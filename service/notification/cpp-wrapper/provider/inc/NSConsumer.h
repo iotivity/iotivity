@@ -82,8 +82,9 @@ namespace OIC
                       * This method is for setting icon image for the Notification service media contents.
                       * This function is valid only when subControllability is set true.
                       * @param accepted - as bool.
+                      * @return :: OK or result code of NSResult
                       */
-                int acceptSubscription(bool accepted);
+                NSResult acceptSubscription(bool accepted);
 
                 /**
                      * Select a topic name for a consumer

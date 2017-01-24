@@ -8,4 +8,10 @@
     <string name="btn_send">Send Notification</string>
     <string name="btn_create_noti">Send Notification</string>
     <string name="btn_log">Clear Logs</string>
+    <string name="enableRemoteService">Enable Remote Service</string>
+    <string name="disableRemoteService">Disable Remote Service</string>
+    <string name="btn_auth">Auth</string>
+    <string name="btn_url"> URL</string>
+    <string name="btn_addr"> Addr. </string>
+    <string name="btn_ok">Enter Details</string>
 </resources>

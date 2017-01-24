@@ -445,52 +445,6 @@ TEST_F(ResourceObjectHandlingRequestTest, SendResponseWithSameHandlesPassedByReq
     ASSERT_EQ(OC_EH_OK, handler(createRequest()));
 }
 
-TEST_F(ResourceObjectHandlingRequestTest, SendResponseWithRCSResponseResults)
-{
-    constexpr int errorCode{ 1999 };
-
-    server->setGetRequestHandler(
-            [](const RCSRequest&, RCSResourceAttributes&) -> RCSGetResponse
-            {
-                return RCSGetResponse::create(errorCode);
-            }
-    );
-
-    mocks.ExpectCallFunc(OCPlatform::sendResponse).Match(
-            [](const shared_ptr<OCResourceResponse> response)
-            {
-                return response->getErrorCode() == errorCode;
-            }
-    ).Return(OC_STACK_OK);
-
-    ASSERT_EQ(OC_EH_OK, handler(createRequest()));
-}
-
-TEST_F(ResourceObjectHandlingRequestTest, SendSetResponseWithCustomAttrs)
-{
-    constexpr int errorCode{ 1999 };
-    constexpr char value[]{ "VALUE" };
-
-    server->setSetRequestHandler(
-            [](const RCSRequest&, RCSResourceAttributes&) -> RCSSetResponse
-            {
-                RCSResourceAttributes attrs;
-                attrs[KEY] = value;
-                return RCSSetResponse::create(attrs, errorCode);
-            }
-    );
-
-    mocks.ExpectCallFunc(OCPlatform::sendResponse).Match(
-            [](const shared_ptr<OCResourceResponse> response)
-            {
-                return value == response->getResourceRepresentation()[KEY].getValue<std::string>()
-                        && response->getErrorCode() == errorCode;
-            }
-    ).Return(OC_STACK_OK);
-
-    ASSERT_EQ(OC_EH_OK, handler(createRequest(OC_REST_POST)));
-}
-
 TEST_F(ResourceObjectHandlingRequestTest, SeparateResponseIsSlowResponse)
 {
     server->setGetRequestHandler(

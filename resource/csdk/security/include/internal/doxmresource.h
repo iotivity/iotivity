@@ -22,9 +22,9 @@
 #define IOTVT_SRM_DOXM_H
 
 #include "octypes.h"
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 #include "cacommon.h"
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 #ifdef __cplusplus
 extern "C" {
@@ -121,7 +121,7 @@ OCStackResult GetDoxmIsOwned(bool *isOwned);
  */
 OCStackResult GetDoxmRownerId(OicUuid_t *rowneruuid);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * Compare the UUID to SubOwner.
  *
@@ -130,7 +130,7 @@ OCStackResult GetDoxmRownerId(OicUuid_t *rowneruuid);
  * @return true if uuid exists in the SubOwner list of doxm, else false.
  */
 bool IsSubOwner(const OicUuid_t* uuid);
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /** This function deallocates the memory for OicSecDoxm_t .
  *
@@ -144,7 +144,7 @@ void DeleteDoxmBinData(OicSecDoxm_t* doxm);
  */
 void RestoreDoxmToInitState();
 
-#if defined(__WITH_DTLS__) && defined(_ENABLE_MULTIPLE_OWNER_)
+#if defined(__WITH_DTLS__) && defined(MULTIPLE_OWNER)
 /**
  * Callback function to handle MOT DTLS handshake result.
  * @param[out]   object           remote device information.
@@ -152,7 +152,16 @@ void RestoreDoxmToInitState();
  */
 void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
                                 const CAErrorInfo_t *errorInfo);
-#endif //__WITH_DTLS__ && _ENABLE_MULTIPLE_OWNER_
+#endif //__WITH_DTLS__ && MULTIPLE_OWNER
+
+/**
+ * Internal function to change doxm resource to Ready for Normal Operation.
+ *
+ * @param newROwner new owner
+ *
+ * @retval ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult SetDoxmSelfOwnership(const OicUuid_t* newROwner);
 
 #ifdef __cplusplus
 }

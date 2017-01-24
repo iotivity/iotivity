@@ -105,13 +105,8 @@ public class Account extends Resource {
                             new RDReceiveHandler(mRequest, response,
                                     mSrcDevice));
                     break;
-                case CHANGED:
-                case CONTENT:
-                    mSrcDevice.sendResponse(response);
-                    break;
                 default:
-                    mSrcDevice.sendResponse(MessageBuilder.createResponse(
-                            mRequest, ResponseStatus.BAD_REQUEST));
+                    mSrcDevice.sendResponse(response);
             }
         }
     }

@@ -70,7 +70,7 @@ typedef struct OCProvisionDev
 #ifdef WITH_TCP
     uint16_t        tcpPort;         /**< tcp port **/
 #endif
-    char             secVer[MAX_VERSION_LEN];         /**< security version **/
+    char             secVer[OIC_SEC_MAX_VER_LEN];         /**< security version **/
     DeviceStatus    devStatus;       /**< status of device **/
     OCDoHandle    handle;
     struct OCProvisionDev  *next;    /**< Next pointer. **/
@@ -99,6 +99,31 @@ typedef struct OCPMResult{
     OicUuid_t      deviceId;
     OCStackResult  res;
 }OCProvisionResult_t;
+
+/**
+ * Owner device type
+ */
+typedef enum OwnerType{
+    SUPER_OWNER = 0,
+    SUB_OWNER = 1
+}OwnerType_t;
+
+/**
+ * Index value to access OxM allow table
+ */
+typedef enum OxmAllowTableIdx {
+    OXM_IDX_JUST_WORKS = 0,
+    OXM_IDX_MV_JUST_WORKS,
+#ifdef MULTIPLE_OWNER
+    OXM_IDX_PRECONFIG_PIN,
+#endif
+    OXM_IDX_RANDOM_DEVICE_PIN,
+    OXM_IDX_MANUFACTURER_CERTIFICATE,
+    OXM_IDX_CON_MFG_CERT,
+    OXM_IDX_DECENTRALIZED_PUBLIC_KEY,
+    OXM_IDX_COUNT,
+    OXM_IDX_UNKNOWN
+}OxmAllowTableIdx_t;
 
 /**
  * Callback function definition of provisioning API

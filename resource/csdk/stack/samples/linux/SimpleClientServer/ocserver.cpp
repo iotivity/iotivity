@@ -42,12 +42,23 @@
 #include "ocpayload.h"
 #include "ocserver.h"
 #include "common.h"
+#include "oic_string.h"
 
-//string length of "/a/light/" + std::numeric_limits<int>::digits10 + '\0'"
+#define VERIFY_SUCCESS(op)                          \
+{                                                   \
+    if (op !=  OC_STACK_OK)                         \
+    {                                               \
+        OIC_LOG_V(FATAL, TAG, "%s failed!!", #op);  \
+        goto exit;                                  \
+    }                                               \
+}
+
+// string length of "/a/light/" + std::numeric_limits<int>::digits10 + '\0'"
 // 9 + 9 + 1 = 19
 const int URI_MAXSIZE = 19;
 
 static int gObserveNotifyType = 3;
+static int gResourceCreateType = ENDPOINT_OPT_NONE;
 
 int gQuitFlag = 0;
 int gLightUnderObservation = 0;
@@ -67,10 +78,10 @@ pthread_t threadId_presence;
 static bool observeThreadStarted = false;
 
 #ifdef WITH_PRESENCE
-#define numPresenceResources (2)
+#define NUM_PRESENCE_RESOURCES 2
 #endif
 
-char *gResourceUri= (char *)"/a/light";
+char *gResourceUri = (char *)"/a/light";
 const char *dateOfManufacture = "2016-01-15";
 const char *deviceName = "myDeviceName";
 const char *deviceUUID = "51b55ddc-ccbb-4cb3-a57f-494eeca13a21";
@@ -79,6 +90,7 @@ const char *manufacturerName = "myName";
 const char *operatingSystemVersion = "myOS";
 const char *hardwareVersion = "myHardwareVersion";
 const char *platformID = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+const char *protocolIndependentID = "6ef9211d-2d5c-401e-8e5d-4b3af48a054f";
 const char *manufacturerLink = "https://www.iotivity.org";
 const char *modelNumber = "myModelNumber";
 const char *platformVersion = "myPlatformVersion";
@@ -86,15 +98,10 @@ const char *supportLink = "https://www.iotivity.org";
 const char *version = "myVersion";
 const char *systemTime = "2015-05-15T11.04";
 const char *specVersion = "core.1.1.0";
-const char *dataModelVersions = "res.1.1.0";
-
-// Entity handler should check for resourceTypeName and ResourceInterface in order to GET
-// the existence of a known resource
-const char *resourceTypeName = "core.light";
-const char *resourceInterface = OC_RSRVD_INTERFACE_DEFAULT;
+const char *dataModelVersions = "res.1.1.0,sh.1.1.0";
+const char *deviceType = "oic.d.tv";
 
 OCPlatformInfo platformInfo;
-OCDeviceInfo deviceInfo;
 
 OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
 {
@@ -110,6 +117,12 @@ OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
     OCRepPayloadSetPropInt(payload, "power", power);
 
     return payload;
+}
+
+static FILE* server_fopen(const char* path, const char* mode)
+{
+    OIC_LOG_V(DEBUG, TAG, "Got file open call for %s",path);
+    return fopen(path, mode);
 }
 
 //This function takes the request as an input and returns the response
@@ -176,8 +189,8 @@ bool checkIfQueryForPowerPassed(char * query)
             int powerRequested = atoi(pointerToOperator + 1);
             if (Light.power > powerRequested)
             {
-                OIC_LOG_V(INFO, TAG, "Current power: %d. Requested: <%d", Light.power
-                            , powerRequested);
+                OIC_LOG_V(INFO, TAG, "Current power: %d. Requested: <%d", Light.power,
+                          powerRequested);
                 return false;
             }
         }
@@ -432,7 +445,9 @@ void ProcessObserveDeregister (OCEntityHandlerRequest *ehRequest)
         }
     }
     if (clientStillObserving == false)
+    {
         gLightUnderObservation = 0;
+    }
 }
 
 OCEntityHandlerResult
@@ -522,6 +537,7 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
         }
     }
 
+    OCPayloadDestroy(response.payload);
     return ehResult;
 }
 
@@ -760,17 +776,17 @@ void *presenceNotificationGenerator(void *param)
     OIC_LOG_V(INFO, TAG, "Will send out presence in %u seconds", secondsBeforePresence);
     sleep(secondsBeforePresence);
     (void)param;
-    OCDoHandle presenceNotificationHandles[numPresenceResources];
+    OCDoHandle presenceNotificationHandles[NUM_PRESENCE_RESOURCES];
     OCStackResult res = OC_STACK_OK;
 
-    std::array<std::string, numPresenceResources> presenceNotificationResources { {
+    std::array<std::string, NUM_PRESENCE_RESOURCES> presenceNotificationResources { {
         std::string("core.fan"),
         std::string("core.led") } };
-    std::array<std::string, numPresenceResources> presenceNotificationUris { {
+    std::array<std::string, NUM_PRESENCE_RESOURCES> presenceNotificationUris { {
         std::string("/a/fan"),
         std::string("/a/led") } };
 
-    for(int i=0; i<numPresenceResources; i++)
+    for(int i=0; i<NUM_PRESENCE_RESOURCES; i++)
     {
         if(res == OC_STACK_OK)
         {
@@ -794,7 +810,7 @@ void *presenceNotificationGenerator(void *param)
                                 presenceNotificationUris[i].c_str());
     }
     sleep(5);
-    for(int i=0; i<numPresenceResources; i++)
+    for(int i=0; i<NUM_PRESENCE_RESOURCES; i++)
     {
         if(res == OC_STACK_OK)
         {
@@ -827,13 +843,41 @@ int createLightResource (char *uri, LightResource *lightResource)
 
     lightResource->state = false;
     lightResource->power= 0;
-    OCStackResult res = OCCreateResource(&(lightResource->handle),
+    OCTpsSchemeFlags endpointFlags = OC_NO_TPS;
+    switch (gResourceCreateType)
+    {
+        case DISPLAY_SUPPORTED_EPS_FLAG:
+        case CREATE_RESOURCE_OC_ALL:
+        // same as OCCreateResource(args...)
+        endpointFlags = OC_ALL;
+        break;
+
+        case CREATE_RESOURCE_OC_COAP:
+        endpointFlags = OC_COAP;
+        break;
+
+#ifdef TCP_ADAPTER
+        case CREATE_RESOURCE_OC_COAP_TCP:
+        endpointFlags = OC_COAP_TCP;
+        break;
+
+        case CREATE_RESOURCE_OC_COAP_WITH_TCP:
+        endpointFlags = (OCTpsSchemeFlags)(OC_COAP | OC_COAP_TCP);
+        break;
+#endif
+        default:
+        endpointFlags = OC_ALL;
+    }
+
+    OCStackResult res = OCCreateResourceWithEp(&(lightResource->handle),
             "core.light",
             "oc.mi.def",
             uri,
             OCEntityHandlerCb,
             NULL,
-            OC_DISCOVERABLE|OC_OBSERVABLE);
+            OC_DISCOVERABLE|OC_OBSERVABLE,
+            endpointFlags);
+
     OIC_LOG_V(INFO, TAG, "Created Light resource with result: %s", getResult(res));
 
     return 0;
@@ -841,24 +885,17 @@ int createLightResource (char *uri, LightResource *lightResource)
 
 void DeletePlatformInfo()
 {
-    free (platformInfo.platformID);
-    free (platformInfo.manufacturerName);
-    free (platformInfo.manufacturerUrl);
-    free (platformInfo.modelNumber);
-    free (platformInfo.dateOfManufacture);
-    free (platformInfo.platformVersion);
-    free (platformInfo.operatingSystemVersion);
-    free (platformInfo.hardwareVersion);
-    free (platformInfo.firmwareVersion);
-    free (platformInfo.supportUrl);
-    free (platformInfo.systemTime);
-}
-
-void DeleteDeviceInfo()
-{
-    free (deviceInfo.deviceName);
-    free (deviceInfo.specVersion);
-    OCFreeOCStringLL (deviceInfo.dataModelVersions);
+    free(platformInfo.platformID);
+    free(platformInfo.manufacturerName);
+    free(platformInfo.manufacturerUrl);
+    free(platformInfo.modelNumber);
+    free(platformInfo.dateOfManufacture);
+    free(platformInfo.platformVersion);
+    free(platformInfo.operatingSystemVersion);
+    free(platformInfo.hardwareVersion);
+    free(platformInfo.firmwareVersion);
+    free(platformInfo.supportUrl);
+    free(platformInfo.systemTime);
 }
 
 bool DuplicateString(char** targetString, const char* sourceString)
@@ -888,12 +925,12 @@ OCStackResult SetPlatformInfo(const char* platformID, const char *manufacturerNa
 
     bool success = true;
 
-    if(manufacturerName != NULL && (strlen(manufacturerName) > MAX_MANUFACTURER_NAME_LENGTH))
+    if(manufacturerName != NULL && (strlen(manufacturerName) > MAX_PLATFORM_NAME_LENGTH))
     {
         return OC_STACK_INVALID_PARAM;
     }
 
-    if(manufacturerUrl != NULL && (strlen(manufacturerUrl) > MAX_MANUFACTURER_URL_LENGTH))
+    if(manufacturerUrl != NULL && (strlen(manufacturerUrl) > MAX_PLATFORM_URL_LENGTH))
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -962,23 +999,28 @@ OCStackResult SetPlatformInfo(const char* platformID, const char *manufacturerNa
     return OC_STACK_ERROR;
 }
 
-OCStackResult SetDeviceInfo(const char* deviceName, const char* specVersion, const char* dataModelVersions)
+OCStackResult SetDeviceInfo()
 {
-    if(!DuplicateString(&deviceInfo.deviceName, deviceName))
+    OCResourceHandle resourceHandle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    if (resourceHandle == NULL)
     {
-        return OC_STACK_ERROR;
+        OIC_LOG(ERROR, TAG, "Device Resource does not exist.");
+        goto exit;
     }
-    if(!DuplicateString(&deviceInfo.specVersion, specVersion))
-    {
-        return OC_STACK_ERROR;
-    }
-    OCFreeOCStringLL(deviceInfo.dataModelVersions);
-    deviceInfo.dataModelVersions = OCCreateOCStringLL(dataModelVersions);
-    if (!deviceInfo.dataModelVersions)
-    {
-        return OC_STACK_ERROR;
-    }
+
+    VERIFY_SUCCESS(OCBindResourceTypeToResource(resourceHandle, deviceType));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, deviceName));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+                                      dataModelVersions));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                      protocolIndependentID));
+
+    OIC_LOG(INFO, TAG, "Device information initialized successfully.");
     return OC_STACK_OK;
+
+exit:
+    return OC_STACK_ERROR;
 }
 
 static void PrintUsage()
@@ -986,6 +1028,13 @@ static void PrintUsage()
     OIC_LOG(INFO, TAG, "Usage : ocserver -o <0|1>");
     OIC_LOG(INFO, TAG, "-o 0 : Notify all observers");
     OIC_LOG(INFO, TAG, "-o 1 : Notify list of observers");
+    OIC_LOG(INFO, TAG, "-e 0 : Display supported endpoint flags");
+    OIC_LOG(INFO, TAG, "-e 1 : Create resource without endpoint flags");
+    OIC_LOG(INFO, TAG, "-e 2 : Create resource with endpoint flag OC_COAP");
+#ifdef TCP_ADAPTER
+    OIC_LOG(INFO, TAG, "-e 3 : Create resource with endpoint flag OC_COAP_TCP");
+    OIC_LOG(INFO, TAG, "-e 4 : Create resource with endpoint flag OC_COAP | OC_COAP_TCP");
+#endif
 }
 
 #ifdef RA_ADAPTER
@@ -1016,12 +1065,15 @@ int main(int argc, char* argv[])
 #endif
 
     int opt = 0;
-    while ((opt = getopt(argc, argv, "o:s:p:d:u:w:r:j:")) != -1)
+    while ((opt = getopt(argc, argv, "o:e:s:p:d:u:w:r:j:")) != -1)
     {
         switch(opt)
         {
             case 'o':
                 gObserveNotifyType = atoi(optarg);
+                break;
+            case 'e':
+                gResourceCreateType = atoi(optarg);
                 break;
 #ifdef RA_ADAPTER
             case 's':
@@ -1052,7 +1104,15 @@ int main(int argc, char* argv[])
         }
     }
 
-    if ((gObserveNotifyType != 0) && (gObserveNotifyType != 1))
+    if ((gObserveNotifyType != 0) && (gObserveNotifyType != 1) &&
+         gResourceCreateType == ENDPOINT_OPT_NONE)
+    {
+        PrintUsage();
+        return -1;
+    }
+
+    if (gResourceCreateType < DISPLAY_SUPPORTED_EPS_FLAG ||
+        gResourceCreateType > ENDPOINT_OPT_NONE)
     {
         PrintUsage();
         return -1;
@@ -1062,7 +1122,20 @@ int main(int argc, char* argv[])
     OCSetRAInfo(&rainfo);
 #endif
 
+    
     OIC_LOG(DEBUG, TAG, "OCServer is starting...");
+    OCPersistentStorage pstStr {
+        server_fopen,
+        fread,
+        fwrite,
+        fclose,
+        unlink
+    };
+    if (OC_STACK_OK != OCRegisterPersistentStorageHandler(&pstStr))
+    {
+        OIC_LOG(ERROR, TAG, "OCRegisterPersistentStorageHandler error");
+        return -1;
+    }
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
@@ -1077,12 +1150,45 @@ int main(int argc, char* argv[])
     }
 #endif
 
+    if (DISPLAY_SUPPORTED_EPS_FLAG == gResourceCreateType)
+    {
+        char strBuff[SAMPLE_MAX_STR_BUFF_SIZE] = {0};
+        OCTpsSchemeFlags deviceFlags = OCGetSupportedEndpointTpsFlags();
+
+        if (deviceFlags & OC_COAP)
+        {
+            OICStrcat(strBuff, sizeof(strBuff), "OC_COAP");
+        }
+        if (deviceFlags & OC_COAPS)
+        {
+            OICStrcat(strBuff, sizeof(strBuff), ", OC_COAPS");
+        }
+#ifdef TCP_ADAPTER
+        if (deviceFlags & OC_COAP_TCP)
+        {
+            OICStrcat(strBuff, sizeof(strBuff), ", OC_COAP_TCP");
+        }
+        if (deviceFlags & OC_COAPS_TCP)
+        {
+            OICStrcat(strBuff, sizeof(strBuff), ", OC_COAPS_TCP");
+        }
+#endif
+#ifdef EDR_ADAPTER
+        if (deviceFlags & OC_COAP_RFCOMM)
+        {
+            OICStrcat(strBuff, sizeof(strBuff), ", OC_COAP_RFCOMM");
+        }
+#endif
+        OIC_LOG_V(INFO, TAG, "Endpoint flag %s is supported", strBuff);
+        return 0;
+    }
+
     OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandlerCb, NULL);
 
     OCStackResult registrationResult =
         SetPlatformInfo(platformID, manufacturerName, manufacturerLink, modelNumber,
-            dateOfManufacture, platformVersion,  operatingSystemVersion,  hardwareVersion,
-            firmwareVersion,  supportLink, systemTime);
+                        dateOfManufacture, platformVersion,  operatingSystemVersion,
+                        hardwareVersion, firmwareVersion, supportLink, systemTime);
 
     if (registrationResult != OC_STACK_OK)
     {
@@ -1098,17 +1204,7 @@ int main(int argc, char* argv[])
         exit (EXIT_FAILURE);
     }
 
-    registrationResult = SetDeviceInfo(deviceName, specVersion, dataModelVersions);
-
-    if (registrationResult != OC_STACK_OK)
-    {
-        OIC_LOG(INFO, TAG, "Device info setting failed locally!");
-        exit (EXIT_FAILURE);
-    }
-
-    OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.d.tv");
-
-    registrationResult = OCSetDeviceInfo(deviceInfo);
+    registrationResult = SetDeviceInfo();
 
     if (registrationResult != OC_STACK_OK)
     {
@@ -1132,7 +1228,6 @@ int main(int argc, char* argv[])
      * Create a thread for generating changes that cause presence notifications
      * to be sent to clients
      */
-
     #ifdef WITH_PRESENCE
     pthread_create(&threadId_presence, NULL, presenceNotificationGenerator, (void *)NULL);
     #endif
@@ -1141,7 +1236,6 @@ int main(int argc, char* argv[])
     OIC_LOG(INFO, TAG, "Entering ocserver main loop...");
 
     DeletePlatformInfo();
-    DeleteDeviceInfo();
 
     signal(SIGINT, handleSigInt);
 

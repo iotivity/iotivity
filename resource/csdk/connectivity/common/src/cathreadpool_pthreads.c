@@ -39,7 +39,7 @@
 #include "octhread.h"
 #include "platform_features.h"
 
-#define TAG PCF("UTHREADPOOL")
+#define TAG PCF("OIC_CA_UTHREADPOOL")
 
 /**
  * empty struct to represent the details.  This implementation has no data
@@ -60,6 +60,11 @@ typedef struct ca_thread_pool_callback_info_t
     ca_thread_func func;
     void* data;
 } ca_thread_pool_callback_info_t;
+
+typedef struct ca_thread_pool_thread_info_t
+{
+    oc_thread thread;
+} ca_thread_pool_thread_info_t;
 
 // passthrough function to convert the pthreads call to a u_thread_func call
 void* ca_thread_pool_pthreads_delegate(void* data)
@@ -139,7 +144,7 @@ exit:
 }
 
 CAResult_t ca_thread_pool_add_task(ca_thread_pool_t thread_pool, ca_thread_func method,
-                                    void *data)
+                                   void *data)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -159,25 +164,41 @@ CAResult_t ca_thread_pool_add_task(ca_thread_pool_t thread_pool, ca_thread_func 
     info->func = method;
     info->data = data;
 
-    oc_thread thread;
-    int thrRet = oc_thread_new(&thread, ca_thread_pool_pthreads_delegate, info);
-    if (thrRet != 0)
+    ca_thread_pool_thread_info_t *threadInfo =
+            (ca_thread_pool_thread_info_t *) OICCalloc(1, sizeof(ca_thread_pool_thread_info_t));
+    if (!threadInfo)
     {
-        OIC_LOG_V(ERROR, TAG, "Thread start failed with error %d", thrRet);
+        OIC_LOG(ERROR, TAG, "Memory allocation failed");
         OICFree(info);
         return CA_STATUS_FAILED;
     }
 
     oc_mutex_lock(thread_pool->details->list_lock);
-    bool addResult = u_arraylist_add(thread_pool->details->threads_list, (void*)thread);
-    oc_mutex_unlock(thread_pool->details->list_lock);
-
-    if(!addResult)
+    bool addResult = u_arraylist_add(thread_pool->details->threads_list, (void*) threadInfo);
+    if (!addResult)
     {
-        OIC_LOG_V(ERROR, TAG, "Arraylist Add failed, may not be properly joined: %d", addResult);
-        oc_thread_free(thread);
+        // Note that this is considered non-fatal.
+        oc_mutex_unlock(thread_pool->details->list_lock);
+        OIC_LOG(ERROR, TAG, "Arraylist add failed");
+        OICFree(info);
+        OICFree(threadInfo);
         return CA_STATUS_FAILED;
     }
+
+    int thrRet = oc_thread_new(&threadInfo->thread, ca_thread_pool_pthreads_delegate, info);
+    if (thrRet != 0)
+    {
+        uint32_t index = 0;
+        if (u_arraylist_get_index(thread_pool->details->threads_list, threadInfo, &index))
+        {
+            u_arraylist_remove(thread_pool->details->threads_list, index);
+        }
+        oc_mutex_unlock(thread_pool->details->list_lock);
+        OIC_LOG_V(ERROR, TAG, "Thread start failed with error %d", thrRet);
+        OICFree(info);
+        return CA_STATUS_FAILED;
+    }
+    oc_mutex_unlock(thread_pool->details->list_lock);
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
@@ -187,7 +208,7 @@ void ca_thread_pool_free(ca_thread_pool_t thread_pool)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    if(!thread_pool)
+    if (!thread_pool)
     {
         OIC_LOG(ERROR, TAG, "Invalid parameter thread_pool was NULL");
         return;
@@ -195,11 +216,19 @@ void ca_thread_pool_free(ca_thread_pool_t thread_pool)
 
     oc_mutex_lock(thread_pool->details->list_lock);
 
-    for(uint32_t i = 0; i<u_arraylist_length(thread_pool->details->threads_list); ++i)
+    for (uint32_t i = 0; i < u_arraylist_length(thread_pool->details->threads_list); ++i)
     {
-        oc_thread thr = (oc_thread)u_arraylist_get(thread_pool->details->threads_list, i);
-        oc_thread_wait(thr);
-        oc_thread_free(thr);
+        ca_thread_pool_thread_info_t *threadInfo = (ca_thread_pool_thread_info_t *)
+                u_arraylist_get(thread_pool->details->threads_list, i);
+        if (threadInfo)
+        {
+            if (threadInfo->thread)
+            {
+                oc_thread_wait(threadInfo->thread);
+                oc_thread_free(threadInfo->thread);
+            }
+            OICFree(threadInfo);
+        }
     }
 
     u_arraylist_free(&(thread_pool->details->threads_list));

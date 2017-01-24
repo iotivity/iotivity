@@ -66,14 +66,13 @@ std::string  systemTime = "2016-01-15T11.01";
 
 // Set of strings for each of device info fields
 std::string  deviceName = "IoTivity Simple Server";
+std::string  deviceType = "oic.wk.tv";
 std::string  specVersion = "core.1.1.0";
-std::string  dataModelVersions = "res.1.1.0";
+std::vector<std::string> dataModelVersions = {"res.1.1.0", "sh.1.1.0"};
+std::string  protocolIndependentID = "fa008167-3bbf-4c9d-8604-c9bcb96cb712";
 
 // OCPlatformInfo Contains all the platform info to be stored
 OCPlatformInfo platformInfo;
-
-// OCDeviceInfo Contains all the device info to be stored
-OCDeviceInfo deviceInfo;
 
 // Specifies where to notify all observers or list of observers
 // false: notifies all observers
@@ -334,7 +333,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
                 }
                 else // normal response case.
                 {
-                    pResponse->setErrorCode(200);
+
                     pResponse->setResponseResult(OC_EH_OK);
                     pResponse->setResourceRepresentation(get());
                     if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -351,7 +350,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
                 // Do related operations related to PUT request
                 // Update the lightResource
                 put(rep);
-                pResponse->setErrorCode(200);
+
                 pResponse->setResponseResult(OC_EH_OK);
                 pResponse->setResourceRepresentation(get());
                 if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -368,7 +367,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
                 // Do related operations related to POST request
                 OCRepresentation rep_post = post(rep);
                 pResponse->setResourceRepresentation(rep_post);
-                pResponse->setErrorCode(200);
+
                 if(rep_post.hasAttribute("createduri"))
                 {
                     pResponse->setResponseResult(OC_EH_RESOURCE_CREATED);
@@ -471,7 +470,6 @@ void * ChangeLightRepresentation (void *param)
                 std::shared_ptr<OCResourceResponse> resourceResponse =
                             {std::make_shared<OCResourceResponse>()};
 
-                resourceResponse->setErrorCode(200);
                 resourceResponse->setResourceRepresentation(lightPtr->get(), DEFAULT_INTERFACE);
 
                 result = OCPlatform::notifyListOfObservers(  lightPtr->getHandle(),
@@ -509,13 +507,6 @@ void DeletePlatformInfo()
     delete[] platformInfo.systemTime;
 }
 
-void DeleteDeviceInfo()
-{
-    delete[] deviceInfo.deviceName;
-    delete[] deviceInfo.specVersion;
-    OCFreeOCStringLL(deviceInfo.dataModelVersions);
-}
-
 void DuplicateString(char ** targetString, std::string sourceString)
 {
     *targetString = new char[sourceString.length() + 1];
@@ -543,18 +534,52 @@ OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerNa
     return OC_STACK_OK;
 }
 
-OCStackResult SetDeviceInfo(std::string deviceName, std::string specVersion, std::string dataModelVersions)
+OCStackResult SetDeviceInfo()
 {
-    DuplicateString(&deviceInfo.deviceName, deviceName);
+    OCStackResult result = OC_STACK_ERROR;
 
-    if (!specVersion.empty())
+    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    if (handle == NULL)
     {
-        DuplicateString(&deviceInfo.specVersion, specVersion);
+        cout << "Failed to find resource " << OC_RSRVD_DEVICE_URI << endl;
+        return result;
     }
 
-    if (!dataModelVersions.empty())
+    result = OCBindResourceTypeToResource(handle, deviceType.c_str());
+    if (result != OC_STACK_OK)
     {
-        OCResourcePayloadAddStringLL(&deviceInfo.dataModelVersions, dataModelVersions.c_str());
+        cout << "Failed to add device type" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, deviceName);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set device name" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+                                          dataModelVersions);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set data model versions" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set spec version" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                          protocolIndependentID);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set piid" << endl;
+        return result;
     }
 
     return OC_STACK_OK;
@@ -572,7 +597,7 @@ void * handleSlowResponse (void *param, std::shared_ptr<OCResourceRequest> pRequ
     pResponse->setRequestHandle(pRequest->getRequestHandle());
     pResponse->setResourceHandle(pRequest->getResourceHandle());
     pResponse->setResourceRepresentation(lightPtr->get());
-    pResponse->setErrorCode(200);
+
     pResponse->setResponseResult(OC_EH_OK);
 
     // Set the slow response flag back to false
@@ -592,9 +617,16 @@ void PrintUsage()
     std::cout << "    4 - Non-secure resource, GET slow response, notify all observers\n";
 }
 
-static FILE* client_open(const char* /*path*/, const char *mode)
+static FILE* client_open(const char* path, const char* mode)
 {
-    return fopen(SVR_DB_FILE_NAME, mode);
+    if (strcmp(path, OC_INTROSPECTION_FILE_NAME) == 0)
+    {
+        return fopen("light_introspection.json", mode);
+    }
+    else
+    {
+        return fopen(SVR_DB_FILE_NAME, mode);
+    }
 }
 
 int main(int argc, char* argv[])
@@ -640,8 +672,7 @@ int main(int argc, char* argv[])
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Server,
-        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-        0,         // Uses randomly available port
+        (OCTransportAdapter)(OCTransportAdapter::OC_ADAPTER_IP|OCTransportAdapter::OC_ADAPTER_TCP),
         OC::QualityOfService::LowQos,
         &ps
     };
@@ -661,10 +692,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    result = SetDeviceInfo(deviceName, specVersion, dataModelVersions);
-    OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.wk.d");
-
-    result = OCPlatform::registerDeviceInfo(deviceInfo);
+    result = SetDeviceInfo();
 
     if (result != OC_STACK_OK)
     {
@@ -687,7 +715,6 @@ int main(int argc, char* argv[])
         std::cout << "Added Interface and Type" << std::endl;
 
         DeletePlatformInfo();
-        DeleteDeviceInfo();
 
         // A condition variable will free the mutex it is given, then do a non-
         // intensive block until 'notify' is called on it.  In this case, since we

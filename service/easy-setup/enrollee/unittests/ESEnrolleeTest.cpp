@@ -118,30 +118,30 @@ public:
         std::cout << __func__ << std::endl;
     }
 
-    static void WiFiProvCbInApp(ESWiFiProvData *)
+    static void WiFiConfProvCbInApp(ESWiFiConfData *)
     {
         std::cout << __func__ << std::endl;
     }
 
-    static void DevConfProvCbInApp(ESDevConfProvData *)
+    static void DevConfProvCbInApp(ESDevConfData *)
     {
         std::cout << __func__ << std::endl;
     }
 
-    static void CloudDataCbInApp(ESCloudProvData *)
+    static void CoapCloudConfCbInApp(ESCoapCloudConfData *)
     {
         std::cout << __func__ << std::endl;
     }
 
     ESResult startEnrollee()
     {
-        ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE |
-                                                    ES_CLOUD_RESOURCE |
+        ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFICONF_RESOURCE |
+                                                    ES_COAPCLOUDCONF_RESOURCE |
                                                     ES_DEVCONF_RESOURCE);
         ESProvisioningCallbacks callbacks;
-        callbacks.WiFiProvCb = &EasysetupEnrolleeTest::WiFiProvCbInApp;
+        callbacks.WiFiConfProvCb = &EasysetupEnrolleeTest::WiFiConfProvCbInApp;
         callbacks.DevConfProvCb = &EasysetupEnrolleeTest::DevConfProvCbInApp;
-        callbacks.CloudDataProvCb = &EasysetupEnrolleeTest::CloudDataCbInApp;
+        callbacks.CoapCloudConfProvCb = &EasysetupEnrolleeTest::CoapCloudConfCbInApp;
 
         return ESInitEnrollee(false, resourcemMask, callbacks);
     }
@@ -149,9 +149,9 @@ public:
     ESResult startEnrolleeWithInvalidRsrcMask()
     {
         ESProvisioningCallbacks callbacks;
-        callbacks.WiFiProvCb = &EasysetupEnrolleeTest::WiFiProvCbInApp;
+        callbacks.WiFiConfProvCb = &EasysetupEnrolleeTest::WiFiConfProvCbInApp;
         callbacks.DevConfProvCb = &EasysetupEnrolleeTest::DevConfProvCbInApp;
-        callbacks.CloudDataProvCb = &EasysetupEnrolleeTest::CloudDataCbInApp;
+        callbacks.CoapCloudConfProvCb = &EasysetupEnrolleeTest::CoapCloudConfCbInApp;
 
         return ESInitEnrollee(false, (ESResourceMask)0, callbacks);
     }
@@ -211,13 +211,13 @@ TEST_F(EasysetupEnrolleeTest, ESInitEnrolleeFailedInvalidRsrcMask)
 
 TEST_F(EasysetupEnrolleeTest, ESInitEnrolleeFailedByWiFiCbIsNull)
 {
-    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE |
-                                                    ES_CLOUD_RESOURCE |
+    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFICONF_RESOURCE |
+                                                    ES_COAPCLOUDCONF_RESOURCE |
                                                     ES_DEVCONF_RESOURCE);
     ESProvisioningCallbacks callbacks;
-    callbacks.WiFiProvCb = NULL;
+    callbacks.WiFiConfProvCb = NULL;
     callbacks.DevConfProvCb = &EasysetupEnrolleeTest::DevConfProvCbInApp;
-    callbacks.CloudDataProvCb = &EasysetupEnrolleeTest::CloudDataCbInApp;
+    callbacks.CoapCloudConfProvCb = &EasysetupEnrolleeTest::CoapCloudConfCbInApp;
 
     ESResult ret = ESInitEnrollee(false, resourcemMask, callbacks);
     EXPECT_EQ(ret, ES_ERROR);
@@ -226,13 +226,13 @@ TEST_F(EasysetupEnrolleeTest, ESInitEnrolleeFailedByWiFiCbIsNull)
 
 TEST_F(EasysetupEnrolleeTest, ESInitEnrolleeFailedByDevConfCbIsNull)
 {
-    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE |
-                                                    ES_CLOUD_RESOURCE |
+    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFICONF_RESOURCE |
+                                                    ES_COAPCLOUDCONF_RESOURCE |
                                                     ES_DEVCONF_RESOURCE);
     ESProvisioningCallbacks callbacks;
-    callbacks.WiFiProvCb = &EasysetupEnrolleeTest::WiFiProvCbInApp;
+    callbacks.WiFiConfProvCb = &EasysetupEnrolleeTest::WiFiConfProvCbInApp;
     callbacks.DevConfProvCb = NULL;
-    callbacks.CloudDataProvCb = &EasysetupEnrolleeTest::CloudDataCbInApp;
+    callbacks.CoapCloudConfProvCb = &EasysetupEnrolleeTest::CoapCloudConfCbInApp;
 
     ESResult ret = ESInitEnrollee(false, resourcemMask, callbacks);
     EXPECT_EQ(ret, ES_ERROR);
@@ -241,13 +241,13 @@ TEST_F(EasysetupEnrolleeTest, ESInitEnrolleeFailedByDevConfCbIsNull)
 
 TEST_F(EasysetupEnrolleeTest, ESInitEnrolleeFailedByCloudCbIsNull)
 {
-    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE |
-                                                    ES_CLOUD_RESOURCE |
+    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFICONF_RESOURCE |
+                                                    ES_COAPCLOUDCONF_RESOURCE |
                                                     ES_DEVCONF_RESOURCE);
     ESProvisioningCallbacks callbacks;
-    callbacks.WiFiProvCb = &EasysetupEnrolleeTest::WiFiProvCbInApp;
+    callbacks.WiFiConfProvCb = &EasysetupEnrolleeTest::WiFiConfProvCbInApp;
     callbacks.DevConfProvCb = &EasysetupEnrolleeTest::DevConfProvCbInApp;
-    callbacks.CloudDataProvCb = NULL;
+    callbacks.CoapCloudConfProvCb = NULL;
 
     ESResult ret = ESInitEnrollee(false, resourcemMask, callbacks);
     EXPECT_EQ(ret, ES_ERROR);
@@ -382,8 +382,8 @@ TEST_F(EasysetupEnrolleeTest, WiFiAndDevConfProperiesProvisionedWithSuccess)
                cntForReceivedCallbackWithSuccess++;
         });
 
-    mocks.OnCallFunc(WiFiProvCbInApp).Do(
-        [& cntForReceivedCallbackWithSuccess](ESWiFiProvData *data)
+    mocks.OnCallFunc(WiFiConfProvCbInApp).Do(
+        [& cntForReceivedCallbackWithSuccess](ESWiFiConfData *data)
         {
             if(!strcmp(data->ssid, "Iotivity_SSID") &&
                 !strcmp(data->pwd, "Iotivity_PWD") &&
@@ -394,7 +394,7 @@ TEST_F(EasysetupEnrolleeTest, WiFiAndDevConfProperiesProvisionedWithSuccess)
             }
         });
     mocks.OnCallFunc(DevConfProvCbInApp).Do(
-        [& cntForReceivedCallbackWithSuccess](ESDevConfProvData *data)
+        [& cntForReceivedCallbackWithSuccess](ESDevConfData *data)
         {
             if(!strcmp(data->language, "korean") &&
                 !strcmp(data->country, "Korea"))
@@ -428,8 +428,8 @@ TEST_F(EasysetupEnrolleeTest, CloudServerProperiesProvisionedWithSuccess)
             }
         });
 
-    mocks.OnCallFunc(CloudDataCbInApp).Do(
-        [& cntForReceivedCallbackWithSuccess](ESCloudProvData *data)
+    mocks.OnCallFunc(CoapCloudConfCbInApp).Do(
+        [& cntForReceivedCallbackWithSuccess](ESCoapCloudConfData *data)
         {
             if(!strcmp(data->authCode, "authCode") &&
                 !strcmp(data->authProvider, "authProvider") &&

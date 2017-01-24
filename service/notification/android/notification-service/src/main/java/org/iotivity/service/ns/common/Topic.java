@@ -19,60 +19,61 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 package org.iotivity.service.ns.common;
+
 import android.util.Log;
+
 /**
-  * @class   Topic
-  * @brief   This class provides implementation of Notification Topic object.
-  */
-public class Topic
-{
+ *
+ * This class provides implementation of Notification Topic object.
+ *
+ */
+public class Topic {
+
     private static final String LOG_TAG = "NotificationService_Topic";
 
-    public enum TopicState
-    {
-        UNSUBSCRIBED (0),
-        SUBSCRIBED (1);
+    /**
+     * This enum is used to represent subscribtion status for this Topic
+     * resource
+     */
+    public enum TopicState {
+        UNSUBSCRIBED(0),
+        SUBSCRIBED(1);
+
         private int type;
 
-        private TopicState(int type)
-        {
+        private TopicState(int type) {
             this.type = type;
         }
 
-        public int getTopicState()
-        {
+        public int getTopicState() {
             return this.type;
         }
 
     };
-    public String mTopicName    = null;
-    public TopicState mState    = TopicState.UNSUBSCRIBED;
 
-    public Topic(String topicName, TopicState state)
-    {
-        Log.i (LOG_TAG, "Topic()");
+    public String     mTopicName = null;
+    public TopicState mState     = TopicState.UNSUBSCRIBED;
+
+    public Topic(String topicName, TopicState state) {
+        Log.i(LOG_TAG, "Topic()");
 
         mTopicName = topicName;
         mState = state;
     }
 
-    public String getTopicName()
-    {
+    public String getTopicName() {
         return mTopicName;
     }
 
-    public void setTopicName(String topicName)
-    {
+    public void setTopicName(String topicName) {
         mTopicName = topicName;
     }
 
-    public TopicState getState()
-    {
+    public TopicState getState() {
         return mState;
     }
 
-    public void setState(TopicState state)
-    {
+    public void setState(TopicState state) {
         mState = state;
     }
 

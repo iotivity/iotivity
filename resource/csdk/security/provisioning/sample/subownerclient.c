@@ -169,8 +169,7 @@ static void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool
 }
 
 // response handler for LED requests.
-static void LedCB(void *ctx, OCDoHandle UNUSED,
-                                                    OCClientResponse *clientResponse)
+static OCStackApplicationResult LedCB(void *ctx, OCDoHandle UNUSED, OCClientResponse *clientResponse)
 {
     if(clientResponse)
     {
@@ -197,11 +196,12 @@ static void LedCB(void *ctx, OCDoHandle UNUSED,
     }
 
     g_doneCB = true;
+    return OC_STACK_OK;
 }
 
 static void inputPinCB(char* pin, size_t len)
 {
-    if(!pin || OXM_RANDOM_PIN_SIZE>=len)
+    if(!pin || OXM_RANDOM_PIN_MAX_SIZE>=len)
     {
         OIC_LOG(ERROR, TAG, "inputPinCB invalid parameters");
         return;
@@ -210,7 +210,7 @@ static void inputPinCB(char* pin, size_t len)
     printf("   > INPUT PIN: ");
     for(int ret=0; 1!=ret; )
     {
-        ret = scanf("%8s", pin);
+        ret = scanf("%32s", pin);
         for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                     // '0x20<=code' is character region
     }
@@ -321,14 +321,15 @@ static int multipleOwnershipTransfer(void)
     // for error checking, the return value saved and printed
     g_doneCB = false;
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     OCProvisionDev_t* dev = NULL;
     LL_FOREACH(g_motdev_list, dev)
     {
         if(OIC_PRECONFIG_PIN == dev->doxm->oxmSel)
         {
             //Pre-Configured PIN initialization
-            if(OC_STACK_OK != OCAddPreconfigPIN(dev, "12341234", OXM_PRECONFIG_PIN_SIZE))
+            const char* testPreconfigPin = "12341234";
+            if(OC_STACK_OK != OCAddPreconfigPin(dev, testPreconfigPin, strlen(testPreconfigPin)))
             {
                 printf("\n\n\n*** %60s ***\n", "WARNNING : Failed to save the pre-configured PIN");
                 printf("*** %60s ***\n\n\n", "WARNNING : You can't use the pre-configured PIN OxM for MOT");
@@ -336,7 +337,7 @@ static int multipleOwnershipTransfer(void)
             }
         }
     }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     if(OC_STACK_OK != OCDoMultipleOwnershipTransfer(g_ctx, g_motdev_list, multipleOwnershipTransferCB))
     {
@@ -557,14 +558,7 @@ static OicSecAcl_t* createAclForLEDAccess(const OicUuid_t* subject)
         goto CRACL_ERROR;
     }
 
-    //fill the eowner id as my deviceID.
-    OicUuid_t myUuid = {.id={0}};
-    if(OC_STACK_OK != GetDoxmDeviceID(&myUuid))
-    {
-        OIC_LOG(ERROR, TAG, "createAcl: GetDoxmDeviceID error return");
-        goto CRACL_ERROR;
-    }
-    memcpy(ace->eownerID->id, myUuid.id, sizeof(myUuid.id));
+    memcpy(ace->eownerID->id, subject->id, sizeof(subject->id));
 
     return acl;
 
@@ -616,22 +610,14 @@ static int provisionAclForLed()
         goto PVACL_ERROR;
     }
 
-    OicUuid_t subjectUuid;
-    OCStackResult rst = GetDoxmDeviceID(&subjectUuid);
-    if(OC_STACK_OK != rst)
-    {
-        OIC_LOG_V(ERROR, TAG, "GetDoxmDeviceID API error: %d", rst);
-        goto PVACL_ERROR;
-    }
-
-    acl = createAclForLEDAccess(&subjectUuid);
+    acl = createAclForLEDAccess(&dev->doxm->subOwners->uuid);
     if(NULL == acl)
     {
         OIC_LOG(ERROR, TAG, "provisionAcl: Failed to create ACL for LED");
         return -1;
     }
 
-    rst = OCProvisionACL((void*) g_ctx, dev, acl, provisionAclCB);
+    OCStackResult rst = OCProvisionACL((void*) g_ctx, dev, acl, provisionAclCB);
     if(OC_STACK_OK != rst)
     {
         OIC_LOG_V(ERROR, TAG, "OCProvisionACL API error: %d", rst);
@@ -845,12 +831,17 @@ static void printUuid(const OicUuid_t* uid)
 
 static FILE* fopen_prvnMng(const char* path, const char* mode)
 {
-    (void)path;  // unused |path| parameter
-
-    // input |g_svr_db_fname| internally by force, not using |path| parameter
-    // because |OCPersistentStorage::open| is called |OCPersistentStorage| internally
-    // with its own |SVR_DB_FILE_NAME|
-    return fopen(SVR_DB_FILE_NAME, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        // input |g_svr_db_fname| internally by force, not using |path| parameter
+        // because |OCPersistentStorage::open| is called |OCPersistentStorage| internally
+        // with its own |SVR_DB_FILE_NAME|
+        return fopen(SVR_DB_FILE_NAME, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 static int waitCallbackRet(void)

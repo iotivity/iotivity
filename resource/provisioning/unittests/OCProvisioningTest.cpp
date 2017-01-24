@@ -25,7 +25,7 @@
 #include <oxmjustworks.h>
 #include <oxmrandompin.h>
 #include <srmutility.h>
-#include <OCProvisioningManager.h>
+#include <OCProvisioningManager.hpp>
 #include <gtest/gtest.h>
 
 #define TIMEOUT 5
@@ -82,6 +82,32 @@ namespace OCProvisioningTest
         EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::discoverUnownedDevices(0, list));
     }
 
+#ifdef MULTIPLE_OWNER
+    TEST(MOTDiscoveryTest, MultipleOwnerEnabledDevices)
+    {
+        DeviceList_t list;
+        EXPECT_EQ(OC_STACK_OK, OCSecure::discoverMultipleOwnerEnabledDevices(TIMEOUT, list));
+    }
+
+    TEST(MOTDiscoveryTest, MultipleOwnerEnabledDevicesZeroTimeOut)
+    {
+        DeviceList_t list;
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::discoverMultipleOwnerEnabledDevices(0, list));
+    }
+
+    TEST(MOTDiscoveryTest, MultipleOwnedDevices)
+    {
+        DeviceList_t list;
+        EXPECT_EQ(OC_STACK_OK, OCSecure::discoverMultipleOwnedDevices(TIMEOUT, list));
+    }
+
+    TEST(MOTDiscoveryTest, MultipleOwnedDevicesZeroTimeOut)
+    {
+        DeviceList_t list;
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::discoverMultipleOwnedDevices(0, list));
+    }
+#endif
+
     TEST(DiscoveryTest, OwnedDevices)
     {
         DeviceList_t list;
@@ -94,52 +120,65 @@ namespace OCProvisioningTest
         EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::discoverOwnedDevices(0, list));
     }
 
-    TEST(OwnershipTest, SetOwnershipTransferCBDataNull)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::setOwnerTransferCallbackData(
-                    OIC_JUST_WORKS, NULL, NULL));
-    }
-
-    TEST(OwnershipTest, SetOwnershipTransferCBData)
-    {
-        OTMCallbackData_t justWorksCBData;
-        justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
-        justWorksCBData.createSecureSessionCB = CreateSecureSessionJustWorksCallback;
-        justWorksCBData.createSelectOxmPayloadCB = CreateJustWorksSelectOxmPayload;
-        justWorksCBData.createOwnerTransferPayloadCB = CreateJustWorksOwnerTransferPayload;
-        EXPECT_EQ(OC_STACK_OK, OCSecure::setOwnerTransferCallbackData(OIC_JUST_WORKS,
-                                        &justWorksCBData, NULL));
-    }
-
-    TEST(OwnershipTest, SetOwnershipTransferCBDataInvalidType)
-    {
-        OTMCallbackData_t justWorksCBData;
-        justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
-        justWorksCBData.createSecureSessionCB = CreateSecureSessionJustWorksCallback;
-        justWorksCBData.createSelectOxmPayloadCB = CreateJustWorksSelectOxmPayload;
-        justWorksCBData.createOwnerTransferPayloadCB = CreateJustWorksOwnerTransferPayload;
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::setOwnerTransferCallbackData(OIC_OXM_COUNT,
-                                        &justWorksCBData, NULL));
-    }
-
-    TEST(OwnershipTest, SetOwnershipTransferCBDataNullInputPin)
-    {
-        OTMCallbackData_t pinBasedCBData;
-        pinBasedCBData.loadSecretCB = InputPinCodeCallback;
-        pinBasedCBData.createSecureSessionCB = CreateSecureSessionRandomPinCallback;
-        pinBasedCBData.createSelectOxmPayloadCB = CreatePinBasedSelectOxmPayload;
-        pinBasedCBData.createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload;
-        OTMSetOwnershipTransferCallbackData(OIC_RANDOM_DEVICE_PIN, &pinBasedCBData);
-
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::setOwnerTransferCallbackData(
-                    OIC_RANDOM_DEVICE_PIN, &pinBasedCBData, NULL));
-    }
-
     TEST(OwnershipTest, OwnershipTransferNullCallback)
     {
         OCSecureResource device;
         EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.doOwnershipTransfer(nullptr));
     }
+
+#ifdef MULTIPLE_OWNER
+    TEST(MOTOwnershipTest, MOTOwnershipTransferNullCallback)
+    {
+        OCSecureResource device;
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.doMultipleOwnershipTransfer(nullptr));
+    }
+
+    TEST(selectMOTMethodTest, selectMOTMethodNullCallback)
+    {
+        OCSecureResource device;
+        const OicSecOxm_t stsecOxm = OIC_PRECONFIG_PIN;
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.selectMOTMethod(stsecOxm, NULL));
+    }
+
+    TEST(changeMOTModeTest, changeMOTModeNullCallback)
+    {
+        OCSecureResource device;
+        const OicSecMomType_t momType = OIC_MULTIPLE_OWNER_ENABLE;
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.changeMOTMode(momType, NULL));
+    }
+
+    TEST(addPreconfigPINTest, addPreconfigPINNullPin)
+    {
+        OCSecureResource device;
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.addPreconfigPIN(NULL, 0));
+    }
+
+    TEST(provisionPreconfPinTest, provisionPreconfPinNullCallback)
+    {
+        OCSecureResource device;
+        const char *pin = "test";
+        size_t PinLength = 4;
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.provisionPreconfPin(pin, PinLength, NULL));
+    }
+
+    TEST(isMOTEnabledTest, isMOTEnabledWithoutDeviceInst)
+    {
+        OCSecureResource device;
+        EXPECT_EQ(false, device.isMOTEnabled());
+    }
+
+    TEST(isMOTSupportedTest, isMOTSupportedWithoutDeviceInst)
+    {
+        OCSecureResource device;
+        EXPECT_EQ(false, device.isMOTSupported());
+    }
+
+    TEST(getMOTMethodTest, getMOTMethodNullOxM)
+    {
+        OCSecureResource device;
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.getMOTMethod(NULL));
+    }
+#endif
 
     TEST(DeviceInfoTest, DevInfoFromNetwork)
     {

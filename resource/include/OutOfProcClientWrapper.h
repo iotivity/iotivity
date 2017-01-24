@@ -32,6 +32,16 @@ namespace OC
                                PlatformConfig /*cfg*/)
         {}
 
+        virtual OCStackResult stop()
+        {
+            return OC_STACK_NOTIMPL;
+        }
+
+        virtual OCStackResult start()
+        {
+            return OC_STACK_NOTIMPL;
+        }
+
         virtual OCStackResult ListenForResource(const std::string& /*servUrl*/,
                                                 const std::string& /*rsrcType*/,
                                                 OCConnectivityType /*connType*/,
@@ -39,10 +49,18 @@ namespace OC
                                                 QualityOfService /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 
-        virtual OCStackResult ListenForResource2(const std::string& /*servUrl*/,
+        virtual OCStackResult ListenForResourceList(const std::string& /*servUrl*/,
                                                 const std::string& /*rsrcType*/,
                                                 OCConnectivityType /*connType*/,
                                                 FindResListCallback& /*callback*/,
+                                                QualityOfService /*QoS*/)
+            {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult ListenForResourceListWithError(const std::string& /*servUrl*/,
+                                                const std::string&  /*rsrcType*/,
+                                                OCConnectivityType /*connType*/,
+                                                FindResListCallback& /*callback*/,
+                                                FindErrorCallback&  /*errorCallback*/,
                                                 QualityOfService /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 

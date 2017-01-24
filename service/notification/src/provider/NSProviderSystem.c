@@ -19,16 +19,20 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "NSProviderSystem.h"
 
-#if (defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD)
 #define MAX_SERVER_ADDRESS 32
 static char NSRemoteServerAddress[MAX_SERVER_ADDRESS] = {0,};
+#endif
+
+#ifdef WITH_MQ
+static NSMQServerInfo * mqServerInfo = NULL;
 #endif
 
 static NSConnectionState NSProviderConnectionState;
 
 NSProviderInfo * providerInfo;
 bool NSPolicy = true;
-bool NSResourceSecurity = true;
+bool NSResourceSecurity = false;
 
 void NSSetProviderConnectionState(NSConnectionState state)
 {
@@ -44,7 +48,7 @@ NSConnectionState NSGetProviderConnectionState()
     return NSProviderConnectionState;
 }
 
-#if (defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD)
 void NSSetRemoteServerAddress(char *serverAddress)
 {
 
@@ -146,3 +150,22 @@ const char * NSGetUserInfo()
 {
     return providerInfo->userInfo;
 }
+
+#ifdef WITH_MQ
+void NSSetMQServerInfo(const char * serverUri, OCDevAddr * devAddr)
+{
+    if (!mqServerInfo)
+    {
+        NS_LOG(DEBUG, "setMqServer");
+        mqServerInfo = (NSMQServerInfo *)OICMalloc(sizeof(NSMQServerInfo));
+        mqServerInfo->serverUri = OICStrdup(serverUri);
+        mqServerInfo->devAddr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
+        memcpy(mqServerInfo->devAddr, devAddr, sizeof(OCDevAddr));
+    }
+}
+
+NSMQServerInfo * NSGetMQServerInfo()
+{
+    return mqServerInfo;
+}
+#endif

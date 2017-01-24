@@ -28,12 +28,6 @@
 
 #include "iotivity_config.h"
 
-#ifndef WITH_ARDUINO
-#ifdef TCP_ADAPTER
-#define HAVE_SYS_POLL_H
-#endif
-#endif
-
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -51,6 +45,11 @@
 extern "C"
 {
 #endif
+
+/**
+ * TAG of Analyzer log.
+ */
+#define ANALYZER_TAG "OIC_ANALYZER"
 
 /**
  * IP address Length.
@@ -106,7 +105,12 @@ extern "C"
 /**
  *Maximum length of the remoteEndpoint identity.
  */
-#define CA_MAX_ENDPOINT_IDENTITY_LEN   (32)
+#define CA_MAX_ENDPOINT_IDENTITY_LEN  CA_MAX_IDENTITY_SIZE
+
+/**
+ * Max identity size.
+ */
+#define CA_MAX_IDENTITY_SIZE (37)
 
 /**
  * option types - the highest option number 63.
@@ -280,6 +284,7 @@ typedef struct
     uint16_t                port;       // for IP
     char                    addr[MAX_ADDR_STR_SIZE_CA]; // address for all
     uint32_t                ifindex;    // usually zero for default interface
+    char                    remoteId[CA_MAX_IDENTITY_SIZE]; // device ID of remote device
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     char                    routeData[MAX_ADDR_STR_SIZE_CA]; /**< GatewayId:ClientId of
                                                                     destination. **/
@@ -495,6 +500,7 @@ typedef struct
     uint16_t messageId;
     char token[CA_MAX_TOKEN_LEN];
     uint8_t tokenLength;
+    uint32_t ifindex;
 } CAHistoryItem_t;
 
 typedef struct
@@ -528,7 +534,9 @@ typedef struct
     struct tcpports
     {
         uint16_t u4;    /**< unicast IPv4 socket port */
+        uint16_t u4s;   /**< unicast IPv6 socket secure port */
         uint16_t u6;    /**< unicast IPv6 socket port */
+        uint16_t u6s;   /**< unicast IPv6 socket secure port */
     } tcp;
 #endif
 } CAPorts_t;
@@ -559,9 +567,9 @@ typedef struct
 #else
         int netlinkFd;              /**< netlink */
         int shutdownFds[2];         /**< fds used to signal threads to stop */
+        int maxfd;                  /**< highest fd (for select) */
 #endif
         int selectTimeout;          /**< in seconds */
-        int maxfd;                  /**< highest fd (for select) */
         bool started;               /**< the IP adapter has started */
         bool terminate;             /**< the IP adapter needs to stop */
         bool ipv6enabled;           /**< IPv6 enabled by OCInit flags */
@@ -592,13 +600,19 @@ typedef struct
     {
         void *threadpool;       /**< threadpool between Initialize and Start */
         CASocket_t ipv4;        /**< IPv4 accept socket */
+        CASocket_t ipv4s;       /**< IPv4 accept socket secure */
         CASocket_t ipv6;        /**< IPv6 accept socket */
+        CASocket_t ipv6s;       /**< IPv6 accept socket secure */
         void *svrlist;          /**< unicast IPv4 TCP server information*/
         int selectTimeout;      /**< in seconds */
         int listenBacklog;      /**< backlog counts*/
+#if defined(_WIN32)
+        WSAEVENT shutdownEvent; /**< Event used to signal threads to stop */
+#else
         int shutdownFds[2];     /**< shutdown pipe */
         int connectionFds[2];   /**< connection pipe */
         int maxfd;              /**< highest fd (for select) */
+#endif
         bool started;           /**< the TCP adapter has started */
         bool terminate;         /**< the TCP adapter needs to stop */
         bool ipv4tcpenabled;    /**< IPv4 TCP enabled by OCInit flags */

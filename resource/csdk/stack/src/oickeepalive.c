@@ -109,7 +109,7 @@ typedef struct
 {
     OCMode mode;                    /**< host Mode of Operation. */
     CAEndpoint_t remoteAddr;        /**< destination Address. */
-    uint32_t interval;              /**< time interval for KeepAlive. in seconds.*/
+    int64_t interval;              /**< time interval for KeepAlive. in seconds.*/
     int32_t currIndex;              /**< current interval value index. */
     size_t intervalSize;            /**< total interval counts. */
     int64_t *intervalInfo;          /**< interval values for KeepAlive. */
@@ -152,21 +152,21 @@ static OCStackResult DeleteKeepAliveResource();
 
 /**
  * API to handle the GET request received for a KeepAlive resource.
- * @param[in]   endPoint        RemoteEndpoint which sent the packet.
- * @param[in]   requestInfo     Received coap packet.
+ * @param[in]   request     Request Received.
+ * @param[in]   resource    Resource handle used for sending the response.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-static OCStackResult HandleKeepAliveGETRequest(const CAEndpoint_t* endPoint,
-                                        const CARequestInfo_t* requestInfo);
+static OCEntityHandlerResult HandleKeepAliveGETRequest(OCServerRequest *request,
+                                                       const OCResource *resource);
 
 /**
- * API to handle the PUT request received for a KeepAlive resource.
- * @param[in]   endPoint        RemoteEndpoint which sent the packet.
- * @param[in]   requestInfo     Received coap packet.
+ * API to handle the POST request received for a KeepAlive resource.
+ * @param[in]   request     Request Received.
+ * @param[in]   resource    Resource handle used for sending the response.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-static OCStackResult HandleKeepAlivePUTRequest(const CAEndpoint_t* endPoint,
-                                        const CARequestInfo_t* requestInfo);
+static OCEntityHandlerResult HandleKeepAlivePOSTRequest(OCServerRequest *request,
+                                                        const OCResource *resource);
 
 /**
  * API to handle the Response payload.
@@ -206,6 +206,36 @@ KeepAliveEntry_t *AddKeepAliveEntry(const CAEndpoint_t *endpoint, OCMode mode,
  * @return  The KeepAlive entry removed in KeepAlive Table.
  */
 static OCStackResult RemoveKeepAliveEntry(const CAEndpoint_t *endpoint);
+
+/**
+ * Create KeepAlive paylaod to send message.
+ * @param[in]   interval   The interval value to be sent.
+ * @return  Created representation payload.
+ */
+static OCRepPayload *CreateKeepAlivePayload(int64_t interval);
+
+/**
+ * Send response to remote device.
+ * @param[in]   request     Request Received.
+ * @param[in]   result      Result to be sent.
+ * @return  ::OC_STACK_OK or Appropriate error code.
+ */
+static OCStackResult SendKeepAliveResponse(OCServerRequest *request,
+                                           OCEntityHandlerResult result);
+
+/**
+ * Add resource type name to payload for GET request.
+ * @param[in]   payload     Pointer to the payload to which byte string needs to be added.
+ * @return  ::OC_STACK_OK or Appropriate error code.
+ */
+static OCStackResult AddResourceTypeNameToPayload(OCRepPayload *payload);
+
+/**
+ * Add resource interface name to payload for GET request.
+ * @param[in]   payload     Pointer to the payload to which byte string needs to be added.
+ * @return  ::OC_STACK_OK or Appropriate error code.
+ */
+static OCStackResult AddResourceInterfaceNameToPayload(OCRepPayload *payload);
 
 OCStackResult InitializeKeepAlive(OCMode mode)
 {
@@ -283,11 +313,16 @@ OCStackResult CreateKeepAliveResource()
     // Create a KeepAlive resource
     OCStackResult result = OCCreateResource(&g_keepAliveHandle,
                                             KEEPALIVE_RESOURCE_TYPE_NAME,
-                                            KEEPALIVE_RESOURCE_INTF_NAME,
+                                            OC_RSRVD_INTERFACE_DEFAULT,
                                             KEEPALIVE_RESOURCE_URI,
                                             NULL,
                                             NULL,
-                                            OC_DISCOVERABLE);
+                                            OC_RES_PROP_NONE);
+    if (OC_STACK_OK == result)
+    {
+        result = BindResourceInterfaceToResource((OCResource *) g_keepAliveHandle,
+                                                 KEEPALIVE_RESOURCE_INTF_NAME);
+    }
 
     if (OC_STACK_OK != result)
     {
@@ -314,92 +349,142 @@ OCStackResult DeleteKeepAliveResource()
     return result;
 }
 
-OCStackResult HandleKeepAliveRequest(const CAEndpoint_t* endPoint,
-                                     const CARequestInfo_t* requestInfo)
+OCStackResult HandleKeepAliveRequest(OCServerRequest *request,
+                                     const OCResource *resource)
 {
-    VERIFY_NON_NULL(endPoint, FATAL, OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL(requestInfo, FATAL, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(request, FATAL, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(resource, FATAL, OC_STACK_INVALID_PARAM);
 
     OIC_LOG(DEBUG, TAG, "HandleKeepAliveRequest IN");
 
-    OCStackResult result = OC_STACK_OK;
-    if (CA_PUT == requestInfo->method)
+    OCEntityHandlerResult result = OC_EH_ERROR;
+    if (OC_REST_GET == request->method)
     {
-        result = HandleKeepAlivePUTRequest(endPoint, requestInfo);
+        switch ((OCObserveAction)request->observationOption)
+        {
+            case OC_OBSERVE_NO_OPTION:
+            case OC_OBSERVE_REGISTER:
+            case OC_OBSERVE_DEREGISTER:
+                OIC_LOG(DEBUG, TAG, "Received GET request");
+                result = HandleKeepAliveGETRequest(request, resource);
+                break;
+            default:
+                OIC_LOG(DEBUG, TAG, "Not Supported by KeepAlive");
+                result = OC_EH_UNAUTHORIZED_REQ;
+        }
     }
-    else if (CA_GET == requestInfo->method)
+    else if (OC_REST_PUT == request->method || OC_REST_POST == request->method)
     {
-        result = HandleKeepAliveGETRequest(endPoint, requestInfo);
+        OIC_LOG(DEBUG, TAG, "Received PUT/POST request");
+        result = HandleKeepAlivePOSTRequest(request, resource);
+    }
+    else
+    {
+        OIC_LOG(DEBUG, TAG, "Not Supported by KeepAlive");
+        result = OC_EH_UNAUTHORIZED_REQ;
+    }
+
+    OCStackResult ret = SendKeepAliveResponse(request, result);
+    if (OC_STACK_OK != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "SendKeepAliveResponse failed with result %u", ret);
     }
 
     OIC_LOG(DEBUG, TAG, "HandleKeepAliveRequest OUT");
-    return result;
+    return ret;
 }
 
-OCStackResult HandleKeepAliveGETRequest(const CAEndpoint_t* endPoint,
-                                        const CARequestInfo_t* requestInfo)
+OCStackResult SendKeepAliveResponse(OCServerRequest *request,
+                                    OCEntityHandlerResult result)
 {
-    VERIFY_NON_NULL(endPoint, FATAL, OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL(requestInfo, FATAL, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(request, FATAL, OC_STACK_INVALID_PARAM);
 
-    OIC_LOG_V(DEBUG, TAG, "Find Ping resource [%s]", requestInfo->info.resourceUri);
+    OIC_LOG_V(DEBUG, TAG, "Send KeepAlive response with entity result[%d]", result);
 
-    CAResponseResult_t result = CA_CONTENT;
-    OCResource *resourcePtr = FindResourceByUri(requestInfo->info.resourceUri);
+    // Convert OCDevAddr to CAEndpoint_t.
+    CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
+    CopyDevAddrToEndpoint(&request->devAddr, &endpoint);
+
+    uint32_t index = 0;
+    KeepAliveEntry_t *entry = GetEntryFromEndpoint(&endpoint, &index);
+    int64_t interval = (entry) ? entry->interval : 0;
+
+    // Create KeepAlive payload to send response message.
+    OCRepPayload *payload = CreateKeepAlivePayload(interval);
+
+    // Add resource type/interface name to payload for GET request.
+    if (OC_REST_GET == request->method && OC_EH_OK == result)
+    {
+        AddResourceTypeNameToPayload(payload);
+        AddResourceInterfaceNameToPayload(payload);
+    }
+
+    OCEntityHandlerResponse ehResponse = { .ehResult = result, 
+                                           .payload = (OCPayload*) payload, 
+                                           .requestHandle = request,
+                                           .resourceHandle = g_keepAliveHandle };
+    OICStrcpy(ehResponse.resourceUri, sizeof(ehResponse.resourceUri), KEEPALIVE_RESOURCE_URI);
+
+    // Send response message.
+    return OCDoResponse(&ehResponse);
+}
+
+OCEntityHandlerResult HandleKeepAliveGETRequest(OCServerRequest *request,
+                                                const OCResource *resource)
+{
+    VERIFY_NON_NULL(request, FATAL, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(resource, FATAL, OC_STACK_INVALID_PARAM);
+
+    OIC_LOG_V(DEBUG, TAG, "Find Ping resource [%s]", request->resourceUrl);
+
+    OCResource *resourcePtr = FindResourceByUri(request->resourceUrl);
     if (!resourcePtr)
     {
         // Resource URL not specified
-        OIC_LOG_V(DEBUG, TAG, "There is no Ping resource [%s]", requestInfo->info.resourceUri);
-        result = CA_NOT_FOUND;
+        OIC_LOG_V(DEBUG, TAG, "There is no Ping resource [%s]", request->resourceUrl);
+        return OC_EH_RESOURCE_NOT_FOUND;
     }
 
-    SendDirectStackResponse(endPoint, requestInfo->info.messageId, result, requestInfo->info.type,
-                            requestInfo->info.numOptions, requestInfo->info.options,
-                            requestInfo->info.token, requestInfo->info.tokenLength,
-                            requestInfo->info.resourceUri, CA_RESPONSE_DATA);
-
-    return OC_STACK_OK;
+    return OC_EH_OK;
 }
 
-OCStackResult HandleKeepAlivePUTRequest(const CAEndpoint_t* endPoint,
-                                        const CARequestInfo_t* requestInfo)
+OCEntityHandlerResult HandleKeepAlivePOSTRequest(OCServerRequest *request,
+                                                 const OCResource *resource)
 {
-    VERIFY_NON_NULL(endPoint, FATAL, OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL(requestInfo, FATAL, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(request, FATAL, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(resource, FATAL, OC_STACK_INVALID_PARAM);
 
     // Get entry from KeepAlive table.
+    CAEndpoint_t endpoint = { .adapter = CA_DEFAULT_ADAPTER };
+    CopyDevAddrToEndpoint(&request->devAddr, &endpoint);
+
     uint32_t index = 0;
-    KeepAliveEntry_t *entry = GetEntryFromEndpoint(endPoint, &index);
+    KeepAliveEntry_t *entry = GetEntryFromEndpoint(&endpoint, &index);
     if (!entry)
     {
         OIC_LOG(ERROR, TAG, "Received the first keepalive message from client");
-        entry = AddKeepAliveEntry(endPoint, OC_SERVER, NULL);
+        entry = AddKeepAliveEntry(&endpoint, OC_SERVER, NULL);
         if (!entry)
         {
             OIC_LOG(ERROR, TAG, "Failed to add new keepalive entry");
-            return OC_STACK_ERROR;
+            return OC_EH_INTERNAL_SERVER_ERROR;
         }
     }
 
     OCPayload *ocPayload = NULL;
     OCParsePayload(&ocPayload, PAYLOAD_TYPE_REPRESENTATION,
-                   requestInfo->info.payload, requestInfo->info.payloadSize);
+                   request->payload, request->payloadSize);
     OCRepPayload *repPayload = (OCRepPayload *)ocPayload;
 
     int64_t interval = 0;
     OCRepPayloadGetPropInt(repPayload, INTERVAL, &interval);
     entry->interval = interval;
-    OIC_LOG_V(DEBUG, TAG, "Received interval is [%d]", entry->interval);
+    OIC_LOG_V(DEBUG, TAG, "Received interval is [%" PRId64 "]", entry->interval);
     entry->timeStamp = OICGetCurrentTime(TIME_IN_US);
 
     OCPayloadDestroy(ocPayload);
 
-    // Send response message.
-    return SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_CHANGED,
-                                   requestInfo->info.type, requestInfo->info.numOptions,
-                                   requestInfo->info.options, requestInfo->info.token,
-                                   requestInfo->info.tokenLength, requestInfo->info.resourceUri,
-                                   CA_RESPONSE_DATA);
+    return OC_EH_OK;
 }
 
 OCStackResult HandleKeepAliveResponse(const CAEndpoint_t *endPoint,
@@ -451,6 +536,11 @@ OCStackResult HandleKeepAliveResponse(const CAEndpoint_t *endPoint,
     {
         // Set sentPingMsg values with false.
         entry->sentPingMsg = false;
+
+        // Check the received interval value.
+        int64_t interval = 0;
+        OCRepPayloadGetPropInt(respPayload, INTERVAL, &interval);
+        OIC_LOG_V(DEBUG, TAG, "Received interval is [%" PRId64 "]", entry->interval);
     }
 
     OIC_LOG(DEBUG, TAG, "HandleKeepAliveResponse OUT");
@@ -537,7 +627,7 @@ void IncreaseInterval(KeepAliveEntry_t *entry)
     {
         entry->currIndex++;
         entry->interval = entry->intervalInfo[entry->currIndex];
-        OIC_LOG_V(DEBUG, TAG, "increase interval value [%d]", entry->interval);
+        OIC_LOG_V(DEBUG, TAG, "increase interval value [%" PRId64 "]", entry->interval);
     }
 }
 
@@ -556,7 +646,7 @@ OCStackResult SendDisconnectMessage(const KeepAliveEntry_t *entry)
         return result;
     }
 
-    CARequestInfo_t requestInfo = { .method = CA_PUT };
+    CARequestInfo_t requestInfo = { .method = CA_POST };
     result = CASendRequest(&entry->remoteAddr, &requestInfo);
     return CAResultToOCResult(result);
 }
@@ -570,16 +660,8 @@ OCStackResult SendPingMessage(KeepAliveEntry_t *entry)
     OCDevAddr devAddr = { .adapter = OC_ADAPTER_TCP };
     CopyEndpointToDevAddr(&(entry->remoteAddr), &devAddr);
 
-    OCRepPayload *payload = OCRepPayloadCreate();
-    if (!payload)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
-        return OC_STACK_ERROR;
-    }
-    payload->base.type = PAYLOAD_TYPE_REPRESENTATION;
-    OCRepPayloadSetPropInt(payload, INTERVAL, entry->interval);
-
-    OCStackResult result = OCDoResource(NULL, OC_REST_PUT, KEEPALIVE_RESOURCE_URI, &devAddr,
+    OCRepPayload *payload = CreateKeepAlivePayload(entry->interval);
+    OCStackResult result = OCDoResource(NULL, OC_REST_POST, KEEPALIVE_RESOURCE_URI, &devAddr,
                                         (OCPayload *) payload, CT_ADAPTER_TCP, OC_LOW_QOS,
                                         &pingData, NULL, 0);
     if (OC_STACK_OK != result)
@@ -592,7 +674,7 @@ OCStackResult SendPingMessage(KeepAliveEntry_t *entry)
     entry->timeStamp = OICGetCurrentTime(TIME_IN_US);
     entry->sentPingMsg = true;
 
-    OIC_LOG_V(DEBUG, TAG, "Client sent ping message, interval [%d]", entry->interval);
+    OIC_LOG_V(DEBUG, TAG, "Client sent ping message, interval [%" PRId64 "]", entry->interval);
 
     return OC_STACK_OK;
 }
@@ -600,13 +682,12 @@ OCStackResult SendPingMessage(KeepAliveEntry_t *entry)
 OCStackApplicationResult PingRequestCallback(void* ctx, OCDoHandle handle,
                                              OCClientResponse *clientResponse)
 {
-    OIC_LOG(DEBUG, TAG, "PingRequestCallback IN");
     (void) ctx;
     (void) handle;
     if (NULL == clientResponse)
     {
         OIC_LOG(ERROR, TAG, "clientResponse is NULL");
-        return OC_STACK_KEEP_TRANSACTION;
+        return OC_STACK_DELETE_TRANSACTION;
     }
 
     CAEndpoint_t endpoint = { .adapter = CA_ADAPTER_TCP };
@@ -615,8 +696,7 @@ OCStackApplicationResult PingRequestCallback(void* ctx, OCDoHandle handle,
     HandleKeepAliveResponse(&endpoint, clientResponse->result,
                             (OCRepPayload *)clientResponse->payload);
 
-    OIC_LOG(DEBUG, TAG, "PingRequestCallback OUT");
-    return OC_STACK_KEEP_TRANSACTION;
+    return OC_STACK_DELETE_TRANSACTION;
 }
 
 KeepAliveEntry_t *GetEntryFromEndpoint(const CAEndpoint_t *endpoint, uint32_t *index)
@@ -734,7 +814,7 @@ OCStackResult RemoveKeepAliveEntry(const CAEndpoint_t *endpoint)
     return OC_STACK_OK;
 }
 
-void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint, bool isConnected)
+void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint, bool isConnected, bool isClient)
 {
     VERIFY_NON_NULL_NR(endpoint, FATAL);
 
@@ -742,18 +822,21 @@ void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint, bool isConnected)
     {
         OIC_LOG(DEBUG, TAG, "Received the connected device information from CA");
 
-        // Send discover message to find ping resource
-        OCCallbackData pingData = {.context = NULL, .cb = PingRequestCallback };
-        OCDevAddr devAddr = { .adapter = OC_ADAPTER_TCP };
-        CopyEndpointToDevAddr(endpoint, &devAddr);
-
-        OCStackResult result = OCDoResource(NULL, OC_REST_DISCOVER, KEEPALIVE_RESOURCE_URI,
-                                            &devAddr, NULL, CT_ADAPTER_TCP, OC_HIGH_QOS,
-                                            &pingData, NULL, 0);
-        if (OC_STACK_OK != result)
+        if (isClient)
         {
-            OIC_LOG(ERROR, TAG, "OCDoResource has failed");
-            return;
+            // Send discover message to find ping resource
+            OCCallbackData pingData = {.context = NULL, .cb = PingRequestCallback };
+            OCDevAddr devAddr = { .adapter = OC_ADAPTER_TCP };
+            CopyEndpointToDevAddr(endpoint, &devAddr);
+
+            OCStackResult result = OCDoResource(NULL, OC_REST_DISCOVER, KEEPALIVE_RESOURCE_URI,
+                                                &devAddr, NULL, CT_ADAPTER_TCP, OC_HIGH_QOS,
+                                                &pingData, NULL, 0);
+            if (OC_STACK_OK != result)
+            {
+                OIC_LOG(ERROR, TAG, "OCDoResource has failed");
+                return;
+            }
         }
     }
     else
@@ -766,4 +849,90 @@ void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint, bool isConnected)
             return;
         }
     }
+}
+
+OCRepPayload *CreateKeepAlivePayload(int64_t interval)
+{
+    OIC_LOG_V(DEBUG, TAG, "Create KeepAlive Payload, interval is [%" PRId64 "]", interval);
+
+    OCRepPayload *payload = OCRepPayloadCreate();
+    if (!payload)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
+        return NULL;
+    }
+    payload->base.type = PAYLOAD_TYPE_REPRESENTATION;
+    OCRepPayloadSetPropInt(payload, INTERVAL, interval);
+
+    return payload;
+}
+
+OCStackResult AddResourceTypeNameToPayload(OCRepPayload *payload)
+{
+    uint8_t numElement = 0;
+    OCStackResult res = OCGetNumberOfResourceTypes(g_keepAliveHandle, &numElement);
+    if (OC_STACK_OK == res)
+    {
+        size_t rtDim[MAX_REP_ARRAY_DEPTH] = {numElement, 0, 0};
+        char **rt = (char **)OICMalloc(sizeof(char *) * numElement);
+        for (uint8_t i = 0; i < numElement; ++i)
+        {
+            const char *value = OCGetResourceTypeName(g_keepAliveHandle, i);
+            OIC_LOG_V(DEBUG, TAG, "value: %s", value);
+            rt[i] = OICStrdup(value);
+            if (NULL == rt[i])
+            {
+                OIC_LOG_V(ERROR, TAG, "Creating duplicate string for rt failed!");
+                for (uint8_t j = 0; j < i; ++j)
+                {
+                    OICFree(rt[j]);
+                }
+                OICFree(rt);
+                return OC_STACK_NO_MEMORY;
+            }
+        }
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_RESOURCE_TYPE, (const char **) rt, rtDim);
+        for (uint8_t i = 0; i < numElement; ++i)
+        {
+            OICFree(rt[i]);
+        }
+        OICFree(rt);
+    }
+
+    return res;
+}
+
+OCStackResult AddResourceInterfaceNameToPayload(OCRepPayload *payload)
+{
+    uint8_t numElement = 0;
+    OCStackResult res = OCGetNumberOfResourceInterfaces(g_keepAliveHandle, &numElement);
+    if (OC_STACK_OK == res)
+    {
+        size_t ifDim[MAX_REP_ARRAY_DEPTH] = {numElement, 0, 0};
+        char **itf = (char **)OICMalloc(sizeof(char *) * numElement);
+        for (uint8_t i = 0; i < numElement; ++i)
+        {
+            const char *value = OCGetResourceInterfaceName(g_keepAliveHandle, i);
+            OIC_LOG_V(DEBUG, TAG, "value: %s", value);
+            itf[i] = OICStrdup(value);
+            if (NULL == itf[i])
+            {
+                OIC_LOG_V(ERROR, TAG, "Creating duplicate string for itf failed!");
+                for (uint8_t j = 0; j < i; ++j)
+                {
+                    OICFree(itf[j]);
+                }
+                OICFree(itf);
+                return OC_STACK_NO_MEMORY;
+            }
+        }
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_INTERFACE, (const char **) itf, ifDim);
+        for (uint8_t i = 0; i < numElement; ++i)
+        {
+            OICFree(itf[i]);
+        }
+        OICFree(itf);
+    }
+
+    return res;
 }

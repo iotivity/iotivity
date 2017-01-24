@@ -124,6 +124,7 @@ namespace OIC
         {
             OIC_LOG(INFO, CONTAINER_TAG, "Stopping resource container.");
 
+            activationLock.lock();
             for (std::map< std::string, shared_ptr<BundleInfoInternal> >::iterator it = m_bundles.begin();
                  it != m_bundles.end(); ++it)
             {
@@ -148,6 +149,7 @@ namespace OIC
             {
                 delete m_config;
             }
+            activationLock.unlock();
         }
 
         void ResourceContainerImpl::activateBundle(shared_ptr<RCSBundleInfo> bundleInfo)
@@ -270,7 +272,7 @@ namespace OIC
             OIC_LOG_V(INFO, CONTAINER_TAG, "Unregister bundle: (%s)",
                      std::string(m_bundles[id]->getID()).c_str());
 
-            const char *error;
+            const char *error = NULL;
             dlclose(bundleHandle);
 
             if ((error = dlerror()) != NULL)
@@ -607,7 +609,7 @@ namespace OIC
         std::list<std::unique_ptr<RCSBundleInfo>> ResourceContainerImpl::listBundles()
         {
             OIC_LOG_V(INFO, CONTAINER_TAG,
-                                 "list bundles (%d)", m_bundles.size());
+                                 "list bundles (%d)", static_cast<int>(m_bundles.size()));
             std::list<std::unique_ptr<RCSBundleInfo> > ret;
             for (std::map< std::string, shared_ptr<BundleInfoInternal> >::iterator it = m_bundles.begin();
                  it != m_bundles.end(); ++it)
@@ -690,7 +692,7 @@ namespace OIC
         void ResourceContainerImpl::registerSoBundle(shared_ptr<RCSBundleInfo> bundleInfo)
         {
             OIC_LOG_V(DEBUG, CONTAINER_TAG, "Register SO bundle");
-            const char *error;
+            const char *error = NULL;
 
             activator_t *bundleActivator = NULL;
             deactivator_t *bundleDeactivator = NULL;
@@ -943,7 +945,7 @@ namespace OIC
         void ResourceContainerImpl::addSoBundleResource(const std::string &bundleId,
                 resourceInfo newResourceInfo)
         {
-            resourceCreator_t *resourceCreator;
+            resourceCreator_t *resourceCreator = nullptr;
 
             resourceCreator = m_bundles[bundleId]->getResourceCreator();
 

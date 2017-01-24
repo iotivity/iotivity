@@ -57,6 +57,7 @@ static const char *NSResultToChar(const int nsresult)
 jobject getNSException(JNIEnv *env, const char *file, const char *functionName,
                        const int line, const int code, const char *message)
 {
+    LOGE (TAG,"Failed : %s" , message );
     const char *codeChar = NSResultToChar(code);
     if (codeChar[0] == '\0')
     {
@@ -93,7 +94,7 @@ int NSExceptionInit(JNIEnv *env)
 {
     if (!env)
     {
-        LOGE ("JNIEnv is null");
+        LOGE (TAG,"JNIEnv is null");
         return JNI_ERR;
     }
 
@@ -102,7 +103,7 @@ int NSExceptionInit(JNIEnv *env)
                                   "org/iotivity/service/ns/common/NSException");
     if (!localNSException)
     {
-        LOGE ("Failed to get local NSException");
+        LOGE (TAG,"Failed to get local NSException");
         return JNI_ERR;
     }
     g_cls_NSException = (jclass)env->NewGlobalRef(localNSException);
@@ -112,7 +113,7 @@ int NSExceptionInit(JNIEnv *env)
                              "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
     if (!g_mid_NSException_ctor)
     {
-        LOGE ("Failed to Get MethodID");
+        LOGE (TAG,"Failed to Get MethodID");
         return JNI_ERR;
     }
 
@@ -121,7 +122,7 @@ int NSExceptionInit(JNIEnv *env)
             "(Ljava/lang/String;Ljava/lang/String;I)V");
     if (!g_mid_NSException_setNativeExceptionLocation)
     {
-        LOGE ("Failed to Get MethodID");
+        LOGE (TAG,"Failed to Get MethodID");
         return JNI_ERR;
     }
 

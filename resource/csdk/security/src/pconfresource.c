@@ -25,9 +25,9 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "cJSON.h"
 #include "base64.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "payload_logging.h"
 #include "resourcemanager.h"
 #include "pconfresource.h"
@@ -37,14 +37,13 @@
 #include "doxmresource.h"
 #include "srmutility.h"
 #include "ocserverrequest.h"
-#include <stdlib.h>
 #include "psinterface.h"
 #include "security_internals.h"
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
 
-#define TAG  "SRM-PCONF"
+#define TAG  "OIC_SRM_PCONF"
 
 static const uint16_t CBOR_SIZE = 1024;
 static const uint64_t CBOR_MAX_SIZE = 4400;
@@ -426,7 +425,7 @@ OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,si
     cborEncoderResult = cbor_encoder_close_container(&encoder, &pconfMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to close pconfMap");
 
-    *size = encoder.ptr - outPayload;
+    *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
     *payload = outPayload;
     ret = OC_STACK_OK;
 exit:
@@ -435,7 +434,7 @@ exit:
         // reallocate and try again!
         OICFree(outPayload);
         // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         cborEncoderResult = CborNoError;
         ret = PconfToCBORPayload(pconf, payload, &cborLen);
         *size = cborLen;

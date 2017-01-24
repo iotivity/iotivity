@@ -1,41 +1,268 @@
 /* ****************************************************************
-*
-* Copyright 2016 Samsung Electronics All Rights Reserved.
-*
-*
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-******************************************************************/
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
-#include <memory>
-#include <iostream>
-#include <stdexcept>
+#include "OCPlatform.h"
+#include "OCApi.h"
+#include "RDClient.h"
 #include <condition_variable>
-#include <map>
-#include <vector>
-#include <string>
-#include <unistd.h>
-#include <stdio.h>
 
-#include "ocstack.h"
-#include "ocpayload.h"
-
-#include <OCApi.h>
-#include <OCPlatform.h>
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+#include "ocprovisioningmanager.h"
+#include "mbedtls/ssl_ciphersuites.h"
+#include <ca_adapter_net_ssl.h>
+#endif // WITH_DTLS__ or __WITH_TLS__
 
 using namespace std;
 using namespace OC;
+
+string              g_host;
+condition_variable g_callbackLock;
+string g_accesstoken, g_refreshtoken, g_tokentype, g_uid, g_redirectUri, g_certificate, g_serverId;
+int g_expiresin;
+
+class Resource
+{
+    public:
+        OCResourceHandle m_handle;
+        Resource(string uri, vector< string > rt, vector< string > itf)
+        {
+            m_representation.setUri(uri);
+            m_representation.setResourceTypes(rt);
+            m_representation.setResourceInterfaces(itf);
+        }
+
+        string getResourceUri()
+        {
+            return m_representation.getUri();
+        }
+
+        vector< string > getResourceType()
+        {
+            return m_representation.getResourceTypes();
+        }
+
+        vector< string > getInterfaces()
+        {
+            return m_representation.getResourceInterfaces();
+        }
+
+        OCRepresentation getRepresentation(void)
+        {
+            m_representation.clearChildren();
+            for (auto it = m_childResources.begin(); it != m_childResources.end(); it++)
+            {
+                m_representation.addChild((*it)->getRepresentation());
+            }
+            return m_representation;
+        }
+
+        OCStackResult addChildResource(Resource *childResource)
+        {
+            m_childResources.push_back(childResource);
+            return OCPlatform::bindResource(m_handle, childResource->m_handle);
+        }
+
+        OCStackResult sendRepresentation(shared_ptr< OCResourceRequest > pRequest)
+        {
+            auto pResponse = make_shared< OC::OCResourceResponse >();
+            pResponse->setRequestHandle(pRequest->getRequestHandle());
+            pResponse->setResourceHandle(pRequest->getResourceHandle());
+
+            // Check for query params (if any)
+            QueryParamsMap queryParamsMap = pRequest->getQueryParameters();
+
+            cout << "\t\t\tquery params: \n";
+            for (auto it = queryParamsMap.begin(); it != queryParamsMap.end(); it++)
+            {
+                cout << "\t\t\t\t" << it->first << ":" << it->second << endl;
+            }
+
+            auto findRes = queryParamsMap.find("if");
+
+            if (findRes != queryParamsMap.end())
+            {
+                pResponse->setResourceRepresentation(getRepresentation(), findRes->second);
+            }
+            else
+            {
+                pResponse->setResourceRepresentation(getRepresentation(), DEFAULT_INTERFACE);
+            }
+
+            pResponse->setResponseResult(OC_EH_OK);
+
+            return OCPlatform::sendResponse(pResponse);
+        }
+
+        OCStackResult propagate()
+        {
+            if (m_interestedObservers.size() > 0)
+            {
+                shared_ptr<OCResourceResponse> resourceResponse =
+                {   make_shared<OCResourceResponse>()};
+
+                resourceResponse->setResourceRepresentation(getRepresentation(), DEFAULT_INTERFACE);
+
+                return OCPlatform::notifyListOfObservers(m_handle,
+                        m_interestedObservers,
+                        resourceResponse);
+            }
+
+            return OC_STACK_OK;
+        }
+
+        virtual OCEntityHandlerResult entityHandler(shared_ptr<OCResourceRequest> request) = 0;
+
+    protected:
+        OCRepresentation m_representation;
+        vector<Resource *> m_childResources;
+        ObservationIds m_interestedObservers;
+};
+
+class BinarySwitchResource: public Resource //oic.r.switch.binary
+{
+    private:
+        bool m_value;
+
+    public:
+        BinarySwitchResource(string uri, vector< string > rt, vector< string > itf) :
+            Resource(uri, rt, itf)
+        {
+            m_value = false;
+            m_representation.setValue("value", m_value);
+        }
+
+        void setBinarySwitchRepresentation(OCRepresentation &rep)
+        {
+            bool value;
+            if (rep.getValue("value", value))
+            {
+                m_value = value;
+                m_representation.setValue("value", m_value);
+                cout << "\t\t\t\t" << "value: " << m_value << endl;
+
+                propagate();
+            }
+        }
+
+        OCEntityHandlerResult entityHandler(shared_ptr< OCResourceRequest > request)
+        {
+            cout << "\tIn Server Binaryswitch entity handler:\n";
+            OCEntityHandlerResult ehResult = OC_EH_ERROR;
+
+            if (request)
+            {
+                // Get the request type and request flag
+                string requestType = request->getRequestType();
+                int requestFlag = request->getRequestHandlerFlag();
+
+                if (requestFlag & RequestHandlerFlag::RequestFlag)
+                {
+                    cout << "\t\trequestFlag : Request\n";
+
+                    // If the request type is GET
+                    if (requestType == "GET")
+                    {
+                        cout << "\t\t\trequestType : GET\n";
+                        if (OC_STACK_OK == sendRepresentation(request))
+                        {
+                            ehResult = OC_EH_OK;
+                        }
+                    }
+                    else if (requestType == "PUT")
+                    {
+                        cout << "\t\t\trequestType : PUT\n";
+                        // PUT request operations
+                    }
+                    else if (requestType == "POST")
+                    {
+                        cout << "\t\t\trequestType : POST\n";
+                        // POST request operations
+                        OCRepresentation rep = request->getResourceRepresentation();
+                        setBinarySwitchRepresentation(rep);
+
+                        if (OC_STACK_OK == sendRepresentation(request))
+                        {
+                            ehResult = OC_EH_OK;
+                        }
+                    }
+                    else if (requestType == "DELETE")
+                    {
+                        cout << "\t\t\trequestType : DELETE\n";
+                        // DELETE request operations
+                    }
+                }
+
+                if (requestFlag & RequestHandlerFlag::ObserverFlag)
+                {
+                    cout << "\t\trequestFlag : Observer\n";
+
+                    ObservationInfo observationInfo = request->getObservationInfo();
+                    if (ObserveAction::ObserveRegister == observationInfo.action)
+                    {
+                        m_interestedObservers.push_back(observationInfo.obsId);
+                    }
+                    else if (ObserveAction::ObserveUnregister == observationInfo.action)
+                    {
+                        m_interestedObservers.erase(
+                            remove(m_interestedObservers.begin(), m_interestedObservers.end(),
+                                   observationInfo.obsId), m_interestedObservers.end());
+                    }
+                }
+            }
+            else
+            {
+                cout << "Request invalid" << endl;
+            }
+
+            return ehResult;
+        }
+};
+
+OCAccountManager::Ptr accountMgr;
+
+void printUsage()
+{
+    cout << endl << "---Group & Invite sample---" << endl;
+    cout << "     1 - searchUser using user UUID" << endl;
+    cout << "     2 - searchUser using email" << endl;
+    cout << "     3 - searchUser using phone" << endl;
+    cout << "     4 - deleteDevice" << endl;
+    cout << "     5 - observeGroup" << endl;
+    cout << "     6 - createGroup" << endl;
+    cout << "     7 - deleteGroup" << endl;
+    cout << "     8 - getGroupInfoAll" << endl;
+    cout << "     9 - getGroupInfo" << endl;
+    cout << "    10 - addPropertyValueToGroup" << endl;
+    cout << "    11 - deletePropertyValueFromGroup" << endl;
+    cout << "    12 - updatePropertyValueOnGroup" << endl;
+    cout << "    13 - observeInvitation" << endl;
+    cout << "    14 - sendInvitation" << endl;
+    cout << "    15 - cancelInvitation" << endl;
+    cout << "    16 - deleteInvitation" << endl;
+    cout << "    17 - cancelObserveGroup" << endl;
+    cout << "    18 - cancelObserveInvitation" << endl;
+    cout << "    30 - resource discover" << endl;
+    cout << "    31 - example resource publish" << endl;
+    cout << "    41 - get my info (device Id, accesstoken, user uuid)" << endl;
+    cout << "    50 - exit" << endl;
+}
 
 void printRepresentation(OCRepresentation rep)
 {
@@ -47,21 +274,21 @@ void printRepresentation(OCRepresentation rep)
             switch (itr->base_type())
             {
                 case AttributeType::OCRepresentation:
-                    for (auto itr2 : (*itr).getValue<vector<OCRepresentation> >())
+                    for (auto itr2 : (*itr).getValue< vector< OCRepresentation > >())
                     {
                         printRepresentation(itr2);
                     }
                     break;
 
                 case AttributeType::Integer:
-                    for (auto itr2 : (*itr).getValue<vector<int> >())
+                    for (auto itr2 : (*itr).getValue< vector< int > >())
                     {
                         cout << "\t\t" << itr2 << endl;
                     }
                     break;
 
                 case AttributeType::String:
-                    for (auto itr2 : (*itr).getValue<vector<string> >())
+                    for (auto itr2 : (*itr).getValue< vector< string > >())
                     {
                         cout << "\t\t" << itr2 << endl;
                     }
@@ -74,14 +301,13 @@ void printRepresentation(OCRepresentation rep)
         }
         else if (itr->type() == AttributeType::OCRepresentation)
         {
-            printRepresentation((*itr).getValue<OCRepresentation>());
+            printRepresentation((*itr).getValue< OCRepresentation >());
         }
     }
 }
 
 //tmp callback
-void ocPost(const HeaderOptions & /*headerOptions*/,
-            const OCRepresentation &rep, const int eCode)
+void onPost(const HeaderOptions & /*headerOptions*/, const OCRepresentation &rep, const int eCode)
 {
     if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
     {
@@ -93,10 +319,11 @@ void ocPost(const HeaderOptions & /*headerOptions*/,
     {
         cout << "\tResponse error: " << eCode << endl;
     }
+    printUsage();
 }
 
-void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation &rep,
-               const int &eCode, const int &sequenceNumber)
+void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation &rep, const int &eCode,
+               const int &sequenceNumber)
 {
     try
     {
@@ -114,7 +341,8 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation &re
         {
             if (eCode == OC_STACK_OK)
             {
-                cout << "Observe registration failed or de-registration action failed/succeeded" << endl;
+                cout << "Observe registration failed or de-registration action failed/succeeded"
+                     << endl;
             }
             else
             {
@@ -127,10 +355,99 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation &re
     {
         cout << "Exception: " << e.what() << " in onObserve" << endl;
     }
+    printUsage();
 }
 
-void onDelete(const HeaderOptions & /*headerOptions*/,
-              const int eCode)
+void onPublish(const OCRepresentation &, const int &eCode)
+{
+    cout << "Publish resource response received, code: " << eCode << endl;
+
+    g_callbackLock.notify_all();
+    printUsage();
+}
+
+shared_ptr< OCResource > g_Resource;
+
+void onFoundResource(shared_ptr< OCResource > resource)
+{
+    cout << "In foundResource\n";
+    string resourceURI;
+    string hostAddress;
+
+    try
+    {
+        // Do some operations with resource object.
+        if (resource)
+        {
+            g_Resource = resource;
+            cout << "DISCOVERED Resource:" << endl;
+            // Get the resource URI
+            resourceURI = resource->uri();
+            cout << "\tURI of the resource: " << resourceURI << endl;
+
+            // Get the resource host address
+            hostAddress = resource->host();
+            cout << "\tHost address of the resource: " << hostAddress << endl;
+
+            // Get the resource types
+            cout << "\tList of resource types: " << endl;
+            for (auto &resourceTypes : resource->getResourceTypes())
+            {
+                cout << "\t\t" << resourceTypes << endl;
+            }
+
+            // Get the resource interfaces
+            cout << "\tList of resource interfaces: " << endl;
+            for (auto &resourceInterfaces : resource->getResourceInterfaces())
+            {
+                cout << "\t\t" << resourceInterfaces << endl;
+            }
+        }
+        else
+        {
+            // Resource is invalid
+            cout << "Resource is invalid" << endl;
+        }
+
+    }
+    catch (exception &e)
+    {
+        cerr << "Exception in foundResource: " << e.what() << endl;
+    }
+}
+
+void printResource(const OCRepresentation &rep)
+{
+    cout << "URI: " << rep.getUri() << endl;
+
+    vector< string > rt = rep.getResourceTypes();
+    for (auto it = rt.begin(); it != rt.end(); it++)
+    {
+        cout << "RT: " << (*it) << endl;
+    }
+
+    for (auto it = rep.begin(); it != rep.end(); it++)
+    {
+        cout << it->attrname() << " : " << it->getValueToString() << endl;
+    }
+
+    vector< OCRepresentation > children = rep.getChildren();
+
+    for (auto it = children.begin(); it != children.end(); it++)
+    {
+        printResource(*it);
+    }
+    printUsage();
+}
+
+void getCollectionResource(const HeaderOptions &, const OCRepresentation &rep, const int ecode)
+{
+    cout << "Resource get: " << ecode << endl;
+
+    printResource(rep);
+}
+
+void onDelete(const HeaderOptions & /*headerOptions*/, const int eCode)
 {
     if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_DELETED)
     {
@@ -140,14 +457,49 @@ void onDelete(const HeaderOptions & /*headerOptions*/,
     {
         cout << "\tDelete Response error: " << eCode << endl;
     }
+    printUsage();
 }
 
-condition_variable g_callbackLock;
-string             g_uid;
-string             g_accesstoken;
+void onSignUp(const HeaderOptions & /*headerOptions*/, const OCRepresentation &rep, const int eCode)
+{
+    if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
+    {
+        cout << "\tSign-up request was successful" << endl;
 
-void handleLoginoutCB(const HeaderOptions &,
-                      const OCRepresentation &rep, const int ecode)
+        printRepresentation(rep);
+
+        // Mandatory field
+        g_accesstoken = rep.getValue < string > ("accesstoken");
+        g_refreshtoken = rep.getValue < string > ("refreshtoken");
+        g_tokentype = rep.getValue < string > ("tokentype");
+        g_uid = rep.getValue < string > ("uid");
+
+        // Optional field
+        if (rep.hasAttribute("expiresin"))
+        {
+            g_expiresin = rep.getValue< int >("expiresin");
+        }
+        if (rep.hasAttribute("redirecturi"))
+        {
+            g_redirectUri = rep.getValue < string > ("redirecturi");
+        }
+        if (rep.hasAttribute("certificate"))
+        {
+            g_certificate = rep.getValue < string > ("certificate");
+        }
+        if (rep.hasAttribute("sid"))
+        {
+            g_serverId = rep.getValue < string > ("sid");
+        }
+    }
+    else
+    {
+        cout << "\tSign-up Response error: " << eCode << endl;
+    }
+    g_callbackLock.notify_all();
+}
+
+void handleLoginoutCB(const HeaderOptions &, const OCRepresentation &rep, const int ecode)
 {
     cout << "Auth response received code: " << ecode << endl;
 
@@ -156,199 +508,417 @@ void handleLoginoutCB(const HeaderOptions &,
         printRepresentation(rep);
     }
 
-    if (ecode == 4)
-    {
-        g_accesstoken = rep.getValueToString("accesstoken");
+    g_callbackLock.notify_all();
+}
 
-        g_uid = rep.getValueToString("uid");
+int insertNumber()
+{
+    int var;
+    while (1)
+    {
+        cin >> var;
+        if (cin.fail() == 1)
+        {
+            cin.clear();
+            cin.ignore(100, '\n');
+        }
+        else
+        {
+            return var;
+        }
+    }
+}
+
+int saveTrustCert(void)
+{
+    OCStackResult res = OC_STACK_ERROR;
+    uint16_t g_credId = 0;
+
+    cout << "Save Trust Cert. Chain into Cred of SVR" << endl;
+
+    ByteArray trustCertChainArray = {0, 0};
+
+    FILE *fp = fopen("rootca.crt", "rb+");
+
+    if (fp)
+    {
+        size_t fsize;
+        if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)) > 0)
+        {
+            trustCertChainArray.data = (uint8_t *)malloc(fsize);
+            trustCertChainArray.len = fsize;
+            if (NULL == trustCertChainArray.data)
+            {
+                cout << "Failed to allocate memory" << endl;
+                fclose(fp);
+                return res;
+            }
+            rewind(fp);
+            if (fsize != fread(trustCertChainArray.data, 1, fsize, fp))
+            {
+                cout << "Certiface not read completely" << endl;
+            }
+            fclose(fp);
+        }
     }
 
-    g_callbackLock.notify_all();
+    res = OCSaveTrustCertChain(trustCertChainArray.data, trustCertChainArray.len, OIC_ENCODING_PEM,
+                               &g_credId);
+
+    if (OC_STACK_OK != res)
+    {
+        cout << "OCSaveTrustCertChainBin API error" << endl;
+        return res;
+    }
+    cout << "CredId of Saved Trust Cert. Chain into Cred of SVR : " << g_credId << endl;
+
+    return res;
+}
+
+static FILE *client_open(const char * /*path*/, const char *mode)
+{
+    return fopen("./rootca.dat", mode);
 }
 
 int main(int argc, char *argv[])
 {
-    if (argc != 4 && argc != 5)
+    if (argc != 5)
     {
-        cout << "Put \"[host-ipaddress:port] [authprovider] [authcode]\" for sign-up and sign-in"
+        cout << "Put \"[host-ipaddress:port] [authprovider] [authcode] [tls mode(0,1)]\" for sign-up and sign-in and publish resources"
              << endl;
-        cout << "Put \"[host-ipaddress:port] [uid] [accessToken] 1\" for sign-in" <<
+        cout << "Put \"[host-ipaddress:port] [uid] [accessToken] [tls mode(0,1)]\" for sign-in and publish resources"
+             <<
              endl;
         return 0;
     }
+
+    OCPersistentStorage ps{ client_open, fread, fwrite, fclose, unlink };
 
     PlatformConfig cfg
     {
         ServiceType::InProc,
         ModeType::Both,
         "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-        0,         // Uses randomly available port
-        QualityOfService::LowQos
+        0, // Uses randomly available port
+        QualityOfService::LowQos,
+        &ps
     };
-
     OCPlatform::Configure(cfg);
-
     OCStackResult result = OC_STACK_ERROR;
 
-    string host = "coap+tcp://";
-    host += argv[1];
+    g_host = "coap+tcp://";
 
-    OCAccountManager::Ptr accountMgr = OCPlatform::constructAccountManagerObject(host,
-                                       CT_ADAPTER_TCP);
+    if (!strcmp(argv[4], "1"))
+    {
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+        g_host = "coaps+tcp://";
+#endif
+    }
+
+    g_host += argv[1];
+
+    accountMgr = OCPlatform::constructAccountManagerObject(g_host, CT_ADAPTER_TCP);
+
+    if (!strcmp(argv[4], "1"))
+    {
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+        cout << "Security Mode" << endl;
+        if (CA_STATUS_OK != saveTrustCert())
+        {
+            cout << "saveTrustCert returned an error" << endl;
+        }
+
+        uint16_t cipher = MBEDTLS_TLS_RSA_WITH_AES_128_GCM_SHA256;
+        if (CA_STATUS_OK != CASelectCipherSuite(cipher, CA_ADAPTER_TCP))
+        {
+            cout << "CASelectCipherSuite returned an error" << endl;
+        }
+#endif
+    }
 
     mutex blocker;
     unique_lock<mutex> lock(blocker);
 
-    if (argc == 5)
+    if (strlen(argv[2]) > 35)
     {
         accountMgr->signIn(argv[2], argv[3], &handleLoginoutCB);
         g_callbackLock.wait(lock);
     }
     else
     {
-        accountMgr->signUp(argv[2], argv[3], &handleLoginoutCB);
+        accountMgr->signUp(argv[2], argv[3], &onSignUp);
         g_callbackLock.wait(lock);
         accountMgr->signIn(g_uid, g_accesstoken, &handleLoginoutCB);
         g_callbackLock.wait(lock);
     }
 
-    cout << "---Group & Invite sample---" << endl;
-    cout << "     1 - searchUser using user UUID" << endl;
-    cout << "     2 - searchUser using email" << endl;
-    cout << "     3 - searchUser using phone" << endl;
-    cout << "     4 - deleteDevice" << endl;
-    cout << "     5 - createGroup" << endl;
-    cout << "     6 - observeGroup" << endl;
-    cout << "     7 - getGroupList" << endl;
-    cout << "     8 - deleteGroup" << endl;
-    cout << "     9 - joinGroup" << endl;
-    cout << "    10 - addDeviceToGroup" << endl;
-    cout << "    11 - getGroupInfo" << endl;
-    cout << "    12 - leaveGroup" << endl;
-    cout << "    13 - deleteDeviceFromGroup" << endl;
-    cout << "    14 - observeInvitation" << endl;
-    cout << "    15 - sendInvitation" << endl;
-    cout << "    16 - cancelInvitation" << endl;
-    cout << "    17 - deleteInvitation" << endl;
-    cout << "    18 - cancelObserveGroup" << endl;
-    cout << "    19 - cancelObserveInvitation" << endl;
-    cout << "    20 - exit" << endl;
+    cout << "Registering resources to platform..." << endl;
+
+    BinarySwitchResource binarySwitch("/power/0",
+    { "oic.r.switch.binary" },
+    { DEFAULT_INTERFACE });
+
+    printUsage();
 
     string cmd;
+    int intCmd;
     string cmd2;
+    string uri;
+    string itf;
+    string rt;
 
     while (true)
     {
-        cin >> cmd;
-
+        intCmd = insertNumber();
         try
         {
             QueryParamsMap query;
             OCRepresentation rep;
 
-            switch (atoi(cmd.c_str()))
+            switch (intCmd)
             {
                 case 1:
                     cout << "Put userUUID to search:" << endl;
                     cin >> cmd;
-                    result = accountMgr->searchUser(cmd, &ocPost);
+                    query["uid"] = cmd;
+                    result = accountMgr->searchUser(query, &onPost);
                     break;
 
                 case 2:
                     cout << "Put email to search:" << endl;
                     cin >> cmd;
                     query["email"] = cmd;
-                    result = accountMgr->searchUser(query, &ocPost);
+                    result = accountMgr->searchUser(query, &onPost);
                     break;
 
                 case 3:
                     cout << "Put phone number to search:" << endl;
                     cin >> cmd;
                     query["phone"] = cmd;
-                    result = accountMgr->searchUser(query, &ocPost);
+                    result = accountMgr->searchUser(query, &onPost);
                     break;
 
                 case 4:
-                    cout << "PUT deviceID to delete:";
-                    cin >> cmd;
-                    result = accountMgr->deleteDevice(cmd, &onDelete);
-                    break;
+                    {
+                        string accessToken, deviceId;
+
+                        cout << "PUT accessToken:";
+                        cin >> accessToken;
+
+                        cout << "PUT deviceID to delete:";
+                        cin >> deviceId;
+
+                        result = accountMgr->deleteDevice(accessToken, deviceId, &onDelete);
+                        break;
+                    }
 
                 case 5:
-                    result = accountMgr->createGroup(OC::AclGroupType::PUBLIC, &ocPost);
+                    result = accountMgr->observeGroup(&onObserve);
                     break;
 
                 case 6:
-                    cout << "PUT groupId to observe:";
-                    cin >> cmd;
-                    result = accountMgr->observeGroup(cmd, &onObserve);
-                    break;
+                    {
+                        int opt;
+                        cout
+                                << "\n---------------------------------------------------------------------\n";
+                        cout << "     w/ optional field? (1:yes / 2:no)" << endl;
+                        cout
+                                << "---------------------------------------------------------------------\n\n";
+                        cin >> opt;
 
+                        if (opt == 1)
+                        {
+                            QueryParamsMap queryParam =
+                                { };
+                            string key, value;
+
+                            int n;
+                            cout << "\nnum of field : ";
+                            n = insertNumber();
+
+                            for (int i = 0; i < n; i++)
+                            {
+                                cout << "query key(ex: gname/parent): ";
+                                cin >> key;
+                                cout << "query value: ";
+                                cin >> value;
+                                queryParam.insert(pair< string, string >(key, value));
+                            }
+                            result = accountMgr->createGroup(queryParam, &onPost);
+                        }
+                        else if (opt == 2)
+                        {
+                            result = accountMgr->createGroup(&onPost);
+                        }
+                        else
+                        {
+                            cout << "invalid option" << endl;
+                        }
+
+                        break;
+                    }
                 case 7:
-                    result = accountMgr->getGroupList(&ocPost);
-                    break;
-
-                case 8:
                     cout << "PUT groupId to delete:";
                     cin >> cmd;
                     result = accountMgr->deleteGroup(cmd, &onDelete);
                     break;
 
+                case 8:
+                    result = accountMgr->getGroupInfoAll(&onPost);
+                    break;
+
                 case 9:
-                    cout << "PUT groupId to join:";
+                    cout << "PUT groupId to get info:";
                     cin >> cmd;
-                    result = accountMgr->joinGroup(cmd, &ocPost);
+                    result = accountMgr->getGroupInfo(cmd, &onPost);
                     break;
 
                 case 10:
-                    cout << "PUT groupId to add device:";
-                    cin >> cmd;
-                    cout << "PUT deviceId to add to group:";
-                    cin >> cmd2;
                     {
-                        vector<string> deviceIds;
-                        deviceIds.push_back(cmd2);
-                        result = accountMgr->addDeviceToGroup(cmd, deviceIds, &ocPost);
+                        string groupId;
+                        cout << "group ID: ";
+                        cin >> groupId;
+
+                        int n;
+                        cout << "num of property : ";
+                        n = insertNumber();
+
+                        OCRepresentation propertyValue;
+
+                        for (int i = 0; i < n; i++)
+                        {
+                            string key, value;
+                            vector< string > values;
+
+                            cout << "property(ex: members/devices): ";
+                            cin >> key;
+
+                            int m;
+                            cout << "\tnum of values : ";
+                            m = insertNumber();
+
+                            for (int j = 0; j < m; j++)
+                            {
+                                cout << "\tvalue: ";
+                                cin >> value;
+                                values.push_back(value);
+                            }
+
+                            propertyValue.setValue < vector < string >> (key, values);
+                        }
+
+                        result = accountMgr->addPropertyValueToGroup(groupId, propertyValue, &onPost);
+                        break;
                     }
-                    break;
 
                 case 11:
-                    cout << "PUT groupId to get info:";
-                    cin >> cmd;
-                    result = accountMgr->getGroupInfo(cmd, &ocPost);
-                    break;
+                    {
+                        string groupId;
+                        cout << "group ID: ";
+                        cin >> groupId;
+
+                        int n;
+                        cout << "number of properties : ";
+                        n = insertNumber();
+
+                        OCRepresentation propertyValue;
+
+                        for (int i = 0; i < n; i++)
+                        {
+                            string key, value;
+                            vector< string > values;
+
+                            cout << "property(ex: members/devices): ";
+                            cin >> key;
+
+                            int m;
+                            cout << "\tnum of values : ";
+                            m = insertNumber();
+
+                            for (int j = 0; j < m; j++)
+                            {
+                                cout << "\tvalue: ";
+                                cin >> value;
+                                values.push_back(value);
+                            }
+
+                            propertyValue.setValue < vector < string >> (key, values);
+                        }
+
+                        result = accountMgr->deletePropertyValueFromGroup(groupId, propertyValue,
+                                 &onPost);
+                    }
 
                 case 12:
-                    cout << "PUT groupId to leave:";
-                    cin >> cmd;
-                    result = accountMgr->leaveGroup(cmd, &onDelete);
-                    break;
-
-                case 13:
-                    cout << "PUT groupId to remove device:";
-                    cin >> cmd;
-                    cout << "PUT deviceId to remove from group:";
-                    cin >> cmd2;
                     {
-                        vector<string> deviceIds;
-                        deviceIds.push_back(cmd2);
-                        result = accountMgr->deleteDeviceFromGroup(cmd, deviceIds, &onDelete);
-                    }
-                    break;
+                        string groupId;
+                        cout << "group ID: ";
+                        cin >> groupId;
 
-                case 14:
+                        int n;
+                        cout << "num of property : ";
+                        n = insertNumber();
+
+                        OCRepresentation propertyValue;
+
+                        for (int i = 0; i < n; i++)
+                        {
+                            string key, value;
+
+                            cout << "property(ex: gname/devices): ";
+                            cin >> key;
+
+                            int opt;
+                            cout << "\tvalue type?(1:string / 2:array) : ";
+                            opt = insertNumber();
+
+                            if (opt == 1)
+                            {
+                                cout << "\tvalue: ";
+                                cin >> value;
+                                propertyValue.setValue < string > (key, value);
+                            }
+                            else if (opt == 2)
+                            {
+                                vector< string > values;
+
+                                int m;
+                                cout << "\tnum of values : ";
+                                m = insertNumber();
+
+                                for (int j = 0; j < m; j++)
+                                {
+                                    cout << "\tvalue: ";
+                                    cin >> value;
+                                    values.push_back(value);
+                                }
+
+                                propertyValue.setValue < vector < string >> (key, values);
+                            }
+                            else
+                            {
+                                cout << "invalid option" << endl;
+                                break;
+                            }
+                        }
+
+                        result = accountMgr->updatePropertyValueOnGroup(groupId, propertyValue,
+                                 &onPost);
+                        break;
+                    }
+                case 13:
                     result = accountMgr->observeInvitation(&onObserve);
                     break;
 
-                case 15:
+                case 14:
                     cout << "PUT groupId to invite:";
                     cin >> cmd;
                     cout << "PUT userUUID to invite:";
                     cin >> cmd2;
-                    result = accountMgr->sendInvitation(cmd, cmd2, &ocPost);
+                    result = accountMgr->sendInvitation(cmd, cmd2, &onPost);
                     break;
 
-                case 16:
+                case 15:
                     cout << "PUT groupId to cancel invitation:";
                     cin >> cmd;
                     cout << "PUT userUUID to cancel invitation:";
@@ -356,27 +926,107 @@ int main(int argc, char *argv[])
                     result = accountMgr->cancelInvitation(cmd, cmd2, &onDelete);
                     break;
 
-                case 17:
-                    cout << "PUT groupId to delete invitation:";
+                case 16:
+                    cout << "PUT groupId to reply to invitation:";
                     cin >> cmd;
-                    result = accountMgr->deleteInvitation(cmd, &onDelete);
+                    cout << "accept to invitation? (1:yes)";
+                    cin >> cmd2;
+
+                    if (cmd2 == "1")
+                    {
+                        result = accountMgr->replyToInvitation(cmd, true, &onDelete);
+                    }
+                    else
+                    {
+                        result = accountMgr->replyToInvitation(cmd, false, &onDelete);
+                    }
+                    break;
+
+                case 17:
+                    result = accountMgr->cancelObserveGroup();
                     break;
 
                 case 18:
-                    cout << "PUT groupId to cancel observe:";
-                    cin >> cmd;
-                    result = accountMgr->cancelObserveGroup(cmd);
-                    break;
-
-                case 19:
                     result = accountMgr->cancelObserveInvitation();
                     break;
+                case 30:
+                    int opt;
+                    cout
+                            << "\n---------------------------------------------------------------------\n";
+                    cout << "     w/ query? (1:yes / 2:no)" << endl;
+                    cout
+                            << "---------------------------------------------------------------------\n\n";
+                    opt = insertNumber();
+                    uri = OC_RSRVD_WELL_KNOWN_URI;
+                    if (opt == 1)
+                    {
+                        string query;
+                        cout << "\ninsert query : ";
+                        cin >> query;
+                        uri += "?";
+                        uri += query;
+                    }
+                    result = OC::OCPlatform::findResource(accountMgr->host(), uri,
+                                                          accountMgr->connectivityType(), &onFoundResource);
+                    break;
+                case 31:
+                    {
+                        uri = binarySwitch.getResourceUri();
+                        rt = binarySwitch.getResourceType()[0];
+                        itf = binarySwitch.getInterfaces()[0];
+                        cout << " RESOURCE URI: " << uri << endl;
+                        cout << " RESOURCE RT: " << rt << endl;
+                        cout << " RESOURCE ITF: " << itf << endl;
 
-                case 20:
+                        result = OCPlatform::registerResource(binarySwitch.m_handle, uri, rt, itf,
+                                                              bind(&BinarySwitchResource::entityHandler, &binarySwitch,
+                                                                      placeholders::_1), OC_OBSERVABLE);
+
+                        if (result != OC_STACK_OK)
+                        {
+                            cout << "Resource registration was unsuccessful" << endl;
+                        }
+
+                        cout << "Publishing resources to cloud \n\n";
+                        ResourceHandles resourceHandles;
+                        OCDeviceInfo devInfoBinarySwitch;
+                        OCStringLL deviceType;
+
+                        deviceType.value = "oic.d.binaryswitch";
+                        deviceType.next = NULL;
+                        devInfoBinarySwitch.deviceName = "FAC_2016";
+                        devInfoBinarySwitch.types = &deviceType;
+                        devInfoBinarySwitch.specVersion = NULL;
+                        devInfoBinarySwitch.dataModelVersions = NULL;
+
+                        OCPlatform::registerDeviceInfo(devInfoBinarySwitch);
+
+                        resourceHandles.push_back(binarySwitch.m_handle);
+
+                        result = RDClient::Instance().publishResourceToRD(g_host,
+                                 OCConnectivityType::CT_ADAPTER_TCP, resourceHandles, &onPublish);
+
+                        cout << " result: " << result
+                             << " Waiting Publish user resource response from cloud" << endl;
+                        g_callbackLock.wait(lock);
+                        break;
+                    }
+                case 41:
+                    {
+                        cout << "my user uuid : " << g_uid << endl;
+                        cout << "my accesstoken : " << g_accesstoken << endl;
+                        cout << "my refreshtoken : " << g_refreshtoken << endl;
+                        cout << "my tokentype : " << g_tokentype << endl;
+                        cout << "my serverId : " << g_serverId << endl;
+
+                        result = OC_STACK_OK;
+                        break;
+                    }
+                case 50:
                     goto exit;
+                default:
                     break;
             }
-
             if (result != OC_STACK_OK)
             {
                 cout << "Error, return code: " << result << endl;
@@ -391,3 +1041,4 @@ int main(int argc, char *argv[])
 exit:
     return 0;
 }
+

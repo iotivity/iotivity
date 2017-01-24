@@ -412,8 +412,14 @@ OCStackResult SendGetRequest(OCDPDev_t* peer)
 
 FILE* client_fopen(const char *path, const char *mode)
 {
-    (void)path;
-    return fopen(CRED_FILE, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CRED_FILE, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 void *CLInterface(void *data)

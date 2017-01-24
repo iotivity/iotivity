@@ -23,55 +23,54 @@ package org.iotivity.service.ns.common;
 import android.util.Log;
 
 /**
-  * @class   SyncInfo
-  * @brief   This class provides implementation of Notification SyncInfo object.
-  */
-public class SyncInfo
-{
+ *
+ * This class provides implementation of Notification SyncInfo object.
+ *
+ */
+public class SyncInfo {
+
     private static final String LOG_TAG = "NotificationService_SyncInfo";
 
-    public enum SyncType
-    {
+    /**
+     * This enum is used to inform about read status of notification message
+     */
+    public enum SyncType {
         UNREAD(0),
         READ(1),
         DELETED(2);
+
         private int type;
 
-    private SyncType(int type)
-    {
-        this.type = type;
-    }
+        private SyncType(int type) {
+            this.type = type;
+        }
 
-    public int getSyncType()
-    {
-        return this.type;
-    }
+        public int getSyncType() {
+            return this.type;
+        }
     };
-    public long mMessageId              = 0;
-    public String mProviderId           = null;
-    public SyncType mState              = SyncType.UNREAD;
 
-    public SyncInfo(long messageId, String providerId, SyncType state)
-    {
-        Log.i (LOG_TAG, "SyncInfo()");
+    public long     mMessageId  = 0;
+    public String   mProviderId = null;
+    public SyncType mState      = SyncType.UNREAD;
+
+    public SyncInfo(long messageId, String providerId, SyncType state) {
+        Log.i(LOG_TAG, "SyncInfo()");
 
         mMessageId = messageId;
         mProviderId = providerId;
         mState = state;
     }
 
-    public long getMessageId()
-    {
+    public long getMessageId() {
         return mMessageId;
     }
 
-    public String getProviderId()
-    {
+    public String getProviderId() {
         return mProviderId;
     }
 
-    public SyncType getState()
-    {
+    public SyncType getState() {
         return mState;
     }
 }

@@ -129,13 +129,14 @@ void CALEGattServerConnectionStateChanged(bool connected, const char *remoteAddr
 {
     VERIFY_NON_NULL_VOID(remoteAddress, TAG, "remote address");
 
+    CAResult_t res = CA_STATUS_OK;
     if (connected)
     {
         OIC_LOG_V(DEBUG, TAG, "Connected to [%s]", remoteAddress);
         char *addr = OICStrdup(remoteAddress);
         oc_mutex_lock(g_LEClientListMutex);
-        CAResult_t result  = CAAddLEClientInfoToList(&g_LEClientList, addr);
-        if (CA_STATUS_OK != result)
+        res  = CAAddLEClientInfoToList(&g_LEClientList, addr);
+        if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "CAAddLEClientInfoToList failed");
             oc_mutex_unlock(g_LEClientListMutex);
@@ -143,6 +144,13 @@ void CALEGattServerConnectionStateChanged(bool connected, const char *remoteAddr
             return;
         }
         oc_mutex_unlock(g_LEClientListMutex);
+
+        res = CALEStopAdvertise();
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to stop advertising [%d]", res);
+            return;
+        }
     }
     else
     {
@@ -150,6 +158,13 @@ void CALEGattServerConnectionStateChanged(bool connected, const char *remoteAddr
         oc_mutex_lock(g_LEClientListMutex);
         CARemoveLEClientInfoFromList(&g_LEClientList, remoteAddress);
         oc_mutex_unlock(g_LEClientListMutex);
+
+        res = CALEStartAdvertise(CA_GATT_SERVICE_UUID);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to start advertising [%d]", res);
+            return;
+        }
     }
 }
 
@@ -880,3 +895,28 @@ void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback)
 {
     g_serverErrorCallback = callback;
 }
+
+bool CALEServerIsConnected(const char* address)
+{
+    //@Todo
+    return true;
+}
+
+uint16_t CALEServerGetMtuSize(const char* address)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    VERIFY_NON_NULL_RET(address, TAG, "address is null", CA_DEFAULT_BLE_MTU_SIZE);
+
+    unsigned int mtu = CA_DEFAULT_BLE_MTU_SIZE + CA_BLE_MTU_HEADER_SIZE;
+    int ret = bt_device_get_att_mtu(address, &mtu);
+    if (0 != ret)
+    {
+        OIC_LOG_V(ERROR, TAG,
+                  "bt_device_get_att_mtu failed with return [%s]", CALEGetErrorMsg(ret));
+        return CA_DEFAULT_BLE_MTU_SIZE;
+    }
+    OIC_LOG_V(INFO, TAG, "mtu size(including header) from bt_device_get_att_mtu is %d", mtu);
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return mtu - CA_BLE_MTU_HEADER_SIZE;
+}
+

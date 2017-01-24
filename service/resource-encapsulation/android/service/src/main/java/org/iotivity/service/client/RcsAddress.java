@@ -35,6 +35,7 @@ public final class RcsAddress {
     /**
      * Factory method for multicast.
      *
+     * @return the multicast RcsAddress
      */
     public static RcsAddress multicast() {
         return new RcsAddress(null);
@@ -43,8 +44,9 @@ public final class RcsAddress {
     /**
      * Factory method for unicast.
      *
-     * @param address
-     *            A physical address for the target.
+     * @param address A physical address for the target.
+     *
+     * @return the unicast RcsAddress
      *
      * @throws NullPointerException
      *             If address is null.

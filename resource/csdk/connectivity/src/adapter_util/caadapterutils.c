@@ -44,19 +44,16 @@
 #include <netdb.h>
 #endif
 
-#ifdef __ANDROID__
+#ifdef __JAVA__
 #include <jni.h>
-#endif
 
-#define CA_ADAPTER_UTILS_TAG "OIC_CA_ADAP_UTILS"
-
-#ifdef __ANDROID__
 /**
  * @var g_jvm
  * @brief pointer to store JavaVM
  */
 static JavaVM *g_jvm = NULL;
 
+#ifdef __ANDROID__
 /**
  * @var gContext
  * @brief pointer to store context for android callback interface
@@ -64,6 +61,9 @@ static JavaVM *g_jvm = NULL;
 static jobject g_Context = NULL;
 static jobject g_Activity = NULL;
 #endif
+#endif
+
+#define CA_ADAPTER_UTILS_TAG "OIC_CA_ADAP_UTILS"
 
 #ifdef WITH_ARDUINO
 CAResult_t CAParseIPv4AddressInternal(const char *ipAddrStr, uint8_t *ipAddr,
@@ -131,16 +131,13 @@ CAResult_t CAParseIPv4AddressInternal(const char *ipAddrStr, uint8_t *ipAddr,
 }
 
 #else // not with_arduino
-/*
- * These two conversion functions return void because errors can't happen
- * (because of NI_NUMERIC), and there's nothing to do if they do happen.
- */
-void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sockAddrLen,
-                         char *host, uint16_t *port)
+CAResult_t CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sockAddrLen,
+                               char *host, uint16_t *port)
 {
-    VERIFY_NON_NULL_VOID(sockAddr, CA_ADAPTER_UTILS_TAG, "sockAddr is null");
-    VERIFY_NON_NULL_VOID(host, CA_ADAPTER_UTILS_TAG, "host is null");
-    VERIFY_NON_NULL_VOID(port, CA_ADAPTER_UTILS_TAG, "port is null");
+    VERIFY_NON_NULL_RET(sockAddr, CA_ADAPTER_UTILS_TAG, "sockAddr is null",
+                        CA_STATUS_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(host, CA_ADAPTER_UTILS_TAG, "host is null", CA_STATUS_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(port, CA_ADAPTER_UTILS_TAG, "port is null", CA_STATUS_INVALID_PARAM);
 
     int r = getnameinfo((struct sockaddr *)sockAddr,
                         sockAddrLen,
@@ -167,19 +164,20 @@ void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sock
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
                             "getnameinfo failed: %s", gai_strerror(r));
 #endif
-        return;
+        return CA_STATUS_FAILED;
     }
     *port = ntohs(((struct sockaddr_in *)sockAddr)->sin_port); // IPv4 and IPv6
+    return CA_STATUS_OK;
 }
 
-void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storage *sockaddr)
+CAResult_t CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storage *sockaddr)
 {
-    VERIFY_NON_NULL_VOID(host, CA_ADAPTER_UTILS_TAG, "host is null");
-    VERIFY_NON_NULL_VOID(sockaddr, CA_ADAPTER_UTILS_TAG, "sockaddr is null");
+    VERIFY_NON_NULL_RET(host, CA_ADAPTER_UTILS_TAG, "host is null", CA_STATUS_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(sockaddr, CA_ADAPTER_UTILS_TAG, "sockaddr is null",
+                        CA_STATUS_INVALID_PARAM);
 
     struct addrinfo *addrs = NULL;
     struct addrinfo hints = { .ai_family = AF_UNSPEC,
-                              .ai_socktype = SOCK_DGRAM,
                               .ai_flags = AI_NUMERICHOST };
 
     int r = getaddrinfo(host, NULL, &hints, &addrs);
@@ -203,7 +201,7 @@ void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storag
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
                             "getaddrinfo failed: %s", gai_strerror(r));
 #endif
-        return;
+        return CA_STATUS_FAILED;
     }
     // assumption: in this case, getaddrinfo will only return one addrinfo
     // or first is the one we want.
@@ -218,8 +216,79 @@ void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storag
         ((struct sockaddr_in *)sockaddr)->sin_port = htons(port);
     }
     freeaddrinfo(addrs);
+    return CA_STATUS_OK;
 }
 #endif // WITH_ARDUINO
+
+#ifdef __JAVA__
+void CANativeJNISetJavaVM(JavaVM *jvm)
+{
+    OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "CANativeJNISetJavaVM");
+    g_jvm = jvm;
+}
+
+JavaVM *CANativeJNIGetJavaVM()
+{
+    return g_jvm;
+}
+
+void CADeleteGlobalReferences(JNIEnv *env)
+{
+#ifdef __ANDROID__
+    if (g_Context)
+    {
+        (*env)->DeleteGlobalRef(env, g_Context);
+        g_Context = NULL;
+    }
+
+    if (g_Activity)
+    {
+        (*env)->DeleteGlobalRef(env, g_Activity);
+        g_Activity = NULL;
+    }
+#endif //__ANDROID__
+}
+
+jmethodID CAGetJNIMethodID(JNIEnv *env, const char* className,
+                           const char* methodName,
+                           const char* methodFormat)
+{
+    VERIFY_NON_NULL_RET(env, CA_ADAPTER_UTILS_TAG, "env", NULL);
+    VERIFY_NON_NULL_RET(className, CA_ADAPTER_UTILS_TAG, "className", NULL);
+    VERIFY_NON_NULL_RET(methodName, CA_ADAPTER_UTILS_TAG, "methodName", NULL);
+    VERIFY_NON_NULL_RET(methodFormat, CA_ADAPTER_UTILS_TAG, "methodFormat", NULL);
+
+    jclass jni_cid = (*env)->FindClass(env, className);
+    if (!jni_cid)
+    {
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "jni_cid [%s] is null", className);
+        CACheckJNIException(env);
+        return NULL;
+    }
+
+    jmethodID jni_midID = (*env)->GetMethodID(env, jni_cid, methodName, methodFormat);
+    if (!jni_midID)
+    {
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "jni_midID [%s] is null", methodName);
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid);
+        return NULL;
+    }
+
+    (*env)->DeleteLocalRef(env, jni_cid);
+    return jni_midID;
+}
+
+bool CACheckJNIException(JNIEnv *env)
+{
+    if ((*env)->ExceptionCheck(env))
+    {
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        return true;
+    }
+    return false;
+}
 
 #ifdef __ANDROID__
 void CANativeJNISetContext(JNIEnv *env, jobject context)
@@ -242,20 +311,9 @@ void CANativeJNISetContext(JNIEnv *env, jobject context)
     }
 }
 
-void CANativeJNISetJavaVM(JavaVM *jvm)
-{
-    OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "CANativeJNISetJavaVM");
-    g_jvm = jvm;
-}
-
 jobject CANativeJNIGetContext()
 {
     return g_Context;
-}
-
-JavaVM *CANativeJNIGetJavaVM()
-{
-    return g_jvm;
 }
 
 void CANativeSetActivity(JNIEnv *env, jobject activity)
@@ -282,47 +340,67 @@ jobject *CANativeGetActivity()
 {
     return g_Activity;
 }
+#endif //__ANDROID__
+#endif //JAVA__
 
-jmethodID CAGetJNIMethodID(JNIEnv *env, const char* className,
-                           const char* methodName,
-                           const char* methodFormat)
+#ifndef WITH_ARDUINO
+void CALogAdapterStateInfo(CATransportAdapter_t adapter, CANetworkStatus_t state)
 {
-    VERIFY_NON_NULL_RET(env, CA_ADAPTER_UTILS_TAG, "env", NULL);
-    VERIFY_NON_NULL_RET(className, CA_ADAPTER_UTILS_TAG, "className", NULL);
-    VERIFY_NON_NULL_RET(methodName, CA_ADAPTER_UTILS_TAG, "methodName", NULL);
-    VERIFY_NON_NULL_RET(methodFormat, CA_ADAPTER_UTILS_TAG, "methodFormat", NULL);
-
-    jclass jni_cid = (*env)->FindClass(env, className);
-    if (!jni_cid)
+    OIC_LOG(DEBUG, CA_ADAPTER_UTILS_TAG, "CALogAdapterStateInfo");
+    OIC_LOG(DEBUG, ANALYZER_TAG, "=================================================");
+    CALogAdapterTypeInfo(adapter);
+    if (CA_INTERFACE_UP == state)
     {
-        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "jni_cid [%s] is null", className);
-        return NULL;
+        OIC_LOG(DEBUG, ANALYZER_TAG, "adapter status is changed to CA_INTERFACE_UP");
     }
-
-    jmethodID jni_midID = (*env)->GetMethodID(env, jni_cid, methodName, methodFormat);
-    if (!jni_midID)
+    else
     {
-        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "jni_midID [%s] is null", methodName);
-        (*env)->DeleteLocalRef(env, jni_cid);
-        return NULL;
+        OIC_LOG(DEBUG, ANALYZER_TAG, "adapter status is changed to CA_INTERFACE_DOWN");
     }
-
-    (*env)->DeleteLocalRef(env, jni_cid);
-    return jni_midID;
+    OIC_LOG(DEBUG, ANALYZER_TAG, "=================================================");
 }
 
-void CADeleteGlobalReferences(JNIEnv *env)
+void CALogSendStateInfo(CATransportAdapter_t adapter,
+                        const char *addr, uint16_t port, ssize_t sentLen,
+                        bool isSuccess, const char* message)
 {
-    if (g_Context)
+    OIC_LOG(DEBUG, CA_ADAPTER_UTILS_TAG, "CALogSendStateInfo");
+    OIC_LOG(DEBUG, ANALYZER_TAG, "=================================================");
+
+    if (true == isSuccess)
     {
-        (*env)->DeleteGlobalRef(env, g_Context);
-        g_Context = NULL;
+        OIC_LOG_V(DEBUG, ANALYZER_TAG, "Send Success, sent length = [%d]", sentLen);
+    }
+    else
+    {
+        OIC_LOG_V(DEBUG, ANALYZER_TAG, "Send Failure, error message  = [%s]",
+                  message != NULL ? message : "no message");
     }
 
-    if (g_Activity)
+    CALogAdapterTypeInfo(adapter);
+    OIC_LOG_V(DEBUG, ANALYZER_TAG, "Address = [%s]:[%d]", addr, port);
+    OIC_LOG(DEBUG, ANALYZER_TAG, "=================================================");
+}
+
+void CALogAdapterTypeInfo(CATransportAdapter_t adapter)
+{
+    switch(adapter)
     {
-        (*env)->DeleteGlobalRef(env, g_Activity);
-        g_Activity = NULL;
+        case CA_ADAPTER_IP:
+            OIC_LOG(DEBUG, ANALYZER_TAG, "Transport Type = [OC_ADAPTER_IP]");
+            break;
+        case CA_ADAPTER_TCP:
+            OIC_LOG(DEBUG, ANALYZER_TAG, "Transport Type = [OC_ADAPTER_TCP]");
+            break;
+        case CA_ADAPTER_GATT_BTLE:
+            OIC_LOG(DEBUG, ANALYZER_TAG, "Transport Type = [OC_ADAPTER_GATT_BTLE]");
+            break;
+        case CA_ADAPTER_RFCOMM_BTEDR:
+            OIC_LOG(DEBUG, ANALYZER_TAG, "Transport Type = [OC_ADAPTER_RFCOMM_BTEDR]");
+            break;
+        default:
+            OIC_LOG_V(DEBUG, ANALYZER_TAG, "Transport Type = [%d]", adapter);
+            break;
     }
 }
 #endif

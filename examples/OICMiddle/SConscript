@@ -27,12 +27,12 @@ lib_env = env.Clone()
 SConscript('#resource/third_party_libs.scons', 'lib_env')
 
 examples_env = lib_env.Clone()
-
 ######################################################################
 # Build flags
 ######################################################################
 examples_env.AppendUnique(CPPPATH = [
 		'../../resource/include/',
+		'../../resource/csdk/include',
 		'../../resource/csdk/stack/include',
 		'../../resource/c_common/ocrandom/include',
 		'../../resource/csdk/logger/include',
@@ -79,6 +79,3 @@ OICMiddle = examples_env.Program('OICMiddle', ['OICMiddle.cpp', 'Client.cpp', 'L
 
 Alias("examples", [OICMiddle])
 env.AppendTarget('examples')
-
-
-

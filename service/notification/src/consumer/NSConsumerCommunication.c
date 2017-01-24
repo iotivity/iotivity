@@ -29,10 +29,8 @@
 
 #define NS_SYNC_URI "/notification/sync"
 
-NSMessage * NSCreateMessage_internal(uint64_t msgId, const char * providerId);
 NSSyncInfo * NSCreateSyncInfo_consumer(uint64_t msgId, const char * providerId, NSSyncType state);
 
-NSMessage * NSGetMessage(OCClientResponse * clientResponse);
 NSSyncInfo * NSGetSyncInfoc(OCClientResponse * clientResponse);
 NSTopicLL * NSGetTopicLL(OCClientResponse * clientResponse);
 
@@ -184,7 +182,7 @@ OCStackApplicationResult NSConsumerMessageListener(
     NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
 
     NS_LOG(DEBUG, "build NSMessage");
-    NSMessage * newNoti = NSGetMessage(clientResponse);
+    NSMessage * newNoti = NSGetMessage((OCRepPayload *) clientResponse->payload);
     NS_VERIFY_NOT_NULL(newNoti, OC_STACK_KEEP_TRANSACTION);
 
     NSTaskType type = TASK_CONSUMER_RECV_MESSAGE;
@@ -219,226 +217,6 @@ void NSGetMessagePostClean(char * pId, OCDevAddr * addr)
     NSOICFree(addr);
 }
 
-bool NSIsExtraValue(const char * name)
-{
-    if (!strcmp(name, NS_ATTRIBUTE_MESSAGE_ID) ||
-        !strcmp(name, NS_ATTRIBUTE_PROVIDER_ID) ||
-        !strcmp(name, NS_ATTRIBUTE_TITLE) ||
-        !strcmp(name, NS_ATTRIBUTE_TEXT) ||
-        !strcmp(name, NS_ATTRIBUTE_SOURCE) ||
-        !strcmp(name, NS_ATTRIBUTE_TOPIC_NAME) ||
-        !strcmp(name, NS_ATTRIBUTE_TYPE) ||
-        !strcmp(name, NS_ATTRIBUTE_DATETIME) ||
-        !strcmp(name, NS_ATTRIBUTE_TTL) ||
-        !strcmp(name, NS_ATTRIBUTE_ICON_IMAGE))
-    {
-        return false;
-    }
-
-    return true;
-}
-
-void NSCopyPayloadValueArray(OCRepPayloadValue* dest, OCRepPayloadValue* source)
-{
-    NS_VERIFY_NOT_NULL_V(source);
-
-    size_t dimTotal = calcDimTotal(source->arr.dimensions);
-    switch(source->arr.type)
-    {
-        case OCREP_PROP_INT:
-            dest->arr.iArray = (int64_t*)OICMalloc(dimTotal * sizeof(int64_t));
-            NS_VERIFY_NOT_NULL_V(dest->arr.iArray);
-            memcpy(dest->arr.iArray, source->arr.iArray, dimTotal * sizeof(int64_t));
-            break;
-        case OCREP_PROP_DOUBLE:
-            dest->arr.dArray = (double*)OICMalloc(dimTotal * sizeof(double));
-            NS_VERIFY_NOT_NULL_V(dest->arr.dArray);
-            memcpy(dest->arr.dArray, source->arr.dArray, dimTotal * sizeof(double));
-            break;
-        case OCREP_PROP_BOOL:
-            dest->arr.bArray = (bool*)OICMalloc(dimTotal * sizeof(bool));
-            NS_VERIFY_NOT_NULL_V(dest->arr.bArray);
-            memcpy(dest->arr.bArray, source->arr.bArray, dimTotal * sizeof(bool));
-            break;
-        case OCREP_PROP_STRING:
-            dest->arr.strArray = (char**)OICMalloc(dimTotal * sizeof(char*));
-            NS_VERIFY_NOT_NULL_V(dest->arr.strArray);
-            for(size_t i = 0; i < dimTotal; ++i)
-            {
-                dest->arr.strArray[i] = OICStrdup(source->arr.strArray[i]);
-            }
-            break;
-        case OCREP_PROP_OBJECT:
-            dest->arr.objArray = (OCRepPayload**)OICMalloc(dimTotal * sizeof(OCRepPayload*));
-            NS_VERIFY_NOT_NULL_V(dest->arr.objArray);
-            for(size_t i = 0; i < dimTotal; ++i)
-            {
-                dest->arr.objArray[i] = OCRepPayloadClone(source->arr.objArray[i]);
-            }
-            break;
-        case OCREP_PROP_ARRAY:
-            dest->arr.objArray = (OCRepPayload**)OICMalloc(dimTotal * sizeof(OCRepPayload*));
-            NS_VERIFY_NOT_NULL_V(dest->arr.objArray);
-            for(size_t i = 0; i < dimTotal; ++i)
-            {
-                dest->arr.objArray[i] = OCRepPayloadClone(source->arr.objArray[i]);
-            }
-            break;
-        case OCREP_PROP_BYTE_STRING:
-            dest->arr.ocByteStrArray = (OCByteString*)OICMalloc(dimTotal * sizeof(OCByteString));
-            NS_VERIFY_NOT_NULL_V(dest->arr.ocByteStrArray);
-            for (size_t i = 0; i < dimTotal; ++i)
-            {
-                OCByteStringCopy(&dest->arr.ocByteStrArray[i], &source->arr.ocByteStrArray[i]);
-                NS_VERIFY_NOT_NULL_V(dest->arr.ocByteStrArray[i].bytes);
-            }
-            break;
-        default:
-            break;
-    }
-}
-
-OCRepPayloadValue * NSCopyPayloadValue(OCRepPayloadValue * value)
-{
-    OCRepPayloadValue * retValue = (OCRepPayloadValue *)OICMalloc(sizeof(OCRepPayloadValue));
-    NS_VERIFY_NOT_NULL(retValue, NULL);
-
-    * retValue = * value;
-    retValue->next = NULL;
-    retValue->name = OICStrdup(value->name);
-
-    switch(value->type)
-    {
-        case OCREP_PROP_STRING:
-            retValue->str = OICStrdup(value->str);
-            break;
-        case OCREP_PROP_BYTE_STRING:
-            retValue->ocByteStr.bytes = (uint8_t * )OICMalloc(value->ocByteStr.len * sizeof(uint8_t));
-            NS_VERIFY_NOT_NULL(retValue->ocByteStr.bytes, NULL);
-            retValue->ocByteStr.len = value->ocByteStr.len;
-            memcpy(retValue->ocByteStr.bytes, value->ocByteStr.bytes, retValue->ocByteStr.len);
-            break;
-        case OCREP_PROP_OBJECT:
-            retValue->obj = OCRepPayloadClone(value->obj);
-            break;
-        case OCREP_PROP_ARRAY:
-            NSCopyPayloadValueArray(retValue, value);
-            break;
-        default:
-            break;
-    }
-
-    return retValue;
-}
-
-OCRepPayload * NSGetExtraInfo(OCRepPayload * payload)
-{
-    NS_LOG(DEBUG, "get extra info");
-    OCRepPayload * extraInfo = OCRepPayloadCreate();
-    NS_VERIFY_NOT_NULL(extraInfo, NULL);
-    OCRepPayload * origin = OCRepPayloadClone(payload);
-
-    bool isFirstExtra = true;
-    OCRepPayloadValue * headValue = NULL;
-    OCRepPayloadValue * curValue = NULL;
-    OCRepPayloadValue * value = origin->values;
-    while(value)
-    {
-        if (NSIsExtraValue(value->name))
-        {
-            curValue = NSCopyPayloadValue(value);
-            NS_LOG_V(DEBUG, " key : %s", curValue->name);
-            if (isFirstExtra)
-            {
-                headValue = curValue;
-                extraInfo->values = headValue;
-                isFirstExtra = false;
-            }
-            else
-            {
-                headValue->next = curValue;
-                headValue = curValue;
-            }
-            curValue = NULL;
-        }
-        value = value->next;
-    }
-    OCRepPayloadDestroy(origin);
-
-
-    if (!isFirstExtra && extraInfo->values)
-    {
-        return extraInfo;
-    }
-    else
-    {
-        OCRepPayloadDestroy(extraInfo);
-        return NULL;
-    }
-}
-
-NSMessage * NSGetMessage(OCClientResponse * clientResponse)
-{
-    NS_VERIFY_NOT_NULL(clientResponse->payload, NULL);
-    OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
-
-    NS_LOG(DEBUG, "get msg id");
-    uint64_t id = NULL;
-    bool getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, (int64_t *)&id);
-    NS_VERIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
-
-    NS_LOG(DEBUG, "get provider id");
-    char * pId = NULL;
-    getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, &pId);
-    NS_LOG_V (DEBUG, "provider id: %s", pId);
-    NS_VERIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
-
-    NS_LOG(DEBUG, "create NSMessage");
-    NSMessage * retMsg = NSCreateMessage_internal(id, pId);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(retMsg, NULL, NSOICFree(pId));
-    NSOICFree(pId);
-
-    NS_LOG(DEBUG, "get msg optional field");
-    OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TITLE, &retMsg->title);
-    OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TEXT, &retMsg->contentText);
-    OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_SOURCE, &retMsg->sourceName);
-    OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TOPIC_NAME, &retMsg->topic);
-
-    OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_TYPE, (int64_t *)&retMsg->type);
-    OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_DATETIME, &retMsg->dateTime);
-    OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_TTL, (int64_t *)&retMsg->ttl);
-
-    char * icon = NULL;
-    OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_ICON_IMAGE, &icon);
-
-    if (icon && strlen(icon))
-    {
-        NSMediaContents * contents = (NSMediaContents *)OICMalloc(sizeof(NSMediaContents));
-        if (contents)
-        {
-            contents->iconImage = icon;
-            retMsg->mediaContents = contents;
-        }
-        else
-        {
-            NSOICFree(icon);
-        }
-    }
-
-    retMsg->extraInfo = NSGetExtraInfo(payload);
-
-    NS_LOG_V(DEBUG, "Msg ID      : %lld", (long long int)retMsg->messageId);
-    NS_LOG_V(DEBUG, "Msg Title   : %s", retMsg->title);
-    NS_LOG_V(DEBUG, "Msg Content : %s", retMsg->contentText);
-    NS_LOG_V(DEBUG, "Msg Source  : %s", retMsg->sourceName);
-    NS_LOG_V(DEBUG, "Msg Topic   : %s", retMsg->topic);
-    NS_LOG_V(DEBUG, "Msg Type    : %d", retMsg->type);
-    NS_LOG_V(DEBUG, "Msg Date    : %s", retMsg->dateTime);
-    NS_LOG_V(DEBUG, "Msg ttl     : %lld", (long long int)retMsg->ttl);
-
-    return retMsg;
-}
-
 NSSyncInfo * NSGetSyncInfoc(OCClientResponse * clientResponse)
 {
     NS_VERIFY_NOT_NULL(clientResponse->payload, NULL);
@@ -471,26 +249,6 @@ NSSyncInfo * NSGetSyncInfoc(OCClientResponse * clientResponse)
     NS_LOG_V(DEBUG, "Sync Provider ID : %s", retSync->providerId);
 
     return retSync;
-}
-
-NSMessage * NSCreateMessage_internal(uint64_t id, const char * providerId)
-{
-    NSMessage * retMsg = (NSMessage *)OICMalloc(sizeof(NSMessage));
-    NS_VERIFY_NOT_NULL(retMsg, NULL);
-
-    retMsg->messageId = id;
-    OICStrcpy(retMsg->providerId, sizeof(char) * NS_DEVICE_ID_LENGTH, providerId);
-    retMsg->title = NULL;
-    retMsg->contentText = NULL;
-    retMsg->sourceName = NULL;
-    retMsg->topic = NULL;
-    retMsg->type = NS_MESSAGE_INFO;
-    retMsg->dateTime = NULL;
-    retMsg->ttl = 0;
-    retMsg->mediaContents = NULL;
-    retMsg->extraInfo = NULL;
-
-    return retMsg;
 }
 
 NSSyncInfo * NSCreateSyncInfo_consumer(uint64_t msgId, const char * providerId, NSSyncType state)

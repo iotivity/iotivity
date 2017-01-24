@@ -36,9 +36,9 @@ else:
 
 samples_env.PrependUnique(CPPPATH = [
 		'../../../../logger/include',
+		'../../../../include',
 		'../../../../stack/include',
 		'../../../../security/include',
-		'../../../../../../extlibs/cjson',
 		'../../../../../../extlibs/boost/boost',
 		'../../../../../oc_logger/include',
 		])
@@ -59,9 +59,21 @@ if target_os not in ['windows']:
 	samples_env.PrependUnique(LIBS = ['m'])
 
 if samples_env.get('SECURED') == '1':
-    samples_env.AppendUnique(LIBS = ['tinydtls'])
+	samples_env.AppendUnique(LIBS = ['tinydtls'])
+
+if target_os in ['windows']:
+	samples_env.AppendUnique(LIBS = ['ws2_32'])
 
 samples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+src_dir = samples_env.get('SRC_DIR')
+sample_src_dir = src_dir + '/resource/csdk/stack/samples/linux/SimpleClientServer/'
+sample_build_dir = samples_env.get('BUILD_DIR') +'/resource/csdk/stack/samples/linux/SimpleClientServer/'
+
+
+introspectionJson = samples_env.Install(sample_build_dir,
+                                        sample_src_dir + 'introspection.json')
+
 
 ######################################################################
 # Source files and Targets
@@ -90,5 +102,3 @@ if with_ra:
 Alias("samples", list_of_samples)
 
 samples_env.AppendTarget('samples')
-
-

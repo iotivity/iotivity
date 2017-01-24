@@ -61,7 +61,7 @@ public final class RcsSetResponse extends RcsResponse {
      * The response will have {@link #DEFAULT_ERROR_CODE} for the errorCode. The
      * attributes of {@link RcsResourceObject} will be set as the result
      * attributes.
-     *
+     * @return the created default RcsSetResponse
      */
     public static RcsSetResponse defaultAction() {
         return new RcsSetResponse();
@@ -73,6 +73,7 @@ public final class RcsSetResponse extends RcsResponse {
      * attributes of {@link RcsResourceObject} will be set as the result
      * attributes.
      *
+     * @return the created default RcsSetResponse
      */
     public static RcsSetResponse accept() {
         return new RcsSetResponse()
@@ -87,7 +88,7 @@ public final class RcsSetResponse extends RcsResponse {
      *
      * @param errorCode
      *            error code to be set in response
-     *
+     * @return the created RcsSetResponse
      */
     public static RcsSetResponse accept(int errorCode) {
         return new RcsSetResponse(errorCode)
@@ -100,6 +101,7 @@ public final class RcsSetResponse extends RcsResponse {
      * attributes of {@link RcsResourceObject} will be set as the result
      * attributes.
      *
+     * @return the created default RcsSetResponse
      */
     public static RcsSetResponse ignore() {
         return new RcsSetResponse()
@@ -113,7 +115,7 @@ public final class RcsSetResponse extends RcsResponse {
      *
      * @param errorCode
      *            error code to be set in response
-     *
+     * @return the created RcsSetResponse
      */
     public static RcsSetResponse ignore(int errorCode) {
         return new RcsSetResponse(errorCode)
@@ -127,7 +129,7 @@ public final class RcsSetResponse extends RcsResponse {
      *
      * @param errorCode
      *            error code to be set in response
-     *
+     * @return the created RcsSetResponse
      */
     public static RcsSetResponse create(int errorCode) {
         return new RcsSetResponse(errorCode);
@@ -140,7 +142,7 @@ public final class RcsSetResponse extends RcsResponse {
      *
      * @param attributes
      *            attributes to be sent as the result
-     *
+     * @return the created RcsSetResponse
      */
     public static RcsSetResponse create(RcsResourceAttributes attributes) {
         return new RcsSetResponse(attributes);
@@ -155,7 +157,7 @@ public final class RcsSetResponse extends RcsResponse {
      *            attributes to be sent as the result
      * @param errorCode
      *            error code for response
-     *
+     * @return the created RcsSetResponse
      */
     public static RcsSetResponse create(RcsResourceAttributes attributes,
             int errorCode) {
@@ -163,8 +165,8 @@ public final class RcsSetResponse extends RcsResponse {
     }
 
     /**
-     * Returns the acceptance method.
-     *
+     * Get the acceptance method.
+     * @return the acceptance method
      */
     public AcceptanceMethod getAcceptanceMethod() {
         return mAcceptanceMethod;

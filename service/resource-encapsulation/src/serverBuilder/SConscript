@@ -24,6 +24,7 @@
 # SConscript file for Local PKI google tests
 gtest_env = SConscript('#extlibs/gtest/SConscript')
 lib_env = gtest_env.Clone()
+rd_mode = lib_env.get('RD_MODE')
 
 # Add third party libraries
 SConscript('#service/third_party_libs.scons', exports = 'lib_env')
@@ -67,6 +68,10 @@ if target_os in ['android']:
 if server_builder_env.get('SECURED') == '1':
 	if server_builder_env.get('WITH_TCP') == True:
 		server_builder_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+
+if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
+	server_builder_env.AppendUnique(LIBS = ['resource_directory'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -104,5 +109,8 @@ if target_os in ['linux']:
 
 	if server_builder_test_env.get('TEST') == '1':
 		from tools.scons.RunTest import *
-		run_test(server_builder_test_env, '',
+		run_test(server_builder_test_env,
+# TODO: fix this test on linux and remove commented lines
+			'',
+#			'service_resource-encapsulation_src_serverBuilder_rcs_server_test.memcheck',
 			'service/resource-encapsulation/src/serverBuilder/rcs_server_test')

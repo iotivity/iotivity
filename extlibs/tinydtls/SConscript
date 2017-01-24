@@ -90,9 +90,6 @@ if not env.get('RELEASE'):
 	samples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 	samples_env.PrependUnique(LIBS = ['tinydtls'])
 
-	if target_os in ['windows', 'msys_nt']:
-		samples_env.AppendUnique(LIBS = ['ws2_32', 'iphlpapi', 'advapi32', 'bcrypt'])
-
 	Alias("samples", [dtlsserver, dtlsclient])
 
 	samples_env.AppendTarget('samples')

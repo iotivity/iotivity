@@ -110,6 +110,10 @@ public class InviteManager {
         List<HashMap<String, Object>> getInviteList = AccountDBManager
                 .getInstance().selectRecord(Constants.INVITE_TABLE, condition);
 
+        if (getInviteList == null || getInviteList.isEmpty()) {
+            throw new BadRequestException("mid or gid is not valid");
+        }
+
         ArrayList<String> uidList = new ArrayList<>();
         for (HashMap<String, Object> getInvite : getInviteList) {
             getInviteTable = mTypeInvite.convertMaptoObject(getInvite,

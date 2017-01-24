@@ -37,10 +37,16 @@ std::string REMOTE_SERVER_ADDRESS;
 std::string mainProvider;
 uint64_t mainMessageId = 0;
 
-FILE* server_fopen(const char *path, const char *mode)
+FILE *server_fopen(const char *path, const char *mode)
 {
-    (void)path;
-    return fopen("oic_ns_provider_db.dat", mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen("oic_ns_provider_db.dat", mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 void onNotificationPostedCb(OIC::Service::NSMessage *notification)
@@ -56,22 +62,22 @@ void onNotificationPostedCb(OIC::Service::NSMessage *notification)
     std::cout << "type : " <<  (int) notification->getType() << std::endl;
     std::cout << "TTL : " <<  notification->getTTL() << std::endl;
     std::cout << "time : " <<  notification->getTime() << std::endl;
-    if(notification->getMediaContents() != nullptr)
+    if (notification->getMediaContents() != nullptr)
     {
         std::cout << "MediaContents IconImage : " <<  notification->getMediaContents()->getIconImage()
-                                                    << std::endl;
+                  << std::endl;
     }
     std::cout << "ExtraInfo " << std::endl;
     OC::OCRepresentation rep = notification->getExtraInfo();
-    for(auto it : rep.getResourceTypes())
+    for (auto it : rep.getResourceTypes())
     {
         std::cout << "resourceType : " << it << std::endl;
     }
-    for(auto it : rep.getResourceInterfaces())
+    for (auto it : rep.getResourceInterfaces())
     {
         std::cout << "Interface : " << it << std::endl;
     }
-    for(auto it : rep.getValues())
+    for (auto it : rep.getValues())
     {
         std::cout << "Key : " << it.first << std::endl;
     }
@@ -185,27 +191,34 @@ int main(void)
         std::cout << "3. SendSyncInfo" << std::endl;
         std::cout << "4. GetTopicList" << std::endl;
         std::cout << "5. UpdateTopicList" << std::endl;
+        std::cout << "6. Subscribe provider" << std::endl;
+        std::cout << "7. UnSubscribe provider" << std::endl;
+        std::cout << "8. Rescan provider" << std::endl;
 #ifdef WITH_CLOUD
-        std::cout << "6. Enable  NS Consumer RemoteService" << std::endl;
+        std::cout << "9. Enable  NS Consumer RemoteService" << std::endl;
 #endif
-        std::cout << "7. Exit" << std::endl;
+        std::cout << "10. Exit" << std::endl;
 
         std::cout << "Input: " << std::endl;
         std::cin >> num;
         switch (num)
         {
             case 1:
-                std::cout << "Start the Notification Consumer" << std::endl;
-                NSConsumerService::getInstance()->start(onDiscoverNotificationCb);
-                break;
+                {
+                    std::cout << "Start the Notification Consumer" << std::endl;
+                    NSConsumerService::getInstance()->start(onDiscoverNotificationCb);
+                    break;
+                }
             case 2:
-                std::cout << "Stop the Notification Consumer" << std::endl;
-                NSConsumerService::getInstance()->stop();
-                break;
+                {
+                    std::cout << "Stop the Notification Consumer" << std::endl;
+                    NSConsumerService::getInstance()->stop();
+                    break;
+                }
             case 3:
                 {
                     std::cout <<  "SendSyncInfo" << std::endl;
-                    if(!mainMessageId)
+                    if (!mainMessageId)
                     {
                         std::cout <<  "Message ID is empty" << std::endl;
                         break;
@@ -213,51 +226,52 @@ int main(void)
                     std::cout << "1. Send Read Sync" << std::endl;
                     std::cout << "2. Send Delete Sync" << std::endl;
                     int syn = 0;
-                    while(!(std::cin >> syn)){
-                        cout << "Bad value!";
+                    while (!(std::cin >> syn))
+                    {
+                        std::cout << "Bad value!" << std::endl;;
                         std::cin.clear();
                         std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
                     }
                     switch (syn)
                     {
                         case 1:
-                        {
-                            std::cout << "Sending Read Sync" << std::endl;
-                            auto provider = NSConsumerService::getInstance()->getProvider(
-                                                mainProvider);
-                            if (provider != nullptr)
                             {
-                                provider->sendSyncInfo(mainMessageId,
-                                                       OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
+                                std::cout << "Sending Read Sync" << std::endl;
+                                auto provider = NSConsumerService::getInstance()->getProvider(
+                                                    mainProvider);
+                                if (provider != nullptr)
+                                {
+                                    provider->sendSyncInfo(mainMessageId,
+                                                           OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
+                                }
+                                break;
                             }
-                        }
-                        break;
                         case 2:
-                        {
-                            std::cout << "Sending Delete Sync" << std::endl;
-                            auto provider = NSConsumerService::getInstance()->getProvider(
-                                                mainProvider);
-                            if (provider != nullptr)
                             {
-                                provider->sendSyncInfo(mainMessageId,
-                                                       OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_DELETED);
+                                std::cout << "Sending Delete Sync" << std::endl;
+                                auto provider = NSConsumerService::getInstance()->getProvider(
+                                                    mainProvider);
+                                if (provider != nullptr)
+                                {
+                                    provider->sendSyncInfo(mainMessageId,
+                                                           OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_DELETED);
+                                }
+                                break;
                             }
-                        }
-                        break;
                         default:
-                        {
-                            cout << "Invalid Input!. sending default Read Sync";
-                            auto provider = NSConsumerService::getInstance()->getProvider(
-                                                mainProvider);
-                            if (provider != nullptr)
                             {
-                                provider->sendSyncInfo(mainMessageId,
-                                                       OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
+                                cout << "Invalid Input!. sending default Read Sync";
+                                auto provider = NSConsumerService::getInstance()->getProvider(
+                                                    mainProvider);
+                                if (provider != nullptr)
+                                {
+                                    provider->sendSyncInfo(mainMessageId,
+                                                           OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
+                                }
+                                std::cin.clear();
+                                std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                                break;
                             }
-                            std::cin.clear();
-                            std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                            break;
-                        }
                     }
                     break;
                 }
@@ -277,8 +291,8 @@ int main(void)
                             }
                         }
                     }
+                    break;
                 }
-                break;
             case 5:
                 {
                     std::cout <<  "UpdateTopicList" << std::endl;
@@ -294,10 +308,55 @@ int main(void)
                         delete topicList;
                         delete provider;
                     }
+                    break;
                 }
-                break;
-#ifdef WITH_CLOUD
             case 6:
+                {
+                    std::cout << "Subscribe provider" << std::endl;
+                    if (!mainProvider.empty())
+                    {
+                        OIC::Service::NSProvider *provider =
+                            NSConsumerService::getInstance()->getProvider(mainProvider);
+                        if (provider != nullptr )
+                        {
+                            std::cout << "calling Subscribe on discovered mainProvider" << std::endl;
+                            if (!provider->isSubscribed())
+                            {
+                                std::cout << "start Subscribing" << std::endl;
+                                provider->subscribe();
+                            }
+                        }
+                    }
+                    break;
+                }
+            case 7:
+                {
+                    std::cout << "UnSubscribe provider" << std::endl;
+                    if (!mainProvider.empty())
+                    {
+                        OIC::Service::NSProvider *provider =
+                            NSConsumerService::getInstance()->getProvider(mainProvider);
+                        if (provider != nullptr )
+                        {
+                            std::cout << "calling UnSubscribe on discovered mainProvider" << std::endl;
+                            if (provider->isSubscribed())
+                            {
+                                std::cout << "start UnSubscribing" << std::endl;
+                                provider->unsubscribe();
+                            }
+                        }
+                    }
+                    break;
+                }
+            case 8:
+                {
+                    std::cout << "Rescan Provider" << std::endl;
+                    NSConsumerService::getInstance()->rescanProvider();
+                    break;
+                }
+
+#ifdef WITH_CLOUD
+            case 9:
                 {
                     std::cout << "Enable NS Consumer RemoteService" << std::endl;
                     std::cout << "Input the Server Address :";
@@ -306,16 +365,20 @@ int main(void)
                     break;
                 }
 #endif
-            case 7:
-                std::cout << "Exit" << std::endl;
-                NSConsumerService::getInstance()->stop();
-                isExit = true;
-                break;
+            case 10:
+                {
+                    std::cout << "Exit" << std::endl;
+                    NSConsumerService::getInstance()->stop();
+                    isExit = true;
+                    break;
+                }
             default:
-                std::cout << "Under Construction" << std::endl;
-                std::cin.clear();
-                std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                break;
+                {
+                    std::cout << "Under Construction" << std::endl;
+                    std::cin.clear();
+                    std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    break;
+                }
         }
     }
 

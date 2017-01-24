@@ -38,6 +38,20 @@ namespace OIC
             m_ocResource = resource;
         }
 
+        void EnrolleeResource::onEnrolleeResourceSafetyCB(const HeaderOptions& headerOptions,
+                                                        const OCRepresentation& rep,
+                                                        const int eCode,
+                                                        ESEnrolleeResourceCb cb,
+                                                        std::weak_ptr<EnrolleeResource> this_ptr)
+        {
+            OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onEnrolleeResourceSafetyCB");
+            std::shared_ptr<EnrolleeResource> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                cb(headerOptions, rep, eCode);
+            }
+        }
+
         void EnrolleeResource::onProvisioningResponse(const HeaderOptions& /*headerOptions*/,
                 const OCRepresentation& /*rep*/, const int eCode)
         {
@@ -175,12 +189,15 @@ namespace OIC
 
             std::function< OCStackResult(void) > getStatus = [&]
             {
-                return m_ocResource->get(m_ocResource->getResourceTypes().at(0),
-                        DEFAULT_INTERFACE, query, std::function<void(const HeaderOptions& headerOptions,
-                        const OCRepresentation& rep, const int eCode) >(
+                ESEnrolleeResourceCb cb = std::bind(&EnrolleeResource::onEnrolleeResourceSafetyCB,
+                                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                                static_cast<ESEnrolleeResourceCb>(
                                 std::bind(&EnrolleeResource::onGetStatusResponse, this,
-                                        std::placeholders::_1, std::placeholders::_2,
-                                        std::placeholders::_3)), OC::QualityOfService::HighQos);
+                                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
+                                shared_from_this());
+
+                return m_ocResource->get(m_ocResource->getResourceTypes().at(0),
+                        DEFAULT_INTERFACE, query, cb, OC::QualityOfService::HighQos);
             };
 
             OCStackResult result = getStatus();
@@ -212,12 +229,15 @@ namespace OIC
 
             std::function< OCStackResult(void) > getConfigurationStatus = [&]
             {
-                return m_ocResource->get(m_ocResource->getResourceTypes().at(0),
-                        BATCH_INTERFACE, query, std::function<void(const HeaderOptions& headerOptions,
-                        const OCRepresentation& rep, const int eCode) >(
+                ESEnrolleeResourceCb cb = std::bind(&EnrolleeResource::onEnrolleeResourceSafetyCB,
+                                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                                static_cast<ESEnrolleeResourceCb>(
                                 std::bind(&EnrolleeResource::onGetConfigurationResponse, this,
-                                        std::placeholders::_1, std::placeholders::_2,
-                                        std::placeholders::_3)), OC::QualityOfService::HighQos);
+                                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
+                                shared_from_this());
+
+                return m_ocResource->get(m_ocResource->getResourceTypes().at(0),
+                        BATCH_INTERFACE, query, cb, OC::QualityOfService::HighQos);
             };
 
             OCStackResult result = getConfigurationStatus();
@@ -245,14 +265,15 @@ namespace OIC
             OC::QueryParamsMap query;
             OC::OCRepresentation provisioningRepresentation = deviceProp.toOCRepresentation();
 
-            m_ocResource->post(OC_RSRVD_ES_RES_TYPE_PROV, BATCH_INTERFACE,
-                    provisioningRepresentation, QueryParamsMap(),
-                    std::function<
-                            void(const HeaderOptions& headerOptions,
-                                    const OCRepresentation& rep, const int eCode) >(
-                    std::bind(&EnrolleeResource::onProvisioningResponse, this,
-                    std::placeholders::_1, std::placeholders::_2,
-                    std::placeholders::_3)), OC::QualityOfService::HighQos);
+            ESEnrolleeResourceCb cb = std::bind(&EnrolleeResource::onEnrolleeResourceSafetyCB,
+                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                            static_cast<ESEnrolleeResourceCb>(
+                            std::bind(&EnrolleeResource::onProvisioningResponse, this,
+                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
+                            shared_from_this());
+
+            m_ocResource->post(OC_RSRVD_ES_RES_TYPE_EASYSETUP, BATCH_INTERFACE,
+                    provisioningRepresentation, QueryParamsMap(), cb, OC::QualityOfService::HighQos);
 
             OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "provisionProperties OUT");
         }

@@ -144,7 +144,7 @@ OCStackApplicationResult putReqCB(void*, OCDoHandle, OCClientResponse * clientRe
     {
         OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OIC_LOG(INFO, TAG, ("=============> Put Response"));
+        OIC_LOG(INFO, TAG, "=============> Put Response");
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -157,7 +157,7 @@ OCStackApplicationResult postReqCB(void *, OCDoHandle, OCClientResponse *clientR
     {
         OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OIC_LOG(INFO, TAG, ("=============> Post Response"));
+        OIC_LOG(INFO, TAG, "=============> Post Response");
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -171,7 +171,7 @@ OCStackApplicationResult getReqCB(void*, OCDoHandle, OCClientResponse * clientRe
         OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
         OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OIC_LOG(INFO, TAG, ("=============> Get Response"));
+        OIC_LOG(INFO, TAG, "=============> Get Response");
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -204,12 +204,12 @@ OCStackApplicationResult discoveryReqCB(void*, OCDoHandle,
                     case TEST_NON_CON_OP:
                         InitGetRequest(OC_LOW_QOS);
                         InitPutRequest(OC_LOW_QOS);
-                        //InitPostRequest(OC_LOW_QOS);
+                        InitPostRequest(OC_LOW_QOS);
                         break;
                     case TEST_CON_OP:
                         InitGetRequest(OC_HIGH_QOS);
                         InitPutRequest(OC_HIGH_QOS);
-                        //InitPostRequest(OC_HIGH_QOS);
+                        InitPostRequest(OC_HIGH_QOS);
                         break;
                 }
             }
@@ -219,7 +219,6 @@ OCStackApplicationResult discoveryReqCB(void*, OCDoHandle,
     return (UnicastDiscovery) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
 
 }
-
 int InitPutRequest(OCQualityOfService qos)
 {
     OIC_LOG_V(INFO, TAG, "Executing %s", __func__);
@@ -241,6 +240,10 @@ int InitPostRequest(OCQualityOfService qos)
     OIC_LOG_V(INFO, TAG, "Executing %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
+    if(WithTcp)
+    {
+        endpoint.adapter = OC_ADAPTER_TCP;
+    }
     endpoint.flags = (OCTransportFlags)(endpoint.flags|OC_SECURE);
 
     // First POST operation (to create an LED instance)
@@ -262,10 +265,16 @@ int InitPostRequest(OCQualityOfService qos)
         OIC_LOG(INFO, TAG, "Second POST call did not succeed");
     }
 
-    // This POST operation will update the original resourced /a/led
-    return (InvokeOCDoResource(query, OC_REST_POST, &endpoint,
-                ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
-                postReqCB, NULL, 0));
+    // This POST operation will update the original resourced /a/led (as long as
+    // the server is set to max 2 /lcd resources)
+    result = InvokeOCDoResource(query, OC_REST_POST, &endpoint,
+            ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
+            postReqCB, NULL, 0);
+    if (OC_STACK_OK != result)
+    {
+        OIC_LOG(INFO, TAG, "Third POST call did not succeed");
+    }
+    return result;
 }
 
 int InitGetRequest(OCQualityOfService qos)
@@ -329,14 +338,26 @@ int InitDiscovery()
 
 FILE* client_fopen_devowner(const char *path, const char *mode)
 {
-    (void)path;
-    return fopen(CRED_FILE_DEVOWNER, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CRED_FILE_DEVOWNER, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 FILE* client_fopen_nondevowner(const char *path, const char *mode)
 {
-    (void)path;
-    return fopen(CRED_FILE_NONDEVOWNER, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CRED_FILE_NONDEVOWNER, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 int main(int argc, char* argv[])
 {

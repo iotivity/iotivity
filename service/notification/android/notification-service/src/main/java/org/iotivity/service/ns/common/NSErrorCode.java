@@ -20,8 +20,12 @@
 
 package org.iotivity.service.ns.common;
 
-public enum NSErrorCode
-{
+/**
+ *
+ * This enum provides details of error code messages thrown in NSException.
+ *
+ */
+public enum NSErrorCode {
     OK("OK", ""),
     ERROR("ERROR", ""),
     SUCCESS("SUCCESS", ""),
@@ -30,42 +34,35 @@ public enum NSErrorCode
     DENY("DENY", ""),
     JNI_EXCEPTION("JNI_EXCEPTION", "Generic Java binder error"),
     JNI_NO_NATIVE_OBJECT("JNI_NO_NATIVE_OBJECT", ""),
-    JNI_INVALID_VALUE("JNI_INVALID_VALUE", ""),;
+    JNI_INVALID_VALUE("JNI_INVALID_VALUE", "");
 
     private String error;
     private String description;
 
-    private NSErrorCode(String error, String description)
-{
-    this.error = error;
-    this.description = description;
-}
-
-public String getError()
-{
-    return error;
-}
-
-public String getDescription()
-{
-    return description;
-}
-
-public static NSErrorCode get(String errorCode)
-{
-    for (NSErrorCode eCode : NSErrorCode.values())
-    {
-        if (eCode.getError().equals(errorCode))
-        {
-            return eCode;
-        }
+    private NSErrorCode(String error, String description) {
+        this.error = error;
+        this.description = description;
     }
-    throw new IllegalArgumentException("Unexpected NSErrorCode value");
-}
 
-@Override
-public String toString()
-{
-    return error + (description.isEmpty() ? "" : " : " + description);
-}
+    public String getError() {
+        return error;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public static NSErrorCode get(String errorCode) {
+        for (NSErrorCode eCode : NSErrorCode.values()) {
+            if (eCode.getError().equals(errorCode)) {
+                return eCode;
+            }
+        }
+        throw new IllegalArgumentException("Unexpected NSErrorCode value");
+    }
+
+    @Override
+    public String toString() {
+        return error + (description.isEmpty() ? "" : " : " + description);
+    }
 }

@@ -211,7 +211,7 @@ namespace OIC
 
             OC::OCResource::Ptr ocResource = OC::OCPlatform::constructResourceObject(rcsResource->getAddress(),
                 rcsResource->getUri(),
-                CT_DEFAULT,
+                rcsResource->m_primitiveResource->getConnectivityType(),
                 rcsResource->isObservable(),
                 rcsResource->getTypes(),
                 rcsResource->getInterfaces());
@@ -285,7 +285,7 @@ namespace OIC
             startCaching({ });
         }
 
-        void RCSRemoteResourceObject::startCaching(CacheUpdatedCallback cb)
+        void RCSRemoteResourceObject::startCaching(CacheUpdatedCallback cb, CacheMode mode)
         {
             SCOPE_LOG_F(DEBUG, TAG);
 
@@ -295,17 +295,28 @@ namespace OIC
                 throw RCSBadRequestException{ "Caching already started." };
             }
 
-            if (cb)
+            if (mode == CacheMode::OBSERVE_ONLY)
             {
                 m_cacheId = ResourceCacheManager::getInstance()->requestResourceCache(
                         m_primitiveResource,
                         std::bind(cachingCallback, std::placeholders::_1, std::placeholders::_2,
-                                std::move(cb)), REPORT_FREQUENCY::UPTODATE, 0);
+                                  std::move(cb)), CACHE_METHOD::OBSERVE_ONLY,
+                                  REPORT_FREQUENCY::UPTODATE, 0);
+            }
+
+            else if (cb)
+            {
+                m_cacheId = ResourceCacheManager::getInstance()->requestResourceCache(
+                        m_primitiveResource,
+                        std::bind(cachingCallback, std::placeholders::_1, std::placeholders::_2,
+                                std::move(cb)), CACHE_METHOD::ITERATED_GET,
+                                REPORT_FREQUENCY::UPTODATE, 0);
             }
             else
             {
                 m_cacheId = ResourceCacheManager::getInstance()->requestResourceCache(
-                        m_primitiveResource, { }, REPORT_FREQUENCY::NONE, 0);
+                        m_primitiveResource, { }, CACHE_METHOD::ITERATED_GET,
+                        REPORT_FREQUENCY::NONE, 0);
             }
 
             OIC_LOG_V(DEBUG, TAG, "startCaching CACHE ID %d", m_cacheId);
@@ -335,7 +346,7 @@ namespace OIC
             }
 
             return convertCacheState(
-                    ResourceCacheManager::getInstance()->getResourceCacheState(m_primitiveResource));
+                    ResourceCacheManager::getInstance()->getResourceCacheState(m_cacheId));
         }
 
         bool RCSRemoteResourceObject::isCachedAvailable() const
@@ -362,7 +373,7 @@ namespace OIC
                 throw RCSBadRequestException{ "Cache data is not available." };
             }
 
-            return ResourceCacheManager::getInstance()->getCachedData(m_primitiveResource);
+            return ResourceCacheManager::getInstance()->getCachedData(m_cacheId);
         }
 
         RCSResourceAttributes::Value RCSRemoteResourceObject::getCachedAttribute(

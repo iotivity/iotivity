@@ -43,7 +43,7 @@ android {
 }
 repositories {
     flatDir {
-        dirs "../../../../../../../android/android_api/base/build/outputs/aar/", "../../../../../mediator/richsdk/android/EasySetupCore/build/outputs/aar/"
+        dirs "../../../../../../../java/iotivity-android/build/outputs/aar/", "../../../../../mediator/richsdk/android/EasySetupCore/build/outputs/aar/"
     }
 }
 

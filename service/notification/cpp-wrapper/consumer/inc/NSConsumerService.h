@@ -62,13 +62,15 @@ namespace OIC
                 /**
                       * Initialize notification service for consumer
                       * @param providerDiscovered Callback function pointers to ProviderDiscoveredCallback,
+                      * @return ::NS_OK or result code of NSResult
                       */
-                void start(ProviderDiscoveredCallback providerDiscovered);
+                NSResult start(ProviderDiscoveredCallback providerDiscovered);
 
                 /**
                       * Terminate notification service for consumer
+                      * @return ::NS_OK or result code of NSResult
                       */
-                void stop();
+                NSResult stop();
 
                 /**
                      * Request to discover to remote address as parameter.
@@ -78,9 +80,18 @@ namespace OIC
                 NSResult enableRemoteService(const std::string &serverAddress);
 
                 /**
-                      * Request discovery manually
+                      * Request to subscribe to remote MQ address as parameter.
+                      * @param[in] server address combined with IP address and port number and MQ broker uri using delimiter :
+                      * @param[in] topicName the interest Topic name for subscription.
+                      * @return ::NS_OK or result code of NSResult
                       */
-                void rescanProvider();
+                NSResult subscribeMQService(const std::string &serverAddress, const std::string &topicName);
+
+                /**
+                      * Request discovery manually
+                      * @return ::NS_OK or result code of NSResult
+                      */
+                NSResult rescanProvider();
 
                 /**
                       *  get the callback for ProviderDiscovered

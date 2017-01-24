@@ -34,12 +34,12 @@ extern "C"
  */
 typedef struct
 {
-    char ssid[OIC_STRING_MAX_VALUE];         /**< Ssid of the Enroller**/
-    char pwd[OIC_STRING_MAX_VALUE];          /**< Pwd of the Enroller**/
-    WIFI_AUTHTYPE authtype;         /**< Auth type of the Enroller**/
-    WIFI_ENCTYPE enctype;           /**< Encryption type of the Enroller**/
-    void *userdata;                 /**< Vender-specific data**/
-} ESWiFiProvData;
+    char ssid[OIC_STRING_MAX_VALUE];        /**< Ssid of the Enroller**/
+    char pwd[OIC_STRING_MAX_VALUE];         /**< Pwd of the Enroller**/
+    WIFI_AUTHTYPE authtype;                 /**< Auth type of the Enroller**/
+    WIFI_ENCTYPE enctype;                   /**< Encryption type of the Enroller**/
+    void *userdata;                         /**< Vender-specific data**/
+} ESWiFiConfData;
 
 /**
  * @brief Data structure delivered from mediator, which provides device configuration information
@@ -50,7 +50,7 @@ typedef struct
     char language[OIC_STRING_MAX_VALUE];    /**< IETF language tag using ISO 639X **/
     char country[OIC_STRING_MAX_VALUE];     /**< ISO Country Code (ISO 3166-1 Alpha-2) **/
     void *userdata;                         /**< Vender-specific data**/
-} ESDevConfProvData;
+} ESDevConfData;
 
 /**
  * @brief Data structure delivered from mediator, which provides Cloud server information
@@ -58,10 +58,12 @@ typedef struct
 typedef struct
 {
     char authCode[OIC_STRING_MAX_VALUE];        /**< Auth code issued by OAuth2.0-compatible account server **/
+    char accessToken[OIC_STRING_MAX_VALUE];     /**< Access token resolved with an auth code **/
+    OAUTH_TOKENTYPE accessTokenType;            /**< Access token type **/
     char authProvider[OIC_STRING_MAX_VALUE];    /**< Auth provider ID **/
     char ciServer[OIC_STRING_MAX_VALUE];        /**< Cloud interface server URL which an Enrollee is going to registered **/
     void *userdata;                             /**< Vender-specific data**/
-} ESCloudProvData;
+} ESCoapCloudConfData;
 
 /**
  * @brief Data structure stored for Device property which includes a WiFi and device configuration.
@@ -93,9 +95,9 @@ typedef struct
  */
 typedef struct
 {
-    void (*WiFiProvCb) (ESWiFiProvData *);
-    void (*DevConfProvCb) (ESDevConfProvData *);
-    void (*CloudDataProvCb) (ESCloudProvData *);
+    void (*WiFiConfProvCb) (ESWiFiConfData *);
+    void (*DevConfProvCb) (ESDevConfData *);
+    void (*CoapCloudConfProvCb) (ESCoapCloudConfData *);
 } ESProvisioningCallbacks;
 
 

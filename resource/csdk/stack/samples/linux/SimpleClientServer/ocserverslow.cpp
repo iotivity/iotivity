@@ -41,7 +41,6 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "logger.h"
-#include "cJSON.h"
 #include "ocserverslow.h"
 #include "ocpayload.h"
 #include "payload_logging.h"
@@ -149,7 +148,7 @@ void ProcessGetPutRequest (OCEntityHandlerRequest *ehRequest)
         OIC_LOG(ERROR, TAG, "Error sending response");
     }
 
-    free(getResp);
+    OCRepPayloadDestroy(getResp);
 }
 
 OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest)
@@ -389,4 +388,3 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
 
     return 0;
 }
-

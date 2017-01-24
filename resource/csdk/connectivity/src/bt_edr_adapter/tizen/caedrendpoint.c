@@ -29,11 +29,12 @@
 #include "caedrutils.h"
 #include "logger.h"
 
-CAResult_t CAEDRSendData(int serverFD, const void *data, uint32_t dataLength)
+CAResult_t CAEDRSendData(int serverFD, const char *addr, const void *data, uint32_t dataLength)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL(data, EDR_ADAPTER_TAG, "Data is null");
+    VERIFY_NON_NULL(addr, EDR_ADAPTER_TAG, "Addr is null");
 
     if (0 > serverFD)
     {
@@ -42,14 +43,28 @@ CAResult_t CAEDRSendData(int serverFD, const void *data, uint32_t dataLength)
     }
 
     int dataLen = bt_socket_send_data(serverFD, (const char *)data, dataLength);
-    if (dataLen == -1)
+    int errcode = get_last_result();
+
+    if (TIZEN_ERROR_NONE == errcode)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "sending data failed!, soketid [%d]", serverFD);
-        return CA_SOCKET_OPERATION_FAILED;
+        CALogSendStateInfo(CA_ADAPTER_RFCOMM_BTEDR, addr, 0, dataLength, true, NULL);
     }
-    else if (dataLen == 0)
+    else
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "soketid [%d] may be disconnected?", serverFD);
+        if (dataLen == -1)
+        {
+            OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "sending data failed!, soketid [%d] errmsg [%s]",
+                      serverFD, get_error_message(errcode));
+        }
+        else if (dataLen == 0)
+        {
+            OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "soketid [%d] may be disconnected? errmsg [%s]",
+                      serverFD, get_error_message(errcode));
+        }
+
+        CALogSendStateInfo(CA_ADAPTER_RFCOMM_BTEDR, addr, 0, dataLength,
+                           false, get_error_message(errcode));
+
         return CA_SOCKET_OPERATION_FAILED;
     }
 

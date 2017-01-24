@@ -19,6 +19,9 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "rd_client.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "octypes.h"
@@ -26,7 +29,7 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 
-#define TAG "RD_CLIENT"
+#define TAG "OIC_RD_CLIENT"
 
 #ifdef RD_CLIENT
 
@@ -84,13 +87,12 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
     OIC_LOG_V(DEBUG, TAG, "Publish Resource to RD with device id [%s]", id);
 
     OCResourceHandle *pubResHandle = resourceHandles;
+    OCResourceHandle defaultResHandles[OIC_RD_DEFAULT_RESOURCE] = { 0 };
     uint8_t nPubResHandles = nHandles;
 
     // if resource handles is null, "/oic/p" and "/oic/d" resource will be published to RD.
-    if (!pubResHandle && !nPubResHandles)
+    if (!pubResHandle)
     {
-        OCResourceHandle defaultResHandles[OIC_RD_DEFAULT_RESOURCE] = { 0 };
-
         // get "/oic/d" and "/oic/p" resource handle from stack.
         defaultResHandles[0] = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
         defaultResHandles[1] = OCGetResourceHandleAtUri(OC_RSRVD_PLATFORM_URI);
@@ -119,16 +121,34 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
         return OC_STACK_NO_MEMORY;
     }
 
-    const char *deviceId = OCGetServerInstanceIDString();
-    if (deviceId)
+    OCRepPayloadSetPropString(rdPayload, OC_RSRVD_DEVICE_ID, (const char *) id);
+
+    char *deviceName = NULL;
+    OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, (void **) &deviceName);
+    if (deviceName)
     {
-        OCRepPayloadSetPropString(rdPayload, OC_RSRVD_DEVICE_ID, deviceId);
+        OCRepPayloadSetPropString(rdPayload, OC_RSRVD_DEVICE_NAME, deviceName);
+        OICFree(deviceName);
     }
+
+    char *platformModelName = NULL;
+    OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MODEL_NUM, (void **) &platformModelName);
+    if (platformModelName)
+    {
+        OCRepPayloadSetPropString(rdPayload, OC_DATA_MODEL_NUMBER, platformModelName);
+        OICFree(platformModelName);
+    }
+
     OCRepPayloadSetPropInt(rdPayload, OC_RSRVD_DEVICE_TTL, OIC_RD_PUBLISH_TTL);
 
-    const OCRepPayload *linkArr[nPubResHandles];
-    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {nPubResHandles, 0, 0};
+    OCRepPayload **linkArr = OICCalloc(nPubResHandles, sizeof(OCRepPayload *));
+    if (!linkArr)
+    {
+        OCRepPayloadDestroy(rdPayload);
+        return OC_STACK_NO_MEMORY;
+    }
 
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {nPubResHandles, 0, 0};
     for (uint8_t j = 0; j < nPubResHandles; j++)
     {
         OCResourceHandle handle = pubResHandle[j];
@@ -153,7 +173,7 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
                     OIC_LOG_V(DEBUG, TAG, "value: %s", value);
                     rt[i] = OICStrdup(value);
                 }
-                OCRepPayloadSetStringArray(link, OC_RSRVD_RESOURCE_TYPE, (const char **)rt, rtDim);
+                OCRepPayloadSetStringArrayAsOwner(link, OC_RSRVD_RESOURCE_TYPE, rt, rtDim);
             }
 
             numElement = 0;
@@ -167,7 +187,7 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
                     OIC_LOG_V(DEBUG, TAG, "value: %s", value);
                     itf[i] = OICStrdup(value);
                 }
-                OCRepPayloadSetStringArray(link, OC_RSRVD_INTERFACE, (const char **)itf, ifDim);
+                OCRepPayloadSetStringArrayAsOwner(link, OC_RSRVD_INTERFACE, itf, ifDim);
             }
 
             uint8_t ins = 0;
@@ -178,8 +198,21 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
 
             size_t mtDim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
             char **mediaType = (char **)OICMalloc(sizeof(char *) * 1);
+            if (!mediaType)
+            {
+                OIC_LOG(ERROR, TAG, "Memory allocation failed!");
+
+                for(uint8_t i = 0; i < nPubResHandles; i++)
+                {
+                    OCRepPayloadDestroy(linkArr[i]);
+                }
+                OICFree(linkArr);
+                OCRepPayloadDestroy(rdPayload);
+                return OC_STACK_NO_MEMORY;
+            }
+
             mediaType[0] = OICStrdup(DEFAULT_MESSAGE_TYPE);
-            OCRepPayloadSetStringArray(link, OC_RSRVD_MEDIA_TYPE, (const char **)mediaType,
+            OCRepPayloadSetStringArrayAsOwner(link, OC_RSRVD_MEDIA_TYPE, mediaType,
             mtDim);
 
             OCResourceProperty p = OCGetResourceProperties(handle);
@@ -192,17 +225,15 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
         }
     }
 
-    OCRepPayloadSetPropObjectArray(rdPayload, OC_RSRVD_LINKS, linkArr, dimensions);
+    OCRepPayloadSetPropObjectArray(rdPayload, OC_RSRVD_LINKS, (const OCRepPayload **)linkArr, dimensions);
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
 
-    if (OC_STACK_OK == OCStopMulticastServer())
+    for (uint8_t i = 0; i < nPubResHandles; i++)
     {
-        OIC_LOG_V(DEBUG, TAG, "Stopped receiving the multicast traffic.");
+        OCRepPayloadDestroy(linkArr[i]);
     }
-    else
-    {
-        OIC_LOG_V(DEBUG, TAG, "Failed stopping the multicast traffic.");
-    }
+    OICFree(linkArr);
+
     return OCDoResource(NULL, OC_REST_POST, targetUri, NULL, (OCPayload *)rdPayload,
                         connectivityType, qos, cbData, NULL, 0);
 }
@@ -242,17 +273,32 @@ OCStackResult OCRDDeleteWithDeviceId(const char *host, const unsigned char *id,
     OIC_LOG_V(DEBUG, TAG, "Delete Resource to RD with device id [%s]", id);
 
     char targetUri[MAX_URI_LENGTH] = { 0 };
-    snprintf(targetUri, MAX_URI_LENGTH, "%s%s?di=%s", host, OC_RSRVD_RD_URI, id);
+    int targetUriBufferRequired = snprintf(targetUri, MAX_URI_LENGTH, "%s%s?di=%s", host, OC_RSRVD_RD_URI, id);
+    if (targetUriBufferRequired >= MAX_URI_LENGTH || targetUriBufferRequired < 0)
+    {
+        return OC_STACK_INVALID_URI;
+    }
 
-    uint8_t len = 0;
+
+    int queryLength = 0;
     char queryParam[MAX_URI_LENGTH] = { 0 };
     for (uint8_t j = 0; j < nHandles; j++)
     {
         OCResource *handle = (OCResource *) resourceHandles[j];
         uint8_t ins = 0;
         OCGetResourceIns(handle, &ins);
-        len += snprintf(queryParam + len, MAX_URI_LENGTH, "&ins=%d", ins);
+        int lenBufferRequired = snprintf(queryParam + queryLength, MAX_URI_LENGTH - queryLength, "&ins=%d", ins);
+        if (lenBufferRequired >= (MAX_URI_LENGTH - queryLength) || lenBufferRequired < 0)
+        {
+            return OC_STACK_INVALID_URI;
+        }
+        queryLength += lenBufferRequired;
         OIC_LOG_V(DEBUG, TAG, "queryParam [%s]", queryParam);
+    }
+
+    if (targetUriBufferRequired + queryLength + 1 > MAX_URI_LENGTH)
+    {
+        return OC_STACK_INVALID_URI;
     }
 
     OICStrcatPartial(targetUri, sizeof(targetUri), queryParam, strlen(queryParam));
@@ -261,5 +307,4 @@ OCStackResult OCRDDeleteWithDeviceId(const char *host, const unsigned char *id,
     return OCDoResource(NULL, OC_REST_DELETE, targetUri, NULL, NULL, connectivityType,
                         qos, cbData, NULL, 0);
 }
-
 #endif

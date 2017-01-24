@@ -37,7 +37,7 @@
 #if defined( __WITH_TLS__) || defined(__WITH_DTLS__)
 #include "pkix_interface.h"
 #endif //__WITH_TLS__ or __WITH_DTLS__
-#define TAG  "SRM"
+#define TAG  "OIC_SRM"
 
 //Request Callback handler
 static CARequestCallback gRequestHandler = NULL;
@@ -45,8 +45,6 @@ static CARequestCallback gRequestHandler = NULL;
 static CAResponseCallback gResponseHandler = NULL;
 //Error Callback handler
 static CAErrorCallback gErrorHandler = NULL;
-//Persistent Storage callback handler for open/read/write/close/unlink
-static OCPersistentStorage *gPersistentStorageHandler =  NULL;
 //Provisioning response callback
 static SPResponseCallback gSPResponseHandler = NULL;
 
@@ -144,17 +142,20 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
 
     // Copy the subjectID
     OicUuid_t subjectId = {.id = {0}};
-    OicUuid_t nullSubjectId = {.id = {0}};
     memcpy(subjectId.id, requestInfo->info.identity.id, sizeof(subjectId.id));
-
-    // if subject id is null that means request is sent thru coap.
-    if (memcmp(subjectId.id, nullSubjectId.id, sizeof(subjectId.id)) != 0)
+    if (endPoint->flags & CA_SECURE)
     {
         OIC_LOG(INFO, TAG, "request over secure channel");
         isRequestOverSecureChannel = true;
     }
 
     //Check the URI has the query and skip it before checking the permission
+    if (NULL == requestInfo->info.resourceUri)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid resourceUri");
+        return;
+    }
+
     char *uri = strstr(requestInfo->info.resourceUri, "?");
     int position = 0;
     if (uri)
@@ -186,9 +187,13 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     OCResource *resPtr = FindResourceByUri(newUri);
     if (NULL != resPtr)
     {
-        // check whether request is for secure resource or not and it should not be a SVR resource
-        if (((resPtr->resourceProperties) & OC_SECURE)
+        // All vertical secure resources and SVR resources other than DOXM & PSTAT should reject request
+        // over coap.
+        if ((((resPtr->resourceProperties) & OC_SECURE)
                             && (g_policyEngineContext.resourceType == NOT_A_SVR_RESOURCE))
+                            || ((g_policyEngineContext.resourceType < OIC_SEC_SVR_TYPE_COUNT)
+                            &&  (g_policyEngineContext.resourceType != OIC_R_DOXM_TYPE)
+                            &&  (g_policyEngineContext.resourceType != OIC_R_PSTAT_TYPE)))
         {
            // if resource is secure and request is over insecure channel
             if (!isRequestOverSecureChannel)
@@ -203,14 +208,14 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
             }
         }
     }
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     /*
      * In case of ACL and CRED, The payload required to verify the payload.
      * Payload information will be used for subowner's permission verification.
      */
     g_policyEngineContext.payload = (uint8_t*)requestInfo->info.payload;
     g_policyEngineContext.payloadSize = requestInfo->info.payloadSize;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     //New request are only processed if the policy engine state is AWAITING_REQUEST.
     if (AWAITING_REQUEST == g_policyEngineContext.state)
@@ -335,18 +340,12 @@ OCStackResult SRMRegisterHandler(CARequestCallback reqHandler,
 OCStackResult SRMRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
 {
     OIC_LOG(DEBUG, TAG, "SRMRegisterPersistentStorageHandler !!");
-    if(!persistentStorageHandler)
-    {
-        OIC_LOG(ERROR, TAG, "The persistent storage handler is invalid");
-        return OC_STACK_INVALID_PARAM;
-    }
-    gPersistentStorageHandler = persistentStorageHandler;
-    return OC_STACK_OK;
+    return OCRegisterPersistentStorageHandler(persistentStorageHandler);
 }
 
 OCPersistentStorage* SRMGetPersistentStorageHandler()
 {
-    return gPersistentStorageHandler;
+    return OCGetPersistentStorageHandler();
 }
 
 OCStackResult SRMInitSecureResources()

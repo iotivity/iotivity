@@ -56,6 +56,8 @@ public class OICConstants {
 
     public static final String ID_URI                        = "id";
 
+    public static final String ROUTE_URI                     = "route";
+
     public static final String INVITE_URI                    = "invite";
 
     public static final String SEARCH_URI                    = "search";
@@ -79,11 +81,11 @@ public class OICConstants {
     public static final String MQ_BROKER_URI                 = "ps";
 
     /* file path for tls communication - Modify filePath to yours */
-    public static final String ROOT_CERT_FILE                = "./rootca.crt";
+    public static final String ROOT_CERT_FILE                = "../certificate/rootca.crt";
 
-    public static final String CLOUD_CERT_FILE               = "./iotivitycloud.crt";
+    public static final String CLOUD_CERT_FILE               = "../certificate/iotivitycloud.crt";
 
-    public static final String CLOUD_KEY_FILE                = "./iotivitycloud.key";
+    public static final String CLOUD_KEY_FILE                = "../certificate/iotivitycloud.key";
 
     /* cloud uuid */
     public static final String CLOUD_UUID                    = "2a6085d1-815d-4277-baba-4e4e4df91308";
@@ -103,6 +105,14 @@ public class OICConstants {
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACCOUNT_URI + "/"
             + OICConstants.TOKEN_REFRESH_URI;
 
+    public static final String ACL_ID_FULL_URI               = "/"
+            + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI + "/"
+            + OICConstants.ID_URI;
+
+    public static final String ACL_VERIFY_FULL_URI           = "/"
+            + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI + "/"
+            + OICConstants.VERIFY_URI;
+
     public static final String GROUP_FULL_URI                = "/"
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI + "/"
             + OICConstants.GROUP_URI;
@@ -111,12 +121,11 @@ public class OICConstants {
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI + "/"
             + OICConstants.INVITE_URI;
 
-    public static final String ACL_VERIFY_FULL_URI           = "/"
-            + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI + "/"
-            + OICConstants.VERIFY_URI;
-
     public static final String KEEP_ALIVE_FULL_URI           = "/" + PREFIX_OIC
             + "/" + OICConstants.KEEP_ALIVE_URI;
+
+    public static final String ROUTE_FULL_URI                = "/" + PREFIX_OIC
+            + "/" + OICConstants.ROUTE_URI;
 
     public static final String MQ_BROKER_FULL_URI            = "/"
             + OICConstants.PREFIX_OIC + "/" + OICConstants.MQ_BROKER_URI;

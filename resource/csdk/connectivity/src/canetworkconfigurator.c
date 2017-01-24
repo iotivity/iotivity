@@ -22,12 +22,14 @@
 
 #include "canetworkconfigurator.h"
 #include "cainterfacecontroller.h"
+#include "cainterface.h"
 #include "uarraylist.h"
 #include "logger.h"
 
 #define TAG "OIC_CA_NW_CONFIG"
 
 static u_arraylist_t *g_selectedNetworkList = NULL;
+static CATransportAdapter_t CASelectedNetwork = CA_DEFAULT_ADAPTER;
 
 #ifdef EDR_ADAPTER
 static uint32_t NETWORK_RFCOMM = CA_ADAPTER_RFCOMM_BTEDR;
@@ -81,6 +83,7 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
                 goto exit;
             }
             res = u_arraylist_add(g_selectedNetworkList, &NETWORK_IP);
+            CASelectedNetwork |= CA_ADAPTER_IP;
 
             break;
 #endif // IP_ADAPTER
@@ -97,6 +100,7 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
                 goto exit;
             }
             res = u_arraylist_add(g_selectedNetworkList, &NETWORK_RFCOMM);
+            CASelectedNetwork |= CA_ADAPTER_RFCOMM_BTEDR;
 
             break;
 #endif // EDR_ADAPTER
@@ -113,6 +117,7 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
                 goto exit;
             }
             res = u_arraylist_add(g_selectedNetworkList, &NETWORK_GATT);
+            CASelectedNetwork |= CA_ADAPTER_GATT_BTLE;
 
             break;
 #endif // LE_ADAPTER
@@ -126,6 +131,7 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
                goto exit;
            }
            res = u_arraylist_add(g_selectedNetworkList, &NETWORK_RA);
+           CASelectedNetwork |= CA_ADAPTER_REMOTE_ACCESS;
            break;
 #endif // RA_ADAPTER
 
@@ -138,6 +144,7 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
                goto exit;
            }
            res = u_arraylist_add(g_selectedNetworkList, &NETWORK_TCP);
+           CASelectedNetwork |= CA_ADAPTER_TCP;
            break;
 #endif // TCP_ADAPTER
 
@@ -154,6 +161,7 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
                goto exit;
            }
            res = u_arraylist_add(g_selectedNetworkList, &NETWORK_NFC);
+           CASelectedNetwork |= CA_ADAPTER_NFC;
 
            break;
 #endif // CA_ADAPTER_NFC
@@ -208,6 +216,7 @@ CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
 
                     OIC_LOG(DEBUG, TAG, "Remove network type(IP)");
                     u_arraylist_remove(g_selectedNetworkList, index);
+                    CASelectedNetwork = CASelectedNetwork & (~CA_ADAPTER_IP);
 
                     break;
 #endif //IP_ADAPTER
@@ -219,6 +228,7 @@ CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
 #else
                     OIC_LOG(DEBUG, TAG, "Remove network type(EDR)");
                     u_arraylist_remove(g_selectedNetworkList, index);
+                    CASelectedNetwork = CASelectedNetwork & (~CA_ADAPTER_RFCOMM_BTEDR);
 
                     break;
 #endif // EDR_ADAPTER
@@ -230,7 +240,7 @@ CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
 #else
                     OIC_LOG(DEBUG, TAG, "Remove network type(LE)");
                     u_arraylist_remove(g_selectedNetworkList, index);
-
+                    CASelectedNetwork = CASelectedNetwork & (~CA_ADAPTER_GATT_BTLE);
                     break;
 #endif // LE_ADAPTER
 
@@ -238,6 +248,7 @@ CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
                 case CA_ADAPTER_REMOTE_ACCESS:
                     OIC_LOG(DEBUG, TAG, "Remove network type(RA)");
                     u_arraylist_remove(g_selectedNetworkList, index);
+                    CASelectedNetwork = CASelectedNetwork & (~CA_ADAPTER_REMOTE_ACCESS);
                     break;
 #endif // RA_ADAPTER
 
@@ -245,6 +256,7 @@ CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
                 case CA_ADAPTER_TCP:
                     OIC_LOG(DEBUG, TAG, "Remove network type(TCP)");
                     u_arraylist_remove(g_selectedNetworkList, index);
+                    CASelectedNetwork = CASelectedNetwork & (~CA_ADAPTER_TCP);
                     break;
 #endif // TCP_ADAPTER
 
@@ -255,7 +267,7 @@ CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
 #else
                    OIC_LOG(DEBUG, TAG, "Add network type(NFC)");
                    u_arraylist_remove(g_selectedNetworkList, index);
-
+                   CASelectedNetwork = CASelectedNetwork & (~CA_ADAPTER_NFC);
                    break;
 #endif // CA_ADAPTER_NFC
                 default:
@@ -274,6 +286,11 @@ CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
 u_arraylist_t *CAGetSelectedNetworkList()
 {
     return g_selectedNetworkList;
+}
+
+CATransportAdapter_t CAGetSelectedNetwork()
+{
+    return CASelectedNetwork;
 }
 
 CAResult_t CAGetNetworkInformationInternal(CAEndpoint_t **info, uint32_t *size)

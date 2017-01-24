@@ -62,6 +62,11 @@ static CAQueueingThread_t *g_sendQueueHandle = NULL;
 #endif
 
 /**
+ * List of the endpoint that has a stack-owned IP address.
+ */
+static u_arraylist_t *g_ownIpEndpointList = NULL;
+
+/**
  * Network Packet Received Callback to CA.
  */
 static CANetworkPacketReceivedCallback g_networkPacketCallback = NULL;
@@ -77,11 +82,13 @@ static CAAdapterChangeCallback g_networkChangeCallback = NULL;
 static CAErrorHandleCallback g_errorCallback = NULL;
 
 static void CAIPPacketReceivedCB(const CASecureEndpoint_t *endpoint,
-                                 const void *data, uint32_t dataLength);
+                                 const void *data, size_t dataLength);
 #ifdef __WITH_DTLS__
-static void CAIPPacketSendCB(CAEndpoint_t *endpoint,
-                             const void *data, uint32_t dataLength);
+static ssize_t CAIPPacketSendCB(CAEndpoint_t *endpoint,
+                                const void *data, size_t dataLength);
 #endif
+
+static void CAUpdateStoredIPAddressInfo(CANetworkStatus_t status);
 
 #ifndef SINGLE_THREAD
 
@@ -108,11 +115,20 @@ CAResult_t CAIPInitializeQueueHandles()
         return CA_STATUS_OK;
     }
 
+    g_ownIpEndpointList = u_arraylist_create();
+    if (!g_ownIpEndpointList)
+    {
+        OIC_LOG(ERROR, TAG, "Memory allocation failed! (g_ownIpEndpointList)");
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
     // Create send message queue
     g_sendQueueHandle = OICMalloc(sizeof(CAQueueingThread_t));
     if (!g_sendQueueHandle)
     {
-        OIC_LOG(ERROR, TAG, "Memory allocation failed!");
+        OIC_LOG(ERROR, TAG, "Memory allocation failed! (g_sendQueueHandle)");
+        u_arraylist_free(&g_ownIpEndpointList);
+        g_ownIpEndpointList = NULL;
         return CA_MEMORY_ALLOC_FAILED;
     }
 
@@ -123,6 +139,8 @@ CAResult_t CAIPInitializeQueueHandles()
         OIC_LOG(ERROR, TAG, "Failed to Initialize send queue thread");
         OICFree(g_sendQueueHandle);
         g_sendQueueHandle = NULL;
+        u_arraylist_free(&g_ownIpEndpointList);
+        g_ownIpEndpointList = NULL;
         return CA_STATUS_FAILED;
     }
 
@@ -134,12 +152,16 @@ void CAIPDeinitializeQueueHandles()
     CAQueueingThreadDestroy(g_sendQueueHandle);
     OICFree(g_sendQueueHandle);
     g_sendQueueHandle = NULL;
+    u_arraylist_free(&g_ownIpEndpointList);
+    g_ownIpEndpointList = NULL;
 }
 
 #endif // SINGLE_THREAD
 
 void CAIPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
 {
+    CAUpdateStoredIPAddressInfo(status);
+
     if (g_networkChangeCallback)
     {
         g_networkChangeCallback(adapter, status);
@@ -148,21 +170,64 @@ void CAIPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
     {
         OIC_LOG(ERROR, TAG, "g_networkChangeCallback is NULL");
     }
+
+    if (CA_INTERFACE_DOWN == status)
+    {
+        OIC_LOG(DEBUG, TAG, "Network status for IP is down");
+#ifdef __WITH_DTLS__
+        OIC_LOG(DEBUG, TAG, "close all ssl session");
+        CAcloseSslConnectionAll();
+#endif
+    }
+}
+
+static void CAUpdateStoredIPAddressInfo(CANetworkStatus_t status)
+{
+    if (CA_INTERFACE_UP == status)
+    {
+        OIC_LOG(DEBUG, TAG, "IP adapter status is on. Store the own IP address info");
+
+        CAEndpoint_t *eps = NULL;
+        uint32_t numOfEps = 0;
+
+        CAResult_t res = CAGetIPInterfaceInformation(&eps, &numOfEps);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CAGetIPInterfaceInformation failed");
+            return;
+        }
+
+        for (size_t i = 0; i < numOfEps; i++)
+        {
+            u_arraylist_add(g_ownIpEndpointList, (void *)&eps[i]);
+        }
+    }
+    else // CA_INTERFACE_DOWN
+    {
+        OIC_LOG(DEBUG, TAG, "IP adapter status is off. Remove the own IP address info");
+
+        uint32_t len = u_arraylist_length(g_ownIpEndpointList);
+        for (uint32_t i = len; i > 0; i--)
+        {
+            CAEndpoint_t *ep = u_arraylist_remove(g_ownIpEndpointList, i - 1);
+            OICFree(ep);
+        }
+    }
 }
 
 #ifdef __WITH_DTLS__
-static void CAIPPacketSendCB(CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
+static ssize_t CAIPPacketSendCB(CAEndpoint_t *endpoint, const void *data, size_t dataLength)
 {
-    VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
-    VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
+    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint is NULL", -1);
+    VERIFY_NON_NULL_RET(data, TAG, "data is NULL", -1);
 
     CAIPSendData(endpoint, data, dataLength, false);
+    return dataLength;
 }
 #endif
 
-
 void CAIPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
-                          uint32_t dataLength)
+                          size_t dataLength)
 {
     VERIFY_NON_NULL_VOID(sep, TAG, "sep is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
@@ -173,6 +238,31 @@ void CAIPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
     {
         g_networkPacketCallback(sep, data, dataLength);
     }
+}
+
+bool CAIPIsLocalEndpoint(const CAEndpoint_t *ep)
+{
+    char addr[MAX_ADDR_STR_SIZE_CA];
+    OICStrcpy(addr, MAX_ADDR_STR_SIZE_CA, ep->addr);
+
+    // drop the zone ID if the address of endpoint is IPv6. ifindex will be checked instead.
+    if ((ep->flags & CA_IPV6) && strchr(addr, '%'))
+    {
+        strtok(addr, "%");
+    }
+
+    size_t len = u_arraylist_length(g_ownIpEndpointList);
+    for (size_t i = 0; i < len; i++)
+    {
+        CAEndpoint_t *ownIpEp = u_arraylist_get(g_ownIpEndpointList, i);
+        if (!strcmp(addr, ownIpEp->addr) && ep->port == ownIpEp->port
+                                         && ep->ifindex == ownIpEp->ifindex)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void CAIPErrorHandler(const CAEndpoint_t *endpoint, const void *data,

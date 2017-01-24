@@ -72,6 +72,9 @@ cxx_headers = ['arpa/inet.h',
                'stdlib.h',
                'string.h',
                'strings.h',
+               'sys/ioctl.h',
+               'sys/poll.h',
+               'sys/select.h',
                'sys/socket.h',
                'sys/stat.h',
                'sys/time.h',
@@ -128,13 +131,6 @@ env.AppendUnique(CPPPATH = [os.path.join(src_dir, 'resource', 'c_common')])
 
 ######################################################################
 
-######################################################################
-# Add platform-specific helper library
-######################################################################
-
-if target_os in ['windows', 'msys_nt']:
-	SConscript('windows/SConscript')
-
 env.AppendUnique(CPPPATH = [
             os.path.join(Dir('.').abspath, 'oic_malloc', 'include'),
             os.path.join(Dir('.').abspath, 'oic_string', 'include'),
@@ -152,6 +148,20 @@ if target_os in ['tizen', 'linux']:
 	env.ParseConfig("pkg-config --cflags --libs uuid")
 
 common_env = env.Clone()
+
+######################################################################
+# Enable treating all warnings as errors
+######################################################################
+
+if target_os in ['windows', 'msys_nt']:
+	common_env.AppendUnique(CCFLAGS=['/W4', '/WX'])
+
+######################################################################
+# Add platform-specific helper library
+######################################################################
+
+if target_os in ['windows', 'msys_nt']:
+	SConscript('windows/SConscript', 'common_env')
 
 ######################################################################
 # Source files and Targets

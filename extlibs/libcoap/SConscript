@@ -27,6 +27,7 @@
 import os
 import glob
 import datetime
+import subprocess
 
 Import('env')
 
@@ -45,38 +46,38 @@ libcoap_repo_url    = 'https://github.com/dthaler/libcoap'
 ######################################################################
 # Download libCoAP
 ######################################################################
-libcoap_branch           = 'develop'
+# Right now this script assumes the revision is a tag, and not a branch or an arbitrary
+# commit. If this changes, update the check below, or else the script will always conclude
+# the repo is not up to date because a tag with that name doesn't exist.
+libcoap_version          = 'IoTivity-1.2.1'
 libcoap_dir              = os.path.join(src_dir, 'extlibs', 'libcoap', 'libcoap')
-libcoap_zip_file         = os.path.join(src_dir, 'extlibs', 'libcoap', libcoap_branch + '.zip')
-libcoap_url              = libcoap_repo_url + '/archive/' + libcoap_branch + '.zip'
-libcoap_checkout_command = 'git clone ' + libcoap_repo_url + '.git extlibs/libcoap/libcoap --branch ' + libcoap_branch
+libcoap_checkout_command = 'git clone ' + libcoap_repo_url + '.git extlibs/libcoap/libcoap -b ' + libcoap_version
 
 if with_upstream_libcoap == '1':
     print '*** Checking for installation of libCoAP ***'
     if not os.path.exists(libcoap_dir):
-        # If the libcoap zip file is not already present, download it
-        if not os.path.exists(libcoap_zip_file):
-            libcoap_zip = libcoap_env.Download(libcoap_zip_file, libcoap_url)
-        else:
-            libcoap_zip = libcoap_zip_file
-        # Unzip libcoap
-        if libcoap_zip and not os.path.exists(os.path.join(libcoap_dir, 'configure')):
-            print 'Unzipping libCoAP'
-            env.UnpackAll(libcoap_dir, libcoap_zip)
-        # Rename libcoap
-        libcoap_unzip_dir = os.path.join(src_dir, 'extlibs', 'libcoap', 'libcoap-' + libcoap_branch)
-        if os.path.exists(os.path.join(libcoap_unzip_dir)):
-            os.rename(libcoap_unzip_dir, libcoap_dir)
-        if not os.path.exists(os.path.join(libcoap_dir, 'README')):
-            print '''
+        print '''
 *********************************** Error: ****************************************
-* Unable to download and unpack libcoap!                                          *
 * Please download libcoap using the following command:                            *
-*                                                                                 *
-''' + libcoap_checkout_command + '''
-*                                                                                 *
-***********************************************************************************'''
-            Exit()
+*     $ %s                              
+***********************************************************************************
+ ''' % libcoap_checkout_command
+        Exit(1)
+
+    os.chdir(libcoap_dir)
+    out = subprocess.check_output('git tag -l ' + libcoap_version, shell = True)
+    if libcoap_version not in out:
+        print out
+        print '''
+*********************************** Error: ****************************************
+* Your libCoAP repo is not up to date with the latest version we require. Please  *
+* update with the following commands:                                             *
+*     $ cd extlibs/libcoap/libcoap                                                *
+*     $ git fetch                                                                 *
+***********************************************************************************
+ '''
+        Exit(1)
+
 else:
     print '''
 *********************************** Info: *****************************************
@@ -116,7 +117,7 @@ if target_os == 'msys_nt':
     libcoap_env.AppendUnique(CPPDEFINES = ['_DEFAULT_SOURCE'])
     libcoap_env.AppendUnique(CFLAGS = ['-std=c99'])
 
-if target_os in ['linux', 'tizen', 'android', 'ios', 'arduino']:
+if target_os in ['linux', 'tizen', 'android', 'ios', 'arduino', 'windows']:
     if with_tcp == True:
         libcoap_env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
 
@@ -150,7 +151,7 @@ if with_upstream_libcoap == '1':
     # Generate coap_config.h
     target_arch = env.get('TARGET_ARCH')
     lib_prefix = '' + str(libcoap_env.get('PREFIX'))
-    libcoap_version = libcoap_branch
+
 
     conf = Configure(libcoap_env)
 

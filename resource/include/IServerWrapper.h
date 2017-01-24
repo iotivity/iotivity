@@ -51,6 +51,7 @@ namespace OC
                     EntityHandler& entityHandler,
                     uint8_t resourceProperty) = 0;
 
+        // @deprecated: Use setPropertyValue instead.
         virtual OCStackResult registerDeviceInfo(
                     const OCDeviceInfo deviceInfo) = 0;
 
@@ -74,19 +75,17 @@ namespace OC
         virtual OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler) = 0;
 
         virtual OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse) = 0;
-#ifdef RD_CLIENT
-        virtual OCStackResult publishResourceToRD(const std::string& host,
-                                                  OCConnectivityType connectivityType,
-                                                  ResourceHandles& resourceHandles,
-                                                  PublishResourceCallback& callback,
-                                                  OCQualityOfService qos) = 0;
 
-        virtual OCStackResult deleteResourceFromRD(const std::string& host,
-                                                   OCConnectivityType connectivityType,
-                                                   ResourceHandles& resourceHandles,
-                                                   DeleteResourceCallback& callback,
-                                                   OCQualityOfService qos) = 0;
-#endif
+        virtual OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag,
+                    const std::string& value) = 0;
+        virtual OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag,
+                    std::string& value) = 0;
+        virtual OCStackResult getPropertyList(OCPayloadType type, const std::string& tag,
+                    std::vector<std::string>& value) = 0;
+
+        virtual OCStackResult stop() = 0;
+
+        virtual OCStackResult start() = 0;
     };
 }
 

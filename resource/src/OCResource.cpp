@@ -33,12 +33,14 @@
 #ifdef HAVE_IN6ADDR_H
 #include <in6addr.h>
 #endif
+#include "ocstack.h"
 
 namespace OC {
 
 static const char COAP[] = "coap://";
 static const char COAPS[] = "coaps://";
 static const char COAP_TCP[] = "coap+tcp://";
+static const char COAPS_TCP[] = "coaps+tcp://";
 static const char COAP_GATT[] = "coap+gatt://";
 static const char COAP_RFCOMM[] = "coap+rfcomm://";
 
@@ -84,9 +86,9 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
 {
     m_devAddr = OCDevAddr{OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0,
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
-                          {0}
+                          {0},
 #endif
-                        };
+                          {0}};
     m_isCollection = std::find(m_interfaces.begin(), m_interfaces.end(), LINK_INTERFACE)
                         != m_interfaces.end();
 
@@ -138,6 +140,11 @@ void OCResource::setHost(const std::string& host)
     else if (host.compare(0, sizeof(COAP_TCP) - 1, COAP_TCP) == 0)
     {
         prefix_len = sizeof(COAP_TCP) - 1;
+    }
+    else if (host.compare(0, sizeof(COAPS_TCP) - 1, COAPS_TCP) == 0)
+    {
+        prefix_len = sizeof(COAPS_TCP) - 1;
+        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags | OC_SECURE);
     }
     else if (host.compare(0, sizeof(COAP_GATT) - 1, COAP_GATT) == 0)
     {
@@ -193,10 +200,17 @@ void OCResource::setHost(const std::string& host)
                 m_interfaces.empty(), m_clientWrapper.expired(), false, false);
         }
 
-        ip6Addr.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
-        m_devAddr.addr[ip6Addr.length()] = '\0';
+        OCStackResult result = OCDecodeAddressForRFC6874(m_devAddr.addr,
+            sizeof(m_devAddr.addr), ip6Addr.c_str(), nullptr);
+
+        if (OC_STACK_OK != result)
+        {
+            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+        }
+
         m_devAddr.port = static_cast<uint16_t>(port);
-        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags & OC_IP_USE_V6);
+        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags | OC_IP_USE_V6);
     }
     else if (host_token[0] == ':')
     {
@@ -502,7 +516,14 @@ std::string OCResource::host() const
 
     if (m_devAddr.adapter & OC_ADAPTER_TCP)
     {
-        ss << COAP_TCP;
+        if (m_devAddr.flags & OC_SECURE)
+        {
+            ss << COAPS_TCP;
+        }
+        else
+        {
+            ss << COAP_TCP;
+        }
     }
     else if (m_devAddr.adapter & OC_ADAPTER_GATT_BTLE)
     {
@@ -526,7 +547,17 @@ std::string OCResource::host() const
 
     if (m_devAddr.flags & OC_IP_USE_V6)
     {
-        ss << '[' << m_devAddr.addr << ']';
+        char addressEncoded[128] = {0};
+
+        OCStackResult result = OCEncodeAddressForRFC6874(addressEncoded,
+                                                         sizeof(addressEncoded),
+                                                         m_devAddr.addr);
+        if (OC_STACK_OK != result)
+        {
+            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+        }
+        ss << '[' << addressEncoded << ']';
     }
     else
     {

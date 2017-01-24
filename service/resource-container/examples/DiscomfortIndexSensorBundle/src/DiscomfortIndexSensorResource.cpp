@@ -66,8 +66,8 @@ void DiscomfortIndexSensorResource::executeLogic()
 void DiscomfortIndexSensorResource::onUpdatedInputResource(const std::string attributeName,
         std::vector<RCSResourceAttributes::Value> values)
 {
-    double sum = 0;
-    double dConvert;
+    double sum = 0.0;
+    double dConvert = 0.0;
     int inputCount = 0;
     std::string itString;
 
@@ -80,7 +80,11 @@ void DiscomfortIndexSensorResource::onUpdatedInputResource(const std::string att
         ++inputCount;
     }
 
-    double result = sum / inputCount;
+    double result = 0.0;
+    if (inputCount)
+    {
+        result = sum / inputCount;
+    }
     std::string indexCount;//string which will contain the indexCount
     std::stringstream convert; // stringstream used for the conversion
     convert << result;//add the value of Number to the characters in the stream

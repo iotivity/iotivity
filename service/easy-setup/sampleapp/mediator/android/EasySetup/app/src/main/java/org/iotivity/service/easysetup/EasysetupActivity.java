@@ -403,7 +403,7 @@ public class EasysetupActivity extends Activity
                                 return;
                             }
 
-                            if(ocResource.getHost().contains("coap+tcp")) {
+                            if(ocResource.getHost().contains("+tcp")) {
                                 Log.d(TAG, "Recv Found resource event  from tcp port," +
                                     "ignoring URI : " + ocResource.getUri());
                                 runOnUiThread(new Runnable() {
@@ -422,6 +422,23 @@ public class EasysetupActivity extends Activity
                             Log.d(TAG,"URI of the resource: " + resourceUri);
                             Log.d(TAG,"Host address of the resource: " + hostAddress);
 
+                            mRemoteEnrollee = mEasySetup.createRemoteEnrollee(ocResource);
+
+                            if(mRemoteEnrollee == null) {
+                                Log.d(TAG, "Recv Found resource event," +
+                                    "ignoring URI : " + ocResource.getUri());
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mDiscoverResource.setEnabled(true);
+                                    }
+                                });
+                                return;
+                            }
+
+                            isFirstTime = false;
+                            mEnrolleeDeviceID = ocResource.getServerId();
+
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -434,9 +451,6 @@ public class EasysetupActivity extends Activity
                                     mProvisionCloudPropProcess.setEnabled(true);
                                 }
                             });
-                            isFirstTime = false;
-                            mRemoteEnrollee = mEasySetup.createRemoteEnrollee(ocResource);
-                            mEnrolleeDeviceID = ocResource.getServerId();
                         }
                     }
                 }
@@ -458,7 +472,7 @@ public class EasysetupActivity extends Activity
                         });
 
                         try {
-                            String requestUri = OcPlatform.WELL_KNOWN_QUERY + "?rt=" + ESConstants.OC_RSRVD_ES_RES_TYPE_PROV;
+                            String requestUri = OcPlatform.WELL_KNOWN_QUERY + "?rt=" + ESConstants.OC_RSRVD_ES_RES_TYPE_EASYSETUP;
                             OcPlatform.findResource("",
                                     requestUri,
                                     EnumSet.of(OcConnectivityType.CT_DEFAULT),

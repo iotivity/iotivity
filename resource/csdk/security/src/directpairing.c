@@ -38,7 +38,6 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "logger.h"
-#include "cJSON.h"
 #include "utlist.h"
 #include "ocpayload.h"
 #include "payload_logging.h"
@@ -61,7 +60,7 @@
 #endif
 
 
-#define TAG ("DP")
+#define TAG ("OIC_DP")
 static const uint16_t CBOR_SIZE = 1024;
 
 /**
@@ -260,19 +259,33 @@ bool DPGenerateQuery(bool isSecure,
 #ifndef WITH_ARDUINO
         case CT_ADAPTER_TCP:
             prefix = (isSecure == true) ? QPREFIX_COAPS_TCP : QPREFIX_COAP_TCP;
+            // intentional fall through don't add break
 #endif
 #endif
         case CT_ADAPTER_IP:
             switch(connType & CT_MASK_FLAGS & ~CT_FLAG_SECURE)
             {
                 case CT_IP_USE_V4:
-                        snRet = snprintf(buffer, bufferSize, "%s%s:%d%s",
-                                         prefix, address, port, uri);
+                    snRet = snprintf(buffer, bufferSize, "%s%s:%d%s",
+                                     prefix, address, port, uri);
                     break;
                 case CT_IP_USE_V6:
-                        snRet = snprintf(buffer, bufferSize, "%s[%s]:%d%s",
-                                         prefix, address, port, uri);
+                {
+                    char addressEncoded[CA_MAX_URI_LENGTH] = {0};
+
+                    OCStackResult result = OCEncodeAddressForRFC6874(addressEncoded,
+                                                                     sizeof(addressEncoded),
+                                                                     address);
+                    if (OC_STACK_OK != result)
+                    {
+                        OIC_LOG_V(ERROR, TAG, "DPGenerateQuery : encoding error %d\n", result);
+                        return false;
+                    }
+
+                    snRet = snprintf(buffer, bufferSize, "%s[%s]:%d%s",
+                                     prefix, addressEncoded, port, uri);
                     break;
+                }
                 default:
                     OIC_LOG(ERROR, TAG, "Unknown address format.");
                     return false;
@@ -296,7 +309,6 @@ bool DPGenerateQuery(bool isSecure,
         case CT_ADAPTER_RFCOMM_BTEDR:
             OIC_LOG(ERROR, TAG, "Not supported connectivity adapter.");
             return false;
-            break;
 #endif
         default:
             OIC_LOG(ERROR, TAG, "Unknown connectivity adapter.");
@@ -467,8 +479,8 @@ OCStackResult FinalizeDirectPairing(void *ctx, OCDirectPairingDev_t* peer,
         OIC_LOG(ERROR, TAG, "Failed to DpairingToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
-    OIC_LOG(INFO, TAG, "DPARING CBOR data:");
-    OIC_LOG_BUFFER(INFO, TAG, secPayload->securityData, secPayload->payloadSize);
+    OIC_LOG(DEBUG, TAG, "DPARING CBOR data:");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!DPGenerateQuery(true,
@@ -724,8 +736,8 @@ OCStackResult DPDirectPairing(void *ctx, OCDirectPairingDev_t* peer, OicSecPrm_t
         OIC_LOG(ERROR, TAG, "Failed to DpairingToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
-    OIC_LOG(INFO, TAG, "DPARING CBOR data:");
-    OIC_LOG_BUFFER(INFO, TAG, secPayload->securityData, secPayload->payloadSize);
+    OIC_LOG(DEBUG, TAG, "DPARING CBOR data:");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!DPGenerateQuery(false,

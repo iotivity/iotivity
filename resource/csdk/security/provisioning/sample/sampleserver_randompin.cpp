@@ -27,8 +27,8 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_PTHREAD_H
-#include <pthread.h>
+#ifdef HAVE_TIME_H
+#include <time.h>
 #endif
 #include <signal.h>
 #include "ocstack.h"
@@ -48,9 +48,6 @@
 #define TAG "SAMPLE_RANDOMPIN"
 
 int gQuitFlag = 0;
-#ifdef _ENABLE_MULTIPLE_OWNER_
-static bool g_LoopFlag = true;
-#endif //_ENABLE_MULTIPLE_OWNER_
 
 /* Structure to represent a LED resource */
 typedef struct LEDRESOURCE{
@@ -145,15 +142,17 @@ const char *getResult(OCStackResult result) {
     }
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
-static pthread_t oc_process_thread;
+#ifdef MULTIPLE_OWNER
 
-static void* oc_process_loop(void* ptr)
+#include <assert.h>
+#include <thread>
+#include <chrono>
+
+static bool volatile g_LoopFlag;
+static std::thread* oc_process_thread;
+
+static void oc_process_loop()
 {
-    struct timespec timeout;
-    timeout.tv_sec  = 0;
-    timeout.tv_nsec = 100000000L;
-
     while(g_LoopFlag)
     {
         if (OCProcess() != OC_STACK_OK)
@@ -162,22 +161,23 @@ static void* oc_process_loop(void* ptr)
             g_LoopFlag = false;
             break;
         }
-        nanosleep(&timeout, NULL);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    pthread_join(&oc_process_thread, NULL);
-    return NULL;
 }
 
 static void StartOCProcessThread()
 {
-    pthread_create(&oc_process_thread, NULL, oc_process_loop, NULL);
+    g_LoopFlag = true;
+    oc_process_thread = new std::thread(oc_process_loop);
 }
 
 static void StopOCProcessThread()
 {
+    assert(oc_process_thread->joinable() == true);
     g_LoopFlag = false;
+    oc_process_thread->join();
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
 {
@@ -314,7 +314,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
                 gLedInstance[gCurrLedInstance].state = 0;
                 gLedInstance[gCurrLedInstance].power = 0;
                 gCurrLedInstance++;
-                strncpy ((char *)response->resourceUri, newLedUri, MAX_URI_LENGTH);
+                strncpy ((char *)response->resourceUri, newLedUri, sizeof(response->resourceUri));
                 ehResult = OC_EH_RESOURCE_CREATED;
             }
         }
@@ -443,11 +443,18 @@ void handleSigInt(int signum)
 
 FILE* server_fopen(const char *path, const char *mode)
 {
-    (void)path;
-    return fopen(CRED_FILE, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CRED_FILE, mode);
+    }
+    else
+    {
+        // unknown file request - try to open it by the given name
+        return fopen(path, mode);
+    }
 }
 
-void GeneratePinCB(char* pin, size_t pinSize)
+void DisplayPinCB(char *pin, size_t pinSize, void *context)
 {
     if(NULL == pin || pinSize <= 0)
     {
@@ -475,10 +482,21 @@ int main()
     }
 
    /**
-     * If server supported random pin based ownership transfer,
-     * callback of print PIN should be registered before runing server.
+     * If the server supports random pin based ownership transfer, the callback
+     * to display a PIN should be registered before running the server.
      */
-    SetGeneratePinCB(GeneratePinCB);
+    SetDisplayPinWithContextCB(DisplayPinCB, NULL);
+
+    /**
+     * Random PIN generation policy can be changed through SetRandomPinPolicy() API.
+     * first param : byte length of random PIN ( 4 <= first param <= 32)
+     * second param : PIN type (This is bitmask)
+     */
+    if(OC_STACK_OK != SetRandomPinPolicy(8, NUM_PIN))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to setting PIN policy");
+        return 0;
+    }
 
     /*
      * Declare and create the example resource: LED
@@ -489,7 +507,7 @@ int main()
     OIC_LOG(INFO, TAG, "Entering ocserver main loop...");
     signal(SIGINT, handleSigInt);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     StartOCProcessThread();
 
     while(!gQuitFlag)
@@ -499,8 +517,8 @@ int main()
         char in = getchar();
         if('G' == in || 'g' == in)
         {
-            char ranPin[OXM_RANDOM_PIN_SIZE + 1] = {0};
-            GeneratePin(ranPin, OXM_RANDOM_PIN_SIZE + 1);
+            char ranPin[OXM_RANDOM_PIN_MAX_SIZE + 1] = {0};
+            GeneratePin(ranPin, sizeof(ranPin));
         }
         if('E' == in || 'e' == in)
         {
@@ -523,7 +541,7 @@ int main()
         }
         nanosleep(&timeout, NULL);
     }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     OIC_LOG(INFO, TAG, "Exiting ocserver main loop...");
 

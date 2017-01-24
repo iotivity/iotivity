@@ -35,6 +35,7 @@
 #define CLOUD_CONTEXT_VALUE 0x99
 
 char CLOUD_ADDRESS[100];
+char CLOUD_TOPIC[100];
 char CLOUD_AUTH_PROVIDER[100];
 char CLOUD_AUTH_CODE[100];
 char CLOUD_UID[100];
@@ -47,8 +48,14 @@ NSTopicLL * g_topicLL = NULL;
 
 FILE* server_fopen(const char *path, const char *mode)
 {
-    (void)path;
-    return fopen("oic_ns_provider_db.dat", mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen("oic_ns_provider_db.dat", mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 void printProviderTopicList(NSTopicLL * topics)
@@ -169,6 +176,9 @@ int main(void)
         printf("4. Select Topics\n");
         printf("5. Cancel select Topics\n");
         printf("0. Exit\n");
+#ifdef WITH_MQ
+        printf("11. Subscribe MQ Service\n");
+#endif
 #ifdef WITH_CLOUD
         printf("21. Enable Remote Service (after login)\n");
         printf("31. Cloud Signup\n");
@@ -250,6 +260,19 @@ int main(void)
                 printf("0. Exit");
                 isExit = true;
                 break;
+#if WITH_MQ
+            case 11:
+                printf("11. Subscribe MQ Service\n");
+
+                printf("Remote Server Address: ");
+                input(CLOUD_ADDRESS);
+
+                printf("Topic[notification]: ");
+                input(CLOUD_TOPIC);
+
+                NSConsumerSubscribeMQService(CLOUD_ADDRESS, CLOUD_TOPIC);
+                break;
+#endif
 #ifdef WITH_CLOUD
             case 21:
                 printf("Enable Remote Service");

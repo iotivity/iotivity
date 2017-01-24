@@ -29,11 +29,12 @@
 #include "ocprovisioningmanager.h"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
+#include "oxmmanufacturercert.h"
 #include "securevirtualresourcetypes.h"
 #include "provisioningdatabasemanager.h"
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 #include "multipleownershiptransfermanager.h"
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 #include "srmutility.h"
 #include "doxmresource.h"
 #include "pmtypes.h"
@@ -115,6 +116,40 @@ TEST(RandomPinOxMTest, NullParam)
     EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
 }
 
+TEST(ManufacturerCertOxMTest, NullParam)
+{
+    OTMContext_t* otmCtx = NULL;
+    OCStackResult res = OC_STACK_ERROR;
+    uint8_t *payloadRes = NULL;
+    size_t size = 0;
+
+    res = PrepareMCertificateCallback(otmCtx);
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
+
+    res = CreateSecureSessionMCertificateCallback(otmCtx);
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
+
+    res = CreateMCertificateBasedSelectOxmPayload(otmCtx, &payloadRes, &size);
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
+
+    res = CreateMCertificateBasedOwnerTransferPayload(otmCtx, &payloadRes, &size);
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
+
+    OTMContext_t otmCtx2;
+    otmCtx2.selectedDeviceInfo = NULL;
+
+    res = InputPinCodeCallback(&otmCtx2);
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
+
+    res = CreateSecureSessionMCertificateCallback(&otmCtx2);
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
+
+    res = CreateMCertificateBasedSelectOxmPayload(&otmCtx2, &payloadRes, &size);
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
+
+    res = CreateMCertificateBasedOwnerTransferPayload(&otmCtx2, &payloadRes, &size);
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
+}
 
 /****************************************
  * Test the OTM modules with sample server
@@ -205,10 +240,10 @@ static pid_t g_myPID2;
 static const char* g_otmCtx = "Test User Context";
 static OCProvisionDev_t* g_unownedDevices = NULL;
 static OCProvisionDev_t* g_ownedDevices = NULL;
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 static OCProvisionDev_t* g_motEnabledDevices = NULL;
 static OCProvisionDev_t* g_multiplOwnedDevices = NULL;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 static void GetCurrentWorkingDirectory(char* buf, size_t bufsize)
 {
@@ -237,16 +272,21 @@ static void GetCurrentWorkingDirectory(char* buf, size_t bufsize)
 
 static FILE* fopen_prvnMng(const char* path, const char* mode)
 {
-    (void)path;  // unused |path| parameter
-
-    // input |g_svr_db_fname| internally by force, not using |path| parameter
-    // because |OCPersistentStorage::open| is called |OCPersistentStorage| internally
-    // with its own |SVR_DB_FILE_NAME|
-    char cwd[1024] = {0};
-    char svr_db_path[1024] = {0};
-    GetCurrentWorkingDirectory(cwd, sizeof(cwd));
-    snprintf(svr_db_path, sizeof(svr_db_path), "%s%s", cwd, SVR_DB_PATH);
-    return fopen(svr_db_path, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        // input |g_svr_db_fname| internally by force, not using |path| parameter
+        // because |OCPersistentStorage::open| is called |OCPersistentStorage| internally
+        // with its own |SVR_DB_FILE_NAME|
+        char cwd[1024] = { 0 };
+        char svr_db_path[1024] = { 0 };
+        GetCurrentWorkingDirectory(cwd, sizeof(cwd));
+        snprintf(svr_db_path, sizeof(svr_db_path), "%s%s", cwd, SVR_DB_PATH);
+        return fopen(svr_db_path, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 // callback function(s) for provisioning client using C-level provisioning API
@@ -268,7 +308,7 @@ static void ownershipTransferCB(void* ctx, int UNUSED1, OCProvisionResult_t* UNU
     g_doneCB = true;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
@@ -296,7 +336,7 @@ static void provisionPreconfiguredPinCB(void* ctx, int nOfRes, OCProvisionResult
     g_callbackResult = !hasError;
     g_doneCB = true;
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 // callback function(s) for provisioning client using C-level provisioning API
 static void removeDeviceCB(void* ctx, int UNUSED1, OCProvisionResult_t* UNUSED2, bool hasError)
@@ -611,7 +651,7 @@ TEST(PerformUnlinkDevices, NullParam)
     EXPECT_EQ(OC_STACK_OK, result);
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 TEST(RegisterPreconfiguredPIN, NullParam)
 {
     OCStackResult result = SetPreconfigPin("12341234", strlen("12341234"));
@@ -632,7 +672,7 @@ TEST(EnableMOT, NullParam)
     EXPECT_NE((OCProvisionDev_t*)NULL, g_ownedDevices);
 
     g_doneCB = false;
-    result = MOTChangeMode(NULL, g_ownedDevices, OIC_MULTIPLE_OWNER_ENABLE, updateDoxmForMOTCB);
+    result = OCChangeMOTMode(NULL, g_ownedDevices, OIC_MULTIPLE_OWNER_ENABLE, updateDoxmForMOTCB);
     EXPECT_EQ(OC_STACK_OK, result);
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
@@ -664,11 +704,11 @@ TEST(ProvisonPreconfiguredPIN, NullParam)
     OCStackResult result = OC_STACK_OK;
 
     g_doneCB = false;
-    result = OCProvisionPreconfPin(NULL, g_motEnabledDevices, "12341234", strlen("12341234"), provisionPreconfiguredPinCB);
+    result = OCProvisionPreconfigPin(NULL, g_motEnabledDevices, "12341234", strlen("12341234"), provisionPreconfiguredPinCB);
     EXPECT_EQ(OC_STACK_OK, result);
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionPreconfPin callback error");
+        OIC_LOG(ERROR, TAG, "OCProvisionPreconfigPin callback error");
         return;
     }
 
@@ -680,7 +720,7 @@ TEST(SelectMOTMethod, NullParam)
     OCStackResult result = OC_STACK_OK;
 
     g_doneCB = false;
-    result = MOTSelectMOTMethod(NULL, g_motEnabledDevices, OIC_PRECONFIG_PIN, updateDoxmForMOTCB);
+    result = OCSelectMOTMethod(NULL, g_motEnabledDevices, OIC_PRECONFIG_PIN, updateDoxmForMOTCB);
     EXPECT_EQ(OC_STACK_OK, result);
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
@@ -724,7 +764,7 @@ TEST(DiscoverMultipleOwnedDevices, NullParam)
     EXPECT_TRUE(NULL != g_multiplOwnedDevices);
 }*/
 
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 TEST(PerformRemoveDevice, NullParam)
 {

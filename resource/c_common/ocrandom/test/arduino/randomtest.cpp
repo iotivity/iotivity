@@ -28,21 +28,6 @@ void setup() {
     Serial.begin(115200);
     Serial.println("Testing Random Number generator for Arduino");
 
-    Serial.print("Testing OCSeedRandom ... ");
-    if (OCSeedRandom() == 0) {
-        Serial.println("[Success]");
-    } else {
-        Serial.println("[Fail]");
-    }
-
-    Serial.print("Testing OCGetRandomByte ... ");
-    uint8_t value8 = OCGetRandomByte();
-    if (value8 >= 0 && value8 < pow(2, 8)) {
-        Serial.println("[Success]");
-    } else {
-        Serial.println("[Fail]");
-    }
-
     Serial.print("Testing OCGetRandom ... ");
     uint32_t value32 = OCGetRandom();
     if (value32 >= 0 && value32 < pow(2, 32)) {
@@ -51,9 +36,11 @@ void setup() {
         Serial.println("[Fail]");
     }
 
-    Serial.print("Testing OCFillRandomMem ... ");
+    Serial.print("Testing OCGetRandomBytes ... ");
     uint8_t array[ARR_SIZE] = {};
-    OCFillRandomMem(array + 1, ARR_SIZE - 2);
+    if (!OCGetRandomBytes(array + 1, ARR_SIZE - 2)) {
+        Serial.println("[Fail]");
+    }
     uint8_t overall = 0;
     uint8_t value82 = 0;
     for (int i = 1; i <= ARR_SIZE - 2; i++) {

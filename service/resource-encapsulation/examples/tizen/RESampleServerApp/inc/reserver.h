@@ -31,7 +31,7 @@ using namespace OIC::Service;
 typedef void(*ClientMenuHandler)();
 typedef int ReturnValue;
 
-constexpr int DEFALUT_VALUE = 0;
+constexpr int DEFAULT_VALUE = 0;
 
 constexpr int PRESENCE_ON = 1;
 constexpr int PRESENCE_OFF = 2;

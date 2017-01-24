@@ -854,6 +854,7 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
             if ((*env)->ExceptionCheck(env))
             {
                 OIC_LOG(ERROR, TAG, "Failed to write data in outputStram");
+                CALogSendStateInfo(CA_ADAPTER_RFCOMM_BTEDR, address, 0, dataLength, false, NULL);
                 (*env)->ExceptionDescribe(env);
                 (*env)->ExceptionClear(env);
                 return CA_STATUS_FAILED;
@@ -861,12 +862,14 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
 
             OIC_LOG_V(INFO, TAG, "EDR sendTo is successful: %u bytes, to %s",
                       dataLength, address);
+            CALogSendStateInfo(CA_ADAPTER_RFCOMM_BTEDR, address, 0, dataLength, true, NULL);
         }
         else
         {
+            OIC_LOG(ERROR, TAG, "error!!");
+            CALogSendStateInfo(CA_ADAPTER_RFCOMM_BTEDR, address, 0, dataLength, false, NULL);
             (*env)->ExceptionDescribe(env);
             (*env)->ExceptionClear(env);
-            OIC_LOG(ERROR, TAG, "error!!");
             return CA_STATUS_FAILED;
         }
     }
@@ -1029,6 +1032,7 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
 
     if ((*env)->ExceptionCheck(env))
     {
+        CALogSendStateInfo(CA_ADAPTER_RFCOMM_BTEDR, address, 0, 0, false, "Connect has Failed");
         OIC_LOG(ERROR, TAG, "Connect is Failed!!!");
         (*env)->ExceptionDescribe(env);
         (*env)->ExceptionClear(env);

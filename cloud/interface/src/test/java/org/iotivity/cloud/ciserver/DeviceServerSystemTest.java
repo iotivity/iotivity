@@ -36,15 +36,19 @@ import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
+import org.iotivity.cloud.base.protocols.ISignaling;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
+import org.iotivity.cloud.base.protocols.coap.CoapSignaling;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
+import org.iotivity.cloud.base.protocols.enums.SignalingMethod;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.base.server.HttpServer;
 import org.iotivity.cloud.ciserver.DeviceServerSystem.CoapDevicePool;
+import org.iotivity.cloud.ciserver.DeviceServerSystem.CoapSignalingHandler;
 import org.iotivity.cloud.ciserver.resources.proxy.account.Account;
 import org.iotivity.cloud.ciserver.resources.proxy.mq.MessageQueue;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceDirectory;
@@ -69,6 +73,7 @@ import io.netty.util.Attribute;
 
 public class DeviceServerSystemTest {
     private ChannelHandlerContext                   mCtx                  = null;
+    private ChannelHandlerContext                   mCtxSignal            = null;
     private String                                  mDi                   = "B371C481-38E6-4D47-8320-7688D8A5B58C";
     private String                                  mUserId               = "testuser";
     private String                                  mAccessToken          = "1689c70ffa245effc563017fee36d250";
@@ -78,6 +83,7 @@ public class DeviceServerSystemTest {
             CoapDevice.class);
     private IResponse                               mRes                  = null;
     private IRequest                                mReq                  = null;
+    private ISignaling                              mSig                  = null;
     final CountDownLatch                            mLatch                = new CountDownLatch(
             1);
     private Cbor<HashMap<Object, Object>>           mCbor                 = new Cbor<>();
@@ -90,6 +96,8 @@ public class DeviceServerSystemTest {
     private DeviceServerSystem.CoapLifecycleHandler mCoapLifecycleHandler = mDeviceServerSystem.new CoapLifecycleHandler();
     @InjectMocks
     private DeviceServerSystem.CoapAuthHandler      mCoapAuthHandler      = mDeviceServerSystem.new CoapAuthHandler();
+    @InjectMocks
+    private CoapSignalingHandler                    mCoapSignalingHandler = mDeviceServerSystem.new CoapSignalingHandler();
 
     @Before
     public void setUp() throws Exception {
@@ -98,6 +106,7 @@ public class DeviceServerSystemTest {
         mRes = null;
         mReq = null;
         mCtx = mock(ChannelHandlerContext.class);
+        mCtxSignal = mock(ChannelHandlerContext.class);
         Cbor<HashMap<Object, Object>> cbor = new Cbor<>();
         Channel channel = mock(Channel.class);
         Attribute<Device> attribute = mock(Attribute.class);
@@ -127,6 +136,31 @@ public class DeviceServerSystemTest {
                 return null;
             }
         }).when(mCtx).fireChannelRead(Mockito.any());
+
+        Mockito.doAnswer(new Answer<Object>() {
+            @Override
+            public CoapSignaling answer(InvocationOnMock invocation)
+                    throws Throwable {
+                Object[] args = invocation.getArguments();
+                CoapSignaling signaling = (CoapSignaling) args[0];
+                System.out.println("\t----------payload : "
+                        + signaling.getPayloadString());
+                System.out.println("\t----------signaling method : "
+                        + signaling.getSignalingMethod());
+                if (signaling.getSignalingMethod()
+                        .equals(SignalingMethod.CSM)) {
+                    System.out.println("\t----------CSM Blockwise Transfer : "
+                            + signaling.getCsmBlockWiseTransfer());
+                    System.out.println("\t----------CSM Max Message Size : "
+                            + signaling.getCsmMaxMessageSize());
+                    System.out.println("\t----------CSM Server Name : "
+                            + signaling.getCsmServerName());
+                }
+                mSig = signaling;
+                mLatch.countDown();
+                return null;
+            }
+        }).when(mCtxSignal).fireChannelRead(Mockito.any());
 
         Mockito.doAnswer(new Answer<Object>() {
             @Override
@@ -364,6 +398,20 @@ public class DeviceServerSystemTest {
         ChannelPromise channelPromise = null;
         mCoapAuthHandler.write(mCtx, response, channelPromise);
         assertEquals(mRes.getStatus(), ResponseStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    public void coapAuthHandlerCSMSignaling() throws Exception {
+
+        System.out.println(
+                "\t--------------coapAuthHandler coapAuthHandlerCSMSignaling Test------------");
+        ISignaling signal = MessageBuilder.createSignaling(SignalingMethod.CSM);
+        CoapSignaling signaling = (CoapSignaling) signal;
+        signaling.setCsmBlockWiseTransfer(true);
+        signaling.setCsmMaxMessageSize(1124);
+        signaling.setCsmServerName("default_server_name");
+        mCoapSignalingHandler.channelRead(mCtxSignal, signal);
+        assertEquals(mSig.getSignalingMethod(), SignalingMethod.CSM);
     }
 
     @Test

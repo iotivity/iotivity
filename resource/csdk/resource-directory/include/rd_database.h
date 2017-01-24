@@ -47,19 +47,6 @@ OCStackResult OCRDDatabaseInit(const char *path);
 OCStackResult OCRDDatabaseStoreResources(const OCRepPayload *payload, const OCDevAddr *address);
 
 /**
- * Search the RD database for queries.
- *
- * @param interfaceType is the interface type that is queried.
- * @param resourceType is the resource type that is queried.
- * @param discPayload is NULL if no resource found or else OCDiscoveryPayload with the details
- * about the resource.
- *
- * @return ::OC_STACK_OK in case of success or else other value.
- */
-OCStackResult OCRDDatabaseCheckResources(const char *interfaceType, const char *resourceType,
-    OCDiscoveryPayload *discPayload);
-
-/**
  * Updates the RD resource
  *
  * @param deviceId of the device for which resources will be update.

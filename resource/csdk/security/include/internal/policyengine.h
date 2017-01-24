@@ -46,15 +46,14 @@ typedef struct PEContext
     char        resource[MAX_URI_LENGTH];
     OicSecSvrType_t resourceType;
     uint16_t    permission;
-    bool        matchingAclFound;
     bool        amsProcessing;
     SRMAccessResponse_t retVal;
     AmsMgrContext_t     *amsMgrContext;
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     uint8_t* payload;
     size_t payloadSize;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 } PEContext_t;
 
 /**

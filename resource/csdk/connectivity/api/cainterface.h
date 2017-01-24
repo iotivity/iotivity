@@ -68,8 +68,11 @@ typedef struct
 /**
  * Callback function to pass the connection information from CA to RI.
  * @param[out]   object           remote device information.
+ * @param[out]   isConnected      Whether keepalive message needs to be sent.
+ * @param[out]   isClient         Host Mode of Operation.
  */
-typedef void (*CAKeepAliveConnectionCallback)(const CAEndpoint_t *object, bool isConnected);
+typedef void (*CAKeepAliveConnectionCallback)(const CAEndpoint_t *object, bool isConnected,
+                                              bool isClient);
 
 /**
  * Register connection status changes callback to process KeepAlive.
@@ -82,10 +85,10 @@ void CARegisterKeepAliveHandler(CAKeepAliveConnectionCallback ConnHandler);
  * Initialize the connectivity abstraction module.
  * It will initialize adapters, thread pool and other modules based on the platform
  * compilation options.
- *
+ * @param[in]   transportType  transport type to initialize.
  * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
  */
-CAResult_t CAInitialize();
+CAResult_t CAInitialize(CATransportAdapter_t transportType);
 
 /**
  * Terminate the connectivity abstraction module.
@@ -214,6 +217,13 @@ CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork);
  *          ::CA_STATUS_INVALID_PARAM or ::CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size);
+
+/**
+ * Get supported network adapter.
+ *
+ * @return  Bit combinations of CATransportAdapter_t enumeration which indicate enabled adapter.
+ */
+CATransportAdapter_t CAGetSelectedNetwork();
 
 /**
  * To Handle the Request or Response.

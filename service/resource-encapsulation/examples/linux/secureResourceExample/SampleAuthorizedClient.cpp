@@ -314,9 +314,16 @@ void runDiscovery()
     g_currentRun = runResourceSelection;
 }
 
-static FILE *client_open(const char * /*path*/, const char *mode)
+static FILE *client_open(const char *path, const char *mode)
 {
-    return fopen("./oic_svr_db_client.json", mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen("./oic_svr_db_client.json", mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int main()

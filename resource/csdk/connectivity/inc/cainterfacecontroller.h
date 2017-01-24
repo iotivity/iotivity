@@ -50,8 +50,9 @@ void CAInitializeAdapters();
  * Initializes different adapters based on the compilation flags.
  * @param[in]   handle           thread pool handle created by message handler
  *                               for different adapters.
+ * @param[in]   transportType    transport type to initialize.
  */
-void CAInitializeAdapters(ca_thread_pool_t handle);
+void CAInitializeAdapters(ca_thread_pool_t handle, CATransportAdapter_t transportType);
 #endif
 
 /**
@@ -159,6 +160,12 @@ CAResult_t CAStopListeningServerAdapters();
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAStartDiscoveryServerAdapters();
+
+/**
+ * Check whether the endpoint is my own or not.
+ * @return  true or false.
+ */
+bool CAIsLocalEndpoint(const CAEndpoint_t *ep);
 
 /**
  * Terminates the adapters which are initialized during the initialization.

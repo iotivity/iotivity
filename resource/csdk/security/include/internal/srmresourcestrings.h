@@ -101,15 +101,15 @@ extern const char * OIC_JSON_PERMISSION_NAME;
 extern const char * OIC_JSON_OWNERS_NAME;
 extern const char * OIC_JSON_OWNER_NAME;
 extern const char * OIC_JSON_DEVOWNERID_NAME;
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 extern const char * OIC_JSON_SUBOWNERID_NAME;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 extern const char * OIC_JSON_OWNED_NAME;
 extern const char * OIC_JSON_OXM_NAME;
 extern const char * OIC_JSON_OXMS_NAME;
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 extern const char * OIC_JSON_MOM_NAME;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 extern const char * OIC_JSON_OXM_TYPE_NAME;
 extern const char * OIC_JSON_OXM_SEL_NAME;
 extern const char * OIC_JSON_DEVICE_ID_FORMAT_NAME;
@@ -121,6 +121,7 @@ extern const char * OIC_JSON_PRIVATEDATA_NAME;
 extern const char * OIC_JSON_PUBDATA_NAME;
 extern const char * OIC_JSON_PRIVDATA_NAME;
 extern const char * OIC_JSON_OPTDATA_NAME;
+extern const char * OIC_JSON_REVOCATION_STATUS_NAME;
 extern const char * OIC_JSON_CREDUSAGE_NAME;
 extern const char * OIC_JSON_CRMS_NAME;
 extern const char * OIC_JSON_VALIDITY_NAME;
@@ -152,17 +153,22 @@ extern const char * OIC_JSON_REL_NAME;
 extern const char * OIC_JSON_RT_NAME;
 extern const char * OIC_JSON_IF_NAME;
 extern const char * OIC_JSON_ROWNERID_NAME;
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 extern const char * OIC_JSON_EOWNERID_NAME;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 extern const char * OIC_JSON_ENCODING_NAME;
 extern const char * OIC_JSON_DATA_NAME;
 extern const char * OIC_JSON_SEC_V_NAME;
 
 extern const char * OIC_JSON_EMPTY_STRING;
 
+// Certificates provided by Cloud
 extern const char * TRUST_CA;
 extern const char * PRIMARY_CERT;
+
+// Certificates provided by manufacturer
+extern const char * MF_TRUST_CA;
+extern const char * MF_PRIMARY_CERT;
 
 extern OicUuid_t WILDCARD_SUBJECT_ID;
 extern OicUuid_t WILDCARD_SUBJECT_B64_ID;
@@ -173,9 +179,14 @@ extern const char * WILDCARD_RESOURCE_URI;
 extern const char * OXM_JUST_WORKS;
 extern const char * OXM_RANDOM_DEVICE_PIN;
 extern const char * OXM_MANUFACTURER_CERTIFICATE;
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 extern const char * OXM_PRECONF_PIN;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
+extern const char * OXM_MV_JUST_WORKS;
+extern const char * OXM_CON_MFG_CERT;
+
+//Mutual Verified Just-Works Message Prefix
+extern const char * MUTUAL_VERIF_NUM;
 
 extern const char * OIC_SEC_ENCODING_BASE64;
 extern const char * OIC_SEC_ENCODING_RAW;

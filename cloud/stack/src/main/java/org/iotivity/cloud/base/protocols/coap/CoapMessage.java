@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.iotivity.cloud.base.exception.ServerException.BadOptionException;
 import org.iotivity.cloud.base.protocols.Message;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.Observe;
@@ -157,6 +158,13 @@ public abstract class CoapMessage extends Message {
             case 6:
                 mObserve = Bytes.bytesToInt(value);
                 break;
+            default: {
+                if (optnum % 2 == 1) {
+                    throw new BadOptionException(
+                            "unrecognized critical option # " + optnum
+                                    + " received");
+                }
+            }
         }
     }
 

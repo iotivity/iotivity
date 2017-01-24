@@ -29,22 +29,20 @@ import org.iotivity.cloud.base.ServerSystem;
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.Device;
-import org.iotivity.cloud.base.device.HttpDevice;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.exception.ClientException;
 import org.iotivity.cloud.base.exception.ServerException;
+import org.iotivity.cloud.base.exception.ServerException.BadOptionException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
-import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
 import org.iotivity.cloud.base.exception.ServerException.UnAuthorizedException;
-import org.iotivity.cloud.base.protocols.IRequest;
-import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
+import org.iotivity.cloud.base.protocols.coap.CoapSignaling;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
-import org.iotivity.cloud.base.protocols.http.HCProxyProcessor;
+import org.iotivity.cloud.base.protocols.enums.SignalingMethod;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.base.server.HttpServer;
 import org.iotivity.cloud.base.server.Server;
@@ -55,6 +53,7 @@ import org.iotivity.cloud.util.Log;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 
 /**
@@ -65,9 +64,10 @@ import io.netty.channel.ChannelPromise;
 
 public class DeviceServerSystem extends ServerSystem {
 
-    private Cbor<HashMap<String, Object>> mCbor     = new Cbor<HashMap<String, Object>>();
+    private Cbor<HashMap<String, Object>>                 mCbor     = new Cbor<HashMap<String, Object>>();
+    private HashMap<ChannelHandlerContext, CoapSignaling> mCsmMap   = new HashMap<>();
 
-    IRequestChannel                       mRDServer = null;
+    IRequestChannel                                       mRDServer = null;
 
     public DeviceServerSystem() {
         mRDServer = ConnectorPool.getConnection("rd");
@@ -114,8 +114,7 @@ public class DeviceServerSystem extends ServerSystem {
             Iterator<String> iterator = mMapDevice.keySet().iterator();
             while (iterator.hasNext()) {
                 String deviceId = iterator.next();
-                CoapDevice getDevice = (CoapDevice) mDevicePool
-                        .queryDevice(deviceId);
+                CoapDevice getDevice = (CoapDevice) queryDevice(deviceId);
                 getDevice.removeObserveChannel(
                         ((CoapDevice) device).getRequestChannel());
             }
@@ -151,7 +150,7 @@ public class DeviceServerSystem extends ServerSystem {
             if (msg instanceof CoapRequest) {
                 try {
                     CoapDevice coapDevice = (CoapDevice) ctx.channel()
-                            .attr(ServerSystem.keyDevice).get();
+                            .attr(keyDevice).get();
 
                     if (coapDevice.isExpiredTime()) {
                         throw new UnAuthorizedException("token is expired");
@@ -159,11 +158,14 @@ public class DeviceServerSystem extends ServerSystem {
 
                     CoapRequest coapRequest = (CoapRequest) msg;
                     IRequestChannel targetChannel = null;
-                    if (coapRequest.getUriPathSegments()
-                            .contains(Constants.REQ_DEVICE_ID)) {
+                    if (coapRequest.getUriPath()
+                            .contains(Constants.ROUTE_FULL_URI)) {
+
+                        int RouteResourcePathSize = Constants.ROUTE_FULL_URI
+                                .split("/").length;
                         CoapDevice targetDevice = (CoapDevice) mDevicePool
                                 .queryDevice(coapRequest.getUriPathSegments()
-                                        .get(1));
+                                        .get(RouteResourcePathSize - 1));
                         targetChannel = targetDevice.getRequestChannel();
                     }
                     switch (coapRequest.getObserve()) {
@@ -199,39 +201,37 @@ public class DeviceServerSystem extends ServerSystem {
         public void write(ChannelHandlerContext ctx, Object msg,
                 ChannelPromise promise) throws Exception {
 
-            if (!(msg instanceof CoapResponse)) {
-                throw new BadRequestException(
-                        "this msg type is not CoapResponse");
-            }
-            // This is CoapResponse
-            // Once the response is valid, add this to deviceList
-            CoapResponse response = (CoapResponse) msg;
+            boolean bCloseConnection = false;
 
-            switch (response.getUriPath()) {
-                case OICConstants.ACCOUNT_SESSION_FULL_URI:
-                    if (response.getStatus() != ResponseStatus.CHANGED) {
-                        throw new UnAuthorizedException();
-                    }
+            if (msg instanceof CoapResponse) {
+                // This is CoapResponse
+                // Once the response is valid, add this to deviceList
+                CoapResponse response = (CoapResponse) msg;
 
-                    if (response.getPayload() != null) {
+                switch (response.getUriPath()) {
+                    case OICConstants.ACCOUNT_SESSION_FULL_URI:
+                        if (response.getStatus() != ResponseStatus.CHANGED) {
+                            bCloseConnection = true;
+                        }
                         break;
-                    }
-
-                    ctx.close();
-                    break;
-                case OICConstants.ACCOUNT_FULL_URI:
-                    if (response.getStatus() != ResponseStatus.DELETED) {
+                    case OICConstants.ACCOUNT_FULL_URI:
+                        if (response.getStatus() == ResponseStatus.DELETED) {
+                            bCloseConnection = true;
+                        }
                         break;
-                    }
-                    ctx.close();
-                    break;
+                }
             }
+
             ctx.writeAndFlush(msg);
+
+            if (bCloseConnection == true) {
+                ctx.close();
+            }
         }
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) {
-            Device device = ctx.channel().attr(ServerSystem.keyDevice).get();
+            Device device = ctx.channel().attr(keyDevice).get();
             // Authenticated device connected
 
             sendDevicePresence(device.getDeviceId(), "on");
@@ -243,7 +243,8 @@ public class DeviceServerSystem extends ServerSystem {
         @Override
         public void channelInactive(ChannelHandlerContext ctx)
                 throws ClientException {
-            Device device = ctx.channel().attr(ServerSystem.keyDevice).get();
+            Device device = ctx.channel().attr(keyDevice).get();
+
             // Some cases, this event occurs after new device connected using
             // same di.
             // So compare actual value, and remove if same.
@@ -253,7 +254,7 @@ public class DeviceServerSystem extends ServerSystem {
                 device.onDisconnected();
 
                 mDevicePool.removeDevice(device);
-                ctx.channel().attr(ServerSystem.keyDevice).remove();
+                ctx.channel().attr(keyDevice).remove();
 
             }
         }
@@ -295,7 +296,6 @@ public class DeviceServerSystem extends ServerSystem {
         @Override
         public void write(ChannelHandlerContext ctx, Object msg,
                 ChannelPromise promise) {
-
             try {
 
                 if (!(msg instanceof CoapResponse)) {
@@ -304,6 +304,7 @@ public class DeviceServerSystem extends ServerSystem {
                 }
                 // This is CoapResponse
                 // Once the response is valid, add this to deviceList
+
                 CoapResponse response = (CoapResponse) msg;
 
                 switch (response.getUriPath()) {
@@ -323,8 +324,7 @@ public class DeviceServerSystem extends ServerSystem {
                         int remainTime = (int) payloadData
                                 .get(Constants.EXPIRES_IN);
 
-                        Device device = ctx.channel()
-                                .attr(ServerSystem.keyDevice).get();
+                        Device device = ctx.channel().attr(keyDevice).get();
                         ((CoapDevice) device).setExpiredPolicy(remainTime);
 
                         // Remove current auth handler and replace to
@@ -349,7 +349,6 @@ public class DeviceServerSystem extends ServerSystem {
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
-
             try {
                 if (!(msg instanceof CoapRequest)) {
                     throw new BadRequestException(
@@ -364,12 +363,10 @@ public class DeviceServerSystem extends ServerSystem {
                     case OICConstants.ACCOUNT_FULL_URI:
                     case OICConstants.ACCOUNT_TOKENREFRESH_FULL_URI:
 
-                        if (ctx.channel().attr(ServerSystem.keyDevice)
-                                .get() == null) {
+                        if (ctx.channel().attr(keyDevice).get() == null) {
                             // Create device first and pass to upperlayer
                             Device device = new CoapDevice(ctx);
-                            ctx.channel().attr(ServerSystem.keyDevice)
-                                    .set(device);
+                            ctx.channel().attr(keyDevice).set(device);
                         }
 
                         break;
@@ -380,13 +377,11 @@ public class DeviceServerSystem extends ServerSystem {
                                 .parsePayloadFromCbor(request.getPayload(),
                                         HashMap.class);
 
-                        Device device = ctx.channel()
-                                .attr(ServerSystem.keyDevice).get();
+                        Device device = ctx.channel().attr(keyDevice).get();
 
                         if (device == null) {
                             device = new CoapDevice(ctx);
-                            ctx.channel().attr(ServerSystem.keyDevice)
-                                    .set(device);
+                            ctx.channel().attr(keyDevice).set(device);
                         }
 
                         if (authPayload == null) {
@@ -425,191 +420,113 @@ public class DeviceServerSystem extends ServerSystem {
 
     @Sharable
     class HttpAuthHandler extends ChannelDuplexHandler {
+        @Override
+        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+            // After current channel authenticated, raise to upper layer
+        }
+    }
 
-        private Cbor<HashMap<String, Object>> mCbor = new Cbor<HashMap<String, Object>>();
+    @Sharable
+    class CoapSignalingHandler extends ChannelInboundHandlerAdapter {
+
+        @Override
+        public void channelInactive(ChannelHandlerContext ctx)
+                throws Exception {
+            // delete csm information from the map
+            mCsmMap.remove(ctx);
+            ctx.fireChannelInactive();
+        }
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
-
-            /*
-             * The parameter msg has been translated from HTTP request to CoAP
-             * request according to
-             * https://tools.ietf.org/html/draft-ietf-core-http-mapping-13 by
-             * the previous handler: HCProxyHandler.
-             */
-
             try {
-                if (msg instanceof IRequest) {
-
-                    IRequest request = (IRequest) msg;
-
-                    switch (request.getUriPath()) {
-                        // In case of Sign-up and Access Token Refresh
-                        case OICConstants.ACCOUNT_FULL_URI:
-                        case OICConstants.ACCOUNT_TOKENREFRESH_FULL_URI:
-
-                            if (ctx.channel().attr(ServerSystem.keyDevice)
-                                    .get() == null) {
-                                // Create a device and pass to next handler
-                                Device device = new HttpDevice(ctx);
-                                ctx.channel().attr(ServerSystem.keyDevice)
-                                        .set(device);
+                if (msg instanceof CoapSignaling) {
+                    if (mCsmMap.get(ctx) == null) {
+                        // In the server, the CSM message is sent to the device
+                        // once
+                        CoapSignaling inicialCsm = (CoapSignaling) MessageBuilder
+                                .createSignaling(SignalingMethod.CSM);
+                        inicialCsm.setCsmMaxMessageSize(4294967295L);
+                        ctx.writeAndFlush(inicialCsm);
+                    }
+                    CoapSignaling signaling = (CoapSignaling) msg;
+                    switch (signaling.getSignalingMethod()) {
+                        case CSM:
+                            // get existing CSM from the map
+                            CoapSignaling existingCsm = mCsmMap.get(ctx);
+                            if (existingCsm == null) {
+                                existingCsm = signaling;
+                            } else {
+                                // replace and cumulate CSM options
+                                existingCsm.setCsmBlockWiseTransfer(
+                                        signaling.getCsmBlockWiseTransfer());
+                                existingCsm.setCsmMaxMessageSize(
+                                        signaling.getCsmMaxMessageSize());
+                                existingCsm.setCsmServerName(
+                                        signaling.getCsmServerName());
                             }
-
+                            mCsmMap.put(ctx, existingCsm);
                             break;
-
-                        // In case of Sign-in
-                        case OICConstants.ACCOUNT_SESSION_FULL_URI:
-
-                            HashMap<String, Object> authPayload = mCbor
-                                    .parsePayloadFromCbor(request.getPayload(),
-                                            HashMap.class);
-
-                            Device device = ctx.channel()
-                                    .attr(ServerSystem.keyDevice).get();
-
-                            if (device == null) {
-                                device = new HttpDevice(ctx);
-                                ctx.channel().attr(ServerSystem.keyDevice)
-                                        .set(device);
-                            }
-
-                            if (authPayload == null) {
-                                throw new BadRequestException(
-                                        "Payload is empty.");
-                            }
-
-                            ((HttpDevice) device).updateDevice(
-                                    (String) authPayload
-                                            .get(Constants.DEVICE_ID),
-                                    (String) authPayload.get(Constants.USER_ID),
-                                    (String) authPayload
-                                            .get(Constants.ACCESS_TOKEN));
-
+                        case PING:
+                            // TODO process PING signaling option
                             break;
-
-                        // In case of other requests (No Sign-up/in request)
+                        case PONG:
+                            // TODO process PONG signaling option
+                            break;
+                        case RELEASE:
+                        case ABORT:
+                            mCsmMap.remove(ctx);
+                            ctx.close();
+                            break;
                         default:
-
-                            // Check Session-ID
-                            boolean isValidSid = false;
-                            boolean isExpiredSid = false;
-                            String sessionId = ctx.channel()
-                                    .attr(HCProxyProcessor.ctxSessionId).get();
-
-                            HttpDevice httpDevice = null;
-                            if (sessionId != null) {
-                                isValidSid = HttpServer.httpDeviceMap
-                                        .containsKey(sessionId);
-                                httpDevice = HttpServer.httpDeviceMap
-                                        .get(sessionId);
-
-                                if (isValidSid && httpDevice != null) {
-                                    // if the session timeout is passed,
-                                    // then remove the session
-                                    if (httpDevice
-                                            .getSessionExpiredTime() <= System
-                                                    .currentTimeMillis()) {
-                                        isExpiredSid = true;
-
-                                        HttpServer.httpDeviceMap
-                                                .remove(sessionId);
-
-                                        Log.v(ctx.channel().id().asLongText()
-                                                .substring(26)
-                                                + " HTTP Session-ID Deleted: "
-                                                + sessionId);
-                                    }
-                                }
-                            }
-
-                            if (sessionId == null) {
-                                throw new UnAuthorizedException(
-                                        "Authentication is required.");
-                            } else if (!isValidSid) {
-                                throw new UnAuthorizedException(
-                                        "Session-ID is not valid.");
-                            } else if (isExpiredSid) {
-                                throw new UnAuthorizedException(
-                                        "Session-ID is expired.");
-                            } else if (httpDevice == null) {
-                                throw new InternalServerErrorException(
-                                        "HttpDevice is not found.");
-                            }
-
-                            httpDevice.replaceCtx(ctx);
-                            ctx.channel().attr(ServerSystem.keyDevice)
-                                    .set(httpDevice);
+                            throw new BadOptionException(
+                                    "unsupported CoAP Signaling option");
                     }
 
                     ctx.fireChannelRead(msg);
+                } else {
+                    ctx.fireChannelRead(msg);
+                    // TODO annotated codes must be removed to follow
+                    // the CSM specification of draft-ietf-core-coap-tcp-tls-05
+
+                    // if (mCsmMap.get(ctx) != null) {
+                    // ctx.fireChannelRead(msg);
+                    // } else {
+                    // // send ABORT signaling and close the connection
+                    // ctx.writeAndFlush(MessageBuilder.createSignaling(
+                    // SignalingMethod.ABORT,
+                    // new String(
+                    // "Capability and Settings message (CSM) is not received
+                    // yet")
+                    // .getBytes()));
+                    // ctx.close();
+                    // }
                 }
             } catch (Throwable t) {
                 ResponseStatus responseStatus = t instanceof ServerException
                         ? ((ServerException) t).getErrorResponse()
-                        : ResponseStatus.UNAUTHORIZED;
-                /*
-                 * The CoAP response will be translated into HTTP response by
-                 * the next handler: HCProxyHandler.
-                 */
-                ctx.writeAndFlush(MessageBuilder
-                        .createResponse((CoapRequest) msg, responseStatus));
-                Log.f(ctx.channel(), t);
-            }
-        }
-
-        @Override
-        public void write(ChannelHandlerContext ctx, Object msg,
-                ChannelPromise promise) {
-
-            try {
-                if (msg instanceof IResponse) {
-
-                    IResponse response = (IResponse) msg;
-
-                    switch (response.getUriPath()) {
-
-                        // In case of Sign-in
-                        case OICConstants.ACCOUNT_SESSION_FULL_URI:
-                            HashMap<String, Object> payloadData = mCbor
-                                    .parsePayloadFromCbor(response.getPayload(),
-                                            HashMap.class);
-
-                            if (response
-                                    .getStatus() != ResponseStatus.CHANGED) {
-                                throw new UnAuthorizedException();
-                            }
-
-                            if (payloadData == null) {
-                                throw new BadRequestException(
-                                        "Payload is empty.");
-                            }
-
-                            int remainTime = (int) payloadData
-                                    .get(Constants.EXPIRES_IN);
-
-                            Device device = ctx.channel()
-                                    .attr(ServerSystem.keyDevice).get();
-                            ((HttpDevice) device).setExpiredTime(remainTime);
-
-                            break;
-                    }
-
-                    ctx.writeAndFlush(msg);
+                        : ResponseStatus.BAD_OPTION;
+                if (msg instanceof CoapRequest) {
+                    ctx.writeAndFlush(MessageBuilder
+                            .createResponse((CoapRequest) msg, responseStatus));
+                } else if (msg instanceof CoapSignaling) {
+                    ctx.writeAndFlush(MessageBuilder.createSignalingResponse(
+                            (CoapSignaling) msg, responseStatus));
                 }
-            } catch (Throwable t) {
                 Log.f(ctx.channel(), t);
-                ctx.writeAndFlush(msg);
-                ctx.close();
             }
         }
+
     }
 
     @Override
     public void addServer(Server server) {
         if (server instanceof CoapServer) {
+            server.addHandler(new CoapSignalingHandler());
             server.addHandler(new CoapAuthHandler());
-        } else if (server instanceof HttpServer) {
+        }
+
+        if (server instanceof HttpServer) {
             server.addHandler(new HttpAuthHandler());
         }
 

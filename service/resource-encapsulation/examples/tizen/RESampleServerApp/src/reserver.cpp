@@ -197,7 +197,7 @@ static void initServer()
 
     server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
     server->setSetRequestHandlerPolicy(RCSResourceObject::SetRequestHandlerPolicy::NEVER);
-    server->setAttribute(g_attributeKey, DEFALUT_VALUE);
+    server->setAttribute(g_attributeKey, DEFAULT_VALUE);
 
     string logMessage = "SERVER CREATED<br>";
     dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());

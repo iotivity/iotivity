@@ -165,9 +165,15 @@ namespace OIC
 
                 /**
                       * This method is for requesting subscription of Notification service.
-                      *
+                      * @return ::NS_OK or result code of NSResult
                       */
-                void subscribe();
+                NSResult subscribe();
+
+                /**
+                      * Request to unsubscribe in order not to receive notification message from provider
+                      * @return ::NS_OK or result code of NSResult
+                     */
+                NSResult unsubscribe();
 
                 /**
                       * This method is for requesting subscription status from Provider of Notification service.
@@ -180,8 +186,9 @@ namespace OIC
                       *
                       * @param messageId - id of type message.
                       * @param type - NSSyncType of Notification service.
+                      * @return ::NS_OK or result code of NSResult
                       */
-                void sendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type);
+                NSResult sendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type);
 
                 /**
                       * This method is for registering for listeners of Notification .

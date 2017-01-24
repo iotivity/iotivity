@@ -57,6 +57,19 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
 /**
  * This function Initializes the OC Stack.  Must be called prior to starting the stack.
  *
+ * @param mode            OCMode Host device is client, server, or client-server.
+ * @param serverFlags     OCTransportFlags Default server transport flags.
+ * @param clientFlags     OCTransportFlags Default client transport flags.
+ * @param transportType   OCTransportAdapter value to initialize.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags, OCTransportFlags clientFlags,
+                      OCTransportAdapter transportType);
+
+/**
+ * This function Initializes the OC Stack.  Must be called prior to starting the stack.
+ *
  * @param ipAddr      IP Address of host device. Deprecated parameter.
  * @param port        Port of host device. Deprecated parameter.
  * @param mode        OCMode Host device is client, server, or client-server.
@@ -238,6 +251,8 @@ OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandle
  * list. The default Device Type is mandatory and always specified by this Device as the first
  * Device Type.
  *
+ * @deprecated Use OCSetPropertyValue instead.
+ *
  * @param deviceInfo   Structure passed by the server application containing the device
  *                     information.
  *
@@ -286,6 +301,47 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
                                OCEntityHandler entityHandler,
                                void* callbackParam,
                                uint8_t resourceProperties);
+
+/**
+ * This function creates a resource.
+ *
+ * @param handle                Pointer to handle to newly created resource. Set by ocstack and
+ *                              used to refer to resource.
+ * @param resourceTypeName      Name of resource type.  Example: "core.led".
+ * @param resourceInterfaceName Name of resource interface.  Example: "core.rw".
+ * @param uri                   URI of the resource.  Example:  "/a/led".
+ * @param entityHandler         Entity handler function that is called by ocstack to handle
+ *                              requests, etc.
+ *                              NULL for default entity handler.
+ * @param callbackParam         parameter passed back when entityHandler is called.
+ * @param resourceProperties    Properties supported by resource.
+ *                              Example: ::OC_DISCOVERABLE|::OC_OBSERVABLE.
+ * @param resourceTpsTypes      Transport Protocol Suites(TPS) types of resource for expose
+                                resource to specific transport adapter (e.g., TCP, UDP)
+                                with messaging protocol (e.g., COAP, COAPS).
+                                Example: "OC_COAP | OC_COAP_TCP"
+ *
+ * @note Only supported TPS types on stack will be mapped to resource.
+         It means "OC_COAPS" and "OC_COAPS_TCP" flags will be ignored if secure option
+         not enabled on stack. Also "COAP_TCP" and "COAPS_TCP" flags will be ignored
+         if stack does not support tcp mode.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCCreateResourceWithEp(OCResourceHandle *handle,
+                                     const char *resourceTypeName,
+                                     const char *resourceInterfaceName,
+                                     const char *uri,
+                                     OCEntityHandler entityHandler,
+                                     void *callbackParam,
+                                     uint8_t resourceProperties,
+                                     OCTpsSchemeFlags resourceTpsTypes);
+/*
+ * This function returns flags of supported endpoint TPS on stack.
+ *
+ * @return Bit combinations of supported OCTpsSchemeFlags.
+ */
+OCTpsSchemeFlags OCGetSupportedEndpointTpsFlags();
 
 /**
  * This function adds a resource to a collection resource.
@@ -586,14 +642,30 @@ OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, uint8_t ins);
  */
 OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins);
 
+#endif
+
 /**
- * This function gets a resource handle by resource uri.
- *
- * @param uri   Uri of Resource to get Resource handle.
- *
- * @return Found  resource handle or NULL if not found.
- */
+* This function gets a resource handle by resource uri.
+*
+* @param uri   Uri of Resource to get Resource handle.
+*
+* @return Found  resource handle or NULL if not found.
+*/
 OCResourceHandle OCGetResourceHandleAtUri(const char *uri);
+
+#ifdef RD_SERVER
+/**
+* Search the RD database for queries.
+*
+* @param interfaceType is the interface type that is queried.
+* @param resourceType is the resource type that is queried.
+* @param discPayload is NULL if no resource found or else OCDiscoveryPayload with the details
+* about the resource.
+*
+* @return ::OC_STACK_OK in case of success or else other value.
+*/
+OCStackResult OCRDDatabaseCheckResources(const char *interfaceType, const char *resourceType,
+    OCDiscoveryPayload *discPayload);
 #endif
 //#endif // DIRECT_PAIRING
 
@@ -650,6 +722,83 @@ OCStackResult OCGetDeviceId(OCUUIdentity *deviceId);
  * @return Returns ::OC_STACK_OK if success.
  */
 OCStackResult OCSetDeviceId(const OCUUIdentity *deviceId);
+
+ /**
+ * Gets the bool state of "isOwned" property on the doxm resource.
+ *
+ * @param isOwned a pointer to be assigned to isOwned property
+ * @return Returns ::OC_STACK_OK if success.
+ */
+OCStackResult OCGetDeviceOwnedState(bool *isOwned);
+
+/**
+ * Encode an address string to match RFC 6874.
+ *
+ * @param outputAddress    a char array to be written with the encoded string.
+ *
+ * @param outputSize       size of outputAddress buffer.
+ *
+ * @param inputAddress     a char array of size <= CA_MAX_URI_LENGTH
+ *                         containing a valid IPv6 address string.
+ *
+ * @return ::OC_STACK_OK on success and other value otherwise.
+ */
+OCStackResult OCEncodeAddressForRFC6874(char* outputAddress,
+                                        size_t outputSize,
+                                        const char* inputAddress);
+
+/**
+ * Decode an address string according to RFC 6874.
+ *
+ * @param outputAddress    a char array to be written with the decoded string.
+ *
+ * @param outputSize       size of outputAddress buffer.
+ *
+ * @param inputAddress     a valid percent-encoded address string.
+ *
+ * @param end              NULL if the entire entire inputAddress is a null-terminated percent-
+ *                         encoded address string.  Otherwise, a pointer to the first byte that
+ *                         is not part of the address string (e.g., ']' in a URI).
+ *
+ * @return ::OC_STACK_OK on success and other value otherwise.
+ */
+OCStackResult OCDecodeAddressForRFC6874(char* outputAddress,
+                                        size_t outputSize,
+                                        const char* inputAddress,
+                                        const char* end);
+
+/**
+ * Set the value of /oic/d and /oic/p properties. This function is a generic function that sets for
+ * all OCF defined properties.
+ *
+ * @param type the payload type for device and platform as defined in @ref OCPayloadType.
+ * @param propName the pre-defined property as per OCF spec.
+ * @param value the value of the property to be set.
+ *
+ * @return ::OC_STACK_OK on success and other value otherwise.
+ */
+OCStackResult OCSetPropertyValue(OCPayloadType type, const char *propName, const void *value);
+
+/**
+ * Get the value of /oic/d and /oic/p properties. This function is a generic function that get value
+ * for all OCF defined properties.
+ *
+ * @param type the payload type for device and platform as defined in @ref OCPayloadType.
+ * @param propName the pre-defined as per OCF spec.
+ * @param value this holds the return value.  In case of error will be set to NULL.
+ *
+ * @return ::OC_STACK_OK on success and other value otherwise.
+ */
+OCStackResult OCGetPropertyValue(OCPayloadType type, const char *propName, void **value);
+
+/**
+* Get the registered persistent storage handler. All modules must use this to obtain access to 
+* persistent storage.
+*
+* @return pointer to OCPersistentStorage structure on success and NULL otherwise.
+*/
+OCPersistentStorage *OCGetPersistentStorageHandler();
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

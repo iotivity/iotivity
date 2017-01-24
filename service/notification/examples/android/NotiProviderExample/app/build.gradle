@@ -8,10 +8,12 @@ android {
         pickFirst 'lib/armeabi/libocstack-jni.so'
         pickFirst 'lib/armeabi-v7a/libocstack-jni.so'
         pickFirst 'lib/x86/libocstack-jni.so'
+        pickFirst 'lib/x86_64/libocstack-jni.so'
+        pickFirst 'lib/arm64-v8a/libocstack-jni.so'
     }
 
     defaultConfig {
-        applicationId "sample.notification.service.iotivity.org.notificationsample"
+        applicationId "sample.notification.service.iotivity.org.notificationprovidersample"
         minSdkVersion 21
         targetSdkVersion 21
         versionCode 1

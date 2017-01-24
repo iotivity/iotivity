@@ -33,7 +33,7 @@
 #include "cloudAuth.h"
 #include "cloudWrapper.h"
 #include "OCApi.h"
-#include "OCCloudProvisioning.h"
+#include "OCCloudProvisioning.hpp"
 
 #ifdef __unix__
 #include <unistd.h> //for unlink
@@ -229,11 +229,11 @@ static int saveTrustCert(void)
         size_t fsize;
         if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)) > 0)
         {
-            trustCertChainArray.data = (uint8_t*)OICCalloc(1, fsize+1);
-            trustCertChainArray.len = fsize+1;
+            trustCertChainArray.data = (uint8_t*)OICCalloc(1, fsize);
+            trustCertChainArray.len = fsize;
             if (NULL == trustCertChainArray.data)
             {
-                OIC_LOG(ERROR,TAG,"OICCalloc");
+                OIC_LOG(ERROR,TAG,"Failed to allocate memory");
                 fclose(fp);
                 return res;
             }
@@ -427,8 +427,14 @@ static void userRequests(void *data)
 
 FILE* server_fopen(const char *path, const char *mode)
 {
-    OC_UNUSED(path);
-    return fopen(fname, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(fname, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 /**

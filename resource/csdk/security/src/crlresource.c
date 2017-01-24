@@ -26,6 +26,7 @@
 #include "srmutility.h"
 #include "doxmresource.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "crlresource.h"
@@ -33,7 +34,7 @@
 #include "base64.h"
 #include <time.h>
 
-#define TAG  "SRM-CRL"
+#define TAG  "OIC_SRM_CRL"
 
 #define SEPARATOR                   ":"
 #define SEPARATOR_LEN               (1)
@@ -74,7 +75,7 @@ void DeleteCrl(OicSecCrl_t *crl)
     }
 }
 
-void printCrl(OicSecCrl_t *crl)
+void printCrl(const OicSecCrl_t *crl)
 {
     if (NULL == crl)
     {
@@ -356,7 +357,7 @@ OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t
     cborEncoderResult = cbor_encoder_close_container(&encoder, &crlMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add close Crl map");
 
-    *size = encoder.ptr - outPayload;
+    *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
     *payload = outPayload;
     ret = OC_STACK_OK;
 
@@ -366,7 +367,7 @@ exit:
         // reallocate and try again!
         OICFree(outPayload);
         // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         cborEncoderResult = CborNoError;
         ret = CrlToCBORPayload(crl, payload, &cborLen, lastUpdate);
     }
@@ -810,7 +811,6 @@ void GetDerCrl(ByteArray_t* out)
 
     out->len = 0;
 
-    char *str = "Can't allocate memory for out->data";
     out->data = OICMalloc(crl->len);
     if (out->data)
     {
@@ -819,7 +819,7 @@ void GetDerCrl(ByteArray_t* out)
     }
     else
     {
-        OIC_LOG_V(ERROR, TAG, "%s", str);
+        OIC_LOG(ERROR, TAG, "Can't allocate memory for out->data");
     }
     DeleteCrl(crlRes);
 }

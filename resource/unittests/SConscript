@@ -20,10 +20,12 @@
 
 import os
 import os.path
+from tools.scons.RunTest import *
+
+Import('test_env')
 
 # SConscript file for Local PKI google tests
-gtest_env = SConscript('#extlibs/gtest/SConscript')
-unittests_env = gtest_env.Clone()
+unittests_env = test_env.Clone()
 src_dir = unittests_env.get('SRC_DIR')
 target_os = unittests_env.get('TARGET_OS')
 with_mq = unittests_env.get('WITH_MQ')
@@ -34,6 +36,7 @@ with_mq = unittests_env.get('WITH_MQ')
 unittests_env.PrependUnique(CPPPATH = [
 		'../include',
 		'../oc_logger/include',
+		'../csdk/include',
 		'../csdk/stack/include',
 		'../csdk/security/include',
 		'../csdk/stack/include/internal',
@@ -47,10 +50,9 @@ unittests_env.PrependUnique(CPPPATH = [
 		])
 
 if target_os in ['windows']:
-	unittests_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi', 'bcrypt'])
 	unittests_env.AppendUnique(CPPPATH = ['#extlibs/boost/boost'])
-
-if unittests_env.get('SECURED') == '1':
+	# On Windows, octbstack_test is a static LIB, that makes calls into static LIB ocsrm.
+	# On other platforms, octbstack_test is a shared LIB, that includes static LIB ocsrm.
 	unittests_env.AppendUnique(LIBS = ['ocsrm'])
 
 unittests_env.AppendUnique(LIBPATH = [unittests_env.get('BUILD_DIR')])
@@ -110,7 +112,6 @@ if unittests_env.get('TEST') == '1':
 	if target_os in ['windows']:
 		unittests_env.AppendENVPath('PATH', unittests_env.get('BUILD_DIR'))
 	if target_os in ['linux', 'windows']:
-                from tools.scons.RunTest import *
                 run_test(unittests_env,
                          'resource_unittests_unittests.memcheck',
                          'resource/unittests/unittests')

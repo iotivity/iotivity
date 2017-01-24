@@ -41,6 +41,8 @@ static const uint16_t STATE_SEND_NONE = 1;
 static const uint16_t STATE_SEND_SUCCESS = 2;
 static const uint16_t STATE_SEND_FAIL = 3;
 static const uint16_t STATE_SENDING = 4;
+static const uint16_t STATE_SEND_PREPARING = 5;
+static const uint16_t STATE_SEND_MTU_NEGO_SUCCESS = 6;
 
 typedef struct le_state_info
 {
@@ -49,6 +51,7 @@ typedef struct le_state_info
     uint16_t sendState;
     jboolean autoConnectFlag;
     jboolean isDescriptorFound;
+    uint16_t mtuSize;
 } CALEState_t;
 
 /**
@@ -57,7 +60,8 @@ typedef struct le_state_info
 typedef enum
 {
     BLE_SCAN_ENABLE = 0, /**< BLE scan is working */
-    BLE_SCAN_DISABLE     /**< BLE scan is not working */
+    BLE_SCAN_DISABLE,    /**< BLE scan is not working */
+    BLE_SCAN_NONE        /**< Initialize State */
 } CALEScanState_t;
 
 /**
@@ -107,6 +111,13 @@ CAResult_t CALEClientDestroyJniInterface();
  * @param[in]   gatt                  Gatt profile object.
  */
 void CALEClientSendFinish(JNIEnv *env, jobject gatt);
+
+/**
+ * send negotiation message after gatt connection is done.
+ * @param[in]   address               remote address.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientSendNegotiationMessage(const char* address);
 
 /**
  * send data for unicast (interface).
@@ -318,6 +329,14 @@ CAResult_t CALEClientDisconnectAll(JNIEnv *env);
 CAResult_t CALEClientDisconnectforAddress(JNIEnv *env, jstring remoteAddress);
 
 /**
+ * request MTU size negotiation to server.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   bluetoothGatt         gatt object.
+ * @param[in]   size                  MTU size.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientRequestMTU(JNIEnv *env, jobject bluetoothGatt, jint size);
+/**
  * start discovery server.
  * @param[in]   env                   JNI interface pointer.
  * @param[in]   bluetoothGatt         Gatt profile object.
@@ -499,6 +518,19 @@ CAResult_t CALEClientRemoveGattObjForAddr(JNIEnv *env, jstring addr);
 jstring CALEClientGetLEAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice);
 
 /**
+ * update new state information by Bluetooth device object.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   device                Bluetooth device.
+ * @param[in]   state_type            state type.
+ * @param[in]   target_state          state index to update.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientUpdateDeviceStateWithBtDevice(JNIEnv *env,
+                                                   jobject device,
+                                                   uint16_t state_type,
+                                                   uint16_t target_state);
+
+/**
  * update new state information.
  * @param[in]   address               remote address.
  * @param[in]   state_type            state type.
@@ -507,6 +539,22 @@ jstring CALEClientGetLEAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
  */
 CAResult_t CALEClientUpdateDeviceState(const char* address, uint16_t state_type,
                                        uint16_t target_state);
+
+/**
+ * This function is used to set MTU size
+ * which negotiated between client and server device.
+ * @param[in]   address               remote address.
+ * @param[in]   mtuSize               MTU size.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientSetMtuSize(const char* address, uint16_t mtuSize);
+
+/**
+ * get MTU size.
+ * @param[in] address      the address of the remote device.
+ * @return  mtu size negotiated from remote device.
+ */
+uint16_t CALEClientGetMtuSize(const char* address);
 
 /**
  * check whether the remote address is existed or not.
@@ -607,18 +655,29 @@ jobject CALEClientGattConnect(JNIEnv *env, jobject bluetoothDevice, jboolean aut
 CAResult_t CALEClientDirectConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autoconnect);
 
 /**
+ * check connection status.
+ * @param[in] address      the address of the remote device.
+ * @return  true or false.
+ */
+bool CALEClientIsConnected(const char* address);
+
+/**
  * set new interval time and working count.
  * @param[in]  intervalTime             interval time(Seconds).
  * @param[in]  workingCount             working count for selected interval time.
+ * @param[in]  nextScanningStep         set next scanning state.
  */
-void CALEClientSetScanInterval(int32_t intervalTime, int32_t workingCount);
+void CALEClientSetScanInterval(int32_t intervalTime, int32_t workingCount,
+                               CALEScanState_t nextScanningStep);
 
 /**
  * restart scanning with new interval time and working count.
  * @param[in]  intervalTime             interval time(Seconds).
  * @param[in]  workingCount             working count for selected interval time.
+ * @param[in]  nextScanningStep         set next scanning state.
  */
-void CALERestartScanWithInterval(int32_t intervalTime, int32_t workingCount);
+void CALERestartScanWithInterval(int32_t intervalTime, int32_t workingCount,
+                                 CALEScanState_t nextScanningStep);
 
 /**
  * start LE scanning logic with interval time and working count.

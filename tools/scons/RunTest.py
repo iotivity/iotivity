@@ -39,7 +39,7 @@ def run_test(env, xml_file, test):
     # Make sure the Google Test libraries are in the dynamic
     # linker/loader path.
     env.AppendENVPath('LD_LIBRARY_PATH', [build_dir])
-    env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/gtest-1.7.0/lib/.libs'])
+    env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/googletest-release-1.7.0/lib/.libs'])
 
     test_cmd = os.path.join(build_dir, test)
 
@@ -62,6 +62,7 @@ def run_test(env, xml_file, test):
 
         # Set up to run the test under Valgrind.
         test_cmd = '%s valgrind --leak-check=full --suppressions=%s --xml=yes --xml-file=%s %s' % (valgrind_environment, suppression_file, xml_file, test_cmd)
-
+    if env.get('TARGET_OS') in ['linux']:
+        env.Depends('ut' + test , os.path.join(build_dir, test))
     ut = env.Command('ut' + test, None, test_cmd)
     env.AlwaysBuild('ut' + test)

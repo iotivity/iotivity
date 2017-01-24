@@ -96,6 +96,10 @@ namespace OC
                     OCConnectivityType connectivityType, FindResListCallback resourceHandler,
                     QualityOfService QoS);
 
+        OCStackResult findResourceList(const std::string& host, const std::string& resourceURI,
+                    OCConnectivityType connectivityType, FindResListCallback resourceHandler,
+                    FindErrorCallback errorHandler, QualityOfService Qos);
+
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     OCConnectivityType connectivityType, FindDeviceCallback deviceInfoHandler);
 
@@ -142,6 +146,15 @@ namespace OC
         OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
                     FindPlatformCallback platformInfoHandler, QualityOfService QoS);
 
+        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag,
+            const std::string& value);
+        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag,
+            const std::vector<std::string>& value);
+        OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag,
+            std::string& value);
+        OCStackResult getPropertyList(OCPayloadType type, const std::string& tag,
+            std::vector<std::string>& value);
+
         /**
         * This API registers a resource with the server
         * @note This API applies to server side only.
@@ -181,6 +194,8 @@ namespace OC
 
         /**
          * This API registers all the device specific information
+         *
+         * @deprecated: Use setPropertyValue instead.
          *
          * @param deviceInfo Structure containing all the device related information
          *
@@ -246,27 +261,6 @@ namespace OC
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
         OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
-#ifdef RD_CLIENT
-        OCStackResult publishResourceToRD(const std::string& host,
-                                          OCConnectivityType connectivityType,
-                                          ResourceHandles& resourceHandles,
-                                          PublishResourceCallback callback);
-
-        OCStackResult publishResourceToRD(const std::string& host,
-                                          OCConnectivityType connectivityType,
-                                          ResourceHandles& resourceHandles,
-                                          PublishResourceCallback callback, QualityOfService qos);
-
-        OCStackResult deleteResourceFromRD(const std::string& host,
-                                           OCConnectivityType connectivityType,
-                                           ResourceHandles& resourceHandles,
-                                           DeleteResourceCallback callback);
-
-        OCStackResult deleteResourceFromRD(const std::string& host,
-                                           OCConnectivityType connectivityType,
-                                           ResourceHandles& resourceHandles,
-                                           DeleteResourceCallback callback, QualityOfService qos);
-#endif
         std::weak_ptr<std::recursive_mutex> csdkLock();
 
         OCStackResult findDirectPairingDevices(unsigned short waittime,
@@ -286,8 +280,11 @@ namespace OC
 
         OCStackResult setDeviceId(const OCUUIdentity *myUuid);
 
+        OCStackResult stop();
+        OCStackResult start();
     private:
         PlatformConfig m_cfg;
+        OCMode m_modeType;
 
     private:
         std::unique_ptr<WrapperFactory> m_WrapperInstance;
@@ -320,6 +317,3 @@ namespace OC
 }
 
 #endif //__OCPLATFORM_IMPL_H
-
-
-

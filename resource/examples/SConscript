@@ -28,15 +28,17 @@ lib_env = thread_env.Clone()
 SConscript('#resource/third_party_libs.scons', 'lib_env')
 examples_env = lib_env.Clone()
 target_os = examples_env.get('TARGET_OS')
+
 ######################################################################
 # Build flags
 ######################################################################
 examples_env.AppendUnique(CPPPATH = [
 		'../include/',
+		'../csdk/include',
 		'../csdk/stack/include',
 		'../c_common/ocrandom/include',
 		'../csdk/logger/include',
-		'../oc_logger/include'
+		'../oc_logger/include',
 		])
 
 examples_env.AppendUnique(LIBPATH = [examples_env.get('BUILD_DIR')])
@@ -103,8 +105,13 @@ if target_os not in ['windows', 'msys_nt']:
 		'groupserver',
 		'groupclient',
 		'lightserver',
-		'threadingsample'
+		'threadingsample',
 		]
+	if 'CLIENT' in examples_env.get('RD_MODE'):
+		examples_env.AppendUnique(CPPPATH = ['../csdk/resource-directory/include'])
+		examples_env.AppendUnique(LIBS = ['resource_directory'])
+		examples_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+		example_names += ['rdclient']
 
 examples = map(make_single_file_cpp_program, example_names)
 
@@ -115,6 +122,9 @@ clientjson = examples_env.Install(examples_env.get('BUILD_DIR') + '/resource/exa
 				examples_env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client.dat')
 serverjson = examples_env.Install(examples_env.get('BUILD_DIR') + '/resource/examples/',
 				examples_env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_server.dat')
+light_introspection_json = examples_env.Install(examples_env.get('BUILD_DIR') + '/resource/examples/',
+				examples_env.get('SRC_DIR') + '/resource/examples/' + 'light_introspection.json')
+
 directpairingdat = examples_env.Install(examples_env.get('BUILD_DIR') + '/resource/examples/',
 				examples_env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client_directpairing.dat')
 

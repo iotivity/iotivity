@@ -31,10 +31,10 @@ import org.iotivity.service.RcsResourceAttributes;
 public class RcsGetResponse extends RcsResponse {
 
     /**
-     * Creates a default RCcsGetResponse. The response will have
+     * Creates a default RcsGetResponse. The response will have
      * {@link #DEFAULT_ERROR_CODE} for the errorCode. The attributes of
      * {@link RcsResourceObject} will be set as the result attributes.
-     *
+     * @return The default RcsGetResponse
      */
     public static RcsGetResponse defaultAction() {
         return new RcsGetResponse();
@@ -47,6 +47,7 @@ public class RcsGetResponse extends RcsResponse {
      *
      * @param errorCode
      *            error code to be set in response
+     * @return The created RcsGetResponse
      *
      */
     public static RcsGetResponse create(int errorCode) {
@@ -62,6 +63,7 @@ public class RcsGetResponse extends RcsResponse {
      *
      * @param attributes
      *            attributes to be sent as the result
+     * @return The created RcsGetResponse
      *
      */
     public static RcsGetResponse create(RcsResourceAttributes attributes) {
@@ -77,6 +79,7 @@ public class RcsGetResponse extends RcsResponse {
      *            attributes to be sent as the result
      * @param errorCode
      *            error code for response
+     * @return The created RcsGetResponse
      *
      */
     public static RcsGetResponse create(RcsResourceAttributes attributes,

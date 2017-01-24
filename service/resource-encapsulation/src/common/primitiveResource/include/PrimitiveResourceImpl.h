@@ -211,6 +211,11 @@ namespace OIC
                 return invokeOC(m_baseResource, &BaseResource::getResourceInterfaces);
             }
 
+            OCConnectivityType getConnectivityType() const
+            {
+                return invokeOC(m_baseResource, &BaseResource::connectivityType);
+            }
+
             bool isObservable() const
             {
                 return invokeOC(m_baseResource, &BaseResource::isObservable);

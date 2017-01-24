@@ -24,6 +24,8 @@
 #include "ocstack.h"
 #include "securevirtualresourcetypes.h"
 #include "pmtypes.h"
+#include "octypes.h"
+
 
 #ifdef __cplusplus
 extern "C"
@@ -41,6 +43,14 @@ extern "C"
  */
 OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
                                         OicSecAcl_t *acl, OCProvisionResultCB resultCallback);
+
+/**
+ * API to save ACL which has several ACE into Acl of SVR.
+ *
+ * @param acl ACL to be saved in Acl of SVR.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPSaveACL(const OicSecAcl_t *acl);
 
 /**
  * API to request CRED information to resource.
@@ -101,7 +111,21 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
  * @param[out] credId CredId of saved trust certificate chain in Cred of SVR.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult SRPSaveOwnCertChain(OicSecCert_t * cert, OicSecKey_t * key, uint16_t *credId);
+OCStackResult SRPSaveOwnCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16_t *credId);
+
+/**
+ * function to register callback, for getting notification for TrustCertChain change.
+ *
+ * @param[in] ctx user context to be passed.
+ * @param[in] TrustCertChainChangeCB notifier callback function
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPRegisterTrustCertChainNotifier(void *ctx, TrustCertChainChangeCB callback);
+
+/**
+ * function to de-register TrustCertChain notification callback.
+ */
+void SRPRemoveTrustCertChainNotifier(void);
 
 #endif // __WITH_DTLS__ || __WITH_TLS__
 /**
@@ -228,6 +252,16 @@ OCStackResult SRPSyncDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDisc
 OCStackResult SRPResetDevice(const OCProvisionDev_t* pTargetDev,
         OCProvisionResultCB resultCallback);
 
+/*
+ * Function to read Trust certificate chain from SVR.
+ * Caller must free when done using the returned trust certificate
+ * @param[in] credId CredId of trust certificate chain in SVR.
+ * @param[out] trustCertChain Trust certificate chain.
+ * @param[out] chainSize Size of trust certificate chain
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
+                                     size_t *chainSize);
 #ifdef __cplusplus
 }
 #endif

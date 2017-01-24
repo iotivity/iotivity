@@ -54,6 +54,7 @@ OicSecCred_t * getCredList()
     cred->credType = SYMMETRIC_PAIR_WISE_KEY;
     cred->privateData.encoding = OIC_ENCODING_RAW;
     cred->privateData.data = (uint8_t *)OICCalloc(1, strlen("My private Key11") + 1);
+    cred->privateData.len = strlen("My private Key11");
     VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
     OICStrcpy((char *)cred->privateData.data, strlen("My private Key11")+1,"My private Key11");
     // use |memcpy| for copying full-lengthed UUID without null termination
@@ -68,7 +69,8 @@ OicSecCred_t * getCredList()
 #endif
     cred->next->credType = SYMMETRIC_PAIR_WISE_KEY;
     cred->next->privateData.encoding = OIC_ENCODING_RAW;
-    sz = strlen("My private Key21") + 1;
+    cred->next->privateData.len = strlen("My private Key21");
+    sz = cred->next->privateData.len + 1;
     cred->next->privateData.data = (uint8_t *)OICCalloc(1, sz);
     VERIFY_NON_NULL(TAG, cred->next->privateData.data, ERROR);
     OICStrcpy((char *)cred->next->privateData.data, sz, "My private Key21");

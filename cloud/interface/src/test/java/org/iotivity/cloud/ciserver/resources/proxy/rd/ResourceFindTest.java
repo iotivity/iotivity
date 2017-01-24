@@ -24,7 +24,6 @@ package org.iotivity.cloud.ciserver.resources.proxy.rd;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -150,8 +149,6 @@ public class ResourceFindTest {
         assertTrue(mReq.getMethod() == RequestMethod.GET);
         assertTrue(queryMap.get("rt").contains("core.light"));
         assertTrue(queryMap.get("di").contains("device1"));
-        assertFalse(queryMap.get("di").contains("device2"));
-        assertFalse(queryMap.get("di").contains("device3"));
     }
 
     // @InjectMocks for testEntireDeviceonResponseReceived

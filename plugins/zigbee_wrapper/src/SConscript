@@ -40,6 +40,7 @@ env.PrependUnique(CPPPATH = [ os.path.join(src_dir, 'resource', 'c_common', 'oic
                               os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
                               os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
                               os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
+                              os.path.join(src_dir, 'resource', 'csdk', 'include'),
                               os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
                               ])
 env.AppendUnique(CPPPATH = [ os.path.join(zw_path, 'include'),

@@ -50,6 +50,21 @@ namespace OC
         typedef OCDoHandle OCPresenceHandle;
 
         /**
+         * API for stop Base layer including resource and connectivity abstraction.
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult stop();
+
+        /**
+         * API for start Base layer including resource and connectivity abstraction.
+         * OCInit will be invoked.
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult start();
+
+        /**
          * API for notifying base that resource's attributes have changed.
          *
          * @param resourceHandle resource handle of the resource
@@ -177,6 +192,18 @@ namespace OC
                     OCConnectivityType connectivityType, FindResListCallback resourceHandler,
                     QualityOfService QoS = QualityOfService::LowQos);
 
+        OCStackResult findResourceList(const std::string& host, const std::string& resourceURI,
+                    OCConnectivityType connectivityType, FindResListCallback resourceHandler,
+                    FindErrorCallback errorHandler, QualityOfService QoS = QualityOfService::LowQos);
+
+        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag,
+                    const std::string& value);
+        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag,
+                    const std::vector<std::string>& value);
+        OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag,
+                    std::string& value);
+        OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag,
+                    std::vector<std::string>& value);
         /**
          * API for Device Discovery
          *
@@ -300,6 +327,8 @@ namespace OC
 
         /**
         * Register Device Info
+        *
+        * @deprecated: Use setPropertyValue instead.
         *
         * @param deviceInfo structure containing all the device specific information
         * @return Returns ::OC_STACK_OK  if no errors and ::OC_STACK_ERROR in case of stack process error
@@ -681,128 +710,6 @@ namespace OC
         OCAccountManager::Ptr constructAccountManagerObject(const std::string& host,
                                                             OCConnectivityType connectivityType);
 #endif // WITH_CLOUD
-#ifdef RD_CLIENT
-        /**
-         * API for Virtual Resource("/oic/d" and "/oic/p") Publish to Resource Directory.
-         * @note This API applies to resource server side only.
-         *
-         * @param host Host IP Address of a service to direct resource publish query.
-         * @param connectivityType ::OCConnectivityType type of connectivity.
-         * @param callback Handles callbacks, success states and failure states.
-         *
-         * @return Returns ::OC_STACK_OK if success.
-         */
-        OCStackResult publishResourceToRD(const std::string& host,
-                                          OCConnectivityType connectivityType,
-                                          PublishResourceCallback callback);
-
-        /**
-         * @overload
-         *
-         * @param host Host IP Address of a service to direct resource publish query.
-         * @param connectivityType ::OCConnectivityType type of connectivity.
-         * @param callback Handles callbacks, success states and failure states.
-         * @param QoS the quality of communication.
-         *
-         * @return Returns ::OC_STACK_OK if success.
-         */
-        OCStackResult publishResourceToRD(const std::string& host,
-                                          OCConnectivityType connectivityType,
-                                          PublishResourceCallback callback,
-                                          QualityOfService QoS);
-
-        /**
-         * API for Resource Publish to Resource Directory.
-         * @note This API applies to resource server side only.
-         *
-         * @param host Host IP Address of a service to direct resource publish query.
-         * @param connectivityType ::OCConnectivityType type of connectivity.
-         * @param resourceHandle resource handle of the resource.
-         * @param callback Handles callbacks, success states and failure states.
-         *
-         * @return Returns ::OC_STACK_OK if success.
-         */
-        OCStackResult publishResourceToRD(const std::string& host,
-                                          OCConnectivityType connectivityType,
-                                          ResourceHandles& resourceHandles,
-                                          PublishResourceCallback callback);
-
-        /**
-         * @overload
-         *
-         * @param host Host IP Address of a service to direct resource publish query.
-         * @param connectivityType ::OCConnectivityType type of connectivity.
-         * @param resourceHandle resource handle of the resource.
-         * @param callback function to callback with published resources.
-         * @param QoS the quality of communication.
-         * @see publishResourceToRD(const std::string&, OCConnectivityType, OCResourceHandle,
-         * uint8_t, PublishResourceCallback)
-         */
-        OCStackResult publishResourceToRD(const std::string& host,
-                                          OCConnectivityType connectivityType,
-                                          ResourceHandles& resourceHandles,
-                                          PublishResourceCallback callback, QualityOfService QoS);
-
-        /**
-         * API for published resource delete from Resource Directory.
-         * @note This API applies to resource server side only.
-         *
-         * @param host Host IP Address of a service to direct resource delete query.
-         * @param connectivityType ::OCConnectivityType type of connectivity.
-         * @param callback Handles callbacks, success states and failure states.
-         *
-         * @return Returns ::OC_STACK_OK if success.
-         */
-        OCStackResult deleteResourceFromRD(const std::string& host,
-                                           OCConnectivityType connectivityType,
-                                           DeleteResourceCallback callback);
-
-        /**
-         * @overload
-         *
-         * @param host Host IP Address of a service to direct resource delete query.
-         * @param connectivityType ::OCConnectivityType type of connectivity.
-         * @param callback Handles callbacks, success states and failure states.
-         * @param QoS the quality of communication.
-         *
-         * @return Returns ::OC_STACK_OK if success.
-         */
-        OCStackResult deleteResourceFromRD(const std::string& host,
-                                           OCConnectivityType connectivityType,
-                                           DeleteResourceCallback callback,
-                                           QualityOfService QoS);
-
-        /**
-         * @overload
-         *
-         * @param host Host IP Address of a service to direct resource delete query.
-         * @param connectivityType ::OCConnectivityType type of connectivity.
-         * @param resourceHandle resource handle of the resource.
-         * @param callback function to callback with published resources.
-         * @see publishResourceToRD(const std::string&, OCConnectivityType, OCResourceHandle,
-         * uint8_t, PublishResourceCallback)
-         */
-        OCStackResult deleteResourceFromRD(const std::string& host,
-                                           OCConnectivityType connectivityType,
-                                           ResourceHandles& resourceHandles,
-                                           DeleteResourceCallback callback);
-
-        /**
-         * @overload
-         *
-         * @param host Host IP Address of a service to direct resource delete query.
-         * @param connectivityType ::OCConnectivityType type of connectivity.
-         * @param resourceHandle resource handle of the resource.
-         * @param callback function to callback with published resources.
-         * @param QoS the quality of communication.
-         * @see publishResourceToRD(const std::string&, OCConnectivityType, OCResourceHandle,
-         * uint8_t, PublishResourceCallback)
-         */
-        OCStackResult deleteResourceFromRD(const std::string& host,
-                                           OCConnectivityType connectivityType,
-                                           ResourceHandles& resourceHandles,
-                                           DeleteResourceCallback callback, QualityOfService QoS);
-#endif
 
         /**
          * gets the deviceId of the client
@@ -823,6 +730,3 @@ namespace OC
 }
 
 #endif // OC_PLATFORM_H_
-
-
-

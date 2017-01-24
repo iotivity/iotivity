@@ -27,7 +27,7 @@
 #include "OCApi.h"
 #include "oic_malloc.h"
 
-#include "EasySetup.h"
+#include "EasySetup.hpp"
 #include "ESRichCommon.h"
 
 #include "ocrandom.h"
@@ -68,7 +68,7 @@ public:
     void discoverRemoteEnrollee(std::function<void(std::shared_ptr<OC::OCResource> resource)> cb)
     {
         m_discoveryCb = cb;
-        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_PROV;
+        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_EASYSETUP;
         OC::OCPlatform::findResource("", uri,
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCb,
@@ -80,7 +80,7 @@ public:
     {
         m_getConfigurationCb = cb;
         m_remoteEnrollee = NULL;
-        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_PROV;
+        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_EASYSETUP;
         OC::OCPlatform::findResource("", uri,
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCbToGetConfiguration,
@@ -90,7 +90,7 @@ public:
     void getWifiRsrc(std::function<void(const OCRepresentation& rep)> cb)
     {
         m_getWifiCb = cb;
-        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_WIFI;
+        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_WIFICONF;
         OC::OCPlatform::findResource("", uri,
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCbToGetWifiRsrc,
@@ -100,7 +100,7 @@ public:
     void getCloudRsrc(std::function<void(const OCRepresentation& rep)> cb)
     {
         m_getCloudCb = cb;
-        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_CLOUDSERVER;
+        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF;
         OC::OCPlatform::findResource("", uri,
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCbToGetCloudRsrc,
@@ -121,7 +121,7 @@ public:
     {
         m_getStatusCb = cb;
         m_remoteEnrollee = NULL;
-        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_PROV;
+        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_EASYSETUP;
         OC::OCPlatform::findResource("", uri,
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCbToGetStatus,
@@ -132,7 +132,7 @@ public:
     {
         m_DevicePropProvisioningCb = cb;
         m_remoteEnrollee = NULL;
-        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_PROV;
+        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_EASYSETUP;
         OC::OCPlatform::findResource("", uri,
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCbToProvisionDeviceProperties,
@@ -143,7 +143,7 @@ public:
     {
         m_CloudPropProvisioningCb = cb;
         m_remoteEnrollee = NULL;
-        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_PROV;
+        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_EASYSETUP;
         OC::OCPlatform::findResource("", uri,
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCbToProvisionCloudProperties,
@@ -154,7 +154,7 @@ public:
     {
         m_provPutCb = cb;
         m_remoteEnrollee = NULL;
-        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_PROV;
+        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_EASYSETUP;
         OC::OCPlatform::findResource("", uri,
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCbToPutProvRsrc,
@@ -201,7 +201,7 @@ private:
             return ;
         }
 
-        if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_PROV) && m_discoveryCb)
+        if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_EASYSETUP) && m_discoveryCb)
         {
             m_discoveryCb(resource);
             m_discoveryCb = NULL;
@@ -224,7 +224,7 @@ private:
             return ;
         }
 
-        if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_PROV) && m_getConfigurationCb
+        if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_EASYSETUP) && m_getConfigurationCb
                                                                            && !m_remoteEnrollee)
         {
             m_remoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(resource);
@@ -271,7 +271,7 @@ private:
             return ;
         }
 
-        if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_WIFI) && m_getWifiCb)
+        if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_WIFICONF) && m_getWifiCb)
         {
             QueryParamsMap test;
             resource->get(test, std::bind(
@@ -314,7 +314,7 @@ private:
             return ;
         }
 
-        if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_CLOUDSERVER) && m_getCloudCb)
+        if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF) && m_getCloudCb)
         {
             QueryParamsMap test;
             resource->get(test, std::bind(
@@ -381,7 +381,7 @@ private:
             return ;
         }
 
-        if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_PROV) && m_getStatusCb
+        if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_EASYSETUP) && m_getStatusCb
                                                                             && !m_remoteEnrollee)
         {
             m_remoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(resource);
@@ -411,7 +411,7 @@ private:
             return ;
         }
 
-        if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_PROV) &&
+        if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_EASYSETUP) &&
                                                 m_DevicePropProvisioningCb && !m_remoteEnrollee)
         {
             m_remoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(resource);
@@ -449,7 +449,7 @@ private:
             return ;
         }
 
-        if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_PROV) &&
+        if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_EASYSETUP) &&
                                                 m_CloudPropProvisioningCb && !m_remoteEnrollee)
         {
             m_remoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(resource);

@@ -73,18 +73,22 @@
 #  endif
 #  define ssize_t SSIZE_T
 #  define F_OK                0
+#  define SHUT_RDWR           SD_BOTH
 #  define sleep(SECS)         Sleep(1000*(SECS))
 #  ifdef __cplusplus
 #    define SUPPORTS_DEFAULT_CTOR
 #  endif
+#  include "windows/include/memmem.h"
 #  include "windows/include/win_sleep.h"
 #  include "windows/include/pthread_create.h"
 #endif
 
 #ifdef HAVE_WINSOCK2_H
 #  define OPTVAL_T(t)    (const char*)(t)
+#  define OC_CLOSE_SOCKET(s) closesocket(s)
 #else
 #  define OPTVAL_T(t)    (t)
+#  define OC_CLOSE_SOCKET(s) close(s)
 #endif
 
 #endif

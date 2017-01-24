@@ -36,7 +36,7 @@
 #include "oic_string.h"
 #include "caremotehandler.h"
 
-#define TAG "SRM-AMSMGR"
+#define TAG "OIC_SRM_AMSMGR"
 
  //Callback for AMS service multicast discovery request.
 static OCStackApplicationResult AmsMgrDiscoveryCallback(void *ctx, OCDoHandle handle,
@@ -300,7 +300,7 @@ static OCStackApplicationResult AmsMgrAclReqCallback(void *ctx, OCDoHandle handl
     {
         size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
         OCStackResult ret =
-                InstallNewACL(((OCSecurityPayload*)clientResponse->payload)->securityData, size);
+                AppendACL(((OCSecurityPayload*)clientResponse->payload)->securityData, size);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
         OIC_LOG_V(INFO, TAG, "%s : Calling checkPermission", __func__);
@@ -398,7 +398,7 @@ void ProcessAMSRequest(PEContext_t *context)
     OIC_LOG_V(INFO, TAG, "Entering %s", __func__);
     if (NULL != context)
     {
-        if((false == context->matchingAclFound) && (false == context->amsProcessing))
+        if((ACCESS_GRANTED != context->retVal) && (false == context->amsProcessing))
         {
             context->amsProcessing = true;
 

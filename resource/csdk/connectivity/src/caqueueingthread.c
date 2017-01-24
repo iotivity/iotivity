@@ -181,9 +181,14 @@ CAResult_t CAQueueingThreadStart(CAQueueingThread_t *thread)
     oc_mutex_unlock(thread->threadMutex);
 
     CAResult_t res = ca_thread_pool_add_task(thread->threadPool, CAQueueingThreadBaseRoutine,
-                                            thread);
+                                             thread);
     if (res != CA_STATUS_OK)
     {
+        // update thread status.
+        oc_mutex_lock(thread->threadMutex);
+        thread->isStop = true;
+        oc_mutex_unlock(thread->threadMutex);
+
         OIC_LOG(ERROR, TAG, "thread pool add task error(send thread).");
     }
 
@@ -201,7 +206,6 @@ CAResult_t CAQueueingThreadAddData(CAQueueingThread_t *thread, void *data, uint3
     if (NULL == data || 0 == size)
     {
         OIC_LOG(ERROR, TAG, "data is empty..");
-
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -242,9 +246,8 @@ CAResult_t CAQueueingThreadDestroy(CAQueueingThread_t *thread)
 
     OIC_LOG(DEBUG, TAG, "thread destroy..");
 
-    oc_mutex_free(thread->threadMutex);
-    thread->threadMutex = NULL;
-    oc_cond_free(thread->threadCond);
+    // mutex lock
+    oc_mutex_lock(thread->threadMutex);
 
     // remove all remained list data.
     while (u_queue_get_size(thread->dataQueue) > 0)
@@ -269,6 +272,14 @@ CAResult_t CAQueueingThreadDestroy(CAQueueingThread_t *thread)
     }
 
     u_queue_delete(thread->dataQueue);
+    thread->dataQueue = NULL;
+
+    // mutex unlock
+    oc_mutex_unlock(thread->threadMutex);
+
+    oc_mutex_free(thread->threadMutex);
+    thread->threadMutex = NULL;
+    oc_cond_free(thread->threadCond);
 
     return CA_STATUS_OK;
 }

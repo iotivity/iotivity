@@ -294,7 +294,14 @@ public:
         return ret;
     }
 
-    jobjectArray NewObjectArray(jsize len, jclass cls, jobject init)
+    jbyteArray NewByteArray(jsize len)
+    {
+        auto ret = m_env->NewByteArray(len);
+        if (m_env->ExceptionCheck()) throw JavaException();
+        return ret;
+    }
+
+  jobjectArray NewObjectArray(jsize len, jclass cls, jobject init)
     {
         auto ret = m_env->NewObjectArray(len, cls, init);
         if (m_env->ExceptionCheck()) throw JavaException();
@@ -311,6 +318,13 @@ public:
     jobject GetObjectArrayElement(jobjectArray array, jsize index)
     {
         auto ret = m_env->GetObjectArrayElement(array, index);
+        if (m_env->ExceptionCheck()) throw JavaException();
+        return ret;
+    }
+
+    jbyte *GetByteArrayElements(jbyteArray array, jboolean *value)
+    {
+        auto ret = m_env->GetByteArrayElements(array, value);
         if (m_env->ExceptionCheck()) throw JavaException();
         return ret;
     }
@@ -339,6 +353,12 @@ public:
         if (m_env->ExceptionCheck()) throw JavaException();
     }
 
+    void SetByteArrayRegion(jbyteArray array, jsize start, jsize len, const jbyte *buf)
+    {
+        m_env->SetByteArrayRegion(array, start, len, buf);
+        if (m_env->ExceptionCheck()) throw JavaException();
+    }
+
     void* GetPrimitiveArrayCritical(jarray array, jboolean* isCopy)
     {
         auto ret = m_env->GetPrimitiveArrayCritical(array, isCopy);
@@ -352,7 +372,14 @@ public:
         if (m_env->ExceptionCheck()) throw JavaException();
     }
 
-    void ThrowNew(jclass cls, const char* msg) {
+    void ReleaseByteArrayElements(jbyteArray array, jbyte* byteArray, int mode)
+    {
+        m_env->ReleaseByteArrayElements(array, byteArray, mode);
+        if (m_env->ExceptionCheck()) throw JavaException();
+    }
+
+    void ThrowNew(jclass cls, const char* msg)
+    {
         m_env->ThrowNew(cls, msg);
         throw JavaException();
     }

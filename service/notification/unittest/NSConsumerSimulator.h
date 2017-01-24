@@ -53,7 +53,7 @@ public:
 
     void findProvider()
     {
-        OC::OCPlatform::findResource("", std::string("/oic/res?rt=oic.wk.notification"),
+        OC::OCPlatform::findResource("", std::string("/oic/res?rt=x.org.iotivity.notification"),
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&NSConsumerSimulator::findResultCallback, this, std::placeholders::_1),
                 OC::QualityOfService::LowQos);
@@ -67,8 +67,8 @@ public:
         }
 
         OC::OCRepresentation rep;
-        rep.setValue("providerId", providerID);
-        rep.setValue("messageId", id);
+        rep.setValue("providerid", providerID);
+        rep.setValue("messageid", id);
         rep.setValue("state", type);
 
         m_syncResource->post(rep, OC::QueryParamsMap(), &onPost, OC::QualityOfService::LowQos);
@@ -99,7 +99,7 @@ private:
     {
         if(resource->uri() == "/notification")
         {
-            resource->get(std::string("oic.wk.notification"), std::string("oic.if.baseline"),
+            resource->get(std::string("x.org.iotivity.notification"), std::string("oic.if.baseline"),
                     OC::QueryParamsMap(), std::bind(&NSConsumerSimulator::onGet, this,
                             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                             resource), OC::QualityOfService::LowQos);
@@ -110,12 +110,12 @@ private:
             std::shared_ptr<OC::OCResource> resource)
     {
         OC::QueryParamsMap map;
-        map.insert(std::pair<std::string,std::string>(std::string("consumerId"),
+        map.insert(std::pair<std::string,std::string>(std::string("consumerid"),
                 std::string("123456789012345678901234567890123456")));
 
         try
         {
-            std::vector<std::string> rts{"oic.wk.notification"};
+            std::vector<std::string> rts{"x.org.iotivity.notification"};
 
             m_msgResource
                 = OC::OCPlatform::constructResourceObject(
@@ -155,17 +155,17 @@ private:
             const OC::OCRepresentation &rep , const int & /*eCode*/, const int &,
             std::shared_ptr<OC::OCResource> )
     {
-        if (rep.getUri() == "/notification/message" && rep.hasAttribute("messageId")
-                && rep.getValue<int>("messageId") != 1)
+        if (rep.getUri() == "/notification/message" && rep.hasAttribute("messageid")
+                && rep.getValue<int>("messageid") != 1)
         {
-            m_messageFunc(int(rep.getValue<int>("messageId")),
+            m_messageFunc(int(rep.getValue<int>("messageid")),
                           std::string(rep.getValueToString("title")),
-                          std::string(rep.getValueToString("contentText")),
+                          std::string(rep.getValueToString("contenttext")),
                           std::string(rep.getValueToString("source")));
 
-            if(rep.getValue<int>("messageId") == 3)
+            if(rep.getValue<int>("messageid") == 3)
             {
-                m_topicResource->get(std::string("oic.wk.notification"),
+                m_topicResource->get(std::string("x.org.iotivity.notification"),
                         std::string("oic.if.baseline"), OC::QueryParamsMap(),
                         std::bind(&NSConsumerSimulator::onTopicGet, this, std::placeholders::_1,
                                 std::placeholders::_2, std::placeholders::_3, m_topicResource),
@@ -174,7 +174,7 @@ private:
         }
         else if (rep.getUri() == "/notification/sync")
         {
-            m_syncFunc(int(rep.getValue<int>("state")), int(rep.getValue<int>("messageId")));
+            m_syncFunc(int(rep.getValue<int>("state")), int(rep.getValue<int>("messageid")));
         }
     }
 
@@ -189,7 +189,7 @@ private:
             OC::OCRepresentation postRep;
 
             std::vector<OC::OCRepresentation> topicArr =
-                            rep.getValue<std::vector<OC::OCRepresentation>>("topicList");
+                            rep.getValue<std::vector<OC::OCRepresentation>>("topiclist");
 
             std::vector<OC::OCRepresentation> postTopicArr;
 
@@ -200,8 +200,8 @@ private:
                 OC::OCRepresentation topic = *it;
                 OC::OCRepresentation postTopic;
 
-                postTopic.setValue("topicName", topic.getValueToString("topicName"));
-                postTopic.setValue("topicState", (int) topic.getValue<int>("topicState"));
+                postTopic.setValue("topicname", topic.getValueToString("topicname"));
+                postTopic.setValue("topicstate", (int) topic.getValue<int>("topicstate"));
 
                 postTopicArr.push_back(topic);
 
@@ -210,10 +210,10 @@ private:
             }
 
             postRep.setValue<std::vector<OC::OCRepresentation>>
-                ("topicList", postTopicArr);
+                ("topiclist", postTopicArr);
 
             OC::QueryParamsMap map;
-            map.insert(std::pair<std::string,std::string>(std::string("consumerId"),
+            map.insert(std::pair<std::string,std::string>(std::string("consumerid"),
                     std::string("123456789012345678901234567890123456")));
             m_topicResource->post(postRep, map, &onPost, OC::QualityOfService::LowQos);
         }

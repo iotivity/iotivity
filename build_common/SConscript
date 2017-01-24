@@ -18,7 +18,7 @@ host_target_map = {
 
 # Map of os and allowed archs (os: allowed archs)
 os_arch_map = {
-    'linux': ['x86', 'x86_64', 'arm', 'arm-v7a', 'arm64'],
+    'linux': ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64', 'mips', 'mipsel', 'mips64', 'mips64el', 'i386', 'powerpc', 'sparc', 'aarch64'],
     'tizen': ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64'],
     'android': ['x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
     'windows': ['x86', 'amd64', 'arm'],
@@ -26,7 +26,7 @@ os_arch_map = {
     'darwin': ['i386', 'x86_64'],
     'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
     'arduino': ['avr', 'arm'],
-    'yocto': ['i586', 'i686', 'x86_64', 'arm', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
+    'yocto': ['i586', 'i686', 'x86_64', 'arm', 'aarch64', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
 }
 
 host = platform.system().lower()
@@ -53,9 +53,6 @@ if target_os == 'android':
     default_arch = 'x86'
 else:
     default_arch = platform.machine()
-
-if default_arch not in os_arch_map[target_os]:
-    default_arch = os_arch_map[target_os][0].lower()
 
 target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch) # target arch
 
@@ -111,8 +108,12 @@ else:
     help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ALL', ['ALL', 'BT', 'BLE', 'IP', 'NFC']))
 
 help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
-help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))
+if target_os in targets_without_dtls_support:
+    help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))
+else:
+    help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '1', allowed_values=('0', '1')))
 help_vars.Add(EnumVariable('MULTIPLE_OWNER', 'Enable multiple owner', '0', allowed_values=('0', '1')))
+help_vars.Add(EnumVariable('EXC_PROV_SUPPORT', 'Except OCPMAPI library(libocpmapi.so)', '0', allowed_values=('0', '1')))
 help_vars.Add(EnumVariable('TEST', 'Run unit tests', '0', allowed_values=('0', '1')))
 help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', logging_default))
 help_vars.Add(BoolVariable('UPLOAD', 'Upload binary ? (For Arduino)', require_upload))
@@ -128,6 +129,9 @@ if target_os == 'windows':
 	# For VS2013, MSVC_VERSION is '12.0'. For VS2015, MSVC_VERSION is '14.0'.
 	# Default value is None, meaning that SCons has to choose automatically a VS version.
 	help_vars.Add(EnumVariable('MSVC_VERSION', 'MSVC compiler version - Windows', None, allowed_values=('12.0', '14.0')))
+
+help_vars.Add(BoolVariable('BUILD_JAVA', 'Build Java bindings', False))
+help_vars.Add(PathVariable('JAVA_HOME', 'JDK directory', os.environ.get('JAVA_HOME'), PathVariable.PathAccept))
 
 AddOption('--prefix',
                   dest='prefix',
@@ -197,13 +201,19 @@ if target_os in targets_support_cc:
     if prefix or tc_path:
         print tc_set_msg
 
-# If cross-compiling, honor environment settings for toolchain to avoid picking up native tools
-if os.environ.get('PKG_CONFIG') != None:
-	env["ENV"]["PKG_CONFIG"] = os.environ.get("PKG_CONFIG")
-if os.environ.get('PKG_CONFIG_PATH') != None:
-	env["ENV"]["PKG_CONFIG_PATH"] = os.environ.get("PKG_CONFIG_PATH")
-if os.environ.get('PKG_CONFIG_SYSROOT_DIR') != None:
-	env["ENV"]["PKG_CONFIG_SYSROOT_DIR"] = os.environ.get("PKG_CONFIG_SYSROOT_DIR")
+# Import env variables only if reproductibility is ensured
+if target_os in ['yocto']:
+    env['CONFIG_ENVIRONMENT_IMPORT'] = True
+else:
+    env['CONFIG_ENVIRONMENT_IMPORT'] = False
+
+if env['CONFIG_ENVIRONMENT_IMPORT'] == True:
+    print "warning: importing some environment variables for OS: %s" % target_os
+    for ev in ['PATH', 'PKG_CONFIG', 'PKG_CONFIG_PATH', 'PKG_CONFIG_SYSROOT_DIR']:
+        if os.environ.get(ev) != None:
+            env['ENV'][ev] = os.environ.get(ev)
+    if os.environ['LDFLAGS'] != None:
+        env.AppendUnique(LINKFLAGS = Split(os.environ['LDFLAGS']))
 
 # Ensure scons be able to change its working directory
 env.SConscriptChdir(1)
@@ -340,12 +350,24 @@ if env.get('ROUTING') == 'GW':
 elif env.get('ROUTING') == 'EP':
     defines.append('-DROUTING_EP=1')
 
+libs = []
+if env.get('WITH_TCP'):
+    defines.append('-DTCP_ADAPTER=1')
+    if env.get('SECURED') == '1':
+        defines.append('-D__WITH_TLS__=1')
+
+if env.get('SECURED') == '1':
+    defines.append('-D__WITH_DTLS__=1')
+    if env.get('EXC_PROV_SUPPORT') == '0':
+        libs.append('-locpmapi')
+
 pc_vars = {
     '\@VERSION\@': project_version,
     '\@PREFIX\@': user_prefix,
     '\@EXEC_PREFIX\@': user_prefix,
     '\@LIB_INSTALL_DIR\@': user_lib,
-    '\@DEFINES\@': " ".join(defines)
+    '\@DEFINES\@': " ".join(defines),
+    '\@LIBS\@': " ".join(libs)
 }
 
 env.Substfile(pc_file, SUBST_DICT = pc_vars)
@@ -385,8 +407,6 @@ if target_os == "yocto":
                         env[tool] = os.path.join(path, os.environ[tool])
                         break
         env['CROSS_COMPILE'] = target_prefix[:len(target_prefix) - 1]
-        if os.environ['LDFLAGS'] != None:
-            env.AppendUnique(LINKFLAGS = Split(os.environ['LDFLAGS']))
     except:
         print "ERROR in Yocto cross-toolchain environment"
         Exit(1)

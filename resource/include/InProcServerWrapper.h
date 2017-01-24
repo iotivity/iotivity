@@ -28,22 +28,6 @@
 
 namespace OC
 {
-#ifdef RD_CLIENT
-    namespace ServerCallbackContext
-    {
-        struct PublishContext
-        {
-            PublishResourceCallback callback;
-            PublishContext(PublishResourceCallback cb) : callback(cb){}
-        };
-
-        struct DeleteContext
-        {
-            DeleteResourceCallback callback;
-            DeleteContext(DeleteResourceCallback cb) : callback(cb){}
-        };
-    }
-#endif
     class InProcServerWrapper : public IServerWrapper
     {
     public:
@@ -60,6 +44,7 @@ namespace OC
                     EntityHandler& entityHandler,
                     uint8_t resourceProperty);
 
+        // @deprecated: Use setPropertyValue instead.
         virtual OCStackResult registerDeviceInfo(
                     const OCDeviceInfo deviceInfo);
 
@@ -84,24 +69,23 @@ namespace OC
         virtual OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler);
 
         virtual OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
-#ifdef RD_CLIENT
-        virtual OCStackResult publishResourceToRD(const std::string& host,
-                                                  OCConnectivityType connectivityType,
-                                                  ResourceHandles& resourceHandles,
-                                                  PublishResourceCallback& callback,
-                                                  OCQualityOfService qos);
 
-        virtual OCStackResult deleteResourceFromRD(const std::string& host,
-                                                   OCConnectivityType connectivityType,
-                                                   ResourceHandles& resourceHandles,
-                                                   DeleteResourceCallback& callback,
-                                                   OCQualityOfService qos);
-#endif
+        virtual OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag,
+                    const std::string& value);
+        virtual OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag,
+                    std::string& value);
+        virtual OCStackResult getPropertyList(OCPayloadType type, const std::string& tag,
+                    std::vector<std::string>& value);
+        virtual OCStackResult stop();
+
+        virtual OCStackResult start();
+
     private:
         void processFunc();
         std::thread m_processThread;
         bool m_threadRun;
         std::weak_ptr<std::recursive_mutex> m_csdkLock;
+        PlatformConfig  m_cfg;
     };
 }
 

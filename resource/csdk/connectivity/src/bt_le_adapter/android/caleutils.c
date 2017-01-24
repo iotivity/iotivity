@@ -39,7 +39,7 @@ jobject CALEGetUuidFromString(JNIEnv *env, const char* uuid)
     if (!jni_cid_UUID)
     {
         OIC_LOG(ERROR, TAG, "jni_cid_UUID is not available");
-        return NULL;
+        goto error_exit;
     }
 
     jmethodID jni_mid_fromString = (*env)->GetStaticMethodID(env, jni_cid_UUID, "fromString",
@@ -48,14 +48,14 @@ jobject CALEGetUuidFromString(JNIEnv *env, const char* uuid)
     if (!jni_mid_fromString)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_fromString is not available");
-        return NULL;
+        goto error_exit;
     }
 
     jstring str_uuid = (*env)->NewStringUTF(env, uuid);
     if (!str_uuid)
     {
         OIC_LOG(ERROR, TAG, "str_uuid is not available");
-        return NULL;
+        goto error_exit;
     }
 
     jobject jni_obj_uuid = (*env)->CallStaticObjectMethod(env, jni_cid_UUID, jni_mid_fromString,
@@ -63,10 +63,14 @@ jobject CALEGetUuidFromString(JNIEnv *env, const char* uuid)
     if (!jni_obj_uuid)
     {
         OIC_LOG(ERROR, TAG, "Fail to get jni uuid object");
-        return NULL;
+        goto error_exit;
     }
 
     return jni_obj_uuid;
+
+error_exit:
+    CACheckJNIException(env);
+    return NULL;
 }
 
 jobject CALEGetParcelUuid(JNIEnv *env, jobject uuid)
@@ -78,7 +82,7 @@ jobject CALEGetParcelUuid(JNIEnv *env, jobject uuid)
     if (!jni_cid_ParcelUuid)
     {
         OIC_LOG(ERROR, TAG, "jni_cid_ParcelUuid is not available");
-        return NULL;
+        goto error_exit;
     }
 
     jmethodID jni_mid_ParcelUuid = (*env)->GetMethodID(env, jni_cid_ParcelUuid, "<init>",
@@ -86,17 +90,20 @@ jobject CALEGetParcelUuid(JNIEnv *env, jobject uuid)
     if (!jni_mid_ParcelUuid)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_ParcelUuid is not available");
-        return NULL;
+        goto error_exit;
     }
 
     jobject jni_ParcelUuid = (*env)->NewObject(env, jni_cid_ParcelUuid, jni_mid_ParcelUuid, uuid);
     if (!jni_ParcelUuid)
     {
         OIC_LOG(ERROR, TAG, "Fail to get jni ParcelUuid");
-        return NULL;
+        goto error_exit;
     }
 
     return jni_ParcelUuid;
+error_exit:
+    CACheckJNIException(env);
+    return NULL;
 }
 
 bool CALEIsBondedDevice(JNIEnv *env, jobject bluetoothDevice)
@@ -114,7 +121,7 @@ bool CALEIsBondedDevice(JNIEnv *env, jobject bluetoothDevice)
     }
 
     jint jni_bondState = (jint)(*env)->CallIntMethod(env, bluetoothDevice, jni_mid_getBondState);
-
+    CACheckJNIException(env);
     OIC_LOG_V(DEBUG, TAG, "bond state is %d", jni_bondState);
 
     if (BOND_BONDED == jni_bondState)
@@ -127,8 +134,6 @@ bool CALEIsBondedDevice(JNIEnv *env, jobject bluetoothDevice)
         OIC_LOG(DEBUG, TAG, "remote device is not bonded");
         return false;
     }
-
-    return false;
 }
 
 jobjectArray CALEGetBondedDevices(JNIEnv *env)
@@ -139,19 +144,19 @@ jobjectArray CALEGetBondedDevices(JNIEnv *env)
     if (!jni_cid_BTAdapter)
     {
         OIC_LOG(ERROR, TAG, "getBondedDevices: jni_cid_BTAdapter is null");
-        return NULL;
+        goto error_exit;
     }
 
     jmethodID jni_mid_getDefaultAdapter = (*env)->GetStaticMethodID(env, jni_cid_BTAdapter,
                                                                     "getDefaultAdapter",
                                                                     METHODID_OBJECTNONPARAM);
-
+    CACheckJNIException(env);
     jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter,
                                                                jni_mid_getDefaultAdapter);
     if (!jni_obj_BTAdapter)
     {
         OIC_LOG(ERROR, TAG, "getBondedDevices: bluetooth adapter is null");
-        return NULL;
+        goto error_exit;
     }
 
     // Get a list of currently paired devices
@@ -161,7 +166,7 @@ jobjectArray CALEGetBondedDevices(JNIEnv *env)
     if (!jni_mid_getBondedDevices)
     {
         OIC_LOG(ERROR, TAG, "getBondedDevices: jni_mid_getBondedDevicesr is null");
-        return NULL;
+        goto error_exit;
     }
 
     jobject jni_obj_setPairedDevices = (*env)->CallObjectMethod(env, jni_obj_BTAdapter,
@@ -169,7 +174,7 @@ jobjectArray CALEGetBondedDevices(JNIEnv *env)
     if (!jni_obj_setPairedDevices)
     {
         OIC_LOG(ERROR, TAG, "getBondedDevices: jni_obj_setPairedDevices is null");
-        return NULL;
+        goto error_exit;
     }
 
     jmethodID jni_mid_toArray = CAGetJNIMethodID(env, "java/util/Set", "toArray",
@@ -185,10 +190,14 @@ jobjectArray CALEGetBondedDevices(JNIEnv *env)
     if (!jni_arrayPairedDevices)
     {
         OIC_LOG(ERROR, TAG, "getBondedDevices: jni_arrayPairedDevices is null");
-        return NULL;
+        goto error_exit;
     }
 
     return jni_arrayPairedDevices;
+
+error_exit:
+    CACheckJNIException(env);
+    return NULL;
 }
 
 jint CALEGetBTStateOnInfo(JNIEnv *env)
@@ -199,6 +208,7 @@ jint CALEGetBTStateOnInfo(JNIEnv *env)
     if (!jni_cid_BTAdapter)
     {
         OIC_LOG(ERROR, TAG, "getBTStateOnInfo: jni_cid_BTAdapter is null");
+        CACheckJNIException(env);
         return -1;
     }
 
@@ -206,10 +216,12 @@ jint CALEGetBTStateOnInfo(JNIEnv *env)
     if (!jni_fid_stateon)
     {
         OIC_LOG(ERROR, TAG, "get_field_state is not available");
+        CACheckJNIException(env);
         return -1;
     }
 
     jint jni_int_val = (*env)->GetStaticIntField(env, jni_cid_BTAdapter, jni_fid_stateon);
+    CACheckJNIException(env);
     OIC_LOG_V(DEBUG, TAG, "bluetooth.STATE_ON state integer value : %d", jni_int_val);
 
     return jni_int_val;
@@ -236,6 +248,7 @@ jint CALEGetBuildVersion(JNIEnv *env)
     if (!jni_cls_version)
     {
         OIC_LOG(ERROR, TAG, "jni_cls_version is null");
+        CACheckJNIException(env);
         return -1;
     }
 
@@ -243,10 +256,12 @@ jint CALEGetBuildVersion(JNIEnv *env)
     if (!jni_fid_sdk)
     {
         OIC_LOG(ERROR, TAG, "jni_fid_sdk is null");
+        CACheckJNIException(env);
         return -1;
     }
 
     jint jni_int_sdk = (*env)->GetStaticIntField(env, jni_cls_version, jni_fid_sdk);
+    CACheckJNIException(env);
     OIC_LOG_V(DEBUG, TAG, "sdk version is %d", jni_int_sdk);
 
     return jni_int_sdk;
@@ -262,6 +277,7 @@ jint CALEGetBuildVersionCodeForName(JNIEnv *env, const char* versionName)
     if (!jni_cls_version)
     {
         OIC_LOG(ERROR, TAG, "jni_cls_version is null");
+        CACheckJNIException(env);
         return -1;
     }
 
@@ -269,10 +285,12 @@ jint CALEGetBuildVersionCodeForName(JNIEnv *env, const char* versionName)
     if (!jni_fid_version)
     {
         OIC_LOG(ERROR, TAG, "jni_fid_version is null");
+        CACheckJNIException(env);
         return -1;
     }
 
     jint jni_int_version = (*env)->GetStaticIntField(env, jni_cls_version, jni_fid_version);
+    CACheckJNIException(env);
     OIC_LOG_V(DEBUG, TAG, "version [%s] is %d",versionName, jni_int_version);
 
     return jni_int_version;
@@ -286,6 +304,7 @@ jboolean CALEIsEnableBTAdapter(JNIEnv *env)
     if (!jni_cid_BTAdapter)
     {
         OIC_LOG(ERROR, TAG, "jni_cid_BTAdapter: jni_cid_BTAdapter is null");
+        CACheckJNIException(env);
         return JNI_FALSE;
     }
 
@@ -295,6 +314,7 @@ jboolean CALEIsEnableBTAdapter(JNIEnv *env)
     if (!jni_mid_getDefaultAdapter)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getDefaultAdapter is null");
+        CACheckJNIException(env);
         (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
         return JNI_FALSE;
     }
@@ -304,6 +324,7 @@ jboolean CALEIsEnableBTAdapter(JNIEnv *env)
     if (!jni_obj_BTAdapter)
     {
         OIC_LOG(ERROR, TAG, "jni_obj_BTAdapter is null");
+        CACheckJNIException(env);
         (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
         return JNI_FALSE;
     }
@@ -313,12 +334,14 @@ jboolean CALEIsEnableBTAdapter(JNIEnv *env)
     if (!jni_mid_isEnable)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_isEnable is null");
+        CACheckJNIException(env);
         (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
         (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
         return JNI_FALSE;
     }
 
     jboolean jni_isEnable = (*env)->CallBooleanMethod(env, jni_obj_BTAdapter, jni_mid_isEnable);
+    CACheckJNIException(env);
     OIC_LOG_V(DEBUG, TAG, "adapter state is %d", jni_isEnable);
 
     (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
@@ -345,6 +368,7 @@ jstring CALEGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
     if (!jni_address)
     {
         OIC_LOG(ERROR, TAG, "jni_address is null");
+        CACheckJNIException(env);
         return NULL;
     }
 
@@ -361,6 +385,7 @@ jint CALEGetConstantsValue(JNIEnv *env, const char* classType, const char* name)
     if (!jni_cid)
     {
         OIC_LOG(ERROR, TAG, "jni_cid is null");
+        CACheckJNIException(env);
         return -1;
     }
 
@@ -369,10 +394,13 @@ jint CALEGetConstantsValue(JNIEnv *env, const char* classType, const char* name)
     if (!jni_fieldID)
     {
         OIC_LOG(ERROR, TAG, "jni_fieldID is null");
+        CACheckJNIException(env);
         return -1;
     }
 
-    return (*env)->GetStaticIntField(env, jni_cid, jni_fieldID);
+    jint jni_id = (*env)->GetStaticIntField(env, jni_cid, jni_fieldID);
+    CACheckJNIException(env);
+    return jni_id;
 }
 
 jobject CALEGetRemoteDevice(JNIEnv *env, jstring address)
@@ -386,7 +414,7 @@ jobject CALEGetRemoteDevice(JNIEnv *env, jstring address)
     if (!jni_cid_BTAdapter)
     {
         OIC_LOG(ERROR, TAG, "jni_cid_BTAdapter is null");
-        return NULL;
+        goto error_exit;
     }
 
     // get remote bt adapter method
@@ -396,7 +424,7 @@ jobject CALEGetRemoteDevice(JNIEnv *env, jstring address)
     if (!jni_mid_getDefaultAdapter)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getDefaultAdapter is null");
-        return NULL;
+        goto error_exit;
     }
 
     // gat bt adapter object
@@ -405,7 +433,7 @@ jobject CALEGetRemoteDevice(JNIEnv *env, jstring address)
     if (!jni_obj_BTAdapter)
     {
         OIC_LOG(ERROR, TAG, "jni_obj_BTAdapter is null");
-        return NULL;
+        goto error_exit;
     }
 
     jmethodID jni_mid_getRemoteDevice = (*env)->GetMethodID(env, jni_cid_BTAdapter,
@@ -414,7 +442,7 @@ jobject CALEGetRemoteDevice(JNIEnv *env, jstring address)
     if (!jni_mid_getRemoteDevice)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getRemoteDevice is null");
-        return NULL;
+        goto error_exit;
     }
 
     jobject jni_obj_device = (*env)->CallObjectMethod(env, jni_obj_BTAdapter,
@@ -423,11 +451,15 @@ jobject CALEGetRemoteDevice(JNIEnv *env, jstring address)
     if (!jni_obj_device)
     {
         OIC_LOG(ERROR, TAG, "jni_obj_device is null");
-        return NULL;
+        goto error_exit;
     }
 
     OIC_LOG(DEBUG, TAG, "OUT - CALEGetRemoteDevice");
     return jni_obj_device;
+
+error_exit:
+    CACheckJNIException(env);
+    return NULL;
 }
 
 jstring CALEGetAddressFromGatt(JNIEnv *env, jobject gatt)
@@ -449,6 +481,7 @@ jstring CALEGetAddressFromGatt(JNIEnv *env, jobject gatt)
     if (!jni_obj_device)
     {
         OIC_LOG(ERROR, TAG, "jni_obj_device is null");
+        CACheckJNIException(env);
         return NULL;
     }
 

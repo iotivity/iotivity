@@ -42,27 +42,23 @@ namespace OC
         public:
             ListenOCContainer(std::weak_ptr<IClientWrapper> cw,
                     OCDevAddr& devAddr, OCDiscoveryPayload* payload)
-                    : m_clientWrapper(cw), m_devAddr(devAddr)
             {
+                OCDevAddr currentDevAddr = devAddr;
                 while (payload)
                 {
                     OCResourcePayload* res = payload->resources;
                     while (res)
                     {
-                        if (res->secure)
-                        {
-                            m_devAddr.flags =
-                                  (OCTransportFlags)(OC_FLAG_SECURE | m_devAddr.flags);
-                        }
 
-                        if (res->port != 0)
-                        {
-                            m_devAddr.port = res->port;
-                        }
+                        currentDevAddr.flags = res->secure ?
+                                (OCTransportFlags)(OC_FLAG_SECURE | devAddr.flags) :
+                                devAddr.flags;
+
+                        currentDevAddr.port = (res->port != 0) ? res->port : devAddr.port;
 
                         if (payload->baseURI)
                         {
-                            OCDevAddr rdPubAddr = m_devAddr;
+                            OCDevAddr rdPubAddr = currentDevAddr;
 
                             std::string baseURI = std::string(payload->baseURI);
                             size_t len = baseURI.length();
@@ -72,7 +68,7 @@ namespace OC
                             OICStrcpy(rdPubAddr.addr, addressLen + 1, ipaddress.c_str());
                             rdPubAddr.port = port;
                             m_resources.push_back(std::shared_ptr<OC::OCResource>(
-                                        new OC::OCResource(m_clientWrapper, rdPubAddr,
+                                        new OC::OCResource(cw, rdPubAddr,
                                             std::string(res->uri),
                                             std::string(payload->sid),
                                             res->bitmap,
@@ -83,7 +79,7 @@ namespace OC
                         else
                         {
                             m_resources.push_back(std::shared_ptr<OC::OCResource>(
-                                    new OC::OCResource(m_clientWrapper, m_devAddr,
+                                    new OC::OCResource(cw, currentDevAddr,
                                         std::string(res->uri),
                                         std::string(payload->sid),
                                         res->bitmap,
@@ -94,11 +90,11 @@ namespace OC
 #ifdef TCP_ADAPTER
                             if (res->tcpPort != 0)
                             {
-                                OCDevAddr tcpDevAddr = m_devAddr;
+                                OCDevAddr tcpDevAddr = currentDevAddr;
                                 tcpDevAddr.port = res->tcpPort;
                                 tcpDevAddr.adapter = OC_ADAPTER_TCP;
                                 m_resources.push_back(std::shared_ptr<OC::OCResource>(
-                                            new OC::OCResource(m_clientWrapper, tcpDevAddr,
+                                            new OC::OCResource(cw, tcpDevAddr,
                                                 std::string(res->uri),
                                                 std::string(payload->sid),
                                                 res->bitmap,
@@ -117,7 +113,6 @@ namespace OC
 #ifdef WITH_MQ
             ListenOCContainer(std::weak_ptr<IClientWrapper> cw,
                                 OCDevAddr& devAddr, OCRepPayload* payload)
-                                : m_clientWrapper(cw), m_devAddr(devAddr)
             {
                 if (payload)
                 {
@@ -128,7 +123,7 @@ namespace OC
                     for(size_t idx = 0; idx < dimensions[0]; idx++)
                     {
                         m_resources.push_back(std::shared_ptr<OC::OCResource>(
-                                new OC::OCResource(m_clientWrapper, m_devAddr,
+                                new OC::OCResource(cw, devAddr,
                                                    std::string(topicList[idx]),
                                                    "",
                                                    OC_OBSERVABLE,
@@ -140,10 +135,9 @@ namespace OC
 
             ListenOCContainer(std::weak_ptr<IClientWrapper> cw,
                               OCDevAddr& devAddr, const std::string& topicUri)
-                              : m_clientWrapper(cw), m_devAddr(devAddr)
             {
                     m_resources.push_back(std::shared_ptr<OC::OCResource>(
-                            new OC::OCResource(m_clientWrapper, m_devAddr,
+                            new OC::OCResource(cw, devAddr,
                                                topicUri,
                                                "",
                                                OC_OBSERVABLE,
@@ -158,7 +152,5 @@ namespace OC
             }
         private:
             std::vector<std::shared_ptr<OC::OCResource>> m_resources;
-            std::weak_ptr<IClientWrapper> m_clientWrapper;
-            OCDevAddr& m_devAddr;
     };
 }

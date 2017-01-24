@@ -291,8 +291,14 @@ OCStackResult RMUpdateInfo(CAHeaderOption_t **options, uint8_t *numOptions,
 void RMGetRouteOptionIndex(const CAHeaderOption_t *options, uint8_t numOptions, int8_t *index)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    RM_NULL_CHECK_VOID(options, TAG, "options");
     RM_NULL_CHECK_VOID(index, TAG, "index");
+
+    if (NULL == options)
+    {
+        OIC_LOG(INFO, TAG, "No existing options");
+        return;
+    }
+
     for (uint32_t i = 0; i < numOptions; i++)
     {
         OIC_LOG_V(DEBUG, TAG, "Request- optionID: %u", options[i].optionID);

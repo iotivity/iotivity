@@ -118,6 +118,14 @@ namespace OIC
                 NSResult disableRemoteService(const std::string &serverAddress);
 
                 /**
+                      * Request to subscribe to remote MQ address as parameter.
+                      * @param[in] server address combined with IP address and port number and MQ broker uri using delimiter :
+                      * @param[in] topicName the interest Topic name for subscription.
+                      * @return ::NS_OK or result code of NSResult
+                      */
+                NSResult subscribeMQService(const std::string &serverAddress, const std::string &topicName);
+
+                /**
                       * Send notification message to all subscribers
                       * @param[in]  msg  Notification message including id, title, contentText
                       * @return :: result code of Provider Service
@@ -129,8 +137,9 @@ namespace OIC
                       * Send read-check to provider in order to synchronize notification status with other consumers
                       * @param[in]  messageId  ID of Notification message to synchronize the status
                       * @param[in]  type  NotificationSyncType of the SyncInfo message
+                      * @return :: OK or result code of NSResult
                       */
-                void sendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type);
+                NSResult sendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type);
 
                 /**
                      * Initialize NSMessage class, This function is valid only when subControllability is set true.

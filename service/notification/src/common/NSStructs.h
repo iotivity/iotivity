@@ -133,7 +133,7 @@ typedef struct
 typedef struct
 {
     OCResourceHandle handle;
-    char * id;
+    uint64_t messageId;
     char providerId[NS_UUID_STRING_SIZE];
     char * state;
 
@@ -155,5 +155,21 @@ typedef struct
     char * userInfo;
 
 } NSProviderInfo;
+
+#ifdef WITH_MQ
+typedef struct
+{
+    char * serverAddr;
+    char * topicName;
+
+} NSMQTopicAddress;
+
+typedef struct
+{
+    char * serverUri;
+    OCDevAddr * devAddr;
+
+} NSMQServerInfo;
+#endif
 
 #endif /* _NS_STRUCTS_H_ */

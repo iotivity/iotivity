@@ -119,7 +119,7 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      * @param configFile
      *            configuration File that contains the Bundle/Bundles
      *            information.
-     *
+     * @return collection of container bundles
      */
     public List<RcsBundleInfo> startContainer(String configFile) {
         if(configFile == null || configFile.isEmpty()){
@@ -230,7 +230,7 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
     /**
      * API for getting the list of all bundles in the container
      *
-     * @return list<RCSBundleInfo> -List of BundleInfo objects each associated
+     * @return List of BundleInfo objects each associated
      *         with a bundle
      *
      *         {@link RcsBundleInfo}
@@ -394,7 +394,7 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      * @param bundleId
      *            Id of the Bundle
      *
-     * @return List<String> All the bundle resources
+     * @return List of all the bundle resources
      */
     public List<String> listBundleResources(String bundleId) {
         if(bundleId == null || bundleId.isEmpty()){
@@ -435,7 +435,7 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      * @param bundleId
      *            Id of the Bundle
      *
-     * @return List<ResourceConfig> All the resource configurations for the given bundle
+     * @return All the resource configurations for the given bundle
      */
     public List<ResourceConfig> getConfiguredBundleResources(String bundleId) {
         Log.d(TAG, "getConfiguredBundleResource " + bundleId);

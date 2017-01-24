@@ -71,6 +71,10 @@ if target_os in ['android']:
     resourceClient_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
     resourceClient_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
 
+if target_os in ['linux']:
+    if not env.get('RELEASE'):
+        resourceClient_env.PrependUnique(LIBS = ['gcov'])
+        resourceClient_env.AppendUnique(CXXFLAGS = ['--coverage'])
 
 ######################################################################
 # Source files and Targets
@@ -86,6 +90,7 @@ client_src = [
         BROKER_SRC_DIR + 'ResourceBroker.cpp',
         CACHE_SRC_DIR + 'DataCache.cpp',
         CACHE_SRC_DIR + 'ResourceCacheManager.cpp',
+        CACHE_SRC_DIR + 'ObserveCache.cpp',
         RESOURCECLIENT_DIR + 'RCSDiscoveryManager.cpp',
         RESOURCECLIENT_DIR + 'RCSDiscoveryManagerImpl.cpp',
         RESOURCECLIENT_DIR + 'RCSRemoteResourceObject.cpp'
@@ -103,6 +108,8 @@ resourceClient_env.UserInstallTargetHeader('include/RCSResourceObject.h', 'servi
 resourceClient_env.UserInstallTargetHeader('include/RCSException.h', 'service/resource-encapsulation', 'RCSException.h')
 resourceClient_env.UserInstallTargetHeader('include/RCSRequest.h', 'service/resource-encapsulation', 'RCSRequest.h')
 resourceClient_env.UserInstallTargetHeader('include/RCSResponse.h', 'service/resource-encapsulation', 'RCSResponse.h')
+resourceClient_env.UserInstallTargetHeader('include/RCSRepresentation.h', 'service/resource-encapsulation', 'RCSRepresentation.h')
+resourceClient_env.UserInstallTargetHeader('include/RCSSeparateResponse.h', 'service/resource-encapsulation', 'RCSSeparateResponse.h')
 
 ######################################################################
 # Build Sample App: SampleResourceClient & SampleResourceServer

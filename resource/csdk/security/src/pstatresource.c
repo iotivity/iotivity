@@ -24,6 +24,7 @@
 #include "ocstack.h"
 #include "oic_malloc.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "payload_logging.h"
 #include "resourcemanager.h"
 #include "pstatresource.h"
@@ -32,7 +33,7 @@
 #include "srmresourcestrings.h"
 #include "srmutility.h"
 
-#define TAG  "SRM-PSTAT"
+#define TAG  "OIC_SRM_PSTAT"
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching below max cbor size. */
@@ -214,7 +215,7 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
 
     if (CborNoError == cborEncoderResult)
     {
-        *size = encoder.ptr - outPayload;
+        *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
         *payload = outPayload;
         ret = OC_STACK_OK;
     }
@@ -224,7 +225,7 @@ exit:
         // reallocate and try again!
         OICFree(outPayload);
         // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         cborEncoderResult = CborNoError;
         ret = PstatToCBORPayload(pstat, payload, &cborLen, writableOnly);
         if (OC_STACK_OK == ret)
@@ -300,10 +301,6 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
         OICFree(strUuid );
         strUuid  = NULL;
 
-        if (roParsed)
-        {
-            *roParsed = true;
-        }
     }
     else
     {
@@ -514,12 +511,13 @@ static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest
  * resource or create a new resource.
  * For pstat, it updates only tm and om.
  */
-static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest *ehRequest)
+static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRequest)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OIC_LOG(INFO, TAG, "HandlePstatPostRequest  processing POST request");
     OicSecPstat_t *pstat = NULL;
-    static uint16_t prevMsgId = 0;
+    static uint16_t previousMsgId = 0;
+    bool isDuplicatedMsg = false;
 
     if (ehRequest->payload && NULL != gPstat)
     {
@@ -533,6 +531,17 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
         if (OC_STACK_OK == ret)
         {
             bool validReq = false;
+
+            /*
+             * message ID is supported for CoAP over UDP only according to RFC 7252
+             * So we should check message ID to prevent duplicate request handling in case of OC_ADAPTER_IP.
+             * In case of other transport adapter, duplicate message check is not required.
+             */
+            if (OC_ADAPTER_IP == ehRequest->devAddr.adapter &&
+                 previousMsgId == ehRequest->messageID)
+            {
+                isDuplicatedMsg = true;
+            }
 
             if (true == roParsed)
             {
@@ -602,6 +611,7 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
             gPstat->om = pstat->om;
             gPstat->tm = pstat->tm;
             gPstat->cm = pstat->cm;
+            memcpy(&(gPstat->deviceID), &(pstat->deviceID), sizeof(OicUuid_t));
             memcpy(&(gPstat->rownerID), &(pstat->rownerID), sizeof(OicUuid_t));
 
             // Convert pstat data into CBOR for update to persistent storage
@@ -639,10 +649,16 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
          const OicSecDoxm_t* doxm = GetDoxmResourceData();
          if(doxm)
          {
-             if(!doxm->owned && prevMsgId !=  ehRequest->messageID)
+             if(!doxm->owned)
              {
-                 RestoreDoxmToInitState();
-                 RestorePstatToInitState();
+                OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request");
+
+                if (!isDuplicatedMsg)
+                {
+                    RestoreDoxmToInitState();
+                    RestorePstatToInitState();
+                    OIC_LOG(WARNING, TAG, "DOXM will be reverted.");
+                }
              }
          }
          else
@@ -652,7 +668,10 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
      }
      else
      {
-         prevMsgId = ehRequest->messageID;
+        if(ehRequest->devAddr.adapter == OC_ADAPTER_IP)
+        {
+            previousMsgId = ehRequest->messageID;
+        }
      }
 
     // Send response payload to request originator
@@ -870,3 +889,44 @@ OCStackResult GetPstatRownerId(OicUuid_t *rowneruuid)
     }
     return retVal;
 }
+
+OCStackResult SetPstatSelfOwnership(const OicUuid_t* newROwner)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    uint8_t *cborPayload = NULL;
+    size_t size = 0;
+
+    if(NULL == gPstat)
+    {
+        ret = OC_STACK_NO_RESOURCE;
+        return ret;
+    }
+
+    if( newROwner && (false == gPstat->isOp) && (true == (TAKE_OWNER && gPstat->cm)) )
+    {
+        gPstat->cm = (OicSecDpm_t)(gPstat->cm & (~TAKE_OWNER));
+        gPstat->isOp = true;
+
+        memcpy(gPstat->deviceID.id, newROwner->id, sizeof(newROwner->id));
+        memcpy(gPstat->rownerID.id, newROwner->id, sizeof(newROwner->id));
+
+        ret = PstatToCBORPayload(gPstat, &cborPayload, &size, false);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+        ret = UpdateSecureResourceInPS(OIC_JSON_PSTAT_NAME, cborPayload, size);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+        OICFree(cborPayload);
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "The state of PSTAT is not Ready For OTM");
+    }
+
+    return ret;
+
+exit:
+    OICFree(cborPayload);
+    return ret;
+}
+

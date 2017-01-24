@@ -31,25 +31,43 @@ cc_sample_app_env = lib_env.Clone()
 ######################################################################
 # Build flags
 ######################################################################
+# For bring up purposes only, the forked version will live here.
+cc_sample_app_env.AppendUnique(CPPPATH = ['../../../resource/csdk/connectivity/lib/libcoap-4.1.1/include',
+                                          '../../../extlibs/mbedtls/mbedtls/include'])
+
+
 cc_sample_app_env.AppendUnique(CPPPATH = [
         '../../../resource/include/',
         '../../../resource/csdk/resource-directory/include',
+        '../../../resource/csdk/include',
         '../../../resource/csdk/stack/include',
         '../../../resource/c_common/ocrandom/include',
         '../../../resource/csdk/logger/include',
-        '../../../resource/oc_logger/include'
+        '../../../resource/oc_logger/include',
+        '../../../resource/csdk/connectivity/inc',
+        '../../../resource/csdk/connectivity/api',
+        '../../../resource/csdk/connectivity/common/inc',
+        '../../../resource/csdk/security/provisioning/include',
+        '../../../resource/csdk/security/provisioning/include/internal'
         ])
 
 cc_sample_app_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra', '-std=c++0x', '-pthread'])
 cc_sample_app_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 cc_sample_app_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-cc_sample_app_env.PrependUnique(LIBS = ['oc', 'octbstack', 'pthread'])
+
+cc_sample_app_env.PrependUnique(LIBS = ['oc', 'octbstack','connectivity_abstraction','pthread', 'resource_directory', 'ocpmapi'])
 
 cc_sample_app_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD', 'RD_CLIENT'])
 
 ######################################################################
-# Source files and Targets
+# Install for rootca certificate 
 ######################################################################
+src_dir = cc_sample_app_env.get('SRC_DIR')
+cc_cloud_src_dir = src_dir + '/cloud/samples/client/'
+
+tlsOption = env.get('SECURED')
+if tlsOption is '1':
+	cc_sample_app_env.Install('.', cc_cloud_src_dir + 'rootca.crt')
 
 ######################################################################
 # Sample for the thin cloud device
@@ -71,7 +89,6 @@ aircon_controller_src = [
         'airconditioner/aircon_controller.cpp'
         ]
 cc_sample_app_env.Program('aircon_controller', aircon_controller_src)
-
 
 ######################################################################
 # Samples for message queue

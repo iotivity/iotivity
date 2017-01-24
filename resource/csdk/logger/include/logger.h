@@ -42,11 +42,6 @@ extern "C"
 {
 #endif
 
-/**
-* Helper for unused warning.
-*/
-#define UNUSED(x) (void)(x)
-
 // Use the PCF macro to wrap strings stored in FLASH on the Arduino
 // Example:  OIC_LOG(INFO, TAG, PCF("Entering function"));
 #ifdef ARDUINO

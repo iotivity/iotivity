@@ -1,8 +1,12 @@
 ; Windows octbstack.dll exports that are required for both products and tests,
 ; but only when building with SECURED=1.
 
+ConvertUuidToStr
+
 CreateJustWorksOwnerTransferPayload
 CreateJustWorksSelectOxmPayload
+CreateMVJustWorksSelectOxmPayload
+CreateConMCertificateBasedSelectOxmPayload
 CreatePinBasedSelectOxmPayload
 CreatePinBasedOwnerTransferPayload
 CreateSecureSessionJustWorksCallback
@@ -10,11 +14,13 @@ CreateSecureSessionRandomPinCallback
 InputPinCodeCallback
 LoadSecretJustWorksCallback
 
+OCConfigSelfOwnership
 OCDeleteACLList
 OCDeleteDiscoveredDevices
 OCDeletePdAclList
 OCDeleteUuidList
 OCDiscoverOwnedDevices
+OCDiscoverSingleDevice
 OCDiscoverUnownedDevices
 OCDoOwnershipTransfer
 OCGetACLResource
@@ -23,14 +29,38 @@ OCGetDevInfoFromNetwork
 OCGetLinkedStatus
 OCInitPM
 OCProvisionACL
+OCSaveACL
 OCProvisionCredentials
 OCProvisionDirectPairing
 OCProvisionPairwiseDevices
+OCProvisionTrustCertChain
+OCReadTrustCertChain
+OCRegisterTrustCertChainNotifier
 OCRemoveDevice
 OCRemoveDeviceWithUuid
+OCRemoveTrustCertChainNotifier
 OCResetDevice
+OCResetSVRDB
+OCSaveTrustCertChain
 OCSetOwnerTransferCallbackData
 OCUnlinkDevices
+OCSetOxmAllowStatus
 
+SetDisplayPinWithContextCB
+UnsetDisplayPinWithContextCB
 SetGeneratePinCB
+UnsetGeneratePinCB
 SetInputPinCB
+SetInputPinWithContextCB
+UnsetInputPinCB
+UnsetInputPinWithContextCB
+SetRandomPinPolicy
+SetDisplayNumCB
+UnsetDisplayNumCB
+SetUserConfirmCB
+UnsetUserConfirmCB
+SetVerifyOption
+VerifyOwnershipTransfer
+
+registerTimer
+unregisterTimer

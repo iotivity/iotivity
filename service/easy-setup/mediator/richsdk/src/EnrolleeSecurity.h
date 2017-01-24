@@ -25,8 +25,9 @@
 #include <atomic>
 #include <condition_variable>
 
+
 #include "ESRichCommon.h"
-#include "OCProvisioningManager.h"
+#include "OCProvisioningManager.hpp"
 
 namespace OIC
 {
@@ -41,18 +42,19 @@ namespace OIC
         class OCSecureResource;
 
         typedef std::vector<OCProvisionResult_t> PMResultList_t;
+        typedef std::function<void(OC::PMResultList_t *result, int hasError)> ESSecurityCb;
 
         /**
          * This class contains the methods needed for security  layer interaction.
          *
          * @see EnrolleeSecurity
          */
-        class EnrolleeSecurity
+        class EnrolleeSecurity : public std::enable_shared_from_this<EnrolleeSecurity>
         {
         public:
             EnrolleeSecurity(std::shared_ptr< OC::OCResource > resource,
             const std::string secDbPath);
-            ESResult provisionOwnership();
+            ESResult provisionOwnership(SecurityProvStatusCbWithOption callback);
             std::string getUUID() const;
 
         private:
@@ -64,18 +66,32 @@ namespace OIC
             std::mutex m_mtx;
             std::condition_variable m_cond;
             std::atomic<bool> OTMResult;
+            std::atomic<bool> MOTMethodProvResult;
+            std::atomic<bool> PreConfigPinProvResult;
             std::atomic<bool> removeDeviceResult;
             std::atomic<bool> aclResult;
             std::atomic<bool> certResult;
 
             std::shared_ptr< OC::OCSecureResource > m_securedResource;
 
-            ESResult performOwnershipTransfer();
+            static void onEnrolleeSecuritySafetyCB(OC::PMResultList_t *result,
+                                    int hasError,
+                                    ESSecurityCb cb,
+                                    std::weak_ptr<EnrolleeSecurity> this_ptr);
+
+            ESResult performOwnershipTransfer(ESResult& res);
             bool isOwnedDeviceRegisteredInSVRDB();
             void removeDeviceWithUuidCB(OC::PMResultList_t *result, int hasError);
-            void ownershipTransferCb(OC::PMResultList_t *result, int hasError);
+#ifdef MULTIPLE_OWNER
+            ESResult performMultipleOwnershipTransfer(const ESOwnershipTransferData& MOTdata);
+            void SelectMOTMethodCB(PMResultList_t *result, int hasError);
+            void PreconfigPinProvCB(PMResultList_t *result, int hasError);
+            void MultipleOwnershipTransferCb(OC::PMResultList_t *result, int hasError);
+#endif
+            void ownershipTransferCb(OC::PMResultList_t *result, int hasError, ESResult& res);
             void convertUUIDToString(const uint8_t uuid[UUID_SIZE],
                                                 std::string& uuidString);
+            std::string getResourceDeviceAddress(const std::string& host);
 
 #if defined(__WITH_DTLS__) && defined(__WITH_TLS__)
         public:

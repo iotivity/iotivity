@@ -26,7 +26,6 @@ Import('env')
 # Add third party libraries
 lib_env = env.Clone()
 SConscript('#service/third_party_libs.scons', 'lib_env')
-
 sample_env = lib_env.Clone()
 
 sample_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])

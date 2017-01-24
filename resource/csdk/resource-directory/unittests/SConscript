@@ -22,6 +22,8 @@
 # ResourceDirectory Unit Test build script
 ##
 # SConscript file for Local PKI google tests
+from tools.scons.RunTest import run_test
+
 gtest_env = SConscript('#extlibs/gtest/SConscript')
 lib_env = gtest_env.Clone()
 target_os = lib_env.get('TARGET_OS')
@@ -36,7 +38,7 @@ if lib_env.get('LOGGING'):
     lib_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 # Add third party libraries
-SConscript('#service/third_party_libs.scons', 'lib_env')
+SConscript('#resource/third_party_libs.scons', 'lib_env')
 
 if target_os in ['linux']:
     # Verify that 'hippomocks' mocking code is installed.  If not,
@@ -57,16 +59,15 @@ rd_test_env.AppendUnique(
         CPPPATH = [
                 src_dir + '/extlibs/hippomocks-master',
                 '../include',
-                '../../stack/test/',
-        ])
+                src_dir + '/resource/include',
+                src_dir + '/resource/csdk/include',
+                src_dir + '/resource/csdk/stack/include',
+                src_dir + '/resource/csdk/stack/test/',
+                src_dir + '/resource/oc_logger/include',])
 
-rd_test_env.PrependUnique(LIBS = [
-    'connectivity_abstraction',
-    'oc_logger',
-    'oc_logger_core',
-    'octbstack',
-    'oc',
-    'resource_directory'])
+rd_test_env.AppendUnique(LIBPATH = [lib_env.get('BUILD_DIR')])
+rd_test_env.AppendUnique(RPATH = [lib_env.get('BUILD_DIR')])
+rd_test_env.PrependUnique(LIBS = ['resource_directory', 'octbstack' ])
 
 if rd_test_env.get('RD_MODE'):
     rd_mode = rd_test_env.get('RD_MODE')
@@ -89,5 +90,6 @@ rd_test_env.AppendTarget('rd_client_test')
 if rd_test_env.get('TEST') == '1':
     target_os = rd_test_env.get('TARGET_OS')
     if target_os in ['linux']:
-        from tools.scons.RunTest import *
-        run_test(rd_test_env, '', 'resource/csdk/resource-directory/unittests/rdtests')
+        run_test(rd_test_env,
+                 'resource_csdk_resource-directory_unittests_rdtests.memcheck',
+                 'resource/csdk/resource-directory/unittests/rdtests')

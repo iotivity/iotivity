@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSProviderSubscription.h"
+#include "NSProviderListener.h"
 
 NSResult NSInitSubscriptionList()
 {
@@ -152,7 +153,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 
         bool iSRemoteServer = false;
 
-#if(defined WITH_CLOUD && defined RD_CLIENT)
+#if(defined WITH_CLOUD)
         iSRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
         if (iSRemoteServer)
         {
@@ -182,7 +183,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         }
 
         bool currPolicy = NSGetPolicy();
-        NSAskAcceptanceToUser(entityHandlerRequest);
+        NSAskAcceptanceToUser(NSCopyOCEntityHandlerRequest(entityHandlerRequest));
 
         if (currPolicy == NS_POLICY_PROVIDER)
         {
@@ -193,6 +194,8 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
             NS_LOG(DEBUG, "NSGetSubscriptionAccepter == NS_ACCEPTER_CONSUMER");
             NSSendConsumerSubResponse(NSCopyOCEntityHandlerRequest(entityHandlerRequest));
         }
+
+        NSFreeOCEntityHandlerRequest(entityHandlerRequest);
     }
     else if (resourceType == NS_RESOURCE_SYNC)
     {
@@ -210,7 +213,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         subData->remote_syncObId = subData->syncObId = 0;
         bool isRemoteServer = false;
 
-#if (defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD)
         isRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
         if (isRemoteServer)
         {
@@ -345,6 +348,38 @@ NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest * entityHandlerRequest
     return NS_OK;
 }
 
+#ifdef WITH_MQ
+void NSProviderMQSubscription(NSMQTopicAddress * topicAddr)
+{
+    char * serverUri = topicAddr->serverAddr;
+    char * topicName = topicAddr->topicName;
+
+    NS_LOG_V(DEBUG, "input Topic Name2 : %s", topicAddr->topicName);
+
+    OCDevAddr * addr = NSChangeAddress(serverUri);
+    OCCallbackData cbdata = { NULL, NULL, NULL };
+    cbdata.cb = NSProviderGetMQResponseCB;
+    cbdata.context = OICStrdup(topicName);
+    cbdata.cd = OICFree;
+
+    char requestUri[100] = "coap+tcp://";
+
+    NS_LOG_V(DEBUG, "requestUri1 = %s", requestUri);
+    OICStrcat(requestUri, strlen(requestUri)+strlen(serverUri)+1, serverUri);
+    NS_LOG_V(DEBUG, "requestUri2 = %s", requestUri);
+    OICStrcat(requestUri, strlen(requestUri)+ strlen("/oic/ps") + 1, "/oic/ps");
+    NS_LOG_V(DEBUG, "requestUri3 = %s", requestUri);
+    OCStackResult ret = OCDoResource(NULL, OC_REST_GET, requestUri, addr,
+                                     NULL, CT_DEFAULT, OC_HIGH_QOS, &cbdata, NULL, 0);
+
+    NSOCResultToSuccess(ret);
+
+    OICFree(topicAddr->serverAddr);
+    OICFree(topicAddr->topicName);
+    OICFree(topicAddr);
+}
+#endif
+
 void * NSSubScriptionSchedule(void *ptr)
 {
     if (ptr == NULL)
@@ -406,6 +441,12 @@ void * NSSubScriptionSchedule(void *ptr)
                     NSHandleSubscription((OCEntityHandlerRequest*) node->taskData,
                             NS_RESOURCE_SYNC);
                     break;
+#ifdef WITH_MQ
+                case TASK_MQ_REQ_SUBSCRIBE:
+                    NS_LOG(DEBUG, "CASE TASK_MQ_REQ_SUBSCRIBE : ");
+                    NSProviderMQSubscription((NSMQTopicAddress*) node->taskData);
+                    break;
+#endif
                 default:
                     break;
 

@@ -22,13 +22,35 @@
 #define CA_UTILS_INTERFACE_H_
 
 #include "cacommon.h"
-#ifdef __ANDROID__
+#ifdef __JAVA__
 #include "jni.h"
 #endif
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+/**
+ * this level depends on transmission time.
+ * unicast based UDP will be checked by caretransmission.
+ */
+typedef enum
+{
+    HIGH_SPEED = 0,
+    NORMAL_SPEED
+} CMSpeedLevel_t;
+
+typedef struct
+{
+    /** address for all **/
+    char addr[MAX_ADDR_STR_SIZE_CA];
+
+    /** adapter priority of all transmissions. **/
+    CATransportAdapter_t adapter;
+
+    /** level about speed of response. **/
+    CMSpeedLevel_t level;
+} CMConfigureInfo_t;
 
 /**
  * Callback function type for connection status changes delivery.
@@ -102,6 +124,7 @@ CAResult_t CASetPortNumberToAssign(CATransportAdapter_t adapter,
  */
 uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_t flag);
 
+#ifdef __JAVA__
 #ifdef __ANDROID__
 /**
  * initialize util client for android
@@ -112,6 +135,16 @@ uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_
  * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context);
+#else
+/**
+ * initialize util client for android
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   jvm                   invocation inferface for JAVA virtual machine.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
+ */
+CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm);
+#endif //_ANDROID__
 
 /**
  * terminate util client for android
@@ -141,7 +174,6 @@ CAResult_t CAUtilStopScan(JNIEnv *env);
  */
 CAResult_t CAUtilCreateBond(JNIEnv *env, jobject device);
 
-
 /**
  * set callback listener of found device.
  * @param[in]  listener         callback listener
@@ -153,15 +185,33 @@ void CAUtilSetFoundDeviceListener(jobject listener);
  * @param[in]  intervalTime         interval time(Seconds).
  * @param[in]  workingCount         working cycle for selected interval time.
  *
- * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
+ * @return  ::CA_STATUS_OK or ::CA_NOT_SUPPORTED
  */
 CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount);
 
-#endif
+/**
+ * stop LE scan.
+ * @return  ::CA_STATUS_OK or ::CA_NOT_SUPPORTED
+ */
+CAResult_t CAUtilStopLEScan();
+#endif //__JAVA__
+
+// BLE util
+/**
+ * start BLE advertising.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAUtilStartLEAdvertising();
+
+/**
+ * stop BLE advertising.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAUtilStopLEAdvertising();
 
 #ifdef __cplusplus
 } /* extern "C" */
-#endif
+#endif //__cplusplus
 
 #endif /* CA_UTILS_INTERFACE_H_ */
 

@@ -48,6 +48,7 @@ namespace OC
         static const char UNKNOWN_ERROR[]              = "Unknown Error";
 
         static const char STACK_INIT_ERROR[]           = "Error Initializing Stack";
+        static const char STACK_TERMINATE_ERROR[]      = "Error Terminating Stack";
         static const char NOT_CONFIGURED_AS_SERVER[]   =
                           "Cannot static construct a Server when configured as a client";
         static const char INVALID_PARAM[]              = "Invalid Param";
@@ -124,7 +125,12 @@ namespace OC
         static const char DUPLICATE_UUID[]             = "Duplicate UUID in DB";
         static const char INCONSISTENT_DB[]            = "Data in provisioning DB is inconsistent";
         static const char AUTHENTICATION_FAILURE[]     = "Authentication failure";
+        static const char NOT_ALLOWED_OXM[]            = "Not allowed ownership transfer method";
+        static const char USER_DENIED_REQ[]            = "Request denied by User";
+        static const char NOT_ACCEPTABLE[]             = "Request not acceptable";
         static const char PUBLISH_RESOURCE_FAILED[]    = "Publish Resource failure";
+        static const char FORBIDDEN_REQ[]              = "Forbidden request";
+        static const char INTERNAL_SERVER_ERROR[]      = "Internal server error";
     }
 
     namespace Error

@@ -34,21 +34,20 @@
 extern "C" {
 #endif
 
-typedef void (*ESWiFiCB) (ESResult, ESWiFiProvData *);
-typedef void (*ESCloudCB) (ESResult, ESCloudProvData *);
-typedef void (*ESDevConfCB) (ESResult, ESDevConfProvData *);
+typedef void (*ESWiFiConfCB) (ESResult, ESWiFiConfData *);
+typedef void (*ESCoapCloudConfCB) (ESResult, ESCoapCloudConfData *);
+typedef void (*ESDevConfCB) (ESResult, ESDevConfData *);
 
 typedef void (*ESWriteUserdataCb)(OCRepPayload* payload, char* resourceType);
 typedef void (*ESReadUserdataCb)(OCRepPayload* payload, char* resourceType, void** userdata);
 
 /* Structure to represent a Light resource */
-typedef struct PROVRESOURCE
+typedef struct
 {
     OCResourceHandle handle;
     ProvStatus status; // provisiong status
     ESErrorCode lastErrCode;
-    char ocfWebLinks[MAX_WEBLINKLEN];
-} ProvResource;
+} EasySetupResource;
 
 typedef struct
 {
@@ -60,15 +59,17 @@ typedef struct
     char cred[OIC_STRING_MAX_VALUE]; // credential information.
     WIFI_AUTHTYPE authType;
     WIFI_ENCTYPE encType;
-} WiFiResource;
+} WiFiConfResource;
 
 typedef struct
 {
     OCResourceHandle handle;
     char authCode[OIC_STRING_MAX_VALUE];
+    char accessToken[OIC_STRING_MAX_VALUE];
+    OAUTH_TOKENTYPE accessTokenType;
     char authProvider[OIC_STRING_MAX_VALUE];
     char ciServer[OIC_STRING_MAX_VALUE];
-} CloudResource;
+} CoapCloudConfResource;
 
 typedef struct
 {
@@ -80,6 +81,12 @@ typedef struct
     char country[OIC_STRING_MAX_VALUE];
 } DevConfResource;
 
+/* Note: These values of structures are not thread-safety */
+extern EasySetupResource g_ESEasySetupResource;
+extern WiFiConfResource g_ESWiFiConfResource;
+extern CoapCloudConfResource g_ESCoapCloudConfResource;
+extern DevConfResource g_ESDevConfResource;
+
 OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMask);
 OCStackResult DeleteEasySetupResources();
 
@@ -88,8 +95,8 @@ OCStackResult SetEnrolleeState(ESEnrolleeState esState);
 OCStackResult SetEnrolleeErrCode(ESErrorCode esErrCode);
 OCEntityHandlerResult CheckEhRequestPayload(OCEntityHandlerRequest *ehRequest);
 
-void RegisterWifiRsrcEventCallBack(ESWiFiCB);
-void RegisterCloudRsrcEventCallBack(ESCloudCB);
+void RegisterWifiRsrcEventCallBack(ESWiFiConfCB);
+void RegisterCloudRsrcEventCallBack(ESCoapCloudConfCB);
 void RegisterDevConfRsrcEventCallBack(ESDevConfCB);
 void UnRegisterResourceEventCallBack(void);
 ESResult SetCallbackForUserData(ESReadUserdataCb readCb, ESWriteUserdataCb writeCb);

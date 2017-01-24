@@ -33,7 +33,7 @@
 #include "oic_string.h"
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "OCProvisioningManager.h"
+#include "OCProvisioningManager.hpp"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
 #include "aclresource.h"
@@ -65,15 +65,21 @@ static const OicSecPrm_t  SUPPORTED_PRMS[1] =
 
 using namespace OC;
 
-DeviceList_t pUnownedDevList, pOwnedDevList;
+DeviceList_t pUnownedDevList, pOwnedDevList, pMOTEnabledDeviceList;
 static int transferDevIdx, ask = 1;
 static OicSecPconf_t g_pconf;
 static uint16_t g_credId = 0;
 
-static FILE* client_open(const char *UNUSED_PARAM, const char *mode)
+static FILE* client_open(const char *path, const char *mode)
 {
-    (void)UNUSED_PARAM;
-    return fopen(DAT_DB_PATH, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(DAT_DB_PATH, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 void printMenu()
@@ -94,7 +100,16 @@ void printMenu()
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     std::cout << "  13. Save the Trust Cert. Chain into Cred of SVR"<<std::endl;
     std::cout << "  14. Provision the Trust Cert. Chain"<<std::endl;
+    std::cout << "  15. Read trust cert chain"<<std::endl;
 #endif // __WITH_DTLS__ || __WITH_TLS__
+#ifdef MULTIPLE_OWNER
+    std::cout << "  16. Change Multiple Ownership Transfer Mode"<<std::endl;
+    std::cout << "  17. Select OxM method for Multiple Ownership Transfer"<<std::endl;
+    std::cout << "  18. Multiple Ownership Transfer Enabled Devices Discovery"<<std::endl;
+    std::cout << "  19. Provision pre configure PIN for Multiple Ownership Transfer Mode"<<std::endl;
+    std::cout << "  20. Add pre configure PIN for Multiple Ownership Transfer Mode"<<std::endl;
+#endif
+    std::cout << "  21. Configure SVRdb as Self-OwnerShip"<<std::endl;
     std::cout << "  99. Exit loop"<<std::endl;
 }
 
@@ -104,7 +119,7 @@ void moveTransferredDevice()
     pUnownedDevList.erase(pUnownedDevList.begin() + transferDevIdx);
 }
 
-void InputPinCB(char* pinBuf, size_t bufSize)
+void OnInputPinCB(OicUuid_t deviceId, char* pinBuf, size_t bufSize)
 {
     if(pinBuf)
     {
@@ -800,10 +815,50 @@ PVDP_ERROR:
     ask = 1;
 }
 
+OCStackResult displayMutualVerifNumCB(uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
+{
+    OIC_LOG(INFO, TAG, "IN displayMutualVerifNumCB");
+    OIC_LOG(INFO, TAG, "############ mutualVerifNum ############");
+    OIC_LOG_BUFFER(INFO, TAG, mutualVerifNum, MUTUAL_VERIF_NUM_LEN);
+    OIC_LOG(INFO, TAG, "############ mutualVerifNum ############");
+    OIC_LOG(INFO, TAG, "OUT displayMutualVerifNumCB");
+    return OC_STACK_OK;
+}
+
+OCStackResult confirmMutualVerifNumCB(void)
+{
+    for (;;)
+    {
+        int userConfirm;
+
+        printf("   > Press 1 if the mutual verification numbers are the same\n");
+        printf("   > Press 0 if the mutual verification numbers are not the same\n");
+
+        for (int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &userConfirm);
+            for (; 0x20<=getchar(); );  // for removing overflow garbage
+                                        // '0x20<=code' is character region
+        }
+        if (1 == userConfirm)
+        {
+            break;
+        }
+        else if (0 == userConfirm)
+        {
+            return OC_STACK_USER_DENIED_REQ;
+        }
+        printf("   Entered Wrong Number. Please Enter Again\n");
+    }
+    return OC_STACK_OK;
+}
+
+
+
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 static int saveTrustCert(void)
 {
-
     // call |OCSaveTrustCertChainBin| API actually
     printf("   Save Trust Cert. Chain into Cred of SVR.\n");
 
@@ -816,11 +871,11 @@ static int saveTrustCert(void)
         size_t fsize;
         if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)) >= 0)
         {
-            trustCertChainArray.data = (uint8_t*)OICMalloc(fsize);
+            trustCertChainArray.data = (uint8_t*)OICCalloc(1, fsize);
             trustCertChainArray.len = fsize;
             if (NULL == trustCertChainArray.data)
             {
-                OIC_LOG(ERROR,TAG,"malloc");
+                OIC_LOG(ERROR,TAG,"Failed to allocate memory");
                 fclose(fp);
                 return -1;
             }
@@ -845,10 +900,32 @@ static int saveTrustCert(void)
 
     return 0;
 }
+
+void certChainCallBack(uint16_t credId, uint8_t *trustCertChain,size_t chainSize)
+{
+    OIC_LOG_V(INFO, TAG, "trustCertChain Changed for credId %u", credId);
+    return;
+}
 #endif // __WITH_DTLS__ or __WITH_TLS__
+
+#ifdef MULTIPLE_OWNER
+void MOTMethodCB(PMResultList_t *result, int hasError)
+{
+    if (hasError)
+    {
+        std::cout << "Error!!! in callback"<<std::endl;
+    }
+    else
+    {
+        std::cout<< "callback successfull"<<std::endl;
+        delete result;
+    }
+}
+#endif // MULTIPLE_OWNER
 
 int main(void)
 {
+    OCStackResult result;
     OCPersistentStorage ps {client_open, fread, fwrite, fclose, unlink };
 
     // Create PlatformConfig object
@@ -865,12 +942,31 @@ int main(void)
 
     try
     {
+        InputPinCallbackHandle callbackHandle = nullptr;
         int choice;
         OicSecAcl_t *acl1 = nullptr, *acl2 = nullptr;
         if (OCSecure::provisionInit("") != OC_STACK_OK)
         {
             std::cout <<"PM Init failed"<< std::endl;
             return 1;
+        }
+
+        result = OCSecure::registerInputPinCallback(OnInputPinCB, &callbackHandle);
+        if (result != OC_STACK_OK)
+        {
+            std::cout << "!!Error - registerInputPinCallback failed." << std::endl;
+        }
+
+        result = OCSecure::registerDisplayNumCallback(displayMutualVerifNumCB);
+        if (result != OC_STACK_OK)
+        {
+            std::cout<< "!!Error - setDisplayVerifNumCB failed."<<std::endl;
+        }
+
+        result = OCSecure::registerUserConfirmCallback(confirmMutualVerifNumCB);
+        if (result != OC_STACK_OK)
+        {
+            std::cout<< "!!Error - setConfirmVerifNumCB failed."<<std::endl;
         }
 
         for (int out = 0; !out;)
@@ -965,36 +1061,7 @@ int main(void)
                             break;
                         }
                         transferDevIdx = devNum - 1;
-
-                        //register callbacks for JUST WORKS and PIN methods
-                        std::cout <<"Registering OTM Methods: 1. JUST WORKS and 2. PIN"<<std::endl;
-
-                        {
-                            OTMCallbackData_t justWorksCBData;
-                            justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
-                            justWorksCBData.createSecureSessionCB =
-                                CreateSecureSessionJustWorksCallback;
-                            justWorksCBData.createSelectOxmPayloadCB =
-                                CreateJustWorksSelectOxmPayload;
-                            justWorksCBData.createOwnerTransferPayloadCB =
-                                CreateJustWorksOwnerTransferPayload;
-                            OCSecure::setOwnerTransferCallbackData(OIC_JUST_WORKS,
-                                    &justWorksCBData, NULL);
-                        }
-
-                        {
-                            OTMCallbackData_t pinBasedCBData;
-                            pinBasedCBData.loadSecretCB = InputPinCodeCallback;
-                            pinBasedCBData.createSecureSessionCB =
-                                CreateSecureSessionRandomPinCallback;
-                            pinBasedCBData.createSelectOxmPayloadCB =
-                                CreatePinBasedSelectOxmPayload;
-                            pinBasedCBData.createOwnerTransferPayloadCB =
-                                CreatePinBasedOwnerTransferPayload;
-                            OCSecure::setOwnerTransferCallbackData(OIC_RANDOM_DEVICE_PIN,
-                                    &pinBasedCBData, InputPinCB);
-                        }
-
+                    
                         ask = 0;
                         std::cout << "Transfering ownership for : "<<
                             pUnownedDevList[devNum-1]->getDeviceID()<<std::endl;
@@ -1286,10 +1353,14 @@ int main(void)
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
                 case 13:
                     {
+                        std::cout<< "registering cert chain change notifier"<<std::endl;
+                        OCSecure::registerTrustCertChangeNotifier(certChainCallBack);
                         if(saveTrustCert())
                         {
                             std::cout<<"Error in saving cert"<<std::endl;
                         }
+                        std::cout<< "Unregister notifier"<<std::endl;
+                        OCSecure::removeTrustCertChangeNotifier();
                         break;
                     }
                 case 14:
@@ -1311,13 +1382,298 @@ int main(void)
                         }
                         break;
                     }
+                case 15:
+                    {
+                        if (0==g_credId)
+                        {
+                            std::cout<<"please save cert using option 13.";
+                        }
+                        else
+                        {
+                            uint8_t *trustCertChain = NULL;
+                            size_t chainSize = 0;
+                            if (OC_STACK_OK != OCSecure::readTrustCertChain(g_credId, &trustCertChain,&chainSize))
+                            {
+                                std::cout <<"issue in read trust chain"<< std::endl;
+                            }
+                            else
+                            {
+                                std::cout<<"size of cert : "<<chainSize<<std::endl;
+                            }
+                        }
+                        break;
+                    }
 #endif //__WITH_DTLS__ || __WITH_TLS__
+#ifdef MULTIPLE_OWNER
+                 case 16:
+                    {
+                        if (!pOwnedDevList.size() && !pMOTEnabledDeviceList.size())
+                        {
+                            std::cout <<"Owned device list and MOT device list both are empty."<<std::endl;
+                            break;
+                        }
+                        unsigned int dev_count = 0;
+                        if (pOwnedDevList.size())
+                        {
+                            dev_count = pOwnedDevList.size();
+                            printDevices(pOwnedDevList);
+                        }
+
+                        if (pMOTEnabledDeviceList.size())
+                        {
+                            dev_count += pMOTEnabledDeviceList.size();
+                            for (unsigned int i = 0; i < pMOTEnabledDeviceList.size(); i++ )
+                            {
+                                std::cout << "Device ";
+                                std::cout <<((dev_count - pMOTEnabledDeviceList.size())+ i + 1) ;
+                                std::cout <<" ID : ";
+                                std::cout << pMOTEnabledDeviceList[i]->getDeviceID()<<" From IP: ";
+                                std::cout << pMOTEnabledDeviceList[i]->getDevAddr() << std::endl;
+                            }
+                        }
+
+                        // select device
+                        unsigned int dev_num = 0;
+                        for( ; ; )
+                        {
+                            std::cout << "Enter Device Number, to change the mode: "<<std::endl;
+                            std::cin >> dev_num;
+                            if(0 < dev_num && dev_count >= dev_num)
+                            {
+                                break;
+                            }
+                            std::cout << "   Entered Wrong Number. Please Enter Again"<<std::endl;
+                        }
+
+                        OicSecMomType_t momType = OIC_MULTIPLE_OWNER_ENABLE;
+                        int mom = 0;
+                        for( ; ; )
+                        {
+                            std::cout <<"   0. Disable Multiple Ownership Transfer"<<std::endl;
+                            std::cout <<"   1. Enable Multiple Ownership Transfer "<<std::endl;
+                            std::cout <<"> Enter Mode of Multiple Ownership Transfer :"<<std::endl;
+                            for(int ret=0; 1!=ret; )
+                            {
+                                ret = scanf("%d", &mom);
+                                for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                                            // '0x20<=code' is character region
+                            }
+                            if(mom == 0)
+                            {
+                                momType = OIC_MULTIPLE_OWNER_DISABLE;
+                                break;
+                            }
+                            if(mom == 1)
+                            {
+                                momType = OIC_MULTIPLE_OWNER_ENABLE;
+                                break;
+                            }
+                            std::cout <<"     Entered Wrong Number. Please Enter Again"<<std::endl;
+                        }
+
+                        if (!pOwnedDevList.size())
+                        {
+                            if(OC_STACK_OK != pMOTEnabledDeviceList[dev_num-1]->changeMOTMode(
+                            (const OicSecMomType_t)momType,MOTMethodCB))
+                            {
+                                OIC_LOG(ERROR, TAG, "changeMOTMode API error");
+                            }
+                        }
+                        else
+                        {
+                            if(dev_num <= pOwnedDevList.size())
+                            {
+                                if(OC_STACK_OK != pOwnedDevList[dev_num-1]->changeMOTMode(momType,
+                                MOTMethodCB))
+                                {
+                                    OIC_LOG(ERROR, TAG, "changeMOTMode API error");
+                                }
+                            }
+                            else
+                            {
+                                if(OC_STACK_OK != pMOTEnabledDeviceList[(dev_num -
+                                pOwnedDevList.size() - 1)]->changeMOTMode(momType,
+                                MOTMethodCB))
+                                {
+                                    OIC_LOG(ERROR, TAG, "changeMOTMode API error");
+                                }
+                            }
+                        }
+                         break;
+                    }
+                case 17:
+                    {
+                        if (!pMOTEnabledDeviceList.size())
+                        {
+                            std::cout <<"Please discover the MOT device first. Use option 18"<<std::endl;
+                            break;
+                        }
+
+                        printDevices(pMOTEnabledDeviceList);
+                        // select device
+                        unsigned int dev_num = 0;
+                        for( ; ; )
+                        {
+                            std::cout << "Enter Device Number, for MOT Device: "<<std::endl;
+                            std::cin >> dev_num;
+                            if(0 < dev_num &&  pMOTEnabledDeviceList.size() >=dev_num)
+                            {
+                                break;
+                            }
+                                              std::cout << "     Entered Wrong Number. Please Enter Again"<<std::endl;
+                        }
+
+                        int oxm = 0;
+                        OicSecOxm_t secOxm = OIC_PRECONFIG_PIN;
+                        std::cout << "Select method for  Multiple Ownership Transfer: "<<std::endl;
+                        for( ; ; )
+                        {
+                            std::cout << "  0. Random PIN OxM "<<std::endl;
+                            std::cout << "  1. Pre-Configured PIN OxM "<<std::endl;
+                            std::cout << "   > Enter Number of  OxM for Multiple Ownership Transfer : "<<std::endl;
+                            std::cin >> oxm;
+                            if(0 == oxm)
+                            {
+                                secOxm = OIC_RANDOM_DEVICE_PIN;
+                                break;
+                            }
+                            if(1 == oxm)
+                            {
+                                secOxm = OIC_PRECONFIG_PIN;
+                                break;
+                            }
+                            std::cout << "     Entered Wrong Number. Please Enter Again"<<std::endl;
+                        }
+
+                        if(OC_STACK_OK != pMOTEnabledDeviceList[dev_num-1]->selectMOTMethod((const OicSecOxm_t)secOxm,
+                                              MOTMethodCB))
+                        {
+                            OIC_LOG(ERROR, TAG, "selectMOTMethod API error");
+                        }
+                         break;
+                    }
+                case 18:
+                    {
+                        pMOTEnabledDeviceList.clear();
+                        std::cout << "Started MOT Enabled device discovery..." <<std::endl;
+                        OCStackResult result = OCSecure::discoverMultipleOwnerEnabledDevices
+                            (DISCOVERY_TIMEOUT, pMOTEnabledDeviceList);
+                        if (result != OC_STACK_OK)
+                        {
+                            std::cout<< "!!Error - MOT Enabled dev Discovery failed."<<std::endl;
+                        }
+                        else if (pMOTEnabledDeviceList.size())
+                        {
+                            std::cout <<"Found MOT enabled devices, count = " <<
+                                pMOTEnabledDeviceList.size() << std::endl;
+                            printDevices(pMOTEnabledDeviceList);
+                        }
+                        else
+                        {
+                            std::cout <<"No MOT enabled Secure devices found"<<std::endl;
+                        }
+                        break;
+                    }
+                case 19:
+                    {
+                        if (!pMOTEnabledDeviceList.size())
+                        {
+                            std::cout <<"Please discover the MOT device first. Use option 16"<<std::endl;
+                            break;
+                        }
+
+                        printDevices(pMOTEnabledDeviceList);
+                        // select device
+                        unsigned int dev_num = 0;
+                        for( ; ; )
+                        {
+                            std::cout << "Enter Device Number, for MOT Device: "<<std::endl;
+                            std::cin >> dev_num;
+                            if(0 < dev_num && pMOTEnabledDeviceList.size() >=dev_num)
+                            {
+                                break;
+                            }
+                            std::cout << "     Entered Wrong Number. Please Enter Again"<<std::endl;
+                        }
+
+                        char preconfigPin[9] = {0};
+                        std::cout << "   > Input the 8 digit PreconfigPin (e.g. 12341234) :" <<std::endl;
+                        for(int ret=0; 1!=ret; )
+                        {
+                            ret = scanf("%8s", preconfigPin);
+                            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                                        // '0x20<=code' is character region
+                        }
+                        size_t preconfPinLength = strlen(preconfigPin);
+                        if(OC_STACK_OK != pMOTEnabledDeviceList[dev_num-1]->provisionPreconfPin(preconfigPin,
+                            preconfPinLength, MOTMethodCB))
+                        {
+                            OIC_LOG(ERROR, TAG, "provisionPreconfPin API error");
+                        }
+                        break;
+                    }
+                    case 20:
+                    {
+                        if (!pMOTEnabledDeviceList.size())
+                        {
+                            std::cout <<"Please discover the MOT device first. Use option 16"<<std::endl;
+                            break;
+                        }
+
+                        printDevices(pMOTEnabledDeviceList);
+                        // select device
+                        unsigned int dev_num = 0;
+                        for( ; ; )
+                        {
+                            std::cout << "Enter Device Number, for MOT Device: "<<std::endl;
+                            std::cin >> dev_num;
+                            if(0 < dev_num && pMOTEnabledDeviceList.size() >=dev_num)
+                            {
+                                break;
+                            }
+                            std::cout << "     Entered Wrong Number. Please Enter Again"<<std::endl;
+                        }
+
+                        char preconfPIN[9] = {0};
+                        std::cout << "   > Input the 8 digit preconfPIN (e.g. 12341234) :" <<std::endl;
+                        for(int ret=0; 1!=ret; )
+                        {
+                            ret = scanf("%8s", preconfPIN);
+                            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                                        // '0x20<=code' is character region
+                        }
+                        size_t preconfPinLength = strlen(preconfPIN);
+                        if(OC_STACK_OK != pMOTEnabledDeviceList[dev_num-1]->addPreconfigPIN(preconfPIN,
+                            preconfPinLength))
+                        {
+                            OIC_LOG(ERROR, TAG, "addPreconfigPIN API error");
+                        }
+                        break;
+                    }
+#endif //MULTIPLE_OWNER
+                case 21:
+                    {
+                        OCStackResult result;
+                        result = OCSecure::configSelfOwnership();
+                        if (OC_STACK_OK != result)
+                        {
+                            std::cout<<"configSelfOwnership API error. Please check SVR DB"<<std::endl;
+                        }
+                        else
+                        {
+                            std::cout<<"Success to configures SVR DB as self-ownership"<<std::endl;
+                        }
+                        break;
+                    }
                 case 99:
                 default:
                     out = 1;
                     break;
             }
         }
+
+        // Unregister the input pin callback
+        OCSecure::deregisterInputPinCallback(callbackHandle);
     }
     catch(OCException& e)
     {

@@ -304,13 +304,6 @@ void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
 
     OIC_LOG(DEBUG, TAG, "Adapter is Enabled");
 
-    int ret = bt_adapter_set_visibility(BT_ADAPTER_VISIBILITY_MODE_GENERAL_DISCOVERABLE, 0);
-    if (BT_ERROR_NONE != ret)
-    {
-        OIC_LOG(ERROR, TAG, "bt_adapter_set_visibility failed");
-        return;
-    }
-
     g_bleDeviceStateChangedCallback(CA_ADAPTER_ENABLED);
     oc_mutex_unlock(g_bleDeviceStateChangedCbMutex);
 

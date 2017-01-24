@@ -45,10 +45,11 @@ namespace OIC
                 /** NSMessageType - enumeration for Notification service MessageType*/
                 enum class NSMessageType
                 {
-                    NS_MESSAGE_ALERT = 0,
-                    NS_MESSAGE_NOTICE = 1,
-                    NS_MESSAGE_EVENT = 2,
-                    NS_MESSAGE_INFO = 3,
+                    NS_MESSAGE_ALERT = 1,
+                    NS_MESSAGE_NOTICE = 2,
+                    NS_MESSAGE_EVENT = 3,
+                    NS_MESSAGE_INFO = 4,
+                    NS_MESSAGE_WARNING = 5,
                 };
 
                 /**

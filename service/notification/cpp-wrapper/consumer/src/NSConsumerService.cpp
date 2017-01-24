@@ -25,6 +25,7 @@
 #include "NSCommon.h"
 #include "NSConstants.h"
 #include "oic_string.h"
+#include "oic_malloc.h"
 
 namespace OIC
 {
@@ -72,6 +73,7 @@ namespace OIC
             {
                 NS_LOG(DEBUG, "Provider with same Id exists. updating the old Provider data");
                 auto changeCallback = oldProvider->getProviderStateReceivedCb();
+                auto prevState = oldProvider->getProviderState();
                 oldProvider->setProviderState((NSProviderState)state);
                 if (state == NS_ALLOW)
                 {
@@ -80,6 +82,17 @@ namespace OIC
                     {
                         NS_LOG(DEBUG, "initiating the callback for Response : NS_ALLOW");
                         changeCallback((NSProviderState)state);
+                    }
+                    else
+                    {
+                        oldProvider->setProviderSubscribedState(NSProviderSubscribedState::SUBSCRIBED);
+                        auto discoveredCallback = NSConsumerService::getInstance()->getProviderDiscoveredCb();
+                        discoveredCallback(oldProvider);
+                        auto changeCallback = oldProvider->getProviderStateReceivedCb();
+                        if (changeCallback != NULL)
+                        {
+                            changeCallback(prevState);
+                        }
                     }
                 }
                 else if (state == NS_DENY)
@@ -102,6 +115,23 @@ namespace OIC
                         NS_LOG(DEBUG, "initiating the callback for Response : NS_TOPIC");
                         changeCallback((NSProviderState)state);
                     }
+                    if (topicLL)
+                    {
+                        NSTopicLL *iter = topicLL;
+                        NSTopicLL *following = NULL;
+
+                        while (iter)
+                        {
+                            following = iter->next;
+                            if (iter)
+                            {
+                                NSOICFree(iter->topicName);
+                                iter->next = NULL;
+                                NSOICFree(iter);
+                            }
+                            iter = following;
+                        }
+                    }
                 }
                 else if (state == NS_STOPPED)
                 {
@@ -113,6 +143,7 @@ namespace OIC
                         NS_LOG(DEBUG, "initiating the callback for Response : NS_STOPPED");
                         changeCallback((NSProviderState)state);
                     }
+                    delete oldProvider;
                 }
             }
             NS_LOG(DEBUG, "onNSProviderStateChanged - OUT");
@@ -129,6 +160,7 @@ namespace OIC
                      NSConsumerService::getInstance()->getAcceptedProviders().size());
             for (auto it : NSConsumerService::getInstance()->getAcceptedProviders())
             {
+                NS_LOG_V(DEBUG, "it->getProviderId : %s", it->getProviderId().c_str());
                 if (it->getProviderId() == nsMessage->getProviderId())
                 {
                     NS_LOG(DEBUG, "Found Provider with given ID");
@@ -148,9 +180,13 @@ namespace OIC
         void onNSSyncInfoReceived(::NSSyncInfo *syncInfo)
         {
             NS_LOG(DEBUG, "onNSSyncInfoReceived - IN");
+            NS_LOG_V(DEBUG, "syncInfo->providerId : %s", syncInfo->providerId);
+
             NSSyncInfo *nsSyncInfo = new NSSyncInfo(syncInfo);
+
             for (auto it : NSConsumerService::getInstance()->getAcceptedProviders())
             {
+                NS_LOG_V(DEBUG, "it->getProviderId : %s", it->getProviderId().c_str());
                 if (it->getProviderId() == nsSyncInfo->getProviderId())
                 {
                     NS_LOG(DEBUG, "Found Provider with given ID");
@@ -187,31 +223,39 @@ namespace OIC
             return &s_instance;
         }
 
-        void NSConsumerService::start(NSConsumerService::ProviderDiscoveredCallback providerDiscovered)
+        NSResult NSConsumerService::start(NSConsumerService::ProviderDiscoveredCallback providerDiscovered)
         {
             NS_LOG(DEBUG, "start - IN");
+            for (auto it : getAcceptedProviders())
+            {
+                delete it;
+            }
+            getAcceptedProviders().clear();
+
             m_providerDiscoveredCb = providerDiscovered;
             NSConsumerConfig nsConfig;
             nsConfig.changedCb = onProviderStateReceived;
             nsConfig.messageCb = onNSMessageReceived;
             nsConfig.syncInfoCb = onNSSyncInfoReceived;
 
-            NSStartConsumer(nsConfig);
+            NSResult result = (NSResult) NSStartConsumer(nsConfig);
             NS_LOG(DEBUG, "start - OUT");
-            return;
+            return result;
         }
 
-        void NSConsumerService::stop()
+        NSResult NSConsumerService::stop()
         {
             NS_LOG(DEBUG, "stop - IN");
-            NSStopConsumer();
+            m_providerDiscoveredCb = NULL;
             for (auto it : getAcceptedProviders())
             {
                 delete it;
             }
             getAcceptedProviders().clear();
+
+            NSResult result = (NSResult) NSStopConsumer();
             NS_LOG(DEBUG, "stop - OUT");
-            return;
+            return result;
         }
 
         NSResult NSConsumerService::enableRemoteService(const std::string &serverAddress)
@@ -229,12 +273,30 @@ namespace OIC
             return result;
         }
 
-        void NSConsumerService::rescanProvider()
+        NSResult NSConsumerService::subscribeMQService(const std::string &serverAddress,
+                const std::string &topicName)
+        {
+            NS_LOG(DEBUG, "subscribeMQService - IN");
+            NS_LOG_V(DEBUG, "Server Address : %s", serverAddress.c_str());
+            NSResult result = NSResult::ERROR;
+#ifdef WITH_MQ
+            result = (NSResult) NSConsumerSubscribeMQService(
+                         serverAddress.c_str(), topicName.c_str());
+#else
+            NS_LOG(ERROR, "MQ Services feature is not enabled in the Build");
+            (void) serverAddress;
+            (void) topicName;
+#endif
+            NS_LOG(DEBUG, "subscribeMQService - OUT");
+            return result;
+        }
+
+        NSResult NSConsumerService::rescanProvider()
         {
             NS_LOG(DEBUG, "rescanProvider - IN");
-            NSRescanProvider();
+            NSResult result = (NSResult) NSRescanProvider();
             NS_LOG(DEBUG, "rescanProvider - OUT");
-            return;
+            return result;
         }
 
         NSConsumerService::ProviderDiscoveredCallback NSConsumerService::getProviderDiscoveredCb()
@@ -244,8 +306,11 @@ namespace OIC
 
         NSProvider *NSConsumerService::getProvider(const std::string &id)
         {
+            NS_LOG_V(DEBUG, "getAcceptedProviders size  : %d", (int) getAcceptedProviders().size());
             for (auto it : getAcceptedProviders())
             {
+                NS_LOG_V(DEBUG, "getProvider  stored providerId : %s", it->getProviderId().c_str());
+                NS_LOG_V(DEBUG, "getProvider  requesting providerId : %s", id.c_str());
                 if (it->getProviderId() == id)
                 {
                     NS_LOG(DEBUG, "getProvider : Found Provider with given ID");

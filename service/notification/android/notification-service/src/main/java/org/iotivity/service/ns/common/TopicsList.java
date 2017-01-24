@@ -19,41 +19,38 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 package org.iotivity.service.ns.common;
+
 import android.util.Log;
 import java.util.Vector;
 import java.util.Iterator;
+
 /**
-  * @class   TopicsList
-  * @brief   This class provides implementation of Topics List
-  */
-public class TopicsList
-{
-    private static final String LOG_TAG = "NotificationService_TopicList";
+ *
+ * This class provides implementation of Topics List.
+ *
+ */
+public class TopicsList {
 
-    public Vector<Topic> mTopicsList = new  Vector<Topic>();
+    private static final String LOG_TAG     = "NotificationService_TopicList";
 
-    public void addTopic(String topicname, Topic.TopicState state)
-    {
-        mTopicsList.add(new Topic(topicname,state));
+    public Vector<Topic>        mTopicsList = new Vector<Topic>();
+
+    public void addTopic(String topicname, Topic.TopicState state) {
+        mTopicsList.add(new Topic(topicname, state));
     }
 
-    public void removeTopic(String topicName)
-    {
-        Iterator <Topic> it = getTopicsList().iterator();
-        while(it.hasNext())
-        {
+    public void removeTopic(String topicName) {
+        Iterator<Topic> it = getTopicsList().iterator();
+        while (it.hasNext()) {
             Topic element = it.next();
-            if(element.getTopicName().equals(topicName))
-            {
+            if (element.getTopicName().equals(topicName)) {
                 mTopicsList.remove(element);
             }
         }
     }
 
-    public Vector<Topic>  getTopicsList()
-    {
+    public Vector<Topic> getTopicsList() {
         return mTopicsList;
     }
 
 }
-

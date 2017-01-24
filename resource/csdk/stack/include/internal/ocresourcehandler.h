@@ -71,15 +71,26 @@ typedef enum
     /** "/oic/gateway" .*/
     OC_GATEWAY_URI,
 #endif
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     /** "/oic/ad" .*/
     OC_PRESENCE,
-    #endif
+#endif
 
 #ifdef MQ_BROKER
     /** "/oic/ps" .*/
     OC_MQ_BROKER_URI,
 #endif
+
+#ifdef TCP_ADAPTER
+    /** "/oic/ping" .*/
+    OC_KEEPALIVE_RESOURCE_URI,
+#endif
+
+    /** "/oic/introspection" .*/
+    OC_INTROSPECTION_URI,
+
+    /** "/oic/introspection/payload" .*/
+    OC_INTROSPECTION_PAYLOAD_URI,
 
     /** Max items in the list */
     OC_MAX_VIRTUAL_RESOURCES    //<s Max items in the list
@@ -181,7 +192,7 @@ void DeleteDeviceInfo();
  * Prepare payload for resource representation.
  */
 OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
-                    OCRepPayload** payload);
+                    OCRepPayload** payload, OCDevAddr *devAddr);
 
 /**
  * A helper function that Maps an @ref OCEntityHandlerResult type to an
@@ -193,4 +204,3 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult);
 }
 #endif // __cplusplus
 #endif //OC_RESOURCEHANDLER_H
-

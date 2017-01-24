@@ -24,14 +24,20 @@
 #include "cautilinterface.h"
 #include "cacommon.h"
 #include "oic_string.h"
+#include "oic_malloc.h"
+#include "cafragmentation.h"
+#include "caleinterface.h"
 
 #define CA_TRANSPORT_ADAPTER_SCOPE  1000
+#define CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE (((CA_DEFAULT_BLE_MTU_SIZE) - (CA_BLE_HEADER_SIZE)) \
+                                           - (CA_BLE_LENGTH_HEADER_SIZE))
+
 
 class CATests : public testing::Test {
     protected:
     virtual void SetUp()
     {
-        CAInitialize();
+        CAInitialize(CA_DEFAULT_ADAPTER);
     }
 
     virtual void TearDown()
@@ -163,7 +169,7 @@ int32_t CAGetDtlsPskCredentials( CADtlsPskCredType_t type,
 // CAInitialize TC
 TEST(InitializeTest, CAInitializeTest)
 {
-    EXPECT_EQ(CA_STATUS_OK, CAInitialize());
+    EXPECT_EQ(CA_STATUS_OK, CAInitialize(CA_DEFAULT_ADAPTER));
     CATerminate();
 }
 
@@ -175,7 +181,7 @@ TEST_F(CATests, TerminateTest)
     char* check = (char *) "terminate success";
     EXPECT_STREQ(check, "terminate success");
 
-    CAInitialize();
+    CAInitialize(CA_DEFAULT_ADAPTER);
 }
 
 // CAStartListeningServer TC
@@ -311,7 +317,7 @@ TEST_F(CATests, SendResponseTestWithInvalidCode)
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_RESET;
     responseData.messageId = 1;
-    responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
+    responseData.payload = (CAPayload_t)OICMalloc(sizeof("response payload"));
     responseData.dataType = CA_RESPONSE_DATA;
 
     EXPECT_TRUE(responseData.payload != NULL);
@@ -330,7 +336,7 @@ TEST_F(CATests, SendResponseTestWithInvalidCode)
 
         CADestroyToken(tempToken);
         CADestroyEndpoint(tempRep);
-        free(responseData.payload);
+        OICFree(responseData.payload);
         tempRep = NULL;
     }
 }
@@ -414,6 +420,63 @@ TEST_F (CATests, GetNetworkInformationTest)
     free(tempInfo);
 }
 
+TEST_F(CATests, GetSelectecNetwork)
+{
+    CATransportAdapter_t SelectedNetwork = CA_DEFAULT_ADAPTER;
+
+#ifdef IP_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork | CA_ADAPTER_IP) ;
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef LE_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork | CA_ADAPTER_GATT_BTLE);
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_GATT_BTLE));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef EDR_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork | CA_ADAPTER_RFCOMM_BTEDR);
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_RFCOMM_BTEDR));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef TCP_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork | CA_ADAPTER_TCP);
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_TCP));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef NFC_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork | CA_ADAPTER_NFC);
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_NFC));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+
+#ifdef IP_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_IP) ;
+    EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ADAPTER_IP));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef LE_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_GATT_BTLE);
+    EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ADAPTER_GATT_BTLE));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef EDR_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_RFCOMM_BTEDR);
+    EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ADAPTER_RFCOMM_BTEDR));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef TCP_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_TCP);
+    EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ADAPTER_TCP));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef NFC_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_NFC);
+    EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ADAPTER_NFC));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+}
+
 TEST_F(CATests, RegisterDTLSCredentialsHandlerTest)
 {
 #ifdef __WITH_DTLS__
@@ -484,5 +547,134 @@ TEST(CAGetPortNumberTest, CAGetPortNumberToAssign)
 #ifdef TCP_ADAPTER
     ASSERT_EQ(static_cast<uint16_t>(0), CAGetAssignedPortNumber(CA_ADAPTER_TCP, CA_IPV4));
     ASSERT_EQ(static_cast<uint16_t>(0), CAGetAssignedPortNumber(CA_ADAPTER_TCP, CA_IPV6));
+#endif
+}
+
+TEST(CAfragmentationTest, FragmentTest)
+{
+#if defined(LE_ADAPTER)
+    const size_t dataLen = 30;
+    uint8_t *data = (uint8_t *) malloc(dataLen*sizeof(uint8_t));
+    memset(data, 'a', dataLen);
+
+    uint32_t midPacketCount = 0;
+    size_t remainingLen = 0;
+    size_t totalLength = 0;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGenerateVariableForFragmentation(dataLen,
+                                                               &midPacketCount,
+                                                               &remainingLen,
+                                                               &totalLength,
+                                                               CA_DEFAULT_BLE_MTU_SIZE));
+
+    uint8_t dataHeader[CA_BLE_HEADER_SIZE] = {0};
+    const uint8_t tmpSourcePort = 1;
+    const uint8_t tmpDestPort = 1;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGenerateHeader(dataHeader,
+                                             CA_BLE_PACKET_START,
+                                             tmpSourcePort,
+                                             CA_BLE_PACKET_NON_SECURE,
+                                             tmpDestPort));
+    EXPECT_TRUE(dataHeader != NULL);
+
+    uint8_t lengthHeader[CA_BLE_LENGTH_HEADER_SIZE] = {0};
+
+    EXPECT_EQ(CA_STATUS_OK, CAGenerateHeaderPayloadLength(lengthHeader,
+                                                          CA_BLE_LENGTH_HEADER_SIZE,
+                                                          dataLen));
+    EXPECT_TRUE(lengthHeader != NULL);
+
+    uint8_t dataSegment[CA_SUPPORTED_BLE_MTU_SIZE] = {0};
+
+    EXPECT_EQ(CA_STATUS_OK, CAMakeFirstDataSegment(dataSegment,
+                                                   data,
+                                                   CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE,
+                                                   dataHeader,
+                                                   lengthHeader));
+    EXPECT_TRUE(dataSegment != NULL);
+
+    EXPECT_EQ(CA_STATUS_OK, CAGenerateHeader(dataHeader,
+                                             CA_BLE_PACKET_NOT_START,
+                                             tmpSourcePort,
+                                             CA_BLE_PACKET_NON_SECURE,
+                                             tmpDestPort));
+    EXPECT_TRUE(dataHeader != NULL);
+
+    EXPECT_EQ(CA_STATUS_OK, CAMakeRemainDataSegment(dataSegment,
+                                                    remainingLen,
+                                                    data,
+                                                    dataLen,
+                                                    0,
+                                                    dataHeader,
+                                                    CA_DEFAULT_BLE_MTU_SIZE));
+    EXPECT_TRUE(dataSegment != NULL);
+
+    free(data);
+#endif
+}
+
+TEST(CAfragmentationTest, DefragmentTest)
+{
+#if defined(LE_ADAPTER)
+    const size_t dataLen = 30;
+    uint8_t *data = (uint8_t *) malloc(dataLen*sizeof(uint8_t));
+    memset(data, 'a', dataLen);
+
+    uint32_t midPacketCount = 0;
+    size_t remainingLen = 0;
+    size_t totalLength = 0;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGenerateVariableForFragmentation(dataLen,
+                                                               &midPacketCount,
+                                                               &remainingLen,
+                                                               &totalLength,
+                                                               CA_SUPPORTED_BLE_MTU_SIZE));
+
+    uint8_t dataHeader[CA_BLE_HEADER_SIZE] = {0};
+    const uint8_t tmpSourcePort = 1;
+    const uint8_t tmpDestPort = 1;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGenerateHeader(dataHeader,
+                                             CA_BLE_PACKET_START,
+                                             tmpSourcePort,
+                                             CA_BLE_PACKET_NON_SECURE,
+                                             tmpDestPort));
+    EXPECT_TRUE(dataHeader != NULL);
+
+    uint8_t lengthHeader[CA_BLE_LENGTH_HEADER_SIZE] = {0};
+
+    EXPECT_EQ(CA_STATUS_OK, CAGenerateHeaderPayloadLength(lengthHeader,
+                                                          CA_BLE_LENGTH_HEADER_SIZE,
+                                                          dataLen));
+    EXPECT_TRUE(lengthHeader != NULL);
+
+    uint8_t dataSegment[CA_SUPPORTED_BLE_MTU_SIZE] = {0};
+
+    EXPECT_EQ(CA_STATUS_OK, CAMakeFirstDataSegment(dataSegment,
+                                                   data,
+                                                   CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE,
+                                                   dataHeader,
+                                                   lengthHeader));
+    EXPECT_TRUE(dataSegment != NULL);
+
+    CABLEPacketStart_t startFlag = CA_BLE_PACKET_NOT_START;
+    CABLEPacketSecure_t secureFlag = CA_BLE_PACKET_NON_SECURE;
+    uint16_t sourcePort = 0;
+    uint16_t destPort = 0;
+
+    EXPECT_EQ(CA_STATUS_OK, CAParseHeader(dataSegment,
+                                          &startFlag,
+                                          &sourcePort,
+                                          &secureFlag,
+                                          &destPort));
+
+    uint32_t parseDataLength = 0;
+
+    EXPECT_EQ(CA_STATUS_OK, CAParseHeaderPayloadLength(dataSegment,
+                                                       CA_BLE_LENGTH_HEADER_SIZE,
+                                                       &parseDataLength));
+
+    free(data);
 #endif
 }

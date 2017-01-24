@@ -35,11 +35,18 @@ namespace OCPlatformTest
     OCResourceHandle resourceHandle;
 
     //OCPersistent Storage Handlers
-    static FILE* client_open(const char * /*path*/, const char *mode)
+    static FILE* client_open(const char *path, const char *mode)
     {
-        std::cout << "<===Opening SVR DB file = './oic_svr_db_client.dat' with mode = '" << mode
+        if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+        {
+            std::cout << "<===Opening SVR DB file = './oic_svr_db_client.dat' with mode = '" << mode
                 << "' " << std::endl;
-        return fopen(SVR_DB_FILE_NAME, mode);
+            return fopen(SVR_DB_FILE_NAME, mode);
+        }
+        else
+        {
+            return fopen(path, mode);
+        }
     }
     OCPersistentStorage gps {client_open, fread, fwrite, fclose, unlink };
 
@@ -105,6 +112,11 @@ namespace OCPlatformTest
 
     bool OCResourcePayloadAddStringLL(OCStringLL **stringLL, std::string value)
     {
+        if (!stringLL)
+        {
+            return false;
+        }
+
         char *dup = NULL;
         DuplicateString(&dup, value);
         if (!*stringLL)
@@ -124,13 +136,12 @@ namespace OCPlatformTest
             temp->next->value = dup;
             return true;
         }
-        return false;
     }
 
     OCResourceHandle RegisterResource(std::string uri, std::string type, std::string iface)
     {
         PlatformConfig cfg
-        { OC::ServiceType::OutOfProc, OC::ModeType::Server, "0.0.0.0", 0,
+        { OC::ServiceType::InProc, OC::ModeType::Server, "0.0.0.0", 0,
                 OC::QualityOfService::LowQos, &gps };
         OCPlatform::Configure(cfg);
         EXPECT_EQ(OC_STACK_OK,OCPlatform::registerResource(
@@ -142,7 +153,7 @@ namespace OCPlatformTest
     OCResourceHandle RegisterResource(std::string uri, std::string type)
     {
         PlatformConfig cfg
-        { OC::ServiceType::OutOfProc, OC::ModeType::Server, "0.0.0.0", 0,
+        { OC::ServiceType::InProc, OC::ModeType::Server, "0.0.0.0", 0,
                 OC::QualityOfService::LowQos, &gps };
         OCPlatform::Configure(cfg);
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
@@ -154,7 +165,7 @@ namespace OCPlatformTest
     OCResourceHandle RegisterResource(std::string uri)
     {
         PlatformConfig cfg
-        { OC::ServiceType::OutOfProc, OC::ModeType::Server, "0.0.0.0", 0,
+        { OC::ServiceType::InProc, OC::ModeType::Server, "0.0.0.0", 0,
                 OC::QualityOfService::LowQos, &gps };
         OCPlatform::Configure(cfg);
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
@@ -438,7 +449,7 @@ namespace OCPlatformTest
             BATCH_INTERFACE);
         EXPECT_EQ(OC_STACK_OK, result);
     }
-    
+
 #if defined (_MSC_VER)
     TEST(BindInterfaceToResourceTest, DISABLED_BindZeroResourceInterface)
 #else
@@ -459,7 +470,7 @@ namespace OCPlatformTest
             "core.brightlight");
         EXPECT_EQ(OC_STACK_OK, result);
     }
-    
+
 #if defined (_MSC_VER)
     TEST(BindTypeToResourceTest, DISABLED_BindZeroResourceType)
 #else
@@ -798,12 +809,15 @@ namespace OCPlatformTest
         OCDeviceInfo deviceInfo;
         DuplicateString(&deviceInfo.deviceName, "myDeviceName");
         deviceInfo.types = NULL;
-        OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.wk.d");
+        OCResourcePayloadAddStringLL(&deviceInfo.types, OC_RSRVD_RESOURCE_TYPE_DEVICE);
         OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.d.tv");
         DuplicateString(&deviceInfo.specVersion, "mySpecVersion");
         deviceInfo.dataModelVersions = nullptr;
         OCResourcePayloadAddStringLL(&deviceInfo.dataModelVersions, "myDataModelVersions");
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerDeviceInfo(deviceInfo));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(
+            PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+            "bda0e016-fe64-41dc-871e-c7e94cc143b9"));
         EXPECT_NO_THROW(DeleteDeviceInfo(deviceInfo));
     }
 
@@ -813,6 +827,54 @@ namespace OCPlatformTest
         EXPECT_ANY_THROW(OCPlatform::registerDeviceInfo(di));
     }
 
+    TEST(RegisterDeviceInfoTest, RegisterDeviceInfoWithSetPropertyValue)
+    {
+        std::string deviceName = "myDeviceName";
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
+            deviceName));
+        std::string specVersion = "mySpecVersion";
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION,
+            specVersion));
+        std::vector<std::string> dmv;
+        dmv.push_back("myDataModelVersions");
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+            dmv));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+            "99a74220-73d3-426f-8397-3c06d586a865"));
+        OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+        ASSERT_TRUE(NULL != handle);
+        EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "oic.wk.tv"));
+    }
+
+
+    TEST(RegisterDeviceInfoTest, RegisterDeviceInfoWithGetPropertyValue)
+    {
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
+            "myDeviceName"));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION,
+            "mySpecVersion"));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+            "myDataModelVersions"));
+        OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+        ASSERT_TRUE(NULL != handle);
+        EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "oic.wk.tv"));
+
+        std::string value;
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::getPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
+            value));
+        EXPECT_STREQ("myDeviceName", value.c_str());
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::getPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION,
+            value));
+        EXPECT_STREQ("mySpecVersion", value.c_str());
+        std::vector<std::string> dmv;
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::getPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+            dmv));
+        EXPECT_STREQ("myDataModelVersions", dmv[0].c_str());
+
+        EXPECT_STREQ("oic.wk.d", OCGetResourceTypeName(handle, 0));
+        EXPECT_STREQ("oic.d.tv", OCGetResourceTypeName(handle, 1));
+        EXPECT_STREQ("oic.wk.tv", OCGetResourceTypeName(handle, 2));
+    }
     //SubscribePresence Test
     TEST(SubscribePresenceTest, DISABLED_SubscribePresenceWithValidParameters)
     {

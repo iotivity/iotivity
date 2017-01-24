@@ -9,13 +9,21 @@
 
 #include "ocstack.h"
 #include "ocpayload.h"
-#include "rd_client.h"
+#include "RDClient.h"
 
 #include <OCApi.h>
 #include <OCPlatform.h>
 
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+#include "ocprovisioningmanager.h"
+#include "mbedtls/ssl_ciphersuites.h"
+#include <ca_adapter_net_ssl.h>
+#endif // WITH_DTLS__ or __WITH_TLS__
+
 using namespace OC;
 using namespace std;
+
+string              g_host;
 
 class Resource
 {
@@ -85,7 +93,6 @@ class Resource
                 pResponse->setResourceRepresentation(getRepresentation(), DEFAULT_INTERFACE);
             }
 
-            pResponse->setErrorCode(200);
             pResponse->setResponseResult(OC_EH_OK);
 
             return OCPlatform::sendResponse(pResponse);
@@ -98,7 +105,6 @@ class Resource
                 shared_ptr<OCResourceResponse> resourceResponse =
                 { make_shared<OCResourceResponse>() };
 
-                resourceResponse->setErrorCode(200);
                 resourceResponse->setResourceRepresentation(getRepresentation(), DEFAULT_INTERFACE);
 
                 return OCPlatform::notifyListOfObservers(m_handle,
@@ -497,18 +503,110 @@ void handleLoginoutCB(const HeaderOptions &,
     g_callbackLock.notify_all();
 }
 
-static FILE *client_open(const char * /*path*/, const char *mode)
+int saveTrustCert(void)
 {
-    return fopen("./aircon_controlee.dat", mode);
+    OCStackResult res = OC_STACK_ERROR;
+    uint16_t g_credId = 0;
+
+    cout << "Save Trust Cert. Chain into Cred of SVR" <<endl;
+
+    ByteArray trustCertChainArray = {0, 0};
+
+    FILE *fp = fopen("rootca.crt", "rb+");
+
+    if (fp)
+    {
+        size_t fsize;
+        if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)) > 0)
+        {
+            trustCertChainArray.data = (uint8_t *)malloc(fsize);
+            trustCertChainArray.len = fsize;
+            if (NULL == trustCertChainArray.data)
+            {
+                cout << "Failed to allocate memory" << endl;
+                fclose(fp);
+                return res;
+            }
+            rewind(fp);
+            if (fsize != fread(trustCertChainArray.data, 1, fsize, fp))
+            {
+                 cout << "Certiface not read completely" << endl;
+            }
+            fclose(fp);
+        }
+    }
+
+    res = OCSaveTrustCertChain(trustCertChainArray.data, trustCertChainArray.len, OIC_ENCODING_PEM,&g_credId);
+
+    if(OC_STACK_OK != res)
+    {
+        cout << "OCSaveTrustCertChainBin API error" << endl;
+        return res;
+    }
+    cout << "CredId of Saved Trust Cert. Chain into Cred of SVR : " << g_credId << endl;
+
+    return res;
+}
+
+static FILE *client_open(const char *path, const char *mode)
+{
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen("./aircon_controlee.dat", mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
+}
+
+OCStackResult SetDeviceInfo()
+{
+    OCStackResult result = OC_STACK_ERROR;
+
+    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+
+    if (handle == NULL)
+    {
+        cout << "Failed to find resource " << OC_RSRVD_DEVICE_URI << endl;
+        return result;
+    }
+
+    result = OCBindResourceTypeToResource(handle, "oic.d.airconditioner");
+
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to add device type" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, "FAC_2016");
+
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set device name" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                          "d7d2b492-83ac-4783-9dcc-b1b54587ebed");
+
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set piid" << endl;
+        return result;
+    }
+
+    return OC_STACK_OK;
 }
 
 int main(int argc, char *argv[])
 {
-    if (argc != 4 && argc != 5)
+    if (argc != 5)
     {
-        cout << "Put \"[host-ipaddress:port] [authprovider] [authcode]\" for sign-up and sign-in and publish resources"
+        cout << "Put \"[host-ipaddress:port] [authprovider] [authcode] [tls mode(0,1)]\" for sign-up and sign-in and publish resources"
              << endl;
-        cout << "Put \"[host-ipaddress:port] [uid] [accessToken] 1\" for sign-in and publish resources" <<
+        cout << "Put \"[host-ipaddress:port] [uid] [accessToken] [tls mode(0,1)]\" for sign-in and publish resources" <<
              endl;
         return 0;
     }
@@ -529,16 +627,41 @@ int main(int argc, char *argv[])
 
     OCStackResult result = OC_STACK_ERROR;
 
-    string host = "coap+tcp://";
-    host += argv[1];
+	g_host = "coap+tcp://";
 
-    OCAccountManager::Ptr accountMgr = OCPlatform::constructAccountManagerObject(host,
+	if (!strcmp(argv[4],"1"))
+	{
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+		g_host = "coaps+tcp://";
+#endif
+	} 
+	
+	g_host += argv[1];
+	
+	OCAccountManager::Ptr accountMgr = OCPlatform::constructAccountManagerObject(g_host,
                                        CT_ADAPTER_TCP);
+
+	if (!strcmp(argv[4], "1"))
+	{
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+		cout << "Security Mode" << endl;
+		if (CA_STATUS_OK != saveTrustCert())
+		{
+			cout << "saveTrustCert returned an error" << endl;
+		}
+
+		uint16_t cipher = MBEDTLS_TLS_RSA_WITH_AES_128_GCM_SHA256;
+		if (CA_STATUS_OK != CASelectCipherSuite(cipher, CA_ADAPTER_TCP))
+		{
+			cout << "CASelectCipherSuite returned an error" << endl;
+		}
+#endif
+	}
 
     mutex blocker;
     unique_lock<mutex> lock(blocker);
 
-    if (argc == 5)
+	if (strlen(argv[2]) > 35)
     {
         accountMgr->signIn(argv[2], argv[3], &handleLoginoutCB);
         g_callbackLock.wait(lock);
@@ -550,7 +673,6 @@ int main(int argc, char *argv[])
         accountMgr->signIn(g_uid, g_accesstoken, &handleLoginoutCB);
         g_callbackLock.wait(lock);
     }
-
 
     cout << "Registering resources to platform..." << endl;
 
@@ -608,6 +730,11 @@ int main(int argc, char *argv[])
                                                   , &binarySwitch, placeholders::_1),
                                           OC_OBSERVABLE);
 
+    if (result != OC_STACK_OK)
+    {
+        exit(EXIT_FAILURE);
+    }
+
     uri = temperature.getResourceUri();
     rt = temperature.getResourceType()[0];
     itf = temperature.getInterfaces()[0];
@@ -620,28 +747,37 @@ int main(int argc, char *argv[])
                                                   , &temperature, placeholders::_1),
                                           OC_OBSERVABLE);
 
+    if (result != OC_STACK_OK)
+    {
+        exit(EXIT_FAILURE);
+    }
+
     result = airConditioner.addChildResource(&binarySwitch);
+
+    if (result != OC_STACK_OK)
+    {
+        exit(EXIT_FAILURE);
+    }
 
     result = airConditioner.addChildResource(&temperature);
 
+    if (result != OC_STACK_OK)
+    {
+        exit(EXIT_FAILURE);
+    }
+
     cout << "Publishing resources to cloud ";
 
+    result = SetDeviceInfo();
+
+    if (result != OC_STACK_OK)
+    {
+        exit(EXIT_FAILURE);
+    }
 
     ResourceHandles resourceHandles;
 
-    OCDeviceInfo        devInfoAirConditioner;
-    OCStringLL          deviceType;
-
-    deviceType.value = "oic.d.airconditioner";
-    deviceType.next = NULL;
-    devInfoAirConditioner.deviceName = "FAC_2016";
-    devInfoAirConditioner.types = &deviceType;
-    devInfoAirConditioner.specVersion = NULL;
-    devInfoAirConditioner.dataModelVersions = NULL;
-
-    OCPlatform::registerDeviceInfo(devInfoAirConditioner);
-
-    result = OCPlatform::publishResourceToRD(host, OCConnectivityType::CT_ADAPTER_TCP,
+	result = RDClient::Instance().publishResourceToRD(g_host, OCConnectivityType::CT_ADAPTER_TCP,
              resourceHandles,
              &onPublish);
 
@@ -649,7 +785,7 @@ int main(int argc, char *argv[])
 
     resourceHandles.push_back(airConditioner.m_handle);
 
-    result = OCPlatform::publishResourceToRD(host, OCConnectivityType::CT_ADAPTER_TCP,
+	result = RDClient::Instance().publishResourceToRD(g_host, OCConnectivityType::CT_ADAPTER_TCP,
              resourceHandles,
              &onPublish);
 
@@ -681,7 +817,6 @@ int main(int argc, char *argv[])
 
             case 'q':
                 goto exit;
-                break;
         }
     }
 

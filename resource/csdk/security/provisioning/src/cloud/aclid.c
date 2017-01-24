@@ -1,3 +1,22 @@
+/* *****************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * *****************************************************************/
 #include "utils.h"
 
 #include "oic_malloc.h"
@@ -12,7 +31,7 @@
 #include "payload_logging.h"
 #include "utlist.h"
 
-#define TAG "CLOUD-ACL-ID"
+#define TAG "OIC_CLOUD_ACL_ID"
 
 /**
  * ACL Id parse from received response
@@ -174,7 +193,7 @@ static OCStackResult handleAclGetInfoResponse(void *ctx, void **data, OCClientRe
 
     printACL(acl);
 
-    result = InstallNewACL2(acl);
+    result = InstallACL(acl);
     if (result != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "Can't update ACL resource");
@@ -271,7 +290,6 @@ OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
             OIC_LOG(ERROR, TAG, "Can't convert subjectuuid to string");
         }
 
-        OCRepPayloadSetPropString(payload, OC_RSRVD_ACE_ID, ace->aceId);
         OCRepPayloadSetPropString(payload, OC_RSRVD_SUBJECT_UUID, (const char *)uuid);
         OCRepPayloadSetPropInt(payload, OC_RSRVD_SUBJECT_TYPE, ace->stype);
         OCRepPayloadSetPropInt(payload, OC_RSRVD_PERMISSION_MASK, ace->permission);
@@ -352,7 +370,7 @@ no_memory:
 OCStackResult OCCloudAclIndividualUpdate(void* ctx,
                                             const char *aclId,
                                             const char *aceId,
-                                            const cloudAce_t *ace,
+                                            const cloudAce_t *aces,
                                             const OCDevAddr *endPoint,
                                             OCCloudResponseCB callback)
 {
@@ -366,10 +384,11 @@ OCStackResult OCCloudAclIndividualUpdate(void* ctx,
 
     VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL_RET(ace, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(aces, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_ID_URL, aclId);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s?%s=%s", DEFAULT_PREFIX,
+            endPoint->addr, endPoint->port, OC_RSRVD_ACL_ID_URL, aclId,
+            OC_RSRVD_ACE_ID, aceId);
 
     OCRepPayload *payload = OCRepPayloadCreate();
     if (!payload)
@@ -388,9 +407,9 @@ OCStackResult OCCloudAclIndividualUpdate(void* ctx,
     }
 
     i = 0;
-    cloudAce_t *tempAce = NULL;
+    cloudAce_t *ace = NULL;
 
-    LL_FOREACH((cloudAce_t*)ace, tempAce)
+    LL_FOREACH((cloudAce_t*)aces, ace)
     {
         OCRepPayload *payload = OCRepPayloadCreate();
         if (!payload)
@@ -401,22 +420,21 @@ OCStackResult OCCloudAclIndividualUpdate(void* ctx,
         helperPayload[i++] = payload;
 
         char *uuid = NULL;
-        if (OC_STACK_OK != ConvertUuidToStr(&tempAce->subjectuuid, &uuid))
+        if (OC_STACK_OK != ConvertUuidToStr(&ace->subjectuuid, &uuid))
         {
             OIC_LOG(ERROR, TAG, "Can't convert subjectuuid to string");
         }
 
-        OCRepPayloadSetPropString(payload, OC_RSRVD_ACE_ID, tempAce->aceId);
         OCRepPayloadSetPropString(payload, OC_RSRVD_SUBJECT_UUID, (const char *)uuid);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_SUBJECT_TYPE, tempAce->stype);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_PERMISSION_MASK, tempAce->permission);
+        OCRepPayloadSetPropInt(payload, OC_RSRVD_SUBJECT_TYPE, ace->stype);
+        OCRepPayloadSetPropInt(payload, OC_RSRVD_PERMISSION_MASK, ace->permission);
 
         OICFree(uuid);
 
         int reslist_count = 0;
         //code below duplicates LL_COUNT, implemented in newer version of utlist.h
         {
-            OicSecRsrc_t *res = tempAce->resources;
+            OicSecRsrc_t *res = ace->resources;
             while (res)
             {
                 res = res->next;
@@ -433,7 +451,7 @@ OCStackResult OCCloudAclIndividualUpdate(void* ctx,
         j = 0;
         OicSecRsrc_t *res = NULL;
 
-        LL_FOREACH(tempAce->resources, res)
+        LL_FOREACH(ace->resources, res)
         {
             OCRepPayload *payload = OCRepPayloadCreate();
             if (!payload)

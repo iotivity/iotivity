@@ -319,9 +319,9 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
         {
             OIC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
                     ehRequest->method);
-            OCRepPayloadDestroy(payload);
             ret = OC_EH_ERROR;
         }
+        OCRepPayloadDestroy(payload);
     }
     else if (ehRequest && flag == OC_OBSERVE_FLAG)
     {
@@ -382,10 +382,7 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
                 ret = OC_EH_ERROR;
             }
         }
-        else
-        {
-            OCRepPayloadDestroy(payload);
-        }
+        OCRepPayloadDestroy(payload);
     }
     else if (ehRequest && flag == OC_OBSERVE_FLAG)
     {

@@ -165,6 +165,7 @@ uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_
     return 0;
 }
 
+#ifdef __JAVA__
 #ifdef __ANDROID__
 /**
  * initialize client connection manager
@@ -177,6 +178,7 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
     OIC_LOG(DEBUG, TAG, "CAUtilClientInitialize");
 
     CAResult_t res = CA_STATUS_OK;
+
 #ifdef LE_ADAPTER
     if (CA_STATUS_OK != CAManagerLEClientInitialize(env, jvm, context))
     {
@@ -200,6 +202,30 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
 #endif
     return res;
 }
+#else //__ANDROID__
+/**
+ * initialize client connection manager
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   jvm                   invocation inferface for JAVA virtual machine.
+ */
+CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm)
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilClientInitialize");
+    (void) env;
+    (void) jvm;
+    CAResult_t res = CA_STATUS_OK;
+
+#ifdef EDR_ADAPTER
+    if (CA_STATUS_OK != CABTPairingInitialize(env, jvm))
+    {
+        OIC_LOG(ERROR, TAG, "CABTPairingInitialize has failed");
+        res = CA_STATUS_FAILED;
+    }
+#endif
+    return res;
+}
+
+#endif //__ANDROID__
 
 /**
  * terminate client connection manager
@@ -208,7 +234,7 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
 CAResult_t CAUtilClientTerminate(JNIEnv *env)
 {
     OIC_LOG(DEBUG, TAG, "CAUtilClientTerminate");
-#ifdef LE_ADAPTER
+#if defined(LE_ADAPTER) && defined(__ANDROID__)
     return CAManagerLEClientTerminate(env);
 #else
     OIC_LOG(DEBUG, TAG, "it is not supported");
@@ -264,7 +290,7 @@ void CAUtilSetFoundDeviceListener(jobject listener)
 CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount)
 {
     OIC_LOG(DEBUG, TAG, "CAUtilSetLEScanInterval");
-#ifdef LE_ADAPTER
+#if defined(LE_ADAPTER) && defined(__ANDROID__)
     CAManagerLESetScanInterval(intervalTime, workingCount);
     return CA_STATUS_OK;
 #else
@@ -274,4 +300,38 @@ CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount)
     return CA_NOT_SUPPORTED;
 #endif
 }
+
+CAResult_t CAUtilStopLEScan()
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilStopLEScan");
+#if defined(LE_ADAPTER) && defined(__ANDROID__)
+    CAManagerLEStopScan();
+    return CA_STATUS_OK;
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
 #endif
+}
+#endif // __JAVA__
+
+CAResult_t CAUtilStartLEAdvertising()
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilStartLEAdvertising");
+#if defined(LE_ADAPTER) && defined(__ANDROID__)
+    return CAManagerLEStartAdvertising();
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
+#endif
+}
+
+CAResult_t CAUtilStopLEAdvertising()
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilStopLEAdvertising");
+#if defined(LE_ADAPTER) && defined(__ANDROID__)
+    return CAManagerLEStopAdvertising();
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
+#endif
+}

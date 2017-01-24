@@ -100,6 +100,15 @@ OCStackResult GetPstatRownerId(OicUuid_t *rowneruuid);
  */
 bool GetPstatIsop();
 
+/**
+ * Internal function to change pastat resource to Ready for Normal Operation.
+ *
+ * @param newROwner new owner
+ *
+ * @retval ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult SetPstatSelfOwnership(const OicUuid_t* newROwner);
+
 #ifdef __cplusplus
 }
 #endif

@@ -24,6 +24,12 @@
 #include <stdlib.h>
 #include "oic_malloc.h"
 
+#include "iotivity_config.h"
+
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
+
 // Enable extra debug logging for malloc.  Comment out to disable
 #ifdef ENABLE_MALLOC_DEBUG
 #include "logger.h"
@@ -120,6 +126,15 @@ void *OICRealloc(void* ptr, size_t size)
 #endif
 }
 
+void OICFreeAndSetToNull(void **ptr)
+{
+    if (*ptr)
+    {
+        OICFree(*ptr);
+        *ptr = NULL;
+    }
+}
+
 void OICFree(void *ptr)
 {
 #ifdef ENABLE_MALLOC_DEBUG
@@ -133,4 +148,20 @@ void OICFree(void *ptr)
 #endif
 
     free(ptr);
+}
+
+void OICClearMemory(void *buf, size_t n)
+{
+    if (NULL != buf)
+    {
+#ifdef HAVE_WINDOWS_H
+        SecureZeroMemory(buf, n);
+#else
+        volatile unsigned char* p = (volatile unsigned char*)buf;
+        while (n--)
+        {
+            *p++ = 0;
+        }
+#endif
+    }
 }

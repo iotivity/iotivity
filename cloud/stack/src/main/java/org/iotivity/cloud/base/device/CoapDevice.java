@@ -100,28 +100,25 @@ public class CoapDevice extends Device {
     }
 
     public void addObserveChannel(IRequestChannel channel) {
-
-        if (channel != null) {
-            mObserveChannelList.add(channel);
-        }
+        mObserveChannelList.add(channel);
     }
 
     public void removeObserveChannel(IRequestChannel channel)
             throws ClientException {
-        if (channel != null && mObserveChannelList.contains(channel)) {
+        if (mObserveChannelList.contains(channel)) {
 
             Iterator<Long> iterator = mObserveRequestList.keySet().iterator();
             while (iterator.hasNext()) {
                 Long token = iterator.next();
                 CoapClient coapClient = (CoapClient) channel;
                 if (coapClient.isObserveRequest(token) != null) {
-                    IRequest getRequest = mObserveRequestList.get(token);
-
-                    CoapRequest coapRequest = (CoapRequest) getRequest;
+                    coapClient.removeObserve(token);
+                    CoapRequest coapRequest = (CoapRequest) mObserveRequestList
+                            .get(token);
                     coapRequest.setObserve(Observe.UNSUBSCRIBE);
-
-                    coapClient.onResponseReceived(MessageBuilder.createResponse(
-                            coapRequest, ResponseStatus.CONTENT, null, null));
+                    IResponse response = MessageBuilder.createResponse(
+                            coapRequest, ResponseStatus.CONTENT, null, null);
+                    sendResponse(response);
                 }
             }
             mObserveChannelList.remove(channel);
@@ -149,7 +146,7 @@ public class CoapDevice extends Device {
             Long token = iterator.next();
             Long respToken = Bytes.bytesToLong(coapResponse.getToken());
             if (respToken.equals(token)
-                    && coapResponse.getSequenceNumber() == -1) {
+                    && coapResponse.getObserve() == Observe.NOTHING) {
                 iterator.remove();
             }
         }
@@ -190,13 +187,13 @@ public class CoapDevice extends Device {
 
     @Override
     public void onDisconnected() {
-        for (IRequestChannel serverChannel : mObserveChannelList) {
-            Iterator<Long> iterator = mObserveRequestList.keySet().iterator();
-            while (iterator.hasNext()) {
-                Long token = iterator.next();
+        Iterator<Long> iterator = mObserveRequestList.keySet().iterator();
+        while (iterator.hasNext()) {
+            Long token = iterator.next();
+            for (IRequestChannel serverChannel : mObserveChannelList) {
                 CoapClient coapClient = (CoapClient) serverChannel;
-
-                if (coapClient.isObserveRequest(token) != null) {
+                if (coapClient != null
+                        && coapClient.isObserveRequest(token) != null) {
                     CoapRequest coapRequest = (CoapRequest) mObserveRequestList
                             .get(token);
                     coapRequest.setObserve(Observe.UNSUBSCRIBE);

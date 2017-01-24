@@ -25,8 +25,9 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "base64.h"
+#include "ocrandom.h"
 
-#define TAG  "SRM-UTILITY"
+#define TAG  "OIC_SRM_UTILITY"
 
 void ParseQueryIterInit(const unsigned char * query, OicParseQueryIter_t * parseIter)
 {
@@ -74,48 +75,6 @@ OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter)
     return NULL;
 }
 
-// TODO This functionality is replicated in all SVR's and therefore we need
-// to encapsulate it in a common method. However, this may not be the right
-// file for this method.
-OCStackResult AddUuidArray(const cJSON* jsonRoot, const char* arrayItem,
-                           size_t *numUuids, OicUuid_t** uuids)
-{
-    size_t idxx = 0;
-    cJSON* jsonObj = cJSON_GetObjectItem((cJSON *)jsonRoot, arrayItem);
-    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-    VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
-
-    *numUuids = (size_t)cJSON_GetArraySize(jsonObj);
-    VERIFY_SUCCESS(TAG, *numUuids > 0, ERROR);
-    *uuids = (OicUuid_t*)OICCalloc(*numUuids, sizeof(OicUuid_t));
-    VERIFY_NON_NULL(TAG, *uuids, ERROR);
-
-    do
-    {
-        unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {0};
-        uint32_t outLen = 0;
-        B64Result b64Ret = B64_OK;
-
-        cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, idxx);
-        VERIFY_NON_NULL(TAG, jsonOwnr, ERROR);
-        VERIFY_SUCCESS(TAG, cJSON_String == jsonOwnr->type, ERROR);
-
-        outLen = 0;
-        b64Ret = b64Decode(jsonOwnr->valuestring, strlen(jsonOwnr->valuestring), base64Buff,
-               sizeof(base64Buff), &outLen);
-
-        VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof((*uuids)[idxx].id)),
-               ERROR);
-        memcpy((*uuids)[idxx].id, base64Buff, outLen);
-    } while ( ++idxx < *numUuids);
-
-    return OC_STACK_OK;
-
-exit:
-    return OC_STACK_ERROR;
-
-}
-
 /**
  * Function to getting string of ownership transfer method
  *
@@ -133,10 +92,14 @@ const char* GetOxmString(OicSecOxm_t oxmType)
             return OXM_RANDOM_DEVICE_PIN;
         case OIC_MANUFACTURER_CERTIFICATE:
             return OXM_MANUFACTURER_CERTIFICATE;
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         case OIC_PRECONFIG_PIN:
             return OXM_PRECONF_PIN;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
+        case OIC_MV_JUST_WORKS:
+            return OXM_MV_JUST_WORKS;
+        case OIC_CON_MFG_CERT:
+            return OXM_CON_MFG_CERT;
         default:
             return NULL;
     }
@@ -177,44 +140,24 @@ exit:
 
 OCStackResult ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid)
 {
-    if(NULL == strUuid || NULL == uuid)
-    {
-        OIC_LOG(ERROR, TAG, "ConvertStrToUuid : Invalid param");
-        return OC_STACK_INVALID_PARAM;
-    }
+    bool result = true;
+    size_t strUuidLen = strlen(strUuid);
 
-    size_t urnIdx = 0;
-    size_t uuidIdx = 0;
-    size_t strUuidLen = 0;
-    char convertedUuid[UUID_LENGTH * 2] = {0};
-
-    strUuidLen = strlen(strUuid);
-    if(0 == strUuidLen)
+    if (0 == strUuidLen)
     {
-        OIC_LOG(INFO, TAG, "The empty string detected, The UUID will be converted to "\
-                           "\"00000000-0000-0000-0000-000000000000\"");
-    }
-    else if(UUID_LENGTH * 2 + 4 == strUuidLen)
-    {
-        for(uuidIdx=0, urnIdx=0; uuidIdx < UUID_LENGTH ; uuidIdx++, urnIdx+=2)
-        {
-            if(*(strUuid + urnIdx) == '-')
-            {
-                urnIdx++;
-            }
-            sscanf(strUuid + urnIdx, "%2hhx", &convertedUuid[uuidIdx]);
-        }
+        OIC_LOG(INFO, TAG, "Converting empty UUID string to 00000000-0000-0000-0000-000000000000");
+        memset(uuid->id, 0, sizeof(uuid->id));
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "Invalid string uuid format, Please set the uuid as correct format");
-        OIC_LOG(ERROR, TAG, "e.g) \"72616E64-5069-6E44-6576-557569643030\" (4-2-2-2-6)");
-        OIC_LOG(ERROR, TAG, "e.g) \"\"");
-
-        return OC_STACK_INVALID_PARAM;
+        result = OCConvertStringToUuid(strUuid, uuid->id);
     }
 
-    memcpy(uuid->id, convertedUuid, UUID_LENGTH);
+    if (!result)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: Invalid parameter '%s'", __func__, strUuid);
+        return OC_STACK_INVALID_PARAM;
+    }
 
     return OC_STACK_OK;
 }

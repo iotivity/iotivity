@@ -37,7 +37,7 @@ allprojects {
             url "http://jcenter.bintray.com/"
         }
         flatDir {
-            dirs "../../../../../../android/android_api/base/build/outputs/aar/"
+            dirs "../../../../../../java/iotivity-android/build/outputs/aar/", "../../../../../java/iotivity-android/build/outputs/aar/"
         }
     }
 }

@@ -33,12 +33,12 @@ extern "C" {
 #include "ocstack.h"
 
 #define NS_QOS OC_HIGH_QOS
-#define NS_RESOURCE_TYPE "oic.wk.notification"
+#define NS_RESOURCE_TYPE "x.org.iotivity.notification"
 #define NS_RESOURCE_URI "/notification"
 #define NS_INTERFACE_BASELINE "oic.if.baseline"
 #define NS_RESOURCE_QUERY "/oic/res"
 
-#define NS_DISCOVER_QUERY "/oic/res?rt=oic.wk.notification"
+#define NS_DISCOVER_QUERY "/oic/res?rt=x.org.iotivity.notification"
 #define NS_DEVICE_ID_LENGTH 37
 
 typedef enum
@@ -114,12 +114,16 @@ void NSSetConsumerId(char * cId);
 char * NSMakeRequestUriWithConsumerId(const char * uri);
 
 NSTask * NSMakeTask(NSTaskType, void *);
-
 NSResult NSConsumerPushEvent(NSTask *);
 
+NSMessage * NSGetMessage(OCRepPayload * payload);
 NSMessage * NSCopyMessage(NSMessage *);
 void NSRemoveMessage(NSMessage *);
 
+void NSGetProviderPostClean(
+        char * pId, char * mUri, char * sUri, char * tUri, NSProviderConnectionInfo * connection);
+
+NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse);
 NSProviderConnectionInfo * NSCreateProviderConnections(OCDevAddr *);
 NSProviderConnectionInfo * NSCopyProviderConnections(NSProviderConnectionInfo *);
 void NSRemoveConnections(NSProviderConnectionInfo *);

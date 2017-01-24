@@ -26,6 +26,7 @@ extern "C"
     #include "ocstackinternal.h"
     #include "logger.h"
     #include "oic_malloc.h"
+    #include "oic_string.h"
 }
 
 #include "gtest/gtest.h"
@@ -54,16 +55,16 @@ using namespace std;
 namespace itst = iotivity::test;
 
 #define DEFAULT_CONTEXT_VALUE 0x99
+#define INVALID_TPS_FLAGS (250)
+#define INVALID_TPS_FLAGS_ZERO (0)
 
 //-----------------------------------------------------------------------------
 // Private variables
 //-----------------------------------------------------------------------------
 static const char TAG[] = "TestHarness";
 
-char gDeviceUUID[] = "myDeviceUUID";
+char gDeviceUUID[] = "fe3f9a68-4931-4cb0-9ea4-81702b43116c";
 char gManufacturerName[] = "myName";
-char gTooLongManufacturerName[] = "extremelylongmanufacturername";
-char gManufacturerUrl[] = "www.foooooooooooooooo.baaaaaaaaaaaaar";
 static OCPrm_t pmSel;
 static char pinNumber;
 static OCDPDev_t peer;
@@ -112,7 +113,7 @@ extern "C" OCStackApplicationResult discoveryCallback(void* ctx,
     OCDiscoveryPayload *discoveryPayload = ((OCDiscoveryPayload *) clientResponse->payload);
     EXPECT_TRUE(discoveryPayload != NULL);
     OCResourcePayload *res = discoveryPayload->resources;
-    size_t count = 0;
+    int count = 0;
     for (OCResourcePayload *res1 = discoveryPayload->resources; res1; res1 = res1->next)
     {
         count++;
@@ -280,7 +281,7 @@ TEST(StackStart, SetPlatformInfoWithClientMode)
         gManufacturerName,
         0, 0, 0, 0, 0, 0, 0, 0, 0
     };
-    EXPECT_EQ(OC_STACK_ERROR, OCSetPlatformInfo(info));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
@@ -294,6 +295,23 @@ TEST(StackStart, SetPlatformInfoWithNoPlatformID)
          0,
          gDeviceUUID,
          0, 0, 0, 0, 0, 0, 0, 0, 0
+     };
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, SetPlatformInfoWithBadPlatformID)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+
+    char invalidId[] = "myDeviceUUID";
+    OCPlatformInfo info =
+     {
+        invalidId,
+        gManufacturerName,
+        0, 0, 0, 0, 0, 0, 0, 0, 0
      };
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
@@ -335,7 +353,12 @@ TEST(StackStart, SetPlatformInfoWithTooLongManufacName)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
-
+    char gTooLongManufacturerName[MAX_PLATFORM_NAME_LENGTH+2];
+    for (int i = 0; i <= MAX_PLATFORM_NAME_LENGTH; i++ )
+    {
+        gTooLongManufacturerName[i] = 'a';
+    }
+    gTooLongManufacturerName[MAX_PLATFORM_NAME_LENGTH+1] = '\0';
     OCPlatformInfo info =
     {
         gDeviceUUID,
@@ -351,6 +374,12 @@ TEST(StackStart, SetPlatformInfoWithTooLongManufacURL)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    char gManufacturerUrl[MAX_PLATFORM_URL_LENGTH+2];
+    for (int i = 0; i <= MAX_PLATFORM_URL_LENGTH; i++ )
+    {
+        gManufacturerUrl[i] = 'a';
+    }
+    gManufacturerUrl[MAX_PLATFORM_URL_LENGTH+1] = '\0';
     OCPlatformInfo info =
     {
         gDeviceUUID,
@@ -360,6 +389,182 @@ TEST(StackStart, SetPlatformInfoWithTooLongManufacURL)
     };
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, SetPlatformInfoWithOCSetPropertyValueAPI)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_ID, gDeviceUUID));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_NAME, gManufacturerName));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_URL, "http://www.iotivity.org"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MODEL_NUM, "S777"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_DATE, "15 Nov, 2016"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_OS_VERSION, "1.1"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_VERSION, "14"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_HARDWARE_VERSION, "0.1"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_FIRMWARE_VERSION, "0.1"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SUPPORT_URL, "http://www.iotivity.org"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SYSTEM_TIME, ""));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, "x.org.iotivity.AAAA", "value"));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, NULL, ""));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPropertyValue(PAYLOAD_TYPE_INVALID, NULL, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPropertyValue(PAYLOAD_TYPE_INVALID, NULL, NULL));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, GetPlatformInfoWithOCGetPropertyValueAPI)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_ID, gDeviceUUID));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_NAME, gManufacturerName));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_URL, "http://www.iotivity.org"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MODEL_NUM, "S777"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_DATE, "15 Nov, 2016"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_OS_VERSION, "1.1"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_VERSION, "14"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_HARDWARE_VERSION, "0.1"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_FIRMWARE_VERSION, "0.1"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SUPPORT_URL, "http://www.iotivity.org"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SYSTEM_TIME, ""));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, "x.org.iotivity.AAAA", "value"));
+
+    void *value = NULL;
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_ID, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ(gDeviceUUID, (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_NAME, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ(gManufacturerName, (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_URL, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("http://www.iotivity.org", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MODEL_NUM, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("S777", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_DATE, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("15 Nov, 2016", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_OS_VERSION, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("1.1", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_VERSION, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("14", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_HARDWARE_VERSION, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("0.1", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_FIRMWARE_VERSION, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("0.1", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SUPPORT_URL, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("http://www.iotivity.org", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SYSTEM_TIME, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, "x.org.iotivity.AAAA", &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("value", (char *)value);
+    OICFree(value);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, SetDeviceInfoAPI)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, "Sample"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, "specVersion"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, "x.org.iotivity.newproperty", "value"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+        "Data Model Version"));
+    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    EXPECT_TRUE(handle != NULL);
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "oic.wk.tv"));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPropertyValue(PAYLOAD_TYPE_INVALID, NULL, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPropertyValue(PAYLOAD_TYPE_INVALID, "", NULL));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, GetDeviceInfoAPI)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, "Sample"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, "specVersion"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, "x.org.iotivity.newproperty", "value"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+        "Data Model Version"));
+    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    EXPECT_TRUE(handle != NULL);
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "oic.wk.tv"));
+
+    void *value = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("Sample", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("specVersion", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, "x.org.iotivity.newproperty", &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("value", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, &value));
+    ASSERT_TRUE(value != NULL);
+    ASSERT_TRUE(((OCStringLL *)value)->value);
+    EXPECT_STREQ("Data Model Version", ((OCStringLL *)value)->value);
+    OCFreeOCStringLL((OCStringLL *) value);
+    value = NULL;
+
+    EXPECT_STREQ("oic.wk.d", OCGetResourceTypeName(handle, 0));
+    EXPECT_STREQ("oic.wk.tv", OCGetResourceTypeName(handle, 1));
+
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
@@ -679,6 +884,78 @@ TEST(StackResource, CreateResourceGoodResourceType)
                                             0,
                                             NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackResource, CreateResourceWithBadEndpointsFlags)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+
+    OIC_LOG(INFO, TAG, "CreateResourceWithEndpointsFlags test");
+
+    InitStack(OC_SERVER);
+
+    OCResourceHandle handle;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCCreateResourceWithEp(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE,
+                                            (OCTpsSchemeFlags)INVALID_TPS_FLAGS));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackResource, CreateResourceWithGoodEndpointsFlags)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+
+    OIC_LOG(INFO, TAG, "CreateResourceWithEndpointsFlags test");
+
+    InitStack(OC_SERVER);
+
+    OCResourceHandle handle;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResourceWithEp(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE,
+                                            OC_ALL));
+    OCResourceHandle handle2;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResourceWithEp(&handle2,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led2",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE,
+                                            OC_COAP));
+#ifdef TCP_ADAPTER
+    OCResourceHandle handle3;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResourceWithEp(&handle3,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led3",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE,
+                                            OC_COAP_TCP));
+
+    OCResourceHandle handle4;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResourceWithEp(&handle4,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led4",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE,
+                                            (OCTpsSchemeFlags)(OC_COAP | OC_COAP_TCP)));
+#endif
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -1815,7 +2092,7 @@ TEST(StackUri, Rfc6874_Noop_1)
     char bytes[100] = {0};
     strncpy(bytes, validIPv6Address, sizeof(bytes));
 
-    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
+    OCStackResult result = OCEncodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
 
     // No % sign, should do nothing
     EXPECT_STREQ(bytes, validIPv6Address);
@@ -1827,7 +2104,7 @@ TEST(StackUri, Rfc6874_Noop_2)
     char validIPv6Address[] = "3812:a61::4:1";
     char bytes[100] = {0};
 
-    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
+    OCStackResult result = OCEncodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
 
     // No % sign, should do nothing
     EXPECT_STREQ(bytes, validIPv6Address);
@@ -1841,7 +2118,7 @@ TEST(StackUri, Rfc6874_WithEncoding)
     char bytes[100] = "";
     strncpy(bytes, validIPv6Address, sizeof(bytes));
 
-    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
+    OCStackResult result = OCEncodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
 
     // Encoding should have occured
     EXPECT_STREQ(bytes, validIPv6AddressEncoded);
@@ -1853,7 +2130,7 @@ TEST(StackUri, Rfc6874_WithEncoding_ExtraPercent)
     char validIPv6Address[] = "fe80::dafe:e3ff:fe00:ebfa%%wlan0";
     char bytes[100] = {0};
 
-    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
+    OCStackResult result = OCEncodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
 
     // Encoding should have failed due to extra '%' character
     EXPECT_STREQ(bytes, "");
@@ -1865,7 +2142,7 @@ TEST(StackUri, Rfc6874_AlreadyEncoded)
     char validIPv6AddressEncoded[] = "fe80::dafe:e3ff:fe00:ebfa%25wlan0";
     char bytes[100] = {0};
 
-    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6AddressEncoded);
+    OCStackResult result = OCEncodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6AddressEncoded);
 
     // Encoding should have failed due to extra '%' character
     EXPECT_STREQ(bytes, "");
@@ -1883,7 +2160,7 @@ TEST(StackUri, Rfc6874_NoOverflow)
     addrBuffer[sizeof(addrBuffer) - sizeof(validIPv6Address) - 3] = '\0';
     strcat(addrBuffer, validIPv6Address);
 
-    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), addrBuffer);
+    OCStackResult result = OCEncodeAddressForRFC6874(bytes, sizeof(bytes), addrBuffer);
 
     // Encoding should have succeeded
     EXPECT_EQ(OC_STACK_OK, result);
@@ -1900,7 +2177,7 @@ TEST(StackUri, Rfc6874_NoOverflow_2)
     addrBuffer[sizeof(addrBuffer) - sizeof(validIPv6Address) - 1] = '\0';
     strcat(addrBuffer, validIPv6Address);
 
-    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), addrBuffer);
+    OCStackResult result = OCEncodeAddressForRFC6874(bytes, sizeof(bytes), addrBuffer);
 
     // Encoding should have failed due to output size limitations
     EXPECT_STREQ(bytes, "");
@@ -1950,4 +2227,17 @@ TEST(StackHeaderOption, getHeaderOption)
                                              &actualDataSize));
     EXPECT_EQ(optionData[0], 1);
     EXPECT_EQ(actualDataSize, 8);
+}
+
+TEST(StackEndpoints, OCGetSupportedEndpointTpsFlags)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+
+    OIC_LOG(INFO, TAG, "OCGetSupportedEndpointTpsFlags test");
+
+    InitStack(OC_SERVER);
+
+    EXPECT_LE(INVALID_TPS_FLAGS_ZERO, OCGetSupportedEndpointTpsFlags());
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }

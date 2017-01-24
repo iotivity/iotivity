@@ -35,9 +35,9 @@ namespace OIC
         {
             uint8_t uuid[UUID_SIZE] = { 0, };
             char uuidStr[UUID_STRING_SIZE] = { 0, };
-            if (RAND_UUID_OK == OCGenerateUuid(uuid))
+            if (OCGenerateUuid(uuid))
             {
-                if (RAND_UUID_OK == OCConvertUuidToString(uuid, uuidStr))
+                if (OCConvertUuidToString(uuid, uuidStr))
                 {
                     return std::string(uuidStr);
                 }
@@ -95,7 +95,18 @@ namespace OIC
                                             + std::to_string(netInfo[i].port);
                     } else if(netInfo[i].flags == CATransportFlags_t::CA_IPV6)
                     {
-                        address_ipv6 = "[" + std::string(netInfo[i].addr) + "]:"
+                        char addressEncoded[CA_MAX_URI_LENGTH] = {0};
+
+                        OCStackResult result = OCEncodeAddressForRFC6874(addressEncoded,
+                                                                         sizeof(addressEncoded),
+                                                                         netInfo[i].addr);
+                        if (OC_STACK_OK != result)
+                        {
+                            OICFree(netInfo);
+                            throw RCSException("address encoding error");
+                        }
+
+                        address_ipv6 = "[" + std::string(addressEncoded) + "]:"
                                             + std::to_string(netInfo[i].port);
                     }
                 }

@@ -191,14 +191,4 @@ class ResourceContainerTestSimulator
             std::this_thread::sleep_for(interval);
         }
 
-        void ChangeResourceState()
-        {
-            std::chrono::milliseconds interval(DEFAULT_WAITTIME);
-            if (server != nullptr)
-            {
-                server = nullptr;
-            }
-            std::this_thread::sleep_for(interval);
-        }
-
 };

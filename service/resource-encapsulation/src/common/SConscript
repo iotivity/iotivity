@@ -68,6 +68,7 @@ if not release:
 if rcs_common_env.get('SECURED') == '1':
 	if rcs_common_env.get('WITH_TCP') == True:
 		rcs_common_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -117,6 +118,9 @@ if target_os in ['linux']:
 	rcs_common_test_env.AppendTarget('rcs_common_test')
 
 	if rcs_common_test_env.get('TEST') == '1':
-		from tools.scons.RunTest import *
-		run_test(rcs_common_test_env, '',
+		from tools.scons.RunTest import run_test
+# TODO: fix test on linux and remove commented lines
+		run_test(rcs_common_test_env,
+#			'service_resource-encapsulation_src_common_rcs_common_test.memcheck',
+			'',
 			'service/resource-encapsulation/src/common/rcs_common_test')

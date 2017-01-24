@@ -27,8 +27,8 @@ else:
 
 env.PrependUnique(CPPPATH = [
 		'../../../../logger/include',
+		'../../../../include',
 		'../../../../stack/include',
-		'../../../../../../extlibs/cjson',
 		'../../../../../oc_logger/include'
 		])
 

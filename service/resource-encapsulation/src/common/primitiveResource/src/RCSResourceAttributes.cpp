@@ -78,6 +78,14 @@ namespace
             m_stream << "\"" + value + "\"";
         }
 
+        void operator()(const RCSByteString& value)
+        {
+            for (size_t i = 0; i < value.size(); ++i)
+            {
+                m_stream << "\\x" << std::hex << (int)value[i];
+            }
+        }
+
         void operator()(const RCSResourceAttributes& attrs)
         {
             m_stream << "{";
@@ -155,6 +163,13 @@ namespace
     };
 
     template< >
+    struct TypeInfoConverter< RCSByteString >
+    {
+        static constexpr RCSResourceAttributes::TypeId typeId =
+                RCSResourceAttributes::TypeId::BYTESTRING;
+    };
+
+    template< >
     struct TypeInfoConverter< RCSResourceAttributes >
     {
         static constexpr RCSResourceAttributes::TypeId typeId =
@@ -206,7 +221,7 @@ namespace
     };
 
     template< typename VARIANT, int POS >
-    constexpr inline std::vector< TypeInfo > getTypeInfo(Int2Type< POS >) noexcept
+    inline std::vector< TypeInfo > getTypeInfo(Int2Type< POS >) noexcept
     {
         auto vec = getTypeInfo< VARIANT >(Int2Type< POS - 1 >{ });
         vec.push_back(TypeInfo::get< VARIANT, POS >());
@@ -214,7 +229,7 @@ namespace
     }
 
     template< typename VARIANT >
-    constexpr inline std::vector< TypeInfo > getTypeInfo(Int2Type< 0 >) noexcept
+    inline std::vector< TypeInfo > getTypeInfo(Int2Type< 0 >) noexcept
     {
         return { TypeInfo::get< VARIANT, 0 >() };
     }
@@ -231,7 +246,6 @@ namespace
 
         return typeInfos[which];
     }
-
 } // unnamed namespace
 
 
@@ -239,7 +253,6 @@ namespace OIC
 {
     namespace Service
     {
-
         RCSResourceAttributes::Value::ComparisonHelper::ComparisonHelper(const Value& v) :
                 m_valueRef(v)
         {

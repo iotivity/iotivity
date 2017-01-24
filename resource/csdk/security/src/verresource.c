@@ -32,6 +32,7 @@
 #include "logger.h"
 #include "payload_logging.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "cainterface.h"
 #include "ocserverrequest.h"
 #include "resourcemanager.h"
@@ -42,7 +43,7 @@
 #include "securevirtualresourcetypes.h"
 #include "srmutility.h"
 
-#define TAG  "SEC-VER"
+#define TAG  "OIC_SEC_VER"
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */
@@ -129,7 +130,7 @@ OCStackResult VerToCBORPayload(const OicSecVer_t *ver, uint8_t **payload, size_t
 
     if (CborNoError == cborEncoderResult)
     {
-        *size = encoder.ptr - outPayload;
+        *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
         *payload = outPayload;
         ret = OC_STACK_OK;
     }
@@ -140,7 +141,7 @@ exit:
         // reallocate and try again!
         OICFree(outPayload);
         // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         OIC_LOG_V(DEBUG, TAG, "Ver reallocation size : %zd.", cborLen);
         cborEncoderResult = CborNoError;
         ret = VerToCBORPayload(ver, payload, &cborLen);
@@ -316,7 +317,7 @@ OCStackResult InitVerResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    OICStrcpy(gVer.secv, MAX_VERSION_LEN, SECURITY_VERSION);
+    OICStrcpy(gVer.secv, OIC_SEC_MAX_VER_LEN, SECURITY_VERSION);
 
     //Read device id from doxm
     OicUuid_t deviceID = {.id={0}};

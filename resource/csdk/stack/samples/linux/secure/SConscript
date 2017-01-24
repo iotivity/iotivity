@@ -26,9 +26,9 @@ samples_env = env.Clone()
 ######################################################################
 samples_env.PrependUnique(CPPPATH = [
 		'../../../../logger/include',
+		'../../../../include',
 		'../../../../stack/include',
 		'../../../../security/include',
-		'../../../../../../extlibs/cjson',
 		'../../../../../../extlibs/tinydtls',
 		'../../../../../oc_logger/include'
 		])

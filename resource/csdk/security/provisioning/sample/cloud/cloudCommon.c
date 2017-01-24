@@ -80,6 +80,7 @@ typedef enum {
     USE_RSA = 8,
     SAVE_TRUST_CERT = 9,
     USE_SECURE_CONN = 10,
+    CONFIG_SELF_OWNERSHIP = 11,
 
     DISCOVERY     = 13,
     GET           = 14,
@@ -144,6 +145,7 @@ static void printMenu(OCMode mode)
     printf("** %d - Change TLS cipher suite (ECDSA/RSA)\n", USE_RSA);
     printf("** %d - Save Trust Cert. Chain into Cred of SVR\n", SAVE_TRUST_CERT);
     printf("** %d - Change Protocol type (CoAP/CoAPs)\n", USE_SECURE_CONN);
+    printf("** %d - Configure SVRdb as Self-OwnerShip\n", CONFIG_SELF_OWNERSHIP);
 
     if (OC_CLIENT == mode)
     {
@@ -359,6 +361,25 @@ static OCStackResult saveTrustCert(void)
     return res;
 }
 
+static OCStackResult configSelfOwnership(void)
+{
+    OCStackResult res = OC_STACK_ERROR;
+    OIC_LOG(INFO, TAG, "Configures SVR DB as self-ownership.");
+
+    res = OCConfigSelfOwnership();
+
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "OCConfigSelfOwnership API error. Please check SVR DB");
+    }
+    else
+    {
+        OIC_LOG(INFO, TAG, "Success to configures SVR DB as self-ownership");
+    }
+
+    return res;
+}
+
 static void wrongRequest()
 {
     printf(">> Entered Wrong Menu Number. Please Enter Again\n\n");
@@ -521,7 +542,7 @@ static void userRequests(void *data)
         {
             int tmp = 0;
             readInteger(&tmp, "Select Cipher Suite", "0 - ECDSA, other - RSA");
-            uint16_t cipher = tmp? MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA:
+            uint16_t cipher = tmp? MBEDTLS_TLS_RSA_WITH_AES_128_GCM_SHA256:
                                    MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
             if (CA_STATUS_OK != CASelectCipherSuite(cipher, CA_ADAPTER_TCP))
             {
@@ -541,6 +562,10 @@ static void userRequests(void *data)
             setCoapPrefix(0 == tmp ? false : true);
             sendDataToServer = false;
         }
+            break;
+        case CONFIG_SELF_OWNERSHIP:
+            configSelfOwnership();
+            sendDataToServer = false;
             break;
         case EXIT:
             oc_mutex_free(mutex);
@@ -573,8 +598,14 @@ static void userRequests(void *data)
 
 FILE* server_fopen(const char *path, const char *mode)
 {
-    OC_UNUSED(path);
-    return fopen(fname, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(fname, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 /**

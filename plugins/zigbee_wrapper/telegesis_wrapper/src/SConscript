@@ -38,6 +38,7 @@ print"Reading Telegesis Wrapper (TW) script"
 env.AppendUnique(CPPPATH = [ os.path.join(tw_path, 'include'),
                              os.path.join(tw_path, 'include', 'internal'),
                              os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
+                             os.path.join(src_dir, 'resource', 'csdk', 'include'),
                              os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
                              os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
                              os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),

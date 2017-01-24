@@ -43,14 +43,19 @@ enrollee_env.PrependUnique(CPPPATH = [
 		enrollee_env.get('SRC_DIR') + '/resource/include',
 		enrollee_env.get('SRC_DIR') + '/resource/csdk/logger/include',
 		enrollee_env.get('SRC_DIR') + '/resource/oc_logger/include',
+		enrollee_env.get('SRC_DIR') + '/resource/csdk/include',
                 enrollee_env.get('SRC_DIR') + '/resource/csdk/stack/include',
                 enrollee_env.get('SRC_DIR') + '/resource/csdk/logger/include',
 		enrollee_env.get('SRC_DIR') + '/resource/csdk/security/include',
+		enrollee_env.get('SRC_DIR') + '/resource/csdk/connectivity/api',
 		enrollee_env.get('SRC_DIR') + '/extlibs/cjson',
-		enrollee_env.get('SRC_DIR') + '/extlibs/sqlite3',
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/inc',
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/inc',
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src'])
+
+if target_os not in ['linux', 'tizen']:
+    enrollee_env.PrependUnique(CPPPATH = [
+        enrollee_env.get('SRC_DIR') + '/extlibs/sqlite3'])
 
 if enrollee_env.get('SECURED') == '1':
 	enrollee_env.AppendUnique(CPPPATH = [
@@ -106,6 +111,8 @@ if target_os in ['linux', 'tizen']:
 	enrollee_sdk_static = enrollee_env.StaticLibrary('ESEnrolleeSDK', es_enrollee_common_src)
 	enrollee_env.InstallTarget([enrollee_sdk_shared, enrollee_sdk_static], 'libESEnrollee')
 	enrollee_env.UserInstallTargetLib([enrollee_sdk_shared, enrollee_sdk_static], 'libESEnrollee')
+	enrollee_env.UserInstallTargetHeader('inc/ESEnrolleeCommon.h', 'service/easy-setup', 'ESEnrolleeCommon.h')
+	enrollee_env.UserInstallTargetHeader('inc/easysetup.h', 'service/easy-setup', 'easysetup.h')
 
 if target_os == 'arduino':
 	es_enrollee_common_src = ['./src/easysetup.c','./src/resourcehandler.c']

@@ -27,6 +27,7 @@
 #include "NSSyncInfo.h"
 #include "NSConstants.h"
 #include "OCRepresentation.h"
+#include "ocpayload.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
 
@@ -88,6 +89,8 @@ namespace OIC
 
         NSProviderService::~NSProviderService()
         {
+            m_config.m_subscribeRequestCb = NULL;
+            m_config.m_syncInfoCb = NULL;
             for (auto it : getAcceptedConsumers())
             {
                 delete it;
@@ -104,6 +107,12 @@ namespace OIC
         NSResult NSProviderService::start(NSProviderService::ProviderConfig config)
         {
             NS_LOG(DEBUG, "start - IN");
+
+            for (auto it : getAcceptedConsumers())
+            {
+                delete it;
+            }
+            getAcceptedConsumers().clear();
 
             m_config = config;
             NSProviderConfig nsConfig;
@@ -122,6 +131,15 @@ namespace OIC
         NSResult NSProviderService::stop()
         {
             NS_LOG(DEBUG, "stop - IN");
+
+            m_config.m_subscribeRequestCb = NULL;
+            m_config.m_syncInfoCb = NULL;
+            for (auto it : getAcceptedConsumers())
+            {
+                delete it;
+            }
+            getAcceptedConsumers().clear();
+
             NSResult result = (NSResult) NSStopProvider();
             NS_LOG(DEBUG, "stop - OUT");
             return result;
@@ -157,6 +175,24 @@ namespace OIC
             return result;
         }
 
+        NSResult NSProviderService::subscribeMQService(const std::string &serverAddress,
+                const std::string &topicName)
+        {
+            NS_LOG(DEBUG, "subscribeMQService - IN");
+            NS_LOG_V(DEBUG, "Server Address : %s", serverAddress.c_str());
+            NSResult result = NSResult::ERROR;
+#ifdef WITH_MQ
+            result = (NSResult) NSProviderSubscribeMQService(
+                         serverAddress.c_str(), topicName.c_str());
+#else
+            NS_LOG(ERROR, "MQ Services feature is not enabled in the Build");
+            (void) serverAddress;
+            (void) topicName;
+#endif
+            NS_LOG(DEBUG, "subscribeMQService - OUT");
+            return result;
+        }
+
         NSResult NSProviderService::sendMessage(NSMessage *msg)
         {
             NS_LOG(DEBUG, "sendMessage - IN");
@@ -172,8 +208,15 @@ namespace OIC
                 OICFree(nsMsg->contentText);
                 OICFree(nsMsg->sourceName);
                 OICFree(nsMsg->topic);
-                OICFree(nsMsg->extraInfo);
-                delete nsMsg->mediaContents;
+                if (nsMsg->mediaContents != NULL)
+                {
+                    if (nsMsg->mediaContents->iconImage != NULL)
+                    {
+                        OICFree(nsMsg->mediaContents->iconImage);
+                    }
+                    delete nsMsg->mediaContents;
+                }
+                OCPayloadDestroy((OCPayload *) nsMsg->extraInfo);
                 delete nsMsg;
             }
             else
@@ -184,13 +227,13 @@ namespace OIC
             return result;
         }
 
-        void NSProviderService::sendSyncInfo(uint64_t messageId,
-                                             NSSyncInfo::NSSyncType type)
+        NSResult NSProviderService::sendSyncInfo(uint64_t messageId,
+                NSSyncInfo::NSSyncType type)
         {
             NS_LOG(DEBUG, "sendSyncInfo - IN");
-            NSProviderSendSyncInfo(messageId, (NSSyncType)type);
+            NSResult result = (NSResult) NSProviderSendSyncInfo(messageId, (NSSyncType)type);
             NS_LOG(DEBUG, "sendSyncInfo - OUT");
-            return;
+            return result;
         }
 
         NSMessage *NSProviderService::createMessage()
@@ -241,8 +284,11 @@ namespace OIC
 
         NSConsumer *NSProviderService::getConsumer(const std::string &id)
         {
+            NS_LOG_V(DEBUG, "getAcceptedConsumers size  : %d", (int) getAcceptedConsumers().size());
             for (auto it : getAcceptedConsumers())
             {
+                NS_LOG_V(DEBUG, "getConsumer  stored consumerId : %s", it->getConsumerId().c_str());
+                NS_LOG_V(DEBUG, "getConsumer  requesting consumerId : %s", id.c_str());
                 if (it->getConsumerId() == id)
                 {
                     NS_LOG(DEBUG, "getConsumer : Found Consumer with given ID");

@@ -41,10 +41,11 @@
 #include "svcresource.h"
 #include "security_internals.h"
 
-#define TAG  "JSON2CBOR"
+#define TAG  "OIC_JSON2CBOR"
 #define MAX_RANGE   ((size_t)-1)
 //SVR database buffer block size
-static const size_t DB_FILE_SIZE_BLOCK = 1023;
+
+#define DB_FILE_SIZE_BLOCK 1023
 
 static OicSecPstat_t* JSONToPstatBin(const char * jsonStr);
 static OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr);
@@ -276,7 +277,7 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
     cborEncoderResult = cbor_encoder_close_container(&encoder, &map);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Container.");
 
-    size_t s = encoder.ptr - outPayload;
+    size_t s = cbor_encoder_get_buffer_size(&encoder, outPayload);
     OIC_LOG_V(DEBUG, TAG, "Payload size %zu", s);
 
     fp1 = fopen(cborFileName, "w");
@@ -608,15 +609,7 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
         doxm->owned = jsonObj->valueint;
     }
 
-    //DPC -- Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DPC_NAME);
-    if (jsonObj)
-    {
-        VERIFY_SUCCESS(TAG, (cJSON_True == jsonObj->type || cJSON_False == jsonObj->type), ERROR);
-        doxm->dpc = jsonObj->valueint;
-    }
-
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     //mom -- Not Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_MOM_NAME);
     if (jsonObj)
@@ -626,7 +619,7 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
         VERIFY_NON_NULL(TAG, doxm->mom, ERROR);
         doxm->mom->mode = (OicSecMomType_t)jsonObj->valueint;
     }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     //DeviceId -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DEVICE_ID_NAME);
@@ -677,7 +670,7 @@ exit:
         DeleteDoxmBinData(doxm);
         doxm = NULL;
     }
-    printf("OUT JSONToDoxmBin\n");
+    printf("OUT %s: %s\n", __func__, (doxm != NULL) ? "success" : "failure");
     return doxm;
 }
 
@@ -747,10 +740,34 @@ exit:
     cJSON_Delete(jsonRoot);
     if (OC_STACK_OK != ret)
     {
-        OIC_LOG(ERROR, TAG, "JSONToPstatBin failed");
+        DeletePstatBinData(pstat);
+        pstat = NULL;
     }
-    printf("OUT JSONToPstatBin\n");
+    printf("OUT %s: %s\n", __func__, (pstat != NULL) ? "success" : "failure");
     return pstat;
+}
+
+static OicEncodingType_t GetEncodingTypeFromStr(const char* encodingType)
+{
+    if (strcmp(OIC_SEC_ENCODING_RAW, encodingType) == 0)
+    {
+        return OIC_ENCODING_RAW;
+    }
+    if (strcmp(OIC_SEC_ENCODING_BASE64, encodingType) == 0)
+    {
+        return OIC_ENCODING_BASE64;
+    }
+    if (strcmp(OIC_SEC_ENCODING_PEM, encodingType) == 0)
+    {
+        return OIC_ENCODING_PEM;
+    }
+    if (strcmp(OIC_SEC_ENCODING_DER, encodingType) == 0)
+    {
+        return OIC_ENCODING_DER;
+    }
+    OIC_LOG(WARNING, TAG, "Unknow encoding type dectected!");
+    OIC_LOG(WARNING, TAG, "json2cbor will use \"oic.sec.encoding.raw\" as default encoding type.");
+    return OIC_ENCODING_RAW;
 }
 
 OicSecCred_t * JSONToCredBin(const char * jsonStr)
@@ -819,8 +836,15 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_SUBJECTID_NAME);
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-            ret = ConvertStrToUuid(jsonObj->valuestring, &cred->subject);
-            VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+            if(strcmp(jsonObj->valuestring, WILDCARD_RESOURCE_URI) == 0)
+            {
+                cred->subject.id[0] = '*';
+            }
+            else
+            {
+                ret = ConvertStrToUuid(jsonObj->valuestring, &cred->subject);
+                VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+            }
 
             //CredType -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_CREDTYPE_NAME);
@@ -842,23 +866,9 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
 
                 cJSON *jsonEncoding = cJSON_GetObjectItem(jsonObj, OIC_JSON_ENCODING_NAME);
                 VERIFY_NON_NULL(TAG, jsonEncoding, ERROR);
-
-                if(strcmp(OIC_SEC_ENCODING_RAW, jsonEncoding->valuestring) == 0)
-                {
-                    cred->privateData.encoding = OIC_ENCODING_RAW;
-                }
-                else if(strcmp(OIC_SEC_ENCODING_BASE64, jsonEncoding->valuestring) == 0)
-                {
-                    cred->privateData.encoding = OIC_ENCODING_BASE64;
-                }
-                else
-                {
-                    printf("Unknow encoding type dectected!\n");
-                    printf("json2cbor will use \"oic.sec.encoding.raw\" as default encoding type.\n");
-                    cred->privateData.encoding = OIC_ENCODING_RAW;
-                }
+                cred->privateData.encoding = GetEncodingTypeFromStr(jsonEncoding->valuestring);
             }
-#ifdef __WITH_DTLS__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
             //PublicData is mandatory only for SIGNED_ASYMMETRIC_KEY credentials type.
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PUBLICDATA_NAME);
 
@@ -872,7 +882,39 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                 memcpy(cred->publicData.data, jsonPub->valuestring, jsonObjLen);
                 cred->publicData.len = jsonObjLen;
             }
-#endif //  __WITH_DTLS__
+
+            //Optional Data
+            jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_OPTDATA_NAME);
+            if (NULL != jsonObj)
+            {
+                cJSON *jsonOpt = cJSON_GetObjectItem(jsonObj, OIC_JSON_DATA_NAME);
+                VERIFY_NON_NULL(TAG, jsonOpt, ERROR);
+                jsonObjLen = strlen(jsonOpt->valuestring);
+                cred->optionalData.data =  (uint8_t *)OICCalloc(1, jsonObjLen);
+                VERIFY_NON_NULL(TAG, (cred->optionalData.data), ERROR);
+                memcpy(cred->optionalData.data, jsonOpt->valuestring, jsonObjLen);
+                cred->optionalData.len = jsonObjLen;
+
+                cJSON *jsonEncoding = cJSON_GetObjectItem(jsonObj, OIC_JSON_ENCODING_NAME);
+                VERIFY_NON_NULL(TAG, jsonEncoding, ERROR);
+                cred->optionalData.encoding = GetEncodingTypeFromStr(jsonEncoding->valuestring);
+
+                cJSON *jsonRevstat = cJSON_GetObjectItem(jsonObj, OIC_JSON_REVOCATION_STATUS_NAME);
+                VERIFY_NON_NULL(TAG, jsonRevstat, ERROR);
+                cred->optionalData.revstat = jsonObj->valueint;
+            }
+
+            //CredUsage
+            jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_CREDUSAGE_NAME);
+            if (NULL != jsonObj)
+            {
+                jsonObjLen = strlen(jsonObj->valuestring);
+                cred->credUsage = OICStrdup(jsonObj->valuestring);
+                VERIFY_NON_NULL(TAG, (cred->credUsage), ERROR);
+            }
+
+#endif // defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+
             //Period -- Not Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PERIOD_NAME);
             if(jsonObj && cJSON_String == jsonObj->type)
@@ -941,7 +983,7 @@ static OicSecSvc_t* JSONToSvcBin(const char * jsonStr)
             }
 
             cJSON *jsonObj = NULL;
-            unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
+            unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {0};
             uint32_t outLen = 0;
             B64Result b64Ret = B64_OK;
 

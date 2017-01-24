@@ -54,7 +54,8 @@ jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') +
 jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
 cmdBuildRE = jdk_env.Gradle(target="service/objs",
     source="service/src/main/java/org/iotivity/service/RcsResourceAttributes.java")
-
+jdk_env.Clean(cmdBuildRE, '#/service/resource-encapsulation/android/build')
+jdk_env.Clean(cmdBuildRE, '#/service/resource-encapsulation/android/service/build')
 env.AppendUnique(resourceencapsulationAAR = cmdBuildRE)
 
 Depends(cmdBuildRE, env.get('baseAAR'))
@@ -70,7 +71,8 @@ cmdBuildREServerApp=re_sample_server_env.Gradle(target="../examples/android/RESa
             "../examples/android/RESampleServerApp/app/src/main/java/org/iotivity/service/sample/server/CustomServerActivity.java",
             "../examples/android/RESampleServerApp/app/src/main/java/org/iotivity/service/sample/server/ResourceProperties.java",
             "../examples/android/RESampleServerApp/app/src/main/java/org/iotivity/service/sample/server/SimpleServerActivity.java"])
-
+jdk_env.Clean(cmdBuildREServerApp, '#/service/resource-encapsulation/examples/android/RESampleServerApp/build')
+jdk_env.Clean(cmdBuildREServerApp, '#/service/resource-encapsulation/examples/android/RESampleServerApp/app/build')
 Depends(cmdBuildREServerApp, cmdBuildRE)
 
 re_sample_client_env = Environment(ENV=os.environ)
@@ -81,7 +83,8 @@ re_sample_client_env['BUILD_DIR'] = env.get('BUILD_DIR')
 cmdBuildREClientApp=re_sample_client_env.Gradle(target="../examples/android/RESampleClientApp/app/apk",
     source=["../examples/android/RESampleClientApp/app/src/main/java/org/iotivity/service/sample/client/MainActivity.java",
             "../examples/android/RESampleClientApp/app/src/main/java/org/iotivity/service/sample/client/ResourceClientActivity.java"])
-
+jdk_env.Clean(cmdBuildREClientApp, '#/service/resource-encapsulation/examples/android/RESampleClientApp/build')
+jdk_env.Clean(cmdBuildREClientApp, '#/service/resource-encapsulation/examples/android/RESampleClientApp/app/build')
 Depends(cmdBuildREClientApp, cmdBuildRE)
 
 

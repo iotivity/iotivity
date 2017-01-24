@@ -45,7 +45,7 @@ extern "C"
 /**
  * Name of resource interface.
  */
-#define KEEPALIVE_RESOURCE_INTF_NAME "oic.if.rw"
+#define KEEPALIVE_RESOURCE_INTF_NAME OC_RSRVD_INTERFACE_READ_WRITE
 
 /**
  * URI of the resource.
@@ -74,18 +74,20 @@ void ProcessKeepAlive();
 /**
  * This API will be called from RI layer whenever there is a request for KeepAlive.
  * Virtual Resource.
- * @param[in]   endPoint        RemoteEndpoint which sent the packet.
- * @param[in]   requestInfo     Received coap packet.
+ * @param[in]   request     Received request information.
+ * @param[in]   resource    Resource handle used for sending the response.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-OCStackResult HandleKeepAliveRequest(const CAEndpoint_t* endPoint,
-                                     const CARequestInfo_t* requestInfo);
+OCStackResult HandleKeepAliveRequest(OCServerRequest *request,
+                                     const OCResource *resource);
 
 /**
  * API to handle the connected device for KeepAlive.
- * @return  Current Time.
+ * @param[in]   endpoint        Remote endpoint information.
+ * @param[in]   isConnected     Whether keepalive message needs to be sent.
+ * @param[in]   isClient        Host Mode of Operation.
  */
-void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint, bool isConnected);
+void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint, bool isConnected, bool isClient);
 
 #ifdef __cplusplus
 } // extern "C"

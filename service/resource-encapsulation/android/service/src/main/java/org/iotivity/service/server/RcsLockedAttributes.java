@@ -144,6 +144,7 @@ public final class RcsLockedAttributes extends RcsObject {
      * @param attributes
      *            attributes to be copied
      *
+     * @return the RcsLockedAttributes
      * @throws RcsUnlockedException
      *             if the {@link RcsResourceObject.AttributesLock} for this
      *             object is unlocked
@@ -172,12 +173,12 @@ public final class RcsLockedAttributes extends RcsObject {
      * @param value
      *            value to be associated with the specified key
      *
+     * @return the RcsLockedAttributes
      * @throws NullPointerException
      *             if key or value is null
      * @throws RcsUnlockedException
      *             if the {@link RcsResourceObject.AttributesLock} for this
      *             object is unlocked
-     *
      */
     public RcsLockedAttributes put(String key, RcsValue value)
             throws RcsException {
@@ -219,6 +220,8 @@ public final class RcsLockedAttributes extends RcsObject {
     /**
      * Returns whether attribute is empty.
      *
+     * @return true if attribute is empty.
+     *
      * @throws RcsUnlockedException
      *             if the {@link RcsResourceObject.AttributesLock} for this
      *             object is unlocked
@@ -230,8 +233,9 @@ public final class RcsLockedAttributes extends RcsObject {
     }
 
     /**
-     * Returns the number of key-value mappings.
+     * Get the number of key-value mappings.
      *
+     * @return the number of key-value mappings
      * @throws RcsUnlockedException
      *             if the {@link RcsResourceObject.AttributesLock} for this
      *             object is unlocked

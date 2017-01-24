@@ -30,7 +30,7 @@
 #include "stdbool.h"
 #include "securevirtualresourcetypes.h"
 
-#define TAG "SRPAPI-CG"
+#define TAG "OIC_SRPAPI_CG"
 
 OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySize,
         const OicUuid_t *ptDeviceId, const OicUuid_t *firstDeviceId,
@@ -42,7 +42,7 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
         OIC_LOG(INFO, TAG, "Invalid params");
         return OC_STACK_INVALID_PARAM;
     }
-    if(!(keySize == OWNER_PSK_LENGTH_128 || keySize == OWNER_PSK_LENGTH_256))
+    if (!(keySize == OWNER_PSK_LENGTH_128 || keySize == OWNER_PSK_LENGTH_256))
     {
         OIC_LOG(INFO, TAG, "Invalid key size");
         return OC_STACK_INVALID_PARAM;
@@ -55,9 +55,14 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
 
     uint8_t *privData = (uint8_t *)OICCalloc(privDataKeySize, sizeof(uint8_t));
     VERIFY_NON_NULL(TAG, privData, ERROR);
-    OicSecKey_t privKey = {privData, keySize};
+    OicSecKey_t privKey = {.data=privData, .len=keySize};
 
-    OCFillRandomMem(privData, privDataKeySize);
+    if (!OCGetRandomBytes(privData, privDataKeySize))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to generate private key");
+        res = OC_STACK_ERROR;
+        goto exit;
+    }
 
     // TODO: currently owner array is 1. only provisioning tool's id.
     tempFirstCred =  GenerateCredential(secondDeviceId, type, NULL, &privKey, ptDeviceId, NULL);
@@ -72,9 +77,10 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
     res = OC_STACK_OK;
 
 exit:
+    OICClearMemory(privData, privDataKeySize);
     OICFree(privData);
 
-    if(res != OC_STACK_OK)
+    if (res != OC_STACK_OK)
     {
         OICFree(tempFirstCred);
         OICFree(tempSecondCred);

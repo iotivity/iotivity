@@ -238,6 +238,7 @@ static void CAIPPassNetworkChangesToAdapter(CANetworkStatus_t status)
         if (cbitem && cbitem->adapter)
         {
             cbitem->callback(cbitem->adapter, status);
+            CALogAdapterStateInfo(cbitem->adapter, status);
         }
     }
 }
@@ -311,9 +312,9 @@ static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family
     return ifitem;
 }
 
-CAInterface_t *CAFindInterfaceChange()
+u_arraylist_t *CAFindInterfaceChange()
 {
-    CAInterface_t *foundNewInterface = NULL;
+    u_arraylist_t *iflist = NULL;
 #ifdef __linux__
     char buf[4096] = { 0 };
     struct nlmsghdr *nh = NULL;
@@ -325,59 +326,46 @@ CAInterface_t *CAFindInterfaceChange()
                           .msg_iov = &iov,
                           .msg_iovlen = 1 };
 
-    size_t len = recvmsg(caglobals.ip.netlinkFd, &msg, 0);
+    ssize_t len = recvmsg(caglobals.ip.netlinkFd, &msg, 0);
 
     for (nh = (struct nlmsghdr *)buf; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len))
     {
-        if (nh != NULL && nh->nlmsg_type != RTM_NEWLINK)
+        if (nh != NULL && (nh->nlmsg_type != RTM_DELADDR && nh->nlmsg_type != RTM_NEWADDR))
         {
             continue;
         }
 
-        struct ifinfomsg *ifi = (struct ifinfomsg *)NLMSG_DATA(nh);
-
-        int ifiIndex = ifi->ifi_index;
-
-        if ((!ifi || (ifi->ifi_flags & IFF_LOOPBACK) || !(ifi->ifi_flags & IFF_RUNNING)))
+        if (RTM_DELADDR == nh->nlmsg_type)
         {
-            bool isFound = CACmpNetworkList(ifiIndex);
-            if (isFound)
+            struct ifaddrmsg *ifa = (struct ifaddrmsg *)NLMSG_DATA (nh);
+            if (ifa)
             {
-                CARemoveNetworkMonitorList(ifiIndex);
-                CAIPPassNetworkChangesToAdapter(CA_INTERFACE_DOWN);
+                int ifiIndex = ifa->ifa_index;
+                bool isFound = CACmpNetworkList(ifiIndex);
+                if (isFound)
+                {
+                    CARemoveNetworkMonitorList(ifiIndex);
+                    CAIPPassNetworkChangesToAdapter(CA_INTERFACE_DOWN);
+                }
             }
             continue;
         }
 
-        u_arraylist_t *iflist = CAIPGetInterfaceInformation(ifiIndex);
-        if (!iflist)
+        // Netlink message type is RTM_NEWADDR.
+        struct ifaddrmsg *ifa = (struct ifaddrmsg *)NLMSG_DATA (nh);
+        if (ifa)
         {
-            OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));
-            return NULL;
-        }
-
-        uint32_t listLength = u_arraylist_length(iflist);
-        for (uint32_t i = 0; i < listLength; i++)
-        {
-            CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
-            if (!ifitem)
+            int ifiIndex = ifa->ifa_index;
+            iflist = CAIPGetInterfaceInformation(ifiIndex);
+            if (!iflist)
             {
-                continue;
+                OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));
+                return NULL;
             }
-
-            if ((int)ifitem->index != ifiIndex)
-            {
-                continue;
-            }
-
-            foundNewInterface = CANewInterfaceItem(ifitem->index, ifitem->name, ifitem->family,
-                                                   ifitem->addr, ifitem->flags);
-            break;    // we found the one we were looking for
         }
-        u_arraylist_destroy(iflist);
     }
 #endif
-    return foundNewInterface;
+    return iflist;
 }
 
 u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)

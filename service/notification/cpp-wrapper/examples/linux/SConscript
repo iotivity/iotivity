@@ -36,6 +36,7 @@ notification_sample_env.AppendUnique(CPPPATH = ['../../../include'])
 notification_sample_env.AppendUnique(CPPPATH = ['../../provider/inc'])
 notification_sample_env.AppendUnique(CPPPATH = ['../../consumer/inc'])
 notification_sample_env.AppendUnique(CPPPATH = ['../../common'])
+notification_sample_env.AppendUnique(CPPPATH = ['../../../../../resource/csdk/include'])
 notification_sample_env.AppendUnique(CPPPATH = ['../../../../../resource/csdk/stack/include'])
 notification_sample_env.AppendUnique(CPPPATH = ['../../../../../resource/csdk/connectivity/api'])
 notification_sample_env.AppendUnique(CPPPATH = ['../../../src/common'])
@@ -45,7 +46,8 @@ notification_sample_env.PrependUnique(LIBS = [
 	'oc_logger',
 	'oc',
 	'connectivity_abstraction',
-	'libcoap'
+	'libcoap',
+        'resource_directory'
 	])
 
 notification_sample_env.AppendUnique(CXXFLAGS = ['-std=c++0x','-frtti'])
@@ -68,6 +70,19 @@ if not env.get('RELEASE'):
 
 if env.get('WITH_CLOUD') == True:
 	notification_sample_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD'])
+
+with_mq = env.get('WITH_MQ')
+if 'SUB' in with_mq:
+    notification_sample_env.AppendUnique(CPPDEFINES = ['MQ_SUBSCRIBER', 'WITH_MQ'])
+    print "MQ SUB support"
+
+if 'PUB' in with_mq:
+    notification_sample_env.AppendUnique(CPPDEFINES = ['MQ_PUBLISHER', 'WITH_MQ'])
+    print "MQ PUB support"
+
+if 'BROKER' in with_mq:
+    notification_sample_env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
+    print "MQ Broker support"
 
 if env.get('WITH_TCP') == True:
 	notification_sample_env.AppendUnique(CPPDEFINES = ['WITH_TCP'])

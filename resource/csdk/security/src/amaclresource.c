@@ -22,6 +22,7 @@
 #include <string.h>
 #include "oic_malloc.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "payload_logging.h"
 #include "psinterface.h"
 #include "resourcemanager.h"
@@ -30,7 +31,7 @@
 #include "srmutility.h"
 #include "amaclresource.h"
 
-#define TAG  "SRM-AMACL"
+#define TAG  "OIC_SRM_AMACL"
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */
@@ -203,7 +204,7 @@ OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayl
     if (CborNoError == cborEncoderResult)
     {
         *cborPayload = outPayload;
-        *cborSize = encoder.ptr - outPayload;
+        *cborSize = cbor_encoder_get_buffer_size(&encoder, outPayload);
         ret = OC_STACK_OK;
     }
 
@@ -214,7 +215,7 @@ exit:
        OICFree(outPayload);
        outPayload = NULL;
        // Since the allocated initial memory failed, double the memory.
-       cborLen += encoder.ptr - encoder.end;
+       cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
        cborEncoderResult = CborNoError;
        ret = AmaclToCBORPayload(amaclS, cborPayload, &cborLen);
        if (OC_STACK_OK == ret)
@@ -445,11 +446,9 @@ static OCEntityHandlerResult HandleAmaclGetRequest (const OCEntityHandlerRequest
     OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
 
     // Send response payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, cborPayload, size))
-    {
-        ehRet = OC_EH_ERROR;
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleAmaclGetRequest");
-    }
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, cborPayload, size)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
+
     OICFree(cborPayload);
 
     OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);

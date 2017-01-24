@@ -3,7 +3,7 @@ To build the app
 1. build Iotivity with TARGET_OS=android
 
 2. Copy aar files into app/libs folder
-   - {Iotivity_root}/android/android_api/base/build/outputs/aar/iotivity-{TARGET_ARCH}-base-{MODE}.aar
+   - {Iotivity_root}/java/iotivity-android/build/outputs/aar/iotivity-{TARGET_ARCH}-base-{MODE}.aar
    - {Iotivity_root}/service/resource-encapsulation/android/service/build/outputs/aar/iotivity-{TARGET_ARCH}-service-{MODE}.aar
 
 3. Configure dependencies for libs in app/build.gradle

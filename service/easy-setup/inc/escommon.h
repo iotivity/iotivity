@@ -30,6 +30,12 @@ extern "C"
 #endif
 
 // Defines
+#define OC_RSRVD_ES_RES_TYPE_COL          "oic.wk.col"
+#define OC_RSRVD_ES_INTERFACE             "if"
+#define OC_RSRVD_ES_RES_TYPE              "rt"
+
+
+
 #define OIC_STRING_MAX_VALUE    64
 #define MAX_WEBLINKLEN          3
 #define NUM_WIFIMODE            5
@@ -47,6 +53,8 @@ extern "C"
 #define OC_RSRVD_ES_AUTHTYPE               "wat"
 #define OC_RSRVD_ES_ENCTYPE                "wet"
 #define OC_RSRVD_ES_AUTHCODE               "ac"
+#define OC_RSRVD_ES_ACCESSTOKEN            "at"
+#define OC_RSRVD_ES_ACCESSTOKEN_TYPE       "att"
 #define OC_RSRVD_ES_AUTHPROVIDER           "apn"
 #define OC_RSRVD_ES_CISERVER               "cis"
 #define OC_RSRVD_ES_SERVERID               "sid"
@@ -60,14 +68,14 @@ extern "C"
 /**
  * Easysetup defined resoruce types and uris.
  */
-#define OC_RSRVD_ES_RES_TYPE_PROV         "oic.wk.prov"
-#define OC_RSRVD_ES_URI_PROV              "/ProvisioningResURI"
-#define OC_RSRVD_ES_RES_TYPE_WIFI         "oic.wk.wifi"
-#define OC_RSRVD_ES_URI_WIFI              "/WiFiProvisioningResURI"
-#define OC_RSRVD_ES_RES_TYPE_CLOUDSERVER  "oic.wk.cloudserver"
-#define OC_RSRVD_ES_URI_CLOUDSERVER       "/CloudServerProvisioningResURI"
-#define OC_RSRVD_ES_RES_TYPE_DEVCONF      "oic.wk.devconf"
-#define OC_RSRVD_ES_URI_DEVCONF           "/DevConfProvisioningResURI"
+#define OC_RSRVD_ES_RES_TYPE_EASYSETUP          "oic.r.easysetup"
+#define OC_RSRVD_ES_URI_EASYSETUP               "/EasySetupResURI"
+#define OC_RSRVD_ES_RES_TYPE_WIFICONF           "oic.r.wificonf"
+#define OC_RSRVD_ES_URI_WIFICONF                "/WiFiConfResURI"
+#define OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF      "oic.r.coapcloudconf"
+#define OC_RSRVD_ES_URI_COAPCLOUDCONF           "/CoapCloudConfResURI"
+#define OC_RSRVD_ES_RES_TYPE_DEVCONF            "oic.r.devconf"
+#define OC_RSRVD_ES_URI_DEVCONF                 "/DevConfResURI"
 
 
 /**
@@ -120,6 +128,16 @@ typedef enum
 } WIFI_ENCTYPE;
 
 /**
+ * @brief OAuth Access Token Types. "bearer" and "mac" types are supported.
+ */
+typedef enum
+{
+    NONE_OAUTH_TOKENTYPE = 0,
+    OAUTH_TOKENTYPE_BEARER,
+    OAUTH_TOKENTYPE_MAC
+} OAUTH_TOKENTYPE;
+
+/**
  * @brief A result of Easy Setup
  */
 typedef enum
@@ -128,6 +146,11 @@ typedef enum
      * Provisioning succeeds.
      */
     ES_OK = 0,
+
+    /**
+     * Secure resource is discovered.
+     */
+    ES_SECURE_RESOURCE_IS_DISCOVERED = 1,
 
     /**
      * Enrollee discovery fails in cloud provisioning
@@ -151,7 +174,10 @@ typedef enum
     ES_SECURE_RESOURCE_DISCOVERY_FAILURE,
 
     /**
-     * Ownership transfer fails because DTLS handshake failure happens
+     * Ownership transfer fails due to one of unexpected reasons.
+     * E.g. A packet loss even with retransmission happens during ownership transfer.
+     * E.g. Mediator's owned status is 'unowned'
+     * E.g. A user confirmation for random pin-based or certificate-based OT fails
      */
     ES_OWNERSHIP_TRANSFER_FAILURE,
 
@@ -170,6 +196,39 @@ typedef enum
     ES_CERT_PROVISIONING_FAILURE,
 
     /**
+     * MOT method selection is failed
+     */
+    ES_MOT_METHOD_SELECTION_FAILURE,
+
+    /**
+     * A provisioning of Pre-configured pin number for MOT is failed
+     */
+    ES_PRE_CONFIG_PIN_PROVISIONING_FAILURE,
+
+    /**
+     * The found enrollee's owner ID indicates a same ID of mediator.
+     * However, a list of owned devices managed in mediator's PMD db has no element for the found enrollee.
+     * That can happen where only mediator is reset without any inform to the enrollee.
+     * To proceed an ownership transfer to the enrollee, it needs to reset the enrollee's SVR DB for its owner, i.e. the mediator
+     */
+    ES_OWNERSHIP_IS_NOT_SYNCHRONIZED,
+
+    /**
+     * Ownership transfer which is cert-based method fails due to user confirmation is denied.
+     */
+    ES_USER_DENIED_CONFIRMATION_REQ,
+
+    /**
+     * Ownership transfer which is cert-based method fails due to wrong certificate.
+     */
+    ES_AUTHENTICATION_FAILURE_WITH_WRONG_CERT,
+
+    /**
+     * Ownership transfer which is random-pin method fails due to wrong pin.
+     */
+    ES_AUTHENTICATION_FAILURE_WITH_WRONG_PIN,
+
+    /**
      * Provisioning fails for some reason.
      */
     ES_ERROR = 255
@@ -180,14 +239,14 @@ typedef enum
  */
 typedef enum
 {
-    ES_WIFI_RESOURCE = 0x01,
-    ES_CLOUD_RESOURCE = 0x02,
+    ES_WIFICONF_RESOURCE = 0x01,
+    ES_COAPCLOUDCONF_RESOURCE = 0x02,
     ES_DEVCONF_RESOURCE = 0x04
 } ESResourceMask;
 
 /**
  * @brief Indicate enrollee and provisioning status. Provisioning status is shown in "provisioning
- *        status" property in provisioning resource.
+ *        status" property in easysetup resource.
  */
 typedef enum
 {

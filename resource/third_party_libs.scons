@@ -57,11 +57,11 @@ if target_os == 'android':
 	if target_arch == 'armeabi-v7a-hard':
 		target_arch = 'armeabi-v7a'
 
-	if target_arch not in ['x86', 'armeabi', 'armeabi-v7a']:
+	if target_arch not in ['x86', 'x86_64', 'armeabi', 'armeabi-v7a']:
 		if not env.GetOption('help') and not env.GetOption('clean'):
 			print '''
 *********************************** Warning ***********************************
-* current only x86, armeabi, armeabi-v7a libraries are provided!              *
+* current only x86, x86_64, armeabi, armeabi-v7a libraries are provided!              *
 *******************************************************************************
 '''
 	else:

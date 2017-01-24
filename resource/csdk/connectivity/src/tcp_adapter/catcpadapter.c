@@ -18,6 +18,7 @@
  *
  ******************************************************************/
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -88,13 +89,16 @@ static CAConnectionChangeCallback g_connectionChangeCallback = NULL;
  */
 static CAErrorHandleCallback g_errorCallback = NULL;
 
-static void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep,
-                                  const void *data, uint32_t dataLength);
-
 /**
  * KeepAlive Connected or Disconnected Callback to CA adapter.
  */
 static CAKeepAliveConnectionCallback g_connKeepAliveCallback = NULL;
+
+static void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep,
+                                  const void *data, uint32_t dataLength);
+
+static void CATCPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
+                              size_t dataLength, CAResult_t result);
 
 static CAResult_t CATCPInitializeQueueHandles();
 
@@ -160,29 +164,75 @@ void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
 
     OIC_LOG_V(DEBUG, TAG, "Address: %s, port:%d", sep->endpoint.addr, sep->endpoint.port);
 
+#ifdef SINGLE_THREAD
     if (g_networkPacketCallback)
     {
         g_networkPacketCallback(sep, data, dataLength);
     }
+#else
+    unsigned char *buffer = (unsigned char*)data;
+    size_t bufferLen = dataLength;
+    size_t index = 0;
+
+    //get remote device information from file descriptor.
+    CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(&sep->endpoint, &index);
+    if (!svritem)
+    {
+        OIC_LOG(ERROR, TAG, "there is no connection information in list");
+        return;
+    }
+    if (UNKNOWN == svritem->protocol)
+    {
+        OIC_LOG(ERROR, TAG, "invalid protocol type");
+        return;
+    }
+
+    //totalLen filled only when header fully read and parsed
+    while (0 != bufferLen)
+    {
+        CAResult_t res = CAConstructCoAP(svritem, &buffer, &bufferLen);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "CAConstructCoAP return error : %d", res);
+            return;
+        }
+
+        //when successfully read all required data - pass them to upper layer.
+        if (svritem->len == svritem->totalLen)
+        {
+            if (g_networkPacketCallback)
+            {
+                g_networkPacketCallback(sep, svritem->data, svritem->totalLen);
+            }
+            CACleanData(svritem);
+        }
+        else
+        {
+            OIC_LOG_V(DEBUG, TAG, "%u bytes required for complete CoAP",
+                                svritem->totalLen - svritem->len);
+        }
+    }
+#endif
 }
 
 #ifdef __WITH_TLS__
-static void CATCPPacketSendCB(CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
+static ssize_t CATCPPacketSendCB(CAEndpoint_t *endpoint, const void *data, size_t dataLength)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
-    VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
-    VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
+    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint is NULL", -1);
+    VERIFY_NON_NULL_RET(data, TAG, "data is NULL", -1);
 
     OIC_LOG_V(DEBUG, TAG, "Address: %s, port:%d", endpoint->addr, endpoint->port);
     OIC_LOG_BUFFER(DEBUG, TAG, data, dataLength);
 
-    CATCPSendData(endpoint, data, dataLength, false);
-    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    ssize_t ret = CATCPSendData(endpoint, data, dataLength);
+    OIC_LOG_V(DEBUG, TAG, "Out %s : %d bytes sent", __func__, ret);
+    return ret;
 }
 #endif
 
-void CATCPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
-                       uint32_t dataLength, CAResult_t result)
+static void CATCPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
+                              size_t dataLength, CAResult_t result)
 {
     VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
@@ -193,12 +243,12 @@ void CATCPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
     }
 }
 
-static void CATCPConnectionHandler(const CAEndpoint_t *endpoint, bool isConnected)
+static void CATCPConnectionHandler(const CAEndpoint_t *endpoint, bool isConnected, bool isClient)
 {
     // Pass the changed connection status to RI Layer for keepalive.
     if (g_connKeepAliveCallback)
     {
-        g_connKeepAliveCallback(endpoint, isConnected);
+        g_connKeepAliveCallback(endpoint, isConnected, isClient);
     }
 
     // Pass the changed connection status to CAUtil.
@@ -245,7 +295,16 @@ void CATCPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
 static void CAInitializeTCPGlobals()
 {
     caglobals.tcp.ipv4.fd = -1;
+    caglobals.tcp.ipv4s.fd = -1;
     caglobals.tcp.ipv6.fd = -1;
+    caglobals.tcp.ipv6s.fd = -1;
+
+    // Set the port number received from application.
+    caglobals.tcp.ipv4.port = caglobals.ports.tcp.u4;
+    caglobals.tcp.ipv4s.port = caglobals.ports.tcp.u4s;
+    caglobals.tcp.ipv6.port = caglobals.ports.tcp.u6;
+    caglobals.tcp.ipv6s.port = caglobals.ports.tcp.u6s;
+
     caglobals.tcp.selectTimeout = CA_TCP_SELECT_TIMEOUT;
     caglobals.tcp.listenBacklog = CA_TCP_LISTEN_BACKLOG;
     caglobals.tcp.svrlist = NULL;
@@ -328,10 +387,6 @@ CAResult_t CAStartTCP()
 
     // Start network monitoring to receive adapter status changes.
     CAIPStartNetworkMonitor(CATCPAdapterHandler, CA_ADAPTER_TCP);
-
-    // Set the port number received from application.
-    caglobals.tcp.ipv4.port = caglobals.ports.tcp.u4;
-    caglobals.tcp.ipv6.port = caglobals.ports.tcp.u6;
 
 #ifndef SINGLE_THREAD
     if (CA_STATUS_OK != CATCPInitializeQueueHandles())
@@ -436,8 +491,7 @@ int32_t CASendTCPUnicastData(const CAEndpoint_t *endpoint,
 #ifndef SINGLE_THREAD
     return CAQueueTCPData(false, endpoint, data, dataLength);
 #else
-    CATCPSendData(endpoint, data, dataLength, false);
-    return dataLength;
+    return CATCPSendData(endpoint, data, dataLength);
 #endif
 }
 
@@ -497,6 +551,14 @@ void CATCPSendDataThread(void *threadData)
         return;
     }
 
+    if (caglobals.tcp.terminate)
+    {
+        OIC_LOG(DEBUG, TAG, "Adapter is not enabled");
+        CATCPErrorHandler(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen,
+                          CA_SEND_FAILED);
+        return;
+    }
+
     if (tcpData->isMulticast)
     {
         //Processing for sending multicast
@@ -505,16 +567,35 @@ void CATCPSendDataThread(void *threadData)
     }
     else
     {
+        // Check payload length from CoAP over TCP format header.
+        CAResult_t result = CA_STATUS_OK;
+        size_t payloadLen = CACheckPayloadLengthFromHeader(tcpData->data, tcpData->dataLen);
+        if (!payloadLen)
+        {
+            // if payload length is zero, disconnect from remote device.
+            OIC_LOG(DEBUG, TAG, "payload length is zero, disconnect from remote device");
+#ifdef __WITH_TLS__
+            if (CA_STATUS_OK != CAcloseSslConnection(tcpData->remoteEndpoint))
+            {
+                OIC_LOG(ERROR, TAG, "Failed to close TLS session");
+            }
+#endif
+            CASearchAndDeleteTCPSession(tcpData->remoteEndpoint);
+            return;
+        }
+
 #ifdef __WITH_TLS__
          if (tcpData->remoteEndpoint && tcpData->remoteEndpoint->flags & CA_SECURE)
          {
-             CAResult_t result = CA_STATUS_OK;
              OIC_LOG(DEBUG, TAG, "CAencryptSsl called!");
              result = CAencryptSsl(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen);
 
              if (CA_STATUS_OK != result)
              {
                  OIC_LOG(ERROR, TAG, "CAAdapterNetDtlsEncrypt failed!");
+                 CASearchAndDeleteTCPSession(tcpData->remoteEndpoint);
+                 CATCPErrorHandler(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen,
+                                   CA_SEND_FAILED);
              }
              OIC_LOG_V(DEBUG, TAG,
                        "CAAdapterNetDtlsEncrypt returned with result[%d]", result);
@@ -522,7 +603,14 @@ void CATCPSendDataThread(void *threadData)
          }
 #endif
         //Processing for sending unicast
-        CATCPSendData(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen, false);
+         ssize_t dlen = CATCPSendData(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen);
+         if (-1 == dlen)
+         {
+             OIC_LOG(ERROR, TAG, "CATCPSendData failed");
+             CASearchAndDeleteTCPSession(tcpData->remoteEndpoint);
+             CATCPErrorHandler(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen,
+                               CA_SEND_FAILED);
+         }
     }
 }
 

@@ -20,10 +20,12 @@
 
 import os
 import os.path
+from tools.scons.RunTest import run_test
+
+Import('test_env')
 
 # SConscript file for Local PKI google tests
-gtest_env = SConscript('#extlibs/gtest/SConscript')
-provisiontests_env = gtest_env.Clone()
+provisiontests_env = test_env.Clone()
 src_dir = provisiontests_env.get('SRC_DIR')
 target_os = provisiontests_env.get('TARGET_OS')
 with_ra = provisiontests_env.get('WITH_RA')
@@ -35,6 +37,7 @@ with_ra_ibb = provisiontests_env.get('WITH_RA_IBB')
 provisiontests_env.PrependUnique(CPPPATH = [
 		'../../include',
 		'../../oc_logger/include',
+		'../../csdk/include',
 		'../../csdk/stack/include',
 		'../../csdk/security/include',
 		'../../csdk/security/provisioning/include',
@@ -49,7 +52,6 @@ provisiontests_env.PrependUnique(CPPPATH = [
 		'../../csdk/ocrandom/include',
 		'../../csdk/logger/include',
 		'../../csdk/connectivity/lib/libcoap-4.1.1/include',
-		'../../../extlibs/cjson/',
 		'../../../extlibs/hippomocks-master/HippoMocks',
 		'../../../extlibs/hippomocks-master/HippoMocksTest'
 		])
@@ -106,8 +108,9 @@ if provisiontests_env.get('TEST') == '1':
 			os.makedirs(result_dir)
 		provisiontests_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
 		provisiontests_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
-		ut = provisiontests_env.Command ('ut', None, out_dir + 'resource/provisioning/unittests/provisiontests')
-		AlwaysBuild ('ut')
+		run_test(provisiontests_env,
+				 'resource/provisioning/unittests/provisiontests.memcheck',
+				 'resource/provisioning/unittests/provisiontests')
 
 src_dir = provisiontests_env.get('SRC_DIR')
 svr_db_src_dir = src_dir + '/resource/provisioning/examples/'

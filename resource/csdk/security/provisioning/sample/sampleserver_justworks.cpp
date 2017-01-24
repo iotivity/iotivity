@@ -278,7 +278,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
                 gLedInstance[gCurrLedInstance].state = 0;
                 gLedInstance[gCurrLedInstance].power = 0;
                 gCurrLedInstance++;
-                strncpy ((char *)response->resourceUri, newLedUri, MAX_URI_LENGTH);
+                strncpy ((char *)response->resourceUri, newLedUri, sizeof(response->resourceUri));
                 ehResult = OC_EH_RESOURCE_CREATED;
             }
         }
@@ -407,8 +407,14 @@ void handleSigInt(int signum)
 
 FILE* server_fopen(const char *path, const char *mode)
 {
-    (void)path;
-    return fopen(CRED_FILE, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CRED_FILE, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int main()

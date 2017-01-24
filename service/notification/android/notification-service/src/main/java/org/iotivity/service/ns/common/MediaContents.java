@@ -23,28 +23,26 @@ package org.iotivity.service.ns.common;
 import android.util.Log;
 
 /**
-  * @class   MediaContents
-  * @brief   This class provides implementation of Notification MediaContents object.
-  */
-public class MediaContents
-{
-    private static final String LOG_TAG = "NotificationService_MediaContents";
+ *
+ * This class provides implementation of Notification MediaContents object.
+ *
+ */
+public class MediaContents {
 
-    public String mIconImage = null;
+    private static final String LOG_TAG    = "NotificationService_MediaContents";
 
-    public MediaContents(String iconImage)
-    {
-        Log.i (LOG_TAG, "MediaContents()");
+    public String               mIconImage = null;
+
+    public MediaContents(String iconImage) {
+        Log.i(LOG_TAG, "MediaContents()");
         mIconImage = iconImage;
     }
 
-    public String getIconImage()
-    {
+    public String getIconImage() {
         return mIconImage;
     }
 
-    public void setIconImage(String iconImage)
-    {
+    public void setIconImage(String iconImage) {
         mIconImage = iconImage;
     }
 }

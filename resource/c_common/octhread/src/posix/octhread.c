@@ -63,7 +63,7 @@
  * TAG
  * Logging tag for module name
  */
-#define TAG PCF("UMUTEX")
+#define TAG PCF("OIC_UMUTEX")
 
 #ifdef __ANDROID__
 /**

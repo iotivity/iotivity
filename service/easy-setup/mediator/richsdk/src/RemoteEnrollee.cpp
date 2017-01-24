@@ -37,7 +37,7 @@ namespace OIC
     {
         static const char ES_BASE_RES_URI[] = "/oic/res";
         #define ES_REMOTE_ENROLLEE_TAG "ES_REMOTE_ENROLLEE"
-        #define DISCOVERY_TIMEOUT 5
+        #define DISCOVERY_TIMEOUT 1
 
         RemoteEnrollee::RemoteEnrollee(const std::shared_ptr< OC::OCResource > resource)
         {
@@ -51,6 +51,18 @@ namespace OIC
             m_cloudPropProvStatusCb = nullptr;
 
             m_deviceId = resource->sid();
+        }
+
+        void RemoteEnrollee::onSecurityStatusHandlerCallback(
+                const std::shared_ptr< SecProvisioningStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr)
+        {
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"onSecurityStatusHandlerCallback");
+            std::shared_ptr<RemoteEnrollee> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                Ptr->securityStatusHandler(status);
+            }
         }
 
         void RemoteEnrollee::securityStatusHandler(
@@ -73,6 +85,42 @@ namespace OIC
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "securityStatusHandlr OUT");
         }
 
+        ESOwnershipTransferData RemoteEnrollee::onSecurityStatusWithOptionHandlerCallback(
+                const std::shared_ptr< SecProvisioningStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr)
+        {
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"onSecurityStatusWithOptionHandlerCallback");
+            std::shared_ptr<RemoteEnrollee> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                return Ptr->securityStatusWithOptionHandler(status);
+            }
+            return ESOwnershipTransferData();
+        }
+
+        ESOwnershipTransferData RemoteEnrollee::securityStatusWithOptionHandler(
+                const std::shared_ptr< SecProvisioningStatus > status) const
+        {
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "securityStatusWithOptionHandler IN");
+            OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_TAG, "UUID = %s, ESResult = %d",
+                    status->getDeviceUUID().c_str(), status->getESResult());
+
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "securityStatusWithOptionHandler OUT");
+            return m_securityProvStatusCbWithOption(status);
+        }
+
+        void RemoteEnrollee::onGetStatusHandlerCallback(
+                const std::shared_ptr< GetEnrolleeStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr)
+        {
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"onGetStatusHandlerCallback");
+            std::shared_ptr<RemoteEnrollee> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                Ptr->getStatusHandler(status);
+            }
+        }
+
         void RemoteEnrollee::getStatusHandler(
                 const std::shared_ptr< GetEnrolleeStatus > status) const
         {
@@ -83,6 +131,18 @@ namespace OIC
             m_getStatusCb(status);
 
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "getStatusHandler OUT");
+        }
+
+        void RemoteEnrollee::onGetConfigurationStatusHandlerCallback(
+                const std::shared_ptr< GetConfigurationStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr)
+        {
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"onGetConfigurationStatusHandlerCallback");
+            std::shared_ptr<RemoteEnrollee> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                Ptr->getConfigurationStatusHandler(status);
+            }
         }
 
         void RemoteEnrollee::getConfigurationStatusHandler (
@@ -97,15 +157,39 @@ namespace OIC
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "getConfigurationStatusHandler OUT");
         }
 
+        void RemoteEnrollee::onDevicePropProvisioningStatusHandlerCallback(
+                const std::shared_ptr< DevicePropProvisioningStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr)
+        {
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"onDevicePropProvisioningStatusHandlerCallback");
+            std::shared_ptr<RemoteEnrollee> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                Ptr->devicePropProvisioningStatusHandler(status);
+            }
+        }
+
         void RemoteEnrollee::devicePropProvisioningStatusHandler(
                 const std::shared_ptr< DevicePropProvisioningStatus > status) const
         {
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "devicePropProvisioningStatusHandler IN");
 
-            OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_TAG, "ProvStatus = %d", status->getESResult());
+            OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_TAG, "DeviceProvStatus = %d", status->getESResult());
             m_devicePropProvStatusCb(status);
 
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "devicePropProvisioningStatusHandler OUT");
+        }
+
+        void RemoteEnrollee::onCloudPropProvisioningStatusHandlerCallback(
+                const std::shared_ptr< CloudPropProvisioningStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr)
+        {
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"onCloudPropProvisioningStatusHandlerCallback");
+            std::shared_ptr<RemoteEnrollee> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                Ptr->cloudPropProvisioningStatusHandler(status);
+            }
         }
 
         void RemoteEnrollee::cloudPropProvisioningStatusHandler (
@@ -118,6 +202,17 @@ namespace OIC
             m_cloudPropProvStatusCb(status);
 
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "cloudPropProvisioningStatusHandler OUT");
+        }
+
+        void RemoteEnrollee::onDiscoveredCallback(const std::shared_ptr<OC::OCResource> resource,
+            std::weak_ptr<RemoteEnrollee> this_ptr)
+        {
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"onDiscoveredCallback()");
+            std::shared_ptr<RemoteEnrollee> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                Ptr->onDeviceDiscovered(resource);
+            }
         }
 
         void RemoteEnrollee::onDeviceDiscovered(std::shared_ptr<OC::OCResource> resource)
@@ -174,17 +269,17 @@ namespace OIC
             std::string query("");
             query.append(ES_BASE_RES_URI);
             query.append("?rt=");
-            query.append(OC_RSRVD_ES_RES_TYPE_PROV);
+            query.append(OC_RSRVD_ES_RES_TYPE_EASYSETUP);
 
             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "query = %s", query.c_str());
 
             m_discoveryResponse = false;
 
-            std::function< void (std::shared_ptr<OC::OCResource>) > onDeviceDiscoveredCb =
-                    std::bind(&RemoteEnrollee::onDeviceDiscovered, this,
-                                                    std::placeholders::_1);
-            OCStackResult result = OC::OCPlatform::findResource("", query, CT_DEFAULT,
-                    onDeviceDiscoveredCb);
+            onDeviceDiscoveredCb cb = std::bind(&RemoteEnrollee::onDiscoveredCallback,
+                                                std::placeholders::_1,
+                                                shared_from_this());
+
+            OCStackResult result = OC::OCPlatform::findResource("", query, CT_DEFAULT, cb);
 
             if (result != OCStackResult::OC_STACK_OK)
             {
@@ -218,21 +313,61 @@ namespace OIC
             m_securityProvStatusCb = callback;
 
             SecurityProvStatusCb securityProvStatusCb = std::bind(
-                    &RemoteEnrollee::securityStatusHandler,
-                    this,
-                    std::placeholders::_1);
+                    &RemoteEnrollee::onSecurityStatusHandlerCallback,
+                    std::placeholders::_1,
+                    shared_from_this());
             //TODO : DBPath is passed empty as of now. Need to take dbpath from application.
-            if(!m_enrolleeSecurity.get())
+            if(!m_localEnrolleeSecurity.get())
             {
-                m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+                m_localEnrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
             }
 
-            res = m_enrolleeSecurity->provisionOwnership();
+            res = m_localEnrolleeSecurity->provisionOwnership(NULL);
 
             std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
-                            std::make_shared< SecProvisioningStatus >(m_enrolleeSecurity->getUUID(), res);
-            m_securityProvStatusCb(securityProvisioningStatus);
-            m_enrolleeSecurity.reset();
+                            std::make_shared< SecProvisioningStatus >(m_localEnrolleeSecurity->getUUID(), res);
+            securityProvStatusCb(securityProvisioningStatus);
+#else
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG,"Mediator is unsecured built.");
+
+            if(!callback)
+            {
+                throw ESInvalidParameterException("Callback is empty");
+            }
+            std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
+                     std::make_shared< SecProvisioningStatus >
+                                   ("", ESResult::ES_SEC_OPERATION_IS_NOT_SUPPORTED);
+            callback(securityProvisioningStatus);
+#endif
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "provisionSecurity OUT");
+        }
+
+        void RemoteEnrollee::provisionSecurity(const SecurityProvStatusCbWithOption callback)
+        {
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "provisionSecurity IN");
+#ifdef __WITH_DTLS__
+            ESResult res = ESResult::ES_ERROR;
+            if(!callback)
+            {
+                throw ESInvalidParameterException("Callback is empty");
+            }
+            m_securityProvStatusCbWithOption = callback;
+
+            SecurityProvStatusCbWithOption securityProvStatusCbWithOption = std::bind(
+                                    &RemoteEnrollee::onSecurityStatusWithOptionHandlerCallback,
+                                    std::placeholders::_1,
+                                    shared_from_this());
+
+            if(!m_localEnrolleeSecurity.get())
+            {
+                m_localEnrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+            }
+
+            res = m_localEnrolleeSecurity->provisionOwnership(securityProvStatusCbWithOption);
+
+            std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
+                            std::make_shared< SecProvisioningStatus >(m_localEnrolleeSecurity->getUUID(), res);
+            securityProvStatusCbWithOption(securityProvisioningStatus);
 #else
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG,"Mediator is unsecured built.");
 
@@ -265,7 +400,10 @@ namespace OIC
             m_getStatusCb = callback;
 
             GetStatusCb getStatusCb = std::bind(
-                &RemoteEnrollee::getStatusHandler, this, std::placeholders::_1);
+                &RemoteEnrollee::onGetStatusHandlerCallback,
+                std::placeholders::_1,
+                shared_from_this());
+
             m_enrolleeResource->registerGetStatusCallback(getStatusCb);
             m_enrolleeResource->getStatus();
 
@@ -289,7 +427,10 @@ namespace OIC
             m_getConfigurationStatusCb = callback;
 
             GetConfigurationStatusCb getConfigurationStatusCb = std::bind(
-                    &RemoteEnrollee::getConfigurationStatusHandler, this, std::placeholders::_1);
+                    &RemoteEnrollee::onGetConfigurationStatusHandlerCallback,
+                    std::placeholders::_1,
+                    shared_from_this());
+
             m_enrolleeResource->registerGetConfigurationStatusCallback(getConfigurationStatusCb);
             m_enrolleeResource->getConfiguration();
 
@@ -319,8 +460,9 @@ namespace OIC
             }
 
             DevicePropProvStatusCb devicePropProvStatusCb = std::bind(
-                    &RemoteEnrollee::devicePropProvisioningStatusHandler,
-                    this, std::placeholders::_1);
+                    &RemoteEnrollee::onDevicePropProvisioningStatusHandlerCallback,
+                    std::placeholders::_1,
+                    shared_from_this());
 
             m_enrolleeResource->registerDevicePropProvStatusCallback(devicePropProvStatusCb);
             m_enrolleeResource->provisionProperties(deviceProp);
@@ -361,6 +503,17 @@ namespace OIC
         void RemoteEnrollee::provisionCloudProperties(const CloudProp& cloudProp,
                                                             const CloudPropProvStatusCb callback)
         {
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "provisionCloudProperties w/o OCResource IN");
+
+            provisionCloudProperties(NULL, cloudProp, callback);
+
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "provisionCloudProperties w/o OCResource OUT");
+        }
+
+        void RemoteEnrollee::provisionCloudProperties(const std::shared_ptr< OC::OCResource > resource,
+                                                        const CloudProp& cloudProp,
+                                                        const CloudPropProvStatusCb callback)
+        {
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "provisionCloudProperties IN");
 
             if(!callback)
@@ -370,18 +523,56 @@ namespace OIC
 
             m_cloudPropProvStatusCb = callback;
 
-            if(cloudProp.getAuthCode().empty() ||
+            if((cloudProp.getAuthCode().empty() && cloudProp.getAccessToken().empty()) ||
                 cloudProp.getAuthProvider().empty() ||
                 cloudProp.getCiServer().empty())
             {
                 throw ESBadRequestException ("Invalid Cloud Provisiong Info.");
             }
 
-            try
+            if(resource)
             {
-                initCloudResource();
+                if(resource->getResourceTypes().at(0) != OC_RSRVD_ES_RES_TYPE_EASYSETUP ||
+                                resource->connectivityType() & CT_ADAPTER_TCP)
+                {
+                    OIC_LOG (ERROR, ES_REMOTE_ENROLLEE_TAG, "Given resource is not valid due to wrong rt or conntype");
+                    throw ESInvalidParameterException("A given OCResource is wrong");
+                }
+
+                auto interfaces = resource->getResourceInterfaces();
+                bool isFound = false;
+                for(auto interface : interfaces)
+                {
+                    if(interface.compare(BATCH_INTERFACE) == 0)
+                    {
+                        OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_TAG, "RemoteEnrollee object is succeessfully created");
+                        OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "HOST: %s", resource->host().c_str());
+                        OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "URI: %s", resource->uri().c_str());
+                        OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "SID: %s", resource->sid().c_str());
+                        OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "CONNECTIVITY: %d", resource->connectivityType());
+                        isFound = true;
+                    }
+                }
+
+                if(!isFound)
+                {
+                    throw ESInvalidParameterException("A given OCResource has no batch interface");
+                }
             }
 
+            try
+            {
+                if(resource == NULL)
+                {
+                    initCloudResource();
+                }
+                else
+                {
+                    OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "Skip to find a provisioning resource");
+                    m_ocResource = resource;
+                    m_cloudResource = std::make_shared<CloudResource>(m_ocResource);
+                }
+            }
             catch (const std::exception& e)
             {
                 OIC_LOG_V(ERROR, ES_REMOTE_ENROLLEE_TAG,
@@ -396,15 +587,15 @@ namespace OIC
             if(!(cloudProp.getCloudID().empty() && cloudProp.getCredID() <= 0))
             {
                 ESResult res = ESResult::ES_ERROR;
-                if(!m_enrolleeSecurity.get())
+                if(!m_cloudEnrolleeSecurity.get())
                 {
-                    m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+                    m_cloudEnrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
                 }
 
 
-                res = m_enrolleeSecurity->provisionSecurityForCloudServer(cloudProp.getCloudID(),
+                res = m_cloudEnrolleeSecurity->provisionSecurityForCloudServer(cloudProp.getCloudID(),
                                                                           cloudProp.getCredID());
-                m_enrolleeSecurity.reset();
+
                 if(res != ESResult::ES_OK)
                 {
                     m_cloudResource = nullptr;
@@ -426,8 +617,9 @@ namespace OIC
             }
 
             CloudPropProvStatusCb cloudPropProvStatusCb = std::bind(
-                    &RemoteEnrollee::cloudPropProvisioningStatusHandler,
-                                    this, std::placeholders::_1);
+                    &RemoteEnrollee::onCloudPropProvisioningStatusHandlerCallback,
+                    std::placeholders::_1,
+                    shared_from_this());
 
             m_cloudResource->registerCloudPropProvisioningStatusCallback(cloudPropProvStatusCb);
             m_cloudResource->provisionProperties(cloudProp);
@@ -436,3 +628,5 @@ namespace OIC
         }
     }
 }
+
+
