@@ -70,14 +70,14 @@ static const uint16_t CBOR_MAX_SIZE = 4400;
 static OicSecDoxm_t        *gDoxm = NULL;
 static OCResourceHandle    gDoxmHandle = NULL;
 
-static OicSecOxm_t gOicSecDoxmJustWorks = OIC_JUST_WORKS;
+static OicSecOxm_t gDoxmDefaultOxm = OIC_RANDOM_DEVICE_PIN;
 static OicSecDoxm_t gDefaultDoxm =
 {
     NULL,                   /* OicUrn_t *oxmType */
     0,                      /* size_t oxmTypeLen */
-    &gOicSecDoxmJustWorks,  /* uint16_t *oxm */
+    &gDoxmDefaultOxm,       /* uint16_t *oxm */
     1,                      /* size_t oxmLen */
-    OIC_JUST_WORKS,         /* uint16_t oxmSel */
+    OIC_RANDOM_DEVICE_PIN,  /* uint16_t oxmSel */
     SYMMETRIC_PAIR_WISE_KEY,/* OicSecCredType_t sct */
     false,                  /* bool owned */
     {.id = {0}},            /* OicUuid_t deviceID */

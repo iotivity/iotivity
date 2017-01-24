@@ -485,11 +485,12 @@ static bool IsAccessWithinValidTime(const OicSecAce_t *ace)
  */
 static void ProcessAccessRequest(PEContext_t *context)
 {
-    OIC_LOG(DEBUG, TAG, "Entering ProcessAccessRequest()");
     if (NULL != context)
     {
         const OicSecAce_t *currentAce = NULL;
         OicSecAce_t *savePtr = NULL;
+
+        OIC_LOG_V(DEBUG, TAG, "Entering ProcessAccessRequest(%s)", context->resource);
 
         // Start out assuming subject not found.
         context->retVal = ACCESS_DENIED_SUBJECT_NOT_FOUND;

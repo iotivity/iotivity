@@ -52,10 +52,8 @@ static OicSecDpom_t gSm = SINGLE_SERVICE_CLIENT_DRIVEN;
 static OicSecPstat_t gDefaultPstat =
 {
     false,                                    // bool isop
-    (OicSecDpm_t)(BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES |
-    PROVISION_CREDENTIALS | PROVISION_ACLS),   // OicSecDpm_t cm
-    (OicSecDpm_t)(TAKE_OWNER | BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES |
-    PROVISION_CREDENTIALS | PROVISION_ACLS),   // OicSecDpm_t tm
+    TAKE_OWNER,                               // OicSecDpm_t cm
+    NORMAL,                                   // OicSecDpm_t tm
     {.id = {0}},                              // OicUuid_t deviceID
     SINGLE_SERVICE_CLIENT_DRIVEN,             // OicSecDpom_t om */
     1,                                        // the number of elts in Sms

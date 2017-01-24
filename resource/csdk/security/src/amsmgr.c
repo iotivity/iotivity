@@ -383,7 +383,7 @@ bool FoundAmaclForRequest(PEContext_t *context)
     }
     else
     {
-        OIC_LOG_V(INFO, TAG, "%s:AMACL found for the requested resource %s",
+        OIC_LOG_V(INFO, TAG, "%s:AMACL not found for the requested resource %s",
                 __func__, context->resource);
         ret = false;
     }
