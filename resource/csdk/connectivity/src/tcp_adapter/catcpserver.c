@@ -1119,6 +1119,7 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "thread_pool_add_task failed");
+        CATCPStopServer();
         return res;
     }
     OIC_LOG(DEBUG, TAG, "CAReceiveHandler thread started successfully.");

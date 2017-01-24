@@ -150,11 +150,14 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags);
 static void CAReceiveHandler(void *data)
 {
     (void)data;
+    OIC_LOG(DEBUG, TAG, "IN - CAReceiveHandler");
 
     while (!caglobals.ip.terminate)
     {
         CAFindReadyMessage();
     }
+
+    OIC_LOG(DEBUG, TAG, "OUT - CAReceiveHandler");
 }
 
 #if !defined(WSA_WAIT_EVENT_0)
@@ -949,6 +952,7 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "thread_pool_add_task failed");
+        CAIPStopServer();
         return res;
     }
     OIC_LOG(DEBUG, TAG, "CAReceiveHandler thread started successfully.");
@@ -961,6 +965,8 @@ void CAIPStopServer()
 {
     caglobals.ip.started = false;
     caglobals.ip.terminate = true;
+
+    CADeInitializeIPGlobals();
 
 #if !defined(WSA_WAIT_EVENT_0)
     if (caglobals.ip.shutdownFds[1] != -1)
@@ -979,6 +985,8 @@ void CAIPStopServer()
         OIC_LOG_V(DEBUG, TAG, "set shutdown event failed: %#08X", GetLastError());
     }
 #endif
+
+    OIC_LOG(DEBUG, TAG, "Adapter terminated successfully");
 }
 
 void CAWakeUpForChange()
