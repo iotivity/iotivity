@@ -1252,8 +1252,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
         CAHeaderOption_t *options = responseInfo->info.options;
         for (uint8_t i = 0; i< responseInfo->info.numOptions; i++)
         {
-            if (options && options[i].protocolID == CA_COAP_ID &&
-                           options[i].optionID == COAP_OPTION_OBSERVE)
+            if (options && (options[i].optionID == COAP_OPTION_OBSERVE))
             {
                 obsHeaderOpt = true;
                 break;
