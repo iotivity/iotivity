@@ -57,6 +57,7 @@
 #include "oxmpreconfpin.h"
 #include "oxmrandompin.h"
 #include "otmcontextlist.h"
+#include "ocstackinternal.h"
 #include "mbedtls/ssl_ciphersuites.h"
 #include "ocrandom.h"
 
@@ -660,11 +661,18 @@ static OCStackResult SaveSubOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
     OCStackResult res = OC_STACK_ERROR;
 
     CAEndpoint_t endpoint;
-    memset(&endpoint, 0x00, sizeof(CAEndpoint_t));
-    OICStrcpy(endpoint.addr, MAX_ADDR_STR_SIZE_CA, selectedDeviceInfo->endpoint.addr);
-    endpoint.addr[MAX_ADDR_STR_SIZE_CA - 1] = '\0';
-    endpoint.port = selectedDeviceInfo->securePort;
-    endpoint.adapter = selectedDeviceInfo->endpoint.adapter;
+    CopyDevAddrToEndpoint(&selectedDeviceInfo->endpoint, &endpoint);
+
+    if (CA_ADAPTER_IP == endpoint.adapter)
+    {
+        endpoint.port = selectedDeviceInfo->securePort;
+    }
+#ifdef WITH_TCP
+    else if (CA_ADAPTER_TCP == endpoint.adapter)
+    {
+        endpoint.port = selectedDeviceInfo->tcpPort;
+    }
+#endif
 
     OicUuid_t ownerDeviceID = {.id={0}};
     if (OC_STACK_OK != GetDoxmDeviceID(&ownerDeviceID))

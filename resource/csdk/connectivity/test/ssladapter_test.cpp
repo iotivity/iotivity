@@ -27,6 +27,7 @@
 #include "iotivity_config.h"
 #include "gtest/gtest.h"
 #include "time.h"
+#include "octypes.h"
 #ifdef HAVE_WINSOCK2_H
 #include <winsock2.h>
 #endif
@@ -999,8 +1000,10 @@ static void socketClose_server()
     OC_CLOSE_SOCKET(sockfd);
 }
 
-static void clutch(bool * list)
+static void clutch(bool * list, const char *deviceId)
 {
+    OC_UNUSED(deviceId);
+
     list[1] = true;
 }
 
@@ -1908,6 +1911,7 @@ static ssize_t CATCPPacketSendCB_forInitHsTest(CAEndpoint_t *, const void * buf,
 static void * test0CAinitiateSslHandshake(void * arg)
 {
     CAEndpoint_t serverAddr;
+    memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.adapter = CA_ADAPTER_TCP;
     serverAddr.flags = CA_SECURE;
     serverAddr.port = 4433;
@@ -2082,6 +2086,7 @@ static void * testCAencryptSsl(void * arg)
 {
     int ret = 0;
     CAEndpoint_t serverAddr;
+    memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.adapter = CA_ADAPTER_TCP;
     serverAddr.flags = CA_SECURE;
     serverAddr.port = 4433;
@@ -2536,6 +2541,7 @@ static void * testCAdecryptSsl(void * arg)
     int buflen = 0;
 
     CAEndpoint_t serverAddr;
+    memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.adapter = CA_ADAPTER_TCP;
     serverAddr.flags = CA_SECURE;
     serverAddr.port = 4433;
@@ -3084,6 +3090,7 @@ static void * testCAsslGenerateOwnerPsk(void * arg)
 {
     int ret = 0;
     CAEndpoint_t serverAddr;
+    memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.adapter = CA_ADAPTER_TCP;
     serverAddr.flags = CA_SECURE;
     serverAddr.port = 4433;

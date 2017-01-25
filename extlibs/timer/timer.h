@@ -22,10 +22,11 @@
 #define TIMER_H_
 
 #include "iotivity_config.h"
-#ifdef HAVE_SYS_TIME_H
+#ifdef HAVE_TIME_H
+#include <time.h>
+#elif defined(HAVE_SYS_TIME_H)
 #include <sys/time.h>
-#endif
-#ifdef HAVE_ARDUINO_TIME_H
+#elif defined(HAVE_ARDUINO_TIME_H)
 #include <Time.h>
 #endif
 

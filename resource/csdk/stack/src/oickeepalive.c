@@ -754,12 +754,7 @@ KeepAliveEntry_t *AddKeepAliveEntry(const CAEndpoint_t *endpoint, OCMode mode,
 
     entry->mode = mode;
     entry->timeStamp = OICGetCurrentTime(TIME_IN_US);
-    entry->remoteAddr.adapter = endpoint->adapter;
-    entry->remoteAddr.flags = endpoint->flags;
-    entry->remoteAddr.ifindex = endpoint->ifindex;
-    entry->remoteAddr.port = endpoint->port;
-    strncpy(entry->remoteAddr.addr, endpoint->addr, sizeof(entry->remoteAddr.addr));
-
+    entry->remoteAddr = *endpoint;
     entry->intervalSize = DEFAULT_INTERVAL_COUNT;
     entry->intervalInfo = intervalInfo;
     if (!entry->intervalInfo)

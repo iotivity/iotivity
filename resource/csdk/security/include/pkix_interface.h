@@ -45,15 +45,17 @@ void GetManufacturerPkixInfo(PkiInfo_t * inf);
  * Used by CA to retrieve credential types
  *
  * @param[out] list TLS suites boolean map.
+ * @param[in]  device uuid.
  */
-void InitCipherSuiteList(bool * list);
+void InitCipherSuiteList(bool * list, const char* deviceId);
 
 /**
  * Used by CA to retrieve manufacturer credential types
  *
  * @param[out] list TLS suites boolean map.
+ * @param[in]  device uuid.
  */
-void InitManufacturerCipherSuiteList(bool * list);
+void InitManufacturerCipherSuiteList(bool * list, const char* deviceId);
 #ifdef __cplusplus
 }
 #endif

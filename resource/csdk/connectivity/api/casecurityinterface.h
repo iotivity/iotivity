@@ -104,10 +104,11 @@ bool CAGetSecureEndpointAttributes(const CAEndpoint_t* peer, uint32_t* allAttrib
  * This internal callback is used by CA layer to
  * retrieve all credential types from SRM
  *
- * @param[out]  list of enabled credential types for CA handshake
+ * @param[out]  list of enabled credential types for CA handshake.
+ * @param[in]   device uuid.
  *
  */
-typedef void (*CAgetCredentialTypesHandler)(bool * list);
+typedef void (*CAgetCredentialTypesHandler)(bool * list, const char* deviceId);
 /**
  * Binary structure containing PKIX related info
  * own certificate chain, public key, CA's and CRL's

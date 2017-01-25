@@ -3363,7 +3363,7 @@ void GetDerKey(ByteArray_t * key, const char * usage)
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
 
-void InitCipherSuiteListInternal(bool * list, const char * usage)
+void InitCipherSuiteListInternal(bool * list, const char * usage, const char *deviceId)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
     if (NULL == list || NULL == usage)
@@ -3385,8 +3385,15 @@ void InitCipherSuiteListInternal(bool * list, const char * usage)
             }
             case SYMMETRIC_PAIR_WISE_KEY:
             {
-                list[0] = true;
-                OIC_LOG(DEBUG, TAG, "SYMMETRIC_PAIR_WISE_KEY found");
+                OicUuid_t uuid;
+
+                if (NULL == deviceId ||
+                    OC_STACK_OK != ConvertStrToUuid(deviceId, &uuid) ||
+                    0 == memcmp(uuid.id, temp->subject.id, sizeof(uuid.id)))
+                {
+                    list[0] = true;
+                    OIC_LOG(DEBUG, TAG, "SYMMETRIC_PAIR_WISE_KEY found");
+                }
                 break;
             }
             case SIGNED_ASYMMETRIC_KEY:

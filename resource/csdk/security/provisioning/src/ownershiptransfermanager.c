@@ -776,12 +776,18 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
     OCStackResult res = OC_STACK_ERROR;
 
     CAEndpoint_t endpoint;
-    memset(&endpoint, 0x00, sizeof(CAEndpoint_t));
-    OICStrcpy(endpoint.addr, MAX_ADDR_STR_SIZE_CA, selectedDeviceInfo->endpoint.addr);
-    endpoint.addr[MAX_ADDR_STR_SIZE_CA - 1] = '\0';
-    endpoint.port = selectedDeviceInfo->securePort;
-    endpoint.adapter = selectedDeviceInfo->endpoint.adapter;
-    uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = { 0 };
+    CopyDevAddrToEndpoint(&selectedDeviceInfo->endpoint, &endpoint);
+
+    if (CA_ADAPTER_IP == endpoint.adapter)
+    {
+        endpoint.port = selectedDeviceInfo->securePort;
+    }
+#ifdef WITH_TCP
+    else if (CA_ADAPTER_TCP == endpoint.adapter)
+    {
+        endpoint.port = selectedDeviceInfo->tcpPort;
+    }
+#endif
 
     OicUuid_t ownerDeviceID = {.id={0}};
     if (OC_STACK_OK != GetDoxmDeviceID(&ownerDeviceID))
@@ -792,6 +798,8 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
 
     OicSecKey_t ownerKey;
     memset(&ownerKey, 0, sizeof(ownerKey));
+
+    uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = { 0 };
     ownerKey.data = ownerPSK;
     ownerKey.len = OWNER_PSK_LENGTH_128;
     ownerKey.encoding = OIC_ENCODING_RAW;
@@ -1739,6 +1747,15 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     OicSecAcl_t* ownerAcl = NULL;
     assert(deviceInfo->connType & CT_FLAG_SECURE);
+
+    CAEndpoint_t endpoint;
+    CopyDevAddrToEndpoint(&deviceInfo->endpoint, &endpoint);
+
+    if (CA_STATUS_OK != CAInitiateHandshake(&endpoint))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to pass ssl handshake");
+        return OC_STACK_ERROR;
+    }
 
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr, deviceInfo->securePort,

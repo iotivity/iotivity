@@ -1271,7 +1271,8 @@ static int InitPskIdentity(mbedtls_ssl_config * config)
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return 0;
 }
-static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapter)
+static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapter,
+                        const char* deviceId)
 {
     int index = 0;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
@@ -1290,7 +1291,8 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
         return;
     }
 
-    g_getCredentialTypesCallback(g_caSslContext->cipherFlag);
+    g_getCredentialTypesCallback(g_caSslContext->cipherFlag, deviceId);
+
     // Retrieve the PSK credential from SRM
     if (true == g_caSslContext->cipherFlag[0] && 0 != InitPskIdentity(config))
     {
@@ -1377,7 +1379,7 @@ static SslEndPoint_t * InitiateTlsHandshake(const CAEndpoint_t *endpoint)
     }
 
     //Load allowed SVR suites from SVR DB
-    SetupCipher(config, endpoint->adapter);
+    SetupCipher(config, endpoint->adapter, endpoint->remoteId);
 
     ret = u_arraylist_add(g_caSslContext->peerList, (void *) tep);
     if (!ret)
@@ -1928,7 +1930,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
             return CA_STATUS_FAILED;
         }
         //Load allowed TLS suites from SVR DB
-        SetupCipher(config, sep->endpoint.adapter);
+        SetupCipher(config, sep->endpoint.adapter, sep->endpoint.remoteId);
 
         ret = u_arraylist_add(g_caSslContext->peerList, (void *) peer);
         if (!ret)

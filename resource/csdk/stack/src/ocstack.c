@@ -556,6 +556,7 @@ void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out)
     out->adapter = (OCTransportAdapter)in->adapter;
     out->flags = CAToOCTransportFlags(in->flags);
     OICStrcpy(out->addr, sizeof(out->addr), in->addr);
+    OICStrcpy(out->remoteId, sizeof(out->remoteId), in->remoteId);
     out->port = in->port;
     out->ifindex = in->ifindex;
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)

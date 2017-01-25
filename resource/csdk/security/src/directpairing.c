@@ -51,6 +51,7 @@
 #include "pmtypes.h"
 #include "pmutility.h"
 #include "srmutility.h"
+#include "ocstackinternal.h"
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 #include <mbedtls/ssl_ciphersuites.h>
 #endif
@@ -635,15 +636,12 @@ static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSE
             VERIFY_SUCCESS(TAG, CA_STATUS_OK == caresult, ERROR);
 
             // initiate dtls
-            CAEndpoint_t *endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
-            VERIFY_NOT_NULL(TAG, endpoint, FATAL);
-            memcpy(endpoint,&dpairData->peer->endpoint,sizeof(CAEndpoint_t));
-            endpoint->port = dpairData->peer->securePort;
-            OIC_LOG_V(INFO, TAG, "Initiate DTLS handshake to %s(%d)", endpoint->addr,
-                    endpoint->port);
-
-            caresult = CAInitiateHandshake(endpoint);
-            OICFree(endpoint);
+            CAEndpoint_t endpoint;
+            CopyDevAddrToEndpoint(&dpairData->peer->endpoint, &endpoint);
+            endpoint.port = dpairData->peer->securePort;
+            OIC_LOG_V(INFO, TAG, "Initiate DTLS handshake to %s(%d)", endpoint.addr,
+                    endpoint.port);
+            caresult = CAInitiateHandshake(&endpoint);
             VERIFY_SUCCESS(TAG, CA_STATUS_OK == caresult, ERROR);
 #endif // __WITH_DTLS__ or __WITH_TLS__
 

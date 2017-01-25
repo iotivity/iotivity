@@ -1372,11 +1372,7 @@ CASocketFd_t CAConnectTCPSession(const CAEndpoint_t *endpoint)
         OIC_LOG(ERROR, TAG, "Out of memory");
         return OC_INVALID_SOCKET;
     }
-    memcpy(svritem->sep.endpoint.addr, endpoint->addr, sizeof(svritem->sep.endpoint.addr));
-    svritem->sep.endpoint.adapter = endpoint->adapter;
-    svritem->sep.endpoint.port = endpoint->port;
-    svritem->sep.endpoint.flags = endpoint->flags;
-    svritem->sep.endpoint.ifindex = endpoint->ifindex;
+    svritem->sep.endpoint = *endpoint;
     svritem->state = CONNECTING;
     svritem->isClient = true;
 

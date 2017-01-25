@@ -76,7 +76,7 @@ void GetManufacturerPkixInfo(PkiInfo_t * inf)
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
 
-void InitCipherSuiteList(bool * list)
+void InitCipherSuiteList(bool * list, const char* deviceId)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
     if (NULL == list)
@@ -85,11 +85,11 @@ void InitCipherSuiteList(bool * list)
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
-    InitCipherSuiteListInternal(list, TRUST_CA);
+    InitCipherSuiteListInternal(list, TRUST_CA, deviceId);
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
 
-void InitManufacturerCipherSuiteList(bool * list)
+void InitManufacturerCipherSuiteList(bool * list, const char* deviceId)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
     if (NULL == list)
@@ -98,6 +98,6 @@ void InitManufacturerCipherSuiteList(bool * list)
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
-    InitCipherSuiteListInternal(list, MF_TRUST_CA);
+    InitCipherSuiteListInternal(list, MF_TRUST_CA, deviceId);
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }

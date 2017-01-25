@@ -251,10 +251,11 @@ void GetDerKey(ByteArray_t * key, const char * usage);
 /**
  * Used by CA to retrieve credential types
  *
- * @param[out] key key to be filled.
+ * @param[out] list list of suites to be filled.
  * @param[in] usage credential usage string.
+ * @param[in] device uuid.
  */
-void InitCipherSuiteListInternal(bool *list, const char * usage);
+void InitCipherSuiteListInternal(bool *list, const char * usage, const char* deviceId);
 #endif // __WITH_TLS__
 
 // Helpers shared by cred and roles resources
