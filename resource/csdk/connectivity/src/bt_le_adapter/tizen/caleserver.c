@@ -724,7 +724,7 @@ CAResult_t CAAddNewCharacteristicsToGattServer(const bt_gatt_h svcPath, const ch
     int properties;
     if (read)
     {
-        properties = BT_GATT_PROPERTY_NOTIFY | BT_GATT_PROPERTY_READ;
+        properties = BT_GATT_PROPERTY_INDICATE | BT_GATT_PROPERTY_READ;
     }
     else
     {
