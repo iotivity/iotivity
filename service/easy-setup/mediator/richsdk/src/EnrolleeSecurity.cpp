@@ -92,6 +92,7 @@ namespace OIC
             {
                 m_mediatorID = {};
             }
+            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "EnrolleeSecurity: Mediator ID %s", m_mediatorID.c_str());
         }
 
         void EnrolleeSecurity::onEnrolleeSecuritySafetyCB(OC::PMResultList_t *result,
@@ -212,6 +213,9 @@ namespace OIC
             {
                 ownerID = {};
             }
+
+            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Mediator ID %s", m_mediatorID.c_str());
+            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Enrollee's Owner ID %s", ownerID.c_str());
 
             if(ownerID == m_mediatorID)
             {
@@ -572,7 +576,7 @@ namespace OIC
                     else
                     {
                         OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,
-                            "The found device is already owned by Other Mediator.(FAILED)");
+                            "An ownership transfer knowledge is not synchronized between mediator and found enrollee.(FAILED)");
                         res = ESResult::ES_OWNERSHIP_IS_NOT_SYNCHRONIZED;
                         return res;
                     }
@@ -807,6 +811,8 @@ namespace OIC
 
         bool EnrolleeSecurity::isOwnedDeviceRegisteredInSVRDB()
         {
+            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "isOwnedDeviceRegisteredInSVRDB IN");
+
             OCStackResult res = OC_STACK_ERROR;
 
             OCUuidList_t *uuidList = NULL;
