@@ -53,6 +53,11 @@ const char * OIC_RSRC_CRED_URI =  "/oic/sec/cred";
 const char * OIC_JSON_CRED_NAME = "cred";
 const char * OIC_JSON_CREDS_NAME = "creds";
 
+//CSR
+const char * OIC_RSRC_TYPE_SEC_CSR = "oic.r.csr";
+const char * OIC_RSRC_CSR_URI = "/oic/sec/csr";
+const char * OIC_JSON_CSR_NAME = "csr";
+
 //CRL
 const char * OIC_RSRC_TYPE_SEC_CRL = "oic.r.crl";
 const char * OIC_RSRC_CRL_URI =  "/oic/sec/crl";
@@ -159,6 +164,7 @@ const char * OIC_JSON_EMPTY_STRING = "";
 // Certificates provided by Cloud
 const char * TRUST_CA = "oic.sec.cred.trustca";
 const char * PRIMARY_CERT = "oic.sec.cred.cert";
+const char * PRIMARY_KEY = "primary_key";
 
 // Certificates provided by manufacturer
 const char * MF_TRUST_CA = "oic.sec.cred.mfgtrustca";

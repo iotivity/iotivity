@@ -34,6 +34,7 @@
 #include "pstatresource.h"
 #include "srmresourcestrings.h"
 #include "credresource.h"
+#include "csrresource.h"
 #include "doxmresource.h"
 #include "pconfresource.h"
 #include "credentialgenerator.h"
@@ -93,6 +94,15 @@ struct GetSecData {
     OCProvisionResultCB resultCallback;         /**< Pointer to result callback.**/
     OCProvisionResult_t *resArr;                /**< Result array.**/
     int numOfResults;                        /**< Number of results in result array.**/
+};
+
+typedef struct GetCsrData GetCsrData_t;
+struct GetCsrData {
+    void *ctx;
+    const OCProvisionDev_t *deviceInfo;         /**< Pointer to PMDevInfo_t.**/
+    OCGetCSRResultCB resultCallback;            /**< Pointer to result callback.**/
+    OCPMGetCsrResult_t *resArr;                 /**< Result array.**/
+    size_t numOfResults;                        /**< Number of results in result array.**/
 };
 
 /**
@@ -2655,6 +2665,150 @@ OCStackResult SRPGetACLResource(void *ctx, const OCProvisionDev_t *selectedDevic
     OIC_LOG(DEBUG, TAG, "OUT SRPGetACLResource");
 
     return OC_STACK_OK;
+}
+
+/**
+ * Internal Function to store results in result array during GetCSRResourceCB.
+ */
+static void registerResultForGetCSRResourceCB(GetCsrData_t *getCsrData,
+                                             OCStackResult stackresult,
+                                             const uint8_t *payload,
+                                             size_t payloadSize)
+{
+    /* SRPGetCSRResource allocates the memory for getCsrData. When it calls this callback,
+     * numOfResults points to the current entry we're filling out. Later when this structure
+     * gets returned to the caller, that's when it actually reflects the number of
+     * results returned.
+     */
+    OCPMGetCsrResult_t* currentEntry = &getCsrData->resArr[getCsrData->numOfResults];
+    OIC_LOG_V(INFO, TAG, "Inside registerResultForGetCSRResourceCB "
+        "getCsrData->numOfResults is %d\n", getCsrData->numOfResults);
+    memcpy(currentEntry->deviceId.id,
+        getCsrData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
+    currentEntry->res = stackresult;
+
+    if (OC_STACK_OK == stackresult)
+    {
+        OCStackResult res = CBORPayloadToCSR(payload, payloadSize,
+            &currentEntry->csr,
+            &currentEntry->csrLen,
+            &currentEntry->encoding);
+        if (OC_STACK_OK != res)
+        {
+            currentEntry->res = res;
+            currentEntry->csr = NULL;
+            currentEntry->csrLen = 0;
+            currentEntry->encoding = OIC_ENCODING_UNKNOW;
+        }
+    }
+
+    ++(getCsrData->numOfResults);
+}
+
+/**
+ * Callback handler of SRPGetCSRResource.
+ *
+ * @param[in] ctx             ctx value passed to callback from calling function.
+ * @param[in] UNUSED          handle to an invocation
+ * @param[in] clientResponse  Response from queries to remote servers.
+ * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
+ *          and  OC_STACK_KEEP_TRANSACTION to keep it.
+ */
+static OCStackApplicationResult SRPGetCSRResourceCB(void *ctx, OCDoHandle UNUSED,
+                                                    OCClientResponse *clientResponse)
+{
+    OIC_LOG_V(INFO, TAG, "Inside SRPGetCSRResourceCB.");
+    OC_UNUSED(UNUSED);
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    GetCsrData_t *getCsrData = (GetCsrData_t*)ctx;
+    OCGetCSRResultCB resultCallback = getCsrData->resultCallback;
+
+    if (clientResponse)
+    {
+        if (OC_STACK_OK == clientResponse->result)
+        {
+            uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData;
+            size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
+
+            OIC_LOG_BUFFER(DEBUG, TAG, payload, size);
+
+            registerResultForGetCSRResourceCB(getCsrData, OC_STACK_OK, payload, size);
+        }
+    }
+    else
+    {
+        registerResultForGetCSRResourceCB(getCsrData, OC_STACK_ERROR, NULL, 0);
+    }
+
+    resultCallback(getCsrData->ctx, getCsrData->numOfResults,
+                   getCsrData->resArr,
+                   false);
+    OIC_LOG_V(ERROR, TAG, "SRPGetCSRResourceCB received Null clientResponse");
+    for (size_t i = 0; i < getCsrData->numOfResults; i++)
+    {
+        OICFree(getCsrData->resArr[i].csr);
+    }
+    OICFree(getCsrData->resArr);
+    OICFree(getCsrData);
+
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+
+OCStackResult SRPGetCSRResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+        OCGetCSRResultCB resultCallback)
+{
+    VERIFY_NOT_NULL_RETURN(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
+
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    if (!PMGenerateQuery(true,
+                        selectedDeviceInfo->endpoint.addr,
+                        selectedDeviceInfo->securePort,
+                        selectedDeviceInfo->connType,
+                        query, sizeof(query), OIC_RSRC_CSR_URI))
+    {
+        OIC_LOG(ERROR, TAG, "SRPGetCSRResource : Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
+    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    cbData.cb = &SRPGetCSRResourceCB;
+    GetCsrData_t* getCsrData = (GetCsrData_t*)OICCalloc(1, sizeof(GetCsrData_t));
+    if (NULL == getCsrData)
+    {
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
+        return OC_STACK_NO_MEMORY;
+    }
+    getCsrData->deviceInfo = selectedDeviceInfo;
+    getCsrData->resultCallback = resultCallback;
+    getCsrData->numOfResults=0;
+    getCsrData->ctx = ctx;
+
+    int noOfRiCalls = 1;
+    getCsrData->resArr = (OCPMGetCsrResult_t*)OICCalloc(noOfRiCalls, sizeof(OCPMGetCsrResult_t));
+    if (NULL == getCsrData->resArr)
+    {
+        OICFree(getCsrData);
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
+        return OC_STACK_NO_MEMORY;
+    }
+    cbData.context = (void *)getCsrData;
+    OCMethod method = OC_REST_GET;
+    OCDoHandle handle = NULL;
+    OIC_LOG(DEBUG, TAG, "Sending Get CSR to resource server");
+    OCStackResult ret = OCDoResource(&handle, method, query, NULL, NULL,
+            selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
+    if (OC_STACK_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
+        OICFree(getCsrData->resArr);
+        OICFree(getCsrData);
+    }
+    OIC_LOG(DEBUG, TAG, "OUT SRPGetCSRResource");
+
+    return ret;
 }
 
 OCStackResult SRPReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,

@@ -37,6 +37,9 @@
 #include "srmutility.h"
 #include "pmtypes.h"
 #include "oxmverifycommon.h"
+#include "mbedtls/config.h"
+#include "mbedtls/pem.h"
+#include "mbedtls/x509_csr.h"
 
 #ifdef _MSC_VER
 #include <io.h>
@@ -73,6 +76,7 @@ extern "C"
 #define _53_RESET_SVR_DB_           53
 #define _60_GET_CRED_               60
 #define _61_GET_ACL_                61
+#define _62_GET_CSR_                62
 #ifdef MULTIPLE_OWNER
 #define _70_MOT_CHANGE_MOM_         70
 #define _71_MOT_PROV_PRECONF_PIN_   71
@@ -219,7 +223,89 @@ static void getAclCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool ha
     g_doneCB = true;
 }
 
-static void provisionDPCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void getCsrCB(void* ctx, size_t nOfRes, OCPMGetCsrResult_t* arr, bool hasError)
+{
+    if (!hasError)
+    {
+        size_t i;
+        mbedtls_x509_csr csr;
+        OIC_LOG_V(INFO, TAG, "getCsrCB SUCCEEDED - ctx: %s", (char*)ctx);
+        for (i = 0; i < nOfRes; i++)
+        {
+            char pemBuffer[2048] = { 0 };
+            char infoBuffer[2048] = { 0 };
+            size_t olen;
+            int ret;
+
+            if (arr[i].encoding == OIC_ENCODING_DER)
+            {
+                ret = mbedtls_pem_write_buffer("-----BEGIN CERTIFICATE REQUEST-----",
+                    "-----END CERTIFICATE REQUEST-----",
+                    arr[i].csr,
+                    arr[i].csrLen,
+                    pemBuffer,
+                    sizeof(pemBuffer),
+                    &olen);
+                if (ret < 0)
+                {
+                    OIC_LOG_V(ERROR, TAG, "Couldn't convert CSR into PEM: %d", ret);
+                    pemBuffer[0] = '\0';
+                }
+            }
+            else
+            {
+                OICStrcpyPartial(pemBuffer, sizeof(pemBuffer), arr[i].csr, arr[i].csrLen);
+            }
+
+            mbedtls_x509_csr_init(&csr);
+            ret = mbedtls_x509_csr_parse_der(&csr, arr[i].csr, arr[i].csrLen);
+            if (ret < 0)
+            {
+                OIC_LOG_V(ERROR, TAG, "Couldn't parse CSR: %d", ret);
+                infoBuffer[0] = '\0';
+            }
+            else
+            {
+                ret = mbedtls_x509_csr_info(infoBuffer, sizeof(infoBuffer), "", &csr);
+                if (ret < 0)
+                {
+                    OIC_LOG_V(ERROR, TAG, "Couldn't get CSR info buffer: %d", ret);
+                    infoBuffer[0] = '\0';
+                }
+            }
+            mbedtls_x509_csr_free(&csr);
+
+            OIC_LOG(INFO, TAG, "getCsrCB success");
+            // OIC_LOG_V truncates strings, and the entirety of the CSR PEM gets cut off if we use it
+            printf("getCsrCB: csr[%" PRIuPTR "]:\n%s\n", i, pemBuffer);
+            printf("getCsrCB: csr info[%" PRIuPTR "]:\n%s\n", i, infoBuffer);
+        }
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "getCsrCB FAILED - ctx: %s", (char*)ctx);
+
+        if (!arr || (0 == nOfRes))
+        {
+            printf("     Device List is Empty..\n\n");
+        }
+        else
+        {
+            size_t lst_cnt;
+            for (lst_cnt = 0; nOfRes > lst_cnt; ++lst_cnt)
+            {
+                printf("     [%" PRIuPTR "] ", lst_cnt + 1);
+                printUuid((const OicUuid_t*)&arr[lst_cnt].deviceId);
+                printf(" - result: %d\n", arr[lst_cnt].res);
+            }
+            printf("\n");
+        }
+    }
+    g_doneCB = true;
+}
+
+
+static void provisionDPCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -834,9 +920,19 @@ static int provisionDirectPairing(void)
     // for error checking, the return value saved and printed
     g_doneCB = false;
     printf("   Atempt Direct-Pairing Provisioning (PIN : [%s])..\n", (char*)pconf.pin.val);
+#if defined(_MSC_VER)
+#pragma warning(push)
+    // Suppress C4028: formal parameter 2 different from declaration. getDevInst returns
+    // OCProvisionDev_t *, which OCProvisionDirectPairing takes as its second parameter.
+    // The compiler doesn't understand this.
+#pragma warning(disable:4028)
+#endif
     OCStackResult rst = OCProvisionDirectPairing((void*) g_ctx,
-                                       getDevInst((const OCProvisionDev_t*) g_own_list, dev_num),
+                                       getDevInst((const OCProvisionDev_t *) g_own_list, dev_num),
                                        &pconf, provisionDPCB);
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
     if(OC_STACK_OK != rst)
     {
         OIC_LOG_V(ERROR, TAG, "OCProvisionDirectPairing API error: %d", rst);
@@ -1121,6 +1217,66 @@ static int getAcl(void)
     return 0;
 
 PVACL_ERROR:
+    return -1;
+}
+
+static int getCsr(void)
+{
+    // check |own_list| for retrieving CSR
+    if(!g_own_list || 1>g_own_cnt)
+    {
+        printf("   > Owned Device List, to retrieve CSR, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for retrieving CSR
+    int dev_num = 0;
+    for( ; ; )
+    {
+        printf("   > Enter Device Number, for retrieving CSR: ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(0<dev_num && g_own_cnt>=dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    // call |getDevInst| API
+    // calling this API with callback actually acts like blocking
+    // for error checking, the return value saved and printed
+    g_doneCB = false;
+    OCProvisionDev_t* dev = getDevInst((const OCProvisionDev_t*) g_own_list, dev_num);
+    if(!dev)
+    {
+        OIC_LOG(ERROR, TAG, "getDevInst: device instance empty");
+        goto GETCSR_ERROR;
+    }
+    OCStackResult rst = OCGetCSRResource((void*) g_ctx, dev, getCsrCB);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCGetCSRResource API error: %d", rst);
+
+        goto GETCSR_ERROR;
+    }
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCGetCSRResource callback error");
+        goto GETCSR_ERROR;
+    }
+
+    // display the result of get credential
+    printf("   > Get CSR SUCCEEDED\n");
+
+    return 0;
+
+GETCSR_ERROR:
     return -1;
 }
 
@@ -2403,7 +2559,8 @@ static void printMenu(void)
 
     printf("** [F] GET SECURITY RESOURCE FOR DEBUGGING ONLY\n");
     printf("** 60. Get the Credential resources of the Selected Device\n");
-    printf("** 61. Get the ACL resources of the Selected Device\n\n");
+    printf("** 61. Get the ACL resources of the Selected Device\n");
+    printf("** 62. Get the CSR of the Selected Device\n\n");
 
 #ifdef MULTIPLE_OWNER
     printf("** [G] UPDATE THE MULTIPLE OWNERSHIP TRANSFER RELATED VALUE\n");
@@ -2605,6 +2762,12 @@ int main()
             if(getAcl())
             {
                 OIC_LOG(ERROR, TAG, "_61_GET_ACL_: error");
+            }
+            break;
+        case _62_GET_CSR_:
+            if(getCsr())
+            {
+                OIC_LOG(ERROR, TAG, "_62_GET_CSR_: error");
             }
             break;
 #ifdef MULTIPLE_OWNER

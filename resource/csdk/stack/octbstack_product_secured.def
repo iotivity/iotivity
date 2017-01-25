@@ -25,6 +25,7 @@ OCDiscoverUnownedDevices
 OCDoOwnershipTransfer
 OCGetACLResource
 OCGetCredResource
+OCGetCSRResource
 OCGetDevInfoFromNetwork
 OCGetLinkedStatus
 OCInitPM

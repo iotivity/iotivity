@@ -42,6 +42,7 @@
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 #include "crlresource.h"
+#include "csrresource.h"
 #endif // __WITH_DTLS__ || __WITH_TLS__
 
 OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
@@ -97,6 +98,10 @@ OCStackResult InitSecureResources( )
     {
         ret = InitCRLResource();
     }
+    if(OC_STACK_OK == ret)
+    {
+        ret = InitCSRResource();
+    }
 #endif // __WITH_DTLS__ || __WITH_TLS__
     if(OC_STACK_OK == ret)
     {
@@ -136,6 +141,7 @@ OCStackResult DestroySecureResources( )
     DeInitPstatResource();
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     DeInitCRLResource();
+    DeInitCSRResource();
 #endif // __WITH_DTLS__ || __WITH_TLS__
     DeInitSVCResource();
     DeInitAmaclResource();

@@ -42,6 +42,7 @@
 #include "mbedtls/pkcs12.h"
 #include "mbedtls/ssl_internal.h"
 #include "mbedtls/net_sockets.h"
+#include "mbedtls/oid.h"
 #ifdef __WITH_DTLS__
 #include "mbedtls/timing.h"
 #include "mbedtls/ssl_cookie.h"
@@ -76,11 +77,6 @@
  * @brief Personalization string for the mbedtls RNG
  */
 #define PERSONALIZATION_STRING "IOTIVITY_RND"
-/**
- * @def UUID_PREFIX
- * @brief uuid prefix in certificate subject field
- */
-#define UUID_PREFIX "uuid:"
 /**
  * @def USERID_PREFIX
  * @brief userid prefix in certificate alternative subject name field
@@ -1864,41 +1860,75 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
             if (MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 != selectedCipher &&
                 MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256 != selectedCipher)
             {
-                char uuid[UUID_LENGTH * 2 + 5] = {0};
-                void * uuidPos = NULL;
-                void * userIdPos = NULL;
                 const mbedtls_x509_crt * peerCert = mbedtls_ssl_get_peer_cert(&peer->ssl);
+                const mbedtls_x509_name * name = NULL;
                 ret = (NULL == peerCert ? -1 : 0);
                 SSL_CHECK_FAIL(peer, ret, "Failed to retrieve cert", 1,
                                             CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_NO_CERT);
-                uuidPos = memmem(peerCert->subject_raw.p, peerCert->subject_raw.len,
-                                                 UUID_PREFIX, sizeof(UUID_PREFIX) - 1);
 
-                if (NULL != uuidPos)
+                /* Find the CN component of the subject name. */
+                for (name = &peerCert->subject; NULL != name; name = name->next)
                 {
-                    memcpy(uuid, (char*) uuidPos + sizeof(UUID_PREFIX) - 1, UUID_LENGTH * 2 + 4);
-                    OIC_LOG_V(DEBUG, NET_SSL_TAG, "certificate uuid string: %s" , uuid);
-                    ret = (OCConvertStringToUuid(uuid, peer->sep.identity.id)) ? 0 : -1;
-                    SSL_CHECK_FAIL(peer, ret, "Failed to convert subject", 1,
-                                          CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT);
+                    if (!name->oid.p)
+                    {
+                        continue;
+                    }
+
+                    if ((name->oid.len < (sizeof(MBEDTLS_OID_AT_CN) - 1) ||
+                        (0 != memcmp(MBEDTLS_OID_AT_CN, name->oid.p, name->oid.len))))
+                    {
+                        continue;
+                    }
+                }
+
+                if (NULL == name)
+                {
+                    OIC_LOG(WARNING, NET_SSL_TAG, "no CN RDN found in subject name");
                 }
                 else
                 {
-                    OIC_LOG(WARNING, NET_SSL_TAG, "uuid not found");
-                }
+                    const size_t uuidBufLen = UUID_STRING_SIZE - 1;
+                    char uuid[UUID_STRING_SIZE] = { 0 };
+                    const unsigned char * uuidPos = NULL;
+                    const unsigned char * userIdPos = NULL;
 
-                userIdPos = memmem(peerCert->subject_raw.p, peerCert->subject_raw.len,
-                                             USERID_PREFIX, sizeof(USERID_PREFIX) - 1);
-                if (NULL != userIdPos)
-                {
-                    memcpy(uuid, (char*) userIdPos + sizeof(USERID_PREFIX) - 1, UUID_LENGTH * 2 + 4);
-                    ret = (OCConvertStringToUuid(uuid, peer->sep.userId.id)) ? 0 : -1;
-                    SSL_CHECK_FAIL(peer, ret, "Failed to convert subject alt name", 1,
-                                      CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT);
-                }
-                else
-                {
-                    OIC_LOG(WARNING, NET_SSL_TAG, "Subject alternative name not found");
+                    uuidPos = (const unsigned char*)memmem(name->val.p, name->val.len,
+                                                           UUID_PREFIX, sizeof(UUID_PREFIX) - 1);
+
+                    /* If UUID_PREFIX is present, ensure there's enough data for the prefix plus an entire
+                     * UUID, to make sure we don't read past the end of the buffer.
+                     */
+                    if ((NULL != uuidPos) && 
+                        (name->val.len >= ((uuidPos - name->val.p) + (sizeof(UUID_PREFIX) - 1) + uuidBufLen)))
+                    {
+                        memcpy(uuid, uuidPos + sizeof(UUID_PREFIX) - 1, uuidBufLen);
+                        OIC_LOG_V(DEBUG, NET_SSL_TAG, "certificate uuid string: %s", uuid);
+                        ret = (OCConvertStringToUuid(uuid, peer->sep.identity.id)) ? 0 : -1;
+                        SSL_CHECK_FAIL(peer, ret, "Failed to convert subject", 1,
+                                       CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT);
+                    }
+                    else
+                    {
+                        OIC_LOG(WARNING, NET_SSL_TAG, "uuid not found");
+                    }
+
+                    /* If USERID_PREFIX is present, ensure there's enough data for the prefix plus an entire
+                     * UUID, to make sure we don't read past the end of the buffer.
+                     */
+                    userIdPos = (const unsigned char*)memmem(name->val.p, name->val.len,
+                                                             USERID_PREFIX, sizeof(USERID_PREFIX) - 1);
+                    if ((NULL != userIdPos) &&
+                        (name->val.len >= ((userIdPos - name->val.p) + (sizeof(USERID_PREFIX) - 1) + uuidBufLen)))
+                    {
+                        memcpy(uuid, userIdPos + sizeof(USERID_PREFIX) - 1, uuidBufLen);
+                        ret = (OCConvertStringToUuid(uuid, peer->sep.userId.id)) ? 0 : -1;
+                        SSL_CHECK_FAIL(peer, ret, "Failed to convert subject alt name", 1,
+                                       CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT);
+                    }
+                    else
+                    {
+                        OIC_LOG(WARNING, NET_SSL_TAG, "Subject alternative name not found");
+                    }
                 }
             }
 

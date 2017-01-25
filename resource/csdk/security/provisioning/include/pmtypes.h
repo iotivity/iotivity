@@ -100,6 +100,15 @@ typedef struct OCPMResult{
     OCStackResult  res;
 }OCProvisionResult_t;
 
+typedef struct OCPMGetCsrResult
+{
+    OicUuid_t           deviceId;
+    OCStackResult       res;
+    uint8_t             *csr;
+    size_t              csrLen;
+    OicEncodingType_t   encoding; /* Determines contents of csr; either OIC_ENCODING_DER or OIC_ENCODING_PEM */
+} OCPMGetCsrResult_t;
+
 /**
  * Owner device type
  */
@@ -136,6 +145,19 @@ typedef enum OxmAllowTableIdx {
  */
 typedef void (*OCProvisionResultCB)(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError);
 
+/**
+ * Callback function definition of CSR retrieve API
+ *
+ * @param[OUT] ctx - If user set a context, it will be returned here.
+ * @param[OUT] nOfRes - total number of results
+ * @param[OUT] arr - Array of OCPMGetCsrResult_t, containing one entry for each target device. If an entry's res
+ *                   member is OC_STACK_OK, then csr and csrLen are valid; otherwise they should not be used.
+ *                   This memory is only valid while the callback is executing; callers must make copies if the data
+ *                   needs to be kept longer.
+ * @param[OUT] hasError - If all calls succeded, this will be false. One or more errors, and this will
+ *                        be true. Examine the elements of arr to discover which failed.
+ */
+typedef void (*OCGetCSRResultCB)(void* ctx, size_t nOfRes, OCPMGetCsrResult_t *arr, bool hasError);
 
 /**
  * Callback function definition of direct-pairing

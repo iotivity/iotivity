@@ -391,6 +391,12 @@ OCStackResult OCGetACLResource(void* ctx, const OCProvisionDev_t *selectedDevice
     return SRPGetACLResource(ctx, selectedDeviceInfo, resultCallback);
 }
 
+OCStackResult OCGetCSRResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                             OCGetCSRResultCB resultCallback)
+{
+    return SRPGetCSRResource(ctx, selectedDeviceInfo, resultCallback);
+}
+
 
 OCStackResult OCReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
                                      size_t *chainSize)

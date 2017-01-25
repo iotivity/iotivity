@@ -74,6 +74,17 @@ OCStackResult SRPGetCredResource(void *ctx, const OCProvisionDev_t *selectedDevi
 OCStackResult SRPGetACLResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
         OCProvisionResultCB resultCallback);
 
+/**
+ * API to request the Certificate Signing Request (CSR) resource.
+ *
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request recieves a response from resource server.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPGetCSRResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+    OCGetCSRResultCB resultCallback);
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 
 /**

@@ -59,6 +59,11 @@ extern const char * OIC_RSRC_CRED_URI;
 extern const char * OIC_JSON_CRED_NAME;
 extern const char * OIC_JSON_CREDS_NAME;
 
+//csr
+extern const char * OIC_RSRC_TYPE_SEC_CSR;
+extern const char * OIC_RSRC_CSR_URI;
+extern const char * OIC_JSON_CSR_NAME;
+
 //CRL
 extern const char * OIC_RSRC_TYPE_SEC_CRL;
 extern const char * OIC_RSRC_CRL_URI;
@@ -162,9 +167,10 @@ extern const char * OIC_JSON_SEC_V_NAME;
 
 extern const char * OIC_JSON_EMPTY_STRING;
 
-// Certificates provided by Cloud
+// Certificates provided by Cloud or OBT/CMS
 extern const char * TRUST_CA;
 extern const char * PRIMARY_CERT;
+extern const char * PRIMARY_KEY;
 
 // Certificates provided by manufacturer
 extern const char * MF_TRUST_CA;

@@ -253,6 +253,18 @@ OCStackResult OCGetACLResource(void* ctx, const OCProvisionDev_t *selectedDevice
                              OCProvisionResultCB resultCallback);
 
 /**
+ * This function requests the device provide its Certificate Signing Request (CSR).
+ *
+ * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
+              request recieves a response from resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCGetCSRResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                               OCGetCSRResultCB resultCallback);
+
+/**
  * this function sends Direct-Pairing Configuration to a device.
  *
  * @param[in] ctx Application context would be returned in result callback.

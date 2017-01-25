@@ -53,6 +53,8 @@
 #include "srmutility.h"
 #include "psinterface.h"
 #include "pinoxmcommon.h"
+#include "certhelpers.h"
+#include "cacommon.h"
 
 #ifdef __unix__
 #include <sys/types.h>
@@ -71,7 +73,6 @@
 #include <wincrypt.h>
 #include <intsafe.h>
 #endif
-
 
 /** Max credential types number used for TLS */
 #define MAX_TYPE 2
@@ -603,7 +604,8 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         }
 #endif //MULTIPLE_OWNER
 
-        if (SIGNED_ASYMMETRIC_KEY == cred->credType && cred->publicData.data)
+        if ((SIGNED_ASYMMETRIC_KEY == cred->credType || ASYMMETRIC_KEY == cred->credType) 
+            && cred->publicData.data)
         {
             mapSize++;
         }
@@ -661,7 +663,8 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         //PublicData -- Not Mandatory
-        if (SIGNED_ASYMMETRIC_KEY == cred->credType && cred->publicData.data)
+        if ((SIGNED_ASYMMETRIC_KEY == cred->credType || ASYMMETRIC_KEY == cred->credType) 
+            && cred->publicData.data)
         {
             cborEncoderResult = SerializeEncodingToCbor(&credMap,
                                          OIC_JSON_PUBLICDATA_NAME, &cred->publicData);
@@ -944,12 +947,6 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to read privateData structure");
 
                                 OicEncodingType_t encoding = cred->privateData.encoding;
-                                if (OIC_ENCODING_DER == encoding || OIC_ENCODING_PEM == encoding)
-                                {
-                                    //For unit test
-                                    cred->privateData.encoding = OIC_ENCODING_RAW;
-                                    OIC_LOG(WARNING, TAG, "Unknown encoding type detected for private data.");
-                                }
                             }
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
                             //PublicData -- Not Mandatory
@@ -1116,6 +1113,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
         VERIFY_NOT_NULL(TAG, cred->publicData.data, ERROR);
         memcpy(cred->publicData.data, publicData->data, publicData->len);
         cred->publicData.len = publicData->len;
+        cred->publicData.encoding = publicData->encoding;
     }
 #endif // __WITH_DTLS__
 
@@ -1125,7 +1123,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
         VERIFY_NOT_NULL(TAG, cred->privateData.data, ERROR);
         memcpy(cred->privateData.data, privateData->data, privateData->len);
         cred->privateData.len = privateData->len;
-        cred->privateData.encoding = OIC_ENCODING_RAW;
+        cred->privateData.encoding = privateData->encoding;
     }
 
     VERIFY_NOT_NULL(TAG, rownerID, ERROR);
@@ -2793,7 +2791,8 @@ void GetDerKey(ByteArray_t * key, const char * usage)
     key->len = 0;
     LL_FOREACH(gCred, temp)
     {
-        if (SIGNED_ASYMMETRIC_KEY == temp->credType &&
+        if ((SIGNED_ASYMMETRIC_KEY == temp->credType || ASYMMETRIC_KEY == temp->credType) && 
+            NULL != temp->credUsage && 
             0 == strcmp(temp->credUsage, usage))
         {
             key->data = OICRealloc(key->data, key->len + temp->privateData.len);

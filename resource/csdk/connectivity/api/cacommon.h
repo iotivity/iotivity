@@ -127,6 +127,18 @@ extern "C"
 #define CA_OPTION_URI_QUERY 15
 #define CA_OPTION_ACCEPT 17
 #define CA_OPTION_LOCATION_QUERY 20
+        
+/**
+ * @def UUID_PREFIX
+ * @brief uuid prefix in certificate subject field
+ */
+#define UUID_PREFIX "uuid:"
+
+/**
+ * @def SUBJECT_PREFIX
+ * @brief prefix for specifying part of a cert's subject for a particular uuid
+ */
+#define SUBJECT_PREFIX "CN=" UUID_PREFIX
 
 /**
 * TODO: Move these COAP defines to CoAP lib once approved.
