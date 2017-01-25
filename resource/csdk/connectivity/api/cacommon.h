@@ -607,14 +607,14 @@ typedef struct
         int selectTimeout;      /**< in seconds */
         int listenBacklog;      /**< backlog counts*/
 #if defined(_WIN32)
-        WSAEVENT shutdownEvent; /**< Event used to signal threads to stop */
+        WSAEVENT updateEvent;   /**< Event used to signal thread to stop or update the FD list */
 #else
         int shutdownFds[2];     /**< shutdown pipe */
         int connectionFds[2];   /**< connection pipe */
         int maxfd;              /**< highest fd (for select) */
 #endif
         bool started;           /**< the TCP adapter has started */
-        bool terminate;         /**< the TCP adapter needs to stop */
+        volatile bool terminate;/**< the TCP adapter needs to stop */
         bool ipv4tcpenabled;    /**< IPv4 TCP enabled by OCInit flags */
         bool ipv6tcpenabled;    /**< IPv6 TCP enabled by OCInit flags */
     } tcp;
