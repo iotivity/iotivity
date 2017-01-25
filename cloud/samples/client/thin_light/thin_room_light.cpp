@@ -643,7 +643,7 @@ void PrintUsage()
             << "sample: \"thin_room_light 127.0.0.1:5683 abcdefg 6543210987654321 1\"\n\t-token refresh and get renewed access token\n\n";
 
 }
-
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 int saveTrustCert(void)
 {
     OCStackResult res = OC_STACK_ERROR;
@@ -688,28 +688,29 @@ int saveTrustCert(void)
 
     return res;
 }
+#endif
 
 static FILE *client_open(const char *path, const char *mode)
 {
-    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
-    {
-        return fopen("./thin_resource_server.dat", mode);
-    }
-    else
-    {
-        return fopen(path, mode);
-    }
+	if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+	{
+		return fopen("./thin_room_light.dat", mode);
+	}
+	else
+	{
+		return fopen(path, mode);
+	}
 }
 
 int main(int argc, char *argv[])
 {
-	if (argc < 3)
+	if (argc < 2)
 	{
-		cout << "Put \"[host-ipaddress:port] [tls mode(0,1)] \" for sign-up"
+		cout << "Put \"[host-ipaddress:port] \" for sign-up"
 			<< endl;
-		cout << "Put \"[host-ipaddress:port] [uid] [accessToken] [tls mode(0,1)]\" for sign-in and publish resources" <<
+		cout << "Put \"[host-ipaddress:port] [uid] [accessToken] \" for sign-in and publish resources" <<
 			endl;
-		cout << "Put \"[host-ipaddress:port] [uid] [refreshToken] refresh [tls mode(0,1)]\" for accessToken to refresh" <<
+		cout << "Put \"[host-ipaddress:port] [uid] [refreshToken] refresh \" for accessToken to refresh" <<
 			endl;
 		return 0;
 	}
@@ -719,25 +720,23 @@ int main(int argc, char *argv[])
     string refreshToken;
     string authProvider;
     string authCode;
-	string tlsMode;
     
 	OCMode stackMode = OC_CLIENT_SERVER;
-	tlsMode = argv[argc - 1];
     switch (argc)
     {
-        case 3:
+        case 2:
             cout << "Put auth provider name(ex: github)" << endl;
             cin >> authProvider;
             cout << "Put auth code(provided by auth provider)" << endl;
             cin >> authCode;
             break;
 
-        case 5:
+        case 4:
             uId = argv[2];
             accessToken = argv[3];
             break;
 
-        case 6:
+        case 5:
             uId = argv[2];
             refreshToken = argv[3];
             break;
@@ -749,12 +748,9 @@ int main(int argc, char *argv[])
 
 	g_host = "coap+tcp://";
 
-	if (tlsMode == "1")
-	{
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-		g_host = "coaps+tcp://";
+	g_host = "coaps+tcp://";
 #endif
-	}
 
 	g_host += argv[1];
 
@@ -776,40 +772,39 @@ int main(int argc, char *argv[])
 
     OCStackResult res = OC_STACK_ERROR;
 
-	if (tlsMode == "1")
-	{
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-		cout << "Security Mode" << endl;
-		if (CA_STATUS_OK != saveTrustCert())
-		{
-			cout << "saveTrustCert returned an error" << endl;
-		}
 
-		uint16_t cipher = MBEDTLS_TLS_RSA_WITH_AES_128_GCM_SHA256;
-		if (CA_STATUS_OK != CASelectCipherSuite(cipher, CA_ADAPTER_TCP))
-		{
-			cout << "CASelectCipherSuite returned an error" << endl;
-		}
-#endif
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+	cout << "Security Mode" << endl;
+	if (CA_STATUS_OK != saveTrustCert())
+	{
+		cout << "saveTrustCert returned an error" << endl;
 	}
+
+	uint16_t cipher = MBEDTLS_TLS_RSA_WITH_AES_128_GCM_SHA256;
+	if (CA_STATUS_OK != CASelectCipherSuite(cipher, CA_ADAPTER_TCP))
+	{
+		cout << "CASelectCipherSuite returned an error" << endl;
+	}
+#endif
+
 
     switch (argc)
     {
-        case 3:
+        case 2:
             cout << "Sign-Up to cloud using " << authProvider << " " << authCode << endl;
             res = OCCloudSignup(g_host.c_str(), OCGetServerInstanceIDString(), authProvider.c_str(),
                                 authCode.c_str(), handleRegisterCB);
             cout << "OCCloudSignup return " << res << endl;
             break;
 
-        case 5:
+        case 4:
             cout << "Sign-In to cloud using " << accessToken << endl;
             res = OCCloudLogin(g_host.c_str(), uId.c_str(), OCGetServerInstanceIDString(),
                                accessToken.c_str(), handleLoginoutCB);
             cout << "OCCloudLogin return " << res << endl;
             break;
 
-        case 6:
+        case 5:
             cout << "Token refresh to cloud using the refresh token " << refreshToken << endl;
             res = OCCloudRefresh(g_host.c_str(), DEFAULT_AUTH_REFRESH, uId.c_str(),
                                  OCGetServerInstanceIDString(), refreshToken.c_str(), handleRegisterCB);
