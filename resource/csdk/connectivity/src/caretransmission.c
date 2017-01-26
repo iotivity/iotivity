@@ -111,8 +111,8 @@ static uint64_t CAGetTimeoutValue()
         OIC_LOG(ERROR, TAG, "OCGetRandomBytes failed");
     }
 
-    return ((DEFAULT_ACK_TIMEOUT_SEC * 1000) + ((1000 * randomValue) >> 8)) *
-            (uint64_t) 1000;
+    return ((DEFAULT_ACK_TIMEOUT_SEC * MSECS_PER_SEC) + ((MSECS_PER_SEC * (uint64_t)randomValue) >> 8)) *
+             MSECS_PER_SEC;
 }
 
 CAResult_t CARetransmissionStart(CARetransmission_t *context)
@@ -153,7 +153,7 @@ static bool CACheckTimeout(uint64_t currentTime, CARetransmissionData_t *retData
 #ifndef SINGLE_THREAD
     // #1. calculate timeout
     uint32_t milliTimeoutValue = retData->timeout * 0.001;
-    uint64_t timeout = (milliTimeoutValue << retData->triedCount) * (uint64_t) 1000;
+    uint64_t timeout = ((uint64_t) milliTimeoutValue << retData->triedCount) * MSECS_PER_SEC;
 
     if (currentTime >= retData->timeStamp + timeout)
     {
@@ -163,7 +163,7 @@ static bool CACheckTimeout(uint64_t currentTime, CARetransmissionData_t *retData
     }
 #else
     // #1. calculate timeout
-    uint64_t timeOut = (2 << retData->triedCount) * (uint64_t) 1000000;
+    uint64_t timeOut = (2 << retData->triedCount) * (uint64_t) USECS_PER_SEC;
 
     if (currentTime >= retData->timeStamp + timeOut)
     {
