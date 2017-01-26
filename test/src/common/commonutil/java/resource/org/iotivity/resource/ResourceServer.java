@@ -1,22 +1,31 @@
 /******************************************************************
- * Copyright 2016 Samsung Electronics All Rights Reserved.
- * <p/>
- * <p/>
- * <p/>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p/>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************/
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
 
 package org.iotivity.resource;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 
 import org.iotivity.base.EntityHandlerResult;
 import org.iotivity.base.OcDeviceInfo;
@@ -33,55 +42,52 @@ import org.iotivity.base.RequestType;
 import org.iotivity.base.ResourceProperty;
 import org.iotivity.common.ResourceConstants;
 import org.iotivity.common.ResourceHelper;
-import org.iotivity.service.testapp.framework.Base;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
 
 public abstract class ResourceServer {
-    static boolean m_isServerConstructed = false;
+    static boolean                m_isServerConstructed = false;
     private static OcPlatformInfo m_platformInfo;
-    private static OcDeviceInfo m_deviceInfo;
-    static ResourceHelper m_resourceHelper = ResourceHelper.getInstance();
-    OcRepresentation m_representation = new OcRepresentation();
-    String m_resourceURI = "";
-    String m_resourceTypeName = "";
-    Vector<String> m_resourceTypeNames = new Vector<String>();
-    String m_resourceInterface = ResourceConstants.DEFAULT_INTERFACE;
-    Vector<String> m_resourceInterfaces = new Vector<String>();
-    OcResourceHandle m_resourceHandle = null;
-    boolean m_isServerRunning = false;
-    boolean m_isSlowResource = false;
-    boolean m_isPresenceStarted = false;
-    EnumSet<ResourceProperty> m_resourceProperty;
+    private static OcDeviceInfo   m_deviceInfo;
+    static ResourceHelper         m_resourceHelper      = ResourceHelper
+            .getInstance();
+    OcRepresentation              m_representation      = new OcRepresentation();
+    String                        m_resourceURI         = "";
+    String                        m_resourceTypeName    = "";
+    Vector<String>                m_resourceTypeNames;
+    String                        m_resourceInterface   = ResourceConstants.DEFAULT_INTERFACE;
+    Vector<String>                m_resourceInterfaces;
+    OcResourceHandle              m_resourceHandle      = null;
+    boolean                       m_isServerRunning     = false;
+    boolean                       m_isSlowResource      = false;
+    boolean                       m_isPresenceStarted   = false;
+    EnumSet<ResourceProperty>     m_resourceProperty;
+    OcPlatform.EntityHandler m_entityHandler;
 
     public ResourceServer() {
-        m_resourceProperty.add(ResourceProperty.ACTIVE);
+    	m_resourceTypeNames   = new Vector<String>();
         m_resourceTypeNames.clear();
+        m_resourceInterfaces  = new Vector<String>();
         m_resourceInterfaces.clear();
+        m_resourceProperty = EnumSet.noneOf(ResourceProperty.class);
+        m_resourceProperty.add(ResourceProperty.ACTIVE);
     }
 
     public abstract void onResourceServerStarted(
             boolean isRegisteredForPresence, int presenceInterval);
 
     public abstract void handleGetRequest(Map<String, String> queryParamsMap,
-                                          OcResourceRequest request, OcResourceResponse response);
+            OcResourceRequest request, OcResourceResponse response);
 
     public abstract void handlePutRequest(Map<String, String> queryParamsMap,
-                                          OcRepresentation incomingRepresentation, OcResourceRequest request,
-                                          OcResourceResponse response);
+            OcRepresentation incomingRepresentation, OcResourceRequest request,
+            OcResourceResponse response);
 
     public abstract void handlePostRequest(Map<String, String> queryParamsMap,
-                                           OcRepresentation incomingRepresentation, OcResourceRequest request,
-                                           OcResourceResponse response);
+            OcRepresentation incomingRepresentation, OcResourceRequest request,
+            OcResourceResponse response);
 
     public abstract void handleDeleteRequest(Map<String, String> queryParamsMap,
-                                             OcRepresentation incomingRepresentation, OcResourceRequest request,
-                                             OcResourceResponse response);
+            OcRepresentation incomingRepresentation, OcResourceRequest request,
+            OcResourceResponse response);
 
     public abstract void handleObserveRequest(
             Map<String, String> queryParamsMap, OcResourceRequest request,
@@ -106,12 +112,11 @@ public abstract class ResourceServer {
                     ResourceConstants.SYSTEM_TIME);
 
             m_deviceInfo = new OcDeviceInfo(ResourceConstants.DEFAULT_DEVICE_NAME,
-                    Arrays.asList(new String[]{
+                    Arrays.asList(new String[] {
                             ResourceConstants.DEVICE_TYPE_DEFAULT,
-                            ResourceConstants.DEVICE_TYPE_AC}));
+                            ResourceConstants.DEVICE_TYPE_AC }));
 
             OcPlatform.registerPlatformInfo(m_platformInfo);
-
             OcPlatform.registerDeviceInfo(m_deviceInfo);
 
             System.out.println("Server Created...");
@@ -134,7 +139,7 @@ public abstract class ResourceServer {
     }
 
     public boolean setResourceProperties(String resourceUri,
-                                         String resourceTypeName, String resourceInterface) {
+            String resourceTypeName, String resourceInterface) {
         m_resourceURI = resourceUri;
         m_resourceTypeName = resourceTypeName;
         m_resourceInterface = resourceInterface;
@@ -205,7 +210,6 @@ public abstract class ResourceServer {
                 }
 
                 return result;
-
             }
         };
 
@@ -243,7 +247,7 @@ public abstract class ResourceServer {
 
             boolean isRegisteredForPresence = false;
             int presenceInterval = 0;
-            onResourceServerStarted(isRegisteredForPresence, presenceInterval);
+            onResourceServerStarted(isRegisteredForPresence, presenceInterval); 
 
             if (isRegisteredForPresence) {
                 try {
@@ -315,7 +319,6 @@ public abstract class ResourceServer {
         try {
             OcPlatform.registerDeviceInfo(m_deviceInfo);
         } catch (OcException e) {
-            Base.showOutPut(e.getMessage());
             result = false;
         }
 
@@ -323,10 +326,10 @@ public abstract class ResourceServer {
     }
 
     public static boolean setPlatformInfo(String platformID,
-                                          String manufacturerName, String manufacturerUrl, String modelNumber,
-                                          String dateOfManufacture, String platformVersion,
-                                          String operatingSystemVersion, String hardwareVersion,
-                                          String firmwareVersion, String supportUrl, String systemTime) {
+            String manufacturerName, String manufacturerUrl, String modelNumber,
+            String dateOfManufacture, String platformVersion,
+            String operatingSystemVersion, String hardwareVersion,
+            String firmwareVersion, String supportUrl, String systemTime) {
         boolean isPlatformSet = true;
         m_platformInfo = new OcPlatformInfo(platformID, manufacturerName,
                 manufacturerUrl, modelNumber, dateOfManufacture,
@@ -377,7 +380,7 @@ public abstract class ResourceServer {
                         .getQueryParameters();
 
                 handlePutRequest(queryParamsMap, incomingRepresentation,
-                        request, response);
+                        request, response); 
             } else if (requestType == RequestType.POST) {
                 // POST request operations
                 OcRepresentation incomingRepresentation = request
@@ -388,7 +391,7 @@ public abstract class ResourceServer {
                         .getQueryParameters();
 
                 handlePostRequest(queryParamsMap, incomingRepresentation,
-                        request, response);
+                        request, response); 
             } else if (requestType == RequestType.DELETE) {
                 // DELETE request operations
                 OcRepresentation incomingRepresentation = request
@@ -398,12 +401,12 @@ public abstract class ResourceServer {
                         .getQueryParameters();
 
                 handleDeleteRequest(queryParamsMap, incomingRepresentation,
-                        request, response);
+                        request, response); 
             }
         } else if (requestFlag.contains(RequestHandlerFlag.OBSERVER)) {
             // Check for query params (if any)
             Map<String, String> queryParamsMap = request.getQueryParameters();
-            handleObserveRequest(queryParamsMap, request, response);
+            handleObserveRequest(queryParamsMap, request, response); 
         }
     }
 

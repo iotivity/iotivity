@@ -1,22 +1,30 @@
 /******************************************************************
- * Copyright 2016 Samsung Electronics All Rights Reserved.
- * <p/>
- * <p/>
- * <p/>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p/>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************/
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
 
 package org.iotivity.resource;
+
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Vector;
 
 import org.iotivity.base.EntityHandlerResult;
 import org.iotivity.base.ObservationInfo;
@@ -29,18 +37,12 @@ import org.iotivity.base.OcResourceResponse;
 import org.iotivity.base.ResourceProperty;
 import org.iotivity.common.ResourceConstants;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Vector;
-
 public class SampleResource extends ResourceServer {
 
-    private boolean m_isObserveRegistered = false;
-    private Vector<String> m_resourceList = new Vector<String>();
-    private Map<String, String> m_accessModifier = new HashMap<String, String>();
-    private ArrayList<Byte> m_listOfObservers = new ArrayList<Byte>();
+    private boolean             m_isObserveRegistered = false;
+    private Vector<String>      m_resourceList        = new Vector<String>();
+    private Map<String, String> m_accessModifier      = new HashMap<String, String>();
+    private ArrayList<Byte>     m_listOfObservers     = new ArrayList<Byte>();
 
     public SampleResource() {
         super();
@@ -51,14 +53,14 @@ public class SampleResource extends ResourceServer {
 
     @Override
     public void onResourceServerStarted(boolean isRegisteredForPresence,
-                                        int presenceInterval) {
+            int presenceInterval) {
         System.out.println("Inside onResourceServerStarted... ");
         isRegisteredForPresence = false;
     }
 
     @Override
     public void handleGetRequest(Map<String, String> queryParamsMap,
-                                 OcResourceRequest request, OcResourceResponse response) {
+            OcResourceRequest request, OcResourceResponse response) {
         System.out.println("Inside handleGetRequest... ");
         boolean result = false;
         boolean shouldReturnError = false;
@@ -136,8 +138,8 @@ public class SampleResource extends ResourceServer {
 
     @Override
     public void handlePutRequest(Map<String, String> queryParamsMap,
-                                 OcRepresentation incomingRepresentation, OcResourceRequest request,
-                                 OcResourceResponse response) {
+            OcRepresentation incomingRepresentation, OcResourceRequest request,
+            OcResourceResponse response) {
 
         System.out.println("Inside handlePutRequest... ");
         System.out
@@ -150,7 +152,7 @@ public class SampleResource extends ResourceServer {
         boolean shouldChange = true;
         boolean result = true;
 
-        if (shouldAllowUpdate(queryParamsMap, response)) {
+        if (shouldAllowUpdate(queryParamsMap,  response)) {
             response.setErrorCode(ResourceConstants.COAP_RESPONSE_CODE_ERROR);
             response.setResponseResult(EntityHandlerResult.ERROR);
         }
@@ -165,12 +167,13 @@ public class SampleResource extends ResourceServer {
         if (result != true) {
             System.out.println("Unable to send response for POST Request");
         }
+
     }
 
     @Override
     public void handlePostRequest(Map<String, String> queryParamsMap,
-                                  OcRepresentation incomingRepresentation, OcResourceRequest request,
-                                  OcResourceResponse response) {
+            OcRepresentation incomingRepresentation, OcResourceRequest request,
+            OcResourceResponse response) {
         boolean isRepUpdated = false;
         boolean isSameAttributeValue = false;
         boolean isAttributeReadOnly = false;
@@ -186,22 +189,6 @@ public class SampleResource extends ResourceServer {
         String uriValue = "";
 
         if (shouldAllowUpdate(queryParamsMap, response)) {
-            if (incomingRepresentation.getUri() != "") {
-                try {
-                    uriValue = incomingRepresentation
-                            .getValue(ResourceConstants.URI_KEY);
-                } catch (OcException e) {
-                    e.printStackTrace();
-                }
-
-                if (uriValue != m_resourceURI) {
-                    String initialUri = getUri();
-                    createResource(initialUri, incomingRepresentation,
-                            response);
-                }
-
-            } else {
-
                 m_representation = incomingRepresentation;
                 isRepUpdated = true;
 
@@ -228,7 +215,6 @@ public class SampleResource extends ResourceServer {
                             ResourceConstants.COAP_RESPONSE_CODE_ERROR);
                     response.setResponseResult(EntityHandlerResult.ERROR);
                 }
-            }
         }
 
         try {
@@ -243,8 +229,8 @@ public class SampleResource extends ResourceServer {
 
     @Override
     public void handleDeleteRequest(Map<String, String> queryParamsMap,
-                                    OcRepresentation incomingRepresentation, OcResourceRequest request,
-                                    OcResourceResponse response) {
+            OcRepresentation incomingRepresentation, OcResourceRequest request,
+            OcResourceResponse response) {
         System.out.println("Inside handleDeleteRequest... ");
         boolean shouldDelete = true;
 
@@ -273,7 +259,7 @@ public class SampleResource extends ResourceServer {
 
     @Override
     public void handleObserveRequest(Map<String, String> queryParamsMap,
-                                     OcResourceRequest request, OcResourceResponse response) {
+            OcResourceRequest request, OcResourceResponse response) {
         System.out.println("Inside handleObserveRequest... ");
 
         // handle observe request
@@ -359,7 +345,7 @@ public class SampleResource extends ResourceServer {
                         resource.getRepresentation(),
                         OcPlatform.DEFAULT_INTERFACE);
 
-                if (m_listOfObservers.size() > 0) {
+                if (m_listOfObservers.size() == 0) {
                     System.out.println(
                             "No More observers, stopping notifications");
                     m_listOfObservers.clear();
@@ -380,8 +366,8 @@ public class SampleResource extends ResourceServer {
     }
 
     void createResource(String initialUri,
-                        OcRepresentation incomingRepresentation,
-                        OcResourceResponse response) {
+            OcRepresentation incomingRepresentation,
+            OcResourceResponse response) {
         System.out.println("Creating new resource!!");
         String uriValue = incomingRepresentation.getUri();
         String resourceUri = initialUri + uriValue;
@@ -493,8 +479,8 @@ public class SampleResource extends ResourceServer {
     }
 
     void supportCreateAndOthersForPUT(Map<String, String> queryParamsMap,
-                                      OcRepresentation incomingRepresentation, OcResourceRequest request,
-                                      OcResourceResponse response) {
+            OcRepresentation incomingRepresentation, OcResourceRequest request,
+            OcResourceResponse response) {
         String uriValue = "";
         String targetValue = "";
         OcRepresentation rep = getRepresentation();
@@ -644,7 +630,7 @@ public class SampleResource extends ResourceServer {
         }
     }
 
-    boolean shouldAllowUpdate(Map<String, String> queryParamsMap, OcResourceResponse response) {
+    boolean shouldAllowUpdate(Map<String, String> queryParamsMap, OcResourceResponse response){
         boolean shouldChange = true;
         if (queryParamsMap.size() > 0) {
             for (Map.Entry<String, String> eachQuery : queryParamsMap

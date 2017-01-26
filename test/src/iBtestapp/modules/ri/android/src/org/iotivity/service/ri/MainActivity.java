@@ -18,35 +18,31 @@
 
 package org.iotivity.service.ri;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.util.Log;
+
+import org.iotivity.service.testapp.framework.Base;
+import org.iotivity.service.testapp.framework.MenuInfo;
+import org.iotivity.service.testapp.framework.DialogInfo;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import android.net.ConnectivityManager;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 
 import org.iotivity.base.ModeType;
 import org.iotivity.base.OcPlatform;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
-import org.iotivity.service.testapp.framework.Base;
-import org.iotivity.service.testapp.framework.MenuInfo;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class MainActivity extends Base {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        if (!isWifiConnected()) {
-            showWifiUnavailableDialog();
-            return;
-        }
-
-        configurePlatform();
 
         Map<String, MenuInfo> menuMap = new LinkedHashMap<String, MenuInfo>();
         menuMap.put("0", new MenuInfo("Quit InerOp App", "exitApplication"));

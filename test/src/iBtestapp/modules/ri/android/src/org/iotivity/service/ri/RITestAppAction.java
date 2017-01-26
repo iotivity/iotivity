@@ -18,17 +18,21 @@
 
 package org.iotivity.service.ri;
 
-import android.content.Context;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 
+import org.iotivity.base.OcPlatform.OnDeviceFoundListener;
+import org.iotivity.base.OcPlatform.OnPlatformFoundListener;
+import org.iotivity.base.OcPlatform.OnResourceFoundListener;
 import org.iotivity.base.ModeType;
 import org.iotivity.base.ObserveType;
 import org.iotivity.base.OcConnectivityType;
 import org.iotivity.base.OcException;
 import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcPlatform;
-import org.iotivity.base.OcPlatform.OnDeviceFoundListener;
-import org.iotivity.base.OcPlatform.OnPlatformFoundListener;
-import org.iotivity.base.OcPlatform.OnResourceFoundListener;
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.OcResource;
 import org.iotivity.base.OcResource.OnDeleteListener;
@@ -45,16 +49,14 @@ import org.iotivity.resource.ResourceServer;
 import org.iotivity.resource.SampleResource;
 import org.iotivity.service.testapp.framework.Base;
 
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
+import android.content.Context;
 
 public class RITestAppAction extends Base {
 
     private static final String DEFAULT_IP = "0.0.0.0";
     private static final int DEFAULT_PORT = 0;
+    private static double targetTemp = 31.234;
+    private static double tempDeviation = 3.33333;
 
     private Vector<OcResource> m_foundResourceList;
     private Vector<SampleResource> m_createdResourceList;
@@ -88,8 +90,17 @@ public class RITestAppAction extends Base {
         m_clientDBPath = m_appContext.getFilesDir().getPath() + "/" + ResourceConstants.CLIENT_DATABASE_FILE_NAME;
     }
 
+    public void printOutput(final String toPrint){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Base.showOutPut(toPrint);
+           }
+       });
+    }
+
     public void exitApplication() {
-        Base.showOutPut("Quit from RITestApp...");
+        printOutput("Quit from InterOpAppRI...");
 
         m_resourceHelper.waitInSecond(ResourceConstants.CALLBACK_WAIT_MIN);
 
@@ -99,24 +110,24 @@ public class RITestAppAction extends Base {
     OnResourceFoundListener onResourceFound = new OnResourceFoundListener() {
 
         @Override
-        public void onResourceFound(OcResource resource) {
+        public synchronized void onResourceFound(OcResource resource) {
             if (resource != null) {
                 m_foundResourceList.add(resource);
-                Base.showOutPut("uri of the found resource is " + resource.getUri());
-                m_hasCallbackArrived = true;
 
-                Base.showOutPut("Host of found resource: " + resource.getHost());
-                Base.showOutPut("di( OCResource.sid() ) of found resource is = " + resource.getServerId());
-                Base.showOutPut("unique identifier of found resource is = " + resource.getUniqueIdentifier());
+                printOutput("uri of the found resource is " + resource.getUri());
+                printOutput("Host of found resource: " + resource.getHost());
+                printOutput("di( OCResource.sid() ) of found resource is = " + resource.getServerId());
+
+                m_hasCallbackArrived = true;
             } else {
-                Base.showOutPut("Found resource is invalid!!");
+                printOutput("Found resource is invalid!!");
             }
 
         }
 
         @Override
         public void onFindResourceFailed(Throwable exception, String message) {
-            Base.showOutPut("Failed to discover resource, reason: " + message);
+            printOutput( "Failed to discover resource, reason: " + message );
 
         }
     };
@@ -125,7 +136,7 @@ public class RITestAppAction extends Base {
 
         @Override
         public void onPlatformFound(OcRepresentation rep) {
-            Base.showOutPut("\nPlatform Information received ---->");
+            printOutput("\nPlatform Information received ---->");
             String value = "";
             String values[] =
                     {"pi", "Platform ID                    ", "mnmn", "Manufacturer name              ", "mnml",
@@ -141,9 +152,9 @@ public class RITestAppAction extends Base {
                         value = rep.getValue(values[i]);
                     } catch (OcException e) {
                         e.printStackTrace();
-                        Base.showOutPut("Failed to get value from Representation : " + e.getMessage());
+                        printOutput("Failed to get value from Representation : " + e.getMessage());
                     }
-                    Base.showOutPut(values[i + 1] + " : " + value);
+                    printOutput(values[i + 1] + " : " + value);
                 }
             }
             m_resourceHelper.printRepresentation(rep);
@@ -156,7 +167,7 @@ public class RITestAppAction extends Base {
 
         @Override
         public void onDeviceFound(OcRepresentation rep) {
-            Base.showOutPut("\nDevice Information received ---->");
+            printOutput("\nDevice Information received ---->");
             String value = "";
             String values[] =
                     {"di", "Device ID        ", "n", "Device name      ", "lcv", "Spec version url ", "dmv",
@@ -168,9 +179,9 @@ public class RITestAppAction extends Base {
                         value = rep.getValue(values[i]);
                     } catch (OcException e) {
                         e.printStackTrace();
-                        Base.showOutPut("Failed to get value from Representation : " + e.getMessage());
+                        printOutput("Failed to get value from Representation : " + e.getMessage());
                     }
-                    Base.showOutPut(values[i + 1] + " : " + value);
+                    printOutput(values[i + 1] + " : " + value);
                 }
             }
 
@@ -185,12 +196,12 @@ public class RITestAppAction extends Base {
         @Override
         public void onGetFailed(Throwable eCode) {
 
-            Base.showOutPut("onGET Response error: " + eCode.getMessage());
+            printOutput("onGET Response error: " + eCode.getMessage());
         }
 
         @Override
         public void onGetCompleted(List<OcHeaderOption> headerOptions, OcRepresentation rep) {
-            Base.showOutPut("Response: GET request was successful");
+            printOutput("Response: GET request was successful");
 
             m_resourceHelper.printRepresentation(rep);
             List<String> interfacelist = rep.getResourceInterfaces();
@@ -207,13 +218,13 @@ public class RITestAppAction extends Base {
             if (isCollection) {
                 List<OcRepresentation> children = rep.getChildren();
 
-                Base.showOutPut("\nCHILD RESOURCE OF GROUP");
+                printOutput("\nCHILD RESOURCE OF GROUP");
                 for (OcRepresentation child : children) {
-                    Base.showOutPut("\tURI :: " + child.getUri());
+                    printOutput("\tURI :: " + child.getUri());
                 }
             } else {
-                Base.showOutPut("THe GET Response has the following representation:");
-                m_resourceHelper.printRepresentation(rep);
+                printOutput("THe GET Response has the following representation:");
+                printOutput(m_resourceHelper.printRepresentation(rep));
             }
         }
     };
@@ -222,14 +233,15 @@ public class RITestAppAction extends Base {
 
         @Override
         public void onPutFailed(Throwable eCode) {
-            Base.showOutPut("onPUT Response error: " + eCode.getMessage());
+            printOutput("onPUT Response error: " + eCode.getMessage());
+
         }
 
         @Override
         public void onPutCompleted(List<OcHeaderOption> headerOptions, OcRepresentation rep) {
-            Base.showOutPut("Response: PUT request was successful");
-            Base.showOutPut("THe PUT response has the following representation:");
-            m_resourceHelper.printRepresentation(rep);
+            printOutput("Response: PUT request was successful");
+            printOutput("THe PUT response has the following representation:");
+            printOutput(m_resourceHelper.printRepresentation(rep));
             m_hasCallbackArrived = true;
         }
     };
@@ -238,15 +250,17 @@ public class RITestAppAction extends Base {
 
         @Override
         public void onPostFailed(Throwable eCode) {
-            Base.showOutPut("onPOST Response error: " + eCode.getMessage());
+            printOutput("onPOST Response error: " + eCode.getMessage());
+
         }
 
         @Override
         public void onPostCompleted(List<OcHeaderOption> headerOptions, OcRepresentation rep) {
-            Base.showOutPut("Response: POST request was successful");
-            Base.showOutPut("THe POST Response has the following representation:");
-            m_resourceHelper.printRepresentation(rep);
+            printOutput("Response: POST request was successful");
+            printOutput("THe POST Response has the following representation:");
+            printOutput(m_resourceHelper.printRepresentation(rep));
             m_hasCallbackArrived = true;
+
         }
     };
 
@@ -255,12 +269,13 @@ public class RITestAppAction extends Base {
 
         @Override
         public void onDeleteFailed(Throwable eCode) {
-            Base.showOutPut("onDELETE Response error: " + eCode.getMessage());
+            printOutput("onDELETE Response error: " + eCode.getMessage());
+
         }
 
         @Override
         public void onDeleteCompleted(List<OcHeaderOption> headerOptions) {
-            Base.showOutPut("Response: DELETE request was successful");
+            printOutput("Response: DELETE request was successful");
             m_hasCallbackArrived = true;
         }
     };
@@ -269,14 +284,15 @@ public class RITestAppAction extends Base {
 
         @Override
         public void onObserveFailed(Throwable eCode) {
-            Base.showOutPut("Observe Response/Notification Error: " + eCode.getMessage());
+            printOutput("Observe Response/Notification Error: " + eCode.getMessage());
+
         }
 
         @Override
         public void onObserveCompleted(List<OcHeaderOption> arg0, OcRepresentation rep, int sequenceNumber) {
-            Base.showOutPut("OBSERVE RESULT:");
-            Base.showOutPut("\tSequenceNumber: " + sequenceNumber);
-            m_resourceHelper.printRepresentation(rep);
+            printOutput("OBSERVE RESULT:");
+            printOutput("\tSequenceNumber: " + sequenceNumber);
+            printOutput(m_resourceHelper.printRepresentation(rep));
             m_hasCallbackArrived = true;
         }
     };
@@ -294,23 +310,11 @@ public class RITestAppAction extends Base {
 
     boolean initiateServer() {
         boolean result = false;
-        if (m_isSecuredClient) {
-            PlatformConfig cfg = new PlatformConfig(m_appContext, ServiceType.IN_PROC, ModeType.CLIENT_SERVER, DEFAULT_IP, DEFAULT_PORT, m_qos, m_clientDBPath);
-
-            result = SampleResource.constructServer(cfg);
-        } else if (m_isSecuredServer) {
-            PlatformConfig cfg = new PlatformConfig(m_appContext, ServiceType.IN_PROC, ModeType.CLIENT_SERVER, DEFAULT_IP, DEFAULT_PORT, m_qos, m_serverDBPath);
-
-            result = SampleResource.constructServer(cfg);
-        } else {
-            PlatformConfig cfg = new PlatformConfig(m_appContext, ServiceType.IN_PROC, ModeType.CLIENT_SERVER, DEFAULT_IP, DEFAULT_PORT, m_qos);
-            result = SampleResource.constructServer(cfg);
-        }
 
         if (result == false) {
-            Base.showOutPut("Unable to start Iotivity servers");
+            printOutput("Unable to start Iotivity servers");
         } else {
-            Base.showOutPut("Iotivity Server started successfully");
+            printOutput("Iotivity Server started successfully");
         }
 
         return result;
@@ -320,7 +324,7 @@ public class RITestAppAction extends Base {
 
         boolean result = false;
         if (m_isAirConDeviceCreated == false) {
-            Base.showOutPut("Creating AirCon Device Resources!!");
+            printOutput("Creating AirCon Device Resources!!");
             ResourceServer.setDeviceInfo("Vendor Smart Home AirCon Device", ResourceConstants.DEVICE_TYPE_AC);
 
             m_acSwitchResource = new SampleResource();
@@ -340,18 +344,18 @@ public class RITestAppAction extends Base {
                 switchRep.setValue(key, ResourceConstants.BINARY_SWITCH_VALUE);
             } catch (OcException e) {
                 e.printStackTrace();
-                Base.showOutPut("Failed to set value to Representation : " + e.getMessage());
+                printOutput("Failed to set value to Representation : " + e.getMessage());
             }
             m_acSwitchResource.setResourceRepresentation(switchRep);
 
             result = m_acSwitchResource.startResource();
 
             if (result == true) {
-                Base.showOutPut("AirConditioner Binary Switch Resource created successfully");
+                printOutput("AirConditioner Binary Switch Resource created successfully");
                 m_createdResourceList.add(m_acSwitchResource);
                 m_isAirConDeviceCreated = true;
             } else {
-                Base.showOutPut("Unable to create AirConditioner Binary Switch resource");
+                printOutput("Unable to create AirConditioner Binary Switch resource");
             }
 
             m_acTemperatureResource = new SampleResource();
@@ -378,17 +382,17 @@ public class RITestAppAction extends Base {
                 temperatureRep.setValue(key, temperature);
             } catch (OcException e) {
                 e.printStackTrace();
-                Base.showOutPut("Failed to set value to Representation : " + e.getMessage());
+                printOutput("Failed to set value to Representation : " + e.getMessage());
             }
             m_acTemperatureResource.setResourceRepresentation(temperatureRep);
             result = m_acTemperatureResource.startResource();
 
             if (result == true) {
-                Base.showOutPut("Air Conditioner Temperature Resource created successfully");
+                printOutput("Air Conditioner Temperature Resource created successfully");
                 m_createdResourceList.add(m_acTemperatureResource);
                 m_isAirConDeviceCreated = true;
             } else {
-                Base.showOutPut("Unable to create Air Conditioner Temperature resource");
+                printOutput("Unable to create Air Conditioner Temperature resource");
             }
 
             m_acAirFlowResource = new SampleResource();
@@ -414,7 +418,7 @@ public class RITestAppAction extends Base {
                 airFlowRep.setValue(key, range);
             } catch (OcException e) {
                 e.printStackTrace();
-                Base.showOutPut("Failed to set value to Representation : " + e.getMessage());
+                printOutput("Failed to set value to Representation : " + e.getMessage());
             }
             m_acAirFlowResource.setAsReadOnly(key);
             m_acAirFlowResource.setResourceRepresentation(airFlowRep);
@@ -422,11 +426,11 @@ public class RITestAppAction extends Base {
             result = m_acAirFlowResource.startResource();
 
             if (result == true) {
-                Base.showOutPut("Air Conditioner AirFlow Resource created successfully");
+                printOutput("Air Conditioner AirFlow Resource created successfully");
                 m_createdResourceList.add(m_acAirFlowResource);
                 m_isAirConDeviceCreated = true;
             } else {
-                Base.showOutPut("Unable to create Air Conditioner AirFlow resource");
+                printOutput("Unable to create Air Conditioner AirFlow resource");
             }
 
             m_acTimerResource = new SampleResource();
@@ -450,7 +454,7 @@ public class RITestAppAction extends Base {
                 clockRep.setValue(key, ResourceConstants.TIMER_RESET_VALUE);
             } catch (OcException e) {
                 e.printStackTrace();
-                Base.showOutPut("Failed to set value to Representation : " + e.getMessage());
+                printOutput("Failed to set value to Representation : " + e.getMessage());
             }
 
             m_acTimerResource.setResourceRepresentation(clockRep);
@@ -459,11 +463,11 @@ public class RITestAppAction extends Base {
             m_acTimerResource.setAsSlowResource();
 
             if (result == true) {
-                Base.showOutPut("Air Conditioner Timer Resource created successfully");
+                printOutput("Air Conditioner Timer Resource created successfully");
                 m_createdResourceList.add(m_acTimerResource);
                 m_isAirConDeviceCreated = true;
             } else {
-                Base.showOutPut("Unable to create Air Conditioner Timer resource");
+                printOutput("Unable to create Air Conditioner Timer resource");
             }
 
             m_acChildLockResource = new SampleResource();
@@ -480,21 +484,21 @@ public class RITestAppAction extends Base {
                 childLockRep.setValue(key, ResourceConstants.CHILD_LOCK_VALUE);
             } catch (OcException e) {
                 e.printStackTrace();
-                Base.showOutPut("Failed to set value to Representation : " + e.getMessage());
+                printOutput("Failed to set value to Representation : " + e.getMessage());
             }
             m_acChildLockResource.setResourceRepresentation(childLockRep);
 
             result = m_acChildLockResource.startResource();
 
             if (result == true) {
-                Base.showOutPut("Air Conditioner Timer Resource created successfully");
+                printOutput("Air Conditioner Timer Resource created successfully");
                 m_createdResourceList.add(m_acChildLockResource);
                 m_isAirConDeviceCreated = true;
             } else {
-                Base.showOutPut("Unable to create Air Conditioner Timer resource");
+                printOutput("Unable to create Air Conditioner Timer resource");
             }
         } else {
-            Base.showOutPut("Already Smart Home AirCon Device Resources are  created!!");
+            printOutput("Already Smart Home AirCon Device Resources are  created!!");
         }
 
     }
@@ -504,12 +508,12 @@ public class RITestAppAction extends Base {
 
             for (SampleResource resource : m_createdResourceList) {
                 if (resource.stopResource()) {
-                    Base.showOutPut("Successfully stopped Resource with URI: "
+                    printOutput("Successfully stopped Resource with URI: "
                             + resource.getUri());
                 }
             }
         } else {
-            Base.showOutPut("There is no resource available to delete!!");
+            printOutput("There is no resource available to delete!!");
         }
 
         m_createdResourceList.clear();
@@ -527,10 +531,10 @@ public class RITestAppAction extends Base {
 
             OcPlatform.findResource(host, requestURI, EnumSet.of(m_connectivityType),
                     onResourceFound, m_qos);
-            Base.showOutPut("Finding Resource....");
+            printOutput("Finding Resource....");
 
         } catch (OcException e) {
-            Base.showOutPut("Unable to find resource, exception Occured: " + e.getMessage());
+            printOutput("Unable to find resource, exception Occured: " + e.getMessage());
         }
         waitForCallback();
     }
@@ -555,10 +559,10 @@ public class RITestAppAction extends Base {
 
             OcPlatform.findResource(host, requestURI, EnumSet.of(m_connectivityType),
                     onResourceFound, m_qos);
-            Base.showOutPut("Finding Resource....");
+            printOutput("Finding Resource....");
 
         } catch (OcException e) {
-            Base.showOutPut("Unable to find resource, exception Occured: " + e.getMessage());
+            printOutput("Unable to find resource, exception Occured: " + e.getMessage());
         }
         waitForCallback();
     }
@@ -570,10 +574,10 @@ public class RITestAppAction extends Base {
 
         if (isMulticast) {
             deviceDiscoveryRequest = OcPlatform.WELL_KNOWN_DEVICE_QUERY;
-            Base.showOutPut("Discovering Device using Multicast... ");
+            printOutput("Discovering Device using Multicast... ");
         } else {
             if (m_foundResourceList.isEmpty()) {
-                Base.showOutPut("Finding OIC Servers to send Unicast Discovery Request");
+                printOutput("Finding OIC Servers to send Unicast Discovery Request");
                 findAllResources();
             }
 
@@ -581,24 +585,25 @@ public class RITestAppAction extends Base {
             if (m_foundResourceList.size() > 0) {
                 host = m_foundResourceList.get(0).getHost();
                 deviceDiscoveryRequest = OcPlatform.WELL_KNOWN_DEVICE_QUERY;
-                Base.showOutPut("Discovering Device using Unicast... ");
-                Base.showOutPut("Sending Unicast device discovery to the host: " + host);
+                printOutput("Discovering Device using Unicast... ");
+                printOutput("Sending Unicast device discovery to the host: " + host);
             } else {
-                Base.showOutPut("No server found to send Unicast device discovery");
-                Base.showOutPut("Sending Multicast Device discovery request...");
+                printOutput("No server found to send Unicast device discovery");
+                printOutput("Sending Multicast Device discovery request...");
                 deviceDiscoveryRequest = OcPlatform.WELL_KNOWN_DEVICE_QUERY;
             }
+
         }
 
         try {
             OcPlatform.getDeviceInfo(host, deviceDiscoveryRequest,
                     EnumSet.of(m_connectivityType), onDeviceInfoReceived);
 
-            Base.showOutPut("Device discovery done successfully");
+            printOutput("Device discovery done successfully");
             waitForCallback();
 
         } catch (OcException e) {
-            Base.showOutPut("Exception occurred while discovering device, reason is: " + e.getMessage());
+            printOutput("Exception occurred while discovering device, reason is: " + e.getMessage());
         }
     }
 
@@ -609,7 +614,7 @@ public class RITestAppAction extends Base {
 
         if (isMulticast) {
             platformDiscoveryRequest = platformDiscoveryURI;
-            Base.showOutPut("Discovering Platform using Multicast... ");
+            printOutput("Discovering Platform using Multicast... ");
 
         } else {
             if (m_foundResourceList.isEmpty()) {
@@ -619,38 +624,38 @@ public class RITestAppAction extends Base {
 
             host = m_foundResourceList.get(0).getHost();
             platformDiscoveryRequest = platformDiscoveryURI;
-            Base.showOutPut("Discovering Platform using Unicast... ");
+            printOutput("Discovering Platform using Unicast... ");
         }
 
         try {
             OcPlatform.getPlatformInfo(host, platformDiscoveryRequest,
                     EnumSet.of(m_connectivityType), onPlatformInfoReceived);
 
-            Base.showOutPut("Platform discovery ");
+            printOutput("Platform discovery ");
             waitForCallback();
 
         } catch (OcException e) {
-            Base.showOutPut("Failure in main thread: " + e.getMessage());
+            printOutput("Failure in main thread: " + e.getMessage());
         }
     }
 
     public void sendGetRequest() {
         int selection = selectResource();
-        if (selection != -1) {
+        if (selection > -1) {
             Map<String, String> qpMap = new HashMap<String, String>();
             OcResource targetResource = m_foundResourceList.get(selection);
-            Base.showOutPut("Sending Get Request to the resource with: " + targetResource.getHost()
+            printOutput("Sending Get Request to the resource with: " + targetResource.getHost()
                     + targetResource.getUri());
             try {
                 targetResource.get(qpMap, onGet, m_qos);
             } catch (OcException e) {
-                Base.showOutPut("Unable to send GET request, Exception Occured!! reason: " + e.getMessage());
+                printOutput("Unable to send GET request, Exception Occured!! reason: " + e.getMessage());
             }
-            Base.showOutPut("GET request sent!!");
+            printOutput("GET request sent!!");
             waitForCallback();
 
         } else {
-            Base.showOutPut("No resource to send GET!!");
+            printOutput("No resource to send GET!!");
         }
     }
 
@@ -662,13 +667,13 @@ public class RITestAppAction extends Base {
             try {
                 m_foundResourceList.get(selection).get(qpMap, onGet, m_qos);
             } catch (OcException e) {
-                Base.showOutPut("Unable to send GET request, Exception Occured!! reason: " + e.getMessage());
+                printOutput("Unable to send GET request, Exception Occured!! reason: " + e.getMessage());
             }
-            Base.showOutPut("GET request sent!!");
+            printOutput("GET request sent!!");
             waitForCallback();
 
         } else {
-            Base.showOutPut("No resource to send GET!!");
+            printOutput("No resource to send GET!!");
         }
     }
 
@@ -677,7 +682,7 @@ public class RITestAppAction extends Base {
         if (selection != -1) {
             OcRepresentation rep = new OcRepresentation();
 
-            Base.showOutPut("Sending Complete Update Message(PUT)...");
+            printOutput("Sending Complete Update Message(PUT)...");
 
             try {
                 String key = ResourceConstants.REGION_KEY;
@@ -693,7 +698,7 @@ public class RITestAppAction extends Base {
                 value = ResourceConstants.DEFAULT_MANUFACTURER;
                 rep.setValue(key, value);
             } catch (OcException e) {
-                Base.showOutPut("Unable to set representation, Exception Occured!! reason: " + e.getMessage());
+                printOutput("Unable to set representation, Exception Occured!! reason: " + e.getMessage());
             }
 
             // Invoke resource's put API with rep, query map and the callback parameter
@@ -701,13 +706,13 @@ public class RITestAppAction extends Base {
             try {
                 m_foundResourceList.get(selection).put(rep, qpMap, onPut, m_qos);
             } catch (OcException e) {
-                Base.showOutPut("Unable to send PUT request, Exception Occured!! reason: " + e.getMessage());
+                printOutput("Unable to send PUT request, Exception Occured!! reason: " + e.getMessage());
             }
-            Base.showOutPut("PUT request sent!!");
+            printOutput("PUT request sent!!");
             waitForCallback();
 
         } else {
-            Base.showOutPut("No resource to send PUT!!");
+            printOutput("No resource to send PUT!!");
         }
     }
 
@@ -716,8 +721,7 @@ public class RITestAppAction extends Base {
         if (selection != -1) {
             OcRepresentation rep = new OcRepresentation();
 
-            Base.showOutPut("Sending Create Resource Message(PUT)...");
-
+            printOutput("Sending Create Resource Message(PUT)...");
 
             try {
                 Vector<String> resourceTypes = new Vector<String>();
@@ -730,7 +734,7 @@ public class RITestAppAction extends Base {
                 key = ResourceConstants.BINARY_SWITCH_KEY;
                 rep.setValue(key, ResourceConstants.BINARY_SWITCH_VALUE);
             } catch (OcException e) {
-                Base.showOutPut("Unable to set representation, Exception Occured!! reason: " + e.getMessage());
+                printOutput("Unable to set representation, Exception Occured!! reason: " + e.getMessage());
             }
 
             // Invoke resource's post API with rep, query map and the callback parameter
@@ -738,13 +742,13 @@ public class RITestAppAction extends Base {
             try {
                 m_foundResourceList.get(selection).put(rep, qpMap, onPut, m_qos);
             } catch (OcException e) {
-                Base.showOutPut("Unable to send PUT request, Exception Occured!! reason: " + e.getMessage());
+                printOutput("Unable to send PUT request, Exception Occured!! reason: " + e.getMessage());
             }
-            Base.showOutPut("PUT request sent!!");
+            printOutput("PUT request sent!!");
             waitForCallback();
 
         } else {
-            Base.showOutPut("No resource to send PUT!!");
+            printOutput("No resource to send PUT!!");
         }
     }
 
@@ -759,24 +763,24 @@ public class RITestAppAction extends Base {
         boolean validChoice = false;
 
         do {
-            Base.showOutPut("Please select attribute data type and press Enter: ");
-            Base.showOutPut("\t\t 1. Integer");
-            Base.showOutPut("\t\t 2. Floating Point - Single Precision");
-            Base.showOutPut("\t\t 3. Floating Point - Double Precision");
-            Base.showOutPut("\t\t 4. Boolean");
-            Base.showOutPut("\t\t 5. String");
+            printOutput("Please select attribute data type and press Enter: ");
+            printOutput("\t\t 1. Integer");
+            printOutput("\t\t 2. Floating Point - Single Precision");
+            printOutput("\t\t 3. Floating Point - Double Precision");
+            printOutput("\t\t 4. Boolean");
+            printOutput("\t\t 5. String");
             choice = (int) Integer.valueOf(waitAndGetInputFromUser());
 
             if (choice > 0 && choice < 5) {
                 validChoice = true;
             } else {
                 validChoice = false;
-                Base.showOutPut("Invalid input for attribute data type. Please select between 1 and 5");
+                printOutput("Invalid input for attribute data type. Please select between 1 and 5");
             }
 
         } while (!validChoice);
 
-        Base.showOutPut("Please input Attribute Value: ");
+        printOutput("Please input Attribute Value: ");
 
         try {
             switch (choice) {
@@ -793,7 +797,7 @@ public class RITestAppAction extends Base {
                     rep.setValue(key, valueDouble);
                     break;
                 case 4:
-                    Base.showOutPut("Please provide boolean value(O for False, 1 for True) : ");
+                    printOutput("Please provide boolean value(O for False, 1 for True) : ");
                     valueBool = (boolean) Boolean.valueOf(waitAndGetInputFromUser());
                     rep.setValue(key, valueBool);
                     break;
@@ -803,7 +807,7 @@ public class RITestAppAction extends Base {
                     break;
             }
         } catch (OcException e) {
-            Base.showOutPut("Unable to set representation, exception occurred: " + e.getMessage());
+            printOutput("Unable to set representation, exception occurred: " + e.getMessage());
         }
 
         return rep;
@@ -814,7 +818,7 @@ public class RITestAppAction extends Base {
         if (selection != -1) {
             String key = "";
 
-            Base.showOutPut("Please input Attribute Key: ");
+            printOutput("Please input Attribute Key: ");
             key = waitAndGetInputFromUser();
 
             OcRepresentation rep = m_createdResourceList.get(selection).getRepresentation();
@@ -822,16 +826,16 @@ public class RITestAppAction extends Base {
             if (rep.hasAttribute(key)) {
                 rep = setAttributeValueFromUser(rep, key);
                 m_createdResourceList.get(selection).setResourceRepresentation(rep);
-                Base.showOutPut("Successfully updated resource attribute!!");
+                printOutput("Successfully updated resource attribute!!");
                 m_resourceHelper.printRepresentation(rep);
                 m_createdResourceList.get(selection).notifyObservers(
                         m_createdResourceList.get(selection));
             } else {
-                Base.showOutPut("The resource does not have the mentioned attribute");
+                printOutput("The resource does not have the mentioned attribute");
             }
 
         } else {
-            Base.showOutPut("No resource to Update!!");
+            printOutput("No resource to Update!!");
         }
     }
 
@@ -839,25 +843,27 @@ public class RITestAppAction extends Base {
         int selection = selectResource();
         if (selection != -1) {
             OcRepresentation rep = new OcRepresentation();
-            String key = "";
+            String key = ResourceConstants.TEMPERATURE_KEY;
+            tempDeviation = tempDeviation * (-1);
+            double value = targetTemp - tempDeviation;
 
-            Base.showOutPut("Please input Attribute Key: ");
+            printOutput("Please input Attribute Key: ");
             key = waitAndGetInputFromUser();
-            rep = setAttributeValueFromUser(rep, key);
 
             // Invoke resource's put API with rep, query map and the callback parameter
-            Base.showOutPut("Sending Partial Update Message(POST)...");
+            printOutput("Sending Partial Update Message(POST)...");
             Map<String, String> qpMap = new HashMap<String, String>();
             try {
+                rep.setValue(key, value);
                 m_foundResourceList.get(selection).post(rep, qpMap, onPost, m_qos);
             } catch (OcException e) {
-                Base.showOutPut("Unbable tosend POST request, Exception occurred: " + e.getMessage());
+                printOutput("Unbable tosend POST request, Exception occurred: " + e.getMessage());
             }
-            Base.showOutPut("POST request sent!!");
+            printOutput("POST request sent!!");
             waitForCallback();
 
         } else {
-            Base.showOutPut("No resource to send POST!!");
+            printOutput("No resource to send POST!!");
         }
     }
 
@@ -866,7 +872,7 @@ public class RITestAppAction extends Base {
         if (selection != -1) {
             OcRepresentation rep = new OcRepresentation();
 
-            Base.showOutPut("Sending Subordinate Resource Create Message(POST)...");
+            printOutput("Sending Subordinate Resource Create Message(POST)...");
 
             Vector<String> resourceTypes = new Vector<String>();
             String key = ResourceConstants.URI_KEY;
@@ -880,59 +886,59 @@ public class RITestAppAction extends Base {
             try {
                 rep.setValue(key, attrValue);
             } catch (OcException e) {
-                Base.showOutPut("Unbable to set representation, Exception occurred: " + e.getMessage());
+                printOutput("Unbable to set representation, Exception occurred: " + e.getMessage());
             }
 
             // Invoke resource's post API with rep, query map and the callback parameter
             try {
                 m_foundResourceList.get(selection).post(rep, new HashMap<String, String>(), onPost, m_qos);
             } catch (OcException e) {
-                Base.showOutPut("Unbable to send POST request, Exception occurred: " + e.getMessage());
+                printOutput("Unbable to send POST request, Exception occurred: " + e.getMessage());
             }
-            Base.showOutPut("POST request sent!!");
+            printOutput("POST request sent!!");
             waitForCallback();
 
         } else {
-            Base.showOutPut("No resource to send POST!!");
+            printOutput("No resource to send POST!!");
         }
     }
 
     public void sendDeleteRequest() {
         int selection = selectResource();
         if (selection != -1) {
-            Base.showOutPut("Sending Delete Request...");
+            printOutput("Sending Delete Request...");
 
             // Invoke resource's delete API with the callback parameter
             OcResource resource = m_foundResourceList.get(selection);
             try {
                 resource.deleteResource(onDelete);
             } catch (OcException e) {
-                Base.showOutPut("Unbable to send DELETE request, Exception occurred: " + e.getMessage());
+                printOutput("Unbable to send DELETE request, Exception occurred: " + e.getMessage());
             }
-            Base.showOutPut("DELETE request sent!!");
+            printOutput("DELETE request sent!!");
             waitForCallback();
         } else {
-            Base.showOutPut("No resource to send DELETE!!");
+            printOutput("No resource to send DELETE!!");
         }
     }
 
     public void observeResource() {
         int selection = selectResource();
         if (selection != -1) {
-            Base.showOutPut("Observing resource...");
+            printOutput("Observing resource...");
 
             OcResource resource = m_foundResourceList.get(selection);
             try {
                 resource.observe(ObserveType.OBSERVE, new HashMap<String, String>(), onObserve, m_qos);
             } catch (OcException e) {
-                Base.showOutPut("Unbable to Observe resource, Exception occurred: " + e.getMessage());
+                printOutput("Unbable to Observe resource, Exception occurred: " + e.getMessage());
             }
-            Base.showOutPut("Observe request sent!!");
+            printOutput("Observe request sent!!");
             m_isObservingResource = true;
             waitForCallback();
 
         } else {
-            Base.showOutPut("No resource to Observe!!");
+            printOutput("No resource to Observe!!");
         }
     }
 
@@ -940,21 +946,21 @@ public class RITestAppAction extends Base {
         int selection = selectResource();
         if (selection != -1) {
             if (m_isObservingResource) {
-                Base.showOutPut("Canceling Observe resource...");
+                printOutput("Canceling Observe resource...");
 
                 OcResource resource = m_foundResourceList.get(selection);
                 try {
                     resource.cancelObserve(m_qos);
                 } catch (OcException e) {
-                    Base.showOutPut("Unbable to Cancel Observe resource, Exception occurred: " + e.getMessage());
+                    printOutput("Unbable to Cancel Observe resource, Exception occurred: " + e.getMessage());
                 }
-                Base.showOutPut("Cancel Observe request sent!!");
+                printOutput("Cancel Observe request sent!!");
                 m_isObservingResource = false;
             } else {
-                Base.showOutPut("No resource is being Observed currently!!");
+                printOutput("No resource is being Observed currently!!");
             }
         } else {
-            Base.showOutPut("No resource to cancel Observe!!");
+            printOutput("No resource to cancel Observe!!");
         }
     }
 
@@ -962,16 +968,16 @@ public class RITestAppAction extends Base {
         int selection = selectResource();
         if (selection != -1) {
             if (m_isObservingResource) {
-                Base.showOutPut("Canceling Observe passively...");
+                printOutput("Canceling Observe passively...");
 
                 // Currently, there is no api to cancel observe passively
                 OcResource resource = m_foundResourceList.get(selection);
-                Base.showOutPut("Cancel Observe request not sent!! Currently there is no API!!");
+                printOutput("Cancel Observe request not sent!! Currently there is no API!!");
             } else {
-                Base.showOutPut("No resource is being Observed currently!!");
+                printOutput("No resource is being Observed currently!!");
             }
         } else {
-            Base.showOutPut("No resource to cancel Observe!!");
+            printOutput("No resource to cancel Observe!!");
         }
     }
 
@@ -980,16 +986,19 @@ public class RITestAppAction extends Base {
         int selection = -1;
         int totalResource = m_foundResourceList.size();
         if (totalResource > 0) {
-            Base.showOutPut("\tPlease select your desired resource no. to send request and press Enter:");
+            printOutput("\tPlease select your desired resource no. to send request and press Enter:");
 
             for (int i = 1; i <= totalResource; i++) {
-                Base.showOutPut("\t\t" + i + ". " + m_foundResourceList.get(i - 1).getUniqueIdentifier());
+                String targetResUri =  m_foundResourceList.get(i - 1).getUri();
+                if (targetResUri.equals(ResourceConstants.AC_AIR_FLOW_URI)){
+                    selection = i;
+                    printOutput("Selecting resource for CRUDN having URI: " + targetResUri);
+                }
             }
 
-            selection = (int) Integer.valueOf(waitAndGetInputFromUser());
 
             while (selection < 1 || selection > totalResource) {
-                Base.showOutPut("Invalid selection of resource. Please select a resource no. between 1 & "
+                printOutput("Invalid selection of resource. Please select a resource no. between 1 & "
                         + totalResource);
                 selection = (int) Integer.valueOf(waitAndGetInputFromUser());
             }
@@ -1003,17 +1012,17 @@ public class RITestAppAction extends Base {
         int selection = -1;
         int totalResource = m_createdResourceList.size();
         if (totalResource > 0) {
-            Base.showOutPut("\tPlease select your desired resource no. to update attribute:");
+            printOutput("\tPlease select your desired resource no. to update attribute:");
 
             int resourceCount = 1;
             for (SampleResource localResource : m_createdResourceList) {
-                Base.showOutPut("\t\t" + resourceCount++ + ". " + localResource.getUri());
+                printOutput("\t\t" + resourceCount++ + ". " + localResource.getUri());
             }
 
             selection = (int) Integer.valueOf(waitAndGetInputFromUser());
 
             while (selection < 1 || selection > totalResource) {
-                Base.showOutPut("Invalid selection of resource. Please select a resource no. between 1 & "
+                printOutput("Invalid selection of resource. Please select a resource no. between 1 & "
                         + totalResource);
                 selection = (int) Integer.valueOf(waitAndGetInputFromUser());
             }
@@ -1085,20 +1094,20 @@ public class RITestAppAction extends Base {
         createAirConDevice(isSecured);
     }
 
-    public void createNonsScuredAirCon() {
+    public void createNonSecuredAirCon() {
         boolean isSecured = false;
         createAirConDevice(isSecured);
     }
 
     public void findResourceWithType() {
-        Base.showOutPut("\tPlease type the Resource Type to find, then press Enter: ");
+        printOutput("\tPlease type the Resource Type to find, then press Enter: ");
         String resourceType = waitAndGetInputFromUser();
         String host = "";
         findResource(resourceType, host);
     }
 
     public void findResourceWithQuery() {
-        Base.showOutPut("\tPlease type the Query to find resource, then press Enter: ");
+        printOutput("\tPlease type the Query to find resource, then press Enter: ");
         String query = waitAndGetInputFromUser();
         String host = "";
         findAllResources(host, query);
@@ -1113,9 +1122,9 @@ public class RITestAppAction extends Base {
         if (selection != -1) {
             host = m_foundResourceList.get(selection).getHost();
         } else {
-            Base.showOutPut("Please enter the IP of the Resource host, then press Enter: ");
+            printOutput("Please enter the IP of the Resource host, then press Enter: ");
             ip = waitAndGetInputFromUser();
-            Base.showOutPut("Please enter the port of the Resource host, then press Enter: ");
+            printOutput("Please enter the port of the Resource host, then press Enter: ");
             port = waitAndGetInputFromUser();
 
             host = ip + ":" + port;
@@ -1132,14 +1141,14 @@ public class RITestAppAction extends Base {
 
     public void findAllResourceUnicastWithQuery() {
         String host = getResourceHost();
-        Base.showOutPut("\tPlease type the Query to find resource, then press Enter: ");
+        printOutput("\tPlease type the Query to find resource, then press Enter: ");
         String query = waitAndGetInputFromUser();
         findAllResources(host, query);
     }
 
     public void findResourceUnicast() {
         String host = getResourceHost();
-        Base.showOutPut("\tPlease type the resource type to find, then press Enter: ");
+        printOutput("\tPlease type the resource type to find, then press Enter: ");
         String resourceType = waitAndGetInputFromUser();
         findResource(resourceType, host);
     }
@@ -1147,9 +1156,9 @@ public class RITestAppAction extends Base {
     public void sendGetWithQuery() {
         String queryKey = "";
         String queryValue = "";
-        Base.showOutPut("Please type query key, then press Enter: ");
+        printOutput("Please type query key, then press Enter: ");
         queryKey = waitAndGetInputFromUser();
-        Base.showOutPut("Please type query value, then press Enter: ");
+        printOutput("Please type query value, then press Enter: ");
         queryValue = waitAndGetInputFromUser();
         sendGetRequestWithQuery(queryKey, queryValue);
     }

@@ -21,11 +21,9 @@
 apply from: "../../../../../build/android/build.gradle"
 
 project.buildDir = "${binDirectory}/ritestapp"
-def riAARFileDir = "${iotivityRootDirectoryFromModules}/service/resource-introspection/android/service/build/outputs/aar"
-def riAARFile = "iotivity-armeabi-service-${buildmode}"
 
 buildscript {
-    repositories { 
+    repositories {
         jcenter()
     }
     dependencies {
@@ -35,7 +33,7 @@ buildscript {
 
 repositories {
         flatDir{
-                dirs "$baseAARFileDirFromModules", "${riAARFileDir}"
+                dirs "${baseAARFileDirFromModules}"
         }
 }
 
@@ -49,8 +47,9 @@ android {
       
         main {
               manifest.srcFile 'AndroidManifest.xml'
-              java.srcDirs "${testAppFrameworkSrcDir}"
               java.srcDirs 'src'
+              java.srcDirs "${testCommonUtilSrcDirectory}/resource"
+			  java.srcDirs "${testAppFrameworkSrcDir}"
               jni.srcDirs = [] //disable automatic ndk-build 
         }
     }
@@ -66,23 +65,15 @@ android {
       resValue 'string', 'app_name', 'RI TestApp'
     }
 
-    println ("\nConfigured $commonText android properties")
-}
-
-android.applicationVariants.all{ variant ->
-       variant.outputs.each { output ->
-         output.processResources.manifestFile = file('AndroidManifest.xml')
-         output.processManifest.enabled=false
-       }
 }
 
 dependencies {
-    compile(name:"${baseAARFile}", ext:'aar')
-    compile(name:"${riAARFile}", ext:'aar')
+    compile fileTree(dir: "${androidLibFileDirFromModules}", include: ['*.jar'])
+    compile(name:"${baseAARFile}", ext:'aar')    
     println ("\n$commonText Library Dependency Resolved")     
 }
 
-task rebuild (dependsOn:['deleteBuildDirectory', 'installDebug']) << {
+task ribuild (dependsOn:['deleteBuildDirectory', 'installDebug']) << {
    println ("\n############# Finished $commonText #############\n")
 }
 

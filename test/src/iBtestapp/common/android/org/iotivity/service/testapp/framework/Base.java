@@ -29,7 +29,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -42,6 +44,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -49,40 +52,59 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.text.method.ScrollingMovementMethod;
+import android.view.Display;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.os.StrictMode;
+import android.os.Message;
+import android.os.Handler;
+import android.os.Looper;
 
 public class Base extends Activity {
-    private static final String LOG_HEADER                  = "Log:\n";
-    private static final String INVOCATION_TARGET_EXCEPTION = "InvocationTargetException";
-    private static final String ILLEGAL_ARGUMENT_EXCEPTION  = "IllegalArgumentException";
-    private static final String ILLEGAL_ACCESS_EXCEPTION    = "IllegalAccessException";
-    private static Context      context;
-    private static final String EMPTY_TEXT_STRING           = "";
-    private static final String ACTION_NOT_FOUND_MESSAGE    = "Corresponding action not found";
-    private static final String ACTIONS_REGISTER_MESSAGE    = "Actions are not registered";
-    private static final String INVALID_MENU_OPTION_MESSAGE = "Menu option does not exist";
-    private static final String ACTION_BUTTON_TEXT          = "Execute";
-    private static final String INPUT_HINT_TEXT             = "Input menu option number";
-    private static String       outPutString                = LOG_HEADER;
-    private Object              actionObject;
-    private static TextView     outputTextView;
+    private static final String        REGISTER_DIALOG_MESSAGE        = "Register dialog first";
+    private static final String        INPUT_TEXT_DIALOG_MESSAGE      = "Input text got in dialog : ";
+    private static final String        SHOW_DIALOG_VALIDATION_MESSAGE = "Show Dialog First";
+    private static final String        MENU_SEPERATOR_TEXT            = ". ";
+    private static final String        SPLIT_TEXT                     = "\\ ";
+    private static final String        NEW_LINE                       = "\n";
+    private static final String        CANCEL                         = "CANCEL";
+    private static final String        OK                             = "OK";
+    private static final String        LOG_HEADER                     = "Log:\n";
+    private static final String        INVOCATION_TARGET_EXCEPTION    = "InvocationTargetException";
+    private static final String        ILLEGAL_ARGUMENT_EXCEPTION     = "IllegalArgumentException";
+    private static final String        ILLEGAL_ACCESS_EXCEPTION       = "IllegalAccessException";
+    private static Context             context;
+    private static final String        EMPTY_TEXT_STRING              = "";
+    private static final String        ACTION_NOT_FOUND_MESSAGE       = "Corresponding action not found";
+    private static final String        ACTIONS_REGISTER_MESSAGE       = "Actions are not registered";
+    private static final String        INVALID_MENU_OPTION_MESSAGE    = "Menu option does not exist";
+    private static final String        ACTION_BUTTON_TEXT             = "Execute";
+    private static final String        INPUT_HINT_TEXT                = "Input menu option number";
+    private static String              outPutString                   = LOG_HEADER;
+    private Object                     actionObject;
+    private static TextView            outputTextView;
+    private static AlertDialog         alertDialog;
+    private static String              dialogInputText;
+    private int                        screenWidth;
+    private int                        screenHeight;
+    Object                             syncObj                        = new Object();
+    private static AlertDialog.Builder alert;
+    private static boolean             isfinished;
+    static Handler                     handler;
+    private static boolean             mResult;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         context = getApplicationContext();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-        return super.onOptionsItemSelected(item);
-
+        WindowManager wm = (WindowManager) context
+                .getSystemService(Context.WINDOW_SERVICE);
+        Display display = wm.getDefaultDisplay();
+        DisplayMetrics metrics = new DisplayMetrics();
+        display.getMetrics(metrics);
+        screenWidth = metrics.widthPixels;
+        screenHeight = metrics.heightPixels;
     }
 
     public static Context getContext() {
@@ -93,6 +115,16 @@ public class Base extends Activity {
             final Map<String, MenuInfo> menuMap, Object actionClassObj) {
         createMenu(appTitle, menuMap);
         registerActions(actionClassObj);
+    }
+
+    public void RegisterApp(String appTitle,
+            final Map<String, MenuInfo> menuMap, Object actionClassObj,
+            DialogInfo dialogInfo) {
+        createMenu(appTitle, menuMap);
+        registerActions(actionClassObj);
+        if (dialogInfo != null) {
+            createDialog(dialogInfo.title, dialogInfo.message);
+        }
     }
 
     private void createMenu(String appTitle,
@@ -138,10 +170,15 @@ public class Base extends Activity {
         TextView menuTextView = new TextView(this);
         menuTextView.setLayoutParams(rowParams);
         menuTextView.setText(getMenuString(menuMap));
+        menuTextView.setMaxWidth(menuTextView.getWidth() + 500);
         menuRow.addView(menuTextView);
         menuTextView.setTextSize(18);
+        menuTextView.setHeight(screenHeight / 2);
+        menuTextView.setVerticalScrollBarEnabled(true);
+        menuTextView.setMovementMethod(new ScrollingMovementMethod());
 
         final EditText inputEditTextView = new EditText(this);
+
         menuTextView.setLayoutParams(rowParams);
         inputRow.addView(inputEditTextView);
         inputEditTextView.setHint(INPUT_HINT_TEXT);
@@ -156,7 +193,7 @@ public class Base extends Activity {
         outputTextView.setLayoutParams(rowParams);
         outputTextView.setVerticalScrollBarEnabled(true);
         outputTextView.setMovementMethod(new ScrollingMovementMethod());
-        outputTextView.setMaxWidth(outputTextView.getWidth());
+        outputTextView.setMaxWidth(outputTextView.getWidth() + 500);
         outputRow.addView(outputTextView);
 
         parentLayout.addView(titleBarRow,
@@ -195,10 +232,10 @@ public class Base extends Activity {
             public void onClick(View arg0) {
                 String inputText = inputEditTextView.getText().toString();
                 if (!inputText.isEmpty()) {
-                    String key = "";
+                    String key = EMPTY_TEXT_STRING;
                     String argument = null;
-                    if (inputText.contains(" ")) {
-                        String temptext[] = inputText.split("\\ ");
+                    if (inputText.contains(EMPTY_TEXT_STRING)) {
+                        String temptext[] = inputText.split(SPLIT_TEXT);
                         key = temptext[0];
                         if (temptext.length > 1)
                             argument = temptext[1];
@@ -224,9 +261,9 @@ public class Base extends Activity {
         while (i.hasNext()) {
             Map.Entry<String, MenuInfo> me = (Map.Entry<String, MenuInfo>) i
                     .next();
-            text += me.getKey() + ". ";
+            text += me.getKey() + MENU_SEPERATOR_TEXT;
             MenuInfo menuInfo = (MenuInfo) me.getValue();
-            text += menuInfo.menuText + "\n";
+            text += menuInfo.menuText + NEW_LINE;
         }
         return text;
     }
@@ -238,8 +275,9 @@ public class Base extends Activity {
     }
 
     public static void showOutPut(String outputText) {
-        Base.outPutString += outputText + "\n";
+        Base.outPutString += outputText + NEW_LINE;
         outputTextView.setText(outPutString);
+        Log.d(getContext().getPackageName(), outputText);
     }
 
     public static void clearOutPut() {
@@ -307,5 +345,47 @@ public class Base extends Activity {
         InputMethodManager inputManager = (InputMethodManager) getSystemService(
                 Context.INPUT_METHOD_SERVICE);
         inputManager.hideSoftInputFromWindow(inputEditView.getWindowToken(), 0);
+    }
+
+    private void createDialog(String title, String message) {
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle(title);
+        alert.setMessage(message);
+        final EditText input = new EditText(this);
+        alert.setView(input);
+        alert.setPositiveButton(OK, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                dialogInputText = input.getEditableText().toString();
+                mResult = true;
+                handler.sendMessage(handler.obtainMessage());
+            }
+        });
+        alert.setNegativeButton(CANCEL, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                mResult = false;
+                handler.sendMessage(handler.obtainMessage());
+                dialog.cancel();
+            }
+        });
+        alertDialog = alert.create();
+    }
+
+    public static boolean showDialog() {
+        handler = new Handler() {
+            @Override
+            public void handleMessage(Message mesg) {
+                throw new RuntimeException();
+            }
+        };
+        alertDialog.show();
+        try {
+            Looper.loop();
+        } catch (RuntimeException e2) {
+        }
+        return mResult;
+    }
+
+    public static String getDialogText() {
+        return dialogInputText;
     }
 }

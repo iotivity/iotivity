@@ -29,7 +29,6 @@ buildscript {
 
 import de.undercouch.gradle.tasks.download.Download
 
-
 /*
  *Variable Initialization
 */
@@ -48,7 +47,7 @@ ext.commonText = "${moduleName}"
 if(project.hasProperty('app')){
     ext.iotivityRootDirectoryFromModules = "../../../../../.."
     ext.secTestRootDirectoryFromModules = "../../../../.."
-    ext.testAppFrameworkSrcDir = "../../../common/android" 
+    ext.testAppFrameworkSrcDir = "../../../common/android"
 }
 
 ext.testCommonUtilSrcDirectory = "${secTestRootDirectoryFromModules}/src/common/commonutil/java"
@@ -85,7 +84,7 @@ if(project.hasProperty('c')){
     for (tempArg in tempArgs) {
         caModuleArgs.add(tempArg)
     }
-}  
+}
 
 if(project.hasProperty('p')){
     println("P arguments: ${p}")
@@ -114,7 +113,6 @@ ext.architecture = "armeabi"
  *Set architecture from cmd arguments if provided
  *Default is armeabi
 */
-
 if(project.hasProperty('arch')){
     ext.architecture ="${arch}"
 }
@@ -167,7 +165,7 @@ ext.dependenciesText = "dependencies {\n    compile(name:\"${baseAARFile}\", ext
 
 /*
  *task to download junit library
- *if not exist download 
+ *if not exist download
 */
 task checkCommonLibFiles(type:Download) {
 
@@ -182,7 +180,7 @@ task checkCommonLibFiles(type:Download) {
 }
 
 /*
- * task to check iotivity base library file  
+ * task to check iotivity base library file
 */
 task checkBaseAARFile {
 
@@ -224,11 +222,10 @@ public void writeToFile() {
          f.append("\n${repoText}")
          f.append("\n${dependenciesText}")
     }
-
 }
 
 /*
- * task to build phy 
+ * task to build es
 */
 task es(type: GradleBuild, dependsOn: [checkCommonLibFiles, 'checkBaseAARFile'])  {
     buildFile = esModuleBuildFileDir
@@ -237,7 +234,7 @@ task es(type: GradleBuild, dependsOn: [checkCommonLibFiles, 'checkBaseAARFile'])
 }
 
 /*
- * task to build phy  without make library
+ * task to build es  without make library
 */
 task esWL(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile'])  {
     buildFile = esModuleBuildFileDir
@@ -255,7 +252,7 @@ task pm(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile'
 }
 
 /*
- * task to build re utc
+ * task to build re
 */
 task re(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile']) {
     buildFile = reModuleBuildFileDir
@@ -292,7 +289,7 @@ task createRCLibrary(type: Exec) {
 }
 
 /*
- * task to build rc 
+ * task to build rc
 */
 task rc(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile']) {
     buildFile = rcModuleBuildFileDir
