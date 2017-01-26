@@ -78,9 +78,6 @@
  * The value of payload size is increased until reaching belox max cbor size. */
 static const uint16_t CBOR_SIZE = 2048;
 
-/** Max cbor size payload. */
-static const uint16_t CBOR_MAX_SIZE = 4400;
-
 /** CRED size - Number of mandatory items. */
 static const uint8_t CRED_ROOT_MAP_SIZE = 4;
 static const uint8_t CRED_MAP_SIZE = 3;
