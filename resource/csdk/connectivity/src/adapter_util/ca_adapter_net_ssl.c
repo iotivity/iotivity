@@ -2218,9 +2218,9 @@ CAResult_t CAsslGenerateOwnerPsk(const CAEndpoint_t *endpoint,
     }
 
     // keyBlockLen set up according to OIC 1.1 Security Specification Section 7.3.2
-    int macKeyLen;
-    int ivSize;
-    int keySize;
+    int macKeyLen = 0;
+    int ivSize = 0;
+    int keySize = 0;
     int keyBlockLen = 0;
     if (MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256 == g_caSslContext->selectedCipher ||
         MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 == g_caSslContext->selectedCipher ||
