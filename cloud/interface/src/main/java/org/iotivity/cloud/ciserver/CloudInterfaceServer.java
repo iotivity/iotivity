@@ -28,8 +28,8 @@ import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.base.server.HttpServer;
 import org.iotivity.cloud.ciserver.DeviceServerSystem.CoapDevicePool;
-import org.iotivity.cloud.ciserver.resources.RouteResource;
 import org.iotivity.cloud.ciserver.resources.KeepAliveResource;
+import org.iotivity.cloud.ciserver.resources.RouteResource;
 import org.iotivity.cloud.ciserver.resources.proxy.account.Account;
 import org.iotivity.cloud.ciserver.resources.proxy.account.AccountSession;
 import org.iotivity.cloud.ciserver.resources.proxy.account.Acl;
@@ -47,13 +47,16 @@ import org.iotivity.cloud.util.Log;
 public class CloudInterfaceServer {
 
     public static void main(String[] args) throws Exception {
+
         Log.Init();
 
         System.out.println("-----CI SERVER-------");
 
-        if (!(args.length == 8 || args.length == 9)) {
+        if (!(args.length == 8 || args.length == 9 || args.length == 10
+                || args.length == 11)) {
             Log.e("\nCoAP-server <Port> and RD-server <Address> <Port> Account-server <Address> <Port> MQ-broker <Address> <Port> HC-proxy [HTTP-port] and TLS-mode <0|1> are required.\n"
-                    + "ex) 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686 80 0\n");
+                    + "and WebSocketLog-Server <Address> <Port> (optional)\n"
+                    + "ex) 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686 80 0 127.0.0.1 8080\n");
             return;
         }
 
@@ -65,8 +68,19 @@ public class CloudInterfaceServer {
         boolean tlsMode = false;
         if (hcProxyMode) {
             tlsMode = Integer.parseInt(args[8]) == 1;
+
         } else {
             tlsMode = Integer.parseInt(args[7]) == 1;
+        }
+
+        if (args.length == 10 || args.length == 11) {
+            if (hcProxyMode) {
+                Log.InitWebLog(args[9], args[10],
+                        CloudInterfaceServer.class.getSimpleName().toString());
+            } else {
+                Log.InitWebLog(args[8], args[9],
+                        CloudInterfaceServer.class.getSimpleName().toString());
+            }
         }
 
         ConnectorPool.addConnection("rd",
@@ -92,7 +106,7 @@ public class CloudInterfaceServer {
         AclGroup aclGroupHandler = new AclGroup();
         Certificate certHandler = new Certificate();
         AclInvite aclInviteHandler = new AclInvite();
-	Crl crlHandler = new Crl();
+        Crl crlHandler = new Crl();
         CoapDevicePool devicePool = deviceServer.getDevicePool();
 
         deviceServer.addResource(acHandler);
@@ -117,7 +131,7 @@ public class CloudInterfaceServer {
 
         deviceServer.addResource(aclInviteHandler);
 
-	deviceServer.addResource(crlHandler);
+        deviceServer.addResource(crlHandler);
 
         KeepAliveResource resKeepAlive = new KeepAliveResource(
                 new int[] { 1, 2, 4, 8 });
