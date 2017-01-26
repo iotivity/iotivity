@@ -95,13 +95,13 @@ const char * OIC_JSON_OWNERS_NAME = "ownrs";
 const char * OIC_JSON_OWNER_NAME = "ownr";
 const char * OIC_JSON_DEVOWNERID_NAME = "devowneruuid";
 #ifdef MULTIPLE_OWNER
-const char * OIC_JSON_SUBOWNERID_NAME = "subowneruuid";
+const char * OIC_JSON_SUBOWNERID_NAME = "x.org.iotivity.subowneruuid";
 #endif //MULTIPLE_OWNER
 const char * OIC_JSON_OWNED_NAME = "owned";
 const char * OIC_JSON_OXM_NAME = "oxm";
 const char * OIC_JSON_OXMS_NAME = "oxms";
 #ifdef MULTIPLE_OWNER
-const char * OIC_JSON_MOM_NAME = "mom";
+const char * OIC_JSON_MOM_NAME = "x.org.iotivity.mom";
 #endif //MULTIPLE_OWNER
 const char * OIC_JSON_OXM_TYPE_NAME = "oxmtype";
 const char * OIC_JSON_OXM_SEL_NAME = "oxmsel";
@@ -148,7 +148,7 @@ const char * OIC_JSON_RT_NAME = OC_RSRVD_RESOURCE_TYPE;
 const char * OIC_JSON_IF_NAME = OC_RSRVD_INTERFACE;
 const char * OIC_JSON_ROWNERID_NAME = "rowneruuid";
 #ifdef MULTIPLE_OWNER
-const char * OIC_JSON_EOWNERID_NAME = "eowneruuid";
+const char * OIC_JSON_EOWNERID_NAME = "x.org.iotivity.eowneruuid";
 #endif //MULTIPLE_OWNER
 const char * OIC_JSON_ENCODING_NAME = "encoding";
 const char * OIC_JSON_DATA_NAME = "data";
@@ -175,9 +175,9 @@ const char * OXM_JUST_WORKS = "oic.sec.doxm.jw";
 const char * OXM_RANDOM_DEVICE_PIN = "oic.sec.doxm.rdp";
 const char * OXM_MANUFACTURER_CERTIFICATE = "oic.sec.doxm.mfgcert";
 #ifdef MULTIPLE_OWNER
-const char * OXM_PRECONF_PIN = "oic.sec.doxm.pcp";
+const char * OXM_PRECONF_PIN = "x.org.iotivity.sec.doxm.pcp";
 #endif //MULTIPLE_OWNER
-const char * OXM_MV_JUST_WORKS = "oic.sec.doxm.mvjw";
+const char * OXM_MV_JUST_WORKS = "x.org.iotivity.sec.doxm.mvjw";
 const char * OXM_CON_MFG_CERT = "x.org.iotivity.conmfgcert";
 
 //Mutual Verified Just-Works Message Prefix
