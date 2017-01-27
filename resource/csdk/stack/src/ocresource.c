@@ -764,15 +764,15 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
         goto exit;
     }
 
-    // figure out which protocols this endpoint supports
-    if (resourcePtr->endpointType | OC_COAP)
+    // Figure out which protocols this endpoint supports
+    if (resourcePtr->endpointType & OC_COAP)
     {
         if (OC_STACK_OK == AddProtocolToLL(&protoLL, COAP_STR))
         {
             dimensions[0]++;
         }
     }
-    if (resourcePtr->endpointType | OC_COAPS)
+    if (resourcePtr->endpointType & OC_COAPS)
     {
         if (OC_STACK_OK == AddProtocolToLL(&protoLL, COAPS_STR))
         {
@@ -780,14 +780,14 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
         }
     }
 #ifdef TCP_ADAPTER
-    if (resourcePtr->endpointType | OC_COAP_TCP)
+    if (resourcePtr->endpointType & OC_COAP_TCP)
     {
         if (OC_STACK_OK == AddProtocolToLL(&protoLL, COAP_STR))
         {
             dimensions[0]++;
         }
     }
-    if (resourcePtr->endpointType | OC_COAPS_TCP)
+    if (resourcePtr->endpointType & OC_COAPS_TCP)
     {
         if (OC_STACK_OK == AddProtocolToLL(&protoLL, COAPS_STR))
         {
@@ -796,14 +796,14 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
     }
 #endif
 #ifdef HTTP_ADAPTER
-    if (resourcePtr->endpointType | OC_HTTP)
+    if (resourcePtr->endpointType & OC_HTTP)
     {
         if (OC_STACK_OK == AddProtocolToLL(&protoLL, HTTP_STR))
         {
             dimensions[0]++;
         }
     }
-    if (resourcePtr->endpointType | OC_HTTPS)
+    if (resourcePtr->endpointType & OC_HTTPS)
     {
         if (OC_STACK_OK == AddProtocolToLL(&protoLL, HTTPS_STR))
         {
@@ -812,7 +812,7 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
     }
 #endif
 #ifdef EDR_ADAPTER
-    if (resourcePtr->endpointType | OC_COAP_RFCOMM)
+    if (resourcePtr->endpointType & OC_COAP_RFCOMM)
     {
         if (OC_STACK_OK == AddProtocolToLL(&protoLL, COAP_STR))
         {
