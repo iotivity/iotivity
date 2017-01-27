@@ -77,7 +77,7 @@ OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t*
     #undef CborNeedsUpdating
 
     OCStackResult ret = OC_STACK_INVALID_PARAM;
-    int64_t err;
+    int64_t err = CborErrorOutOfMemory;
     uint8_t *out = NULL;
     size_t curSize = INIT_SIZE;
 
@@ -91,32 +91,24 @@ OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t*
         size_t securityPayloadSize = ((OCSecurityPayload *)payload)->payloadSize;
         if (securityPayloadSize > 0)
         {
-            out = (uint8_t *)OICCalloc(1, ((OCSecurityPayload *)payload)->payloadSize);
-            VERIFY_PARAM_NON_NULL(TAG, out, "Failed to allocate security payload");
+            curSize = securityPayloadSize;
         }
     }
-    if (out == NULL)
+
+    ret = OC_STACK_NO_MEMORY;
+
+    for (;;)
     {
         out = (uint8_t *)OICCalloc(1, curSize);
         VERIFY_PARAM_NON_NULL(TAG, out, "Failed to allocate payload");
-    }
-    err = OCConvertPayloadHelper(payload, out, &curSize);
-    ret = OC_STACK_NO_MEMORY;
-
-    if (err == CborErrorOutOfMemory)
-    {
-        // reallocate "out" and try again!
-        uint8_t *out2 = (uint8_t *)OICRealloc(out, curSize);
-        VERIFY_PARAM_NON_NULL(TAG, out2, "Failed to increase payload size");
-        out = out2;
         err = OCConvertPayloadHelper(payload, out, &curSize);
-        while (err == CborErrorOutOfMemory)
+
+        if (CborErrorOutOfMemory != err)
         {
-            uint8_t *out2 = (uint8_t *)OICRealloc(out, curSize);
-            VERIFY_PARAM_NON_NULL(TAG, out2, "Failed to increase payload size");
-            out = out2;
-            err = OCConvertPayloadHelper(payload, out, &curSize);
+            break;
         }
+
+        OICFree(out);
     }
 
     if (err == CborNoError)
