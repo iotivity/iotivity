@@ -4,7 +4,7 @@
 %define DEST_LIB_DIR  %{buildroot}/%{_libdir}
 
 Name: com-oic-ri
-Version:    1.2.1
+Version:    1.3.0
 Release:    0
 Summary: Tizen oicri application
 Group: Network & Connectivity / IoT Connectivity
