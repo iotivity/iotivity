@@ -25,7 +25,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include <payload_logging.h>
+#include "payload_logging.h"
 #include "utlist.h"
 #include "logger.h"
 #include "oic_malloc.h"
@@ -2057,7 +2057,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
     OIC_LOG_V(INFO, TAG, "Payload Size: %d", 
               ((OCRepPayload*)clientResponse->payload)->values->str);
     OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-    OIC_LOG(INFO, TAG, ("=============> Get Response"));
+    OIC_LOG(INFO, TAG, "=============> Get Response");
 
     if (clientResponse->numRcvdVendorSpecificHeaderOptions > 0)
     {
