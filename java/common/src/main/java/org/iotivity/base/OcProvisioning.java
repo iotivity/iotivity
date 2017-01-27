@@ -221,4 +221,23 @@ public class OcProvisioning {
     }
     private static native int saveTrustCertChain1(byte[] trustCertChain, int encodingType)
         throws OcException;
+
+   /**
+     *  Method to save pin type.
+     *
+     *  @param pinSize Byte Len of Random pin.
+     *  @param pinType Enumset of pin, see PinType for enums
+     *  @throws OcException
+     */
+    public static int setPinType(int pinSize, EnumSet<PinType>  pinType) throws OcException {
+
+        int pinTypeInt = 0;
+
+        for (PinType ops : PinType.values()) {
+            if (pinType.contains(ops))
+                pinTypeInt |= ops.getValue();
+        }
+        return setPinType0(pinSize, pinTypeInt);
+    }
+    private static native int setPinType0(int pinSize, int pinType) throws OcException;
 }

@@ -338,6 +338,33 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_unsetDisplayNumList
 
 /*
  * Class:     org_iotivity_base_OcProvisioning
+ * Method:    setPinType0
+ * Signature: (II)I
+ */
+JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setPinType0
+  (JNIEnv *env, jclass thiz, jint pinSize, jint pinType)
+{
+    LOGI("OcProvisioning_setPinType0");
+
+    OCStackResult result = OC_STACK_ERROR;
+    try
+    {
+        result = OCSecure::setRandomPinPolicy((size_t)pinSize, (OicSecPinType_t)pinType);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Failed to set PinType");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+    }
+    return result;
+}
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
  * Method:    setConfirmNumListener
  * Signature: (Lorg/iotivity/base/OcProvisioning/ConfirmNumListener;)V
  */

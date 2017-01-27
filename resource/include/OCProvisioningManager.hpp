@@ -268,12 +268,17 @@ namespace OC
              * to be registered at a time by setInputPinCallback and registerInputPinCallback. 
              * Use unsetInputPinCallback to unregister a callback set by setInputPinCallback. 
              *
+
              * @deprecated Use registerInputPinCallback instead.
              *
              * @param InputPinCallback inputPin callback function.
              * @return OC_STACK_OK in case of success and other value otherwise.
              *         OC_STACK_INVALID_CALLBACK if inputPin is invalid.
              *         OC_STACK_DUPLICATE_REQUEST if an input pin callback has already been set.
+
+
+
+
              */
             static OCStackResult setInputPinCallback(InputPinCallback inputPin);
 
@@ -287,6 +292,7 @@ namespace OC
             static OCStackResult unsetInputPinCallback();
 
             /**
+
              * API to register for a callback to input a pin. Only one input pin callback is allowed
              * to be registered at a time by setInputPinCallback and registerInputPinCallback. Use 
              * deregisterInputPinCallback to unregister a callback set by registerInputPinCallback.
@@ -332,6 +338,15 @@ namespace OC
             static OCStackResult unsetDisplayPinCB();
 
             /**
+             * API to set Pin Type policy.
+             *
+             * @param  pinSize pin Size
+             * @param  pinType Type of the pin.
+             * @return OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult setRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType);
+
+            /**
              * API to register for a callback to display a pin. Only one display pin callback is
              * allowed to be registered at a time by setDisplayPinCB and registerDisplayPinCallback.
              * Use deregisterDisplayPinCallback to unregister a callback set by registerDisplayPinCallback.
@@ -352,6 +367,15 @@ namespace OC
              * @return  OC_STACK_OK in case of success and other value otherwise.
              */
             static OCStackResult deregisterDisplayPinCallback(DisplayPinCallbackHandle displayPinCallbackHandle);
+
+
+
+
+
+
+
+
+
 
             /**
              * API to get status of all the devices in current subnet. The status include endpoint
