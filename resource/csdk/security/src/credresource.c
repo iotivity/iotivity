@@ -296,33 +296,22 @@ static size_t OicSecCredCount(const OicSecCred_t *secCred)
     return size;
 }
 
-static char* EncodingValueToString(OicEncodingType_t encoding)
+static const char* EncodingValueToString(OicEncodingType_t encoding)
 {
-    char* str = NULL;
     switch (encoding)
     {
-        case OIC_ENCODING_RAW:
-            str = (char*)OIC_SEC_ENCODING_RAW;
-            break;
-        case OIC_ENCODING_BASE64:
-            str = (char*)OIC_SEC_ENCODING_BASE64;
-            break;
-        case OIC_ENCODING_DER:
-            str = (char*)OIC_SEC_ENCODING_DER;
-            break;
-        case OIC_ENCODING_PEM:
-            str = (char*)OIC_SEC_ENCODING_PEM;
-            break;
-        default:
-            break;
+        case OIC_ENCODING_RAW:    return OIC_SEC_ENCODING_RAW;
+        case OIC_ENCODING_BASE64: return OIC_SEC_ENCODING_BASE64;
+        case OIC_ENCODING_DER:    return OIC_SEC_ENCODING_DER;
+        case OIC_ENCODING_PEM:    return OIC_SEC_ENCODING_PEM;
+        default:                  return NULL;
     }
-    return str;
 }
 
 static CborError SerializeEncodingToCborInternal(CborEncoder *map, const OicSecKey_t *value)
 {
     CborError cborEncoderResult = CborNoError;
-    char *encoding = EncodingValueToString(value->encoding);
+    const char *encoding = EncodingValueToString(value->encoding);
     if (encoding)
     {
         cborEncoderResult = cbor_encode_text_string(map, OIC_JSON_ENCODING_NAME,
@@ -467,7 +456,8 @@ static CborError DeserializeEncodingFromCborInternal(CborValue *map, char *name,
             value->encoding = OIC_ENCODING_RAW;
             OIC_LOG(WARNING, TAG, "Unknown encoding type detected.");
         }
-        OICFree(strEncoding);
+        //Because cbor using malloc directly, it is required to use free() instead of OICFree
+        free(strEncoding);
     }
     exit:
     return cborFindResult;
@@ -500,7 +490,8 @@ static CborError DeserializeEncodingFromCbor(CborValue *rootMap, OicSecKey_t *va
             cborFindResult = cbor_value_advance(&map);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Map.");
         }
-        OICFree(name);
+        //Because cbor using malloc directly, it is required to use free() instead of OICFree
+        free(name);
     }
     exit:
     return cborFindResult;
@@ -545,7 +536,8 @@ static CborError DeserializeSecOptFromCbor(CborValue *rootMap, OicSecOpt_t *valu
             cborFindResult = cbor_value_advance(&map);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Map.");
         }
-        OICFree(name);
+        //Because cbor using malloc directly, it is required to use free() instead of OICFree
+        free(name);
     }
     exit:
     return cborFindResult;
@@ -933,7 +925,9 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                     ret = ConvertStrToUuid(subjectid, &cred->subject);
                                     VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
                                 }
-                                OICFree(subjectid);
+                                //Because cbor using malloc directly
+                                //It is required to use free() instead of OICFree
+                                free(subjectid);
                             }
                             // credtype
                             if (strcmp(name, OIC_JSON_CREDTYPE_NAME)  == 0)
@@ -997,7 +991,9 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                     VERIFY_NOT_NULL(TAG, cred->eownerID, ERROR);
                                 }
                                 ret = ConvertStrToUuid(eowner, cred->eownerID);
-                                OICFree(eowner);
+                                //Because cbor using malloc directly
+                                //It is required to use free() instead of OICFree
+                                free(eowner);
                                 VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
                             }
 #endif //MULTIPLE_OWNER
@@ -1007,7 +1003,9 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 cborFindResult = cbor_value_advance(&credMap);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing CRED Map.");
                             }
-                            OICFree(name);
+                            //Because cbor using malloc directly
+                            //It is required to use free() instead of OICFree
+                            free(name);
                         }
                     }
                     cred->next = NULL;
@@ -1028,13 +1026,17 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
 
                 ret = ConvertStrToUuid(stRowner, &headCred->rownerID);
                 VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
-                OICFree(stRowner);
+                //Because cbor using malloc directly
+                //It is required to use free() instead of OICFree
+                free(stRowner);
             }
             else if (NULL != gCred)
             {
                 memcpy(&(headCred->rownerID), &(gCred->rownerID), sizeof(OicUuid_t));
             }
-            OICFree(tagName);
+            //Because cbor using malloc directly
+            //It is required to use free() instead of OICFree
+            free(tagName);
         }
         if (cbor_value_is_valid(&CredRootMap))
         {
