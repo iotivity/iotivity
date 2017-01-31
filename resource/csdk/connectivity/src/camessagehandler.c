@@ -712,13 +712,10 @@ static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, ui
         if (id == item->messageId && tokenLength == item->tokenLength
             && ep->ifindex == item->ifindex && memcmp(item->token, token, tokenLength) == 0)
         {
-            if ((familyFlags ^ item->flags) == CA_IPFAMILY_MASK)
-            {
-                OIC_LOG_V(INFO, TAG, "IPv%c duplicate message ignored",
-                          familyFlags & CA_IPV6 ? '6' : '4');
-                ret = true;
-                break;
-            }
+            OIC_LOG_V(INFO, TAG, "IPv%c duplicate message ignored",
+                      familyFlags & CA_IPV6 ? '6' : '4');
+            ret = true;
+            break;
         }
     }
 
