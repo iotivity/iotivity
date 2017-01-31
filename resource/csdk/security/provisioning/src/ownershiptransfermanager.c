@@ -522,6 +522,7 @@ static void OwnershipTransferSessionEstablished(const CAEndpoint_t *endpoint,
         OicSecDoxm_t *newDevDoxm, OTMContext_t *otmCtx)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+    OCStackResult res = OC_STACK_ERROR;
 
     //In case of Mutual Verified Just-Works, display mutualVerifNum
     if (OIC_MV_JUST_WORKS == newDevDoxm->oxmSel)
@@ -530,16 +531,16 @@ static void OwnershipTransferSessionEstablished(const CAEndpoint_t *endpoint,
         uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN] = {0};
         OicUuid_t deviceID = {.id = {0}};
 
-        if (OC_STACK_OK != GetDoxmDeviceID(&deviceID))
-        {
-            OIC_LOG(ERROR, TAG, "Error while retrieving Owner's device ID");
-            goto exit;
-        }
-
         //Generate mutualVerifNum
         char label[LABEL_LEN] = {0};
         snprintf(label, LABEL_LEN, "%s%s", MUTUAL_VERIF_NUM, OXM_MV_JUST_WORKS);
-
+        res = GetDoxmDeviceID(&deviceID);
+        if (OC_STACK_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "Error while retrieving Owner's device ID");
+            SetResult(otmCtx, res);
+            goto exit;
+        }
         CAResult_t pskRet = CAGenerateOwnerPSK(endpoint,
                 (uint8_t *)label,
                 strlen(label),
@@ -550,29 +551,34 @@ static void OwnershipTransferSessionEstablished(const CAEndpoint_t *endpoint,
         if (CA_STATUS_OK != pskRet)
         {
             OIC_LOG(WARNING, TAG, "CAGenerateOwnerPSK failed");
+            SetResult(otmCtx, OC_STACK_ERROR);
             goto exit;
         }
 
         memcpy(mutualVerifNum, preMutualVerifNum + sizeof(preMutualVerifNum) - sizeof(mutualVerifNum),
                 sizeof(mutualVerifNum));
-        if (OC_STACK_OK != VerifyOwnershipTransfer(mutualVerifNum, DISPLAY_NUM))
+        res = VerifyOwnershipTransfer(mutualVerifNum, DISPLAY_NUM);
+        if (OC_STACK_OK != res)
         {
             OIC_LOG(ERROR, TAG, "Error while displaying mutualVerifNum");
+            SetResult(otmCtx, res);
             goto exit;
         }
     }
     //In case of confirmed manufacturer cert, display message
     else if (OIC_CON_MFG_CERT == newDevDoxm->oxmSel)
     {
-        if (OC_STACK_OK != VerifyOwnershipTransfer(NULL, DISPLAY_NUM))
+        res = VerifyOwnershipTransfer(NULL, DISPLAY_NUM);
+        if (OC_STACK_OK != res)
         {
             OIC_LOG(ERROR, TAG, "Error while displaying message");
+            SetResult(otmCtx, res);
             goto exit;
         }
     }
 
     //Send request : POST /oic/sec/doxm [{... , "devowner":"PT's UUID"}]
-    OCStackResult res = PostOwnerUuid(otmCtx);
+    res = PostOwnerUuid(otmCtx);
     if(OC_STACK_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Failed to send owner information");
@@ -1011,7 +1017,15 @@ static OCStackApplicationResult OwnerUuidUpdateHandler(void *ctx, OCDoHandle UNU
     }
     else
     {
-        res = clientResponse->result;
+        if (OIC_CON_MFG_CERT == otmCtx->selectedDeviceInfo->doxm->oxmSel &&
+                    OC_STACK_NOT_ACCEPTABLE == clientResponse->result)
+        {
+            res = OC_STACK_USER_DENIED_REQ;
+        }
+        else
+        {
+            res = clientResponse->result;
+        }
         OIC_LOG_V(ERROR, TAG, "OwnerUuidHandler : Unexpected result %d", res);
         SetResult(otmCtx, res);
     }
