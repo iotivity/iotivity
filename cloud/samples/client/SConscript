@@ -55,7 +55,7 @@ cc_sample_app_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra', '-st
 cc_sample_app_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 cc_sample_app_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 
-cc_sample_app_env.PrependUnique(LIBS = ['oc', 'octbstack','connectivity_abstraction','pthread', 'resource_directory', 'ocpmapi'])
+cc_sample_app_env.PrependUnique(LIBS = ['oc', 'octbstack','connectivity_abstraction','pthread', 'resource_directory'])
 
 cc_sample_app_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD', 'RD_CLIENT'])
 
@@ -68,6 +68,7 @@ cc_cloud_src_dir = src_dir + '/cloud/samples/client/'
 tlsOption = env.get('SECURED')
 if tlsOption is '1':
 	cc_sample_app_env.Install('.', cc_cloud_src_dir + 'rootca.crt')
+	cc_sample_app_env.PrependUnique(LIBS = ['ocpmapi'])
 
 ######################################################################
 # Sample for the thin cloud device
