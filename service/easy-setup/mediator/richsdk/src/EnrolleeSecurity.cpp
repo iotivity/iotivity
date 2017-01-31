@@ -67,32 +67,6 @@ namespace OIC
         {
             (void) secDbPath;
             m_ocResource = resource;
-
-            OCUUIdentity* mediatorDevId = (OCUUIdentity* )OICMalloc(sizeof(OCUUIdentity));
-
-            if(!mediatorDevId)
-            {
-                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "provisionOwnership: OICMalloc error return");
-                m_mediatorID = {};
-            }
-
-            if(OC::OCPlatform::getDeviceId(mediatorDevId) != OC_STACK_OK)
-            {
-                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "getDeviceId is failed.");
-                OICFree(mediatorDevId);
-                m_mediatorID = {};
-            }
-
-            char uuidString[UUID_STRING_SIZE];
-            if(OCConvertUuidToString(mediatorDevId->id, uuidString))
-            {
-                m_mediatorID = uuidString;
-            }
-            else
-            {
-                m_mediatorID = {};
-            }
-            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "EnrolleeSecurity: Mediator ID %s", m_mediatorID.c_str());
         }
 
         void EnrolleeSecurity::onEnrolleeSecuritySafetyCB(OC::PMResultList_t *result,
@@ -447,10 +421,39 @@ namespace OIC
             OCStackResult result = OC_STACK_ERROR;
             ESOwnershipTransferData ownershipTransferData;
 
+            OCUUIdentity* mediatorDevId = (OCUUIdentity* )OICMalloc(sizeof(OCUUIdentity));
+
+            if(!mediatorDevId)
+            {
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "provisionOwnership: OICMalloc error return");
+                return res;
+            }
+
+            if(OC::OCPlatform::getDeviceId(mediatorDevId) != OC_STACK_OK)
+            {
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "getDeviceId is failed.");
+                OICFree(mediatorDevId);
+                return res;
+            }
+
+            char uuidString[UUID_STRING_SIZE];
+            if(OCConvertUuidToString(mediatorDevId->id, uuidString))
+            {
+                m_mediatorID = uuidString;
+                OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Mediator UUID : %s", uuidString);
+                OICFree(mediatorDevId);
+            }
+            else
+            {
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "OCConvertUuidToString is failed.");
+                OICFree(mediatorDevId);
+                return res;
+            }
+
             OicUuid_t uuid;
             if(OC_STACK_OK != ConvertStrToUuid(m_ocResource->sid().c_str(), &uuid))
             {
-                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Convert to uuid from deviceID failed.");
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Convert to uuid from deviceID failed.");
                 return res;
             }
 
