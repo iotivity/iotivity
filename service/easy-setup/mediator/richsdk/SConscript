@@ -77,7 +77,7 @@ if target_os in ['android']:
 	if not env.get('RELEASE'):
 		easy_setup_env.AppendUnique(LIBS = ['log'])
 
-if target_os in ['linux']:
+if target_os in ['linux', 'tizen']:
 	easy_setup_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 	easy_setup_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 	easy_setup_env.AppendUnique(CXXFLAGS = ['-pthread'])
@@ -126,7 +126,7 @@ print"easysetup_path %s" % easysetup_path
 
 es_src = None
 
-if target_os in ['android','linux','ios']:
+if target_os in ['android','linux','ios','tizen']:
 	if env.get('SECURED') == '1':
 		env.AppendUnique(es_src = [os.path.join(easysetup_path, 'src/EnrolleeSecurity.cpp')])
 
@@ -142,7 +142,7 @@ if target_os in ['android','linux','ios']:
 	easy_setup_env.InstallTarget(es_sdk_static, 'libESMediatorRich')
 	if target_os not in ['ios']:
 		es_sdk_shared = easy_setup_env.SharedLibrary('ESMediatorRich', env.get('es_src'))
-		easy_setup_env.InstallTarget(es_sdk_shared, 'libESMediatorRich')
+		easy_setup_env.UserInstallTargetLib(es_sdk_shared, 'libESMediatorRich')
 		easy_setup_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libESMediatorRich.so'])
 
 filenames = [ 'ESException.h', 'ESRichCommon.h', 'EasySetup.hpp', 'RemoteEnrollee.h' ]
