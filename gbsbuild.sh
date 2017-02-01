@@ -55,7 +55,7 @@ cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp
 
 cd $sourcedir/tmp
 
-secured=0
+secured=1
 gbscommand="gbs build -A armv7l "
 
 for ARGUMENT_VALUE in $*
