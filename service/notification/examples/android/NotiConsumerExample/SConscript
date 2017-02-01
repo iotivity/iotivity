@@ -80,4 +80,5 @@ cmdBuildNotificationConsumerApp=jdk_env.Gradle(target="app/apk",
     source=["app/src/main/java/org/iotivity/service/ns/sample/consumer/MainActivity.java",
             "app/src/main/java/org/iotivity/service/ns/sample/consumer/ConsumerSample.java"])
 jdk_env.Clean(cmdBuildNotificationConsumerApp, '#/service/notification/examples/android/NotiConsumerExample/build')
+jdk_env.Clean(cmdBuildNotificationConsumerApp, '#/service/notification/examples/android/NotiConsumerExample/app/build')
 Depends(cmdBuildNotificationConsumerApp, env.get('notificationAAR'))

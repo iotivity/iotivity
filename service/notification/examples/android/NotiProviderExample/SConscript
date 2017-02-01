@@ -81,4 +81,5 @@ cmdBuildNotificationProviderApp=jdk_env.Gradle(target="app/apk",
             "app/src/main/java/org/iotivity/service/ns/sample/provider/NotiListener.java",
             "app/src/main/java/org/iotivity/service/ns/sample/provider/ProviderSample.java"])
 jdk_env.Clean(cmdBuildNotificationProviderApp, '#/service/notification/examples/android/NotiProviderExample/build')
+jdk_env.Clean(cmdBuildNotificationProviderApp, '#/service/notification/examples/android/NotiProviderExample/app/build')
 Depends(cmdBuildNotificationProviderApp, env.get('notificationAAR'))

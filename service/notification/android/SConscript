@@ -57,7 +57,9 @@ jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') +
 jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
 cmdBuildNotification = jdk_env.Gradle(target="notification-service/objs",
     source="notification-service/src/main/java/org/iotivity/service/ns/consumer/ConsumerService.java")
-jdk_env.Clean(cmdBuildNotification, './build')
+jdk_env.Clean(cmdBuildNotification, '#/service/notification/android/build')
+jdk_env.Clean(cmdBuildNotification, '#/service/notification/android/notification-service/build')
+
 Depends(cmdBuildNotification, env.get('baseAAR'))
 
 env.AppendUnique(notificationAAR = cmdBuildNotification)

@@ -101,10 +101,39 @@ jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' b
 #cmdBuildExamples=jdk_env.Gradle(target="../examples-%s/devicediscoveryclient/apk" % (examples_target, ), source="examples-%s/devicediscoveryclient/src/main/java/org/iotivity/base/examples/DeviceDiscoveryClient.java" % (examples_target, ))
 cmdBuildExamples=jdk_env.Gradle(target="examples-%s/simpleclient/jar" % (examples_target, ), source="examples-%s/simpleclient/src/main/java/org/iotivity/base/examples/SimpleClient.java" % (examples_target, ))
 
-exampleAclFiles = jdk_env.Install('#java/examples-java/simpleserver/build/libs/', 'examples-java/simpleserver/src/main/assets/oic_svr_db_server.dat')
-exampleAclFiles += jdk_env.Install('#java/examples-java/simpleclientserver/build/libs/', 'examples-java/simpleserver/src/main/assets/oic_svr_db_server.dat')
+if target_os != 'android':
+	exampleAclFiles = jdk_env.Install('#java/examples-java/simpleserver/build/libs/', 'examples-java/simpleserver/src/main/assets/oic_svr_db_server.dat')
+	exampleAclFiles += jdk_env.Install('#java/examples-java/simpleclientserver/build/libs/', 'examples-java/simpleserver/src/main/assets/oic_svr_db_server.dat')
+	Depends(exampleAclFiles, cmdBuildExamples)
 
-Depends(cmdBuildExamples, exampleAclFiles)
 Depends(cmdBuildExamples, cmdBuildApi)
+
+if target_os == 'android':
+	jdk_env.Clean(cmdBuildExamples, '#/java/iotivity-android/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/cloudprovisioningclient/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/devicediscoveryclient/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/devicediscoveryserver/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/DirectPairing/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/fridgeclient/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/fridgegroupclient/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/fridgegroupserver/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/fridgeserver/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/groupclient/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/groupserver/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/presenceclient/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/presenceserver/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/provisioningclient/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/simplebase/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/simpleclient/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/simpleserver/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/simpleclientserver/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/simpleserver/build/')
+else:
+	jdk_env.Clean(cmdBuildExamples, '#/java/iotivity-linux/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-java/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-java/simpleclient/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-java/simpleclientserver/build/')
+	jdk_env.Clean(cmdBuildExamples, '#/java/examples-java/simpleserver/build/')
 
 env.AppendUnique(baseAAR = cmdBuildApi)
