@@ -362,6 +362,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
             {
                 aclMapSize++;
             }
+            validityElts = validityElts->next;
         }
 
 #ifdef MULTIPLE_OWNER
