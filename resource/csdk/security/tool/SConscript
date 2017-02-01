@@ -35,7 +35,7 @@ else:
     # For bring up purposes only, the forked version will live here.
     tools_env.AppendUnique(CPPPATH = ['../../connectivity/lib/libcoap-4.1.1/include'])
 
-tools_env.PrependUnique(CPPPATH = ['../../../../extlibs/cjson',
+tools_env.PrependUnique(CPPPATH = ['#/extlibs/cjson',
                                   '../../include',
                                   '../../stack/include',
                                   '../../stack/include/internal',
@@ -50,7 +50,7 @@ tools_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra', '-std=c++0x'
 tools_env.AppendUnique(LIBPATH = [tools_env.get('BUILD_DIR')])
 tools_env.AppendUnique(RPATH = [tools_env.get('BUILD_DIR')])
 
-tools_env.PrepareLib('cjson')
+SConscript('#/extlibs/cjson/SConscript')
 
 if target_os in ['msys_nt', 'windows']:
     # octbstack.dll doesn't export all the functions called by this app, so use static LIBs instead.
@@ -62,7 +62,8 @@ elif target_os in ['darwin']:
 else:
     tools_env.PrependUnique(LIBS = ['octbstack', 'ocsrm', 'm'])
 
-tools_env.PrependUnique(LIBS = ['cjsonLibrary'])
+tools_env.PrependUnique(LIBS = ['cjson'])
+tools_env.AppendUnique(LIBS = ['timer'])
 
 ######################################################################
 # Source files and Targets

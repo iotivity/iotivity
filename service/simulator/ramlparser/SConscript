@@ -24,8 +24,8 @@ lib_env = env.Clone()
 SConscript('#service/third_party_libs.scons', 'lib_env')
 raml_env = lib_env.Clone()
 
-raml_env.PrepareLib('cjson')
-raml_env.PrepareLib('yaml')
+SConscript('#/extlibs/cjson/SConscript')
+SConscript('#/extlibs/yaml/SConscript')
 ######################################################################
 # Build flags
 ######################################################################
@@ -41,7 +41,7 @@ raml_env.AppendUnique(CPPDEFINES = ['LINUX'])
 raml_env.Append( RPATH = env.Literal('\\$$ORIGIN'))
 
 raml_env.PrependUnique(LIBS = ['octbstack', 'YamlParser'])
-raml_env.AppendUnique(LIBS = ['pthread', 'm', 'cjsonLibrary'])
+raml_env.AppendUnique(LIBS = ['pthread', 'm', 'cjson'])
 
 ######################################################################
 # Source files and Targets

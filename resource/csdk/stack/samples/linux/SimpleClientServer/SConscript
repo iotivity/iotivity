@@ -17,9 +17,10 @@
 # limitations under the License.
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-Import('env')
 
-samples_env = env.Clone()
+Import('stacksamples_env')
+
+samples_env = stacksamples_env.Clone()
 SConscript('#build_common/thread.scons', exports={'thread_env': samples_env})
 
 target_os = samples_env.get('TARGET_OS')
@@ -66,8 +67,7 @@ if target_os not in ['windows']:
 if samples_env.get('SECURED') == '1':
     samples_env.AppendUnique(LIBS=['tinydtls'])
 
-if target_os in ['windows']:
-    samples_env.AppendUnique(LIBS=['ws2_32'])
+samples_env.AppendUnique(LIBS = ['timer'])
 
 samples_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 

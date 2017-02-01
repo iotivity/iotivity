@@ -69,7 +69,7 @@ scons %{JOB} --prefix=%{_prefix} \
 mkdir -p %{DEST_INC_DIR}
 mkdir -p %{DEST_LIB_DIR}/pkgconfig
 
-cp -f %{ROOTDIR}/resource/csdk/liboctbstack.so %{buildroot}/%{_libdir}
+cp -f %{ROOTDIR}/resource/csdk/stack/liboctbstack.so %{buildroot}/%{_libdir}
 cp -f %{ROOTDIR}/resource/c_common/libc_common.a %{buildroot}/%{_libdir}
 cp -f %{ROOTDIR}/resource/csdk/security/libocsrm.a %{buildroot}/%{_libdir}
 cp -f %{ROOTDIR}/resource/csdk/connectivity/src/libconnectivity_abstraction.so %{buildroot}/%{_libdir}

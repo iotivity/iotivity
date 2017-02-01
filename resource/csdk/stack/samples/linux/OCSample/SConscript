@@ -18,30 +18,31 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-Import('env')
-csdktest_env = env.Clone()
+Import('stacksamples_env')
+ocsample_env = stacksamples_env.Clone()
 
 ######################################################################
 # Build flags
 ######################################################################
-csdktest_env.PrependUnique(CPPPATH = [
-    '../../../include',
-    '../../../stack/include',
+ocsample_env.PrependUnique(CPPPATH = [
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
 ])
 
-csdktest_env.PrependUnique(LIBS = [
-    'octbstack', 'connectivity_abstraction'
+ocsample_env.PrependUnique(LIBS = [
+    'octbstack',
+    'connectivity_abstraction'
 ])
-if env.get('SECURED') == '1':
-	if env.get('WITH_TCP') == True:
-		csdktest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+if ocsample_env.get('SECURED') == '1':
+	if ocsample_env.get('WITH_TCP') == True:
+		ocsample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
-csdktest_env.AppendUnique(LIBPATH = [
-    csdktest_env.get('BUILD_DIR'),
+ocsample_env.AppendUnique(LIBPATH = [
+    ocsample_env.get('BUILD_DIR'),
 ])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-occlient = csdktest_env.Program('occlient', ['occlient.c'])
-ocserver = csdktest_env.Program('ocserver', ['ocserver.c'])
+occlient = ocsample_env.Program('occlient', ['occlient.c'])
+ocserver = ocsample_env.Program('ocserver', ['ocserver.c'])

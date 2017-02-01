@@ -20,6 +20,6 @@
 
 Import('env')
 
-libcjson = env.StaticLibrary('cjsonLibrary', ['cJSON.c'])
-env.InstallTarget(libcjson, 'libCjson');
+libcjson = env.StaticLibrary('cjson', ['cJSON.c'], OBJPREFIX='libcjson_')
+env.InstallTarget(libcjson, 'cjson');
 

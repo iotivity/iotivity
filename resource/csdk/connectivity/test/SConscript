@@ -42,8 +42,8 @@ catest_env.PrependUnique(CPPPATH = [
 
 catest_env.AppendUnique(LIBPATH = [catest_env.get('BUILD_DIR')])
 catest_env.PrependUnique(LIBS = ['octbstack_test',
-                                    'connectivity_abstraction',
-                                    'coap'])
+                                 'connectivity_abstraction',
+                                 'coap'])
 
 if target_os not in ['arduino', 'darwin', 'ios', 'msys_nt', 'windows']:
 	catest_env.AppendUnique(LIBS=['rt'])
@@ -59,6 +59,8 @@ if catest_env.get('LOGGING'):
 
 if target_os not in ['msys_nt', 'windows']:
 	catest_env.AppendUnique(LIBS = ['m'])
+
+catest_env.AppendUnique(LIBS = ['timer'])
 
 ######################################################################
 # Source files and Targets
