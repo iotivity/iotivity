@@ -37,6 +37,7 @@
 #define __STDC_LIMIT_MACROS
 #endif
 #include "iotivity_config.h"
+#include <stdlib.h>
 #include <inttypes.h>
 #include <string.h>
 #include <ctype.h>
@@ -5269,7 +5270,7 @@ OCStackResult OCSetProxyURI(const char *uri)
 }
 
 #if defined(RD_CLIENT) || defined(RD_SERVER)
-OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, uint8_t ins)
+OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, int64_t ins)
 {
     VERIFY_NON_NULL(handle, ERROR, OC_STACK_INVALID_PARAM);
 
@@ -5372,13 +5373,22 @@ OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
                  query = strstr(query, OC_RSRVD_INS);
                  if (query)
                  {
-                     uint8_t queryIns = atoi(query + 4);
+                     // Arduino's AVR-GCC doesn't support strtoll().
+                     int64_t queryIns;
+                     int matchedItems = sscanf(query + 4, "%lld", &queryIns);
+
+                     if (0 == matchedItems)
+                     {
+                         OICFree(targetUri);
+                         return OC_STACK_INVALID_QUERY;
+                     }
+
                      for (uint8_t i = 0; i < numResources; i++)
                      {
                          OCResourceHandle resHandle = OCGetResourceHandle(i);
                          if (resHandle)
                          {
-                             uint8_t resIns = 0;
+                             int64_t resIns = 0;
                              OCGetResourceIns(resHandle, &resIns);
                              if (queryIns && queryIns == resIns)
                              {
@@ -5397,7 +5407,7 @@ OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
     return OC_STACK_OK;
 }
 
-OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins)
+OCStackResult OCGetResourceIns(OCResourceHandle handle, int64_t* ins)
 {
     OCResource *resource = NULL;
 
@@ -5467,8 +5477,8 @@ OCStackResult OCSetHeaderOption(OCHeaderOption* ocHdrOpt, size_t* numOptions, ui
     ocHdrOpt->protocolID = OC_COAP_ID;
     ocHdrOpt->optionID = optionID;
     ocHdrOpt->optionLength =
-            optionDataLength < MAX_HEADER_OPTION_DATA_LENGTH ?
-                    optionDataLength : MAX_HEADER_OPTION_DATA_LENGTH;
+            (optionDataLength < MAX_HEADER_OPTION_DATA_LENGTH) ?
+                    (uint16_t)optionDataLength : MAX_HEADER_OPTION_DATA_LENGTH;
     memcpy(ocHdrOpt->optionData, (const void*) optionData, ocHdrOpt->optionLength);
     *numOptions += 1;
 

@@ -113,6 +113,7 @@ if target_os in ['android', 'linux', 'tizen', 'msys_nt', 'windows']:
 if target_os not in ['windows', 'msys_nt']:
     liboctbstack_env.AppendUnique(LIBS = ['m'])
 else:
+    liboctbstack_env.AppendUnique(CCFLAGS=['/W3', '/WX'])
     # octbstack.def specifies the list of functions exported by octbstack.dll.
     liboctbstack_env.Replace(WINDOWS_INSERT_DEF = ['1'])
 

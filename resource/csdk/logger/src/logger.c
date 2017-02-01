@@ -128,7 +128,7 @@ static oc_log_level LEVEL_XTABLE[] = {OC_LOG_DEBUG, OC_LOG_INFO,
  * @param buffer     - pointer to buffer of bytes
  * @param bufferSize - max number of byte in buffer
  */
-void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, size_t bufferSize)
+void OCLogBuffer(LogLevel level, const char* tag, const uint8_t* buffer, size_t bufferSize)
 {
     if (!buffer || !tag || (bufferSize == 0))
     {
@@ -140,14 +140,13 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, size_
     char lineBuffer[LINE_BUFFER_SIZE];
     memset(lineBuffer, 0, sizeof lineBuffer);
     size_t lineIndex = 0;
-    size_t i;
-    for (i = 0; i < bufferSize; i++)
+    for (size_t i = 0; i < bufferSize; i++)
     {
         // Format the buffer data into a line
-        snprintf(&lineBuffer[lineIndex*3], sizeof(lineBuffer)-lineIndex*3, "%02X ", buffer[i]);
+        snprintf(&lineBuffer[lineIndex * 3], sizeof(lineBuffer) - lineIndex * 3, "%02X ", buffer[i]);
         lineIndex++;
         // Output 16 values per line
-        if (((i+1)%16) == 0)
+        if (((i + 1) % 16) == 0)
         {
             OCLogv(level, tag, "%s", lineBuffer);
             memset(lineBuffer, 0, sizeof lineBuffer);

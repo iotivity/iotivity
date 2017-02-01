@@ -54,6 +54,7 @@
 #include "payload_logging.h"
 #include "ocendpoint.h"
 #include "ocstackinternal.h"
+#include "oickeepalive.h"
 
 #ifdef ROUTING_GATEWAY
 #include "routingmanager.h"

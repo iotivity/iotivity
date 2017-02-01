@@ -691,7 +691,7 @@ OCStackResult OCSetProxyURI(const char *uri);
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, uint8_t ins);
+OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, int64_t ins);
 
 /**
  * This function gets the resource unique id for a resource.
@@ -701,7 +701,7 @@ OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, uint8_t ins);
  *
  * @return Ins if resource found or 0 resource not found.
  */
-OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins);
+OCStackResult OCGetResourceIns(OCResourceHandle handle, int64_t *ins);
 
 #ifdef RD_SERVER
 /**

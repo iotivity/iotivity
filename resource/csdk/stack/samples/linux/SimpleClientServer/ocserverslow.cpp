@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "iotivity_config.h"
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -201,19 +202,14 @@ OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest
 void AlarmHandler(int sig);
 int WINAPI AlarmThread(void *seconds)
 {
-// Explicit casts didn't remove this warning and we're guaranteed to be within
-// bounds expected by sleep().
-#pragma warning( suppress : 4311 )
-    sleep((unsigned int)seconds);
+    sleep(PtrToUlong(seconds));
     AlarmHandler(0);
     return 0;
 }
 
 void alarm(unsigned int seconds)
 {
-// Explicit casts didn't remove this warning.
-#pragma warning( suppress : 4312 )
-    CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AlarmThread, (void*)seconds, 0, NULL);
+    CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AlarmThread, ULongToPtr(seconds), 0, NULL);
 }
 #endif
 
@@ -372,7 +368,7 @@ int main(int /*argc*/, char** /*argv[]*/)
     return 0;
 }
 
-int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int resourcePower)
+int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int64_t resourcePower)
 {
     if (!uri)
     {

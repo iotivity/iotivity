@@ -613,7 +613,7 @@ TEST(StackStart, GetDeviceInfoAPI)
 
     EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, &value));
     ASSERT_TRUE(value != NULL);
-    ASSERT_TRUE(((OCStringLL *)value)->value);
+    ASSERT_TRUE(((OCStringLL *)value)->value != NULL);
     EXPECT_STREQ("Data Model Version", ((OCStringLL *)value)->value);
     OCFreeOCStringLL((OCStringLL *) value);
     value = NULL;

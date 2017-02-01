@@ -102,7 +102,7 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
         int64_t pow;
         if(OCRepPayloadGetPropInt(input, "power", &pow))
         {
-            currLEDResource->power =pow;
+            currLEDResource->power = pow;
         }
 
         bool state;
@@ -178,8 +178,8 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
         {
             // Create new LED instance
             char newLedUri[15] = "/a/led/";
-            int newLedUriLength = strlen(newLedUri);
-            snprintf (newLedUri + newLedUriLength, sizeof(newLedUri)-newLedUriLength, "%d", gCurrLedInstance);
+            size_t newLedUriLength = strlen(newLedUri);
+            snprintf((newLedUri + newLedUriLength), (sizeof(newLedUri) - newLedUriLength), "%d", gCurrLedInstance);
 
             respPLPost_led = OCRepPayloadCreate();
             OCRepPayloadSetUri(respPLPost_led, gResourceUri);
@@ -373,7 +373,7 @@ int main(int /*argc*/, char* /*argv*/[])
     return 0;
 }
 
-int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int resourcePower)
+int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int64_t resourcePower)
 {
     if (!uri)
     {

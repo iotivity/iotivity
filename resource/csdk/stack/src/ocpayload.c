@@ -578,7 +578,15 @@ bool OCRepPayloadGetPropDouble(const OCRepPayload* payload, const char* name, do
         }
         else if (val->type == OCREP_PROP_INT)
         {
+// Should be removed once IOT-1705 is fixed.
+#ifdef _MSC_VER
+#pragma warning( suppress : 4244 )
             *value = val->i;
+
+#else
+            *value = val->i;
+
+#endif
             return true;
         }
     }
@@ -1113,9 +1121,11 @@ bool OCRepPayloadGetDoubleArray(const OCRepPayload* payload, const char* name,
 {
     OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
 
-    if (!val || val->type != OCREP_PROP_ARRAY ||
-        (val->arr.type != OCREP_PROP_DOUBLE && val->arr.type != OCREP_PROP_INT)
-            || !val->arr.dArray)
+    if (!val ||
+        (val->type != OCREP_PROP_ARRAY) ||
+        ((val->arr.type != OCREP_PROP_DOUBLE) &&
+         (val->arr.type != OCREP_PROP_INT)) ||
+        !val->arr.dArray)
     {
         return false;
     }
@@ -1141,7 +1151,15 @@ bool OCRepPayloadGetDoubleArray(const OCRepPayload* payload, const char* name,
         size_t n = 0;
         for ( ; n < dimTotal; ++n)
         {
+// Should be removed once IOT-1705 is fixed.
+#ifdef _MSC_VER
+#pragma warning( suppress : 4244 )
             (*array)[n] = val->arr.iArray[n];
+
+#else
+            (*array)[n] = val->arr.iArray[n];
+
+#endif
         }
     }
     memcpy(dimensions, val->arr.dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));

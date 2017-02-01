@@ -217,7 +217,7 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
                 OCRepPayloadSetStringArrayAsOwner(link, OC_RSRVD_INTERFACE, itf, ifDim);
             }
 
-            uint8_t ins = 0;
+            int64_t ins = 0;
             if (OC_STACK_OK == OCGetResourceIns(handle, &ins))
             {
                 OCRepPayloadSetPropInt(link, OC_RSRVD_INS, ins);
@@ -376,9 +376,9 @@ OCStackResult OCRDDeleteWithDeviceId(OCDoHandle *handle, const char *host,
     for (uint8_t j = 0; j < nHandles; j++)
     {
         OCResource *handle = (OCResource *) resourceHandles[j];
-        uint8_t ins = 0;
+        int64_t ins = 0;
         OCGetResourceIns(handle, &ins);
-        int lenBufferRequired = snprintf(queryParam + queryLength, MAX_URI_LENGTH - queryLength, "&ins=%d", ins);
+        int lenBufferRequired = snprintf((queryParam + queryLength), (MAX_URI_LENGTH - queryLength), "&ins=%lld", ins);
         if (lenBufferRequired >= (MAX_URI_LENGTH - queryLength) || lenBufferRequired < 0)
         {
             return OC_STACK_INVALID_URI;

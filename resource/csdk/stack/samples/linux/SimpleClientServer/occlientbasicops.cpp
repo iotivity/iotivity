@@ -45,6 +45,10 @@
 #define MAX_IP_ADDR_ST_SZ  16 //string size of "155.255.255.255" (15 + 1)
 #define MAX_PORT_ST_SZ  6     //string size of "65535" (5 + 1)
 
+// Including the NULL terminator, length of UUID string of the form:
+// "a62389f7-afde-00b6-cd3e-12b97d2fcf09"
+#define UUID_STRING_LENGTH sizeof("a62389f7-afde-00b6-cd3e-12b97d2fcf09")
+
 static int UnicastDiscovery = 0;
 static int TestCase = 0;
 static int Connectivity = 0;
@@ -407,15 +411,11 @@ void collectUniqueResource(const OCClientResponse * clientResponse)
     OCDiscoveryPayload* pay = (OCDiscoveryPayload*) clientResponse->payload;
     OCResourcePayload* res = pay->resources;
 
-    // Including the NUL terminator, length of UUID string of the form:
-    //   "a62389f7-afde-00b6-cd3e-12b97d2fcf09"
-#   define UUID_LENGTH 37
-
-    char sidStr[UUID_LENGTH];
+    char sidStr[UUID_STRING_LENGTH];
 
     while(res) {
 
-        int ret = snprintf(sidStr, UUID_LENGTH,
+        int ret = snprintf(sidStr, UUID_STRING_LENGTH,
                 "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
                 pay->sid[0], pay->sid[1], pay->sid[2], pay->sid[3],
                 pay->sid[4], pay->sid[5], pay->sid[6], pay->sid[7],
@@ -423,7 +423,7 @@ void collectUniqueResource(const OCClientResponse * clientResponse)
                 pay->sid[12], pay->sid[13], pay->sid[14], pay->sid[15]
                 );
 
-        if (ret == UUID_LENGTH - 1)
+        if (ret == (UUID_STRING_LENGTH - 1))
         {
             if(insertResource(sidStr, res->uri, clientResponse) == 1)
             {

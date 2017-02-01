@@ -107,7 +107,7 @@ void OCSetLogLevel(LogLevel level, bool hidePrivateLogEntries);
  * @param[in]    buffer     pointer to buffer of bytes
  * @param[in]    bufferSize max number of byte in buffer
  */
-void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, size_t bufferSize);
+void OCLogBuffer(LogLevel level, const char* tag, const uint8_t* buffer, size_t bufferSize);
 
 #define OCLog(level,tag,mes) LOG_(LOG_ID_MAIN, (level), (tag), mes)
 #define OCLogv(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, (level),tag,fmt,##args)
@@ -163,7 +163,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, size_
      * @param buffer     - pointer to buffer of bytes
      * @param bufferSize - max number of byte in buffer
      */
-    void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, size_t bufferSize);
+    void OCLogBuffer(LogLevel level, const char* tag, const uint8_t* buffer, size_t bufferSize);
 #else  // For arduino platforms
     /**
      * Initialize the serial logger for Arduino
@@ -191,7 +191,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, size_
      * @param buffer     - pointer to buffer of bytes
      * @param bufferSize - max number of byte in buffer
      */
-    void OCLogBuffer(LogLevel level, const char *tag, const uint8_t *buffer, size_t bufferSize);
+    void OCLogBuffer(LogLevel level, const char* tag, const uint8_t* buffer, size_t bufferSize);
 
     /**
      * Output a variable argument list log string with the specified priority level.

@@ -33,18 +33,18 @@ rd_mode = stacktest_env.get('RD_MODE')
 # Build flags
 ######################################################################
 stacktest_env.PrependUnique(CPPPATH = [
-		'../../security/include',
-		'../../ocsocket/include',
-		'../../logger/include',
-		'../../../c_common/ocrandom/include',
-		'../../include',
-		'../../stack/include',
-		'../../stack/include/internal',
-		'../../connectivity/api',
-		'../../connectivity/inc/pkix',
-		'../../connectivity/external/inc',
-		'../../../oc_logger/include',
-		])
+        '../../security/include',
+        '../../ocsocket/include',
+        '../../logger/include',
+        '../../../c_common/ocrandom/include',
+        '../../include',
+        '../../stack/include',
+        '../../stack/include/internal',
+        '../../connectivity/api',
+        '../../connectivity/inc/pkix',
+        '../../connectivity/external/inc',
+        '../../../oc_logger/include',
+        ])
 
 stacktest_env.AppendUnique(LIBPATH = [stacktest_env.get('BUILD_DIR')])
 stacktest_env.PrependUnique(LIBS = ['octbstack_test',
@@ -55,18 +55,19 @@ if target_os != 'darwin':
     stacktest_env.PrependUnique(LIBS = ['oc_logger'])
 
 if stacktest_env.get('SECURED') == '1':
-	stacktest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto', 'tinydtls'])
+    stacktest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto', 'tinydtls'])
 
 if stacktest_env.get('LOGGING'):
-	stacktest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    stacktest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-if target_os not in ['msys_nt', 'windows']:
-	stacktest_env.PrependUnique(LIBS = ['m'])
+if target_os in ['msys_nt', 'windows']:
+    stacktest_env.PrependUnique(LIBS = ['sqlite3'])
+    stacktest_env.AppendUnique(CCFLAGS=['/W3', '/WX'])
 else:
-	stacktest_env.PrependUnique(LIBS = ['sqlite3'])
+    stacktest_env.PrependUnique(LIBS = ['m'])
 
 if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	stacktest_env.PrependUnique(LIBS = ['resource_directory'])
+    stacktest_env.PrependUnique(LIBS = ['resource_directory'])
 
 stacktest_env.AppendUnique(LIBS = ['timer'])
 ######################################################################
@@ -79,7 +80,7 @@ Alias("test", [stacktests, cbortests])
 
 stacktest_env.AppendTarget('test')
 if stacktest_env.get('TEST') == '1':
-	if target_os in ['linux', 'windows']:
+    if target_os in ['linux', 'windows']:
                 run_test(stacktest_env,
                          'resource_csdk_stack_test.memcheck',
                          'resource/csdk/stack/test/stacktests')

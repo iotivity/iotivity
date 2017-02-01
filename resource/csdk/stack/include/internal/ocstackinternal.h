@@ -310,7 +310,7 @@ OCStackResult ExtractFiltersFromQuery(const char *query, char **filterOne, char 
 #if defined(RD_CLIENT) || defined(RD_SERVER)
 /**
  * This function binds an resource unique ins value to the resource. This can be only called
- * when stack is received response from resource-directory.
+ * when the stack has received a response from resource-directory.
  *
  * @param requestUri URI of the resource.
  * @param response Response from queries to remote servers.
