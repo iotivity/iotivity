@@ -78,7 +78,7 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?TARGET_OS: %define TARGET_OS tizen}
 %{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
 %{!?VERBOSE: %define VERBOSE 1}
-%{!?WITH_CLOUD: %define WITH_CLOUD 0}
+%{!?WITH_CLOUD: %define WITH_CLOUD 1}
 %{!?WITH_MQ: %define WITH_MQ OFF}
 %{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?WITH_TCP: %define WITH_TCP 0}
@@ -308,6 +308,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %{_libdir}/librcs_server.so
 %{_libdir}/libresource_directory.so
 %{_libdir}/libESEnrolleeSDK.so
+%{_libdir}/libESMediatorRich.so
 %{_libdir}/libnotification*.so
 %if 0%{?WITH_PROXY} == 1
 %{_libdir}/libcoap_http_proxy.so
