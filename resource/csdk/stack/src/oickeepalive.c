@@ -910,6 +910,12 @@ OCStackResult AddResourceInterfaceNameToPayload(OCRepPayload *payload)
     {
         size_t ifDim[MAX_REP_ARRAY_DEPTH] = {numElement, 0, 0};
         char **itf = (char **)OICMalloc(sizeof(char *) * numElement);
+        if (!itf)
+        {
+            OIC_LOG(ERROR, TAG, "Could not allocate memory for itf");
+            return OC_STACK_NO_MEMORY;
+        }
+
         for (uint8_t i = 0; i < numElement; ++i)
         {
             const char *value = OCGetResourceInterfaceName(g_keepAliveHandle, i);

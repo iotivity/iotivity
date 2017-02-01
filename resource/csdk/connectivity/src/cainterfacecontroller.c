@@ -215,6 +215,7 @@ static void RemoveAllNetworkStateChangedCallback()
         OIC_LOG(DEBUG, TAG, "remove all callbacks");
         LL_DELETE(g_networkChangeCallbackList, callback);
         OICFree(callback);
+        callback = NULL;
     }
 }
 
