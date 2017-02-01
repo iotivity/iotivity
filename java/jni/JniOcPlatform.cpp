@@ -1523,7 +1523,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo0(
             jstring jStr = (jstring)env->GetObjectArrayElement(jDeviceTypes, i);
             if (!jStr)
             {
-                delete deviceInfo.deviceName;
+                delete[] deviceInfo.deviceName;
                 ThrowOcException(OC_STACK_INVALID_PARAM, "device type cannot be null");
                 return;
             }
@@ -1531,7 +1531,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo0(
             OCResourcePayloadAddStringLL(&deviceInfo.types, env->GetStringUTFChars(jStr, nullptr));
             if (env->ExceptionCheck())
             {
-                delete deviceInfo.deviceName;
+                delete[] deviceInfo.deviceName;
                 return;
             }
 
@@ -1548,7 +1548,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo0(
     {
         OCStackResult result = OCPlatform::registerDeviceInfo(deviceInfo);
 
-        delete deviceInfo.deviceName;
+        delete[] deviceInfo.deviceName;
 
         if (OC_STACK_OK != result)
         {
@@ -1668,17 +1668,17 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerPlatformInfo0(
         {
             OCStackResult result = OCPlatform::registerPlatformInfo(platformInfo);
 
-            delete platformInfo.platformID;
-            delete platformInfo.manufacturerName;
-            delete platformInfo.manufacturerUrl;
-            delete platformInfo.modelNumber;
-            delete platformInfo.dateOfManufacture;
-            delete platformInfo.platformVersion;
-            delete platformInfo.operatingSystemVersion;
-            delete platformInfo.hardwareVersion;
-            delete platformInfo.firmwareVersion;
-            delete platformInfo.supportUrl;
-            delete platformInfo.systemTime;
+            delete[] platformInfo.platformID;
+            delete[] platformInfo.manufacturerName;
+            delete[] platformInfo.manufacturerUrl;
+            delete[] platformInfo.modelNumber;
+            delete[] platformInfo.dateOfManufacture;
+            delete[] platformInfo.platformVersion;
+            delete[] platformInfo.operatingSystemVersion;
+            delete[] platformInfo.hardwareVersion;
+            delete[] platformInfo.firmwareVersion;
+            delete[] platformInfo.supportUrl;
+            delete[] platformInfo.systemTime;
 
             if (OC_STACK_OK != result)
             {
