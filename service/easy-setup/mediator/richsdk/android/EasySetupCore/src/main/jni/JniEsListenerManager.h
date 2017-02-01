@@ -74,13 +74,14 @@ class JniEsListenerManager
                     m_listenerMap.insert(
                         std::pair < jobject,
                         std::pair<T *, int >> (jgListener, std::pair<T *, int>(onEventListener, 1)));
+                    ES_LOGD("OnEventListener: new listener");
                 }
                 else
                 {
                     ES_LOGD("OnEventListener: Failed to create global listener ref.");
                     delete onEventListener;
+                    onEventListener = NULL;
                 }
-                ES_LOGD("OnEventListener: new listener");
             }
             m_mapMutex.unlock();
             return onEventListener;
