@@ -78,6 +78,9 @@ typedef struct OCServerRequest
     /** Remote endpoint address **/
     OCDevAddr devAddr;
 
+    /** The ID of server request*/
+    uint32_t requestId;
+
     /** Token for the request.*/
     CAToken_t requestToken;
 
