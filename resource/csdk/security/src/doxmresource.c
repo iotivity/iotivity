@@ -724,7 +724,6 @@ static bool ValidateQuery(const char * query)
     bool bInterfaceQry = false;      // does querystring contains 'if' query ?
     bool bInterfaceMatch = false;    // does 'if' query matches with oic.if.baseline ?
 #ifdef MULTIPLE_OWNER
-    bool bMotQry = false;         // does querystring contains 'mom' and 'owned' query ?
     bool bMotMatch = false;       // does 'mom' query value is not '0' && does query value matches with doxm.owned status?
 #endif //MULTIPLE_OWNER
 
@@ -752,7 +751,6 @@ static bool ValidateQuery(const char * query)
 #ifdef MULTIPLE_OWNER
         if (strncasecmp((char *)parseIter.attrPos, OIC_JSON_MOM_NAME, strlen(OIC_JSON_MOM_NAME)) == 0)
         {
-            bMotQry = true;
             OicSecMomType_t momMode = (OicSecMomType_t)(parseIter.valPos[0] - CHAR_ZERO);
             if(NULL != gDoxm->mom && momMode != gDoxm->mom->mode)
             {
@@ -795,14 +793,8 @@ static bool ValidateQuery(const char * query)
         }
     }
 
-#ifdef MULTIPLE_OWNER
-    return ((bOwnedQry ? bOwnedMatch : true) &&
-            (bDeviceIDQry ? bDeviceIDMatch : true) &&
-            (bMotQry ? bMotMatch : true));
-#else
     return ((bOwnedQry ? bOwnedMatch : true) &&
             (bDeviceIDQry ? bDeviceIDMatch : true));
-#endif //MULTIPLE_OWNER
 }
 
 static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest * ehRequest)
@@ -1757,7 +1749,7 @@ OCStackResult InitDoxmResource()
     }
 
     //In case of the server is shut down unintentionally, we should initialize the owner
-    if(false == gDoxm->owned)
+    if(gDoxm && (false == gDoxm->owned))
     {
         OicUuid_t emptyUuid = {.id={0}};
         memcpy(&gDoxm->owner, &emptyUuid, sizeof(OicUuid_t));
@@ -1858,24 +1850,22 @@ OCStackResult SetDoxmDeviceIDSeed(const uint8_t* seed, size_t seedSize)
 
 OCStackResult SetDoxmDeviceID(const OicUuid_t *deviceID)
 {
-    bool isPT = false;
-
-    if(NULL == deviceID)
+    bool isOwnerUpdated = false;
+    bool isRownerUpdated = false;
+    if (NULL == deviceID)
     {
         return OC_STACK_INVALID_PARAM;
     }
-    if(NULL == gDoxm)
+    if (NULL == gDoxm)
     {
         OIC_LOG(ERROR, TAG, "Doxm resource is not initialized.");
         return OC_STACK_NO_RESOURCE;
     }
 
-    //Check the device's OTM state
-
 #ifdef __WITH_DTLS__
     //for normal device.
-    if(true == gDoxm->owned &&
-       memcmp(gDoxm->deviceID.id, gDoxm->owner.id, sizeof(gDoxm->owner.id)) != 0)
+    if (true == gDoxm->owned &&
+        memcmp(gDoxm->deviceID.id, gDoxm->owner.id, sizeof(gDoxm->owner.id)) != 0)
     {
         OIC_LOG(ERROR, TAG, "This device owned by owner's device.");
         OIC_LOG(ERROR, TAG, "Device UUID cannot be changed to guarantee the reliability of the connection.");
@@ -1884,27 +1874,40 @@ OCStackResult SetDoxmDeviceID(const OicUuid_t *deviceID)
 #endif //__WITH_DTLS
 
     //Save the previous UUID
-    OicUuid_t tempUuid;
-    memcpy(tempUuid.id, gDoxm->deviceID.id, sizeof(tempUuid.id));
+    OicUuid_t prevUuid;
+    memcpy(prevUuid.id, gDoxm->deviceID.id, sizeof(prevUuid.id));
 
-    //Change the UUID
+    //Change the device UUID
     memcpy(gDoxm->deviceID.id, deviceID->id, sizeof(deviceID->id));
-    if(isPT)
+
+    //Change the owner ID if necessary
+    if (memcmp(gDoxm->owner.id, prevUuid.id, sizeof(prevUuid.id)) == 0)
     {
         memcpy(gDoxm->owner.id, deviceID->id, sizeof(deviceID->id));
-        memcpy(gDoxm->rownerID.id, deviceID->id, sizeof(deviceID->id));
+        isOwnerUpdated = true;
     }
+    //Change the resource owner ID if necessary
+    if (memcmp(gDoxm->rownerID.id, prevUuid.id, sizeof(prevUuid.id)) == 0)
+    {
+        memcpy(gDoxm->rownerID.id, deviceID->id, sizeof(deviceID->id));
+        isRownerUpdated = true;
+    }
+    // TODO: T.B.D Change resource owner for pstat, acl and cred
 
     //Update PS
-    if(!UpdatePersistentStorage(gDoxm))
+    if (!UpdatePersistentStorage(gDoxm))
     {
-        //revert UUID in case of update error
-        memcpy(gDoxm->deviceID.id, tempUuid.id, sizeof(tempUuid.id));
-        if(isPT)
+        //revert UUID in case of PSI error
+        memcpy(gDoxm->deviceID.id, prevUuid.id, sizeof(prevUuid.id));
+        if (isOwnerUpdated)
         {
-            memcpy(gDoxm->owner.id, tempUuid.id, sizeof(tempUuid.id));
-            memcpy(gDoxm->rownerID.id, tempUuid.id, sizeof(tempUuid.id));
+            memcpy(gDoxm->owner.id, prevUuid.id, sizeof(prevUuid.id));
         }
+        if (isRownerUpdated)
+        {
+            memcpy(gDoxm->rownerID.id, prevUuid.id, sizeof(prevUuid.id));
+        }
+        // TODO: T.B.D Revert resource owner for pstat, acl and cred
 
         OIC_LOG(ERROR, TAG, "Failed to update persistent storage");
         return OC_STACK_ERROR;

@@ -669,6 +669,8 @@ exit:
             RemoveCredential(&dpairData->peer->deviceID);
             OICFree(dpairData);
             g_dp_proceed_ctx = NULL;
+            OIC_LOG_V(INFO, TAG, "OUT DirectPairingHandler.");
+            return OC_STACK_DELETE_TRANSACTION;
         }
 
         resultCallback(dpairData->userCtx, dpairData->peer, res);
