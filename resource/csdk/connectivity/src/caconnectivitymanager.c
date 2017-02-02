@@ -354,8 +354,6 @@ CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *re
 
 CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
 {
-    OIC_LOG_V(DEBUG, TAG, "Selected network : %d", interestedNetwork);
-
     if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;

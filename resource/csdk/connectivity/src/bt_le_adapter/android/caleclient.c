@@ -179,7 +179,6 @@ static void CALEScanThread(void* object)
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -267,8 +266,6 @@ static void CALEScanThread(void* object)
 
 CAResult_t CALEClientStartScanWithInterval()
 {
-    OIC_LOG(DEBUG, TAG, "IN - CALEClientStartScanWithInterval");
-
     if (g_isWorkingScanThread)
     {
         OIC_LOG(DEBUG, TAG, "scan interval logic already running");
@@ -290,7 +287,6 @@ CAResult_t CALEClientStartScanWithInterval()
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT - CALEClientStartScanWithInterval");
     return CA_STATUS_OK;
 }
 
@@ -334,7 +330,6 @@ CAResult_t CALECreateJniInterfaceObject()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -415,7 +410,6 @@ CAResult_t CALEClientInitialize()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -514,7 +508,6 @@ void CALEClientTerminate()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -618,7 +611,6 @@ CAResult_t CALEClientDestroyJniInterface()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -692,7 +684,6 @@ void CALEClientSendFinish(JNIEnv *env, jobject gatt)
 
 CAResult_t CALEClientSendNegotiationMessage(const char* address)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALEClientSendNegotiationMessage(%s)", address);
     VERIFY_NON_NULL(address, TAG, "address is null");
 
     return CALEClientSendUnicastMessageImpl(address, NULL, 0);
@@ -702,7 +693,6 @@ CAResult_t CALEClientSendUnicastMessage(const char* address,
                                         const uint8_t* data,
                                         const uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALEClientSendUnicastMessage(%s, %p)", address, data);
     VERIFY_NON_NULL(address, TAG, "address is null");
     VERIFY_NON_NULL(data, TAG, "data is null");
 
@@ -726,7 +716,6 @@ CAResult_t CALEClientSendMulticastMessage(const uint8_t* data,
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -884,7 +873,7 @@ CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address)
 CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* data,
                                             const uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALEClientSendUnicastMessageImpl, address: %s, data: %p", address,
+    OIC_LOG_V(INFO, TAG, "CALEClientSendUnicastMessageImpl, address: %s, data: %p", address,
               data);
     VERIFY_NON_NULL(address, TAG, "address is null");
 
@@ -899,7 +888,6 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
         if (JNI_OK != res)
         {
@@ -946,8 +934,6 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
                 CACheckJNIException(env);
                 goto error_exit;
             }
-
-            OIC_LOG_V(DEBUG, TAG, "remote device address is %s", setAddress);
 
             if (!strcmp(setAddress, address))
             {
@@ -1356,8 +1342,6 @@ CAResult_t CALEClientStartScan()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
-
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
         if (JNI_OK != res)
         {
@@ -1599,7 +1583,6 @@ CAResult_t CALEClientStopScan()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
         if (JNI_OK != res)
         {
@@ -2205,7 +2188,6 @@ static void CALEWriteCharacteristicThread(void* object)
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -2704,7 +2686,6 @@ CAResult_t CALEClientCreateUUIDList()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -2990,15 +2971,13 @@ bool CALEClientIsDeviceInScanDeviceList(JNIEnv *env, const char* remoteAddress)
         {
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             (*env)->DeleteLocalRef(env, jni_setAddress);
+            OIC_LOG_V(INFO, TAG, "[%s] exist in scanned device list", remoteAddress);
             return true;
         }
 
         (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
         (*env)->DeleteLocalRef(env, jni_setAddress);
     }
-
-    OIC_LOG_V(DEBUG, TAG, "[%s] doesn't exist in scanned device list", remoteAddress);
-
     return false;
 }
 
@@ -3169,7 +3148,6 @@ CAResult_t CALEClientAddGattobjToList(JNIEnv *env, jobject gatt)
 
 bool CALEClientIsGattObjInList(JNIEnv *env, const char* remoteAddress)
 {
-    OIC_LOG(DEBUG, TAG, "CALEClientIsGattObjInList");
     VERIFY_NON_NULL(env, TAG, "env is null");
     VERIFY_NON_NULL_RET(remoteAddress, TAG, "remoteAddress is null", true);
 
@@ -3464,8 +3442,6 @@ CAResult_t CALEClientRemoveGattObjForAddr(JNIEnv *env, jstring addr)
 
 jstring CALEClientGetLEAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
 {
-    OIC_LOG(DEBUG, TAG, "CALEClientGetLEAddressFromBTDevice");
-
     VERIFY_NON_NULL_RET(env, TAG, "env", NULL);
     VERIFY_NON_NULL_RET(bluetoothDevice, TAG, "bluetoothDevice", NULL);
 
@@ -3931,7 +3907,6 @@ void CAStopLEGattClient()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -4013,7 +3988,7 @@ CAResult_t CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const 
                                                uint32_t dataLen, CALETransferType_t type,
                                                int32_t position)
 {
-    OIC_LOG(DEBUG, TAG, "call CALEClientSendUnicastMessage");
+    OIC_LOG(INFO, TAG, "call CALEClientSendUnicastMessage");
     VERIFY_NON_NULL(remoteAddress, TAG, "remoteAddress is null");
 
     if (LE_UNICAST != type || position < 0)
@@ -4048,7 +4023,6 @@ void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle)
 CAResult_t CAGetLEAddress(char **local_address)
 {
     VERIFY_NON_NULL(local_address, TAG, "local_address");
-    OIC_LOG(INFO, TAG, "CAGetLEAddress is not support");
     return CA_NOT_SUPPORTED;
 }
 
@@ -4127,7 +4101,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
         CACheckJNIException(env);
         goto error_exit;
     }
-    OIC_LOG_V(DEBUG, TAG, "CALeGattConnectionStateChangeCallback - address [%s]", address);
+    OIC_LOG_V(INFO, TAG, "CALeGattConnectionStateChangeCallback - address [%s]", address);
 
     if (state_connected == newstate)
     {
@@ -4462,9 +4436,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicChangedCallback(
     jbyte *jni_byte_responseData = (jbyte*) (*env)->GetByteArrayElements(env, data, &isCopy);
     CACheckJNIException(env);
 
-    OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicChangedCallback - raw data received : %p",
-            jni_byte_responseData);
-
     uint8_t* receivedData = OICMalloc(length);
     if (!receivedData)
     {
@@ -4492,7 +4463,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicChangedCallback(
         return;
     }
 
-    OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicChangedCallback - data. : %p, %d",
+    OIC_LOG_V(INFO, TAG, "CALeGattCharacteristicChangedCallback - data. : %p, %d",
               receivedData, length);
 
     uint32_t sentLength = 0;
@@ -4569,8 +4540,8 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattMtuChangedCallback(JNIEnv *env,
                                                                     jint mtu,
                                                                     jint status)
 {
-    OIC_LOG_V(INFO, TAG, "caLeGattMtuChangedCallback - mtu[%d-including Header size 3 byte)", mtu);
-    OIC_LOG_V(INFO, TAG, "caLeGattMtuChangedCallback - status %d", status);
+    OIC_LOG_V(INFO, TAG, "caLeGattMtuChangedCallback - status %d, "
+              "mtu[%d-including Header size 3 byte]", mtu, status);
 
     (void)obj;
 

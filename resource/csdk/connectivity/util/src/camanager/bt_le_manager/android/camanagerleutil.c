@@ -215,8 +215,6 @@ bool CAManagerControlAdapter(JNIEnv *env, bool control_flag)
 
 CAResult_t CAManagerReadRemoteRssi(JNIEnv *env, jobject bluetoothGatt)
 {
-    OIC_LOG(DEBUG, TAG, "CAManagerReadRemoteRssi");
-
     VERIFY_NON_NULL(env, TAG, "env is null");
     VERIFY_NON_NULL(bluetoothGatt, TAG, "bluetoothGatt is null");
 
@@ -227,7 +225,6 @@ CAResult_t CAManagerReadRemoteRssi(JNIEnv *env, jobject bluetoothGatt)
     }
 
     // get BluetoothGatt class
-    OIC_LOG(DEBUG, TAG, "get BluetoothGatt class");
     jclass jni_cid_BluetoothGatt = (*env)->FindClass(env, CLASSPATH_BT_GATT);
     if (!jni_cid_BluetoothGatt)
     {
@@ -235,7 +232,6 @@ CAResult_t CAManagerReadRemoteRssi(JNIEnv *env, jobject bluetoothGatt)
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG(DEBUG, TAG, "discovery gatt services method");
     jmethodID jni_mid_readRemoteRssi = (*env)->GetMethodID(env, jni_cid_BluetoothGatt,
                                                              "readRemoteRssi", "()Z");
     if (!jni_mid_readRemoteRssi)
@@ -244,7 +240,6 @@ CAResult_t CAManagerReadRemoteRssi(JNIEnv *env, jobject bluetoothGatt)
         return CA_STATUS_FAILED;
     }
     // call disconnect gatt method
-    OIC_LOG(DEBUG, TAG, "CALL API - request readremoteRssi");
     jboolean ret = (*env)->CallBooleanMethod(env, bluetoothGatt, jni_mid_readRemoteRssi);
     if (!ret)
     {
@@ -613,7 +608,6 @@ bool CAManagerAddConnectedDeviceAddress(JNIEnv *env, jobject context,
 bool CAManagerIsConnectedDeviceAddress(JNIEnv *env, jobject context,
                                        jstring address, jobject set)
 {
-    OIC_LOG(DEBUG, TAG, "CAManagerIsConnectedDeviceAddress");
     VERIFY_NON_NULL_RET(env, TAG, "env", false);
     VERIFY_NON_NULL_RET(context, TAG, "context", false);
 
@@ -722,7 +716,6 @@ jobject CAManagerCreateSetString(JNIEnv *env)
 bool CAManagerCallFuncSetString(JNIEnv *env, jstring address, jobject set,
                                 CASetMethod_t method_type)
 {
-    OIC_LOG(DEBUG, TAG, "CAManagerCallFuncSetString");
     VERIFY_NON_NULL_RET(env, TAG, "env", false);
     VERIFY_NON_NULL_RET(address, TAG, "address", false);
     VERIFY_NON_NULL_RET(set, TAG, "set", false);
@@ -738,17 +731,14 @@ bool CAManagerCallFuncSetString(JNIEnv *env, jstring address, jobject set,
     switch (method_type)
     {
         case CM_CONTAINS:
-            OIC_LOG(DEBUG, TAG, "java/util/HashSet.contains");
             jni_mid_setMethod = (*env)->GetMethodID(env, jni_cls_set, "contains",
                                                     "(Ljava/lang/Object;)Z");
             break;
         case CM_ADD:
-            OIC_LOG(DEBUG, TAG, "java/util/HashSet.add");
             jni_mid_setMethod = (*env)->GetMethodID(env, jni_cls_set, "add",
                                                     "(Ljava/lang/Object;)Z");
             break;
         case CM_REMOVE:
-            OIC_LOG(DEBUG, TAG, "java/util/HashSet.remove");
             jni_mid_setMethod = (*env)->GetMethodID(env, jni_cls_set, "remove",
                                                     "(Ljava/lang/Object;)Z");
             break;
@@ -762,6 +752,5 @@ bool CAManagerCallFuncSetString(JNIEnv *env, jstring address, jobject set,
     }
 
     jboolean res = (*env)->CallBooleanMethod(env, set, jni_mid_setMethod, address);
-    OIC_LOG_V(DEBUG, TAG, "method return result : %d", res);
     return res;
 }

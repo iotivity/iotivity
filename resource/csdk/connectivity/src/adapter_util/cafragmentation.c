@@ -123,8 +123,6 @@ CAResult_t CAGenerateHeader(uint8_t *header,
                             CABLEPacketSecure_t secure,
                             const uint8_t destPort)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     VERIFY_NON_NULL(header, TAG, "header is NULL");
 
     if (sourcePort > CA_SUPPORTED_BLE_MAX_PORT ||
@@ -171,8 +169,6 @@ CAResult_t CAMakeFirstDataSegment(uint8_t *dataSegment,
                                   const uint8_t *dataHeader,
                                   const uint8_t *lengthHeader)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     VERIFY_NON_NULL(dataSegment, TAG, "dataSegment is NULL");
     VERIFY_NON_NULL(dataHeader, TAG, "dataHeader is NULL");
     VERIFY_NON_NULL(lengthHeader, TAG, "lengthHeader is NULL");
@@ -180,9 +176,6 @@ CAResult_t CAMakeFirstDataSegment(uint8_t *dataSegment,
     memcpy(dataSegment, dataHeader, CA_BLE_HEADER_SIZE);
     memcpy(dataSegment + CA_BLE_HEADER_SIZE, lengthHeader, CA_BLE_LENGTH_HEADER_SIZE);
     memcpy(dataSegment + CA_BLE_HEADER_SIZE + CA_BLE_LENGTH_HEADER_SIZE, data, dataLength);
-
-    OIC_LOG(DEBUG, TAG, "OUT");
-
     return CA_STATUS_OK;
 }
 
@@ -194,8 +187,6 @@ CAResult_t CAMakeRemainDataSegment(uint8_t *dataSegment,
                                    const uint8_t *dataHeader,
                                    uint16_t mtuSize)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     VERIFY_NON_NULL(dataSegment, TAG, "dataSegment is NULL");
     VERIFY_NON_NULL(dataHeader, TAG, "dataHeader is NULL");
 
@@ -209,9 +200,6 @@ CAResult_t CAMakeRemainDataSegment(uint8_t *dataSegment,
 
     memcpy(dataSegment, dataHeader, CA_BLE_HEADER_SIZE);
     memcpy(dataSegment + CA_BLE_HEADER_SIZE, sourceData + index, segmentPayloadLength);
-
-    OIC_LOG(DEBUG, TAG, "OUT");
-
     return CA_STATUS_OK;
 }
 
@@ -221,16 +209,12 @@ CAResult_t CAParseHeader(const uint8_t *header,
                          CABLEPacketSecure_t *secureFlag,
                          uint16_t *destPort)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     VERIFY_NON_NULL(header, TAG, "header is NULL");
 
     *startFlag = CAGetBits(header[0], CA_BLE_START_POS, CA_BLE_START_LEN);
     *sourcePort = CAGetBits(header[0], CA_BLE_SOURCE_PORT_POS, CA_BLE_SOURCE_PORT_LEN);
     *secureFlag = CAGetBits(header[1], CA_BLE_SECURE_POS, CA_BLE_SECURE_LEN);
     *destPort = CAGetBits(header[1], CA_BLE_DESTINATION_PORT_POS, CA_BLE_DESTINATION_PORT_LEN);
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 
     return CA_STATUS_OK;
 }
@@ -239,7 +223,6 @@ CAResult_t CAParseHeaderPayloadLength(uint8_t *header,
                                       size_t headerLength,
                                       uint32_t *dataLength)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL(header, TAG, "header is NULL");
 
     if (headerLength != CA_BLE_LENGTH_HEADER_SIZE)
@@ -253,6 +236,5 @@ CAResult_t CAParseHeaderPayloadLength(uint8_t *header,
         *dataLength |= header[CA_BLE_HEADER_SIZE+idx];
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }

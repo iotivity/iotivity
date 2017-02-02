@@ -435,9 +435,6 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeClientInterface_caManagerLeGattConnectionStateChangeCB(
         JNIEnv *env, jobject obj, jobject gatt, jint status, jint newState)
 {
-    OIC_LOG_V(INFO, TAG, "caManagerLeGattConnectionStateChangeCB - status %d, newState %d",
-              status, newState);
-
     VERIFY_NON_NULL_VOID(env, TAG, "env");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
     VERIFY_NON_NULL_VOID(gatt, TAG, "gatt");
@@ -460,12 +457,8 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeGattConnectionStateChangeCB(
         return;
     }
 
-    OIC_LOG_V(DEBUG, TAG, "caManagerLeGattConnectionStateChangeCB - address [%s]", address);
-
     if (GATT_SUCCESS == status && state_connected == newState) // le connected
     {
-        OIC_LOG(DEBUG, TAG, "LE is connected");
-
         CAResult_t res = CAManagerReadRemoteRssi(env, gatt);
         if (CA_STATUS_OK != res)
         {
@@ -475,8 +468,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeGattConnectionStateChangeCB(
     }
     else if (state_disconnected == newState)// le disconnected
     {
-        OIC_LOG(DEBUG, TAG, "LE is disconnected");
-
         if (LINK_LOSS == status || REMOTE_DISCONNECT == status)
         {
             if (!CAManagerIsInACDataList(env, jni_address))
@@ -517,7 +508,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeServicesDiscoveredCallback(J
                                                                                jobject gatt,
                                                                                jint status)
 {
-    OIC_LOG_V(INFO, TAG, "caManagerLeServicesDiscoveredCallback - status %d", status);
     VERIFY_NON_NULL_VOID(env, TAG, "env");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
     VERIFY_NON_NULL_VOID(gatt, TAG, "gatt");
@@ -546,8 +536,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeServicesDiscoveredCallback(J
             return;
         }
 
-        OIC_LOG_V(DEBUG, TAG, "ServicesDiscovered device : %s", address);
-
         if (CAManagerIsConnectedDeviceAddress(env, g_context, jni_address, g_connectedDeviceSet))
         {
             OIC_LOG(INFO, TAG, "AC list - the address will be added to ACData list");
@@ -565,8 +553,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeServicesDiscoveredCallback(J
 
         (*env)->ReleaseStringUTFChars(env, jni_address, address);
         (*env)->DeleteLocalRef(env, jni_address);
-
-        OIC_LOG(INFO, TAG, "ServicesDiscovery is successful");
     }
     else
     {

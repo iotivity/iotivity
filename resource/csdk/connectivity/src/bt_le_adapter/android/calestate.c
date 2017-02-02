@@ -134,7 +134,6 @@ bool CALEIsDeviceInList(const char* remoteAddress,
 
         if (!strcmp(remoteAddress, state->address))
         {
-            OIC_LOG(DEBUG, TAG, "the device is already set");
             return true;
         }
         else
@@ -143,7 +142,7 @@ bool CALEIsDeviceInList(const char* remoteAddress,
         }
     }
 
-    OIC_LOG(DEBUG, TAG, "there are no the device in list.");
+    OIC_LOG(INFO, TAG, "there are no the device in list.");
     return false;
 }
 
@@ -176,7 +175,7 @@ CAResult_t CALERemoveAllDeviceState(u_arraylist_t *deviceList,
 CAResult_t CALEResetDeviceStateForAll(u_arraylist_t *deviceList,
                                       oc_mutex deviceListMutex)
 {
-    OIC_LOG(DEBUG, TAG, "CALEClientResetDeviceStateForAll");
+    OIC_LOG(DEBUG, TAG, "CALEResetDeviceStateForAll");
     VERIFY_NON_NULL(deviceList, TAG, "deviceList is null");
 
     oc_mutex_lock(deviceListMutex);
@@ -243,8 +242,6 @@ CALEState_t* CALEGetStateInfo(const char* remoteAddress,
     VERIFY_NON_NULL_RET(deviceList, TAG, "deviceList is null", NULL);
 
     uint32_t length = u_arraylist_length(deviceList);
-    OIC_LOG_V(DEBUG, TAG, "length of deviceStateList : %d", length);
-    OIC_LOG_V(DEBUG, TAG, "target address : %s", remoteAddress);
 
     for (uint32_t index = 0; index < length; index++)
     {
@@ -255,16 +252,14 @@ CALEState_t* CALEGetStateInfo(const char* remoteAddress,
             continue;
         }
 
-        OIC_LOG_V(DEBUG, TAG, "state address : %s (idx: %d)", state->address, index);
-
         if (!strcmp(state->address, remoteAddress))
         {
-            OIC_LOG(DEBUG, TAG, "found state");
             return state;
         }
+        OIC_LOG_V(DEBUG, TAG, "state addr[%s, %d]", state->address, index);
     }
 
-    OIC_LOG_V(DEBUG, TAG, "[%s] doesn't exist in deviceStateList", remoteAddress);
+    OIC_LOG_V(DEBUG, TAG, "[%s] doesn't exist in deviceStateList", remoteAddress, length);
     return NULL;
 }
 

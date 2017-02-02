@@ -578,8 +578,6 @@ static CAResult_t CALEGetPortsFromSenderInfo(const char *leAddress,
 
 static CAResult_t CAInitLEServerQueues()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
-
     oc_mutex_lock(g_bleAdapterThreadPoolMutex);
 
     CAResult_t result = CAInitLEServerSenderQueue();
@@ -610,15 +608,11 @@ static CAResult_t CAInitLEServerQueues()
     g_dataBleServerReceiverHandlerState = true;
 
     oc_mutex_unlock(g_bleAdapterThreadPoolMutex);
-
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 static CAResult_t CAInitLEClientQueues()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
-
     oc_mutex_lock(g_bleAdapterThreadPoolMutex);
 
     CAResult_t result = CAInitLEClientSenderQueue();
@@ -649,14 +643,12 @@ static CAResult_t CAInitLEClientQueues()
     g_dataBleClientReceiverHandlerState = true;
 
     oc_mutex_unlock(g_bleAdapterThreadPoolMutex);
-
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 static CAResult_t CAInitLEServerReceiverQueue()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CAInitLEServerReceiverQueue");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CAInitLEServerReceiverQueue");
     // Check if the message queue is already initialized
     if (g_bleServerReceiverQueue)
     {
@@ -691,13 +683,12 @@ static CAResult_t CAInitLEServerReceiverQueue()
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 static CAResult_t CAInitLEClientReceiverQueue()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CAInitLEClientReceiverQueue");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CAInitLEClientReceiverQueue");
     // Check if the message queue is already initialized
     if (g_bleClientReceiverQueue)
     {
@@ -732,13 +723,12 @@ static CAResult_t CAInitLEClientReceiverQueue()
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 static CAResult_t CAInitLEServerSenderQueue()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CAInitLEServerSenderQueue");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CAInitLEServerSenderQueue");
     // Check if the message queue is already initialized
     if (g_bleServerSendQueueHandle)
     {
@@ -765,7 +755,6 @@ static CAResult_t CAInitLEServerSenderQueue()
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -794,7 +783,7 @@ static void CALEClearSenderInfo()
 
 static CAResult_t CAInitLEClientSenderQueue()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CAInitLEClientSenderQueue");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CAInitLEClientSenderQueue");
 
     if (g_bleClientSendQueueHandle)
     {
@@ -819,8 +808,6 @@ static CAResult_t CAInitLEClientSenderQueue()
         g_bleClientSendQueueHandle = NULL;
         return CA_STATUS_FAILED;
     }
-
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT - CAInitLEClientSenderQueue");
     return CA_STATUS_OK;
 }
 
@@ -847,8 +834,6 @@ static void CAStopLEQueues()
 
 static void CATerminateLEQueues()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
-
     CAQueueingThreadDestroy(g_bleClientSendQueueHandle);
     OICFree(g_bleClientSendQueueHandle);
     g_bleClientSendQueueHandle = NULL;
@@ -866,8 +851,6 @@ static void CATerminateLEQueues()
     g_bleClientReceiverQueue = NULL;
 
     CALEClearSenderInfo();
-
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
 static CAResult_t CALEGetSenderInfo(const char *leAddress,
@@ -914,7 +897,7 @@ static CAResult_t CALEGetSenderInfo(const char *leAddress,
 
 static void CALEDataReceiverHandler(void *threadData, CABLEAdapter_t receiverType)
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CALEDataReceiverHandler");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALEDataReceiverHandler");
 
     oc_mutex bleReceiveDataMutex = NULL;
     bool dataBleReceiverHandlerState = false;
@@ -1198,22 +1181,17 @@ static void CALEDataReceiverHandler(void *threadData, CABLEAdapter_t receiverTyp
         }
     }
     oc_mutex_unlock(bleReceiveDataMutex);
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT - CALEDataReceiverHandler");
 }
 
 
 static void CALEServerDataReceiverHandler(void *threadData)
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CALEServerDataReceiverHandler");
     CALEDataReceiverHandler(threadData, ADAPTER_SERVER);
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
 static void CALEClientDataReceiverHandler(void *threadData)
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CALEClientDataReceiverHandler");
     CALEDataReceiverHandler(threadData, ADAPTER_CLIENT);
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
 static void CALEServerSendDataThread(void *threadData)
@@ -2303,7 +2281,7 @@ static CAResult_t CALEServerSendDataSingleThread(const uint8_t *data,
 
 static CAResult_t CAInitLEAdapterMutex()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CAInitLEAdapterMutex");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CAInitLEAdapterMutex");
 
     if (NULL == g_bleIsServerMutex)
     {
@@ -2401,13 +2379,12 @@ static CAResult_t CAInitLEAdapterMutex()
         }
     }
 
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 static void CATerminateLEAdapterMutex()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CATerminateLEAdapterMutex");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CATerminateLEAdapterMutex");
 
     oc_mutex_free(g_bleIsServerMutex);
     g_bleIsServerMutex = NULL;
@@ -2435,8 +2412,6 @@ static void CATerminateLEAdapterMutex()
 
     oc_mutex_free(g_bleClientReceiveDataMutex);
     g_bleClientReceiveDataMutex = NULL;
-
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
 /**
@@ -2640,7 +2615,7 @@ static CAResult_t CALEAdapterClientSendData(const CAEndpoint_t *remoteEndpoint,
 
 static CAResult_t CALEAdapterGattServerStart()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "Before CAStartLEGattServer");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALEAdapterGattServerStart");
 
     if (caglobals.bleFlags & CA_LE_SERVER_DISABLE)
     {
@@ -2710,7 +2685,7 @@ static CAResult_t CALEAdapterGattServerStop()
 
 static CAResult_t CALEAdapterGattClientStart()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "Before CAStartLEGattClient");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALEAdapterGattClientStart");
 
     CAResult_t result = CAStartLEGattClient();
 
@@ -2827,7 +2802,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
                           CAErrorHandleCallback errorCallback,
                           ca_thread_pool_t handle)
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CAInitializeLE");
 
     //Input validation
     VERIFY_NON_NULL(registerCallback, CALEADAPTER_TAG, "RegisterConnectivity callback is null");
@@ -2906,23 +2881,16 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
         };
 
     registerCallback(connHandler);
-
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-
     return CA_STATUS_OK;
 }
 
 static CAResult_t CAStartLE()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CAStartLE");
-
     return CAStartLEAdapter();
 }
 
 static CAResult_t CAStopLE()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
-
 #ifdef __WITH_DTLS__
     CAdeinitSslAdapter();
 #endif
@@ -2948,15 +2916,12 @@ static CAResult_t CAStopLE()
             break;
     }
     oc_mutex_unlock(g_bleIsServerMutex);
-
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-
     return CAStopLEAdapter();
 }
 
 static void CATerminateLE()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CATerminateLE");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CATerminateLE");
 
     CASetLEReqRespServerCallback(NULL);
     CASetLEReqRespClientCallback(NULL);
@@ -2992,8 +2957,6 @@ static void CATerminateLE()
 #endif
 
     CATerminateLEAdapterMutex();
-
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT - CATerminateLE");
 }
 
 static CAResult_t CAStartLEListeningServer()
@@ -3110,11 +3073,9 @@ static CAResult_t CAStartLEDiscoveryServer()
 
 static CAResult_t CAReadLEData()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 #ifdef SINGLE_THREAD
     CACheckLEData();
 #endif
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -3212,10 +3173,10 @@ static int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint,
             oc_mutex_unlock(g_bleIsServerMutex);
             OIC_LOG(ERROR, CALEADAPTER_TAG, "Send unicast data for client failed" );
 
-             if (g_errorHandler)
-             {
-                 g_errorHandler(endpoint, data, dataLen, result);
-             }
+            if (g_errorHandler)
+            {
+                g_errorHandler(endpoint, data, dataLen, result);
+            }
             return -1;
         }
     }
@@ -3524,8 +3485,6 @@ static CAResult_t CALEAdapterClientSendData(const CAEndpoint_t *remoteEndpoint,
                                             const uint8_t *data,
                                             uint32_t dataLen)
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
-
     VERIFY_NON_NULL(data, CALEADAPTER_TAG, "Param data is NULL");
 #ifndef SINGLE_THREAD
     VERIFY_NON_NULL_RET(g_bleClientSendQueueHandle, CALEADAPTER_TAG,
@@ -3552,7 +3511,6 @@ static CAResult_t CALEAdapterClientSendData(const CAEndpoint_t *remoteEndpoint,
     CAQueueingThreadAddData(g_bleClientSendQueueHandle, bleData, sizeof(CALEData_t));
     oc_mutex_unlock(g_bleClientSendDataMutex);
 #endif
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -3692,8 +3650,6 @@ static CAResult_t CALEAdapterClientReceivedData(const char *remoteAddress,
                                                 uint32_t dataLength,
                                                 uint32_t *sentLength)
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
-
     //Input validation
     VERIFY_NON_NULL(data, CALEADAPTER_TAG, "Data is null");
     VERIFY_NON_NULL(sentLength, CALEADAPTER_TAG, "Sent data length holder is null");
@@ -3734,32 +3690,23 @@ static CAResult_t CALEAdapterClientReceivedData(const char *remoteAddress,
 
     *sentLength = dataLength;
 #endif
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 static void CASetLEAdapterThreadPoolHandle(ca_thread_pool_t handle)
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
-
     oc_mutex_lock(g_bleAdapterThreadPoolMutex);
     g_bleAdapterThreadPool = handle;
     oc_mutex_unlock(g_bleAdapterThreadPoolMutex);
-
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
 static void CASetLEReqRespAdapterCallback(CANetworkPacketReceivedCallback callback)
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
-
     oc_mutex_lock(g_bleAdapterReqRespCbMutex);
 
     g_networkPacketReceivedCallback = callback;
 
     oc_mutex_unlock(g_bleAdapterReqRespCbMutex);
-
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
 static void CALEErrorHandler(const char *remoteAddress,

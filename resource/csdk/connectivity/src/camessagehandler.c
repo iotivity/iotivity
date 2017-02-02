@@ -1374,10 +1374,8 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
     if (NULL != data->remoteEndpoint)
     {
         CALogAdapterTypeInfo(data->remoteEndpoint->adapter);
-        OIC_LOG(DEBUG, ANALYZER_TAG, "-------------------------------------------------");
         OIC_LOG_V(DEBUG, ANALYZER_TAG, "Address = [%s]:[%d]", data->remoteEndpoint->addr,
                   data->remoteEndpoint->port);
-        OIC_LOG(DEBUG, ANALYZER_TAG, "-------------------------------------------------");
     }
 
     switch(data->dataType)
@@ -1440,7 +1438,6 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
         OIC_LOG(DEBUG, ANALYZER_TAG, "Coap Token");
         OIC_LOG_BUFFER(DEBUG, ANALYZER_TAG, (const uint8_t *) info->token, info->tokenLength);
         OIC_LOG_V(DEBUG, ANALYZER_TAG, "Res URI = [%s]", info->resourceUri);
-        OIC_LOG(DEBUG, ANALYZER_TAG, "-------------------------------------------------");
 
         if (CA_FORMAT_APPLICATION_CBOR == info->payloadFormat)
         {
@@ -1460,7 +1457,7 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
     OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Header size = [%lu]", pdu->length - payloadLen);
 
     OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Payload");
-    OIC_LOG_BUFFER(DEBUG, ANALYZER_TAG, pdu->data, payloadLen);
+//    OIC_LOG_BUFFER(DEBUG, ANALYZER_TAG, pdu->data, payloadLen);
     OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Payload Size = [%lu]", payloadLen);
     OIC_LOG(DEBUG, ANALYZER_TAG, "=================================================");
 }

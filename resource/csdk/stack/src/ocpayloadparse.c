@@ -62,7 +62,6 @@ OCStackResult OCParsePayload(OCPayload **outPayload, OCPayloadType payloadType,
 
     OIC_LOG_V(INFO, TAG, "CBOR Parsing size: %zu of Payload Type: %d, Payload:",
             payloadSize, payloadType);
-    OIC_LOG_BUFFER(DEBUG, TAG, payload, payloadSize);
 
     CborParser parser;
     CborValue rootValue;

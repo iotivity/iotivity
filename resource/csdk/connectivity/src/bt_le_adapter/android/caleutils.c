@@ -405,7 +405,7 @@ jint CALEGetConstantsValue(JNIEnv *env, const char* classType, const char* name)
 
 jobject CALEGetRemoteDevice(JNIEnv *env, jstring address)
 {
-    OIC_LOG(DEBUG, TAG, "IN - CALEGetRemoteDevice");
+    OIC_LOG(DEBUG, TAG, "CALEGetRemoteDevice");
 
     VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
     VERIFY_NON_NULL_RET(address, TAG, "address is null", NULL);
@@ -453,8 +453,6 @@ jobject CALEGetRemoteDevice(JNIEnv *env, jstring address)
         OIC_LOG(ERROR, TAG, "jni_obj_device is null");
         goto error_exit;
     }
-
-    OIC_LOG(DEBUG, TAG, "OUT - CALEGetRemoteDevice");
     return jni_obj_device;
 
 error_exit:
@@ -464,7 +462,7 @@ error_exit:
 
 jstring CALEGetAddressFromGatt(JNIEnv *env, jobject gatt)
 {
-    OIC_LOG(DEBUG, TAG, "IN - CALEGetAddressFromGatt");
+    OIC_LOG(DEBUG, TAG, "CALEGetAddressFromGatt");
 
     VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
     VERIFY_NON_NULL_RET(gatt, TAG, "gatt is null", NULL);
@@ -492,6 +490,5 @@ jstring CALEGetAddressFromGatt(JNIEnv *env, jobject gatt)
         return NULL;
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT - CALEGetAddressFromGatt");
     return jni_address;
 }

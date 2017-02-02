@@ -534,9 +534,7 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
         }
         else
         {
-            OIC_LOG_V(DEBUG, TAG, "Head opt ID: %d", id);
-            OIC_LOG_V(DEBUG, TAG, "Head opt data: %s", (info->options + i)->optionData);
-            OIC_LOG_V(DEBUG, TAG, "Head opt length: %d", (info->options + i)->optionLength);
+            OIC_LOG_V(DEBUG, TAG, "Head opt ID[%d], length[%d]", id, (info->options + i)->optionLength);
             int ret = coap_insert(optlist,
                                   CACreateNewOptionNode(id, (info->options + i)->optionLength,
                                                         (info->options + i)->optionData),
@@ -1232,12 +1230,12 @@ CAPayloadFormat_t CAConvertFormat(uint16_t format)
 #ifdef WITH_BWT
 bool CAIsSupportedBlockwiseTransfer(CATransportAdapter_t adapter)
 {
-    OIC_LOG_V(INFO, TAG, "adapter value is %d", adapter);
     if (CA_ADAPTER_IP & adapter || CA_ADAPTER_NFC & adapter
             || CA_DEFAULT_ADAPTER == adapter)
     {
         return true;
     }
+    OIC_LOG_V(INFO, TAG, "adapter value of BWT is %d", adapter);
     return false;
 }
 #endif
@@ -1245,12 +1243,12 @@ bool CAIsSupportedBlockwiseTransfer(CATransportAdapter_t adapter)
 #ifdef WITH_TCP
 bool CAIsSupportedCoAPOverTCP(CATransportAdapter_t adapter)
 {
-    OIC_LOG_V(INFO, TAG, "adapter value is %d", adapter);
     if (CA_ADAPTER_GATT_BTLE & adapter || CA_ADAPTER_RFCOMM_BTEDR & adapter
             || CA_ADAPTER_TCP & adapter || CA_DEFAULT_ADAPTER == adapter)
     {
         return true;
     }
+    OIC_LOG_V(INFO, TAG, "adapter value of CoAP/TCP is %d", adapter);
     return false;
 }
 #endif

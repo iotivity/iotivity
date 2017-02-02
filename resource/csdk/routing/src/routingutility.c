@@ -80,7 +80,6 @@ void RMSetStackMode(OCMode mode)
 OCStackResult RMAddInfo(const char *destination, void *message, bool isRequest,
                         bool *doPost)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_WITH_RET(message, TAG, "options");
 
     CAHeaderOption_t **options = NULL;
@@ -214,14 +213,12 @@ OCStackResult RMAddInfo(const char *destination, void *message, bool isRequest,
         *options = optionPtr;
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
 OCStackResult RMUpdateInfo(CAHeaderOption_t **options, uint8_t *numOptions,
                            CAEndpoint_t *endpoint)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_WITH_RET(options, TAG, "options");
     RM_NULL_CHECK_WITH_RET(*options, TAG, "invalid option");
     RM_NULL_CHECK_WITH_RET(numOptions, TAG, "numOptions");
@@ -284,13 +281,11 @@ OCStackResult RMUpdateInfo(CAHeaderOption_t **options, uint8_t *numOptions,
         OICFree(*options);
         *options = NULL;
     }
-    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
 void RMGetRouteOptionIndex(const CAHeaderOption_t *options, uint8_t numOptions, int8_t *index)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_VOID(index, TAG, "index");
 
     if (NULL == options)
@@ -309,12 +304,10 @@ void RMGetRouteOptionIndex(const CAHeaderOption_t *options, uint8_t numOptions, 
             break;
         }
     }
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 OCStackResult RMCreateRouteOption(const RMRouteOption_t *optValue, CAHeaderOption_t *options)
 {
-    OIC_LOG(DEBUG, RM_TAG, "IN");
     RM_NULL_CHECK_WITH_RET(optValue, RM_TAG, "optValue");
     RM_NULL_CHECK_WITH_RET(options, RM_TAG, "options");
 
@@ -426,13 +419,11 @@ OCStackResult RMCreateRouteOption(const RMRouteOption_t *optValue, CAHeaderOptio
     OIC_LOG_V(INFO, RM_TAG, "Option Length is %d", options->optionLength);
 
     OICFree(tempData);
-    OIC_LOG(DEBUG, RM_TAG, "OUT");
     return OC_STACK_OK;
 }
 
 OCStackResult RMParseRouteOption(const CAHeaderOption_t *options, RMRouteOption_t *optValue)
 {
-    OIC_LOG(DEBUG, RM_TAG, "IN");
     RM_NULL_CHECK_WITH_RET(options, RM_TAG, "options");
     RM_NULL_CHECK_WITH_RET(optValue, RM_TAG, "optValue");
     if (0 == options->optionLength)
@@ -504,6 +495,5 @@ OCStackResult RMParseRouteOption(const CAHeaderOption_t *options, RMRouteOption_
     OIC_LOG_V(INFO, RM_TAG, "Option Sender Addr is [%u][%u]", optValue->srcGw, optValue->srcEp);
     OIC_LOG_V(INFO, RM_TAG, "Option Dest Addr is [%u][%u]", optValue->destGw, optValue->destEp);
     OIC_LOG_V(INFO, RM_TAG, "Message Type is [%u]", optValue->msgType);
-    OIC_LOG(DEBUG, RM_TAG, "OUT");
     return OC_STACK_OK;
 }
