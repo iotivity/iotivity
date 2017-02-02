@@ -1368,7 +1368,9 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             memcpy(response->identity.id, responseInfo->info.identity.id,
                                     sizeof (response->identity.id));
             response->identity.id_length = responseInfo->info.identity.id_length;
-            response->result = OC_STACK_UNAUTHORIZED_REQ;
+            response->result = OC_STACK_OK;
+
+            OIC_LOG(DEBUG, TAG, "This is response of observer cancel or observer request fail");
 
             cbNode->callBack(cbNode->context,
                              cbNode->handle,
