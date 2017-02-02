@@ -315,7 +315,7 @@ OCStackResult JniOcSecureResource::provisionDirectPairing(JNIEnv* env, jobjectAr
                 tmp1 = tmp2;
             }
 
-            delete pconf->prm;
+            delete[] pconf->prm;
             delete pconf;
             resultListener->ProvisionResultCallback(result, hasError, ListenerFunc::PROVISIONDIRECTPAIRING);
         };
@@ -333,7 +333,7 @@ OCStackResult JniOcSecureResource::provisionDirectPairing(JNIEnv* env, jobjectAr
             tmp1 = tmp2;
         }
 
-        delete pconf->prm;
+        delete[] pconf->prm;
         delete pconf;
     }
     return ret;

@@ -140,6 +140,7 @@ exit:
         OIC_LOG(DEBUG, TAG, "Memory getting reallocated.");
         // reallocate and try again!
         OICFree(outPayload);
+        outPayload = NULL;
         // Since the allocated initial memory failed, double the memory.
         cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         OIC_LOG_V(DEBUG, TAG, "Ver reallocation size : %zd.", cborLen);

@@ -486,7 +486,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListen
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     jbyte* trustCertChainBytes = env->GetByteArrayElements(trustCertChain, 0);
     jsize arrayLength = env->GetArrayLength(trustCertChain);
-    uint16_t credId;
+    uint16_t credId = -1;
     unsigned char* trustedCertChar = new unsigned char[arrayLength];
     try
     {

@@ -818,6 +818,7 @@ static OCEntityHandlerResult HandlePconfGetRequest (const OCEntityHandlerRequest
 {
     uint8_t* payload = NULL;
     size_t size = 0;
+    const OicSecDoxm_t *m_doxm = NULL;
     OCEntityHandlerResult ehRet = OC_EH_OK;
 
     OicSecPconf_t pconf;
@@ -825,7 +826,13 @@ static OCEntityHandlerResult HandlePconfGetRequest (const OCEntityHandlerRequest
 
     OIC_LOG (DEBUG, TAG, "Pconf EntityHandle processing GET request");
 
-    if (true == GetDoxmResourceData()->dpc)
+    m_doxm = GetDoxmResourceData();
+    if (NULL == m_doxm)
+    {
+      OIC_LOG (DEBUG, TAG, "Doxm resource Data is NULL");
+    }
+
+    if ((m_doxm) && (true == m_doxm->dpc))
     {
         //Making response elements for Get request
         if( (true == gPconf->edp) &&
