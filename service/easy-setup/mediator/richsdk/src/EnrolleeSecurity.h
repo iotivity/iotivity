@@ -85,7 +85,6 @@ namespace OIC
             ESResult discoverTargetSecureResource();
             ESOwnershipTransferData getOwnershipTransferDataFromUser
                                         (SecurityProvStatusCbWithOption callback);
-            bool isTargetDeviceMine();
             ESResult syncUpWithMediatorDB();
 #ifdef MULTIPLE_OWNER
             ESResult performMultipleOwnershipTransfer(const ESOwnershipTransferData& MOTdata);

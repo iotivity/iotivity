@@ -559,23 +559,6 @@ namespace OIC
             return ownershipTransferData;
         }
 
-        bool EnrolleeSecurity::isTargetDeviceMine()
-        {
-            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "isTargetDeviceMine IN");
-#ifdef MULTIPLE_OWNER
-            if(isOwnedDeviceRegisteredInDB() &&
-                (isOwnerIDMatched(m_securedResource) ||
-                    isSubOwnerIDMatched(m_securedResource)))
-#else
-            if(isOwnedDeviceRegisteredInDB() &&
-                    isOwnerIDMatched(m_securedResource))
-#endif
-            {
-                return true;
-            }
-            return false;
-        }
-
         ESResult EnrolleeSecurity::syncUpWithMediatorDB()
         {
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "syncUpWithMediatorDB IN");
@@ -677,7 +660,15 @@ namespace OIC
 
                 if(m_securedResource->getOwnedStatus())
                 {
-                    if(isTargetDeviceMine())
+#ifdef MULTIPLE_OWNER
+                    if(isOwnedDeviceRegisteredInDB() &&
+                        (isOwnerIDMatched(m_securedResource) ||
+                            isSubOwnerIDMatched(m_securedResource)))
+#else
+                    if(isOwnedDeviceRegisteredInDB() &&
+                            isOwnerIDMatched(m_securedResource))
+#endif
+
                     {
                         OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
                             "The found device is already owned by Mediator.(SUCCESS)");
@@ -686,6 +677,8 @@ namespace OIC
                     }
 #ifdef MULTIPLE_OWNER
                     else if( !isOwnedDeviceRegisteredInDB() &&
+                             !isOwnerIDMatched(m_securedResource) &&
+                             !isSubOwnerIDMatched(m_securedResource) &&
                              m_securedResource->isMOTSupported() &&
                              m_securedResource->isMOTEnabled() &&
                              OIC_PRECONFIG_PIN == ownershipTransferData.getMOTMethod() &&
@@ -701,12 +694,23 @@ namespace OIC
                             return res;
                         }
                     }
+                    else if( !isOwnedDeviceRegisteredInDB() &&
+                             (isOwnerIDMatched(m_securedResource) ||
+                             isSubOwnerIDMatched(m_securedResource)))
+#else
+                    else if( !isOwnedDeviceRegisteredInDB() && isOwnerIDMatched(m_securedResource))
 #endif
+                    {
+                        OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,
+                        "An ownership transfer knowledge is not synchronized between mediator and found enrollee.(FAILED)");
+                        res = ESResult::ES_OWNERSHIP_IS_NOT_SYNCHRONIZED;
+                        return res;
+                    }
                     else
                     {
                         OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,
                             "The found device is already owned by Other Mediator.(FAILED)");
-                        res = ESResult::ES_OWNERSHIP_IS_NOT_SYNCHRONIZED;
+                        res = ESResult::ES_OWNERSHIP_TRANSFER_FAILURE;
                         return res;
                     }
                 }
