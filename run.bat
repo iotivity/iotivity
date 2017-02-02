@@ -7,7 +7,7 @@ if [%1]==[] goto USAGE
 set IOTIVITY_DIR=%~dp0
 set HOME=%USERPROFILE%
 
-IF "%1" == "msys" (
+IF /I "%1" == "msys" (
   set BUILD_MSYS="YES"
   SHIFT
 ) ELSE (
@@ -37,8 +37,11 @@ if "%WITH_TCP%" == "" (
   set WITH_TCP=1
 )
 
+if "%SECURED%" == "" (
+  set SECURED=1
+)
+
 set THREAD_COUNT=%NUMBER_OF_PROCESSORS%
-set SECURED=1
 set ROUTING=EP
 set WITH_UPSTREAM_LIBCOAP=1
 set BINDIR=debug
@@ -51,28 +54,31 @@ set DEBUG=
 
 :processArgs
 IF NOT "%1"=="" (
-  IF "%1"=="-arch" (
+  IF /I "%1"=="-arch" (
     SET TARGET_ARCH=%2
     SHIFT
   )
-  IF "%1"=="-threads" (
+  IF /I "%1"=="-threads" (
     SET THREAD_COUNT=%2
     SHIFT
   )
-  IF "%1"=="-noTest" (
+  IF /I "%1"=="-noTest" (
     SET TEST=0
   )
-  IF "%1"=="-logging" (
+  IF /I "%1"=="-logging" (
     SET LOGGING=1
   )
-  IF "%1"=="-debugger" (
+  IF /I "%1"=="-debugger" (
     set DEBUG="%ProgramFiles(x86)%\Windows Kits\10\Debuggers\x64\cdb.exe" -2 -c "g"
   )
-  IF "%1"=="-release" (
+  IF /I "%1"=="-release" (
     SET RELEASE=1
   )
-  IF "%1"=="-noTCP" (
+  IF /I "%1"=="-noTCP" (
     SET WITH_TCP=0
+  )
+  IF /I "%1"=="-noSecurity" (
+    set SECURED=0
   )
 
   SHIFT
@@ -213,6 +219,8 @@ echo   -threads [NUMBER_OF_THREADS] - Build in parallel using [NUMBER_OF_THREADS
 echo.
 echo   -noTCP                       - Build with the TCP adapter disabled
 echo.
+echo   -noSecurity                  - Remove security support (results in code that cannot be certified by OCF)
+echo.
 echo. Usage examples:
 echo.
 echo   Launch SimpleClient with debugger:
@@ -241,6 +249,9 @@ echo      %0 build -threads 1
 echo.
 echo   Build with TCP adapter disabled and run unit tests:
 echo      %0 build -noTCP
+echo.
+echo   Build without security support and run unit tests:
+echo      %0 build -noSecurity
 echo.
 echo   Run all tests:
 echo      %0 test
