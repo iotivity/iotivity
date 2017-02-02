@@ -72,6 +72,9 @@ typedef struct OCServerRequest
     /** Remote endpoint address **/
     OCDevAddr devAddr;
 
+    /** The ID of server request*/
+    uint32_t requestId;
+
     /** Token for the request.*/
     CAToken_t requestToken;
 
@@ -107,9 +110,6 @@ typedef struct OCServerRequest
 
     /** payload is retrieved from the payload of the received request PDU.*/
     uint8_t payload[1];
-
-    /** The ID of server request*/
-    uint32_t requestId;
 
     // WARNING: Do NOT add attributes after payload as they get overwritten
     // when payload content gets copied over!
