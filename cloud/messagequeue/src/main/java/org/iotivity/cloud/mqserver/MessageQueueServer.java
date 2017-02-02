@@ -36,7 +36,7 @@ public class MessageQueueServer {
 
         System.out.println("-----MQ SERVER-----");
 
-        if (!(args.length != 6 || args.length == 8)) {
+        if (!(args.length == 6 || args.length == 8)) {
             Log.e("coap server port, Kafka_zookeeper_Address port"
                     + " and Kafka_broker_Address Port and TLS mode required\n"
                     + " and WebSocketLog-Server <Address> <Port> (optional)\n"
