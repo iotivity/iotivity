@@ -319,7 +319,7 @@ namespace OIC
             //TODO : DBPath is passed empty as of now. Need to take dbpath from application.
             if(!m_localEnrolleeSecurity.get())
             {
-                m_localEnrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+                m_localEnrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource);
             }
 
             res = m_localEnrolleeSecurity->provisionOwnership(NULL);
@@ -360,7 +360,7 @@ namespace OIC
 
             if(!m_localEnrolleeSecurity.get())
             {
-                m_localEnrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+                m_localEnrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource);
             }
 
             res = m_localEnrolleeSecurity->provisionOwnership(securityProvStatusCbWithOption);
@@ -589,7 +589,7 @@ namespace OIC
                 ESResult res = ESResult::ES_ERROR;
                 if(!m_cloudEnrolleeSecurity.get())
                 {
-                    m_cloudEnrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+                    m_cloudEnrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource);
                 }
 
 

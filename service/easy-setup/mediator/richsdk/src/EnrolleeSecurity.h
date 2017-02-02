@@ -52,8 +52,7 @@ namespace OIC
         class EnrolleeSecurity : public std::enable_shared_from_this<EnrolleeSecurity>
         {
         public:
-            EnrolleeSecurity(std::shared_ptr< OC::OCResource > resource,
-            const std::string secDbPath);
+            EnrolleeSecurity(std::shared_ptr< OC::OCResource > resource);
             ESResult provisionOwnership(SecurityProvStatusCbWithOption callback);
             std::string getUUID() const;
 
@@ -80,21 +79,29 @@ namespace OIC
                                     ESSecurityCb cb,
                                     std::weak_ptr<EnrolleeSecurity> this_ptr);
 
-            ESResult performOwnershipTransfer(ESResult& res);
-            bool isOwnedDeviceRegisteredInSVRDB();
+            ESResult performOwnershipTransfer();
+            bool isOwnedDeviceRegisteredInDB();
             void removeDeviceWithUuidCB(OC::PMResultList_t *result, int hasError);
+            ESResult discoverTargetSecureResource();
+            ESOwnershipTransferData getOwnershipTransferDataFromUser
+                                        (SecurityProvStatusCbWithOption callback);
+            bool isTargetDeviceMine();
+            ESResult syncUpWithMediatorDB();
 #ifdef MULTIPLE_OWNER
             ESResult performMultipleOwnershipTransfer(const ESOwnershipTransferData& MOTdata);
             void SelectMOTMethodCB(PMResultList_t *result, int hasError);
             void PreconfigPinProvCB(PMResultList_t *result, int hasError);
             void MultipleOwnershipTransferCb(OC::PMResultList_t *result, int hasError);
             bool isSubOwnerIDMatched(std::shared_ptr< OC::OCSecureResource > foundDevice);
+            ESResult RequestSetPreconfPinData(const ESOwnershipTransferData ownershipTransferData);
+            ESResult RequestSetMOTMethod(const ESOwnershipTransferData ownershipTransferData);
 #endif
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError, ESResult& res);
             void convertUUIDToString(const uint8_t uuid[UUID_SIZE],
                                                 std::string& uuidString);
             std::string getResourceDeviceAddress(const std::string& host);
             bool isOwnerIDMatched(std::shared_ptr< OC::OCSecureResource > foundDevice);
+            OCUUIdentity* getMediatorDevID();
 
 #if defined(__WITH_DTLS__) && defined(__WITH_TLS__)
         public:
