@@ -185,6 +185,10 @@ void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storag
     int r = getaddrinfo(host, NULL, &hints, &addrs);
     if (r)
     {
+        if (NULL != addrs)
+        {
+            freeaddrinfo(addrs);
+        }
 #if defined(EAI_SYSTEM)
         if (EAI_SYSTEM == r)
         {

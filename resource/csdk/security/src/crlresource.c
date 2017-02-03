@@ -362,23 +362,30 @@ OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t
     ret = OC_STACK_OK;
 
 exit:
-    if ((CborErrorOutOfMemory == cborEncoderResult) && (cborLen < CBOR_MAX_SIZE))
-    {
-        // reallocate and try again!
-        OICFree(outPayload);
-        // Since the allocated initial memory failed, double the memory.
-        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
-        cborEncoderResult = CborNoError;
-        ret = CrlToCBORPayload(crl, payload, &cborLen, lastUpdate);
-    }
-
     if ((CborNoError != cborEncoderResult) || (OC_STACK_OK != ret))
     {
         OICFree(outPayload);
-        outPayload = NULL;
-        *payload = NULL;
-        *size = 0;
-        ret = OC_STACK_ERROR;
+        if ((CborErrorOutOfMemory == cborEncoderResult) && (cborLen < CBOR_MAX_SIZE))
+        {
+            // Since the allocated initial memory failed, double the memory.
+            cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
+            cborEncoderResult = CborNoError;
+            ret = CrlToCBORPayload(crl, payload, &cborLen, lastUpdate);
+            if (OC_STACK_OK != ret)
+            {
+                outPayload = NULL;
+                *payload = NULL;
+                *size = 0;
+                ret = OC_STACK_ERROR;
+            }
+        }
+        else
+        {
+            outPayload = NULL;
+            *payload = NULL;
+            *size = 0;
+            ret = OC_STACK_ERROR;
+        }
     }
 
     return ret;
