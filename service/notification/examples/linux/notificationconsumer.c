@@ -197,13 +197,11 @@ int main(void)
         {
             printf("Fail to input num\n");
         }
-        fflush(stdin);
 
         if(scanf("%c", &dummy) == EOF)
         {
             printf("Fail to input dummy\n");
         }
-        fflush(stdin);
 
         switch (num)
         {
