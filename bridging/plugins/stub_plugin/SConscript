@@ -1,0 +1,94 @@
+#******************************************************************
+#
+# Copyright 2017 Intel Mobile Communications GmbH All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+##
+# LifX Plugin build script
+##
+
+import os
+import os.path
+
+Import('env')
+
+target_os = env.get('TARGET_OS')
+src_dir = env.get('SRC_DIR')
+bridging_path = os.path.join(src_dir, 'bridging')
+
+stub_env = env.Clone()
+
+print "Reading stub Plugin script"
+
+######################################################################
+# Build flags
+######################################################################
+stub_env.PrependUnique(CPPPATH = [ os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
+                              os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
+                              os.path.join(src_dir, 'resource', 'c_common'),
+                              os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
+                              os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
+                              os.path.join(src_dir, 'resource', 'csdk', 'include'),
+                              os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
+                              os.path.join(src_dir, 'extlibs', 'cjson'),
+                              os.path.join(src_dir, 'extlibs', 'tinycbor', 'src'),
+                              os.path.join(src_dir, 'extlibs', 'rapidjson', 'rapidjson', 'include', 'rapidjson')
+                              ])
+stub_env.AppendUnique(CPPPATH = [ os.path.join(bridging_path, 'include'),
+                             os.path.join(bridging_path, 'plugins', 'stub_plugin')
+                             ])
+
+if target_os not in ['arduino', 'windows']:
+    stub_env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
+
+if target_os in ['darwin','ios']:
+    stub_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
+
+stub_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
+stub_env.AppendUnique(RPATH = [stub_env.get('BUILD_DIR')])
+stub_env.AppendUnique(LIBPATH = [stub_env.get('BUILD_DIR')])
+
+if stub_env.get('LOGGING'):
+    stub_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+stub_env.PrependUnique(LIBS = ['m',
+                               'octbstack',
+                               'ocsrm',
+                               'connectivity_abstraction',
+                               'coap',
+                               'curl' ])
+
+#####################################################################
+# Source files and Target(s)
+######################################################################
+stub_src = [
+         os.path.join(bridging_path, 'common', 'plugin_if.cpp'),
+         os.path.join(bridging_path, 'common', 'plugin_server.cpp'),
+         os.path.join(bridging_path, 'common', 'pipe_handler.cpp'),
+         os.path.join(bridging_path, 'common', 'message_handler.cpp'),
+         os.path.join(bridging_path, 'common', 'curl_client.cpp'),
+         os.path.join(bridging_path, 'common', 'plugin_process.cpp'),
+         os.path.join(bridging_path, 'common', 'ConcurrentIotivityUtils.cpp'),
+         os.path.join(bridging_path, 'plugins', 'stub_plugin', 'stub_plugin.cpp'),
+         ]
+
+stub_env.AppendUnique(STUB_SRC = stub_src)
+stublib = stub_env.SharedLibrary('stubplugin', stub_env.get('STUB_SRC'))
+stub_env.InstallTarget(stublib, 'stubplugin')
+stub_env.UserInstallTargetLib(stublib, 'stubplugin')
+
+

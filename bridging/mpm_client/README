@@ -1,0 +1,64 @@
+General:
+The "mpm_client" is intended to show how you can
+programatically control the functionality of the
+"minipluginmanager" library.
+
+There are two revisions to this application.
+
+1. "mpm_client" which assumes all operations from start.
+    In this revision of the application, the only modes
+    of operation are controlled via command line
+    arguments upon startup.
+
+    + You may issue the flag "-n" such that all
+      resources created by any plugin are created in
+      IoTivity's non-secure mode (i.e. no DTLS
+      encryption is used for the representation of
+      that particular resource).
+        (If this flag is not passed in, all
+         resources will be created in IoTivity's
+         secure mode (all requests/responses will
+         use DTLS encryption).
+    + You may issue the flag "-f" such that only one
+      plugin will be loaded with the name specified
+      immediately after the flag.
+        (If this flag is not passed in, a file
+         named "plugin_load_list.txt" needs to
+         reside at the same level as this
+         application.)
+
+    + Operations assumed by the "mpm_client" are as
+      follows:
+        - You want to perform discovery only once,
+          and it happens at startup.
+        - You allow any resource the plugin wants
+          to create to be created within IoTivity.
+        - Note: This arrangement is particularly
+            good for POCs or demos.
+
+2. "mpm_client_sarr" which awaits user input before doing
+    anything.
+    In this revision of the application, you will be
+    prompted with CLI controls to flex the
+    minipluginmanager library's APIs.
+
+
+What does the file "plugin_load_list.txt" do?
+
+    Every line in this file must contain a valid plugin
+    library name (e.g. "liblifxplugin.so"). The
+    "mpm_client" application will load each plugin
+    individually.
+
+What does the file "plugin_load_list.txt" file need to be populated with?
+
+    As an example(without spaces, tabs, or qoutes):
+        "
+            liblifxplugin.so
+            libhueplugin.so
+
+        "
+
+    Note: This version of the "plugin_load_list.txt" file
+    would load two plugins. You can place as many as you'd
+    like.

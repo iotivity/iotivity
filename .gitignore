@@ -120,6 +120,7 @@ extlibs/bluez/bluez
 extlibs/mbedtls/mbedtls
 extlibs/raxmpp/raxmpp
 extlibs/yaml/yaml
+extlibs/rapidjson/rapidjson
 
 # Ignore editor (e.g. Emacs) backup and autosave files
 *~
