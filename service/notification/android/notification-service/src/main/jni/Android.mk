@@ -24,6 +24,12 @@ LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libocstack-jni.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
+OIC_LIB_PATH := $(ROOT_PATH)/out/android/$(TARGET_ARCH_ABI)/$(APP_OPTIM)
+LOCAL_MODULE := res_directory
+LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libresource_directory.so
+include $(PREBUILT_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
 LOCAL_MODULE := notification_consumer_jni
 LOCAL_CPPFLAGS := -std=c++0x -frtti -fexceptions
 LOCAL_LDLIBS := -llog

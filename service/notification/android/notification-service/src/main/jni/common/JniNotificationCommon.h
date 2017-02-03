@@ -23,11 +23,16 @@
 
 #include <jni.h>
 #include <android/log.h>
+#include "JniSharedObjectHolder.h"
 
 
-#define  TAG    "NotificationService_JNI"
+#define  NSTAG    "NotificationService_JNI"
 
 #define JNI_CURRENT_VERSION JNI_VERSION_1_6
+
+#define NS_LOGI(...) __android_log_print(ANDROID_LOG_INFO, NSTAG, __VA_ARGS__)
+#define NS_LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, NSTAG, __VA_ARGS__)
+#define NS_LOGE(...) __android_log_print(ANDROID_LOG_ERROR, NSTAG, __VA_ARGS__)
 
 #ifdef __cplusplus
 extern "C" {

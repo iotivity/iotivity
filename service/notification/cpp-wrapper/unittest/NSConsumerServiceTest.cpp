@@ -39,7 +39,7 @@
 namespace
 {
     NSProviderSimulator g_providerSimul;
-    OIC::Service::NSProvider *g_provider;
+    std::shared_ptr<OIC::Service::NSProvider> g_provider;
 
     std::atomic_bool g_isStartedStack(false);
 
@@ -87,17 +87,17 @@ class NotificationServiceConsumerTest : public TestWithMock
         NotificationServiceConsumerTest() = default;
         ~NotificationServiceConsumerTest() = default;
 
-        static void ProviderDiscoveredCallbackEmpty( OIC::Service::NSProvider *)
+        static void ProviderDiscoveredCallbackEmpty( std::shared_ptr<OIC::Service::NSProvider> )
         {
             std::cout << __func__ << std::endl;
         }
 
-        static void NotificationReceivedCallbackEmpty( OIC::Service::NSMessage *)
+        static void NotificationReceivedCallbackEmpty( OIC::Service::NSMessage )
         {
             std::cout << __func__ << std::endl;
         }
 
-        static void SyncCallbackEmpty(OIC::Service::NSSyncInfo *)
+        static void SyncCallbackEmpty(OIC::Service::NSSyncInfo)
         {
             std::cout << __func__ << std::endl;
         }
@@ -164,7 +164,7 @@ TEST_F(NotificationServiceConsumerTest, StopConsumerPositive)
 TEST_F(NotificationServiceConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsumerFirst)
 {
     mocks.ExpectCallFunc(ProviderDiscoveredCallbackEmpty).Do(
-        [this]( OIC::Service::NSProvider * provider)
+        [this]( std::shared_ptr<OIC::Service::NSProvider> provider)
     {
         std::cout << "Call Discovered" << std::endl;
         std::cout << provider->getProviderId() << std::endl;
@@ -193,7 +193,7 @@ TEST_F(NotificationServiceConsumerTest, DiscoverProviderWithNonAccepterWhenStart
     }
 
     mocks.ExpectCallFunc(ProviderDiscoveredCallbackEmpty).Do(
-        [this]( OIC::Service::NSProvider * provider)
+        [this]( std::shared_ptr<OIC::Service::NSProvider> provider)
     {
         std::cout << "Call Discovered" << std::endl;
         g_provider = provider;
@@ -214,7 +214,7 @@ TEST_F(NotificationServiceConsumerTest, DiscoverProviderWithNonAccepterWhenResca
 {
     g_providerSimul.setAccepter((int)NSSelector::NS_SELECTION_CONSUMER);
     mocks.OnCallFunc(ProviderDiscoveredCallbackEmpty).Do(
-        [this]( OIC::Service::NSProvider * provider)
+        [this]( std::shared_ptr<OIC::Service::NSProvider> provider)
     {
         std::cout << "Call Discovered" << std::endl;
         g_provider = provider;
@@ -261,9 +261,9 @@ TEST_F(NotificationServiceConsumerTest, ExpectReceiveNotification)
     std::string msg = "msg";
 
     mocks.ExpectCallFunc(NotificationReceivedCallbackEmpty).Do(
-        [this]( OIC::Service::NSMessage * message)
+        [this]( OIC::Service::NSMessage message)
     {
-        std::cout << "Income Notification : " << message->getMessageId() << std::endl;
+        std::cout << "Income Notification : " << message.getMessageId() << std::endl;
         responseCon.notify_all();
     });
 
@@ -280,7 +280,7 @@ TEST_F(NotificationServiceConsumerTest, DiscoverProviderWithAccepterisProvider)
     g_providerSimul.setAccepter((int)NSSelector::NS_SELECTION_PROVIDER);
 
     mocks.ExpectCallFunc(ProviderDiscoveredCallbackEmpty).Do(
-        [this]( OIC::Service::NSProvider * provider)
+        [this]( std::shared_ptr<OIC::Service::NSProvider> provider)
     {
         std::cout << "Call Discovered" << std::endl;
         g_provider = provider;
@@ -310,10 +310,10 @@ TEST_F(NotificationServiceConsumerTest, ExpectReceiveNotificationWithAccepterisP
     uint64_t revId = 1;
 
     mocks.OnCallFunc(NotificationReceivedCallbackEmpty).Do(
-        [this, & id, & revId](OIC::Service::NSMessage * message)
+        [this, & id, & revId](OIC::Service::NSMessage message)
     {
-        std::cout << "Income Notification : " << message->getMessageId() << std::endl;
-        revId =  message->getMessageId();
+        std::cout << "Income Notification : " << message.getMessageId() << std::endl;
+        revId =  message.getMessageId();
         responseCon.notify_all();
     });
 
@@ -333,17 +333,17 @@ TEST_F(NotificationServiceConsumerTest, ExpectCallbackReadCheckWhenProviderNotif
     OIC::Service::NSSyncInfo::NSSyncType type = OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_DELETED;
 
     mocks.OnCallFunc(NotificationReceivedCallbackEmpty).Do(
-        [this]( OIC::Service::NSMessage * message)
+        [this]( OIC::Service::NSMessage message)
     {
-        std::cout << "Income Notification : " << message->getMessageId() << std::endl;
+        std::cout << "Income Notification : " << message.getMessageId() << std::endl;
     });
 
     mocks.OnCallFunc(SyncCallbackEmpty).Do(
-        [& type, this](OIC::Service::NSSyncInfo * sync)
+        [& type, this](OIC::Service::NSSyncInfo sync)
     {
-        std::cout << "Income SyncInfo : " << sync->getMessageId()
-                  << ", State : " << (int) sync->getState() << std::endl;
-        type = sync->getState();
+        std::cout << "Income SyncInfo : " << sync.getMessageId()
+                  << ", State : " << (int) sync.getState() << std::endl;
+        type = sync.getState();
         responseCon.notify_all();
     });
 
@@ -370,17 +370,17 @@ TEST_F(NotificationServiceConsumerTest, ExpectCallbackDismissCheckWhenProviderNo
     OIC::Service::NSSyncInfo::NSSyncType type = OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ;
 
     mocks.OnCallFunc(NotificationReceivedCallbackEmpty).Do(
-        [this]( OIC::Service::NSMessage * message)
+        [this]( OIC::Service::NSMessage message)
     {
-        std::cout << "Income Notification : " << message->getMessageId() << std::endl;
+        std::cout << "Income Notification : " << message.getMessageId() << std::endl;
     });
 
     mocks.OnCallFunc(SyncCallbackEmpty).Do(
-        [& type, this](OIC::Service::NSSyncInfo * sync)
+        [& type, this](OIC::Service::NSSyncInfo sync)
     {
-        std::cout << "Income Notification : " << sync->getMessageId()
-                  << ", State : " << (int) sync->getState() << std::endl;
-        type = sync->getState();
+        std::cout << "Income Notification : " << sync.getMessageId()
+                  << ", State : " << (int) sync.getState() << std::endl;
+        type = sync.getState();
         responseCon.notify_all();
     });
 
@@ -409,21 +409,21 @@ TEST_F(NotificationServiceConsumerTest, ExpectCallbackReadCheckWhenConsumerPostS
     ASSERT_NE(nullptr, g_provider) << "error: discovery failure";
 
     mocks.OnCallFunc(NotificationReceivedCallbackEmpty).Do(
-        [this]( OIC::Service::NSMessage * message)
+        [this]( OIC::Service::NSMessage message)
     {
-        std::cout << "Income Notification : " << message->getMessageId() << std::endl;
-        g_provider->sendSyncInfo(message->getMessageId(),
+        std::cout << "Income Notification : " << message.getMessageId() << std::endl;
+        g_provider->sendSyncInfo(message.getMessageId(),
                                  OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
         std::unique_lock< std::mutex > lock { mutexForCondition };
         responseCon.wait_for(lock, g_waitForResponse);
     });
 
     mocks.OnCallFunc(SyncCallbackEmpty).Do(
-        [& type, this](OIC::Service::NSSyncInfo * sync)
+        [& type, this](OIC::Service::NSSyncInfo sync)
     {
-        std::cout << "Income Notification : " << sync->getMessageId()
-                  << ", State : " << (int) sync->getState() << std::endl;
-        type = sync->getState();
+        std::cout << "Income Notification : " << sync.getMessageId()
+                  << ", State : " << (int) sync.getState() << std::endl;
+        type = sync.getState();
         responseCon.notify_all();
     });
 
@@ -446,21 +446,21 @@ TEST_F(NotificationServiceConsumerTest, ExpectCallbackDismissCheckWhenConsumerPo
     ASSERT_NE(nullptr, g_provider) << "error: discovery failure";
 
     mocks.OnCallFunc(NotificationReceivedCallbackEmpty).Do(
-        [this]( OIC::Service::NSMessage * message)
+        [this]( OIC::Service::NSMessage message)
     {
-        std::cout << "Income Notification : " << message->getMessageId() << std::endl;
-        g_provider->sendSyncInfo(message->getMessageId(),
+        std::cout << "Income Notification : " << message.getMessageId() << std::endl;
+        g_provider->sendSyncInfo(message.getMessageId(),
                                  OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_DELETED);
         std::unique_lock< std::mutex > lock { mutexForCondition };
         responseCon.wait_for(lock, g_waitForResponse);
     });
 
     mocks.OnCallFunc(SyncCallbackEmpty).Do(
-        [& type, this](OIC::Service::NSSyncInfo * sync)
+        [& type, this](OIC::Service::NSSyncInfo sync)
     {
-        std::cout << "Income Notification : " << sync->getMessageId()
-                  << ", State : " << (int) sync->getState() << std::endl;
-        type = sync->getState();
+        std::cout << "Income Notification : " << sync.getMessageId()
+                  << ", State : " << (int) sync.getState() << std::endl;
+        type = sync.getState();
         responseCon.notify_all();
     });
 
@@ -477,17 +477,20 @@ TEST_F(NotificationServiceConsumerTest, ExpectGetProviderSuccessWithValidProvide
 {
     ASSERT_NE(nullptr, g_provider) << "error: discovery failure";
 
-    OIC::Service::NSProvider *provider =
-        OIC::Service::NSConsumerService::getInstance()->getProvider(g_provider->getProviderId());
+    std::shared_ptr<OIC::Service::NSProvider> provider =
+        OIC::Service::NSConsumerService::getInstance()->getProvider(
+            g_provider->getProviderId());
     int ret = strcmp(provider->getProviderId().c_str(), g_provider->getProviderId().c_str());
     EXPECT_EQ(0, ret);
 }
 
 TEST_F(NotificationServiceConsumerTest, ExpectGetProviderSuccessWithInvalidProviderId)
 {
-    OIC::Service::NSProvider *provider =
-        OIC::Service::NSConsumerService::getInstance()->getProvider("123456789012345678901234567890123457");
-    EXPECT_EQ(provider, (void *)NULL);
+    std::shared_ptr<OIC::Service::NSProvider> provider =
+        OIC::Service::NSConsumerService::getInstance()->getProvider(
+            "123456789012345678901234567890123457");
+    bool res = (provider == nullptr);
+    EXPECT_EQ(res, 1);
 }
 
 TEST_F(NotificationServiceConsumerTest, ExpectCallbackTopicUpdated)
@@ -548,9 +551,12 @@ TEST_F(NotificationServiceConsumerTest, ExpectFailUpdateTopicOnConsumer)
     OIC::Service::NSTopicsList *retTopic = g_provider->getTopicList();
     for (auto it : retTopic->getTopicsList())
     {
+        std::cout << "Topic Name: " << it->getTopicName() << std::endl;
+        std::cout << "state : " << (int) it->getState() << std::endl;
         it->setState(OIC::Service::NSTopic::NSTopicState::SUBSCRIBED);
     }
     OIC::Service::NSResult ret = g_provider->updateTopicList(retTopic);
+    std::cout << "ret : " << (int) ret << std::endl;
 
     EXPECT_EQ(OIC::Service::NSResult::ERROR, ret);
 }

@@ -242,34 +242,34 @@ public class ProviderService {
         public void onMessageSynchronized(SyncInfo syncInfo);
     }
 
-    public native void nativeStart(
+    private native void nativeStart(
             OnConsumerSubscribedListener subscribedListener,
             OnMessageSynchronizedListener messageSynchronized,
             boolean subControllability, String userInfo,
             boolean resourceSecurity) throws NSException;
 
-    public native void nativeStop() throws NSException;
+    private native void nativeStop() throws NSException;
 
-    public native void nativeSendMessage(Message message) throws NSException;
+    private native void nativeSendMessage(Message message) throws NSException;
 
-    public native void nativeSendSyncInfo(long messageId, int type)
+    private native void nativeSendSyncInfo(long messageId, int type)
             throws NSException;
 
-    public native Message nativeCreateMessage() throws NSException;
+    private native Message nativeCreateMessage() throws NSException;
 
-    public native void nativeEnableRemoteService(String servAdd)
+    private native void nativeEnableRemoteService(String servAdd)
             throws NSException;
 
-    public native void nativeDisableRemoteService(String servAdd)
+    private native void nativeDisableRemoteService(String servAdd)
             throws NSException;
 
-    public native void nativeSubscribeMQService(String servAdd, String topicName)
+    private native void nativeSubscribeMQService(String servAdd, String topicName)
             throws NSException;
 
-    public native void nativeRegisterTopic(String topicName) throws NSException;
+    private native void nativeRegisterTopic(String topicName) throws NSException;
 
-    public native void nativeUnregisterTopic(String topicName)
+    private native void nativeUnregisterTopic(String topicName)
             throws NSException;
 
-    public native TopicsList nativeGetRegisteredTopicList() throws NSException;
+    private native TopicsList nativeGetRegisteredTopicList() throws NSException;
 }

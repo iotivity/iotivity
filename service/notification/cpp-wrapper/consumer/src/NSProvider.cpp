@@ -20,6 +20,7 @@
 
 #include "NSProvider.h"
 #include <cstring>
+#include "NSConsumerService.h"
 #include "NSConsumerInterface.h"
 #include "NSConstants.h"
 #include "NSCommon.h"
@@ -106,7 +107,11 @@ namespace OIC
         NSTopicsList *NSProvider::getTopicList() const
         {
             NS_LOG(DEBUG, "getTopicList - IN");
-            NSTopicsList * topicList = new NSTopicsList();
+            if (!isValid())
+            {
+                return nullptr;
+            }
+            NSTopicsList *topicList = new NSTopicsList();
             for (auto it : m_topicList->getTopicsList())
             {
                 topicList->addTopic(it->getTopicName(), it->getState());
@@ -117,6 +122,10 @@ namespace OIC
         NSResult NSProvider::updateTopicList(NSTopicsList *topicList)
         {
             NS_LOG(DEBUG, "updateTopicList - IN");
+            if (!isValid())
+            {
+                return NSResult::FAIL;
+            }
             if (topicList == nullptr)
             {
                 return NSResult::ERROR;
@@ -190,18 +199,30 @@ namespace OIC
         NSProviderState NSProvider::getProviderState() const
         {
             NS_LOG_V(DEBUG, "getProviderState  state : %d", (int)m_state);
+            if (!isValid())
+            {
+                return NSProviderState::STOPPED;
+            }
             return m_state;
         }
 
         NSProviderSubscribedState NSProvider::getProviderSubscribedState() const
         {
             NS_LOG_V(DEBUG, "getProviderSubscribedState  state : %d", (int)m_subscribedState);
+            if (!isValid())
+            {
+                return NSProviderSubscribedState::DENY;
+            }
             return m_subscribedState;
         }
 
         NSResult NSProvider::subscribe()
         {
             NS_LOG(DEBUG, "Subscribe - IN");
+            if (!isValid())
+            {
+                return NSResult::FAIL;
+            }
             NSResult result = (NSResult) NSSubscribe(getProviderId().c_str());
             NS_LOG(DEBUG, "Subscribe - OUT");
             return result;
@@ -210,6 +231,10 @@ namespace OIC
         NSResult NSProvider::unsubscribe()
         {
             NS_LOG(DEBUG, "unsubscribe - IN");
+            if (!isValid())
+            {
+                return NSResult::FAIL;
+            }
             NSResult result = (NSResult) NSUnsubscribe(getProviderId().c_str());
             NS_LOG(DEBUG, "unsubscribe - OUT");
             return result;
@@ -218,6 +243,10 @@ namespace OIC
         bool NSProvider::isSubscribed()
         {
             NS_LOG(DEBUG, "isSubscribed - IN");
+            if (!isValid())
+            {
+                return false;
+            }
             NS_LOG_V(DEBUG, "Subscribed state : %d", (int)getProviderSubscribedState());
             if (getProviderSubscribedState() == NSProviderSubscribedState::SUBSCRIBED)
             {
@@ -229,7 +258,11 @@ namespace OIC
         NSResult NSProvider::sendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type)
         {
             NS_LOG(DEBUG, "SendSyncInfo - IN");
-            NSResult result = (NSResult) NSConsumerSendSyncInfo(m_providerId.c_str(), messageId,
+            if (!isValid())
+            {
+                return NSResult::FAIL;
+            }
+            NSResult result = (NSResult) NSConsumerSendSyncInfo(getProviderId().c_str(), messageId,
                               (::NSSyncType)type);
             NS_LOG(DEBUG, "SendSyncInfo - OUT");
             return result;
@@ -278,6 +311,16 @@ namespace OIC
         void NSProvider::setProviderSubscribedState(const NSProviderSubscribedState &subscribedState)
         {
             m_subscribedState = subscribedState;
+        }
+
+        bool NSProvider::isValid() const
+        {
+            if (!NSConsumerService::getInstance()->getAcceptedProviders().isAccepted(getProviderId()))
+            {
+                NS_LOG(DEBUG, "Invalid Operation with stale reference of Provider. Provider ID doesnot exist");
+                return false;
+            }
+            return true;
         }
     }
 }

@@ -135,6 +135,14 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeG
 JNIEXPORT jboolean JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeIsSubscribed
 (JNIEnv *, jobject);
 
+/*
+ * Class:     org_iotivity_service_ns_consumer_Provider
+ * Method:    nativeDispose
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeDispose
+(JNIEnv *env, jobject object);
+
 #ifdef __cplusplus
 }
 #endif

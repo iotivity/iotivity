@@ -20,6 +20,7 @@
 
 #include "NSConsumer.h"
 #include <cstring>
+#include "NSProviderService.h"
 #include "NSProviderInterface.h"
 #include "NSConstants.h"
 #include "oic_string.h"
@@ -52,6 +53,10 @@ namespace OIC
         NSResult NSConsumer::acceptSubscription(bool accepted)
         {
             NS_LOG(DEBUG, "acceptSubscription - IN");
+            if (!isValid())
+            {
+                return NSResult::FAIL;
+            }
             NSResult result = (NSResult) NSAcceptSubscription(getConsumerId().c_str(), accepted);
             NS_LOG(DEBUG, "acceptSubscription - OUT");
             return result;
@@ -60,6 +65,10 @@ namespace OIC
         NSResult NSConsumer::setTopic(const std::string &topicName)
         {
             NS_LOG(DEBUG, "setTopic - IN");
+            if (!isValid())
+            {
+                return NSResult::FAIL;
+            }
             NSResult result = (NSResult) NSProviderSetConsumerTopic(getConsumerId().c_str(),
                               topicName.c_str());
             NS_LOG(DEBUG, "setTopic - OUT");
@@ -69,6 +78,10 @@ namespace OIC
         NSResult NSConsumer::unsetTopic(const std::string &topicName)
         {
             NS_LOG(DEBUG, "unsetTopic - IN");
+            if (!isValid())
+            {
+                return NSResult::FAIL;
+            }
             NSResult result = (NSResult) NSProviderUnsetConsumerTopic(getConsumerId().c_str(),
                               topicName.c_str());
             NS_LOG(DEBUG, "unsetTopic - OUT");
@@ -78,11 +91,25 @@ namespace OIC
         NSTopicsList *NSConsumer::getConsumerTopicList()
         {
             NS_LOG(DEBUG, "getConsumerTopicList - IN");
+            if (!isValid())
+            {
+                return nullptr;
+            }
             ::NSTopicLL *topics = NSProviderGetConsumerTopics(getConsumerId().c_str());
 
             NSTopicsList *nsTopics = new NSTopicsList(topics);
             NS_LOG(DEBUG, "getConsumerTopicList - OUT");
             return nsTopics;
+        }
+
+        bool NSConsumer::isValid() const
+        {
+            if (!NSProviderService::getInstance()->getAcceptedConsumers().isAccepted(getConsumerId()))
+            {
+                NS_LOG(DEBUG, "Invalid Operation with stale reference of Consumer. Consumer ID doesnot exist");
+                return false;
+            }
+            return true;
         }
     }
 }

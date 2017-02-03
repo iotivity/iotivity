@@ -304,6 +304,7 @@ public class MainActivity extends Activity
                             getApplicationContext());
                     notiBuilder.setContentTitle(title);
                     notiBuilder.setContentText(body);
+                    notiBuilder.setSubText(topic);
                     notiBuilder.setPriority(Notification.PRIORITY_MAX);
                     notiBuilder.setDefaults(Notification.DEFAULT_ALL);
                     notiBuilder.setSmallIcon(R.mipmap.ic_launcher);

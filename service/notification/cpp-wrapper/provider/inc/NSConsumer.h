@@ -108,6 +108,7 @@ namespace OIC
 
             private:
                 ::NSConsumer *getNSConsumer();
+                bool isValid() const;
 
             private:
                 std::string m_consumerId;

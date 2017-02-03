@@ -151,6 +151,18 @@ public class ProviderSample
         Log.i(TAG, "Stop ProviderService - OUT");
     }
 
+    public Message createMessage() {
+        Log.i(TAG, "createMessage ProviderService - IN");
+        Message message = null;
+        try {
+            message = ioTNotification.createMessage();
+        } catch (Exception e) {
+            Log.e(TAG, "Exception: createMessage : " + e);
+        }
+        Log.i(TAG, "createMessage ProviderService - OUT");
+        return message;
+    }
+
     public void sendMessage(Message notiMessage) {
         Log.i(TAG, "SendMessage ProviderService - IN");
 

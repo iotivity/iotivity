@@ -102,6 +102,7 @@ public class NotiListener extends NotificationListenerService {
         String id = Integer.toString(sbn.getId());
         String title = bundle.getString(Notification.EXTRA_TITLE, "");
         String body = bundle.getString(Notification.EXTRA_TEXT, "");
+        String topic = bundle.getString(Notification.EXTRA_SUB_TEXT, "");
 
         Log.i(TAG, "onNotificationPosted .. ");
         Log.i(TAG, "source : " + source);
@@ -109,7 +110,18 @@ public class NotiListener extends NotificationListenerService {
         Log.i(TAG, "Title : " + title);
         Log.i(TAG, "Body : " + body);
 
-        Message notiMessage = new Message(title, body, source);
+        Message notiMessage = mProviderSample.createMessage();
+        if(notiMessage == null)
+        {
+            Log.e(TAG, "CreateMessage Failed");
+            return;
+        }
+        Log.i(TAG, "Message ID : " + notiMessage.getMessageId());
+        Log.i(TAG, "Provider ID : " + notiMessage.getProviderId());
+        notiMessage.setTitle(title);
+        notiMessage.setContentText(body);
+        notiMessage.setTopic(topic);
+        notiMessage.setSourceName(source);
         notiMessage.setTTL(10);
         notiMessage.setTime("12:10");
         MediaContents media = new MediaContents("daasd");

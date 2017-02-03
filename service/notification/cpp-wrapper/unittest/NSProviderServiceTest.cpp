@@ -43,7 +43,7 @@ namespace
     std::mutex mutexForCondition;
 
     NSConsumerSimulator g_consumerSimul;
-    OIC::Service::NSConsumer *g_consumer;
+    std::shared_ptr<OIC::Service::NSConsumer> g_consumer;
 }
 
 class TestWithMock: public testing::Test
@@ -76,12 +76,12 @@ class NotificationProviderServiceTest : public TestWithMock
         NotificationProviderServiceTest() = default;
         ~NotificationProviderServiceTest() = default;
 
-        static void ConsumerSubscribedCallbackEmpty(OIC::Service::NSConsumer *)
+        static void ConsumerSubscribedCallbackEmpty(std::shared_ptr<OIC::Service::NSConsumer> )
         {
             std::cout << __func__ << std::endl;
         }
 
-        static void MessageSynchronizedCallbackEmpty(OIC::Service::NSSyncInfo *)
+        static void MessageSynchronizedCallbackEmpty(OIC::Service::NSSyncInfo)
         {
             std::cout << __func__ << std::endl;
         }
@@ -173,7 +173,7 @@ TEST_F(NotificationProviderServiceTest,
 {
     g_consumer = NULL;
     mocks.ExpectCallFunc(ConsumerSubscribedCallbackEmpty).Do(
-        []( OIC::Service::NSConsumer * consumer)
+        []( std::shared_ptr<OIC::Service::NSConsumer> consumer)
     {
         std::cout << "ConsumerSubscribedCallbackEmpty" << std::endl;
         g_consumer = consumer;
@@ -223,11 +223,11 @@ TEST_F(NotificationProviderServiceTest, NeverCallNotifyOnConsumerByAcceptIsFalse
 
     g_consumer->acceptSubscription(false);
 
-    OIC::Service::NSMessage *msg =  OIC::Service::NSProviderService::getInstance()->createMessage();
-    msgID = (int)msg->getMessageId();
-    msg->setTitle(std::string("Title"));
-    msg->setContentText(std::string("ContentText"));
-    msg->setSourceName(std::string("OCF"));
+    OIC::Service::NSMessage msg =  OIC::Service::NSProviderService::getInstance()->createMessage();
+    msgID = (int)msg.getMessageId();
+    msg.setTitle(std::string("Title"));
+    msg.setContentText(std::string("ContentText"));
+    msg.setSourceName(std::string("OCF"));
 
     OIC::Service::NSProviderService::getInstance()->sendMessage(msg);
     {
@@ -237,8 +237,6 @@ TEST_F(NotificationProviderServiceTest, NeverCallNotifyOnConsumerByAcceptIsFalse
 
     std::unique_lock< std::mutex > lock { mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
-
-    delete msg;
 
     EXPECT_EQ(expectTrue, true);
 }
@@ -261,17 +259,16 @@ TEST_F(NotificationProviderServiceTest, ExpectCallNotifyOnConsumerByAcceptIsTrue
 
     g_consumer->acceptSubscription(true);
 
-    OIC::Service::NSMessage *msg =  OIC::Service::NSProviderService::getInstance()->createMessage();
-    msgID = (int)msg->getMessageId();
-    msg->setTitle(std::string("Title"));
-    msg->setContentText(std::string("ContentText"));
-    msg->setSourceName(std::string("OCF"));
+    OIC::Service::NSMessage msg =  OIC::Service::NSProviderService::getInstance()->createMessage();
+    msgID = (int)msg.getMessageId();
+    msg.setTitle(std::string("Title"));
+    msg.setContentText(std::string("ContentText"));
+    msg.setSourceName(std::string("OCF"));
 
     OIC::Service::NSProviderService::getInstance()->sendMessage(msg);
     std::unique_lock< std::mutex > lock { mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    delete msg;
 }
 
 TEST_F(NotificationProviderServiceTest, ExpectCallbackSyncOnReadToConsumer)
@@ -290,18 +287,16 @@ TEST_F(NotificationProviderServiceTest, ExpectCallbackSyncOnReadToConsumer)
         }
     });
 
-    OIC::Service::NSMessage *msg =  OIC::Service::NSProviderService::getInstance()->createMessage();
-    id = (int)msg->getMessageId();
-    msg->setTitle(std::string("Title"));
-    msg->setContentText(std::string("ContentText"));
-    msg->setSourceName(std::string("OCF"));
+    OIC::Service::NSMessage msg =  OIC::Service::NSProviderService::getInstance()->createMessage();
+    id = (int)msg.getMessageId();
+    msg.setTitle(std::string("Title"));
+    msg.setContentText(std::string("ContentText"));
+    msg.setSourceName(std::string("OCF"));
 
-    OIC::Service::NSProviderService::getInstance()->sendSyncInfo(msg->getMessageId(),
+    OIC::Service::NSProviderService::getInstance()->sendSyncInfo(msg.getMessageId(),
             OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
     std::unique_lock< std::mutex > lock { mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
-
-    delete msg;
 }
 
 TEST_F(NotificationProviderServiceTest, ExpectCallbackSyncOnReadFromConsumer)
@@ -309,27 +304,25 @@ TEST_F(NotificationProviderServiceTest, ExpectCallbackSyncOnReadFromConsumer)
     int type = (int)OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ;
     int id = 0;
     mocks.ExpectCallFunc(MessageSynchronizedCallbackEmpty).Do(
-        [& id](OIC::Service::NSSyncInfo * sync)
+        [& id](OIC::Service::NSSyncInfo sync)
     {
         std::cout << "MessageSynchronizedCallbackEmpty" << std::endl;
-        if ((int)sync->getMessageId() == id
-            && sync->getState() == OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ)
+        if ((int)sync.getMessageId() == id
+            && sync.getState() == OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ)
         {
             std::cout << "ExpectCallbackSyncOnReadFromConsumer" << std::endl;
             responseCon.notify_all();
         }
     });
 
-    OIC::Service::NSMessage *msg =  OIC::Service::NSProviderService::getInstance()->createMessage();
-    id = (int)msg->getMessageId();
-    msg->setTitle(std::string("Title"));
-    msg->setContentText(std::string("ContentText"));
-    msg->setSourceName(std::string("OCF"));
-    g_consumerSimul.syncToProvider(type, id, msg->getProviderId());
+    OIC::Service::NSMessage msg =  OIC::Service::NSProviderService::getInstance()->createMessage();
+    id = (int)msg.getMessageId();
+    msg.setTitle(std::string("Title"));
+    msg.setContentText(std::string("ContentText"));
+    msg.setSourceName(std::string("OCF"));
+    g_consumerSimul.syncToProvider(type, id, msg.getProviderId());
     std::unique_lock< std::mutex > lock { mutexForCondition };
     responseCon.wait(lock);
-
-    delete msg;
 }
 
 TEST_F(NotificationProviderServiceTest, ExpectEqualAddedTopicsAndRegisteredTopics)
@@ -516,13 +509,6 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualUnSetConsumerTopicsAndGetCons
     responseCon.wait_for(lock, g_waitForResponse);
 }
 
-TEST_F(NotificationProviderServiceTest, ExpectFailSendMessage)
-{
-    OIC::Service::NSResult result = OIC::Service::NSResult::OK;
-    result = OIC::Service::NSProviderService::getInstance()->sendMessage(nullptr);
-
-    EXPECT_EQ(result, OIC::Service::NSResult::ERROR);
-}
 
 TEST_F(NotificationProviderServiceTest, CancelObserves)
 {

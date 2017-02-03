@@ -66,8 +66,6 @@ public class Message {
     private String           mTopic         = null;
     private OcRepresentation mExtraInfo     = null;
 
-    private long            mNativeHandle  = 0;
-
     public Message(String title, String contentText, String sourceName) {
         Log.i(LOG_TAG, "Message()");
 

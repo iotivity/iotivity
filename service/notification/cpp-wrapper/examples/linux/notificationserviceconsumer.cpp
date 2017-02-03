@@ -49,26 +49,26 @@ FILE *server_fopen(const char *path, const char *mode)
     }
 }
 
-void onNotificationPostedCb(OIC::Service::NSMessage *notification)
+void onNotificationPostedCb(OIC::Service::NSMessage notification)
 {
     std::cout << "------------------------------------" << std::endl;
     std::cout << "Message Received " << std::endl;
     std::cout << "------------------------------------" << std::endl;
-    std::cout << "id : " << notification->getMessageId() << std::endl;
-    std::cout << "title : " << notification->getTitle() << std::endl;
-    std::cout << "content : " <<  notification->getContentText() << std::endl;
-    std::cout << "source : " <<  notification->getSourceName() << std::endl;
-    std::cout << "topic : " <<  notification->getTopic() << std::endl;
-    std::cout << "type : " <<  (int) notification->getType() << std::endl;
-    std::cout << "TTL : " <<  notification->getTTL() << std::endl;
-    std::cout << "time : " <<  notification->getTime() << std::endl;
-    if (notification->getMediaContents() != nullptr)
+    std::cout << "id : " << notification.getMessageId() << std::endl;
+    std::cout << "title : " << notification.getTitle() << std::endl;
+    std::cout << "content : " <<  notification.getContentText() << std::endl;
+    std::cout << "source : " <<  notification.getSourceName() << std::endl;
+    std::cout << "topic : " <<  notification.getTopic() << std::endl;
+    std::cout << "type : " <<  (int) notification.getType() << std::endl;
+    std::cout << "TTL : " <<  notification.getTTL() << std::endl;
+    std::cout << "time : " <<  notification.getTime() << std::endl;
+    if (notification.getMediaContents() != nullptr)
     {
-        std::cout << "MediaContents IconImage : " <<  notification->getMediaContents()->getIconImage()
+        std::cout << "MediaContents IconImage : " <<  notification.getMediaContents()->getIconImage()
                   << std::endl;
     }
     std::cout << "ExtraInfo " << std::endl;
-    OC::OCRepresentation rep = notification->getExtraInfo();
+    OC::OCRepresentation rep = notification.getExtraInfo();
     for (auto it : rep.getResourceTypes())
     {
         std::cout << "resourceType : " << it << std::endl;
@@ -81,17 +81,17 @@ void onNotificationPostedCb(OIC::Service::NSMessage *notification)
     {
         std::cout << "Key : " << it.first << std::endl;
     }
-    mainMessageId = notification->getMessageId();
+    mainMessageId = notification.getMessageId();
 }
 
-void onNotificationSyncCb(OIC::Service::NSSyncInfo *sync)
+void onNotificationSyncCb(OIC::Service::NSSyncInfo sync)
 {
     std::cout << "------------------------------------" << std::endl;
     std::cout << "SyncInfo Received " << std::endl;
     std::cout << "------------------------------------" << std::endl;
-    std::cout << "Sync ID : " <<  sync->getMessageId() << std::endl;
-    std::cout << "Provider ID : " <<  sync->getProviderId() << std::endl;
-    std::cout << "Sync STATE : " << (int) sync->getState() << std::endl;
+    std::cout << "Sync ID : " <<  sync.getMessageId() << std::endl;
+    std::cout << "Provider ID : " <<  sync.getProviderId() << std::endl;
+    std::cout << "Sync STATE : " << (int) sync.getState() << std::endl;
 }
 
 void onProviderStateChangedCb(OIC::Service::NSProviderState state)
@@ -108,7 +108,8 @@ void onProviderStateChangedCb(OIC::Service::NSProviderState state)
     }
     else if (state == OIC::Service::NSProviderState::TOPIC)
     {
-        OIC::Service::NSProvider *provider = NSConsumerService::getInstance()->getProvider(mainProvider);
+        std::shared_ptr<OIC::Service::NSProvider> provider =
+            NSConsumerService::getInstance()->getProvider(mainProvider);
         if (provider != nullptr)
         {
             auto topicList = provider->getTopicList();
@@ -129,7 +130,7 @@ void onProviderStateChangedCb(OIC::Service::NSProviderState state)
     }
 }
 
-void onDiscoverNotificationCb(OIC::Service::NSProvider *provider)
+void onDiscoverNotificationCb(std::shared_ptr<OIC::Service::NSProvider> provider)
 {
     std::cout << "Notification Resource Discovered" << std::endl;
     std::cout << "SetListeners for callbacks" << std::endl;
@@ -278,7 +279,8 @@ int main(void)
             case 4:
                 {
                     std::cout <<  "GetTopicList" << std::endl;
-                    OIC::Service::NSProvider *provider = NSConsumerService::getInstance()->getProvider(mainProvider);
+                    std::shared_ptr<OIC::Service::NSProvider> provider =
+                        NSConsumerService::getInstance()->getProvider(mainProvider);
                     if (provider != nullptr)
                     {
                         auto topicList = provider->getTopicList();
@@ -296,7 +298,8 @@ int main(void)
             case 5:
                 {
                     std::cout <<  "UpdateTopicList" << std::endl;
-                    OIC::Service::NSProvider *provider = NSConsumerService::getInstance()->getProvider(mainProvider);
+                    std::shared_ptr<OIC::Service::NSProvider> provider =
+                        NSConsumerService::getInstance()->getProvider(mainProvider);
                     if (provider != nullptr)
                     {
                         NSTopicsList *topicList = new NSTopicsList();
@@ -306,7 +309,6 @@ int main(void)
 
                         provider->updateTopicList(topicList);
                         delete topicList;
-                        delete provider;
                     }
                     break;
                 }
@@ -315,7 +317,7 @@ int main(void)
                     std::cout << "Subscribe provider" << std::endl;
                     if (!mainProvider.empty())
                     {
-                        OIC::Service::NSProvider *provider =
+                        std::shared_ptr<OIC::Service::NSProvider> provider =
                             NSConsumerService::getInstance()->getProvider(mainProvider);
                         if (provider != nullptr )
                         {
@@ -334,7 +336,7 @@ int main(void)
                     std::cout << "UnSubscribe provider" << std::endl;
                     if (!mainProvider.empty())
                     {
-                        OIC::Service::NSProvider *provider =
+                        std::shared_ptr<OIC::Service::NSProvider> provider =
                             NSConsumerService::getInstance()->getProvider(mainProvider);
                         if (provider != nullptr )
                         {

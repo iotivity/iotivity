@@ -94,19 +94,19 @@ public class Consumer {
      *
      * @throws NSException failure to request topic list
      */
-    public TopicsList getConsumerTopicList() throws NSException {
+    private TopicsList getConsumerTopicList() throws NSException {
         return nativeGetConsumerTopicList(mConsumerId);
     }
 
-    public native void nativeAcceptSubscription(String consumerId,
+    private native void nativeAcceptSubscription(String consumerId,
             boolean accepted) throws NSException;
 
-    public native void nativeSetConsumerTopic(String consumerId,
+    private native void nativeSetConsumerTopic(String consumerId,
             String topicName) throws NSException;
 
-    public native void nativeUnsetConsumerTopic(String consumerId,
+    private native void nativeUnsetConsumerTopic(String consumerId,
             String topicName) throws NSException;
 
-    public native TopicsList nativeGetConsumerTopicList(String consumerId)
+    private native TopicsList nativeGetConsumerTopicList(String consumerId)
             throws NSException;
 }

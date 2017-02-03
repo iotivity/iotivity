@@ -57,14 +57,14 @@ namespace OIC
                      * synchronization
                      * @param[in] message     Notification message
                      */
-                typedef void (*MessageReceivedCallback)(NSMessage *);
+                typedef void (*MessageReceivedCallback)(NSMessage);
 
                 /**
                      * Provider and consumer use this callback function to receive the status of the message
                      * synchronization
                      * @param[in] sync        Synchronization information of the notification message
                      */
-                typedef void (*SyncInfoReceivedCallback)(NSSyncInfo *);
+                typedef void (*SyncInfoReceivedCallback)(NSSyncInfo);
 
                 /**
                       * Constructor of NSProvider.
@@ -256,6 +256,7 @@ namespace OIC
 
             private:
                 ::NSProvider *getNSProvider();
+                bool isValid() const;
 
             private:
                 std::string m_providerId;

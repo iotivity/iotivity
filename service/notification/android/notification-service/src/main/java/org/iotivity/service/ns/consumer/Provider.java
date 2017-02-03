@@ -68,6 +68,16 @@ public class Provider {
         mProviderId = providerId;
     }
 
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            nativeDispose();
+        } catch (Throwable t) {
+            throw t;
+        } finally {
+            super.finalize();
+        }
+    }
     /**
      * API for getting providerId
      *
@@ -239,13 +249,15 @@ public class Provider {
             OnSyncInfoReceivedListener onSyncInfoReceivedListener)
             throws NSException;
 
-    public native TopicsList nativeGetTopicList() throws NSException;
+    private native TopicsList nativeGetTopicList() throws NSException;
 
     private native void nativeUpdateTopicList(TopicsList topicsList)
             throws NSException;
 
     private native ProviderState nativeGetProviderState() throws NSException;
 
-    public native boolean nativeIsSubscribed() throws NSException;
+    private native boolean nativeIsSubscribed() throws NSException;
+
+    private native void nativeDispose();
 
 }
