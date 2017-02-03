@@ -211,7 +211,6 @@ int main()
         {
             if(scanf("%c", &dummy) > 0)
             {
-                fflush(stdin);
                 printf("\n");
             }
         }
