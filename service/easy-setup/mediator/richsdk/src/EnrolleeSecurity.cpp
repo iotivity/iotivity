@@ -530,6 +530,35 @@ namespace OIC
                     return ES_ERROR;
                 }
             }
+
+            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Secured resource is found.");
+            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "HOST: %s", m_securedResource->getDevAddr().c_str());
+            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "SID: %s", m_securedResource->getDeviceID().c_str());
+            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Owned status: %d", m_securedResource->getOwnedStatus());
+
+            OicSecOxm_t selectedOTMethod;
+            if( OC_STACK_OK != m_securedResource->getOTMethod(&selectedOTMethod) )
+            {
+                selectedOTMethod = OIC_OXM_COUNT; // Out-of-range
+            }
+            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Selected OT Method: %d", (int)(selectedOTMethod));
+#ifdef MULTIPLE_OWNER
+            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "MOT Supported: %d", (int)(m_securedResource->isMOTSupported()));
+            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "MOT Enabled: %d", (int)(m_securedResource->isMOTEnabled()));
+#endif
+            if(m_securedResource->getOwnedStatus())
+            {
+                char uuidString[UUID_STRING_SIZE];
+                if(OCConvertUuidToString(m_securedResource->getDevPtr()->doxm->owner.id, uuidString))
+                {
+                    OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Owner ID: %s", uuidString);
+                }
+                else
+                {
+                    OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "OCConvertUuidToString is failed");
+                }
+            }
+
             return ES_OK;
         }
 
