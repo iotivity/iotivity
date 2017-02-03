@@ -119,7 +119,7 @@ namespace OC
 
             virtual ~OCRepresentation(){}
 
-            void setDevAddr(const OCDevAddr addr);
+            void setDevAddr(const OCDevAddr&);
 
             const std::string getHost() const;
 

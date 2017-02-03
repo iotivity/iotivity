@@ -836,6 +836,7 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
                 {
                     err = cbor_value_advance(&repMap);
                     free(name);  // Free *TinyCBOR allocated* string.
+                    name = NULL;
                     continue;
                 }
             }

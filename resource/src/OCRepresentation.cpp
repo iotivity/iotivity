@@ -631,7 +631,7 @@ namespace OC
         m_children = children;
     }
 
-    void OCRepresentation::setDevAddr(const OCDevAddr m_devAddr)
+    void OCRepresentation::setDevAddr(const OCDevAddr& m_devAddr)
     {
         std::ostringstream ss;
         if (m_devAddr.flags & OC_SECURE)
