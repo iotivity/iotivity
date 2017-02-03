@@ -271,6 +271,7 @@ static int ReadFile(const char *name, OCByteString *crl)
     result = 0;
 exit:
     fclose(file);
+    OICFree(buffer);
     return 0;
 }
 

@@ -317,6 +317,10 @@ bool readFile(const char *name, OCByteString *out)
     result = true;
 exit:
     fclose(file);
+    if (buffer) 
+    {
+        free(buffer);
+    }
     return result;
 }
 
