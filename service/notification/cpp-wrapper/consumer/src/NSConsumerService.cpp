@@ -45,6 +45,9 @@ namespace OIC
 
             if (oldProvider == nullptr)
             {
+                //Callback received for First time from new Provider as there is no reference to
+                //previous Provider with same ID in internal map.
+                //States received during discovery of Provider : NS_DISCOVERED and NS_ALLOW
                 std::shared_ptr<NSProvider> nsProvider = std::make_shared<NSProvider>(provider);
                 NS_LOG(DEBUG, "Provider with same Id do not exist. updating Data for New Provider");
                 auto discoveredCallback = NSConsumerService::getInstance()->getProviderDiscoveredCb();
@@ -74,6 +77,8 @@ namespace OIC
             }
             else
             {
+                //Callback received from already discovered and existing Provider in internal map.
+                //States received Post discovery of Provider.
                 NS_LOG(DEBUG, "Provider with same Id exists. updating the old Provider data");
                 auto changeCallback = oldProvider->getProviderStateReceivedCb();
                 auto prevState = oldProvider->getProviderState();
