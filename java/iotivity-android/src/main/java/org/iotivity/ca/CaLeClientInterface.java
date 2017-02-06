@@ -43,6 +43,7 @@ public class CaLeClientInterface {
     private static String SERVICE_UUID = "ADE3D529-C784-4F63-A987-EB69F70EE816";
     private static String TAG          = "OIC_LE_CB_INTERFACE";
     private static Context mContext;
+    private static volatile boolean isLeClientInitialized = false;
 
     private CaLeClientInterface(Context context) {
         caLeRegisterLeScanCallback(mLeScanCallback);
@@ -50,7 +51,10 @@ public class CaLeClientInterface {
         synchronized(CaLeClientInterface.class) {
             mContext = context;
         }
-        registerIntentFilter();
+        if (!isLeClientInitialized) {
+            registerIntentFilter();
+            isLeClientInitialized = true;
+        }
     }
 
 
@@ -72,7 +76,10 @@ public class CaLeClientInterface {
     }
 
     public static void destroyLeInterface() {
-        mContext.unregisterReceiver(mReceiver);
+        if (isLeClientInitialized) {
+            mContext.unregisterReceiver(mReceiver);
+            isLeClientInitialized = false;
+        }
     }
 
     private native static void caLeRegisterLeScanCallback(BluetoothAdapter.LeScanCallback callback);

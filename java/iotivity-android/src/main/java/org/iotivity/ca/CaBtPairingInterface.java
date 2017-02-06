@@ -29,12 +29,16 @@ import android.content.IntentFilter;
 
 public class CaBtPairingInterface {
     private static Context mContext;
+    private static volatile boolean isBtInitialized = false;
 
     private CaBtPairingInterface(Context context) {
         synchronized(CaBtPairingInterface.class) {
             mContext = context;
         }
-        registerIntentFilter();
+        if (!isBtInitialized) {
+            registerIntentFilter();
+            isBtInitialized = true;
+        }
     }
 
     private static IntentFilter registerIntentFilter() {
@@ -47,7 +51,10 @@ public class CaBtPairingInterface {
     }
 
     public static void destroyEdrInterface() {
-        mContext.unregisterReceiver(mReceiver);
+        if (isBtInitialized) {
+            mContext.unregisterReceiver(mReceiver);
+            isBtInitialized = false;
+        }
     }
 
     private native static void oicEdrStateChangedCallback(int state);
