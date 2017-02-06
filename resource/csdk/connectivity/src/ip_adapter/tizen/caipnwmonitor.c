@@ -31,7 +31,6 @@
 #include <linux/rtnetlink.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <wifi.h>
 #include <net_connection.h>
 
 #include "caipinterface.h"
@@ -198,12 +197,6 @@ CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
 {
     if (!g_adapterCallbackList)
     {
-        // Initialize Wifi service.
-        if (WIFI_ERROR_NONE != wifi_initialize())
-        {
-            OIC_LOG(ERROR, TAG, "wifi_initialize failed");
-        }
-
         // Initialize Connections.
         connection_error_e ret = connection_create(&connection);
         if (CONNECTION_ERROR_NONE != ret)
@@ -232,12 +225,6 @@ CAResult_t CAIPStopNetworkMonitor(CATransportAdapter_t adapter)
     CAIPUnSetNetworkMonitorCallback(adapter);
     if (!g_adapterCallbackList)
     {
-        // Deinitialize Wifi service.
-        if (WIFI_ERROR_NONE != wifi_deinitialize())
-        {
-            OIC_LOG(ERROR, TAG, "wifi_deinitialize failed");
-        }
-
         // Reset callback for receiving state changes.
         if (connection)
         {

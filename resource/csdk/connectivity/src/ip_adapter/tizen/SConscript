@@ -5,7 +5,7 @@
 Import('env', 'src_dir')
 import os.path
 
-env.ParseConfig("pkg-config --cflags --libs capi-network-wifi capi-network-connection")
+env.ParseConfig("pkg-config --cflags --libs capi-network-connection")
 
 src_files = [ 'caipnwmonitor.c' ]
 
