@@ -2008,3 +2008,187 @@ exit:
     return ret;
 }
 
+#ifdef MULTIPLE_OWNER
+/** This function checks if two sets of /oic/sec/doxm MOT-specific properties are identical.
+ *
+ * @param doxm1 is a pointer to the first @ref OicSecDoxm_t data.
+ * @param doxm2 is a pointer to the second @ref OicSecDoxm_t data.
+ *
+ * @return true if all of the properties are identical, else false.
+ */
+static bool AreDoxmBinMOTPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* doxm2)
+{
+    //Compare the subOwners lists.
+    OicSecSubOwner_t* subOwner1 = doxm1->subOwners;
+    OicSecSubOwner_t* subOwner2 = doxm2->subOwners;
+
+    for (;;)
+    {
+        if ((NULL == subOwner1) && (NULL == subOwner2))
+        {
+            //Reached the end of both lists, so the two lists were identical.
+            break;
+        }
+
+        if ((NULL != subOwner1) && (NULL != subOwner2))
+        {
+            if (0 != memcmp(&subOwner1->uuid, &subOwner2->uuid, sizeof(subOwner1->uuid)))
+            {
+                OIC_LOG_V(ERROR, TAG, "%s: subOwner uuid mismatch", __func__);
+                return false;
+            }
+
+            if (subOwner1->status != subOwner2->status)
+            {
+                OIC_LOG_V(ERROR, TAG, "%s: subOwner status mismatch: (%u, %u)", 
+                    __func__, (uint32_t)subOwner1->status, (uint32_t)subOwner2->status);
+                return false;
+            }
+
+            //Go to the next elements from the two lists.
+            subOwner1 = subOwner1->next;
+            subOwner2 = subOwner2->next;
+            continue;
+        }
+     
+        OIC_LOG_V(ERROR, TAG, "%s: subOwner list length mismatch", __func__);
+        return false;
+    }
+
+    // Compare the mom values.
+    if (NULL == doxm1->mom)
+    {
+        if (NULL != doxm2->mom)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: doxm1->mom is NULL", __func__);
+            return false;
+        }
+
+        return true;
+    }
+
+    if (NULL == doxm2->mom)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: doxm2->mom is NULL", __func__);
+        return false;
+    }
+
+    if (doxm1->mom->mode != doxm2->mom->mode)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: mom->mode mismatch: (%u, %u)", 
+            __func__, (uint32_t)doxm1->mom->mode, (uint32_t)doxm2->mom->mode);
+        return false;
+    }
+
+    return true;
+}
+#endif //#ifdef MULTIPLE_OWNER
+
+bool AreDoxmBinPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* doxm2)
+{
+    if (NULL == doxm1 || NULL == doxm2)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: unxpected NULL doxm pointer", __func__);
+        return false;
+    }
+
+    //Compare the contents of the oxmType array and its length oxmTypeLen.
+    size_t arrayLength = doxm1->oxmTypeLen;
+
+    if (arrayLength != doxm2->oxmTypeLen)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: oxmTypeLen mismatch: (%" PRIuPTR ", %" PRIuPTR ")", 
+            __func__, arrayLength, doxm2->oxmTypeLen);
+        return false;
+    }
+
+    for (size_t i = 0; i < arrayLength; i++)
+    {
+        if (NULL == doxm1->oxmType[i] || NULL == doxm2->oxmType[i])
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: unexpected NULL found in the oxmType array",
+                __func__);
+            return false;
+        }
+
+        if (0 != strcmp(doxm1->oxmType[i], doxm2->oxmType[i]))
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: oxmType mismatch: (%s, %s)", 
+                __func__, doxm1->oxmType[i], doxm2->oxmType[i]);
+            return false;
+        }
+    }
+
+    //Compare the contents of the oxm array and its length oxmLen.
+    arrayLength = doxm1->oxmLen;
+
+    if (arrayLength != doxm2->oxmLen)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: oxmLen mismatch: (%" PRIuPTR ", %" PRIuPTR ")", 
+            __func__, arrayLength, doxm2->oxmLen);
+        return false;
+    }
+   
+    for (size_t i = 0; i < arrayLength; i++)
+    {
+        if (doxm1->oxm[i] != doxm2->oxm[i])
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: oxmType mismatch: (%u, %u)", 
+                __func__, (uint32_t)doxm1->oxm[i], (uint32_t)doxm2->oxm[i]);
+            return false;
+        }
+    }
+
+    //Compare the remaining property values.
+    if (doxm1->oxmSel != doxm2->oxmSel)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: oxmSel mismatch: (%u, %u)", 
+            __func__, (uint32_t)doxm1->oxmSel, (uint32_t)doxm2->oxmSel);
+        return false;
+    }
+
+    if (doxm1->sct != doxm2->sct)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: sct mismatch: (%u, %u)", 
+            __func__, (uint32_t)doxm1->sct, (uint32_t)doxm2->sct);
+        return false;
+    }
+
+    if (doxm1->owned != doxm2->owned)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: owned mismatch: (%u, %u)", 
+            __func__, (uint32_t)doxm1->owned, (uint32_t)doxm2->owned);
+        return false;
+    }
+
+    if (0 != memcmp(&doxm1->deviceID, &doxm2->deviceID, sizeof(doxm1->deviceID)))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: deviceID mismatch", __func__);
+        return false;
+    }
+    
+    if (doxm1->dpc != doxm2->dpc)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: dpc mismatch: (%u, %u)", 
+            __func__, (uint32_t)doxm1->dpc, (uint32_t)doxm2->dpc);
+        return false;
+    }
+
+    if (0 != memcmp(&doxm1->owner, &doxm2->owner, sizeof(doxm1->owner)))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: owner mismatch", __func__);
+        return false;
+    }
+    
+    if (0 != memcmp(&doxm1->rownerID, &doxm2->rownerID, sizeof(doxm1->rownerID)))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: rownerID mismatch", __func__);
+        return false;
+    }
+
+#ifdef MULTIPLE_OWNER
+    return AreDoxmBinMOTPropertyValuesEqual(doxm1, doxm2);
+#else
+    return true;
+#endif
+}

@@ -42,6 +42,7 @@
 #endif
 #include <stdbool.h>
 #include <string.h>
+#include <assert.h>
 
 #include "logger.h"
 #include "oic_malloc.h"
@@ -326,6 +327,16 @@ static OCStackResult PostOwnerTransferModeToResource(OTMContext_t* otmCtx);
  */
 static OCStackResult GetProvisioningStatusResource(OTMContext_t* otmCtx);
 
+/**
+ * Function to send a GET request to /oic/sec/doxm, using the OTM-secured session.
+ * The property values obtained this way are then compared with the values obtained
+ * before establishing the secured session. If the two sets of values are different,
+ * ownership transfer is automatically cancelled.
+ *
+ * @param[in]  otmCtx  Context value of ownership transfer.
+ * @return  OC_STACK_OK on success
+ */
+static OCStackResult GetAndVerifyDoxmResource(OTMContext_t* otmCtx);
 
 /**
  * Function to send  uuid of owner device to new device.
@@ -580,11 +591,15 @@ static void OwnershipTransferSessionEstablished(const CAEndpoint_t *endpoint,
         }
     }
 
-    //Send request : POST /oic/sec/doxm [{... , "devowner":"PT's UUID"}]
-    res = PostOwnerUuid(otmCtx);
+    //This is a secure session.
+    otmCtx->selectedDeviceInfo->connType |= CT_FLAG_SECURE;
+
+    //Send request : GET /oic/sec/doxm. Then verify that the property values obtained this way
+    //are the same as those already-stored in the otmCtx.
+    res = GetAndVerifyDoxmResource(otmCtx);
     if(OC_STACK_OK != res)
     {
-        OIC_LOG(ERROR, TAG, "Failed to send owner information");
+        OIC_LOG(ERROR, TAG, "Failed to get doxm information after establishing secure connection");
         SetResult(otmCtx, res);
     }
 
@@ -859,13 +874,38 @@ static OCStackApplicationResult OwnerTransferModeHandler(void *ctx, OCDoHandle U
     (void)UNUSED;
     if (OC_STACK_RESOURCE_CHANGED == clientResponse->result)
     {
-        OIC_LOG(INFO, TAG, "OwnerTransferModeHandler : response result = OC_STACK_OK");
-        //Send request : GET /oic/sec/pstat
-        OCStackResult res = GetProvisioningStatusResource(otmCtx);
-        if(OC_STACK_OK != res)
+        OCStackResult res = OC_STACK_ERROR;
+
+        //Save the current context, that will be used by the DTLS handshake callback
+        if(OC_STACK_OK != AddOTMContext(otmCtx,
+                                        otmCtx->selectedDeviceInfo->endpoint.addr,
+                                        otmCtx->selectedDeviceInfo->securePort))
         {
-            OIC_LOG(WARNING, TAG, "Failed to get pstat information");
+            OIC_LOG(ERROR, TAG, "OwnerTransferModeHandler : Failed to add OTM Context into list");
             SetResult(otmCtx, res);
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+
+        //Create DTLS secure session
+        if(otmCtx->otmCallback.loadSecretCB)
+        {
+            res = otmCtx->otmCallback.loadSecretCB(otmCtx);
+            if(OC_STACK_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "OwnerTransferModeHandler : Failed to load secret");
+                SetResult(otmCtx, res);
+                return  OC_STACK_DELETE_TRANSACTION;
+            }
+        }
+        if(otmCtx->otmCallback.createSecureSessionCB)
+        {
+            res = otmCtx->otmCallback.createSecureSessionCB(otmCtx);
+            if(OC_STACK_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "OwnerTransferModeHandler : Failed to create DTLS session");
+                SetResult(otmCtx, res);
+                return OC_STACK_DELETE_TRANSACTION;
+            }
         }
     }
     else
@@ -905,7 +945,7 @@ static OCStackApplicationResult ListMethodsHandler(void *ctx, OCDoHandle UNUSED,
     {
         if  (NULL == clientResponse->payload)
         {
-            OIC_LOG(INFO, TAG, "Skiping Null payload");
+            OIC_LOG(INFO, TAG, "Skipping Null payload");
             SetResult(otmCtx, OC_STACK_ERROR);
             return OC_STACK_DELETE_TRANSACTION;
         }
@@ -1061,46 +1101,17 @@ static OCStackApplicationResult OperationModeUpdateHandler(void *ctx, OCDoHandle
     (void) UNUSED;
     if  (OC_STACK_RESOURCE_CHANGED == clientResponse->result)
     {
-        OCStackResult res = OC_STACK_ERROR;
-
-        //DTLS Handshake
-        //Load secret for temporal secure session.
-        if(otmCtx->otmCallback.loadSecretCB)
+        //Send request : POST /oic/sec/doxm [{... , "devowner":"PT's UUID"}]
+        OCStackResult res = PostOwnerUuid(otmCtx);
+        if(OC_STACK_OK != res)
         {
-            res = otmCtx->otmCallback.loadSecretCB(otmCtx);
-            if(OC_STACK_OK != res)
-            {
-                OIC_LOG(ERROR, TAG, "OperationModeUpdate : Failed to load secret");
-                SetResult(otmCtx, res);
-                return  OC_STACK_DELETE_TRANSACTION;
-            }
-        }
-
-        //Save the current context instance to use on the dtls handshake callback
-        if(OC_STACK_OK != AddOTMContext(otmCtx,
-                                         otmCtx->selectedDeviceInfo->endpoint.addr,
-                                         otmCtx->selectedDeviceInfo->securePort))
-        {
-            OIC_LOG(ERROR, TAG, "OperationModeUpdate : Failed to add OTM Context into OTM List.");
+            OIC_LOG(ERROR, TAG, "OperationModeUpdateHandler: Failed to send devowner");
             SetResult(otmCtx, res);
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-
-        //Try DTLS handshake to generate secure session
-        if(otmCtx->otmCallback.createSecureSessionCB)
-        {
-            res = otmCtx->otmCallback.createSecureSessionCB(otmCtx);
-            if(OC_STACK_OK != res)
-            {
-                OIC_LOG(ERROR, TAG, "OperationModeUpdate : Failed to create DTLS session");
-                SetResult(otmCtx, res);
-                return OC_STACK_DELETE_TRANSACTION;
-            }
         }
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "Error while update operation mode");
+        OIC_LOG(ERROR, TAG, "Error while updating operation mode");
         SetResult(otmCtx, clientResponse->result);
     }
 
@@ -1149,10 +1160,10 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
             }
 
             /**
-             * If we select NULL cipher,
-             * client will select appropriate cipher suite according to server's cipher-suite list.
-             */
-            // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 = 0xC037, /**< see RFC 5489 */
+                * If we select NULL cipher,
+                * client will select appropriate cipher suite according to server's cipher-suite list.
+                */
+                // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 = 0xC037, /**< see RFC 5489 */
             caResult = CASelectCipherSuite(0xC037, endpoint->adapter);
             if(CA_STATUS_OK != caResult)
             {
@@ -1162,9 +1173,9 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
             }
 
             /**
-             * in case of random PIN based OxM,
-             * revert get_psk_info callback of tinyDTLS to use owner credential.
-             */
+                * in case of random PIN based OxM,
+                * revert get_psk_info callback of tinyDTLS to use owner credential.
+                */
             if(OIC_RANDOM_DEVICE_PIN == otmCtx->selectedDeviceInfo->doxm->oxmSel)
             {
                 OicUuid_t emptyUuid = { .id={0}};
@@ -1180,7 +1191,7 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
                 }
             }
 #ifdef __WITH_TLS__
-           otmCtx->selectedDeviceInfo->connType |= CT_FLAG_SECURE;
+            otmCtx->selectedDeviceInfo->connType |= CT_FLAG_SECURE;
 #endif
             res = PostOwnerAcl(otmCtx);
             if(OC_STACK_OK != res)
@@ -1398,6 +1409,95 @@ exit:
     return OC_STACK_DELETE_TRANSACTION;
 }
 
+/**
+ * Callback handler for GetAndVerifyDoxmResource.
+ *
+ * @param[in] ctx             ctx value passed to callback from calling function.
+ * @param[in] UNUSED          handle to an invocation
+ * @param[in] clientResponse  Response from queries to remote servers.
+ * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
+ *          and  OC_STACK_KEEP_TRANSACTION to keep it.
+ */
+static OCStackApplicationResult GetAndVerifyDoxmHandler(void *ctx, OCDoHandle UNUSED,
+                                                    OCClientResponse *clientResponse)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+
+    VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
+    VERIFY_NOT_NULL(TAG, ctx, WARNING);
+
+    OTMContext_t* otmCtx = (OTMContext_t*)ctx;
+    otmCtx->ocDoHandle = NULL;
+    (void)UNUSED;
+
+    if (OC_STACK_OK != clientResponse->result)
+    {
+        OIC_LOG_V(WARNING, TAG, "%s : Client response is incorrect : %d",
+            __func__, clientResponse->result);
+        SetResult(otmCtx, clientResponse->result);
+    }
+    else
+    {
+        //Sanity checks.
+        OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
+        if (NULL == deviceInfo)
+        {
+            OIC_LOG(INFO, TAG, "Selected device info is NULL");
+            SetResult(otmCtx, OC_STACK_ERROR);
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+
+        OCSecurityPayload *payload = (OCSecurityPayload*)clientResponse->payload;
+        if (NULL == payload)
+        {
+            OIC_LOG(INFO, TAG, "Skipping Null payload");
+            SetResult(otmCtx, OC_STACK_ERROR);
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+
+        if (PAYLOAD_TYPE_SECURITY != clientResponse->payload->type)
+        {
+            OIC_LOG(INFO, TAG, "Unknown payload type");
+            SetResult(otmCtx, OC_STACK_ERROR);
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+
+        //Compare the doxm property values obtained over this secured session with those
+        //values obtained before the DTLS handshake.
+        OicSecDoxm_t *doxm = NULL;
+        uint8_t *securityData = payload->securityData;
+        size_t size = payload->payloadSize;
+
+        OCStackResult res = CBORPayloadToDoxm(securityData, size, &doxm);
+        if ((NULL == doxm) || (OC_STACK_OK != res))
+        {
+            OIC_LOG(INFO, TAG, "Received malformed CBOR");
+            SetResult(otmCtx, OC_STACK_ERROR);
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+
+        bool equal = AreDoxmBinPropertyValuesEqual(doxm, deviceInfo->doxm);
+        DeleteDoxmBinData(doxm);
+        if (!equal)
+        {
+            SetResult(otmCtx, OC_STACK_ERROR);
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+
+        //Send request : GET /oic/sec/pstat
+        res = GetProvisioningStatusResource(otmCtx);
+        if(OC_STACK_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to get pstat information");
+            SetResult(otmCtx, res);
+        }
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
+exit:
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
 static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
 {
     OIC_LOG(DEBUG, TAG, "IN PostOwnerCredential");
@@ -1410,6 +1510,7 @@ static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
 
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    assert(deviceInfo->connType & CT_FLAG_SECURE);
 
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr, deviceInfo->securePort,
@@ -1580,6 +1681,7 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     OicSecAcl_t* ownerAcl = NULL;
+    assert(deviceInfo->connType & CT_FLAG_SECURE);
 
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr, deviceInfo->securePort,
@@ -1719,8 +1821,10 @@ static OCStackResult GetProvisioningStatusResource(OTMContext_t* otmCtx)
 
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
-    if(!PMGenerateQuery(false,
-                        deviceInfo->endpoint.addr, deviceInfo->endpoint.port,
+    assert(deviceInfo->connType & CT_FLAG_SECURE);
+
+    if(!PMGenerateQuery(true,
+                        deviceInfo->endpoint.addr, deviceInfo->securePort,
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_PSTAT_URI))
     {
@@ -1757,6 +1861,8 @@ static OCStackResult PostOwnerUuid(OTMContext_t* otmCtx)
 
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    assert(deviceInfo->connType & CT_FLAG_SECURE);
+
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr, deviceInfo->securePort,
                         deviceInfo->connType,
@@ -1814,6 +1920,8 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
 
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    assert(deviceInfo->connType & CT_FLAG_SECURE);
+
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr, deviceInfo->securePort,
                         deviceInfo->connType,
@@ -1872,8 +1980,10 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
 
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
-    if(!PMGenerateQuery(false,
-                        deviceInfo->endpoint.addr, deviceInfo->endpoint.port,
+    assert(deviceInfo->connType & CT_FLAG_SECURE);
+
+    if(!PMGenerateQuery(true,
+                        deviceInfo->endpoint.addr, deviceInfo->securePort,
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_PSTAT_URI))
     {
@@ -1910,6 +2020,46 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
     }
 
     OIC_LOG(DEBUG, TAG, "OUT PostUpdateOperationMode");
+
+    return res;
+}
+
+static OCStackResult GetAndVerifyDoxmResource(OTMContext_t* otmCtx)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+
+    if(!otmCtx || !otmCtx->selectedDeviceInfo || !otmCtx->selectedDeviceInfo->doxm)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid context");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    assert(deviceInfo->connType & CT_FLAG_SECURE);
+
+    if(!PMGenerateQuery(true,
+                        deviceInfo->endpoint.addr, deviceInfo->securePort,
+                        deviceInfo->connType,
+                        query, sizeof(query), OIC_RSRC_DOXM_URI))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s : Failed to generate query", __func__);
+        return OC_STACK_ERROR;
+    }
+    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
+    OCCallbackData cbData;
+    cbData.cb = &GetAndVerifyDoxmHandler;
+    cbData.context = (void *)otmCtx;
+    cbData.cd = NULL;
+    OCStackResult res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_GET, query, NULL, NULL,
+                                     deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
 
     return res;
 }
@@ -2012,6 +2162,14 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
         return res;
     }
 
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    //Register TLS event handler, to catch the TLS handshake event
+    if(CA_STATUS_OK != CAregisterSslHandshakeCallback(DTLSHandshakeCB))
+    {
+        OIC_LOG(WARNING, TAG, "StartOwnershipTransfer : Failed to register TLS handshake callback.");
+    }
+#endif // __WITH_DTLS__ or __WITH_TLS__
+
     //Send Req: POST /oic/sec/doxm [{..."OxmSel" :g_OTMCbDatas[Index of Selected OxM].OXMString,...}]
     res = PostOwnerTransferModeToResource(otmCtx);
     if(OC_STACK_OK != res)
@@ -2021,13 +2179,6 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
         return res;
     }
 
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-    //Register TLS event handler to catch the tls event while handshake
-    if(CA_STATUS_OK != CAregisterSslHandshakeCallback(DTLSHandshakeCB))
-    {
-        OIC_LOG(WARNING, TAG, "StartOwnershipTransfer : Failed to register TLS handshake callback.");
-    }
-#endif // __WITH_DTLS__ or __WITH_TLS__
     OIC_LOG(INFO, TAG, "OUT StartOwnershipTransfer");
 
 exit:
@@ -2177,6 +2328,8 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
     OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    assert(otmCtx->selectedDeviceInfo->connType & CT_FLAG_SECURE);
+
     if(!PMGenerateQuery(true,
                         otmCtx->selectedDeviceInfo->endpoint.addr,
                         otmCtx->selectedDeviceInfo->securePort,
@@ -2235,6 +2388,8 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
     OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    assert(otmCtx->selectedDeviceInfo->connType & CT_FLAG_SECURE);
+
     if(!PMGenerateQuery(true,
                         otmCtx->selectedDeviceInfo->endpoint.addr,
                         otmCtx->selectedDeviceInfo->securePort,
