@@ -388,6 +388,13 @@ static void DebugSsl(void *ctx, int level, const char *file, int line, const cha
     ((void) line);
     ((void) ctx);
 
+    char * temp = (char*) str;
+    size_t len = strlen(temp);
+    if (1 <= len && temp[len - 1] == '\n')
+    {
+        temp[len - 1] = '\0';
+    }
+
     OIC_LOG_V(DEBUG, MBED_TLS_TAG, "%s", str);
 }
 #endif
