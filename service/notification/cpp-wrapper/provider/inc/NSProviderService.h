@@ -29,7 +29,6 @@
 
 #include <string>
 #include "NSConsumer.h"
-#include "NSAcceptedConsumers.h"
 #include "NSSyncInfo.h"
 #include "NSMessage.h"
 #include "NSUtils.h"
@@ -39,6 +38,7 @@ namespace OIC
 {
     namespace Service
     {
+        class NSAcceptedConsumers;
         /**
          * @class   NSProviderService
          * @brief   This class provides a set of C++APIs for Notification Provider.
@@ -185,19 +185,14 @@ namespace OIC
                       *  get handle of Consumers accepted.
                       * @return m_acceptedConsumers -accepted Consumers
                       */
-                NSAcceptedConsumers &getAcceptedConsumers();
+                NSAcceptedConsumers *getAcceptedConsumers();
 
             private :
                 ProviderConfig m_config;
-                NSAcceptedConsumers m_acceptedConsumers;
+                NSAcceptedConsumers *m_acceptedConsumers;
 
             private:
-                NSProviderService()
-                {
-                    m_config.m_subscribeRequestCb = NULL;
-                    m_config.m_syncInfoCb = NULL;
-                    m_acceptedConsumers.removeConsumers();
-                }
+                NSProviderService();
                 ~NSProviderService();
                 NSProviderService(const NSProviderService &) = delete;
                 NSProviderService &operator=(const NSProviderService &) = delete;

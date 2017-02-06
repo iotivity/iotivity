@@ -21,6 +21,7 @@
 #include "NSConsumer.h"
 #include <cstring>
 #include "NSProviderService.h"
+#include "NSAcceptedConsumers.h"
 #include "NSProviderInterface.h"
 #include "NSConstants.h"
 #include "oic_string.h"
@@ -104,7 +105,7 @@ namespace OIC
 
         bool NSConsumer::isValid() const
         {
-            if (!NSProviderService::getInstance()->getAcceptedConsumers().isAccepted(getConsumerId()))
+            if (!NSProviderService::getInstance()->getAcceptedConsumers()->isAccepted(getConsumerId()))
             {
                 NS_LOG(DEBUG, "Invalid Operation with stale reference of Consumer. Consumer ID doesnot exist");
                 return false;

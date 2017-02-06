@@ -21,6 +21,7 @@
 #include "NSConsumerService.h"
 #include <cstring>
 #include "NSConsumerInterface.h"
+#include "NSAcceptedProviders.h"
 #include "NSMessage.h"
 #include "NSCommon.h"
 #include "NSConstants.h"
@@ -50,7 +51,7 @@ namespace OIC
                 nsProvider->setProviderState((NSProviderState)state);
                 auto topicLL = NSConsumerGetTopicList(provider->providerId);
                 nsProvider->setTopicList(new NSTopicsList(topicLL));
-                NSConsumerService::getInstance()->getAcceptedProviders().addProvider(nsProvider);
+                NSConsumerService::getInstance()->getAcceptedProviders()->addProvider(nsProvider);
                 if (state == NS_DISCOVERED)
                 {
                     nsProvider->setProviderSubscribedState(NSProviderSubscribedState::DISCOVERED);
@@ -103,7 +104,7 @@ namespace OIC
                 else if (state == NS_DENY)
                 {
                     oldProvider->setProviderSubscribedState(NSProviderSubscribedState::DENY);
-                    NSConsumerService::getInstance()->getAcceptedProviders().removeProvider(
+                    NSConsumerService::getInstance()->getAcceptedProviders()->removeProvider(
                         oldProvider->getProviderId());
                     if (changeCallback != NULL)
                     {
@@ -141,7 +142,7 @@ namespace OIC
                 else if (state == NS_STOPPED)
                 {
                     oldProvider->setProviderSubscribedState(NSProviderSubscribedState::DENY);
-                    NSConsumerService::getInstance()->getAcceptedProviders().removeProvider(
+                    NSConsumerService::getInstance()->getAcceptedProviders()->removeProvider(
                         oldProvider->getProviderId());
                     NS_LOG(DEBUG, "initiating the State callback : NS_STOPPED");
                     if (changeCallback != NULL)
@@ -161,7 +162,7 @@ namespace OIC
 
             NSMessage nsMessage(message);
 
-            if (NSConsumerService::getInstance()->getAcceptedProviders().isAccepted(
+            if (NSConsumerService::getInstance()->getAcceptedProviders()->isAccepted(
                     nsMessage.getProviderId()))
             {
                 auto provider = NSConsumerService::getInstance()->getProvider(
@@ -187,7 +188,7 @@ namespace OIC
 
             NSSyncInfo nsSyncInfo(syncInfo);
 
-            if (NSConsumerService::getInstance()->getAcceptedProviders().isAccepted(
+            if (NSConsumerService::getInstance()->getAcceptedProviders()->isAccepted(
                     nsSyncInfo.getProviderId()))
             {
                 auto provider = NSConsumerService::getInstance()->getProvider(
@@ -209,12 +210,13 @@ namespace OIC
         NSConsumerService::NSConsumerService()
         {
             m_providerDiscoveredCb = NULL;
-            m_acceptedProviders.removeProviders();
+            m_acceptedProviders = new NSAcceptedProviders();
         }
 
         NSConsumerService::~NSConsumerService()
         {
-            m_acceptedProviders.removeProviders();
+            m_acceptedProviders->removeProviders();
+            delete m_acceptedProviders;
         }
 
         NSConsumerService *NSConsumerService::getInstance()
@@ -226,7 +228,7 @@ namespace OIC
         NSResult NSConsumerService::start(NSConsumerService::ProviderDiscoveredCallback providerDiscovered)
         {
             NS_LOG(DEBUG, "start - IN");
-            m_acceptedProviders.removeProviders();
+            m_acceptedProviders->removeProviders();
 
             m_providerDiscoveredCb = providerDiscovered;
             NSConsumerConfig nsConfig;
@@ -243,7 +245,7 @@ namespace OIC
         {
             NS_LOG(DEBUG, "stop - IN");
             m_providerDiscoveredCb = NULL;
-            m_acceptedProviders.removeProviders();
+            m_acceptedProviders->removeProviders();
 
             NSResult result = (NSResult) NSStopConsumer();
             NS_LOG(DEBUG, "stop - OUT");
@@ -298,10 +300,10 @@ namespace OIC
 
         std::shared_ptr<NSProvider> NSConsumerService::getProvider(const std::string &id)
         {
-            return m_acceptedProviders.getProvider(id);
+            return m_acceptedProviders->getProvider(id);
         }
 
-        NSAcceptedProviders &NSConsumerService::getAcceptedProviders()
+        NSAcceptedProviders *NSConsumerService::getAcceptedProviders()
         {
             return m_acceptedProviders;
         }

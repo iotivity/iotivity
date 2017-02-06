@@ -31,13 +31,13 @@
 #include <algorithm>
 #include "NSProvider.h"
 #include "NSUtils.h"
-#include "NSAcceptedProviders.h"
 
 
 namespace OIC
 {
     namespace Service
     {
+        class NSAcceptedProviders;
         /**
          * @class   NSConsumerService
          * @brief   This class provides a set of C++APIs for Notification Consumer.
@@ -110,11 +110,11 @@ namespace OIC
                       *  get handle of providers accepted.
                       * @return m_acceptedProviders -accepted providers
                       */
-                NSAcceptedProviders &getAcceptedProviders();
+                NSAcceptedProviders *getAcceptedProviders();
 
             private :
                 ProviderDiscoveredCallback m_providerDiscoveredCb;
-                NSAcceptedProviders m_acceptedProviders;
+                NSAcceptedProviders *m_acceptedProviders;
 
             private :
                 NSConsumerService();

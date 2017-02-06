@@ -23,6 +23,7 @@
 #include <cstring>
 #include "NSCommon.h"
 #include "NSProviderInterface.h"
+#include "NSAcceptedConsumers.h"
 #include "NSConsumer.h"
 #include "NSSyncInfo.h"
 #include "NSConstants.h"
@@ -39,7 +40,7 @@ namespace OIC
         {
             NS_LOG(DEBUG, "onConsumerSubscribedCallback - IN");
             std::shared_ptr<NSConsumer> nsConsumer = std::make_shared<NSConsumer>(consumer);
-            NSProviderService::getInstance()->getAcceptedConsumers().addConsumer(nsConsumer);
+            NSProviderService::getInstance()->getAcceptedConsumers()->addConsumer(nsConsumer);
             if (NSProviderService::getInstance()->getProviderConfig().m_subscribeRequestCb != NULL)
             {
                 NS_LOG(DEBUG, "initiating the callback for consumer subscribed");
@@ -86,11 +87,19 @@ namespace OIC
             return nsMsg;
         }
 
+        NSProviderService::NSProviderService()
+        {
+            m_config.m_subscribeRequestCb = NULL;
+            m_config.m_syncInfoCb = NULL;
+            m_acceptedConsumers = new NSAcceptedConsumers();
+        }
+
         NSProviderService::~NSProviderService()
         {
             m_config.m_subscribeRequestCb = NULL;
             m_config.m_syncInfoCb = NULL;
-            getAcceptedConsumers().removeConsumers();
+            m_acceptedConsumers->removeConsumers();
+            delete m_acceptedConsumers;
         }
 
         NSProviderService *NSProviderService::getInstance()
@@ -102,7 +111,7 @@ namespace OIC
         NSResult NSProviderService::start(NSProviderService::ProviderConfig config)
         {
             NS_LOG(DEBUG, "start - IN");
-            getAcceptedConsumers().removeConsumers();
+            m_acceptedConsumers->removeConsumers();
 
             m_config = config;
             NSProviderConfig nsConfig;
@@ -124,7 +133,7 @@ namespace OIC
 
             m_config.m_subscribeRequestCb = NULL;
             m_config.m_syncInfoCb = NULL;
-            getAcceptedConsumers().removeConsumers();
+            m_acceptedConsumers->removeConsumers();
 
             NSResult result = (NSResult) NSStopProvider();
             NS_LOG(DEBUG, "stop - OUT");
@@ -265,10 +274,10 @@ namespace OIC
 
         std::shared_ptr<NSConsumer> NSProviderService::getConsumer(const std::string &id)
         {
-            return m_acceptedConsumers.getConsumer(id);
+            return m_acceptedConsumers->getConsumer(id);
         }
 
-        NSAcceptedConsumers &NSProviderService::getAcceptedConsumers()
+        NSAcceptedConsumers *NSProviderService::getAcceptedConsumers()
         {
             return m_acceptedConsumers;
         }

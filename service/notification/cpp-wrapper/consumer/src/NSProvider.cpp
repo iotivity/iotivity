@@ -22,6 +22,7 @@
 #include <cstring>
 #include "NSConsumerService.h"
 #include "NSConsumerInterface.h"
+#include "NSAcceptedProviders.h"
 #include "NSConstants.h"
 #include "NSCommon.h"
 #include "oic_string.h"
@@ -315,7 +316,7 @@ namespace OIC
 
         bool NSProvider::isValid() const
         {
-            if (!NSConsumerService::getInstance()->getAcceptedProviders().isAccepted(getProviderId()))
+            if (!NSConsumerService::getInstance()->getAcceptedProviders()->isAccepted(getProviderId()))
             {
                 NS_LOG(DEBUG, "Invalid Operation with stale reference of Provider. Provider ID doesnot exist");
                 return false;
