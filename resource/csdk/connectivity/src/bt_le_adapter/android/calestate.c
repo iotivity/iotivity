@@ -165,8 +165,6 @@ CAResult_t CALERemoveAllDeviceState(u_arraylist_t *deviceList,
         OICFree(state);
     }
 
-    OICFree(deviceList);
-    deviceList = NULL;
     oc_mutex_unlock(deviceListMutex);
 
     return CA_STATUS_OK;

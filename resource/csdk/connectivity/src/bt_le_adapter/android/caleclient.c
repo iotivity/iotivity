@@ -556,6 +556,11 @@ void CALEClientTerminate()
         OIC_LOG(ERROR, TAG, "CALERemoveAllDeviceState has failed");
     }
 
+    oc_mutex_lock(g_deviceStateListMutex);
+    OICFree(g_deviceStateList);
+    g_deviceStateList = NULL;
+    oc_mutex_unlock(g_deviceStateListMutex);
+
     ret = CALEClientRemoveAllScanDevices(env);
     if (CA_STATUS_OK != ret)
     {
@@ -3843,6 +3848,12 @@ void CALEClientTerminateGattMutexVariables()
 
     oc_mutex_free(g_threadScanIntervalMutex);
     g_threadScanIntervalMutex = NULL;
+
+    oc_mutex_free(g_gattObjectMutex);
+    g_gattObjectMutex = NULL;
+
+    oc_mutex_free(g_deviceStateListMutex);
+    g_deviceStateListMutex = NULL;
 }
 
 void CALEClientSetSendFinishFlag(bool flag)
