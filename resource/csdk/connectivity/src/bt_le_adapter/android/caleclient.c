@@ -3925,21 +3925,16 @@ void CAStopLEGattClient()
 
     CALEClientStopScanWithInterval();
 
-    oc_mutex_lock(g_threadMutex);
-    OIC_LOG(DEBUG, TAG, "signal - connection cond");
-    oc_cond_signal(g_threadCond);
-    CALEClientSetSendFinishFlag(true);
-    oc_mutex_unlock(g_threadMutex);
-
-    oc_mutex_lock(g_threadSendMutex);
-    OIC_LOG(DEBUG, TAG, "signal - g_deviceDesc cond");
-    oc_cond_signal(g_deviceDescCond);
-    oc_mutex_unlock(g_threadSendMutex);
-
     oc_mutex_lock(g_threadWriteCharacteristicMutex);
     OIC_LOG(DEBUG, TAG, "signal - WriteCharacteristic cond");
     oc_cond_signal(g_threadWriteCharacteristicCond);
     oc_mutex_unlock(g_threadWriteCharacteristicMutex);
+
+    CALEClientSetSendFinishFlag(true);
+    oc_mutex_lock(g_threadMutex);
+    OIC_LOG(DEBUG, TAG, "signal - g_threadCond cond");
+    oc_cond_signal(g_threadCond);
+    oc_mutex_unlock(g_threadMutex);
 
     oc_mutex_lock(g_deviceScanRetryDelayMutex);
     OIC_LOG(DEBUG, TAG, "signal - delay cond");
@@ -3950,6 +3945,11 @@ void CAStopLEGattClient()
     OIC_LOG(DEBUG, TAG, "signal - delay cond");
     oc_cond_signal(g_threadScanIntervalCond);
     oc_mutex_unlock(g_threadScanIntervalMutex);
+
+    oc_mutex_lock(g_threadSendMutex);
+    OIC_LOG(DEBUG, TAG, "signal - g_deviceDesc cond");
+    oc_cond_signal(g_deviceDescCond);
+    oc_mutex_unlock(g_threadSendMutex);
 
     oc_cond_free(g_deviceDescCond);
     oc_cond_free(g_threadCond);
@@ -3979,9 +3979,10 @@ CAResult_t CAInitializeLEGattClient()
 
 void CATerminateLEGattClient()
 {
-    OIC_LOG(DEBUG, TAG, "Terminate GATT Client");
+    OIC_LOG(INFO, TAG, "IN - Terminate GATT Client");
     CAStopLEGattClient();
     CALEClientTerminate();
+    OIC_LOG(INFO, TAG, "OUT - Terminate GATT Client");
 }
 
 CAResult_t CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const uint8_t  *data,
