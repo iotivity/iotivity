@@ -199,6 +199,41 @@ namespace OC
         return result;
     }
 
+    OCStackResult OCSecure::setOwnerTransferCallbackData(OicSecOxm_t oxm,
+            OTMCallbackData_t* callbackData, InputPinCallback inputPin)
+    {
+        if (NULL == callbackData || oxm >= OIC_OXM_COUNT)
+        {
+            oclog() <<"Invalid callbackData or OXM type";
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        if ((OIC_RANDOM_DEVICE_PIN == oxm) && !inputPin)
+        {
+            oclog() <<"for OXM type DEVICE_PIN, inputPin callback can't be null";
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCSetOwnerTransferCallbackData(oxm, callbackData);
+            if (result == OC_STACK_OK && (OIC_RANDOM_DEVICE_PIN == oxm))
+            {
+                SetInputPinCB(inputPin);
+            }
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
     OCStackResult OCSecure::discoverSingleDeviceInUnicast(unsigned short timeout,
             const OicUuid_t* deviceID,
             const std::string& hostAddress,

@@ -236,6 +236,19 @@ namespace OC
                     std::shared_ptr<OCSecureResource> &foundDevice);
 
             /**
+             * API for registering Ownership transfer methods for a particular transfer Type.
+             * @deprecated Use setInputPinCallback to set input pin callback value.
+             *
+             * @param oxm Ownership transfer method.
+             * @param callbackData CallbackData Methods for ownership transfer.
+             * @param inputPin Callback method to input pin for verification.
+             * @return ::OC_STACK_OK in case of success and other value otherwise.
+             *
+             */
+            static OCStackResult setOwnerTransferCallbackData(OicSecOxm_t oxm,
+                    OTMCallbackData_t* callbackData, InputPinCallback inputPin);
+
+            /**
              * API is responsible for discovery of devices in specified endpoint/deviceID.
              * And this function will only return the specified device's response.
              *
