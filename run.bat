@@ -41,11 +41,14 @@ if "%SECURED%" == "" (
   set SECURED=1
 )
 
+if "%MULTIPLE_OWNER%" == "" (
+  set MULTIPLE_OWNER=1
+)
+
 set THREAD_COUNT=%NUMBER_OF_PROCESSORS%
 set ROUTING=EP
 set WITH_UPSTREAM_LIBCOAP=1
 set BINDIR=debug
-set MULTIPLE_OWNER=1
 
 set RUN_ARG=%1
 SHIFT
@@ -79,6 +82,9 @@ IF NOT "%1"=="" (
   )
   IF /I "%1"=="-noSecurity" (
     set SECURED=0
+  )
+  IF /I "%1"=="-noMOT" (
+    set MULTIPLE_OWNER=0
   )
 
   SHIFT
@@ -221,6 +227,8 @@ echo   -noTCP                       - Build with the TCP adapter disabled
 echo.
 echo   -noSecurity                  - Remove security support (results in code that cannot be certified by OCF)
 echo.
+echo   -noMOT                       - Remove Multiple Ownership Transfer support.
+echo.
 echo. Usage examples:
 echo.
 echo   Launch SimpleClient with debugger:
@@ -252,6 +260,9 @@ echo      %0 build -noTCP
 echo.
 echo   Build without security support and run unit tests:
 echo      %0 build -noSecurity
+echo.
+echo   Build without Multiple Ownership Transfer support and run unit tests:
+echo      %0 build -noMOT
 echo.
 echo   Run all tests:
 echo      %0 test
