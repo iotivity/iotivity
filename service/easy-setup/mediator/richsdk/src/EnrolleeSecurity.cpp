@@ -624,37 +624,34 @@ namespace OIC
             return ESResult::ES_OK;
         }
 
-        OCUUIdentity* EnrolleeSecurity::getMediatorDevID()
+        std::string EnrolleeSecurity::getMediatorDevID()
         {
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "getMediatorDevID IN");
             OCUUIdentity* mediatorDevId = (OCUUIdentity* )OICMalloc(sizeof(OCUUIdentity));
             if(!mediatorDevId)
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "provisionOwnership: OICMalloc error return");
-                return NULL;
+                return {};
             }
 
             if(OC::OCPlatform::getDeviceId(mediatorDevId) != OC_STACK_OK)
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "getDeviceId is failed.");
                 OICFree(mediatorDevId);
-                return NULL;
+                return {};
             }
 
             char uuidString[UUID_STRING_SIZE];
             if(OCConvertUuidToString(mediatorDevId->id, uuidString))
             {
-                m_mediatorID = uuidString;
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Mediator UUID : %s", uuidString);
                 OICFree(mediatorDevId);
+                return std::string(uuidString);
             }
-            else
-            {
-                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "OCConvertUuidToString is failed.");
-                OICFree(mediatorDevId);
-                return NULL;
-            }
-            return mediatorDevId;
+
+            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "OCConvertUuidToString is failed.");
+            OICFree(mediatorDevId);
+            return {};
         }
 
         ESResult EnrolleeSecurity::provisionOwnership(SecurityProvStatusCbWithOption callback)
@@ -665,11 +662,15 @@ namespace OIC
 
             ESOwnershipTransferData ownershipTransferData;
 
-            OCUUIdentity* mediatorDevId = getMediatorDevID();
-            if(!mediatorDevId)
+            std::string mediatorDevIdStr = getMediatorDevID();
+            if(mediatorDevIdStr.empty())
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "getMediatorDevID is failed.");
                 return res;
+            }
+            else
+            {
+                m_mediatorID = mediatorDevIdStr;
             }
 
             res = discoverTargetSecureResource();

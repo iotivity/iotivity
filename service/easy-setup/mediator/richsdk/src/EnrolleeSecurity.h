@@ -100,7 +100,7 @@ namespace OIC
                                                 std::string& uuidString);
             std::string getResourceDeviceAddress(const std::string& host);
             bool isOwnerIDMatched(std::shared_ptr< OC::OCSecureResource > foundDevice);
-            OCUUIdentity* getMediatorDevID();
+            std::string getMediatorDevID();
 
 #if defined(__WITH_DTLS__) && defined(__WITH_TLS__)
         public:
