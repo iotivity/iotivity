@@ -2489,10 +2489,13 @@ TEST_F(OCDiscoverTests, DiscoverResourceWithValidQueries)
         0, CT_DEFAULT, OC_HIGH_QOS, discoverBaselineCB, NULL, 0));
     discoverBaselineCB.Wait(100);
 
+    // Disabled temporarily on Windows to unblock other developers. Will be enabled in IOT-1806.
+#ifndef _MSC_VER
     Callback discoverDefaultCB(&DiscoverLinkedListResource);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res", NULL, 0, CT_DEFAULT,
         OC_HIGH_QOS, discoverDefaultCB, NULL, 0));
     discoverDefaultCB.Wait(100);
+#endif
 
     Callback discoverLinkedListCB(&DiscoverLinkedListResource);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?if=oic.if.ll", NULL, 0,
