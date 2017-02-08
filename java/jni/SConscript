@@ -75,6 +75,7 @@ if env.get('SECURED') == '1':
 
 if target_os == 'android':
 	jni_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+	jni_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libocstack-jni.so'])
 	jni_env.AppendUnique(LIBS = ['gnustl_shared'])
 
 	if not env.get('RELEASE'):

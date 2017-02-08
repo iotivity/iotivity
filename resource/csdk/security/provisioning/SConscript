@@ -107,6 +107,9 @@ else:
 	provisioning_env.AppendUnique(CPPPATH = ['#/extlibs/sqlite3'])
 	provisioning_src = provisioning_src + ['#/extlibs/sqlite3/sqlite3.c' ]
 
+if target_os in ['android']:
+	provisioning_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libocpmapi.so'])
+
 if target_os in ['windows', 'msys_nt', 'ios']:
 	# octbstack.dll is exporting ocpmapi APIs on Windows - there is no ocpmapi.dll.
 	provisioningserver = provisioning_env.StaticLibrary('ocpmapi', provisioning_src)

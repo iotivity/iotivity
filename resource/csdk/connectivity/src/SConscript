@@ -195,6 +195,7 @@ if env.get('LOGGING'):
 	lib_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 if ca_os == 'android':
+	lib_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libca-interface.so'])
 	lib_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libconnectivity_abstraction.so'])
 
 if lib_env.get('SECURED') == '1':
