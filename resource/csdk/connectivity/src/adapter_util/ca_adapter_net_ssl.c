@@ -600,6 +600,11 @@ static int RecvCallBack(void * tep, unsigned char * data, size_t dataLen)
     size_t retLen = (recBuf->len > recBuf->loaded ? recBuf->len - recBuf->loaded : 0);
     retLen = (retLen < dataLen ? retLen : dataLen);
 
+    if (retLen > INT_MAX)
+    {
+        return 0;
+    }
+
     memcpy(data, recBuf->buff + recBuf->loaded, retLen);
     recBuf->loaded += retLen;
 
