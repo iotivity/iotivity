@@ -257,12 +257,12 @@ namespace OIC
             return result;
         }
 
-        NSTopicsList *NSProviderService::getRegisteredTopicList()
+        std::shared_ptr<NSTopicsList> NSProviderService::getRegisteredTopicList()
         {
             NS_LOG(DEBUG, "getRegisteredTopicList - IN");
             ::NSTopicLL *topics = NSProviderGetTopics();
 
-            NSTopicsList *nsTopics = new NSTopicsList(topics);
+            std::shared_ptr<NSTopicsList> nsTopics = std::make_shared<NSTopicsList>(topics, false);
             NS_LOG(DEBUG, "getRegisteredTopicList - OUT");
             return nsTopics;
         }

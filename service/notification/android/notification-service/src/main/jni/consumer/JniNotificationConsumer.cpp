@@ -200,7 +200,7 @@ jobject getJavaTopicState(JNIEnv *env, OIC::Service::NSTopic::NSTopicState nsSta
     return topicState;
 }
 
-jobject getJavaTopicsList(JNIEnv *env, OIC::Service::NSTopicsList *topicList)
+jobject getJavaTopicsList(JNIEnv *env, std::shared_ptr<OIC::Service::NSTopicsList> topicList)
 {
     NS_LOGD ("ConsumerService_getJavaTopicsList - IN");
     jclass cls_topicList = (jclass) (env->NewLocalRef(g_cls_TopicsList));
@@ -230,8 +230,8 @@ jobject getJavaTopicsList(JNIEnv *env, OIC::Service::NSTopicsList *topicList)
     }
     for (auto it : topicList->getTopicsList())
     {
-        jobject jState = getJavaTopicState(env, it->getState());
-        std::string topicName = it->getTopicName();
+        jobject jState = getJavaTopicState(env, it.getState());
+        std::string topicName = it.getTopicName();
         jstring jTopicName = env->NewStringUTF(topicName.c_str());
         env->CallVoidMethod(obj_topicList, mid_addTopic, jTopicName, jState);
     }
@@ -303,7 +303,7 @@ const char *getNativeTopicName(JNIEnv *env,  jobject jTopic)
 
 }
 
-OIC::Service::NSTopicsList *getNativeTopicsList(JNIEnv *env, jobject jTopicList)
+std::shared_ptr<OIC::Service::NSTopicsList> getNativeTopicsList(JNIEnv *env, jobject jTopicList)
 {
     NS_LOGD ("ConsumerService_getNativeTopicsList - IN");
 
@@ -344,28 +344,25 @@ OIC::Service::NSTopicsList *getNativeTopicsList(JNIEnv *env, jobject jTopicList)
         NS_LOGE ("Error: MethodId for Vector get  not found");
         return nullptr;
     }
-    OIC::Service::NSTopicsList *nsTopicList = new OIC::Service::NSTopicsList();
+    std::shared_ptr<OIC::Service::NSTopicsList> nsTopicList = std::make_shared<OIC::Service::NSTopicsList>();
     for (int index = 0; index < size; index++)
     {
         jobject topicObj = env->CallObjectMethod(jobj, getMethod, index);
         if (topicObj == NULL)
         {
             NS_LOGE ("Error: object of field  Topic  is null");
-            delete nsTopicList;
             return nullptr;
         }
         const char *name =  getNativeTopicName(env, topicObj);
         if (name == nullptr)
         {
             NS_LOGE ("Error: Couldn't find topic Name");
-            delete nsTopicList;
             return nullptr;
         }
         std::string topicName(name);
         OIC::Service::NSTopic::NSTopicState state = OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED;
         if (!getNativeTopicState(env, topicObj, state))
         {
-            delete nsTopicList;
             return nullptr;
         }
         nsTopicList->addTopic(topicName, state);
@@ -1347,7 +1344,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeG
         return NULL;
     }
     jlong jProvider = env->GetLongField(jObj, nativeHandle);
-    OIC::Service::NSTopicsList *topicList = nullptr;
+    std::shared_ptr<OIC::Service::NSTopicsList> topicList = nullptr;
     if (jProvider)
     {
         NS_LOGD ("calling subscribe on mNativeHandle");
@@ -1387,7 +1384,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeUpda
         ThrowNSException(JNI_INVALID_VALUE, "TopicList cannot be null");
         return;
     }
-    OIC::Service::NSTopicsList *nsTopicsList = getNativeTopicsList(env, jTopicsList);
+    std::shared_ptr<OIC::Service::NSTopicsList> nsTopicsList = getNativeTopicsList(env, jTopicsList);
     if (nsTopicsList == nullptr)
     {
         ThrowNSException(JNI_INVALID_VALUE, "NSTopicList cannot be created ");

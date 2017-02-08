@@ -608,7 +608,7 @@ jobject getJavaTopicState(JNIEnv *env, OIC::Service::NSTopic::NSTopicState nsSta
     return topicState;
 }
 
-jobject getJavaTopicsList(JNIEnv *env, OIC::Service::NSTopicsList *topicList)
+jobject getJavaTopicsList(JNIEnv *env, std::shared_ptr<OIC::Service::NSTopicsList> topicList)
 {
     NS_LOGD ("JNIProviderService: getJavaTopicsList - IN");
     jclass cls_topicList = (jclass) (env->NewLocalRef(g_cls_TopicsList));
@@ -638,8 +638,8 @@ jobject getJavaTopicsList(JNIEnv *env, OIC::Service::NSTopicsList *topicList)
     }
     for (auto it : topicList->getTopicsList())
     {
-        jobject jState = getJavaTopicState(env, it->getState());
-        std::string topicName = it->getTopicName();
+        jobject jState = getJavaTopicState(env, it.getState());
+        std::string topicName = it.getTopicName();
         jstring jTopicName = env->NewStringUTF(topicName.c_str());
         env->CallVoidMethod(obj_topicList, mid_addTopic, jTopicName, jState);
     }
@@ -1151,7 +1151,7 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeGetRegisteredTopicLi
 {
     NS_LOGD ("JNIProviderService: nativeGetRegisteredTopicList - IN");
 
-    OIC::Service::NSTopicsList *topicList  =
+    std::shared_ptr<OIC::Service::NSTopicsList> topicList  =
         OIC::Service::NSProviderService::getInstance()->getRegisteredTopicList();
     if (topicList == nullptr)
     {
@@ -1160,7 +1160,6 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeGetRegisteredTopicLi
     }
 
     jobject obj_topicList = getJavaTopicsList(env, topicList);
-    delete topicList;
 
     NS_LOGD ("JNIProviderService: nativeGetRegisteredTopicList - OUT");
     return obj_topicList;
@@ -1281,14 +1280,13 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeG
         return NULL;
     }
     env->ReleaseStringUTFChars(jConsumerId, id);
-    OIC::Service::NSTopicsList *topicList  = nsConsumer->getConsumerTopicList();
+    std::shared_ptr<OIC::Service::NSTopicsList> topicList  = nsConsumer->getConsumerTopicList();
     if (topicList == nullptr)
     {
         ThrowNSException(JNI_NO_NATIVE_POINTER, "Topic List doesn't exist");
         return NULL;
     }
     jobject obj_topicList = getJavaTopicsList(env, topicList);
-    delete topicList;
 
     NS_LOGD ("JNIProviderService: nativeGetConsumerTopicList - OUT");
     return obj_topicList;

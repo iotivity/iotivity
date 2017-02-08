@@ -53,7 +53,7 @@ namespace OIC
                 auto discoveredCallback = NSConsumerService::getInstance()->getProviderDiscoveredCb();
                 nsProvider->setProviderState((NSProviderState)state);
                 auto topicLL = NSConsumerGetTopicList(provider->providerId);
-                nsProvider->setTopicList(new NSTopicsList(topicLL));
+                nsProvider->setTopicList(std::make_shared<NSTopicsList>(topicLL, false));
                 NSConsumerService::getInstance()->getAcceptedProviders()->addProvider(nsProvider);
                 if (state == NS_DISCOVERED)
                 {
@@ -120,7 +120,7 @@ namespace OIC
                 else if (state == NS_TOPIC)
                 {
                     auto topicLL = NSConsumerGetTopicList(provider->providerId);
-                    oldProvider->setTopicList(new NSTopicsList(topicLL));
+                    oldProvider->setTopicList(std::make_shared<NSTopicsList>(topicLL, false));
                     if (changeCallback != NULL)
                     {
                         NS_LOG(DEBUG, "initiating the callback for Response : NS_TOPIC");
@@ -147,6 +147,7 @@ namespace OIC
                 else if (state == NS_STOPPED)
                 {
                     oldProvider->setProviderSubscribedState(NSProviderSubscribedState::DENY);
+                    oldProvider->getTopicList()->unsetModifiability();
                     NSConsumerService::getInstance()->getAcceptedProviders()->removeProvider(
                         oldProvider->getProviderId());
                     NS_LOG(DEBUG, "initiating the State callback : NS_STOPPED");

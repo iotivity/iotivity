@@ -528,12 +528,12 @@ TEST_F(NotificationServiceConsumerTest, ExpectEQTopicList)
 
     ASSERT_NE(nullptr, g_provider) << "error: discovery failure";
 
-    std::list<OIC::Service::NSTopic *>  retTopic = g_provider->getTopicList()->getTopicsList();
+    auto  retTopic = g_provider->getTopicList()->getTopicsList();
     auto it1 = retTopic.begin();
     auto it2 = topics.begin();
     while ( it1 != retTopic.end() || it2 != topics.end() )
     {
-        if ((*it1)->getTopicName() !=  *it2)
+        if ((*it1).getTopicName() !=  *it2)
         {
             isSame = false; break;
         }
@@ -548,12 +548,12 @@ TEST_F(NotificationServiceConsumerTest, ExpectFailUpdateTopicOnConsumer)
 {
     ASSERT_NE(nullptr, g_provider) << "error: discovery failure";
 
-    OIC::Service::NSTopicsList *retTopic = g_provider->getTopicList();
+    auto retTopic = g_provider->getTopicList();
     for (auto it : retTopic->getTopicsList())
     {
-        std::cout << "Topic Name: " << it->getTopicName() << std::endl;
-        std::cout << "state : " << (int) it->getState() << std::endl;
-        it->setState(OIC::Service::NSTopic::NSTopicState::SUBSCRIBED);
+        std::cout << "Topic Name: " << it.getTopicName() << std::endl;
+        std::cout << "state : " << (int) it.getState() << std::endl;
+        it.setState(OIC::Service::NSTopic::NSTopicState::SUBSCRIBED);
     }
     OIC::Service::NSResult ret = g_provider->updateTopicList(retTopic);
     std::cout << "ret : " << (int) ret << std::endl;

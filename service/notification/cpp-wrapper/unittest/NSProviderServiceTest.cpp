@@ -222,7 +222,6 @@ TEST_F(NotificationProviderServiceTest, NeverCallNotifyOnConsumerByAcceptIsFalse
     ASSERT_NE(nullptr, g_consumer) << "error: discovery failure";
 
     g_consumer->acceptSubscription(false);
-
     OIC::Service::NSMessage msg =  OIC::Service::NSProviderService::getInstance()->createMessage();
     msgID = (int)msg.getMessageId();
     msg.setTitle(std::string("Title"));
@@ -334,7 +333,7 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualAddedTopicsAndRegisteredTopic
     std::unique_lock< std::mutex > lock { mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
     bool isSame = false;
-    OIC::Service::NSTopicsList *topicList =
+    auto topicList =
         OIC::Service::NSProviderService::getInstance()->getRegisteredTopicList();
     if (!topicList)
     {
@@ -347,7 +346,7 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualAddedTopicsAndRegisteredTopic
         int i = 0;
         for (auto itr : topicList->getTopicsList())
         {
-            compString[i] = itr->getTopicName(); i++;
+            compString[i] = itr.getTopicName(); i++;
         }
         std::cout << compString[0] << std::endl;
         std::cout << compString[1] << std::endl;
@@ -360,10 +359,6 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualAddedTopicsAndRegisteredTopic
 
     OIC::Service::NSProviderService::getInstance()->unregisterTopic(str1);
     OIC::Service::NSProviderService::getInstance()->unregisterTopic(str2);
-    if (topicList != nullptr)
-    {
-        delete topicList;
-    }
     responseCon.wait_for(lock, g_waitForResponse);
 }
 
@@ -377,7 +372,7 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualUnregisteredTopicsAndRegister
     std::unique_lock< std::mutex > lock { mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
     bool isSame = false;
-    OIC::Service::NSTopicsList *topicList =
+    auto topicList =
         OIC::Service::NSProviderService::getInstance()->getRegisteredTopicList();
     if (!topicList)
     {
@@ -386,8 +381,9 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualUnregisteredTopicsAndRegister
     }
     else
     {
-        std::list<OIC::Service::NSTopic *>::iterator it = topicList->getTopicsList().begin();
-        std::string compStr = (*it)->getTopicName() ;
+        auto topic = topicList->getTopicsList();
+        auto it = topic.begin();
+        std::string compStr = (*it).getTopicName() ;
         std::cout << compStr << std::endl;
         if (str1.compare(compStr) == 0 )
         {
@@ -397,10 +393,6 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualUnregisteredTopicsAndRegister
     EXPECT_EQ(isSame, true);
 
     OIC::Service::NSProviderService::getInstance()->unregisterTopic(str1);
-    if (topicList != nullptr)
-    {
-        delete topicList;
-    }
     responseCon.wait_for(lock, g_waitForResponse);
 }
 
@@ -419,7 +411,7 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualSetConsumerTopicsAndGetConsum
     responseCon.wait_for(lock, g_waitForResponse);
 
     bool isSame = false;
-    OIC::Service::NSTopicsList *topicList =  g_consumer->getConsumerTopicList();
+    auto topicList =  g_consumer->getConsumerTopicList();
 
     if (!topicList)
     {
@@ -432,8 +424,8 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualSetConsumerTopicsAndGetConsum
         int i = 0, state[10] = {0};
         for (auto itr : topicList->getTopicsList())
         {
-            compString[i] = itr->getTopicName();
-            state[i++] = (int) itr->getState();
+            compString[i] = itr.getTopicName();
+            state[i++] = (int) itr.getState();
         }
         std::cout << compString[0] << std::endl;
         std::cout << compString[1] << std::endl;
@@ -448,10 +440,6 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualSetConsumerTopicsAndGetConsum
 
     OIC::Service::NSProviderService::getInstance()->unregisterTopic(str1);
     OIC::Service::NSProviderService::getInstance()->unregisterTopic(str2);
-    if (topicList != nullptr)
-    {
-        delete topicList;
-    }
     responseCon.wait_for(lock, g_waitForResponse);
 }
 
@@ -472,7 +460,7 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualUnSetConsumerTopicsAndGetCons
     responseCon.wait_for(lock, g_waitForResponse);
 
     bool isSame = false;
-    OIC::Service::NSTopicsList *topicList =  g_consumer->getConsumerTopicList();
+    auto topicList =  g_consumer->getConsumerTopicList();
 
     if (!topicList)
     {
@@ -485,8 +473,8 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualUnSetConsumerTopicsAndGetCons
         int i = 0, state[10] = {0};
         for (auto itr : topicList->getTopicsList())
         {
-            compString[i] = itr->getTopicName();
-            state[i++] = (int) itr->getState();
+            compString[i] = itr.getTopicName();
+            state[i++] = (int) itr.getState();
         }
         std::cout << compString[0] << std::endl;
         std::cout << compString[1] << std::endl;
@@ -501,11 +489,6 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualUnSetConsumerTopicsAndGetCons
 
     OIC::Service::NSProviderService::getInstance()->unregisterTopic(str1);
     OIC::Service::NSProviderService::getInstance()->unregisterTopic(str2);
-
-    if (topicList != nullptr)
-    {
-        delete topicList;
-    }
     responseCon.wait_for(lock, g_waitForResponse);
 }
 

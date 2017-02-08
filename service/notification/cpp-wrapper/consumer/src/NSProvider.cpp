@@ -47,7 +47,7 @@ namespace OIC
             m_state = NSProviderState::DENY;
             m_subscribedState = NSProviderSubscribedState::DENY;
 
-            m_topicList = new NSTopicsList();
+            m_topicList = std::make_shared<NSTopicsList>();
 
             if (provider != nullptr)
             {
@@ -58,13 +58,13 @@ namespace OIC
         NSProvider::NSProvider(const NSProvider &provider)
         {
             m_providerId = provider.getProviderId();
-            m_topicList = new NSTopicsList();
+            m_topicList = std::make_shared<NSTopicsList>();
             auto topicsList = provider.getTopicList();
             if (topicsList != nullptr)
             {
                 for (auto it : topicsList->getTopicsList())
                 {
-                    getTopicList()->addTopic(it->getTopicName(), it->getState());
+                    getTopicList()->addTopic(it.getTopicName(), it.getState());
                 }
             }
             setListener(provider.getProviderStateReceivedCb(), provider.getMessageReceivedCb(),
@@ -76,13 +76,13 @@ namespace OIC
         NSProvider &NSProvider::operator=(const NSProvider &provider)
         {
             this->m_providerId = provider.getProviderId();
-            this->m_topicList = new NSTopicsList();
+            this->m_topicList = std::make_shared<NSTopicsList>();
             auto topicsList = provider.getTopicList();
             if (topicsList != nullptr)
             {
                 for (auto it : topicsList->getTopicsList())
                 {
-                    this->getTopicList()->addTopic(it->getTopicName(), it->getState());
+                    this->getTopicList()->addTopic(it.getTopicName(), it.getState());
                 }
             }
             this->setListener(provider.getProviderStateReceivedCb(), provider.getMessageReceivedCb(),
@@ -92,35 +92,28 @@ namespace OIC
             return *this;
         }
 
-        NSProvider::~NSProvider()
-        {
-            if (m_topicList != nullptr)
-            {
-                delete m_topicList;
-            }
-        }
-
         std::string NSProvider::getProviderId() const
         {
             return m_providerId;
         }
 
-        NSTopicsList *NSProvider::getTopicList() const
+        std::shared_ptr<NSTopicsList> NSProvider::getTopicList() const
         {
             NS_LOG(DEBUG, "getTopicList - IN");
             if (!isValid())
             {
                 return nullptr;
             }
-            NSTopicsList *topicList = new NSTopicsList();
+            std::shared_ptr<NSTopicsList> topicList = std::make_shared<NSTopicsList>();
             for (auto it : m_topicList->getTopicsList())
             {
-                topicList->addTopic(it->getTopicName(), it->getState());
+                topicList->addTopic(it.getTopicName(), it.getState());
             }
+            topicList->unsetModifiability();
             return topicList;
         }
 
-        NSResult NSProvider::updateTopicList(NSTopicsList *topicList)
+        NSResult NSProvider::updateTopicList(std::shared_ptr<NSTopicsList> topicList)
         {
             NS_LOG(DEBUG, "updateTopicList - IN");
             if (!isValid())
@@ -142,8 +135,8 @@ namespace OIC
                     return NSResult::ERROR;
                 }
                 topic->topicName = NULL;
-                topic->topicName = OICStrdup(it->getTopicName().c_str());
-                topic->state = (::NSTopicState)it->getState();
+                topic->topicName = OICStrdup(it.getTopicName().c_str());
+                topic->state = (::NSTopicState)it.getState();
                 topic->next = NULL;
                 if (topicLL == NULL)
                 {
@@ -295,12 +288,8 @@ namespace OIC
             return m_syncInfoCb;
         }
 
-        void NSProvider::setTopicList(NSTopicsList *topicsList)
+        void NSProvider::setTopicList(std::shared_ptr<NSTopicsList> topicsList)
         {
-            if (m_topicList != nullptr)
-            {
-                delete m_topicList;
-            }
             m_topicList = topicsList;
         }
 

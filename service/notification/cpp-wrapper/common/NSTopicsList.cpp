@@ -25,14 +25,16 @@ namespace OIC
 {
     namespace Service
     {
-        NSTopicsList::NSTopicsList(::NSTopicLL *topics)
+        NSTopicsList::NSTopicsList(::NSTopicLL *topics, bool modify)
         {
             ::NSTopicLL *topicsNode = nullptr;
             topicsNode = topics;
+            m_modifiable = modify;
 
             while (topicsNode != nullptr)
             {
-                addTopic(topicsNode->topicName, (NSTopic::NSTopicState)topicsNode->state);
+                m_topicsList.push_back(new NSTopic(
+                    topicsNode->topicName, (NSTopic::NSTopicState)topicsNode->state));
                 topicsNode = topicsNode->next;
             }
 
@@ -41,47 +43,74 @@ namespace OIC
         {
             for (auto it : topicsList.getTopicsList())
             {
-                addTopic(it->getTopicName(), it->getState());
+                m_topicsList.push_back(new NSTopic(it.getTopicName(), it.getState()));
             }
+            m_modifiable = false;
         }
 
         NSTopicsList &NSTopicsList::operator=(const NSTopicsList &topicsList)
         {
             for (auto it : topicsList.getTopicsList())
             {
-                this->addTopic(it->getTopicName(), it->getState());
+                this->m_topicsList.push_back(new NSTopic(it.getTopicName(), it.getState()));
             }
             return *this;
+            m_modifiable = false;
         }
 
         NSTopicsList::~NSTopicsList()
         {
-            for (auto it : getTopicsList())
+            for (auto it : m_topicsList)
             {
                 delete it;
             }
-            getTopicsList().clear();
+            m_topicsList.clear();
         }
 
         void NSTopicsList::addTopic(const std::string &topicName, NSTopic::NSTopicState state)
         {
-            m_topicsList.push_back(new NSTopic(topicName, state));
+            if(m_modifiable)
+            {
+                m_topicsList.push_back(new NSTopic(topicName, state));
+            }
+            else
+            {
+                //TODO: add exception code for Invalid operation
+            }
         }
 
         void NSTopicsList::removeTopic(const std::string &topicName)
         {
-            for (auto it : getTopicsList())
+            if(m_modifiable)
             {
-                if (it->getTopicName().compare(topicName) == 0)
+                for (auto it : m_topicsList)
                 {
-                    m_topicsList.remove(it);
+                    if (it->getTopicName().compare(topicName) == 0)
+                    {
+                        m_topicsList.remove(it);
+                    }
                 }
+            }
+            else
+            {
+                //TODO: add exception code for Invalid operation
             }
         }
 
-        std::list<NSTopic *> NSTopicsList::getTopicsList() const
+        std::list<NSTopic> NSTopicsList::getTopicsList() const
         {
-            return m_topicsList;
+            std::list<NSTopic> topicList;
+            for (auto it : m_topicsList)
+            {
+                NSTopic topic(it->getTopicName(), it->getState());
+                topicList.push_back(topic);
+            }
+            return topicList;
+        }
+
+        void NSTopicsList::unsetModifiability()
+        {
+            m_modifiable = false;
         }
     }
 }

@@ -46,14 +46,14 @@ namespace OIC
                 /**
                      * Constructor of NSTopicsList.
                      */
-                NSTopicsList() = default;
+                NSTopicsList() : m_modifiable(true) { }
 
                 /**
                      * Constructor of NSTopicsList.
                      *
                      * @param topics - pointer to NSTopicLL struct to initialize.
                      */
-                NSTopicsList(::NSTopicLL *topics);
+                NSTopicsList(::NSTopicLL *topics, bool modify);
 
                 /**
                      * Copy Constructor of NSTopicsList.
@@ -95,10 +95,20 @@ namespace OIC
                      *
                      * @return topic as NSTopics Linked list.
                      */
-                std::list<NSTopic *> getTopicsList() const;
+                std::list<NSTopic> getTopicsList() const;
+
+                /**
+                     * This method is for preventing for add/remove Topic from Topicslist.
+                     * Below method restricts the application from illegally modifying Topics when 
+                     * Provider is in Invalid state. By calling the API, the service prevents and protects
+                     * the integrity of TopicsList updation when the associated object is Invalid.
+                     *
+                     */
+                void unsetModifiability();
 
             private:
                 std::list<NSTopic *> m_topicsList;
+                bool m_modifiable;
 
         };
     }

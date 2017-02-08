@@ -69,7 +69,7 @@ namespace OIC
                 /**
                       * Constructor of NSProvider.
                       */
-                NSProvider(): m_topicList(new NSTopicsList()), m_state(NSProviderState::DENY),
+                NSProvider(): m_topicList(std::make_shared<NSTopicsList>()), m_state(NSProviderState::DENY),
                     m_subscribedState(NSProviderSubscribedState::DENY),
                     m_stateCb(NULL), m_messageCb(NULL), m_syncInfoCb(NULL)
                 {
@@ -81,7 +81,7 @@ namespace OIC
                       * @param providerId - providerId of the Notification.
                       */
                 NSProvider(const std::string &providerId) : m_providerId(providerId),
-                    m_topicList(new NSTopicsList()), m_state(NSProviderState::DENY),
+                    m_topicList(std::make_shared<NSTopicsList>()), m_state(NSProviderState::DENY),
                     m_subscribedState(NSProviderSubscribedState::DENY),
                     m_stateCb(NULL), m_messageCb(NULL), m_syncInfoCb(NULL)
                 {
@@ -93,7 +93,7 @@ namespace OIC
                       * @param providerId - providerId of the Notification.
                       * @param topicList - NSTopicsList of interested Topics.
                       */
-                NSProvider(const std::string &providerId, NSTopicsList *topicList) : m_providerId(
+                NSProvider(const std::string &providerId, std::shared_ptr<NSTopicsList> topicList) : m_providerId(
                         providerId), m_topicList(topicList), m_state(NSProviderState::DENY),
                     m_subscribedState(NSProviderSubscribedState::DENY),
                     m_stateCb(NULL), m_messageCb(NULL), m_syncInfoCb(NULL)
@@ -125,7 +125,7 @@ namespace OIC
                 /**
                       * Destructor of NSProvider.
                       */
-                ~NSProvider();
+                ~NSProvider() = default;
 
                 /**
                       * This method is for getting ProviderId from the Notification service provider.
@@ -139,7 +139,7 @@ namespace OIC
                       *
                       * @return NSTopicsList  as pointer.
                       */
-                NSTopicsList *getTopicList() const;
+                std::shared_ptr<NSTopicsList> getTopicList() const;
 
                 /**
                      * Update Topic list that is wanted to be subscribed from provider
@@ -147,7 +147,7 @@ namespace OIC
                      * @param topicList - NSTopicsList of interested Topics.
                      * @return NSResult
                      */
-                NSResult updateTopicList(NSTopicsList *topicList);
+                NSResult updateTopicList(std::shared_ptr<NSTopicsList> topicList);
 
                 /**
                       * This method is for getting ProviderState from the Notification service provider.
@@ -238,7 +238,7 @@ namespace OIC
                       *
                       * @param topicsList  as NSTopicsList pointer.
                       */
-                void setTopicList(NSTopicsList *topicsList);
+                void setTopicList(std::shared_ptr<NSTopicsList> topicsList);
 
                 /**
                      * This method is for setting ProviderState for the Notification service provider.
@@ -260,7 +260,7 @@ namespace OIC
 
             private:
                 std::string m_providerId;
-                NSTopicsList *m_topicList;
+                std::shared_ptr<NSTopicsList> m_topicList;
                 NSProviderState m_state;
                 NSProviderSubscribedState m_subscribedState;
 

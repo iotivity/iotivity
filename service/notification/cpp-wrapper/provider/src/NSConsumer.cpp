@@ -89,7 +89,7 @@ namespace OIC
             return result;
         }
 
-        NSTopicsList *NSConsumer::getConsumerTopicList()
+        std::shared_ptr<NSTopicsList> NSConsumer::getConsumerTopicList()
         {
             NS_LOG(DEBUG, "getConsumerTopicList - IN");
             if (!isValid())
@@ -98,7 +98,7 @@ namespace OIC
             }
             ::NSTopicLL *topics = NSProviderGetConsumerTopics(getConsumerId().c_str());
 
-            NSTopicsList *nsTopics = new NSTopicsList(topics);
+            std::shared_ptr<NSTopicsList> nsTopics = std::make_shared<NSTopicsList>(topics, false);
             NS_LOG(DEBUG, "getConsumerTopicList - OUT");
             return nsTopics;
         }

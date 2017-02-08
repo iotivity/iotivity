@@ -165,7 +165,7 @@ namespace OIC
                      * Request topics list already registered by provider user
                      * @return :: Topic list
                      */
-                NSTopicsList *getRegisteredTopicList();
+                std::shared_ptr<NSTopicsList> getRegisteredTopicList();
 
                 /**
                       *  get Provider config values
