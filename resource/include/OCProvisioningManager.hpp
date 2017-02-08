@@ -148,6 +148,42 @@ namespace OC
 
     class OCSecure
     {
+        private:
+            /**
+             * Common callback wrapper, which will be called from OC-APIs.
+             */
+            static void callbackWrapper(void* ctx, size_t nOfRes,
+                                         OCProvisionResult_t *arr, bool hasError);
+
+            /**
+             * Callback function to display Verification Number.
+             *
+             * @param[in] ctx  User context returned in callback
+             * @param[in] verifNum  Array of MUTUAL_VERIF_NUM_LEN size bytes
+             *
+             * @return OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult displayNumCallbackWrapper(void* ctx,
+                    uint8_t verifNum[MUTUAL_VERIF_NUM_LEN]);
+
+            /**
+             * Callback function to get 'Num' verification result.
+             *
+             * @return OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult confirmUserCallbackWrapper(void* ctx);
+
+            /**
+             * Notifier wrapper for trustCertChain change.
+             *
+             * @param[in] ctx  User context returned in callback
+             * @param[in] credId  trustCertChain changed for this ID
+             * @param[in] trustCertChain trustcertchain binary blob
+             * @param[in] chainSize size of trustCertChain
+             */
+            static void certCallbackWrapper(void* ctx, uint16_t credId, uint8_t *trustCertChain,
+                                size_t chainSize);
+
         public:
             /**
              * The API is responsible for initialization of the provisioning manager. It will load
@@ -265,10 +301,9 @@ namespace OC
 
             /**
              * API for registering a pin input callback. Only one input pin callback is allowed
-             * to be registered at a time by setInputPinCallback and registerInputPinCallback. 
-             * Use unsetInputPinCallback to unregister a callback set by setInputPinCallback. 
+             * to be registered at a time by setInputPinCallback and registerInputPinCallback.
+             * Use unsetInputPinCallback to unregister a callback set by setInputPinCallback.
              *
-
              * @deprecated Use registerInputPinCallback instead.
              *
              * @param inputPin inputPin callback function.
@@ -288,9 +323,8 @@ namespace OC
             static OCStackResult unsetInputPinCallback();
 
             /**
-
              * API to register for a callback to input a pin. Only one input pin callback is allowed
-             * to be registered at a time by setInputPinCallback and registerInputPinCallback. Use 
+             * to be registered at a time by setInputPinCallback and registerInputPinCallback. Use
              * deregisterInputPinCallback to unregister a callback set by registerInputPinCallback.
              *
              * @param inputPinCB             Callback which is to be registered.
@@ -363,15 +397,6 @@ namespace OC
              * @return  OC_STACK_OK in case of success and other value otherwise.
              */
             static OCStackResult deregisterDisplayPinCallback(DisplayPinCallbackHandle displayPinCallbackHandle);
-
-
-
-
-
-
-
-
-
 
             /**
              * API to get status of all the devices in current subnet. The status include endpoint
@@ -447,23 +472,6 @@ namespace OC
              */
             static OCStackResult setVerifyOptionMask(VerifyOptionBitmask_t optionMask);
 
-            /**
-             * Callback function to display Verification Number.
-             *
-             * @param[in] ctx  User context returned in callback
-             * @param[in] verifNum  Array of MUTUAL_VERIF_NUM_LEN size bytes
-             *
-             * @return OC_STACK_OK in case of success and other value otherwise.
-             */
-            static OCStackResult displayNumCallbackWrapper(void* ctx,
-                    uint8_t verifNum[MUTUAL_VERIF_NUM_LEN]);
-
-             /**
-             * Callback function to get 'Num' verification result.
-             *
-             * @return OC_STACK_OK in case of success and other value otherwise.
-             */
-            static OCStackResult confirmUserCallbackWrapper(void* ctx);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
             /**
@@ -477,7 +485,6 @@ namespace OC
              */
             static OCStackResult saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
                                         OicEncodingType_t encodingType, uint16_t *credId);
-
 
             /**
              * API to read Trust certificate chain from SVR.
@@ -508,17 +515,6 @@ namespace OC
             static OCStackResult removeTrustCertChangeNotifier();
 
             /**
-             * Notifier wrapper for trustCertChain change.
-             *
-             * @param[in] ctx  User context returned in callback
-             * @param[in] credId  trustCertChain changed for this ID
-             * @param[in] trustCertChain trustcertchain binary blob
-             * @param[in] chainSize size of trustCertChain
-             */
-            static void certCallbackWrapper(void* ctx, uint16_t credId, uint8_t *trustCertChain,
-                                size_t chainSize);
-
-            /**
              * Wrapper to save the seed value to generate device UUID
              *
              * @param[in] seed  buffer of seed value
@@ -534,7 +530,6 @@ namespace OC
              *@return OC_STACK_OK in case of successful configue and other value otherwise.
              */
             static OCStackResult configSelfOwnership();
-
     };
 
     /**
@@ -704,12 +699,6 @@ namespace OC
              */
             OCStackResult getOTMethod(OicSecOxm_t* oxm);
 
-            /**
-             * Common callback wrapper, which will be called from OC-APIs.
-             */
-            static void callbackWrapper(void* ctx, size_t nOfRes,
-                    OCProvisionResult_t *arr, bool hasError);
-
 #ifdef MULTIPLE_OWNER
             /**
              * API to update 'doxm.oxmsel' to resource server.
@@ -799,6 +788,12 @@ namespace OC
 #endif // MULTIPLE_OWNER
 
         private:
+            /**
+             * Common callback wrapper, which will be called from OC-APIs.
+             */
+            static void callbackWrapper(void* ctx, size_t nOfRes,
+                                           OCProvisionResult_t *arr, bool hasError);
+
             void validateSecureResource();
     };
 

@@ -39,6 +39,31 @@ namespace OC
      */
     bool g_displayPinCallbackRegistered = false;
 
+    static void callbackWrapperImpl(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
+    {
+        PMResultList_t *results = nullptr;
+        ProvisionContext* context = static_cast<ProvisionContext*>(ctx);
+
+        try
+        {
+            results = new PMResultList_t;
+        }
+        catch (std::bad_alloc& e)
+        {
+            oclog() <<"Bad alloc exception";
+            return;
+        }
+
+        for (size_t i = 0; i < nOfRes; i++)
+        {
+            results->push_back(arr[i]);
+        }
+
+        std::thread exec(context->callback, results, hasError);
+        exec.detach();
+
+        delete context;
+    }
     OCStackResult OCSecure::provisionInit(const std::string& dbPath)
     {
         OCStackResult result;
@@ -382,7 +407,7 @@ namespace OC
 
         return result;
     }
-    
+
     static void inputPinCallbackWrapper(OicUuid_t deviceId, char* pinBuffer, size_t pinBufferSize, void* context)
     {
         (static_cast<InputPinContext*>(context))->callback(deviceId, pinBuffer, pinBufferSize);
@@ -694,7 +719,7 @@ namespace OC
             if(OC_STACK_OK == result)
             {
                 result = OCRemoveDeviceWithUuid(static_cast<void*>(context), waitTimeForOwnedDeviceDiscovery,
-                        &targetDev, &OCSecureResource::callbackWrapper);
+                        &targetDev, &OCSecure::callbackWrapper);
             }
             else
             {
@@ -1044,30 +1069,14 @@ namespace OC
     }
 #endif // __WITH_DTLS__ || __WITH_TLS__
 
+    void OCSecure::callbackWrapper(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
+    {
+        callbackWrapperImpl(ctx, nOfRes, arr, hasError);
+    }
+
     void OCSecureResource::callbackWrapper(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
     {
-        PMResultList_t *results = nullptr;
-        ProvisionContext* context = static_cast<ProvisionContext*>(ctx);
-
-        try
-        {
-            results = new PMResultList_t;
-        }
-        catch (std::bad_alloc& e)
-        {
-            oclog() <<"Bad alloc exception";
-            return;
-        }
-
-        for (size_t i = 0; i < nOfRes; i++)
-        {
-            results->push_back(arr[i]);
-        }
-
-        std::thread exec(context->callback, results, hasError);
-        exec.detach();
-
-        delete context;
+        callbackWrapperImpl(ctx, nOfRes, arr, hasError);
     }
 
     OCSecureResource::OCSecureResource(): m_csdkLock(std::weak_ptr<std::recursive_mutex>()),
