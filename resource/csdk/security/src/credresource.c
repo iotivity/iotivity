@@ -105,6 +105,41 @@ static bool ValueWithinBounds(uint64_t value, uint64_t maxValue)
 }
 
 /**
+ * Internal function to check a subject of SIGNED_ASYMMETRIC_KEY(Certificate).
+ * If that subject is NULL or wildcard, set it to own deviceID.
+ * @param cred credential on SVR DB file
+ * @param deviceID own deviceuuid of doxm resource
+ *
+ * @return
+ *     true successfully done
+ *     false Invalid cred
+ */
+
+static bool CheckSubjectOfCertificate(OicSecCred_t* cred, OicUuid_t deviceID)
+{
+    OicUuid_t emptyUuid = {.id={0}};
+    OIC_LOG(DEBUG, TAG, "IN CheckSubjectOfCertificate");
+    VERIFY_NOT_NULL(TAG, cred, ERROR);
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    if ( SIGNED_ASYMMETRIC_KEY == cred->credType)
+    {
+        if((0 == memcmp(cred->subject.id, emptyUuid.id, sizeof(cred->subject.id))) ||
+            (0 == memcmp(cred->subject.id, &WILDCARD_SUBJECT_ID, sizeof(cred->subject.id))))
+        {
+            memcpy(cred->subject.id, deviceID.id, sizeof(deviceID.id));
+        }
+    }
+#endif
+
+    OIC_LOG(DEBUG, TAG, "OUT CheckSubjectOfCertificate");
+    return true;
+exit:
+    OIC_LOG(ERROR, TAG, "OUT CheckSubjectOfCertificate");
+    return false;
+}
+
+/**
  * Internal function to check credential
  */
 static bool IsValidCredential(const OicSecCred_t* cred)
@@ -2210,7 +2245,7 @@ OCStackResult InitCredResource()
 
     if ((ret == OC_STACK_OK) && data)
     {
-        // Read ACL resource from PS
+        // Read Cred resource from PS
         ret = CBORPayloadToCred(data, size, &gCred);
 
 #ifdef HAVE_WINDOWS_H
@@ -2267,18 +2302,43 @@ OCStackResult InitCredResource()
         gCred = GetCredDefault();
     }
 
-    //Add a log to track the invalid credential.
-    LL_FOREACH(gCred, cred)
+    if (gCred)
     {
-        if (false == IsValidCredential(cred))
+        OicUuid_t deviceID;
+        OicUuid_t emptyUuid = {.id={0}};
+
+        ret = GetDoxmDeviceID(&deviceID);
+        VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
+
+        //Add a log to track the invalid credential.
+        LL_FOREACH(gCred, cred)
         {
-            OIC_LOG(WARNING, TAG, "Invalid credential data was dectected while InitCredResource");
-            OIC_LOG_V(WARNING, TAG, "Invalid credential ID = %d", cred->credId);
+            if (false == CheckSubjectOfCertificate(cred, deviceID))
+            {
+                OIC_LOG(WARNING, TAG, "Check subject of Certificate was failed while InitCredResource");
+            }
+            if (false == IsValidCredential(cred))
+            {
+                OIC_LOG(WARNING, TAG, "Invalid credential data was dectected while InitCredResource");
+                OIC_LOG_V(WARNING, TAG, "Invalid credential ID = %d", cred->credId);
+            }
+        }
+
+        if (0 == memcmp(&gCred->rownerID, &emptyUuid, sizeof(OicUuid_t)))
+        {
+            memcpy(&gCred->rownerID, &deviceID, sizeof(OicUuid_t));
+        }
+
+        if (!UpdatePersistentStorage(gCred))
+        {
+            OIC_LOG(FATAL, TAG, "UpdatePersistentStorage failed!");
         }
     }
-
     //Instantiate 'oic.sec.cred'
     ret = CreateCredResource();
+
+exit:
+    OIC_LOG(DEBUG, TAG, "OUT InitCredResource.");
     OICClearMemory(data, size);
     OICFree(data);
     return ret;
