@@ -65,6 +65,7 @@ namespace OIC
             std::mutex m_mtx;
             std::condition_variable m_cond;
             std::atomic<bool> OTMResult;
+            std::atomic<bool> enableMOTModeResult;
             std::atomic<bool> MOTMethodProvResult;
             std::atomic<bool> PreConfigPinProvResult;
             std::atomic<bool> removeDeviceResult;
@@ -88,12 +89,16 @@ namespace OIC
             ESResult syncUpWithMediatorDB();
 #ifdef MULTIPLE_OWNER
             ESResult performMultipleOwnershipTransfer(const ESOwnershipTransferData& MOTdata);
+            void changeMOTMethodCB(PMResultList_t *result, int hasError);
+
             void SelectMOTMethodCB(PMResultList_t *result, int hasError);
             void PreconfigPinProvCB(PMResultList_t *result, int hasError);
             void MultipleOwnershipTransferCb(OC::PMResultList_t *result, int hasError);
             bool isSubOwnerIDMatched(std::shared_ptr< OC::OCSecureResource > foundDevice);
-            ESResult RequestSetPreconfPinData(const ESOwnershipTransferData ownershipTransferData);
-            ESResult RequestSetMOTMethod(const ESOwnershipTransferData ownershipTransferData);
+            ESResult RequestSetPreconfPinData(const ESOwnershipTransferData& MOTData);
+            ESResult RequestSetMOTMethod(const ESOwnershipTransferData& MOTData);
+            ESResult requestEnableMOTMode();
+            ESResult provisionMOTConfig(const ESOwnershipTransferData& MOTData);
 #endif
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError, ESResult& res);
             void convertUUIDToString(const uint8_t uuid[UUID_SIZE],

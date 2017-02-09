@@ -255,6 +255,26 @@ namespace OIC
             return ret;
         }
 
+        void EnrolleeSecurity::changeMOTMethodCB(PMResultList_t *result, int hasError)
+        {
+            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "changeMOTMethodCB IN");
+            if (hasError)
+            {
+                OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG,
+                                "requestEnableMOTMode API is failed with error %d", hasError);
+                enableMOTModeResult = false;
+            }
+            else
+            {
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "requestEnableMOTMode API is succeeded");
+                enableMOTModeResult = true;
+            }
+
+            delete result;
+            m_cond.notify_all();
+        }
+
+
         void EnrolleeSecurity::SelectMOTMethodCB(PMResultList_t *result, int hasError)
         {
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "SelectMOTMethodCB IN");
@@ -332,7 +352,7 @@ namespace OIC
             }
         }
 
-        ESResult EnrolleeSecurity::RequestSetPreconfPinData(const ESOwnershipTransferData ownershipTransferData)
+        ESResult EnrolleeSecurity::RequestSetPreconfPinData(const ESOwnershipTransferData& MOTData)
         {
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "RequestSetPreconfPinData IN");
 
@@ -345,7 +365,7 @@ namespace OIC
                     this, std::placeholders::_1, std::placeholders::_2)),
                     shared_from_this());
 
-            std::string pin = ownershipTransferData.getPreConfiguredPin();
+            std::string pin = MOTData.getPreConfiguredPin();
 
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "provisionPreconfPin is called.");
             if(OC_STACK_OK != m_securedResource->provisionPreconfPin(
@@ -369,12 +389,11 @@ namespace OIC
             return ESResult::ES_OK;
         }
 
-        ESResult EnrolleeSecurity::RequestSetMOTMethod(const ESOwnershipTransferData ownershipTransferData)
+        ESResult EnrolleeSecurity::RequestSetMOTMethod(const ESOwnershipTransferData& MOTData)
         {
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "RequestSetMOTMethod IN");
 
             ESResult res = ESResult::ES_ERROR;
-
 
             OC::ResultCallBack selectMOTMethodCB = std::bind(
                     &EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
@@ -385,7 +404,7 @@ namespace OIC
 
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "selectMOTMethod is called.");
             if(OC_STACK_OK != m_securedResource->selectMOTMethod(
-                                    ownershipTransferData.getMOTMethod(),
+                                    MOTData.getMOTMethod(),
                                     selectMOTMethodCB))
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "selectMOTMethod API error");
@@ -404,6 +423,76 @@ namespace OIC
             }
 
             return ESResult::ES_OK;
+        }
+
+        ESResult EnrolleeSecurity::requestEnableMOTMode()
+        {
+            ESResult res = ESResult:: ES_ERROR;
+
+            OC::ResultCallBack changeMOTMethodCB = std::bind(
+                    &EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
+                    std::placeholders::_1, std::placeholders::_2,
+                    static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::changeMOTMethodCB,
+                    this, std::placeholders::_1, std::placeholders::_2)),
+                    shared_from_this());
+
+            if(OC_STACK_OK !=
+                m_securedResource->changeMOTMode(OIC_MULTIPLE_OWNER_ENABLE, changeMOTMethodCB))
+            {
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "changeMOTMode is failed.");
+                return ESResult:: ES_MOT_ENABLING_FAILURE;
+            }
+
+            std::unique_lock<std::mutex> lck(m_mtx);
+            m_cond.wait(lck);
+
+            if(!enableMOTModeResult)
+            {
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "requestEnableMOTMode is failed.");
+                res = ESResult:: ES_MOT_ENABLING_FAILURE;
+                return res;
+            }
+
+            return ESResult::ES_OK;
+        }
+
+        ESResult EnrolleeSecurity::provisionMOTConfig(const ESOwnershipTransferData& MOTData)
+        {
+            ESResult res = ESResult:: ES_ERROR;
+
+            if(!m_securedResource->isMOTEnabled())
+            {
+                res = requestEnableMOTMode();
+                if(res != ESResult::ES_OK)
+                {
+                    OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "requestEnableMOTMode is failed.");
+                    return res;
+                }
+            }
+
+            if( OIC_PRECONFIG_PIN == MOTData.getMOTMethod() &&
+                !MOTData.getPreConfiguredPin().empty())
+            {
+                res = RequestSetPreconfPinData(MOTData);
+
+                if(res != ESResult::ES_OK)
+                {
+                    OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "RequestSetPreconfPinData is failed.");
+                    return res;
+                }
+            }
+            if(OIC_PRECONFIG_PIN == MOTData.getMOTMethod() ||
+               OIC_RANDOM_DEVICE_PIN == MOTData.getMOTMethod())
+            {
+                res = RequestSetMOTMethod(MOTData);
+
+                if(res != ESResult::ES_OK)
+                {
+                    OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "RequestSetMOTMethod is failed.");
+                    return res;
+                }
+            }
+            return res;
         }
 #endif
 
@@ -690,29 +779,81 @@ namespace OIC
 
                 if(m_securedResource->getOwnedStatus())
                 {
-#ifdef MULTIPLE_OWNER
-                    if(isOwnedDeviceRegisteredInDB() &&
-                        (isOwnerIDMatched(m_securedResource) ||
-                            isSubOwnerIDMatched(m_securedResource)))
-#else
-                    if(isOwnedDeviceRegisteredInDB() &&
-                            isOwnerIDMatched(m_securedResource))
-#endif
-
+                    if(isOwnedDeviceRegisteredInDB())
                     {
-                        OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
-                            "The found device is already owned by Mediator.(SUCCESS)");
-                        res = ESResult::ES_OK;
+#ifdef MULTIPLE_OWNER
+                        if(isSubOwnerIDMatched(m_securedResource))
+                        {
+                            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
+                                "The found device is already owned by Mediator.(SUCCESS)");
+                            res = ESResult::ES_OK;
+                            return res;
+                        }
+
+                        if(isOwnerIDMatched(m_securedResource))
+                        {
+                            if((OIC_PRECONFIG_PIN == ownershipTransferData.getMOTMethod() ||
+                                OIC_RANDOM_DEVICE_PIN == ownershipTransferData.getMOTMethod()))
+                            {
+                                if(m_securedResource->isMOTSupported())
+                                {
+                                    res = provisionMOTConfig(ownershipTransferData);
+                                    if(res != ES_OK)
+                                    {
+                                        OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
+                                            "provisionMOTConfig is failed.");
+                                        return res;
+                                    }
+                                    OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
+                                        "The found device is already owned by Mediator and enabled MOT mode.");
+                                    return res;
+                                }
+                                else
+                                {
+                                    OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
+                                        "The found device is not supported MOT");
+                                    return ESResult:: ES_MOT_NOT_SUPPORTED;
+                                }
+                            }
+                            else
+                            {
+                                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
+                                    "The found device is already owned by Mediator.(SUCCESS)");
+                                res = ESResult::ES_OK;
+                                return res;
+                            }
+                        }
+
+                        OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,
+                            "An ownership transfer knowledge is not synchronized"
+                            "between mediator and found enrollee.(FAILED)");
+                        res = ESResult::ES_OWNERSHIP_IS_NOT_SYNCHRONIZED;
                         return res;
+#else
+                        if(isOwnerIDMatched(m_securedResource))
+                        {
+                            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
+                                "The found device is already owned by Mediator.(SUCCESS)");
+                            res = ESResult::ES_OK;
+                            return res;
+                        }
+                        else
+                        {
+                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,
+                                "An ownership transfer knowledge is not synchronized"
+                                "between mediator and found enrollee.(FAILED)");
+                            res = ESResult::ES_OWNERSHIP_IS_NOT_SYNCHRONIZED;
+                            return res;
+                        }
+#endif
                     }
 #ifdef MULTIPLE_OWNER
                     else if( !isOwnedDeviceRegisteredInDB() &&
                              !isOwnerIDMatched(m_securedResource) &&
                              !isSubOwnerIDMatched(m_securedResource) &&
-                             m_securedResource->isMOTSupported() &&
                              m_securedResource->isMOTEnabled() &&
-                             OIC_PRECONFIG_PIN == ownershipTransferData.getMOTMethod() &&
-                             !ownershipTransferData.getPreConfiguredPin().empty())
+                             (OIC_PRECONFIG_PIN == ownershipTransferData.getMOTMethod() ||
+                              OIC_RANDOM_DEVICE_PIN == ownershipTransferData.getMOTMethod()))
                     {
                         // MOT case;
                         res = performMultipleOwnershipTransfer(ownershipTransferData);
@@ -766,32 +907,11 @@ namespace OIC
                         return res;
                     }
 #ifdef MULTIPLE_OWNER
-                    if( m_securedResource->isMOTSupported() &&
-                        m_securedResource->isMOTEnabled() &&
-                        OIC_PRECONFIG_PIN == ownershipTransferData.getMOTMethod() &&
-                            !ownershipTransferData.getPreConfiguredPin().empty())
+                    if( m_securedResource->isMOTSupported())
                     {
-                        res = RequestSetPreconfPinData(ownershipTransferData);
-
-                        if(res != ESResult::ES_OK)
-                        {
-                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "RequestSetPreconfPinData is failed.");
-                            return res;
-                        }
+                        res = provisionMOTConfig(ownershipTransferData);
                     }
-                    if( m_securedResource->isMOTSupported() &&
-                        m_securedResource->isMOTEnabled() &&
-                        (OIC_PRECONFIG_PIN == ownershipTransferData.getMOTMethod() ||
-                            OIC_RANDOM_DEVICE_PIN == ownershipTransferData.getMOTMethod()))
-                    {
-                        res = RequestSetMOTMethod(ownershipTransferData);
-
-                        if(res != ESResult::ES_OK)
-                        {
-                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "RequestSetMOTMethod is failed.");
-                            return res;
-                        }
-                    }
+                    return res;
 #endif
                 }
             }
