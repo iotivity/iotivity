@@ -1574,11 +1574,14 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             else
             {
 #ifdef RD_CLIENT
-                // if request uri is '/oic/rd', update ins value of resource.
-                char *targetUri = strstr(cbNode->requestUri, OC_RSRVD_RD_URI);
-                if (targetUri)
+                if (cbNode->requestUri)
                 {
-                    OCUpdateResourceInsWithResponse(cbNode->requestUri, response);
+                    // if request uri is '/oic/rd', update ins value of resource.
+                    char *targetUri = strstr(cbNode->requestUri, OC_RSRVD_RD_URI);
+                    if (targetUri)
+                    {
+                        OCUpdateResourceInsWithResponse(cbNode->requestUri, response);
+                    }
                 }
 #endif
                 // set remoteID(device ID) into OCClientResponse callback parameter
@@ -3778,8 +3781,11 @@ OCStackResult OCUnBindResource(
             {
                 OCChildResource *temp = tempChildResource->next;
                 OICFree(tempChildResource);
-                tempLastChildResource->next = temp;
-                temp = NULL;
+                if (tempLastChildResource)
+                {
+                    tempLastChildResource->next = temp;
+                    temp = NULL;
+                }
             }
 
             OIC_LOG(INFO, TAG, "resource unbound");
@@ -4733,12 +4739,12 @@ OCStackResult deleteResource(OCResource *resource)
                 headResource = temp->next;
             }
             // Deleting tail.
-            else if (temp == tailResource)
+            else if (temp == tailResource && prev)
             {
                 tailResource = prev;
                 tailResource->next = NULL;
             }
-            else
+            else if (prev)
             {
                 prev->next = temp->next;
             }

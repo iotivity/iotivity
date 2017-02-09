@@ -1377,7 +1377,6 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     OCPayload* payload = NULL;
     char *interfaceQuery = NULL;
     char *resourceTypeQuery = NULL;
-    char *dataModelVersions = NULL;
 
     OIC_LOG(INFO, TAG, "Entering HandleVirtualResource");
 
@@ -1619,10 +1618,7 @@ exit:
         OICFree(resourceTypeQuery);
     }
     OCPayloadDestroy(payload);
-    if (dataModelVersions)
-    {
-        OICFree(dataModelVersions);
-    }
+
     // To ignore the message, OC_STACK_CONTINUE is sent
     return discoveryResult;
 }
