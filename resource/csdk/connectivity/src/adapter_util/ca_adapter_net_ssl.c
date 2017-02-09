@@ -1080,7 +1080,7 @@ CAResult_t CAcloseSslConnection(const CAEndpoint_t *endpoint)
     return CA_STATUS_OK;
 }
 
-void CAcloseSslConnectionAll()
+void CAcloseSslConnectionAll(CATransportAdapter_t transportType)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     oc_mutex_lock(g_sslContextMutex);
@@ -1092,15 +1092,24 @@ void CAcloseSslConnectionAll()
     }
 
     uint32_t listLength = u_arraylist_length(g_caSslContext->peerList);
+    OIC_LOG_V(DEBUG, NET_SSL_TAG,
+            "Required transport [%d], peer count [%u]", transportType, listLength);
     for (uint32_t i = listLength; i > 0; i--)
     {
-        SslEndPoint_t *tep = (SslEndPoint_t *)u_arraylist_remove(g_caSslContext->peerList, i - 1);
+        SslEndPoint_t *tep = (SslEndPoint_t *)u_arraylist_get(g_caSslContext->peerList, i - 1);
         if (NULL == tep)
         {
             continue;
         }
-        OIC_LOG_V(DEBUG, NET_SSL_TAG, "SSL Connection [%s:%d]",
-                  tep->sep.endpoint.addr, tep->sep.endpoint.port);
+        OIC_LOG_V(DEBUG, NET_SSL_TAG, "SSL Connection [%s:%d], Transport [%d]",
+                  tep->sep.endpoint.addr, tep->sep.endpoint.port, tep->sep.endpoint.adapter);
+
+        // check transport matching
+        if (0 == (tep->sep.endpoint.adapter & transportType))
+        {
+            OIC_LOG(DEBUG, NET_SSL_TAG, "Skip the un-matched transport session");
+            continue;
+        }
 
         // TODO: need to check below code after socket close is ensured.
         /*int ret = 0;
@@ -1110,6 +1119,8 @@ void CAcloseSslConnectionAll()
         }
         while (MBEDTLS_ERR_SSL_WANT_WRITE == ret);*/
 
+        // delete from list
+        u_arraylist_remove(g_caSslContext->peerList, i - 1);
         DeleteSslEndPoint(tep);
     }
     oc_mutex_unlock(g_sslContextMutex);

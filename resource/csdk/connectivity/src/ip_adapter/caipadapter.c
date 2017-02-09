@@ -176,7 +176,7 @@ void CAIPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
         OIC_LOG(DEBUG, TAG, "Network status for IP is down");
 #ifdef __WITH_DTLS__
         OIC_LOG(DEBUG, TAG, "close all ssl session");
-        CAcloseSslConnectionAll();
+        CAcloseSslConnectionAll(CA_ADAPTER_IP);
 #endif
     }
 }

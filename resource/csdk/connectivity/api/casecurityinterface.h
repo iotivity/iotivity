@@ -246,7 +246,7 @@ CAResult_t CAcloseSslConnection(const CAEndpoint_t *endpoint);
 /**
  * Close All of DTLS sessions.
  */
-void CAcloseSslConnectionAll();
+void CAcloseSslConnectionAll(CATransportAdapter_t transportType);
 
 #ifdef __cplusplus
 } /* extern "C" */
