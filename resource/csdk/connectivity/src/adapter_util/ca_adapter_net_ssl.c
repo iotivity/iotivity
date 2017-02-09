@@ -1874,7 +1874,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
                         continue;
                     }
 
-                    if ((name->oid.len < (sizeof(MBEDTLS_OID_AT_CN) - 1) ||
+                    if ((name->oid.len < MBEDTLS_OID_SIZE(MBEDTLS_OID_AT_CN) ||
                         (0 != memcmp(MBEDTLS_OID_AT_CN, name->oid.p, name->oid.len))))
                     {
                         continue;

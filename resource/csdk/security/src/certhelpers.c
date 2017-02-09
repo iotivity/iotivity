@@ -23,23 +23,26 @@
 #include "logger.h"
 #include <stddef.h>
 #include <string.h>
+#include <assert.h>
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "cacommon.h"
+#include "ocrandom.h"
 #include "cacommonutil.h"
 
 #include "ocpayload.h"
 #include "payload_logging.h"
 #include "pmutility.h"
+#include "srmutility.h"
 
 // headers required for mbed TLS
+#include "mbedtls/config.h"
 #include "mbedtls/platform.h"
-#include "mbedtls/ssl.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
-#include "mbedtls/pkcs12.h"
-#include "mbedtls/ssl_internal.h"
 #include "mbedtls/x509_csr.h"
+#include "mbedtls/x509_crt.h"
+#include "mbedtls/oid.h"
 
 #ifndef NDEBUG
 #include "mbedtls/debug.h"
@@ -51,7 +54,9 @@
 #endif
 #include <fcntl.h>
 
-#define TAG "OIC_CSR"
+#include "certhelpers.h"
+
+#define TAG "OIC_CERTHELPERS"
 
 /**
  * @def PERSONALIZATION_STRING

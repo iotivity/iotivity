@@ -188,7 +188,8 @@ liboctbstack_src = [
     OCTBSTACK_SRC + 'ocserverrequest.c',
     OCTBSTACK_SRC + 'occollection.c',
     OCTBSTACK_SRC + 'oicgroup.c',
-    OCTBSTACK_SRC + 'ocendpoint.c'
+    OCTBSTACK_SRC + 'ocendpoint.c',
+    OCTBSTACK_SRC + 'occertutility.c'
     ]
 
 if with_tcp == True:

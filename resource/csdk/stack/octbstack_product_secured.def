@@ -23,6 +23,11 @@ OCDiscoverOwnedDevices
 OCDiscoverSingleDevice
 OCDiscoverUnownedDevices
 OCDoOwnershipTransfer
+OCGenerateCACertificate
+OCGenerateIdentityCertificate
+OCGenerateKeyPair
+OCGenerateRandomSerialNumber
+OCGenerateRoleCertificate
 OCGetACLResource
 OCGetCredResource
 OCGetCSRResource

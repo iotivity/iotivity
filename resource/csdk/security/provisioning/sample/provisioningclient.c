@@ -243,7 +243,7 @@ static void getCsrCB(void* ctx, size_t nOfRes, OCPMGetCsrResult_t* arr, bool has
                     "-----END CERTIFICATE REQUEST-----",
                     arr[i].csr,
                     arr[i].csrLen,
-                    pemBuffer,
+                    (unsigned char *)pemBuffer,
                     sizeof(pemBuffer),
                     &olen);
                 if (ret < 0)
@@ -254,7 +254,7 @@ static void getCsrCB(void* ctx, size_t nOfRes, OCPMGetCsrResult_t* arr, bool has
             }
             else
             {
-                OICStrcpyPartial(pemBuffer, sizeof(pemBuffer), arr[i].csr, arr[i].csrLen);
+                OICStrcpyPartial(pemBuffer, sizeof(pemBuffer), (const char *)arr[i].csr, arr[i].csrLen);
             }
 
             mbedtls_x509_csr_init(&csr);
