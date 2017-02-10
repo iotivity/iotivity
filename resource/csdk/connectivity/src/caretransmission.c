@@ -638,6 +638,19 @@ CAResult_t CARetransmissionDestroy(CARetransmission_t *context)
 
     OIC_LOG(DEBUG, TAG, "retransmission context destroy..");
 
+    ca_mutex_lock(context->threadMutex);
+    uint32_t len = u_arraylist_length(context->dataList);
+    for (uint32_t i = 0; i < len; i++)
+    {
+        CARetransmissionData_t *data = u_arraylist_get(context->dataList, i);
+        if (NULL == data)
+        {
+            continue;
+        }
+        CAFreeEndpoint(data->endpoint);
+        OICFree(data->pdu);
+    }
+    ca_mutex_unlock(context->threadMutex);
     ca_mutex_free(context->threadMutex);
     context->threadMutex = NULL;
     ca_cond_free(context->threadCond);

@@ -1456,6 +1456,7 @@ OCStackResult OCSetDeviceInfo(OCDeviceInfo info)
     {
         dataModelVersion = OCCreateOCStringLL(OC_DATA_MODEL_VERSION);
         VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, dataModelVersion));
+        OCFreeOCStringLL(dataModelVersion);
     }
     OIC_LOG(INFO, TAG, "Device parameter initialized successfully.");
     return OC_STACK_OK;
