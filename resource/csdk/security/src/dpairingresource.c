@@ -606,10 +606,8 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
 
                 if(pdAcl->periods && pdAcl->periods[0])
                 {
-                    size_t periodLen = strlen(pdAcl->periods[0]) + 1;
-                    validity->period = (char*)OICMalloc(periodLen * sizeof(char));
+                    validity->period = OICStrdup(pdAcl->periods[0]);
                     VERIFY_NOT_NULL(TAG, (validity->period), ERROR);
-                    OICStrcpy(validity->period, periodLen, pdAcl->periods[0]);
                 }
 
                 if(pdAcl->recurrences && 0 < pdAcl->prdRecrLen)
@@ -620,11 +618,8 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
 
                     for(size_t i = 0; i < pdAcl->prdRecrLen; i++)
                     {
-                        size_t recurrenceLen = strlen(pdAcl->recurrences[i]) + 1;
-                        validity->recurrences[i] = (char*)OICMalloc(recurrenceLen  * sizeof(char));
+                        validity->recurrences[i] = OICStrdup(pdAcl->recurrences[i]);
                         VERIFY_NOT_NULL(TAG, (validity->recurrences[i]), ERROR);
-
-                        OICStrcpy(validity->recurrences[i], recurrenceLen, pdAcl->recurrences[i]);
                     }
                 }
 

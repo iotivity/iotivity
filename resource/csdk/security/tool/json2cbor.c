@@ -349,7 +349,6 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
             VERIFY_NOT_NULL(TAG, ace, ERROR);
             LL_APPEND(headAcl->aces, ace);
 
-            size_t jsonObjLen = 0;
             cJSON *jsonObj = NULL;
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_SUBJECTID_NAME);
             VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
@@ -382,24 +381,19 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                 VERIFY_NOT_NULL(TAG, jsonRsrc, ERROR);
 
                 //href
-                size_t jsonRsrcObjLen = 0;
                 cJSON *jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_HREF_NAME);
                 VERIFY_NOT_NULL(TAG, jsonRsrcObj, ERROR);
                 VERIFY_SUCCESS(TAG, cJSON_String == jsonRsrcObj->type, ERROR);
 
-                jsonRsrcObjLen = strlen(jsonRsrcObj->valuestring) + 1;
-                rsrc->href = (char*)OICMalloc(jsonRsrcObjLen);
+                rsrc->href = OICStrdup(jsonRsrcObj->valuestring);
                 VERIFY_NOT_NULL(TAG, (rsrc->href), ERROR);
-                OICStrcpy(rsrc->href, jsonRsrcObjLen, jsonRsrcObj->valuestring);
 
                 //rel
                 jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_REL_NAME);
                 if(jsonRsrcObj)
                 {
-                    jsonRsrcObjLen = strlen(jsonRsrcObj->valuestring) + 1;
-                    rsrc->rel = (char*)OICMalloc(jsonRsrcObjLen);
+                    rsrc->rel = OICStrdup(jsonRsrcObj->valuestring);
                     VERIFY_NOT_NULL(TAG, (rsrc->rel), ERROR);
-                    OICStrcpy(rsrc->rel, jsonRsrcObjLen, jsonRsrcObj->valuestring);
                 }
 
                 //rt
@@ -476,10 +470,8 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                     {
                         VERIFY_SUCCESS(TAG, (cJSON_String == jsonPeriod->type), ERROR);
 
-                        jsonObjLen = strlen(jsonPeriod->valuestring) + 1;
-                        validity->period = (char*)OICMalloc(jsonObjLen);
+                        validity->period = OICStrdup(jsonPeriod->valuestring);
                         VERIFY_NOT_NULL(TAG, validity->period, ERROR);
-                        OICStrcpy(validity->period, jsonObjLen, jsonPeriod->valuestring);
                     }
 
                     //Recurrence
@@ -500,10 +492,8 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
 #pragma warning(suppress : 4267)
                             jsonRecur = cJSON_GetArrayItem(jsonRecurObj, i);
                             VERIFY_NOT_NULL(TAG, jsonRecur, ERROR);
-                            jsonObjLen = strlen(jsonRecur->valuestring) + 1;
-                            validity->recurrences[i] = (char*)OICMalloc(jsonObjLen);
+                            validity->recurrences[i] = OICStrdup(jsonRecur->valuestring);
                             VERIFY_NOT_NULL(TAG, validity->recurrences[i], ERROR);
-                            OICStrcpy(validity->recurrences[i], jsonObjLen, jsonRecur->valuestring);
                         }
                     }
                 }
@@ -935,10 +925,8 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PERIOD_NAME);
             if(jsonObj && cJSON_String == jsonObj->type)
             {
-                jsonObjLen = strlen(jsonObj->valuestring) + 1;
-                cred->period = (char *)OICMalloc(jsonObjLen);
+                cred->period = OICStrdup(jsonObj->valuestring);
                 VERIFY_NOT_NULL(TAG, cred->period, ERROR);
-                strncpy(cred->period, jsonObj->valuestring, jsonObjLen);
             }
             cred->next = NULL;
         } while( ++idx < numCred);
@@ -1103,11 +1091,8 @@ static OicSecAmacl_t* JSONToAmaclBin(const char * jsonStr)
         VERIFY_NOT_NULL(TAG, jsonRsrcObj, ERROR);
         VERIFY_SUCCESS(TAG, cJSON_String == jsonRsrcObj->type, ERROR);
 
-        size_t jsonRsrcObjLen = 0;
-        jsonRsrcObjLen = strlen(jsonRsrcObj->valuestring) + 1;
-        headAmacl->resources[idxx] = (char*)OICMalloc(jsonRsrcObjLen);
+        headAmacl->resources[idxx] = OICStrdup(jsonRsrcObj->valuestring);
         VERIFY_NOT_NULL(TAG, (headAmacl->resources[idxx]), ERROR);
-        OICStrcpy(headAmacl->resources[idxx], jsonRsrcObjLen, jsonRsrcObj->valuestring);
 
     } while ( ++idxx < headAmacl->resourcesLen);
 
