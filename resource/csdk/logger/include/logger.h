@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include "logger_types.h"
 
 #ifdef __ANDROID__
@@ -64,7 +65,10 @@ typedef enum {
     INFO = DLOG_INFO,
     WARNING = DLOG_WARN,
     ERROR = DLOG_ERROR,
-    FATAL = DLOG_ERROR
+    FATAL = DLOG_ERROR,
+    DEBUG_LITE = DLOG_DEBUG,
+    INFO_LITE = DLOG_INFO,
+    INFO_PRIVATE = DLOG_INFO,
 } LogLevel;
 #else
 
@@ -78,9 +82,21 @@ typedef enum {
     INFO,
     WARNING,
     ERROR,
-    FATAL
+    FATAL,
+    DEBUG_LITE,       // The DEBUG log for Lite device
+    INFO_LITE,        // The INFO log for Lite device
+    INFO_PRIVATE,     // The log contained private data
 } LogLevel;
+
 #endif
+
+/**
+ * Set log level and privacy log to print.
+ *
+ * @param level                   - log level.
+ * @param hidePrivateLogEntries   - Hide Private Log.
+ */
+void OCSetLogLevel(LogLevel level, bool hidePrivateLogEntries);
 
 #ifdef __TIZEN__
 /**

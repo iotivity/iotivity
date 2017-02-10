@@ -55,6 +55,11 @@
 #include "string.h"
 #include "logger_types.h"
 
+// log level
+LogLevel g_level = DEBUG;
+// privacy log
+bool g_hidePrivateLogEntries = false;
+
 #ifndef __TIZEN__
 static oc_log_ctx_t *logCtx = 0;
 #endif
@@ -155,6 +160,13 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, size_
         OCLogv(level, tag, "%s", lineBuffer);
     }
 }
+
+void OCSetLogLevel(LogLevel level, bool hidePrivateLogEntries)
+{
+    g_level = level;
+    g_hidePrivateLogEntries = hidePrivateLogEntries;
+}
+
 #ifndef __TIZEN__
 void OCLogConfig(oc_log_ctx_t *ctx)
 {
@@ -189,6 +201,17 @@ void OCLogv(LogLevel level, const char * tag, const char * format, ...)
     if (!format || !tag) {
         return;
     }
+
+    if (g_level > level && ERROR != level && WARNING != level && FATAL != level)
+    {
+        return;
+    }
+
+    if (true == g_hidePrivateLogEntries && INFO_PRIVATE == level)
+    {
+        return;
+    }
+
     char buffer[MAX_LOG_V_BUFFER_SIZE] = {0};
     va_list args;
     va_start(args, format);
@@ -210,6 +233,31 @@ void OCLog(LogLevel level, const char * tag, const char * logStr)
     if (!logStr || !tag)
     {
        return;
+    }
+
+    if (g_level > level && ERROR != level && WARNING != level && FATAL != level)
+    {
+        return;
+    }
+
+    if (true == g_hidePrivateLogEntries && INFO_PRIVATE == level)
+    {
+        return;
+    }
+
+    switch(level)
+    {
+        case DEBUG_LITE:
+            level = DEBUG;
+            break;
+        case INFO_LITE:
+            level = INFO;
+            break;
+        case INFO_PRIVATE:
+            level = INFO;
+            break;
+        default:
+            break;
     }
 
    #ifdef __ANDROID__
