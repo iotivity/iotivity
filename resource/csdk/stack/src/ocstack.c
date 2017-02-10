@@ -1503,8 +1503,9 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     OICFree(response);
                     return;
                 }
+
                 // In case of error, still want application to receive the error message.
-                if (OCResultToSuccess(response->result))
+                if (OCResultToSuccess(response->result) || PAYLOAD_TYPE_REPRESENTATION == type)
                 {
                     if (OC_STACK_OK != OCParsePayload(&response->payload,
                             type,
