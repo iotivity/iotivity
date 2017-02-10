@@ -49,10 +49,10 @@ if secured == '1':
 
 include_paths = [
     iotivity_test_root + '/include',
-    iotivity_root + '/resource/include', 
+    iotivity_root + '/resource/include',
     iotivity_root + '/resource/csdk/include',
-    iotivity_root + '/resource/csdk/connectivity/api', 
-    iotivity_root + '/resource/csdk/stack/include', 
+    iotivity_root + '/resource/csdk/connectivity/api',
+    iotivity_root + '/resource/csdk/stack/include',
     iotivity_root + '/resource/csdk/security/include',
     iotivity_root + '/resource/csdk/ocsocket/include',
     iotivity_root + '/resource/csdk/ocrandom/include',
@@ -63,7 +63,7 @@ include_paths = [
     iotivity_root + '/extlibs/timer/',
     iotivity_root + '/extlibs/tinycbor/tinycbor/src/',
     iotivity_root + '/extlibs/mbedtls/mbedtls/include',
-    iotivity_root + '/extlibs/timer/' 
+    iotivity_root + '/extlibs/timer/'
 ]
 
 libs = Split('libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction libcoap pthread libglib-2.0 gcov')
@@ -75,7 +75,7 @@ src = [
     iotivity_test_root + '/src/testapp/IUTSimulatorApp/c_cpp/IUTSimulator.cpp',
 ]
 
-iut_app = env_linux.Program(source = src, target = 'IUTSimulator', CPPPATH = include_paths, 
+iut_app = env_linux.Program(source = src, target = 'IUTSimulator', CPPPATH = include_paths,
                 LIBS = libs, LIBPATH = iotivity_lib_path, RPATH = iotivity_lib_path, CPPFLAGS = cppflags + common_linux_cppflags)
 install_targets += [iut_app]
 

@@ -189,24 +189,82 @@ bool ResourceHelper::containsResource(vector< shared_ptr< OCResource > > resourc
 
 void ResourceHelper::printRepresentation(OCRepresentation rep)
 {
-    OCRepPayload *incomingPayload = rep.getPayload();
-    string uri = incomingPayload->uri;
+    string uri = rep.getUri();
     if (uri.compare("") == 0)
     {
         cout << "The representation has no uri." << endl;
     }
     else
     {
-        cout << "The representation has uri: " << incomingPayload->uri << endl;
+        cout << "The representation has uri: " << uri << endl;
     }
+
+    if (rep.hasAttribute(INTERFACE_KEY))
+    {
+        cout << "The representation has interface: " << rep.getValueToString(INTERFACE_KEY) << endl;
+    }
+
+    if (rep.hasAttribute(RESOURCE_TYPE_KEY))
+    {
+        cout << "The representation has interface: " << rep.getValueToString(RESOURCE_TYPE_KEY) << endl;
+    }
+
+    printPayload(rep.getPayload(), rep);
+}
+
+void ResourceHelper::printPayload(OCRepPayload* incomingPayload, OCRepresentation rep, int level)
+{
+    bool hasInterface = false;
+    bool hasType = false;
+    level++;
+
+    OCStringLL* interfaces = incomingPayload->interfaces;
+    string interfaceInfo = "The representation Interfaces are: [";
+    while(interfaces)
+    {
+        hasInterface = true;
+
+        interfaceInfo += string(interfaces->value) + " ";
+        interfaces = interfaces->next;
+    }
+
+    if (hasInterface){
+        cout << interfaceInfo << "]" << endl;
+    }
+
+    OCStringLL* types = incomingPayload->types;
+    string typeInfo = "The representation Types are: [";
+    while(types)
+    {
+        hasType = true;
+
+        typeInfo += string(types->value) + " ";
+        types = types->next;
+    }
+
+    if (hasType){
+        cout << typeInfo << "]" << endl;
+    }
+
+    if (level == 1)
+    {
+        cout << "The representation has following Attributes: " << endl;
+    }
+
 
     while (incomingPayload)
     {
         OCRepPayloadValue *repValue = incomingPayload->values;
-        cout << "The representation has following value: " << endl;
         while (repValue)
         {
             string value = "";
+            string tabValue = "";
+            for (int i = 0; i < level; i++)
+            {
+                tabValue += "\t\t\t";
+            }
+            cout << tabValue << repValue->name << " : ";
+
             if (repValue->type == OCRepPayloadPropType::OCREP_PROP_INT)
             {
 #ifdef __LINUX__
@@ -231,8 +289,35 @@ void ResourceHelper::printRepresentation(OCRepresentation rep)
             {
                 value = string(repValue->str);
             }
-
-            cout << "\t\t\t" << repValue->name << " : " << value << endl;
+            if (repValue->type == OCRepPayloadPropType::OCREP_PROP_ARRAY )
+            {
+                if (repValue->arr.type == OCRepPayloadPropType::OCREP_PROP_OBJECT)
+                {
+                    cout << "[" << endl;
+                    size_t arraySize = repValue->arr.dimensions[0];
+                    OCRepPayload** objectArray = repValue->arr.objArray;
+                    for (size_t sz = 0; sz < arraySize; sz++)
+                    {
+                        OCRepPayload* payload = *objectArray;
+                        cout << "\t\t\t\t\t {" <<endl;
+                        printPayload(payload, rep, level);
+                        cout << "\t\t\t\t\t }" <<endl;
+                        objectArray++;
+                    }
+                    cout << "\t\t\t\t ]" << endl;
+                }
+                else
+                {
+                    value = rep.getValueToString(repValue->name);
+                }
+            }
+            if (repValue->type == OCRepPayloadPropType::OCREP_PROP_OBJECT)
+            {
+                cout << "\t{" <<endl;
+                printPayload(repValue->obj, rep, level);
+                cout << "\t}" <<endl;
+            }
+            cout << value << endl;
             repValue = repValue->next;
         }
         incomingPayload = incomingPayload->next;

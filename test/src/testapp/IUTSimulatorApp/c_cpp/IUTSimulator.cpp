@@ -1,22 +1,22 @@
 /******************************************************************
-*
-* Copyright 2017 Samsung Electronics All Rights Reserved.
-*
-*
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-******************************************************************/
+ *
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 #include <vector>
 #include <iostream>
@@ -588,13 +588,7 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                         else if (key.compare(RESOURCE_TYPE_KEY) == 0)
                         {
                             vector< string > resourceTypeList;
-//                            if ((queryValue.compare(GROUP_TYPE_ROOM) == 0)
-//                                    || (queryValue.compare(GROUP_TYPE_AIRCON_VENDOR) == 0))
-//                            {
-//                                cout << "The resource type  used in query is oic.wk.col" << endl;
-//                                pResponse->setResourceRepresentation(rep, responseInterface);
-//                            }
-//                            else
+
                             if (queryValue.compare(SWITCH_RESOURCE_TYPE) == 0)
                             {
                                 vector< OCRepresentation > requiredChild;
@@ -672,7 +666,6 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                     cerr << "Unable to send response for GET Request" << endl;
                 }
 
-//                handleGetRequest(queryParamsMap, request, pResponse); // Process query params and do required operations ..
 
             }
             else if (requestType == "PUT")
@@ -682,7 +675,6 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                 // Check for query params (if any)
                 QueryParamsMap queryParamsMap = request->getQueryParameters();
 
-//                handlePutRequest(queryParamsMap, incomingRepresentation, request, pResponse); // Process query params and do required operations ..
             }
             else if (requestType == "POST")
             {
@@ -881,7 +873,6 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                     cerr << "Unable to send response for GET Request" << endl;
                 }
 
-//                handlePostRequest(queryParamsMap, incomingRepresentation, request, pResponse); // Process query params and do required operations ..
             }
             else if (requestType == "DELETE")
             {
@@ -890,7 +881,6 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                 // Check for query params (if any)
                 QueryParamsMap queryParamsMap = request->getQueryParameters();
 
-//                handleDeleteRequest(queryParamsMap, incomingRepresentation, request, pResponse); // Process query params and do required operations ..
             }
         }
 
@@ -999,8 +989,6 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
     if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_OK)
     {
         cout << "Response: GET request was successful" << endl;
-
-//        g_resourceHelper->printIncomingRepresentation(rep);
 
         vector< string > interfacelist = rep.getResourceInterfaces();
 
@@ -1362,9 +1350,9 @@ void createAirConDevice(bool isSecured)
         g_acSwitchResource = new SampleResource();
         g_acSwitchResourceHidden = new SampleResource();
         g_acSwitchResource->setResourceProperties(AC_SWITCH_URI, SWITCH_RESOURCE_TYPE,
-        SWITCH_RESOURCE_INTERFACE);
+                SWITCH_RESOURCE_INTERFACE);
         g_acSwitchResourceHidden->setResourceProperties(AC_SWITCH_URI_CHILD, SWITCH_RESOURCE_TYPE,
-        SWITCH_RESOURCE_INTERFACE);
+                SWITCH_RESOURCE_INTERFACE);
         OCRepresentation switchRep;
         string value = "";
         vector< int > range;
@@ -1391,9 +1379,9 @@ void createAirConDevice(bool isSecured)
         g_acTemperatureResource = new SampleResource();
         g_acTemperatureResourceHidden = new SampleResource();
         g_acTemperatureResource->setResourceProperties(AC_TEMPERATURE_URI,
-        TEMPERATURE_RESOURCE_TYPE, TEMPERATURE_RESOURCE_INTERFACE);
+                TEMPERATURE_RESOURCE_TYPE, TEMPERATURE_RESOURCE_INTERFACE);
         g_acTemperatureResourceHidden->setResourceProperties(AC_TEMPERATURE_URI_CHILD,
-        TEMPERATURE_RESOURCE_TYPE, TEMPERATURE_RESOURCE_INTERFACE);
+                TEMPERATURE_RESOURCE_TYPE, TEMPERATURE_RESOURCE_INTERFACE);
         OCRepresentation temperatureRep;
         value = "C";
         temperatureRep.setValue("units", value);
@@ -1426,12 +1414,10 @@ void createAirConDevice(bool isSecured)
         g_acAirFlowResource = new SampleResource();
         g_acAirFlowResourceHidden = new SampleResource();
         setlocale(LC_ALL, "");
-//        string airflowUri = "/AirFlowResURI/নতুন/তিমুর";
-//        g_acAirFlowResource->setResourceProperties(airflowUri, AIR_FLOW_RESOURCE_TYPE,
         g_acAirFlowResource->setResourceProperties(AC_AIR_FLOW_URI, AIR_FLOW_RESOURCE_TYPE,
-        AIR_FLOW_RESOURCE_INTERFACE);
+                AIR_FLOW_RESOURCE_INTERFACE);
         g_acAirFlowResourceHidden->setResourceProperties(AC_AIR_FLOW_URI_CHILD,
-        AIR_FLOW_RESOURCE_TYPE, AIR_FLOW_RESOURCE_INTERFACE);
+                AIR_FLOW_RESOURCE_TYPE, AIR_FLOW_RESOURCE_INTERFACE);
 
         OCRepresentation airFlowRep;
         int speed = 10;
@@ -1858,7 +1844,7 @@ void createGroup(string groupType)
             }
 
             OCPlatform::registerResource(g_collectionHandle, resourceURI, groupType, LINK_INTERFACE,
-            NULL, collectionProperty);
+                    NULL, collectionProperty);
 
             cout << "Create Group is called for IoTivity Handler" << endl;
 
@@ -2150,7 +2136,6 @@ void discoverIntrospection(bool isMulticast){
     g_hasCallbackArrived = false;
     ostringstream introspectionDiscoveryRequest;
     string introspectionDiscoveryURI = OC_RSRVD_INTROSPECTION_URI;
-//    string introspectionDiscoveryURI = "/oic/introspection";
     if (isMulticast){
         introspectionDiscoveryRequest << OC_MULTICAST_PREFIX << introspectionDiscoveryURI;
         cout << "Discovering Introspection using Multicast... " << endl;
@@ -2700,77 +2685,6 @@ void sendPostRequestCreate()
     }
 }
 
-void sendSpecialPost()
-{
-    int selection = selectResource();
-    if (selection != -1)
-    {
-        OCRepresentation rep1, rep2, rep3, rep4;
-        bool valueBool = false;
-
-        vector< string > rtTypes;
-        rtTypes.push_back("oic.r.switch.binary");
-        rep1.setValue("rt", rtTypes);
-        // Invoke resource's put API with rep, query map and the callback parameter
-        cout << "Sending Partial Update Message(POST)..." << endl;
-        QueryParamsMap query;
-        query["if"] = "oic.if.baseline";
-        g_foundResourceList.at(selection)->post(rep1, query, &onPost, g_qos);
-        rep3.empty();
-        waitForCallback();
-        sleep(2);
-        g_foundResourceList.at(selection)->put(rep1, query, &onPut, g_qos);
-        rep3.empty();
-        waitForCallback();
-        sleep(2);
-
-        valueBool = true;
-        rep2.setValue(ON_OFF_KEY, valueBool);
-        // Invoke resource's put API with rep, query map and the callback parameter
-        cout << "Sending Partial Update Message(POST)..." << endl;
-        g_foundResourceList.at(selection)->post(rep2, query, &onPost, g_qos);
-        waitForCallback();
-        sleep(2);
-
-        g_foundResourceList.at(selection)->put(rep2, query, &onPut, g_qos);
-        rep3.empty();
-        waitForCallback();
-        sleep(2);
-
-        valueBool = true;
-        rep3.setValue(ON_OFF_KEY, valueBool);
-        rep3.setValue("rt", rtTypes);
-        // Invoke resource's put API with rep, query map and the callback parameter
-        cout << "Sending Partial Update Message(POST)..." << endl;
-        g_foundResourceList.at(selection)->post(rep3, query, &onPost, g_qos);
-//        g_foundResourceList.at(selection)->post(rep, QueryParamsMap(), &onPost, g_qos);
-        cout << "POST request sent!!" << endl;
-        waitForCallback();
-        sleep(2);
-
-        g_foundResourceList.at(selection)->put(rep4, query, &onPut, g_qos);
-        rep3.empty();
-        waitForCallback();
-
-        selection = selectResource();
-        rtTypes.clear();
-        rtTypes.push_back("oic.d.tv");
-        rep4.setValue("rt", rtTypes);
-        cout << "Sending Partial Update Message(POST)..." << endl;
-        g_foundResourceList.at(selection)->post(rep4, query, &onPost, g_qos);
-        sleep(2);
-
-        g_foundResourceList.at(selection)->put(rep4, query, &onPut, g_qos);
-        rep3.empty();
-        waitForCallback();
-
-    }
-    else
-    {
-        cout << "No resource to send POST!!" << endl;
-    }
-}
-
 void sendDeleteRequest()
 {
     int selection = selectResource();
@@ -3060,8 +2974,8 @@ void selectMenu(int choice)
     totalSecuredMenu = 4;
 #endif
 
-    if ((choice > 38 && choice < 101) || choice < 0 || (choice > 8 && choice < 9)
-            || ((choice > 102 + totalSecuredMenu) && (choice < 107 || choice > 108)))
+    if ((choice > 38 && choice < 101) || choice < 0 || ((choice > 102 + totalSecuredMenu)
+             && (choice < 107 || choice > 108)))
     {
         cout << "Invalid Input. Please input your choice again" << endl;
         return;
@@ -3166,7 +3080,6 @@ void selectMenu(int choice)
             break;
 
         case 16:
-//                joinGroup();
             break;
 
         case 17:
@@ -3195,7 +3108,6 @@ void selectMenu(int choice)
 
         case 22:
             sendPostRequestUpdateUserInput();
-//                sendSpecialPost();
             break;
 
         case 23:
