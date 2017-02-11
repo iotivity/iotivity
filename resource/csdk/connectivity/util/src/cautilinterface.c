@@ -389,3 +389,21 @@ CAResult_t CAGetIpv6AddrScope(const char *addr, CATransportFlags_t *scopeLevel)
 {
     return CAGetIpv6AddrScopeInternal(addr, scopeLevel);
 }
+
+void CAUtilSetLogLevel(CAUtilLogLevel_t level, bool hidePrivateLogEntries)
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilSetLogLevel");
+    LogLevel logLevel = DEBUG;
+    switch(level)
+    {
+        case CA_LOG_LEVEL_INFO:
+            logLevel = INFO;
+            break;
+        case CA_LOG_LEVEL_ALL:
+        default:
+            logLevel = DEBUG;
+            break;
+    }
+
+    OCSetLogLevel(logLevel, hidePrivateLogEntries);
+}

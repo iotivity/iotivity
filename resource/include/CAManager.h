@@ -110,6 +110,17 @@ namespace OC
          */
         OCStackResult setBTConfigure(const CAUtilConfig& config);
 
+        /**
+         * set CAUtil log preference.
+         * @param[in]  level                     ::OCLogLevel value.
+         * @param[in]  hidePrivateLogEntries     Private Log Entries.
+         *                                       Example:
+         *                                       true : hide private log.
+         *                                       false : show private log.
+         *                                       (privacy : uid, did, access token, etc)
+         */
+        void setLogLevel(OCLogLevel level, bool hidePrivateLogEntries);
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         /**
          * Select the cipher suite for TLS/DTLS handshake.

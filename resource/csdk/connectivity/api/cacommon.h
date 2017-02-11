@@ -658,6 +658,12 @@ typedef struct
 
 extern CAGlobals_t caglobals;
 
+typedef enum
+{
+    CA_LOG_LEVEL_ALL = 1,             // all logs.
+    CA_LOG_LEVEL_INFO,                // debug level is disabled.
+} CAUtilLogLevel_t;
+
 /**
  * Callback function type for request delivery.
  * @param[out]   object       Endpoint object from which the request is received.

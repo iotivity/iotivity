@@ -139,6 +139,12 @@ OCStackResult CAManager::setBTConfigure(const CAUtilConfig& config)
     return convertCAResultToOCResult(ret);
 }
 
+void CAManager::setLogLevel(OCLogLevel level, bool hidePrivateLogEntries)
+{
+    OIC_LOG(INFO, TAG, "setLogLevel");
+    CAUtilSetLogLevel((CAUtilLogLevel_t) level, hidePrivateLogEntries);
+}
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 OCStackResult CAManager::setCipherSuite(const uint16_t cipher, OCTransportAdapter adapter)
 {
