@@ -139,7 +139,7 @@ TEST_F(RDTests, CreateRDResource)
     cbData.cb = &handleDiscoveryCB;
     cbData.cd = NULL;
     cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
-    EXPECT_EQ(OC_STACK_OK, OCRDDiscover(CT_ADAPTER_IP, &cbData, OC_LOW_QOS));
+    EXPECT_EQ(OC_STACK_OK, OCRDDiscover(NULL, CT_ADAPTER_IP, &cbData, OC_LOW_QOS));
 
     EXPECT_EQ(OC_STACK_OK, OCRDStop());
 }
@@ -200,13 +200,13 @@ TEST_F(RDTests, CreateRDResource)
 TEST_F(RDTests, RDPublishResourceNullAddr)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    EXPECT_EQ(OC_STACK_INVALID_IP, OCRDPublish(0, CT_ADAPTER_IP, nullptr, 0, 0, OC_LOW_QOS));
+    EXPECT_EQ(OC_STACK_INVALID_IP, OCRDPublish(NULL, 0, CT_ADAPTER_IP, nullptr, 0, 0, OC_LOW_QOS));
 }
 
 TEST_F(RDTests, RDPublishResourceNullCB)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCRDPublish("127.0.0.1", CT_ADAPTER_IP, nullptr,
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCRDPublish(NULL, "127.0.0.1", CT_ADAPTER_IP, nullptr,
                                                      0, 0, OC_LOW_QOS));
 }
 
@@ -225,7 +225,7 @@ TEST_F(RDTests, RDPublishResource)
                                             "oic.if.baseline", "/a/light", rdEntityHandler,
                                             NULL, (OC_DISCOVERABLE | OC_OBSERVABLE)));
 
-    EXPECT_EQ(OC_STACK_OK, OCRDPublish("127.0.0.1", CT_ADAPTER_IP, &handle,
+    EXPECT_EQ(OC_STACK_OK, OCRDPublish(NULL, "127.0.0.1", CT_ADAPTER_IP, &handle,
                                        1, &cbData, OC_LOW_QOS));
 }
 
@@ -247,20 +247,20 @@ TEST_F(RDTests, RDPublishMultipleResources)
                                             "oic.if.baseline", "/a/light2", rdEntityHandler,
                                             NULL, (OC_DISCOVERABLE | OC_OBSERVABLE)));
 
-    EXPECT_EQ(OC_STACK_OK, OCRDPublish("127.0.0.1", CT_ADAPTER_IP, handles,
+    EXPECT_EQ(OC_STACK_OK, OCRDPublish(NULL, "127.0.0.1", CT_ADAPTER_IP, handles,
                                        2, &cbData, OC_LOW_QOS));
 }
 
 TEST_F(RDTests, RDDeleteResourceNullAddr)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    EXPECT_EQ(OC_STACK_INVALID_IP, OCRDDelete(0, CT_ADAPTER_IP, nullptr, 0, 0, OC_LOW_QOS));
+    EXPECT_EQ(OC_STACK_INVALID_IP, OCRDDelete(NULL, 0, CT_ADAPTER_IP, nullptr, 0, 0, OC_LOW_QOS));
 }
 
 TEST_F(RDTests, RDDeleteResourceNullCB)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCRDDelete("127.0.0.1", CT_ADAPTER_IP, nullptr,
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCRDDelete(NULL, "127.0.0.1", CT_ADAPTER_IP, nullptr,
                                                     0, 0, OC_LOW_QOS));
 }
 
@@ -273,7 +273,7 @@ TEST_F(RDTests, RDDeleteAllResource)
     cbData.cd = NULL;
     cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
 
-    EXPECT_EQ(OC_STACK_OK, OCRDDelete("127.0.0.1", CT_ADAPTER_IP, nullptr, 0, &cbData,
+    EXPECT_EQ(OC_STACK_OK, OCRDDelete(NULL, "127.0.0.1", CT_ADAPTER_IP, nullptr, 0, &cbData,
                                       OC_LOW_QOS));
 }
 
@@ -292,7 +292,7 @@ TEST_F(RDTests, RDDeleteSpecificResource)
                                             "oic.if.baseline", "/a/light", rdEntityHandler,
                                             NULL, OC_DISCOVERABLE | OC_OBSERVABLE));
 
-    EXPECT_EQ(OC_STACK_OK, OCRDDelete("127.0.0.1", CT_ADAPTER_IP, &handle,
+    EXPECT_EQ(OC_STACK_OK, OCRDDelete(NULL, "127.0.0.1", CT_ADAPTER_IP, &handle,
                                       1, &cbData, OC_LOW_QOS));
 }
 #endif

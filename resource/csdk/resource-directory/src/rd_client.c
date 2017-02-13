@@ -33,8 +33,8 @@
 
 #ifdef RD_CLIENT
 
-OCStackResult OCRDDiscover(OCConnectivityType connectivityType, OCCallbackData *cbBiasFactor,
-                           OCQualityOfService qos)
+OCStackResult OCRDDiscover(OCDoHandle *handle, OCConnectivityType connectivityType,
+                           OCCallbackData *cbBiasFactor, OCQualityOfService qos)
 {
     if (!cbBiasFactor || !cbBiasFactor->cb)
     {
@@ -47,7 +47,7 @@ OCStackResult OCRDDiscover(OCConnectivityType connectivityType, OCCallbackData *
     snprintf(queryUri, MAX_URI_LENGTH, "coap://%s%s", OC_MULTICAST_PREFIX, OC_RSRVD_RD_URI);
     OIC_LOG_V(DEBUG, TAG, "Querying RD: %s\n", queryUri);
 
-    return OCDoResource(NULL, OC_REST_DISCOVER, queryUri, NULL, NULL, connectivityType, qos,
+    return OCDoResource(handle, OC_REST_DISCOVER, queryUri, NULL, NULL, connectivityType, qos,
                         cbBiasFactor, NULL, 0);
 }
 
@@ -113,7 +113,8 @@ exit:
     return cbData->cb(cbData->context, handle, clientResponse);
 }
 
-OCStackResult OCRDPublish(const char *host, OCConnectivityType connectivityType,
+OCStackResult OCRDPublish(OCDoHandle *handle, const char *host,
+                          OCConnectivityType connectivityType,
                           OCResourceHandle *resourceHandles, uint8_t nHandles,
                           OCCallbackData *cbData, OCQualityOfService qos)
 {
@@ -131,7 +132,7 @@ OCStackResult OCRDPublish(const char *host, OCConnectivityType connectivityType,
     // Get Device ID from stack.
     const unsigned char *id = (const unsigned char *) OCGetServerInstanceIDString();
 
-    return OCRDPublishWithDeviceId(host, id, connectivityType, resourceHandles, nHandles,
+    return OCRDPublishWithDeviceId(handle, host, id, connectivityType, resourceHandles, nHandles,
                                    cbData, qos);
 }
 
@@ -263,7 +264,8 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
     return rdPayload;
 }
 
-OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
+OCStackResult OCRDPublishWithDeviceId(OCDoHandle *handle, const char *host,
+                                      const unsigned char *id,
                                       OCConnectivityType connectivityType,
                                       OCResourceHandle *resourceHandles, uint8_t nHandles,
                                       OCCallbackData *cbData, OCQualityOfService qos)
@@ -321,11 +323,12 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
     rdPublishCbData.context = rdPublishContext;
     rdPublishCbData.cb = RDPublishCallback;
     rdPublishCbData.cd = RDPublishContextDeleter;
-    return OCDoResource(NULL, OC_REST_POST, targetUri, NULL, (OCPayload *)rdPayload,
+    return OCDoResource(handle, OC_REST_POST, targetUri, NULL, (OCPayload *)rdPayload,
                         connectivityType, qos, &rdPublishCbData, NULL, 0);
 }
 
-OCStackResult OCRDDelete(const char *host, OCConnectivityType connectivityType,
+OCStackResult OCRDDelete(OCDoHandle *handle, const char *host,
+                         OCConnectivityType connectivityType,
                          OCResourceHandle *resourceHandles, uint8_t nHandles,
                          OCCallbackData *cbData, OCQualityOfService qos)
 {
@@ -342,11 +345,12 @@ OCStackResult OCRDDelete(const char *host, OCConnectivityType connectivityType,
 
     const unsigned char *id = (const unsigned char *) OCGetServerInstanceIDString();
 
-    return OCRDDeleteWithDeviceId(host, id, connectivityType, resourceHandles, nHandles,
+    return OCRDDeleteWithDeviceId(handle, host, id, connectivityType, resourceHandles, nHandles,
                                   cbData, qos);
 }
 
-OCStackResult OCRDDeleteWithDeviceId(const char *host, const unsigned char *id,
+OCStackResult OCRDDeleteWithDeviceId(OCDoHandle *handle, const char *host,
+                                     const unsigned char *id,
                                      OCConnectivityType connectivityType,
                                      OCResourceHandle *resourceHandles, uint8_t nHandles,
                                      OCCallbackData *cbData, OCQualityOfService qos)
@@ -391,7 +395,7 @@ OCStackResult OCRDDeleteWithDeviceId(const char *host, const unsigned char *id,
     OICStrcatPartial(targetUri, sizeof(targetUri), queryParam, strlen(queryParam));
     OIC_LOG_V(DEBUG, TAG, "Target URI: %s", targetUri);
 
-    return OCDoResource(NULL, OC_REST_DELETE, targetUri, NULL, NULL, connectivityType,
+    return OCDoResource(handle, OC_REST_DELETE, targetUri, NULL, NULL, connectivityType,
                         qos, cbData, NULL, 0);
 }
 #endif

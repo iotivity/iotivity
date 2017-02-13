@@ -126,7 +126,7 @@ OCStackResult RDClient::publishResourceToRD(const std::string& host,
     if (cLock)
     {
         std::lock_guard<std::recursive_mutex> lock(*cLock);
-        result = OCRDPublish(host.c_str(), connectivityType, &resourceHandles[0],
+        result = OCRDPublish(nullptr, host.c_str(), connectivityType, &resourceHandles[0],
                              resourceHandles.size(), &cbdata, static_cast<OCQualityOfService>(qos));
     }
 
@@ -186,7 +186,7 @@ OCStackResult RDClient::deleteResourceFromRD(const std::string& host,
     if (cLock)
     {
         std::lock_guard<std::recursive_mutex> lock(*cLock);
-        result = OCRDDelete(host.c_str(), connectivityType, &resourceHandles[0],
+        result = OCRDDelete(nullptr, host.c_str(), connectivityType, &resourceHandles[0],
                             resourceHandles.size(), &cbdata, static_cast<OCQualityOfService>(qos));
     }
 
