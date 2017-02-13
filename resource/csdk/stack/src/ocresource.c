@@ -55,6 +55,8 @@
 #include "ocendpoint.h"
 #include "ocstackinternal.h"
 #include "oickeepalive.h"
+#include "ocpayloadcbor.h"
+#include "psinterface.h"
 
 #ifdef ROUTING_GATEWAY
 #include "routingmanager.h"
@@ -63,11 +65,22 @@
 /// Module Name
 #define TAG "OIC_RI_RESOURCE"
 
-// using 1k as block size since most persistent storage implementations use a power of 2.
-#define INTROSPECTION_FILE_SIZE_BLOCK 1024
+// Using 1k as block size since most persistent storage implementations use a power of 2.
+#define INTROSPECTION_FILE_SIZE_BLOCK  1024
 
 #define VERIFY_SUCCESS(op) { if (op != (OC_STACK_OK)) \
             {OIC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
+
+/**
+ * Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
+ * The value of payload size is increased up to CBOR_MAX_SIZE.
+ */
+static const uint16_t CBOR_SIZE = 512;
+
+/**
+ * Max cbor size payload.
+ */
+static const uint16_t CBOR_MAX_SIZE = 4400;
 
 extern OCResource *headResource;
 
@@ -79,6 +92,14 @@ static OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
                                                   OCDevAddr *endpoint,
                                                   CAEndpoint_t *networkInfo,
                                                   size_t infoSize);
+
+/**
+ * Sets the value of an attribute on a resource.
+ */
+static OCStackResult SetAttributeInternal(OCResource *resource,
+                                          const char *attribute,
+                                          const void *value,
+                                          bool updateDatabase);
 
 //-----------------------------------------------------------------------------
 // Default resource entity handler function
@@ -486,6 +507,390 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
     }
 
     return OC_STACK_OK;
+}
+
+void CleanUpDeviceProperties(OCDeviceProperties **deviceProperties)
+{
+    if (!deviceProperties || !(*deviceProperties))
+    {
+        return;
+    }
+
+    OICFreeAndSetToNull((void**)(deviceProperties));
+}
+
+static OCStackResult CreateDeviceProperties(const char *piid, OCDeviceProperties **deviceProperties)
+{
+    OIC_LOG(DEBUG, TAG, "CreateDeviceProperties IN");
+
+    OCStackResult result = OC_STACK_OK;
+
+    if (!piid || !deviceProperties)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    *deviceProperties = (OCDeviceProperties*)OICCalloc(1, sizeof(OCDeviceProperties));
+    if (*deviceProperties)
+    {
+        OICStrcpy((*deviceProperties)->protocolIndependentId, UUID_STRING_SIZE, piid);
+    }
+    else
+    {
+        result = OC_STACK_NO_MEMORY;
+    }
+
+    OIC_LOG(DEBUG, TAG, "CreateDeviceProperties OUT");
+
+    return result;
+}
+
+static OCStackResult GenerateDeviceProperties(OCDeviceProperties **deviceProperties)
+{
+    OCStackResult result = OC_STACK_OK;
+    OicUuid_t generatedProtocolIndependentId = {.id = {0}};
+    char* protocolIndependentId = NULL;
+
+    if (!deviceProperties)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    *deviceProperties = NULL;
+
+    // Generate a UUID for the Protocol Independent ID
+    if (OCGenerateUuid(generatedProtocolIndependentId.id))
+    {
+        protocolIndependentId = (char*)OICCalloc(UUID_STRING_SIZE, sizeof(char));
+        if (protocolIndependentId)
+        {
+            if (!OCConvertUuidToString(generatedProtocolIndependentId.id, protocolIndependentId))
+            {
+                OIC_LOG(ERROR, TAG, "ConvertUuidToStr failed");
+                result = OC_STACK_ERROR;
+            }
+        }
+        else
+        {
+            result = OC_STACK_NO_MEMORY;
+        }
+    }
+    else
+    {
+        OIC_LOG(FATAL, TAG, "Generate UUID for Device Properties Protocol Independent ID failed!");
+        result = OC_STACK_ERROR;
+    }
+
+    if (OC_STACK_OK == result)
+    {
+        result = CreateDeviceProperties(protocolIndependentId, deviceProperties);
+        if (OC_STACK_OK != result)
+        {
+            OIC_LOG(ERROR, TAG, "CreateDeviceProperties failed");
+        }
+    }
+
+    // Clean Up
+    OICFreeAndSetToNull((void**)&protocolIndependentId);
+
+    return result;
+}
+
+OCStackResult CBORPayloadToDeviceProperties(const uint8_t *payload, size_t size, OCDeviceProperties **deviceProperties)
+{
+    OCStackResult result = OC_STACK_OK;
+    CborError cborResult = CborNoError;
+    char* protocolIndependentId = NULL;
+    CborParser parser;
+    CborValue dpCbor;
+    CborValue dpMap;
+
+    if (!payload || (size <= 0) || !deviceProperties)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    *deviceProperties = NULL;
+
+    cbor_parser_init(payload, size, 0, &parser, &dpCbor);
+
+    // Protocol Independent ID - Mandatory
+    cborResult = cbor_value_map_find_value(&dpCbor, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, &dpMap);
+    if ((CborNoError == cborResult) && cbor_value_is_text_string(&dpMap))
+    {
+        size_t len = 0;
+
+        cborResult = cbor_value_dup_text_string(&dpMap, &protocolIndependentId, &len, NULL);
+        if (CborNoError != cborResult)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to get Protocol Independent Id!");
+            result = OC_STACK_ERROR;
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Protocol Independent Id is not present or invalid!");
+        result = OC_STACK_ERROR;
+    }
+
+    if (OC_STACK_OK == result)
+    {
+        result = CreateDeviceProperties(protocolIndependentId, deviceProperties);
+        if (OC_STACK_OK != result)
+        {
+            OIC_LOG(ERROR, TAG, "CreateDeviceProperties failed");
+        }
+    }
+
+    // Clean Up
+    OICFreeAndSetToNull((void**)&protocolIndependentId);
+
+    return result;
+}
+
+OCStackResult DevicePropertiesToCBORPayload(const OCDeviceProperties *deviceProperties, uint8_t **payload, size_t *size)
+{
+    OCStackResult result = OC_STACK_OK;
+    CborError cborResult = CborNoError;
+    uint8_t *cborPayload = NULL;
+    size_t cborLen = CBOR_SIZE;
+    CborEncoder encoder;
+    CborEncoder dpMap;
+
+    if (!deviceProperties || !payload || !size || (*size > CBOR_MAX_SIZE))
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    // Reset the CBOR length if we need to
+    if (*size > 0)
+    {
+        cborLen = *size;
+    }
+
+    *payload = NULL;
+    *size = 0;
+
+    cborPayload = (uint8_t*)OICCalloc(1, cborLen);
+    if (NULL != cborPayload)
+    {
+        cbor_encoder_init(&encoder, cborPayload, cborLen, 0);
+
+        // Create the Device Properties encoder map
+        cborResult = cbor_encoder_create_map(&encoder, &dpMap, CborIndefiniteLength);
+        if (CborNoError != cborResult)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to create encoder map!");
+            result = OC_STACK_ERROR;
+        }
+    }
+    else
+    {
+        result = OC_STACK_NO_MEMORY;
+    }
+
+    // Protocol Independent ID - Mandatory
+    if (OC_STACK_OK == result)
+    {
+        cborResult = cbor_encode_text_string(&dpMap, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, strlen(OC_RSRVD_PROTOCOL_INDEPENDENT_ID));
+        if (CborNoError == cborResult)
+        {
+            cborResult = cbor_encode_text_string(&dpMap,
+                                                 deviceProperties->protocolIndependentId,
+                                                 strlen(deviceProperties->protocolIndependentId));
+            if (CborNoError != cborResult)
+            {
+                OIC_LOG(ERROR, TAG, "Failed to encode protocolIndependentId!");
+                result = OC_STACK_ERROR;
+            }
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "Failed to encode OC_RSRVD_PROTOCOL_INDEPENDENT_ID!");
+            result = OC_STACK_ERROR;
+        }
+    }
+
+    // Encoding is finished
+    if (OC_STACK_OK == result)
+    {
+        cborResult = cbor_encoder_close_container(&encoder, &dpMap);
+        if (CborNoError != cborResult)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to close dpMap container!");
+            result = OC_STACK_ERROR;
+        }
+    }
+
+    if (OC_STACK_OK == result)
+    {
+        *size = cbor_encoder_get_buffer_size(&encoder, cborPayload);
+        *payload = cborPayload;
+        cborPayload = NULL;
+    }
+    else if ((CborErrorOutOfMemory == cborResult) && (cborLen < CBOR_MAX_SIZE))
+    {
+        OICFreeAndSetToNull((void**)&cborPayload);
+
+        // Realloc and try again
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
+        result = DevicePropertiesToCBORPayload(deviceProperties, payload, &cborLen);
+        if (OC_STACK_OK == result)
+        {
+            *size = cborLen;
+        }
+    }
+    else
+    {
+        OICFreeAndSetToNull((void**)&cborPayload);
+    }
+
+    return result;
+}
+
+static OCStackResult UpdateDeviceInfoResourceWithDeviceProperties(const OCDeviceProperties *deviceProperties, bool updateDatabase)
+{
+    OCStackResult result = OC_STACK_OK;
+    OCResource *resource = NULL;
+
+    if (!deviceProperties)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    resource = FindResourceByUri(OC_RSRVD_DEVICE_URI);
+    if (resource)
+    {
+        result = SetAttributeInternal(resource, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, deviceProperties->protocolIndependentId, updateDatabase);
+        if (OC_STACK_OK != result)
+        {
+            OIC_LOG(ERROR, TAG, "OCSetPropertyValue failed to set Protocol Independent ID");
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Resource does not exist.");
+        result = OC_STACK_NO_RESOURCE;
+    }
+
+    return result;
+}
+
+static OCStackResult ReadDevicePropertiesFromDatabase(OCDeviceProperties **deviceProperties)
+{
+    uint8_t *data = NULL;
+    size_t size = 0;
+
+    OCStackResult result = ReadDatabaseFromPS(OC_DEVICE_PROPS_FILE_NAME, OC_JSON_DEVICE_PROPS_NAME, &data, &size);
+    if (OC_STACK_OK == result)
+    {
+        // Read device properties from PS
+        result = CBORPayloadToDeviceProperties(data, size, deviceProperties);
+        if (OC_STACK_OK != result)
+        {
+            OIC_LOG(WARNING, TAG, "CBORPayloadToDeviceProperties failed");
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "ReadDatabaseFromPS failed");
+    }
+
+    // Clean Up
+    OICFreeAndSetToNull((void**)&data);
+
+    return result;
+}
+
+static OCStackResult UpdateDevicePropertiesDatabase(const OCDeviceProperties *deviceProperties)
+{
+    OCStackResult result = OC_STACK_OK;
+    uint8_t *payload = NULL;
+    size_t size = 0;
+
+    if (!deviceProperties)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    // Check to see if persistent storage exists. If it doesn't then
+    // we just allow the device properties to exist in memory and
+    // it is the application's job to manage them.
+    if (!OCGetPersistentStorageHandler())
+    {
+        OIC_LOG(DEBUG, TAG, "Persistent Storage handler is NULL.");
+        return OC_STACK_OK;
+    }
+
+    // Convert OCDeviceProperties into CBOR to use for updating Persistent Storage
+    result = DevicePropertiesToCBORPayload(deviceProperties, &payload, &size);
+    if ((OC_STACK_OK == result) && payload)
+    {
+        result = UpdateResourceInPS(OC_DEVICE_PROPS_FILE_NAME, OC_JSON_DEVICE_PROPS_NAME, payload, size);
+        if (OC_STACK_OK != result)
+        {
+            OIC_LOG_V(ERROR, TAG, "UpdateResourceInPS failed with %d!", result);
+        }
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "DevicePropertiesToCBORPayload failed with %d!", result);
+    }
+
+    // Clean Up
+    OICFreeAndSetToNull((void**)&payload);
+
+    return result;
+}
+
+OCStackResult InitializeDeviceProperties()
+{
+    OIC_LOG(DEBUG, TAG, "InitializeDeviceProperties IN");
+
+    OCStackResult result = OC_STACK_OK;
+    OCDeviceProperties *deviceProperties = NULL;
+    bool updateDatabase = false;
+
+    // Populate OCDeviceProperties from persistent storage
+    result = ReadDevicePropertiesFromDatabase(&deviceProperties);
+    if (OC_STACK_OK != result)
+    {
+        OIC_LOG(ERROR, TAG, "ReadDevicePropertiesFromDatabase failed");
+    }
+
+    // If the device properties in persistent storage are corrupted or
+    // not available for some reason, a default OCDeviceProperties is created.
+    if ((OC_STACK_OK != result) || !deviceProperties)
+    {
+        result = GenerateDeviceProperties(&deviceProperties);
+        if (OC_STACK_OK == result)
+        {
+            updateDatabase = true;
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "GenerateDeviceProperties failed");
+        }
+    }
+
+    // Set the device properties information on the device info resource. This will
+    // also persist OCDeviceProperties so they can be used in the future if they are
+    // not already in the database.
+    if (OC_STACK_OK == result)
+    {
+        result = UpdateDeviceInfoResourceWithDeviceProperties(deviceProperties, updateDatabase);
+        if (OC_STACK_OK != result)
+        {
+            OIC_LOG(ERROR, TAG, "UpdateDeviceInfoResourceWithDeviceProperties failed");
+        }
+    }
+
+    // Clean Up
+    CleanUpDeviceProperties(&deviceProperties);
+
+    OIC_LOG(DEBUG, TAG, "InitializeDeviceProperties OUT");
+
+    return result;
 }
 
 static size_t GetIntrospectionDataSize(const OCPersistentStorage *ps)
@@ -2043,10 +2448,14 @@ OCStackResult OCGetPropertyValue(OCPayloadType type, const char *prop, void **va
     return res;
 }
 
-OCStackResult OCSetAttribute(OCResource* resource, const char* attribute, const void* value)
+static OCStackResult SetAttributeInternal(OCResource *resource,
+                                          const char *attribute,
+                                          const void *value,
+                                          bool updateDatabase)
 {
-    // See if the attribute already exists in the list.
     OCAttribute *resAttrib = NULL;
+
+    // See if the attribute already exists in the list.
     for (resAttrib = resource->rsrcAttributes; resAttrib; resAttrib = resAttrib->next)
     {
         if (0 == strcmp(attribute, resAttrib->attrName))
@@ -2086,12 +2495,96 @@ OCStackResult OCSetAttribute(OCResource* resource, const char* attribute, const 
     }
     VERIFY_PARAM_NON_NULL(TAG, resAttrib->attrValue, "Failed allocating attribute value");
 
+    // The resource has changed from what is stored in the database. Update the database to
+    // reflect the new value.
+    if (updateDatabase)
+    {
+        OCDeviceProperties *deviceProperties = NULL;
+
+        OCStackResult result = CreateDeviceProperties((const char*)value, &deviceProperties);
+        if (OC_STACK_OK == result)
+        {
+            result = UpdateDevicePropertiesDatabase(deviceProperties);
+            if (OC_STACK_OK != result)
+            {
+                OIC_LOG(ERROR, TAG, "UpdateDevicePropertiesDatabase failed!");
+            }
+
+            CleanUpDeviceProperties(&deviceProperties);
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "CreateDeviceProperties failed!");
+        }
+    }
+
     return OC_STACK_OK;
 
 exit:
     OCDeleteResourceAttributes(resAttrib);
     return OC_STACK_NO_MEMORY;
+}
 
+static OCStackResult IsDatabaseUpdateNeeded(const char *attribute, const void *value, bool *update)
+{
+    OCStackResult result = OC_STACK_OK;
+    void *currentPIID = NULL;
+
+    if (!attribute || !value || !update)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    *update = false;
+
+    // Protocol Independent ID
+    if (0 == strcmp(OC_RSRVD_PROTOCOL_INDEPENDENT_ID, attribute))
+    {
+        result = OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, &currentPIID);
+        if (OC_STACK_OK == result)
+        {
+            // PIID has already been set on the resource and stored in the database. Check to see
+            // if the value is changing so the database can be updated accordingly.
+            if (0 != strcmp((char *)currentPIID, (char*)value))
+            {
+                *update = true;
+            }
+        }
+        else if (OC_STACK_NO_RESOURCE == result)
+        {
+            // PIID has not been set yet so we should always update the database.
+            *update = true;
+            result = OC_STACK_OK;
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, TAG, 
+                "Call to OCGetPropertyValue for the current PIID failed with error: %d", result);
+        }
+    }
+
+    // Clean Up
+    OICFreeAndSetToNull(&currentPIID);
+
+    return result;
+}
+
+OCStackResult OCSetAttribute(OCResource *resource, const char *attribute, const void *value)
+{
+    bool updateDatabase = false;
+
+    // Check to see if we also need to update the database for this attribute. If the current
+    // value matches what is stored in the database we can skip the update and an unnecessary
+    // write.
+    if (OC_STACK_OK != IsDatabaseUpdateNeeded(attribute, value, &updateDatabase))
+    {
+        OIC_LOG_V(WARNING, TAG, 
+            "Could not determine if a database update was needed for %s. Proceeding without updating the database.",
+            attribute);
+        updateDatabase = false;
+    }
+
+    return SetAttributeInternal(resource, attribute, value, updateDatabase);
 }
 
 OCStackResult OCSetPropertyValue(OCPayloadType type, const char *prop, const void *value)

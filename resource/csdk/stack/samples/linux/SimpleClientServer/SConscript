@@ -80,6 +80,9 @@ sample_build_dir = samples_env.get(
 introspectionJson = samples_env.Install(sample_build_dir,
                                         sample_src_dir + 'introspection.json')
 
+deviceProperties = samples_env.Install(sample_build_dir,
+                                       sample_src_dir + 'device_properties.dat')
+
 
 ######################################################################
 # Source files and Targets

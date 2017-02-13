@@ -28,6 +28,7 @@ extern "C"
     #include "oic_malloc.h"
     #include "oic_string.h"
     #include "oic_time.h"
+    #include "ocresourcehandler.h"
 }
 
 #include "gtest/gtest.h"
@@ -65,6 +66,7 @@ namespace itst = iotivity::test;
 static const char TAG[] = "TestHarness";
 
 char gDeviceUUID[] = "fe3f9a68-4931-4cb0-9ea4-81702b43116c";
+char gDevicePIID[] = "32684bf3-4c44-47b0-99fe-6a9a59b73a8d";
 char gManufacturerName[] = "myName";
 static OCPrm_t pmSel;
 static char pinNumber;
@@ -181,6 +183,17 @@ uint8_t InitResourceIndex()
 
 extern "C" uint32_t g_ocStackStartCount;
 
+OCDeviceProperties* getTestDeviceProps()
+{
+    OCDeviceProperties* deviceProps = (OCDeviceProperties*)OICCalloc(1, sizeof(OCDeviceProperties));
+    if (NULL != deviceProps)
+    {
+        OICStrcpy(deviceProps->protocolIndependentId, UUID_STRING_SIZE, gDevicePIID);
+    }
+
+    return deviceProps;
+}
+
 class OCDiscoverTests : public testing::Test
 {
     protected:
@@ -193,6 +206,15 @@ class OCDiscoverTests : public testing::Test
         {
             OCStop();
         }
+};
+
+class OCDevicePropertiesTests : public testing::Test
+{
+protected:
+    virtual void SetUp()
+    {
+        itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    }
 };
 //-----------------------------------------------------------------------------
 //  Tests
@@ -1364,6 +1386,147 @@ TEST(StackResource, StackTestResourceDiscoverManyResources)
     EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle4, OC_RSRVD_INTERFACE_BATCH));
 
     //EXPECT_EQ(OC_STACK_OK, OCHandleServerRequest(&res, uri, query, req, rsp));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST_F(OCDevicePropertiesTests, DevicePropertiesToCBORPayloadllNULL)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, DevicePropertiesToCBORPayload(NULL, NULL, NULL));
+}
+
+TEST_F(OCDevicePropertiesTests, DevicePropertiesToCBORPayloadNULLPayload)
+{
+    OCDeviceProperties* deviceProps = getTestDeviceProps();
+    ASSERT_TRUE(NULL != deviceProps);
+    size_t size = 0;
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, DevicePropertiesToCBORPayload(deviceProps, NULL, &size));
+
+    CleanUpDeviceProperties(&deviceProps);
+}
+
+TEST_F(OCDevicePropertiesTests, DevicePropertiesToCBORPayloadNULLSize)
+{
+    OCDeviceProperties* deviceProps = getTestDeviceProps();
+    ASSERT_TRUE(NULL != deviceProps);
+    uint8_t* payload = NULL;
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, DevicePropertiesToCBORPayload(deviceProps, &payload, NULL));
+
+    CleanUpDeviceProperties(&deviceProps);
+}
+
+TEST_F(OCDevicePropertiesTests, DevicePropertiesToCBORPayloadNULLDeviceProperties)
+{
+    uint8_t* payload = NULL;
+    size_t size = 0;
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, DevicePropertiesToCBORPayload(NULL, &payload, &size));
+}
+
+TEST_F(OCDevicePropertiesTests, DevicePropertiesToCBORPayloadVALID)
+{
+    OCDeviceProperties* deviceProps = getTestDeviceProps();
+    ASSERT_TRUE(NULL != deviceProps);
+    uint8_t* payload = NULL;
+    size_t size = 0;
+
+    EXPECT_EQ(OC_STACK_OK, DevicePropertiesToCBORPayload(deviceProps, &payload, &size));
+    EXPECT_TRUE(payload != NULL);
+
+    CleanUpDeviceProperties(&deviceProps);
+    OICFree(payload);
+}
+
+TEST_F(OCDevicePropertiesTests, CBORPayloadToDevicePropertiesAllNULL)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, CBORPayloadToDeviceProperties(NULL, 0, NULL));
+}
+
+TEST_F(OCDevicePropertiesTests, CBORPayloadToDevicePropertiesNULLPayload)
+{
+    OCDeviceProperties* deviceProps = NULL;
+    size_t size = 10;
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, CBORPayloadToDeviceProperties(NULL, size, &deviceProps));
+}
+
+TEST_F(OCDevicePropertiesTests, CBORPayloadToDevicePropertiesInvalidSize)
+{
+    OCDeviceProperties* deviceProps = NULL;
+    uint8_t* payload = (uint8_t*)OICCalloc(1, sizeof(uint8_t));
+    ASSERT_TRUE(NULL != payload);
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, CBORPayloadToDeviceProperties(payload, 0, &deviceProps));
+
+    OICFree(payload);
+}
+
+TEST_F(OCDevicePropertiesTests, CBORPayloadToDevicePropertiesNULLDeviceProperties)
+{
+    uint8_t* payload = (uint8_t*)OICCalloc(1, sizeof(uint8_t));
+    ASSERT_TRUE(NULL != payload);
+    size_t size = 10;
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, CBORPayloadToDeviceProperties(payload, size, NULL));
+
+    OICFree(payload);
+}
+
+TEST_F(OCDevicePropertiesTests, CBORPayloadToDevicePropertiesVALID)
+{
+    OCDeviceProperties* controlDeviceProps = getTestDeviceProps();
+    ASSERT_TRUE(NULL != controlDeviceProps);
+    OCDeviceProperties* testDeviceProps = NULL;
+    uint8_t* payload = NULL;
+    size_t size = 0;
+
+    EXPECT_EQ(OC_STACK_OK, DevicePropertiesToCBORPayload(controlDeviceProps, &payload, &size));
+    EXPECT_TRUE(payload != NULL);
+
+    EXPECT_EQ(OC_STACK_OK, CBORPayloadToDeviceProperties(payload, size, &testDeviceProps));
+    ASSERT_TRUE(testDeviceProps != NULL);
+    EXPECT_STREQ(gDevicePIID, testDeviceProps->protocolIndependentId);
+
+    CleanUpDeviceProperties(&controlDeviceProps);
+    CleanUpDeviceProperties(&testDeviceProps);
+    OICFree(payload);
+}
+
+TEST_F(OCDevicePropertiesTests, PIIDAvailableAfterInit)
+{
+    void *piid = NULL;
+
+    InitStack(OC_SERVER);
+
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, &piid));
+    ASSERT_TRUE(piid != NULL);
+
+    OICFree(piid);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST_F(OCDevicePropertiesTests, UpdatePIID)
+{
+    void *originalPIID = NULL;
+    void *newPIID = NULL;
+
+    InitStack(OC_SERVER);
+
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, &originalPIID));
+    ASSERT_TRUE(originalPIID != NULL);
+
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, gDevicePIID));
+
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, &newPIID));
+    ASSERT_TRUE(newPIID != NULL);
+    EXPECT_STREQ(gDevicePIID, (char *)newPIID);
+    EXPECT_STRNE((char *)originalPIID, (char *)newPIID);
+
+    OICFree(newPIID);
+    OICFree(originalPIID);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }

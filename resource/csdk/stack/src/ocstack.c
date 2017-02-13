@@ -4870,6 +4870,12 @@ OCStackResult initResources()
         }
     }
 
+    // Initialize Device Properties
+    if (OC_STACK_OK == result)
+    {
+        result = InitializeDeviceProperties();
+    }
+
     return result;
 }
 
