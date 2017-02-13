@@ -78,6 +78,9 @@ OCNotifyListOfObservers
 OCPayloadDestroy
 OCPresencePayloadCreate
 OCProcess
+OCRDDatabaseDiscoveryPayloadCreate
+OCRDDatabaseGetStorageFilename
+OCRDDatabaseSetStorageFilename
 OCRegisterPersistentStorageHandler
 OCRepPayloadAddInterface
 OCRepPayloadAddResourceType

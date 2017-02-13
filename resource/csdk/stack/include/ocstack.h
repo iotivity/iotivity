@@ -734,6 +734,13 @@ OCResourceHandle OCGetResourceHandleAtUri(const char *uri);
 OCStackResult OCRDDatabaseSetStorageFilename(const char *filename);
 
 /**
+ * Returns the filename to be used for database persistent storage.
+ *
+ * @return the filename
+ */
+const char *OCRDDatabaseGetStorageFilename();
+
+/**
 * Search the RD database for queries.
 *
 * @param interfaceType is the interface type that is queried.
