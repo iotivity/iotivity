@@ -111,6 +111,7 @@ OCRepPayloadSetIntArrayAsOwner
 OCRepPayloadSetNull
 OCRepPayloadSetPropBool
 OCRepPayloadSetPropByteString
+OCRepPayloadSetPropByteStringAsOwner
 OCRepPayloadSetPropDouble
 OCRepPayloadSetPropInt
 OCRepPayloadSetPropObjectArray
