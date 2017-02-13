@@ -248,10 +248,10 @@ extern "C" {
 #define OC_RSRVD_HOSTING_PORT           "port"
 
 /** TCP Port. */
-#define OC_RSRVD_TCP_PORT               "tcp"
+#define OC_RSRVD_TCP_PORT               "x.org.iotivity.tcp"
 
 /** TLS Port. */
-#define OC_RSRVD_TLS_PORT               "tls"
+#define OC_RSRVD_TLS_PORT               "x.org.iotivity.tls"
 
 /** For Server instance ID.*/
 #define OC_RSRVD_SERVER_INSTANCE_ID     "sid"
