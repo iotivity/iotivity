@@ -3750,7 +3750,7 @@ static void CALERemoveSendQueueData(CAQueueingThread_t *queueHandle, oc_mutex mu
             CALEData_t *bleData = (CALEData_t *) message->msg;
             if (bleData && bleData->remoteEndpoint)
             {
-                if (!strcmp(bleData->remoteEndpoint->addr, address))
+                if (!strcasecmp(bleData->remoteEndpoint->addr, address))
                 {
                     OIC_LOG(DEBUG, CALEADAPTER_TAG, "found the message of disconnected device");
                     if (NULL != queueHandle->destroy)

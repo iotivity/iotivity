@@ -944,7 +944,7 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
                 goto error_exit;
             }
 
-            if (!strcmp(setAddress, address))
+            if (!strcasecmp(setAddress, address))
             {
                 (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
                 (*env)->DeleteLocalRef(env, jni_setAddress);
@@ -2714,7 +2714,7 @@ CAResult_t CALEClientDisconnectforAddress(JNIEnv *env, jstring remote_address)
         }
 
         OIC_LOG_V(DEBUG, TAG, "target address : %s, set address : %s", address, setAddress);
-        if (!strcmp(address, setAddress))
+        if (!strcasecmp(address, setAddress))
         {
             CAResult_t res = CALEClientDisconnect(env, jarrayObj);
             if (CA_STATUS_OK != res)
@@ -3592,7 +3592,7 @@ bool CALEClientIsDeviceInScanDeviceList(JNIEnv *env, const char* remoteAddress)
             return true;
         }
 
-        if (!strcmp(remoteAddress, setAddress))
+        if (!strcasecmp(remoteAddress, setAddress))
         {
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             (*env)->DeleteLocalRef(env, jni_setAddress);
@@ -3693,7 +3693,7 @@ CAResult_t CALEClientRemoveDeviceInScanDeviceList(JNIEnv *env, jstring address)
             return CA_STATUS_FAILED;
         }
 
-        if (!strcmp(setAddress, remoteAddress))
+        if (!strcasecmp(setAddress, remoteAddress))
         {
             OIC_LOG_V(DEBUG, TAG, "remove object : %s", remoteAddress);
             (*env)->DeleteGlobalRef(env, jarrayObj);
@@ -3802,7 +3802,7 @@ bool CALEClientIsGattObjInList(JNIEnv *env, const char* remoteAddress)
             return true;
         }
 
-        if (!strcmp(remoteAddress, setAddress))
+        if (!strcasecmp(remoteAddress, setAddress))
         {
             OIC_LOG(DEBUG, TAG, "the device is already set");
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
@@ -3853,7 +3853,7 @@ jobject CALEClientGetGattObjInList(JNIEnv *env, const char* remoteAddress)
             return NULL;
         }
 
-        if (!strcmp(remoteAddress, setAddress))
+        if (!strcasecmp(remoteAddress, setAddress))
         {
             OIC_LOG(DEBUG, TAG, "the device is already set");
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
@@ -3963,7 +3963,7 @@ CAResult_t CALEClientRemoveGattObj(JNIEnv *env, jobject gatt)
             return CA_STATUS_FAILED;
         }
 
-        if (!strcmp(setAddress, remoteAddress))
+        if (!strcasecmp(setAddress, remoteAddress))
         {
             OIC_LOG_V(DEBUG, TAG, "remove object : %s", remoteAddress);
             (*env)->DeleteGlobalRef(env, jarrayObj);
@@ -4040,7 +4040,7 @@ CAResult_t CALEClientRemoveGattObjForAddr(JNIEnv *env, jstring addr)
             return CA_STATUS_FAILED;
         }
 
-        if (!strcmp(setAddress, remoteAddress))
+        if (!strcasecmp(setAddress, remoteAddress))
         {
             OIC_LOG_V(DEBUG, TAG, "remove object : %s", remoteAddress);
             (*env)->DeleteGlobalRef(env, jarrayObj);
@@ -4146,7 +4146,7 @@ jstring CALEClientGetLEAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
         }
 
         OIC_LOG_V(DEBUG, TAG, "btAddress : %s (idx: %d)", btAddress, index);
-        if (!strcmp(targetAddress, btAddress))
+        if (!strcasecmp(targetAddress, btAddress))
         {
             OIC_LOG(DEBUG, TAG, "Found Gatt object from BT device");
 
