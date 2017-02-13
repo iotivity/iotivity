@@ -71,6 +71,7 @@
 #define BM 3
 #define MAX_CHANGEABLEVALUES_LEN 102
 
+using namespace OC::Bridging;
 /*******************************************************************************
  * Pound defines and structure declarations go here
  ******************************************************************************/

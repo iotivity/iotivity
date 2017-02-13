@@ -43,6 +43,7 @@
 #include "gw_error_code.h"
 
 using namespace std;
+using namespace OC::Bridging;
 
 /*******************************************************************************
  * Pound defines and structure declarations go here

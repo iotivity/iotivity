@@ -70,7 +70,7 @@
 #define         MAX_QUERY_STRING                200
 #define         TAG                            "HUE_RESOURCE"
 
-
+using namespace OC::Bridging;
 /*******************************************************************************
  * global data goes here
  ******************************************************************************/
