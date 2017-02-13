@@ -31,6 +31,7 @@
 #include <coap/coap.h>
 #include "cathreadpool.h"
 #include "octhread.h"
+#include "logger.h"
 #include "uarraylist.h"
 #include "cacommon.h"
 #include "caprotocolmessage.h"
@@ -43,72 +44,58 @@ extern "C"
 #endif
 
 /**
- * Callback to send replaced data.
- * @param[in]   data    send data.
- */
-typedef void (*CASendThreadFunc)(CAData_t *data);
-
-/**
- * Callback to notify received data from the remote endpoint.
- * @param[in]   data    received data.
- */
-typedef void (*CAReceiveThreadFunc)(CAData_t *data);
-
-/**
- * Context of connection manager
- */
-typedef struct
-{
-    /** send method for block data. **/
-    CASendThreadFunc sendThreadFunc;
-
-    /** callback function for received message. **/
-    CAReceiveThreadFunc receivedThreadFunc;
-
-    /** array list on which the thread is operating. **/
-    u_arraylist_t *dataList;
-
-    /** data list mutex for synchronization. **/
-    oc_mutex dataListMutex;
-
-    /** sender mutex for synchronization. **/
-    oc_mutex dataSenderMutex;
-} CAConnectionManagerContext_t;
-
-/**
  * Initializes the connection manager context.
- * @param[in]  CASendThreadFunc    function point to add data in send queue thread.
- * @param[in]  CAReceiveThreadFunc function point to add data in receive queue thread.
- * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAInitializeConnectionManager(CASendThreadFunc blockSendMethod,
-                                         CAReceiveThreadFunc receivedDataCallback);
+CAResult_t CACMInitialize();
 
 /**
  * Terminate the connection manager context.
+ * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-void CATerminateConnectionManager();
-
-/**
- * Initialize mutex.
- * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CAInitConnectionManagerMutexVariables();
-
-/**
- * Terminate mutex.
- */
-void CATerminateConnectionManagerMutexVariables();
+CAResult_t CACMTerminate();
 
 /**
  * Get request/response message to send.
+ * @param[in,out]  data     data to request or response.
+ * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAData_t* CAGetConnectionManagerMessageData(CAData_t *data);
+CAResult_t CACMGetMessageData(CAData_t *data);
 
 /**
- * Start connection manager.
+ * Set CM User Configuration
+ * @param[in]  connPriority     value of CAConnectUserPref_t
+ * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-void CAStartConnectionManagerService(CMConfigureInfo_t info);
+CAResult_t CACMSetConnUserConfig(CAConnectUserPref_t connPrefer);
+
+/**
+ * Get CM User Configuration
+ * @param[out]  connPriority     value of CAConnectUserPref_t
+ * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CACMGetConnUserConfig(CAConnectUserPref_t *connPrefer);
+
+/**
+ * Update Remote Device Info.
+ * @param[in]  endpoint       network address.
+ * @param[in]  isCloud        with cloud or not .
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CACMUpdateRemoteDeviceInfo(const CAEndpoint_t endpoint, bool isCloud);
+
+/**
+ * Reset Remote Device Info.
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CACMResetRemoteDeviceInfo();
+
+/**
+ * Set callback to handle connection status
+ * @param[in]  callback       Callback function type for adapter status changes delivery.
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CACMSetIPConnectionCallback(CAAdapterStateChangedCB callback);
 
 #ifdef __cplusplus
 } /* extern "C" */

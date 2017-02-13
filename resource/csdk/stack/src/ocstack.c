@@ -64,6 +64,10 @@
 #include "oicgroup.h"
 #include "ocendpoint.h"
 
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+#include "occonnectionmanager.h"
+#endif
+
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
 #include "routingutility.h"
 #ifdef ROUTING_GATEWAY
@@ -1596,6 +1600,10 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                                   payload->sid);
                         OIC_LOG_V(INFO, TAG, "Device ID of response : %s",
                                   response->devAddr.remoteId);
+
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+                        OCCMDiscoveryResource(&response);
+#endif
                     }
                 }
 
@@ -2425,6 +2433,14 @@ OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     }
 #endif
 
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+    // Initialize the Connection Manager
+    if (result == OC_STACK_OK)
+    {
+        result = OCCMInitialize();
+    }
+#endif
+
 exit:
     if(result != OC_STACK_OK)
     {
@@ -2492,6 +2508,11 @@ OCStackResult OCStop()
     DeleteClientCBList();
     // Terminate connectivity-abstraction layer.
     CATerminate();
+
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+    // Terminate the Connection Manager
+    OCCMTerminate();
+#endif
 
     stackState = OC_STACK_UNINITIALIZED;
     return OC_STACK_OK;

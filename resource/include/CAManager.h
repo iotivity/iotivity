@@ -129,6 +129,18 @@ namespace OC
          */
         OCStackResult setCipherSuite(const uint16_t cipher, OCTransportAdapter adapter);
 #endif // defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+        /**
+         * Set User Preference
+         * @param user preference
+         *        0: OC_USER_PREF_CLOUD (default)
+         *        1: OC_USER_PREF_LOCAL_UDP
+         *        2: OC_USER_PREF_LOCAL_TCP
+         * @return ::OC_STACK_OK if sucess.
+         */
+        OCStackResult setConnectionManagerUserConfig(OCConnectUserPref_t connPriority);
+#endif
     }
 }
 

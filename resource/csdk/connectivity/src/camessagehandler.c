@@ -48,6 +48,9 @@
 #include "cathreadpool.h" /* for thread pool */
 #include "caqueueingthread.h"
 
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+#include "caconnectionmanager.h"
+#endif
 #define SINGLE_HANDLE
 #define MAX_THREAD_POOL_SIZE    20
 
@@ -1002,6 +1005,14 @@ CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg
     }
 
     OIC_LOG_V(DEBUG, TAG, "device ID of endpoint of this message is %s", endpoint->remoteId);
+
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+    CAResult_t ret = CACMGetMessageData(data);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(DEBUG, TAG, "Ignore ConnectionManager");
+    }
+#endif
 
 #ifdef SINGLE_THREAD
     CAResult_t result = CAProcessSendData(data);

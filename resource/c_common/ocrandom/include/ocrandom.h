@@ -40,7 +40,7 @@ extern "C" {
 
 /*
  * Size of a UUID string.
- * IoTivity formats UUIDs as strings following RFC 4122, Section 3. 
+ * IoTivity formats UUIDs as strings following RFC 4122, Section 3.
  * For example, "f81d4fae-7dec-11d0-a765-00a0c91e6bf6".
  * This requires 36 characters, plus one for the null terminator.
  */
@@ -108,6 +108,18 @@ bool OCConvertUuidToString(const uint8_t uuid[UUID_SIZE],
  */
 bool OCConvertStringToUuid(const char uuidString[UUID_STRING_SIZE],
                                          uint8_t uuid[UUID_SIZE]);
+
+/**
+ * Check if the provided uuid is valid.
+ * 1. The length of uuids should always be 36.
+ * 2. Hyphens are expected at positions {9, 14, 19, 24}.
+ * 3. The rest charcters should be simple xdigits.
+ *
+ * @param[i] uuid
+ *              uuid extracted from uri
+ * @retval true for success, otherwise false and an error is logged
+ */
+bool OCIsUUID(const char *uuid);
 
 #ifdef __cplusplus
 }

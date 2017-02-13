@@ -31,26 +31,17 @@ extern "C"
 #endif
 
 /**
- * this level depends on transmission time.
- * unicast based UDP will be checked by caretransmission.
+ * User Preference of connectivity channel for connection manager
  */
 typedef enum
 {
-    HIGH_SPEED = 0,
-    NORMAL_SPEED
-} CMSpeedLevel_t;
-
-typedef struct
-{
-    /** address for all **/
-    char addr[MAX_ADDR_STR_SIZE_CA];
-
-    /** adapter priority of all transmissions. **/
-    CATransportAdapter_t adapter;
-
-    /** level about speed of response. **/
-    CMSpeedLevel_t level;
-} CMConfigureInfo_t;
+    /** Cloud TCP (Default) */
+    CA_USER_PREF_CLOUD = 0,
+    /** local UDP */
+    CA_USER_PREF_LOCAL_UDP = 1,
+    /** local TCP */
+    CA_USER_PREF_LOCAL_TCP = 2
+} CAConnectUserPref_t;
 
 /*
  * CAUtilConfig_t structure.
@@ -58,7 +49,7 @@ typedef struct
 typedef struct
 {
     CATransportBTFlags_t bleFlags;
-    CMConfigureInfo_t cmInfo;
+    CAConnectUserPref_t connUserPref;
 } CAUtilConfig_t;
 
 /**
@@ -132,6 +123,48 @@ CAResult_t CASetPortNumberToAssign(CATransportAdapter_t adapter,
  * @return  assigned port number information.
  */
 uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_t flag);
+
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+/**
+ * Initializes the Connection Manager
+ * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAUtilCMInitailize();
+
+/**
+ * Terminate the Connection Manager
+ * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAUtilCMTerminate();
+
+/**
+ * Update RemoteDevice Information for Connection Manager
+ * @param[in]  endpoint   Remote device information with specific device ID.
+ * @param[in]  isCloud    with cloud or not.
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CAUtilCMUpdateRemoteDeviceInfo(const CAEndpoint_t endpoint, bool isCloud);
+
+/**
+ * Reset RemoteDevice Info. for Connection Manager
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CAUtilCMResetRemoteDeviceInfo();
+
+/**
+ * Set Connection Manager configuration
+ * @param[in]  connPrefer  enum type of CAConnectUserPref_t.(default:CA_USER_PREF_CLOUD)
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CAUtilCMSetConnectionUserConfig(CAConnectUserPref_t connPrefer);
+
+/**
+ * Get Connection Manager configuration
+ * @param[out]  connPrefer  enum type of CAConnectUserPref_t.
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CAUtilCMGetConnectionUserConfig(CAConnectUserPref_t *connPrefer);
+#endif //TCP_ADAPTER & WITH_CLOUD
 
 #ifdef __JAVA__
 #ifdef __ANDROID__

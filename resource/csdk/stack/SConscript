@@ -35,6 +35,7 @@ rd_mode = env.get('RD_MODE')
 with_ra = env.get('WITH_RA')
 with_ra_ibb = env.get('WITH_RA_IBB')
 with_tcp = env.get('WITH_TCP')
+with_cloud = env.get('WITH_CLOUD')
 with_mq = env.get('WITH_MQ')
 # As in the source code, it includes arduino Time library (C++)
 # It requires compile the .c with g++
@@ -186,6 +187,8 @@ liboctbstack_src = [
 
 if with_tcp == True:
     liboctbstack_src.append(OCTBSTACK_SRC + 'oickeepalive.c')
+    if with_cloud == True:
+        liboctbstack_src.append(OCTBSTACK_SRC + 'occonnectionmanager.c')
 
 if 'SERVER' in rd_mode:
     liboctbstack_src.append(OCTBSTACK_SRC + 'oicresourcedirectory.c')

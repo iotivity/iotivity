@@ -26,15 +26,45 @@
 #ifndef CA_CONNECTIONMANAGER_ARBITER_H_
 #define CA_CONNECTIONMANAGER_ARBITER_H_
 
-#include "logger.h"
-#include "cathreadpool.h"
-#include "octhread.h"
+#include "cacommon.h"
+#include "camanagerutil.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
+/**
+ * Initializes the Message Arbiter
+ * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAMsgArbiterInitialize();
+
+/**
+ * Terminate the Message Arbiter
+ */
+CAResult_t CAMsgArbiterTerminate();
+
+/**
+ * Update Device Info. in managed data
+ * @param[in]  endpoint       network address.
+ * @param[in]  isCloud        with cloud or not .
+ * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAMsgArbiterUpdateDeviceInfo(const CAEndpoint_t endpoint, bool isCloud);
+
+/**
+ * Reset Device Info in managed data
+ * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAMsgArbiterResetDeviceInfo();
+
+/**
+ * Get request/response message to send.
+ * @param[in, out]  data     data to request or response.
+ * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAMsgArbiterGetMessageData(CAData_t *data);
 
 #ifdef __cplusplus
 } /* extern "C" */

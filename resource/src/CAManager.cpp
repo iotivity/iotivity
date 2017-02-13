@@ -160,3 +160,12 @@ OCStackResult CAManager::stopLEAdvertising()
 
     return convertCAResultToOCResult(ret);
 }
+
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+OCStackResult CAManager::setConnectionManagerUserConfig(OCConnectUserPref_t connPriority)
+{
+    CAResult_t ret = CAUtilCMSetConnectionUserConfig((CAConnectUserPref_t)connPriority);
+
+    return convertCAResultToOCResult(ret);
+}
+#endif

@@ -268,4 +268,13 @@ public class CaInterface {
     }
     private static native int setCipherSuiteImpl(int cipher, int adapter);
 
+    /**
+     * Set Connection Manager configuration.
+     * It can be set a connection manager configuration.(default: CA_CLOUD)
+     */
+    public synchronized static void setConnectionUserConfig(CaIpConnectionPreference connPriority) {
+        CaInterface.caManagerSetConnectionUserConfig(connPriority.getValue());
+    }
+
+    private static native void caManagerSetConnectionUserConfig(int connPriority);
 }
