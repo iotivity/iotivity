@@ -987,8 +987,11 @@ public final class OcPlatform {
      * Additionally, you can only create this object if OcPlatform was initialized to be a Client
      * or Client/Server.
      *
-     * @param host                a string containing a resolvable host address of the server holding
-     *                            the resource
+     * @param host                a string containing a resolvable host address of the server
+     *                            holding the resource. Currently this should be in the format of
+     *                            coap://address:port for IPv4  and in the format of
+     *                            coap://[address%25ZoneID]:port for IPv6. In the future,
+     *                            we expect "coap:" section is removed from this format.
      * @param uri                 the rest of the resource's URI that will permit messages to be
      *                            properly routed.
      *                            Example: /a/light
