@@ -623,7 +623,27 @@ bool findDiscoveredBridge(const char *macAddrString, HueDiscoveredCtx *discovere
     return false;
 }
 
-/*
+bool updateDiscoverBridgeDetails(const char *macAddrString, const char *clientID)
+{
+    pthread_mutex_lock(&g_discovered_bridges_lock);
+
+    for (std::vector<HueDiscoveredCtx>::iterator it = g_discovered_bridges.begin() ;
+         it != g_discovered_bridges.end(); ++it)
+    {
+        if ((strcmp(macAddrString, (*it).macAddrString) == 0) && (strcmp((*it).clientIDs, "") == 0))
+        {
+            OICStrcpy((*it).clientIDs, MAX_STRING, clientID);
+            (*it).numClients = 1;
+            pthread_mutex_unlock(&g_discovered_bridges_lock);
+            return true;
+        }
+    }
+    pthread_mutex_unlock(&g_discovered_bridges_lock);
+    return false;
+}
+
+
+/**
  * Based on a single context structure find a client in the clientID list.
  *
  * input

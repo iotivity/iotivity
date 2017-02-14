@@ -155,6 +155,17 @@ GW_RESULT addDiscoveredBridge(HueDiscoveredCtx discoveredCtx);
 
 bool findDiscoveredBridge(const char *macAddrString, HueDiscoveredCtx *discoveredCtx);
 
+/*
+ * This functions Updated on of the data of the discovered bridge
+ * to the global vector for internal usage.
+ *
+ * @param[in] macAddrString bridge MAC address
+ * @param[in] clientId Hue Bridge client id
+ *
+ * @return True on success else False
+ */
+bool updateDiscoverBridgeDetails(const char *macAddrString, const char *clientID);
+
 
 #ifdef __cplusplus
 }

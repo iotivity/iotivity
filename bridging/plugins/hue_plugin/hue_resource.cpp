@@ -629,12 +629,19 @@ GW_RESULT plugin_reconnect(plugin_ctx_t *ctx, mpm_pipe_message_t * message)
         if(authorizedBridges.find(plugindetails->bridgeMac) == authorizedBridges.end())
         {
             memset(&discoveredCtx, 0, sizeof(HueDiscoveredCtx));
-            OICStrcpy(discoveredCtx.macAddrString, MAX_STRING - 1,plugindetails->bridgeMac);
-            OICStrcpy(discoveredCtx.ipAddrString, MAX_STRING - 1, ip.c_str());
-            OICStrcpy(discoveredCtx.clientIDs, MAX_STRING * MAX_CLIENTS, plugindetails->clientId);
-            discoveredCtx.numClients = 1;
-            addAuthorizedBridge(plugindetails->bridgeMac,plugindetails->clientId);
-            result = addDiscoveredBridge(discoveredCtx);
+            if (false == findDiscoveredBridge(plugindetails->bridgeMac, &discoveredCtx))
+            {
+                OICStrcpy(discoveredCtx.macAddrString, MAX_STRING - 1, plugindetails->bridgeMac);
+                OICStrcpy(discoveredCtx.ipAddrString, MAX_STRING - 1, ip.c_str());
+                OICStrcpy(discoveredCtx.clientIDs, MAX_STRING * MAX_CLIENTS, plugindetails->clientId);
+                discoveredCtx.numClients = 1;
+                addAuthorizedBridge(plugindetails->bridgeMac, plugindetails->clientId);
+                result = addDiscoveredBridge(discoveredCtx);
+            }
+            else
+            {
+                updateDiscoverBridgeDetails(plugindetails->bridgeMac, plugindetails->clientId);
+            }
             uint32_t prefix_size = MAX_QUERY_STRING;
             char *prefix = (char *) OICMalloc(prefix_size);
             result = hueAuthGetHttpPrefix(prefix, &prefix_size,plugindetails->bridgeMac,plugindetails->clientId);
@@ -658,7 +665,10 @@ GW_RESULT plugin_reconnect(plugin_ctx_t *ctx, mpm_pipe_message_t * message)
     for (bridgeItr it = authorizedBridges.begin(); it != authorizedBridges.end(); it++)
     {
         HueBridge *authorizedbridge = &(it->second);
-        if( plugindetails->bridgeMac == authorizedbridge->getBridgeMAC())
+        std::string data;
+        data =  authorizedbridge->getBridgeMAC();
+        std::transform(data.begin(), data.end(), data.begin(), ::tolower);
+        if (plugindetails->bridgeMac == data)
         {
             OIC_LOG(DEBUG, TAG,"Bridge Found and is authorized");
             addReconnectLightsToBridge(plugindetails, authorizedbridge, ip);
