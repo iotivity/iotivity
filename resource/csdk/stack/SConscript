@@ -22,6 +22,7 @@
 # liboctbstack (share library) build script
 ##
 Import('env')
+import os
 
 liboctbstack_env = env.Clone()
 
@@ -158,8 +159,13 @@ if liboctbstack_env.get('ROUTING') in ['GW', 'EP']:
 
 if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
     liboctbstack_env.PrependUnique(CPPPATH = ['#resource/csdk/resource-directory/include'])
+
+    if target_os in ['windows']:
+        liboctbstack_env.AppendUnique(LIBS = ['sqlite3'])
+
     if 'CLIENT' in rd_mode:
         liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+
     if 'SERVER' in rd_mode:
         liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
         if target_os in ['tizen']:
@@ -192,7 +198,7 @@ if with_tcp == True:
 
 if 'SERVER' in rd_mode:
     liboctbstack_src.append(OCTBSTACK_SRC + 'oicresourcedirectory.c')
-    if target_os not in ['linux', 'tizen']:
+    if target_os not in ['linux', 'tizen', 'windows']:
         liboctbstack_src.append('#extlibs/sqlite3/sqlite3.c')
 
 if target_os in ['linux']:

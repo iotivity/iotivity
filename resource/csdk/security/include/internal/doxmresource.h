@@ -108,7 +108,6 @@ OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID);
  */
 OCStackResult SetDoxmDeviceID(const OicUuid_t *deviceID);
 
-
 /**
  * Gets the OicUuid_t value for the owner of this device.
  *
@@ -149,6 +148,15 @@ bool IsSubOwner(const OicUuid_t* uuid);
  * @param doxm is the pointer to @ref OicSecDoxm_t.
  */
 void DeleteDoxmBinData(OicSecDoxm_t* doxm);
+
+/** This function checks if two sets of /oic/sec/doxm properties are identical.
+ *
+ * @param doxm1 is a pointer to the first @ref OicSecDoxm_t data.
+ * @param doxm2 is a pointer to the second @ref OicSecDoxm_t data.
+ *
+ * @return true if all of the properties are identical, else false.
+ */
+bool AreDoxmBinPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* doxm2);
 
 /**
  * Function to restore doxm resurce to initial status.

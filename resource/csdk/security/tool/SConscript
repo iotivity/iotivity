@@ -19,6 +19,7 @@
 # //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
 Import('libocsrm_env')
+import os
 
 tools_env = libocsrm_env.Clone()
 src_dir = tools_env.get('SRC_DIR')
@@ -55,7 +56,7 @@ SConscript('#/extlibs/cjson/SConscript')
 if target_os in ['msys_nt', 'windows']:
     # octbstack.dll doesn't export all the functions called by this app, so use static LIBs instead.
     tools_env.AppendUnique(LIBS = ['coap', 'tinydtls', 'mbedtls', 'mbedx509', 'mbedcrypto',
-                                   'octbstack_static', 'ocsrm', 'connectivity_abstraction'])
+                                   'octbstack_static', 'ocsrm', 'connectivity_abstraction', 'sqlite3'])
 elif target_os in ['darwin']:
     tools_env.AppendUnique(LIBS = ['coap', 'tinydtls', 'mbedtls', 'mbedx509', 'mbedcrypto',
                                    'octbstack', 'ocsrm', 'connectivity_abstraction'])

@@ -374,10 +374,10 @@ bool OCIsUUID(const char *uuid)
         char var = uuid[i];
 
         //Check if a hyphen is expected here.
-        if (i = hyphens[counter] -1)
+        if (i == (hyphens[counter] - 1))
         {
             //We need a hyphen here.
-            if('-' != var)
+            if ('-' != var)
             {
                 //The character is not a hyphen.
                 return false;

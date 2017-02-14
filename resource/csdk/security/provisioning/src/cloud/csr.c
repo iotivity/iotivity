@@ -65,7 +65,7 @@ static OCByteString g_privateKey = {0, 0};
  * @def PERSONALIZATION_STRING
  * @brief Personalization string for the mbedtls RNG
  */
-#define PERSONALIZATION_STRING "IOTIVITY_RND"
+static const unsigned char PERSONALIZATION_STRING[] = "IOTIVITY_RND";
 
 typedef struct
 {
@@ -168,11 +168,11 @@ static int ecdsaGenKeypair(mbedtls_pk_context * pk)
  */
 static int GenerateCSR(char *subject, OCByteString *csr)
 {
-    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    int result = 0;
     VERIFY_NON_NULL_RET(subject, TAG, "Param subject is NULL", -1);
     VERIFY_NON_NULL_RET(csr, TAG, "Param csr is NULL", -1);
 
-    int ret = 0;
+    int len = 0;
     int bufsize = 1024;
     unsigned char * buf = NULL;
     mbedtls_entropy_context entropy;
@@ -185,15 +185,15 @@ static int GenerateCSR(char *subject, OCByteString *csr)
     if (NULL == key)
     {
         OIC_LOG_V(ERROR, TAG, "OICMalloc returned NULL on key allocation");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        result = -1;
+        goto exit;
     }
     // Generate keypair
-    if (0 > ecdsaGenKeypair(key))
+    result = ecdsaGenKeypair(key);
+    if (result < 0)
     {
         OIC_LOG(ERROR, TAG, "ecdsaGenKeypair error");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        goto exit;
     }
 
     // Initialize CSR context
@@ -201,22 +201,22 @@ static int GenerateCSR(char *subject, OCByteString *csr)
     // Set up MD algorithm, key and subject to CSR
     mbedtls_x509write_csr_set_md_alg(&req, MBEDTLS_MD_SHA256);
     mbedtls_x509write_csr_set_key(&req, key);
-    if (0 > mbedtls_x509write_csr_set_subject_name(&req, subject))
+    result = mbedtls_x509write_csr_set_subject_name(&req, subject);
+    if (result < 0)
     {
         OIC_LOG(ERROR, TAG, "mbedtls_x509write_csr_set_subject_name error");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        goto exit;
     }
 
     // Initialize the DRBG context
     mbedtls_ctr_drbg_init(&ctr_drbg);
     mbedtls_entropy_init(&entropy);
-    if (0 != mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func,
-                                   &entropy, PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING)))
+    result = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func,
+             &entropy, PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING));
+    if (result < 0)
     {
         OIC_LOG(ERROR, TAG, "Seed initialization failed!");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        goto exit;
     }
     mbedtls_ctr_drbg_set_prediction_resistance(&ctr_drbg, MBEDTLS_CTR_DRBG_PR_ON);
 
@@ -225,73 +225,59 @@ static int GenerateCSR(char *subject, OCByteString *csr)
     if (NULL == buf)
     {
         OIC_LOG(ERROR, TAG, "OICMalloc returned NULL on buf allocation");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        result = -1;
+        goto exit;
     }
-    ret = mbedtls_x509write_csr_der(&req, buf, bufsize,
-                                    mbedtls_ctr_drbg_random, &ctr_drbg);
-    if (ret < 0)
+    len = mbedtls_x509write_csr_der(&req, buf, bufsize, mbedtls_ctr_drbg_random, &ctr_drbg);
+    if (len < 0)
     {
         OIC_LOG(ERROR, TAG, "mbedtls_x509write_csr_der error");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        result = len;
+        goto exit;
     }
 
     // CSR to output
-    csr->bytes = (uint8_t *)OICMalloc(ret * sizeof(uint8_t));
+    csr->bytes = (uint8_t *)OICMalloc(len * sizeof(uint8_t));
     if (NULL == csr->bytes)
     {
         OIC_LOG(ERROR, TAG, "OICMalloc returned NULL on csr allocation");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        result = -1;
+        goto exit;
     }
-    memcpy(csr->bytes, buf + bufsize - ret, ret * sizeof(uint8_t));
-    csr->len = ret;
+    memcpy(csr->bytes, buf + bufsize - len, len * sizeof(uint8_t));
+    csr->len = len;
     // Private key to output
-    ret = mbedtls_pk_write_key_der(key, buf, bufsize);
-    if (ret < 0)
+    len = mbedtls_pk_write_key_der(key, buf, bufsize);
+    if (len < 0)
     {
         OIC_LOG(ERROR, TAG, "mbedtls_pk_write_key_der error");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        result = len;
+        goto exit;
     }
-    g_privateKey.bytes = (uint8_t *)OICMalloc(ret * sizeof(char));
+    g_privateKey.bytes = (uint8_t *)OICMalloc(len * sizeof(char));
     if (NULL == g_privateKey.bytes)
     {
         OIC_LOG(ERROR, TAG, "OICMalloc returned NULL on g_privateKey.bytes allocation");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        result = -1;
+        goto exit;
     }
-    memcpy(g_privateKey.bytes, buf + bufsize - ret, ret * sizeof(uint8_t));
-    g_privateKey.len = ret;
-    // Public key to output
-    ret = mbedtls_pk_write_pubkey_der(key, buf, bufsize);
-    if (ret < 0)
-    {
-        OIC_LOG(ERROR, TAG, "mbedtls_pk_write_pubkey_der error");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
-    }
-    //leave this, may be public key will be required in future
-    OCByteString publicKey;
-    publicKey.bytes = (uint8_t *)OICMalloc(ret * sizeof(char));
-    if (NULL == publicKey.bytes)
-    {
-        OIC_LOG(ERROR, TAG, "OICMalloc returned NULL on pubKey allocation");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
-    }
-    memcpy(publicKey.bytes, buf + bufsize - ret, ret * sizeof(uint8_t));
-    publicKey.len = ret;
-    OICFree(publicKey.bytes);
+    memcpy(g_privateKey.bytes, buf + bufsize - len, len * sizeof(uint8_t));
+    g_privateKey.len = len;
 
+    exit:
     mbedtls_entropy_free(&entropy);
     mbedtls_ctr_drbg_free(&ctr_drbg);
     mbedtls_x509write_csr_free(&req);
     OICFree(key);
+    OICFree(buf);
 
-    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-    return 0;
+    if (result)
+    {
+        OICFree(csr->bytes);
+        csr->bytes = NULL;
+    }
+
+    return result;
 }
 
 /**
@@ -305,7 +291,6 @@ static int GenerateCSR(char *subject, OCByteString *csr)
 static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCClientResponse *response)
 {
     OCStackResult result = OC_STACK_OK;
-    OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
 
     OC_UNUSED(ctx);
     OC_UNUSED(data);
@@ -330,7 +315,7 @@ static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCCli
                                    OC_RSRVD_DEVICE_ID, &deviceId))
     {
         OIC_LOG(ERROR, TAG, "Can't get: Device Id");
-        result = OC_STACK_ERROR;
+        return OC_STACK_ERROR;
     }
 
     OicSecKey_t cert;
@@ -338,7 +323,7 @@ static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCCli
                                    OC_RSRVD_CERT, &cert))
     {
         OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_CERT);
-        result = OC_STACK_ERROR;
+        return OC_STACK_ERROR;
     }
     else
     {
@@ -351,9 +336,16 @@ static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCCli
 
         uint16_t credId;
         result = SRPSaveOwnCertChain(&cert, &key, &credId);
+
+        OICClearMemory(g_privateKey.bytes, g_privateKey.len);
+        OICFree(g_privateKey.bytes);
+        g_privateKey.bytes = NULL;
+        g_privateKey.len   = 0;
+
         if (result != OC_STACK_OK)
         {
             OIC_LOG(ERROR, TAG, "Can't add cert");
+            return result;
         }
     }
 
@@ -363,7 +355,7 @@ static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCCli
                                    OC_RSRVD_CACERT, &caCert))
     {
         OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_CACERT);
-        result = OC_STACK_ERROR;
+        return OC_STACK_ERROR;
     }
     else
     {
@@ -374,13 +366,6 @@ static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCCli
             OIC_LOG(ERROR, TAG, "Can't insert CA cert");
         }
     }
-
-    OICClearMemory(g_privateKey.bytes, g_privateKey.len);
-    OICFree(g_privateKey.bytes);
-    g_privateKey.bytes = NULL;
-    g_privateKey.len   = 0;
-
-    OIC_LOG_V(DEBUG, TAG, "OUT: %s", __func__);
 
     return result;
 }

@@ -62,6 +62,8 @@ if stacktest_env.get('LOGGING'):
 
 if target_os not in ['msys_nt', 'windows']:
 	stacktest_env.PrependUnique(LIBS = ['m'])
+else:
+	stacktest_env.PrependUnique(LIBS = ['sqlite3'])
 
 if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
 	stacktest_env.PrependUnique(LIBS = ['resource_directory'])
