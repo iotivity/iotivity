@@ -179,17 +179,13 @@ OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
 
             //href is mandatory
             VERIFY_NOT_NULL(TAG, rsrc->href, ERROR);
-            allocateSize = strlen(rsrc->href) + 1;
-            newRsrc->href = (char*)OICMalloc(sizeof(char) * allocateSize);
+            newRsrc->href = (char*)OICStrdup(rsrc->href);
             VERIFY_NOT_NULL(TAG, newRsrc->href, ERROR);
-            OICStrcpy(newRsrc->href, allocateSize, rsrc->href);
 
             if(rsrc->rel)
             {
-                allocateSize = strlen(rsrc->rel) + 1;
-                newRsrc->rel = (char*)OICMalloc(sizeof(char) * allocateSize);
+                newRsrc->rel = OICStrdup(rsrc->rel);
                 VERIFY_NOT_NULL(TAG, newRsrc->rel, ERROR);
-                OICStrcpy(newRsrc->rel, allocateSize, rsrc->rel);
             }
 
             if(rsrc->types && 0 < rsrc->typeLen)
@@ -232,10 +228,8 @@ OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
 
                 if(validity->period)
                 {
-                    allocateSize = strlen(validity->period) + 1;
-                    newValidity->period = (char*)OICMalloc(sizeof(char) * allocateSize);
+                    newValidity->period = OICStrdup(validity->period);
                     VERIFY_NOT_NULL(TAG, newValidity->period, ERROR);
-                    OICStrcpy(newValidity->period, allocateSize, validity->period);
                 }
 
                 if(validity->recurrences && 0 < validity->recurrenceLen)
@@ -247,10 +241,8 @@ OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
 
                     for(size_t i = 0; i < validity->recurrenceLen; i++)
                     {
-                        allocateSize = strlen(validity->recurrences[i]) + 1;
-                        newValidity->recurrences[i] = (char*)OICMalloc(sizeof(char) * allocateSize);
+                        newValidity->recurrences[i] = OICStrdup(validity->recurrences[i]);
                         VERIFY_NOT_NULL(TAG, (newValidity->recurrences[i]), ERROR);
-                        OICStrcpy(newValidity->recurrences[i], allocateSize, validity->recurrences[i]);
                     }
                 }
             }

@@ -113,6 +113,7 @@ static OCStackApplicationResult MOTUpdateSecurityResourceCB(void *ctx, OCDoHandl
 exit:
     if(motCtx)
     {
+        PMDeleteDeviceList(motCtx->selectedDeviceInfo);
         OICFree(motCtx->ctxResultArray);
         OICFree(motCtx);
     }
@@ -187,13 +188,9 @@ exit:
     //If POST request successfully sent, motCtx will be cleaned from response handler.
     if(freeFlag && motCtx)
     {
+        PMDeleteDeviceList(motCtx->selectedDeviceInfo);
         OICFree(motCtx->ctxResultArray);
         OICFree(motCtx);
-    }
-
-    if (localTargetDeviceInfo)
-    {
-        PMDeleteDeviceList(localTargetDeviceInfo);
     }
 
     return postMomRes;
@@ -467,18 +464,15 @@ exit:
     //If POST request successfully sent, motCtx will be cleaned from response handler.
     if(freeFlag && motCtx)
     {
+        PMDeleteDeviceList(motCtx->selectedDeviceInfo);
         OICFree(motCtx->ctxResultArray);
         OICFree(motCtx);
     }
+
     if(pinCred)
     {
         OICFree(pinCred->privateData.data);
         OICFree(pinCred);
-    }
-
-    if (localTargetDeviceInfo)
-    {
-        PMDeleteDeviceList(localTargetDeviceInfo);
     }
 
     return postCredRes;

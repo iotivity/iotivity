@@ -388,6 +388,13 @@ static void DebugSsl(void *ctx, int level, const char *file, int line, const cha
     ((void) line);
     ((void) ctx);
 
+    char * temp = (char*) str;
+    size_t len = strlen(temp);
+    if (1 <= len && temp[len - 1] == '\n')
+    {
+        temp[len - 1] = '\0';
+    }
+
     OIC_LOG_V(DEBUG, MBED_TLS_TAG, "%s", str);
 }
 #endif
@@ -894,9 +901,6 @@ static SslEndPoint_t *GetSslPeer(const CAEndpoint_t *peer)
 const CASecureEndpoint_t *GetCASecureEndpointData(const CAEndpoint_t* peer)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
-
-    // TODO: Added as workaround, need to debug
-    oc_mutex_unlock(g_sslContextMutex);
 
     oc_mutex_lock(g_sslContextMutex);
     if (NULL == g_caSslContext)
@@ -2206,9 +2210,6 @@ CAResult_t CAsslGenerateOwnerPsk(const CAEndpoint_t *endpoint,
     VERIFY_NON_NULL_RET(rsrcServerDeviceId, NET_SSL_TAG, "rsrcId is NULL", CA_STATUS_INVALID_PARAM);
     VERIFY_NON_NULL_RET(provServerDeviceId, NET_SSL_TAG, "provId is NULL", CA_STATUS_INVALID_PARAM);
     VERIFY_NON_NULL_RET(ownerPsk, NET_SSL_TAG, "ownerPSK is NULL", CA_STATUS_INVALID_PARAM);
-
-    // TODO: Added as workaround, need to debug
-    oc_mutex_unlock(g_sslContextMutex);
 
     oc_mutex_lock(g_sslContextMutex);
     if (NULL == g_caSslContext)
