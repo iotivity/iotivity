@@ -31,6 +31,7 @@ OCBindResourceInsToResource
 OCBindResourceInterfaceToResource
 OCBindResourceTypeToResource
 OCCancel
+OCClearResourceProperties
 OCCreateOCStringLL
 OCCreateResource
 OCDecodeAddressForRFC6874
@@ -130,6 +131,7 @@ OCSetDeviceInfo
 OCSetHeaderOption
 OCSetPlatformInfo
 OCSetPropertyValue
+OCSetResourceProperties
 OCStartPresence
 OCStop
 OCStopPresence
