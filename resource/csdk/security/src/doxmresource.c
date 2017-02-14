@@ -1327,6 +1327,12 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                         //Save the owner's UUID to derive owner credential
                         memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
 
+                        // In case of random-pin based OTM, close the PIN display if callback is registered.
+                        if (!isDuplicatedMsg)
+                        {
+                            ClosePinDisplay();
+                        }
+
                         //Update new state in persistent storage
                         if (UpdatePersistentStorage(gDoxm) == true)
                         {

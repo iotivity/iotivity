@@ -48,6 +48,7 @@ typedef struct DisplayPinCallbacks
 {
     GeneratePinCallback callback;
     DisplayPinCallbackWithContext contextCallback;
+    ClosePinDisplayCallback closePinDisplayCallback;
     void* context;
 } DisplayPinCallbacks_t;
 
@@ -61,7 +62,7 @@ typedef struct InputPinCallbacks
     void* context;
 } InputPinCallbacks_t;
 
-static DisplayPinCallbacks_t g_displayPinCallbacks = { .callback = NULL, .contextCallback = NULL, .context = NULL };
+static DisplayPinCallbacks_t g_displayPinCallbacks = { .callback = NULL, .contextCallback = NULL, .closePinDisplayCallback = NULL, .context = NULL };
 static InputPinCallbacks_t g_inputPinCallbacks = { .callback = NULL, .contextCallback = NULL, .context = NULL };
 
 typedef struct PinOxmData {
@@ -185,6 +186,23 @@ OCStackResult SetDisplayPinWithContextCB(DisplayPinCallbackWithContext displayPi
     return OC_STACK_OK;
 }
 
+void SetClosePinDisplayCB(ClosePinDisplayCallback closeCB)
+{
+    if (NULL == closeCB)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to set a callback for closing a pin.");
+        return;
+    }
+
+    if (NULL != g_displayPinCallbacks.closePinDisplayCallback)
+    {
+        OIC_LOG(ERROR, TAG, "Callback for closing a pin is already set.");
+        return;
+    }
+
+    g_displayPinCallbacks.closePinDisplayCallback = closeCB;
+}
+
 void UnsetInputPinCB()
 {
     UnsetInputPinWithContextCB();
@@ -207,6 +225,19 @@ void UnsetDisplayPinWithContextCB()
     g_displayPinCallbacks.callback = NULL;
     g_displayPinCallbacks.contextCallback = NULL;
     g_displayPinCallbacks.context = NULL;
+}
+
+void UnsetClosePinDisplayCB()
+{
+    g_displayPinCallbacks.closePinDisplayCallback = NULL;
+}
+
+void ClosePinDisplay()
+{
+    if (g_displayPinCallbacks.closePinDisplayCallback)
+    {
+        g_displayPinCallbacks.closePinDisplayCallback();
+    }
 }
 
 /**

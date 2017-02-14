@@ -469,6 +469,13 @@ void DisplayPinCB(char *pin, size_t pinSize, void *context)
     OIC_LOG(INFO, TAG, "============================");
 }
 
+void ClosePinDisplayCB(void)
+{
+    OIC_LOG(INFO, TAG, "============================");
+    OIC_LOG(INFO, TAG, "    PIN DISPLAY CLOSED.");
+    OIC_LOG(INFO, TAG, "============================");
+}
+
 int main()
 {
     OIC_LOG(DEBUG, TAG, "OCServer is starting...");
@@ -488,6 +495,13 @@ int main()
      * to display a PIN should be registered before running the server.
      */
     SetDisplayPinWithContextCB(DisplayPinCB, NULL);
+
+    /**
+     * If the server supports random pin based OTM,
+     * the callback to close PIN display can be registered.
+     * This callback will be invoked when random PIN based OTM is done.
+     */
+    SetClosePinDisplayCB(ClosePinDisplayCB);
 
     /**
      * Random PIN generation policy can be changed through SetRandomPinPolicy() API.
