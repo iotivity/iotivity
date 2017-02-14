@@ -536,7 +536,7 @@ namespace OIC
 
                     if(resource->getOwnedStatus())
                     {
-                        char uuidString[UUID_STRING_SIZE];
+                        char uuidString[UUID_STRING_SIZE] = {};
                         if(OCConvertUuidToString(resource->getDevPtr()->doxm->owner.id, uuidString))
                         {
                             m_ownerID = uuidString;

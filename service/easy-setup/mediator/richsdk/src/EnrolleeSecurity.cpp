@@ -175,7 +175,7 @@ namespace OIC
 
             bool ret = false;
             std::string ownerID;
-            char uuidString[UUID_STRING_SIZE];
+            char uuidString[UUID_STRING_SIZE] = {};
             if(OCConvertUuidToString(foundDevice->getDevPtr()->doxm->owner.id, uuidString))
             {
                 ownerID = uuidString;
@@ -518,7 +518,7 @@ namespace OIC
                         }
                         else if(OC_STACK_AUTHENTICATION_FAILURE  == result->at(i).res)
                         {
-                            OicSecOxm_t oxm;
+                            OicSecOxm_t oxm = OIC_OXM_COUNT;
                             if(OC_STACK_OK != m_securedResource->getOTMethod(&oxm))
                             {
                                 OTMResult = false;
@@ -625,7 +625,7 @@ namespace OIC
             OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "SID: %s", m_securedResource->getDeviceID().c_str());
             OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Owned status: %d", m_securedResource->getOwnedStatus());
 
-            OicSecOxm_t selectedOTMethod;
+            OicSecOxm_t selectedOTMethod = OIC_OXM_COUNT;
             if( OC_STACK_OK != m_securedResource->getOTMethod(&selectedOTMethod) )
             {
                 selectedOTMethod = OIC_OXM_COUNT; // Out-of-range
@@ -637,7 +637,7 @@ namespace OIC
 #endif
             if(m_securedResource->getOwnedStatus())
             {
-                char uuidString[UUID_STRING_SIZE];
+                char uuidString[UUID_STRING_SIZE] = {};
                 if(OCConvertUuidToString(m_securedResource->getDevPtr()->doxm->owner.id, uuidString))
                 {
                     OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Owner ID: %s", uuidString);
@@ -730,7 +730,7 @@ namespace OIC
                 return {};
             }
 
-            char uuidString[UUID_STRING_SIZE];
+            char uuidString[UUID_STRING_SIZE] = {};
             if(OCConvertUuidToString(mediatorDevId->id, uuidString))
             {
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Mediator UUID : %s", uuidString);
@@ -1056,6 +1056,7 @@ namespace OIC
             if (OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Error while getting info from DB");
+                OICFree(uuidList);
                 return false;
             }
 
@@ -1095,7 +1096,7 @@ namespace OIC
             // Need to discover Owned device in a given network, again
             std::shared_ptr< OC::OCSecureResource > ownedDevice = NULL;
 
-            OCStackResult result;
+            OCStackResult result = OC_STACK_ERROR;
             OicUuid_t uuid;
             if(OC_STACK_OK != ConvertStrToUuid(m_ocResource->sid().c_str(), &uuid))
             {

@@ -155,27 +155,27 @@ OCStackResult initEasySetupResource(bool isSecured)
         OC_RSRVD_ES_URI_EASYSETUP, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
     }
-    if(res)
+    if(res != OC_STACK_OK)
     {
         OIC_LOG_V(INFO, ES_RH_TAG, "Created EasySetup resource with result: %s", getResult(res));
         return res;
     }
 
     res = OCBindResourceTypeToResource(g_ESEasySetupResource.handle, OC_RSRVD_ES_RES_TYPE_COL);
-    if(res)
+    if(res != OC_STACK_OK)
     {
         OIC_LOG_V(INFO, ES_RH_TAG, "Binding Resource type with result: %s", getResult(res));
         return res;
     }
 
     res = OCBindResourceInterfaceToResource(g_ESEasySetupResource.handle, OC_RSRVD_INTERFACE_LL);
-    if(res)
+    if(res != OC_STACK_OK)
     {
         OIC_LOG_V(INFO, ES_RH_TAG, "Binding Resource interface with result: %s", getResult(res));
         return res;
     }
     res = OCBindResourceInterfaceToResource(g_ESEasySetupResource.handle, OC_RSRVD_INTERFACE_BATCH);
-    if(res)
+    if(res != OC_STACK_OK)
     {
         OIC_LOG_V(INFO, ES_RH_TAG, "Binding Resource interface with result: %s", getResult(res));
         return res;
