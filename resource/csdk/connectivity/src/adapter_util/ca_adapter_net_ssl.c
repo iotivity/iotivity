@@ -939,6 +939,91 @@ const CASecureEndpoint_t *GetCASecureEndpointData(const CAEndpoint_t* peer)
 #endif
 
 /**
+ * Adds a bit to the attributes field of a secure endpoint.
+ *
+ * @param[in]  peer         remote address
+ * @param[in]  newAttribute bit to be added to the attributes field
+ *
+ * @return  true if the secure endpoint has been found, false otherwise.
+ */
+bool SetCASecureEndpointAttribute(const CAEndpoint_t* peer, uint32_t newAttribute)
+{
+    bool result = false;
+
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s(peer = %s:%u, attribute = %#x)", __func__,
+        peer->addr, (uint32_t)peer->port, newAttribute);
+
+    oc_mutex_lock(g_sslContextMutex);
+
+    if (NULL == g_caSslContext)
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "Context is NULL");
+    }
+    else
+    {
+        SslEndPoint_t* sslPeer = GetSslPeer(peer);
+
+        if (!sslPeer)
+        {
+            OIC_LOG(ERROR, NET_SSL_TAG, "SSL peer not found");
+        }
+        else
+        {
+            sslPeer->sep.attributes |= newAttribute;
+            result = true;
+        }
+    }
+
+    oc_mutex_unlock(g_sslContextMutex);
+
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s -> %s", __func__, result ? "success" : "failed");
+    return result;
+}
+
+/**
+ * Gets the attributes field of a secure endpoint.
+ *
+ * @param[in]  peer          remote address
+ * @param[out] allAttributes all the attributes bits for that remote address
+ *
+ * @return  true if the secure endpoint has been found, false otherwise.
+ */
+bool GetCASecureEndpointAttributes(const CAEndpoint_t* peer, uint32_t* allAttributes)
+{
+    bool result = false;
+
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s(peer = %s:%u)", __func__,
+        peer->addr, (uint32_t)peer->port);
+
+    oc_mutex_lock(g_sslContextMutex);
+
+    if (NULL == g_caSslContext)
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "Context is NULL");
+    }
+    else
+    {
+        SslEndPoint_t* sslPeer = GetSslPeer(peer);
+
+        if (!sslPeer)
+        {
+            OIC_LOG(ERROR, NET_SSL_TAG, "SSL peer not found");
+        }
+        else
+        {
+            *allAttributes = sslPeer->sep.attributes;
+            result = true;
+        }
+    }
+
+    oc_mutex_unlock(g_sslContextMutex);
+
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s -> %s, attributes = %#x", __func__,
+        result ? "success" : "failed", result ? *allAttributes : 0);
+    return result;
+}
+
+/**
  * Deletes cached message.
  *
  * @param[in]  msg    message
@@ -1792,9 +1877,9 @@ static void SendCacheMessages(SslEndPoint_t * tep)
 
 void CAsetSslHandshakeCallback(CAErrorCallback tlsHandshakeCallback)
 {
-    OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s(%p)", __func__, tlsHandshakeCallback);
     g_sslCallback = tlsHandshakeCallback;
-    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s(%p)", __func__, tlsHandshakeCallback);
 }
 
 /* Read data from TLS connection

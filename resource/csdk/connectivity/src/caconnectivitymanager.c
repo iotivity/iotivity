@@ -155,6 +155,42 @@ const CASecureEndpoint_t *CAGetSecureEndpointData(const CAEndpoint_t *peer)
 }
 #endif //MULTIPLE_OWNER
 
+bool CASetSecureEndpointAttribute(const CAEndpoint_t* peer, uint32_t attribute)
+{
+    bool success = false;
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    if (!g_isInitialized)
+    {
+        OIC_LOG(DEBUG, TAG, "CA is not initialized");
+    }
+    else
+    {
+        success = SetCASecureEndpointAttribute(peer, attribute);
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "Out %s -> %u", __func__, (uint32_t)success);
+    return success;
+}
+
+bool CAGetSecureEndpointAttributes(const CAEndpoint_t* peer, uint32_t* attributes)
+{
+    bool success = false;
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    if (!g_isInitialized)
+    {
+        OIC_LOG(DEBUG, TAG, "CA is not initialized");
+    }
+    else
+    {
+        success = GetCASecureEndpointAttributes(peer, attributes);
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "Out %s -> %u", __func__, (uint32_t)success);
+    return success;
+}
+
 CAResult_t CAregisterSslHandshakeCallback(CAErrorCallback tlsHandshakeCallback)
 {
     OIC_LOG(DEBUG, TAG, "CAregisterSslHandshakeCallback");

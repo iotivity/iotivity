@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "iotivity_config.h"
+#include "iotivity_debug.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -1001,6 +1002,30 @@ static bool ValidateOxmsel(const OicSecOxm_t *supportedMethods,
     return isValidOxmsel;
 }
 
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+static void DoxmDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s(%p, %p)", __func__, endpoint, info);
+
+    if ((NULL != endpoint) && (NULL != info) && (CA_STATUS_OK == info->result))
+    {
+        /*
+         * Allow this OBT endpoint to bypass ACE checks for SVRs, while this
+         * device is not yet owned.
+         */
+        OC_VERIFY(CASetSecureEndpointAttribute(endpoint,
+            CA_SECURE_ENDPOINT_ATTRIBUTE_ADMINISTRATOR));
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "Out %s(%p, %p)", __func__, endpoint, info);
+}
+
+static void RegisterOTMSslHandshakeCallback(CAErrorCallback callback)
+{
+    OC_VERIFY(CA_STATUS_OK == CAregisterSslHandshakeCallback(callback));
+}
+#endif // __WITH_DTLS__ or __WITH_TLS__
+
 static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRequest)
 {
     OIC_LOG (DEBUG, TAG, "Doxm EntityHandle  processing POST request");
@@ -1068,6 +1093,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                             VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
                             OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
 
+                            RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
                             caRes = CASelectCipherSuite((uint16_t)TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256, ehRequest->devAddr.adapter);
                             VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
                             OIC_LOG(INFO, TAG, "ECDHE_PSK CipherSuite will be used for MOT");
@@ -1163,8 +1189,9 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                             ehRet = OC_EH_ERROR;
                             goto exit;
                         }
-                        OIC_LOG (INFO, TAG, "Doxm EntityHandle  enabling AnonECDHCipherSuite");
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+                        RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
+                        OIC_LOG(INFO, TAG, "Doxm EntityHandle  enabling AnonECDHCipherSuite");
                         ehRet = (CAEnableAnonECDHCipherSuite(true) == CA_STATUS_OK) ? OC_EH_OK : OC_EH_ERROR;
 #endif // __WITH_DTLS__ or __WITH_TLS__
                         goto exit;
@@ -1191,6 +1218,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                          * Disable anonymous ECDH cipher in tinyDTLS since device is now
                          * in owned state.
                          */
+                        RegisterOTMSslHandshakeCallback(NULL);
                         CAResult_t caRes = CA_STATUS_OK;
                         caRes = CAEnableAnonECDHCipherSuite(false);
                         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
@@ -1252,8 +1280,8 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                 {
                     /*
                      * If current state of the device is un-owned, enable
-                     * anonymous ECDH cipher in tinyDTLS so that Provisioning
-                     * tool can initiate JUST_WORKS ownership transfer process.
+                     * ECDHE_PSK cipher so that the Provisioning tool can
+                     * initiate the ownership transfer.
                      */
                     if(memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) == 0)
                     {
@@ -1270,12 +1298,11 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                         }
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-                        CAResult_t caRes = CA_STATUS_OK;
-
-                        caRes = CAEnableAnonECDHCipherSuite(false);
+                        CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
                         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
                         OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
 
+                        RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
                         caRes = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256,
                                                     ehRequest->devAddr.adapter);
                         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
@@ -1356,6 +1383,8 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                         OIC_LOG(WARNING, TAG, "Failed to update DOXM in persistent storage");
                         ehRet = OC_EH_ERROR;
                     }
+
+                    RegisterOTMSslHandshakeCallback(NULL);
                     CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
                     VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
                     OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
@@ -1674,6 +1703,7 @@ static void PrepareMOT(const OicSecDoxm_t* doxm)
             VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
             OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
 
+            RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
             caRes = CASelectCipherSuite((uint16_t)TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256, CA_ADAPTER_IP);
             VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
 #ifdef __WITH_TLS__

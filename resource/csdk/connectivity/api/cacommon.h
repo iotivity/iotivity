@@ -324,7 +324,15 @@ typedef struct
     // TODO change name to deviceId
     CARemoteId_t identity;      /**< endpoint device uuid */
     CARemoteId_t userId;        /**< endpoint user uuid */
+    uint32_t attributes;
 } CASecureEndpoint_t;
+
+/**
+ * Endpoint used for security administration - a special type of identity that
+ * bypasses Access Control Entry checks for SVR resources, while the device is
+ * not owned yet.
+ */
+#define CA_SECURE_ENDPOINT_ATTRIBUTE_ADMINISTRATOR  0x1
 
 /**
  * Enums for CA return values.

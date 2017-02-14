@@ -70,9 +70,10 @@ typedef struct OCProvisionDev
 #ifdef WITH_TCP
     uint16_t        tcpPort;         /**< tcp port **/
 #endif
-    char             secVer[OIC_SEC_MAX_VER_LEN];         /**< security version **/
+    char            secVer[OIC_SEC_MAX_VER_LEN];         /**< security version **/
     DeviceStatus    devStatus;       /**< status of device **/
-    OCDoHandle    handle;
+    OCDoHandle      handle;
+    bool            ownerAclUnauthorizedRequest;        /**< true if the provisioning client has already re-tried posting the Owner ACE **/
     struct OCProvisionDev  *next;    /**< Next pointer. **/
 }OCProvisionDev_t;
 

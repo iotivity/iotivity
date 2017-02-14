@@ -106,19 +106,31 @@ static bool IsRequestFromDevOwner(SRMRequestContext_t *context)
         return retVal;
     }
 
-    /*
-    if(OC_STACK_OK == GetDoxmDevOwnerId(&ownerid))
-    {
-        retVal = UuidCmp(&context->subject, &ownerid);
-    }
-    */
-
-    // TODO: Added as workaround for CTT
     OicSecDoxm_t* doxm = (OicSecDoxm_t*) GetDoxmResourceData();
     if (doxm)
     {
         retVal = UuidCmp(&doxm->owner, &context->subjectUuid);
+        OIC_LOG_V(DEBUG, TAG, "%s: request was %sreceived from device owner",
+            __func__, retVal ? "" : "NOT ");
     }
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    //Ownership Transfer sessions are allowed to bypass SVR ACEs, while this
+    //Device is not owned yet.
+    if (!retVal && (NULL != context->endPoint))
+    {
+        uint32_t allAttributes;
+        if (CAGetSecureEndpointAttributes(context->endPoint, &allAttributes) &&
+            (allAttributes & CA_SECURE_ENDPOINT_ATTRIBUTE_ADMINISTRATOR))
+        {
+            retVal = true;
+        }
+
+        OIC_LOG_V(DEBUG, TAG, "%s: request was %sreceived from Ownership Transfer session",
+            __func__, retVal ? "" : "NOT ");
+    }
+#endif
+
     return retVal;
 }
 

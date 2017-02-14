@@ -37,6 +37,8 @@
 #ifdef MULTIPLE_OWNER
 #define GetCASecureEndpointData GetCASecureEndpointDataTest
 #endif
+#define SetCASecureEndpointAttribute SetCASecureEndpointAttributeTest
+#define GetCASecureEndpointAttributes GetCASecureEndpointAttributesTest
 
 #include "../src/adapter_util/ca_adapter_net_ssl.c"
 

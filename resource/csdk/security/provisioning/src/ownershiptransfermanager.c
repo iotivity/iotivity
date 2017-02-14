@@ -1144,27 +1144,24 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
 
     if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
     {
-        if(otmCtx && otmCtx->selectedDeviceInfo)
+        if(otmCtx->selectedDeviceInfo)
         {
-            //Close the temporal secure session to verify the owner credential
+            //For Servers based on OCF 1.0, PostOwnerAcl can be executed using
+            //the already-existing session. However, get ready here to use the
+            //Owner Credential for establishing future secure sessions.
+            //
+            //For Servers based on OIC 1.1, PostOwnerAcl might fail with status
+            //OC_STACK_UNAUTHORIZED_REQ. After such a failure, OwnerAclHandler
+            //will close the current session and re-establish a new session,
+            //using the Owner Credential.
             CAEndpoint_t* endpoint = (CAEndpoint_t *)&otmCtx->selectedDeviceInfo->endpoint;
-            endpoint->port = otmCtx->selectedDeviceInfo->securePort;
-            CAResult_t caResult = CA_STATUS_OK;
-            caResult = CAcloseSslConnection(endpoint);
-
-            if(CA_STATUS_OK != caResult)
-            {
-                OIC_LOG(ERROR, TAG, "Failed to close DTLS session");
-                SetResult(otmCtx, caResult);
-                return OC_STACK_DELETE_TRANSACTION;
-            }
 
             /**
-                * If we select NULL cipher,
-                * client will select appropriate cipher suite according to server's cipher-suite list.
-                */
-                // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 = 0xC037, /**< see RFC 5489 */
-            caResult = CASelectCipherSuite(0xC037, endpoint->adapter);
+              * If we select NULL cipher,
+              * client will select appropriate cipher suite according to server's cipher-suite list.
+              */
+            // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 = 0xC037, /**< see RFC 5489 */
+            CAResult_t caResult = CASelectCipherSuite(0xC037, endpoint->adapter);
             if(CA_STATUS_OK != caResult)
             {
                 OIC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
@@ -1173,9 +1170,9 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
             }
 
             /**
-                * in case of random PIN based OxM,
-                * revert get_psk_info callback of tinyDTLS to use owner credential.
-                */
+              * in case of random PIN based OxM,
+              * revert get_psk_info callback of tinyDTLS to use owner credential.
+              */
             if(OIC_RANDOM_DEVICE_PIN == otmCtx->selectedDeviceInfo->doxm->oxmSel)
             {
                 OicUuid_t emptyUuid = { .id={0}};
@@ -1232,26 +1229,57 @@ static OCStackApplicationResult OwnerAclHandler(void *ctx, OCDoHandle UNUSED,
 
     OIC_LOG(DEBUG, TAG, "IN OwnerAclHandler");
     (void)UNUSED;
-    OCStackResult res = OC_STACK_OK;
+    OCStackResult res = clientResponse->result;
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
     otmCtx->ocDoHandle = NULL;
+    OCProvisionDev_t* selectedDeviceInfo = otmCtx->selectedDeviceInfo;
 
-    if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
+    if(OC_STACK_RESOURCE_CHANGED == res)
     {
-        if(otmCtx && otmCtx->selectedDeviceInfo)
+        if(NULL != selectedDeviceInfo)
         {
             //POST /oic/sec/doxm [{ ..., "owned":"TRUE" }]
             res = PostOwnershipInformation(otmCtx);
             if(OC_STACK_OK != res)
             {
-                OIC_LOG(ERROR, TAG, "Failed to update ownership information to new device");
+                OIC_LOG_V(ERROR, TAG, "%s: Failed to update the ownership information of the new device, res = %d",
+                    __func__, res);
+                SetResult(otmCtx, res);
+            }
+        }
+    }
+    else if((OC_STACK_UNAUTHORIZED_REQ == res) &&
+            (NULL != selectedDeviceInfo) &&
+            !selectedDeviceInfo->ownerAclUnauthorizedRequest)
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: UNAUTHORIZED_REQ. Assuming server is based on OIC 1.1",
+            __func__);
+        selectedDeviceInfo->ownerAclUnauthorizedRequest = true;
+
+        //Close the temporal secure session and re-connect using the owner credential
+        CAEndpoint_t* endpoint = (CAEndpoint_t *)&selectedDeviceInfo->endpoint;
+        endpoint->port = selectedDeviceInfo->securePort;
+        CAResult_t caResult = CAcloseSslConnection(endpoint);
+
+        if(CA_STATUS_OK != caResult)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Failed to close DTLS session, caResult = %d",
+                __func__, caResult);
+            SetResult(otmCtx, caResult);
+        }
+        else
+        {
+            res = PostOwnerAcl(otmCtx);
+            if(OC_STACK_OK != res)
+            {
+                OIC_LOG_V(ERROR, TAG, "%s: Failed to update owner ACL to new device, res = %d",
+                    __func__, res);
                 SetResult(otmCtx, res);
             }
         }
     }
     else
     {
-        res = clientResponse->result;
         OIC_LOG_V(ERROR, TAG, "OwnerAclHandler : Unexpected result %d", res);
         SetResult(otmCtx, res);
     }
