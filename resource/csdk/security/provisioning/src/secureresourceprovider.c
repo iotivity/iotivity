@@ -774,7 +774,6 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
             return OC_STACK_INVALID_PARAM;
         }
     }
-    return OC_STACK_ERROR;
 }
 
 /**

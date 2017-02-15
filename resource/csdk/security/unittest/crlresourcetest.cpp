@@ -89,7 +89,7 @@ TEST(CRLResourceTest, GetDerCrl)
 {
     ByteArray crlArray = {NULL, 0};
     GetDerCrl(&crlArray);
-    EXPECT_NE(0, crlArray.len);
+    EXPECT_NE(static_cast<size_t>(0), crlArray.len);
 }
 
 #endif

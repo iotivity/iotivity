@@ -116,6 +116,13 @@ void readInteger(int* item, const char* description, const char* example)
     skipSpecialCharacters();
 }
 
+void readUInt16(uint16_t* item, const char* description, const char* example)
+{
+    printf("Enter %s (f.e. %s):\n", description, example);
+    scanf("%hu", item);
+    skipSpecialCharacters();
+}
+
 /**
  * Read user input (expect array of strings)
  *
@@ -446,16 +453,16 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
 
         char aceid[MAX_ID_LENGTH] = { 0 };
         char subjectuuid[MAX_ID_LENGTH] = { 0 };
-        int stype = 0;
-        int permission = 0;
+        uint16_t stype = 0;
+        uint16_t permission = 0;
 
         do
         {
             readString(subjectuuid, sizeof(subjectuuid), "subjectuuid", SUBJECT_ID_EXAMPLE);
         } while (OC_STACK_OK != ConvertStrToUuid(subjectuuid, &ace->subjectuuid));
 
-        readInteger(&stype, "subject type", "0 – Device, 1 – User, 2 - Group");
-        readInteger(&permission, "permission", "6");
+        readUInt16(&stype, "subject type", "0 – Device, 1 – User, 2 - Group");
+        readUInt16(&permission, "permission", "6");
 
         ace->aceId = OICStrdup(aceid);
         ace->stype = stype;
@@ -464,7 +471,7 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
         int reslist_count = 0;
         readInteger(&reslist_count, "resources list count", "1");
 
-        for (int i = 0; i < reslist_count; i++)
+        for (int j = 0; j < reslist_count; j++)
         {
             OicSecRsrc_t *res = OICCalloc(1, sizeof(OicSecRsrc_t));
             if (!res)
@@ -513,8 +520,8 @@ OCStackResult OCWrapperAclIndividualUpdate(const OCDevAddr *endPoint, OCCloudRes
 
     char aceid[MAX_ID_LENGTH] = { 0 };
     char subjectuuid[MAX_ID_LENGTH] = { 0 };
-    int stype = 0;
-    int permission = 0;
+    uint16_t stype = 0;
+    uint16_t permission = 0;
 
     readString(aceid, sizeof(aceid), "ace id", ACE_ID_EXAMPLE);
     do
@@ -522,8 +529,8 @@ OCStackResult OCWrapperAclIndividualUpdate(const OCDevAddr *endPoint, OCCloudRes
         readString(subjectuuid, sizeof(subjectuuid), "subjectuuid", SUBJECT_ID_EXAMPLE);
     } while (OC_STACK_OK != ConvertStrToUuid(subjectuuid, &ace->subjectuuid));
 
-    readInteger(&stype, "subject type", "0 – Device, 1 – User, 2 - Group");
-    readInteger(&permission, "permission", "6");
+    readUInt16(&stype, "subject type", "0 – Device, 1 – User, 2 - Group");
+    readUInt16(&permission, "permission", "6");
 
     ace->stype = stype;
     ace->permission = permission;

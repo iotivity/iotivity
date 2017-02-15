@@ -81,7 +81,7 @@ OCStackResult LoadPreconfigPinCodeCallback(OTMContext_t *otmCtx)
     if(NULL == cred)
     {
         OicUuid_t uuid = {.id={0}};
-        OICStrcpy(uuid.id, sizeof(uuid.id), WILDCARD_SUBJECT_ID.id);
+        memcpy(&uuid, &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t));
         cred = GetCredResourceData(&uuid);
         if(NULL == cred)
         {
@@ -104,7 +104,7 @@ OCStackResult LoadPreconfigPinCodeCallback(OTMContext_t *otmCtx)
             return OC_STACK_NO_MEMORY;
         }
         size_t pinLen = 0;
-        if(B64_OK != b64Decode(cred->privateData.data, cred->privateData.len, pinBuffer, pinBufLen, &pinLen))
+        if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, pinBuffer, pinBufLen, &pinLen))
         {
             OIC_LOG(ERROR, TAG, "Failed to base64 deconding for preconfig PIN");
             OICFree(pinBuffer);

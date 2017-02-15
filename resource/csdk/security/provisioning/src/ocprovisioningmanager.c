@@ -437,6 +437,8 @@ OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *select
 #ifdef MULTIPLE_OWNER
 static void AddPreconfPinOxMCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
+    OC_UNUSED(hasError);
+
     ProvPreconfPINCtx_t* provCtx = (ProvPreconfPINCtx_t*)ctx;
     if(provCtx)
     {

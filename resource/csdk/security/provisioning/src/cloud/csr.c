@@ -114,7 +114,7 @@ static int ecdsaGenKeypair(mbedtls_pk_context * pk)
     mbedtls_ctr_drbg_init(&ctr_drbg);
     mbedtls_entropy_init(&entropy);
     if (0 != mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func,
-                                   &entropy, PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING)))
+                                   &entropy, (const unsigned char*)PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING)))
     {
         OIC_LOG(ERROR, TAG, "Seed initialization failed!");
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
@@ -211,8 +211,9 @@ static int GenerateCSR(char *subject, OCByteString *csr)
     // Initialize the DRBG context
     mbedtls_ctr_drbg_init(&ctr_drbg);
     mbedtls_entropy_init(&entropy);
+
     result = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func,
-             &entropy, PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING));
+             &entropy, (const unsigned char*)PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING));
     if (result < 0)
     {
         OIC_LOG(ERROR, TAG, "Seed initialization failed!");
@@ -327,12 +328,11 @@ static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCCli
     }
     else
     {
-        OicSecKey_t key =
-        {
-            g_privateKey.bytes,
-            g_privateKey.len,
-            OIC_ENCODING_DER
-        };
+        OicSecKey_t key;
+        memset(&key, 0, sizeof(key));
+        key.data = g_privateKey.bytes;
+        key.len = g_privateKey.len;
+        key.encoding = OIC_ENCODING_DER;
 
         uint16_t credId;
         result = SRPSaveOwnCertChain(&cert, &key, &credId);
@@ -420,7 +420,11 @@ OCStackResult OCCloudCertificateIssueRequest(void* ctx,
 
     OCRepPayloadSetPropString(payload, OC_RSRVD_DEVICE_ID, deviceId);
 
-    OicSecKey_t csr = {.data = request.bytes, .len = request.len, .encoding = OIC_ENCODING_DER};
+    OicSecKey_t csr;
+    memset(&csr, 0, sizeof(csr));
+    csr.data = request.bytes;
+    csr.len = request.len;
+    csr.encoding = OIC_ENCODING_DER;
 
     OCRepPayloadSetPropPubDataType(payload, OC_RSRVD_CSR, &csr);
 

@@ -7,8 +7,13 @@ import os.path
 # Set common flags
 if env['CC'] == 'cl':
     # Enable warnings as errors.
-    env.AppendUnique(CCFLAGS=[
-        '/we4133'])  # C4133 incompatible type conversion
+    #  - warning C4133: incompatible type conversion
+    env.AppendUnique(CCFLAGS=['/we4133'])
+
+    # Disable the following warnings:
+    #  - warning C4127: conditional expression is constant
+    #    - Disabled due to the widespread usage in IoTivity
+    env.AppendUnique(CCFLAGS=['/wd4127'])
 
     env.AppendUnique(CCFLAGS=['/EHsc'])
 

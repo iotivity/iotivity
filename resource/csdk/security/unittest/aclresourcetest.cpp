@@ -137,7 +137,7 @@ TEST(ACLResourceTest, CBORDefaultACLConversion)
     OCStackResult convRet = AclToCBORPayload(defaultAcl, &defaultPsStorage, &defaultAclSize);
     EXPECT_EQ(OC_STACK_OK, convRet);
     ASSERT_TRUE(NULL != defaultPsStorage);
-    EXPECT_NE(0, defaultAclSize);
+    EXPECT_NE(static_cast<size_t>(0), defaultAclSize);
 
     OicSecAcl_t* convertedAcl = CBORPayloadToAcl(defaultPsStorage, defaultAclSize);
     ASSERT_TRUE(NULL != convertedAcl);

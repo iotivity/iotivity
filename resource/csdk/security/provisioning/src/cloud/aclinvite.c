@@ -45,10 +45,10 @@ static OCStackResult parseInvitePayload(const OCRepPayload *payload, const char 
 {
     OCStackResult result = OC_STACK_NO_MEMORY;
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
-    OCRepPayload **heplerPayload  = NULL;
+    OCRepPayload **helperPayload  = NULL;
     size_t i = 0;
 
-    if (!OCRepPayloadGetPropObjectArray(payload, name, &heplerPayload, dimensions))
+    if (!OCRepPayloadGetPropObjectArray(payload, name, &helperPayload, dimensions))
     {
         OIC_LOG_V(ERROR, TAG, "Can't get: %s", name);
         return OC_STACK_MALFORMED_RESPONSE;
@@ -78,22 +78,22 @@ static OCStackResult parseInvitePayload(const OCRepPayload *payload, const char 
 
     for (i = 0; i < gidlist->length; i++)
     {
-        const OCRepPayload *payload = heplerPayload[i];
+        const OCRepPayload *gidPayload = helperPayload[i];
 
-        if (!OCRepPayloadGetPropString(payload, OC_RSRVD_GROUP_ID, &gidlist->array[i]))
+        if (!OCRepPayloadGetPropString(gidPayload, OC_RSRVD_GROUP_ID, &gidlist->array[i]))
         {
             OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_GROUP_ID);
             result = OC_STACK_MALFORMED_RESPONSE;
             goto exit;
         }
 
-        if (!OCRepPayloadGetPropString(payload, OC_RSRVD_MEMBER_ID, &midlist->array[i]))
+        if (!OCRepPayloadGetPropString(gidPayload, OC_RSRVD_MEMBER_ID, &midlist->array[i]))
         {
             OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_MEMBER_ID);
             result = OC_STACK_MALFORMED_RESPONSE;
             goto exit;
         }
-        OCRepPayloadDestroy(heplerPayload[i]);
+        OCRepPayloadDestroy(helperPayload[i]);
     }
 
     result = OC_STACK_OK;
@@ -106,10 +106,10 @@ exit:
 
         for (size_t k = i; k < gidlist->length; k++)
         {
-            OCRepPayloadDestroy(heplerPayload[i]);
+            OCRepPayloadDestroy(helperPayload[i]);
         }
     }
-    OICFree(heplerPayload);
+    OICFree(helperPayload);
     return result;
 }
 
@@ -237,7 +237,8 @@ OCStackResult OCCloudAclInviteUser(void* ctx,
     //add next fields if they were filled
     if (userId) OCRepPayloadSetPropString(payload, OC_RSRVD_USER_UUID, userId);
 
-    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {groupIds->length, 0, 0};
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
+    dimensions[0] = groupIds->length;
     OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_INVITE,
             (const struct OCRepPayload **)heplerPayload, dimensions);
 
@@ -327,8 +328,8 @@ OCStackResult OCCloudAclCancelInvitation(void* ctx,
 
     if (userId)
     {
-        size_t len = strlen(uri);
-        snprintf(uri + len, MAX_URI_LENGTH - len, "?%s=%s", OC_RSRVD_USER_UUID, userId);
+        len = strlen(uri);
+        snprintf((uri + len), (MAX_URI_LENGTH - len), "?%s=%s", OC_RSRVD_USER_UUID, userId);
     }
 
     len = strlen(uri);

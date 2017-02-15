@@ -81,7 +81,7 @@ bool ReadCBORFile(const char* filename, const char* rsrcname, uint8_t **payload,
     int ret = snprintf(filepath, len, "%s%s", STRINGIZE(SECURITY_BUILD_UNITTEST_DIR), filename);
     printf("Root build path: %s \n", filepath);
 
-    if (ret == (len - 1))
+    if (ret == (int)(len - 1))
     {
         FILE *fp = fopen(filepath, "rb");
         if (fp)
@@ -98,7 +98,7 @@ bool ReadCBORFile(const char* filename, const char* rsrcname, uint8_t **payload,
                     }
                     else
                     {
-                        size = st.st_size;
+                        size = (size_t)st.st_size;
 
                         CborValue cbor = {0, };
                         CborParser parser = {0, };

@@ -1261,8 +1261,6 @@ static OCStackApplicationResult MOTDeviceDiscoveryHandler(void *ctx, OCDoHandle 
         OIC_LOG(INFO, TAG, "Skiping Null response");
         return OC_STACK_KEEP_TRANSACTION;
     }
-
-    return  OC_STACK_DELETE_TRANSACTION;
 }
 
 /**

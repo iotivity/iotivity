@@ -456,6 +456,8 @@ FILE* server_fopen(const char *path, const char *mode)
 
 void DisplayPinCB(char *pin, size_t pinSize, void *context)
 {
+    OC_UNUSED(context);
+
     if(NULL == pin || pinSize <= 0)
     {
         OIC_LOG(INFO, TAG, "Invalid PIN");
@@ -514,7 +516,7 @@ int main()
     {
         printf("Press 'G' to generate random PIN...\n");
         printf("Press 'E' to exit...\n");
-        char in = getchar();
+        char in = (char)getchar();
         if('G' == in || 'g' == in)
         {
             char ranPin[OXM_RANDOM_PIN_MAX_SIZE + 1] = {0};

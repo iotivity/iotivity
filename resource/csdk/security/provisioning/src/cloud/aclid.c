@@ -276,13 +276,13 @@ OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
 
     LL_FOREACH((cloudAce_t*)aces, ace)
     {
-        OCRepPayload *payload = OCRepPayloadCreate();
-        if (!payload)
+        OCRepPayload *acePayload = OCRepPayloadCreate();
+        if (!acePayload)
         {
             OIC_LOG_V(DEBUG, TAG, "Can't allocate memory for helperPayload[i]");
             goto no_memory;
         }
-        helperPayload[i++] = payload;
+        helperPayload[i++] = acePayload;
 
         char *uuid = NULL;
         if (OC_STACK_OK != ConvertUuidToStr(&ace->subjectuuid, &uuid))
@@ -290,9 +290,9 @@ OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
             OIC_LOG(ERROR, TAG, "Can't convert subjectuuid to string");
         }
 
-        OCRepPayloadSetPropString(payload, OC_RSRVD_SUBJECT_UUID, (const char *)uuid);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_SUBJECT_TYPE, ace->stype);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_PERMISSION_MASK, ace->permission);
+        OCRepPayloadSetPropString(acePayload, OC_RSRVD_SUBJECT_UUID, (const char *)uuid);
+        OCRepPayloadSetPropInt(acePayload, OC_RSRVD_SUBJECT_TYPE, ace->stype);
+        OCRepPayloadSetPropInt(acePayload, OC_RSRVD_PERMISSION_MASK, ace->permission);
 
         OICFree(uuid);
 
@@ -318,26 +318,26 @@ OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
 
         LL_FOREACH(ace->resources, res)
         {
-            OCRepPayload *payload = OCRepPayloadCreate();
-            if (!payload)
+            OCRepPayload *aceResourcePayload = OCRepPayloadCreate();
+            if (!aceResourcePayload)
             {
                 OIC_LOG_V(DEBUG, TAG, "Can't allocate memory for helperPayload2[j]");
                 goto no_memory;
             }
-            helperPayload2[j++] = payload;
+            helperPayload2[j++] = aceResourcePayload;
 
-            OCRepPayloadSetPropString(payload, OC_RSRVD_HREF, res->href);
+            OCRepPayloadSetPropString(aceResourcePayload, OC_RSRVD_HREF, res->href);
 
             dimensions[0] = res->typeLen;
-            OCRepPayloadSetStringArray(payload, OC_RSRVD_RESOURCE_TYPE,
+            OCRepPayloadSetStringArray(aceResourcePayload, OC_RSRVD_RESOURCE_TYPE,
                                        (const char **)res->types, dimensions);
 
             dimensions[0] = res->interfaceLen;
-            OCRepPayloadSetStringArray(payload, OC_RSRVD_INTERFACE,
+            OCRepPayloadSetStringArray(aceResourcePayload, OC_RSRVD_INTERFACE,
                                        (const char **)res->interfaces, dimensions);
         }
         dimensions[0] = reslist_count;
-        OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_RESOURCES,
+        OCRepPayloadSetPropObjectArray(acePayload, OC_RSRVD_RESOURCES,
                 (const OCRepPayload **)helperPayload2, dimensions);
     }
     dimensions[0] = acllist_count;
@@ -411,13 +411,13 @@ OCStackResult OCCloudAclIndividualUpdate(void* ctx,
 
     LL_FOREACH((cloudAce_t*)aces, ace)
     {
-        OCRepPayload *payload = OCRepPayloadCreate();
-        if (!payload)
+        OCRepPayload *acePayload = OCRepPayloadCreate();
+        if (!acePayload)
         {
             OIC_LOG_V(DEBUG, TAG, "Can't allocate memory for helperPayload[i]");
             goto no_memory;
         }
-        helperPayload[i++] = payload;
+        helperPayload[i++] = acePayload;
 
         char *uuid = NULL;
         if (OC_STACK_OK != ConvertUuidToStr(&ace->subjectuuid, &uuid))
@@ -425,9 +425,9 @@ OCStackResult OCCloudAclIndividualUpdate(void* ctx,
             OIC_LOG(ERROR, TAG, "Can't convert subjectuuid to string");
         }
 
-        OCRepPayloadSetPropString(payload, OC_RSRVD_SUBJECT_UUID, (const char *)uuid);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_SUBJECT_TYPE, ace->stype);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_PERMISSION_MASK, ace->permission);
+        OCRepPayloadSetPropString(acePayload, OC_RSRVD_SUBJECT_UUID, (const char *)uuid);
+        OCRepPayloadSetPropInt(acePayload, OC_RSRVD_SUBJECT_TYPE, ace->stype);
+        OCRepPayloadSetPropInt(acePayload, OC_RSRVD_PERMISSION_MASK, ace->permission);
 
         OICFree(uuid);
 
@@ -453,26 +453,26 @@ OCStackResult OCCloudAclIndividualUpdate(void* ctx,
 
         LL_FOREACH(ace->resources, res)
         {
-            OCRepPayload *payload = OCRepPayloadCreate();
-            if (!payload)
+            OCRepPayload *aceResourcePayload = OCRepPayloadCreate();
+            if (!aceResourcePayload)
             {
                 OIC_LOG_V(DEBUG, TAG, "Can't allocate memory for helperPayload2[j]");
                 goto no_memory;
             }
-            helperPayload2[j++] = payload;
+            helperPayload2[j++] = aceResourcePayload;
 
-            OCRepPayloadSetPropString(payload, OC_RSRVD_HREF, res->href);
+            OCRepPayloadSetPropString(aceResourcePayload, OC_RSRVD_HREF, res->href);
 
             dimensions[0] = res->typeLen;
-            OCRepPayloadSetStringArray(payload, OC_RSRVD_RESOURCE_TYPE,
+            OCRepPayloadSetStringArray(aceResourcePayload, OC_RSRVD_RESOURCE_TYPE,
                                        (const char **)res->types, dimensions);
 
             dimensions[0] = res->interfaceLen;
-            OCRepPayloadSetStringArray(payload, OC_RSRVD_INTERFACE,
+            OCRepPayloadSetStringArray(aceResourcePayload, OC_RSRVD_INTERFACE,
                                        (const char **)res->interfaces, dimensions);
         }
         dimensions[0] = reslist_count;
-        OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_RESOURCES,
+        OCRepPayloadSetPropObjectArray(acePayload, OC_RSRVD_RESOURCES,
                 (const OCRepPayload **)helperPayload2, dimensions);
     }
     dimensions[0] = acllist_count;

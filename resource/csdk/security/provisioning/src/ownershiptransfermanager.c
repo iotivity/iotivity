@@ -624,6 +624,8 @@ exit:
 static void OwnershipTransferSessionFailed(const CAEndpoint_t *endpoint,
         const CAErrorInfo_t *info, OicSecDoxm_t *newDevDoxm, OTMContext_t *otmCtx, bool emptyOwnerUuid)
 {
+    OC_UNUSED(endpoint);
+
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
 
     if (CA_DTLS_AUTHENTICATION_FAILURE != info->result)
@@ -768,6 +770,7 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
     endpoint.addr[MAX_ADDR_STR_SIZE_CA - 1] = '\0';
     endpoint.port = selectedDeviceInfo->securePort;
     endpoint.adapter = selectedDeviceInfo->endpoint.adapter;
+    uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = { 0 };
 
     OicUuid_t ownerDeviceID = {.id={0}};
     if (OC_STACK_OK != GetDoxmDeviceID(&ownerDeviceID))
@@ -776,8 +779,11 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
         return res;
     }
 
-    uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = {0};
-    OicSecKey_t ownerKey = {.data=ownerPSK, .len=OWNER_PSK_LENGTH_128, .encoding=OIC_ENCODING_RAW};
+    OicSecKey_t ownerKey;
+    memset(&ownerKey, 0, sizeof(ownerKey));
+    ownerKey.data = ownerPSK;
+    ownerKey.len = OWNER_PSK_LENGTH_128;
+    ownerKey.encoding = OIC_ENCODING_RAW;
 
     //Generating OwnerPSK
     CAResult_t pskRet = CAGenerateOwnerPSK(&endpoint,

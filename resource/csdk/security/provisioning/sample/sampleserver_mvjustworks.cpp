@@ -397,8 +397,10 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     return ehResult;
 }
 
-OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
+OCStackResult displayNumCB(void *ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
 {
+    OC_UNUSED(ctx);
+
     OIC_LOG(INFO, TAG, "IN displayNumCB");
     OIC_LOG(INFO, TAG, "############ mutualVerifNum ############");
     OIC_LOG_BUFFER(INFO, TAG, mutualVerifNum, MUTUAL_VERIF_NUM_LEN);
@@ -407,8 +409,10 @@ OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_L
     return OC_STACK_OK;
 }
 
-OCStackResult confirmNumCB(void * ctx)
+OCStackResult confirmNumCB(void *ctx)
 {
+    OC_UNUSED(ctx);
+
     for (;;)
     {
         int userConfirm;
