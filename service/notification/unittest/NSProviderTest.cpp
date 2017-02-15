@@ -34,7 +34,12 @@ namespace
 {
     std::atomic_bool g_isStartedStack(false);
 
-    std::chrono::milliseconds g_waitForResponse(1000);
+    /// Reasonable timeout is set to 1000 ms in unsecured mode
+    unsigned int g_timeout = 1000;
+#ifdef SECURED
+    g_timeout = 2 * g_timeout
+#endif
+    std::chrono::milliseconds g_waitForResponse(g_timeout);
 
     std::condition_variable responseProviderSub;
     std::mutex responseProviderSubLock;
@@ -230,8 +235,11 @@ TEST_F(NotificationProviderTest, ExpectCallbackWhenReceiveSubscribeRequestWithAc
 
     // maximum waiting time for subscription is 1.5 sec.
     // usually maximum time is 1 sec. (g_waitForResponse = 1 sec.)
-    // but, in the secured case is need to more wait for processing.
-    std::chrono::milliseconds waitForSubscription(1500);
+    unsigned int timeout = g_timeout * 1.5;
+#ifdef SECURED
+    timemout = 2 * timemout;
+#endif
+    std::chrono::milliseconds waitForSubscription(timemout);
     std::unique_lock< std::mutex > lock{ responseProviderSubLock };
     responseProviderSub.wait_for(lock, waitForSubscription);
 
@@ -570,7 +578,7 @@ TEST_F(NotificationProviderTest, CancelObserves)
 {
     bool ret = g_consumerSimul.cancelObserves();
 
-    std::chrono::milliseconds waitForTerminate(1000);
+    std::chrono::milliseconds waitForTerminate(g_timemout);
     std::this_thread::sleep_for(waitForTerminate);
 
     EXPECT_EQ(ret, true);
