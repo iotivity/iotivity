@@ -1560,7 +1560,7 @@ static int InitConfig(mbedtls_ssl_config * conf, int transport, int mode)
 /**
  * Starts DTLS retransmission.
  */
-static int StartRetransmit()
+static void StartRetransmit()
 {
     size_t listIndex = 0;
     size_t listLength = 0;
@@ -1571,7 +1571,7 @@ static int StartRetransmit()
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Context is NULL. Stop retransmission");
         oc_mutex_unlock(g_sslContextMutex);
-        return -1;
+        return;
     }
 
     if (g_caSslContext->timerId != -1)
@@ -1594,7 +1594,7 @@ static int StartRetransmit()
             if (MBEDTLS_ERR_SSL_CONN_EOF != ret)
             {
                 //start new timer
-                registerTimer(RETRANSMISSION_TIME, &g_caSslContext->timerId, (void *) StartRetransmit);
+                registerTimer(RETRANSMISSION_TIME, &g_caSslContext->timerId, StartRetransmit);
                 //unlock & return
                 if (!checkSslOperation(tep,
                                        ret,
@@ -1602,15 +1602,14 @@ static int StartRetransmit()
                                        MBEDTLS_SSL_ALERT_MSG_HANDSHAKE_FAILURE))
                 {
                     oc_mutex_unlock(g_sslContextMutex);
-                    return CA_STATUS_FAILED;
+                    return;
                 }
             }
         }
     }
     //start new timer
-    registerTimer(RETRANSMISSION_TIME, &g_caSslContext->timerId, (void *) StartRetransmit);
+    registerTimer(RETRANSMISSION_TIME, &g_caSslContext->timerId, StartRetransmit);
     oc_mutex_unlock(g_sslContextMutex);
-    return 0;
 }
 #endif
 
