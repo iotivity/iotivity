@@ -5397,6 +5397,23 @@ OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
     return OC_STACK_OK;
 }
 
+OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins)
+{
+    OCResource *resource = NULL;
+
+    VERIFY_NON_NULL(handle, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(ins, ERROR, OC_STACK_INVALID_PARAM);
+
+    resource = findResource((OCResource *) handle);
+    if (resource)
+    {
+        *ins = resource->ins;
+        return OC_STACK_OK;
+    }
+    return OC_STACK_ERROR;
+}
+#endif // RD_CLIENT || RD_SERVER
+
 OCResourceHandle OCGetResourceHandleAtUri(const char *uri)
 {
     if (!uri)
@@ -5418,23 +5435,6 @@ OCResourceHandle OCGetResourceHandleAtUri(const char *uri)
     }
     return NULL;
 }
-
-OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins)
-{
-    OCResource *resource = NULL;
-
-    VERIFY_NON_NULL(handle, ERROR, OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL(ins, ERROR, OC_STACK_INVALID_PARAM);
-
-    resource = findResource((OCResource *) handle);
-    if (resource)
-    {
-        *ins = resource->ins;
-        return OC_STACK_OK;
-    }
-    return OC_STACK_ERROR;
-}
-#endif
 
 OCStackResult OCSetHeaderOption(OCHeaderOption* ocHdrOpt, size_t* numOptions, uint16_t optionID,
                                 void* optionData, size_t optionDataLength)

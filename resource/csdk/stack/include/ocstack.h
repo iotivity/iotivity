@@ -290,7 +290,8 @@ OCStackResult OCStopPresence();
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandler, void* callbackParameter);
+OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandler,
+                                              void* callbackParameter);
 
 /**
  * This function sets device information.
@@ -574,16 +575,6 @@ OCStackResult OCGetNumberOfResourceInterfaces(OCResourceHandle handle,
 const char *OCGetResourceInterfaceName(OCResourceHandle handle, uint8_t index);
 
 /**
- * This function gets methods of resource interface of the resource.
- *
- * @param handle      Handle of resource.
- * @param index       Index of resource, 0 to Count - 1.
- *
- * @return Allowed methods if resource found or NULL if resource not found.
- */
-uint8_t OCGetResourceInterfaceAllowedMethods(OCResourceHandle handle, uint8_t index);
-
-/**
  * This function gets resource handle from the collection resource by index.
  *
  * @param collectionHandle   Handle of collection resource.
@@ -632,13 +623,11 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult
-OCNotifyListOfObservers (OCResourceHandle handle,
-                         OCObservationId  *obsIdList,
-                         uint8_t          numberOfIds,
-                         const OCRepPayload *payload,
-                         OCQualityOfService qos);
-
+OCStackResult OCNotifyListOfObservers (OCResourceHandle handle,
+                                       OCObservationId  *obsIdList,
+                                       uint8_t          numberOfIds,
+                                       const OCRepPayload *payload,
+                                       OCQualityOfService qos);
 
 /**
  * This function sends a response to a request.
@@ -684,6 +673,7 @@ const OCDPDev_t* OCGetDirectPairedDevices();
  */
 OCStackResult OCDoDirectPairing(void *ctx, OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
                                 OCDirectPairingCB resultCallback);
+//#endif // DIRECT_PAIRING
 
 /**
  * This function sets uri being used for proxy.
@@ -713,17 +703,6 @@ OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, uint8_t ins);
  */
 OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins);
 
-#endif
-
-/**
-* This function gets a resource handle by resource uri.
-*
-* @param uri   Uri of Resource to get Resource handle.
-*
-* @return Found  resource handle or NULL if not found.
-*/
-OCResourceHandle OCGetResourceHandleAtUri(const char *uri);
-
 #ifdef RD_SERVER
 /**
  * Sets the filename to be used for database persistent storage.
@@ -750,10 +729,20 @@ const char *OCRDDatabaseGetStorageFilename();
 *
 * @return ::OC_STACK_OK in case of success or else other value.
 */
-OCStackResult OCRDDatabaseDiscoveryPayloadCreate(const char *interfaceType, const char *resourceType,
-    OCDiscoveryPayload **discPayload);
-#endif
-//#endif // DIRECT_PAIRING
+OCStackResult OCRDDatabaseDiscoveryPayloadCreate(const char *interfaceType,
+                                                 const char *resourceType,
+                                                 OCDiscoveryPayload **discPayload);
+#endif // RD_SERVER
+#endif // RD_CLIENT || RD_SERVER
+
+/**
+* This function gets a resource handle by resource uri.
+*
+* @param uri   Uri of Resource to get Resource handle.
+*
+* @return Found  resource handle or NULL if not found.
+*/
+OCResourceHandle OCGetResourceHandleAtUri(const char *uri);
 
 /**
  *  Add a header option to the given header option array.
@@ -766,12 +755,11 @@ OCStackResult OCRDDatabaseDiscoveryPayloadCreate(const char *interfaceType, cons
  *
  * @return ::OC_STACK_OK on success and other value otherwise.
  */
-OCStackResult
-OCSetHeaderOption(OCHeaderOption* ocHdrOpt,
-                  size_t* numOptions,
-                  uint16_t optionID,
-                  void* optionData,
-                  size_t optionDataLength);
+OCStackResult OCSetHeaderOption(OCHeaderOption* ocHdrOpt,
+                                size_t* numOptions,
+                                uint16_t optionID,
+                                void* optionData,
+                                size_t optionDataLength);
 
 /**
  *  Get data value of the option with specified option ID from given header option array.
@@ -785,13 +773,12 @@ OCSetHeaderOption(OCHeaderOption* ocHdrOpt,
  *
  * @return ::OC_STACK_OK on success and other value otherwise.
  */
-OCStackResult
-OCGetHeaderOption(OCHeaderOption* ocHdrOpt,
-                  size_t numOptions,
-                  uint16_t optionID,
-                  void* optionData,
-                  size_t optionDataLength,
-                  uint16_t* receivedDatalLength);
+OCStackResult OCGetHeaderOption(OCHeaderOption* ocHdrOpt,
+                                size_t numOptions,
+                                uint16_t optionID,
+                                void* optionData,
+                                size_t optionDataLength,
+                                uint16_t* receivedDatalLength);
 
 /**
  * gets the deviceId of the client
@@ -821,9 +808,7 @@ OCStackResult OCGetDeviceOwnedState(bool *isOwned);
  * Encode an address string to match RFC 6874.
  *
  * @param outputAddress    a char array to be written with the encoded string.
- *
  * @param outputSize       size of outputAddress buffer.
- *
  * @param inputAddress     a char array of size <= CA_MAX_URI_LENGTH
  *                         containing a valid IPv6 address string.
  *
@@ -837,11 +822,8 @@ OCStackResult OCEncodeAddressForRFC6874(char* outputAddress,
  * Decode an address string according to RFC 6874.
  *
  * @param outputAddress    a char array to be written with the decoded string.
- *
  * @param outputSize       size of outputAddress buffer.
- *
  * @param inputAddress     a valid percent-encoded address string.
- *
  * @param end              NULL if the entire entire inputAddress is a null-terminated percent-
  *                         encoded address string.  Otherwise, a pointer to the first byte that
  *                         is not part of the address string (e.g., ']' in a URI).

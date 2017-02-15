@@ -203,17 +203,6 @@ OCStackResult SendStopNotification();
 #endif // WITH_PRESENCE
 
 /**
- * Function to parse the IPv4 address.
- *
- * @param ipAddrStr       Pointer to a string of IPv4 address.
- * @param ipAddr          pointer to IPv4 adress.
- * @param port            Port number.
- *
- * @return true on success, false upon failure.
- */
-bool ParseIPv4Address(char * ipAddrStr, uint8_t * ipAddr, uint16_t * port);
-
-/**
  * Bind a resource interface to a resource.
  *
  * @param resource Target resource.
