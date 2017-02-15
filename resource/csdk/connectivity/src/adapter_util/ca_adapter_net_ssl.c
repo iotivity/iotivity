@@ -439,6 +439,7 @@ typedef struct SslContext
     int selectedCipher;
 
 #ifdef __WITH_DTLS__
+    mbedtls_ssl_cookie_ctx cookieCtx;
     int timerId;
 #endif
 
@@ -501,7 +502,6 @@ typedef struct SslEndPoint
     uint8_t master[MASTER_SECRET_LEN];
     uint8_t random[2*RANDOM_LEN];
 #ifdef __WITH_DTLS__
-    mbedtls_ssl_cookie_ctx cookieCtx;
     mbedtls_timing_delay_context timer;
 #endif // __WITH_DTLS__
 } SslEndPoint_t;
@@ -1074,9 +1074,6 @@ static void DeleteSslEndPoint(SslEndPoint_t * tep)
     VERIFY_NON_NULL_VOID(tep, NET_SSL_TAG, "tep");
 
     mbedtls_ssl_free(&tep->ssl);
-#ifdef __WITH_DTLS__
-    mbedtls_ssl_cookie_free(&tep->cookieCtx);
-#endif
     DeleteCacheList(tep->cacheList);
     OICFree(tep);
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
@@ -1259,20 +1256,11 @@ static SslEndPoint_t * NewSslEndPoint(const CAEndpoint_t * endpoint, mbedtls_ssl
                                   mbedtls_timing_set_delay, mbedtls_timing_get_delay);
         if (MBEDTLS_SSL_IS_SERVER == config->endpoint)
         {
-            if (0 != mbedtls_ssl_cookie_setup(&tep->cookieCtx, mbedtls_ctr_drbg_random,
-                                              &g_caSslContext->rnd))
-            {
-                OIC_LOG(ERROR, NET_SSL_TAG, "Cookie setup failed!");
-                OICFree(tep);
-                OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
-                return NULL;
-            }
-            mbedtls_ssl_conf_dtls_cookies(config, mbedtls_ssl_cookie_write, mbedtls_ssl_cookie_check,
-                                          &tep->cookieCtx);
             if (0 != mbedtls_ssl_set_client_transport_id(&tep->ssl,
                                     (const unsigned char *) endpoint->addr, sizeof(endpoint->addr)))
             {
                 OIC_LOG(ERROR, NET_SSL_TAG, "Transport id setup failed!");
+                mbedtls_ssl_free(&tep->ssl);
                 OICFree(tep);
                 OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
                 return NULL;
@@ -1288,6 +1276,9 @@ static SslEndPoint_t * NewSslEndPoint(const CAEndpoint_t * endpoint, mbedtls_ssl
         OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
         return NULL;
     }
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "New [%s role] endpoint added [%s:%d]",
+            (MBEDTLS_SSL_IS_SERVER==config->endpoint ? "server" : "client"),
+            endpoint->addr, endpoint->port);
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return tep;
 }
@@ -1427,7 +1418,6 @@ static SslEndPoint_t * InitiateTlsHandshake(const CAEndpoint_t *endpoint)
     //Load allowed SVR suites from SVR DB
     SetupCipher(config, endpoint->adapter);
 
-    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Add %s:%d", tep->sep.endpoint.addr, tep->sep.endpoint.port);
     ret = u_arraylist_add(g_caSslContext->peerList, (void *) tep);
     if (!ret)
     {
@@ -1490,6 +1480,7 @@ void CAdeinitSslAdapter()
 #ifdef __WITH_DTLS__
     mbedtls_ssl_config_free(&g_caSslContext->clientDtlsConf);
     mbedtls_ssl_config_free(&g_caSslContext->serverDtlsConf);
+    mbedtls_ssl_cookie_free(&g_caSslContext->cookieCtx);
 #endif // __WITH_DTLS__
     mbedtls_ctr_drbg_free(&g_caSslContext->rnd);
     mbedtls_entropy_free(&g_caSslContext->entropy);
@@ -1528,6 +1519,15 @@ static int InitConfig(mbedtls_ssl_config * conf, int transport, int mode)
     mbedtls_ssl_conf_rng(conf, mbedtls_ctr_drbg_random, &g_caSslContext->rnd);
     mbedtls_ssl_conf_curves(conf, curve[ADAPTER_CURVE_SECP256R1]);
     mbedtls_ssl_conf_authmode(conf, MBEDTLS_SSL_VERIFY_REQUIRED);
+
+#ifdef __WITH_DTLS__
+    if (MBEDTLS_SSL_TRANSPORT_DATAGRAM == transport &&
+            MBEDTLS_SSL_IS_SERVER == mode)
+    {
+        mbedtls_ssl_conf_dtls_cookies(conf, mbedtls_ssl_cookie_write, mbedtls_ssl_cookie_check,
+                                      &g_caSslContext->cookieCtx);
+    }
+#endif // __WITH_DTLS__
 
     /* Set TLS 1.2 as the minimum allowed version. */
     mbedtls_ssl_conf_min_version(conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
@@ -1685,6 +1685,17 @@ CAResult_t CAinitSslAdapter()
     }
 #endif // __WITH_TLS__
 #ifdef __WITH_DTLS__
+    mbedtls_ssl_cookie_init(&g_caSslContext->cookieCtx);
+    if (0 != mbedtls_ssl_cookie_setup(&g_caSslContext->cookieCtx, mbedtls_ctr_drbg_random,
+                                      &g_caSslContext->rnd))
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "Cookie setup failed!");
+        oc_mutex_unlock(g_sslContextMutex);
+        CAdeinitSslAdapter();
+        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+        return CA_STATUS_FAILED;
+    }
+
     if (0 != InitConfig(&g_caSslContext->clientDtlsConf,
                         MBEDTLS_SSL_TRANSPORT_DATAGRAM, MBEDTLS_SSL_IS_CLIENT))
     {
