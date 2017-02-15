@@ -326,8 +326,8 @@ extern "C" {
 /** Device specification version.*/
 #define OC_SPEC_VERSION                 "ocf.1.1.0"
 
-/** Integer value of spec version.*/
-#define OC_SPEC_VERSION_VALUE           0
+/** Integer value of spec version (OCF1.0 0b0000:1000:0000:0000).*/
+#define OC_SPEC_VERSION_VALUE           2048
 
 /** Device Data Model version.*/
 #define OC_DATA_MODEL_VERSION           "ocf.res.1.1.0,ocf.sh.1.1.0"

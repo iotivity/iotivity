@@ -65,6 +65,7 @@
 #include "ocpayloadcbor.h"
 #include "cautilinterface.h"
 #include "cainterface.h"
+#include "caprotocolmessage.h"
 #include "oicgroup.h"
 #include "ocendpoint.h"
 #include "ocatomic.h"
@@ -469,6 +470,21 @@ static OCStackResult OCDeInitializeInternal();
 //-----------------------------------------------------------------------------
 // Internal functions
 //-----------------------------------------------------------------------------
+static OCPayloadFormat CAToOCPayloadFormat(CAPayloadFormat_t caFormat)
+{
+    switch (caFormat)
+    {
+    case CA_FORMAT_UNDEFINED:
+        return OC_FORMAT_UNDEFINED;
+    case CA_FORMAT_APPLICATION_CBOR:
+        return OC_FORMAT_CBOR;
+    case CA_FORMAT_APPLICATION_VND_OCF_CBOR:
+        return OC_FORMAT_VND_OCF_CBOR;
+    default:
+        return OC_FORMAT_UNSUPPORTED;
+    }
+}
+
 static void OCEnterInitializer()
 {
     for (;;)
@@ -596,36 +612,39 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
 #endif
 
     uint16_t acceptVersion = OC_SPEC_VERSION_VALUE;
-    // From OCF onwards, check settings of version option.
-    if (DEFAULT_ACCEPT_VERSION_VALUE <= acceptVersion)
+    CAPayloadFormat_t acceptFormat = CA_FORMAT_APPLICATION_CBOR;
+    // Check settings of version option and content format.
+    if (requestInfo->info.numOptions > 0 && requestInfo->info.options)
     {
-        if (requestInfo->info.numOptions > 0 && requestInfo->info.options)
+        for (uint8_t i = 0; i < requestInfo->info.numOptions; i++)
         {
-            for (uint8_t i = 0; i < requestInfo->info.numOptions; i++)
+            if (COAP_OPTION_ACCEPT_VERSION == requestInfo->info.options[i].optionID)
             {
-                if (COAP_OPTION_ACCEPT_VERSION == requestInfo->info.options[i].protocolID)
+                acceptVersion = *(uint16_t*) requestInfo->info.options[i].optionData;
+            }
+            else if (COAP_OPTION_ACCEPT == requestInfo->info.options[i].optionID)
+            {
+                if (1 == requestInfo->info.options[i].optionLength)
                 {
-                    acceptVersion = requestInfo->info.options[i].optionData[0];
-                    break;
+                    acceptFormat = CAConvertFormat(
+                            *(uint8_t*) requestInfo->info.options[i].optionData);
                 }
-                else if (COAP_OPTION_CONTENT_VERSION == requestInfo->info.options[i].protocolID)
+                else if (2 == requestInfo->info.options[i].optionLength)
                 {
-                    acceptVersion = requestInfo->info.options[i].optionData[0];
-                    break;
+                    acceptFormat = CAConvertFormat(
+                            *(uint16_t*) requestInfo->info.options[i].optionData);
+                }
+                else
+                {
+                    acceptFormat = CA_FORMAT_UNSUPPORTED;
+                    OIC_LOG_V(DEBUG, TAG, "option has an unsupported format");
                 }
             }
         }
     }
 
-    if (DEFAULT_CONTENT_VERSION_VALUE <= acceptVersion)
-    {
-        requestInfo->info.acceptFormat = CA_FORMAT_APPLICATION_VND_OCF_CBOR;
-        requestInfo->info.acceptVersion = acceptVersion;
-    }
-    else
-    {
-      requestInfo->info.acceptFormat = CA_FORMAT_APPLICATION_CBOR;
-    }
+    requestInfo->info.acceptVersion = acceptVersion;
+    requestInfo->info.acceptFormat = acceptFormat;
 
     CAResult_t result = CASendRequest(object, requestInfo);
     if(CA_STATUS_OK != result)
@@ -2287,21 +2306,7 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         memcpy(serverRequest.requestToken, requestInfo->info.token, requestInfo->info.tokenLength);
     }
 
-    switch (requestInfo->info.acceptFormat)
-    {
-        case CA_FORMAT_APPLICATION_CBOR:
-            serverRequest.acceptFormat = OC_FORMAT_CBOR;
-            break;
-        case CA_FORMAT_APPLICATION_VND_OCF_CBOR:
-            serverRequest.acceptFormat = OC_FORMAT_VND_OCF_CBOR;
-            break;
-        case CA_FORMAT_UNDEFINED:
-            serverRequest.acceptFormat = OC_FORMAT_UNDEFINED;
-            break;
-        default:
-            serverRequest.acceptFormat = OC_FORMAT_UNSUPPORTED;
-    }
-
+    serverRequest.acceptFormat = CAToOCPayloadFormat(requestInfo->info.acceptFormat);
     if (requestInfo->info.type == CA_MSG_CONFIRM)
     {
         serverRequest.qos = OC_HIGH_QOS;
@@ -3236,36 +3241,37 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
         }
 
         uint16_t payloadVersion = OC_SPEC_VERSION_VALUE;
+        CAPayloadFormat_t payloadFormat = CA_FORMAT_APPLICATION_CBOR;
         // From OCF onwards, check version option settings
-        if (DEFAULT_CONTENT_VERSION_VALUE <= payloadVersion)
+        if (numOptions > 0 && options)
         {
-            if (numOptions > 0 && options)
+            for (uint8_t i = 0; i < numOptions; i++)
             {
-                for (uint8_t i = 0; i < numOptions; i++)
+                if (COAP_OPTION_CONTENT_VERSION == options[i].optionID)
                 {
-                    if (COAP_OPTION_CONTENT_VERSION == options[i].optionID)
+                    payloadVersion = *(uint16_t*) options[i].optionData;
+                }
+                else if (COAP_OPTION_CONTENT_FORMAT == options[i].optionID)
+                {
+                    if (1 == options[i].optionLength)
                     {
-                        payloadVersion = options[i].optionData[0];
-                        break;
+                        payloadFormat = CAConvertFormat(*(uint8_t*) options[i].optionData);
                     }
-                    else if (COAP_OPTION_ACCEPT_VERSION == options[i].optionID)
+                    else if (2 == options[i].optionLength)
                     {
-                        payloadVersion = options[i].optionData[0];
-                        break;
+                        payloadFormat = CAConvertFormat(*(uint16_t*) options[i].optionData);
+                    }
+                    else
+                    {
+                        payloadFormat = CA_FORMAT_UNSUPPORTED;
+                        OIC_LOG_V(DEBUG, TAG, "option has an unsupported format");
                     }
                 }
             }
         }
 
-        if (DEFAULT_CONTENT_VERSION_VALUE <= payloadVersion)
-        {
-            requestInfo.info.payloadFormat = CA_FORMAT_APPLICATION_VND_OCF_CBOR;
-            requestInfo.info.payloadVersion = payloadVersion;
-        }
-        else
-        {
-            requestInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
-        }
+        requestInfo.info.payloadVersion = payloadVersion;
+        requestInfo.info.payloadFormat = payloadFormat;
     }
     else
     {

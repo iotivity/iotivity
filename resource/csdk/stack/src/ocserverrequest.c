@@ -167,6 +167,20 @@ static OCStackResult OCSendResponse(const CAEndpoint_t *object, CAResponseInfo_t
     return OC_STACK_OK;
 }
 
+static CAPayloadFormat_t OCToCAPayloadFormat(OCPayloadFormat ocFormat)
+{
+    switch (ocFormat)
+    {
+    case OC_FORMAT_UNDEFINED:
+        return CA_FORMAT_UNDEFINED;
+    case OC_FORMAT_CBOR:
+        return CA_FORMAT_APPLICATION_CBOR;
+    case OC_FORMAT_VND_OCF_CBOR:
+        return CA_FORMAT_APPLICATION_VND_OCF_CBOR;
+    default:
+        return CA_FORMAT_UNSUPPORTED;
+    }
+}
 //-------------------------------------------------------------------------------------------------
 // Internal APIs
 //-------------------------------------------------------------------------------------------------
@@ -644,20 +658,17 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                 // Add CONTENT_FORMAT OPT if payload exist
                 if (responseInfo.info.payloadSize > 0)
                 {
-                    if (OC_FORMAT_VND_OCF_CBOR == serverRequest->acceptFormat)
-                    {
-                        responseInfo.info.payloadFormat = CA_FORMAT_APPLICATION_VND_OCF_CBOR;
-                        if (!serverRequest->acceptVersion)
-                        {
-                            serverRequest->acceptVersion = DEFAULT_ACCEPT_VERSION_VALUE;
-                        }
-                        // Add CONTENT_VERSION OPT for this format.
-                        responseInfo.info.payloadVersion = serverRequest->acceptVersion;
-                    }
-                    else
+                    responseInfo.info.payloadFormat = OCToCAPayloadFormat(
+                            serverRequest->acceptFormat);
+                    if (CA_FORMAT_UNDEFINED == responseInfo.info.payloadFormat)
                     {
                         responseInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
                     }
+                    if (!serverRequest->acceptVersion)
+                    {
+                        serverRequest->acceptVersion = DEFAULT_VERSION_VALUE;
+                    }
+                    responseInfo.info.payloadVersion = serverRequest->acceptVersion;
                 }
                 break;
             default:

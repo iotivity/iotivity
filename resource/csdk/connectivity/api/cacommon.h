@@ -139,8 +139,8 @@ extern "C"
 #define CA_OPTION_ACCEPT_VERSION 2049
 #define CA_OPTION_CONTENT_VERSION 2053
 
-#define DEFAULT_ACCEPT_VERSION_VALUE 2048   // OCF version 1.0.0
-#define DEFAULT_CONTENT_VERSION_VALUE 2048  // OCF version 1.0.0
+// The Accept Version and Content-Format Version for OCF 1.0.0 (0b0000 1000 0000 0000).
+#define DEFAULT_VERSION_VALUE 2048
 
 /**
  * Payload information from resource model.

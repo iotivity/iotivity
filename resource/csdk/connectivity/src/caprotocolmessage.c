@@ -540,39 +540,47 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
         }
 
         uint32_t id = (info->options + i)->optionID;
-        if (COAP_OPTION_URI_PATH == id || COAP_OPTION_URI_QUERY == id)
+        switch (id)
         {
-            OIC_LOG_V(DEBUG, TAG, "not Header Opt: %d", id);
-        }
-        else
-        {
-            OIC_LOG_V(DEBUG, TAG, "Head opt ID[%d], length[%d]", id, (info->options + i)->optionLength);
-            int ret = coap_insert(optlist,
-                                  CACreateNewOptionNode(id, (info->options + i)->optionLength,
-                                                        (info->options + i)->optionData),
-                                  CAOrderOpts);
-            if (ret <= 0)
-            {
-                return CA_STATUS_INVALID_PARAM;
-            }
+            case COAP_OPTION_URI_PATH:
+            case COAP_OPTION_URI_QUERY:
+                OIC_LOG_V(DEBUG, TAG, "not Header Opt: %d", id);
+                break;
+            case COAP_OPTION_ACCEPT:
+            case COAP_OPTION_ACCEPT_VERSION:
+            case COAP_OPTION_CONTENT_FORMAT:
+            case COAP_OPTION_CONTENT_VERSION:
+                // this is handled below via CAParsePayloadFormatHeadOption
+                break;
+            default:
+                OIC_LOG_V(DEBUG, TAG, "Head opt ID[%d], length[%d]", id,
+                    (info->options + i)->optionLength);
+                int ret = coap_insert(optlist,
+                                      CACreateNewOptionNode(id, (info->options + i)->optionLength,
+                                                            (info->options + i)->optionData),
+                                      CAOrderOpts);
+                if (ret <= 0)
+                {
+                    return CA_STATUS_INVALID_PARAM;
+                }
         }
     }
 
     // insert one extra header with the payload format if applicable.
     if (CA_FORMAT_UNDEFINED != info->payloadFormat)
     {
-        CAParsePayloadFormatHeadOption(info->payloadFormat, COAP_OPTION_CONTENT_FORMAT, COAP_OPTION_CONTENT_VERSION, info->payloadVersion, optlist);
+        CAParsePayloadFormatHeadOption(COAP_OPTION_CONTENT_FORMAT, info->payloadFormat, COAP_OPTION_CONTENT_VERSION, info->payloadVersion, optlist);
     }
 
     if (CA_FORMAT_UNDEFINED != info->acceptFormat)
     {
-        CAParsePayloadFormatHeadOption(info->acceptFormat, COAP_OPTION_ACCEPT, info->acceptVersion, COAP_OPTION_ACCEPT_VERSION, optlist);
+        CAParsePayloadFormatHeadOption(COAP_OPTION_ACCEPT, info->acceptFormat, COAP_OPTION_ACCEPT_VERSION, info->acceptVersion, optlist);
     }
 
     return CA_STATUS_OK;
 }
 
-CAResult_t CAParsePayloadFormatHeadOption(CAPayloadFormat_t format, uint16_t formatOption,
+CAResult_t CAParsePayloadFormatHeadOption(uint16_t formatOption, CAPayloadFormat_t format,
         uint16_t versionOption, uint16_t version, coap_list_t **optlist)
 {
     coap_list_t* encodeNode = NULL;
@@ -592,9 +600,6 @@ CAResult_t CAParsePayloadFormatHeadOption(CAPayloadFormat_t format, uint16_t for
                     coap_encode_var_bytes(encodeBuf,
                             (unsigned short) COAP_MEDIATYPE_APPLICATION_VND_OCF_CBOR),
                     (char *) encodeBuf);
-            // Include payload version information for this format.
-            versionNode = CACreateNewOptionNode(versionOption,
-                    coap_encode_var_bytes(versionBuf, version), (char *) versionBuf);
             break;
         default:
             OIC_LOG_V(ERROR, TAG, "Format option:[%d] not supported", format);
@@ -604,36 +609,39 @@ CAResult_t CAParsePayloadFormatHeadOption(CAPayloadFormat_t format, uint16_t for
         OIC_LOG(ERROR, TAG, "Format option not created");
         return CA_STATUS_INVALID_PARAM;
     }
-    int ret = coap_insert(optlist, encodeNode, CAOrderOpts);
-    if (0 >= ret)
+    else
     {
-        coap_delete(encodeNode);
-        OIC_LOG(ERROR, TAG, "Format option not inserted in header");
-        if (CA_FORMAT_APPLICATION_VND_OCF_CBOR == format && versionNode)
+        int ret = coap_insert(optlist, encodeNode, CAOrderOpts);
+        if (0 >= ret)
         {
-            coap_delete(versionNode);
+            coap_delete(encodeNode);
+            OIC_LOG(ERROR, TAG, "Format option not inserted in header");
+            return CA_STATUS_INVALID_PARAM;
         }
-        return CA_STATUS_INVALID_PARAM;
     }
 
-    if (CA_FORMAT_APPLICATION_VND_OCF_CBOR == format)
+    if (COAP_OPTION_ACCEPT_VERSION == versionOption || 
+        COAP_OPTION_CONTENT_VERSION == versionOption)
     {
+        versionNode = CACreateNewOptionNode(versionOption,
+                coap_encode_var_bytes(versionBuf, version), (char *) versionBuf);
+
         if (!versionNode)
         {
             OIC_LOG(ERROR, TAG, "Version option not created");
             coap_delete(encodeNode);
             return CA_STATUS_INVALID_PARAM;
         }
-        else
+    }
+    if (versionNode)
+    {
+        int ret = coap_insert(optlist, versionNode, CAOrderOpts);
+        if (0 >= ret)
         {
-            ret = coap_insert(optlist, versionNode, CAOrderOpts);
-            if (0 >= ret)
-            {
-                coap_delete(versionNode);
-                coap_delete(encodeNode);
-                OIC_LOG(ERROR, TAG, "Content version option not inserted in header");
-                return CA_STATUS_INVALID_PARAM;
-            }
+            coap_delete(versionNode);
+            coap_delete(encodeNode);
+            OIC_LOG(ERROR, TAG, "Content version option not inserted in header");
+            return CA_STATUS_INVALID_PARAM;
         }
     }
     return CA_STATUS_OK;
@@ -918,7 +926,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                 else
                 {
                     OIC_LOG(DEBUG, TAG, "unsupported content version");
-                    outInfo->payloadVersion = DEFAULT_CONTENT_VERSION_VALUE;
+                    outInfo->payloadVersion = DEFAULT_VERSION_VALUE;
 
                 }
             }
@@ -931,7 +939,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                 else
                 {
                     OIC_LOG(DEBUG, TAG, "unsupported accept version");
-                    outInfo->acceptVersion = DEFAULT_ACCEPT_VERSION_VALUE;
+                    outInfo->acceptVersion = DEFAULT_VERSION_VALUE;
                 }
             }
             else if (COAP_OPTION_ACCEPT == opt_iter.type)
