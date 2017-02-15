@@ -562,8 +562,7 @@ int32_t GetDtlsPskForPreconfPinOxm( CADtlsPskCredType_t type,
             case CA_DTLS_PSK_KEY:
                 {
                     OicUuid_t uuid;
-                    memset(&uuid, 0x00, sizeof(uuid));
-                    OICStrcpy(uuid.id, sizeof(uuid.id), WILDCARD_SUBJECT_ID.id);
+                    memcpy(&uuid, &WILDCARD_SUBJECT_ID, sizeof(uuid));
 
                     //Load PreConfigured-PIN
                     const OicSecCred_t* cred = GetCredResourceData(&uuid);
@@ -592,7 +591,7 @@ int32_t GetDtlsPskForPreconfPinOxm( CADtlsPskCredType_t type,
                                 return ret;
                             }
 
-                            if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, pinBuffer, pinBufSize, &pinLength))
+                            if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, (uint8_t*)pinBuffer, pinBufSize, &pinLength))
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
                                 OICFree(pinBuffer);
@@ -663,8 +662,7 @@ int32_t GetDtlsPskForMotPreconfPinOxm( CADtlsPskCredType_t type,
             case CA_DTLS_PSK_KEY:
                 {
                     OicUuid_t uuid;
-                    memset(&uuid, 0x00, sizeof(uuid));
-                    OICStrcpy(uuid.id, sizeof(uuid.id), WILDCARD_SUBJECT_ID.id);
+                    memcpy(&uuid, &WILDCARD_SUBJECT_ID, sizeof(uuid));
 
                     //Load PreConfigured-PIN
                     const OicSecCred_t* cred = GetCredResourceData(&uuid);
@@ -693,7 +691,7 @@ int32_t GetDtlsPskForMotPreconfPinOxm( CADtlsPskCredType_t type,
                                 return ret;
                             }
 
-                            if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, pinBuffer, pinBufSize, &pinLength))
+                            if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, (uint8_t*)pinBuffer, pinBufSize, &pinLength))
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
                                 OICFree(pinBuffer);

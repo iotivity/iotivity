@@ -99,7 +99,7 @@ OCStackResult SVCToCBORPayload(const OicSecSvc_t *svc, uint8_t **cborPayload,
     CborEncoder svcArray;
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_ERROR);
 
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
@@ -348,11 +348,11 @@ static OCEntityHandlerResult HandleSVCPostRequest(const OCEntityHandlerRequest *
             LL_APPEND(gSvc, newSvc);
 
             // Convert SVC data into JSON for update to persistent storage
-            size_t size = 0;
+            size_t cborSize = 0;
             uint8_t *cborPayload = NULL;
-            res = SVCToCBORPayload(gSvc, &cborPayload, &size);
+            res = SVCToCBORPayload(gSvc, &cborPayload, &cborSize);
             if (cborPayload && OC_STACK_OK == res &&
-                UpdateSecureResourceInPS(OIC_JSON_SVC_NAME, cborPayload, size) == OC_STACK_OK)
+                UpdateSecureResourceInPS(OIC_JSON_SVC_NAME, cborPayload, cborSize) == OC_STACK_OK)
             {
                 ehRet = OC_EH_CHANGED;
             }

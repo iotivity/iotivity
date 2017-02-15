@@ -459,7 +459,8 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_PERMISSION_NAME);
             VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
-            ace->permission = jsonObj->valueint;
+            VERIFY_SUCCESS(TAG, jsonObj->valueint <= UINT16_MAX, ERROR);
+            ace->permission = (uint16_t)jsonObj->valueint;
 
             //Validity -- Not Mandatory
             cJSON *jsonValidityObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_VALIDITY_NAME);
@@ -510,20 +511,20 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                         VERIFY_NOT_NULL(TAG, validity->recurrences, ERROR);
 
                         cJSON *jsonRecur = NULL;
-                        for(size_t i = 0; i < validity->recurrenceLen; i++)
+                        for(size_t j = 0; j < validity->recurrenceLen; j++)
                         {
 // Needs to be removed once IOT-1746 is resolved.
 #ifdef _MSC_VER
 #pragma warning(suppress : 4267)
-                            jsonRecur = cJSON_GetArrayItem(jsonRecurObj, i);
+                            jsonRecur = cJSON_GetArrayItem(jsonRecurObj, j);
 
 #else
-                            jsonRecur = cJSON_GetArrayItem(jsonRecurObj, i);
+                            jsonRecur = cJSON_GetArrayItem(jsonRecurObj, j);
 
 #endif
                             VERIFY_NOT_NULL(TAG, jsonRecur, ERROR);
-                            validity->recurrences[i] = OICStrdup(jsonRecur->valuestring);
-                            VERIFY_NOT_NULL(TAG, validity->recurrences[i], ERROR);
+                            validity->recurrences[j] = OICStrdup(jsonRecur->valuestring);
+                            VERIFY_NOT_NULL(TAG, validity->recurrences[j], ERROR);
                         }
                     }
                 }
@@ -883,7 +884,8 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             if(jsonObj)
             {
                 VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
-                cred->credId = jsonObj->valueint;
+                VERIFY_SUCCESS(TAG, jsonObj->valueint <= UINT16_MAX, ERROR);
+                cred->credId = (uint16_t)jsonObj->valueint;
             }
 
             //subject -- Mandatory

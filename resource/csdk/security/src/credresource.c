@@ -370,8 +370,8 @@ static CborError SerializeEncodingToCborInternal(CborEncoder *map, const OicSecK
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "Unknown encoding type.");
-        VERIFY_CBOR_SUCCESS(TAG, CborErrorUnknownType, "Failed Adding Encoding Value.");
+        OIC_LOG_V(ERROR, TAG, "Unknown encoding type: %u.", value->encoding);
+        return CborErrorUnknownType;
     }
     exit:
     return cborEncoderResult;
@@ -600,7 +600,8 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
     }
 
     outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_ERROR);
+
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     // Create CRED Root Map (creds, rownerid)
@@ -888,7 +889,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
             if (strcmp(tagName, OIC_JSON_CREDS_NAME)  == 0)
             {
                 // Enter CREDS Array
-                size_t len = 0;
+                size_t tempLen = 0;
                 int credCount = 0;
                 CborValue credArray = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
                 cborFindResult = cbor_value_enter_container(&CredRootMap, &credArray);
@@ -923,10 +924,10 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                     while(cbor_value_is_valid(&credMap) && cbor_value_is_text_string(&credMap))
                     {
                         char* name = NULL;
-                        CborType type = cbor_value_get_type(&credMap);
-                        if (type == CborTextStringType)
+                        CborType cmType = cbor_value_get_type(&credMap);
+                        if (cmType == CborTextStringType)
                         {
-                            cborFindResult = cbor_value_dup_text_string(&credMap, &name, &len, NULL);
+                            cborFindResult = cbor_value_dup_text_string(&credMap, &name, &tempLen, NULL);
                             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Name in CRED Map.");
                             cborFindResult = cbor_value_advance(&credMap);
                             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Value in CRED Map.");
@@ -945,7 +946,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                             if (strcmp(name, OIC_JSON_SUBJECTID_NAME)  == 0)
                             {
                                 char *subjectid = NULL;
-                                cborFindResult = cbor_value_dup_text_string(&credMap, &subjectid, &len, NULL);
+                                cborFindResult = cbor_value_dup_text_string(&credMap, &subjectid, &tempLen, NULL);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding subjectid Value.");
                                 if(strcmp(subjectid, WILDCARD_RESOURCE_URI) == 0)
                                 {
@@ -998,14 +999,14 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                             //Credusage -- Not Mandatory
                             if (0 == strcmp(OIC_JSON_CREDUSAGE_NAME, name))
                             {
-                                cborFindResult = cbor_value_dup_text_string(&credMap, &cred->credUsage, &len, NULL);
+                                cborFindResult = cbor_value_dup_text_string(&credMap, &cred->credUsage, &tempLen, NULL);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Period.");
                             }
 #endif  //__WITH_DTLS__ ||  __WITH_TLS__
 
                             if (0 == strcmp(OIC_JSON_PERIOD_NAME, name))
                             {
-                                cborFindResult = cbor_value_dup_text_string(&credMap, &cred->period, &len, NULL);
+                                cborFindResult = cbor_value_dup_text_string(&credMap, &cred->period, &tempLen, NULL);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Period.");
                             }
 
@@ -1014,7 +1015,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                             if (strcmp(OIC_JSON_EOWNERID_NAME, name)  == 0 && cbor_value_is_text_string(&credMap))
                             {
                                 char *eowner = NULL;
-                                cborFindResult = cbor_value_dup_text_string(&credMap, &eowner, &len, NULL);
+                                cborFindResult = cbor_value_dup_text_string(&credMap, &eowner, &tempLen, NULL);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding eownerId Value.");
                                 if(NULL == cred->eownerID)
                                 {
@@ -1281,8 +1282,12 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
 
         if ((OC_STACK_OK == res) && payload)
         {
-            DATA_BLOB decryptedPayload = { .cbData = dwordSize, .pbData = payload };
-            DATA_BLOB encryptedPayload = { .cbData = 0, .pbData = NULL };
+            DATA_BLOB decryptedPayload;
+            DATA_BLOB encryptedPayload;
+            memset(&decryptedPayload, 0, sizeof(decryptedPayload));
+            memset(&encryptedPayload, 0, sizeof(encryptedPayload));
+            decryptedPayload.cbData = dwordSize;
+            decryptedPayload.pbData = payload;
 
             if (CryptProtectData(
                 &decryptedPayload,
@@ -1757,7 +1762,8 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
     }
     else
     {
-        VERIFY_SUCCESS(TAG, OIC_ENCODING_UNKNOW, ERROR);
+        OIC_LOG_V(ERROR, TAG, "Unknown credential encoding type: %u.", receviedCred->privateData.encoding);
+        goto exit;
     }
 
     OIC_LOG(INFO, TAG, "PrivateData of OwnerPSK was calculated successfully");
@@ -1835,8 +1841,8 @@ static bool FillPrivateDataOfSubOwnerPSK(OicSecCred_t* receivedCred, const CAEnd
     }
     else
     {
-        OIC_LOG(INFO, TAG, "Unknown credential encoding type.");
-        VERIFY_SUCCESS(TAG, OIC_ENCODING_UNKNOW, ERROR);
+        OIC_LOG_V(ERROR, TAG, "Unknown credential encoding type: %u.", receviedCred->privateData.encoding);
+        goto exit;
     }
 
     OIC_LOG(INFO, TAG, "PrivateData of SubOwnerPSK was calculated successfully");
@@ -1957,10 +1963,10 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
                   * If some error is occured while ownership transfer,
                   * ownership transfer related resource should be revert back to initial status.
                   */
-                const OicSecDoxm_t* doxm =  GetDoxmResourceData();
-                if(doxm)
+                const OicSecDoxm_t* ownershipDoxm =  GetDoxmResourceData();
+                if(ownershipDoxm)
                 {
-                    if(!doxm->owned)
+                    if(!ownershipDoxm->owned)
                     {
                         OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request");
 
@@ -2041,7 +2047,6 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
         {
             if(IsEmptyCred(cred))
             {
-                OicUuid_t emptyUuid = {.id={0}};
                 if(memcmp(cred->rownerID.id, emptyUuid.id, sizeof(emptyUuid.id)) != 0)
                 {
                     OIC_LOG(INFO, TAG, "CRED's rowner will be updated.");
@@ -2260,8 +2265,12 @@ OCStackResult InitCredResource()
 
         if (ret != OC_STACK_OK)
         {
-            DATA_BLOB encryptedPayload = { .cbData = dwordSize, .pbData = data };
-            DATA_BLOB decryptedPayload = { .cbData = 0, .pbData = NULL };
+            DATA_BLOB decryptedPayload;
+            DATA_BLOB encryptedPayload;
+            memset(&decryptedPayload, 0, sizeof(decryptedPayload));
+            memset(&encryptedPayload, 0, sizeof(encryptedPayload));
+            encryptedPayload.cbData = dwordSize;
+            encryptedPayload.pbData = data;
 
             if (CryptUnprotectData(
                 &encryptedPayload,
@@ -2595,7 +2604,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                                         return ret;
                                     }
 
-                                    if(B64_OK != b64Decode((char*)wildCardCred->privateData.data, wildCardCred->privateData.len, pinBuffer, pinBufSize, &pinLength))
+                                    if(B64_OK != b64Decode((char*)wildCardCred->privateData.data, wildCardCred->privateData.len, (uint8_t*)pinBuffer, pinBufSize, &pinLength))
                                     {
                                         OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
                                         return ret;
@@ -2687,7 +2696,12 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
     }
 
     uint8_t privData[OWNER_PSK_LENGTH_128] = {0,};
-    OicSecKey_t privKey = {privData, OWNER_PSK_LENGTH_128, OIC_ENCODING_RAW};
+    OicSecKey_t privKey;
+    memset(&privKey, 0, sizeof(privKey));
+    privKey.data = privData;
+    privKey.len = OWNER_PSK_LENGTH_128;
+    privKey.encoding = OIC_ENCODING_RAW;
+
     OicSecCred_t* cred = NULL;
     int dtlsRes = DeriveCryptoKeyFromPassword((const unsigned char *)pin, pinSize, rownerID->id,
                                               UUID_LENGTH, PBKDF_ITERATIONS,

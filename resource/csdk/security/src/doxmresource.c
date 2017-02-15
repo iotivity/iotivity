@@ -167,7 +167,8 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     int64_t cborEncoderResult = CborNoError;
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_ERROR);
+
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     cborEncoderResult = cbor_encoder_create_map(&encoder, &doxmMap, CborIndefiniteLength);
@@ -271,11 +272,11 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
         subOwner = NULL;
         LL_FOREACH(doxm->subOwners, subOwner)
         {
-            char* strUuid = NULL;
-            ret = ConvertUuidToStr(&subOwner->uuid, &strUuid);
+            char* strSubOwnerUuid = NULL;
+            ret = ConvertUuidToStr(&subOwner->uuid, &strSubOwnerUuid);
             VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
-            cborEncoderResult = cbor_encode_text_string(&subOwners, strUuid, strlen(strUuid));
-            OICFree(strUuid);
+            cborEncoderResult = cbor_encode_text_string(&subOwners, strSubOwnerUuid, strlen(strSubOwnerUuid));
+            OICFree(strSubOwnerUuid);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SubOwnerId Value");
         }
         cborEncoderResult = cbor_encoder_close_container(&doxmMap, &subOwners);
@@ -427,11 +428,11 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering oxmType Array.")
 
         int i = 0;
-        size_t len = 0;
+        size_t oxmTypeStrlen = 0;
         while (cbor_value_is_valid(&oxmType) && cbor_value_is_text_string(&oxmType))
         {
             cborFindResult = cbor_value_dup_text_string(&oxmType, &doxm->oxmType[i++],
-                                                        &len, NULL);
+                                                        &oxmTypeStrlen, NULL);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding omxType text string.");
             cborFindResult = cbor_value_advance(&oxmType);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing oxmType.");
@@ -602,16 +603,16 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
         {
             OCStackResult convertRes = OC_STACK_ERROR;
             OicSecSubOwner_t* subOwner = NULL;
-            char* strUuid = NULL;
+            char* strSubOwnerUuid = NULL;
             size_t uuidLen = 0;
 
-            cborFindResult = cbor_value_dup_text_string(&subOwnerCbor, &strUuid, &uuidLen, NULL);
+            cborFindResult = cbor_value_dup_text_string(&subOwnerCbor, &strSubOwnerUuid, &uuidLen, NULL);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SubOwnerId Value");
 
             subOwner = (OicSecSubOwner_t*)OICCalloc(1, sizeof(OicSecSubOwner_t));
             VERIFY_NOT_NULL(TAG, subOwner, ERROR);
 
-            convertRes = ConvertStrToUuid(strUuid, &subOwner->uuid);
+            convertRes = ConvertStrToUuid(strSubOwnerUuid, &subOwner->uuid);
             VERIFY_SUCCESS(TAG, OC_STACK_OK == convertRes, ERROR);
             subOwner->status = MOT_STATUS_DONE;
             LL_APPEND(doxm->subOwners, subOwner);

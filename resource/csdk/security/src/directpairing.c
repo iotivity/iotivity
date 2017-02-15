@@ -897,15 +897,13 @@ static OCStackApplicationResult DirectPairingDiscoveryHandler(void* ctx, OCDoHan
                 OCDevAddr endpoint;
                 memcpy(&endpoint, &clientResponse->devAddr, sizeof(OCDevAddr));
 
-                OCStackResult res = addDev(&g_dp_discover, &endpoint,
-                            clientResponse->connType, pconf);
+                res = addDev(&g_dp_discover, &endpoint, clientResponse->connType, pconf);
                 DeletePconfBinData(pconf);
                 if (OC_STACK_OK != res)
                 {
                     OIC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
                     return OC_STACK_KEEP_TRANSACTION;
                 }
-
 
                 char rsrc_uri[MAX_URI_LENGTH+1] = {0};
                 int wr_len = snprintf(rsrc_uri, sizeof(rsrc_uri), "%s?%s=%s",
@@ -932,9 +930,9 @@ static OCStackApplicationResult DirectPairingDiscoveryHandler(void* ctx, OCDoHan
                 cbData.cb = &DirectPairingPortDiscoveryHandler;
                 cbData.context = NULL;
                 cbData.cd = NULL;
-                OCStackResult ret = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
+                res = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
                         clientResponse->connType, OC_LOW_QOS, &cbData, NULL, 0);
-                if(OC_STACK_OK != ret)
+                if(OC_STACK_OK != res)
                 {
                     OIC_LOG(ERROR, TAG, "Failed to Secure Port Discovery");
                     return OC_STACK_KEEP_TRANSACTION;

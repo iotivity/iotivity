@@ -73,8 +73,7 @@ void DeleteAmaclList(OicSecAmacl_t* amacl)
     }
 }
 
-OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayload,
-                                 size_t *cborSize)
+OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayload, size_t *cborSize)
 {
     if (NULL == amaclS || NULL == cborPayload || NULL != *cborPayload || NULL == cborSize)
     {
@@ -101,7 +100,8 @@ OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayl
 
     const OicSecAmacl_t *amacl = amaclS;
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_ERROR);
+
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     // Create AMACL Map
@@ -470,12 +470,12 @@ static OCEntityHandlerResult HandleAmaclPostRequest (const OCEntityHandlerReques
         {
             // Append the new Amacl to existing Amacl
             LL_APPEND(gAmacl, newAmacl);
-            size_t size = 0;
+            size_t cborSize = 0;
             // Convert Amacl data into JSON for update to persistent storage.
             uint8_t *cborPayload = NULL;
-            res = AmaclToCBORPayload(gAmacl, &cborPayload, &size);
+            res = AmaclToCBORPayload(gAmacl, &cborPayload, &cborSize);
             if (cborPayload && (OC_STACK_OK == res) &&
-                (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_AMACL_NAME, cborPayload, size)))
+                (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_AMACL_NAME, cborPayload, cborSize)))
             {
                 ehRet = OC_EH_RESOURCE_CREATED;
             }

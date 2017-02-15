@@ -99,7 +99,8 @@ OCStackResult VerToCBORPayload(const OicSecVer_t *ver, uint8_t **payload, size_t
     char* strUuid = NULL;
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_ERROR);
+
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     cborEncoderResult |= cbor_encoder_create_map(&encoder, &verMap, mapSize);

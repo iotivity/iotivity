@@ -160,7 +160,6 @@ void DeleteACLList(OicSecAcl_t* acl)
 OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
 {
     OicSecAce_t* newAce = NULL;
-    size_t allocateSize = 0;
 
     if(ace)
     {
@@ -312,7 +311,8 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
     }
 
     outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_ERROR);
+
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     // Create ACL Map (aclist, rownerid)
@@ -724,11 +724,11 @@ OicSecAcl_t* CBORPayloadToAcl2(const uint8_t *cborPayload, const size_t size)
                     while (cbor_value_is_valid(&aceMap))
                     {
                         char* name = NULL;
-                        size_t len = 0;
-                        CborType type = cbor_value_get_type(&aceMap);
-                        if (type == CborTextStringType)
+                        size_t tempLen = 0;
+                        CborType aceMapType = cbor_value_get_type(&aceMap);
+                        if (aceMapType == CborTextStringType)
                         {
-                            cborFindResult = cbor_value_dup_text_string(&aceMap, &name, &len, NULL);
+                            cborFindResult = cbor_value_dup_text_string(&aceMap, &name, &tempLen, NULL);
                             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Name in ACE Map.");
                             cborFindResult = cbor_value_advance(&aceMap);
                             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Value in ACE Map.");
@@ -739,7 +739,7 @@ OicSecAcl_t* CBORPayloadToAcl2(const uint8_t *cborPayload, const size_t size)
                             if (strcmp(name, OIC_JSON_SUBJECTID_NAME)  == 0)
                             {
                                 char *subject = NULL;
-                                cborFindResult = cbor_value_dup_text_string(&aceMap, &subject, &len, NULL);
+                                cborFindResult = cbor_value_dup_text_string(&aceMap, &subject, &tempLen, NULL);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding subject Value.");
                                 if(strcmp(subject, WILDCARD_RESOURCE_URI) == 0)
                                 {
@@ -784,7 +784,7 @@ OicSecAcl_t* CBORPayloadToAcl2(const uint8_t *cborPayload, const size_t size)
                                         // "href"
                                         if (0 == strcmp(OIC_JSON_HREF_NAME, rMapName))
                                         {
-                                            cborFindResult = cbor_value_dup_text_string(&rMap, &rsrc->href, &len, NULL);
+                                            cborFindResult = cbor_value_dup_text_string(&rMap, &rsrc->href, &tempLen, NULL);
                                             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Href Value.");
                                         }
 
@@ -839,7 +839,7 @@ OicSecAcl_t* CBORPayloadToAcl2(const uint8_t *cborPayload, const size_t size)
                                         // "rel"
                                         if (0 == strcmp(OIC_JSON_REL_NAME, rMapName))
                                         {
-                                            cborFindResult = cbor_value_dup_text_string(&rMap, &rsrc->rel, &len, NULL);
+                                            cborFindResult = cbor_value_dup_text_string(&rMap, &rsrc->rel, &tempLen, NULL);
                                             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding REL Value.");
                                         }
 
@@ -892,8 +892,8 @@ OicSecAcl_t* CBORPayloadToAcl2(const uint8_t *cborPayload, const size_t size)
                                     cborFindResult = cbor_value_enter_container(&validitiesMap, &validityMap);
                                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding a validity Map.");
 
-                                    size_t len = 0;
-                                    cborFindResult =cbor_value_dup_text_string(&validityMap, &validity->period, &len, NULL);
+                                    size_t vmLen = 0;
+                                    cborFindResult = cbor_value_dup_text_string(&validityMap, &validity->period, &vmLen, NULL);
                                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding a Period value.");
 
                                     //recurrence (string array)
@@ -909,7 +909,7 @@ OicSecAcl_t* CBORPayloadToAcl2(const uint8_t *cborPayload, const size_t size)
 
                                     for(size_t i = 0; cbor_value_is_text_string(&recurrenceMap) && i < validity->recurrenceLen; i++)
                                     {
-                                        cborFindResult = cbor_value_dup_text_string(&recurrenceMap, &validity->recurrences[i], &len, NULL);
+                                        cborFindResult = cbor_value_dup_text_string(&recurrenceMap, &validity->recurrences[i], &vmLen, NULL);
                                         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding a recurrence Value.");
 
                                         cborFindResult = cbor_value_advance(&recurrenceMap);
@@ -923,7 +923,7 @@ OicSecAcl_t* CBORPayloadToAcl2(const uint8_t *cborPayload, const size_t size)
                             OICFree(name);
                         }
 
-                        if (type != CborMapType && cbor_value_is_valid(&aceMap))
+                        if (aceMapType != CborMapType && cbor_value_is_valid(&aceMap))
                         {
                             cborFindResult = cbor_value_advance(&aceMap);
                             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing the Array.");
@@ -1052,11 +1052,11 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                 while (cbor_value_is_valid(&aceMap))
                                 {
                                     char* name = NULL;
-                                    size_t len = 0;
-                                    CborType type = cbor_value_get_type(&aceMap);
-                                    if (type == CborTextStringType)
+                                    size_t tempLen = 0;
+                                    CborType aceMapType = cbor_value_get_type(&aceMap);
+                                    if (aceMapType == CborTextStringType)
                                     {
-                                        cborFindResult = cbor_value_dup_text_string(&aceMap, &name, &len, NULL);
+                                        cborFindResult = cbor_value_dup_text_string(&aceMap, &name, &tempLen, NULL);
                                         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Name in ACE Map.");
                                         cborFindResult = cbor_value_advance(&aceMap);
                                         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Value in ACE Map.");
@@ -1067,7 +1067,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                         if (strcmp(name, OIC_JSON_SUBJECTID_NAME)  == 0)
                                         {
                                             char *subject = NULL;
-                                            cborFindResult = cbor_value_dup_text_string(&aceMap, &subject, &len, NULL);
+                                            cborFindResult = cbor_value_dup_text_string(&aceMap, &subject, &tempLen, NULL);
                                             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding subject Value.");
                                             if(strcmp(subject, WILDCARD_RESOURCE_URI) == 0)
                                             {
@@ -1111,7 +1111,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                                     // "href"
                                                     if (0 == strcmp(OIC_JSON_HREF_NAME, rMapName))
                                                     {
-                                                        cborFindResult = cbor_value_dup_text_string(&rMap, &rsrc->href, &len, NULL);
+                                                        cborFindResult = cbor_value_dup_text_string(&rMap, &rsrc->href, &tempLen, NULL);
                                                         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Href Value.");
                                                     }
 
@@ -1164,7 +1164,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                                     // "rel"
                                                     if (0 == strcmp(OIC_JSON_REL_NAME, rMapName))
                                                     {
-                                                        cborFindResult = cbor_value_dup_text_string(&rMap, &rsrc->rel, &len, NULL);
+                                                        cborFindResult = cbor_value_dup_text_string(&rMap, &rsrc->rel, &tempLen, NULL);
                                                         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding REL Value.");
                                                     }
 
@@ -1217,8 +1217,8 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                                 cborFindResult = cbor_value_enter_container(&validitiesMap, &validityMap);
                                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding a validity Map.");
 
-                                                size_t len = 0;
-                                                cborFindResult =cbor_value_dup_text_string(&validityMap, &validity->period, &len, NULL);
+                                                size_t vmLen = 0;
+                                                cborFindResult =cbor_value_dup_text_string(&validityMap, &validity->period, &vmLen, NULL);
                                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding a Period value.");
 
                                                 //recurrence (string array)
@@ -1234,7 +1234,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
 
                                                 for(size_t i = 0; cbor_value_is_text_string(&recurrenceMap) && i < validity->recurrenceLen; i++)
                                                 {
-                                                    cborFindResult = cbor_value_dup_text_string(&recurrenceMap, &validity->recurrences[i], &len, NULL);
+                                                    cborFindResult = cbor_value_dup_text_string(&recurrenceMap, &validity->recurrences[i], &vmLen, NULL);
                                                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding a recurrence Value.");
 
                                                     cborFindResult = cbor_value_advance(&recurrenceMap);
@@ -1251,7 +1251,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                         if (strcmp(name, OIC_JSON_EOWNERID_NAME)  == 0)
                                         {
                                             char *eowner = NULL;
-                                            cborFindResult = cbor_value_dup_text_string(&aceMap, &eowner, &len, NULL);
+                                            cborFindResult = cbor_value_dup_text_string(&aceMap, &eowner, &tempLen, NULL);
                                             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding eownerId Value.");
                                             if(NULL == ace->eownerID)
                                             {
@@ -1266,7 +1266,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                         OICFree(name);
                                     }
 
-                                    if (type != CborMapType && cbor_value_is_valid(&aceMap))
+                                    if (aceMapType != CborMapType && cbor_value_is_valid(&aceMap))
                                     {
                                         cborFindResult = cbor_value_advance(&aceMap);
                                         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing the Array.");
@@ -1378,7 +1378,7 @@ exit:
  *     ::OC_STACK_NO_RESOURCE on failure to find the appropriate ACE
  *     ::OC_STACK_INVALID_PARAM on invalid parameter
  */
-OCStackResult RemoveACE(const OicUuid_t * subject, const char * resource)
+OCStackResult RemoveACE(const OicUuid_t *subject, const char *resource)
 {
     OIC_LOG(DEBUG, TAG, "IN RemoveACE");
 
@@ -1387,7 +1387,7 @@ OCStackResult RemoveACE(const OicUuid_t * subject, const char * resource)
     bool deleteFlag = false;
     OCStackResult ret = OC_STACK_NO_RESOURCE;
 
-    if (memcmp(subject->id, &WILDCARD_SUBJECT_ID, sizeof(subject->id)) == 0)
+    if (memcmp(subject, &WILDCARD_SUBJECT_ID, sizeof(*subject)) == 0)
     {
         OIC_LOG_V(ERROR, TAG, "%s received invalid parameter", __func__ );
         return  OC_STACK_INVALID_PARAM;
@@ -1860,7 +1860,9 @@ static OCEntityHandlerResult HandleACLGetRequest(const OCEntityHandlerRequest *e
          * Below code needs to be updated for scenarios when Subject have
          * multiple ACE's in ACL resource.
          */
-        while ((currentAce = GetACLResourceData(&subject, &savePtr)))
+        for (currentAce = GetACLResourceData(&subject, &savePtr);
+             NULL != currentAce;
+             currentAce = GetACLResourceData(&subject, &savePtr))
         {
             targetAcl.aces = (OicSecAce_t*)currentAce;
 
@@ -1873,7 +1875,7 @@ static OCEntityHandlerResult HandleACLGetRequest(const OCEntityHandlerRequest *e
                 OicSecRsrc_t *rsrc = NULL;
                 LL_FOREACH(currentAce->resources, rsrc)
                 {
-                    if(0 == strcmp(rsrc->href, resource) ||
+                    if (0 == strcmp(rsrc->href, resource) ||
                         0 == strcmp(WILDCARD_RESOURCE_URI, rsrc->href))
                     {
                         // Convert ACL data into CBOR format for transmission
@@ -1978,12 +1980,12 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
 
             if(OC_EH_OK == ehRet)
             {
-                size_t size = 0;
+                size_t cborSize = 0;
                 uint8_t *cborPayload = NULL;
 
-                if (OC_STACK_OK == AclToCBORPayload(gAcl, &cborPayload, &size))
+                if (OC_STACK_OK == AclToCBORPayload(gAcl, &cborPayload, &cborSize))
                 {
-                    if (UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, cborPayload, size) == OC_STACK_OK)
+                    if (UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, cborPayload, cborSize) == OC_STACK_OK)
                     {
                         ehRet = OC_EH_CHANGED;
                     }
@@ -2123,7 +2125,6 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     OicSecRsrc_t* resRsrc = NULL;
     OicSecRsrc_t* deviceRsrc = NULL;
     OicSecRsrc_t* platformRsrc = NULL;
-    OicSecRsrc_t* aclRsrc = NULL;
     OicSecRsrc_t* doxmRsrc = NULL;
     OicSecRsrc_t* pstatRsrc = NULL;
 
@@ -2147,7 +2148,7 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     VERIFY_NOT_NULL(TAG, readOnlyAce, ERROR);
 
     // Subject -- Mandatory
-    memcpy(readOnlyAce->subjectuuid.id, &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t));
+    memcpy(&readOnlyAce->subjectuuid, &WILDCARD_SUBJECT_ID, sizeof(readOnlyAce->subjectuuid));
 
     // Resources -- Mandatory
     // /oic/res
@@ -2219,7 +2220,7 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     VERIFY_NOT_NULL(TAG, readWriteAce, ERROR);
 
     // Subject -- Mandatory
-    memcpy(readWriteAce->subjectuuid.id, &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t));
+    memcpy(&readWriteAce->subjectuuid, &WILDCARD_SUBJECT_ID, sizeof(readWriteAce->subjectuuid));
 
     // Resources -- Mandatory
     // /oic/sec/doxm
@@ -2635,8 +2636,20 @@ static OicSecAce_t* GetSecDefaultACE()
     const int NUM_OF_DOXM_IF  = 1;
     const int NUM_OF_PSTAT_RT = 1;
     const int NUM_OF_PSTAT_IF = 1;
+
+#ifdef _MSC_VER
+    // OIC_RSRC_TYPE_SEC_DOXM and OIC_RSRC_TYPE_SEC_PSTAT are const but also extern so they cause warnings.
+#pragma warning(push)
+#pragma warning(disable:4204)
+#endif
+
     const char *doxmRt[] = { OIC_RSRC_TYPE_SEC_DOXM };
     const char *pstatRt[] = { OIC_RSRC_TYPE_SEC_PSTAT };
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
     const char *doxmIf[] = { OC_RSRVD_INTERFACE_DEFAULT };
     const char *pstatIf[] = { OC_RSRVD_INTERFACE_DEFAULT };
     OicSecRsrc_t* doxmRsrc = NULL;
@@ -2647,7 +2660,7 @@ static OicSecAce_t* GetSecDefaultACE()
     VERIFY_NOT_NULL(TAG, newAce, ERROR);
 
     // Subject -- Mandatory
-    memcpy(newAce->subjectuuid.id, &WILDCARD_SUBJECT_ID, WILDCARD_SUBJECT_ID_LEN);
+    memcpy(&newAce->subjectuuid, &WILDCARD_SUBJECT_ID, WILDCARD_SUBJECT_ID_LEN);
 
     //Resources -- Mandatory
     //Add doxm

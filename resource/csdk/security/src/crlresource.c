@@ -319,7 +319,8 @@ OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t
     CborError cborEncoderResult = CborNoError;
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_ERROR);
+
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     cborEncoderResult = cbor_encoder_create_map(&encoder, &crlMap, mapSize);
@@ -787,18 +788,18 @@ void GetDerCrl(ByteArray_t* out)
 
     if (OIC_ENCODING_BASE64 == crl->encoding)
     {
-        size_t outSize = B64DECODE_OUT_SAFESIZE((crl->len + 1));
-        uint8_t *out = OICCalloc(1, outSize);
-        if (!out)
+        size_t decodeBufferSize = B64DECODE_OUT_SAFESIZE((crl->len + 1));
+        uint8_t *decodeBuffer = OICCalloc(1, decodeBufferSize);
+        if (!decodeBuffer)
         {
             OIC_LOG(ERROR, TAG, "Can't allocate memory for base64 str");
             return;
         }
         size_t len = 0;
 
-        if(B64_OK == b64Decode((char*)crl->data, crl->len, out, outSize, &len))
+        if(B64_OK == b64Decode((char*)crl->data, crl->len, decodeBuffer, decodeBufferSize, &len))
         {
-            memcpy(crl->data, out, len);
+            memcpy(crl->data, decodeBuffer, len);
             crl->len = (size_t)len;
 
             OIC_LOG (ERROR, TAG, "Crl successfully decoded to base64.");
@@ -807,7 +808,8 @@ void GetDerCrl(ByteArray_t* out)
         {
             OIC_LOG (ERROR, TAG, "Base64 decoding failed.");
         }
-        OICFree(out);
+
+        OICFree(decodeBuffer);
     }
 
     out->len = 0;

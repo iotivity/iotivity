@@ -428,6 +428,11 @@ bool SRMIsSecurityResourceURI(const char* uri)
         return false;
     }
 
+#ifdef _MSC_VER
+    // The strings below are const but they are also marked as extern so they cause warnings.
+#pragma warning(push)
+#pragma warning(disable:4204)
+#endif
     const char *rsrcs[] = {
         OIC_RSRC_SVC_URI,
         OIC_RSRC_AMACL_URI,
@@ -441,6 +446,10 @@ bool SRMIsSecurityResourceURI(const char* uri)
         OIC_RSRC_VER_URI,
         OC_RSRVD_PROV_CRL_URL
     };
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
     // Remove query from Uri for resource string comparison
     size_t uriLen = strlen(uri);
