@@ -38,7 +38,11 @@ src_dir = rcs_common_env.get('SRC_DIR')
 # Build flags
 ######################################################################
 rcs_common_env.AppendUnique(CPPPATH = [
-    rcs_common_env.get('SRC_DIR')+'/extlibs',
+    '#/extlibs',
+    '#/resource/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/oc_logger/include',
     '../../include',
     'primitiveResource/include'])
 

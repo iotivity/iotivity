@@ -69,13 +69,20 @@ notification_wrapper_test_env.AppendUnique(LINKFLAGS = ['-Wl,--no-as-needed'])
 notification_wrapper_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
 notification_wrapper_test_env.AppendUnique(LIBS = ['pthread'])
 
-notification_wrapper_test_env.PrependUnique(CPPPATH = [ src_dir + '/extlibs/hippomocks-master', gtest_dir + '/include'])
-notification_wrapper_test_env.AppendUnique(CPPPATH = ['../provider/inc'])
-notification_wrapper_test_env.AppendUnique(CPPPATH = ['../consumer/inc'])
-notification_wrapper_test_env.AppendUnique(CPPPATH = ['../common'])
-notification_wrapper_test_env.AppendUnique(CPPPATH = ['../../include'])
-notification_wrapper_test_env.AppendUnique(CPPPATH = ['../../src/provider'])
-notification_wrapper_test_env.AppendUnique(CPPPATH = ['../../src/consumer'])
+notification_wrapper_test_env.PrependUnique(CPPPATH = [
+    '#/extlibs/hippomocks-master',
+    gtest_dir + '/include',
+    '../provider/inc',
+    '../consumer/inc',
+    '../common',
+    '../../include',
+    '../../src/provider',
+    '../../src/consumer',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/resource/oc_logger/include'
+])
 
 ######################################################################
 # Build Test

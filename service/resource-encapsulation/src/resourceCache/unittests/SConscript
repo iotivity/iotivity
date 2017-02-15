@@ -46,12 +46,18 @@ target_os = cache_test_env.get('TARGET_OS')
 # Build flags
 ######################################################################
 
-cache_test_env.AppendUnique(CPPPATH = ['../include'])
-cache_test_env.AppendUnique(CPPPATH = ['../../../include'])
-cache_test_env.AppendUnique(CPPPATH = ['../../common/primitiveResource/include'])
-cache_test_env.AppendUnique(CPPPATH = ['../../common/expiryTimer/include'])
-cache_test_env.AppendUnique(CPPPATH = ['../../common/expiryTimer/src'])
-cache_test_env.AppendUnique(CPPPATH = ['../../common/utils/include'])
+cache_test_env.AppendUnique(CPPPATH = [
+    '../include',
+    '../../../include',
+    '../../common/primitiveResource/include',
+    '../../common/expiryTimer/include',
+    '../../common/expiryTimer/src',
+    '../../common/utils/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/resource/oc_logger/include'
+])
 cache_test_env.PrependUnique(CPPPATH = [cache_test_env.get('SRC_DIR')+'/extlibs/hippomocks-master'])
 cache_test_env.AppendUnique(LIBPATH = [cache_test_env.get('BUILD_DIR')])
 cache_test_env.PrependUnique(LIBS = ['rcs_client', 'rcs_common',

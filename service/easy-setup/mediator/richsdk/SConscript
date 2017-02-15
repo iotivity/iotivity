@@ -57,7 +57,15 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-easy_setup_env.AppendUnique(CPPPATH = ['inc', 'src', '../../inc'])
+easy_setup_env.AppendUnique(CPPPATH = [
+    'inc',
+    'src',
+    '../../inc',
+    '#/resource/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/oc_logger/include'
+    ])
 
 if target_os not in ['windows']:
     easy_setup_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])

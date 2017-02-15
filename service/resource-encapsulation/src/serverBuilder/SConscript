@@ -41,6 +41,10 @@ server_builder_env.AppendUnique(CPPPATH = [
     '../common/primitiveResource/include',
     '../common/utils/include',
     '../../include',
+    '#/resource/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/oc_logger/include',
     ])
 
 server_builder_env.AppendUnique(CPPPATH = [server_builder_env.get('SRC_DIR')+'/extlibs', 'include'])

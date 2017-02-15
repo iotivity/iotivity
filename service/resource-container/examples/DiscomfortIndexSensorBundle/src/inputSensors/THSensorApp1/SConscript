@@ -2,12 +2,10 @@
 # linux sample sensor app  build script
 ##
 
-Import('env')
+Import('env linux_sample_env')
 
 # Add third party libraries
-lib_env = env.Clone()
-SConscript('#service/third_party_libs.scons', 'lib_env')
-linux_sample_env = lib_env.Clone()
+SConscript('#service/third_party_libs.scons', exports = { 'lib_env' : linux_sample_env })
 
 ######################################################################
 # Build flags

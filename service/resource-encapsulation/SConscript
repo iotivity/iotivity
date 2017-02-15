@@ -56,6 +56,10 @@ resourceClient_env = lib_env.Clone()
 ######################################################################
 resourceClient_env.AppendUnique(CPPPATH = [
     'include',
+    '#/resource/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/oc_logger/include',
     'src/common/primitiveResource/include',
     'src/common/expiryTimer/include',
     'src/common/utils/include',

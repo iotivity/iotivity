@@ -154,7 +154,7 @@ if with_upstream_libcoap == '1':
     lib_prefix = '' + str(libcoap_env.get('PREFIX'))
 
     if (not os.path.isfile(config_h_file_path)) and (not env.GetOption('clean')):
-        conf = Configure(libcoap_env)
+        conf = Configure(libcoap_env.Clone(LIBS = []))
 
         config_h_header = '''
 /* ****************************************************************************

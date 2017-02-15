@@ -39,7 +39,13 @@ sample_env.AppendUnique(LIBS = [
     'pthread',
     'mbedtls', 'mbedx509', 'mbedcrypto'
     ])
-sample_env.AppendUnique(CPPPATH = ['../../../include'])
+sample_env.AppendUnique(CPPPATH = [
+    '../../../include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/resource/oc_logger/include'
+])
 
 if env.get('SECURED') == '1':
     sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])

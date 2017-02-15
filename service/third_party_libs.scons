@@ -47,7 +47,7 @@ if target_os in ['linux']:
 *******************************************************************************
 ''' % target_arch
 
-		conf = Configure(lib_env)
+		conf = Configure(lib_env.Clone(LIBS = []))
 
 		if target_os not in ['tizen'] and not conf.CheckLib('boost_thread', language='C++'):
 			print 'Did not find boost_thread, exiting!'
@@ -57,7 +57,7 @@ if target_os in ['linux']:
 			print 'Did not find boost_system, exiting!'
 			Exit(1)
 
-		lib_env = conf.Finish()
+		conf.Finish()
 
 ######################################################################
 # The 'include' path of external libraries

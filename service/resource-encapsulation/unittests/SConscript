@@ -57,9 +57,13 @@ src_dir = lib_env.get('SRC_DIR')
 ######################################################################
 rcs_test_env.AppendUnique(
         CPPPATH = [
-                src_dir + '/extlibs/hippomocks-master',
+                '#/extlibs/hippomocks-master',
                 '../include',
                 '../src/common/utils/include',
+                '#/resource/csdk/include',
+                '#/resource/csdk/stack/include',
+                '#/resource/include',
+                '#/resource/oc_logger/include'
         ])
 
 rcs_test_env.PrependUnique(LIBS = [

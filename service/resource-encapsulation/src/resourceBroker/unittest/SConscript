@@ -47,12 +47,18 @@ target_os = broker_test_env.get('TARGET_OS')
 # Build flags
 ######################################################################
 
-broker_test_env.AppendUnique(CPPPATH = ['../include'])
-broker_test_env.AppendUnique(CPPPATH = ['../../../include'])
-broker_test_env.AppendUnique(CPPPATH = ['../../common/primitiveResource/include'])
-broker_test_env.AppendUnique(CPPPATH = ['../../common/expiryTimer/include'])
-broker_test_env.AppendUnique(CPPPATH = ['../../common/expiryTimer/src'])
-broker_test_env.AppendUnique(CPPPATH = ['../../common/utils/include'])
+broker_test_env.AppendUnique(CPPPATH = [
+    '../include',
+    '../../../include',
+    '../../common/primitiveResource/include',
+    '../../common/expiryTimer/include',
+    '../../common/expiryTimer/src',
+    '../../common/utils/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/resource/oc_logger/include'
+])
 
 broker_test_env.PrependUnique(CPPPATH = [broker_test_env.get('SRC_DIR')+'/extlibs/hippomocks-master'])
 broker_test_env.AppendUnique(LIBPATH = [broker_test_env.get('BUILD_DIR')])

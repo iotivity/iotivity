@@ -39,10 +39,16 @@ sample_env.AppendUnique(LIBS = [
     'rcs_common',
     'pthread'
     ])
-sample_env.AppendUnique(CPPPATH = ['../../include'])
+sample_env.AppendUnique(CPPPATH = [
+    '../../include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/resource/oc_logger/include'
+])
 
 if env.get('SECURED') == '1':
-   	sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if 'rt' in sample_env.get('LIBS'):
     sample_env.Append(LIBS = ['rt'])
@@ -70,4 +76,4 @@ nestedAttributesServer = server_env.Program('nestedAttributesServer', 'NestedAtt
 # ##### Build the RE Secure Resource Example #####
 ######################################################################
 if env.get('SECURED') == '1':
-	SConscript('secureResourceExample/SConscript')
+    SConscript('secureResourceExample/SConscript')
