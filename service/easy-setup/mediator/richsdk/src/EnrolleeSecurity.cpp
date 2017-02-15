@@ -71,7 +71,7 @@ namespace OIC
                                                         ESSecurityCb cb,
                                                         std::weak_ptr<EnrolleeSecurity> this_ptr)
         {
-            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "onEnrolleeSecuritySafetyCB");
+            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "onEnrolleeSecuritySafetyCB");
             std::shared_ptr<EnrolleeSecurity> Ptr = this_ptr.lock();
             if(Ptr)
             {
@@ -185,18 +185,18 @@ namespace OIC
                 ownerID = {};
             }
 
-            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Mediator ID %s", m_mediatorID.c_str());
-            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Enrollee's Owner ID %s", ownerID.c_str());
+            OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG, "Mediator ID %s", m_mediatorID.c_str());
+            OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG, "Enrollee's Owner ID %s", ownerID.c_str());
 
             if(ownerID == m_mediatorID)
             {
-                OIC_LOG(INFO, ENROLEE_SECURITY_TAG,
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
                     "The found device's first owner ID is matched with Mediator's ID");
                 ret = true;
             }
             else
             {
-                OIC_LOG(INFO, ENROLEE_SECURITY_TAG,
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
                     "The found device's first owner ID is NOT matched with Mediator's ID");
             }
 
@@ -237,7 +237,7 @@ namespace OIC
 
                 if(subOwnerID == m_mediatorID)
                 {
-                    OIC_LOG(INFO, ENROLEE_SECURITY_TAG,
+                    OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
                     "The found device's owner ID is matched with Mediator's ID as a second owner");
                     ret = true;
                     break;
@@ -247,7 +247,7 @@ namespace OIC
 
             if(!ret)
             {
-                OIC_LOG(INFO, ENROLEE_SECURITY_TAG,
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
                     "The found device's sub owner ID is NOT matched with Mediator's ID");
             }
 
@@ -337,7 +337,9 @@ namespace OIC
                         if( OC_STACK_OK == result->at(i).res )
                         {
                             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "MultipleOwnershipTransferCb is succeeded");
-                            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d for device %s", result->at(i).res, uuid.c_str());
+                            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d", result->at(i).res);
+                            OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG, "device uuid : %s", uuid.c_str());
+
                             OTMResult = true;
                         }
                         else
@@ -556,7 +558,9 @@ namespace OIC
                         if( OC_STACK_OK == result->at(i).res )
                         {
                             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "OwnershipTransfer is succeeded");
-                            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d for device %s", result->at(i).res, uuid.c_str());
+                            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d", result->at(i).res);
+                            OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG, "device uuid : %s", uuid.c_str());
+
                             OTMResult = true;
                         }
                         else
@@ -622,7 +626,7 @@ namespace OIC
 
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Secured resource is found.");
             OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "HOST: %s", m_securedResource->getDevAddr().c_str());
-            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "SID: %s", m_securedResource->getDeviceID().c_str());
+            OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG, "SID: %s", m_securedResource->getDeviceID().c_str());
             OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Owned status: %d", m_securedResource->getOwnedStatus());
 
             OicSecOxm_t selectedOTMethod = OIC_OXM_COUNT;
@@ -640,7 +644,7 @@ namespace OIC
                 char uuidString[UUID_STRING_SIZE] = {};
                 if(OCConvertUuidToString(m_securedResource->getDevPtr()->doxm->owner.id, uuidString))
                 {
-                    OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Owner ID: %s", uuidString);
+                    OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG, "Owner ID: %s", uuidString);
                 }
                 else
                 {
@@ -670,7 +674,7 @@ namespace OIC
             else if(OIC_PRECONFIG_PIN == ownershipTransferData.getMOTMethod())
             {
                 OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Selected MOT Method: OIC_PRECONFIG_PIN");
-                OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Pre-configured PIN: %s",
+                OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG, "Pre-configured PIN: %s",
                                     ownershipTransferData.getPreConfiguredPin().c_str());
             }
 #endif
@@ -733,7 +737,7 @@ namespace OIC
             char uuidString[UUID_STRING_SIZE] = {};
             if(OCConvertUuidToString(mediatorDevId->id, uuidString))
             {
-                OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Mediator UUID : %s", uuidString);
+                OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG, "Mediator UUID : %s", uuidString);
                 OICFree(mediatorDevId);
                 return std::string(uuidString);
             }
@@ -930,7 +934,7 @@ namespace OIC
             OCStackResult result = OC_STACK_ERROR;
             ESResult res = ESResult::ES_ERROR;
 
-            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Transfering ownership for : %s ",
+            OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG, "Transfering ownership for : %s ",
                     m_securedResource->getDeviceID().c_str());
 
             OC::ResultCallBack ownershipTransferCb =
@@ -969,7 +973,7 @@ namespace OIC
 
             OCStackResult result = OC_STACK_ERROR;
 
-            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Transfering sub-ownership for : %s ",
+            OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG, "Transfering sub-ownership for : %s ",
                     m_securedResource->getDeviceID().c_str());
 
             if(OIC_PRECONFIG_PIN == MOTdata.getMOTMethod() &&
@@ -1035,8 +1039,8 @@ namespace OIC
                     std::string uuid;
                     convertUUIDToString(result->at(i).deviceId.id, uuid);
 
-                    OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG,
-                        "Result is = %d for device %s",  result->at(i).res, uuid.c_str());
+                    OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d", result->at(i).res);
+                    OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG, "device uuid : %s", uuid.c_str());
                }
                removeDeviceResult = true;
             }
@@ -1065,7 +1069,7 @@ namespace OIC
             {
                 std::string uuid;
                 convertUUIDToString(pUuidList->dev.id, uuid);
-                OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG,
+                OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG,
                     "m_ocResource->sid(): %s, cur DB UUID %s",
                     m_ocResource->sid().c_str(), uuid.c_str());
                 if(m_ocResource->sid() == uuid.c_str())
@@ -1141,7 +1145,7 @@ namespace OIC
             {
                 OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Secured resource is found.");
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "HOST: %s", ownedDevice->getDevAddr().c_str());
-                OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "SID: %s", ownedDevice->getDeviceID().c_str());
+                OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG, "SID: %s", ownedDevice->getDeviceID().c_str());
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Owned status: %d", ownedDevice->getOwnedStatus());
 
                 if (ownedDevice->getOwnedStatus())
@@ -1257,7 +1261,7 @@ namespace OIC
                 return res;
             }
 
-            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Given cloudUuid: %s", cloudUuid.c_str());
+            OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG, "Given cloudUuid: %s", cloudUuid.c_str());
 
             OicUuid_t uuid;
             if(OC_STACK_OK != ConvertStrToUuid(cloudUuid.c_str(), &uuid))
@@ -1309,13 +1313,13 @@ namespace OIC
             OicSecAcl_t* acl = (OicSecAcl_t*) OICCalloc(1, sizeof(OicSecAcl_t));
             if(!acl)
             {
-                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "createAcl: OICCalloc error return");
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "createAcl: OICCalloc error return");
                 return NULL;  // not need to 'goto' |ERROR| before allocating |acl|
             }
             OicSecAce_t* ace = (OicSecAce_t*) OICCalloc(1, sizeof(OicSecAce_t));
             if(!ace)
             {
-                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,  "createAcl: OICCalloc error return");
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,  "createAcl: OICCalloc error return");
                 return NULL;  // not need to 'goto' |ERROR| before allocating |acl|
             }
             LL_APPEND(acl->aces, ace);
@@ -1325,7 +1329,7 @@ namespace OIC
             OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
             if(!rsrc)
             {
-                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "createAcl: OICCalloc error return");
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "createAcl: OICCalloc error return");
                 OCDeleteACLList(acl);
                 return NULL;
             }
@@ -1335,7 +1339,7 @@ namespace OIC
             rsrc->href = (char*) OICCalloc(len, sizeof(char));
             if(!rsrc->href)
             {
-                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,  "createAcl: OICCalloc error return");
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,  "createAcl: OICCalloc error return");
                 FreeRsrc(rsrc);
                 OCDeleteACLList(acl);
                 return NULL;
@@ -1347,7 +1351,7 @@ namespace OIC
             rsrc->types = (char**)OICCalloc(arrLen, sizeof(char*));
             if(!rsrc->types)
             {
-                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,  "createAcl: OICCalloc error return");
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,  "createAcl: OICCalloc error return");
                 FreeRsrc(rsrc);
                 OCDeleteACLList(acl);
                 return NULL;
@@ -1355,7 +1359,7 @@ namespace OIC
             rsrc->types[0] = OICStrdup("rt");   // ignore
             if(!rsrc->types[0])
             {
-                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,  "createAcl: OICStrdup error return");
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,  "createAcl: OICStrdup error return");
                 FreeRsrc(rsrc);
                 OCDeleteACLList(acl);
                 return NULL;
@@ -1365,7 +1369,7 @@ namespace OIC
             rsrc->interfaces = (char**)OICCalloc(arrLen, sizeof(char*));
             if(!rsrc->interfaces)
             {
-                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,  "createAcl: OICCalloc error return");
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,  "createAcl: OICCalloc error return");
                 FreeRsrc(rsrc);
                 OCDeleteACLList(acl);
                 return NULL;
@@ -1373,7 +1377,7 @@ namespace OIC
             rsrc->interfaces[0] = OICStrdup("if");  // ignore
             if(!rsrc->interfaces[0])
             {
-                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,  "createAcl: OICStrdup error return");
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,  "createAcl: OICStrdup error return");
                 FreeRsrc(rsrc);
                 OCDeleteACLList(acl);
                 return NULL;
@@ -1405,8 +1409,9 @@ namespace OIC
                for (unsigned int i = 0; i < result->size(); i++)
                {
                    convertUUIDToString(result->at(i).deviceId.id, devUuid);
-                   OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d  for device %s",
-                                                           result->at(i).res, devUuid.c_str());
+
+                   OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d", result->at(i).res);
+                   OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG, "device uuid : %s", devUuid.c_str());
                }
                delete result;
                aclResult = true;
@@ -1431,8 +1436,9 @@ namespace OIC
                for (unsigned int i = 0; i < result->size(); i++)
                {
                    convertUUIDToString(result->at(i).deviceId.id, devUuid);
-                   OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d  for device %s",
-                                                           result->at(i).res, devUuid.c_str());
+
+                   OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d", result->at(i).res);
+                   OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG, "device uuid : %s", devUuid.c_str());
                }
                delete result;
                certResult= true;

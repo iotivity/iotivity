@@ -46,11 +46,11 @@ static ESDeviceProperty gESDeviceProperty;
 
 void ESWiFiConfRsrcCallback(ESResult esResult, ESWiFiConfData *eventData)
 {
-    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ESWiFiConfRsrcCallback IN");
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESWiFiConfRsrcCallback IN");
 
     if(esResult != ES_OK)
     {
-        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "ESWiFiConfRsrcCallback Error Occured");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESWiFiConfRsrcCallback Error Occured");
         return;
     }
 
@@ -61,18 +61,18 @@ void ESWiFiConfRsrcCallback(ESResult esResult, ESWiFiConfData *eventData)
     }
     else
     {
-        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "WiFiConfProvCb is NULL");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "WiFiConfProvCb is NULL");
         return;
     }
 }
 
 void ESCoapCloudConfRsrcCallback(ESResult esResult, ESCoapCloudConfData *eventData)
 {
-    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ESCoapCloudConfRsrcCallback IN");
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESCoapCloudConfRsrcCallback IN");
 
     if(esResult != ES_OK)
     {
-        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "ESCoapCloudConfRsrcCallback Error Occured");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESCoapCloudConfRsrcCallback Error Occured");
         return;
     }
 
@@ -82,18 +82,18 @@ void ESCoapCloudConfRsrcCallback(ESResult esResult, ESCoapCloudConfData *eventDa
     }
     else
     {
-        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "CoapCloudConfProvCb is NULL");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "CoapCloudConfProvCb is NULL");
         return;
     }
 }
 
 void ESDevConfRsrcallback(ESResult esResult, ESDevConfData *eventData)
 {
-    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ESDevConfRsrcallback IN");
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESDevConfRsrcallback IN");
 
     if(esResult != ES_OK)
     {
-        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "ESDevConfRsrcallback Error Occured");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESDevConfRsrcallback Error Occured");
         return;
     }
 
@@ -103,7 +103,7 @@ void ESDevConfRsrcallback(ESResult esResult, ESDevConfData *eventData)
     }
     else
     {
-        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "DevConfProvCb is NULL");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "DevConfProvCb is NULL");
         return;
     }
 }
@@ -185,14 +185,14 @@ ESResult ESSetDeviceProperty(ESDeviceProperty *deviceProperty)
     while((deviceProperty->WiFi).mode[modeIdx] != WiFi_EOF)
     {
         (gESDeviceProperty.WiFi).mode[modeIdx] = (deviceProperty->WiFi).mode[modeIdx];
-        OIC_LOG_V(INFO, ES_ENROLLEE_TAG, "WiFi Mode : %d", (gESDeviceProperty.WiFi).mode[modeIdx]);
+        OIC_LOG_V(INFO_PRIVATE, ES_ENROLLEE_TAG, "WiFi Mode : %d", (gESDeviceProperty.WiFi).mode[modeIdx]);
         modeIdx ++;
     }
     (gESDeviceProperty.WiFi).freq = (deviceProperty->WiFi).freq;
-    OIC_LOG_V(INFO, ES_ENROLLEE_TAG, "WiFi Freq : %d", (gESDeviceProperty.WiFi).freq);
+    OIC_LOG_V(INFO_PRIVATE, ES_ENROLLEE_TAG, "WiFi Freq : %d", (gESDeviceProperty.WiFi).freq);
 
     OICStrcpy((gESDeviceProperty.DevConf).deviceName, OIC_STRING_MAX_VALUE, (deviceProperty->DevConf).deviceName);
-    OIC_LOG_V(INFO, ES_ENROLLEE_TAG, "Device Name : %s", (gESDeviceProperty.DevConf).deviceName);
+    OIC_LOG_V(INFO_PRIVATE, ES_ENROLLEE_TAG, "Device Name : %s", (gESDeviceProperty.DevConf).deviceName);
 
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetDeviceProperty OUT");
     return ES_OK;
@@ -235,7 +235,7 @@ ESResult ESSetErrorCode(ESErrorCode esErrCode)
         return ES_ERROR;
     }
 
-    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Set ESErrorCode succesfully : %d", esErrCode);
+    OIC_LOG_V(INFO, ES_ENROLLEE_TAG, "Set ESErrorCode succesfully : %d", esErrCode);
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetErrorCode OUT");
     return ES_OK;
 }
@@ -259,6 +259,8 @@ ESResult ESTerminateEnrollee()
 
 ESResult ESSetCallbackForUserdata(ESReadUserdataCb readCb, ESWriteUserdataCb writeCb)
 {
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetCallbackForUserdata IN");
+
     if(!readCb && !writeCb)
     {
         OIC_LOG(INFO, ES_ENROLLEE_TAG, "Both of callbacks for user data are null");

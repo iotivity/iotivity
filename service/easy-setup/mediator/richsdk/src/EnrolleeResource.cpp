@@ -44,7 +44,7 @@ namespace OIC
                                                         ESEnrolleeResourceCb cb,
                                                         std::weak_ptr<EnrolleeResource> this_ptr)
         {
-            OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onEnrolleeResourceSafetyCB");
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onEnrolleeResourceSafetyCB");
             std::shared_ptr<EnrolleeResource> Ptr = this_ptr.lock();
             if(Ptr)
             {
@@ -55,19 +55,19 @@ namespace OIC
         void EnrolleeResource::onProvisioningResponse(const HeaderOptions& /*headerOptions*/,
                 const OCRepresentation& /*rep*/, const int eCode)
         {
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onProvisioningResponse : eCode = %d",
+            OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onProvisioningResponse : eCode = %d",
                         eCode);
 
             if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
             {
                 ESResult result = ESResult::ES_ERROR;
 
-                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                OIC_LOG(ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
                             "onProvisioningResponse : Provisioning is failed ");
 
                 if(eCode == OCStackResult::OC_STACK_COMM_ERROR)
                 {
-                    OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                    OIC_LOG(ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
                         "can't receive any response from Enrollee by a timeout threshold.");
                     result = ESResult::ES_COMMUNICATION_ERROR;
                 }
@@ -78,7 +78,7 @@ namespace OIC
                 return;
             }
 
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                     "onProvisioningResponse : Provisioning is success. ");
 
             std::shared_ptr< DevicePropProvisioningStatus > provStatus = std::make_shared<
@@ -89,19 +89,19 @@ namespace OIC
         void EnrolleeResource::onGetStatusResponse(const HeaderOptions& /*headerOptions*/,
                 const OCRepresentation& rep, const int eCode)
         {
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onGetStatusResponse : eCode = %d",
+            OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onGetStatusResponse : eCode = %d",
                         eCode);
 
             if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
             {
                 ESResult result = ESResult::ES_ERROR;
 
-                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                OIC_LOG(ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
                             "onGetStatusResponse : onGetStatusResponse is failed ");
 
                 if(eCode == OCStackResult::OC_STACK_COMM_ERROR)
                 {
-                    OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                    OIC_LOG(ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
                         "can't receive any response from Enrollee by a timeout threshold.");
                     result = ESResult::ES_COMMUNICATION_ERROR;
                 }
@@ -125,19 +125,19 @@ namespace OIC
         void EnrolleeResource::onGetConfigurationResponse(const HeaderOptions& /*headerOptions*/,
                 const OCRepresentation& rep, const int eCode)
         {
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onGetConfigurationResponse : eCode = %d",
+            OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onGetConfigurationResponse : eCode = %d",
                         eCode);
 
             if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
             {
                 ESResult result = ESResult::ES_ERROR;
 
-                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                OIC_LOG(ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
                             "onGetConfigurationResponse : onGetConfigurationResponse is failed ");
 
                 if(eCode == OCStackResult::OC_STACK_COMM_ERROR)
                 {
-                    OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                    OIC_LOG(ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
                         "can't receive any response from Enrollee by a timeout threshold.");
                     result = ESResult::ES_COMMUNICATION_ERROR;
                 }
@@ -177,7 +177,7 @@ namespace OIC
 
         void EnrolleeResource::getStatus()
         {
-            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getStatus IN");
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getStatus IN");
 
             if (m_ocResource == nullptr)
             {
@@ -212,12 +212,12 @@ namespace OIC
 
                 return;
             }
-            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getStatus OUT");
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getStatus OUT");
         }
 
         void EnrolleeResource::getConfiguration()
         {
-            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getConfiguration IN");
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getConfiguration IN");
 
             if (m_ocResource == nullptr)
             {
@@ -251,12 +251,12 @@ namespace OIC
                 return;
             }
 
-            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getConfiguration OUT");
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getConfiguration OUT");
         }
 
         void EnrolleeResource::provisionProperties(const DeviceProp& deviceProp)
         {
-            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "provisionProperties IN");
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "provisionProperties IN");
             if (m_ocResource == nullptr)
             {
                 throw ESBadRequestException("Resource is not initialized");
@@ -275,7 +275,7 @@ namespace OIC
             m_ocResource->post(OC_RSRVD_ES_RES_TYPE_EASYSETUP, BATCH_INTERFACE,
                     provisioningRepresentation, QueryParamsMap(), cb, OC::QualityOfService::HighQos);
 
-            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "provisionProperties OUT");
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "provisionProperties OUT");
         }
     }
 }

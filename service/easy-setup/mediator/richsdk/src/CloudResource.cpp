@@ -46,7 +46,7 @@ namespace OIC
                                                                 ESCloudResourceCb cb,
                                                                 std::weak_ptr<CloudResource> this_ptr)
         {
-            OIC_LOG_V(DEBUG, ES_CLOUD_RES_TAG, "onCloudProvResponseSafetyCb");
+            OIC_LOG(DEBUG, ES_CLOUD_RES_TAG, "onCloudProvResponseSafetyCb");
             std::shared_ptr<CloudResource> Ptr = this_ptr.lock();
             if(Ptr)
             {
@@ -57,7 +57,7 @@ namespace OIC
 
         void CloudResource::provisionProperties(const CloudProp& cloudProp)
         {
-            OIC_LOG (DEBUG, ES_CLOUD_RES_TAG, "provisionProperties IN");
+            OIC_LOG(DEBUG, ES_CLOUD_RES_TAG, "provisionProperties IN");
 
             OCRepresentation provisioningRepresentation = cloudProp.toOCRepresentation();
 
@@ -71,13 +71,13 @@ namespace OIC
             m_ocResource->post(OC_RSRVD_ES_RES_TYPE_EASYSETUP, BATCH_INTERFACE,
                         provisioningRepresentation, QueryParamsMap(), cb, OC::QualityOfService::HighQos);
 
-            OIC_LOG (DEBUG, ES_CLOUD_RES_TAG, "provisionProperties OUT");
+            OIC_LOG(DEBUG, ES_CLOUD_RES_TAG, "provisionProperties OUT");
         }
 
         void CloudResource::onCloudProvResponse(const HeaderOptions& /*headerOptions*/,
                 const OCRepresentation& /*rep*/, const int eCode)
         {
-            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "onCloudProvResponse : eCode = %d",
+            OIC_LOG_V(DEBUG, ES_CLOUD_RES_TAG, "onCloudProvResponse : eCode = %d",
                         eCode);
 
             if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
@@ -88,7 +88,7 @@ namespace OIC
 
                 if(eCode == OCStackResult::OC_STACK_COMM_ERROR)
                 {
-                    OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG,
+                    OIC_LOG(DEBUG, ES_CLOUD_RES_TAG,
                             "can't receive any response from Enrollee by a timeout threshold.");
                     result = ESResult::ES_COMMUNICATION_ERROR;
                 }

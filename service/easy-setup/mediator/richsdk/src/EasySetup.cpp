@@ -50,7 +50,7 @@ namespace OIC
 
         std::shared_ptr<RemoteEnrollee> EasySetup::createRemoteEnrollee (std::shared_ptr< OC::OCResource > resource)
         {
-            OIC_LOG(DEBUG, EASYSETUP_TAG, "createRemoteEnrollee IN");
+            OIC_LOG(INFO, EASYSETUP_TAG, "createRemoteEnrollee IN");
 
             if(resource)
             {
@@ -66,11 +66,11 @@ namespace OIC
                 {
                     if(interface.compare(BATCH_INTERFACE) == 0)
                     {
-                        OIC_LOG (DEBUG, EASYSETUP_TAG, "RemoteEnrollee object is succeessfully created");
-                        OIC_LOG_V (DEBUG, EASYSETUP_TAG, "HOST: %s", resource->host().c_str());
-                        OIC_LOG_V (DEBUG, EASYSETUP_TAG, "URI: %s", resource->uri().c_str());
-                        OIC_LOG_V (DEBUG, EASYSETUP_TAG, "SID: %s", resource->sid().c_str());
-                        OIC_LOG_V (DEBUG, EASYSETUP_TAG, "CONNECTIVITY: %d", resource->connectivityType());
+                        OIC_LOG (INFO, EASYSETUP_TAG, "RemoteEnrollee object is succeessfully created");
+                        OIC_LOG_V (INFO_PRIVATE, EASYSETUP_TAG, "HOST: %s", resource->host().c_str());
+                        OIC_LOG_V (INFO_PRIVATE, EASYSETUP_TAG, "URI: %s", resource->uri().c_str());
+                        OIC_LOG_V (INFO_PRIVATE, EASYSETUP_TAG, "SID: %s", resource->sid().c_str());
+                        OIC_LOG_V (INFO_PRIVATE, EASYSETUP_TAG, "CONNECTIVITY: %d", resource->connectivityType());
                         return std::shared_ptr< RemoteEnrollee > (new RemoteEnrollee(resource));
                     }
                 }
