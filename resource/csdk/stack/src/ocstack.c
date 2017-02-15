@@ -3590,6 +3590,7 @@ OCStackResult OCProcess()
 {
     if (stackState == OC_STACK_UNINITIALIZED)
     {
+        OIC_LOG(ERROR, TAG, "OCProcess has failed. ocstack is not initialized");
         return OC_STACK_ERROR;
     }
 #ifdef WITH_PRESENCE

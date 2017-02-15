@@ -2826,14 +2826,14 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     }
     CAInitializeLEAdapter();
 
-    CASetLEClientThreadPoolHandle(handle);
-
     result = CAInitializeLEGattClient();
     if (CA_STATUS_OK != result)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitializeLEGattClient() failed");
         return CA_STATUS_FAILED;
     }
+
+    CASetLEClientThreadPoolHandle(handle);
 
     CASetLEReqRespClientCallback(CALEAdapterClientReceivedData);
     CASetLEServerThreadPoolHandle(handle);
