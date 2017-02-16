@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <memory.h>
+#include <limits.h>
 
 #include "ocstack.h"
 #include "oic_malloc.h"
