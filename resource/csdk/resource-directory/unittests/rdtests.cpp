@@ -298,41 +298,6 @@ TEST_F(RDTests, RDDeleteSpecificResource)
 #endif
 
 #if (defined(RD_SERVER) && defined(RD_CLIENT))
-class Callback
-{
-    public:
-        Callback(OCClientResponseHandler cb)
-            : m_cb(cb), m_called(false)
-        {
-            m_cbData.cb = &Callback::handler;
-            m_cbData.cd = NULL;
-            m_cbData.context = this;
-        }
-        void Wait()
-        {
-            while (!m_called)
-            {
-                OCProcess();
-            }
-        }
-        operator OCCallbackData *()
-        {
-            return &m_cbData;
-        }
-    private:
-        OCCallbackData m_cbData;
-        OCClientResponseHandler m_cb;
-        bool m_called;
-        static OCStackApplicationResult handler(void *ctx, OCDoHandle handle,
-                                                OCClientResponse *clientResponse)
-        {
-            Callback *callback = (Callback *) ctx;
-            OCStackApplicationResult result = callback->m_cb(NULL, handle, clientResponse);
-            callback->m_called = true;
-            return result;
-        }
-};
-
 class RDDiscoverTests : public testing::Test
 {
     protected:
@@ -409,15 +374,15 @@ TEST_F(RDDiscoverTests, DiscoverAllResources)
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles[1], "core.light",
                                             "oic.if.baseline", "/a/light2", rdEntityHandler,
                                             NULL, (OC_DISCOVERABLE | OC_OBSERVABLE)));
-    Callback publishCB(&handlePublishCB);
+    itst::Callback publishCB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[0], CT_ADAPTER_IP, handles,
               2, publishCB, OC_LOW_QOS));
-    publishCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, publishCB.Wait(100));
 
-    Callback discoverCB(&DiscoverAllResourcesVerify);
+    itst::Callback discoverCB(&DiscoverAllResourcesVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res", NULL, 0, CT_DEFAULT,
                                         OC_HIGH_QOS, discoverCB, NULL, 0));
-    discoverCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
 static OCStackApplicationResult ResourceQueryMatchesLocalAndRemoteVerify(void *ctx,
@@ -456,16 +421,16 @@ TEST_F(RDDiscoverTests, ResourceQueryMatchesLocalAndRemote)
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles[0], "core.light",
                                             "oic.if.baseline", "/a/light", rdEntityHandler,
                                             NULL, (OC_DISCOVERABLE | OC_OBSERVABLE)));
-    Callback publishCB(&handlePublishCB);
+    itst::Callback publishCB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[0], CT_ADAPTER_IP, handles,
               1, publishCB, OC_LOW_QOS));
-    publishCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, publishCB.Wait(100));
 
-    Callback discoverCB(&ResourceQueryMatchesLocalAndRemoteVerify);
+    itst::Callback discoverCB(&ResourceQueryMatchesLocalAndRemoteVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=core.light", NULL, 0,
                                         CT_DEFAULT,
                                         OC_HIGH_QOS, discoverCB, NULL, 0));
-    discoverCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
 static OCStackApplicationResult ResourceQueryMatchesLocalOnlyVerify(void *ctx,
@@ -497,18 +462,18 @@ TEST_F(RDDiscoverTests, ResourceQueryMatchesLocalOnly)
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles[1], "core.light2",
                                             "oic.if.baseline", "/a/light2", rdEntityHandler,
                                             NULL, (OC_DISCOVERABLE | OC_OBSERVABLE)));
-    Callback publishCB(&handlePublishCB);
+    itst::Callback publishCB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[0], CT_ADAPTER_IP, &handles[1],
               1, publishCB, OC_LOW_QOS));
-    publishCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, publishCB.Wait(100));
 
     OIC_LOG(INFO, TAG, "Published");
 
-    Callback discoverCB(&ResourceQueryMatchesLocalOnlyVerify);
+    itst::Callback discoverCB(&ResourceQueryMatchesLocalOnlyVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=core.light", NULL, 0,
                                         CT_DEFAULT,
                                         OC_HIGH_QOS, discoverCB, NULL, 0));
-    discoverCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
 static OCStackApplicationResult ResourceQueryMatchesRemoteOnlyVerify(void *ctx,
@@ -574,16 +539,16 @@ TEST_F(RDDiscoverTests, ResourceQueryMatchesRemoteOnly)
 
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *)repPayload);
 
-    Callback publishCB(&handlePublishCB);
+    itst::Callback publishCB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_POST, "127.0.0.1/oic/rd?rt=oic.wk.rdpub", NULL,
                                         (OCPayload *)repPayload, CT_DEFAULT, OC_HIGH_QOS, publishCB, NULL, 0));
-    publishCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, publishCB.Wait(100));
 
-    Callback discoverCB(&ResourceQueryMatchesRemoteOnlyVerify);
+    itst::Callback discoverCB(&ResourceQueryMatchesRemoteOnlyVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=core.light2", NULL, 0,
                                         CT_DEFAULT,
                                         OC_HIGH_QOS, discoverCB, NULL, 0));
-    discoverCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
 static OCStackApplicationResult DatabaseHas0ResourceQueryMatchesVerify(void *ctx,
@@ -620,24 +585,24 @@ TEST_F(RDDiscoverTests, DatabaseHas0ResourceQueryMatches)
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles[3], "core.light4",
                                             "oic.if.baseline", "/a/light4", rdEntityHandler,
                                             NULL, (OC_DISCOVERABLE | OC_OBSERVABLE)));
-    Callback publish0CB(&handlePublishCB);
+    itst::Callback publish0CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[0], CT_ADAPTER_IP, &handles[1],
               1, publish0CB, OC_LOW_QOS));
-    publish0CB.Wait();
-    Callback publish1CB(&handlePublishCB);
+    EXPECT_EQ(OC_STACK_OK, publish0CB.Wait(100));
+    itst::Callback publish1CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[1], CT_ADAPTER_IP, &handles[2],
               1, publish1CB, OC_LOW_QOS));
-    publish1CB.Wait();
-    Callback publish2CB(&handlePublishCB);
+    EXPECT_EQ(OC_STACK_OK, publish1CB.Wait(100));
+    itst::Callback publish2CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[2], CT_ADAPTER_IP, &handles[3],
               1, publish2CB, OC_LOW_QOS));
-    publish2CB.Wait();
+    EXPECT_EQ(OC_STACK_OK, publish2CB.Wait(100));
 
-    Callback discoverCB(&DatabaseHas0ResourceQueryMatchesVerify);
+    itst::Callback discoverCB(&DatabaseHas0ResourceQueryMatchesVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=core.light", NULL, 0,
                                         CT_DEFAULT,
                                         OC_HIGH_QOS, discoverCB, NULL, 0));
-    discoverCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
 static OCStackApplicationResult DatabaseHas1ResourceQueryMatchVerify(void *ctx,
@@ -688,24 +653,24 @@ TEST_F(RDDiscoverTests, DatabaseHas1ResourceQueryMatch)
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles[3], "core.light4",
                                             "oic.if.baseline", "/a/light4", rdEntityHandler,
                                             NULL, (OC_DISCOVERABLE | OC_OBSERVABLE)));
-    Callback publish0CB(&handlePublishCB);
+    itst::Callback publish0CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[0], CT_ADAPTER_IP, &handles[1],
               1, publish0CB, OC_LOW_QOS));
-    publish0CB.Wait();
-    Callback publish1CB(&handlePublishCB);
+    EXPECT_EQ(OC_STACK_OK, publish0CB.Wait(100));
+    itst::Callback publish1CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[1], CT_ADAPTER_IP, &handles[2],
               1, publish1CB, OC_LOW_QOS));
-    publish1CB.Wait();
-    Callback publish2CB(&handlePublishCB);
+    EXPECT_EQ(OC_STACK_OK, publish1CB.Wait(100));
+    itst::Callback publish2CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[2], CT_ADAPTER_IP, &handles[3],
               1, publish2CB, OC_LOW_QOS));
-    publish2CB.Wait();
+    EXPECT_EQ(OC_STACK_OK, publish2CB.Wait(100));
 
-    Callback discoverCB(&DatabaseHas1ResourceQueryMatchVerify);
+    itst::Callback discoverCB(&DatabaseHas1ResourceQueryMatchVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=core.light2", NULL, 0,
                                         CT_DEFAULT,
                                         OC_HIGH_QOS, discoverCB, NULL, 0));
-    discoverCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
 static OCStackApplicationResult DatabaseHasNResourceQueryMatchesVerify(void *ctx,
@@ -758,24 +723,24 @@ TEST_F(RDDiscoverTests, DatabaseHasNResourceQueryMatches)
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles[3], "core.light",
                                             "oic.if.baseline", "/a/light4", rdEntityHandler,
                                             NULL, (OC_DISCOVERABLE | OC_OBSERVABLE)));
-    Callback publish0CB(&handlePublishCB);
+    itst::Callback publish0CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[0], CT_ADAPTER_IP, &handles[1],
               1, publish0CB, OC_LOW_QOS));
-    publish0CB.Wait();
-    Callback publish1CB(&handlePublishCB);
+    EXPECT_EQ(OC_STACK_OK, publish0CB.Wait(100));
+    itst::Callback publish1CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[1], CT_ADAPTER_IP, &handles[2],
               1, publish1CB, OC_LOW_QOS));
-    publish1CB.Wait();
-    Callback publish2CB(&handlePublishCB);
+    EXPECT_EQ(OC_STACK_OK, publish1CB.Wait(100));
+    itst::Callback publish2CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[2], CT_ADAPTER_IP, &handles[3],
               1, publish2CB, OC_LOW_QOS));
-    publish2CB.Wait();
+    EXPECT_EQ(OC_STACK_OK, publish2CB.Wait(100));
 
-    Callback discoverCB(&DatabaseHasNResourceQueryMatchesVerify);
+    itst::Callback discoverCB(&DatabaseHasNResourceQueryMatchesVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=core.light", NULL, 0,
                                         CT_DEFAULT,
                                         OC_HIGH_QOS, discoverCB, NULL, 0));
-    discoverCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
 static OCStackApplicationResult DatabaseHas0InterfaceQueryMatchesVerify(void *ctx,
@@ -812,24 +777,24 @@ TEST_F(RDDiscoverTests, DatabaseHas0InterfaceQueryMatches)
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles[3], "core.light4",
                                             "oic.if.four", "/a/light4", rdEntityHandler,
                                             NULL, (OC_DISCOVERABLE | OC_OBSERVABLE)));
-    Callback publish0CB(&handlePublishCB);
+    itst::Callback publish0CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[0], CT_ADAPTER_IP, &handles[1],
               1, publish0CB, OC_LOW_QOS));
-    publish0CB.Wait();
-    Callback publish1CB(&handlePublishCB);
+    EXPECT_EQ(OC_STACK_OK, publish0CB.Wait(100));
+    itst::Callback publish1CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[1], CT_ADAPTER_IP, &handles[2],
               1, publish1CB, OC_LOW_QOS));
-    publish1CB.Wait();
-    Callback publish2CB(&handlePublishCB);
+    EXPECT_EQ(OC_STACK_OK, publish1CB.Wait(100));
+    itst::Callback publish2CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[2], CT_ADAPTER_IP, &handles[3],
               1, publish2CB, OC_LOW_QOS));
-    publish2CB.Wait();
+    EXPECT_EQ(OC_STACK_OK, publish2CB.Wait(100));
 
-    Callback discoverCB(&DatabaseHas0InterfaceQueryMatchesVerify);
+    itst::Callback discoverCB(&DatabaseHas0InterfaceQueryMatchesVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?if=oic.if.one", NULL, 0,
                                         CT_DEFAULT,
                                         OC_HIGH_QOS, discoverCB, NULL, 0));
-    discoverCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
 static OCStackApplicationResult DatabaseHas1InterfaceQueryMatchVerify(void *ctx,
@@ -890,24 +855,24 @@ TEST_F(RDDiscoverTests, DatabaseHas1InterfaceQueryMatch)
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles[3], "core.light4",
                                             "oic.if.four", "/a/light4", rdEntityHandler,
                                             NULL, (OC_DISCOVERABLE | OC_OBSERVABLE)));
-    Callback publish0CB(&handlePublishCB);
+    itst::Callback publish0CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[0], CT_ADAPTER_IP, &handles[1],
               1, publish0CB, OC_LOW_QOS));
-    publish0CB.Wait();
-    Callback publish1CB(&handlePublishCB);
+    EXPECT_EQ(OC_STACK_OK, publish0CB.Wait(100));
+    itst::Callback publish1CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[1], CT_ADAPTER_IP, &handles[2],
               1, publish1CB, OC_LOW_QOS));
-    publish1CB.Wait();
-    Callback publish2CB(&handlePublishCB);
+    EXPECT_EQ(OC_STACK_OK, publish1CB.Wait(100));
+    itst::Callback publish2CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[2], CT_ADAPTER_IP, &handles[3],
               1, publish2CB, OC_LOW_QOS));
-    publish2CB.Wait();
+    EXPECT_EQ(OC_STACK_OK, publish2CB.Wait(100));
 
-    Callback discoverCB(&DatabaseHas1InterfaceQueryMatchVerify);
+    itst::Callback discoverCB(&DatabaseHas1InterfaceQueryMatchVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?if=oic.if.two", NULL, 0,
                                         CT_DEFAULT,
                                         OC_HIGH_QOS, discoverCB, NULL, 0));
-    discoverCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
 static OCStackApplicationResult DatabaseHasNInterfaceQueryMatchesVerify(void *ctx,
@@ -967,24 +932,24 @@ TEST_F(RDDiscoverTests, DatabaseHasNInterfaceQueryMatches)
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles[3], "core.light",
                                             "oic.if.a", "/a/light4", rdEntityHandler,
                                             NULL, (OC_DISCOVERABLE | OC_OBSERVABLE)));
-    Callback publish0CB(&handlePublishCB);
+    itst::Callback publish0CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[0], CT_ADAPTER_IP, &handles[1],
               1, publish0CB, OC_LOW_QOS));
-    publish0CB.Wait();
-    Callback publish1CB(&handlePublishCB);
+    EXPECT_EQ(OC_STACK_OK, publish0CB.Wait(100));
+    itst::Callback publish1CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[1], CT_ADAPTER_IP, &handles[2],
               1, publish1CB, OC_LOW_QOS));
-    publish1CB.Wait();
-    Callback publish2CB(&handlePublishCB);
+    EXPECT_EQ(OC_STACK_OK, publish1CB.Wait(100));
+    itst::Callback publish2CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[2], CT_ADAPTER_IP, &handles[3],
               1, publish2CB, OC_LOW_QOS));
-    publish2CB.Wait();
+    EXPECT_EQ(OC_STACK_OK, publish2CB.Wait(100));
 
-    Callback discoverCB(&DatabaseHasNInterfaceQueryMatchesVerify);
+    itst::Callback discoverCB(&DatabaseHasNInterfaceQueryMatchesVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?if=oic.if.a", NULL, 0,
                                         CT_DEFAULT,
                                         OC_HIGH_QOS, discoverCB, NULL, 0));
-    discoverCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
 static OCStackApplicationResult ResourceAndInterfaceQueryMatchVerify(void *ctx,
@@ -1047,16 +1012,16 @@ TEST_F(RDDiscoverTests, ResourceAndInterfaceQueryMatch)
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles[3], "core.light2",
                                             "oic.if.a", "/a/light4", rdEntityHandler,
                                             NULL, (OC_DISCOVERABLE | OC_OBSERVABLE)));
-    Callback publish0CB(&handlePublishCB);
+    itst::Callback publish0CB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[0], CT_ADAPTER_IP, &handles[1],
               3, publish0CB, OC_LOW_QOS));
-    publish0CB.Wait();
+    EXPECT_EQ(OC_STACK_OK, publish0CB.Wait(100));
 
-    Callback discoverCB(&ResourceAndInterfaceQueryMatchVerify);
+    itst::Callback discoverCB(&ResourceAndInterfaceQueryMatchVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=core.light2&if=oic.if.two",
                                         NULL, 0, CT_DEFAULT,
                                         OC_HIGH_QOS, discoverCB, NULL, 0));
-    discoverCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
 static OCStackApplicationResult BaselineVerify(void *ctx, OCDoHandle handle,
@@ -1080,16 +1045,16 @@ TEST_F(RDDiscoverTests, Baseline)
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles[0], "core.light",
                                             "oic.if.baseline", "/a/light", rdEntityHandler,
                                             NULL, (OC_DISCOVERABLE | OC_OBSERVABLE)));
-    Callback publishCB(&handlePublishCB);
+    itst::Callback publishCB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[0], CT_ADAPTER_IP, handles,
               1, publishCB, OC_LOW_QOS));
-    publishCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, publishCB.Wait(100));
 
-    Callback discoverCB(&BaselineVerify);
+    itst::Callback discoverCB(&BaselineVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?if=oic.if.baseline", NULL, 0,
                                         CT_DEFAULT,
                                         OC_HIGH_QOS, discoverCB, NULL, 0));
-    discoverCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
 static OCStackApplicationResult DeleteDeviceVerify(void *ctx, OCDoHandle handle,
@@ -1119,21 +1084,21 @@ TEST_F(RDDiscoverTests, DeleteDevice)
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles[0], "core.light",
                                             "oic.if.baseline", "/a/light", rdEntityHandler,
                                             NULL, (OC_DISCOVERABLE | OC_OBSERVABLE)));
-    Callback publishCB(&handlePublishCB);
+    itst::Callback publishCB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[0], CT_ADAPTER_IP, handles,
               1, publishCB, OC_LOW_QOS));
-    publishCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, publishCB.Wait(100));
 
-    Callback deleteCB(&handleDeleteCB);
+    itst::Callback deleteCB(&handleDeleteCB);
     EXPECT_EQ(OC_STACK_OK, OCRDDeleteWithDeviceId(NULL, "127.0.0.1", di[0], CT_ADAPTER_IP, nullptr, 0,
                                                   deleteCB, OC_HIGH_QOS));
-    deleteCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, deleteCB.Wait(100));
 
-    Callback discoverCB(&DeleteDeviceVerify);
+    itst::Callback discoverCB(&DeleteDeviceVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res", NULL, 0,
                                         CT_DEFAULT,
                                         OC_HIGH_QOS, discoverCB, NULL, 0));
-    discoverCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
 static OCStackApplicationResult Delete1Verify(void *ctx, OCDoHandle handle,
@@ -1186,21 +1151,21 @@ TEST_F(RDDiscoverTests, Delete1)
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles[1], "core.light",
                                             "oic.if.baseline", "/a/light2", rdEntityHandler,
                                             NULL, (OC_DISCOVERABLE | OC_OBSERVABLE)));
-    Callback publishCB(&handlePublishCB);
+    itst::Callback publishCB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[0], CT_ADAPTER_IP, handles,
               2, publishCB, OC_LOW_QOS));
-    publishCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, publishCB.Wait(100));
 
-    Callback deleteCB(&handleDeleteCB);
+    itst::Callback deleteCB(&handleDeleteCB);
     EXPECT_EQ(OC_STACK_OK, OCRDDeleteWithDeviceId(NULL, "127.0.0.1", di[0], CT_ADAPTER_IP, handles, 1,
                                                   deleteCB, OC_HIGH_QOS));
-    deleteCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, deleteCB.Wait(100));
 
-    Callback discoverCB(&Delete1Verify);
+    itst::Callback discoverCB(&Delete1Verify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res", NULL, 0,
                                         CT_DEFAULT,
                                         OC_HIGH_QOS, discoverCB, NULL, 0));
-    discoverCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
 static OCStackApplicationResult DeleteNVerify(void *ctx, OCDoHandle handle,
@@ -1262,20 +1227,21 @@ TEST_F(RDDiscoverTests, DeleteN)
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles[2], "core.light",
                                             "oic.if.baseline", "/a/light3", rdEntityHandler,
                                             NULL, (OC_DISCOVERABLE | OC_OBSERVABLE)));
-    Callback publishCB(&handlePublishCB);
+    itst::Callback publishCB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCRDPublishWithDeviceId(NULL, "127.0.0.1", di[0], CT_ADAPTER_IP, handles,
               3, publishCB, OC_LOW_QOS));
-    publishCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, publishCB.Wait(100));
 
-    Callback deleteCB(&handleDeleteCB);
+    itst::Callback deleteCB(&handleDeleteCB);
     EXPECT_EQ(OC_STACK_OK, OCRDDeleteWithDeviceId(NULL, "127.0.0.1", di[0], CT_ADAPTER_IP, handles, 2,
                                                   deleteCB, OC_HIGH_QOS));
-    deleteCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, deleteCB.Wait(100));
 
-    Callback discoverCB(&DeleteNVerify);
+    itst::Callback discoverCB(&DeleteNVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res", NULL, 0,
                                         CT_DEFAULT,
                                         OC_HIGH_QOS, discoverCB, NULL, 0));
-    discoverCB.Wait();
+    EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 #endif
+
