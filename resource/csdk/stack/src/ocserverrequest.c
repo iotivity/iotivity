@@ -140,7 +140,7 @@ static void DeleteServerResponse(OCServerResponse * serverResponse)
  * outgoing response.
  *
  * @param object CA remote endpoint.
- * @param requestInfo CA request info.
+ * @param responseInfo CA response info.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
