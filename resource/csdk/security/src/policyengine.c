@@ -242,7 +242,8 @@ OCStackResult GetSvcRownerId(OicUuid_t *rowner)
     return OC_STACK_ERROR;
 }
 
-static GetSvrRownerId_t GetSvrRownerId[OIC_SEC_SVR_TYPE_COUNT] = {
+static GetSvrRownerId_t GetSvrRownerId[OIC_SEC_SVR_TYPE_COUNT + 1] = {
+    NULL,
     GetAclRownerId,
     GetAmaclRownerId,
     GetCredRownerId,
