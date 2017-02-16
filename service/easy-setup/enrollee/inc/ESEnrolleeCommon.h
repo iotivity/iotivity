@@ -30,6 +30,15 @@ extern "C"
 #endif
 
 /**
+ * @brief Data structure for connect request from Mediator
+ */
+typedef struct
+{
+    ES_CONNECT_TYPE connect[NUM_CONNECT_TYPE];
+    int numRequest;
+} ESConnectRequest;
+
+/**
  * @brief Data structure delivered from mediator, which provides WiFi information
  */
 typedef struct
@@ -95,6 +104,7 @@ typedef struct
  */
 typedef struct
 {
+    void (*ConnectRequestCb) (ESConnectRequest *);
     void (*WiFiConfProvCb) (ESWiFiConfData *);
     void (*DevConfProvCb) (ESDevConfData *);
     void (*CoapCloudConfProvCb) (ESCoapCloudConfData *);

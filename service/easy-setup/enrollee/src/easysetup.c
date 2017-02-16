@@ -44,6 +44,27 @@ static bool gIsSecured = false;
 static ESProvisioningCallbacks gESProvisioningCb;
 static ESDeviceProperty gESDeviceProperty;
 
+void ESConnectRequestCallback(ESResult esResult, ESConnectRequest *eventData)
+{
+    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ESConnectRequestCallback IN");
+
+    if(esResult != ES_OK)
+    {
+        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "ESConnectRequestCallback Error Occured");
+        return;
+    }
+
+    if(gESProvisioningCb.ConnectRequestCb != NULL)
+    {
+        gESProvisioningCb.ConnectRequestCb(eventData);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "ConnectRequestCb is NULL");
+        return;
+    }
+}
+
 void ESWiFiConfRsrcCallback(ESResult esResult, ESWiFiConfData *eventData)
 {
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESWiFiConfRsrcCallback IN");
@@ -154,6 +175,13 @@ ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvision
         }
     }
 
+    // TODO: if EasySetupProvCb is NULL, we should return an error at this moment.
+    if(callbacks.ConnectRequestCb != NULL)
+    {
+        gESProvisioningCb.ConnectRequestCb = callbacks.ConnectRequestCb;
+        RegisterConnectRequestEventCallBack(ESConnectRequestCallback);
+    }
+
     if(CreateEasySetupResources(gIsSecured, resourceMask) != OC_STACK_OK)
     {
         UnRegisterResourceEventCallBack();
@@ -165,7 +193,6 @@ ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvision
 
         return ES_ERROR;
     }
-
 
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESInitEnrollee OUT");
     return ES_OK;

@@ -67,6 +67,24 @@ void PrintMenu()
     printf("============\n");
 }
 
+void ConnectRequestCbInApp(ESConnectRequest *connectRequest)
+{
+    printf("ConnectRequestCbInApp IN\n");
+
+    if(connectRequest == NULL)
+    {
+        printf("connectRequest is NULL\n");
+        return ;
+    }
+
+    for(int i = 0 ; i < connectRequest->numRequest ; ++i)
+    {
+        printf("connect : %d\n", connectRequest->connect[i]);
+    }
+
+    printf("ConnectRequestCbInApp OUT\n");
+}
+
 void WiFiConfProvCbInApp(ESWiFiConfData *eventData)
 {
     printf("WiFiConfProvCbInApp IN\n");
@@ -126,6 +144,7 @@ void CoapCloudConfProvCbInApp(ESCoapCloudConfData *eventData)
 }
 
 ESProvisioningCallbacks gCallbacks = {
+    .ConnectRequestCb = &ConnectRequestCbInApp,
     .WiFiConfProvCb = &WiFiConfProvCbInApp,
     .DevConfProvCb = &DevConfProvCbInApp,
     .CoapCloudConfProvCb = &CoapCloudConfProvCbInApp

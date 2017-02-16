@@ -57,6 +57,7 @@ void updateCoapCloudConfResource(OCRepPayload* input);
 void updateDevConfResource(OCRepPayload* input);
 const char *getResult(OCStackResult result);
 
+ESConnectRequestCB gConnectRequestEvtCb = NULL;
 ESWiFiConfCB gWifiConfRsrcEvtCb = NULL;
 ESCoapCloudConfCB gCoapCloudConfRsrcEvtCb = NULL;
 ESDevConfCB gDevConfRsrcEvtCb = NULL;
@@ -120,6 +121,11 @@ void RegisterDevConfRsrcEventCallBack(ESDevConfCB cb)
     gDevConfRsrcEvtCb = cb;
 }
 
+void RegisterConnectRequestEventCallBack(ESConnectRequestCB cb)
+{
+    gConnectRequestEvtCb = cb;
+}
+
 void UnRegisterResourceEventCallBack()
 {
     if (gWifiConfRsrcEvtCb)
@@ -134,12 +140,21 @@ void UnRegisterResourceEventCallBack()
     {
         gDevConfRsrcEvtCb = NULL;
     }
+    if (gConnectRequestEvtCb)
+    {
+        gConnectRequestEvtCb = NULL;
+    }
 }
 
 OCStackResult initEasySetupResource(bool isSecured)
 {
     g_ESEasySetupResource.status = ES_STATE_INIT;
     g_ESEasySetupResource.lastErrCode = ES_ERRCODE_NO_ERROR;
+    for( int i = 0 ; i < NUM_CONNECT_TYPE ; ++i )
+    {
+        g_ESEasySetupResource.connectRequest[i] = ES_CONNECT_NONE;
+    }
+    g_ESEasySetupResource.numRequest = 0;
 
     OCStackResult res = OC_STACK_ERROR;
     if (isSecured)
@@ -280,6 +295,46 @@ OCStackResult initDevConfResource(bool isSecured)
 void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input)
 {
     OIC_LOG_V(DEBUG, ES_RH_TAG, "g_ESEasySetupResource.status %d", g_ESEasySetupResource.status);
+
+    int64_t *connect_req = NULL;
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
+    if (OCRepPayloadGetIntArray(input, OC_RSRVD_ES_CONNECT, &connect_req, dimensions))
+    {
+        ESConnectRequest* connectRequest = (ESConnectRequest*)OICMalloc(sizeof(ESConnectRequest));
+        int cntRequest = 0;
+        for (int i = 0 ; i < NUM_CONNECT_TYPE ; ++i)
+        {
+            g_ESEasySetupResource.connectRequest[i] = ES_CONNECT_NONE;
+            connectRequest->connect[i] = ES_CONNECT_NONE;
+
+            if(i < dimensions[0] &&
+                (connect_req[i] == ES_CONNECT_WIFI || connect_req[i] == ES_CONNECT_COAPCLOUD))
+            {
+                g_ESEasySetupResource.connectRequest[cntRequest] = connect_req[i];
+                connectRequest->connect[cntRequest] = connect_req[i];
+                OIC_LOG_V(DEBUG, ES_RH_TAG, "g_ESEasySetupResource.connectType[%d] : %d",
+                                                    cntRequest, g_ESEasySetupResource.connectRequest[cntRequest]);
+                cntRequest++;
+            }
+        }
+        connectRequest->numRequest = cntRequest;
+        g_ESEasySetupResource.numRequest = cntRequest;
+
+        if(g_ESEasySetupResource.connectRequest[0] != ES_CONNECT_NONE)
+        {
+            OIC_LOG(DEBUG, ES_RH_TAG, "Send ConnectRequest Callback To ES");
+
+            // TODO : Need to check appropriateness of gWiFiData
+            if(gConnectRequestEvtCb != NULL)
+            {
+                gConnectRequestEvtCb(ES_OK, connectRequest);
+            }
+            else
+            {
+                OIC_LOG(ERROR, ES_RH_TAG, "gConnectRequestEvtCb is NULL");
+            }
+        }
+    }
 
     if(ehRequest->query)
     {
@@ -942,6 +997,14 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
             OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PROVSTATUS, g_ESEasySetupResource.status);
             OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_LAST_ERRORCODE, g_ESEasySetupResource.lastErrCode);
 
+            size_t dimensions[MAX_REP_ARRAY_DEPTH] = {g_ESEasySetupResource.numRequest , 0, 0};
+            int64_t *connectRequest = (int64_t *)OICMalloc(g_ESEasySetupResource.numRequest  * sizeof(int64_t));
+            for(int i = 0 ; i < g_ESEasySetupResource.numRequest  ; ++i)
+            {
+                connectRequest[i] = g_ESEasySetupResource.connectRequest[i];
+            }
+            OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_CONNECT, (int64_t *)connectRequest, dimensions);
+
             if(gWriteUserdataCb)
             {
                 gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_EASYSETUP);
@@ -998,6 +1061,13 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
 
         OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_PROVSTATUS, g_ESEasySetupResource.status);
         OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_LAST_ERRORCODE, g_ESEasySetupResource.lastErrCode);
+        size_t dimensions[MAX_REP_ARRAY_DEPTH] = {g_ESEasySetupResource.numRequest , 0, 0};
+        int64_t *connectRequest = (int64_t *)OICMalloc(g_ESEasySetupResource.numRequest  * sizeof(int64_t));
+        for(int i = 0 ; i < g_ESEasySetupResource.numRequest  ; ++i)
+        {
+            connectRequest[i] = g_ESEasySetupResource.connectRequest[i];
+        }
+        OCRepPayloadSetIntArray(repPayload, OC_RSRVD_ES_CONNECT, (int64_t *)connectRequest, dimensions);
 
         if(gWriteUserdataCb)
         {

@@ -34,6 +34,7 @@
 extern "C" {
 #endif
 
+typedef void (*ESConnectRequestCB) (ESResult, ESConnectRequest *);
 typedef void (*ESWiFiConfCB) (ESResult, ESWiFiConfData *);
 typedef void (*ESCoapCloudConfCB) (ESResult, ESCoapCloudConfData *);
 typedef void (*ESDevConfCB) (ESResult, ESDevConfData *);
@@ -47,6 +48,8 @@ typedef struct
     OCResourceHandle handle;
     ProvStatus status; // provisiong status
     ESErrorCode lastErrCode;
+    ES_CONNECT_TYPE connectRequest[NUM_CONNECT_TYPE];
+    int numRequest;
 } EasySetupResource;
 
 typedef struct

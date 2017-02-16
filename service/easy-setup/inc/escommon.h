@@ -39,6 +39,7 @@ extern "C"
 #define OIC_STRING_MAX_VALUE    64
 #define MAX_WEBLINKLEN          3
 #define NUM_WIFIMODE            5
+#define NUM_CONNECT_TYPE        3
 
 /**
  * Attributes used to form a proper easysetup conforming JSON message.
@@ -143,8 +144,9 @@ typedef enum
  */
 typedef enum
 {
-    ES_CONNECT_WIFI = 0x01,     /**< WiFi Conf resource **/
-    ES_CONNECT_COAPCLOUD = 0x02 /**< Coap Cloud Conf resource **/
+    ES_CONNECT_NONE = 0,        /**< Init value **/
+    ES_CONNECT_WIFI = 1,        /**< WiFi Conf resource **/
+    ES_CONNECT_COAPCLOUD = 2    /**< Coap Cloud Conf resource **/
 } ES_CONNECT_TYPE;
 
 /**
