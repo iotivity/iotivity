@@ -872,12 +872,15 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
         return OC_STACK_ERROR;
     }
 
-    OicSecCred_t *headCred = (OicSecCred_t *) OICCalloc(1, sizeof(OicSecCred_t));
+    OicSecCred_t *headCred = NULL;
 
     // Enter CRED Root Map
     CborValue CredRootMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
     cborFindResult = cbor_value_enter_container(&credCbor, &CredRootMap);
     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering CRED Root Map.");
+
+    headCred = (OicSecCred_t *) OICCalloc(1, sizeof(OicSecCred_t));
+    VERIFY_NOT_NULL(TAG, headCred, ERROR);
 
     while (cbor_value_is_valid(&CredRootMap))
     {
@@ -918,6 +921,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                     else
                     {
                         cred = (OicSecCred_t *) OICCalloc(1, sizeof(OicSecCred_t));
+                        VERIFY_NOT_NULL(TAG, cred, ERROR);
                         OicSecCred_t *temp = headCred;
                         while (temp->next)
                         {
@@ -925,8 +929,6 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                         }
                         temp->next = cred;
                     }
-
-                    VERIFY_NOT_NULL(TAG, cred, ERROR);
 
                     while(cbor_value_is_valid(&credMap) && cbor_value_is_text_string(&credMap))
                     {
