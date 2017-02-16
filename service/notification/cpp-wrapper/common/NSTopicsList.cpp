@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSTopicsList.h"
+#include "NSException.h"
 #include "oic_malloc.h"
 
 namespace OIC
@@ -75,7 +76,7 @@ namespace OIC
             }
             else
             {
-                //TODO: add exception code for Invalid operation
+                throw NSException("Invalid Operation. Method not supported as the object state is invalid");
             }
         }
 
@@ -93,7 +94,7 @@ namespace OIC
             }
             else
             {
-                //TODO: add exception code for Invalid operation
+                throw NSException("Invalid Operation. Method not supported as the object state is invalid");
             }
         }
 
@@ -107,7 +108,11 @@ namespace OIC
             }
             return topicList;
         }
-
+       
+        //Below method restricts the application from illegally modifying Topics when
+        //Provider is in Invalid state. By calling the API, the service prevents and protects
+        //the integrity of TopicsList updation when the associated object is Invalid
+        //The default value of the variable is 'false' in the provider side. Also, the state is irreversible.
         void NSTopicsList::unsetModifiability()
         {
             m_modifiable = false;

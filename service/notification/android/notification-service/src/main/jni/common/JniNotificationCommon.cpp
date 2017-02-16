@@ -48,6 +48,8 @@ static const char *NSResultToChar(const int nsresult)
             return "JNI_NO_NATIVE_POINTER";
         case JNI_INVALID_VALUE:
             return "JNI_INVALID_VALUE";
+        case NATIVE_EXCEPTION:
+            return "NATIVE_EXCEPTION";
         default:
             return "";
     }

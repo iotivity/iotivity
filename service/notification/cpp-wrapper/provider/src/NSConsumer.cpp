@@ -23,6 +23,7 @@
 #include "NSProviderService.h"
 #include "NSAcceptedConsumers.h"
 #include "NSProviderInterface.h"
+#include "NSException.h"
 #include "NSConstants.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
@@ -56,7 +57,7 @@ namespace OIC
             NS_LOG(DEBUG, "acceptSubscription - IN");
             if (!isValid())
             {
-                return NSResult::FAIL;
+                throw NSException("Invalid Operation with stale reference of Consumer");
             }
             NSResult result = (NSResult) NSAcceptSubscription(getConsumerId().c_str(), accepted);
             NS_LOG(DEBUG, "acceptSubscription - OUT");
@@ -68,7 +69,7 @@ namespace OIC
             NS_LOG(DEBUG, "setTopic - IN");
             if (!isValid())
             {
-                return NSResult::FAIL;
+                throw NSException("Invalid Operation with stale reference of Consumer");
             }
             NSResult result = (NSResult) NSProviderSetConsumerTopic(getConsumerId().c_str(),
                               topicName.c_str());
@@ -81,7 +82,7 @@ namespace OIC
             NS_LOG(DEBUG, "unsetTopic - IN");
             if (!isValid())
             {
-                return NSResult::FAIL;
+                throw NSException("Invalid Operation with stale reference of Consumer");
             }
             NSResult result = (NSResult) NSProviderUnsetConsumerTopic(getConsumerId().c_str(),
                               topicName.c_str());
@@ -94,7 +95,7 @@ namespace OIC
             NS_LOG(DEBUG, "getConsumerTopicList - IN");
             if (!isValid())
             {
-                return nullptr;
+                throw NSException("Invalid Operation with stale reference of Consumer");
             }
             ::NSTopicLL *topics = NSProviderGetConsumerTopics(getConsumerId().c_str());
 

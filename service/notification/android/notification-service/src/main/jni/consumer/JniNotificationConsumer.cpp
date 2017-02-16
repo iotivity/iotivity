@@ -20,6 +20,7 @@
 
 #include "JniNotificationConsumer.h"
 #include "NSConsumerService.h"
+#include "NSException.h"
 #include "JniOcRepresentation.h"
 
 static JavaVM *g_jvm_consumer = NULL;
@@ -344,7 +345,8 @@ std::shared_ptr<OIC::Service::NSTopicsList> getNativeTopicsList(JNIEnv *env, job
         NS_LOGE ("Error: MethodId for Vector get  not found");
         return nullptr;
     }
-    std::shared_ptr<OIC::Service::NSTopicsList> nsTopicList = std::make_shared<OIC::Service::NSTopicsList>();
+    std::shared_ptr<OIC::Service::NSTopicsList> nsTopicList =
+        std::make_shared<OIC::Service::NSTopicsList>();
     for (int index = 0; index < size; index++)
     {
         jobject topicObj = env->CallObjectMethod(jobj, getMethod, index);
@@ -372,44 +374,6 @@ std::shared_ptr<OIC::Service::NSTopicsList> getNativeTopicsList(JNIEnv *env, job
     env->DeleteLocalRef(cls_topicList);
     NS_LOGD ("ConsumerService_getNativeTopicsList - OUT");
     return nsTopicList;
-}
-
-std::shared_ptr<OIC::Service::NSProvider> getNativeProvider(JNIEnv *env, jobject jObj)
-{
-    NS_LOGD ("ConsumerService_getNativeProvider - IN");
-    jclass providerClass = env->GetObjectClass(jObj);
-    if (!providerClass)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
-        return NULL;
-    }
-    jfieldID jproviderId = env->GetFieldID(providerClass, "mProviderId", "Ljava/lang/String;");
-    if (!jproviderId)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to get providerId for Provider");
-        return NULL;
-    }
-    jstring jprovider_id = (jstring) env->GetObjectField(jObj, jproviderId);
-    if (!jprovider_id)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "ProviderId cannot be null");
-        return NULL;
-    }
-
-    const char *providerId = env->GetStringUTFChars(jprovider_id, 0);
-    NS_LOGD ("ProviderId : %s\n", providerId);
-
-    std::shared_ptr<OIC::Service::NSProvider> provider =
-        OIC::Service::NSConsumerService::getInstance()->getProvider(std::string(
-                    providerId));
-    if (provider == nullptr)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
-        return NULL;
-    }
-    env->ReleaseStringUTFChars(jprovider_id, providerId);
-    NS_LOGD ("ConsumerService_getNativeProvider - OUT");
-    return provider;
 }
 
 jobject getJavaProvider(JNIEnv *env, std::shared_ptr<OIC::Service::NSProvider> provider)
@@ -1121,18 +1085,20 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSubs
         NS_LOGD ("calling subscribe on mNativeHandle");
         JniSharedObjectHolder<OIC::Service::NSProvider> *objectHolder =
             reinterpret_cast<JniSharedObjectHolder<OIC::Service::NSProvider> *>(jProvider);
-        result  = objectHolder->get()->subscribe();
+        try
+        {
+            result  = objectHolder->get()->subscribe();
+        }
+        catch (OIC::Service::NSException ex)
+        {
+            ThrowNSException(NATIVE_EXCEPTION, ex.what());
+            return;
+        }
     }
     else
     {
-        std::shared_ptr<OIC::Service::NSProvider> provider = getNativeProvider(env, jObj);
-        if (provider == nullptr)
-        {
-            ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
-            return;
-        }
-        NS_LOGD ("calling subscribe on ProviderID");
-        result  = provider->subscribe();
+        NS_LOGE ("Couldn't find Provider");
+        ThrowNSException(JNI_NO_NATIVE_POINTER, "Fail to find native Provider");
     }
     if (result !=  OIC::Service::NSResult::OK)
     {
@@ -1167,18 +1133,20 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeUnsu
         NS_LOGD ("calling subscribe on mNativeHandle");
         JniSharedObjectHolder<OIC::Service::NSProvider> *objectHolder =
             reinterpret_cast<JniSharedObjectHolder<OIC::Service::NSProvider> *>(jProvider);
-        result  = objectHolder->get()->unsubscribe();
+        try
+        {
+            result  = objectHolder->get()->unsubscribe();
+        }
+        catch (OIC::Service::NSException ex)
+        {
+            ThrowNSException(NATIVE_EXCEPTION, ex.what());
+            return;
+        }
     }
     else
     {
-        std::shared_ptr<OIC::Service::NSProvider> provider = getNativeProvider(env, jObj);
-        if (provider == nullptr)
-        {
-            ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
-            return;
-        }
-        NS_LOGD ("calling subscribe on ProviderID");
-        result  = provider->unsubscribe();
+        NS_LOGE ("Couldn't find Provider");
+        ThrowNSException(JNI_NO_NATIVE_POINTER, "Fail to find native Provider");
     }
     if (result !=  OIC::Service::NSResult::OK)
     {
@@ -1224,19 +1192,21 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSend
         NS_LOGD ("calling SendSyncInfo on mNativeHandle");
         JniSharedObjectHolder<OIC::Service::NSProvider> *objectHolder =
             reinterpret_cast<JniSharedObjectHolder<OIC::Service::NSProvider> *>(jProvider);
-        result  = objectHolder->get()->sendSyncInfo(messageId,
-                  (OIC::Service::NSSyncInfo::NSSyncType)jSyncType);
+        try
+        {
+            result  = objectHolder->get()->sendSyncInfo(messageId,
+                      (OIC::Service::NSSyncInfo::NSSyncType)jSyncType);
+        }
+        catch (OIC::Service::NSException ex)
+        {
+            ThrowNSException(NATIVE_EXCEPTION, ex.what());
+            return;
+        }
     }
     else
     {
-        std::shared_ptr<OIC::Service::NSProvider> provider = getNativeProvider(env, jObj);
-        if (provider == nullptr)
-        {
-            ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
-            return;
-        }
-        NS_LOGD ("calling SendSyncInfo on ProviderID");
-        result  = provider->sendSyncInfo(messageId, (OIC::Service::NSSyncInfo::NSSyncType)jSyncType);
+        NS_LOGE ("Couldn't find Provider");
+        ThrowNSException(JNI_NO_NATIVE_POINTER, "Fail to find native Provider");
     }
     if (result !=  OIC::Service::NSResult::OK)
     {
@@ -1297,30 +1267,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSetL
     }
     else
     {
-        std::shared_ptr<OIC::Service::NSProvider> provider = getNativeProvider(env, jObj);
-        if (provider == nullptr)
-        {
-            ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
-            return;
-        }
-        NS_LOGD ("calling SetListener on ProviderID");
-        if (g_obj_acceptListener != NULL)
-        {
-            env->DeleteGlobalRef(g_obj_acceptListener);
-        }
-        if (g_obj_postListener != NULL)
-        {
-            env->DeleteGlobalRef(g_obj_postListener);
-        }
-        if (g_obj_syncListener != NULL)
-        {
-            env->DeleteGlobalRef(g_obj_syncListener);
-        }
-        g_obj_acceptListener = (jobject) env->NewGlobalRef(jAcceptListener);
-        g_obj_postListener = (jobject) env->NewGlobalRef(jPostListener);
-        g_obj_syncListener = (jobject) env->NewGlobalRef(jSyncListener);
-
-        provider->setListener(onProviderState, onMessagePosted, onSyncInfoReceived);
+        NS_LOGE ("Couldn't find Provider");
+        ThrowNSException(JNI_NO_NATIVE_POINTER, "Fail to find native Provider");
     }
     NS_LOGD ("Provider_SetListener - OUT");
     return;
@@ -1350,18 +1298,20 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeG
         NS_LOGD ("calling subscribe on mNativeHandle");
         JniSharedObjectHolder<OIC::Service::NSProvider> *objectHolder =
             reinterpret_cast<JniSharedObjectHolder<OIC::Service::NSProvider> *>(jProvider);
-        topicList = objectHolder->get()->getTopicList();
+        try
+        {
+            topicList = objectHolder->get()->getTopicList();
+        }
+        catch (OIC::Service::NSException ex)
+        {
+            ThrowNSException(NATIVE_EXCEPTION, ex.what());
+            return NULL;
+        }
     }
     else
     {
-        std::shared_ptr<OIC::Service::NSProvider> provider = getNativeProvider(env, jObj);
-        if (provider == nullptr)
-        {
-            ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
-            return NULL;
-        }
-        NS_LOGD ("calling subscribe on ProviderID");
-        topicList = provider->getTopicList();
+        NS_LOGE ("Couldn't find Provider");
+        ThrowNSException(JNI_NO_NATIVE_POINTER, "Fail to find native Provider");
     }
     if (topicList == nullptr)
     {
@@ -1411,18 +1361,20 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeUpda
         NS_LOGD ("calling subscribe on mNativeHandle");
         JniSharedObjectHolder<OIC::Service::NSProvider> *objectHolder =
             reinterpret_cast<JniSharedObjectHolder<OIC::Service::NSProvider> *>(jProvider);
-        result = objectHolder->get()->updateTopicList(nsTopicsList);
+        try
+        {
+            result = objectHolder->get()->updateTopicList(nsTopicsList);
+        }
+        catch (OIC::Service::NSException ex)
+        {
+            ThrowNSException(NATIVE_EXCEPTION, ex.what());
+            return;
+        }
     }
     else
     {
-        std::shared_ptr<OIC::Service::NSProvider> provider = getNativeProvider(env, jObj);
-        if (provider == nullptr)
-        {
-            ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
-            return;
-        }
-        NS_LOGD ("calling subscribe on ProviderID");
-        result = provider->updateTopicList(nsTopicsList);
+        NS_LOGE ("Couldn't find Provider");
+        ThrowNSException(JNI_NO_NATIVE_POINTER, "Fail to find native Provider");
     }
     if (result !=  OIC::Service::NSResult::OK)
     {
@@ -1457,18 +1409,20 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeG
         NS_LOGD ("calling getProviderState on mNativeHandle");
         JniSharedObjectHolder<OIC::Service::NSProvider> *objectHolder =
             reinterpret_cast<JniSharedObjectHolder<OIC::Service::NSProvider> *>(jProvider);
-        state = objectHolder->get()->getProviderState();
+        try
+        {
+            state = objectHolder->get()->getProviderState();
+        }
+        catch (OIC::Service::NSException ex)
+        {
+            ThrowNSException(NATIVE_EXCEPTION, ex.what());
+            return NULL;
+        }
     }
     else
     {
-        std::shared_ptr<OIC::Service::NSProvider> provider = getNativeProvider(env, jObj);
-        if (provider == nullptr)
-        {
-            ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
-            return NULL;
-        }
-        NS_LOGD ("calling getProviderState on ProviderID");
-        state = provider->getProviderState();
+        NS_LOGE ("Couldn't find Provider");
+        ThrowNSException(JNI_NO_NATIVE_POINTER, "Fail to find native Provider");
     }
     jobject obj_state = getJavaProviderState(env, state);
 
@@ -1499,18 +1453,20 @@ JNIEXPORT jboolean JNICALL Java_org_iotivity_service_ns_consumer_Provider_native
         NS_LOGD ("calling isSubscribe on mNativeHandle");
         JniSharedObjectHolder<OIC::Service::NSProvider> *objectHolder =
             reinterpret_cast<JniSharedObjectHolder<OIC::Service::NSProvider> *>(jProvider);
-        return (jboolean) objectHolder->get()->isSubscribed();
+        try
+        {
+            return (jboolean) objectHolder->get()->isSubscribed();
+        }
+        catch (OIC::Service::NSException ex)
+        {
+            ThrowNSException(NATIVE_EXCEPTION, ex.what());
+            return (jboolean)false;
+        }
     }
     else
     {
-        std::shared_ptr<OIC::Service::NSProvider> provider = getNativeProvider(env, jObj);
-        if (provider == nullptr)
-        {
-            ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
-            return (jboolean)false;
-        }
-        NS_LOGD ("calling isSubscribe on ProviderID");
-        return (jboolean) provider->isSubscribed();
+        NS_LOGE ("Couldn't find Provider");
+        ThrowNSException(JNI_NO_NATIVE_POINTER, "Fail to find native Provider");
     }
 }
 

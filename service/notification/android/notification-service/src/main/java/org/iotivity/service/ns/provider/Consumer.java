@@ -94,7 +94,7 @@ public class Consumer {
      *
      * @throws NSException failure to request topic list
      */
-    private TopicsList getConsumerTopicList() throws NSException {
+    public TopicsList getConsumerTopicList() throws NSException {
         return nativeGetConsumerTopicList(mConsumerId);
     }
 

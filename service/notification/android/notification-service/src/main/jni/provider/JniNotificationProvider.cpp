@@ -20,6 +20,7 @@
 
 #include "JniNotificationProvider.h"
 #include "NSProviderService.h"
+#include "NSException.h"
 #include "JniOcRepresentation.h"
 
 static JavaVM *g_jvm_provider = NULL;
@@ -1182,7 +1183,16 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeAcce
         OIC::Service::NSProviderService::getInstance()->getConsumer(consumerId);
     if (consumer)
     {
-        OIC::Service::NSResult result  = consumer->acceptSubscription((bool)jAccepted);
+        OIC::Service::NSResult result = OIC::Service::NSResult::ERROR;
+        try
+        {
+            result = consumer->acceptSubscription((bool)jAccepted);
+        }
+        catch (OIC::Service::NSException ex)
+        {
+            ThrowNSException(NATIVE_EXCEPTION, ex.what());
+            return;
+        }
         if (result !=  OIC::Service::NSResult::OK)
         {
             ThrowNSException((int) result, "Fail to  acceptSubscription");
@@ -1192,7 +1202,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeAcce
     else
     {
         NS_LOGE ("Couldn't find consumer");
-        ThrowNSException(JNI_NO_NATIVE_POINTER, "Fail to  find consumer");
+        ThrowNSException(JNI_NO_NATIVE_POINTER, "Fail to find native consumer");
     }
     return;
 }
@@ -1216,7 +1226,16 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeSetC
         ThrowNSException(JNI_NO_NATIVE_POINTER, "Consumer does exists");
         return;
     }
-    OIC::Service::NSResult result  = nsConsumer->setTopic(topicName);
+    OIC::Service::NSResult result = OIC::Service::NSResult::ERROR;
+    try
+    {
+        result  = nsConsumer->setTopic(topicName);
+    }
+    catch (OIC::Service::NSException ex)
+    {
+        ThrowNSException(NATIVE_EXCEPTION, ex.what());
+        return;
+    }
 
     if (result !=  OIC::Service::NSResult::OK)
     {
@@ -1248,7 +1267,16 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeUnse
         ThrowNSException(JNI_NO_NATIVE_POINTER, "Consumer does exists");
         return;
     }
-    OIC::Service::NSResult result  = nsConsumer->unsetTopic(topicName);
+    OIC::Service::NSResult result = OIC::Service::NSResult::ERROR;
+    try
+    {
+        result  = nsConsumer->unsetTopic(topicName);
+    }
+    catch (OIC::Service::NSException ex)
+    {
+        ThrowNSException(NATIVE_EXCEPTION, ex.what());
+        return;
+    }
 
     if (result !=  OIC::Service::NSResult::OK)
     {
@@ -1280,7 +1308,16 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeG
         return NULL;
     }
     env->ReleaseStringUTFChars(jConsumerId, id);
-    std::shared_ptr<OIC::Service::NSTopicsList> topicList  = nsConsumer->getConsumerTopicList();
+    std::shared_ptr<OIC::Service::NSTopicsList> topicList = nullptr;
+    try
+    {
+        topicList  = nsConsumer->getConsumerTopicList();
+    }
+    catch (OIC::Service::NSException ex)
+    {
+        ThrowNSException(NATIVE_EXCEPTION, ex.what());
+        return NULL;
+    }
     if (topicList == nullptr)
     {
         ThrowNSException(JNI_NO_NATIVE_POINTER, "Topic List doesn't exist");
