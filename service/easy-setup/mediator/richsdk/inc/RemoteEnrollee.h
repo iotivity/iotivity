@@ -161,6 +161,17 @@ namespace OIC
                                             const CloudProp& cloudProp,
                                             const CloudPropProvStatusCb callback);
 
+            /**
+             * Notify an Enrollee to Connect WiFi/Cloud
+             *
+             * @param connectTypes Target configurations to be connected. E.g. WiFi and coap cloud server
+             * @param callback will give the result if the connect request succeeds or fails
+             *
+             * @see ES_CONNECT_TYPE
+             * @see ConnectRequestStatusCb
+             */
+            void requestToConnect(const std::vector<ES_CONNECT_TYPE> &connectTypes, const ConnectRequestStatusCb callback);
+
         private:
             RemoteEnrollee(const std::shared_ptr< OC::OCResource > resource);
 
@@ -185,6 +196,10 @@ namespace OIC
                 const std::shared_ptr< CloudPropProvisioningStatus > status,
                 std::weak_ptr<RemoteEnrollee> this_ptr);
 
+            static void onConnectRequestStatusHandlerCallback(
+                const std::shared_ptr< ConnectRequestStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr);
+
             static void onSecurityStatusHandlerCallback(
                 const std::shared_ptr< SecProvisioningStatus > status,
                 std::weak_ptr<RemoteEnrollee> this_ptr);
@@ -204,6 +219,8 @@ namespace OIC
                 (const std::shared_ptr< DevicePropProvisioningStatus > status) const;
             void cloudPropProvisioningStatusHandler
                 (const std::shared_ptr< CloudPropProvisioningStatus > status) const;
+            void connectRequestStatusHandler(
+                const std::shared_ptr< ConnectRequestStatus > status) const;
             void securityStatusHandler
                 (const std::shared_ptr< SecProvisioningStatus > status) const;
             ESOwnershipTransferData securityStatusWithOptionHandler
@@ -230,6 +247,7 @@ namespace OIC
             SecProvisioningDbPathCb m_secProvisioningDbPathCb;
             DevicePropProvStatusCb m_devicePropProvStatusCb;
             CloudPropProvStatusCb m_cloudPropProvStatusCb;
+            ConnectRequestStatusCb m_connectRequestStatusCb;
 
             friend class EasySetup;
         };

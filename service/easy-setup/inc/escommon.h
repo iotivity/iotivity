@@ -64,6 +64,7 @@ extern "C"
 #define OC_RSRVD_ES_MODELNUMBER            "mnmo"
 #define OC_RSRVD_ES_LOCATION               "loc"
 #define OC_RSRVD_ES_HREF                   "href"
+#define OC_RSRVD_ES_CONNECT                "cn"
 
 /**
  * Easysetup defined resoruce types and uris.
@@ -136,6 +137,15 @@ typedef enum
     OAUTH_TOKENTYPE_BEARER,
     OAUTH_TOKENTYPE_MAC
 } OAUTH_TOKENTYPE;
+
+/**
+ * @brief  A target configuration type to be connected (or executed)
+ */
+typedef enum
+{
+    ES_CONNECT_WIFI = 0x01,     /**< WiFi Conf resource **/
+    ES_CONNECT_COAPCLOUD = 0x02 /**< Coap Cloud Conf resource **/
+} ES_CONNECT_TYPE;
 
 /**
  * @brief A result of Easy Setup

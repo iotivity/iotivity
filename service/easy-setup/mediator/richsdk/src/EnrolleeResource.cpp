@@ -36,6 +36,10 @@ namespace OIC
         EnrolleeResource::EnrolleeResource(std::shared_ptr< OC::OCResource > resource)
         {
             m_ocResource = resource;
+            m_getStatusCb = nullptr;
+            m_getConfigurationStatusCb = nullptr;
+            m_devicePropProvStatusCb = nullptr;
+            m_connectRequestStatusCb = nullptr;
         }
 
         void EnrolleeResource::onEnrolleeResourceSafetyCB(const HeaderOptions& headerOptions,
@@ -157,6 +161,41 @@ namespace OIC
             }
         }
 
+         void EnrolleeResource::onConnectRequestResponse(const HeaderOptions& /*headerOptions*/,
+                const OCRepresentation& /*rep*/, const int eCode)
+        {
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onConnectRequestResponse : eCode = %d",
+                        eCode);
+
+            if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
+            {
+                ESResult result = ESResult::ES_ERROR;
+
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                            "onConnectRequestResponse : onConnectRequestResponse is failed ");
+
+                if(eCode == OCStackResult::OC_STACK_COMM_ERROR)
+                {
+                    OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                        "can't receive any response from Enrollee by a timeout threshold.");
+                    result = ESResult::ES_COMMUNICATION_ERROR;
+                }
+
+                std::shared_ptr< ConnectRequestStatus > connectRequestStatus = std::make_shared<
+                        ConnectRequestStatus >(result);
+                m_connectRequestStatusCb(connectRequestStatus);
+                return;
+            }
+
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                    "onConnectRequestResponse : Provisioning is success. ");
+
+            std::shared_ptr< ConnectRequestStatus > connectRequestStatus = std::make_shared<
+                    ConnectRequestStatus >(ESResult::ES_OK);
+            m_connectRequestStatusCb(connectRequestStatus);
+        }
+
+
         void EnrolleeResource::registerGetStatusCallback(
             const GetStatusCb callback)
         {
@@ -173,6 +212,12 @@ namespace OIC
             const DevicePropProvStatusCb callback)
         {
             m_devicePropProvStatusCb = callback;
+        }
+
+        void EnrolleeResource::registerConnectRequestStatusCallback(
+            const ConnectRequestStatusCb callback)
+        {
+            m_connectRequestStatusCb = callback;
         }
 
         void EnrolleeResource::getStatus()
@@ -276,6 +321,39 @@ namespace OIC
                     provisioningRepresentation, QueryParamsMap(), cb, OC::QualityOfService::HighQos);
 
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "provisionProperties OUT");
+        }
+
+        void EnrolleeResource::requestToConnect(const std::vector<ES_CONNECT_TYPE> &connectTypes)
+        {
+            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "requestToConnect IN");
+            if (m_ocResource == nullptr)
+            {
+                throw ESBadRequestException("Resource is not initialized");
+            }
+
+            OC::QueryParamsMap query;
+            OC::OCRepresentation requestRepresentation;
+            std::vector<int> connectTypes_int;
+            connectTypes_int.clear();
+
+            for(auto it : connectTypes)
+            {
+                connectTypes_int.push_back(static_cast<int>(it));
+            }
+
+            requestRepresentation.setValue<std::vector<int>>(OC_RSRVD_ES_CONNECT, connectTypes_int);
+
+            ESEnrolleeResourceCb cb = std::bind(&EnrolleeResource::onEnrolleeResourceSafetyCB,
+                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                            static_cast<ESEnrolleeResourceCb>(
+                            std::bind(&EnrolleeResource::onConnectRequestResponse, this,
+                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
+                            shared_from_this());
+
+            m_ocResource->post(OC_RSRVD_ES_RES_TYPE_EASYSETUP, OC_RSRVD_INTERFACE_DEFAULT,
+                    requestRepresentation, QueryParamsMap(), cb, OC::QualityOfService::HighQos);
+
+            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "requestToConnect OUT");
         }
     }
 }

@@ -49,6 +49,7 @@ namespace OIC
             m_secProvisioningDbPathCb = nullptr;
             m_devicePropProvStatusCb = nullptr;
             m_cloudPropProvStatusCb = nullptr;
+            m_connectRequestStatusCb = nullptr;
 
             m_deviceId = resource->sid();
         }
@@ -202,6 +203,29 @@ namespace OIC
             m_cloudPropProvStatusCb(status);
 
             OIC_LOG(INFO, ES_REMOTE_ENROLLEE_TAG, "cloudPropProvisioningStatusHandler OUT");
+        }
+
+        void RemoteEnrollee::onConnectRequestStatusHandlerCallback(
+                const std::shared_ptr< ConnectRequestStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr)
+        {
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"onConnectRequestStatusHandlerCallback");
+            std::shared_ptr<RemoteEnrollee> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                Ptr->connectRequestStatusHandler(status);
+            }
+        }
+
+        void RemoteEnrollee::connectRequestStatusHandler(
+                const std::shared_ptr< ConnectRequestStatus > status) const
+        {
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "connectRequestStatusHandler IN");
+
+            OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_TAG, "RequestConnectStatus = %d", status->getESResult());
+            m_connectRequestStatusCb(status);
+
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "connectRequestStatusHandler OUT");
         }
 
         void RemoteEnrollee::onDiscoveredCallback(const std::shared_ptr<OC::OCResource> resource,
@@ -625,6 +649,28 @@ namespace OIC
             m_cloudResource->provisionProperties(cloudProp);
 
             OIC_LOG(INFO, ES_REMOTE_ENROLLEE_TAG, "provisionCloudProperties OUT");
+        }
+
+        void RemoteEnrollee::requestToConnect(const std::vector<ES_CONNECT_TYPE> &connectTypes, const ConnectRequestStatusCb callback)
+        {
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "connect IN");
+
+            if(!callback)
+            {
+                throw ESInvalidParameterException("Callback is empty");
+            }
+
+            m_connectRequestStatusCb = callback;
+
+            ConnectRequestStatusCb connectRequestStatusCb = std::bind(
+                        &RemoteEnrollee::onConnectRequestStatusHandlerCallback,
+                        std::placeholders::_1,
+                        shared_from_this());
+
+            m_enrolleeResource->registerConnectRequestStatusCallback(connectRequestStatusCb);
+            m_enrolleeResource->requestToConnect(connectTypes);
+
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "connect OUT");
         }
     }
 }
