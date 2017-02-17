@@ -59,6 +59,12 @@ class JniOcSecureResource
         OCStackResult removeDevice(JNIEnv* env, jint timeout, jobject jListener);
         OCStackResult provisionDirectPairing(JNIEnv* env, jobjectArray jpdacls,jobject jListener,
                 std::string pin, std::vector<int> prms, int edp);
+        OCStackResult selectMOTMethod(JNIEnv* env, jint oxmSel, jobject jListener);
+        OCStackResult changeMOTMode(JNIEnv* env, jint momType, jobject jListener);
+        OCStackResult addPreconfigPIN(JNIEnv* env, std::string pin, int size);
+        OCStackResult provisionPreconfPin(JNIEnv* env, std::string pin, int size,
+                jobject jListener);
+        OCStackResult doMultipleOwnershipTransfer(JNIEnv* env, jobject jListener);
     private:
 
         std::map<jobject, std::pair<JniProvisionResultListner*, int>> resultMap;
@@ -142,6 +148,46 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionDirectPa
  */
 JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcSecureResource_getLinkedDevices
   (JNIEnv *, jobject);
+
+/*
+ * Class:     org_iotivity_base_OcSecureResource
+ * Method:    selectMOTMethod0
+ * Signature: (ILorg/iotivity/base/OcSecureResource/SelectOTMMethodListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_selectMOTMethod0
+  (JNIEnv *, jobject, jint, jobject);
+
+/*
+ * Class:     org_iotivity_base_OcSecureResource
+ * Method:    changeMOTMode0
+ * Signature: (ILorg/iotivity/base/OcSecureResource/ChangeMOTModeListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_changeMOTMode0
+  (JNIEnv *, jobject, jint, jobject);
+
+/*
+ * Class:     org_iotivity_base_OcSecureResource
+ * Method:    addPreConfigPIN0
+ * Signature: (Ljava/lang/String;I)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_addPreConfigPIN0
+  (JNIEnv *, jobject, jstring, jint);
+
+/*
+ * Class:     org_iotivity_base_OcSecureResource
+ * Method:    provisionPreConfigPIN0
+ * Signature: (Ljava/lang/String;ILorg/iotivity/base/OcSecureResource/ProvisionPreConfigPINListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionPreConfigPIN0
+  (JNIEnv *, jobject, jstring, jint, jobject);
+
+/*
+ * Class:     org_iotivity_base_OcSecureResource
+ * Method:    doMultipleOwnershipTransfer
+ * Signature: (Lorg/iotivity/base/OcSecureResource/DoMultipleOwnershipTransferListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_doMultipleOwnershipTransfer
+  (JNIEnv *, jobject, jobject);
 
 /*
  * Class:     org_iotivity_base_OcSecureResource

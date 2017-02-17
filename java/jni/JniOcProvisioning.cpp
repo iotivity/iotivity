@@ -474,6 +474,91 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListen
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
     }
 }
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    discoverMOTEnabledDevices1
+ * Signature: (I)[Lorg/iotivity/base/OcSecureResource;
+ */
+JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverMOTEnabledDevices1
+  (JNIEnv *env, jclass thiz, jint timeout)
+{
+    LOGI("OcProvisioning_discoverMOTEnabledDevices1");
+#if defined(MULTIPLE_OWNER)
+    DeviceList_t list;
+
+    try
+    {
+        if (timeout < 0)
+        {
+            ThrowOcException(OC_STACK_INVALID_PARAM, "Timeout value cannot be negative");
+            return nullptr;
+        }
+        OCStackResult result = OCSecure::discoverMultipleOwnerEnabledDevices(
+                (unsigned short)timeout, list);
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Failed to discover MOT Enabled devices");
+            return nullptr;
+        }
+
+        return JniSecureUtils::convertDeviceVectorToJavaArray(env, list);
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        return nullptr;
+    }
+#else
+    ThrowOcException(OC_STACK_INVALID_PARAM, "MULTIPLE_OWNER not enabled");
+    return nullptr;
+#endif
+}
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    discoverMOTEnabledOwnedDevices1
+ * Signature: (I)[Lorg/iotivity/base/OcSecureResource;
+ */
+JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverMOTEnabledOwnedDevices1
+  (JNIEnv *env, jclass thiz, jint timeout)
+{
+    LOGI("OcProvisioning_discoverMOTEnabledOwnedDevices1");
+#if defined(MULTIPLE_OWNER)
+    DeviceList_t list;
+
+    try
+    {
+        if (timeout < 0)
+        {
+            ThrowOcException(OC_STACK_INVALID_PARAM, "Timeout value cannot be negative");
+            return nullptr;
+        }
+        OCStackResult result = OCSecure::discoverMultipleOwnedDevices(
+                (unsigned short)timeout, list);
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Failed to discover MOT Enabled Owned devices");
+            return nullptr;
+        }
+
+        return JniSecureUtils::convertDeviceVectorToJavaArray(env, list);
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        return nullptr;
+    }
+#else
+    ThrowOcException(OC_STACK_INVALID_PARAM, "MULTIPLE_OWNER not enabled");
+    return nullptr;
+#endif
+}
+
 /*
  * Class:     org_iotivity_base_OcProvisioning
  * Method:    saveTrustCertChain1

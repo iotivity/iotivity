@@ -137,6 +137,26 @@ void JniProvisionResultListner::ProvisionResultCallback(PMResultList_t *result, 
             calledFunc = "provisionDirectPairingListener";
         }
         break;
+        case ListenerFunc::SELECT_OTM_METHOD:
+        {
+            calledFunc = "selectOTMMethodListener";
+        }
+        break;
+        case ListenerFunc::CHANGE_MOT_MODE:
+        {
+            calledFunc = "changeMOTModeListener";
+        }
+        break;
+        case ListenerFunc::PROVISION_PRE_CONFIG_PIN:
+        {
+            calledFunc = "provisionPreConfigPINListener";
+        }
+        break;
+        case ListenerFunc::MULTIPLE_OXM:
+        {
+            calledFunc = "doMultipleOwnershipTransferListener";
+        }
+        break;
         default:
         {
             checkExAndRemoveListener(env);

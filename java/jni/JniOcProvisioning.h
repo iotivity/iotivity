@@ -116,6 +116,20 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_unsetConfirmNumList
  * Signature: (I)I
  */
 JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setMVJustWorksOptions0
+(JNIEnv *, jclass, jint);
+/*
+ * Method:    discoverMOTEnabledDevices1
+ * Signature: (I)[Lorg/iotivity/base/OcSecureResource;
+ */
+JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverMOTEnabledDevices1
+  (JNIEnv *, jclass, jint);
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    discoverMOTEnabledOwnedDevices1
+ * Signature: (I)[Lorg/iotivity/base/OcSecureResource;
+ */
+JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverMOTEnabledOwnedDevices1
   (JNIEnv *, jclass, jint);
 
 /*
