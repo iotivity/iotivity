@@ -22,7 +22,6 @@
 package org.iotivity.cloud.util;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -72,7 +71,7 @@ public class JSONUtil<T> {
         return parsedData;
     }
 
-    public T writeJSON(HashMap<Object, Object> data) {
+    public T writeJSON(Object data) {
         if (data == null)
             return null;
 

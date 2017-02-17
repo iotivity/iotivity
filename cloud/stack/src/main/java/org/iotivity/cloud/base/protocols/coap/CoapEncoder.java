@@ -70,6 +70,10 @@ public class CoapEncoder extends MessageToByteEncoder<CoapMessage> {
         }
     }
 
+    public void encode(CoapMessage msg, ByteBuf out) throws Exception {
+        encode(null, msg, out);
+    }
+
     private void calcShimHeader(CoapMessage coapMessage, ByteBuf byteBuf,
             long length) {
         if (length < 13) {

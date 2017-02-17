@@ -21,6 +21,11 @@
  */
 package org.iotivity.cloud.base;
 
+import io.netty.channel.ChannelHandler.Sharable;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.util.AttributeKey;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +46,7 @@ import org.iotivity.cloud.base.resource.ResourceManager;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.base.server.HttpServer;
 import org.iotivity.cloud.base.server.Server;
+import org.iotivity.cloud.base.server.WebSocketServer;
 import org.iotivity.cloud.util.Log;
 
 import io.netty.channel.ChannelHandler.Sharable;
@@ -146,7 +152,7 @@ public class ServerSystem extends ResourceManager {
     }
 
     public void addServer(Server server) {
-        if (server instanceof CoapServer) {
+        if (server instanceof CoapServer || server instanceof WebSocketServer) {
             server.addHandler(new PersistentPacketReceiver());
         } else if (server instanceof HttpServer) {
             server.addHandler(new NonPersistentPacketReceiver());

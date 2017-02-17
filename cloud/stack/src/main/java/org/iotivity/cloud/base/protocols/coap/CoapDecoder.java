@@ -166,6 +166,10 @@ public class CoapDecoder extends ByteToMessageDecoder {
         }
     }
 
+    public void decode(ByteBuf in, List<Object> out) throws Exception {
+        decode(null, in, out);
+    }
+
     private int parseOptions(CoapMessage coapMessage, ByteBuf byteBuf,
             int maxLength) {
 
@@ -207,7 +211,7 @@ public class CoapDecoder extends ByteToMessageDecoder {
             }
         }
 
-        /// return option length
+        // return option length
         return byteBuf.readerIndex() - startPos;
     }
 }

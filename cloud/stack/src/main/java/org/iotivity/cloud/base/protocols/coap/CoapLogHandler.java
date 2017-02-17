@@ -77,13 +77,14 @@ public class CoapLogHandler extends ChannelDuplexHandler {
             log = composeCoapRequest(
                     ctx.channel().id().asLongText().substring(26),
                     (CoapRequest) msg);
-        } else {
-            log = composeCoapResponse(
-                    ctx.channel().id().asLongText().substring(26),
-                    (CoapResponse) msg);
+        } else if (msg instanceof CoapResponse) {
+            log = composeCoapResponse(ctx.channel().id().asLongText()
+                    .substring(26), (CoapResponse) msg);
         }
 
-        Log.v(log);
+        if (log != null) {
+            Log.v(log);
+        }
 
         ctx.writeAndFlush(msg);
     }
@@ -98,13 +99,14 @@ public class CoapLogHandler extends ChannelDuplexHandler {
             log = composeCoapRequest(
                     ctx.channel().id().asLongText().substring(26),
                     (CoapRequest) msg);
-        } else {
-            log = composeCoapResponse(
-                    ctx.channel().id().asLongText().substring(26),
-                    (CoapResponse) msg);
+        } else if (msg instanceof CoapResponse) {
+            log = composeCoapResponse(ctx.channel().id().asLongText()
+                    .substring(26), (CoapResponse) msg);
         }
 
-        Log.v(log);
+        if (log != null) {
+            Log.v(log);
+        }
 
         ctx.fireChannelRead(msg);
     }
