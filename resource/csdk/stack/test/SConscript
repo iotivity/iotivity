@@ -84,3 +84,6 @@ if stacktest_env.get('TEST') == '1':
                 run_test(stacktest_env,
                          'resource_csdk_stack_test.memcheck',
                          'resource/csdk/stack/test/stacktests')
+                run_test(stacktest_env,
+                         'resource_csdk_stack_test.memcheck',
+                         'resource/csdk/stack/test/cbortests')
