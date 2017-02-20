@@ -2312,7 +2312,13 @@ OCStackResult InitCredResource()
         OicUuid_t emptyUuid = {.id={0}};
 
         ret = GetDoxmDeviceID(&deviceID);
-        VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
+        if (ret != OC_STACK_OK)
+        {
+            OIC_LOG_V(WARNING, TAG, "%s: GetDoxmDeviceID failed, error %d", __func__, ret);
+            //Unit tests expect error code OC_STACK_INVALID_PARAM.
+            ret = OC_STACK_INVALID_PARAM;
+            goto exit;
+        }
 
         //Add a log to track the invalid credential.
         LL_FOREACH(gCred, cred)
