@@ -266,9 +266,9 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     }
     else
     {
-        // Store the endpoint and requestinfo params.
         ctx->endPoint = endPoint;
         ctx->requestInfo = requestInfo;
+        ctx->requestedPermission = GetPermissionFromCAMethod_t(requestInfo->method);
 
         // Copy the subjectID.
         memcpy(ctx->subjectUuid.id,
@@ -302,7 +302,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
             ctx->payloadSize = requestInfo->info.payloadSize;
 #endif //MULTIPLE_OWNER
 
-            OIC_LOG_V(DEBUG, TAG, "Processing request with uri, %s for method, %d",
+            OIC_LOG_V(DEBUG, TAG, "Processing request with uri, %s for method %d",
                 ctx->requestInfo->info.resourceUri, ctx->requestInfo->method);
             CheckPermission(ctx);
             OIC_LOG_V(DEBUG, TAG, "Request for permission %d received responseVal %d.",

@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include <string.h>
+#include <assert.h>
 
 #include "utlist.h"
 #include "oic_malloc.h"
@@ -62,6 +63,9 @@ uint16_t GetPermissionFromCAMethod_t(const CAMethod_t method)
             perm = (uint16_t)PERMISSION_FULL_CONTROL;
             break;
     }
+
+    OIC_LOG_V(INFO, TAG, "%s: CA method %d requires permission %#x",
+        __func__, method, (uint32_t)perm);
     return perm;
 }
 
@@ -134,7 +138,6 @@ static bool IsRequestFromDevOwner(SRMRequestContext_t *context)
     return retVal;
 }
 
-
 #ifdef MULTIPLE_OWNER
 /**
  * Compare the request's subject to SubOwner.
@@ -145,28 +148,14 @@ static bool IsRequestFromSubOwner(SRMRequestContext_t *context)
 {
     bool retVal = false;
 
-    if(NULL == context)
+    if (NULL != context)
     {
-        return retVal;
+        retVal = IsSubOwner(&context->subjectUuid);
     }
 
-    if(IsSubOwner(&context->subjectUuid))
-    {
-        retVal = true;
-    }
-
-    if(true == retVal)
-    {
-        OIC_LOG(INFO, TAG, "PE.IsRequestFromSubOwner(): returning true");
-    }
-    else
-    {
-        OIC_LOG(INFO, TAG, "PE.IsRequestFromSubOwner(): returning false");
-    }
-
+    OIC_LOG_V(INFO, TAG, "%s: returning %s", __func__, retVal ? "true" : "false");
     return retVal;
 }
-
 
 /**
  * Verify the SubOwner's request.
@@ -211,19 +200,10 @@ static bool IsValidRequestFromSubOwner(SRMRequestContext_t *context)
             break;
     }
 
-    if(isValidRequest)
-    {
-        OIC_LOG(INFO, TAG, "PE.IsValidRequestFromSubOwner(): returning true");
-    }
-    else
-    {
-        OIC_LOG(INFO, TAG, "PE.IsValidRequestFromSubOwner(): returning false");
-    }
-
+    OIC_LOG_V(INFO, TAG, "%s: returning %s", __func__, isValidRequest ? "true" : "false");
     return isValidRequest;
 }
 #endif //MULTIPLE_OWNER
-
 
 // TODO - remove these function placeholders as they are implemented
 // in the resource entity handler code.
@@ -292,15 +272,7 @@ bool IsRequestFromResourceOwner(SRMRequestContext_t *context)
         }
     }
 
-    if(true == retVal)
-    {
-        OIC_LOG(INFO, TAG, "PE.IsRequestFromResourceOwner(): returning true");
-    }
-    else
-    {
-        OIC_LOG(INFO, TAG, "PE.IsRequestFromResourceOwner(): returning false");
-    }
-
+    OIC_LOG_V(INFO, TAG, "%s: returning %s", __func__, retVal ? "true" : "false");
     return retVal;
 }
 
@@ -315,14 +287,13 @@ bool IsRequestFromResourceOwner(SRMRequestContext_t *context)
 INLINE_API bool IsPermissionAllowingRequest(const uint16_t permission,
     const uint16_t request)
 {
-    if (request == (request & permission))
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    bool allowed = (request == (request & permission));
+
+    OIC_LOG_V(INFO, TAG, "%s: ACE allows permission %#x, "
+        "requested permission %#x -> allowed = %u", __func__,
+        (uint32_t)permission, (uint32_t)request, (uint32_t)allowed);
+
+    return allowed;
 }
 
 /**
@@ -503,14 +474,9 @@ static void ProcessAccessRequest(SRMRequestContext_t *context)
 
 void CheckPermission(SRMRequestContext_t *context)
 {
-    bool isDeviceOwned = false;
-
-    if(NULL == context)
-    {
-        OIC_LOG_V(ERROR, TAG, "NULL context; access denied.");
-        context->responseVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
-        return;
-    }
+    assert(NULL != context);
+    assert(context->requestedPermission != 0);
+    assert((context->requestedPermission & ~PERMISSION_FULL_CONTROL) == 0);
 
     // Before doing any ACL processing, check if request is a) coming
     // from DevOwner AND b) the device is in Ready for OTM or Reset state
@@ -518,7 +484,7 @@ void CheckPermission(SRMRequestContext_t *context)
     // AND c) the request is for a SVR resource.
     // If all 3 conditions are met, grant request.
     // TODO_IoTivity_1.3: use pstat.dos instead of these two checks.
-    isDeviceOwned = true; // default to value that will NOT grant access
+    bool isDeviceOwned = true; // default to value that will NOT grant access
     if (OC_STACK_OK != GetDoxmIsOwned(&isDeviceOwned)) // if runtime error, don't grant
     {
         OIC_LOG_V(ERROR, TAG, "GetDoxmIsOwned() call failed.");
@@ -531,21 +497,24 @@ void CheckPermission(SRMRequestContext_t *context)
             !isDeviceOwned &&                   // AND if doxm->isOwned == false
             (NOT_A_SVR_RESOURCE != context->resourceType)) // AND if is SVR type
     {
+        OIC_LOG(INFO, TAG, "CheckPermission: granting access to device owner");
         context->responseVal = ACCESS_GRANTED;
     }
     // If not granted via DevOwner status and not a subowner,
     // then check if request is for a SVR and coming from rowner
     else if (IsRequestFromResourceOwner(context))
     {
+        OIC_LOG(INFO, TAG, "CheckPermission: granting access to resource owner");
         context->responseVal = ACCESS_GRANTED;
     }
 #ifdef MULTIPLE_OWNER // TODO Samsung reviewer: per above comment, should this
                       // go above IsRequestFromResourceOwner() call, or here?
     // Then check if request from SubOwner.
-    else if(IsRequestFromSubOwner(context))
+    else if (IsRequestFromSubOwner(context))
     {
-        if(IsValidRequestFromSubOwner(context))
+        if (IsValidRequestFromSubOwner(context))
         {
+            OIC_LOG(INFO, TAG, "CheckPermission: granting access to device sub-owner");
             context->responseVal = ACCESS_GRANTED;
         }
     }
