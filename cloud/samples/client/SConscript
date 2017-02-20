@@ -32,23 +32,24 @@ cc_sample_app_env = lib_env.Clone()
 # Build flags
 ######################################################################
 # For bring up purposes only, the forked version will live here.
-cc_sample_app_env.AppendUnique(CPPPATH = ['../../../resource/csdk/connectivity/lib/libcoap-4.1.1/include',
-                                          '../../../extlibs/mbedtls/mbedtls/include'])
+cc_sample_app_env.AppendUnique(CPPPATH = ['#/resource/csdk/connectivity/lib/libcoap-4.1.1/include',
+                                          '#/extlibs/mbedtls/mbedtls/include'])
 
 
 cc_sample_app_env.AppendUnique(CPPPATH = [
-        '../../../resource/include/',
-        '../../../resource/csdk/resource-directory/include',
-        '../../../resource/csdk/include',
-        '../../../resource/csdk/stack/include',
-        '../../../resource/c_common/ocrandom/include',
-        '../../../resource/csdk/logger/include',
-        '../../../resource/oc_logger/include',
-        '../../../resource/csdk/connectivity/inc',
-        '../../../resource/csdk/connectivity/api',
-        '../../../resource/csdk/connectivity/common/inc',
-        '../../../resource/csdk/security/provisioning/include',
-        '../../../resource/csdk/security/provisioning/include/internal'
+        '#/resource/include/',
+        '#/resource/csdk/resource-directory/include',
+        '#/resource/csdk/include',
+        '#/resource/csdk/stack/include',
+        '#/resource/c_common/ocrandom/include',
+        '#/resource/csdk/logger/include',
+        '#/resource/oc_logger/include',
+        '#/resource/csdk/connectivity/inc',
+        '#/resource/csdk/connectivity/api',
+        '#/resource/csdk/connectivity/common/inc',
+        '#/resource/csdk/security/include',
+        '#/resource/csdk/security/provisioning/include',
+        '#/resource/csdk/security/provisioning/include/internal'
         ])
 
 cc_sample_app_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra', '-std=c++0x', '-pthread'])

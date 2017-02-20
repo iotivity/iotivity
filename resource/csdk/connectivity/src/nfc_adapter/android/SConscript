@@ -1,12 +1,10 @@
 #######################################################
 #       Build NFC Client and Server for Android
 #######################################################
+import os
 
-Import('env', 'src_dir')
-import os.path
+Import('connectivity_env')
 
-env.AppendUnique(CPPPATH = [ os.path.join(src_dir, 'android') ])
+src_dir = os.path.abspath(os.curdir)
 
-src_files = [ 'canfcserver.c' ]
-
-Return('src_files')
+connectivity_env.AppendUnique(CA_SRC = [ os.path.join(src_dir, 'canfcserver.c')])

@@ -65,7 +65,7 @@ if target_os not in ['windows', 'winrt']:
 
 jni_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 jni_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-jni_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction'])
+jni_env.PrependUnique(LIBS = ['resource_directory', 'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction'])
 if env.get('SECURED') == '1':
     jni_env.AppendUnique(CPPDEFINES= ['__WITH_TLS__'])
     jni_env.PrependUnique(LIBS = ['mbedtls', 'ocprovision', 'ocpmapi'])

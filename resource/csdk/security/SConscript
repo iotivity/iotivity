@@ -37,9 +37,10 @@ if with_upstream_libcoap == '1':
 	libocsrm_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
 else:
 	# For bring up purposes only, the forked version will live here.
-	libocsrm_env.AppendUnique(CPPPATH = ['#/resource/connectivity/lib/libcoap-4.1.1/include'])
+	libocsrm_env.AppendUnique(CPPPATH = ['#/resource/csdk/connectivity/lib/libcoap-4.1.1/include'])
 
 libocsrm_env.PrependUnique(CPPPATH = [
+		'#/extlibs/mbedtls/mbedtls/include',
 		'#/resource/csdk/logger/include',
 		'#/resource/c_common/ocrandom/include',
 		'#/resource/csdk/include',

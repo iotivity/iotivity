@@ -48,6 +48,7 @@ notification_env.AppendUnique(CPPPATH = ['inc'])
 notification_env.AppendUnique(CPPPATH = ['../common'])
 notification_env.AppendUnique(CPPPATH = ['../consumer/inc'])
 notification_env.AppendUnique(CPPPATH = ['../../src/common'])
+notification_env.AppendUnique(CPPPATH = ['#/resource/csdk/security/include'])
 
 notification_env.PrependUnique(LIBS = [
 	'oc_logger',

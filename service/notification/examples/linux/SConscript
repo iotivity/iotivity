@@ -15,10 +15,11 @@ target_os = env.get('TARGET_OS')
 notification_sample_env.AppendUnique(CPPPATH = ['../../include'])
 notification_sample_env.AppendUnique(CPPPATH = ['../../src/common'])
 notification_sample_env.AppendUnique(CPPPATH = ['../../src/provider'])
-notification_sample_env.AppendUnique(CPPPATH = ['../../../../resource/csdk/include'])
-notification_sample_env.AppendUnique(CPPPATH = ['../../../../resource/csdk/stack/include'])
-notification_sample_env.AppendUnique(CPPPATH = ['../../../../resource/csdk/resource-directory/include'])
-notification_sample_env.AppendUnique(CPPPATH = ['../../../../resource/csdk/connectivity/api'])
+notification_sample_env.AppendUnique(CPPPATH = ['#/resource/csdk/include'])
+notification_sample_env.AppendUnique(CPPPATH = ['#/resource/csdk/stack/include'])
+notification_sample_env.AppendUnique(CPPPATH = ['#/resource/csdk/security/include'])
+notification_sample_env.AppendUnique(CPPPATH = ['#/resource/csdk/resource-directory/include'])
+notification_sample_env.AppendUnique(CPPPATH = ['#/resource/csdk/connectivity/api'])
 
 notification_sample_env.PrependUnique(LIBS = [
 	'octbstack',

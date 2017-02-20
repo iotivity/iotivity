@@ -46,10 +46,11 @@ notification_env.AppendUnique(CPPPATH = ['include'])
 notification_env.AppendUnique(CPPPATH = ['src/common'])
 notification_env.AppendUnique(CPPPATH = ['src/provider'])
 notification_env.AppendUnique(CPPPATH = ['src/consumer'])
-notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/include'])
-notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/stack/include'])
-notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/resource-directory/include'])
-notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/connectivity/api'])
+notification_env.AppendUnique(CPPPATH = ['#/resource/csdk/include'])
+notification_env.AppendUnique(CPPPATH = ['#/resource/csdk/security/include'])
+notification_env.AppendUnique(CPPPATH = ['#/resource/csdk/stack/include'])
+notification_env.AppendUnique(CPPPATH = ['#/resource/csdk/resource-directory/include'])
+notification_env.AppendUnique(CPPPATH = ['#/resource/csdk/connectivity/api'])
 
 notification_env.PrependUnique(LIBS = [
 	'octbstack',

@@ -29,7 +29,7 @@
 #include "oic_malloc.h"
 #include "provisioningdatabasemanager.h"
 #include "oic_string.h"
-#include "utlist.h"
+#include "coap/utlist.h"
 #include "srmutility.h"
 #include "aclresource.h"
 #include "internal/doxmresource.h"

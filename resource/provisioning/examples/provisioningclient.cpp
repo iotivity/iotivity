@@ -37,7 +37,7 @@
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
 #include "aclresource.h"
-#include "utlist.h"
+#include "coap/utlist.h"
 
 #define MAX_PERMISSION_LENGTH (5)
 #define ACL_RESRC_ARRAY_SIZE (3)
