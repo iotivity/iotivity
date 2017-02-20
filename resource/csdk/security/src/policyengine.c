@@ -475,8 +475,8 @@ static void ProcessAccessRequest(SRMRequestContext_t *context)
 void CheckPermission(SRMRequestContext_t *context)
 {
     assert(NULL != context);
-    assert(context->requestedPermission != 0);
-    assert((context->requestedPermission & ~PERMISSION_FULL_CONTROL) == 0);
+    assert(0 != context->requestedPermission);
+    assert(0 == (context->requestedPermission & ~PERMISSION_FULL_CONTROL));
 
     // Before doing any ACL processing, check if request is a) coming
     // from DevOwner AND b) the device is in Ready for OTM or Reset state

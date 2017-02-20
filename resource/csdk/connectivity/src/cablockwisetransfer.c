@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "caadapterutils.h"
 #include "cainterface.h"
@@ -1625,6 +1626,7 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
         OIC_LOG(ERROR, TAG, "getting has failed");
         return CA_STATUS_FAILED;
     }
+    bool blockRemoved = false;
 
     CAResult_t res = CA_STATUS_OK;
     uint32_t code = (*pdu)->transport_hdr->udp.code;
@@ -1704,17 +1706,25 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
                 OIC_LOG(ERROR, TAG, "remove has failed");
                 return res;
             }
+            blockRemoved = true;
         }
     }
 
-    CALogBlockInfo(block1);
+    if (!blockRemoved)
+    {
+        CALogBlockInfo(block1);
+    }
 
     OIC_LOG(DEBUG, TAG, "OUT-AddBlockOption1");
 
     return CA_STATUS_OK;
 
 exit:
-    CARemoveBlockDataFromList(blockID);
+    if (!blockRemoved)
+    {
+        CARemoveBlockDataFromList(blockID);
+    }
+
     return res;
 }
 
@@ -2005,7 +2015,7 @@ CAResult_t CAUpdatePayloadData(CABlockData_t *currData, const CAData_t *received
         // update received payload length
         currData->receivedPayloadLen += blockPayloadLen;
 
-        OIC_LOG_V(DEBUG, TAG, "updated payload: %s, len: %zu", currData->payload,
+        OIC_LOG_V(DEBUG, TAG, "updated payload: @ %p, len: %" PRIuPTR, currData->payload,
                   currData->receivedPayloadLen);
     }
 

@@ -217,8 +217,8 @@ void ClearRequestContext(SRMRequestContext_t *context)
         context->subjectIdType = SUBJECT_ID_TYPE_ERROR;
         memset(&context->subjectUuid, 0, sizeof(context->subjectUuid));
 #ifdef MULTIPLE_OWNER
-        memset(&context->payload, 0, context->payloadSize); // TODO Samsung reviewer: please confirm
-        context->payloadSize = 0; // TODO Samsung reviewer: please confirm
+        context->payload = NULL;
+        context->payloadSize = 0;
 #endif //MULTIPLE_OWNER
     }
 
