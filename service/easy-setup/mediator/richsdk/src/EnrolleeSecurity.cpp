@@ -596,7 +596,6 @@ namespace OIC
                 std::string GattAddress = getResourceDeviceAddress(m_ocResource->host());
                 if(!GattAddress.empty())
                 {
-
                     result = OCSecure::discoverSingleDeviceInUnicast(ES_SEC_DISCOVERY_TIMEOUT,
                                                             &uuid,
                                                             GattAddress,
@@ -604,7 +603,7 @@ namespace OIC
                                                             m_securedResource);
                     if(result != OC_STACK_OK)
                     {
-                        return ES_ERROR;
+                        return ES_SECURE_RESOURCE_DISCOVERY_FAILURE;
                     }
                 }
                 else
@@ -620,7 +619,7 @@ namespace OIC
                                                         m_securedResource);
                 if(result != OC_STACK_OK)
                 {
-                    return ES_ERROR;
+                    return ES_SECURE_RESOURCE_DISCOVERY_FAILURE;
                 }
             }
 
