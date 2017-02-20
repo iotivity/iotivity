@@ -275,54 +275,54 @@ namespace OIC
         }
 
 
-        void EnrolleeSecurity::SelectMOTMethodCB(PMResultList_t *result, int hasError)
+        void EnrolleeSecurity::selectMOTMethodCB(PMResultList_t *result, int hasError)
         {
-            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "SelectMOTMethodCB IN");
+            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "selectMOTMethodCB IN");
             if (hasError)
             {
                 OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG,
                                 "selectMOTMethod API is failed with error %d", hasError);
-                MOTMethodProvResult = false;
+                motMethodProvResult = false;
             }
             else
             {
                 OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "selectMOTMethod API is succeeded");
-                MOTMethodProvResult = true;
+                motMethodProvResult = true;
             }
 
             delete result;
             m_cond.notify_all();
         }
 
-        void EnrolleeSecurity::PreconfigPinProvCB(PMResultList_t *result, int hasError)
+        void EnrolleeSecurity::preconfigPinProvCB(PMResultList_t *result, int hasError)
         {
-            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "PreconfigPinProvCB IN");
+            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "preconfigPinProvCB IN");
             if (hasError)
             {
                 OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG,
                                 "provisionPreconfPin API is failed with error %d", hasError);
-                PreConfigPinProvResult = false;
+                preConfigPinProvResult = false;
             }
             else
             {
                 OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "provisionPreconfPin API is succeeded");
-                PreConfigPinProvResult = true;
+                preConfigPinProvResult = true;
             }
 
             delete result;
             m_cond.notify_all();
         }
 
-        void EnrolleeSecurity::MultipleOwnershipTransferCb(OC::PMResultList_t *result, int hasError)
+        void EnrolleeSecurity::multipleOwnershipTransferCb(OC::PMResultList_t *result, int hasError)
         {
-            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "MultipleOwnershipTransferCb IN");
+            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "multipleOwnershipTransferCb IN");
 
-            OTMResult = false;
+            otmResult = false;
 
             if (hasError)
             {
-                OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "MultipleOwnershipTransferCb is failed with code(%d)", hasError);
-                OTMResult = false;
+                OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "multipleOwnershipTransferCb is failed with code(%d)", hasError);
+                otmResult = false;
                 m_cond.notify_all();
             }
             else
@@ -336,16 +336,16 @@ namespace OIC
                     {
                         if( OC_STACK_OK == result->at(i).res )
                         {
-                            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "MultipleOwnershipTransferCb is succeeded");
+                            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "multipleOwnershipTransferCb is succeeded");
                             OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d", result->at(i).res);
                             OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG, "device uuid : %s", uuid.c_str());
 
-                            OTMResult = true;
+                            otmResult = true;
                         }
                         else
                         {
-                            OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "OwnershipTransfer is failed with code(%d)", hasError);
-                            OTMResult = false;
+                            OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "multipleOwnershipTransfer is failed with code(%d)", hasError);
+                            otmResult = false;
                         }
                     }
                 }
@@ -354,16 +354,16 @@ namespace OIC
             }
         }
 
-        ESResult EnrolleeSecurity::RequestSetPreconfPinData(const ESOwnershipTransferData& MOTData)
+        ESResult EnrolleeSecurity::requestSetPreconfPinData(const ESOwnershipTransferData& MOTData)
         {
-            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "RequestSetPreconfPinData IN");
+            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "requestSetPreconfPinData IN");
 
             ESResult res = ESResult::ES_ERROR;
 
             OC::ResultCallBack preconfigPinProvCB = std::bind(
                     &EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
                     std::placeholders::_1, std::placeholders::_2,
-                    static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::PreconfigPinProvCB,
+                    static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::preconfigPinProvCB,
                     this, std::placeholders::_1, std::placeholders::_2)),
                     shared_from_this());
 
@@ -381,7 +381,7 @@ namespace OIC
             std::unique_lock<std::mutex> lck(m_mtx);
             m_cond.wait(lck);
 
-            if(!PreConfigPinProvResult)
+            if(!preConfigPinProvResult)
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "provisionPreconfPin is failed.");
                 res = ESResult:: ES_PRE_CONFIG_PIN_PROVISIONING_FAILURE;
@@ -391,16 +391,16 @@ namespace OIC
             return ESResult::ES_OK;
         }
 
-        ESResult EnrolleeSecurity::RequestSetMOTMethod(const ESOwnershipTransferData& MOTData)
+        ESResult EnrolleeSecurity::requestSetMOTMethod(const ESOwnershipTransferData& MOTData)
         {
-            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "RequestSetMOTMethod IN");
+            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "requestSetMOTMethod IN");
 
             ESResult res = ESResult::ES_ERROR;
 
             OC::ResultCallBack selectMOTMethodCB = std::bind(
                     &EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
                     std::placeholders::_1, std::placeholders::_2,
-                    static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::SelectMOTMethodCB,
+                    static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::selectMOTMethodCB,
                     this, std::placeholders::_1, std::placeholders::_2)),
                     shared_from_this());
 
@@ -417,7 +417,7 @@ namespace OIC
             std::unique_lock<std::mutex> lck(m_mtx);
             m_cond.wait(lck);
 
-            if(!MOTMethodProvResult)
+            if(!motMethodProvResult)
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "selectMOTMethod is failed.");
                 res = ESResult:: ES_MOT_METHOD_SELECTION_FAILURE;
@@ -475,7 +475,7 @@ namespace OIC
             if( OIC_PRECONFIG_PIN == MOTData.getMOTMethod() &&
                 !MOTData.getPreConfiguredPin().empty())
             {
-                res = RequestSetPreconfPinData(MOTData);
+                res = requestSetPreconfPinData(MOTData);
 
                 if(res != ESResult::ES_OK)
                 {
@@ -486,7 +486,7 @@ namespace OIC
             if(OIC_PRECONFIG_PIN == MOTData.getMOTMethod() ||
                OIC_RANDOM_DEVICE_PIN == MOTData.getMOTMethod())
             {
-                res = RequestSetMOTMethod(MOTData);
+                res = requestSetMOTMethod(MOTData);
 
                 if(res != ESResult::ES_OK)
                 {
@@ -503,7 +503,7 @@ namespace OIC
         {
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "ownershipTransferCb IN");
 
-            OTMResult = false;
+            otmResult = false;
 
             if (hasError)
             {
@@ -523,7 +523,7 @@ namespace OIC
                             OicSecOxm_t oxm = OIC_OXM_COUNT;
                             if(OC_STACK_OK != m_securedResource->getOTMethod(&oxm))
                             {
-                                OTMResult = false;
+                                otmResult = false;
                                 return;
                             }
 
@@ -544,7 +544,7 @@ namespace OIC
                 }
                 OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "OwnershipTransfer is failed with ESResult(%d)", res);
 
-                OTMResult = false;
+                otmResult = false;
             }
             else
             {
@@ -561,12 +561,12 @@ namespace OIC
                             OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d", result->at(i).res);
                             OIC_LOG_V(INFO_PRIVATE, ENROLEE_SECURITY_TAG, "device uuid : %s", uuid.c_str());
 
-                            OTMResult = true;
+                            otmResult = true;
                         }
                         else
                         {
                             OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "OwnershipTransfer is failed with code(%d)", hasError);
-                            OTMResult = false;
+                            otmResult = false;
                         }
                     }
                 }
@@ -957,7 +957,7 @@ namespace OIC
             std::unique_lock<std::mutex> lck(m_mtx);
             m_cond.wait(lck);
 
-            if(!OTMResult)
+            if(!otmResult)
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Ownership-Transfer failed.");
                 return res;
@@ -994,7 +994,7 @@ namespace OIC
             OC::ResultCallBack multipleOwnershipTransferCb =
                 std::bind(&EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
                           std::placeholders::_1, std::placeholders::_2,
-                          static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::MultipleOwnershipTransferCb,
+                          static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::multipleOwnershipTransferCb,
                           this, std::placeholders::_1, std::placeholders::_2)),
                           shared_from_this());
 
@@ -1010,7 +1010,7 @@ namespace OIC
             std::unique_lock<std::mutex> lck(m_mtx);
             m_cond.wait(lck);
 
-            if(!OTMResult)
+            if(!otmResult)
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Multiple Ownership-Transfer failed.");
                 return ESResult::ES_OWNERSHIP_TRANSFER_FAILURE;
@@ -1224,7 +1224,7 @@ namespace OIC
             OC::ResultCallBack CertProvisioningCb =
                 std::bind(&EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
                           std::placeholders::_1, std::placeholders::_2,
-                          static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::CertProvisioningCb,
+                          static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::certProvisioningCb,
                           this, std::placeholders::_1, std::placeholders::_2)),
                           shared_from_this());
 
@@ -1282,7 +1282,7 @@ namespace OIC
             OC::ResultCallBack aclProvisioningCb =
                 std::bind(&EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
                           std::placeholders::_1, std::placeholders::_2,
-                          static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::ACLProvisioningCb,
+                          static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::aclProvisioningCb,
                           this, std::placeholders::_1, std::placeholders::_2)),
                           shared_from_this());
 
@@ -1392,9 +1392,9 @@ namespace OIC
             return acl;
         }
 
-        void EnrolleeSecurity::ACLProvisioningCb(PMResultList_t *result, int hasError)
+        void EnrolleeSecurity::aclProvisioningCb(PMResultList_t *result, int hasError)
         {
-            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "ACLProvisioningCb IN");
+            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "aclProvisioningCb IN");
 
             if (hasError)
             {
@@ -1419,9 +1419,9 @@ namespace OIC
             m_cond.notify_all();
         }
 
-        void EnrolleeSecurity::CertProvisioningCb(PMResultList_t *result, int hasError)
+        void EnrolleeSecurity::certProvisioningCb(PMResultList_t *result, int hasError)
         {
-            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "CertProvisioningCb IN");
+            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "certProvisioningCb IN");
 
             if (hasError)
             {
