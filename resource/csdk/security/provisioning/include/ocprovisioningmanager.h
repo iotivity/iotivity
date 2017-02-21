@@ -332,7 +332,7 @@ OCStackResult OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInf
  * API to update 'doxm.oxmsel' to resource server.
  *
  * @param[in] targetDeviceInfo Selected target device.
- * @param[in] oxmSelValue Method of multiple ownership transfer (ref. oic.sec.oxm)
+ * @param[in] oxmSelValue Method of multiple ownership transfer (ref. oic.sec.doxmtype)
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            POST 'oxmsel' request recieves a response from resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.

@@ -39,9 +39,9 @@ extern "C" {
  *
  * @param[in] ctx Application context would be returned in result callback
  * @param[in] targetDeviceInfo Selected target device.
- * @param[in] newOxm  OxMs to be added (ref. oic.sec.oxm)
+ * @param[in] newOxm  OxMs to be added (ref. oic.sec.doxmtype)
  * @param[in] resultCallback callback provided by API user, callback will be called when
- *            POST 'oxms' request recieves a response from resource server.
+ *            POST 'oxms' request receives a response from resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult MOTAddMOTMethod(void *ctx, OCProvisionDev_t *targetDeviceInfo,
@@ -52,7 +52,7 @@ OCStackResult MOTAddMOTMethod(void *ctx, OCProvisionDev_t *targetDeviceInfo,
  *
  * @param[in] ctx Application context would be returned in result callback
  * @param[in] targetDeviceInfo Selected target device.
- * @param[in] oxmSelValue Method of multiple ownership transfer (ref. oic.sec.oxm)
+ * @param[in] oxmSelValue Method of multiple ownership transfer (ref. oic.sec.doxmtype)
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            POST 'oxmsel' request recieves a response from resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
