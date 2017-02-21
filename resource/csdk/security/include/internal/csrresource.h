@@ -26,6 +26,9 @@
 #include "octypes.h"
 
 #if defined(__WITH_TLS__) || defined(__WITH_DTLS__)
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * Initialize the CSR resource.
  *
@@ -53,6 +56,9 @@ OCStackResult DeInitCSRResource();
 OCStackResult CBORPayloadToCSR(const uint8_t *cborPayload, size_t size, 
                                uint8_t **csr, size_t *csrLen, 
                                OicEncodingType_t *encoding);
+#ifdef __cplusplus
+}
+#endif
 #endif
 
 #endif

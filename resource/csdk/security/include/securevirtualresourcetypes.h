@@ -256,10 +256,12 @@ typedef enum
     OIC_R_AMACL_TYPE,
     OIC_R_CRED_TYPE,
     OIC_R_CRL_TYPE,
+    OIC_R_CSR_TYPE,
     OIC_R_DOXM_TYPE,
     OIC_R_DPAIRING_TYPE,
     OIC_R_PCONF_TYPE,
     OIC_R_PSTAT_TYPE,
+    OIC_R_ROLES_TYPE,
     OIC_R_SACL_TYPE,
     OIC_R_SVC_TYPE,
     OIC_SEC_SVR_TYPE_COUNT, //define the value to number of SVR
@@ -347,7 +349,8 @@ typedef void OicSecCert_t;
  */
 #define UUID_LENGTH 128/8 // 128-bit GUID length
 //TODO: Confirm the length and type of ROLEID.
-#define ROLEID_LENGTH 128/8 // 128-bit ROLEID length
+#define ROLEID_LENGTH 64 // 64-byte authority max length
+#define ROLEAUTHORITY_LENGTH 64 // 64-byte authority max length
 #define OWNER_PSK_LENGTH_128 128/8 //byte size of 128-bit key size
 #define OWNER_PSK_LENGTH_256 256/8 //byte size of 256-bit key size
 
@@ -530,8 +533,8 @@ struct OicSecPstat
 struct OicSecRole
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    //TODO fill in with Role definition
-    uint8_t             id[ROLEID_LENGTH];
+    char                id[ROLEID_LENGTH];                    // 0:R:S:Y:String
+    char                authority[ROLEAUTHORITY_LENGTH];      // 1:R:S:N:String
 };
 
 /**

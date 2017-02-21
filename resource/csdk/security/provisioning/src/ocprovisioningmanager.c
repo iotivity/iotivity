@@ -397,6 +397,17 @@ OCStackResult OCGetCSRResource(void* ctx, const OCProvisionDev_t *selectedDevice
     return SRPGetCSRResource(ctx, selectedDeviceInfo, resultCallback);
 }
 
+OCStackResult OCGetRolesResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                              OCGetRolesResultCB resultCallback)
+{
+    return SRPGetRolesResource(ctx, selectedDeviceInfo, resultCallback);
+}
+
+OCStackResult OCDeleteRoleCertificateByCredId(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                                              OCProvisionResultCB resultCallback, uint32_t credId)
+{
+    return SRPDeleteRoleCertificateByCredId(ctx, selectedDeviceInfo, resultCallback, credId);
+}
 
 OCStackResult OCReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
                                      size_t *chainSize)

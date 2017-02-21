@@ -19,6 +19,7 @@ OCConvertDerCSRToPem
 OCDeleteACLList
 OCDeleteDiscoveredDevices
 OCDeletePdAclList
+OCDeleteRoleCertificateByCredId
 OCDeleteUuidList
 OCDiscoverOwnedDevices
 OCDiscoverSingleDevice
@@ -35,6 +36,7 @@ OCGetCSRResource
 OCGetDevInfoFromNetwork
 OCGetLinkedStatus
 OCGetPublicKeyFromCSR
+OCGetRolesResource
 OCGetUuidFromCSR
 OCInitPM
 OCProvisionACL

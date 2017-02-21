@@ -328,6 +328,8 @@ typedef struct
 #endif
 } CAEndpoint_t;
 
+#define CA_SECURE_ENDPOINT_PUBLIC_KEY_MAX_LENGTH    (128)
+
 /**
  * Endpoint information for secure messages.
  */
@@ -338,6 +340,8 @@ typedef struct
     CARemoteId_t identity;      /**< endpoint device uuid */
     CARemoteId_t userId;        /**< endpoint user uuid */
     uint32_t attributes;
+    uint8_t publicKey[CA_SECURE_ENDPOINT_PUBLIC_KEY_MAX_LENGTH]; /**< Peer's DER-encoded public key (if using certificate) */
+    size_t publicKeyLength;     /**< Length of publicKey; zero if not using certificate */
 } CASecureEndpoint_t;
 
 /**

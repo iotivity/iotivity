@@ -39,9 +39,7 @@
 #define CAsetTlsCipherSuite CAsetTlsCipherSuiteTest
 #define CAsslGenerateOwnerPsk CAsslGenerateOwnerPskTest
 #define CAcloseSslConnectionAll CAcloseSslConnectionAllTest
-#ifdef MULTIPLE_OWNER
 #define GetCASecureEndpointData GetCASecureEndpointDataTest
-#endif
 #define SetCASecureEndpointAttribute SetCASecureEndpointAttributeTest
 #define GetCASecureEndpointAttributes GetCASecureEndpointAttributesTest
 

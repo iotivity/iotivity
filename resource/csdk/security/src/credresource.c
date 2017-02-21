@@ -66,6 +66,8 @@
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 #include <mbedtls/ssl_ciphersuites.h>
 #include "mbedtls/pk.h"
+#include "mbedtls/base64.h"
+#include "mbedtls/pem.h"
 #endif
 
 #define TAG  "OIC_SRM_CREDL"
@@ -383,7 +385,7 @@ static CborError SerializeEncodingToCborInternal(CborEncoder *map, const OicSecK
     return cborEncoderResult;
 }
 
-static CborError SerializeEncodingToCbor(CborEncoder *rootMap, const char* tag, const OicSecKey_t *value)
+CborError SerializeEncodingToCbor(CborEncoder *rootMap, const char* tag, const OicSecKey_t *value)
 {
     CborError cborEncoderResult = CborNoError;
     CborEncoder map;
@@ -405,7 +407,7 @@ static CborError SerializeEncodingToCbor(CborEncoder *rootMap, const char* tag, 
     return cborEncoderResult;
 }
 
-static CborError SerializeSecOptToCbor(CborEncoder *rootMap, const char* tag, const OicSecOpt_t *value)
+CborError SerializeSecOptToCbor(CborEncoder *rootMap, const char* tag, const OicSecOpt_t *value)
 {
     CborError cborEncoderResult = CborNoError;
     CborEncoder map;
@@ -500,7 +502,7 @@ static CborError DeserializeEncodingFromCborInternal(CborValue *map, char *name,
     return cborFindResult;
 }
 
-static CborError DeserializeEncodingFromCbor(CborValue *rootMap, OicSecKey_t *value)
+CborError DeserializeEncodingFromCbor(CborValue *rootMap, OicSecKey_t *value)
 {
     CborValue map = { .parser = NULL };
     CborError cborFindResult = cbor_value_enter_container(rootMap, &map);
@@ -534,7 +536,7 @@ static CborError DeserializeEncodingFromCbor(CborValue *rootMap, OicSecKey_t *va
     return cborFindResult;
 }
 
-static CborError DeserializeSecOptFromCbor(CborValue *rootMap, OicSecOpt_t *value)
+CborError DeserializeSecOptFromCbor(CborValue *rootMap, OicSecOpt_t *value)
 {
     CborValue map = { .parser = NULL };
     CborError cborFindResult = cbor_value_enter_container(rootMap, &map);
@@ -2843,14 +2845,95 @@ OCStackResult GetCredRownerId(OicUuid_t *rowneruuid)
 }
 
 #if defined (__WITH_TLS__) || defined(__WITH_DTLS__)
-void GetDerCaCert(ByteArray_t * crt, const char * usage)
+/* Caller must call OICFree on *der when finished. */
+static int ConvertPemCertToDer(const char *pem, size_t pemLen, uint8_t** der, size_t* derLen)
+{
+    size_t bufSize = B64DECODE_OUT_SAFESIZE(pemLen + 1);
+    uint8_t *buf = OICCalloc(1, bufSize);
+    if (NULL == buf)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+        return -1;
+    }
+    size_t outSize = 0;
+    if (B64_OK != b64Decode(pem, pemLen, buf, bufSize, &outSize))
+    {
+        OICFree(buf);
+        OIC_LOG(ERROR, TAG, "Failed to decode base64 data");
+        return -1;
+    }
+
+    *der = buf;
+    *derLen = outSize;
+
+    return 0;
+}
+
+/* Caller must call OICFree on *pem when finished. */
+static int ConvertDerCertToPem(const uint8_t* der, size_t derLen, uint8_t** pem)
+{
+    const char* pemHeader = "-----BEGIN CERTIFICATE-----\n";
+    const char* pemFooter = "-----END CERTIFICATE-----\n";
+
+    /* Get the length required for output*/
+    size_t pemLen;
+    int ret = mbedtls_pem_write_buffer(pemHeader, 
+        pemFooter,
+        der,
+        derLen,
+        NULL,
+        0,
+        &pemLen);
+    if (ret != MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL)
+    {
+        OIC_LOG_V(ERROR, TAG, "Couldn't convert cert into PEM, failed getting required length: %d", ret);
+        return ret;
+    }
+
+    *pem = OICCalloc(1, pemLen + 1);
+    if (*pem == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory for PEM cert");
+        return ret;
+    }
+
+    /* Try the conversion */
+    ret = mbedtls_pem_write_buffer(pemHeader, pemFooter,
+        der,
+        derLen,
+        *pem,
+        pemLen,
+        &pemLen);
+    if (ret < 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "Couldn't convert cert into PEM, failed getting required length: %d", ret);
+        OICFreeAndSetToNull(pem);
+        return ret;
+    }
+
+    return 0;
+}
+
+static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodingType_t desiredEncoding)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
     if (NULL == crt || NULL == usage)
     {
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return;
+        return OC_STACK_INVALID_PARAM;
     }
+    
+    switch (desiredEncoding)
+    {
+    case OIC_ENCODING_PEM:
+    case OIC_ENCODING_DER:
+    case OIC_ENCODING_BASE64:
+        break;
+    default:
+        OIC_LOG_V(ERROR, TAG, "%s: Unsupported encoding %d", __func__, desiredEncoding);
+        return OC_STACK_INVALID_PARAM;
+    }
+    
     crt->len = 0;
     OicSecCred_t* temp = NULL;
 
@@ -2860,43 +2943,100 @@ void GetDerCaCert(ByteArray_t * crt, const char * usage)
             (temp->credUsage != NULL) &&
             (0 == strcmp(temp->credUsage, usage)) && (false == temp->optionalData.revstat))
         {
-            if(OIC_ENCODING_BASE64 == temp->optionalData.encoding)
+            if (OIC_ENCODING_DER == desiredEncoding)
             {
-                size_t bufSize = B64DECODE_OUT_SAFESIZE((temp->optionalData.len + 1));
-                uint8_t * buf = OICCalloc(1, bufSize);
-                if(NULL == buf)
+                if ((OIC_ENCODING_BASE64 == temp->optionalData.encoding) ||
+                    (OIC_ENCODING_PEM == temp->optionalData.encoding))
                 {
-                    OIC_LOG(ERROR, TAG, "Failed to allocate memory");
-                    return;
-                }
-                size_t outSize;
-                if(B64_OK != b64Decode((char*)(temp->optionalData.data),
-                                       temp->optionalData.len, buf, bufSize, &outSize))
-                {
+                    uint8_t *buf = NULL;
+                    size_t outSize = 0;
+                    int ret = ConvertPemCertToDer((const char *)temp->optionalData.data, temp->optionalData.len, &buf, &outSize);
+                    if (0 > ret)
+                    {
+                        OIC_LOG(ERROR, TAG, "Could not convert PEM cert to DER");
+                        return OC_STACK_ERROR;
+                    }
+
+                    uint8_t *savePtr = crt->data;
+                    crt->data = OICRealloc(crt->data, crt->len + outSize);
+                    if (NULL == crt->data)
+                    {
+                        OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
+                        OICFree(savePtr);
+                        OICFree(buf);
+                        return OC_STACK_NO_MEMORY;
+                    }
+                    memcpy(crt->data + crt->len, buf, outSize);
+                    crt->len += outSize;
                     OICFree(buf);
-                    OIC_LOG(ERROR, TAG, "Failed to decode base64 data");
-                    return;
                 }
-                crt->data = OICRealloc(crt->data, crt->len + outSize);
-                memcpy(crt->data + crt->len, buf, outSize);
-                crt->len += outSize;
-                OICFree(buf);
+                else
+                {
+                    uint8_t *savePtr = crt->data;
+                    crt->data = OICRealloc(crt->data, crt->len + temp->optionalData.len);
+                    if (NULL == crt->data)
+                    {
+                        OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
+                        OICFree(savePtr);
+                        return OC_STACK_NO_MEMORY;
+                    }
+                    memcpy(crt->data + crt->len, temp->optionalData.data, temp->optionalData.len);
+                    crt->len += temp->optionalData.len;
+                }
+                OIC_LOG_V(DEBUG, TAG, "%s found", usage);
             }
             else
             {
+                /* PEM/Base64 */
+                uint8_t *pem = NULL;
+                size_t pemLen = 0;
+                if ((OIC_ENCODING_BASE64 == temp->optionalData.encoding) ||
+                    (OIC_ENCODING_PEM == temp->optionalData.encoding))
+                {
+                    pem = temp->optionalData.data;
+                    pemLen = temp->optionalData.len;
+                }
+                else
+                {
+                    int ret = ConvertDerCertToPem(temp->optionalData.data, temp->optionalData.len, &pem);
+                    if (0 > ret)
+                    {
+                        OIC_LOG_V(ERROR, TAG, "Failed converting DER cert to PEM: %d", ret);
+                        return OC_STACK_ERROR;
+                    }
+                    pemLen = strlen((char *)pem) + 1;
+                }
+
+                uint8_t *oldData = crt->data;
                 crt->data = OICRealloc(crt->data, crt->len + temp->optionalData.len);
+                if (NULL == crt->data)
+                {
+                    OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
+                    OICFree(oldData);
+                    return OC_STACK_NO_MEMORY;
+                }
                 memcpy(crt->data + crt->len, temp->optionalData.data, temp->optionalData.len);
                 crt->len += temp->optionalData.len;
             }
-            OIC_LOG_V(DEBUG, TAG, "%s found", usage);
         }
     }
     if(0 == crt->len)
     {
         OIC_LOG_V(WARNING, TAG, "%s not found", usage);
+        return OC_STACK_NO_RESOURCE;
     }
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-    return;
+    return OC_STACK_OK;
+}
+
+void GetDerCaCert(ByteArray_t * crt, const char * usage)
+{
+    (void)GetCaCert(crt, usage, OIC_ENCODING_DER);
+}
+
+OCStackResult GetPemCaCert(ByteArray_t * crt, const char * usage)
+{
+    return GetCaCert(crt, usage, OIC_ENCODING_PEM);
 }
 
 void GetDerOwnCert(ByteArray_t * crt, const char * usage)

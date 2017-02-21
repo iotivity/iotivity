@@ -80,13 +80,40 @@ OCStackResult SRPGetACLResource(void *ctx, const OCProvisionDev_t *selectedDevic
 /**
  * API to request the Certificate Signing Request (CSR) resource.
  *
+ * @param[in] ctx Application context to be returned in result callback.
  * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult SRPGetCSRResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
-    OCGetCSRResultCB resultCallback);
+                                OCGetCSRResultCB resultCallback);
+
+/**
+ * API to request the Roles resource.
+ *
+ * @param[in] ctx Application context to be returned in result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] resultCallback Callback provided by API user. Callback will be called when
+ *            provisioning request receives a response from resource server.
+ * @return OC_STACK_OK in case of success or error value otherwise.
+ */
+OCStackResult SRPGetRolesResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                                  OCGetRolesResultCB resultCallback);
+
+/**
+ * This function requests the device delete a particular role certificate by credId.
+ *
+ * @param[in] ctx Application context that is returned in the result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] resultCallback callback provided by the API user. Callback will be called when request receives
+ *            a response from the resource server.
+ * @param[in] credId credId to request be deleted.
+ *
+ * @return OC_STACK_OK in case of success, and error value otherwise.
+ */
+OCStackResult SRPDeleteRoleCertificateByCredId(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                                               OCProvisionResultCB resultCallback, uint32_t credId);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 

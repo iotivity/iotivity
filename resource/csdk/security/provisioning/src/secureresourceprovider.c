@@ -35,6 +35,7 @@
 #include "srmresourcestrings.h"
 #include "credresource.h"
 #include "csrresource.h"
+#include "rolesresource.h"
 #include "doxmresource.h"
 #include "pconfresource.h"
 #include "credentialgenerator.h"
@@ -102,6 +103,15 @@ struct GetCsrData {
     const OCProvisionDev_t *deviceInfo;         /**< Pointer to PMDevInfo_t.**/
     OCGetCSRResultCB resultCallback;            /**< Pointer to result callback.**/
     OCPMGetCsrResult_t *resArr;                 /**< Result array.**/
+    size_t numOfResults;                        /**< Number of results in result array.**/
+};
+
+typedef struct GetRolesData GetRolesData_t;
+struct GetRolesData {
+    void *ctx;                                  /**< User-provided context **/
+    const OCProvisionDev_t *deviceInfo;         /**< Pointer to PMDevInfo_t.**/
+    OCGetRolesResultCB resultCallback;          /**< Pointer to result callback.**/
+    OCPMGetRolesResult_t *resArr;               /**< Result array.**/
     size_t numOfResults;                        /**< Number of results in result array.**/
 };
 
@@ -2860,7 +2870,6 @@ static OCStackApplicationResult SRPGetCSRResourceCB(void *ctx, OCDoHandle UNUSED
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-
 OCStackResult SRPGetCSRResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
         OCGetCSRResultCB resultCallback)
 {
@@ -2913,6 +2922,284 @@ OCStackResult SRPGetCSRResource(void *ctx, const OCProvisionDev_t *selectedDevic
         OICFree(getCsrData);
     }
     OIC_LOG(DEBUG, TAG, "OUT SRPGetCSRResource");
+
+    return ret;
+}
+
+/**
+ * Internal Function to store results in result array during GetRolesResourceCB.
+ */
+static void registerResultForGetRolesResourceCB(GetRolesData_t *getRolesData,
+                                                OCStackResult stackresult,
+                                                const uint8_t *payload,
+                                                size_t payloadSize)
+{
+    /* SRPGetRolesResource allocates the memory for getRolesData. When it calls this callback,
+     * numOfResults points to the current entry we're filling out. Later when this structure
+     * gets returned to the caller, that's when it actually reflects the number of
+     * results returned.
+     */
+    OCPMGetRolesResult_t* currentEntry = &getRolesData->resArr[getRolesData->numOfResults];
+    OIC_LOG_V(INFO, TAG, "Inside registerResultForGetCSRResourceCB "
+        "getRolesData->numOfResults is %d\n", getRolesData->numOfResults);
+    memcpy(currentEntry->deviceId.id,
+        getRolesData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
+    currentEntry->res = stackresult;
+    currentEntry->chainsLength = 0;
+
+    if (OC_STACK_OK == stackresult)
+    {
+        RoleCertChain_t *chains = NULL;
+        OCStackResult res = CBORPayloadToRoles(payload, payloadSize, &chains);
+        if (OC_STACK_OK != res)
+        {
+            currentEntry->res = res;
+            currentEntry->chains = NULL;
+        }
+        else
+        {
+            RoleCertChain_t *curr = NULL;
+            for (curr = chains; NULL != curr; curr = curr->next)
+            {
+                currentEntry->chainsLength++;
+            }
+            currentEntry->chains = (OCPMRoleCertChain_t *)OICCalloc(currentEntry->chainsLength, sizeof(OCPMRoleCertChain_t));
+            if (NULL == currentEntry->chains)
+            {
+                OIC_LOG(ERROR, TAG, "No memory allocating role chains");
+                currentEntry->chainsLength = 0;
+                currentEntry->res = OC_STACK_NO_MEMORY;
+            }
+            else
+            {
+                size_t i;
+                for (i = 0, curr = chains; NULL != curr; curr = curr->next, i++)
+                {
+                    currentEntry->chains[i].credId = curr->credId;
+                    /* Take ownership of the buffers from certificate and optData, rather than copy. */
+                    currentEntry->chains[i].certificate = curr->certificate;
+                    currentEntry->chains[i].optData = curr->optData;
+                    
+                    curr->certificate.data = NULL;
+                    curr->certificate.len = 0;
+                    curr->optData.data = NULL;
+                    curr->optData.len = 0;
+                }
+            }
+            FreeRoleCertChainList(chains);
+        }
+    }
+
+    ++(getRolesData->numOfResults);
+}
+
+/**
+ * Callback handler of SRPGetRolesResource.
+ *
+ * @param[in] ctx             ctx value passed to callback from calling function.
+ * @param[in] UNUSED          handle to an invocation
+ * @param[in] clientResponse  Response from queries to remote servers.
+ * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
+ *          and  OC_STACK_KEEP_TRANSACTION to keep it.
+ */
+static OCStackApplicationResult SRPGetRolesResourceCB(void *ctx, OCDoHandle handle,
+                                                      OCClientResponse *clientResponse)
+{
+    OIC_LOG(INFO, TAG, "Inside SRPGetRolesResourceCB.");
+    OC_UNUSED(handle);
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    GetRolesData_t *getRolesData = (GetRolesData_t*)ctx;
+    OCGetRolesResultCB resultCallback = getRolesData->resultCallback;
+
+    if (clientResponse)
+    {
+        if (OC_STACK_OK == clientResponse->result)
+        {
+            uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData;
+            size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
+
+            OIC_LOG_BUFFER(DEBUG, TAG, payload, size);
+
+            registerResultForGetRolesResourceCB(getRolesData, OC_STACK_OK, payload, size);
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "SRPGetRolesResourceCB received Null clientResponse");
+        registerResultForGetRolesResourceCB(getRolesData, OC_STACK_ERROR, NULL, 0);
+    }
+
+    resultCallback(getRolesData->ctx, getRolesData->numOfResults,
+                   getRolesData->resArr,
+                   false);
+    for (size_t i = 0; i < getRolesData->numOfResults; i++)
+    {
+        /* We took ownership of certificate.data and optData.data, so we must free them.
+         * These are allocated internally by tinycbor, which uses malloc and free, so we call
+         * free directly for those.
+         */
+        for (size_t j = 0; j < getRolesData->resArr[i].chainsLength; j++)
+        {
+            free(getRolesData->resArr[i].chains[j].certificate.data);
+            free(getRolesData->resArr[i].chains[j].optData.data);
+        }
+        OICFree(getRolesData->resArr[i].chains);
+    }
+    OICFree(getRolesData->resArr);
+    OICFree(getRolesData);
+
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+OCStackResult SRPGetRolesResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+        OCGetRolesResultCB resultCallback)
+{
+    VERIFY_NOT_NULL_RETURN(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
+
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    if (!PMGenerateQuery(true,
+                        selectedDeviceInfo->endpoint.addr,
+                        selectedDeviceInfo->securePort,
+                        selectedDeviceInfo->connType,
+                        query, sizeof(query), OIC_RSRC_ROLES_URI))
+    {
+        OIC_LOG(ERROR, TAG, "SRPGetRolesResource : Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
+    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    cbData.cb = &SRPGetRolesResourceCB;
+    GetRolesData_t *getRolesData = (GetRolesData_t*)OICCalloc(1, sizeof(GetRolesData_t));
+    if (NULL == getRolesData)
+    {
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
+        return OC_STACK_NO_MEMORY;
+    }
+    getRolesData->deviceInfo = selectedDeviceInfo;
+    getRolesData->resultCallback = resultCallback;
+    getRolesData->numOfResults = 0;
+    getRolesData->ctx = ctx;
+
+    getRolesData->resArr = (OCPMGetRolesResult_t*)OICCalloc(1, sizeof(OCPMGetRolesResult_t));
+    if (NULL == getRolesData->resArr)
+    {
+        OICFree(getRolesData);
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
+        return OC_STACK_NO_MEMORY;
+    }
+    cbData.context = (void *)getRolesData;
+    OCDoHandle handle = NULL;
+    OIC_LOG(DEBUG, TAG, "Sending Get Roles to resource server");
+    OCStackResult ret = OCDoResource(&handle, OC_REST_GET, query, NULL, NULL,
+            selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
+    if (OC_STACK_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
+        OICFree(getRolesData->resArr);
+        OICFree(getRolesData);
+    }
+    OIC_LOG(DEBUG, TAG, "OUT SRPGetRolesResource");
+
+    return ret;
+}
+
+/**
+ * Callback handler of SRPDeleteRoleCertificateByCredId.
+ *
+ * @param[in] ctx             ctx value passed to callback from calling function.
+ * @param[in] UNUSED          handle to an invocation
+ * @param[in] clientResponse  Response from queries to remote servers.
+ * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
+ *          and  OC_STACK_KEEP_TRANSACTION to keep it.
+ */
+static OCStackApplicationResult SRPDeleteRoleCertificateCB(void *ctx, OCDoHandle UNUSED,
+                                                           OCClientResponse *clientResponse)
+{
+    OC_UNUSED(UNUSED);
+    GetSecData_t *getSecData = (GetSecData_t *)ctx;
+
+    OIC_LOG(DEBUG, TAG, "SRPDeleteRoleCertificateCB IN");
+
+    if (NULL != clientResponse)
+    {
+        memcpy(getSecData->resArr[(getSecData->numOfResults)].deviceId.id,
+            getSecData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
+        getSecData->resArr[(getSecData->numOfResults)].res = clientResponse->result;
+        ++(getSecData->numOfResults);
+    }
+
+    OIC_LOG(DEBUG, TAG, "SRPDeleteRoleCertificateCB OUT");
+
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+OCStackResult SRPDeleteRoleCertificateByCredId(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                                               OCProvisionResultCB resultCallback, uint32_t credId)
+{
+    VERIFY_NOT_NULL_RETURN(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
+
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    if (!PMGenerateQuery(true,
+                        selectedDeviceInfo->endpoint.addr,
+                        selectedDeviceInfo->securePort,
+                        selectedDeviceInfo->connType,
+                        query, sizeof(query), OIC_RSRC_ROLES_URI))
+    {
+        OIC_LOG(ERROR, TAG, "SRPDeleteRoleCertificateByCredId : Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    size_t queryLen = strlen(query);
+    int snRet = snprintf(query + queryLen, sizeof(query) - queryLen, "?credId=%u", credId);
+
+    if (0 > snRet)
+    {
+        OIC_LOG_V(ERROR, TAG, "snprintf returned error: %d", snRet);
+        return OC_STACK_ERROR;
+    }
+    else if ((size_t)snRet >= (sizeof(query) - queryLen))
+    {
+        OIC_LOG_V(ERROR, TAG, "snprintf truncated");
+        return OC_STACK_ERROR;
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
+    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    cbData.cb = &SRPDeleteRoleCertificateCB;
+    GetSecData_t *getSecData = (GetSecData_t*)OICCalloc(1, sizeof(GetSecData_t));
+    if (NULL == getSecData)
+    {
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
+        return OC_STACK_NO_MEMORY;
+    }
+    getSecData->deviceInfo = selectedDeviceInfo;
+    getSecData->resultCallback = resultCallback;
+    getSecData->numOfResults = 0;
+    getSecData->ctx = ctx;
+
+    getSecData->resArr = (OCProvisionResult_t*)OICCalloc(1, sizeof(OCProvisionResult_t));
+    if (NULL == getSecData->resArr)
+    {
+        OICFree(getSecData);
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
+        return OC_STACK_NO_MEMORY;
+    }
+    cbData.context = (void *)getSecData;
+    OCMethod method = OC_REST_DELETE;
+    OCDoHandle handle = NULL;
+    OIC_LOG(DEBUG, TAG, "Sending Delete Roles to resource server");
+    OCStackResult ret = OCDoResource(&handle, method, query, NULL, NULL,
+            selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
+    if (OC_STACK_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
+        OICFree(getSecData->resArr);
+        OICFree(getSecData);
+    }
+    OIC_LOG(DEBUG, TAG, "OUT SRPGetRolesResource");
 
     return ret;
 }

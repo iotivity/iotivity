@@ -72,10 +72,11 @@ typedef int (*CAgetPskCredentialsHandler)(CADtlsPskCredType_t type,
  * API to get a secure connected peer information
  *
  * @param[in] peer peer information includs IP address and port.
+ * @param[out] sep copy of secure endpoint info
  *
- * @return  secure connected peer information on success, otherwise NULL
+ * @return  CA_STATUS_OK on success; other error otherwise
  */
-const CASecureEndpoint_t *CAGetSecureEndpointData(const CAEndpoint_t *peer);
+CAResult_t CAGetSecureEndpointData(const CAEndpoint_t *peer, CASecureEndpoint_t *sep);
 #endif //MULTIPLE_OWNER
 
 /**

@@ -169,7 +169,7 @@ OCStackResult OCGenerateRandomSerialNumber(char **serial, size_t *serialLen)
 
     /* Do the write for real. */
     ret = mbedtls_mpi_write_string(&serialMpi, 10, *serial, *serialLen, serialLen);
-    VERIFY_SUCCESS(TAG, ret == 0, ERROR);
+    VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
 
     res = OC_STACK_OK;
 

@@ -64,6 +64,11 @@ extern const char * OIC_RSRC_TYPE_SEC_CSR;
 extern const char * OIC_RSRC_CSR_URI;
 extern const char * OIC_JSON_CSR_NAME;
 
+//roles
+extern const char * OIC_RSRC_TYPE_SEC_ROLES;
+extern const char * OIC_RSRC_ROLES_URI;
+extern const char * OIC_JSON_ROLES_NAME;
+
 //CRL
 extern const char * OIC_RSRC_TYPE_SEC_CRL;
 extern const char * OIC_RSRC_CRL_URI;

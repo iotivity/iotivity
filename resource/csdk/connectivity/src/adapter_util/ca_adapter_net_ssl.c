@@ -25,6 +25,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include <assert.h>
 #include "ca_adapter_net_ssl.h"
 #include "cacommon.h"
 #include "caipinterface.h"
@@ -846,15 +847,15 @@ static SslEndPoint_t *GetSslPeer(const CAEndpoint_t *peer)
     return NULL;
 }
 
-#ifdef MULTIPLE_OWNER
 /**
- * Gets CA secure endpoint info corresponding for endpoint.
+ * Gets a copy of CA secure endpoint info corresponding for endpoint.
  *
  * @param[in]  peer    remote address
+ * @param[out] sep     copy of secure endpoint data
  *
- * @return  CASecureEndpoint or NULL
+ * @return  CA_STATUS_OK on success; other error code on failure
  */
-const CASecureEndpoint_t *GetCASecureEndpointData(const CAEndpoint_t* peer)
+CAResult_t GetCASecureEndpointData(const CAEndpoint_t* peer, CASecureEndpoint_t* sep)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
 
@@ -863,23 +864,23 @@ const CASecureEndpoint_t *GetCASecureEndpointData(const CAEndpoint_t* peer)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Context is NULL");
         oc_mutex_unlock(g_sslContextMutex);
-        return NULL;
+        return CA_STATUS_NOT_INITIALIZED;
     }
 
     SslEndPoint_t* sslPeer = GetSslPeer(peer);
     if(sslPeer)
     {
         OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+        memcpy(sep, &sslPeer->sep, sizeof(sslPeer->sep));
         oc_mutex_unlock(g_sslContextMutex);
-        return &sslPeer->sep;
+        return CA_STATUS_OK;
     }
 
     OIC_LOG(DEBUG, NET_SSL_TAG, "Return NULL");
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     oc_mutex_unlock(g_sslContextMutex);
-    return NULL;
+    return CA_STATUS_INVALID_PARAM;
 }
-#endif
 
 /**
  * Adds a bit to the attributes field of a secure endpoint.
@@ -2052,6 +2053,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
             {
                 const mbedtls_x509_crt * peerCert = mbedtls_ssl_get_peer_cert(&peer->ssl);
                 const mbedtls_x509_name * name = NULL;
+                uint8_t pubKeyBuf[CA_SECURE_ENDPOINT_PUBLIC_KEY_MAX_LENGTH] = { 0 };
                 ret = (NULL == peerCert ? -1 : 0);
                 if (!checkSslOperation(peer,
                                        ret,
@@ -2062,6 +2064,30 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
                     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
                     return CA_STATUS_FAILED;
                 }
+
+                /* mbedtls_pk_write_pubkey_der takes a non-const mbedtls_pk_context, but inspection
+                 * shows that every place it's used internally treats it as const, so casting its
+                 * constness away is safe.
+                 */
+                ret = mbedtls_pk_write_pubkey_der((mbedtls_pk_context *)&peerCert->pk, pubKeyBuf, sizeof(pubKeyBuf));
+                if (ret <= 0)
+                {
+                    OIC_LOG_V(ERROR, NET_SSL_TAG, "Failed to copy public key of remote peer: -0x%x", ret);
+                    oc_mutex_unlock(g_sslContextMutex);
+                    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+                    return CA_STATUS_FAILED;
+                }
+                else if (ret > sizeof(peer->sep.publicKey))
+                {
+                    assert(!"publicKey field of CASecureEndpoint_t is too small for the public key!");
+                    OIC_LOG(ERROR, NET_SSL_TAG, "Public key of remote peer was too large");
+                    oc_mutex_unlock(g_sslContextMutex);
+                    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+                    return CA_STATUS_FAILED;
+                }
+                /* DER data is written to the end of the buffer, so we have to skip ahead in it. */
+                memcpy(peer->sep.publicKey, (pubKeyBuf + sizeof(pubKeyBuf) - ret), ret);
+                peer->sep.publicKeyLength = ret;
 
                 /* Find the CN component of the subject name. */
                 for (name = &peerCert->subject; NULL != name; name = name->next)
@@ -2141,6 +2167,12 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
                         OIC_LOG(WARNING, NET_SSL_TAG, "Subject alternative name not found");
                     }
                 }
+            }
+            else
+            {
+                /* No public key information for non-certificate-using ciphersuites. */
+                memset(&peer->sep.publicKey, 0, sizeof(peer->sep.publicKey));
+                peer->sep.publicKeyLength = 0;
             }
 
             oc_mutex_unlock(g_sslContextMutex);

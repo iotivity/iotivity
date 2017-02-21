@@ -24,6 +24,7 @@
 #include "cainterface.h"
 #include "securevirtualresourcetypes.h"
 #include "octypes.h"
+#include <cbor.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -211,7 +212,14 @@ OCStackResult GetCredRownerId(OicUuid_t *rowneruuid);
 
 #if defined(__WITH_TLS__) || defined(__WITH_DTLS__)
 /**
- * Used by mbedTLS to retrieve trusted CA certificates
+ * Used by role certificate validator to get CA certificates as PEM
+ *
+ * @param[out] crt certificates to be filled.
+ * @param[in] usage credential usage string.
+ */
+OCStackResult GetPemCaCert(ByteArray_t * crt, const char * usage);
+/**
+ * Used by mbedTLS to retrieve trusted CA certificates as DER
  *
  * @param[out] crt certificates to be filled.
  * @param[in] usage credential usage string.
@@ -239,6 +247,13 @@ void GetDerKey(ByteArray_t * key, const char * usage);
  */
 void InitCipherSuiteListInternal(bool *list, const char * usage);
 #endif // __WITH_TLS__
+
+// Helpers shared by cred and roles resources
+CborError SerializeEncodingToCbor(CborEncoder *rootMap, const char *tag, const OicSecKey_t *value);
+CborError SerializeSecOptToCbor(CborEncoder *rootMap, const char *tag, const OicSecOpt_t *value);
+CborError DeserializeEncodingFromCbor(CborValue *rootMap, OicSecKey_t *value);
+CborError DeserializeSecOptFromCbor(CborValue *rootMap, OicSecOpt_t *value);
+
 #ifdef __cplusplus
 }
 #endif

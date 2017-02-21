@@ -58,6 +58,11 @@ const char * OIC_RSRC_TYPE_SEC_CSR = "oic.r.csr";
 const char * OIC_RSRC_CSR_URI = "/oic/sec/csr";
 const char * OIC_JSON_CSR_NAME = "csr";
 
+//roles
+const char * OIC_RSRC_TYPE_SEC_ROLES = "oic.r.roles";
+const char * OIC_RSRC_ROLES_URI = "/oic/sec/roles";
+const char * OIC_JSON_ROLES_NAME = "roles";
+
 //CRL
 const char * OIC_RSRC_TYPE_SEC_CRL = "oic.r.crl";
 const char * OIC_RSRC_CRL_URI =  "/oic/sec/crl";

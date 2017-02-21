@@ -266,6 +266,33 @@ OCStackResult OCGetCSRResource(void* ctx, const OCProvisionDev_t *selectedDevice
                                OCGetCSRResultCB resultCallback);
 
 /**
+ * This function requests the device provide its roles resource, listing the role certificates
+ * it has for the local requestor.
+ *
+ * @param[in] ctx Application context that is returned in the result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] resultCallback callback provided by the API user. Callback will be called when provisioning
+ *                           request receives a response from the resource server.
+ * @return OC_STACK_OK in case of success, and error value otherwise.
+ */
+OCStackResult OCGetRolesResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                                 OCGetRolesResultCB resultCallback);
+
+/**
+ * This function requests the device delete a particular role certificate by credId.
+ *
+ * @param[in] ctx Application context that is returned in the result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] resultCallback callback provided by the API user. Callback will be called when request receives
+ *            a response from the resource server.
+ * @param[in] credId credId to request be deleted. If 0, delete all role certificates for this peer.
+ *
+ * @return OC_STACK_OK in case of success, and error value otherwise.
+ */
+OCStackResult OCDeleteRoleCertificateByCredId(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                                              OCProvisionResultCB resultCallback, uint32_t credId);
+
+/**
  * this function sends Direct-Pairing Configuration to a device.
  *
  * @param[in] ctx Application context would be returned in result callback.
