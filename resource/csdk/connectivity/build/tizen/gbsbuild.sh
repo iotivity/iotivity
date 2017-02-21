@@ -54,7 +54,6 @@ cp -R $cur_dir/samples/tizen/ $sourcedir/tmp/con/sample/
 mkdir -p $sourcedir/tmp/con/sample/external/inc
 cp -R $cur_dir/external/inc/* $sourcedir/tmp/con/sample/external/inc/
 
-cp -R ./extlibs/tinydtls/ $sourcedir/tmp/con/extlibs/
 cp -R ./extlibs/mbedtls/ $sourcedir/tmp/con/mbedtls/
 cp -R ./extlibs/timer/ $sourcedir/tmp/con/extlibs/
 cp -R ./extlibs/libcoap/ $sourcedir/tmp/con/extlibs/

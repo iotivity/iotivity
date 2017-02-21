@@ -36,9 +36,8 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'#/resource/csdk/security/provisioning/include/cloud',
 		'#/resource/csdk/security/provisioning/include/oxm',
 		'#/resource/csdk/connectivity/inc/pkix',
-		'#/extlibs/tinydtls/ecc',
-		'#/extlibs/tinydtls/sha2',
-		'#/extlibs/asn1cert'
+		'#/extlibs/asn1cert',
+		'#/extlibs/mbedtls/mbedtls/include'
 		])
 
 provisioning_env.AppendUnique(CPPDEFINES= ['__WITH_DTLS__'])

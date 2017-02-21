@@ -37,8 +37,6 @@
 #include "cacommon.h"
 #include "cainterface.h"
 #include "base64.h"
-#include "global.h"
-
 #include "srmresourcestrings.h"
 #include "doxmresource.h"
 #include "pstatresource.h"
@@ -58,6 +56,7 @@
 #include "oxmpreconfpin.h"
 #include "oxmrandompin.h"
 #include "otmcontextlist.h"
+#include "mbedtls/ssl_ciphersuites.h"
 
 #define TAG "OIC_MULTIPLE_OTM"
 
@@ -762,11 +761,10 @@ static OCStackApplicationResult SubOwnerCredentialHandler(void *ctx, OCDoHandle 
                 return OC_STACK_DELETE_TRANSACTION;
             }
 
-            // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 = 0xC037, /**< see RFC 5489 */
-            caResult = CASelectCipherSuite(0xC037, endpoint->adapter);
+            caResult = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, endpoint->adapter);
             if(CA_STATUS_OK != caResult)
             {
-                OIC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
+                OIC_LOG(ERROR, TAG, "Failed to select TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256");
                 SetMOTResult(motCtx, OC_STACK_ERROR);
                 return OC_STACK_DELETE_TRANSACTION;
             }

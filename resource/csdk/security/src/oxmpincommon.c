@@ -118,7 +118,7 @@ void SetInputPinCB(InputPinCallback pinCB)
         OIC_LOG(ERROR, TAG, "Failed to set callback for input pin.");
         return;
     }
-    
+
     if ((NULL != g_inputPinCallbacks.callback) || (NULL != g_inputPinCallbacks.contextCallback))
     {
         OIC_LOG(ERROR, TAG, "Callback for input pin is already set.");
@@ -135,7 +135,7 @@ OCStackResult SetInputPinWithContextCB(InputPinCallbackWithContext inputPinCB, v
         OIC_LOG(ERROR, TAG, "Failed to set callback for input pin.");
         return OC_STACK_INVALID_PARAM;
     }
-    
+
     if ((NULL != g_inputPinCallbacks.callback) || (NULL != g_inputPinCallbacks.contextCallback))
     {
         OIC_LOG(ERROR, TAG, "Callback for input pin is already set.");
@@ -172,7 +172,7 @@ OCStackResult SetDisplayPinWithContextCB(DisplayPinCallbackWithContext displayPi
         OIC_LOG(ERROR, TAG, "Failed to set a callback for displaying a pin.");
         return OC_STACK_INVALID_PARAM;
     }
-    
+
     if ((NULL != g_displayPinCallbacks.callback) || (NULL != g_displayPinCallbacks.contextCallback))
     {
         OIC_LOG(ERROR, TAG, "Callback for displaying a pin is already set.");

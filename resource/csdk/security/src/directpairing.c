@@ -42,23 +42,16 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 #include "cainterface.h"
-
 #include "directpairing.h"
 #include "srmresourcestrings.h" //@note: SRM's internal header
 #include "doxmresource.h"       //@note: SRM's internal header
 #include "pconfresource.h"       //@note: SRM's internal header
 #include "dpairingresource.h"       //@note: SRM's internal header
 #include "credresource.h"
-
 #include "pmtypes.h"
 #include "pmutility.h"
-
 #include "srmutility.h"
-
-#ifdef __WITH_DTLS__
-#include "global.h"
-#endif
-
+#include "mbedtls/ssl_ciphersuites.h"
 
 #define TAG ("OIC_DP")
 static const uint16_t CBOR_SIZE = 1024;
@@ -396,12 +389,6 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
             {
                 OIC_LOG(INFO, TAG, "Fail to close temporary dtls session");
             }
-
-            caResult = CASelectCipherSuite(TLS_NULL_WITH_NULL_NULL, CA_ADAPTER_IP);
-            if(CA_STATUS_OK != caResult)
-            {
-                OIC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
-            }
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
             OIC_LOG(INFO, TAG, "Direct-Papring was successfully completed.");
@@ -637,7 +624,7 @@ static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSE
             caresult = CAEnableAnonECDHCipherSuite(false);
             VERIFY_SUCCESS(TAG, CA_STATUS_OK == caresult, ERROR);
 
-            caresult = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256, CA_ADAPTER_IP);
+            caresult = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, CA_ADAPTER_IP);
             VERIFY_SUCCESS(TAG, CA_STATUS_OK == caresult, ERROR);
 
             //Register proceeding peer info. & DTLS event handler to catch the dtls event while handshake

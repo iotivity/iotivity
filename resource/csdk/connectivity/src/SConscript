@@ -53,9 +53,6 @@ env.SConscript(os.path.join(root_dir, 'common', 'SConscript'))
 # Getting util source files
 env.SConscript(os.path.join(root_dir, 'util', 'SConscript'))
 
-# The tinydtls library is found in '#extlibs/tinydtls', where the '#'
-# is interpreted by SCons as the top-level iotivity directory where
-# the SConscruct file is found.
 build_dir = env.get('BUILD_DIR')
 
 env.AppendUnique(CA_SRC = [os.path.join(ca_path,
@@ -66,8 +63,6 @@ if (('BLE' in ca_transport) or ('ALL' in ca_transport)):
                                           'adapter_util/cafragmentation.c')])
 
 if env.get('SECURED') == '1':
-	SConscript('#/extlibs/tinydtls/SConscript')
-	env.AppendUnique(CPPPATH = ['#extlibs/tinydtls'])
 	env.AppendUnique(CPPPATH = ['#extlibs/timer'])
 	env.AppendUnique(CPPPATH = [src_dir + '/resource/csdk/security/include'])
 	env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])

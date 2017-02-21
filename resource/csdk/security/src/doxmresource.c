@@ -26,10 +26,6 @@
 #include <strings.h>
 #endif
 
-#ifdef __WITH_DTLS__
-#include "global.h"
-#endif
-
 #include "ocstack.h"
 #include "oic_malloc.h"
 #include "payload_logging.h"
@@ -53,6 +49,7 @@
 #include "srmutility.h"
 #include "pinoxmcommon.h"
 #include "oxmverifycommon.h"
+#include "mbedtls/ssl_ciphersuites.h"
 
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 #include "mbedtls/md.h"
@@ -1094,7 +1091,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                             OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
 
                             RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
-                            caRes = CASelectCipherSuite((uint16_t)TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256, ehRequest->devAddr.adapter);
+                            caRes = CASelectCipherSuite((uint16_t)MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, ehRequest->devAddr.adapter);
                             VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
                             OIC_LOG(INFO, TAG, "ECDHE_PSK CipherSuite will be used for MOT");
 
@@ -1303,7 +1300,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                         OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
 
                         RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
-                        caRes = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256,
+                        caRes = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256,
                                                     ehRequest->devAddr.adapter);
                         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
 
@@ -1704,10 +1701,10 @@ static void PrepareMOT(const OicSecDoxm_t* doxm)
             OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
 
             RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
-            caRes = CASelectCipherSuite((uint16_t)TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256, CA_ADAPTER_IP);
+            caRes = CASelectCipherSuite((uint16_t)MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, CA_ADAPTER_IP);
             VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
 #ifdef __WITH_TLS__
-            caRes = CASelectCipherSuite((uint16_t)TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256, CA_ADAPTER_TCP);
+            caRes = CASelectCipherSuite((uint16_t)MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, CA_ADAPTER_TCP);
             VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
 #endif
             OIC_LOG(INFO, TAG, "ECDHE_PSK CipherSuite will be used for MOT");

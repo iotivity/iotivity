@@ -23,7 +23,6 @@ PROJECT_COMMON_INC_PATH     = $(PROJECT_COMMON_PATH)/inc
 PROJECT_COMMON_SRC_PATH     = $(PROJECT_COMMON_PATH)/src
 PROJECT_LIB_PATH            = $(PROJECT_ROOT_PATH)/lib
 PROJECT_EXTERNAL_PATH       = $(PROJECT_ROOT_PATH)/external/inc
-DTLS_LIB                    = $(EXT_LIB_PATH)/tinydtls
 OIC_C_COMMON_PATH           = $(ROOT_DIR_PATH)/resource/c_common
 #GLIB_PATH                  = ../../../../../../extlibs/glib/glib-2.40.2
 
@@ -45,12 +44,6 @@ DEBUG_FLAG      = -DTB_LOG
 BUILD_FLAG.debug        = $(DEFINE_FLAG) $(DEBUG_FLAG)
 BUILD_FLAG.release      =       $(DEFINE_FLAG)
 BUILD_FLAG = $(BUILD_FLAG.$(BUILD))
-
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#Build TinyDtls
-
-include $(CLEAR_VARS)
-include $(DTLS_LIB)/Android.mk
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #Build OIC C Common libraries required for CA
@@ -131,7 +124,7 @@ LOCAL_LDLIBS += -L$(SYSROOT)/usr/lib -llog
 LOCAL_PATH = $(PROJECT_SRC_PATH)
 LOCAL_MODULE = CA
 
-LOCAL_STATIC_LIBRARIES = CACommon CACoap TinyDtls
+LOCAL_STATIC_LIBRARIES = CACommon CACoap
 
 LOCAL_C_INCLUDES = $(PROJECT_API_PATH)
 LOCAL_C_INCLUDES += $(PROJECT_COMMON_INC_PATH)
