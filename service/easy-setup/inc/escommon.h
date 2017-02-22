@@ -38,7 +38,7 @@ extern "C"
 
 #define OIC_STRING_MAX_VALUE    64
 #define MAX_WEBLINKLEN          3
-#define NUM_WIFIMODE            5
+#define NUM_WIFIMODE            10
 #define NUM_CONNECT_TYPE        3
 
 /**
