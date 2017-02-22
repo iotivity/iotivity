@@ -75,7 +75,7 @@ OCStackApplicationResult RDPublishCallback(void *ctx,
         OCRepPayload *rdPayload = (OCRepPayload *) clientResponse->payload;
         if (!OCRepPayloadGetPropObjectArray(rdPayload, OC_RSRVD_LINKS, &links, dimensions))
         {
-            OIC_LOG_V(DEBUG, TAG, "No links in publish response");
+            OIC_LOG(DEBUG, TAG, "No links in publish response");
             goto exit;
         }
         for(size_t i = 0; i < dimensions[0]; i++)
@@ -83,7 +83,7 @@ OCStackApplicationResult RDPublishCallback(void *ctx,
             char *uri = NULL;
             if (!OCRepPayloadGetPropString(links[i], OC_RSRVD_HREF, &uri))
             {
-                OIC_LOG_V(ERROR, TAG, "Missing 'href' in publish response");
+                OIC_LOG(ERROR, TAG, "Missing 'href' in publish response");
                 goto next;
             }
             OCResourceHandle handle = OCGetResourceHandleAtUri(uri);
@@ -95,7 +95,7 @@ OCStackApplicationResult RDPublishCallback(void *ctx,
             int64_t ins = 0;
             if (!OCRepPayloadGetPropInt(links[i], OC_RSRVD_INS, &ins))
             {
-                OIC_LOG_V(ERROR, TAG, "Missing 'ins' in publish response");
+                OIC_LOG(ERROR, TAG, "Missing 'ins' in publish response");
                 goto next;
             }
             OCBindResourceInsToResource(handle, ins);

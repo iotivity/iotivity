@@ -499,7 +499,7 @@ void CheckPermission(SRMRequestContext_t *context)
     bool isDeviceOwned = true; // default to value that will NOT grant access
     if (OC_STACK_OK != GetDoxmIsOwned(&isDeviceOwned)) // if runtime error, don't grant
     {
-        OIC_LOG_V(ERROR, TAG, "GetDoxmIsOwned() call failed.");
+        OIC_LOG(ERROR, TAG, "GetDoxmIsOwned() call failed.");
         context->responseVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
     }
     // If we were able to get the value of doxm->isOwned, proceed with

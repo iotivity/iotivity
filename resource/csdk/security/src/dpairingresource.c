@@ -366,7 +366,7 @@ exit:
  */
 void DPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
-    OIC_LOG_V(INFO, TAG, "IN DPairingDTLSHandshakeCB");
+    OIC_LOG(INFO, TAG, "IN DPairingDTLSHandshakeCB");
 
     if(gDpair && endpoint && info)
     {
@@ -391,7 +391,7 @@ void DPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *
         RemoveCredential(&gDpair->pdeviceID);
     }
 
-    OIC_LOG_V(INFO, TAG, "OUT DPairingDTLSHandshakeCB");
+    OIC_LOG(INFO, TAG, "OUT DPairingDTLSHandshakeCB");
 }
 
 static OCEntityHandlerResult HandleDpairingPostRequest (const OCEntityHandlerRequest * ehRequest)

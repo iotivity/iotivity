@@ -349,7 +349,7 @@ OCStackResult GenerateObserverId (OCObservationId *observationId)
     {
         if (!OCGetRandomBytes((uint8_t*)observationId, sizeof(OCObservationId)))
         {
-            OIC_LOG_V(ERROR, TAG, "Failed to generate random observationId");
+            OIC_LOG(ERROR, TAG, "Failed to generate random observationId");
             goto exit;
         }
 

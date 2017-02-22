@@ -79,12 +79,12 @@ static void SRMSendResponse(SRMRequestContext_t *context)
         if (CA_STATUS_OK == CASendResponse(context->endPoint,
             &(context->responseInfo)))
         {
-            OIC_LOG_V(DEBUG, TAG, "SRM response sent.");
+            OIC_LOG(DEBUG, TAG, "SRM response sent.");
             context->responseSent = true;
         }
         else
         {
-            OIC_LOG_V(ERROR, TAG, "SRM response failed.");
+            OIC_LOG(ERROR, TAG, "SRM response failed.");
         }
     }
     else
@@ -152,7 +152,7 @@ void SetResourceUriAndType(SRMRequestContext_t *context)
     }
     if (MAX_URI_LENGTH < position  || 0 > position)
     {
-        OIC_LOG_V(ERROR, TAG, "Incorrect URI length.");
+        OIC_LOG(ERROR, TAG, "Incorrect URI length.");
         return;
     }
     OICStrcpyPartial(context->resourceUri, MAX_URI_LENGTH + 1,
