@@ -17,6 +17,9 @@ print "Given OS is %s" % target_os
 print "BUILD_SAMPLE is %s" % build_sample
 print "MQ flag is %s" % with_mq
 
+if target_os in ['msys_nt', 'windows']:
+    connectivity_env.AppendUnique(CCFLAGS=['/W3', '/WX'])
+
 targets_disallow_multitransport = ['arduino']
 
 if target_os in targets_disallow_multitransport:

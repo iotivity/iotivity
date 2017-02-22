@@ -89,7 +89,7 @@ void printCrl(const OicSecCrl_t *crl)
 
     OIC_LOG(INFO, TAG, "crl:");
     OIC_LOG_V(INFO, TAG, "encoding = %d", crl->CrlData.encoding);
-    OIC_LOG_V(INFO, TAG, "data (length = %zu):", crl->CrlData.len);
+    OIC_LOG_V(INFO, TAG, "data (length = %" PRIuPTR "):", crl->CrlData.len);
     OIC_LOG_BUFFER(INFO, TAG, crl->CrlData.data, crl->CrlData.len);
 }
 

@@ -1977,7 +1977,7 @@ static size_t printUuidList(const OCUuidList_t* uid_lst)
     size_t lst_cnt = 0;
     for( ; lst; )
     {
-        printf("     [%zu] ", ++lst_cnt);
+        printf("     [%" PRIuPTR "] ", ++lst_cnt);
         printUuid((const OicUuid_t*) &lst->dev);
         printf("\n");
         lst = lst->next;

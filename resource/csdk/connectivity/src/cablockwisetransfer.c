@@ -34,7 +34,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 
 #include "caadapterutils.h"
 #include "cainterface.h"
@@ -730,7 +729,7 @@ CAResult_t CASendErrorMessage(const coap_pdu_t *pdu, uint8_t status,
     }
     else
     {
-        CAInfo_t responseData = { .tokenLength = pdu->transport_hdr->udp.token_length };
+        CAInfo_t responseData = { .tokenLength = (uint8_t)pdu->transport_hdr->udp.token_length };
         responseData.token = (CAToken_t) OICMalloc(responseData.tokenLength);
         if (!responseData.token)
         {
@@ -1413,7 +1412,7 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t *info,
     if (info->payload)
     {
         dataLength = (unsigned int)info->payloadSize;
-        OIC_LOG_V(DEBUG, TAG, "dataLength - %" PRIuPTR, dataLength);
+        OIC_LOG_V(DEBUG, TAG, "dataLength - %u", dataLength);
     }
 
     CABlockDataID_t* blockDataID = CACreateBlockDatablockId(

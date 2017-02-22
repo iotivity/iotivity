@@ -20,7 +20,6 @@
 //
 
 #define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 #include "stringbuffer.h"
 #include "writer.h"
 #include "curlClient.h"

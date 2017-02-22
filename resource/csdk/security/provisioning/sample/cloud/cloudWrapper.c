@@ -204,11 +204,11 @@ void printStringArray(stringArray_t *list)
         return;
     }
 
-    OIC_LOG_V(INFO, TAG, "List contains %zu items", list->length);
+    OIC_LOG_V(INFO, TAG, "List contains %" PRIuPTR " items", list->length);
 
     for (size_t i = 0; i < list->length; i++)
     {
-        OIC_LOG_V(INFO, TAG, "item[%zu] = %s", i, list->array[i]);
+        OIC_LOG_V(INFO, TAG, "item[%" PRIuPTR "] = %s", i, list->array[i]);
     }
 }
 
@@ -295,7 +295,7 @@ bool readFile(const char *name, OCByteString *out)
     size_t realCount = fread(buffer, length, count, file);
     if (realCount != count)
     {
-        OIC_LOG_V(ERROR, TAG, "Read %d bytes %zu times instead of %zu", length, realCount, count);
+        OIC_LOG_V(ERROR, TAG, "Read %d bytes %" PRIuPTR " times instead of %" PRIuPTR, length, realCount, count);
         goto exit;
     }
 

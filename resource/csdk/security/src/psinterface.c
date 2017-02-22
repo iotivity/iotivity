@@ -174,7 +174,7 @@ OCStackResult ReadDatabaseFromPS(const char *databaseName, const char *resourceN
     VERIFY_NOT_NULL(TAG, ps, ERROR);
 
     fileSize = GetDatabaseSize(ps, databaseName);
-    OIC_LOG_V(DEBUG, TAG, "File Read Size: %zu", fileSize);
+    OIC_LOG_V(DEBUG, TAG, "File Read Size: %" PRIuPTR, fileSize);
     if (fileSize)
     {
         fsData = (uint8_t *) OICCalloc(1, fileSize);

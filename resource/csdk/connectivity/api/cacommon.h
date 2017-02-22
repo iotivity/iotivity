@@ -603,7 +603,7 @@ typedef struct
 #else
         int netlinkFd;              /**< netlink */
         int shutdownFds[2];         /**< fds used to signal threads to stop */
-        int maxfd;                  /**< highest fd (for select) */
+        CASocketFd_t maxfd;         /**< highest fd (for select) */
 #endif
         int selectTimeout;          /**< in seconds */
         bool started;               /**< the IP adapter has started */
@@ -646,7 +646,7 @@ typedef struct
 #else
         int shutdownFds[2];     /**< shutdown pipe */
         int connectionFds[2];   /**< connection pipe */
-        int maxfd;              /**< highest fd (for select) */
+        CASocketFd_t maxfd;     /**< highest fd (for select) */
 #endif
         bool started;           /**< the TCP adapter has started */
         volatile bool terminate;/**< the TCP adapter needs to stop */

@@ -39,7 +39,6 @@
 #include "iotivity_config.h"
 #include "iotivity_debug.h"
 #include <stdlib.h>
-#include <inttypes.h>
 #include <string.h>
 #include <ctype.h>
 #ifdef HAVE_UNISTD_H
@@ -1013,7 +1012,7 @@ OCStackResult OCEncodeAddressForRFC6874(char *outputAddress,
     {
         OIC_LOG_V(ERROR, TAG,
                   "OCEncodeAddressForRFC6874 failed: "
-                  "outputSize (%zu) < inputSize (%zu)",
+                  "outputSize (%" PRIuPTR ") < inputSize (%" PRIuPTR ")",
                   outputSize, inputSize);
 
         return OC_STACK_ERROR;
