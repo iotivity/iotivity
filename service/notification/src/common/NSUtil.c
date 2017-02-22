@@ -480,43 +480,100 @@ NSTopicList * NSInitializeTopicList()
     return topicList;
 }
 
-char * NSGetQueryAddress(const char * serverFullAddress)
+OCDevAddr * NSChangeAddress(const char * inputaddress)
 {
-    if (strstr(serverFullAddress, "coap+tcp://"))
-    {
-        return OICStrdup(serverFullAddress+11);
-    }
-    else if (strstr(serverFullAddress, "coap://"))
-    {
-        return OICStrdup(serverFullAddress+7);
-    }
-    else
-    {
-        return OICStrdup(serverFullAddress);
-    }
-}
+    NS_VERIFY_NOT_NULL(inputaddress, NULL);
 
-OCDevAddr * NSChangeAddress(const char * address)
-{
-    NS_VERIFY_NOT_NULL(address, NULL);
-    OCDevAddr * retAddr = NULL;
-
-    int index = 0;
-    while(address[index] != '\0')
+    char * address = (char *)inputaddress;
+    char * schema = strstr(inputaddress, "//");
+    if (schema)
     {
-        if (address[index] == ':')
-        {
-            break;
-        }
-        index++;
+        address = schema + 2;
     }
-
-    if (address[index] == '\0')
+    size_t prefixLen = schema - inputaddress;
+    if (prefixLen <= 0)
     {
+        NS_LOG(ERROR, "Invalid Input address.");
         return NULL;
     }
 
-    int tmp = index + 1;
+    OCTransportFlags flags = OC_DEFAULT_FLAGS;
+    OCTransportAdapter adapter = OC_ADAPTER_IP;
+    if (strstr(inputaddress, "coap+tcp://"))
+    {
+        NS_LOG(DEBUG, "address : TCP");
+        adapter |= OC_ADAPTER_TCP;
+    }
+    else if (strstr(inputaddress, "coaps://"))
+    {
+        NS_LOG(DEBUG, "address : UDP + SECURED");
+        flags |= OC_FLAG_SECURE;
+    }
+    else if (strstr(inputaddress, "coaps+tcp://"))
+    {
+        NS_LOG(DEBUG, "address : TCP + SECURED");
+        flags |= OC_FLAG_SECURE;
+        adapter |= OC_ADAPTER_TCP;
+    }
+    else if (strstr(inputaddress, "coap://"))
+    {
+        NS_LOG(DEBUG, "address : UDP");
+    }
+    else
+    {
+        NS_LOG(ERROR, "Invalid CoAP Schema.");
+        return NULL;
+    }
+
+    OCDevAddr * retAddr = NULL;
+    retAddr = (OCDevAddr *) OICMalloc(sizeof(OCDevAddr));
+    NS_VERIFY_NOT_NULL(retAddr, NULL);
+
+    char * start = address;
+    char * end = address;
+    if (address[0] == '[')
+    {
+        flags |= OC_IP_USE_V6;
+        end = strchr(++address, ']');
+        if (!end || end <= start)
+        {
+            NS_LOG(ERROR, "Invalid Input Address - IPv6.");
+            NSOICFree(retAddr);
+            return NULL;
+        }
+        memset(retAddr->addr, 0, (size_t)MAX_ADDR_STR_SIZE);
+        OICStrcpy(retAddr->addr, (size_t)(end-start), address);
+    }
+    else
+    {
+        flags |= OC_IP_USE_V4;
+        end = strchr(address, ':');
+        if (!end || end <= start)
+        {
+            NS_LOG(ERROR, "Invalid Input Address - IPv4.");
+            NSOICFree(retAddr);
+            return NULL;
+        }
+        char * end2 = strchr(end + 1, ':');
+        if (end2)
+        {
+            NS_LOG(ERROR, "Invalid Input Address - IPv4.");
+            NSOICFree(retAddr);
+            return NULL;
+        }
+        memset(retAddr->addr, 0, (size_t)MAX_ADDR_STR_SIZE);
+        OICStrcpy(retAddr->addr, (size_t)(end-start)+1, address);
+    }
+
+    retAddr->adapter = adapter;
+    retAddr->flags = flags;
+
+    address = end + 1;
+    int tmp = 0;
+    if (flags & OC_IP_USE_V6)
+    {
+        address++;
+    }
     uint16_t port = address[tmp++] - '0';
 
     while(true)
@@ -525,21 +582,20 @@ OCDevAddr * NSChangeAddress(const char * address)
         {
             break;
         }
+        if (tmp >= 5 || (port >= 6553 && (address[tmp] -'0') >= 6))
+        {
+            NS_LOG_V(ERROR, "Invalid Input Address - Port. %d", tmp+1);
+            NSOICFree(retAddr);
+            return NULL;
+        }
         port *= 10;
         port += address[tmp++] - '0';
     }
 
-    retAddr = (OCDevAddr *) OICMalloc(sizeof(OCDevAddr));
-    NS_VERIFY_NOT_NULL(retAddr, NULL);
-
-    retAddr->adapter = OC_ADAPTER_TCP;
-    OICStrcpy(retAddr->addr, index + 1, address);
-    retAddr->addr[index] = '\0';
     retAddr->port = port;
-    retAddr->flags = OC_IP_USE_V6;
 
     NS_LOG(DEBUG, "Change Address for TCP request");
-    NS_LOG_V(DEBUG, "Origin : %s", address);
+    NS_LOG_V(DEBUG, "Origin : %s", inputaddress);
     NS_LOG_V(DEBUG, "Changed Addr : %s", retAddr->addr);
     NS_LOG_V(DEBUG, "Changed Port : %d", retAddr->port);
 
