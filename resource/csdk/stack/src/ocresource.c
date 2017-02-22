@@ -140,7 +140,7 @@ OCStackResult ExtractFiltersFromQuery(const char *query, char **filterOne, char 
 {
     if (!query)
     {
-        OIC_LOG_V(ERROR, TAG, "Query is empty!");
+        OIC_LOG(ERROR, TAG, "Query is empty!");
         return OC_STACK_INVALID_QUERY;
     }
     char *key = NULL;
@@ -156,7 +156,7 @@ OCStackResult ExtractFiltersFromQuery(const char *query, char **filterOne, char 
     queryDup = OICStrdup(query);
     if (NULL == queryDup)
     {
-        OIC_LOG_V(ERROR, TAG, "Creating duplicate string failed!");
+        OIC_LOG(ERROR, TAG, "Creating duplicate string failed!");
         return OC_STACK_NO_MEMORY;
     }
 
@@ -208,7 +208,7 @@ OCStackResult ExtractFiltersFromQuery(const char *query, char **filterOne, char 
         *filterOne = OICStrdup(*filterOne);
         if (NULL == *filterOne)
         {
-            OIC_LOG_V(ERROR, TAG, "Creating duplicate string failed!");
+            OIC_LOG(ERROR, TAG, "Creating duplicate string failed!");
             eCode = OC_STACK_NO_MEMORY;
             goto exit;
         }
@@ -219,7 +219,7 @@ OCStackResult ExtractFiltersFromQuery(const char *query, char **filterOne, char 
         *filterTwo = OICStrdup(*filterTwo);
         if (NULL == *filterTwo)
         {
-            OIC_LOG_V(ERROR, TAG, "Creating duplicate string failed!");
+            OIC_LOG(ERROR, TAG, "Creating duplicate string failed!");
             OICFree(*filterOne);
             eCode = OC_STACK_NO_MEMORY;
             goto exit;

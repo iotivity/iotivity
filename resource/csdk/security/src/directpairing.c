@@ -341,7 +341,7 @@ void DPDeleteLists()
 static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHandle UNUSED,
                                                   OCClientResponse *clientResponse)
 {
-    OIC_LOG_V(INFO, TAG, "IN DirectPairingFinalizeHandler()");
+    OIC_LOG(INFO, TAG, "IN DirectPairingFinalizeHandler()");
     (void)UNUSED;
     if(NULL == ctx)
     {
@@ -524,7 +524,7 @@ OCStackResult FinalizeDirectPairing(void *ctx, OCDirectPairingDev_t* peer,
  */
 void DirectPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
-    OIC_LOG_V(INFO, TAG, "IN DirectPairingDTLSHandshakeCB");
+    OIC_LOG(INFO, TAG, "IN DirectPairingDTLSHandshakeCB");
 
 
     if(g_dp_proceed_ctx && g_dp_proceed_ctx->peer && endpoint && info)
@@ -572,11 +572,11 @@ void DirectPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInf
         }
         else
         {
-            OIC_LOG_V(INFO, TAG, "DirectPairingDTLSHandshakeCB - Not matched to peer address");
+            OIC_LOG(INFO, TAG, "DirectPairingDTLSHandshakeCB - Not matched to peer address");
         }
     }
 
-    OIC_LOG_V(INFO, TAG, "OUT DirectPairingDTLSHandshakeCB");
+    OIC_LOG(INFO, TAG, "OUT DirectPairingDTLSHandshakeCB");
 }
 
 /**
@@ -591,7 +591,7 @@ void DirectPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInf
 static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSED,
                                                   OCClientResponse *clientResponse)
 {
-    OIC_LOG_V(INFO, TAG, "IN DirectPairingHandler.");
+    OIC_LOG(INFO, TAG, "IN DirectPairingHandler.");
     (void)UNUSED;
     if(NULL == ctx)
     {
@@ -677,7 +677,7 @@ exit:
 
         resultCallback(dpairData->userCtx, dpairData->peer, res);
     }
-    OIC_LOG_V(INFO, TAG, "OUT DirectPairingHandler.");
+    OIC_LOG(INFO, TAG, "OUT DirectPairingHandler.");
     return OC_STACK_DELETE_TRANSACTION;
 }
 

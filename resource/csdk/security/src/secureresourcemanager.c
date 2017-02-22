@@ -171,7 +171,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     }
     if (MAX_URI_LENGTH < position  || 0 > position)
     {
-        OIC_LOG(ERROR, TAG, "Incorrect URI length");
+        OIC_LOG(ERROR, TAG, "Incorrect URI length.");
         return;
     }
     SRMAccessResponse_t response = ACCESS_DENIED;

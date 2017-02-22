@@ -505,7 +505,7 @@ CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapt
 
 CAResult_t CAEnableAnonECDHCipherSuite(const bool enable)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAEnableAnonECDHCipherSuite");
+    OIC_LOG(DEBUG, TAG, "CAEnableAnonECDHCipherSuite");
     CAResult_t res = CA_STATUS_FAILED;
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     // TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256    0xFF00 replaces 0xC018
@@ -527,7 +527,7 @@ CAResult_t CAGenerateOwnerPSK(const CAEndpoint_t* endpoint,
                     const uint8_t* provServerDeviceID, const size_t provServerDeviceIDLen,
                     uint8_t* ownerPSK, const size_t ownerPskSize)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN : CAGenerateOwnerPSK");
+    OIC_LOG(DEBUG, TAG, "IN : CAGenerateOwnerPSK");
     CAResult_t res = CA_STATUS_FAILED;
 #if defined (__WITH_DTLS__) || defined(__WITH_TLS__)
     //newOwnerLabel and prevOwnerLabe can be NULL
@@ -547,13 +547,13 @@ CAResult_t CAGenerateOwnerPSK(const CAEndpoint_t* endpoint,
 #else
     OIC_LOG(ERROR, TAG, "Method not supported");
 #endif
-    OIC_LOG_V(DEBUG, TAG, "OUT : CAGenerateOwnerPSK");
+    OIC_LOG(DEBUG, TAG, "OUT : CAGenerateOwnerPSK");
     return res;
 }
 
 CAResult_t CAInitiateHandshake(const CAEndpoint_t *endpoint)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN : CAInitiateHandshake");
+    OIC_LOG(DEBUG, TAG, "IN : CAInitiateHandshake");
     CAResult_t res = CA_STATUS_FAILED;
 #if defined (__WITH_DTLS__) || defined(__WITH_TLS__)
     if (!endpoint)
@@ -569,13 +569,13 @@ CAResult_t CAInitiateHandshake(const CAEndpoint_t *endpoint)
 #else
         OIC_LOG(ERROR, TAG, "Method not supported");
 #endif
-    OIC_LOG_V(DEBUG, TAG, "OUT : CAInitiateHandshake");
+    OIC_LOG(DEBUG, TAG, "OUT : CAInitiateHandshake");
     return res;
 }
 
 CAResult_t CAcloseSslSession(const CAEndpoint_t *endpoint)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN : CAcloseSslSession");
+    OIC_LOG(DEBUG, TAG, "IN : CAcloseSslSession");
     CAResult_t res = CA_STATUS_FAILED;
 #if defined (__WITH_DTLS__) || defined(__WITH_TLS__)
     if (!endpoint)
@@ -591,7 +591,7 @@ CAResult_t CAcloseSslSession(const CAEndpoint_t *endpoint)
 #else
     OIC_LOG(ERROR, TAG, "Method not supported");
 #endif
-    OIC_LOG_V(DEBUG, TAG, "OUT : CAcloseSslSession");
+    OIC_LOG(DEBUG, TAG, "OUT : CAcloseSslSession");
     return res;
 }
 

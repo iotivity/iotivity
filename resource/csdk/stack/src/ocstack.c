@@ -2007,7 +2007,7 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     if (requestResult == OC_STACK_RESOURCE_ERROR
             && serverRequest.observationOption == OC_OBSERVE_REGISTER)
     {
-        OIC_LOG_V(ERROR, TAG, "Observe Registration failed due to resource error");
+        OIC_LOG(ERROR, TAG, "Observe Registration failed due to resource error");
     }
     else if(!OCResultToSuccess(requestResult))
     {
