@@ -259,8 +259,8 @@ static OCStackResult CheckResources(const char *interfaceType, const char *resou
     }
 
     size_t sidLength = strlen(discPayload->sid);
-    size_t resourceTypeLength = strlen(resourceType);
-    size_t interfaceTypeLength = strlen(interfaceType);
+    size_t resourceTypeLength = resourceType ? strlen(resourceType) : 0;
+    size_t interfaceTypeLength = interfaceType ? strlen(interfaceType) : 0;
 
     if ((sidLength > INT_MAX) ||
         (resourceTypeLength > INT_MAX) ||
