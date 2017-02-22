@@ -214,13 +214,14 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
 #ifdef ARDUINO
 
 #define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)  OCLogBuffer((level), PCF(tag), (buffer), (bufferSize))
-// Don't define variable argument log function for Arduino
+
+// Don't define variable argument log function for Arduino but display context instead
 #define OIC_LOG_V(level, tag, format, ...) OCLogv((level), PCF(tag), __LINE__, PCF(format),__VA_ARGS__)
+#define OIC_LOG_V(level, tag, ...)    OIC_LOG(level, tag, __FILE__)
 
 #define OIC_LOG_CONFIG(ctx)
 #define OIC_LOG_SHUTDOWN()
 #define OIC_LOG(level, tag, logStr) OCLog((level), PCF(tag), __LINE__, PCF(logStr))
-#define OIC_LOG_V(level, tag, ...)
 
 #else
 
