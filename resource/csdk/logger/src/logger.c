@@ -492,7 +492,7 @@ void OCLogv(int level, PROGMEM const char *tag, const int lineNum,
 
     char c;
     Serial.print(F(": "));
-    while ((c = pgm_read_byte(tag)))
+    while (*tag && (c = pgm_read_byte(tag)))
     {
      Serial.write(c);
      tag++;
