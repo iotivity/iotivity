@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include <cinttypes>
 #include "gtest/gtest.h"
 #include "time.h"
 
@@ -83,6 +84,7 @@
 #define dummyHandler 0xF123
 
 #define SERVER_PORT 4433
+#define SERVER_PORT_STRING "4433"
 #define SERVER_NAME "localhost"
 #define GET_REQUEST "GET / HTTP/1.0\r\n\r\n"
 
@@ -966,40 +968,42 @@ static void error(const char *msg)
     exit(0);
 }
 
-static int sockfd, newsockfd;
+static CASocketFd_t sockfd, newsockfd;
 
 static void socketConnect()
 {
-    int portno;
-    struct sockaddr_in serv_addr;
-    struct hostent *server;
+    struct addrinfo* addressInfo = NULL;
+    struct addrinfo hints;
 
-    portno = SERVER_PORT;
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_INET;
+
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
         error("ERROR opening socket");
-    server = gethostbyname(SERVER_NAME);
-    if (server == NULL) {
+
+    int result = getaddrinfo(SERVER_NAME, SERVER_PORT_STRING, &hints, &addressInfo);
+    if (0 != result)
+    {
         fprintf(stderr,"ERROR, no such host\n");
         exit(0);
     }
-    //memset((char *) &serv_addr, sizeof(serv_addr));
-    memset((void*)&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    memcpy((char *)server->h_addr,
-         (char *)&serv_addr.sin_addr.s_addr,
-         server->h_length);
-    serv_addr.sin_port = htons(portno);
-    if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)
+
+    if (connect(sockfd, addressInfo->ai_addr, (int)addressInfo->ai_addrlen) < 0)
+    {
         error("ERROR connecting");
+    }
+
+    freeaddrinfo(addressInfo);
 }
 
 static ssize_t CATCPPacketSendCB(CAEndpoint_t *, const void *buf, size_t buflen)
 {
-    int n;
-    n = write(sockfd, buf, buflen);
+    int n = send(sockfd, (const char*)buf, (int)buflen, 0);
     if (n < 0)
-         error("ERROR writing to socket");
+    {
+        error("ERROR writing to socket");
+    }
     return n;
 }
 
@@ -1014,12 +1018,12 @@ static void PacketReceive(unsigned char *data, int * datalen)
 {
     int n;
     char buffer[2048] = {'\0'};
-    n = read(sockfd, buffer, 5);
+    n = recv(sockfd, buffer, 5, 0);
     if ((buffer[0] == 0x16 || buffer[0] == 0x14 || buffer[0] == 0x17 || buffer[0] == 0x15)
         && buffer[1] == 0x03 && buffer[2] == 0x03)
     {
         int tlslen = (unsigned char)buffer[3] * 0x100 + (unsigned char)buffer[4];
-        n = read(sockfd, buffer + 5, tlslen);
+        n = recv(sockfd, buffer + 5, tlslen, 0);
     }
 
     if (n < 0)
@@ -1031,7 +1035,7 @@ static void PacketReceive(unsigned char *data, int * datalen)
 
 static void socketClose()
 {
-    close(sockfd);
+    OC_CLOSE_SOCKET(sockfd);
 }
 
 static void infoCallback_that_loads_x509(PkiInfo_t * inf)
@@ -1076,7 +1080,7 @@ static void socketOpen_server()
 static ssize_t CATCPPacketSendCB_server(CAEndpoint_t *, const void *buf, size_t buflen)
 {
     int n;
-    n = write(newsockfd,buf,buflen);
+    n = send(newsockfd, (const char*)buf, (int)buflen, 0);
     if (n < 0)
          error("ERROR writing to socket");
     return n;
@@ -1091,12 +1095,12 @@ static void PacketReceive_server(unsigned char *data, int * datalen)
 {
     int n;
     char buffer[2048] = {'\0'};
-    n = read(newsockfd, buffer, 5);
+    n = recv(newsockfd, buffer, 5, 0);
 
     if (buffer[0] == 0x16 || buffer[0] == 0x14 || buffer[0] == 0x17 || buffer[0] == 0x15)
     {
         int tlslen = (unsigned char)buffer[3] * 0x100 + (unsigned char)buffer[4];
-        n = read(newsockfd, buffer + 5, tlslen);
+        n = recv(newsockfd, buffer + 5, tlslen, 0);
     }
 
     if (n < 0)
@@ -1108,8 +1112,8 @@ static void PacketReceive_server(unsigned char *data, int * datalen)
 
 static void socketClose_server()
 {
-    close(newsockfd);
-    close(sockfd);
+    OC_CLOSE_SOCKET(newsockfd);
+    OC_CLOSE_SOCKET(sockfd);
 }
 
 static void clutch(bool * list)
@@ -2000,11 +2004,11 @@ unsigned char predictedClientHello[] = {
     0x00, 0x00, 0x00, 0x17, 0x00, 0x00
 };
 static unsigned char controlBuf[sizeof(predictedClientHello)];
-static char controlBufLen = 0;
+static size_t controlBufLen = 0;
 static ssize_t CATCPPacketSendCB_forInitHsTest(CAEndpoint_t *, const void * buf, size_t buflen)
 {
     int n;
-    n = write(sockfd, buf, buflen);
+    n = send(sockfd, (const char*)buf, (int)buflen, 0);
     if (n < 0)
          error("ERROR writing to socket");
 
@@ -3224,7 +3228,7 @@ TEST(TLSAdaper, Test_ParseChain)
     int errNum;
     mbedtls_x509_crt crt;
     mbedtls_x509_crt_init(&crt);
-    int ret = ParseChain(&crt, certChain, certChainLen, &errNum);
+    size_t ret = ParseChain(&crt, certChain, certChainLen, &errNum);
     mbedtls_x509_crt_free(&crt);
 
     EXPECT_EQ(10, ret + errNum);

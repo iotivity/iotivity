@@ -138,14 +138,14 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
         {
             OIC_LOG_V(DEBUG, TAG, "uri : %s", info->resourceUri);
 
-            uint32_t length = strlen(info->resourceUri);
+            size_t length = strlen(info->resourceUri);
             if (CA_MAX_URI_LENGTH < length)
             {
                 OIC_LOG(ERROR, TAG, "URI len err");
                 return NULL;
             }
 
-            uint32_t uriLength = length + sizeof(COAP_URI_HEADER);
+            size_t uriLength = length + sizeof(COAP_URI_HEADER);
             char *coapUri = (char *) OICCalloc(1, uriLength);
             if (NULL == coapUri)
             {
@@ -259,10 +259,12 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
     VERIFY_NON_NULL_RET(info, TAG, "info", NULL);
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
     VERIFY_NON_NULL_RET(transport, TAG, "transport", NULL);
+    VERIFY_TRUE_RET((info->payloadSize <= COAP_MAX_PDU_SIZE), TAG,
+                    "info->payloadSize", NULL);
 
-    unsigned int length = COAP_MAX_PDU_SIZE;
+    size_t length = COAP_MAX_PDU_SIZE;
 #ifdef WITH_TCP
-    unsigned int msgLength = 0;
+    size_t msgLength = 0;
     if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         if (options)
@@ -286,8 +288,8 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
                 }
                 msgLength += optLength;
                 prevOptNumber = curOptNumber;
-                OIC_LOG_V(DEBUG, TAG, "curOptNumber[%d], prevOptNumber[%d], optValueLen[%zu], "
-                        "optLength[%zu], msgLength[%d]",
+                OIC_LOG_V(DEBUG, TAG, "curOptNumber[%d], prevOptNumber[%d], optValueLen[%" PRIuPTR "], "
+                        "optLength[%" PRIuPTR "], msgLength[%" PRIuPTR "]",
                           curOptNumber, prevOptNumber, optValueLen, optLength, msgLength);
             }
         }
@@ -296,7 +298,14 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
         {
             msgLength = msgLength + info->payloadSize + PAYLOAD_MARKER;
         }
-        *transport = coap_get_tcp_header_type_from_size(msgLength);
+
+        if (msgLength > UINT_MAX)
+        {
+            OIC_LOG(ERROR, TAG, "Message length too large.");
+            return NULL;
+        }
+
+        *transport = coap_get_tcp_header_type_from_size((unsigned int)msgLength);
         length = msgLength + coap_get_tcp_header_length_for_transport(*transport)
                 + info->tokenLength;
     }
@@ -306,7 +315,9 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
         *transport = COAP_UDP;
     }
 
-    coap_pdu_t *pdu = coap_new_pdu2(*transport, length);
+    coap_pdu_t *pdu = coap_pdu_init2(0, 0,
+                                     ntohs(COAP_INVALID_TID),
+                                     length, *transport);
 
     if (NULL == pdu)
     {
@@ -314,13 +325,13 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
         return NULL;
     }
 
-    OIC_LOG_V(DEBUG, TAG, "transport type: %d, payload size: %zu",
+    OIC_LOG_V(DEBUG, TAG, "transport type: %d, payload size: %" PRIuPTR,
               *transport, info->payloadSize);
 
 #ifdef WITH_TCP
     if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
-        coap_add_length(pdu, *transport, msgLength);
+        coap_add_length(pdu, *transport, (unsigned int)msgLength);
     }
     else
 #endif
@@ -393,10 +404,11 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
 
     OIC_LOG_V(DEBUG, TAG, "[%d] pdu length after option", pdu->length);
 
-    if (NULL != info->payload && 0 < info->payloadSize)
+    if ((NULL != info->payload) && (0 < info->payloadSize))
     {
         OIC_LOG(DEBUG, TAG, "payload is added");
-        coap_add_data(pdu, info->payloadSize, (const unsigned char *) info->payload);
+        coap_add_data(pdu, (unsigned int)info->payloadSize,
+                      (const unsigned char*)info->payload);
     }
 
     return pdu;
@@ -1009,7 +1021,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
 
     if (optionResult[0] != '\0')
     {
-        OIC_LOG_V(DEBUG, TAG, "URL length:%zu", strlen(optionResult));
+        OIC_LOG_V(DEBUG, TAG, "URL length:%" PRIuPTR, strlen(optionResult));
         outInfo->resourceUri = OICStrdup(optionResult);
         if (!outInfo->resourceUri)
         {

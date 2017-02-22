@@ -342,7 +342,7 @@ void OCDeleteResourceAttributes(OCAttribute *rsrcAttributes);
  */
 void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload *payload, const OCResource *res,
                                           uint16_t securePort, bool isVirtual,
-                                          void *networkInfo, uint32_t infoSize,
+                                          void *networkInfo, size_t infoSize,
                                           const OCDevAddr *devAddr);
 #else
 /**
@@ -359,7 +359,7 @@ void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload *payload, const OCR
  */
 void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload *payload, const OCResource *res,
                                           uint16_t securePort, bool isVirtual,
-                                          void *networkInfo, uint32_t infoSize,
+                                          void *networkInfo, size_t infoSize,
                                           const OCDevAddr *devAddr, uint16_t tcpPort);
 #endif
 #ifdef __cplusplus

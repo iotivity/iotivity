@@ -30,6 +30,7 @@
 #define _DEFAULT_SOURCE
 #define _BSD_SOURCE
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,7 +67,7 @@ static bool CACheckPayloadLength(const CAData_t *sendData)
 
     // check if message has to be transfered to a block
     size_t maxBlockSize = BLOCK_SIZE(CA_DEFAULT_BLOCK_SIZE);
-    OIC_LOG_V(DEBUG, TAG, "payloadLen=%zu, maxBlockSize=%zu", payloadLen, maxBlockSize);
+    OIC_LOG_V(DEBUG, TAG, "payloadLen=%" PRIuPTR ", maxBlockSize=%" PRIuPTR, payloadLen, maxBlockSize);
 
     if (payloadLen <= maxBlockSize)
     {
@@ -311,6 +312,8 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     VERIFY_NON_NULL(pdu->transport_hdr, TAG, "pdu->transport_hdr");
     VERIFY_NON_NULL(endpoint, TAG, "endpoint");
     VERIFY_NON_NULL(receivedData, TAG, "receivedData");
+    VERIFY_TRUE((pdu->transport_hdr->udp.token_length <= UINT8_MAX), TAG,
+                "pdu->transport_hdr->udp.token_length");
 
     // check if received message type is CA_MSG_RESET
     if (CA_EMPTY == pdu->transport_hdr->udp.code)
@@ -397,7 +400,7 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
         {
             CABlockDataID_t* blockDataID = CACreateBlockDatablockId(
                                                         (CAToken_t)pdu->transport_hdr->udp.token,
-                                                        pdu->transport_hdr->udp.token_length,
+                                                        (uint8_t)pdu->transport_hdr->udp.token_length,
                                                         endpoint->addr, endpoint->port);
             if (NULL == blockDataID || blockDataID->idLength < 1)
             {
@@ -455,7 +458,7 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             if (receivedData->responseInfo)
             {
                 CARemoveBlockDataFromListWithSeed((CAToken_t)pdu->transport_hdr->udp.token,
-                                                  pdu->transport_hdr->udp.token_length,
+                                                  (uint8_t)pdu->transport_hdr->udp.token_length,
                                                   endpoint->addr, endpoint->port);
             }
             return CA_NOT_SUPPORTED;
@@ -682,6 +685,8 @@ CAResult_t CASendErrorMessage(const coap_pdu_t *pdu, uint8_t status,
     VERIFY_NON_NULL(pdu, TAG, "pdu");
     VERIFY_NON_NULL(pdu->transport_hdr, TAG, "pdu->transport_hdr");
     VERIFY_NON_NULL(blockID, TAG, "blockID");
+    VERIFY_TRUE((pdu->transport_hdr->udp.token_length <= UINT8_MAX), TAG,
+                "pdu->transport_hdr->udp.token_length");
 
     // create error responseInfo
     CABlockData_t *data = CAGetBlockDataFromBlockDataList(blockID);
@@ -722,7 +727,7 @@ CAResult_t CASendErrorMessage(const coap_pdu_t *pdu, uint8_t status,
         }
         else
         {
-            CAInfo_t responseData = { .tokenLength = pdu->transport_hdr->udp.token_length };
+            CAInfo_t responseData = { .tokenLength = (uint8_t)pdu->transport_hdr->udp.token_length };
             responseData.token = (CAToken_t) OICMalloc(responseData.tokenLength);
             if (!responseData.token)
             {
@@ -825,7 +830,7 @@ CAResult_t CAReceiveLastBlock(const CABlockDataID_t *blockID, const CAData_t *re
 
 static CABlockData_t* CACheckTheExistOfBlockData(const CABlockDataID_t* blockDataID,
                                                  coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
-                                                 uint8_t blockType)
+                                                 uint16_t blockType)
 {
     // Get BlockData data. If does not exist, create a new data
     CABlockData_t *data = CAGetBlockDataFromBlockDataList(blockDataID);
@@ -871,12 +876,14 @@ CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     VERIFY_NON_NULL(pdu->transport_hdr, TAG, "pdu->transport_hdr");
     VERIFY_NON_NULL(endpoint, TAG, "endpoint");
     VERIFY_NON_NULL(receivedData, TAG, "receivedData");
+    VERIFY_TRUE((pdu->transport_hdr->udp.token_length <= UINT8_MAX), TAG,
+                "pdu->transport_hdr->udp.token_length");
 
     OIC_LOG_V(INFO, TAG, "num:%d, M:%d, sze:%d", block.num, block.m, block.szx);
 
     CABlockDataID_t* blockDataID = CACreateBlockDatablockId(
             (CAToken_t)pdu->transport_hdr->udp.token,
-            pdu->transport_hdr->udp.token_length,
+            (uint8_t)pdu->transport_hdr->udp.token_length,
             endpoint->addr, endpoint->port);
     if (NULL == blockDataID || blockDataID->idLength < 1)
     {
@@ -1016,10 +1023,12 @@ CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     VERIFY_NON_NULL(pdu->transport_hdr, TAG, "pdu->transport_hdr");
     VERIFY_NON_NULL(endpoint, TAG, "endpoint");
     VERIFY_NON_NULL(receivedData, TAG, "receivedData");
+    VERIFY_TRUE((pdu->transport_hdr->udp.token_length <= UINT8_MAX), TAG,
+                "pdu->transport_hdr->udp.token_length");
 
     CABlockDataID_t* blockDataID = CACreateBlockDatablockId(
             (CAToken_t)pdu->transport_hdr->udp.token,
-            pdu->transport_hdr->udp.token_length,
+            (uint8_t)pdu->transport_hdr->udp.token_length,
             endpoint->addr, endpoint->port);
     if (NULL == blockDataID || blockDataID->idLength < 1)
     {
@@ -1395,18 +1404,22 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t *info,
     VERIFY_NON_NULL(info, TAG, "info");
     VERIFY_NON_NULL(endpoint, TAG, "endpoint");
     VERIFY_NON_NULL(options, TAG, "options");
+    VERIFY_TRUE(((*pdu)->transport_hdr->udp.token_length <= UINT8_MAX), TAG,
+                "pdu->transport_hdr->udp.token_length");
+    VERIFY_TRUE((info->payloadSize <= COAP_MAX_PDU_SIZE), TAG,
+                    "info->payloadSize");
 
     CAResult_t res = CA_STATUS_OK;
-    size_t dataLength = 0;
+    unsigned int dataLength = 0;
     if (info->payload)
     {
-        dataLength = info->payloadSize;
-        OIC_LOG_V(DEBUG, TAG, "dataLength - %zu", dataLength);
+        dataLength = (unsigned int)info->payloadSize;
+        OIC_LOG_V(DEBUG, TAG, "dataLength - %" PRIuPTR, dataLength);
     }
 
     CABlockDataID_t* blockDataID = CACreateBlockDatablockId(
             (CAToken_t)(*pdu)->transport_hdr->udp.token,
-            (*pdu)->transport_hdr->udp.token_length,
+            (uint8_t)(*pdu)->transport_hdr->udp.token_length,
             endpoint->addr, endpoint->port);
     if (NULL == blockDataID || blockDataID->idLength < 1)
     {
@@ -1423,7 +1436,7 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t *info,
         goto exit;
     }
 
-    uint8_t blockType = CAGetBlockOptionType(blockDataID);
+    uint16_t blockType = CAGetBlockOptionType(blockDataID);
     if (COAP_OPTION_BLOCK2 == blockType)
     {
         res = CAAddBlockOption2(pdu, info, dataLength, blockDataID, options);
@@ -1468,7 +1481,7 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t *info,
         OIC_LOG_V(DEBUG, TAG, "[%d] pdu length after option", (*pdu)->length);
 
         // if response data is so large. it have to send as block transfer
-        if (!coap_add_data(*pdu, dataLength, (const unsigned char *) info->payload))
+        if (!coap_add_data(*pdu, dataLength, (const unsigned char*)info->payload))
         {
             OIC_LOG(INFO, TAG, "it has to use block");
             res = CA_STATUS_FAILED;
@@ -1513,6 +1526,7 @@ CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
     VERIFY_NON_NULL(info, TAG, "info");
     VERIFY_NON_NULL(blockID, TAG, "blockID");
     VERIFY_NON_NULL(options, TAG, "options");
+    VERIFY_TRUE((dataLength <= COAP_MAX_PDU_SIZE), TAG, "dataLength");
 
     // get set block data from CABlock list-set.
     coap_block_t *block1 = CAGetBlockOption(blockID, COAP_OPTION_BLOCK1);
@@ -1567,7 +1581,8 @@ CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
             goto exit;
         }
 
-        if (!coap_add_block(*pdu, dataLength, (const unsigned char *) info->payload,
+        if (!coap_add_block(*pdu, (unsigned int)dataLength,
+                            (const unsigned char *) info->payload,
                             block2->num, block2->szx))
         {
             OIC_LOG(ERROR, TAG, "Data length is smaller than the start index");
@@ -1618,6 +1633,7 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
     VERIFY_NON_NULL(info, TAG, "info");
     VERIFY_NON_NULL(blockID, TAG, "blockID");
     VERIFY_NON_NULL(options, TAG, "options");
+    VERIFY_TRUE((dataLength <= COAP_MAX_PDU_SIZE), TAG, "dataLength");
 
     // get set block data from CABlock list-set.
     coap_block_t *block1 = CAGetBlockOption(blockID, COAP_OPTION_BLOCK1);
@@ -1662,7 +1678,8 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
         }
 
         // add the payload data as the block size.
-        if (!coap_add_block(*pdu, dataLength, (const unsigned char *) info->payload, block1->num,
+        if (!coap_add_block(*pdu, (unsigned int)dataLength,
+                            (const unsigned char *) info->payload, block1->num,
                             block1->szx))
         {
             OIC_LOG(ERROR, TAG, "Data length is smaller than the start index");
@@ -1690,7 +1707,8 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
         }
 
         // add the payload data as the block size.
-        if (!coap_add_data(*pdu, dataLength, (const unsigned char *) info->payload))
+        if (!coap_add_data(*pdu, (unsigned int)dataLength,
+                           (const unsigned char*)info->payload))
         {
             OIC_LOG(ERROR, TAG, "failed to add payload");
             return CA_STATUS_FAILED;
@@ -1764,9 +1782,9 @@ CAResult_t CAAddOptionToPDU(coap_pdu_t *pdu, coap_list_t **options)
                       COAP_OPTION_DATA(*(coap_option *) opt->data));
 
             OIC_LOG_V(DEBUG, TAG, "[%d] pdu length", pdu->length);
-            int ret = coap_add_option(pdu, COAP_OPTION_KEY(*(coap_option *) opt->data),
-                                      COAP_OPTION_LENGTH(*(coap_option *) opt->data),
-                                      COAP_OPTION_DATA(*(coap_option *) opt->data));
+            size_t ret = coap_add_option(pdu, COAP_OPTION_KEY(*(coap_option *) opt->data),
+                                         COAP_OPTION_LENGTH(*(coap_option *) opt->data),
+                                         COAP_OPTION_DATA(*(coap_option *) opt->data));
             if (!ret)
             {
                 return CA_STATUS_FAILED;
@@ -1785,6 +1803,7 @@ CAResult_t CAAddBlockSizeOption(coap_pdu_t *pdu, uint16_t sizeType, size_t dataL
     OIC_LOG(DEBUG, TAG, "IN-CAAddBlockSizeOption");
     VERIFY_NON_NULL(pdu, TAG, "pdu");
     VERIFY_NON_NULL(options, TAG, "options");
+    VERIFY_TRUE((dataLength <= UINT_MAX), TAG, "dataLength");
 
     if (sizeType != COAP_OPTION_SIZE1 && sizeType != COAP_OPTION_SIZE2)
     {
@@ -1793,7 +1812,8 @@ CAResult_t CAAddBlockSizeOption(coap_pdu_t *pdu, uint16_t sizeType, size_t dataL
     }
 
     unsigned char value[BLOCKWISE_OPTION_BUFFER] = { 0 };
-    unsigned int optionLength = coap_encode_var_bytes(value, dataLength);
+    unsigned int optionLength = coap_encode_var_bytes(value,
+                                                      (unsigned int)dataLength);
 
     int ret = coap_insert(options,
                           CACreateNewOptionNode(sizeType, optionLength, (char *) value),
@@ -1831,7 +1851,7 @@ bool CAIsPayloadLengthInPduWithBlockSizeOption(coap_pdu_t *pdu,
         *totalPayloadLen = coap_decode_var_bytes(COAP_OPT_VALUE(option),
                                                  COAP_OPT_LENGTH(option));
 
-        OIC_LOG_V(DEBUG, TAG, "the total payload length to be received is [%zu]bytes",
+        OIC_LOG_V(DEBUG, TAG, "the total payload length to be received is [%" PRIuPTR "]bytes",
                   *totalPayloadLen);
 
         return true;
@@ -1896,16 +1916,16 @@ uint8_t CACheckBlockErrorType(CABlockData_t *currData, coap_block_t *receivedBlo
     if (receivedBlock->m && blockPayloadLen != (size_t) BLOCK_SIZE(receivedBlock->szx))
     {
         // 413 Error handling of too large entity
-        if (COAP_MAX_PDU_SIZE < BLOCK_SIZE(receivedBlock->szx) + optionLen)
+        if (COAP_MAX_PDU_SIZE < ((size_t)BLOCK_SIZE(receivedBlock->szx)) + optionLen)
         {
             // buffer size is smaller than received block size
             OIC_LOG(ERROR, TAG, "error type 4.13");
             OIC_LOG(ERROR, TAG, "too large size");
 
             // set the block size to be smaller than COAP_MAX_PDU_SIZE
-            for (int32_t size = CA_DEFAULT_BLOCK_SIZE; size >= 0; size--)
+            for (unsigned int size = CA_DEFAULT_BLOCK_SIZE; size >= 0; size--)
             {
-                if (COAP_MAX_PDU_SIZE >= BLOCK_SIZE(size) + optionLen)
+                if (COAP_MAX_PDU_SIZE >= (size_t)BLOCK_SIZE(size) + optionLen)
                 {
                     OIC_LOG_V(ERROR, TAG, "replace sze with %d", size);
                     currData->block2.szx = size;
@@ -2028,6 +2048,8 @@ CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint
     VERIFY_NON_NULL_RET(pdu, TAG, "pdu", NULL);
     VERIFY_NON_NULL_RET(pdu->transport_hdr, TAG, "pdu->transport_hdr", NULL);
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
+    VERIFY_TRUE_RET((pdu->transport_hdr->udp.token_length <= UINT8_MAX), TAG,
+                    "pdu->transport_hdr->udp.token_length", NULL);
 
     CARequestInfo_t* requestInfo = NULL;
     CAResponseInfo_t* responseInfo = NULL;
@@ -2035,7 +2057,7 @@ CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint
     uint32_t code = pdu->transport_hdr->udp.code;
     if (CA_GET == code || CA_POST == code || CA_PUT == code || CA_DELETE == code)
     {
-        CAInfo_t responseData = { .tokenLength = pdu->transport_hdr->udp.token_length };
+        CAInfo_t responseData = { .tokenLength = (uint8_t)pdu->transport_hdr->udp.token_length };
         responseData.token = (CAToken_t) OICMalloc(responseData.tokenLength);
         if (!responseData.token)
         {
@@ -2055,7 +2077,7 @@ CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint
     }
     else
     {
-        CAInfo_t requestData = { .tokenLength = pdu->transport_hdr->udp.token_length };
+        CAInfo_t requestData = { .tokenLength = (uint8_t)pdu->transport_hdr->udp.token_length };
         requestData.token = (CAToken_t) OICMalloc(requestData.tokenLength);
         if (!requestData.token)
         {
@@ -2249,7 +2271,7 @@ CAResult_t CAHandleBlockErrorResponse(coap_block_t *block, uint16_t blockType,
     return CA_STATUS_OK;
 }
 
-CAResult_t CAUpdateBlockOptionType(const CABlockDataID_t *blockID, uint8_t blockType)
+CAResult_t CAUpdateBlockOptionType(const CABlockDataID_t *blockID, uint16_t blockType)
 {
     OIC_LOG(DEBUG, TAG, "IN-UpdateBlockOptionType");
     VERIFY_NON_NULL(blockID, TAG, "blockID");
@@ -2274,7 +2296,7 @@ CAResult_t CAUpdateBlockOptionType(const CABlockDataID_t *blockID, uint8_t block
     return CA_STATUS_FAILED;
 }
 
-uint8_t CAGetBlockOptionType(const CABlockDataID_t *blockID)
+uint16_t CAGetBlockOptionType(const CABlockDataID_t *blockID)
 {
     OIC_LOG(DEBUG, TAG, "IN-GetBlockOptionType");
     VERIFY_NON_NULL_RET(blockID, TAG, "blockID", 0);

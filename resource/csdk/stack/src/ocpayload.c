@@ -1766,7 +1766,7 @@ void OCResourcePayloadAddNewEndpoint(OCResourcePayload* payload, OCEndpointPaylo
 
 static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t securePort,
                                          bool isVirtual, CAEndpoint_t *networkInfo,
-                                         uint32_t infoSize, const OCDevAddr *devAddr
+                                         size_t infoSize, const OCDevAddr *devAddr
 #ifndef TCP_ADAPTER
                                                                                     )
 #else
@@ -1896,7 +1896,7 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
         OCEndpointPayload *lastNode = pl->eps;
         if ((OC_ADAPTER_IP | OC_ADAPTER_TCP) & (devAddr->adapter))
         {
-            for (uint32_t i = 0; i < infoSize; i++)
+            for (size_t i = 0; i < infoSize; i++)
             {
                 CAEndpoint_t *info = networkInfo + i;
 
@@ -1984,7 +1984,7 @@ void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource
 #ifndef TCP_ADAPTER
 void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload* payload, const OCResource* res,
                                           uint16_t securePort, bool isVirtual,
-                                          void *networkInfo, uint32_t infoSize,
+                                          void *networkInfo, size_t infoSize,
                                           const OCDevAddr *devAddr)
 {
     OCDiscoveryPayloadAddNewResource(payload,
@@ -1995,7 +1995,7 @@ void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload* payload, const OCR
 #else
 void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload* payload, const OCResource* res,
                                           uint16_t securePort, bool isVirtual,
-                                          void *networkInfo, uint32_t infoSize,
+                                          void *networkInfo, size_t infoSize,
                                           const OCDevAddr *devAddr, uint16_t tcpPort)
 {
     OCDiscoveryPayloadAddNewResource(payload,

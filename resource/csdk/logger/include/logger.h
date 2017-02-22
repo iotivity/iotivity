@@ -23,6 +23,7 @@
 
 #define IOTIVITY_VERSION "1.3.0"
 
+#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdarg.h>

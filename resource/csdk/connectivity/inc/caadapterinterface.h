@@ -114,7 +114,7 @@ typedef int32_t (*CAAdapterSendMulticastData)(const CAEndpoint_t *endpoint,
  * @param[out]   size           Number of local connectivity structures.
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h)
  */
-typedef CAResult_t (*CAAdapterGetNetworkInfo)(CAEndpoint_t **info, uint32_t *size);
+typedef CAResult_t (*CAAdapterGetNetworkInfo)(CAEndpoint_t **info, size_t *size);
 
 /**
  * Read Synchronous API callback.

@@ -1173,10 +1173,9 @@ void CATerminateMessageHandler()
 #ifndef SINGLE_THREAD
     CATransportAdapter_t connType;
     u_arraylist_t *list = CAGetSelectedNetworkList();
-    uint32_t length = u_arraylist_length(list);
+    size_t length = u_arraylist_length(list);
 
-    uint32_t i = 0;
-    for (i = 0; i < length; i++)
+    for (size_t i = 0; i < length; i++)
     {
         void* ptrType = u_arraylist_get(list, i);
 
@@ -1253,7 +1252,7 @@ static void CALogPayloadInfo(CAInfo_t *info)
 
         if (info->payload)
         {
-            OIC_LOG_V(DEBUG, TAG, "payload: %p(%zu)", info->payload,
+            OIC_LOG_V(DEBUG, TAG, "payload: %p(%" PRIuPTR ")", info->payload,
                       info->payloadSize);
         }
 

@@ -186,7 +186,7 @@ OCStackResult HandleKeepAliveResponse(const CAEndpoint_t *endPoint,
  * @param[out]  index       index of array list.
  * @return  KeepAlive entry to send ping message.
  */
-static KeepAliveEntry_t *GetEntryFromEndpoint(const CAEndpoint_t *endpoint, uint32_t *index);
+static KeepAliveEntry_t *GetEntryFromEndpoint(const CAEndpoint_t *endpoint, size_t *index);
 
 /**
  * Add keepalive entry.
@@ -405,7 +405,7 @@ OCStackResult SendKeepAliveResponse(OCServerRequest *request,
     CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
     CopyDevAddrToEndpoint(&request->devAddr, &endpoint);
 
-    uint32_t index = 0;
+    size_t index = 0;
     KeepAliveEntry_t *entry = GetEntryFromEndpoint(&endpoint, &index);
     int64_t interval = (entry) ? entry->interval : 0;
 
@@ -458,7 +458,7 @@ OCEntityHandlerResult HandleKeepAlivePOSTRequest(OCServerRequest *request,
     CAEndpoint_t endpoint = { .adapter = CA_DEFAULT_ADAPTER };
     CopyDevAddrToEndpoint(&request->devAddr, &endpoint);
 
-    uint32_t index = 0;
+    size_t index = 0;
     KeepAliveEntry_t *entry = GetEntryFromEndpoint(&endpoint, &index);
     if (!entry)
     {
@@ -496,7 +496,7 @@ OCStackResult HandleKeepAliveResponse(const CAEndpoint_t *endPoint,
     OIC_LOG(DEBUG, TAG, "HandleKeepAliveResponse IN");
 
     // Get entry from KeepAlive table.
-    uint32_t index = 0;
+    size_t index = 0;
     KeepAliveEntry_t *entry = GetEntryFromEndpoint(endPoint, &index);
     if (!entry)
     {
@@ -555,9 +555,9 @@ void ProcessKeepAlive()
         return;
     }
 
-    uint32_t len = u_arraylist_length(g_keepAliveConnectionTable);
+    size_t len = u_arraylist_length(g_keepAliveConnectionTable);
 
-    for (uint32_t i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++)
     {
         KeepAliveEntry_t *entry = (KeepAliveEntry_t *)u_arraylist_get(g_keepAliveConnectionTable,
                                                                       i);
@@ -622,7 +622,7 @@ void IncreaseInterval(KeepAliveEntry_t *entry)
 {
     VERIFY_NON_NULL_NR(entry, FATAL);
 
-    OIC_LOG_V(DEBUG, TAG, "Total interval counts: %zu", entry->intervalSize);
+    OIC_LOG_V(DEBUG, TAG, "Total interval counts: %" PRIuPTR, entry->intervalSize);
     if (entry->intervalSize > (size_t)entry->currIndex + 1)
     {
         entry->currIndex++;
@@ -699,7 +699,7 @@ OCStackApplicationResult PingRequestCallback(void* ctx, OCDoHandle handle,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-KeepAliveEntry_t *GetEntryFromEndpoint(const CAEndpoint_t *endpoint, uint32_t *index)
+KeepAliveEntry_t *GetEntryFromEndpoint(const CAEndpoint_t *endpoint, size_t *index)
 {
     if (!g_keepAliveConnectionTable)
     {
@@ -707,9 +707,9 @@ KeepAliveEntry_t *GetEntryFromEndpoint(const CAEndpoint_t *endpoint, uint32_t *i
         return NULL;
     }
 
-    uint32_t len = u_arraylist_length(g_keepAliveConnectionTable);
+    size_t len = u_arraylist_length(g_keepAliveConnectionTable);
 
-    for (uint32_t i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++)
     {
         KeepAliveEntry_t *entry = (KeepAliveEntry_t *)u_arraylist_get(g_keepAliveConnectionTable,
                                                                       i);
@@ -788,7 +788,7 @@ OCStackResult RemoveKeepAliveEntry(const CAEndpoint_t *endpoint)
 {
     VERIFY_NON_NULL(endpoint, FATAL, OC_STACK_INVALID_PARAM);
 
-    uint32_t index = 0;
+    size_t index = 0;
     KeepAliveEntry_t *entry = GetEntryFromEndpoint(endpoint, &index);
     if (!entry)
     {

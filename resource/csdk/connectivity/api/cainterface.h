@@ -216,7 +216,7 @@ CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork);
  * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_NOT_INITIALIZED or
  *          ::CA_STATUS_INVALID_PARAM or ::CA_MEMORY_ALLOC_FAILED
  */
-CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size);
+CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, size_t *size);
 
 /**
  * Get supported network adapter.

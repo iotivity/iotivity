@@ -86,7 +86,8 @@ CAResult_t CAGenerateVariableForFragmentation(size_t dataLength,
                                               size_t *totalLength,
                                               uint16_t mtuSize)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN, dataLength = %zu, mtu = %zu", dataLength, mtuSize);
+    OIC_LOG_V(DEBUG, TAG, "IN, dataLength = %" PRIuPTR ", mtu = %u",
+              dataLength, (uint32_t)mtuSize);
 
     size_t remainDataSize = 0;
     size_t dataOnlyLen =

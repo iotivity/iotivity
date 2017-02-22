@@ -288,7 +288,7 @@ void CADestroyToken(CAToken_t token)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size)
+CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, size_t *size)
 {
     OIC_LOG(DEBUG, TAG, "CAGetNetworkInformation");
 

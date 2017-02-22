@@ -25,6 +25,7 @@
  * functions to write to the pipe and read from the pipe.
  */
 
+#include <cinttypes>
 #include <string.h>
 #include <errno.h>
 #include "messageHandler.h"
@@ -35,7 +36,6 @@
 #include "platform_features.h"
 #include "oic_malloc.h"
 #include "logger.h"
-#include <cinttypes>
 
 #define TAG "PIPE_HANDLER"
 
