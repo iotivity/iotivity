@@ -21,6 +21,7 @@ OCDeletePdAclList
 OCDeleteUuidList
 OCDiscoverOwnedDevices
 OCDiscoverSingleDevice
+OCDiscoverSingleDeviceInUnicast
 OCDiscoverUnownedDevices
 OCDoOwnershipTransfer
 OCGetACLResource
@@ -43,6 +44,7 @@ OCRemoveTrustCertChainNotifier
 OCResetDevice
 OCResetSVRDB
 OCSaveTrustCertChain
+OCSelectOwnershipTransferMethod
 OCSetOwnerTransferCallbackData
 OCUnlinkDevices
 OCSetOxmAllowStatus
