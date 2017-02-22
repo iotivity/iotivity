@@ -1440,7 +1440,8 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
 
     if (pdu->transport_hdr)
     {
-        OIC_LOG_V(DEBUG, ANALYZER_TAG, "Msg ID = [%d]", pdu->transport_hdr->udp.id);
+        OIC_LOG_V(DEBUG, ANALYZER_TAG, "Msg ID = [%u]", 
+            (uint32_t)ntohs(pdu->transport_hdr->udp.id));
     }
 
     if (info)
