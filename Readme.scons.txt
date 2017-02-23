@@ -8,7 +8,7 @@
       $ sudo apt-get install git-core scons ssh build-essential g++ doxygen valgrind
 
     Install external libraries:
-      $ sudo apt-get install libboost-dev libboost-program-options-dev libboost-thread-dev uuid-dev libssl-dev libtool libglib2.0-dev
+      $ sudo apt-get install libboost-dev libboost-program-options-dev libboost-thread-dev uuid-dev libssl-dev libtool libglib2.0-dev libcap-dev libcurl4-openssl-dev autotools-dev autoconf
 
     Build release binaries:
       $ scons

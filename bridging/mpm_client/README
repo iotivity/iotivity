@@ -1,0 +1,31 @@
+General:
+The "mpm_sample_client" is intended to show how you can
+programmatically control the functionality of the
+"minipluginmanager" library.
+
+1. "mpm_sample_client" awaits user input before doing
+    anything. You will be prompted with CLI controls
+    to flex the minipluginmanager library's APIs.
+
+    The only modes of operation are controlled via
+    command line arguments upon startup.
+
+    + You may issue the flag "-n" such that all
+      resources created by any plugin are created in
+      IoTivity's non-secure mode (i.e. no DTLS
+      encryption is used for the representation of
+      that particular resource).
+        (If this flag is not passed in, all
+         resources will be created in IoTivity's
+         secure mode (all requests/responses will
+         use DTLS encryption).
+
+    + Only one plugin will be loaded with the name
+      specified
+
+    + Operations performed by the "mpm_sample_client" are
+      as follows:
+        - Scan - Device Discovery
+        - Add - Create iotivity resource
+        - Remove - Delete iotivity resource
+        - Unload - to unload the plugin and exit mpm_sample_client
