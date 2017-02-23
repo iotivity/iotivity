@@ -414,73 +414,64 @@ static bool IsResourceInAce(const char *resource, const OicSecAce_t *ace)
  */
 static void ProcessAccessRequest(SRMRequestContext_t *context)
 {
-    OIC_LOG(DEBUG, TAG, "Entering ProcessAccessRequest().");
-
-    if (NULL != context)
+    if (NULL == context)
     {
-        const OicSecAce_t *currentAce = NULL;
-        OicSecAce_t *aceSavePtr = NULL;
+        OIC_LOG(ERROR, TAG, "ProcessAccessRequest(): context is NULL, returning.");
+        return;
+    }
 
-        OIC_LOG_V(DEBUG, TAG, "Entering ProcessAccessRequest(%s)",
-            context->resourceUri);
+    OIC_LOG_V(DEBUG, TAG, "Entering %s(%s)", __func__, context->resourceUri);
 
-        // Start out assuming subject not found.
-        context->responseVal = ACCESS_DENIED_SUBJECT_NOT_FOUND;
+    const OicSecAce_t *currentAce = NULL;
+    OicSecAce_t *aceSavePtr = NULL;
 
-        // Loop through all ACLs with a matching Subject searching for the right
-        // ACL for this request.
-        do
+    OIC_LOG_V(DEBUG, TAG, "Entering ProcessAccessRequest(%s)",
+        context->resourceUri);
+
+    // Start out assuming subject not found.
+    context->responseVal = ACCESS_DENIED_SUBJECT_NOT_FOUND;
+
+    // Loop through all ACLs with a matching Subject searching for the right
+    // ACL for this request.
+    do
+    {
+        currentAce = GetACLResourceData(&context->subjectUuid, &aceSavePtr);
+
+        if (NULL != currentAce)
         {
-            OIC_LOG_V(DEBUG, TAG, "%s: getting ACE..." ,__func__);
-            currentAce = GetACLResourceData(&context->subjectUuid, &aceSavePtr);
+            // Found the subject, so how about resource?
+            OIC_LOG_V(DEBUG, TAG, "%s:found ACE matching subject" ,__func__);
 
-            if (NULL != currentAce)
+            // Subject was found, so err changes to Rsrc not found for now.
+            context->responseVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
+            OIC_LOG_V(DEBUG, TAG, "%s:Searching for resource..." ,__func__);
+            if (IsResourceInAce(context->resourceUri, currentAce))
             {
-                // Found the subject, so how about resource?
-                OIC_LOG_V(DEBUG, TAG, "%s:found ACE matching subject" ,__func__);
+                OIC_LOG_V(INFO, TAG, "%s:found matching resource in ACE" ,__func__);
 
-                // Subject was found, so err changes to Rsrc not found for now.
-                context->responseVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
-                OIC_LOG_V(DEBUG, TAG, "%s:Searching for resource..." ,__func__);
-                if (IsResourceInAce(context->resourceUri, currentAce))
+                // Found the resource, so it's down to valid period & permission.
+                context->responseVal = ACCESS_DENIED_INVALID_PERIOD;
+                if (IsAccessWithinValidTime(currentAce))
                 {
-                    OIC_LOG_V(INFO, TAG, "%s:found matching resource in ACE" ,__func__);
-
-                    // Found the resource, so it's down to valid period & permission.
-                    context->responseVal = ACCESS_DENIED_INVALID_PERIOD;
-                    if (IsAccessWithinValidTime(currentAce))
+                    context->responseVal = ACCESS_DENIED_INSUFFICIENT_PERMISSION;
+                    if (IsPermissionAllowingRequest(currentAce->permission,
+                        context->requestedPermission))
                     {
-                        context->responseVal = ACCESS_DENIED_INSUFFICIENT_PERMISSION;
-                        if (IsPermissionAllowingRequest(currentAce->permission,
-                            context->requestedPermission))
-                        {
-                            context->responseVal = ACCESS_GRANTED;
-                        }
+                        context->responseVal = ACCESS_GRANTED;
                     }
                 }
             }
-            else
-            {
-                OIC_LOG_V(INFO, TAG, "%s:no ACE found matching subject for resource %s",
-                    __func__, context->resourceUri);
-            }
-        } while ((NULL != currentAce)
-            && (false == IsAccessGranted(context->responseVal)));
-
-        if (IsAccessGranted(context->responseVal))
-        {
-            OIC_LOG_V(INFO, TAG, "%s:Leaving ProcessAccessRequest(ACCESS_GRANTED)", __func__);
         }
         else
         {
-            OIC_LOG_V(INFO, TAG, "%s:Leaving ProcessAccessRequest(ACCESS_DENIED)", __func__);
+            OIC_LOG_V(INFO, TAG, "%s:no ACE found matching subject for resource %s",
+                __func__, context->resourceUri);
         }
-    }
-    else
-    {
-        OIC_LOG_V(ERROR, TAG, "%s:Leaving ProcessAccessRequest(context is NULL)", __func__);
-    }
+    } while ((NULL != currentAce)
+        && (false == IsAccessGranted(context->responseVal)));
 
+    OIC_LOG_V(INFO, TAG, "%s:Leaving with responseVal = %s", __func__,
+        IsAccessGranted(context->responseVal) ? "ACCESS_GRANTED" : "ACCESS_DENIED");
     return;
 }
 

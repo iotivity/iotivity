@@ -1751,6 +1751,96 @@ static bool IsSameACE(OicSecAce_t* ace1, OicSecAce_t* ace2)
     return false;
 }
 
+static void printACE(const OicSecAce_t *ace)
+{
+#ifndef TB_LOG
+    OC_UNUSED(ace);
+#else
+    OIC_LOG(INFO, TAG, "=================================================");
+    OIC_LOG_V(INFO, TAG, "ACE @ %p", ace);
+    OIC_LOG_V(INFO, TAG, "    permission = %#x", (uint32_t)ace->permission);
+
+    // Log the subjectuuid.
+    char uuidString[UUID_STRING_SIZE];
+    bool convertedUUID = OCConvertUuidToString(ace->subjectuuid.id, uuidString);
+    OIC_LOG_V(INFO, TAG, "    subjectuuid = %s", convertedUUID ? uuidString : "incorrect format");
+
+    // Log all resources this ACE applies to.
+    OicSecRsrc_t *resource = NULL;
+    uint32_t resourceCount = 0;
+    LL_FOREACH(ace->resources, resource)
+    {
+        OIC_LOG_V(INFO, TAG, "    resources[%u]:", resourceCount);
+        OIC_LOG_V(INFO, TAG, "        href = %s", resource->href ? resource->href : "null");
+
+        for (size_t i = 0; i < resource->typeLen; i++)
+        {
+            OIC_LOG_V(INFO, TAG, "        types[%" PRIuPTR "] = %s", i,
+                resource->types[i] ? resource->types[i] : "null");
+        }
+
+        for (size_t i = 0; i < resource->interfaceLen; i++)
+        {
+            OIC_LOG_V(INFO, TAG, "        interfaces[%" PRIuPTR "] = %s", i,
+                resource->interfaces[i] ? resource->interfaces[i] : "null");
+        }
+
+        resourceCount++;
+    }
+
+    // Log the validities.
+    OicSecValidity_t *validity = NULL;
+    uint32_t validityCount = 0;
+    LL_FOREACH(ace->validities, validity)
+    {
+        OIC_LOG_V(INFO, TAG, "    validities[%u]:", validityCount);
+        OIC_LOG_V(INFO, TAG, "        period = %s", validity->period);
+        for (size_t i = 0; i < validity->recurrenceLen; i++)
+        {
+            OIC_LOG_V(INFO, TAG, "    recurrences[%" PRIuPTR "] = %s", i,
+                validity->recurrences[i] ? validity->recurrences[i] : "null");
+        }
+        validityCount++;
+    }
+
+    OIC_LOG(INFO, TAG, "=================================================");
+#endif
+}
+
+void printACL(const OicSecAcl_t* acl)
+{
+#ifndef TB_LOG
+    OC_UNUSED(acl);
+#else
+    OIC_LOG_V(INFO, TAG, "Print ACL @ %p:", acl);
+
+    if (NULL == acl)
+    {
+        return;
+    }
+
+    char rowner[UUID_STRING_SIZE];
+    if (OCConvertUuidToString(acl->rownerID.id, rowner))
+    {
+        OIC_LOG_V(INFO, TAG, "rowner id = %s", rowner);
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Can't convert rowner uuid to string");
+    }
+
+    const OicSecAce_t *ace = acl->aces;
+    int ace_count = 0;
+    while (ace)
+    {
+        ace_count++;
+        OIC_LOG_V(INFO, TAG, "Print ace[%d]:", ace_count);
+        printACE(ace);
+        ace = ace->next;
+    }
+#endif
+}
+
 /**
  * Internal function to remove all ACL data on ACL resource and persistent storage
  *
@@ -1959,12 +2049,13 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
                 }
                 if(isNewAce)
                 {
-                    OIC_LOG(DEBUG, TAG, "NEW ACE dectected.");
+                    OIC_LOG(DEBUG, TAG, "NEW ACE detected:");
 
                     OicSecAce_t* insertAce = DuplicateACE(newAce);
                     if(insertAce)
                     {
-                        OIC_LOG(DEBUG, TAG, "Appending new ACE..");
+                        OIC_LOG(DEBUG, TAG, "Prepending new ACE:");
+                        printACE(insertAce);
                         LL_PREPEND(gAcl->aces, insertAce);
                     }
                     else
@@ -2387,6 +2478,9 @@ const OicSecAce_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAce_t **
         return NULL;
     }
 
+    OIC_LOG(DEBUG, TAG, "GetACLResourceData: searching for ACE matching subject:");
+    OIC_LOG_BUFFER(DEBUG, TAG, subjectId->id, sizeof(subjectId->id));
+
     /*
      * savePtr MUST point to NULL if this is the 'first' call to retrieve ACL for
      * subjectID.
@@ -2416,6 +2510,8 @@ const OicSecAce_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAce_t **
     {
         if (memcmp(&(ace->subjectuuid), subjectId, sizeof(OicUuid_t)) == 0)
         {
+            OIC_LOG(DEBUG, TAG, "GetACLResourceData: found matching ACE:");
+            printACE(ace);
             *savePtr = ace;
             return ace;
         }
@@ -2424,87 +2520,6 @@ const OicSecAce_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAce_t **
     // Cleanup in case no ACL is found
     *savePtr = NULL;
     return NULL;
-}
-
-void printACL(const OicSecAcl_t* acl)
-{
-    OIC_LOG(INFO, TAG, "Print ACL:");
-
-    if (NULL == acl)
-    {
-        OIC_LOG(INFO, TAG, "Received NULL acl");
-        return;
-    }
-
-    char *rowner = NULL;
-    if (OC_STACK_OK == ConvertUuidToStr(&acl->rownerID, &rowner))
-    {
-        OIC_LOG_V(INFO, TAG, "rowner id = %s", rowner);
-    }
-    else
-    {
-        OIC_LOG(ERROR, TAG, "Can't convert rowner uuid to string");
-    }
-    OICFree(rowner);
-
-    const OicSecAce_t *ace = acl->aces;
-    int ace_count = 0;
-    while (ace)
-    {
-        ace_count++;
-        OIC_LOG_V(INFO, TAG, "Print ace[%d]:", ace_count);
-
-        OIC_LOG_V(INFO, TAG, "ace permission = %d", ace->permission);
-
-        char *subjectuuid = NULL;
-        if (OC_STACK_OK == ConvertUuidToStr(&ace->subjectuuid, &subjectuuid))
-        {
-            OIC_LOG_V(INFO, TAG, "ace subject uuid = %s", subjectuuid);
-        }
-        else
-        {
-            OIC_LOG(ERROR, TAG, "Can't convert subjectuuid to string");
-        }
-        OICFree(subjectuuid);
-
-        OicSecRsrc_t *res = ace->resources;
-        int res_count = 0;
-        while (res)
-        {
-            res_count++;
-            OIC_LOG_V(INFO, TAG, "Print resources[%d]:", res_count);
-
-            OIC_LOG_V(INFO, TAG, "href = %s", res->href);
-
-            for (size_t i = 0; i < res->typeLen; i++)
-            {
-                OIC_LOG_V(INFO, TAG, "if[%zu] = %s", i, res->types[i]);
-            }
-            for (size_t i = 0; i < res->interfaceLen; i++)
-            {
-                OIC_LOG_V(INFO, TAG, "if[%zu] = %s", i, res->interfaces[i]);
-            }
-
-            res= res->next;
-        }
-
-        OicSecValidity_t *vals = ace->validities;
-        int vals_count = 0;
-        while (vals)
-        {
-            vals_count++;
-            OIC_LOG_V(INFO, TAG, "Print validities[%d]:", vals_count);
-
-            OIC_LOG_V(INFO, TAG, "period = %s", vals->period);
-            for (size_t i = 0; i < vals->recurrenceLen; i++)
-            {
-                OIC_LOG_V(INFO, TAG, "recurrences[%zu] = %s", i, vals->recurrences[i]);
-            }
-            vals = vals->next;
-        }
-
-        ace = ace->next;
-    }
 }
 
 OCStackResult AppendACL2(const OicSecAcl_t* acl)
@@ -2577,7 +2592,7 @@ OCStackResult InstallACL(const OicSecAcl_t* acl)
         {
             if(IsSameACE(newAce, existAce))
             {
-                OIC_LOG(DEBUG, TAG, "Duplicated ACE dectected.");
+                OIC_LOG(DEBUG, TAG, "Duplicated ACE detected.");
                 ret = OC_STACK_DUPLICATE_REQUEST;
                 isNewAce = false;
             }
@@ -2585,12 +2600,13 @@ OCStackResult InstallACL(const OicSecAcl_t* acl)
         if(isNewAce)
         {
             // Append new ACE to existing ACL
-            OIC_LOG(DEBUG, TAG, "NEW ACE dectected.");
+            OIC_LOG(DEBUG, TAG, "NEW ACE detected.");
 
             OicSecAce_t* insertAce = DuplicateACE(newAce);
             if(insertAce)
             {
-                OIC_LOG(DEBUG, TAG, "Appending new ACE..");
+                OIC_LOG(DEBUG, TAG, "Prepending new ACE:");
+                printACE(insertAce);
 
                 if (!newInstallAcl)
                 {

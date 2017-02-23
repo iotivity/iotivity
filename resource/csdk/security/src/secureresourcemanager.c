@@ -169,12 +169,22 @@ void SetResourceUriAndType(SRMRequestContext_t *context)
 // the exception of a few SVRs (see Security Specification).
 void CheckRequestForSecResourceOverUnsecureChannel(SRMRequestContext_t *context)
 {
+    OIC_LOG_V(DEBUG, TAG, "%s: secureChannel = %u, resourceType = %d, URI = %s",
+        __func__, (uint32_t)context->secureChannel,
+        context->resourceType, context->resourceUri);
+
     // if request is over unsecure channel, check resource type
     if(false == context->secureChannel)
     {
         OCResource *resPtr = FindResourceByUri(context->resourceUri);
+
+        // TODO: IOT-1843:
+        // Should a NULL return value from FindResourceByUri result in CA_FORBIDDEN_REQ?
         if (NULL != resPtr)
         {
+            OIC_LOG_V(DEBUG, TAG, "%s: OC_SECURE = %s",
+                __func__, ((resPtr->resourceProperties) & OC_SECURE) ? "true" : "false");
+
             // All vertical secure resources and SVR resources other than
             // DOXM & PSTAT should reject requests over unsecure channel.
             if ((((resPtr->resourceProperties) & OC_SECURE)
@@ -187,6 +197,10 @@ void CheckRequestForSecResourceOverUnsecureChannel(SRMRequestContext_t *context)
                 context->responseVal = ACCESS_DENIED_SEC_RESOURCE_OVER_UNSECURE_CHANNEL;
                 context->responseInfo.result = CA_FORBIDDEN_REQ;
                 SRMSendResponse(context);
+            }
+            else
+            {
+                OIC_LOG_V(DEBUG, TAG, "%s: Allowing unsecured access", __func__);
             }
         }
     }
