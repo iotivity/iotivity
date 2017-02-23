@@ -71,7 +71,7 @@ NSResult NSConsumerListenerInit()
 
 void NSConsumerListenerTermiate()
 {
-    CARegisterNetworkMonitorHandler(NULL, NULL);
+    CAUnregisterNetworkMonitorHandler(NSAdapterStateListener, NSConnectionStateListener);
     OCCancel(*getPresenceHandle(), NS_QOS, NULL, 0);
 }
 
