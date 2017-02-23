@@ -792,7 +792,7 @@ OCStackResult CAResponseToOCStackResult(CAResponseResult_t caCode)
             ret = OC_STACK_NO_RESOURCE;
             break;
         case CA_RETRANSMIT_TIMEOUT:
-            ret = OC_STACK_COMM_ERROR;
+            ret = OC_STACK_GATEWAY_TIMEOUT;
             break;
         case CA_REQUEST_ENTITY_TOO_LARGE:
             ret = OC_STACK_TOO_LARGE_REQ;
@@ -859,6 +859,9 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
             ret = CA_NOT_FOUND;
             break;
         case OC_STACK_COMM_ERROR:
+            ret = CA_RETRANSMIT_TIMEOUT;
+            break;
+        case OC_STACK_GATEWAY_TIMEOUT:
             ret = CA_RETRANSMIT_TIMEOUT;
             break;
         case OC_STACK_NOT_ACCEPTABLE:
