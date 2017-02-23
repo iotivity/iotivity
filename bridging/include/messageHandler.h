@@ -40,6 +40,7 @@ extern "C" {
 #define MPM_MAX_LENGTH_32     32
 #define MPM_MAX_LENGTH_64     64
 #define MPM_MAX_LENGTH_256    256
+#define MPM_MAX_LENGTH_1024   1024
 #define MPM_MAX_UNIQUE_ID_LEN 128
 #define MPM_MAX_METADATA_LEN  3000
 
