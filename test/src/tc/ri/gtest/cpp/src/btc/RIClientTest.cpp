@@ -76,7 +76,7 @@ public:
  * @post_condition  None
  * @expected Should not throw any exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, Configure_SRC_P)
 {
     PlatformConfig config
@@ -108,12 +108,12 @@ TEST_F(RIClientTest_btc, Configure_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, FindResource_SRC_P)
 {
     EXPECT_EQ(OC_STACK_OK,
-            OCPlatform::findResource("", m_ResReqURI.str(), CT_DEFAULT,
-                    bind(&RIClientTest_btc::foundResource, this, PH::_1)));
+              OCPlatform::findResource("", m_ResReqURI.str(), CT_DEFAULT,
+                                       bind(&RIClientTest_btc::foundResource, this, PH::_1)));
 }
 #endif
 
@@ -132,12 +132,12 @@ TEST_F(RIClientTest_btc, FindResource_SRC_P)
  * @post_condition None
  * @expected Should throw exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, FindResourceWithUri_NV_N)
 {
     EXPECT_ANY_THROW(
-            OCPlatform::findResource("", nullptr, CT_DEFAULT,
-                    bind(&RIClientTest_btc::foundResource, this, PH::_1)));
+        OCPlatform::findResource("", nullptr, CT_DEFAULT,
+                                 bind(&RIClientTest_btc::foundResource, this, PH::_1)));
 }
 #endif
 
@@ -156,12 +156,12 @@ TEST_F(RIClientTest_btc, FindResourceWithUri_NV_N)
  * @post_condition None
  * @expected Should throw exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, FindResourceWithHost_NV_N)
 {
     EXPECT_ANY_THROW(
-            OCPlatform::findResource(nullptr, m_ResReqURI.str(), CT_DEFAULT,
-                    bind(&RIClientTest_btc::foundResource, this, PH::_1)));
+        OCPlatform::findResource(nullptr, m_ResReqURI.str(), CT_DEFAULT,
+                                 bind(&RIClientTest_btc::foundResource, this, PH::_1)));
 }
 #endif
 
@@ -180,7 +180,7 @@ TEST_F(RIClientTest_btc, FindResourceWithHost_NV_N)
  * @post_condition None
  * @expected Should throw exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, FindResourceWithHandler_NV_N)
 {
     EXPECT_ANY_THROW(OCPlatform::findResource(nullptr, m_ResReqURI.str(), CT_DEFAULT, NULL));
@@ -204,13 +204,13 @@ TEST_F(RIClientTest_btc, FindResourceWithHandler_NV_N)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, FindResourceWithQos_SRC_P)
 {
     EXPECT_EQ(OC_STACK_OK,
-            OCPlatform::findResource("", m_ResReqURI.str(), CT_DEFAULT,
-                    bind(&RIClientTest_btc::foundResource, this, PH::_1),
-                    QualityOfService::LowQos));
+              OCPlatform::findResource("", m_ResReqURI.str(), CT_DEFAULT,
+                                       bind(&RIClientTest_btc::foundResource, this, PH::_1),
+                                       QualityOfService::LowQos));
 }
 #endif
 
@@ -229,12 +229,12 @@ TEST_F(RIClientTest_btc, FindResourceWithQos_SRC_P)
  * @post_condition  None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, GetDeviceInfo_SRC_P)
 {
     EXPECT_EQ(OC_STACK_OK,
-            OCPlatform::getDeviceInfo("", m_ResReqURI.str(), CT_DEFAULT,
-                    bind(&RIClientTest_btc::receivedDeviceInfo, this, PH::_1)));
+              OCPlatform::getDeviceInfo("", m_ResReqURI.str(), CT_DEFAULT,
+                                        bind(&RIClientTest_btc::receivedDeviceInfo, this, PH::_1)));
 }
 #endif
 
@@ -255,13 +255,13 @@ TEST_F(RIClientTest_btc, GetDeviceInfo_SRC_P)
  * @post_condition  None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, GetDeviceInfoWithLowQos_SRC_P)
 {
     EXPECT_EQ(OC_STACK_OK,
-            OCPlatform::getDeviceInfo("", m_DeviceReqURI.str(), CT_DEFAULT,
-                    bind(&RIClientTest_btc::receivedDeviceInfo, this, PH::_1),
-                    OC::QualityOfService::LowQos));
+              OCPlatform::getDeviceInfo("", m_DeviceReqURI.str(), CT_DEFAULT,
+                                        bind(&RIClientTest_btc::receivedDeviceInfo, this, PH::_1),
+                                        OC::QualityOfService::LowQos));
 }
 #endif
 
@@ -282,13 +282,13 @@ TEST_F(RIClientTest_btc, GetDeviceInfoWithLowQos_SRC_P)
  * @post_condition  None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, GetDeviceInfoWithMidQos_SRC_P)
 {
     EXPECT_EQ(OC_STACK_OK,
-            OCPlatform::getDeviceInfo("", m_DeviceReqURI.str(), CT_DEFAULT,
-                    bind(&RIClientTest_btc::receivedDeviceInfo, this, PH::_1),
-                    OC::QualityOfService::MidQos));
+              OCPlatform::getDeviceInfo("", m_DeviceReqURI.str(), CT_DEFAULT,
+                                        bind(&RIClientTest_btc::receivedDeviceInfo, this, PH::_1),
+                                        OC::QualityOfService::MidQos));
 }
 #endif
 
@@ -309,13 +309,13 @@ TEST_F(RIClientTest_btc, GetDeviceInfoWithMidQos_SRC_P)
  * @post_condition  None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, GetDeviceInfoWithHighQos_SRC_P)
 {
     EXPECT_EQ(OC_STACK_OK,
-            OCPlatform::getDeviceInfo("", m_DeviceReqURI.str(), CT_DEFAULT,
-                    bind(&RIClientTest_btc::receivedDeviceInfo, this, PH::_1),
-                    OC::QualityOfService::HighQos));
+              OCPlatform::getDeviceInfo("", m_DeviceReqURI.str(), CT_DEFAULT,
+                                        bind(&RIClientTest_btc::receivedDeviceInfo, this, PH::_1),
+                                        OC::QualityOfService::HighQos));
 }
 #endif
 
@@ -336,13 +336,13 @@ TEST_F(RIClientTest_btc, GetDeviceInfoWithHighQos_SRC_P)
  * @post_condition  None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, GetDeviceInfoWithNaQos_SRC_P)
 {
     EXPECT_EQ(OC_STACK_OK,
-            OCPlatform::getDeviceInfo("", m_DeviceReqURI.str(), CT_DEFAULT,
-                    bind(&RIClientTest_btc::receivedDeviceInfo, this, PH::_1),
-                    OC::QualityOfService::NaQos));
+              OCPlatform::getDeviceInfo("", m_DeviceReqURI.str(), CT_DEFAULT,
+                                        bind(&RIClientTest_btc::receivedDeviceInfo, this, PH::_1),
+                                        OC::QualityOfService::NaQos));
 }
 #endif
 
@@ -361,12 +361,12 @@ TEST_F(RIClientTest_btc, GetDeviceInfoWithNaQos_SRC_P)
  * @post_condition  None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, GetDeviceInfoWithUri_NV_N)
 {
     EXPECT_ANY_THROW(
-            OCPlatform::getDeviceInfo("", nullptr, CT_DEFAULT,
-                    bind(&RIClientTest_btc::receivedDeviceInfo, this, PH::_1)));
+        OCPlatform::getDeviceInfo("", nullptr, CT_DEFAULT,
+                                  bind(&RIClientTest_btc::receivedDeviceInfo, this, PH::_1)));
 }
 #endif
 
@@ -385,7 +385,7 @@ TEST_F(RIClientTest_btc, GetDeviceInfoWithUri_NV_N)
  * @post_condition  None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, GetDeviceInfoWithCallback_NV_N)
 {
     EXPECT_ANY_THROW(OCPlatform::getDeviceInfo("", m_DeviceReqURI.str(), CT_DEFAULT, NULL));
@@ -407,12 +407,12 @@ TEST_F(RIClientTest_btc, GetDeviceInfoWithCallback_NV_N)
  * @post_condition  None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, GetPlatform_SRC_P)
 {
     EXPECT_EQ(OC_STACK_OK,
-            OCPlatform::getPlatformInfo("", m_PlatformReqURI.str(), CT_DEFAULT,
-                    bind(&RIClientTest_btc::receivedDeviceInfo, this, PH::_1)));
+              OCPlatform::getPlatformInfo("", m_PlatformReqURI.str(), CT_DEFAULT,
+                                          bind(&RIClientTest_btc::receivedDeviceInfo, this, PH::_1)));
 }
 #endif
 
@@ -433,13 +433,13 @@ TEST_F(RIClientTest_btc, GetPlatform_SRC_P)
  * @post_condition  None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, GetPlatformInfoWithLowQos_SRC_P)
 {
     EXPECT_EQ(OC_STACK_OK,
-            OCPlatform::getPlatformInfo("", m_PlatformReqURI.str(), CT_DEFAULT,
-                    bind(&RIClientTest_btc::receivedPlatformInfo, this, PH::_1),
-                    OC::QualityOfService::LowQos));
+              OCPlatform::getPlatformInfo("", m_PlatformReqURI.str(), CT_DEFAULT,
+                                          bind(&RIClientTest_btc::receivedPlatformInfo, this, PH::_1),
+                                          OC::QualityOfService::LowQos));
 }
 #endif
 
@@ -460,13 +460,13 @@ TEST_F(RIClientTest_btc, GetPlatformInfoWithLowQos_SRC_P)
  * @post_condition  None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, GetPlatformInfoWithMidQos_SRC_P)
 {
     EXPECT_EQ(OC_STACK_OK,
-            OCPlatform::getPlatformInfo("", m_PlatformReqURI.str(), CT_DEFAULT,
-                    bind(&RIClientTest_btc::receivedPlatformInfo, this, PH::_1),
-                    OC::QualityOfService::MidQos));
+              OCPlatform::getPlatformInfo("", m_PlatformReqURI.str(), CT_DEFAULT,
+                                          bind(&RIClientTest_btc::receivedPlatformInfo, this, PH::_1),
+                                          OC::QualityOfService::MidQos));
 }
 #endif
 
@@ -487,13 +487,13 @@ TEST_F(RIClientTest_btc, GetPlatformInfoWithMidQos_SRC_P)
  * @post_condition  None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, GetPlatformInfoWithHighQos_SRC_P)
 {
     EXPECT_EQ(OC_STACK_OK,
-            OCPlatform::getPlatformInfo("", m_PlatformReqURI.str(), CT_DEFAULT,
-                    bind(&RIClientTest_btc::receivedPlatformInfo, this, PH::_1),
-                    OC::QualityOfService::HighQos));
+              OCPlatform::getPlatformInfo("", m_PlatformReqURI.str(), CT_DEFAULT,
+                                          bind(&RIClientTest_btc::receivedPlatformInfo, this, PH::_1),
+                                          OC::QualityOfService::HighQos));
 }
 #endif
 
@@ -514,13 +514,13 @@ TEST_F(RIClientTest_btc, GetPlatformInfoWithHighQos_SRC_P)
  * @post_condition  None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, GetPlatformInfoWithNaQos_SRC_P)
 {
     EXPECT_EQ(OC_STACK_OK,
-            OCPlatform::getPlatformInfo("", m_PlatformReqURI.str(), CT_DEFAULT,
-                    bind(&RIClientTest_btc::receivedPlatformInfo, this, PH::_1),
-                    OC::QualityOfService::NaQos));
+              OCPlatform::getPlatformInfo("", m_PlatformReqURI.str(), CT_DEFAULT,
+                                          bind(&RIClientTest_btc::receivedPlatformInfo, this, PH::_1),
+                                          OC::QualityOfService::NaQos));
 }
 #endif
 
@@ -539,12 +539,12 @@ TEST_F(RIClientTest_btc, GetPlatformInfoWithNaQos_SRC_P)
  * @post_condition  None
  * @expected Should throw any exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, GetPlatformInfoWithUri_NV_N)
 {
     EXPECT_ANY_THROW(
-            OCPlatform::getPlatformInfo("", nullptr, CT_DEFAULT,
-                    bind(&RIClientTest_btc::receivedPlatformInfo, this, PH::_1)));
+        OCPlatform::getPlatformInfo("", nullptr, CT_DEFAULT,
+                                    bind(&RIClientTest_btc::receivedPlatformInfo, this, PH::_1)));
 }
 #endif
 
@@ -563,7 +563,7 @@ TEST_F(RIClientTest_btc, GetPlatformInfoWithUri_NV_N)
  * @post_condition  None
  * @expected Should throw any exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, GetPlatformInfoWithCallback_NV_N)
 {
     EXPECT_ANY_THROW(OCPlatform::getPlatformInfo("", m_PlatformReqURI.str(), CT_DEFAULT, NULL));
@@ -585,7 +585,7 @@ TEST_F(RIClientTest_btc, GetPlatformInfoWithCallback_NV_N)
  * @expected 1. Should return OC_STACK_OK
  *           2. presenceHandle should not be null
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, SubscribePresence_SRC_P)
 {
     OCPlatform::OCPresenceHandle presenceHandle = nullptr;
@@ -613,14 +613,14 @@ TEST_F(RIClientTest_btc, SubscribePresence_SRC_P)
  * @expected 1. Should return OC_STACK_OK
  *           2. presenceHandle should not be null
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, SubscribePresenceHost_NV_N)
 {
     OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
     EXPECT_ANY_THROW(
-            OCPlatform::subscribePresence(presenceHandle, nullptr, CT_DEFAULT,
-                    bind(&RIClientTest_btc::presenceHandler, this, PH::_1, PH::_2, PH::_3)));
+        OCPlatform::subscribePresence(presenceHandle, nullptr, CT_DEFAULT,
+                                      bind(&RIClientTest_btc::presenceHandler, this, PH::_1, PH::_2, PH::_3)));
 }
 #endif
 
@@ -638,13 +638,13 @@ TEST_F(RIClientTest_btc, SubscribePresenceHost_NV_N)
  * @post_condition None
  * @expected Should throw exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, SubscribePresencePresenceHandler_NV_N)
 {
     OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
     EXPECT_ANY_THROW(
-            OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, CT_DEFAULT, NULL));
+        OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, CT_DEFAULT, NULL));
 }
 #endif
 
@@ -664,7 +664,7 @@ TEST_F(RIClientTest_btc, SubscribePresencePresenceHandler_NV_N)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, SubscribePresenceWithResourceType_SRC_P)
 {
     OCPlatform::OCPresenceHandle presenceHandle = nullptr;
@@ -692,7 +692,7 @@ TEST_F(RIClientTest_btc, SubscribePresenceWithResourceType_SRC_P)
  * @post_condition None
  * @expected Should throw exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, SubscribePresenceWithResourceType_NV_N)
 {
     OCPlatform::OCPresenceHandle presenceHandle = nullptr;
@@ -716,13 +716,13 @@ TEST_F(RIClientTest_btc, SubscribePresenceWithResourceType_NV_N)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, UnsubscribePresence_SRC_P)
 {
     OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
     OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, CT_DEFAULT,
-            bind(&RIClientTest_btc::presenceHandler, this, PH::_1, PH::_2, PH::_3));
+                                  bind(&RIClientTest_btc::presenceHandler, this, PH::_1, PH::_2, PH::_3));
 
     EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
 }
@@ -741,7 +741,7 @@ TEST_F(RIClientTest_btc, UnsubscribePresence_SRC_P)
  * @post_condition None
  * @expected Exception should occur
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, UnsubscribePresence_ESV_P)
 {
     OCPlatform::OCPresenceHandle presenceHandle = nullptr;
@@ -785,7 +785,7 @@ TEST_F(RIClientTest_btc, UnsubscribePresence_ESV_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIClientTest_btc, UnsubscribePresence_NV_N)
 {
     OCPlatform::OCPresenceHandle presenceHandle = nullptr;

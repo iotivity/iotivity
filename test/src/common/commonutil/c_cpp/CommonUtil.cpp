@@ -19,6 +19,9 @@
  ******************************************************************/
 
 #include "CommonUtil.h"
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 
 using namespace boost::assign;
 
@@ -341,16 +344,7 @@ const char* CommonUtil::GetTimeStampString()
 
 void CommonUtil::waitInSecond(unsigned int seconds)
 {
-#ifdef __LINUX__
     sleep(seconds);
-#endif
-
-#ifdef __WINDOWS__
-    sleep(seconds * 1000);
-#endif
-#ifdef __TIZEN__
-    sleep(seconds);
-#endif
 }
 
 bool CommonUtil::writeFile(std::string filePath, std::string fileName, std::string fileContent)

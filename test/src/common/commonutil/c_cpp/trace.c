@@ -21,12 +21,16 @@
 
 #include <errno.h>
 #include <stdio.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <string.h>
 #include "trace.h"
 #include <memory.h>
 #include <stdlib.h>
+#ifdef __cplusplus
 #include <cstdlib>
+#endif
 
 #define FN_SIZE 100
 #define FN_DEFAULT "cyglog.%d"
@@ -42,16 +46,30 @@ extern "C"
 {
 
 #endif
+
+#if defined(__GNUC__)
 #include <dlfcn.h>
 #include <memory.h>
 /* Static functions. */
 static FILE *openlogfile(const char *filename) __attribute__ ((no_instrument_function));
 static void closelogfile(void) __attribute__ ((no_instrument_function));
 
-/* Note that these are linked internally by the compiler. 
+/* Note that these are linked internally by the compiler.
  * Don't call them directly! */
 void __cyg_profile_func_enter(void *this_fn, void *call_site) __attribute__ ((no_instrument_function));
 void __cyg_profile_func_exit(void *this_fn, void *call_site) __attribute__ ((no_instrument_function));
+#else
+#include <locale.h>
+/* Static functions. */
+static FILE *openlogfile(const char *filename);
+static void closelogfile(void);
+
+/* Note that these are linked internally by the compiler.
+ * Don't call them directly! */
+void __cyg_profile_func_enter(void *this_fn, void *call_site);
+void __cyg_profile_func_exit(void *this_fn, void *call_site);
+
+#endif
 
 #ifdef __cplusplus
 };
@@ -59,6 +77,7 @@ void __cyg_profile_func_exit(void *this_fn, void *call_site) __attribute__ ((no_
 
 void __cyg_profile_func_enter(void *this_fn, void *call_site)
 {
+#if defined(__GNUC__)
     Dl_info di;
     if (cyg_profile_enabled)
         if (logfile || openlogfile(cyg_profile_filename))
@@ -97,7 +116,7 @@ void __cyg_profile_func_enter(void *this_fn, void *call_site)
                 }
 
             }
-
+#endif
     //fprintf(logfile, "+ %d %p %p\n", level++,
     //  this_fn, call_site);
 }
@@ -184,8 +203,9 @@ openlogfile(const char *filename)
         complained = 1;
         return NULL;
     }
-
+#ifndef __WINDOWS__
     setlinebuf(file);
+#endif
     logfile = file;
 
     return file;

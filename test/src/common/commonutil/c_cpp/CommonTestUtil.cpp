@@ -29,7 +29,11 @@ long CommonTestUtil::s_memoryDiffSum = 0;
 
 long CommonTestUtil::getCurrentAllocatedMemory()
 {
+#ifndef __WINDOWS__
     return mallinfo().uordblks;
+#else
+    return 0;
+#endif
 }
 
 void CommonTestUtil::runCommonTCSetUpPart()

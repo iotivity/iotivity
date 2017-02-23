@@ -91,7 +91,7 @@ public:
  * @post_condition  Call OCStop()
  * @expected Callback should be called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, SetAndGetPlatformInfoNON_CV_P)
 {
     OCStackResult m_result;
@@ -101,7 +101,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetPlatformInfoNON_CV_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, PLATFORM_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -148,7 +148,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetPlatformInfoNON_CV_P)
  * @post_condition  Call OCStop()
  * @expected Callback should be called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, SetAndGetPlatformInfoCON_CV_P)
 {
     OCStackResult m_result;
@@ -158,7 +158,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetPlatformInfoCON_CV_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, PLATFORM_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -205,7 +205,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetPlatformInfoCON_CV_P)
  * @post_condition  Call OCStop()
  * @expected Set platform information is get
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, SetAndGetPlatformInfoPayloadCheckNON_SQV_P)
 {
     OCStackResult m_result;
@@ -215,7 +215,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetPlatformInfoPayloadCheckNON_SQV_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, PLATFORM_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -262,7 +262,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetPlatformInfoPayloadCheckNON_SQV_P)
  * @post_condition  Call OCStop()
  * @expected Set platform information is get
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, SetAndGetPlatformInfoPayloadCheckCON_SQV_P)
 {
     OCStackResult m_result;
@@ -272,7 +272,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetPlatformInfoPayloadCheckCON_SQV_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, PLATFORM_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -318,7 +318,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetPlatformInfoPayloadCheckCON_SQV_P)
  * @post_condition  Call OCStop()
  * @expected Callback should be called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoNON_CV_P)
 {
     OCStackResult m_result;
@@ -335,7 +335,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoNON_CV_P)
     }
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, DEVICE_DISCOVERY_QUERY, OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -381,7 +381,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoNON_CV_P)
  * @post_condition  Call OCStop()
  * @expected Callback should be called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoCON_CV_P)
 {
     OCStackResult m_result;
@@ -398,7 +398,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoCON_CV_P)
     }
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, DEVICE_DISCOVERY_QUERY, OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -445,7 +445,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoCON_CV_P)
  * @post_condition  Call OCStop()
  * @expected Set device information is get
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoPayloadCheckNON_SQV_P)
 {
     OCStackResult m_result;
@@ -462,7 +462,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoPayloadCheckNON_SQV_P)
     }
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, DEVICE_DISCOVERY_QUERY, OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -509,7 +509,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoPayloadCheckNON_SQV_P)
  * @post_condition  Call OCStop()
  * @expected Set device information is get
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoPayloadCheckCON_SQV_P)
 {
     OCStackResult m_result;
@@ -526,7 +526,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoPayloadCheckCON_SQV_P)
     }
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, DEVICE_DISCOVERY_QUERY, OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -584,16 +584,16 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoPayloadCheckCON_SQV_P)
  * @post_condition  Call OCStop()
  * @expected Callback should be called and resource is found
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndDiscoverResourceNON_CV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -657,16 +657,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndDiscoverResourceNON_CV_P)
  * @post_condition  Call OCStop()
  * @expected Callback should be called and resource should be found
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndDiscoverResourceCON_CV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -731,16 +731,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndDiscoverResourceCON_CV_P)
  * @post_condition  Call OCStop()
  * @expected Resource is found and created resources information is get
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndDiscoverResourcePayloadCheckNON_SQV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -805,16 +805,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndDiscoverResourcePayloadCheckN
  * @post_condition  Call OCStop()
  * @expected Resource is found and created resources information is get
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndDiscoverResourceCheckPayloadCheckCON_SQV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -880,16 +880,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndDiscoverResourceCheckPayloadC
  * @post_condition  Call OCStop()
  * @expected Callback is called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestNON_CV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -909,7 +909,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestNON_CV_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -969,16 +969,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestNON_CV_P)
  * @post_condition  Call OCStop()
  * @expected Callback is called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestCON_CV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -998,7 +998,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestCON_CV_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1061,16 +1061,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestCON_CV_P)
  * @post_condition  Call OCStop()
  * @expected callback's payload matches resource attribute's value which are set from server side
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestPayloadCheckNON_SQV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1094,7 +1094,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestPayloadCheckNON
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1157,16 +1157,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestPayloadCheckNON
  * @post_condition  Call OCStop()
  * @expected callback's payload matches resource attribute's value which are set from server side
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestPayloadCheckCON_SQV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1190,7 +1190,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestPayloadCheckCON
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1250,16 +1250,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestPayloadCheckCON
  * @post_condition  Call OCStop()
  * @expected Callback is called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestNON_CV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1279,7 +1279,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestNON_CV_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1339,16 +1339,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestNON_CV_P)
  * @post_condition  Call OCStop()
  * @expected Callback is called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestCON_CV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1368,7 +1368,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestCON_CV_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1431,16 +1431,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestCON_CV_P)
  * @post_condition  Call OCStop()
  * @expected callback's payload matches resource attribute's value which are sent from client side
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestPayloadCheckNON_SQV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1464,7 +1464,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestPayloadCheckNON
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1527,16 +1527,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestPayloadCheckNON
  * @post_condition  Call OCStop()
  * @expected callback's payload matches resource attribute's value which are sent from client side
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestPayloadCheckCON_SQV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1560,7 +1560,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestPayloadCheckCON
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1620,16 +1620,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestPayloadCheckCON
  * @post_condition  Call OCStop()
  * @expected Callback is called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestNON_CV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1649,7 +1649,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestNON_CV_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1709,16 +1709,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestNON_CV_P)
  * @post_condition  Call OCStop()
  * @expected Callback is called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestCON_CV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1738,7 +1738,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestCON_CV_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1801,16 +1801,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestCON_CV_P)
  * @post_condition  Call OCStop()
  * @expected callback's payload matches resource attribute's value which are sent from client side
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestPayloadCheckNON_SQV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1836,7 +1836,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestPayloadCheckNO
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1899,16 +1899,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestPayloadCheckNO
  * @post_condition  Call OCStop()
  * @expected callback's payload matches resource attribute's value which are sent from client side
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestPayloadCheckCON_SQV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1934,7 +1934,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestPayloadCheckCO
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -1994,16 +1994,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestPayloadCheckCO
  * @post_condition  Call OCStop()
  * @expected Callback is called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestNON_CV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -2023,7 +2023,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestNON_CV_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
 
@@ -2083,16 +2083,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestNON_CV_P)
  * @post_condition  Call OCStop()
  * @expected Callback is called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestCON_CV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -2112,7 +2112,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestCON_CV_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -2174,16 +2174,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestCON_CV_P)
  * @post_condition  Call OCStop()
  * @expected Resource is not found after delete operation
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestAndCheckIfResourceDeleted_CV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -2202,7 +2202,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestAndCheckIfRe
     RICsdkHelper::s_isCallback = false;
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
     CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
 
     if (RICsdkHelper::s_isCallback == false)
@@ -2215,7 +2215,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestAndCheckIfRe
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -2281,16 +2281,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestAndCheckIfRe
  * @post_condition  Call OCStop()
  * @expected Callback is called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendObserveRequestNON_CV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -2310,7 +2310,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendObserveRequestNON_CV_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_OBSERVE, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -2370,16 +2370,16 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendObserveRequestNON_CV_P)
  * @post_condition  Call OCStop()
  * @expected Callback is called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendObserveRequestCON_CV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -2399,7 +2399,7 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendObserveRequestCON_CV_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_OBSERVE, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -2445,19 +2445,19 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendObserveRequestCON_CV_P)
  * @post_condition  Call OCStop()
  * @expected Callback should not be called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, StopMulticastAndDiscoverResource_SQV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCStopMulticastServer();
     ASSERT_EQ(OC_STACK_OK,m_result)<< "Server: OCStopMulticastServer failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -2515,19 +2515,19 @@ TEST_F(RICsdkIntegrationTest_stc, StopMulticastAndDiscoverResource_SQV_P)
  * @post_condition  Call OCStop()
  * @expected Callback should be called and resource should be found
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkIntegrationTest_stc, BindResourceTypeToResourceAndCheckIfResourceFoundUsingType_GSRV_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
             RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResourceTypeToResource(m_resourceHandle, RESOURCE_TYPE_LIGHT);
     ASSERT_EQ(OC_STACK_OK,m_result)<< "Server: OCBindResourceTypeToResource failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, LIGHT_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCDoHandle)NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 

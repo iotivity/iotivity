@@ -27,6 +27,7 @@
 extern "C" {
 #endif
 
+#ifdef _GNUC_
 /* Enable/disable CygProfiler.  */
 void cygprofile_enable (void)
 	__attribute__ ((no_instrument_function));
@@ -45,6 +46,20 @@ int cygprofile_setfilename (const char *filename)
 char *cygprofile_getfilename (void)
 	__attribute__ ((no_instrument_function));
 
+#else
+/* Enable/disable CygProfiler.  */
+void cygprofile_enable (void);
+void cygprofile_disable (void);
+
+/* Tell whether CygProfiler is enabled/disabled.  */
+int cygprofile_isenabled (void);
+
+/* Set filename of a logfile.  */
+int cygprofile_setfilename (const char *filename);
+
+/* Query for a filename of a logfile.  */
+char *cygprofile_getfilename (void);
+#endif
 #ifdef __cplusplus
 };
 #endif

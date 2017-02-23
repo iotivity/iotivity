@@ -21,13 +21,27 @@
 #ifndef __RESOURCE_HELPER_H__
 #define __RESOURCE_HELPER_H__
 
+#ifdef __WINDOWS__
+#undef _WINSOCKAPI_
+#define _WINSOCKAPI_
+#include <windows.h>
+#endif
+
+#ifdef __LINUX__
+#include <execinfo.h>
+#include <unistd.h>
+#include "time.h"
+#endif
+
 #include <iostream>
 #include <map>
 #include <utility>
 #include <vector>
 #include <mutex>
 #include <algorithm>
-#include "time.h"
+#include <cstdlib>
+#include <cstdio>
+
 
 #include "OCPlatform.h"
 
@@ -99,7 +113,12 @@ namespace PH = std::placeholders;
 #define GROUP_TYPE_ROOM "oic.wk.col"
 #define GROUP_TYPE_AIRCON "x.com.vendor.aircon.collection.extra"
 #define GROUP_TYPE_AIRCON_VENDOR "x.com.vendor.aircon.collection"
+#ifdef GROUP_NAME
+#undef GROUP_NAME
 #define GROUP_NAME "AirCon Collection"
+#else
+#define GROUP_NAME "AirCon Collection"
+#endif
 #define RESOURCE_TYPE_ROOM "core.room"
 #define SERVER_IP_V4 "0.0.0.0"
 #define SERVER_IP_V6 ":::::"

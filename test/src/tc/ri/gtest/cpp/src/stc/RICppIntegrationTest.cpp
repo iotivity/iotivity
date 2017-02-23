@@ -390,14 +390,14 @@ public:
  * @post_condition None
  * @expected Resource should be found successfully and callback should be called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICppIntegrationTest_stc, CreateAndFindResource_SQV_CV_P)
 {
     try
     {
         m_temperatureHandle = m_RIHelper->registerResource(m_TemperatureUri, m_TemperatureType,
                 m_ResourceInterface);
-        ASSERT_NE(m_temperatureHandle,NULL) << "Register Resource failed";
+        ASSERT_NE(m_temperatureHandle,(OCResourceHandle)NULL) << "Register Resource failed";
 
         std::ostringstream requestURI;
         requestURI << OC_RSRVD_WELL_KNOWN_URI;
@@ -454,14 +454,14 @@ TEST_F(RICppIntegrationTest_stc, CreateAndFindResource_SQV_CV_P)
  * @post_condition None
  * @expected Resource should be found successfully and callback should be called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICppIntegrationTest_stc, CreateAndFindResourceUsingResourceType_SQV_CV_P)
 {
     try
     {
         m_temperatureHandle = m_RIHelper->registerResource(m_TemperatureUri, m_TemperatureType,
                 m_ResourceInterface);
-        ASSERT_NE(m_temperatureHandle,NULL) << "Register Resource failed";
+        ASSERT_NE(m_temperatureHandle,(OCResourceHandle)NULL) << "Register Resource failed";
 
         IOTIVITYTEST_LOG(INFO, "Finding Temperature Resource...");
         ASSERT_EQ(OC_STACK_OK,
@@ -519,14 +519,14 @@ TEST_F(RICppIntegrationTest_stc, CreateAndFindResourceUsingResourceType_SQV_CV_P
  * @post_condition None
  * @expected Resource should be found successfully and callback should be called for both times
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICppIntegrationTest_stc, CreateAndFindResourceTwice_VLCC_P)
 {
     try
     {
         m_temperatureHandle = m_RIHelper->registerResource(m_TemperatureUri, m_TemperatureType,
                 m_ResourceInterface);
-        ASSERT_NE(m_temperatureHandle,NULL) << "Register Resource failed";
+        ASSERT_NE(m_temperatureHandle,(OCResourceHandle)NULL) << "Register Resource failed";
 
         IOTIVITYTEST_LOG(INFO, "Finding Temperature Resource...");
         ASSERT_EQ(OC_STACK_OK,
@@ -602,14 +602,14 @@ TEST_F(RICppIntegrationTest_stc, CreateAndFindResourceTwice_VLCC_P)
  * @post_condition None
  * @expected Resource should be found successfully and callback should be called
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICppIntegrationTest_stc, CreateAndFindResourceWithQos_SQV_CV_P)
 {
     try
     {
         m_temperatureHandle = m_RIHelper->registerResource(m_TemperatureUri, m_TemperatureType,
                 m_ResourceInterface);
-        ASSERT_NE(m_temperatureHandle,NULL) << "Register Resource failed";
+        ASSERT_NE(m_temperatureHandle,(OCResourceHandle)NULL) << "Register Resource failed";
 
         IOTIVITYTEST_LOG(INFO, "Finding Temperature Resource...");
 
@@ -669,14 +669,14 @@ TEST_F(RICppIntegrationTest_stc, CreateAndFindResourceWithQos_SQV_CV_P)
  * @post_condition None
  * @expected Resource should be found successfully and callback should be called for both times
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICppIntegrationTest_stc, CreateAndFindResourceWithQosTwice_VLCC_P)
 {
     try
     {
         m_temperatureHandle = m_RIHelper->registerResource(m_TemperatureUri, m_TemperatureType,
                 m_ResourceInterface);
-        ASSERT_NE(m_temperatureHandle,NULL) << "Register Resource failed";
+        ASSERT_NE(m_temperatureHandle,(OCResourceHandle)NULL) << "Register Resource failed";
 
         IOTIVITYTEST_LOG(INFO, "Finding Resource with Qos...");
         ASSERT_EQ(OC_STACK_OK,
@@ -738,7 +738,7 @@ TEST_F(RICppIntegrationTest_stc, CreateAndFindResourceWithQosTwice_VLCC_P)
  * @post_condition None
  * @expected Received device info should be matched with Set device info
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICppIntegrationTest_stc, RegisterAndGetDeviceInfo_GSRV_CV_P)
 {
     try
@@ -793,7 +793,7 @@ TEST_F(RICppIntegrationTest_stc, RegisterAndGetDeviceInfo_GSRV_CV_P)
  * @post_condition None
  * @expected Received device info should be matched with Set device info
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICppIntegrationTest_stc, RegisterAndGetDeviceInfoWithQos_GSRV_CV_P)
 {
     try
@@ -846,7 +846,7 @@ TEST_F(RICppIntegrationTest_stc, RegisterAndGetDeviceInfoWithQos_GSRV_CV_P)
  * @post_condition None
  * @expected Received platform info should be matched with Set platform info
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICppIntegrationTest_stc, RegisterAndGetPlatformInfo_GSRV_CV_P)
 {
     try
@@ -900,7 +900,7 @@ TEST_F(RICppIntegrationTest_stc, RegisterAndGetPlatformInfo_GSRV_CV_P)
  * @post_condition None
  * @expected Received platform info should be matched with Set platform info
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICppIntegrationTest_stc, RegisterAndGetPlatformInfoWithQos_SQV_CV_P)
 {
     try
@@ -964,14 +964,14 @@ TEST_F(RICppIntegrationTest_stc, RegisterAndGetPlatformInfoWithQos_SQV_CV_P)
  * @post_condition None
  * @expected onGet callback is called and response is found correctly
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendGetRequest_SQV_CV_P)
 {
     try
     {
         m_temperatureHandle = m_RIHelper->registerResource(m_TemperatureUri, m_TemperatureType,
                 m_ResourceInterface);
-        ASSERT_NE(m_temperatureHandle,NULL) << "Register Resource failed";
+        ASSERT_NE(m_temperatureHandle,(OCResourceHandle)NULL) << "Register Resource failed";
 
         IOTIVITYTEST_LOG(INFO, "Finding Temperature Resource...");
         ASSERT_EQ(OC_STACK_OK,
@@ -1044,14 +1044,14 @@ TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendGetRequest_SQV_CV_P)
  * @post_condition None
  * @expected onGet callback is called and response is found correctly
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendGetRequestWithQos_SQV_CV_P)
 {
     try
     {
         m_temperatureHandle = m_RIHelper->registerResource(m_TemperatureUri, m_TemperatureType,
                 m_ResourceInterface);
-        ASSERT_NE(m_temperatureHandle,NULL) << "Register Resource failed";
+        ASSERT_NE(m_temperatureHandle,(OCResourceHandle)NULL) << "Register Resource failed";
 
         IOTIVITYTEST_LOG(INFO, "Finding Temperature Resource...");
         ASSERT_EQ(OC_STACK_OK,
@@ -1127,14 +1127,14 @@ TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendGetRequestWithQos_SQV_CV_P
  * @post_condition None
  * @expected onPut callback is called and response is found correctly
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendPutRequest_SQV_CV_P)
 {
     try
     {
         m_temperatureHandle = m_RIHelper->registerResource(m_TemperatureUri, m_TemperatureType,
                 m_ResourceInterface);
-        ASSERT_NE(m_temperatureHandle,NULL) << "Register Resource failed";
+        ASSERT_NE(m_temperatureHandle,(OCResourceHandle)NULL) << "Register Resource failed";
 
         IOTIVITYTEST_LOG(INFO, "Finding Temperature Resource...");
         ASSERT_EQ(OC_STACK_OK,
@@ -1213,14 +1213,14 @@ TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendPutRequest_SQV_CV_P)
  * @post_condition None
  * @expected onPut callback is called and response is found correctly
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendPutRequestWithQos_SQV_CV_P)
 {
     try
     {
         m_temperatureHandle = m_RIHelper->registerResource(m_TemperatureUri, m_TemperatureType,
                 m_ResourceInterface);
-        ASSERT_NE(m_temperatureHandle,NULL) << "Register Resource failed";
+        ASSERT_NE(m_temperatureHandle,(OCResourceHandle)NULL) << "Register Resource failed";
 
         IOTIVITYTEST_LOG(INFO, "Finding Temperature Resource...");
         ASSERT_EQ(OC_STACK_OK,
@@ -1300,14 +1300,14 @@ TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendPutRequestWithQos_SQV_CV_P
  * @post_condition None
  * @expected onPost callback is called and response is found correctly
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendPostRequest_SQV_CV_P)
 {
     try
     {
         m_temperatureHandle = m_RIHelper->registerResource(m_TemperatureUri, m_TemperatureType,
                 m_ResourceInterface);
-        ASSERT_NE(m_temperatureHandle,NULL) << "Register Resource failed";
+        ASSERT_NE(m_temperatureHandle,(OCResourceHandle)NULL) << "Register Resource failed";
 
         IOTIVITYTEST_LOG(INFO, "Finding Temperature Resource...");
         ASSERT_EQ(OC_STACK_OK,
@@ -1386,14 +1386,14 @@ TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendPostRequest_SQV_CV_P)
  * @post_condition None
  * @expected onPost callback is called and response is found correctly
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendPostRequestWithQos_SQV_CV_P)
 {
     try
     {
         m_temperatureHandle = m_RIHelper->registerResource(m_TemperatureUri, m_TemperatureType,
                 m_ResourceInterface);
-        ASSERT_NE(m_temperatureHandle,NULL) << "Register Resource failed";
+        ASSERT_NE(m_temperatureHandle,(OCResourceHandle)NULL) << "Register Resource failed";
 
         IOTIVITYTEST_LOG(INFO, "Finding Temperature Resource...");
         ASSERT_EQ(OC_STACK_OK,
@@ -1474,14 +1474,14 @@ TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendPostRequestWithQos_SQV_CV_
  * @post_condition None
  * @expected onDelete callback is called and response is found correctly and resource is not found after delete operation
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendDeleteRequest_SQV_CV_P)
 {
     try
     {
         m_temperatureHandle = m_RIHelper->registerResource(m_TemperatureUri, m_TemperatureType,
                 m_ResourceInterface);
-        ASSERT_NE(m_temperatureHandle,NULL) << "Register Resource failed";
+        ASSERT_NE(m_temperatureHandle,(OCResourceHandle)NULL) << "Register Resource failed";
 
         IOTIVITYTEST_LOG(INFO, "Finding Temperature Resource...");
         ASSERT_EQ(OC_STACK_OK,
@@ -1572,14 +1572,14 @@ TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendDeleteRequest_SQV_CV_P)
  * @post_condition None
  * @expected onDelete callback is called and response is found correctly and resource is not found after delete operation
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendDeleteRequestWithQos_SQV_CV_P)
 {
     try
     {
         m_temperatureHandle = m_RIHelper->registerResource(m_TemperatureUri, m_TemperatureType,
                 m_ResourceInterface);
-        ASSERT_NE(m_temperatureHandle,NULL) << "Register Resource failed";
+        ASSERT_NE(m_temperatureHandle,(OCResourceHandle)NULL) << "Register Resource failed";
 
         IOTIVITYTEST_LOG(INFO, "Finding Temperature Resource...");
         ASSERT_EQ(OC_STACK_OK,

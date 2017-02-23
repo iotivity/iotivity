@@ -58,7 +58,7 @@ public:
     static OCStackApplicationResult DeviceDiscoveryReqCB(void* ctx, OCDoHandle /*m_doHandle*/,
             OCClientResponse * clientResponse)
     {
-
+        return OC_STACK_KEEP_TRANSACTION;
     }
 };
 
@@ -75,7 +75,7 @@ public:
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCInitClient_SRC_P)
 {
     m_result = m_pRICsdkHelper->initClient();
@@ -97,7 +97,7 @@ TEST_F(RICsdkClientTest_btc, OCInitClient_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCInit1Client_SRC_P)
 {
     m_result = OCInit1(m_ClientMode, m_DefaultTransportFlags, m_DefaultTransportFlags);
@@ -134,14 +134,14 @@ TEST_F(RICsdkClientTest_btc, OCInit1Client_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceNON_SRC_P)
 {
     m_result = m_pRICsdkHelper->initClient();
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for client. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, DEVICE_DISCOVERY_QUERY, OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,DEVICE_DISCOVERY_QUERY,OC_LOW_QOS);
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 }
 #endif
 
@@ -174,14 +174,14 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceNON_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceCON_SRC_P)
 {
     m_result = m_pRICsdkHelper->initClient();
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for client. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, DEVICE_DISCOVERY_QUERY, OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,DEVICE_DISCOVERY_QUERY,OC_HIGH_QOS);
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 }
 #endif
 
@@ -214,15 +214,14 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceCON_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverPlatformNON_SRC_P)
 {
     m_result = m_pRICsdkHelper->initClient();
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for client. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, PLATFORM_DISCOVERY_QUERY,
-            OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,PLATFORM_DISCOVERY_QUERY,OC_LOW_QOS);
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 }
 #endif
 
@@ -255,15 +254,14 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverPlatformNON_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverPlatformCON_SRC_P)
 {
     m_result = m_pRICsdkHelper->initClient();
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for client. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, PLATFORM_DISCOVERY_QUERY,
-            OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,PLATFORM_DISCOVERY_QUERY,OC_HIGH_QOS);
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 }
 #endif
 
@@ -298,16 +296,16 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverPlatformCON_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCDoResourceGetRequestNON_SRC_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
-            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+            RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL) << m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -322,8 +320,9 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceGetRequestNON_SRC_P)
         SET_FAILURE("Client: Resource is not found");
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET, ALL_RESOURCE_DISCOVERY_QUERY, OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET,ALL_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+
 }
 #endif
 
@@ -358,16 +357,16 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceGetRequestNON_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCDoResourceGetRequestCON_SRC_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
-            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+            RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL) << m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -382,9 +381,9 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceGetRequestCON_SRC_P)
         SET_FAILURE("Client: Resource is not found");
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET, ALL_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET,ALL_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 }
 #endif
 
@@ -419,16 +418,16 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceGetRequestCON_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCDoResourcePutRequestNON_SRC_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
-            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+            RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL) << m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -443,8 +442,8 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePutRequestNON_SRC_P)
         SET_FAILURE("Client: Resource is not found");
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT, ALL_RESOURCE_DISCOVERY_QUERY, OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT,ALL_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 }
 #endif
 
@@ -479,16 +478,17 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePutRequestNON_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCDoResourcePutRequestCON_SRC_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
-            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+            RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL) << m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -503,9 +503,9 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePutRequestCON_SRC_P)
         SET_FAILURE("Client: Resource is not found");
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT, ALL_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT,ALL_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 }
 #endif
 
@@ -540,16 +540,16 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePutRequestCON_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCDoResourcePostRequestNON_SRC_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
-            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+            RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL) << m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -564,9 +564,9 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePostRequestNON_SRC_P)
         SET_FAILURE("Client: Resource is not found");
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST, ALL_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST,ALL_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 }
 #endif
 
@@ -601,16 +601,16 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePostRequestNON_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCDoResourcePostRequestCON_SRC_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
-            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+            RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL) << m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -625,9 +625,9 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePostRequestCON_SRC_P)
         SET_FAILURE("Client: Resource is not found");
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST, ALL_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST,ALL_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 }
 #endif
 
@@ -662,16 +662,16 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePostRequestCON_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCDoResourceDeleteRequestNON_SRC_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
-            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+            RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL) << m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -686,9 +686,9 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDeleteRequestNON_SRC_P)
         SET_FAILURE("Client: Resource is not found");
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE, ALL_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE,ALL_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 }
 #endif
 
@@ -723,16 +723,16 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDeleteRequestNON_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCDoResourceDeleteRequestCON_SRC_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
-            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+           RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL) << m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -747,9 +747,9 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDeleteRequestCON_SRC_P)
         SET_FAILURE("Client: Resource is not found");
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE, ALL_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE,ALL_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 }
 #endif
 
@@ -784,16 +784,16 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDeleteRequestCON_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCDoResourceObserveRequestNON_SRC_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
-            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+            RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL) << m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -808,9 +808,9 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceObserveRequestNON_SRC_P)
         SET_FAILURE("Client: Resource is not found");
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_OBSERVE, ALL_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_OBSERVE,ALL_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 }
 #endif
 
@@ -845,16 +845,16 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceObserveRequestNON_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCDoResourceObserveRequestCON_SRC_P)
 {
     m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
-            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+            RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,(OCResourceHandle)NULL) << m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
@@ -869,9 +869,9 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceObserveRequestCON_SRC_P)
         SET_FAILURE("Client: Resource is not found");
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_OBSERVE, ALL_RESOURCE_DISCOVERY_QUERY,
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_OBSERVE,ALL_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 }
 #endif
 
@@ -904,7 +904,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceObserveRequestCON_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_INVALID_CALLBACK and handle should not be returned
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceCallbackData_NV_N)
 {
     m_result = m_pRICsdkHelper->initClient();
@@ -946,7 +946,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceCallbackData_NV_N)
  * @post_condition None
  * @expected Should return OC_STACK_INVALID_URI and handle should not be returned
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceRequestUri_ESV_N)
 {
     m_result = m_pRICsdkHelper->initClient();
@@ -987,14 +987,14 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceRequestUri_ESV_N)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCCancel_SRC_P)
 {
     m_result = m_pRICsdkHelper->initClient();
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for client. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, DEVICE_DISCOVERY_QUERY, OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,DEVICE_DISCOVERY_QUERY,OC_HIGH_QOS);
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCCancel(m_doHandle, OC_HIGH_QOS, 0, 0);
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCCancel failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -1029,14 +1029,14 @@ TEST_F(RICsdkClientTest_btc, OCCancel_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkClientTest_btc, OCCancelDoHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initClient();
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for client. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, DEVICE_DISCOVERY_QUERY, OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,DEVICE_DISCOVERY_QUERY,OC_HIGH_QOS);
+    ASSERT_NE((OCResourceHandle)NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCCancel(NULL, OC_HIGH_QOS, 0, 0);
     ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCCancel failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);

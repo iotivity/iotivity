@@ -71,15 +71,15 @@ public:
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, GetResource_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->get(OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3)));
+              resource->get(OC::QueryParamsMap(),
+                            bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3)));
 }
 #endif
 
@@ -98,16 +98,16 @@ TEST_F(RIResourceTest_btc, GetResource_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, GetResourceWithLowQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->get(OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
-                    OC::QualityOfService::LowQos));
+              resource->get(OC::QueryParamsMap(),
+                            bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
+                            OC::QualityOfService::LowQos));
 }
 #endif
 
@@ -128,16 +128,16 @@ TEST_F(RIResourceTest_btc, GetResourceWithLowQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, GetResourceWithHighQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->get(OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
-                    OC::QualityOfService::HighQos));
+              resource->get(OC::QueryParamsMap(),
+                            bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
+                            OC::QualityOfService::HighQos));
 }
 #endif
 
@@ -158,16 +158,16 @@ TEST_F(RIResourceTest_btc, GetResourceWithHighQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, GetResourceWithMidQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->get(OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
-                    OC::QualityOfService::MidQos));
+              resource->get(OC::QueryParamsMap(),
+                            bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
+                            OC::QualityOfService::MidQos));
 }
 #endif
 
@@ -188,16 +188,16 @@ TEST_F(RIResourceTest_btc, GetResourceWithMidQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, GetResourceWithNaQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->get(OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
-                    OC::QualityOfService::NaQos));
+              resource->get(OC::QueryParamsMap(),
+                            bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
+                            OC::QualityOfService::NaQos));
 }
 #endif
 
@@ -219,15 +219,15 @@ TEST_F(RIResourceTest_btc, GetResourceWithNaQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, GetResourceWithRTIF_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->get("", DEFAULT_INTERFACE, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3)));
+              resource->get("", DEFAULT_INTERFACE, OC::QueryParamsMap(),
+                            bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3)));
 }
 #endif
 
@@ -249,15 +249,15 @@ TEST_F(RIResourceTest_btc, GetResourceWithRTIF_SRC_P)
  * @post_condition None
  * @expected Should throw exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, GetResourceWithRT_NV_N)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_ANY_THROW(
-            resource->get(nullptr, DEFAULT_INTERFACE, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3)));
+        resource->get(nullptr, DEFAULT_INTERFACE, OC::QueryParamsMap(),
+                      bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3)));
 }
 #endif
 
@@ -279,15 +279,15 @@ TEST_F(RIResourceTest_btc, GetResourceWithRT_NV_N)
  * @post_condition None
  * @expected Should throw exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, GetResourceWithIF_NV_N)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_ANY_THROW(
-            resource->get("", nullptr, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3)));
+        resource->get("", nullptr, OC::QueryParamsMap(),
+                      bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3)));
 }
 #endif
 
@@ -311,16 +311,16 @@ TEST_F(RIResourceTest_btc, GetResourceWithIF_NV_N)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, GetResourceWithRTIFQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->get("", DEFAULT_INTERFACE, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
-                    OC::QualityOfService::LowQos));
+              resource->get("", DEFAULT_INTERFACE, OC::QueryParamsMap(),
+                            bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
+                            OC::QualityOfService::LowQos));
 }
 #endif
 
@@ -340,15 +340,15 @@ TEST_F(RIResourceTest_btc, GetResourceWithRTIFQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, PutResource_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->put(m_Representation, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3)));
+              resource->put(m_Representation, OC::QueryParamsMap(),
+                            bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3)));
 }
 #endif
 
@@ -370,16 +370,16 @@ TEST_F(RIResourceTest_btc, PutResource_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, PutResourceWithLowQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->put(m_Representation, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
-                    OC::QualityOfService::LowQos));
+              resource->put(m_Representation, OC::QueryParamsMap(),
+                            bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
+                            OC::QualityOfService::LowQos));
 }
 #endif
 
@@ -401,16 +401,16 @@ TEST_F(RIResourceTest_btc, PutResourceWithLowQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, PutResourceWithHighQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->put(m_Representation, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
-                    OC::QualityOfService::HighQos));
+              resource->put(m_Representation, OC::QueryParamsMap(),
+                            bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
+                            OC::QualityOfService::HighQos));
 }
 #endif
 
@@ -432,16 +432,16 @@ TEST_F(RIResourceTest_btc, PutResourceWithHighQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, PutResourceWithMidQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->put(m_Representation, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
-                    OC::QualityOfService::MidQos));
+              resource->put(m_Representation, OC::QueryParamsMap(),
+                            bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
+                            OC::QualityOfService::MidQos));
 }
 #endif
 
@@ -463,16 +463,16 @@ TEST_F(RIResourceTest_btc, PutResourceWithMidQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, PutResourceWithNaQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->put(m_Representation, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
-                    OC::QualityOfService::NaQos));
+              resource->put(m_Representation, OC::QueryParamsMap(),
+                            bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
+                            OC::QualityOfService::NaQos));
 }
 #endif
 
@@ -494,15 +494,15 @@ TEST_F(RIResourceTest_btc, PutResourceWithNaQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, PutResourceWithRTIF_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->put("", DEFAULT_INTERFACE, m_Representation, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3)));
+              resource->put("", DEFAULT_INTERFACE, m_Representation, OC::QueryParamsMap(),
+                            bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3)));
 }
 #endif
 
@@ -525,16 +525,16 @@ TEST_F(RIResourceTest_btc, PutResourceWithRTIF_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, PutResourceWithRTIFQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->put("", DEFAULT_INTERFACE, m_Representation, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
-                    OC::QualityOfService::LowQos));
+              resource->put("", DEFAULT_INTERFACE, m_Representation, OC::QueryParamsMap(),
+                            bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
+                            OC::QualityOfService::LowQos));
 }
 #endif
 
@@ -553,15 +553,15 @@ TEST_F(RIResourceTest_btc, PutResourceWithRTIFQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, PostResource_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->post(m_Representation, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3)));
+              resource->post(m_Representation, OC::QueryParamsMap(),
+                             bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3)));
 }
 #endif
 
@@ -582,16 +582,16 @@ TEST_F(RIResourceTest_btc, PostResource_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, PostResourceWithLowQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->post(m_Representation, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
-                    OC::QualityOfService::LowQos));
+              resource->post(m_Representation, OC::QueryParamsMap(),
+                             bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
+                             OC::QualityOfService::LowQos));
 }
 #endif
 
@@ -612,16 +612,16 @@ TEST_F(RIResourceTest_btc, PostResourceWithLowQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, PostResourceWithHighQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->post(m_Representation, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
-                    OC::QualityOfService::HighQos));
+              resource->post(m_Representation, OC::QueryParamsMap(),
+                             bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
+                             OC::QualityOfService::HighQos));
 }
 #endif
 
@@ -642,16 +642,16 @@ TEST_F(RIResourceTest_btc, PostResourceWithHighQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, PostResourceWithMidQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->post(m_Representation, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
-                    OC::QualityOfService::MidQos));
+              resource->post(m_Representation, OC::QueryParamsMap(),
+                             bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
+                             OC::QualityOfService::MidQos));
 }
 #endif
 
@@ -672,16 +672,16 @@ TEST_F(RIResourceTest_btc, PostResourceWithMidQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, PostResourceWithNaQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->post(m_Representation, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
-                    OC::QualityOfService::NaQos));
+              resource->post(m_Representation, OC::QueryParamsMap(),
+                             bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
+                             OC::QualityOfService::NaQos));
 }
 #endif
 
@@ -703,15 +703,15 @@ TEST_F(RIResourceTest_btc, PostResourceWithNaQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, PostResourceWithRTIF_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->post("", DEFAULT_INTERFACE, m_Representation, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3)));
+              resource->post("", DEFAULT_INTERFACE, m_Representation, OC::QueryParamsMap(),
+                             bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3)));
 }
 #endif
 
@@ -734,16 +734,16 @@ TEST_F(RIResourceTest_btc, PostResourceWithRTIF_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, PostResourceWithRTIFQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->post("", DEFAULT_INTERFACE, m_Representation, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
-                    OC::QualityOfService::LowQos));
+              resource->post("", DEFAULT_INTERFACE, m_Representation, OC::QueryParamsMap(),
+                             bind(&RIResourceTest_btc::onGetPut, this, PH::_1, PH::_2, PH::_3),
+                             OC::QualityOfService::LowQos));
 }
 #endif
 
@@ -763,15 +763,15 @@ TEST_F(RIResourceTest_btc, PostResourceWithRTIFQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, ObserveResource_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4)));
+              resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
+                                bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4)));
 }
 #endif
 
@@ -792,16 +792,16 @@ TEST_F(RIResourceTest_btc, ObserveResource_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, ObserveResourceWithLowQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4),
-                    QualityOfService::LowQos));
+              resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
+                                bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4),
+                                QualityOfService::LowQos));
 }
 #endif
 
@@ -822,16 +822,16 @@ TEST_F(RIResourceTest_btc, ObserveResourceWithLowQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, ObserveResourceWithHighQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4),
-                    QualityOfService::HighQos));
+              resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
+                                bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4),
+                                QualityOfService::HighQos));
 }
 #endif
 
@@ -852,16 +852,16 @@ TEST_F(RIResourceTest_btc, ObserveResourceWithHighQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, ObserveResourceWithMidQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4),
-                    QualityOfService::MidQos));
+              resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
+                                bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4),
+                                QualityOfService::MidQos));
 }
 #endif
 
@@ -882,16 +882,16 @@ TEST_F(RIResourceTest_btc, ObserveResourceWithMidQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, ObserveResourceWithNaQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4),
-                    QualityOfService::NaQos));
+              resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
+                                bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4),
+                                QualityOfService::NaQos));
 }
 #endif
 
@@ -912,7 +912,7 @@ TEST_F(RIResourceTest_btc, ObserveResourceWithNaQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, CancelObserveResource_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
@@ -920,7 +920,7 @@ TEST_F(RIResourceTest_btc, CancelObserveResource_SRC_P)
     EXPECT_TRUE(resource != NULL);
 
     resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
-            bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4));
+                      bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4));
 
     EXPECT_EQ(OC_STACK_OK, resource->cancelObserve());
 }
@@ -943,7 +943,7 @@ TEST_F(RIResourceTest_btc, CancelObserveResource_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, CancelObserveResourceWithLowQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
@@ -951,8 +951,8 @@ TEST_F(RIResourceTest_btc, CancelObserveResourceWithLowQos_SRC_P)
     EXPECT_TRUE(resource != NULL);
 
     resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
-            bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4),
-            QualityOfService::LowQos);
+                      bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4),
+                      QualityOfService::LowQos);
 
     EXPECT_EQ(OC_STACK_OK, resource->cancelObserve(QualityOfService::LowQos));
 }
@@ -975,16 +975,16 @@ TEST_F(RIResourceTest_btc, CancelObserveResourceWithLowQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, CancelObserveResourceWithHighQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4),
-                    QualityOfService::HighQos));
+              resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
+                                bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4),
+                                QualityOfService::HighQos));
 
     EXPECT_EQ(OC_STACK_OK, resource->cancelObserve(QualityOfService::HighQos));
 }
@@ -1007,16 +1007,16 @@ TEST_F(RIResourceTest_btc, CancelObserveResourceWithHighQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, CancelObserveResourceWithMidQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4),
-                    QualityOfService::MidQos));
+              resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
+                                bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4),
+                                QualityOfService::MidQos));
 
     EXPECT_EQ(OC_STACK_OK, resource->cancelObserve(QualityOfService::MidQos));
 }
@@ -1039,16 +1039,16 @@ TEST_F(RIResourceTest_btc, CancelObserveResourceWithMidQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, CancelObserveResourceWithNaQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
-                    bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4),
-                    QualityOfService::NaQos));
+              resource->observe(ObserveType::ObserveAll, OC::QueryParamsMap(),
+                                bind(&RIResourceTest_btc::onObserve, this, PH::_1, PH::_2, PH::_3, PH::_4),
+                                QualityOfService::NaQos));
 
     EXPECT_EQ(OC_STACK_OK, resource->cancelObserve(QualityOfService::NaQos));
 }
@@ -1068,15 +1068,15 @@ TEST_F(RIResourceTest_btc, CancelObserveResourceWithNaQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, DeleteResource_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->deleteResource(
-                    bind(&RIResourceTest_btc::deleteResource, this, PH::_1, PH::_2)));
+              resource->deleteResource(
+                  bind(&RIResourceTest_btc::deleteResource, this, PH::_1, PH::_2)));
 }
 #endif
 
@@ -1095,16 +1095,16 @@ TEST_F(RIResourceTest_btc, DeleteResource_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, DeleteResourceWithLowQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->deleteResource(
-                    bind(&RIResourceTest_btc::deleteResource, this, PH::_1, PH::_2),
-                    QualityOfService::LowQos));
+              resource->deleteResource(
+                  bind(&RIResourceTest_btc::deleteResource, this, PH::_1, PH::_2),
+                  QualityOfService::LowQos));
 }
 #endif
 
@@ -1123,16 +1123,16 @@ TEST_F(RIResourceTest_btc, DeleteResourceWithLowQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, DeleteResourceWithHighQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->deleteResource(
-                    bind(&RIResourceTest_btc::deleteResource, this, PH::_1, PH::_2),
-                    QualityOfService::HighQos));
+              resource->deleteResource(
+                  bind(&RIResourceTest_btc::deleteResource, this, PH::_1, PH::_2),
+                  QualityOfService::HighQos));
 }
 #endif
 
@@ -1151,16 +1151,16 @@ TEST_F(RIResourceTest_btc, DeleteResourceWithHighQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, DeleteResourceWithMidQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->deleteResource(
-                    bind(&RIResourceTest_btc::deleteResource, this, PH::_1, PH::_2),
-                    QualityOfService::MidQos));
+              resource->deleteResource(
+                  bind(&RIResourceTest_btc::deleteResource, this, PH::_1, PH::_2),
+                  QualityOfService::MidQos));
 }
 #endif
 
@@ -1179,15 +1179,15 @@ TEST_F(RIResourceTest_btc, DeleteResourceWithMidQos_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
 TEST_F(RIResourceTest_btc, DeleteResourceWithNaQos_SRC_P)
 {
     OCResource::Ptr resource = m_RIHelper->constructResourceObject(m_HostAddress, m_ResAddress);
 
     EXPECT_TRUE(resource != NULL);
     EXPECT_EQ(OC_STACK_OK,
-            resource->deleteResource(
-                    bind(&RIResourceTest_btc::deleteResource, this, PH::_1, PH::_2),
-                    QualityOfService::NaQos));
+              resource->deleteResource(
+                  bind(&RIResourceTest_btc::deleteResource, this, PH::_1, PH::_2),
+                  QualityOfService::NaQos));
 }
 #endif

@@ -20,6 +20,7 @@
 
 #ifndef __COMMON_UTIL_H__
 #define __COMMON_UTIL_H__
+#include "iotivity_config.h"
 #include <malloc.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -28,6 +29,8 @@
 #include <fstream>
 #ifdef __GNUC__
 #include <ifaddrs.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
 #ifdef HAVE_WINDOWS_H

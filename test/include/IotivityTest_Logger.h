@@ -62,8 +62,14 @@
 
 // Max buffer size used in variable argument log function
 #define MAX_LOG_BUFFER_SIZE (8192)
+#ifdef __GNUC__
 static const char * LEVEL[] __attribute__ ((unused)) =
 { "DEBUG", "INFO", "WARNING", "ERROR", "FATAL" };
+#else
+static const char * LEVEL[] =
+{ "DEBUG", "INFO", "WARNING", "ERROR", "FATAL" };
+#endif
+
 static const char * envLogWriteFile = "NOLOGFILE";
 
 static const char* GetTimeStampString()
@@ -80,6 +86,22 @@ static const char* GetTimeStampString()
     return time_string;
 }
 
+#ifdef __WINDOWS__
+static const char* GetTimeStampStringForFilename()
+{
+    static char time_string[128] = "";
+
+    time_t now = time(0);
+    struct tm* now_tm = localtime(&now);
+
+    snprintf(time_string, sizeof(time_string), "%d-%02d-%02d-%02d-%02d-%02d",
+            now_tm->tm_year + 1900, now_tm->tm_mon + 1, now_tm->tm_mday, now_tm->tm_hour,
+            now_tm->tm_min, now_tm->tm_sec);
+
+    return time_string;
+}
+#endif
+
 static void mkDir(std::string dir)
 {
 #ifdef __LINUX__
@@ -93,8 +115,8 @@ static void mkDir(std::string dir)
     }
 
 #endif
-#ifdef __TIZEN__
-    boost::filesystem::create_directories(dir);
+#if defined(__TIZEN__) || defined(__WINDOWS__)
+boost::filesystem::create_directories(dir);
 #endif
 }
 
@@ -133,7 +155,11 @@ static FILE* g_logfile_out = NULL;
 
 static std::string splitFilename(const std::string path, std::string &appName)
 {
+#ifndef __WINDOWS_
     unsigned found = path.find_last_of("/\\");
+#else
+    unsigned found = path.find_last_of("\\");
+#endif
     appName = path.substr(found + 1);
 
     return path.substr(0, found);
@@ -160,6 +186,18 @@ static FILE* _initLogFile()
         extern char *__progname;
         filename = (dirName + "/" + std::string(__progname) + "_" + timestamp + ".log");
 #endif
+
+#ifdef __WINDOWS__
+        extern std::string g_appName;
+        char temp[_MAX_PATH];
+        std::string fullpath = getcwd(temp, _MAX_PATH) ? std::string( temp ) : std::string("");
+        mkDir(fullpath + "\\" + dirName);
+        size_t lastindex = g_appName.find_last_of(".");
+        std::string appName = g_appName.substr(0, lastindex);
+
+        filename = (fullpath + "\\" + dirName + "\\" + appName + "_" + GetTimeStampStringForFilename() + ".log");
+#endif
+
         FILE* fp = fopen(filename.c_str(), "w");
         if (fp == NULL)
         {

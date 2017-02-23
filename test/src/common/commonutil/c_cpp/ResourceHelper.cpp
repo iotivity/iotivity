@@ -20,6 +20,9 @@
 
 #include <sstream>
 #include <ResourceHelper.h>
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 
 ResourceHelper *ResourceHelper::s_resourceHelperInstance = NULL;
 mutex ResourceHelper::s_mutex;
@@ -331,16 +334,7 @@ void ResourceHelper::printPayload(OCRepPayload* incomingPayload, OCRepresentatio
 
 void ResourceHelper::waitInSecond(unsigned int seconds)
 {
-#ifdef __LINUX__
     sleep(seconds);
-#endif
-
-#ifdef __WINDOWS__
-    sleep(seconds * 1000);
-#endif
-#ifdef __TIZEN__
-    sleep(seconds);
-#endif
 }
 
 void ResourceHelper::duplicateString(char ** targetString, string sourceString)

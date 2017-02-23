@@ -25,6 +25,10 @@
 #include "trace.h"
 #endif
 
+#ifdef __WINDOWS__
+std::string g_appName;
+#endif
+
 class IotivityTestEnv: public ::testing::Environment
 {
 protected:
@@ -61,6 +65,10 @@ int main(int argc, char* argv[])
         }
     }
     /*End Call-Graph Test Region*/
+#endif
+
+#if defined(__WINDOWS__)
+     g_appName = argv[0];
 #endif
 
     IOTIVITYTEST_LOG(DEBUG, "Start testing Iotivity, Testable is built at %s %s", __DATE__,

@@ -1317,7 +1317,11 @@ void RICsdkHelper::runThreadForOCProcess()
 
 void RICsdkHelper::startOCProcess()
 {
+#ifndef __WINDOWS__
     pthread_create(&m_p_thread, NULL, &RICsdkHelper::runThreadForOCProcess, NULL);
+#else
+    pthread_create(&m_p_thread, NULL, (void *(*)(void *))(&RICsdkHelper::runThreadForOCProcess), NULL);
+#endif
 }
 
 string RICsdkHelper::getFailureMessage()

@@ -23,15 +23,22 @@
 #define RI_TC_HELPER_H_
 
 #include <string.h>
+
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <iostream>
 #include <map>
 #include <utility>
 #include <vector>
 #include <mutex>
 #include <algorithm>
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
+#ifdef __cplusplus
 #include <cstdlib>
+#endif
 #include <condition_variable>
 
 #include <OCPlatform_impl.h>

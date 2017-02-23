@@ -76,11 +76,12 @@ public:
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCInitServer_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK, m_result) << "OCInit failed for server. Actual result : " <<
+                                     CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -98,14 +99,15 @@ TEST_F(RICsdkServerTest_btc, OCInitServer_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCInitClientServer_SRC_P)
 {
     uint16_t portZero = 0;
-    const char* ipAddress = nullptr;
+    const char *ipAddress = nullptr;
 
     m_result = OCInit(ipAddress, portZero, m_ClientServerMode);
-    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for client-server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK, m_result) << "OCInit failed for client-server. Actual result : " <<
+                                     CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -123,14 +125,16 @@ TEST_F(RICsdkServerTest_btc, OCInitClientServer_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCInit_USV_N)
 {
     uint16_t portZero = 0;
-    const char* ipAddress = nullptr;
+    const char *ipAddress = nullptr;
 
     m_result = OCInit(ipAddress, portZero, m_GatewayMode);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(
+                            m_result);
+
 }
 #endif
 
@@ -149,11 +153,12 @@ TEST_F(RICsdkServerTest_btc, OCInit_USV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCInit1Server_SRC_P)
 {
     m_result = OCInit1(m_ServerMode, m_DefaultTransportFlags, m_DefaultTransportFlags);
-    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit1 failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK, m_result) << "OCInit1 failed for server. Actual result : " <<
+                                     CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -172,11 +177,12 @@ TEST_F(RICsdkServerTest_btc, OCInit1Server_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCInit1ClientServer_SRC_P)
 {
     m_result = OCInit1(m_ClientServerMode, m_DefaultTransportFlags, m_DefaultTransportFlags);
-    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit1 failed for client-server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK, m_result) << "OCInit1 failed for client-server. Actual result : " <<
+                                     CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -195,11 +201,12 @@ TEST_F(RICsdkServerTest_btc, OCInit1ClientServer_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCInit1Server_USV_N)
 {
     m_result = OCInit1(m_GatewayMode, m_DefaultTransportFlags, m_DefaultTransportFlags);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCInit1 failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM, m_result) << "OCInit1 failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(
+                            m_result);
 }
 #endif
 
@@ -215,14 +222,16 @@ TEST_F(RICsdkServerTest_btc, OCInit1Server_USV_N)
  * @post_condition none
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCStop_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK, m_result) << "OCInit failed for server. Actual result : " <<
+                                     CommonUtil::s_OCStackResultString.at(m_result);
 
     m_result = OCStop();
-    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCStop failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK, m_result) << "OCStop failed. Actual result : " <<
+                                     CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -238,14 +247,16 @@ TEST_F(RICsdkServerTest_btc, OCStop_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCSetPlatformInfo_SRC_FSV_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK, m_result) << "OCInit failed for server. Actual result : " <<
+                                     CommonUtil::s_OCStackResultString.at(m_result);
 
     m_result = OCSetPlatformInfo(m_pRICsdkHelper->getPlatformInfo());
-    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCSetPlatformInfo failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK, m_result) << "OCSetPlatformInfo failed. Actual result : " <<
+                                     CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -261,7 +272,7 @@ TEST_F(RICsdkServerTest_btc, OCSetPlatformInfo_SRC_FSV_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCSetPlatformInfo_USV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -285,7 +296,7 @@ TEST_F(RICsdkServerTest_btc, OCSetPlatformInfo_USV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCSetDeviceInfo_SRC_FSV_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -297,7 +308,7 @@ TEST_F(RICsdkServerTest_btc, OCSetDeviceInfo_SRC_FSV_P)
         m_result = OCSetDeviceInfo(deviceInfo);
         ASSERT_EQ(OC_STACK_OK,m_result)<< "OCSetDeviceInfo failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
     }
-    catch(exception &e)
+    catch (exception &e)
     {
         SET_FAILURE("Exception occured. Exception is " + std::string(e.what()));
     }
@@ -328,7 +339,7 @@ TEST_F(RICsdkServerTest_btc, OCSetDeviceInfo_SRC_FSV_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCCreateResource_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -364,7 +375,7 @@ TEST_F(RICsdkServerTest_btc, OCCreateResource_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCCreateResourceTypeName_ESV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -400,7 +411,7 @@ TEST_F(RICsdkServerTest_btc, OCCreateResourceTypeName_ESV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_URI
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCCreateResourceURI_ESV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -431,7 +442,7 @@ TEST_F(RICsdkServerTest_btc, OCCreateResourceURI_ESV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCDeleteResource_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -439,7 +450,7 @@ TEST_F(RICsdkServerTest_btc, OCDeleteResource_SRC_P)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCDeleteResource(m_handle);
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCDeleteResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -465,7 +476,7 @@ TEST_F(RICsdkServerTest_btc, OCDeleteResource_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCDeleteResourceResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -473,7 +484,7 @@ TEST_F(RICsdkServerTest_btc, OCDeleteResourceResourceHandle_NV_N)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCDeleteResource(NULL);
     ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCDeleteResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -502,7 +513,7 @@ TEST_F(RICsdkServerTest_btc, OCDeleteResourceResourceHandle_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCBindResourceTypeToResource_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -510,7 +521,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceTypeToResource_SRC_P)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResourceTypeToResource(m_handle, RESOURCE_TYPE_FAN);
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResourceTypeToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -539,7 +550,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceTypeToResource_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_ERROR
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCBindResourceTypeToResourceResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -547,7 +558,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceTypeToResourceResourceHandle_NV_N)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResourceTypeToResource(NULL, RESOURCE_TYPE_LIGHT);
     ASSERT_EQ(OC_STACK_ERROR,m_result)<< "OCBindResourceTypeToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -576,7 +587,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceTypeToResourceResourceHandle_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCBindResourceTypeToResourceResourceType_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -584,7 +595,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceTypeToResourceResourceType_NV_N)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResourceTypeToResource(m_handle, NULL);
     ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCBindResourceTypeToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -613,7 +624,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceTypeToResourceResourceType_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCBindResourceInterfaceToResource_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -621,7 +632,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceInterfaceToResource_SRC_P)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResourceInterfaceToResource(m_handle, RESOURCE_INTERFACE_RW);
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResourceInterfaceToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -650,7 +661,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceInterfaceToResource_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_ERROR
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCBindResourceInterfaceToResourceResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -658,7 +669,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceInterfaceToResourceResourceHandle_NV_
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResourceInterfaceToResource(NULL, RESOURCE_INTERFACE_RW);
     ASSERT_EQ(OC_STACK_ERROR,m_result)<< "OCBindResourceInterfaceToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -687,7 +698,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceInterfaceToResourceResourceHandle_NV_
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCBindResourceInterfaceToResourceResourceType_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -695,7 +706,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceInterfaceToResourceResourceType_NV_N)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResourceInterfaceToResource(m_handle, NULL);
     ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCBindResourceInterfaceToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -723,7 +734,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceInterfaceToResourceResourceType_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCBindResource_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -731,11 +742,11 @@ TEST_F(RICsdkServerTest_btc, OCBindResource_SRC_P)
 
     m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_lightHandle,(OCResourceHandle)NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_fanHandle,(OCResourceHandle)NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_fanHandle, m_lightHandle);
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -763,7 +774,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResource_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_ERROR
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCBindResourceCollectionHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -771,11 +782,11 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceCollectionHandle_NV_N)
 
     m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_lightHandle,(OCResourceHandle)NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_fanHandle,(OCResourceHandle)NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(NULL, m_lightHandle);
     ASSERT_EQ(OC_STACK_ERROR,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -803,7 +814,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceCollectionHandle_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_ERROR
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCBindResourceResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -811,11 +822,11 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceResourceHandle_NV_N)
 
     m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_lightHandle,(OCResourceHandle)NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_fanHandle,(OCResourceHandle)NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_fanHandle, NULL);
     ASSERT_EQ(OC_STACK_ERROR,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -843,7 +854,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceResourceHandle_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCBindResourceSameHandle_ECRC_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -851,11 +862,11 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceSameHandle_ECRC_N)
 
     m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_lightHandle,(OCResourceHandle)NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_fanHandle,(OCResourceHandle)NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_lightHandle, m_lightHandle);
     ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -884,7 +895,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceSameHandle_ECRC_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCUnBindResource_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -892,11 +903,11 @@ TEST_F(RICsdkServerTest_btc, OCUnBindResource_SRC_P)
 
     m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_lightHandle,(OCResourceHandle)NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_fanHandle,(OCResourceHandle)NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_fanHandle, m_lightHandle);
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -928,7 +939,7 @@ TEST_F(RICsdkServerTest_btc, OCUnBindResource_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_ERROR
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCUnBindResourceCollectionHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -936,11 +947,11 @@ TEST_F(RICsdkServerTest_btc, OCUnBindResourceCollectionHandle_NV_N)
 
     m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_lightHandle,(OCResourceHandle)NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_fanHandle,(OCResourceHandle)NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_fanHandle, m_lightHandle);
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -972,7 +983,7 @@ TEST_F(RICsdkServerTest_btc, OCUnBindResourceCollectionHandle_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_ERROR
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCUnBindResourceResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -980,11 +991,11 @@ TEST_F(RICsdkServerTest_btc, OCUnBindResourceResourceHandle_NV_N)
 
     m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_lightHandle,(OCResourceHandle)NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_fanHandle,(OCResourceHandle)NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_fanHandle, m_lightHandle);
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -1016,7 +1027,7 @@ TEST_F(RICsdkServerTest_btc, OCUnBindResourceResourceHandle_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCUnBindResourceSameHandle_ECRC_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1024,11 +1035,11 @@ TEST_F(RICsdkServerTest_btc, OCUnBindResourceSameHandle_ECRC_N)
 
     m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_lightHandle,(OCResourceHandle)NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_fanHandle,(OCResourceHandle)NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_fanHandle, m_lightHandle);
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -1050,7 +1061,7 @@ TEST_F(RICsdkServerTest_btc, OCUnBindResourceSameHandle_ECRC_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCStartPresence_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1078,7 +1089,7 @@ TEST_F(RICsdkServerTest_btc, OCStartPresence_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCStopPresence_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1114,7 +1125,7 @@ TEST_F(RICsdkServerTest_btc, OCStopPresence_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_NO_OBSERVERS
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCNotifyAllObserversNON_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1122,7 +1133,7 @@ TEST_F(RICsdkServerTest_btc, OCNotifyAllObserversNON_SRC_P)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCQualityOfService qos = OC_LOW_QOS;
     m_result = OCNotifyAllObservers(m_handle, qos);
@@ -1151,7 +1162,7 @@ TEST_F(RICsdkServerTest_btc, OCNotifyAllObserversNON_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_NO_OBSERVERS
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCNotifyAllObserversCON_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1159,7 +1170,7 @@ TEST_F(RICsdkServerTest_btc, OCNotifyAllObserversCON_SRC_P)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCQualityOfService qos = OC_HIGH_QOS;
     m_result = OCNotifyAllObservers(m_handle, qos);
@@ -1188,7 +1199,7 @@ TEST_F(RICsdkServerTest_btc, OCNotifyAllObserversCON_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_ERROR
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCNotifyAllObserversResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1196,7 +1207,7 @@ TEST_F(RICsdkServerTest_btc, OCNotifyAllObserversResourceHandle_NV_N)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCQualityOfService qos = OC_HIGH_QOS;
     m_result = OCNotifyAllObservers(NULL, qos);
@@ -1232,7 +1243,7 @@ TEST_F(RICsdkServerTest_btc, OCNotifyAllObserversResourceHandle_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversNON_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1240,7 +1251,7 @@ TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversNON_SRC_P)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCObservationId obsIdList = 1;
     uint8_t numberOfIds = 0;
@@ -1282,7 +1293,7 @@ TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversNON_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversCON_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1290,7 +1301,7 @@ TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversCON_SRC_P)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCObservationId obsIdList = 1;
     uint8_t numberOfIds = 0;
@@ -1332,7 +1343,7 @@ TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversCON_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_ERROR
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1340,7 +1351,7 @@ TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversResourceHandle_NV_N)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCObservationId *obsIdList;
     uint8_t numberOfIds = 0;
@@ -1380,7 +1391,7 @@ TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversResourceHandle_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_ERROR
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversOCObservationId_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1388,7 +1399,7 @@ TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversOCObservationId_NV_N)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t numberOfIds = 0;
     const OCRepPayload *payload;
@@ -1427,7 +1438,7 @@ TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversOCObservationId_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_ERROR
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversPayload_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1435,7 +1446,7 @@ TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversPayload_NV_N)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCObservationId *obsIdList;
     uint8_t numberOfIds = 0;
@@ -1468,14 +1479,14 @@ TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversPayload_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCSetDefaultDeviceEntityHandler_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     void* callbackParameter;
-    m_result = OCSetDefaultDeviceEntityHandler(OCEntityHandlerCb, callbackParameter);
+    m_result = OCSetDefaultDeviceEntityHandler((OCDeviceEntityHandler)OCEntityHandlerCb, callbackParameter);
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCNotifyListOfObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
@@ -1492,7 +1503,7 @@ TEST_F(RICsdkServerTest_btc, OCSetDefaultDeviceEntityHandler_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCDoResponse_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1515,7 +1526,7 @@ TEST_F(RICsdkServerTest_btc, OCDoResponse_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCProcess_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1538,7 +1549,7 @@ TEST_F(RICsdkServerTest_btc, OCProcess_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCRegisterPersistentStorageHandler_SRC_P)
 {
     OCPersistentStorage ps =
@@ -1560,7 +1571,7 @@ TEST_F(RICsdkServerTest_btc, OCRegisterPersistentStorageHandler_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCRegisterPersistentStorageHandler_USV_N)
 {
     OCPersistentStorage ps2 =
@@ -1594,7 +1605,7 @@ TEST_F(RICsdkServerTest_btc, OCRegisterPersistentStorageHandler_USV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCBindResourceHandler_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1634,7 +1645,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceHandler_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCBindResourceHandlerResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1670,7 +1681,7 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceHandlerResourceHandle_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetNumberOfResources_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1678,7 +1689,7 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResources_SRC_P)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t numResources = 0;
     m_result = OCGetNumberOfResources(&numResources);
@@ -1706,7 +1717,7 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResources_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetNumberOfResources_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1714,7 +1725,7 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResources_NV_N)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCGetNumberOfResources(NULL);
     ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCGetNumberOfResources failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -1741,7 +1752,7 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResources_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetResourceHandle_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1749,12 +1760,12 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceHandle_SRC_P)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t index = 0;
     OCResourceHandle receivedHandle = NULL;
     receivedHandle = OCGetResourceHandle(index);
-    ASSERT_NE(receivedHandle,NULL)<< "OCGetResourceHandle failed. Received handle is null";
+    ASSERT_NE(receivedHandle,(OCResourceHandle)NULL)<< "OCGetResourceHandle failed. Received handle is null";
 }
 #endif
 
@@ -1770,15 +1781,15 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceHandle_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetServerInstanceIDString_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    const char* receivedIDString;
+    const char *receivedIDString;
     receivedIDString = OCGetServerInstanceIDString();
-    ASSERT_NE(NULL,receivedIDString)<< "OCGetServerInstanceIDString failed. Received id is null";
+    ASSERT_NE((const char *)NULL,receivedIDString)<< "OCGetServerInstanceIDString failed. Received id is null";
 }
 #endif
 
@@ -1802,7 +1813,7 @@ TEST_F(RICsdkServerTest_btc, OCGetServerInstanceIDString_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return resource uri
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetResourceUri_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1810,11 +1821,11 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceUri_SRC_P)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     const char* receivedUri = NULL;
     receivedUri = OCGetResourceUri(m_handle);
-    ASSERT_NE(NULL,receivedUri)<< "OCGetResourceUri failed. Received uri is null";
+    ASSERT_NE((const char*)NULL,receivedUri)<< "OCGetResourceUri failed. Received uri is null";
 }
 #endif
 
@@ -1838,7 +1849,7 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceUri_SRC_P)
  * @post_condition Call OCStop()
  * @expected Returned resource uri is null
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetResourceUri_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1846,11 +1857,11 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceUri_NV_N)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     const char* receivedUri = NULL;
     receivedUri = OCGetResourceUri(NULL);
-    ASSERT_EQ(NULL,receivedUri)<< "OCGetResourceUri failed. Received uri should be null";
+    ASSERT_EQ((const char *)NULL,receivedUri)<< "OCGetResourceUri failed. Received uri should be null";
 }
 #endif
 
@@ -1874,7 +1885,7 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceUri_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return resource property
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetResourceProperties_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1882,9 +1893,9 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceProperties_SRC_P)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    OCResourceProperty receivedProperty = NULL;
+    OCResourceProperty receivedProperty = (OCResourceProperty)NULL;
     receivedProperty = OCGetResourceProperties(m_handle);
     ASSERT_NE(NULL,receivedProperty)<< "OCGetResourceProperties failed. Received property is null";
 }
@@ -1911,7 +1922,7 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceProperties_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceTypes_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1919,7 +1930,7 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceTypes_SRC_P)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t numResourceTypes = 0;
     m_result = OCGetNumberOfResourceTypes(m_handle, &numResourceTypes);
@@ -1948,7 +1959,7 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceTypes_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceTypesResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1956,7 +1967,7 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceTypesResourceHandle_NV_N)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t numResourceTypes = 0;
     m_result = OCGetNumberOfResourceTypes(NULL, &numResourceTypes);
@@ -1985,7 +1996,7 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceTypesResourceHandle_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceTypesResourceTypes_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -1993,7 +2004,7 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceTypesResourceTypes_NV_N)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCGetNumberOfResourceTypes(m_handle, NULL);
     ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCGetNumberOfResourceTypes failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -2021,7 +2032,7 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceTypesResourceTypes_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return resourceType Name
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetResourceTypeName_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -2029,12 +2040,12 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceTypeName_SRC_P)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t index = 0;
     const char* receivedResourceType = NULL;
     receivedResourceType = OCGetResourceTypeName(m_handle, index);
-    ASSERT_NE(NULL,receivedResourceType)<< "OCGetResourceTypeName failed. Received resource type is null";
+    ASSERT_NE((const char*)NULL,receivedResourceType)<< "OCGetResourceTypeName failed. Received resource type is null";
 }
 #endif
 
@@ -2059,7 +2070,7 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceTypeName_SRC_P)
  * @post_condition Call OCStop()
  * @expected Returned resourceType Name is null
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetResourceTypeNameResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -2067,12 +2078,12 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceTypeNameResourceHandle_NV_N)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t index = 0;
     const char* receivedResourceType = NULL;
     receivedResourceType = OCGetResourceTypeName(NULL, index);
-    ASSERT_EQ(NULL,receivedResourceType)<< "OCGetResourceTypeName failed. Received resource type should be null";
+    ASSERT_EQ((const char*)NULL,receivedResourceType)<< "OCGetResourceTypeName failed. Received resource type should be null";
 }
 #endif
 
@@ -2098,7 +2109,7 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceTypeNameResourceHandle_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceInterfaces_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -2106,7 +2117,7 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceInterfaces_SRC_P)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t numResourceInterfaces = 0;
     m_result = OCGetNumberOfResourceInterfaces(m_handle, &numResourceInterfaces);
@@ -2136,7 +2147,7 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceInterfaces_SRC_P)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceInterfacesResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -2144,7 +2155,7 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceInterfacesResourceHandle_NV_N)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t numResourceInterfaces = 0;
     m_result = OCGetNumberOfResourceInterfaces(NULL, &numResourceInterfaces);
@@ -2174,7 +2185,7 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceInterfacesResourceHandle_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceInterfacesNumResourceInterfaces_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -2182,7 +2193,7 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceInterfacesNumResourceInterface
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCGetNumberOfResourceInterfaces(m_handle, NULL);
     ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCGetNumberOfResourceInterfaces failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -2210,7 +2221,7 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceInterfacesNumResourceInterface
  * @post_condition Call OCStop()
  * @expected Should return resource interface name
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetResourceInterfaceName_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -2218,12 +2229,12 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceInterfaceName_SRC_P)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t index = 0;
     const char* receivedResourceInterfaceName = NULL;
     receivedResourceInterfaceName = OCGetResourceInterfaceName(m_handle, index);
-    ASSERT_NE(NULL,receivedResourceInterfaceName)<< "OCGetResourceInterfaceName failed. Received resource interface is null";
+    ASSERT_NE((const char*)NULL,receivedResourceInterfaceName)<< "OCGetResourceInterfaceName failed. Received resource interface is null";
 }
 #endif
 
@@ -2248,7 +2259,7 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceInterfaceName_SRC_P)
  * @post_condition Call OCStop()
  * @expected Returned resource interface name is null
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetResourceInterfaceNameResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -2256,12 +2267,12 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceInterfaceNameResourceHandle_NV_N)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t index = 0;
     const char* receivedResourceInterfaceName = NULL;
     receivedResourceInterfaceName = OCGetResourceInterfaceName(NULL, index);
-    ASSERT_EQ(NULL,receivedResourceInterfaceName)<< "OCGetResourceInterfaceName failed. Received resource interface should be null";
+    ASSERT_EQ((const char*)NULL,receivedResourceInterfaceName)<< "OCGetResourceInterfaceName failed. Received resource interface should be null";
 }
 #endif
 
@@ -2289,7 +2300,7 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceInterfaceNameResourceHandle_NV_N)
  * @post_condition Call OCStop()
  * @expected Should return resource handle
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetResourceHandleFromCollection_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -2297,11 +2308,11 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceHandleFromCollection_SRC_P)
 
     m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_lightHandle,(OCResourceHandle)NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_fanHandle,(OCResourceHandle)NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_fanHandle, m_lightHandle);
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -2309,7 +2320,7 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceHandleFromCollection_SRC_P)
     OCResourceHandle receivedHandle = NULL;
     uint8_t index = 0;
     receivedHandle = OCGetResourceHandleFromCollection(m_fanHandle, index);
-    ASSERT_NE(NULL,receivedHandle)<< "OCGetResourceHandleFromCollection failed. Received handle is null";
+    ASSERT_NE((OCResourceHandle)NULL,receivedHandle)<< "OCGetResourceHandleFromCollection failed. Received handle is null";
 }
 #endif
 
@@ -2335,7 +2346,7 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceHandleFromCollection_SRC_P)
  * @post_condition Call OCStop()
  * @expected Returned resource handle is null
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetResourceHandleFromCollectionResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -2343,11 +2354,11 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceHandleFromCollectionResourceHandle_NV_
 
     m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_lightHandle,(OCResourceHandle)NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_fanHandle,(OCResourceHandle)NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_fanHandle, m_lightHandle);
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -2355,7 +2366,7 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceHandleFromCollectionResourceHandle_NV_
     OCResourceHandle receivedHandle = NULL;
     uint8_t index = 0;
     receivedHandle = OCGetResourceHandleFromCollection(NULL, index);
-    ASSERT_EQ(NULL,receivedHandle)<< "OCGetResourceHandleFromCollection failed. Received handle should be null";
+    ASSERT_EQ((OCResourceHandle)NULL,receivedHandle)<< "OCGetResourceHandleFromCollection failed. Received handle should be null";
 }
 #endif
 
@@ -2379,7 +2390,7 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceHandleFromCollectionResourceHandle_NV_
  * @post_condition Call OCStop()
  * @expected Should return entity handler
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetResourceHandler_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -2387,11 +2398,11 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceHandler_SRC_P)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCEntityHandler entityHandler = NULL;
     entityHandler = OCGetResourceHandler(m_handle);
-    ASSERT_NE(NULL,entityHandler)<< "OCGetResourceHandler failed. Received entity handler is null";
+    ASSERT_NE((OCEntityHandler)NULL,entityHandler)<< "OCGetResourceHandler failed. Received entity handler is null";
 }
 #endif
 
@@ -2415,7 +2426,7 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceHandler_SRC_P)
  * @post_condition Call OCStop()
  * @expected Returned entity handler should be null
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerTest_btc, OCGetResourceHandlerResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
@@ -2423,11 +2434,11 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceHandlerResourceHandle_NV_N)
 
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
             RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCEntityHandler entityHandler = NULL;
     entityHandler = OCGetResourceHandler(NULL);
-    ASSERT_EQ(NULL,entityHandler)<< "OCGetResourceHandler failed. Received entity handler should be null";
+    ASSERT_EQ((OCEntityHandler)NULL,entityHandler)<< "OCGetResourceHandler failed. Received entity handler should be null";
 }
 #endif
 

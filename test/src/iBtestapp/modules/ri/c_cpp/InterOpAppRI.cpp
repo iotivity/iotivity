@@ -26,10 +26,12 @@
 #ifdef __LINUX__
 #include <execinfo.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include <signal.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include "SampleResource.h"
 #include "ResourceHelper.h"
 #include "OCPlatform.h"
@@ -103,6 +105,7 @@ string g_commonVendorUri = "Vendor";
 ResourceHelper *g_resourceHelper;
 
 static mutex s_mutex;
+
 static bool s_isFirstTime = true;
 static const char CRED_FILE_SERVER[] = "oic_svr_db_server.dat";
 static const char CRED_FILE_CLIENT[] = "oic_svr_db_client.dat";
@@ -276,6 +279,7 @@ int main(int argc, char* argv[])
 void onResourceFound(shared_ptr< OCResource > resource)
 {
     s_mutex.lock();
+
     cout << "Found a resource!!" << endl;
 
     if (resource)
@@ -318,6 +322,7 @@ void onResourceFound(shared_ptr< OCResource > resource)
     }
 
     s_mutex.unlock();
+
 }
 
 void onPlatformInfoReceived(const OCRepresentation& rep)
@@ -366,18 +371,18 @@ void onDeviceInfoReceived(const OCRepresentation& rep)
 // callback handler on GET request
 void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
-	s_mutex.lock();
+    s_mutex.lock();
     if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_OK)
     {
         cout << "Response: GET request was successful" << endl;
 
-        vector< string > interfacelist = rep.getResourceInterfaces();
+        vector< string > interfaceList = rep.getResourceInterfaces();
 
         bool isCollection = false;
-        for (auto interface = interfacelist.begin(); interface != interfacelist.end(); interface++)
+        for (auto resourceInterface = interfaceList.begin(); resourceInterface != interfaceList.end(); resourceInterface++)
         {
-            if (((*interface).compare(GROUP_INTERFACE) == 0)
-                    || ((*interface).compare(BATCH_INTERFACE) == 0))
+            if (((*resourceInterface).compare(GROUP_INTERFACE) == 0)
+                    || ((*resourceInterface).compare(BATCH_INTERFACE) == 0))
             {
                 isCollection = true;
                 break;

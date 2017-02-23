@@ -73,7 +73,7 @@ public:
  * @post_condition None
  * @expected Should not throw an exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, ConfigureInProc_SRC_P)
 {
     PlatformConfig config
@@ -101,7 +101,7 @@ TEST_F(RIServerTest_btc, ConfigureInProc_SRC_P)
  * @post_condition None
  * @expected Should not throw an exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, ConfigureOutOfProc_SRC_P)
 {
     PlatformConfig config
@@ -114,7 +114,7 @@ TEST_F(RIServerTest_btc, ConfigureOutOfProc_SRC_P)
     catch (exception &e)
     {
         SET_FAILURE(
-                "Exception occurs at ConfigureOutOfProc_SRC_P. Exception is " + string(e.what()));
+            "Exception occurs at ConfigureOutOfProc_SRC_P. Exception is " + string(e.what()));
     }
 }
 #endif
@@ -130,7 +130,7 @@ TEST_F(RIServerTest_btc, ConfigureOutOfProc_SRC_P)
  * @post_condition  None
  * @expected Should not throw an exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, ConfigureDefault_SRC_P)
 {
     PlatformConfig config
@@ -158,7 +158,7 @@ TEST_F(RIServerTest_btc, ConfigureDefault_SRC_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, RegisterPlatformInfo_SRC_P)
 {
     EXPECT_EQ(OC_STACK_OK, OCPlatform::registerPlatformInfo(m_RIHelper->getPlatformInfo()));
@@ -176,7 +176,7 @@ TEST_F(RIServerTest_btc, RegisterPlatformInfo_SRC_P)
  * @post_condition None
  * @expected Should not throw an exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, RegisterPlatformInfo_FSV_P)
 {
     EXPECT_NO_THROW(OCPlatform::registerPlatformInfo(m_RIHelper->getPlatformInfo()));
@@ -194,7 +194,7 @@ TEST_F(RIServerTest_btc, RegisterPlatformInfo_FSV_P)
  * @post_condition None
  * @expected Should throw an exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, RegisterPlatformInfo_ETC_N)
 {
     OCPlatformInfo platformInfo;
@@ -223,7 +223,7 @@ TEST_F(RIServerTest_btc, RegisterPlatformInfo_ETC_N)
  * @expected 1. Should return OC_STACK_OK
  *           2. Should not throw any exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, RegisterDeviceInfo_SRC_P)
 {
     try
@@ -231,7 +231,7 @@ TEST_F(RIServerTest_btc, RegisterDeviceInfo_SRC_P)
         static OCDeviceInfo deviceInfo = m_RIHelper->getDeviceInfo();
         ASSERT_EQ(OC_STACK_OK, OCPlatform::registerDeviceInfo(deviceInfo))<< "registerDeviceInfo does not return OC_STACK_OK";
     }
-    catch (exception& e)
+    catch (exception &e)
     {
         SET_FAILURE("registerDeviceInfo() failed. Exception is " + string(e.what()));
     }
@@ -255,7 +255,7 @@ TEST_F(RIServerTest_btc, RegisterDeviceInfo_SRC_P)
  * @expected 1. result should be OC_STACK_OK
  *           2. No exception should occur
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, registerResource_SRC_P)
 {
     m_RIHelper->configClientServerPlatform();
@@ -263,14 +263,14 @@ TEST_F(RIServerTest_btc, registerResource_SRC_P)
     try
     {
         OCStackResult result = OCPlatform::registerResource(m_ResourceHandle, m_HomeUri, m_HomeType,
-                m_ResourceInterface, bind(&RIServerTest_btc::entityHandler, this, PH::_1),
-                m_ResourceProperty);
+                               m_ResourceInterface, bind(&RIServerTest_btc::entityHandler, this, PH::_1),
+                               m_ResourceProperty);
 
         OCPlatform::unregisterResource(m_ResourceHandle);
 
         EXPECT_EQ(OC_STACK_OK, result);
     }
-    catch (exception& e)
+    catch (exception &e)
     {
         SET_FAILURE(
                 "Found exception while performing registerResource() API. Exception: "
@@ -295,15 +295,15 @@ TEST_F(RIServerTest_btc, registerResource_SRC_P)
  * @post_condition None
  * @expected Should throw exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, registerResourceUri_ESV_P)
 {
     m_RIHelper->configClientServerPlatform();
 
     EXPECT_ANY_THROW(
-            OCPlatform::registerResource(m_ResourceHandle, m_EmptyStr, m_ResourceTypeName,
-                    m_ResourceInterface, bind(&RIServerTest_btc::entityHandler, this, PH::_1),
-                    m_ResourceProperty));
+        OCPlatform::registerResource(m_ResourceHandle, m_EmptyStr, m_ResourceTypeName,
+                                     m_ResourceInterface, bind(&RIServerTest_btc::entityHandler, this, PH::_1),
+                                     m_ResourceProperty));
 }
 #endif
 
@@ -323,15 +323,15 @@ TEST_F(RIServerTest_btc, registerResourceUri_ESV_P)
  * @post_condition None
  * @expected Should throw an exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, registerResourceResType_ESV_P)
 {
     m_RIHelper->configClientServerPlatform();
 
     EXPECT_ANY_THROW(
-            OCPlatform::registerResource(m_ResourceHandle, m_HomeUri, m_EmptyStr,
-                    m_ResourceInterface, bind(&RIServerTest_btc::entityHandler, this, PH::_1),
-                    m_ResourceProperty));
+        OCPlatform::registerResource(m_ResourceHandle, m_HomeUri, m_EmptyStr,
+                                     m_ResourceInterface, bind(&RIServerTest_btc::entityHandler, this, PH::_1),
+                                     m_ResourceProperty));
 }
 #endif
 
@@ -352,13 +352,14 @@ TEST_F(RIServerTest_btc, registerResourceResType_ESV_P)
  * @post_condition Perform unregisterResource()
  * @expected Should not throw any exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, registerResourceCB_NV_P)
 {
     m_RIHelper->configClientServerPlatform();
 
     EXPECT_NO_THROW(
-            OCPlatform::registerResource(m_ResourceHandle, m_HomeUri, m_HomeType, m_ResourceInterface, NULL, m_ResourceProperty));
+        OCPlatform::registerResource(m_ResourceHandle, m_HomeUri, m_HomeType, m_ResourceInterface, NULL,
+                                     m_ResourceProperty));
 
     OCPlatform::unregisterResource(m_ResourceHandle);
 }
@@ -379,11 +380,11 @@ TEST_F(RIServerTest_btc, registerResourceCB_NV_P)
  * @post_condition None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, UnregisterResource_SRC_P)
 {
     EXPECT_EQ(OC_STACK_OK,
-            OCPlatform::unregisterResource(m_RIHelper->registerResource(m_HomeUri, m_HomeType)));
+              OCPlatform::unregisterResource(m_RIHelper->registerResource(m_HomeUri, m_HomeType)));
 }
 #endif
 
@@ -397,7 +398,7 @@ TEST_F(RIServerTest_btc, UnregisterResource_SRC_P)
  * @post_condition None
  * @expected Should throw any exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, UnregisterResource_NV_N)
 {
     EXPECT_ANY_THROW(OCPlatform::unregisterResource(NULL));
@@ -421,7 +422,7 @@ TEST_F(RIServerTest_btc, UnregisterResource_NV_N)
  * @post_condition Perform unregisterResource()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, BindTypeToResource_SRC_P)
 {
     string type = "core.dimlight";
@@ -452,7 +453,7 @@ TEST_F(RIServerTest_btc, BindTypeToResource_SRC_P)
  * @post_condition Perform unregisterResource()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, BindTypeToResource_ESV_N)
 {
     OCResourceHandle resourceHandle = m_RIHelper->registerResource(m_HomeUri, m_HomeType);
@@ -475,7 +476,7 @@ TEST_F(RIServerTest_btc, BindTypeToResource_ESV_N)
  * @post_condition None
  * @expected Should throw any exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, BindTypeToResource_NV_N)
 {
     EXPECT_ANY_THROW(OCPlatform::bindTypeToResource(NULL, m_ResourceTypeName));
@@ -499,7 +500,7 @@ TEST_F(RIServerTest_btc, BindTypeToResource_NV_N)
  * @post_condition Perform unregisterResource()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, BindInterfaceToResource_SRC_P)
 {
     string iface = "oic.if.l";
@@ -531,7 +532,7 @@ TEST_F(RIServerTest_btc, BindInterfaceToResource_SRC_P)
  * @post_condition Perform unregisterResource()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, BindInterfaceToResource_ESV_P)
 {
     OCResourceHandle resourceHandle = m_RIHelper->registerResource(m_HomeUri, m_HomeType);
@@ -556,7 +557,7 @@ TEST_F(RIServerTest_btc, BindInterfaceToResource_ESV_P)
  * @post_condition Perform unregisterResource()
  * @expected Should throw any exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, BindInterfaceToResource_NV_N)
 {
     string iface = "oic.if.l";
@@ -582,12 +583,12 @@ TEST_F(RIServerTest_btc, BindInterfaceToResource_NV_N)
  * @post_condition Perform unregisterResource()
  * @expected Should throw any exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, BindResource_SRC_P)
 {
     OCResourceHandle resourceHome = m_RIHelper->registerResource(m_HomeUri, m_HomeType);
     OCResourceHandle resourceKitchen = m_RIHelper->registerResource(m_KitchenUri, m_KitchenType,
-            LINK_INTERFACE);
+                                       LINK_INTERFACE);
 
     EXPECT_EQ(OC_STACK_OK, OCPlatform::bindResource(resourceHome, resourceKitchen));
 
@@ -608,7 +609,7 @@ TEST_F(RIServerTest_btc, BindResource_SRC_P)
  * @post_condition None
  * @expected Should throw any exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, BindResource_USV_N)
 {
     OCResourceHandle resourceHandle1 = 0;
@@ -638,12 +639,12 @@ TEST_F(RIServerTest_btc, BindResource_USV_N)
  * @post_condition Perform unregisterResource()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, UnbindResource_SRC_P)
 {
     OCResourceHandle resourceHome = m_RIHelper->registerResource(m_HomeUri, m_HomeType);
     OCResourceHandle resourceKitchen = m_RIHelper->registerResource(m_KitchenUri, m_KitchenType,
-            LINK_INTERFACE);
+                                       LINK_INTERFACE);
 
     OCPlatform::bindResource(resourceHome, resourceKitchen);
 
@@ -666,7 +667,7 @@ TEST_F(RIServerTest_btc, UnbindResource_SRC_P)
  * @post_condition None
  * @expected Should throw exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, UnbindResource_USV_N)
 {
     OCResourceHandle resourceHandle1 = 0;
@@ -693,14 +694,14 @@ TEST_F(RIServerTest_btc, UnbindResource_USV_N)
  * @post_condition Perform unregisterResource()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, BindResources_SRC_P)
 {
     OCResourceHandle resourceHome = m_RIHelper->registerResource(m_HomeUri, m_HomeType);
     OCResourceHandle resourceKitchen = m_RIHelper->registerResource(m_KitchenUri, m_KitchenType,
-            LINK_INTERFACE);
+                                       LINK_INTERFACE);
     OCResourceHandle resourceOffice = m_RIHelper->registerResource(m_OfficeUri, m_OfficeType,
-            LINK_INTERFACE);
+                                      LINK_INTERFACE);
 
     vector< OCResourceHandle > resList;
     resList.push_back(resourceKitchen);
@@ -726,7 +727,7 @@ TEST_F(RIServerTest_btc, BindResources_SRC_P)
  * @post_condition None
  * @expected Should throw an exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, BindResources_USV_N)
 {
     OCResourceHandle resourceHandle1 = 0;
@@ -761,14 +762,14 @@ TEST_F(RIServerTest_btc, BindResources_USV_N)
  * @post_condition Perform unregisterResource()
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, UnbindResources_SRC_P)
 {
     OCResourceHandle resourceHome = m_RIHelper->registerResource(m_HomeUri, m_HomeType);
     OCResourceHandle resourceKitchen = m_RIHelper->registerResource(m_KitchenUri, m_KitchenType,
-            LINK_INTERFACE);
+                                       LINK_INTERFACE);
     OCResourceHandle resourceOffice = m_RIHelper->registerResource(m_OfficeUri, m_OfficeType,
-            LINK_INTERFACE);
+                                      LINK_INTERFACE);
 
     vector< OCResourceHandle > resList;
     resList.push_back(resourceKitchen);
@@ -796,7 +797,7 @@ TEST_F(RIServerTest_btc, UnbindResources_SRC_P)
  * @post_condition None
  * @expected Should throw an exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, UnbindResources_USV_N)
 {
     OCResourceHandle resourceHandle1 = 0;
@@ -822,7 +823,7 @@ TEST_F(RIServerTest_btc, UnbindResources_USV_N)
  * @post_condition  None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, StartPresence_SRC_P)
 {
     EXPECT_EQ(OC_STACK_OK, OCPlatform::startPresence(DEFAULT_PRESENCE_TIME));
@@ -840,7 +841,7 @@ TEST_F(RIServerTest_btc, StartPresence_SRC_P)
  * @post_condition  None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, StartPresence_LBV_P)
 {
     EXPECT_EQ(OC_STACK_OK, OCPlatform::startPresence(PRESENCE_TIME_MIN));
@@ -858,7 +859,7 @@ TEST_F(RIServerTest_btc, StartPresence_LBV_P)
  * @post_condition  None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, StartPresence_UBV_P)
 {
     EXPECT_EQ(OC_STACK_OK, OCPlatform::startPresence(OC_MAX_PRESENCE_TTL_SECONDS));
@@ -876,7 +877,7 @@ TEST_F(RIServerTest_btc, StartPresence_UBV_P)
  * @post_condition  None
  * @expected Should return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, StopPresence_SRC_P)
 {
     OCPlatform::startPresence(DEFAULT_PRESENCE_TIME);
@@ -895,7 +896,7 @@ TEST_F(RIServerTest_btc, StopPresence_SRC_P)
  * @post_condition  None
  * @expected Should throw an exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, StopPresence_USV_N)
 {
     EXPECT_ANY_THROW(OCPlatform::stopPresence());
@@ -918,7 +919,7 @@ TEST_F(RIServerTest_btc, StopPresence_USV_N)
  * @post_condition Perform unregisterResource()
  * @expected Should return OC_STACK_NO_OBSERVERS
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, NotifyAllObservers_SRC_P)
 {
     OCResourceHandle resourceHome = m_RIHelper->registerResource(m_HomeUri, m_HomeType);
@@ -940,7 +941,7 @@ TEST_F(RIServerTest_btc, NotifyAllObservers_SRC_P)
  * @post_condition Perform unregisterResource()
  * @expected Should throw an exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, NotifyAllObservers_USV_N)
 {
     OCResourceHandle resourceHome = 0;
@@ -965,19 +966,19 @@ TEST_F(RIServerTest_btc, NotifyAllObservers_USV_N)
  * @post_condition Perform unregisterResource()
  * @expected Should return OC_STACK_NO_OBSERVERS
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, NotifyAllObserversWithQos_SRC_P)
 {
     OCResourceHandle resourceHome = m_RIHelper->registerResource(m_HomeUri, m_HomeType);
 
     EXPECT_EQ(OC_STACK_NO_OBSERVERS,
-            OCPlatform::notifyAllObservers(resourceHome, QualityOfService::LowQos));
+              OCPlatform::notifyAllObservers(resourceHome, QualityOfService::LowQos));
     EXPECT_EQ(OC_STACK_NO_OBSERVERS,
-            OCPlatform::notifyAllObservers(resourceHome, QualityOfService::HighQos));
+              OCPlatform::notifyAllObservers(resourceHome, QualityOfService::HighQos));
     EXPECT_EQ(OC_STACK_NO_OBSERVERS,
-            OCPlatform::notifyAllObservers(resourceHome, QualityOfService::MidQos));
+              OCPlatform::notifyAllObservers(resourceHome, QualityOfService::MidQos));
     EXPECT_EQ(OC_STACK_NO_OBSERVERS,
-            OCPlatform::notifyAllObservers(resourceHome, QualityOfService::NaQos));
+              OCPlatform::notifyAllObservers(resourceHome, QualityOfService::NaQos));
 
     OCPlatform::unregisterResource(resourceHome);
 }
@@ -1001,7 +1002,7 @@ TEST_F(RIServerTest_btc, NotifyAllObserversWithQos_SRC_P)
  * @post_condition Perform unregisterResource()
  * @expected Should throw exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, NotifyListOfObservers_USV_N)
 {
     OCResourceHandle resourceHome = m_RIHelper->registerResource(m_HomeUri, m_HomeType);
@@ -1010,7 +1011,7 @@ TEST_F(RIServerTest_btc, NotifyListOfObservers_USV_N)
     ObservationIds interestedObservers;
 
     EXPECT_ANY_THROW(
-            OCPlatform::notifyListOfObservers(resourceHome, interestedObservers, resourceResponse));
+        OCPlatform::notifyListOfObservers(resourceHome, interestedObservers, resourceResponse));
 
     OCPlatform::unregisterResource(resourceHome);
 }
@@ -1034,7 +1035,7 @@ TEST_F(RIServerTest_btc, NotifyListOfObservers_USV_N)
  * @post_condition Perform unregisterResource()
  * @expected Should throw exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, NotifyListOfObserversWithQos_USV_N)
 {
     OCResourceHandle resourceHome = m_RIHelper->registerResource(m_HomeUri, m_HomeType);
@@ -1043,17 +1044,17 @@ TEST_F(RIServerTest_btc, NotifyListOfObserversWithQos_USV_N)
 
     ObservationIds interestedObservers;
     EXPECT_ANY_THROW(
-            OCPlatform::notifyListOfObservers(resourceHome, interestedObservers, resourceResponse,
-                    QualityOfService::HighQos));
+        OCPlatform::notifyListOfObservers(resourceHome, interestedObservers, resourceResponse,
+                                          QualityOfService::HighQos));
     EXPECT_ANY_THROW(
-            OCPlatform::notifyListOfObservers(resourceHome, interestedObservers, resourceResponse,
-                    QualityOfService::LowQos));
+        OCPlatform::notifyListOfObservers(resourceHome, interestedObservers, resourceResponse,
+                                          QualityOfService::LowQos));
     EXPECT_ANY_THROW(
-            OCPlatform::notifyListOfObservers(resourceHome, interestedObservers, resourceResponse,
-                    QualityOfService::MidQos));
+        OCPlatform::notifyListOfObservers(resourceHome, interestedObservers, resourceResponse,
+                                          QualityOfService::MidQos));
     EXPECT_ANY_THROW(
-            OCPlatform::notifyListOfObservers(resourceHome, interestedObservers, resourceResponse,
-                    QualityOfService::NaQos));
+        OCPlatform::notifyListOfObservers(resourceHome, interestedObservers, resourceResponse,
+                                          QualityOfService::NaQos));
 
     OCPlatform::unregisterResource(resourceHome);
 }
@@ -1070,12 +1071,12 @@ TEST_F(RIServerTest_btc, NotifyListOfObserversWithQos_USV_N)
  * @post_condition None
  * @expected Should not throw any exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, SetDefaultDeviceEntityHandler_SRC_P)
 {
     EXPECT_EQ(OC_STACK_OK,
-            OCPlatform::setDefaultDeviceEntityHandler(
-                    bind(&RIServerTest_btc::entityHandler, this, PH::_1)));
+              OCPlatform::setDefaultDeviceEntityHandler(
+                  bind(&RIServerTest_btc::entityHandler, this, PH::_1)));
 }
 #endif
 
@@ -1090,7 +1091,7 @@ TEST_F(RIServerTest_btc, SetDefaultDeviceEntityHandler_SRC_P)
  * @post_condition None
  * @expected Should not throw any exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, SetDefaultDeviceEntityHandler_NV_P)
 {
     EXPECT_NO_THROW(OCPlatform::setDefaultDeviceEntityHandler(NULL));
@@ -1108,7 +1109,7 @@ TEST_F(RIServerTest_btc, SetDefaultDeviceEntityHandler_NV_P)
  * @post_condition None
  * @expected Should throw an exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RIServerTest_btc, SendResponse_USV_N)
 {
     shared_ptr< OCResourceResponse > resourceResponse;

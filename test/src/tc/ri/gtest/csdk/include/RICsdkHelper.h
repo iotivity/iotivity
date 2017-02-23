@@ -23,14 +23,18 @@
 #define RI_CSDK_HELPER_H_
 
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
 #include <iostream>
 #include <map>
 #include <utility>
 #include <vector>
 #include <mutex>
 #include <algorithm>
-#include <pthread.h>
 #include <gtest/gtest.h>
 #include <OCApi.h>
 #include <oic_malloc.h>

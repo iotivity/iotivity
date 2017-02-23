@@ -28,6 +28,8 @@
 #include <fstream>
 #ifdef __GNUC__
 #include <ifaddrs.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
 #include <ctime>

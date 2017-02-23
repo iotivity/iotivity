@@ -88,15 +88,15 @@ public:
  * @post_condition Call OCStop()
  * @expected Returned resource property matches with the set property
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerIntegrationTest_stc, CreateResourceAndGetResourceProperties_GSRV_P)
 {
     m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL) << m_pRICsdkHelper->getFailureMessage();
 
-    OCResourceProperty receivedProperty = NULL;
+    OCResourceProperty receivedProperty = (OCResourceProperty)NULL;
     receivedProperty = OCGetResourceProperties(m_handle);
-    ASSERT_NE(NULL,receivedProperty) << "Server: OCGetResourceProperties failed. Received property is null";
+    ASSERT_NE((OCResourceProperty)NULL,receivedProperty) << "Server: OCGetResourceProperties failed. Received property is null";
     ASSERT_LE(7,receivedProperty) << "Server: Set Resource Property is not Received";
 }
 #endif
@@ -128,14 +128,14 @@ TEST_F(RICsdkServerIntegrationTest_stc, CreateResourceAndGetResourceProperties_G
  * @post_condition Call OCStop()
  * @expected Received resource handle should match with the created resource's handle
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerIntegrationTest_stc, GetResourceHandleFromCollectionAndCheckIfAddedHandleIsFound_GSRV_P)
 {
     OCResourceHandle m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL) << "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_lightHandle,(OCResourceHandle)NULL) << "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     OCResourceHandle m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL) << "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_fanHandle,(OCResourceHandle)NULL) << "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_fanHandle, m_lightHandle);
     ASSERT_EQ(OC_STACK_OK,m_result) << "OCBindResource failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
@@ -143,7 +143,7 @@ TEST_F(RICsdkServerIntegrationTest_stc, GetResourceHandleFromCollectionAndCheckI
     OCResourceHandle receivedHandle = NULL;
     uint8_t index = 0;
     receivedHandle = OCGetResourceHandleFromCollection(m_fanHandle,index);
-    ASSERT_NE(NULL,receivedHandle) << "OCGetResourceHandleFromCollection failed. Received handle is null";
+    ASSERT_NE((OCResourceHandle)NULL,receivedHandle) << "OCGetResourceHandleFromCollection failed. Received handle is null";
     ASSERT_EQ(m_lightHandle,receivedHandle) << "Received Handle does not match with the created resource";
 }
 #endif
@@ -178,17 +178,17 @@ TEST_F(RICsdkServerIntegrationTest_stc, GetResourceHandleFromCollectionAndCheckI
  * @post_condition Call OCStop()
  * @expected Two resource type names should match
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerIntegrationTest_stc, CreateResourceAndGetResourceTypeName_GSRV_P)
 {
     const char* addedResourceType = "core.light1";
     m_handle = m_pRICsdkHelper->createResource(addedResourceType,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL) << m_pRICsdkHelper->getFailureMessage();
 
     uint8_t index = 0;
     const char* receivedResourceType = NULL;
     receivedResourceType = OCGetResourceTypeName(m_handle,index);
-    ASSERT_NE(NULL,receivedResourceType) << "OCGetResourceTypeName failed. Received resource type is null";
+    ASSERT_NE((const char*)NULL,receivedResourceType) << "OCGetResourceTypeName failed. Received resource type is null";
     if (strcmp(receivedResourceType, addedResourceType) != 0)
     {
         SET_FAILURE("Received resource type does match with the created resource's resource type");
@@ -225,17 +225,17 @@ TEST_F(RICsdkServerIntegrationTest_stc, CreateResourceAndGetResourceTypeName_GSR
  * @post_condition Call OCStop()
  * @expected Two entity handlers should match
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RICsdkServerIntegrationTest_stc, CreateResourceAndGetResourceHandler_SRC_P)
 {
     m_result = OCCreateResource(&m_handle,RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT,OCEntityHandlerCb,NULL,
             OC_DISCOVERABLE|OC_OBSERVABLE);
     ASSERT_EQ(OC_STACK_OK,m_result) << "OCCreateResource failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
-    ASSERT_NE(m_handle,NULL) << "Resource handle is Null";
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL) << "Resource handle is Null";
 
-    OCEntityHandler entityHandler = NULL;
+    OCEntityHandler entityHandler = (OCEntityHandler)NULL;
     entityHandler = OCGetResourceHandler(m_handle);
-    ASSERT_NE(NULL,entityHandler) << "OCGetResourceHandler failed. Received entity handler is null";
-    ASSERT_EQ(OCEntityHandlerCb,entityHandler) << "Received entity handler does not match with the set entity handler";
+    ASSERT_NE((OCEntityHandler)NULL,entityHandler) << "OCGetResourceHandler failed. Received entity handler is null";
+    ASSERT_EQ((OCEntityHandler)OCEntityHandlerCb,entityHandler) << "Received entity handler does not match with the set entity handler";
 }
 #endif
