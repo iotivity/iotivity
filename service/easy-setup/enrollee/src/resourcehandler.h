@@ -71,7 +71,7 @@ typedef struct
     char accessToken[OIC_STRING_MAX_VALUE];
     OAUTH_TOKENTYPE accessTokenType;
     char authProvider[OIC_STRING_MAX_VALUE];
-    char ciServer[OIC_STRING_MAX_VALUE];
+    char ciServer[OIC_URI_STRING_MAX_VALUE];
 } CoapCloudConfResource;
 
 typedef struct

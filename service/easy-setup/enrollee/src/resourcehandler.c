@@ -438,7 +438,7 @@ void updateCoapCloudConfResource(OCRepPayload* input)
     memset(cloudData->accessToken, 0, OIC_STRING_MAX_VALUE);
     g_ESCoapCloudConfResource.accessTokenType = NONE_OAUTH_TOKENTYPE;
     memset(cloudData->authProvider, 0, OIC_STRING_MAX_VALUE);
-    memset(cloudData->ciServer, 0, OIC_STRING_MAX_VALUE);
+    memset(cloudData->ciServer, 0, OIC_URI_STRING_MAX_VALUE);
     cloudData->userdata = NULL;
 
     char *authCode = NULL;

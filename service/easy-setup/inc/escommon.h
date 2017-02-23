@@ -34,12 +34,11 @@ extern "C"
 #define OC_RSRVD_ES_INTERFACE             "if"
 #define OC_RSRVD_ES_RES_TYPE              "rt"
 
-
-
-#define OIC_STRING_MAX_VALUE    64
-#define MAX_WEBLINKLEN          3
-#define NUM_WIFIMODE            10
-#define NUM_CONNECT_TYPE        3
+#define OIC_STRING_MAX_VALUE        64
+#define OIC_URI_STRING_MAX_VALUE    256
+#define MAX_WEBLINKLEN              3
+#define NUM_WIFIMODE                10
+#define NUM_CONNECT_TYPE            3
 
 /**
  * Attributes used to form a proper easysetup conforming JSON message.

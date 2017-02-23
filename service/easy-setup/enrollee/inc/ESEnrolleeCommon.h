@@ -70,7 +70,7 @@ typedef struct
     char accessToken[OIC_STRING_MAX_VALUE];     /**< Access token resolved with an auth code **/
     OAUTH_TOKENTYPE accessTokenType;            /**< Access token type **/
     char authProvider[OIC_STRING_MAX_VALUE];    /**< Auth provider ID **/
-    char ciServer[OIC_STRING_MAX_VALUE];        /**< Cloud interface server URL which an Enrollee is going to registered **/
+    char ciServer[OIC_URI_STRING_MAX_VALUE];    /**< Cloud interface server URL which an Enrollee is going to registered **/
     void *userdata;                             /**< Vender-specific data**/
 } ESCoapCloudConfData;
 
