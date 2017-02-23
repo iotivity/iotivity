@@ -75,6 +75,7 @@
 #include "pkix_interface.h"
 #include "oxmverifycommon.h"
 #include "psinterface.h"
+#include "ocstackinternal.h"
 
 #define TAG "OIC_OTM"
 
@@ -191,6 +192,28 @@ static OxmAllowTableIdx_t GetOxmAllowTableIdx(OicSecOxm_t oxm)
         default:
             return OXM_IDX_UNKNOWN;
     }
+}
+
+/**
+ * Internal API to close the secure Ownership Transfer session.
+ */
+static bool CloseSslConnection(const OCProvisionDev_t *selectedDeviceInfo)
+{
+    bool success = true;
+
+    CAEndpoint_t endpoint;
+    CopyDevAddrToEndpoint(&selectedDeviceInfo->endpoint, &endpoint);
+    endpoint.port = selectedDeviceInfo->securePort;
+    CAResult_t caResult = CAcloseSslConnection(&endpoint);
+
+    if (CA_STATUS_OK != caResult)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: Failed to close DTLS session, caResult = %d",
+            __func__, caResult);
+        success = false;
+    }
+
+    return success;
 }
 
 /**
@@ -474,15 +497,7 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
                 {
                     OIC_LOG(WARNING, TAG, "Internal error in PDMDeleteDevice");
                 }
-
-                CAEndpoint_t endpoint;
-                memcpy(&endpoint, &(otmCtx->selectedDeviceInfo->endpoint), sizeof(CAEndpoint_t));
-                endpoint.port = otmCtx->selectedDeviceInfo->securePort;
-
-                if (CA_STATUS_OK != CAcloseSslConnection(&endpoint))
-                {
-                    OIC_LOG(WARNING, TAG, "Failed to close Secure session");
-                }
+                CloseSslConnection(otmCtx->selectedDeviceInfo);
             }
         }
     }
@@ -1241,7 +1256,8 @@ static OCStackApplicationResult OwnerAclHandler(void *ctx, OCDoHandle UNUSED,
             res = PostOwnershipInformation(otmCtx);
             if(OC_STACK_OK != res)
             {
-                OIC_LOG_V(ERROR, TAG, "%s: Failed to update the ownership information of the new device, res = %d",
+                OIC_LOG_V(ERROR, TAG, "%s: Failed to update the ownership information"
+                    "of the new device, res = %d",
                     __func__, res);
                 SetResult(otmCtx, res);
             }
@@ -1256,15 +1272,10 @@ static OCStackApplicationResult OwnerAclHandler(void *ctx, OCDoHandle UNUSED,
         selectedDeviceInfo->ownerAclUnauthorizedRequest = true;
 
         //Close the temporal secure session and re-connect using the owner credential
-        CAEndpoint_t* endpoint = (CAEndpoint_t *)&selectedDeviceInfo->endpoint;
-        endpoint->port = selectedDeviceInfo->securePort;
-        CAResult_t caResult = CAcloseSslConnection(endpoint);
-
-        if(CA_STATUS_OK != caResult)
+        if(!CloseSslConnection(selectedDeviceInfo))
         {
-            OIC_LOG_V(ERROR, TAG, "%s: Failed to close DTLS session, caResult = %d",
-                __func__, caResult);
-            SetResult(otmCtx, caResult);
+            //Cannot make progress reliably, so return the error code from the previous request.
+            SetResult(otmCtx, OC_STACK_UNAUTHORIZED_REQ);
         }
         else
         {
@@ -1413,16 +1424,17 @@ static OCStackApplicationResult ReadyForNomalStatusHandler(void *ctx, OCDoHandle
         OIC_LOG(INFO, TAG, "Device state is in Ready for Normal Operation.");
         OCStackResult res = PDMSetDeviceState(&otmCtx->selectedDeviceInfo->doxm->deviceID,
                                               PDM_DEVICE_ACTIVE);
-         if (OC_STACK_OK == res)
-         {
-                OIC_LOG_V(INFO, TAG, "Add device's UUID in PDM_DB");
-                SetResult(otmCtx, OC_STACK_OK);
-                return OC_STACK_DELETE_TRANSACTION;
-         }
-          else
-         {
-              OIC_LOG(ERROR, TAG, "Ownership transfer is complete but adding information to DB is failed.");
-         }
+        if (OC_STACK_OK == res)
+        {
+            CloseSslConnection(otmCtx->selectedDeviceInfo);
+            OIC_LOG_V(INFO, TAG, "Add device's UUID in PDM_DB");
+            SetResult(otmCtx, OC_STACK_OK);
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "Ownership transfer is complete but adding information to DB is failed.");
+        }
     }
     else
     {
