@@ -50,10 +50,6 @@ provisioning_env.PrependUnique(LIBS = ['octbstack', 'oc_logger', 'connectivity_a
 
 provisioning_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
-
-if target_os not in ['msys_nt', 'windows', 'android', 'ios']:
-	provisioning_env.ParseConfig('pkg-config --libs glib-2.0')
-
 if target_os in ['windows', 'msys_nt']:
 	provisioning_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi'])
 
