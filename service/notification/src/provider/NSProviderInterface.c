@@ -124,6 +124,8 @@ NSResult NSStopProvider()
 
     if (initProvider)
     {
+        CAUnregisterNetworkMonitorHandler((CAAdapterStateChangedCB)NSProviderAdapterStateListener,
+                (CAConnectionStateChangedCB)NSProviderConnectionStateListener);
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_STOP_PRESENCE, NULL);
         NSRegisterSubscribeRequestCb((NSSubscribeRequestCallback)NULL);
         NSRegisterSyncCb((NSProviderSyncInfoCallback)NULL);
