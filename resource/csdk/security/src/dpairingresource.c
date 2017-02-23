@@ -41,7 +41,9 @@
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
 #include "payload_logging.h"
-#include "mbedtls/ssl_ciphersuites.h"
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+#include <mbedtls/ssl_ciphersuites.h>
+#endif
 
 #ifdef HAVE_STRINGS_H
 #include <strings.h>

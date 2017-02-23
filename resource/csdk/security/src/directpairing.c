@@ -51,7 +51,9 @@
 #include "pmtypes.h"
 #include "pmutility.h"
 #include "srmutility.h"
-#include "mbedtls/ssl_ciphersuites.h"
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+#include <mbedtls/ssl_ciphersuites.h>
+#endif
 
 #define TAG ("OIC_DP")
 static const uint16_t CBOR_SIZE = 1024;

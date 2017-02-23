@@ -49,10 +49,9 @@
 #include "srmutility.h"
 #include "pinoxmcommon.h"
 #include "oxmverifycommon.h"
-#include "mbedtls/ssl_ciphersuites.h"
-
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
-#include "mbedtls/md.h"
+#include <mbedtls/ssl_ciphersuites.h>
+#include <mbedtls/md.h>
 #include "pkix_interface.h"
 #endif
 
