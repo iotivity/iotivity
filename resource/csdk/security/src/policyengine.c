@@ -118,10 +118,22 @@ static bool IsRequestFromDevOwner(SRMRequestContext_t *context)
             __func__, retVal ? "" : "NOT ");
     }
 
+    return retVal;
+}
+
+/**
+ * Check if the request has been received from a session used for Ownership Transfer.
+ *
+ * @return true if the CA_SECURE_ENDPOINT_ATTRIBUTE_ADMINISTRATOR bit is set, else false.
+ */
+static bool IsRequestFromOwnershipTransferSession(SRMRequestContext_t *context)
+{
+    bool retVal = false;
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     //Ownership Transfer sessions are allowed to bypass SVR ACEs, while this
-    //Device is not owned yet.
-    if (!retVal && (NULL != context->endPoint))
+    //Device is not ready for normal operation yet.
+    if ((NULL != context) && (NULL != context->endPoint))
     {
         uint32_t allAttributes;
         if (CAGetSecureEndpointAttributes(context->endPoint, &allAttributes) &&
@@ -449,7 +461,7 @@ static void ProcessAccessRequest(SRMRequestContext_t *context)
             }
             else
             {
-                OIC_LOG_V(INFO, TAG, "%s:no ACL found matching subject for resource %s",
+                OIC_LOG_V(INFO, TAG, "%s:no ACE found matching subject for resource %s",
                     __func__, context->resourceUri);
             }
         } while ((NULL != currentAce)
@@ -519,6 +531,13 @@ void CheckPermission(SRMRequestContext_t *context)
         }
     }
 #endif //MULTIPLE_OWNER
+    else if (!GetPstatIsop() &&
+             (NOT_A_SVR_RESOURCE != context->resourceType) &&
+             IsRequestFromOwnershipTransferSession(context))
+    {
+        OIC_LOG(INFO, TAG, "CheckPermission: granting access to OT session request");
+        context->responseVal = ACCESS_GRANTED;
+    }
     // Else request is a "normal" request that must be tested against ACL.
     else
     {

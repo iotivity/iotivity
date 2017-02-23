@@ -330,7 +330,7 @@ typedef struct
 /**
  * Endpoint used for security administration - a special type of identity that
  * bypasses Access Control Entry checks for SVR resources, while the device is
- * not owned yet.
+ * not ready for normal operation yet.
  */
 #define CA_SECURE_ENDPOINT_ATTRIBUTE_ADMINISTRATOR  0x1
 
