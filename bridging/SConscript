@@ -42,7 +42,7 @@ if target_os not in ['android', 'arduino', 'darwin', 'ios', 'tizen', 'msys_nt', 
 
     SConscript(os.path.join('plugins', 'lifx_plugin', 'SConscript'))
 
-#    SConscript(os.path.join('plugins', 'hue_plugin', 'SConscript'))
+    SConscript(os.path.join('plugins', 'hue_plugin', 'SConscript'))
 
     SConscript(os.path.join('plugins', 'nest_plugin', 'SConscript'))
 
