@@ -1640,7 +1640,12 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                                   response->devAddr.remoteId);
 
 #if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
-                        OCCMDiscoveryResource(response);
+                        CAConnectUserPref_t connPrefer = CA_USER_PREF_CLOUD;
+                        CAResult_t ret = CAUtilCMGetConnectionUserConfig(&connPrefer);
+                        if (ret == CA_STATUS_OK && connPrefer != CA_USER_PREF_CLOUD)
+                        {
+                            OCCMDiscoveryResource(response);
+                        }
 #endif
                     }
                 }
