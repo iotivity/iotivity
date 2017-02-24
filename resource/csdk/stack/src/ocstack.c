@@ -1491,6 +1491,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             OIC_LOG(INFO, TAG, "Calling into application address space");
 
             OCClientResponse *response = NULL;
+            OCPayloadType type = PAYLOAD_TYPE_INVALID;
 
             response = (OCClientResponse *)OICCalloc(1, sizeof(*response));
             if (!response)
@@ -1513,7 +1514,6 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             if(responseInfo->info.payload &&
                responseInfo->info.payloadSize)
             {
-                OCPayloadType type = PAYLOAD_TYPE_INVALID;
                 // check the security resource
                 if (SRMIsSecurityResourceURI(cbNode->requestUri))
                 {
@@ -1707,7 +1707,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 }
 #endif
                 // set remoteID(device ID) into OCClientResponse callback parameter
-                if (OC_REST_DISCOVER == cbNode->method)
+                if (OC_REST_DISCOVER == cbNode->method && PAYLOAD_TYPE_DISCOVERY == type)
                 {
                     OCDiscoveryPayload *payload = (OCDiscoveryPayload*) response->payload;
                     // Payload can be empty in case of error message.
