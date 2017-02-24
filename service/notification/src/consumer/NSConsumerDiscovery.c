@@ -112,9 +112,9 @@ OCStackApplicationResult NSProviderDiscoverListener(
     while (discoveryPayload)
     {
         OCResourcePayload * resource = discoveryPayload->resources;
-        NS_LOG_V(DEBUG, "Discovered resource uri : %s", resource->uri);
         while (resource)
         {
+            NS_LOG_V(DEBUG, "Discovered resource uri : %s", resource->uri);
             NS_VERIFY_NOT_NULL(resource->uri, OC_STACK_KEEP_TRANSACTION);
             if (strstr(resource->uri, NS_RESOURCE_URI))
             {
