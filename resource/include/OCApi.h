@@ -208,6 +208,23 @@ namespace OC
         {}
             PlatformConfig(const ServiceType serviceType_,
             const ModeType mode_,
+            const std::string& ipAddress_,
+            const uint16_t port_,
+            const OCTransportAdapter transportType_,
+            const QualityOfService QoS_,
+            OCPersistentStorage *ps_ = nullptr)
+                : serviceType(serviceType_),
+                mode(mode_),
+                serverConnectivity(CT_DEFAULT),
+                clientConnectivity(CT_DEFAULT),
+                transportType(transportType_),
+                ipAddress(ipAddress_),
+                port(port_),
+                QoS(QoS_),
+                ps(ps_)
+        {}
+            PlatformConfig(const ServiceType serviceType_,
+            const ModeType mode_,
             OCTransportAdapter transportType_,
             const QualityOfService QoS_,
             OCPersistentStorage *ps_ = nullptr)

@@ -612,11 +612,11 @@ void RemoveOnDirectPairingListener(JNIEnv* env, jobject jListener)
 /*
 * Class:     org_iotivity_base_OcPlatform
 * Method:    configure
-* Signature: (IILjava/lang/String;II)V
+* Signature: (IILjava/lang/String;IILjava/lang/String;I)V
 */
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
 (JNIEnv *env, jclass clazz, jint jServiceType, jint jModeType, jstring jIpAddress, jint jPort,
-                                                                 jint jQOS, jstring jDbPath)
+ jint jQOS, jstring jDbPath, jint jTransport)
 {
     LOGI("OcPlatform_configure");
 
@@ -642,6 +642,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
         JniUtils::getModeType(env, jModeType),
         ipAddress,
         port,
+        JniUtils::getOCTransportAdapter(jTransport),
         JniUtils::getQOS(env, static_cast<int>(jQOS)),
         JniOcSecurity::getOCPersistentStorage()
     };

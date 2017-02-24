@@ -108,7 +108,8 @@ public final class OcPlatform {
                     platformConfig.getIpAddress(),
                     platformConfig.getPort(),
                     platformConfig.getQualityOfService().getValue(),
-                    platformConfig.getSvrDbPath()
+                    platformConfig.getSvrDbPath(),
+                    platformConfig.getAvailableTransportType()
             );
 
             sIsPlatformInitialized = true;
@@ -120,7 +121,8 @@ public final class OcPlatform {
                                          String ipAddress,
                                          int port,
                                          int qualityOfService,
-                                         String dbPath);
+                                         String dbPath,
+                                         int transport);
 
     /**
      * API for stop all process of the OcPlatform.

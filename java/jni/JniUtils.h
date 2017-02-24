@@ -135,6 +135,36 @@ public:
         }
     }
 
+    static OCTransportAdapter getOCTransportAdapter(int adapter)
+    {
+        int transport = OCTransportAdapter::OC_DEFAULT_ADAPTER;
+        if (adapter & CT_ADAPTER_IP)
+        {
+            transport |= OCTransportAdapter::OC_ADAPTER_IP;
+        }
+
+        if (adapter & CT_ADAPTER_GATT_BTLE)
+        {
+            transport |= OCTransportAdapter::OC_ADAPTER_GATT_BTLE;
+        }
+
+        if (adapter & CT_ADAPTER_RFCOMM_BTEDR)
+        {
+            transport |= OCTransportAdapter::OC_ADAPTER_RFCOMM_BTEDR;
+        }
+
+        if (adapter & CT_ADAPTER_TCP)
+        {
+            transport |= OCTransportAdapter::OC_ADAPTER_TCP;
+        }
+
+        if (adapter & CT_ADAPTER_NFC)
+        {
+            transport |= OCTransportAdapter::OC_ADAPTER_NFC;
+        }
+        return (OCTransportAdapter)transport;
+    }
+
     static std::string stackResultToStr(const int result)
     {
         switch (result)
