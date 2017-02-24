@@ -37,7 +37,11 @@
         ((level) == 0) ? DLOG_DEBUG : \
         ((level) == 1) ? DLOG_INFO : \
         ((level) == 2) ? DLOG_WARN : \
-    ((level) == 3) ? DLOG_ERROR : DLOG_ERROR)
+        ((level) == 3) ? DLOG_ERROR : \
+        ((level) == 4) ? DLOG_ERROR : \
+        ((level) == 5) ? DLOG_INFO : \
+        ((level) == 6) ? DLOG_INFO : \
+        ((level) == 7) ? DLOG_INFO : DLOG_INFO)
 #define NS_LOG_V(level, format, ...) (dlog_print(NS_CONVERT_LEVEL(level), LOG_TAG, (format), __VA_ARGS__))
 #define NS_LOG(level, msg) (dlog_print(NS_CONVERT_LEVEL(level), LOG_TAG, (msg)))
 #else // __TIZEN__
@@ -50,7 +54,11 @@
         ((level) == 0) ? "DEBUG" : \
         ((level) == 1) ? "INFO" : \
         ((level) == 2) ? "WARNING" : \
-    ((level) == 3) ? "ERROR" : "FATAL")
+        ((level) == 3) ? "ERROR" : \
+        ((level) == 4) ? "FATAL" : \
+        ((level) == 5) ? "DEBUG_LITE" : \
+        ((level) == 6) ? "INFO_LITE" : \
+        ((level) == 7) ? "INFO_PRIVATE" : "INFO_PRIVATE")
 #define NS_LOG_V(level, format, ...) \
     { \
         printf("%s: %s ", NS_CONVERT_LEVEL(level), __NS_FILE__); \
