@@ -19,8 +19,12 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <cinttypes>
+#include "iotivity_config.h"
 #include "gtest/gtest.h"
 #include "time.h"
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
 
 // Test function hooks
 #define CAcloseSslConnection CAcloseSslConnectionTest
@@ -962,15 +966,22 @@ unsigned char control_server_message_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384[] = {
 };
 int control_server_message_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384_len = sizeof(control_server_message_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384);
 
+static volatile bool socket_error = false;
+
 static void error(const char *msg)
 {
+    socket_error = true;
     perror(msg);
-    exit(0);
 }
 
 static CASocketFd_t sockfd, newsockfd;
 
-static void socketConnect()
+static void socketClose()
+{
+    OC_CLOSE_SOCKET(sockfd);
+}
+
+static bool socketConnect()
 {
     struct addrinfo* addressInfo = NULL;
     struct addrinfo hints;
@@ -980,21 +991,29 @@ static void socketConnect()
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
+    {
         error("ERROR opening socket");
+        return false;
+    }
 
     int result = getaddrinfo(SERVER_NAME, SERVER_PORT_STRING, &hints, &addressInfo);
     if (0 != result)
     {
-        fprintf(stderr,"ERROR, no such host\n");
-        exit(0);
+        error("ERROR, no such host");
+        socketClose();
+        return false;
     }
 
     if (connect(sockfd, addressInfo->ai_addr, (int)addressInfo->ai_addrlen) < 0)
     {
         error("ERROR connecting");
+        socketClose();
+        freeaddrinfo(addressInfo);
+        return false;
     }
 
     freeaddrinfo(addressInfo);
+    return true;
 }
 
 static ssize_t CATCPPacketSendCB(CAEndpoint_t *, const void *buf, size_t buflen)
@@ -1027,15 +1046,14 @@ static void PacketReceive(unsigned char *data, int * datalen)
     }
 
     if (n < 0)
-         error("ERROR reading from socket");
+    {
+        error("ERROR reading from socket");
+        *datalen = 0;
+        return;
+    }
 
     *datalen = n + 5;
     memcpy(data, buffer, *datalen);
-}
-
-static void socketClose()
-{
-    OC_CLOSE_SOCKET(sockfd);
 }
 
 static void infoCallback_that_loads_x509(PkiInfo_t * inf)
@@ -1050,16 +1068,30 @@ static void infoCallback_that_loads_x509(PkiInfo_t * inf)
     inf->crl.len = 0;
 }
 
-static void socketOpen_server()
+static bool socketOpen_server()
 {
     int portno;
     struct sockaddr_in serv_addr, cli_addr;
     socklen_t clilen;
 
+#ifdef HAVE_WINSOCK2_H
+    WORD wVersionRequested = MAKEWORD(2, 2);
+    WSADATA wsaData;
+    int err = WSAStartup(wVersionRequested, &wsaData);
+    if (err)
+    {
+        error("WSAStartup error");
+        return false;
+    }
+#endif
+
     portno = SERVER_PORT;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
+    {
         error("\nERROR opening socket");
+        return false;
+    }
     //bzero((char *) &serv_addr, sizeof(serv_addr));
     memset((void*)&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
@@ -1067,14 +1099,23 @@ static void socketOpen_server()
     serv_addr.sin_port = htons(portno);
     if (bind(sockfd, (struct sockaddr *) &serv_addr,
               sizeof(serv_addr)) < 0)
-              error("\nERROR on binding");
+    {
+        error("\nERROR on binding");
+        socketClose();
+        return false;
+    }
     listen(sockfd,5);
     clilen = sizeof(cli_addr);
     newsockfd = accept(sockfd,
                  (struct sockaddr *) &cli_addr,
                  &clilen);
     if (newsockfd < 0)
-          error("\nERROR on accept");
+    {
+        error("\nERROR on accept");
+        socketClose();
+        return false;
+    }
+    return true;
 }
 
 static ssize_t CATCPPacketSendCB_server(CAEndpoint_t *, const void *buf, size_t buflen)
@@ -1082,7 +1123,9 @@ static ssize_t CATCPPacketSendCB_server(CAEndpoint_t *, const void *buf, size_t 
     int n;
     n = send(newsockfd, (const char*)buf, (int)buflen, 0);
     if (n < 0)
-         error("ERROR writing to socket");
+    {
+        error("ERROR writing to socket");
+    }
     return n;
 }
 
@@ -1091,6 +1134,7 @@ static void CATCPPacketReceivedCB_server(const CASecureEndpoint_t *, const void 
     memcpy(msg, data, dataLength);
     msglen = dataLength;
 }
+
 static void PacketReceive_server(unsigned char *data, int * datalen)
 {
     int n;
@@ -1104,7 +1148,11 @@ static void PacketReceive_server(unsigned char *data, int * datalen)
     }
 
     if (n < 0)
-         error("\nERROR reading from socket");
+    {
+        error("\nERROR reading from socket");
+        *datalen = n;
+        return;
+    }
 
     *datalen = n + 5;
     memcpy(data, buffer, *datalen);
@@ -1880,7 +1928,7 @@ static int testCAinitSslAdapter()
 }
 
 // CAinitTlsAdapter()
-TEST(TLSAdaper, Test_1)
+TEST(TLSAdapter, Test_1)
 {
     int ret = 0xFF;
     ret = testCAinitSslAdapter();
@@ -1979,7 +2027,7 @@ static int testCAsetSslAdapterCallbacks()
 }
 
 // CAsetSslAdapterCallbacks()
-TEST(TLSAdaper, Test_2)
+TEST(TLSAdapter, Test_2)
 {
     int ret = 0xFF;
     ret = testCAsetSslAdapterCallbacks();
@@ -2010,7 +2058,10 @@ static ssize_t CATCPPacketSendCB_forInitHsTest(CAEndpoint_t *, const void * buf,
     int n;
     n = send(sockfd, (const char*)buf, (int)buflen, 0);
     if (n < 0)
-         error("ERROR writing to socket");
+    {
+        error("ERROR writing to socket");
+        return n;
+    }
 
     memset(controlBuf, 0, sizeof(predictedClientHello));
     memcpy(controlBuf, buf, buflen);
@@ -2074,7 +2125,11 @@ static void * test0CAinitiateSslHandshake(void * arg)
 
     CAsetPskCredentialsCallback(GetDtlsPskCredentials);
 
-    socketConnect();
+    if (!socketConnect())
+    {
+        *((int*)arg) = 0xFF;
+        return (void *) 0xFF;
+    }
 
     unsigned int unixTime = (unsigned)time(NULL);
     CAinitiateSslHandshake(&serverAddr);
@@ -2136,8 +2191,16 @@ static int test1CAinitiateSslHandshake()
 }
 
 // CAinitiateSslHandshake()
-TEST(TLSAdaper, Test_3_0)
+// This test has a bug in it (IOT-1848):
+//  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
+//  to true) and socketConnect() is hard coded to try only IPv4.
+#ifdef HAVE_WINSOCK2_H
+TEST(TLSAdapter, DISABLED_Test_3_0)
+#else
+TEST(TLSAdapter, Test_3_0)
+#endif
 {
+    socket_error = false;
     pthread_t thread1, thread2;
     int ret = 0;
     int arg = 1;
@@ -2146,7 +2209,7 @@ TEST(TLSAdaper, Test_3_0)
     if(ret)
     {
         fprintf(stderr, "Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
@@ -2155,15 +2218,16 @@ TEST(TLSAdaper, Test_3_0)
     if(ret)
     {
         fprintf(stderr, "Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
 
+    ASSERT_FALSE(socket_error);
     EXPECT_EQ(0, arg);
 }
 
-TEST(TLSAdaper, Test_3_1)
+TEST(TLSAdapter, Test_3_1)
 {
     int ret = 0xFF;
     ret = test1CAinitiateSslHandshake();
@@ -2251,7 +2315,11 @@ static void * testCAencryptSsl(void * arg)
 
     CAsetPskCredentialsCallback(GetDtlsPskCredentials);
 
-    socketConnect();
+    if (!socketConnect())
+    {
+        *((int*)arg) = 0xFF;
+        return (void *) 0xFF;
+    }
 
     // CAinitiateSslHandshake
     oc_mutex_lock(g_sslContextMutex);
@@ -2266,6 +2334,11 @@ static void * testCAencryptSsl(void * arg)
     for (int i = 0; i < 6; i++)
     {
         PacketReceive(buffer, &buflen);
+        if (buflen < 1)
+        {
+            *((int*)arg) = 0xFF;
+            return (void *) 0xFF;
+        }
         CAdecryptSsl(sep, (uint8_t *)buffer, buflen);
     }
 
@@ -2274,6 +2347,11 @@ static void * testCAencryptSsl(void * arg)
     CAencryptSsl(&serverAddr, buffer, ret);
 
     PacketReceive(buffer, &buflen);
+    if (buflen < 1)
+    {
+        *((int*)arg) = 0xFF;
+        return (void *) 0xFF;
+    }
     CAdecryptSsl(sep, (uint8_t *)buffer, buflen);
 
     CAcloseSslConnection(&serverAddr);
@@ -2387,8 +2465,16 @@ static void * testCAencryptSsl(void * arg)
 }
 
 // CAencryptSsl()
-TEST(TLSAdaper, Test_4_0)
+// This test has a bug in it (IOT-1848):
+//  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
+//  to true) and socketConnect() is hard coded to try only IPv4.
+#ifdef HAVE_WINSOCK2_H
+TEST(TLSAdapter, DISABLED_Test_4_0)
+#else
+TEST(TLSAdapter, Test_4_0)
+#endif
 {
+    socket_error = false;
     pthread_t thread1, thread2;
     int ret = 0;
     int arg = 0;
@@ -2397,7 +2483,7 @@ TEST(TLSAdaper, Test_4_0)
     if(ret)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
@@ -2406,17 +2492,26 @@ TEST(TLSAdaper, Test_4_0)
     if(ret)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
 
+    ASSERT_FALSE(socket_error);
     EXPECT_EQ(0, arg);
 }
 
 // CAencryptSsl()
-TEST(TLSAdaper, Test_4_1)
+// This test has a bug in it (IOT-1848):
+//  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
+//  to true) and socketConnect() is hard coded to try only IPv4.
+#ifdef HAVE_WINSOCK2_H
+TEST(TLSAdapter, DISABLED_Test_4_1)
+#else
+TEST(TLSAdapter, Test_4_1)
+#endif
 {
+    socket_error = false;
     pthread_t thread1, thread2;
     int ret = 0;
     int arg = 1;
@@ -2425,7 +2520,7 @@ TEST(TLSAdaper, Test_4_1)
     if(ret)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
@@ -2434,17 +2529,26 @@ TEST(TLSAdaper, Test_4_1)
     if(ret)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
 
+    ASSERT_FALSE(socket_error);
     EXPECT_EQ(0, arg);
 }
 
 // CAencryptSsl()
-TEST(TLSAdaper, Test_4_2)
+// This test has a bug in it (IOT-1848):
+//  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
+//  to true) and socketConnect() is hard coded to try only IPv4.
+#ifdef HAVE_WINSOCK2_H
+TEST(TLSAdapter, DISABLED_Test_4_2)
+#else
+TEST(TLSAdapter, Test_4_2)
+#endif
 {
+    socket_error = false;
     pthread_t thread1, thread2;
     int ret = 0;
     int arg = 2;
@@ -2453,7 +2557,7 @@ TEST(TLSAdaper, Test_4_2)
     if(ret)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
@@ -2462,17 +2566,26 @@ TEST(TLSAdaper, Test_4_2)
     if(ret)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
 
+    ASSERT_FALSE(socket_error);
     EXPECT_EQ(0, arg);
 }
 
 // CAencryptSsl()
-TEST(TLSAdaper, Test_4_3)
+// This test has a bug in it (IOT-1848):
+//  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
+//  to true) and socketConnect() is hard coded to try only IPv4.
+#ifdef HAVE_WINSOCK2_H
+TEST(TLSAdapter, DISABLED_Test_4_3)
+#else
+TEST(TLSAdapter, Test_4_3)
+#endif
 {
+    socket_error = false;
     pthread_t thread1, thread2;
     int ret = 0;
     int arg = 3;
@@ -2481,7 +2594,7 @@ TEST(TLSAdaper, Test_4_3)
     if(ret)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
@@ -2490,17 +2603,26 @@ TEST(TLSAdaper, Test_4_3)
     if(ret)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
 
+    ASSERT_FALSE(socket_error);
     EXPECT_EQ(0, arg);
 }
 
 // CAencryptSsl()
-TEST(TLSAdaper, Test_4_4)
+// This test has a bug in it (IOT-1848):
+//  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
+//  to true) and socketConnect() is hard coded to try only IPv4.
+#ifdef HAVE_WINSOCK2_H
+TEST(TLSAdapter, DISABLED_Test_4_4)
+#else
+TEST(TLSAdapter, Test_4_4)
+#endif
 {
+    socket_error = false;
     pthread_t thread1, thread2;
     int ret = 0;
     int arg = 4;
@@ -2509,7 +2631,7 @@ TEST(TLSAdaper, Test_4_4)
     if(ret)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
@@ -2518,16 +2640,25 @@ TEST(TLSAdaper, Test_4_4)
     if(ret)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
 
+    ASSERT_FALSE(socket_error);
     EXPECT_EQ(0, arg);
 }
 
-TEST(TLSAdaper, Test_4_5)
+// This test has a bug in it (IOT-1848):
+//  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
+//  to true) and socketConnect() is hard coded to try only IPv4.
+#ifdef HAVE_WINSOCK2_H
+TEST(TLSAdapter, DISABLED_Test_4_5)
+#else
+TEST(TLSAdapter, Test_4_5)
+#endif
 {
+    socket_error = false;
     pthread_t thread1, thread2;
     int ret = 0;
     int arg = 5;
@@ -2536,7 +2667,7 @@ TEST(TLSAdaper, Test_4_5)
     if(ret)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
@@ -2545,11 +2676,12 @@ TEST(TLSAdaper, Test_4_5)
     if(ret)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
 
+    ASSERT_FALSE(socket_error);
     EXPECT_EQ(0, arg);
 }
 
@@ -2616,7 +2748,11 @@ static void * testCAdecryptSsl(void * arg)
 
     CAsetPskCredentialsCallback(GetDtlsPskCredentials);
 
-    socketConnect();
+    if (!socketConnect())
+    {
+        *((int*)arg) = 0xFF;
+        return (void *) 0xFF;
+    }
 
     // CAinitiateSslHandshake
     oc_mutex_lock(g_sslContextMutex);
@@ -2629,6 +2765,11 @@ static void * testCAdecryptSsl(void * arg)
     for (int i = 0; i < 6; i++)
     {
         PacketReceive(buffer, &buflen);
+        if (buflen < 1)
+        {
+            *((int*)arg) = 0xFF;
+            return (void *) 0xFF;
+        }
         CAdecryptSsl(sep, (uint8_t *)buffer, buflen);
     }
 
@@ -2637,6 +2778,11 @@ static void * testCAdecryptSsl(void * arg)
     CAencryptSsl(&serverAddr, buffer, ret);
 
     PacketReceive(buffer, &buflen);
+    if (buflen < 1)
+    {
+        *((int*)arg) = 0xFF;
+        return (void *) 0xFF;
+    }
     CAdecryptSsl(sep, (uint8_t *)buffer, buflen);
 
     CAcloseSslConnection(&serverAddr);
@@ -2673,8 +2819,16 @@ static void * testCAdecryptSsl(void * arg)
 }
 
 // CAdecryptTls()
-TEST(TLSAdaper, Test_5)
+// This test has a bug in it (IOT-1848):
+//  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
+//  to true) and socketConnect() is hard coded to try only IPv4.
+#ifdef HAVE_WINSOCK2_H
+TEST(TLSAdapter, DISABLED_Test_5)
+#else
+TEST(TLSAdapter, Test_5)
+#endif
 {
+    socket_error = false;
     pthread_t thread1, thread2;
     int ret = 0;
     int arg = 1;
@@ -2683,7 +2837,7 @@ TEST(TLSAdaper, Test_5)
     if(ret)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
@@ -2692,11 +2846,12 @@ TEST(TLSAdaper, Test_5)
     if(ret)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
 
+    ASSERT_FALSE(socket_error);
     EXPECT_EQ(0, arg);
 }
 
@@ -2775,7 +2930,7 @@ static int testCAdeinitSslAdapter()
 }
 
 // CAdeinitSslAdapter()
-TEST(TLSAdaper, Test_6)
+TEST(TLSAdapter, Test_6)
 {
     int ret = 0xFF;
     ret = testCAdeinitSslAdapter();
@@ -2814,7 +2969,11 @@ static void * testServer(void * arg)
 
     CAsetPskCredentialsCallback(GetDtlsPskCredentials);
 
-    socketOpen_server();
+    if (!socketOpen_server())
+    {
+        *((int*)arg) = 0xFF;
+        return (void *) 0xFF;
+    }
 
     CASecureEndpoint_t * sep = (CASecureEndpoint_t *) malloc (sizeof(CASecureEndpoint_t));
     sep->endpoint = serverAddr;
@@ -2822,6 +2981,11 @@ static void * testServer(void * arg)
     for (int i = 0; i < 7; i++)
     {
         PacketReceive_server(buffer, &buflen);
+        if (buflen < 1)
+        {
+            *((int*)arg) = 0xFF;
+            return (void *) 0xFF;
+        }
         CAdecryptSsl(sep, (uint8_t *)buffer, buflen);
     }
 
@@ -2857,8 +3021,16 @@ static void * testServer(void * arg)
     }
 }
 
-TEST(TLSAdaper, Test_7)
+#ifdef HAVE_WINSOCK2_H
+// This test doesn't work on Windows:
+// testServer opens a socket without first calling WSAStartup
+// PacketReceive_server calls read() rather than recv() on a socket handle
+TEST(TLSAdapter, DISABLED_Test_7)
+#else
+TEST(TLSAdapter, Test_7)
+#endif
 {
+    socket_error = false;
     pthread_t thread1, thread2;
     int ret = 0;
     int arg = 1;
@@ -2867,7 +3039,7 @@ TEST(TLSAdaper, Test_7)
     if (ret)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
@@ -2876,11 +3048,12 @@ TEST(TLSAdaper, Test_7)
     if (ret)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
 
+    ASSERT_FALSE(socket_error);
     EXPECT_EQ(NULL, arg);
 }
 
@@ -2935,21 +3108,21 @@ static int testCAsetCredentialTypesCallback()
 }
 
 // CAsetPskCredentialsCallback()
-TEST(TLSAdaper, Test_9_0)
+TEST(TLSAdapter, Test_9_0)
 {
     int ret = 0xFF;
     ret = testCAsetPskCredentialsCallback();
     EXPECT_EQ(0, ret);
 }
 // CAsetPkixInfoCallback()
-TEST(TLSAdaper, Test_9_1)
+TEST(TLSAdapter, Test_9_1)
 {
     int ret = 0xFF;
     ret = testCAsetPkixInfoCallback();
     EXPECT_EQ(0, ret);
 }
 // CAsetCredentialTypesCallback()
-TEST(TLSAdaper, Test_9_2)
+TEST(TLSAdapter, Test_9_2)
 {
     int ret = 0xFF;
     ret = testCAsetCredentialTypesCallback();
@@ -3064,7 +3237,7 @@ static int testCAsetTlsCipherSuite()
 }
 
 // CAinitTlsAdapter()
-TEST(TLSAdaper, Test_10)
+TEST(TLSAdapter, Test_10)
 {
     int ret = 0xff;
     ret = testCAsetTlsCipherSuite();
@@ -3147,7 +3320,11 @@ static void * testCAsslGenerateOwnerPsk(void * arg)
 
     CAsetPskCredentialsCallback(GetDtlsPskCredentials);
 
-    socketConnect();
+    if (!socketConnect())
+    {
+        *((int*)arg) = 0xFF;
+        return (void *) 0xFF;
+    }
 
     // CAinitiateSslHandshake
     oc_mutex_lock(g_sslContextMutex);
@@ -3196,8 +3373,16 @@ static void * testCAsslGenerateOwnerPsk(void * arg)
     }
 }
 
-TEST(TLSAdaper, Test_11)
+// This test has a bug in it (IOT-1848):
+//  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
+//  to true) and socketConnect() is hard coded to try only IPv4.
+#ifdef HAVE_WINSOCK2_H
+TEST(TLSAdapter, DISABLED_Test_11)
+#else
+TEST(TLSAdapter, Test_11)
+#endif
 {
+    socket_error = false;
     pthread_t thread1, thread2;
     int ret = 0;
     int arg = 1;
@@ -3206,7 +3391,7 @@ TEST(TLSAdaper, Test_11)
     if(ret)
     {
         fprintf(stderr, "Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
@@ -3215,15 +3400,16 @@ TEST(TLSAdaper, Test_11)
     if(ret)
     {
         fprintf(stderr, "Error - pthread_create() return code: %d\n", ret);
-        exit(EXIT_FAILURE);
+        ASSERT_TRUE(false);
     }
 
     sleep(5);
 
+    ASSERT_FALSE(socket_error);
     EXPECT_EQ(0, arg);
 }
 
-TEST(TLSAdaper, Test_ParseChain)
+TEST(TLSAdapter, Test_ParseChain)
 {
     int errNum;
     mbedtls_x509_crt crt;
