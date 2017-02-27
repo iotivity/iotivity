@@ -346,7 +346,7 @@ NSMessage * NSGetMessage(OCRepPayload * payload)
     NS_LOG(DEBUG, "get provider id");
     char * pId = NULL;
     getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, &pId);
-    NS_LOG_V (DEBUG, "provider id: %s", pId);
+    NS_LOG_V (INFO_PRIVATE, "provider id: %s", pId);
     NS_VERIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
 
     NS_LOG(DEBUG, "create NSMessage");

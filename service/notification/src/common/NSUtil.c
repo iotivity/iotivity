@@ -298,7 +298,7 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
     OICStrcpy(retSync->providerId, UUID_STRING_SIZE, providerId);
     OICFree(providerId);
 
-    NS_LOG_V(DEBUG, "Provider ID : %s", retSync->providerId);
+    NS_LOG_V(INFO_PRIVATE, "Provider ID : %s", retSync->providerId);
     NS_LOG_V(DEBUG, "Sync ID : %lld", (long long int)retSync->messageId);
     NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->state);
 
@@ -595,9 +595,9 @@ OCDevAddr * NSChangeAddress(const char * inputaddress)
     retAddr->port = port;
 
     NS_LOG(DEBUG, "Change Address for TCP request");
-    NS_LOG_V(DEBUG, "Origin : %s", inputaddress);
-    NS_LOG_V(DEBUG, "Changed Addr : %s", retAddr->addr);
-    NS_LOG_V(DEBUG, "Changed Port : %d", retAddr->port);
+    NS_LOG_V(INFO_PRIVATE, "Origin : %s", address);
+    NS_LOG_V(INFO_PRIVATE, "Changed Addr : %s", retAddr->addr);
+    NS_LOG_V(INFO_PRIVATE, "Changed Port : %d", retAddr->port);
 
     return retAddr;
 }

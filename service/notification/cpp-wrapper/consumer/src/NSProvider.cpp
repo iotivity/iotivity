@@ -167,7 +167,7 @@ namespace OIC
                     iter = iter->next;
                 }
             }
-            NS_LOG_V(DEBUG, "calling Lower layer UpdateTopicList for Provider Id : %s",
+            NS_LOG_V(INFO_PRIVATE, "calling Lower layer UpdateTopicList for Provider Id : %s",
                      getProviderId().c_str());
             NSResult result = (NSResult) NSConsumerUpdateTopicList(getProviderId().c_str(), topicLL);
 

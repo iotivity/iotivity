@@ -79,7 +79,7 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
         return NS_ERROR;
     }
 
-    NS_LOG_V(DEBUG, "NS Provider ID: %s", NSGetProviderInfo()->providerId);
+    NS_LOG_V(INFO_PRIVATE, "NS Provider ID: %s", NSGetProviderInfo()->providerId);
 
     char * copyReq = OICStrdup(entityHandlerRequest->query);
     char * reqInterface = NSGetValueFromQuery(copyReq, NS_QUERY_INTERFACE);
@@ -135,7 +135,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         return;
     }
 
-    NS_LOG_V(DEBUG, "consumerId = %s", id);
+    NS_LOG_V(INFO_PRIVATE, "consumerId = %s", id);
     if (resourceType == NS_RESOURCE_MESSAGE)
     {
         NS_LOG(DEBUG, "resourceType == NS_RESOURCE_MESSAGE");
@@ -145,9 +145,9 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         NS_VERIFY_NOT_NULL_V(subData);
 
         OICStrcpy(subData->id, UUID_STRING_SIZE, id);
-        NS_LOG_V(DEBUG, "SubList ID = [%s]", subData->id);
+        NS_LOG_V(INFO_PRIVATE, "SubList ID = [%s]", subData->id);
 
-        NS_LOG_V(DEBUG, "Consumer Address: %s", entityHandlerRequest->devAddr.addr);
+        NS_LOG_V(INFO_PRIVATE, "Consumer Address: %s", entityHandlerRequest->devAddr.addr);
 
         subData->remote_messageObId = subData->messageObId = 0;
 
@@ -206,9 +206,9 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         NS_VERIFY_NOT_NULL_V(subData);
 
         OICStrcpy(subData->id, UUID_STRING_SIZE, id);
-        NS_LOG_V(DEBUG, "SubList ID = [%s]", subData->id);
+        NS_LOG_V(INFO_PRIVATE, "SubList ID = [%s]", subData->id);
 
-        NS_LOG_V(DEBUG, "Consumer Address: %s", entityHandlerRequest->devAddr.addr);
+        NS_LOG_V(INFO_PRIVATE, "Consumer Address: %s", entityHandlerRequest->devAddr.addr);
 
         subData->remote_syncObId = subData->syncObId = 0;
         bool isRemoteServer = false;

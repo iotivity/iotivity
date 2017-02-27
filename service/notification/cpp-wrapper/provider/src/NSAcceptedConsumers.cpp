@@ -45,7 +45,7 @@ namespace OIC
         void NSAcceptedConsumers::addConsumer(std::shared_ptr<NSConsumer> consumer)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            NS_LOG_V(DEBUG, "AcceptedConsumers::addConsumer  Id : %s", consumer->getConsumerId().c_str());
+            NS_LOG_V(INFO_PRIVATE, "AcceptedConsumers::addConsumer  Id : %s", consumer->getConsumerId().c_str());
             m_consumers[consumer->getConsumerId()] = consumer;
             return;
         }
@@ -53,7 +53,7 @@ namespace OIC
         void NSAcceptedConsumers::removeConsumer(const std::string &id)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            NS_LOG_V(DEBUG, "AcceptedConsumers::removeConsumer  Id : %s", id.c_str());
+            NS_LOG_V(INFO_PRIVATE, "AcceptedConsumers::removeConsumer  Id : %s", id.c_str());
             m_consumers.erase(id);
             return;
         }
@@ -61,7 +61,7 @@ namespace OIC
         bool NSAcceptedConsumers::isAccepted(const std::string &id)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            NS_LOG_V(DEBUG, "AcceptedConsumers::isAccepted  Id : %s", id.c_str());
+            NS_LOG_V(INFO_PRIVATE, "AcceptedConsumers::isAccepted  Id : %s", id.c_str());
             if ( m_consumers.find(id) == m_consumers.end() )
             {
                 NS_LOG(DEBUG, "isAccepted : Not Found Consumer with given ID");

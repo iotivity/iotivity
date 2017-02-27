@@ -35,7 +35,7 @@ namespace OIC
         void NSConsumerService::onProviderStateReceived(::NSProvider *provider, ::NSProviderState state)
         {
             NS_LOG(DEBUG, "onNSProviderStateChanged - IN");
-            NS_LOG_V(DEBUG, "provider Id : %s", provider->providerId);
+            NS_LOG_V(INFO_PRIVATE, "provider Id : %s", provider->providerId);
             NS_LOG_V(DEBUG, "state : %d", (int)state);
 
             std::string provId;
@@ -164,7 +164,7 @@ namespace OIC
         void NSConsumerService::onNSMessageReceived(::NSMessage *message)
         {
             NS_LOG(DEBUG, "onNSMessageReceived - IN");
-            NS_LOG_V(DEBUG, "message->providerId : %s", message->providerId);
+            NS_LOG_V(INFO_PRIVATE, "message->providerId : %s", message->providerId);
 
             NSMessage nsMessage(message);
 
@@ -190,7 +190,7 @@ namespace OIC
         void NSConsumerService::onNSSyncInfoReceived(::NSSyncInfo *syncInfo)
         {
             NS_LOG(DEBUG, "onNSSyncInfoReceived - IN");
-            NS_LOG_V(DEBUG, "syncInfo->providerId : %s", syncInfo->providerId);
+            NS_LOG_V(INFO_PRIVATE, "syncInfo->providerId : %s", syncInfo->providerId);
 
             NSSyncInfo nsSyncInfo(syncInfo);
 
@@ -261,7 +261,7 @@ namespace OIC
         NSResult NSConsumerService::enableRemoteService(const std::string &serverAddress)
         {
             NS_LOG(DEBUG, "enableRemoteService - IN");
-            NS_LOG_V(DEBUG, "Server Address : %s", serverAddress.c_str());
+            NS_LOG_V(INFO_PRIVATE, "Server Address : %s", serverAddress.c_str());
             NSResult result = NSResult::ERROR;
 #ifdef WITH_CLOUD
             result = (NSResult) NSConsumerEnableRemoteService(OICStrdup(serverAddress.c_str()));
@@ -277,7 +277,7 @@ namespace OIC
                 const std::string &topicName)
         {
             NS_LOG(DEBUG, "subscribeMQService - IN");
-            NS_LOG_V(DEBUG, "Server Address : %s", serverAddress.c_str());
+            NS_LOG_V(INFO_PRIVATE, "Server Address : %s", serverAddress.c_str());
             NSResult result = NSResult::ERROR;
 #ifdef WITH_MQ
             result = (NSResult) NSConsumerSubscribeMQService(

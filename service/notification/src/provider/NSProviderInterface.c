@@ -155,7 +155,7 @@ NSResult NSProviderEnableRemoteService(char *serverAddress)
         return NS_FAIL;
     }
 
-    NS_LOG_V(DEBUG, "Remote server address: %s", serverAddress);
+    NS_LOG_V(INFO_PRIVATE, "Remote server address: %s", serverAddress);
     NS_LOG(DEBUG, "Request to publish resource");
     NSPushQueue(DISCOVERY_SCHEDULER, TASK_PUBLISH_RESOURCE, serverAddress);
 
@@ -165,7 +165,7 @@ NSResult NSProviderEnableRemoteService(char *serverAddress)
 #else
     (void) serverAddress;
 #endif
-    NS_LOG_V(DEBUG, "Not logged in remote server: %s", serverAddress);
+    NS_LOG_V(INFO_PRIVATE, "Not logged in remote server: %s", serverAddress);
     return NS_FAIL;
 }
 
@@ -182,7 +182,7 @@ NSResult NSProviderDisableRemoteService(char *serverAddress)
         return NS_FAIL;
     }
 
-    NS_LOG_V(DEBUG, "Remote server address: %s", serverAddress);
+    NS_LOG_V(INFO_PRIVATE, "Remote server address: %s", serverAddress);
 
     NS_LOG(DEBUG, "Delete remote server info");
     NSDeleteRemoteServerAddress(serverAddress);
@@ -193,7 +193,7 @@ NSResult NSProviderDisableRemoteService(char *serverAddress)
 #else
     (void) serverAddress;
 #endif
-    NS_LOG_V(DEBUG, "Not logged in remote server : %s", serverAddress);
+    NS_LOG_V(INFO_PRIVATE, "Not logged in remote server : %s", serverAddress);
     return NS_FAIL;
 }
 

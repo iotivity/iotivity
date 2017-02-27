@@ -242,7 +242,7 @@ NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newOb
     NSCacheElement * obj = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(obj, NS_ERROR, pthread_mutex_unlock(mutex));
 
-    NS_LOG_V(DEBUG, "New Object address : %s:%d", newProvObj->connection->addr->addr, newProvObj->connection->addr->port);
+    NS_LOG_V(INFO_PRIVATE, "New Object address : %s:%d", newProvObj->connection->addr->addr, newProvObj->connection->addr->port);
     obj->data = (void *) NSCopyProvider_internal(newProvObj);
 
     if (!obj->data)

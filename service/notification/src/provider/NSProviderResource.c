@@ -37,7 +37,7 @@ OCStackApplicationResult NSHandlePublishCb(void *ctx, OCDoHandle handle,
     if (ctx != (void *)DEFAULT_CONTEXT_VALUE)
     {
         NS_LOG(DEBUG, "Invalid Publish callback received");
-    } 
+    }
 
     NS_LOG_V(DEBUG, "Publish resource response received code: %d", clientResponse->result);
 
@@ -48,7 +48,7 @@ NSResult NSPublishResourceToCloud(char *serverAddress)
 {
 
     NS_LOG(DEBUG, "NSPublishResourceToCloud - IN");
-    NS_LOG_V(DEBUG, "Remote Server Address: %s", serverAddress);
+    NS_LOG_V(INFO_PRIVATE, "Remote Server Address: %s", serverAddress);
 
     OCCallbackData cbData;
     cbData.cb = NSHandlePublishCb;

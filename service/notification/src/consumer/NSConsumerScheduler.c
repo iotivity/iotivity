@@ -82,7 +82,7 @@ NSResult NSConsumerMessageHandlerInit()
     NS_VERIFY_NOT_NULL(consumerUuid, NS_ERROR);
 
     NSSetConsumerId(consumerUuid);
-    NS_LOG_V(DEBUG, "Consumer ID : %s", *NSGetConsumerId());
+    NS_LOG_V(INFO_PRIVATE, "Consumer ID : %s", *NSGetConsumerId());
 
     NS_LOG(DEBUG, "listener init");
     NSResult ret = NSConsumerListenerInit();

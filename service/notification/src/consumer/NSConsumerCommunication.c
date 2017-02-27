@@ -86,7 +86,7 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
             }
         }
 
-        NS_LOG_V(DEBUG, "subscribe to %s:%d", connections->addr->addr, connections->addr->port);
+        NS_LOG_V(INFO_PRIVATE, "subscribe to %s:%d", connections->addr->addr, connections->addr->port);
 
         NS_LOG(DEBUG, "get subscribe message query");
         char * query = NULL;
@@ -250,7 +250,7 @@ NSSyncInfo * NSGetSyncInfoc(OCClientResponse * clientResponse)
 
     NS_LOG_V(DEBUG, "Sync ID : %lld", (long long int)retSync->messageId);
     NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->state);
-    NS_LOG_V(DEBUG, "Sync Provider ID : %s", retSync->providerId);
+    NS_LOG_V(INFO_PRIVATE, "Sync Provider ID : %s", retSync->providerId);
 
     return retSync;
 }
@@ -364,12 +364,12 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         {
             if (connections->isSubscribing == false)
             {
-                NS_LOG_V(DEBUG, "unsubscribed to %s:%d",
+                NS_LOG_V(INFO_PRIVATE, "unsubscribed to %s:%d",
                      connections->addr->addr, connections->addr->port);
                 connections = connections->next;
                 continue;
             }
-            NS_LOG_V(DEBUG, "cancel subscribe to %s:%d",
+            NS_LOG_V(INFO_PRIVATE, "cancel subscribe to %s:%d",
                      connections->addr->addr, connections->addr->port);
             OCCancel(connections->messageHandle, NS_QOS, NULL, 0);
             OCCancel(connections->syncHandle, NS_QOS, NULL, 0);
@@ -474,7 +474,7 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         }
 
         OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_CONSUMER_ID, *NSGetConsumerId());
-        NS_LOG_V(DEBUG, "NS_ATTRIBUTE_CONSUMER_ID: %s", *NSGetConsumerId());
+        NS_LOG_V(INFO_PRIVATE, "NS_ATTRIBUTE_CONSUMER_ID: %s", *NSGetConsumerId());
 
         iter = topicLL;
         int iterSize = 0;
@@ -654,7 +654,7 @@ OCStackApplicationResult NSIntrospectTopic(
     NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(clientResponse->result),
                             OC_STACK_KEEP_TRANSACTION)
 
-    NS_LOG_V(DEBUG, "GET response income : %s:%d",
+    NS_LOG_V(INFO_PRIVATE, "GET response income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
     NS_LOG_V(DEBUG, "GET response result : %d",
             clientResponse->result);

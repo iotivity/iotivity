@@ -143,7 +143,7 @@ namespace OIC
         NSResult NSProviderService::enableRemoteService(const std::string &serverAddress)
         {
             NS_LOG(DEBUG, "enableRemoteService - IN");
-            NS_LOG_V(DEBUG, "Server Address : %s", serverAddress.c_str());
+            NS_LOG_V(INFO_PRIVATE, "Server Address : %s", serverAddress.c_str());
             NSResult result = NSResult::ERROR;
 #ifdef WITH_CLOUD
             result = (NSResult) NSProviderEnableRemoteService(OICStrdup(serverAddress.c_str()));
@@ -158,7 +158,7 @@ namespace OIC
         NSResult NSProviderService::disableRemoteService(const std::string &serverAddress)
         {
             NS_LOG(DEBUG, "disableRemoteService - IN");
-            NS_LOG_V(DEBUG, "Server Address : %s", serverAddress.c_str());
+            NS_LOG_V(INFO_PRIVATE, "Server Address : %s", serverAddress.c_str());
             NSResult result = NSResult::ERROR;
 #ifdef WITH_CLOUD
             result = (NSResult) NSProviderDisableRemoteService(OICStrdup(serverAddress.c_str()));
@@ -174,7 +174,7 @@ namespace OIC
                 const std::string &topicName)
         {
             NS_LOG(DEBUG, "subscribeMQService - IN");
-            NS_LOG_V(DEBUG, "Server Address : %s", serverAddress.c_str());
+            NS_LOG_V(INFO_PRIVATE, "Server Address : %s", serverAddress.c_str());
             NSResult result = NSResult::ERROR;
 #ifdef WITH_MQ
             result = (NSResult) NSProviderSubscribeMQService(
@@ -195,7 +195,7 @@ namespace OIC
 
             ::NSMessage *nsMsg = getNSMessage(msg);
 
-            NS_LOG_V(DEBUG, "nsMsg->providerId : %s", nsMsg->providerId);
+            NS_LOG_V(INFO_PRIVATE, "nsMsg->providerId : %s", nsMsg->providerId);
             result = (NSResult) NSSendMessage(nsMsg);
             OICFree(nsMsg->dateTime);
             OICFree(nsMsg->title);
@@ -234,7 +234,7 @@ namespace OIC
             NSMessage nsMessage(message);
 
             NS_LOG_V(DEBUG, "Message ID : %lld", (long long int) nsMessage.getMessageId());
-            NS_LOG_V(DEBUG, "Provider ID : %s", nsMessage.getProviderId().c_str());
+            NS_LOG_V(INFO_PRIVATE, "Provider ID : %s", nsMessage.getProviderId().c_str());
             NS_LOG(DEBUG, "createMessage - OUT");
 
             OICFree(message);

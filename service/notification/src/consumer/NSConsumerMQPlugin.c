@@ -104,7 +104,7 @@ OCStackApplicationResult NSConsumerIntrospectMQTopic(
     NS_VERIFY_NOT_NULL(clientResponse->payload, OC_STACK_KEEP_TRANSACTION);
 
     NS_LOG(DEBUG, "income get response of MQ broker");
-    NS_LOG_V(DEBUG, "MQ GET response income : %s:%d",
+    NS_LOG_V(INFO_PRIVATE, "MQ GET response income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
     NS_LOG_V(DEBUG, "MQ GET response result : %d",
             clientResponse->result);
@@ -160,7 +160,7 @@ OCStackApplicationResult NSConsumerMQListener(
     NS_VERIFY_NOT_NULL(clientResponse->payload, OC_STACK_KEEP_TRANSACTION);
 
     NS_LOG(DEBUG, "income observe response of MQ notification");
-    NS_LOG_V(DEBUG, "MQ OBS response income : %s:%d",
+    NS_LOG_V(INFO_PRIVATE, "MQ OBS response income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
     NS_LOG_V(DEBUG, "MQ OBS response result : %d",
             clientResponse->result);
