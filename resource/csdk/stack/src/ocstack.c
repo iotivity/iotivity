@@ -2480,7 +2480,7 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
 OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlags clientFlags)
 {
     OIC_LOG(DEBUG, TAG, "call OCInit1");
-    return OCInit2(mode, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS, OC_DEFAULT_ADAPTER);
+    return OCInit2(mode, serverFlags, clientFlags, OC_DEFAULT_ADAPTER);
 }
 
 OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags,
