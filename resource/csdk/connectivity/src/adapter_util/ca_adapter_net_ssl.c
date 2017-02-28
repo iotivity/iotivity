@@ -1323,9 +1323,20 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
 {
     int index = 0;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
+
     VERIFY_NON_NULL_VOID(config, NET_SSL_TAG, "Invaild param");
     VERIFY_NON_NULL_VOID(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL");
     VERIFY_NON_NULL_VOID(g_getCredentialTypesCallback, NET_SSL_TAG, "Param callback is null");
+
+    //Resetting cipherFlag
+    g_caSslContext->cipherFlag[0] = false;
+    g_caSslContext->cipherFlag[1] = false;
+
+    if (NULL == g_getCredentialTypesCallback)
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "Param callback is null");
+        return;
+    }
 
     g_getCredentialTypesCallback(g_caSslContext->cipherFlag);
     // Retrieve the PSK credential from SRM
@@ -1345,24 +1356,42 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
     }
 
     memset(g_cipherSuitesList, 0, sizeof(g_cipherSuitesList));
+
+    // Add the preferred ciphersuite first
     if (SSL_CIPHER_MAX != g_caSslContext->cipher)
     {
         g_cipherSuitesList[index] = tlsCipher[g_caSslContext->cipher][0];
+        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Preferred ciphersuite added");
+        index++;
     }
-    else
+
+    // Add PSK ciphersuite
+    if (true == g_caSslContext->cipherFlag[0] &&
+                MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 != tlsCipher[g_caSslContext->cipher][0])
     {
+       g_cipherSuitesList[index] = MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256;
+       OIC_LOG(DEBUG, NET_SSL_TAG, "PSK ciphersuite added");
+       index++;
+    }
+
+    // Add all certificate ciphersuites
     if (true == g_caSslContext->cipherFlag[1])
     {
-        for (int i = 2; i < SSL_CIPHER_MAX - 2; i++)
+        for (int i = 0; i < SSL_CIPHER_MAX - 1; i++)
+        {
+            if (MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 != tlsCipher[i][0] &&
+                    i != g_caSslContext->cipher)
             {
                 g_cipherSuitesList[index] = tlsCipher[i][0];
                 index ++;
             }
         }
-        if (true == g_caSslContext->cipherFlag[0])
-        {
-           g_cipherSuitesList[index] = MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256;
-        }
+    }
+
+    OIC_LOG(DEBUG, NET_SSL_TAG, "Supported ciphersuites:");
+    for (int i = 0; i < index; i++)
+    {
+        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Ciphersuite %04x", g_cipherSuitesList[i]);
     }
 
     mbedtls_ssl_conf_ciphersuites(config, g_cipherSuitesList);
