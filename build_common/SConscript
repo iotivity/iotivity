@@ -428,7 +428,7 @@ if 'ALL' in target_transport:
         env.AppendUnique(CPPDEFINES = ['RA_ADAPTER'])
     if with_tcp:
         env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER'])
-    if (target_os in ['linux']):
+    if (target_os in ['linux', 'yocto']):
         env.AppendUnique(CPPDEFINES = ['IP_ADAPTER', 'NO_EDR_ADAPTER', 'LE_ADAPTER'])
     elif (target_os == 'android'):
         env.AppendUnique(CPPDEFINES = ['IP_ADAPTER', 'EDR_ADAPTER', 'LE_ADAPTER', 'NFC_ADAPTER'])
