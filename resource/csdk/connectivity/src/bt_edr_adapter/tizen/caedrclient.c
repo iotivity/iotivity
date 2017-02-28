@@ -319,8 +319,8 @@ void CAEDRDeviceDiscoveryCallback(int result, bt_adapter_device_discovery_state_
                         return;
                     }
 
-                    int lengthData = u_arraylist_length(g_multicastDataList);
-                    for(int len = 0; len < lengthData; len++)
+                    size_t lengthData = u_arraylist_length(g_multicastDataList);
+                    for(size_t len = 0; len < lengthData; len++)
                     {
                         // Adding to pending list
                         EDRData *multicastData =

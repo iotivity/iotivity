@@ -1425,8 +1425,8 @@ CAResult_t CALEServerDisconnectAllDevices(JNIEnv *env)
         return CA_STATUS_FAILED;
     }
 
-    uint32_t length = u_arraylist_length(g_connectedDeviceList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_connectedDeviceList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_connectedDeviceList, index);
         if (!jarrayObj)
@@ -1873,8 +1873,8 @@ CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, co
 
     oc_mutex_lock(g_threadSendMutex);
 
-    uint32_t length = u_arraylist_length(g_connectedDeviceList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_connectedDeviceList);
+    for (size_t index = 0; index < length; index++)
     {
         OIC_LOG(DEBUG, TAG, "check device address");
         jobject jarrayObj = (jobject) u_arraylist_get(g_connectedDeviceList, index);
@@ -1997,8 +1997,8 @@ CAResult_t CALEServerSendMulticastMessageImpl(JNIEnv *env, const uint8_t *data, 
     g_sendBuffer = (jbyteArray)(*env)->NewGlobalRef(env, jni_arr);
     CACheckJNIException(env);
 
-    uint32_t length = u_arraylist_length(g_connectedDeviceList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_connectedDeviceList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_connectedDeviceList, index);
         if (!jarrayObj)
@@ -2098,8 +2098,8 @@ bool CALEServerIsDeviceInList(JNIEnv *env, const char* remoteAddress)
         return false;
     }
 
-    uint32_t length = u_arraylist_length(g_connectedDeviceList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_connectedDeviceList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_connectedDeviceList, index);
 
@@ -2197,8 +2197,8 @@ CAResult_t CALEServerRemoveAllDevices(JNIEnv *env)
         return CA_STATUS_FAILED;
     }
 
-    uint32_t length = u_arraylist_length(g_connectedDeviceList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_connectedDeviceList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_connectedDeviceList, index);
         if (jarrayObj)
@@ -2229,8 +2229,8 @@ CAResult_t CALEServerRemoveDevice(JNIEnv *env, jstring address)
         return CA_STATUS_FAILED;
     }
 
-    uint32_t length = u_arraylist_length(g_connectedDeviceList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_connectedDeviceList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_connectedDeviceList, index);
 

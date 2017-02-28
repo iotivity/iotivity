@@ -18,6 +18,11 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+// Warning disabled globally but VS2013 ignores the /wd4200 option in C++ files.
+#if defined(_MSC_VER) && _MSC_VER < 1900
+#pragma warning(disable : 4200)
+#endif
+
 #include <cinttypes>
 #include "iotivity_config.h"
 #include "gtest/gtest.h"
@@ -70,7 +75,7 @@
 #endif
 
 #if defined(_WIN32)
-#include "../../../../c_common/windows/include/pthread_create.h"
+#include "pthread_create.h"
 #endif
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>

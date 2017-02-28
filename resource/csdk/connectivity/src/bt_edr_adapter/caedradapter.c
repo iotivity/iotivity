@@ -326,7 +326,7 @@ int32_t CASendEDRMulticastData(const CAEndpoint_t *endpoint, const void *data, u
     return sentLen;
 }
 
-CAResult_t CAGetEDRInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
+CAResult_t CAGetEDRInterfaceInformation(CAEndpoint_t **info, size_t *size)
 {
     VERIFY_NON_NULL(info, TAG, "LocalConnectivity info is null");
 
