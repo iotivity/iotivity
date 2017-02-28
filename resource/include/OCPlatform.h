@@ -595,12 +595,15 @@ namespace OC
          *               events
          *
          * @return Returns ::OC_STACK_OK if success.
-         * @copydoc subscribePresence(OCPresenceHandle&, const std::string&, resourceType, OCConnectivityType, SubscribeCallback)
          */
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
                         OCConnectivityType connectivityType, SubscribeCallback presenceHandler);
         /**
          * @overload
+         *
+         * subscribes to a server's presence change events.  By making this subscription,
+         * every time a server adds/removes/alters a resource, starts or is intentionally
+         * stopped (potentially more to be added later).
          *
          * @param presenceHandle a handle object that can be used to identify this subscription
          *               request.  It can be used to unsubscribe from these events in the future.
@@ -612,6 +615,7 @@ namespace OC
          *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
          * @param presenceHandler callback function that will receive notifications/subscription
          *               events
+         *
          * @see subscribePresence(OCPresenceHandle&, const std::string&, OCConnectivityType, SubscribeCallback)
          */
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,

@@ -85,7 +85,7 @@ namespace OIC
             /**
              * Constructs an exception with a description.
              *
-             * @param OCStackResult The description for the error.
+             * @param reason OCStackResult The description for the error.
              */
             explicit ESPlatformException(OCStackResult reason);
 
@@ -115,7 +115,7 @@ namespace OIC
             /**
              * Constructs an exception with a description.
              *
-             * @param OCStackResult The description for the error.
+             * @param what OCStackResult The description for the error.
              */
             explicit ESBadRequestException(const std::string& what);
             /**
@@ -134,7 +134,7 @@ namespace OIC
             /**
              * Constructs an exception with a description.
              *
-             * @param OCStackResult The description for the error.
+             * @param what OCStackResult The description for the error.
              */
             explicit ESInvalidParameterException(const std::string& what);
          /**
@@ -152,7 +152,7 @@ namespace OIC
             /**
              * Constructs an exception with a description.
              *
-             * @param OCStackResult The description for the error.
+             * @param what OCStackResult The description for the error.
              */
             explicit ESBadGetException(const std::string& what);
            /**
@@ -171,7 +171,7 @@ namespace OIC
             /**
              * Constructs an exception with a description.
              *
-             * @param OCStackResult The description for the error.
+             * @param what OCStackResult The description for the error.
              */
             explicit ESInvalidKeyException(const std::string& what);
              /**

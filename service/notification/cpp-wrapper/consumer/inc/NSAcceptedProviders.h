@@ -71,8 +71,8 @@ namespace OIC
                 std::shared_ptr<NSProvider> getProvider(const std::string &id);
 
                 /**
-                      *  request to add NSProvider pointer
-                      * @param shared pointer to NSProvider
+                      * Request to add NSProvider pointer
+                      * @param provider shared pointer to NSProvider
                       *
                       */
                 void addProvider(std::shared_ptr<NSProvider> provider);
