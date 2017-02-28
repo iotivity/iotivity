@@ -332,7 +332,7 @@ void CAIPPullData()
     CAArduinoCheckData();
 }
 
-CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
+CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, size_t *size)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -346,7 +346,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         return CA_STATUS_FAILED;
     }
 
-    uint32_t len = u_arraylist_length(iflist);
+    size_t len = u_arraylist_length(iflist);
 
     CAEndpoint_t *eps = (CAEndpoint_t *)OICCalloc(len, sizeof (CAEndpoint_t));
     if (!eps)
@@ -356,7 +356,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    for (uint32_t i = 0, j = 0; i < len; i++)
+    for (size_t i = 0, j = 0; i < len; i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
         if(!ifitem)

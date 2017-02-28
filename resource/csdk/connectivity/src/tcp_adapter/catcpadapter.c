@@ -95,7 +95,7 @@ static CAErrorHandleCallback g_errorCallback = NULL;
 static CAKeepAliveConnectionCallback g_connKeepAliveCallback = NULL;
 
 static void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep,
-                                  const void *data, uint32_t dataLength);
+                                  const void *data, size_t dataLength);
 
 static void CATCPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
                               size_t dataLength, CAResult_t result);
@@ -157,7 +157,7 @@ void CATCPConnectionStateCB(const char *ipAddress, CANetworkStatus_t status)
 }
 
 void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
-                           uint32_t dataLength)
+                           size_t dataLength)
 {
     VERIFY_NON_NULL_VOID(sep, TAG, "sep is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
@@ -453,18 +453,15 @@ CAResult_t CAStartTCPDiscoveryServer()
     return CA_STATUS_OK;
 }
 
-static size_t CAQueueTCPData(bool isMulticast, const CAEndpoint_t *endpoint,
-                             const void *data, size_t dataLength)
+static int32_t CAQueueTCPData(bool isMulticast, const CAEndpoint_t *endpoint,
+                             const void *data, uint32_t dataLength)
 {
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", -1);
     VERIFY_NON_NULL_RET(data, TAG, "data", -1);
-
-    if (0 == dataLength)
-    {
-        OIC_LOG(ERROR, TAG, "Invalid Data Length");
-        return -1;
-    }
-
+    VERIFY_TRUE_RET((dataLength <= INT_MAX) && (dataLength > 0),
+                    TAG,
+                    "Invalid Data Length",
+                    -1);
     VERIFY_NON_NULL_RET(g_sendQueueHandle, TAG, "sendQueueHandle", -1);
 
     // Create TCPData to add to queue
@@ -477,7 +474,7 @@ static size_t CAQueueTCPData(bool isMulticast, const CAEndpoint_t *endpoint,
     // Add message to send queue
     CAQueueingThreadAddData(g_sendQueueHandle, tcpData, sizeof(CATCPData));
 
-    return dataLength;
+    return (int32_t)dataLength;
 }
 
 int32_t CASendTCPUnicastData(const CAEndpoint_t *endpoint,
@@ -486,10 +483,16 @@ int32_t CASendTCPUnicastData(const CAEndpoint_t *endpoint,
 {
     OIC_LOG(DEBUG, TAG, "IN");
     (void)dataType;
+    if ((0 == dataLength) || (dataLength > INT32_MAX))
+    {
+        OIC_LOG(ERROR, TAG, "Invalid Data Length");
+        return -1;
+    }
+
 #ifndef SINGLE_THREAD
     return CAQueueTCPData(false, endpoint, data, dataLength);
 #else
-    return CATCPSendData(endpoint, data, dataLength);
+    return (int32_t)CATCPSendData(endpoint, data, dataLength);
 #endif
 }
 

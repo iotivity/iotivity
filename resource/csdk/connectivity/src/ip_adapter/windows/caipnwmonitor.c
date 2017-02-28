@@ -150,8 +150,8 @@ static void CAIPDestroyNetworkMonitorList()
  */
 static bool CACmpNetworkList(uint32_t ifIndex, int family, const char *addr, u_arraylist_t *iflist)
 {
-    uint32_t list_length = u_arraylist_length(iflist);
-    for (uint32_t list_index = 0; list_index < list_length; list_index++)
+    size_t list_length = u_arraylist_length(iflist);
+    for (size_t list_index = 0; list_index < list_length; list_index++)
     {
         CAInterface_t *currItem = (CAInterface_t *) u_arraylist_get(iflist, list_index);
         if ((currItem->index == ifIndex) && (currItem->family == family) &&
@@ -180,15 +180,15 @@ static void CALLBACK IpAddressChangeCallback(void *context,
 
     // Fetch new network address info.
     u_arraylist_t *newList = GetInterfaceInformation(0);
-    uint32_t newLen = u_arraylist_length(newList);
+    size_t newLen = u_arraylist_length(newList);
 
     u_arraylist_t *oldList = g_CAIPNetworkMonitorAddressList;
-    uint32_t oldLen = u_arraylist_length(oldList);
+    size_t oldLen = u_arraylist_length(oldList);
 
     if (caglobals.ip.addressChangeEvent)
     {
         // Check whether any addresses went away.
-        for (uint32_t i = 0; i < oldLen; i++)
+        for (size_t i = 0; i < oldLen; i++)
         {
             CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(oldList, i);
             if (!CACmpNetworkList(ifitem->index, ifitem->family, ifitem->addr, newList))
@@ -199,7 +199,7 @@ static void CALLBACK IpAddressChangeCallback(void *context,
         }
 
         // Check whether any new addresses are available.
-        for (uint32_t i = 0; i < newLen; i++)
+        for (size_t i = 0; i < newLen; i++)
         {
             CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(newList, i);
             if (!CACmpNetworkList(ifitem->index, ifitem->family, ifitem->addr, oldList))
@@ -275,7 +275,7 @@ DWORD WINAPI IpNetworkMonitorWorker(PVOID context)
         return err;
     }
 
-    SOCKET nwmSocket = WSASocket(
+    SOCKET nwmSocket = WSASocketW(
         AF_INET6,
         SOCK_DGRAM,
         0, // Default proto.
@@ -898,8 +898,8 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
     // Avoid extra kernel calls by just duplicating what's in our cache.
     oc_mutex_lock(g_CAIPNetworkMonitorMutex);
 
-    uint32_t list_length = u_arraylist_length(g_CAIPNetworkMonitorAddressList);
-    for (uint32_t list_index = 0; list_index < list_length; list_index++)
+    size_t list_length = u_arraylist_length(g_CAIPNetworkMonitorAddressList);
+    for (size_t list_index = 0; list_index < list_length; list_index++)
     {
         CAInterface_t *currItem = (CAInterface_t *)u_arraylist_get(g_CAIPNetworkMonitorAddressList,
                                                                    list_index);

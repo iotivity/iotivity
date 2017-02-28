@@ -582,10 +582,8 @@ bool OCRepPayloadGetPropDouble(const OCRepPayload* payload, const char* name, do
 #ifdef _MSC_VER
 #pragma warning( suppress : 4244 )
             *value = val->i;
-
 #else
             *value = val->i;
-
 #endif
             return true;
         }
@@ -1155,10 +1153,8 @@ bool OCRepPayloadGetDoubleArray(const OCRepPayload* payload, const char* name,
 #ifdef _MSC_VER
 #pragma warning( suppress : 4244 )
             (*array)[n] = val->arr.iArray[n];
-
 #else
             (*array)[n] = val->arr.iArray[n];
-
 #endif
         }
     }

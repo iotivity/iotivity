@@ -122,7 +122,7 @@ int32_t CASendEDRMulticastData(const CAEndpoint_t *endpoint, const void *data,
  *
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetEDRInterfaceInformation(CAEndpoint_t **info, uint32_t *size);
+CAResult_t CAGetEDRInterfaceInformation(CAEndpoint_t **info, size_t *size);
 
 /**
  * Read Synchronous API callback.

@@ -491,8 +491,8 @@ Java_org_iotivity_ca_CaIpInterface_caIpStateEnabled(JNIEnv *env, jclass class)
         return;
     }
 
-    uint32_t listLength = u_arraylist_length(iflist);
-    for (uint32_t i = 0; i < listLength; i++)
+    size_t listLength = u_arraylist_length(iflist);
+    for (size_t i = 0; i < listLength; i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
         if (!ifitem)
