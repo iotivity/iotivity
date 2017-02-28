@@ -2193,6 +2193,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
         OIC_LOG(ERROR, TAG, "createAcl: device instance empty");
         goto CRACL_ERROR;
     }
+    ace->subjectType = OicSecAceUuidSubject;
     memcpy(&ace->subjectuuid, &dev->doxm->deviceID, UUID_LENGTH);
 
     // enter number of |resources| in 'accessed' device

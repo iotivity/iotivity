@@ -76,17 +76,22 @@ TEST(SRPProvisionACLTest, NullDeviceInfo)
     uint8_t deviceId2[] = {0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x63};
     memcpy(pDev2.doxm->deviceID.id, deviceId2, sizeof(deviceId2));
 
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionACL(NULL, NULL, &acl, &provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionACL(NULL, NULL, &acl, OIC_SEC_ACL_V2, &provisioningCB));
 }
 
 TEST(SRPProvisionACLTest, NullCallback)
 {
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPProvisionACL(NULL, &pDev1, &acl, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPProvisionACL(NULL, &pDev1, &acl, OIC_SEC_ACL_V2, NULL));
 }
 
 TEST(SRPProvisionACLTest, NullACL)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionACL(NULL, &pDev1, NULL, &provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionACL(NULL, &pDev1, NULL, OIC_SEC_ACL_V2, &provisioningCB));
+}
+
+TEST(SRPProvisionACLTest, InvalidVersion)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionACL(NULL, &pDev1, &acl, OIC_SEC_ACL_UNKNOWN, &provisioningCB));
 }
 
 TEST(SRPProvisionCredentialsTest, NullDevice1)
@@ -452,12 +457,12 @@ TEST_F(SRPTest, SRPProvisionTrustCertChainNoResource)
 
 TEST(SRPProvisionTrustCertChainTest, SRPGetACLResourceNoCallback)
 {
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPGetACLResource(NULL, &pDev1, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPGetACLResource(NULL, &pDev1, OIC_SEC_ACL_V2, NULL));
 }
 
 TEST(SRPProvisionTrustCertChainTest, SRPGetACLResourceNoDevice)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPGetACLResource(NULL, NULL, provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPGetACLResource(NULL, NULL, OIC_SEC_ACL_V2, provisioningCB));
 }
 
 TEST(SRPProvisionTrustCertChainTest, SRPGetCredResourceNoCallback)

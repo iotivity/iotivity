@@ -948,11 +948,25 @@ static OCStackApplicationResult SRPProvisionACLCB(void *ctx, OCDoHandle UNUSED,
 }
 
 OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
-        OicSecAcl_t *acl, OCProvisionResultCB resultCallback)
+        OicSecAcl_t *acl, OicSecAclVersion_t aclVersion, OCProvisionResultCB resultCallback)
 {
     VERIFY_NOT_NULL_RETURN(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, acl, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
+
+    const char *uri = NULL;
+
+    switch (aclVersion)
+    {
+    case OIC_SEC_ACL_V1:
+        uri = OIC_RSRC_ACL_URI;
+        break;
+    case OIC_SEC_ACL_V2:
+        uri = OIC_RSRC_ACL2_URI;
+        break;
+    default:
+        return OC_STACK_INVALID_PARAM;
+    }
 
     // if rowneruuid is empty, set it to device ID
     OicUuid_t emptyOwner = {.id = {0} };
@@ -980,7 +994,7 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    if(OC_STACK_OK != AclToCBORPayload(acl, &secPayload->securityData, &secPayload->payloadSize))
+    if(OC_STACK_OK != AclToCBORPayload(acl, aclVersion, &secPayload->securityData, &secPayload->payloadSize))
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Failed to AclToCBORPayload");
@@ -994,7 +1008,7 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
                         selectedDeviceInfo->endpoint.addr,
                         selectedDeviceInfo->securePort,
                         selectedDeviceInfo->connType,
-                        query, sizeof(query), OIC_RSRC_ACL_URI))
+                        query, sizeof(query), uri))
     {
         OIC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
         return OC_STACK_ERROR;
@@ -2724,17 +2738,31 @@ static OCStackApplicationResult SRPGetACLResourceCB(void *ctx, OCDoHandle UNUSED
 }
 
 OCStackResult SRPGetACLResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
-        OCProvisionResultCB resultCallback)
+        OicSecAclVersion_t aclVersion, OCProvisionResultCB resultCallback)
 {
     VERIFY_NOT_NULL_RETURN(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
+
+    const char *uri = NULL;
+
+    switch (aclVersion)
+    {
+    case OIC_SEC_ACL_V1:
+        uri = OIC_RSRC_ACL_URI;
+        break;
+    case OIC_SEC_ACL_V2:
+        uri = OIC_RSRC_ACL2_URI;
+        break;
+    default:
+        return OC_STACK_INVALID_PARAM;
+    }
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
                         selectedDeviceInfo->endpoint.addr,
                         selectedDeviceInfo->securePort,
                         selectedDeviceInfo->connType,
-                        query, sizeof(query), OIC_RSRC_ACL_URI))
+                        query, sizeof(query), uri))
     {
         OIC_LOG(ERROR, TAG, "SRPGetACLResource : Failed to generate query");
         return OC_STACK_ERROR;
@@ -2833,7 +2861,7 @@ static OCStackApplicationResult SRPGetCSRResourceCB(void *ctx, OCDoHandle UNUSED
 {
     size_t i = 0;
     OIC_LOG_V(INFO, TAG, "IN %s", __func__);
-    (void)UNUSED;
+    OC_UNUSED(UNUSED);
     VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
     GetCsrData_t *getCsrData = (GetCsrData_t*)ctx;
     OCGetCSRResultCB resultCallback = getCsrData->resultCallback;

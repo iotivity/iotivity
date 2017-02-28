@@ -42,6 +42,10 @@ extern const char * OIC_JSON_ACL_NAME;
 extern const char * OIC_JSON_ACLIST_NAME;
 extern const char * OIC_JSON_ACES_NAME;
 
+extern const char * OIC_RSRC_TYPE_SEC_ACL2;
+extern const char * OIC_RSRC_ACL2_URI;
+extern const char * OIC_JSON_ACL2_NAME;
+
 //PSTAT
 extern const char * OIC_RSRC_TYPE_SEC_PSTAT;
 extern const char * OIC_RSRC_PSTAT_URI;

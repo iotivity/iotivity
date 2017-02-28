@@ -347,7 +347,23 @@ void OCDeleteDiscoveredDevices(OCProvisionDev_t *pList)
 OCStackResult OCProvisionACL(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecAcl_t *acl,
                              OCProvisionResultCB resultCallback)
 {
-    return SRPProvisionACL(ctx, selectedDeviceInfo, acl, resultCallback);
+    return SRPProvisionACL(ctx, selectedDeviceInfo, acl, OIC_SEC_ACL_V1, resultCallback);
+}
+
+/**
+ * this function sends ACL information to resource.
+ *
+ * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] acl ACL to provision.
+ * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
+              request recieves a response from resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCProvisionACL2(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecAcl_t *acl,
+                              OCProvisionResultCB resultCallback)
+{
+    return SRPProvisionACL(ctx, selectedDeviceInfo, acl, OIC_SEC_ACL_V2, resultCallback);
 }
 
 /**
@@ -388,7 +404,13 @@ OCStackResult OCGetCredResource(void* ctx, const OCProvisionDev_t *selectedDevic
 OCStackResult OCGetACLResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
                              OCProvisionResultCB resultCallback)
 {
-    return SRPGetACLResource(ctx, selectedDeviceInfo, resultCallback);
+    return SRPGetACLResource(ctx, selectedDeviceInfo, OIC_SEC_ACL_V1, resultCallback);
+}
+
+OCStackResult OCGetACL2Resource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                               OCProvisionResultCB resultCallback)
+{
+    return SRPGetACLResource(ctx, selectedDeviceInfo, OIC_SEC_ACL_V2, resultCallback);
 }
 
 OCStackResult OCGetCSRResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
@@ -1027,7 +1049,7 @@ static void AclProv1CB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool 
     UpdateLinkResults(link, 1, arr[0].res);
     if (NULL != link->pDev2Acl)
     {
-        OCStackResult res =  SRPProvisionACL(ctx, link->pDev2, link->pDev2Acl, &AclProv2CB);
+        OCStackResult res =  SRPProvisionACL(ctx, link->pDev2, link->pDev2Acl, OIC_SEC_ACL_V1, &AclProv2CB);
         if (OC_STACK_OK!=res)
         {
              UpdateLinkResults(link, 2, res);
@@ -1077,7 +1099,7 @@ static void ProvisionCredsCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr,
     if (NULL != link->pDev1Acl)
     {
 
-        OCStackResult res =  SRPProvisionACL(ctx, link->pDev1, link->pDev1Acl, &AclProv1CB);
+        OCStackResult res =  SRPProvisionACL(ctx, link->pDev1, link->pDev1Acl, OIC_SEC_ACL_V1, &AclProv1CB);
         if (OC_STACK_OK!=res)
         {
              OIC_LOG(ERROR, TAG, "Error while provisioning ACL for device 1");
@@ -1092,7 +1114,7 @@ static void ProvisionCredsCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr,
     else if (NULL!=link->pDev2Acl)
     {
         OIC_LOG(ERROR, TAG, "ACL for device 1 is NULL");
-        OCStackResult res =  SRPProvisionACL(ctx, link->pDev2, link->pDev2Acl, &AclProv2CB);
+        OCStackResult res =  SRPProvisionACL(ctx, link->pDev2, link->pDev2Acl, OIC_SEC_ACL_V1, &AclProv2CB);
         if (OC_STACK_OK!=res)
         {
              OIC_LOG(ERROR, TAG, "Error while provisioning ACL for device 2");

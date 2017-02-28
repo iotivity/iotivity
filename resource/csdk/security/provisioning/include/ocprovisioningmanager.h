@@ -192,7 +192,7 @@ OCStackResult OCIsSubownerOfDevice(OCProvisionDev_t *device, bool *isSubowner);
 /**
  * API to provision credentials between two devices and ACLs for the devices who act as a server.
  *
- * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] ctx Application context returned in the result callback.
  * @param[in] type Type of credentials to be provisioned to the device.
  * @param[in] keySize size of key
  * @param[in] pDev1 Pointer to OCProvisionDev_t instance,respresenting device to be provisioned.
@@ -209,9 +209,9 @@ OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_
                                          OCProvisionResultCB resultCallback);
 
 /**
- * API to send ACL information to device.
+ * API to send version 1 ACL information to device.
  *
- * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] ctx Application context returned in the result callback.
  * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] acl ACL to provision.
  * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
@@ -220,6 +220,19 @@ OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_
  */
 OCStackResult OCProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecAcl_t *acl,
                              OCProvisionResultCB resultCallback);
+
+/**
+ * API to send version 2 ACL information to device.
+ *
+ * @param[in] ctx Application context returned in the result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] acl ACL to provision.
+ * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
+              request recieves a response from resource server.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCProvisionACL2(void *ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecAcl_t *acl,
+                              OCProvisionResultCB resultCallback);
 
 /**
  * function to save ACL which has several ACE into Acl of SVR.
@@ -232,7 +245,7 @@ OCStackResult OCSaveACL(const OicSecAcl_t* acl);
 /**
  * this function requests CRED information to resource.
  *
- * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] ctx Application context returned in the result callback.
  * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
               request recieves a response from resource server.
@@ -242,9 +255,9 @@ OCStackResult OCGetCredResource(void* ctx, const OCProvisionDev_t *selectedDevic
                              OCProvisionResultCB resultCallback);
 
 /**
- * this function requests ACL information to resource.
+ * this function requests version 1 ACL information to resource.
  *
- * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] ctx Application context returned in the result callback.
  * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
               request recieves a response from resource server.
@@ -254,9 +267,21 @@ OCStackResult OCGetACLResource(void* ctx, const OCProvisionDev_t *selectedDevice
                              OCProvisionResultCB resultCallback);
 
 /**
+ * this function requests version 2 ACL information to resource.
+ *
+ * @param[in] ctx Application context returned in the result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
+              request recieves a response from resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCGetACL2Resource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                               OCProvisionResultCB resultCallback);
+
+/**
  * This function requests the device provide its Certificate Signing Request (CSR).
  *
- * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] ctx Application context returned in the result callback.
  * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
               request recieves a response from resource server.
@@ -295,7 +320,7 @@ OCStackResult OCDeleteRoleCertificateByCredId(void *ctx, const OCProvisionDev_t 
 /**
  * this function sends Direct-Pairing Configuration to a device.
  *
- * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] ctx Application context returned in the result callback.
  * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] pconf PCONF pointer.
  * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
@@ -308,7 +333,7 @@ OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *select
 /**
  * API to provision credential to devices.
  *
- * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] ctx Application context returned in the result callback.
  * @param[in] type Type of credentials to be provisioned to the device.
  * @param[in] keySize size of key
  * @param[in] pDev1 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
@@ -344,7 +369,7 @@ OCStackResult OCProvisionCertificate(void *ctx,
  * OCProvisionPreconfigPin API will update the device's Doxm
  * and then try preconfigured PIN provisioning once again.
  *
- * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] ctx Application context returned in the result callback.
  * @param[in] targetDeviceInfo Selected target device.
  * @param[in] preconfigPin string of preconfigured PIN.
  * @param[in] preconfigPinLen string length of 'preconfigPin'.
@@ -538,7 +563,7 @@ void OCDeletePdAclList(OicSecPdAcl_t* pPdAcl);
 /**
  * this function sends CRL information to resource.
  *
- * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] ctx Application context returned in the result callback.
  * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] crl CRL to provision.
  * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
@@ -551,7 +576,7 @@ OCStackResult OCProvisionCRL(void* ctx, const OCProvisionDev_t *selectedDeviceIn
 /**
  * function to provision Trust certificate chain to devices.
  *
- * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] ctx Application context returned in the result callback.
  * @param[in] type Type of credentials to be provisioned to the device.
  * @param[in] credId CredId of trust certificate chain to be provisioned to the device.
  * @param[in] selectedDeviceInfo Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.

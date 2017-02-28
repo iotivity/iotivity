@@ -37,6 +37,10 @@ const char * OIC_JSON_ACL_NAME = "acl";
 const char * OIC_JSON_ACLIST_NAME = "aclist";
 const char * OIC_JSON_ACES_NAME = "aces";
 
+const char * OIC_RSRC_TYPE_SEC_ACL2 = "oic.r.acl2";
+const char * OIC_RSRC_ACL2_URI = "/oic/sec/acl2";
+const char * OIC_JSON_ACL2_NAME = "acl2";
+
 //Pstat
 const char * OIC_RSRC_TYPE_SEC_PSTAT = "oic.r.pstat";
 const char * OIC_RSRC_PSTAT_URI =  "/oic/sec/pstat";

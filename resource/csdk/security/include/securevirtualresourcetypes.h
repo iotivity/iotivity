@@ -404,10 +404,41 @@ struct OicSecValidity
     OicSecValidity_t *next;
 };
 
+typedef enum
+{
+    OIC_SEC_ACL_UNKNOWN = 0,
+    OIC_SEC_ACL_V1 = 1,
+    OIC_SEC_ACL_V2 = 2
+} OicSecAclVersion_t;
+
+#define OIC_SEC_ACL_LATEST OIC_SEC_ACL_V2
+
+typedef enum
+{
+    OicSecAceUuidSubject = 0, /* Default to this type. */
+    OicSecAceRoleSubject
+} OicSecAceSubjectType;
+
+/**
+ * /oic/sec/role (Role) data type.
+ * Derived from OIC Security Spec; see Spec for details.
+ */
+struct OicSecRole
+{
+    // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
+    char id[ROLEID_LENGTH];                 // 0:R:S:Y:String
+    char authority[ROLEAUTHORITY_LENGTH];   // 1:R:S:N:String
+};
+
 struct OicSecAce
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    OicUuid_t subjectuuid;              // 0:R:S:Y:uuid
+    OicSecAceSubjectType subjectType;
+    union                               // 0:R:S:Y:{roletype|didtype|"*"}
+    {
+        OicUuid_t subjectuuid;          // Only valid for subjectType == OicSecAceUuidSubject
+        OicSecRole_t subjectRole;       // Only valid for subjectType == OicSecAceRoleSubject
+    };
     OicSecRsrc_t *resources;            // 1:R:M:Y:Resource
     uint16_t permission;                // 2:R:S:Y:UINT16
     OicSecValidity_t *validities;       // 3:R:M:N:Time-interval
@@ -524,17 +555,6 @@ struct OicSecPstat
     OicSecDpom_t        *sm;            // 5:R:M:Y:oic.sec.dpom
     uint16_t            commitHash;     // 6:R:S:Y:oic.sec.sha256
     OicUuid_t           rownerID;       // 7:R:S:Y:oic.uuid
-};
-
-/**
- * /oic/sec/role (Role) data type.
- * Derived from OIC Security Spec; see Spec for details.
- */
-struct OicSecRole
-{
-    // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    char                id[ROLEID_LENGTH];                    // 0:R:S:Y:String
-    char                authority[ROLEAUTHORITY_LENGTH];      // 1:R:S:N:String
 };
 
 /**

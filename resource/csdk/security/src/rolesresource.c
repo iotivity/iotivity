@@ -974,8 +974,19 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
     memset(&trustedCaCerts, 0, sizeof(trustedCaCerts));
 
     OCStackResult res = GetPeerPublicKeyFromEndpoint(endpoint, &publicKey, &publicKeyLength);
-    if (OC_STACK_OK != res)
+    if (OC_STACK_INVALID_PARAM == res)
     {
+        /*
+         * OC_STACK_INVALID_PARAM means the endpoint didn't authenticate with a certificate.
+         * Succeed and return no roles.
+         */
+        *roles = NULL;
+        *roleCount = 0;
+        return OC_STACK_OK;
+    }
+    else if (OC_STACK_OK != res)
+    {
+        /* Any other error is a fatal error. */
         OIC_LOG_V(ERROR, TAG, "Could not GetPeerPublicKeyFromEndpoint: %d", res);
         return res;
     }

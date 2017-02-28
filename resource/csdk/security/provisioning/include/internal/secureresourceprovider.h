@@ -37,13 +37,14 @@ extern "C"
  *
  * @param[in] ctx Application context to be returned in result callback.
  * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] aclVersion Version of the ACL resource to access
  * @param[in] acl ACL to provision.
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
-                                        OicSecAcl_t *acl, OCProvisionResultCB resultCallback);
+                                        OicSecAcl_t *acl, OicSecAclVersion_t aclVersion, OCProvisionResultCB resultCallback);
 
 /**
  * API to save ACL which has several ACE into Acl of SVR.
@@ -70,12 +71,13 @@ OCStackResult SRPGetCredResource(void *ctx, const OCProvisionDev_t *selectedDevi
  *
  * @param[in] ctx Application context to be returned in result callback.
  * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] aclVersion Version of ACL resource to query
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult SRPGetACLResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
-        OCProvisionResultCB resultCallback);
+        OicSecAclVersion_t aclVersion, OCProvisionResultCB resultCallback);
 
 /**
  * API to request the Certificate Signing Request (CSR) resource.

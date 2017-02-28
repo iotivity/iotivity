@@ -134,7 +134,7 @@ TEST(ACLResourceTest, CBORDefaultACLConversion)
 
     size_t defaultAclSize = 0;
     uint8_t *defaultPsStorage = NULL;
-    OCStackResult convRet = AclToCBORPayload(defaultAcl, &defaultPsStorage, &defaultAclSize);
+    OCStackResult convRet = AclToCBORPayload(defaultAcl, OIC_SEC_ACL_LATEST, &defaultPsStorage, &defaultAclSize);
     EXPECT_EQ(OC_STACK_OK, convRet);
     ASSERT_TRUE(NULL != defaultPsStorage);
     EXPECT_NE(static_cast<size_t>(0), defaultAclSize);
@@ -207,7 +207,7 @@ TEST(ACLResourceTest, CBORACLConversion)
 
     size_t size = 0;
     uint8_t *psStorage = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(secAcl, &psStorage, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(secAcl, OIC_SEC_ACL_V1, &psStorage, &size));
     ASSERT_TRUE(NULL != psStorage);
     OicSecAcl_t *acl = CBORPayloadToAcl(psStorage, size);
     ASSERT_TRUE(NULL != acl);
@@ -419,7 +419,7 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t  *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_LATEST, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
@@ -474,7 +474,7 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_LATEST, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
@@ -541,7 +541,7 @@ TEST(ACLResourceTest, ACLGetWithQueryTest)
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_LATEST, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
