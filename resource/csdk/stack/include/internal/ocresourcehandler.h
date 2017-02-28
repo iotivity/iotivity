@@ -150,8 +150,13 @@ OCResource *FindResourceByUri(const char* resourceUri);
 bool IsVirtualResource(const char* resourceUri);
 
 /**
- * Parameter @ref handling returns by-reference the type of resource handling
- * required by the internal stack based on the specified @ref request.
+ * Parameter handling returns by-reference the type of resource handling
+ * required by the internal stack based on the specified request.
+ *
+ * @param request the OCServerRequest to the internal stack
+ * @param handling the resource handling required by the internal stack
+ * @param resource the OCResource from the stack
+ *
  * @return ::OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult DetermineResourceHandling (const OCServerRequest *request,
@@ -159,8 +164,13 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
                                          OCResource **resource);
 
 /**
- * Processes the specified @ref request based on the type of resource handling
- * @ref resHandling.
+ * Processes the specified request based on the type of resource handling
+ * resHandling.
+ *
+ * @param resHandling the type of resource handling to be used
+ * @param resource the resource to process the request on
+ * @param request the request to process
+ *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult ProcessRequest(ResourceHandling resHandling,

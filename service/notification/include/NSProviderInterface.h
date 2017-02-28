@@ -86,14 +86,14 @@ NSResult NSStopProvider();
 
 /**
  * Request to publish resource using remote relay server
- * @param[in]  server address combined with IP address and port number using delimiter :
+ * @param[in]  serverAddress server address combined with IP address and port number using delimiter :
  * @return ::NS_OK if the action is requested succesfully or NS_FAIL if wrong parameter is set.
  */
 NSResult NSProviderEnableRemoteService(char * serverAddress);
 
 /**
  * Request to terminate remote service from relay server
- * @param[in]  server address combined with IP address and port number using delimiter :
+ * @param[in]  serverAddress server address combined with IP address and port number using delimiter :
  * @return ::NS_OK if the action is requested succesfully or NS_FAIL if wrong parameter is set.
  */
 NSResult NSProviderDisableRemoteService(char * serverAddress);
@@ -101,7 +101,7 @@ NSResult NSProviderDisableRemoteService(char * serverAddress);
 #ifdef WITH_MQ
 /**
  * Request to subscribe to remote MQ address as parameter.
- * @param[in] server address combined with IP address and port number and MQ broker uri using delimiter :
+ * @param[in] serverAddress server address combined with IP address and port number and MQ broker uri using delimiter :
  * @param[in] topicName the interest Topic name for subscription.
  * @return ::NS_OK or result code of NSResult
  */
@@ -110,7 +110,7 @@ NSResult NSProviderSubscribeMQService(const char * serverAddress, const char * t
 
 /**
  * Send notification message to all subscribers
- * @param[in]  message  Notification message including id, title, contentText
+ * @param[in]  msg  Notification message including id, title, contentText
  * @return ::NS_OK if the action is requested succesfully or NS_FAIL if wrong parameter is set.
  */
 NSResult NSSendMessage(NSMessage * msg);
@@ -118,8 +118,8 @@ NSResult NSSendMessage(NSMessage * msg);
 /**
  * Send acceptance to consumer who subscribes the resource of notification message
  * This function is valid only when subControllability is set true.
- * @param[in]  consumer  Consumer who subscribes the resource
- * @param[in]  accepted  the result of acceptance; ALLOW or DENY
+ * @param[in]  consumerId  Consumer who subscribes the resource
+ * @param[in]  accepted    the result of acceptance; ALLOW or DENY
  * @return ::NS_OK if this function is requested succesfully
  * or NS_FAIL if subContollability is false.
  */
@@ -127,7 +127,7 @@ NSResult NSAcceptSubscription(const char * consumerId, bool accepted);
 
 /**
  * Send synchronizad state of notificaion message to consumers
- * @param[in]  messageiId  ID of notification message
+ * @param[in]  messageId  ID of notification message
  * @param[in]  type  SyncType of the syncInfo message
  * @return ::NS_OK if the action is requested succesfully or NS_FAIL if wrong parameter is set.
  */
@@ -172,7 +172,7 @@ NSResult NSProviderUnsetConsumerTopic(const char * consumerId, const char * topi
 
 /**
  * Request topic list with selection state for the consumer
- * @param[in] consumerid  the id of consumer which topic list is subscribed for
+ * @param[in] consumerId  the id of consumer which topic list is subscribed for
  * @return :: Topic list
  */
 NSTopicLL * NSProviderGetConsumerTopics(const char * consumerId);

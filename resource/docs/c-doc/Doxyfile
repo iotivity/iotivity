@@ -660,8 +660,8 @@ WARN_LOGFILE           = ./doxygen.log
 # with spaces.
 
 INPUT                  = . \
+             ../../csdk/include/octypes.h \
              ../../csdk/stack/include/ocstack.h \
-             ../../csdk/stack/include/octypes.h \
              ../../csdk/stack/include/ocpayload.h \
              ../../csdk/stack/include/ocpresence.h \
              ../../csdk/stack/include/payload_logging.h \

@@ -208,7 +208,7 @@ OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle)
  * @param qos                                   Request QOS.
  * @param query                                 Request query.
  * @param rcvdVendorSpecificHeaderOptions       Received vendor specific header options.
- * @param reqJSONPayload                        Request JSON payload.
+ * @param payload                               Request JSON payload.
  * @param requestToken                          Request token.
  * @param tokenLength                           Request token length.
  * @param resourceUrl                           URL of resource.

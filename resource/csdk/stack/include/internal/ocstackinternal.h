@@ -324,7 +324,7 @@ OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
 /**
  * Delete all of the dynamically allocated elements that were created for the resource attributes.
  *
- * @param resourceAttr Specified resource attribute.
+ * @param rsrcAttributes Specified resource attribute.
  */
 void OCDeleteResourceAttributes(OCAttribute *rsrcAttributes);
 

@@ -253,8 +253,8 @@ CAResult_t CASetProxyUri(const char *uri);
 /**
  * This function return zone id related from ifindex and address.
  *
- * @param ifindex[in]     interface index.
- * @param zoneId[out]     pointer of zoneId string.
+ * @param[in] ifindex     interface index.
+ * @param[out] zoneId     pointer of zoneId string.
  *
  * @return  ::CA_STATUS_OK or ::CA_STATUS_INVALID_PARAM
  */

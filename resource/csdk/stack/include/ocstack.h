@@ -646,8 +646,8 @@ OCStackResult OCDoResponse(OCEntityHandlerResponse *response);
  * all the device in subnet which support direct-pairing.
  * Caller must NOT free returned constant pointer
  *
- * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
- *                    client before returning the list of devices.
+ * @param[in] waittime Timeout in seconds, value till which function will listen to responses from
+ *                     client before returning the list of devices.
  * @return OCDirectPairingDev_t pointer in case of success and NULL otherwise.
  */
 const OCDPDev_t* OCDiscoverDirectPairingDevices(unsigned short waittime);
@@ -665,6 +665,7 @@ const OCDPDev_t* OCGetDirectPairedDevices();
  * The function is responsible for establishment of direct-pairing. It will proceed mode negotiation
  * and connect PIN based dtls session.
  *
+ * @param[in] ctx user context passed back with resultCallback.
  * @param[in] peer Target device to establish direct-pairing.
  * @param[in] pmSel Selected mode of pairing.
  * @param[in] pinNumber PIN number for authentication, pin lenght is defined DP_PIN_LENGTH(8).
@@ -870,8 +871,8 @@ OCPersistentStorage *OCGetPersistentStorageHandler();
 /**
 * This function return link local zone id related from ifindex.
 *
-* @param ifindex[in]     interface index.
-* @param zoneId[out]     pointer of zoneId string, caller should free
+* @param[in] ifindex     interface index.
+* @param[out] zoneId     pointer of zoneId string, caller should free
 *                        zoneId using OICFree() when it returned CA_STATUS_OK.
 * @return Returns ::OC_STACK_OK if success.
 */

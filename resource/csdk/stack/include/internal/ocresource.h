@@ -144,7 +144,7 @@ typedef struct attr_t {
      */
     char *attrName;
 
-    /** value of the attribute as void. To support both string and @OCStringLL value*/
+    /** value of the attribute as void. To support both string and ::OCStringLL value*/
     void *attrValue;
 } OCAttribute;
 
