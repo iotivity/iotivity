@@ -696,6 +696,19 @@ CAResult_t CASendErrorMessage(const coap_pdu_t *pdu, uint8_t status,
         return CA_STATUS_FAILED;
     }
 
+    if (!data->sentData)
+    {
+        OIC_LOG(ERROR, TAG, "data has no sent-data");
+        return CA_STATUS_FAILED;
+    }
+
+    CAData_t *cloneData = CACloneCAData(data->sentData);
+    if (!cloneData)
+    {
+        OIC_LOG(ERROR, TAG, "clone has failed");
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
     CAMessageType_t sentMsgType = CA_MSG_NONCONFIRM;
     switch (pdu->transport_hdr->udp.type)
     {
@@ -709,52 +722,39 @@ CAResult_t CASendErrorMessage(const coap_pdu_t *pdu, uint8_t status,
             sentMsgType = CA_MSG_NONCONFIRM;
     }
 
-    CAData_t *cloneData = NULL;
-    if (data->sentData)
+    if (cloneData->responseInfo)
     {
-        cloneData = CACloneCAData(data->sentData);
-        if (!cloneData)
-        {
-            OIC_LOG(ERROR, TAG, "clone has failed");
-            return CA_MEMORY_ALLOC_FAILED;
-        }
-
-        if (cloneData->responseInfo)
-        {
-            cloneData->responseInfo->info.messageId = pdu->transport_hdr->udp.id;
-            cloneData->responseInfo->info.type = sentMsgType;
-            cloneData->responseInfo->result = responseResult;
-        }
-        else
-        {
-            CAInfo_t responseData = { .tokenLength = (uint8_t)pdu->transport_hdr->udp.token_length };
-            responseData.token = (CAToken_t) OICMalloc(responseData.tokenLength);
-            if (!responseData.token)
-            {
-                OIC_LOG(ERROR, TAG, "out of memory");
-                return CA_MEMORY_ALLOC_FAILED;
-            }
-            memcpy(responseData.token, pdu->transport_hdr->udp.token, responseData.tokenLength);
-
-            cloneData->responseInfo = (CAResponseInfo_t*) OICCalloc(1, sizeof(CAResponseInfo_t));
-            if (!cloneData->responseInfo)
-            {
-                OIC_LOG(ERROR, TAG, "out of memory");
-                OICFree(responseData.token);
-                return CA_MEMORY_ALLOC_FAILED;
-            }
-
-            cloneData->responseInfo->info = responseData;
-            cloneData->responseInfo->info.type = sentMsgType;
-            cloneData->responseInfo->result = responseResult;
-        }
-        OIC_LOG(DEBUG, TAG, "set response message to send error code");
+        cloneData->responseInfo->info.messageId = pdu->transport_hdr->udp.id;
+        cloneData->responseInfo->info.type = sentMsgType;
+        cloneData->responseInfo->result = responseResult;
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "data has no sent-data");
-        return CA_MEMORY_ALLOC_FAILED;
+        CAInfo_t responseData = { .tokenLength = pdu->transport_hdr->udp.token_length };
+        responseData.token = (CAToken_t) OICMalloc(responseData.tokenLength);
+        if (!responseData.token)
+        {
+            OIC_LOG(ERROR, TAG, "out of memory");
+            CADestroyDataSet(cloneData);
+            return CA_MEMORY_ALLOC_FAILED;
+        }
+        memcpy(responseData.token, pdu->transport_hdr->udp.token, responseData.tokenLength);
+
+        cloneData->responseInfo = (CAResponseInfo_t*) OICCalloc(1, sizeof(CAResponseInfo_t));
+        if (!cloneData->responseInfo)
+        {
+            OIC_LOG(ERROR, TAG, "out of memory");
+            CADestroyDataSet(cloneData);
+            OICFree(responseData.token);
+            return CA_MEMORY_ALLOC_FAILED;
+        }
+
+        cloneData->responseInfo->info = responseData;
+        cloneData->responseInfo->info.type = sentMsgType;
+        cloneData->responseInfo->result = responseResult;
     }
+
+    OIC_LOG(DEBUG, TAG, "set response message to send error code");
 
     // if there is a requestInfo, remove it to send response message
     if (cloneData->requestInfo)
@@ -2102,12 +2102,14 @@ CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint
         {
             OIC_LOG(ERROR, TAG, "memory allocation failed");
             OICFree(requestData.token);
+            OICFree(requestInfo);
             return NULL;
         }
 
         CAGetResponseInfoFromPDU(pdu, resInfo, endpoint);
         requestInfo->method = CA_GET;
-        requestInfo->info.messageId = CAGetMessageIdFromPduBinaryData(pdu->transport_hdr, pdu->length);
+        requestInfo->info.messageId = CAGetMessageIdFromPduBinaryData(pdu->transport_hdr,
+                                                                      pdu->length);
         requestInfo->info.resourceUri = OICStrdup(resInfo->info.resourceUri);
 
         // after copying the resource uri, destroy response info.
@@ -2118,8 +2120,16 @@ CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint
     if (!data)
     {
         OIC_LOG(ERROR, TAG, "out of memory");
-        OICFree(requestInfo);
-        OICFree(responseInfo);
+        if (NULL != requestInfo)
+        {
+            OICFree(requestInfo->info.token);
+            OICFree(requestInfo);
+        }
+        if (NULL != responseInfo)
+        {
+            OICFree(responseInfo->info.token);
+            OICFree(responseInfo);
+        }
         return NULL;
     }
 
