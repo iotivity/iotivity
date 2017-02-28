@@ -1841,7 +1841,7 @@ static bool FillPrivateDataOfSubOwnerPSK(OicSecCred_t* receivedCred, const CAEnd
     }
     else
     {
-        OIC_LOG_V(ERROR, TAG, "Unknown credential encoding type: %u.", receviedCred->privateData.encoding);
+        OIC_LOG_V(ERROR, TAG, "Unknown credential encoding type: %u.", receivedCred->privateData.encoding);
         goto exit;
     }
 
