@@ -366,6 +366,15 @@ typedef void (IPCA_CALL *IPCACreateResourceComplete)(
 typedef void (IPCA_CALL *IPCADeleteResourceComplete)(IPCAStatus result, void* context);
 
 /**
+ * Callback from IPCA when a handle is completely closed.
+ *
+ * @param[in] context   Caller's context set in IPCACloseHandle().
+ *
+ */
+typedef void (IPCA_CALL *IPCACloseHandleComplete)(void* context);
+
+
+/**
  * Discovery status in IPCADiscoverDeviceCallback.
  */
 typedef enum
@@ -748,14 +757,22 @@ IPCAStatus IPCA_CALL IPCAObserveResource(
  * For handle returned by IPCAObserveResource(), IPCACloseHandle unsubscribes server's resource
  * change notification.
  *
- * @param[in] handle  Handle returned in the following methods:
- *                    IPCAGetProperties()
- *                    IPCASetProperties()
- *                    IPCAObserveResource()
- *                    IPCADiscoverDevices()
+ * @param[in] handle                Handle returned in the following methods:
+ *                                  IPCAGetProperties(), IPCASetProperties(), IPCAObserveResource()
+ *                                  IPCADiscoverDevices(), IPCACreateResource() and
+ *                                  IPCARequestAccess().
+ * @param[in] closeHandleComplete   Optional callback when handle is completely closed.
+ *                                  Upon receiving this callback, an application can safely perform
+ *                                  any needed cleanup for resources related to the handle closed.
+ * @param[in] context               Application's context that is passed back as argument in the
+ *                                  closeHandleComplete callback.
  *
+ * @return IPCA_OK if successful.
+ *         IPCA_FAIL if handle is already closed, closeHandleComplete will not be called.
  */
-void IPCA_CALL IPCACloseHandle(IPCAHandle handle);
+IPCAStatus IPCA_CALL IPCACloseHandle(IPCAHandle handle,
+                                     IPCACloseHandleComplete closeHandleComplete,
+                                     void* context);
 
 /**
  * Perform factory reset.

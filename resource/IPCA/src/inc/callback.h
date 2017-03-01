@@ -42,40 +42,47 @@ typedef std::shared_ptr<Device> DevicePtr;
 // Structure contains information to make callbacks to app.
 struct CallbackInfo
 {
-    public:
-        CallbackInfo() { /* std::cout << "+ CallbackInfo " << this << std::endl; */ }
-        ~CallbackInfo() { /* std::cout << "- CallbackInfo " << this << " mapKey: ";
-                             std::cout << mapKey << std::endl; */ }
-        typedef std::shared_ptr<CallbackInfo> Ptr;
-        size_t mapKey;          // key to m_callbackInfoList map.  Initialized in AddCallbackInfo().
-        App* app;               // the app that creates this callback.
-        DevicePtr device;     // the device expected to respond to the callback.
-        CallbackType type;
-        union
-        {
-            IPCADiscoverDeviceCallback discoveryCallback;
-            IPCAResourceChangeCallback resourceChangeCallback;
-            IPCAGetPropertiesComplete getCallback;
-            IPCASetPropertiesComplete setCallback;
-            IPCACreateResourceComplete createResourceCallback;
-            IPCADeleteResourceComplete deleteResourceCallback;
-            IPCAProvidePasswordCallback passwordInputCallback;
-            IPCADisplayPasswordCallback passwordDisplayCallback;
-            IPCARequestAccessCompletionCallback requestAccessCompletionCallback;
-        };
-        const void* callbackContext;    // app's callback context.
-        std::vector<std::string> resourceTypeList;  // Parameter for Discovery.
-        std::string resourcePath;       // Parameters for for Get, Set, Observe request.
-        std::string resourceInterface;
-        std::string resourceType;
-        size_t callbackInProgressCount; // Non zero if callback is in progress.
-        bool markedToBeRemoved; // Set to true when this object can't be removed in
-                                // RemoveCallbackInfo(). It'll be removed opportunistically.
-        std::vector<std::string> discoveredDevicesList; // List of device ids that were indicated to
-                                                        // app with IPCA_DEVICE_DISCOVERED.
-        std::shared_ptr<OC::OCResource> ocResource; // The OCResource this callback works with.
+    CallbackInfo() { /* std::cout << "+ CallbackInfo " << this << std::endl; */ }
+    ~CallbackInfo() { /* std::cout << "- CallbackInfo " << this << " mapKey: ";
+                         std::cout << mapKey << std::endl; */ }
+    typedef std::shared_ptr<CallbackInfo> Ptr;
+    size_t mapKey;          // key to m_callbackInfoList map.  Initialized in AddCallbackInfo().
+    App* app;               // the app that creates this callback.
+    DevicePtr device;     // the device expected to respond to the callback.
+    CallbackType type;
+    union
+    {
+        IPCADiscoverDeviceCallback discoveryCallback;
+        IPCAResourceChangeCallback resourceChangeCallback;
+        IPCAGetPropertiesComplete getCallback;
+        IPCASetPropertiesComplete setCallback;
+        IPCACreateResourceComplete createResourceCallback;
+        IPCADeleteResourceComplete deleteResourceCallback;
+        IPCAProvidePasswordCallback passwordInputCallback;
+        IPCADisplayPasswordCallback passwordDisplayCallback;
+        IPCARequestAccessCompletionCallback requestAccessCompletionCallback;
+    };
+    const void* callbackContext;    // app's callback context.
+    std::vector<std::string> resourceTypeList;  // Parameter for Discovery.
+    std::string resourcePath;       // Parameters for for Get, Set, Observe request.
+    std::string resourceInterface;
+    std::string resourceType;
 
-        uint64_t requestSentTimestamp; // when the request was sent to the server.
+    size_t callbackInProgressCount; // Non zero if callback is in progress.
+    bool markedToBeRemoved; // Set to true when this object can't be removed in
+                            // RemoveCallbackInfo(). It'll be removed opportunistically.
+
+    // closeHandleCompleteCallback is from argument in IPCACloseHandle().
+    // It will be set in this structure if IPCACloseHandle() is called when the callback
+    // for this CallbackInfo is in progress.
+    IPCACloseHandleComplete closeHandleCompleteCallback;
+    const void* closeHandleCompletecontext;
+
+    std::vector<std::string> discoveredDevicesList; // List of device ids that were indicated to
+                                                    // app with IPCA_DEVICE_DISCOVERED.
+    std::shared_ptr<OC::OCResource> ocResource; // The OCResource this callback works with.
+
+    uint64_t requestSentTimestamp; // when the request was sent to the server.
 };
 
 // Represent IPCAResourceChangeCallback, IPCAGetPropertiesComplete, IPCASetPropertiesComplete.
@@ -136,7 +143,10 @@ class Callback
 
         // Remove the CallbackInfo matching mapKey. This function sets markedToBeRemoved if the
         // callback is in the middle of calling back.
-        void RemoveCallbackInfo(size_t mapKey);
+        // Function returns IPCA_FAIL if callback is already closed.
+        IPCAStatus RemoveCallbackInfo(size_t mapKey,
+                        IPCACloseHandleComplete closeHandleComplete = nullptr,
+                        const void* context = nullptr);
 
         // Complete the callback for expired CallbackInfo and remove them from the
         // m_callbackInfoList. Caller receives a list of them.
@@ -188,6 +198,13 @@ class Callback
     private:
         bool MatchAllRequiredResourceTypes(const std::vector<std::string>& requiredResourceTypes,
                                            const std::vector<std::string>& deviceResourceTypes);
+
+        // Callback to app's closeHandleComplete() that is set in IPCACloseHandle().
+        void CallCloseHandleComplete(IPCACloseHandleComplete closeHandleComplete,
+                                     const void* context);
+
+        // Common initialization for new CallbackInfo object.
+        void CommonInitializeCallbackInfo(CallbackInfo::Ptr callbackInfo);
 
     private:
         // Mutex for synchronization use.

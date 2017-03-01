@@ -445,10 +445,15 @@ OCStackResult OCPlatform::sendResponse(const std::shared_ptr<OCResourceResponse>
     {
         case OC_REST_POST:
         {
+            OCStackResult ocResult = OC_STACK_ERROR;
+            if ((result == OC_EH_OK) || (result == OC_EH_RESOURCE_CREATED))
+            {
+                ocResult = OC_STACK_OK;
+            }
             std::thread postCallbackThread(pendingRequest->postCallback,
                             serverHeaderOptions,
                             ocRep,
-                            (result == OC_EH_OK) ? OC_STACK_OK : OC_STACK_ERROR);
+                            ocResult);
             postCallbackThread.detach();
             break;
         }
@@ -465,9 +470,15 @@ OCStackResult OCPlatform::sendResponse(const std::shared_ptr<OCResourceResponse>
 
         case OC_REST_DELETE:
         {
+            OCStackResult ocResult = OC_STACK_ERROR;
+            if ((result == OC_EH_OK) || (result == OC_EH_RESOURCE_DELETED))
+            {
+                ocResult = OC_STACK_OK;
+            }
+
             std::thread deleteCallbackThread(pendingRequest->deleteCallback,
                             serverHeaderOptions,
-                            (result == OC_EH_OK) ? OC_STACK_OK : OC_STACK_ERROR);
+                            ocResult);
             deleteCallbackThread.detach();
             break;
         }
