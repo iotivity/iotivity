@@ -102,65 +102,48 @@ OCEntityHandlerResult resourceEntityHandlerCb(OCEntityHandlerFlag flag,
 MPMResult loadNestAuthConfig(std::string filename, std::string &pincode,
                              std::string &accessToken)
 {
-    FILE *fp = fopen(filename.c_str(), "r");
-    char str[MPM_MAX_LENGTH_1024];
     MPMResult result = MPM_RESULT_INTERNAL_ERROR;
+    ifstream tokenFile(filename);
 
-    if (NULL != fp)
+    if (!tokenFile.is_open())
     {
-        if (fgets(str, MPM_MAX_LENGTH_1024, fp) == NULL)
-        {
-            OIC_LOG_V(ERROR, TAG, "fgets failed on %s", filename.c_str());
-            goto CLEANUP;
-        }
-        // @todo the logic below needs to be fixed.
-        // The intention here was to remove the last character which was new line.
-        // Current logic doesn't cover edge case like empty string and etc.
-        str[strlen(str) - 1] = '\0';
-        pincode = std::string(str);
-
-        if (fgets(str, MPM_MAX_LENGTH_1024, fp) == NULL)
-        {
-            OIC_LOG_V(ERROR, TAG, "fgets failed on %s", filename.c_str());
-            goto CLEANUP;
-        }
-        str[strlen(str) - 1] = '\0';
-        accessToken = std::string(str);
-
-        if (fgets(str, MPM_MAX_LENGTH_1024, fp) == NULL)
-        {
-            OIC_LOG_V(ERROR, TAG, "fgets failed on %s", filename.c_str());
-            goto CLEANUP;
-        }
-        str[strlen(str) - 1] = '\0';
-        nest_client_id = std::string(str);
-
-        if (fgets(str, MPM_MAX_LENGTH_1024, fp) == NULL)
-        {
-            OIC_LOG_V(ERROR, TAG, "fgets failed on %s", filename.c_str());
-            goto CLEANUP;
-        }
-        str[strlen(str) - 1] = '\0';
-        nest_client_secret = std::string(str);
-
-        result = MPM_RESULT_OK;
+        OIC_LOG_V(ERROR, TAG, "Could not open %s.\n", filename.c_str());
+        return result;
     }
     else
     {
-        OIC_LOG_V(ERROR, TAG, "Could not open %s.\n", filename.c_str());
+        if (!getline(tokenFile, pincode))
+        {
+            OIC_LOG(ERROR, TAG, "Could not read pincode");
+            goto CLEANUP;
+        }
+        if (!getline(tokenFile, accessToken))
+        {
+            OIC_LOG(ERROR, TAG, "Could not read access token");
+            goto CLEANUP;
+        }
+        if (!getline(tokenFile, nest_client_id))
+        {
+            OIC_LOG(ERROR, TAG, "Could not read client id");
+            goto CLEANUP;
+        }
+        if (!getline(tokenFile, nest_client_secret))
+        {
+            OIC_LOG(ERROR, TAG, "Could not read client secret");
+            goto CLEANUP;
+        }
+
+        result = MPM_RESULT_OK;
     }
 
 CLEANUP:
-    if (fp != NULL)
-    {
-        fclose(fp);
-    }
+    tokenFile.close();
     return result;
 }
 
 Nest::ACCESS_TOKEN populateAccessTokenFromFile(std::string accessToken)
 {
-    Nest::ACCESS_TOKEN aTok(accessToken.c_str());
+    Nest::ACCESS_TOKEN aTok(accessToken);
 
     return aTok;
 }
@@ -187,22 +170,20 @@ MPMResult checkValidityOfExistingToken(Nest::ACCESS_TOKEN aTok)
 
 void updateNestTokenFile(std::string filename, std::string pincode, std::string accessToken)
 {
-    FILE *fp = fopen(filename.c_str(), "w");
-    if (fp == NULL)
+    ofstream tokenFile;
+    tokenFile.open(filename.c_str());
+    if (tokenFile.is_open())
     {
-        OIC_LOG(ERROR, TAG, "Failed to open nest.cnf file");
-        return;
+        tokenFile << pincode << std::endl;
+        tokenFile << accessToken << std::endl;
+        tokenFile << nest_client_id << std::endl;
+        tokenFile << nest_client_secret << std::endl;
+        tokenFile.close();
     }
-    fputs(pincode.c_str(), fp);
-    fputs("\n", fp);
-    fputs(accessToken.c_str(), fp);
-    fputs("\n", fp);
-    fputs(nest_client_id.c_str(), fp);
-    fputs("\n", fp);
-    fputs(nest_client_secret.c_str(), fp);
-    fputs("\n", fp);
-
-    fclose(fp);
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Failed to open nest token file");
+    }
 }
 
 MPMResult refreshAccessToken(std::string filename, std::string pincode)
@@ -332,7 +313,7 @@ bool isSecureEnvironmentSet()
 {
     char *non_secure_env = getenv("NONSECURE");
 
-    if (non_secure_env && (strcmp(non_secure_env, "true") == 0))
+    if (non_secure_env && !strcmp(non_secure_env, "true"))
     {
         OIC_LOG(INFO, TAG, "Creating NON SECURE resources");
         return false;
@@ -420,7 +401,7 @@ MPMResult  deleteOCFResource(const std::string &uri)
     return MPM_RESULT_OK;
 }
 
-void createPayloadForMetadata(MPMResourceList **list, const char *uri)
+void createPayloadForMetadata(MPMResourceList **list, const std::string &uri)
 {
     MPMResourceList *tempPtr = NULL;
     tempPtr = (MPMResourceList *) OICCalloc(1, sizeof(MPMResourceList));
@@ -431,7 +412,7 @@ void createPayloadForMetadata(MPMResourceList **list, const char *uri)
     }
 
     OICStrcpy(tempPtr->rt, MPM_MAX_LENGTH_64, NEST_THERMOSTAT_RT.c_str());
-    OICStrcpy(tempPtr->href, MPM_MAX_URI_LEN, uri);
+    OICStrcpy(tempPtr->href, MPM_MAX_URI_LEN, uri.c_str());
     OICStrcpy(tempPtr->interfaces, MPM_MAX_LENGTH_64, NEST_THERMOSTAT_IF.c_str());
     tempPtr->bitmap = BM;
     tempPtr->next = *list;
@@ -490,7 +471,7 @@ MPMResult pluginAdd(MPMPluginCtx *, MPMPipeMessage *message)
     createOCFResource(uri);
     addedThermostats[uri] = uriToNestThermostatMap[uri];
 
-    createPayloadForMetadata(&list, uri.c_str());
+    createPayloadForMetadata(&list, uri);
 
     NestThermostat::THERMOSTAT thermostat;
     addedThermostats[uri]->get(thermostat);

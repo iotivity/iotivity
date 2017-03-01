@@ -20,8 +20,8 @@
 
 #include <stdio.h>
 #include <string>
-#include "nest_thermostat.h"
-#include "nest_defs.h"
+#include "nestThermostat.h"
+#include "nestDefs.h"
 #include "rapidjson.h"
 #include "document.h"
 #include "JsonHelper.h"
@@ -35,7 +35,8 @@
 using namespace OC::Bridging;
 
 NestThermostat::NestThermostat(const std::string &token, uint16_t hum, uint32_t hvac,
-                               uint16_t temp, uint32_t scale, const char *devId) : m_token(token)
+                               uint16_t temp, uint32_t scale, const std::string &devId)
+                               : m_token(token)
 {
     m_thermostat.humidity = hum;
     m_thermostat.targetTempF = temp;
