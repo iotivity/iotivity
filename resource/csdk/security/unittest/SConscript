@@ -99,7 +99,6 @@ unittest = srmtest_env.Program('unittest', ['aclresourcetest.cpp',
                                             'iotvticalendartest.cpp',
                                             'base64tests.cpp',
                                             'pbkdf2tests.cpp',
-                                            'svcresourcetest.cpp',
                                             'srmtestcommon.cpp',
                                             'directpairingtest.cpp',
                                             'crlresourcetest.cpp'])

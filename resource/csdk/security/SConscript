@@ -113,7 +113,6 @@ libocsrm_src = [
 	OCSRM_SRC + 'pstatresource.c',
 	OCSRM_SRC + 'doxmresource.c',
 	OCSRM_SRC + 'credresource.c',
-	OCSRM_SRC + 'svcresource.c',
 	OCSRM_SRC + 'pconfresource.c',
 	OCSRM_SRC + 'dpairingresource.c',
 	OCSRM_SRC + 'policyengine.c',

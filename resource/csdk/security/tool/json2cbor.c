@@ -38,7 +38,6 @@
 #include "doxmresource.h"
 #include "amaclresource.h"
 #include "credresource.h"
-#include "svcresource.h"
 #include "security_internals.h"
 
 #define TAG  "OIC_JSON2CBOR"
@@ -50,7 +49,6 @@
 static OicSecPstat_t* JSONToPstatBin(const char * jsonStr);
 static OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr);
 static OicSecAcl_t *JSONToAclBin(const char * jsonStr);
-static OicSecSvc_t* JSONToSvcBin(const char * jsonStr);
 static OicSecAmacl_t* JSONToAmaclBin(const char * jsonStr);
 static OicSecCred_t* JSONToCredBin(const char * jsonStr);
 
@@ -86,7 +84,6 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
     uint8_t *pstatCbor = NULL;
     uint8_t *doxmCbor = NULL;
     uint8_t *amaclCbor = NULL;
-    uint8_t *svcCbor = NULL;
     uint8_t *credCbor = NULL;
     cJSON *jsonRoot = NULL;
     OCStackResult ret = OC_STACK_ERROR;
@@ -184,22 +181,6 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         printf("AMACL Cbor Size: %zd\n", amaclCborSize);
         DeleteAmaclList(amacl);
     }
-    value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_SVC_NAME);
-    size_t svcCborSize = 0;
-    if (NULL != value)
-    {
-        OicSecSvc_t *svc = JSONToSvcBin(jsonStr);
-        VERIFY_NOT_NULL(TAG, svc, FATAL);
-        ret = SVCToCBORPayload(svc, &svcCbor, &svcCborSize);
-        if(OC_STACK_OK != ret)
-        {
-            OIC_LOG (ERROR, TAG, "Failed converting Svc to Cbor Payload");
-            DeleteSVCList(svc);
-            goto exit;
-        }
-        printf("SVC Cbor Size: %zd\n", svcCborSize);
-        DeleteSVCList(svc);
-    }
     value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_CRED_NAME);
     //printf("CRED json : \n%s\n", cJSON_PrintUnformatted(value));
     size_t credCborSize = 0;
@@ -220,7 +201,7 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
     }
 
     CborEncoder encoder;
-    size_t cborSize = aclCborSize + pstatCborSize + doxmCborSize + svcCborSize + credCborSize + amaclCborSize;
+    size_t cborSize = aclCborSize + pstatCborSize + doxmCborSize + credCborSize + amaclCborSize;
 
     printf("Total Cbor Size : %zd\n", cborSize);
     cborSize += 255; // buffer margin for adding map and byte string
@@ -259,13 +240,6 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         cborEncoderResult = cbor_encode_byte_string(&map, amaclCbor, amaclCborSize);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding AMACL Value.");
     }
-    if (svcCborSize > 0)
-    {
-        cborEncoderResult = cbor_encode_text_string(&map, OIC_JSON_SVC_NAME, strlen(OIC_JSON_SVC_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SVC Name.");
-        cborEncoderResult = cbor_encode_byte_string(&map, svcCbor, svcCborSize);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SVC Value.");
-    }
     if (credCborSize > 0)
     {
         cborEncoderResult = cbor_encode_text_string(&map, OIC_JSON_CRED_NAME, strlen(OIC_JSON_CRED_NAME));
@@ -302,7 +276,6 @@ exit:
     OICFree(doxmCbor);
     OICFree(pstatCbor);
     OICFree(amaclCbor);
-    OICFree(svcCbor);
     OICFree(credCbor);
     OICFree(jsonStr);
     return ;
@@ -755,12 +728,6 @@ OicSecPstat_t* JSONToPstatBin(const char * jsonStr)
     VERIFY_SUCCESS(TAG, (cJSON_True == jsonObj->type || cJSON_False == jsonObj->type) , ERROR);
     pstat->isOp = jsonObj->valueint;
 
-    jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_DEVICE_ID_NAME);
-    VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
-    VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-    ret = ConvertStrToUuid(jsonObj->valuestring, &pstat->deviceID);
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-
     jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_ROWNERID_NAME);
     VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
     VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
@@ -1000,112 +967,6 @@ exit:
     return headCred;
 }
 
-static OicSecSvc_t* JSONToSvcBin(const char * jsonStr)
-{
-    OCStackResult ret = OC_STACK_ERROR;
-    OicSecSvc_t * headSvc = NULL;
-    OicSecSvc_t * prevSvc = NULL;
-    cJSON *jsonRoot = NULL;
-    cJSON *jsonSvcArray = NULL;
-
-    VERIFY_NOT_NULL(TAG, jsonStr, ERROR);
-
-    jsonRoot = cJSON_Parse(jsonStr);
-    VERIFY_NOT_NULL(TAG, jsonRoot, ERROR);
-
-    jsonSvcArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_SVC_NAME);
-    VERIFY_NOT_NULL(TAG, jsonSvcArray, INFO);
-
-    if (cJSON_Array == jsonSvcArray->type)
-    {
-        int numSvc = cJSON_GetArraySize(jsonSvcArray);
-        int idx = 0;
-
-        VERIFY_SUCCESS(TAG, numSvc > 0, INFO);
-        do
-        {
-            cJSON *jsonSvc = cJSON_GetArrayItem(jsonSvcArray, idx);
-            VERIFY_NOT_NULL(TAG, jsonSvc, ERROR);
-
-            OicSecSvc_t *svc = (OicSecSvc_t*)OICCalloc(1, sizeof(OicSecSvc_t));
-            VERIFY_NOT_NULL(TAG, svc, ERROR);
-
-            headSvc = (headSvc) ? headSvc : svc;
-            if (prevSvc)
-            {
-                prevSvc->next = svc;
-            }
-
-            cJSON *jsonObj = NULL;
-            unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {0};
-            size_t outLen = 0;
-            B64Result b64Ret = B64_OK;
-
-            // Service Device Identity
-            jsonObj = cJSON_GetObjectItem(jsonSvc, OIC_JSON_SERVICE_DEVICE_ID);
-            VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-            outLen = 0;
-            b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
-                       sizeof(base64Buff), &outLen);
-            VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(svc->svcdid.id)), ERROR);
-            memcpy(svc->svcdid.id, base64Buff, outLen);
-
-            // Service Type
-            jsonObj = cJSON_GetObjectItem(jsonSvc, OIC_JSON_SERVICE_TYPE);
-            VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
-            svc->svct = (OicSecSvcType_t)jsonObj->valueint;
-
-            // Resource Owners
-            jsonObj = cJSON_GetObjectItem(jsonSvc, OIC_JSON_OWNERS_NAME);
-            VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
-
-            svc->ownersLen = cJSON_GetArraySize(jsonObj);
-            VERIFY_SUCCESS(TAG, svc->ownersLen > 0, ERROR);
-            svc->owners = (OicUuid_t*)OICCalloc(svc->ownersLen, sizeof(OicUuid_t));
-            VERIFY_NOT_NULL(TAG, (svc->owners), ERROR);
-
-            size_t idxx = 0;
-            do
-            {
-// Needs to be removed once IOT-1746 is resolved.
-#ifdef _MSC_VER
-#pragma warning(suppress : 4267)
-                cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, idxx);
-
-#else
-                cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, idxx);
-
-#endif
-                VERIFY_NOT_NULL(TAG, jsonOwnr, ERROR);
-                VERIFY_SUCCESS(TAG, cJSON_String == jsonOwnr->type, ERROR);
-                outLen = 0;
-                b64Ret = b64Decode(jsonOwnr->valuestring, strlen(jsonOwnr->valuestring), base64Buff,
-                           sizeof(base64Buff), &outLen);
-
-                VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(svc->owners[idxx].id)),
-                                   ERROR);
-                memcpy(svc->owners[idxx].id, base64Buff, outLen);
-            } while ( ++idxx < svc->ownersLen);
-
-            prevSvc = svc;
-        } while( ++idx < numSvc);
-    }
-
-    ret = OC_STACK_OK;
-
-exit:
-    cJSON_Delete(jsonRoot);
-    if (OC_STACK_OK != ret)
-    {
-        DeleteSVCList(headSvc);
-        headSvc = NULL;
-    }
-    return headSvc;
-}
-
 static OicSecAmacl_t* JSONToAmaclBin(const char * jsonStr)
 {
     OCStackResult ret = OC_STACK_ERROR;
@@ -1158,43 +1019,10 @@ static OicSecAmacl_t* JSONToAmaclBin(const char * jsonStr)
 
     } while ( ++idxx < headAmacl->resourcesLen);
 
-    // Ams -- Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonAmacl, OIC_JSON_AMS_NAME);
-    VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
-    VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
-
-    headAmacl->amssLen = cJSON_GetArraySize(jsonObj);
-    VERIFY_SUCCESS(TAG, headAmacl->amssLen > 0, ERROR);
-    headAmacl->amss = (OicUuid_t*)OICCalloc(headAmacl->amssLen, sizeof(OicUuid_t));
-    VERIFY_NOT_NULL(TAG, headAmacl->amss, ERROR);
-
-    idxx = 0;
-    do
-    {
-// Needs to be removed once IOT-1746 is resolved.
-#ifdef _MSC_VER
-#pragma warning(suppress : 4267)
-        cJSON *jsonAms = cJSON_GetArrayItem(jsonObj, idxx);
-
-#else
-        cJSON *jsonAms = cJSON_GetArrayItem(jsonObj, idxx);
-
-#endif
-        VERIFY_NOT_NULL(TAG, jsonAms, ERROR);
-        VERIFY_SUCCESS(TAG, cJSON_String == jsonAms->type, ERROR);
-
-        memcpy(headAmacl->amss[idxx].id, (OicUuid_t *)jsonAms->valuestring, strlen(jsonAms->valuestring));
-
-    } while ( ++idxx < headAmacl->amssLen);
-
-
     // Rowner -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonAmacl, OIC_JSON_ROWNERID_NAME);
     VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
     VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-
-    ret = ConvertStrToUuid(jsonObj->valuestring, &headAmacl->rownerID);
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
     ret = OC_STACK_OK;
 

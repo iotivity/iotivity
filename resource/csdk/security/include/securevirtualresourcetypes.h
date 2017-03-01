@@ -434,9 +434,6 @@ struct OicSecAmacl
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
     size_t              resourcesLen;   // the number of elts in Resources
     char                **resources;    // 0:R:M:Y:String
-    size_t              amssLen;        // the number of elts in Amss
-    OicUuid_t           *amss;          // 1:R:M:Y:acl
-    OicUuid_t           rownerID;        // 2:R:S:Y:oic.uuid
     OicSecAmacl_t         *next;
 };
 
@@ -515,7 +512,6 @@ struct OicSecPstat
     bool                isOp;           // 0:R:S:Y:Boolean
     OicSecDpm_t         cm;             // 1:R:S:Y:oic.sec.dpm
     OicSecDpm_t         tm;             // 2:RW:S:Y:oic.sec.dpm
-    OicUuid_t           deviceID;       // 3:R:S:Y:oic.uuid
     OicSecDpom_t        om;             // 4:RW:M:Y:oic.sec.dpom
     size_t              smLen;          // the number of elts in Sm
     OicSecDpom_t        *sm;            // 5:R:M:Y:oic.sec.dpom
@@ -545,20 +541,6 @@ struct OicSecSacl
 #if defined(_MSC_VER)
     uint8_t unused; // VS doesn't like empty structs
 #endif
-};
-
-/**
- * /oic/sec/svc (Service requiring a secure connection) data type.
- * Derived from OIC Security Spec; see Spec for details.
- */
-struct OicSecSvc
-{
-    // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    OicUuid_t               svcdid;                 //0:R:S:Y:oic.uuid
-    OicSecSvcType_t         svct;                   //1:R:M:Y:OIC Service Type
-    size_t                  ownersLen;              //2:the number of elts in Owners
-    OicUuid_t               *owners;                //3:R:M:Y:oic.uuid
-    OicSecSvc_t             *next;
 };
 
 #if defined(__WITH_DTLS__) ||  defined(__WITH_TLS__)

@@ -92,7 +92,6 @@ extern const char * OIC_JSON_VER_NAME;
 //reset profile
 extern const char * OIC_JSON_RESET_PF_NAME;
 
-extern const char * OIC_JSON_SUBJECT_NAME;
 extern const char * OIC_JSON_SUBJECTID_NAME;
 extern const char * OIC_JSON_RESOURCES_NAME;
 extern const char * OIC_JSON_AMSS_NAME;
@@ -143,7 +142,6 @@ extern const char * OIC_JSON_EDP_NAME;
 extern const char * OIC_JSON_PIN_NAME;
 extern const char * OIC_JSON_PDACL_NAME;
 extern const char * OIC_JSON_PDDEV_LIST_NAME;
-extern const char * OIC_JSON_ROWNER_NAME;
 extern const char * OIC_JSON_PRM_NAME;
 extern const char * OIC_JSON_SPM_NAME;
 extern const char * OIC_JSON_PDEVICE_ID_NAME;

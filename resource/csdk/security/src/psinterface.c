@@ -232,12 +232,6 @@ OCStackResult UpdateSecureResourceInPS(const char *rsrcName, const uint8_t *psPa
                 cborFindResult = cbor_value_dup_byte_string(&curVal, &amaclCbor, &amaclCborLen, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding AMACL Name Value.");
             }
-            cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_SVC_NAME, &curVal);
-            if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
-            {
-                cborFindResult = cbor_value_dup_byte_string(&curVal, &svcCbor, &svcCborLen, NULL);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SVC Name Value.");
-            }
             cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_CRED_NAME, &curVal);
             if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
             {
@@ -321,13 +315,6 @@ OCStackResult UpdateSecureResourceInPS(const char *rsrcName, const uint8_t *psPa
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Amacl Name.");
                 cborEncoderResult |= cbor_encode_byte_string(&secRsrc, amaclCbor, amaclCborLen);
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Amacl Value.");
-            }
-            if (strcmp(OIC_JSON_SVC_NAME, rsrcName) && svcCborLen)
-            {
-                cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_SVC_NAME, strlen(OIC_JSON_SVC_NAME));
-                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SVC Name.");
-                cborEncoderResult |= cbor_encode_byte_string(&secRsrc, svcCbor, svcCborLen);
-                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SVC Value.");
             }
             if (strcmp(OIC_JSON_CRED_NAME, rsrcName) && credCborLen)
             {

@@ -1411,12 +1411,6 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                     ehRet = OC_EH_ERROR;
                     goto exit;
                 }
-                ownerRes = SetAmaclRownerId(&gDoxm->owner);
-                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
-                {
-                    ehRet = OC_EH_ERROR;
-                    goto exit;
-                }
                 ownerRes = SetCredRownerId(&gDoxm->owner);
                 if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
                 {

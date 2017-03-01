@@ -54,7 +54,6 @@ static OicSecPstat_t gDefaultPstat =
     false,                                    // bool isop
     TAKE_OWNER,                               // OicSecDpm_t cm
     NORMAL,                                   // OicSecDpm_t tm
-    {.id = {0}},                              // OicUuid_t deviceID
     SINGLE_SERVICE_CLIENT_DRIVEN,             // OicSecDpom_t om */
     1,                                        // the number of elts in Sms
     &gSm,                                     // OicSecDpom_t *sm
@@ -155,16 +154,6 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Name Tag.");
         cborEncoderResult = cbor_encode_int(&pstatMap, pstat->sm[0]);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Name Value.");
-
-        cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_DEVICE_ID_NAME,
-            strlen(OIC_JSON_DEVICE_ID_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Tag.");
-        ret = ConvertUuidToStr(&pstat->deviceID, &strUuid);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
-        cborEncoderResult = cbor_encode_text_string(&pstatMap, strUuid, strlen(strUuid));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Value.");
-        OICFree(strUuid);
-        strUuid = NULL;
 
         cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_ROWNERID_NAME,
             strlen(OIC_JSON_ROWNERID_NAME));
@@ -288,23 +277,6 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
     else
     {
         pstat->isOp = gPstat->isOp;
-        cborFindResult = CborNoError;
-    }
-
-    cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_DEVICE_ID_NAME, &pstatMap);
-    if (CborNoError == cborFindResult && cbor_value_is_text_string(&pstatMap))
-    {
-        cborFindResult = cbor_value_dup_text_string(&pstatMap, &strUuid , &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Device Id Value.");
-        ret = ConvertStrToUuid(strUuid , &pstat->deviceID);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-        OICFree(strUuid );
-        strUuid  = NULL;
-
-    }
-    else
-    {
-        memcpy(&pstat->deviceID, &gPstat->deviceID, sizeof(OicUuid_t));
         cborFindResult = CborNoError;
     }
 
@@ -611,7 +583,6 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
             gPstat->om = pstat->om;
             gPstat->tm = pstat->tm;
             gPstat->cm = pstat->cm;
-            memcpy(&(gPstat->deviceID), &(pstat->deviceID), sizeof(OicUuid_t));
             memcpy(&(gPstat->rownerID), &(pstat->rownerID), sizeof(OicUuid_t));
 
             // Convert pstat data into CBOR for update to persistent storage
@@ -751,7 +722,6 @@ OCStackResult InitPstatResource()
     // Read Pstat resource from PS
     uint8_t *data = NULL;
     size_t size = 0;
-    OicUuid_t emptyUuid = {.id={0}};
     ret = GetSecureVirtualDatabaseFromPS(OIC_JSON_PSTAT_NAME, &data, &size);
     // If database read failed
     if (OC_STACK_OK != ret)
@@ -774,16 +744,6 @@ OCStackResult InitPstatResource()
         gPstat = GetPstatDefault();
     }
     VERIFY_NOT_NULL(TAG, gPstat, FATAL);
-
-    //In case of Pstat's device id is empty, fill the device id as doxm's device id.
-    if(0 == memcmp(&gPstat->deviceID, &emptyUuid, sizeof(OicUuid_t)))
-    {
-        OicUuid_t doxmUuid = {.id={0}};
-        if(OC_STACK_OK == GetDoxmDeviceID(&doxmUuid))
-        {
-            memcpy(&gPstat->deviceID, &doxmUuid, sizeof(OicUuid_t));
-        }
-    }
 
     // Instantiate 'oic.sec.pstat'
     ret = CreatePstatResource();
@@ -907,7 +867,6 @@ OCStackResult SetPstatSelfOwnership(const OicUuid_t* newROwner)
         gPstat->cm = (OicSecDpm_t)(gPstat->cm & (~TAKE_OWNER));
         gPstat->isOp = true;
 
-        memcpy(gPstat->deviceID.id, newROwner->id, sizeof(newROwner->id));
         memcpy(gPstat->rownerID.id, newROwner->id, sizeof(newROwner->id));
 
         ret = PstatToCBORPayload(gPstat, &cborPayload, &size, false);
