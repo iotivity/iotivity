@@ -37,6 +37,8 @@
 #include "logger.h"
 #include "ConcurrentIotivityUtils.h"
 
+using namespace std;
+
 MPMPluginCtx *g_pluginCtx = NULL;
 
 #define DEVICE_NAME "LIFX_BULB"
@@ -46,16 +48,15 @@ MPMPluginCtx *g_pluginCtx = NULL;
 #define MAX_ACCESS_TOKEN_LENGTH 1024
 #define TAG "LIFX_RESOURCE"
 
-static const char* OIC_BINARY_SWITCH = "oic.r.switch.binary";
-static const char* OIC_BRIGHTNESS_LIGHT = "oic.r.light.brightness";
-
+static std::string OIC_BINARY_SWITCH = "oic.r.switch.binary";
+static std::string OIC_BRIGHTNESS_LIGHT = "oic.r.light.brightness";
 const uint BINARY_SWITCH_CALLBACK = 0;
 const uint BRIGHTNESS_CALLBACK = 1;
 
 static const std::string BINARY_SWITCH_RELATIVE_URI = "/switch";
 static const std::string BRIGHTNESS_RELATIVE_URI = "/brightness";
 
-char accessToken[MAX_ACCESS_TOKEN_LENGTH];
+std::string accessToken;
 const static char CRED_FILE[] = "./oic_svr_db_lifx.dat";
 
 using namespace OC::Bridging;
@@ -107,23 +108,21 @@ MPMResult pluginCreate(MPMPluginCtx **pluginSpecificCtx)
     ctx->resource_type = "oic.d.light";
     ctx->open = lifxSecurityFile;
 
-
-    FILE *fp = fopen("./lifx.cnf", "r");
-
-    if (NULL == fp)
+    ifstream tokenFile("./lifx.cnf");
+    if (!tokenFile.is_open())
     {
         OIC_LOG(ERROR, TAG, "error loading lifx.cnf file.");
         return MPM_RESULT_INTERNAL_ERROR;
     }
 
-    if (fgets(accessToken, MAX_ACCESS_TOKEN_LENGTH - 1, fp) == NULL)
+    if (!getline (tokenFile, accessToken))
     {
         OIC_LOG(ERROR, TAG, "Failed to read ./lifx.cnf");
-        fclose(fp);
+        tokenFile.close();
         return MPM_RESULT_INTERNAL_ERROR;
     }
-    accessToken[strlen(accessToken)-1] = '\0';
-    fclose(fp);
+
+    tokenFile.close();
 
     return MPM_RESULT_OK;
 }
@@ -202,9 +201,9 @@ MPMResult pluginScan(MPMPluginCtx *, MPMPipeMessage *)
 
 bool isSecureEnvironmentSet()
 {
-    char *non_secure_env = getenv("NONSECURE");
+	char *non_secure_env = getenv("NONSECURE");
 
-    if (non_secure_env != NULL && (strcmp(non_secure_env, "true") == 0))
+    if (non_secure_env && !strcmp(non_secure_env, "true"))
     {
         OIC_LOG(INFO, TAG, "Creating NON SECURE resources");
         return false;
@@ -213,8 +212,8 @@ bool isSecureEnvironmentSet()
     return true;
 }
 
-MPMResult createPayloadForMetadata(MPMResourceList **list, const char *uri, const char *res_type,
-                              const char *interface)
+MPMResult createPayloadForMetadata(MPMResourceList **list, const std::string &uri, const std::string &res_type,
+                              const std::string &interface)
 {
     MPMResourceList *tempPtr;
     tempPtr = (MPMResourceList *) OICCalloc(1, sizeof(MPMResourceList));
@@ -223,9 +222,10 @@ MPMResult createPayloadForMetadata(MPMResourceList **list, const char *uri, cons
         OIC_LOG_V(ERROR, TAG, "failed to allocate memory for tempPtr");
         return MPM_RESULT_OUT_OF_MEMORY;
     }
-    strncpy(tempPtr->rt, res_type,  MPM_MAX_LENGTH_64);
-    strncpy(tempPtr->href, uri, MPM_MAX_URI_LEN);
-    strncpy(tempPtr->interfaces, interface, MPM_MAX_LENGTH_64);
+
+    OICStrcpy(tempPtr->rt, MPM_MAX_LENGTH_64, res_type.c_str());
+    OICStrcpy(tempPtr->href, MPM_MAX_URI_LEN, uri.c_str());
+    OICStrcpy(tempPtr->interfaces, MPM_MAX_LENGTH_64,interface.c_str());
     tempPtr->bitmap = BM;
     tempPtr->next = *list;
     *list  = tempPtr;
@@ -308,12 +308,13 @@ MPMResult pluginAdd(MPMPluginCtx *, MPMPipeMessage * message)
     }
 
     std::string switchUri = uri + BINARY_SWITCH_RELATIVE_URI;
-    result = createPayloadForMetadata(&list, switchUri.c_str(), OIC_BINARY_SWITCH,
-             OC_RSRVD_INTERFACE_ACTUATOR);
+    result = createPayloadForMetadata(&list, switchUri, OIC_BINARY_SWITCH,
+                 OC_RSRVD_INTERFACE_ACTUATOR);
 
     std::string brightnessUri = uri + BRIGHTNESS_RELATIVE_URI;
-    result = createPayloadForMetadata(&list, brightnessUri.c_str(), OIC_BRIGHTNESS_LIGHT,
+    result = createPayloadForMetadata(&list, brightnessUri, OIC_BRIGHTNESS_LIGHT,
              OC_RSRVD_INTERFACE_ACTUATOR);
+
     if (result == MPM_RESULT_OUT_OF_MEMORY)
     {
         OIC_LOG(ERROR, TAG, "Failed to create payload for metadata");
@@ -324,15 +325,15 @@ MPMResult pluginAdd(MPMPluginCtx *, MPMPipeMessage * message)
     targetLight->getUser(user);
 
     // filling plugin specific details
-    strncpy(pluginSpecificDetails.id, targetLight->config.id.c_str(), MPM_MAX_LENGTH_64);
-    strncpy(pluginSpecificDetails.label, targetLight->config.label.c_str(), MPM_MAX_LENGTH_64);
-    strncpy(pluginSpecificDetails.uuid, targetLight->config.uuid.c_str(), MPM_MAX_LENGTH_64);
-    strncpy(pluginSpecificDetails.user, user.c_str(), MPM_MAX_LENGTH_256);
+    OICStrcpy(pluginSpecificDetails.id, MPM_MAX_LENGTH_64, targetLight->config.id.c_str());
+    OICStrcpy(pluginSpecificDetails.label, MPM_MAX_LENGTH_64, targetLight->config.label.c_str());
+    OICStrcpy(pluginSpecificDetails.uuid, MPM_MAX_LENGTH_64, targetLight->config.uuid.c_str());
+    OICStrcpy(pluginSpecificDetails.user, MPM_MAX_LENGTH_256, user.c_str());
 
     // filling device specific details
-    strncpy(deviceConfiguration.devName, DEVICE_NAME, MPM_MAX_LENGTH_64);
-    strncpy(deviceConfiguration.devType, DEVICE_TYPE, MPM_MAX_LENGTH_64);
-    strncpy(deviceConfiguration.manufacturerName, MANUFACTURER_NAME, MPM_MAX_LENGTH_256);
+    OICStrcpy(deviceConfiguration.devName, MPM_MAX_LENGTH_64, DEVICE_NAME);
+    OICStrcpy(deviceConfiguration.devType, MPM_MAX_LENGTH_64, DEVICE_TYPE);
+    OICStrcpy(deviceConfiguration.manufacturerName, MPM_MAX_LENGTH_256, MANUFACTURER_NAME);
 
     MPMFormMetaData(list, &deviceConfiguration, buff, MPM_MAX_METADATA_LEN, &pluginSpecificDetails,
                     sizeof(pluginSpecificDetails));
@@ -340,7 +341,8 @@ MPMResult pluginAdd(MPMPluginCtx *, MPMPipeMessage * message)
     addedLights[uri] = uriToLifxLightMap[uri];
 
     MPMAddResponse response;
-    strncpy(response.uri, uri.c_str(), MPM_MAX_URI_LEN);
+    memset(&response, 0, sizeof(MPMAddResponse));
+    OICStrcpy(response.uri, MPM_MAX_URI_LEN, uri.c_str());
     memcpy(response.metadata, buff, MPM_MAX_METADATA_LEN);
 
     size_t size = sizeof(MPMAddResponse);
