@@ -199,13 +199,12 @@ static OCStackResult ResourcePayloadCreate(sqlite3_stmt *stmt, OCDiscoveryPayloa
         resourcePayload->bitmap = (uint8_t)(bitmap & (OC_OBSERVABLE | OC_DISCOVERABLE));
         resourcePayload->secure = ((bitmap & OC_SECURE) != 0);
 
-        const char address[] = "SELECT di, address FROM RD_DEVICE_LIST "
+        const char address[] = "SELECT di FROM RD_DEVICE_LIST "
             "INNER JOIN RD_DEVICE_LINK_LIST ON RD_DEVICE_LINK_LIST.DEVICE_ID = RD_DEVICE_LIST.ID "
             "WHERE RD_DEVICE_LINK_LIST.DEVICE_ID=@deviceId";
         int addressSize = (int)sizeof(address);
 
         const uint8_t di_index = 0;
-        const uint8_t address_index = 1;
 
         sqlite3_stmt *stmt1 = 0;
         VERIFY_SQLITE(sqlite3_prepare_v2(gRDDB, address, addressSize, &stmt1, NULL));
@@ -215,14 +214,7 @@ static OCStackResult ResourcePayloadCreate(sqlite3_stmt *stmt, OCDiscoveryPayloa
         if (SQLITE_ROW == res || SQLITE_DONE == res)
         {
             const unsigned char *di = sqlite3_column_text(stmt1, di_index);
-            const unsigned char *tempAddress = sqlite3_column_text(stmt1, address_index);
-            OIC_LOG_V(DEBUG, TAG, " %s %s", di, tempAddress);
-            discPayload->baseURI = OICStrdup((char *)tempAddress);
-            if (!discPayload->baseURI)
-            {
-                result = OC_STACK_NO_MEMORY;
-                goto exit;
-            }
+            OIC_LOG_V(DEBUG, TAG, " %s", di);
             discPayload->sid = OICStrdup((char *)di);
             if (!discPayload->sid)
             {

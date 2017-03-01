@@ -680,7 +680,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                 OC_REST_NOMETHOD,
                                                 &observer->devAddr,
                                                 (OCResourceHandle)NULL,
-                                                NULL, PAYLOAD_TYPE_REPRESENTATION,
+                                                NULL,
+                                                PAYLOAD_TYPE_REPRESENTATION, OC_FORMAT_CBOR,
                                                 NULL, 0, 0, NULL,
                                                 OC_OBSERVE_DEREGISTER,
                                                 observer->observeId,
@@ -736,7 +737,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                     OC_REST_NOMETHOD,
                                                     &observer->devAddr,
                                                     (OCResourceHandle)NULL,
-                                                    NULL, PAYLOAD_TYPE_REPRESENTATION,
+                                                    NULL,
+                                                    PAYLOAD_TYPE_REPRESENTATION, OC_FORMAT_CBOR,
                                                     NULL, 0, 0, NULL,
                                                     OC_OBSERVE_DEREGISTER,
                                                     observer->observeId,
@@ -1221,6 +1223,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     if (responseInfo->info.payload)
     {
         result = OCParsePayload(&response->payload,
+                CAToOCPayloadFormat(responseInfo->info.payloadFormat),
                 PAYLOAD_TYPE_PRESENCE,
                 responseInfo->info.payload,
                 responseInfo->info.payloadSize);
@@ -1694,6 +1697,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 if (OCResultToSuccess(response->result) || PAYLOAD_TYPE_REPRESENTATION == type)
                 {
                     if (OC_STACK_OK != OCParsePayload(&response->payload,
+                            CAToOCPayloadFormat(responseInfo->info.payloadFormat),
                             type,
                             responseInfo->info.payload,
                             responseInfo->info.payloadSize))
@@ -2135,10 +2139,11 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
                 protocolRequest->numRcvdVendorSpecificHeaderOptions,
                 protocolRequest->observationOption, protocolRequest->qos,
                 protocolRequest->query, protocolRequest->rcvdVendorSpecificHeaderOptions,
-                protocolRequest->payload, protocolRequest->requestToken,
-                protocolRequest->tokenLength, protocolRequest->resourceUrl,
-                protocolRequest->reqTotalSize, protocolRequest->acceptFormat,
-                protocolRequest->acceptVersion, &protocolRequest->devAddr);
+                protocolRequest->payloadFormat, protocolRequest->payload,
+                protocolRequest->requestToken, protocolRequest->tokenLength,
+                protocolRequest->resourceUrl, protocolRequest->reqTotalSize,
+                protocolRequest->acceptFormat, protocolRequest->acceptVersion,
+                &protocolRequest->devAddr);
         if (OC_STACK_OK != result)
         {
             OIC_LOG(ERROR, TAG, "Error adding server request");
@@ -2243,6 +2248,7 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
 
     if ((requestInfo->info.payload) && (0 < requestInfo->info.payloadSize))
     {
+        serverRequest.payloadFormat = CAToOCPayloadFormat(requestInfo->info.payloadFormat);
         serverRequest.reqTotalSize = requestInfo->info.payloadSize;
         serverRequest.payload = (uint8_t *) OICMalloc(requestInfo->info.payloadSize);
         if (!serverRequest.payload)
@@ -3232,14 +3238,6 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
 
     if (payload)
     {
-        if((result =
-            OCConvertPayload(payload, &requestInfo.info.payload, &requestInfo.info.payloadSize))
-                != OC_STACK_OK)
-        {
-            OIC_LOG(ERROR, TAG, "Failed to create CBOR Payload");
-            goto exit;
-        }
-
         uint16_t payloadVersion = OC_SPEC_VERSION_VALUE;
         CAPayloadFormat_t payloadFormat = CA_FORMAT_APPLICATION_CBOR;
         // From OCF onwards, check version option settings
@@ -3272,6 +3270,15 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
 
         requestInfo.info.payloadVersion = payloadVersion;
         requestInfo.info.payloadFormat = payloadFormat;
+
+        if((result =
+            OCConvertPayload(payload, CAToOCPayloadFormat(requestInfo.info.payloadFormat),
+                             &requestInfo.info.payload, &requestInfo.info.payloadSize))
+                != OC_STACK_OK)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to create CBOR Payload");
+            goto exit;
+        }
     }
     else
     {

@@ -107,7 +107,8 @@ TEST_F(CborByteStringTest, ByteStringConvertParseTest)
     // Convert OCPayload to CBOR
     uint8_t *payload_cbor = NULL;
     size_t payload_cbor_size = 0;
-    EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*) payload_in, &payload_cbor, &payload_cbor_size));
+    EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*) payload_in, OC_FORMAT_CBOR,
+            &payload_cbor, &payload_cbor_size));
 
 #ifdef CBOR_BIN_STRING_DEBUG
     FILE *fp = fopen("binstring.cbor", "wb+");
@@ -120,7 +121,7 @@ TEST_F(CborByteStringTest, ByteStringConvertParseTest)
 
     // Parse CBOR back to OCPayload
     OCPayload* payload_out = NULL;
-    EXPECT_EQ(OC_STACK_OK, OCParsePayload(&payload_out, PAYLOAD_TYPE_REPRESENTATION,
+    EXPECT_EQ(OC_STACK_OK, OCParsePayload(&payload_out, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                  payload_cbor, payload_cbor_size));
 
     OCByteString quakedata_out = {NULL, 0};
@@ -194,7 +195,8 @@ TEST_F(CborByteStringTest, ByteStringArrayConvertParseTest )
     // Convert OCPayload to CBOR
     uint8_t *payload_cbor = NULL;
     size_t payload_cbor_size = 0;
-    EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*) payload_in, &payload_cbor, &payload_cbor_size));
+    EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*) payload_in, OC_FORMAT_CBOR,
+            &payload_cbor, &payload_cbor_size));
 #ifdef CBOR_BIN_STRING_DEBUG
     FILE *fp = fopen("binstringarr.cbor", "wb+");
     if (fp)
@@ -206,7 +208,7 @@ TEST_F(CborByteStringTest, ByteStringArrayConvertParseTest )
 
     // Parse CBOR back to OCPayload
     OCPayload* payload_out = NULL;
-    EXPECT_EQ(OC_STACK_OK, OCParsePayload(&payload_out, PAYLOAD_TYPE_REPRESENTATION,
+    EXPECT_EQ(OC_STACK_OK, OCParsePayload(&payload_out, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                 payload_cbor, payload_cbor_size));
 
     OCByteString* quakedata_out = NULL;
@@ -252,7 +254,8 @@ TEST(CborHeterogeneousArrayTest, ConvertParseTest)
     // Convert OCPayload to CBOR
     uint8_t *payload_cbor = NULL;
     size_t payload_cbor_size = 0;
-    EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*) payload_in, &payload_cbor, &payload_cbor_size));
+    EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*) payload_in, OC_FORMAT_CBOR,
+            &payload_cbor, &payload_cbor_size));
 #ifdef CBOR_BIN_STRING_DEBUG
     FILE *fp = fopen("binstringhetarr.cbor", "wb+");
     if (fp)
@@ -275,7 +278,7 @@ TEST(CborHeterogeneousArrayTest, ConvertParseTest)
 
     // Parse CBOR back to OCPayload
     OCPayload* payload_out = NULL;
-    EXPECT_EQ(OC_STACK_OK, OCParsePayload(&payload_out, PAYLOAD_TYPE_REPRESENTATION,
+    EXPECT_EQ(OC_STACK_OK, OCParsePayload(&payload_out, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                                           payload_cbor, payload_cbor_size));
 
     // Compare values

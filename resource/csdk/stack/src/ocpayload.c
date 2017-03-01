@@ -2076,12 +2076,14 @@ void OCDiscoveryResourceDestroy(OCResourcePayload* payload)
 
     OICFree(payload->uri);
     OICFree(payload->rel);
+    OICFree(payload->anchor);
     OCFreeOCStringLL(payload->types);
     OCFreeOCStringLL(payload->interfaces);
     OCDiscoveryEndpointDestroy(payload->eps);
     OCDiscoveryResourceDestroy(payload->next);
     OICFree(payload);
 }
+
 void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
 {
     if (!payload)
@@ -2089,7 +2091,6 @@ void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
         return;
     }
     OICFree(payload->sid);
-    OICFree(payload->baseURI);
     OCFreeOCStringLL(payload->type);
     OICFree(payload->name);
     OCFreeOCStringLL(payload->iface);

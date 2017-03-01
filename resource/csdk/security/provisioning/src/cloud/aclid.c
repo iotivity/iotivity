@@ -177,7 +177,7 @@ static OCStackResult handleAclGetInfoResponse(void *ctx, void **data, OCClientRe
         return OC_STACK_INVALID_PARAM;
     }
 
-    result = OCConvertPayload(response->payload, &cbor, &size);
+    result = OCConvertPayload(response->payload, OC_FORMAT_CBOR, &cbor, &size);
     if (result != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "Can't convert OCPayload to cbor");

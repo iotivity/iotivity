@@ -1660,6 +1660,7 @@ static OCStackResult EHRequest(OCEntityHandlerRequest *ehRequest, OCPayloadType 
                                      (OCResourceHandle)resource,
                                      request->query,
                                      type,
+                                     request->payloadFormat,
                                      request->payload,
                                      request->payloadSize,
                                      request->numRcvdVendorSpecificHeaderOptions,

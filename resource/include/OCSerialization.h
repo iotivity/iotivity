@@ -105,19 +105,24 @@ namespace OC
                             epsVector = EpsLLToVector(eps);
                         }
 
-                        if (payload->baseURI)
-                        {
-                            OCDevAddr rdPubAddr = currentDevAddr;
+                        m_resources.push_back(std::shared_ptr<OC::OCResource>(
+                                new OC::OCResource(cw, currentDevAddr,
+                                    std::string(res->uri),
+                                    std::string(payload->sid),
+                                    res->bitmap,
+                                    StringLLToVector(res->types),
+                                    StringLLToVector(res->interfaces),
+                                    epsVector
+                                    )));
 
-                            std::string baseURI = std::string(payload->baseURI);
-                            size_t len = baseURI.length();
-                            int addressLen = baseURI.find_first_of(":");
-                            std::string ipaddress = baseURI.substr(0, addressLen);
-                            int port = atoi(baseURI.substr(addressLen + 1, len).c_str());
-                            OICStrcpy(rdPubAddr.addr, addressLen + 1, ipaddress.c_str());
-                            rdPubAddr.port = port;
+#ifdef TCP_ADAPTER
+                        if (res->tcpPort != 0)
+                        {
+                            OCDevAddr tcpDevAddr = currentDevAddr;
+                            tcpDevAddr.port = res->tcpPort;
+                            tcpDevAddr.adapter = OC_ADAPTER_TCP;
                             m_resources.push_back(std::shared_ptr<OC::OCResource>(
-                                        new OC::OCResource(cw, rdPubAddr,
+                                        new OC::OCResource(cw, tcpDevAddr,
                                             std::string(res->uri),
                                             std::string(payload->sid),
                                             res->bitmap,
@@ -126,36 +131,7 @@ namespace OC
                                             epsVector
                                             )));
                         }
-                        else
-                        {
-                            m_resources.push_back(std::shared_ptr<OC::OCResource>(
-                                    new OC::OCResource(cw, currentDevAddr,
-                                        std::string(res->uri),
-                                        std::string(payload->sid),
-                                        res->bitmap,
-                                        StringLLToVector(res->types),
-                                        StringLLToVector(res->interfaces),
-                                        epsVector
-                                        )));
-
-#ifdef TCP_ADAPTER
-                            if (res->tcpPort != 0)
-                            {
-                                OCDevAddr tcpDevAddr = currentDevAddr;
-                                tcpDevAddr.port = res->tcpPort;
-                                tcpDevAddr.adapter = OC_ADAPTER_TCP;
-                                m_resources.push_back(std::shared_ptr<OC::OCResource>(
-                                            new OC::OCResource(cw, tcpDevAddr,
-                                                std::string(res->uri),
-                                                std::string(payload->sid),
-                                                res->bitmap,
-                                                StringLLToVector(res->types),
-                                                StringLLToVector(res->interfaces),
-                                                epsVector
-                                                )));
-                            }
 #endif
-                        }
                         res = res->next;
                     }
                     payload = payload->next;

@@ -217,10 +217,6 @@ INLINE_API void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* payloa
     while(payload && payload->resources)
     {
         OIC_LOG_V(level, PL_TAG, "\tDI: %s", payload->sid);
-        if (payload->baseURI)
-        {
-            OIC_LOG_V(level, PL_TAG, "\tBase URI:%s", payload->baseURI);
-        }
         if (payload->name)
         {
             OIC_LOG_V(level, PL_TAG, "\tNAME: %s", payload->name);
@@ -248,6 +244,10 @@ INLINE_API void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* payloa
             if (res->rel)
             {
                 OIC_LOG_V(level, PL_TAG, "\tRelation:%s", res->rel);
+            }
+            if (res->anchor)
+            {
+                OIC_LOG_V(level, PL_TAG, "\tAnchor:%s", res->anchor);
             }
             OIC_LOG(level, PL_TAG, "\tResource Types:");
             OCStringLL* strll =  res->types;

@@ -252,7 +252,6 @@ TEST_F(RDDatabaseTests, UpdateResources)
 
     OCDiscoveryPayload *discPayload = NULL;
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(OC_RSRVD_INTERFACE_LL, NULL, &discPayload));
-    EXPECT_STREQ("192.168.1.1:12345", discPayload->baseURI);
     bool foundThermostat = false;
     bool foundLight = false;
     for (OCResourcePayload *resource = discPayload->resources; resource; resource = resource->next)
@@ -308,7 +307,6 @@ TEST_F(RDDatabaseTests, AddAndUpdateResources)
 
     OCDiscoveryPayload *discPayload = NULL;
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(OC_RSRVD_INTERFACE_LL, NULL, &discPayload));
-    EXPECT_STREQ("192.168.1.1:12345", discPayload->baseURI);
     bool foundThermostat = false;
     bool foundLight = false;
     bool foundLight2 = false;

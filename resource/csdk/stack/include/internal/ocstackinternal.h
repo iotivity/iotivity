@@ -80,6 +80,9 @@ typedef struct
     /** The REST method retrieved from received request PDU.*/
     OCMethod method;
 
+    /** the provided payload format. */
+    OCPayloadFormat payloadFormat;
+
     /** the requested payload format. */
     OCPayloadFormat acceptFormat;
 

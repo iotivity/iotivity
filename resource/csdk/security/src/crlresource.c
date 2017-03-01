@@ -737,7 +737,7 @@ OCStackResult getLastUpdateFromDB(char **lastUpdate)
         goto exit;
     }
 
-    result = OCParsePayload(&payload, PAYLOAD_TYPE_REPRESENTATION, data, size);
+    result = OCParsePayload(&payload, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION, data, size);
     if (result != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "Can't parse cbor data from DB");
