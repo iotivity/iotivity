@@ -38,11 +38,10 @@ OCStackResult OCRDDatabaseInit();
  * Stores in database the published resource.
  *
  * @param payload is the the published resource payload.
- * @param address provide information about endpoint connectivity details.
  *
  * @return ::OC_STACK_OK in case of success or else other value.
  */
-OCStackResult OCRDDatabaseStoreResources(const OCRepPayload *payload, const OCDevAddr *address);
+OCStackResult OCRDDatabaseStoreResources(const OCRepPayload *payload);
 
 /**
  * Delete the RD resources

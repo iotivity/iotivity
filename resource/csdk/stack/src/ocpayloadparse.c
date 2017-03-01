@@ -405,18 +405,77 @@ static OCStackResult OCParseDiscoveryPayloadVndOcfCbor(OCPayload **outPayload, C
     OCEndpointPayload *endpoint = NULL;
     size_t len = 0;
     CborError err = CborNoError;
+    CborValue linkMap;
+    CborValue *linkArray = NULL;
     *outPayload = NULL;
 
     VERIFY_PARAM_NON_NULL(TAG, outPayload, "Invalid Parameter outPayload");
     VERIFY_PARAM_NON_NULL(TAG, rootValue, "Invalid Parameter rootValue");
-    if (cbor_value_is_array(rootValue))
+    if (cbor_value_is_map(rootValue))
+    {
+        rootPayload = OCDiscoveryPayloadCreate();
+        VERIFY_PARAM_NON_NULL(TAG, rootPayload, "Failed error initializing discovery payload");
+
+        // Look for DI
+        CborValue curVal;
+        err = cbor_value_map_find_value(rootValue, OC_RSRVD_DEVICE_ID, &curVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find device id tag");
+        if (cbor_value_is_valid(&curVal))
+        {
+            if (cbor_value_is_byte_string(&curVal))
+            {
+                err = cbor_value_dup_byte_string(&curVal, (uint8_t **)&(rootPayload->sid), &len, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to copy device id value");
+            }
+            else if (cbor_value_is_text_string(&curVal))
+            {
+                err = cbor_value_dup_text_string(&curVal, &(rootPayload->sid), &len, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to copy device id value");
+            }
+        }
+
+        // RT - Not a mandatory field
+        err = cbor_value_map_find_value(rootValue, OC_RSRVD_RESOURCE_TYPE, &curVal);
+        if (cbor_value_is_valid(&curVal))
+        {
+            err = OCParseStringLL(rootValue, OC_RSRVD_RESOURCE_TYPE, &rootPayload->type);
+            VERIFY_CBOR_SUCCESS(TAG, err, "to find resource type");
+        }
+
+        // IF - Not a mandatory field
+        err = cbor_value_map_find_value(rootValue, OC_RSRVD_INTERFACE, &curVal);
+        if (cbor_value_is_valid(&curVal))
+        {
+            err =  OCParseStringLL(rootValue, OC_RSRVD_INTERFACE, &rootPayload->iface);
+            VERIFY_CBOR_SUCCESS(TAG, err, "to find interface");
+        }
+
+        // Name - Not a mandatory field
+        err = cbor_value_map_find_value(rootValue, OC_RSRVD_DEVICE_NAME, &curVal);
+        if (cbor_value_is_text_string(&curVal))
+        {
+            err = cbor_value_dup_text_string(&curVal, &rootPayload->name, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, err, "to find device name");
+        }
+
+        // Look for Links which will have an array as the value
+        err = cbor_value_map_find_value(rootValue, OC_RSRVD_LINKS, &linkMap);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find links tag");
+        linkArray = &linkMap;
+    }
+    else
+    {
+        linkArray = rootValue;
+    }
+
+    if (cbor_value_is_array(linkArray))
     {
         // Root value is already inside the main root array
 
         // Enter the main root array and start iterating through the array processing
         // each resource which shows up as a map.
         CborValue resourceMap;
-        err = cbor_value_enter_container(rootValue, &resourceMap);
+        err = cbor_value_enter_container(linkArray, &resourceMap);
         VERIFY_CBOR_SUCCESS(TAG, err, "to enter root array");
 
         while (cbor_value_is_map(&resourceMap))
@@ -574,7 +633,7 @@ static OCStackResult OCParseDiscoveryPayloadVndOcfCbor(OCPayload **outPayload, C
             }
         }
 
-        err = cbor_value_leave_container(rootValue, &resourceMap);
+        err = cbor_value_leave_container(linkArray, &resourceMap);
         VERIFY_CBOR_SUCCESS(TAG, err, "to leave resource map");
     }
     else

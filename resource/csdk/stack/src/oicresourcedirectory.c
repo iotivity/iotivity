@@ -31,6 +31,7 @@
 #include "ocrandom.h"
 #include "logger.h"
 #include "ocpayload.h"
+#include "ocendpoint.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 
@@ -47,15 +48,21 @@ static sqlite3 *gRDDB = NULL;
 
 /* Column indices of RD_DEVICE_LINK_LIST table */
 static const uint8_t ins_index = 0;
-static const uint8_t uri_index = 1;
-static const uint8_t p_index = 4;
-static const uint8_t d_index = 7;
+static const uint8_t href_index = 1;
+static const uint8_t rel_index = 2;
+static const uint8_t anchor_index = 3;
+static const uint8_t bm_index = 4;
+static const uint8_t d_index = 5;
 
 /* Column indices of RD_LINK_RT table */
 static const uint8_t rt_value_index = 0;
 
 /* Column indices of RD_LINK_IF table */
 static const uint8_t if_value_index = 0;
+
+/* Column indices of RD_LINK_EP table */
+static const uint8_t ep_value_index = 0;
+static const uint8_t pri_value_index = 1;
 
 #define VERIFY_SQLITE(arg) \
 if (SQLITE_OK != (arg)) \
@@ -151,15 +158,35 @@ static OCStackResult ResourcePayloadCreate(sqlite3_stmt *stmt, OCDiscoveryPayloa
         }
 
         sqlite3_int64 id = sqlite3_column_int64(stmt, ins_index);
-        const unsigned char *uri = sqlite3_column_text(stmt, uri_index);
-        sqlite3_int64 bitmap = sqlite3_column_int64(stmt, p_index);
+        const unsigned char *uri = sqlite3_column_text(stmt, href_index);
+        const unsigned char *rel = sqlite3_column_text(stmt, rel_index);
+        const unsigned char *anchor = sqlite3_column_text(stmt, anchor_index);
+        sqlite3_int64 bitmap = sqlite3_column_int64(stmt, bm_index);
         sqlite3_int64 deviceId = sqlite3_column_int64(stmt, d_index);
-        OIC_LOG_V(DEBUG, TAG, " %s %" PRId64, uri, deviceId);
+        OIC_LOG_V(DEBUG, TAG, " %s %" PRId64, uri, (int64_t) deviceId);
         resourcePayload->uri = OICStrdup((char *)uri);
         if (!resourcePayload->uri)
         {
             result = OC_STACK_NO_MEMORY;
             goto exit;
+        }
+        if (rel)
+        {
+            resourcePayload->rel = OICStrdup((char *)rel);
+            if (!resourcePayload->rel)
+            {
+                result = OC_STACK_NO_MEMORY;
+                goto exit;
+            }
+        }
+        if (anchor)
+        {
+            resourcePayload->anchor = OICStrdup((char *)anchor);
+            if (!resourcePayload->anchor)
+            {
+                result = OC_STACK_NO_MEMORY;
+                goto exit;
+            }
         }
 
         sqlite3_stmt *stmtRT = 0;
@@ -170,8 +197,8 @@ static OCStackResult ResourcePayloadCreate(sqlite3_stmt *stmt, OCDiscoveryPayloa
         VERIFY_SQLITE(sqlite3_bind_int64(stmtRT, sqlite3_bind_parameter_index(stmtRT, "@id"), id));
         while (SQLITE_ROW == sqlite3_step(stmtRT))
         {
-            const unsigned char *rt1 = sqlite3_column_text(stmtRT, rt_value_index);
-            result = appendStringLL(&resourcePayload->types, rt1);
+            const unsigned char *tempRt = sqlite3_column_text(stmtRT, rt_value_index);
+            result = appendStringLL(&resourcePayload->types, tempRt);
             if (OC_STACK_OK != result)
             {
                 goto exit;
@@ -197,32 +224,62 @@ static OCStackResult ResourcePayloadCreate(sqlite3_stmt *stmt, OCDiscoveryPayloa
         VERIFY_SQLITE(sqlite3_finalize(stmtIF));
 
         resourcePayload->bitmap = (uint8_t)(bitmap & (OC_OBSERVABLE | OC_DISCOVERABLE));
-        resourcePayload->secure = ((bitmap & OC_SECURE) != 0);
 
-        const char address[] = "SELECT di FROM RD_DEVICE_LIST "
+        sqlite3_stmt *stmtEp = 0;
+        const char ep[] = "SELECT ep,pri FROM RD_LINK_EP WHERE LINK_ID=@id";
+        int epSize = (int)sizeof(ep);
+
+        VERIFY_SQLITE(sqlite3_prepare_v2(gRDDB, ep, epSize, &stmtEp, NULL));
+        VERIFY_SQLITE(sqlite3_bind_int64(stmtEp, sqlite3_bind_parameter_index(stmtEp, "@id"), id));
+        while (SQLITE_ROW == sqlite3_step(stmtEp))
+        {
+            OCEndpointPayload *epPayload = (OCEndpointPayload *)OICCalloc(1, sizeof(OCEndpointPayload));
+            if (!epPayload)
+            {
+                result = OC_STACK_NO_MEMORY;
+                goto exit;
+            }
+            const unsigned char *tempEp = sqlite3_column_text(stmtEp, ep_value_index);
+            result = OCParseEndpointString((const char *)tempEp, epPayload);
+            if (OC_STACK_OK != result)
+            {
+                goto exit;
+            }
+            sqlite3_int64 pri = sqlite3_column_int64(stmtEp, pri_value_index);
+            epPayload->pri = (uint16_t)pri;
+            OCEndpointPayload **tmp = &resourcePayload->eps;
+            while (*tmp)
+            {
+                tmp = &(*tmp)->next;
+            }
+            *tmp = epPayload;
+        }
+        VERIFY_SQLITE(sqlite3_finalize(stmtEp));
+
+        const char di[] = "SELECT di FROM RD_DEVICE_LIST "
             "INNER JOIN RD_DEVICE_LINK_LIST ON RD_DEVICE_LINK_LIST.DEVICE_ID = RD_DEVICE_LIST.ID "
             "WHERE RD_DEVICE_LINK_LIST.DEVICE_ID=@deviceId";
-        int addressSize = (int)sizeof(address);
+        int diSize = (int)sizeof(di);
 
         const uint8_t di_index = 0;
 
-        sqlite3_stmt *stmt1 = 0;
-        VERIFY_SQLITE(sqlite3_prepare_v2(gRDDB, address, addressSize, &stmt1, NULL));
-        VERIFY_SQLITE(sqlite3_bind_int64(stmt1, sqlite3_bind_parameter_index(stmt1, "@deviceId"), deviceId));
+        sqlite3_stmt *stmtDI = 0;
+        VERIFY_SQLITE(sqlite3_prepare_v2(gRDDB, di, diSize, &stmtDI, NULL));
+        VERIFY_SQLITE(sqlite3_bind_int64(stmtDI, sqlite3_bind_parameter_index(stmtDI, "@deviceId"), deviceId));
 
-        res = sqlite3_step(stmt1);
+        res = sqlite3_step(stmtDI);
         if (SQLITE_ROW == res || SQLITE_DONE == res)
         {
-            const unsigned char *di = sqlite3_column_text(stmt1, di_index);
-            OIC_LOG_V(DEBUG, TAG, " %s", di);
-            discPayload->sid = OICStrdup((char *)di);
+            const unsigned char *tempDi = sqlite3_column_text(stmtDI, di_index);
+            OIC_LOG_V(DEBUG, TAG, " %s", tempDi);
+            discPayload->sid = OICStrdup((char *)tempDi);
             if (!discPayload->sid)
             {
                 result = OC_STACK_NO_MEMORY;
                 goto exit;
             }
         }
-        VERIFY_SQLITE(sqlite3_finalize(stmt1));
+        VERIFY_SQLITE(sqlite3_finalize(stmtDI));
         OCDiscoveryPayloadAddNewResource(discPayload, resourcePayload);
         res = sqlite3_step(stmt);
     }
