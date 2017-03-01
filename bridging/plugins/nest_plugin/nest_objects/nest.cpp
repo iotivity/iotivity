@@ -23,7 +23,7 @@
 #include <iostream>
 #include "nest.h"
 #include "curlClient.h"
-#include "nest_defs.h"
+#include "nestDefs.h"
 #include "rapidjson.h"
 #include "document.h"
 #include "stringbuffer.h"
@@ -48,13 +48,13 @@ void Nest::setAccessToken(const ACCESS_TOKEN &token)
     m_accessToken = token;
 }
 
-Nest::AWAY_MODE Nest::getAwayMode(const char *value) const
+Nest::AWAY_MODE Nest::getAwayMode(const std::string &value) const
 {
-    if (!strncmp(value, NEST_HOME_TAG, strlen(NEST_HOME_TAG)))
+    if (NEST_HOME_TAG == value)
     {
         return eAWHome;
     }
-    else if (!strncmp(value, NEST_AWAY_TAG, strlen(NEST_AWAY_TAG)))
+    else if (NEST_AWAY_TAG == value)
     {
         return eAWAway;
     }

@@ -38,7 +38,7 @@ class NestThermostat
         typedef std::vector<NestThermostat> devices;
 
         NestThermostat(const std::string &token, uint16_t hum, uint32_t hvac,
-                       uint16_t temp, uint32_t scale, const char *devId);
+                       uint16_t temp, uint32_t scale, const std::string &devId);
 
         NestThermostat(const std::string &token, const std::string &jsonThermostat);
 

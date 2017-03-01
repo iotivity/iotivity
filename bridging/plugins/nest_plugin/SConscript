@@ -88,9 +88,9 @@ nest_env.PrependUnique(LIBS = ['m',
 # Source files and Target(s)
 ######################################################################
 nest_src = [
-         os.path.join(bridging_path, 'plugins', 'nest_plugin', 'nest_resource.cpp'),
+         os.path.join(bridging_path, 'plugins', 'nest_plugin', 'nestResource.cpp'),
          os.path.join(bridging_path, 'plugins', 'nest_plugin', 'nest_objects', 'nest.cpp'),
-         os.path.join(bridging_path, 'plugins', 'nest_plugin', 'nest_objects', 'nest_thermostat.cpp'),
+         os.path.join(bridging_path, 'plugins', 'nest_plugin', 'nest_objects', 'nestThermostat.cpp'),
          ]
 
 nest_env.AppendUnique(NEST_SRC = nest_src)
