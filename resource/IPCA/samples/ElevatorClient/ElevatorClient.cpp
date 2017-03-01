@@ -73,7 +73,7 @@ IPCAStatus RequestObserve()
 {
     if (g_observeHandle != nullptr)
     {
-        IPCACloseHandle(g_observeHandle);
+        IPCACloseHandle(g_observeHandle, nullptr, 0);
         g_observeHandle = nullptr;
     }
 
@@ -533,7 +533,7 @@ bool DiscoverElevator(bool freeRun, size_t timeOutMs)
         g_deviceDiscoveredCV.wait_for(lock, std::chrono::milliseconds{ timeOutMs });
 
         // Stop discovery.
-        IPCACloseHandle(g_discoverDeviceHandle);
+        IPCACloseHandle(g_discoverDeviceHandle, nullptr, 0);
     }
 
     return g_targetElevatorDiscovered;

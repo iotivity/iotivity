@@ -283,13 +283,17 @@ IPCAStatus IPCA_CALL IPCADeleteResource(IPCADeviceHandle deviceHandle,
                     handle);
 }
 
-void IPCA_CALL IPCACloseHandle(IPCAHandle handle)
+IPCAStatus IPCA_CALL IPCACloseHandle(IPCAHandle handle,
+                        IPCACloseHandleComplete closeHandleComplete,
+                        void* context)
 {
     std::lock_guard<std::mutex> lock(g_ipcaAppMutex);
     if (g_app != nullptr)
     {
-        g_app->CloseIPCAHandle(handle);
+        return (g_app->CloseIPCAHandle(handle, closeHandleComplete, context));
     }
+
+    return IPCA_FAIL;
 }
 
 typedef struct

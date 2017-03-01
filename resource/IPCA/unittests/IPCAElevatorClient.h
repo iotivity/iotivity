@@ -85,6 +85,15 @@ public:
         IPCAStatus result,
         IPCAPropertyBagHandle propertyBagHandle);
 
+    // IPCACloseHandle() tests.
+    IPCAStatus TestCloseHandleForGet();
+    IPCAStatus TestCloseHandleForSet();
+    IPCAStatus TestCloseHandleForObserve();
+    IPCAStatus TestCloseHandleForCreate();
+    IPCAStatus TestCloseHandleForDelete();
+    IPCAStatus TestCloseHandleForDiscover();
+    IPCAStatus TestMultipleCallsToCloseSameHandle();
+
     // Failure cases.
     IPCAStatus GetUnknownResource();
     IPCAStatus SetUnknownResource();
@@ -139,6 +148,9 @@ private:
     bool CreateElevatorResource(
             std::string resourcePath, IPCAPropertyBagHandle propertyBagHandle);
     bool DeleteElevatorResource();
+
+    // Test timing of IPCACloseHandle() for the ipcaHandle.
+    void RunCloseHandleTest(IPCAHandle ipcaHandle, void* testContext);
 
 protected:
     virtual void SetUp();

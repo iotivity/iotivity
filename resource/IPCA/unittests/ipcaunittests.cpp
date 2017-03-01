@@ -607,6 +607,40 @@ TEST_F(IPCAElevatorClient, SuccessfulReboot)
     EXPECT_EQ(IPCA_OK, RebootElevator());
 }
 
+TEST_F(IPCAElevatorClient, TestCloseHandleTimingForGet)
+{
+    EXPECT_EQ(IPCA_OK, TestCloseHandleForGet());
+}
+
+TEST_F(IPCAElevatorClient, TestCloseHandleTimingForSet)
+{
+    EXPECT_EQ(IPCA_OK, TestCloseHandleForSet());
+}
+
+TEST_F(IPCAElevatorClient, TestCloseHandleTimingForCreate)
+{
+    EXPECT_EQ(IPCA_OK, TestCloseHandleForCreate());
+}
+
+TEST_F(IPCAElevatorClient, TestCloseHandleTimingForDelete)
+{
+    EXPECT_EQ(IPCA_OK, TestCloseHandleForDelete());
+}
+
+TEST_F(IPCAElevatorClient, TestCloseHandleTimingForObserve)
+{
+    EXPECT_EQ(IPCA_OK, TestCloseHandleForObserve());
+}
+
+TEST_F(IPCAElevatorClient, TestCloseHandleTimingForDiscover)
+{
+    EXPECT_EQ(IPCA_OK, TestCloseHandleForDiscover());
+}
+
+TEST_F(IPCAElevatorClient, TestMultipleCallsToCloseHandle)
+{
+    EXPECT_EQ(IPCA_OK, TestMultipleCallsToCloseSameHandle());
+}
 
 TEST(ElevatorServerStop, Stop)
 {

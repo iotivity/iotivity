@@ -647,6 +647,6 @@ int main()
 
     g_OCFDeviceList.clear();
 
-    IPCACloseHandle(discoverDeviceHandle);
+    IPCACloseHandle(discoverDeviceHandle, nullptr, 0);
     IPCAClose(g_ipcaAppHandle);
 }

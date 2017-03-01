@@ -26,6 +26,7 @@
 #include "iotivity_config.h"
 #include "ocrandom.h"
 #include "octypes.h"
+#include "oic_time.h"
 #include "ipca.h"
 #include "ipcatestdata.h"
 #include "IPCAElevatorClient.h"
@@ -87,7 +88,7 @@ bool IPCAElevatorClient::GetElevatorProperties()
     m_getDataCompleteCbCV.wait_for(
         lock,
         std::chrono::seconds(10),
-        [this ] { return m_getPropertiesCallbackCalled; });
+        [this] { return m_getPropertiesCallbackCalled; });
 
     return m_getPropertiesCallbackCalled;
 }
@@ -170,7 +171,7 @@ bool IPCAElevatorClient::DeleteElevatorResource()
 {
     m_deleteResourceCallbackCalled = false;
 
-    // Set properties.
+    // Delete resource.
     EXPECT_EQ(IPCA_OK, IPCADeleteResource(
                             m_deviceHandle,
                             &C_DeleteResourceCb,
@@ -277,7 +278,7 @@ void IPCAElevatorClient::StopObserve()
 {
     if (m_observeHandle)
     {
-        IPCACloseHandle(m_observeHandle);
+        IPCACloseHandle(m_observeHandle, nullptr, 0);
     }
 }
 
@@ -373,7 +374,7 @@ void IPCAElevatorClient::TearDown()
 {
     if (m_observeHandle != nullptr)
     {
-        IPCACloseHandle(m_observeHandle);
+        IPCACloseHandle(m_observeHandle, nullptr, 0);
         m_observeHandle = nullptr;
     }
 
@@ -385,7 +386,7 @@ void IPCAElevatorClient::TearDown()
 
     if (m_deviceDiscoveryHandle != nullptr)
     {
-        IPCACloseHandle(m_deviceDiscoveryHandle);
+        IPCACloseHandle(m_deviceDiscoveryHandle, nullptr, 0);
         m_deviceDiscoveryHandle = nullptr;
     }
 
@@ -636,7 +637,8 @@ void IPCAElevatorClient::DiscoverElevator1()
                             m_discoveredElevator1DeviceId.c_str(), &m_deviceHandle));
 }
 
-void IPCAElevatorClient::SetPropertiesCallback(IPCAStatus result,
+void IPCAElevatorClient::SetPropertiesCallback(
+                                IPCAStatus result,
                                 void* context,
                                 IPCAPropertyBagHandle propertyBagHandle)
 {
@@ -648,7 +650,8 @@ void IPCAElevatorClient::SetPropertiesCallback(IPCAStatus result,
     m_setPropertiesCompleteCV.notify_all();
 }
 
-void IPCAElevatorClient::GetPropertiesCallback(IPCAStatus result,
+void IPCAElevatorClient::GetPropertiesCallback(
+                                IPCAStatus result,
                                 void* context,
                                 IPCAPropertyBagHandle propertyBagHandle)
 {
@@ -670,7 +673,8 @@ void IPCAElevatorClient::GetPropertiesCallback(IPCAStatus result,
     m_getDataCompleteCbCV.notify_all();
 }
 
-void IPCAElevatorClient::CreateResourceCallback(IPCAStatus result,
+void IPCAElevatorClient::CreateResourceCallback(
+                                IPCAStatus result,
                                 const char* newResourcePath,
                                 IPCAPropertyBagHandle propertyBagHandle)
 {
@@ -703,4 +707,376 @@ void IPCAElevatorClient::ResourceChangeNotificationCallback(IPCAStatus result,
             ELEVATOR_PROPERTY_TARGET_FLOOR, &m_observedTargetFloor);
 
     m_resourceChangeCbCV.notify_all();
+}
+
+// This data structure is used to coordinate between C_ControlledRequestCompleteCallback() and
+// RunCloseHandleTest().
+typedef struct
+{
+    bool isInCallback;  // Set to true when callback for request is called.
+    bool isTimeToCompleteCallback;  // Set to true when callback should complete.
+    uint64_t completeCallbackTimestamp;  // Timestamp when isTimeToCompleteCallback is set.
+    uint64_t closeHandleCompleteTimestamp;  // When IPCACloseHandleComplete() is called.
+} ContextForCloseHandleTest;
+
+// This callback coordinates with RunCloseHandleTest() on when to complete the callback.
+void IPCA_CALL C_ControlledRequestCompleteCallback(
+                            IPCAStatus result,
+                            void* context,
+                            IPCAPropertyBagHandle propertyBagHandle)
+{
+    OC_UNUSED(propertyBagHandle);
+
+    ContextForCloseHandleTest* testContext = reinterpret_cast<ContextForCloseHandleTest*>(context);
+    testContext->isInCallback = true;
+
+    if (result != IPCA_OK)
+    {
+        std::cout << "C_ControlledRequestCompleteCallback(): unsuccessful. result = " << result;
+        std::cout << std::endl;
+        return;
+    }
+
+    // Hang on here until the RunCloseHandleTest() indicates that it's time to complete
+    // this callback.
+    while (testContext->isTimeToCompleteCallback == false)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
+void IPCA_CALL C_ControlledCreateResourceCallback(
+                        IPCAStatus result,
+                        void* context,
+                        const char* newResourcePath,
+                        IPCAPropertyBagHandle propertyBagHandle)
+{
+    OC_UNUSED(newResourcePath);
+    C_ControlledRequestCompleteCallback(result, context, propertyBagHandle);
+}
+
+void IPCA_CALL C_ControlledDeleteResourceCallback(IPCAStatus result, void* context)
+{
+    C_ControlledRequestCompleteCallback(result, context, NULL);
+}
+
+void IPCA_CALL C_ControlledDiscoverCallback(
+                            void* context,
+                            IPCADeviceStatus deviceStatus,
+                            const IPCADiscoveredDeviceInfo* discoveredDeviceInfo)
+{
+    OC_UNUSED(deviceStatus);
+    OC_UNUSED(discoveredDeviceInfo);
+    C_ControlledRequestCompleteCallback(IPCA_OK, context, NULL);
+}
+
+void IPCA_CALL C_CloseHandleCallback(void* context)
+{
+    ContextForCloseHandleTest* testContext = reinterpret_cast<ContextForCloseHandleTest*>(context);
+    testContext->closeHandleCompleteTimestamp = OICGetCurrentTime(TIME_IN_MS);
+}
+
+// This function coordinates with C_ControlledRequestCompleteCallback() to test behavior
+// of IPCACloseHandle() when callback is in progress.
+void IPCAElevatorClient::RunCloseHandleTest(IPCAHandle ipcaHandle, void* context)
+{
+    ContextForCloseHandleTest* testContext = reinterpret_cast<ContextForCloseHandleTest*>(context);
+
+    // Wait for the callback. If the server did not respond, rely on IPCA to time out the pending
+    // request.
+    while (testContext->isInCallback == false)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    // Close the handle.  At this time C_ControlledRequestCompleteCallback() is looping
+    // waiting for isTimeToCompleteCallback to turn to true.
+    if (IPCA_OK != IPCACloseHandle(
+                            ipcaHandle,
+                            &C_CloseHandleCallback,
+                            static_cast<void*>(testContext)))
+    {
+        std::cout << "RunCloseHandleTest(): IPCACloseHandle() failed. Request may have timed out.";
+        std::cout << std::endl;
+        return;
+    }
+
+    // Another call to IPCAClose() on closing handle should not succeed.
+    ASSERT_NE(IPCA_OK, IPCACloseHandle(
+                            ipcaHandle,
+                            &C_CloseHandleCallback,
+                            static_cast<void*>(testContext)));
+
+    // Sleep an extra 100 milliseconds to make sure C_CloseHandleCallback is not called.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    testContext->completeCallbackTimestamp = OICGetCurrentTime(TIME_IN_MS);
+    testContext->isTimeToCompleteCallback = true;
+
+    // Now wait for C_CloseHandleCallback() to complete.
+    while (testContext->closeHandleCompleteTimestamp == 0)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    // The closeHandleCompleteTimestamp value must be equal to or greater than when
+    // isTimeToCompleteCallback is set. It could be equal if C_ControlledRequestCompleteCallback()
+    // processes the isTimeToCompleteCallbackas as soon as it's set.
+    ASSERT_TRUE(testContext->closeHandleCompleteTimestamp >=
+                testContext->completeCallbackTimestamp);
+}
+
+IPCAStatus IPCAElevatorClient::TestCloseHandleForGet()
+{
+    IPCAHandle getHandle;
+    ContextForCloseHandleTest testContext;
+    memset(&testContext, 0, sizeof(ContextForCloseHandleTest));
+
+    // Call Get api.
+    IPCAStatus status = IPCAGetProperties(
+                                m_deviceHandle,
+                                &C_ControlledRequestCompleteCallback,
+                                reinterpret_cast<void*>(&testContext),
+                                ELEVATOR_RESOURCE_PATH,
+                                nullptr,
+                                nullptr,
+                                &getHandle);
+
+    if (status != IPCA_OK)
+    {
+        return status;
+    }
+
+    RunCloseHandleTest(getHandle, &testContext);
+    return IPCA_OK;
+}
+
+IPCAStatus IPCAElevatorClient::TestCloseHandleForSet()
+{
+    IPCAStatus status;
+    IPCAHandle setHandle;
+    ContextForCloseHandleTest testContext;
+    memset(&testContext, 0, sizeof(ContextForCloseHandleTest));
+
+    IPCAPropertyBagHandle propertyBagHandle;
+    status = IPCAPropertyBagCreate(&propertyBagHandle);
+    if (status != IPCA_OK)
+    {
+        return status;
+    }
+
+    status = IPCAPropertyBagSetValueInt(
+                    propertyBagHandle,
+                    ELEVATOR_PROPERTY_TARGET_FLOOR,
+                    3 /* target floor, value is random */);
+
+    if (status != IPCA_OK)
+    {
+        return status;
+    }
+
+    // Set properties.
+    status = IPCASetProperties(
+                    m_deviceHandle,
+                    &C_ControlledRequestCompleteCallback,
+                    reinterpret_cast<void*>(&testContext),
+                    (const char*)ELEVATOR_RESOURCE_PATH,
+                    nullptr,
+                    (const char*)ELEVATOR_RESOURCE_TYPE,
+                    propertyBagHandle,
+                    &setHandle);
+
+    if (status != IPCA_OK)
+    {
+        return status;
+    }
+
+    RunCloseHandleTest(setHandle, &testContext);
+    return IPCA_OK;
+}
+
+IPCAStatus IPCAElevatorClient::TestCloseHandleForObserve()
+{
+    IPCAHandle observeHandle;
+    ContextForCloseHandleTest testContext;
+    memset(&testContext, 0, sizeof(ContextForCloseHandleTest));
+
+    // Call Get api.
+    IPCAStatus status = IPCAObserveResource(
+                                   m_deviceHandle,
+                                   &C_ControlledRequestCompleteCallback,
+                                   reinterpret_cast<void*>(&testContext),
+                                   ELEVATOR_RESOURCE_PATH,
+                                   nullptr,
+                                   &observeHandle);
+    if (status != IPCA_OK)
+    {
+        return status;
+    }
+
+    // Set target floor so the server sends notifications.
+    bool result;
+    SetTargetFloor(10, &result);    // Set to floor 10
+    if (result != true)
+    {
+        return IPCA_FAIL;
+    }
+
+    RunCloseHandleTest(observeHandle, &testContext);
+    return IPCA_OK;
+}
+
+IPCAStatus IPCAElevatorClient::TestCloseHandleForCreate()
+{
+    IPCAStatus status;
+    IPCAHandle createHandle;
+    ContextForCloseHandleTest testContext;
+    memset(&testContext, 0, sizeof(ContextForCloseHandleTest));
+
+    IPCAPropertyBagHandle propertyBagHandle;
+    status = IPCAPropertyBagCreate(&propertyBagHandle);
+    if (status != IPCA_OK)
+    {
+        return status;
+    }
+
+    // Call Create api.
+    status = IPCACreateResource(
+                        m_deviceHandle,
+                        &C_ControlledCreateResourceCallback,
+                        reinterpret_cast<void*>(&testContext),
+                        ELEVATOR_RESOURCE_CREATE_RELATIVE_PATH,
+                        nullptr,
+                        nullptr,
+                        propertyBagHandle,
+                        &createHandle);
+
+    if (status != IPCA_OK)
+    {
+        return status;
+    }
+
+    RunCloseHandleTest(createHandle, &testContext);
+    return IPCA_OK;
+}
+
+
+IPCAStatus IPCAElevatorClient::TestCloseHandleForDelete()
+{
+    IPCAHandle deleteHandle;
+    ContextForCloseHandleTest testContext;
+    memset(&testContext, 0, sizeof(ContextForCloseHandleTest));
+
+    // Call Delete api.
+    IPCAStatus status = IPCADeleteResource(
+                            m_deviceHandle,
+                            &C_ControlledDeleteResourceCallback,
+                            reinterpret_cast<void*>(&testContext),
+                            (const char*)ELEVATOR_RESOURCE_DELETE_PATH,
+                            &deleteHandle);
+
+    if (status != IPCA_OK)
+    {
+        return status;
+    }
+
+    RunCloseHandleTest(deleteHandle, &testContext);
+    return IPCA_OK;
+}
+
+IPCAStatus IPCAElevatorClient::TestCloseHandleForDiscover()
+{
+    IPCAHandle discoverDeviceHandle;
+    ContextForCloseHandleTest testContext;
+    memset(&testContext, 0, sizeof(ContextForCloseHandleTest));
+
+    const char* RequiredResourceTypes[] = {
+        ELEVATOR_RESOURCE_TYPE,
+        ELEVATOR_CO_RESOURCE_TYPE,
+        ELEVATOR_RESOURCE_CREATE_RELATIVE_PATH_TYPE,
+        ELEVATOR_RESOURCE_DELETE_TYPE
+    };
+
+    const int ResourceTypeCount = sizeof(RequiredResourceTypes) / sizeof(char*);
+
+   // Start discovery.
+   IPCAStatus status = IPCADiscoverDevices(
+                               m_ipcaAppHandle,
+                               &C_ControlledDiscoverCallback,
+                               reinterpret_cast<void*>(&testContext),
+                               RequiredResourceTypes,
+                               ResourceTypeCount,
+                               &discoverDeviceHandle);
+
+    if (status != IPCA_OK)
+    {
+        return status;
+    }
+
+    RunCloseHandleTest(discoverDeviceHandle, &testContext);
+    return IPCA_OK;
+}
+
+// Callback from IPCA for IPCAGetProperties() call in TestMultipleCallsToCloseSameHandle().
+void IPCA_CALL C_RequestComplete(
+                    IPCAStatus result,
+                    void* context,
+                    IPCAPropertyBagHandle propertyBagHandle)
+{
+    OC_UNUSED(result);
+    OC_UNUSED(context);
+    OC_UNUSED(propertyBagHandle);
+}
+
+// IPCACloseHandleComplete() in TestMultipleCallsToCloseSameHandle().
+void IPCA_CALL C_CloseHandleComplete(void* context)
+{
+    size_t* testContext = reinterpret_cast<size_t*>(context);
+    (*testContext)++;
+}
+
+// Wait for *value to reach target or timeout. Return *value.
+size_t C_WaitNumber(size_t* value, size_t target)
+{
+    const uint64_t MAX_WAIT_TIME_MS = 100;
+    uint64_t beginTime = OICGetCurrentTime(TIME_IN_MS);
+    while ((OICGetCurrentTime(TIME_IN_MS) - beginTime < MAX_WAIT_TIME_MS) && (*value != target))
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    return *value;
+}
+
+// Observe the right behavior of IPCACloseHandle() when handle is already closed.
+IPCAStatus IPCAElevatorClient::TestMultipleCallsToCloseSameHandle()
+{
+    IPCAHandle getHandle;
+    IPCAStatus status = IPCAGetProperties(
+                                m_deviceHandle,
+                                &C_RequestComplete,
+                                NULL,
+                                ELEVATOR_RESOURCE_PATH,
+                                nullptr,
+                                nullptr,
+                                &getHandle);
+    if (status != IPCA_OK)
+    {
+        return status;
+    }
+
+    size_t count = 0;
+
+    // First IPCACloseHandle() should be succesful.
+    EXPECT_EQ(IPCA_OK, IPCACloseHandle(getHandle, &C_CloseHandleComplete, static_cast<void*>(&count)));
+    EXPECT_EQ(1, C_WaitNumber(&count, 1));
+
+    // Subsequent IPCACloseHandle() on the same handle is expected to fail.
+    // And the C_CloseHandleMultiple() is not called, i.e. count should not increase.
+    EXPECT_EQ(IPCA_FAIL, IPCACloseHandle(getHandle, &C_CloseHandleComplete, static_cast<void*>(&count)));
+    EXPECT_EQ(1, C_WaitNumber(&count, 2));
+
+    EXPECT_EQ(IPCA_FAIL, IPCACloseHandle(getHandle, &C_CloseHandleComplete, static_cast<void*>(&count)));
+    EXPECT_EQ(1, C_WaitNumber(&count, 3));
+
+    return IPCA_OK;
 }

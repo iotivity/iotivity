@@ -57,7 +57,7 @@ void Callback::Stop()
     m_stopCalled = true;
 
     // Wait some amount of time for all callbacks in progress to complete.
-    const int WaitTimeSeconds = 3;
+    const int WaitTimeSeconds = 30;
     int i = 0;
     while (i < WaitTimeSeconds)
     {
@@ -103,7 +103,15 @@ void Callback::Stop()
             m_expiredCallbacksInProgress);
         throw timeoutException;
     }
+}
 
+void Callback::CommonInitializeCallbackInfo(CallbackInfo::Ptr cbInfo)
+{
+    cbInfo->app = m_app;
+    cbInfo->callbackInProgressCount = 0;
+    cbInfo->markedToBeRemoved = false;
+    cbInfo->requestSentTimestamp = 0;
+    cbInfo->closeHandleCompleteCallback = nullptr;
 }
 
 CallbackInfo::Ptr Callback::CreatePasswordCallbackInfo(
@@ -126,11 +134,9 @@ CallbackInfo::Ptr Callback::CreatePasswordCallbackInfo(
         return nullptr;
     }
 
-    cbInfo->app = m_app;
+    CommonInitializeCallbackInfo(cbInfo);
     cbInfo->type = cbType;
     cbInfo->callbackContext = context;
-    cbInfo->callbackInProgressCount = 0;
-    cbInfo->markedToBeRemoved = false;
 
     switch (cbType)
     {
@@ -163,12 +169,10 @@ CallbackInfo::Ptr Callback::CreateRequestAccessCompletionCallbackInfo(
         return nullptr;
     }
 
-    cbInfo->app = m_app;
+    CommonInitializeCallbackInfo(cbInfo);
     cbInfo->device = device;
     cbInfo->type = Callbacktype_RequestAccessCompletionCallback;
     cbInfo->callbackContext = context;
-    cbInfo->callbackInProgressCount = 0;
-    cbInfo->markedToBeRemoved = false;
     cbInfo->requestAccessCompletionCallback = completionCallback;
 
     if (resourcePath != nullptr)
@@ -198,13 +202,10 @@ CallbackInfo::Ptr Callback::CreateCallbackInfo(
         return nullptr;
     }
 
-    cbInfo->app = m_app;
+    CommonInitializeCallbackInfo(cbInfo);
     cbInfo->device = device;
     cbInfo->type = cbType;
     cbInfo->callbackContext = context;
-    cbInfo->callbackInProgressCount = 0;
-    cbInfo->markedToBeRemoved = false;
-    cbInfo->requestSentTimestamp = 0;
 
     cbInfo->resourcePath = std::string(resourcePath ? resourcePath : "");
     cbInfo->resourceInterface = std::string(resourceInterface ? resourceInterface : "");
@@ -367,6 +368,17 @@ bool Callback::SetCallbackInProgress(size_t mapKey)
     }
 }
 
+void Callback::CallCloseHandleComplete(IPCACloseHandleComplete closeHandleComplete,
+                                       const void* context)
+{
+    if (closeHandleComplete != nullptr)
+    {
+        std::thread callbackThread = std::thread(closeHandleComplete,
+                                                 const_cast<void*>(context));
+        callbackThread.detach();
+    }
+}
+
 bool Callback::ClearCallbackInProgress(size_t mapKey)
 {
     std::lock_guard<std::mutex> lock(m_callbackMutex);
@@ -375,30 +387,72 @@ bool Callback::ClearCallbackInProgress(size_t mapKey)
     // must complete.
     if (m_callbackInfoList.find(mapKey) !=  m_callbackInfoList.end())
     {
-        m_callbackInfoList[mapKey]->callbackInProgressCount--;
+        CallbackInfo::Ptr cbInfo = m_callbackInfoList[mapKey];
+
+        // There should be one ClearCallbackInProgress() for each SetCallbackInProgress().
+        assert(cbInfo->callbackInProgressCount > 0);
+
+        // One less in progress callback.
+        cbInfo->callbackInProgressCount--;
+
+        // closeHandleCompleteCallback is set if IPCACloseHandle() is called when callback
+        // for the handle that the app is closing is already in progress.
+        // Call it if this is the last callback that has completed.
+        if ((cbInfo->closeHandleCompleteCallback != nullptr) &&
+            (cbInfo->callbackInProgressCount == 0))
+        {
+            CallCloseHandleComplete(
+                cbInfo->closeHandleCompleteCallback,
+                cbInfo->closeHandleCompletecontext);
+
+            cbInfo->closeHandleCompleteCallback = nullptr;
+        }
         return true;
     }
 
-    OIC_LOG_V(INFO, TAG, "ClearCallbackInProgress() mapKey [%d] is not found", mapKey);
+    OIC_LOG_V(WARNING, TAG, "ClearCallbackInProgress() mapKey [%d] is not found", mapKey);
     assert(false); // In progress callback is not expected to be removed from the list.
     return false;
 }
 
-void Callback::RemoveCallbackInfo(size_t mapKey)
+IPCAStatus Callback::RemoveCallbackInfo(size_t mapKey,
+                        IPCACloseHandleComplete closeHandleComplete,
+                        const void* context)
 {
+    CallbackInfo::Ptr callbackInfo = nullptr;
+
     std::lock_guard<std::mutex> lock(m_callbackMutex);
 
     if (m_callbackInfoList.find(mapKey) !=  m_callbackInfoList.end())
     {
-        if (m_callbackInfoList[mapKey]->callbackInProgressCount == 0)
-        {
-            m_callbackInfoList.erase(mapKey);
-        }
-        else
-        {
-            m_callbackInfoList[mapKey]->markedToBeRemoved = true;
-        }
+        callbackInfo = m_callbackInfoList[mapKey];
     }
+
+    if ((callbackInfo == nullptr) || (callbackInfo->markedToBeRemoved == true))
+    {
+        // Handle is already closed (no longer in the list) or closing (marked to be removed).
+        return IPCA_FAIL;
+    }
+
+    // callbackInProgress count is 0 when there's no in progress callback to app's code.
+    if (callbackInfo->callbackInProgressCount == 0)
+    {
+        // Remove the reference to the CallbackInfo object and call closeHandleComplete
+        // to app if requested.
+        m_callbackInfoList.erase(mapKey);
+        CallCloseHandleComplete(closeHandleComplete, context);
+    }
+    else
+    {
+        // There's at least one in progress callback to app's code.
+        callbackInfo->markedToBeRemoved = true;
+
+        // Call to closeHandleComplete will happen when all the callbacks are completed.
+        callbackInfo->closeHandleCompleteCallback = closeHandleComplete;
+        callbackInfo->closeHandleCompletecontext = context;
+    }
+
+    return IPCA_OK;
 }
 
 void Callback::CompleteAndRemoveExpiredCallbackInfo(std::vector<CallbackInfo::Ptr>& cbInfoList)
@@ -419,8 +473,9 @@ void Callback::CompleteAndRemoveExpiredCallbackInfo(std::vector<CallbackInfo::Pt
         for(auto const& entry : m_callbackInfoList)
         {
             // Opportunistic removal of callback that couldn't be removed during
-            // RemoveCallbackInfo().
-            if (entry.second->markedToBeRemoved == true)
+            // RemoveCallbackInfo() and if by now it has completed the callback.
+            if ((entry.second->markedToBeRemoved == true) &&
+                (entry.second->callbackInProgressCount == 0))
             {
                 m_expiredCallbacksInProgress++;
                 cbInfoList.push_back(entry.second);
@@ -762,6 +817,7 @@ void Callback::DeleteResourceCallback(IPCAStatus status, CallbackInfo::Ptr cbInf
                 const_cast<void*>(cbInfo->callbackContext));
 
     ClearCallbackInProgress(cbInfo->mapKey);
+    RemoveCallbackInfo(cbInfo->mapKey);
 }
 
 void Callback::PasswordInputCallback(std::string deviceId,
@@ -857,4 +913,5 @@ void Callback::RequestAccessCompletionCallback(IPCAStatus status, CallbackInfo::
     }
 
     ClearCallbackInProgress(cbInfo->mapKey);
+    RemoveCallbackInfo(cbInfo->mapKey);
 }
