@@ -125,23 +125,23 @@ MPMResult Honeywell::manageMutexes(bool initialize)
     return result;
 }
 
-void Honeywell::dumpResponseString(const char *stringData, const char *fileName)
+void Honeywell::dumpResponseString(const std::string &stringData, const std::string &fileName)
 {
     char logBuffer[MAX_LOG_STRING + 1];
 
-    if ((NULL == stringData) || (0 == strlen(stringData)))
+    if (stringData.empty())
     {
         OIC_LOG_V(ERROR, LOG_TAG, "stringData is NULL or zero len");
         return;
     }
 
-    OICStrcpy(logBuffer, sizeof(logBuffer), stringData);
+    OICStrcpy(logBuffer, sizeof(logBuffer), stringData.c_str());
     // display LENGTH of full response string, but only output the safe/truncated string
-    if ((NULL != fileName) && (0 != strlen(fileName)))
+    if (!fileName.empty())
     {
         if (MPM_RESULT_OK != SaveStringIntoFile(stringData, fileName))
         {
-            OIC_LOG_V(ERROR, LOG_TAG, "Error saving file %s", fileName);
+            OIC_LOG_V(ERROR, LOG_TAG, "Error saving file %s", fileName.c_str());
         }
     }
 }

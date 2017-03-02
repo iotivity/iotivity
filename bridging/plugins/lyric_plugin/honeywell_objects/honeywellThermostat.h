@@ -98,7 +98,7 @@ struct THERMOSTAT
     int cloudIndex;                 // index of device in array returned by server
 };
 
-void dump_details(const THERMOSTAT &thermostat, const char *description);
+void dump_details(const THERMOSTAT &thermostat, const std::string &description);
 
 std::string hvacModeToString(const HVAC_MODE &hvacMode);
 
@@ -148,7 +148,7 @@ public:
         return m_changeableValues;
     }
 
-    void buildDeviceUri(const char *baseUri = NULL);
+    void buildDeviceUri(const std::string &);
 
     std::string getDeviceUri()
     {
