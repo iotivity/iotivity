@@ -1321,10 +1321,10 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
     GetTCPPortInfo(devAddr, &tcpPort, (resourcePtr->resourceProperties & OC_SECURE));
 
     OCDiscoveryPayloadAddResourceWithEps(payload, resourcePtr, securePort,
-                                         isVirtual, networkInfo, infoSize, devAddr, tcpPort);
+                                         networkInfo, infoSize, devAddr, tcpPort);
 #else
     OCDiscoveryPayloadAddResourceWithEps(payload, resourcePtr, securePort,
-                                         isVirtual, networkInfo, infoSize, devAddr);
+                                         networkInfo, infoSize, devAddr);
 #endif
 
     return OC_STACK_OK;

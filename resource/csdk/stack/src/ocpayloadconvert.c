@@ -241,6 +241,16 @@ static int64_t OCConvertResourcePayloadCbor(CborEncoder *linkArray, OCResourcePa
         err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
                                   uri);
     }
+    else if (!strstr(resource->uri, OC_ENDPOINT_TPS_TOKEN) &&
+             resource->rel && !strcmp(resource->rel, "self") &&
+             resource->anchor)
+    {
+        char uri[MAX_URI_LENGTH];
+        snprintf(uri, MAX_URI_LENGTH, "%s%s", resource->anchor, resource->uri);
+
+        err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
+                                  uri);
+    }
     else
     {
         err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
@@ -527,8 +537,20 @@ static int64_t OCConvertDiscoveryPayloadVndOcfCbor(OCDiscoveryPayload *payload,
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating discovery map");
 
             // Uri
-            err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
-                                      resource->uri);
+            if (!strstr(resource->uri, OC_ENDPOINT_TPS_TOKEN) &&
+                resource->rel && !strcmp(resource->rel, "self"))
+            {
+                char uri[MAX_URI_LENGTH];
+                snprintf(uri, MAX_URI_LENGTH, "ocf://%s%s", payload->sid, resource->uri);
+
+                err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
+                                          uri);
+            }
+            else
+            {
+                err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
+                                          resource->uri);
+            }
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding uri to links map");
 
             // Rel - Not a mandatory field
@@ -536,19 +558,10 @@ static int64_t OCConvertDiscoveryPayloadVndOcfCbor(OCDiscoveryPayload *payload,
                                                  resource->rel);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rel to links map");
 
-            // Anchor - Not a mandatory field
-            if (resource->anchor)
-            {
-                err |= AddTextStringToMap(&linkMap, OC_RSRVD_URI, sizeof(OC_RSRVD_URI) - 1,
-                                          resource->anchor);
-            }
-            else
-            {
-                char anchor[MAX_URI_LENGTH];
-                snprintf(anchor, MAX_URI_LENGTH, "ocf://%s", payload->sid);
-                err |= AddTextStringToMap(&linkMap, OC_RSRVD_URI, sizeof(OC_RSRVD_URI) - 1,
-                                          anchor);
-            }
+            // Anchor
+            char anchor[MAX_URI_LENGTH];
+            snprintf(anchor, MAX_URI_LENGTH, "ocf://%s", payload->sid);
+            err |= AddTextStringToMap(&linkMap, OC_RSRVD_URI, sizeof(OC_RSRVD_URI) - 1, anchor);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding anchor to links map");
 
             // Resource Type

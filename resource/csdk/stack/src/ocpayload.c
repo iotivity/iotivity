@@ -36,6 +36,7 @@
 
 #define TAG "OIC_RI_PAYLOAD"
 #define CSV_SEPARATOR ','
+#define MASK_SECURE_FAMS (OC_FLAG_SECURE | OC_MASK_FAMS)
 
 static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val);
 
@@ -1761,8 +1762,8 @@ void OCResourcePayloadAddNewEndpoint(OCResourcePayload* payload, OCEndpointPaylo
 }
 
 static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t securePort,
-                                         bool isVirtual, CAEndpoint_t *networkInfo,
-                                         size_t infoSize, const OCDevAddr *devAddr
+                                         CAEndpoint_t *networkInfo, size_t infoSize,
+                                         const OCDevAddr *devAddr
 #ifndef TCP_ADAPTER
                                                                                     )
 #else
@@ -1775,8 +1776,86 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
         return NULL;
     }
 
-    pl->uri = OICStrdup(res->uri);
+    OCEndpointPayload *selfEp = NULL;
+    if (networkInfo && infoSize && devAddr)
+    {
+        OCEndpointPayload *lastNode = pl->eps;
+        if ((OC_ADAPTER_IP | OC_ADAPTER_TCP) & (devAddr->adapter))
+        {
+            for (size_t i = 0; i < infoSize; i++)
+            {
+                CAEndpoint_t *info = networkInfo + i;
 
+                if (((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter &&
+                     info->ifindex == devAddr->ifindex) ||
+                    info->adapter == CA_ADAPTER_RFCOMM_BTEDR)
+                {
+                    OCTpsSchemeFlags matchedTps = OC_NO_TPS;
+                    if (OC_STACK_OK != OCGetMatchedTpsFlags(info->adapter,
+                                                            info->flags,
+                                                            &matchedTps))
+                    {
+                        return NULL;
+                    }
+
+                    if ((res->endpointType) & matchedTps)
+                    {
+                        // create payload
+                        OCEndpointPayload* tmpNode = (OCEndpointPayload*)
+                            OICCalloc(1, sizeof(OCEndpointPayload));
+                        if (!tmpNode)
+                        {
+                            return NULL;
+                        }
+
+                        OCStackResult ret = OCConvertTpsToString(matchedTps, &(tmpNode->tps));
+                        if (ret != OC_STACK_OK)
+                        {
+                            OCDiscoveryEndpointDestroy(tmpNode);
+                            OCDiscoveryResourceDestroy(pl);
+                            return NULL;
+                        }
+
+                        tmpNode->addr = (char*)OICCalloc(MAX_ADDR_STR_SIZE, sizeof(char));
+                        if (!tmpNode->addr)
+                        {
+                            OCDiscoveryEndpointDestroy(tmpNode);
+                            OCDiscoveryResourceDestroy(pl);
+                            return NULL;
+                        }
+
+                        memcpy(tmpNode->addr, info->addr, sizeof(info->addr));
+                        tmpNode->family = (OCTransportFlags)(info->flags);
+                        tmpNode->port = info->port;
+                        tmpNode->pri  = 1;
+                        tmpNode->next = NULL;
+
+                        // remember endpoint that matches devAddr for use in anchor.
+                        OCTransportFlags infoFlagsSecureFams = (OCTransportFlags)
+                                (info->flags & MASK_SECURE_FAMS);
+                        if ((infoFlagsSecureFams & devAddr->flags) == infoFlagsSecureFams)
+                        {
+                            selfEp = tmpNode;
+                        }
+
+                        // store in list
+                        if (!pl->eps)
+                        {
+                            pl->eps = tmpNode;
+                            lastNode = tmpNode;
+                        }
+                        else
+                        {
+                            lastNode->next = tmpNode;
+                            lastNode = tmpNode;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    pl->uri = OICStrdup(res->uri);
     if (!pl->uri)
     {
         OCDiscoveryResourceDestroy(pl);
@@ -1787,12 +1866,22 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
     if (0 == strcmp(res->uri, OC_RSRVD_WELL_KNOWN_URI))
     {
         pl->rel = OICStrdup("self");
-
         if (!pl->rel)
         {
             OCDiscoveryResourceDestroy(pl);
             return NULL;
         }
+    }
+
+    // anchor
+    char *anchor = OCCreateEndpointString(selfEp);
+    if (anchor)
+    {
+        pl->anchor = anchor;
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Can't determine anchor");
     }
 
     // types
@@ -1883,83 +1972,6 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
     pl->tcpPort = tcpPort;
 #endif
 
-    if (isVirtual || !networkInfo || infoSize == 0 || !devAddr)
-    {
-        pl->eps = NULL;
-    }
-    else
-    {
-        OCEndpointPayload *lastNode = pl->eps;
-        if ((OC_ADAPTER_IP | OC_ADAPTER_TCP) & (devAddr->adapter))
-        {
-            for (size_t i = 0; i < infoSize; i++)
-            {
-                CAEndpoint_t *info = networkInfo + i;
-
-                if (info)
-                {
-                    if (((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter &&
-                        info->ifindex == devAddr->ifindex) ||
-                        info->adapter == CA_ADAPTER_RFCOMM_BTEDR)
-                    {
-                        OCTpsSchemeFlags matchedTps = OC_NO_TPS;
-                        if (OC_STACK_OK != OCGetMatchedTpsFlags(info->adapter,
-                                                                info->flags,
-                                                                &matchedTps))
-                        {
-                            return NULL;
-                        }
-
-                        if ((res->endpointType) & matchedTps)
-                        {
-                            // create payload
-                            OCEndpointPayload* tmpNode = (OCEndpointPayload*)
-                                                          OICCalloc(1, sizeof(OCEndpointPayload));
-                            if (!tmpNode)
-                            {
-                                return NULL;
-                            }
-
-                            OCStackResult ret = OCConvertTpsToString(matchedTps, &(tmpNode->tps));
-                            if (ret != OC_STACK_OK)
-                            {
-                                OCDiscoveryEndpointDestroy(tmpNode);
-                                OCDiscoveryResourceDestroy(pl);
-                                return NULL;
-                            }
-
-                            tmpNode->addr = (char*)OICCalloc(MAX_ADDR_STR_SIZE, sizeof(char));
-                            if (!tmpNode->addr)
-                            {
-                                OCDiscoveryEndpointDestroy(tmpNode);
-                                OCDiscoveryResourceDestroy(pl);
-                                return NULL;
-                            }
-
-                            memcpy(tmpNode->addr, info->addr, sizeof(info->addr));
-                            tmpNode->family = (OCTransportFlags)(info->flags);
-                            tmpNode->port = info->port;
-                            tmpNode->pri  = 1;
-                            tmpNode->next = NULL;
-
-                            // store in list
-                            if (!pl->eps)
-                            {
-                                pl->eps = tmpNode;
-                                lastNode = tmpNode;
-                            }
-                            else
-                            {
-                                lastNode->next = tmpNode;
-                                lastNode = tmpNode;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     return pl;
 }
 
@@ -1967,36 +1979,33 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
                                    uint16_t securePort)
 {
-    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort, false, NULL, 0, NULL));
+    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort, NULL, 0, NULL));
 }
 #else
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
                                    uint16_t securePort, uint16_t tcpPort)
 {
-    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort, false, NULL, 0, NULL, tcpPort));
+    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort, NULL, 0, NULL,
+                                                             tcpPort));
 }
 #endif
 
 #ifndef TCP_ADAPTER
 void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload* payload, const OCResource* res,
-                                          uint16_t securePort, bool isVirtual,
-                                          void *networkInfo, size_t infoSize,
+                                          uint16_t securePort, void *networkInfo, size_t infoSize,
                                           const OCDevAddr *devAddr)
 {
     OCDiscoveryPayloadAddNewResource(payload,
-                                     OCCopyResource(res, securePort, isVirtual,
-                                                    (CAEndpoint_t *)networkInfo,
+                                     OCCopyResource(res, securePort, (CAEndpoint_t *)networkInfo,
                                                     infoSize, devAddr));
 }
 #else
 void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload* payload, const OCResource* res,
-                                          uint16_t securePort, bool isVirtual,
-                                          void *networkInfo, size_t infoSize,
+                                          uint16_t securePort, void *networkInfo, size_t infoSize,
                                           const OCDevAddr *devAddr, uint16_t tcpPort)
 {
     OCDiscoveryPayloadAddNewResource(payload,
-                                     OCCopyResource(res, securePort, isVirtual,
-                                                    (CAEndpoint_t *)networkInfo,
+                                     OCCopyResource(res, securePort, (CAEndpoint_t *)networkInfo,
                                                     infoSize, devAddr, tcpPort));
 }
 #endif
