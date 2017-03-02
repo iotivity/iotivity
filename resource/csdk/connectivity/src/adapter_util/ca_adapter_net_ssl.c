@@ -953,7 +953,11 @@ bool SetCASecureEndpointAttribute(const CAEndpoint_t* peer, uint32_t newAttribut
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s(peer = %s:%u, attribute = %#x)", __func__,
         peer->addr, (uint32_t)peer->port, newAttribute);
 
-    oc_mutex_lock(g_sslContextMutex);
+    // Acquiring g_sslContextMutex recursively here is not supported, so assert
+    // that the caller already owns this mutex. IOT-1876 tracks a possible
+    // refactoring of the code that is using g_sslContextMutex, to address these
+    // API quirks.
+    oc_mutex_assert_owner(g_sslContextMutex, true);
 
     if (NULL == g_caSslContext)
     {
@@ -973,8 +977,6 @@ bool SetCASecureEndpointAttribute(const CAEndpoint_t* peer, uint32_t newAttribut
             result = true;
         }
     }
-
-    oc_mutex_unlock(g_sslContextMutex);
 
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s -> %s", __func__, result ? "success" : "failed");
     return result;

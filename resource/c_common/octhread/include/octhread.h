@@ -37,6 +37,11 @@ extern "C"
 {
 #endif /* __cplusplus */
 
+/**
+ * Value used for the owner field of an oc_mutex that doesn't have an owner.
+ */
+#define OC_INVALID_THREAD_ID    0
+
 typedef struct oc_mutex_internal *oc_mutex;
 typedef struct oc_cond_internal *oc_cond;
 typedef struct oc_thread_internal *oc_thread;
@@ -131,6 +136,18 @@ void oc_mutex_unlock(oc_mutex mutex);
  *
  */
 bool oc_mutex_free(oc_mutex mutex);
+
+/**
+ * On Debug builds, assert that the current thread owns or does not own a mutex.
+ *
+ * This function has no effect on Release builds.
+ *
+ * @param[in] mutex  The mutex to assert on.
+ * @param[in] currentThreadIsOwner  true if the current thread is expected to
+ *                  be the mutex owner, false otherwise.
+ *
+ */
+void oc_mutex_assert_owner(const oc_mutex mutex, bool currentThreadIsOwner);
 
 /**
  * Creates new condition.

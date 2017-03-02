@@ -41,7 +41,22 @@ static const uint64_t USECS_PER_MSEC = 1000;
 typedef struct _tagMutexInfo_t
 {
     CRITICAL_SECTION mutex;
+
+    /**
+     * Catch some of the incorrect mutex usage, by tracking the mutex owner,
+     * on Debug builds.
+     */
+#ifndef NDEBUG
+    DWORD owner;
+#endif
 } oc_mutex_internal;
+
+static DWORD oc_get_current_thread_id()
+{
+    DWORD id = GetCurrentThreadId();
+    assert(OC_INVALID_THREAD_ID != id);
+    return id;
+}
 
 typedef struct _tagEventInfo_t
 {
@@ -119,6 +134,9 @@ oc_mutex oc_mutex_new(void)
     oc_mutex_internal *mutexInfo = (oc_mutex_internal*) OICMalloc(sizeof(oc_mutex_internal));
     if (NULL != mutexInfo)
     {
+#ifndef NDEBUG
+        mutexInfo->owner = OC_INVALID_THREAD_ID;
+#endif
         InitializeCriticalSection(&mutexInfo->mutex);
         retVal = (oc_mutex)mutexInfo;
     }
@@ -154,6 +172,14 @@ void oc_mutex_lock(oc_mutex mutex)
     if (mutexInfo)
     {
         EnterCriticalSection(&mutexInfo->mutex);
+
+#ifndef NDEBUG
+        /**
+         * Updating the owner field must be performed while owning the lock,
+         * to solve race conditions with other threads using the same lock.
+         */
+        mutexInfo->owner = oc_get_current_thread_id();
+#endif
     }
     else
     {
@@ -166,12 +192,41 @@ void oc_mutex_unlock(oc_mutex mutex)
     oc_mutex_internal *mutexInfo = (oc_mutex_internal*) mutex;
     if (mutexInfo)
     {
+#ifndef NDEBUG
+        /**
+         * Updating the owner field must be performed while owning the lock,
+         * to solve race conditions with other threads using the same lock.
+         */
+        mutexInfo->owner = OC_INVALID_THREAD_ID;
+#endif
+
         LeaveCriticalSection(&mutexInfo->mutex);
     }
     else
     {
         OIC_LOG_V(ERROR, TAG, "%s: Invalid mutex !", __func__);
     }
+}
+
+void oc_mutex_assert_owner(const oc_mutex mutex, bool currentThreadIsOwner)
+{
+#ifdef NDEBUG
+    OC_UNUSED(mutex);
+    OC_UNUSED(currentThreadIsOwner);
+#else
+    assert(NULL != mutex);
+    const oc_mutex_internal *mutexInfo = (const oc_mutex_internal*) mutex;
+
+    DWORD currentThreadID = oc_get_current_thread_id();
+    if (currentThreadIsOwner)
+    {
+        assert(mutexInfo->owner == currentThreadID);
+    }
+    else
+    {
+        assert(mutexInfo->owner != currentThreadID);
+    }
+#endif
 }
 
 oc_cond oc_cond_new(void)
