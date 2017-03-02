@@ -1359,7 +1359,7 @@ OCStackResult HandleBatchResponse(char *requestUri, OCRepPayload **payload)
         {
             if (OC_STACK_OK == ExtractFiltersFromQuery(uriQuery, &interfaceName, &rtTypeName))
             {
-                if (0 == strcmp(OC_RSRVD_INTERFACE_BATCH, interfaceName))
+                if (interfaceName && (0 == strcmp(OC_RSRVD_INTERFACE_BATCH, interfaceName)))
                 {
                     char *uri = (*payload)->uri;
                     if (uri && 0 != strcmp(uriWithoutQuery, uri))
@@ -1375,6 +1375,7 @@ OCStackResult HandleBatchResponse(char *requestUri, OCRepPayload **payload)
                 }
             }
         }
+
         OICFree(interfaceName);
         OICFree(rtTypeName);
         OICFree(uriQuery);
