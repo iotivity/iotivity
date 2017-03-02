@@ -2299,6 +2299,7 @@ OCStackResult OCStop()
     // Ensure that the TTL associated with ANY and ALL presence notifications originating from
     // here send with the code "OC_STACK_PRESENCE_STOPPED" result.
     presenceResource.presenceTTL = 0;
+    presenceState = OC_PRESENCE_UNINITIALIZED;
 #endif // WITH_PRESENCE
 
 #ifdef ROUTING_GATEWAY
