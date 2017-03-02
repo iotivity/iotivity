@@ -83,6 +83,7 @@ static const uint16_t CBOR_SIZE = 512;
 static const uint16_t CBOR_MAX_SIZE = 4400;
 
 extern OCResource *headResource;
+extern bool g_multicastServerStopped;
 
 /**
  * Prepares a Payload for response.
@@ -1829,6 +1830,14 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 #endif
             )
     {
+        if (g_multicastServerStopped && !isUnicast(request))
+        {
+            // Ignore the discovery request
+            FindAndDeleteServerRequest(request);
+            discoveryResult = OC_STACK_CONTINUE;
+            goto exit;
+        }
+
         char *interfaceQuery = NULL;
         char *resourceTypeQuery = NULL;
 
@@ -1988,7 +1997,6 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         OIC_LOG_PAYLOAD(DEBUG, payload);
         if(discoveryResult == OC_STACK_OK)
         {
-
             SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
         }
         else // Error handling
@@ -2083,7 +2091,6 @@ HandleResourceWithEntityHandler(OCServerRequest *request,
     if (request && request->resourceUrl && SRMIsSecurityResourceURI(request->resourceUrl))
     {
         type = PAYLOAD_TYPE_SECURITY;
-
     }
 
     result = EHRequest(&ehRequest, type, request, resource);

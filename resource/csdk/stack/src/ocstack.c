@@ -167,6 +167,8 @@ uint32_t g_ocStackStartCount = 0;
 // Number of threads currently executing OCInit2 or OCStop
 volatile int32_t g_ocStackStartStopThreadCount = 0;
 
+bool g_multicastServerStopped = false;
+
 //-----------------------------------------------------------------------------
 // Macros
 //-----------------------------------------------------------------------------
@@ -2756,23 +2758,13 @@ OCStackResult OCStartMulticastServer()
         OIC_LOG(ERROR, TAG, "OCStack is not initalized. Cannot start multicast server.");
         return OC_STACK_ERROR;
     }
-    CAResult_t ret = CAStartListeningServer();
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG_V(ERROR, TAG, "Failed starting listening server: %d", ret);
-        return OC_STACK_ERROR;
-    }
+    g_multicastServerStopped = false;
     return OC_STACK_OK;
 }
 
 OCStackResult OCStopMulticastServer()
 {
-    CAResult_t ret = CAStopListeningServer();
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG_V(ERROR, TAG, "Failed stopping listening server: %d", ret);
-        return OC_STACK_ERROR;
-    }
+    g_multicastServerStopped = true;
     return OC_STACK_OK;
 }
 
