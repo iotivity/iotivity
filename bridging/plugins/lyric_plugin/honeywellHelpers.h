@@ -33,7 +33,7 @@
 /// @param fileContents - (output) Returned file contents.
 ///
 /// @return MPM_RESULT_OK on success, error code otherwise.
-MPMResult LoadFileIntoString(const char *filePath, std::string &fileContents);
+MPMResult LoadFileIntoString(const std::string &filePath, std::string &fileContents);
 
 /// Saves a string into a text file.
 ///
@@ -41,7 +41,7 @@ MPMResult LoadFileIntoString(const char *filePath, std::string &fileContents);
 /// @param filePath - (input) Path/filename to load.
 ///
 /// @return MPM_RESULT_OK on success, error code otherwise.
-MPMResult SaveStringIntoFile(const char *stringData, const char *filePath);
+MPMResult SaveStringIntoFile(const std::string &stringData, const std::string &filePath);
 
 /// Copies a file.
 ///
@@ -50,7 +50,7 @@ MPMResult SaveStringIntoFile(const char *stringData, const char *filePath);
 /// @param binaryFile - (input) true if source is binary file, false if text file.
 ///
 /// @return MPM_RESULT_OK on success, error code otherwise.
-MPMResult CopyFile(const char *sourceFilePath, const char *destFilePath, bool binaryFile);
+MPMResult CopyFile(const std::string &sourceFilePath, const std::string &destFilePath, bool binaryFile);
 
 /// builds a path string to a given token file of given filename.
 /// Uses the contents of the TOKEN_DIR environment variable as the
@@ -61,7 +61,7 @@ MPMResult CopyFile(const char *sourceFilePath, const char *destFilePath, bool bi
 /// @param fileName - (input) filename only
 ///
 /// @return Full path/filename of token file.
-std::string GetTokenPath(const char *fileName);
+std::string GetTokenPath(const std::string &fileName);
 
 /// Calculates setpoints to achieve a desired target temperature. Honeywell thermostats don't have
 /// a single target temp like Nest. Instead you need to set an upper and lower threshold using
