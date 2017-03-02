@@ -248,6 +248,7 @@ NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newOb
     if (!obj->data)
     {
         NS_LOG (ERROR, "Failed to CopyProvider");
+        NSOICFree(obj);
         pthread_mutex_unlock(mutex);
 
         return NS_ERROR;

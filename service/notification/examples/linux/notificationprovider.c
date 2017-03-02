@@ -22,7 +22,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <ctype.h>
 
 #include "NSProviderInterface.h"
 #include "NSCommon.h"
@@ -206,7 +205,7 @@ int main()
 
         printf("input : ");
 
-        if(scanf("%d", &num) > 0 && isdigit(num) == 0)
+        if(scanf("%d", &num) > 0)
         {
             if(scanf("%c", &dummy) > 0)
             {
