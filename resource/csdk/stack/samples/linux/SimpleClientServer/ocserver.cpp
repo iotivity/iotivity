@@ -35,6 +35,7 @@
 #include <pthread.h>
 #endif
 #include <array>
+#include <cinttypes>
 #include "oic_malloc.h"
 #include <getopt.h>
 #include "ocstack.h"
@@ -187,7 +188,7 @@ bool checkIfQueryForPowerPassed(char * query)
         if (pointerToOperator)
         {
             int64_t powerRequested;
-            int matchedItems = sscanf((pointerToOperator + 1), "%lld", &powerRequested);
+            int matchedItems = sscanf((pointerToOperator + 1), "%" SCNd64, &powerRequested);
 
             if (1 != matchedItems)
             {
@@ -196,7 +197,7 @@ bool checkIfQueryForPowerPassed(char * query)
 
             if (Light.power > powerRequested)
             {
-                OIC_LOG_V(INFO, TAG, "Current power: %lld. Requested: <%lld", Light.power,
+                OIC_LOG_V(INFO, TAG, "Current power: %" PRId64 ". Requested: <%" PRId64, Light.power,
                           powerRequested);
                 return false;
             }
@@ -737,7 +738,7 @@ void *ChangeLightRepresentation (void *param)
         Light.power += 5;
         if (gLightUnderObservation)
         {
-            OIC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %lld\n", Light.power);
+            OIC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %" PRId64 "\n", Light.power);
             if (gObserveNotifyType == 1)
             {
                 // Notify list of observers. Alternate observers on the list will be notified.
