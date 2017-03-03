@@ -119,6 +119,18 @@
 /**
  * Mark a parameter as unused. Used to prevent unused variable compiler warnings.
  */
-#define OC_UNUSED(x) (void)(x)
+#  define OC_UNUSED(x) (void)(x)
+
+/**
+ * Calling convention.
+ */
+#ifdef _WIN32
+/*
+ * Set to __stdcall for Windows, consistent with WIN32 APIs.
+ */
+#  define OC_CALL   __stdcall
+#else
+#  define OC_CALL
+#endif
 
 #endif

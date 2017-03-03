@@ -25,7 +25,7 @@
 
 #define TAG "IPCA_Variant"
 
-IPCAStatus IPCAPropertyBagCreate(IPCAPropertyBagHandle* propertyBagHandle)
+IPCAStatus IPCA_CALL IPCAPropertyBagCreate(IPCAPropertyBagHandle* propertyBagHandle)
 {
     OC::OCRepresentation* rep = new OC::OCRepresentation();
 
@@ -38,13 +38,16 @@ IPCAStatus IPCAPropertyBagCreate(IPCAPropertyBagHandle* propertyBagHandle)
     return IPCA_OK;
 }
 
-void IPCAPropertyBagDestroy(IPCAPropertyBagHandle propertyBagHandle)
+void IPCA_CALL IPCAPropertyBagDestroy(IPCAPropertyBagHandle propertyBagHandle)
 {
     delete(reinterpret_cast<OC::OCRepresentation*>(propertyBagHandle));
 }
 
 template <typename _T>
-IPCAStatus IPCAPropertySetValue(IPCAPropertyBagHandle propertyBagHandle, const char* key, _T value)
+IPCAStatus IPCA_CALL IPCAPropertySetValue(
+                                IPCAPropertyBagHandle propertyBagHandle,
+                                const char* key,
+                                _T value)
 {
     if (propertyBagHandle == nullptr)
     {
@@ -64,38 +67,43 @@ IPCAStatus IPCAPropertySetValue(IPCAPropertyBagHandle propertyBagHandle, const c
     }
 }
 
-IPCAStatus IPCAPropertyBagSetValueInt(IPCAPropertyBagHandle propertyBagHandle,
-                    const char* key,
-                    int value)
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValueInt(
+                                IPCAPropertyBagHandle propertyBagHandle,
+                                const char* key,
+                                int value)
 {
     return IPCAPropertySetValue(propertyBagHandle, key, value);
 }
 
-IPCAStatus IPCAPropertyBagSetValueDouble(IPCAPropertyBagHandle propertyBagHandle,
-                    const char* key,
-                    double value)
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValueDouble(
+                                IPCAPropertyBagHandle propertyBagHandle,
+                                const char* key,
+                                double value)
 {
     return IPCAPropertySetValue(propertyBagHandle, key, value);
 }
 
-IPCAStatus IPCAPropertyBagSetValueBool(IPCAPropertyBagHandle propertyBagHandle,
-                    const char* key,
-                    bool value)
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValueBool(
+                                IPCAPropertyBagHandle propertyBagHandle,
+                                const char* key,
+                                bool value)
 {
     return IPCAPropertySetValue(propertyBagHandle, key, value);
 }
 
-IPCAStatus IPCAPropertyBagSetValueString(IPCAPropertyBagHandle propertyBagHandle,
-                    const char* key,
-                    const char* value)
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValueString(
+                                IPCAPropertyBagHandle propertyBagHandle,
+                                const char* key,
+                                const char* value)
 {
     std::string valueString = value;
     return IPCAPropertySetValue(propertyBagHandle, key, valueString);
 }
 
-IPCAStatus IPCAPropertyBagSetValuePropertyBag(IPCAPropertyBagHandle propertyBagHandle,
-                    const char* key,
-                    const IPCAPropertyBagHandle value)
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValuePropertyBag(
+                                IPCAPropertyBagHandle propertyBagHandle,
+                                const char* key,
+                                const IPCAPropertyBagHandle value)
 {
     if (propertyBagHandle == nullptr)
     {
@@ -118,10 +126,11 @@ IPCAStatus IPCAPropertyBagSetValuePropertyBag(IPCAPropertyBagHandle propertyBagH
 }
 
 template <typename _T>
-IPCAStatus IPCAPropertyBagSetValueArray(IPCAPropertyBagHandle propertyBagHandle,
-                    const char* key,
-                    const _T* valueArray,
-                    size_t arrayCount)
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValueArray(
+                                IPCAPropertyBagHandle propertyBagHandle,
+                                const char* key,
+                                const _T* valueArray,
+                                size_t arrayCount)
 {
     if (propertyBagHandle == nullptr)
     {
@@ -149,35 +158,39 @@ IPCAStatus IPCAPropertyBagSetValueArray(IPCAPropertyBagHandle propertyBagHandle,
     }
 }
 
-IPCAStatus IPCAPropertyBagSetValueIntArray(IPCAPropertyBagHandle propertyBagHandle,
-                    const char* key,
-                    const int* valueArray,
-                    size_t arrayCount)
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValueIntArray(
+                                IPCAPropertyBagHandle propertyBagHandle,
+                                const char* key,
+                                const int* valueArray,
+                                size_t arrayCount)
 {
     return IPCAPropertyBagSetValueArray(propertyBagHandle, key, valueArray, arrayCount);
 }
 
-IPCAStatus IPCAPropertyBagSetValueDoubleArray(IPCAPropertyBagHandle propertyBagHandle,
-                    const char* key,
-                    const double* valueArray,
-                    size_t arrayCount)
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValueDoubleArray(
+                                IPCAPropertyBagHandle propertyBagHandle,
+                                const char* key,
+                                const double* valueArray,
+                                size_t arrayCount)
 {
     return IPCAPropertyBagSetValueArray(propertyBagHandle, key, valueArray, arrayCount);
 
 }
 
-IPCAStatus IPCAPropertyBagSetValueBoolArray(IPCAPropertyBagHandle propertyBagHandle,
-                    const char* key,
-                    const bool* valueArray,
-                    size_t arrayCount)
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValueBoolArray(
+                                IPCAPropertyBagHandle propertyBagHandle,
+                                const char* key,
+                                const bool* valueArray,
+                                size_t arrayCount)
 {
     return IPCAPropertyBagSetValueArray(propertyBagHandle, key, valueArray, arrayCount);
 }
 
-IPCAStatus IPCAPropertyBagSetValueStringArray(IPCAPropertyBagHandle propertyBagHandle,
-                    const char* key,
-                    const char** valueArray,
-                    size_t arrayCount)
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValueStringArray(
+                                IPCAPropertyBagHandle propertyBagHandle,
+                                const char* key,
+                                const char** valueArray,
+                                size_t arrayCount)
 {
     if (propertyBagHandle == nullptr)
     {
@@ -205,10 +218,11 @@ IPCAStatus IPCAPropertyBagSetValueStringArray(IPCAPropertyBagHandle propertyBagH
     }
 }
 
-IPCAStatus IPCAPropertyBagSetValuePropertyBagArray(IPCAPropertyBagHandle propertyBagHandle,
-                    const char* key,
-                    const IPCAPropertyBagHandle* valueArray,
-                    size_t valueCount)
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValuePropertyBagArray(
+                                IPCAPropertyBagHandle propertyBagHandle,
+                                const char* key,
+                                const IPCAPropertyBagHandle* valueArray,
+                                size_t valueCount)
 {
     if (propertyBagHandle == nullptr)
     {
@@ -238,7 +252,10 @@ IPCAStatus IPCAPropertyBagSetValuePropertyBagArray(IPCAPropertyBagHandle propert
 }
 
 template <typename _T>
-IPCAStatus AllocateAndCopyTypeVectorToArrayOfType(std::vector<_T> array, _T** dest, size_t* count)
+IPCAStatus IPCA_CALL AllocateAndCopyTypeVectorToArrayOfType(
+                                std::vector<_T> array,
+                                _T** dest,
+                                size_t* count)
 {
     _T* buffer;
     size_t arraySize = array.size();
@@ -262,9 +279,10 @@ IPCAStatus AllocateAndCopyTypeVectorToArrayOfType(std::vector<_T> array, _T** de
 }
 
 template <typename _T>
-IPCAStatus IPCAPropertyBagGetValueArray(IPCAPropertyBagHandle propertyBagHandle,
-                const char* key, _T** value,
-                size_t* valueCount)
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValueArray(
+                            IPCAPropertyBagHandle propertyBagHandle,
+                            const char* key, _T** value,
+                            size_t* valueCount)
 {
     if (propertyBagHandle == nullptr)
     {
@@ -281,49 +299,53 @@ IPCAStatus IPCAPropertyBagGetValueArray(IPCAPropertyBagHandle propertyBagHandle,
     return AllocateAndCopyTypeVectorToArrayOfType(array, value, valueCount);
 }
 
-IPCAStatus IPCAPropertyBagGetValueIntArray(IPCAPropertyBagHandle propertyBagHandle,
-                                const char* key,
-                                int** value,
-                                size_t* valueCount)
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValueIntArray(
+                            IPCAPropertyBagHandle propertyBagHandle,
+                            const char* key,
+                            int** value,
+                            size_t* valueCount)
 {
     return IPCAPropertyBagGetValueArray(propertyBagHandle, key, value, valueCount);
 }
 
-void IPCAPropertyBagFreeIntArray(int* valueArray)
+void IPCA_CALL IPCAPropertyBagFreeIntArray(int* valueArray)
 {
     OICFree((void*)valueArray);
 }
 
-IPCAStatus IPCAPropertyBagGetValueDoubleArray(IPCAPropertyBagHandle propertyBagHandle,
-                                const char* key,
-                                double** value,
-                                size_t* valueCount)
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValueDoubleArray(
+                            IPCAPropertyBagHandle propertyBagHandle,
+                            const char* key,
+                            double** value,
+                            size_t* valueCount)
 {
     return IPCAPropertyBagGetValueArray(propertyBagHandle, key, value, valueCount);
 }
 
-void IPCAPropertyBagFreeDoubleArray(double* valueArray)
+void IPCA_CALL IPCAPropertyBagFreeDoubleArray(double* valueArray)
 {
     OICFree((void*)valueArray);
 }
 
-IPCAStatus IPCAPropertyBagGetValueBoolArray(IPCAPropertyBagHandle propertyBagHandle,
-                                const char* key,
-                                bool** value,
-                                size_t* valueCount)
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValueBoolArray(
+                            IPCAPropertyBagHandle propertyBagHandle,
+                            const char* key,
+                            bool** value,
+                            size_t* valueCount)
 {
     return IPCAPropertyBagGetValueArray(propertyBagHandle, key, value, valueCount);
 }
 
-void IPCAPropertyBagFreeBoolArray(bool* valueArray)
+void IPCA_CALL IPCAPropertyBagFreeBoolArray(bool* valueArray)
 {
     OICFree((void*)valueArray);
 }
 
-IPCAStatus IPCAPropertyBagGetValueStringArray(IPCAPropertyBagHandle propertyBagHandle,
-                                const char* key,
-                                char*** value,
-                                size_t* valueCount)
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValueStringArray(
+                            IPCAPropertyBagHandle propertyBagHandle,
+                            const char* key,
+                            char*** value,
+                            size_t* valueCount)
 {
     if (propertyBagHandle == nullptr)
     {
@@ -341,15 +363,16 @@ IPCAStatus IPCAPropertyBagGetValueStringArray(IPCAPropertyBagHandle propertyBagH
     return AllocateAndCopyStringVectorToArrayOfCharPointers(array, value, valueCount);
 }
 
-void IPCAPropertyBagFreeStringArray(char** valueArray, size_t valueCount)
+void IPCA_CALL IPCAPropertyBagFreeStringArray(char** valueArray, size_t valueCount)
 {
     FreeArrayOfCharPointers(valueArray, valueCount);
 }
 
-IPCAStatus IPCAPropertyBagGetValuePropertyBagArray(IPCAPropertyBagHandle propertyBagHandle,
-                                const char* key,
-                                IPCAPropertyBagHandle** value,
-                                size_t* count)
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValuePropertyBagArray(
+                            IPCAPropertyBagHandle propertyBagHandle,
+                            const char* key,
+                            IPCAPropertyBagHandle** value,
+                            size_t* count)
 {
     if (propertyBagHandle == nullptr)
     {
@@ -419,7 +442,9 @@ IPCAStatus IPCAPropertyBagGetValuePropertyBagArray(IPCAPropertyBagHandle propert
     return IPCA_OK;
 }
 
-void IPCAPropertyBagFreePropertyBagArray(IPCAPropertyBagHandle* valueArray, size_t valueCount)
+void IPCA_CALL IPCAPropertyBagFreePropertyBagArray(
+                                        IPCAPropertyBagHandle* valueArray,
+                                        size_t valueCount)
 {
     for (size_t i = 0; i < valueCount; i++)
     {
@@ -429,9 +454,10 @@ void IPCAPropertyBagFreePropertyBagArray(IPCAPropertyBagHandle* valueArray, size
     OICFree(valueArray);
 }
 
-IPCAStatus IPCAPropertyBagGetValueInt(IPCAPropertyBagHandle propertyBagHandle,
-                        const char* key,
-                        int* value)
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValueInt(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    int* value)
 {
     if (propertyBagHandle == nullptr)
     {
@@ -447,9 +473,10 @@ IPCAStatus IPCAPropertyBagGetValueInt(IPCAPropertyBagHandle propertyBagHandle,
     return IPCA_OK;
 }
 
-IPCAStatus IPCAPropertyBagGetValueDouble(IPCAPropertyBagHandle propertyBagHandle,
-                            const char* key,
-                            double* value)
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValueDouble(
+                                        IPCAPropertyBagHandle propertyBagHandle,
+                                        const char* key,
+                                        double* value)
 {
     if (propertyBagHandle == nullptr)
     {
@@ -465,9 +492,10 @@ IPCAStatus IPCAPropertyBagGetValueDouble(IPCAPropertyBagHandle propertyBagHandle
     return IPCA_OK;
 }
 
-IPCAStatus IPCAPropertyBagGetValueBool(IPCAPropertyBagHandle propertyBagHandle,
-                            const char* key,
-                            bool* value)
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValueBool(
+                                        IPCAPropertyBagHandle propertyBagHandle,
+                                        const char* key,
+                                        bool* value)
 {
     if (propertyBagHandle == nullptr)
     {
@@ -483,9 +511,10 @@ IPCAStatus IPCAPropertyBagGetValueBool(IPCAPropertyBagHandle propertyBagHandle,
     return IPCA_OK;
 }
 
-IPCAStatus IPCAPropertyBagGetValueString(IPCAPropertyBagHandle propertyBagHandle,
-                            const char* key,
-                            char** buffer)
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValueString(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    char** buffer)
 {
     if (propertyBagHandle == nullptr)
     {
@@ -502,14 +531,15 @@ IPCAStatus IPCAPropertyBagGetValueString(IPCAPropertyBagHandle propertyBagHandle
     return AllocateAndCopyStringToFlatBuffer(stringValue, buffer);
 }
 
-void IPCAPropertyBagFreeString(char* buffer)
+void IPCA_CALL IPCAPropertyBagFreeString(char* buffer)
 {
     OICFree(static_cast<void*>(buffer));
 }
 
-IPCAStatus IPCAPropertyBagGetValuePropertyBag(IPCAPropertyBagHandle propertyBagHandle,
-                            const char* key,
-                            IPCAPropertyBagHandle* value)
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValuePropertyBag(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    IPCAPropertyBagHandle* value)
 {
     if (propertyBagHandle == nullptr)
     {
@@ -533,8 +563,9 @@ IPCAStatus IPCAPropertyBagGetValuePropertyBag(IPCAPropertyBagHandle propertyBagH
     return IPCA_OK;
 }
 
-IPCAStatus IPCAPropertyBagGetResourcePath(IPCAPropertyBagHandle propertyBagHandle,
-                                          char** resourcePath)
+IPCAStatus IPCA_CALL IPCAPropertyBagGetResourcePath(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    char** resourcePath)
 {
     if (propertyBagHandle == nullptr)
     {
@@ -546,7 +577,7 @@ IPCAStatus IPCAPropertyBagGetResourcePath(IPCAPropertyBagHandle propertyBagHandl
                 resourcePath);
 }
 
-IPCAValueType AttributeTypeToIPCAValueType(AttributeType type)
+IPCAValueType IPCA_CALL AttributeTypeToIPCAValueType(AttributeType type)
 {
     IPCAValueType ipcaValueType;
 
@@ -592,7 +623,8 @@ IPCAValueType AttributeTypeToIPCAValueType(AttributeType type)
     return ipcaValueType;
 }
 
-IPCAStatus IPCAPropertyBagGetAllKeyValuePairs(IPCAPropertyBagHandle propertyBagHandle,
+IPCAStatus IPCA_CALL IPCAPropertyBagGetAllKeyValuePairs(
+                            IPCAPropertyBagHandle propertyBagHandle,
                             char*** keys,
                             IPCAValueType** valueTypes,
                             size_t* count)
@@ -637,12 +669,12 @@ IPCAStatus IPCAPropertyBagGetAllKeyValuePairs(IPCAPropertyBagHandle propertyBagH
     return status;
 }
 
-void IPCAPropertyBagFreeIPCAValueTypeArray(IPCAValueType* valueArray)
+void IPCA_CALL IPCAPropertyBagFreeIPCAValueTypeArray(IPCAValueType* valueArray)
 {
     OICFree((void*)valueArray);
 }
 
-void IPCAPropertyBagDebugDump(IPCAPropertyBagHandle propertyBagHandle)
+void IPCA_CALL IPCAPropertyBagDebugDump(IPCAPropertyBagHandle propertyBagHandle)
 {
     OC::OCRepresentation* rep = (reinterpret_cast<OC::OCRepresentation*>(propertyBagHandle));
     PrintOCRep(*rep);

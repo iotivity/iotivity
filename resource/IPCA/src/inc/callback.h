@@ -90,9 +90,10 @@ struct CallbackInfo
 };
 
 // Represent IPCAResourceChangeCallback, IPCAGetPropertiesComplete, IPCASetPropertiesComplete.
-typedef void (IPCA_CALL *GenericAppCallback)(IPCAStatus result,
-                                             void* context,
-                                             IPCAPropertyBagHandle propertyBagHandle);
+typedef void (IPCA_CALL *GenericAppCallback)(
+                                    IPCAStatus result,
+                                    void* context,
+                                    IPCAPropertyBagHandle propertyBagHandle);
 
 // One Callback object per App.  One app per IPCAOpen().
 class Callback

@@ -64,7 +64,10 @@ IPCAStatus IPCAElevatorClient::RebootElevator()
     return status;
 }
 
-void C_GetPropertiesCb(IPCAStatus result, void* context, IPCAPropertyBagHandle propertyBagHandle)
+void IPCA_CALL C_GetPropertiesCb(
+                        IPCAStatus result,
+                        void* context,
+                        IPCAPropertyBagHandle propertyBagHandle)
 {
     IPCAElevatorClient* ipcaElevatorClient = (IPCAElevatorClient*)context;
     ipcaElevatorClient->GetPropertiesCallback(result, context, propertyBagHandle);
@@ -94,7 +97,10 @@ bool IPCAElevatorClient::GetElevatorProperties()
     return m_getPropertiesCallbackCalled;
 }
 
-void C_SetPropertiesCb(IPCAStatus result, void* context, IPCAPropertyBagHandle propertyBagHandle)
+void IPCA_CALL C_SetPropertiesCb(
+                        IPCAStatus result,
+                        void* context,
+                        IPCAPropertyBagHandle propertyBagHandle)
 {
     IPCAElevatorClient* ipcaTest = (IPCAElevatorClient*)context;
     ipcaTest->SetPropertiesCallback(result, context, propertyBagHandle);
@@ -126,7 +132,8 @@ bool IPCAElevatorClient::SetElevatorProperties(IPCAPropertyBagHandle propertyBag
     return m_setPropertiesCallbackCalled;
 }
 
-void C_CreateResourceCb(IPCAStatus result,
+void IPCA_CALL C_CreateResourceCb(
+                        IPCAStatus result,
                         void* context,
                         const char* newResourcePath,
                         IPCAPropertyBagHandle propertyBagHandle)
@@ -135,8 +142,9 @@ void C_CreateResourceCb(IPCAStatus result,
     ipcaTest->CreateResourceCallback(result, newResourcePath, propertyBagHandle);
 }
 
-bool IPCAElevatorClient::CreateElevatorResource(std::string resourcePath,
-                                                IPCAPropertyBagHandle propertyBagHandle)
+bool IPCAElevatorClient::CreateElevatorResource(
+                                    std::string resourcePath,
+                                    IPCAPropertyBagHandle propertyBagHandle)
 {
     m_createResourceCallbackCalled = false;
 
@@ -162,7 +170,7 @@ bool IPCAElevatorClient::CreateElevatorResource(std::string resourcePath,
     return m_createResourceCallbackCalled;
 }
 
-void C_DeleteResourceCb(IPCAStatus result, void* context)
+void IPCA_CALL C_DeleteResourceCb(IPCAStatus result, void* context)
 {
     IPCAElevatorClient* ipcaTest = (IPCAElevatorClient*)context;
     ipcaTest->DeleteResourceCallback(result);
@@ -243,7 +251,8 @@ void IPCAElevatorClient::CreateResouceExplicitPath()
 {
 }
 
-void C_ResourceChangeNotificationCb(IPCAStatus result,
+void IPCA_CALL C_ResourceChangeNotificationCb(
+                                    IPCAStatus result,
                                     void* context,
                                     IPCAPropertyBagHandle propertyBagHandle)
 {
@@ -594,9 +603,10 @@ void IPCAElevatorClient::DiscoverElevator1Callback(
     }
 }
 
-void C_DiscoverElevator1Cb(void* context,
-                           IPCADeviceStatus deviceStatus,
-                           const IPCADiscoveredDeviceInfo* discoveredDeviceInfo)
+void IPCA_CALL C_DiscoverElevator1Cb(
+                            void* context,
+                            IPCADeviceStatus deviceStatus,
+                            const IPCADiscoveredDeviceInfo* discoveredDeviceInfo)
 {
     IPCAElevatorClient* ipcaTest = (IPCAElevatorClient*)context;
     ipcaTest->DiscoverElevator1Callback(context, deviceStatus, discoveredDeviceInfo);
@@ -695,8 +705,9 @@ void IPCAElevatorClient::DeleteResourceCallback(IPCAStatus result)
     m_deleteResourceCompleteCV.notify_all();
 }
 
-void IPCAElevatorClient::ResourceChangeNotificationCallback(IPCAStatus result,
-                                                            IPCAPropertyBagHandle propertyBagHandle)
+void IPCAElevatorClient::ResourceChangeNotificationCallback(
+                                            IPCAStatus result,
+                                            IPCAPropertyBagHandle propertyBagHandle)
 {
     EXPECT_EQ(IPCA_OK, result);
 

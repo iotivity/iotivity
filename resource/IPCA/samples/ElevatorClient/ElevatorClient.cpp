@@ -37,8 +37,10 @@
 
 // Forward decls.
 extern bool RediscoverElevator();
-extern void ResourceChangeNotificationCallback(IPCAStatus result, void* context,
-                IPCAPropertyBagHandle propertyBagHandle);
+extern void IPCA_CALL ResourceChangeNotificationCallback(
+                                            IPCAStatus result,
+                                            void* context,
+                                            IPCAPropertyBagHandle propertyBagHandle);
 
 // Key is device id.  Value is pointer to OCFDevice.
 std::map<std::string, OCFDevice::Ptr> g_OCFDeviceList;
@@ -84,8 +86,10 @@ IPCAStatus RequestObserve()
 }
 
 // Callback from IPCAObserveResource().
-void ResourceChangeNotificationCallback(IPCAStatus result, void* context,
-                        IPCAPropertyBagHandle propertyBagHandle)
+void IPCA_CALL ResourceChangeNotificationCallback(
+                                        IPCAStatus result,
+                                        void* context,
+                                        IPCAPropertyBagHandle propertyBagHandle)
 {
     UNUSED_PARAMETER(context);
 
@@ -137,9 +141,10 @@ void ResourceChangeNotificationCallback(IPCAStatus result, void* context,
 std::mutex g_getPropertiesCbMutex;
 std::condition_variable g_getPropertiesCompleteCV;
 
-void GetPropertiesCallback(IPCAStatus result,
-                    void* context,
-                    IPCAPropertyBagHandle propertyBagHandle)
+void IPCA_CALL GetPropertiesCallback(
+                            IPCAStatus result,
+                            void* context,
+                            IPCAPropertyBagHandle propertyBagHandle)
 {
     UNUSED_PARAMETER(context);
 
@@ -188,9 +193,10 @@ void GetPropertiesCallback(IPCAStatus result,
 // IPCASetProperties() completion callback.
 std::mutex g_setPropertiesCbMutex;
 std::condition_variable g_setPropertiesCompleteCV;
-void SetPropertiesCallback(IPCAStatus result,
-                void* context,
-                IPCAPropertyBagHandle propertyBagHandle)
+void IPCA_CALL SetPropertiesCallback(
+                        IPCAStatus result,
+                        void* context,
+                        IPCAPropertyBagHandle propertyBagHandle)
 {
     UNUSED_PARAMETER(context);
     UNUSED_PARAMETER(propertyBagHandle);
@@ -211,9 +217,10 @@ void SetPropertiesCallback(IPCAStatus result,
 // Callback when device is discovered.
 std::mutex g_deviceDiscoveredCbMutex;
 std::condition_variable g_deviceDiscoveredCV;
-void DiscoverDevicesCallback(void* context,
-            IPCADeviceStatus deviceStatus,
-            const IPCADiscoveredDeviceInfo* deviceInfo)
+void IPCA_CALL DiscoverDevicesCallback(
+                        void* context,
+                        IPCADeviceStatus deviceStatus,
+                        const IPCADiscoveredDeviceInfo* deviceInfo)
 {
     UNUSED_PARAMETER(context);
 
@@ -555,13 +562,13 @@ bool RediscoverElevator()
     return true;
 }
 
-IPCAStatus PwdInputCallback(
-                void* context,
-                const IPCADeviceInfo* deviceInformation,
-                const IPCAPlatformInfo* platformInformation,
-                IPCAOwnershipTransferType type,
-                char* passwordBuffer,
-                size_t passwordBufferSize)
+IPCAStatus IPCA_CALL PwdInputCallback(
+                            void* context,
+                            const IPCADeviceInfo* deviceInformation,
+                            const IPCAPlatformInfo* platformInformation,
+                            IPCAOwnershipTransferType type,
+                            char* passwordBuffer,
+                            size_t passwordBufferSize)
 {
     UNUSED_PARAMETER(passwordBufferSize);
     UNUSED_PARAMETER(type);
@@ -585,12 +592,12 @@ IPCAStatus PwdInputCallback(
     return IPCA_OK;
 }
 
-IPCAStatus PwdDisplayCallback(
-                void* context,
-                const IPCADeviceInfo* deviceInformation,
-                const IPCAPlatformInfo* platformInformation,
-                IPCAOwnershipTransferType type,
-                const char* password)
+IPCAStatus IPCA_CALL PwdDisplayCallback(
+                            void* context,
+                            const IPCADeviceInfo* deviceInformation,
+                            const IPCAPlatformInfo* platformInformation,
+                            IPCAOwnershipTransferType type,
+                            const char* password)
 {
     UNUSED_PARAMETER(context);
     UNUSED_PARAMETER(deviceInformation);
@@ -607,7 +614,7 @@ IPCAStatus PwdDisplayCallback(
     return IPCA_OK;
 }
 
-void AuthCompletionCallback(IPCAStatus completionStatus, void* context)
+void IPCA_CALL AuthCompletionCallback(IPCAStatus completionStatus, void* context)
 {
     UNUSED_PARAMETER(context);
     std::cout << "AuthCompletionCallback().  Completion status is: " << completionStatus;
