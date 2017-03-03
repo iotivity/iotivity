@@ -54,6 +54,19 @@ namespace OIC
                 }
 
                 /**
+                    * Copy Constructor of NSAcceptedConsumers.
+                    *
+                    */
+                NSAcceptedConsumers(const NSAcceptedConsumers &);
+
+                /**
+                    * Copy assignment operator of NSAcceptedConsumers.
+                    *
+                    * @return NSAcceptedConsumers object reference
+                    */
+                NSAcceptedConsumers &operator=(const NSAcceptedConsumers &);
+
+                /**
                       * Destructor of NSAcceptedConsumers.
                       */
                 ~NSAcceptedConsumers()
@@ -106,11 +119,11 @@ namespace OIC
                       *  get the map of Consumers accepted.
                       * @return m_consumers  -map of accepted Consumers
                       */
-                std::map<std::string, std::shared_ptr<NSConsumer> > getConsumers();
+                std::map<std::string, std::shared_ptr<NSConsumer> > getConsumers() const;
 
             private :
                 std::map<std::string, std::shared_ptr<NSConsumer> > m_consumers;
-                std::mutex m_mutex;
+                mutable std::mutex m_mutex;
         };
     }
 }

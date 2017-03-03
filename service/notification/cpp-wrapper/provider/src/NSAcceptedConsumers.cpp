@@ -29,6 +29,19 @@ namespace OIC
 {
     namespace Service
     {
+        NSAcceptedConsumers::NSAcceptedConsumers(const NSAcceptedConsumers &consumers)
+        {
+            removeConsumers();
+            m_consumers.insert((consumers.getConsumers()).begin(), (consumers.getConsumers()).end());
+        }
+
+        NSAcceptedConsumers &NSAcceptedConsumers::operator=(const NSAcceptedConsumers &consumers)
+        {
+            removeConsumers();
+            this->m_consumers.insert((consumers.getConsumers()).begin(), (consumers.getConsumers()).end());
+            return *this;
+        }
+
         std::shared_ptr<NSConsumer> NSAcceptedConsumers::getConsumer(const std::string &id)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
@@ -89,7 +102,7 @@ namespace OIC
             return;
         }
 
-        std::map<std::string, std::shared_ptr<NSConsumer> > NSAcceptedConsumers::getConsumers()
+        std::map<std::string, std::shared_ptr<NSConsumer> > NSAcceptedConsumers::getConsumers() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             return m_consumers;

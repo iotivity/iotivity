@@ -27,6 +27,19 @@ namespace OIC
 {
     namespace Service
     {
+        NSAcceptedProviders::NSAcceptedProviders(const NSAcceptedProviders &providers)
+        {
+            removeProviders();
+            m_providers.insert((providers.getProviders()).begin(), (providers.getProviders()).end());
+        }
+
+        NSAcceptedProviders &NSAcceptedProviders::operator=(const NSAcceptedProviders &providers)
+        {
+            removeProviders();
+            this->m_providers.insert((providers.getProviders()).begin(), (providers.getProviders()).end());
+            return *this;
+        }
+
         std::shared_ptr<NSProvider> NSAcceptedProviders::getProvider(const std::string &id)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
@@ -87,7 +100,7 @@ namespace OIC
             return;
         }
 
-        std::map<std::string, std::shared_ptr<NSProvider> > NSAcceptedProviders::getProviders()
+        std::map<std::string, std::shared_ptr<NSProvider> > NSAcceptedProviders::getProviders() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             return m_providers;
