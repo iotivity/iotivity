@@ -31,7 +31,6 @@ bool is_leap_year(int yy)
 {
     int yyyy = yy + TM_BASE_YEAR;
 
-    bool bLeap = false;
     if (yyyy % 100 == 0)
     {
         return yyyy % 400 == 0;

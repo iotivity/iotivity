@@ -1900,7 +1900,7 @@ CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, co
         OIC_LOG_V(DEBUG, TAG, "setAddress : %s", setAddress);
         OIC_LOG_V(DEBUG, TAG, "address : %s", address);
 
-        if (!strcmp(setAddress, address))
+        if (!strcasecmp(setAddress, address))
         {
             OIC_LOG(DEBUG, TAG, "found the device");
 
@@ -2123,7 +2123,7 @@ bool CALEServerIsDeviceInList(JNIEnv *env, const char* remoteAddress)
             return false;
         }
 
-        if (!strcmp(remoteAddress, setAddress))
+        if (!strcasecmp(remoteAddress, setAddress))
         {
             OIC_LOG(ERROR, TAG, "the device is already set");
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
@@ -2257,7 +2257,7 @@ CAResult_t CALEServerRemoveDevice(JNIEnv *env, jstring address)
                 continue;
             }
 
-            if (!strcmp(setAddress, remoteAddress))
+            if (!strcasecmp(setAddress, remoteAddress))
             {
                 OIC_LOG_V(DEBUG, TAG, "device address : %s", remoteAddress);
 

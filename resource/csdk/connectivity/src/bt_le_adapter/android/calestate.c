@@ -132,7 +132,7 @@ bool CALEIsDeviceInList(const char* remoteAddress,
             return false;
         }
 
-        if (!strcmp(remoteAddress, state->address))
+        if (!strcasecmp(remoteAddress, state->address))
         {
             return true;
         }
@@ -165,8 +165,6 @@ CAResult_t CALERemoveAllDeviceState(u_arraylist_t *deviceList,
         OICFree(state);
     }
 
-    OICFree(deviceList);
-    deviceList = NULL;
     oc_mutex_unlock(deviceListMutex);
 
     return CA_STATUS_OK;
@@ -216,7 +214,7 @@ CAResult_t CALERemoveDeviceState(const char* remoteAddress,
             continue;
         }
 
-        if (!strcmp(state->address, remoteAddress))
+        if (!strcasecmp(state->address, remoteAddress))
         {
             OIC_LOG_V(DEBUG, TAG, "remove state : %s", state->address);
 
@@ -252,7 +250,7 @@ CALEState_t* CALEGetStateInfo(const char* remoteAddress,
             continue;
         }
 
-        if (!strcmp(state->address, remoteAddress))
+        if (!strcasecmp(state->address, remoteAddress))
         {
             return state;
         }

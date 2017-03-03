@@ -186,10 +186,17 @@ bool checkIfQueryForPowerPassed(char * query)
 
         if (pointerToOperator)
         {
-            int powerRequested = atoi(pointerToOperator + 1);
+            int64_t powerRequested;
+            int matchedItems = sscanf((pointerToOperator + 1), "%lld", &powerRequested);
+
+            if (1 != matchedItems)
+            {
+                return true;
+            }
+
             if (Light.power > powerRequested)
             {
-                OIC_LOG_V(INFO, TAG, "Current power: %d. Requested: <%d", Light.power,
+                OIC_LOG_V(INFO, TAG, "Current power: %lld. Requested: <%lld", Light.power,
                           powerRequested);
                 return false;
             }
@@ -730,7 +737,7 @@ void *ChangeLightRepresentation (void *param)
         Light.power += 5;
         if (gLightUnderObservation)
         {
-            OIC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %d\n", Light.power);
+            OIC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %lld\n", Light.power);
             if (gObserveNotifyType == 1)
             {
                 // Notify list of observers. Alternate observers on the list will be notified.

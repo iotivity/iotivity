@@ -353,10 +353,9 @@ int main()
                             for (auto it : nsTopics->getTopicsList())
                             {
 
-                                std::cout << it->getTopicName() << std::endl;
-                                std::cout << (int) it->getState() << std::endl;
+                                std::cout << it.getTopicName() << std::endl;
+                                std::cout << (int) it.getState() << std::endl;
                             }
-                            delete nsTopics;
                         }
                         std::cout <<  "GetConsumerTopicList completed" << std::endl;
                     }
@@ -370,10 +369,9 @@ int main()
                     for (auto it : nsTopics->getTopicsList())
                     {
 
-                        std::cout << it->getTopicName() << std::endl;
-                        std::cout << (int) it->getState() << std::endl;
+                        std::cout << it.getTopicName() << std::endl;
+                        std::cout << (int) it.getState() << std::endl;
                     }
-                    delete nsTopics;
                     break;
                 }
 #ifdef WITH_CLOUD

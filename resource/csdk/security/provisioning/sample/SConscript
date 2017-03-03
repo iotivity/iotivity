@@ -45,7 +45,6 @@ if target_os not in ['windows']:
 
 if target_os not in ['msys_nt', 'windows']:
 	provisioning_sample_env.AppendUnique(LIBS = ['dl', 'm'])
-	provisioning_sample_env.ParseConfig('pkg-config --libs glib-2.0');
 	provisioning_sample_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 else:
 	provisioning_sample_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk')])

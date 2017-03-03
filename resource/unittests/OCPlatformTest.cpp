@@ -174,6 +174,19 @@ namespace OCPlatformTest
         return resourceHandle;
     }
 
+    OCResourceHandle RegisterResource(std::string uri, OCTpsSchemeFlags resourceTpsTypes)
+    {
+        PlatformConfig cfg
+        { OC::ServiceType::OutOfProc, OC::ModeType::Server, "0.0.0.0", 0,
+                OC::QualityOfService::LowQos, &gps };
+        OCPlatform::Configure(cfg);
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
+                                        resourceHandle, uri, gResourceTypeName,
+                                        gResourceInterface, entityHandler, gResourceProperty,
+                                        resourceTpsTypes));
+        return resourceHandle;
+    }
+
     //Configure
     // Enable it when the stack throw an exception
     // https://jira.iotivity.org/browse/IOT-428
@@ -402,6 +415,37 @@ namespace OCPlatformTest
                 resourceHandle, uri, type,
                 gResourceInterface, entityHandler, gResourceProperty));
     }
+
+    TEST(RegisterResourceTest, RegisterWithTpsType)
+    {
+        std::string uri = "/a/light7";
+        std::string type = "core.light";
+        uint8_t gResourceProperty = 0;
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
+                resourceHandle, uri, type,
+                gResourceInterface, entityHandler, gResourceProperty , OC_COAP));
+    }
+
+    TEST(RegisterResourceTest, RegisterWithTpsTypeAll)
+    {
+        std::string uri = "/a/light8";
+        std::string type = "core.light";
+        uint8_t gResourceProperty = 0;
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
+                resourceHandle, uri, type,
+                gResourceInterface, entityHandler, gResourceProperty, OC_ALL));
+    }
+#ifdef TCP_ADAPTER
+    TEST(RegisterResourceTest, RegisterWithTpsTypeBitComb)
+    {
+        std::string uri = "/a/light9";
+        std::string type = "core.light";
+        uint8_t gResourceProperty = 0;
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
+                resourceHandle, uri, type,
+                gResourceInterface, entityHandler, gResourceProperty, (OCTpsSchemeFlags)(OC_COAP || OC_COAP_TCP)));
+    }
+#endif
 
     //UnregisterTest
     TEST(UnregisterTest, UnregisterZeroHandleValue)
@@ -801,6 +845,12 @@ namespace OCPlatformTest
         EXPECT_EQ(OC_STACK_OK,
                 OCPlatform::getDeviceInfo("", requestURI.str(), CT_DEFAULT, &receivedDeviceInfo,
                         OC::QualityOfService::NaQos));
+    }
+
+    TEST(GetSupportedTransportsInfoTest, getSupportedTransportsInfoWithValidParm)
+    {
+        OCTpsSchemeFlags input = OC_NO_TPS;
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::getSupportedTransportsInfo(input));
     }
 
     //RegisterDeviceInfo test

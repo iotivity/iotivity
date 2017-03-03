@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include <string.h>
+#include <assert.h>
 
 #include "utlist.h"
 #include "oic_malloc.h"
@@ -62,6 +63,9 @@ uint16_t GetPermissionFromCAMethod_t(const CAMethod_t method)
             perm = (uint16_t)PERMISSION_FULL_CONTROL;
             break;
     }
+
+    OIC_LOG_V(INFO, TAG, "%s: CA method %d requires permission %#x",
+        __func__, method, (uint32_t)perm);
     return perm;
 }
 
@@ -106,22 +110,45 @@ static bool IsRequestFromDevOwner(SRMRequestContext_t *context)
         return retVal;
     }
 
-    /*
-    if(OC_STACK_OK == GetDoxmDevOwnerId(&ownerid))
-    {
-        retVal = UuidCmp(&context->subject, &ownerid);
-    }
-    */
-
-    // TODO: Added as workaround for CTT
     OicSecDoxm_t* doxm = (OicSecDoxm_t*) GetDoxmResourceData();
     if (doxm)
     {
         retVal = UuidCmp(&doxm->owner, &context->subjectUuid);
+        OIC_LOG_V(DEBUG, TAG, "%s: request was %sreceived from device owner",
+            __func__, retVal ? "" : "NOT ");
     }
+
     return retVal;
 }
 
+/**
+ * Check if the request has been received from a session used for Ownership Transfer.
+ *
+ * @return true if the CA_SECURE_ENDPOINT_ATTRIBUTE_ADMINISTRATOR bit is set, else false.
+ */
+static bool IsRequestFromOwnershipTransferSession(SRMRequestContext_t *context)
+{
+    bool retVal = false;
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    //Ownership Transfer sessions are allowed to bypass SVR ACEs, while this
+    //Device is not ready for normal operation yet.
+    if ((NULL != context) && (NULL != context->endPoint))
+    {
+        uint32_t allAttributes;
+        if (CAGetSecureEndpointAttributes(context->endPoint, &allAttributes) &&
+            (allAttributes & CA_SECURE_ENDPOINT_ATTRIBUTE_ADMINISTRATOR))
+        {
+            retVal = true;
+        }
+
+        OIC_LOG_V(DEBUG, TAG, "%s: request was %sreceived from Ownership Transfer session",
+            __func__, retVal ? "" : "NOT ");
+    }
+#endif
+
+    return retVal;
+}
 
 #ifdef MULTIPLE_OWNER
 /**
@@ -133,28 +160,14 @@ static bool IsRequestFromSubOwner(SRMRequestContext_t *context)
 {
     bool retVal = false;
 
-    if(NULL == context)
+    if (NULL != context)
     {
-        return retVal;
+        retVal = IsSubOwner(&context->subjectUuid);
     }
 
-    if(IsSubOwner(&context->subjectUuid))
-    {
-        retVal = true;
-    }
-
-    if(true == retVal)
-    {
-        OIC_LOG(INFO, TAG, "PE.IsRequestFromSubOwner(): returning true");
-    }
-    else
-    {
-        OIC_LOG(INFO, TAG, "PE.IsRequestFromSubOwner(): returning false");
-    }
-
+    OIC_LOG_V(INFO, TAG, "%s: returning %s", __func__, retVal ? "true" : "false");
     return retVal;
 }
-
 
 /**
  * Verify the SubOwner's request.
@@ -199,19 +212,10 @@ static bool IsValidRequestFromSubOwner(SRMRequestContext_t *context)
             break;
     }
 
-    if(isValidRequest)
-    {
-        OIC_LOG(INFO, TAG, "PE.IsValidRequestFromSubOwner(): returning true");
-    }
-    else
-    {
-        OIC_LOG(INFO, TAG, "PE.IsValidRequestFromSubOwner(): returning false");
-    }
-
+    OIC_LOG_V(INFO, TAG, "%s: returning %s", __func__, isValidRequest ? "true" : "false");
     return isValidRequest;
 }
 #endif //MULTIPLE_OWNER
-
 
 // TODO - remove these function placeholders as they are implemented
 // in the resource entity handler code.
@@ -242,7 +246,8 @@ OCStackResult GetSvcRownerId(OicUuid_t *rowner)
     return OC_STACK_ERROR;
 }
 
-static GetSvrRownerId_t GetSvrRownerId[OIC_SEC_SVR_TYPE_COUNT] = {
+static GetSvrRownerId_t GetSvrRownerId[OIC_SEC_SVR_TYPE_COUNT + 1] = {
+    NULL,
     GetAclRownerId,
     GetAmaclRownerId,
     GetCredRownerId,
@@ -279,15 +284,7 @@ bool IsRequestFromResourceOwner(SRMRequestContext_t *context)
         }
     }
 
-    if(true == retVal)
-    {
-        OIC_LOG(INFO, TAG, "PE.IsRequestFromResourceOwner(): returning true");
-    }
-    else
-    {
-        OIC_LOG(INFO, TAG, "PE.IsRequestFromResourceOwner(): returning false");
-    }
-
+    OIC_LOG_V(INFO, TAG, "%s: returning %s", __func__, retVal ? "true" : "false");
     return retVal;
 }
 
@@ -302,14 +299,13 @@ bool IsRequestFromResourceOwner(SRMRequestContext_t *context)
 INLINE_API bool IsPermissionAllowingRequest(const uint16_t permission,
     const uint16_t request)
 {
-    if (request == (request & permission))
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    bool allowed = (request == (request & permission));
+
+    OIC_LOG_V(INFO, TAG, "%s: ACE allows permission %#x, "
+        "requested permission %#x -> allowed = %u", __func__,
+        (uint32_t)permission, (uint32_t)request, (uint32_t)allowed);
+
+    return allowed;
 }
 
 /**
@@ -418,86 +414,72 @@ static bool IsResourceInAce(const char *resource, const OicSecAce_t *ace)
  */
 static void ProcessAccessRequest(SRMRequestContext_t *context)
 {
-    OIC_LOG(DEBUG, TAG, "Entering ProcessAccessRequest().");
-
-    if (NULL != context)
+    if (NULL == context)
     {
-        const OicSecAce_t *currentAce = NULL;
-        OicSecAce_t *aceSavePtr = NULL;
+        OIC_LOG(ERROR, TAG, "ProcessAccessRequest(): context is NULL, returning.");
+        return;
+    }
 
-        OIC_LOG_V(DEBUG, TAG, "Entering ProcessAccessRequest(%s)",
-            context->resourceUri);
+    OIC_LOG_V(DEBUG, TAG, "Entering %s(%s)", __func__, context->resourceUri);
 
-        // Start out assuming subject not found.
-        context->responseVal = ACCESS_DENIED_SUBJECT_NOT_FOUND;
+    const OicSecAce_t *currentAce = NULL;
+    OicSecAce_t *aceSavePtr = NULL;
 
-        // Loop through all ACLs with a matching Subject searching for the right
-        // ACL for this request.
-        do
+    OIC_LOG_V(DEBUG, TAG, "Entering ProcessAccessRequest(%s)",
+        context->resourceUri);
+
+    // Start out assuming subject not found.
+    context->responseVal = ACCESS_DENIED_SUBJECT_NOT_FOUND;
+
+    // Loop through all ACLs with a matching Subject searching for the right
+    // ACL for this request.
+    do
+    {
+        currentAce = GetACLResourceData(&context->subjectUuid, &aceSavePtr);
+
+        if (NULL != currentAce)
         {
-            OIC_LOG_V(DEBUG, TAG, "%s: getting ACE..." ,__func__);
-            currentAce = GetACLResourceData(&context->subjectUuid, &aceSavePtr);
+            // Found the subject, so how about resource?
+            OIC_LOG_V(DEBUG, TAG, "%s:found ACE matching subject" ,__func__);
 
-            if (NULL != currentAce)
+            // Subject was found, so err changes to Rsrc not found for now.
+            context->responseVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
+            OIC_LOG_V(DEBUG, TAG, "%s:Searching for resource..." ,__func__);
+            if (IsResourceInAce(context->resourceUri, currentAce))
             {
-                // Found the subject, so how about resource?
-                OIC_LOG_V(DEBUG, TAG, "%s:found ACE matching subject" ,__func__);
+                OIC_LOG_V(INFO, TAG, "%s:found matching resource in ACE" ,__func__);
 
-                // Subject was found, so err changes to Rsrc not found for now.
-                context->responseVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
-                OIC_LOG_V(DEBUG, TAG, "%s:Searching for resource..." ,__func__);
-                if (IsResourceInAce(context->resourceUri, currentAce))
+                // Found the resource, so it's down to valid period & permission.
+                context->responseVal = ACCESS_DENIED_INVALID_PERIOD;
+                if (IsAccessWithinValidTime(currentAce))
                 {
-                    OIC_LOG_V(INFO, TAG, "%s:found matching resource in ACE" ,__func__);
-
-                    // Found the resource, so it's down to valid period & permission.
-                    context->responseVal = ACCESS_DENIED_INVALID_PERIOD;
-                    if (IsAccessWithinValidTime(currentAce))
+                    context->responseVal = ACCESS_DENIED_INSUFFICIENT_PERMISSION;
+                    if (IsPermissionAllowingRequest(currentAce->permission,
+                        context->requestedPermission))
                     {
-                        context->responseVal = ACCESS_DENIED_INSUFFICIENT_PERMISSION;
-                        if (IsPermissionAllowingRequest(currentAce->permission,
-                            context->requestedPermission))
-                        {
-                            context->responseVal = ACCESS_GRANTED;
-                        }
+                        context->responseVal = ACCESS_GRANTED;
                     }
                 }
             }
-            else
-            {
-                OIC_LOG_V(INFO, TAG, "%s:no ACL found matching subject for resource %s",
-                    __func__, context->resourceUri);
-            }
-        } while ((NULL != currentAce)
-            && (false == IsAccessGranted(context->responseVal)));
-
-        if (IsAccessGranted(context->responseVal))
-        {
-            OIC_LOG_V(INFO, TAG, "%s:Leaving ProcessAccessRequest(ACCESS_GRANTED)", __func__);
         }
         else
         {
-            OIC_LOG_V(INFO, TAG, "%s:Leaving ProcessAccessRequest(ACCESS_DENIED)", __func__);
+            OIC_LOG_V(INFO, TAG, "%s:no ACE found matching subject for resource %s",
+                __func__, context->resourceUri);
         }
-    }
-    else
-    {
-        OIC_LOG_V(ERROR, TAG, "%s:Leaving ProcessAccessRequest(context is NULL)", __func__);
-    }
+    } while ((NULL != currentAce)
+        && (false == IsAccessGranted(context->responseVal)));
 
+    OIC_LOG_V(INFO, TAG, "%s:Leaving with responseVal = %s", __func__,
+        IsAccessGranted(context->responseVal) ? "ACCESS_GRANTED" : "ACCESS_DENIED");
     return;
 }
 
 void CheckPermission(SRMRequestContext_t *context)
 {
-    bool isDeviceOwned = false;
-
-    if(NULL == context)
-    {
-        OIC_LOG_V(ERROR, TAG, "NULL context; access denied.");
-        context->responseVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
-        return;
-    }
+    assert(NULL != context);
+    assert(0 != context->requestedPermission);
+    assert(0 == (context->requestedPermission & ~PERMISSION_FULL_CONTROL));
 
     // Before doing any ACL processing, check if request is a) coming
     // from DevOwner AND b) the device is in Ready for OTM or Reset state
@@ -505,10 +487,10 @@ void CheckPermission(SRMRequestContext_t *context)
     // AND c) the request is for a SVR resource.
     // If all 3 conditions are met, grant request.
     // TODO_IoTivity_1.3: use pstat.dos instead of these two checks.
-    isDeviceOwned = true; // default to value that will NOT grant access
+    bool isDeviceOwned = true; // default to value that will NOT grant access
     if (OC_STACK_OK != GetDoxmIsOwned(&isDeviceOwned)) // if runtime error, don't grant
     {
-        OIC_LOG_V(ERROR, TAG, "GetDoxmIsOwned() call failed.");
+        OIC_LOG(ERROR, TAG, "GetDoxmIsOwned() call failed.");
         context->responseVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
     }
     // If we were able to get the value of doxm->isOwned, proceed with
@@ -518,25 +500,35 @@ void CheckPermission(SRMRequestContext_t *context)
             !isDeviceOwned &&                   // AND if doxm->isOwned == false
             (NOT_A_SVR_RESOURCE != context->resourceType)) // AND if is SVR type
     {
+        OIC_LOG(INFO, TAG, "CheckPermission: granting access to device owner");
         context->responseVal = ACCESS_GRANTED;
     }
     // If not granted via DevOwner status and not a subowner,
     // then check if request is for a SVR and coming from rowner
     else if (IsRequestFromResourceOwner(context))
     {
+        OIC_LOG(INFO, TAG, "CheckPermission: granting access to resource owner");
         context->responseVal = ACCESS_GRANTED;
     }
 #ifdef MULTIPLE_OWNER // TODO Samsung reviewer: per above comment, should this
                       // go above IsRequestFromResourceOwner() call, or here?
     // Then check if request from SubOwner.
-    else if(IsRequestFromSubOwner(context))
+    else if (IsRequestFromSubOwner(context))
     {
-        if(IsValidRequestFromSubOwner(context))
+        if (IsValidRequestFromSubOwner(context))
         {
+            OIC_LOG(INFO, TAG, "CheckPermission: granting access to device sub-owner");
             context->responseVal = ACCESS_GRANTED;
         }
     }
 #endif //MULTIPLE_OWNER
+    else if (!GetPstatIsop() &&
+             (NOT_A_SVR_RESOURCE != context->resourceType) &&
+             IsRequestFromOwnershipTransferSession(context))
+    {
+        OIC_LOG(INFO, TAG, "CheckPermission: granting access to OT session request");
+        context->responseVal = ACCESS_GRANTED;
+    }
     // Else request is a "normal" request that must be tested against ACL.
     else
     {

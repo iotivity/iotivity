@@ -55,6 +55,9 @@
 #define GATT_REQUEST_NOT_SUPPORTED          6
 #define GATT_WRITE_NOT_PERMITTED            3
 
+#define BLE_SCAN_API_LEVEL (21)
+#define BLE_MIN_API_LEVEL  (18)
+
 static ca_thread_pool_t g_threadPoolHandle = NULL;
 
 JavaVM *g_jvm;
@@ -109,8 +112,10 @@ static CALEScanState_t g_curScanningStep = BLE_SCAN_NONE;
 static CALEScanState_t g_nextScanningStep = BLE_SCAN_ENABLE;
 
 static CABLEDataReceivedCallback g_CABLEClientDataReceivedCallback = NULL;
+static int32_t g_jniIntSdk = -1;
 
 static bool g_setHighQoS = true;
+static bool g_setFullScanFlag = true;
 
 /**
  * check if retry logic for connection routine has to be stopped or not.
@@ -420,8 +425,8 @@ CAResult_t CALEClientInitialize()
         isAttached = true;
     }
 
-    CAResult_t ret = CALECheckPlatformVersion(env, 18);
-    if (CA_STATUS_OK != ret)
+    g_jniIntSdk = CALEGetBuildVersion(env);
+    if (g_jniIntSdk < BLE_MIN_API_LEVEL)
     {
         OIC_LOG(ERROR, TAG, "it is not supported");
 
@@ -429,11 +434,10 @@ CAResult_t CALEClientInitialize()
         {
             (*g_jvm)->DetachCurrentThread(g_jvm);
         }
-
-        return ret;
+        return CA_STATUS_FAILED;
     }
 
-    ret = CALEClientInitGattMutexVaraibles();
+    CAResult_t ret = CALEClientInitGattMutexVaraibles();
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "CALEClientInitGattMutexVaraibles has failed!");
@@ -555,6 +559,11 @@ void CALEClientTerminate()
     {
         OIC_LOG(ERROR, TAG, "CALERemoveAllDeviceState has failed");
     }
+
+    oc_mutex_lock(g_deviceStateListMutex);
+    OICFree(g_deviceStateList);
+    g_deviceStateList = NULL;
+    oc_mutex_unlock(g_deviceStateListMutex);
 
     ret = CALEClientRemoveAllScanDevices(env);
     if (CA_STATUS_OK != ret)
@@ -935,7 +944,7 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
                 goto error_exit;
             }
 
-            if (!strcmp(setAddress, address))
+            if (!strcasecmp(setAddress, address))
             {
                 (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
                 (*env)->DeleteLocalRef(env, jni_setAddress);
@@ -1357,11 +1366,31 @@ CAResult_t CALEClientStartScan()
     // scan gatt server with UUID
     if (g_leScanCallback && g_uuidList)
     {
-#ifdef UUID_SCAN
-        ret = CALEClientStartScanWithUUIDImpl(env, g_uuidList, g_leScanCallback);
-#else
-        ret = CALEClientStartScanImpl(env, g_leScanCallback);
-#endif
+        if (g_jniIntSdk >= BLE_SCAN_API_LEVEL)
+        {
+            if (!g_setFullScanFlag)
+            {
+                //new uuid scan with callback
+                ret = CALEClientStartScanWithUUIDImplForV21(env, g_uuidList, g_leScanCallback);
+            }
+            else
+            {
+                //new full scan with callback
+                ret = CALEClientStartScanImplForV21(env, g_leScanCallback);
+            }
+        }
+        else
+        {
+            if (!g_setFullScanFlag)
+            {
+                ret = CALEClientStartScanWithUUIDImpl(env, g_uuidList, g_leScanCallback);
+            }
+            else
+            {
+                ret = CALEClientStartScanImpl(env, g_leScanCallback);
+            }
+        }
+
         if (CA_STATUS_OK != ret)
         {
             if (CA_ADAPTER_NOT_ENABLED == ret)
@@ -1385,6 +1414,7 @@ CAResult_t CALEClientStartScan()
 
 CAResult_t CALEClientStartScanImpl(JNIEnv *env, jobject callback)
 {
+    OIC_LOG(DEBUG, TAG, "CALEClientStartScanImpl IN");
     VERIFY_NON_NULL(callback, TAG, "callback is null");
     VERIFY_NON_NULL(env, TAG, "env is null");
 
@@ -1457,8 +1487,113 @@ CAResult_t CALEClientStartScanImpl(JNIEnv *env, jobject callback)
     return CA_STATUS_OK;
 }
 
+CAResult_t CALEClientStartScanImplForV21(JNIEnv *env, jobject callback)
+{
+    OIC_LOG(DEBUG, TAG, "CALEClientStartScanImplForV21 IN");
+    VERIFY_NON_NULL(callback, TAG, "callback is null");
+    VERIFY_NON_NULL(env, TAG, "env is null");
+
+    if (!CALEIsEnableBTAdapter(env))
+    {
+        OIC_LOG(INFO, TAG, "BT adapter is not enabled");
+        return CA_ADAPTER_NOT_ENABLED;
+    }
+
+    CAResult_t res = CA_STATUS_FAILED;
+    // get default bt adapter class
+    jclass jni_cid_BTAdapter = (*env)->FindClass(env, CLASSPATH_BT_ADAPTER);
+    if (!jni_cid_BTAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "getState From BTAdapter: jni_cid_BTAdapter is null");
+        CACheckJNIException(env);
+        return CA_STATUS_FAILED;
+    }
+
+    jmethodID jni_mid_getDefaultAdapter = (*env)->GetStaticMethodID(env, jni_cid_BTAdapter,
+                                                                    "getDefaultAdapter",
+                                                                    "()Landroid/bluetooth/"
+                                                                    "BluetoothAdapter;");
+    if (!jni_mid_getDefaultAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_getDefaultAdapter is null");
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        return CA_STATUS_FAILED;
+    }
+
+    jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter,
+                                                               jni_mid_getDefaultAdapter);
+    if (!jni_obj_BTAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "jni_obj_BTAdapter is null");
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        return CA_STATUS_FAILED;
+    }
+
+    // get bluetoothLeScanner class
+    jclass jni_cid_leScanner = (*env)->FindClass(env, CLASSPATH_LE_SCANNER);
+    if (!jni_cid_leScanner)
+    {
+        OIC_LOG(ERROR, TAG, "getState From leScanner: jni_cid_leScanner is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        return CA_STATUS_FAILED;
+    }
+
+    // get remote bt adapter method
+    jmethodID jni_mid_getBluetoothLeScanner = (*env)->GetMethodID(env, jni_cid_BTAdapter,
+                                                                  "getBluetoothLeScanner",
+                                                                  "()Landroid/bluetooth/"
+                                                                  "le/BluetoothLeScanner;");
+    if (!jni_mid_getBluetoothLeScanner)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_getBluetoothLeScanner is null");
+        CACheckJNIException(env);
+        goto error_exit;
+    }
+
+    // get startScan(ScanCallback callback) method
+    jmethodID jni_mid_startScan = (*env)->GetMethodID(env, jni_cid_leScanner, "startScan",
+                                                      "(Landroid/bluetooth/le/ScanCallback;)V");
+    if (!jni_mid_startScan)
+    {
+        OIC_LOG(ERROR, TAG, "startScan: jni_mid_startScan is null");
+        CACheckJNIException(env);
+        goto error_exit;
+    }
+
+    // gat le scanner object
+    jobject jni_obj_leScanner = (*env)->CallObjectMethod(env, jni_obj_BTAdapter,
+                                                         jni_mid_getBluetoothLeScanner);
+    if (!jni_obj_leScanner)
+    {
+        OIC_LOG(ERROR, TAG, "getState From BTAdapter: jni_obj_leScanner is null");
+        CACheckJNIException(env);
+        goto error_exit;
+    }
+
+    // call startScan method
+    OIC_LOG(INFO, TAG, "CALL API - startScan(for level21)");
+    (*env)->CallVoidMethod(env, jni_obj_leScanner, jni_mid_startScan, callback);
+    if (CACheckJNIException(env))
+    {
+        OIC_LOG(INFO, TAG, "startScan has failed");
+        (*env)->DeleteLocalRef(env, jni_obj_leScanner);
+        goto error_exit;
+    }
+    res = CA_STATUS_OK;
+    (*env)->DeleteLocalRef(env, jni_obj_leScanner);
+
+error_exit:
+    (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+    (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+    (*env)->DeleteLocalRef(env, jni_cid_leScanner);
+    return res;
+}
+
 CAResult_t CALEClientStartScanWithUUIDImpl(JNIEnv *env, jobjectArray uuids, jobject callback)
 {
+    OIC_LOG(DEBUG, TAG, "CALEClientStartScanWithUUIDImpl IN");
     VERIFY_NON_NULL(callback, TAG, "callback is null");
     VERIFY_NON_NULL(uuids, TAG, "uuids is null");
     VERIFY_NON_NULL(env, TAG, "env is null");
@@ -1531,6 +1666,379 @@ CAResult_t CALEClientStartScanWithUUIDImpl(JNIEnv *env, jobjectArray uuids, jobj
     return CA_STATUS_OK;
 }
 
+CAResult_t CALEClientStartScanWithUUIDImplForV21(JNIEnv *env, jobjectArray uuids, jobject callback)
+{
+    OIC_LOG(DEBUG, TAG, "CALEClientStartScanWithUUIDImplForV21 IN");
+    VERIFY_NON_NULL(callback, TAG, "callback is null");
+    VERIFY_NON_NULL(uuids, TAG, "uuids is null");
+    VERIFY_NON_NULL(env, TAG, "env is null");
+
+    if (!CALEIsEnableBTAdapter(env))
+    {
+        OIC_LOG(INFO, TAG, "BT adapter is not enabled");
+        return CA_ADAPTER_NOT_ENABLED;
+    }
+
+    // get bluetoothLeScanner class
+    jclass jni_cid_leScanner = (*env)->FindClass(env, CLASSPATH_LE_SCANNER);
+    if (!jni_cid_leScanner)
+    {
+        OIC_LOG(ERROR, TAG, "getState From leScanner: jni_cid_leScanner is null");
+        CACheckJNIException(env);
+        return CA_STATUS_FAILED;
+    }
+
+    // get startScan(with UUID) method
+    jmethodID jni_mid_startScan = (*env)->GetMethodID(env, jni_cid_leScanner,
+                                                      "startScan",
+                                                      "(Ljava/util/List;"
+                                                      "Landroid/bluetooth/le/ScanSettings;"
+                                                      "Landroid/bluetooth/le/ScanCallback;"
+                                                      ")V");
+    if (!jni_mid_startScan)
+    {
+        OIC_LOG(ERROR, TAG, "startScan: jni_mid_startScan is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_leScanner);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_cid_leScanner);
+
+    // get scanfilter.Builder class id
+    jclass jni_cid_scanfilterBuilder = (*env)->FindClass(env,
+                                                         "android/bluetooth/le/"
+                                                         "ScanFilter$Builder");
+    if (!jni_cid_scanfilterBuilder)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_cid_scanfilterBuilder is null");
+        CACheckJNIException(env);
+        return CA_STATUS_FAILED;
+    }
+
+    // get scanfilter.Builder(ctor) method id
+    jmethodID jni_mid_scanfilterBuilderCtor = (*env)->GetMethodID(env, jni_cid_scanfilterBuilder,
+                                                                  "<init>", "()V");
+    if (!jni_mid_scanfilterBuilderCtor)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_cid_scanfilterBuilderCtor is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_scanfilterBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    // call scanfilter.Builder()
+    jobject jni_obj_scanfilterBuilder = (*env)->NewObject(env, jni_cid_scanfilterBuilder,
+                                                          jni_mid_scanfilterBuilderCtor);
+    if (!jni_obj_scanfilterBuilder)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_obj_scanfilterBuilder is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_scanfilterBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    // get scanfilter.Builder.setServiceUuid method id
+    jmethodID jni_mid_setServiceUuid = (*env)->GetMethodID(env, jni_cid_scanfilterBuilder,
+                                                           "setServiceUuid",
+                                                           "(Landroid/os/ParcelUuid;)Landroid/"
+                                                           "bluetooth/le/ScanFilter$Builder;");
+    if (!jni_mid_setServiceUuid)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_mid_setServiceUuid is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_scanfilterBuilder);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilterBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    // get scanfilter.Builder.build method id
+    jmethodID jni_mid_build_scanfilterBuilder = (*env)->GetMethodID(env,
+                                                                    jni_cid_scanfilterBuilder,
+                                                                    "build",
+                                                                    "()Landroid/bluetooth/le/"
+                                                                    "ScanFilter;");
+    if (!jni_mid_build_scanfilterBuilder)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_mid_build_scanfilterBuilder is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_scanfilterBuilder);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilterBuilder);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_cid_scanfilterBuilder);
+
+    // call ParcelUuid.fromSting(uuid)
+    jobject jni_obj_parcelUuid = CALEGetParcelUuidFromString(env, OIC_GATT_SERVICE_UUID);
+    if (!jni_obj_parcelUuid)
+    {
+        OIC_LOG(ERROR, TAG, "scanSettings: jni_obj_parcelUuid is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilterBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    // call setServiceUuid(uuid)
+    jobject jni_obj_setServiceUuid = (*env)->CallObjectMethod(env,
+                                                              jni_obj_scanfilterBuilder,
+                                                              jni_mid_setServiceUuid,
+                                                              jni_obj_parcelUuid);
+    if (!jni_obj_setServiceUuid)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_obj_setServiceUuid is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilterBuilder);
+        (*env)->DeleteLocalRef(env, jni_obj_parcelUuid);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_obj_parcelUuid);
+    (*env)->DeleteLocalRef(env, jni_obj_setServiceUuid);
+
+    // call build()
+    jobject jni_obj_scanfilter = (*env)->CallObjectMethod(env,
+                                                          jni_obj_scanfilterBuilder,
+                                                          jni_mid_build_scanfilterBuilder);
+    if (!jni_obj_scanfilter)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_obj_scanfilter is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilterBuilder);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_obj_scanfilterBuilder);
+
+    // get scanSettings.Builder class id
+    jclass jni_cid_scanSettingsBuilder = (*env)->FindClass(env,
+                                                          "android/bluetooth/le/"
+                                                          "ScanSettings$Builder");
+    if (!jni_cid_scanSettingsBuilder)
+    {
+        OIC_LOG(ERROR, TAG, "scanSettings: jni_cid_scanSettingsBuilder is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        return CA_STATUS_FAILED;
+    }
+
+    // get scanSettings.Builder(ctor) method id
+    jmethodID jni_mid_scanSettingsBuilderCtor = (*env)->GetMethodID(env, jni_cid_scanSettingsBuilder,
+                                                                    "<init>", "()V");
+    if (!jni_mid_scanSettingsBuilderCtor)
+    {
+        OIC_LOG(ERROR, TAG, "scanSettings: jni_mid_scanSettingsBuilderCtor is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_cid_scanSettingsBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    // get scanSettings.Builder.setScanMode method id
+    jmethodID jni_mid_setScanMode = (*env)->GetMethodID(env, jni_cid_scanSettingsBuilder,
+                                                        "setScanMode",
+                                                         "(I)Landroid/"
+                                                         "bluetooth/le/ScanSettings$Builder;");
+    if (!jni_mid_setScanMode)
+    {
+        OIC_LOG(ERROR, TAG, "scanSettings: jni_mid_setScanMode is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_cid_scanSettingsBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    // get scanSettings.Builder.build method id
+    jmethodID jni_mid_build_scanSettings = (*env)->GetMethodID(env,
+                                                               jni_cid_scanSettingsBuilder,
+                                                               "build",
+                                                               "()Landroid/bluetooth/le/"
+                                                               "ScanSettings;");
+    if (!jni_mid_build_scanSettings)
+    {
+        OIC_LOG(ERROR, TAG, "scanSettings: jni_mid_build_scanSettings is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_cid_scanSettingsBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    // call scanSettings.Builder()
+    jobject jni_obj_scanSettingBuilder = (*env)->NewObject(env, jni_cid_scanSettingsBuilder,
+                                                           jni_mid_scanSettingsBuilderCtor);
+    if (!jni_obj_scanSettingBuilder)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_obj_scanSettingBuilder is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_cid_scanSettingsBuilder);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_cid_scanSettingsBuilder);
+
+    jclass jni_cid_arrayList = (*env)->FindClass(env, "java/util/ArrayList");
+    if (!jni_cid_arrayList)
+    {
+        OIC_LOG(ERROR, TAG, "ArrayList: jni_cid_arrayList is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_obj_scanSettingBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    jmethodID jni_mid_arrayListCtor = (*env)->GetMethodID(env, jni_cid_arrayList, "<init>", "()V");
+    if (!jni_mid_arrayListCtor)
+    {
+        OIC_LOG(ERROR, TAG, "ArrayList: jni_mid_arrayListCtor is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_cid_arrayList);
+        (*env)->DeleteLocalRef(env, jni_obj_scanSettingBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    jmethodID jni_mid_arrayListAdd = (*env)->GetMethodID(env, jni_cid_arrayList,
+                                                         "add", "(Ljava/lang/Object;)Z");
+    if (!jni_mid_arrayListAdd)
+    {
+        OIC_LOG(ERROR, TAG, "ArrayList: jni_mid_arrayListAdd is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_cid_arrayList);
+        (*env)->DeleteLocalRef(env, jni_obj_scanSettingBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    jobject jni_obj_filterList = (*env)->NewObject(env, jni_cid_arrayList, jni_mid_arrayListCtor);
+    if (!jni_obj_filterList)
+    {
+        OIC_LOG(ERROR, TAG, "ArrayList: jni_obj_filterList is null");
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_cid_arrayList);
+        (*env)->DeleteLocalRef(env, jni_obj_scanSettingBuilder);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_cid_arrayList);
+
+    jboolean jni_bool_arrayListIsAdded = (*env)->CallBooleanMethod(env, jni_obj_filterList,
+                                                                   jni_mid_arrayListAdd,
+                                                                   jni_obj_scanfilter);
+    if (!jni_bool_arrayListIsAdded)
+    {
+        OIC_LOG(ERROR, TAG, "ArrayList: jni_bool_arrayListIsAdded is null");
+        (*env)->DeleteLocalRef(env, jni_obj_filterList);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_obj_scanSettingBuilder);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+
+    // get ScanSettings.SCAN_MODE_BALANCED jint value
+    jint jni_int_scanBalancedMode = CALEGetConstantsValue(env, CLASSPATH_LE_SCANSETTINGS,
+                                                          "SCAN_MODE_BALANCED");
+    CACheckJNIException(env);
+
+    // call setScanMode(SCAN_MODE_BALANCED)
+    jobject jni_obj_setScanMode = (*env)->CallObjectMethod(env, jni_obj_scanSettingBuilder,
+                                                           jni_mid_setScanMode,
+                                                           jni_int_scanBalancedMode);
+    if (!jni_obj_setScanMode)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_obj_setScanMode is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanSettingBuilder);
+        (*env)->DeleteLocalRef(env, jni_obj_filterList);
+        return CA_STATUS_FAILED;
+    }
+
+    // call build
+    jobject jni_obj_scanSettings = (*env)->CallObjectMethod(env, jni_obj_scanSettingBuilder,
+                                                                 jni_mid_build_scanSettings);
+    if (!jni_obj_scanSettings)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_obj_scanSettings is null");
+        (*env)->DeleteLocalRef(env, jni_obj_scanSettingBuilder);
+        (*env)->DeleteLocalRef(env, jni_obj_filterList);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_obj_scanSettingBuilder);
+
+    CAResult_t res = CA_STATUS_FAILED;
+    // get default bt adapter class
+    jclass jni_cid_BTAdapter = (*env)->FindClass(env, CLASSPATH_BT_ADAPTER);
+    if (!jni_cid_BTAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "getState From BTAdapter: jni_cid_BTAdapter is null");
+        CACheckJNIException(env);
+        goto error_exit;
+    }
+
+    jmethodID jni_mid_getDefaultAdapter = (*env)->GetStaticMethodID(env, jni_cid_BTAdapter,
+                                                                    "getDefaultAdapter",
+                                                                    "()Landroid/bluetooth/"
+                                                                    "BluetoothAdapter;");
+    if (!jni_mid_getDefaultAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_getDefaultAdapter is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        goto error_exit;
+    }
+
+    jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter,
+                                                               jni_mid_getDefaultAdapter);
+    if (!jni_obj_BTAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "jni_obj_BTAdapter is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        goto error_exit;
+    }
+
+    // get remote bt adapter method
+    jmethodID jni_mid_getBluetoothLeScanner = (*env)->GetMethodID(env, jni_cid_BTAdapter,
+                                                                  "getBluetoothLeScanner",
+                                                                  "()Landroid/bluetooth/"
+                                                                  "le/BluetoothLeScanner;");
+    if (!jni_mid_getBluetoothLeScanner)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_getBluetoothLeScanner is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        goto error_exit;
+    }
+
+    // get le scanner object
+    jobject jni_obj_leScanner = (*env)->CallObjectMethod(env, jni_obj_BTAdapter,
+                                                         jni_mid_getBluetoothLeScanner);
+    if (!jni_obj_leScanner)
+    {
+        OIC_LOG(ERROR, TAG, "jni_obj_leScanner is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        goto error_exit;
+    }
+    (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+    (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+
+    // call startScan method
+    OIC_LOG(INFO, TAG, "CALL API - startScanWithUUID(for level 21)");
+    (*env)->CallVoidMethod(env, jni_obj_leScanner, jni_mid_startScan, jni_obj_filterList,
+                           jni_obj_scanSettings, callback);
+    if (CACheckJNIException(env))
+    {
+        OIC_LOG(INFO, TAG, "startScan has failed");
+    }
+    else
+    {
+        res = CA_STATUS_OK;
+    }
+    (*env)->DeleteLocalRef(env, jni_obj_leScanner);
+
+error_exit:
+    (*env)->DeleteLocalRef(env, jni_obj_scanSettings);
+    (*env)->DeleteLocalRef(env, jni_obj_filterList);
+    return res;
+}
+
 jobject CALEClientGetUUIDObject(JNIEnv *env, const char* uuid)
 {
     VERIFY_NON_NULL_RET(uuid, TAG, "uuid is null", NULL);
@@ -1592,7 +2100,17 @@ CAResult_t CALEClientStopScan()
         isAttached = true;
     }
 
-    CAResult_t ret = CALEClientStopScanImpl(env, g_leScanCallback);
+    CAResult_t ret = CA_STATUS_FAILED;
+
+    if (g_jniIntSdk >= BLE_SCAN_API_LEVEL)
+    {
+        ret = CALEClientStopScanImplForV21(env, g_leScanCallback);
+    }
+    else
+    {
+        ret = CALEClientStopScanImpl(env, g_leScanCallback);
+    }
+
     if (CA_STATUS_OK != ret)
     {
         if (CA_ADAPTER_NOT_ENABLED == ret)
@@ -1615,7 +2133,7 @@ CAResult_t CALEClientStopScan()
 
 CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback)
 {
-    OIC_LOG(DEBUG, TAG, "CALEClientStopScanImpl");
+    OIC_LOG(DEBUG, TAG, "CALEClientStopScanImpl IN");
     VERIFY_NON_NULL(callback, TAG, "callback is null");
     VERIFY_NON_NULL(env, TAG, "env is null");
 
@@ -1658,7 +2176,7 @@ CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback)
         return CA_STATUS_FAILED;
     }
 
-    // gat bt adapter object
+    // get bt adapter object
     jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter,
                                                                jni_mid_getDefaultAdapter);
     if (!jni_obj_BTAdapter)
@@ -1682,6 +2200,113 @@ CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback)
 
     (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
     (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+    return CA_STATUS_OK;
+}
+
+CAResult_t CALEClientStopScanImplForV21(JNIEnv *env, jobject callback)
+{
+    OIC_LOG(DEBUG, TAG, "CALEClientStopScanImplForV21 IN");
+    VERIFY_NON_NULL(callback, TAG, "callback is null");
+    VERIFY_NON_NULL(env, TAG, "env is null");
+
+    if (!CALEIsEnableBTAdapter(env))
+    {
+        OIC_LOG(INFO, TAG, "BT adapter is not enabled");
+        return CA_ADAPTER_NOT_ENABLED;
+    }
+
+    // get default bt adapter class
+    jclass jni_cid_BTAdapter = (*env)->FindClass(env, CLASSPATH_BT_ADAPTER);
+    if (!jni_cid_BTAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "getState From BTAdapter: jni_cid_BTAdapter is null");
+        CACheckJNIException(env);
+        return CA_STATUS_FAILED;
+    }
+
+    jmethodID jni_mid_getDefaultAdapter = (*env)->GetStaticMethodID(env, jni_cid_BTAdapter,
+                                                                    "getDefaultAdapter",
+                                                                    "()Landroid/bluetooth/"
+                                                                    "BluetoothAdapter;");
+    if (!jni_mid_getDefaultAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_getDefaultAdapter is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        return CA_STATUS_FAILED;
+    }
+
+    jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter,
+                                                               jni_mid_getDefaultAdapter);
+    if (!jni_obj_BTAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "jni_obj_BTAdapter is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        return CA_STATUS_FAILED;
+    }
+
+    // get bluetoothLeScanner class
+    jclass jni_cid_leScanner = (*env)->FindClass(env, CLASSPATH_LE_SCANNER);
+    if (!jni_cid_leScanner)
+    {
+        OIC_LOG(ERROR, TAG, "getState From leScanner: jni_cid_leScanner is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        return CA_STATUS_FAILED;
+    }
+
+    // get remote bt adapter method
+    jmethodID jni_mid_getBluetoothLeScanner = (*env)->GetMethodID(env, jni_cid_BTAdapter,
+                                                                  "getBluetoothLeScanner",
+                                                                  "()Landroid/bluetooth/"
+                                                                  "le/BluetoothLeScanner;");
+    if (!jni_mid_getBluetoothLeScanner)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_getBluetoothLeScanner is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_cid_leScanner);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+
+    // get stopScan(ScanCallback callback) method
+    jmethodID jni_mid_stopScan = (*env)->GetMethodID(env, jni_cid_leScanner, "stopScan",
+                                                      "(Landroid/bluetooth/le/ScanCallback;)V");
+    if (!jni_mid_stopScan)
+    {
+        OIC_LOG(ERROR, TAG, "stopScan: jni_mid_stopScan is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_cid_leScanner);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_cid_leScanner);
+
+    // gat le scanner object
+    jobject jni_obj_leScanner = (*env)->CallObjectMethod(env, jni_obj_BTAdapter,
+                                                         jni_mid_getBluetoothLeScanner);
+    if (!jni_obj_leScanner)
+    {
+        OIC_LOG(ERROR, TAG, "getState From BTAdapter: jni_obj_leScanner is null");
+        CACheckJNIException(env);
+        return CA_STATUS_FAILED;
+    }
+
+    // call stopScan method
+    OIC_LOG(INFO, TAG, "CALL API - stopScan for level 21");
+    (*env)->CallVoidMethod(env, jni_obj_leScanner, jni_mid_stopScan, callback);
+    if (CACheckJNIException(env))
+    {
+        OIC_LOG(INFO, TAG, "stopScan for level 21 has failed");
+        (*env)->DeleteLocalRef(env, jni_obj_leScanner);
+        return CA_STATUS_FAILED;
+    }
+
+    (*env)->DeleteLocalRef(env, jni_obj_leScanner);
     return CA_STATUS_OK;
 }
 
@@ -2089,7 +2714,7 @@ CAResult_t CALEClientDisconnectforAddress(JNIEnv *env, jstring remote_address)
         }
 
         OIC_LOG_V(DEBUG, TAG, "target address : %s, set address : %s", address, setAddress);
-        if (!strcmp(address, setAddress))
+        if (!strcasecmp(address, setAddress))
         {
             CAResult_t res = CALEClientDisconnect(env, jarrayObj);
             if (CA_STATUS_OK != res)
@@ -2967,7 +3592,7 @@ bool CALEClientIsDeviceInScanDeviceList(JNIEnv *env, const char* remoteAddress)
             return true;
         }
 
-        if (!strcmp(remoteAddress, setAddress))
+        if (!strcasecmp(remoteAddress, setAddress))
         {
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             (*env)->DeleteLocalRef(env, jni_setAddress);
@@ -3068,7 +3693,7 @@ CAResult_t CALEClientRemoveDeviceInScanDeviceList(JNIEnv *env, jstring address)
             return CA_STATUS_FAILED;
         }
 
-        if (!strcmp(setAddress, remoteAddress))
+        if (!strcasecmp(setAddress, remoteAddress))
         {
             OIC_LOG_V(DEBUG, TAG, "remove object : %s", remoteAddress);
             (*env)->DeleteGlobalRef(env, jarrayObj);
@@ -3177,7 +3802,7 @@ bool CALEClientIsGattObjInList(JNIEnv *env, const char* remoteAddress)
             return true;
         }
 
-        if (!strcmp(remoteAddress, setAddress))
+        if (!strcasecmp(remoteAddress, setAddress))
         {
             OIC_LOG(DEBUG, TAG, "the device is already set");
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
@@ -3228,7 +3853,7 @@ jobject CALEClientGetGattObjInList(JNIEnv *env, const char* remoteAddress)
             return NULL;
         }
 
-        if (!strcmp(remoteAddress, setAddress))
+        if (!strcasecmp(remoteAddress, setAddress))
         {
             OIC_LOG(DEBUG, TAG, "the device is already set");
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
@@ -3338,7 +3963,7 @@ CAResult_t CALEClientRemoveGattObj(JNIEnv *env, jobject gatt)
             return CA_STATUS_FAILED;
         }
 
-        if (!strcmp(setAddress, remoteAddress))
+        if (!strcasecmp(setAddress, remoteAddress))
         {
             OIC_LOG_V(DEBUG, TAG, "remove object : %s", remoteAddress);
             (*env)->DeleteGlobalRef(env, jarrayObj);
@@ -3415,7 +4040,7 @@ CAResult_t CALEClientRemoveGattObjForAddr(JNIEnv *env, jstring addr)
             return CA_STATUS_FAILED;
         }
 
-        if (!strcmp(setAddress, remoteAddress))
+        if (!strcasecmp(setAddress, remoteAddress))
         {
             OIC_LOG_V(DEBUG, TAG, "remove object : %s", remoteAddress);
             (*env)->DeleteGlobalRef(env, jarrayObj);
@@ -3521,7 +4146,7 @@ jstring CALEClientGetLEAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
         }
 
         OIC_LOG_V(DEBUG, TAG, "btAddress : %s (idx: %d)", btAddress, index);
-        if (!strcmp(targetAddress, btAddress))
+        if (!strcasecmp(targetAddress, btAddress))
         {
             OIC_LOG(DEBUG, TAG, "Found Gatt object from BT device");
 
@@ -3843,6 +4468,12 @@ void CALEClientTerminateGattMutexVariables()
 
     oc_mutex_free(g_threadScanIntervalMutex);
     g_threadScanIntervalMutex = NULL;
+
+    oc_mutex_free(g_gattObjectMutex);
+    g_gattObjectMutex = NULL;
+
+    oc_mutex_free(g_deviceStateListMutex);
+    g_deviceStateListMutex = NULL;
 }
 
 void CALEClientSetSendFinishFlag(bool flag)
@@ -4041,6 +4672,20 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeRegisterLeScanCallback(JNIEnv *env,
 }
 
 JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaLeClientInterface_caLeRegisterLeScanCallbackForV21(JNIEnv *env,
+                                                                          jobject obj,
+                                                                          jobject callback)
+{
+    OIC_LOG(DEBUG, TAG, "caLeRegisterLeScanCallbackForV21");
+    VERIFY_NON_NULL_VOID(env, TAG, "env is null");
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
+    VERIFY_NON_NULL_VOID(callback, TAG, "callback is null");
+
+    g_leScanCallback = (*env)->NewGlobalRef(env, callback);
+    CACheckJNIException(env);
+}
+
+JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeClientInterface_caLeRegisterGattCallback(JNIEnv *env, jobject obj,
                                                                   jobject callback)
 {
@@ -4065,6 +4710,38 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeScanCallback(JNIEnv *env, jobject o
     if (CA_STATUS_OK != res)
     {
         OIC_LOG_V(ERROR, TAG, "CALEClientAddScanDeviceToList has failed : %d", res);
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaLeClientInterface_caLeScanFailedCallback(JNIEnv *env, jobject obj,
+                                                                jint errorCode)
+{
+    VERIFY_NON_NULL_VOID(env, TAG, "env is null");
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
+
+    switch (errorCode)
+    {
+        case 1:
+            OIC_LOG(ERROR, TAG, "BLE scan has failed, error is SCAN_FAILED_ALREADY_STARTED");
+            break;
+
+        case 2:
+            OIC_LOG(ERROR, TAG,
+                    "BLE scan has failed, error is SCAN_FAILED_APPLICATION_REGISTRATION_FAILED");
+            break;
+
+        case 3:
+            OIC_LOG(ERROR, TAG, "BLE scan has failed, error is SCAN_FAILED_INTERNAL_ERROR");
+            break;
+
+        case 4:
+            OIC_LOG(ERROR, TAG, "BLE scan has failed, error is SCAN_FAILED_FEATURE_UNSUPPORTED");
+            break;
+
+        default:
+            OIC_LOG(ERROR, TAG, "BLE scan has failed with unknown error");
+            break;
     }
 }
 

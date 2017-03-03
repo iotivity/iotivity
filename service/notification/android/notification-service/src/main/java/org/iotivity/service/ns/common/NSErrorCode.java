@@ -34,7 +34,8 @@ public enum NSErrorCode {
     DENY("DENY", ""),
     JNI_EXCEPTION("JNI_EXCEPTION", "Generic Java binder error"),
     JNI_NO_NATIVE_OBJECT("JNI_NO_NATIVE_POINTER", ""),
-    JNI_INVALID_VALUE("JNI_INVALID_VALUE", "");
+    JNI_INVALID_VALUE("JNI_INVALID_VALUE", ""),
+    NATIVE_EXCEPTION("NATIVE_EXCEPTION", "");
 
     private String error;
     private String description;

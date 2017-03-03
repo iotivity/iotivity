@@ -107,7 +107,7 @@ TEST(PDMAddDeviceTest, ValidUUID)
     {
         int tem = rand() % 25;
 
-        id[i] = tem + 65;
+        id[i] = (uint8_t)(tem + 65);
     }
 
     memcpy(&uid.id, &id, UUID_LENGTH);
@@ -183,7 +183,7 @@ TEST (PDMDeleteDevice, ValidButNonExistDeviceID)
     {
         int tem = rand() % 25;
 
-        id[i] = tem + 65;
+        id[i] = (uint8_t)(tem + 65);
     }
 
     memcpy(&uid.id, &id, sizeof(uid.id));

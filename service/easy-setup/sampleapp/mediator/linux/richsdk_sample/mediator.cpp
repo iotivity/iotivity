@@ -255,6 +255,41 @@ void provisionDeviceProperty()
     }
 }
 
+void connectRequestStatusCallback(std::shared_ptr< ConnectRequestStatus > requestStatus)
+{
+    if(requestStatus->getESResult() != ES_OK)
+    {
+      cout << "Request to connection is failed." << endl;
+      return;
+    }
+    else
+    {
+      cout << "Request to connection is success." << endl;
+    }
+}
+
+void requestToConnect()
+{
+    if(!remoteEnrollee)
+    {
+        std::cout << "RemoteEnrollee is null, retry Discovery EnrolleeResource." << endl;
+        return;
+    }
+
+    try
+    {
+        std::vector<ES_CONNECT_TYPE> types;
+        types.push_back(ES_CONNECT_WIFI);
+        types.push_back(ES_CONNECT_COAPCLOUD);
+        remoteEnrollee->requestToConnect(types, connectRequestStatusCallback);
+    }
+    catch (OCException &e)
+    {
+        std::cout << "Exception during provisionDeviceProperties call" << e.reason();
+        return;
+    }
+}
+
 void cloudProvisioningStatusCallback(std::shared_ptr< CloudPropProvisioningStatus > provStatus)
 {
     switch (provStatus->getESResult())
@@ -360,9 +395,9 @@ void foundResource(std::shared_ptr<OC::OCResource> resource)
 
 void discoveryEnrolleeResource()
 {
-	try
-	{
-	    std::ostringstream requestURI;
+    try
+    {
+        std::ostringstream requestURI;
         requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=" << OC_RSRVD_ES_RES_TYPE_EASYSETUP;
         OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource);
         std::cout<< "Finding Resource... " <<std::endl;
@@ -370,20 +405,21 @@ void discoveryEnrolleeResource()
         std::unique_lock<std::mutex> lck(g_discoverymtx);
         g_cond.wait_for(lck, std::chrono::seconds(5));
 	}
-	catch (OCException& e)
-	{
-		std::cout << "Exception in discoveryEnrolleeResource: "<<e.what();
-	}
+    catch (OCException &e)
+    {
+        std::cout << "Exception in discoveryEnrolleeResource: "<<e.what();
+    }
 }
 
 void DisplayMenu()
 {
-	constexpr int DISCOVERY_ENROLLEE = 1;
+    constexpr int DISCOVERY_ENROLLEE = 1;
     constexpr int PROVISION_SECURITY = 2;
     constexpr int GET_STATUS = 3;
     constexpr int GET_CONFIGURATION = 4;
     constexpr int PROVISION_DEVICE_PROPERTY = 5;
-    constexpr int PROVISION_CLOUD_PROPERTY = 6;
+    constexpr int REQUEST_TO_CONNECT = 6;
+    constexpr int PROVISION_CLOUD_PROPERTY = 7;
 
     std::cout << "========================================================\n";
     std::cout << DISCOVERY_ENROLLEE << ". Discovery Enrollee Resource \n";
@@ -391,6 +427,7 @@ void DisplayMenu()
     std::cout << GET_STATUS << ". Get Status from Enrollee  \n";
     std::cout << GET_CONFIGURATION << ". Get Configuration from Enrollee  \n";
     std::cout << PROVISION_DEVICE_PROPERTY << ". Provision Device Property\n";
+    std::cout << REQUEST_TO_CONNECT << ". Request to Connect  \n";
     std::cout << PROVISION_CLOUD_PROPERTY << ". Provision Cloud Property  \n";
     std::cout << "========================================================\n";
 
@@ -412,6 +449,9 @@ void DisplayMenu()
             break;
         case PROVISION_DEVICE_PROPERTY:
             provisionDeviceProperty();
+            break;
+        case REQUEST_TO_CONNECT:
+            requestToConnect();
             break;
         case PROVISION_CLOUD_PROPERTY:
             provisionCloudProperty();

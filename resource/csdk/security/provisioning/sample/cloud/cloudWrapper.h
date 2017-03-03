@@ -258,6 +258,15 @@ void readString(char* item, int length, const char* description, const char* exa
 void readInteger(int* item, const char* description, const char* example);
 
 /**
+ * Read user input (expect uint16_t value)
+ *
+ * @param[out] item           uint16_t item to fill
+ * @param[in]  description    item description
+ * @param[in]  example        item example
+ */
+void readUInt16(uint16_t* item, const char* description, const char* example);
+
+/**
  * Copies whole binary file to out variable
  *
  * @param[in] list           array of strings structure

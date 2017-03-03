@@ -1,5 +1,5 @@
 Name: iotivity
-Version: 1.2.0
+Version: 1.3.0
 Release: 0
 Summary: IoT Connectivity sponsored by the OCF
 Group: Network & Connectivity / IoT Connectivity
@@ -73,7 +73,7 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?RD_MODE: %define RD_MODE CLIENT}
 %{!?RELEASE: %define RELEASE 1}
 %{!?ROUTING: %define ROUTING EP}
-%{!?SECURED: %define SECURED 0}
+%{!?SECURED: %define SECURED 1}
 %{!?TARGET_ARCH: %define TARGET_ARCH %{_arch}}
 %{!?TARGET_OS: %define TARGET_OS tizen}
 %{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}

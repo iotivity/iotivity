@@ -63,7 +63,7 @@ NSCacheElement * NSProviderStorageRead(NSCacheList * list, const char * findId)
     NSCacheElement * next = NULL;
     NSCacheType type = list->cacheType;
 
-    NS_LOG_V(DEBUG, "Find ID - %s", findId);
+    NS_LOG_V(INFO_PRIVATE, "Find ID - %s", findId);
 
     while (iter)
     {
@@ -108,7 +108,7 @@ NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, char * id, bool stat
         {
             NS_LOG(DEBUG, "Update Data - IN");
 
-            NS_LOG_V(DEBUG, "currData_ID = %s", itData->id);
+            NS_LOG_V(INFO_PRIVATE, "currData_ID = %s", itData->id);
             NS_LOG_V(DEBUG, "currData_MsgObID = %d", itData->messageObId);
             NS_LOG_V(DEBUG, "currData_SyncObID = %d", itData->syncObId);
             NS_LOG_V(DEBUG, "currData_Cloud_MsgObID = %d", itData->remote_messageObId);
@@ -164,14 +164,14 @@ NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj)
             {
                 NS_LOG(DEBUG, "Update Data - IN");
 
-                NS_LOG_V(DEBUG, "currData_ID = %s", itData->id);
+                NS_LOG_V(INFO_PRIVATE, "currData_ID = %s", itData->id);
                 NS_LOG_V(DEBUG, "currData_MsgObID = %d", itData->messageObId);
                 NS_LOG_V(DEBUG, "currData_SyncObID = %d", itData->syncObId);
                 NS_LOG_V(DEBUG, "currData_Cloud_MsgObID = %d", itData->remote_messageObId);
                 NS_LOG_V(DEBUG, "currData_Cloud_SyncObID = %d", itData->remote_syncObId);
                 NS_LOG_V(DEBUG, "currData_IsWhite = %d", itData->isWhite);
 
-                NS_LOG_V(DEBUG, "subData_ID = %s", subData->id);
+                NS_LOG_V(INFO_PRIVATE, "subData_ID = %s", subData->id);
                 NS_LOG_V(DEBUG, "subData_MsgObID = %d", subData->messageObId);
                 NS_LOG_V(DEBUG, "subData_SyncObID = %d", subData->syncObId);
                 NS_LOG_V(DEBUG, "subData_Cloud_MsgObID = %d", subData->remote_messageObId);
@@ -288,13 +288,13 @@ bool NSProviderCompareIdCacheData(NSCacheType type, void * data, const char * id
         return false;
     }
 
-    NS_LOG_V(DEBUG, "Data(compData) = [%s]", id);
+    NS_LOG_V(INFO_PRIVATE, "Data(compData) = [%s]", id);
 
     if (type == NS_PROVIDER_CACHE_SUBSCRIBER)
     {
         NSCacheSubData * subData = (NSCacheSubData *) data;
 
-        NS_LOG_V(DEBUG, "Data(subData) = [%s]", subData->id);
+        NS_LOG_V(INFO_PRIVATE, "Data(subData) = [%s]", subData->id);
 
         if (strcmp(subData->id, id) == 0)
         {
@@ -309,7 +309,7 @@ bool NSProviderCompareIdCacheData(NSCacheType type, void * data, const char * id
     {
         NSCacheSubData * subData = (NSCacheSubData *) data;
 
-        NS_LOG_V(DEBUG, "Data(subData) = [%s]", subData->id);
+        NS_LOG_V(INFO_PRIVATE, "Data(subData) = [%s]", subData->id);
 
         OCObservationId currID = *id;
 
@@ -356,7 +356,7 @@ bool NSProviderCompareIdCacheData(NSCacheType type, void * data, const char * id
     {
         NSCacheTopicSubData * topicData = (NSCacheTopicSubData *) data;
 
-        NS_LOG_V(DEBUG, "Data(topicData) = [%s]", topicData->id);
+        NS_LOG_V(INFO_PRIVATE, "Data(topicData) = [%s]", topicData->id);
 
         if (strcmp(topicData->id, id) == 0)
         {
@@ -541,7 +541,7 @@ NSTopicLL * NSProviderGetConsumerTopicsCacheData(NSCacheList * regTopicList,
 
         if (curr && strcmp(curr->id, consumerId) == 0)
         {
-            NS_LOG_V(DEBUG, "curr->id = %s", curr->id);
+            NS_LOG_V(INFO_PRIVATE, "curr->id = %s", curr->id);
             NS_LOG_V(DEBUG, "curr->topicName = %s", curr->topicName);
             NSTopicLL * topicIter = topics;
 
@@ -623,9 +623,9 @@ NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,
     }
 
     NSCacheTopicSubData * curr = (NSCacheTopicSubData *) del->data;
-    NS_LOG_V(DEBUG, "compareid = %s", cId);
+    NS_LOG_V(INFO_PRIVATE, "compareid = %s", cId);
     NS_LOG_V(DEBUG, "comparetopicName = %s", topicName);
-    NS_LOG_V(DEBUG, "curr->id = %s", curr->id);
+    NS_LOG_V(INFO_PRIVATE, "curr->id = %s", curr->id);
     NS_LOG_V(DEBUG, "curr->topicName = %s", curr->topicName);
 
     if ( (strncmp(curr->id, cId, NS_UUID_STRING_SIZE) == 0) &&

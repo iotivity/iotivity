@@ -74,7 +74,7 @@ OCStackResult PMSingleDeviceDiscoveryInUnicast(unsigned short waittime, const Oi
                         OCProvisionDev_t **ppFoundDevice);
 
 /**
- * Discover owned/unowned devices in the same IP subnet. .
+ * Discover owned/unowned devices in the same IP subnet.
  *
  * @param[in] waittime      Timeout in seconds.
  * @param[in] isOwned       bool flag for owned / unowned discovery
@@ -155,7 +155,7 @@ OCProvisionDev_t* PMCloneOCProvisionDev(const OCProvisionDev_t* src);
 /**
  * Function to generate qurey for coap/coaps request.
  *
- * @param[in] isSeucre Choose whether to encrypt the payload.
+ * @param[in] isSecure Choose whether to encrypt the payload.
  * @param[in] address Network address of remote device
  * @param[in] port Port number
  * @param[in] connType Connectivity type of remote device

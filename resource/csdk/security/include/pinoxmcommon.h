@@ -59,6 +59,11 @@ typedef void (*GeneratePinCallback)(char* pinData, size_t pinSize);
 typedef void(*DisplayPinCallbackWithContext)(char* pinData, size_t pinSize, void* context);
 
 /**
+ * Function pointer to close the displied PIN.
+ */
+typedef void (*ClosePinDisplayCallback)(void);
+
+/**
  * Function pointer to input pin code.
  */
 typedef void (*InputPinCallback)(char* pinBuf, size_t bufSize);
@@ -105,10 +110,18 @@ void SetInputPinCB(InputPinCallback pinCB);
  * @param context     context to return in the callback.
  *
  * @return OC_STACK_OK in case of success or other value in case of error.
- *         OC_STACK_INVALID_PARAM if pinCB is invalid. 
+ *         OC_STACK_INVALID_PARAM if pinCB is invalid.
  *         OC_STACK_DUPLICATE_REQUEST if an input pin callback has already been set.
  */
 OCStackResult SetInputPinWithContextCB(InputPinCallbackWithContext inputPinCB, void* context);
+
+/**
+ * Function to set the close PIN callback
+ * This callback will be invoked when PIN based OTM is finished.
+ *
+ * @param closeCB implementation of close PIN callback.
+ */
+void SetClosePinDisplayCB(ClosePinDisplayCallback closeCB);
 
 /**
  * Function to unset the input PIN callback.
@@ -141,6 +154,12 @@ void UnsetGeneratePinCB();
 void UnsetDisplayPinWithContextCB();
 
 /**
+ * Function to unset the PIN close callback.
+ * NOTE : Do not call this function while PIN based ownership transfer is in progress.
+ */
+void UnsetClosePinCB();
+
+/**
  * Function to generate a random PIN.
  * This function will send a generated PIN to the user via the callback that was set in
  * SetGeneratePinCB or SetGeneratePinWithContextCB.
@@ -154,8 +173,8 @@ OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize);
 
 /**
  * Function to get a pin for a device.
- * This function will acquire a pin from the user via the callback that was set in 
- * SetInputPinCB or SetInputPinWithContextCB. 
+ * This function will acquire a pin from the user via the callback that was set in
+ * SetInputPinCB or SetInputPinWithContextCB.
  *
  * @param[in] deviceId is the device that is requesting a pin
  * @param[in,out] pinBuffer is the reference to the buffer to store the inputed PIN data.
@@ -164,6 +183,12 @@ OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize);
  * @return ::OC_STACK_OK in case of success or other value in ccase of error.
  */
 OCStackResult InputPin(OicUuid_t deviceId, char* pinBuffer, size_t bufferSize);
+
+/**
+ * Function to invoke the callback for close a PIN display.
+ */
+void ClosePinDisplay();
+
 
 #ifdef MULTIPLE_OWNER
 /**

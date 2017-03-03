@@ -37,6 +37,7 @@
 #define __STDC_LIMIT_MACROS
 #endif
 #include "iotivity_config.h"
+#include <stdlib.h>
 #include <inttypes.h>
 #include <string.h>
 #include <ctype.h>
@@ -428,6 +429,14 @@ static void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, boo
  */
 static void OCSetNetworkMonitorHandler(CAAdapterStateChangedCB adapterHandler,
                                        CAConnectionStateChangedCB connectionHandler);
+/**
+ * Map zoneId to endpoint address which scope is ipv6 link-local.
+ * @param payload Discovery payload which has Endpoint information.
+ * @param ifindex index which indicate network interface.
+ */
+#ifndef WITH_ARDUINO
+static OCStackResult OCMapZoneIdToLinkLocalEndpoint(OCDiscoveryPayload *payload, uint32_t ifindex);
+#endif
 
 //-----------------------------------------------------------------------------
 // Internal functions
@@ -1273,6 +1282,98 @@ exit:
     return result;
 }
 
+OCStackResult HandleBatchResponse(char *requestUri, OCRepPayload **payload)
+{
+    if (requestUri && *payload)
+    {
+        char *interfaceName = NULL;
+        char *rtTypeName = NULL;
+        char *uriQuery = NULL;
+        char *uriWithoutQuery = NULL;
+        if (OC_STACK_OK == getQueryFromUri(requestUri, &uriQuery, &uriWithoutQuery))
+        {
+            if (OC_STACK_OK == ExtractFiltersFromQuery(uriQuery, &interfaceName, &rtTypeName))
+            {
+                if (0 == strcmp(OC_RSRVD_INTERFACE_BATCH, interfaceName))
+                {
+                    char *uri = (*payload)->uri;
+                    if (uri && 0 != strcmp(uriWithoutQuery, uri))
+                    {
+                        OCRepPayload *newPayload = OCRepPayloadCreate();
+                        if (newPayload)
+                        {
+                            OCRepPayloadSetUri(newPayload, uri);
+                            newPayload->next = *payload;
+                            *payload = newPayload;
+                        }
+                    }
+                }
+            }
+        }
+        OICFree(interfaceName);
+        OICFree(rtTypeName);
+        OICFree(uriQuery);
+        OICFree(uriWithoutQuery);
+        return OC_STACK_OK;
+    }
+    return OC_STACK_INVALID_PARAM;
+}
+
+#ifndef WITH_ARDUINO
+OCStackResult OCMapZoneIdToLinkLocalEndpoint(OCDiscoveryPayload *payload, uint32_t ifindex)
+{
+    if (!payload)
+    {
+        OIC_LOG(ERROR, TAG, "Given argument payload is NULL!!");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    OCResourcePayload *curRes = payload->resources;
+
+    while (curRes != NULL)
+    {
+        OCEndpointPayload* eps = curRes->eps;
+
+        while (eps != NULL)
+        {
+            if (eps->family & OC_IP_USE_V6)
+            {
+                CATransportFlags_t scopeLevel;
+                if (CA_STATUS_OK == CAGetIpv6AddrScope(eps->addr, &scopeLevel))
+                {
+                    if (CA_SCOPE_LINK == scopeLevel)
+                    {
+                        char *zoneId = NULL;
+                        if (OC_STACK_OK == OCGetLinkLocalZoneId(ifindex, &zoneId))
+                        {
+                            assert(zoneId != NULL);
+                            // put zoneId to end of addr
+                            OICStrcat(eps->addr, OC_MAX_ADDR_STR_SIZE, "%");
+                            OICStrcat(eps->addr, OC_MAX_ADDR_STR_SIZE, zoneId);
+                            OICFree(zoneId);
+                        }
+                        else
+                        {
+                            OIC_LOG(ERROR, TAG, "failed at parse zone-id for link-local address");
+                            return OC_STACK_ERROR;
+                        }
+                    }
+                }
+                else
+                {
+                    OIC_LOG(ERROR, TAG, "failed at parse ipv6 scope level");
+                    return OC_STACK_ERROR;
+                }
+            }
+            eps = eps->next;
+        }
+        curRes = curRes->next;
+    }
+
+    return OC_STACK_OK;
+}
+#endif
+
 void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
 {
     OIC_LOG(DEBUG, TAG, "Enter OCHandleResponse");
@@ -1390,6 +1491,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             OIC_LOG(INFO, TAG, "Calling into application address space");
 
             OCClientResponse *response = NULL;
+            OCPayloadType type = PAYLOAD_TYPE_INVALID;
 
             response = (OCClientResponse *)OICCalloc(1, sizeof(*response));
             if (!response)
@@ -1412,7 +1514,6 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             if(responseInfo->info.payload &&
                responseInfo->info.payloadSize)
             {
-                OCPayloadType type = PAYLOAD_TYPE_INVALID;
                 // check the security resource
                 if (SRMIsSecurityResourceURI(cbNode->requestUri))
                 {
@@ -1520,6 +1621,22 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                         OCPayloadDestroy(response->payload);
                         return;
                     }
+
+                    // Check endpoints has link-local ipv6 address.
+                    // if there is, map zone-id which parsed from ifindex
+#ifndef WITH_ARDUINO
+                    if (PAYLOAD_TYPE_DISCOVERY == response->payload->type)
+                    {
+                        OCDiscoveryPayload *disPayload = (OCDiscoveryPayload*)(response->payload);
+                        if (OC_STACK_OK !=
+                            OCMapZoneIdToLinkLocalEndpoint(disPayload, response->devAddr.ifindex))
+                        {
+                            OIC_LOG(ERROR, TAG, "failed at map zone-id for link-local address");
+                            OCPayloadDestroy(response->payload);
+                            return;
+                        }
+                    }
+#endif
                 }
                 else
                 {
@@ -1590,7 +1707,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 }
 #endif
                 // set remoteID(device ID) into OCClientResponse callback parameter
-                if (OC_REST_DISCOVER == cbNode->method)
+                if (OC_REST_DISCOVER == cbNode->method && PAYLOAD_TYPE_DISCOVERY == type)
                 {
                     OCDiscoveryPayload *payload = (OCDiscoveryPayload*) response->payload;
                     // Payload can be empty in case of error message.
@@ -1602,9 +1719,18 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                                   response->devAddr.remoteId);
 
 #if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
-                        OCCMDiscoveryResource(&response);
+                        CAConnectUserPref_t connPrefer = CA_USER_PREF_CLOUD;
+                        CAResult_t ret = CAUtilCMGetConnectionUserConfig(&connPrefer);
+                        if (ret == CA_STATUS_OK && connPrefer != CA_USER_PREF_CLOUD)
+                        {
+                            OCCMDiscoveryResource(response);
+                        }
 #endif
                     }
+                }
+                if (response->payload && response->payload->type == PAYLOAD_TYPE_REPRESENTATION)
+                {
+                    HandleBatchResponse(cbNode->requestUri, (OCRepPayload **)&response->payload);
                 }
 
                 OCStackApplicationResult appFeedback = cbNode->callBack(cbNode->context,
@@ -2172,7 +2298,7 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     if (requestResult == OC_STACK_RESOURCE_ERROR
             && serverRequest.observationOption == OC_OBSERVE_REGISTER)
     {
-        OIC_LOG_V(ERROR, TAG, "Observe Registration failed due to resource error");
+        OIC_LOG(ERROR, TAG, "Observe Registration failed due to resource error");
     }
     else if (!OCResultToSuccess(requestResult))
     {
@@ -5269,7 +5395,7 @@ OCStackResult OCSetProxyURI(const char *uri)
 }
 
 #if defined(RD_CLIENT) || defined(RD_SERVER)
-OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, uint8_t ins)
+OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, int64_t ins)
 {
     VERIFY_NON_NULL(handle, ERROR, OC_STACK_INVALID_PARAM);
 
@@ -5372,13 +5498,22 @@ OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
                  query = strstr(query, OC_RSRVD_INS);
                  if (query)
                  {
-                     uint8_t queryIns = atoi(query + 4);
+                     // Arduino's AVR-GCC doesn't support strtoll().
+                     int64_t queryIns;
+                     int matchedItems = sscanf(query + 4, "%lld", &queryIns);
+
+                     if (0 == matchedItems)
+                     {
+                         OICFree(targetUri);
+                         return OC_STACK_INVALID_QUERY;
+                     }
+
                      for (uint8_t i = 0; i < numResources; i++)
                      {
                          OCResourceHandle resHandle = OCGetResourceHandle(i);
                          if (resHandle)
                          {
-                             uint8_t resIns = 0;
+                             int64_t resIns = 0;
                              OCGetResourceIns(resHandle, &resIns);
                              if (queryIns && queryIns == resIns)
                              {
@@ -5396,6 +5531,23 @@ OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
     OICFree(targetUri);
     return OC_STACK_OK;
 }
+
+OCStackResult OCGetResourceIns(OCResourceHandle handle, int64_t* ins)
+{
+    OCResource *resource = NULL;
+
+    VERIFY_NON_NULL(handle, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(ins, ERROR, OC_STACK_INVALID_PARAM);
+
+    resource = findResource((OCResource *) handle);
+    if (resource)
+    {
+        *ins = resource->ins;
+        return OC_STACK_OK;
+    }
+    return OC_STACK_ERROR;
+}
+#endif // RD_CLIENT || RD_SERVER
 
 OCResourceHandle OCGetResourceHandleAtUri(const char *uri)
 {
@@ -5418,23 +5570,6 @@ OCResourceHandle OCGetResourceHandleAtUri(const char *uri)
     }
     return NULL;
 }
-
-OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins)
-{
-    OCResource *resource = NULL;
-
-    VERIFY_NON_NULL(handle, ERROR, OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL(ins, ERROR, OC_STACK_INVALID_PARAM);
-
-    resource = findResource((OCResource *) handle);
-    if (resource)
-    {
-        *ins = resource->ins;
-        return OC_STACK_OK;
-    }
-    return OC_STACK_ERROR;
-}
-#endif
 
 OCStackResult OCSetHeaderOption(OCHeaderOption* ocHdrOpt, size_t* numOptions, uint16_t optionID,
                                 void* optionData, size_t optionDataLength)
@@ -5467,8 +5602,8 @@ OCStackResult OCSetHeaderOption(OCHeaderOption* ocHdrOpt, size_t* numOptions, ui
     ocHdrOpt->protocolID = OC_COAP_ID;
     ocHdrOpt->optionID = optionID;
     ocHdrOpt->optionLength =
-            optionDataLength < MAX_HEADER_OPTION_DATA_LENGTH ?
-                    optionDataLength : MAX_HEADER_OPTION_DATA_LENGTH;
+            (optionDataLength < MAX_HEADER_OPTION_DATA_LENGTH) ?
+                    (uint16_t)optionDataLength : MAX_HEADER_OPTION_DATA_LENGTH;
     memcpy(ocHdrOpt->optionData, (const void*) optionData, ocHdrOpt->optionLength);
     *numOptions += 1;
 

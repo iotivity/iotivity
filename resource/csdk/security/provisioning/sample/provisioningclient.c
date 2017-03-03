@@ -379,6 +379,9 @@ static void updateDoxmForMOTCB(void* ctx, size_t nOfRes, OCProvisionResult_t* ar
 
 static void inputPinCB(OicUuid_t deviceId, char *pin, size_t len, void *context)
 {
+    OC_UNUSED(deviceId);
+    OC_UNUSED(context);
+
     if(!pin || OXM_RANDOM_PIN_MIN_SIZE > len)
     {
         OIC_LOG(ERROR, TAG, "inputPinCB invalid parameters");
@@ -1421,6 +1424,8 @@ static int removeDeviceWithUuid(void)
 
 OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
 {
+    OC_UNUSED(ctx);
+
     OIC_LOG(INFO, TAG, "IN displayMutualVerifNumCB");
     if (NULL != mutualVerifNum)
     {
@@ -1438,6 +1443,8 @@ OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_L
 
 OCStackResult confirmNumCB(void * ctx)
 {
+    OC_UNUSED(ctx);
+
     for (;;)
     {
         int userConfirm;
@@ -1561,7 +1568,6 @@ static int selectMultipleOwnershipTrnasferMethod(void)
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
-    const int preconfOxm = 4;
     int oxm = 0;
     for( ; ; )
     {
@@ -1850,17 +1856,17 @@ static OicSecAcl_t* createAcl(const int dev_num)
             goto CRACL_ERROR;
         }
 
-        for(size_t i = 0; i < arrLen; i++)
+        for(size_t j = 0; j < arrLen; j++)
         {
-            printf("         Enter ResourceType[%zu] Name (e.g. core.led): ", i+1);
+            printf("         Enter ResourceType[%zu] Name (e.g. core.led): ", j+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
-            rsrc->types[i] = OICStrdup(rsrc_in);
-            if(!rsrc->types[i])
+            rsrc->types[j] = OICStrdup(rsrc_in);
+            if(!rsrc->types[j])
             {
                 OIC_LOG(ERROR, TAG, "createAcl: OICStrdup error return");
                 goto CRACL_ERROR;
@@ -1891,17 +1897,17 @@ static OicSecAcl_t* createAcl(const int dev_num)
             goto CRACL_ERROR;
         }
 
-        for(size_t i = 0; i < arrLen; i++)
+        for(size_t j = 0; j < arrLen; j++)
         {
-            printf("         Enter Interface[%zu] Name (e.g. oic.if.baseline): ", i+1);
+            printf("         Enter Interface[%zu] Name (e.g. oic.if.baseline): ", j+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
-            rsrc->interfaces[i] = OICStrdup(rsrc_in);
-            if(!rsrc->interfaces[i])
+            rsrc->interfaces[j] = OICStrdup(rsrc_in);
+            if(!rsrc->interfaces[j])
             {
                 OIC_LOG(ERROR, TAG, "createAcl: OICStrdup error return");
                 goto CRACL_ERROR;
@@ -2209,6 +2215,9 @@ const char* getResult(OCStackResult result)
 OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
     OCClientResponse* clientResponse)
 {
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
+
     if (clientResponse == NULL)
     {
         OIC_LOG(INFO, TAG, "getReqCB received NULL clientResponse");
@@ -2413,26 +2422,26 @@ static int waitCallbackRet(void)
 
 static int selectTwoDiffNum(int* a, int* b, const int max, const char* str)
 {
-    if(!a || !b || 2>max || !str)
+    if(!a || !b || (2 > max) || !str)
     {
         return -1;
     }
 
     for( ; ; )
     {
-        for(int i=0; 2>i; ++i)
+        for(int i = 0; 2 > i; ++i)
         {
-            int* num = 0==i?a:b;
+            int* num = (0 == i) ? a : b;
             for( ; ; )
             {
-                printf("   > Enter Device[%d] Number, %s: ", i+1, str);
-                for(int ret=0; 1!=ret; )
+                printf("   > Enter Device[%d] Number, %s: ", (i + 1), str);
+                for(int ret = 0; 1 != ret;)
                 {
                     ret = scanf("%d", num);
                     for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                                 // '0x20<=code' is character region
                 }
-                if(0<*num && max>=*num)
+                if((0 < *num) && (max >= *num))
                 {
                     break;
                 }
@@ -2445,8 +2454,6 @@ static int selectTwoDiffNum(int* a, int* b, const int max, const char* str)
             return 0;
         }
     }
-
-    return -1;
 }
 
 #ifdef __WITH_TLS__

@@ -25,13 +25,11 @@ which is open source software, written and copyright by Olaf Bergmann
 with a BSD and GPLv2 license. The original software is available from
   http://sourceforge.net/projects/libcoap/
 
-The DTLS protocol is provided by the tinyDTLS package,
-which is open source software, written and copyright by Olaf Bergmann
-with an MIT license. The tinyDTLS library relies on algorithms whose
-source is under a BSD license. The additional licenses can be viewed at
-  http://tinydtls.sourceforge.net/
+The TLS/DTLS protocol is provided by the mbedTLS package,
+which is open source software, written and copyright by ARM
+with an Apache 2.0 license.
 The original software is available from
-  http://sourceforge.net/projects/tinydtls/
+  https://github.com/ARMmbed/mbedtls
 
 This project relies on utilities in the Boost C++library which is open
 source software with a Boost Software License v1.0. The details of the
@@ -50,3 +48,8 @@ which is open source software, written and copyright by Dave Gamble
 with an MIT license. The original software is available from
   http://sourceforge.net/projects/cjson/
 
+The Linked List macro(utlist.h) is provided by the uthash package,
+which is open source software, written and copyright by Troy D. Hanson
+with an BSD license.
+The original software is available from
+  https://github.com/troydhanson/uthash

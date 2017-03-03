@@ -79,12 +79,12 @@ static void SRMSendResponse(SRMRequestContext_t *context)
         if (CA_STATUS_OK == CASendResponse(context->endPoint,
             &(context->responseInfo)))
         {
-            OIC_LOG_V(DEBUG, TAG, "SRM response sent.");
+            OIC_LOG(DEBUG, TAG, "SRM response sent.");
             context->responseSent = true;
         }
         else
         {
-            OIC_LOG_V(ERROR, TAG, "SRM response failed.");
+            OIC_LOG(ERROR, TAG, "SRM response failed.");
         }
     }
     else
@@ -152,7 +152,7 @@ void SetResourceUriAndType(SRMRequestContext_t *context)
     }
     if (MAX_URI_LENGTH < position  || 0 > position)
     {
-        OIC_LOG_V(ERROR, TAG, "Incorrect URI length.");
+        OIC_LOG(ERROR, TAG, "Incorrect URI length.");
         return;
     }
     OICStrcpyPartial(context->resourceUri, MAX_URI_LENGTH + 1,
@@ -169,12 +169,22 @@ void SetResourceUriAndType(SRMRequestContext_t *context)
 // the exception of a few SVRs (see Security Specification).
 void CheckRequestForSecResourceOverUnsecureChannel(SRMRequestContext_t *context)
 {
+    OIC_LOG_V(DEBUG, TAG, "%s: secureChannel = %u, resourceType = %d, URI = %s",
+        __func__, (uint32_t)context->secureChannel,
+        context->resourceType, context->resourceUri);
+
     // if request is over unsecure channel, check resource type
     if(false == context->secureChannel)
     {
         OCResource *resPtr = FindResourceByUri(context->resourceUri);
+
+        // TODO: IOT-1843:
+        // Should a NULL return value from FindResourceByUri result in CA_FORBIDDEN_REQ?
         if (NULL != resPtr)
         {
+            OIC_LOG_V(DEBUG, TAG, "%s: OC_SECURE = %s",
+                __func__, ((resPtr->resourceProperties) & OC_SECURE) ? "true" : "false");
+
             // All vertical secure resources and SVR resources other than
             // DOXM & PSTAT should reject requests over unsecure channel.
             if ((((resPtr->resourceProperties) & OC_SECURE)
@@ -187,6 +197,10 @@ void CheckRequestForSecResourceOverUnsecureChannel(SRMRequestContext_t *context)
                 context->responseVal = ACCESS_DENIED_SEC_RESOURCE_OVER_UNSECURE_CHANNEL;
                 context->responseInfo.result = CA_FORBIDDEN_REQ;
                 SRMSendResponse(context);
+            }
+            else
+            {
+                OIC_LOG_V(DEBUG, TAG, "%s: Allowing unsecured access", __func__);
             }
         }
     }
@@ -217,8 +231,8 @@ void ClearRequestContext(SRMRequestContext_t *context)
         context->subjectIdType = SUBJECT_ID_TYPE_ERROR;
         memset(&context->subjectUuid, 0, sizeof(context->subjectUuid));
 #ifdef MULTIPLE_OWNER
-        memset(&context->payload, 0, context->payloadSize); // TODO Samsung reviewer: please confirm
-        context->payloadSize = 0; // TODO Samsung reviewer: please confirm
+        context->payload = NULL;
+        context->payloadSize = 0;
 #endif //MULTIPLE_OWNER
     }
 
@@ -266,9 +280,9 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     }
     else
     {
-        // Store the endpoint and requestinfo params.
         ctx->endPoint = endPoint;
         ctx->requestInfo = requestInfo;
+        ctx->requestedPermission = GetPermissionFromCAMethod_t(requestInfo->method);
 
         // Copy the subjectID.
         memcpy(ctx->subjectUuid.id,
@@ -302,7 +316,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
             ctx->payloadSize = requestInfo->info.payloadSize;
 #endif //MULTIPLE_OWNER
 
-            OIC_LOG_V(DEBUG, TAG, "Processing request with uri, %s for method, %d",
+            OIC_LOG_V(DEBUG, TAG, "Processing request with uri, %s for method %d",
                 ctx->requestInfo->info.resourceUri, ctx->requestInfo->method);
             CheckPermission(ctx);
             OIC_LOG_V(DEBUG, TAG, "Request for permission %d received responseVal %d.",
@@ -428,6 +442,11 @@ bool SRMIsSecurityResourceURI(const char* uri)
         return false;
     }
 
+#ifdef _MSC_VER
+    // The strings below are const but they are also marked as extern so they cause warnings.
+#pragma warning(push)
+#pragma warning(disable:4204)
+#endif
     const char *rsrcs[] = {
         OIC_RSRC_SVC_URI,
         OIC_RSRC_AMACL_URI,
@@ -442,6 +461,10 @@ bool SRMIsSecurityResourceURI(const char* uri)
         OIC_RSRC_VER_URI,
         OC_RSRVD_PROV_CRL_URL
     };
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
     // Remove query from Uri for resource string comparison
     size_t uriLen = strlen(uri);

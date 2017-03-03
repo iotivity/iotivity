@@ -186,15 +186,15 @@ static FILE* TestFopen(const char *path, const char *mode)
     }
 }
 
-void SetPersistentHandler(OCPersistentStorage *ps)
+void SetPersistentHandler(OCPersistentStorage *persistentStorage)
 {
-    if(ps)
+    if(persistentStorage)
     {
-        ps->open = TestFopen;
-        ps->read = fread;
-        ps->write = fwrite;
-        ps->close = fclose;
-        ps->unlink = remove;
+        persistentStorage->open = TestFopen;
+        persistentStorage->read = fread;
+        persistentStorage->write = fwrite;
+        persistentStorage->close = fclose;
+        persistentStorage->unlink = remove;
     }
 }
 
@@ -418,9 +418,9 @@ TEST(SRPProvisionTrustCertChainTest, SRPProvisionTrustCertChainNullResultCallbac
     int ctx;
     OicSecCredType_t type = SIGNED_ASYMMETRIC_KEY;
     uint16_t credId = 0;
-    OCProvisionDev_t selectedDeviceInfo;
+    OCProvisionDev_t deviceInfo;
 
-    result = SRPProvisionTrustCertChain(&ctx, type, credId, &selectedDeviceInfo, NULL);
+    result = SRPProvisionTrustCertChain(&ctx, type, credId, &deviceInfo, NULL);
     EXPECT_EQ(OC_STACK_INVALID_CALLBACK, result);
 }
 
@@ -430,9 +430,9 @@ TEST(SRPProvisionTrustCertChainTest, SRPProvisionTrustCertChainInvalidOicSecCred
     int ctx;
     OicSecCredType_t type = PIN_PASSWORD;
     uint16_t credId = 0;
-    OCProvisionDev_t selectedDeviceInfo;
+    OCProvisionDev_t deviceInfo;
 
-    result = SRPProvisionTrustCertChain(&ctx, type, credId, &selectedDeviceInfo, provisioningCB);
+    result = SRPProvisionTrustCertChain(&ctx, type, credId, &deviceInfo, provisioningCB);
     EXPECT_EQ(OC_STACK_INVALID_PARAM, result);
 }
 
@@ -442,9 +442,9 @@ TEST_F(SRPTest, SRPProvisionTrustCertChainNoResource)
     int ctx;
     OicSecCredType_t type = SIGNED_ASYMMETRIC_KEY;
     uint16_t credId = 0;
-    OCProvisionDev_t selectedDeviceInfo;
+    OCProvisionDev_t deviceInfo;
 
-    result = SRPProvisionTrustCertChain(&ctx, type, credId, &selectedDeviceInfo, provisioningCB);
+    result = SRPProvisionTrustCertChain(&ctx, type, credId, &deviceInfo, provisioningCB);
     EXPECT_EQ(OC_STACK_NO_RESOURCE, result);
 }
 

@@ -54,6 +54,7 @@
 #include "payload_logging.h"
 #include "ocendpoint.h"
 #include "ocstackinternal.h"
+#include "oickeepalive.h"
 
 #ifdef ROUTING_GATEWAY
 #include "routingmanager.h"
@@ -148,7 +149,7 @@ OCStackResult ExtractFiltersFromQuery(const char *query, char **filterOne, char 
 {
     if (!query)
     {
-        OIC_LOG_V(ERROR, TAG, "Query is empty!");
+        OIC_LOG(ERROR, TAG, "Query is empty!");
         return OC_STACK_INVALID_QUERY;
     }
     char *key = NULL;
@@ -164,7 +165,7 @@ OCStackResult ExtractFiltersFromQuery(const char *query, char **filterOne, char 
     queryDup = OICStrdup(query);
     if (NULL == queryDup)
     {
-        OIC_LOG_V(ERROR, TAG, "Creating duplicate string failed!");
+        OIC_LOG(ERROR, TAG, "Creating duplicate string failed!");
         return OC_STACK_NO_MEMORY;
     }
 
@@ -216,7 +217,7 @@ OCStackResult ExtractFiltersFromQuery(const char *query, char **filterOne, char 
         *filterOne = OICStrdup(*filterOne);
         if (NULL == *filterOne)
         {
-            OIC_LOG_V(ERROR, TAG, "Creating duplicate string failed!");
+            OIC_LOG(ERROR, TAG, "Creating duplicate string failed!");
             eCode = OC_STACK_NO_MEMORY;
             goto exit;
         }
@@ -227,7 +228,7 @@ OCStackResult ExtractFiltersFromQuery(const char *query, char **filterOne, char 
         *filterTwo = OICStrdup(*filterTwo);
         if (NULL == *filterTwo)
         {
-            OIC_LOG_V(ERROR, TAG, "Creating duplicate string failed!");
+            OIC_LOG(ERROR, TAG, "Creating duplicate string failed!");
             OICFree(*filterOne);
             eCode = OC_STACK_NO_MEMORY;
             goto exit;
@@ -613,32 +614,32 @@ OCRepPayload *BuildUrlInfoWithProtocol(const char *protocol)
     OCRepPayload *urlInfoPayload = OCRepPayloadCreate();
     if (!urlInfoPayload)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to create a new RepPayload");
+        OIC_LOG(ERROR, TAG, "Failed to create a new RepPayload");
         result = OC_STACK_NO_MEMORY;
         goto exit;
     }
 
     if (!OCRepPayloadSetPropString(urlInfoPayload, OC_RSRVD_INTROSPECTION_URL, OC_RSRVD_INTROSPECTION_PAYLOAD_URI))
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to add url");
+        OIC_LOG(ERROR, TAG, "Failed to add url");
         result = OC_STACK_ERROR;
         goto exit;
     }
     if (!OCRepPayloadSetPropString(urlInfoPayload, OC_RSRVD_INTROSPECTION_PROTOCOL, protocol))
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to add protocol");
+        OIC_LOG(ERROR, TAG, "Failed to add protocol");
         result = OC_STACK_ERROR;
         goto exit;
     }
     if (!OCRepPayloadSetPropString(urlInfoPayload, OC_RSRVD_INTROSPECTION_CONTENT_TYPE, OC_RSRVD_INTROSPECTION_CONTENT_TYPE_VALUE))
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to add content type");
+        OIC_LOG(ERROR, TAG, "Failed to add content type");
         result = OC_STACK_ERROR;
         goto exit;
     }
     if (!OCRepPayloadSetPropInt(urlInfoPayload, OC_RSRVD_INTROSPECTION_VERSION, OC_RSRVD_INTROSPECTION_VERSION_VALUE))
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to add version");
+        OIC_LOG(ERROR, TAG, "Failed to add version");
         result = OC_STACK_ERROR;
         goto exit;
     }
@@ -730,7 +731,7 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
 
     if (!OCRepPayloadSetUri(tempPayload, resourcePtr->uri))
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to set payload URI");
+        OIC_LOG(ERROR, TAG, "Failed to set payload URI");
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -740,7 +741,7 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
     {
         if (!OCRepPayloadAddResourceType(tempPayload, resType->resourcetypename))
         {
-            OIC_LOG_V(ERROR, TAG, "Failed at add resource type");
+            OIC_LOG(ERROR, TAG, "Failed at add resource type");
             ret = OC_STACK_ERROR;
             goto exit;
         }
@@ -752,7 +753,7 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
     {
         if (!OCRepPayloadAddInterface(tempPayload, resInterface->name))
         {
-            OIC_LOG_V(ERROR, TAG, "Failed to add interface");
+            OIC_LOG(ERROR, TAG, "Failed to add interface");
             ret = OC_STACK_ERROR;
             goto exit;
         }
@@ -760,7 +761,7 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
     }
     if (!OCRepPayloadSetPropString(tempPayload, OC_RSRVD_INTROSPECTION_NAME, OC_RSRVD_INTROSPECTION_NAME_VALUE))
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to set Name property.");
+        OIC_LOG(ERROR, TAG, "Failed to set Name property.");
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -834,7 +835,7 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
                 urlInfoPayload[i] = BuildUrlInfoWithProtocol(proto->value);
                 if (!urlInfoPayload[i])
                 {
-                    OIC_LOG_V(ERROR, TAG, "Unable to build urlInfo object for protocol");
+                    OIC_LOG(ERROR, TAG, "Unable to build urlInfo object for protocol");
                     ret = OC_STACK_ERROR;
                     goto exit;
                 }
@@ -846,14 +847,14 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
                                                        urlInfoPayload,
                                                        dimensions))
             {
-                OIC_LOG_V(ERROR, TAG, "Unable to add urlInfo object to introspection payload ");
+                OIC_LOG(ERROR, TAG, "Unable to add urlInfo object to introspection payload ");
                 ret = OC_STACK_ERROR;
                 goto exit;
             }
         }
         else
         {
-            OIC_LOG_V(ERROR, TAG, "Unable to allocate memory for urlInfo ");
+            OIC_LOG(ERROR, TAG, "Unable to allocate memory for urlInfo ");
             ret = OC_STACK_NO_MEMORY;
             goto exit;
         }

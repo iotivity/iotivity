@@ -103,7 +103,7 @@ NSResult NSConsumerEnableRemoteService(const char * serverAddress)
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
-    char * queryAddr = NSGetQueryAddress(serverAddress);
+    char * queryAddr = OICStrdup(serverAddress);
     NS_VERIFY_NOT_NULL(queryAddr, NS_ERROR);
 
     NSTask * discoverTask = NSMakeTask(TASK_CONSUMER_REQ_DISCOVER, (void *)queryAddr);
@@ -204,7 +204,7 @@ NSTopicLL * NSConsumerGetTopicList(const char * providerId)
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NULL);
 
-    NS_LOG_V(DEBUG, "NSProvider ID: %s", providerId);
+    NS_LOG_V(INFO_PRIVATE, "NSProvider ID: %s", providerId);
     NSProvider_internal * prov_internal = NSConsumerFindNSProvider(providerId);
     NS_VERIFY_NOT_NULL(prov_internal, NULL);
 

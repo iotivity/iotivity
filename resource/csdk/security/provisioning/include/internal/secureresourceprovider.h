@@ -35,6 +35,7 @@ extern "C"
 /**
  * API to send ACL information to resource.
  *
+ * @param[in] ctx Application context would be returned in result callback.
  * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] acl ACL to provision.
  * @param[in] resultCallback callback provided by API user, callback will be called when
@@ -55,6 +56,7 @@ OCStackResult SRPSaveACL(const OicSecAcl_t *acl);
 /**
  * API to request CRED information to resource.
  *
+ * @param[in] ctx Application context would be returned in result callback.
  * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from resource server.
@@ -66,6 +68,7 @@ OCStackResult SRPGetCredResource(void *ctx, const OCProvisionDev_t *selectedDevi
 /**
  * API to request ACL information to resource.
  *
+ * @param[in] ctx Application context would be returned in result callback.
  * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from resource server.
@@ -142,6 +145,7 @@ void SRPRemoveTrustCertChainNotifier(void);
 /**
  * API to send Direct-Pairing Configuration to a device.
  *
+ * @param[in] ctx Application context would be returned in result callback.
  * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] pconf PCONF pointer.
  * @param[in] resultCallback callback provided by API user, callback will be called when
@@ -166,7 +170,9 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
 /**
  * API to provision credential to devices.
  *
+ * @param[in] ctx Application context would be returned in result callback.
  * @param[in] type Type of credentials to be provisioned to the device.
+ * @param[in] keySize size of key
  * @param[in] pDev1 Pointer to PMOwnedDeviceInfo_t instance,respresenting resource to be provsioned.
    @param[in] pDev2 Pointer to PMOwnedDeviceInfo_t instance,respresenting resource to be provsioned.
  * @param[in] resultCallback callback provided by API user, callback will be called when
@@ -195,7 +201,7 @@ OCStackResult SRPUnlinkDevices(void* ctx,
                               const OCProvisionDev_t* pTargetDev2,
                               OCProvisionResultCB resultCallback);
 
-/*
+/**
  * Function to device revocation.
  * This function will remove credential of target device from all devices in subnet.
  *
@@ -214,7 +220,7 @@ OCStackResult SRPRemoveDevice(void* ctx,
                               const OCProvisionDev_t* pTargetDev,
                               OCProvisionResultCB resultCallback);
 
-/*
+/**
 * Function to device revocation
 * This function will remove credential of target device from all devices in subnet.
 *
@@ -230,7 +236,7 @@ OCStackResult SRPRemoveDevice(void* ctx,
 OCStackResult SRPRemoveDeviceWithoutDiscovery(void* ctx, const OCProvisionDev_t* pOwnedDevList,
                              const OCProvisionDev_t* pTargetDev, OCProvisionResultCB resultCallback);
 
-/*
+/**
  * Function to sync-up credential and ACL of the target device.
  * This function will remove credential and ACL of target device from all devices in subnet.
  *
@@ -247,7 +253,7 @@ OCStackResult SRPRemoveDeviceWithoutDiscovery(void* ctx, const OCProvisionDev_t*
 OCStackResult SRPSyncDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
                          const OCProvisionDev_t* pTargetDev, OCProvisionResultCB resultCallback);
 
-/*
+/**
  * Function for remote reset
  * This function will send pstat POST(modify) message to the target device
  * to change current mode to reset state in order to initiate remote reset.
@@ -263,7 +269,7 @@ OCStackResult SRPSyncDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDisc
 OCStackResult SRPResetDevice(const OCProvisionDev_t* pTargetDev,
         OCProvisionResultCB resultCallback);
 
-/*
+/**
  * Function to read Trust certificate chain from SVR.
  * Caller must free when done using the returned trust certificate
  * @param[in] credId CredId of trust certificate chain in SVR.

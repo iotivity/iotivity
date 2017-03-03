@@ -26,6 +26,7 @@ public enum OxmType {
     OIC_JUST_WORKS(0),
     OIC_RANDOM_DEVICE_PIN(1),
     OIC_MANUFACTURER_CERTIFICATE(2),
+    OIC_PRECONFIG_PIN(65280),
     OIC_OXM_COUNT(3);
 
     private int value;

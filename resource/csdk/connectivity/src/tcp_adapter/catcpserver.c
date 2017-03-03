@@ -1444,7 +1444,7 @@ void CATCPDisconnectAll()
     oc_mutex_unlock(g_mutexObjectList);
 
 #ifdef __WITH_TLS__
-    CAcloseSslConnectionAll();
+    CAcloseSslConnectionAll(CA_ADAPTER_TCP);
 #endif
 
 }

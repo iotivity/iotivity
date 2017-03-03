@@ -40,7 +40,7 @@ typedef struct LIGHTRESOURCE
 {
     OCResourceHandle handle;
     bool state;
-    int power;
+    int64_t power;
 } LightResource;
 
 /* Structure to represent the observers */

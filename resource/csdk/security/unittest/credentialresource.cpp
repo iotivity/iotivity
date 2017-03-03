@@ -19,7 +19,6 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "gtest/gtest.h"
-#include "logger.h"
 #include "ocpayload.h"
 #include "ocstack.h"
 #include "oic_malloc.h"
@@ -31,6 +30,7 @@
 #include "srmutility.h"
 #include "psinterface.h"
 #include "security_internals.h"
+#include "logger.h"
 
 #define TAG "SRM-CRED-UT"
 

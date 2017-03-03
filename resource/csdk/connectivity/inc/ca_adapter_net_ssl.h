@@ -190,6 +190,26 @@ CAResult_t CAsslGenerateOwnerPsk(const CAEndpoint_t *endpoint,
 const CASecureEndpoint_t *GetCASecureEndpointData(const CAEndpoint_t* peer);
 #endif
 
+/**
+ * Adds a bit to the attributes field of a secure endpoint.
+ *
+ * @param[in]  peer         remote address
+ * @param[in]  newAttribute bit to be added to the attributes field
+ *
+ * @return  true if the secure endpoint has been found, false otherwise.
+ */
+bool SetCASecureEndpointAttribute(const CAEndpoint_t* peer, uint32_t newAttribute);
+
+/**
+ * Gets the attributes field of a secure endpoint.
+ *
+ * @param[in]  peer          remote address
+ * @param[out] allAttributes all the attributes bits for that remote address
+ *
+ * @return  true if the secure endpoint has been found, false otherwise.
+ */
+bool GetCASecureEndpointAttributes(const CAEndpoint_t* peer, uint32_t* allAttributes);
+
 #ifdef __cplusplus
 }
 #endif //__cplusplus

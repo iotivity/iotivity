@@ -232,7 +232,7 @@ typedef struct OCResource {
     union
     {
         /** An ordinal number that is not repeated - must be unique in the collection context. */
-        uint8_t ins;
+        int64_t ins;
         /** Any unique string including a URI. */
         char *uniqueStr;
         /** Use UUID for universal uniqueness - used in /oic/res to identify the device. */

@@ -298,7 +298,7 @@ typedef enum
 }MotStatus_t;
 #endif //MULTIPLE_OWNER
 
-/*
+/**
  * oic.sec.mom type definition
  * TODO: This type will be included to OIC Security Spec.
  * 0 : Disable multiple owner

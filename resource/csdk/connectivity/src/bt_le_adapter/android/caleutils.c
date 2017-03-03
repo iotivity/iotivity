@@ -106,6 +106,50 @@ error_exit:
     return NULL;
 }
 
+jobject CALEGetParcelUuidFromString(JNIEnv *env, const char* uuid)
+{
+    VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
+    VERIFY_NON_NULL_RET(uuid, TAG, "uuid is null", NULL);
+
+    jclass jni_cid_ParcelUuid = (*env)->FindClass(env, "android/os/ParcelUuid");
+    if (!jni_cid_ParcelUuid)
+    {
+        OIC_LOG(ERROR, TAG, "jni_cid_ParcelUuid is not available");
+        goto error_exit;
+    }
+
+    jmethodID jni_mid_fromString = (*env)->GetStaticMethodID(env, jni_cid_ParcelUuid,
+                                                             "fromString",
+                                                             "(Ljava/lang/String;)"
+                                                             "Landroid/os/ParcelUuid;");
+    if (!jni_mid_fromString)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_fromString is not available");
+        goto error_exit;
+    }
+
+    jstring str_uuid = (*env)->NewStringUTF(env, uuid);
+    if (!str_uuid)
+    {
+        OIC_LOG(ERROR, TAG, "str_uuid is not available");
+        goto error_exit;
+    }
+
+    jobject jni_obj_parcelUuid = (*env)->CallStaticObjectMethod(env, jni_cid_ParcelUuid,
+                                                                jni_mid_fromString,
+                                                                str_uuid);
+    if (!jni_obj_parcelUuid)
+    {
+        OIC_LOG(ERROR, TAG, "Fail to get jni uuid object");
+        goto error_exit;
+    }
+
+    return jni_obj_parcelUuid;
+error_exit:
+    CACheckJNIException(env);
+    return NULL;
+}
+
 bool CALEIsBondedDevice(JNIEnv *env, jobject bluetoothDevice)
 {
     VERIFY_NON_NULL_RET(env, TAG, "env is null", false);

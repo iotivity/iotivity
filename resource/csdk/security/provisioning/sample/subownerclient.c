@@ -179,6 +179,9 @@ static void provisionAclCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, b
 // response handler for LED requests.
 static OCStackApplicationResult LedCB(void *ctx, OCDoHandle UNUSED, OCClientResponse *clientResponse)
 {
+    OC_UNUSED(ctx);
+    OC_UNUSED(UNUSED);
+
     if(clientResponse)
     {
         if(OC_STACK_OK == clientResponse->result)
@@ -944,7 +947,6 @@ int main()
 
     // main loop for provisioning manager
     int mnNum = 0;
-    int selDevNum = 0;
     for( ; ; )
     {
         printf("\n");

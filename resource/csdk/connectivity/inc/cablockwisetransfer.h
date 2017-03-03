@@ -497,7 +497,7 @@ CAData_t *CAGetDataSetFromBlockDataList(const CABlockDataID_t *blockID);
  * Update the block data from block-wise transfer list.
  * @param[in]   blockID     ID set of CABlockData.
  * @param[in]   sendData    New block date should be sent.
- * @return CAData structure.
+ * @return CABlockData_t structure.
  */
 CABlockData_t *CAUpdateDataSetFromBlockDataList(const CABlockDataID_t *blockID,
                                                 const CAData_t *sendData);

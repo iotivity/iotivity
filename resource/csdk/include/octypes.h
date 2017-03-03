@@ -248,10 +248,10 @@ extern "C" {
 #define OC_RSRVD_HOSTING_PORT           "port"
 
 /** TCP Port. */
-#define OC_RSRVD_TCP_PORT               "tcp"
+#define OC_RSRVD_TCP_PORT               "x.org.iotivity.tcp"
 
 /** TLS Port. */
-#define OC_RSRVD_TLS_PORT               "tls"
+#define OC_RSRVD_TLS_PORT               "x.org.iotivity.tls"
 
 /** For Server instance ID.*/
 #define OC_RSRVD_SERVER_INSTANCE_ID     "sid"
@@ -690,6 +690,18 @@ typedef enum
     /** disable rfcomm server.*/
     OC_EDR_SERVER_DISABLE = (1 << 7)
 } OCTransportBTFlags_t;
+
+/**
+ * Log level to print can be controlled through this enum.
+ * And privacy logs contained uid, Token, Device id, etc can also disable.
+ * This enum (OCLogLevel) must be kept synchronized with
+ * CAUtilLogLevel_t (in CACommon.h).
+ */
+typedef enum
+{
+    OC_LOG_LEVEL_ALL = 1,             // all logs.
+    OC_LOG_LEVEL_INFO,                // debug level is disabled.
+} OCLogLevel;
 
 /**
  *  Enum layout assumes some targets have 16-bit integer (e.g., Arduino).

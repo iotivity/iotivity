@@ -46,10 +46,11 @@ notification_env.AppendUnique(CPPPATH = ['include'])
 notification_env.AppendUnique(CPPPATH = ['src/common'])
 notification_env.AppendUnique(CPPPATH = ['src/provider'])
 notification_env.AppendUnique(CPPPATH = ['src/consumer'])
-notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/include'])
-notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/stack/include'])
-notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/resource-directory/include'])
-notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/connectivity/api'])
+notification_env.AppendUnique(CPPPATH = ['#/resource/csdk/include'])
+notification_env.AppendUnique(CPPPATH = ['#/resource/csdk/security/include'])
+notification_env.AppendUnique(CPPPATH = ['#/resource/csdk/stack/include'])
+notification_env.AppendUnique(CPPPATH = ['#/resource/csdk/resource-directory/include'])
+notification_env.AppendUnique(CPPPATH = ['#/resource/csdk/connectivity/api'])
 
 notification_env.PrependUnique(LIBS = [
 	'octbstack',
@@ -145,8 +146,8 @@ notification_consumer_env.UserInstallTargetHeader('include/NSCommon.h',\
 
 
 # Go to build Unit test
-if target_os == 'linux':
-    SConscript('unittest/SConscript')
+#if target_os == 'linux':
+#    SConscript('unittest/SConscript')
 
 # Go to build c++ wrapper
 SConscript('cpp-wrapper/SConscript')

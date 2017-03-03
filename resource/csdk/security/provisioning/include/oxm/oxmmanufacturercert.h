@@ -35,7 +35,7 @@ extern "C" {
  *
  * @param otmCtx Context of OTM, It includes current device information.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult PrepareMCertificateCallback(OTMContext_t *otmCtx);
 
@@ -44,7 +44,7 @@ OCStackResult PrepareMCertificateCallback(OTMContext_t *otmCtx);
  *
  * @param otmCtx Context of OTM, It includes current device information.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult CreateSecureSessionMCertificateCallback(OTMContext_t *otmCtx);
 
@@ -56,7 +56,7 @@ OCStackResult CreateSecureSessionMCertificateCallback(OTMContext_t *otmCtx);
  * @note Returned memory should be deallocated by caller.
  * @param cborSize is the size of the cborPayload.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult CreateMCertificateBasedSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
                                              size_t *cborSize);
@@ -69,7 +69,7 @@ OCStackResult CreateMCertificateBasedSelectOxmPayload(OTMContext_t *otmCtx, uint
  * @note Returned memory should be deallocated by caller.
  * @param cborSize is the size of the cborPayload.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult CreateConMCertificateBasedSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
                                              size_t *cborSize);
@@ -78,11 +78,11 @@ OCStackResult CreateConMCertificateBasedSelectOxmPayload(OTMContext_t *otmCtx, u
  * Generate payload for owner transfer request.
  *
  * @param otmCtx Context of OTM, It includes current device information.
- * @param cborPaylaod is the DOXM CBOR payload including the owner information.
+ * @param cborPayload is the DOXM CBOR payload including the owner information.
  * @note Returned memory should be deallocated by caller.
  * @param cborSize is the size of the cborPayload.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult CreateMCertificateBasedOwnerTransferPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
                                                  size_t *cborSize);

@@ -21,6 +21,11 @@
 #include "iotivity_config.h"
 #include "OCResource.h"
 #include "OCUtilities.h"
+#include "ocstack.h"
+#include "oic_malloc.h"
+#include "cacommon.h"
+#include "cautilinterface.h"
+#include "oic_string.h"
 
 #include <boost/lexical_cast.hpp>
 #include <sstream>
@@ -73,12 +78,88 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
 }
 
 OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
+                        const OCDevAddr& devAddr, const std::string& uri,
+                        const std::string& serverId, uint8_t property,
+                        const std::vector<std::string>& resourceTypes,
+                        const std::vector<std::string>& interfaces,
+                        const std::vector<std::string>& endpoints)
+ :  m_clientWrapper(clientWrapper), m_uri(uri),
+    m_resourceId(serverId, m_uri), m_devAddr(devAddr),
+    m_isCollection(false), m_property(property),
+    m_resourceTypes(resourceTypes), m_interfaces(interfaces),
+    m_endpoints(endpoints),
+    m_observeHandle(nullptr)
+{
+    m_isCollection = std::find(m_interfaces.begin(), m_interfaces.end(), LINK_INTERFACE)
+                        != m_interfaces.end();
+
+    if (m_uri.empty() ||
+        resourceTypes.empty() ||
+        interfaces.empty()||
+        m_clientWrapper.expired())
+    {
+        throw ResourceInitException(m_uri.empty(), resourceTypes.empty(),
+                interfaces.empty(), m_clientWrapper.expired(), false, false);
+    }
+}
+
+OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
+                        const std::string& host, const std::string& uri,
+                        const std::string& serverId,
+                        OCConnectivityType connectivityType, uint8_t property,
+                        const std::vector<std::string>& resourceTypes,
+                        const std::vector<std::string>& interfaces,
+                        const std::vector<std::string>& endpoints)
+ :  m_clientWrapper(clientWrapper), m_uri(uri),
+    m_resourceId(serverId, m_uri),
+    m_isCollection(false), m_property(property),
+    m_resourceTypes(resourceTypes), m_interfaces(interfaces),
+    m_endpoints(endpoints),
+    m_observeHandle(nullptr)
+{
+    m_devAddr = OCDevAddr{OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0,
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+                          {0}
+#endif
+                        };
+    m_isCollection = std::find(m_interfaces.begin(), m_interfaces.end(), LINK_INTERFACE)
+                        != m_interfaces.end();
+
+    if (m_uri.empty() ||
+        resourceTypes.empty() ||
+        interfaces.empty()||
+        m_clientWrapper.expired())
+    {
+        throw ResourceInitException(m_uri.empty(), resourceTypes.empty(),
+                interfaces.empty(), m_clientWrapper.expired(), false, false);
+    }
+
+    if (uri.length() == 1 && uri[0] == '/')
+    {
+        throw ResourceInitException(m_uri.empty(), resourceTypes.empty(),
+                interfaces.empty(), m_clientWrapper.expired(), false, false);
+    }
+
+    if (uri[0] != '/')
+    {
+        throw ResourceInitException(m_uri.empty(), resourceTypes.empty(),
+                interfaces.empty(), m_clientWrapper.expired(), false, false);
+    }
+
+    // construct the devAddr from the pieces we have
+    m_devAddr.adapter = static_cast<OCTransportAdapter>(connectivityType >> CT_ADAPTER_SHIFT);
+    m_devAddr.flags = static_cast<OCTransportFlags>(connectivityType & CT_MASK_FLAGS);
+
+    this->setHost(host);
+}
+
+OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                         const std::string& host, const std::string& uri,
                         const std::string& serverId,
                         OCConnectivityType connectivityType, uint8_t property,
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces)
- :  m_clientWrapper(clientWrapper), m_uri(uri),
+:  m_clientWrapper(clientWrapper), m_uri(uri),
     m_resourceId(serverId, m_uri),
     m_isCollection(false), m_property(property),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
@@ -124,40 +205,84 @@ OCResource::~OCResource()
 {
 }
 
-void OCResource::setHost(const std::string& host)
+std::string OCResource::setHost(const std::string& host)
 {
     size_t prefix_len;
 
-    if (host.compare(0, sizeof(COAP) - 1, COAP) == 0)
+    OCDevAddr new_devAddr;
+    memset(&new_devAddr, 0, sizeof(new_devAddr));
+    new_devAddr.adapter = OC_DEFAULT_ADAPTER;
+    new_devAddr.flags = OC_DEFAULT_FLAGS;
+
+    // init m_devAddr
+    m_devAddr = new_devAddr;
+    bool usingIpAddr = false;
+
+    if (host.compare(0, sizeof(COAPS) - 1, COAPS) == 0)
     {
-        prefix_len = sizeof(COAP) - 1;
-    }
-    else if (host.compare(0, sizeof(COAPS) - 1, COAPS) == 0)
-    {
+        if (!OC_SECURE)
+        {
+            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+            m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+        }
         prefix_len = sizeof(COAPS) - 1;
         m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags | OC_SECURE);
+        m_devAddr.adapter = OC_ADAPTER_IP;
+        usingIpAddr = true;
+    }
+    else if (host.compare(0, sizeof(COAP) - 1, COAP) == 0)
+    {
+        prefix_len = sizeof(COAP) - 1;
+        m_devAddr.adapter = OC_ADAPTER_IP;
+        usingIpAddr = true;
     }
     else if (host.compare(0, sizeof(COAP_TCP) - 1, COAP_TCP) == 0)
     {
         prefix_len = sizeof(COAP_TCP) - 1;
+        m_devAddr.adapter = OC_ADAPTER_TCP;
+        usingIpAddr = true;
     }
     else if (host.compare(0, sizeof(COAPS_TCP) - 1, COAPS_TCP) == 0)
     {
+        if (!OC_SECURE)
+        {
+            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+            m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+        }
         prefix_len = sizeof(COAPS_TCP) - 1;
         m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags | OC_SECURE);
+        m_devAddr.adapter = OC_ADAPTER_TCP;
+        usingIpAddr = true;
     }
     else if (host.compare(0, sizeof(COAP_GATT) - 1, COAP_GATT) == 0)
     {
         prefix_len = sizeof(COAP_GATT) - 1;
+        m_devAddr.adapter = OC_ADAPTER_GATT_BTLE;
     }
     else if (host.compare(0, sizeof(COAP_RFCOMM) - 1, COAP_RFCOMM) == 0)
     {
         prefix_len = sizeof(COAP_RFCOMM) - 1;
+        m_devAddr.adapter = OC_ADAPTER_RFCOMM_BTEDR;
     }
     else
     {
         throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
             m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+    }
+
+    // set flag
+    if (usingIpAddr)
+    {
+        if (host.find('[') != std::string::npos)
+        {
+            // ipv6
+            m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags | OC_IP_USE_V6);
+        }
+        else
+        {
+            // ipv4
+            m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags | OC_IP_USE_V4);
+        }
     }
 
     // remove 'coap://' or 'coaps://' or 'coap+tcp://' or 'coap+gatt://' or 'coap+rfcomm://'
@@ -200,13 +325,47 @@ void OCResource::setHost(const std::string& host)
                 m_interfaces.empty(), m_clientWrapper.expired(), false, false);
         }
 
-        OCStackResult result = OCDecodeAddressForRFC6874(m_devAddr.addr,
-            sizeof(m_devAddr.addr), ip6Addr.c_str(), nullptr);
-
-        if (OC_STACK_OK != result)
+        if (std::string::npos != ip6Addr.find("%25"))
         {
-            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
-                m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+            OCStackResult result = OCDecodeAddressForRFC6874(m_devAddr.addr,
+                                   sizeof(m_devAddr.addr), ip6Addr.c_str(), nullptr);
+
+            if (OC_STACK_OK != result)
+            {
+                throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                    m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+            }
+        }
+        else
+        {
+            // It means zone-id is missing, check ipv6Addr is link local
+            CATransportFlags_t scopeLevel;
+            CAResult_t caResult = CAGetIpv6AddrScope(ip6Addr.c_str(), &scopeLevel);
+
+            if (CA_STATUS_OK != caResult)
+            {
+                throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                    m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+            }
+            else
+            {
+                if (CA_SCOPE_LINK == scopeLevel)
+                {
+                    {
+                        // Given ip address is link-local scope without zone-id.
+                        throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                            m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+                    }
+                }
+                else
+                {
+                    if (!OICStrcpy(m_devAddr.addr, sizeof(m_devAddr.addr), ip6Addr.c_str()))
+                    {
+                        throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                            m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+                    }
+                }
+            }
         }
 
         m_devAddr.port = static_cast<uint16_t>(port);
@@ -293,6 +452,7 @@ void OCResource::setHost(const std::string& host)
             m_devAddr.port = static_cast<uint16_t>(port);
         }
     }
+    return this->host();
 }
 
 OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap,
@@ -568,6 +728,11 @@ std::string OCResource::host() const
         ss << ':' << m_devAddr.port;
     }
     return ss.str();
+}
+
+std::vector<std::string> OCResource::getAllHosts() const
+{
+    return m_endpoints;
 }
 
 std::string OCResource::uri() const

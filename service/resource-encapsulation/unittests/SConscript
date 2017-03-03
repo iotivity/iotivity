@@ -74,8 +74,7 @@ rcs_test_env.PrependUnique(LIBS = [
 
 if lib_env.get('SECURED') == '1':
     rcs_test_env.AppendUnique(CPPDEFINES = ['SECURED'])
-    if lib_env.get('WITH_TCP') == True:
-        rcs_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    rcs_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if 'g++' in rcs_test_env.get('CXX'):
     rcs_test_env.AppendUnique(CXXFLAGS = ['-std=c++0x'])

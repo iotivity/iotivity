@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <memory.h>
+#include <limits.h>
 
 #include "ocstack.h"
 #include "oic_malloc.h"
@@ -47,6 +48,7 @@ typedef struct DisplayPinCallbacks
 {
     GeneratePinCallback callback;
     DisplayPinCallbackWithContext contextCallback;
+    ClosePinDisplayCallback closePinDisplayCallback;
     void* context;
 } DisplayPinCallbacks_t;
 
@@ -60,7 +62,7 @@ typedef struct InputPinCallbacks
     void* context;
 } InputPinCallbacks_t;
 
-static DisplayPinCallbacks_t g_displayPinCallbacks = { .callback = NULL, .contextCallback = NULL, .context = NULL };
+static DisplayPinCallbacks_t g_displayPinCallbacks = { .callback = NULL, .contextCallback = NULL, .closePinDisplayCallback = NULL, .context = NULL };
 static InputPinCallbacks_t g_inputPinCallbacks = { .callback = NULL, .contextCallback = NULL, .context = NULL };
 
 typedef struct PinOxmData {
@@ -117,7 +119,7 @@ void SetInputPinCB(InputPinCallback pinCB)
         OIC_LOG(ERROR, TAG, "Failed to set callback for input pin.");
         return;
     }
-    
+
     if ((NULL != g_inputPinCallbacks.callback) || (NULL != g_inputPinCallbacks.contextCallback))
     {
         OIC_LOG(ERROR, TAG, "Callback for input pin is already set.");
@@ -134,7 +136,7 @@ OCStackResult SetInputPinWithContextCB(InputPinCallbackWithContext inputPinCB, v
         OIC_LOG(ERROR, TAG, "Failed to set callback for input pin.");
         return OC_STACK_INVALID_PARAM;
     }
-    
+
     if ((NULL != g_inputPinCallbacks.callback) || (NULL != g_inputPinCallbacks.contextCallback))
     {
         OIC_LOG(ERROR, TAG, "Callback for input pin is already set.");
@@ -171,7 +173,7 @@ OCStackResult SetDisplayPinWithContextCB(DisplayPinCallbackWithContext displayPi
         OIC_LOG(ERROR, TAG, "Failed to set a callback for displaying a pin.");
         return OC_STACK_INVALID_PARAM;
     }
-    
+
     if ((NULL != g_displayPinCallbacks.callback) || (NULL != g_displayPinCallbacks.contextCallback))
     {
         OIC_LOG(ERROR, TAG, "Callback for displaying a pin is already set.");
@@ -182,6 +184,23 @@ OCStackResult SetDisplayPinWithContextCB(DisplayPinCallbackWithContext displayPi
     g_displayPinCallbacks.context = context;
 
     return OC_STACK_OK;
+}
+
+void SetClosePinDisplayCB(ClosePinDisplayCallback closeCB)
+{
+    if (NULL == closeCB)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to set a callback for closing a pin.");
+        return;
+    }
+
+    if (NULL != g_displayPinCallbacks.closePinDisplayCallback)
+    {
+        OIC_LOG(ERROR, TAG, "Callback for closing a pin is already set.");
+        return;
+    }
+
+    g_displayPinCallbacks.closePinDisplayCallback = closeCB;
 }
 
 void UnsetInputPinCB()
@@ -206,6 +225,19 @@ void UnsetDisplayPinWithContextCB()
     g_displayPinCallbacks.callback = NULL;
     g_displayPinCallbacks.contextCallback = NULL;
     g_displayPinCallbacks.context = NULL;
+}
+
+void UnsetClosePinDisplayCB()
+{
+    g_displayPinCallbacks.closePinDisplayCallback = NULL;
+}
+
+void ClosePinDisplay()
+{
+    if (g_displayPinCallbacks.closePinDisplayCallback)
+    {
+        g_displayPinCallbacks.closePinDisplayCallback();
+    }
 }
 
 /**
@@ -561,8 +593,7 @@ int32_t GetDtlsPskForPreconfPinOxm( CADtlsPskCredType_t type,
             case CA_DTLS_PSK_KEY:
                 {
                     OicUuid_t uuid;
-                    memset(&uuid, 0x00, sizeof(uuid));
-                    OICStrcpy(uuid.id, sizeof(uuid.id), WILDCARD_SUBJECT_ID.id);
+                    memcpy(&uuid, &WILDCARD_SUBJECT_ID, sizeof(uuid));
 
                     //Load PreConfigured-PIN
                     const OicSecCred_t* cred = GetCredResourceData(&uuid);
@@ -591,7 +622,7 @@ int32_t GetDtlsPskForPreconfPinOxm( CADtlsPskCredType_t type,
                                 return ret;
                             }
 
-                            if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, pinBuffer, pinBufSize, &pinLength))
+                            if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, (uint8_t*)pinBuffer, pinBufSize, &pinLength))
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
                                 OICFree(pinBuffer);
@@ -662,8 +693,7 @@ int32_t GetDtlsPskForMotPreconfPinOxm( CADtlsPskCredType_t type,
             case CA_DTLS_PSK_KEY:
                 {
                     OicUuid_t uuid;
-                    memset(&uuid, 0x00, sizeof(uuid));
-                    OICStrcpy(uuid.id, sizeof(uuid.id), WILDCARD_SUBJECT_ID.id);
+                    memcpy(&uuid, &WILDCARD_SUBJECT_ID, sizeof(uuid));
 
                     //Load PreConfigured-PIN
                     const OicSecCred_t* cred = GetCredResourceData(&uuid);
@@ -692,7 +722,7 @@ int32_t GetDtlsPskForMotPreconfPinOxm( CADtlsPskCredType_t type,
                                 return ret;
                             }
 
-                            if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, pinBuffer, pinBufSize, &pinLength))
+                            if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, (uint8_t*)pinBuffer, pinBufSize, &pinLength))
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
                                 OICFree(pinBuffer);

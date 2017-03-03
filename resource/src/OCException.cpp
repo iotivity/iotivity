@@ -119,6 +119,8 @@ std::string OC::OCException::reason(const OCStackResult sr)
             return OC::Exception::FORBIDDEN_REQ;
         case OC_STACK_INTERNAL_SERVER_ERROR:
             return OC::Exception::INTERNAL_SERVER_ERROR;
+        case OC_STACK_BAD_ENDPOINT:
+            return OC::Exception::BAD_ENDPOINT;
     }
 
     return OC::Exception::UNKNOWN_ERROR;

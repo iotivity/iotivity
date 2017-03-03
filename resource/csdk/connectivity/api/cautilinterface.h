@@ -266,6 +266,17 @@ CAResult_t CAUtilSetBTConfigure(CAUtilConfig_t config);
  */
 CAResult_t CAGetIpv6AddrScope(const char *addr, CATransportFlags_t *scopeLevel);
 
+/**
+ * set CAUtil log preference.
+ * @param[in]  level                     ::CAUtilLogLevel_t value
+ * @param[in]  hidePrivateLogEntries     Private Log Entries.
+ *                                       Example:
+ *                                       true : hide private log.
+ *                                       false : show private log.
+ *                                       (privacy : uid, did, access token, etc)
+ */
+void CAUtilSetLogLevel(CAUtilLogLevel_t level, bool hidePrivateLogEntries);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif //__cplusplus

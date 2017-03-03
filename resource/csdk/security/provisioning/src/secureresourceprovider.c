@@ -557,7 +557,13 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
     OicSecCred_t *cred = (OicSecCred_t *)OICCalloc(1, sizeof(*cred));
     VERIFY_NOT_NULL_RETURN(TAG, cred, ERROR, OC_STACK_NO_MEMORY);
 
-    memcpy(cred->subject.id, &WILDCARD_SUBJECT_ID, WILDCARD_SUBJECT_ID_LEN);
+    res = GetDoxmDeviceID(&cred->subject);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Cann't get the device id(GetDoxmDeviceID)");
+        DeleteCredList(cred);
+        return res;
+    }
 
     cred->credUsage= (char *)OICCalloc(1, strlen(TRUST_CA)+1 );
     VERIFY_NOT_NULL_RETURN(TAG, cred->credUsage, ERROR, OC_STACK_NO_MEMORY);
@@ -620,9 +626,12 @@ OCStackResult SRPSaveOwnCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16_
 
     OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
 
-    if (OC_STACK_OK != GetDoxmDeviceID(&cred->subject))
+    res = GetDoxmDeviceID(&cred->subject);
+    if (OC_STACK_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Cann't get the device id(GetDoxmDeviceID)");
+        DeleteCredList(cred);
+        return res;
     }
 
     cred->credUsage= (char *)OICCalloc(1, strlen(PRIMARY_CERT)+1 );
@@ -775,7 +784,6 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
             return OC_STACK_INVALID_PARAM;
         }
     }
-    return OC_STACK_ERROR;
 }
 
 /**

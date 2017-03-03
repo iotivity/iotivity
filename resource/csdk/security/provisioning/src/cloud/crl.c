@@ -155,7 +155,8 @@ OCStackResult OCCloudPostCRL(void* ctx,
     //add next fields if they were filled
     if (serialNumbers)
     {
-        size_t dimensions[MAX_REP_ARRAY_DEPTH] = {serialNumbers->length, 0 ,0};
+        size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
+        dimensions[0] = serialNumbers->length;
         OCRepPayloadSetStringArray(payload, OC_RSRVD_SERIAL_NUMBERS,
                                    (const char**)serialNumbers->array, dimensions);
 

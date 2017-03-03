@@ -4,7 +4,7 @@
 %define DEST_LIB_DIR  %{buildroot}/%{_libdir}
 
 Name: com-oic-ca
-Version:    1.2.0
+Version:    1.3.0
 Release:    0
 Summary: Tizen oicca application
 Group: Network & Connectivity / IoT Connectivity
@@ -67,10 +67,9 @@ mkdir -p %{DEST_LIB_DIR}/pkgconfig
 cp -f %{ROOTDIR}/con/src/libconnectivity_abstraction.so %{buildroot}/%{_libdir}
 cp -f %{ROOTDIR}/extlibs/libcoap/libcoap.a %{buildroot}/%{_libdir}
 if echo %{SECURED}|grep -qi '1'; then
-	cp -f %{ROOTDIR}/con/extlibs/tinydtls/libtinydtls.a %{buildroot}/%{_libdir}
 	cp -f %{ROOTDIR}/con/extlibs/mbedtls/libmbedcrypto.a %{buildroot}/%{_libdir}
-	cp -f %{ROOTDIR}/con/extlibs/tinydtls/libmbedtls.a %{buildroot}/%{_libdir}
-	cp -f %{ROOTDIR}/con/extlibs/tinydtls/libmbedx509.a %{buildroot}/%{_libdir}
+	cp -f %{ROOTDIR}/con/extlibs/mbedtls/libmbedtls.a %{buildroot}/%{_libdir}
+	cp -f %{ROOTDIR}/con/extlibs/mbedtls/libmbedx509.a %{buildroot}/%{_libdir}
 fi
 cp -rf %{ROOTDIR}/con/api/cacommon.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/inc/caadapterinterface.h* %{DEST_INC_DIR}/

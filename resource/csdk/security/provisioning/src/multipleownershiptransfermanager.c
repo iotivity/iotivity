@@ -37,8 +37,6 @@
 #include "cacommon.h"
 #include "cainterface.h"
 #include "base64.h"
-#include "global.h"
-
 #include "srmresourcestrings.h"
 #include "doxmresource.h"
 #include "pstatresource.h"
@@ -58,6 +56,7 @@
 #include "oxmpreconfpin.h"
 #include "oxmrandompin.h"
 #include "otmcontextlist.h"
+#include "mbedtls/ssl_ciphersuites.h"
 
 #define TAG "OIC_MULTIPLE_OTM"
 
@@ -252,7 +251,7 @@ exit:
  * API to add 'doxm.oxms' to resource server.
  *
  * @param[in] targetDeviceInfo Selected target device.
- * @param[in] newOxm  OxMs to be added (ref. oic.sec.oxm)
+ * @param[in] newOxm  OxMs to be added (ref. oic.sec.doxmtype)
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            POST 'oxms' request recieves a response from resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
@@ -263,7 +262,6 @@ OCStackResult MOTAddMOTMethod(void *ctx, OCProvisionDev_t *targetDeviceInfo,
     OCStackResult postOxmRes = OC_STACK_INVALID_PARAM;
     OicSecOxm_t* newOxms = NULL;
     uint8_t* doxmPayload = NULL;
-    size_t doxmPayloadLen = 0;
 
     OIC_LOG(DEBUG, TAG, "IN MOTAddMOTMethod");
 
@@ -314,7 +312,7 @@ exit:
  * API to update 'doxm.oxmsel' to resource server.
  *
  * @param[in] targetDeviceInfo Selected target device.
-  * @param[in] oxmSelValue Method of multiple ownership transfer (ref. oic.sec.oxm)
+  * @param[in] oxmSelValue Method of multiple ownership transfer (ref. oic.sec.doxmtype)
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            POST 'oxmsel' request recieves a response from resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
@@ -408,7 +406,7 @@ OCStackResult MOTProvisionPreconfigPIN(void *ctx, const OCProvisionDev_t *target
     pinCred->privateData.len = preconfPINLen;
     pinCred->privateData.encoding = OIC_ENCODING_RAW;
     pinCred->credType = PIN_PASSWORD;
-    OICStrcpy(pinCred->subject.id, sizeof(pinCred->subject.id), WILDCARD_SUBJECT_ID.id);
+    memcpy(&pinCred->subject, &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t));
 
     //Generate the security payload using updated doxm
     secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
@@ -599,7 +597,6 @@ OCStackResult MOTAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
 {
     OCStackResult addCredRes = OC_STACK_INVALID_PARAM;
     OicSecCred_t* pinCred = NULL;
-    bool freeFlag = true;
 
     OIC_LOG(DEBUG, TAG, "IN MOTAddPreconfigPIN");
 
@@ -673,7 +670,11 @@ static OCStackResult SaveSubOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
     }
 
     uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = {0};
-    OicSecKey_t ownerKey = {ownerPSK, OWNER_PSK_LENGTH_128};
+    OicSecKey_t ownerKey;
+    memset(&ownerKey, 0, sizeof(ownerKey));
+    ownerKey.data = ownerPSK;
+    ownerKey.len = OWNER_PSK_LENGTH_128;
+    ownerKey.encoding = OIC_ENCODING_UNKNOW;
 
     //Generating SubOwnerPSK
     CAResult_t pskRet = CAGenerateOwnerPSK(&endpoint,
@@ -695,15 +696,15 @@ static OCStackResult SaveSubOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
 
         size_t outSize = 0;
         size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
-        char* b64Buf = (uint8_t *)OICCalloc(1, b64BufSize);
+        char* b64Buf = (char*)OICCalloc(1, b64BufSize);
         VERIFY_NOT_NULL(TAG, b64Buf, ERROR);
         b64Encode(cred->privateData.data, cred->privateData.len, b64Buf, b64BufSize, &outSize);
 
-        OICFree( cred->privateData.data );
+        OICFree(cred->privateData.data);
         cred->privateData.data = (uint8_t *)OICCalloc(1, outSize + 1);
         VERIFY_NOT_NULL(TAG, cred->privateData.data, ERROR);
 
-        strncpy(cred->privateData.data, b64Buf, outSize);
+        strncpy((char*)(cred->privateData.data), b64Buf, outSize);
         cred->privateData.data[outSize] = '\0';
         cred->privateData.encoding = OIC_ENCODING_BASE64;
         cred->privateData.len = outSize;
@@ -762,11 +763,10 @@ static OCStackApplicationResult SubOwnerCredentialHandler(void *ctx, OCDoHandle 
                 return OC_STACK_DELETE_TRANSACTION;
             }
 
-            // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 = 0xC037, /**< see RFC 5489 */
-            caResult = CASelectCipherSuite(0xC037, endpoint->adapter);
+            caResult = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, endpoint->adapter);
             if(CA_STATUS_OK != caResult)
             {
-                OIC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
+                OIC_LOG(ERROR, TAG, "Failed to select TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256");
                 SetMOTResult(motCtx, OC_STACK_ERROR);
                 return OC_STACK_DELETE_TRANSACTION;
             }
@@ -848,7 +848,7 @@ static OCStackResult PostSubOwnerCredential(OTMContext_t* motCtx)
         memcpy(newCredential.eownerID->id, ownerId.id, sizeof(ownerId.id));
 
         //Fill private data as empty string
-        newCredential.privateData.data = "";
+        newCredential.privateData.data = (uint8_t*)"";
         newCredential.privateData.len = 0;
         newCredential.privateData.encoding = ownerCredential->privateData.encoding;
 
@@ -915,8 +915,6 @@ static void MOTDtlsHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t
 
             if(NULL != newDevDoxm)
             {
-                OicUuid_t emptyUuid = {.id={0}};
-
                 //Make sure the address matches.
                 if(strncmp(motCtx->selectedDeviceInfo->endpoint.addr,
                    endpoint->addr,

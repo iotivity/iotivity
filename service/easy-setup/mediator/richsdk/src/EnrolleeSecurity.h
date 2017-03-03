@@ -64,10 +64,10 @@ namespace OIC
 
             std::mutex m_mtx;
             std::condition_variable m_cond;
-            std::atomic<bool> OTMResult;
+            std::atomic<bool> otmResult;
             std::atomic<bool> enableMOTModeResult;
-            std::atomic<bool> MOTMethodProvResult;
-            std::atomic<bool> PreConfigPinProvResult;
+            std::atomic<bool> motMethodProvResult;
+            std::atomic<bool> preConfigPinProvResult;
             std::atomic<bool> removeDeviceResult;
             std::atomic<bool> aclResult;
             std::atomic<bool> certResult;
@@ -91,12 +91,12 @@ namespace OIC
             ESResult performMultipleOwnershipTransfer(const ESOwnershipTransferData& MOTdata);
             void changeMOTMethodCB(PMResultList_t *result, int hasError);
 
-            void SelectMOTMethodCB(PMResultList_t *result, int hasError);
-            void PreconfigPinProvCB(PMResultList_t *result, int hasError);
-            void MultipleOwnershipTransferCb(OC::PMResultList_t *result, int hasError);
+            void selectMOTMethodCB(PMResultList_t *result, int hasError);
+            void preconfigPinProvCB(PMResultList_t *result, int hasError);
+            void multipleOwnershipTransferCb(OC::PMResultList_t *result, int hasError);
             bool isSubOwnerIDMatched(std::shared_ptr< OC::OCSecureResource > foundDevice);
-            ESResult RequestSetPreconfPinData(const ESOwnershipTransferData& MOTData);
-            ESResult RequestSetMOTMethod(const ESOwnershipTransferData& MOTData);
+            ESResult requestSetPreconfPinData(const ESOwnershipTransferData& MOTData);
+            ESResult requestSetMOTMethod(const ESOwnershipTransferData& MOTData);
             ESResult requestEnableMOTMode();
             ESResult provisionMOTConfig(const ESOwnershipTransferData& MOTData);
 #endif
@@ -119,8 +119,8 @@ namespace OIC
                 std::shared_ptr< OC::OCSecureResource > ownedDevice,
                 std::string& cloudUuid);
             OicSecAcl_t* createAcl(const OicUuid_t cloudUuid);
-            void ACLProvisioningCb(PMResultList_t *result, int hasError);
-            void CertProvisioningCb(PMResultList_t *result, int hasError);
+            void aclProvisioningCb(PMResultList_t *result, int hasError);
+            void certProvisioningCb(PMResultList_t *result, int hasError);
 #endif //defined(__WITH_DTLS__) && defined(__WITH_TLS__)
         };
     }

@@ -376,8 +376,14 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                 VERIFY_NOT_NULL(TAG, rsrc, ERROR);
 
 // Needs to be removed once IOT-1746 is resolved.
+#ifdef _MSC_VER
 #pragma warning(suppress : 4267)
                 cJSON *jsonRsrc = cJSON_GetArrayItem(jsonObj, idxx);
+
+#else
+                cJSON *jsonRsrc = cJSON_GetArrayItem(jsonObj, idxx);
+
+#endif
                 VERIFY_NOT_NULL(TAG, jsonRsrc, ERROR);
 
                 //href
@@ -407,8 +413,14 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                     for(size_t i = 0; i < rsrc->typeLen; i++)
                     {
 // Needs to be removed once IOT-1746 is resolved.
+#ifdef _MSC_VER
 #pragma warning(suppress : 4267)
                         cJSON *jsonRsrcType = cJSON_GetArrayItem(jsonRsrcObj, i);
+
+#else
+                        cJSON *jsonRsrcType = cJSON_GetArrayItem(jsonRsrcObj, i);
+
+#endif
                         VERIFY_NOT_NULL(TAG, jsonRsrcType, ERROR);
                         rsrc->types[i] = OICStrdup(jsonRsrcType->valuestring);
                         VERIFY_NOT_NULL(TAG, (rsrc->types[i]), ERROR);
@@ -426,8 +438,14 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                     for(size_t i = 0; i < rsrc->interfaceLen; i++)
                     {
 // Needs to be removed once IOT-1746 is resolved.
+#ifdef _MSC_VER
 #pragma warning(suppress : 4267)
                         cJSON *jsonInterface = cJSON_GetArrayItem(jsonRsrcObj, i);
+
+#else
+                        cJSON *jsonInterface = cJSON_GetArrayItem(jsonRsrcObj, i);
+
+#endif
                         VERIFY_NOT_NULL(TAG, jsonInterface, ERROR);
                         rsrc->interfaces[i] = OICStrdup(jsonInterface->valuestring);
                         VERIFY_NOT_NULL(TAG, (rsrc->interfaces[i]), ERROR);
@@ -441,7 +459,8 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_PERMISSION_NAME);
             VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
-            ace->permission = jsonObj->valueint;
+            VERIFY_SUCCESS(TAG, jsonObj->valueint <= UINT16_MAX, ERROR);
+            ace->permission = (uint16_t)jsonObj->valueint;
 
             //Validity -- Not Mandatory
             cJSON *jsonValidityObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_VALIDITY_NAME);
@@ -455,8 +474,14 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                 for(size_t i = 0; i < validityLen; i++)
                 {
 // Needs to be removed once IOT-1746 is resolved.
+#ifdef _MSC_VER
 #pragma warning(suppress : 4267)
                     jsonValidity = cJSON_GetArrayItem(jsonValidityObj, i);
+
+#else
+                    jsonValidity = cJSON_GetArrayItem(jsonValidityObj, i);
+
+#endif
                     VERIFY_NOT_NULL(TAG, jsonValidity, ERROR);
                     VERIFY_SUCCESS(TAG, (jsonValidity->type == cJSON_Array), ERROR);
 
@@ -486,14 +511,20 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                         VERIFY_NOT_NULL(TAG, validity->recurrences, ERROR);
 
                         cJSON *jsonRecur = NULL;
-                        for(size_t i = 0; i < validity->recurrenceLen; i++)
+                        for(size_t j = 0; j < validity->recurrenceLen; j++)
                         {
 // Needs to be removed once IOT-1746 is resolved.
+#ifdef _MSC_VER
 #pragma warning(suppress : 4267)
-                            jsonRecur = cJSON_GetArrayItem(jsonRecurObj, i);
+                            jsonRecur = cJSON_GetArrayItem(jsonRecurObj, j);
+
+#else
+                            jsonRecur = cJSON_GetArrayItem(jsonRecurObj, j);
+
+#endif
                             VERIFY_NOT_NULL(TAG, jsonRecur, ERROR);
-                            validity->recurrences[i] = OICStrdup(jsonRecur->valuestring);
-                            VERIFY_NOT_NULL(TAG, validity->recurrences[i], ERROR);
+                            validity->recurrences[j] = OICStrdup(jsonRecur->valuestring);
+                            VERIFY_NOT_NULL(TAG, validity->recurrences[j], ERROR);
                         }
                     }
                 }
@@ -558,8 +589,14 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
         for (size_t i  = 0; i < doxm->oxmTypeLen ; i++)
         {
 // Needs to be removed once IOT-1746 is resolved.
+#ifdef _MSC_VER
 #pragma warning(suppress : 4267)
             cJSON *jsonOxmTy = cJSON_GetArrayItem(jsonObj, i);
+
+#else
+            cJSON *jsonOxmTy = cJSON_GetArrayItem(jsonObj, i);
+
+#endif
             VERIFY_NOT_NULL(TAG, jsonOxmTy, ERROR);
 
             jsonObjLen = strlen(jsonOxmTy->valuestring) + 1;
@@ -582,8 +619,14 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
         for (size_t i  = 0; i < doxm->oxmLen ; i++)
         {
 // Needs to be removed once IOT-1746 is resolved.
+#ifdef _MSC_VER
 #pragma warning(suppress : 4267)
             cJSON *jsonOxm = cJSON_GetArrayItem(jsonObj, i);
+
+#else
+            cJSON *jsonOxm = cJSON_GetArrayItem(jsonObj, i);
+
+#endif
             VERIFY_NOT_NULL(TAG, jsonOxm, ERROR);
             doxm->oxm[i] = (OicSecOxm_t)jsonOxm->valueint;
         }
@@ -591,8 +634,14 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
 
     //OxmSel -- Mandatory
 // Needs to be removed once IOT-1746 is resolved.
+#ifdef _MSC_VER
 #pragma warning(suppress : 4267)
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_SEL_NAME);
+
+#else
+    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_SEL_NAME);
+
+#endif
     if (jsonObj)
     {
         VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
@@ -835,7 +884,8 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             if(jsonObj)
             {
                 VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
-                cred->credId = jsonObj->valueint;
+                VERIFY_SUCCESS(TAG, jsonObj->valueint <= UINT16_MAX, ERROR);
+                cred->credId = (uint16_t)jsonObj->valueint;
             }
 
             //subject -- Mandatory
@@ -1021,8 +1071,14 @@ static OicSecSvc_t* JSONToSvcBin(const char * jsonStr)
             do
             {
 // Needs to be removed once IOT-1746 is resolved.
+#ifdef _MSC_VER
 #pragma warning(suppress : 4267)
                 cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, idxx);
+
+#else
+                cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, idxx);
+
+#endif
                 VERIFY_NOT_NULL(TAG, jsonOwnr, ERROR);
                 VERIFY_SUCCESS(TAG, cJSON_String == jsonOwnr->type, ERROR);
                 outLen = 0;
@@ -1083,8 +1139,14 @@ static OicSecAmacl_t* JSONToAmaclBin(const char * jsonStr)
     do
     {
 // Needs to be removed once IOT-1746 is resolved.
+#ifdef _MSC_VER
 #pragma warning(suppress : 4267)
         cJSON *jsonRsrc = cJSON_GetArrayItem(jsonRlistArray, idxx);
+
+#else
+        cJSON *jsonRsrc = cJSON_GetArrayItem(jsonRlistArray, idxx);
+
+#endif
         VERIFY_NOT_NULL(TAG, jsonRsrc, ERROR);
 
         cJSON *jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_HREF_NAME);
@@ -1110,8 +1172,14 @@ static OicSecAmacl_t* JSONToAmaclBin(const char * jsonStr)
     do
     {
 // Needs to be removed once IOT-1746 is resolved.
+#ifdef _MSC_VER
 #pragma warning(suppress : 4267)
         cJSON *jsonAms = cJSON_GetArrayItem(jsonObj, idxx);
+
+#else
+        cJSON *jsonAms = cJSON_GetArrayItem(jsonObj, idxx);
+
+#endif
         VERIFY_NOT_NULL(TAG, jsonAms, ERROR);
         VERIFY_SUCCESS(TAG, cJSON_String == jsonAms->type, ERROR);
 

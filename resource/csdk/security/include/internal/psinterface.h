@@ -52,7 +52,7 @@ OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **dat
  *
  * @param rsrcName is the name of the secure resource that will be updated.
  * @param cborPayload is the pointer holding cbor payload.
- * @param cborPayload is the size of the cbor payload.
+ * @param size is the size of the cbor payload.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value
  */

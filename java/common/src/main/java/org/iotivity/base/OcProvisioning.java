@@ -99,6 +99,38 @@ public class OcProvisioning {
         public String pinCallbackListener();
     }
 
+
+    /**
+     * Method to Discover devices which are MOT (Multiple owner transfer) enabled
+     * and unowned.
+     *
+     * @param timeout     Timeout in sec.Time to listen for responses before
+     *                    returining the Array.
+     * @return            Array of OcSecureResource class objects.
+     * @throws OcException
+     */
+    public static List<OcSecureResource> discoverMOTEnabledDevices(int timeout)
+        throws OcException {
+            return Arrays.asList(OcProvisioning.discoverMOTEnabledDevices1(timeout));
+        }
+    private static native OcSecureResource[] discoverMOTEnabledDevices1(int timeout)
+        throws OcException;
+
+    /**
+     * Method to Discover devices which are MOT (Multiple owner transfer) enabled and Owned.
+     *
+     * @param timeout     Timeout in sec.Time to listen for responses before
+     *                    returining the Array.
+     * @return            Array of OcSecureResource class objects.
+     * @throws OcException
+     */
+    public static List<OcSecureResource> discoverMOTEnabledOwnedDevices(int timeout)
+        throws OcException {
+            return Arrays.asList(OcProvisioning.discoverMOTEnabledOwnedDevices1(timeout));
+        }
+    private static native OcSecureResource[] discoverMOTEnabledOwnedDevices1(int timeout)
+        throws OcException;
+
     /**
      * Server API to set Callback for Displaying stack generated PIN.
      *

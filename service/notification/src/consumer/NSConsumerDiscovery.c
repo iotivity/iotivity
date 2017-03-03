@@ -43,7 +43,7 @@ OCStackApplicationResult NSConsumerPresenceListener(
     NS_VERIFY_STACK_SUCCESS(
             NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
 
-    NS_LOG_V(DEBUG, "Presence income : %s:%d",
+    NS_LOG_V(INFO_PRIVATE, "Presence income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
     NS_LOG_V(DEBUG, "Presence result : %d",
             clientResponse->result);
@@ -93,7 +93,7 @@ OCStackApplicationResult NSProviderDiscoverListener(
     NS_VERIFY_NOT_NULL(clientResponse->payload, OC_STACK_KEEP_TRANSACTION);
     NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
 
-    NS_LOG_V(DEBUG, "Discover income : %s:%d",
+    NS_LOG_V(INFO_PRIVATE, "Discover income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
     NS_LOG_V(DEBUG, "Discover result : %d",
             clientResponse->result);
@@ -112,9 +112,9 @@ OCStackApplicationResult NSProviderDiscoverListener(
     while (discoveryPayload)
     {
         OCResourcePayload * resource = discoveryPayload->resources;
-        NS_LOG_V(DEBUG, "Discovered resource uri : %s", resource->uri);
         while (resource)
         {
+            NS_LOG_V(DEBUG, "Discovered resource uri : %s", resource->uri);
             NS_VERIFY_NOT_NULL(resource->uri, OC_STACK_KEEP_TRANSACTION);
             if (strstr(resource->uri, NS_RESOURCE_URI))
             {
@@ -152,7 +152,7 @@ OCStackApplicationResult NSIntrospectProvider(
     NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
     NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
 
-    NS_LOG_V(DEBUG, "GET response income : %s:%d",
+    NS_LOG_V(INFO_PRIVATE, "GET response income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
     NS_LOG_V(DEBUG, "GET response result : %d",
             clientResponse->result);
@@ -210,7 +210,7 @@ void NSConsumerHandleRequestDiscover(OCDevAddr * address, NSConsumerDiscoverType
         }
         else
         {
-            NS_LOG_V(DEBUG, "Request discover But Adapter is not IP : %d", address->adapter);
+            NS_LOG_V(INFO_PRIVATE, "Request discover But Adapter is not IP : %d", address->adapter);
         }
     }
     else

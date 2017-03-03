@@ -34,11 +34,11 @@ extern "C"
 #define OC_RSRVD_ES_INTERFACE             "if"
 #define OC_RSRVD_ES_RES_TYPE              "rt"
 
-
-
-#define OIC_STRING_MAX_VALUE    64
-#define MAX_WEBLINKLEN          3
-#define NUM_WIFIMODE            5
+#define OIC_STRING_MAX_VALUE        64
+#define OIC_URI_STRING_MAX_VALUE    256
+#define MAX_WEBLINKLEN              3
+#define NUM_WIFIMODE                10
+#define NUM_CONNECT_TYPE            3
 
 /**
  * Attributes used to form a proper easysetup conforming JSON message.
@@ -64,6 +64,7 @@ extern "C"
 #define OC_RSRVD_ES_MODELNUMBER            "mnmo"
 #define OC_RSRVD_ES_LOCATION               "loc"
 #define OC_RSRVD_ES_HREF                   "href"
+#define OC_RSRVD_ES_CONNECT                "cn"
 
 /**
  * Easysetup defined resoruce types and uris.
@@ -136,6 +137,16 @@ typedef enum
     OAUTH_TOKENTYPE_BEARER,
     OAUTH_TOKENTYPE_MAC
 } OAUTH_TOKENTYPE;
+
+/**
+ * @brief  A target configuration type to be connected (or executed)
+ */
+typedef enum
+{
+    ES_CONNECT_NONE = 0,        /**< Init value **/
+    ES_CONNECT_WIFI = 1,        /**< WiFi Conf resource **/
+    ES_CONNECT_COAPCLOUD = 2    /**< Coap Cloud Conf resource **/
+} ES_CONNECT_TYPE;
 
 /**
  * @brief A result of Easy Setup

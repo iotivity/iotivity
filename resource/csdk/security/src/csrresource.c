@@ -143,7 +143,7 @@ static OCStackResult CSRToCBORPayload(const uint8_t *csr, size_t csrLen, OicEnco
     }
 
     outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_NO_MEMORY);
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     // Create CSR Root Map (csr)

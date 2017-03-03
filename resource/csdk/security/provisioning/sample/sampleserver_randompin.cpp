@@ -456,6 +456,8 @@ FILE* server_fopen(const char *path, const char *mode)
 
 void DisplayPinCB(char *pin, size_t pinSize, void *context)
 {
+    OC_UNUSED(context);
+
     if(NULL == pin || pinSize <= 0)
     {
         OIC_LOG(INFO, TAG, "Invalid PIN");
@@ -464,6 +466,13 @@ void DisplayPinCB(char *pin, size_t pinSize, void *context)
 
     OIC_LOG(INFO, TAG, "============================");
     OIC_LOG_V(INFO, TAG, "    PIN CODE : %s", pin);
+    OIC_LOG(INFO, TAG, "============================");
+}
+
+void ClosePinDisplayCB(void)
+{
+    OIC_LOG(INFO, TAG, "============================");
+    OIC_LOG(INFO, TAG, "    PIN DISPLAY CLOSED.");
     OIC_LOG(INFO, TAG, "============================");
 }
 
@@ -486,6 +495,13 @@ int main()
      * to display a PIN should be registered before running the server.
      */
     SetDisplayPinWithContextCB(DisplayPinCB, NULL);
+
+    /**
+     * If the server supports random pin based OTM,
+     * the callback to close PIN display can be registered.
+     * This callback will be invoked when random PIN based OTM is done.
+     */
+    SetClosePinDisplayCB(ClosePinDisplayCB);
 
     /**
      * Random PIN generation policy can be changed through SetRandomPinPolicy() API.
@@ -514,7 +530,7 @@ int main()
     {
         printf("Press 'G' to generate random PIN...\n");
         printf("Press 'E' to exit...\n");
-        char in = getchar();
+        char in = (char)getchar();
         if('G' == in || 'g' == in)
         {
             char ranPin[OXM_RANDOM_PIN_MAX_SIZE + 1] = {0};

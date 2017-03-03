@@ -536,7 +536,7 @@ namespace OIC
 
                     if(resource->getOwnedStatus())
                     {
-                        char uuidString[UUID_STRING_SIZE];
+                        char uuidString[UUID_STRING_SIZE] = {};
                         if(OCConvertUuidToString(resource->getDevPtr()->doxm->owner.id, uuidString))
                         {
                             m_ownerID = uuidString;
@@ -972,6 +972,39 @@ namespace OIC
             ESResult m_result;
         };
 
+        /**
+         * Status object for connect API. This object is given to application
+         * when a response for 'Connect' request from Enrollee is arrived.
+         */
+        class ConnectRequestStatus
+        {
+        public:
+            /**
+             * Constructor
+             */
+            ConnectRequestStatus(ESResult result) :
+                    m_result(result)
+            {
+            }
+
+            /**
+             * Get a result of Connect request
+             *
+             * @return ::ES_OK\n
+             *         ::ES_COMMUNICATION_ERROR\n
+             *         ::ES_ERROR\n
+             *
+             * @see ESResult
+             */
+            ESResult getESResult()
+            {
+                return m_result;
+            }
+
+        private:
+            ESResult m_result;
+        };
+
         class ESOwnershipTransferData
         {
         public:
@@ -1058,6 +1091,12 @@ namespace OIC
          * Callback function definition for providing Enrollee cloud property provisioning status
          */
         typedef function< void(shared_ptr< CloudPropProvisioningStatus >) > CloudPropProvStatusCb;
+
+        /**
+         * Callback function definition for providing 'Connect' request status
+         */
+        typedef function< void(shared_ptr< ConnectRequestStatus >) > ConnectRequestStatusCb;
+
 
         /**
          * Callback function definition for providing Enrollee security provisioning status

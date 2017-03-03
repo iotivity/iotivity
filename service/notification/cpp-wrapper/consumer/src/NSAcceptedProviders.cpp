@@ -43,7 +43,7 @@ namespace OIC
         void NSAcceptedProviders::addProvider(std::shared_ptr<NSProvider> provider)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            NS_LOG_V(DEBUG, "AcceptedProviders::addProvider  Id : %s", provider->getProviderId().c_str());
+            NS_LOG_V(INFO_PRIVATE, "AcceptedProviders::addProvider  Id : %s", provider->getProviderId().c_str());
             m_providers[provider->getProviderId()] = provider;
             return;
         }
@@ -51,7 +51,7 @@ namespace OIC
         void NSAcceptedProviders::removeProvider(const std::string &id)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            NS_LOG_V(DEBUG, "AcceptedProviders::removeProvider  Id : %s", id.c_str());
+            NS_LOG_V(INFO_PRIVATE, "AcceptedProviders::removeProvider  Id : %s", id.c_str());
             m_providers.erase(id);
             return;
         }
@@ -59,7 +59,7 @@ namespace OIC
         bool NSAcceptedProviders::isAccepted(const std::string &id)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            NS_LOG_V(DEBUG, "AcceptedProviders::isAccepted  Id : %s", id.c_str());
+            NS_LOG_V(INFO_PRIVATE, "AcceptedProviders::isAccepted  Id : %s", id.c_str());
             if ( m_providers.find(id) == m_providers.end() )
             {
                 NS_LOG(DEBUG, "isAccepted : Not Found Provider with given ID");

@@ -34,6 +34,8 @@
 #include "logger.h"
 #include "iotivity_debug.h"
 
+#define TAG "OIC_UMUTEX"
+
 static const uint64_t USECS_PER_MSEC = 1000;
 
 typedef struct _tagMutexInfo_t

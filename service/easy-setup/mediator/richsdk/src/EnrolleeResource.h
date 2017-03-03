@@ -59,11 +59,13 @@ namespace OIC
                 const GetConfigurationStatusCb callback);
             void registerDevicePropProvStatusCallback(
                 const DevicePropProvStatusCb callback);
+            void registerConnectRequestStatusCallback(
+                const ConnectRequestStatusCb callback);
 
             void getConfiguration();
             void getStatus();
-
             void provisionProperties(const DeviceProp& deviceProp);
+            void requestToConnect(const std::vector<ES_CONNECT_TYPE> &connectTypes);
 
         private:
             std::shared_ptr< OC::OCResource > m_ocResource;
@@ -71,6 +73,7 @@ namespace OIC
             GetStatusCb m_getStatusCb;
             GetConfigurationStatusCb m_getConfigurationStatusCb;
             DevicePropProvStatusCb m_devicePropProvStatusCb;
+            ConnectRequestStatusCb m_connectRequestStatusCb;
 
         private:
             static void onEnrolleeResourceSafetyCB(const HeaderOptions& headerOptions,
@@ -87,6 +90,9 @@ namespace OIC
                                                            const OCRepresentation& rep,
                                                            const int eCode);
             void onProvisioningResponse(const HeaderOptions& headerOptions,
+                                                    const OCRepresentation& rep,
+                                                    const int eCode);
+            void onConnectRequestResponse(const HeaderOptions& headerOptions,
                                                     const OCRepresentation& rep,
                                                     const int eCode);
         };

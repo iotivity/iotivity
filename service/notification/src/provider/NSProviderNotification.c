@@ -145,7 +145,7 @@ NSResult NSSendNotification(NSMessage *msg)
     while (it)
     {
         NSCacheSubData * subData = (NSCacheSubData *) it->data;
-        NS_LOG_V(DEBUG, "message subData->id = %s", subData->id);
+        NS_LOG_V(INFO_PRIVATE, "message subData->id = %s", subData->id);
         NS_LOG_V(DEBUG, "subData->messageId = %d", subData->messageObId);
         NS_LOG_V(DEBUG, "subData->cloud_messageId = %d", subData->remote_messageObId);
         NS_LOG_V(DEBUG, "subData->syncId = %d", subData->syncObId);
@@ -248,7 +248,7 @@ NSResult NSSendSync(NSSyncInfo *sync)
     while (it)
     {
         NSCacheSubData * subData = (NSCacheSubData *) it->data;
-        NS_LOG_V(DEBUG, "sync subData->id = %s", subData->id);
+        NS_LOG_V(INFO_PRIVATE, "sync subData->id = %s", subData->id);
         NS_LOG_V(DEBUG, "subData->messageId = %d", subData->messageObId);
         NS_LOG_V(DEBUG, "subData->cloud_messageId = %d", subData->remote_messageObId);
         NS_LOG_V(DEBUG, "subData->syncId = %d", subData->syncObId);

@@ -75,7 +75,7 @@ OCStackApplicationResult RDPublishCallback(void *ctx,
         OCRepPayload *rdPayload = (OCRepPayload *) clientResponse->payload;
         if (!OCRepPayloadGetPropObjectArray(rdPayload, OC_RSRVD_LINKS, &links, dimensions))
         {
-            OIC_LOG_V(DEBUG, TAG, "No links in publish response");
+            OIC_LOG(DEBUG, TAG, "No links in publish response");
             goto exit;
         }
         for(size_t i = 0; i < dimensions[0]; i++)
@@ -83,7 +83,7 @@ OCStackApplicationResult RDPublishCallback(void *ctx,
             char *uri = NULL;
             if (!OCRepPayloadGetPropString(links[i], OC_RSRVD_HREF, &uri))
             {
-                OIC_LOG_V(ERROR, TAG, "Missing 'href' in publish response");
+                OIC_LOG(ERROR, TAG, "Missing 'href' in publish response");
                 goto next;
             }
             OCResourceHandle handle = OCGetResourceHandleAtUri(uri);
@@ -95,7 +95,7 @@ OCStackApplicationResult RDPublishCallback(void *ctx,
             int64_t ins = 0;
             if (!OCRepPayloadGetPropInt(links[i], OC_RSRVD_INS, &ins))
             {
-                OIC_LOG_V(ERROR, TAG, "Missing 'ins' in publish response");
+                OIC_LOG(ERROR, TAG, "Missing 'ins' in publish response");
                 goto next;
             }
             OCBindResourceInsToResource(handle, ins);
@@ -217,7 +217,7 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
                 OCRepPayloadSetStringArrayAsOwner(link, OC_RSRVD_INTERFACE, itf, ifDim);
             }
 
-            uint8_t ins = 0;
+            int64_t ins = 0;
             if (OC_STACK_OK == OCGetResourceIns(handle, &ins))
             {
                 OCRepPayloadSetPropInt(link, OC_RSRVD_INS, ins);
@@ -376,9 +376,9 @@ OCStackResult OCRDDeleteWithDeviceId(OCDoHandle *handle, const char *host,
     for (uint8_t j = 0; j < nHandles; j++)
     {
         OCResource *handle = (OCResource *) resourceHandles[j];
-        uint8_t ins = 0;
+        int64_t ins = 0;
         OCGetResourceIns(handle, &ins);
-        int lenBufferRequired = snprintf(queryParam + queryLength, MAX_URI_LENGTH - queryLength, "&ins=%d", ins);
+        int lenBufferRequired = snprintf((queryParam + queryLength), (MAX_URI_LENGTH - queryLength), "&ins=%lld", ins);
         if (lenBufferRequired >= (MAX_URI_LENGTH - queryLength) || lenBufferRequired < 0)
         {
             return OC_STACK_INVALID_URI;

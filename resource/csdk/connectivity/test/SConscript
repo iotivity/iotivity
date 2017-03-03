@@ -33,11 +33,23 @@ rd_mode = catest_env.get('RD_MODE')
 ######################################################################
 # Build flags
 ######################################################################
+if catest_env.get('WITH_UPSTREAM_LIBCOAP') == '1':
+    # For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
+    catest_env.AppendUnique(CPPPATH = [os.path.join('#', 'extlibs', 'libcoap', 'libcoap', 'include')])
+else:
+    # For bring up purposes only, the forked version will live here.
+    catest_env.AppendUnique(CPPPATH = [ os.path.join('#', 'resource', 'csdk', 'connectivity', 'lib', 'libcoap-4.1.1', 'include')])
+
 catest_env.PrependUnique(CPPPATH = [
-                '../../logger/include',
-                '../../include',
-                '../../stack/include',
-                '../../../oc_logger/include',
+                '#/extlibs/timer',
+                '#/extlibs/mbedtls/mbedtls/include',
+                '#/resource/csdk/connectivity/api',
+                '#/resource/csdk/connectivity/inc',
+                '#/resource/csdk/connectivity/common/inc',
+                '#/resource/csdk/logger/include',
+                '#/resource/csdk/include',
+                '#/resource/csdk/stack/include',
+                '#/resource/oc_logger/include',
                ])
 
 catest_env.AppendUnique(LIBPATH = [catest_env.get('BUILD_DIR')])
@@ -46,19 +58,16 @@ catest_env.PrependUnique(LIBS = ['octbstack_test',
                                  'coap'])
 
 if target_os not in ['arduino', 'darwin', 'ios', 'msys_nt', 'windows']:
-	catest_env.AppendUnique(LIBS=['rt'])
+    catest_env.AppendUnique(LIBS=['rt'])
 
 if catest_env.get('SECURED') == '1':
-	catest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+    catest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	catest_env.PrependUnique(LIBS = ['resource_directory'])
-
-if catest_env.get('LOGGING'):
-	catest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    catest_env.PrependUnique(LIBS = ['resource_directory'])
 
 if target_os not in ['msys_nt', 'windows']:
-	catest_env.AppendUnique(LIBS = ['m'])
+    catest_env.AppendUnique(LIBS = ['m'])
 
 catest_env.AppendUnique(LIBS = ['timer'])
 
@@ -67,21 +76,21 @@ catest_env.AppendUnique(LIBS = ['timer'])
 ######################################################################
 
 tests_src = [
-	'catests.cpp',
-	'caprotocolmessagetest.cpp',
-	'ca_api_unittest.cpp',
-	'octhread_tests.cpp',
-	'uarraylist_test.cpp',
-	'ulinklist_test.cpp',
-	'uqueue_test.cpp'
+    'catests.cpp',
+    'caprotocolmessagetest.cpp',
+    'ca_api_unittest.cpp',
+    'octhread_tests.cpp',
+    'uarraylist_test.cpp',
+    'ulinklist_test.cpp',
+    'uqueue_test.cpp'
 ]
 
 if (('IP' in target_transport) or ('ALL' in target_transport)):
-	if target_os != 'arduino':
-		tests_src = tests_src + ['cablocktransfertest.cpp']
+    if target_os != 'arduino':
+        tests_src = tests_src + ['cablocktransfertest.cpp']
 
 if catest_env.get('SECURED') == '1' and catest_env.get('WITH_TCP') == True:
-	tests_src = tests_src + ['ssladapter_test.cpp']
+    tests_src = tests_src + ['ssladapter_test.cpp']
 
 catests = catest_env.Program('catests', tests_src)
 

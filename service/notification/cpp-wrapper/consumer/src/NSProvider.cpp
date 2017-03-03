@@ -47,7 +47,7 @@ namespace OIC
             m_state = NSProviderState::DENY;
             m_subscribedState = NSProviderSubscribedState::DENY;
 
-            m_topicList = new NSTopicsList();
+            m_topicList = std::make_shared<NSTopicsList>();
 
             if (provider != nullptr)
             {
@@ -58,15 +58,16 @@ namespace OIC
         NSProvider::NSProvider(const NSProvider &provider)
         {
             m_providerId = provider.getProviderId();
-            m_topicList = new NSTopicsList();
+            m_topicList = std::make_shared<NSTopicsList>();
             auto topicsList = provider.getTopicList();
             if (topicsList != nullptr)
             {
                 for (auto it : topicsList->getTopicsList())
                 {
-                    getTopicList()->addTopic(it->getTopicName(), it->getState());
+                    m_topicList->addTopic(it.getTopicName(), it.getState());
                 }
             }
+            m_topicList->unsetModifiability();
             setListener(provider.getProviderStateReceivedCb(), provider.getMessageReceivedCb(),
                         provider.getSyncInfoReceivedCb());
             setProviderState(provider.getProviderState());
@@ -76,15 +77,16 @@ namespace OIC
         NSProvider &NSProvider::operator=(const NSProvider &provider)
         {
             this->m_providerId = provider.getProviderId();
-            this->m_topicList = new NSTopicsList();
+            this->m_topicList = std::make_shared<NSTopicsList>();
             auto topicsList = provider.getTopicList();
             if (topicsList != nullptr)
             {
                 for (auto it : topicsList->getTopicsList())
                 {
-                    this->getTopicList()->addTopic(it->getTopicName(), it->getState());
+                    this->m_topicList->addTopic(it.getTopicName(), it.getState());
                 }
             }
+            m_topicList->unsetModifiability();
             this->setListener(provider.getProviderStateReceivedCb(), provider.getMessageReceivedCb(),
                               provider.getSyncInfoReceivedCb());
             this->setProviderState(provider.getProviderState());
@@ -92,40 +94,33 @@ namespace OIC
             return *this;
         }
 
-        NSProvider::~NSProvider()
-        {
-            if (m_topicList != nullptr)
-            {
-                delete m_topicList;
-            }
-        }
-
         std::string NSProvider::getProviderId() const
         {
             return m_providerId;
         }
 
-        NSTopicsList *NSProvider::getTopicList() const
+        std::shared_ptr<NSTopicsList> NSProvider::getTopicList() const  throw (NSException)
         {
             NS_LOG(DEBUG, "getTopicList - IN");
             if (!isValid())
             {
-                return nullptr;
+                throw NSException("Invalid Operation on provider. Provider is already Stopped.");
             }
-            NSTopicsList *topicList = new NSTopicsList();
+            std::shared_ptr<NSTopicsList> topicList = std::make_shared<NSTopicsList>();
             for (auto it : m_topicList->getTopicsList())
             {
-                topicList->addTopic(it->getTopicName(), it->getState());
+                topicList->addTopic(it.getTopicName(), it.getState());
             }
+            topicList->unsetModifiability();
             return topicList;
         }
 
-        NSResult NSProvider::updateTopicList(NSTopicsList *topicList)
+        NSResult NSProvider::updateTopicList(std::shared_ptr<NSTopicsList> topicList)  throw (NSException)
         {
             NS_LOG(DEBUG, "updateTopicList - IN");
             if (!isValid())
             {
-                return NSResult::FAIL;
+                throw NSException("Invalid Operation on provider. Provider is already Stopped.");
             }
             if (topicList == nullptr)
             {
@@ -142,8 +137,8 @@ namespace OIC
                     return NSResult::ERROR;
                 }
                 topic->topicName = NULL;
-                topic->topicName = OICStrdup(it->getTopicName().c_str());
-                topic->state = (::NSTopicState)it->getState();
+                topic->topicName = OICStrdup(it.getTopicName().c_str());
+                topic->state = (::NSTopicState)it.getState();
                 topic->next = NULL;
                 if (topicLL == NULL)
                 {
@@ -172,7 +167,7 @@ namespace OIC
                     iter = iter->next;
                 }
             }
-            NS_LOG_V(DEBUG, "calling Lower layer UpdateTopicList for Provider Id : %s",
+            NS_LOG_V(INFO_PRIVATE, "calling Lower layer UpdateTopicList for Provider Id : %s",
                      getProviderId().c_str());
             NSResult result = (NSResult) NSConsumerUpdateTopicList(getProviderId().c_str(), topicLL);
 
@@ -207,46 +202,46 @@ namespace OIC
             return m_state;
         }
 
-        NSProviderSubscribedState NSProvider::getProviderSubscribedState() const
+        NSProviderSubscribedState NSProvider::getProviderSubscribedState() const  throw (NSException)
         {
             NS_LOG_V(DEBUG, "getProviderSubscribedState  state : %d", (int)m_subscribedState);
             if (!isValid())
             {
-                return NSProviderSubscribedState::DENY;
+                throw NSException("Invalid Operation on provider. Provider is already Stopped.");
             }
             return m_subscribedState;
         }
 
-        NSResult NSProvider::subscribe()
+        NSResult NSProvider::subscribe()  throw (NSException)
         {
             NS_LOG(DEBUG, "Subscribe - IN");
             if (!isValid())
             {
-                return NSResult::FAIL;
+                throw NSException("Invalid Operation on provider. Provider is already Stopped.");
             }
             NSResult result = (NSResult) NSSubscribe(getProviderId().c_str());
             NS_LOG(DEBUG, "Subscribe - OUT");
             return result;
         }
 
-        NSResult NSProvider::unsubscribe()
+        NSResult NSProvider::unsubscribe()  throw (NSException)
         {
             NS_LOG(DEBUG, "unsubscribe - IN");
             if (!isValid())
             {
-                return NSResult::FAIL;
+                throw NSException("Invalid Operation on provider. Provider is already Stopped.");
             }
             NSResult result = (NSResult) NSUnsubscribe(getProviderId().c_str());
             NS_LOG(DEBUG, "unsubscribe - OUT");
             return result;
         }
 
-        bool NSProvider::isSubscribed()
+        bool NSProvider::isSubscribed()  throw (NSException)
         {
             NS_LOG(DEBUG, "isSubscribed - IN");
             if (!isValid())
             {
-                return false;
+                throw NSException("Invalid Operation on provider. Provider is already Stopped.");
             }
             NS_LOG_V(DEBUG, "Subscribed state : %d", (int)getProviderSubscribedState());
             if (getProviderSubscribedState() == NSProviderSubscribedState::SUBSCRIBED)
@@ -256,12 +251,12 @@ namespace OIC
             return false;
         }
 
-        NSResult NSProvider::sendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type)
+        NSResult NSProvider::sendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type)  throw (NSException)
         {
             NS_LOG(DEBUG, "SendSyncInfo - IN");
             if (!isValid())
             {
-                return NSResult::FAIL;
+                throw NSException("Invalid Operation on provider. Provider is already Stopped.");
             }
             NSResult result = (NSResult) NSConsumerSendSyncInfo(getProviderId().c_str(), messageId,
                               (::NSSyncType)type);
@@ -295,12 +290,8 @@ namespace OIC
             return m_syncInfoCb;
         }
 
-        void NSProvider::setTopicList(NSTopicsList *topicsList)
+        void NSProvider::setTopicList(std::shared_ptr<NSTopicsList> topicsList)
         {
-            if (m_topicList != nullptr)
-            {
-                delete m_topicList;
-            }
             m_topicList = topicsList;
         }
 

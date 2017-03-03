@@ -37,7 +37,7 @@ typedef struct LEDRESOURCE
 {
     OCResourceHandle handle;
     bool state;
-    int power;
+    int64_t power;
 } LEDResource;
 
 //-----------------------------------------------------------------------------
@@ -47,7 +47,7 @@ typedef struct LEDRESOURCE
 /* Function that creates a new LED resource by calling the
  * OCCreateResource() method.
  */
-int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int resourcePower);
+int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int64_t resourcePower);
 
 /* This method converts the payload to JSON format */
 char* constructJsonResponse (OCEntityHandlerRequest *ehRequest);

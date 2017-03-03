@@ -71,7 +71,7 @@ NSResult NSConsumerListenerInit()
 
 void NSConsumerListenerTermiate()
 {
-    CARegisterNetworkMonitorHandler(NULL, NULL);
+    CAUnregisterNetworkMonitorHandler(NSAdapterStateListener, NSConnectionStateListener);
     OCCancel(*getPresenceHandle(), NS_QOS, NULL, 0);
 }
 
@@ -80,7 +80,7 @@ void NSConnectionStateListener(const CAEndpoint_t * info, bool connected)
     NS_VERIFY_NOT_NULL_V(info);
 
     NS_LOG_V(DEBUG, "adapter : %d", info->adapter);
-    NS_LOG_V(DEBUG, "remote_address : %s:%d", info->addr, info->port);
+    NS_LOG_V(INFO_PRIVATE, "remote_address : %s:%d", info->addr, info->port);
     NS_LOG_V(DEBUG, "isConnect : %d", connected);
 
     NSTaskType type = TASK_EVENT_CONNECTED;

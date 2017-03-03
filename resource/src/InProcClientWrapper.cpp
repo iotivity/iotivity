@@ -140,13 +140,11 @@ namespace OC
                 )
           )
         {
-            //OCPayloadDestroy(clientResponse->payload);
             return OCRepresentation();
         }
 
         MessageContainer oc;
         oc.setPayload(clientResponse->payload);
-        //OCPayloadDestroy(clientResponse->payload);
 
         std::vector<OCRepresentation>::const_iterator it = oc.representations().begin();
         if (it == oc.representations().end())
@@ -155,16 +153,15 @@ namespace OC
         }
 
         // first one is considered the root, everything else is considered a child of this one.
-        OCRepresentation root = *it;
-        root.setDevAddr(clientResponse->devAddr);
-        root.setUri(clientResponse->resourceUri);
-        ++it;
+       OCRepresentation root = *it;
+       root.setDevAddr(clientResponse->devAddr);
+       root.setUri(clientResponse->resourceUri);
+       ++it;
 
         std::for_each(it, oc.representations().end(),
                 [&root](const OCRepresentation& repItr)
                 {root.addChild(repItr);});
         return root;
-
     }
 
     OCStackApplicationResult listenCallback(void* ctx, OCDoHandle /*handle*/,
@@ -886,7 +883,6 @@ namespace OC
     {
         ClientCallbackContext::GetContext* context =
             static_cast<ClientCallbackContext::GetContext*>(ctx);
-
         OCRepresentation rep;
         HeaderOptions serverHeaderOptions;
         OCStackResult result = clientResponse->result;
@@ -920,11 +916,11 @@ namespace OC
         OCStackResult result;
         ClientCallbackContext::GetContext* ctx =
             new ClientCallbackContext::GetContext(callback);
+
         OCCallbackData cbdata;
-        cbdata.context = static_cast<void*>(ctx),
+        cbdata.context = static_cast<void*>(ctx);
         cbdata.cb      = getResourceCallback;
         cbdata.cd      = [](void* c){delete (ClientCallbackContext::GetContext*)c;};
-
 
         std::string uri = assembleSetResourceUri(resourceUri, queryParams);
 

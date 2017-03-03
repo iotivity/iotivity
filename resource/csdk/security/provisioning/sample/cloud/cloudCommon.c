@@ -444,8 +444,8 @@ static void userRequests(void *data)
         {
             char example[8];
             snprintf(example, sizeof(example), "%d", DEFAULT_PORT);
-            int tmp = 0;
-            readInteger(&tmp, "port number", example);
+            uint16_t tmp = 0;
+            readUInt16(&tmp, "port number", example);
             endPoint.port = tmp;
             sendDataToServer = false;
         }

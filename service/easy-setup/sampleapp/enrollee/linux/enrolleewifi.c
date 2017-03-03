@@ -67,6 +67,24 @@ void PrintMenu()
     printf("============\n");
 }
 
+void ConnectRequestCbInApp(ESConnectRequest *connectRequest)
+{
+    printf("ConnectRequestCbInApp IN\n");
+
+    if(connectRequest == NULL)
+    {
+        printf("connectRequest is NULL\n");
+        return ;
+    }
+
+    for(int i = 0 ; i < connectRequest->numRequest ; ++i)
+    {
+        printf("connect : %d\n", connectRequest->connect[i]);
+    }
+
+    printf("ConnectRequestCbInApp OUT\n");
+}
+
 void WiFiConfProvCbInApp(ESWiFiConfData *eventData)
 {
     printf("WiFiConfProvCbInApp IN\n");
@@ -126,6 +144,7 @@ void CoapCloudConfProvCbInApp(ESCoapCloudConfData *eventData)
 }
 
 ESProvisioningCallbacks gCallbacks = {
+    .ConnectRequestCb = &ConnectRequestCbInApp,
     .WiFiConfProvCb = &WiFiConfProvCbInApp,
     .DevConfProvCb = &DevConfProvCbInApp,
     .CoapCloudConfProvCb = &CoapCloudConfProvCbInApp
@@ -191,7 +210,8 @@ void SetDeviceInfo()
     // Set user properties if needed
     char userValue_str[] = "user_str";
     g_userProperties.userValue_int = 0;
-    strcpy(g_userProperties.userValue_str, userValue_str);
+
+    strncpy(g_userProperties.userValue_str, userValue_str, strlen(userValue_str));
     SetUserProperties(&g_userProperties);
 
     if(ESSetDeviceProperty(&deviceProperty) == ES_ERROR)
@@ -239,7 +259,7 @@ int main()
     printf("EasySetup Enrollee SAMPLE\n");
     printf("#########################\n");
     PrintMenu();
-    char option;
+    char option = "";
 
     while(true)
     {
@@ -296,7 +316,10 @@ int main()
                     PrintMenu();
                     break;
             }
-            if (option == 'Q' || option == 'q') { break; }
+            if (option == 'Q' || option == 'q')
+            {
+                break;
+            }
         }
     }
     return 0;

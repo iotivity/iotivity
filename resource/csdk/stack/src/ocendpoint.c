@@ -245,7 +245,7 @@ char* OCCreateEndpointString(const OCEndpointPayload* endpoint)
         )
     {
         // checking addr is ipv4 or not
-        if (endpoint->family == OC_IP_USE_V4)
+        if (endpoint->family & OC_IP_USE_V4)
         {
             // ipv4
             sprintf(buf, "%s://%s:%d", endpoint->tps, endpoint->addr, endpoint->port);

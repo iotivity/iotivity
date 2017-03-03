@@ -894,7 +894,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                 else
                 {
                     outInfo->payloadFormat = CA_FORMAT_UNSUPPORTED;
-                    OIC_LOG_V(DEBUG, TAG, "option has an unsupported format");
+                    OIC_LOG(DEBUG, TAG, "option has an unsupported format");
                 }
             }
             else if (COAP_OPTION_CONTENT_VERSION == opt_iter.type)
@@ -905,7 +905,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                 }
                 else
                 {
-                    OIC_LOG_V(DEBUG, TAG, "unsupported content version");
+                    OIC_LOG(DEBUG, TAG, "unsupported content version");
                     outInfo->payloadVersion = DEFAULT_CONTENT_VERSION_VALUE;
 
                 }
@@ -918,7 +918,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                 }
                 else
                 {
-                    OIC_LOG_V(DEBUG, TAG, "unsupported accept version");
+                    OIC_LOG(DEBUG, TAG, "unsupported accept version");
                     outInfo->acceptVersion = DEFAULT_ACCEPT_VERSION_VALUE;
                 }
             }
@@ -936,7 +936,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                 else
                 {
                     outInfo->acceptFormat = CA_FORMAT_UNSUPPORTED;
-                    OIC_LOG_V(DEBUG, TAG, "option has an unsupported accept format");
+                    OIC_LOG(DEBUG, TAG, "option has an unsupported accept format");
                 }
             }
             else if (COAP_OPTION_URI_PORT == opt_iter.type ||

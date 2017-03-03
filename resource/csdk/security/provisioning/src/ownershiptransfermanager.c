@@ -50,7 +50,6 @@
 #include "cacommon.h"
 #include "cainterface.h"
 #include "base64.h"
-#include "global.h"
 #include "utlist.h"
 #include "srmresourcestrings.h"
 #include "doxmresource.h"
@@ -76,6 +75,7 @@
 #include "pkix_interface.h"
 #include "oxmverifycommon.h"
 #include "psinterface.h"
+#include "ocstackinternal.h"
 
 #define TAG "OIC_OTM"
 
@@ -192,6 +192,28 @@ static OxmAllowTableIdx_t GetOxmAllowTableIdx(OicSecOxm_t oxm)
         default:
             return OXM_IDX_UNKNOWN;
     }
+}
+
+/**
+ * Internal API to close the secure Ownership Transfer session.
+ */
+static bool CloseSslConnection(const OCProvisionDev_t *selectedDeviceInfo)
+{
+    bool success = true;
+
+    CAEndpoint_t endpoint;
+    CopyDevAddrToEndpoint(&selectedDeviceInfo->endpoint, &endpoint);
+    endpoint.port = selectedDeviceInfo->securePort;
+    CAResult_t caResult = CAcloseSslConnection(&endpoint);
+
+    if (CA_STATUS_OK != caResult)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: Failed to close DTLS session, caResult = %d",
+            __func__, caResult);
+        success = false;
+    }
+
+    return success;
 }
 
 /**
@@ -475,15 +497,7 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
                 {
                     OIC_LOG(WARNING, TAG, "Internal error in PDMDeleteDevice");
                 }
-
-                CAEndpoint_t endpoint;
-                memcpy(&endpoint, &(otmCtx->selectedDeviceInfo->endpoint), sizeof(CAEndpoint_t));
-                endpoint.port = otmCtx->selectedDeviceInfo->securePort;
-
-                if (CA_STATUS_OK != CAcloseSslConnection(&endpoint))
-                {
-                    OIC_LOG(WARNING, TAG, "Failed to close Secure session");
-                }
+                CloseSslConnection(otmCtx->selectedDeviceInfo);
             }
         }
     }
@@ -610,6 +624,8 @@ exit:
 static void OwnershipTransferSessionFailed(const CAEndpoint_t *endpoint,
         const CAErrorInfo_t *info, OicSecDoxm_t *newDevDoxm, OTMContext_t *otmCtx, bool emptyOwnerUuid)
 {
+    OC_UNUSED(endpoint);
+
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
 
     if (CA_DTLS_AUTHENTICATION_FAILURE != info->result)
@@ -754,6 +770,7 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
     endpoint.addr[MAX_ADDR_STR_SIZE_CA - 1] = '\0';
     endpoint.port = selectedDeviceInfo->securePort;
     endpoint.adapter = selectedDeviceInfo->endpoint.adapter;
+    uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = { 0 };
 
     OicUuid_t ownerDeviceID = {.id={0}};
     if (OC_STACK_OK != GetDoxmDeviceID(&ownerDeviceID))
@@ -762,8 +779,11 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
         return res;
     }
 
-    uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = {0};
-    OicSecKey_t ownerKey = {.data=ownerPSK, .len=OWNER_PSK_LENGTH_128, .encoding=OIC_ENCODING_RAW};
+    OicSecKey_t ownerKey;
+    memset(&ownerKey, 0, sizeof(ownerKey));
+    ownerKey.data = ownerPSK;
+    ownerKey.len = OWNER_PSK_LENGTH_128;
+    ownerKey.encoding = OIC_ENCODING_RAW;
 
     //Generating OwnerPSK
     CAResult_t pskRet = CAGenerateOwnerPSK(&endpoint,
@@ -1144,27 +1164,24 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
 
     if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
     {
-        if(otmCtx && otmCtx->selectedDeviceInfo)
+        if(otmCtx->selectedDeviceInfo)
         {
-            //Close the temporal secure session to verify the owner credential
+            //For Servers based on OCF 1.0, PostOwnerAcl can be executed using
+            //the already-existing session. However, get ready here to use the
+            //Owner Credential for establishing future secure sessions.
+            //
+            //For Servers based on OIC 1.1, PostOwnerAcl might fail with status
+            //OC_STACK_UNAUTHORIZED_REQ. After such a failure, OwnerAclHandler
+            //will close the current session and re-establish a new session,
+            //using the Owner Credential.
             CAEndpoint_t* endpoint = (CAEndpoint_t *)&otmCtx->selectedDeviceInfo->endpoint;
-            endpoint->port = otmCtx->selectedDeviceInfo->securePort;
-            CAResult_t caResult = CA_STATUS_OK;
-            caResult = CAcloseSslConnection(endpoint);
-
-            if(CA_STATUS_OK != caResult)
-            {
-                OIC_LOG(ERROR, TAG, "Failed to close DTLS session");
-                SetResult(otmCtx, caResult);
-                return OC_STACK_DELETE_TRANSACTION;
-            }
 
             /**
-                * If we select NULL cipher,
-                * client will select appropriate cipher suite according to server's cipher-suite list.
-                */
-                // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 = 0xC037, /**< see RFC 5489 */
-            caResult = CASelectCipherSuite(0xC037, endpoint->adapter);
+              * If we select NULL cipher,
+              * client will select appropriate cipher suite according to server's cipher-suite list.
+              */
+            // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 = 0xC037, /**< see RFC 5489 */
+            CAResult_t caResult = CASelectCipherSuite(0xC037, endpoint->adapter);
             if(CA_STATUS_OK != caResult)
             {
                 OIC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
@@ -1173,9 +1190,9 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
             }
 
             /**
-                * in case of random PIN based OxM,
-                * revert get_psk_info callback of tinyDTLS to use owner credential.
-                */
+              * in case of random PIN based OxM,
+              * revert get_psk_info callback of tinyDTLS to use owner credential.
+              */
             if(OIC_RANDOM_DEVICE_PIN == otmCtx->selectedDeviceInfo->doxm->oxmSel)
             {
                 OicUuid_t emptyUuid = { .id={0}};
@@ -1232,26 +1249,53 @@ static OCStackApplicationResult OwnerAclHandler(void *ctx, OCDoHandle UNUSED,
 
     OIC_LOG(DEBUG, TAG, "IN OwnerAclHandler");
     (void)UNUSED;
-    OCStackResult res = OC_STACK_OK;
+    OCStackResult res = clientResponse->result;
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
     otmCtx->ocDoHandle = NULL;
+    OCProvisionDev_t* selectedDeviceInfo = otmCtx->selectedDeviceInfo;
 
-    if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
+    if(OC_STACK_RESOURCE_CHANGED == res)
     {
-        if(otmCtx && otmCtx->selectedDeviceInfo)
+        if(NULL != selectedDeviceInfo)
         {
             //POST /oic/sec/doxm [{ ..., "owned":"TRUE" }]
             res = PostOwnershipInformation(otmCtx);
             if(OC_STACK_OK != res)
             {
-                OIC_LOG(ERROR, TAG, "Failed to update ownership information to new device");
+                OIC_LOG_V(ERROR, TAG, "%s: Failed to update the ownership information"
+                    "of the new device, res = %d",
+                    __func__, res);
+                SetResult(otmCtx, res);
+            }
+        }
+    }
+    else if((OC_STACK_UNAUTHORIZED_REQ == res) &&
+            (NULL != selectedDeviceInfo) &&
+            !selectedDeviceInfo->ownerAclUnauthorizedRequest)
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: UNAUTHORIZED_REQ. Assuming server is based on OIC 1.1",
+            __func__);
+        selectedDeviceInfo->ownerAclUnauthorizedRequest = true;
+
+        //Close the temporal secure session and re-connect using the owner credential
+        if(!CloseSslConnection(selectedDeviceInfo))
+        {
+            //Cannot make progress reliably, so return the error code from the previous request.
+            SetResult(otmCtx, OC_STACK_UNAUTHORIZED_REQ);
+        }
+        else
+        {
+            res = PostOwnerAcl(otmCtx);
+            if(OC_STACK_OK != res)
+            {
+                OIC_LOG_V(ERROR, TAG, "%s: Failed to update owner ACL to new device, res = %d",
+                    __func__, res);
                 SetResult(otmCtx, res);
             }
         }
     }
     else
     {
-        res = clientResponse->result;
         OIC_LOG_V(ERROR, TAG, "OwnerAclHandler : Unexpected result %d", res);
         SetResult(otmCtx, res);
     }
@@ -1386,16 +1430,17 @@ static OCStackApplicationResult ReadyForNomalStatusHandler(void *ctx, OCDoHandle
         OIC_LOG(INFO, TAG, "Device state is in Ready for Normal Operation.");
         OCStackResult res = PDMSetDeviceState(&otmCtx->selectedDeviceInfo->doxm->deviceID,
                                               PDM_DEVICE_ACTIVE);
-         if (OC_STACK_OK == res)
-         {
-                OIC_LOG_V(INFO, TAG, "Add device's UUID in PDM_DB");
-                SetResult(otmCtx, OC_STACK_OK);
-                return OC_STACK_DELETE_TRANSACTION;
-         }
-          else
-         {
-              OIC_LOG(ERROR, TAG, "Ownership transfer is complete but adding information to DB is failed.");
-         }
+        if (OC_STACK_OK == res)
+        {
+            CloseSslConnection(otmCtx->selectedDeviceInfo);
+            OIC_LOG_V(INFO, TAG, "Add device's UUID in PDM_DB");
+            SetResult(otmCtx, OC_STACK_OK);
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "Ownership transfer is complete but adding information to DB is failed.");
+        }
     }
     else
     {

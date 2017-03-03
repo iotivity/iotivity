@@ -272,31 +272,37 @@ namespace OC
                     QualityOfService QoS);
 
         /**
+         * This function returns flags of supported endpoint TPS on stack.
+         *
+         * @param[out] supportedTps Bit combinations of supported OCTpsSchemeFlags.
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult getSupportedTransportsInfo(OCTpsSchemeFlags& supportedTps);
+
+        /**
         * This API registers a resource with the server
         * @note This API applies to server side only.
         *
         * @param resourceHandle Upon successful registration, resourceHandle will be filled
         * @param resourceURI The URI of the resource. Example: "a/light". See NOTE below
-        * @param resourceTypeName The resource type. Example: "light"
+        * @param resourceTypeName The resource type. Example: "core.light"
         * @param resourceInterface The resource interface (whether it is collection etc).
         * @param entityHandler entity handler callback.
-        * @param resourceProperty indicates the property of the resource. Defined in ocstack.h.
+        * @param resourceProperty indicates the property of the resource. Defined in octypes.h.
         * setting resourceProperty as OC_DISCOVERABLE will allow Discovery of this resource
         * setting resourceProperty as OC_OBSERVABLE will allow observation
-        * settings resourceProperty as OC_DISCOVERABLE | OC_OBSERVABLE will allow both discovery and
-        * observation
+        * setting resourceProperty as OC_DISCOVERABLE | OC_OBSERVABLE will allow both discovery
+        * and observation
         *
         * @return Returns ::OC_STACK_OK if success.
-        * @note "a/light" is a relative URI.
-        * Above relative URI will be prepended (by core) with a host IP + namespace "oic"
-        * Therefore, fully qualified URI format would be //HostIP-Address/namespace/relativeURI"
-        * Example, a relative URI: 'a/light' will result in a fully qualified URI:
-        *   //192.168.1.1/oic/a/light"
-        * First parameter can take a relative URI and core will take care of preparing the fully
-        * qualified URI OR
-        * first parameter can take fully qualified URI and core will take that as is for further
-        * operations
-        * @note OCStackResult is defined in ocstack.h.
+        * @note "a/light" is a relative reference to URI.
+        * Above relative reference to URI will be prepended (by core) with a host IP
+        * Therefore, fully qualified URI format would be
+        * "CoAP(s)+protocol-URI-Scheme://HostIP-Address/relativeURI"
+        * Example, a relative reference to URI: 'a/light' will result in a fully qualified URI:
+        *   "coap://192.168.1.1:5246/a/light", "coaps://192.168.1.1:5246/a/light"
+        * @note OCStackResult is defined in octypes.h.
         * @note entity handler callback :
         * When you set specific return value like OC_EH_CHANGED, OC_EH_CONTENT,
         * OC_EH_SLOW and etc in entity handler callback,
@@ -311,6 +317,49 @@ namespace OC
                         const std::string& resourceInterface,
                         EntityHandler entityHandler,
                         uint8_t resourceProperty);
+
+        /**
+        * This API registers a resource with the server
+        * @note This API applies to server side only.
+        *
+        * @param resourceHandle Upon successful registration, resourceHandle will be filled
+        * @param resourceURI The URI of the resource. Example: "a/light". See NOTE below
+        * @param resourceTypeName The resource type. Example: "core.light"
+        * @param resourceInterface The resource interface (whether it is collection etc).
+        * @param entityHandler Entity handler callback.
+        * @param resourceProperty indicates the property of the resource. Defined in octypes.h.
+        * @param resourceTpsTypes Transport Protocol Suites(TPS) types of resource for
+                                  open resource to specific transport adapter (e.g., TCP, UDP)
+                                  with messaging protocol(e.g., COAP, COAPS).
+                                  Example: "OC_COAP | OC_COAP_TCP"
+        * setting resourceProperty as OC_DISCOVERABLE will allow Discovery of this resource
+        * setting resourceProperty as OC_OBSERVABLE will allow observation
+        * setting resourceProperty as OC_DISCOVERABLE | OC_OBSERVABLE will allow both discovery
+        * and observation
+        *
+        * @return Returns ::OC_STACK_OK if success.
+        * @note "a/light" is a relative reference to URI.
+        * Above relative reference to URI will be prepended (by core) with a host IP
+        * Therefore, fully qualified URI format would be
+        * "CoAP(s)+protocol-URI-Scheme://HostIP-Address/relativeURI"
+        * Example, a relative reference to URI: 'a/light' will result in a fully qualified URI:
+        *   "coap://192.168.1.1:5246/a/light", "coaps://192.168.1.1:5246/a/light"
+        * @note OCStackResult is defined in octypes.h.
+        * @note entity handler callback :
+        * When you set specific return value like OC_EH_CHANGED, OC_EH_CONTENT,
+        * OC_EH_SLOW and etc in entity handler callback,
+        * ocstack will be not send response automatically to client
+        * except for error return value like OC_EH_ERROR
+        * If you want to send response to client with specific result,
+        * OCDoResponse API should be called with the result value.
+        */
+        OCStackResult registerResource(OCResourceHandle& resourceHandle,
+                        std::string& resourceURI,
+                        const std::string& resourceTypeName,
+                        const std::string& resourceInterface,
+                        EntityHandler entityHandler,
+                        uint8_t resourceProperty,
+                        OCTpsSchemeFlags resourceTpsTypes);
 
         /**
          * This API registers a resource with the server
@@ -617,16 +666,18 @@ namespace OC
          * to be a Client or Client/Server.  Otherwise, this will return an empty
          * shared ptr.
          *
-         * @param host a string containing a resolvable host address of the server
-         *           holding the resource. Currently this should be in the format
-         *           coap://address:port, though in the future, we expect this to
-         *           change to //address:port
+         * @param host a string containing a resolvable "coap(s)", "coap(s)+protocol" uri scheme
+         *        of the server holding the resource.
+         *        Currently this should be in the format coap(s)://address:port or
+         *        coap(s)+protocol://address:port, though in the future, we expect this to
+         *        change to //address:port
          *
          * @param uri the rest of the resource's URI that will permit messages to be
          *           properly routed.  Example: /a/light
          *
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
+         *                           transport method and IP address scope.
+         *                           Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
          *                           if you want to use a specific Flag like IPv4,
          *                           you should apply OR operation for the flag in here.
          *                           Example: static_cast<OCConnectivityType>(CT_ADAPTER_TCP

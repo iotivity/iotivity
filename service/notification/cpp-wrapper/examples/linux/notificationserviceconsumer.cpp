@@ -117,8 +117,8 @@ void onProviderStateChangedCb(OIC::Service::NSProviderState state)
             {
                 for (auto it : topicList->getTopicsList())
                 {
-                    std::cout << "Topic Name: " << it->getTopicName() << std::endl;
-                    std::cout << "Topic state: " << (int) it->getState() << std::endl;
+                    std::cout << "Topic Name: " << it.getTopicName() << std::endl;
+                    std::cout << "Topic state: " << (int) it.getState() << std::endl;
                 }
             }
         }
@@ -288,8 +288,8 @@ int main(void)
                         {
                             for (auto it : topicList->getTopicsList())
                             {
-                                std::cout << "Topic Name: " << it->getTopicName() << std::endl;
-                                std::cout << "Topic state: " << (int) it->getState() << std::endl;
+                                std::cout << "Topic Name: " << it.getTopicName() << std::endl;
+                                std::cout << "Topic state: " << (int) it.getState() << std::endl;
                             }
                         }
                     }
@@ -302,13 +302,12 @@ int main(void)
                         NSConsumerService::getInstance()->getProvider(mainProvider);
                     if (provider != nullptr)
                     {
-                        NSTopicsList *topicList = new NSTopicsList();
+                        std::shared_ptr<NSTopicsList> topicList = std::make_shared<NSTopicsList>();
                         topicList->addTopic("OCF_TOPIC1", NSTopic::NSTopicState::SUBSCRIBED);
                         topicList->addTopic("OCF_TOPIC2", NSTopic::NSTopicState::SUBSCRIBED);
                         topicList->addTopic("OCF_TOPIC3", NSTopic::NSTopicState::UNSUBSCRIBED);
 
                         provider->updateTopicList(topicList);
-                        delete topicList;
                     }
                     break;
                 }

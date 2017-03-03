@@ -36,9 +36,8 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'#/resource/csdk/security/provisioning/include/cloud',
 		'#/resource/csdk/security/provisioning/include/oxm',
 		'#/resource/csdk/connectivity/inc/pkix',
-		'#/extlibs/tinydtls/ecc',
-		'#/extlibs/tinydtls/sha2',
-		'#/extlibs/asn1cert'
+		'#/extlibs/asn1cert',
+		'#/extlibs/mbedtls/mbedtls/include'
 		])
 
 provisioning_env.AppendUnique(CPPDEFINES= ['__WITH_DTLS__'])
@@ -47,13 +46,13 @@ if 'g++' in provisioning_env.get('CXX'):
     provisioning_env.AppendUnique(CXXFLAGS = ['-std=c++0x'])
 
 provisioning_env.AppendUnique(LIBPATH = [provisioning_env.get('BUILD_DIR')])
-provisioning_env.PrependUnique(LIBS = ['octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'ocsrm'])
+provisioning_env.PrependUnique(LIBS = ['octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
+
+if target_os not in ['msys_nt', 'windows']:
+	# octbstack.dll is exporting ocpmapi and ocsrm APIs on Windows.
+	provisioning_env.PrependUnique(LIBS = ['ocsrm'])
 
 provisioning_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
-
-
-if target_os not in ['msys_nt', 'windows', 'android', 'ios']:
-	provisioning_env.ParseConfig('pkg-config --libs glib-2.0')
 
 if target_os in ['windows', 'msys_nt']:
 	provisioning_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi'])

@@ -41,13 +41,12 @@
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
 #include "payload_logging.h"
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+#include <mbedtls/ssl_ciphersuites.h>
+#endif
 
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
-#endif
-
-#ifdef __WITH_DTLS__
-#include "global.h"
 #endif
 
 #define TAG  "OIC_SRM_DPAIRING"
@@ -134,7 +133,11 @@ OCStackResult SavePairingPSK(OCDevAddr *endpoint,
     }
 
     uint8_t pairingPSK[OWNER_PSK_LENGTH_128] = {0};
-    OicSecKey_t pairingKey = {pairingPSK, OWNER_PSK_LENGTH_128, OIC_ENCODING_RAW};
+    OicSecKey_t pairingKey;
+    memset(&pairingKey, 0, sizeof(pairingKey));
+    pairingKey.data = pairingPSK;
+    pairingKey.len = OWNER_PSK_LENGTH_128;
+    pairingKey.encoding = OIC_ENCODING_RAW;
 
     //Generating PairingPSK using OwnerPSK scheme
     CAResult_t pskRet = CAGenerateOwnerPSK((const CAEndpoint_t *)endpoint,
@@ -199,7 +202,8 @@ OCStackResult DpairingToCBORPayload(const OicSecDpairing_t *dpair, uint8_t **pay
     uint8_t mapSize = DPAIR_MAP_SIZE;
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_ERROR);
+
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     cborEncoderResult = cbor_encoder_create_map(&encoder, &dpairMap, mapSize);
@@ -367,7 +371,7 @@ exit:
  */
 void DPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
-    OIC_LOG_V(INFO, TAG, "IN DPairingDTLSHandshakeCB");
+    OIC_LOG(INFO, TAG, "IN DPairingDTLSHandshakeCB");
 
     if(gDpair && endpoint && info)
     {
@@ -392,7 +396,7 @@ void DPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *
         RemoveCredential(&gDpair->pdeviceID);
     }
 
-    OIC_LOG_V(INFO, TAG, "OUT DPairingDTLSHandshakeCB");
+    OIC_LOG(INFO, TAG, "OUT DPairingDTLSHandshakeCB");
 }
 
 static OCEntityHandlerResult HandleDpairingPostRequest (const OCEntityHandlerRequest * ehRequest)
@@ -446,22 +450,22 @@ static OCEntityHandlerResult HandleDpairingPostRequest (const OCEntityHandlerReq
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
             // Add temporary psk
-            OCStackResult res;
+            OCStackResult result;
             OicUuid_t subjectId = {.id={0}};
-            res = AddTmpPskWithPIN(&gDpair->pdeviceID,
+            result = AddTmpPskWithPIN(&gDpair->pdeviceID,
                            SYMMETRIC_PAIR_WISE_KEY,
                            (char*)pconf->pin.val, DP_PIN_LENGTH,
                            &gDpair->rownerID, &subjectId);
-            if(res != OC_STACK_OK ||
+            if(result != OC_STACK_OK ||
                     memcmp(&gDpair->pdeviceID, &subjectId, sizeof(OicUuid_t)))
             {
-                OIC_LOG_V(ERROR, TAG, "Failed to save the temporal PSK : %d", res);
+                OIC_LOG_V(ERROR, TAG, "Failed to save the temporal PSK : %d", result);
                 goto exit;
             }
 
             // Prepare to establish a secure channel with Pin-based PSK cipher suite
             if (CA_STATUS_OK != CAEnableAnonECDHCipherSuite(false) ||
-                CA_STATUS_OK != CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256, CA_ADAPTER_IP))
+                CA_STATUS_OK != CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, CA_ADAPTER_IP))
             {
                 OIC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256");
                 goto exit;
@@ -526,7 +530,6 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
         {
             res = CBORPayloadToDpair(payload, size, &newDpair);
         }
-
     }
     else
     {
@@ -542,8 +545,8 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
         // Check if valid Put request
         VERIFY_SUCCESS(TAG, PRM_NOT_ALLOWED == newDpair->spm, ERROR);
 
-        const OicSecPconf_t *pconf = GetPconfResourceData();
-        VERIFY_NOT_NULL(TAG, pconf, ERROR);
+        const OicSecPconf_t *secPconf = GetPconfResourceData();
+        VERIFY_NOT_NULL(TAG, secPconf, ERROR);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         OCServerRequest * request = (OCServerRequest *)ehRequest->requestHandle;
@@ -552,14 +555,14 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
         //Generate new credential
         OIC_LOG_V(INFO, TAG, "SavePairingPSK for %s(%d)", request->devAddr.addr,
                 request->devAddr.port);
-        OCStackResult res = SavePairingPSK(&request->devAddr, &newDpair->pdeviceID,
-                (OicUuid_t *)&pconf->rownerID, true);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);
+        OCStackResult result = SavePairingPSK(&request->devAddr, &newDpair->pdeviceID,
+                (OicUuid_t *)&secPconf->rownerID, true);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == result, ERROR);
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
         //Generate new acl
         OicSecPdAcl_t *pdAcl;
-        LL_FOREACH(pconf->pdacls, pdAcl)
+        LL_FOREACH(secPconf->pdacls, pdAcl)
         {
             OicSecAcl_t* acl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
             VERIFY_NOT_NULL(TAG, acl, ERROR);

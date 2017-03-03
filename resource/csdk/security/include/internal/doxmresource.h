@@ -45,7 +45,7 @@ OCStackResult InitDoxmResource();
 OCStackResult DeInitDoxmResource();
 
 /**
- * This method is used by SRM to retrieve DOXM resource data..
+ * This method is used by SRM to retrieve DOXM resource data.
  *
  * @return reference to @ref OicSecDoxm_t, binary format of Doxm resource data.
  */
