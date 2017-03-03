@@ -137,9 +137,10 @@ IPCAPlatformInfo* OCFDevice::GetPlatformInfo()
     return m_platformInfo;
 }
 
-void C_GetPropertiesCallback(IPCAStatus result,
-                void* context,
-                IPCAPropertyBagHandle propertyBagHandle)
+void IPCA_CALL C_GetPropertiesCallback(
+                            IPCAStatus result,
+                            void* context,
+                            IPCAPropertyBagHandle propertyBagHandle)
 {
     std::lock_guard<std::recursive_mutex> lock(g_globalMutex);
 
@@ -511,9 +512,10 @@ void OCFDevice::GetDeviceDetails(std::string deviceName, const char** deviceUris
 std::map<std::string, OCFDevice::Ptr> g_OCFDeviceList;
 
 // Callback when device is discovered.
-void DiscoverDevicesCallback(void* context,
-            IPCADeviceStatus deviceStatus,
-            const IPCADiscoveredDeviceInfo* deviceInfo)
+void IPCA_CALL DiscoverDevicesCallback(
+                            void* context,
+                            IPCADeviceStatus deviceStatus,
+                            const IPCADiscoveredDeviceInfo* deviceInfo)
 {
     UNREFERENCED_PARAMETER(context);
 
@@ -559,12 +561,13 @@ void DiscoverDevicesCallback(void* context,
     ocfDevice->DisplayDevice();
 }
 
-IPCAStatus IPCA_CALL PasswordInputCallback(void* context,
-                                           const IPCADeviceInfo* deviceInformation,
-                                           const IPCAPlatformInfo* platformInformation,
-                                           IPCAOwnershipTransferType type,
-                                           char* passwordBuffer,
-                                           size_t passwordBufferSize)
+IPCAStatus IPCA_CALL PasswordInputCallback(
+                                    void* context,
+                                    const IPCADeviceInfo* deviceInformation,
+                                    const IPCAPlatformInfo* platformInformation,
+                                    IPCAOwnershipTransferType type,
+                                    char* passwordBuffer,
+                                    size_t passwordBufferSize)
 {
     UNREFERENCED_PARAMETER(context);
     UNREFERENCED_PARAMETER(deviceInformation);
@@ -579,11 +582,12 @@ IPCAStatus IPCA_CALL PasswordInputCallback(void* context,
     return IPCA_FAIL;
 }
 
-IPCAStatus IPCA_CALL PasswordDisplayCallback(void* context,
-                                             const IPCADeviceInfo* deviceInformation,
-                                             const IPCAPlatformInfo* platformInformation,
-                                             IPCAOwnershipTransferType type,
-                                             const char* password)
+IPCAStatus IPCA_CALL PasswordDisplayCallback(
+                                    void* context,
+                                    const IPCADeviceInfo* deviceInformation,
+                                    const IPCAPlatformInfo* platformInformation,
+                                    IPCAOwnershipTransferType type,
+                                    const char* password)
 {
     UNREFERENCED_PARAMETER(context);
     UNREFERENCED_PARAMETER(deviceInformation);

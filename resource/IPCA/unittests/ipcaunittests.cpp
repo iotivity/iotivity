@@ -34,7 +34,7 @@ using namespace std;
 using namespace std::placeholders;
 
 // Implemented in ipca.dll.
-void IPCASetUnitTestMode();
+void IPCA_CALL IPCASetUnitTestMode();
 
 // IPCA test app info.
 IPCAUuid IPCATestAppUuid = {0x84, 0x71, 0x88, 0x78, 0xe6, 0x91, 0x4b, 0xf4,
