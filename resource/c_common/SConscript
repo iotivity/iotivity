@@ -135,6 +135,7 @@ env.AppendUnique(CPPPATH = [
             os.path.join(Dir('.').abspath, 'oic_malloc', 'include'),
             os.path.join(Dir('.').abspath, 'oic_string', 'include'),
             os.path.join(Dir('.').abspath, 'oic_time', 'include'),
+            os.path.join(Dir('.').abspath, 'ocatomic', 'include'),
             os.path.join(Dir('.').abspath, 'ocrandom', 'include'),
             os.path.join(Dir('.').abspath, 'octhread', 'include')
         ])
@@ -180,11 +181,19 @@ elif target_os  in ['windows']:
 else:
 	common_src.append('octhread/src/noop/octhread.c')
 
+if target_os in ['windows', 'msys_nt']:
+	common_src.append('ocatomic/src/windows/ocatomic.c')
+elif target_os in ['arduino']:
+	common_src.append('ocatomic/src/arduino/ocatomic.c')
+else:
+	common_src.append('ocatomic/src/others/ocatomic.c')
+
 common_env.AppendUnique(LIBS = ['logger'])
 common_env.AppendUnique(CPPPATH = ['#resource/csdk/logger/include'])
 commonlib = common_env.StaticLibrary('c_common', common_src)
 common_env.InstallTarget(commonlib, 'c_common')
 common_env.UserInstallTargetLib(commonlib, 'c_common')
+common_env.UserInstallTargetHeader('iotivity_debug.h', 'c_common', 'iotivity_debug.h')
 common_env.UserInstallTargetHeader('platform_features.h', 'c_common', 'platform_features.h')
 
 env.PrependUnique(LIBS = ['c_common'])

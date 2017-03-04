@@ -37,10 +37,14 @@
 #define __STDC_LIMIT_MACROS
 #endif
 #include "iotivity_config.h"
+#include "iotivity_debug.h"
 #include <stdlib.h>
 #include <inttypes.h>
 #include <string.h>
 #include <ctype.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include "ocstack.h"
 #include "ocstackinternal.h"
@@ -64,6 +68,8 @@
 #include "cainterface.h"
 #include "oicgroup.h"
 #include "ocendpoint.h"
+#include "ocatomic.h"
+#include "platform_features.h"
 
 #if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
 #include "occonnectionmanager.h"
@@ -106,8 +112,7 @@
 typedef enum
 {
     OC_STACK_UNINITIALIZED = 0,
-    OC_STACK_INITIALIZED,
-    OC_STACK_UNINIT_IN_PROGRESS
+    OC_STACK_INITIALIZED
 } OCStackState;
 
 #ifdef WITH_PRESENCE
@@ -156,6 +161,11 @@ CAAdapterStateChangedCB g_adapterHandler = NULL;
 CAConnectionStateChangedCB g_connectionHandler = NULL;
 // Persistent Storage callback handler for open/read/write/close/unlink
 static OCPersistentStorage *g_PersistentStorageHandler = NULL;
+// Number of users of OCStack, based on the successful calls to OCInit2 prior to OCStop
+// The variable must not be declared static because it is also referenced by the unit test
+uint32_t g_ocStackStartCount = 0;
+// Number of threads currently executing OCInit2 or OCStop
+volatile int32_t g_ocStackStartStopThreadCount = 0;
 
 //-----------------------------------------------------------------------------
 // Macros
@@ -438,9 +448,55 @@ static void OCSetNetworkMonitorHandler(CAAdapterStateChangedCB adapterHandler,
 static OCStackResult OCMapZoneIdToLinkLocalEndpoint(OCDiscoveryPayload *payload, uint32_t ifindex);
 #endif
 
+/**
+ * Initialize the stack.
+ * Caller of this function must serialize calls to this function and the stop counterpart.
+ * @param mode            Mode of operation.
+ * @param serverFlags     The server flag used when the mode of operation is a server mode.
+ * @param clientFlags     The client flag used when the mode of operation is a client mode.
+ * @param transportType   The transport type.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+static OCStackResult OCInitializeInternal(OCMode mode, OCTransportFlags serverFlags,
+    OCTransportFlags clientFlags, OCTransportAdapter transportType);
+
+/**
+ * DeInitialize the stack.
+ * Caller of this function must serialize calls to this function and the init counterpart.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+static OCStackResult OCDeInitializeInternal();
+
 //-----------------------------------------------------------------------------
 // Internal functions
 //-----------------------------------------------------------------------------
+static void OCEnterInitializer()
+{
+    for (;;)
+    {
+        int32_t initCount = oc_atomic_increment(&g_ocStackStartStopThreadCount);
+        assert(initCount > 0);
+        if (initCount == 1)
+        {
+            break;
+        }
+        OC_VERIFY(oc_atomic_decrement(&g_ocStackStartStopThreadCount) >= 0);
+#if !defined(ARDUINO)
+        // Yield execution to the thread that is holding the lock.
+        sleep(0);
+#else // ARDUINO
+        assert(!"Not expecting initCount to go above 1 on Arduino");
+        break;
+#endif // ARDUINO
+    }
+}
+
+static void OCLeaveInitializer()
+{
+    OC_VERIFY(oc_atomic_decrement(&g_ocStackStartStopThreadCount) >= 0);
+}
 
 bool checkProxyUri(OCHeaderOption *options, uint8_t numOptions)
 {
@@ -2427,10 +2483,38 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     return OCInit2(mode, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS, OC_DEFAULT_ADAPTER);
 }
 
-OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags, OCTransportFlags clientFlags,
-                      OCTransportAdapter transportType)
+OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags,
+    OCTransportFlags clientFlags, OCTransportAdapter transportType)
 {
-    if(stackState == OC_STACK_INITIALIZED)
+    OIC_LOG(INFO, TAG, "Entering OCInit2");
+
+    // Serialize calls to start and stop the stack.
+    OCEnterInitializer();
+
+    OCStackResult result = OC_STACK_OK;
+
+    if (g_ocStackStartCount == 0)
+    {
+        // This is the first call to initialize the stack so it gets to do the real work.
+        result = OCInitializeInternal(mode, serverFlags, clientFlags, transportType);
+    }
+    
+    if (result == OC_STACK_OK)
+    {
+        // Increment the start count since we're about to return success.
+        assert(g_ocStackStartCount != UINT_MAX);
+        assert(stackState == OC_STACK_INITIALIZED);
+        g_ocStackStartCount++;
+    }
+
+    OCLeaveInitializer();
+    return result;
+}
+
+OCStackResult OCInitializeInternal(OCMode mode, OCTransportFlags serverFlags,
+    OCTransportFlags clientFlags, OCTransportAdapter transportType)
+{
+    if (stackState == OC_STACK_INITIALIZED)
     {
         OIC_LOG(INFO, TAG, "Subsequent calls to OCInit() without calling \
                 OCStop() between them are ignored.");
@@ -2454,7 +2538,6 @@ OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
 #endif
 
     OCStackResult result = OC_STACK_ERROR;
-    OIC_LOG(INFO, TAG, "Entering OCInit");
 
     // Validate mode
     if (!((mode == OC_CLIENT) || (mode == OC_SERVER) || (mode == OC_CLIENT_SERVER)
@@ -2583,22 +2666,35 @@ OCStackResult OCStop()
 {
     OIC_LOG(INFO, TAG, "Entering OCStop");
 
-    if (stackState == OC_STACK_UNINIT_IN_PROGRESS)
+    // Serialize calls to start and stop the stack.
+    OCEnterInitializer();
+
+    OCStackResult result = OC_STACK_OK;
+
+    if (g_ocStackStartCount == 1)
     {
-        OIC_LOG(DEBUG, TAG, "Stack already stopping, exiting");
-        return OC_STACK_OK;
+        // This is the last call to stop the stack, do the real work.
+        result = OCDeInitializeInternal();
     }
-    else if (stackState != OC_STACK_INITIALIZED)
+    else if (g_ocStackStartCount == 0)
     {
-        OIC_LOG(INFO, TAG, "Stack not initialized");
-        return OC_STACK_ERROR;
+        OIC_LOG(ERROR, TAG, "Too many calls to OCStop");
+        assert(!"Too many calls to OCStop");
+        result = OC_STACK_ERROR;
     }
 
-    // unset cautil config
-    CAUtilConfig_t configs = {(CATransportBTFlags_t)CA_DEFAULT_BT_FLAGS};
-    CAUtilSetBTConfigure(configs);
+    if (result == OC_STACK_OK)
+    {
+        g_ocStackStartCount--;
+    }
 
-    stackState = OC_STACK_UNINIT_IN_PROGRESS;
+    OCLeaveInitializer();
+    return result;
+}
+
+OCStackResult OCDeInitializeInternal()
+{
+    assert(stackState == OC_STACK_INITIALIZED);
 
 #ifdef WITH_PRESENCE
     // Ensure that the TTL associated with ANY and ALL presence notifications originating from
@@ -2639,6 +2735,10 @@ OCStackResult OCStop()
     // Terminate the Connection Manager
     OCCMTerminate();
 #endif
+
+    // Unset cautil config
+    CAUtilConfig_t configs = {(CATransportBTFlags_t)CA_DEFAULT_BT_FLAGS};
+    CAUtilSetBTConfigure(configs);
 
     stackState = OC_STACK_UNINITIALIZED;
     return OC_STACK_OK;

@@ -179,6 +179,8 @@ uint8_t InitResourceIndex()
 #endif
 }
 
+extern "C" uint32_t g_ocStackStartCount;
+
 class OCDiscoverTests : public testing::Test
 {
     protected:
@@ -200,7 +202,9 @@ TEST(StackInit, StackInitNullAddr)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit(0, 5683, OC_SERVER));
+    EXPECT_EQ(1, g_ocStackStartCount);
     EXPECT_EQ(OC_STACK_OK, OCStop());
+    EXPECT_EQ(0, g_ocStackStartCount);
 }
 
 TEST(StackInit, StackInitNullPort)
@@ -221,7 +225,7 @@ TEST(StackInit, StackInitInvalidMode)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_ERROR, OCInit(0, 0, (OCMode)10));
-    EXPECT_EQ(OC_STACK_ERROR, OCStop());
+    EXPECT_EQ(0, g_ocStackStartCount);
 }
 
 TEST(StackStart, StackStartSuccessClient)
@@ -266,9 +270,15 @@ TEST(StackStart, StackStartSuccessClientThenServer)
 TEST(StackStart, StackStartSuccessiveInits)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(0, g_ocStackStartCount);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    EXPECT_EQ(1, g_ocStackStartCount);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.2", 5683, OC_SERVER));
+    EXPECT_EQ(2, g_ocStackStartCount);
     EXPECT_EQ(OC_STACK_OK, OCStop());
+    EXPECT_EQ(1, g_ocStackStartCount);
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+    EXPECT_EQ(0, g_ocStackStartCount);
 }
 
 TEST(StackStart, SetPlatformInfoValid)
@@ -610,20 +620,6 @@ TEST(StackDiscovery, DISABLED_DoResourceDeviceDiscovery)
                                         NULL,
                                         0));
     EXPECT_EQ(OC_STACK_OK, OCStop());
-}
-
-TEST(StackStop, StackStopWithoutInit)
-{
-    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    EXPECT_EQ(OC_STACK_ERROR, OCStop());
-}
-
-TEST(StackStop, StackStopRepeated)
-{
-    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
-    EXPECT_EQ(OC_STACK_OK, OCStop());
-    EXPECT_EQ(OC_STACK_ERROR, OCStop());
 }
 
 TEST(StackResource, DISABLED_UpdateResourceNullURI)
