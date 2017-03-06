@@ -257,8 +257,8 @@ static void CASelectReturned(fd_set *readFds, int ret)
             u_arraylist_t *iflist = CAFindInterfaceChange();
             if (iflist)
             {
-                uint32_t listLength = u_arraylist_length(iflist);
-                for (uint32_t i = 0; i < listLength; i++)
+                size_t listLength = u_arraylist_length(iflist);
+                for (size_t i = 0; i < listLength; i++)
                 {
                     CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
                     if (ifitem)
@@ -357,8 +357,8 @@ static void CAFindReadyMessage()
 {
     CASocketFd_t socketArray[EVENT_ARRAY_SIZE];
     HANDLE eventArray[EVENT_ARRAY_SIZE];
-    int arraySize = 0;
-    int eventIndex;
+    DWORD arraySize = 0;
+    DWORD eventIndex;
 
     // socketArray and eventArray should have same number of elements
     OC_STATIC_ASSERT(_countof(socketArray) == _countof(eventArray), "Arrays should have same number of elements");
@@ -393,7 +393,7 @@ static void CAFindReadyMessage()
 
     while (!caglobals.ip.terminate)
     {
-        int ret = WSAWaitForMultipleEvents(arraySize, eventArray, FALSE, WSA_INFINITE, FALSE);
+        DWORD ret = WSAWaitForMultipleEvents(arraySize, eventArray, FALSE, WSA_INFINITE, FALSE);
         assert(ret >= WSA_WAIT_EVENT_0);
         assert(ret < (WSA_WAIT_EVENT_0 + arraySize));
 
@@ -424,8 +424,8 @@ static void CAFindReadyMessage()
                         u_arraylist_t *iflist = CAFindInterfaceChange();
                         if (iflist)
                         {
-                            uint32_t listLength = u_arraylist_length(iflist);
-                            for (uint32_t i = 0; i < listLength; i++)
+                            size_t listLength = u_arraylist_length(iflist);
+                            for (size_t i = 0; i < listLength; i++)
                             {
                                 CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
                                 if (ifitem)
@@ -455,7 +455,7 @@ static void CAFindReadyMessage()
 
     }
 
-    for (int i = 0; i < arraySize; i++)
+    for (size_t i = 0; i < arraySize; i++)
     {
         HANDLE h = eventArray[i];
         if (h != caglobals.ip.addressChangeEvent)
@@ -697,8 +697,8 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
 
 void CAIPPullData()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-    OIC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
 }
 
 static CASocketFd_t CACreateSocket(int family, uint16_t *port, bool isMulticast)
@@ -797,21 +797,29 @@ static CASocketFd_t CACreateSocket(int family, uint16_t *port, bool isMulticast)
 #define CHECKFD(FD)
 #else
 #define CHECKFD(FD) \
+do \
+{ \
     if (FD > caglobals.ip.maxfd) \
-        caglobals.ip.maxfd = FD;
+    { \
+        caglobals.ip.maxfd = FD; \
+    } \
+} while (0)
 #endif
-
 #define NEWSOCKET(FAMILY, NAME, MULTICAST) \
+do \
+{ \
     caglobals.ip.NAME.fd = CACreateSocket(FAMILY, &caglobals.ip.NAME.port, MULTICAST); \
     if (caglobals.ip.NAME.fd == OC_INVALID_SOCKET) \
     {   \
         caglobals.ip.NAME.port = 0; \
         caglobals.ip.NAME.fd = CACreateSocket(FAMILY, &caglobals.ip.NAME.port, MULTICAST); \
     }   \
-    CHECKFD(caglobals.ip.NAME.fd)
+    CHECKFD(caglobals.ip.NAME.fd); \
+} while(0)
 
 static void CARegisterForAddressChanges()
 {
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
 #ifdef _WIN32
     caglobals.ip.addressChangeEvent = WSACreateEvent();
     if (WSA_INVALID_EVENT != caglobals.ip.addressChangeEvent)
@@ -846,10 +854,12 @@ static void CARegisterForAddressChanges()
     }
 #endif
 #endif
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
 }
 
 static void CAInitializeFastShutdownMechanism()
 {
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
     caglobals.ip.selectTimeout = -1; // don't poll for shutdown
     int ret = -1;
 #if defined(WSA_WAIT_EVENT_0)
@@ -895,6 +905,7 @@ static void CAInitializeFastShutdownMechanism()
         OIC_LOG_V(ERROR, TAG, "fast shutdown mechanism init failed: %s", CAIPS_GET_ERROR);
         caglobals.ip.selectTimeout = SELECT_TIMEOUT; //poll needed for shutdown
     }
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
 }
 
 CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
@@ -935,18 +946,18 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
 
     if (caglobals.ip.ipv6enabled)
     {
-        NEWSOCKET(AF_INET6, u6, false)
-        NEWSOCKET(AF_INET6, u6s, false)
-        NEWSOCKET(AF_INET6, m6, true)
-        NEWSOCKET(AF_INET6, m6s, true)
+        NEWSOCKET(AF_INET6, u6, false);
+        NEWSOCKET(AF_INET6, u6s, false);
+        NEWSOCKET(AF_INET6, m6, true);
+        NEWSOCKET(AF_INET6, m6s, true);
         OIC_LOG_V(INFO, TAG, "IPv6 unicast port: %u", caglobals.ip.u6.port);
     }
     if (caglobals.ip.ipv4enabled)
     {
-        NEWSOCKET(AF_INET, u4, false)
-        NEWSOCKET(AF_INET, u4s, false)
-        NEWSOCKET(AF_INET, m4, true)
-        NEWSOCKET(AF_INET, m4s, true)
+        NEWSOCKET(AF_INET, u4, false);
+        NEWSOCKET(AF_INET, u4s, false);
+        NEWSOCKET(AF_INET, m4, true);
+        NEWSOCKET(AF_INET, m4s, true);
         OIC_LOG_V(INFO, TAG, "IPv4 unicast port: %u", caglobals.ip.u4.port);
     }
 
@@ -1100,7 +1111,7 @@ static void applyMulticastToInterface4(uint32_t ifindex)
     }
 }
 
-static void applyMulticast6(int fd, struct in6_addr *addr, uint32_t ifindex)
+static void applyMulticast6(CASocketFd_t fd, struct in6_addr *addr, uint32_t ifindex)
 {
     struct ipv6_mreq mreq = { .ipv6mr_interface = ifindex };
 
@@ -1155,6 +1166,7 @@ static void applyMulticastToInterface6(uint32_t ifindex)
 
 CAResult_t CAIPStartListenServer()
 {
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
     u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
     if (!iflist)
     {
@@ -1162,10 +1174,10 @@ CAResult_t CAIPStartListenServer()
         return CA_STATUS_FAILED;
     }
 
-    uint32_t len = u_arraylist_length(iflist);
+    size_t len = u_arraylist_length(iflist);
     OIC_LOG_V(DEBUG, TAG, "IP network interfaces found: %d", len);
 
-    for (uint32_t i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
 
@@ -1190,6 +1202,7 @@ CAResult_t CAIPStartListenServer()
     }
 
     u_arraylist_destroy(iflist);
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
     return CA_STATUS_OK;
 }
 
@@ -1202,10 +1215,10 @@ CAResult_t CAIPStopListenServer()
         return CA_STATUS_FAILED;
     }
 
-    uint32_t len = u_arraylist_length(iflist);
+    size_t len = u_arraylist_length(iflist);
     OIC_LOG_V(DEBUG, TAG, "IP network interfaces found: %d", len);
 
-    for (uint32_t i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
 
@@ -1259,11 +1272,11 @@ void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback)
     g_packetReceivedCallback = callback;
 }
 
-static void sendData(int fd, const CAEndpoint_t *endpoint,
-                     const void *data, uint32_t dlen,
+static void sendData(CASocketFd_t fd, const CAEndpoint_t *endpoint,
+                     const void *data, size_t dlen,
                      const char *cast, const char *fam)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
 
     if (!endpoint)
     {
@@ -1316,9 +1329,10 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
 #else
     int err = 0;
     int len = 0;
-    int sent = 0;
+    size_t sent = 0;
     do {
-        len = sendto(fd, ((char*)data) + sent, dlen - sent, 0, (struct sockaddr *)&sock, socklen);
+        int dataToSend = ((dlen - sent) > INT_MAX) ? INT_MAX : (int)(dlen - sent);
+        len = sendto(fd, ((char*)data) + sent, dataToSend, 0, (struct sockaddr *)&sock, socklen);
         if (OC_SOCKET_ERROR == len)
         {
             err = WSAGetLastError();
@@ -1340,9 +1354,9 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
             {
                 OIC_LOG_V(DEBUG, TAG, "%s%s %s sendTo (Partial Send) is successful: "
                                       "currently sent: %ld bytes, "
-                                      "total sent: %ld bytes, "
-                                      "remaining: %ld bytes",
-                                      secure, cast, fam, len, sent, dlen-sent);
+                                      "total sent: %" PRIuPTR " bytes, "
+                                      "remaining: %" PRIuPTR " bytes",
+                                      secure, cast, fam, len, sent, (dlen - sent));
             }
             else
             {
@@ -1356,7 +1370,7 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
 
 static void sendMulticastData6(const u_arraylist_t *iflist,
                                CAEndpoint_t *endpoint,
-                               const void *data, uint32_t datalen)
+                               const void *data, size_t datalen)
 {
     if (!endpoint)
     {
@@ -1372,10 +1386,10 @@ static void sendMulticastData6(const u_arraylist_t *iflist,
         return;
     }
     OICStrcpy(endpoint->addr, sizeof(endpoint->addr), ipv6mcname);
-    int fd = caglobals.ip.u6.fd;
+    CASocketFd_t fd = caglobals.ip.u6.fd;
 
-    uint32_t len = u_arraylist_length(iflist);
-    for (uint32_t i = 0; i < len; i++)
+    size_t len = u_arraylist_length(iflist);
+    for (size_t i = 0; i < len; i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
         if (!ifitem)
@@ -1403,7 +1417,7 @@ static void sendMulticastData6(const u_arraylist_t *iflist,
 
 static void sendMulticastData4(const u_arraylist_t *iflist,
                                CAEndpoint_t *endpoint,
-                               const void *data, uint32_t datalen)
+                               const void *data, size_t datalen)
 {
     VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
 
@@ -1417,10 +1431,10 @@ static void sendMulticastData4(const u_arraylist_t *iflist,
 #endif
 
     OICStrcpy(endpoint->addr, sizeof(endpoint->addr), IPv4_MULTICAST);
-    int fd = caglobals.ip.u4.fd;
+    CASocketFd_t fd = caglobals.ip.u4.fd;
 
-    uint32_t len = u_arraylist_length(iflist);
-    for (uint32_t i = 0; i < len; i++)
+    size_t len = u_arraylist_length(iflist);
+    for (size_t i = 0; i < len; i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
         if (!ifitem)
@@ -1449,7 +1463,7 @@ static void sendMulticastData4(const u_arraylist_t *iflist,
     }
 }
 
-void CAIPSendData(CAEndpoint_t *endpoint, const void *data, uint32_t datalen,
+void CAIPSendData(CAEndpoint_t *endpoint, const void *data, size_t datalen,
                   bool isMulticast)
 {
     VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
@@ -1506,7 +1520,7 @@ void CAIPSendData(CAEndpoint_t *endpoint, const void *data, uint32_t datalen,
     }
 }
 
-CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
+CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, size_t *size)
 {
     VERIFY_NON_NULL(info, TAG, "info is NULL");
     VERIFY_NON_NULL(size, TAG, "size is NULL");
@@ -1518,8 +1532,8 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         return CA_STATUS_FAILED;
     }
 
-    uint32_t len = u_arraylist_length(iflist);
-    uint32_t length = len;
+    size_t len = u_arraylist_length(iflist);
+    size_t length = len;
 
 #ifdef __WITH_DTLS__
     //If DTLS is supported, each interface can support secure port as well
@@ -1534,7 +1548,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    for (uint32_t i = 0, j = 0; i < len; i++)
+    for (size_t i = 0, j = 0; i < len; i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
         if(!ifitem)

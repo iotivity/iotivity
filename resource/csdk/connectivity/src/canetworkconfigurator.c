@@ -183,8 +183,8 @@ CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
         return CA_STATUS_FAILED;
     }
 
-    uint32_t selectedNetworkLength = u_arraylist_length(g_selectedNetworkList);
-    for (uint32_t index = 0; index < selectedNetworkLength; index++)
+    size_t selectedNetworkLength = u_arraylist_length(g_selectedNetworkList);
+    for (size_t index = 0; index < selectedNetworkLength; index++)
     {
         void* ptrType = u_arraylist_get(g_selectedNetworkList, index);
         if (NULL == ptrType)
@@ -283,7 +283,7 @@ CATransportAdapter_t CAGetSelectedNetwork()
     return CASelectedNetwork;
 }
 
-CAResult_t CAGetNetworkInformationInternal(CAEndpoint_t **info, uint32_t *size)
+CAResult_t CAGetNetworkInformationInternal(CAEndpoint_t **info, size_t *size)
 {
     OIC_LOG(DEBUG, TAG, "get network information.");
 

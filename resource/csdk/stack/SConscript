@@ -57,6 +57,7 @@ else:
 
 liboctbstack_env.PrependUnique(CPPPATH = [
         '#/extlibs/timer/',
+        '#resource/c_common/ocatomic/include',
         '#resource/csdk/logger/include',
         '#resource/csdk/include',
         'include',

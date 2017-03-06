@@ -668,7 +668,7 @@ INPUT                  = . \
                          ../../include/OCResourceResponse.h \
                          ../../include/OCResource.h \
                          ../../include/OCProvisioningManager.hpp \
-                         ../../csdk/stack/include/octypes.h \
+                         ../../csdk/include/octypes.h \
                          ../../csdk/stack/include/ocstackconfig.h \
                          guides \
                          ../../../service/resource-encapsulation/include \
@@ -677,6 +677,7 @@ INPUT                  = . \
                          ../../../service/easy-setup/mediator/richsdk/inc/ \
                          ../../../service/easy-setup/inc \
                          ../../../service/scene-manager/include \
+                         ../../../service/notification/include \
                          ../../../service/notification/cpp-wrapper/provider/inc \
                          ../../../service/notification/cpp-wrapper/consumer/inc \
                          ../../../service/notification/cpp-wrapper/common/NSMediaContents.h \

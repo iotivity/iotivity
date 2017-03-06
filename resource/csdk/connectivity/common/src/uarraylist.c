@@ -110,7 +110,7 @@ void u_arraylist_shrink_to_fit(u_arraylist_t *list)
     }
 }
 
-void *u_arraylist_get(const u_arraylist_t *list, uint32_t index)
+void *u_arraylist_get(const u_arraylist_t *list, size_t index)
 {
     if (!list )
     {
@@ -125,14 +125,14 @@ void *u_arraylist_get(const u_arraylist_t *list, uint32_t index)
     return NULL;
 }
 
-bool u_arraylist_get_index(const u_arraylist_t *list, const void *data, uint32_t *index)
+bool u_arraylist_get_index(const u_arraylist_t *list, const void *data, size_t *index)
 {
     if (!list || !data)
     {
         return false;
     }
 
-    for (uint32_t i = 0; i < list->length; i++)
+    for (size_t i = 0; i < list->length; i++)
     {
         if (data == list->data[i])
         {
@@ -169,7 +169,7 @@ bool u_arraylist_add(u_arraylist_t *list, void *data)
         list->data = (void **) tmp;
         memset(list->data + list->capacity, 0,
                (new_capacity - list->capacity) * sizeof(list->data[0]));
-        list->capacity = (uint32_t)new_capacity;
+        list->capacity = new_capacity;
     }
 
     list->data[list->length] = data;
@@ -178,7 +178,7 @@ bool u_arraylist_add(u_arraylist_t *list, void *data)
     return true;
 }
 
-void *u_arraylist_remove(u_arraylist_t *list, uint32_t index)
+void *u_arraylist_remove(u_arraylist_t *list, size_t index)
 {
     void *removed = NULL;
 
@@ -201,7 +201,7 @@ void *u_arraylist_remove(u_arraylist_t *list, uint32_t index)
     return removed;
 }
 
-uint32_t u_arraylist_length(const u_arraylist_t *list)
+size_t u_arraylist_length(const u_arraylist_t *list)
 {
     if (!list)
     {
@@ -218,7 +218,7 @@ bool u_arraylist_contains(const u_arraylist_t *list, const void *data)
         return false;
     }
 
-    for (uint32_t i = 0; i < list->length; i++)
+    for (size_t i = 0; i < list->length; i++)
     {
         if (data == list->data[i])
         {
@@ -236,7 +236,7 @@ void u_arraylist_destroy(u_arraylist_t *list)
     {
         return;
     }
-    for (uint32_t i = 0; i < list->length; i++)
+    for (size_t i = 0; i < list->length; i++)
     {
         OICFree(list->data[i]);
     }

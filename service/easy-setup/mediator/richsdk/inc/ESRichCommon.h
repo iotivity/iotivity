@@ -148,6 +148,7 @@ namespace OIC
 
             /**
              * Constructor with OCRepresentation object. This is used for JNI communication.
+             * @param rep OCRepresentation object
              */
             CloudProp(const OCRepresentation &rep)
             {
@@ -344,6 +345,7 @@ namespace OIC
 
             /**
              * Constructor with OCRepresentation object. This is used for JNI communication.
+             * @param rep OCRepresentation object
              */
             DeviceProp(const OCRepresentation &rep)
             {
@@ -374,6 +376,7 @@ namespace OIC
              *
              * @param language IETF language tag using ISO 639X
              * @param country ISO Country Code (ISO 3166-1 Alpha-2)
+             * @param location location information
              */
             void setDevConfProp(string language, string country, string location)
             {
@@ -598,7 +601,7 @@ namespace OIC
         };
 
         /**
-         * @breif This provide a set of getter APIs from received response for getConfiguration().
+         * @brief This provide a set of getter APIs from received response for getConfiguration().
          *        Received information includes a device name, WiFi supported mode, and frequency.
          *        Additionally, you can know if Enrollee can be access to cloud server with this
          *        object.

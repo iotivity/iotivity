@@ -107,7 +107,7 @@ int32_t CASendNFCMulticastData(const CAEndpoint_t *endpoint, const void *data,
  * @return  ::CA_STATUS_OK, if success or Appropriate error code.
  * @remarks info is allocated in this API and must be freed by the caller.
  */
-CAResult_t CAGetNFCInterfaceInformation(CAEndpoint_t **info, uint32_t *size);
+CAResult_t CAGetNFCInterfaceInformation(CAEndpoint_t **info, size_t *size);
 
 /**
  * Read Synchronous API callback.

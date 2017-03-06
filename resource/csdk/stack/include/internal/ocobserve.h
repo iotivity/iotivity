@@ -136,7 +136,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
  * @param resource                  Observed resource.
  * @param obsIdList                 List of observation ids that need to be notified.
  * @param numberOfIds               Number of observation ids included in obsIdList.
- * @param notificationJSONPayload   JSON encoded payload to send in notification.
+ * @param payload                   JSON encoded payload to send in notification.
  * @param maxAge                    Time To Live (in seconds) of observation.
  * @param qos                       Desired quality of service of the observation notifications.
  *

@@ -557,7 +557,7 @@ int32_t CASendRAUnicastData(const CAEndpoint_t *remoteEndpoint, const void *data
     return dataLength;
 }
 
-CAResult_t CAGetRAInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
+CAResult_t CAGetRAInterfaceInformation(CAEndpoint_t **info, size_t *size)
 {
     VERIFY_NON_NULL(info, RA_ADAPTER_TAG, "info is NULL");
     VERIFY_NON_NULL(size, RA_ADAPTER_TAG, "size is NULL");

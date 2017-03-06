@@ -67,9 +67,10 @@ public:
      * API for Virtual Resource("/oic/d" and "/oic/p") Publish to Resource Directory.
      * @note This API applies to resource server side only.
      *
-     * @param host Host IP Address of a service to direct resource publish query.
+     * @param host             Host IP Address of a service to direct resource publish query.
      * @param connectivityType ::OCConnectivityType type of connectivity.
-     * @param callback Handles callbacks, success states and failure states.
+     * @param resourceHandles  This is the resource handle which we need to register to RD.
+     * @param callback         Handles callbacks, success states and failure states.
      *
      * @return Returns ::OC_STACK_OK if success.
      */
@@ -93,9 +94,10 @@ public:
      * API for published resource delete from Resource Directory.
      * @note This API applies to resource server side only.
      *
-     * @param host Host IP Address of a service to direct resource delete query.
+     * @param host             Host IP Address of a service to direct resource delete query.
      * @param connectivityType ::OCConnectivityType type of connectivity.
-     * @param callback Handles callbacks, success states and failure states.
+     * @param resourceHandles  This is the resource handle which we need to register to RD.
+     * @param callback         Handles callbacks, success states and failure states.
      *
      * @return Returns ::OC_STACK_OK if success.
      */

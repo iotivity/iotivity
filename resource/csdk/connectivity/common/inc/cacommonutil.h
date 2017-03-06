@@ -32,17 +32,38 @@ extern "C"
 /**
  * Macro to verify the validity of input argument.
  *
+ * @param  expr         Expression to verify.
+ * @param  log_tag      Log tag.
+ * @param  log_message  Log message.
+ */
+#define VERIFY_TRUE(expr, log_tag, log_message) \
+    VERIFY_TRUE_RET((expr), (log_tag), (log_message), CA_STATUS_INVALID_PARAM)
+
+/**
+ * Macro to verify the validity of input argument.
+ *
+ * @param  expr         Expression to verify.
+ * @param  log_tag      Log tag.
+ * @param  log_message  Log message.
+ * @param  ret          Return value.
+ */
+#define VERIFY_TRUE_RET(expr, log_tag, log_message, ret) \
+    if (!(expr)) \
+    { \
+        OIC_LOG_V(ERROR, (log_tag), "Invalid input: %s", (log_message)); \
+        return (ret); \
+    } \
+
+/**
+ * Macro to verify the validity of input argument.
+ *
  * @param  arg  log level
  * @param  log_tag  log tag
  * @param  log_message  log message
  * @param  ret  return value
  */
 #define VERIFY_NON_NULL_RET(arg, log_tag, log_message, ret) \
-    if (NULL == (arg)) \
-    { \
-        OIC_LOG_V(ERROR, (log_tag), "Invalid input:%s", (log_message)); \
-        return (ret); \
-    } \
+    VERIFY_TRUE_RET(NULL != (arg), (log_tag), (log_message), (ret))
 
 /**
  * Macro to verify the validity of input argument.

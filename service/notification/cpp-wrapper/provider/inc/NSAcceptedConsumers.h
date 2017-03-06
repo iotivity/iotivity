@@ -69,8 +69,9 @@ namespace OIC
                 std::shared_ptr<NSConsumer> getConsumer(const std::string &id);
 
                 /**
-                      *  request to add NSConsumer pointer
-                      * @param pointer to NSConsumer
+                      * Request to add NSConsumer pointer
+                      *
+                      * @param consumer pointer to NSConsumer
                       *
                       */
                 void addConsumer(std::shared_ptr<NSConsumer> consumer);

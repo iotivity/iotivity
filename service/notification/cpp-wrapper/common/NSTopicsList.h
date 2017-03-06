@@ -51,7 +51,8 @@ namespace OIC
                 /**
                      * Constructor of NSTopicsList.
                      *
-                     * @param topics - pointer to NSTopicLL struct to initialize.
+                     * @param topics  pointer to NSTopicLL struct to initialize.
+                     * @param modify  indicate if the list is modifiable
                      */
                 NSTopicsList(::NSTopicLL *topics, bool modify);
 

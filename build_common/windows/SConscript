@@ -6,14 +6,15 @@ import os.path
 
 # Set common flags
 if env['CC'] == 'cl':
-    # Enable warnings as errors.
     #  - warning C4133: incompatible type conversion
     env.AppendUnique(CCFLAGS=['/we4133'])
 
     # Disable the following warnings:
     #  - warning C4127: conditional expression is constant
     #    - Disabled due to the widespread usage in IoTivity
-    env.AppendUnique(CCFLAGS=['/wd4127'])
+    #  - warning C4200: zero-sized array in struct/union.
+    #    - It is an acceptable approach for variable size structs.
+    env.AppendUnique(CCFLAGS=['/wd4127', '/wd4200'])
 
     env.AppendUnique(CCFLAGS=['/EHsc'])
 

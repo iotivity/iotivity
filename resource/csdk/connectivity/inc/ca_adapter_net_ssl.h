@@ -123,7 +123,7 @@ void CAdeinitSslAdapter();
  *
  */
 
-CAResult_t CAencryptSsl(const CAEndpoint_t *endpoint, void *data, uint32_t dataLen);
+CAResult_t CAencryptSsl(const CAEndpoint_t *endpoint, void *data, size_t dataLen);
 
 /**
  * Performs TLS decryption of the data.
@@ -138,7 +138,7 @@ CAResult_t CAencryptSsl(const CAEndpoint_t *endpoint, void *data, uint32_t dataL
  * @retval  ::CA_STATUS_FAILED Operation failed.
  *
  */
-CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t dataLen);
+CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dataLen);
 
 /**
  * Initiate TLS handshake with selected cipher suite.

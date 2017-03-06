@@ -274,7 +274,7 @@ void CATCPReadDataInternal()
     return;
 }
 
-CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
+CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, size_t *size)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -297,7 +297,7 @@ static ssize_t sendData(const CAEndpoint_t *endpoint,
         return -1;
     }
 
-    if (dlen > 65535) // Max value for uint16_t
+    if (dlen > UINT16_MAX)
     {
         // This will never happen as max buffer size we are dealing with is COAP_MAX_PDU_SIZE
         OIC_LOG(ERROR, TAG, "Size exceeded");

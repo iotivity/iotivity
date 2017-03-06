@@ -260,8 +260,8 @@ CAResult_t CAUtilSetBTConfigure(CAUtilConfig_t config);
 
 /**
  * return scope level of given ip address.
- * @param[in]    address  remote address.
- * @param[out]   scope level of given ip address.
+ * @param[in] addr         remote address.
+ * @param[out] scopeLevel  scope level of given ip address.
  * @return      ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAGetIpv6AddrScope(const char *addr, CATransportFlags_t *scopeLevel);

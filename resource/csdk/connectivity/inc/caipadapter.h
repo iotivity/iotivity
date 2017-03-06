@@ -119,7 +119,7 @@ int32_t CASendIPMulticastData(const CAEndpoint_t *endpoint, const void *data,
  * @param[out]   size        Number of local connectivity structures.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size);
+CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, size_t *size);
 
 /**
  * Read Synchronous API callback.

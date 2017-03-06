@@ -402,7 +402,7 @@ TEST_F(CATests, HandlerRequestResponseTest)
 // CAGetNetworkInformation TC
 TEST_F (CATests, GetNetworkInformationTest)
 {
-    uint32_t tempSize = 0;
+    size_t tempSize = 0;
     CAEndpoint_t *tempInfo = NULL;
 
     EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
@@ -410,7 +410,7 @@ TEST_F (CATests, GetNetworkInformationTest)
 
 // @todo: if this api is supported on windows platform, it should be changed.
 #if !defined(_WIN32)
-    for (uint32_t index = 0; index < tempSize; index++)
+    for (size_t index = 0; index < tempSize; index++)
     {
         EXPECT_TRUE(tempInfo[index].adapter != 0);
         EXPECT_TRUE(strlen(tempInfo[index].addr) != 0);

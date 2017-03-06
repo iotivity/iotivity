@@ -137,8 +137,13 @@ static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem);
 #define CHECKFD(FD)
 #else
 #define CHECKFD(FD) \
+do \
+{ \
     if (FD > caglobals.tcp.maxfd) \
-        caglobals.tcp.maxfd = FD;
+    { \
+        caglobals.tcp.maxfd = FD; \
+    } \
+} while (0)
 #endif
 
 #define CLOSE_SOCKET(TYPE) \
@@ -406,7 +411,7 @@ static void CAFindReadyMessage()
     CASocketFd_t socketArray[EVENT_ARRAY_SIZE] = {0};
     HANDLE eventArray[_countof(socketArray)];
     int arraySize = 0;
-        
+
     if (OC_INVALID_SOCKET != caglobals.tcp.ipv4.fd)
     {
         CAPushSocket(caglobals.tcp.ipv4.fd, socketArray, eventArray, &arraySize, _countof(socketArray));
@@ -420,7 +425,7 @@ static void CAFindReadyMessage()
         CAPushEvent(OC_INVALID_SOCKET, socketArray,
                     caglobals.tcp.updateEvent, eventArray, &arraySize, _countof(socketArray));
     }
-
+    
     int svrlistBeginIndex = arraySize;
 
     while (!caglobals.tcp.terminate)
@@ -765,7 +770,7 @@ static void CAReceiveMessage(CASocketFd_t fd)
             nbRead = tlsLength - svritem->tlsLen;
         }
 
-        len = recv(fd, svritem->tlsdata + svritem->tlsLen, nbRead, 0);
+        len = recv(fd, svritem->tlsdata + svritem->tlsLen, (int)nbRead, 0);
         if (len < 0)
         {
             OIC_LOG_V(ERROR, TAG, "recv failed %s", strerror(errno));
@@ -784,7 +789,7 @@ static void CAReceiveMessage(CASocketFd_t fd)
             if (tlsLength > 0 && tlsLength == svritem->tlsLen)
             {
                 //when successfully read data - pass them to callback.
-                res = CAdecryptSsl(&svritem->sep, (uint8_t *)svritem->tlsdata, svritem->tlsLen);
+                res = CAdecryptSsl(&svritem->sep, (uint8_t *)svritem->tlsdata, (int)svritem->tlsLen);
                 svritem->tlsLen = 0;
                 OIC_LOG_V(DEBUG, TAG, "%s: CAdecryptSsl returned %d", __func__, res);
             }
@@ -1198,7 +1203,9 @@ size_t CACheckPayloadLengthFromHeader(const void *data, size_t dlen)
     coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(
             ((unsigned char *)data)[0] >> 4);
 
-    coap_pdu_t *pdu = coap_new_pdu2(transport, dlen);
+    coap_pdu_t *pdu = coap_pdu_init2(0, 0,
+                                     ntohs(COAP_INVALID_TID),
+                                     dlen, transport);
     if (!pdu)
     {
         OIC_LOG(ERROR, TAG, "outpdu is null");
@@ -1215,7 +1222,7 @@ size_t CACheckPayloadLengthFromHeader(const void *data, size_t dlen)
 
     size_t payloadLen = 0;
     size_t headerSize = coap_get_tcp_header_length_for_transport(transport);
-    OIC_LOG_V(DEBUG, TAG, "headerSize : %zu, pdu length : %d",
+    OIC_LOG_V(DEBUG, TAG, "headerSize : %" PRIuPTR ", pdu length : %d",
               headerSize, pdu->length);
     if (pdu->length > headerSize)
     {
@@ -1230,7 +1237,7 @@ size_t CACheckPayloadLengthFromHeader(const void *data, size_t dlen)
 static ssize_t sendData(const CAEndpoint_t *endpoint, const void *data,
                         size_t dlen, const char *fam)
 {
-    OIC_LOG_V(INFO, TAG, "The length of data that needs to be sent is %zu bytes", dlen);
+    OIC_LOG_V(INFO, TAG, "The length of data that needs to be sent is %" PRIuPTR " bytes", dlen);
 
     // #1. find a session info from list.
     CASocketFd_t sockFd = CAGetSocketFDFromEndpoint(endpoint);
@@ -1249,7 +1256,8 @@ static ssize_t sendData(const CAEndpoint_t *endpoint, const void *data,
     ssize_t remainLen = dlen;
     do
     {
-        ssize_t len = send(sockFd, data, remainLen, 0);
+        int dataToSend = (remainLen > INT_MAX) ? INT_MAX : (int)remainLen;
+        ssize_t len = send(sockFd, data, dataToSend, 0);
         if (-1 == len)
         {
             if (EWOULDBLOCK != errno)
@@ -1268,7 +1276,7 @@ static ssize_t sendData(const CAEndpoint_t *endpoint, const void *data,
 #ifndef TB_LOG
     (void)fam;
 #endif
-    OIC_LOG_V(INFO, TAG, "unicast %stcp sendTo is successful: %zu bytes", fam, dlen);
+    OIC_LOG_V(INFO, TAG, "unicast %stcp sendTo is successful: %" PRIuPTR " bytes", fam, dlen);
     CALogSendStateInfo(endpoint->adapter, endpoint->addr, endpoint->port,
                        dlen, true, NULL);
     return dlen;
@@ -1293,7 +1301,7 @@ ssize_t CATCPSendData(CAEndpoint_t *endpoint, const void *data, size_t datalen)
     return -1;
 }
 
-CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
+CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, size_t *size)
 {
     VERIFY_NON_NULL(info, TAG, "info is NULL");
     VERIFY_NON_NULL(size, TAG, "size is NULL");
@@ -1305,7 +1313,7 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         return CA_STATUS_FAILED;
     }
 
-    uint32_t len = u_arraylist_length(iflist);
+    size_t len = u_arraylist_length(iflist);
 
     CAEndpoint_t *ep = (CAEndpoint_t *)OICCalloc(len, sizeof (CAEndpoint_t));
     if (!ep)
@@ -1315,7 +1323,7 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    for (uint32_t i = 0, j = 0; i < len; i++)
+    for (size_t i = 0, j = 0; i < len; i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
         if (!ifitem)
@@ -1562,9 +1570,9 @@ size_t CAGetTotalLengthFromHeader(const unsigned char *recvBuffer)
                                                         transport);
     size_t headerLen = coap_get_tcp_header_length((unsigned char *)recvBuffer);
 
-    OIC_LOG_V(DEBUG, TAG, "option/paylaod length [%zu]", optPaylaodLen);
-    OIC_LOG_V(DEBUG, TAG, "header length [%zu]", headerLen);
-    OIC_LOG_V(DEBUG, TAG, "total data length [%zu]", headerLen + optPaylaodLen);
+    OIC_LOG_V(DEBUG, TAG, "option/paylaod length [%" PRIuPTR "]", optPaylaodLen);
+    OIC_LOG_V(DEBUG, TAG, "header length [%" PRIuPTR "]", headerLen);
+    OIC_LOG_V(DEBUG, TAG, "total data length [%" PRIuPTR "]", headerLen + optPaylaodLen);
 
     OIC_LOG(DEBUG, TAG, "OUT - CAGetTotalLengthFromHeader");
     return headerLen + optPaylaodLen;

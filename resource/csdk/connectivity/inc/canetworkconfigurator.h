@@ -61,7 +61,7 @@ u_arraylist_t *CAGetSelectedNetworkList();
  * @param[out]   size       No Of Array objects.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetNetworkInformationInternal(CAEndpoint_t **info, uint32_t *size);
+CAResult_t CAGetNetworkInformationInternal(CAEndpoint_t **info, size_t *size);
 
 /**
  * Terminate network type from selected configuration.

@@ -188,7 +188,7 @@ static void CAUpdateStoredIPAddressInfo(CANetworkStatus_t status)
         OIC_LOG(DEBUG, TAG, "IP adapter status is on. Store the own IP address info");
 
         CAEndpoint_t *eps = NULL;
-        uint32_t numOfEps = 0;
+        size_t numOfEps = 0;
 
         CAResult_t res = CAGetIPInterfaceInformation(&eps, &numOfEps);
         if (CA_STATUS_OK != res)
@@ -210,8 +210,8 @@ static void CAUpdateStoredIPAddressInfo(CANetworkStatus_t status)
         OICFree(headEp);
         headEp = NULL;
 
-        uint32_t len = u_arraylist_length(g_ownIpEndpointList);
-        for (uint32_t i = len; i > 0; i--)
+        size_t len = u_arraylist_length(g_ownIpEndpointList);
+        for (size_t i = len; i > 0; i--)
         {
             u_arraylist_remove(g_ownIpEndpointList, i - 1);
         }
@@ -269,7 +269,7 @@ bool CAIPIsLocalEndpoint(const CAEndpoint_t *ep)
 }
 
 void CAIPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
-                      uint32_t dataLength, CAResult_t result)
+                      size_t dataLength, CAResult_t result)
 {
     VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
