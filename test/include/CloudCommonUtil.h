@@ -86,6 +86,15 @@ typedef struct Stringstr
     size_t len;
 } Stringstr;
 
+const static std::string CONFIG_PROP_FILE = "config.properties";
+const static std::string CLOUD_PROP_FILE = "cloud.properties";
+const static std::string CLOUD_ACCESSTOKEN_KEY = "accesstoken";
+const static std::string CLOUD_UID_KEY ="uid";
+const static std::string CI_SERVER_ETHERNET_IP_KEY = "ci_server_ethernet_ip";
+const static std::string CI_SERVER_WIFI_IP_KEY = "ci_server_wifi_ip";
+const static std::string GITHUB_USER_KEY = "github_userid";
+const static std::string GITHUB_PASSWORD_KEY = "github_passowrd";
+
 class CloudCommonUtil
 {
     static long s_setUpDynamicMemoryUsage;
@@ -103,8 +112,8 @@ public:
     static std::string getDefaultHostAddess();
     static char* get_authenticity_token(const char* resposeTxt);
     static void create_file(string filename, string data);
-    static char* get_auth_token_code(const char* resposeTxt, char *code);
-    static char* getgithubcode(char gitlogin[], char gitpassword[], char *code);
+    static char* get_auth_token_code(const char* responseTxt, char *code);
+    static char* getgithubcode(const char gitlogin[], const char gitpassword[], char *code);
     static void printRepresentation(OCRepresentation rep);
     static std::string readfile(std::string filename);
     static char* getGitLoginAuthCodeMain();

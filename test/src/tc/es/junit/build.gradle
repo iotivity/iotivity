@@ -22,7 +22,10 @@ apply from: "../../../../build/android/build.gradle"
 project.buildDir = "${binDirectory}/es"
 def esAARFileDir = "${iotivityRootDirectoryFromModules}/service/easy-setup/mediator/richsdk/android/EasySetupCore/build/outputs/aar"
 def esAARFile = "EasySetupCore-${buildmode}"
-
+//def esSoFileDir = "${iotivityRootDirectoryFromModules}/android/android_api/base/libs/armeabi"
+//println("So fille dir : "+esSoFileDir)
+def esSoFileDir = "/home/sk/gittest/oictest_repo/IotivityOrgSource/target/iotivity/service/easy-setup/mediator/richsdk/android/EasySetupCore/src/main/libs/armeabi"
+//def esSoFileDir = "/home/sk/gittest/oictest_repo/IotivityOrgSource/target/iotivity/android/android_api/base/libs/armeabi"
 
 buildscript {
     repositories { 
@@ -39,6 +42,7 @@ repositories {
         }
 }
 
+print("${baseAARFileDirFromModules}")
 apply plugin: 'com.android.application'
 
 android {
@@ -50,6 +54,7 @@ android {
         main {
               manifest.srcFile 'AndroidManifest.xml'
               java.srcDirs 'src'
+             // jniLibs.srcDir "${esSoFileDir}"
               jni.srcDirs = [] //disable automatic ndk-build 
               assets.srcDirs = ['./assets'] 
         }
@@ -60,13 +65,23 @@ android {
      }
 
     defaultConfig {
-      applicationId "org.iotivity.service.es.test"
+      applicationId "org.iotivity.test.es.tc"
       minSdkVersion 21
       targetSdkVersion 21
       resValue 'string', 'app_name', 'EasySetupTest'
     }
     println ("\nConfigured $commonText android properties")
 }
+
+/*
+android.applicationVariants.all{ variant ->
+       variant.outputs.each { output ->
+         output.processResources.manifestFile = file('AndroidManifest.xml')
+         output.processManifest.enabled=false
+       }
+}
+*/
+
 
 dependencies {
     compile fileTree(dir: "${androidLibFileDirFromModules}", include: ['*.jar'])

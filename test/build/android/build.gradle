@@ -108,7 +108,6 @@ def dexmakermockitoJarFile = "${androidLibFileDirFromMainBuild}/dexmaker-mockito
 */
 
 def baseAAROutDirectory = "java/iotivity-android/build/outputs/aar"
-//def baseAAROutDirectory = "android/android_api/base/build/outputs/aar"
 ext.architecture = "armeabi"
 
 /*

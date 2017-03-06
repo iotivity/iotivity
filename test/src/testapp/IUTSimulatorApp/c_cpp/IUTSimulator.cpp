@@ -1,22 +1,22 @@
 /******************************************************************
- *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
- *
- *
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- ******************************************************************/
+*
+* Copyright 2017 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
 
 #include <vector>
 #include <iostream>
@@ -95,12 +95,13 @@ static const char CRED_FILE_SERVER[] = "oic_svr_db_server.dat";
 static const char CRED_FILE_CLIENT[] = "oic_svr_db_client.dat";
 static const string JUST_WORKS_DI = "6A757374-776F-726B-4465-765575696430";
 static const string RANDOM_PIN_DI = "72616E64-5069-6E44-6576-557569643030";
+static const string MFG_DI = "4d617566-6163-7475-7265-724365727430";
 static const int CLIENT_MODE = 1;
 static const int SERVER_MODE = 2;
 static int g_modeType;
 static int g_securityType;
 static const char sourceFileNames[][100] =
-{ "../../oic_svr_db_server_justworks.dat", "../../oic_svr_db_server_randompin.dat" };
+{ "None", "../../oic_svr_db_server_justworks.dat", "../../oic_svr_db_server_randompin.dat",  "../../oic_svr_db_server_mfg.dat"};
 string g_di = "";
 string g_collectionName = GROUP_NAME;
 
@@ -132,6 +133,7 @@ void deleteResource(void);
 void findCollection(string);
 void findResource(string resourceType, string host = "");
 void findAllResources(string host = "", string query = "");
+void discoverIntrospection(bool isMulticast = true);
 void discoverDevice(bool);
 void discoverPlatform(bool isMulticast = true);
 void sendGetRequest();
@@ -252,6 +254,7 @@ void generatePinCB(char* pin, size_t pinSize)
 int main(int argc, char* argv[])
 {
     signal(SIGSEGV, handler);
+
     g_createdResourceList.clear();
     g_foundResourceList.clear();
     g_handleList.clear();
@@ -328,15 +331,15 @@ int main(int argc, char* argv[])
         try
         {
             int optionSelected = stoi(argv[3]);
-            g_securityType = optionSelected % 2;
+            g_securityType = optionSelected % 10;
 
-            if (optionSelected == 0 || optionSelected == 1)
+            if (optionSelected / 10 == 1)
             {
                 cout << "Using secured client...." << endl;
                 g_isSecuredClient = true;
                 g_modeType = CLIENT_MODE;
             }
-            else if (optionSelected == 2 || optionSelected == 3)
+            else if (optionSelected / 10 == 2)
             {
                 cout << "Using secured server...." << endl;
                 g_isSecuredServer = true;
@@ -347,20 +350,31 @@ int main(int argc, char* argv[])
                 cout << "Using unsecured server & client...." << endl;
             }
 
-            if (optionSelected >= 0 && optionSelected <= 3)
+            if (g_isSecuredClient || g_isSecuredServer)
             {
-#ifdef __SECURED__
-                SetGeneratePinCB(generatePinCB);
-#endif
-                if (g_securityType)
-                {
-                    cout << "Supported Security Mode: randompin" << endl;
-                    g_di = RANDOM_PIN_DI;
-                }
-                else
+                if (g_securityType == 1 )
                 {
                     cout << "Supported Security Mode: justworks" << endl;
                     g_di = JUST_WORKS_DI;
+                }
+                else if (g_securityType == 2 )
+                {
+#ifdef __SECURED__
+                    SetGeneratePinCB(generatePinCB);
+#endif
+                    cout << "Supported Security Mode: randompin" << endl;
+                    g_di = RANDOM_PIN_DI;
+                }
+                else if (g_securityType == 3 )
+                {
+                    cout << "Supported Security Mode: manufacturing certificate" << endl;
+                    g_di = MFG_DI;
+                }
+                else
+                {
+                    cout << "Unsupported Security Mode Specified, Using Default Mode: justworks" << endl;
+                    g_di = JUST_WORKS_DI;
+                    g_securityType = 1;
                 }
 
                 replaceDatFile(g_modeType, g_securityType);
@@ -397,7 +411,6 @@ int main(int argc, char* argv[])
     {
         PlatformConfig cfg
         { OC::ServiceType::InProc, OC::ModeType::Both, g_ipVer, g_ipVer, g_qos };
-        //    { OC::ServiceType::InProc, OC::ModeType::Both, g_ipVer, CT_DEFAULT, serverIp, (uint16_t) SERVER_PORT, g_qos };
         result = SampleResource::constructServer(cfg);
     }
 
@@ -502,7 +515,6 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                 addIntoLinksArray(allChildren, g_acAirFlowResourceHidden);
                 rep.setValue(LINKS_KEY, allChildren);
 
-                pResponse->setErrorCode(COAP_RESPONSE_CODE_RETRIEVED);
                 cout << "Current Resource Representation to send : " << endl;
 
                 if (queryParamsMap.size() > 0)
@@ -576,7 +588,13 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                         else if (key.compare(RESOURCE_TYPE_KEY) == 0)
                         {
                             vector< string > resourceTypeList;
-
+//                            if ((queryValue.compare(GROUP_TYPE_ROOM) == 0)
+//                                    || (queryValue.compare(GROUP_TYPE_AIRCON_VENDOR) == 0))
+//                            {
+//                                cout << "The resource type  used in query is oic.wk.col" << endl;
+//                                pResponse->setResourceRepresentation(rep, responseInterface);
+//                            }
+//                            else
                             if (queryValue.compare(SWITCH_RESOURCE_TYPE) == 0)
                             {
                                 vector< OCRepresentation > requiredChild;
@@ -654,6 +672,7 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                     cerr << "Unable to send response for GET Request" << endl;
                 }
 
+//                handleGetRequest(queryParamsMap, request, pResponse); // Process query params and do required operations ..
 
             }
             else if (requestType == "PUT")
@@ -663,6 +682,7 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                 // Check for query params (if any)
                 QueryParamsMap queryParamsMap = request->getQueryParameters();
 
+//                handlePutRequest(queryParamsMap, incomingRepresentation, request, pResponse); // Process query params and do required operations ..
             }
             else if (requestType == "POST")
             {
@@ -680,7 +700,6 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                 vector< OCRepresentation > allChildren;
                 OCRepresentation links;
 
-                pResponse->setErrorCode(COAP_RESPONSE_CODE_RETRIEVED);
                 cout << "Current Resource Representation to send : " << endl;
 
                 if (queryParamsMap.size() > 0)
@@ -732,7 +751,7 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                                 if (incomingRepresentation.hasAttribute(ON_OFF_KEY))
                                 {
                                     isUpdated = g_acSwitchResourceHidden->updateRepresentation(
-                                            ON_OFF_KEY, incomingRepresentation);
+                                    ON_OFF_KEY, incomingRepresentation);
                                     if (isUpdated)
                                     {
                                         batchRep.setValue(URI_KEY,
@@ -862,6 +881,7 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                     cerr << "Unable to send response for GET Request" << endl;
                 }
 
+//                handlePostRequest(queryParamsMap, incomingRepresentation, request, pResponse); // Process query params and do required operations ..
             }
             else if (requestType == "DELETE")
             {
@@ -870,6 +890,7 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                 // Check for query params (if any)
                 QueryParamsMap queryParamsMap = request->getQueryParameters();
 
+//                handleDeleteRequest(queryParamsMap, incomingRepresentation, request, pResponse); // Process query params and do required operations ..
             }
         }
 
@@ -978,6 +999,8 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
     if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_OK)
     {
         cout << "Response: GET request was successful" << endl;
+
+//        g_resourceHelper->printIncomingRepresentation(rep);
 
         vector< string > interfacelist = rep.getResourceInterfaces();
 
@@ -1339,9 +1362,9 @@ void createAirConDevice(bool isSecured)
         g_acSwitchResource = new SampleResource();
         g_acSwitchResourceHidden = new SampleResource();
         g_acSwitchResource->setResourceProperties(AC_SWITCH_URI, SWITCH_RESOURCE_TYPE,
-                SWITCH_RESOURCE_INTERFACE);
+        SWITCH_RESOURCE_INTERFACE);
         g_acSwitchResourceHidden->setResourceProperties(AC_SWITCH_URI_CHILD, SWITCH_RESOURCE_TYPE,
-                SWITCH_RESOURCE_INTERFACE);
+        SWITCH_RESOURCE_INTERFACE);
         OCRepresentation switchRep;
         string value = "";
         vector< int > range;
@@ -1368,9 +1391,9 @@ void createAirConDevice(bool isSecured)
         g_acTemperatureResource = new SampleResource();
         g_acTemperatureResourceHidden = new SampleResource();
         g_acTemperatureResource->setResourceProperties(AC_TEMPERATURE_URI,
-                TEMPERATURE_RESOURCE_TYPE, TEMPERATURE_RESOURCE_INTERFACE);
+        TEMPERATURE_RESOURCE_TYPE, TEMPERATURE_RESOURCE_INTERFACE);
         g_acTemperatureResourceHidden->setResourceProperties(AC_TEMPERATURE_URI_CHILD,
-                TEMPERATURE_RESOURCE_TYPE, TEMPERATURE_RESOURCE_INTERFACE);
+        TEMPERATURE_RESOURCE_TYPE, TEMPERATURE_RESOURCE_INTERFACE);
         OCRepresentation temperatureRep;
         value = "C";
         temperatureRep.setValue("units", value);
@@ -1403,10 +1426,12 @@ void createAirConDevice(bool isSecured)
         g_acAirFlowResource = new SampleResource();
         g_acAirFlowResourceHidden = new SampleResource();
         setlocale(LC_ALL, "");
+//        string airflowUri = "/AirFlowResURI/নতুন/তিমুর";
+//        g_acAirFlowResource->setResourceProperties(airflowUri, AIR_FLOW_RESOURCE_TYPE,
         g_acAirFlowResource->setResourceProperties(AC_AIR_FLOW_URI, AIR_FLOW_RESOURCE_TYPE,
-                AIR_FLOW_RESOURCE_INTERFACE);
+        AIR_FLOW_RESOURCE_INTERFACE);
         g_acAirFlowResourceHidden->setResourceProperties(AC_AIR_FLOW_URI_CHILD,
-                AIR_FLOW_RESOURCE_TYPE, AIR_FLOW_RESOURCE_INTERFACE);
+        AIR_FLOW_RESOURCE_TYPE, AIR_FLOW_RESOURCE_INTERFACE);
 
         OCRepresentation airFlowRep;
         int speed = 10;
@@ -1833,20 +1858,17 @@ void createGroup(string groupType)
             }
 
             OCPlatform::registerResource(g_collectionHandle, resourceURI, groupType, LINK_INTERFACE,
-                    NULL,
-                    collectionProperty);
+            NULL, collectionProperty);
 
             cout << "Create Group is called for IoTivity Handler" << endl;
-
 
             OCPlatform::bindTypeToResource(g_collectionHandle, GROUP_TYPE_AIRCON);
             OCPlatform::bindInterfaceToResource(g_collectionHandle, BATCH_INTERFACE);
             OCPlatform::bindInterfaceToResource(g_collectionHandle, DEFAULT_INTERFACE);
 
-
             resourceURI = COLLECTION_RESOURCE_URI_VENDOR;
-            OCPlatform::registerResource(g_collectionHandleVendor, resourceURI, groupType, LINK_INTERFACE,
-                    &entityHandlerCollection, // entityHandler
+            OCPlatform::registerResource(g_collectionHandleVendor, resourceURI, groupType,
+                    LINK_INTERFACE, &entityHandlerCollection, // entityHandler
                     collectionProperty);
 
             cout << "Create Group is called for Vendor handler." << endl;
@@ -2123,10 +2145,29 @@ void findAllResources(string host, string query)
     waitForCallback();
 }
 
+void discoverIntrospection(bool isMulticast){
+    string host = "";
+    g_hasCallbackArrived = false;
+    ostringstream introspectionDiscoveryRequest;
+    string introspectionDiscoveryURI = OC_RSRVD_INTROSPECTION_URI;
+//    string introspectionDiscoveryURI = "/oic/introspection";
+    if (isMulticast){
+        introspectionDiscoveryRequest << OC_MULTICAST_PREFIX << introspectionDiscoveryURI;
+        cout << "Discovering Introspection using Multicast... " << endl;
+    }
+    findAllResources(host, introspectionDiscoveryRequest.str());
+
+    if (g_foundResourceList.size() == 0)
+    {
+        cout << "No resource found!!" << endl;
+    }
+}
+
 void discoverDevice(bool isMulticast)
 {
 
     string host = "";
+    g_hasCallbackArrived = false;
     ostringstream deviceDiscoveryRequest;
     string deviceDiscoveryURI = "/oic/d";
     OCStackResult result = OC_STACK_ERROR;
@@ -2244,6 +2285,15 @@ void sendGetRequest()
         targetResource->get(qpMap, onGet, g_qos);
         cout << "GET request sent!!" << endl;
         waitForCallback();
+        if(targetResource->uri().compare(OC_RSRVD_INTROSPECTION_URI) == 0)
+        {
+            OCResource::Ptr payloadResource = OCPlatform::constructResourceObject(targetResource->host(),
+                    OC_RSRVD_INTROSPECTION_PAYLOAD_URI, targetResource->connectivityType(),
+                    true, targetResource->getResourceTypes(), targetResource->getResourceInterfaces());
+            payloadResource->get(qpMap, onGet, g_qos);
+            cout << "GET request sent to introspection payload resource!!" << endl;
+            waitForCallback();
+        }
 
     }
     else
@@ -2650,6 +2700,77 @@ void sendPostRequestCreate()
     }
 }
 
+void sendSpecialPost()
+{
+    int selection = selectResource();
+    if (selection != -1)
+    {
+        OCRepresentation rep1, rep2, rep3, rep4;
+        bool valueBool = false;
+
+        vector< string > rtTypes;
+        rtTypes.push_back("oic.r.switch.binary");
+        rep1.setValue("rt", rtTypes);
+        // Invoke resource's put API with rep, query map and the callback parameter
+        cout << "Sending Partial Update Message(POST)..." << endl;
+        QueryParamsMap query;
+        query["if"] = "oic.if.baseline";
+        g_foundResourceList.at(selection)->post(rep1, query, &onPost, g_qos);
+        rep3.empty();
+        waitForCallback();
+        sleep(2);
+        g_foundResourceList.at(selection)->put(rep1, query, &onPut, g_qos);
+        rep3.empty();
+        waitForCallback();
+        sleep(2);
+
+        valueBool = true;
+        rep2.setValue(ON_OFF_KEY, valueBool);
+        // Invoke resource's put API with rep, query map and the callback parameter
+        cout << "Sending Partial Update Message(POST)..." << endl;
+        g_foundResourceList.at(selection)->post(rep2, query, &onPost, g_qos);
+        waitForCallback();
+        sleep(2);
+
+        g_foundResourceList.at(selection)->put(rep2, query, &onPut, g_qos);
+        rep3.empty();
+        waitForCallback();
+        sleep(2);
+
+        valueBool = true;
+        rep3.setValue(ON_OFF_KEY, valueBool);
+        rep3.setValue("rt", rtTypes);
+        // Invoke resource's put API with rep, query map and the callback parameter
+        cout << "Sending Partial Update Message(POST)..." << endl;
+        g_foundResourceList.at(selection)->post(rep3, query, &onPost, g_qos);
+//        g_foundResourceList.at(selection)->post(rep, QueryParamsMap(), &onPost, g_qos);
+        cout << "POST request sent!!" << endl;
+        waitForCallback();
+        sleep(2);
+
+        g_foundResourceList.at(selection)->put(rep4, query, &onPut, g_qos);
+        rep3.empty();
+        waitForCallback();
+
+        selection = selectResource();
+        rtTypes.clear();
+        rtTypes.push_back("oic.d.tv");
+        rep4.setValue("rt", rtTypes);
+        cout << "Sending Partial Update Message(POST)..." << endl;
+        g_foundResourceList.at(selection)->post(rep4, query, &onPost, g_qos);
+        sleep(2);
+
+        g_foundResourceList.at(selection)->put(rep4, query, &onPut, g_qos);
+        rep3.empty();
+        waitForCallback();
+
+    }
+    else
+    {
+        cout << "No resource to send POST!!" << endl;
+    }
+}
+
 void sendDeleteRequest()
 {
     int selection = selectResource();
@@ -2865,57 +2986,58 @@ int selectLocalResource()
 void showMenu(int argc, char* argv[])
 {
     cout << "Please Select an option from the menu and press Enter" << endl;
-    cout << "\t\t 0. Quit IUT Emulator App" << endl;
+    cout << "\t\t " << setw(3) << "0" << ". Quit IUT Emulator App" << endl;
     cout << "\t Server Operations:" << endl;
-    cout << "\t\t 1. Create Normal Resource" << endl;
-    cout << "\t\t 2. Create Invisible Resource" << endl;
-    cout << "\t\t 3. Create Resource With Complete URL" << endl;
-    cout << "\t\t 4. Create Secured Resource" << endl;
-    cout << "\t\t 5. Create " << MAX_LIGHT_RESOURCE_COUNT << " Light Resources" << endl;
-    cout << "\t\t 6. Create Group Resource" << endl;
-    cout << "\t\t 7. Delete All Resources" << endl;
-    cout << "\t\t 8. Delete Created Group" << endl;
+    cout << "\t\t " << setw(3) << "1" << ". Create Normal Resource" << endl;
+    cout << "\t\t " << setw(3) << "2" << ". Create Invisible Resource" << endl;
+    cout << "\t\t " << setw(3) << "3" << ". Create Resource With Complete URL" << endl;
+    cout << "\t\t " << setw(3) << "4" << " Create Secured Resource" << endl;
+    cout << "\t\t " << setw(3) << "5" << ". Create " << MAX_LIGHT_RESOURCE_COUNT << " Light Resources" << endl;
+    cout << "\t\t " << setw(3) << "6" << ". Create Group Resource" << endl;
+    cout << "\t\t " << setw(3) << "7" << ". Delete All Resources" << endl;
+    cout << "\t\t " << setw(3) << "8" << ". Delete Created Group" << endl;
     cout << "\t Client Operations:" << endl;
-    cout << "\t\t 10. Find Resource using Interface Query" << endl;
-    cout << "\t\t 11. Find Specific Type Of Resource" << endl;
-    cout << "\t\t 12. Find All Resources" << endl;
-    cout << "\t\t 13. Find All Resources using Baseline Query - Unicast" << endl;
-    cout << "\t\t 14. Find Specific Type Of Resource - Unicast" << endl;
-    cout << "\t\t 15. Find All Resources - Unicast" << endl;
-    cout << "\t\t 16. Join Found Resource To The Group" << endl;
-    cout << "\t\t 17. Send GET Request" << endl;
-    cout << "\t\t 18. Send GET Request with query" << endl;
-    cout << "\t\t 19. Send PUT Request - Create Resource" << endl;
-    cout << "\t\t 20. Send PUT Request - Complete Update" << endl;
-    cout << "\t\t 21. Send POST Request - Partial Update - Default" << endl;
-    cout << "\t\t 22. Send POST Request - Partial Update - User Input" << endl;
-    cout << "\t\t 23. Send POST Request - Create Sub-Ordinate Resource" << endl;
-    cout << "\t\t 24. Send Delete Request" << endl;
-    cout << "\t\t 25. Observe Resource - Retrieve Request with Observe" << endl;
-    cout << "\t\t 26. Cancel Observing Resource" << endl;
-    cout << "\t\t 27. Cancel Observing Resource Passively" << endl;
-    cout << "\t\t 28. Discover Device - Unicast" << endl;
-    cout << "\t\t 29. Discover Device - Multicast" << endl;
-    cout << "\t\t 30. Discover Platform - Multicast" << endl;
-    cout << "\t\t 32. Find Group" << endl;
-    cout << "\t\t 32. Join Found Resource To Found Group" << endl;
-    cout << "\t\t 33. Update Collection" << endl;
-    cout << "\t\t 34. Update Local Resource Manually" << endl;
-    cout << "\t\t 35. Update Local Resource Automatically" << endl;
-    cout << "\t\t 36. Set Quality of Service - CON(Confirmable)" << endl;
-    cout << "\t\t 37. Set Quality of Service - NON(Non-Confirmable)" << endl;
-    cout << "\t\t 38. Reset Secure Storage" << endl;
+    cout << "\t\t " << setw(3) << "9" << ". Find Introspection" << endl;
+    cout << "\t\t " << setw(3) << "10" << ". Find Resource using Interface Query" << endl;
+    cout << "\t\t " << setw(3) << "11" << ". Find Specific Type Of Resource" << endl;
+    cout << "\t\t " << setw(3) << "12" << ". Find All Resources" << endl;
+    cout << "\t\t " << setw(3) << "13" << ". Find All Resources using Baseline Query - Unicast" << endl;
+    cout << "\t\t " << setw(3) << "14" << ". Find Specific Type Of Resource - Unicast" << endl;
+    cout << "\t\t " << setw(3) << "15" << ". Find All Resources - Unicast" << endl;
+    cout << "\t\t " << setw(3) << "16" << ". Join Found Resource To The Group" << endl;
+    cout << "\t\t " << setw(3) << "17" << ". Send GET Request" << endl;
+    cout << "\t\t " << setw(3) << "18" << ". Send GET Request with query" << endl;
+    cout << "\t\t " << setw(3) << "19" << ". Send PUT Request - Create Resource" << endl;
+    cout << "\t\t " << setw(3) << "20" << ". Send PUT Request - Complete Update" << endl;
+    cout << "\t\t " << setw(3) << "21" << ". Send POST Request - Partial Update - Default" << endl;
+    cout << "\t\t " << setw(3) << "22" << ". Send POST Request - Partial Update - User Input" << endl;
+    cout << "\t\t " << setw(3) << "23" << ". Send POST Request - Create Sub-Ordinate Resource" << endl;
+    cout << "\t\t " << setw(3) << "24" << ". Send Delete Request" << endl;
+    cout << "\t\t " << setw(3) << "25" << ". Observe Resource - Retrieve Request with Observe" << endl;
+    cout << "\t\t " << setw(3) << "26" << ". Cancel Observing Resource" << endl;
+    cout << "\t\t " << setw(3) << "27" << ". Cancel Observing Resource Passively" << endl;
+    cout << "\t\t " << setw(3) << "28" << ". Discover Device - Unicast" << endl;
+    cout << "\t\t " << setw(3) << "29" << ". Discover Device - Multicast" << endl;
+    cout << "\t\t " << setw(3) << "30" << ". Discover Platform - Multicast" << endl;
+    cout << "\t\t " << setw(3) << "31" << ". Find Group" << endl;
+    cout << "\t\t " << setw(3) << "32" << ". Join Found Resource To Found Group" << endl;
+    cout << "\t\t " << setw(3) << "33" << ". Update Collection" << endl;
+    cout << "\t\t " << setw(3) << "34" << ". Update Local Resource Manually" << endl;
+    cout << "\t\t " << setw(3) << "35" << ". Update Local Resource Automatically" << endl;
+    cout << "\t\t " << setw(3) << "36" << ". Set Quality of Service - CON(Confirmable)" << endl;
+    cout << "\t\t " << setw(3) << "37" << ". Set Quality of Service - NON(Non-Confirmable)" << endl;
+    cout << "\t\t " << setw(3) << "38" << ". Reset Secure Storage" << endl;
     cout << "\t Smart Home Vertical Resource Creation:" << endl;
-    cout << "\t\t 101. Create Smart TV Device" << endl;
-    cout << "\t\t 102. Create Air Conditioner Device" << endl;
+    cout << "\t\t " << setw(3) << "101" << ". Create Smart TV Device" << endl;
+    cout << "\t\t " << setw(3) << "102" << ". Create Air Conditioner Device" << endl;
 #ifdef __SECURED__
-    cout << "\t\t 103. Create Secured Smart TV Device" << endl;
-    cout << "\t\t 104. Create Secured Air Conditioner Device" << endl;
-    cout << "\t\t 105. Create Secured Air Conditioner Single Resource" << endl;
-    cout << "\t\t 106. Create Secured Vendor Defined Resource" << endl;
+    cout << "\t\t " << setw(3) << "103" << ". Create Secured Smart TV Device" << endl;
+    cout << "\t\t " << setw(3) << "104" << ". Create Secured Air Conditioner Device" << endl;
+    cout << "\t\t " << setw(3) << "105" << ". Create Secured Air Conditioner Single Resource" << endl;
+    cout << "\t\t " << setw(3) << "106" << ". Create Secured Vendor Defined Resource" << endl;
 #endif
-    cout << "\t\t 107. Create Air Conditioner Single Resource" << endl;
-    cout << "\t\t 108. Create  Vendor Defined Resource" << endl;
+    cout << "\t\t " << setw(3) << "107" << ". Create Air Conditioner Single Resource" << endl;
+    cout << "\t\t " << setw(3) << "108" << ". Create  Vendor Defined Resource" << endl;
 
     g_hasCallbackArrived = false;
     handleMenu(argc, argv);
@@ -2938,7 +3060,7 @@ void selectMenu(int choice)
     totalSecuredMenu = 4;
 #endif
 
-    if ((choice > 38 && choice < 101) || choice < 0 || (choice > 8 && choice < 10)
+    if ((choice > 38 && choice < 101) || choice < 0 || (choice > 8 && choice < 9)
             || ((choice > 102 + totalSecuredMenu) && (choice < 107 || choice > 108)))
     {
         cout << "Invalid Input. Please input your choice again" << endl;
@@ -2977,6 +3099,10 @@ void selectMenu(int choice)
 
         case 8:
             deleteGroup();
+            break;
+
+        case 9:
+            discoverIntrospection(true);
             break;
 
         case 10:
@@ -3040,6 +3166,7 @@ void selectMenu(int choice)
             break;
 
         case 16:
+//                joinGroup();
             break;
 
         case 17:
@@ -3068,6 +3195,7 @@ void selectMenu(int choice)
 
         case 22:
             sendPostRequestUpdateUserInput();
+//                sendSpecialPost();
             break;
 
         case 23:

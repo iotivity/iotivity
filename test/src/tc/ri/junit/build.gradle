@@ -48,7 +48,7 @@ android {
         main {
               manifest.srcFile 'AndroidManifest.xml'
               java.srcDirs 'src'
-              //jniLibs.srcDir "${tmSoFileDir}"
+              java.srcDirs "${testCommonUtilSrcDirectory}/resource"
               jni.srcDirs = [] //disable automatic ndk-build 
         }
     }
@@ -58,7 +58,7 @@ android {
      }
 
     defaultConfig {
-      applicationId "org.iotivity.service.ri.test"
+      applicationId "org.iotivity.test.ri.tc"
       minSdkVersion 21
       targetSdkVersion 21
     }

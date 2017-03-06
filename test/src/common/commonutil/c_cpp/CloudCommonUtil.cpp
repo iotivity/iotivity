@@ -24,6 +24,8 @@ string CloudCommonUtil::g_authprovider = "github";
 string CloudCommonUtil::g_authCode = "";
 string CloudCommonUtil::g_uid = "";
 string CloudCommonUtil::g_accessToken = "";
+Configuration g_cloudPropFile(CLOUD_PROP_FILE);
+Configuration g_configPropFile(CONFIG_PROP_FILE);
 
 static int g_isCbInvoked = CALLBACK_NOT_INVOKED;
 OCAccountManager::Ptr accountMgr = nullptr;
@@ -31,12 +33,19 @@ OCAccountManager::Ptr accountMgr = nullptr;
 std::string CloudCommonUtil::getDefaultHostAddess()
 {
     string hostAddress = "";
+
 #ifdef __TLS_ON__
     hostAddress = COAP_TLSON_PREFIX;
 #else
     hostAddress = COAP_TLSOFF_PREFIX;
 #endif
-    string ci_server_ip = CloudCommonUtil::readfile(CI_SERVER_IP_TXT);
+
+#ifdef __LINUX__
+    string ci_server_ip = g_configPropFile.getProperties(CI_SERVER_ETHERNET_IP_KEY);
+#elif __TIZEN__
+    string ci_server_ip = g_configPropFile.getProperties(CI_SERVER_WIFI_IP_KEY);
+#endif
+
     string local_host = ci_server_ip + ":" + to_string(REMOTE_CI_SERVER_PORT);
     hostAddress += local_host;
     hostAddress.erase(std::remove(hostAddress.begin(), hostAddress.end(), '\n'), hostAddress.end());
@@ -168,7 +177,7 @@ char* CloudCommonUtil::get_auth_token_code(const char* resposeTxt, char *code)
     return code;
 }
 
-char* CloudCommonUtil::getgithubcode(char *gitlogin, char *gitpassword, char *code)
+char* CloudCommonUtil::getgithubcode(const char *gitlogin, const char *gitpassword, char *code)
 {
     char demoPost[1000] =
     { 0 };
@@ -299,7 +308,9 @@ char* CloudCommonUtil::getGitLoginAuthCodeMain()
 {
     __FUNC_IN__
     char *code = new char[30];
-    code = getgithubcode(GITHUB_USER_ID, GITHUB_USER_PASSOWRD, code);
+    string github_user_id =g_configPropFile.getProperties(GITHUB_USER_KEY);
+    string github_password =g_configPropFile.getProperties(GITHUB_PASSWORD_KEY);
+    code = getgithubcode(github_user_id.c_str(), github_password.c_str(), code);
     IOTIVITYTEST_LOG(INFO, "Auth Code: %s", code);
     __FUNC_OUT__
     return code;
@@ -314,14 +325,14 @@ void CloudCommonUtil::printRepresentation(OCRepresentation rep)
         if (itr->attrname().compare("accesstoken") == 0)
         {
             CloudCommonUtil::g_accessToken = itr->getValueToString();
-            CloudCommonUtil::create_file(CLOUD_ACCESSTOKEN_TXT, CloudCommonUtil::g_accessToken);
+            g_cloudPropFile.setProperties(CLOUD_ACCESSTOKEN_KEY, CloudCommonUtil::g_accessToken);
 
         }
 
         if (itr->attrname().compare("uid") == 0)
         {
             CloudCommonUtil::g_uid = itr->getValueToString();
-            CloudCommonUtil::create_file(CLOUD_UUID_TXT, CloudCommonUtil::g_uid);
+            g_cloudPropFile.setProperties(CLOUD_UID_KEY, CloudCommonUtil::g_uid);
         }
     }
 }
@@ -380,7 +391,7 @@ bool CloudCommonUtil::signUp(OCAccountManager::Ptr accountMgr)
             return false;
         }
     }
-
+    g_cloudPropFile.save();
     __FUNC_OUT__
     return true;
 }
@@ -393,8 +404,8 @@ bool CloudCommonUtil::signIn(OCAccountManager::Ptr accountMgr)
     __FUNC_IN__
     g_isCbInvoked = CALLBACK_NOT_INVOKED;
 
-    CloudCommonUtil::g_uid = readfile(CLOUD_UUID_TXT);
-    CloudCommonUtil::g_accessToken = readfile(CLOUD_ACCESSTOKEN_TXT);
+    CloudCommonUtil::g_uid = g_cloudPropFile.getProperties(CLOUD_UID_KEY);
+    CloudCommonUtil::g_accessToken = g_cloudPropFile.getProperties(CLOUD_ACCESSTOKEN_KEY);
 
     OCStackResult result = accountMgr->signIn(CloudCommonUtil::g_uid,
             CloudCommonUtil::g_accessToken, signInOutCB);
@@ -427,7 +438,7 @@ bool CloudCommonUtil::signOut(OCAccountManager::Ptr accountMgr)
     __FUNC_IN__
     g_isCbInvoked = CALLBACK_NOT_INVOKED;
 
-    CloudCommonUtil::g_accessToken = readfile(CLOUD_ACCESSTOKEN_TXT);
+    CloudCommonUtil::g_accessToken = g_cloudPropFile.getProperties(CLOUD_ACCESSTOKEN_KEY);
 
     OCStackResult result = accountMgr->signOut(CloudCommonUtil::g_accessToken, signInOutCB);
     IOTIVITYTEST_LOG(INFO, "[Cloud Common] signOut returns %s",
