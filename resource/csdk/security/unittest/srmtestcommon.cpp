@@ -71,6 +71,13 @@ bool ReadCBORFile(const char* filename, const char* rsrcname, uint8_t **payload,
     uint8_t *data = NULL;
     size_t size = 0;
 
+#ifdef _MSC_VER
+// The path SECURITY_BUILD_UNITTEST_DIR can contain '\u' which VS misinterprets as a universal 
+// character name in the STRINGIZE macro and outputs warning C4429 'possible incomplete or 
+// improperly formed universal-character-name' https://msdn.microsoft.com/en-us/library/z78hwa6k.aspx
+#pragma warning(push)
+#pragma warning(disable:4429)
+#endif
     size_t len = strlen(STRINGIZE(SECURITY_BUILD_UNITTEST_DIR)) + strlen(filename) + 1;
     char *filepath = (char *)OICCalloc(1, len);
     if (!filepath)
@@ -80,6 +87,10 @@ bool ReadCBORFile(const char* filename, const char* rsrcname, uint8_t **payload,
     }
     int ret = snprintf(filepath, len, "%s%s", STRINGIZE(SECURITY_BUILD_UNITTEST_DIR), filename);
     printf("Root build path: %s \n", filepath);
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
     if (ret == (int)(len - 1))
     {
