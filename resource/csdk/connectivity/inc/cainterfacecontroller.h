@@ -43,16 +43,21 @@ extern "C"
 #ifdef SINGLE_THREAD
 /**
  * Initializes different adapters based on the compilation flags.
+ *
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-void CAInitializeAdapters();
+CAResult_t CAInitializeAdapters();
 #else
 /**
  * Initializes different adapters based on the compilation flags.
  * @param[in]   handle           thread pool handle created by message handler
  *                               for different adapters.
  * @param[in]   transportType    transport type to initialize.
+ *
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-void CAInitializeAdapters(ca_thread_pool_t handle, CATransportAdapter_t transportType);
+
+CAResult_t CAInitializeAdapters(ca_thread_pool_t handle, CATransportAdapter_t transportType);
 #endif
 
 /**

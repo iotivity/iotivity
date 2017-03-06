@@ -1149,7 +1149,12 @@ CAResult_t CAInitializeMessageHandler(CATransportAdapter_t transportType)
     }
 
     // initialize interface adapters by controller
-    CAInitializeAdapters(g_threadPoolHandle, transportType);
+    res = CAInitializeAdapters(g_threadPoolHandle, transportType);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to Initialize Adapters.");
+        return res;
+    }
 #else
     // retransmission initialize
     CAResult_t res = CARetransmissionInitialize(&g_retransmissionContext, NULL, CASendUnicastData,
@@ -1186,6 +1191,9 @@ void CATerminateMessageHandler()
         CAStopAdapter(connType);
     }
 
+    // terminate interface adapters by controller
+    CATerminateAdapters();
+
     // stop retransmission
     if (NULL != g_retransmissionContext.threadMutex)
     {
@@ -1221,9 +1229,6 @@ void CATerminateMessageHandler()
     CARetransmissionDestroy(&g_retransmissionContext);
     CAQueueingThreadDestroy(&g_sendThread);
     CAQueueingThreadDestroy(&g_receiveThread);
-
-    // terminate interface adapters by controller
-    CATerminateAdapters();
 #else
     // terminate interface adapters by controller
     CATerminateAdapters();
