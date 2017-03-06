@@ -21,8 +21,10 @@
 ##
 # Notification Unit Test build script
 ##
-
+from tools.scons.RunTest import run_test
 Import('env')
+
+import os
 
 if env.get('RELEASE'):
 	env.AppendUnique(CCFLAGS = ['-Os'])
@@ -40,7 +42,7 @@ SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
 #unit test setting
 ######################################################################
 src_dir = lib_env.get('SRC_DIR')
-gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
+gtest_dir = src_dir + '/extlibs/gtest/googletest-release-1.7.0'
 
 notification_test_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
@@ -53,7 +55,7 @@ GTest_Main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
 notification_test_env.AppendUnique(LIBPATH = [lib_env.get('BUILD_DIR')])
 notification_test_env.AppendUnique(LIBS = [
-    'connectivity_abstraction', 'oc', 'octbstack', 'oc_logger', 'coap',
+    'connectivity_abstraction', 'oc', 'octbstack', 'oc_logger', 'coap', 'resource_directory',
     GTest_Main, GTest])
 
 if target_os not in ['windows', 'winrt']:
@@ -69,8 +71,8 @@ notification_test_env.AppendUnique(CPPPATH = ['../include'])
 
 if env.get('WITH_TCP') == True:
 	notification_test_env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
-	if env.get('SECURED') == '1':
-		notification_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+if env.get('SECURED') == '1':
+	notification_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # Build Test
@@ -92,8 +94,25 @@ notification_provider_test = notification_provider_test_env.Program('notificatio
 Alias("notification_provider_test", notification_provider_test)
 env.AppendTarget('notification_provider_test')
 
+# TODO: Fix this test for MLK and remove commented lines
 if env.get('TEST') == '1':
-    if target_os == 'linux':
-            from tools.scons.RunTest import *
-            run_test(notification_consumer_test_env, '', 'service/notification/unittest/notification_consumer_test')
-            run_test(notification_provider_test_env, '', 'service/notification/unittest/notification_provider_test')
+    if target_os in ['linux'] and env.get('SECURED') != '1':
+        run_test(notification_consumer_test_env,
+#                'service_notification_unittest_notification_consumer_test.memcheck',
+                 '',
+                 'service/notification/unittest/notification_consumer_test')
+        run_test(notification_provider_test_env,
+#                'service_notification_unittest_notification_provider_test.memcheck',
+                 '',
+                 'service/notification/unittest/notification_provider_test')
+else:
+    notification_consumer_test_env.AppendUnique(CPPDEFINES = ['LOCAL_RUNNING'])
+    notification_provider_test_env.AppendUnique(CPPDEFINES = ['LOCAL_RUNNING'])
+    src_dir = notification_consumer_test_env.get('SRC_DIR')
+    svr_db_src_dir = os.path.join(src_dir, 'service/notification/unittest/')
+    svr_db_build_dir = os.path.join(notification_consumer_test_env.get('BUILD_DIR'),
+        'service', 'notification', 'unittest') + os.sep
+    notification_consumer_test_env.Alias("install",
+        notification_consumer_test_env.Install(svr_db_build_dir,
+              os.path.join(svr_db_src_dir,
+                           'oic_svr_db_ns.dat')))

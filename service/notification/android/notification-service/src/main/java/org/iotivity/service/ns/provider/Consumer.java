@@ -18,76 +18,95 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 package org.iotivity.service.ns.provider;
+
 import org.iotivity.service.ns.common.*;
 import java.util.Vector;
-/**
-  * @class   Consumer
-  * @brief   This class provides implementation of Notification Consumer object.
-  */
-public class Consumer
-{
 
-    public String mConsumerId = null;
+/**
+ *
+ * This class provides implementation of Notification Consumer object.
+ *
+ */
+public class Consumer {
+
+    private String mConsumerId = null;
 
     /**
-      * Constructor of Consumer.
-      */
-    public Consumer(final String consumerId)
-    {
+     * Constructor of Consumer
+     *
+     * @param consumerId ConsumerId as a string
+     */
+    public Consumer(final String consumerId) {
         mConsumerId = consumerId;
     }
 
     /**
-      * API for getting consumerId
-      * @return ConsumerId as string
-      */
-    public String getConsumerId( )
-    {
+     * API for getting consumerId
+     *
+     * @return ConsumerId as string
+     */
+    public String getConsumerId() {
         return mConsumerId;
     }
 
     /**
-      * API for accepting Subscription request.
-      * This function is valid only when subControllability is set true.
-      * @param accepted - boolean variable representing Subscription response as TRUE/FALSE.
-      * @return :: result code  100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
-      */
-    public int acceptSubscription(boolean accepted) throws NSException
-    {
-        return nativeAcceptSubscription(mConsumerId, accepted);
+     * API for accepting Subscription request. This function is valid only when
+     * subControllability is set true.
+     *
+     * @param accepted
+     *            boolean variable representing Subscription response as
+     *            TRUE/FALSE.
+     *
+     * @throws NSException failure accepting subscription request
+     */
+    public void acceptSubscription(boolean accepted) throws NSException {
+        nativeAcceptSubscription(mConsumerId, accepted);
     }
 
     /**
-      * Select a topic for a consumer
-      * @param  topicName - Topic name to select
-      * @return :: result code
-      */
-    public int setTopic(String topicName) throws NSException
-    {
-        return nativeSetConsumerTopic(mConsumerId, topicName);
+     * Select a topic for a consumer
+     *
+     * @param topicName
+     *            Topic name to select
+     *
+     * @throws NSException failure selecting a topic
+     */
+    public void setTopic(String topicName) throws NSException {
+        nativeSetConsumerTopic(mConsumerId, topicName);
     }
 
     /**
-      * Unselect a topic for a consumer
-      * @param  topicName - Topic name to Unselect
-      * @return :: result code
-      */
-    public int unsetTopic(String topicName) throws NSException
-    {
-        return nativeUnsetConsumerTopic(mConsumerId, topicName);
+     * Unselect a topic for a consumer
+     *
+     * @param topicName
+     *            Topic name to Unselect
+     *
+     * @throws NSException failure unselecting topic
+     */
+    public void unsetTopic(String topicName) throws NSException {
+        nativeUnsetConsumerTopic(mConsumerId, topicName);
     }
 
     /**
-      * Request topic list with selection state for the consumer
-      * @return :: Topic list
-      */
-    public TopicsList getConsumerTopicList() throws NSException
-    {
+     * Request topic list with selection state for the consumer
+     *
+     * @return Topic list
+     *
+     * @throws NSException failure to request topic list
+     */
+    public TopicsList getConsumerTopicList() throws NSException {
         return nativeGetConsumerTopicList(mConsumerId);
     }
 
-    public native int  nativeAcceptSubscription(String  consumerId, boolean accepted) throws NSException;
-    public native int  nativeSetConsumerTopic(String consumerId, String topicName) throws NSException;
-    public native int  nativeUnsetConsumerTopic(String consumerId, String topicName) throws NSException;
-    public native TopicsList  nativeGetConsumerTopicList(String consumerId) throws NSException;
+    private native void nativeAcceptSubscription(String consumerId,
+            boolean accepted) throws NSException;
+
+    private native void nativeSetConsumerTopic(String consumerId,
+            String topicName) throws NSException;
+
+    private native void nativeUnsetConsumerTopic(String consumerId,
+            String topicName) throws NSException;
+
+    private native TopicsList nativeGetConsumerTopicList(String consumerId)
+            throws NSException;
 }

@@ -59,49 +59,63 @@ namespace OC
 // CBOR->OCPayload and OCPayload->OCRepresentation conversions
 namespace OCRepresentationEncodingTest
 {
-    static const char sid1[] = "646F6F72-4465-7669-6365-555549443030";
-    static const char devicename1[] = "device name";
-    static const char specver1[] = "spec version";
-    static const char dmver1[] = "res.1.1.0";
-    static OCStringLL *types = NULL;
+    static const char *sid1;
     // Device Payloads
     TEST(DeviceDiscoveryEncoding, Normal)
     {
-        OCResourcePayloadAddStringLL(&types, "oic.wk.d");
-        OCResourcePayloadAddStringLL(&types, "oic.d.tv");
-
-        OCDevicePayload* device = OCDevicePayloadCreate(
-                sid1,
-                devicename1,
-                types,
-                specver1,
-                dmver1);
+        sid1 = OCGetServerInstanceIDString();
+        static const char piid1[] = "e987b8f5-527a-454e-98c1-1eef2e5f1cf5";
+        const char devicename1[] = "device name";
+        OCRepPayload *device = OCRepPayloadCreate();
         EXPECT_TRUE(device);
-        EXPECT_STREQ(sid1, device->sid);
-        EXPECT_STREQ(devicename1, device->deviceName);
-        EXPECT_STREQ(specver1, device->specVersion);
-        EXPECT_TRUE(device->dataModelVersions);
-        EXPECT_STREQ("res.1.1.0", device->dataModelVersions->value);
-        EXPECT_FALSE(device->dataModelVersions->next);
-        EXPECT_EQ(PAYLOAD_TYPE_DEVICE, ((OCPayload *)device)->type);
-        EXPECT_STREQ("oic.wk.d", device->types->value);
-        EXPECT_STREQ("oic.d.tv", device->types->next->value);
+        EXPECT_TRUE(OCRepPayloadAddResourceType(device, OC_RSRVD_RESOURCE_TYPE_DEVICE));
+        EXPECT_TRUE(OCRepPayloadAddResourceType(device, "oic.d.tv"));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_DEVICE_ID, sid1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_DEVICE_NAME, devicename1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_SPEC_VERSION, OC_SPEC_VERSION));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, piid1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, "x.org.iotivity.newproperty", "value"));
+
+        size_t dim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
+        char **dt = (char **)OICMalloc(sizeof(char *) * 1);
+        EXPECT_TRUE(dt);
+        dt[0] = OICStrdup(OC_DATA_MODEL_VERSION);
+        EXPECT_TRUE(OCRepPayloadSetStringArray(device, OC_RSRVD_DATA_MODEL_VERSION, (const char **)dt, dim));
+        OICFree(dt[0]);
+        OICFree(dt);
 
         uint8_t* cborData;
         size_t cborSize;
         OCPayload* parsedDevice;
         EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)device, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedDevice, PAYLOAD_TYPE_DEVICE,
-                    cborData, cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedDevice, PAYLOAD_TYPE_REPRESENTATION, cborData, cborSize));
         OICFree(cborData);
 
-        EXPECT_STREQ(device->sid, ((OCDevicePayload*)parsedDevice)->sid);
-        EXPECT_STREQ(device->deviceName, ((OCDevicePayload*)parsedDevice)->deviceName);
-        EXPECT_STREQ(device->specVersion, ((OCDevicePayload*)parsedDevice)->specVersion);
-        EXPECT_STREQ(device->dataModelVersions->value, ((OCDevicePayload*)parsedDevice)->dataModelVersions->value);
-        EXPECT_STREQ("oic.wk.d", ((OCDevicePayload*)parsedDevice)->types->value);
-        EXPECT_STREQ("oic.d.tv", ((OCDevicePayload*)parsedDevice)->types->next->value);
-        EXPECT_EQ(device->base.type, ((OCDevicePayload*)parsedDevice)->base.type);
+        OCRepPayload *parsedRep = (OCRepPayload *)parsedDevice;
+        char *value = NULL;
+        EXPECT_TRUE(OCRepPayloadGetPropString(parsedRep, OC_RSRVD_DEVICE_ID, &value));
+        EXPECT_STREQ(sid1, value);
+        OICFree(value);
+        EXPECT_TRUE(OCRepPayloadGetPropString(parsedRep, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, &value));
+        EXPECT_STREQ(piid1, value);
+        OICFree(value);
+        EXPECT_TRUE(OCRepPayloadGetPropString(parsedRep, OC_RSRVD_DEVICE_NAME, &value));
+        EXPECT_STREQ(devicename1, value);
+        OICFree(value);
+        EXPECT_TRUE(OCRepPayloadGetPropString(parsedRep, OC_RSRVD_SPEC_VERSION, &value));
+        EXPECT_STREQ(OC_SPEC_VERSION, value);
+        OICFree(value);
+        EXPECT_TRUE(OCRepPayloadGetPropString(device, "x.org.iotivity.newproperty", &value));
+        EXPECT_STREQ("value", value);
+        OICFree(value);
+        char **dmv = NULL;
+        EXPECT_TRUE(OCRepPayloadGetStringArray(parsedRep, OC_RSRVD_DATA_MODEL_VERSION, &dmv, dim));
+        EXPECT_STREQ(OC_DATA_MODEL_VERSION, dmv[0]);
+        OICFree(dmv[0]);
+        OICFree(dmv);
+        EXPECT_STREQ(OC_RSRVD_RESOURCE_TYPE_DEVICE, parsedRep->types->value);
+        EXPECT_STREQ("oic.d.tv", parsedRep->types->next->value);
+        EXPECT_EQ(device->base.type, parsedRep->base.type);
 
         OCPayloadDestroy((OCPayload*)device);
 
@@ -111,102 +125,148 @@ namespace OCRepresentationEncodingTest
         const OC::OCRepresentation &r1 = mc1.representations()[0];
         EXPECT_STREQ(sid1, r1.getValue<std::string>(OC_RSRVD_DEVICE_ID).c_str());
         EXPECT_STREQ(devicename1, r1.getValue<std::string>(OC_RSRVD_DEVICE_NAME).c_str());
-        EXPECT_STREQ(specver1, r1.getValue<std::string>(OC_RSRVD_SPEC_VERSION).c_str());
-        EXPECT_STREQ("res.1.1.0", r1.getDataModelVersions()[0].c_str());
+        EXPECT_STREQ(OC_SPEC_VERSION, r1.getValue<std::string>(OC_RSRVD_SPEC_VERSION).c_str());
+        EXPECT_STREQ("value", r1.getValue<std::string>("x.org.iotivity.newproperty").c_str());
+        std::vector<std::string> dmv2 = r1.getValue<std::vector<std::string>>(OC_RSRVD_DATA_MODEL_VERSION);
+        EXPECT_STREQ(OC_DATA_MODEL_VERSION, dmv2[0].c_str());
 
         OCPayloadDestroy(parsedDevice);
 
-        static const char dmver2[] = "res.1.1.0,sh.1.1.0";
-        device = OCDevicePayloadCreate(
-                     sid1,
-                     devicename1,
-                     types,
-                     specver1,
-                     dmver2);
-
-        EXPECT_STREQ("res.1.1.0", device->dataModelVersions->value);
-        EXPECT_TRUE(device->dataModelVersions->next);
-        EXPECT_STREQ("sh.1.1.0", device->dataModelVersions->next->value);
-        EXPECT_FALSE(device->dataModelVersions->next->next);
+        device = OCRepPayloadCreate();
+        EXPECT_TRUE(device);
+        EXPECT_TRUE(OCRepPayloadAddResourceType(device, OC_RSRVD_RESOURCE_TYPE_DEVICE));
+        EXPECT_TRUE(OCRepPayloadAddResourceType(device, "oic.d.tv"));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_DEVICE_NAME, devicename1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_DEVICE_ID, sid1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, piid1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_SPEC_VERSION, OC_SPEC_VERSION));
+        size_t dim1[MAX_REP_ARRAY_DEPTH] = {2, 0, 0};
+        char **dt1 = (char **)OICMalloc(sizeof(char *) * 2);
+        EXPECT_TRUE(dt1);
+        dt1[0] = OICStrdup("res.1.1.0");
+        dt1[1] = OICStrdup("sh.1.1.0");
+        OCRepPayloadSetStringArray(device, OC_RSRVD_DATA_MODEL_VERSION, (const char**)dt1, dim1);
         EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)device, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedDevice, PAYLOAD_TYPE_DEVICE,
-                                              cborData, cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedDevice, PAYLOAD_TYPE_REPRESENTATION, cborData, cborSize));
         OICFree(cborData);
-        EXPECT_STREQ(device->dataModelVersions->value,
-                     ((OCDevicePayload *)parsedDevice)->dataModelVersions->value);
-        EXPECT_STREQ(device->dataModelVersions->next->value,
-                     ((OCDevicePayload *)parsedDevice)->dataModelVersions->next->value);
+        OICFree(dt1[0]);
+        OICFree(dt1[1]);
+        OICFree(dt1);
+        char **dmv1 = NULL;
+        parsedRep = (OCRepPayload *)parsedDevice;
+        EXPECT_TRUE(OCRepPayloadGetStringArray(parsedRep, OC_RSRVD_DATA_MODEL_VERSION, &dmv1, dim));
+        EXPECT_STREQ("res.1.1.0", dmv1[0]);
+        EXPECT_STREQ("sh.1.1.0", dmv1[1]);
+        OICFree(dmv1[0]);
+        OICFree(dmv1[1]);
+        OICFree(dmv1);
         OCPayloadDestroy((OCPayload *)device);
         OC::MessageContainer mc2;
         mc2.setPayload(parsedDevice);
         EXPECT_EQ(1u, mc2.representations().size());
         const OC::OCRepresentation r2 = mc2.representations()[0];
-        EXPECT_STREQ("res.1.1.0", r2.getDataModelVersions()[0].c_str());
-        EXPECT_STREQ("sh.1.1.0", r2.getDataModelVersions()[1].c_str());
-
+        std::vector<std::string> dmv3 = r2.getValue<std::vector<std::string>>(OC_RSRVD_DATA_MODEL_VERSION);
+        EXPECT_STREQ("res.1.1.0", dmv3[0].c_str());
+        EXPECT_STREQ("sh.1.1.0", dmv3[1].c_str());
         OCPayloadDestroy(parsedDevice);
     }
-
-    static const char uri1[] = "/testuri";
-    static char pfid1[] = "pfid";
-    static char mfgnm1[] = "mfgnm";
-    static char mfgurl1[] = "mfgurl";
-    static char modelnum1[] = "modelnum";
-    static char dom1[] = "dom";
-    static char pfver1[] = "pfver";
-    static char osver1[] = "osver";
-    static char hwver1[] = "hwver";
-    static char fwver1[] = "fwver";
-    static char url1[] = "url";
-    static char time1[] = "time";
 
     // Platform Payloads
     TEST(PlatformDiscoveryEncoding, Normal)
     {
-        OCPlatformInfo info {pfid1, mfgnm1, mfgurl1, modelnum1, dom1, pfver1, osver1, hwver1,
-            fwver1, url1, time1};
-        OCPlatformPayload* platform = OCPlatformPayloadCreate(&info);
-        EXPECT_EQ(PAYLOAD_TYPE_PLATFORM, ((OCPayload*)platform)->type);
-        EXPECT_STREQ(pfid1, platform->info.platformID);
-        EXPECT_STREQ(mfgnm1, platform->info.manufacturerName);
-        EXPECT_STREQ(mfgurl1, platform->info.manufacturerUrl);
-        EXPECT_STREQ(modelnum1, platform->info.modelNumber);
-        EXPECT_STREQ(dom1, platform->info.dateOfManufacture);
-        EXPECT_STREQ(pfver1, platform->info.platformVersion);
-        EXPECT_STREQ(osver1, platform->info.operatingSystemVersion);
-        EXPECT_STREQ(hwver1, platform->info.hardwareVersion);
-        EXPECT_STREQ(fwver1, platform->info.firmwareVersion);
-        EXPECT_STREQ(url1, platform->info.supportUrl);
-        EXPECT_STREQ(time1, platform->info.systemTime);
-        EXPECT_STREQ(OC_RSRVD_INTERFACE_DEFAULT, platform->interfaces->value);
-        EXPECT_STREQ(OC_RSRVD_INTERFACE_READ, platform->interfaces->next->value);
-        EXPECT_STREQ(OC_RSRVD_RESOURCE_TYPE_PLATFORM, platform->rt->value);
+        static char pfid1[] = "646F6F72-4465-7669-6365-555549443030";
+        static char mfgnm1[] = "mfgnm";
+        static char mfgurl1[] = "http://www.iotivity.org";
+        static char modelnum1[] = "modelnum";
+        static char dom1[] = "dom";
+        static char pfver1[] = "pfver";
+        static char osver1[] = "osver";
+        static char hwver1[] = "hwver";
+        static char fwver1[] = "fwver";
+        static char url1[] = "http://www.iotivity.org";
+        static char time1[] = "20161122T143938Z";
+        static char vid1[] = "Manufacturer Freeform Text";
+        OCRepPayload *platform = OCRepPayloadCreate();
+        EXPECT_TRUE(platform != NULL);
+        EXPECT_EQ(PAYLOAD_TYPE_REPRESENTATION, ((OCPayload*)platform)->type);
+        EXPECT_TRUE(OCRepPayloadAddResourceType(platform, (char *)OC_RSRVD_RESOURCE_TYPE_PLATFORM));
+        EXPECT_TRUE(OCRepPayloadAddInterface(platform, (char *)OC_RSRVD_INTERFACE_DEFAULT));
+        EXPECT_TRUE(OCRepPayloadAddInterface(platform, (char *)OC_RSRVD_INTERFACE_READ));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_PLATFORM_ID, pfid1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_MFG_NAME, mfgnm1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_MFG_URL, mfgurl1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_MODEL_NUM, modelnum1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_MFG_DATE, dom1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_OS_VERSION, osver1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_PLATFORM_VERSION, pfver1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_HARDWARE_VERSION, hwver1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_FIRMWARE_VERSION, fwver1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_SUPPORT_URL, url1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_SYSTEM_TIME, time1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_VID, vid1));
+
 
         uint8_t* cborData;
         size_t cborSize;
-        OCPayload* parsedPlatform;
+        OCPayload* parsedPlatform = NULL;
         EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)platform, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedPlatform, PAYLOAD_TYPE_PLATFORM,
-                    cborData, cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedPlatform, PAYLOAD_TYPE_REPRESENTATION, cborData, cborSize));
         OICFree(cborData);
 
-        EXPECT_EQ(platform->base.type, ((OCPlatformPayload*)parsedPlatform)->base.type);
-        OCPlatformPayload* platform2 = (OCPlatformPayload*)parsedPlatform;
-        EXPECT_STREQ(platform->info.platformID, platform2->info.platformID);
-        EXPECT_STREQ(platform->info.manufacturerName, platform->info.manufacturerName);
-        EXPECT_STREQ(platform->info.manufacturerUrl, platform->info.manufacturerUrl);
-        EXPECT_STREQ(platform->info.modelNumber, platform->info.modelNumber);
-        EXPECT_STREQ(platform->info.dateOfManufacture, platform->info.dateOfManufacture);
-        EXPECT_STREQ(platform->info.platformVersion, platform->info.platformVersion);
-        EXPECT_STREQ(platform->info.operatingSystemVersion, platform->info.operatingSystemVersion);
-        EXPECT_STREQ(platform->info.hardwareVersion, platform->info.hardwareVersion);
-        EXPECT_STREQ(platform->info.firmwareVersion, platform->info.firmwareVersion);
-        EXPECT_STREQ(platform->info.supportUrl, platform->info.supportUrl);
-        EXPECT_STREQ(platform->info.systemTime, platform2->info.systemTime);
-        EXPECT_STREQ(platform->interfaces->value, platform2->interfaces->value);
-        EXPECT_STREQ(platform->rt->value, platform2->rt->value);
+        OCRepPayload *platform1 = (OCRepPayload *)parsedPlatform;
+        EXPECT_EQ(platform->base.type, platform1->base.type);
+        char *value = NULL;
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_PLATFORM_ID, &value));
+        EXPECT_STREQ(pfid1, value);
+        OICFree(value);
 
-        OCPayloadDestroy((OCPayload*)platform);
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_MFG_NAME, &value));
+        EXPECT_STREQ(mfgnm1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_MFG_URL, &value));
+        EXPECT_STREQ(mfgurl1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_MODEL_NUM, &value));
+        EXPECT_STREQ(modelnum1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_MFG_DATE, &value));
+        EXPECT_STREQ(dom1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_OS_VERSION, &value));
+        EXPECT_STREQ(osver1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_PLATFORM_VERSION, &value));
+        EXPECT_STREQ(pfver1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_HARDWARE_VERSION, &value));
+        EXPECT_STREQ(hwver1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_FIRMWARE_VERSION, &value));
+        EXPECT_STREQ(fwver1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_SUPPORT_URL, &value));
+        EXPECT_STREQ(url1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_SYSTEM_TIME, &value));
+        EXPECT_STREQ(time1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_VID, &value));
+        EXPECT_STREQ(vid1, value);
+        OICFree(value);
+
+        EXPECT_STREQ(platform1->types->value, OC_RSRVD_RESOURCE_TYPE_PLATFORM);
+        EXPECT_STREQ(platform1->interfaces->value, OC_RSRVD_INTERFACE_DEFAULT);
+        EXPECT_STREQ(platform1->interfaces->next->value, OC_RSRVD_INTERFACE_READ);
 
         OC::MessageContainer mc;
         mc.setPayload(parsedPlatform);
@@ -223,11 +283,15 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ(fwver1, r.getValue<std::string>(OC_RSRVD_FIRMWARE_VERSION).c_str());
         EXPECT_STREQ(url1, r.getValue<std::string>(OC_RSRVD_SUPPORT_URL).c_str());
         EXPECT_STREQ(time1, r.getValue<std::string>(OC_RSRVD_SYSTEM_TIME).c_str());
+        EXPECT_STREQ(vid1, r.getValue<std::string>(OC_RSRVD_VID).c_str());
 
-        OCPayloadDestroy(parsedPlatform);
+        OCPayloadDestroy((OCPayload *)platform);
+        OCPayloadDestroy((OCPayload *)platform1);
     }
+
     TEST(PresencePayload, Normal)
     {
+        static const char uri1[] = "/testuri";
         uint32_t maxAge = 0;
         uint32_t sequenceNumber = 0;
         OCPresenceTrigger trigger = OC_PRESENCE_TRIGGER_CREATE;
@@ -301,11 +365,22 @@ namespace OCRepresentationEncodingTest
     {
         OC::OCRepresentation startRep;
         std::vector<int> iarr {};
-        startRep["iarr"] = {};
+        std::vector<double> darr {};
+        std::vector<bool> barr {};
+        std::vector<std::string> strarr {};
+        std::vector<OC::OCRepresentation> objarr {};
+        std::vector<OCByteString> bytestrarr {{NULL, 0}};
+        startRep.setValue("StringAttr", std::string(""));
+        startRep["iarr"] = iarr;
+        startRep["darr"] = darr;
+        startRep["barr"] = barr;
+        startRep["strarr"] = strarr;
+        startRep["objarr"] = objarr;
+        startRep["bytestrarr"] = bytestrarr;
+        startRep.setValue("StringAttr2", std::string("String attr"));
 
         OC::MessageContainer mc1;
         mc1.addRepresentation(startRep);
-
         OCRepPayload* cstart = mc1.getPayload();
         EXPECT_EQ(PAYLOAD_TYPE_REPRESENTATION, cstart->base.type);
 
@@ -323,9 +398,21 @@ namespace OCRepresentationEncodingTest
         EXPECT_EQ(1u, mc2.representations().size());
         const OC::OCRepresentation& r = mc2.representations()[0];
 
+        EXPECT_STREQ("", r.getValue<std::string>("StringAttr").c_str());
         std::vector<int> iarr2 = r["iarr"];
-
         EXPECT_EQ(iarr, iarr2);
+        std::vector<double> darr2 = r["darr"];
+        EXPECT_EQ(darr, darr2);
+        std::vector<bool> barr2 = r["barr"];
+        EXPECT_EQ(barr, barr2);
+        std::vector<std::string> strarr2 = r["strarr"];
+        EXPECT_EQ(strarr, strarr2);
+        std::vector<OC::OCRepresentation> objarr2 = r["objarr"];
+        EXPECT_EQ(objarr, objarr2);
+        std::vector<uint8_t> binAttr = r.getValue<std::vector<uint8_t>>("BinaryAttr");
+        EXPECT_EQ(bytestrarr[0].len, binAttr.size());
+        EXPECT_STREQ("String attr", r.getValue<std::string>("StringAttr2").c_str());
+        OIC_LOG_PAYLOAD(DEBUG, cparsed);
         OCPayloadDestroy(cparsed);
     }
 
@@ -373,8 +460,11 @@ namespace OCRepresentationEncodingTest
                 newSubRep.getValue<std::vector<uint8_t>>("BinaryAttr"));
         OCPayloadDestroy(cparsed);
     }
-
+#if defined (_MSC_VER)
+    TEST(RepresentationEncoding, DISABLED_OneDVectors)
+#else
     TEST(RepresentationEncoding, OneDVectors)
+#endif
     {
         // Setup
         OC::OCRepresentation startRep;
@@ -451,7 +541,11 @@ namespace OCRepresentationEncodingTest
         OCPayloadDestroy(cparsed);
     }
 
+#if defined (_MSC_VER)
+    TEST(RepresentationEncoding, DISABLED_TwoDVectors)
+#else
     TEST(RepresentationEncoding, TwoDVectors)
+#endif
     {
         // Setup
         OC::OCRepresentation startRep;
@@ -544,7 +638,11 @@ namespace OCRepresentationEncodingTest
         OCPayloadDestroy(cparsed);
     }
 
+#if defined (_MSC_VER)
+    TEST(RepresentationEncoding, DISABLED_TwoDVectorsJagged)
+#else
     TEST(RepresentationEncoding, TwoDVectorsJagged)
+#endif
     {
         // Setup
         OC::OCRepresentation startRep;
@@ -652,7 +750,11 @@ namespace OCRepresentationEncodingTest
         OCPayloadDestroy(cparsed);
     }
 
+#if defined (_MSC_VER)
+    TEST(RepresentationEncoding, DISABLED_ThreeDVectors)
+#else
     TEST(RepresentationEncoding, ThreeDVectors)
+#endif
     {
         // Setup
         OC::OCRepresentation startRep;
@@ -795,7 +897,11 @@ namespace OCRepresentationEncodingTest
         OCPayloadDestroy(cparsed);
     }
 
+#if defined (_MSC_VER)
+    TEST(RepresentationEncoding, DISABLED_ThreeDVectorsJagged)
+#else
     TEST(RepresentationEncoding, ThreeDVectorsJagged)
+#endif
     {
         // Setup
         OC::OCRepresentation startRep;

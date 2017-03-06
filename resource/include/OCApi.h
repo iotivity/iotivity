@@ -146,6 +146,9 @@ namespace OC
         /** default flags for client. */
         OCConnectivityType         clientConnectivity;
 
+        /** transport type to initialize. */
+        OCTransportAdapter         transportType;
+
         /** not used. */
         std::string                ipAddress;
 
@@ -164,6 +167,7 @@ namespace OC
                 mode(ModeType::Both),
                 serverConnectivity(CT_DEFAULT),
                 clientConnectivity(CT_DEFAULT),
+                transportType(OC_DEFAULT_ADAPTER),
                 ipAddress("0.0.0.0"),
                 port(0),
                 QoS(QualityOfService::NaQos),
@@ -179,6 +183,7 @@ namespace OC
                 mode(mode_),
                 serverConnectivity(serverConnectivity_),
                 clientConnectivity(clientConnectivity_),
+                transportType(OC_DEFAULT_ADAPTER),
                 ipAddress(""),
                 port(0),
                 QoS(QoS_),
@@ -195,11 +200,62 @@ namespace OC
                 mode(mode_),
                 serverConnectivity(CT_DEFAULT),
                 clientConnectivity(CT_DEFAULT),
+                transportType(OC_DEFAULT_ADAPTER),
                 ipAddress(ipAddress_),
                 port(port_),
                 QoS(QoS_),
                 ps(ps_)
         {}
+            PlatformConfig(const ServiceType serviceType_,
+            const ModeType mode_,
+            const std::string& ipAddress_,
+            const uint16_t port_,
+            const OCTransportAdapter transportType_,
+            const QualityOfService QoS_,
+            OCPersistentStorage *ps_ = nullptr)
+                : serviceType(serviceType_),
+                mode(mode_),
+                serverConnectivity(CT_DEFAULT),
+                clientConnectivity(CT_DEFAULT),
+                transportType(transportType_),
+                ipAddress(ipAddress_),
+                port(port_),
+                QoS(QoS_),
+                ps(ps_)
+        {}
+            PlatformConfig(const ServiceType serviceType_,
+            const ModeType mode_,
+            OCTransportAdapter transportType_,
+            const QualityOfService QoS_,
+            OCPersistentStorage *ps_ = nullptr)
+                : serviceType(serviceType_),
+                mode(mode_),
+                serverConnectivity(CT_DEFAULT),
+                clientConnectivity(CT_DEFAULT),
+                transportType(transportType_),
+                ipAddress(""),
+                port(0),
+                QoS(QoS_),
+                ps(ps_)
+        {}
+            PlatformConfig(const ServiceType serviceType_,
+            const ModeType mode_,
+            OCConnectivityType serverConnectivity_,
+            OCConnectivityType clientConnectivity_,
+            OCTransportAdapter transportType_,
+            const QualityOfService QoS_,
+            OCPersistentStorage *ps_ = nullptr)
+                : serviceType(serviceType_),
+                mode(mode_),
+                serverConnectivity(serverConnectivity_),
+                clientConnectivity(clientConnectivity_),
+                transportType(transportType_),
+                ipAddress(""),
+                port(0),
+                QoS(QoS_),
+                ps(ps_)
+        {}
+
     };
 
     enum RequestHandlerFlag
@@ -213,13 +269,7 @@ namespace OC
         Observe,
         ObserveAll
     };
-#ifdef WITH_CLOUD
-    enum class AclGroupType
-    {
-        PUBLIC,
-        PRIVATE
-    };
-#endif
+
     // Typedef for list of resource handles.
     typedef std::vector<OCResourceHandle> ResourceHandles;
 
@@ -307,11 +357,6 @@ namespace OC
 
     typedef std::function<void(const int, const std::string&,
                                std::shared_ptr<OCResource>)> MQTopicCallback;
-#ifdef RD_CLIENT
-    typedef std::function<void(const OCRepresentation&, const int)> PublishResourceCallback;
-
-    typedef std::function<void(const int)> DeleteResourceCallback;
-#endif
 } // namespace OC
 
 #endif

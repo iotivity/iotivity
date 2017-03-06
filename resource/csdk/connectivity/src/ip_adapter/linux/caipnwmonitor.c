@@ -39,28 +39,64 @@
 #include <linux/rtnetlink.h>
 #endif
 
-#include "camutex.h"
+#include "caipnwmonitor.h"
+#include "octhread.h"
 #include "caadapterutils.h"
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include <coap/utlist.h>
 
 #define TAG "OIC_CA_IP_MONITOR"
 
 /**
  * Mutex for synchronizing access to cached interface and IP address information.
  */
-static ca_mutex g_networkMonitorContextMutex = NULL;
+static oc_mutex g_networkMonitorContextMutex = NULL;
 
 /**
  * Used to storing network interface.
  */
 static u_arraylist_t *g_netInterfaceList = NULL;
 
-static CAIPConnectionStateChangeCallback g_networkChangeCallback = NULL;
+/**
+ * Used to storing adapter changes callback interface.
+ */
+static struct CAIPCBData_t *g_adapterCallbackList = NULL;
 
+/**
+ * Initialize the network interface monitoring list.
+ */
 static CAResult_t CAIPInitializeNetworkMonitorList();
+
+/**
+ * Destroy the network interface monitoring list.
+ */
 static void CAIPDestroyNetworkMonitorList();
+
+/**
+ * Compare the interface with the already added interface in list.
+ */
+static bool CACmpNetworkList(uint32_t ifiindex);
+
+/**
+ * Add new network interface in list.
+ */
+static CAResult_t CAAddNetworkMonitorList(CAInterface_t *ifitem);
+
+/**
+ * Remove network interface from list.
+ */
+static void CARemoveNetworkMonitorList(int ifiindex);
+
+/**
+ * Pass the changed network status through the stored callback.
+ */
+static void CAIPPassNetworkChangesToAdapter(CANetworkStatus_t status);
+
+/**
+ * Create new interface item.
+ */
 static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family,
                                          const char *addr, int flags);
 
@@ -68,10 +104,10 @@ static CAResult_t CAIPInitializeNetworkMonitorList()
 {
     if (!g_networkMonitorContextMutex)
     {
-        g_networkMonitorContextMutex = ca_mutex_new();
+        g_networkMonitorContextMutex = oc_mutex_new();
         if (!g_networkMonitorContextMutex)
         {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
             return CA_STATUS_FAILED;
         }
     }
@@ -99,49 +135,55 @@ static void CAIPDestroyNetworkMonitorList()
 
     if (g_networkMonitorContextMutex)
     {
-        ca_mutex_free(g_networkMonitorContextMutex);
+        oc_mutex_free(g_networkMonitorContextMutex);
         g_networkMonitorContextMutex = NULL;
     }
 }
 
 static bool CACmpNetworkList(uint32_t ifiindex)
 {
+    OIC_LOG_V(DEBUG, TAG, "IN %s: ifiindex = %ul", __func__, ifiindex);
+
     if (!g_netInterfaceList)
     {
         OIC_LOG(ERROR, TAG, "g_netInterfaceList is NULL");
         return false;
     }
 
-    ca_mutex_lock(g_networkMonitorContextMutex);
+    oc_mutex_lock(g_networkMonitorContextMutex);
 
-    uint32_t list_length = u_arraylist_length(g_netInterfaceList);
-    for (uint32_t list_index = 0; list_index < list_length; list_index++)
+    size_t list_length = u_arraylist_length(g_netInterfaceList);
+    for (size_t list_index = 0; list_index < list_length; list_index++)
     {
-        CAInterface_t *currItem = (CAInterface_t *) u_arraylist_get(g_netInterfaceList, list_index);
+        CAInterface_t *currItem = (CAInterface_t *) u_arraylist_get(g_netInterfaceList,
+                                                                    list_index);
         if (currItem->index == ifiindex)
         {
-            ca_mutex_unlock(g_networkMonitorContextMutex);
+            oc_mutex_unlock(g_networkMonitorContextMutex);
             return true;
         }
     }
-    ca_mutex_unlock(g_networkMonitorContextMutex);
+    oc_mutex_unlock(g_networkMonitorContextMutex);
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
     return false;
 }
 
 static CAResult_t CAAddNetworkMonitorList(CAInterface_t *ifitem)
 {
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
     VERIFY_NON_NULL(g_netInterfaceList, TAG, "g_netInterfaceList is NULL");
     VERIFY_NON_NULL(ifitem, TAG, "ifitem is NULL");
 
-    ca_mutex_lock(g_networkMonitorContextMutex);
+    oc_mutex_lock(g_networkMonitorContextMutex);
     bool result = u_arraylist_add(g_netInterfaceList, (void *) ifitem);
     if (!result)
     {
         OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
-        ca_mutex_unlock(g_networkMonitorContextMutex);
+        oc_mutex_unlock(g_networkMonitorContextMutex);
         return CA_STATUS_FAILED;
     }
-    ca_mutex_unlock(g_networkMonitorContextMutex);
+    oc_mutex_unlock(g_networkMonitorContextMutex);
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
     return CA_STATUS_OK;
 }
 
@@ -149,10 +191,10 @@ static void CARemoveNetworkMonitorList(int ifiindex)
 {
     VERIFY_NON_NULL_VOID(g_netInterfaceList, TAG, "g_netInterfaceList is NULL");
 
-    ca_mutex_lock(g_networkMonitorContextMutex);
+    oc_mutex_lock(g_networkMonitorContextMutex);
 
-    uint32_t list_length = u_arraylist_length(g_netInterfaceList);
-    for (uint32_t list_index = 0; list_index < list_length; list_index++)
+    size_t list_length = u_arraylist_length(g_netInterfaceList);
+    for (size_t list_index = 0; list_index < list_length; list_index++)
     {
         CAInterface_t *removedifitem = (CAInterface_t *) u_arraylist_get(
                 g_netInterfaceList, list_index);
@@ -161,25 +203,31 @@ static void CARemoveNetworkMonitorList(int ifiindex)
             if (u_arraylist_remove(g_netInterfaceList, list_index))
             {
                 OICFree(removedifitem);
-                ca_mutex_unlock(g_networkMonitorContextMutex);
+                oc_mutex_unlock(g_networkMonitorContextMutex);
                 return;
             }
             continue;
         }
     }
-    ca_mutex_unlock(g_networkMonitorContextMutex);
+    oc_mutex_unlock(g_networkMonitorContextMutex);
     return;
 }
 
-CAResult_t CAIPStartNetworkMonitor()
+CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
+                                   CATransportAdapter_t adapter)
 {
-    return CAIPInitializeNetworkMonitorList();
+    CAResult_t res = CAIPInitializeNetworkMonitorList();
+    if (CA_STATUS_OK == res)
+    {
+        return CAIPSetNetworkMonitorCallback(callback, adapter);
+    }
+    return res;
 }
 
-CAResult_t CAIPStopNetworkMonitor()
+CAResult_t CAIPStopNetworkMonitor(CATransportAdapter_t adapter)
 {
     CAIPDestroyNetworkMonitorList();
-    return CA_STATUS_OK;
+    return CAIPUnSetNetworkMonitorCallback(adapter);
 }
 
 int CAGetPollingInterval(int interval)
@@ -187,14 +235,77 @@ int CAGetPollingInterval(int interval)
     return interval;
 }
 
-void CAIPSetNetworkMonitorCallback(CAIPConnectionStateChangeCallback callback)
+static void CAIPPassNetworkChangesToAdapter(CANetworkStatus_t status)
 {
-    g_networkChangeCallback = callback;
+    OIC_LOG_V(DEBUG, TAG, "IN %s: status = %d", __func__, status);
+    CAIPCBData_t *cbitem = NULL;
+    LL_FOREACH(g_adapterCallbackList, cbitem)
+    {
+        if (cbitem && cbitem->adapter)
+        {
+            cbitem->callback(cbitem->adapter, status);
+            CALogAdapterStateInfo(cbitem->adapter, status);
+        }
+    }
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
+}
+
+CAResult_t CAIPSetNetworkMonitorCallback(CAIPAdapterStateChangeCallback callback,
+                                         CATransportAdapter_t adapter)
+{
+    if (!callback)
+    {
+        OIC_LOG(ERROR, TAG, "callback is null");
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    CAIPCBData_t *cbitem = NULL;
+    LL_FOREACH(g_adapterCallbackList, cbitem)
+    {
+        if (cbitem && adapter == cbitem->adapter && callback == cbitem->callback)
+        {
+            OIC_LOG(DEBUG, TAG, "this callback is already added");
+            return CA_STATUS_OK;
+        }
+    }
+
+    cbitem = (CAIPCBData_t *)OICCalloc(1, sizeof(*cbitem));
+    if (!cbitem)
+    {
+        OIC_LOG(ERROR, TAG, "Malloc failed");
+        return CA_STATUS_FAILED;
+    }
+
+    cbitem->adapter = adapter;
+    cbitem->callback = callback;
+    LL_APPEND(g_adapterCallbackList, cbitem);
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAIPUnSetNetworkMonitorCallback(CATransportAdapter_t adapter)
+{
+    CAIPCBData_t *cbitem = NULL;
+    CAIPCBData_t *tmpCbitem = NULL;
+    LL_FOREACH_SAFE(g_adapterCallbackList, cbitem, tmpCbitem)
+    {
+        if (cbitem && adapter == cbitem->adapter)
+        {
+            OIC_LOG(DEBUG, TAG, "remove specific callback");
+            LL_DELETE(g_adapterCallbackList, cbitem);
+            OICFree(cbitem);
+            return CA_STATUS_OK;
+        }
+    }
+    return CA_STATUS_OK;
 }
 
 static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family,
                                          const char *addr, int flags)
 {
+    OIC_LOG_V(DEBUG, TAG, "IN %s:"
+              "index = %d, name = \"%s\", family = %d, addr = \"%s\", flags = %d",
+              __func__, index, name, family, addr, flags);
     CAInterface_t *ifitem = (CAInterface_t *)OICCalloc(1, sizeof (CAInterface_t));
     if (!ifitem)
     {
@@ -208,12 +319,13 @@ static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family
     OICStrcpy(ifitem->addr, sizeof (ifitem->addr), addr);
     ifitem->flags = flags;
 
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
     return ifitem;
 }
 
-CAInterface_t *CAFindInterfaceChange()
+u_arraylist_t *CAFindInterfaceChange()
 {
-    CAInterface_t *foundNewInterface = NULL;
+    u_arraylist_t *iflist = NULL;
 #ifdef __linux__
     char buf[4096] = { 0 };
     struct nlmsghdr *nh = NULL;
@@ -225,66 +337,51 @@ CAInterface_t *CAFindInterfaceChange()
                           .msg_iov = &iov,
                           .msg_iovlen = 1 };
 
-    size_t len = recvmsg(caglobals.ip.netlinkFd, &msg, 0);
+    ssize_t len = recvmsg(caglobals.ip.netlinkFd, &msg, 0);
 
     for (nh = (struct nlmsghdr *)buf; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len))
     {
-        if (nh != NULL && nh->nlmsg_type != RTM_NEWLINK)
+        if (nh != NULL && (nh->nlmsg_type != RTM_DELADDR && nh->nlmsg_type != RTM_NEWADDR))
         {
             continue;
         }
 
-        struct ifinfomsg *ifi = (struct ifinfomsg *)NLMSG_DATA(nh);
-
-        int ifiIndex = ifi->ifi_index;
-        u_arraylist_t *iflist = CAIPGetInterfaceInformation(ifiIndex);
-
-        if ((!ifi || (ifi->ifi_flags & IFF_LOOPBACK) || !(ifi->ifi_flags & IFF_RUNNING)))
+        if (RTM_DELADDR == nh->nlmsg_type)
         {
-            bool isFound = CACmpNetworkList(ifiIndex);
-            if (isFound)
+            struct ifaddrmsg *ifa = (struct ifaddrmsg *)NLMSG_DATA (nh);
+            if (ifa)
             {
-                CARemoveNetworkMonitorList(ifiIndex);
-                if (g_networkChangeCallback)
+                int ifiIndex = ifa->ifa_index;
+                bool isFound = CACmpNetworkList(ifiIndex);
+                if (isFound)
                 {
-                    g_networkChangeCallback(CA_ADAPTER_IP ,CA_INTERFACE_DOWN);
+                    CARemoveNetworkMonitorList(ifiIndex);
+                    CAIPPassNetworkChangesToAdapter(CA_INTERFACE_DOWN);
                 }
             }
             continue;
         }
 
-        if (!iflist)
+        // Netlink message type is RTM_NEWADDR.
+        struct ifaddrmsg *ifa = (struct ifaddrmsg *)NLMSG_DATA (nh);
+        if (ifa)
         {
-            OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));
-            return NULL;
-        }
-
-        uint32_t listLength = u_arraylist_length(iflist);
-        for (uint32_t i = 0; i < listLength; i++)
-        {
-            CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
-            if (!ifitem)
+            int ifiIndex = ifa->ifa_index;
+            iflist = CAIPGetInterfaceInformation(ifiIndex);
+            if (!iflist)
             {
-                continue;
+                OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));
+                return NULL;
             }
-
-            if ((int)ifitem->index != ifiIndex)
-            {
-                continue;
-            }
-
-            foundNewInterface = CANewInterfaceItem(ifitem->index, ifitem->name, ifitem->family,
-                                                   ifitem->addr, ifitem->flags);
-            break;    // we found the one we were looking for
         }
-        u_arraylist_destroy(iflist);
     }
 #endif
-    return foundNewInterface;
+    return iflist;
 }
 
 u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
 {
+    OIC_LOG_V(DEBUG, TAG, "IN %s: desiredIndex = %d", __func__, desiredIndex);
     if (desiredIndex < 0)
     {
         OIC_LOG_V(ERROR, TAG, "invalid index : %d", desiredIndex);
@@ -305,9 +402,9 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
         u_arraylist_destroy(iflist);
         return NULL;
     }
-    OIC_LOG(DEBUG, TAG, "Got ifaddrs");
 
     struct ifaddrs *ifa = NULL;
+    OIC_LOG(DEBUG, TAG, "Iterating over interface addresses.");
     for (ifa = ifp; ifa; ifa = ifa->ifa_next)
     {
         if (!ifa->ifa_addr)
@@ -326,10 +423,12 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
             continue;
         }
 
-        int length = u_arraylist_length(iflist);
+        size_t length = u_arraylist_length(iflist);
         int already = false;
-        for (int i = length-1; i >= 0; i--)
+        OIC_LOG_V(DEBUG, TAG, "Iterating over %" PRIuPTR " interfaces.", length);
+        for (size_t i = 0; i < length; i++)
         {
+            OIC_LOG_V(DEBUG, TAG, "Checking interface %" PRIuPTR ".", i);
             CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
 
             if (ifitem
@@ -388,18 +487,43 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
                 OICFree(newifitem);
                 goto exit;
             }
-            if (g_networkChangeCallback)
-            {
-                g_networkChangeCallback(CA_ADAPTER_IP, CA_INTERFACE_UP);
-            }
+            CAIPPassNetworkChangesToAdapter(CA_INTERFACE_UP);
             OIC_LOG_V(DEBUG, TAG, "Added interface: %s (%d)", ifitem->name, ifitem->family);
         }
     }
     freeifaddrs(ifp);
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
     return iflist;
 
 exit:
     freeifaddrs(ifp);
     u_arraylist_destroy(iflist);
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
     return NULL;
+}
+
+CAResult_t CAGetLinkLocalZoneIdInternal(uint32_t ifindex, char **zoneId)
+{
+    if (!zoneId || (*zoneId != NULL))
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    *zoneId = (char *)OICCalloc(IF_NAMESIZE, sizeof(char));
+    if (!(*zoneId))
+    {
+        OIC_LOG(ERROR, TAG, "OICCalloc failed in CAGetLinkLocalZoneIdInternal");
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
+    if (!if_indextoname(ifindex, *zoneId))
+    {
+        OIC_LOG(ERROR, TAG, "if_indextoname failed in CAGetLinkLocalZoneIdInternal");
+        OICFree(*zoneId);
+        *zoneId = NULL;
+        return CA_STATUS_FAILED;
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "Given ifindex is %d parsed zoneId is %s", ifindex, *zoneId);
+    return CA_STATUS_OK;
 }

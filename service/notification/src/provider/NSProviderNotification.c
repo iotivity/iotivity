@@ -19,6 +19,8 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSProviderNotification.h"
+#include "NSProviderListener.h"
+#include "NSProviderSystem.h"
 
 NSResult NSSetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
 {
@@ -76,6 +78,31 @@ NSResult NSSetSyncPayload(NSSyncInfo *sync, OCRepPayload** syncPayload)
     return NS_OK;
 }
 
+#ifdef WITH_MQ
+OCStackResult NSProviderPublishTopic(OCRepPayload * payload, OCClientResponseHandler response)
+{
+    NS_LOG(DEBUG, "NSProviderPublishTopic - IN");
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(OCCallbackData));
+    cbData.cb = response;
+    cbData.cd = NULL;
+    cbData.context = NULL;
+
+    NSMQServerInfo * serverInfo = NSGetMQServerInfo();
+
+    if (!serverInfo)
+    {
+        NS_LOG(DEBUG, "serverInfo is not NULL");
+        NS_LOG_V(DEBUG, "serverInfo->serverUri = %s", serverInfo->serverUri);
+    }
+
+    NS_LOG(DEBUG, "NSProviderPublishTopic - OUT");
+
+    return OCDoResource(NULL, OC_REST_POST, serverInfo->serverUri, serverInfo->devAddr,
+            (OCPayload *)payload, CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+}
+#endif
+
 NSResult NSSendNotification(NSMessage *msg)
 {
     NS_LOG(DEBUG, "NSSendMessage - IN");
@@ -90,12 +117,6 @@ NSResult NSSendNotification(NSMessage *msg)
         return NS_ERROR;
     }
 
-    if (consumerSubList->head == NULL)
-    {
-        NS_LOG(ERROR, "SubList->head is NULL, empty SubList");
-        return NS_ERROR;
-    }
-
     OCRepPayload* payload = NULL;
 
     if (NSSetMessagePayload(msg, &payload) != NS_OK)
@@ -104,12 +125,27 @@ NSResult NSSendNotification(NSMessage *msg)
         return NS_ERROR;
     }
 
+#ifdef WITH_MQ
+    if (NSGetMQServerInfo())
+    {
+        NSProviderPublishTopic(OCRepPayloadClone(payload), NSProviderPublishMQResponseCB);
+    }
+#endif
+
+    if (consumerSubList->head == NULL)
+    {
+        NS_LOG(ERROR, "SubList->head is NULL, empty SubList");
+        OCRepPayloadDestroy(payload);
+        msg->extraInfo = NULL;
+        return NS_ERROR;
+    }
+
     NSCacheElement * it = consumerSubList->head;
 
     while (it)
     {
         NSCacheSubData * subData = (NSCacheSubData *) it->data;
-        NS_LOG_V(DEBUG, "message subData->id = %s", subData->id);
+        NS_LOG_V(INFO_PRIVATE, "message subData->id = %s", subData->id);
         NS_LOG_V(DEBUG, "subData->messageId = %d", subData->messageObId);
         NS_LOG_V(DEBUG, "subData->cloud_messageId = %d", subData->remote_messageObId);
         NS_LOG_V(DEBUG, "subData->syncId = %d", subData->syncObId);
@@ -120,11 +156,11 @@ NSResult NSSendNotification(NSMessage *msg)
         {
             if(subData->messageObId != 0)
             {
-                if(msg->topic && (msg->topic)[0] != '\0')
+                if (msg->topic && (msg->topic)[0] != '\0')
                 {
                     NS_LOG_V(DEBUG, "this is topic message: %s", msg->topic);
 
-                    if(NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
+                    if (NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
                     {
                         obArray[obCount++] = subData->messageObId;
                     }
@@ -135,13 +171,13 @@ NSResult NSSendNotification(NSMessage *msg)
                 }
             }
 
-#if(defined WITH_CLOUD && defined RD_CLIENT)
-            if(subData->remote_messageObId != 0)
+#if (defined WITH_CLOUD)
+            if (subData->remote_messageObId != 0)
             {
-                if(msg->topic && (msg->topic)[0] != '\0')
+                if (msg->topic && (msg->topic)[0] != '\0')
                 {
                     NS_LOG_V(DEBUG, "this is topic message via remote server: %s", msg->topic);
-                    if(NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
+                    if (NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
                     {
                         obArray[obCount++] = subData->remote_messageObId;
                     }
@@ -164,9 +200,11 @@ NSResult NSSendNotification(NSMessage *msg)
         NS_LOG(DEBUG, "-------------------------------------------------------message\n");
     }
 
-    if(!obCount)
+    if (!obCount)
     {
         NS_LOG(ERROR, "observer count is zero");
+        OCRepPayloadDestroy(payload);
+        msg->extraInfo = NULL;
         return NS_ERROR;
     }
 
@@ -210,7 +248,7 @@ NSResult NSSendSync(NSSyncInfo *sync)
     while (it)
     {
         NSCacheSubData * subData = (NSCacheSubData *) it->data;
-        NS_LOG_V(DEBUG, "sync subData->id = %s", subData->id);
+        NS_LOG_V(INFO_PRIVATE, "sync subData->id = %s", subData->id);
         NS_LOG_V(DEBUG, "subData->messageId = %d", subData->messageObId);
         NS_LOG_V(DEBUG, "subData->cloud_messageId = %d", subData->remote_messageObId);
         NS_LOG_V(DEBUG, "subData->syncId = %d", subData->syncObId);
@@ -219,13 +257,13 @@ NSResult NSSendSync(NSSyncInfo *sync)
 
         if (subData->isWhite)
         {
-            if(subData->syncObId != 0)
+            if (subData->syncObId != 0)
             {
                 obArray[obCount++] = subData->syncObId;
             }
 
-#if(defined WITH_CLOUD && defined RD_CLIENT)
-            if(subData->remote_syncObId != 0)
+#if (defined WITH_CLOUD)
+            if (subData->remote_syncObId != 0)
             {
                 obArray[obCount++] = subData->remote_syncObId;
             }
@@ -234,12 +272,32 @@ NSResult NSSendSync(NSSyncInfo *sync)
         it = it->next;
     }
 
-    OCRepPayload* payload;
+    OCRepPayload* payload = NULL;
     if (NSSetSyncPayload(sync, &payload) != NS_OK)
     {
         NS_LOG(ERROR, "Failed to allocate payload");
         return NS_ERROR;
     }
+
+#ifdef WITH_MQ
+    if (NSGetMQServerInfo())
+    {
+        OCRepPayload* MQPayload = OCRepPayloadClone(payload);
+        NSMessageType MQType = 0;
+
+        if (sync->state == NS_SYNC_READ)
+        {
+            MQType = NS_MESSAGE_READ;
+        }
+        else if (sync->state == NS_SYNC_DELETED)
+        {
+            MQType = NS_MESSAGE_DELETED;
+        }
+
+        OCRepPayloadSetPropInt(MQPayload, NS_ATTRIBUTE_TYPE, (int64_t) MQType);
+        NSProviderPublishTopic(MQPayload, NSProviderPublishMQResponseCB);
+    }
+#endif
 
     for (i = 0; i < obCount; ++i)
     {
@@ -252,7 +310,6 @@ NSResult NSSendSync(NSSyncInfo *sync)
             obCount, payload, OC_LOW_QOS);
 
     NS_LOG_V(DEBUG, "Sync ocstackResult = %d", ocstackResult);
-
     if (ocstackResult != OC_STACK_OK)
     {
         NS_LOG(ERROR, "fail to send Sync");
@@ -311,7 +368,6 @@ void * NSNotificationSchedule(void *ptr)
         }
 
         pthread_mutex_unlock(&NSMutex[NOTIFICATION_SCHEDULER]);
-
     }
 
     NS_LOG(INFO, "Destroy NSNotificationSchedule");

@@ -31,7 +31,7 @@
 #include "catcpinterface.h"
 #include <coap/pdu.h>
 #include "caadapterutils.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 
@@ -274,7 +274,7 @@ void CATCPReadDataInternal()
     return;
 }
 
-CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
+CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, size_t *size)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -284,8 +284,8 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     return CA_NOT_SUPPORTED;
 }
 
-static void sendData(const CAEndpoint_t *endpoint,
-                     const void *data, size_t dlen)
+static ssize_t sendData(const CAEndpoint_t *endpoint,
+                        const void *data, size_t dlen)
 {
     uint16_t port = endpoint->port;
     uint8_t ipAddr[4] = { 0 };
@@ -294,14 +294,14 @@ static void sendData(const CAEndpoint_t *endpoint,
                                    &parsedPort) != CA_STATUS_OK)
     {
         OIC_LOG(ERROR, TAG, "parse fail");
-        return;
+        return -1;
     }
 
-    if (dlen > 65535) // Max value for uint16_t
+    if (dlen > UINT16_MAX)
     {
         // This will never happen as max buffer size we are dealing with is COAP_MAX_PDU_SIZE
         OIC_LOG(ERROR, TAG, "Size exceeded");
-        return;
+        return -1;
     }
 
     uint32_t ret = send(g_unicastSocket, (const uint8_t *)data, (uint16_t)dlen);
@@ -311,19 +311,17 @@ static void sendData(const CAEndpoint_t *endpoint,
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");
+    return ret;
 }
 
-void CATCPSendData(CAEndpoint_t *endpoint, const void *data, uint32_t datalen,
-                   bool isMulticast)
+ssize_t CATCPSendData(CAEndpoint_t *endpoint, const void *data, size_t datalen)
 {
     VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
 
-    if (!isMulticast)
+    if (caglobals.tcp.ipv4tcpenabled && (endpoint->adapter & CA_ADAPTER_TCP))
     {
-        if (caglobals.tcp.ipv4tcpenabled && (endpoint->adapter & CA_ADAPTER_TCP))
-        {
-            sendData(endpoint, data, datalen);
-        }
+        return sendData(endpoint, data, datalen);
     }
+    return -1;
 }

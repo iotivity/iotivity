@@ -282,7 +282,7 @@ OCStackResult TWInitialize(PIPlugin_Zigbee* plugin, const char* deviceDevPath)
             if (out->g_plugin == plugin)
             {
                 //Ignore because it's already in the list.
-                return TW_RESULT_OK;
+	      return (OCStackResult) TW_RESULT_OK;
             }
         }
     }
@@ -1101,12 +1101,12 @@ OCStackResult TWProcess(PIPlugin_Zigbee* plugin)
         if (ret != TW_RESULT_OK)
         {
             OIC_LOG(ERROR, TAG, "TWDequeueEntry");
-            ret = OC_STACK_ERROR;
+            ret = (TWResultCode)OC_STACK_ERROR;
             break;
         }
         if (entry == NULL)
         {
-            ret = OC_STACK_OK;
+            ret = (TWResultCode)OC_STACK_OK;
             break;
         }
 
@@ -1118,7 +1118,7 @@ OCStackResult TWProcess(PIPlugin_Zigbee* plugin)
             if(ret != TW_RESULT_OK)
             {
                 OIC_LOG(ERROR, TAG, "Failed to delete entry.");
-                ret = OC_STACK_ERROR;
+                ret = (TWResultCode)OC_STACK_ERROR;
                 break;
             }
         }
@@ -1129,13 +1129,13 @@ OCStackResult TWProcess(PIPlugin_Zigbee* plugin)
             if(ret != TW_RESULT_OK)
             {
                 OIC_LOG(ERROR, TAG, "Failed to delete entry.");
-                ret = OC_STACK_ERROR;
+                ret = (TWResultCode)OC_STACK_ERROR;
                 break;
             }
         }
     }
 
-    return ret;
+    return (OCStackResult)ret;
 }
 
 OCStackResult TWUninitialize(PIPlugin_Zigbee* plugin)
@@ -1932,7 +1932,7 @@ TWResultCode FindMatchNodes(TWContext* ctx)
     if(stringRet <= 0)
     {
         OIC_LOG(ERROR, TAG, "Build command error.");
-        ret = OC_STACK_ERROR;
+        ret = (TWResultCode)OC_STACK_ERROR;
         goto exit;
     }
     ret = TWIssueATCommand(ctx->g_plugin, cmdString);
@@ -1991,7 +1991,7 @@ TWResultCode FindClusters(char nodeId[], char endpoint[], TWContext* ctx)
     if(stringRet <= 0)
     {
         OIC_LOG(ERROR, TAG, "Build command error.");
-        ret = OC_STACK_ERROR;
+        ret = (TWResultCode)OC_STACK_ERROR;
         goto exit;
     }
     ret = TWIssueATCommand(ctx->g_plugin, cmdString);
@@ -2063,7 +2063,7 @@ TWResultCode GetRemoteEUI(char *nodeId, char* outRemoteEUI, TWContext* ctx)
     if(stringRet <= 0)
     {
         OIC_LOG(ERROR, TAG, "Build command error.");
-        ret = OC_STACK_ERROR;
+        ret = (TWResultCode)OC_STACK_ERROR;
         goto exit;
     }
     ret = TWIssueATCommand(ctx->g_plugin, cmdString);

@@ -29,7 +29,7 @@
 #include <stdint.h>
 
 #include "cathreadpool.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "cacommon.h"
 
@@ -74,10 +74,10 @@ typedef struct
     ca_thread_pool_t threadPool;
 
     /** mutex for synchronization. **/
-    ca_mutex threadMutex;
+    oc_mutex threadMutex;
 
     /** conditional mutex for synchronization. **/
-    ca_cond threadCond;
+    oc_cond threadCond;
 
     /** send method for retransmission data. **/
     CADataSendMethod_t dataSendMethod;

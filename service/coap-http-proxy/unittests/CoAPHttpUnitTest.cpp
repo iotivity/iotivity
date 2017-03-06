@@ -103,8 +103,7 @@ TEST_F(CoApHttpTest, CHPGetOCContentType)
 {
     HttpResponse_t httpResponse;
     //char *httpContentType = "OC_FORMAT_CBOR";
-    char httpContentType[64];
-    strcpy(httpContentType, "application/cbor");
+    char *httpContentType = "CBOR_CONTENT_TYPE";
     EXPECT_EQ(OC_FORMAT_CBOR, (CHPGetOCContentType(httpContentType)));
 }
 

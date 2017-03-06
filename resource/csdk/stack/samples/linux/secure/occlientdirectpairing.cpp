@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "iotivity_config.h"
+#include <cinttypes>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -234,9 +235,9 @@ bool printPairingMethod(const OCDPDev_t* pDev)
     }
 
     bool bAvailable = true;
-    for(size_t i=0; i<pDev->prmLen; i++)
+    for (size_t i = 0; i < pDev->prmLen; i++)
     {
-        printf("     [%ld] ", i+1);
+        printf("     [%" PRIuPTR "] ", i + 1);
         switch (pDev->prm[i])
         {
             case DP_PRE_CONFIGURED:
@@ -335,8 +336,8 @@ int DeviceDiscovery()
     /* Start a discovery query*/
     OIC_LOG_V(INFO, TAG, "Resource Discovery : %s\n", queryUri);
 
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, queryUri, 0, 0, CT_DEFAULT,
-                       OC_LOW_QOS, &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, queryUri, 0, 0, CT_DEFAULT,
+                      OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -400,8 +401,8 @@ OCStackResult SendGetRequest(OCDPDev_t* peer)
     cbData.cd = NULL;
 
     OIC_LOG(INFO, TAG, "Request to /a/light ");
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri,
-               &endpoint, NULL, peer->connType, OC_LOW_QOS, &cbData, NULL, 0);
+    ret = OCDoRequest(&handle, OC_REST_GET, szQueryUri,
+                      &endpoint, NULL, peer->connType, OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG_V(ERROR, TAG, "OCDoResource returns error %d with method %d", ret, OC_REST_GET);
@@ -412,8 +413,14 @@ OCStackResult SendGetRequest(OCDPDev_t* peer)
 
 FILE* client_fopen(const char *path, const char *mode)
 {
-    (void)path;
-    return fopen(CRED_FILE, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CRED_FILE, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 void *CLInterface(void *data)

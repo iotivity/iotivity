@@ -25,6 +25,9 @@
 #include "cacommon.h"
 #include "logger.h"
 
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+#include "caconnectionmanager.h"
+#endif
 #define TAG "OIC_CA_COMMON_UTILS"
 
 CAResult_t CARegisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateCB,
@@ -32,8 +35,15 @@ CAResult_t CARegisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateC
 {
     OIC_LOG(DEBUG, TAG, "CARegisterNetworkMonitorHandler");
 
-    CASetNetworkMonitorCallbacks(adapterStateCB, connStateCB);
-    return CA_STATUS_OK;
+    return CASetNetworkMonitorCallbacks(adapterStateCB, connStateCB);
+}
+
+CAResult_t CAUnregisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateCB,
+                                             CAConnectionStateChangedCB connStateCB)
+{
+    OIC_LOG(DEBUG, TAG, "CAUnregisterNetworkMonitorHandler");
+
+    return CAUnsetNetworkMonitorCallbacks(adapterStateCB, connStateCB);
 }
 
 CAResult_t CASetAutoConnectionDeviceInfo(const char *address)
@@ -158,6 +168,39 @@ uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_
     return 0;
 }
 
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+CAResult_t CAUtilCMInitailize()
+{
+    return CACMInitialize();
+}
+
+CAResult_t CAUtilCMTerminate()
+{
+    return CACMTerminate();
+}
+
+CAResult_t CAUtilCMUpdateRemoteDeviceInfo(const CAEndpoint_t endpoint, bool isCloud)
+{
+    return CACMUpdateRemoteDeviceInfo(endpoint, isCloud);
+}
+
+CAResult_t CAUtilCMResetRemoteDeviceInfo()
+{
+    return CACMResetRemoteDeviceInfo();
+}
+
+CAResult_t CAUtilCMSetConnectionUserConfig(CAConnectUserPref_t connPrefer)
+{
+    return CACMSetConnUserConfig(connPrefer);
+}
+
+CAResult_t CAUtilCMGetConnectionUserConfig(CAConnectUserPref_t *connPrefer)
+{
+    return CACMGetConnUserConfig(connPrefer);
+}
+#endif
+
+#ifdef __JAVA__
 #ifdef __ANDROID__
 /**
  * initialize client connection manager
@@ -170,6 +213,7 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
     OIC_LOG(DEBUG, TAG, "CAUtilClientInitialize");
 
     CAResult_t res = CA_STATUS_OK;
+
 #ifdef LE_ADAPTER
     if (CA_STATUS_OK != CAManagerLEClientInitialize(env, jvm, context))
     {
@@ -193,6 +237,30 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
 #endif
     return res;
 }
+#else //__ANDROID__
+/**
+ * initialize client connection manager
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   jvm                   invocation inferface for JAVA virtual machine.
+ */
+CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm)
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilClientInitialize");
+    (void) env;
+    (void) jvm;
+    CAResult_t res = CA_STATUS_OK;
+
+#ifdef EDR_ADAPTER
+    if (CA_STATUS_OK != CABTPairingInitialize(env, jvm))
+    {
+        OIC_LOG(ERROR, TAG, "CABTPairingInitialize has failed");
+        res = CA_STATUS_FAILED;
+    }
+#endif
+    return res;
+}
+
+#endif //__ANDROID__
 
 /**
  * terminate client connection manager
@@ -201,7 +269,7 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
 CAResult_t CAUtilClientTerminate(JNIEnv *env)
 {
     OIC_LOG(DEBUG, TAG, "CAUtilClientTerminate");
-#ifdef LE_ADAPTER
+#if defined(LE_ADAPTER) && defined(__ANDROID__)
     return CAManagerLEClientTerminate(env);
 #else
     OIC_LOG(DEBUG, TAG, "it is not supported");
@@ -257,7 +325,7 @@ void CAUtilSetFoundDeviceListener(jobject listener)
 CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount)
 {
     OIC_LOG(DEBUG, TAG, "CAUtilSetLEScanInterval");
-#ifdef LE_ADAPTER
+#if defined(LE_ADAPTER) && defined(__ANDROID__)
     CAManagerLESetScanInterval(intervalTime, workingCount);
     return CA_STATUS_OK;
 #else
@@ -267,4 +335,75 @@ CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount)
     return CA_NOT_SUPPORTED;
 #endif
 }
+
+CAResult_t CAUtilStopLEScan()
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilStopLEScan");
+#if defined(LE_ADAPTER) && defined(__ANDROID__)
+    CAManagerLEStopScan();
+    return CA_STATUS_OK;
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
 #endif
+}
+#endif // __JAVA__
+
+CAResult_t CAUtilStartLEAdvertising()
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilStartLEAdvertising");
+#if (defined(__ANDROID__) || defined(__TIZEN__)) && defined(LE_ADAPTER)
+    return CAManagerLEStartAdvertising();
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
+#endif
+}
+
+CAResult_t CAUtilStopLEAdvertising()
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilStopLEAdvertising");
+#if (defined(__ANDROID__) || defined(__TIZEN__)) && defined(LE_ADAPTER)
+    return CAManagerLEStopAdvertising();
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
+#endif
+}
+
+CAResult_t CAUtilSetBTConfigure(CAUtilConfig_t config)
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilSetConfigure");
+#if (defined(__ANDROID__) && defined(LE_ADAPTER))
+    OIC_LOG_V(DEBUG, TAG, "bleFlag [%d]", config.bleFlags);
+    CAManagerSetConfigure(config);
+    return CA_STATUS_OK;
+#else
+    (void) config;
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
+#endif
+}
+
+CAResult_t CAGetIpv6AddrScope(const char *addr, CATransportFlags_t *scopeLevel)
+{
+    return CAGetIpv6AddrScopeInternal(addr, scopeLevel);
+}
+
+void CAUtilSetLogLevel(CAUtilLogLevel_t level, bool hidePrivateLogEntries)
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilSetLogLevel");
+    LogLevel logLevel = DEBUG;
+    switch(level)
+    {
+        case CA_LOG_LEVEL_INFO:
+            logLevel = INFO;
+            break;
+        case CA_LOG_LEVEL_ALL:
+        default:
+            logLevel = DEBUG;
+            break;
+    }
+
+    OCSetLogLevel(logLevel, hidePrivateLogEntries);
+}

@@ -34,7 +34,7 @@ static const char g_b64TransTbl[] =
  *
  * @return ::B64_OK for Success, otherwise some error value.
  */
-static B64Result b64EncodeBlk(const uint8_t* in, char* out, uint32_t len)
+static B64Result b64EncodeBlk(const uint8_t* in, char* out, size_t len)
 {
     if (NULL == in || NULL ==  out || 0 == len )
     {
@@ -78,7 +78,7 @@ static B64Result b64EncodeBlk(const uint8_t* in, char* out, uint32_t len)
 }
 
 B64Result b64Encode(const uint8_t* in, const size_t inLen,
-               char* outBuf, const size_t outBufSize, uint32_t* outLen)
+               char* outBuf, const size_t outBufSize, size_t* outLen)
 {
     if (NULL == in || 0 == inLen || NULL ==  outBuf || NULL == outLen )
     {
@@ -88,13 +88,13 @@ B64Result b64Encode(const uint8_t* in, const size_t inLen,
     *outLen = ((inLen / 3) * 3 == inLen) ?
               ((inLen / 3) * 4) :
               (((inLen / 3) + 1) * 4);
-    uint32_t minBufSize = (*outLen + 1);
+    size_t minBufSize = (*outLen + 1);
     if (outBufSize < minBufSize)
     {
         return B64_OUTPUT_BUFFER_TOO_SMALL;
     }
 
-    uint32_t i;
+    size_t i;
     for (i = 0; i < inLen / 3; i++)
     {
         if(B64_OK != b64EncodeBlk(in + i * 3, outBuf + i * 4, 3))
@@ -103,7 +103,7 @@ B64Result b64Encode(const uint8_t* in, const size_t inLen,
         }
     }
 
-    if (((size_t)i * 3) != inLen)
+    if ((i * 3) != inLen)
     {
         if (B64_OK != b64EncodeBlk(in + i * 3, outBuf + i * 4, inLen - i * 3))
         {
@@ -186,7 +186,7 @@ static B64Result b64DecodeBlk(const char* in, uint8_t* out)
 }
 
 B64Result b64Decode(const char* in, const size_t inLen,
-               uint8_t* outBuf, size_t outBufSize, uint32_t* outLen)
+               uint8_t* outBuf, size_t outBufSize, size_t* outLen)
 {
     if (NULL == in || 0 == inLen || 0 != (inLen & 0x03) || NULL == outBuf || NULL == outLen)
     {
@@ -194,7 +194,7 @@ B64Result b64Decode(const char* in, const size_t inLen,
     }
 
     *outLen = (inLen / 4) * 3;
-    uint32_t minBufSize = (inLen / 4) * 3;
+    size_t minBufSize = (inLen / 4) * 3;
     if ('=' == in[inLen - 1])
     {
         minBufSize--;
@@ -210,7 +210,7 @@ B64Result b64Decode(const char* in, const size_t inLen,
         return B64_OUTPUT_BUFFER_TOO_SMALL;
     }
 
-    for (uint32_t i = 0; i < inLen / 4; i++)
+    for (size_t i = 0; i < inLen / 4; i++)
     {
         if(B64_OK != b64DecodeBlk(in + i * 4, outBuf + i * 3))
         {

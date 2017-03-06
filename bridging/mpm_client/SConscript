@@ -1,0 +1,83 @@
+#******************************************************************
+#
+# Copyright 2017 Intel Mobile Communications GmbH All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+Import('env')
+import os
+import os.path
+target_os = env.get('TARGET_OS')
+target_arch = env.get('TARGET_ARCH')
+mpmclient_env = env.Clone()
+src_dir = env.get('SRC_DIR')
+bridging_dir = os.path.join(src_dir, 'bridging')
+
+######################################################################
+# Build flags
+######################################################################
+
+def maskFlags(flags):
+    flags = [flags.replace('-Wl,--no-undefined', '' ) for flags in flags]
+    return flags
+mpmclient_env.PrependUnique(CPPPATH = [
+        os.path.join(bridging_dir, 'include'),
+        os.path.join(bridging_dir, 'mini_plugin_manager'),
+        os.path.join(bridging_dir, 'mpm_client')
+                ])
+
+#  Note: Each of the plugin names need to be listed here after 'minipluginmanager'.
+#  Otherwise you will need to prepend LD_LIBRARY_PATH to your execution command.
+mpmclient_env.PrependUnique(LIBS = ['minipluginmanager'])
+
+if target_arch in ['x86_64', 'arm64']:
+    mpmclient_env.AppendUnique(CPPFLAGS = ['-Llib64'])
+else:
+    mpmclient_env.AppendUnique(CPPFLAGS = ['-Llib'])
+mpmclient_env.AppendUnique(LIBS = ['pthread'])
+
+mpmclient_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+mpmclient_env.AppendUnique(LIBS = ['m',
+                               'octbstack',
+                               'ocsrm',
+                               'connectivity_abstraction',
+                               'coap',
+                               'curl' ])
+
+mpmclient_env.AppendUnique(RPATH = [os.path.join(env.get('BUILD_DIR'), 'bridging', 'plugins')])
+
+if target_os in ['linux', 'tizen']:
+    mpmclient_env.ParseConfig('pkg-config --cflags --libs sqlite3')
+else:
+    mpmclient_env.AppendUnique(CPPPATH = ['#/extlibs/sqlite3'])
+
+mpmclient_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])
+mpmclient_env.AppendUnique(LINKFLAGS = ['-Wl,--allow-shlib-undefined'])
+######################################################################
+# Source files and Targets
+######################################################################
+mpm_sample_client = mpmclient_env.Program('mpm_sample_client',
+        ['MPMSampleClient.cpp'])
+
+list_of_samples = [mpm_sample_client]
+
+Alias("samples", list_of_samples)
+
+env.AppendTarget('samples')
+
+

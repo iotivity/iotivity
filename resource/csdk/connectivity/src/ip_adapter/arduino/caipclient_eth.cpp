@@ -30,12 +30,15 @@
 #include "cacommon.h"
 #include "caadapterinterface.h"
 #include "caipadapter.h"
+#include "caipnwmonitor.h"
 #include "caipadapterutils_eth.h"
 #include "caadapterutils.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 
 #define TAG "IPC"
+
+#define UINT16_MAX 65535
 
 static int g_sockID = 0;
 
@@ -72,7 +75,7 @@ void CAIPSetUnicastPort(uint16_t port)
 }
 
 void CAIPSendData(CAEndpoint_t *endpoint, const void *buf,
-                  uint32_t bufLen, bool isMulticast)
+                  size_t bufLen, bool isMulticast)
 {
     if (!isMulticast && 0 == g_unicastPort)
     {
@@ -124,7 +127,7 @@ void CAIPSendData(CAEndpoint_t *endpoint, const void *buf,
         return;
     }
 
-    if (bufLen > 65535) // Max value for uint16_t
+    if (bufLen > UINT16_MAX)
     {
         // This will never happen as max buffer size we are dealing with is COAP_MAX_PDU_SIZE
         OIC_LOG(ERROR, TAG, "Size exceeded");

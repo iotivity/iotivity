@@ -26,6 +26,7 @@
 #include "srmutility.h"
 #include "doxmresource.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "crlresource.h"
@@ -33,7 +34,7 @@
 #include "base64.h"
 #include <time.h>
 
-#define TAG  "SRM-CRL"
+#define TAG  "OIC_SRM_CRL"
 
 #define SEPARATOR                   ":"
 #define SEPARATOR_LEN               (1)
@@ -74,7 +75,7 @@ void DeleteCrl(OicSecCrl_t *crl)
     }
 }
 
-void printCrl(OicSecCrl_t *crl)
+void printCrl(const OicSecCrl_t *crl)
 {
     if (NULL == crl)
     {
@@ -318,7 +319,8 @@ OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t
     CborError cborEncoderResult = CborNoError;
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_ERROR);
+
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     cborEncoderResult = cbor_encoder_create_map(&encoder, &crlMap, mapSize);
@@ -356,28 +358,35 @@ OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t
     cborEncoderResult = cbor_encoder_close_container(&encoder, &crlMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add close Crl map");
 
-    *size = encoder.ptr - outPayload;
+    *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
     *payload = outPayload;
     ret = OC_STACK_OK;
 
 exit:
-    if ((CborErrorOutOfMemory == cborEncoderResult) && (cborLen < CBOR_MAX_SIZE))
-    {
-        // reallocate and try again!
-        OICFree(outPayload);
-        // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
-        cborEncoderResult = CborNoError;
-        ret = CrlToCBORPayload(crl, payload, &cborLen, lastUpdate);
-    }
-
     if ((CborNoError != cborEncoderResult) || (OC_STACK_OK != ret))
     {
         OICFree(outPayload);
-        outPayload = NULL;
-        *payload = NULL;
-        *size = 0;
-        ret = OC_STACK_ERROR;
+        if ((CborErrorOutOfMemory == cborEncoderResult) && (cborLen < CBOR_MAX_SIZE))
+        {
+            // Since the allocated initial memory failed, double the memory.
+            cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
+            cborEncoderResult = CborNoError;
+            ret = CrlToCBORPayload(crl, payload, &cborLen, lastUpdate);
+            if (OC_STACK_OK != ret)
+            {
+                outPayload = NULL;
+                *payload = NULL;
+                *size = 0;
+                ret = OC_STACK_ERROR;
+            }
+        }
+        else
+        {
+            outPayload = NULL;
+            *payload = NULL;
+            *size = 0;
+            ret = OC_STACK_ERROR;
+        }
     }
 
     return ret;
@@ -404,7 +413,7 @@ OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to enter Crl map");
 
     crl = (OicSecCrl_t *)OICCalloc(1, sizeof(OicSecCrl_t));
-    VERIFY_NON_NULL(TAG, crl, ERROR);
+    VERIFY_NOT_NULL(TAG, crl, ERROR);
 
     cborFindResult = cbor_value_map_find_value(&crlCbor, OC_RSRVD_CRL_ID, &crlMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&crlMap))
@@ -509,7 +518,7 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
     {
         OIC_LOG(INFO, TAG, "Update SVR DB...");
         CBORPayloadToCrl(payload, size, &crl);
-        VERIFY_NON_NULL(TAG, crl, ERROR);
+        VERIFY_NOT_NULL(TAG, crl, ERROR);
 
         if (OC_STACK_OK == UpdateCRLResource(crl))
         {
@@ -786,18 +795,18 @@ void GetDerCrl(ByteArray_t* out)
 
     if (OIC_ENCODING_BASE64 == crl->encoding)
     {
-        size_t outSize = B64DECODE_OUT_SAFESIZE((crl->len + 1));
-        uint8_t *out = OICCalloc(1, outSize);
-        if (!out)
+        size_t decodeBufferSize = B64DECODE_OUT_SAFESIZE((crl->len + 1));
+        uint8_t *decodeBuffer = OICCalloc(1, decodeBufferSize);
+        if (!decodeBuffer)
         {
             OIC_LOG(ERROR, TAG, "Can't allocate memory for base64 str");
             return;
         }
-        uint32_t len = 0;
+        size_t len = 0;
 
-        if(B64_OK == b64Decode((char*)crl->data, crl->len, out, outSize, &len))
+        if(B64_OK == b64Decode((char*)crl->data, crl->len, decodeBuffer, decodeBufferSize, &len))
         {
-            memcpy(crl->data, out, len);
+            memcpy(crl->data, decodeBuffer, len);
             crl->len = (size_t)len;
 
             OIC_LOG (ERROR, TAG, "Crl successfully decoded to base64.");
@@ -806,12 +815,13 @@ void GetDerCrl(ByteArray_t* out)
         {
             OIC_LOG (ERROR, TAG, "Base64 decoding failed.");
         }
+
+        OICFree(decodeBuffer);
     }
 
     out->len = 0;
 
-    char *str = "Can't allocate memory for out->data";
-    out->data = OICMalloc(crl->len);
+    out->data = OICRealloc(out->data, crl->len);
     if (out->data)
     {
         memcpy(out->data, crl->data, crl->len);
@@ -819,7 +829,7 @@ void GetDerCrl(ByteArray_t* out)
     }
     else
     {
-        OIC_LOG_V(ERROR, TAG, "%s", str);
+        OIC_LOG(ERROR, TAG, "Can't allocate memory for out->data");
     }
     DeleteCrl(crlRes);
 }

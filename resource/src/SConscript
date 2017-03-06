@@ -22,13 +22,15 @@
 # OCLib (share library) build script
 ##
 import os
-thread_env = SConscript('#build_common/thread.scons')
-lib_env = thread_env.Clone()
+
+Import('env')
+
+oclib_env = env.Clone()
+SConscript('#build_common/thread.scons', exports = {'thread_env' : oclib_env})
 
 # Add third party libraries
-SConscript('#resource/third_party_libs.scons', 'lib_env')
+SConscript('#resource/third_party_libs.scons', exports = {'lib_env' : oclib_env})
 
-oclib_env = lib_env.Clone()
 secured = oclib_env.get('SECURED')
 target_os = oclib_env.get('TARGET_OS')
 with_cloud = oclib_env.get('WITH_CLOUD')
@@ -47,7 +49,9 @@ else:
 
 oclib_env.AppendUnique(CPPPATH = [
 		'../include/',
+		'../csdk/include',
 		'../csdk/stack/include',
+		'../csdk/security/include',
 		'../c_common/ocrandom/include',
 		'../csdk/logger/include',
 		'../oc_logger/include',
@@ -74,15 +78,14 @@ if target_os == 'android':
 
 if target_os == 'tizen':
 	oclib_env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
+if target_os in ['linux', 'tizen']:
 	oclib_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 
 if target_os in ['linux'] and oclib_env.get('SIMULATOR', False):
     oclib_env.Append( RPATH = oclib_env.Literal('\\$$ORIGIN'))
 
 if target_os in ['msys_nt', 'windows']:
-	oclib_env.AppendUnique(LIBPATH = [os.path.join(oclib_env.get('BUILD_DIR'), 'resource', 'oc_logger')])
-	oclib_env.AppendUnique(LIBPATH = [os.path.join(oclib_env.get('BUILD_DIR'), 'resource', 'csdk')])
-	oclib_env.AppendUnique(LIBS=['octbstack', 'logger', 'oc_logger','connectivity_abstraction', 'ocsrm', 'c_common', 'routingmanager'])
+	oclib_env.AppendUnique(LIBS=['logger', 'c_common', 'routingmanager'])
 	oclib_env.AppendUnique(LIBS=[ 'coap', 'ws2_32' ,'iphlpapi'])
 	if secured == '1':
 		oclib_env.AppendUnique(LIBS=['mbedtls', 'mbedx509','mbedcrypto'])
@@ -98,18 +101,6 @@ if 'PUB' in with_mq:
 
 if 'BROKER' in with_mq:
 	oclib_env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
-
-if target_os in ['linux', 'android'] and oclib_env.get('RD_MODE'):
-	rd_mode = oclib_env.get('RD_MODE')
-	oclib_env.AppendUnique(LIBPATH = [os.path.join(oclib_env.get('BUILD_DIR'), 'resource', 'csdk','resource-directory')])
-	oclib_env.AppendUnique(CPPPATH = ['../csdk/resource-directory/include'])
-	oclib_env.AppendUnique(LIBS=['resource_directory'])
-
-	if 'CLIENT' in rd_mode:
-	 	oclib_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
-
-	if 'SERVER' in rd_mode:
-		oclib_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
 
 ######################################################################
 # Source files and Targets
@@ -131,7 +122,7 @@ oclib_src = [
 if with_cloud:
 	oclib_src = oclib_src + ['OCAccountManager.cpp']
 
-if target_os in ['windows']:
+if target_os in ['windows', 'ios']:
 	oclib_src = oclib_src + ['OCApi.cpp']
 	# TODO: Add OC_EXPORT prefixes to enable DLL generation
 	oclib = oclib_env.StaticLibrary('oc', oclib_src)
@@ -173,5 +164,5 @@ if with_cloud:
 	oclib_env.UserInstallTargetHeader(header_dir + 'OCAccountManager.h', 'resource', 'OCAccountManager.h')
 
 # Add Provisioning library
-if target_os in ['linux', 'android', 'tizen'] and secured == '1':
+if target_os in ['linux', 'android', 'tizen', 'ios', 'windows'] and secured == '1':
         SConscript('../provisioning/SConscript')

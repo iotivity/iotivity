@@ -68,8 +68,8 @@ void HueConnector::disconnect()
 std::string HueConnector::transmit(std::string target, std::string payload)
 {
     std::cout << "Transmitting to " << target << " " << payload << endl;
-    CURL *curl;
-    CURLcode res;
+    CURL *curl = NULL;
+    CURLcode res = CURLE_OK;
     struct curl_slist *headers = NULL; /* http headers to send with request */
     /* set content type */
     headers = curl_slist_append(headers, "Accept: application/json");
@@ -114,8 +114,8 @@ static int writer(char *data, size_t size, size_t nmemb, std::string *buffer_in)
 std::string HueConnector::read(std::string target)
 {
     std::cout << "Reading from to " << target << endl;
-    CURL *curl;
-    CURLcode res;
+    CURL *curl = NULL;
+    CURLcode res = CURLE_OK;
     struct curl_slist *headers = NULL; /* http headers to send with request */
     /* set content type */
     headers = curl_slist_append(headers, "Accept: application/json");

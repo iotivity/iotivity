@@ -20,6 +20,7 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+#include "RDClient.h"
 
 #include <functional>
 #include <iostream>
@@ -61,10 +62,18 @@ public:
 
         m_resourceUri = resourceURI;
 
-        OCPlatform::registerResource(m_resourceHandle, resourceURI, resourceTypeName,
-                                     resourceInterface,
-                                     nullptr,
-                                     OC_DISCOVERABLE);
+        OCStackResult ret = OCPlatform::registerResource(m_resourceHandle,
+                                                         resourceURI,
+                                                         resourceTypeName,
+                                                         resourceInterface,
+                                                         nullptr,
+                                                         OC_DISCOVERABLE);
+
+        if (OC_STACK_OK != ret)
+        {
+            cout << "Resource creation was unsuccessful\n";
+            return;
+        }
 
         m_publishedResourceHandles.push_back(m_resourceHandle);
         cout << "registerResource is called." << endl;
@@ -105,9 +114,8 @@ public:
          * Publish Resource of Resource-Server to RD.
          */
 
-        OCStackResult result = OCPlatform::publishResourceToRD(rdAddress, connectivityType,
-                                                               m_publishedResourceHandles,
-                                                               &onPublish);
+        OCStackResult result = RDClient::Instance().publishResourceToRD(rdAddress, connectivityType,
+                                                                         m_publishedResourceHandles, &onPublish);
         if (OC_STACK_OK != result)
         {
             cout << "Resource publish was unsuccessful\n";
@@ -122,9 +130,8 @@ public:
          * if resource-server want to delete all resources from RD.
          * Ex.) OCPlatform::deleteResourceFromRD(rdAddress, connectivityType, &onDelete);
          */
-        OCStackResult result = OCPlatform::deleteResourceFromRD(rdAddress, connectivityType,
-                                                                m_publishedResourceHandles,
-                                                                &onDelete);
+        OCStackResult result = RDClient::Instance().deleteResourceFromRD(rdAddress, connectivityType,
+                                                                          m_publishedResourceHandles, &onDelete);
         if (OC_STACK_OK != result)
         {
             cout << "Resource delete was unsuccessful\n";
@@ -211,9 +218,16 @@ static void printUsage()
     std::cout<<"Usage: rdserver <coap+tcp://10.11.12.13:5683>\n";
 }
 
-static FILE* client_open(const char* /*path*/, const char *mode)
+static FILE* client_open(const char* path, const char* mode)
 {
-    return fopen(SVR_DB_FILE_NAME, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(SVR_DB_FILE_NAME, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int main(int argc, char* argv[])

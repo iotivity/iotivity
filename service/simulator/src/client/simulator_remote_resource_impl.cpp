@@ -42,8 +42,6 @@ static std::string requestTypeToString(RequestType type)
         default:
             return "";
     }
-
-    return ""; // Control should not reach here
 }
 
 static RequestType requestTypeToEnum(const std::string &type)

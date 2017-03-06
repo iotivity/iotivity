@@ -2,20 +2,37 @@
 %define ROOTDIR  %{_builddir}/%{name}-%{version}
 %define DEST_INC_DIR  %{buildroot}/%{_includedir}/OICHeaders
 %define DEST_LIB_DIR  %{buildroot}/%{_libdir}
-%{!?VERBOSE: %define VERBOSE 1}
-
 
 Name: com-oic-ca
-Version:    1.2.0
+Version:    1.3.0
 Release:    0
 Summary: Tizen oicca application
-URL: http://slp-source.sec.samsung.net
-Source: %{name}-%{version}.tar.gz
+Group: Network & Connectivity / IoT Connectivity
 License: Apache-2.0
-Group: Applications/OIC
+URL: https://www.iotivity.org/
+Source0: http://mirrors.kernel.org/%{name}/%{version}/%{name}-%{version}.tar.gz
+
+%define JOB "-j4"
+%if 0%{?speedpython}
+%define JOB %{?_smp_mflags}
+%endif
+%if 0%{?speedpython:1} && 0%{?en_speedpython:1}
+%en_speedpython
+%endif
+
+# Default values to be eventually overiden BEFORE or as gbs params:
+%{!?LOGGING: %define LOGGING 1}
+%{!?RELEASE: %define RELEASE 1}
+%{!?SECURED: %define SECURED 0}
+%{!?TARGET_OS: %define TARGET_OS tizen}
+%{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
+%{!?VERBOSE: %define VERBOSE 1}
+%{!?WITH_TCP: %define WITH_TCP 0}
+
 BuildRequires: pkgconfig(dlog)
+BuildRequires: pkgconfig(ttrace)
 BuildRequires: pkgconfig(glib-2.0)
-BuildRequires: pkgconfig(capi-network-wifi)
+BuildRequires: pkgconfig(capi-network-connection)
 BuildRequires: pkgconfig(capi-network-bluetooth)
 BuildRequires: boost-devel
 BuildRequires: boost-thread
@@ -29,15 +46,19 @@ BuildRequires: pkgconfig(uuid)
 SLP oicca application
 
 %prep
-
 %setup -q
 
 %build
+scons %{JOB} \
+    LOGGING=%{LOGGING} \
+    RELEASE=%{RELEASE} \
+    SECURED=%{SECURED} \
+    TARGET_OS=%{TARGET_OS} \
+    TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
+    VERBOSE=%{VERBOSE} \
+    WITH_TCP=%{WITH_TCP} \
+    #eol
 
-echo %{ROOTDIR}
-
-scons TARGET_OS=tizen -c
-scons VERBOSE=%{VERBOSE} TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT} SECURED=%{SECURED} RELEASE=%{RELEASE} LOGGING=%{LOGGING} WITH_TCP=%{WITH_TCP}
 
 %install
 mkdir -p %{DEST_INC_DIR}
@@ -46,10 +67,9 @@ mkdir -p %{DEST_LIB_DIR}/pkgconfig
 cp -f %{ROOTDIR}/con/src/libconnectivity_abstraction.so %{buildroot}/%{_libdir}
 cp -f %{ROOTDIR}/extlibs/libcoap/libcoap.a %{buildroot}/%{_libdir}
 if echo %{SECURED}|grep -qi '1'; then
-	cp -f %{ROOTDIR}/con/extlibs/tinydtls/libtinydtls.a %{buildroot}/%{_libdir}
 	cp -f %{ROOTDIR}/con/extlibs/mbedtls/libmbedcrypto.a %{buildroot}/%{_libdir}
-	cp -f %{ROOTDIR}/con/extlibs/tinydtls/libmbedtls.a %{buildroot}/%{_libdir}
-	cp -f %{ROOTDIR}/con/extlibs/tinydtls/libmbedx509.a %{buildroot}/%{_libdir}
+	cp -f %{ROOTDIR}/con/extlibs/mbedtls/libmbedtls.a %{buildroot}/%{_libdir}
+	cp -f %{ROOTDIR}/con/extlibs/mbedtls/libmbedx509.a %{buildroot}/%{_libdir}
 fi
 cp -rf %{ROOTDIR}/con/api/cacommon.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/inc/caadapterinterface.h* %{DEST_INC_DIR}/

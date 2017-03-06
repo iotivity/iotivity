@@ -20,10 +20,12 @@
 
 import os
 import os.path
+from tools.scons.RunTest import *
+
+Import('test_env')
 
 # SConscript file for Local PKI google tests
-gtest_env = SConscript('#extlibs/gtest/SConscript')
-unittests_env = gtest_env.Clone()
+unittests_env = test_env.Clone()
 src_dir = unittests_env.get('SRC_DIR')
 target_os = unittests_env.get('TARGET_OS')
 with_mq = unittests_env.get('WITH_MQ')
@@ -34,6 +36,7 @@ with_mq = unittests_env.get('WITH_MQ')
 unittests_env.PrependUnique(CPPPATH = [
 		'../include',
 		'../oc_logger/include',
+		'../csdk/include',
 		'../csdk/stack/include',
 		'../csdk/security/include',
 		'../csdk/stack/include/internal',
@@ -46,14 +49,21 @@ unittests_env.PrependUnique(CPPPATH = [
 		'#extlibs/hippomocks-master/HippoMocksTest'
 		])
 
+if target_os in ['windows']:
+	unittests_env.AppendUnique(CPPPATH = ['#extlibs/boost/boost'])
+	unittests_env.AppendUnique(LIBS = ['sqlite3'])
+	# On Windows, octbstack_test is a static LIB, that makes calls into static LIB ocsrm.
+	# On other platforms, octbstack_test is a shared LIB, that includes static LIB ocsrm.
+	unittests_env.AppendUnique(LIBS = ['ocsrm'])
+
 unittests_env.AppendUnique(LIBPATH = [unittests_env.get('BUILD_DIR')])
 unittests_env.PrependUnique(LIBS = [
 		'oc',
-		'octbstack',
+		'octbstack_test',
 		'oc_logger',
 		'connectivity_abstraction',
-		'coap'
-		])
+		'coap',
+		'timer'])
 
 if unittests_env.get('SECURED') == '1':
 	unittests_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
@@ -79,6 +89,14 @@ unittests_src = [
 		'OCHeaderOptionTest.cpp'
 	]
 
+# TODO: Fix errors in the following Windows tests.
+if target_os in ['windows']:
+	if '12.0' == unittests_env['MSVC_VERSION']:
+		unittests_src.remove('OCPlatformTest.cpp')
+		unittests_src.remove('OCRepresentationEncodingTest.cpp')
+		unittests_src.remove('OCRepresentationTest.cpp')
+		unittests_src.remove('OCResourceTest.cpp')
+
 if (('SUB' in with_mq) or ('PUB' in with_mq) or ('BROKER' in with_mq)):
 	unittests_src = unittests_src + ['OCMQResourceTest.cpp']
 
@@ -91,11 +109,13 @@ Alias("unittests", [unittests])
 
 unittests_env.AppendTarget('unittests')
 if unittests_env.get('TEST') == '1':
-	if target_os in ['linux']:
-                from tools.scons.RunTest import *
+	if target_os in ['windows']:
+		unittests_env.AppendENVPath('PATH', unittests_env.get('BUILD_DIR'))
+	if target_os in ['linux', 'windows']:
                 run_test(unittests_env,
                          'resource_unittests_unittests.memcheck',
-                         'resource/unittests/unittests')
+                         'resource/unittests/unittests',
+                         unittests)
 
 src_dir = unittests_env.get('SRC_DIR')
 svr_db_src_dir = os.path.join(src_dir, 'resource/examples/')

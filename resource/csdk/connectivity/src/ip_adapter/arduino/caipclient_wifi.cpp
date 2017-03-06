@@ -50,7 +50,7 @@ void CAIPSetUnicastPort(uint16_t port)
 }
 
 void CAIPSendData(CAEndpoint_t *endpoint,
-                  const void *data, uint32_t dataLength, bool isMulticast)
+                  const void *data, size_t dataLength, bool isMulticast)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -73,7 +73,7 @@ void CAIPSendData(CAEndpoint_t *endpoint,
     IPAddress remoteIp(ip);
     Udp.beginPacket(remoteIp, endpoint->port);
 
-    uint32_t bytesWritten = 0;
+    size_t bytesWritten = 0;
     while (bytesWritten < dataLength)
     {
         // get remaining bytes
@@ -85,7 +85,7 @@ void CAIPSendData(CAEndpoint_t *endpoint,
         if(writeCount == 0)
         {
             // write failed
-            OIC_LOG_V(ERROR, TAG, "Failed after %u", bytesWritten);
+            OIC_LOG_V(ERROR, TAG, "Failed after %" PRIuPTR, bytesWritten);
             break;
         }
         bytesWritten += writeCount;

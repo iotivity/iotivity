@@ -661,13 +661,14 @@ WARN_LOGFILE           = ./doxygen.log
 
 INPUT                  = . \
                          ../../include/OCApi.h \
+                         ../../include/OCException.h \
                          ../../include/OCPlatform.h \
                          ../../include/OCRepresentation.h \
                          ../../include/OCResourceRequest.h \
                          ../../include/OCResourceResponse.h \
                          ../../include/OCResource.h \
-                         ../../include/OCProvisioningManager.h \
-                         ../../csdk/stack/include/octypes.h \
+                         ../../include/OCProvisioningManager.hpp \
+                         ../../csdk/include/octypes.h \
                          ../../csdk/stack/include/ocstackconfig.h \
                          guides \
                          ../../../service/resource-encapsulation/include \
@@ -676,6 +677,15 @@ INPUT                  = . \
                          ../../../service/easy-setup/mediator/richsdk/inc/ \
                          ../../../service/easy-setup/inc \
                          ../../../service/scene-manager/include \
+                         ../../../service/notification/include \
+                         ../../../service/notification/cpp-wrapper/provider/inc \
+                         ../../../service/notification/cpp-wrapper/consumer/inc \
+                         ../../../service/notification/cpp-wrapper/common/NSMediaContents.h \
+                         ../../../service/notification/cpp-wrapper/common/NSMessage.h \
+                         ../../../service/notification/cpp-wrapper/common/NSSyncInfo.h \
+                         ../../../service/notification/cpp-wrapper/common/NSTopic.h \
+                         ../../../service/notification/cpp-wrapper/common/NSTopicsList.h \
+                         ../../../service/notification/cpp-wrapper/common/NSUtils.h \
 
                          #../../../service/resource-hosting/include \
                          #../../../service/things-manager/sdk/inc/ThingsConfiguration.h \

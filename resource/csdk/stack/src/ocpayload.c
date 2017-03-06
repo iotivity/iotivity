@@ -31,6 +31,8 @@
 #include "ocstackinternal.h"
 #include "ocresource.h"
 #include "logger.h"
+#include "ocendpoint.h"
+#include "cacommon.h"
 
 #define TAG "OIC_RI_PAYLOAD"
 #define CSV_SEPARATOR ','
@@ -52,12 +54,6 @@ void OCPayloadDestroy(OCPayload* payload)
         case PAYLOAD_TYPE_DISCOVERY:
             OCDiscoveryPayloadDestroy((OCDiscoveryPayload*)payload);
             break;
-        case PAYLOAD_TYPE_DEVICE:
-            OCDevicePayloadDestroy((OCDevicePayload*)payload);
-            break;
-        case PAYLOAD_TYPE_PLATFORM:
-            OCPlatformPayloadDestroy((OCPlatformPayload*)payload);
-            break;
         case PAYLOAD_TYPE_PRESENCE:
             OCPresencePayloadDestroy((OCPresencePayload*)payload);
             break;
@@ -70,6 +66,7 @@ void OCPayloadDestroy(OCPayload* payload)
             break;
     }
 }
+
 OCRepPayload* OCRepPayloadCreate()
 {
     OCRepPayload* payload = (OCRepPayload*)OICCalloc(1, sizeof(OCRepPayload));
@@ -528,7 +525,6 @@ static bool OCRepPayloadSetProp(OCRepPayload* payload, const char* name,
         case OCREP_PROP_BYTE_STRING:
                val->ocByteStr = *(OCByteString*)value;
                return val->ocByteStr.bytes != NULL;
-               break;
         case OCREP_PROP_NULL:
                return val != NULL;
         case OCREP_PROP_ARRAY:
@@ -582,7 +578,13 @@ bool OCRepPayloadGetPropDouble(const OCRepPayload* payload, const char* name, do
         }
         else if (val->type == OCREP_PROP_INT)
         {
+// Should be removed once IOT-1705 is fixed.
+#ifdef _MSC_VER
+#pragma warning( suppress : 4244 )
             *value = val->i;
+#else
+            *value = val->i;
+#endif
             return true;
         }
     }
@@ -1117,9 +1119,11 @@ bool OCRepPayloadGetDoubleArray(const OCRepPayload* payload, const char* name,
 {
     OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
 
-    if (!val || val->type != OCREP_PROP_ARRAY ||
-        (val->arr.type != OCREP_PROP_DOUBLE && val->arr.type != OCREP_PROP_INT)
-            || !val->arr.dArray)
+    if (!val ||
+        (val->type != OCREP_PROP_ARRAY) ||
+        ((val->arr.type != OCREP_PROP_DOUBLE) &&
+         (val->arr.type != OCREP_PROP_INT)) ||
+        !val->arr.dArray)
     {
         return false;
     }
@@ -1145,7 +1149,13 @@ bool OCRepPayloadGetDoubleArray(const OCRepPayload* payload, const char* name,
         size_t n = 0;
         for ( ; n < dimTotal; ++n)
         {
+// Should be removed once IOT-1705 is fixed.
+#ifdef _MSC_VER
+#pragma warning( suppress : 4244 )
             (*array)[n] = val->arr.iArray[n];
+#else
+            (*array)[n] = val->arr.iArray[n];
+#endif
         }
     }
     memcpy(dimensions, val->arr.dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
@@ -1501,7 +1511,7 @@ char* OCCreateString(const OCStringLL* ll)
         len += strlen(it->value) + 1;
     }
     len--; // remove trailing separator (just added above)
-    str = (char*) malloc(len + 1);
+    str = (char*) OICMalloc(len + 1);
     if (!str)
     {
         return NULL;
@@ -1515,7 +1525,7 @@ char* OCCreateString(const OCStringLL* ll)
         count = snprintf(pos, len + 1, "%s", it->value);
         if ((size_t)count < sublen)
         {
-            free(str);
+            OICFree(str);
             return NULL;
         }
         len -= sublen;
@@ -1585,6 +1595,29 @@ OCRepPayload* OCRepPayloadClone (const OCRepPayload* payload)
     return clone;
 }
 
+OCRepPayload* OCRepPayloadBatchClone(const OCRepPayload* repPayload)
+{
+    OCRepPayload *newPayload = OCRepPayloadCreate();
+    if (!newPayload)
+    {
+        return NULL;
+    }
+
+    newPayload->uri = OICStrdup(repPayload->uri);
+    OCRepPayload *clone = OCRepPayloadCreate();
+    if (!clone)
+    {
+        OCPayloadDestroy((OCPayload *)newPayload);
+        return NULL;
+    }
+
+    clone->types  = CloneOCStringLL(repPayload->types);
+    clone->interfaces  = CloneOCStringLL(repPayload->interfaces);
+    clone->values = OCRepPayloadValueClone(repPayload->values);
+    OCRepPayloadSetPropObjectAsOwner(newPayload, OC_RSRVD_REPRESENTATION, clone);
+
+    return newPayload;
+}
 
 void OCRepPayloadDestroy(OCRepPayload* payload)
 {
@@ -1644,6 +1677,7 @@ void OCSecurityPayloadDestroy(OCSecurityPayload* payload)
         return;
     }
 
+    OICClearMemory(payload->securityData, payload->payloadSize);
     OICFree(payload->securityData);
     OICFree(payload);
 }
@@ -1676,11 +1710,63 @@ OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload, si
     return NULL;
 }
 
-#ifndef TCP_ADAPTER
-static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t securePort)
-#else
+size_t OCEndpointPayloadGetEndpointCount(OCEndpointPayload* payload)
+{
+    size_t i = 0;
+    OCEndpointPayload* ep = payload;
+    while (ep)
+    {
+        ++i;
+        ep = ep->next;
+    }
+    return i;
+}
+
+OCEndpointPayload* OCEndpointPayloadGetEndpoint(OCEndpointPayload* payload, size_t index)
+{
+    size_t i = 0;
+    OCEndpointPayload* ep = payload;
+    while (ep)
+    {
+        if (i == index)
+        {
+            return ep;
+        }
+        ++i;
+        ep = ep->next;
+    }
+    return NULL;
+}
+
+void OCResourcePayloadAddNewEndpoint(OCResourcePayload* payload, OCEndpointPayload* endpoint)
+{
+    if (!payload)
+    {
+        return;
+    }
+
+    if (!payload->eps)
+    {
+        payload->eps = endpoint;
+    }
+    else
+    {
+        OCEndpointPayload* ep = payload->eps;
+        while (ep->next)
+        {
+            ep = ep->next;
+        }
+        ep->next = endpoint;
+    }
+}
+
 static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t securePort,
-                                         uint16_t tcpPort)
+                                         bool isVirtual, CAEndpoint_t *networkInfo,
+                                         size_t infoSize, const OCDevAddr *devAddr
+#ifndef TCP_ADAPTER
+                                                                                    )
+#else
+                                         , uint16_t tcpPort)
 #endif
 {
     OCResourcePayload* pl = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
@@ -1695,6 +1781,18 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
     {
         OCDiscoveryResourceDestroy(pl);
         return NULL;
+    }
+
+    // relation is always the default unless the resource is the well known URI
+    if (0 == strcmp(res->uri, OC_RSRVD_WELL_KNOWN_URI))
+    {
+        pl->rel = OICStrdup("self");
+
+        if (!pl->rel)
+        {
+            OCDiscoveryResourceDestroy(pl);
+            return NULL;
+        }
     }
 
     // types
@@ -1784,6 +1882,84 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
 #ifdef TCP_ADAPTER
     pl->tcpPort = tcpPort;
 #endif
+
+    if (isVirtual || !networkInfo || infoSize == 0 || !devAddr)
+    {
+        pl->eps = NULL;
+    }
+    else
+    {
+        OCEndpointPayload *lastNode = pl->eps;
+        if ((OC_ADAPTER_IP | OC_ADAPTER_TCP) & (devAddr->adapter))
+        {
+            for (size_t i = 0; i < infoSize; i++)
+            {
+                CAEndpoint_t *info = networkInfo + i;
+
+                if (info)
+                {
+                    if (((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter &&
+                        info->ifindex == devAddr->ifindex) ||
+                        info->adapter == CA_ADAPTER_RFCOMM_BTEDR)
+                    {
+                        OCTpsSchemeFlags matchedTps = OC_NO_TPS;
+                        if (OC_STACK_OK != OCGetMatchedTpsFlags(info->adapter,
+                                                                info->flags,
+                                                                &matchedTps))
+                        {
+                            return NULL;
+                        }
+
+                        if ((res->endpointType) & matchedTps)
+                        {
+                            // create payload
+                            OCEndpointPayload* tmpNode = (OCEndpointPayload*)
+                                                          OICCalloc(1, sizeof(OCEndpointPayload));
+                            if (!tmpNode)
+                            {
+                                return NULL;
+                            }
+
+                            OCStackResult ret = OCConvertTpsToString(matchedTps, &(tmpNode->tps));
+                            if (ret != OC_STACK_OK)
+                            {
+                                OCDiscoveryEndpointDestroy(tmpNode);
+                                OCDiscoveryResourceDestroy(pl);
+                                return NULL;
+                            }
+
+                            tmpNode->addr = (char*)OICCalloc(MAX_ADDR_STR_SIZE, sizeof(char));
+                            if (!tmpNode->addr)
+                            {
+                                OCDiscoveryEndpointDestroy(tmpNode);
+                                OCDiscoveryResourceDestroy(pl);
+                                return NULL;
+                            }
+
+                            memcpy(tmpNode->addr, info->addr, sizeof(info->addr));
+                            tmpNode->family = (OCTransportFlags)(info->flags);
+                            tmpNode->port = info->port;
+                            tmpNode->pri  = 1;
+                            tmpNode->next = NULL;
+
+                            // store in list
+                            if (!pl->eps)
+                            {
+                                pl->eps = tmpNode;
+                                lastNode = tmpNode;
+                            }
+                            else
+                            {
+                                lastNode->next = tmpNode;
+                                lastNode = tmpNode;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     return pl;
 }
 
@@ -1791,21 +1967,46 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
                                    uint16_t securePort)
 {
-    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort));
+    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort, false, NULL, 0, NULL));
 }
 #else
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
                                    uint16_t securePort, uint16_t tcpPort)
 {
-    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort, tcpPort));
+    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort, false, NULL, 0, NULL, tcpPort));
+}
+#endif
+
+#ifndef TCP_ADAPTER
+void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload* payload, const OCResource* res,
+                                          uint16_t securePort, bool isVirtual,
+                                          void *networkInfo, size_t infoSize,
+                                          const OCDevAddr *devAddr)
+{
+    OCDiscoveryPayloadAddNewResource(payload,
+                                     OCCopyResource(res, securePort, isVirtual,
+                                                    (CAEndpoint_t *)networkInfo,
+                                                    infoSize, devAddr));
+}
+#else
+void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload* payload, const OCResource* res,
+                                          uint16_t securePort, bool isVirtual,
+                                          void *networkInfo, size_t infoSize,
+                                          const OCDevAddr *devAddr, uint16_t tcpPort)
+{
+    OCDiscoveryPayloadAddNewResource(payload,
+                                     OCCopyResource(res, securePort, isVirtual,
+                                                    (CAEndpoint_t *)networkInfo,
+                                                    infoSize, devAddr, tcpPort));
 }
 #endif
 
 bool OCResourcePayloadAddStringLL(OCStringLL **stringLL, const char *value)
 {
-    char *dup = OICStrdup(value);
-    VERIFY_PARAM_NON_NULL(TAG, dup, "Failed copying string");
+    char *dup = NULL;
     VERIFY_PARAM_NON_NULL(TAG, value, "Invalid Parameters");
+    dup = OICStrdup(value);
+    VERIFY_PARAM_NON_NULL(TAG, dup, "Failed copying string");
 
     if (!*stringLL)
     {
@@ -1853,6 +2054,19 @@ void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePay
     }
 }
 
+void OCDiscoveryEndpointDestroy(OCEndpointPayload* payload)
+{
+    if (!payload)
+    {
+        return;
+    }
+
+    OICFree(payload->tps);
+    OICFree(payload->addr);
+    OCDiscoveryEndpointDestroy(payload->next);
+    OICFree(payload);
+}
+
 void OCDiscoveryResourceDestroy(OCResourcePayload* payload)
 {
     if (!payload)
@@ -1861,11 +2075,12 @@ void OCDiscoveryResourceDestroy(OCResourcePayload* payload)
     }
 
     OICFree(payload->uri);
+    OICFree(payload->rel);
     OCFreeOCStringLL(payload->types);
     OCFreeOCStringLL(payload->interfaces);
+    OCDiscoveryEndpointDestroy(payload->eps);
     OCDiscoveryResourceDestroy(payload->next);
     OICFree(payload);
-
 }
 void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
 {
@@ -1875,175 +2090,11 @@ void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
     }
     OICFree(payload->sid);
     OICFree(payload->baseURI);
-    OICFree(payload->uri);
     OCFreeOCStringLL(payload->type);
     OICFree(payload->name);
     OCFreeOCStringLL(payload->iface);
     OCDiscoveryResourceDestroy(payload->resources);
     OCDiscoveryPayloadDestroy(payload->next);
-    OICFree(payload);
-}
-
-OCDevicePayload* OCDevicePayloadCreate(const char* sid, const char* dname,
-        const OCStringLL *types, const char* specVer, const char* dmVer)
-{
-
-    OCDevicePayload* payload = (OCDevicePayload*)OICCalloc(1, sizeof(OCDevicePayload));
-
-    if (!payload)
-    {
-        return NULL;
-    }
-
-    payload->base.type = PAYLOAD_TYPE_DEVICE;
-    payload->sid = OICStrdup(sid);
-    if (sid && !payload->sid)
-    {
-        goto exit;
-    }
-
-    payload->deviceName = OICStrdup(dname);
-    if (dname && !payload->deviceName)
-    {
-        goto exit;
-    }
-
-    payload->specVersion = OICStrdup(specVer);
-    if (specVer && !payload->specVersion)
-    {
-        goto exit;
-    }
-
-    payload->dataModelVersions = OCCreateOCStringLL(dmVer);
-    if (!payload->dataModelVersions || (dmVer && !payload->dataModelVersions->value))
-    {
-        goto exit;
-    }
-
-    OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_DEFAULT);
-    OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_READ);
-
-    payload->types = CloneOCStringLL((OCStringLL *)types);
-    if (types && !payload->types)
-    {
-        goto exit;
-    }
-
-    return payload;
-
-exit:
-    OCDevicePayloadDestroy((OCDevicePayload*)payload);
-    return NULL;
-}
-
-void OCDevicePayloadDestroy(OCDevicePayload* payload)
-{
-    if (!payload)
-    {
-        return;
-    }
-
-    OICFree(payload->sid);
-    OICFree(payload->deviceName);
-    OICFree(payload->specVersion);
-    OCFreeOCStringLL(payload->dataModelVersions);
-    OCFreeOCStringLL(payload->types);
-    OCFreeOCStringLL(payload->interfaces);
-    OICFree(payload);
-}
-
-static void OCCopyPlatformInfo(const OCPlatformInfo* platformInfo, OCPlatformPayload* target)
-{
-    if (!platformInfo || !target)
-    {
-        return;
-    }
-
-    target->info.platformID = OICStrdup(platformInfo->platformID);
-    target->info.manufacturerName = OICStrdup(platformInfo->manufacturerName);
-    target->info.manufacturerUrl = OICStrdup(platformInfo->manufacturerUrl);
-    target->info.modelNumber = OICStrdup(platformInfo->modelNumber);
-    target->info.dateOfManufacture = OICStrdup(platformInfo->dateOfManufacture);
-    target->info.platformVersion = OICStrdup(platformInfo->platformVersion);
-    target->info.operatingSystemVersion = OICStrdup(platformInfo->operatingSystemVersion);
-    target->info.hardwareVersion = OICStrdup(platformInfo->hardwareVersion);
-    target->info.firmwareVersion = OICStrdup(platformInfo->firmwareVersion);
-    target->info.supportUrl = OICStrdup(platformInfo->supportUrl);
-    target->info.systemTime = OICStrdup(platformInfo->systemTime);
-}
-
-OCPlatformPayload* OCPlatformPayloadCreateAsOwner(OCPlatformInfo* platformInfo)
-{
-    OCPlatformPayload* payload = (OCPlatformPayload*)OICCalloc(1, sizeof(OCPlatformPayload));
-    if (!payload)
-    {
-        return NULL;
-    }
-
-    payload->base.type = PAYLOAD_TYPE_PLATFORM;
-
-    payload->interfaces = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-    if (!payload->interfaces)
-    {
-        return NULL;
-    }
-    payload->interfaces->value = OICStrdup(OC_RSRVD_INTERFACE_READ);
-    payload->rt = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-    if (!payload->rt)
-    {
-        return NULL;
-    }
-    payload->rt->value = OICStrdup(OC_RSRVD_RESOURCE_TYPE_PLATFORM);
-    payload->info = *platformInfo;
-
-    return payload;
-}
-
-OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo)
-{
-    OCPlatformPayload* payload = (OCPlatformPayload*)OICCalloc(1, sizeof(OCPlatformPayload));
-
-    if (!payload)
-    {
-        return NULL;
-    }
-
-    payload->base.type = PAYLOAD_TYPE_PLATFORM;
-    OCResourcePayloadAddStringLL(&payload->rt, OC_RSRVD_RESOURCE_TYPE_PLATFORM);
-
-    OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_DEFAULT);
-    OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_READ);
-
-    OCCopyPlatformInfo(platformInfo, payload);
-
-    return payload;
-}
-
-void OCPlatformInfoDestroy(OCPlatformInfo *info)
-{
-    OICFree(info->platformID);
-    OICFree(info->manufacturerName);
-    OICFree(info->manufacturerUrl);
-    OICFree(info->modelNumber);
-    OICFree(info->dateOfManufacture);
-    OICFree(info->platformVersion);
-    OICFree(info->operatingSystemVersion);
-    OICFree(info->hardwareVersion);
-    OICFree(info->firmwareVersion);
-    OICFree(info->supportUrl);
-    OICFree(info->systemTime);
-}
-
-void OCPlatformPayloadDestroy(OCPlatformPayload* payload)
-{
-    if (!payload)
-    {
-        return;
-    }
-    OICFree(payload->uri);
-    OCPlatformInfoDestroy(&payload->info);
-    OCFreeOCStringLL(payload->rt);
-    OCFreeOCStringLL(payload->interfaces);
     OICFree(payload);
 }
 

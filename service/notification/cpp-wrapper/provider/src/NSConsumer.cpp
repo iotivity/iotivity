@@ -20,7 +20,10 @@
 
 #include "NSConsumer.h"
 #include <cstring>
+#include "NSProviderService.h"
+#include "NSAcceptedConsumers.h"
 #include "NSProviderInterface.h"
+#include "NSException.h"
 #include "NSConstants.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
@@ -49,17 +52,25 @@ namespace OIC
             return m_consumerId;
         }
 
-        int NSConsumer::acceptSubscription(bool accepted)
+        NSResult NSConsumer::acceptSubscription(bool accepted)
         {
             NS_LOG(DEBUG, "acceptSubscription - IN");
+            if (!isValid())
+            {
+                throw NSException("Invalid Operation with stale reference of Consumer");
+            }
             NSResult result = (NSResult) NSAcceptSubscription(getConsumerId().c_str(), accepted);
             NS_LOG(DEBUG, "acceptSubscription - OUT");
-            return (int) result;
+            return result;
         }
 
         NSResult NSConsumer::setTopic(const std::string &topicName)
         {
             NS_LOG(DEBUG, "setTopic - IN");
+            if (!isValid())
+            {
+                throw NSException("Invalid Operation with stale reference of Consumer");
+            }
             NSResult result = (NSResult) NSProviderSetConsumerTopic(getConsumerId().c_str(),
                               topicName.c_str());
             NS_LOG(DEBUG, "setTopic - OUT");
@@ -69,20 +80,38 @@ namespace OIC
         NSResult NSConsumer::unsetTopic(const std::string &topicName)
         {
             NS_LOG(DEBUG, "unsetTopic - IN");
+            if (!isValid())
+            {
+                throw NSException("Invalid Operation with stale reference of Consumer");
+            }
             NSResult result = (NSResult) NSProviderUnsetConsumerTopic(getConsumerId().c_str(),
                               topicName.c_str());
             NS_LOG(DEBUG, "unsetTopic - OUT");
             return result;
         }
 
-        NSTopicsList *NSConsumer::getConsumerTopicList()
+        std::shared_ptr<NSTopicsList> NSConsumer::getConsumerTopicList()
         {
             NS_LOG(DEBUG, "getConsumerTopicList - IN");
+            if (!isValid())
+            {
+                throw NSException("Invalid Operation with stale reference of Consumer");
+            }
             ::NSTopicLL *topics = NSProviderGetConsumerTopics(getConsumerId().c_str());
 
-            NSTopicsList *nsTopics = new NSTopicsList(topics);
+            std::shared_ptr<NSTopicsList> nsTopics = std::make_shared<NSTopicsList>(topics, false);
             NS_LOG(DEBUG, "getConsumerTopicList - OUT");
             return nsTopics;
+        }
+
+        bool NSConsumer::isValid() const
+        {
+            if (!NSProviderService::getInstance()->getAcceptedConsumers()->isAccepted(getConsumerId()))
+            {
+                NS_LOG(DEBUG, "Invalid Operation with stale reference of Consumer. Consumer ID doesnot exist");
+                return false;
+            }
+            return true;
         }
     }
 }

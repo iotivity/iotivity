@@ -73,6 +73,7 @@ public class ResourcePresenceTest {
         mRes = null;
         mReq = null;
         Mockito.doReturn("mockDeviceId").when(mMockDevice).getDeviceId();
+        Mockito.doReturn("mockUserId").when(mMockDevice).getUserId();
         MockitoAnnotations.initMocks(this);
         deviceServerSystem.addResource(adHandler);
         Mockito.doAnswer(new Answer<Object>() {
@@ -107,8 +108,10 @@ public class ResourcePresenceTest {
         // assertion: if the request packet from the CI contains the query
         // which includes the accesstoken and the di
         assertTrue(latch.await(1L, SECONDS));
-        assertTrue(queryMap.containsKey("mid"));
-        assertEquals(mReq.getUriPath(), Constants.GROUP_FULL_URI + "/null");
+        assertTrue(queryMap.containsKey("uid"));
+        assertTrue(queryMap.containsKey("members"));
+        assertEquals(mReq.getUriPath(),
+                Constants.GROUP_FULL_URI + "/mockUserId");
     }
 
     @Test
@@ -121,8 +124,10 @@ public class ResourcePresenceTest {
         deviceServerSystem.onRequestReceived(mMockDevice, request);
         HashMap<String, List<String>> queryMap = mReq.getUriQueryMap();
         assertTrue(latch.await(1L, SECONDS));
-        assertTrue(queryMap.containsKey("mid"));
-        assertEquals(mReq.getUriPath(), Constants.GROUP_FULL_URI + "/null");
+        assertTrue(queryMap.containsKey("uid"));
+        assertTrue(queryMap.containsKey("members"));
+        assertEquals(mReq.getUriPath(),
+                Constants.GROUP_FULL_URI + "/mockUserId");
     }
 
     IRequest                               requestEntireDevices = MessageBuilder
@@ -173,12 +178,11 @@ public class ResourcePresenceTest {
         deviceList.add("device1");
         deviceList.add("device2");
         deviceList.add("device3");
-        responsePayload.put("dilist", deviceList);
+        responsePayload.put("devices", deviceList);
         responsePayload.put("gid", "g0001");
-        responsePayload.put("gmid", "u0001");
         ArrayList<String> midList = new ArrayList<String>();
         midList.add("u0001");
-        responsePayload.put("midlist", midList);
+        responsePayload.put("members", midList);
         IResponse response = MessageBuilder.createResponse(requestEntireDevices,
                 ResponseStatus.CONTENT, ContentFormat.APPLICATION_CBOR,
                 cbor.encodingPayloadToCbor(responsePayload));

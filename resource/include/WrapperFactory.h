@@ -59,10 +59,8 @@ namespace OC
             {
             case ServiceType::InProc:
                 return std::make_shared<InProcClientWrapper>(csdkLock, cfg);
-                break;
             case ServiceType::OutOfProc:
                 return std::make_shared<OutOfProcClientWrapper>(csdkLock, cfg);
-                break;
             }
 			return nullptr;
         }
@@ -74,7 +72,6 @@ namespace OC
             {
             case ServiceType::InProc:
                 return std::make_shared<InProcServerWrapper>(csdkLock, cfg);
-                break;
             case ServiceType::OutOfProc:
                 throw OC::OCException(OC::Exception::SVCTYPE_OUTOFPROC, OC_STACK_NOTIMPL);
                 break;

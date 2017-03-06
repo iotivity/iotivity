@@ -1,3 +1,22 @@
+/* *****************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * *****************************************************************/
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +31,7 @@
 #include "pmutility.h"
 #include "cacommonutil.h"
 
-#define TAG "CLOUD-ACL-INVITE"
+#define TAG "OIC_CLOUD_ACL_INVITE"
 
 /**
  * This helper function parses "name" : { "gid":[], "mid":[] } payload
@@ -26,10 +45,10 @@ static OCStackResult parseInvitePayload(const OCRepPayload *payload, const char 
 {
     OCStackResult result = OC_STACK_NO_MEMORY;
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
-    OCRepPayload **heplerPayload  = NULL;
+    OCRepPayload **helperPayload  = NULL;
     size_t i = 0;
 
-    if (!OCRepPayloadGetPropObjectArray(payload, name, &heplerPayload, dimensions))
+    if (!OCRepPayloadGetPropObjectArray(payload, name, &helperPayload, dimensions))
     {
         OIC_LOG_V(ERROR, TAG, "Can't get: %s", name);
         return OC_STACK_MALFORMED_RESPONSE;
@@ -59,22 +78,22 @@ static OCStackResult parseInvitePayload(const OCRepPayload *payload, const char 
 
     for (i = 0; i < gidlist->length; i++)
     {
-        const OCRepPayload *payload = heplerPayload[i];
+        const OCRepPayload *gidPayload = helperPayload[i];
 
-        if (!OCRepPayloadGetPropString(payload, OC_RSRVD_GROUP_ID, &gidlist->array[i]))
+        if (!OCRepPayloadGetPropString(gidPayload, OC_RSRVD_GROUP_ID, &gidlist->array[i]))
         {
             OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_GROUP_ID);
             result = OC_STACK_MALFORMED_RESPONSE;
             goto exit;
         }
 
-        if (!OCRepPayloadGetPropString(payload, OC_RSRVD_MEMBER_ID, &midlist->array[i]))
+        if (!OCRepPayloadGetPropString(gidPayload, OC_RSRVD_MEMBER_ID, &midlist->array[i]))
         {
             OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_MEMBER_ID);
             result = OC_STACK_MALFORMED_RESPONSE;
             goto exit;
         }
-        OCRepPayloadDestroy(heplerPayload[i]);
+        OCRepPayloadDestroy(helperPayload[i]);
     }
 
     result = OC_STACK_OK;
@@ -87,10 +106,10 @@ exit:
 
         for (size_t k = i; k < gidlist->length; k++)
         {
-            OCRepPayloadDestroy(heplerPayload[i]);
+            OCRepPayloadDestroy(helperPayload[i]);
         }
     }
-    OICFree(heplerPayload);
+    OICFree(helperPayload);
     return result;
 }
 
@@ -218,7 +237,8 @@ OCStackResult OCCloudAclInviteUser(void* ctx,
     //add next fields if they were filled
     if (userId) OCRepPayloadSetPropString(payload, OC_RSRVD_USER_UUID, userId);
 
-    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {groupIds->length, 0, 0};
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
+    dimensions[0] = groupIds->length;
     OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_INVITE,
             (const struct OCRepPayload **)heplerPayload, dimensions);
 
@@ -308,8 +328,8 @@ OCStackResult OCCloudAclCancelInvitation(void* ctx,
 
     if (userId)
     {
-        size_t len = strlen(uri);
-        snprintf(uri + len, MAX_URI_LENGTH - len, "?%s=%s", OC_RSRVD_USER_UUID, userId);
+        len = strlen(uri);
+        snprintf((uri + len), (MAX_URI_LENGTH - len), "?%s=%s", OC_RSRVD_USER_UUID, userId);
     }
 
     len = strlen(uri);

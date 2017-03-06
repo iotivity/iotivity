@@ -30,12 +30,10 @@ cp -R ./examples $sourcedir/tmp
 
 # tinycbor is available as soft-link, so copying with 'dereference' option.
 cp -LR ./extlibs/tinycbor $sourcedir/tmp/extlibs
-rm -rf $sourcedir/tmp/extlibs/tinycbor/tinycbor/.git
 
 cp -R ./extlibs/cjson $sourcedir/tmp/extlibs
 cp -R ./extlibs/mbedtls $sourcedir/tmp/extlibs
 cp -R ./extlibs/gtest $sourcedir/tmp/extlibs
-cp -R ./extlibs/tinydtls $sourcedir/tmp/extlibs
 cp -LR ./extlibs/sqlite3 $sourcedir/tmp/extlibs
 cp -R ./extlibs/timer $sourcedir/tmp/extlibs
 cp -R ./extlibs/rapidxml $sourcedir/tmp/extlibs
@@ -59,14 +57,11 @@ cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp
 cd $sourcedir/tmp
 
 echo `pwd`
-if [ -d ./extlibs/mbedtls/mbedtls ];then
-    cd ./extlibs/mbedtls/mbedtls
-    git reset --hard ad249f509fd62a3bbea7ccd1fef605dbd482a7bd ; git apply --whitespace=fix ../ocf.patch
-    cd -
-    rm -rf ./extlibs/mbedtls/mbedtls/.git*
-fi
-rm -rf ./extlibs/tinycbor/tinycbor/.git*
+# Prepare mbedTLS dependency
+$SHELL ./extlibs/mbedtls/prep.sh
 
+# Prepare TinyCBOR dependency
+$SHELL ./extlibs/tinycbor/prep.sh
 
 # Build IoTivity
 # Initialize Git repository
@@ -78,7 +73,7 @@ if [ ! -d .git ]; then
    git commit -m "Initial commit"
 fi
 
-buildoption="--define 'TARGET_TRANSPORT '$1 --define 'SECURED '$2 --define 'ROUTING '$3 --define 'RELEASE '$4 --define 'LOGGING '$5 --define 'ES_TARGET_ENROLLEE '$6 --define 'WITH_TCP '$7 --define 'WITH_CLOUD '$8" 
+buildoption="--define 'TARGET_TRANSPORT '$1 --define 'SECURED '$2 --define 'ROUTING '$3 --define 'RELEASE '$4 --define 'LOGGING '$5 --define 'ES_TARGET_ENROLLEE '$6 --define 'WITH_TCP '$7 --define 'WITH_CLOUD '$8"
 echo "Calling core gbs build command"
 gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-OIC $buildoption --include-all --repository ./"
 echo $gbscommand

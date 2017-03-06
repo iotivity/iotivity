@@ -77,16 +77,17 @@ NSResult NSRegisterTopic(const char * topicName)
         OICFree(data);
         return NS_FAIL;
     }
+
     element->data = (void *) data;
     element->next = NULL;
 
-    if(NSProviderStorageWrite(registeredTopicList, element) != NS_OK)
+    if (NSProviderStorageWrite(registeredTopicList, element) != NS_OK)
     {
         NS_LOG(DEBUG, "fail to write cache");
         return NS_FAIL;
     }
-    NSSendTopicUpdation();
 
+    NSSendTopicUpdation();
     NS_LOG(DEBUG, "NSWriteTopicsToStorage() NS_OK");
     return NS_OK;
 }
@@ -103,6 +104,7 @@ NSResult NSUnregisterTopic(const char * topicName)
     }
 
     result = NSProviderStorageDelete(registeredTopicList, topicName);
+
     while (NSProviderStorageDelete(consumerTopicList, topicName) != NS_FAIL)
     {
     }
@@ -155,13 +157,14 @@ NSResult NSSendTopicUpdation()
                 obArray[obCount++] = subData->messageObId;
             }
 
-#if(defined WITH_CLOUD && defined RD_CLIENT)
-            if(subData->remote_messageObId != 0)
+#if (defined WITH_CLOUD)
+            if (subData->remote_messageObId != 0)
             {
                 obArray[obCount++] = subData->remote_messageObId;
             }
 #endif
         }
+
         it = it->next;
     }
 
@@ -337,8 +340,8 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
         OCResourcePayloadAddStringLL(&payload->interfaces, NS_INTERFACE_READ);
         OCResourcePayloadAddStringLL(&payload->types, NS_ROOT_TYPE);
     }
-    OICFree(copyReq);
 
+    OICFree(copyReq);
     response.requestHandle = entityHandlerRequest->requestHandle;
     response.resourceHandle = entityHandlerRequest->resource;
     response.persistentBufferFlag = 0;
@@ -371,15 +374,15 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
         return NS_FAIL;
     }
 
-    NS_LOG_V(DEBUG, "TOPIC consumer ID = %s", consumerId);
+    NS_LOG_V(INFO_PRIVATE, "TOPIC consumer ID = %s", consumerId);
 
     consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_CID;
 
     while (NSProviderStorageDelete(consumerTopicList, consumerId) != NS_FAIL)
     {
     }
-    consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME;
 
+    consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME;
     OCRepPayload ** topicListPayload = NULL;
     OCRepPayloadValue * payloadValue = NULL;
     payloadValue = NSPayloadFindValue(payload, NS_ATTRIBUTE_TOPIC_LIST);
@@ -472,7 +475,8 @@ void * NSTopicSchedule(void * ptr)
                         {
                             newObj->data = topicSyncResult->topicData;
                             newObj->next = NULL;
-                            if(NSProviderStorageWrite(consumerTopicList, newObj) == NS_OK)
+
+                            if (NSProviderStorageWrite(consumerTopicList, newObj) == NS_OK)
                             {
                                 NSSendTopicUpdationToConsumer(subData->id);
                                 topicSyncResult->result = NS_OK;
@@ -496,11 +500,13 @@ void * NSTopicSchedule(void * ptr)
                     pthread_mutex_lock(topicSyncResult->mutex);
                     NSCacheTopicSubData * topicSubData =
                             (NSCacheTopicSubData *) topicSyncResult->topicData;
+
                     if (NSProviderDeleteConsumerTopic(consumerTopicList, topicSubData) == NS_OK)
                     {
                         NSSendTopicUpdationToConsumer(topicSubData->id);
                         topicSyncResult->result = NS_OK;
                     }
+
                     OICFree(topicSubData->topicName);
                     OICFree(topicSubData);
                     pthread_cond_signal(topicSyncResult->condition);

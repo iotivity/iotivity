@@ -25,7 +25,7 @@
 #include "caremotehandler.h"
 #include "logger.h"
 
-#define TAG "CA"
+#define TAG "OIC_CA_REMOTE_HANDLER"
 
 CAEndpoint_t *CACloneEndpoint(const CAEndpoint_t *rep)
 {
@@ -297,6 +297,8 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
     }
     clone->payloadFormat = info->payloadFormat;
     clone->acceptFormat = info->acceptFormat;
+    clone->payloadVersion = info->payloadVersion;
+    clone->acceptVersion = info->acceptVersion;
 
     if (info->resourceUri)
     {

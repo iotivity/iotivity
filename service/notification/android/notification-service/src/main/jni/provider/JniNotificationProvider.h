@@ -30,25 +30,25 @@ extern "C" {
 /*
  * Class:     org_iotivity_service_ns_provider_ProviderService
  * Method:    nativeStart
- * Signature: (Lorg/iotivity/service/ns/provider/ProviderService/OnConsumerSubscribedListener;Lorg/iotivity/service/ns/provider/ProviderService/OnMessageSynchronizedListener;ZLjava/lang/String;Z)I
+ * Signature: (Lorg/iotivity/service/ns/provider/ProviderService/OnConsumerSubscribedListener;Lorg/iotivity/service/ns/provider/ProviderService/OnMessageSynchronizedListener;ZLjava/lang/String;Z)V
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeStart
+JNIEXPORT void JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeStart
 (JNIEnv *, jobject, jobject, jobject, jboolean, jstring, jboolean);
 
 /*
  * Class:     org_iotivity_service_ns_provider_ProviderService
  * Method:    nativeStop
- * Signature: ()I
+ * Signature: ()V
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeStop
+JNIEXPORT void JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeStop
 (JNIEnv *, jobject);
 
 /*
  * Class:     org_iotivity_service_ns_provider_ProviderService
  * Method:    nativeSendMessage
- * Signature: (Lorg/iotivity/service/ns/common/Message;)I
+ * Signature: (Lorg/iotivity/service/ns/common/Message;)V
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeSendMessage
+JNIEXPORT void JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeSendMessage
 (JNIEnv *, jobject, jobject);
 
 /*
@@ -70,35 +70,44 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_provider_ProviderService_
 /*
  * Class:     org_iotivity_service_ns_provider_ProviderService
  * Method:    nativeEnableRemoteService
- * Signature: (Ljava/lang/String;)I
+ * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT jint JNICALL
+JNIEXPORT void JNICALL
 Java_org_iotivity_service_ns_provider_ProviderService_nativeEnableRemoteService
 (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     org_iotivity_service_ns_provider_ProviderService
  * Method:    nativeDisableRemoteService
- * Signature: (Ljava/lang/String;)I
+ * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT jint JNICALL
+JNIEXPORT void JNICALL
 Java_org_iotivity_service_ns_provider_ProviderService_nativeDisableRemoteService
 (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     org_iotivity_service_ns_provider_ProviderService
- * Method:    nativeRegisterTopic
- * Signature: (Ljava/lang/String;)I
+ * Method:    nativeSubscribeMQService
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)V
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeRegisterTopic
+JNIEXPORT void JNICALL
+Java_org_iotivity_service_ns_provider_ProviderService_nativeSubscribeMQService
+(JNIEnv *, jobject, jstring, jstring);
+
+/*
+ * Class:     org_iotivity_service_ns_provider_ProviderService
+ * Method:    nativeRegisterTopic
+ * Signature: (Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeRegisterTopic
 (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     org_iotivity_service_ns_provider_ProviderService
  * Method:    nativeUnregisterTopic
- * Signature: (Ljava/lang/String;)I
+ * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeUnregisterTopic
+JNIEXPORT void JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeUnregisterTopic
 (JNIEnv *, jobject, jstring);
 
 /*
@@ -113,25 +122,25 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeGetRegisteredTopicLi
 /*
  * Class:     org_iotivity_service_ns_provider_Consumer
  * Method:    nativeAcceptSubscription
- * Signature: (Ljava/lang/String;Z)I
+ * Signature: (Ljava/lang/String;Z)V
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeAcceptSubscription
+JNIEXPORT void JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeAcceptSubscription
 (JNIEnv *, jobject, jstring, jboolean);
 
 /*
  * Class:     org_iotivity_service_ns_provider_Consumer
  * Method:    nativeSetConsumerTopic
- * Signature: (Ljava/lang/String;Ljava/lang/String;)I
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)V
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeSetConsumerTopic
+JNIEXPORT void JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeSetConsumerTopic
 (JNIEnv *, jobject, jstring, jstring);
 
 /*
  * Class:     org_iotivity_service_ns_provider_Consumer
  * Method:    nativeUnsetConsumerTopic
- * Signature: (Ljava/lang/String;Ljava/lang/String;)I
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)V
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeUnsetConsumerTopic
+JNIEXPORT void JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeUnsetConsumerTopic
 (JNIEnv *, jobject, jstring, jstring);
 
 /*

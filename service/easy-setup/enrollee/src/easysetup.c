@@ -44,56 +44,77 @@ static bool gIsSecured = false;
 static ESProvisioningCallbacks gESProvisioningCb;
 static ESDeviceProperty gESDeviceProperty;
 
-void ESWiFiRsrcCallback(ESResult esResult, ESWiFiProvData *eventData)
+void ESConnectRequestCallback(ESResult esResult, ESConnectRequest *eventData)
 {
-    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ESWiFiRsrcCallback IN");
+    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ESConnectRequestCallback IN");
 
     if(esResult != ES_OK)
     {
-        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "ESWiFiRsrcCallback Error Occured");
+        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "ESConnectRequestCallback Error Occured");
+        return;
+    }
+
+    if(gESProvisioningCb.ConnectRequestCb != NULL)
+    {
+        gESProvisioningCb.ConnectRequestCb(eventData);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "ConnectRequestCb is NULL");
+        return;
+    }
+}
+
+void ESWiFiConfRsrcCallback(ESResult esResult, ESWiFiConfData *eventData)
+{
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESWiFiConfRsrcCallback IN");
+
+    if(esResult != ES_OK)
+    {
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESWiFiConfRsrcCallback Error Occured");
         return;
     }
 
     // deliver data to ESProvisioningCallbacks
-    if(gESProvisioningCb.WiFiProvCb != NULL)
+    if(gESProvisioningCb.WiFiConfProvCb != NULL)
     {
-        gESProvisioningCb.WiFiProvCb(eventData);
+        gESProvisioningCb.WiFiConfProvCb(eventData);
     }
     else
     {
-        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "WiFiProvCb is NULL");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "WiFiConfProvCb is NULL");
         return;
     }
 }
 
-void ESCloudRsrcCallback(ESResult esResult, ESCloudProvData *eventData)
+void ESCoapCloudConfRsrcCallback(ESResult esResult, ESCoapCloudConfData *eventData)
 {
-    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ESCloudRsrcCallback IN");
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESCoapCloudConfRsrcCallback IN");
 
     if(esResult != ES_OK)
     {
-        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "ESCloudRsrcCallback Error Occured");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESCoapCloudConfRsrcCallback Error Occured");
         return;
     }
 
-    if(gESProvisioningCb.CloudDataProvCb != NULL)
+    if(gESProvisioningCb.CoapCloudConfProvCb != NULL)
     {
-        gESProvisioningCb.CloudDataProvCb(eventData);
+        gESProvisioningCb.CoapCloudConfProvCb(eventData);
     }
     else
     {
-        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "CloudDataProvCb is NULL");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "CoapCloudConfProvCb is NULL");
         return;
     }
 }
 
-void ESDevconfRsrcallback(ESResult esResult, ESDevConfProvData *eventData)
+void ESDevConfRsrcallback(ESResult esResult, ESDevConfData *eventData)
 {
-    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ESDevconfRsrcallback IN");
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESDevConfRsrcallback IN");
 
     if(esResult != ES_OK)
     {
-        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "ESDevconfRsrcallback Error Occured");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESDevConfRsrcallback Error Occured");
         return;
     }
 
@@ -103,7 +124,7 @@ void ESDevconfRsrcallback(ESResult esResult, ESDevConfProvData *eventData)
     }
     else
     {
-        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "DevConfProvCb is NULL");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "DevConfProvCb is NULL");
         return;
     }
 }
@@ -114,16 +135,16 @@ ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvision
 
     gIsSecured = isSecured;
 
-    if((resourceMask & ES_WIFI_RESOURCE) == ES_WIFI_RESOURCE)
+    if((resourceMask & ES_WIFICONF_RESOURCE) == ES_WIFICONF_RESOURCE)
     {
-        if(callbacks.WiFiProvCb != NULL)
+        if(callbacks.WiFiConfProvCb != NULL)
         {
-            gESProvisioningCb.WiFiProvCb = callbacks.WiFiProvCb;
-            RegisterWifiRsrcEventCallBack(ESWiFiRsrcCallback);
+            gESProvisioningCb.WiFiConfProvCb = callbacks.WiFiConfProvCb;
+            RegisterWifiRsrcEventCallBack(ESWiFiConfRsrcCallback);
         }
         else
         {
-            OIC_LOG(ERROR, ES_ENROLLEE_TAG, "WiFiProvCb NULL");
+            OIC_LOG(ERROR, ES_ENROLLEE_TAG, "WiFiConfProvCb NULL");
             return ES_ERROR;
         }
     }
@@ -132,7 +153,7 @@ ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvision
         if(callbacks.DevConfProvCb != NULL)
         {
             gESProvisioningCb.DevConfProvCb = callbacks.DevConfProvCb;
-            RegisterDevConfRsrcEventCallBack(ESDevconfRsrcallback);
+            RegisterDevConfRsrcEventCallBack(ESDevConfRsrcallback);
         }
         else
         {
@@ -140,18 +161,25 @@ ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvision
             return ES_ERROR;
         }
     }
-    if((resourceMask & ES_CLOUD_RESOURCE) == ES_CLOUD_RESOURCE)
+    if((resourceMask & ES_COAPCLOUDCONF_RESOURCE) == ES_COAPCLOUDCONF_RESOURCE)
     {
-        if(callbacks.CloudDataProvCb != NULL)
+        if(callbacks.CoapCloudConfProvCb != NULL)
         {
-            gESProvisioningCb.CloudDataProvCb = callbacks.CloudDataProvCb;
-            RegisterCloudRsrcEventCallBack(ESCloudRsrcCallback);
+            gESProvisioningCb.CoapCloudConfProvCb = callbacks.CoapCloudConfProvCb;
+            RegisterCloudRsrcEventCallBack(ESCoapCloudConfRsrcCallback);
         }
         else
         {
-            OIC_LOG(ERROR, ES_ENROLLEE_TAG, "CloudDataProvCb NULL");
+            OIC_LOG(ERROR, ES_ENROLLEE_TAG, "CoapCloudConfProvCb NULL");
             return ES_ERROR;
         }
+    }
+
+    // TODO: if EasySetupProvCb is NULL, we should return an error at this moment.
+    if(callbacks.ConnectRequestCb != NULL)
+    {
+        gESProvisioningCb.ConnectRequestCb = callbacks.ConnectRequestCb;
+        RegisterConnectRequestEventCallBack(ESConnectRequestCallback);
     }
 
     if(CreateEasySetupResources(gIsSecured, resourceMask) != OC_STACK_OK)
@@ -165,7 +193,6 @@ ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvision
 
         return ES_ERROR;
     }
-
 
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESInitEnrollee OUT");
     return ES_OK;
@@ -185,14 +212,14 @@ ESResult ESSetDeviceProperty(ESDeviceProperty *deviceProperty)
     while((deviceProperty->WiFi).mode[modeIdx] != WiFi_EOF)
     {
         (gESDeviceProperty.WiFi).mode[modeIdx] = (deviceProperty->WiFi).mode[modeIdx];
-        OIC_LOG_V(INFO, ES_ENROLLEE_TAG, "WiFi Mode : %d", (gESDeviceProperty.WiFi).mode[modeIdx]);
+        OIC_LOG_V(INFO_PRIVATE, ES_ENROLLEE_TAG, "WiFi Mode : %d", (gESDeviceProperty.WiFi).mode[modeIdx]);
         modeIdx ++;
     }
     (gESDeviceProperty.WiFi).freq = (deviceProperty->WiFi).freq;
-    OIC_LOG_V(INFO, ES_ENROLLEE_TAG, "WiFi Freq : %d", (gESDeviceProperty.WiFi).freq);
+    OIC_LOG_V(INFO_PRIVATE, ES_ENROLLEE_TAG, "WiFi Freq : %d", (gESDeviceProperty.WiFi).freq);
 
     OICStrcpy((gESDeviceProperty.DevConf).deviceName, OIC_STRING_MAX_VALUE, (deviceProperty->DevConf).deviceName);
-    OIC_LOG_V(INFO, ES_ENROLLEE_TAG, "Device Name : %s", (gESDeviceProperty.DevConf).deviceName);
+    OIC_LOG_V(INFO_PRIVATE, ES_ENROLLEE_TAG, "Device Name : %s", (gESDeviceProperty.DevConf).deviceName);
 
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetDeviceProperty OUT");
     return ES_OK;
@@ -202,7 +229,7 @@ ESResult ESSetState(ESEnrolleeState esState)
 {
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetState IN");
 
-    if(esState < ES_STATE_INIT || esState > ES_STATE_FAILED_TO_REGISTER_TO_CLOUD)
+    if(esState < ES_STATE_INIT || esState >= ES_STATE_EOF)
     {
         OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "Invalid ESEnrolleeState : %d", esState);
         return ES_ERROR;
@@ -235,7 +262,7 @@ ESResult ESSetErrorCode(ESErrorCode esErrCode)
         return ES_ERROR;
     }
 
-    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Set ESErrorCode succesfully : %d", esErrCode);
+    OIC_LOG_V(INFO, ES_ENROLLEE_TAG, "Set ESErrorCode succesfully : %d", esErrCode);
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetErrorCode OUT");
     return ES_OK;
 }
@@ -259,6 +286,8 @@ ESResult ESTerminateEnrollee()
 
 ESResult ESSetCallbackForUserdata(ESReadUserdataCb readCb, ESWriteUserdataCb writeCb)
 {
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetCallbackForUserdata IN");
+
     if(!readCb && !writeCb)
     {
         OIC_LOG(INFO, ES_ENROLLEE_TAG, "Both of callbacks for user data are null");

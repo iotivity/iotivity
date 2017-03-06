@@ -20,70 +20,77 @@
 
 import os
 import os.path
+from tools.scons.RunTest import *
+
+Import('test_env')
 
 # SConscript file for Local PKI google tests
-gtest_env = SConscript('#extlibs/gtest/SConscript')
-catest_env = gtest_env.Clone()
+catest_env = test_env.Clone()
 target_os = catest_env.get('TARGET_OS')
 target_transport = catest_env.get('TARGET_TRANSPORT')
+rd_mode = catest_env.get('RD_MODE')
 
 ######################################################################
 # Build flags
 ######################################################################
+if catest_env.get('WITH_UPSTREAM_LIBCOAP') == '1':
+    # For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
+    catest_env.AppendUnique(CPPPATH = [os.path.join('#', 'extlibs', 'libcoap', 'libcoap', 'include')])
+else:
+    # For bring up purposes only, the forked version will live here.
+    catest_env.AppendUnique(CPPPATH = [ os.path.join('#', 'resource', 'csdk', 'connectivity', 'lib', 'libcoap-4.1.1', 'include')])
+
 catest_env.PrependUnique(CPPPATH = [
-                '../../logger/include',
-                '../../stack/include',
-                '../../extlibs/cjson',
-                '../../../oc_logger/include',
+                '#/extlibs/timer',
+                '#/extlibs/mbedtls/mbedtls/include',
+                '#/resource/csdk/connectivity/api',
+                '#/resource/csdk/connectivity/inc',
+                '#/resource/csdk/connectivity/common/inc',
+                '#/resource/csdk/logger/include',
+                '#/resource/csdk/include',
+                '#/resource/csdk/stack/include',
+                '#/resource/oc_logger/include',
                ])
 
 catest_env.AppendUnique(LIBPATH = [catest_env.get('BUILD_DIR')])
-catest_env.PrependUnique(LIBS = ['gtest', 'gtest_main'])
-catest_env.PrependUnique(LIBS = ['octbstack',
-                                    'connectivity_abstraction',
-                                    'coap'])
+catest_env.PrependUnique(LIBS = ['octbstack_test',
+                                 'connectivity_abstraction',
+                                 'coap'])
 
 if target_os not in ['arduino', 'darwin', 'ios', 'msys_nt', 'windows']:
-	catest_env.AppendUnique(LIBS=['rt'])
+    catest_env.AppendUnique(LIBS=['rt'])
 
 if catest_env.get('SECURED') == '1':
-	catest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+    catest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
-if catest_env.get('WITH_RD') == '1':
-	catest_env.PrependUnique(LIBS = ['resource_directory'])
+if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
+    catest_env.PrependUnique(LIBS = ['resource_directory'])
 
-if catest_env.get('LOGGING'):
-	catest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+if target_os not in ['msys_nt', 'windows']:
+    catest_env.AppendUnique(LIBS = ['m'])
 
-if target_os in ['msys_nt', 'windows']:
-	catest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
-	catest_env.AppendUnique(LIBS = ['ws2_32',
-                                        'advapi32',
-                                        'bcrypt',
-                                        'iphlpapi'])
-else:
-	catest_env.AppendUnique(LIBS = ['m'])
+catest_env.AppendUnique(LIBS = ['timer'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
 
 tests_src = [
-	'catests.cpp',
-	'caprotocolmessagetest.cpp',
-	'ca_api_unittest.cpp',
-	'camutex_tests.cpp',
-	'uarraylist_test.cpp',
-	'ulinklist_test.cpp',
-	'uqueue_test.cpp'
+    'catests.cpp',
+    'caprotocolmessagetest.cpp',
+    'ca_api_unittest.cpp',
+    'octhread_tests.cpp',
+    'uarraylist_test.cpp',
+    'ulinklist_test.cpp',
+    'uqueue_test.cpp'
 ]
 
 if (('IP' in target_transport) or ('ALL' in target_transport)):
-	if target_os != 'arduino':
-		tests_src = tests_src + ['cablocktransfertest.cpp']
+    if target_os != 'arduino':
+        tests_src = tests_src + ['cablocktransfertest.cpp']
 
 if catest_env.get('SECURED') == '1' and catest_env.get('WITH_TCP') == True:
-	tests_src = tests_src + ['ssladapter_test.cpp']
+    tests_src = tests_src + ['ssladapter_test.cpp']
 
 catests = catest_env.Program('catests', tests_src)
 
@@ -93,7 +100,6 @@ catest_env.AppendTarget('test')
 if catest_env.get('TEST') == '1':
         if target_os in ['linux', 'windows']:
                 catest_env.AppendENVPath('PATH', catest_env.get('BUILD_DIR'))
-                from tools.scons.RunTest import *
                 run_test(catest_env,
                          'resource_csdk_connectivity_test.memcheck',
                          'resource/csdk/connectivity/test/catests')

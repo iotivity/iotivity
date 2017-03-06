@@ -18,26 +18,28 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+Import('env')
+
 ##
 # Examples build script
 ##
-thread_env = SConscript('#build_common/thread.scons')
-lib_env = thread_env.Clone()
-target_os = lib_env.get('TARGET_OS')
+examples_env = env.Clone()
+SConscript('#build_common/thread.scons', exports = {'thread_env' : examples_env})
+
+target_os = examples_env.get('TARGET_OS')
 
 # Add third party libraries
-SConscript('#resource/third_party_libs.scons', 'lib_env')
+SConscript('#resource/third_party_libs.scons', exports = {'lib_env' : examples_env})
 
-with_ra = lib_env.get('WITH_RA')
-with_ra_ibb = lib_env.get('WITH_RA_IBB')
-
-examples_env = lib_env.Clone()
+with_ra = examples_env.get('WITH_RA')
+with_ra_ibb = examples_env.get('WITH_RA_IBB')
 
 ######################################################################
 # Build flags
 ######################################################################
 examples_env.AppendUnique(CPPPATH = [
         '../../include/',
+        '../../csdk/include',
         '../../csdk/stack/include',
         '../../../extlibs/cjson',
         '../../csdk/logger/include',
@@ -86,12 +88,18 @@ if target_os in ['darwin', 'ios']:
 
 if target_os == 'tizen':
     examples_env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
-
+if examples_env.get('MULTIPLE_OWNER') == '1':
+    examples_env.AppendUnique(CPPDEFINES = ['MULTIPLE_OWNER'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
 provisioningclient = examples_env.Program('provisioningclient', 'provisioningclient.cpp')
+if examples_env.get('MULTIPLE_OWNER') == '1':
+	subownerclient = examples_env.Program('subownerclient', 'subownerclient.cpp')
+
+if examples_env.get('WITH_TCP') == True:
+	cloudClient = examples_env.Program('cloudClient',['cloudClient.cpp', 'cloudAuth.cpp', 'cloudWrapper.cpp'])
 
 if examples_env.get('WITH_TCP') == True:
 	cloudClient = examples_env.Program('cloudClient',['cloudClient.cpp', 'cloudAuth.cpp', 'cloudWrapper.cpp'])
@@ -102,6 +110,12 @@ svr_db_build_dir = examples_env.get('BUILD_DIR') +'/resource/provisioning/exampl
 
 clientjson = examples_env.Install(svr_db_build_dir, svr_db_src_dir + 'oic_svr_db_client.json')
 clientdat = examples_env.Install(svr_db_build_dir, svr_db_src_dir + 'oic_svr_db_client.dat')
+
+if examples_env.get('MULTIPLE_OWNER') == '1':
+	subownerclientdat = examples_env.Install(svr_db_build_dir,
+		svr_db_src_dir + 'oic_svr_db_subowner_client.dat')
+	Alias("subowner", [subownerclientdat, subownerclient])
+	examples_env.AppendTarget("subowner")
 
 if examples_env.get('WITH_TCP') == True:
 	clouddat = examples_env.Install(svr_db_build_dir,

@@ -24,18 +24,41 @@
 #define __PRINTLOG 0
 #define __NS_FILE__ ( strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__ )
 
+#include "logger.h"
+
 #ifdef TB_LOG
-#include "logger.h"
-#define NS_LOG_V(level, format, ...) (OIC_LOG_V((level), __NS_FILE__, (format), __VA_ARGS__))
-#define NS_LOG(level, msg) (OIC_LOG((level), __NS_FILE__, (msg)))
-#else
+#ifdef __TIZEN__
+#include <dlog.h>
+#ifdef LOG_TAG
+#undef LOG_TAG
+#endif // LOG_TAG
+#define LOG_TAG "NotificationService"
+#define NS_CONVERT_LEVEL(level) ( \
+        ((level) == 0) ? DLOG_DEBUG : \
+        ((level) == 1) ? DLOG_INFO : \
+        ((level) == 2) ? DLOG_WARN : \
+        ((level) == 3) ? DLOG_ERROR : \
+        ((level) == 4) ? DLOG_ERROR : \
+        ((level) == 5) ? DLOG_INFO : \
+        ((level) == 6) ? DLOG_INFO : \
+        ((level) == 7) ? DLOG_INFO : DLOG_INFO)
+#define NS_LOG_V(level, format, ...) (dlog_print(NS_CONVERT_LEVEL(level), LOG_TAG, (format), __VA_ARGS__))
+#define NS_LOG(level, msg) (dlog_print(NS_CONVERT_LEVEL(level), LOG_TAG, (msg)))
+#else // __TIZEN__
+#define NS_LOG_V(level, format, ...) OIC_LOG_V((level), __NS_FILE__, (format), __VA_ARGS__)
+#define NS_LOG(level, msg) OIC_LOG((level), __NS_FILE__, (msg))
+#endif // __TIZEN__
+#else // TB_LOG
 #if (__PRINTLOG == 1)
-#include "logger.h"
 #define NS_CONVERT_LEVEL(level) ( \
         ((level) == 0) ? "DEBUG" : \
         ((level) == 1) ? "INFO" : \
         ((level) == 2) ? "WARNING" : \
-    ((level) == 3) ? "ERROR" : "FATAL")
+        ((level) == 3) ? "ERROR" : \
+        ((level) == 4) ? "FATAL" : \
+        ((level) == 5) ? "DEBUG_LITE" : \
+        ((level) == 6) ? "INFO_LITE" : \
+        ((level) == 7) ? "INFO_PRIVATE" : "INFO_PRIVATE")
 #define NS_LOG_V(level, format, ...) \
     { \
         printf("%s: %s ", NS_CONVERT_LEVEL(level), __NS_FILE__); \
@@ -48,12 +71,12 @@
         printf((msg)); \
         printf("\n"); \
     }
-#else
+#else // (__PRINTLOG == 1)
 #define NS_CONVERT_LEVEL(level)
 #define NS_LOG(level, msg)
 #define NS_LOG_V(level, format, ...) NS_LOG((level), ((format), __VA_ARGS__))
-#endif
-#endif
+#endif // (__PRINTLOG == 1)
+#endif // TB_LOG
 
 #define NS_TAG                     "IOT_NOTI"
 
@@ -61,9 +84,9 @@
 #define THREAD_COUNT               5
 
 // NOTIOBJ //
-#define NOTIOBJ_TITLE_KEY          "title"
-#define NOTIOBJ_ID_KEY             "id"
-#define NOTOOBJ_CONTENT_KEY        "contentText"
+#define NOTIOBJ_TITLE_KEY          "x.org.iotivity.ns.title"
+#define NOTIOBJ_ID_KEY             "x.org.iotivity.ns.id"
+#define NOTOOBJ_CONTENT_KEY        "x.org.iotivity.ns.contenttext"
 
 #define DISCOVERY_TAG              "NS_PROVIDER_DISCOVERY"
 #define SUBSCRIPTION_TAG           "NS_PROVIDER_SUBSCRIPTION"
@@ -74,14 +97,14 @@
 #define RESOURCE_TAG               "NS_PROVIDER_RESOURCE"
 #define TOPIC_TAG                  "NS_PROVIDER_TOPIC"
 
-#define NS_ROOT_TYPE               "oic.wk.notification"
-#define NS_COLLECTION_MESSAGE_TYPE "oic.wk.notification.message"
-#define NS_COLLECTION_SYNC_TYPE    "oic.wk.notification.sync"
-#define NS_COLLECTION_TOPIC_TYPE   "oic.wk.notification.topic"
+#define NS_ROOT_TYPE               "x.org.iotivity.notification"
+#define NS_COLLECTION_MESSAGE_TYPE "x.org.iotivity.notification.message"
+#define NS_COLLECTION_SYNC_TYPE    "x.org.iotivity.notification.sync"
+#define NS_COLLECTION_TOPIC_TYPE   "x.org.iotivity.notification.topic"
 
 #define NS_INTERFACE_READ          "oic.if.r"
 #define NS_INTERFACE_READWRITE     "oic.if.rw"
-#define NS_INTERFACE_BASELINE       "oic.if.baseline"
+#define NS_INTERFACE_BASELINE      "oic.if.baseline"
 
 #define NS_ROOT_URI                "/notification"
 #define NS_COLLECTION_MESSAGE_URI  "/notification/message"
@@ -91,8 +114,8 @@
 #define NS_QUERY_SEPARATOR         "&;"
 #define NS_KEY_VALUE_DELIMITER     "="
 
-#define NS_QUERY_CONSUMER_ID       "consumerId"
-#define NS_QUERY_PROVIDER_ID       "providerId"
+#define NS_QUERY_CONSUMER_ID       "x.org.iotivity.ns.consumerid"
+#define NS_QUERY_PROVIDER_ID       "x.org.iotivity.ns.providerid"
 #define NS_QUERY_INTERFACE         "if"
 
 #define NS_QUERY_ID_SIZE           10
@@ -101,6 +124,11 @@
 #define NS_POLICY_CONSUMER         0
 
 #define NS_RD_PUBLISH_QUERY        "/oic/rd?rt=oic.wk.rdpub"
+
+#ifdef WITH_MQ
+#define NS_ATTRIBUTE_MQ_MESSAGE   "x.org.iotivity.ns.message"
+#define NS_ATTIRBUTE_MQ_TOPICLIST "x.org.iotivity.ns.topiclist"
+#endif
 
 #define NS_VERIFY_NOT_NULL_V(obj) \
     { \
@@ -183,28 +211,28 @@
         } \
     }
 
-#define VERSION        "1.2.0"
+#define VERSION        IOTIVITY_VERSION
 
-#define NS_ATTRIBUTE_VERSION "version"
-#define NS_ATTRIBUTE_POLICY "subControllability"
-#define NS_ATTRIBUTE_MESSAGE "messageUri"
-#define NS_ATTRIBUTE_SYNC "syncUri"
-#define NS_ATTRIBUTE_TOPIC "topicUri"
-#define NS_ATTRIBUTE_MESSAGE_ID "messageId"
-#define NS_ATTRIBUTE_PROVIDER_ID "providerId"
-#define NS_ATTRIBUTE_CONSUMER_ID "consumerId"
-#define NS_ATTRIBUTE_TOPIC_LIST "topicList"
-#define NS_ATTRIBUTE_TOPIC_NAME "topicName"
-#define NS_ATTRIBUTE_TOPIC_SELECTION "topicState"
-#define NS_ATTRIBUTE_TITLE "title"
-#define NS_ATTRIBUTE_TEXT "contentText"
-#define NS_ATTRIBUTE_SOURCE "source"
-#define NS_ATTRIBUTE_STATE "state"
-#define NS_ATTRIBUTE_DEVICE "device"
-#define NS_ATTRIBUTE_TYPE "type"
-#define NS_ATTRIBUTE_DATETIME "dateTime"
-#define NS_ATTRIBUTE_TTL "ttl"
-#define NS_ATTRIBUTE_ICON_IMAGE "iconImage"
+#define NS_ATTRIBUTE_VERSION "x.org.iotivity.ns.version"
+#define NS_ATTRIBUTE_POLICY "x.org.iotivity.ns.subcontrollability"
+#define NS_ATTRIBUTE_MESSAGE "x.org.iotivity.ns.messageuri"
+#define NS_ATTRIBUTE_SYNC "x.org.iotivity.ns.syncuri"
+#define NS_ATTRIBUTE_TOPIC "x.org.iotivity.ns.topicuri"
+#define NS_ATTRIBUTE_MESSAGE_ID "x.org.iotivity.ns.messageid"
+#define NS_ATTRIBUTE_PROVIDER_ID "x.org.iotivity.ns.providerid"
+#define NS_ATTRIBUTE_CONSUMER_ID "x.org.iotivity.ns.consumerid"
+#define NS_ATTRIBUTE_TOPIC_LIST "x.org.iotivity.ns.topiclist"
+#define NS_ATTRIBUTE_TOPIC_NAME "x.org.iotivity.ns.topicname"
+#define NS_ATTRIBUTE_TOPIC_SELECTION "x.org.iotivity.ns.topicstate"
+#define NS_ATTRIBUTE_TITLE "x.org.iotivity.ns.title"
+#define NS_ATTRIBUTE_TEXT "x.org.iotivity.ns.contenttext"
+#define NS_ATTRIBUTE_SOURCE "x.org.iotivity.ns.source"
+#define NS_ATTRIBUTE_STATE "x.org.iotivity.ns.state"
+#define NS_ATTRIBUTE_DEVICE "x.org.iotivity.ns.device"
+#define NS_ATTRIBUTE_TYPE "x.org.iotivity.ns.type"
+#define NS_ATTRIBUTE_DATETIME "x.org.iotivity.ns.datetime"
+#define NS_ATTRIBUTE_TTL "x.org.iotivity.ns.ttl"
+#define NS_ATTRIBUTE_ICON_IMAGE "x.org.iotivity.ns.iconimage"
 
 typedef enum eConnectionState
 {
@@ -220,10 +248,15 @@ typedef enum eSchedulerType
     SUBSCRIPTION_SCHEDULER = 2,
     NOTIFICATION_SCHEDULER = 3,
     TOPIC_SCHEDULER = 4,
+
 } NSSchedulerType;
 
 typedef enum eTaskType
 {
+#ifdef WITH_MQ
+    TASK_MQ_REQ_SUBSCRIBE = 20001,
+#endif
+
     TASK_REGISTER_RESOURCE = 1000,
     TASK_PUBLISH_RESOURCE = 1001,
 
@@ -300,6 +333,7 @@ typedef enum eCacheType
 
     NS_CONSUMER_CACHE_PROVIDER = 2000,
     NS_CONSUMER_CACHE_MESSAGE = 2001,
+
 } NSCacheType;
 
 typedef enum eResourceType
@@ -307,12 +341,14 @@ typedef enum eResourceType
     NS_RESOURCE_MESSAGE = 1000,
     NS_RESOURCE_SYNC = 1001,
     NS_RESOURCE_TOPIC = 1002,
+
 } NSResourceType;
 
 typedef enum eInterfaceType
 {
     NS_INTERFACE_TYPE_READ = 1,
     NS_INTERFACE_TYPE_READWRITE = 2,
+
 } NSInterfaceType;
 
 #endif /* _NS_CONSTANTS_H_ */

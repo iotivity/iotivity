@@ -42,7 +42,7 @@ include $(PREBUILT_SHARED_LIBRARY)
 endif
 
 include $(CLEAR_VARS)
-OIC_LIB_PATH := ../../../../../../../../../android/android_api/base/libs/$(TARGET_ARCH_ABI)
+OIC_LIB_PATH := ../../../../../../../../../java/iotivity-android/build/native-libs/$(TARGET_ARCH_ABI)
 LOCAL_MODULE := android-ocstack
 LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libocstack-jni.so
 include $(PREBUILT_SHARED_LIBRARY)
@@ -76,6 +76,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH) \
 					$(LOCAL_PATH)/../../../../../../../../../resource/oc_logger/include \
 					$(LOCAL_PATH)/../../../../../../../../../resource/c_common/oic_malloc/include \
 					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/connectivity/api \
+					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/include \
 					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/stack/include \
 					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/logger/include \
 					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/security/include \
@@ -85,7 +86,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH) \
 					$(LOCAL_PATH)/../../../../../../../../../extlibs/cjson \
 					$(LOCAL_PATH)/../../../../../../../../../extlibs/boost/boost_1_58_0 \
 					$(LOCAL_PATH)/../../../../../../../../../extlibs/timer \
-					$(LOCAL_PATH)/../../../../../../../../../android/android_api/base/jni \
+					$(LOCAL_PATH)/../../../../../../../../../java/jni \
 
 LOCAL_SRC_FILES += $(patsubst $(LOCAL_PATH)/%, %, $(wildcard $(LOCAL_PATH)/*.cpp))
 LOCAL_SRC_FILES += $(patsubst $(LOCAL_PATH)/%, %, $(wildcard $(LOCAL_PATH)/*.h))

@@ -21,6 +21,7 @@
  */
 package org.iotivity.cloud.ciserver.resources.proxy.rd;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +36,6 @@ import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
-import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.util.Cbor;
@@ -79,46 +79,34 @@ public class ResourceFind extends Resource {
                             .parsePayloadFromCbor(response.getPayload(),
                                     HashMap.class);
 
-                    if (payloadData == null) {
-                        mSrcDevice.sendResponse(MessageBuilder.createResponse(
-                                mRequest, ResponseStatus.BAD_REQUEST));
-                        return;
-                    }
+                    ArrayList<String> devices = (ArrayList<String>) getResponseDeviceList(
+                            payloadData);
 
-                    if (mRequest.getUriQuery() != null
-                            && mRequest.getUriQueryMap()
-                                    .containsKey(Constants.REQ_DEVICE_ID)) {
-                        if (!getResponseDeviceList(payloadData)
-                                .containsAll(mRequest.getUriQueryMap()
-                                        .get(Constants.REQ_DEVICE_ID))) {
-                            mSrcDevice.sendResponse(
-                                    MessageBuilder.createResponse(mRequest,
-                                            ResponseStatus.BAD_REQUEST));
-                        }
-                    } else {
-                        String additionalQuery = makeAdditionalQuery(
-                                payloadData);
-                        mRequest = MessageBuilder.modifyRequest(mRequest, null,
-                                (mRequest.getUriQuery() != null
-                                        ? mRequest.getUriQuery() : "")
-                                        + (additionalQuery == null ? ""
-                                                : ";" + additionalQuery),
-                                null, null);
-                    }
+                    StringBuilder additionalQuery = makeAdditionalQuery(
+                            devices);
+                    String uriQuery = (additionalQuery != null
+                            ? additionalQuery.toString() : "")
+                            + (mRequest.getUriQuery() != null
+                                    ? (";" + mRequest.getUriQuery()) : "");
+                    mRequest = MessageBuilder.modifyRequest(mRequest, null,
+                            uriQuery, null, null);
 
                     mRDServer.sendRequest(mRequest, mSrcDevice);
                     break;
+
                 default:
-                    mSrcDevice.sendResponse(MessageBuilder.createResponse(
-                            mRequest, ResponseStatus.BAD_REQUEST));
+                    mSrcDevice.sendResponse(response);
             }
         }
 
-        private String makeAdditionalQuery(
-                HashMap<String, Object> payloadData) {
+        private StringBuilder makeAdditionalQuery(
+                ArrayList<String> deviceList) {
 
             StringBuilder additionalQuery = new StringBuilder();
-            List<String> deviceList = getResponseDeviceList(payloadData);
+
+            if (deviceList == null) {
+                return null;
+            }
 
             if (deviceList == null) {
                 return null;
@@ -135,15 +123,17 @@ public class ResourceFind extends Resource {
                     additionalQuery.append(";");
                 }
             }
-            return additionalQuery.toString();
+            return additionalQuery;
         }
 
         @SuppressWarnings("unchecked")
         private List<String> getResponseDeviceList(
                 HashMap<String, Object> payloadData) {
-            List<String> deviceList = (List<String>) payloadData
-                    .get(Constants.REQ_DEVICE_LIST);
-
+            ArrayList<String> deviceList = new ArrayList<>();
+            if (payloadData.containsKey(Constants.REQ_DEVICE_LIST)) {
+                deviceList = (ArrayList<String>) payloadData
+                        .get(Constants.REQ_DEVICE_LIST);
+            }
             return deviceList;
         }
     }
@@ -155,11 +145,18 @@ public class ResourceFind extends Resource {
                 .containsKey(Constants.REQ_DEVICE_ID)) {
 
             mRDServer.sendRequest(request, srcDevice);
-        } else {
-            StringBuffer uriQuery = new StringBuffer();
-            uriQuery.append(
-                    Constants.REQ_MEMBER_ID + "=" + srcDevice.getUserId());
 
+        } else {
+            StringBuffer additionalQuery = new StringBuffer();
+            additionalQuery
+                    .append(Constants.USER_ID + "=" + srcDevice.getUserId());
+            additionalQuery.append(";");
+            additionalQuery.append(
+                    Constants.REQ_MEMBER_LIST + "=" + srcDevice.getUserId());
+
+            String uriQuery = additionalQuery.toString()
+                    + (request.getUriQuery() != null
+                            ? (";" + request.getUriQuery()) : "");
             StringBuffer uriPath = new StringBuffer();
             uriPath.append(Constants.PREFIX_OIC + "/");
             uriPath.append(Constants.ACL_URI + "/");
@@ -167,7 +164,7 @@ public class ResourceFind extends Resource {
             uriPath.append(srcDevice.getUserId());
 
             IRequest requestToAS = MessageBuilder.createRequest(
-                    RequestMethod.GET, uriPath.toString(), uriQuery.toString());
+                    RequestMethod.GET, uriPath.toString(), uriQuery);
 
             mASServer.sendRequest(requestToAS,
                     new AccountReceiveHandler(request, srcDevice));

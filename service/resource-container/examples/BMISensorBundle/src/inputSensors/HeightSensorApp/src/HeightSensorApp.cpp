@@ -52,7 +52,7 @@ OCResourceHandle HeightResource::getHandle()
 
 void HeightResource::setResourceRepresentation(OCRepresentation &rep)
 {
-    double tempHeight;
+    double tempHeight = 0.0;
 
     rep.getValue("height", tempHeight);
 
@@ -80,7 +80,7 @@ void *TestSensorVal(void *param)
 
     bool bFlag = true;
     int nSleep_time = INTERVAL_FOR_CHECK;
-    double nHeight;
+    double nHeight = 0.0;
 
     std::cout << "[HeightSensorAPP] ::" << __func__ << " is called."
               << std::endl;
@@ -160,8 +160,6 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
 
                 if (response)
                 {
-                    // TODO Error Code
-                    response->setErrorCode(200);
                     response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
                 }
             }
@@ -181,7 +179,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
 
         if (requestFlag & RequestHandlerFlag::ObserverFlag)
         {
-            pthread_t threadId;
+            pthread_t threadId = {};
 
             cout << "\t\trequestFlag : Observer\n";
             g_Observation = 1;
@@ -222,7 +220,7 @@ int main()
 
         OC::OCPlatform::stopPresence();
     }
-    catch (std::exception e)
+    catch (std::exception & e)
     {
         cout << e.what() << endl;
     }

@@ -80,7 +80,7 @@ int utclose(FILE *fp)
 int utunlink(const char *path)
 {
     EXPECT_TRUE((path != NULL)) << "utunlink\n";
-    return unlink(path);
+    return remove(path);
 }
 static OCPersistentStorage gpsi;
 

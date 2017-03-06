@@ -547,12 +547,15 @@ namespace OCRepresentationTest
         rep[AttrName] = nullptr;
         EXPECT_TRUE(rep.isNULL(AttrName));
 
+// @todo: Re-enable this part of the unit test. MSVC can't assign to nullptr_t.
+#ifndef _MSC_VER
         std::nullptr_t repout = rep[AttrName];
         std::nullptr_t repout2;
         repout2 = rep[AttrName];
 
         EXPECT_EQ(nullptr, repout);
         EXPECT_EQ(nullptr, repout2);
+#endif
 
         double badout;
         EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
@@ -1444,4 +1447,23 @@ namespace OCRepresentationTest
             }
         }
     }
+
+    TEST(OCRepresentationHostTest, ValidHost)
+    {
+        OCDevAddr addr = {OC_DEFAULT_ADAPTER, OC_IP_USE_V6, 5000, "fe80::1%eth0", 0, "", ""};
+
+        OCRepresentation rep;
+        rep.setDevAddr(addr);
+        std::string host = rep.getHost();
+        EXPECT_STREQ("coap://[fe80::1%25eth0]:5000", host.c_str());
+    }
+
+    TEST(OCRepresentationHostTest, InvalidHost)
+    {
+        OCDevAddr addr = {OC_DEFAULT_ADAPTER, OC_IP_USE_V6, 5000, "fe80::1%%", 0, "", ""};
+
+        OCRepresentation rep;
+        EXPECT_ANY_THROW(rep.setDevAddr(addr));
+    }
+
 }

@@ -31,6 +31,7 @@
 #include "canetworkconfigurator.h"
 #include "cainterfacecontroller.h"
 #include "logger.h"
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 #include "ca_adapter_net_ssl.h"
 #endif // __WITH_DTLS__ or __WITH_TLS__
@@ -54,22 +55,17 @@ extern void CAsetCredentialTypesCallback(CAgetCredentialTypesHandler credCallbac
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
 
-CAResult_t CAInitialize()
+CAResult_t CAInitialize(CATransportAdapter_t transportType)
 {
-    OIC_LOG_V(DEBUG, TAG, "IoTivity version is v%s", IOTIVITY_VERSION);
-    OIC_LOG(DEBUG, TAG, "CAInitialize");
+    OIC_LOG_V(DEBUG, TAG, "CAInitialize type : %d", transportType);
 
     if (!g_isInitialized)
     {
-        if (0 != OCSeedRandom())
-        {
-            OIC_LOG(ERROR, TAG, "Seed Random Failed");
-        }
-
-        CAResult_t res = CAInitializeMessageHandler();
+        CAResult_t res = CAInitializeMessageHandler(transportType);
         if (res != CA_STATUS_OK)
         {
             OIC_LOG(ERROR, TAG, "CAInitialize has failed");
+            CATerminateMessageHandler();
             return res;
         }
         g_isInitialized = true;
@@ -142,7 +138,7 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
 }
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 const CASecureEndpoint_t *CAGetSecureEndpointData(const CAEndpoint_t *peer)
 {
     OIC_LOG(DEBUG, TAG, "IN CAGetSecurePeerInfo");
@@ -156,11 +152,48 @@ const CASecureEndpoint_t *CAGetSecureEndpointData(const CAEndpoint_t *peer)
     OIC_LOG(DEBUG, TAG, "OUT CAGetSecurePeerInfo");
     return GetCASecureEndpointData(peer);
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
+
+bool CASetSecureEndpointAttribute(const CAEndpoint_t* peer, uint32_t attribute)
+{
+    bool success = false;
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    if (!g_isInitialized)
+    {
+        OIC_LOG(DEBUG, TAG, "CA is not initialized");
+    }
+    else
+    {
+        success = SetCASecureEndpointAttribute(peer, attribute);
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "Out %s -> %u", __func__, (uint32_t)success);
+    return success;
+}
+
+bool CAGetSecureEndpointAttributes(const CAEndpoint_t* peer, uint32_t* attributes)
+{
+    bool success = false;
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    if (!g_isInitialized)
+    {
+        OIC_LOG(DEBUG, TAG, "CA is not initialized");
+    }
+    else
+    {
+        success = GetCASecureEndpointAttributes(peer, attributes);
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "Out %s -> %u", __func__, (uint32_t)success);
+    return success;
+}
 
 CAResult_t CAregisterSslHandshakeCallback(CAErrorCallback tlsHandshakeCallback)
 {
     OIC_LOG(DEBUG, TAG, "CAregisterSslHandshakeCallback");
+
     if(!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
@@ -254,7 +287,7 @@ void CADestroyToken(CAToken_t token)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size)
+CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, size_t *size)
 {
     OIC_LOG(DEBUG, TAG, "CAGetNetworkInformation");
 
@@ -356,8 +389,6 @@ CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *re
 
 CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
 {
-    OIC_LOG_V(DEBUG, TAG, "Selected network : %d", interestedNetwork);
-
     if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
@@ -475,33 +506,43 @@ CAResult_t CAHandleRequestResponse()
     return CA_STATUS_OK;
 }
 
-#if defined (__WITH_DTLS__) || defined(__WITH_TLS__)
 CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
 {
+    (void)(adapter); // prevent unused-parameter warning when building release variant
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
     OIC_LOG_V(DEBUG, TAG, "cipher : %d , CATransportAdapter : %d", cipher, adapter);
-    if (CA_STATUS_OK != CAsetTlsCipherSuite(cipher))
+    CAResult_t res = CA_STATUS_FAILED;
+#if defined (__WITH_DTLS__) || defined(__WITH_TLS__)
+    res = CAsetTlsCipherSuite(cipher);
+    if (CA_STATUS_OK != res)
     {
-        OIC_LOG_V(ERROR, TAG, "Out %s", __func__);
-        return CA_STATUS_FAILED;
+        OIC_LOG_V(ERROR, TAG, "Failed to CAsetTlsCipherSuite : %d", res);
     }
+#else
+    (void)(cipher); // prevent unused-parameter warning
+    OIC_LOG(ERROR, TAG, "Method not supported");
+#endif
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-    return CA_STATUS_OK;
+    return res;
 }
 
 CAResult_t CAEnableAnonECDHCipherSuite(const bool enable)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAEnableAnonECDHCipherSuite");
-
+    OIC_LOG(DEBUG, TAG, "CAEnableAnonECDHCipherSuite");
+    CAResult_t res = CA_STATUS_FAILED;
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     // TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256    0xFF00 replaces 0xC018
-    // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256    0xC037
-    if (CA_STATUS_OK != CAsetTlsCipherSuite(enable ? 0xFF00 : 0xC037))
+    res = CAsetTlsCipherSuite(enable ? 0xFF00 : 0x00);
+    if (CA_STATUS_OK != res)
     {
-        return CA_STATUS_FAILED;
+        OIC_LOG_V(ERROR, TAG, "Failed to CAsetTlsCipherSuite : %d", res);
     }
+#else
+    (void)(enable); // prevent unused-parameter compiler warning
+    OIC_LOG(ERROR, TAG, "Method not supported");
 #endif
-    return CA_STATUS_OK;
+    OIC_LOG_V(ERROR, TAG, "Out %s", __func__);
+    return res;
 }
 
 CAResult_t CAGenerateOwnerPSK(const CAEndpoint_t* endpoint,
@@ -510,10 +551,9 @@ CAResult_t CAGenerateOwnerPSK(const CAEndpoint_t* endpoint,
                     const uint8_t* provServerDeviceID, const size_t provServerDeviceIDLen,
                     uint8_t* ownerPSK, const size_t ownerPskSize)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN : CAGenerateOwnerPSK");
-
-    CAResult_t res = CA_STATUS_OK;
-
+    OIC_LOG(DEBUG, TAG, "IN : CAGenerateOwnerPSK");
+    CAResult_t res = CA_STATUS_FAILED;
+#if defined (__WITH_DTLS__) || defined(__WITH_TLS__)
     //newOwnerLabel and prevOwnerLabe can be NULL
     if (!endpoint || !label || 0 == labelLen || !ownerPSK || 0 == ownerPskSize)
     {
@@ -524,22 +564,31 @@ CAResult_t CAGenerateOwnerPSK(const CAEndpoint_t* endpoint,
                                       rsrcServerDeviceID, rsrcServerDeviceIDLen,
                                       provServerDeviceID, provServerDeviceIDLen,
                                       ownerPSK, ownerPskSize);
-
     if (CA_STATUS_OK != res)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to CAGenerateOwnerPSK : %d", res);
     }
-
-    OIC_LOG_V(DEBUG, TAG, "OUT : CAGenerateOwnerPSK");
-
+#else
+    (void)(endpoint); // prevent unused-parameter compiler warnings
+    (void)(label);
+    (void)(labelLen);
+    (void)(rsrcServerDeviceID);
+    (void)(rsrcServerDeviceIDLen);
+    (void)(provServerDeviceID);
+    (void)(provServerDeviceIDLen);
+    (void)(ownerPSK);
+    (void)(ownerPskSize);
+    OIC_LOG(ERROR, TAG, "Method not supported");
+#endif
+    OIC_LOG(DEBUG, TAG, "OUT : CAGenerateOwnerPSK");
     return res;
 }
 
 CAResult_t CAInitiateHandshake(const CAEndpoint_t *endpoint)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN : CAInitiateHandshake");
-    CAResult_t res = CA_STATUS_OK;
-
+    OIC_LOG(DEBUG, TAG, "IN : CAInitiateHandshake");
+    CAResult_t res = CA_STATUS_FAILED;
+#if defined (__WITH_DTLS__) || defined(__WITH_TLS__)
     if (!endpoint)
     {
         return CA_STATUS_INVALID_PARAM;
@@ -550,17 +599,19 @@ CAResult_t CAInitiateHandshake(const CAEndpoint_t *endpoint)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to CAinitiateSslHandshake : %d", res);
     }
-
-    OIC_LOG_V(DEBUG, TAG, "OUT : CAInitiateHandshake");
-
+#else
+    (void)(endpoint); // prevent unused-parameter compiler warning
+    OIC_LOG(ERROR, TAG, "Method not supported");
+#endif
+    OIC_LOG(DEBUG, TAG, "OUT : CAInitiateHandshake");
     return res;
 }
 
 CAResult_t CAcloseSslSession(const CAEndpoint_t *endpoint)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN : CAcloseSslSession");
-    CAResult_t res = CA_STATUS_OK;
-
+    OIC_LOG(DEBUG, TAG, "IN : CAcloseSslSession");
+    CAResult_t res = CA_STATUS_FAILED;
+#if defined (__WITH_DTLS__) || defined(__WITH_TLS__)
     if (!endpoint)
     {
         return CA_STATUS_INVALID_PARAM;
@@ -571,13 +622,13 @@ CAResult_t CAcloseSslSession(const CAEndpoint_t *endpoint)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to CAsslClose : %d", res);
     }
-
-    OIC_LOG_V(DEBUG, TAG, "OUT : CAcloseSslSession");
-
+#else
+    (void)(endpoint); // prevent unused-parameter compiler warning
+    OIC_LOG(ERROR, TAG, "Method not supported");
+#endif
+    OIC_LOG(DEBUG, TAG, "OUT : CAcloseSslSession");
     return res;
 }
-
-#endif /* __WITH_DTLS__ */
 
 #ifdef TCP_ADAPTER
 void CARegisterKeepAliveHandler(CAKeepAliveConnectionCallback ConnHandler)

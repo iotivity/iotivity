@@ -106,7 +106,6 @@ void IoTServer::temperatureObserverLoop()
     usleep(1500000);
     cout << "Temperature Observer Callback" << endl;
     shared_ptr<OCResourceResponse> resourceResponse(new OCResourceResponse());
-    resourceResponse->setErrorCode(200);
     resourceResponse->setResourceRepresentation(getTemperatureRepresentation(),
     EDISON_RESOURCE_INTERFACE);
     OCStackResult result = OCPlatform::notifyListOfObservers(m_temperatureResource,
@@ -124,7 +123,6 @@ void IoTServer::lightObserverLoop()
     usleep(1500000);
     cout << "Light Observer Callback" << endl;
     shared_ptr<OCResourceResponse> resourceResponse(new OCResourceResponse());
-    resourceResponse->setErrorCode(200);
     resourceResponse->setResourceRepresentation(getLightRepresentation(),
     EDISON_RESOURCE_INTERFACE);
     OCStackResult result = OCPlatform::notifyListOfObservers(m_ambientLightResource,
@@ -166,7 +164,6 @@ OCEntityHandlerResult IoTServer::lightEntityHandler(shared_ptr<OCResourceRequest
                 cout << "GET request for ambient light reading" << endl;
                 if (Response)
                 {
-                    Response->setErrorCode(200);
                     Response->setResponseResult(OC_EH_OK);
                     Response->setResourceRepresentation(getLightRepresentation());
                     if (OCPlatform::sendResponse(Response) == OC_STACK_OK)
@@ -221,7 +218,6 @@ OCEntityHandlerResult IoTServer::temperatureEntityHandler(shared_ptr<OCResourceR
                 cout << "GET request for temperature sensor reading" << endl;
                 if (Response)
                 {
-                    Response->setErrorCode(200);
                     Response->setResponseResult(OC_EH_OK);
                     Response->setResourceRepresentation(getTemperatureRepresentation());
                     if (OCPlatform::sendResponse(Response) == OC_STACK_OK)
@@ -300,7 +296,6 @@ OCEntityHandlerResult IoTServer::LEDEntityHandler(shared_ptr<OCResourceRequest> 
                 putLEDRepresentation();
                 if (Response)
                 {
-                    Response->setErrorCode(200);
                     Response->setResourceRepresentation(getLEDRepresentation());
                     Response->setResponseResult(OC_EH_OK);
                     if (OCPlatform::sendResponse(Response) == OC_STACK_OK)
@@ -314,7 +309,6 @@ OCEntityHandlerResult IoTServer::LEDEntityHandler(shared_ptr<OCResourceRequest> 
                 cout << "GET request for platform LED" << endl;
                 if (Response)
                 {
-                    Response->setErrorCode(200);
                     Response->setResourceRepresentation(getLEDRepresentation());
                     Response->setResponseResult(OC_EH_OK);
                     if (OCPlatform::sendResponse(Response) == OC_STACK_OK)

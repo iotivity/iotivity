@@ -45,16 +45,31 @@ typedef enum CAProtocol
 } CAProtocol_t;
 
 /**
- * TCP Session Information for IPv4 TCP transport
+ * TCP Connection State.
  */
-typedef struct
+typedef enum
+{
+    CONNECTING = 0,
+    CONNECTED,
+    DISCONNECTED
+} CATCPConnectionState_t;
+
+/**
+ * TCP Session Information for IPv4/IPv6 TCP transport
+ */
+typedef struct CATCPSessionInfo_t
 {
     CASecureEndpoint_t sep;             /**< secure endpoint information */
-    int fd;                             /**< file descriptor info */
+    CASocketFd_t fd;                    /**< file descriptor info */
     unsigned char* data;                /**< received data from remote device */
     size_t len;                         /**< received data length */
-    size_t totalLen;                    /**< total data length required to receive */
+    size_t totalLen;                    /**< total coap data length required to receive */
+    unsigned char tlsdata[18437];       /**< tls data(rfc5246: TLSCiphertext max (2^14+2048+5)) */
+    size_t tlsLen;                      /**< received tls data length */
     CAProtocol_t protocol;              /**< application-level protocol */
+    CATCPConnectionState_t state;       /**< current tcp session state */
+    bool isClient;                      /**< Host Mode of Operation. */
+    struct CATCPSessionInfo_t *next;    /**< Linked list; for multiple session list. */
 } CATCPSessionInfo_t;
 
 /**
@@ -120,7 +135,7 @@ CAResult_t CAStartTCPDiscoveryServer();
  * @param[in]   data           Data which is required to be sent.
  * @param[in]   dataLen        Size of data to be sent.
  * @param[in]   dataType       Data type which is REQUEST or RESPONSE.
- * @note  dataLen must be > 0.
+ * @note  dataLen must be > 0 and <= INT_MAX.
  * @return  The number of bytes sent on the network, or -1 upon error.
  */
 int32_t CASendTCPUnicastData(const CAEndpoint_t *endpoint,
@@ -134,7 +149,7 @@ int32_t CASendTCPUnicastData(const CAEndpoint_t *endpoint,
  * @param[in]   data           Data which is required to be sent.
  * @param[in]   dataLen        Size of data to be sent.
  * @param[in]   dataType       Data type which is REQUEST or RESPONSE.
- * @note  dataLen must be > 0.
+ * @note  dataLen must be > 0 and <= INT_MAX.
  * @return  The number of bytes sent on the network, or -1 upon error.
  */
 int32_t CASendTCPMulticastData(const CAEndpoint_t *endpoint,
@@ -148,7 +163,7 @@ int32_t CASendTCPMulticastData(const CAEndpoint_t *endpoint,
  * @param[out]   size        Number of local connectivity structures.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, uint32_t *size);
+CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, size_t *size);
 
 /**
  * Read Synchronous API callback.

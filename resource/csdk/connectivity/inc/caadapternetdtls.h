@@ -22,7 +22,7 @@
 
 #include "dtls.h"
 #include "uarraylist.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "caadapterutils.h"
 #include "cainterface.h"
 #include "cacommon.h"
@@ -33,10 +33,10 @@
 #define MAX_SUPPORTED_ADAPTERS 2
 
 typedef void (*CAPacketReceivedCallback)(const CASecureEndpoint_t *sep,
-                                         const void *data, uint32_t dataLength);
+                                         const void *data, size_t dataLength);
 
 typedef void (*CAPacketSendCallback)(CAEndpoint_t *endpoint,
-                                         const void *data, uint32_t dataLength);
+                                     const void *data, size_t dataLength);
 
 /**
  * Data structure for holding the send and recv callbacks.

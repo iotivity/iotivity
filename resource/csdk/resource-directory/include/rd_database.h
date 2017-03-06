@@ -30,11 +30,9 @@ extern "C" {
 /**
  * Opens the RD publish database.
  *
- * @param path to the database file.
- *
  * @return ::OC_STACK_OK in case of success or else other value.
  */
-OCStackResult OCRDDatabaseInit(const char *path);
+OCStackResult OCRDDatabaseInit();
 
 /**
  * Stores in database the published resource.
@@ -47,35 +45,17 @@ OCStackResult OCRDDatabaseInit(const char *path);
 OCStackResult OCRDDatabaseStoreResources(const OCRepPayload *payload, const OCDevAddr *address);
 
 /**
- * Search the RD database for queries.
+ * Delete the RD resources
  *
- * @param interfaceType is the interface type that is queried.
- * @param resourceType is the resource type that is queried.
- * @param discPayload is NULL if no resource found or else OCDiscoveryPayload with the details
- * about the resource.
- *
- * @return ::OC_STACK_OK in case of success or else other value.
- */
-OCStackResult OCRDDatabaseCheckResources(const char *interfaceType, const char *resourceType,
-    OCDiscoveryPayload *discPayload);
-
-/**
- * Updates the RD resource
- *
- * @param deviceId of the device for which resources will be update.
+ * @param deviceId of the device containing the resource(s) to be deleted.
+ * @param instanceIds the resource(s) to be deleted.  If NULL then all resources
+ *                    belonging to the device will be deleted.
+ * @param nInstanceIds the number of instanceIds
  *
  * @return ::OC_STACK_OK in case of success or else other value.
  */
-OCStackResult OCRDDatabaseUpdateDevice(const char *deviceId);
-
-/**
- * Delete the RD resource
- *
- * @param deviceId of the device for which resources will be deleted.
- *
- * @return ::OC_STACK_OK in case of success or else other value.
- */
-OCStackResult OCRDDatabaseDeleteDevice(const char *deviceId);
+OCStackResult OCRDDatabaseDeleteResources(const char *deviceId, const uint8_t *instanceIds,
+                                          uint8_t nInstanceIds);
 
 /**
  * Close the RD publish database.

@@ -28,7 +28,7 @@
 #define CA_EDR_ENDPOINT_H_
 
 #include <bluetooth.h>
-
+#include <tizen.h>
 #include "cacommon.h"
 
 #ifdef __cplusplus
@@ -48,7 +48,7 @@ extern "C"
  * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
-CAResult_t CAEDRSendData(int serverFD, const void *data, uint32_t dataLength);
+CAResult_t CAEDRSendData(int serverFD, const char *addr, const void *data, uint32_t dataLength);
 
 #ifdef __cplusplus
 } /* extern "C" */

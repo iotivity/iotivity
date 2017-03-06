@@ -34,8 +34,24 @@
 #include "ocstack.h"
 #include "ocpayload.h"
 #include "rd_client.h"
+#include "OCPlatform.h"
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+#include "ocprovisioningmanager.h"
+#include "mbedtls/ssl_ciphersuites.h"
+#include <ca_adapter_net_ssl.h>
+#endif // WITH_DTLS__ or __WITH_TLS__
 
 using namespace std;
+
+#define VERIFY_SUCCESS(op)                          \
+{                                                   \
+    if (op != OC_STACK_OK)                          \
+    {                                               \
+        cout << #op << " failed!!" << endl;         \
+        goto exit;                                  \
+    }                                               \
+}
 
 #define DEFAULT_CONTEXT_VALUE 0x99
 #define DEFAULT_AUTH_SIGNUP "/oic/account"
@@ -447,6 +463,34 @@ OCStackApplicationResult handlePublishCB(void *ctx, OCDoHandle /*handle*/,
     return OC_STACK_KEEP_TRANSACTION;
 }
 
+OCStackResult SetDeviceInfo()
+{
+    OCResourceHandle resourceHandle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    if (resourceHandle == NULL)
+    {
+        cout << "Device Resource does not exist." << endl;
+        goto exit;
+    }
+
+    VERIFY_SUCCESS(OCBindResourceTypeToResource(resourceHandle, "oic.d.light"));
+
+    if (OCGetServerInstanceIDString() == NULL)
+    {
+        cout << "Device ID generation failed"  << endl;
+        goto exit;
+    }
+
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, "Living Room Light"));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                      "91debd4b-c875-47e1-9e1d-b1cd32baeb01"));
+
+    cout << "Device information published successfully." << endl;
+    return OC_STACK_OK;
+
+exit:
+    return OC_STACK_ERROR;
+}
+
 void PublishResources(string host)
 {
     cout << "Publishing resources..." << endl;
@@ -463,34 +507,24 @@ void PublishResources(string host)
     cbData.context = (void *) DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    cout << "Publish default resources" << endl;
+    cout << "Publishing default resources" << endl;
 
-    OCDeviceInfo devInfoRoomLight;
-    OCStringLL deviceType;
-
-    deviceType.value = "oic.d.light";
-    deviceType.next = NULL;
-    devInfoRoomLight.deviceName = "Living Room Light";
-    devInfoRoomLight.types = &deviceType;
-    devInfoRoomLight.specVersion = NULL;
-    devInfoRoomLight.dataModelVersions = NULL;
-
-    OCStackResult res = OCSetDeviceInfo(devInfoRoomLight);
+    OCStackResult res = SetDeviceInfo();
 
     if (res != OC_STACK_OK)
     {
-        cout << "Setting device info failed" << endl;
+        cout << "Publishing device info failed" << endl;
     }
 
-    res = OCRDPublish(host.c_str(), CT_ADAPTER_TCP, NULL, 0, &cbData, OC_LOW_QOS);
+    res = OCRDPublish(nullptr, host.c_str(), CT_ADAPTER_TCP, NULL, 0, &cbData, OC_LOW_QOS);
     if (res != OC_STACK_OK)
     {
         cout << "Unable to publish default resources to cloud" << endl;
     }
 
-    cout << "Publish user resources" << endl;
+    cout << "Publishing user resources" << endl;
 
-    res = OCRDPublish(host.c_str(), CT_ADAPTER_TCP, resourceHandles, 1, &cbData, OC_LOW_QOS);
+    res = OCRDPublish(nullptr, host.c_str(), CT_ADAPTER_TCP, resourceHandles, 1, &cbData, OC_LOW_QOS);
     if (res != OC_STACK_OK)
     {
         cout << "Unable to publish user resources to cloud" << endl;
@@ -534,7 +568,9 @@ void printRepresentation(OCRepPayloadValue *value)
     }
 }
 
-string g_host = "coap+tcp://";
+
+
+string g_host;
 
 OCStackApplicationResult handleLoginoutCB(void *ctx, OCDoHandle /*handle*/,
         OCClientResponse *clientResponse)
@@ -608,36 +644,100 @@ void PrintUsage()
 
 }
 
-static FILE *client_open(const char * /*path*/, const char *mode)
+int saveTrustCert(void)
 {
-    return fopen("./thin_resource_server.dat", mode);
+    OCStackResult res = OC_STACK_ERROR;
+    uint16_t g_credId = 0;
+
+    cout << "Save Trust Cert. Chain into Cred of SVR" <<endl;
+
+    ByteArray trustCertChainArray = {0, 0};
+
+    FILE *fp = fopen("rootca.crt", "rb+");
+
+    if (fp)
+    {
+        size_t fsize;
+        if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)) > 0)
+        {
+            trustCertChainArray.data = (uint8_t *)malloc(fsize);
+            trustCertChainArray.len = fsize;
+            if (NULL == trustCertChainArray.data)
+            {
+                cout << "Failed to allocate memory" << endl;
+                fclose(fp);
+                return res;
+            }
+            rewind(fp);
+            if (fsize != fread(trustCertChainArray.data, 1, fsize, fp))
+            {
+                 cout << "Certiface not read completely" << endl;
+            }
+            fclose(fp);
+        }
+    }
+
+    res = OCSaveTrustCertChain(trustCertChainArray.data, trustCertChainArray.len, OIC_ENCODING_PEM,&g_credId);
+
+    if(OC_STACK_OK != res)
+    {
+        cout << "OCSaveTrustCertChainBin API error" << endl;
+        return res;
+    }
+    cout << "CredId of Saved Trust Cert. Chain into Cred of SVR : " << g_credId << endl;
+
+    return res;
+}
+
+static FILE *client_open(const char *path, const char *mode)
+{
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen("./thin_resource_server.dat", mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int main(int argc, char *argv[])
 {
+	if (argc < 3)
+	{
+		cout << "Put \"[host-ipaddress:port] [tls mode(0,1)] \" for sign-up"
+			<< endl;
+		cout << "Put \"[host-ipaddress:port] [uid] [accessToken] [tls mode(0,1)]\" for sign-in and publish resources" <<
+			endl;
+		cout << "Put \"[host-ipaddress:port] [uid] [refreshToken] refresh [tls mode(0,1)]\" for accessToken to refresh" <<
+			endl;
+		return 0;
+	}
+
     string uId;
     string accessToken;
     string refreshToken;
     string authProvider;
     string authCode;
-
-    OCMode stackMode = OC_CLIENT_SERVER;
-
+	string tlsMode;
+    
+	OCMode stackMode = OC_CLIENT_SERVER;
+	tlsMode = argv[argc - 1];
     switch (argc)
     {
-        case 2:
+        case 3:
             cout << "Put auth provider name(ex: github)" << endl;
             cin >> authProvider;
             cout << "Put auth code(provided by auth provider)" << endl;
             cin >> authCode;
             break;
 
-        case 4:
+        case 5:
             uId = argv[2];
             accessToken = argv[3];
             break;
 
-        case 5:
+        case 6:
             uId = argv[2];
             refreshToken = argv[3];
             break;
@@ -647,7 +747,16 @@ int main(int argc, char *argv[])
             return 0;
     }
 
-    g_host += argv[1];
+	g_host = "coap+tcp://";
+
+	if (tlsMode == "1")
+	{
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+		g_host = "coaps+tcp://";
+#endif
+	}
+
+	g_host += argv[1];
 
     cout << "Host " << g_host.c_str() << endl;
 
@@ -667,23 +776,40 @@ int main(int argc, char *argv[])
 
     OCStackResult res = OC_STACK_ERROR;
 
+	if (tlsMode == "1")
+	{
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+		cout << "Security Mode" << endl;
+		if (CA_STATUS_OK != saveTrustCert())
+		{
+			cout << "saveTrustCert returned an error" << endl;
+		}
+
+		uint16_t cipher = MBEDTLS_TLS_RSA_WITH_AES_128_GCM_SHA256;
+		if (CA_STATUS_OK != CASelectCipherSuite(cipher, CA_ADAPTER_TCP))
+		{
+			cout << "CASelectCipherSuite returned an error" << endl;
+		}
+#endif
+	}
+
     switch (argc)
     {
-        case 2:
+        case 3:
             cout << "Sign-Up to cloud using " << authProvider << " " << authCode << endl;
             res = OCCloudSignup(g_host.c_str(), OCGetServerInstanceIDString(), authProvider.c_str(),
                                 authCode.c_str(), handleRegisterCB);
             cout << "OCCloudSignup return " << res << endl;
             break;
 
-        case 4:
+        case 5:
             cout << "Sign-In to cloud using " << accessToken << endl;
             res = OCCloudLogin(g_host.c_str(), uId.c_str(), OCGetServerInstanceIDString(),
                                accessToken.c_str(), handleLoginoutCB);
             cout << "OCCloudLogin return " << res << endl;
             break;
 
-        case 5:
+        case 6:
             cout << "Token refresh to cloud using the refresh token " << refreshToken << endl;
             res = OCCloudRefresh(g_host.c_str(), DEFAULT_AUTH_REFRESH, uId.c_str(),
                                  OCGetServerInstanceIDString(), refreshToken.c_str(), handleRegisterCB);

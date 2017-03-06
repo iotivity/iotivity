@@ -21,8 +21,6 @@
 #ifndef IOTVT_SRM_PSI_H
 #define IOTVT_SRM_PSI_H
 
-#include "cJSON.h"
-
 /**
  * Reads the Secure Virtual Database from PS into dynamically allocated
  * memory buffer.
@@ -33,17 +31,6 @@
  * @return char * reference to memory buffer containing SVR database.
  */
 char * GetSVRDatabase();
-
-/**
- * This method is used by a entity handlers of SVR's to update
- * SVR database.
- *
- * @param rsrcName string denoting the SVR name ("acl", "cred", "pstat" etc).
- * @param jsonObj JSON object containing the SVR contents.
- *
- * @return ::OC_STACK_OK for Success, otherwise some error value
- */
-OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj);
 
 /**
  * Reads the Secure Virtual Database from PS
@@ -65,7 +52,7 @@ OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **dat
  *
  * @param rsrcName is the name of the secure resource that will be updated.
  * @param cborPayload is the pointer holding cbor payload.
- * @param cborPayload is the size of the cbor payload.
+ * @param size is the size of the cbor payload.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value
  */

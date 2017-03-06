@@ -29,13 +29,16 @@ OCEntityHandlerRequest *NSCopyOCEntityHandlerRequest(OCEntityHandlerRequest *ent
 
     if (copyOfRequest)
     {
-        // Do shallow copy
         memcpy(copyOfRequest, entityHandlerRequest, sizeof(OCEntityHandlerRequest));
+        copyOfRequest->payload = NULL;
+        copyOfRequest->query = NULL;
+        copyOfRequest->numRcvdVendorSpecificHeaderOptions = 0;
+        copyOfRequest->rcvdVendorSpecificHeaderOptions = NULL;
 
-        if (copyOfRequest->query)
+        if (entityHandlerRequest->query)
         {
             copyOfRequest->query = OICStrdup(entityHandlerRequest->query);
-            if(!copyOfRequest->query)
+            if (!copyOfRequest->query)
             {
                 NS_LOG(ERROR, "Copy failed due to allocation failure");
                 OICFree(copyOfRequest);
@@ -48,10 +51,6 @@ OCEntityHandlerRequest *NSCopyOCEntityHandlerRequest(OCEntityHandlerRequest *ent
             copyOfRequest->payload = (OCPayload *)
                     (OCRepPayloadClone ((OCRepPayload*) entityHandlerRequest->payload));
         }
-
-        // Ignore vendor specific header options for example
-        copyOfRequest->numRcvdVendorSpecificHeaderOptions = 0;
-        copyOfRequest->rcvdVendorSpecificHeaderOptions = NULL;
     }
 
     if (copyOfRequest)
@@ -107,7 +106,7 @@ NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
 {
     NSMessage * newMsg = NULL;
 
-    if(copyMsg == NULL)
+    if (copyMsg == NULL)
     {
         NS_LOG(ERROR, "Copy Msg is NULL");
         return NULL;
@@ -119,7 +118,7 @@ NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
     newMsg->messageId = copyMsg->messageId;
     OICStrcpy(newMsg->providerId, UUID_STRING_SIZE, copyMsg->providerId);
 
-    if(copyMsg->dateTime)
+    if (copyMsg->dateTime)
     {
         newMsg->dateTime = OICStrdup(copyMsg->dateTime);
     }
@@ -175,7 +174,7 @@ NSSyncInfo* NSDuplicateSync(NSSyncInfo * copyMsg)
 {
     NSSyncInfo * newMsg = NULL;
 
-    if(!copyMsg)
+    if (!copyMsg)
     {
         NS_LOG(ERROR, "Copy Msg is NULL");
         return NULL;
@@ -183,7 +182,7 @@ NSSyncInfo* NSDuplicateSync(NSSyncInfo * copyMsg)
 
     newMsg = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
 
-    if(!newMsg)
+    if (!newMsg)
     {
         NS_LOG(ERROR, "newMsg is NULL");
         return NULL;
@@ -215,7 +214,7 @@ NSConsumer* NSDuplicateConsumer(NSConsumer * copyMsg)
 {
     NSConsumer * newMsg = NULL;
 
-    if(copyMsg == NULL)
+    if (copyMsg == NULL)
     {
         NS_LOG(ERROR, "Copy Msg is NULL");
         return NULL;
@@ -223,7 +222,7 @@ NSConsumer* NSDuplicateConsumer(NSConsumer * copyMsg)
 
     newMsg = (NSConsumer *)OICMalloc(sizeof(NSConsumer));
 
-    if(!newMsg)
+    if (!newMsg)
     {
         NS_LOG(ERROR, "newMsg is NULL");
         return NULL;
@@ -239,7 +238,7 @@ NSConsumer* NSDuplicateConsumer(NSConsumer * copyMsg)
 void NSDuplicateSetPropertyString(OCRepPayload** msgPayload, const char * name,
         const char * copyString)
 {
-    if(copyString)
+    if (copyString)
     {
         OCRepPayloadSetPropString(*msgPayload, name, copyString);
     }
@@ -248,7 +247,7 @@ void NSDuplicateSetPropertyString(OCRepPayload** msgPayload, const char * name,
 void NSDuplicateSetPropertyInt(OCRepPayload** msgPayload, const char * name,
         int64_t value)
 {
-    if(value)
+    if (value)
     {
         OCRepPayloadSetPropInt(*msgPayload, name, value);
     }
@@ -260,11 +259,13 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
     char * providerId = NULL;
     int64_t state = 0;
 
-    if(!payload)
+    if (!payload)
     {
         return NULL;
     }
+
     NSSyncInfo * retSync = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
+
     if (!retSync)
     {
         return NULL;
@@ -272,8 +273,8 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
 
     retSync->messageId = 0;
     retSync->state = NS_SYNC_READ;
-
     OCRepPayload * repPayload = (OCRepPayload *)payload;
+
     if (!OCRepPayloadGetPropInt(repPayload, NS_ATTRIBUTE_MESSAGE_ID,
             (int64_t *)&retSync->messageId))
     {
@@ -297,7 +298,7 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
     OICStrcpy(retSync->providerId, UUID_STRING_SIZE, providerId);
     OICFree(providerId);
 
-    NS_LOG_V(DEBUG, "Provider ID : %s", retSync->providerId);
+    NS_LOG_V(INFO_PRIVATE, "Provider ID : %s", retSync->providerId);
     NS_LOG_V(DEBUG, "Sync ID : %lld", (long long int)retSync->messageId);
     NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->state);
 
@@ -310,9 +311,9 @@ NSResult NSGenerateUUIDStr(char uuidStr[UUID_STRING_SIZE])
 {
     uint8_t uuid[UUID_SIZE] = { 0, };
 
-    if (RAND_UUID_OK == OCGenerateUuid(uuid))
+    if (OCGenerateUuid(uuid))
     {
-        if (RAND_UUID_OK == OCConvertUuidToString(uuid, uuidStr))
+        if (OCConvertUuidToString(uuid, uuidStr))
         {
             return NS_OK;
         }
@@ -329,7 +330,7 @@ char * NSGetValueFromQuery(char *query, char * compareKey)
 
     NS_LOG_V(INFO, "NS Query Params = %s", query);
 
-    if(!query || query[0] == '\0' || !strlen(query))
+    if (!query || query[0] == '\0' || !strlen(query))
     {
         NS_LOG(ERROR, "query is null or \\0 or size is 0");
         return NULL;
@@ -369,7 +370,7 @@ char * NSGetValueFromQuery(char *query, char * compareKey)
 
 NSResult NSFreeMalloc(char ** obj)
 {
-    if(*obj)
+    if (*obj)
     {
         OICFree(*obj);
         *obj = NULL;
@@ -381,20 +382,20 @@ NSResult NSFreeMalloc(char ** obj)
 
 NSMediaContents * NSDuplicateMediaContents(NSMediaContents * copyObj)
 {
-    if(!copyObj)
+    if (!copyObj)
     {
         return NULL;
     }
 
     NSMediaContents * newObj = (NSMediaContents *)OICMalloc(sizeof(NSMediaContents));
 
-    if(!newObj)
+    if (!newObj)
     {
         NS_LOG(ERROR, "contents newObj is NULL");
         return NULL;
     }
 
-    if(copyObj->iconImage)
+    if (copyObj->iconImage)
     {
         newObj->iconImage = OICStrdup(copyObj->iconImage);
     }
@@ -404,7 +405,7 @@ NSMediaContents * NSDuplicateMediaContents(NSMediaContents * copyObj)
 
 NSResult NSFreeMediaContents(NSMediaContents * obj)
 {
-    if(!obj)
+    if (!obj)
     {
         return NS_FAIL;
     }
@@ -419,7 +420,7 @@ NSMessage * NSInitializeMessage()
 {
     NSMessage * msg = (NSMessage *)OICMalloc(sizeof(NSMessage));
 
-    if(!msg)
+    if (!msg)
     {
         NS_LOG(ERROR, "Msg is NULL");
         return NULL;
@@ -449,7 +450,8 @@ OCRepPayloadValue* NSPayloadFindValue(const OCRepPayload* payload, const char* n
     }
 
     OCRepPayloadValue* val = payload->values;
-    while(val)
+
+    while (val)
     {
         if (0 == strcmp(val->name, name))
         {
@@ -465,7 +467,7 @@ NSTopicList * NSInitializeTopicList()
 {
     NSTopicList * topicList = (NSTopicList *)OICMalloc(sizeof(NSTopicList));
 
-    if(!topicList)
+    if (!topicList)
     {
         NS_LOG(ERROR, "topicList is NULL");
         return NULL;
@@ -478,16 +480,142 @@ NSTopicList * NSInitializeTopicList()
     return topicList;
 }
 
-NSResult NSFreeTopicList(NSTopicList * topicList)
+OCDevAddr * NSChangeAddress(const char * inputaddress)
 {
-    if (!topicList)
+    NS_VERIFY_NOT_NULL(inputaddress, NULL);
+
+    char * address = (char *)inputaddress;
+    char * schema = strstr(inputaddress, "//");
+    if (schema)
     {
-        return NS_ERROR;
+        address = schema + 2;
+    }
+    size_t prefixLen = schema - inputaddress;
+    if (prefixLen <= 0)
+    {
+        NS_LOG(ERROR, "Invalid Input address.");
+        return NULL;
     }
 
-    //TODO:Free Topic List
+    OCTransportFlags flags = OC_DEFAULT_FLAGS;
+    OCTransportAdapter adapter = OC_ADAPTER_IP;
+    if (strstr(inputaddress, "coap+tcp://"))
+    {
+        NS_LOG(DEBUG, "address : TCP");
+        adapter = OC_ADAPTER_TCP;
+    }
+    else if (strstr(inputaddress, "coaps://"))
+    {
+        NS_LOG(DEBUG, "address : UDP + SECURED");
+        flags |= OC_FLAG_SECURE;
+    }
+    else if (strstr(inputaddress, "coaps+tcp://"))
+    {
+        NS_LOG(DEBUG, "address : TCP + SECURED");
+        flags |= OC_FLAG_SECURE;
+        adapter = OC_ADAPTER_TCP;
+    }
+    else if (strstr(inputaddress, "coap://"))
+    {
+        NS_LOG(DEBUG, "address : UDP");
+    }
+    else
+    {
+        NS_LOG(ERROR, "Invalid CoAP Schema.");
+        return NULL;
+    }
 
+    OCDevAddr * retAddr = NULL;
+    retAddr = (OCDevAddr *) OICMalloc(sizeof(OCDevAddr));
+    NS_VERIFY_NOT_NULL(retAddr, NULL);
 
-    return NS_OK;
+    char * start = address;
+    char * end = address;
+    if (address[0] == '[')
+    {
+        flags |= OC_IP_USE_V6;
+        end = strchr(++address, ']');
+        if (!end || end <= start)
+        {
+            NS_LOG(ERROR, "Invalid Input Address - IPv6.");
+            NSOICFree(retAddr);
+            return NULL;
+        }
+        memset(retAddr->addr, 0, (size_t)MAX_ADDR_STR_SIZE);
+        OICStrcpy(retAddr->addr, (size_t)(end-start), address);
+    }
+    else
+    {
+        flags |= OC_IP_USE_V4;
+        end = strchr(address, ':');
+        if (!end || end <= start)
+        {
+            NS_LOG(ERROR, "Invalid Input Address - IPv4.");
+            NSOICFree(retAddr);
+            return NULL;
+        }
+        char * end2 = strchr(end + 1, ':');
+        if (end2)
+        {
+            NS_LOG(ERROR, "Invalid Input Address - IPv4.");
+            NSOICFree(retAddr);
+            return NULL;
+        }
+        memset(retAddr->addr, 0, (size_t)MAX_ADDR_STR_SIZE);
+        OICStrcpy(retAddr->addr, (size_t)(end-start)+1, address);
+    }
+
+    retAddr->adapter = adapter;
+    retAddr->flags = flags;
+
+    address = end + 1;
+    int tmp = 0;
+    if (flags & OC_IP_USE_V6)
+    {
+        address++;
+    }
+    uint16_t port = address[tmp++] - '0';
+
+    while(true)
+    {
+        if (address[tmp] == '\0' || address[tmp] > '9' || address[tmp] < '0')
+        {
+            break;
+        }
+        if (tmp >= 5 || (port >= 6553 && (address[tmp] -'0') >= 6))
+        {
+            NS_LOG_V(ERROR, "Invalid Input Address - Port. %d", tmp+1);
+            NSOICFree(retAddr);
+            return NULL;
+        }
+        port *= 10;
+        port += address[tmp++] - '0';
+    }
+
+    retAddr->port = port;
+
+    NS_LOG(DEBUG, "Change Address for TCP request");
+    NS_LOG_V(INFO_PRIVATE, "Origin : %s", address);
+    NS_LOG_V(INFO_PRIVATE, "Changed Addr : %s", retAddr->addr);
+    NS_LOG_V(INFO_PRIVATE, "Changed Port : %d", retAddr->port);
+
+    return retAddr;
+}
+
+bool NSOCResultToSuccess(OCStackResult ret)
+{
+    switch (ret)
+    {
+        case OC_STACK_OK:
+        case OC_STACK_RESOURCE_CREATED:
+        case OC_STACK_RESOURCE_DELETED:
+        case OC_STACK_PRESENCE_STOPPED:
+        case OC_STACK_CONTINUE:
+        case OC_STACK_RESOURCE_CHANGED:
+            return true;
+        default:
+            NS_LOG_V(DEBUG, "OCStackResult : %d", (int)ret);
+            return false;
+    }
 }
 

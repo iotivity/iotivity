@@ -92,10 +92,11 @@ NSResult NSStartProvider(NSProviderConfig config)
 #ifdef SECURED
         NS_LOG(DEBUG, "Built with SECURED");
 
-        if(!config.resourceSecurity)
+        if (!config.resourceSecurity)
         {
             NS_LOG(DEBUG, "Resource Security Off");
         }
+
         NSSetResourceSecurity(config.resourceSecurity);
 #endif
 
@@ -121,13 +122,15 @@ NSResult NSStopProvider()
     NS_LOG(DEBUG, "NSStopProvider - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(initProvider)
+    if (initProvider)
     {
+        CAUnregisterNetworkMonitorHandler((CAAdapterStateChangedCB)NSProviderAdapterStateListener,
+                (CAConnectionStateChangedCB)NSProviderConnectionStateListener);
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_STOP_PRESENCE, NULL);
-        NSDeinitProviderInfo();
-        NSUnRegisterResource();
         NSRegisterSubscribeRequestCb((NSSubscribeRequestCallback)NULL);
         NSRegisterSyncCb((NSProviderSyncInfoCallback)NULL);
+        NSUnRegisterResource();
+        NSDeinitProviderInfo();
         NSStopScheduler();
         NSDeinitailize();
 
@@ -141,17 +144,18 @@ NSResult NSStopProvider()
 
 NSResult NSProviderEnableRemoteService(char *serverAddress)
 {
-#if(defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD)
     NS_LOG(DEBUG, "NSProviderEnableRemoteService - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!initProvider || !serverAddress)
+    if (!initProvider || !serverAddress)
     {
         NS_LOG(DEBUG, "Provider service has not been started yet");
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
-    NS_LOG_V(DEBUG, "Remote server address: %s", serverAddress);
+
+    NS_LOG_V(INFO_PRIVATE, "Remote server address: %s", serverAddress);
     NS_LOG(DEBUG, "Request to publish resource");
     NSPushQueue(DISCOVERY_SCHEDULER, TASK_PUBLISH_RESOURCE, serverAddress);
 
@@ -161,22 +165,24 @@ NSResult NSProviderEnableRemoteService(char *serverAddress)
 #else
     (void) serverAddress;
 #endif
-    NS_LOG_V(DEBUG, "Not logged in remote server: %s", serverAddress);
+    NS_LOG_V(INFO_PRIVATE, "Not logged in remote server: %s", serverAddress);
     return NS_FAIL;
 }
 
 NSResult NSProviderDisableRemoteService(char *serverAddress)
 {
-#if(defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD)
     NS_LOG(DEBUG, "NSProviderDisableRemoteService - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!initProvider || !serverAddress)
+    if (!initProvider || !serverAddress)
     {
         NS_LOG(DEBUG, "Provider service has not been started yet");
+        pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
-    NS_LOG_V(DEBUG, "Remote server address: %s", serverAddress);
+
+    NS_LOG_V(INFO_PRIVATE, "Remote server address: %s", serverAddress);
 
     NS_LOG(DEBUG, "Delete remote server info");
     NSDeleteRemoteServerAddress(serverAddress);
@@ -187,9 +193,45 @@ NSResult NSProviderDisableRemoteService(char *serverAddress)
 #else
     (void) serverAddress;
 #endif
-    NS_LOG_V(DEBUG, "Not logged in remote server : %s", serverAddress);
+    NS_LOG_V(INFO_PRIVATE, "Not logged in remote server : %s", serverAddress);
     return NS_FAIL;
 }
+
+#ifdef WITH_MQ
+NSResult NSProviderSubscribeMQService(const char * serverAddress, const char * topicName)
+{
+    NS_LOG(DEBUG, "NSProviderSubscribeMQService - IN");
+    pthread_mutex_lock(&nsInitMutex);
+
+    if (!initProvider || !serverAddress || !topicName)
+    {
+        NS_LOG(DEBUG, "Provider service has not been started yet or set the server "
+                "address and topicName");
+        pthread_mutex_unlock(&nsInitMutex);
+        return NS_FAIL;
+    }
+
+    NSMQTopicAddress * topicAddr = (NSMQTopicAddress *)OICMalloc(sizeof(NSMQTopicAddress));
+
+    if (!topicAddr)
+    {
+        NS_LOG(DEBUG, "fail to memory allocate");
+        pthread_mutex_unlock(&nsInitMutex);
+        return NS_FAIL;
+    }
+
+    topicAddr->serverAddr = NSGetQueryAddress(serverAddress);
+    topicAddr->topicName = OICStrdup(topicName);
+
+    NS_LOG_V(DEBUG, "input Topic Name : %s", topicAddr->topicName);
+
+    NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_MQ_REQ_SUBSCRIBE, (void *) topicAddr);
+
+    pthread_mutex_unlock(&nsInitMutex);
+    NS_LOG(DEBUG, "NSProviderSubscribeMQService - OUT");
+    return NS_OK;
+}
+#endif
 
 NSResult NSSendMessage(NSMessage * msg)
 {
@@ -250,7 +292,7 @@ NSResult NSAcceptSubscription(const char * consumerId, bool accepted)
     }
 
     char * newConsumerId = OICStrdup(consumerId);
-    if(accepted)
+    if (accepted)
     {
         NS_LOG(DEBUG, "accepted is true - ALLOW");
         NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_ALLOW, newConsumerId);
@@ -384,7 +426,7 @@ NSResult NSProviderUnregisterTopic(const char * topicName)
 
     NSPushQueue(TOPIC_SCHEDULER, TASK_UNREGISTER_TOPIC, &topicSyncResult);
     pthread_cond_wait(topicSyncResult.condition, &nsInitMutex);
-    if(topicSyncResult.result != NS_OK)
+    if (topicSyncResult.result != NS_OK)
     {
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
@@ -404,12 +446,16 @@ NSResult NSProviderSetConsumerTopic(const char * consumerId, const char * topicN
     NSCacheTopicSubData * topicSubData =
             (NSCacheTopicSubData *) OICMalloc(sizeof(NSCacheTopicSubData));
 
-    if(!initProvider || !consumerId || consumerId[0] == '\0' || !topicName || topicName[0] == '\0'
+    if (!initProvider || !consumerId || consumerId[0] == '\0' || !topicName || topicName[0] == '\0'
             || !NSGetPolicy() || !topicSubData)
     {
         NS_LOG(DEBUG, "provider is not started or "
                 "consumer id should be set for topic subscription or "
                 "Configuration must set to true.");
+        if (topicSubData)
+        {
+            OICFreeAndSetToNull(&topicSubData);
+        }
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
@@ -439,12 +485,16 @@ NSResult NSProviderUnsetConsumerTopic(const char * consumerId, const char * topi
     NSCacheTopicSubData * topicSubData =
             (NSCacheTopicSubData *) OICMalloc(sizeof(NSCacheTopicSubData));
 
-    if(!initProvider || !consumerId || consumerId[0] == '\0' || !topicName || topicName[0] == '\0'
+    if (!initProvider || !consumerId || consumerId[0] == '\0' || !topicName || topicName[0] == '\0'
             || !NSGetPolicy() || !topicSubData)
     {
         NS_LOG(DEBUG, "provider is not started or "
                 "consumer id should be set for topic subscription or "
                 "Configuration must set to true.");
+        if (topicSubData)
+        {
+            OICFreeAndSetToNull(&topicSubData);
+        }
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }

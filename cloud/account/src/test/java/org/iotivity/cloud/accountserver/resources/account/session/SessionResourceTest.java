@@ -112,6 +112,14 @@ public class SessionResourceTest {
         mongoDB.createTable(Constants.GROUP_TABLE);
     }
 
+    @After
+    public void resetAccountDatabase() throws Exception {
+        MongoDB mongoDB = new MongoDB(Constants.DB_NAME);
+        mongoDB.createTable(Constants.USER_TABLE);
+        mongoDB.createTable(Constants.TOKEN_TABLE);
+        mongoDB.createTable(Constants.GROUP_TABLE);
+    }
+
     @Test
     public void testSignInOnDefaultRequestReceived() throws Exception {
         getTestMethodName();
@@ -313,9 +321,11 @@ public class SessionResourceTest {
         payloadData.put("accesstoken", accessToken);
         payloadData.put("login", false);
         payloadData.put("di", deviceId);
-        payloadData.put("uid", USER_UUID);
+        StringBuffer query = new StringBuffer();
+        query.append("uid=" + USER_UUID);
         request = MessageBuilder.createRequest(RequestMethod.POST,
-                DEFAULT_AUTH_LOGOUT, null, ContentFormat.APPLICATION_CBOR,
+                DEFAULT_AUTH_LOGOUT, query.toString(),
+                ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(payloadData));
         return request;
     }

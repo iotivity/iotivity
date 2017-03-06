@@ -64,9 +64,16 @@ using namespace OC;
 static int ask = 1;
 static PairedDevices discoveredDeviceList, pairedDeviceList;
 
-static FILE* client_open(const char* /*fileName*/, const char *mode)
+static FILE* client_open(const char* path, const char* mode)
 {
-    return fopen(DAT_DB_PATH, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(DAT_DB_PATH, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 

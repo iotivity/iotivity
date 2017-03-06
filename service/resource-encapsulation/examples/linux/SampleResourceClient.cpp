@@ -87,7 +87,7 @@ int processUserInput(int min = std::numeric_limits<int>::min(),
 {
     assert(min <= max);
 
-    int input;
+    int input = 0;
 
     std::cin >> input;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -423,15 +423,16 @@ std::string selectResourceType()
 
     switch (processUserInput(RESOURCE_TEMP, RESOURCE_LIGHT))
     {
-    case RESOURCE_TEMP:
-    {
-        g_attrKey = "Temperature";
-        return RESOURCE_TYPE_TEMP;
-    }
-    case RESOURCE_LIGHT:
-    {
-        g_attrKey = "Brightness";
-        return RESOURCE_TYPE_LIGHT;
+        case RESOURCE_TEMP:
+        {
+            g_attrKey = "Temperature";
+            return RESOURCE_TYPE_TEMP;
+        }
+        case RESOURCE_LIGHT:
+        {
+            g_attrKey = "Brightness";
+            return RESOURCE_TYPE_LIGHT;
+        }
     }
     }
 

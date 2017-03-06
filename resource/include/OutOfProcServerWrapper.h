@@ -31,6 +31,16 @@ namespace OC
         OutOfProcServerWrapper(PlatformConfig /*cfg*/)
         {}
 
+        virtual OCStackResult stop()
+        {
+            return OC_STACK_NOTIMPL;
+        }
+
+        virtual OCStackResult start()
+        {
+            return OC_STACK_NOTIMPL;
+        }
+
         virtual OCStackResult registerResource(
             OCResourceHandle& /*resourceHandle*/,
             std::string& /*resourceURI*/,

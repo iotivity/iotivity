@@ -114,7 +114,7 @@ typedef int32_t (*CAAdapterSendMulticastData)(const CAEndpoint_t *endpoint,
  * @param[out]   size           Number of local connectivity structures.
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h)
  */
-typedef CAResult_t (*CAAdapterGetNetworkInfo)(CAEndpoint_t **info, uint32_t *size);
+typedef CAResult_t (*CAAdapterGetNetworkInfo)(CAEndpoint_t **info, size_t *size);
 
 /**
  * Read Synchronous API callback.
@@ -188,7 +188,7 @@ typedef void (*CARegisterConnectivityCallback)(CAConnectivityHandler_t handler);
  * @see SendUnicastData(), SendMulticastData()
  */
 typedef void (*CANetworkPacketReceivedCallback)(const CASecureEndpoint_t *sep,
-                                            const void *data, uint32_t dataLen);
+                                            const void *data, size_t dataLen);
 
 /**
  * This will be used to notify network changes to the connectivity common logic layer.
@@ -204,7 +204,7 @@ typedef void (*CAConnectionChangeCallback)(const CAEndpoint_t *info, bool isConn
  * This will be used to notify error result to the connectivity common logic layer.
  */
 typedef void (*CAErrorHandleCallback)(const CAEndpoint_t *endpoint,
-                                      const void *data, uint32_t dataLen,
+                                      const void *data, size_t dataLen,
                                       CAResult_t result);
 
 #ifdef __cplusplus

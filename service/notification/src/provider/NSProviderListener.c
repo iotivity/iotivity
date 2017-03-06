@@ -135,13 +135,8 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
             NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_RECV_SUBSCRIPTION,
                     NSCopyOCEntityHandlerRequest(entityHandlerRequest));
             ehResult = OC_EH_OK;
-
-            if (NSGetPolicy() == NS_POLICY_CONSUMER)
-            {
-                return ehResult;
-            }
         }
-        else if(ocObAction == OC_OBSERVE_DEREGISTER)
+        else if (ocObAction == OC_OBSERVE_DEREGISTER)
         {
             NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_OBSERVE_DEREGISTER");
             NS_LOG_V(DEBUG, "NSEntityHandlerMessageCb\n - "
@@ -203,7 +198,7 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
 
             NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_REST_POST");
 
-            if(NSProviderIsSyncAttributes((OCRepPayload *)entityHandlerRequest->payload))
+            if (NSProviderIsSyncAttributes((OCRepPayload *)entityHandlerRequest->payload))
             {
                 NSPushQueue(NOTIFICATION_SCHEDULER, TASK_RECV_READ,
                                     NSGetSyncInfo(entityHandlerRequest->payload));
@@ -233,7 +228,7 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
             NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SYNC_SUBSCRIPTION,
                     NSCopyOCEntityHandlerRequest(entityHandlerRequest));
         }
-        else if(ocObAction == OC_OBSERVE_DEREGISTER)
+        else if (ocObAction == OC_OBSERVE_DEREGISTER)
         {
             NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_OBSERVE_DEREGISTER");
             NS_LOG_V(DEBUG, "NSEntityHandlerSyncCb\n - "
@@ -296,12 +291,12 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
             // Receive interesting topic list from consumers
-            // Send topic notice message(id = TOPIC) to the consumer 
+            // Send topic notice message(id = TOPIC) to the consumer
             // which requests to post.
             NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OC_REST_POST");
             // Accepter is provider. our service is not support sendtopiclist from OC_REST_POST
             // Accepter is consumer. our service is support sendtopiclist from OC_REST_POST
-            if(NSGetPolicy() == false &&
+            if (NSGetPolicy() == false &&
                     NSProviderIsTopicAttributes(OCRepPayloadClone((OCRepPayload *)
                             entityHandlerRequest->payload)))
             {
@@ -325,6 +320,163 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
     return ehResult;
 }
 
+#ifdef WITH_MQ
+OCStackApplicationResult NSProviderMQListener(void * ctx, OCDoHandle handle,
+        OCClientResponse * clientResponse)
+{
+    (void) ctx;
+    (void) handle;
+
+    NS_LOG_V(DEBUG, "clientResponse->sequenceNumber = %d", clientResponse->sequenceNumber);
+
+    if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
+    {
+        NS_LOG(DEBUG, "MQ OC_OBSERVE_RIGSTER");
+        NSSetMQServerInfo(clientResponse->resourceUri, &(clientResponse->devAddr));
+    }
+
+    NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_NOT_NULL(clientResponse->payload, OC_STACK_KEEP_TRANSACTION);
+
+    NS_LOG(DEBUG, "income observe response of MQ notification");
+    NS_LOG_V(INFO_PRIVATE, "MQ OBS response income : %s:%d",
+            clientResponse->devAddr.addr, clientResponse->devAddr.port);
+    NS_LOG_V(DEBUG, "MQ OBS response result : %d",
+            clientResponse->result);
+    NS_LOG_V(DEBUG, "MQ OBS response sequenceNum : %d",
+            clientResponse->sequenceNumber);
+    NS_LOG_V(DEBUG, "MQ OBS response resource uri : %s",
+            clientResponse->resourceUri);
+    NS_LOG_V(DEBUG, "MQ OBS response Transport Type : %d",
+                    clientResponse->devAddr.adapter);
+
+    OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
+    NS_VERIFY_NOT_NULL(payload, OC_STACK_KEEP_TRANSACTION);
+
+    NSMessageType type = -1;
+    bool getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_TYPE, (int64_t *) &type);
+    NS_LOG_V (DEBUG, "message sync type : %d", (int) type);
+
+    if (!getResult && (type == NS_MESSAGE_READ || type == NS_MESSAGE_DELETED))
+    {
+        char * pId = NULL;
+        getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, &pId);
+        NS_LOG_V (INFO_PRIVATE, "provider id: %s", pId);
+
+        if (getResult && strcmp(pId, NSGetProviderInfo()->providerId) == 0)
+        {
+            NSSyncInfo * syncInfo = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
+            syncInfo->state = (type == NS_MESSAGE_READ) ? NS_SYNC_READ : NS_SYNC_DELETED;
+            OICStrcpy(syncInfo->providerId, NS_UUID_STRING_SIZE, pId);
+            OICFree(pId);
+            NSPushQueue(NOTIFICATION_SCHEDULER, TASK_RECV_READ, (void*) syncInfo);
+        }
+    }
+
+    return OC_STACK_KEEP_TRANSACTION;
+}
+
+OCStackApplicationResult NSProviderGetMQResponseCB(void * ctx, OCDoHandle handle,
+        OCClientResponse * clientResponse)
+{
+    NS_LOG(DEBUG, "NSProviderGetMQResponseCB - IN");
+
+    (void) handle;
+
+    NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_NOT_NULL(clientResponse->payload, OC_STACK_KEEP_TRANSACTION);
+
+    NS_LOG(DEBUG, "income get response of MQ broker");
+    NS_LOG_V(INFO_PRIVATE, "MQ GET response income : %s:%d",
+            clientResponse->devAddr.addr, clientResponse->devAddr.port);
+    NS_LOG_V(DEBUG, "MQ GET response result : %d",
+            clientResponse->result);
+    NS_LOG_V(DEBUG, "MQ GET response sequenceNum : %d",
+            clientResponse->sequenceNumber);
+    NS_LOG_V(DEBUG, "MQ GET response resource uri : %s",
+            clientResponse->resourceUri);
+    NS_LOG_V(DEBUG, "MQ GET response Transport Type : %d",
+                    clientResponse->devAddr.adapter);
+
+    char ** topicList = NULL;
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0};
+    OCRepPayloadGetStringArray((OCRepPayload *) clientResponse->payload,
+                               NS_ATTIRBUTE_MQ_TOPICLIST, & topicList, dimensions);
+
+    char * interestTopicName = (char *) ctx;
+
+    NS_LOG_V(DEBUG, "interestTopicName = %s", interestTopicName);
+    for (size_t i = 0; i < dimensions[0]; ++i)
+    {
+        NS_LOG_V(DEBUG, "found MQ topic : %s", topicList[i]);
+        if (!strcmp(topicList[i], interestTopicName))
+        {
+            NS_LOG(DEBUG, "subscribe to MQ notification");
+
+            OCCallbackData cbdata = { NULL, NULL, NULL };
+            cbdata.cb = NSProviderMQListener;
+            cbdata.context = NULL;
+            cbdata.cd = NULL;
+
+            OCStackResult ret = OCDoResource(NULL, OC_REST_OBSERVE, topicList[i],
+                    clientResponse->addr, NULL, CT_DEFAULT, OC_HIGH_QOS, &cbdata, NULL, 0);
+
+            if (!NSOCResultToSuccess(ret))
+            {
+                NS_LOG(DEBUG, "fail to subscribe to MQ notification");
+                continue;
+            }
+        }
+    }
+
+    NS_LOG(DEBUG, "NSProviderGetMQResponseCB - OUT");
+    return OC_STACK_KEEP_TRANSACTION;
+}
+
+OCStackApplicationResult NSProviderPublishMQResponseCB(void *ctx, OCDoHandle handle,
+        OCClientResponse *clientResponse)
+{
+    (void) ctx;
+    (void) handle;
+    NS_LOG(DEBUG, "Publish Topic callback received");
+
+    OCStackApplicationResult res = OC_STACK_ERROR;
+
+    NS_LOG_V(DEBUG, "Publish Topic response received code: (%d)", clientResponse->result);
+
+    if (clientResponse->payload != NULL &&
+        clientResponse->payload->type == PAYLOAD_TYPE_REPRESENTATION)
+    {
+        NS_LOG(DEBUG, "PAYLOAD_TYPE_REPRESENTATION received");
+
+        OCRepPayloadValue *val = ((OCRepPayload *)clientResponse->payload)->values;
+        while (val)
+        {
+            if( val->type == OCREP_PROP_INT)
+            {
+                NS_LOG_V(DEBUG, "Key: %s, Value: %lld, int", val->name, val->i);
+            }
+            else if( val->type == OCREP_PROP_STRING)
+            {
+                NS_LOG_V(DEBUG, "Key: %s, Value: %s, string", val->name, val->str);
+            }
+            else
+            {
+                NS_LOG_V(DEBUG, "Un supported val Type.(0x%d)", val->type);
+            }
+
+            val = val->next;
+        }
+
+        res = OC_STACK_KEEP_TRANSACTION;
+    }
+
+    return res;
+}
+#endif
+
 void NSProviderConnectionStateListener(const CAEndpoint_t * info, bool connected)
 {
     NS_LOG(DEBUG, "NSProviderConnectionStateListener - IN");
@@ -339,9 +491,9 @@ void NSProviderConnectionStateListener(const CAEndpoint_t * info, bool connected
         // Start Presence
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_START_PRESENCE, NULL);
 
-        if(info->adapter == CA_ADAPTER_TCP)
+        if (info->adapter == CA_ADAPTER_TCP)
         {
-            NS_LOG_V(DEBUG, "TCP Connected remote address: %s:%d", info->addr, info->port);
+            NS_LOG_V(INFO_PRIVATE, "TCP Connected remote address: %s:%d", info->addr, info->port);
         }
     }
     else
@@ -351,9 +503,9 @@ void NSProviderConnectionStateListener(const CAEndpoint_t * info, bool connected
         // Set Connection State
         NSSetProviderConnectionState(DISCONNECTED);
 
-        if(info->adapter == CA_ADAPTER_TCP)
+        if (info->adapter == CA_ADAPTER_TCP)
         {
-            NS_LOG_V(DEBUG, "TCP Disconnected remote address: %s:%d", info->addr, info->port);
+            NS_LOG_V(INFO_PRIVATE, "TCP Disconnected remote address: %s:%d", info->addr, info->port);
         }
     }
 
@@ -403,14 +555,15 @@ bool NSProviderCompareSyncAttributes(const char * name)
 bool NSProviderIsSyncAttributes(OCRepPayload * payload)
 {
     NS_LOG(DEBUG, "get extra info");
-
     OCRepPayloadValue * curr = payload->values;
-    while(curr)
+
+    while (curr)
     {
         if (!NSProviderCompareSyncAttributes(curr->name))
         {
             return false;
         }
+
         curr = curr->next;
     }
 
@@ -442,9 +595,9 @@ bool NSProviderCompareSubTopicAttributes(const char * name)
 bool NSProviderIsTopicAttributes(OCRepPayload * payload)
 {
     NS_LOG(DEBUG, "get extra info");
-
     OCRepPayloadValue * curr = payload->values;
-    while(curr)
+
+    while (curr)
     {
         if (!NSProviderCompareTopicAttributes(curr->name))
         {
@@ -470,7 +623,8 @@ bool NSProviderIsTopicAttributes(OCRepPayload * payload)
             for (int i = 0; i < (int) dimensionSize; i++)
             {
                 OCRepPayloadValue * subCurr = topicListPayload[i]->values;
-                while(subCurr)
+
+                while (subCurr)
                 {
                     if (!NSProviderCompareSubTopicAttributes(subCurr->name))
                     {

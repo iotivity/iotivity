@@ -45,10 +45,17 @@ namespace OC
                         FindCallback& callback,
                         QualityOfService QoS) = 0;
 
-        virtual OCStackResult ListenForResource2(const std::string& serviceUrl,
+        virtual OCStackResult ListenForResourceList(const std::string& serviceUrl,
                         const std::string& resourceType,
                         OCConnectivityType connectivityType,
                         FindResListCallback& callback,
+                        QualityOfService QoS) = 0;
+
+        virtual OCStackResult ListenForResourceListWithError(const std::string& serviceUrl,
+                        const std::string& resourceType,
+                        OCConnectivityType connectivityType,
+                        FindResListCallback& callback,
+                        FindErrorCallback& errorCallback,
                         QualityOfService QoS) = 0;
 
         virtual OCStackResult ListenErrorForResource(const std::string& serviceUrl,
@@ -150,6 +157,10 @@ namespace OC
             const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
             MQTopicCallback& callback, QualityOfService QoS) = 0;
 #endif
+        virtual OCStackResult stop() = 0;
+
+        virtual OCStackResult start() = 0;
+
         virtual ~IClientWrapper(){}
     };
 }

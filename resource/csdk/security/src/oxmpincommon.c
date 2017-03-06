@@ -19,8 +19,11 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <memory.h>
+#include <limits.h>
 
 #include "ocstack.h"
+#include "oic_malloc.h"
+#include "oic_string.h"
 #include "ocrandom.h"
 #include "logger.h"
 #include "pinoxmcommon.h"
@@ -31,19 +34,83 @@
 #include "doxmresource.h"
 #include "credresource.h"
 #include "cainterface.h"
+#include "oic_string.h"
 
-#define TAG "PIN_OXM_COMMON"
+#define TAG "OIC_PIN_OXM_COMMON"
 
-static GeneratePinCallback gGenPinCallback = NULL;
-static InputPinCallback gInputPinCallback = NULL;
+#define NUMBER_OF_PINNUM (10)
+#define NUMBER_OF_ALPHABET (26)
+
+/**
+ * Callbacks for displaying a pin.
+ */
+typedef struct DisplayPinCallbacks
+{
+    GeneratePinCallback callback;
+    DisplayPinCallbackWithContext contextCallback;
+    ClosePinDisplayCallback closePinDisplayCallback;
+    void* context;
+} DisplayPinCallbacks_t;
+
+/**
+ * Callbacks for pin input.
+ */
+typedef struct InputPinCallbacks
+{
+    InputPinCallback callback;
+    InputPinCallbackWithContext contextCallback;
+    void* context;
+} InputPinCallbacks_t;
+
+static DisplayPinCallbacks_t g_displayPinCallbacks = { .callback = NULL, .contextCallback = NULL, .closePinDisplayCallback = NULL, .context = NULL };
+static InputPinCallbacks_t g_inputPinCallbacks = { .callback = NULL, .contextCallback = NULL, .context = NULL };
 
 typedef struct PinOxmData {
-    uint8_t pinData[OXM_RANDOM_PIN_SIZE + 1];
+    uint8_t pinData[OXM_RANDOM_PIN_MAX_SIZE + 1];
+    size_t pinSize;
+    OicSecPinType_t pinType;
     OicUuid_t newDevice;
 }PinOxmData_t;
 
-static PinOxmData_t g_PinOxmData;
+static PinOxmData_t g_PinOxmData = {
+        .pinData={0},
+        .pinSize = OXM_RANDOM_PIN_DEFAULT_SIZE,
+        .pinType = (OicSecPinType_t)(OXM_RANDOM_PIN_DEFAULT_PIN_TYPE),
+    };
 
+/**
+ * Internal function to check pinType
+ */
+static bool IsValidPinType(OicSecPinType_t pinType)
+{
+    return ((NUM_PIN & pinType) ||
+            (LOWERCASE_CHAR_PIN & pinType) ||
+            (UPPERCASE_CHAR_PIN & pinType));
+}
+
+OCStackResult SetRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType)
+{
+    if(OXM_RANDOM_PIN_MIN_SIZE > pinSize)
+    {
+        OIC_LOG(ERROR, TAG, "PIN size is too small");
+        return OC_STACK_INVALID_PARAM;
+    }
+    if(OXM_RANDOM_PIN_MAX_SIZE < pinSize)
+    {
+        OIC_LOG_V(ERROR, TAG, "PIN size can not exceed %d bytes", OXM_RANDOM_PIN_MAX_SIZE);
+        return OC_STACK_INVALID_PARAM;
+    }
+    if(false == IsValidPinType(pinType))
+    {
+        OIC_LOG(ERROR, TAG, "Invalid PIN type.");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    g_PinOxmData.pinSize = pinSize;
+    g_PinOxmData.pinType = pinType;
+
+    return OC_STACK_OK;
+}
 
 void SetInputPinCB(InputPinCallback pinCB)
 {
@@ -53,7 +120,33 @@ void SetInputPinCB(InputPinCallback pinCB)
         return;
     }
 
-    gInputPinCallback = pinCB;
+    if ((NULL != g_inputPinCallbacks.callback) || (NULL != g_inputPinCallbacks.contextCallback))
+    {
+        OIC_LOG(ERROR, TAG, "Callback for input pin is already set.");
+        return;
+    }
+
+    g_inputPinCallbacks.callback = pinCB;
+}
+
+OCStackResult SetInputPinWithContextCB(InputPinCallbackWithContext inputPinCB, void* context)
+{
+    if (NULL == inputPinCB)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to set callback for input pin.");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if ((NULL != g_inputPinCallbacks.callback) || (NULL != g_inputPinCallbacks.contextCallback))
+    {
+        OIC_LOG(ERROR, TAG, "Callback for input pin is already set.");
+        return OC_STACK_DUPLICATE_REQUEST;
+    }
+
+    g_inputPinCallbacks.contextCallback = inputPinCB;
+    g_inputPinCallbacks.context = context;
+
+    return OC_STACK_OK;
 }
 
 void SetGeneratePinCB(GeneratePinCallback pinCB)
@@ -64,7 +157,132 @@ void SetGeneratePinCB(GeneratePinCallback pinCB)
         return;
     }
 
-    gGenPinCallback = pinCB;
+    if ((NULL != g_displayPinCallbacks.callback) || (NULL != g_displayPinCallbacks.contextCallback))
+    {
+        OIC_LOG(ERROR, TAG, "Callback for generate pin is already set.");
+        return;
+    }
+
+    g_displayPinCallbacks.callback = pinCB;
+}
+
+OCStackResult SetDisplayPinWithContextCB(DisplayPinCallbackWithContext displayPinCB, void* context)
+{
+    if (NULL == displayPinCB)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to set a callback for displaying a pin.");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if ((NULL != g_displayPinCallbacks.callback) || (NULL != g_displayPinCallbacks.contextCallback))
+    {
+        OIC_LOG(ERROR, TAG, "Callback for displaying a pin is already set.");
+        return OC_STACK_DUPLICATE_REQUEST;
+    }
+
+    g_displayPinCallbacks.contextCallback = displayPinCB;
+    g_displayPinCallbacks.context = context;
+
+    return OC_STACK_OK;
+}
+
+void SetClosePinDisplayCB(ClosePinDisplayCallback closeCB)
+{
+    if (NULL == closeCB)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to set a callback for closing a pin.");
+        return;
+    }
+
+    if (NULL != g_displayPinCallbacks.closePinDisplayCallback)
+    {
+        OIC_LOG(ERROR, TAG, "Callback for closing a pin is already set.");
+        return;
+    }
+
+    g_displayPinCallbacks.closePinDisplayCallback = closeCB;
+}
+
+void UnsetInputPinCB()
+{
+    UnsetInputPinWithContextCB();
+}
+
+void UnsetInputPinWithContextCB()
+{
+    g_inputPinCallbacks.callback = NULL;
+    g_inputPinCallbacks.contextCallback = NULL;
+    g_inputPinCallbacks.context = NULL;
+}
+
+void UnsetGeneratePinCB()
+{
+    UnsetDisplayPinWithContextCB();
+}
+
+void UnsetDisplayPinWithContextCB()
+{
+    g_displayPinCallbacks.callback = NULL;
+    g_displayPinCallbacks.contextCallback = NULL;
+    g_displayPinCallbacks.context = NULL;
+}
+
+void UnsetClosePinDisplayCB()
+{
+    g_displayPinCallbacks.closePinDisplayCallback = NULL;
+}
+
+void ClosePinDisplay()
+{
+    if (g_displayPinCallbacks.closePinDisplayCallback)
+    {
+        g_displayPinCallbacks.closePinDisplayCallback();
+    }
+}
+
+/**
+ * Internal function to generate PIN element according to pinType.
+ * This function assumes the pinType is valid.
+ * In case of invalid pinType, '0' will be returned as default vaule.
+ */
+static char GenerateRandomPinElement(OicSecPinType_t pinType)
+{
+    const char defaultRetValue = '0';
+    char allowedCharacters[NUMBER_OF_PINNUM + NUMBER_OF_ALPHABET * 2];
+    uint32_t curIndex = 0;
+
+    if(NUM_PIN & pinType)
+    {
+        for(char pinEle = '0'; pinEle <= '9'; pinEle++)
+        {
+            allowedCharacters[curIndex++] = pinEle;
+        }
+    }
+    if(UPPERCASE_CHAR_PIN & pinType)
+    {
+        for(char pinEle = 'A'; pinEle <= 'Z'; pinEle++)
+        {
+            allowedCharacters[curIndex++] = pinEle;
+        }
+    }
+    if(LOWERCASE_CHAR_PIN & pinType)
+    {
+        for(char pinEle = 'a'; pinEle <= 'z'; pinEle++)
+        {
+            allowedCharacters[curIndex++] = pinEle;
+        }
+    }
+
+    if(0 == curIndex)
+    {
+        return defaultRetValue;
+    }
+    else
+    {
+        curIndex -= 1;
+    }
+
+    return allowedCharacters[OCGetRandomRange(0, curIndex)];
 }
 
 OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize)
@@ -74,22 +292,34 @@ OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize)
         OIC_LOG(ERROR, TAG, "PIN buffer is NULL");
         return OC_STACK_INVALID_PARAM;
     }
-    if(OXM_RANDOM_PIN_SIZE + 1 > bufferSize)
+    if(g_PinOxmData.pinSize + 1 > bufferSize)
     {
         OIC_LOG(ERROR, TAG, "PIN buffer size is too small");
         return OC_STACK_INVALID_PARAM;
     }
-    for(size_t i = 0; i < OXM_RANDOM_PIN_SIZE; i++)
+    if(false == IsValidPinType(g_PinOxmData.pinType))
     {
-        pinBuffer[i] = OCGetRandomRange((uint32_t)'0', (uint32_t)'9');
+        OIC_LOG(ERROR, TAG, "Invalid PIN type.");
+        OIC_LOG(ERROR, TAG, "Please set the PIN type using SetRandomPinPolicy API.");
+        return OC_STACK_ERROR;
+    }
+
+    for(size_t i = 0; i < g_PinOxmData.pinSize; i++)
+    {
+        pinBuffer[i] = GenerateRandomPinElement(g_PinOxmData.pinType);
         g_PinOxmData.pinData[i] = pinBuffer[i];
     }
-    pinBuffer[OXM_RANDOM_PIN_SIZE] = '\0';
-    g_PinOxmData.pinData[OXM_RANDOM_PIN_SIZE] = '\0';
 
-    if(gGenPinCallback)
+    pinBuffer[g_PinOxmData.pinSize] = '\0';
+    g_PinOxmData.pinData[g_PinOxmData.pinSize] = '\0';
+
+    if(g_displayPinCallbacks.callback)
     {
-        gGenPinCallback(pinBuffer, OXM_RANDOM_PIN_SIZE);
+        g_displayPinCallbacks.callback(pinBuffer, g_PinOxmData.pinSize);
+    }
+    else if (g_displayPinCallbacks.contextCallback)
+    {
+        g_displayPinCallbacks.contextCallback(pinBuffer, g_PinOxmData.pinSize, g_displayPinCallbacks.context);
     }
     else
     {
@@ -123,24 +353,30 @@ OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize)
     return OC_STACK_OK;
 }
 
-OCStackResult InputPin(char* pinBuffer, size_t bufferSize)
+OCStackResult InputPin(OicUuid_t deviceId, char* pinBuffer, size_t bufferSize)
 {
     if(!pinBuffer)
     {
         OIC_LOG(ERROR, TAG, "PIN buffer is NULL");
         return OC_STACK_INVALID_PARAM;
     }
-    if(OXM_RANDOM_PIN_SIZE + 1 > bufferSize)
+    if(g_PinOxmData.pinSize + 1 > bufferSize)
     {
         OIC_LOG(ERROR, TAG, "PIN buffer size is too small");
         return OC_STACK_INVALID_PARAM;
     }
 
-    if(gInputPinCallback)
+    if(g_inputPinCallbacks.callback)
     {
-        gInputPinCallback(pinBuffer, OXM_RANDOM_PIN_SIZE + 1);
-        memcpy(g_PinOxmData.pinData, pinBuffer, OXM_RANDOM_PIN_SIZE);
-        g_PinOxmData.pinData[OXM_RANDOM_PIN_SIZE] = '\0';
+        g_inputPinCallbacks.callback(pinBuffer, bufferSize);
+        OICStrcpy((char*)(g_PinOxmData.pinData), OXM_RANDOM_PIN_MAX_SIZE + 1, pinBuffer);
+        g_PinOxmData.pinSize = strlen((char*)(g_PinOxmData.pinData));
+    }
+    else if (g_inputPinCallbacks.contextCallback)
+    {
+        g_inputPinCallbacks.contextCallback(deviceId, pinBuffer, bufferSize, g_inputPinCallbacks.context);
+        OICStrcpy((char*)(g_PinOxmData.pinData), OXM_RANDOM_PIN_MAX_SIZE + 1, pinBuffer);
+        g_PinOxmData.pinSize = strlen((char*)(g_PinOxmData.pinData));
     }
     else
     {
@@ -152,10 +388,10 @@ OCStackResult InputPin(char* pinBuffer, size_t bufferSize)
     return OC_STACK_OK;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
-OCStackResult SetPreconfigPin(const char* pinBuffer, size_t pinLength)
+#ifdef MULTIPLE_OWNER
+OCStackResult SetPreconfigPin(const char *pinBuffer, size_t pinLength)
 {
-    if(NULL == pinBuffer || OXM_PRECONFIG_PIN_SIZE < pinLength)
+    if(NULL == pinBuffer || OXM_PRECONFIG_PIN_MAX_SIZE < pinLength)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -165,7 +401,7 @@ OCStackResult SetPreconfigPin(const char* pinBuffer, size_t pinLength)
 
     return OC_STACK_OK;
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 #ifdef __WITH_DTLS__
 
@@ -181,7 +417,7 @@ int DerivePSKUsingPIN(uint8_t* result)
 {
     int dtlsRes = DeriveCryptoKeyFromPassword(
                                               (const unsigned char *)g_PinOxmData.pinData,
-                                              OXM_RANDOM_PIN_SIZE,
+                                              g_PinOxmData.pinSize,
                                               g_PinOxmData.newDevice.id,
                                               UUID_LENGTH, PBKDF_ITERATIONS,
                                               OWNER_PSK_LENGTH_128, result);
@@ -203,7 +439,9 @@ int32_t GetDtlsPskForRandomPinOxm( CADtlsPskCredType_t type,
     (void)UNUSED1;
     (void)UNUSED2;
 
-    if (NULL == result || result_length < OWNER_PSK_LENGTH_128)
+    if ((NULL == result)
+        || (result_length < OWNER_PSK_LENGTH_128)
+        || (result_length > INT32_MAX))
     {
         return ret;
     }
@@ -219,8 +457,12 @@ int32_t GetDtlsPskForRandomPinOxm( CADtlsPskCredType_t type,
                  * At this point, The server generate random hint and
                  * provide it to client through server key exchange message.
                  */
-                OCFillRandomMem(result, result_length);
-                ret = result_length;
+                if (!OCGetRandomBytes(result, result_length))
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to generate random PSK hint");
+                    break;
+                }
+                ret = (int32_t)result_length;
 
                 OIC_LOG(DEBUG, TAG, "PSK HINT : ");
                 OIC_LOG_BUFFER(DEBUG, TAG, result, result_length);
@@ -236,7 +478,6 @@ int32_t GetDtlsPskForRandomPinOxm( CADtlsPskCredType_t type,
                 else
                 {
                     OIC_LOG_V(ERROR, TAG, "Failed to derive crypto key from PIN");
-                    ret = -1;
                 }
             }
             break;
@@ -244,7 +485,6 @@ int32_t GetDtlsPskForRandomPinOxm( CADtlsPskCredType_t type,
         default:
             {
                 OIC_LOG (ERROR, TAG, "Wrong value passed for CADtlsPskCredType_t.");
-                ret = -1;
             }
             break;
     }
@@ -252,7 +492,7 @@ int32_t GetDtlsPskForRandomPinOxm( CADtlsPskCredType_t type,
     return ret;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 int32_t GetDtlsPskForMotRandomPinOxm( CADtlsPskCredType_t type,
               const unsigned char *UNUSED1, size_t UNUSED2,
               unsigned char *result, size_t result_length)
@@ -316,7 +556,9 @@ int32_t GetDtlsPskForPreconfPinOxm( CADtlsPskCredType_t type,
     (void)UNUSED1;
     (void)UNUSED2;
 
-    if (NULL == result || result_length < OWNER_PSK_LENGTH_128)
+    if ((NULL == result)
+        || (result_length < OWNER_PSK_LENGTH_128)
+        || (result_length > INT_MAX))
     {
         return ret;
     }
@@ -335,8 +577,13 @@ int32_t GetDtlsPskForPreconfPinOxm( CADtlsPskCredType_t type,
                      * At this point, The server generate random hint and
                      * provide it to client through server key exchange message.
                      */
-                    OCFillRandomMem(result, result_length);
-                    ret = result_length;
+                    if (!OCGetRandomBytes(result, result_length))
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to generate random PSK hint");
+                        ret = -1;
+                        break;
+                    }
+                    ret = (int32_t)result_length;
 
                     OIC_LOG(DEBUG, TAG, "PSK HINT : ");
                     OIC_LOG_BUFFER(DEBUG, TAG, result, result_length);
@@ -346,18 +593,17 @@ int32_t GetDtlsPskForPreconfPinOxm( CADtlsPskCredType_t type,
             case CA_DTLS_PSK_KEY:
                 {
                     OicUuid_t uuid;
-                    memset(&uuid, 0x00, sizeof(uuid));
-                    OICStrcpy(uuid.id, sizeof(uuid.id), WILDCARD_SUBJECT_ID.id);
+                    memcpy(&uuid, &WILDCARD_SUBJECT_ID, sizeof(uuid));
 
                     //Load PreConfigured-PIN
                     const OicSecCred_t* cred = GetCredResourceData(&uuid);
                     if(cred)
                     {
                         char* pinBuffer = NULL;
-                        uint32_t pinLength = 0;
+                        size_t pinLength = 0;
                         if(OIC_ENCODING_RAW == cred->privateData.encoding)
                         {
-                            pinBuffer = OICCalloc(1, cred->privateData.len + 1);
+                            pinBuffer = (char*)OICCalloc(1, cred->privateData.len + 1);
                             if(NULL == pinBuffer)
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to allocate memory");
@@ -369,16 +615,17 @@ int32_t GetDtlsPskForPreconfPinOxm( CADtlsPskCredType_t type,
                         else if(OIC_ENCODING_BASE64 == cred->privateData.encoding)
                         {
                             size_t pinBufSize = B64DECODE_OUT_SAFESIZE((cred->privateData.len + 1));
-                            pinBuffer = OICCalloc(1, pinBufSize);
+                            pinBuffer = (char*)OICCalloc(1, pinBufSize);
                             if(NULL == pinBuffer)
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to allocate memory");
                                 return ret;
                             }
 
-                            if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, pinBuffer, pinBufSize, &pinLength))
+                            if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, (uint8_t*)pinBuffer, pinBufSize, &pinLength))
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
+                                OICFree(pinBuffer);
                                 return ret;
                             }
                         }
@@ -446,18 +693,17 @@ int32_t GetDtlsPskForMotPreconfPinOxm( CADtlsPskCredType_t type,
             case CA_DTLS_PSK_KEY:
                 {
                     OicUuid_t uuid;
-                    memset(&uuid, 0x00, sizeof(uuid));
-                    OICStrcpy(uuid.id, sizeof(uuid.id), WILDCARD_SUBJECT_ID.id);
+                    memcpy(&uuid, &WILDCARD_SUBJECT_ID, sizeof(uuid));
 
                     //Load PreConfigured-PIN
                     const OicSecCred_t* cred = GetCredResourceData(&uuid);
                     if(cred)
                     {
                         char* pinBuffer = NULL;
-                        uint32_t pinLength = 0;
+                        size_t pinLength = 0;
                         if(OIC_ENCODING_RAW == cred->privateData.encoding)
                         {
-                            pinBuffer = OICCalloc(1, cred->privateData.len + 1);
+                            pinBuffer = (char*)OICCalloc(1, cred->privateData.len + 1);
                             if(NULL == pinBuffer)
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to allocate memory");
@@ -469,16 +715,17 @@ int32_t GetDtlsPskForMotPreconfPinOxm( CADtlsPskCredType_t type,
                         else if(OIC_ENCODING_BASE64 == cred->privateData.encoding)
                         {
                             size_t pinBufSize = B64DECODE_OUT_SAFESIZE((cred->privateData.len + 1));
-                            pinBuffer = OICCalloc(1, pinBufSize);
+                            pinBuffer = (char*)OICCalloc(1, pinBufSize);
                             if(NULL == pinBuffer)
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to allocate memory");
                                 return ret;
                             }
 
-                            if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, pinBuffer, pinBufSize, &pinLength))
+                            if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, (uint8_t*)pinBuffer, pinBufSize, &pinLength))
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
+                                OICFree(pinBuffer);
                                 return ret;
                             }
                         }
@@ -515,6 +762,6 @@ int32_t GetDtlsPskForMotPreconfPinOxm( CADtlsPskCredType_t type,
 
     return ret;
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 #endif //__WITH_DTLS__

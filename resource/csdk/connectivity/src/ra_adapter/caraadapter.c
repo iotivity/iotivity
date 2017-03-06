@@ -26,7 +26,7 @@
 #include <stdint.h>
 
 #include "caadapterutils.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "logger.h"
 #include "oic_malloc.h"
@@ -77,7 +77,7 @@ typedef struct
     CAJidBoundCallback jidBoundCallback;
 } CARAXmppData_t;
 
-static ca_mutex g_raadapterMutex = NULL;
+static oc_mutex g_raadapterMutex = NULL;
 
 static CARAXmppData_t g_xmppData = {.xmpp = NULL, .port = 5222, .hostName = {0},
     .password = {0}, .jid = {0}, .connectionStatus = CA_INTERFACE_DOWN,
@@ -451,14 +451,14 @@ CAResult_t CAStartRA()
         return CA_STATUS_FAILED;
     }
 
-    g_raadapterMutex = ca_mutex_new ();
+    g_raadapterMutex = oc_mutex_new ();
     if (!g_raadapterMutex)
     {
         OIC_LOG (ERROR, RA_ADAPTER_TAG, PCF("Memory allocation for mutex failed."));
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    ca_mutex_lock (g_raadapterMutex);
+    oc_mutex_lock (g_raadapterMutex);
 
     xmpphelper_connect(g_xmppData.xmpp, g_xmppData.hostName, g_xmppData.port,
                     g_xmppData.jid, g_xmppData.password);
@@ -471,7 +471,7 @@ CAResult_t CAStartRA()
 
     xmpphelper_run(g_xmppData.xmpp);
 
-    ca_mutex_unlock (g_raadapterMutex);
+    oc_mutex_unlock (g_raadapterMutex);
 
     OIC_LOG(DEBUG, RA_ADAPTER_TAG, "RA adapter started succesfully");
     return CA_STATUS_OK;
@@ -485,7 +485,7 @@ CAResult_t CAStopRA()
     xmpp_ibb_unregister(xmpphelper_get_conn(g_xmppData.xmpp));
     if (!g_raadapterMutex)
     {
-        ca_mutex_free (g_raadapterMutex);
+        oc_mutex_free (g_raadapterMutex);
         g_raadapterMutex = NULL;
     }
     OIC_LOG(DEBUG, RA_ADAPTER_TAG, PCF("Stopped RA adapter successfully"));
@@ -516,11 +516,11 @@ int32_t CASendRAUnicastData(const CAEndpoint_t *remoteEndpoint, const void *data
     int obsopt = CARAGetReqObsOption(pdu, remoteEndpoint);
     coap_delete_pdu(pdu);
 
-    ca_mutex_lock (g_raadapterMutex);
+    oc_mutex_lock (g_raadapterMutex);
     if (CA_INTERFACE_UP != g_xmppData.connectionStatus)
     {
         OIC_LOG(ERROR, RA_ADAPTER_TAG, "Unable to send XMPP message, RA not connected");
-        ca_mutex_unlock (g_raadapterMutex);
+        oc_mutex_unlock (g_raadapterMutex);
         return -1;
     }
 
@@ -531,7 +531,7 @@ int32_t CASendRAUnicastData(const CAEndpoint_t *remoteEndpoint, const void *data
         if (sess == NULL)
         {
             OIC_LOG(ERROR, RA_ADAPTER_TAG, "IBB session establish failed!");
-            ca_mutex_unlock (g_raadapterMutex);
+            oc_mutex_unlock (g_raadapterMutex);
             return -1;
         }
     }
@@ -544,7 +544,7 @@ int32_t CASendRAUnicastData(const CAEndpoint_t *remoteEndpoint, const void *data
     }
     xmppdata_t xdata = {.data = (char *) data, .size = dataLength};
     int rc = xmpp_ibb_send_data(sess, &xdata);
-    ca_mutex_unlock (g_raadapterMutex);
+    oc_mutex_unlock (g_raadapterMutex);
     if (rc < 0)
     {
         OIC_LOG(ERROR, RA_ADAPTER_TAG, "IBB send data failed!");
@@ -557,7 +557,7 @@ int32_t CASendRAUnicastData(const CAEndpoint_t *remoteEndpoint, const void *data
     return dataLength;
 }
 
-CAResult_t CAGetRAInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
+CAResult_t CAGetRAInterfaceInformation(CAEndpoint_t **info, size_t *size)
 {
     VERIFY_NON_NULL(info, RA_ADAPTER_TAG, "info is NULL");
     VERIFY_NON_NULL(size, RA_ADAPTER_TAG, "size is NULL");
@@ -628,7 +628,7 @@ typedef struct
     char jabberID[CA_RAJABBERID_SIZE];
 } CARAXmppData_t;
 
-static ca_mutex g_raadapterMutex = NULL;
+static oc_mutex g_raadapterMutex = NULL;
 
 static CARAXmppData_t g_xmppData = {};
 
@@ -674,7 +674,7 @@ void CARAXmppConnectedCB(void * const param, xmpp_error_code_t result,
     {
         printf("\n\n\t\t===>your jid: %s\n\n", bound_jid);
 
-        ca_mutex_lock (g_raadapterMutex);
+        oc_mutex_lock (g_raadapterMutex);
         OICStrcpy (g_xmppData.jabberID, CA_RAJABBERID_SIZE, bound_jid);
 
         g_xmppData.connection_status = CA_INTERFACE_UP;
@@ -692,7 +692,7 @@ void CARAXmppConnectedCB(void * const param, xmpp_error_code_t result,
         OIC_LOG_V(ERROR, RA_ADAPTER_TAG, "XMPP connected callback status: %d", result);
     }
 
-    ca_mutex_unlock (g_raadapterMutex);
+    oc_mutex_unlock (g_raadapterMutex);
     // Notify network change to CA
     CARANotifyNetworkChange(bound_jid, connection_status);
 
@@ -704,13 +704,13 @@ void CARAXmppDisonnectedCB(void * const param, xmpp_error_code_t result,
 {
     OIC_LOG(DEBUG, RA_ADAPTER_TAG, "CARAXmppDisonnectedCB IN");
     char jabberID[CA_RAJABBERID_SIZE];
-    ca_mutex_lock (g_raadapterMutex);
+    oc_mutex_lock (g_raadapterMutex);
 
     g_xmppData.connection_status = CA_INTERFACE_DOWN;
     xmpp_message_context_destroy(g_xmppData.message_context);
     OICStrcpy (jabberID, CA_RAJABBERID_SIZE, g_xmppData.jabberID);
 
-    ca_mutex_unlock (g_raadapterMutex);
+    oc_mutex_unlock (g_raadapterMutex);
 
     // Notify network change to CA
     CARANotifyNetworkChange(jabberID, CA_INTERFACE_DOWN);
@@ -824,14 +824,14 @@ CAResult_t CAStartRA()
 
     OIC_LOG(DEBUG, RA_ADAPTER_TAG, PCF("Starting RA adapter"));
 
-    g_raadapterMutex = ca_mutex_new ();
+    g_raadapterMutex = oc_mutex_new ();
     if (!g_raadapterMutex)
     {
         OIC_LOG (ERROR, RA_ADAPTER_TAG, PCF("Memory allocation for mutex failed."));
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    ca_mutex_lock (g_raadapterMutex);
+    oc_mutex_lock (g_raadapterMutex);
 
     xmpp_context_init(&g_xmppData.context);
     g_xmppData.handle = xmpp_startup(&g_xmppData.context);
@@ -848,7 +848,7 @@ CAResult_t CAStartRA()
     xmpp_identity_destroy(&g_xmppData.g_identity);
     xmpp_host_destroy(&g_xmppData.g_host);
 
-    ca_mutex_unlock (g_raadapterMutex);
+    oc_mutex_unlock (g_raadapterMutex);
 
     if (XMPP_ERR_OK != ret)
     {
@@ -875,7 +875,7 @@ CAResult_t CAStopRA()
 
     xmpp_shutdown_xmpp(g_xmppData.handle);
     xmpp_context_destroy(&g_xmppData.context);
-    ca_mutex_free (g_raadapterMutex);
+    oc_mutex_free (g_raadapterMutex);
     g_raadapterMutex = NULL;
 
     OIC_LOG(DEBUG, RA_ADAPTER_TAG, PCF("Stopped RA adapter successfully"));
@@ -899,12 +899,12 @@ int32_t CASendRAUnicastData(const CAEndpoint_t *remoteEndpoint, const void *data
     }
 
     OIC_LOG_V(ERROR, RA_ADAPTER_TAG, "Sending unicast data to %s", remoteEndpoint->addr);
-    ca_mutex_lock (g_raadapterMutex);
+    oc_mutex_lock (g_raadapterMutex);
 
     if (CA_INTERFACE_UP != g_xmppData.connection_status)
     {
         OIC_LOG(ERROR, RA_ADAPTER_TAG, "Unable to send XMPP message, RA not connected");
-        ca_mutex_unlock (g_raadapterMutex);
+        oc_mutex_unlock (g_raadapterMutex);
         return -1;
     }
 
@@ -914,10 +914,10 @@ int32_t CASendRAUnicastData(const CAEndpoint_t *remoteEndpoint, const void *data
     if (XMPP_ERR_OK != res)
     {
         OIC_LOG_V(ERROR, RA_ADAPTER_TAG, "Unable to send XMPP message, status: %d", res);
-        ca_mutex_unlock (g_raadapterMutex);
+        oc_mutex_unlock (g_raadapterMutex);
         return -1;
     }
-    ca_mutex_unlock (g_raadapterMutex);
+    oc_mutex_unlock (g_raadapterMutex);
 
     OIC_LOG_V(INFO, RA_ADAPTER_TAG, "Successfully dispatched bytes[%d] to addr[%s]",
             dataLength, remoteEndpoint->addr);
@@ -930,16 +930,16 @@ CAResult_t CAGetRAInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     VERIFY_NON_NULL(info, RA_ADAPTER_TAG, "info is NULL");
     VERIFY_NON_NULL(size, RA_ADAPTER_TAG, "size is NULL");
 
-    ca_mutex_lock (g_raadapterMutex);
+    oc_mutex_lock (g_raadapterMutex);
 
     if (CA_INTERFACE_UP != g_xmppData.connection_status)
     {
         OIC_LOG(ERROR, RA_ADAPTER_TAG, "Failed to get interface info, RA not Connected");
-        ca_mutex_unlock (g_raadapterMutex);
+        oc_mutex_unlock (g_raadapterMutex);
         return CA_ADAPTER_NOT_ENABLED;
     }
 
-    ca_mutex_unlock (g_raadapterMutex);
+    oc_mutex_unlock (g_raadapterMutex);
 
     CAEndpoint_t *localEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS,
                                  CA_ADAPTER_REMOTE_ACCESS,

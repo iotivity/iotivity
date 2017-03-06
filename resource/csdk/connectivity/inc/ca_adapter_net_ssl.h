@@ -28,23 +28,30 @@ extern "C" {
 #include "cainterface.h"
 
 /**
- * Currently TLS supported adapters(2) WIFI and ETHENET for linux platform.
+ * Currently TLS supported adapters(3) WIFI, ETHENET and BLE for linux platform.
  */
-#define MAX_SUPPORTED_ADAPTERS 2
+#define MAX_SUPPORTED_ADAPTERS 3
 
 typedef void (*CAPacketReceivedCallback)(const CASecureEndpoint_t *sep,
-                                         const void *data, uint32_t dataLength);
+                                         const void *data, size_t dataLength);
 
-typedef void (*CAPacketSendCallback)(CAEndpoint_t *endpoint,
-                                         const void *data, uint32_t dataLength);
+typedef ssize_t (*CAPacketSendCallback)(CAEndpoint_t *endpoint,
+                                        const void *data, size_t dataLength);
 
 /**
  * Select the cipher suite for dtls handshake
  *
  * @param[in] cipher    cipher suite
- *                             0xC018 : TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256
- *                             0xC0A8 : TLS_PSK_WITH_AES_128_CCM_8
- *                             0xC0AE : TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
+ *                        TLS_RSA_WITH_AES_256_CBC_SHA256          0x3D
+ *                        TLS_RSA_WITH_AES_128_GCM_SHA256          0x009C
+ *                        TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256  0xC02B
+ *                        TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8       0xC0AE
+ *                        TLS_ECDHE_ECDSA_WITH_AES_128_CCM         0xC0AC
+ *                        TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256  0xC023
+ *                        TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384  0xC024
+ *                        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384  0xC02C
+ *                        TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256    0xC037
+ *                        TLS_ECDH_anon_WITH_AES_128_CBC_SHA       0xC018
  *
  * @retval  ::CA_STATUS_OK for success, otherwise some error value
  */
@@ -116,7 +123,7 @@ void CAdeinitSslAdapter();
  *
  */
 
-CAResult_t CAencryptSsl(const CAEndpoint_t *endpoint, void *data, uint32_t dataLen);
+CAResult_t CAencryptSsl(const CAEndpoint_t *endpoint, void *data, size_t dataLen);
 
 /**
  * Performs TLS decryption of the data.
@@ -131,7 +138,7 @@ CAResult_t CAencryptSsl(const CAEndpoint_t *endpoint, void *data, uint32_t dataL
  * @retval  ::CA_STATUS_FAILED Operation failed.
  *
  */
-CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t dataLen);
+CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dataLen);
 
 /**
  * Initiate TLS handshake with selected cipher suite.
@@ -172,7 +179,7 @@ CAResult_t CAsslGenerateOwnerPsk(const CAEndpoint_t *endpoint,
                     const uint8_t* provServerDeviceId, const size_t provServerDeviceIdLen,
                     uint8_t* ownerPsk, const size_t ownerPskSize);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * Gets CA secure endpoint info corresponding for endpoint.
  *
@@ -182,6 +189,26 @@ CAResult_t CAsslGenerateOwnerPsk(const CAEndpoint_t *endpoint,
  */
 const CASecureEndpoint_t *GetCASecureEndpointData(const CAEndpoint_t* peer);
 #endif
+
+/**
+ * Adds a bit to the attributes field of a secure endpoint.
+ *
+ * @param[in]  peer         remote address
+ * @param[in]  newAttribute bit to be added to the attributes field
+ *
+ * @return  true if the secure endpoint has been found, false otherwise.
+ */
+bool SetCASecureEndpointAttribute(const CAEndpoint_t* peer, uint32_t newAttribute);
+
+/**
+ * Gets the attributes field of a secure endpoint.
+ *
+ * @param[in]  peer          remote address
+ * @param[out] allAttributes all the attributes bits for that remote address
+ *
+ * @return  true if the secure endpoint has been found, false otherwise.
+ */
+bool GetCASecureEndpointAttributes(const CAEndpoint_t* peer, uint32_t* allAttributes);
 
 #ifdef __cplusplus
 }

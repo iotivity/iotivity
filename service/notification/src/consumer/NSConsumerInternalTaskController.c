@@ -235,7 +235,7 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
             isSubscribing |= infos->isSubscribing;
             if (infos->addr->adapter == newAdapter && infos->isSubscribing == true)
             {
-                NS_LOG_V(DEBUG, "This provider already discovered : %s:%d",
+                NS_LOG_V(INFO_PRIVATE, "This provider already discovered : %s:%d",
                          infos->addr->addr, infos->addr->port);
                 NS_LOG_V(DEBUG, "Subscription : %d", infos->isSubscribing);
                 return;
@@ -289,7 +289,7 @@ void NSConsumerHandleProviderDeleted(NSProvider_internal * provider)
     NSResult ret = NSConsumerStorageDelete(providerCache, provider->providerId);
     NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *)1 : NULL);
 
-    NS_LOG_V(DEBUG, "Stopped Provider : %s", provider->providerId);
+    NS_LOG_V(INFO_PRIVATE, "Stopped Provider : %s", provider->providerId);
     NSProvider * prov = NSCopyProvider(provider);
     NSProviderChanged(prov, NS_STOPPED);
     NSRemoveProvider(prov);
@@ -323,7 +323,7 @@ void NSConsumerHandleRecvProviderChanged(NSMessage * msg)
 {
     NS_VERIFY_NOT_NULL_V(msg);
 
-    NS_LOG_V(DEBUG, "confirmed by : %s", msg->providerId);
+    NS_LOG_V(INFO_PRIVATE, "confirmed by : %s", msg->providerId);
 
     NSCacheList * ProviderCache = *(NSGetProviderCacheList());
 

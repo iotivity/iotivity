@@ -28,12 +28,7 @@
 
 #include "iotivity_config.h"
 
-#ifndef WITH_ARDUINO
-#ifdef TCP_ADAPTER
-#define HAVE_SYS_POLL_H
-#endif
-#endif
-
+#include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -51,6 +46,11 @@
 extern "C"
 {
 #endif
+
+/**
+ * TAG of Analyzer log.
+ */
+#define ANALYZER_TAG "OIC_ANALYZER"
 
 /**
  * IP address Length.
@@ -106,7 +106,12 @@ extern "C"
 /**
  *Maximum length of the remoteEndpoint identity.
  */
-#define CA_MAX_ENDPOINT_IDENTITY_LEN   (32)
+#define CA_MAX_ENDPOINT_IDENTITY_LEN  CA_MAX_IDENTITY_SIZE
+
+/**
+ * Max identity size.
+ */
+#define CA_MAX_IDENTITY_SIZE (37)
 
 /**
  * option types - the highest option number 63.
@@ -123,6 +128,19 @@ extern "C"
 #define CA_OPTION_URI_QUERY 15
 #define CA_OPTION_ACCEPT 17
 #define CA_OPTION_LOCATION_QUERY 20
+
+/**
+* TODO: Move these COAP defines to CoAP lib once approved.
+*/
+#define COAP_OPTION_ACCEPT_VERSION 2049
+#define COAP_OPTION_CONTENT_VERSION 2053
+#define COAP_MEDIATYPE_APPLICATION_VND_OCF_CBOR 10000 // application/vnd.ocf+cbor
+
+#define CA_OPTION_ACCEPT_VERSION 2049
+#define CA_OPTION_CONTENT_VERSION 2053
+
+#define DEFAULT_ACCEPT_VERSION_VALUE 2048   // OCF version 1.0.0
+#define DEFAULT_CONTENT_VERSION_VALUE 2048  // OCF version 1.0.0
 
 /**
  * Payload information from resource model.
@@ -210,6 +228,17 @@ typedef enum
     CA_SCOPE_GLOBAL    = 0xE, // IPv6 Global scope
 } CATransportFlags_t;
 
+typedef enum
+{
+    CA_DEFAULT_BT_FLAGS = 0,
+    // flags for BLE transport
+    CA_LE_ADV_DISABLE   = 0x1,   // disable BLE advertisement.
+    CA_LE_ADV_ENABLE    = 0x2,   // enable BLE advertisement.
+    CA_LE_SERVER_DISABLE = (1 << 4),   // disable gatt server.
+    // flags for EDR transport
+    CA_EDR_SERVER_DISABLE = (1 << 7)
+} CATransportBTFlags_t;
+
 #define CA_IPFAMILY_MASK (CA_IPV6|CA_IPV4)
 #define CA_SCOPE_MASK 0xf     // mask scope bits above
 
@@ -280,6 +309,7 @@ typedef struct
     uint16_t                port;       // for IP
     char                    addr[MAX_ADDR_STR_SIZE_CA]; // address for all
     uint32_t                ifindex;    // usually zero for default interface
+    char                    remoteId[CA_MAX_IDENTITY_SIZE]; // device ID of remote device
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     char                    routeData[MAX_ADDR_STR_SIZE_CA]; /**< GatewayId:ClientId of
                                                                     destination. **/
@@ -295,7 +325,15 @@ typedef struct
     // TODO change name to deviceId
     CARemoteId_t identity;      /**< endpoint device uuid */
     CARemoteId_t userId;        /**< endpoint user uuid */
+    uint32_t attributes;
 } CASecureEndpoint_t;
+
+/**
+ * Endpoint used for security administration - a special type of identity that
+ * bypasses Access Control Entry checks for SVR resources, while the device is
+ * not ready for normal operation yet.
+ */
+#define CA_SECURE_ENDPOINT_ATTRIBUTE_ADMINISTRATOR  0x1
 
 /**
  * Enums for CA return values.
@@ -396,6 +434,7 @@ typedef enum
     CA_FORMAT_APPLICATION_EXI,
     CA_FORMAT_APPLICATION_JSON,
     CA_FORMAT_APPLICATION_CBOR,
+    CA_FORMAT_APPLICATION_VND_OCF_CBOR,
     CA_FORMAT_UNSUPPORTED
 } CAPayloadFormat_t;
 
@@ -436,6 +475,8 @@ typedef struct
     size_t payloadSize;         /**< size in bytes of the payload */
     CAPayloadFormat_t payloadFormat;    /**< encoding format of the request payload */
     CAPayloadFormat_t acceptFormat;     /**< accept format for the response payload */
+    uint16_t payloadVersion;    /**< version of the payload */
+    uint16_t acceptVersion;     /**< expected version for the response payload */
     CAURI_t resourceUri;        /**< Resource URI information **/
     CARemoteId_t identity;      /**< endpoint identity */
     CADataType_t dataType;      /**< data type */
@@ -495,6 +536,7 @@ typedef struct
     uint16_t messageId;
     char token[CA_MAX_TOKEN_LEN];
     uint8_t tokenLength;
+    uint32_t ifindex;
 } CAHistoryItem_t;
 
 typedef struct
@@ -528,7 +570,9 @@ typedef struct
     struct tcpports
     {
         uint16_t u4;    /**< unicast IPv4 socket port */
+        uint16_t u4s;   /**< unicast IPv6 socket secure port */
         uint16_t u6;    /**< unicast IPv6 socket port */
+        uint16_t u6s;   /**< unicast IPv6 socket secure port */
     } tcp;
 #endif
 } CAPorts_t;
@@ -553,14 +597,15 @@ typedef struct
         CASocket_t m6s;             /**< multicast IPv6 secure */
         CASocket_t m4;              /**< multicast IPv4 */
         CASocket_t m4s;             /**< multicast IPv4 secure */
-        CASocketFd_t netlinkFd;     /**< netlink */
 #if defined(_WIN32)
+        WSAEVENT addressChangeEvent;/**< Event used to signal address changes */
         WSAEVENT shutdownEvent;     /**< Event used to signal threads to stop */
 #else
+        int netlinkFd;              /**< netlink */
         int shutdownFds[2];         /**< fds used to signal threads to stop */
+        int maxfd;                  /**< highest fd (for select) */
 #endif
         int selectTimeout;          /**< in seconds */
-        int maxfd;                  /**< highest fd (for select) */
         bool started;               /**< the IP adapter has started */
         bool terminate;             /**< the IP adapter needs to stop */
         bool ipv6enabled;           /**< IPv6 enabled by OCInit flags */
@@ -591,22 +636,34 @@ typedef struct
     {
         void *threadpool;       /**< threadpool between Initialize and Start */
         CASocket_t ipv4;        /**< IPv4 accept socket */
+        CASocket_t ipv4s;       /**< IPv4 accept socket secure */
         CASocket_t ipv6;        /**< IPv6 accept socket */
-        void *svrlist;          /**< unicast IPv4 TCP server information*/
+        CASocket_t ipv6s;       /**< IPv6 accept socket secure */
         int selectTimeout;      /**< in seconds */
         int listenBacklog;      /**< backlog counts*/
+#if defined(_WIN32)
+        WSAEVENT updateEvent;   /**< Event used to signal thread to stop or update the FD list */
+#else
         int shutdownFds[2];     /**< shutdown pipe */
         int connectionFds[2];   /**< connection pipe */
         int maxfd;              /**< highest fd (for select) */
+#endif
         bool started;           /**< the TCP adapter has started */
-        bool terminate;         /**< the TCP adapter needs to stop */
+        volatile bool terminate;/**< the TCP adapter needs to stop */
         bool ipv4tcpenabled;    /**< IPv4 TCP enabled by OCInit flags */
         bool ipv6tcpenabled;    /**< IPv6 TCP enabled by OCInit flags */
     } tcp;
 #endif
+    CATransportBTFlags_t bleFlags;   /**< flags related BLE transport */
 } CAGlobals_t;
 
 extern CAGlobals_t caglobals;
+
+typedef enum
+{
+    CA_LOG_LEVEL_ALL = 1,             // all logs.
+    CA_LOG_LEVEL_INFO,                // debug level is disabled.
+} CAUtilLogLevel_t;
 
 /**
  * Callback function type for request delivery.

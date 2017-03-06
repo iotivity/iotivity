@@ -32,6 +32,7 @@
 #include "logger.h"
 #include "payload_logging.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "cainterface.h"
 #include "ocserverrequest.h"
 #include "resourcemanager.h"
@@ -42,7 +43,7 @@
 #include "securevirtualresourcetypes.h"
 #include "srmutility.h"
 
-#define TAG  "SEC-VER"
+#define TAG  "OIC_SEC_VER"
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */
@@ -98,7 +99,8 @@ OCStackResult VerToCBORPayload(const OicSecVer_t *ver, uint8_t **payload, size_t
     char* strUuid = NULL;
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_ERROR);
+
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     cborEncoderResult |= cbor_encoder_create_map(&encoder, &verMap, mapSize);
@@ -129,7 +131,7 @@ OCStackResult VerToCBORPayload(const OicSecVer_t *ver, uint8_t **payload, size_t
 
     if (CborNoError == cborEncoderResult)
     {
-        *size = encoder.ptr - outPayload;
+        *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
         *payload = outPayload;
         ret = OC_STACK_OK;
     }
@@ -139,8 +141,9 @@ exit:
         OIC_LOG(DEBUG, TAG, "Memory getting reallocated.");
         // reallocate and try again!
         OICFree(outPayload);
+        outPayload = NULL;
         // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         OIC_LOG_V(DEBUG, TAG, "Ver reallocation size : %zd.", cborLen);
         cborEncoderResult = CborNoError;
         ret = VerToCBORPayload(ver, payload, &cborLen);
@@ -178,7 +181,7 @@ OCStackResult CBORPayloadToVer(const uint8_t *cborPayload, size_t size,
     cbor_parser_init(cborPayload, size, 0, &parser, &verCbor);
     CborValue verMap = { .parser = NULL };
     OicSecVer_t *ver = (OicSecVer_t *)OICCalloc(1, sizeof(OicSecVer_t));
-    VERIFY_NON_NULL(TAG, ver, ERROR);
+    VERIFY_NOT_NULL(TAG, ver, ERROR);
 
 
     cborFindResult = cbor_value_map_find_value(&verCbor, OIC_JSON_SEC_V_NAME, &verMap);
@@ -316,7 +319,7 @@ OCStackResult InitVerResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    OICStrcpy(gVer.secv, MAX_VERSION_LEN, SECURITY_VERSION);
+    OICStrcpy(gVer.secv, OIC_SEC_MAX_VER_LEN, SECURITY_VERSION);
 
     //Read device id from doxm
     OicUuid_t deviceID = {.id={0}};

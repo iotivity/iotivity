@@ -61,10 +61,10 @@ typedef void (*ESReadUserdataCb)(OCRepPayload* payload, char* resourceType, void
  *
  * @param isSecured         True if the Enrollee is operating in secured mode.
  * @param resourceMask      Provisining Resource Type which application wants to make.
- *                          ES_WIFI_RESOURCE = 0x01,
- *                          ES_CLOUD_RESOURCE = 0x02,
+ *                          ES_WIFICONF_RESOURCE = 0x01,
+ *                          ES_COAPCLOUDCONF_RESOURCE = 0x02,
  *                          ES_DEVCONF_RESOURCE = 0x04
- * @param callbacks         ESProvisioningCallbacks for updating Provisioning Resources' data to the application
+ * @param callbacks         ESProvisioningCallbacks for updating Easy setup Resources' data to the application
  * @return ::ES_OK on success, some other value upon failure.
  */
 ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvisioningCallbacks callbacks);
@@ -73,7 +73,7 @@ ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvision
 /**
  * This function Sets Device Information.
  *
- * @param deviceProperty   Contains device information composed of WiFi Structure & DevConf Structure
+ * @param deviceProperty   Contains device information composed of WiFiConf Structure & DevConf Structure
  * @return ::ES_OK on success, some other value upon failure.
  *
  * @see ESDeviceProperty
@@ -103,8 +103,7 @@ ESResult ESSetState(ESEnrolleeState esState);
 ESResult ESSetErrorCode(ESErrorCode esErrCode);
 
 /**
- * This function performs termination of Provisioning and Network resources.
- * Also terminates the IoTivity core stack.
+ * This function performs termination of all Easy setup resources.
  *
  * @return ::ES_OK on success, some other value upon failure.
  */

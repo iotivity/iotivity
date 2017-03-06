@@ -31,7 +31,7 @@ class CABlockTransferTests : public testing::Test {
     protected:
     virtual void SetUp()
     {
-        CAInitialize();
+        CAInitialize(CA_ADAPTER_IP);
     }
 
     virtual void TearDown()
@@ -132,7 +132,9 @@ TEST_F(CABlockTransferTests, CARemoveBlockDataFromListWithSeed)
     if (currData)
     {
         EXPECT_EQ(CA_STATUS_OK, CARemoveBlockDataFromListWithSeed(tempToken,
-                                                                  CA_MAX_TOKEN_LEN, 5683));
+                                                                  CA_MAX_TOKEN_LEN,
+                                                                  tempRep->addr,
+                                                                  tempRep->port));
     }
 
     CADestroyDataSet(cadata);

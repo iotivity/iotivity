@@ -96,6 +96,10 @@ namespace OC
                     OCConnectivityType connectivityType, FindResListCallback resourceHandler,
                     QualityOfService QoS);
 
+        OCStackResult findResourceList(const std::string& host, const std::string& resourceURI,
+                    OCConnectivityType connectivityType, FindResListCallback resourceHandler,
+                    FindErrorCallback errorHandler, QualityOfService Qos);
+
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     OCConnectivityType connectivityType, FindDeviceCallback deviceInfoHandler);
 
@@ -142,32 +146,97 @@ namespace OC
         OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
                     FindPlatformCallback platformInfoHandler, QualityOfService QoS);
 
+        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag,
+            const std::string& value);
+        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag,
+            const std::vector<std::string>& value);
+        OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag,
+            std::string& value);
+        OCStackResult getPropertyList(OCPayloadType type, const std::string& tag,
+            std::vector<std::string>& value);
+
+        /**
+         * This function returns flags of supported endpoint TPS on stack.
+         *
+         * @param[out] supportedTps Bit combinations of supported OCTpsSchemeFlags.
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult getSupportedTransportsInfo(OCTpsSchemeFlags& supportedTps);
+
         /**
         * This API registers a resource with the server
         * @note This API applies to server side only.
         *
         * @param resourceHandle Upon successful registration, resourceHandle will be filled
         * @param resourceURI The URI of the resource. Example: "a/light". See NOTE below
-        * @param resourceTypeName The resource type. Example: "light"
+        * @param resourceTypeName The resource type. Example: "core.light"
         * @param resourceInterface The resource interface (whether it is collection etc).
-        * @param entityHandler entity handler callback.
-        * @param resourceProperty indicates the property of the resource. Defined in ocstack.h.
+        * @param entityHandler Entity handler callback.
+        * @param resourceProperty indicates the property of the resource. Defined in octypes.h.
+        * @param resourceTpsTypes Transport Protocol Suites(TPS) types of resource for
+                                  open resource to specific transport adapter (e.g., TCP, UDP)
+                                  with messaging protocol(e.g., COAP, COAPS).
+                                  Example: "OC_COAP | OC_COAP_TCP"
         * setting resourceProperty as OC_DISCOVERABLE will allow Discovery of this resource
         * setting resourceProperty as OC_OBSERVABLE will allow observation
-        * settings resourceProperty as OC_DISCOVERABLE | OC_OBSERVABLE will allow both discovery
+        * setting resourceProperty as OC_DISCOVERABLE | OC_OBSERVABLE will allow both discovery
         * and observation
         *
         * @return Returns ::OC_STACK_OK if success.
-        * @note "a/light" is a relative URI.
-        * Above relative URI will be prepended (by core) with a host IP + namespace "oc"
-        * Therefore, fully qualified URI format would be //HostIP-Address/namespace/relativeURI"
-        * Example, a relative URI: 'a/light' will result in a fully qualified URI:
-        *   //192.168.1.1/oic/a/light"
-        * First parameter can take a relative URI and core will take care of preparing the fully
-        * qualified URI OR
-        * first parameter can take fully qualified URI and core will take that as is for further
-        * operations
-        * @note OCStackResult is defined in ocstack.h.
+        * @note "a/light" is a relative reference to URI.
+        * Above relative reference to URI will be prepended (by core) with a host IP
+        * Therefore, fully qualified URI format would be
+        * "CoAP(s)+protocol-URI-Scheme://HostIP-Address/relativeURI"
+        * Example, a relative reference to URI: 'a/light' will result in a fully qualified URI:
+        *   "coap://192.168.1.1:5246/a/light", "coaps://192.168.1.1:5246/a/light"
+        * @note OCStackResult is defined in octypes.h.
+        * @note entity handler callback :
+        * When you set specific return value like OC_EH_CHANGED, OC_EH_CONTENT,
+        * OC_EH_SLOW and etc in entity handler callback,
+        * ocstack will be not send response automatically to client
+        * except for error return value like OC_EH_ERROR
+        * If you want to send response to client with specific result,
+        * OCDoResponse API should be called with the result value.
+        */
+        OCStackResult registerResource(OCResourceHandle& resourceHandle,
+                        std::string& resourceURI,
+                        const std::string& resourceTypeName,
+                        const std::string& resourceInterface,
+                        EntityHandler entityHandler,
+                        uint8_t resourceProperty,
+                        OCTpsSchemeFlags resourceTpsTypes);
+
+        /**
+        * This API registers a resource with the server
+        * @note This API applies to server side only.
+        *
+        * @param resourceHandle Upon successful registration, resourceHandle will be filled
+        * @param resourceURI The URI of the resource. Example: "a/light". See NOTE below
+        * @param resourceTypeName The resource type. Example: "core.light"
+        * @param resourceInterface The resource interface (whether it is collection etc).
+        * @param entityHandler entity handler callback.
+        * @param resourceProperty indicates the property of the resource. Defined in octypes.h.
+        * setting resourceProperty as OC_DISCOVERABLE will allow Discovery of this resource
+        * setting resourceProperty as OC_OBSERVABLE will allow observation
+        * setting resourceProperty as OC_DISCOVERABLE | OC_OBSERVABLE will allow both discovery 
+        * and observation
+        *
+        * @return Returns ::OC_STACK_OK if success.
+        * @note "a/light" is a relative reference to URI.
+        * Above relative reference to URI will be prepended (by core) with a host IP
+        * Therefore, fully qualified URI format would be
+        * "CoAP(s)+protocol-URI-Scheme://HostIP-Address/relativeURI"
+        * Example, a relative reference to URI: 'a/light' will result in a fully qualified URI:
+        *   "coap://192.168.1.1:5246/a/light", "coaps://192.168.1.1:5246/a/light"
+        * @note OCStackResult is defined in octypes.h.
+        * @note entity handler callback :
+        * When you set specific return value like OC_EH_CHANGED, OC_EH_CONTENT,
+        * OC_EH_SLOW and etc in entity handler callback,
+        * ocstack will be not send response automatically to client
+        * except for error return value like OC_EH_ERROR
+        * If you want to send response to client with specific result,
+        * OCDoResponse API should be called with the result value.
         */
         OCStackResult registerResource(OCResourceHandle& resourceHandle,
                         std::string& resourceURI,
@@ -181,6 +250,8 @@ namespace OC
 
         /**
          * This API registers all the device specific information
+         *
+         * @deprecated: Use setPropertyValue instead.
          *
          * @param deviceInfo Structure containing all the device related information
          *
@@ -245,28 +316,8 @@ namespace OC
                         OCConnectivityType connectivityType, bool isObservable,
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
+
         OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
-#ifdef RD_CLIENT
-        OCStackResult publishResourceToRD(const std::string& host,
-                                          OCConnectivityType connectivityType,
-                                          ResourceHandles& resourceHandles,
-                                          PublishResourceCallback callback);
-
-        OCStackResult publishResourceToRD(const std::string& host,
-                                          OCConnectivityType connectivityType,
-                                          ResourceHandles& resourceHandles,
-                                          PublishResourceCallback callback, QualityOfService qos);
-
-        OCStackResult deleteResourceFromRD(const std::string& host,
-                                           OCConnectivityType connectivityType,
-                                           ResourceHandles& resourceHandles,
-                                           DeleteResourceCallback callback);
-
-        OCStackResult deleteResourceFromRD(const std::string& host,
-                                           OCConnectivityType connectivityType,
-                                           ResourceHandles& resourceHandles,
-                                           DeleteResourceCallback callback, QualityOfService qos);
-#endif
         std::weak_ptr<std::recursive_mutex> csdkLock();
 
         OCStackResult findDirectPairingDevices(unsigned short waittime,
@@ -286,8 +337,11 @@ namespace OC
 
         OCStackResult setDeviceId(const OCUUIdentity *myUuid);
 
+        OCStackResult stop();
+        OCStackResult start();
     private:
         PlatformConfig m_cfg;
+        OCMode m_modeType;
 
     private:
         std::unique_ptr<WrapperFactory> m_WrapperInstance;
@@ -320,6 +374,3 @@ namespace OC
 }
 
 #endif //__OCPLATFORM_IMPL_H
-
-
-

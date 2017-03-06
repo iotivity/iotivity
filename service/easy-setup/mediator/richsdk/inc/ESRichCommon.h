@@ -31,6 +31,11 @@
 #include "OCPlatform.h"
 #include "ocstack.h"
 #include "octypes.h"
+#ifdef __WITH_DTLS__
+#include "securevirtualresourcetypes.h"
+#include "OCProvisioningManager.hpp"
+#include "ocrandom.h"
+#endif
 
 #include "escommon.h"
 
@@ -43,7 +48,7 @@ namespace OIC
     namespace Service
     {
         /**
-         * @brief Properties of provisioning resource. It includes a provisioning status and last
+         * @brief Properties of easysetup resource. It includes a provisioning status and last
          *        error code.
          */
         class EnrolleeStatus
@@ -73,7 +78,7 @@ namespace OIC
              *
              * @return a provisioning status property of Enrollee
              */
-            ProvStatus getProvStatus()
+            ProvStatus getProvStatus() const
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_PROVSTATUS))
                 {
@@ -88,7 +93,7 @@ namespace OIC
              *
              * @return a last error code property of Enrollee.
              */
-            ESErrorCode getLastErrCode()
+            ESErrorCode getLastErrCode() const
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_LAST_ERRORCODE))
                 {
@@ -112,7 +117,7 @@ namespace OIC
         };
 
         /**
-         * @brief Data class stored for Cloud server property provisioning
+         * @brief Data class stored for provisioning of coap cloud server properties
          */
         class CloudProp
         {
@@ -143,6 +148,7 @@ namespace OIC
 
             /**
              * Constructor with OCRepresentation object. This is used for JNI communication.
+             * @param rep OCRepresentation object
              */
             CloudProp(const OCRepresentation &rep)
             {
@@ -152,7 +158,7 @@ namespace OIC
             }
 
             /**
-             * Set CloudServer resource properties to be delivered to Enrollee
+             * Set CoapCloudConf resource properties to be delivered to Enrollee
              *
              * @param authCode  Auth code issued by OAuth2.0-compatible account server
              * @param authProvider Auth provider ID
@@ -161,6 +167,26 @@ namespace OIC
             void setCloudProp(string authCode, string authProvider, string ciServer)
             {
                 m_rep.setValue(OC_RSRVD_ES_AUTHCODE, authCode);
+                m_rep.setValue(OC_RSRVD_ES_AUTHPROVIDER, authProvider);
+                m_rep.setValue(OC_RSRVD_ES_CISERVER, ciServer);
+            }
+
+            /**
+             * Set CoapCloudConf resource properties with Access token to be delivered to Enrollee
+             *
+             * @param accessToken  Access token which is given in a return of auth code issued by
+             *                     OAuth2.0-compatible account server
+             * @param tokenType Access token type, i.e. "bearer"
+             * @param authProvider Auth provider ID
+             * @param ciServer Cloud interface server URL which an Enrollee is going to registered
+             *
+             * @see OAUTH_TOKENTYPE
+             */
+            void setCloudPropWithAccessToken(string accessToken, OAUTH_TOKENTYPE tokenType,
+                                                string authProvider, string ciServer)
+            {
+                m_rep.setValue(OC_RSRVD_ES_ACCESSTOKEN, accessToken);
+                m_rep.setValue(OC_RSRVD_ES_ACCESSTOKEN_TYPE, tokenType);
                 m_rep.setValue(OC_RSRVD_ES_AUTHPROVIDER, authProvider);
                 m_rep.setValue(OC_RSRVD_ES_CISERVER, ciServer);
             }
@@ -248,6 +274,36 @@ namespace OIC
             }
 
             /**
+             * Get an access token to be delivered.
+             *
+             * @return an access token to be delivered.
+             */
+            std::string getAccessToken() const
+            {
+                if(m_rep.hasAttribute(OC_RSRVD_ES_ACCESSTOKEN))
+                {
+                    return m_rep.getValue<std::string>(OC_RSRVD_ES_ACCESSTOKEN);
+                }
+                return std::string("");
+            }
+
+            /**
+             * Get an access token type to be delivered.
+             *
+             * @return an access token type to be delivered.
+             */
+            OAUTH_TOKENTYPE getAccessTokenType() const
+            {
+
+                if(m_rep.hasAttribute(OC_RSRVD_ES_ACCESSTOKEN_TYPE))
+                {
+                    return static_cast<OAUTH_TOKENTYPE>(
+                                m_rep.getValue<int>(OC_RSRVD_ES_ACCESSTOKEN_TYPE));
+                }
+                return NONE_OAUTH_TOKENTYPE;
+            }
+
+            /**
              * Get OCRepresentation object
              *
              * @return OCRepresentation object
@@ -263,8 +319,8 @@ namespace OIC
         };
 
         /**
-         * @brief Data class stored for Device property provisioning which includes a WiFi
-         *        and device configuration provisioning
+         * @brief Data class stored for provisioning of Device properties which includes
+         *        properties of WiFiConf resource and DevConf resource
          */
         class DeviceProp
         {
@@ -289,6 +345,7 @@ namespace OIC
 
             /**
              * Constructor with OCRepresentation object. This is used for JNI communication.
+             * @param rep OCRepresentation object
              */
             DeviceProp(const OCRepresentation &rep)
             {
@@ -296,7 +353,7 @@ namespace OIC
             }
 
             /**
-             * Set WiFi resource properties to be delivered to Enrollee
+             * Set WiFiConf resource properties to be delivered to Enrollee
              *
              * @param ssid Ssid of the Enroller
              * @param pwd Pwd of the Enrolle
@@ -319,6 +376,7 @@ namespace OIC
              *
              * @param language IETF language tag using ISO 639X
              * @param country ISO Country Code (ISO 3166-1 Alpha-2)
+             * @param location location information
              */
             void setDevConfProp(string language, string country, string location)
             {
@@ -454,13 +512,70 @@ namespace OIC
             SecProvisioningStatus(string deviceUUID, ESResult result) :
                 m_devUUID(deviceUUID), m_result(result)
             {
+#ifdef __WITH_DTLS__
+                m_selectedOTMethod = OIC_JUST_WORKS;
+                m_isMOTEnabled = false;
+                m_isOwned = false;
+                m_ownerID = {};
+#endif
+            }
+#ifdef __WITH_DTLS__
+            SecProvisioningStatus(std::shared_ptr<OCSecureResource> resource, ESResult result) :
+                m_result(result)
+            {
+                m_isMOTEnabled = false;
+                if(resource.get() != nullptr)
+                {
+                    m_devUUID = resource->getDeviceID();
+                    m_isOwned = resource->getOwnedStatus();
+#ifdef MULTIPLE_OWNER
+                    m_isMOTEnabled = resource->isMOTEnabled();
+#endif
+
+                    if( OC_STACK_OK != resource->getOTMethod(&m_selectedOTMethod) )
+                    {
+                        m_selectedOTMethod = OIC_OXM_COUNT; // Out-of-range
+                    }
+
+                    if(resource->getOwnedStatus())
+                    {
+                        char uuidString[UUID_STRING_SIZE] = {};
+                        if(OCConvertUuidToString(resource->getDevPtr()->doxm->owner.id, uuidString))
+                        {
+                            m_ownerID = uuidString;
+                        }
+                        else
+                        {
+                            m_ownerID = {};
+                        }
+                    }
+                }
             }
 
-            const string getDeviceUUID()
+            OicSecOxm_t getSelectedOTMethod() const
+            {
+                return m_selectedOTMethod;
+            }
+
+            bool isMOTEnabled() const
+            {
+                return m_isMOTEnabled;
+            }
+
+            bool isOwnedDevice() const
+            {
+                return m_isOwned;
+            }
+
+            const std::string getOwnerID()
+            {
+                return m_ownerID;
+            }
+#endif
+            const std::string getDeviceUUID()
             {
                 return m_devUUID;
             }
-
             /**
              * Get a result for about security provisioning is success or not.
              *
@@ -477,10 +592,16 @@ namespace OIC
         private:
             string m_devUUID;
             ESResult m_result;
+#ifdef __WITH_DTLS__
+            OicSecOxm_t m_selectedOTMethod;
+            bool m_isMOTEnabled;
+            bool m_isOwned;
+            std::string m_ownerID;
+#endif
         };
 
         /**
-         * @breif This provide a set of getter APIs from received response for getConfiguration().
+         * @brief This provide a set of getter APIs from received response for getConfiguration().
          *        Received information includes a device name, WiFi supported mode, and frequency.
          *        Additionally, you can know if Enrollee can be access to cloud server with this
          *        object.
@@ -491,21 +612,21 @@ namespace OIC
             /**
              * Constructor
              * The expected OCRepresentation is one for collection resource and has several child
-             * OCRepresentation object corresponding to WiFi, DevConf, and CloudServer resource's
-             * representation.
+             * OCRepresentation object corresponding to WiFiConf, DevConf, and CoapCloudConf
+             * resources' representations.
              */
             EnrolleeConf(const OCRepresentation& rep) :
-                m_ProvRep(rep)
+                m_EasySetupRep(rep)
             {
             }
 
             EnrolleeConf(const EnrolleeConf& enrolleeConf) :
-                m_ProvRep(enrolleeConf.getProvResRep())
+                m_EasySetupRep(enrolleeConf.getEasySetupRep())
             {
             }
 
             EnrolleeConf(const EnrolleeConf&& enrolleeConf) :
-                m_ProvRep(std::move(enrolleeConf.getProvResRep()))
+                m_EasySetupRep(std::move(enrolleeConf.getEasySetupRep()))
             {
             }
 
@@ -517,14 +638,24 @@ namespace OIC
              */
             std::string getDeviceName() const
             {
-                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                std::vector<OCRepresentation> children = m_EasySetupRep.getChildren();
                 for(auto child = children.begin(); child != children.end(); ++child)
                 {
                     if(child->getUri().find(OC_RSRVD_ES_URI_DEVCONF) != std::string::npos)
                     {
-                        if(child->hasAttribute(OC_RSRVD_ES_DEVNAME))
+                        OCRepresentation rep;
+                        if(child->hasAttribute(OC_RSRVD_REPRESENTATION))
                         {
-                            return child->getValue<std::string>(OC_RSRVD_ES_DEVNAME);
+                            rep = child->getValue<OCRepresentation>(OC_RSRVD_REPRESENTATION);
+                        }
+                        else
+                        {
+                            return std::string("");
+                        }
+
+                        if(rep.hasAttribute(OC_RSRVD_ES_DEVNAME))
+                        {
+                            return rep.getValue<std::string>(OC_RSRVD_ES_DEVNAME);
                         }
                     }
                 }
@@ -538,14 +669,24 @@ namespace OIC
              */
             std::string getModelNumber() const
             {
-                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                std::vector<OCRepresentation> children = m_EasySetupRep.getChildren();
                 for(auto child = children.begin(); child != children.end(); ++child)
                 {
                     if(child->getUri().find(OC_RSRVD_ES_URI_DEVCONF) != std::string::npos)
                     {
-                        if(child->hasAttribute(OC_RSRVD_ES_MODELNUMBER))
+                        OCRepresentation rep;
+                        if(child->hasAttribute(OC_RSRVD_REPRESENTATION))
                         {
-                            return child->getValue<std::string>(OC_RSRVD_ES_MODELNUMBER);
+                            rep = child->getValue<OCRepresentation>(OC_RSRVD_REPRESENTATION);
+                        }
+                        else
+                        {
+                            return std::string("");
+                        }
+
+                        if(rep.hasAttribute(OC_RSRVD_ES_MODELNUMBER))
+                        {
+                            return rep.getValue<std::string>(OC_RSRVD_ES_MODELNUMBER);
                         }
                     }
                 }
@@ -564,14 +705,24 @@ namespace OIC
                 vector<WIFI_MODE> modes;
                 modes.clear();
 
-                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                std::vector<OCRepresentation> children = m_EasySetupRep.getChildren();
                 for(auto child = children.begin(); child != children.end(); ++child)
                 {
-                    if(child->getUri().find(OC_RSRVD_ES_URI_WIFI) != std::string::npos)
+                    if(child->getUri().find(OC_RSRVD_ES_URI_WIFICONF) != std::string::npos)
                     {
-                        if(child->hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
+                        OCRepresentation rep;
+                        if(child->hasAttribute(OC_RSRVD_REPRESENTATION))
                         {
-                            for(auto it : child->getValue
+                            rep = child->getValue<OCRepresentation>(OC_RSRVD_REPRESENTATION);
+                        }
+                        else
+                        {
+                            return modes;
+                        }
+
+                        if(rep.hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
+                        {
+                            for(auto it : rep.getValue
                                         <std::vector<int>>(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
                             {
                                 modes.push_back(static_cast<WIFI_MODE>(it));
@@ -591,15 +742,25 @@ namespace OIC
              */
             WIFI_FREQ getWiFiFreq() const
             {
-                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                std::vector<OCRepresentation> children = m_EasySetupRep.getChildren();
                 for(auto child = children.begin(); child != children.end(); ++child)
                 {
-                    if(child->getUri().find(OC_RSRVD_ES_URI_WIFI) != std::string::npos)
+                    if(child->getUri().find(OC_RSRVD_ES_URI_WIFICONF) != std::string::npos)
                     {
-                        if(child->hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
+                        OCRepresentation rep;
+                        if(child->hasAttribute(OC_RSRVD_REPRESENTATION))
+                        {
+                            rep = child->getValue<OCRepresentation>(OC_RSRVD_REPRESENTATION);
+                        }
+                        else
+                        {
+                            return WIFI_FREQ_NONE;
+                        }
+
+                        if(rep.hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
                         {
                             return static_cast<WIFI_FREQ>(
-                                        child->getValue<int>(OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
+                                        rep.getValue<int>(OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
                         }
                     }
                 }
@@ -613,12 +774,12 @@ namespace OIC
              */
             bool isCloudAccessible() const
             {
-                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                std::vector<OCRepresentation> children = m_EasySetupRep.getChildren();
                 for(auto child = children.begin(); child != children.end(); ++child)
                 {
                     for(auto rt : child->getResourceTypes())
                     {
-                        if(0 == rt.compare(OC_RSRVD_ES_RES_TYPE_CLOUDSERVER))
+                        if(0 == rt.compare(OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF))
                         {
                             return true;
                         }
@@ -632,13 +793,13 @@ namespace OIC
              *
              * @return OCRepresentation object
              */
-            const OCRepresentation& getProvResRep() const
+            const OCRepresentation& getEasySetupRep() const
             {
-                return m_ProvRep;
+                return m_EasySetupRep;
             }
 
         protected:
-            OCRepresentation m_ProvRep;
+            OCRepresentation m_EasySetupRep;
         };
 
         /**
@@ -815,6 +976,106 @@ namespace OIC
         };
 
         /**
+         * Status object for connect API. This object is given to application
+         * when a response for 'Connect' request from Enrollee is arrived.
+         */
+        class ConnectRequestStatus
+        {
+        public:
+            /**
+             * Constructor
+             */
+            ConnectRequestStatus(ESResult result) :
+                    m_result(result)
+            {
+            }
+
+            /**
+             * Get a result of Connect request
+             *
+             * @return ::ES_OK\n
+             *         ::ES_COMMUNICATION_ERROR\n
+             *         ::ES_ERROR\n
+             *
+             * @see ESResult
+             */
+            ESResult getESResult()
+            {
+                return m_result;
+            }
+
+        private:
+            ESResult m_result;
+        };
+
+        class ESOwnershipTransferData
+        {
+        public:
+#ifdef __WITH_DTLS__
+            ESOwnershipTransferData() :
+                m_MOTMethod(OIC_JUST_WORKS), m_preconfiguredPin("")
+            {
+            }
+
+            ESOwnershipTransferData(const ESOwnershipTransferData& data) :
+                m_MOTMethod(data.getMOTMethod()),
+                m_preconfiguredPin(data.getPreConfiguredPin())
+            {
+            }
+
+            ESResult setMOTMethod(OicSecOxm_t method)
+            {
+#ifdef MULTIPLE_OWNER
+                if(OIC_RANDOM_DEVICE_PIN != method)
+                {
+                    return ES_ERROR;
+                }
+
+                m_MOTMethod = method;
+                return ES_OK;
+#else
+                (void) method;
+
+                return ES_ERROR;
+#endif
+            }
+
+            ESResult setMOTMethod(OicSecOxm_t method, const std::string& pin)
+            {
+#ifdef MULTIPLE_OWNER
+                if(OIC_PRECONFIG_PIN != method || pin.empty())
+                {
+                    return ES_ERROR;
+                }
+
+                m_preconfiguredPin = pin;
+                m_MOTMethod = method;
+                return ES_OK;
+#else
+                (void) method;
+                (void) pin;
+
+                return ES_ERROR;
+#endif
+            }
+
+            OicSecOxm_t getMOTMethod() const
+            {
+                return m_MOTMethod;
+            }
+
+            std::string getPreConfiguredPin() const
+            {
+                return m_preconfiguredPin;
+            }
+
+        private:
+            OicSecOxm_t m_MOTMethod;
+            std::string m_preconfiguredPin;
+#endif
+        };
+
+        /**
          * Callback function definition for providing Enrollee status
          */
         typedef function< void(shared_ptr< GetEnrolleeStatus >) > GetStatusCb;
@@ -835,9 +1096,23 @@ namespace OIC
         typedef function< void(shared_ptr< CloudPropProvisioningStatus >) > CloudPropProvStatusCb;
 
         /**
+         * Callback function definition for providing 'Connect' request status
+         */
+        typedef function< void(shared_ptr< ConnectRequestStatus >) > ConnectRequestStatusCb;
+
+
+        /**
          * Callback function definition for providing Enrollee security provisioning status
          */
         typedef function< void(shared_ptr<SecProvisioningStatus>) > SecurityProvStatusCb;
+
+        /**
+         * Callback function definition for providing Enrollee security provisioning status.
+         * This callback is an overloaded version of SecurityProvStatusCb, which has
+         * ESOwnershipTransferData as a return value.
+         */
+        typedef function< ESOwnershipTransferData(shared_ptr<SecProvisioningStatus>) >
+                                                                    SecurityProvStatusCbWithOption;
 
         /**
          * Callback definition to be invoked when the security stack expects a pin from application

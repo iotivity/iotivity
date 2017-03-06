@@ -49,7 +49,7 @@ struct OCUuidList
     OCUuidList_t *next;
 };
 
-/*
+/**
  * Device's power on/off state.
  */
 typedef enum {
@@ -70,9 +70,10 @@ typedef struct OCProvisionDev
 #ifdef WITH_TCP
     uint16_t        tcpPort;         /**< tcp port **/
 #endif
-    char             secVer[MAX_VERSION_LEN];         /**< security version **/
+    char            secVer[OIC_SEC_MAX_VER_LEN];         /**< security version **/
     DeviceStatus    devStatus;       /**< status of device **/
-    OCDoHandle    handle;
+    OCDoHandle      handle;
+    bool            ownerAclUnauthorizedRequest;        /**< true if the provisioning client has already re-tried posting the Owner ACE **/
     struct OCProvisionDev  *next;    /**< Next pointer. **/
 }OCProvisionDev_t;
 
@@ -101,23 +102,48 @@ typedef struct OCPMResult{
 }OCProvisionResult_t;
 
 /**
+ * Owner device type
+ */
+typedef enum OwnerType{
+    SUPER_OWNER = 0,
+    SUB_OWNER = 1
+}OwnerType_t;
+
+/**
+ * Index value to access OxM allow table
+ */
+typedef enum OxmAllowTableIdx {
+    OXM_IDX_JUST_WORKS = 0,
+    OXM_IDX_MV_JUST_WORKS,
+#ifdef MULTIPLE_OWNER
+    OXM_IDX_PRECONFIG_PIN,
+#endif
+    OXM_IDX_RANDOM_DEVICE_PIN,
+    OXM_IDX_MANUFACTURER_CERTIFICATE,
+    OXM_IDX_CON_MFG_CERT,
+    OXM_IDX_DECENTRALIZED_PUBLIC_KEY,
+    OXM_IDX_COUNT,
+    OXM_IDX_UNKNOWN
+}OxmAllowTableIdx_t;
+
+/**
  * Callback function definition of provisioning API
  *
- * @param[OUT] ctx - If user set his/her context, it will be returned here.
- * @param[OUT] nOfRes - total number of results, it depends on using which provisioning API.
- * @param[OUT] arr - Array of OCPMResult_t, each OCPMResult_t contains result for target Device.
- * @param[OUT} hasError - If there is no error, it's returned with 'false' but if there is a single
+ * @param[in] ctx - If user set his/her context, it will be returned here.
+ * @param[in] nOfRes - total number of results, it depends on using which provisioning API.
+ * @param[in] arr - Array of OCPMResult_t, each OCPMResult_t contains result for target Device.
+ * @param[in] hasError - If there is no error, it's returned with 'false' but if there is a single
  *                        or more error is/are occured during operation, it will be 'true'.
  */
-typedef void (*OCProvisionResultCB)(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError);
+typedef void (*OCProvisionResultCB)(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError);
 
 
 /**
  * Callback function definition of direct-pairing
  *
- * @param[OUT] ctx - User context which will be returned wth callback
- * @param[OUT] peer - pairing device info.
- * @param[OUT} result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK'
+ * @param[in] ctx - User context which will be returned wth callback
+ * @param[in] peer - pairing device info.
+ * @param[in] result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK'
  *                                   if D2D pairing is success without error
  */
 typedef void (*OCDirectPairingResultCB)(void *ctx, OCDirectPairingDev_t *peer, OCStackResult result);

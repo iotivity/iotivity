@@ -35,6 +35,7 @@
 #include "ocrandom.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "ocstack.h"
 
 namespace OC
 {
@@ -54,98 +55,10 @@ namespace OC
             case PAYLOAD_TYPE_REPRESENTATION:
                 setPayload(reinterpret_cast<const OCRepPayload*>(rep));
                 break;
-            case PAYLOAD_TYPE_DEVICE:
-                setPayload(reinterpret_cast<const OCDevicePayload*>(rep));
-                break;
-            case PAYLOAD_TYPE_PLATFORM:
-                setPayload(reinterpret_cast<const OCPlatformPayload*>(rep));
-                break;
             default:
                 throw OC::OCException("Invalid Payload type in setPayload");
                 break;
         }
-    }
-
-    void MessageContainer::setPayload(const OCDevicePayload* payload)
-    {
-        if (payload == nullptr)
-        {
-            return;
-        }
-
-        OCRepresentation rep;
-        rep[OC_RSRVD_DEVICE_ID] = (payload->sid) ?
-            std::string(payload->sid) :
-            std::string();
-        rep[OC_RSRVD_DEVICE_NAME] = payload->deviceName ?
-            std::string(payload->deviceName) :
-            std::string();
-        rep[OC_RSRVD_SPEC_VERSION] = payload->specVersion ?
-            std::string(payload->specVersion) :
-            std::string();
-        for (OCStringLL *strll = payload->dataModelVersions; strll; strll = strll->next)
-        {
-            rep.addDataModelVersion(strll->value);
-        }
-        for (OCStringLL *strll = payload->types; strll; strll = strll->next)
-        {
-           rep.addResourceType(strll->value);
-        }
-        m_reps.push_back(std::move(rep));
-    }
-
-    void MessageContainer::setPayload(const OCPlatformPayload* payload)
-    {
-        if (payload == nullptr)
-        {
-            return;
-        }
-
-        OCRepresentation rep;
-        rep[OC_RSRVD_PLATFORM_ID] = payload->info.platformID ?
-            std::string(payload->info.platformID) :
-            std::string();
-        rep[OC_RSRVD_MFG_NAME] = payload->info.manufacturerName ?
-            std::string(payload->info.manufacturerName) :
-            std::string();
-        rep[OC_RSRVD_MFG_URL] = payload->info.manufacturerUrl ?
-            std::string(payload->info.manufacturerUrl) :
-            std::string();
-        rep[OC_RSRVD_MODEL_NUM] = payload->info.modelNumber ?
-            std::string(payload->info.modelNumber) :
-            std::string();
-        rep[OC_RSRVD_MFG_DATE] = payload->info.dateOfManufacture ?
-            std::string(payload->info.dateOfManufacture) :
-            std::string();
-        rep[OC_RSRVD_PLATFORM_VERSION] = payload->info.platformVersion ?
-            std::string(payload->info.platformVersion) :
-            std::string();
-        rep[OC_RSRVD_OS_VERSION] = payload->info.operatingSystemVersion ?
-            std::string(payload->info.operatingSystemVersion) :
-            std::string();
-        rep[OC_RSRVD_HARDWARE_VERSION] = payload->info.hardwareVersion ?
-            std::string(payload->info.hardwareVersion) :
-            std::string();
-        rep[OC_RSRVD_FIRMWARE_VERSION] = payload->info.firmwareVersion ?
-            std::string(payload->info.firmwareVersion) :
-            std::string();
-        rep[OC_RSRVD_SUPPORT_URL] = payload->info.supportUrl ?
-            std::string(payload->info.supportUrl) :
-            std::string();
-        rep[OC_RSRVD_SYSTEM_TIME] = payload->info.systemTime ?
-            std::string(payload->info.systemTime) :
-            std::string();
-
-        for (OCStringLL *strll = payload->rt; strll; strll = strll->next)
-        {
-            rep.addResourceType(strll->value);
-        }
-        for (OCStringLL *strll = payload->interfaces; strll; strll = strll->next)
-        {
-            rep.addResourceInterface(strll->value);
-        }
-
-        m_reps.push_back(std::move(rep));
     }
 
     void MessageContainer::setPayload(const OCRepPayload* payload)
@@ -316,7 +229,7 @@ namespace OC
         ((int64_t*)array)[pos] = item;
     }
 
-#if !defined(_MSC_VER)
+#if !(defined(_MSC_VER) || defined(__APPLE__))
     template<>
     void get_payload_array::copy_to_array(std::_Bit_reference br, void* array, size_t pos)
     {
@@ -519,14 +432,12 @@ namespace OC
     std::string OCRepresentation::payload_array_helper_copy<std::string>(
             size_t index, const OCRepPayloadValue* pl)
     {
-        if (pl->arr.strArray[index])
+        if (pl && pl->arr.strArray[index])
         {
             return std::string(pl->arr.strArray[index]);
         }
-        else
-        {
-            return std::string{};
-        }
+
+        return std::string{};
     }
 
     template<>
@@ -720,14 +631,14 @@ namespace OC
         m_children = children;
     }
 
-    void OCRepresentation::setDevAddr(const OCDevAddr m_devAddr)
+    void OCRepresentation::setDevAddr(const OCDevAddr& devAddr)
     {
         std::ostringstream ss;
-        if (m_devAddr.flags & OC_SECURE)
+        if (devAddr.flags & OC_SECURE)
         {
             ss << COAPS;
         }
-        else if (m_devAddr.adapter & OC_ADAPTER_TCP)
+        else if (devAddr.adapter & OC_ADAPTER_TCP)
         {
             ss << COAP_TCP;
         }
@@ -735,17 +646,26 @@ namespace OC
         {
             ss << COAP;
         }
-        if (m_devAddr.flags & OC_IP_USE_V6)
+        if (devAddr.flags & OC_IP_USE_V6)
         {
-            ss << '[' << m_devAddr.addr << ']';
+            char addressEncoded[128] = {0};
+
+            OCStackResult result = OCEncodeAddressForRFC6874(addressEncoded,
+                                                             sizeof(addressEncoded),
+                                                             devAddr.addr);
+            if (OC_STACK_OK != result)
+            {
+                throw OC::OCException("Invalid address in setDevAddr");
+            }
+            ss << '[' << addressEncoded << ']';
         }
         else
         {
-            ss << m_devAddr.addr;
+            ss << devAddr.addr;
         }
-        if (m_devAddr.port)
+        if (devAddr.port)
         {
-            ss << ':' << m_devAddr.port;
+            ss << ':' << devAddr.port;
         }
         m_host = ss.str();
     }

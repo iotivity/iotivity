@@ -82,7 +82,7 @@ int32_t CASendRAUnicastData(const CAEndpoint_t *endpoint, const void *data,
  * @param[out]   size        Number of local connectivity structures.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAGetRAInterfaceInformation(CAEndpoint_t **info, uint32_t *size);
+CAResult_t CAGetRAInterfaceInformation(CAEndpoint_t **info, size_t *size);
 
 /**
  * Stops RA server and de-register XMPP callback listeners.

@@ -40,7 +40,6 @@ extern "C" {
 #define OC_JSON_SUFFIX_LEN                 (sizeof(OC_JSON_SUFFIX) - 1)
 #define OC_JSON_SEPARATOR                  ','
 #define OC_JSON_SEPARATOR_STR              ","
-#define OC_KEY_VALUE_DELIMITER             "="
 
 /**
  * Static values for various JSON attributes.
@@ -86,6 +85,12 @@ typedef enum
     OC_KEEPALIVE_RESOURCE_URI,
 #endif
 
+    /** "/oic/introspection" .*/
+    OC_INTROSPECTION_URI,
+
+    /** "/oic/introspection/payload" .*/
+    OC_INTROSPECTION_PAYLOAD_URI,
+
     /** Max items in the list */
     OC_MAX_VIRTUAL_RESOURCES    //<s Max items in the list
 
@@ -118,6 +123,12 @@ typedef enum
 } ResourceHandling;
 
 /**
+ * This function returns the virtual resource of the given URI.
+ * @return the virtual resource or ::OC_UNKNOWN_URI
+ */
+OCVirtualResources GetTypeOfVirtualURI(const char* resourceUri);
+
+/**
  * Default entity handler (ie. callback) to be used for resources with
  * no entity handler.
  */
@@ -139,8 +150,13 @@ OCResource *FindResourceByUri(const char* resourceUri);
 bool IsVirtualResource(const char* resourceUri);
 
 /**
- * Parameter @ref handling returns by-reference the type of resource handling
- * required by the internal stack based on the specified @ref request.
+ * Parameter handling returns by-reference the type of resource handling
+ * required by the internal stack based on the specified request.
+ *
+ * @param request the OCServerRequest to the internal stack
+ * @param handling the resource handling required by the internal stack
+ * @param resource the OCResource from the stack
+ *
  * @return ::OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult DetermineResourceHandling (const OCServerRequest *request,
@@ -148,8 +164,13 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
                                          OCResource **resource);
 
 /**
- * Processes the specified @ref request based on the type of resource handling
- * @ref resHandling.
+ * Processes the specified request based on the type of resource handling
+ * resHandling.
+ *
+ * @param resHandling the type of resource handling to be used
+ * @param resource the resource to process the request on
+ * @param request the request to process
+ *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult ProcessRequest(ResourceHandling resHandling,
@@ -186,7 +207,7 @@ void DeleteDeviceInfo();
  * Prepare payload for resource representation.
  */
 OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
-                    OCRepPayload** payload);
+                    OCRepPayload** payload, OCDevAddr *devAddr);
 
 /**
  * A helper function that Maps an @ref OCEntityHandlerResult type to an
@@ -198,4 +219,3 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult);
 }
 #endif // __cplusplus
 #endif //OC_RESOURCEHANDLER_H
-

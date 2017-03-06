@@ -29,6 +29,7 @@
 #define TAG "ocserver"
 #define SAMPLE_MAX_NUM_OBSERVATIONS     8
 #define SAMPLE_MAX_NUM_POST_INSTANCE  2
+#define SAMPLE_MAX_STR_BUFF_SIZE  100
 
 //-----------------------------------------------------------------------------
 // Typedefs
@@ -39,7 +40,7 @@ typedef struct LIGHTRESOURCE
 {
     OCResourceHandle handle;
     bool state;
-    int power;
+    int64_t power;
 } LightResource;
 
 /* Structure to represent the observers */
@@ -50,6 +51,15 @@ typedef struct
     OCResourceHandle resourceHandle;
 } Observers;
 
+typedef enum
+{
+    DISPLAY_SUPPORTED_EPS_FLAG        = 0,
+    CREATE_RESOURCE_OC_ALL,
+    CREATE_RESOURCE_OC_COAP,
+    CREATE_RESOURCE_OC_COAP_TCP,
+    CREATE_RESOURCE_OC_COAP_WITH_TCP,
+    ENDPOINT_OPT_NONE
+} EndpointOption;
 //-----------------------------------------------------------------------------
 // Function prototype
 //-----------------------------------------------------------------------------

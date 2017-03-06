@@ -34,8 +34,6 @@ public:
     std::string dataStr; // data could be binary... for testing we'll use str
 };
 
-
-
 /**
  * Helper to validate the state of CoAP URI parsing.
  *
@@ -212,4 +210,41 @@ TEST(CAProtocolMessage, CAGetTokenFromPDU)
     outData.type = CA_MSG_NONCONFIRM;
 
     EXPECT_EQ(CA_STATUS_OK, CAGetTokenFromPDU(pdu->transport_hdr, &outData, &tempRep));
+    coap_delete_list(options);
+    coap_delete_pdu(pdu);
+}
+
+TEST(CAProtocolMessage, CAGetInfoFromPDU)
+{
+    CAEndpoint_t tempRep;
+    memset(&tempRep, 0, sizeof(CAEndpoint_t));
+    tempRep.flags = CA_DEFAULT_FLAGS;
+    tempRep.adapter = CA_ADAPTER_IP;
+    tempRep.port = 5683;
+
+    coap_pdu_t *pdu = NULL;
+    coap_list_t *options = NULL;
+    coap_transport_t transport = COAP_UDP;
+
+    CAInfo_t inData;
+    memset(&inData, 0, sizeof(CAInfo_t));
+    inData.token = (CAToken_t)"token";
+    inData.tokenLength = strlen(inData.token);
+    inData.type = CA_MSG_NONCONFIRM;
+    inData.payload = (CAPayload_t) "requestPayload";
+    inData.payloadSize = sizeof(inData.payload);;
+    inData.payloadFormat = CA_FORMAT_APPLICATION_VND_OCF_CBOR;
+    inData.acceptFormat = CA_FORMAT_APPLICATION_VND_OCF_CBOR;
+    inData.payloadVersion = 2048;
+    inData.acceptVersion = 2048;
+
+    pdu = CAGeneratePDU(CA_GET, &inData, &tempRep, &options, &transport);
+
+    uint32_t code = CA_NOT_FOUND;
+    CAInfo_t outData;
+    memset(&outData, 0, sizeof(CAInfo_t));
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetInfoFromPDU(pdu, &tempRep, &code, &outData));
+    coap_delete_list(options);
+    coap_delete_pdu(pdu);
 }

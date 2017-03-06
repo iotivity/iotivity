@@ -24,13 +24,13 @@
 Import('env')
 
 es_target = env.get ('TARGET_OS')
+service_easy_setup_env = env.Clone()
 
-if es_target in ['linux']:
-   SConscript('mediator/SConscript')
-   SConscript('enrollee/SConscript')
+if es_target in ['android', 'ios', 'linux', 'tizen']:
+    SConscript('mediator/SConscript')
 
-if es_target in ['android']:
-   SConscript('mediator/SConscript')
+if es_target in ['linux', 'tizen']:
+    SConscript('enrollee/SConscript')
 
-if es_target in ['tizen']:
-   SConscript('enrollee/SConscript')
+if es_target in ['android', 'linux', 'tizen']:
+    service_easy_setup_env.UserInstallTargetHeader('inc/escommon.h', 'service/easy-setup', 'escommon.h')

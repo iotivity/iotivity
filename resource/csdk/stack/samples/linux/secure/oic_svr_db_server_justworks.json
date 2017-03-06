@@ -42,12 +42,6 @@
                             "rel": ""
                         },
                         {
-                            "href": "/oic/sec/acl",
-                            "rt": ["oic.r.acl"],
-                            "if": ["oic.if.baseline"],
-                            "rel": ""
-                        },
-                        {
                             "href": "/oic/sec/cred",
                             "rt": ["oic.r.cred"],
                             "if": ["oic.if.baseline"],
@@ -76,7 +70,6 @@
         "owned": false,
         "deviceuuid": "6a757374-776f-726b-4465-765575696430",
         "devowneruuid": "",
-        "rowneruuid": "6a757374-776f-726b-4465-765575696430",
-        "x.org.iotivity.dpc": false
+        "rowneruuid": "6a757374-776f-726b-4465-765575696430"
     }
 }

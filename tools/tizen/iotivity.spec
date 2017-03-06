@@ -1,13 +1,19 @@
 Name: iotivity
-Version: 1.2.0
+Version: 1.3.0
 Release: 0
 Summary: IoT Connectivity sponsored by the OCF
-Group: Network & Connectivity/Other
-License: Apache-2.0
+Group: Network & Connectivity / IoT Connectivity
+License: Apache-2.0 and BSD-2-Clause and (MIT or BSL-1.0) and MIT
 URL: https://www.iotivity.org/
-Source0: %{name}-%{version}.tar.bz2
+Source0: http://mirrors.kernel.org/%{name}/%{version}/%{name}-%{version}.tar.gz
 Source1001: %{name}.manifest
 Source1002: %{name}-test.manifest
+
+%if 0%{?tizen:1}
+%define TARGET_OS tizen
+%else
+%define TARGET_OS linux
+%endif
 
 %if "%{tizen}" == "2.3"
 %define TARGET_TRANSPORT IP
@@ -21,21 +27,10 @@ Source1002: %{name}-test.manifest
 %define TARGET_TRANSPORT IP
 %endif
 
-%define JOB "-j4"
-%if 0%{?speedpython}
-%define JOB %{?_smp_mflags}
-%endif
-%if 0%{?speedpython:1} && 0%{?en_speedpython:1}
-%en_speedpython
-%endif
 
-## If tizen 2.x, RELEASE follows tizen_build_binary_release_type_eng. ##
-## and if tizen 3.0, RELEASE follows tizen_build_devel_mode. ##
-%if 0%{?tizen_build_devel_mode} == 1 || 0%{?tizen_build_binary_release_type_eng} == 1
-%define RELEASE False
-%else
+# default is RELEASE mode.
+# If DEBUG mode is needed, please use tizen_build_devel_mode
 %define RELEASE True
-%endif
 # For Example
 %if %{RELEASE} == "True"
 %define build_mode release
@@ -44,9 +39,15 @@ Source1002: %{name}-test.manifest
 %endif
 
 %ifarch armv7l armv7hl armv7nhl armv7tnhl armv7thl
+%if 3 <= 0%{?tizen_version_major}
+BuildRequires: python-accel-armv7l-cross-arm
+%endif
 %define TARGET_ARCH "armeabi-v7a"
 %endif
 %ifarch aarch64
+%if 3 <= 0%{?tizen_version_major}
+BuildRequires: python-accel-aarch64-cross-aarch64
+%endif
 %define TARGET_ARCH "arm64"
 %endif
 %ifarch x86_64
@@ -58,25 +59,31 @@ Source1002: %{name}-test.manifest
 
 %define ex_install_dir %{buildroot}%{_bindir}
 
-%if ! %{?license:0}
+%if ! 0%{?license:0}
 %define license %doc
+%endif
+
+%if ! 0%{?manifest:0}
+%define manifest %doc
 %endif
 
 # Default values to be eventually overiden BEFORE or as gbs params:
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
 %{!?LOGGING: %define LOGGING 1}
+%{!?RD_MODE: %define RD_MODE CLIENT}
+%{!?RELEASE: %define RELEASE 1}
 %{!?ROUTING: %define ROUTING EP}
-%{!?SECURED: %define SECURED 0}
+%{!?SECURED: %define SECURED 1}
 %{!?TARGET_ARCH: %define TARGET_ARCH %{_arch}}
 %{!?TARGET_OS: %define TARGET_OS tizen}
-%{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP,BT}
+%{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
 %{!?VERBOSE: %define VERBOSE 1}
-%{!?WITH_CLOUD: %define WITH_CLOUD 0}
+%{!?WITH_CLOUD: %define WITH_CLOUD 1}
 %{!?WITH_MQ: %define WITH_MQ OFF}
 %{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?WITH_TCP: %define WITH_TCP 0}
 
-BuildRequires:  gettext-tools, expat-devel
+BuildRequires:  expat-devel
 BuildRequires:  python, libcurl-devel
 BuildRequires:  scons
 BuildRequires:  openssl-devel
@@ -84,14 +91,20 @@ BuildRequires:  boost-devel
 BuildRequires:  boost-thread
 BuildRequires:  boost-system
 BuildRequires:  boost-filesystem
-BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(uuid)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(sqlite3)
 %if "%{TARGET_OS}" == "tizen"
+BuildRequires:  gettext-tools
 BuildRequires:  pkgconfig(dlog)
-BuildRequires:  pkgconfig(capi-network-wifi)
+BuildRequires:  pkgconfig(ttrace)
+BuildRequires:  pkgconfig(capi-network-connection)
 BuildRequires:  pkgconfig(capi-network-bluetooth) >= 0.1.52
+%else
+%if 0%{?fedora:1}
+BuildRequires:  sqlite-devel
+BuildRequires:  gettext-devel
+%endif
 %endif
 Requires(postun): /sbin/ldconfig
 Requires(post): /sbin/ldconfig
@@ -160,10 +173,11 @@ cp %{SOURCE1001} ./%{name}-test.manifest
 %endif
 
 %build
-scons %{JOB} --prefix=%{_prefix} \
+scons %{?_smp_mflags} --prefix=%{_prefix} \
     ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} \
     LIB_INSTALL_DIR=%{_libdir} \
     LOGGING=%{LOGGING} \
+    RD_MODE=%{RD_MODE} \
     RELEASE=%{RELEASE} \
     ROUTING=%{ROUTING} \
     SECURED=%{SECURED} \
@@ -186,6 +200,7 @@ scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
     ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} \
     LIB_INSTALL_DIR=%{_libdir} \
     LOGGING=%{LOGGING} \
+    RD_MODE=%{RD_MODE} \
     RELEASE=%{RELEASE} \
     ROUTING=%{ROUTING} \
     SECURED=%{SECURED} \
@@ -222,7 +237,7 @@ cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleserverH
 cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/threadingsample %{ex_install_dir}
 cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/oic_svr_db_server.dat %{ex_install_dir}
 cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/oic_svr_db_client.dat %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/libcoap.a %{buildroot}%{_libdir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/lib*.a %{buildroot}%{_libdir}
 
 %if 0%{?WITH_PROXY} == 1
 mkdir -p %{ex_install_dir}/proxy-sample
@@ -233,7 +248,9 @@ cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/service/coap-http-proxy/samples
 mkdir -p %{ex_install_dir}/provisioning
 mkdir -p %{ex_install_dir}/provision-sample
 
-cp ./resource/csdk/security/include/pinoxmcommon.h %{buildroot}%{_includedir}
+
+cp ./resource/csdk/security/include/*.h %{buildroot}%{_includedir}
+cp ./resource/csdk/connectivity/api/*.h %{buildroot}%{_includedir}/
 cp ./resource/csdk/security/provisioning/include/oxm/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/internal/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/*.h %{buildroot}%{_includedir}
@@ -246,12 +263,16 @@ cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat 
 %endif
 
 cp resource/c_common/*.h %{buildroot}%{_includedir}
+cp resource/csdk/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
 
-cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
-cp service/easy-setup/inc/*.h %{buildroot}%{_includedir}
-cp service/easy-setup/enrollee/inc/*.h %{buildroot}%{_includedir}
+install -d %{buildroot}%{_includedir}/iotivity
+ln -fs ../resource %{buildroot}%{_includedir}/iotivity/
+ln -fs ../service %{buildroot}%{_includedir}/iotivity/
+ln -fs ../c_common %{buildroot}%{_includedir}/iotivity/
+
+rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 
 install -d %{buildroot}%{_includedir}/iotivity
 ln -fs ../resource %{buildroot}%{_includedir}/iotivity/
@@ -274,6 +295,11 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %{_libdir}/liboc_logger_core.so
 %{_libdir}/liboctbstack.so
 %{_libdir}/libconnectivity_abstraction.so
+%if 0%{?SECURED} == 1
+%{_libdir}/libocpmapi.so
+%{_libdir}/libocprovision.so
+%{_libdir}/oic_svr_db_server.dat
+%endif
 
 %files service
 %manifest %{name}.manifest
@@ -281,25 +307,20 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %license LICENSE
 %{_libdir}/libBMISensorBundle.so
 %{_libdir}/libDISensorBundle.so
-%{_libdir}/libTGMSDKLibrary.so
 %{_libdir}/libHueBundle.so
 %{_libdir}/librcs_client.so
 %{_libdir}/librcs_common.so
 %{_libdir}/librcs_container.so
 %{_libdir}/librcs_server.so
+%{_libdir}/libresource_directory.so
 %{_libdir}/libESEnrolleeSDK.so
+%{_libdir}/libESMediatorRich.so
+%{_libdir}/libnotification*.so
 %if 0%{?WITH_PROXY} == 1
 %{_libdir}/libcoap_http_proxy.so
 %endif
-%if 0%{?SECURED} == 1
-%{_libdir}/libocpmapi.so
-%{_libdir}/libocprovision.so
-%{_libdir}/oic_svr_db_server.dat
-%endif
 %if "%{TARGET_OS}" == "linux"
 %{_libdir}/libnotification*.so
-%else
-%{_libdir}/libresource_hosting.so
 %endif
 
 %files test

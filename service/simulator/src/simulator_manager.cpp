@@ -184,6 +184,19 @@ void SimulatorManager::setDeviceInfo(const std::string &deviceName)
                      ocDeviceInfo);
 }
 
+void SimulatorManager::setDeviceInfo(const std::string &deviceName, const std::string &protocolIndependentID)
+{
+    setDeviceInfo(deviceName);
+
+    typedef OCStackResult (*SetPropertyValue)(OCPayloadType, const std::string&,
+                                              const std::string&);
+
+    invokeocplatform(static_cast<SetPropertyValue>(OC::OCPlatform::setPropertyValue),
+                     PAYLOAD_TYPE_DEVICE,
+                     OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                     protocolIndependentID.c_str());
+}
+
 void SimulatorManager::getPlatformInfo(const std::string &host, PlatformInfoCallback callback)
 {
     VALIDATE_CALLBACK(callback)

@@ -40,26 +40,44 @@ namespace OIC
             m_ocResource = resource;
         }
 
+        void CloudResource::onCloudProvResponseSafetyCb(const HeaderOptions& headerOptions,
+                                                                const OCRepresentation& rep,
+                                                                const int eCode,
+                                                                ESCloudResourceCb cb,
+                                                                std::weak_ptr<CloudResource> this_ptr)
+        {
+            OIC_LOG(DEBUG, ES_CLOUD_RES_TAG, "onCloudProvResponseSafetyCb");
+            std::shared_ptr<CloudResource> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                cb(headerOptions, rep, eCode);
+            }
+        }
+
+
         void CloudResource::provisionProperties(const CloudProp& cloudProp)
         {
-            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "Enter provisionProperties.");
+            OIC_LOG(DEBUG, ES_CLOUD_RES_TAG, "provisionProperties IN");
 
             OCRepresentation provisioningRepresentation = cloudProp.toOCRepresentation();
 
-            m_ocResource->post(OC_RSRVD_ES_RES_TYPE_PROV, BATCH_INTERFACE,
-                        provisioningRepresentation, QueryParamsMap(),
-                        std::function<
-                                void(const HeaderOptions& headerOptions,
-                                        const OCRepresentation& rep, const int eCode) >(
-                        std::bind(&CloudResource::onCloudProvResponse, this,
-                        std::placeholders::_1, std::placeholders::_2,
-                        std::placeholders::_3)), OC::QualityOfService::HighQos);
+            ESCloudResourceCb cb = std::bind(&CloudResource::onCloudProvResponseSafetyCb,
+                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                            static_cast<ESCloudResourceCb>(
+                            std::bind(&CloudResource::onCloudProvResponse, this,
+                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
+                            shared_from_this());
+
+            m_ocResource->post(OC_RSRVD_ES_RES_TYPE_EASYSETUP, BATCH_INTERFACE,
+                        provisioningRepresentation, QueryParamsMap(), cb, OC::QualityOfService::HighQos);
+
+            OIC_LOG(DEBUG, ES_CLOUD_RES_TAG, "provisionProperties OUT");
         }
 
         void CloudResource::onCloudProvResponse(const HeaderOptions& /*headerOptions*/,
                 const OCRepresentation& /*rep*/, const int eCode)
         {
-            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "onCloudProvResponse : eCode = %d",
+            OIC_LOG_V(DEBUG, ES_CLOUD_RES_TAG, "onCloudProvResponse : eCode = %d",
                         eCode);
 
             if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
@@ -70,7 +88,7 @@ namespace OIC
 
                 if(eCode == OCStackResult::OC_STACK_COMM_ERROR)
                 {
-                    OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG,
+                    OIC_LOG(DEBUG, ES_CLOUD_RES_TAG,
                             "can't receive any response from Enrollee by a timeout threshold.");
                     result = ESResult::ES_COMMUNICATION_ERROR;
                 }
@@ -91,7 +109,6 @@ namespace OIC
         void CloudResource::registerCloudPropProvisioningStatusCallback(
             const CloudPropProvStatusCb callback)
         {
-            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "Enter registerCloudPropProvisioningStatusCallback.");
             m_cloudPropProvStatusCb = callback;
         }
     }

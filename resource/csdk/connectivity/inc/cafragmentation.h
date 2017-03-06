@@ -33,11 +33,6 @@
 #include "logger.h"
 
 /**
- * The MTU supported for BLE adapter
- */
-#define CA_SUPPORTED_BLE_MTU_SIZE  20
-
-/**
  * The maximum port value for BLE packet format
  */
 #define CA_SUPPORTED_BLE_MAX_PORT  127
@@ -118,6 +113,7 @@ typedef enum {
  *                              packet.
  * @param[out]  remainingLen    Size of last packet before adding header.
  * @param[out]  totalLengh      The total length of the data.
+ * @param[in]   mtuSize         MTU size.
  *
  * @return ::CA_STATUS_OK on success. One of the CA_STATUS_FAILED
  *           or other error values on error.
@@ -127,7 +123,8 @@ typedef enum {
 CAResult_t CAGenerateVariableForFragmentation(size_t dataLength,
                                               uint32_t *midPacketCount,
                                               size_t *remainingLen,
-                                              size_t *totalLength);
+                                              size_t *totalLength,
+                                              uint16_t mtuSize);
 
 /**
  * This function is used to generate the CA BLE header to
@@ -214,16 +211,18 @@ CAResult_t CAMakeFirstDataSegment(uint8_t *dataSegment,
  * to maintain the fragmentation logic. start data segment is included
  * 2 bytes header and transmit data.
  *
- * @param[out]  dataSegment    Pointer to the octet array that will
- *                             contain the generated data packet.
- * @param[in]   data           Data to the octet array that required
- *                             transmittin to remote device. it will
- *                             be embedded in 7th byte to data length.
- * @param[in]   dataLength     The length of data size.
- * @param[in]   index          Index to determine whether some of the
- *                             total data
- * @param[in]   dataHeader     Pointer to the octet array that contain
- *                             data header.
+ * @param[out]  dataSegment            Pointer to the octet array that will
+ *                                     contain the generated data packet.
+ * @param[in]   segmentPayloadLength   The length of data segment payload.
+ * @param[in]   sourceData             Data to the octet array that required
+ *                                     transmission to remote device. it will
+ *                                     be embedded in 7th byte to data length.
+ * @param[in]   sourceDataLength       The length of total data.
+ * @param[in]   segmentNum             Index to determine whether some of the
+ *                                     total data
+ * @param[in]   dataHeader             Pointer to the octet array that contain
+ *                                     data header.
+ * @param[in]   mtuSize                MTU size.
  *
  * @return ::CA_STATUS_OK on success. One of the CA_STATUS_FAILED
  *           or other error values on error.
@@ -232,10 +231,12 @@ CAResult_t CAMakeFirstDataSegment(uint8_t *dataSegment,
  * @retval ::CA_STATUS_FAILED         Operation failed
  */
 CAResult_t CAMakeRemainDataSegment(uint8_t *dataSegment,
-                                   const uint8_t *data,
-                                   const uint32_t dataLength,
-                                   const uint32_t index,
-                                   const uint8_t *dataHeader);
+                                   const uint32_t segmentPayloadLength,
+                                   const uint8_t *sourceData,
+                                   const uint32_t sourceDataLength,
+                                   const uint32_t segmentNum,
+                                   const uint8_t *dataHeader,
+                                   uint16_t mtuSize);
 
 /**
  * This function is used to parse the header in the receiver end. This

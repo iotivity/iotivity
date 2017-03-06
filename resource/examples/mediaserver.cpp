@@ -105,16 +105,55 @@ public:
     /// This function internally calls registerResource API.
     void createResource()
     {
-        //URI of the resource
+        OCStackResult result = OC_STACK_OK;
+
+        /* Resource Information */
         std::string resourceURI = m_mediaUri;
-        //resource type name. In this case, it is media
         std::string resourceTypeName = "core.media";
-        // resource interface.
         std::string resourceInterface = DEFAULT_INTERFACE;
+
+        /* Device Information */
+        result = SetDeviceInfo();
+        if (OC_STACK_OK != result)
+        {
+            cout << "Device information registration was unsuccessful\n";
+            return;
+        }
+
+        /* Platform Info */
+        char* platformId = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+        char* manufacturerName = "OCF";
+        char* manufacturerLink = "https://www.iotivity.org";
+        char* modelNumber = "895";
+        char* dateOfManufacture = "2016-01-15";
+        char* platformVersion = "1.0";
+        char* osVersion = "1.0";
+        char* hardwareVersion = "1.0";
+        char* firmwareVersion = "1.0";
+        char* supportLink = "https://www.iotivity.org";
+        OCPlatformInfo platformInfo = { platformId,
+                                        manufacturerName,
+                                        manufacturerLink,
+                                        modelNumber,
+                                        dateOfManufacture,
+                                        platformVersion,
+                                        osVersion,
+                                        hardwareVersion,
+                                        firmwareVersion,
+                                        supportLink,
+                                        nullptr
+                                      };
+
+        result = OCPlatform::registerPlatformInfo(platformInfo);
+        if (OC_STACK_OK != result)
+        {
+            cout << "Platform information registration was unsuccessful\n";
+            return;
+        }
 
         // OCResourceProperty is defined ocstack.h
         uint8_t resourceProperty;
-        if(isSecure)
+        if (isSecure)
         {
             resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE;
         }
@@ -122,13 +161,11 @@ public:
         {
             resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
         }
-        EntityHandler cb = std::bind(&MediaResource::entityHandler, this,PH::_1);
+        EntityHandler cb = std::bind(&MediaResource::entityHandler, this, PH::_1);
 
         // This will internally create and register the resource.
-        OCStackResult result = OCPlatform::registerResource(
-                                    m_resourceHandle, resourceURI, resourceTypeName,
-                                    resourceInterface, cb, resourceProperty);
-
+        result = OCPlatform::registerResource(m_resourceHandle, resourceURI, resourceTypeName,
+                                              resourceInterface, cb, resourceProperty);
         if (OC_STACK_OK != result)
         {
             cout << "Resource creation was unsuccessful\n";
@@ -270,7 +307,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
                 }
                 else // normal response case.
                 {
-                    pResponse->setErrorCode(200);
+
                     pResponse->setResponseResult(OC_EH_OK);
                     pResponse->setResourceRepresentation(get());
                     if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -287,7 +324,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
                 // Do related operations related to PUT request
                 // Update the mediaResource
                 put(rep);
-                pResponse->setErrorCode(200);
+
                 pResponse->setResponseResult(OC_EH_OK);
                 pResponse->setResourceRepresentation(get());
                 if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -304,7 +341,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
                 // Do related operations related to POST request
                 OCRepresentation rep_post = post(rep);
                 pResponse->setResourceRepresentation(rep_post);
-                pResponse->setErrorCode(200);
+
                 if(rep_post.hasAttribute("createduri"))
                 {
                     pResponse->setResponseResult(OC_EH_RESOURCE_CREATED);
@@ -367,6 +404,34 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
     return ehResult;
 }
 
+OCStackResult SetDeviceInfo()
+{
+    OCStackResult result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
+                                                        "IoTivity Media Server");
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set device name" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, "core.1.1.0");
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set spec version" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                          "9f9752ed-b4ab-4662-af22-7e541bbee2fb");
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set piid" << endl;
+        return result;
+    }
+
+    return OC_STACK_OK;
+}
+
 };
 
 // ChangeMediaRepresentaion is an observation function,
@@ -406,7 +471,6 @@ void * ChangeMediaRepresentation (void *param)
                 std::shared_ptr<OCResourceResponse> resourceResponse =
                             {std::make_shared<OCResourceResponse>()};
 
-                resourceResponse->setErrorCode(200);
                 resourceResponse->setResourceRepresentation(mediaPtr->get(), DEFAULT_INTERFACE);
 
                 result = OCPlatform::notifyListOfObservers(  mediaPtr->getHandle(),
@@ -441,7 +505,7 @@ void * handleSlowResponse (void *param, std::shared_ptr<OCResourceRequest> pRequ
     pResponse->setRequestHandle(pRequest->getRequestHandle());
     pResponse->setResourceHandle(pRequest->getResourceHandle());
     pResponse->setResourceRepresentation(mediaPtr->get());
-    pResponse->setErrorCode(200);
+
     pResponse->setResponseResult(OC_EH_OK);
 
     // Set the slow response flag back to false
@@ -461,9 +525,16 @@ void PrintUsage()
     cout << "    4 - Non-secure resource, GET slow response, notify all observers\n";
 }
 
-static FILE* client_open(const char* /*path*/, const char *mode)
+static FILE* client_open(const char* path, const char* mode)
 {
-    return fopen("./oic_svr_db_server.json", mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen("./oic_svr_db_server.dat", mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 void playPause()

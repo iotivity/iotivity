@@ -49,6 +49,131 @@ namespace OIC
 {
     namespace Service
     {
+        /**
+        * This RCSByteString the one of RCSResourceAttributes value for Byte String (Binary).
+        *
+        * It provides similar usage to c++ standard vector.<br/>
+        * An RCSByteString can be one of various attribute value type.
+        *
+        * @see Value
+        * @see Type
+        * @see RCSRemoteResourceObject
+        * @see RCSResourceObject
+        * @see RCSResourceAttributes
+        */
+        class RCSByteString
+        {
+        public:
+            typedef std::vector<uint8_t> DataType;
+
+            /**
+             * Returns a vector<uint8_t> type of byte string.
+             *
+             * @return A stored byte string with std::vector<uint8_t>
+             */
+            DataType getByteString() const
+            {
+                return {m_data};
+            }
+
+            /**
+             * Returns a size of stored vector<uint8_t>.
+             *
+             * @return A size of stored byte string.
+             */
+            size_t size() const
+            {
+                return m_data.size();
+            }
+
+            /**
+              * @relates RCSByteString
+              *
+              * Checks if the byte string is same contents, or not.
+              *
+              * @return true if the byte string are equal, false otherwise.
+              */
+            inline bool operator==(const RCSByteString& rhs) const
+            {
+                return this->m_data == rhs.getByteString();
+            }
+
+            /**
+             * @relates RCSByteString
+             *
+             * Checks if the byte string is not same contents, or is same.
+             *
+             * @return true if the byte string are not equal, false otherwise.
+             */
+            inline bool operator!=(const RCSByteString& rhs) const
+            {
+                return this->m_data != rhs.getByteString();
+            }
+
+            /**
+             * Return a value of indexed byte string.
+             *
+             * @param it location of the element.
+             *
+             * @return A copied value of indexed byte string.
+             */
+            inline uint8_t operator[](size_t it) const
+            {
+                return this->m_data[it];
+            }
+
+            RCSByteString()
+            {
+            }
+            RCSByteString(DataType && rhs)
+            : m_data {std::move(rhs)}
+            {
+            }
+            RCSByteString(const DataType & rhs)
+            : m_data {rhs}
+            {
+            }
+            RCSByteString(RCSByteString && rhs)
+            : m_data {DataType{rhs.getByteString()}}
+            {
+            }
+            RCSByteString(const RCSByteString & rhs)
+            : m_data {DataType{rhs.getByteString()}}
+            {
+            }
+
+            RCSByteString(::OCByteString && rhs)
+            : m_data {DataType{rhs.bytes, rhs.bytes + rhs.len}}
+            {
+            }
+            RCSByteString(const ::OCByteString & rhs)
+            : m_data {DataType{rhs.bytes, rhs.bytes + rhs.len}}
+            {
+            }
+
+            RCSByteString(uint8_t* bytes, size_t size)
+            : m_data {DataType{bytes, bytes + size}}
+            {
+            }
+            inline RCSByteString& operator=(RCSByteString&& rhs)
+            {
+                return operator =(rhs);
+            }
+            inline RCSByteString& operator=(const RCSByteString& rhs)
+            {
+                if(&rhs != this)
+                {
+                    if (!m_data.empty())
+                    {
+                        m_data.clear();
+                    }
+                    m_data = DataType{rhs.getByteString()};
+                }
+                return *this;
+            }
+        private:
+            DataType m_data;
+        };
 
         /**
         * This represents the attributes for a resource.
@@ -65,6 +190,7 @@ namespace OIC
         * @see RCSDiscoveryManager
         * @see RCSRemoteResourceObject
         * @see RCSResourceObject
+        * @see RCSByteString
         */
         class RCSResourceAttributes
         {
@@ -77,12 +203,14 @@ namespace OIC
                 double,
                 bool,
                 std::string,
+                RCSByteString,
                 RCSResourceAttributes,
 
                 std::vector< int >,
                 std::vector< double >,
                 std::vector< bool >,
                 std::vector< std::string >,
+                std::vector< RCSByteString >,
                 std::vector< RCSResourceAttributes >,
 
                 std::vector< std::vector< int > >,
@@ -96,6 +224,9 @@ namespace OIC
 
                 std::vector< std::vector< std::string > >,
                 std::vector< std::vector< std::vector< std::string > > >,
+
+                std::vector< std::vector< RCSByteString > >,
+                std::vector< std::vector< std::vector< RCSByteString > > >,
 
                 std::vector< std::vector< RCSResourceAttributes > >,
                 std::vector< std::vector< std::vector< RCSResourceAttributes > > >
@@ -159,6 +290,7 @@ namespace OIC
                 DOUBLE, /**< double */
                 BOOL, /**< bool */
                 STRING, /**< std::string */
+                BYTESTRING, /**< RCSByteString */
                 ATTRIBUTES, /**< RCSResourceAttributes */
                 VECTOR /**< std::vector */
             };
@@ -264,12 +396,14 @@ namespace OIC
                 double
                 bool
                 std::string
+                RCSByteString
                 RCSResourceAttributes
 
                 std::vector< int >
                 std::vector< double >
                 std::vector< bool >
                 std::vector< std::string >
+                std::vector< RCSByteString >
                 std::vector< RCSResourceAttributes >
 
                 std::vector< std::vector< int > >
@@ -283,6 +417,9 @@ namespace OIC
 
                 std::vector< std::vector< std::string > >
                 std::vector< std::vector< std::vector< std::string > > >
+
+                std::vector< std::vector< RCSByteString > >
+                std::vector< std::vector< std::vector< RCSByteString > > >
 
                 std::vector< std::vector< RCSResourceAttributes > >
                 std::vector< std::vector< std::vector< RCSResourceAttributes > > >

@@ -74,7 +74,7 @@ OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t
  * will be allocated by the function and content of *crl will be ignored.
  * @param cborPayload is the cbor vlaue
  * @param size is a pointer to length of the CRL buffer. Should be not NULL.
- * @param crl is a pointer to buffer that contains crl. Shoul be not NULL. Buffer
+ * @param secCrl is a pointer to buffer that contains crl. Shoul be not NULL. Buffer
  *
  * @note Caller responsible for crl buffer memory (use OICFree to free it).
  *
@@ -99,7 +99,7 @@ OCStackResult DeInitCRLResource();
 /**
  * Get an instance of CRL resource.
  *
- * @return reference to the @ref OicSecCrl_t, holding reference to CRL resource.
+ * @return reference to the OicSecCrl_t, holding reference to CRL resource.
  */
 OicSecCrl_t *GetCRLResource();
 
@@ -125,7 +125,7 @@ OCStackResult getLastUpdateFromDB(char **lastUpdate);
  *
  * @param crl  crl object
  */
-void printCrl(OicSecCrl_t *crl);
+void printCrl(const OicSecCrl_t *crl);
 
 #ifdef __cplusplus
 }

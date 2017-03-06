@@ -23,6 +23,6 @@ env.AppendUnique(CCFLAGS = ['-Wextra', '-fPIC'])
 env.AppendUnique(LIBS = ['dl', 'pthread'])
 
 env.AppendUnique(CCFLAGS = ['-D__TIZEN__', '-D_GNU_SOURCE', '-DTIZEN_DEBUG_ENABLE'])
-env.ParseConfig("pkg-config dlog --cflags --libs")
+env.ParseConfig("pkg-config dlog ttrace --cflags --libs")
 
 # Set arch flags : It will be handled by Tizen build system.

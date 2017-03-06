@@ -21,10 +21,13 @@
  */
 package org.iotivity.cloud.accountserver.resources.acl.group;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.base.device.Device;
@@ -53,158 +56,442 @@ public class GroupResource extends Resource {
 
         IResponse response = null;
 
-        if (request.getUriPathSegments().size() > getUriPathSegments().size()
-                + 1) {
-            throw new BadRequestException("uriPath is invalid");
+        if (getUriPathSegments().containsAll(request.getUriPathSegments())) {
+            response = groupBrokerManagement(srcDevice, request);
         }
 
+        else {
+            response = individualGroupManagement(request);
+        }
+        srcDevice.sendResponse(response);
+    }
+
+    private IResponse groupBrokerManagement(Device srcDevice,
+            IRequest request) {
+        IResponse response = null;
         switch (request.getMethod()) {
             case POST:
-                response = handlePostRequest(request);
+                response = handleBrokerPostRequest(request);
                 break;
             case GET:
-                response = handleGetRequest(srcDevice, request);
-                break;
-            case DELETE:
-                response = handleDeleteRequest(request);
+                response = handleBrokerGetRequest(srcDevice, request);
                 break;
             default:
                 throw new BadRequestException(
                         request.getMethod() + " request type is not support");
         }
-        srcDevice.sendResponse(response);
+        return response;
     }
 
-    private IResponse handlePostRequest(IRequest request)
-            throws ServerException {
-        HashMap<String, Object> payloadData = mCbor
-                .parsePayloadFromCbor(request.getPayload(), HashMap.class);
+    private IResponse handleBrokerPostRequest(IRequest request) {
+        byte[] payload = request.getPayload();
 
-        if (payloadData == null) {
-            throw new BadRequestException("payload is null");
+        HashMap<String, Object> parsedPayload = mCbor
+                .parsePayloadFromCbor(payload, HashMap.class);
+
+        checkQueryException(Arrays.asList(Constants.KEYFIELD_UID),
+                request.getUriQueryMap());
+
+        checkPayloadException(Arrays.asList(Constants.KEYFIELD_GROUP_MEMBERS),
+                parsedPayload);
+
+        // get user id
+        String uid = request.getUriQueryMap().get(Constants.KEYFIELD_UID)
+                .get(0);
+
+        if (uid == null || uid.isEmpty()) {
+            throw new BadRequestException(
+                    Constants.REQ_UUID_ID + " is null or empty");
         }
 
-        if (getUriPathSegments().containsAll(request.getUriPathSegments())) {
-            String uuid = payloadData.get(Constants.REQ_GROUP_MASTER_ID)
-                    .toString();
-            String gtype = (String) payloadData.get(Constants.REQ_GROUP_TYPE)
-                    .toString();
-            if (uuid == null || gtype == null) {
-                throw new PreconditionFailedException(
-                        "value of group property is invalid");
-            }
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.CHANGED, ContentFormat.APPLICATION_CBOR,
-                    mCbor.encodingPayloadToCbor(GroupManager.getInstance()
-                            .createGroup(uuid, gtype)));
-        } else {
-            String gid = request.getUriPathSegments()
-                    .get(getUriPathSegments().size());
+        String gname = getProperty(parsedPayload,
+                Constants.KEYFIELD_GROUP_NAME);
+        String parent = getProperty(parsedPayload,
+                Constants.KEYFIELD_GROUP_PARENT);
 
-            if (payloadData.containsKey(Constants.REQ_MEMBER_LIST)) {
-                List<String> midList = (List<String>) payloadData
-                        .get(Constants.REQ_MEMBER_LIST);
-                if (midList == null) {
-                    throw new PreconditionFailedException(
-                            "midList property is invalid");
-                }
-                GroupManager.getInstance().addGroupMember(gid,
-                        new HashSet<String>(midList));
-            }
-
-            if (payloadData.containsKey(Constants.REQ_DEVICE_ID_LIST)) {
-                List<String> diList = (List<String>) payloadData
-                        .get(Constants.REQ_DEVICE_ID_LIST);
-                if (diList == null) {
-                    throw new PreconditionFailedException(
-                            "diList property is invalid");
-                }
-                GroupManager.getInstance().addGroupDevice(gid,
-                        new HashSet<String>(diList));
-            }
+        if (parent != null) {
+            ArrayList<String> properties = new ArrayList<>(
+                    Arrays.asList(Constants.KEYFIELD_GROUP));
+            GroupBrokerManager.getInstance().verifyAuthorization(uid, parent,
+                    properties, UserOperation.ADD);
         }
-        return MessageBuilder.createResponse(request, ResponseStatus.CHANGED);
 
+        HashMap<String, Object> responsePayload = GroupBrokerManager
+                .getInstance().createGroup(uid, null, gname, parent);
+
+        if (parent != null) {
+            GroupBrokerManager.getInstance().notifyToObservers(GroupManager
+                    .getInstance().getGroupTable(parent).getMembers());
+        }
+
+        return MessageBuilder.createResponse(request, ResponseStatus.CHANGED,
+                ContentFormat.APPLICATION_CBOR,
+                mCbor.encodingPayloadToCbor(responsePayload));
     }
 
-    private IResponse handleGetRequest(Device srcDevice, IRequest request)
-            throws ServerException {
-        HashMap<String, Object> responsePayload = null;
-        String mid = null;
+    private IResponse handleBrokerGetRequest(Device srcDevice,
+            IRequest request) {
+        HashMap<String, List<String>> queryMap = request.getUriQueryMap();
 
-        if (!request.getUriQueryMap().containsKey(Constants.REQ_MEMBER)) {
-            throw new PreconditionFailedException("mid property is invalid");
+        checkQueryException(Arrays.asList(Constants.REQ_UUID_ID,
+                Constants.KEYFIELD_GROUP_MEMBERS), queryMap);
+
+        String uid = queryMap.get(Constants.REQ_UUID_ID).get(0);
+        if (!uid.equals(
+                queryMap.get(Constants.KEYFIELD_GROUP_MEMBERS).get(0))) {
+            throw new BadRequestException(
+                    Constants.REQ_UUID_ID + "query value should be equal to "
+                            + Constants.KEYFIELD_GROUP_MEMBERS + "query value");
+        }
+        switch (request.getObserve()) {
+            case SUBSCRIBE:
+                GroupBrokerManager.getInstance().addObserver(uid, srcDevice,
+                        request);
+                break;
+            case UNSUBSCRIBE:
+                GroupBrokerManager.getInstance().removeObserver(uid, srcDevice,
+                        request);
+                break;
+            default:
         }
 
-        mid = request.getUriQueryMap().get(Constants.REQ_MEMBER).get(0);
+        HashMap<String, Object> responsePayload = GroupBrokerManager
+                .getInstance().getGroupList(uid);
 
-        if (getUriPathSegments().containsAll(request.getUriPathSegments())) {
-            responsePayload = GroupManager.getInstance().getGroupList(mid);
-        } else {
-            String gid = request.getUriPathSegments()
-                    .get(getUriPathSegments().size());
-            switch (request.getObserve()) {
-                case NOTHING:
-                    responsePayload = GroupManager.getInstance()
-                            .getGroupInfo(gid, mid);
-                    break;
-                case SUBSCRIBE:
-                    responsePayload = GroupManager.getInstance()
-                            .addGroupSubscriber(gid, mid, srcDevice, request);
-                    break;
-                case UNSUBSCRIBE:
-                    responsePayload = GroupManager.getInstance()
-                            .removeGroupSubscriber(gid, mid);
-                    break;
-                default:
-                    throw new BadRequestException(request.getObserve()
-                            + " observe type is not support");
-            }
-        }
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
                 ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(responsePayload));
     }
 
-    private IResponse handleDeleteRequest(IRequest request)
+    private String getProperty(HashMap<String, Object> properties, String key) {
+        String property = null;
+        Object obj = properties.get(key);
+        if (obj != null) {
+            property = obj.toString();
+        }
+        return property;
+    }
+
+    private IResponse individualGroupManagement(IRequest request) {
+        IResponse response = null;
+        switch (request.getMethod()) {
+            case POST:
+                response = handleGroupPostRequest(request);
+                break;
+            case GET:
+                response = handleGroupGetRequest(request);
+                break;
+            case DELETE:
+                response = handleGroupDeleteRequest(request);
+                break;
+            default:
+                throw new BadRequestException(
+                        request.getMethod() + " request type is not support");
+        }
+        return response;
+    }
+
+    private IResponse handleGroupPostRequest(IRequest request)
             throws ServerException {
-        if (getUriPathSegments().containsAll(request.getUriPathSegments())) {
+        if (request.getPayload() == null) {
+            throw new BadRequestException("payload is null");
+        }
+        HashMap<String, Object> payloadData = mCbor
+                .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
-            checkQueryException(Arrays.asList(Constants.REQ_GROUP_MASTER_ID,
-                    Constants.REQ_GROUP_ID), request.getUriQueryMap());
+        // TODO to be deleted
+        if (payloadData.containsKey(Constants.KEYFIELD_UID)) {
+            throw new BadRequestException(
+                    " uid key is not supported in the payload");
+        }
 
-            String gmid = request.getUriQueryMap()
-                    .get(Constants.REQ_GROUP_MASTER_ID).get(0);
-            String gid = request.getUriQueryMap().get(Constants.REQ_GROUP_ID)
-                    .get(0);
+        checkQueryException(Arrays.asList(Constants.KEYFIELD_UID),
+                request.getUriQueryMap());
 
-            GroupManager.getInstance().deleteGroup(gmid, gid);
+        // get user id
+        String uid = request.getUriQueryMap().get(Constants.KEYFIELD_UID)
+                .get(0);
+
+        if (uid == null || uid.isEmpty()) {
+            throw new BadRequestException(
+                    Constants.REQ_UUID_ID + " is null or empty");
+        }
+
+        String gid = request.getUriPathSegments()
+                .get(getUriPathSegments().size());
+
+        // process POST oic/acl/group/<gid> to update group info
+        if (!request.getUriQueryMap()
+                .containsKey(Constants.REQ_GROUP_QUERY_OPERATION)) {
+            handlePostUpdateRequest(gid, uid, payloadData);
         } else {
-            String gid = request.getUriPathSegments()
-                    .get(getUriPathSegments().size());
-            if (request.getUriQueryMap()
-                    .containsKey(Constants.REQ_MEMBER_LIST)) {
-                List<String> midList = request.getUriQueryMap()
-                        .get(Constants.REQ_MEMBER_LIST);
-                if (midList == null) {
+            checkQueryException(Constants.REQ_GROUP_QUERY_OPERATION,
+                    request.getUriQueryMap());
+
+            String postOption = request.getUriQueryMap()
+                    .get(Constants.REQ_GROUP_QUERY_OPERATION).get(0);
+
+            switch (postOption) {
+                case Constants.REQ_GROUP_QUERY_ADD:
+                    handlePostAddRequest(gid, uid, payloadData);
+                    break;
+                case Constants.REQ_GROUP_QUERY_DELETE:
+                    handlePostDeleteRequest(gid, uid, payloadData);
+                    break;
+                default:
                     throw new PreconditionFailedException(
-                            "midList property is invalid");
-                }
-                GroupManager.getInstance().removeGroupMember(gid,
-                        new HashSet<String>(midList));
-            }
-            if (request.getUriQueryMap()
-                    .containsKey(Constants.REQ_DEVICE_ID_LIST)) {
-                List<String> diList = request.getUriQueryMap()
-                        .get(Constants.REQ_DEVICE_ID_LIST);
-                if (diList == null) {
-                    throw new PreconditionFailedException(
-                            "diList property is invalid");
-                }
-                GroupManager.getInstance().removeGroupDevice(gid,
-                        new HashSet<String>(diList));
+                            postOption + " query option is not supported");
             }
         }
+        GroupBrokerManager.getInstance().notifyToObservers(
+                GroupManager.getInstance().getGroupTable(gid).getMembers());
+        return MessageBuilder.createResponse(request, ResponseStatus.CHANGED);
+    }
+
+    private void handlePostAddRequest(String gid, String mid,
+            HashMap<String, Object> properties) {
+        GroupManager.getInstance().verifyPostRequestAuthz(gid, mid, properties,
+                UserOperation.ADD);
+        addToGroupProcess(gid, properties);
+
+    }
+
+    private void handlePostDeleteRequest(String gid, String mid,
+            HashMap<String, Object> properties) {
+        GroupManager.getInstance().verifyPostRequestAuthz(gid, mid, properties,
+                UserOperation.DELETE);
+        deleteFromGroupProcess(gid, properties);
+    }
+
+    private void handlePostUpdateRequest(String gid, String mid,
+            HashMap<String, Object> properties) {
+        HashMap<String, Object> addedProperties = new HashMap<>();
+        HashMap<String, Object> deletedProperties = new HashMap<>();
+        HashMap<String, Object> replacedProperties = new HashMap<>();
+
+        Iterator<String> keys = properties.keySet().iterator();
+
+        while (keys.hasNext()) {
+            String key = keys.next();
+            if (properties.get(key) instanceof Collection) {
+                ArrayList<Object> addedValues = GroupManager.getInstance()
+                        .getAddPropertyValues(gid, key,
+                                (ArrayList<Object>) properties.get(key));
+                ArrayList<Object> deletedValues = GroupManager.getInstance()
+                        .getDeletePropertyValues(gid, key,
+                                (ArrayList<Object>) properties.get(key));
+                if (!addedValues.isEmpty()) {
+                    addedProperties.put(key, addedValues);
+                }
+                if (!deletedValues.isEmpty()) {
+                    deletedProperties.put(key, deletedValues);
+                }
+            } else if (properties.get(key) instanceof String) {
+                replacedProperties.put(key, properties.get(key));
+            } else {
+                throw new PreconditionFailedException(
+                        "payload instance type is not supported");
+            }
+        }
+
+        GroupManager.getInstance().verifyPostRequestAuthz(gid, mid,
+                replacedProperties, UserOperation.REPLACE);
+
+        GroupManager.getInstance().verifyPostRequestAuthz(gid, mid,
+                addedProperties, UserOperation.ADD);
+
+        GroupManager.getInstance().verifyPostRequestAuthz(gid, mid,
+                deletedProperties, UserOperation.DELETE);
+
+        deleteFromGroupProcess(gid, deletedProperties);
+
+        addToGroupProcess(gid, addedProperties);
+
+        replaceToGroupProcess(gid, replacedProperties);
+    }
+
+    private void addToGroupProcess(String gid,
+            HashMap<String, Object> properties) {
+        Iterator<String> keys = properties.keySet().iterator();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            switch (key) {
+                case Constants.KEYFIELD_GROUP_MEMBERS:
+                    GroupManager.getInstance().addMembersToGroup(gid,
+                            (convertArrayObjectToString(
+                                    (ArrayList<Object>) properties.get(key))));
+                    break;
+                case Constants.KEYFIELD_GROUP_MASTERS:
+                    GroupManager.getInstance().addMastersToGroup(gid,
+                            (convertArrayObjectToString(
+                                    (ArrayList<Object>) properties.get(key))));
+                    break;
+                case Constants.KEYFIELD_GROUP_DEVICES:
+                    GroupManager.getInstance().addDevicesToGroup(gid,
+                            (convertArrayObjectToString(
+                                    (ArrayList<Object>) properties.get(key))));
+                    break;
+                case Constants.KEYFIELD_GROUP_RESOURCES:
+                    GroupManager.getInstance().addResourcesToGroup(gid,
+                            (ArrayList<Object>) properties.get(key));
+                    break;
+                default:
+                    throw new BadRequestException(key
+                            + " property is not supported to add values to the group");
+            }
+        }
+    }
+
+    private void deleteFromGroupProcess(String gid,
+            HashMap<String, Object> properties) {
+        Iterator<String> keys = properties.keySet().iterator();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            switch (key) {
+                case Constants.KEYFIELD_GROUP_MEMBERS:
+                    GroupManager.getInstance().deleteMembersFromGroup(gid,
+                            (convertArrayObjectToString(
+                                    (ArrayList<Object>) properties.get(key))));
+                    break;
+                case Constants.KEYFIELD_GROUP_MASTERS:
+                    GroupManager.getInstance().deleteMastersFromGroup(gid,
+                            (convertArrayObjectToString(
+                                    (ArrayList<Object>) properties.get(key))));
+                    break;
+                case Constants.KEYFIELD_GROUP_DEVICES:
+                    GroupManager.getInstance().deleteDevicesFromGroup(gid,
+                            (convertArrayObjectToString(
+                                    (ArrayList<Object>) properties.get(key))));
+                    break;
+                case Constants.KEYFIELD_GROUP_RESOURCES:
+                    GroupManager.getInstance().deleteResourcesFromGroup(gid,
+                            (ArrayList<Object>) properties.get(key));
+                    break;
+                default:
+                    throw new BadRequestException(key
+                            + " property is not supported to delete values from the group");
+            }
+        }
+    }
+
+    private void replaceToGroupProcess(String gid,
+            HashMap<String, Object> properties) {
+        Iterator<String> keys = properties.keySet().iterator();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            switch (key) {
+                case Constants.KEYFIELD_GROUP_NAME:
+                    GroupManager.getInstance().replaceGnameToGroup(gid,
+                            (String) properties.get(key));
+                    break;
+                case Constants.KEYFIELD_GROUP_OWNER:
+                    GroupManager.getInstance().replaceOwnerToGroup(gid,
+                            (String) properties.get(key));
+                    break;
+                default:
+                    throw new BadRequestException(key
+                            + " property is not supported to replace the value to the group");
+            }
+        }
+    }
+
+    private IResponse handleGroupGetRequest(IRequest request)
+            throws ServerException {
+        HashMap<String, List<String>> queryMap = request.getUriQueryMap();
+
+        checkQueryException(Arrays.asList(Constants.REQ_UUID_ID,
+                Constants.KEYFIELD_GROUP_MEMBERS), queryMap);
+
+        String uid = queryMap.get(Constants.REQ_UUID_ID).get(0);
+
+        if (uid == null || uid.isEmpty()) {
+            throw new BadRequestException(
+                    Constants.REQ_UUID_ID + " is null or empty");
+        }
+
+        if (!uid.equals(
+                queryMap.get(Constants.KEYFIELD_GROUP_MEMBERS).get(0))) {
+            throw new BadRequestException(
+                    Constants.REQ_UUID_ID + "query value should be equal to "
+                            + Constants.KEYFIELD_GROUP_MEMBERS + "query value");
+        }
+
+        String gid = request.getUriPathSegments()
+                .get(getUriPathSegments().size());
+
+        GroupManager.getInstance().verifyGetRequestAuthz(gid, uid);
+
+        HashMap<String, Object> responsePayload = null;
+
+        switch (request.getObserve()) {
+            case NOTHING:
+                responsePayload = GroupManager.getInstance().getGroupInfo(gid);
+                break;
+            case SUBSCRIBE:
+            case UNSUBSCRIBE:
+            default:
+                throw new BadRequestException(
+                        request.getObserve() + " observe type is not support");
+        }
+
+        return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
+                ContentFormat.APPLICATION_CBOR,
+                mCbor.encodingPayloadToCbor(responsePayload));
+    }
+
+    private IResponse handleGroupDeleteRequest(IRequest request)
+            throws ServerException {
+
+        HashMap<String, List<String>> queryMap = request.getUriQueryMap();
+
+        checkQueryException(Arrays.asList(Constants.REQ_UUID_ID,
+                Constants.KEYFIELD_GROUP_OWNER), queryMap);
+
+        String uid = queryMap.get(Constants.REQ_UUID_ID).get(0);
+
+        if (uid == null || uid.isEmpty()) {
+            throw new BadRequestException(
+                    Constants.REQ_UUID_ID + " is null or empty");
+        }
+
+        if (!uid.equals(queryMap.get(Constants.KEYFIELD_GROUP_OWNER).get(0))) {
+            throw new BadRequestException(
+                    Constants.REQ_UUID_ID + "query value should be equal to "
+                            + Constants.KEYFIELD_GROUP_OWNER
+                            + "query value to delete group");
+        }
+
+        String gid = request.getUriPathSegments()
+                .get(getUriPathSegments().size());
+
+        GroupManager.getInstance().verifyDeleteRequestAuthz(gid, uid);
+
+        String parent = GroupManager.getInstance().getGroupTable(gid)
+                .getParent();
+        ArrayList<String> deletegGroupMembers = GroupManager.getInstance()
+                .getGroupTable(gid).getMembers();
+
+        GroupManager.getInstance().deleteGroup(gid);
+
+        if (parent != null) {
+            GroupBrokerManager.getInstance().notifyToObservers(GroupManager
+                    .getInstance().getGroupTable(parent).getMembers());
+        } else {
+            GroupBrokerManager.getInstance()
+                    .notifyToObservers(deletegGroupMembers);
+        }
+
+        GroupAclManager.getInstance().removeAceByGroup(gid);
+
         return MessageBuilder.createResponse(request, ResponseStatus.DELETED);
+    }
+
+    private ArrayList<String> convertArrayObjectToString(
+            ArrayList<Object> objectArray) {
+        ArrayList<String> strings = new ArrayList<>();
+        for (Object object : objectArray) {
+            strings.add(Objects.toString(object, null));
+        }
+        return strings;
     }
 }

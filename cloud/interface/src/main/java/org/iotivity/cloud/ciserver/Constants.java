@@ -41,12 +41,22 @@ public class Constants extends OICConstants {
 
     public static final String REQ_GROUP_MASTER_ID = "gmid";
     public static final String REQ_MEMBER_ID       = "mid";
-    public static final String REQ_MEMBER_LIST     = "midlist";
+    public static final String REQ_MEMBER_LIST     = "members";
     public static final String REQ_DEVICE_ID       = "di";
-    public static final String REQ_DEVICE_LIST     = "dilist";
+    public static final String REQ_DEVICE_ROUTE    = "route";
+    public static final String REQ_DEVICE_LIST     = "devices";
     public static final String REQ_INVITE          = "invite";
     public static final String REQ_PING_ARRAY      = "inarray";
     public static final String REQ_PING            = "in";
+    public static final String REQ_SEARCH_USER_ID  = "sid";
+    public static final String REQ_REQUEST_METHOD  = "rm";
+    public static final String REQ_REQUEST_URI     = "uri";
+
+    public static final String REQ_GROUP_DEVICES   = "devices";
+
+    public static final String RESP_GRANT_POLICY   = "gp";
+    public static final String RESP_ACL_ALLOWED    = "Allowed";
+    public static final String RESP_ACL_DENIED     = "Denied";
 
     public static final String REQ_LINKS           = "links";
     public static final String REQ_HREF            = "href";

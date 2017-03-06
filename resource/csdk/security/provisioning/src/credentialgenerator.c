@@ -30,7 +30,7 @@
 #include "stdbool.h"
 #include "securevirtualresourcetypes.h"
 
-#define TAG "SRPAPI-CG"
+#define TAG "OIC_SRPAPI_CG"
 
 OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySize,
         const OicUuid_t *ptDeviceId, const OicUuid_t *firstDeviceId,
@@ -42,7 +42,7 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
         OIC_LOG(INFO, TAG, "Invalid params");
         return OC_STACK_INVALID_PARAM;
     }
-    if(!(keySize == OWNER_PSK_LENGTH_128 || keySize == OWNER_PSK_LENGTH_256))
+    if (!(keySize == OWNER_PSK_LENGTH_128 || keySize == OWNER_PSK_LENGTH_256))
     {
         OIC_LOG(INFO, TAG, "Invalid key size");
         return OC_STACK_INVALID_PARAM;
@@ -54,27 +54,38 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
     size_t privDataKeySize = keySize;
 
     uint8_t *privData = (uint8_t *)OICCalloc(privDataKeySize, sizeof(uint8_t));
-    VERIFY_NON_NULL(TAG, privData, ERROR);
-    OicSecKey_t privKey = {privData, keySize};
+    VERIFY_NOT_NULL(TAG, privData, ERROR);
 
-    OCFillRandomMem(privData, privDataKeySize);
+    OicSecKey_t privKey;
+    memset(&privKey, 0, sizeof(privKey));
+    privKey.data = privData;
+    privKey.len = keySize;
+    privKey.encoding = OIC_ENCODING_UNKNOW;
+
+    if (!OCGetRandomBytes(privData, privDataKeySize))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to generate private key");
+        res = OC_STACK_ERROR;
+        goto exit;
+    }
 
     // TODO: currently owner array is 1. only provisioning tool's id.
     tempFirstCred =  GenerateCredential(secondDeviceId, type, NULL, &privKey, ptDeviceId, NULL);
-    VERIFY_NON_NULL(TAG, tempFirstCred, ERROR);
+    VERIFY_NOT_NULL(TAG, tempFirstCred, ERROR);
 
     // TODO: currently owner array is 1. only provisioning tool's id.
     tempSecondCred =  GenerateCredential(firstDeviceId, type, NULL, &privKey, ptDeviceId, NULL);
-    VERIFY_NON_NULL(TAG, tempSecondCred, ERROR);
+    VERIFY_NOT_NULL(TAG, tempSecondCred, ERROR);
 
     *firstCred = tempFirstCred;
     *secondCred = tempSecondCred;
     res = OC_STACK_OK;
 
 exit:
+    OICClearMemory(privData, privDataKeySize);
     OICFree(privData);
 
-    if(res != OC_STACK_OK)
+    if (res != OC_STACK_OK)
     {
         OICFree(tempFirstCred);
         OICFree(tempSecondCred);

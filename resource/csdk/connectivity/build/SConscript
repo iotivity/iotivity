@@ -14,14 +14,14 @@ host_target_map = {
 
 # Map of os and allowed archs (os: allowed archs)
 os_arch_map = {
-		'linux': ['x86', 'x86_64', 'arm', 'arm64'],
+		'linux': ['x86', 'x86_64', 'arm', 'arm64', 'mips', 'mipsel', 'mips64', 'mips64el', 'i386', 'powerpc', 'sparc', 'aarch64'],
 		'tizen': ['x86', 'x86_64', 'arm', 'arm64'],
 		'android': ['x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
 		'windows': ['x86', 'amd64', 'arm'],
 		'darwin': ['i386', 'x86_64'],
 		'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
 		'arduino': ['avr', 'arm'],
-                'yocto': ['i586', 'i686', 'x86_64', 'arm', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
+                'yocto': ['i586', 'i686', 'x86_64', 'arm', 'aarch64', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
 		}
 
 host = platform.system().lower()
@@ -40,8 +40,6 @@ if target_os not in host_target_map[host]:
 	Exit(1)
 
 default_arch = platform.machine()
-if default_arch not in os_arch_map[target_os]:
-	default_arch = os_arch_map[target_os][0].lower()
 
 target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch) # target arch
 
@@ -61,7 +59,7 @@ help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', False))
 help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map[host]))
 help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ALL', ['ALL', 'BT', 'BLE', 'IP']))
 help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
-help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))
+help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '1', allowed_values=('0', '1')))
 help_vars.Add(BoolVariable('UPLOAD', 'Upload binary ? (For Arduino)', require_upload))
 help_vars.Add(EnumVariable('ROUTING', 'Enable routing', 'EP', allowed_values=('GW', 'EP')))
 help_vars.Add(EnumVariable('BUILD_SAMPLE', 'Build with sample', 'ON', allowed_values=('ON', 'OFF')))
@@ -104,7 +102,7 @@ env.AppendUnique(CPPDEFINES = ['-D__OIC_DEVICE_NAME__=' + "\'\"" + device_name +
 
 tc_set_msg = '''
 ************************************ Warning **********************************
-*   Enviornment variable TC_PREFIX/TC_PATH is set. It will change the default *
+*   Environment variable TC_PREFIX/TC_PATH is set. It will change the default *
 * toolchain, if it isn't what you expect you should unset it, otherwise it may*
 * cause inexplicable errors.                                                  *
 *******************************************************************************

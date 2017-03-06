@@ -81,7 +81,7 @@ void JniGetConfigurationStatusListener::getConfigurationStatusCallback (
     }
 
     EnrolleeConf enrolleeConf = getConfigurationStatusCb->getEnrolleeConf();
-    OCRepresentation m_ProvRep = enrolleeConf.getProvResRep();
+    OCRepresentation m_ProvRep = enrolleeConf.getEasySetupRep();
 
     OCRepresentation* rep = new OCRepresentation(m_ProvRep);
     jlong handle = reinterpret_cast<jlong>(rep);

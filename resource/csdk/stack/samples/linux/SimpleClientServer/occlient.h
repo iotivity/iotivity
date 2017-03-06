@@ -28,6 +28,8 @@
 // Defines
 //-----------------------------------------------------------------------------
 #define TAG "occlient"
+#define COAP_UDP "coap"
+#define COAP_TCP "coap+tcp"
 #define DEFAULT_CONTEXT_VALUE 0x99
 #ifndef MAX_LENGTH_IPv4_ADDR
 #define MAX_LENGTH_IPv4_ADDR 16
@@ -63,6 +65,10 @@ typedef enum {
     TEST_GET_REQ_NON_WITH_VENDOR_HEADER_OPTIONS,
     TEST_DISCOVER_PLATFORM_REQ,
     TEST_DISCOVER_DEV_REQ,
+    TEST_DISCOVER_REQ_SHOW_EPS,
+    TEST_GET_REQ_UDP,
+    TEST_GET_REQ_TCP,
+    TEST_INTROSPECTION,
     MAX_TESTS
 } CLIENT_TEST;
 
@@ -94,8 +100,11 @@ std::string getIPAddrTBServer(OCClientResponse * clientResponse);
 /* Get the port number the server is listening on */
 std::string getPortTBServer(OCClientResponse * clientResponse);
 
+/* Show endpoints information in given resource payload */
+void showEndpointsInfo(OCResourcePayload* res);
+
 /* Following are initialization functions for GET, Observe, PUT
- * POST, Delete & Discovery operations
+ * POST, Delete & Discovery, Get with coap, get with coap+tcp operations
  */
 int InitGetRequestToUnavailableResource(OCQualityOfService qos);
 int InitObserveRequest(OCQualityOfService qos);
@@ -106,7 +115,9 @@ int InitDeleteRequest(OCQualityOfService qos);
 int InitGetRequest(OCQualityOfService qos);
 int InitDeviceDiscovery(OCQualityOfService qos);
 int InitPlatformDiscovery(OCQualityOfService qos);
-int InitDiscovery(OCQualityOfService qos);
+int InitDiscovery(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions);
+int InitGetRequestWithCoap(OCDiscoveryPayload* dis, bool isUdp);
+int InitIntrospection(OCDiscoveryPayload* dis);
 
 /* Call delete operation on already deleted resource */
 void* RequestDeleteDeathResourceTask(void* myqos);

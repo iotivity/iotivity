@@ -48,7 +48,7 @@ void ReadUserdataCb(OCRepPayload* payload, char* resourceType, void** userdata)
 
     if(payload != NULL)
     {
-        if(strstr(resourceType, OC_RSRVD_ES_RES_TYPE_WIFI))
+        if(strstr(resourceType, OC_RSRVD_ES_RES_TYPE_WIFICONF))
         {
             int64_t value = -1;
             if (OCRepPayloadGetPropInt(payload, USERPROPERTY_KEY_INT, &value))
@@ -56,10 +56,10 @@ void ReadUserdataCb(OCRepPayload* payload, char* resourceType, void** userdata)
                 if(*userdata != NULL)
                 {
                     *userdata = (void*)OICMalloc(sizeof(UserProperties));
+                    ((UserProperties*)(*userdata))->userValue_int = value;
                 }
                 OIC_LOG_V(INFO, ESX_ENROLLEE_TAG, "[User specific property] %s : %ld",
                                                                             USERPROPERTY_KEY_INT, value);
-                ((UserProperties*)(*userdata))->userValue_int = value;
                 g_userProperties.userValue_int = value;
             }
         }
@@ -74,7 +74,7 @@ void WriteUserdataCb(OCRepPayload* payload, char* resourceType)
 
     if(payload != NULL)
     {
-        if(strstr(resourceType, OC_RSRVD_ES_RES_TYPE_WIFI))
+        if(strstr(resourceType, OC_RSRVD_ES_RES_TYPE_WIFICONF))
         {
             OCRepPayloadSetPropInt(payload, USERPROPERTY_KEY_INT, g_userProperties.userValue_int);
         }

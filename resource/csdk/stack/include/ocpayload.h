@@ -75,6 +75,8 @@ size_t calcDimTotal(const size_t dimensions[MAX_REP_ARRAY_DEPTH]);
 
 OCRepPayload* OCRepPayloadClone(const OCRepPayload* payload);
 
+OCRepPayload* OCRepPayloadBatchClone(const OCRepPayload* repPayload);
+
 void OCRepPayloadAppend(OCRepPayload* parent, OCRepPayload* child);
 
 bool OCRepPayloadSetUri(OCRepPayload* payload, const char* uri);
@@ -180,7 +182,7 @@ bool OCRepPayloadSetByteStringArray(OCRepPayload* payload, const char* name,
  *
  * @param payload      Pointer to the payload from which byte string array needs to be retrieved.
  * @param name         Name of the byte string array.
- * @param value        Byte string array.
+ * @param array        Byte string array.
  * @param dimensions   Number of byte strings in above array.
  *
  * @note: Caller needs to invoke OICFree on 'bytes' field of all array elements after it is
@@ -241,25 +243,23 @@ void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
                                    uint16_t securePort, uint16_t tcpPort);
 #endif
-void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePayload* res);
+void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload,
+                                      OCResourcePayload* res);
 bool OCResourcePayloadAddStringLL(OCStringLL **payload, const char* type);
 
 size_t OCDiscoveryPayloadGetResourceCount(OCDiscoveryPayload* payload);
-OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload, size_t index);
+OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload,
+                                                 size_t index);
 
+size_t OCEndpointPayloadGetEndpointCount(OCEndpointPayload* payload);
+OCEndpointPayload* OCEndpointPayloadGetEndpoint(OCEndpointPayload* payload,
+                                                size_t index);
+
+void OCResourcePayloadAddNewEndpoint(OCResourcePayload* payload,
+                                     OCEndpointPayload* endpoint);
+void OCDiscoveryEndpointDestroy(OCEndpointPayload* payload);
 void OCDiscoveryResourceDestroy(OCResourcePayload* payload);
 void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload);
-
-// Device Payload
-OCDevicePayload* OCDevicePayloadCreate(const char* sid, const char* dname,
-        const OCStringLL *types, const char* specVer, const char* dmVer);
-void OCDevicePayloadDestroy(OCDevicePayload* payload);
-
-// Platform Payload
-OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo);
-OCPlatformPayload* OCPlatformPayloadCreateAsOwner(OCPlatformInfo* platformInfo);
-void OCPlatformInfoDestroy(OCPlatformInfo *info);
-void OCPlatformPayloadDestroy(OCPlatformPayload* payload);
 
 // Presence Payload
 OCPresencePayload* OCPresencePayloadCreate(uint32_t seqNum, uint32_t maxAge,
@@ -281,7 +281,7 @@ OCStringLL* OCCreateOCStringLL(const char* text);
 /**
  * This function creates a string from a list (with separated contents if several)
  * @param ll           Pointer to list
- * @return newly allocated string
+ * @return newly allocated string. Caller takes ownership and must later free this memory with OICFree.
  * @note separator is ',' (according to rfc4180)
  **/
 char* OCCreateString(const OCStringLL* ll);

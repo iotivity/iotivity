@@ -31,7 +31,7 @@
 #include "caadapterutils.h"
 #include "caedrutils.h"
 #include "logger.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "cacommon.h"
 #include "caedrdevicelist.h"
 

@@ -328,6 +328,28 @@ Java_org_oic_simulator_SimulatorManager_nativeSetDeviceInfo
 }
 
 JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorManager_nativeSetDeviceInfo2
+(JNIEnv *env, jobject /*object*/, jstring jDeviceName, jstring jProtocolIndependentID)
+{
+    VALIDATE_INPUT(env, !jDeviceName, "Device name is null!")
+
+    try
+    {
+        JniString jniDeviceName(env, jDeviceName);
+        JniString jniProtocolIndependentID(env, jProtocolIndependentID);
+        SimulatorManager::getInstance()->setDeviceInfo(jniDeviceName.get(), jniProtocolIndependentID.get());
+    }
+    catch (InvalidArgsException &e)
+    {
+        ThrowInvalidArgsException(env, e.code(), e.what());
+    }
+    catch (SimulatorException &e)
+    {
+        ThrowSimulatorException(env, e.code(), e.what());
+    }
+}
+
+JNIEXPORT void JNICALL
 Java_org_oic_simulator_SimulatorManager_nativeFindDevices
 (JNIEnv *env, jobject /*object*/, jstring jHostUri, jobject jListener)
 {

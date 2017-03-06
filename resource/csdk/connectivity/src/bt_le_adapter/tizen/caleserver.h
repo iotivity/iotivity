@@ -78,7 +78,17 @@ CAResult_t CAInitGattServerMutexVariables();
  * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval  ::CA_STATUS_FAILED Operation failed.
  */
-CAResult_t CALEStartAdvertise(const char *serviceUUID);
+CAResult_t CALEStartAdvertise();
+
+/**
+ * Used to start advertising with service UUID.
+ *
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
+ */
+CAResult_t CALEStartAdvertiseImpl(const char *serviceUUID);
 
 /**
  * Used to stop advertising.
@@ -154,6 +164,20 @@ void CALEGattRemoteCharacteristicWriteCb(char *remoteAddress, bt_gatt_server_h s
  * @param[in] connStateCb      callback for receiving the changed network info.
  */
 void CASetLEConnectionStateChangedCallback(CALEConnectionStateChangedCallback connStateCb);
+
+/**
+ * check connection status.
+ * @param[in] address      the address of the remote device.
+ * @return  true or false.
+ */
+bool CALEServerIsConnected(const char* address);
+
+/**
+ * get MTU size.
+ * @param[in] address      the address of the remote device.
+ * @return  mtu size negotiated from remote device.
+ */
+uint16_t CALEServerGetMtuSize(const char* address);
 
 #endif /* TZ_BLE_SERVER_H_ */
 

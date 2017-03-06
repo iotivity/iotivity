@@ -39,9 +39,6 @@ target_os = env.get('TARGET_OS')
 if target_os == 'arduino':
 	SConscript('arduino.scons')
 
-if target_os == 'android':
-	SConscript('android/android_api/SConscript')
-
 # By default, src_dir is current dir, the build_dir is:
 #     ./out/<target_os>/<target_arch>/<release or debug>/
 #
@@ -59,14 +56,24 @@ SConscript(build_dir + 'resource/SConscript')
 if target_os not in ['arduino','darwin','ios', 'android', 'msys_nt', 'windows']:
 	SConscript(build_dir + 'examples/OICMiddle/SConscript')
 
+java_build = None
+if (env.get('BUILD_JAVA') == True  and env.get('JAVA_HOME') != None) or target_os == 'android':
+        java_build = SConscript(build_dir + 'java/SConscript')
+
 # Build 'service' sub-project
-SConscript(build_dir + 'service/SConscript')
+service_build = SConscript(build_dir + 'service/SConscript')
+
+if (env.get('BUILD_JAVA') == True and env.get('JAVA_HOME') != None) or target_os == 'android':
+        Depends(service_build, java_build)
 
 # Build "cloud" sub-project
 SConscript(build_dir + 'cloud/SConscript')
 
 # Build "plugin interface" sub-project
 SConscript(build_dir + 'plugins/SConscript')
+
+# Build "bridging" sub-project
+SConscript(build_dir + 'bridging/SConscript')
 
 # Append targets information to the help information, to see help info, execute command line:
 #     $ scon [options] -h

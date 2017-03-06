@@ -33,7 +33,6 @@ import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
-import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 
@@ -77,13 +76,8 @@ public class Account extends Resource {
                                     uriPath.toString(), mRequest.getUriQuery()),
                             mSrcDevice);
                     break;
-                case CHANGED:
-                case CONTENT:
-                    mSrcDevice.sendResponse(response);
-                    break;
                 default:
-                    mSrcDevice.sendResponse(MessageBuilder.createResponse(
-                            mRequest, ResponseStatus.BAD_REQUEST));
+                    mSrcDevice.sendResponse(response);
             }
         }
     }
@@ -91,14 +85,31 @@ public class Account extends Resource {
     @Override
     public void onDefaultRequestReceived(Device srcDevice, IRequest request)
             throws ServerException {
-        if (request.getMethod().equals(RequestMethod.DELETE)) {
-            StringBuffer additionalQuery = new StringBuffer();
-            additionalQuery
-                    .append(Constants.USER_ID + "=" + srcDevice.getUserId());
-            String uriQuery = request.getUriQuery() + ";"
-                    + additionalQuery.toString();
-            request = MessageBuilder.modifyRequest(request, null, uriQuery,
-                    null, null);
+        switch (request.getMethod()) {
+            case GET:
+                if (request.getUriQuery() == null) {
+                    StringBuffer additionalQuery = new StringBuffer();
+                    additionalQuery.append(
+                            Constants.USER_ID + "=" + srcDevice.getUserId());
+                    String uriQuery = additionalQuery.toString()
+                            + (request.getUriQuery() != null
+                                    ? (";" + request.getUriQuery()) : "");
+                    request = MessageBuilder.modifyRequest(request, null,
+                            uriQuery, null, null);
+                }
+                break;
+            case DELETE:
+                StringBuffer additionalQuery = new StringBuffer();
+                additionalQuery.append(
+                        Constants.USER_ID + "=" + srcDevice.getUserId());
+                String uriQuery = additionalQuery.toString()
+                        + (request.getUriQuery() != null
+                                ? (";" + request.getUriQuery()) : "");
+                request = MessageBuilder.modifyRequest(request, null, uriQuery,
+                        null, null);
+                break;
+            default:
+                break;
         }
         mASServer.sendRequest(request,
                 new AccountReceiveHandler(request, srcDevice));

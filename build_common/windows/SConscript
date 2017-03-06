@@ -6,35 +6,46 @@ import os.path
 
 # Set common flags
 if env['CC'] == 'cl':
+    #  - warning C4133: incompatible type conversion
+    env.AppendUnique(CCFLAGS=['/we4133'])
 
-    # TODO: re-enable warnings, especially: 4244, 4267, 4365
-    env.AppendUnique(CXXFLAGS=[
-        '/wd4244',   # C4244 conversion from one type to another type results in a possible loss of data.
-        '/wd4267',   # C4267 conversion from size_t to a smaller type.
-        '/wd4355',   # C4355 'this' used in base member initializer list.
-        '/wd4800',   # C4800 forcing value to bool 'true' or 'false'.
-        '/wd4996',   # C4996 deprecated declaration.
-        '/wd4820',   # C4820 added padding to the end of a struct.
-        '/wd4514',   # C4514 unreferenced inline function has been removed
-        '/wd4365',   # C4365 signed/unsigned mismatch
-        '/wd4503'])  # C4503 decorated name length exceeded, name was truncated
+    # Disable the following warnings:
+    #  - warning C4127: conditional expression is constant
+    #    - Disabled due to the widespread usage in IoTivity
+    #  - warning C4200: zero-sized array in struct/union.
+    #    - It is an acceptable approach for variable size structs.
+    #  - warning C4201: nameless struct/union
+    #    - Disabled due to IoTivity not being ANSI compatible
+    #  - warning C4214:  bit field types other than int
+    #    - Disabled due to IoTivity not being ANSI compatible
+    #  - warning C4706: assignment within conditional expression
+    #    - Disabled due to the widespread usage in IoTivity and low impact.
+    env.AppendUnique(CCFLAGS=['/wd4127', '/wd4200', '/wd4201', '/wd4214', '/wd4706'])
 
     env.AppendUnique(CCFLAGS=['/EHsc'])
-
-    vs_version = env['MSVC_VERSION']
 
     # Set release/debug flags
     if env.get('RELEASE'):
         env.AppendUnique(CCFLAGS = ['/MD', '/O2', '/GF'])
         env.AppendUnique(CPPDEFINES = ['NDEBUG'])
-    elif env.get('TARGET_ARCH') in ['x86', 'x86_64'] or "14.0" in vs_version:
-        env.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/ZI', '/RTC1', '/Gm'])
-        env.AppendUnique(LINKFLAGS = ['/debug'])
     else:
-        env.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/Zi', '/RTC1', '/Gm'])
+        env.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/RTC1'])
         env.AppendUnique(LINKFLAGS = ['/debug'])
     env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
     env.AppendUnique(PATH = os.environ['PATH'])
+    env['PDB'] = '${TARGET.base}.pdb'
+    env.Append(LINKFLAGS=['/PDB:${TARGET.base}.pdb'])
+
+    # Add Windows-specific libraries
+    env.AppendUnique(LIBS = ['bcrypt', 'ws2_32', 'advapi32', 'iphlpapi', 'crypt32', 'kernel32'])
+
+    # Visual Studio compiler complains that functions like strncpy are unsafe. We
+    # are aware that it's possible to create a non-null terminated string using the
+    # strncpy function.  However, the str*_s functions are not standard and thus
+    # will not work on all systems supported by IoTivity. This will prevent Visual
+    # Studio from displaying unwanted warnings.
+    # See https://msdn.microsoft.com/en-us/library/ttcz0bys.aspx for more details.
+    env.AppendUnique(CPPDEFINES=['_CRT_SECURE_NO_WARNINGS', '_CRT_NONSTDC_NO_WARNINGS'])
 
 elif env['CC'] == 'gcc':
     print "\nError: gcc not supported on Windows.  Use Visual Studio!\n"

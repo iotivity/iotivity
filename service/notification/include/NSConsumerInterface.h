@@ -79,10 +79,20 @@ NSResult NSStopConsumer();
 
 /**
  * Request to discover to remote address as parameter.
- * @param[in] server address combined with IP address and port number using delimiter :
+ * @param[in] serverAddress combined with IP address and port number using delimiter :
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSConsumerEnableRemoteService(const char *serverAddress);
+NSResult NSConsumerEnableRemoteService(const char * serverAddress);
+
+#ifdef WITH_MQ
+/**
+ * Request to subscribe to remote MQ address as parameter.
+ * @param[in] serverAddress server address combined with IP address and port number and MQ broker uri using delimiter :
+ * @param[in] topicName the interest MQ Topic name for subscription.
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSConsumerSubscribeMQService(const char * serverAddress, const char * topicName);
+#endif
 
 /**
  * Request discovery manually
@@ -96,6 +106,13 @@ NSResult NSRescanProvider();
  * @return ::NS_OK or result code of NSResult
  */
 NSResult NSSubscribe(const char * providerId);
+
+/**
+ * Request to unsubscribe in order not to receive notification message from provider
+ * @param[in]  providerId  the Id of Provider who send the notification message
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSUnsubscribe(const char * providerId);
 
 /**
  * Send sync type to provider in order to synchronize notification status with other consumers

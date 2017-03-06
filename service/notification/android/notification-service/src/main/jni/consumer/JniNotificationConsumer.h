@@ -47,11 +47,20 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_nat
 /*
  * Class:     org_iotivity_service_ns_consumer_ConsumerService
  * Method:    nativeEnableRemoteService
- * Signature: (Ljava/lang/String;)I
+ * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT jint JNICALL
+JNIEXPORT void JNICALL
 Java_org_iotivity_service_ns_consumer_ConsumerService_nativeEnableRemoteService
 (JNIEnv *, jobject, jstring);
+
+/*
+ * Class:     org_iotivity_service_ns_consumer_ConsumerService
+ * Method:    nativeSubscribeMQService
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_service_ns_consumer_ConsumerService_nativeSubscribeMQService
+(JNIEnv *, jobject, jstring, jstring);
 
 /*
  * Class:     org_iotivity_service_ns_consumer_ConsumerService
@@ -69,6 +78,15 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_nat
 JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSubscribe
 (JNIEnv *, jobject);
 
+
+/*
+ * Class:     org_iotivity_service_ns_consumer_Provider
+ * Method:    nativeUnsubscribe
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeUnsubscribe
+(JNIEnv *, jobject);
+
 /*
  * Class:     org_iotivity_service_ns_consumer_Provider
  * Method:    nativeSendSyncInfo
@@ -80,7 +98,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSend
 /*
  * Class:     org_iotivity_service_ns_consumer_Provider
  * Method:    nativeSetListener
- * Signature: (Lorg/iotivity/service/ns/consumer/Provider/OnProviderStateListener;Lorg/iotivity/service/ns/consumer/Provider/OnMessageReceivedListner;Lorg/iotivity/service/ns/consumer/Provider/OnSyncInfoReceivedListner;)V
+ * Signature: (Lorg/iotivity/service/ns/consumer/Provider/OnProviderStateListener;Lorg/iotivity/service/ns/consumer/Provider/OnMessageReceivedListener;Lorg/iotivity/service/ns/consumer/Provider/OnSyncInfoReceivedListener;)V
  */
 JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSetListener
 (JNIEnv *, jobject, jobject, jobject, jobject);
@@ -96,9 +114,9 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeG
 /*
  * Class:     org_iotivity_service_ns_consumer_Provider
  * Method:    nativeUpdateTopicList
- * Signature: (Lorg/iotivity/service/ns/common/TopicsList;)I
+ * Signature: (Lorg/iotivity/service/ns/common/TopicsList;)V
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeUpdateTopicList
+JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeUpdateTopicList
 (JNIEnv *, jobject, jobject);
 
 /*
@@ -116,6 +134,14 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeG
  */
 JNIEXPORT jboolean JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeIsSubscribed
 (JNIEnv *, jobject);
+
+/*
+ * Class:     org_iotivity_service_ns_consumer_Provider
+ * Method:    nativeDispose
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeDispose
+(JNIEnv *env, jobject object);
 
 #ifdef __cplusplus
 }

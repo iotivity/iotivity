@@ -48,9 +48,16 @@ HWND WINAPI CreateTrackbar(HWND parent, int x, int y, int w, int h,UINT iMin, UI
 HWND WINAPI CreateLabel(HWND parent, LPCTSTR lpText, int x, int y, int w, int h);
 HWND WINAPI CreateButton(HWND parent, UINT_PTR id, LPCTSTR caption, int x, int y, int w, int h);
 
-FILE* client_open(const char* /*path*/, const char *mode)
+FILE* client_open(const char* path, const char* mode)
 {
-    return fopen("./oic_svr_db_client.dat", mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen("./oic_svr_db_client.dat", mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,

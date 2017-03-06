@@ -61,10 +61,6 @@ namespace OC
         public:
             void setPayload(const OCPayload* rep);
 
-            void setPayload(const OCDevicePayload* rep);
-
-            void setPayload(const OCPlatformPayload* rep);
-
             void setPayload(const OCRepPayload* rep);
 
             OCRepPayload* getPayload() const;
@@ -123,7 +119,7 @@ namespace OC
 
             virtual ~OCRepresentation(){}
 
-            void setDevAddr(const OCDevAddr addr);
+            void setDevAddr(const OCDevAddr&);
 
             const std::string getHost() const;
 

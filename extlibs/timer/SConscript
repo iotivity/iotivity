@@ -20,8 +20,16 @@
 
 Import('env')
 
-timer_src = [ 'timer.c' ]
+timer_env = env.Clone()
 
-libtimer = env.StaticLibrary('timer', timer_src, OBJPREFIX='libtimer_')
-env.InstallTarget(libtimer, 'timer');
+target_os = timer_env.get('TARGET_OS')
 
+# Required for arduino builds to have access to Timer.h.
+if target_os == 'arduino':
+    timer_env.Replace(CC = env.get('CXX'))
+    timer_env.Replace(CFLAGS = env.get('CXXFLAGS'))
+elif target_os == 'windows':
+    timer_env.AppendUnique(CCFLAGS = ['/W4', '/WX'])
+
+libtimer = timer_env.StaticLibrary('timer', ['timer.c'], OBJPREFIX='libtimer_')
+timer_env.InstallTarget(libtimer, 'timer');

@@ -109,6 +109,18 @@ std::string OC::OCException::reason(const OCStackResult sr)
             return OC::Exception::INCONSISTENT_DB;
         case OC_STACK_AUTHENTICATION_FAILURE:
             return OC::Exception::AUTHENTICATION_FAILURE;
+        case OC_STACK_NOT_ALLOWED_OXM:
+            return OC::Exception::NOT_ALLOWED_OXM;
+        case OC_STACK_USER_DENIED_REQ:
+            return OC::Exception::USER_DENIED_REQ;
+        case OC_STACK_NOT_ACCEPTABLE:
+            return OC::Exception::NOT_ACCEPTABLE;
+        case OC_STACK_FORBIDDEN_REQ:
+            return OC::Exception::FORBIDDEN_REQ;
+        case OC_STACK_INTERNAL_SERVER_ERROR:
+            return OC::Exception::INTERNAL_SERVER_ERROR;
+        case OC_STACK_BAD_ENDPOINT:
+            return OC::Exception::BAD_ENDPOINT;
     }
 
     return OC::Exception::UNKNOWN_ERROR;

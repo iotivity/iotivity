@@ -52,6 +52,8 @@ public class Constants extends OICConstants {
 
     public static final String ACL_TABLE                  = "ACL_TABLE";
 
+    public static final String ACE_TABLE                  = "ACE_TABLE";
+
     public static final String ACLTEMPLATE_TABLE          = "ACLTEMPLATE_TABLE";
 
     // Database table key
@@ -72,17 +74,33 @@ public class Constants extends OICConstants {
 
     public static final String KEYFIELD_DID               = "did";
 
+    public static final String KEYFIELD_UID               = "uid";
+
+    public static final String KEYFIELD_OID               = "oid";
+
     public static final String KEYFIELD_ACLID             = "aclid";
 
     public static final String KEYFIELD_DI                = "di";
 
-    public static final String KEYFIELD_GTYPE             = "gtype";
+    public static final String KEYFIELD_GROUP_GACL        = "gacl";
 
-    public static final String KEYFIELD_GIDLIST           = "gidlist";
+    public static final String KEYFIELD_GROUP_PARENT      = "parent";
 
-    public static final String KEYFIELD_MIDLIST           = "midlist";
+    public static final String KEYFIELD_GROUP_OWNER       = "owner";
 
-    public static final String KEYFIELD_GACL              = "gacl";
+    public static final String KEYFIELD_GROUP_MASTERS     = "masters";
+
+    public static final String KEYFIELD_GROUP_MEMBERS     = "members";
+
+    public static final String KEYFIELD_GROUP             = "group";
+
+    public static final String KEYFIELD_GROUP_NAME        = "gname";
+
+    public static final String KEYFIELD_GROUP_DEVICES     = "devices";
+
+    public static final String KEYFIELD_GROUP_RESOURCES   = "resources";
+
+    public static final String KEYFIELD_GROUP_SUBGROUPS   = "subgroups";
 
     public static final String KEYFIELD_USERID            = "userid";
 
@@ -95,6 +113,8 @@ public class Constants extends OICConstants {
     public static final String KEYFIELD_INVITE_USER       = "inviteUser";
 
     public static final String KEYFIELD_INVITED_USER      = "invitedUser";
+
+    public static final String KEYFIELD_ACE_ID            = "aceid";
 
     public static final String KEYFIELD_ACE_SUBJECT_ID    = "subjectuuid";
 
@@ -112,7 +132,11 @@ public class Constants extends OICConstants {
 
     public static final String KEYFIELD_ACE_RESOURCE_IF   = "if";
 
-    // Request payload key
+    public static final String KEYFIELD_RESOURCE_RT       = "rt";
+
+    public static final String KEYFIELD_RESOURCE_IF       = "if";
+
+    // Request key
 
     public static final String REQ_DEVICE_ID              = "di";
 
@@ -150,13 +174,17 @@ public class Constants extends OICConstants {
 
     public static final String REQ_SEARCH_USER_ID         = "sid";
 
-    public static final String REQ_SEARCH_CRITERIA        = "search";
-
     public static final String REQ_GROUP_ID               = "gid";
 
     public static final String REQ_GROUP_MASTER_ID        = "gmid";
 
     public static final String REQ_GROUP_TYPE             = "gtype";
+
+    public static final String REQ_GROUP_QUERY_OPERATION  = "op";
+
+    public static final String REQ_GROUP_QUERY_ADD        = "add";
+
+    public static final String REQ_GROUP_QUERY_DELETE     = "delete";
 
     public static final String REQ_MEMBER                 = "mid";
 
@@ -170,17 +198,15 @@ public class Constants extends OICConstants {
 
     public static final String REQ_SERIAL_NUMBER          = "rcsn";
 
-    public static final String REQ_MEMBER_LIST            = "midlist";
-
-    public static final String REQ_GTYPE_PRIVATE          = "Private";
-
-    public static final String REQ_GTYPE_PUBLIC           = "Public";
-
     public static final String REQ_CSR                    = "csr";
 
     public static final String REQ_INVITE                 = "invite";
 
-    // Response payload key
+    public static final String REQ_INVITE_ACCEPT          = "accept";
+
+    public static final String SEARCH_USER_LIST           = "ulist";
+
+    // Response key
 
     public static final String RESP_ACCESS_TOKEN          = "accesstoken";
 
@@ -195,8 +221,6 @@ public class Constants extends OICConstants {
     public static final String RESP_CERTIFICATE           = "certificate";
 
     public static final String RESP_SERVER_ID             = "sid";
-
-    public static final String RESP_DEVICES               = "devices";
 
     public static final String RESP_UUID                  = "uid";
 
@@ -226,15 +250,15 @@ public class Constants extends OICConstants {
 
     public static final String CERT_CHAIN                 = "certchain";
 
-    // query parameter key
-
-    public static final String REQ_INVITE_ACCEPT          = "accept";
+    public static final String RESP_GROUPS                = "groups";
 
     // constants
 
     public static final String INVITE_ACCEPT              = "1";
 
     public static final String INVITE_DENY                = "0";
+
+    public static final String ACL_RESOURCE_TYPE          = "oic.wk.acl";
 
     // static token type
 
@@ -249,4 +273,5 @@ public class Constants extends OICConstants {
     public static final String SAMSUNG                    = "Samsung";
 
     public static final String GOOGLE                     = "Google";
+
 }

@@ -30,7 +30,7 @@
 
 #include <coap/coap.h>
 #include "cathreadpool.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "cacommon.h"
 #include "caprotocolmessage.h"
@@ -68,10 +68,10 @@ typedef struct
     u_arraylist_t *dataList;
 
     /** data list mutex for synchronization. **/
-    ca_mutex blockDataListMutex;
+    oc_mutex blockDataListMutex;
 
     /** sender mutex for synchronization. **/
-    ca_mutex blockDataSenderMutex;
+    oc_mutex blockDataSenderMutex;
 } CABlockWiseContext_t;
 
 /**
@@ -419,11 +419,12 @@ void CADestroyDataSet(CAData_t* data);
  * Create the blockId for CABlockData.
  * @param[in]   token   token of current message.
  * @param[in]   tokenLength   token length of current message.
+ * @param[in]   addr    address, must be MAX_ADDR_STR_SIZE_CA in length.
  * @param[in]   portNumber   port.
  * @return ID set of CABlockData.
  */
 CABlockDataID_t* CACreateBlockDatablockId(const CAToken_t token, uint8_t tokenLength,
-                                          uint16_t portNumber);
+                                          const char* addr, uint16_t portNumber);
 
 /**
  * Destroy the blockId set.
@@ -476,14 +477,14 @@ CAPayload_t CAGetPayloadInfo(const CAData_t *data, size_t *payloadLen);
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAUpdateBlockOptionType(const CABlockDataID_t *blockID,
-                                   uint8_t blockType);
+                                   uint16_t blockType);
 
 /**
  * Get the block option type from block-wise transfer list.
  * @param[in]   blockID     ID set of CABlockData.
  * @return block option type.
  */
-uint8_t CAGetBlockOptionType(const CABlockDataID_t *blockID);
+uint16_t CAGetBlockOptionType(const CABlockDataID_t *blockID);
 
 /**
  * Get the block data from block-wise transfer list.
@@ -491,6 +492,15 @@ uint8_t CAGetBlockOptionType(const CABlockDataID_t *blockID);
  * @return CAData structure.
  */
 CAData_t *CAGetDataSetFromBlockDataList(const CABlockDataID_t *blockID);
+
+/**
+ * Update the block data from block-wise transfer list.
+ * @param[in]   blockID     ID set of CABlockData.
+ * @param[in]   sendData    New block date should be sent.
+ * @return CABlockData_t structure.
+ */
+CABlockData_t *CAUpdateDataSetFromBlockDataList(const CABlockDataID_t *blockID,
+                                                const CAData_t *sendData);
 
 /**
  * Get token from block-wise transfer list.
@@ -560,11 +570,12 @@ CAResult_t CARemoveAllBlockDataFromList();
  * Find the block data with seed info and remove it from block-wise transfer list.
  * @param[in]   token         token of the message.
  * @param[in]   tokenLength   token length of the message.
+ * @param[in]   addr          address, must be MAX_ADDR_STR_SIZE_CA in length.
  * @param[in]   portNumber    port.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CARemoveBlockDataFromListWithSeed(const CAToken_t token, uint8_t tokenLength,
-                                             uint16_t portNumber);
+                                             const char* addr, uint16_t portNumber);
 
 #ifdef __cplusplus
 } /* extern "C" */

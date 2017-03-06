@@ -24,6 +24,7 @@
 #include "cacommon.h"
 #include "caadapterutils.h"
 #include "cafragmentation.h"
+#include "caleinterface.h"
 
 /**
  * Debugging tag for fragmentation module.
@@ -82,13 +83,15 @@ static uint8_t CAGetBits(uint8_t x, unsigned p, unsigned n)
 CAResult_t CAGenerateVariableForFragmentation(size_t dataLength,
                                               uint32_t *midPacketCount,
                                               size_t *remainingLen,
-                                              size_t *totalLength)
+                                              size_t *totalLength,
+                                              uint16_t mtuSize)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN, dataLength = %d", dataLength);
+    OIC_LOG_V(DEBUG, TAG, "IN, dataLength = %" PRIuPTR ", mtu = %u",
+              dataLength, (uint32_t)mtuSize);
 
     size_t remainDataSize = 0;
     size_t dataOnlyLen =
-        CA_SUPPORTED_BLE_MTU_SIZE - (CA_BLE_HEADER_SIZE + CA_BLE_LENGTH_HEADER_SIZE);
+            mtuSize - (CA_BLE_HEADER_SIZE + CA_BLE_LENGTH_HEADER_SIZE);
     //total data size is smaller than 14 byte case.
     if (dataLength < dataOnlyLen)
     {
@@ -99,14 +102,14 @@ CAResult_t CAGenerateVariableForFragmentation(size_t dataLength,
         remainDataSize = dataLength - dataOnlyLen;
     }
 
-    if (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE <= 0)
+    if (mtuSize - CA_BLE_HEADER_SIZE <= 0)
     {
         OIC_LOG_V(ERROR, TAG, "BLE header size shouldn't be bigger than BLE MTU size.");
         return CA_STATUS_FAILED;
     }
 
-    *midPacketCount = (uint32_t)remainDataSize / (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE);
-    *remainingLen = (uint32_t)remainDataSize % (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE);
+    *midPacketCount = (uint32_t)remainDataSize / (mtuSize - CA_BLE_HEADER_SIZE);
+    *remainingLen = (uint32_t)remainDataSize % (mtuSize - CA_BLE_HEADER_SIZE);
     uint32_t remainHeaderSize = CA_BLE_HEADER_SIZE * (*midPacketCount + (*remainingLen == 0 ? 0:1));
     *totalLength = dataLength + (CA_BLE_HEADER_SIZE + CA_BLE_LENGTH_HEADER_SIZE) + remainHeaderSize;
 
@@ -121,8 +124,6 @@ CAResult_t CAGenerateHeader(uint8_t *header,
                             CABLEPacketSecure_t secure,
                             const uint8_t destPort)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     VERIFY_NON_NULL(header, TAG, "header is NULL");
 
     if (sourcePort > CA_SUPPORTED_BLE_MAX_PORT ||
@@ -169,8 +170,6 @@ CAResult_t CAMakeFirstDataSegment(uint8_t *dataSegment,
                                   const uint8_t *dataHeader,
                                   const uint8_t *lengthHeader)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     VERIFY_NON_NULL(dataSegment, TAG, "dataSegment is NULL");
     VERIFY_NON_NULL(dataHeader, TAG, "dataHeader is NULL");
     VERIFY_NON_NULL(lengthHeader, TAG, "lengthHeader is NULL");
@@ -178,37 +177,30 @@ CAResult_t CAMakeFirstDataSegment(uint8_t *dataSegment,
     memcpy(dataSegment, dataHeader, CA_BLE_HEADER_SIZE);
     memcpy(dataSegment + CA_BLE_HEADER_SIZE, lengthHeader, CA_BLE_LENGTH_HEADER_SIZE);
     memcpy(dataSegment + CA_BLE_HEADER_SIZE + CA_BLE_LENGTH_HEADER_SIZE, data, dataLength);
-
-    OIC_LOG(DEBUG, TAG, "OUT");
-
     return CA_STATUS_OK;
 }
 
 CAResult_t CAMakeRemainDataSegment(uint8_t *dataSegment,
-                                   const uint8_t *data,
-                                   const uint32_t dataLength,
-                                   const uint32_t index,
-                                   const uint8_t *dataHeader)
+                                   const uint32_t segmentPayloadLength,
+                                   const uint8_t *sourceData,
+                                   const uint32_t sourceDataLength,
+                                   const uint32_t segmentNum,
+                                   const uint8_t *dataHeader,
+                                   uint16_t mtuSize)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     VERIFY_NON_NULL(dataSegment, TAG, "dataSegment is NULL");
     VERIFY_NON_NULL(dataHeader, TAG, "dataHeader is NULL");
 
-    const uint8_t *cur_pos = data +
-        (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE - CA_BLE_LENGTH_HEADER_SIZE +
-         (index * (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE)));
-    if (NULL == cur_pos)
+    uint32_t index = (mtuSize - CA_BLE_HEADER_SIZE - CA_BLE_LENGTH_HEADER_SIZE) +
+            (segmentNum * (mtuSize - CA_BLE_HEADER_SIZE));
+    if (sourceDataLength < index + segmentPayloadLength)
     {
-        OIC_LOG(ERROR, TAG, "data is NULL");
+        OIC_LOG(DEBUG, TAG, "dataSegment will exceed");
         return CA_STATUS_FAILED;
     }
 
     memcpy(dataSegment, dataHeader, CA_BLE_HEADER_SIZE);
-    memcpy(dataSegment + CA_BLE_HEADER_SIZE, cur_pos, dataLength);
-
-    OIC_LOG(DEBUG, TAG, "OUT");
-
+    memcpy(dataSegment + CA_BLE_HEADER_SIZE, sourceData + index, segmentPayloadLength);
     return CA_STATUS_OK;
 }
 
@@ -218,16 +210,12 @@ CAResult_t CAParseHeader(const uint8_t *header,
                          CABLEPacketSecure_t *secureFlag,
                          uint16_t *destPort)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     VERIFY_NON_NULL(header, TAG, "header is NULL");
 
     *startFlag = CAGetBits(header[0], CA_BLE_START_POS, CA_BLE_START_LEN);
     *sourcePort = CAGetBits(header[0], CA_BLE_SOURCE_PORT_POS, CA_BLE_SOURCE_PORT_LEN);
     *secureFlag = CAGetBits(header[1], CA_BLE_SECURE_POS, CA_BLE_SECURE_LEN);
     *destPort = CAGetBits(header[1], CA_BLE_DESTINATION_PORT_POS, CA_BLE_DESTINATION_PORT_LEN);
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 
     return CA_STATUS_OK;
 }
@@ -236,7 +224,6 @@ CAResult_t CAParseHeaderPayloadLength(uint8_t *header,
                                       size_t headerLength,
                                       uint32_t *dataLength)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL(header, TAG, "header is NULL");
 
     if (headerLength != CA_BLE_LENGTH_HEADER_SIZE)
@@ -250,6 +237,5 @@ CAResult_t CAParseHeaderPayloadLength(uint8_t *header,
         *dataLength |= header[CA_BLE_HEADER_SIZE+idx];
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }

@@ -29,7 +29,7 @@
 #include "ESEnrolleeSimulator.h"
 #include "escommon.h"
 #include "ESRichCommon.h"
-#include "EasySetup.h"
+#include "EasySetup.hpp"
 #include "RemoteEnrollee.h"
 
 #include "ESEnrolleeCommon.h"
@@ -88,14 +88,14 @@ public:
     EasysetupMediatorTest() = default;
     ~EasysetupMediatorTest() = default;
 
-    std::shared_ptr<OC::OCResource> CreateNotProvResource()
+    std::shared_ptr<OC::OCResource> CreateNotEasySetupResource()
     {
         OCConnectivityType connectivityType = CT_DEFAULT;
-        std::vector<std::string> types = {"oic.wk.notprov"};
+        std::vector<std::string> types = {"oic.r.noteasysetup"};
         std::vector<std::string> ifaces = {DEFAULT_INTERFACE};
 
         return OCPlatform::constructResourceObject("coap://192.168.1.2:5000",
-                                                   "/NotProvisioningResURI",
+                                                   "/NotEasySetupResURI",
                                                    connectivityType,
                                                    false,
                                                    types,
@@ -104,7 +104,7 @@ public:
 
     void discoverRemoteEnrollee()
     {
-        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_PROV;
+        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_EASYSETUP;
         OC::OCPlatform::findResource("", uri,
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&EasysetupMediatorTest::discoverRemoteEnrolleeCb,
@@ -144,16 +144,16 @@ private:
         }
 
         CAEndpoint_t *tempInfo = NULL;
-        uint32_t tempSize = 0;
+        size_t tempSize = 0;
 
         CAResult_t res = CAGetNetworkInformation(&tempInfo, &tempSize);
-        if (CA_STATUS_OK != res || NULL == tempInfo || 0 >= tempSize)
+        if (CA_STATUS_OK != res || NULL == tempInfo || 0 == tempSize)
         {
             free(tempInfo);
             return false;
         }
 
-        for (uint32_t index = 0; index  < tempSize; index++)
+        for (size_t index = 0; index  < tempSize; index++)
         {
             if (CA_ADAPTER_IP == tempInfo[index].adapter)
             {
@@ -175,21 +175,21 @@ private:
             return ;
         }
 
-        if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_PROV))
+        if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_EASYSETUP))
         {
             m_enrolleeResource = resource;
         }
     }
 };
 
-TEST_F(EasysetupMediatorTest, createremoteenrolleeFailedWithNotProvResource)
+TEST_F(EasysetupMediatorTest, createremoteenrolleeFailedWithNotEasySetupResource)
 {
-    auto remoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(CreateNotProvResource());
+    auto remoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(CreateNotEasySetupResource());
 
     EXPECT_EQ(nullptr, remoteEnrollee);
 }
 
-TEST_F(EasysetupMediatorTest, createremoteenrolleeSucceedWithProvResource)
+TEST_F(EasysetupMediatorTest, createremoteenrolleeSucceedWithEasySetupResource)
 {
     discoverRemoteEnrollee();
     g_remoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(m_enrolleeResource);

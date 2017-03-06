@@ -36,44 +36,44 @@ extern "C" {
  *
  * @param otmCtx Context of OTM, It includes current device information.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult LoadPreconfPinCodeCallback(OTMContext_t *otmCtx);
+OCStackResult LoadPreconfigPinCodeCallback(OTMContext_t *otmCtx);
 
 /**
  * Callback implementation to establish a secure channel with PSK cipher suite.
  *
  * @param otmCtx Context of OTM, It includes current device information.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult CreateSecureSessionPreconfPinCallback(OTMContext_t *otmCtx);
+OCStackResult CreateSecureSessionPreconfigPinCallback(OTMContext_t *otmCtx);
 
 /**
  * Generate payload for select OxM request.
  *
  * @param otmCtx Context of OTM, It includes current device information.
- * @param cborPaylaod is the DOXM CBOR payload including the selected OxM.
+ * @param cborPayload is the DOXM CBOR payload including the selected OxM.
  * @note Returned memory should be deallocated by caller.
  * @param cborSize is the size of the cborPayload.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult CreatePreconfPinBasedSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
-                                             size_t *cborSize);
+OCStackResult CreatePreconfigPinBasedSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
+                                               size_t *cborSize);
 
 /**
  * Generate payload for owner transfer request.
  *
  * @param otmCtx Context of OTM, It includes current device information.
- * @param cborPaylaod is the DOXM CBOR payload including the owner information.
+ * @param cborPayload is the DOXM CBOR payload including the owner information.
  * @note Returned memory should be deallocated by caller.
  * @param cborSize is the size of the cborPayload.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult CreatePreconfPinBasedOwnerTransferPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
-                                                 size_t *cborSize);
+OCStackResult CreatePreconfigPinBasedOwnerTransferPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
+                                                   size_t *cborSize);
 
 #ifdef __cplusplus
 }

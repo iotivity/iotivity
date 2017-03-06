@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSProviderSubscription.h"
+#include "NSProviderListener.h"
 
 NSResult NSInitSubscriptionList()
 {
@@ -78,7 +79,7 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
         return NS_ERROR;
     }
 
-    NS_LOG_V(DEBUG, "NS Provider ID: %s", NSGetProviderInfo()->providerId);
+    NS_LOG_V(INFO_PRIVATE, "NS Provider ID: %s", NSGetProviderInfo()->providerId);
 
     char * copyReq = OICStrdup(entityHandlerRequest->query);
     char * reqInterface = NSGetValueFromQuery(copyReq, NS_QUERY_INTERFACE);
@@ -89,6 +90,7 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
         OCResourcePayloadAddStringLL(&payload->interfaces, NS_INTERFACE_READ);
         OCResourcePayloadAddStringLL(&payload->types, NS_ROOT_TYPE);
     }
+
     OICFree(copyReq);
     OCRepPayloadSetUri(payload, NS_ROOT_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
@@ -125,7 +127,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
     char * copyReq = OICStrdup(entityHandlerRequest->query);
     char * id = NSGetValueFromQuery(copyReq, NS_QUERY_CONSUMER_ID);
 
-    if(!id)
+    if (!id)
     {
         OICFree(copyReq);
         NSFreeOCEntityHandlerRequest(entityHandlerRequest);
@@ -133,7 +135,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         return;
     }
 
-    NS_LOG_V(DEBUG, "consumerId = %s", id);
+    NS_LOG_V(INFO_PRIVATE, "consumerId = %s", id);
     if (resourceType == NS_RESOURCE_MESSAGE)
     {
         NS_LOG(DEBUG, "resourceType == NS_RESOURCE_MESSAGE");
@@ -143,17 +145,17 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         NS_VERIFY_NOT_NULL_V(subData);
 
         OICStrcpy(subData->id, UUID_STRING_SIZE, id);
-        NS_LOG_V(DEBUG, "SubList ID = [%s]", subData->id);
+        NS_LOG_V(INFO_PRIVATE, "SubList ID = [%s]", subData->id);
 
-        NS_LOG_V(DEBUG, "Consumer Address: %s", entityHandlerRequest->devAddr.addr);
+        NS_LOG_V(INFO_PRIVATE, "Consumer Address: %s", entityHandlerRequest->devAddr.addr);
 
         subData->remote_messageObId = subData->messageObId = 0;
 
         bool iSRemoteServer = false;
 
-#if(defined WITH_CLOUD && defined RD_CLIENT)
+#if(defined WITH_CLOUD)
         iSRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
-        if(iSRemoteServer)
+        if (iSRemoteServer)
         {
             NS_LOG(DEBUG, "Requested by remote server");
             subData->remote_messageObId = entityHandlerRequest->obsInfo.obsId;
@@ -161,7 +163,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         }
 #endif
 
-        if(!iSRemoteServer)
+        if (!iSRemoteServer)
         {
             NS_LOG(DEBUG, "Requested by local consumer");
             subData->messageObId = entityHandlerRequest->obsInfo.obsId;
@@ -181,7 +183,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         }
 
         bool currPolicy = NSGetPolicy();
-        NSAskAcceptanceToUser(entityHandlerRequest);
+        NSAskAcceptanceToUser(NSCopyOCEntityHandlerRequest(entityHandlerRequest));
 
         if (currPolicy == NS_POLICY_PROVIDER)
         {
@@ -192,6 +194,8 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
             NS_LOG(DEBUG, "NSGetSubscriptionAccepter == NS_ACCEPTER_CONSUMER");
             NSSendConsumerSubResponse(NSCopyOCEntityHandlerRequest(entityHandlerRequest));
         }
+
+        NSFreeOCEntityHandlerRequest(entityHandlerRequest);
     }
     else if (resourceType == NS_RESOURCE_SYNC)
     {
@@ -202,16 +206,16 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         NS_VERIFY_NOT_NULL_V(subData);
 
         OICStrcpy(subData->id, UUID_STRING_SIZE, id);
-        NS_LOG_V(DEBUG, "SubList ID = [%s]", subData->id);
+        NS_LOG_V(INFO_PRIVATE, "SubList ID = [%s]", subData->id);
 
-        NS_LOG_V(DEBUG, "Consumer Address: %s", entityHandlerRequest->devAddr.addr);
+        NS_LOG_V(INFO_PRIVATE, "Consumer Address: %s", entityHandlerRequest->devAddr.addr);
 
         subData->remote_syncObId = subData->syncObId = 0;
         bool isRemoteServer = false;
 
-#if(defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD)
         isRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
-        if(isRemoteServer)
+        if (isRemoteServer)
         {
             NS_LOG(DEBUG, "Requested by remote server");
             subData->remote_syncObId = entityHandlerRequest->obsInfo.obsId;
@@ -219,7 +223,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         }
 #endif
 
-        if(!isRemoteServer)
+        if (!isRemoteServer)
         {
             NS_LOG(DEBUG, "Requested by local consumer");
             subData->syncObId = entityHandlerRequest->obsInfo.obsId;
@@ -251,12 +255,11 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
 
     consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER_OBSERVE_ID;
 
-    while(NSProviderStorageDelete(consumerSubList, (char *)
+    while (NSProviderStorageDelete(consumerSubList, (char *)
             &(entityHandlerRequest->obsInfo.obsId)) != NS_FAIL);
+
     consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER;
-
     NSFreeOCEntityHandlerRequest(entityHandlerRequest);
-
     NS_LOG(DEBUG, "NSHandleUnsubscription - OUT");
 }
 
@@ -294,11 +297,12 @@ NSResult NSSendResponse(const char * id, bool accepted)
 
     NSCacheElement * element = NSProviderStorageRead(consumerSubList, id);
 
-    if(element == NULL)
+    if (element == NULL)
     {
         NS_LOG(ERROR, "element is NULL");
         return NS_ERROR;
     }
+
     NSCacheSubData * subData = (NSCacheSubData*) element->data;
 
     if (OCNotifyListOfObservers(rHandle, (OCObservationId*)&subData->messageObId, 1,
@@ -309,8 +313,8 @@ NSResult NSSendResponse(const char * id, bool accepted)
         return NS_ERROR;
 
     }
-    OCRepPayloadDestroy(payload);
 
+    OCRepPayloadDestroy(payload);
     NS_LOG(DEBUG, "NSSendResponse - OUT");
     return NS_OK;
 }
@@ -328,7 +332,7 @@ NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest * entityHandlerRequest
     char * copyReq = OICStrdup(entityHandlerRequest->query);
     char * id = NSGetValueFromQuery(copyReq, NS_QUERY_CONSUMER_ID);
 
-    if(!id)
+    if (!id)
     {
         OICFree(copyReq);
         NSFreeOCEntityHandlerRequest(entityHandlerRequest);
@@ -343,6 +347,38 @@ NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest * entityHandlerRequest
     NS_LOG(DEBUG, "NSSendSubscriptionResponse - OUT");
     return NS_OK;
 }
+
+#ifdef WITH_MQ
+void NSProviderMQSubscription(NSMQTopicAddress * topicAddr)
+{
+    char * serverUri = topicAddr->serverAddr;
+    char * topicName = topicAddr->topicName;
+
+    NS_LOG_V(DEBUG, "input Topic Name2 : %s", topicAddr->topicName);
+
+    OCDevAddr * addr = NSChangeAddress(serverUri);
+    OCCallbackData cbdata = { NULL, NULL, NULL };
+    cbdata.cb = NSProviderGetMQResponseCB;
+    cbdata.context = OICStrdup(topicName);
+    cbdata.cd = OICFree;
+
+    char requestUri[100] = "coap+tcp://";
+
+    NS_LOG_V(DEBUG, "requestUri1 = %s", requestUri);
+    OICStrcat(requestUri, strlen(requestUri)+strlen(serverUri)+1, serverUri);
+    NS_LOG_V(DEBUG, "requestUri2 = %s", requestUri);
+    OICStrcat(requestUri, strlen(requestUri)+ strlen("/oic/ps") + 1, "/oic/ps");
+    NS_LOG_V(DEBUG, "requestUri3 = %s", requestUri);
+    OCStackResult ret = OCDoResource(NULL, OC_REST_GET, requestUri, addr,
+                                     NULL, CT_DEFAULT, OC_HIGH_QOS, &cbdata, NULL, 0);
+
+    NSOCResultToSuccess(ret);
+
+    OICFree(topicAddr->serverAddr);
+    OICFree(topicAddr->topicName);
+    OICFree(topicAddr);
+}
+#endif
 
 void * NSSubScriptionSchedule(void *ptr)
 {
@@ -405,6 +441,12 @@ void * NSSubScriptionSchedule(void *ptr)
                     NSHandleSubscription((OCEntityHandlerRequest*) node->taskData,
                             NS_RESOURCE_SYNC);
                     break;
+#ifdef WITH_MQ
+                case TASK_MQ_REQ_SUBSCRIBE:
+                    NS_LOG(DEBUG, "CASE TASK_MQ_REQ_SUBSCRIBE : ");
+                    NSProviderMQSubscription((NSMQTopicAddress*) node->taskData);
+                    break;
+#endif
                 default:
                     break;
 

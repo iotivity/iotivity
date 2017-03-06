@@ -18,26 +18,31 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+Import('env')
+
 ##
 # Examples build script
 ##
-thread_env = SConscript('#build_common/thread.scons')
-lib_env = thread_env.Clone()
+lib_env = env.Clone()
+SConscript('#build_common/thread.scons', exports = {'thread_env' : lib_env})
 
 # Add third party libraries
 SConscript('#resource/third_party_libs.scons', 'lib_env')
 examples_env = lib_env.Clone()
 target_os = examples_env.get('TARGET_OS')
+
 ######################################################################
 # Build flags
 ######################################################################
 examples_env.AppendUnique(CPPPATH = [
-		'../include/',
-		'../csdk/stack/include',
-		'../c_common/ocrandom/include',
-		'../csdk/logger/include',
-		'../oc_logger/include'
-		])
+        '#/resource/csdk/security/include',
+        '#/resource/include/',
+        '#/resource/csdk/include',
+        '#/resource/csdk/stack/include',
+        '#/resource/c_common/ocrandom/include',
+        '#/resource/csdk/logger/include',
+        '#/resource/oc_logger/include'
+        ])
 
 examples_env.AppendUnique(LIBPATH = [examples_env.get('BUILD_DIR')])
 examples_env.AppendUnique(RPATH = [examples_env.get('BUILD_DIR')])
@@ -49,62 +54,56 @@ examples_env.AppendUnique(LIBS = ['oc'])
 
 compiler = examples_env.get('CXX')
 if 'g++' in compiler:
-	examples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
+    examples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
 
 if target_os in ['msys_nt', 'windows']:
-	examples_env.PrependUnique(LIBS = ['mswsock', 'ws2_32', 'iphlpapi', 'ole32'])
+    examples_env.PrependUnique(LIBS = ['mswsock', 'ws2_32', 'iphlpapi', 'ole32'])
 
 if examples_env.get('SECURED') == '1':
-	examples_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
-	examples_env.AppendUnique(CPPDEFINES = ['_WITH_DTLS_'])
-	if target_os in ['msys_nt', 'windows']:
-		examples_env.AppendUnique(LIBS = ['advapi32'])
+    examples_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+    if target_os in ['msys_nt', 'windows']:
+        examples_env.AppendUnique(LIBS = ['advapi32'])
 
 if target_os == 'android':
-	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	examples_env.AppendUnique(LIBS = ['gnustl_shared'])
+    examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+    examples_env.AppendUnique(LIBS = ['gnustl_shared'])
 
-	if not examples_env.get('RELEASE'):
-		examples_env.AppendUnique(LIBS = ['log'])
-
-if target_os in ['darwin', 'ios']:
-	examples_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
-
-if examples_env.get('WITH_CLOUD'):
-	examples_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD'])
+    if not examples_env.get('RELEASE'):
+        examples_env.AppendUnique(LIBS = ['log'])
 
 if target_os in ['msys_nt', 'windows']:
-	examples_env.AppendUnique(LIBS = ['Comctl32', 'Gdi32', 'User32'])
-
-if examples_env.get('LOGGING'):
-	examples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    examples_env.AppendUnique(LIBS = ['Comctl32', 'Gdi32', 'User32'])
 
 def make_single_file_cpp_program(program_name):
-	return examples_env.Program(program_name, program_name + ".cpp")
+    return examples_env.Program(program_name, program_name + ".cpp")
 
 ######################################################################
 # Source files and Targets
 ######################################################################
 example_names = [
-	'simpleserver', 'simpleclient',
-	'simpleclientserver',
-	'directpairingclient',
-	'devicediscoveryserver', 'devicediscoveryclient',
-	'simpleserverHQ', 'simpleclientHQ',
-	]
+    'simpleserver', 'simpleclient',
+    'simpleclientserver',
+    'directpairingclient',
+    'devicediscoveryserver', 'devicediscoveryclient',
+    'simpleserverHQ', 'simpleclientHQ',
+    ]
 
 if target_os not in ['windows', 'msys_nt']:
-	example_names += [
-		'fridgeserver', 'fridgeclient',
-		'presenceserver', 'presenceclient',
-		'roomserver', 'roomclient',
-		'garageserver',
-		'garageclient',
-		'groupserver',
-		'groupclient',
-		'lightserver',
-		'threadingsample'
-		]
+    example_names += [
+        'fridgeserver', 'fridgeclient',
+        'presenceserver', 'presenceclient',
+        'roomserver', 'roomclient',
+        'garageserver',
+        'garageclient',
+        'groupserver',
+        'groupclient',
+        'lightserver',
+        'threadingsample',
+        ]
+    if 'CLIENT' in examples_env.get('RD_MODE'):
+        examples_env.AppendUnique(CPPPATH = ['../csdk/resource-directory/include'])
+        examples_env.AppendUnique(LIBS = ['resource_directory'])
+        example_names += ['rdclient']
 
 examples = map(make_single_file_cpp_program, example_names)
 
@@ -112,18 +111,21 @@ examples = map(make_single_file_cpp_program, example_names)
 # Other examples
 ######################################################################
 clientjson = examples_env.Install(examples_env.get('BUILD_DIR') + '/resource/examples/',
-				examples_env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client.dat')
+                examples_env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client.dat')
 serverjson = examples_env.Install(examples_env.get('BUILD_DIR') + '/resource/examples/',
-				examples_env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_server.dat')
+                examples_env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_server.dat')
+light_introspection_json = examples_env.Install(examples_env.get('BUILD_DIR') + '/resource/examples/',
+                examples_env.get('SRC_DIR') + '/resource/examples/' + 'light_introspection.json')
+
 directpairingdat = examples_env.Install(examples_env.get('BUILD_DIR') + '/resource/examples/',
-				examples_env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client_directpairing.dat')
+                examples_env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client_directpairing.dat')
 
 examples += [clientjson, serverjson, directpairingdat]
 
 if target_os in ['msys_nt', 'windows']:
-	winUIClient = examples_env.Program('winUIClient', ['winuiclientgui.cpp', 'winuiclient.cpp'])
-	mediaserver = examples_env.Program('mediaserver', 'mediaserver.cpp')
-	examples += [winUIClient, mediaserver]
+    winUIClient = examples_env.Program('winUIClient', ['winuiclientgui.cpp', 'winuiclient.cpp'])
+    mediaserver = examples_env.Program('mediaserver', 'mediaserver.cpp')
+    examples += [winUIClient, mediaserver]
 
 Alias("examples", examples)
 examples_env.AppendTarget('examples')

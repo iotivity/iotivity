@@ -47,14 +47,14 @@ public:
 
     ESResult initEnrollee()
     {
-        ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE |
-                                                    ES_CLOUD_RESOURCE |
+        ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFICONF_RESOURCE |
+                                                    ES_COAPCLOUDCONF_RESOURCE |
                                                     ES_DEVCONF_RESOURCE);
         ESProvisioningCallbacks callbacks;
 
-        callbacks.WiFiProvCb = &onWiFiProvisioning;
+        callbacks.WiFiConfProvCb = &onWiFiProvisioning;
         callbacks.DevConfProvCb = &onDevConfProvisioning;
-        callbacks.CloudDataProvCb = &onCloudProvisioning;
+        callbacks.CoapCloudConfProvCb = &onCloudProvisioning;
 
         return ESInitEnrollee(false, resourcemMask, callbacks);
     }
@@ -79,15 +79,15 @@ public:
     }
 
 private:
-    static void onWiFiProvisioning(ESWiFiProvData* /*data*/)
+    static void onWiFiProvisioning(ESWiFiConfData* /*data*/)
     {
     }
 
-    static void onDevConfProvisioning(ESDevConfProvData* /*data*/)
+    static void onDevConfProvisioning(ESDevConfData* /*data*/)
     {
     }
 
-    static void onCloudProvisioning(ESCloudProvData* /*data*/)
+    static void onCloudProvisioning(ESCoapCloudConfData* /*data*/)
     {
     }
 };

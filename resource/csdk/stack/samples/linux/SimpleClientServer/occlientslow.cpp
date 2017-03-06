@@ -104,9 +104,12 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, method, query.str().c_str(), dest,
-            (method == OC_REST_PUT) ? putPayload() : NULL,
-            adapterType, qos, &cbData, options, numOptions);
+    OCPayload* payload = (method == OC_REST_PUT) ? putPayload() : NULL;
+
+    ret = OCDoRequest(NULL, method, query.str().c_str(), dest,
+                      payload, adapterType, qos, &cbData, options, numOptions);
+
+    OCPayloadDestroy(payload);
 
     if (ret != OC_STACK_OK)
     {
@@ -250,8 +253,8 @@ int InitDiscovery()
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, queryUri, 0, 0, CT_DEFAULT,
-                       OC_LOW_QOS, &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, queryUri, 0, 0, CT_DEFAULT,
+                      OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");

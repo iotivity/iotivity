@@ -30,13 +30,13 @@
 #include "oic_malloc.h"
 #include "logger.h"
 #include "pbkdf2.h"
-#include "global.h"
 #include "base64.h"
 #include "oxmrandompin.h"
 #include "ownershiptransfermanager.h"
 #include "pinoxmcommon.h"
+#include "mbedtls/ssl_ciphersuites.h"
 
-#define TAG "OXM_RandomPIN"
+#define TAG "OIC_OXM_RandomPIN"
 
 OCStackResult CreatePinBasedSelectOxmPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
 {
@@ -78,9 +78,9 @@ OCStackResult InputPinCodeCallback(OTMContext_t *otmCtx)
         return OC_STACK_INVALID_PARAM;
     }
 
-    uint8_t pinData[OXM_RANDOM_PIN_SIZE + 1];
+    uint8_t pinData[OXM_RANDOM_PIN_MAX_SIZE + 1] = {0};
 
-    OCStackResult res = InputPin((char*)pinData, OXM_RANDOM_PIN_SIZE + 1);
+    OCStackResult res = InputPin(otmCtx->selectedDeviceInfo->doxm->deviceID, (char*)pinData, sizeof(pinData));
     if (OC_STACK_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Failed to input PIN");
@@ -101,7 +101,7 @@ OCStackResult InputPinCodeCallback(OTMContext_t *otmCtx)
             res = OC_STACK_ERROR;
         }
     }
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     //in case of MOT
     else if(otmCtx->selectedDeviceInfo->doxm->owned &&
             otmCtx->selectedDeviceInfo->doxm->mom &&
@@ -113,7 +113,7 @@ OCStackResult InputPinCodeCallback(OTMContext_t *otmCtx)
             res = OC_STACK_ERROR;
         }
     }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     //Set the device id to derive temporal PSK
     SetUuidForPinBasedOxm(&(otmCtx->selectedDeviceInfo->doxm->deviceID));
@@ -138,13 +138,13 @@ OCStackResult CreateSecureSessionRandomPinCallback(OTMContext_t* otmCtx)
     }
     OIC_LOG(INFO, TAG, "Anonymous cipher suite disabled.");
 
-    caresult  = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256, otmCtx->selectedDeviceInfo->endpoint.adapter);
+    caresult  = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, otmCtx->selectedDeviceInfo->endpoint.adapter);
     if (CA_STATUS_OK != caresult)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256");
+        OIC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256");
         return OC_STACK_ERROR;
     }
-    OIC_LOG(INFO, TAG, "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 cipher suite selected.");
+    OIC_LOG(INFO, TAG, "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 cipher suite selected.");
 
     OCProvisionDev_t* selDevInfo = otmCtx->selectedDeviceInfo;
     CAEndpoint_t endpoint;
@@ -153,6 +153,10 @@ OCStackResult CreateSecureSessionRandomPinCallback(OTMContext_t* otmCtx)
     if(CA_ADAPTER_IP == endpoint.adapter)
     {
         endpoint.port = selDevInfo->securePort;
+        caresult = CAInitiateHandshake(&endpoint);
+    }
+    else if (CA_ADAPTER_GATT_BTLE == endpoint.adapter)
+    {
         caresult = CAInitiateHandshake(&endpoint);
     }
 #ifdef __WITH_TLS__

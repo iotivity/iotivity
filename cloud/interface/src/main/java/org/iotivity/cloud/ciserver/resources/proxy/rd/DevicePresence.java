@@ -21,6 +21,7 @@
  */
 package org.iotivity.cloud.ciserver.resources.proxy.rd;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -79,18 +80,14 @@ public class DevicePresence extends Resource {
                             .parsePayloadFromCbor(response.getPayload(),
                                     HashMap.class);
 
-                    if (payloadData == null) {
-                        mSrcDevice.sendResponse(MessageBuilder.createResponse(
-                                mRequest, ResponseStatus.BAD_REQUEST));
-                        return;
-                    }
+                    ArrayList<String> devices = (ArrayList<String>) getResponseDeviceList(
+                            payloadData);
 
                     if (mRequest.getUriQuery() != null
                             && mRequest.getUriQueryMap()
                                     .containsKey(Constants.REQ_DEVICE_ID)) {
-                        if (!getResponseDeviceList(payloadData)
-                                .containsAll(mRequest.getUriQueryMap()
-                                        .get(Constants.REQ_DEVICE_ID))) {
+                        if (!devices.containsAll(mRequest.getUriQueryMap()
+                                .get(Constants.REQ_DEVICE_ID))) {
                             mSrcDevice.sendResponse(
                                     MessageBuilder.createResponse(mRequest,
                                             ResponseStatus.BAD_REQUEST));
@@ -98,25 +95,19 @@ public class DevicePresence extends Resource {
                     } else {
                         String additionalQuery = makeAdditionalQuery(
                                 payloadData, mSrcDevice.getDeviceId());
-                        if (additionalQuery == null) {
-                            mSrcDevice.sendResponse(
-                                    MessageBuilder.createResponse(mRequest,
-                                            ResponseStatus.BAD_REQUEST));
-                            return;
-                        }
+
+                        String uriQuery = additionalQuery.toString()
+                                + (mRequest.getUriQuery() != null
+                                        ? (";" + mRequest.getUriQuery()) : "");
                         mRequest = MessageBuilder.modifyRequest(mRequest, null,
-                                additionalQuery
-                                        + (mRequest.getUriQuery() != null
-                                                ? ";" + mRequest.getUriQuery()
-                                                : ""),
-                                null, null);
+                                uriQuery, null, null);
                     }
 
                     mRDServer.sendRequest(mRequest, mSrcDevice);
                     break;
+
                 default:
-                    mSrcDevice.sendResponse(MessageBuilder.createResponse(
-                            mRequest, ResponseStatus.BAD_REQUEST));
+                    mSrcDevice.sendResponse(response);
             }
         }
 
@@ -154,8 +145,14 @@ public class DevicePresence extends Resource {
     @Override
     public void onDefaultRequestReceived(Device srcDevice, IRequest request)
             throws ServerException {
-        StringBuffer uriQuery = new StringBuffer();
-        uriQuery.append(Constants.REQ_MEMBER_ID + "=" + srcDevice.getUserId());
+        StringBuffer additionalQuery = new StringBuffer();
+        additionalQuery.append(Constants.USER_ID + "=" + srcDevice.getUserId());
+        additionalQuery.append(";");
+        additionalQuery.append(
+                Constants.REQ_MEMBER_LIST + "=" + srcDevice.getUserId());
+        String uriQuery = additionalQuery.toString()
+                + (request.getUriQuery() != null ? (";" + request.getUriQuery())
+                        : "");
 
         StringBuffer uriPath = new StringBuffer();
         uriPath.append(Constants.PREFIX_OIC + "/");
@@ -164,7 +161,7 @@ public class DevicePresence extends Resource {
         uriPath.append(srcDevice.getUserId());
 
         IRequest requestToAS = MessageBuilder.createRequest(RequestMethod.GET,
-                uriPath.toString(), uriQuery.toString());
+                uriPath.toString(), uriQuery);
 
         mASServer.sendRequest(requestToAS,
                 new AccountReceiveHandler(request, srcDevice));

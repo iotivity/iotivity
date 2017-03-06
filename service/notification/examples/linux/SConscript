@@ -15,15 +15,18 @@ target_os = env.get('TARGET_OS')
 notification_sample_env.AppendUnique(CPPPATH = ['../../include'])
 notification_sample_env.AppendUnique(CPPPATH = ['../../src/common'])
 notification_sample_env.AppendUnique(CPPPATH = ['../../src/provider'])
-notification_sample_env.AppendUnique(CPPPATH = ['../../../../resource/csdk/stack/include'])
-notification_sample_env.AppendUnique(CPPPATH = ['../../../../resource/csdk/resource-directory/include'])
-notification_sample_env.AppendUnique(CPPPATH = ['../../../../resource/csdk/connectivity/api'])
+notification_sample_env.AppendUnique(CPPPATH = ['#/resource/csdk/include'])
+notification_sample_env.AppendUnique(CPPPATH = ['#/resource/csdk/stack/include'])
+notification_sample_env.AppendUnique(CPPPATH = ['#/resource/csdk/security/include'])
+notification_sample_env.AppendUnique(CPPPATH = ['#/resource/csdk/resource-directory/include'])
+notification_sample_env.AppendUnique(CPPPATH = ['#/resource/csdk/connectivity/api'])
 
 notification_sample_env.PrependUnique(LIBS = [
 	'octbstack',
 	'oc_logger',
 	'connectivity_abstraction',
-	'libcoap'
+	'libcoap',
+        'resource_directory'
 	])
 
 if target_os not in ['windows', 'winrt']:
@@ -62,8 +65,21 @@ if env.get('WITH_CLOUD') == True:
 
 if env.get('WITH_TCP') == True:
 	notification_sample_env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
-	if env.get('SECURED') == '1':
-		notification_sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+if env.get('SECURED') == '1':
+	notification_sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+
+with_mq = env.get('WITH_MQ')
+if 'SUB' in with_mq:
+    notification_sample_env.AppendUnique(CPPDEFINES = ['MQ_SUBSCRIBER', 'WITH_MQ'])
+    print "MQ SUB support"
+
+if 'PUB' in with_mq:
+    notification_sample_env.AppendUnique(CPPDEFINES = ['MQ_PUBLISHER', 'WITH_MQ'])
+    print "MQ PUB support"
+
+if 'BROKER' in with_mq:
+    notification_sample_env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
+    print "MQ Broker support"
 
 ####################################################################
 # Source files and Targets

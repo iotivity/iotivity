@@ -31,7 +31,6 @@
 
 using namespace OC;
 
-const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
 std::mutex resourceLock;
 
@@ -88,7 +87,7 @@ void printRoomRepresentation(const OCRepresentation& rep)
 void onGet(const HeaderOptions& /*headerOptions*/,
         const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE)
+    if (eCode == OC_STACK_OK)
     {
         std::cout << "GET request was successful" << std::endl;
 
@@ -106,7 +105,7 @@ void onGet(const HeaderOptions& /*headerOptions*/,
 void onGet1(const HeaderOptions& /*headerOptions*/,
         const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE)
+    if (eCode == OC_STACK_OK)
     {
         std::cout << "GET request was successful" << std::endl;
 
@@ -152,7 +151,7 @@ void putRoomRepresentation(std::shared_ptr<OCResource> resource)
 // callback handler on PUT request
 void onPut(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE)
+    if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
     {
         std::cout << "PUT request was successful" << std::endl;
 

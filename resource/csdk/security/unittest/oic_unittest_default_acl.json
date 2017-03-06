@@ -22,7 +22,13 @@
                             "rel": "",
                             "rt": ["oic.wk.p"],
                             "if": ["oic.if.baseline", "oic.if.r"]
-                        },
+                        }
+                    ],
+                    "permission": 2
+                },
+                {
+                    "subjectuuid": "*",
+                    "resources": [
                         {
                             "href": "/oic/sec/doxm",
                             "rel": "",
@@ -36,13 +42,13 @@
                             "if": ["oic.if.baseline"]
                         },
                         {
-                            "href": "/oic/sec/acl",
+                            "href": "/oic/sec/cred",
                             "rel": "",
-                            "rt": ["oic.r.acl"],
+                            "rt": ["oic.r.cred"],
                             "if": ["oic.if.baseline"]
                         }
                     ],
-                    "permission": 2
+                    "permission": 6
                 }
             ]
         },

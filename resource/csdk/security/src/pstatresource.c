@@ -24,6 +24,7 @@
 #include "ocstack.h"
 #include "oic_malloc.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "payload_logging.h"
 #include "resourcemanager.h"
 #include "pstatresource.h"
@@ -32,7 +33,7 @@
 #include "srmresourcestrings.h"
 #include "srmutility.h"
 
-#define TAG  "SRM-PSTAT"
+#define TAG  "OIC_SRM_PSTAT"
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching below max cbor size. */
@@ -51,11 +52,8 @@ static OicSecDpom_t gSm = SINGLE_SERVICE_CLIENT_DRIVEN;
 static OicSecPstat_t gDefaultPstat =
 {
     false,                                    // bool isop
-    (OicSecDpm_t)(BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES |
-    PROVISION_CREDENTIALS | PROVISION_ACLS),   // OicSecDpm_t cm
-    (OicSecDpm_t)(TAKE_OWNER | BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES |
-    PROVISION_CREDENTIALS | PROVISION_ACLS),   // OicSecDpm_t tm
-    {.id = {0}},                              // OicUuid_t deviceID
+    TAKE_OWNER,                               // OicSecDpm_t cm
+    NORMAL,                                   // OicSecDpm_t tm
     SINGLE_SERVICE_CLIENT_DRIVEN,             // OicSecDpom_t om */
     1,                                        // the number of elts in Sms
     &gSm,                                     // OicSecDpom_t *sm
@@ -113,7 +111,8 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
     int64_t cborEncoderResult = CborNoError;
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_ERROR);
+
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     if (false == writableOnly)
@@ -155,16 +154,6 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Name Tag.");
         cborEncoderResult = cbor_encode_int(&pstatMap, pstat->sm[0]);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Name Value.");
-
-        cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_DEVICE_ID_NAME,
-            strlen(OIC_JSON_DEVICE_ID_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Tag.");
-        ret = ConvertUuidToStr(&pstat->deviceID, &strUuid);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
-        cborEncoderResult = cbor_encode_text_string(&pstatMap, strUuid, strlen(strUuid));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Value.");
-        OICFree(strUuid);
-        strUuid = NULL;
 
         cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_ROWNERID_NAME,
             strlen(OIC_JSON_ROWNERID_NAME));
@@ -214,7 +203,7 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
 
     if (CborNoError == cborEncoderResult)
     {
-        *size = encoder.ptr - outPayload;
+        *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
         *payload = outPayload;
         ret = OC_STACK_OK;
     }
@@ -223,8 +212,9 @@ exit:
     {
         // reallocate and try again!
         OICFree(outPayload);
+        outPayload = NULL;
         // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         cborEncoderResult = CborNoError;
         ret = PstatToCBORPayload(pstat, payload, &cborLen, writableOnly);
         if (OC_STACK_OK == ret)
@@ -276,7 +266,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding PSTAT Map.");
 
     pstat = (OicSecPstat_t *)OICCalloc(1, sizeof(OicSecPstat_t));
-    VERIFY_NON_NULL(TAG, pstat, ERROR);
+    VERIFY_NOT_NULL(TAG, pstat, ERROR);
 
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_ISOP_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_boolean(&pstatMap))
@@ -287,27 +277,6 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
     else
     {
         pstat->isOp = gPstat->isOp;
-        cborFindResult = CborNoError;
-    }
-
-    cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_DEVICE_ID_NAME, &pstatMap);
-    if (CborNoError == cborFindResult && cbor_value_is_text_string(&pstatMap))
-    {
-        cborFindResult = cbor_value_dup_text_string(&pstatMap, &strUuid , &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Device Id Value.");
-        ret = ConvertStrToUuid(strUuid , &pstat->deviceID);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-        OICFree(strUuid );
-        strUuid  = NULL;
-
-        if (roParsed)
-        {
-            *roParsed = true;
-        }
-    }
-    else
-    {
-        memcpy(&pstat->deviceID, &gPstat->deviceID, sizeof(OicUuid_t));
         cborFindResult = CborNoError;
     }
 
@@ -374,7 +343,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
     }
     else
     {
-        VERIFY_NON_NULL(TAG, gPstat, ERROR);
+        VERIFY_NOT_NULL(TAG, gPstat, ERROR);
         pstat->smLen = gPstat->smLen;
         pstat->sm = (OicSecDpom_t*)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
         *pstat->sm = *gPstat->sm;
@@ -393,7 +362,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
     }
     else
     {
-        VERIFY_NON_NULL(TAG, gPstat, ERROR);
+        VERIFY_NOT_NULL(TAG, gPstat, ERROR);
         memcpy(pstat->rownerID.id, gPstat->rownerID.id, sizeof(gPstat->rownerID.id));
         cborFindResult = CborNoError;
     }
@@ -514,25 +483,37 @@ static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest
  * resource or create a new resource.
  * For pstat, it updates only tm and om.
  */
-static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest *ehRequest)
+static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRequest)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OIC_LOG(INFO, TAG, "HandlePstatPostRequest  processing POST request");
     OicSecPstat_t *pstat = NULL;
-    static uint16_t prevMsgId = 0;
+    static uint16_t previousMsgId = 0;
+    bool isDuplicatedMsg = false;
 
     if (ehRequest->payload && NULL != gPstat)
     {
         uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData;
         size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
-        VERIFY_NON_NULL(TAG, payload, ERROR);
+        VERIFY_NOT_NULL(TAG, payload, ERROR);
 
         bool roParsed = false;
         OCStackResult ret = CBORPayloadToPstatBin(payload, size, &pstat, &roParsed);
-        VERIFY_NON_NULL(TAG, pstat, ERROR);
+        VERIFY_NOT_NULL(TAG, pstat, ERROR);
         if (OC_STACK_OK == ret)
         {
             bool validReq = false;
+
+            /*
+             * message ID is supported for CoAP over UDP only according to RFC 7252
+             * So we should check message ID to prevent duplicate request handling in case of OC_ADAPTER_IP.
+             * In case of other transport adapter, duplicate message check is not required.
+             */
+            if (OC_ADAPTER_IP == ehRequest->devAddr.adapter &&
+                 previousMsgId == ehRequest->messageID)
+            {
+                isDuplicatedMsg = true;
+            }
 
             if (true == roParsed)
             {
@@ -639,10 +620,16 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
          const OicSecDoxm_t* doxm = GetDoxmResourceData();
          if(doxm)
          {
-             if(!doxm->owned && prevMsgId !=  ehRequest->messageID)
+             if(!doxm->owned)
              {
-                 RestoreDoxmToInitState();
-                 RestorePstatToInitState();
+                OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request");
+
+                if (!isDuplicatedMsg)
+                {
+                    RestoreDoxmToInitState();
+                    RestorePstatToInitState();
+                    OIC_LOG(WARNING, TAG, "DOXM will be reverted.");
+                }
              }
          }
          else
@@ -652,7 +639,10 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
      }
      else
      {
-         prevMsgId = ehRequest->messageID;
+        if(ehRequest->devAddr.adapter == OC_ADAPTER_IP)
+        {
+            previousMsgId = ehRequest->messageID;
+        }
      }
 
     // Send response payload to request originator
@@ -732,7 +722,6 @@ OCStackResult InitPstatResource()
     // Read Pstat resource from PS
     uint8_t *data = NULL;
     size_t size = 0;
-    OicUuid_t emptyUuid = {.id={0}};
     ret = GetSecureVirtualDatabaseFromPS(OIC_JSON_PSTAT_NAME, &data, &size);
     // If database read failed
     if (OC_STACK_OK != ret)
@@ -754,17 +743,7 @@ OCStackResult InitPstatResource()
     {
         gPstat = GetPstatDefault();
     }
-    VERIFY_NON_NULL(TAG, gPstat, FATAL);
-
-    //In case of Pstat's device id is empty, fill the device id as doxm's device id.
-    if(0 == memcmp(&gPstat->deviceID, &emptyUuid, sizeof(OicUuid_t)))
-    {
-        OicUuid_t doxmUuid = {.id={0}};
-        if(OC_STACK_OK == GetDoxmDeviceID(&doxmUuid))
-        {
-            memcpy(&gPstat->deviceID, &doxmUuid, sizeof(OicUuid_t));
-        }
-    }
+    VERIFY_NOT_NULL(TAG, gPstat, FATAL);
 
     // Instantiate 'oic.sec.pstat'
     ret = CreatePstatResource();
@@ -870,3 +849,43 @@ OCStackResult GetPstatRownerId(OicUuid_t *rowneruuid)
     }
     return retVal;
 }
+
+OCStackResult SetPstatSelfOwnership(const OicUuid_t* newROwner)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    uint8_t *cborPayload = NULL;
+    size_t size = 0;
+
+    if(NULL == gPstat)
+    {
+        ret = OC_STACK_NO_RESOURCE;
+        return ret;
+    }
+
+    if( newROwner && (false == gPstat->isOp) && (true == (TAKE_OWNER && gPstat->cm)) )
+    {
+        gPstat->cm = (OicSecDpm_t)(gPstat->cm & (~TAKE_OWNER));
+        gPstat->isOp = true;
+
+        memcpy(gPstat->rownerID.id, newROwner->id, sizeof(newROwner->id));
+
+        ret = PstatToCBORPayload(gPstat, &cborPayload, &size, false);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+        ret = UpdateSecureResourceInPS(OIC_JSON_PSTAT_NAME, cborPayload, size);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+        OICFree(cborPayload);
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "The state of PSTAT is not Ready For OTM");
+    }
+
+    return ret;
+
+exit:
+    OICFree(cborPayload);
+    return ret;
+}
+

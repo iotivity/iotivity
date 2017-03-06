@@ -22,6 +22,8 @@ package org.iotivity.service.easysetup.mediator;
 
 import android.util.Log;
 
+import org.iotivity.service.easysetup.mediator.enums.OAUTH_TOKENTYPE;
+
 import org.iotivity.base.OcException;
 import org.iotivity.base.OcRepresentation;
 
@@ -62,6 +64,31 @@ public class CloudProp {
             mRep.setValue(ESConstants.OC_RSRVD_ES_CISERVER, ciServer);
         } catch (OcException e) {
             Log.e(TAG, "setCloudProp is failed.");
+        }
+    }
+
+    public void setCloudPropWithAccessToken(String accessToken, OAUTH_TOKENTYPE tokenType,
+                                        String authProvider, String ciServer)
+    {
+        if(accessToken == null)
+        {
+            accessToken = "";
+        }
+        if(authProvider == null)
+        {
+            authProvider = "";
+        }
+        if(ciServer == null)
+        {
+            ciServer = "";
+        }
+        try {
+            mRep.setValue(ESConstants.OC_RSRVD_ES_ACCESSTOKEN, accessToken);
+            mRep.setValue(ESConstants.OC_RSRVD_ES_ACCESSTOKEN_TYPE, tokenType.getValue());
+            mRep.setValue(ESConstants.OC_RSRVD_ES_AUTHPROVIDER, authProvider);
+            mRep.setValue(ESConstants.OC_RSRVD_ES_CISERVER, ciServer);
+        } catch (OcException e) {
+            Log.e(TAG, "setCloudPropWithAccessToken is failed.");
         }
     }
 
@@ -159,6 +186,52 @@ public class CloudProp {
     public int getCredID()
     {
         return mCredID;
+    }
+
+    /**
+     * This method returns an accessToken used for the first registration to IoTivity cloud
+     * @return accessToken for sign-up to IoTivity cloud
+     */
+    public String getAccessToken()
+    {
+        if(mRep == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            if (mRep.hasAttribute(ESConstants.OC_RSRVD_ES_ACCESSTOKEN))
+                return mRep.getValue(ESConstants.OC_RSRVD_ES_ACCESSTOKEN);
+        }
+        catch (OcException e)
+        {
+            Log.e(TAG, "getAccessToken is failed.");
+        }
+        return null;
+    }
+
+    /**
+     * This method returns an access token type
+     * @return tokenType of access token
+     */
+    public OAUTH_TOKENTYPE getAccessTokenType()
+    {
+        if(mRep == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            if (mRep.hasAttribute(ESConstants.OC_RSRVD_ES_ACCESSTOKEN_TYPE))
+                return OAUTH_TOKENTYPE.fromInt((int)mRep.getValue(ESConstants.OC_RSRVD_ES_ACCESSTOKEN_TYPE));
+        }
+        catch (OcException e)
+        {
+            Log.e(TAG, "getAccessTokenType is failed.");
+        }
+        return OAUTH_TOKENTYPE.NONE_OAUTH_TOKENTYPE;
     }
 
     public OcRepresentation toOCRepresentation()

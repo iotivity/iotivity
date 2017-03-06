@@ -56,6 +56,12 @@ namespace OIC
             struct OCBaseType< OC::AttributeType::String > : TypeDef< std::string > { };
 
             template< >
+            struct OCBaseType< OC::AttributeType::Binary > : TypeDef< RCSByteString::DataType > { };
+
+            template< >
+            struct OCBaseType< OC::AttributeType::OCByteString > : TypeDef< OCByteString > { };
+
+            template< >
             struct OCBaseType< OC::AttributeType::OCRepresentation >
                 : TypeDef< OC::OCRepresentation >
             {};
@@ -124,6 +130,16 @@ namespace OIC
                         case OC::AttributeType::String:
                             return insertItem< DEPTH, OC::AttributeType::String >(item);
 
+                        case OC::AttributeType::Binary:
+                            // OCRep support only 0-depth for binary type.
+                            // If RI changed, this line should be changed to DEPTH.
+                            return insertOcBinary< OC::AttributeType::Binary >
+                            (Detail::Int2Type< 0 >{ }, item);
+
+                        case OC::AttributeType::OCByteString:
+                            return insertOcBinary< OC::AttributeType::OCByteString >
+                            (Detail::Int2Type< DEPTH >{ }, item);
+
                         case OC::AttributeType::OCRepresentation:
                             return insertOcRep(Detail::Int2Type< DEPTH >{ }, item);
 
@@ -170,6 +186,37 @@ namespace OIC
                             insertOcRep(Detail::Int2Type< DEPTH >{ }, item.getValue< ItemType >()));
                 }
 
+                template< typename OCREP >
+                RCSByteString insertOcBinary(Detail::Int2Type< 0 >, const OCREP& ocBinary)
+                {
+                    return RCSByteString(ocBinary);
+                }
+
+                template< int DEPTH, typename OCREPS,
+                    typename ATTRS = typename Detail::SeqType< DEPTH, RCSByteString >::type >
+                ATTRS insertOcBinary(Detail::Int2Type< DEPTH >, const OCREPS& ocBinaryVec)
+                {
+                    ATTRS result;
+
+                    for (const auto& nested : ocBinaryVec)
+                    {
+                        result.push_back(insertOcBinary(Detail::Int2Type< DEPTH - 1 >{ }, nested));
+                    }
+
+                    return result;
+                }
+
+                template< OC::AttributeType BASE_TYPE, int DEPTH >
+                void insertOcBinary(Detail::Int2Type< DEPTH >,
+                        const OC::OCRepresentation::AttributeItem& item)
+                {
+                    typedef typename Detail::OCItemType< DEPTH, BASE_TYPE >::type ItemType;
+
+                    putValue(item.attrname(),
+                             insertOcBinary(Detail::Int2Type< DEPTH >{ },
+                                            item.getValue< ItemType >()));
+                }
+
             public:
                 ResourceAttributesBuilder() = default;
 
@@ -213,7 +260,10 @@ namespace OIC
                 OCRepresentationBuilder() = default;
 
                 template< typename T, typename B = typename Detail::TypeInfo< T >::base_type >
-                typename std::enable_if< !std::is_same< B, RCSResourceAttributes >::value >::type
+                typename std::enable_if< (
+                !std::is_same< B, RCSResourceAttributes >::value &&
+                !std::is_same< B, RCSByteString >::value
+                )>::type
                 operator()(const std::string& key, const T& value)
                 {
                     m_target[key] = value;
@@ -225,6 +275,14 @@ namespace OIC
                 operator()(const std::string& key, const T& value)
                 {
                     m_target[key] = convertAttributes(Detail::Int2Type< I::depth >{ }, value);
+                }
+
+                template< typename T, typename I = Detail::TypeInfo< T > >
+                typename std::enable_if< std::is_same< typename I::base_type,
+                                                RCSByteString >::value >::type
+                operator()(const std::string& key, const T& value)
+                {
+                    m_target[key] = convertByteString(Detail::Int2Type< I::depth >{ }, value);
                 }
 
                 void operator()(const std::string& key, const std::nullptr_t&)
@@ -248,6 +306,35 @@ namespace OIC
                     {
                         result.push_back(
                                 convertAttributes(Detail::Int2Type< DEPTH - 1 >{ }, nested));
+                    }
+
+                    return result;
+                }
+
+                OCByteString convertByteString(Detail::Int2Type< 0 >,
+                        const RCSByteString& byteString)
+                {
+                    OCByteString blob;
+                    blob.len = byteString.size();
+                    blob.bytes = new uint8_t[blob.len];
+                    for (size_t i = 0; i < blob.len; ++i)
+                    {
+                        blob.bytes[i] = byteString[i];
+                    }
+
+                    return blob;
+                }
+
+                template< int DEPTH, typename ATTRS, typename OCREPS = typename Detail::SeqType<
+                        DEPTH, OCByteString >::type >
+                OCREPS convertByteString(Detail::Int2Type< DEPTH >, const ATTRS& byteStringVec)
+                {
+                    OCREPS result;
+
+                    for (const auto& nested : byteStringVec)
+                    {
+                        result.push_back(
+                                convertByteString(Detail::Int2Type< DEPTH - 1 >{ }, nested));
                     }
 
                     return result;

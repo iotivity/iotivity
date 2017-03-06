@@ -49,17 +49,32 @@
 #define MAX_QUERY_LENGTH (256)
 #endif
 
+
 /**
  * Maximum length of the Manufacturer name supported by the server
  * for manufacturer name.
+ * @deprecated use MAX_PLATFORM_NAME_LENGTH instead.
  */
-#define MAX_MANUFACTURER_NAME_LENGTH (16)
+#define MAX_MANUFACTURER_NAME_LENGTH (64)
 
 /**
  * Maximum length of the URL to the Manufacturer details supported by
  * the server.
+ * @deprecated use MAX_PLATFORM_URL_LENGTH instead.
  */
-#define MAX_MANUFACTURER_URL_LENGTH (32)
+#define MAX_MANUFACTURER_URL_LENGTH (256)
+
+/**
+ * Maximum length of the value supported by the server
+ * for platform property of type string.
+ */
+#define MAX_PLATFORM_NAME_LENGTH (64)
+
+/**
+ * Maximum length of the URL supported by the server
+ * for platform property of type url.
+ */
+#define MAX_PLATFORM_URL_LENGTH (256)
 
 /**
  * Maximum number of resources which can be contained inside collection

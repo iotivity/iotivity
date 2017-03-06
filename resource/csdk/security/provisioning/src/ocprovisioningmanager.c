@@ -24,9 +24,9 @@
 #include "pmutility.h"
 #include "srmutility.h"
 #include "ownershiptransfermanager.h"
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 #include "multipleownershiptransfermanager.h"
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 #include "oic_malloc.h"
 #include "logger.h"
 #include "secureresourceprovider.h"
@@ -35,8 +35,9 @@
 #include "utlist.h"
 #include "aclresource.h" //Note: SRM internal header
 #include "pconfresource.h"
+#include "psinterface.h"
 
-#define TAG "OCPMAPI"
+#define TAG "OIC_OCPMAPI"
 
 typedef struct Linkdata Linkdata_t;
 struct Linkdata
@@ -53,7 +54,7 @@ struct Linkdata
 
 };
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 typedef struct ProvPreconfPINCtx ProvPreconfPINCtx_t;
 struct ProvPreconfPINCtx
 {
@@ -63,7 +64,7 @@ struct ProvPreconfPINCtx
     size_t pinLen;
     OCProvisionResultCB resultCallback;
 };
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /**
  * The function is responsible for initializaton of the provisioning manager. It will load
@@ -78,6 +79,11 @@ struct ProvPreconfPINCtx
 OCStackResult OCInitPM(const char* dbPath)
 {
     return PDMInit(dbPath);
+}
+
+OCStackResult OCPDMCleanupForTimeout()
+{
+    return PDMDeleteDeviceWithState(PDM_DEVICE_INIT);
 }
 
 /**
@@ -99,6 +105,33 @@ OCStackResult OCDiscoverSingleDevice(unsigned short timeout, const OicUuid_t* de
     }
 
     return PMSingleDeviceDiscovery(timeout, deviceID, ppFoundDevice);
+}
+
+/**
+ * The function is responsible for discovery of owned/unowned device is specified endpoint/deviceID.
+ * And this function will only return the specified device's response.
+ *
+ * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
+ *                    server before returning the device.
+ * @param[in] deviceID         deviceID of target device.
+ * @param[in] hostAddress       MAC address of target device.
+ * @param[in] connType       ConnectivityType for discovery.
+ * @param[out] ppFoundDevice     OCProvisionDev_t of found device.
+ * @return OTM_SUCCESS in case of success and other value otherwise.
+ */
+OCStackResult OCDiscoverSingleDeviceInUnicast(unsigned short timeout, const OicUuid_t* deviceID,
+                             const char* hostAddress, OCConnectivityType connType,
+                             OCProvisionDev_t **ppFoundDevice)
+{
+    if( NULL == ppFoundDevice || NULL != *ppFoundDevice || 0 == timeout || NULL == deviceID ||
+            NULL == hostAddress)
+    {
+        OIC_LOG(ERROR, TAG, "OCDiscoverSingleDeviceInUnicast : Invalid Parameter");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    return PMSingleDeviceDiscoveryInUnicast(timeout, deviceID, hostAddress, connType,
+            ppFoundDevice);
 }
 
 /**
@@ -140,7 +173,31 @@ OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **
     return PMDeviceDiscovery(timeout, true, ppList);
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
+/**
+ * The function is responsible for the discovery of an MOT-enabled device with the specified deviceID.
+ * The function will return when security information for device with deviceID has been obtained or the
+ * timeout has been exceeded.
+ *
+ * @param[in]  timeoutSeconds  Maximum time, in seconds, this function will listen for responses from 
+ *                             servers before returning.
+ * @param[in]  deviceID        deviceID of target device.
+ * @param[out] ppFoundDevice   OCProvisionDev_t of discovered device. Caller should use
+ *                             OCDeleteDiscoveredDevices to delete the device.
+ * @return OC_STACK_OK in case of success and other values otherwise.
+ */
+OCStackResult OCDiscoverMultipleOwnerEnabledSingleDevice(unsigned short timeoutSeconds,
+                                                         const OicUuid_t* deviceID, 
+                                                         OCProvisionDev_t **ppFoundDevice)
+{
+    if ((NULL == ppFoundDevice) || (NULL != *ppFoundDevice) || (0 == timeoutSeconds) || (NULL == deviceID))
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    return PMMultipleOwnerSingleDeviceDiscovery(timeoutSeconds, deviceID, ppFoundDevice);
+}
+
 /**
  * The function is responsible for discovery of MOT enabled device is current subnet.
  *
@@ -177,22 +234,20 @@ OCStackResult OCDiscoverMultipleOwnedDevices(unsigned short timeout, OCProvision
     return PMMultipleOwnerDeviceDiscovery(timeout, true, ppList);
 }
 
-
 /**
  * API to add preconfigured PIN to local SVR DB.
  *
  * @param[in] targetDeviceInfo Selected target device.
- * @param[in] preconfPIN Preconfig PIN which is used while multiple owner authentication
- * @param[in] preconfPINLen Byte length of preconfig PIN
- *
+ * @param[in] preconfigPin Preconfig PIN which is used while multiple owner authentication
+ * @param[in] preconfigPinLen Byte length of preconfigPin
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
-                                 const char* preconfPIN, size_t preconfPINLen)
+OCStackResult OCAddPreconfigPin(const OCProvisionDev_t *targetDeviceInfo,
+                                const char *preconfigPin,
+                                size_t preconfigPinLen)
 {
-    return MOTAddPreconfigPIN( targetDeviceInfo, preconfPIN, preconfPINLen);
+    return MOTAddPreconfigPIN(targetDeviceInfo, preconfigPin, preconfigPinLen);
 }
-
 
 OCStackResult OCDoMultipleOwnershipTransfer(void* ctx,
                                       OCProvisionDev_t *targetDevices,
@@ -210,7 +265,23 @@ OCStackResult OCDoMultipleOwnershipTransfer(void* ctx,
     return MOTDoOwnershipTransfer(ctx, targetDevices, resultCallback);
 }
 
-#endif //_ENABLE_MULTIPLE_OWNER_
+/**
+ * The function is responsible for determining if the caller is a subowner of the specified device.
+ *
+ * @param[in]  device      MOT enabled device that contains a list of subowners
+ * @param[out] isSubowner  Bool indicating whether the caller is a subowner of device
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCIsSubownerOfDevice(OCProvisionDev_t *device, bool *isSubowner)
+{
+    if ((NULL == device) || (NULL == isSubowner))
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    return PMIsSubownerOfDevice(device, isSubowner);
+}
+#endif //MULTIPLE_OWNER
 
 /**
  * API to register for particular OxM.
@@ -227,6 +298,19 @@ OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t*
     }
 
     return OTMSetOwnershipTransferCallbackData(oxm, callbackData);
+}
+
+/**
+ * API to set a allow status of OxM
+ *
+ * @param[in] oxm Owership transfer method (ref. OicSecOxm_t)
+ * @param[in] allowStatus allow status (true = allow, false = not allow)
+ *
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus)
+{
+    return OTMSetOxmAllowStatus(oxm, allowStatus);
 }
 
 OCStackResult OCDoOwnershipTransfer(void* ctx,
@@ -272,6 +356,17 @@ OCStackResult OCProvisionACL(void* ctx, const OCProvisionDev_t *selectedDeviceIn
 }
 
 /**
+ * function to save ACL which has several ACE into Acl of SVR.
+ *
+ * @param acl ACL to be saved in Acl of SVR.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCSaveACL(const OicSecAcl_t* acl)
+{
+    return SRPSaveACL(acl);
+}
+
+/**
  * this function requests CRED information to resource.
  *
  * @param[in] ctx Application context would be returned in result callback.
@@ -301,6 +396,12 @@ OCStackResult OCGetACLResource(void* ctx, const OCProvisionDev_t *selectedDevice
     return SRPGetACLResource(ctx, selectedDeviceInfo, resultCallback);
 }
 
+
+OCStackResult OCReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
+                                     size_t *chainSize)
+{
+    return SRPReadTrustCertChain(credId, trustCertChain, chainSize);
+}
 /**
  * function to provision credential to devices.
  *
@@ -338,9 +439,11 @@ OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *select
     return SRPProvisionDirectPairing(ctx, selectedDeviceInfo, pconf, resultCallback);
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
-static void AddPreconfPinOxMCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+#ifdef MULTIPLE_OWNER
+static void AddPreconfPinOxMCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
+    OC_UNUSED(hasError);
+
     ProvPreconfPINCtx_t* provCtx = (ProvPreconfPINCtx_t*)ctx;
     if(provCtx)
     {
@@ -353,10 +456,11 @@ static void AddPreconfPinOxMCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, 
     }
 }
 
-OCStackResult OCProvisionPreconfPin(void* ctx,
-                                               OCProvisionDev_t *targetDeviceInfo,
-                                               const char * preconfPin, size_t preconfPinLen,
-                                               OCProvisionResultCB resultCallback)
+OCStackResult OCProvisionPreconfigPin(void *ctx,
+                                      OCProvisionDev_t *targetDeviceInfo,
+                                      const char *preconfigPin,
+                                      size_t preconfigPinLen,
+                                      OCProvisionResultCB resultCallback)
 {
     if( NULL == targetDeviceInfo )
     {
@@ -364,7 +468,7 @@ OCStackResult OCProvisionPreconfPin(void* ctx,
     }
     if (NULL == resultCallback)
     {
-        OIC_LOG(INFO, TAG, "OCProvisionPreconfPINCredential : NULL Callback");
+        OIC_LOG(INFO, TAG, "OCProvisionPreconfigPinCredential : NULL Callback");
         return OC_STACK_INVALID_CALLBACK;
     }
 
@@ -375,8 +479,8 @@ OCStackResult OCProvisionPreconfPin(void* ctx,
     }
     provCtx->ctx = ctx;
     provCtx->devInfo = targetDeviceInfo;
-    provCtx->pin = preconfPin;
-    provCtx->pinLen = preconfPinLen;
+    provCtx->pin = preconfigPin;
+    provCtx->pinLen = preconfigPinLen;
     provCtx->resultCallback = resultCallback;
     /*
      * First of all, update OxMs to support preconfigured PIN OxM.
@@ -387,7 +491,7 @@ OCStackResult OCProvisionPreconfPin(void* ctx,
      */
     return MOTAddMOTMethod((void*)provCtx, targetDeviceInfo, OIC_PRECONFIG_PIN, AddPreconfPinOxMCB);
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /*
 * Function to unlink devices.
@@ -485,7 +589,7 @@ static OCStackResult RemoveDeviceInfoFromLocal(const OCProvisionDev_t* pTargetDe
      * Change the device status as stale status.
      * If all request are successed, this device information will be deleted.
      */
-    res = PDMSetDeviceStale(&pTargetDev->doxm->deviceID);
+    res = PDMSetDeviceState(&pTargetDev->doxm->deviceID, PDM_DEVICE_STALE);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(WARNING, TAG, "OCRemoveDevice : Failed to set device status as stale");
@@ -598,6 +702,7 @@ OCStackResult OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedD
     OCProvisionDev_t* pTargetDev = NULL;
     bool discoverdFlag = false;
     OCProvisionDev_t* pOwnedDevList = NULL;
+    OCStackResult resReq = OC_STACK_CONTINUE;
 
     if (!pTargetUuid || 0 == waitTimeForOwnedDeviceDiscovery)
     {
@@ -617,67 +722,91 @@ OCStackResult OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedD
         goto error;
     }
 
-    //2. Find owned device from the network
-    res = PMDeviceDiscovery(waitTimeForOwnedDeviceDiscovery, true, &pOwnedDevList);
-    if (OC_STACK_OK != res)
-    {
-        OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Failed to PMDeviceDiscovery");
-        goto error;
-    }
-
-    LL_FOREACH(pOwnedDevList, pTargetDev)
-    {
-        if(memcmp(&pTargetDev->doxm->deviceID.id, pTargetUuid->id, sizeof(pTargetUuid->id)) == 0)
-        {
-            break;
-        }
-    }
-
+    //Generate OCProvisionDev_t instance to use when target device not found on the network.
+    //In this case, the device id required only.
+    pTargetDev = (OCProvisionDev_t*)OICCalloc(1, sizeof(OCProvisionDev_t));
     if(NULL == pTargetDev)
     {
-        OIC_LOG_V(WARNING, TAG, "Can not find [%s] on the network.", strUuid);
-        OIC_LOG(WARNING, TAG, "Device information will be deleted from local and other devices.");
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory.");
+        res = OC_STACK_NO_MEMORY;
+        goto error;
+    }
+    pTargetDev->doxm = (OicSecDoxm_t*)OICCalloc(1, sizeof(OicSecDoxm_t));
+    if(NULL == pTargetDev->doxm)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory.");
+        res = OC_STACK_NO_MEMORY;
+        goto error;
+    }
+    memcpy(pTargetDev->doxm->deviceID.id, pTargetUuid->id, sizeof(pTargetUuid->id));
 
-        pTargetDev = (OCProvisionDev_t*)OICCalloc(1, sizeof(OCProvisionDev_t));
-        if(NULL == pTargetDev)
+    OCUuidList_t* linkedDevices = NULL;
+    size_t numOfLinkedDevices = 0;
+    res = PDMGetLinkedDevices(pTargetUuid, &linkedDevices, &numOfLinkedDevices);
+    if(OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Error in PDMGetLinkedDevices");
+        goto error;
+    }
+    PDMDestoryOicUuidLinkList(linkedDevices);
+
+    //If there is no linked devices, device revocation step can be skipped.
+    if(0 != numOfLinkedDevices)
+    {
+        OIC_LOG_V(INFO, TAG, "[%s] linked with other devices.", strUuid);
+        //2. Find owned device from the network
+        res = PMDeviceDiscovery(waitTimeForOwnedDeviceDiscovery, true, &pOwnedDevList);
+        if (OC_STACK_OK != res)
         {
-            OIC_LOG(ERROR, TAG, "Failed to memory allocation.");
+            OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Failed to PMDeviceDiscovery");
             goto error;
         }
 
-        pTargetDev->doxm = (OicSecDoxm_t*)OICCalloc(1, sizeof(OicSecDoxm_t));
-        if(NULL == pTargetDev->doxm)
+        OCProvisionDev_t* tempDev = NULL;
+        LL_FOREACH(pOwnedDevList, tempDev)
         {
-            OIC_LOG(ERROR, TAG, "Failed to memory allocation.");
-            goto error;
+            if(memcmp(&tempDev->doxm->deviceID.id, pTargetUuid->id, sizeof(pTargetUuid->id)) == 0)
+            {
+                break;
+            }
         }
 
-        //in case of can't find target device, the device id required only.
-        memcpy(pTargetDev->doxm->deviceID.id, pTargetUuid->id, sizeof(pTargetUuid->id));
-    }
-    else
-    {
-        discoverdFlag = true;
-        OIC_LOG_V(INFO, TAG, "[%s] is dectected on the network.", strUuid);
-    }
-
-    OIC_LOG_V(INFO, TAG, "Trying [%s] revocation.", strUuid);
-
-    // Send DELETE requests to linked devices
-    OCStackResult resReq = OC_STACK_ERROR; // Check that we have to wait callback or not.
-    resReq = SRPRemoveDeviceWithoutDiscovery(ctx, pOwnedDevList, pTargetDev, resultCallback);
-    if (OC_STACK_OK != resReq)
-    {
-        if (OC_STACK_CONTINUE == resReq)
+        if(NULL == tempDev)
         {
-            OIC_LOG(DEBUG, TAG, "OCRemoveDeviceWithUuid : Revoked device has no linked device except PT.");
+            OIC_LOG_V(WARNING, TAG, "Can not find [%s] on the network.", strUuid);
+            OIC_LOG_V(WARNING, TAG, "[%s]'s information will be deleted from local and other devices.", strUuid);
         }
         else
         {
-            OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Failed to invoke SRPRemoveDevice");
-            res = resReq;
-            goto error;
+            OICFree(pTargetDev->doxm);
+            OICFree(pTargetDev);
+            pTargetDev = tempDev;
+            discoverdFlag = true;
+            OIC_LOG_V(INFO, TAG, "[%s] is dectected on the network.", strUuid);
         }
+
+        OIC_LOG_V(INFO, TAG, "Trying [%s] revocation.", strUuid);
+
+        // Send DELETE requests to linked devices
+        resReq = SRPRemoveDeviceWithoutDiscovery(ctx, pOwnedDevList, pTargetDev, resultCallback);
+        if (OC_STACK_OK != resReq)
+        {
+            if (OC_STACK_CONTINUE == resReq)
+            {
+                OIC_LOG(INFO, TAG, "OCRemoveDeviceWithUuid : Revoked device has no linked device except PT.");
+            }
+            else
+            {
+                OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Failed to invoke SRPRemoveDevice");
+                res = resReq;
+                goto error;
+            }
+        }
+    }
+    else
+    {
+        OIC_LOG_V(INFO, TAG, "There is no linked devices with [%s]", strUuid);
+        OIC_LOG(INFO, TAG, "Device discovery and SRPRemoveDevice will be skipped.");
     }
 
     res = RemoveDeviceInfoFromLocal(pTargetDev);
@@ -761,6 +890,26 @@ OCStackResult OCResetDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDisc
 }
 
 /**
+ * This function resets SVR DB to its factory setting.
+ *
+ * @return OC_STACK_OK in case of successful reset and other value otherwise.
+ */
+OCStackResult OCResetSVRDB(void)
+{
+    return ResetSecureResourceInPS();
+}
+
+/**
+ * This function configures SVR DB as self-ownership.
+ *
+ *@return OC_STACK_OK in case of successful configue and other value otherwise.
+ */
+OCStackResult OCConfigSelfOwnership(void)
+{
+    return ConfigSelfOwnership();
+}
+
+/**
  * Internal Function to update result in link result array.
  */
 static void UpdateLinkResults(Linkdata_t *link, int device, OCStackResult stackresult)
@@ -783,7 +932,7 @@ static void UpdateLinkResults(Linkdata_t *link, int device, OCStackResult stackr
 /**
  * Callback to handle ACL provisioning for device 2.
  */
-static void AclProv2CB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+static void AclProv2CB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
 
     if (NULL == ctx)
@@ -819,7 +968,7 @@ static void AclProv2CB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool has
 /**
  * Callback to handle ACL provisioning for device 1
  */
-static void AclProv1CB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+static void AclProv1CB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
 
     if (NULL == ctx)
@@ -870,7 +1019,7 @@ static void AclProv1CB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool has
 /**
  * Callback to handle credential provisioning.
  */
-static void ProvisionCredsCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+static void ProvisionCredsCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
     if (NULL == ctx)
     {
@@ -1183,7 +1332,7 @@ void OCDeletePdAclList(OicSecPdAcl_t* pPdAcl)
     FreePdAclList(pPdAcl);
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * API to update 'doxm.mom' to resource server.
  *
@@ -1203,7 +1352,7 @@ OCStackResult OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInf
  * API to update 'doxm.oxmsel' to resource server.
  *
  * @param[in] targetDeviceInfo Selected target device.
-  * @param[in] oxmSelValue Method of multiple ownership transfer (ref. oic.sec.oxm)
+  * @param[in] oxmSelValue Method of multiple ownership transfer (ref. oic.sec.doxmtype)
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            POST 'oxmsel' request recieves a response from resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
@@ -1212,6 +1361,23 @@ OCStackResult OCSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceI
                                  const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback)
 {
     return MOTSelectMOTMethod(ctx, targetDeviceInfo, oxmSelValue, resultCallback);
+}
+#endif //MULTIPLE_OWNER
+
+/**
+ * Function to select appropriate security provisioning method.
+ *
+ * @param[in] supportedMethods   Array of supported methods
+ * @param[in] numberOfMethods   number of supported methods
+ * @param[out]  selectedMethod         Selected methods
+ * @param[in] ownerType type of owner device (SUPER_OWNER or SUB_OWNER)
+ * @return  OC_STACK_OK on success
+ */
+OCStackResult OCSelectOwnershipTransferMethod(const OicSecOxm_t *supportedMethods,
+        size_t numberOfMethods, OicSecOxm_t *selectedMethod, OwnerType_t ownerType)
+{
+    return OTMSelectOwnershipTransferMethod(supportedMethods, numberOfMethods,
+                                            selectedMethod, ownerType);
 }
 #endif //_ENABLE_MULTIPLE_OWNER_
 
@@ -1250,5 +1416,24 @@ OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
     return SRPSaveTrustCertChain(trustCertChain, chainSize, encodingType, credId);
 }
 
+/**
+ * function to register notifier for Trustcertchain change.
+ *
+ * @param[in] ctx user context.
+ * @param[in] TrustCertChainChangeCB notification callback fucntion.
+ * @return    OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCRegisterTrustCertChainNotifier(void *ctx, TrustCertChainChangeCB Callback)
+{
+    return SRPRegisterTrustCertChainNotifier(ctx, Callback);
+}
+
+/**
+ * function to de-register notifier for Trustcertchain change.
+ */
+void OCRemoveTrustCertChainNotifier()
+{
+    SRPRemoveTrustCertChainNotifier();
+}
 #endif // __WITH_DTLS__ || __WITH_TLS__
 

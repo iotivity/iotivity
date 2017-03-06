@@ -103,6 +103,7 @@ public class AclInviteTest {
         HashMap<String, Object> invite = new HashMap<>();
         invite.put("gid", "g0001");
         invite.put("mid", "u0001");
+        payloadData.put("uid", "u0001");
         payloadData.put("invite", Arrays.asList(invite));
         Cbor<HashMap<Object, Object>> cbor = new Cbor<>();
         IRequest request = MessageBuilder.createRequest(RequestMethod.POST,
@@ -111,6 +112,7 @@ public class AclInviteTest {
         mAclInviteHandler.onRequestReceived(mMockDevice, request);
 
         assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(mReq.getUriQueryMap().containsKey("uid"));
         assertTrue(cbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
                 .containsKey("uid"));
         assertTrue(cbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
@@ -124,16 +126,36 @@ public class AclInviteTest {
     }
 
     @Test
-    public void testGetRequestReceived() throws Exception {
+    public void testGetRequestReceivedAccept() throws Exception {
         System.out.println(
                 "\t--------------OnRequestReceived(AS) Get Message Test------------");
 
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
-                TEST_RESOURCE_INVITE_URI, null, null, null);
+                TEST_RESOURCE_INVITE_URI, "gid=g0001;accept=1", null, null);
         mAclInviteHandler.onRequestReceived(mMockDevice, request);
 
         assertTrue(mLatch.await(1L, SECONDS));
         assertTrue(mReq.getUriQueryMap().containsKey("uid"));
+        assertTrue(mReq.getUriQueryMap().containsKey("gid"));
+        assertTrue(mReq.getUriQueryMap().containsKey("accept"));
+        assertTrue(mReq.getUriQueryMap().get("accept").get(0).equals("1"));
+        assertEquals(mReq.getUriPath(), TEST_RESOURCE_INVITE_URI);
+    }
+
+    @Test
+    public void testGetRequestReceivedDeny() throws Exception {
+        System.out.println(
+                "\t--------------OnRequestReceived(AS) Get Message Test------------");
+
+        IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
+                TEST_RESOURCE_INVITE_URI, "gid=g0001;accept=0", null, null);
+        mAclInviteHandler.onRequestReceived(mMockDevice, request);
+
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(mReq.getUriQueryMap().containsKey("uid"));
+        assertTrue(mReq.getUriQueryMap().containsKey("gid"));
+        assertTrue(mReq.getUriQueryMap().containsKey("accept"));
+        assertTrue(mReq.getUriQueryMap().get("accept").get(0).equals("0"));
         assertEquals(mReq.getUriPath(), TEST_RESOURCE_INVITE_URI);
     }
 
@@ -143,11 +165,12 @@ public class AclInviteTest {
                 "\t--------------OnRequestReceived(AS) Delete Message Test------------");
 
         IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
-                TEST_RESOURCE_INVITE_URI, "gid=g0001", null, null);
+                TEST_RESOURCE_INVITE_URI, "gid=g0001;mid=u0002", null, null);
         mAclInviteHandler.onRequestReceived(mMockDevice, request);
 
         assertTrue(mLatch.await(1L, SECONDS));
         assertTrue(mReq.getUriQueryMap().containsKey("gid"));
+        assertTrue(mReq.getUriQueryMap().containsKey("mid"));
         assertTrue(mReq.getUriQueryMap().containsKey("uid"));
         assertEquals(mReq.getUriPath(), TEST_RESOURCE_INVITE_URI);
     }

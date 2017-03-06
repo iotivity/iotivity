@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "EasySetup.h"
+#include "EasySetup.hpp"
 
 #include "OCPlatform.h"
 #include "logger.h"
@@ -31,13 +31,12 @@ namespace OIC
 {
     namespace Service
     {
-        #define EASYSETUP_TAG "EASY_SETUP"
+        #define EASYSETUP_TAG "ES_EASY_SETUP"
 
         EasySetup * EasySetup::s_instance = nullptr;
 
         EasySetup::EasySetup()
         {
-
         }
 
         EasySetup* EasySetup::getInstance ()
@@ -51,12 +50,14 @@ namespace OIC
 
         std::shared_ptr<RemoteEnrollee> EasySetup::createRemoteEnrollee (std::shared_ptr< OC::OCResource > resource)
         {
+            OIC_LOG(INFO, EASYSETUP_TAG, "createRemoteEnrollee IN");
+
             if(resource)
             {
-                if(resource->getResourceTypes().at(0) != OC_RSRVD_ES_RES_TYPE_PROV ||
+                if(resource->getResourceTypes().at(0) != OC_RSRVD_ES_RES_TYPE_EASYSETUP ||
                    resource->connectivityType() & CT_ADAPTER_TCP)
                 {
-                    OIC_LOG_V (DEBUG, EASYSETUP_TAG, "createRemoteEnrollee : invalid resource");
+                    OIC_LOG (ERROR, EASYSETUP_TAG, "Given resource is not valid due to wrong rt or conntype");
                     return nullptr;
                 }
 
@@ -65,11 +66,17 @@ namespace OIC
                 {
                     if(interface.compare(BATCH_INTERFACE) == 0)
                     {
+                        OIC_LOG (INFO, EASYSETUP_TAG, "RemoteEnrollee object is succeessfully created");
+                        OIC_LOG_V (INFO_PRIVATE, EASYSETUP_TAG, "HOST: %s", resource->host().c_str());
+                        OIC_LOG_V (INFO_PRIVATE, EASYSETUP_TAG, "URI: %s", resource->uri().c_str());
+                        OIC_LOG_V (INFO_PRIVATE, EASYSETUP_TAG, "SID: %s", resource->sid().c_str());
+                        OIC_LOG_V (INFO_PRIVATE, EASYSETUP_TAG, "CONNECTIVITY: %d", resource->connectivityType());
                         return std::shared_ptr< RemoteEnrollee > (new RemoteEnrollee(resource));
                     }
                 }
             }
-            OIC_LOG_V (DEBUG, EASYSETUP_TAG, "createRemoteEnrollee : invalid resource");
+
+            OIC_LOG (ERROR, EASYSETUP_TAG, "Given resource is NULL");
             return nullptr;
         }
     }

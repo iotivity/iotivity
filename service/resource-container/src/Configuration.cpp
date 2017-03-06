@@ -87,8 +87,8 @@ namespace OIC
 
         void Configuration::getConfiguredBundles(configInfo *configOutput)
         {
-            rapidxml::xml_node< char > *bundle;
-            rapidxml::xml_node< char > *subItem;
+            rapidxml::xml_node< char > *bundle = nullptr;
+            rapidxml::xml_node< char > *subItem = nullptr;
 
             string strKey, strValue;
 
@@ -130,7 +130,7 @@ namespace OIC
 
         void Configuration::getBundleConfiguration(string bundleId, configInfo *configOutput)
         {
-            rapidxml::xml_node< char > *bundle;
+            rapidxml::xml_node< char > *bundle = nullptr;
 
             string strBundleId, strPath, strVersion;
 
@@ -202,9 +202,11 @@ namespace OIC
         void Configuration::getResourceConfiguration(std::string bundleId, std::string resourceUri,
                         resourceInfo *resourceInfoOut)
         {
-            rapidxml::xml_node< char > *bundle;
-            rapidxml::xml_node< char > *resource;
-            rapidxml::xml_node< char > *item, *subItem, *subItem2;
+            rapidxml::xml_node< char > *bundle = nullptr;
+            rapidxml::xml_node< char > *resource = nullptr;
+            rapidxml::xml_node< char > *item = nullptr;
+            rapidxml::xml_node< char > *subItem = nullptr;
+            rapidxml::xml_node< char > *subItem2 = nullptr;
 
             string strBundleId;
             string strKey, strValue;
@@ -327,9 +329,11 @@ namespace OIC
         void Configuration::getResourceConfiguration(std::string bundleId,
                 std::vector< resourceInfo > *configOutput)
         {
-            rapidxml::xml_node< char > *bundle;
-            rapidxml::xml_node< char > *resource;
-            rapidxml::xml_node< char > *item, *subItem, *subItem2;
+            rapidxml::xml_node< char > *bundle = nullptr;
+            rapidxml::xml_node< char > *resource = nullptr;
+            rapidxml::xml_node< char > *item = nullptr;
+            rapidxml::xml_node< char > *subItem = nullptr;
+            rapidxml::xml_node< char > *subItem2 = nullptr;
 
             string strBundleId;
             string strKey, strValue;
@@ -347,7 +351,10 @@ namespace OIC
                                  bundle->next_sibling())
                         {
                             // <id>
-                            strBundleId = bundle->first_node(BUNDLE_ID)->value();
+                            if (bundle->first_node(BUNDLE_ID))
+                            {
+                                strBundleId = bundle->first_node(BUNDLE_ID)->value();
+                            }
 
                             OIC_LOG_V(INFO, CONTAINER_TAG, "Comparing bundle ids %s - %s !",
                                     strBundleId.c_str(), bundleId.c_str());

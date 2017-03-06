@@ -162,6 +162,16 @@ class SimulatorManager
         void setDeviceInfo(const std::string &deviceName);
 
         /**
+         * API for registering device information with stack.
+         *
+         * @param deviceName - Device name to be registered.
+         * @param protocolIndependentID - Protocol-independent UUID to be registered.
+         *
+         * NOTE: API throws @InvalidArgsException and @SimulatorException on error.
+         */
+        void setDeviceInfo(const std::string &deviceName, const std::string &protocolIndependentID);
+
+        /**
          * API for getting platform information from remote device.
          * Received platform information will be notified through the callback set using
          * @callback parameter.

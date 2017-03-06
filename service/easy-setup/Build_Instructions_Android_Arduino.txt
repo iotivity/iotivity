@@ -46,7 +46,7 @@ Steps to build and deploy Easysetup Mediator in Android platform
          scons TARGET_OS=android TARGET_ARCH=armeabi TARGET_TRANSPORT=IP RELEASE=0
 
     b) If the project is setup correctly, you should see a BUILD SUCCESSFUL message on the terminal
-        You should see the .aar files generated inside of '<iotivity>/android/android_api/base/build/outputs/aar' directory. The .aar files contain jni directory and also a .jar file
+        You should see the .aar files generated inside of '<iotivity>/java/iotivity-android/build/outputs/aar' directory. The .aar files contain jni directory and also a .jar file
 
     c) Now navigate to the Easysetup NDK folder
         <iotivity-root>/service/easy-setup/mediator/richsdk/android

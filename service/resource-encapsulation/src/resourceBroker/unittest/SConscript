@@ -47,12 +47,18 @@ target_os = broker_test_env.get('TARGET_OS')
 # Build flags
 ######################################################################
 
-broker_test_env.AppendUnique(CPPPATH = ['../include'])
-broker_test_env.AppendUnique(CPPPATH = ['../../../include'])
-broker_test_env.AppendUnique(CPPPATH = ['../../common/primitiveResource/include'])
-broker_test_env.AppendUnique(CPPPATH = ['../../common/expiryTimer/include'])
-broker_test_env.AppendUnique(CPPPATH = ['../../common/expiryTimer/src'])
-broker_test_env.AppendUnique(CPPPATH = ['../../common/utils/include'])
+broker_test_env.AppendUnique(CPPPATH = [
+    '../include',
+    '../../../include',
+    '../../common/primitiveResource/include',
+    '../../common/expiryTimer/include',
+    '../../common/expiryTimer/src',
+    '../../common/utils/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/resource/oc_logger/include'
+])
 
 broker_test_env.PrependUnique(CPPPATH = [broker_test_env.get('SRC_DIR')+'/extlibs/hippomocks-master'])
 broker_test_env.AppendUnique(LIBPATH = [broker_test_env.get('BUILD_DIR')])
@@ -70,8 +76,7 @@ if 'g++' in compiler:
     broker_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 if broker_test_env.get('SECURED') == '1':
-	if broker_test_env.get('WITH_TCP') == True:
-		broker_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    broker_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # Build Test
@@ -83,8 +88,11 @@ Alias("broker_test", broker_test)
 broker_test_env.AppendTarget('broker_test')
 
 if broker_test_env.get('TEST') == '1':
-        if target_os in ['linux']:
-                from tools.scons.RunTest import *
-                run_test(broker_test_env,
-                         '',
-                         'service/resource-encapsulation/src/resourceBroker/unittest/broker_test')
+    if target_os in ['linux']:
+        from tools.scons.RunTest import run_test
+        run_test(broker_test_env,
+# TODO: fix this test on linux and remove commented lines
+#                'service_resource-encapsulation_src_resourceBroker_unittest_broker_test.memcheck',
+                 '',
+                 'service/resource-encapsulation/src/resourceBroker/unittest/broker_test',
+                 broker_test)

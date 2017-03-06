@@ -178,4 +178,34 @@ void CADiscoverLEServicesThread (void *remoteAddress);
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CALEGattDiscoverServices(const char *remoteAddress);
+
+/**
+ * check connection status.
+ * @param[in] address      the address of the remote device.
+ * @return  true or false.
+ */
+bool CALEClientIsConnected(const char* address);
+
+/**
+ * get MTU size.
+ * @param[in] address      the address of the remote device.
+ * @return  mtu size negotiated from remote device.
+ */
+uint16_t CALEClientGetMtuSize(const char* address);
+
+/**
+ * This function is used to set MTU size
+ * which negotiated between client and server device.
+ * @param[in]   address       remote address.
+ * @param[in]   mtuSize       MTU size.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientSetMtuSize(const char* address, uint16_t mtuSize);
+
+/**
+ * Send negotiation message after gatt connection is done.
+ * @param[in]   address               remote address.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientSendNegotiationMessage(const char* address);
 #endif /* TZ_BLE_CLIENT_H_ */

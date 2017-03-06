@@ -1,17 +1,20 @@
 #######################################################
 #       Build TCP adapter for Ardunino
 #######################################################
+import os
 
-Import('env', 'src_dir')
-import os.path
+Import('connectivity_env')
 
-env.AppendUnique(CPPPATH = [ os.path.join(src_dir, 'arduino') ])
+src_dir = os.path.abspath(os.curdir)
 
-if env.get('SHIELD') == 'ETH':
-    src_files = [ 'catcpserver_eth.cpp' ,
-                  'catcpadapterutils_eth.cpp']
+connectivity_env.PrependUnique(CPPPATH = [ src_dir ])
+
+src_files = None
+if connectivity_env.get('SHIELD') == 'ETH':
+    src_files = [ os.path.join(src_dir, 'catcpserver_eth.cpp') ,
+                  os.path.join(src_dir, 'catcpadapterutils_eth.cpp')]
 else:
     print "\nError: TCP is not supported for WIFI shield"
     Exit(1)
 
-Return('src_files')
+connectivity_env.AppendUnique(CA_SRC = src_files)

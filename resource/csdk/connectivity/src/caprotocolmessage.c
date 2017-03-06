@@ -51,7 +51,6 @@
 
 static const char COAP_URI_HEADER[] = "coap://[::]/";
 
-#ifdef WITH_CHPROXY
 static char g_chproxyUri[CA_MAX_URI_LENGTH];
 
 CAResult_t CASetProxyUri(const char *uri)
@@ -60,7 +59,6 @@ CAResult_t CASetProxyUri(const char *uri)
     OICStrcpy(g_chproxyUri, sizeof (g_chproxyUri), uri);
     return CA_STATUS_OK;
 }
-#endif
 
 CAResult_t CAGetRequestInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                    CARequestInfo_t *outReqInfo)
@@ -106,6 +104,9 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
     VERIFY_NON_NULL_RET(optlist, TAG, "optlist", NULL);
 
+    OIC_LOG_V(DEBUG, TAG, "generate pdu for [%d]adapter, [%d]flags",
+              endpoint->adapter, endpoint->flags);
+
     coap_pdu_t *pdu = NULL;
 
     // RESET have to use only 4byte (empty message)
@@ -135,14 +136,16 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
     {
         if (info->resourceUri)
         {
-            uint32_t length = strlen(info->resourceUri);
+            OIC_LOG_V(DEBUG, TAG, "uri : %s", info->resourceUri);
+
+            size_t length = strlen(info->resourceUri);
             if (CA_MAX_URI_LENGTH < length)
             {
                 OIC_LOG(ERROR, TAG, "URI len err");
                 return NULL;
             }
 
-            uint32_t uriLength = length + sizeof(COAP_URI_HEADER);
+            size_t uriLength = length + sizeof(COAP_URI_HEADER);
             char *coapUri = (char *) OICCalloc(1, uriLength);
             if (NULL == coapUri)
             {
@@ -181,7 +184,7 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
     return pdu;
 }
 
-coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
+coap_pdu_t *CAParsePDU(const char *data, size_t length, uint32_t *outCode,
                        const CAEndpoint_t *endpoint)
 {
     VERIFY_NON_NULL_RET(data, TAG, "data", NULL);
@@ -195,7 +198,8 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
     }
 #endif
 
-    coap_pdu_t *outpdu = coap_new_pdu2(transport, length);
+    coap_pdu_t *outpdu =
+        coap_pdu_init2(0, 0, ntohs(COAP_INVALID_TID), length, transport);
     if (NULL == outpdu)
     {
         OIC_LOG(ERROR, TAG, "outpdu is null");
@@ -242,6 +246,8 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
     return outpdu;
 
 exit:
+    OIC_LOG(DEBUG, TAG, "data :");
+    OIC_LOG_BUFFER(DEBUG, TAG,  data, length);
     coap_delete_pdu(outpdu);
     return NULL;
 }
@@ -253,10 +259,12 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
     VERIFY_NON_NULL_RET(info, TAG, "info", NULL);
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
     VERIFY_NON_NULL_RET(transport, TAG, "transport", NULL);
+    VERIFY_TRUE_RET((info->payloadSize <= COAP_MAX_PDU_SIZE), TAG,
+                    "info->payloadSize", NULL);
 
-    unsigned int length = COAP_MAX_PDU_SIZE;
+    size_t length = COAP_MAX_PDU_SIZE;
 #ifdef WITH_TCP
-    unsigned int msgLength = 0;
+    size_t msgLength = 0;
     if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         if (options)
@@ -280,8 +288,8 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
                 }
                 msgLength += optLength;
                 prevOptNumber = curOptNumber;
-                OIC_LOG_V(DEBUG, TAG, "curOptNumber[%d], prevOptNumber[%d], optValueLen[%zu], "
-                        "optLength[%zu], msgLength[%d]",
+                OIC_LOG_V(DEBUG, TAG, "curOptNumber[%d], prevOptNumber[%d], optValueLen[%" PRIuPTR "], "
+                        "optLength[%" PRIuPTR "], msgLength[%" PRIuPTR "]",
                           curOptNumber, prevOptNumber, optValueLen, optLength, msgLength);
             }
         }
@@ -290,7 +298,14 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
         {
             msgLength = msgLength + info->payloadSize + PAYLOAD_MARKER;
         }
-        *transport = coap_get_tcp_header_type_from_size(msgLength);
+
+        if (msgLength > UINT_MAX)
+        {
+            OIC_LOG(ERROR, TAG, "Message length too large.");
+            return NULL;
+        }
+
+        *transport = coap_get_tcp_header_type_from_size((unsigned int)msgLength);
         length = msgLength + coap_get_tcp_header_length_for_transport(*transport)
                 + info->tokenLength;
     }
@@ -300,7 +315,9 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
         *transport = COAP_UDP;
     }
 
-    coap_pdu_t *pdu = coap_new_pdu2(*transport, length);
+    coap_pdu_t *pdu = coap_pdu_init2(0, 0,
+                                     ntohs(COAP_INVALID_TID),
+                                     length, *transport);
 
     if (NULL == pdu)
     {
@@ -308,13 +325,13 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
         return NULL;
     }
 
-    OIC_LOG_V(DEBUG, TAG, "transport type: %d, payload size: %zu",
+    OIC_LOG_V(DEBUG, TAG, "transport type: %d, payload size: %" PRIuPTR,
               *transport, info->payloadSize);
 
 #ifdef WITH_TCP
     if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
-        coap_add_length(pdu, *transport, msgLength);
+        coap_add_length(pdu, *transport, (unsigned int)msgLength);
     }
     else
 #endif
@@ -374,18 +391,24 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
                       COAP_OPTION_DATA(*(coap_option *) opt->data));
 
             OIC_LOG_V(DEBUG, TAG, "[%d] pdu length", pdu->length);
-            coap_add_option2(pdu, COAP_OPTION_KEY(*(coap_option *) opt->data),
-                             COAP_OPTION_LENGTH(*(coap_option *) opt->data),
-                             COAP_OPTION_DATA(*(coap_option *) opt->data), *transport);
+            if (0 == coap_add_option2(pdu, COAP_OPTION_KEY(*(coap_option *) opt->data),
+                                      COAP_OPTION_LENGTH(*(coap_option *) opt->data),
+                                      COAP_OPTION_DATA(*(coap_option *) opt->data), *transport))
+            {
+                OIC_LOG(ERROR, TAG, "coap_add_option2 has failed");
+                coap_delete_pdu(pdu);
+                return NULL;
+            }
         }
     }
 
     OIC_LOG_V(DEBUG, TAG, "[%d] pdu length after option", pdu->length);
 
-    if (NULL != info->payload && 0 < info->payloadSize)
+    if ((NULL != info->payload) && (0 < info->payloadSize))
     {
         OIC_LOG(DEBUG, TAG, "payload is added");
-        coap_add_data(pdu, info->payloadSize, (const unsigned char *) info->payload);
+        coap_add_data(pdu, (unsigned int)info->payloadSize,
+                      (const unsigned char*)info->payload);
     }
 
     return pdu;
@@ -395,8 +418,6 @@ CAResult_t CAParseURI(const char *uriInfo, coap_list_t **optlist)
 {
     VERIFY_NON_NULL(uriInfo, TAG, "uriInfo");
     VERIFY_NON_NULL(optlist, TAG, "optlist");
-
-    OIC_LOG_V(DEBUG, TAG, "url : %s", uriInfo);
 
     /* split arg into Uri-* options */
     coap_uri_t uri;
@@ -525,9 +546,7 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
         }
         else
         {
-            OIC_LOG_V(DEBUG, TAG, "Head opt ID: %d", id);
-            OIC_LOG_V(DEBUG, TAG, "Head opt data: %s", (info->options + i)->optionData);
-            OIC_LOG_V(DEBUG, TAG, "Head opt length: %d", (info->options + i)->optionLength);
+            OIC_LOG_V(DEBUG, TAG, "Head opt ID[%d], length[%d]", id, (info->options + i)->optionLength);
             int ret = coap_insert(optlist,
                                   CACreateNewOptionNode(id, (info->options + i)->optionLength,
                                                         (info->options + i)->optionData),
@@ -542,61 +561,81 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
     // insert one extra header with the payload format if applicable.
     if (CA_FORMAT_UNDEFINED != info->payloadFormat)
     {
-        coap_list_t* node = NULL;
-        uint8_t buf[CA_ENCODE_BUFFER_SIZE] = {0};
-        switch (info->payloadFormat)
-        {
-            case CA_FORMAT_APPLICATION_CBOR:
-                node = CACreateNewOptionNode(
-                        COAP_OPTION_CONTENT_FORMAT,
-                        coap_encode_var_bytes(buf, (unsigned short)COAP_MEDIATYPE_APPLICATION_CBOR),
-                        (char *)buf);
-                break;
-            default:
-                OIC_LOG_V(ERROR, TAG, "format option:[%d] not supported", info->payloadFormat);
-        }
-        if (!node)
-        {
-            OIC_LOG(ERROR, TAG, "format option not created");
-            return CA_STATUS_INVALID_PARAM;
-        }
-        int ret = coap_insert(optlist, node, CAOrderOpts);
-        if (ret <= 0)
-        {
-            coap_delete(node);
-            OIC_LOG(ERROR, TAG, "format option not inserted in header");
-            return CA_STATUS_INVALID_PARAM;
-        }
-    }
-    if (CA_FORMAT_UNDEFINED != info->acceptFormat)
-    {
-        coap_list_t* node = NULL;
-        uint8_t buf[CA_ENCODE_BUFFER_SIZE] = {0};
-        switch (info->acceptFormat)
-        {
-            case CA_FORMAT_APPLICATION_CBOR:
-                node = CACreateNewOptionNode(
-                        COAP_OPTION_ACCEPT,
-                        coap_encode_var_bytes(buf, (unsigned short)COAP_MEDIATYPE_APPLICATION_CBOR),
-                        (char *)buf);
-                break;
-            default:
-                OIC_LOG_V(ERROR, TAG, "format option:[%d] not supported", info->acceptFormat);
-        }
-        if (!node)
-        {
-            OIC_LOG(ERROR, TAG, "format option not created");
-            return CA_STATUS_INVALID_PARAM;
-        }
-        int ret = coap_insert(optlist, node, CAOrderOpts);
-        if (ret <= 0)
-        {
-            coap_delete(node);
-            OIC_LOG(ERROR, TAG, "format option not inserted in header");
-            return CA_STATUS_INVALID_PARAM;
-        }
+        CAParsePayloadFormatHeadOption(info->payloadFormat, COAP_OPTION_CONTENT_FORMAT, COAP_OPTION_CONTENT_VERSION, info->payloadVersion, optlist);
     }
 
+    if (CA_FORMAT_UNDEFINED != info->acceptFormat)
+    {
+        CAParsePayloadFormatHeadOption(info->acceptFormat, COAP_OPTION_ACCEPT, info->acceptVersion, COAP_OPTION_ACCEPT_VERSION, optlist);
+    }
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAParsePayloadFormatHeadOption(CAPayloadFormat_t format, uint16_t formatOption,
+        uint16_t versionOption, uint16_t version, coap_list_t **optlist)
+{
+    coap_list_t* encodeNode = NULL;
+    coap_list_t* versionNode = NULL;
+    uint8_t encodeBuf[CA_ENCODE_BUFFER_SIZE] = { 0 };
+    uint8_t versionBuf[CA_ENCODE_BUFFER_SIZE] = { 0 };
+
+    switch (format)
+    {
+        case CA_FORMAT_APPLICATION_CBOR:
+            encodeNode = CACreateNewOptionNode(formatOption,
+                    coap_encode_var_bytes(encodeBuf,
+                            (unsigned short) COAP_MEDIATYPE_APPLICATION_CBOR), (char *) encodeBuf);
+            break;
+        case CA_FORMAT_APPLICATION_VND_OCF_CBOR:
+            encodeNode = CACreateNewOptionNode(formatOption,
+                    coap_encode_var_bytes(encodeBuf,
+                            (unsigned short) COAP_MEDIATYPE_APPLICATION_VND_OCF_CBOR),
+                    (char *) encodeBuf);
+            // Include payload version information for this format.
+            versionNode = CACreateNewOptionNode(versionOption,
+                    coap_encode_var_bytes(versionBuf, version), (char *) versionBuf);
+            break;
+        default:
+            OIC_LOG_V(ERROR, TAG, "Format option:[%d] not supported", format);
+    }
+    if (!encodeNode)
+    {
+        OIC_LOG(ERROR, TAG, "Format option not created");
+        return CA_STATUS_INVALID_PARAM;
+    }
+    int ret = coap_insert(optlist, encodeNode, CAOrderOpts);
+    if (0 >= ret)
+    {
+        coap_delete(encodeNode);
+        OIC_LOG(ERROR, TAG, "Format option not inserted in header");
+        if (CA_FORMAT_APPLICATION_VND_OCF_CBOR == format && versionNode)
+        {
+            coap_delete(versionNode);
+        }
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    if (CA_FORMAT_APPLICATION_VND_OCF_CBOR == format)
+    {
+        if (!versionNode)
+        {
+            OIC_LOG(ERROR, TAG, "Version option not created");
+            coap_delete(encodeNode);
+            return CA_STATUS_INVALID_PARAM;
+        }
+        else
+        {
+            ret = coap_insert(optlist, versionNode, CAOrderOpts);
+            if (0 >= ret)
+            {
+                coap_delete(versionNode);
+                coap_delete(encodeNode);
+                OIC_LOG(ERROR, TAG, "Content version option not inserted in header");
+                return CA_STATUS_INVALID_PARAM;
+            }
+        }
+    }
     return CA_STATUS_OK;
 }
 
@@ -678,6 +717,8 @@ uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter)
             && COAP_OPTION_SIZE1 != opt_iter.type && COAP_OPTION_SIZE2 != opt_iter.type
             && COAP_OPTION_CONTENT_FORMAT != opt_iter.type
             && COAP_OPTION_ACCEPT != opt_iter.type
+            && COAP_OPTION_CONTENT_VERSION != opt_iter.type
+            && COAP_OPTION_ACCEPT_VERSION != opt_iter.type
             && COAP_OPTION_URI_HOST != opt_iter.type && COAP_OPTION_URI_PORT != opt_iter.type
             && COAP_OPTION_ETAG != opt_iter.type && COAP_OPTION_MAXAGE != opt_iter.type
             && COAP_OPTION_PROXY_SCHEME != opt_iter.type)
@@ -760,9 +801,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     uint32_t optionLength = 0;
     bool isfirstsetflag = false;
     bool isQueryBeingProcessed = false;
-#ifdef WITH_CHPROXY
     bool isProxyRequest = false;
-#endif
 
     while ((option = coap_option_next(&opt_iter)))
     {
@@ -859,11 +898,40 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                 {
                     outInfo->payloadFormat = CAConvertFormat((uint8_t)buf[0]);
                 }
+                else if (2 == COAP_OPT_LENGTH(option))
+                {
+                    outInfo->payloadFormat = CAConvertFormat(
+                            coap_decode_var_bytes(COAP_OPT_VALUE(option), COAP_OPT_LENGTH(option)));
+                }
                 else
                 {
                     outInfo->payloadFormat = CA_FORMAT_UNSUPPORTED;
-                    OIC_LOG_V(DEBUG, TAG, "option[%d] has an unsupported format [%d]",
-                              opt_iter.type, (uint8_t)buf[0]);
+                    OIC_LOG(DEBUG, TAG, "option has an unsupported format");
+                }
+            }
+            else if (COAP_OPTION_CONTENT_VERSION == opt_iter.type)
+            {
+                if (2 == COAP_OPT_LENGTH(option))
+                {
+                    outInfo->payloadVersion =  coap_decode_var_bytes(COAP_OPT_VALUE(option), COAP_OPT_LENGTH(option));
+                }
+                else
+                {
+                    OIC_LOG(DEBUG, TAG, "unsupported content version");
+                    outInfo->payloadVersion = DEFAULT_CONTENT_VERSION_VALUE;
+
+                }
+            }
+            else if (COAP_OPTION_ACCEPT_VERSION == opt_iter.type)
+            {
+                if (2 == COAP_OPT_LENGTH(option))
+                {
+                    outInfo->acceptVersion = coap_decode_var_bytes(COAP_OPT_VALUE(option), COAP_OPT_LENGTH(option));
+                }
+                else
+                {
+                    OIC_LOG(DEBUG, TAG, "unsupported accept version");
+                    outInfo->acceptVersion = DEFAULT_ACCEPT_VERSION_VALUE;
                 }
             }
             else if (COAP_OPTION_ACCEPT == opt_iter.type)
@@ -872,12 +940,16 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                 {
                     outInfo->acceptFormat = CAConvertFormat((uint8_t)buf[0]);
                 }
+                else if (2 == COAP_OPT_LENGTH(option))
+                {
+                    outInfo->acceptFormat = CAConvertFormat(
+                            coap_decode_var_bytes(COAP_OPT_VALUE(option), COAP_OPT_LENGTH(option)));
+                }
                 else
                 {
                     outInfo->acceptFormat = CA_FORMAT_UNSUPPORTED;
+                    OIC_LOG(DEBUG, TAG, "option has an unsupported accept format");
                 }
-                OIC_LOG_V(DEBUG, TAG, "option[%d] has an unsupported format [%d]",
-                          opt_iter.type, (uint8_t)buf[0]);
             }
             else if (COAP_OPTION_URI_PORT == opt_iter.type ||
                     COAP_OPTION_URI_HOST == opt_iter.type ||
@@ -890,12 +962,10 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             }
             else
             {
-#ifdef WITH_CHPROXY
                 if (COAP_OPTION_PROXY_URI == opt_iter.type)
                 {
                     isProxyRequest = true;
                 }
-#endif
                 if (idx < count)
                 {
                     if (bufLength <= sizeof(outInfo->options[0].optionData))
@@ -951,7 +1021,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
 
     if (optionResult[0] != '\0')
     {
-        OIC_LOG_V(DEBUG, TAG, "URL length:%zu", strlen(optionResult));
+        OIC_LOG_V(DEBUG, TAG, "URL length:%" PRIuPTR, strlen(optionResult));
         outInfo->resourceUri = OICStrdup(optionResult);
         if (!outInfo->resourceUri)
         {
@@ -961,11 +1031,10 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             return CA_MEMORY_ALLOC_FAILED;
         }
     }
-#ifdef WITH_CHPROXY
     else if(isProxyRequest && g_chproxyUri[0] != '\0')
     {
        /*
-        *   A request for CoAP-HTTP Proxy will not have any uri element as per CoAP specs
+        *   A request for Proxy will not have any uri element as per CoAP specs
         *   and only COAP_OPTION_PROXY_URI will be present. Use preset proxy uri
         *   for such requests.
         */
@@ -978,7 +1047,6 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             return CA_MEMORY_ALLOC_FAILED;
         }
     }
-#endif
     return CA_STATUS_OK;
 
 exit:
@@ -1043,7 +1111,11 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token, uint8_t tokenLength)
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    OCFillRandomMem((uint8_t *)temp, tokenLength);
+    if (!OCGetRandomBytes((uint8_t *)temp, tokenLength))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to generate random token");
+        return CA_STATUS_FAILED;
+    }
 
     // save token
     *token = temp;
@@ -1140,7 +1212,7 @@ CAResponseResult_t CAGetCodeFromPduBinaryData(const void *pdu, uint32_t size)
     return (CAResponseResult_t) CA_RESPONSE_CODE(hdr->code);
 }
 
-CAPayloadFormat_t CAConvertFormat(uint8_t format)
+CAPayloadFormat_t CAConvertFormat(uint16_t format)
 {
     switch (format)
     {
@@ -1160,6 +1232,8 @@ CAPayloadFormat_t CAConvertFormat(uint8_t format)
             return CA_FORMAT_APPLICATION_JSON;
         case COAP_MEDIATYPE_APPLICATION_CBOR:
             return CA_FORMAT_APPLICATION_CBOR;
+        case COAP_MEDIATYPE_APPLICATION_VND_OCF_CBOR:
+            return CA_FORMAT_APPLICATION_VND_OCF_CBOR;
         default:
             return CA_FORMAT_UNSUPPORTED;
     }
@@ -1173,6 +1247,7 @@ bool CAIsSupportedBlockwiseTransfer(CATransportAdapter_t adapter)
     {
         return true;
     }
+    OIC_LOG_V(INFO, TAG, "adapter value of BWT is %d", adapter);
     return false;
 }
 #endif
@@ -1185,6 +1260,7 @@ bool CAIsSupportedCoAPOverTCP(CATransportAdapter_t adapter)
     {
         return true;
     }
+    OIC_LOG_V(INFO, TAG, "adapter value of CoAP/TCP is %d", adapter);
     return false;
 }
 #endif

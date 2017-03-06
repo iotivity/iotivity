@@ -40,8 +40,14 @@ Java_org_iotivity_service_easysetup_mediator_EasySetup_nativeCreateRemoteEnrolle
 {
     ES_LOGI("JniEasySetup::nativeCreateRemoteEnrollee enter");
 
-    std::shared_ptr<RemoteEnrollee> nativeRemoteEnrollee;
-    jobject jRemoteEnrollee;
+    std::shared_ptr<RemoteEnrollee> nativeRemoteEnrollee = NULL;
+    jobject jRemoteEnrollee = NULL;
+
+    if(!jResource)
+    {
+        ES_LOGE("JniEasySetup::nativeCreateRemoteEnrollee Invalid param.");
+        return NULL;
+    }
 
     if(!jResource)
     {

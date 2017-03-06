@@ -22,10 +22,6 @@
 #include <unistd.h>
 #endif
 
-#include <string>
-#include <map>
-#include <vector>
-#include <memory>
 #include <algorithm>
 
 #include <UnitTestHelper.h>
@@ -33,17 +29,12 @@
 #include <gtest/gtest.h>
 #include <HippoMocks/hippomocks.h>
 
-#include "Configuration.h"
-#include "BundleActivator.h"
-#include "BundleResource.h"
 #include "RCSResourceContainer.h"
-#include "ResourceContainerBundleAPI.h"
 #include "ResourceContainerImpl.h"
-#include "RemoteResourceUnit.h"
+#include "SoftSensorResource.h"
 
 #include "RCSResourceObject.h"
 #include "RCSRemoteResourceObject.h"
-#include "SoftSensorResource.h"
 
 #include "ResourceContainerTestSimulator.h"
 
@@ -57,7 +48,7 @@ string CONFIG_FILE = "ResourceContainerTestConfig.xml";
 
 void getCurrentPath(std::string *pPath)
 {
-    char buffer[MAX_PATH];
+    char buffer[MAX_PATH] = {0,};
 
 #if defined(__linux__)
     char *strPath = NULL;
@@ -815,7 +806,11 @@ TEST_F(RemoteResourceUnitTest, startMonitoring)
     ptr->startMonitoring();
 }
 
+#ifdef SECURED
+TEST_F(RemoteResourceUnitTest, DISABLED_onCacheCBCalled)
+#else
 TEST_F(RemoteResourceUnitTest, onCacheCBCalled)
+#endif
 {
     bool isCalled = false;
     mocks.ExpectCallFunc(onCacheCB).Do(

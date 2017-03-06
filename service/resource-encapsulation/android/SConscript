@@ -44,13 +44,47 @@ if not os.path.exists(android_home + '/platforms/android-21') or not os.path.exi
 
 
 def ensure_libs(target, source, env):
-    return target, [source, env.get('BUILD_DIR') + 'librcs_server.so', 
+    return target, [source, env.get('BUILD_DIR') + 'librcs_server.so',
                     env.get('BUILD_DIR') + 'librcs_client.so']
 
 jdk_env = Environment(ENV=os.environ)
-jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + 
+jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') +
     ' build -bservice/resource-encapsulation/android/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE),
     emitter = ensure_libs)
 jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
-jdk_env.Gradle(target="service/objs", 
+cmdBuildRE = jdk_env.Gradle(target="service/objs",
     source="service/src/main/java/org/iotivity/service/RcsResourceAttributes.java")
+jdk_env.Clean(cmdBuildRE, '#/service/resource-encapsulation/android/build')
+jdk_env.Clean(cmdBuildRE, '#/service/resource-encapsulation/android/service/build')
+env.AppendUnique(resourceencapsulationAAR = cmdBuildRE)
+
+Depends(cmdBuildRE, env.get('baseAAR'))
+
+# Build RE Android Samples
+re_sample_server_env = Environment(ENV=os.environ)
+re_sample_server_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') +
+    ' build -bservice/resource-encapsulation/examples/android/RESampleServerApp/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE),
+    emitter = ensure_libs)
+re_sample_server_env['BUILD_DIR'] = env.get('BUILD_DIR')
+cmdBuildREServerApp=re_sample_server_env.Gradle(target="../examples/android/RESampleServerApp/app/apk",
+    source=["../examples/android/RESampleServerApp/app/src/main/java/org/iotivity/service/sample/server/MainActivity.java",
+            "../examples/android/RESampleServerApp/app/src/main/java/org/iotivity/service/sample/server/CustomServerActivity.java",
+            "../examples/android/RESampleServerApp/app/src/main/java/org/iotivity/service/sample/server/ResourceProperties.java",
+            "../examples/android/RESampleServerApp/app/src/main/java/org/iotivity/service/sample/server/SimpleServerActivity.java"])
+jdk_env.Clean(cmdBuildREServerApp, '#/service/resource-encapsulation/examples/android/RESampleServerApp/build')
+jdk_env.Clean(cmdBuildREServerApp, '#/service/resource-encapsulation/examples/android/RESampleServerApp/app/build')
+Depends(cmdBuildREServerApp, cmdBuildRE)
+
+re_sample_client_env = Environment(ENV=os.environ)
+re_sample_client_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') +
+    ' build -bservice/resource-encapsulation/examples/android/RESampleClientApp/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE),
+    emitter = ensure_libs)
+re_sample_client_env['BUILD_DIR'] = env.get('BUILD_DIR')
+cmdBuildREClientApp=re_sample_client_env.Gradle(target="../examples/android/RESampleClientApp/app/apk",
+    source=["../examples/android/RESampleClientApp/app/src/main/java/org/iotivity/service/sample/client/MainActivity.java",
+            "../examples/android/RESampleClientApp/app/src/main/java/org/iotivity/service/sample/client/ResourceClientActivity.java"])
+jdk_env.Clean(cmdBuildREClientApp, '#/service/resource-encapsulation/examples/android/RESampleClientApp/build')
+jdk_env.Clean(cmdBuildREClientApp, '#/service/resource-encapsulation/examples/android/RESampleClientApp/app/build')
+Depends(cmdBuildREClientApp, cmdBuildRE)
+
+

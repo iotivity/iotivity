@@ -23,11 +23,16 @@
 
 #include <jni.h>
 #include <android/log.h>
+#include "JniSharedObjectHolder.h"
 
 
-#define  LOG_TAG    "Notification_Common"
+#define  NSTAG    "NotificationService_JNI"
 
 #define JNI_CURRENT_VERSION JNI_VERSION_1_6
+
+#define NS_LOGI(...) __android_log_print(ANDROID_LOG_INFO, NSTAG, __VA_ARGS__)
+#define NS_LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, NSTAG, __VA_ARGS__)
+#define NS_LOGE(...) __android_log_print(ANDROID_LOG_ERROR, NSTAG, __VA_ARGS__)
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,6 +41,7 @@ extern "C" {
 #define JNI_EXCEPTION 1000
 #define JNI_NO_NATIVE_POINTER 1001
 #define JNI_INVALID_VALUE 1002
+#define NATIVE_EXCEPTION 1003
 
 #define JNI_NS_OK 100
 #define JNI_NS_ERROR 200

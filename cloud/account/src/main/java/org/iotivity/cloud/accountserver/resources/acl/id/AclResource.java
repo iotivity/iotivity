@@ -1,3 +1,24 @@
+/*
+ * //******************************************************************
+ * //
+ * // Copyright 2016 Samsung Electronics All Rights Reserved.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //      http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ */
 package org.iotivity.cloud.accountserver.resources.acl.id;
 
 import java.util.Arrays;
@@ -86,37 +107,44 @@ public class AclResource extends Resource {
     }
 
     private IResponse handlePostRequest(IRequest request)
-        throws ServerException {
+            throws ServerException {
 
-            HashMap<String, Object> payloadData = mCbor
-                .parsePayloadFromCbor(request.getPayload(), HashMap.class);
-
-            if (null !=request.getUriQueryMap()) {
-                String aclid = request.getUriPathSegments().get(getUriPathSegments().size());
-                String aceid = request.getUriQueryMap().get(Constants.REQ_ACE_ID).get(0);
-                List<HashMap<String, Object>> aclist = (List<HashMap<String, Object>>) payloadData
-                    .get(Constants.REQ_ACL_LIST);
-                mAclManager.updateACE(aclid, aceid, aclist.get(0));
-                return MessageBuilder.createResponse(request, ResponseStatus.CHANGED);
-            }
-            else if (!getUriPathSegments().containsAll(request.getUriPathSegments())) {
-                String aclid = request.getUriPathSegments().get(getUriPathSegments().size());
-
-                List<HashMap<String, Object>> aclist = null;
-                if (!payloadData.containsKey(Constants.REQ_ACL_LIST)) {
-                    throw new BadRequestException("aclist not included in payload");
-                }
-                aclist = (List<HashMap<String, Object>>) payloadData
-                    .get(Constants.REQ_ACL_LIST);
-                aclist= mAclManager.addAclACE(aclid, aclist);
-                payloadData.put(Constants.REQ_ACL_LIST, aclist);
-                return MessageBuilder.createResponse(request, ResponseStatus.CHANGED,
-                        ContentFormat.APPLICATION_CBOR,
-                        mCbor.encodingPayloadToCbor(payloadData));
-            }
-            throw new BadRequestException("uriPath is invalid");
+        if (request.getPayload() == null) {
+            throw new BadRequestException("payload is null");
         }
 
+        HashMap<String, Object> payloadData = mCbor
+                .parsePayloadFromCbor(request.getPayload(), HashMap.class);
+
+        if (null != request.getUriQueryMap()) {
+            String aclid = request.getUriPathSegments()
+                    .get(getUriPathSegments().size());
+            String aceid = request.getUriQueryMap().get(Constants.REQ_ACE_ID)
+                    .get(0);
+            List<HashMap<String, Object>> aclist = (List<HashMap<String, Object>>) payloadData
+                    .get(Constants.REQ_ACL_LIST);
+            mAclManager.updateACE(aclid, aceid, aclist.get(0));
+            return MessageBuilder.createResponse(request,
+                    ResponseStatus.CHANGED);
+        } else if (!getUriPathSegments()
+                .containsAll(request.getUriPathSegments())) {
+            String aclid = request.getUriPathSegments()
+                    .get(getUriPathSegments().size());
+
+            List<HashMap<String, Object>> aclist = null;
+            if (!payloadData.containsKey(Constants.REQ_ACL_LIST)) {
+                throw new BadRequestException("aclist not included in payload");
+            }
+            aclist = (List<HashMap<String, Object>>) payloadData
+                    .get(Constants.REQ_ACL_LIST);
+            aclist = mAclManager.addAclACE(aclid, aclist);
+            payloadData.put(Constants.REQ_ACL_LIST, aclist);
+            return MessageBuilder.createResponse(request,
+                    ResponseStatus.CHANGED, ContentFormat.APPLICATION_CBOR,
+                    mCbor.encodingPayloadToCbor(payloadData));
+        }
+        throw new BadRequestException("uriPath is invalid");
+    }
 
     @SuppressWarnings("unchecked")
 
@@ -179,17 +207,14 @@ public class AclResource extends Resource {
             aclid = request.getUriPathSegments()
                     .get(getUriPathSegments().size());
 
-            if (request.getUriQueryMap() == null)
-            {
+            if (request.getUriQueryMap() == null) {
                 mAclManager.deleteAclAclist(aclid);
-            }
-            else if (request.getUriQueryMap()
+            } else if (request.getUriQueryMap()
                     .containsKey(Constants.REQ_ACE_ID)) {
-                String aceid = request.getUriQueryMap().get(Constants.REQ_ACE_ID)
-                        .get(0);
+                String aceid = request.getUriQueryMap()
+                        .get(Constants.REQ_ACE_ID).get(0);
                 mAclManager.deleteAclACE(aclid, aceid);
-            }
-            else {
+            } else {
                 throw new BadRequestException("uriPath is invalid");
             }
         }

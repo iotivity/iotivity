@@ -74,7 +74,29 @@ CAResult_t CAManagerLEClientTerminate(JNIEnv *env);
  */
 void CAManagerLESetScanInterval(jint intervalTime, jint workingCount);
 
+/**
+ * stop BLE scan.
+ */
+void CAManagerLEStopScan();
 #endif
+
+/**
+ * start BLE advertising.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAManagerLEStartAdvertising();
+
+/**
+ * stop BLE advertising.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAManagerLEStopAdvertising();
+
+/**
+ * set CAUtilConfig_t configure.
+ * @param[in]  config       ::CAUtilConfig_t value
+ */
+void CAManagerSetConfigure(CAUtilConfig_t config);
 
 #ifdef __cplusplus
 } /* extern "C" */

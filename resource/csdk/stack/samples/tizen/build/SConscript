@@ -27,8 +27,8 @@ else:
 
 env.PrependUnique(CPPPATH = [
 		'../../../../logger/include',
+		'../../../../include',
 		'../../../../stack/include',
-		'../../../../../../extlibs/cjson',
 		'../../../../../oc_logger/include'
 		])
 
@@ -38,9 +38,6 @@ if routing == 'GW':
 elif routing == 'EP':
 	env.AppendUnique(CPPDEFINES = ['ROUTING_EP'])
 env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
-
-if env.get('WITH_PROXY'):
-	env.AppendUnique(CPPDEFINES = ['WITH_CHPROXY'])
 
 print "Given Transport is %s" % transport
 print "Given OS is %s" % target_os

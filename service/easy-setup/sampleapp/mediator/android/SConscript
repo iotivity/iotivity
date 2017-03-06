@@ -74,5 +74,6 @@ jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') +
 jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
 cmdBuildEasysetupApp=jdk_env.Gradle(target="EasySetup/app/apk", 
     source="EasySetup/app/src/main/java/org/iotivity/service/easysetup/EasysetupActivity.java")
-
+jdk_env.Clean(cmdBuildEasysetupApp, '#/service/easy-setup/sampleapp/mediator/android/EasySetup/build')
+jdk_env.Clean(cmdBuildEasysetupApp, '#/service/easy-setup/sampleapp/mediator/android/EasySetup/app/build')
 Depends(cmdBuildEasysetupApp, env.get('easysetupAAR'))

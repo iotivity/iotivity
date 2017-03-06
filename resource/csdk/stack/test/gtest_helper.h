@@ -27,6 +27,7 @@
 #include <future>
 #include <mutex>
 #include <thread>
+#include "oic_time.h"
 
 namespace iotivity
 {
@@ -143,6 +144,47 @@ namespace iotivity
                         std::terminate();
                     }
                 }
+            }
+        };
+
+        class Callback
+        {
+        public:
+            Callback(OCClientResponseHandler cb) : m_cb(cb), m_called(false)
+            {
+                m_cbData.cb = &Callback::handler;
+                m_cbData.cd = NULL;
+                m_cbData.context = this;
+            }
+            OCStackResult Wait(long waitTime)
+            {
+                uint64_t startTime = OICGetCurrentTime(TIME_IN_MS);
+                while (!m_called)
+                {
+                    uint64_t currTime = OICGetCurrentTime(TIME_IN_MS);
+                    long elapsed = (long)((currTime - startTime) / MS_PER_SEC);
+                    if (elapsed > waitTime)
+                    {
+                        break;
+                    }
+                    OCProcess();
+                }
+                return m_called ? OC_STACK_OK : OC_STACK_TIMEOUT;
+            }
+            operator OCCallbackData *()
+            {
+                return &m_cbData;
+            }
+        private:
+            OCCallbackData m_cbData;
+            OCClientResponseHandler m_cb;
+            bool m_called;
+            static OCStackApplicationResult handler(void *ctx, OCDoHandle handle, OCClientResponse *clientResponse)
+            {
+                Callback *callback = (Callback *) ctx;
+                OCStackApplicationResult result = callback->m_cb(NULL, handle, clientResponse);
+                callback->m_called = true;
+                return result;
             }
         };
     } // namespace test

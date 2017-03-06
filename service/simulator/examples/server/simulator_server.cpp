@@ -398,7 +398,8 @@ void setDeviceInfo()
 {
     try
     {
-        SimulatorManager::getInstance()->setDeviceInfo("IoTivity Simulator Linux Sample");
+        SimulatorManager::getInstance()->setDeviceInfo("IoTivity Simulator Linux Sample",
+                                                       "c49f7cba-3b3d-490b-9d3f-d4f17a3dad26");
         std::cout << "Setting Device Info is successful" << std::endl;
     }
     catch (InvalidArgsException &e)

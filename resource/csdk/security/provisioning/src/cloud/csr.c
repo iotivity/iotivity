@@ -1,3 +1,23 @@
+/* *****************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * *****************************************************************/
+#include "iotivity_config.h"
 #include "utils.h"
 
 #include "logger.h"
@@ -27,24 +47,25 @@
 #include "mbedtls/version.h"
 #endif
 
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <fcntl.h>
 
-#define TAG "CLOUD-CSR"
+#define TAG "OIC_CLOUD_CSR"
 
 //TODO: is it required in CSR response?
-static OCByteString privateKey = {0, 0};
+static OCByteString g_privateKey = {0, 0};
 
 #define MAX_URI_QUERY MAX_URI_LENGTH + MAX_QUERY_LENGTH
 
 #define MAX_STRING_LEN 254
 
 /**
- * @def SEED
- * @brief Seed for initialization RNG
+ * @def PERSONALIZATION_STRING
+ * @brief Personalization string for the mbedtls RNG
  */
-
-#define SEED "IOTIVITY_RND"
+static const unsigned char PERSONALIZATION_STRING[] = "IOTIVITY_RND";
 
 typedef struct
 {
@@ -89,40 +110,17 @@ static int ecdsaGenKeypair(mbedtls_pk_context * pk)
 
     VERIFY_NON_NULL_RET(pk, TAG, "Param pk is NULL", -1);
 
-    // Entropy seeding
-#ifdef __unix__
-    unsigned char seed[sizeof(SEED)] = {0};
-    int urandomFd = -2;
-    urandomFd = open("/dev/urandom", O_RDONLY);
-    if(urandomFd == -1)
-    {
-        OIC_LOG(ERROR, TAG, "Fails open /dev/urandom!");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
-    }
-    if(0 > read(urandomFd, seed, sizeof(seed)))
-    {
-        OIC_LOG(ERROR, TAG, "Fails read from /dev/urandom!");
-        close(urandomFd);
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
-    }
-    close(urandomFd);
-
-#else
-    unsigned char * seed = (unsigned char*) SEED;
-#endif
-    // Initialize and seed DRBG context
+    // Initialize the DRBG context
     mbedtls_ctr_drbg_init(&ctr_drbg);
     mbedtls_entropy_init(&entropy);
     if (0 != mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func,
-                                   &entropy, seed, sizeof(SEED)))
+                                   &entropy, (const unsigned char*)PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING)))
     {
         OIC_LOG(ERROR, TAG, "Seed initialization failed!");
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return -1;
     }
-    mbedtls_ctr_drbg_set_prediction_resistance(&ctr_drbg, MBEDTLS_CTR_DRBG_PR_OFF);
+    mbedtls_ctr_drbg_set_prediction_resistance(&ctr_drbg, MBEDTLS_CTR_DRBG_PR_ON);
     // Initialize l context
     mbedtls_pk_init(pk);
     if (0 > mbedtls_pk_setup(pk, mbedtls_pk_info_from_type(MBEDTLS_PK_ECKEY)))
@@ -170,11 +168,11 @@ static int ecdsaGenKeypair(mbedtls_pk_context * pk)
  */
 static int GenerateCSR(char *subject, OCByteString *csr)
 {
-    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    int result = 0;
     VERIFY_NON_NULL_RET(subject, TAG, "Param subject is NULL", -1);
     VERIFY_NON_NULL_RET(csr, TAG, "Param csr is NULL", -1);
 
-    int ret = 0;
+    int len = 0;
     int bufsize = 1024;
     unsigned char * buf = NULL;
     mbedtls_entropy_context entropy;
@@ -187,15 +185,15 @@ static int GenerateCSR(char *subject, OCByteString *csr)
     if (NULL == key)
     {
         OIC_LOG_V(ERROR, TAG, "OICMalloc returned NULL on key allocation");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        result = -1;
+        goto exit;
     }
     // Generate keypair
-    if (0 > ecdsaGenKeypair(key))
+    result = ecdsaGenKeypair(key);
+    if (result < 0)
     {
         OIC_LOG(ERROR, TAG, "ecdsaGenKeypair error");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        goto exit;
     }
 
     // Initialize CSR context
@@ -203,120 +201,84 @@ static int GenerateCSR(char *subject, OCByteString *csr)
     // Set up MD algorithm, key and subject to CSR
     mbedtls_x509write_csr_set_md_alg(&req, MBEDTLS_MD_SHA256);
     mbedtls_x509write_csr_set_key(&req, key);
-    if (0 > mbedtls_x509write_csr_set_subject_name(&req, subject))
+    result = mbedtls_x509write_csr_set_subject_name(&req, subject);
+    if (result < 0)
     {
         OIC_LOG(ERROR, TAG, "mbedtls_x509write_csr_set_subject_name error");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        goto exit;
     }
 
-    // Entropy seeding
-#ifdef __unix__
-    unsigned char seed[sizeof(SEED)] = {0};
-    int urandomFd = -2;
-    urandomFd = open("/dev/urandom", O_RDONLY);
-    if(urandomFd == -1)
-    {
-        OIC_LOG(ERROR, TAG, "Fails open /dev/urandom!");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
-    }
-    if(0 > read(urandomFd, seed, sizeof(seed)))
-    {
-        OIC_LOG(ERROR, TAG, "Fails read from /dev/urandom!");
-        close(urandomFd);
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
-    }
-    close(urandomFd);
-
-#else
-    unsigned char * seed = (unsigned char *) SEED;
-#endif
-    // Initialize and seed DRBG context
+    // Initialize the DRBG context
     mbedtls_ctr_drbg_init(&ctr_drbg);
     mbedtls_entropy_init(&entropy);
-    if (0 != mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func,
-                                   &entropy, seed, sizeof(SEED)))
+
+    result = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func,
+             &entropy, (const unsigned char*)PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING));
+    if (result < 0)
     {
         OIC_LOG(ERROR, TAG, "Seed initialization failed!");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        goto exit;
     }
-    mbedtls_ctr_drbg_set_prediction_resistance(&ctr_drbg, MBEDTLS_CTR_DRBG_PR_OFF);
+    mbedtls_ctr_drbg_set_prediction_resistance(&ctr_drbg, MBEDTLS_CTR_DRBG_PR_ON);
 
     // Create CSR
     buf = (unsigned char *)OICMalloc(bufsize * sizeof(unsigned char));
     if (NULL == buf)
     {
         OIC_LOG(ERROR, TAG, "OICMalloc returned NULL on buf allocation");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        result = -1;
+        goto exit;
     }
-    ret = mbedtls_x509write_csr_der(&req, buf, bufsize,
-                                    mbedtls_ctr_drbg_random, &ctr_drbg);
-    if (ret < 0)
+    len = mbedtls_x509write_csr_der(&req, buf, bufsize, mbedtls_ctr_drbg_random, &ctr_drbg);
+    if (len < 0)
     {
         OIC_LOG(ERROR, TAG, "mbedtls_x509write_csr_der error");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        result = len;
+        goto exit;
     }
 
     // CSR to output
-    csr->bytes = (uint8_t *)OICMalloc(ret * sizeof(uint8_t));
+    csr->bytes = (uint8_t *)OICMalloc(len * sizeof(uint8_t));
     if (NULL == csr->bytes)
     {
         OIC_LOG(ERROR, TAG, "OICMalloc returned NULL on csr allocation");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        result = -1;
+        goto exit;
     }
-    memcpy(csr->bytes, buf + bufsize - ret, ret * sizeof(uint8_t));
-    csr->len = ret;
+    memcpy(csr->bytes, buf + bufsize - len, len * sizeof(uint8_t));
+    csr->len = len;
     // Private key to output
-    ret = mbedtls_pk_write_key_der(key, buf, bufsize);
-    if (ret < 0)
+    len = mbedtls_pk_write_key_der(key, buf, bufsize);
+    if (len < 0)
     {
         OIC_LOG(ERROR, TAG, "mbedtls_pk_write_key_der error");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        result = len;
+        goto exit;
     }
-    privateKey.bytes = (uint8_t *)OICMalloc(ret * sizeof(char));
-    if (NULL == privateKey.bytes)
+    g_privateKey.bytes = (uint8_t *)OICMalloc(len * sizeof(char));
+    if (NULL == g_privateKey.bytes)
     {
-        OIC_LOG(ERROR, TAG, "OICMalloc returned NULL on privateKey.bytes allocation");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
+        OIC_LOG(ERROR, TAG, "OICMalloc returned NULL on g_privateKey.bytes allocation");
+        result = -1;
+        goto exit;
     }
-    memcpy(privateKey.bytes, buf + bufsize - ret, ret * sizeof(uint8_t));
-    privateKey.len = ret;
-    // Public key to output
-    ret = mbedtls_pk_write_pubkey_der(key, buf, bufsize);
-    if (ret < 0)
-    {
-        OIC_LOG(ERROR, TAG, "mbedtls_pk_write_pubkey_der error");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
-    }
-    //leave this, may be public key will be required in future
-    OCByteString publicKey;
-    publicKey.bytes = (uint8_t *)OICMalloc(ret * sizeof(char));
-    if (NULL == publicKey.bytes)
-    {
-        OIC_LOG(ERROR, TAG, "OICMalloc returned NULL on pubKey allocation");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
-    }
-    memcpy(publicKey.bytes, buf + bufsize - ret, ret * sizeof(uint8_t));
-    publicKey.len = ret;
-    OICFree(publicKey.bytes);
+    memcpy(g_privateKey.bytes, buf + bufsize - len, len * sizeof(uint8_t));
+    g_privateKey.len = len;
 
+    exit:
     mbedtls_entropy_free(&entropy);
     mbedtls_ctr_drbg_free(&ctr_drbg);
     mbedtls_x509write_csr_free(&req);
     OICFree(key);
+    OICFree(buf);
 
-    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-    return 0;
+    if (result)
+    {
+        OICFree(csr->bytes);
+        csr->bytes = NULL;
+    }
+
+    return result;
 }
 
 /**
@@ -330,7 +292,6 @@ static int GenerateCSR(char *subject, OCByteString *csr)
 static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCClientResponse *response)
 {
     OCStackResult result = OC_STACK_OK;
-    OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
 
     OC_UNUSED(ctx);
     OC_UNUSED(data);
@@ -355,7 +316,7 @@ static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCCli
                                    OC_RSRVD_DEVICE_ID, &deviceId))
     {
         OIC_LOG(ERROR, TAG, "Can't get: Device Id");
-        result = OC_STACK_ERROR;
+        return OC_STACK_ERROR;
     }
 
     OicSecKey_t cert;
@@ -363,28 +324,28 @@ static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCCli
                                    OC_RSRVD_CERT, &cert))
     {
         OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_CERT);
-        result = OC_STACK_ERROR;
+        return OC_STACK_ERROR;
     }
     else
     {
-        OicSecKey_t key =
-        {
-            privateKey.bytes,
-            privateKey.len,
-            OIC_ENCODING_DER
-        };
-
-        OicSecCert_t cert1 =
-        {
-            cert.data,
-            cert.len,
-        };
+        OicSecKey_t key;
+        memset(&key, 0, sizeof(key));
+        key.data = g_privateKey.bytes;
+        key.len = g_privateKey.len;
+        key.encoding = OIC_ENCODING_DER;
 
         uint16_t credId;
-        result = SRPSaveOwnCertChain(&cert1, &key, &credId);
+        result = SRPSaveOwnCertChain(&cert, &key, &credId);
+
+        OICClearMemory(g_privateKey.bytes, g_privateKey.len);
+        OICFree(g_privateKey.bytes);
+        g_privateKey.bytes = NULL;
+        g_privateKey.len   = 0;
+
         if (result != OC_STACK_OK)
         {
-            OIC_LOG(ERROR, TAG, "Cann't add cert");
+            OIC_LOG(ERROR, TAG, "Can't add cert");
+            return result;
         }
     }
 
@@ -393,8 +354,8 @@ static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCCli
     if (!OCRepPayloadGetPropPubDataType((OCRepPayload *)response->payload,
                                    OC_RSRVD_CACERT, &caCert))
     {
-        OIC_LOG_V(ERROR, TAG, "Cann't get: %s", OC_RSRVD_CACERT);
-        result = OC_STACK_ERROR;
+        OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_CACERT);
+        return OC_STACK_ERROR;
     }
     else
     {
@@ -405,12 +366,6 @@ static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCCli
             OIC_LOG(ERROR, TAG, "Can't insert CA cert");
         }
     }
-
-    OICFree(privateKey.bytes);
-    privateKey.bytes = NULL;
-    privateKey.len   = 0;
-
-    OIC_LOG_V(DEBUG, TAG, "OUT: %s", __func__);
 
     return result;
 }
@@ -453,7 +408,7 @@ OCStackResult OCCloudCertificateIssueRequest(void* ctx,
     OIC_LOG_BUFFER(DEBUG, TAG, request.bytes, request.len);
 
     OIC_LOG(DEBUG, TAG, "Private Key:");
-    OIC_LOG_BUFFER(DEBUG, TAG, privateKey.bytes, privateKey.len);
+    OIC_LOG_BUFFER(DEBUG, TAG, g_privateKey.bytes, g_privateKey.len);
 
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
@@ -465,7 +420,11 @@ OCStackResult OCCloudCertificateIssueRequest(void* ctx,
 
     OCRepPayloadSetPropString(payload, OC_RSRVD_DEVICE_ID, deviceId);
 
-    OicSecKey_t csr = {.data = request.bytes, .len = request.len, .encoding = OIC_ENCODING_DER};
+    OicSecKey_t csr;
+    memset(&csr, 0, sizeof(csr));
+    csr.data = request.bytes;
+    csr.len = request.len;
+    csr.encoding = OIC_ENCODING_DER;
 
     OCRepPayloadSetPropPubDataType(payload, OC_RSRVD_CSR, &csr);
 

@@ -63,10 +63,6 @@ TEST(PstatResourceTest, PstatEntityHandlerWithPostRequest)
     OicSecPstat_t *defaultPstat = (OicSecPstat_t *) OICCalloc(1, sizeof(*defaultPstat));
     ASSERT_TRUE(defaultPstat != NULL);
     defaultPstat->isOp = false;
-    uint8_t deviceId[] = {0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x69, 0x64, 0x00,
-                          0x00, 0x00, 0x00, 0x00, 0x18, 0x5a, 0x9f};
-    memcpy(defaultPstat->deviceID.id, deviceId, sizeof(deviceId));
-    EXPECT_EQ(sizeof(defaultPstat->deviceID.id), sizeof(deviceId));
     defaultPstat->commitHash = 1234;
     defaultPstat->cm = (OicSecDpm_t) 63;
     defaultPstat->tm = (OicSecDpm_t) 48;
@@ -123,9 +119,6 @@ TEST(PstatResourceTest, PstatToCBORPayloadAndCBORPayloadToPstat)
     OicSecPstat_t pstat;
     pstat.cm = NORMAL;
     pstat.commitHash = 0;
-    uint8_t deviceId[] = {0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x69, 0x64, 0x00,
-                          0x00, 0x00, 0x00, 0x00, 0x18, 0x5a, 0x9f};
-    memcpy(pstat.deviceID.id, deviceId, sizeof(deviceId));
     pstat.isOp = true;
     pstat.tm = NORMAL;
     pstat.om = SINGLE_SERVICE_CLIENT_DRIVEN;

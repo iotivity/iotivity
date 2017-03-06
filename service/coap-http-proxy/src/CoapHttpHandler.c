@@ -133,8 +133,8 @@ OCStackResult CHPTerminate()
 
     g_proxyHandle = NULL;
     g_isCHProxyInitialized = false;
-    return result;
     OIC_LOG_V(DEBUG, TAG, "%s OUT", __func__);
+    return result;
 }
 
 static void CHPGetProxyURI(OCHeaderOption* options, uint8_t *numOptions, char* uri,
@@ -194,7 +194,7 @@ OCEntityHandlerResult CHPEntityHandler(OCEntityHandlerFlag flag,
                                        void* callbackParam)
 {
     OIC_LOG(INFO, TAG, "Proxy request received");
-    UNUSED(callbackParam);
+    OC_UNUSED(callbackParam);
 
     if (!g_isCHProxyInitialized)
     {

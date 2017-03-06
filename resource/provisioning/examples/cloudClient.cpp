@@ -23,7 +23,7 @@
 
 #include "ocstack.h"
 #include "logger.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "cathreadpool.h"
 #include "ocpayload.h"
 #include "payload_logging.h"
@@ -33,7 +33,7 @@
 #include "cloudAuth.h"
 #include "cloudWrapper.h"
 #include "OCApi.h"
-#include "OCCloudProvisioning.h"
+#include "OCCloudProvisioning.hpp"
 
 #ifdef __unix__
 #include <unistd.h> //for unlink
@@ -61,8 +61,8 @@ static char *fname = DEFAULT_DB_FILE;
 static uint64_t timeout;
 static uint16_t g_credId = 0;
 
-ca_cond cond;
-ca_mutex mutex;
+oc_cond cond;
+oc_mutex mutex;
 std::string ip(DEFAULT_HOST);
 OCCloudProvisioning g_cloudProv(ip, (uint16_t)DEFAULT_PORT);
 
@@ -190,9 +190,9 @@ void handleCB(void* ctx, OCStackResult result, void* data)
     OC_UNUSED(data);
 
     printf("Cloud request Result is == %d", result);
-    ca_mutex_lock(mutex);
-    ca_cond_signal(cond);
-    ca_mutex_unlock(mutex);
+    oc_mutex_lock(mutex);
+    oc_cond_signal(cond);
+    oc_mutex_unlock(mutex);
 }
 
 void handleCB1(OCStackResult result, void *data)
@@ -200,9 +200,9 @@ void handleCB1(OCStackResult result, void *data)
     OC_UNUSED(data);
 
     printf("Cloud request Result is == %d", result);
-    ca_mutex_lock(mutex);
-    ca_cond_signal(cond);
-    ca_mutex_unlock(mutex);
+    oc_mutex_lock(mutex);
+    oc_cond_signal(cond);
+    oc_mutex_unlock(mutex);
 }
 
 void handleCB2(OCStackResult result, std::string data)
@@ -210,9 +210,9 @@ void handleCB2(OCStackResult result, std::string data)
     printf("Cloud request Result is == %d", result);
     printf("ACL ID for the device is == %s", data.c_str());
 
-    ca_mutex_lock(mutex);
-    ca_cond_signal(cond);
-    ca_mutex_unlock(mutex);
+    oc_mutex_lock(mutex);
+    oc_cond_signal(cond);
+    oc_mutex_unlock(mutex);
 }
 
 static int saveTrustCert(void)
@@ -229,11 +229,11 @@ static int saveTrustCert(void)
         size_t fsize;
         if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)) > 0)
         {
-            trustCertChainArray.data = (uint8_t*)OICCalloc(1, fsize+1);
-            trustCertChainArray.len = fsize+1;
+            trustCertChainArray.data = (uint8_t*)OICCalloc(1, fsize);
+            trustCertChainArray.len = fsize;
             if (NULL == trustCertChainArray.data)
             {
-                OIC_LOG(ERROR,TAG,"OICCalloc");
+                OIC_LOG(ERROR,TAG,"Failed to allocate memory");
                 fclose(fp);
                 return res;
             }
@@ -270,8 +270,8 @@ static void userRequests(void *data)
     strncpy(endPoint.addr, DEFAULT_HOST, sizeof(endPoint.addr));
     endPoint.port = DEFAULT_PORT;
 
-    mutex = ca_mutex_new();
-    cond = ca_cond_new();
+    mutex = oc_mutex_new();
+    cond = oc_cond_new();
 
     while (false == fExit)
     {
@@ -289,7 +289,7 @@ static void userRequests(void *data)
 
         int request = 0;
         scanf("%d", &request);
-        for( ; 0x20<=getchar(); );
+        getchar();
 
         switch (request)
         {
@@ -404,8 +404,8 @@ static void userRequests(void *data)
         }
             break;
         case EXIT:
-            ca_mutex_free(mutex);
-            ca_cond_free(cond);
+            oc_mutex_free(mutex);
+            oc_cond_free(cond);
             fExit = true;
             break;
         default:
@@ -416,9 +416,9 @@ static void userRequests(void *data)
         //if requests were sent then wait response
         if (res == OC_STACK_OK)
         {
-            ca_mutex_lock(mutex);
-            ca_cond_wait_for(cond, mutex, timeout);
-            ca_mutex_unlock(mutex);
+            oc_mutex_lock(mutex);
+            oc_cond_wait_for(cond, mutex, timeout);
+            oc_mutex_unlock(mutex);
         }
     }
 
@@ -427,8 +427,14 @@ static void userRequests(void *data)
 
 FILE* server_fopen(const char *path, const char *mode)
 {
-    OC_UNUSED(path);
-    return fopen(fname, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(fname, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 /**

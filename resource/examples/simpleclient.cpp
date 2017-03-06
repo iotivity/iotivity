@@ -475,6 +475,47 @@ void foundResource(std::shared_ptr<OCResource> resource)
                 std::cout << "\t\t" << resourceInterfaces << std::endl;
             }
 
+            // Get Resource current host
+            std::cout << "\tHost of resource: " << std::endl;
+            std::cout << "\t\t" << resource->host() << std::endl;
+
+            // Get Resource Endpoint Infomation
+            std::cout << "\tList of resource endpoints: " << std::endl;
+            for(auto &resourceEndpoints : resource->getAllHosts())
+            {
+                std::cout << "\t\t" << resourceEndpoints << std::endl;
+            }
+
+            // If resource is found from ip based adapter.
+            if (std::string::npos != resource->host().find("coap://") ||
+                std::string::npos != resource->host().find("coaps://") ||
+                std::string::npos != resource->host().find("coap+tcp://") ||
+                std::string::npos != resource->host().find("coaps+tcp://"))
+            {
+                for(auto &resourceEndpoints : resource->getAllHosts())
+                {
+                    if (resourceEndpoints.compare(resource->host()) != 0 &&
+                        std::string::npos == resourceEndpoints.find("coap+rfcomm"))
+                    {
+                        std::string newHost = resourceEndpoints;
+
+                        if (std::string::npos != newHost.find("tcp"))
+                        {
+                            TRANSPORT_TYPE_TO_USE = OCConnectivityType::CT_ADAPTER_TCP;
+                        }
+                        else
+                        {
+                            TRANSPORT_TYPE_TO_USE = OCConnectivityType::CT_ADAPTER_IP;
+                        }
+                        // Change Resource host if another host exists
+                        std::cout << "\tChange host of resource endpoints" << std::endl;
+                        std::cout << "\t\t" << "Current host is "
+                                  << resource->setHost(newHost) << std::endl;
+                        break;
+                    }
+                }
+            }
+
             if(resourceURI == "/a/light")
             {
                 if (resource->connectivityType() & TRANSPORT_TYPE_TO_USE)
@@ -551,9 +592,16 @@ void checkTransportValue(int value)
     }
 }
 
-static FILE* client_open(const char* /*path*/, const char *mode)
+static FILE* client_open(const char* path, const char* mode)
 {
-    return fopen(SVR_DB_FILE_NAME, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(SVR_DB_FILE_NAME, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -592,8 +640,9 @@ int main(int argc, char* argv[]) {
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Both,
-        "0.0.0.0",
-        0,
+        OCConnectivityType::CT_ADAPTER_IP,
+        OCConnectivityType::CT_ADAPTER_IP,
+        (OCTransportAdapter)(OCTransportAdapter::OC_ADAPTER_IP|OCTransportAdapter::OC_ADAPTER_TCP),
         OC::QualityOfService::HighQos,
         &ps
     };

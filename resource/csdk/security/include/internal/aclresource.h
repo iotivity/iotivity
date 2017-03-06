@@ -62,7 +62,7 @@ const OicSecAce_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAce_t **
  */
 OCStackResult AclToCBORPayload(const OicSecAcl_t * acl, uint8_t **outPayload, size_t *size);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * Function to check the ACL access of SubOwner
  *
@@ -73,7 +73,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t * acl, uint8_t **outPayload, si
  * @return ::true for valid access, otherwise invalid access
  */
 bool IsValidAclAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPayload, const size_t size);
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 
 /**
@@ -111,24 +111,35 @@ void FreeRsrc(OicSecRsrc_t *rsrc);
  */
 OicSecAce_t* DuplicateACE(const OicSecAce_t* ace);
 
+
 /**
- * This function installs a new ACL.
+ * This function check the duplication with pre-installed ACL and installs only new ACEs.
+ *
+ * @param acl  acl to install.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult InstallACL(const OicSecAcl_t* acl);
+
+/**
+ * This function appends a new ACL.
  *
  * @param payload cbor value representing a new ACL.
  * @param size of the cbor payload.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult InstallNewACL(const uint8_t* payload, const size_t size);
+OCStackResult AppendACL(const uint8_t* payload, const size_t size);
 
 /**
- * This function installs a new ACL.
+ * This function appends a new ACL.
  *
- * @param acl  new acl to install.
+ * @param acl  new acl to append.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult InstallNewACL2(const OicSecAcl_t* acl);
+OCStackResult AppendACL2(const OicSecAcl_t* acl);
+
 /**
  * This function updates default ACE which is required for ownership transfer.
  * This function should be invoked after OTM is complete to prevent anonymous user access.
@@ -161,7 +172,7 @@ OCStackResult GetAclRownerId(OicUuid_t *rowneruuid);
  * @param cborPayload is the pointer to cbor payload to parse.
  * @param size of the cbor payload.
  *
- * @return ::acl instance of @ref OicSecAcl_t structure or NULL if error occurs
+ * @return instance of @ref OicSecAcl_t structure or NULL if error occurs
  */
 OicSecAcl_t* CBORPayloadToAcl2(const uint8_t *cborPayload, const size_t size);
 

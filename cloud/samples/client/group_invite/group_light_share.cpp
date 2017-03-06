@@ -9,7 +9,7 @@
 
 #include "ocstack.h"
 #include "ocpayload.h"
-#include "rd_client.h"
+#include "RDClient.h"
 
 #include <OCApi.h>
 #include <OCPlatform.h>
@@ -99,7 +99,6 @@ private:
                 if (requestType == "GET")
                 {
                     cout << "\t\t\trequestType : GET\n";
-                    pResponse->setErrorCode(200);
                     pResponse->setResponseResult(OC_EH_OK);
                     pResponse->setResourceRepresentation(get());
                     if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -116,7 +115,6 @@ private:
                     // Do related operations related to POST request
                     OCRepresentation rep_post = post(rep);
                     pResponse->setResourceRepresentation(rep_post);
-                    pResponse->setErrorCode(200);
 
                     if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {
@@ -321,12 +319,19 @@ void handleLoginoutCB(const HeaderOptions &, const OCRepresentation &rep, const 
 
 string g_option;
 
-static FILE *client_open(const char * /*path*/, const char *mode)
+static FILE *client_open(const char *path, const char *mode)
 {
-    string option = "./";
-    option += g_option;
-    option += ".dat";
-    return fopen(option.c_str(), mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        string option = "./";
+        option += g_option;
+        option += ".dat";
+        return fopen(option.c_str(), mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int main(int argc, char **argv)
@@ -383,9 +388,10 @@ int main(int argc, char **argv)
     ResourceHandles resourceHandles;
     resourceHandles.push_back(lightResource.m_resourceHandle);
 
-    OCPlatform::publishResourceToRD(g_host, OCConnectivityType::CT_ADAPTER_TCP, resourceHandles,
+    RDClient::Instance().publishResourceToRD(g_host, OCConnectivityType::CT_ADAPTER_TCP, resourceHandles,
             &onPublish);
     g_callbackLock.wait(lock);
+/* TODO: need to modify the below according to the OCAccountManager API changed.
     if (g_option == "owner")
     {
         cout << "Creating group" << endl;
@@ -427,6 +433,6 @@ int main(int argc, char **argv)
 
         cin >> cmd;
     }
-
+*/
     return 0;
 }

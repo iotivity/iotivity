@@ -19,16 +19,20 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "NSProviderSystem.h"
 
-#if(defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD)
 #define MAX_SERVER_ADDRESS 32
 static char NSRemoteServerAddress[MAX_SERVER_ADDRESS] = {0,};
+#endif
+
+#ifdef WITH_MQ
+static NSMQServerInfo * mqServerInfo = NULL;
 #endif
 
 static NSConnectionState NSProviderConnectionState;
 
 NSProviderInfo * providerInfo;
 bool NSPolicy = true;
-bool NSResourceSecurity = true;
+bool NSResourceSecurity = false;
 
 void NSSetProviderConnectionState(NSConnectionState state)
 {
@@ -44,7 +48,7 @@ NSConnectionState NSGetProviderConnectionState()
     return NSProviderConnectionState;
 }
 
-#if(defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD)
 void NSSetRemoteServerAddress(char *serverAddress)
 {
 
@@ -53,16 +57,16 @@ void NSSetRemoteServerAddress(char *serverAddress)
 
 void NSDeleteRemoteServerAddress(char *serverAddress)
 {
-    NS_LOG_V(DEBUG, "Delete cloud address: %s", serverAddress);
+    NS_LOG_V(INFO_PRIVATE, "Delete cloud address: %s", serverAddress);
 
     memset(NSRemoteServerAddress, 0, MAX_SERVER_ADDRESS);
 }
 
 bool NSIsRemoteServerAddress(char *serverAddress)
 {
-    NS_LOG_V(DEBUG, "Check server address: %s", serverAddress);
+    NS_LOG_V(INFO_PRIVATE, "Check server address: %s", serverAddress);
 
-    if(serverAddress != NULL)
+    if (serverAddress != NULL)
     {
         return strstr(NSRemoteServerAddress, serverAddress);
     }
@@ -77,33 +81,35 @@ void NSInitProviderInfo(const char * userInfo)
 
     providerInfo = (NSProviderInfo *) OICMalloc(sizeof(NSProviderInfo));
     const char * generatedUuid = (char *)OCGetServerInstanceIDString();
-    NS_LOG_V(DEBUG, "Generate Provider ID: %s", generatedUuid);
+    NS_LOG_V(INFO_PRIVATE, "Generate Provider ID: %s", generatedUuid);
     OICStrcpy(providerInfo->providerId, UUID_STRING_SIZE, generatedUuid);
 
     providerInfo->providerName = NULL;
     providerInfo->userInfo = NULL;
 
-    if(userInfo)
+    if (userInfo)
+    {
         providerInfo->userInfo = OICStrdup(userInfo);
+    }
 }
 
 void NSDeinitProviderInfo()
 {
     NS_LOG(DEBUG, "NSDeinitProviderInfo");
 
-    if(!providerInfo)
+    if (!providerInfo)
     {
         NS_LOG(DEBUG, "providerInfo is NULL");
         return;
     }
 
-    if(providerInfo->providerName)
+    if (providerInfo->providerName)
     {
         OICFree(providerInfo->providerName);
         providerInfo->providerName = NULL;
     }
 
-    if(providerInfo->userInfo)
+    if (providerInfo->userInfo)
     {
         OICFree(providerInfo->userInfo);
         providerInfo->userInfo = NULL;
@@ -115,7 +121,7 @@ void NSDeinitProviderInfo()
 
 NSProviderInfo * NSGetProviderInfo()
 {
-    NS_LOG_V(DEBUG, "ProviderInfo: %s", providerInfo->providerId);
+    NS_LOG_V(INFO_PRIVATE, "ProviderInfo: %s", providerInfo->providerId);
 
     return providerInfo;
 }
@@ -144,3 +150,22 @@ const char * NSGetUserInfo()
 {
     return providerInfo->userInfo;
 }
+
+#ifdef WITH_MQ
+void NSSetMQServerInfo(const char * serverUri, OCDevAddr * devAddr)
+{
+    if (!mqServerInfo)
+    {
+        NS_LOG(DEBUG, "setMqServer");
+        mqServerInfo = (NSMQServerInfo *)OICMalloc(sizeof(NSMQServerInfo));
+        mqServerInfo->serverUri = OICStrdup(serverUri);
+        mqServerInfo->devAddr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
+        memcpy(mqServerInfo->devAddr, devAddr, sizeof(OCDevAddr));
+    }
+}
+
+NSMQServerInfo * NSGetMQServerInfo()
+{
+    return mqServerInfo;
+}
+#endif

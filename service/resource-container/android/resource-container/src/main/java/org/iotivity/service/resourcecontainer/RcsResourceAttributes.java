@@ -105,7 +105,7 @@ public final class RcsResourceAttributes
      * @param key
      *            key with which the specified value is to be associated
      *
-     * @param value
+     * @param object
      *            value to be associated with the specified key
      *
      * @throws NullPointerException
@@ -193,6 +193,7 @@ public final class RcsResourceAttributes
     
     /**
      * Updates all properties provided as parameter.
+     * @param attrs the attributes to update
      */
     public void put(RcsResourceAttributes attrs){
         for (final String key : attrs.keySet()) {

@@ -57,20 +57,20 @@ extern "C" {
  * Values used to create bit-maskable enums for single-value response with
  * embedded code.
  */
-#define ACCESS_GRANTED_DEF            (1 << 0)
-#define ACCESS_DENIED_DEF             (1 << 1)
-#define INSUFFICIENT_PERMISSION_DEF   (1 << 2)
-#define SUBJECT_NOT_FOUND_DEF         (1 << 3)
-#define RESOURCE_NOT_FOUND_DEF        (1 << 4)
-#define POLICY_ENGINE_ERROR_DEF       (1 << 5)
-#define INVALID_PERIOD_DEF            (1 << 6)
-#define ACCESS_WAITING_DEF            (1 << 7)
-#define AMS_SERVICE_DEF               (1 << 8)
+#define ACCESS_GRANTED_DEF                      (1 << 0)
+#define ACCESS_DENIED_DEF                       (1 << 1)
+#define INSUFFICIENT_PERMISSION_DEF             (1 << 2)
+#define SUBJECT_NOT_FOUND_DEF                   (1 << 3)
+#define RESOURCE_NOT_FOUND_DEF                  (1 << 4)
+#define POLICY_ENGINE_ERROR_DEF                 (1 << 5)
+#define INVALID_PERIOD_DEF                      (1 << 6)
+#define SEC_RESOURCE_OVER_UNSECURE_CHANNEL_DEF  (1 << 7)
 #define REASON_MASK_DEF               (INSUFFICIENT_PERMISSION_DEF | \
                                        INVALID_PERIOD_DEF | \
                                        SUBJECT_NOT_FOUND_DEF | \
                                        RESOURCE_NOT_FOUND_DEF | \
-                                       POLICY_ENGINE_ERROR_DEF)
+                                       POLICY_ENGINE_ERROR_DEF | \
+                                       SEC_RESOURCE_OVER_UNSECURE_CHANNEL_DEF)
 
 
 /**
@@ -81,6 +81,7 @@ extern "C" {
  * 4th lsb:  D (Delete)
  * 5th lsb:  N (Notify)
  */
+#define PERMISSION_ERROR        (0x0)
 #define PERMISSION_CREATE       (1 << 0)
 #define PERMISSION_READ         (1 << 1)
 #define PERMISSION_WRITE        (1 << 2)
@@ -121,10 +122,8 @@ typedef enum
         | RESOURCE_NOT_FOUND_DEF,
     ACCESS_DENIED_POLICY_ENGINE_ERROR = ACCESS_DENIED_DEF
         | POLICY_ENGINE_ERROR_DEF,
-    ACCESS_WAITING_FOR_AMS = ACCESS_WAITING_DEF
-        | AMS_SERVICE_DEF,
-    ACCESS_DENIED_AMS_SERVICE_ERROR = ACCESS_DENIED
-        | AMS_SERVICE_DEF
+    ACCESS_DENIED_SEC_RESOURCE_OVER_UNSECURE_CHANNEL = ACCESS_DENIED_DEF
+        | SEC_RESOURCE_OVER_UNSECURE_CHANNEL_DEF,
 } SRMAccessResponse_t;
 
 /**
@@ -219,7 +218,7 @@ typedef enum OicSecDpm
     SECURITY_MANAGEMENT_SERVICES    = (0x1 << 3),
     PROVISION_CREDENTIALS           = (0x1 << 4),
     PROVISION_ACLS                  = (0x1 << 5),
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     TAKE_SUB_OWNER                  = (0x1 << 6),
 #endif
     // << 7 THROUGH 15 RESERVED
@@ -252,7 +251,8 @@ typedef enum
 
 typedef enum
 {
-    OIC_R_ACL_TYPE = 0,
+    OIC_RESOURCE_TYPE_ERROR = 0,
+    OIC_R_ACL_TYPE,
     OIC_R_AMACL_TYPE,
     OIC_R_CRED_TYPE,
     OIC_R_CRL_TYPE,
@@ -270,11 +270,14 @@ typedef enum
 {
     OIC_JUST_WORKS                          = 0x0,
     OIC_RANDOM_DEVICE_PIN                   = 0x1,
-    OIC_MANUFACTURER_CERTIFICATE           = 0x2,
-#ifdef _ENABLE_MULTIPLE_OWNER_
-    OIC_PRECONFIG_PIN                      = 0x3,
-#endif //_ENABLE_MULTIPLE_OWNER_
-    OIC_OXM_COUNT
+    OIC_MANUFACTURER_CERTIFICATE            = 0x2,
+    OIC_DECENTRALIZED_PUBLIC_KEY            = 0x3,
+    OIC_OXM_COUNT,
+#ifdef MULTIPLE_OWNER
+    OIC_PRECONFIG_PIN                       = 0xFF00,
+#endif //MULTIPLE_OWNER
+    OIC_MV_JUST_WORKS                       = 0xFF01,
+    OIC_CON_MFG_CERT                        = 0xFF02,
 }OicSecOxm_t;
 
 typedef enum
@@ -286,16 +289,16 @@ typedef enum
     OIC_ENCODING_DER = 4
 }OicEncodingType_t;
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 typedef enum
 {
     MOT_STATUS_READY = 0,
     MOT_STATUS_IN_PROGRESS = 1,
     MOT_STATUS_DONE = 2,
 }MotStatus_t;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
-/*
+/**
  * oic.sec.mom type definition
  * TODO: This type will be included to OIC Security Spec.
  * 0 : Disable multiple owner
@@ -312,6 +315,8 @@ typedef enum
 
 typedef struct OicSecKey OicSecKey_t;
 
+typedef struct OicSecOpt OicSecOpt_t;
+
 typedef struct OicSecPstat OicSecPstat_t;
 
 typedef struct OicSecRole OicSecRole_t;
@@ -324,10 +329,10 @@ typedef char *OicUrn_t; //TODO is URN type defined elsewhere?
 
 typedef struct OicUuid OicUuid_t; //TODO is UUID type defined elsewhere?
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 typedef struct OicSecSubOwner OicSecSubOwner_t;
 typedef struct OicSecMom OicSecMom_t;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
@@ -368,6 +373,15 @@ struct OicSecKey
 
 };
 
+struct OicSecOpt
+{
+    uint8_t                *data;
+    size_t                  len;
+
+    OicEncodingType_t encoding;
+    bool                revstat;
+};
+
 struct OicSecRsrc
 {
     char *href; // 0:R:S:Y:String
@@ -394,7 +408,7 @@ struct OicSecAce
     OicSecRsrc_t *resources;            // 1:R:M:Y:Resource
     uint16_t permission;                // 2:R:S:Y:UINT16
     OicSecValidity_t *validities;       // 3:R:M:N:Time-interval
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     OicUuid_t* eownerID;                //4:R:S:N:oic.uuid
 #endif
     OicSecAce_t *next;
@@ -420,9 +434,6 @@ struct OicSecAmacl
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
     size_t              resourcesLen;   // the number of elts in Resources
     char                **resources;    // 0:R:M:Y:String
-    size_t              amssLen;        // the number of elts in Amss
-    OicUuid_t           *amss;          // 1:R:M:Y:acl
-    OicUuid_t           rownerID;        // 2:R:S:Y:oic.uuid
     OicSecAmacl_t         *next;
 };
 
@@ -441,20 +452,20 @@ struct OicSecCred
     //OicSecRole_t        *roleIds;       // 2:R:M:N:oic.sec.role
     OicSecCredType_t    credType;       // 3:R:S:Y:oic.sec.credtype
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-    OicSecCert_t        publicData;     // own cerificate chain
+    OicSecKey_t         publicData;     // own cerificate chain
     char            *credUsage;            // 4:R:S:N:String
-    OicSecKey_t        optionalData;   // CA's cerificate chain
+    OicSecOpt_t        optionalData;   // CA's cerificate chain
 #endif /* __WITH_DTLS__  or __WITH_TLS__*/
     OicSecKey_t         privateData;    // 6:R:S:N:oic.sec.key
     char                *period;        // 7:R:S:N:String
     OicUuid_t           rownerID;       // 8:R:S:Y:oic.uuid
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     OicUuid_t           *eownerID;      //9:R:S:N:oic.uuid
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
     OicSecCred_t        *next;
 };
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 struct OicSecSubOwner {
     OicUuid_t uuid;
     MotStatus_t status;
@@ -464,7 +475,7 @@ struct OicSecSubOwner {
 struct OicSecMom{
     OicSecMomType_t mode;
 };
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /**
  * /oic/sec/doxm (Device Owner Transfer Methods) data type
@@ -485,10 +496,10 @@ struct OicSecDoxm
     OicUuid_t           deviceID;       // 6:R:S:Y:oic.uuid
     bool                dpc;            // 7:R:S:Y:Boolean
     OicUuid_t           owner;          // 8:R:S:Y:oic.uuid
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     OicSecSubOwner_t* subOwners;        //9:R/W:M:N:oic.uuid
     OicSecMom_t *mom;                   //10:R/W:S:N:oic.sec.mom
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
     OicUuid_t           rownerID;       // 11:R:S:Y:oic.uuid
 };
 
@@ -501,7 +512,6 @@ struct OicSecPstat
     bool                isOp;           // 0:R:S:Y:Boolean
     OicSecDpm_t         cm;             // 1:R:S:Y:oic.sec.dpm
     OicSecDpm_t         tm;             // 2:RW:S:Y:oic.sec.dpm
-    OicUuid_t           deviceID;       // 3:R:S:Y:oic.uuid
     OicSecDpom_t        om;             // 4:RW:M:Y:oic.sec.dpom
     size_t              smLen;          // the number of elts in Sm
     OicSecDpom_t        *sm;            // 5:R:M:Y:oic.sec.dpom
@@ -531,20 +541,6 @@ struct OicSecSacl
 #if defined(_MSC_VER)
     uint8_t unused; // VS doesn't like empty structs
 #endif
-};
-
-/**
- * /oic/sec/svc (Service requiring a secure connection) data type.
- * Derived from OIC Security Spec; see Spec for details.
- */
-struct OicSecSvc
-{
-    // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    OicUuid_t               svcdid;                 //0:R:S:Y:oic.uuid
-    OicSecSvcType_t         svct;                   //1:R:M:Y:OIC Service Type
-    size_t                  ownersLen;              //2:the number of elts in Owners
-    OicUuid_t               *owners;                //3:R:M:Y:oic.uuid
-    OicSecSvc_t             *next;
 };
 
 #if defined(__WITH_DTLS__) ||  defined(__WITH_TLS__)
@@ -633,7 +629,7 @@ struct OicSecDpairing
     OicUuid_t           rownerID;          // 2:R:S:Y:oic.uuid
 };
 
-#define MAX_VERSION_LEN 16 // Security Version length. i.e., 00.00.000 + reserved space
+#define OIC_SEC_MAX_VER_LEN 16 // Security Version length. i.e., 00.00.000 + reserved space
 
 /**
  * @brief   security version data type
@@ -646,7 +642,7 @@ typedef struct OicSecVer OicSecVer_t;
 struct OicSecVer
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    char              secv[MAX_VERSION_LEN];          // 0:R:S:Y:String
+    char              secv[OIC_SEC_MAX_VER_LEN];          // 0:R:S:Y:String
     OicUuid_t       deviceID;     // 1:R:S:Y:oic.uuid
 };
 

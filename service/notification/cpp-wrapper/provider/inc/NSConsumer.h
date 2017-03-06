@@ -29,6 +29,7 @@
 
 
 #include <string>
+#include <memory>
 #include "NSCommon.h"
 #include "NSUtils.h"
 #include "NSTopicsList.h"
@@ -82,8 +83,9 @@ namespace OIC
                       * This method is for setting icon image for the Notification service media contents.
                       * This function is valid only when subControllability is set true.
                       * @param accepted - as bool.
+                      * @return :: OK or result code of NSResult
                       */
-                int acceptSubscription(bool accepted);
+                NSResult acceptSubscription(bool accepted);
 
                 /**
                      * Select a topic name for a consumer
@@ -103,10 +105,11 @@ namespace OIC
                      * Request topic list with selection state for the consumer
                      * @return :: Topic list
                      */
-                NSTopicsList *getConsumerTopicList();
+                std::shared_ptr<NSTopicsList> getConsumerTopicList();
 
             private:
                 ::NSConsumer *getNSConsumer();
+                bool isValid() const;
 
             private:
                 std::string m_consumerId;

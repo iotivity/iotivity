@@ -54,6 +54,7 @@ public:
     virtual std::string host() const = 0;
     virtual std::vector<std::string> getResourceTypes() const = 0;
     virtual std::vector<std::string> getResourceInterfaces() const = 0;
+    virtual OCConnectivityType connectivityType() const = 0;
 
     virtual bool isObservable() const = 0;
 };

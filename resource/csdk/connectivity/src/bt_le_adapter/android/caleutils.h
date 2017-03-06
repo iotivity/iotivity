@@ -52,7 +52,8 @@ static const char CLASSPATH_BT_GATT[] = "android/bluetooth/BluetoothGatt";
 static const char CLASSPATH_BT_ADAPTER[] = "android/bluetooth/BluetoothAdapter";
 static const char CLASSPATH_BT_DEVICE[] = "android/bluetooth/BluetoothDevice";
 static const char CLASSPATH_BT_UUID[] = "java/util/UUID";
-
+static const char CLASSPATH_LE_SCANNER[] = "android/bluetooth/le/BluetoothLeScanner";
+static const char CLASSPATH_LE_SCANSETTINGS[] = "android/bluetooth/le/ScanSettings";
 
 static const char METHODID_OBJECTNONPARAM[] = "()Landroid/bluetooth/BluetoothAdapter;";
 static const char METHODID_BT_DEVICE[] = "()Landroid/bluetooth/BluetoothDevice;";
@@ -69,6 +70,15 @@ static const uint16_t STATE_CONNECTED = 3;
 static const uint16_t STATE_SERVICE_CONNECTED = 2;
 static const uint16_t STATE_DISCONNECTED = 1;
 
+static const uint16_t GATT_ERROR = 133;
+
+static const uint16_t STATE_SEND_NONE = 1;
+static const uint16_t STATE_SEND_SUCCESS = 2;
+static const uint16_t STATE_SEND_FAIL = 3;
+static const uint16_t STATE_SENDING = 4;
+static const uint16_t STATE_SEND_PREPARING = 5;
+static const uint16_t STATE_SEND_MTU_NEGO_SUCCESS = 6;
+
 /**
  * get uuid(jni object) from uuid(character).
  * @param[in]   env              JNI interface pointer.
@@ -84,6 +94,14 @@ jobject CALEGetUuidFromString(JNIEnv *env, const char* uuid);
  * @return  parcel uuid object.
  */
 jobject CALEGetParcelUuid(JNIEnv *env, jobject uuid);
+
+/**
+ * get parcel uuid object from uuid string value.
+ * @param[in]   env              JNI interface pointer.
+ * @param[in]   uuid             uuid (const char*).
+ * @return  parcel uuid object.
+ */
+jobject CALEGetParcelUuidFromString(JNIEnv *env, const char* uuid);
 
 /**
  * get address from a local device.

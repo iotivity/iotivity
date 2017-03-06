@@ -79,7 +79,6 @@
         "sct": 1,
         "owned": true,
         "deviceuuid": "5375624F-776E-6572-436C-69656E743030",
-        "x.org.iotivity.dpc": false,
         "devowneruuid": "5375624F-776E-6572-436C-69656E743030",
         "rowneruuid": "5375624F-776E-6572-436C-69656E743030"
     }

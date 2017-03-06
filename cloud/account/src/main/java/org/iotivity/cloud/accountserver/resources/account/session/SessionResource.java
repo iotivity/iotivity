@@ -86,31 +86,31 @@ public class SessionResource extends Resource {
 
         HashMap<String, Object> responsePayload = null;
 
-        if (checkPayloadException(
-                Arrays.asList(Constants.REQ_UUID_ID, Constants.REQ_DEVICE_ID,
-                        Constants.REQ_ACCESS_TOKEN, Constants.REQ_LOGIN),
-                payloadData)) {
+        checkPayloadException(Arrays.asList(Constants.REQ_DEVICE_ID,
+                Constants.REQ_ACCESS_TOKEN), payloadData);
 
+        String deviceId = payloadData.get(Constants.REQ_DEVICE_ID).toString();
+        String accessToken = payloadData.get(Constants.REQ_ACCESS_TOKEN)
+                .toString();
+
+        checkPayloadException(Constants.REQ_LOGIN, payloadData);
+
+        boolean signinRequest = (boolean) payloadData.get(Constants.REQ_LOGIN);
+
+        if (signinRequest) {
+            // sign-in response payload
+            checkPayloadException(Constants.REQ_UUID_ID, payloadData);
             String uuid = payloadData.get(Constants.REQ_UUID_ID).toString();
-            String deviceId = payloadData.get(Constants.REQ_DEVICE_ID)
-                    .toString();
-            String accessToken = payloadData.get(Constants.REQ_ACCESS_TOKEN)
-                    .toString();
-
-            // identify if the request is sign-in or sign-out
-            boolean signinRequest = (boolean) payloadData
-                    .get(Constants.REQ_LOGIN);
-
-            if (signinRequest) {
-                // sign-in response payload
-                responsePayload = mAsManager.signInOut(uuid, deviceId,
-                        accessToken);
-            } else {
-                // sign-out response
-                mAsManager.signInOut(uuid, deviceId, accessToken);
-                return MessageBuilder.createResponse(request,
-                        ResponseStatus.CHANGED);
-            }
+            responsePayload = mAsManager.signInOut(uuid, deviceId, accessToken);
+        } else {
+            // sign-out response
+            checkQueryException(Constants.REQ_UUID_ID,
+                    request.getUriQueryMap());
+            String uuid = request.getUriQueryMap().get(Constants.REQ_UUID_ID)
+                    .get(0);
+            mAsManager.signInOut(uuid, deviceId, accessToken);
+            return MessageBuilder.createResponse(request,
+                    ResponseStatus.CHANGED);
         }
 
         // sign-in response

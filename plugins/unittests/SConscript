@@ -62,5 +62,6 @@ if unittests_env.get('TEST') == '1':
                 from tools.scons.RunTest import *
                 run_test(unittests_env,
                          'plugins_unittests.memcheck',
-                         'plugins/unittests/piunittests')
+                         'plugins/unittests/piunittests',
+                         piunittests)
 

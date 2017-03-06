@@ -29,6 +29,7 @@ import java.util.List;
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.db.InviteTable;
+import org.iotivity.cloud.accountserver.resources.acl.group.GroupBrokerManager;
 import org.iotivity.cloud.accountserver.resources.acl.group.GroupManager;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.base.device.Device;
@@ -110,6 +111,10 @@ public class InviteManager {
         List<HashMap<String, Object>> getInviteList = AccountDBManager
                 .getInstance().selectRecord(Constants.INVITE_TABLE, condition);
 
+        if (getInviteList == null || getInviteList.isEmpty()) {
+            throw new BadRequestException("mid or gid is not valid");
+        }
+
         ArrayList<String> uidList = new ArrayList<>();
         for (HashMap<String, Object> getInvite : getInviteList) {
             getInviteTable = mTypeInvite.convertMaptoObject(getInvite,
@@ -123,10 +128,12 @@ public class InviteManager {
         /* add user into group */
         if (accepted) {
 
-            HashSet<String> midlist = new HashSet<String>();
+            ArrayList<String> midlist = new ArrayList<>();
             midlist.add(mid);
 
-            GroupManager.getInstance().addGroupMember(gid, midlist);
+            GroupManager.getInstance().addMembersToGroup(gid, midlist);
+            GroupBrokerManager.getInstance().notifyToObservers(
+                    GroupManager.getInstance().getGroupTable(gid).getMembers());
         }
 
         notifyToSubscriber(mid);

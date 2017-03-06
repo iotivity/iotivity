@@ -28,7 +28,6 @@
 #ifndef _NS_CONSUMER_SERVICE_H_
 #define _NS_CONSUMER_SERVICE_H_
 
-#include <list>
 #include <algorithm>
 #include "NSProvider.h"
 #include "NSUtils.h"
@@ -38,19 +37,19 @@ namespace OIC
 {
     namespace Service
     {
+        class NSAcceptedProviders;
         /**
          * @class   NSConsumerService
          * @brief   This class provides a set of C++APIs for Notification Consumer.
          */
         class NSConsumerService
         {
-
             public :
                 /**
                      * Consumer uses this callback function to receive the discovered providers
                      * @param[in] provider        Provider who has the notification resource
                      */
-                typedef void (*ProviderDiscoveredCallback)(NSProvider *);
+                typedef void (*ProviderDiscoveredCallback)(std::shared_ptr<NSProvider> );
 
                 /**
                       * API for getting the Instance of NSConsumerService class
@@ -62,13 +61,15 @@ namespace OIC
                 /**
                       * Initialize notification service for consumer
                       * @param providerDiscovered Callback function pointers to ProviderDiscoveredCallback,
+                      * @return ::NS_OK or result code of NSResult
                       */
-                void start(ProviderDiscoveredCallback providerDiscovered);
+                NSResult start(ProviderDiscoveredCallback providerDiscovered);
 
                 /**
                       * Terminate notification service for consumer
+                      * @return ::NS_OK or result code of NSResult
                       */
-                void stop();
+                NSResult stop();
 
                 /**
                      * Request to discover to remote address as parameter.
@@ -78,9 +79,18 @@ namespace OIC
                 NSResult enableRemoteService(const std::string &serverAddress);
 
                 /**
-                      * Request discovery manually
+                      * Request to subscribe to remote MQ address as parameter.
+                      * @param[in] serverAddress server address combined with IP address and port number and MQ broker uri using delimiter :
+                      * @param[in] topicName the interest Topic name for subscription.
+                      * @return ::NS_OK or result code of NSResult
                       */
-                void rescanProvider();
+                NSResult subscribeMQService(const std::string &serverAddress, const std::string &topicName);
+
+                /**
+                      * Request discovery manually
+                      * @return ::NS_OK or result code of NSResult
+                      */
+                NSResult rescanProvider();
 
                 /**
                       *  get the callback for ProviderDiscovered
@@ -89,22 +99,22 @@ namespace OIC
                 ProviderDiscoveredCallback getProviderDiscoveredCb();
 
                 /**
-                      *  request to get NSProvider pointer
-                      * @param id -id as string
-                      *
-                      * @return pointer to NSProvider
-                      */
-                NSProvider *getProvider(const std::string &id);
+                     *  request to get NSProvider pointer
+                     * @param id -id as string
+                     *
+                     * @return shared pointer to NSProvider
+                     */
+                std::shared_ptr<NSProvider> getProvider(const std::string &id);
 
                 /**
-                      *  get list of providers acceted.
-                      * @return m_acceptedProviders -list of accepted providers
+                      *  get handle of providers accepted.
+                      * @return m_acceptedProviders -accepted providers
                       */
-                std::list<NSProvider *> &getAcceptedProviders();
+                NSAcceptedProviders *getAcceptedProviders();
 
             private :
                 ProviderDiscoveredCallback m_providerDiscoveredCb;
-                std::list<NSProvider *> m_acceptedProviders;
+                NSAcceptedProviders *m_acceptedProviders;
 
             private :
                 NSConsumerService();
@@ -113,6 +123,10 @@ namespace OIC
                 NSConsumerService &operator=(const NSConsumerService & ) = delete;
                 NSConsumerService(const NSConsumerService &&) = delete;
                 NSConsumerService &operator=(const NSConsumerService && ) = delete;
+
+                static void onProviderStateReceived(::NSProvider *provider, ::NSProviderState state);
+                static void onNSMessageReceived(::NSMessage *message);
+                static void onNSSyncInfoReceived(::NSSyncInfo *syncInfo);
 
         };
     }

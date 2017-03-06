@@ -71,6 +71,8 @@ public class EasySetup {
 
     /**
      * Gives a singleton instance of Easy setup and initialize the easy setup
+     * @param context android context
+     * @return a initialized singleton instance of EasySetup
      */
     public synchronized static EasySetup getInstance(Context context) {
         if (sInstance == null) {
@@ -87,7 +89,7 @@ public class EasySetup {
      *        discovered in a network. The OcResource object can be obtained by calling
      *        OcPlatform.findResource() API. What resource you have to discover with
      *        the OcPlatform.findResource() API is a "provisioning" resource with a certain
-     *        resource type, i.e. oic.wk.prov
+     *        resource type, i.e. oic.r.easysetup
      *
      * @return Pointer to RemoteEnrollee instance
      */

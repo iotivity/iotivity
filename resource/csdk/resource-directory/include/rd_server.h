@@ -28,6 +28,8 @@
 extern "C" {
 #endif // __cplusplus
 
+#ifdef RD_SERVER
+
 /**
 * This function creates resource /oic/rd.
 *
@@ -57,6 +59,8 @@ OCStackResult OCRDStop();
  */
 OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *resourceType,
         OCDiscoveryPayload **payload);
+
+#endif
 
 #ifdef __cplusplus
 }

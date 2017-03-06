@@ -57,7 +57,24 @@ OCStackResult PMSingleDeviceDiscovery(unsigned short waittime, const OicUuid_t* 
                                  OCProvisionDev_t **ppFoundDevice);
 
 /**
- * Discover owned/unowned devices in the same IP subnet. .
+ * Discover owned/unowned device in the specified endpoint/MAC address.
+ * It will return the found device even though timeout is not exceeded.
+ *
+ * @param[in] waittime           Timeout in seconds.
+ * @param[in] deviceID           deviceID of target device.
+ * @param[in] hostAddress       MAC address of target device.
+ * @param[in] connType       ConnectivityType for discovery.
+ * @param[out] ppFoundDevice     OCProvisionDev_t of found device.
+ *
+ * @return OC_STACK_OK on success otherwise error.
+ *         OC_STACK_INVALID_PARAM when deviceID is NULL or ppFoundDevice is not initailized.
+ */
+OCStackResult PMSingleDeviceDiscoveryInUnicast(unsigned short waittime, const OicUuid_t* deviceID,
+                        const char* hostAddress, OCConnectivityType connType,
+                        OCProvisionDev_t **ppFoundDevice);
+
+/**
+ * Discover owned/unowned devices in the same IP subnet.
  *
  * @param[in] waittime      Timeout in seconds.
  * @param[in] isOwned       bool flag for owned / unowned discovery
@@ -67,7 +84,25 @@ OCStackResult PMSingleDeviceDiscovery(unsigned short waittime, const OicUuid_t* 
  */
 OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisionDev_t **ppList);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
+/**
+ * The function is responsible for the discovery of an MOT-enabled device with the specified deviceID.
+ * The function will return when security information for device with deviceID has been obtained or the
+ * timeout has been exceeded.
+ *
+ * @param[in]  timeoutSeconds  Maximum time, in seconds, this function will listen for responses from 
+ *                             servers before returning.
+ * @param[in]  deviceID        deviceID of target device.
+ * @param[out] ppFoundDevice   OCProvisionDev_t of found device. Caller should use PMDeleteDeviceList 
+ *                             to delete the device.
+ *
+ * @return OC_STACK_OK on success otherwise error.
+ *         OC_STACK_INVALID_PARAM when deviceID is NULL or ppFoundDevice is not initailized.
+ */
+OCStackResult PMMultipleOwnerSingleDeviceDiscovery(unsigned short timeoutSeconds,
+                                                   const OicUuid_t *deviceID,
+                                                   OCProvisionDev_t **ppFoundDevice);
+
 /**
  * Discover multiple OTM enabled devices in the same IP subnet.
  *
@@ -78,7 +113,17 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
  * @return OC_STACK_OK on success otherwise error.
  */
 OCStackResult PMMultipleOwnerDeviceDiscovery(unsigned short waittime, bool isMultipleOwned, OCProvisionDev_t **ppDevicesList);
-#endif //_ENABLE_MULTIPLE_OWNER_
+
+/**
+ * The function is responsible for determining if the caller is a subowner of the specified device.
+ *
+ * @param[in]  device      MOT enabled device that contains a list of subowners
+ * @param[out] isSubowner  Bool indicating whether the caller is a subowner of device
+ *
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult PMIsSubownerOfDevice(OCProvisionDev_t *device, bool *isSubowner);
+#endif //MULTIPLE_OWNER
 
 /**
  * This function deletes list of provision target devices
@@ -110,7 +155,7 @@ OCProvisionDev_t* PMCloneOCProvisionDev(const OCProvisionDev_t* src);
 /**
  * Function to generate qurey for coap/coaps request.
  *
- * @param[in] isSeucre Choose whether to encrypt the payload.
+ * @param[in] isSecure Choose whether to encrypt the payload.
  * @param[in] address Network address of remote device
  * @param[in] port Port number
  * @param[in] connType Connectivity type of remote device

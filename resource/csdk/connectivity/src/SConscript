@@ -3,16 +3,16 @@
 ##
 import os.path
 
-Import('env')
+Import('connectivity_env')
 
-ca_os = env.get('TARGET_OS')
-ca_transport = env.get('TARGET_TRANSPORT')
-secured = env.get('SECURED')
-multiple_owner = env.get('MULTIPLE_OWNER')
-with_ra = env.get ('WITH_RA')
-with_ra_ibb = env.get('WITH_RA_IBB')
-with_tcp = env.get('WITH_TCP')
-src_dir = env.get('SRC_DIR')
+ca_os = connectivity_env.get('TARGET_OS')
+ca_transport = connectivity_env.get('TARGET_TRANSPORT')
+secured = connectivity_env.get('SECURED')
+multiple_owner = connectivity_env.get('MULTIPLE_OWNER')
+with_ra = connectivity_env.get ('WITH_RA')
+with_ra_ibb = connectivity_env.get('WITH_RA_IBB')
+with_tcp = connectivity_env.get('WITH_TCP')
+src_dir = connectivity_env.get('SRC_DIR')
 root_dir = os.pardir
 ca_path = os.curdir
 
@@ -22,89 +22,60 @@ ca_path = os.curdir
 
 print"Reading ca script %s"%ca_transport
 
-env.PrependUnique(CPPPATH = [ os.path.join(root_dir, 'api') ])
+connectivity_env.PrependUnique(CPPPATH = [ os.path.join(root_dir, 'api') ])
 
-with_upstream_libcoap = env.get('WITH_UPSTREAM_LIBCOAP')
+with_upstream_libcoap = connectivity_env.get('WITH_UPSTREAM_LIBCOAP')
 if with_upstream_libcoap == '1':
 	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
-	env.AppendUnique(CPPPATH = [os.path.join('#extlibs', 'libcoap', 'libcoap', 'include')])
-	env.AppendUnique(CPPDEFINES = ['WITH_UPSTREAM_LIBCOAP'])
+	connectivity_env.AppendUnique(CPPPATH = [os.path.join('#extlibs', 'libcoap', 'libcoap', 'include')])
 else:
 	# For bring up purposes only, the forked version will live here.
-	env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'lib', 'libcoap-4.1.1', 'include')])
+	connectivity_env.AppendUnique(CPPPATH = [ os.path.join('#resource', 'csdk', 'connectivity', 'lib', 'libcoap-4.1.1', 'include')])
 
-env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'inc'),
+connectivity_env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'inc'),
                              os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
                              os.path.join(root_dir, 'common', 'inc'),
                              os.path.join(root_dir, 'util', 'inc') ])
 
-if ca_os not in ['arduino', 'windows']:
-	env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
-
 if ca_os not in ['darwin', 'ios', 'windows']:
-	env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
-
-if ca_os in ['darwin','ios']:
-	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
+	connectivity_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 
 # Getting common source files
-env.SConscript(os.path.join(root_dir, 'common', 'SConscript'))
+connectivity_env.SConscript(os.path.join(root_dir, 'common', 'SConscript'), exports = 'connectivity_env')
 
 # Getting util source files
-env.SConscript(os.path.join(root_dir, 'util', 'SConscript'))
+connectivity_env.SConscript(os.path.join(root_dir, 'util', 'SConscript'), exports = 'connectivity_env')
 
-# The tinydtls library is found in '#extlibs/tinydtls', where the '#'
-# is interpreted by SCons as the top-level iotivity directory where
-# the SConscruct file is found.
-build_dir = env.get('BUILD_DIR')
+build_dir = connectivity_env.get('BUILD_DIR')
 
-env.AppendUnique(CA_SRC = [os.path.join(ca_path,
+connectivity_env.AppendUnique(CA_SRC = [os.path.join(ca_path,
                                         'adapter_util/caadapterutils.c')])
 
 if (('BLE' in ca_transport) or ('ALL' in ca_transport)):
-	env.AppendUnique(CA_SRC = [os.path.join(ca_path,
+	connectivity_env.AppendUnique(CA_SRC = [os.path.join(ca_path,
                                           'adapter_util/cafragmentation.c')])
 
-if env.get('SECURED') == '1':
-	env.SConscript(build_dir + 'extlibs/tinydtls/SConscript')
-	env.AppendUnique(CPPPATH = ['#extlibs/tinydtls'])
-	env.AppendUnique(CPPPATH = [src_dir + '/resource/csdk/security/include'])
-	env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
-	env.AppendUnique(CPPPATH = [os.path.join(root_dir, 'external/inc')])
+if connectivity_env.get('SECURED') == '1':
+	connectivity_env.AppendUnique(CPPPATH = ['#extlibs/timer'])
+	connectivity_env.AppendUnique(CPPPATH = [src_dir + '/resource/csdk/security/include'])
+	connectivity_env.AppendUnique(CPPPATH = [os.path.join(root_dir, 'external/inc')])
 	tls_path = 'extlibs/mbedtls';
 	tls_headers_path = 'mbedtls/include';
 	if ca_os == 'tizen' and os.path.exists(root_dir + '/' + tls_path):
-		env.SConscript(os.path.join(root_dir, tls_path + '/SConscript'))
-		env.AppendUnique(CPPPATH = [os.path.join(root_dir, tls_path + '/' + tls_headers_path)])
+		connectivity_env.SConscript(os.path.join(root_dir, tls_path + '/SConscript'))
+		connectivity_env.AppendUnique(CPPPATH = [os.path.join(root_dir, tls_path + '/' + tls_headers_path)])
 	else:
 		if ca_os != 'android':
-			env.SConscript('#' + tls_path + '/SConscript')
-		env.AppendUnique(CPPPATH = ['#' + tls_path + '/' + tls_headers_path])
-		env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'adapter_util/ca_adapter_net_ssl.c')])
-
-if ((secured == '1') and (with_tcp == True)):
-	env.AppendUnique(CPPDEFINES = ['__WITH_TLS__'])
-
-if (multiple_owner == '1'):
-	env.AppendUnique(CPPDEFINES=['_ENABLE_MULTIPLE_OWNER_'])
-
+			connectivity_env.SConscript('#' + tls_path + '/SConscript')
+		connectivity_env.AppendUnique(CPPPATH = ['#' + tls_path + '/' + tls_headers_path])
+		connectivity_env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'adapter_util/ca_adapter_net_ssl.c')])
 
 ca_common_src = None
 
 if with_ra_ibb:
-	env.SConscript('#extlibs/wksxmppxep/SConscript')
-
-if env.get('ROUTING') == 'GW':
-	env.AppendUnique(CPPDEFINES = ['ROUTING_GATEWAY'])
-elif env.get('ROUTING') == 'EP':
-	env.AppendUnique(CPPDEFINES = ['ROUTING_EP'])
-
-if env.get('WITH_PROXY'):
-	env.AppendUnique(CPPDEFINES = ['WITH_CHPROXY'])
+	connectivity_env.SConscript('#extlibs/wksxmppxep/SConscript')
 
 if ca_os == 'arduino':
-	env.AppendUnique(CPPDEFINES = ['SINGLE_THREAD'])
-	env.AppendUnique(CPPDEFINES = ['WITH_ARDUINO'])
 	print "setting WITH_ARDUINO"
 	ca_common_src = [
 		'caconnectivitymanager.c',
@@ -125,98 +96,81 @@ else:
 		'caretransmission.c',
 		]
 	if (('IP' in ca_transport) or ('ALL' in ca_transport)):
-		env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'cablockwisetransfer.c') ])
-		env.AppendUnique(CPPDEFINES = ['WITH_BWT'])
+		connectivity_env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'cablockwisetransfer.c') ])
 
 ca_common_src = [
         os.path.join(ca_path, d) for d in ca_common_src ]
 
-env.AppendUnique(CA_SRC = ca_common_src)
+connectivity_env.AppendUnique(CA_SRC = ca_common_src)
 
+transports = set()
 if 'ALL' in ca_transport:
-		transports = []
-
 		if with_ra:
-				transports.append('ra_adapter')
+				transports.add('ra_adapter')
 
 		if ca_os in ['linux']:
-				transports.append('ip_adapter')
-				transports.append('bt_le_adapter')
+				transports.add('ip_adapter')
+				transports.add('bt_le_adapter')
 		elif ca_os in ['tizen']:
-				transports.append('ip_adapter')
-				transports.append('bt_edr_adapter')
-				transports.append('bt_le_adapter')
+				transports.add('ip_adapter')
+				transports.add('bt_edr_adapter')
+				transports.add('bt_le_adapter')
 		elif ca_os in ['android']:
-				transports.append('ip_adapter')
-				transports.append('bt_edr_adapter')
-				transports.append('bt_le_adapter')
-				transports.append('nfc_adapter')
+				transports.add('ip_adapter')
+				transports.add('bt_edr_adapter')
+				transports.add('bt_le_adapter')
+				transports.add('nfc_adapter')
 		elif ca_os in['darwin','ios', 'msys_nt', 'windows']:
-				transports.append('ip_adapter')
+				transports.add('ip_adapter')
 		else:
-				transports.append('ip_adapter')
-				transports.append('bt_edr_adapter')
-				transports.append('bt_le_adapter')
+				transports.add('ip_adapter')
+				transports.add('bt_edr_adapter')
+				transports.add('bt_le_adapter')
 
-		env.SConscript(dirs = [
-				os.path.join(ca_path, d) for d in transports ])
+		connectivity_env.SConscript(dirs = [
+				os.path.join(ca_path, d) for d in transports ], exports = 'connectivity_env')
 
 if 'IP' in ca_transport:
-	env.SConscript(os.path.join(ca_path, 'ip_adapter/SConscript'))
-	if ca_os == 'arduino':
-		if with_tcp == True:
-			transports = [ 'ip_adapter', 'tcp_adapter']
-			env.SConscript(dirs = [
-				os.path.join(ca_path, d) for d in transports ])
+	transports.add('ip_adapter')
+	if ca_os == 'arduino' and with_tcp:
+		transports.add('tcp_adapter')
 
 if 'BT' in ca_transport:
-	env.SConscript(os.path.join(ca_path, 'bt_edr_adapter/SConscript'))
+	transports.add('bt_edr_adapter')
 
 if 'BLE' in ca_transport:
-	env.SConscript(os.path.join(ca_path, 'bt_le_adapter/SConscript'))
+	transports.add('bt_le_adapter')
 
 if 'NFC' in ca_transport:
-	env.SConscript(os.path.join(ca_path, 'nfc_adapter/SConscript'))
+	transports.add('nfc_adapter')
 
-if ca_os in ['linux', 'tizen', 'android']:
-	if with_tcp == True:
-		env.SConscript(os.path.join(ca_path, 'tcp_adapter/SConscript'))
-		env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
+if ca_os in ['linux', 'tizen', 'android', 'ios', 'windows'] and with_tcp:
+	transports.add('tcp_adapter')
 
-if ca_os in ['linux', 'tizen', 'android', 'arduino', 'ios']:
-	if (('BLE' in ca_transport) or ('BT' in ca_transport) or ('ALL' in ca_transport)):
-		env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
+SConscript(dirs = list(transports), exports='connectivity_env')
 
-print "Include path is %s" % env.get('CPPPATH')
-print "Files path is %s" % env.get('CA_SRC')
-
-lib_env = env.Clone()
-lib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-
-if env.get('LOGGING'):
-	lib_env.AppendUnique(CPPDEFINES=['TB_LOG'])
+print "Include path is %s" % connectivity_env.get('CPPPATH')
+print "Files path is %s" % connectivity_env.get('CA_SRC')
 
 if ca_os == 'android':
-	lib_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libconnectivity_abstraction.so'])
+	connectivity_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libca-interface.so'])
+	connectivity_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libconnectivity_abstraction.so'])
 
-if ca_os in ['android', 'tizen', 'linux']:
-	lib_env.AppendUnique(LIBS = ['coap'])
-	if lib_env.get('SECURED') == '1':
-		lib_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
+if connectivity_env.get('SECURED') == '1':
+	connectivity_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto', 'timer'])
+
+if ca_os in ['android', 'tizen', 'linux', 'yocto']:
+	connectivity_env.AppendUnique(LIBS = ['coap'])
 	if ca_os != 'android':
-		lib_env.AppendUnique(LIBS = ['rt'])
-		if ((lib_env.get('SECURED') == '1') and ((lib_env.get('WITH_TCP')) or (lib_env.get('WITH_CLOUD')))):
-			lib_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
-	static_calib = lib_env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
-	shared_calib = lib_env.SharedLibrary('connectivity_abstraction', lib_env.get('CA_SRC'))
+		connectivity_env.AppendUnique(LIBS = ['rt'])
+	static_calib = connectivity_env.StaticLibrary('connectivity_abstraction', connectivity_env.get('CA_SRC'))
+	shared_calib = connectivity_env.SharedLibrary('connectivity_abstraction', connectivity_env.get('CA_SRC'))
 	calib = Flatten([static_calib, shared_calib])
 elif ca_os in ['msys_nt', 'windows']:
-	lib_env.AppendUnique(LIBS = ['coap', 'mswsock', 'ws2_32', 'iphlpapi', 'logger'])
-	if lib_env.get('SECURED') == '1':
-		lib_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
-	calib = lib_env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
+	connectivity_env.AppendUnique(LIBS = ['coap', 'mswsock', 'ws2_32', 'iphlpapi', 'logger'])
+	calib = connectivity_env.StaticLibrary('connectivity_abstraction', connectivity_env.get('CA_SRC'))
 else:
-	calib = lib_env.StaticLibrary('connectivity_abstraction', lib_env.get('CA_SRC'))
+	calib = connectivity_env.StaticLibrary('connectivity_abstraction', connectivity_env.get('CA_SRC'))
 
-lib_env.InstallTarget(calib, 'connectivity_abstraction')
-lib_env.UserInstallTargetLib(calib, 'connectivity_abstraction')
+connectivity_env.InstallTarget(calib, 'connectivity_abstraction')
+connectivity_env.UserInstallTargetLib(calib, 'connectivity_abstraction')

@@ -1,4 +1,5 @@
 import os, string, sys, subprocess
+import SCons.Errors
 
 Import('env')
 
@@ -39,11 +40,11 @@ elif target_os in ['windows']:
             boost_zip = boost_zip_file
         else:
             print '*** Downloading Boost zip file (> 100MB). Please wait... ***'
-            boost_zip = env.Download(boost_zip_file, boost_url)
+            boost_zip = boost_env.Download(boost_zip_file, boost_url)
 
         # Unzip boost
         print '*** Unpacking boost %s zip file ... ***' % boost_version
-        env.UnpackAll(boost_dir, boost_zip)
+        boost_env.UnpackAll(boost_dir, boost_zip)
 
         # Rename from boost_1_60_0 -> boost
         os.rename(boost_base_name, 'boost')
@@ -69,10 +70,10 @@ elif target_os in ['windows']:
         Exit(1)
 
 elif target_os in ['android']:
-    env.Tool('URLDownload',    toolpath=['../../tools/scons'])
-    env.Tool('UnpackAll',      toolpath=['../../tools/scons'])
-    env.Tool('BoostBootstrap', toolpath=['../../tools/scons'])
-    env.Tool('BoostBuild',     toolpath=['../../tools/scons'])
+    boost_env.Tool('URLDownload',    toolpath=['../../tools/scons'])
+    boost_env.Tool('UnpackAll',      toolpath=['../../tools/scons'])
+    boost_env.Tool('BoostBootstrap', toolpath=['../../tools/scons'])
+    boost_env.Tool('BoostBuild',     toolpath=['../../tools/scons'])
 
     host_os = sys.platform
 
@@ -83,14 +84,14 @@ elif target_os in ['android']:
         raise SCons.Errors.EnvironmentError(msg)
 
     if not os.path.exists(boost_arch_name) and not os.path.exists(boost_base_name):
-        boost_arch_name = env.URLDownload(boost_arch_name, boost_url)
+        boost_arch_name = boost_env.URLDownload(boost_arch_name, boost_url)
 
     if not os.path.exists(boost_base_name):
-	boost_arch_name = env.UnpackAll(boost_bootstrap, boost_arch_name)
+	boost_arch_name = boost_env.UnpackAll(boost_bootstrap, boost_arch_name)
 
-    boost_b2  = env.BoostBootstrap(boost_b2_name, boost_arch_name)
+    boost_b2  = boost_env.BoostBootstrap(boost_b2_name, boost_arch_name)
 
-    dep_sys_root = env['DEP_SYS_ROOT']
+    dep_sys_root = boost_env['DEP_SYS_ROOT']
     dep_src_dir =  dep_sys_root + os.sep + 'include'
     dep_lib_dir =  dep_sys_root + os.sep + 'lib'
 
@@ -107,5 +108,5 @@ elif target_os in ['android']:
         os.path.join(dep_src_dir, 'libboost_program_options.a')
         ]
 
-    boost_build = env.BoostBuild(boost_targets, boost_b2, PREFIX=dep_sys_root, MODULES=modules)
+    boost_build = boost_env.BoostBuild(boost_targets, boost_b2, PREFIX=dep_sys_root, MODULES=modules)
 

@@ -141,11 +141,19 @@ OCStackResult RMSendNotificationToAll(const OCRepPayload *payload);
  */
 void RMSendDeleteToNeighbourNodes();
 
-void RMGenerateGatewayID(uint8_t *id, size_t idLen)
+OCStackResult RMGenerateGatewayID(uint8_t *id, size_t idLen)
 {
     OIC_LOG(DEBUG, TAG, "RMGenerateGatewayID IN");
-    OCFillRandomMem(id, idLen);
+
+    if (!OCGetRandomBytes(id, idLen))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to generate random gateway ID");
+        return OC_STACK_ERROR;
+    }
+
     OIC_LOG(DEBUG, TAG, "RMGenerateGatewayID OUT");
+
+    return OC_STACK_OK;
 }
 OCStackResult RMInitialize()
 {
@@ -165,7 +173,12 @@ OCStackResult RMInitialize()
     }
 
     // Generates a 4 byte Gateway ID.
-    RMGenerateGatewayID((uint8_t *)&g_GatewayID, sizeof(g_GatewayID));
+    result = RMGenerateGatewayID((uint8_t *)&g_GatewayID, sizeof(g_GatewayID));
+    if (OC_STACK_OK != result)
+    {
+        OIC_LOG_V(ERROR, TAG, "RMGenerateGatewayID failed[%d]", result);
+        return result;
+    }
 
     OIC_LOG_V(INFO, RM_TAG, "Gateway ID: %u", g_GatewayID);
 
@@ -1244,7 +1257,7 @@ OCStackResult RMHandleRequest(CARequestInfo_t *message, const CAEndpoint_t *send
 {
     if (!g_isRMInitialized)
     {
-        OIC_LOG(ERROR, TAG, "RM not initialized");
+        OIC_LOG(INFO, TAG, "RM not initialized");
         *selfDestination = true;
         return OC_STACK_OK;
     }
@@ -1257,7 +1270,7 @@ OCStackResult RMHandleResponse(CAResponseInfo_t *message, const CAEndpoint_t *se
 {
     if (!g_isRMInitialized)
     {
-        OIC_LOG(ERROR, TAG, "RM not initialized");
+        OIC_LOG(INFO, TAG, "RM not initialized");
         *selfDestination = true;
         return OC_STACK_OK;
     }

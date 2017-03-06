@@ -343,6 +343,48 @@ TEST(ResourceAttributesConverterTest, OCRepresentationCanBeConvertedIntoResource
     ASSERT_TRUE(value == resourceAttributes[KEY]);
 }
 
+TEST(ResourceAttributesConverterTest, OCRepresentationCanBeConvertedIntoResourceAttributesTypeBinary)
+{
+    static uint8_t binval[] = {0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8,
+                               0x9, 0x0, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
+
+    OCByteString value {binval, sizeof(binval)};
+    OC::OCRepresentation ocRep;
+    ocRep[KEY] = value;
+
+    RCSResourceAttributes resourceAttributes{
+        ResourceAttributesConverter::fromOCRepresentation(ocRep) };
+
+    auto rcsValue = resourceAttributes[KEY].get<RCSByteString>();
+    for (size_t i = 0; i < rcsValue.size(); ++i)
+    {
+        ASSERT_EQ(binval[i], rcsValue[i]);
+    }
+}
+
+TEST(ResourceAttributesConverterTest, ResourceAttributesCanBeConvertedIntoOCRepresentationTypeBinary)
+{
+    static RCSByteString::DataType binval {0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8,
+                                           0x9, 0x0, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
+    RCSResourceAttributes resourceAttributes;
+    RCSByteString value {binval};
+    resourceAttributes[KEY] = value;
+
+    OC::OCRepresentation ocRep{
+        ResourceAttributesConverter::toOCRepresentation(resourceAttributes) };
+
+    auto rcsValue = resourceAttributes[KEY].get<RCSByteString>();
+    auto ocValue = ocRep[KEY].getValue<OCByteString>();
+
+    ASSERT_EQ(rcsValue.size(), ocValue.len);
+    ASSERT_EQ(rcsValue.size(), binval.size());
+    ASSERT_EQ(binval.size(), ocValue.len);
+
+    for (size_t i = 0; i < rcsValue.size(); ++i)
+    {
+        ASSERT_EQ(ocValue.bytes[i], rcsValue[i]);
+    }
+}
 
 TEST(ResourceAttributesConverterTest, NestedOCRepresentationCanBeConvertedIntoResourceAttributes)
 {

@@ -26,11 +26,11 @@
 #include "cainterface.h"
 #include "oic_malloc.h"
 #include "logger.h"
-#include "global.h"
 #include "pmtypes.h"
 #include "ownershiptransfermanager.h"
+#include "mbedtls/ssl_ciphersuites.h"
 
-#define TAG "OXM_JustWorks"
+#define TAG "OIC_OXM_JustWorks"
 
 OCStackResult CreateJustWorksSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **payload, size_t *size)
 {
@@ -91,10 +91,10 @@ OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
     }
     OIC_LOG(INFO, TAG, "Anonymous cipher suite Enabled.");
 
-    caresult  = CASelectCipherSuite(TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256, otmCtx->selectedDeviceInfo->endpoint.adapter);
+    caresult  = CASelectCipherSuite(MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256, otmCtx->selectedDeviceInfo->endpoint.adapter);
     if (CA_STATUS_OK != caresult)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256");
+        OIC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDH_anon_WITH_AES_128_CBC_SHA256");
         caresult = CAEnableAnonECDHCipherSuite(false);
         if (CA_STATUS_OK != caresult)
         {
@@ -106,7 +106,7 @@ OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
         }
         return OC_STACK_ERROR;
     }
-    OIC_LOG(INFO, TAG, "TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 cipher suite selected.");
+    OIC_LOG(INFO, TAG, "TLS_ECDH_anon_WITH_AES_128_CBC_SHA256 cipher suite selected.");
 
     OCProvisionDev_t *selDevInfo = otmCtx->selectedDeviceInfo;
     CAEndpoint_t endpoint;
@@ -115,6 +115,10 @@ OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
     if(CA_ADAPTER_IP == endpoint.adapter)
     {
         endpoint.port = selDevInfo->securePort;
+        caresult = CAInitiateHandshake(&endpoint);
+    }
+    else if (CA_ADAPTER_GATT_BTLE == endpoint.adapter)
+    {
         caresult = CAInitiateHandshake(&endpoint);
     }
 #ifdef __WITH_TLS__
@@ -133,3 +137,19 @@ OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
     OIC_LOG(INFO, TAG, "OUT CreateSecureSessionJustWorksCallback");
     return OC_STACK_OK;
 }
+
+OCStackResult CreateMVJustWorksSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
+                                             size_t *cborSize)
+{
+    if (!otmCtx || !otmCtx->selectedDeviceInfo || !cborPayload || *cborPayload || !cborSize)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    otmCtx->selectedDeviceInfo->doxm->oxmSel = OIC_MV_JUST_WORKS;
+    *cborPayload = NULL;
+    *cborSize = 0;
+
+    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, cborPayload, cborSize, true);
+}
+

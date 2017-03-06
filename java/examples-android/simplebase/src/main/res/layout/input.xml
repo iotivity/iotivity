@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/activity_vertical_margin">
+
+    <TextView
+        android:id="@+id/inputView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Enter the server information"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <RadioGroup
+        android:id="@+id/radioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone">
+
+        <RadioButton
+            android:id="@+id/radioIP"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Use IP and Port" />
+
+        <RadioButton
+            android:id="@+id/radioDomain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Use Domain and Port" />
+    </RadioGroup>
+
+    <EditText
+        android:id="@+id/inputText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/activity_vertical_margin" />
+
+    <TextView
+        android:id="@+id/inputView2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Input Server IP and Port"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:visibility="gone" />
+
+    <EditText
+        android:id="@+id/inputText2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/activity_vertical_margin"
+        android:visibility="gone" />
+
+    <CheckBox
+        android:id="@+id/secured"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="SECURED"
+        android:visibility="gone" />
+
+</LinearLayout>

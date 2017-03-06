@@ -78,7 +78,7 @@ typedef struct _CAPeripheralContext
     GMainLoop * event_loop;
 
     /// Mutex used to synchronize access to context fields.
-    ca_mutex lock;
+    oc_mutex lock;
 
     /**
      * Service registration condition variable.
@@ -90,7 +90,7 @@ typedef struct _CAPeripheralContext
      *
      * @see @c GMainLoop documentation for further details.
      */
-    ca_cond condition;
+    oc_cond condition;
 
 } CAPeripheralContext;
 

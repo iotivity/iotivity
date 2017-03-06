@@ -31,7 +31,6 @@ import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
-import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.util.Cbor;
@@ -66,51 +65,21 @@ public class AclGroup extends Resource {
                 if (payloadData == null) {
                     throw new BadRequestException("payload is null");
                 }
-                if (getUriPathSegments()
-                        .containsAll(request.getUriPathSegments())) {
-                    payloadData.put(Constants.REQ_GROUP_MASTER_ID,
-                            srcDevice.getUserId());
-                } else {
-                    if (payloadData.isEmpty()) {
-                        payloadData = new HashMap<>();
-                        payloadData.put(Constants.REQ_MEMBER_LIST,
-                                Arrays.asList(srcDevice.getUserId()));
-                    }
-                }
-                request = MessageBuilder.modifyRequest(request, null, null,
-                        ContentFormat.APPLICATION_CBOR,
-                        mCbor.encodingPayloadToCbor(payloadData));
                 break;
             case GET:
-                StringBuffer uriGetQuery = new StringBuffer();
-                uriGetQuery.append(
-                        Constants.REQ_MEMBER_ID + "=" + srcDevice.getUserId());
-                request = MessageBuilder.modifyRequest(request, null,
-                        uriGetQuery.toString(), null, null);
                 break;
             case DELETE:
-                StringBuffer additionalQuery = new StringBuffer();
-                if (getUriPathSegments()
-                        .containsAll(request.getUriPathSegments())) {
-                    additionalQuery.append(Constants.REQ_GROUP_MASTER_ID + "="
-                            + srcDevice.getUserId());
-                    String uriDeleteQuery = request.getUriQuery() + ";"
-                            + additionalQuery.toString();
-                    request = MessageBuilder.modifyRequest(request, null,
-                            uriDeleteQuery, null, null);
-                } else {
-                    if (request.getUriQuery() == null) {
-                        additionalQuery.append(Constants.REQ_MEMBER_LIST + "="
-                                + srcDevice.getUserId());
-                        request = MessageBuilder.modifyRequest(request, null,
-                                additionalQuery.toString(), null, null);
-                    }
-                }
                 break;
             default:
                 throw new BadRequestException(
                         request.getMethod() + " request type is not support");
         }
-        mAuthServer.sendRequest(request, srcDevice);
+        StringBuffer additionalQuery = new StringBuffer();
+        additionalQuery.append(Constants.USER_ID + "=" + srcDevice.getUserId());
+        String uriQuery = additionalQuery.toString()
+                + (request.getUriQuery() != null ? (";" + request.getUriQuery())
+                        : "");
+        mAuthServer.sendRequest(MessageBuilder.modifyRequest(request, null,
+                uriQuery, null, null), srcDevice);
     }
 }

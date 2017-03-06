@@ -29,12 +29,22 @@
 #ifndef OC_OBSERVE_H
 #define OC_OBSERVE_H
 
+#include "ocserverrequest.h"
+
 /** Maximum number of observers to reach */
 
 #define MAX_OBSERVER_FAILED_COMM         (2)
 
 /** Maximum number of observers to reach for resources with low QOS */
 #define MAX_OBSERVER_NON_COUNT           (3)
+
+/**
+ *  MAX_OBSERVER_TTL_SECONDS sets the maximum time to live (TTL) for notification.
+ *  60 sec/min * 60 min/hr * 24 hr/day
+ */
+#define MAX_OBSERVER_TTL_SECONDS     (60 * 60 * 24)
+
+#define MILLISECONDS_PER_SECOND   (1000)
 
 /**
  * Data structure to hold informations for each registered observer.
@@ -74,11 +84,20 @@ typedef struct ResourceObserver
     /** force the qos value to CON.*/
     uint8_t forceHighQos;
 
+    /** The TTL for this callback. TTL is set to 24 hours.
+     * A server send a notification in a confirmable message every 24 hours.
+     * This prevents a client that went away or is no logger interested
+     * from remaining in the list of observers indefinitely.*/
+    uint32_t TTL;
+
     /** next node in this list.*/
     struct ResourceObserver *next;
 
     /** requested payload encoding format. */
     OCPayloadFormat acceptFormat;
+
+    /** requested payload content version. */
+    uint16_t acceptVersion;
 
 } ResourceObserver;
 
@@ -117,7 +136,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
  * @param resource                  Observed resource.
  * @param obsIdList                 List of observation ids that need to be notified.
  * @param numberOfIds               Number of observation ids included in obsIdList.
- * @param notificationJSONPayload   JSON encoded payload to send in notification.
+ * @param payload                   JSON encoded payload to send in notification.
  * @param maxAge                    Time To Live (in seconds) of observation.
  * @param qos                       Desired quality of service of the observation notifications.
  *
@@ -152,6 +171,8 @@ OCStackResult GenerateObserverId (OCObservationId *observationId);
  * @param tokenLength     Length of token.
  * @param resHandle       Resource handle.
  * @param qos             Quality of service of observation.
+ * @param acceptFormat    Accept payload format.
+ * @param acceptVersion   Accept payload version.
  * @param devAddr         Device address.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
@@ -164,6 +185,7 @@ OCStackResult AddObserver (const char         *resUri,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
                            OCPayloadFormat    acceptFormat,
+                           uint16_t           acceptVersion,
                            const OCDevAddr    *devAddr);
 
 /**
@@ -176,6 +198,16 @@ OCStackResult AddObserver (const char         *resUri,
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
  OCStackResult DeleteObserverUsingToken (CAToken_t token, uint8_t tokenLength);
+
+ /**
+  * Delete observer with device address from list of observers.
+  * Free memory that was allocated for the observer in the list.
+  *
+  * @param devAddr Device's address.
+  *
+  * @return ::OC_STACK_OK on success, some other value upon failure.
+  */
+OCStackResult DeleteObserverUsingDevAddr(const OCDevAddr *devAddr);
 
 /**
  * Search the list of observers for the specified token.
@@ -230,6 +262,19 @@ OCStackResult
 GetObserveHeaderOption (uint32_t * observationOption,
                         CAHeaderOption_t *options,
                         uint8_t * numOptions);
+
+/**
+ * Handle registering/deregistering of observers of virtual resources.  Currently only the
+ * well-known virtual resource (/oic/res) may be observable.
+ *
+ * @param request a virtual resource server request
+ *
+ * @return ::OC_STACK_OK on success, ::OC_STACK_DUPLICATE_REQUEST when registering a duplicate
+ *         observer, some other value upon failure.
+ */
+OCStackResult
+HandleVirtualObserveRequest(OCServerRequest *request);
+
 
 #endif //OC_OBSERVE_H
 

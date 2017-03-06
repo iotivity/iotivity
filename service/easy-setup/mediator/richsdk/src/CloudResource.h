@@ -35,12 +35,15 @@ namespace OIC
     namespace Service
     {
         class OCResource;
+        typedef std::function<void(const HeaderOptions& headerOptions,
+                                   const OCRepresentation& rep,
+                                   const int eCode)> ESCloudResourceCb;
         /**
          * This class contains the resource discovery methods.
          *
          * @see CloudResource
          */
-        class CloudResource
+        class CloudResource : public std::enable_shared_from_this<CloudResource>
         {
         public:
             CloudResource(std::shared_ptr< OC::OCResource > resource);
@@ -51,6 +54,11 @@ namespace OIC
             void provisionProperties(const CloudProp& CloudProp);
 
         private:
+            static void onCloudProvResponseSafetyCb(const HeaderOptions& headerOptions,
+                                                    const OCRepresentation& rep,
+                                                    const int eCode,
+                                                    ESCloudResourceCb cb,
+                                                    std::weak_ptr<CloudResource> this_ptr);
             void onCloudProvResponse(const HeaderOptions& headerOptions,
                                                 const OCRepresentation& rep,
                                                 const int eCode);

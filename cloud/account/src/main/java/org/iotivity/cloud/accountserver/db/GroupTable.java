@@ -21,42 +21,63 @@
  */
 package org.iotivity.cloud.accountserver.db;
 
-public class GroupTable {
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 
-    private String gid;
-    private Object midlist;
-    private Object dilist;
-    private String gmid;
-    private String gacl;
-    private String gtype;
+import org.iotivity.cloud.accountserver.Constants;
+import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
+
+public class GroupTable {
+    private String            gid       = null;
+    private String            gname     = null;
+    private String            owner     = null;
+    private ArrayList<String> members   = null;
+    private ArrayList<String> masters   = null;
+    private ArrayList<String> devices   = null;
+    private ArrayList<Object> resources = null;
+    private ArrayList<String> subgroups = null;
+    private String            parent    = null;
+    private ArrayList<Object> gacl      = null;
 
     public GroupTable() {
+        setGacl(makeGAcl());
     }
 
-    /**
-     * API to initialize group table instance
-     * 
-     * @param gid
-     *            group ID
-     * @param midlist
-     *            member ID list as a form of array
-     * @param dilist
-     *            device ID list as a form of array
-     * @param gmid
-     *            group master ID
-     * @param gacl
-     *            group ACL
-     * @param gtype
-     *            group type
-     */
-    public GroupTable(String gid, Object midlist, Object dilist, String gmid,
-            String gacl, String gtype) {
+    private ArrayList<Object> makeGAcl() {
+        HashMap<String, Object> publicGAcl = new HashMap<>();
+        publicGAcl.put(Constants.KEYFIELD_ACE_PERMISSION, (int) 31);
+        ArrayList<HashMap<String, Object>> resources = new ArrayList<>();
+        HashMap<String, Object> resource = new HashMap<>();
+        resource.put(Constants.KEYFIELD_ACE_RESOURCE_HREF, "*");
+        resource.put(Constants.KEYFIELD_ACE_RESOURCE_RT,
+                new ArrayList<String>());
+        resource.put(Constants.KEYFIELD_ACE_RESOURCE_IF,
+                Arrays.asList(Constants.DEFAULT_INTERFACE));
+        resources.add(resource);
+        publicGAcl.put(Constants.KEYFIELD_GROUP_RESOURCES, resources);
+
+        ArrayList<Object> gaclList = new ArrayList<>();
+        gaclList.add(publicGAcl);
+
+        return gaclList;
+    }
+
+    public GroupTable(String gid, String gname, String owner,
+            ArrayList<String> masters, ArrayList<String> members,
+            ArrayList<String> devices, ArrayList<Object> resources,
+            ArrayList<String> subgroups, String parent,
+            ArrayList<Object> gacl) {
         this.gid = gid;
-        this.midlist = midlist;
-        this.dilist = dilist;
-        this.gmid = gmid;
+        this.gname = gname;
+        this.owner = owner;
+        this.members = members;
+        this.masters = masters;
+        this.devices = devices;
+        this.resources = resources;
+        this.subgroups = subgroups;
+        this.parent = parent;
         this.gacl = gacl;
-        this.gtype = gtype;
     }
 
     /**
@@ -74,65 +95,72 @@ public class GroupTable {
      * @param gid
      *            group ID to be set
      */
-    public void setGid(Object gid) {
+    public void setGid(String gid) {
         this.gid = gid.toString();
     }
 
-    /**
-     * API to get member ID list of the group
-     * 
-     * @return member ID list
-     */
-    public Object getMidlist() {
-        return midlist;
+    public String getGname() {
+        return gname;
     }
 
-    /**
-     * API to set member ID list of the group
-     * 
-     * @param midlist
-     *            member ID list to be set
-     */
-    public void setMidlist(Object midlist) {
-        this.midlist = midlist;
+    public void setGname(String gname) {
+        this.gname = gname.toString();
     }
 
-    /**
-     * API to get device ID list of the group
-     * 
-     * @return device ID list
-     */
-    public Object getDilist() {
-        return dilist;
+    public String getOwner() {
+        return owner;
     }
 
-    /**
-     * API to set device ID list of the group
-     * 
-     * @param dilist
-     *            device ID list to be set
-     */
-    public void setDilist(Object dilist) {
-        this.dilist = dilist;
+    public void setOwner(String owner) {
+        this.owner = owner.toString();
     }
 
-    /**
-     * API to get the group master ID
-     * 
-     * @return group master ID
-     */
-    public String getGmid() {
-        return gmid;
+    public ArrayList<String> getMasters() {
+        return masters;
     }
 
-    /**
-     * API to set the master ID of the group
-     * 
-     * @param gmid
-     *            group master ID to be set
-     */
-    public void setGmid(Object gmid) {
-        this.gmid = gmid.toString();
+    public void setMasters(ArrayList<String> masters) {
+        this.masters = masters;
+    }
+
+    public ArrayList<String> getMembers() {
+        return members;
+    }
+
+    public void setMembers(ArrayList<String> members) {
+        this.members = members;
+    }
+
+    public ArrayList<String> getDevices() {
+        return devices;
+    }
+
+    public void setDevices(ArrayList<String> devices) {
+        this.devices = devices;
+    }
+
+    public ArrayList<Object> getResources() {
+        return resources;
+    }
+
+    public void setResources(ArrayList<Object> resources) {
+        this.resources = resources;
+    }
+
+    public ArrayList<String> getSubgroups() {
+        return subgroups;
+    }
+
+    public void setSubgroups(ArrayList<String> subgroups) {
+        this.subgroups = subgroups;
+    }
+
+    public String getParent() {
+        return parent;
+    }
+
+    public void setParent(String parentGid) {
+        this.parent = parentGid;
     }
 
     /**
@@ -140,7 +168,7 @@ public class GroupTable {
      * 
      * @return group ACL
      */
-    public String getGacl() {
+    public ArrayList<Object> getGacl() {
         return gacl;
     }
 
@@ -150,26 +178,68 @@ public class GroupTable {
      * @param gacl
      *            group ACL to be set
      */
-    public void setGacl(Object gacl) {
-        this.gacl = gacl.toString();
+    public void setGacl(ArrayList<Object> gacl) {
+        this.gacl = gacl;
     }
 
-    /**
-     * API to get group type
-     * 
-     * @return group type
-     */
-    public String getGtype() {
-        return gtype;
+    public <T> T getPropertyValue(String property) {
+        switch (property) {
+            case Constants.REQ_GROUP_ID:
+                return (T) gid;
+            case Constants.KEYFIELD_GROUP_NAME:
+                return (T) gname;
+            case Constants.KEYFIELD_GROUP_OWNER:
+                return (T) owner;
+            case Constants.KEYFIELD_GROUP_MEMBERS:
+                return (T) members;
+            case Constants.KEYFIELD_GROUP_MASTERS:
+                return (T) masters;
+            case Constants.KEYFIELD_GROUP_DEVICES:
+                return (T) devices;
+            case Constants.KEYFIELD_GROUP_RESOURCES:
+                return (T) resources;
+            case Constants.KEYFIELD_GROUP_SUBGROUPS:
+                return (T) subgroups;
+            case Constants.KEYFIELD_GROUP_GACL:
+                return (T) gacl;
+            default:
+                throw new BadRequestException(
+                        property + " is not supported in the group");
+        }
     }
 
-    /**
-     * API to set group type
-     * 
-     * @param gtype
-     *            group type to be set
-     */
-    public void setGtype(Object gtype) {
-        this.gtype = gtype.toString();
+    public void setPropertyValue(String property, Object value) {
+        switch (property) {
+            case Constants.REQ_GROUP_ID:
+                this.gid = (String) value;
+                break;
+            case Constants.KEYFIELD_GROUP_NAME:
+                this.gname = (String) value;
+                break;
+            case Constants.KEYFIELD_GROUP_OWNER:
+                this.owner = (String) value;
+                break;
+            case Constants.KEYFIELD_GROUP_MEMBERS:
+                this.members = (ArrayList<String>) value;
+                break;
+            case Constants.KEYFIELD_GROUP_MASTERS:
+                this.masters = (ArrayList<String>) value;
+                break;
+            case Constants.KEYFIELD_GROUP_DEVICES:
+                this.devices = (ArrayList<String>) value;
+                break;
+            case Constants.KEYFIELD_GROUP_RESOURCES:
+                this.resources = (ArrayList<Object>) value;
+                break;
+            case Constants.KEYFIELD_GROUP_SUBGROUPS:
+                this.subgroups = (ArrayList<String>) value;
+                break;
+            case Constants.KEYFIELD_GROUP_GACL:
+                this.gacl = (ArrayList<Object>) value;
+                break;
+            default:
+                throw new BadRequestException(
+                        property + " is not supported in the group");
+        }
     }
 }

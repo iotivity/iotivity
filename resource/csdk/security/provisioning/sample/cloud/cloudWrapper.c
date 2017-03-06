@@ -1,3 +1,22 @@
+/* *****************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * *****************************************************************/
 #include "logger.h"
 #include "occloudprovisioning.h"
 #include "oic_malloc.h"
@@ -94,6 +113,13 @@ void readInteger(int* item, const char* description, const char* example)
 {
     printf("Enter %s (f.e. %s):\n", description, example);
     scanf("%d", item);
+    skipSpecialCharacters();
+}
+
+void readUInt16(uint16_t* item, const char* description, const char* example)
+{
+    printf("Enter %s (f.e. %s):\n", description, example);
+    scanf("%hu", item);
     skipSpecialCharacters();
 }
 
@@ -427,16 +453,16 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
 
         char aceid[MAX_ID_LENGTH] = { 0 };
         char subjectuuid[MAX_ID_LENGTH] = { 0 };
-        int stype = 0;
-        int permission = 0;
+        uint16_t stype = 0;
+        uint16_t permission = 0;
 
         do
         {
             readString(subjectuuid, sizeof(subjectuuid), "subjectuuid", SUBJECT_ID_EXAMPLE);
         } while (OC_STACK_OK != ConvertStrToUuid(subjectuuid, &ace->subjectuuid));
 
-        readInteger(&stype, "subject type", "0 – Device, 1 – User, 2 - Group");
-        readInteger(&permission, "permission", "6");
+        readUInt16(&stype, "subject type", "0 – Device, 1 – User, 2 - Group");
+        readUInt16(&permission, "permission", "6");
 
         ace->aceId = OICStrdup(aceid);
         ace->stype = stype;
@@ -445,7 +471,7 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
         int reslist_count = 0;
         readInteger(&reslist_count, "resources list count", "1");
 
-        for (int i = 0; i < reslist_count; i++)
+        for (int j = 0; j < reslist_count; j++)
         {
             OicSecRsrc_t *res = OICCalloc(1, sizeof(OicSecRsrc_t));
             if (!res)
@@ -494,8 +520,8 @@ OCStackResult OCWrapperAclIndividualUpdate(const OCDevAddr *endPoint, OCCloudRes
 
     char aceid[MAX_ID_LENGTH] = { 0 };
     char subjectuuid[MAX_ID_LENGTH] = { 0 };
-    int stype = 0;
-    int permission = 0;
+    uint16_t stype = 0;
+    uint16_t permission = 0;
 
     readString(aceid, sizeof(aceid), "ace id", ACE_ID_EXAMPLE);
     do
@@ -503,8 +529,8 @@ OCStackResult OCWrapperAclIndividualUpdate(const OCDevAddr *endPoint, OCCloudRes
         readString(subjectuuid, sizeof(subjectuuid), "subjectuuid", SUBJECT_ID_EXAMPLE);
     } while (OC_STACK_OK != ConvertStrToUuid(subjectuuid, &ace->subjectuuid));
 
-    readInteger(&stype, "subject type", "0 – Device, 1 – User, 2 - Group");
-    readInteger(&permission, "permission", "6");
+    readUInt16(&stype, "subject type", "0 – Device, 1 – User, 2 - Group");
+    readUInt16(&permission, "permission", "6");
 
     ace->stype = stype;
     ace->permission = permission;

@@ -20,31 +20,38 @@
 
 import os
 import os.path
+from tools.scons.RunTest import *
+
+Import('test_env')
 
 # SConscript file for Local PKI google tests
-gtest_env = SConscript('#extlibs/gtest/SConscript')
-randomtest_env = gtest_env.Clone()
+randomtest_env = test_env.Clone()
 target_os = randomtest_env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
 ######################################################################
+
 randomtest_env.PrependUnique(CPPPATH = [
         '../include',
-		'../../logger/include',
-		'../../../oc_logger/include',
-		])
-
+               '../../logger/include',
+               '../../../oc_logger/include',
+               ])
+ 
 randomtest_env.AppendUnique(LIBPATH = [randomtest_env.get('BUILD_DIR')])
 randomtest_env.PrependUnique(LIBS = ['octbstack',
-                                     'connectivity_abstraction',
-                                     'uuid'])
+                                      'connectivity_abstraction',
+                                      'uuid'])
+
+randomtest_env.PrependUnique(CPPPATH = ['../include'])
+
+randomtest_env.PrependUnique(LIBS = ['c_common'])
 
 if target_os in ['linux']:
     randomtest_env.AppendUnique(LIBS = ['m'])
 
-if randomtest_env.get('SECURED') == '1':
-	randomtest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+#if randomtest_env.get('SECURED') == '1':
+#	randomtest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 if randomtest_env.get('LOGGING'):
 	randomtest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
@@ -52,14 +59,13 @@ if randomtest_env.get('LOGGING'):
 ######################################################################
 # Source files and Targets
 ######################################################################
-randomtests = randomtest_env.Program('randomtests', ['linux/randomtest.cpp'])
+randomtests = randomtest_env.Program('randomtests', ['randomtest.cpp'])
 
 Alias("test", [randomtests])
 
 randomtest_env.AppendTarget('test')
 if randomtest_env.get('TEST') == '1':
-	if target_os in ['linux']:
-                from tools.scons.RunTest import *
+	if target_os in ['linux', 'windows']:
                 run_test(randomtest_env,
                          'resource_csdk_random_test.memcheck',
                          'resource/c_common/ocrandom/test/randomtests')

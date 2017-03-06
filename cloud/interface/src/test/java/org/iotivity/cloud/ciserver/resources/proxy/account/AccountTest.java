@@ -24,6 +24,7 @@ package org.iotivity.cloud.ciserver.resources.proxy.account;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -85,6 +86,8 @@ public class AccountTest {
                 mReqRDServer = request;
                 mLatch.countDown();
                 System.out.println(
+                        "\t----------requestMethod : " + request.getMethod());
+                System.out.println(
                         "\t----------payload : " + request.getPayloadString());
                 System.out.println(
                         "\t----------uripath : " + request.getUriPath());
@@ -104,6 +107,8 @@ public class AccountTest {
                 mReqASServer = request;
                 mLatch.countDown();
                 System.out.println(
+                        "\t----------requestMethod : " + request.getMethod());
+                System.out.println(
                         "\t----------payload : " + request.getPayloadString());
                 System.out.println(
                         "\t----------uripath : " + request.getUriPath());
@@ -117,8 +122,7 @@ public class AccountTest {
 
     @Test
     public void testAccountDeviceDeleteOnRequestReceived() throws Exception {
-        System.out.println(
-                "\t--------------OnRequestReceived Device Delete Test------------");
+        getTestMethodName();
         IRequest request = null;
         request = MessageBuilder.createRequest(RequestMethod.DELETE,
                 ACCOUNT_URI, "di=device1");
@@ -139,8 +143,7 @@ public class AccountTest {
 
     @Test
     public void testAccountDeviceDeleteOnResponseReceived() throws Exception {
-        System.out.println(
-                "\t--------------OnResponseReceived Device Delete Test------------");
+        getTestMethodName();
         IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
                 ACCOUNT_URI, "di=device1");
 
@@ -153,9 +156,36 @@ public class AccountTest {
     }
 
     @Test
+    public void testAccountSearchSingleUserOnResponseReceived()
+            throws Exception {
+        getTestMethodName();
+        IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
+                Constants.ACCOUNT_SEARCH_FULL_URI,
+                "search=userid:user1,userid:user2,userid:user3");
+
+        mDeviceServerSystem.onRequestReceived(mMockDevice, request);
+        assertTrue(mReqASServer.getUriPath()
+                .equals(Constants.ACCOUNT_SEARCH_FULL_URI));
+        assertFalse(
+                mReqASServer.getUriQueryMap().containsKey(Constants.USER_ID));
+    }
+
+    @Test
+    public void testAccountSearchNoQueryOnResponseReceived() throws Exception {
+        getTestMethodName();
+        IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
+                Constants.ACCOUNT_SEARCH_FULL_URI, null);
+
+        mDeviceServerSystem.onRequestReceived(mMockDevice, request);
+        assertTrue(mReqASServer.getUriPath()
+                .equals(Constants.ACCOUNT_SEARCH_FULL_URI));
+        assertTrue(
+                mReqASServer.getUriQueryMap().containsKey(Constants.USER_ID));
+    }
+
+    @Test
     public void testAccountResourceOnRequestReceived() throws Exception {
-        System.out.println(
-                "\t--------------OnRequestReceived Sign Up Test------------");
+        getTestMethodName();
         // sign up request from the client
         IRequest request = null;
         HashMap<String, String> payloadData = new HashMap<String, String>();
@@ -171,5 +201,11 @@ public class AccountTest {
         // from the client
         assertTrue(mLatch.await(1L, SECONDS));
         assertEquals(request, mReqASServer);
+    }
+
+    private void getTestMethodName() {
+        StackTraceElement[] stacks = new Throwable().getStackTrace();
+        StackTraceElement currentStack = stacks[1];
+        System.out.println("\t---Test Name : " + currentStack.getMethodName());
     }
 }

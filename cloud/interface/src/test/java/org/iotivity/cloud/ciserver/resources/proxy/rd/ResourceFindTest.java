@@ -24,7 +24,6 @@ package org.iotivity.cloud.ciserver.resources.proxy.rd;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -59,7 +58,7 @@ import org.mockito.stubbing.Answer;
 public class ResourceFindTest {
     private static final String TEST_RESOURCE_FIND_URI = Constants.WELL_KNOWN_FULL_URI;
     private String              di                     = "B371C481-38E6-4D47-8320-7688D8A5B58C";
-    private CoapDevice          mockDevice             = mock(CoapDevice.class);
+    private CoapDevice          mMockDevice            = mock(CoapDevice.class);
     private IResponse           mRes                   = null;
     private IRequest            mReq                   = null;
     private DeviceServerSystem  mDeviceServerSystem    = new DeviceServerSystem();
@@ -77,7 +76,8 @@ public class ResourceFindTest {
     public void setUp() throws Exception {
         mRes = null;
         mReq = null;
-        Mockito.doReturn("mockDeviceId").when(mockDevice).getDeviceId();
+        Mockito.doReturn("mockDeviceId").when(mMockDevice).getDeviceId();
+        Mockito.doReturn("mockUserId").when(mMockDevice).getUserId();
         MockitoAnnotations.initMocks(this);
         mDeviceServerSystem.addResource(mResHandler);
         // callback mock
@@ -90,7 +90,7 @@ public class ResourceFindTest {
                 mRes = resp;
                 return resp;
             }
-        }).when(mockDevice).sendResponse(Mockito.anyObject());
+        }).when(mMockDevice).sendResponse(Mockito.anyObject());
         Mockito.doAnswer(new Answer<Object>() {
             @Override
             public CoapRequest answer(InvocationOnMock invocation)
@@ -136,7 +136,7 @@ public class ResourceFindTest {
                     "rt=core.light;di=" + "device1");
     @InjectMocks
     ResourceFind.AccountReceiveHandler specificDeviceHandler = mResHandler.new AccountReceiveHandler(
-            requestSpecificDevice, mockDevice);
+            requestSpecificDevice, mMockDevice);
 
     @Test
     public void testSpecificDeviceonResponseReceived()
@@ -149,8 +149,6 @@ public class ResourceFindTest {
         assertTrue(mReq.getMethod() == RequestMethod.GET);
         assertTrue(queryMap.get("rt").contains("core.light"));
         assertTrue(queryMap.get("di").contains("device1"));
-        assertFalse(queryMap.get("di").contains("device2"));
-        assertFalse(queryMap.get("di").contains("device3"));
     }
 
     // @InjectMocks for testEntireDeviceonResponseReceived
@@ -158,15 +156,15 @@ public class ResourceFindTest {
             .createRequest(RequestMethod.GET, TEST_RESOURCE_FIND_URI,
                     "rt=core.light");
     @InjectMocks
-    ResourceFind.AccountReceiveHandler handler              = mResHandler.new AccountReceiveHandler(
-            requestEntireDevices, mockDevice);
+    ResourceFind.AccountReceiveHandler entireDevicehandler  = mResHandler.new AccountReceiveHandler(
+            requestEntireDevices, mMockDevice);
 
     @Test
     public void testEntireDeviceonResponseReceived() throws ClientException {
         System.out.println(
                 "\t--------------onResponseReceived(RD) Resource Find (entire deivces) Test------------");
         IResponse response = responseFromAccountServer();
-        handler.onResponseReceived(response);
+        entireDevicehandler.onResponseReceived(response);
         HashMap<String, List<String>> queryMap = mReq.getUriQueryMap();
         assertTrue(mReq.getMethod() == RequestMethod.GET);
         assertTrue(queryMap.get("rt").contains("core.light"));
@@ -180,7 +178,7 @@ public class ResourceFindTest {
             .createRequest(RequestMethod.GET, TEST_RESOURCE_FIND_URI, null);
     @InjectMocks
     ResourceFind.AccountReceiveHandler entireDevicesNoQueryHandler = mResHandler.new AccountReceiveHandler(
-            requestEntireDevicesNoQuery, mockDevice);
+            requestEntireDevicesNoQuery, mMockDevice);
 
     @Test
     public void testEntireDeviceNoQueryonResponseReceived()
@@ -203,11 +201,13 @@ public class ResourceFindTest {
                 "\t--------------OnRequestReceived(RD) Resource Find (entire deivces) Test------------");
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
                 TEST_RESOURCE_FIND_URI, "rt=core.light");
-        mResHandler.onRequestReceived(mockDevice, request);
+        mResHandler.onRequestReceived(mMockDevice, request);
         HashMap<String, List<String>> queryMap = mReq.getUriQueryMap();
         assertTrue(mLatch.await(1L, SECONDS));
-        assertTrue(queryMap.containsKey("mid"));
-        assertEquals(mReq.getUriPath(), Constants.GROUP_FULL_URI + "/null");
+        assertTrue(queryMap.containsKey("uid"));
+        assertTrue(queryMap.containsKey("members"));
+        assertEquals(mReq.getUriPath(),
+                Constants.GROUP_FULL_URI + "/mockUserId");
     }
 
     @Test
@@ -217,7 +217,7 @@ public class ResourceFindTest {
                 "\t--------------OnRequestReceived(RD) Resource Find (specific deivce) Test------------");
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
                 TEST_RESOURCE_FIND_URI, "rt=core.light;di=" + di);
-        mResHandler.onRequestReceived(mockDevice, request);
+        mResHandler.onRequestReceived(mMockDevice, request);
         HashMap<String, List<String>> queryMap = mReq.getUriQueryMap();
         // assertion: if the request packet from the CI contains the query
         // which includes device ID and the accesstoken
@@ -235,12 +235,12 @@ public class ResourceFindTest {
         deviceList.add("device1");
         deviceList.add("device2");
         deviceList.add("device3");
-        responsePayload.put("dilist", deviceList);
+        responsePayload.put("devices", deviceList);
         responsePayload.put("gid", "g0001");
         responsePayload.put("gmid", "u0001");
         ArrayList<String> midList = new ArrayList<String>();
         midList.add("u0001");
-        responsePayload.put("midlist", midList);
+        responsePayload.put("memebers", midList);
         IResponse response = MessageBuilder.createResponse(requestEntireDevices,
                 ResponseStatus.CONTENT, ContentFormat.APPLICATION_CBOR,
                 cbor.encodingPayloadToCbor(responsePayload));

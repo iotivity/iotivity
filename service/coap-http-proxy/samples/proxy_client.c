@@ -97,8 +97,8 @@ static void PrintUsage()
 OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle,
                                   OCClientResponse* clientResponse)
 {
-    UNUSED(ctx);
-    UNUSED(handle);
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
     if (clientResponse)
     {
         OIC_LOG_V(INFO, TAG, "StackResult: %u", clientResponse->result);
@@ -115,8 +115,8 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle,
 OCStackApplicationResult postReqCB(void* ctx, OCDoHandle handle,
                                    OCClientResponse* clientResponse)
 {
-    UNUSED(ctx);
-    UNUSED(handle);
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
     if (clientResponse)
     {
         OIC_LOG_V(INFO, TAG, "StackResult: %u", clientResponse->result);
@@ -134,8 +134,8 @@ OCStackApplicationResult deleteReqCB(void* ctx,
                                      OCDoHandle handle,
                                      OCClientResponse* clientResponse)
 {
-    UNUSED(ctx);
-    UNUSED(handle);
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
     if (clientResponse)
     {
         OIC_LOG_V(INFO, TAG, "StackResult: %d",  clientResponse->result);
@@ -152,8 +152,8 @@ OCStackApplicationResult deleteReqCB(void* ctx,
 OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
                                   OCClientResponse* clientResponse)
 {
-    UNUSED(ctx);
-    UNUSED(handle);
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
     if (!clientResponse)
     {
         OIC_LOG_V(INFO, TAG, "%s received NULL clientResponse", __func__);
@@ -245,8 +245,8 @@ int InitProxyRequest()
 OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                                         OCClientResponse* clientResponse)
 {
-    UNUSED(ctx);
-    UNUSED(handle);
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
     if (clientResponse)
     {
         OIC_LOG_V(INFO, TAG, "StackResult: %d", clientResponse->result);

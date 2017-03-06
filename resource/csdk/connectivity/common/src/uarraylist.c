@@ -24,7 +24,7 @@
 #include "logger.h"
 #include "oic_malloc.h"
 
-#define TAG "UARRAYLIST"
+#define TAG "OIC_UARRAYLIST"
 
 /**
  * Use this default capacity when initialized
@@ -66,7 +66,7 @@ void u_arraylist_free(u_arraylist_t **list)
     *list = NULL;
 }
 
-void u_arraylist_reserve(u_arraylist_t *list, size_t count)
+bool u_arraylist_reserve(u_arraylist_t *list, size_t count)
 {
     if (list && (count > list->capacity))
     {
@@ -74,7 +74,7 @@ void u_arraylist_reserve(u_arraylist_t *list, size_t count)
         if (!tmp)
         {
             OIC_LOG(DEBUG, TAG, "Memory reallocation failed.");
-            // Note that this is considered non-fatal.
+            return false;
         }
         else
         {
@@ -82,6 +82,7 @@ void u_arraylist_reserve(u_arraylist_t *list, size_t count)
             list->capacity = count;
         }
     }
+    return true;
 }
 
 void u_arraylist_shrink_to_fit(u_arraylist_t *list)
@@ -109,7 +110,7 @@ void u_arraylist_shrink_to_fit(u_arraylist_t *list)
     }
 }
 
-void *u_arraylist_get(const u_arraylist_t *list, uint32_t index)
+void *u_arraylist_get(const u_arraylist_t *list, size_t index)
 {
     if (!list )
     {
@@ -122,6 +123,25 @@ void *u_arraylist_get(const u_arraylist_t *list, uint32_t index)
     }
 
     return NULL;
+}
+
+bool u_arraylist_get_index(const u_arraylist_t *list, const void *data, size_t *index)
+{
+    if (!list || !data)
+    {
+        return false;
+    }
+
+    for (size_t i = 0; i < list->length; i++)
+    {
+        if (data == list->data[i])
+        {
+            *index = i;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool u_arraylist_add(u_arraylist_t *list, void *data)
@@ -149,7 +169,7 @@ bool u_arraylist_add(u_arraylist_t *list, void *data)
         list->data = (void **) tmp;
         memset(list->data + list->capacity, 0,
                (new_capacity - list->capacity) * sizeof(list->data[0]));
-        list->capacity = (uint32_t)new_capacity;
+        list->capacity = new_capacity;
     }
 
     list->data[list->length] = data;
@@ -158,7 +178,7 @@ bool u_arraylist_add(u_arraylist_t *list, void *data)
     return true;
 }
 
-void *u_arraylist_remove(u_arraylist_t *list, uint32_t index)
+void *u_arraylist_remove(u_arraylist_t *list, size_t index)
 {
     void *removed = NULL;
 
@@ -181,7 +201,7 @@ void *u_arraylist_remove(u_arraylist_t *list, uint32_t index)
     return removed;
 }
 
-uint32_t u_arraylist_length(const u_arraylist_t *list)
+size_t u_arraylist_length(const u_arraylist_t *list)
 {
     if (!list)
     {
@@ -198,7 +218,7 @@ bool u_arraylist_contains(const u_arraylist_t *list, const void *data)
         return false;
     }
 
-    for (uint32_t i = 0; i < list->length; i++)
+    for (size_t i = 0; i < list->length; i++)
     {
         if (data == list->data[i])
         {
@@ -216,7 +236,7 @@ void u_arraylist_destroy(u_arraylist_t *list)
     {
         return;
     }
-    for (uint32_t i = 0; i < list->length; i++)
+    for (size_t i = 0; i < list->length; i++)
     {
         OICFree(list->data[i]);
     }

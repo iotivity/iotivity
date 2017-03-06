@@ -57,14 +57,16 @@ OCStackResult DeInitCredResource();
 OicSecCred_t* GetCredResourceData(const OicUuid_t* subjectId);
 
 /**
- * This method is used by SRM to retrieve credential for given credId.
+ * This method is used by SRM to retrieve credential entry for given credId.
+ *
+ * @note Caller needs to release this memory by calling DeleteCredList().
  *
  * @param credId for which credential is required.
  *
  * @return reference to @ref OicSecCred_t, if credential is found, else NULL, if credential
  * not found.
  */
-OicSecCred_t* GetCredResourceDataByCredId(const uint16_t credId);
+OicSecCred_t* GetCredEntryByCredId(const uint16_t credId);
 
 /**
  * This function converts credential data into CBOR format.
@@ -80,7 +82,7 @@ OicSecCred_t* GetCredResourceDataByCredId(const uint16_t credId);
 OCStackResult CredToCBORPayload(const OicSecCred_t* cred, uint8_t **cborPayload,
                                 size_t *cborSize, int secureFlag);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * Function to check the credential access of SubOwner
  *
@@ -91,7 +93,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t* cred, uint8_t **cborPayload,
  * @return ::true for valid access, otherwise invalid access
  */
 bool IsValidCredentialAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPayload, size_t size);
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /**
  * This function generates the bin credential data.
@@ -107,7 +109,7 @@ bool IsValidCredentialAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cb
 
  */
 OicSecCred_t * GenerateCredential(const OicUuid_t* subject, OicSecCredType_t credType,
-                     const OicSecCert_t * publicData, const OicSecKey_t * privateData,
+                     const OicSecKey_t * publicData, const OicSecKey_t * privateData,
                      const OicUuid_t * rownerID, const OicUuid_t * eownerID);
 
 /**
@@ -178,7 +180,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
 /**
  * Function to getting credential list
  *
- * @return ::credential list
+ * @return instance of @ref OicSecCred_t
  */
 const OicSecCred_t* GetCredList();
 
@@ -212,26 +214,30 @@ OCStackResult GetCredRownerId(OicUuid_t *rowneruuid);
  * Used by mbedTLS to retrieve trusted CA certificates
  *
  * @param[out] crt certificates to be filled.
+ * @param[in] usage credential usage string.
  */
-void GetDerCaCert(ByteArray_t * crt);
+void GetDerCaCert(ByteArray_t * crt, const char * usage);
 /**
  * Used by mbedTLS to retrieve own certificate chain
  *
  * @param[out] crt certificate chain to be filled.
+ * @param[in] usage credential usage string.
  */
-void GetDerOwnCert(ByteArray_t * crt);
+void GetDerOwnCert(ByteArray_t * crt, const char * usage);
 /**
  * Used by mbedTLS to retrieve owm private key
  *
  * @param[out] key key to be filled.
+ * @param[in] usage credential usage string.
  */
-void GetDerKey(ByteArray_t * key);
+void GetDerKey(ByteArray_t * key, const char * usage);
 /**
  * Used by CA to retrieve credential types
  *
  * @param[out] key key to be filled.
+ * @param[in] usage credential usage string.
  */
-void InitCipherSuiteList(bool *list);
+void InitCipherSuiteListInternal(bool *list, const char * usage);
 #endif // __WITH_TLS__
 #ifdef __cplusplus
 }

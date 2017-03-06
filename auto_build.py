@@ -36,7 +36,8 @@ def call_scons(build_options, extra_option_str):
     cmd_line += " " + str(extra_option_str)
 
     print ("Running : " + cmd_line)
-    exit_code = subprocess.Popen([cmd_line], shell=True).wait()
+    sys.stdout.flush()
+    exit_code = subprocess.Popen(cmd_line, shell=True).wait()
     if exit_code != 0:
         exit(exit_code)
 
@@ -52,11 +53,13 @@ def build_all(flag, extra_option_str):
         build_linux_unsecured_with_mq(flag, extra_option_str)
         build_linux_unsecured_with_tcp(flag, extra_option_str)
         build_linux_secured_with_tcp(flag, extra_option_str)
+        build_linux_unsecured_with_java(flag, extra_option_str)
+        build_linux_secured_with_java(flag, extra_option_str)
         build_simulator(flag, extra_option_str)
 
-    build_android(flag, extra_option_str)
-    build_arduino(flag, extra_option_str)
-    build_tizen(flag, extra_option_str)
+        build_android(flag, extra_option_str)
+        build_arduino(flag, extra_option_str)
+        build_tizen(flag, extra_option_str)
 
     if platform.system() == "Windows":
         build_windows(flag, extra_option_str)
@@ -72,6 +75,35 @@ def build_linux_unsecured(flag, extra_option_str):
     print ("*********** Build for linux ************")
     build_options = {
                         'RELEASE':flag,
+                        'SECURED':0,
+                    }
+    call_scons(build_options, extra_option_str)
+
+def build_linux_secured_with_tcp(flag, extra_option_str):
+    print ("*********** Build for linux with Secured TCP ************")
+    build_options = {
+                        'RELEASE':flag,
+                        'WITH_TCP': 1,
+                        'WITH_CLOUD':1,
+                    }
+    call_scons(build_options, extra_option_str)
+
+def build_linux_unsecured_with_java(flag, extra_option_str):
+    print ("*********** Build for linux with Java support ************")
+    build_options = {
+                        'RELEASE':flag,
+                        'BUILD_JAVA': 1,
+                        'TARGET_TRANSPORT': 'IP',
+                    }
+    call_scons(build_options, extra_option_str)
+
+def build_linux_secured_with_java(flag, extra_option_str):
+    print ("*********** Build for linux with Java support and secured ************")
+    build_options = {
+                        'RELEASE':flag,
+                        'BUILD_JAVA': 1,
+                        'TARGET_TRANSPORT': 'IP',
+                        'SECURED': 1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -91,6 +123,7 @@ def build_linux_unsecured_with_tcp(flag, extra_option_str):
                         'RELEASE':flag,
                         'WITH_TCP': 1,
                         'TARGET_TRANSPORT': 'IP',
+                        'SECURED':0,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -99,6 +132,7 @@ def build_linux_unsecured_with_rm(flag, extra_option_str):
     build_options = {
                         'ROUTING':'GW',
                         'RELEASE':flag,
+                        'SECURED':0,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -106,7 +140,6 @@ def build_linux_secured(flag, extra_option_str):
     print ("*********** Build for linux with Security *************")
     build_options = {
                         'RELEASE':flag,
-                        'SECURED':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -116,6 +149,7 @@ def build_linux_unsecured_with_ra(flag, extra_option_str):
                         'RELEASE':flag,
                         'WITH_RA':1,
                         'WITH_RA_IBB':1,
+                        'SECURED':0,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -125,7 +159,6 @@ def build_linux_secured_with_ra(flag, extra_option_str):
                         'RELEASE':flag,
                         'WITH_RA':1,
                         'WITH_RA_IBB':1,
-                        'SECURED':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -134,6 +167,7 @@ def build_linux_unsecured_with_rd(flag, extra_option_str):
     build_options = {
                         'RELEASE':flag,
                         'RD_MODE':'all',
+                        'SECURED':0,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -142,7 +176,6 @@ def build_linux_secured_with_rd(flag, extra_option_str):
     build_options = {
                         'RELEASE':flag,
                         'RD_MODE':'all',
-                        'SECURED':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -151,6 +184,7 @@ def build_linux_unsecured_with_mq(flag, extra_option_str):
     build_options = {
                         'RELEASE':flag,
                         'WITH_MQ':'PUB,SUB,BROKER',
+                        'SECURED':0,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -159,6 +193,7 @@ def build_linux_unsecured_with_tcp(flag, extra_option_str):
     build_options = {
                         'RELEASE':flag,
                         'WITH_TCP':'1',
+                        'SECURED':0,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -175,6 +210,12 @@ def build_android(flag, extra_option_str):
     call_scons(build_options, extra_option_str)
 
 def build_android_x86(flag, extra_option_str):
+    """ Build Android x86 Suite """
+    build_android_x86_with_ip(flag, extra_option_str)
+    build_android_x86_with_bt(flag, extra_option_str)
+    build_android_x86_with_ble(flag, extra_option_str)
+
+def build_android_x86_with_ip(flag, extra_option_str):
     print ("*********** Build for android x86 *************")
     build_options = {
                         'TARGET_OS':'android',
@@ -184,13 +225,33 @@ def build_android_x86(flag, extra_option_str):
                     }
     call_scons(build_options, extra_option_str)
 
-    build_options['TARGET_TRANSPORT'] = 'BT'
+def build_android_x86_with_bt(flag, extra_option_str):
+    print ("*********** Build for android x86 with Bluetooth *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'x86',
+                        'RELEASE':flag,
+                        'TARGET_TRANSPORT':'BT',
+                    }
     call_scons(build_options, extra_option_str)
 
-    build_options['TARGET_TRANSPORT'] = 'BLE'
+def build_android_x86_with_ble(flag, extra_option_str):
+    print ("*********** Build for android x86 with Bluetooth Low Energy *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'x86',
+                        'RELEASE':flag,
+                        'TARGET_TRANSPORT':'BLE',
+                    }
     call_scons(build_options, extra_option_str)
 
 def build_android_x86_with_rm(flag, extra_option_str):
+    """ Build Android x86 Routing Manager Suite """
+    build_android_x86_with_rm_and_ip(flag, extra_option_str)
+    build_android_x86_with_rm_and_bt(flag, extra_option_str)
+    build_android_x86_with_rm_and_ble(flag, extra_option_str)
+
+def build_android_x86_with_rm_and_ip(flag, extra_option_str):
     print ("*********** Build for android x86 with Routing Manager *************")
     build_options = {
                         'TARGET_OS':'android',
@@ -201,13 +262,35 @@ def build_android_x86_with_rm(flag, extra_option_str):
                     }
     call_scons(build_options, extra_option_str)
 
-    build_options['TARGET_TRANSPORT'] = 'BT'
+def build_android_x86_with_rm_and_bt(flag, extra_option_str):
+    print ("*********** Build for android x86 with Routing Manager and Bluetooth *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'x86',
+                        'ROUTING':'GW',
+                        'RELEASE':flag,
+                        'TARGET_TRANSPORT':'BT',
+                    }
     call_scons(build_options, extra_option_str)
 
-    build_options['TARGET_TRANSPORT'] = 'BLE'
+def build_android_x86_with_rm_and_ble(flag, extra_option_str):
+    print ("*********** Build for android x86 with Routing Manager and Bluetooth Low Energy *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'x86',
+                        'ROUTING':'GW',
+                        'RELEASE':flag,
+                        'TARGET_TRANSPORT':'BLE',
+                    }
     call_scons(build_options, extra_option_str)
 
 def build_android_armeabi(flag, extra_option_str):
+    """ Build Android Armeabi Suite """
+    build_android_armeabi_with_ip(flag, extra_option_str)
+    build_android_armeabi_with_bt(flag, extra_option_str)
+    build_android_armeabi_with_ble(flag, extra_option_str)
+
+def build_android_armeabi_with_ip(flag, extra_option_str):
     print ("*********** Build for android armeabi *************")
     build_options = {
                         'TARGET_OS':'android',
@@ -217,14 +300,34 @@ def build_android_armeabi(flag, extra_option_str):
                     }
     call_scons(build_options, extra_option_str)
 
-    build_options['TARGET_TRANSPORT'] = 'BT'
+def build_android_armeabi_with_bt(flag, extra_option_str):
+    print ("*********** Build for android armeabi with Bluetooth *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'armeabi',
+                        'RELEASE':flag,
+                        'TARGET_TRANSPORT':'BT',
+                    }
     call_scons(build_options, extra_option_str)
 
-    build_options['TARGET_TRANSPORT'] = 'BLE'
+def build_android_armeabi_with_ble(flag, extra_option_str):
+    print ("*********** Build for android armeabi with Bluetooth Low Energy *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'armeabi',
+                        'RELEASE':flag,
+                        'TARGET_TRANSPORT':'BLE',
+                    }
     call_scons(build_options, extra_option_str)
 
 def build_android_armeabi_with_rm(flag, extra_option_str):
-    print ("*********** Build for android armeabi with Routing Manager*************")
+    """ Build Android Armeabi Routing Manager Suite """
+    build_android_armeabi_with_rm_and_ip(flag, extra_option_str)
+    build_android_armeabi_with_rm_and_bt(flag, extra_option_str)
+    build_android_armeabi_with_rm_and_ble(flag, extra_option_str)
+
+def build_android_armeabi_with_rm_and_ip(flag, extra_option_str):
+    print ("*********** Build for android armeabi with Routing Manager *************")
     build_options = {
                         'TARGET_OS':'android',
                         'TARGET_ARCH':'armeabi',
@@ -234,10 +337,26 @@ def build_android_armeabi_with_rm(flag, extra_option_str):
                     }
     call_scons(build_options, extra_option_str)
 
-    build_options['TARGET_TRANSPORT'] = 'BT'
+def build_android_armeabi_with_rm_and_bt(flag, extra_option_str):
+    print ("*********** Build for android armeabi with Routing Manager and Bluetooth *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'armeabi',
+                        'ROUTING':'GW',
+                        'RELEASE':flag,
+                        'TARGET_TRANSPORT':'BT',
+                    }
     call_scons(build_options, extra_option_str)
 
-    build_options['TARGET_TRANSPORT'] = 'BLE'
+def build_android_armeabi_with_rm_and_ble(flag, extra_option_str):
+    print ("*********** Build for android armeabi with Routing Manager and Bluetooth Low Energy *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'armeabi',
+                        'ROUTING':'GW',
+                        'RELEASE':flag,
+                        'TARGET_TRANSPORT':'BLE',
+                    }
     call_scons(build_options, extra_option_str)
 
 def build_arduino(flag, extra_option_str):
@@ -277,9 +396,11 @@ def build_tizen(flag, extra_option_str):
     print ("*********** Build for Tizen *************")
     cmd_line = "/bin/sh " + os.getcwd() + "/gbsbuild.sh"
     print ("Running : " + cmd_line)
-    subprocess.Popen([cmd_line], shell=True).wait()
+    exit_code = subprocess.Popen([cmd_line], shell=True).wait()
+    if exit_code != 0:
+        exit(exit_code)
 
-    print ("*********** Build for Tizen octbstack lib and sample *************")
+    print ("*********** Build for Tizen octbstack lib and sample with security *************")
     extra_option_str = "-f resource/csdk/stack/samples/tizen/build/SConscript " + extra_option_str
     build_options = {
                         'TARGET_OS':'tizen',
@@ -289,12 +410,11 @@ def build_tizen(flag, extra_option_str):
                     }
     call_scons(build_options, extra_option_str)
 
-    print ("*********** Build for Tizen octbstack lib and sample with Security*************")
-    build_options['SECURED'] = 1
+    print ("*********** Build for Tizen octbstack lib and sample *************")
+    build_options['SECURED'] = 0
     call_scons(build_options, extra_option_str)
 
     print ("*********** Build for Tizen octbstack lib and sample with Routing Manager*************")
-    del build_options['SECURED']
     build_options['ROUTING'] = 'GW'
     call_scons(build_options, extra_option_str)
 
@@ -343,7 +463,6 @@ def build_windows(flag, extra_option_str):
                         'RELEASE':flag,
                         'WITH_RA':0,
                         'TARGET_TRANSPORT':'IP',
-                        'SECURED':1,
                         'WITH_TCP':0,
                         'BUILD_SAMPLE':'ON',
                         'LOGGING':'off',
@@ -362,7 +481,6 @@ def build_msys(flag, extra_option_str):
                         'RELEASE':flag,
                         'WITH_RA':0,
                         'TARGET_TRANSPORT':'IP',
-                        'SECURED':1,
                         'WITH_TCP':0,
                         'BUILD_SAMPLE':'ON',
                         'LOGGING':'off',
@@ -384,21 +502,22 @@ def unit_tests():
     build_options = {
                         'RELEASE':'false',
                     }
-    extra_option_str = "resource -c"
-    call_scons(build_options, extra_option_str)
-
-    build_options = {
-                        'LOGGING':'false',
-                        'RELEASE':'false',
-                    }
-    extra_option_str = "resource"
+    extra_option_str = "-c ."
     call_scons(build_options, extra_option_str)
 
     build_options = {
                         'TEST':1,
                         'RELEASE':'false',
+                        'SECURED':0,
                     }
-    extra_option_str = "resource"
+    extra_option_str = ""
+    call_scons(build_options, extra_option_str)
+
+    build_options = {
+                        'TEST':1,
+                        'SECURED':1,
+                        'RELEASE':'false',
+                    }
     call_scons(build_options, extra_option_str)
 
     print ("*********** Unit test Stop *************")
@@ -470,6 +589,14 @@ elif arg_num == 2:
         build_linux_secured_with_tcp("false", "")
         build_linux_secured_with_tcp("true", "")
 
+    elif str(sys.argv[1]) == "linux_unsecured_with_java":
+        build_linux_unsecured_with_java("false", "")
+        build_linux_unsecured_with_java("true", "")
+
+    elif str(sys.argv[1]) == "linux_secured_with_java":
+        build_linux_secured_with_java("false", "")
+        build_linux_secured_with_java("true", "")
+
     elif str(sys.argv[1]) == "android":
         build_android("true", "")
         build_android("false", "")
@@ -480,11 +607,59 @@ elif arg_num == 2:
         build_android_x86_with_rm("true", "")
         build_android_x86_with_rm("false", "")
 
+    elif str(sys.argv[1]) == "android_x86_with_ip":
+        build_android_x86_with_ip("true", "")
+        build_android_x86_with_ip("false", "")
+
+    elif str(sys.argv[1]) == "android_x86_with_bt":
+        build_android_x86_with_bt("true", "")
+        build_android_x86_with_bt("false", "")
+
+    elif str(sys.argv[1]) == "android_x86_with_ble":
+        build_android_x86_with_ble("true", "")
+        build_android_x86_with_ble("false", "")
+
+    elif str(sys.argv[1]) == "android_x86_with_rm_and_ip":
+        build_android_x86_with_rm_and_ip("true", "")
+        build_android_x86_with_rm_and_ip("false", "")
+
+    elif str(sys.argv[1]) == "android_x86_with_rm_and_bt":
+        build_android_x86_with_rm_and_bt("true", "")
+        build_android_x86_with_rm_and_bt("false", "")
+
+    elif str(sys.argv[1]) == "android_x86_with_rm_and_ble":
+        build_android_x86_with_rm_and_ble("true", "")
+        build_android_x86_with_rm_and_ble("false", "")
+
     elif str(sys.argv[1]) == "android_armeabi":
         build_android_armeabi("true", "")
         build_android_armeabi("false", "")
         build_android_armeabi_with_rm("true", "")
         build_android_armeabi_with_rm("false", "")
+
+    elif str(sys.argv[1]) == "android_armeabi_with_ip":
+        build_android_armeabi_with_ip("true", "")
+        build_android_armeabi_with_ip("false", "")
+
+    elif str(sys.argv[1]) == "android_armeabi_with_bt":
+        build_android_armeabi_with_bt("true", "")
+        build_android_armeabi_with_bt("false", "")
+
+    elif str(sys.argv[1]) == "android_armeabi_with_ble":
+        build_android_armeabi_with_ble("true", "")
+        build_android_armeabi_with_ble("false", "")
+
+    elif str(sys.argv[1]) == "android_armeabi_with_rm_and_ip":
+        build_android_armeabi_with_rm_and_ip("true", "")
+        build_android_armeabi_with_rm_and_ip("false", "")
+
+    elif str(sys.argv[1]) == "android_armeabi_with_rm_and_bt":
+        build_android_armeabi_with_rm_and_bt("true", "")
+        build_android_armeabi_with_rm_and_bt("false", "")
+
+    elif str(sys.argv[1]) == "android_armeabi_with_rm_and_ble":
+        build_android_armeabi_with_rm_and_ble("true", "")
+        build_android_armeabi_with_rm_and_ble("false", "")
 
     elif str(sys.argv[1]) == "arduino":
         build_arduino("true", "")

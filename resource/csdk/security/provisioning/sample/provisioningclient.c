@@ -25,7 +25,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-
+#include "payload_logging.h"
 #include "utlist.h"
 #include "logger.h"
 #include "oic_malloc.h"
@@ -36,6 +36,14 @@
 #include "securevirtualresourcetypes.h"
 #include "srmutility.h"
 #include "pmtypes.h"
+#include "oxmverifycommon.h"
+
+#ifdef _MSC_VER
+#include <io.h>
+
+#define F_OK 0
+#define access _access_s
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -47,27 +55,33 @@ extern "C"
 #define _10_DISCOV_ALL_DEVS_        10
 #define _11_DISCOV_UNOWN_DEVS_      11
 #define _12_DISCOV_OWN_DEVS_        12
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 #define _13_MOT_DISCOV_DEV_         13
-#endif //_ENABLE_MULTIPLE_OWNER_
+#define _14_MOT_DISCOV_SINGLE_DEV_  14
+#endif //MULTIPLE_OWNER
 #define _20_REGIST_DEVS_            20
 #define _30_PROVIS_PAIR_DEVS_       30
 #define _31_PROVIS_CRED_            31
 #define _32_PROVIS_ACL_             32
 #define _33_PROVIS_DP_              33
 #define _34_CHECK_LINK_STATUS_      34
+#define _35_SAVE_ACL_               35
 #define _40_UNLINK_PAIR_DEVS_       40
 #define _50_REMOVE_SELEC_DEV_       50
 #define _51_REMOVE_DEV_WITH_UUID_   51
 #define _52_RESET_SELEC_DEV_        52
+#define _53_RESET_SVR_DB_           53
 #define _60_GET_CRED_               60
 #define _61_GET_ACL_                61
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 #define _70_MOT_CHANGE_MOM_         70
 #define _71_MOT_PROV_PRECONF_PIN_   71
 #define _72_MOT_OXM_SEL_            72
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 #define _80_SELECT_PROTOCOL_        80
+#define _81_SELECT_VERIF_METHOD_    81
+#define _91_SELECT_INTROSPECTION_METHOD_    91
+#define _92_SELECT_INTROSPECTION_PAYLOAD_METHOD_    92
 #define _99_EXIT_PRVN_CLT_          99
 
 #define ACL_RESRC_MAX_NUM   16
@@ -90,17 +104,17 @@ static const OicSecPrm_t  SUPPORTED_PRMS[1] =
 // |g_ctx| means provision manager application context and
 // the following, includes |un/own_list|, could be variables, which |g_ctx| has,
 // for accessing all function(s) for these, they are declared on global domain
-static const char* g_ctx = "Provision Manager Client Application Context";
+static char* g_ctx = "Provision Manager Client Application Context";
 static char* g_svr_fname;
 static char* g_prvn_fname;
 static OCProvisionDev_t* g_own_list;
 static OCProvisionDev_t* g_unown_list;
 static int g_own_cnt;
 static int g_unown_cnt;
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 static OCProvisionDev_t* g_mot_enable_list;
 static int g_mot_enable_cnt;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 static bool g_doneCB;
 #ifdef __WITH_TLS__
@@ -109,18 +123,19 @@ static void setDevProtocol(OCProvisionDev_t* dev_lst);
 #endif
 // function declaration(s) for calling them before implementing
 static OicSecAcl_t* createAcl(const int);
+static OicSecAcl_t* createSimpleAcl(const OicUuid_t uuid);
 static OicSecPdAcl_t* createPdAcl(const int);
 static OCProvisionDev_t* getDevInst(const OCProvisionDev_t*, const int);
 static int printDevList(const OCProvisionDev_t*);
 static size_t printUuidList(const OCUuidList_t*);
-static int printResultList(const OCProvisionResult_t*, const int);
+static size_t printResultList(const OCProvisionResult_t*, const size_t);
 static void printUuid(const OicUuid_t*);
 static FILE* fopen_prvnMng(const char*, const char*);
 static int waitCallbackRet(void);
 static int selectTwoDiffNum(int*, int*, const int, const char*);
 
 // callback function(s) for provisioning client using C-level provisioning API
-static void ownershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void ownershipTransferCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -134,7 +149,7 @@ static void ownershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t* arr,
     g_doneCB = true;
 }
 
-static void provisionPairwiseCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void provisionPairwiseCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -148,7 +163,7 @@ static void provisionPairwiseCB(void* ctx, int nOfRes, OCProvisionResult_t* arr,
     g_doneCB = true;
 }
 
-static void provisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void provisionCredCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -162,7 +177,7 @@ static void provisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, boo
     g_doneCB = true;
 }
 
-static void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void provisionAclCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -176,7 +191,7 @@ static void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool
     g_doneCB = true;
 }
 
-static void getCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void getCredCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -190,7 +205,7 @@ static void getCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasE
     g_doneCB = true;
 }
 
-static void getAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void getAclCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -204,7 +219,7 @@ static void getAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasEr
     g_doneCB = true;
 }
 
-static void provisionDPCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void provisionDPCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -218,7 +233,7 @@ static void provisionDPCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool 
     g_doneCB = true;
 }
 
-static void unlinkDevicesCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void unlinkDevicesCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -232,7 +247,7 @@ static void unlinkDevicesCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, boo
     g_doneCB = true;
 }
 
-static void removeDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void removeDeviceCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -246,7 +261,7 @@ static void removeDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool
     g_doneCB = true;
 }
 
-static void syncDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void syncDeviceCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -260,8 +275,8 @@ static void syncDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool h
     g_doneCB = true;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
-static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+#ifdef MULTIPLE_OWNER
+static void updateDoxmForMOTCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -274,11 +289,14 @@ static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, 
     }
     g_doneCB = true;
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
-static void inputPinCB(char* pin, size_t len)
+static void inputPinCB(OicUuid_t deviceId, char *pin, size_t len, void *context)
 {
-    if(!pin || OXM_RANDOM_PIN_SIZE>=len)
+    OC_UNUSED(deviceId);
+    OC_UNUSED(context);
+
+    if(!pin || OXM_RANDOM_PIN_MIN_SIZE > len)
     {
         OIC_LOG(ERROR, TAG, "inputPinCB invalid parameters");
         return;
@@ -287,7 +305,7 @@ static void inputPinCB(char* pin, size_t len)
     printf("   > INPUT PIN: ");
     for(int ret=0; 1!=ret; )
     {
-        ret = scanf("%8s", pin);
+        ret = scanf("%32s", pin);
         for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                     // '0x20<=code' is character region
     }
@@ -303,7 +321,7 @@ static int initProvisionClient(void)
         .read = fread,
         .write = fwrite,
         .close = fclose,
-        .unlink = unlink
+        .unlink = remove
     };
     if(OC_STACK_OK != OCRegisterPersistentStorageHandler(&pstStr))
     {
@@ -337,7 +355,7 @@ static int initProvisionClient(void)
         return -1;
     }
 
-    SetInputPinCB(inputPinCB);
+    SetInputPinWithContextCB(inputPinCB, NULL);
 
     return 0;
 }
@@ -356,7 +374,7 @@ static int discoverAllDevices(void)
         g_unown_list = NULL;
     }
 
-    // call |OCGetDevInfoFromNetwork| API actually
+    // call |OCGetDevInfoFromNetwork| API
     printf("   Discovering All Un/Owned Devices on Network..\n");
     if(OC_STACK_OK != OCGetDevInfoFromNetwork(DISCOVERY_TIMEOUT, &g_own_list, &g_unown_list))
     {
@@ -386,7 +404,7 @@ static int discoverUnownedDevices(void)
         g_unown_list = NULL;
     }
 
-    // call |OCDiscoverUnownedDevices| API actually
+    // call |OCDiscoverUnownedDevices| API
     printf("   Discovering Only Unowned Devices on Network..\n");
     if(OC_STACK_OK != OCDiscoverUnownedDevices(DISCOVERY_TIMEOUT, &g_unown_list))
     {
@@ -412,7 +430,7 @@ static int discoverOwnedDevices(void)
         g_own_list = NULL;
     }
 
-    // call |OCDiscoverOwnedDevices| API actually
+    // call |OCDiscoverOwnedDevices| API
     printf("   Discovering Only Owned Devices on Network..\n");
     if(OC_STACK_OK != OCDiscoverOwnedDevices(DISCOVERY_TIMEOUT, &g_own_list))
     {
@@ -429,7 +447,7 @@ static int discoverOwnedDevices(void)
     return 0;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 static int discoverMOTEnabledDevices(void)
 {
     // delete owned device list before updating it
@@ -439,7 +457,7 @@ static int discoverMOTEnabledDevices(void)
         g_mot_enable_list = NULL;
     }
 
-    // call |OCDiscoverOwnedDevices| API actually
+    // call |OCDiscoverOwnedDevices| API
     printf("   Discovering Multiple Ownership Transfer Enabled Devices on Network..\n");
     if(OC_STACK_OK != OCDiscoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT, &g_mot_enable_list))
     {
@@ -453,7 +471,51 @@ static int discoverMOTEnabledDevices(void)
 
     return 0;
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+
+static int discoverSingleMOTEnabledDevice(void)
+{
+    OicUuid_t uuid = { .id = { 0 } };
+    char strUuid[64] = { 0 };
+
+    // Delete owned device list before updating it
+    if (g_mot_enable_list)
+    {
+        OCDeleteDiscoveredDevices(g_mot_enable_list);
+        g_mot_enable_list = NULL;
+    }
+
+    // Get the device id
+    printf("   Specify the Multiple Ownership Transfer enabled device to discover on the network\n");
+    printf("   > Input the UUID : ");
+    for (int ret = 0; 1 != ret; )
+    {
+        ret = scanf("%64s", strUuid);
+        for (; 0x20 <= getchar(); );  // for removing overflow garbages
+                                      // '0x20<=code' is character region
+    }
+
+    OCStackResult rst = ConvertStrToUuid(strUuid, &uuid);
+    if (OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "ConvertStrToUuid API error: %d", rst);
+        return -1;
+    }
+
+    // Call |OCDiscoverMultipleOwnerEnabledSingleDevice| API
+    printf("   Discovering the Multiple Ownership Transfer enabled device on the network..\n");
+    if (OC_STACK_OK != OCDiscoverMultipleOwnerEnabledSingleDevice(DISCOVERY_TIMEOUT, &uuid, &g_mot_enable_list))
+    {
+        OIC_LOG(ERROR, TAG, "OCDiscoverMultipleOwnerEnabledSingleDevice API error");
+        return -1;
+    }
+
+    // Display the discovered owned list
+    printf("   > Discovered Multiple Ownership Transfer Enabled Device\n");
+    g_mot_enable_cnt = printDevList(g_mot_enable_list);
+
+    return 0;
+}
+#endif //MULTIPLE_OWNER
 
 static int registerDevices(void)
 {
@@ -465,7 +527,7 @@ static int registerDevices(void)
         return 0;  // normal case
     }
 
-    // call |OCDoOwnershipTransfer| API actually
+    // call |OCDoOwnershipTransfer| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -519,7 +581,7 @@ static int provisionPairwise(void)
         }
     }
 
-    // call |OCProvisionPairwiseDevices| API actually
+    // call |OCProvisionPairwiseDevices| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -606,7 +668,7 @@ static int provisionCred(void)
     }
 
 
-    // call |OCProvisionCredentials| API actually
+    // call |OCProvisionCredentials| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -672,7 +734,7 @@ static int provisionAcl(void)
         goto PVACL_ERROR;
     }
 
-    // call |OCProvisionACL| API actually
+    // call |OCProvisionACL| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -770,7 +832,7 @@ static int provisionDirectPairing(void)
         goto PVDP_ERROR;
     }
 
-    // call |OCProvisionDirectPairing| API actually
+    // call |OCProvisionDirectPairing| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -832,7 +894,7 @@ static int checkLinkedStatus(void)
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
-    // call |OCGetLinkedStatus| API actually
+    // call |OCGetLinkedStatus| API
     printf("   Checking Selected Link Status on PRVN DB..\n");
     OCUuidList_t* dvid_lst = NULL;
     size_t dvid_cnt = 0;
@@ -873,6 +935,79 @@ CKLST_ERROR:
     return -1;
 }
 
+static int saveAcl(void)
+{
+    // create ACL to save into local SVR DB
+    OicSecAcl_t* acl = NULL;
+    OicUuid_t uuid =   {.id={0}};
+    char strUuid[64] = {0};
+
+    printf("[1] Use a test UUID [11111111-2222-3333-4444-555555555555]\n");
+    printf("[2] Use a user input\n");
+    int sel_num = 0;
+    for( ; ; )
+    {
+        printf("   > Select Number, for Subject UUID of new ACE: ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &sel_num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(1 == sel_num)
+        {
+            OICStrcpy(strUuid, sizeof(strUuid), "11111111-2222-3333-4444-555555555555");
+            break;
+        }
+        else if(2 == sel_num)
+        {
+            printf("   > Input the UUID : ");
+            for(int ret=0; 1!=ret; )
+            {
+                ret = scanf("%64s", strUuid);
+                for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+            }
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+
+    printf("Selected Subject UUID : %s\n", strUuid);
+    OCStackResult rst = ConvertStrToUuid(strUuid, &uuid);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "ConvertStrToUuid API error: %d", rst);
+        goto SVACL_ERROR;
+    }
+
+    acl = createSimpleAcl(uuid);
+    if(!acl)
+    {
+        OIC_LOG(ERROR, TAG, "createAcl error return");
+        goto SVACL_ERROR;
+    }
+
+    // call |OCSaveACL| API
+    rst = OCSaveACL(acl);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCSaveACL API error: %d", rst);
+        goto SVACL_ERROR;
+    }
+    OCDeleteACLList(acl);  // after here |acl| points nothing
+
+    // display the ACL-provisioned result
+    printf("   > Saved Selected ACL\n");
+
+    return 0;
+
+SVACL_ERROR:
+    OCDeleteACLList(acl);  // after here |acl| points nothing
+    return -1;
+}
+
 static int getCred(void)
 {
     // check |own_list| for checking selected link status on PRVN DB
@@ -901,7 +1036,7 @@ static int getCred(void)
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
-    // call |getDevInst| API actually
+    // call |getDevInst| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -960,7 +1095,7 @@ static int getAcl(void)
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
-    // call |getDevInst| API actually
+    // call |getDevInst| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -1010,7 +1145,7 @@ static int unlinkPairwise(void)
         return -1;
     }
 
-    // call |OCUnlinkDevices| API actually
+    // call |OCUnlinkDevices| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -1066,7 +1201,7 @@ static int removeDevice(void)
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
-    // call |OCRemoveDevice| API actually
+    // call |OCRemoveDevice| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -1131,7 +1266,56 @@ static int removeDeviceWithUuid(void)
     return 0;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
+{
+    OC_UNUSED(ctx);
+
+    OIC_LOG(INFO, TAG, "IN displayMutualVerifNumCB");
+    if (NULL != mutualVerifNum)
+    {
+        OIC_LOG(INFO, TAG, "############ mutualVerifNum ############");
+        OIC_LOG_BUFFER(INFO, TAG, mutualVerifNum, MUTUAL_VERIF_NUM_LEN);
+        OIC_LOG(INFO, TAG, "############ mutualVerifNum ############");
+        OIC_LOG(INFO, TAG, "OUT displayMutualVerifNumCB");
+    }
+    else
+    {
+        OIC_LOG(INFO, TAG, "############ Confirm on the Server side ############");
+    }
+    return OC_STACK_OK;
+}
+
+OCStackResult confirmNumCB(void * ctx)
+{
+    OC_UNUSED(ctx);
+
+    for (;;)
+    {
+        int userConfirm;
+
+        printf("   > Press 1 if the mutual verification numbers are the same\n");
+        printf("   > Press 0 if the mutual verification numbers are not the same\n");
+
+        for (int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &userConfirm);
+            for (; 0x20<=getchar(); );  // for removing overflow garbage
+                                        // '0x20<=code' is character region
+        }
+        if (1 == userConfirm)
+        {
+            break;
+        }
+        else if (0 == userConfirm)
+        {
+            return OC_STACK_USER_DENIED_REQ;
+        }
+        printf("   Entered Wrong Number. Please Enter Again\n");
+    }
+    return OC_STACK_OK;
+}
+
+#ifdef MULTIPLE_OWNER
 static int changeMultipleOwnershipTrnasferMode(void)
 {
     // check |own_list| for removing device
@@ -1181,13 +1365,13 @@ static int changeMultipleOwnershipTrnasferMode(void)
     }
 
     OCProvisionDev_t* motDev = getDevInst(g_own_list, dev_num);
-    if(OC_STACK_OK == MOTChangeMode(NULL, motDev, (OicSecMomType_t)dev_num, updateDoxmForMOTCB))
+    if(OC_STACK_OK == OCChangeMOTMode(NULL, motDev, (OicSecMomType_t)mom, updateDoxmForMOTCB))
     {
         g_doneCB = false;
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "MOTChangeMode API error");
+        OIC_LOG(ERROR, TAG, "OCChangeMOTMode API error");
         return -1;
     }
 
@@ -1231,10 +1415,11 @@ static int selectMultipleOwnershipTrnasferMethod(void)
     int oxm = 0;
     for( ; ; )
     {
-        printf("   0. (Not Supported)\n");
-        printf("   1. Random PIN OxM\n");
-        printf("   2. (Not Supported)\n");
-        printf("   3. Pre-Configured PIN OxM\n");
+        printf("   %d. (Not Supported)\n", OIC_JUST_WORKS);
+        printf("   %d. Random PIN OxM\n", OIC_RANDOM_DEVICE_PIN);
+        printf("   %d. (Not Supported)\n", OIC_MANUFACTURER_CERTIFICATE);
+        printf("   %d. (Not Supported)\n", OIC_DECENTRALIZED_PUBLIC_KEY);
+        printf("   %d. Pre-Configured PIN OxM\n", OIC_PRECONFIG_PIN);
         printf("   > Enter Number of  OxM for Multiple Ownership Transfer : ");
         for(int ret=0; 1!=ret; )
         {
@@ -1250,13 +1435,13 @@ static int selectMultipleOwnershipTrnasferMethod(void)
     }
 
     OCProvisionDev_t* motDev = getDevInst(g_mot_enable_list, dev_num);
-    if(OC_STACK_OK ==  MOTSelectMOTMethod(NULL, motDev, (OicSecOxm_t)oxm, updateDoxmForMOTCB))
+    if(OC_STACK_OK == OCSelectMOTMethod(NULL, motDev, (OicSecOxm_t)oxm, updateDoxmForMOTCB))
     {
         g_doneCB = false;
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "MOTSelectMOTMethod API error");
+        OIC_LOG(ERROR, TAG, "OCSelectMOTMethod API error");
         return -1;
     }
 
@@ -1297,23 +1482,23 @@ static int provisionPreconfigPIN()
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
-    char preconfPIN[9] = {0};
-    printf("   > Input the PreconfigPIN (e.g. 12341234) : ");
+    char preconfigPin[9] = {0};
+    printf("   > Input the PreconfigPin (e.g. 12341234) : ");
     for(int ret=0; 1!=ret; )
     {
-        ret = scanf("%8s", preconfPIN);
+        ret = scanf("%8s", preconfigPin);
         for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                     // '0x20<=code' is character region
     }
 
     OCProvisionDev_t* motDev = getDevInst(g_mot_enable_list, dev_num);
-    if(OC_STACK_OK == OCProvisionPreconfPin(NULL, motDev, preconfPIN, strlen(preconfPIN), provisionCredCB))
+    if(OC_STACK_OK == OCProvisionPreconfigPin(NULL, motDev, preconfigPin, strlen(preconfigPin), provisionCredCB))
     {
         g_doneCB = false;
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionPreconfPin API error");
+        OIC_LOG(ERROR, TAG, "OCProvisionPreconfigPin API error");
         return -1;
     }
 
@@ -1325,7 +1510,7 @@ static int provisionPreconfigPIN()
 
     return 0;
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 static int resetDevice(void)
 {
@@ -1376,6 +1561,18 @@ static int resetDevice(void)
     printf("   > Reset Selected Owned Device SUCCEEDED\n");
     printf("   > Please Discover Owned Devices for the Registered Result, with [10|12] Menu\n");
 
+    return 0;
+}
+
+static int resetSVRDB(void)
+{
+    printf("   Resetting SVR DB..\n");
+    OCStackResult rst = OCResetSVRDB();
+    if (OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCResetSVRDB API error: %d", rst);
+        return -1;
+    }
     return 0;
 }
 
@@ -1484,7 +1681,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
             printf("         Enter Number of resource type for [%s] : ", rsrc->href);
             for(int ret=0; 1!=ret; )
             {
-                ret = scanf("%d", &arrLen);
+                ret = scanf("%zu", &arrLen);
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
@@ -1503,17 +1700,17 @@ static OicSecAcl_t* createAcl(const int dev_num)
             goto CRACL_ERROR;
         }
 
-        for(int i = 0; i < arrLen; i++)
+        for(size_t j = 0; j < arrLen; j++)
         {
-            printf("         Enter ResourceType[%d] Name (e.g. core.led): ", i+1);
+            printf("         Enter ResourceType[%zu] Name (e.g. core.led): ", j+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
-            rsrc->types[i] = OICStrdup(rsrc_in);
-            if(!rsrc->types[i])
+            rsrc->types[j] = OICStrdup(rsrc_in);
+            if(!rsrc->types[j])
             {
                 OIC_LOG(ERROR, TAG, "createAcl: OICStrdup error return");
                 goto CRACL_ERROR;
@@ -1525,7 +1722,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
             printf("         Enter Number of interface for [%s]: ", rsrc->href);
             for(int ret=0; 1!=ret; )
             {
-                ret = scanf("%d", &arrLen);
+                ret = scanf("%zu", &arrLen);
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
@@ -1544,17 +1741,17 @@ static OicSecAcl_t* createAcl(const int dev_num)
             goto CRACL_ERROR;
         }
 
-        for(int i = 0; i < arrLen; i++)
+        for(size_t j = 0; j < arrLen; j++)
         {
-            printf("         Enter Interface[%d] Name (e.g. oic.if.baseline): ", i+1);
+            printf("         Enter Interface[%zu] Name (e.g. oic.if.baseline): ", j+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
-            rsrc->interfaces[i] = OICStrdup(rsrc_in);
-            if(!rsrc->interfaces[i])
+            rsrc->interfaces[j] = OICStrdup(rsrc_in);
+            if(!rsrc->interfaces[j])
             {
                 OIC_LOG(ERROR, TAG, "createAcl: OICStrdup error return");
                 goto CRACL_ERROR;
@@ -1602,6 +1799,76 @@ CRACL_ERROR:
     return NULL;
 }
 
+static OicSecAcl_t* createSimpleAcl(const OicUuid_t uuid)
+{
+    OIC_LOG(DEBUG, TAG, "createSimpleAcl IN");
+
+    // allocate memory for |acl| struct
+    OicSecAcl_t* acl = (OicSecAcl_t*) OICCalloc(1, sizeof(OicSecAcl_t));
+    if(!acl)
+    {
+        OIC_LOG(DEBUG, TAG, "OICCalloc error return");
+        return NULL;  // not need to 'goto' |ERROR| before allocating |acl|
+    }
+    OicSecAce_t* ace = (OicSecAce_t*) OICCalloc(1, sizeof(OicSecAce_t));
+    if(!ace)
+    {
+        OIC_LOG(DEBUG, TAG,  "OICCalloc error return");
+        return NULL;  // not need to 'goto' |ERROR| before allocating |acl|
+    }
+    LL_APPEND(acl->aces, ace);
+
+    memcpy(&ace->subjectuuid, &uuid, UUID_LENGTH);
+
+    OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+    if(!rsrc)
+    {
+        OIC_LOG(DEBUG, TAG, "OICCalloc error return");
+        OCDeleteACLList(acl);
+        return NULL;
+    }
+
+    char href[] = "*";
+    size_t len = strlen(href)+1;  // '1' for null termination
+    rsrc->href = (char*) OICCalloc(len, sizeof(char));
+    if(!rsrc->href)
+    {
+        OIC_LOG(DEBUG, TAG,  "OICCalloc error return");
+        OCDeleteACLList(acl);
+        return NULL;
+    }
+    OICStrcpy(rsrc->href, len, href);
+
+    size_t arrLen = 1;
+    rsrc->typeLen = arrLen;
+    rsrc->types = (char**)OICCalloc(arrLen, sizeof(char*));
+    if(!rsrc->types)
+    {
+        OIC_LOG(DEBUG, TAG,  "OICCalloc error return");
+        OCDeleteACLList(acl);
+        return NULL;
+    }
+    rsrc->types[0] = OICStrdup("");   // ignore
+
+    rsrc->interfaceLen = 1;
+    rsrc->interfaces = (char**)OICCalloc(arrLen, sizeof(char*));
+    if(!rsrc->interfaces)
+    {
+        OIC_LOG(DEBUG, TAG,  "OICCalloc error return");
+        OCDeleteACLList(acl);
+        return NULL;
+    }
+    rsrc->interfaces[0] = OICStrdup("oic.if.baseline");  // ignore
+
+    LL_APPEND(ace->resources, rsrc);
+
+    ace->permission = 31;   // R/W/U/D
+
+    OIC_LOG(DEBUG, TAG, "createSimpleAcl OUT");
+
+    return acl;
+}
+
 static OicSecPdAcl_t* createPdAcl(const int dev_num)
 {
     if(0>=dev_num || g_own_cnt<dev_num)
@@ -1625,16 +1892,16 @@ static OicSecPdAcl_t* createPdAcl(const int dev_num)
     pdAcl->resourcesLen = 1;
 
     // resource
-    int num = pdAcl->resourcesLen;
+    size_t num = pdAcl->resourcesLen;
     pdAcl->resources = (char**) OICCalloc(num, sizeof(char*));
     if(!pdAcl->resources)
     {
         OIC_LOG(ERROR, TAG, "createPdAcl: OICCalloc error return");
         goto CRPDACL_ERROR;
     }
-    for(int i=0; num>i; ++i)
+    for (size_t i = 0; num > i; ++i)
     {
-        size_t len = strlen(rsrc_in[i])+1;  // '1' for null termination
+        size_t len = strlen(rsrc_in[i]) + 1;  // '1' for null termination
         char* rsrc = (char*) OICCalloc(len, sizeof(char));
         if(!rsrc)
         {
@@ -1720,24 +1987,239 @@ static size_t printUuidList(const OCUuidList_t* uid_lst)
     return lst_cnt;
 }
 
-static int printResultList(const OCProvisionResult_t* rslt_lst, const int rslt_cnt)
+static size_t printResultList(const OCProvisionResult_t* rslt_lst, const size_t rslt_cnt)
 {
-    if(!rslt_lst || 0>=rslt_cnt)
+    if (!rslt_lst || (0 == rslt_cnt))
     {
         printf("     Device List is Empty..\n\n");
         return 0;
     }
 
-    int lst_cnt = 0;
-    for( ; rslt_cnt>lst_cnt; ++lst_cnt)
+    size_t lst_cnt = 0;
+    for (; rslt_cnt > lst_cnt; ++lst_cnt)
     {
-        printf("     [%d] ", lst_cnt+1);
-        printUuid((const OicUuid_t*) &rslt_lst[lst_cnt].deviceId);
+        printf("     [%" PRIuPTR "] ", lst_cnt + 1);
+        printUuid((const OicUuid_t*)&rslt_lst[lst_cnt].deviceId);
         printf(" - result: %d\n", rslt_lst[lst_cnt].res);
     }
     printf("\n");
 
     return lst_cnt;
+}
+
+const char* getResult(OCStackResult result)
+{
+    switch (result)
+    {
+    case OC_STACK_OK:
+        return "OC_STACK_OK";
+    case OC_STACK_RESOURCE_CREATED:
+        return "OC_STACK_RESOURCE_CREATED";
+    case OC_STACK_RESOURCE_DELETED:
+        return "OC_STACK_RESOURCE_DELETED";
+    case OC_STACK_RESOURCE_CHANGED:
+        return "OC_STACK_RESOURCE_CHANGED";
+    case OC_STACK_INVALID_URI:
+        return "OC_STACK_INVALID_URI";
+    case OC_STACK_INVALID_QUERY:
+        return "OC_STACK_INVALID_QUERY";
+    case OC_STACK_INVALID_IP:
+        return "OC_STACK_INVALID_IP";
+    case OC_STACK_INVALID_PORT:
+        return "OC_STACK_INVALID_PORT";
+    case OC_STACK_INVALID_CALLBACK:
+        return "OC_STACK_INVALID_CALLBACK";
+    case OC_STACK_INVALID_METHOD:
+        return "OC_STACK_INVALID_METHOD";
+    case OC_STACK_NO_MEMORY:
+        return "OC_STACK_NO_MEMORY";
+    case OC_STACK_COMM_ERROR:
+        return "OC_STACK_COMM_ERROR";
+    case OC_STACK_INVALID_PARAM:
+        return "OC_STACK_INVALID_PARAM";
+    case OC_STACK_NOTIMPL:
+        return "OC_STACK_NOTIMPL";
+    case OC_STACK_NO_RESOURCE:
+        return "OC_STACK_NO_RESOURCE";
+    case OC_STACK_RESOURCE_ERROR:
+        return "OC_STACK_RESOURCE_ERROR";
+    case OC_STACK_SLOW_RESOURCE:
+        return "OC_STACK_SLOW_RESOURCE";
+    case OC_STACK_NO_OBSERVERS:
+        return "OC_STACK_NO_OBSERVERS";
+    case OC_STACK_UNAUTHORIZED_REQ:
+        return "OC_STACK_UNAUTHORIZED_REQ";
+    case OC_STACK_ERROR:
+        return "OC_STACK_ERROR";
+    default:
+        return "UNKNOWN";
+    }
+}
+
+OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
+    OCClientResponse* clientResponse)
+{
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
+
+    if (clientResponse == NULL)
+    {
+        OIC_LOG(INFO, TAG, "getReqCB received NULL clientResponse");
+        return OC_STACK_DELETE_TRANSACTION;
+    }
+
+    OIC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
+    OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
+    OIC_LOG_V(INFO, TAG, "Payload Size: %d", 
+              ((OCRepPayload*)clientResponse->payload)->values->str);
+    OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
+    OIC_LOG(INFO, TAG, "=============> Get Response");
+
+    if (clientResponse->numRcvdVendorSpecificHeaderOptions > 0)
+    {
+        OIC_LOG(INFO, TAG, "Received vendor specific options");
+        uint8_t i = 0;
+        OCHeaderOption* rcvdOptions = clientResponse->rcvdVendorSpecificHeaderOptions;
+        for (i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
+        {
+            if ((rcvdOptions[i]).protocolID == OC_COAP_ID)
+            {
+                OIC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
+                    (rcvdOptions[i]).optionID);
+
+                OIC_LOG_BUFFER(INFO, TAG, rcvdOptions[i].optionData,
+                    MAX_HEADER_OPTION_DATA_LENGTH);
+            }
+        }
+    }
+    g_doneCB = true; // flag done
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+int obtainUserSelectionForDeviceNumber(int numDevices)
+{
+    int dev_num = -1;
+    for (; ; )
+    {
+        printf("   > Enter Device Number: ");
+        for (int ret = 0; 1 != ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for (; 0x20 <= getchar(); );  // for removing overflow garbages
+                                          // '0x20<=code' is character region
+        }
+        if ((0 < dev_num) && (numDevices >= dev_num))
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+    return dev_num;
+}
+
+void selectIntrospectionMethod()
+{
+    OCStackResult ret;
+    OCCallbackData cbData;
+    OCDoHandle handle;
+    static OCDevAddr serverAddr;
+    cbData.cb = &getReqCB;
+    int dev_num = 1;
+    OCProvisionDev_t *device = NULL;
+
+    // check |own_list| for devices that can be used for introspection
+    if (!g_own_list || (1 > g_own_cnt))
+    {
+        printf("   > Owned Device List, to do introspection, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return;
+    }
+
+    if (g_own_cnt != 1)
+    {
+        // we have more than one option - ask user to select one
+        printf("   > Multiple devices found - select a device for Introspection\n");
+        dev_num = obtainUserSelectionForDeviceNumber(g_own_cnt);
+    }
+
+    device = getDevInst(g_own_list, dev_num); 
+    if (device)
+    {
+        serverAddr = device->endpoint;
+        cbData.context = NULL;
+        cbData.cd = NULL;
+        OIC_LOG_V(INFO, TAG, "Performing Introspection");
+        g_doneCB = false;
+
+        ret = OCDoResource(&handle, OC_REST_GET, OC_RSRVD_INTROSPECTION_URI, &serverAddr,
+            NULL,
+            CT_ADAPTER_IP, OC_LOW_QOS, &cbData, NULL, 0);
+
+        if (ret != OC_STACK_OK)
+        {
+            OIC_LOG_V(ERROR, TAG, "OCDoResource returned error %d with method", ret);
+        }
+        if (waitCallbackRet())  // input |g_doneCB| flag implicitly
+        {
+            OIC_LOG(ERROR, TAG, "selectIntrospectionMethod callback error");
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Selected device does not exist");
+    }
+}
+
+void selectIntrospectionPayloadMethod()
+{
+    OCStackResult ret;
+    OCCallbackData cbData;
+    OCDoHandle handle;
+    static OCDevAddr serverAddr;
+    cbData.cb = &getReqCB;
+    int dev_num = 1;
+    OCProvisionDev_t *device = NULL;
+
+    // check |own_list| for devices that can be used for introspection payload
+    if (!g_own_list || (1 > g_own_cnt))
+    {
+        printf("   > Owned Device List, to get introspection payload, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return;
+    }
+
+    if (g_own_cnt != 1)
+    {
+        // we have more than one option - ask user to select one
+        printf("   > Multiple devices found - select a device for Introspection payload\n");
+        dev_num = obtainUserSelectionForDeviceNumber(g_own_cnt);
+    }
+
+    device = getDevInst(g_own_list, dev_num);
+    if (device)
+    {
+        serverAddr = device->endpoint;
+        cbData.context = g_ctx;
+        cbData.cd = NULL;
+        OIC_LOG_V(INFO, TAG, "Performing Introspection Payload");
+        g_doneCB = false;
+        ret = OCDoResource(&handle, OC_REST_GET, OC_RSRVD_INTROSPECTION_PAYLOAD_URI, &serverAddr,
+            NULL,
+            CT_ADAPTER_IP, OC_LOW_QOS, &cbData, NULL, 0);
+
+        if (ret != OC_STACK_OK)
+        {
+            OIC_LOG_V(ERROR, TAG, "OCDoResource returned error %d with method", ret);
+        }
+        if (waitCallbackRet())  // input |g_doneCB| flag implicitly
+        {
+            OIC_LOG(ERROR, TAG, "selectIntrospectionPayloadMethod callback error");
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Selected device does not exist");
+    }
 }
 
 static void printUuid(const OicUuid_t* uid)
@@ -1754,12 +2236,17 @@ static void printUuid(const OicUuid_t* uid)
 
 static FILE* fopen_prvnMng(const char* path, const char* mode)
 {
-    (void)path;  // unused |path| parameter
-
-    // input |g_svr_db_fname| internally by force, not using |path| parameter
-    // because |OCPersistentStorage::open| is called |OCPersistentStorage| internally
-    // with its own |SVR_DB_FILE_NAME|
-    return fopen(SVR_DB_FILE_NAME, mode);
+    if (0 == strncmp(path, OC_SECURITY_DB_DAT_FILE_NAME, strlen(OC_SECURITY_DB_DAT_FILE_NAME)))
+    {
+        // input |g_svr_db_fname| internally by force, not using |path| parameter
+        // because |OCPersistentStorage::open| is called |OCPersistentStorage| internally
+        // with its own |SVR_DB_FILE_NAME|
+        return fopen(SVR_DB_FILE_NAME, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 static int waitCallbackRet(void)
@@ -1774,31 +2261,36 @@ static int waitCallbackRet(void)
         }
     }
 
+    if(!g_doneCB)
+    {
+        OCPDMCleanupForTimeout();
+    }
+
     return 0;
 }
 
 static int selectTwoDiffNum(int* a, int* b, const int max, const char* str)
 {
-    if(!a || !b || 2>max || !str)
+    if(!a || !b || (2 > max) || !str)
     {
         return -1;
     }
 
     for( ; ; )
     {
-        for(int i=0; 2>i; ++i)
+        for(int i = 0; 2 > i; ++i)
         {
-            int* num = 0==i?a:b;
+            int* num = (0 == i) ? a : b;
             for( ; ; )
             {
-                printf("   > Enter Device[%d] Number, %s: ", i+1, str);
-                for(int ret=0; 1!=ret; )
+                printf("   > Enter Device[%d] Number, %s: ", (i + 1), str);
+                for(int ret = 0; 1 != ret;)
                 {
                     ret = scanf("%d", num);
                     for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                                 // '0x20<=code' is character region
                 }
-                if(0<*num && max>=*num)
+                if((0 < *num) && (max >= *num))
                 {
                     break;
                 }
@@ -1811,8 +2303,6 @@ static int selectTwoDiffNum(int* a, int* b, const int max, const char* str)
             return 0;
         }
     }
-
-    return -1;
 }
 
 #ifdef __WITH_TLS__
@@ -1862,6 +2352,30 @@ static void selectSecureProtocol()
 }
 #endif
 
+static void selectVerifMethod()
+{
+    int option;
+    printf("   Select verification method for ownership transfer\n");
+    printf("   0 - No verification\n");
+    printf("   1 - Display only\n");
+    printf("   2 - Confirm only\n");
+    printf("   3 - Both Display and Confirm\n");
+
+    for(int ret=0; 1!=ret; )
+    {
+        ret = scanf("%d",&option);
+        for( ; 0x20<=getchar(); );  // for removing overflow garbages
+        // '0x20<=code' is character region
+    }
+
+    if(0 > option || 3 < option)
+    {
+        printf("Invalid option!");
+    }
+    SetVerifyOption((VerifyOptionBitmask_t) option);
+    printf("Option %d chosen!", option);
+}
+
 static void printMenu(void)
 {
     printf("************************************************************\n");
@@ -1871,12 +2385,13 @@ static void printMenu(void)
     printf("** [A] DISCOVER DEVICES ON NETWORK\n");
     printf("** 10. Discover All Un/Owned Devices on Network\n");
     printf("** 11. Discover Only Unowned Devices on Network\n");
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     printf("** 12. Discover Only Owned Devices on Network\n");
-    printf("** 13. Discover Multiple Ownership Transfer Enabled Devices on Network\n\n");
+    printf("** 13. Discover Multiple Ownership Transfer Enabled Devices on Network\n");
+    printf("** 14. Discover Specific Multiple Ownership Transfer Enabled Device on Network\n\n");
 #else
     printf("** 12. Discover Only Owned Devices on Network\n\n");
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     printf("** [B] REGISTER/OWN ALL DISCOVERED UNOWNED DEVICES\n");
     printf("** 20. Register/Own All Discovered Unowned Devices\n\n");
@@ -1886,7 +2401,8 @@ static void printMenu(void)
     printf("** 31. Provision Credentials for Pairwise Things\n");
     printf("** 32. Provision the Selected Access Control List(ACL)\n");
     printf("** 33. Provision Direct-Pairing Configuration\n");
-    printf("** 34. Check Linked Status of the Selected Device on PRVN DB\n\n");
+    printf("** 34. Check Linked Status of the Selected Device on PRVN DB\n");
+    printf("** 35. Save the Selected Access Control List(ACL) into local SVR DB\n\n");
 
     printf("** [D] UNLINK PAIRWISE THINGS\n");
     printf("** 40. Unlink Pairwise Things\n\n");
@@ -1894,28 +2410,34 @@ static void printMenu(void)
     printf("** [E] REMOVE THE SELECTED DEVICE\n");
     printf("** 50. Remove the Selected Device\n");
     printf("** 51. Remove Device with UUID (UUID input is required)\n");
-    printf("** 52. Reset the Selected Device\n\n");
+    printf("** 52. Reset the Selected Device\n");
+    printf("** 53. Reset SVR DB\n\n");
 
     printf("** [F] GET SECURITY RESOURCE FOR DEBUGGING ONLY\n");
     printf("** 60. Get the Credential resources of the Selected Device\n");
     printf("** 61. Get the ACL resources of the Selected Device\n\n");
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     printf("** [G] UPDATE THE MULTIPLE OWNERSHIP TRANSFER RELATED VALUE\n");
     printf("** 70. Change the Multiple Ownership transfer MODE(update mom)\n");
     printf("** 71. Provision Preconfigured PIN\n");
     printf("** 72. Change the Multiple Ownership transfer METHOD(update oxmsel)\n\n");
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 #ifdef __WITH_TLS__
-    printf("** [H] SELECT SECURE PROTOCOL DTLS/TLS\n");
-    printf("** 80. Select secure protocol(default DTLS)\n\n");
-
-    printf("** [I] EXIT PROVISIONING CLIENT\n");
+    printf("** [H] SELECT SECURE PROTOCOL DTLS/TLS AND OTHERS\n");
+    printf("** 80. Select secure protocol(default DTLS)\n");
+    printf("** 81. Select verification method\n\n");
 #else
-    printf("** [H] EXIT PROVISIONING CLIENT\n");
+    printf("** [H] SELECT VERIFICATION OPTION\n");
+    printf("** 81. Select verification method\n\n");
 #endif
 
+    printf("** [I] SELECT INTROSPECTION OPTION\n");
+    printf("** 91. Select Get Introspection Resource\n");
+    printf("** 92. Select Get Introspection Payload\n\n");
+
+    printf("** [J] EXIT PROVISIONING CLIENT\n");
     printf("** 99. Exit Provisionong Client\n\n");
 
     printf("************************************************************\n\n");
@@ -1951,9 +2473,19 @@ int main()
         goto PMCLT_ERROR;
     }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+    // Client can choose a allowed/not-allowed OxM method.
+    if(OC_STACK_OK != OCSetOxmAllowStatus(OIC_DECENTRALIZED_PUBLIC_KEY, false))
+    {
+        OIC_LOG(WARNING, TAG, "Failed to disable OIC_DECENTRALIZED_PUBLIC_KEY OxM");
+    }
+
+    // set callbacks for verification options
+    SetDisplayNumCB(NULL, displayNumCB);
+    SetUserConfirmCB(NULL, confirmNumCB);
+
+#ifdef MULTIPLE_OWNER
     SetPreconfigPin("12341234", 8);
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     // main loop for provisioning manager
     int mn_num = 0;
@@ -1989,14 +2521,20 @@ int main()
                 OIC_LOG(ERROR, TAG, "_12_DISCOV_OWN_DEVS_: error");
             }
             break;
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         case _13_MOT_DISCOV_DEV_:
             if(discoverMOTEnabledDevices())
             {
                 OIC_LOG(ERROR, TAG, "_13_MOT_DISCOV_DEV_: error");
             }
             break;
-#endif //_ENABLE_MULTIPLE_OWNER_
+        case _14_MOT_DISCOV_SINGLE_DEV_:
+            if (discoverSingleMOTEnabledDevice())
+            {
+                OIC_LOG(ERROR, TAG, "_14_MOT_DISCOV_SINGLE_DEV_: error");
+            }
+            break;
+#endif //MULTIPLE_OWNER
         case _20_REGIST_DEVS_:
             if(registerDevices())
             {
@@ -2033,6 +2571,12 @@ int main()
                 OIC_LOG(ERROR, TAG, "_34_CHECK_LINK_STATUS_: error");
             }
             break;
+        case _35_SAVE_ACL_:
+            if(saveAcl())
+            {
+                OIC_LOG(ERROR, TAG, "_35_SAVE_ACL_: error");
+            }
+            break;
         case _40_UNLINK_PAIR_DEVS_:
             if(unlinkPairwise())
             {
@@ -2057,6 +2601,12 @@ int main()
                 OIC_LOG(ERROR, TAG, "_52_RESET_SELEC_DEV_: error");
             }
             break;
+        case _53_RESET_SVR_DB_:
+            if(resetSVRDB())
+            {
+                OIC_LOG(ERROR, TAG, "_53_RESET_SVR_DB_: error");
+            }
+            break;
         case _60_GET_CRED_:
             if(getCred())
             {
@@ -2069,7 +2619,7 @@ int main()
                 OIC_LOG(ERROR, TAG, "_61_GET_ACL_: error");
             }
             break;
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         case _70_MOT_CHANGE_MOM_:
             if(changeMultipleOwnershipTrnasferMode())
             {
@@ -2088,12 +2638,21 @@ int main()
                 OIC_LOG(ERROR, TAG, "_72_MOT_OXM_SEL_: error");
             }
             break;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 #ifdef __WITH_TLS__
         case  _80_SELECT_PROTOCOL_:
             selectSecureProtocol();
             break;
 #endif
+        case _81_SELECT_VERIF_METHOD_:
+            selectVerifMethod();
+            break;
+        case _91_SELECT_INTROSPECTION_METHOD_:
+            selectIntrospectionMethod();
+            break;
+        case _92_SELECT_INTROSPECTION_PAYLOAD_METHOD_:
+            selectIntrospectionPayloadMethod();
+            break;
         case _99_EXIT_PRVN_CLT_:
             goto PMCLT_ERROR;
         default:
@@ -2109,9 +2668,9 @@ PMCLT_ERROR:
     }
     OCDeleteDiscoveredDevices(g_own_list);  // after here |g_own_list| points nothing
     OCDeleteDiscoveredDevices(g_unown_list);  // after here |g_unown_list| points nothing
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     OCDeleteDiscoveredDevices(g_mot_enable_list);  // after here |g_motdev_list| points nothing
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     if(g_svr_fname)
     {

@@ -25,7 +25,6 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "cJSON.h"
 #include "base64.h"
 #include "resourcemanager.h"
 #include "dpairingresource.h"
@@ -39,19 +38,18 @@
 #include "aclresource.h"
 #include "srmutility.h"
 #include "ocserverrequest.h"
-#include "ocpayloadcbor.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "payload_logging.h"
-#include <stdlib.h>
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+#include <mbedtls/ssl_ciphersuites.h>
+#endif
+
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
 
-#ifdef __WITH_DTLS__
-#include "global.h"
-#endif
-
-#define TAG  "SRM-DPAIRING"
+#define TAG  "OIC_SRM_DPAIRING"
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */
@@ -135,7 +133,11 @@ OCStackResult SavePairingPSK(OCDevAddr *endpoint,
     }
 
     uint8_t pairingPSK[OWNER_PSK_LENGTH_128] = {0};
-    OicSecKey_t pairingKey = {pairingPSK, OWNER_PSK_LENGTH_128, OIC_ENCODING_RAW};
+    OicSecKey_t pairingKey;
+    memset(&pairingKey, 0, sizeof(pairingKey));
+    pairingKey.data = pairingPSK;
+    pairingKey.len = OWNER_PSK_LENGTH_128;
+    pairingKey.encoding = OIC_ENCODING_RAW;
 
     //Generating PairingPSK using OwnerPSK scheme
     CAResult_t pskRet = CAGenerateOwnerPSK((const CAEndpoint_t *)endpoint,
@@ -147,14 +149,15 @@ OCStackResult SavePairingPSK(OCDevAddr *endpoint,
 
     if (CA_STATUS_OK == pskRet)
     {
-        OIC_LOG(INFO, TAG, "pairingPSK dump:\n");
-        OIC_LOG_BUFFER(INFO, TAG, pairingPSK, OWNER_PSK_LENGTH_128);
+        OIC_LOG(DEBUG, TAG, "pairingPSK dump:\n");
+        OIC_LOG_BUFFER(DEBUG, TAG, pairingPSK, OWNER_PSK_LENGTH_128);
         //Generating new credential for direct-pairing client
 
         OicSecCred_t *cred = GenerateCredential(peerDevID,
                 SYMMETRIC_PAIR_WISE_KEY, NULL,
                 &pairingKey, owner, NULL);
-        VERIFY_NON_NULL(TAG, cred, ERROR);
+        OICClearMemory(pairingPSK, sizeof(pairingPSK));
+        VERIFY_NOT_NULL(TAG, cred, ERROR);
 
         res = AddCredential(cred);
         if(res != OC_STACK_OK)
@@ -199,7 +202,8 @@ OCStackResult DpairingToCBORPayload(const OicSecDpairing_t *dpair, uint8_t **pay
     uint8_t mapSize = DPAIR_MAP_SIZE;
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_ERROR);
+
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     cborEncoderResult = cbor_encoder_create_map(&encoder, &dpairMap, mapSize);
@@ -243,7 +247,7 @@ OCStackResult DpairingToCBORPayload(const OicSecDpairing_t *dpair, uint8_t **pay
 
      if (CborNoError == cborEncoderResult)
     {
-        *size = encoder.ptr - outPayload;
+        *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
         *payload = outPayload;
         ret = OC_STACK_OK;
     }
@@ -253,8 +257,9 @@ exit:
     {
        // reallocate and try again!
        OICFree(outPayload);
+       outPayload = NULL;
        // Since the allocated initial memory failed, double the memory.
-       cborLen += encoder.ptr - encoder.end;
+       cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
        cborEncoderResult = CborNoError;
        ret = DpairingToCBORPayload(dpair, payload, &cborLen);
        *size = cborLen;
@@ -294,7 +299,7 @@ OCStackResult CBORPayloadToDpair(const uint8_t *cborPayload, size_t size,
     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering DPairing Map");
 
     dpair = (OicSecDpairing_t *)OICCalloc(1, sizeof(*dpair));
-    VERIFY_NON_NULL(TAG, dpair, ERROR);
+    VERIFY_NOT_NULL(TAG, dpair, ERROR);
 
     while (cbor_value_is_valid(&dpairMap) && cbor_value_is_text_string(&dpairMap))
     {
@@ -367,7 +372,7 @@ exit:
  */
 void DPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
-    OIC_LOG_V(INFO, TAG, "IN DPairingDTLSHandshakeCB");
+    OIC_LOG(INFO, TAG, "IN DPairingDTLSHandshakeCB");
 
     if(gDpair && endpoint && info)
     {
@@ -392,7 +397,7 @@ void DPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *
         RemoveCredential(&gDpair->pdeviceID);
     }
 
-    OIC_LOG_V(INFO, TAG, "OUT DPairingDTLSHandshakeCB");
+    OIC_LOG(INFO, TAG, "OUT DPairingDTLSHandshakeCB");
 }
 
 static OCEntityHandlerResult HandleDpairingPostRequest (const OCEntityHandlerRequest * ehRequest)
@@ -446,22 +451,22 @@ static OCEntityHandlerResult HandleDpairingPostRequest (const OCEntityHandlerReq
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
             // Add temporary psk
-            OCStackResult res;
+            OCStackResult result;
             OicUuid_t subjectId = {.id={0}};
-            res = AddTmpPskWithPIN(&gDpair->pdeviceID,
+            result = AddTmpPskWithPIN(&gDpair->pdeviceID,
                            SYMMETRIC_PAIR_WISE_KEY,
                            (char*)pconf->pin.val, DP_PIN_LENGTH,
                            &gDpair->rownerID, &subjectId);
-            if(res != OC_STACK_OK ||
+            if(result != OC_STACK_OK ||
                     memcmp(&gDpair->pdeviceID, &subjectId, sizeof(OicUuid_t)))
             {
-                OIC_LOG_V(ERROR, TAG, "Failed to save the temporal PSK : %d", res);
+                OIC_LOG_V(ERROR, TAG, "Failed to save the temporal PSK : %d", result);
                 goto exit;
             }
 
             // Prepare to establish a secure channel with Pin-based PSK cipher suite
             if (CA_STATUS_OK != CAEnableAnonECDHCipherSuite(false) ||
-                CA_STATUS_OK != CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256, CA_ADAPTER_IP))
+                CA_STATUS_OK != CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, CA_ADAPTER_IP))
             {
                 OIC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256");
                 goto exit;
@@ -526,7 +531,6 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
         {
             res = CBORPayloadToDpair(payload, size, &newDpair);
         }
-
     }
     else
     {
@@ -542,8 +546,8 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
         // Check if valid Put request
         VERIFY_SUCCESS(TAG, PRM_NOT_ALLOWED == newDpair->spm, ERROR);
 
-        const OicSecPconf_t *pconf = GetPconfResourceData();
-        VERIFY_NON_NULL(TAG, pconf, ERROR);
+        const OicSecPconf_t *secPconf = GetPconfResourceData();
+        VERIFY_NOT_NULL(TAG, secPconf, ERROR);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         OCServerRequest * request = (OCServerRequest *)ehRequest->requestHandle;
@@ -552,20 +556,20 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
         //Generate new credential
         OIC_LOG_V(INFO, TAG, "SavePairingPSK for %s(%d)", request->devAddr.addr,
                 request->devAddr.port);
-        OCStackResult res = SavePairingPSK(&request->devAddr, &newDpair->pdeviceID,
-                (OicUuid_t *)&pconf->rownerID, true);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);
+        OCStackResult result = SavePairingPSK(&request->devAddr, &newDpair->pdeviceID,
+                (OicUuid_t *)&secPconf->rownerID, true);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == result, ERROR);
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
         //Generate new acl
         OicSecPdAcl_t *pdAcl;
-        LL_FOREACH(pconf->pdacls, pdAcl)
+        LL_FOREACH(secPconf->pdacls, pdAcl)
         {
             OicSecAcl_t* acl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
-            VERIFY_NON_NULL(TAG, acl, ERROR);
+            VERIFY_NOT_NULL(TAG, acl, ERROR);
 
             OicSecAce_t* ace = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
-            VERIFY_NON_NULL(TAG, ace, ERROR);
+            VERIFY_NOT_NULL(TAG, ace, ERROR);
 
             LL_APPEND(acl->aces, ace);
 
@@ -574,7 +578,7 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
             for(size_t i = 0; i < pdAcl->resourcesLen; i++)
             {
                 OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-                VERIFY_NON_NULL(TAG, rsrc, ERROR);
+                VERIFY_NOT_NULL(TAG, rsrc, ERROR);
                 LL_APPEND(ace->resources, rsrc);
 
                 //href
@@ -584,16 +588,16 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
                 // if
                 rsrc->interfaceLen = 1;
                 rsrc->interfaces = (char**)OICCalloc(rsrc->interfaceLen, sizeof(char));
-                VERIFY_NON_NULL(TAG, (rsrc->interfaces), ERROR);
+                VERIFY_NOT_NULL(TAG, (rsrc->interfaces), ERROR);
                 rsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-                VERIFY_NON_NULL(TAG, (rsrc->interfaces[0]), ERROR);
+                VERIFY_NOT_NULL(TAG, (rsrc->interfaces[0]), ERROR);
 
                 //rt
                 rsrc->typeLen = 1;
                 rsrc->types = (char**)OICCalloc(rsrc->typeLen, sizeof(char));
-                VERIFY_NON_NULL(TAG, (rsrc->types), ERROR);
+                VERIFY_NOT_NULL(TAG, (rsrc->types), ERROR);
                 rsrc->types[0] = OICStrdup("oic.core");
-                VERIFY_NON_NULL(TAG, (rsrc->types[0]), ERROR);
+                VERIFY_NOT_NULL(TAG, (rsrc->types[0]), ERROR);
             }
 
             ace->permission = pdAcl->permission;
@@ -602,29 +606,24 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
             if(pdAcl->periods || pdAcl->recurrences)
             {
                 OicSecValidity_t* validity = (OicSecValidity_t*)OICCalloc(1, sizeof(OicSecValidity_t));
-                VERIFY_NON_NULL(TAG, validity, ERROR);
+                VERIFY_NOT_NULL(TAG, validity, ERROR);
 
                 if(pdAcl->periods && pdAcl->periods[0])
                 {
-                    size_t periodLen = strlen(pdAcl->periods[0]) + 1;
-                    validity->period = (char*)OICMalloc(periodLen * sizeof(char));
-                    VERIFY_NON_NULL(TAG, (validity->period), ERROR);
-                    OICStrcpy(validity->period, periodLen, pdAcl->periods[0]);
+                    validity->period = OICStrdup(pdAcl->periods[0]);
+                    VERIFY_NOT_NULL(TAG, (validity->period), ERROR);
                 }
 
                 if(pdAcl->recurrences && 0 < pdAcl->prdRecrLen)
                 {
                     validity->recurrenceLen = pdAcl->prdRecrLen;
                     validity->recurrences = (char**)OICMalloc(sizeof(char*) * pdAcl->prdRecrLen);
-                    VERIFY_NON_NULL(TAG, (validity->recurrences), ERROR);
+                    VERIFY_NOT_NULL(TAG, (validity->recurrences), ERROR);
 
                     for(size_t i = 0; i < pdAcl->prdRecrLen; i++)
                     {
-                        size_t recurrenceLen = strlen(pdAcl->recurrences[i]) + 1;
-                        validity->recurrences[i] = (char*)OICMalloc(recurrenceLen  * sizeof(char));
-                        VERIFY_NON_NULL(TAG, (validity->recurrences[i]), ERROR);
-
-                        OICStrcpy(validity->recurrences[i], recurrenceLen, pdAcl->recurrences[i]);
+                        validity->recurrences[i] = OICStrdup(pdAcl->recurrences[i]);
+                        VERIFY_NOT_NULL(TAG, (validity->recurrences[i]), ERROR);
                     }
                 }
 
@@ -635,7 +634,7 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
             uint8_t *payload = NULL;
             if (OC_STACK_OK == AclToCBORPayload(acl, &payload, &size))
             {
-                InstallNewACL(payload, size);
+                AppendACL(payload, size);
                 OICFree(payload);
             }
             DeleteACLList(acl);

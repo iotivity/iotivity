@@ -128,8 +128,9 @@ CAResult_t CALEServerCreateJniInterfaceObject();
 
 /**
  * start advertise in gatt server.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEStartAdvertise();
+CAResult_t CALEServerStartAdvertise();
 
 /**
  * start advertise in gatt server.
@@ -138,7 +139,13 @@ CAResult_t CALEStartAdvertise();
  *                                 advertisement result.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback);
+CAResult_t CALEServerStartAdvertiseImpl(JNIEnv *env, jobject advertiseCallback);
+
+/**
+ * stop advertise in gatt server.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEServerStopAdvertise();
 
 /**
  * stop advertise in gatt server.
@@ -147,7 +154,7 @@ CAResult_t CALEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback);
  *                                 advertisement result.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEServerStopAdvertise(JNIEnv *env, jobject advertiseCallback);
+CAResult_t CALEServerStopAdvertiseImpl(JNIEnv *env, jobject advertiseCallback);
 
 /**
  * open a gatt server.
@@ -317,6 +324,19 @@ CAResult_t CALEServerInitConditionVaraibles();
  */
 void CALEServerTerminateConditionVaraibles();
 
+/**
+ * check connection status.
+ * @param[in] address      the address of the remote device.
+ * @return  true or false.
+ */
+bool CALEServerIsConnected(const char* address);
+
+/**
+ * get MTU size.
+ * @param[in] address      the address of the remote device.
+ * @return  mtu size negotiated from remote device.
+ */
+uint16_t CALEServerGetMtuSize(const char* address);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

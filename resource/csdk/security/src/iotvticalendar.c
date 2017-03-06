@@ -24,6 +24,7 @@
 #define _XOPEN_SOURCE  //Needed by strptime
 #include "iotivity_config.h"
 #include <string.h>
+#include <assert.h>
 #include "iotvticalendar.h"
 #include "oic_string.h"
 
@@ -39,6 +40,13 @@ static const char UNTIL[] = "UNTIL";
 static const char BYDAY[] = "BYDAY";
 static const char DAILY[] = "DAILY";
 
+static size_t CalculateElementLength(const char* startPosition, const char* endPosition)
+{
+    assert((NULL != startPosition) &&
+            ((NULL == endPosition) || (endPosition >= startPosition)));
+    return (NULL != endPosition) ? (size_t) (endPosition - startPosition) : strlen(startPosition);
+}
+
 IotvtICalResult_t ParsePeriod(const char *periodStr, IotvtICalPeriod_t *period)
 {
     if ((NULL == periodStr) || (NULL == period))
@@ -48,8 +56,8 @@ IotvtICalResult_t ParsePeriod(const char *periodStr, IotvtICalPeriod_t *period)
 
     char *endDTPos;
     char *fmt = "";
-    int   startDTLen;
-    int   endDTLen;
+    size_t  startDTLen;
+    size_t  endDTLen;
 
     //Finding length of startDateTime and endDateTime in period
     //startDateTime and endDateTime can have form YYYYmmdd or YYYYmmddTHHMMSS
@@ -164,7 +172,7 @@ static IotvtICalResult_t ParseDate(char *untilRule, IotvtICalRecur_t *recur)
  * @return ::IOTVTICAL_SUCCESS is succesful, else in case of error ::IOTVTICAL_ERROR,
  * if bydayRule has empty weekday list or invalid weekdays.
  */
-static IotvtICalResult_t  ParseByday(char *bydayRule, IotvtICalRecur_t *recur)
+static IotvtICalResult_t  ParseByDay(char *bydayRule, IotvtICalRecur_t *recur)
 {
     if (strstr(bydayRule, "SU"))
     {
@@ -211,23 +219,24 @@ IotvtICalResult_t ParseRecur(const char *recurStr, IotvtICalRecur_t *recur)
         return IOTVTICAL_INVALID_PARAMETER;
     }
 
-    const char *startPos="";
-    const char *endPos="";
+    const char *startPos = recurStr;
+    const char *endPos;
     char        buf[50];
     int         freqFlag = 0; //valid RRULE must have "FREQ" parameter.
                               //flag to track if RRULE has "FREQ" or not
 
-    startPos = recurStr;
     //Iterates though recurrence rule
-    //Eg, RRULE: FREQ=DAILY; UNTIL=20150703; BYDAY=MO, WE, FR
-    while ('\0' != startPos)
+    //E.g., RRULE: FREQ=DAILY; UNTIL=20150703; BYDAY=MO, WE, FR
+    while (NULL != startPos)
     {
         endPos = strchr(startPos, ';');
-        if (endPos)
+        size_t elementLength = CalculateElementLength(startPos, endPos);
+        if (elementLength >= sizeof(buf))
         {
-            endPos += 1;
+            return IOTVTICAL_INVALID_RRULE;
         }
-        OICStrcpy(buf, (endPos - startPos), startPos);
+
+        OICStrcpyPartial(buf, sizeof(buf), startPos, elementLength);
         if (NULL != strstr(buf, FREQ))
         {
             if (NULL != strstr(buf, DAILY))
@@ -249,12 +258,13 @@ IotvtICalResult_t ParseRecur(const char *recurStr, IotvtICalRecur_t *recur)
         }
         else if (NULL != strstr(buf, BYDAY))
         {
-            if (IOTVTICAL_SUCCESS != ParseByday(buf, recur))
+            if (IOTVTICAL_SUCCESS != ParseByDay(buf, recur))
             {
                 return IOTVTICAL_INVALID_RRULE;
             };
         }
-        startPos = endPos;
+
+        startPos = (NULL != endPos) ? (endPos + 1) : NULL;
     }
 
     if (1 != freqFlag)
