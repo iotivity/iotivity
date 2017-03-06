@@ -108,6 +108,78 @@ void RemoveOnResourceFoundListener(JNIEnv* env, jobject jListener)
     resourceFoundMapLock.unlock();
 }
 
+JniOnResourcesFoundListener* AddOnResourcesFoundListener(JNIEnv* env, jobject jListener)
+{
+    JniOnResourcesFoundListener *onResourcesFoundListener = nullptr;
+
+    resourcesFoundMapLock.lock();
+
+    for (auto it = onResourcesFoundListenerMap.begin();
+         it != onResourcesFoundListenerMap.end();
+         ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            onResourcesFoundListener = refPair.first;
+            refPair.second++;
+            it->second = refPair;
+            onResourcesFoundListenerMap.insert(*it);
+            LOGD("OnResourcesFoundListener: ref. count incremented");
+            break;
+        }
+    }
+
+    if (!onResourcesFoundListener)
+    {
+        onResourcesFoundListener =
+            new JniOnResourcesFoundListener(env, jListener, RemoveOnResourcesFoundListener);
+        jobject jgListener = env->NewGlobalRef(jListener);
+
+        onResourcesFoundListenerMap.insert(
+            std::pair<jobject,
+                      std::pair<JniOnResourcesFoundListener*, int >>(
+                          jgListener,
+                          std::pair<JniOnResourcesFoundListener*, int>(onResourcesFoundListener,
+                                                                       1)));
+        LOGD("OnResourcesFoundListener: new listener");
+    }
+    resourcesFoundMapLock.unlock();
+    return onResourcesFoundListener;
+}
+
+void RemoveOnResourcesFoundListener(JNIEnv* env, jobject jListener)
+{
+    resourcesFoundMapLock.lock();
+
+    for (auto it = onResourcesFoundListenerMap.begin();
+         it != onResourcesFoundListenerMap.end();
+         ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            if (refPair.second > 1)
+            {
+                refPair.second--;
+                it->second = refPair;
+                onResourcesFoundListenerMap.insert(*it);
+                LOGI("OnResourcesFoundListener: ref. count decremented");
+            }
+            else
+            {
+                env->DeleteGlobalRef(it->first);
+                JniOnResourcesFoundListener* listener = refPair.first;
+                delete listener;
+                onResourcesFoundListenerMap.erase(it);
+                LOGI("OnResourcesFoundListener removed");
+            }
+            break;
+        }
+    }
+    resourcesFoundMapLock.unlock();
+}
+
 JniOnDeviceInfoListener* AddOnDeviceInfoListener(JNIEnv* env, jobject jListener)
 {
     JniOnDeviceInfoListener *onDeviceInfoListener = nullptr;
@@ -980,6 +1052,175 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource1(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
+* Method:    findResources0
+* Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnResourcesFoundListener;)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResources0(
+    JNIEnv *env,
+    jclass clazz,
+    jstring jHost,
+    jstring jResourceUri,
+    jint jConnectivityType,
+    jobject jListener)
+{
+    LOGD("OcPlatform_findResources0");
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "onResourcesFoundListener cannot be null");
+        return;
+    }
+    const char *host = nullptr;
+    if (jHost)
+    {
+        host = env->GetStringUTFChars(jHost, nullptr);
+    }
+    const char *resourceUri = nullptr;
+    if (jResourceUri)
+    {
+        resourceUri = env->GetStringUTFChars(jResourceUri, nullptr);
+    }
+
+    JniOnResourcesFoundListener *onResourcesFoundListener = AddOnResourcesFoundListener(env, jListener);
+
+    FindResListCallback findCallback = [onResourcesFoundListener](const std::vector<std::shared_ptr<OC::OCResource>> resources)
+    {
+        onResourcesFoundListener->foundResourcesCallback(resources);
+    };
+
+    FindErrorCallback findErrorCallback = [onResourcesFoundListener](const std::string& uri, const int eCode)
+    {
+        onResourcesFoundListener->findResourcesErrorCallback(uri, eCode);
+    };
+
+    try
+    {
+        OCStackResult result = OCPlatform::findResourceList(
+            host,
+            resourceUri,
+            static_cast<OCConnectivityType>(jConnectivityType),
+            findCallback,
+            findErrorCallback,
+            OC::QualityOfService::NaQos);
+
+        if (jHost)
+        {
+            env->ReleaseStringUTFChars(jHost, host);
+        }
+        if (jResourceUri)
+        {
+            env->ReleaseStringUTFChars(jResourceUri, resourceUri);
+        }
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Find resources has failed");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+
+        if (jHost)
+        {
+            env->ReleaseStringUTFChars(jHost, host);
+        }
+        if (jResourceUri)
+        {
+            env->ReleaseStringUTFChars(jResourceUri, resourceUri);
+        }
+
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
+* Method:    findResources1
+* Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnResourcesFoundListener;I)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResources1(
+    JNIEnv *env,
+    jclass clazz,
+    jstring jHost,
+    jstring jResourceUri,
+    jint jConnectivityType,
+    jobject jListener,
+    jint jQoS)
+{
+    LOGD("OcPlatform_findResources1");
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "onResourcesFoundListener cannot be null");
+        return;
+    }
+    const char *host = nullptr;
+    if (jHost)
+    {
+        host = env->GetStringUTFChars(jHost, nullptr);
+    }
+    const char *resourceUri = nullptr;
+    if (jResourceUri)
+    {
+        resourceUri = env->GetStringUTFChars(jResourceUri, nullptr);
+    }
+
+    JniOnResourcesFoundListener *onResourcesFoundListener = AddOnResourcesFoundListener(env, jListener);
+
+    FindResListCallback findCallback = [onResourcesFoundListener](std::vector<std::shared_ptr<OC::OCResource>> resources)
+    {
+        onResourcesFoundListener->foundResourcesCallback(resources);
+    };
+
+    FindErrorCallback findErrorCallback = [onResourcesFoundListener](const std::string& uri, const int eCode)
+    {
+        onResourcesFoundListener->findResourcesErrorCallback(uri, eCode);
+    };
+
+    try
+    {
+        OCStackResult result = OCPlatform::findResourceList(
+            host,
+            resourceUri,
+            static_cast<OCConnectivityType>(jConnectivityType),
+            findCallback,
+            findErrorCallback,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (jHost)
+        {
+            env->ReleaseStringUTFChars(jHost, host);
+        }
+        if (jResourceUri)
+        {
+            env->ReleaseStringUTFChars(jResourceUri, resourceUri);
+        }
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Find resources has failed");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+
+        if (jHost)
+        {
+            env->ReleaseStringUTFChars(jHost, host);
+        }
+        if (jResourceUri)
+        {
+            env->ReleaseStringUTFChars(jResourceUri, resourceUri);
+        }
+
         ThrowOcException(e.code(), e.reason().c_str());
     }
 }

@@ -21,6 +21,7 @@
 */
 #include "JniOcStack.h"
 #include "JniOnResourceFoundListener.h"
+#include "JniOnResourcesFoundListener.h"
 #include "JniOnDeviceInfoListener.h"
 #include "JniOnPlatformInfoListener.h"
 #include "JniOnDPDevicesFoundListener.h"
@@ -37,6 +38,9 @@ using namespace OC;
 
 JniOnResourceFoundListener* AddOnResourceFoundListener(JNIEnv* env, jobject jListener);
 void RemoveOnResourceFoundListener(JNIEnv* env, jobject jListener);
+
+JniOnResourcesFoundListener* AddOnResourcesFoundListener(JNIEnv* env, jobject jListener);
+void RemoveOnResourcesFoundListener(JNIEnv* env, jobject jListener);
 
 JniOnDeviceInfoListener* AddOnDeviceInfoListener(JNIEnv* env, jobject jListener);
 void RemoveOnDeviceInfoListener(JNIEnv* env, jobject jListener);
@@ -57,6 +61,7 @@ JniOnDirectPairingListener* AddOnDirectPairingListener(JNIEnv* env, jobject jLis
 void RemoveOnDirectPairingListener(JNIEnv* env, jobject jListener);
 
 std::map<jobject, std::pair<JniOnResourceFoundListener*, int>> onResourceFoundListenerMap;
+std::map<jobject, std::pair<JniOnResourcesFoundListener*, int>> onResourcesFoundListenerMap;
 std::map<jobject, std::pair<JniOnDeviceInfoListener*, int>> onDeviceInfoListenerMap;
 std::map<jobject, std::pair<JniOnPlatformInfoListener*, int>> onPlatformInfoListenerMap;
 std::map<jobject, std::pair<JniOnPresenceListener*, int>> onPresenceListenerMap;
@@ -65,6 +70,7 @@ std::map<jobject, std::pair<JniOnDPDevicesFoundListener*, int>> onDPDevicesFound
 std::map<jobject, std::pair<JniOnDirectPairingListener*, int>> directPairingListenerMap;
 
 std::mutex resourceFoundMapLock;
+std::mutex resourcesFoundMapLock;
 std::mutex deviceInfoMapLock;
 std::mutex platformInfoMapLock;
 std::mutex presenceMapLock;
@@ -145,6 +151,22 @@ extern "C" {
     * Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnResourceFoundListener;I)V
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource1
+        (JNIEnv *, jclass, jstring, jstring, jint, jobject, jint);
+
+    /*
+    * Class:     org_iotivity_base_OcPlatform
+    * Method:    findResources0
+    * Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnResourcesFoundListener;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResources0
+        (JNIEnv *, jclass, jstring, jstring, jint, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcPlatform
+    * Method:    findResources1
+    * Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnResourcesFoundListener;I)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResources1
         (JNIEnv *, jclass, jstring, jstring, jint, jobject, jint);
 
     /*

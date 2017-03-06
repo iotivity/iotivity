@@ -351,6 +351,93 @@ public final class OcPlatform {
             int qualityOfService) throws OcException;
 
     /**
+     * API for Service and Resource Discovery
+     * <p>
+     * Note: This API is for client side only.
+     * </p>
+     *
+     * @param host                     Host Address of a service to direct resource discovery query.
+     *                                 If empty, performs multicast resource discovery query
+     * @param resourceUri              name of the resource. If null or empty, performs search for all
+     *                                 resource names
+     * @param connectivityTypeSet      Set of types of connectivity. Example: IP
+     * @param onResourcesFoundListener Handles events, success states and failure states.
+     * @throws OcException if failure
+     */
+    public static void findResources(
+            String host,
+            String resourceUri,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            OnResourcesFoundListener onResourcesFoundListener) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
+
+        OcPlatform.findResources0(
+                host,
+                resourceUri,
+                connTypeInt,
+                onResourcesFoundListener
+        );
+    }
+
+    private static native void findResources0(
+            String host,
+            String resourceUri,
+            int connectivityType,
+            OnResourcesFoundListener onResourcesFoundListener) throws OcException;
+
+    /**
+     * API for Service and Resource Discovery.
+     * <p>
+     * Note: This API is for client side only.
+     * </p>
+     *
+     * @param host                     Host IP Address of a service to direct resource discovery query.
+     *                                 If empty, performs multicast resource discovery query
+     * @param resourceUri              name of the resource. If null or empty, performs search for all
+     *                                 resource names
+     * @param connectivityTypeSet      Set of types of connectivity. Example: IP
+     * @param onResourcesFoundListener Handles events, success states and failure states.
+     * @param qualityOfService         the quality of communication
+     * @throws OcException if failure
+     */
+    public static void findResources(
+            String host,
+            String resourceUri,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            OnResourcesFoundListener onResourcesFoundListener,
+            QualityOfService qualityOfService) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
+
+        OcPlatform.findResources1(host,
+                resourceUri,
+                connTypeInt,
+                onResourcesFoundListener,
+                qualityOfService.getValue()
+        );
+    }
+
+    private static native void findResources1(
+            String host,
+            String resourceUri,
+            int connectivityType,
+            OnResourcesFoundListener onResourcesFoundListener,
+            int qualityOfService) throws OcException;
+
+    /**
      * API for Device Discovery
      *
      * @param host                  Host IP Address. If null or empty, Multicast is performed.
@@ -1122,6 +1209,15 @@ public final class OcPlatform {
     public interface OnResourceFoundListener {
         public void onResourceFound(OcResource resource);
         public void onFindResourceFailed(Throwable ex, String uri);
+    }
+
+    /**
+     * An OnResourcesFoundListener can be registered via the OcPlatform.findResources call.
+     * Event listeners are notified asynchronously
+     */
+    public interface OnResourcesFoundListener {
+        public void onResourcesFound(OcResource[] resources);
+        public void onFindResourcesFailed(Throwable ex, String uri);
     }
 
     /**

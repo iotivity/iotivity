@@ -112,6 +112,7 @@ ocstack_files = [
 			'JniUtils.cpp',
 			'JniEntityHandler.cpp',
 			'JniOnResourceFoundListener.cpp',
+			'JniOnResourcesFoundListener.cpp',
 			'JniOnDeviceInfoListener.cpp',
 			'JniOnPlatformInfoListener.cpp',
 			'JniOnPresenceListener.cpp',

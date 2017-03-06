@@ -44,6 +44,8 @@ public:
         std::vector<OC::OCRepresentation>& representationVector);
     static jobjectArray convertRepresentationVectorToJavaArray(JNIEnv *env,
         const std::vector<OC::OCRepresentation>& representationVector);
+    static jobjectArray convertResourceVectorToJavaArray(JNIEnv *env,
+        const std::vector<std::shared_ptr<OC::OCResource>>& resourceVector);
 
     static OC::ServiceType getServiceType(JNIEnv *env, int type)
     {
