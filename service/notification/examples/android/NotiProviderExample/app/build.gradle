@@ -10,6 +10,11 @@ android {
         pickFirst 'lib/x86/libocstack-jni.so'
         pickFirst 'lib/x86_64/libocstack-jni.so'
         pickFirst 'lib/arm64-v8a/libocstack-jni.so'
+        exclude 'lib/armeabi/libresource_directory.so'
+        exclude 'lib/armeabi-v7a/libresource_directory.so'
+        exclude 'lib/x86/libresource_directory.so'
+        exclude 'lib/x86_64/libresource_directory.so'
+        exclude 'lib/arm64-v8a/libresource_directory.so'
     }
 
     defaultConfig {

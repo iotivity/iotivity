@@ -137,6 +137,7 @@ task copyNativeLibs(type: Copy) {
         'liboc_logger.so',
         'liboctbstack.so',
         'liboc.so',
+        'libresource_directory.so',
         'libocstack-jni.so'
     ]
     if ("$SECURED" == '1')
