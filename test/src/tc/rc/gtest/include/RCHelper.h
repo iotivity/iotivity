@@ -32,6 +32,7 @@
 #include "gtest_custom.h"
 #include "OCPlatform.h"
 #include "CommonUtil.h"
+#include "CommonTestUtil.h"
 #include "IotivityTest_Logger.h"
 #include "RCSBundleInfo.h"
 #include "RCSResourceContainer.h"
@@ -44,35 +45,35 @@ namespace PH = std::placeholders;
 
 class RCHelper {
 private:
-    static RCHelper* s_rcHelperInstance;
-    static std::mutex s_mutex;
-    string m_errorMessage;
+	static RCHelper* s_rcHelperInstance;
+	static std::mutex s_mutex;
+	string m_errorMessage;
 
 public:
-    RCHelper();
-    virtual ~RCHelper();
+	RCHelper();
+	virtual ~RCHelper();
 
-    /**
-     * @brief   Function is for getting singleton instance of TMHelper
-     * @return  singleton instance of TMHelper
-     */
-    static RCHelper* getInstance(void);
+	/**
+	 * @brief   Function is for getting singleton instance of TMHelper
+	 * @return  singleton instance of TMHelper
+	 */
+	static RCHelper* getInstance(void);
 
-    string getFailureMessage();
+	string getFailureMessage();
 
-    bool isBundleAdded(RCSResourceContainer *container, string bundleID);
+	bool isBundleAdded(RCSResourceContainer *container, string bundleID);
 
-    unique_ptr<RCSBundleInfo> getBundle(RCSResourceContainer *container,
-            string bundleID);
+	unique_ptr<RCSBundleInfo> getBundle(RCSResourceContainer *container,
+			string bundleID);
 
-    bool startBundle(RCSResourceContainer *container, string bundleID);
+	bool startBundle(RCSResourceContainer *container, string bundleID);
 
-    bool stopBundle(RCSResourceContainer *container, string bundleID);
+	bool stopBundle(RCSResourceContainer *container, string bundleID);
 
-    bool removeBundle(RCSResourceContainer *container, string bundleID);
+	bool removeBundle(RCSResourceContainer *container, string bundleID);
 
-    bool addResourceConfigVersion(RCSResourceContainer *container,
-            string bundleID, string value);
+	bool addResourceConfigVersion(RCSResourceContainer *container,
+			string bundleID, string value);
 
 };
 

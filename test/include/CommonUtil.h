@@ -35,8 +35,8 @@
 #undef BOOST_NO_CXX11_SCOPED_ENUMS
 #include "boost/assign.hpp"
 #include "octypes.h"
-#include "gtest_custom.h"
-#include "gtest/gtest.h"
+//#include "gtest_custom.h"
+//#include "gtest/gtest.h"
 
 #define APP_START_STOP_TIMEOUT 2
 
@@ -57,6 +57,14 @@ class CommonUtil
 public:
 
     static map<OCStackResult, string> s_OCStackResultString;
+
+    /**
+     * API for Get OCSTACK result in char*
+     *
+     * @return char*
+     */
+    static char* getOCStackResult(OCStackResult ocstackresult);
+
     /**
      * API for get time stamp
      *
@@ -64,21 +72,6 @@ public:
      *
      */
     static const char* GetTimeStampString();
-    /**
-     * API for common TC set up part
-     *
-     * @return none
-     *
-     */
-    static void runCommonTCSetUpPart();
-
-    /**
-     * API for common TC tear down part
-     *
-     * @return none
-     *
-     */
-    static void runCommonTCTearDownPart();
 
     /**
      * API for launch App
@@ -91,6 +84,7 @@ public:
      *
      * NOTE: This API will be support other platforms
      */
+//    static void launchApp(std::string app);
     static void launchApp(std::string app, bool withGnome = false);
 
     /**
@@ -164,15 +158,6 @@ public:
      * NOTE: This API will be support other platforms
      */
     static bool isExists(std::string file);
-
-    /**
-     * API for get current allocated memory
-     *
-     * @return allocated memory size (byte)
-     *
-     * NOTE: This API will be support other platforms
-     */
-    static long getCurrentAllocatedMemory();
 
     /**
      * API for freezing current thread from execute next code for a given time

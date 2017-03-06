@@ -19,265 +19,115 @@
 *
 ******************************************************************/
 '''
-##
-# Build script for Linux
-#
-##
-
-print '\n---------------Started Building IotivitySecTest for Linux---------------\n'
 
 Import('env_linux')
 import os
 
-
-# Initializing Home Dir
-######################################################################
-
-TARGET = env_linux['VARIANT_DIR']
-ENV_HOME = '../../..'
-PROJECT_HOME = '../../'
-EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
-SRC_HOME = ENV_HOME + '/IotivitySECDevSource'
-ORG_SRC = ''
-
-if env_linux.get('RELEASE'):
-	target_release = 'release'
-else:
-	target_release = 'debug'
-
-print "target build is --------------------------------" + target_release
-
-ORG_SRC = env_linux['ORG_SRC']
-ORG_SRC_HOME = env_linux['ORG_SRC_HOME']
-
-target_arch = env_linux.get('TARGET_ARCH')
-ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release
-COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
-
-######################################################################
-# Initializing IC Dir
-######################################################################
-
-IC_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
-IC_RESOURCE_INCLUDE = IC_RESOURCE_DIR + '/include'
-IC_C_COMMON = IC_RESOURCE_DIR + '/c_common'
-IC_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
-IC_RESOURCE_CSDK_LIB = IC_RESOURCE_LIB
-IC_RESOURCE_CSDK_SECURITY = IC_RESOURCE_DIR + '/csdk/security/include'
-IC_RESOURCE_CSDK_RESOURCE_DIRECTORY =  IC_RESOURCE_DIR + '/csdk/resource-directory/include'
-IC_RESOURCE_STACK = IC_RESOURCE_DIR + '/csdk/stack/include'
-IC_RESOURCE_SOCKET = IC_RESOURCE_DIR + '/csdk/ocsocket/include'
-IC_RESOURCE_RANDOM = IC_RESOURCE_DIR + '/csdk/ocrandom/include'
-IC_RESOURCE_LOGGER = IC_RESOURCE_DIR + '/csdk/logger/include'
-IC_RESOURCE_OC_LOGGER = IC_RESOURCE_DIR + '/oc_logger/include'
-IC_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
-IC_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
-IC_RESOURCE_OC_LOGGER_LIB = IC_RESOURCE_LIB
-IC_DIR = ORG_SRC_HOME + '/service/things-manager'
-IC_INCLUDE = IC_DIR + '/sdk/inc'
-IC_SDK_INCLUDE = IC_DIR + '/sdk/src'
-IC_LIB = IC_RESOURCE_LIB
-IC_LIB_TIMER = IC_RESOURCE_LIB + '/extlibs/timer/'
-LOGGER_INC_DIR = ORG_SRC_HOME + '/resource/csdk/logger/include'
-
-######################################################################
-
-# Initializing CA Dir
-######################################################################
-
-CA_IOT = ENV_HOME + ORG_SRC
-CA_LIB_DIR = CA_IOT + '/out/linux/' + target_arch + '/' + target_release
-
-######################################################################
-# Initializing Gtest Dir
-######################################################################
-
-GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
-GTEST_INCLUDE = GTEST + '/include'
-TINY_CBOR_INCLUDE = ORG_SRC_HOME + '/extlibs/tinycbor/tinycbor/src'
-GTEST_BIN = GTEST + '/bin/linux'
-GTEST_LIB = GTEST_BIN + '/libgtest.a'
-
-######################################################################
-######################################################################
-
-# Initializing Project Dir
-######################################################################
-
-RESOURCE_LIB_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
-
-TC_DIR = PROJECT_HOME +  TARGET + 'tc' + '/ic/gtest/src'
-STC_DIR = TC_DIR + '/stc'
-BTC_DIR = TC_DIR + '/btc'
-TESTAPP_DIR = PROJECT_HOME +  TARGET + 'testapp'
-TESTAPP_CINCLUDE = PROJECT_HOME + '/include/testapp'
-
-
-COMMON_DIR = PROJECT_HOME +  TARGET + 'common'
-COMMON_UTIL_DIR = PROJECT_HOME +  TARGET + 'common/commonutil/c_cpp'
-CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
-TC_COMMON_DIR = COMMON_DIR + '/testcase'
-#TESTAPP_COMMON_DIR = COMMON_DIR + '/testapp/c_cpp'
-
-INCLUDE_DIR = PROJECT_HOME + '/src/tc/ic/gtest'
-TC_INCLUDE_DIR = INCLUDE_DIR + '/include'
-IC_INCLUDE_DIR = INCLUDE_DIR
-
-
-#COMMON_UTIL_INCLUDE_DIR = INCLUDE_DIR + '/commonutil'
-COMMON_UTIL_INCLUDE_DIR = PROJECT_HOME + '/include'
-
-
-TESTAPP_INCLUDE_DIR = INCLUDE_DIR + '/testapp'
-
-
-######################################################################
-
-# Initializing Flags
-######################################################################
-
 env_linux['CC'] = 'g++'
 
-COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D __WITH_DTLS__  -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs')
+iotivity_root = env_linux.get('IOTIVITY_ROOT')
+iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
+iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
+variant_dir = env_linux.get('VARIANT_DIR')
+test = env_linux.get('TEST')
+cloud_service_build = env_linux.get('CLOUD_SERVICE')
+kafka_root = env_linux.get('KAFKA_ROOT')
+common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
+
+install_targets = []
+default_targets = []
+
+iotivity_include_paths = [
+    iotivity_root + '/resource/include',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/c_common',
+    iotivity_root + '/resource/csdk/stack/include',
+    iotivity_root + '/resource/csdk/ocsocket/include',
+    iotivity_root + '/resource/csdk/ocrandom/include',
+    iotivity_root + '/resource/oc_logger/include',
+    iotivity_root + '/resource/csdk/resource-directory/include',
+    iotivity_root + '/extlibs/cereal/include',
+    iotivity_root + '/extlibs/timer',
+    iotivity_root + '/extlibs/timer/',
+    iotivity_root + '/resource/c_common/oic_malloc/include',
+    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/extlibs/tinycbor/tinycbor/src'
+]
+
+tc_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/tc/ic/gtest/include',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
+]
+
+simulator_include_paths = [
+    iotivity_test_root + '/include'
+]
+
+tc_src = [
+    Glob(iotivity_test_root + '/src/tc/ic/gtest/src/btc/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/ic/gtest/src/stc/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/ic/gtest/src/helper/*.cpp')
+]
+
+simulator_src = [
+    iotivity_test_root + '/src/testapp/cloud/cloud_server.cpp'
+]
 
 PKG_FLAGS = Split('`pkg-config --cflags --libs uuid`')
-
-IC_CFLAGS = [COMMON_FLAGS]
-
-######################################################################
-
-# Initializing Includes
-######################################################################
-
-COMMON_CINCLUDE = [GTEST_INCLUDE, TINY_CBOR_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, LOGGER_INC_DIR]
-
-
-IC_CINCLUDE = [COMMON_CINCLUDE, IC_RESOURCE_INCLUDE, IC_RESOURCE_STACK, IC_RESOURCE_CSDK_SECURITY, IC_RESOURCE_CSDK_RESOURCE_DIRECTORY, IC_INCLUDE_DIR, IC_RESOURCE_SOCKET, IC_RESOURCE_RANDOM, IC_RESOURCE_OC_LOGGER, IC_INCLUDE, IC_RESOURCE_CEREAL, IC_RESOURCE_TIMER, IC_LIB_TIMER, IC_SDK_INCLUDE, IC_INCLUDE_DIR, IC_C_COMMON]
-
-
-######################################################################
-
-# Initializing Libraries
-######################################################################
-
-COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR, CA_LIB_DIR, '/usr/local/lib/', CA_LIB_DIR + '/resource/c_common']
-IC_LIB_LOCATION = [COMMON_LIB_LOCATION, IC_RESOURCE_LIB, IC_RESOURCE_CSDK_LIB, IC_RESOURCE_OC_LOGGER_LIB, IC_LIB]
-
-COMMON_STATIC_LIBS = [GTEST_LIB]
-COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat libresource_directory liboc liboc_logger liboc_logger_core pthread libglib-2.0 uuid gcov curl')
-
-IC_STATIC_RESOURCE_LIBS = []
-IC_LIBS = COMMON_SHARED_LIBS
-
-######################################################################
-
-# Initializing Targets
-######################################################################
-
-
-IC_ITC_BIN = 'iotivity_IC_test'
-
-TEST_SERVER_BIN = 'testserver'
-UNSUPPORTIVE_SERVER_BIN = 'unsupportivetestserver'
-BOOTSTRAP_SERVER_BIN = 'bootstrapserver'
-TEST_COLLECTION_BIN = 'testcollection'
-IC_TESTAPP_BIN = "IC_testapp"
-
-
-######################################################################
-
-# Initializing Sources
-######################################################################
-
-COMMON_CPP = Glob(COMMON_UTIL_DIR + '/*.cpp')
-COMMON_TC_CPP = Glob(COMMON_DIR + '/testcase/*.cpp')
-
-#IC_HELPER_CPP = Glob(TC_DIR + '/helper/*.cpp')
-IC_HELPER_CPP = Glob(PROJECT_HOME + '/src/tc/ic/gtest/src/helper/*.cpp')
-
-
-COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
-
-TEST_MAIN = [PROJECT_HOME +  TARGET + 'common/testcase/gtest' + '/IotivitySECTestMain.cpp']
-
-
-IC_STC_CPP = Glob(STC_DIR + '/*.cpp')
-IC_BTC_CPP = Glob(BTC_DIR + '/*.cpp')
-
-
-IC_CPP = [TEST_MAIN, COMMON_UTIL_CPP, IC_HELPER_CPP, CALL_GRAPH_CPP]
-
-
-IC_TC_SRC = [IC_CPP, IC_STC_CPP, IC_BTC_CPP, COMMON_STATIC_LIBS, IC_STATIC_RESOURCE_LIBS]
-
-#TEST_SERVER_SRC = [TEST_SERVER_CPP, COMMON_UTIL_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, IC_STATIC_LIBS, IC_STATIC_RESOURCE_LIBS]
-
-#UICUPPORTIVE_SERVER_SRC = [UNSUPPORTIVE_TEST_SERVER_CPP, COMMON_UTIL_CPP, UNSUPPORTIVE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, IC_STATIC_LIBS, IC_STATIC_RESOURCE_LIBS]
-
-#BOOTSTRAP_SERVER_SRC = [BOOTSTRAP_SERVER_CPP, COMMON_UTIL_CPP, COMMON_STATIC_LIBS, IC_STATIC_LIBS, IC_STATIC_RESOURCE_LIBS]
-
-#TEST_COLLECTION_SRC = [TEST_COLLECTION_CPP, COMMON_UTIL_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, IC_STATIC_LIBS, IC_STATIC_RESOURCE_LIBS]
-
-#IC_TESTAPP_SRC = Glob(PROJECT_HOME +  TARGET + '/iBtestapp/modules/ic/c_cpp/bootstrapserver.cpp')
-
-
-######################################################################
-
-# Initializing Build
-######################################################################
-
-env_linux.ParseConfig("pkg-config --cflags --libs uuid")
-
-create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
-
-IC_itc = env_linux.Program(source = IC_TC_SRC, target = IC_ITC_BIN,CPPDEFINES = ['WITH_CLOUD', 'MQ_BROKER','RD_CLIENT', 'MQ_SUBSCRIBER', 'MQ_PUBLISHER', 'WITH_MQ'], CPPPATH = IC_CINCLUDE, LIBS = IC_LIBS, LIBPATH = IC_LIB_LOCATION, CPPFLAGS = IC_CFLAGS)
-
-#test_server = env_linux.Program(source = TEST_SERVER_SRC, target = TEST_SERVER_BIN, CPPPATH = IC_CINCLUDE, LIBS = IC_LIBS, LIBPATH = IC_LIB_LOCATION, CPPFLAGS = IC_CFLAGS)
-
-#unsupportive_server = env_linux.Program(source = UNSUPPORTIVE_SERVER_SRC, target = UNSUPPORTIVE_SERVER_BIN, CPPPATH = IC_CINCLUDE, LIBS = IC_LIBS, LIBPATH = IC_LIB_LOCATION, CPPFLAGS = IC_CFLAGS)
-
-#bootstrap_server = env_linux.Program(source = BOOTSTRAP_SERVER_SRC, target = BOOTSTRAP_SERVER_BIN, CPPPATH = IC_CINCLUDE, LIBS = IC_LIBS, LIBPATH = IC_LIB_LOCATION, CPPFLAGS = IC_CFLAGS)
-
-#test_collection = env_linux.Program(source = TEST_COLLECTION_SRC, target = TEST_COLLECTION_BIN, CPPPATH = IC_CINCLUDE, LIBS = IC_LIBS, LIBPATH = IC_LIB_LOCATION, CPPFLAGS = IC_CFLAGS)
-
-#IC_testapp = env_linux.Program(source = IC_TESTAPP_SRC, target = IC_TESTAPP_BIN, CPPPATH = IC_CINCLUDE, LIBS = IC_LIBS, LIBPATH = IC_LIB_LOCATION, CPPFLAGS = IC_CFLAGS)
-
 env_linux.AppendUnique(CPPFLAGS = PKG_FLAGS)
 
-pre_job = [create_target_dir]
+cloud_defines = ['WITH_CLOUD', 'MQ_BROKER', 'WITH_MQ','RD_CLIENT', 'MQ_PUBLISHER', 'MQ_SUBSCRIBER']
 
-######################################################################
+cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -fpermissive')
 
-# Define Build Targets
-######################################################################
+libs = Split('connectivity_abstraction octbstack coap boost_system boost_filesystem boost_thread dl expat oc oc_logger resource_directory glib-2.0 uuid gcov cloud_util curl common_util pthread')
 
-target_service = env_linux.get('TARGET_SERVICE')
-target_transport = env_linux.get('TARGET_TRANSPORT')
-target_test = env_linux.get('TARGET_TEST')
-default_targets = [pre_job]
-install_targets = []
+if 'tc' in test:
+    ic_tc = env_linux.Program(source = tc_src, 
+                target = 'iotivity_ic_test', 
+                CPPPATH = iotivity_include_paths + tc_include_paths, 
+                LIBS = libs + ['gtest', 'tc_util', 'pthread', 'dl'], 
+                RPATH = iotivity_lib_path,
+                LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux', '.'],
+                CPPDEFINES = cloud_defines,
+                CPPFLAGS = cppflags + common_linux_cppflags)
+    install_targets += ic_tc
+  
+if 'app' in test:
+    ic_testapp = env_linux.Program(source = testapp_src, 
+                    target = 'iotivity_ic_testapp', 
+                    CPPPATH = iotivity_include_paths + testapp_include_paths, 
+                    LIBS = libs, 
+                    RPATH = iotivity_lib_path,
+                    LIBPATH = [iotivity_lib_path, '.'], 
+                    CPPFLAGS = cppflags + common_linux_cppflags)
+    install_targets += ic_testapp
 
-print "target_service = " + target_service
-print "target_test = " + target_test
-print "target_transport = " + target_transport
+if 'tc' in test or 'simulator' in test:
+    cloud_simulator = env_linux.Program(source= simulator_src,
+                          target='iotivity_ic_server',
+                          CPPPATH= iotivity_include_paths + simulator_include_paths,
+                          LIBS=libs,
+                          LIBPATH = [iotivity_lib_path, '.'],
+                          RPATH=iotivity_lib_path,
+                          CPPDEFINES = cloud_defines,
+                          CPPFLAGS = cppflags + common_linux_cppflags)
+    install_targets += cloud_simulator
 
-#SConscript(GTEST + '/SConscript')
+if 'tc' in test or 'app' in test:
+    ic_resource_path = iotivity_test_root + '/res/cloud_resource'
+    ic_resource_list = Glob(ic_resource_path + '/*.*')
 
-print "---------------service--------------" + target_service + target_test
+install = env_linux.Install(iotivity_test_root + '/' + variant_dir, install_targets)
+install_res = env_linux.Install(iotivity_test_root + '/' + variant_dir, ic_resource_list)
+install_res += env_linux.Install(iotivity_test_root + '/bin', ic_resource_list)
 
-
-if 'cloud' in target_service or 'all' in target_service:
-    if 'tc' in target_test or 'all' in target_test:
-        print '---------------IC Build Selected---------------'
-        #install_targets += [ca_simulator]
-        install_targets += IC_itc
-    #if 'app' in target_test or 'all' in target_test:
-     #   print '---------------IC TEST APP Build Selected---------------'
-     #   install_targets += [IC_testapp]
-
-
-
-install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
+if cloud_service_build:
+    build_command = 'bash ' + iotivity_test_root + '/res/cloud_resource/cloud_build.sh ' + kafka_root + ' ' + iotivity_root
+    cloud_build = env_linux.Command('cloud_build', None, build_command)
+    default_targets += [cloud_build]
 
 delete_bin = []
 i = 0
@@ -286,6 +136,6 @@ for delete_target in install_targets:
     delete_bin[i] = Command(str(i), [], Delete(delete_target))
     i = i + 1
 
-default_targets += install_targets + install + delete_bin
+default_targets += install_targets + install + install_res + delete_bin
 
 env_linux.Default(default_targets)

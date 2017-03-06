@@ -20,6 +20,7 @@
 
 #include <gtest/gtest.h>
 #include "CommonUtil.h"
+#include "CommonTestUtil.h"
 #include <atomic>
 #include <functional>
 #include <condition_variable>
@@ -65,13 +66,13 @@ protected:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
     }
 
     virtual void TearDown()
     {
         g_remoteEnrollee = nullptr;
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 
 };

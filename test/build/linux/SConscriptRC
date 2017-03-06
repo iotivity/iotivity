@@ -30,244 +30,100 @@ print '\n---------------Started Building Resource Container Module for Linux----
 Import('env_linux')
 import os
 
-JAVA_LIB = ''
 
-# Initializing Home Dir
-######################################################################
-
-TARGET = env_linux['VARIANT_DIR']
-ENV_HOME = '../../..'
-PROJECT_HOME = '../../'
-EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
-ORG_SRC = ''
-
-if env_linux.get('RELEASE'):
-    target_release = 'release'
-else:
-    target_release = 'debug'
-
-print "target build is --------------------------------" + target_release
-
-ORG_SRC = env_linux['ORG_SRC']
-ORG_SRC_HOME = env_linux['ORG_SRC_HOME']
-
-
-target_arch = env_linux.get('TARGET_ARCH')
-ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release
-COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
-
-######################################################################
-
-# Initializing RC Dir
-######################################################################
-
-RC_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
-RC_RESOURCE_INCLUDE = RC_RESOURCE_DIR + '/include'
-RC_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
-RC_RESOURCE_STACK = RC_RESOURCE_DIR + '/csdk/stack/include'
-RC_RESOURCE_SOCKET = RC_RESOURCE_DIR + '/csdk/ocsocket/include'
-RC_RESOURCE_RANDOM = RC_RESOURCE_DIR + '/csdk/ocrandom/include'
-RC_RESOURCE_LOGGER = RC_RESOURCE_DIR + '/csdk/logger/include'
-RC_RESOURCE_OC_LOGGER = RC_RESOURCE_DIR + '/oc_logger/include'
-RC_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
-RC_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
-RC_DIR = ORG_SRC_HOME + '/service/resource-container'
-RC_BUNDLE_INCLUDE = RC_DIR + '/bundle-api/include'
-RC_MODULES_DIR = RC_DIR + '/src'
-RC_INCLUDE = RC_DIR + '/include/'
-RC_C_COMMON = ORG_SRC_HOME + '/resource/c_common'
-
-RC_RESOURCE_ROUTING = RC_RESOURCE_DIR + '/csdk/routing/include'
-RC_CONNECTIVITY_MALLOC = ORG_SRC_HOME + '/resource/c_common/oic_malloc/include'
-RC_CONNECTIVITY_STRING = ORG_SRC_HOME + '/resource/c_common/oic_string/include'
-RC_CONNECTIVITY_LOGGER = ORG_SRC_HOME + '/resource/csdk/connectivity/common/inc'
-
-
-RCS_DIR = ORG_SRC_HOME + '/service/resource-encapsulation'
-RCS_MODULES_DIR = RCS_DIR + '/src'
-RCS_INCLUDE = RCS_DIR + '/include'
-LOGGER_INC_DIR = ORG_SRC_HOME + '/resource/csdk/logger/include'
-
-#####################################################################
-# Initializing CA Dir
-######################################################################
-CA_IOT = ENV_HOME + ORG_SRC
-CA_DIR = CA_IOT + '/resource/csdk/connectivity'
-CA_LIB_DIR = CA_IOT + '/out/linux/' + target_arch + '/' + target_release
-
-######################################################################
-######################################################################
-
-# Initializing Gtest Dir
-######################################################################
-
-GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
-GTEST_INCLUDE = GTEST + '/include'
-GTEST_BIN = GTEST + '/bin/linux'
-GTEST_LIB = GTEST_BIN + '/libgtest.a'
-
-######################################################################
-# Initializing Project Dir
-######################################################################
-
-RESOURCE_LIB_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
-
-TC_DIR = PROJECT_HOME +  TARGET + 'tc'
-STC_DIR = TC_DIR + '/rc/gtest/src/stc'
-BTC_DIR = TC_DIR + '/rc/gtest/src/btc'
-TESTAPP_DIR = PROJECT_HOME +  TARGET + 'test_app'
-TESTAPP_CINCLUDE = PROJECT_HOME + '/include/testapp'
-
-
-COMMON_DIR = PROJECT_HOME +  TARGET + 'common'
-COMMON_UTIL_DIR = PROJECT_HOME +  TARGET + 'common/commonutil/c_cpp'
-CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
-TC_COMMON_DIR = COMMON_DIR + '/testcase'
-
-TESTAPP_COMMON_DIR = COMMON_DIR + '/testapp/c_cpp'
-
-INCLUDE_DIR = PROJECT_HOME + TARGET + '/tc/rc/gtest/include'
-TC_INCLUDE_DIR = INCLUDE_DIR
-RC_INCLUDE_DIR = INCLUDE_DIR
-COMMON_UTIL_INCLUDE_DIR = PROJECT_HOME + 'include'
-
-TESTAPP_INCLUDE_DIR = INCLUDE_DIR
-
-TARGET = env_linux['VARIANT_DIR']
-
-TESTAPP_INCLUDE_DIR = PROJECT_HOME +  TARGET + '/iBtestapp/modules/rc/c_cpp/include'
-TESTAPP_COMMON_INCLUDE_DIR = PROJECT_HOME +  TARGET + '/iBtestapp/common/include'
-
-######################################################################
-
-# Initializing Flags
-######################################################################
+Import('env_linux')
+import os
 
 env_linux['CC'] = 'g++'
 
-COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D __WITH_DTLS__  -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs')
+iotivity_root = env_linux.get('IOTIVITY_ROOT')
+iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
+iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
+variant_dir = env_linux.get('VARIANT_DIR')
+test = env_linux.get('TEST')
+common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
 
+install_targets = []
+default_targets = []
 
-RC_CFLAGS = [COMMON_FLAGS]
+iotivity_include_paths = [
+    iotivity_root + '/resource/include',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/c_common',
+    iotivity_root + '/resource/csdk/stack/include',
+    iotivity_root + '/resource/csdk/ocsocket/include',
+    iotivity_root + '/resource/csdk/ocrandom/include',
+    iotivity_root + '/resource/oc_logger/include',
+    iotivity_root + '/extlibs/cereal/include',
+    iotivity_root + '/extlibs/timer',
+    iotivity_root + '/extlibs/timer/',
+    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/extlibs/tinycbor/tinycbor/src',
+    iotivity_root + '/resource/csdk/security/include',
+    iotivity_root + '/service/resource-container/bundle-api/include',
+    iotivity_root + '/service/resource-container/src',
+    iotivity_root + '/service/resource-container/include/',
+    iotivity_root + '/service/resource-encapsulation/include/'
+]
 
-######################################################################
-# Initializing Includes
-######################################################################
-COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, LOGGER_INC_DIR]
-RC_CINCLUDE = [ RC_C_COMMON, COMMON_CINCLUDE, RC_RESOURCE_INCLUDE,TESTAPP_INCLUDE_DIR, TESTAPP_COMMON_INCLUDE_DIR,RC_RESOURCE_STACK, RC_RESOURCE_SOCKET, RC_RESOURCE_RANDOM, RC_RESOURCE_OC_LOGGER,RC_CONNECTIVITY_LOGGER,RC_CONNECTIVITY_STRING,RC_CONNECTIVITY_MALLOC,RC_RESOURCE_ROUTING, RC_RESOURCE_CEREAL, RC_RESOURCE_TIMER, RC_INCLUDE,RCS_INCLUDE,RCS_MODULES_DIR, RC_MODULES_DIR, RC_BUNDLE_INCLUDE, RC_INCLUDE_DIR]
+tc_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/tc/rc/gtest/include',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
+]
 
-######################################################################
+tc_src = [
+    Glob(iotivity_test_root + '/src/tc/rc/gtest/src/btc/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/rc/gtest/src/stc/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/rc/gtest/src/helper/*.cpp')
+]
 
-# Initializing Libraries
-######################################################################
+testapp_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/iBtestapp/common/include',
+    iotivity_test_root + '/src/iBtestapp/modules/rc/c_cpp/include'
+]
 
-COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR, CA_LIB_DIR, '/usr/local/lib/', CA_LIB_DIR + '/resource/c_common']
-RC_LIB_LOCATION = [COMMON_LIB_LOCATION, JAVA_LIB]
+testapp_src = [ 
+    Glob(iotivity_test_root + '/src/iBtestapp/modules/rc/c_cpp/src/*.cpp'),
+    iotivity_test_root + '/src/iBtestapp/common/src/IBtestappCommonUtil.cpp'
+]
 
-COMMON_STATIC_LIBS = [GTEST_LIB]
-COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboc_logger liboc_logger_core pthread libglib-2.0 uuid gcov')
+cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -fpermissive')
 
-RC_STATIC_LIBS = [RC_RESOURCE_LIB + '/librcs_client.a', RC_RESOURCE_LIB + '/librcs_common.a', RC_RESOURCE_LIB + '/librcs_container.a', RC_RESOURCE_LIB + '/librcs_server.a', RC_RESOURCE_LIB + '/libocsrm.a']
-RC_STATIC_RESOURCE_LIBS = []
-RC_SHARED_LIBS = Split('-lHueBundle -lrcs_common -lrcs_container -lrcs_server -lrcs_client -locsrm')
-RC_LIBS = [COMMON_SHARED_LIBS, RC_SHARED_LIBS]
-
-######################################################################
-
-# Initializing Targets
-######################################################################
-
-
-RC_ITC_BIN = 'iotivity_rc_test'
-TEST_MAIN_BIN = 'test_main.o'
-RC_TESTAPP_BIN = 'rc_testapp'
-
-######################################################################
-
-# Initializing Sources
-######################################################################
-
-COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
-
-TEST_MAIN = [TC_COMMON_DIR + '/gtest/IotivitySECTestMain.cpp']
-
-RC_HELPER_CPP = Glob(TC_DIR + '/rc/gtest/src/helper/*.cpp')
-
-RC_STC_CPP = Glob(STC_DIR + '/*.cpp')
-RC_BTC_CPP = Glob(BTC_DIR + '/*.cpp')
-
-RC_CPP = [TEST_MAIN, COMMON_UTIL_CPP, RC_HELPER_CPP, CALL_GRAPH_CPP]
-
-RC_TC_SRC = [RC_CPP, RC_STC_CPP, RC_BTC_CPP, COMMON_STATIC_LIBS, RC_STATIC_LIBS, RC_STATIC_RESOURCE_LIBS]
-#RC_BTC_SRC = [RC_CPP, RC_BTC_CPP, COMMON_STATIC_LIBS, RC_STATIC_LIBS, RC_STATIC_RESOURCE_LIBS]
-
-TESTAPP_COMMON_CPP = PROJECT_HOME +  TARGET + '/iBtestapp/common/src/IBtestappCommonUtil.cpp'
-
-RC_TESTAPP_SRC = Glob(PROJECT_HOME +  TARGET + '/iBtestapp/modules/rc/c_cpp/src/*.cpp')
-
-######################################################################
-
-# Initializing Build
-######################################################################
+libs = Split('connectivity_abstraction octbstack coap boost_system boost_filesystem boost_thread dl expat oc oc_logger oc_logger_core glib-2.0 uuid gcov rcs_client rcs_common rcs_container rcs_server ocsrm HueBundle rcs_container rcs_server rcs_client common_util pthread')
 
 env_linux.ParseConfig("pkg-config --cflags --libs uuid")
 
-create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
+default_targets += env_linux.Command('rc_hue_lib', [], Copy(iotivity_test_root + '/' + variant_dir, iotivity_lib_path + '/libHueBundle.so'))
+default_targets += env_linux.Command('rc_di_lib', [], Copy(iotivity_test_root + '/' + variant_dir, iotivity_lib_path + '/libDISensorBundle.so'))
+default_targets += env_linux.Command('rc_bmi_lib', [], Copy(iotivity_test_root + '/' + variant_dir, iotivity_lib_path + '/libBMISensorBundle.so'))
+default_targets += env_linux.Command('rc_container_xml', [], Copy(iotivity_test_root + '/' + variant_dir, iotivity_test_root + '/res/resource_container_xml/ResourceContainerConfig.xml'))
+default_targets += env_linux.Command('rc_empty_xml', [], Copy(iotivity_test_root + '/' + variant_dir, iotivity_test_root + '/res/resource_container_xml/ResourceContainerEmptyConfig.xml'))
+default_targets += env_linux.Command('rc_testapp_xml', [], Copy(iotivity_test_root + '/' + variant_dir, iotivity_test_root + '/res/resource_container_xml/ResourceContainerConfigTestApp.xml'))
 
-test_main = env_linux.Object(source = TEST_MAIN, target = TEST_MAIN_BIN, CPPPATH = COMMON_CINCLUDE, CPPFLAGS = COMMON_FLAGS )
+if 'tc' in test:
+    rc_tc = env_linux.Program(source = tc_src, 
+                target = 'iotivity_rc_test', 
+                CPPPATH = iotivity_include_paths + tc_include_paths, 
+                LIBS = libs + ['gtest', 'tc_util', 'pthread', 'dl'], 
+                RPATH = iotivity_lib_path,
+                LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux', '.'],
+                CPPFLAGS = cppflags + common_linux_cppflags)
+    install_targets += rc_tc
+  
+if 'app' in test:
+    rc_testapp = env_linux.Program(source = testapp_src, 
+                    target = 'iotivity_rc_app', 
+                    CPPPATH = iotivity_include_paths + testapp_include_paths, 
+                    LIBS = libs, 
+                    RPATH = iotivity_lib_path,
+                    LIBPATH = [iotivity_lib_path, '.'], 
+                    CPPFLAGS = cppflags + common_linux_cppflags)
+    install_targets += rc_testapp
 
-rc_tc = env_linux.Program(source = RC_TC_SRC , target = RC_ITC_BIN, CPPPATH = RC_CINCLUDE, LIBS = RC_LIBS, LIBPATH = RC_LIB_LOCATION, CPPFLAGS = RC_CFLAGS)
-
-rc_testapp = env_linux.Program(source = (RC_TESTAPP_SRC,TESTAPP_COMMON_CPP) , target = RC_TESTAPP_BIN, CPPPATH = RC_CINCLUDE, LIBS = RC_LIBS, LIBPATH = RC_LIB_LOCATION, CPPFLAGS = RC_CFLAGS)
-
-pre_job = [create_target_dir]
-
-######################################################################
-
-# Define Build Targets
-######################################################################
-target_service = env_linux.get('TARGET_SERVICE')
-target_transport = env_linux.get('TARGET_TRANSPORT')
-target_test = env_linux.get('TARGET_TEST')
-default_targets = [pre_job]
-install_targets = []
-
-print "target_service = " + target_service
-print "target_test = " + target_test
-print "target_transport = " + target_transport
-
-#SConscript(GTEST + '/SConscript')
-
-print "---------------service--------------" + target_service + target_test
-
-
-if 'rc' in target_service or 'all' in target_service:
-    rc_lib_path = Dir('.').abspath + '/' + ORG_SRC_HOME + ORG_SRC_OUT_DIR
-    rc_xml_path = 'res/resource_container_xml'
-    copy_rc_hue_lib = env_linux.Command('copy_rc_hue_lib', [], Copy(TARGET, rc_lib_path + '/libHueBundle.so'))
-    copy_rc_di_lib = env_linux.Command('copy_rc_di_lib', [], Copy(TARGET, rc_lib_path + '/libDISensorBundle.so'))
-
-    copy_rc_bmi_lib = env_linux.Command('copy_rc_bmi_lib', [], Copy(TARGET, rc_lib_path + '/libBMISensorBundle.so'))
-    copy_rc_container_xml = env_linux.Command('copy_rc_container_xml', [], Copy(TARGET, rc_xml_path + '/ResourceContainerConfig.xml'))
-    copy_rc_container_empty_xml = env_linux.Command('copy_rc_container_empty_xml', [], Copy(TARGET, rc_xml_path + '/ResourceContainerEmptyConfig.xml'))
-    copy_rc_container_testapp_xml = env_linux.Command('copy_rc_container_testapp_xml', [], Copy(TARGET, rc_xml_path + '/ResourceContainerConfigTestApp.xml'))
-    default_targets += [copy_rc_hue_lib]
-    default_targets += [copy_rc_di_lib]
-    default_targets += [copy_rc_bmi_lib]
-    default_targets += [copy_rc_container_xml]
-    default_targets += [copy_rc_container_empty_xml]
-    default_targets += [copy_rc_container_testapp_xml]
-
-    if 'tc' in target_test or 'all' in target_test:
-        print '---------------RC TC Build Selected---------------'
-        install_targets += rc_tc
-
-    if 'app' in target_test or 'all' in target_test:
-        print '---------------RC TESTAPP Build Selected---------------'
-        install_targets += rc_testapp
-
-
-install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
+install = env_linux.Install(iotivity_test_root + '/' + variant_dir, install_targets)
 
 delete_bin = []
 i = 0

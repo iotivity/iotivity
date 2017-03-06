@@ -35,13 +35,13 @@ protected:
 	
     virtual void SetUp()
     {
-		CommonUtil::runCommonTCSetUpPart();
+		CommonTestUtil::runCommonTCSetUpPart();
 		m_rdHelper = RDHelper::getInstance();
 	}
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
         free(m_rdHelper);
     }
 

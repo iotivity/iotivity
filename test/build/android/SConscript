@@ -31,75 +31,138 @@ print '\n---------------Started Building IotivitySecTest for Android------------
 
 Import('env_android')
 
+iotivity_root = env_android.get('IOTIVITY_ROOT')
+
+if not env_android.get('ANDROID_HOME'):
+    if os.path.exists(iotivity_root + '/extlibs/android/sdk/android-sdk-linux'):
+        env_android.Replace(ANDROID_HOME = iotivity_root + '/extlibs/android/sdk/android-sdk-linux')
+    else:
+        env_android.Replace(ANDROID_HOME = os.environ.get('ANDROID_HOME'))
+
+if not env_android.get('ANDROID_NDK'):
+    if os.path.exists(iotivity_root + '/extlibs/android/ndk/android-ndk-r10d'):
+        env_android.Replace(ANDROID_NDK = iotivity_root + '/extlibs/android/ndk/android-ndk-r10d')
+    else:
+        env_android.Replace(ANDROID_NDK = os.environ.get('ANDROID_NDK'))
+
+if not env_android.get('ANDROID_GRADLE'):
+    if os.path.isfile(iotivity_root + '/extlibs/android/gradle/gradle-2.2.1/bin/gradle'):
+        env_android.Replace(ANDROID_GRADLE = iotivity_root + '/extlibs/android/gradle/gradle-2.2.1/bin/gradle')
+    else:
+        env_android.Replace(ANDROID_GRADLE = os.environ.get('ANDROID_GRADLE'))
+
 target_arch = env_android.get('TARGET_ARCH')
-target_service = env_android.get('TARGET_SERVICE')
-target_test = env_android.get('TARGET_TEST')
-target_framework = env_android.get('TARGET_FRAMEWORK')
-variant_dir = env_android.get('VARIANT_DIR')
-rpm_path = env_android.get('RPMS_DIR')
-is_prevent_enabled = env_android.get('PREVENT')
+module = env_android.get('MODULE')
+test = env_android.get('test')
 target_transport = ARGUMENTS.get('TARGET_TRANSPORT')
-target_secured = env_android.get('SECURED')
+secured = env_android.get('SECURED')
+iotivity_root = env_android.get('IOTIVITY_ROOT')
+iotivity_test_root = env_android.get('IOTIVITY_TEST_ROOT')
+release_dir=env_android.get('RELEASE_DIR')
+all_modules = env_android.get('ALL_MODULES')
+test = env_android.get('TEST')
 gradle_bin = env_android.get('ANDROID_GRADLE')
 ndk_dir = env_android.get('ANDROID_NDK')
 sdk_dir = env_android.get('ANDROID_HOME')
 push = env_android.get('PUSH')
+framework = env_android.get('FRAMEWORK')
 
-print 'ndk_path: ' + ndk_dir
+print sdk_dir
+print ndk_dir
+print gradle_bin
 
-if push == True:
-    push = '1'
-else:
-    push = '0'
+if not os.path.exists(sdk_dir):
+    print 'No valid ANDROID_HOME found'
+    exit(-1)
 
-print 'push: ' + str(push)
-print 'target_test: ' + target_test
+if not os.path.exists(ndk_dir):
+    print 'No valid ANDROID_NDK found'
+    exit(-1)
 
-if env_android.get('RELEASE'):
-    RELEASE_DIR='release'
-else:
-    RELEASE_DIR='debug'
+if not os.path.isfile(gradle_bin):
+    print 'No valid ANDROID_GRADLE found'
+    exit(-1)
 
-PROJECT_HOME = '../..'
+os.environ['ANDROID_HOME'] = sdk_dir
 
 default_targets = []
 
-if 'iut' in target_service or 'all' in target_service:
 
+for temp in list(set(all_modules) - set(['iut', 'ca'])):
+
+    if temp in module:
+
+        jdk_env = Environment(ENV=os.environ)
+        build_command = gradle_bin + ' ' + temp + ' -b' + iotivity_test_root + '/build/android/build.gradle -Parch=%s -Pm=%s -Piotivity_root=%s  -Pp=%s' %(target_arch, release_dir, iotivity_root, iotivity_test_root + '/build/android/')
+
+        if 'tc' in test:
+
+            if temp == 'pm':
+
+                jdk_env['BUILDERS']['Gradle'] = Builder(action = gradle_bin + ' install -b' + iotivity_test_root + '/src/common/commonutil/java/TCPTestServer/build.gradle -PIOTIVITY_TEST_ROOT=' + iotivity_test_root)
+                source_list = Glob(iotivity_test_root + '/src/common/commonutil/java/TCPTestServer/*.java')
+                tcp_server = jdk_env.Gradle(target='tcp_server', source=source_list)
+                default_targets += tcp_server
+
+                jdk_env['BUILDERS']['Gradle'] = Builder(action = gradle_bin + ' installDebug -b' + iotivity_test_root + '/src/common/commonutil/java/TCPAndroidClient/build.gradle -PIOTIVITY_TEST_ROOT=' + iotivity_test_root)
+                source_list = Glob(iotivity_test_root + '/src/common/commonutil/java/TCPAndroidClient/*.java')
+                tcp_client = jdk_env.Gradle(target='tcp_client', source=source_list)
+                default_targets += tcp_client
+            
+            jdk_env['BUILDERS']['Gradle'] = Builder(action = build_command)
+            source_list = Glob(iotivity_test_root + '/src/tc/' + temp + '/junit/*.java')
+            junit_tc = jdk_env.Gradle(target='junit_tc', source=source_list)
+            default_targets += junit_tc
+
+        if 'app' in test:
+            jdk_env['BUILDERS']['Gradle'] = Builder(action = build_command + ' -Papp')
+            source_list = Glob(iotivity_test_root + '/src/iBtestapp/modules/' + temp + '/android' + '/junit/*.java')
+            interop_app = jdk_env.Gradle(target='junit_tc', source=source_list)
+            default_targets += interop_app
+
+
+if 'iut' in module:
+    
     security_mode = env_android.get('SECURITY_MODE')
-    print 'security_mode: ' + security_mode
-
     native_script = "bash build/android/iut/native_build.sh stand_alone=false ndk_path=%s push=%s security_mode=%s" % (ndk_dir, push, security_mode)
     default_targets += [native_script]
     native_build = env_android.Command('native_build', None, default_targets)
     env_android.Default(native_build)
 
-if 'ca' in target_service or 'all' in target_service:
+if 'ca' in module:
 
-    os.environ['ANDROID_HOME'] = env_android.get('ANDROID_HOME')
+    os.environ['ANDROID_HOME'] = sdk_dir
     jdk_env = Environment(ENV=os.environ)
 
     CURRENT_PATH = Dir('.').srcnode().abspath
 
-    if 'gtest' in target_framework or 'all' in target_framework:
-        cagtest_build_script = "bash build/android/ca/gtest/native_build.sh clean=0 push=%s android_home=%s android_ndk=%s release=%s target_arch=%s stand_alone=0" % (push, sdk_dir, ndk_dir, RELEASE_DIR, target_arch)
+    if 'gtest' in framework:
+
+        cagtest_build_script = "bash build/android/ca/gtest/native_build.sh clean=0 push=%s android_home=%s android_ndk=%s release_dir=%s target_arch=%s iotivity_root=%s iotivity_test_root=%s" % (push, sdk_dir, ndk_dir, release_dir, target_arch, iotivity_root, iotivity_test_root)
         cagtest_native_build = env_android.Command('cagtest_native_build', None, cagtest_build_script)
         default_targets += cagtest_native_build
 
-    if 'junit' in target_framework or 'all' in target_framework:
+    if 'junit' in framework:
 
-        if 'tc' in target_test or 'all' in target_test:
-            jdk_env['BUILDERS']['Gradle'] = Builder(action = gradle_bin + ' ca -b' + CURRENT_PATH + '/build.gradle -Pm=%s -Pc=\"release=%s target_arch=%s\" -Pp=%s/ --continue' %(RELEASE_DIR, RELEASE_DIR, target_arch, CURRENT_PATH))
-            cajunit_gradle_build = jdk_env.Gradle(target=CURRENT_PATH + '/../../bin/android/ca/outputs/apk/catest-debug.apk', source=CURRENT_PATH + '/../../src/tc/ca/junit/build.gradle')
+        if 'tc' in test:
+            build_command = "bash build/android/ca/junit/native_build.sh test=simulator stand_alone=0 android_ndk=%s release=%s target_arch=%s iotivity_root=%s iotivity_test_root=%s" % (ndk_dir, release_dir, target_arch, iotivity_root, iotivity_test_root)
+            ca_tc_native_build = env_android.Command('ca_tc_native_build', None, build_command)
+            default_targets += ca_tc_native_build
+
+            build_command = gradle_bin + ' ca -b' + iotivity_test_root + '/build/android/build.gradle -Parch=%s -Pm=%s -Piotivity_root=%s  -Pp=%s' %(target_arch, release_dir, iotivity_root, iotivity_test_root + '/build/android/')
+
+            jdk_env['BUILDERS']['Gradle'] = Builder(action = build_command)
+            cajunit_gradle_build = jdk_env.Gradle(target = iotivity_test_root + '/bin/android/ca/outputs/apk/catest-debug.apk', source = iotivity_test_root + '/src/tc/ca/junit/build.gradle')
             default_targets += cajunit_gradle_build
 
-        if 'app' in target_test or 'all' in target_test:
-            casimulator_build_script = "bash build/android/ca/junit/native_build.sh type=simulator stand_alone=0 android_ndk=%s release=%s target_arch=%s" % (ndk_dir, RELEASE_DIR, target_arch)
-            casimuator_native_build = env_android.Command('casimulator_native_build', None, casimulator_build_script)
-            default_targets += casimuator_native_build
+        if 'simulator' in test:
+            build_command = "bash build/android/ca/junit/native_build.sh test=simulator stand_alone=0 android_ndk=%s release=%s target_arch=%s iotivity_root=%s iotivity_test_root=%s" % (ndk_dir, release_dir, target_arch, iotivity_root, iotivity_test_root)
+            default_targets += env_android.Command('ca_simulator_native_build', None, build_command)
 
-            jdk_env['BUILDERS']['Gradle'] = Builder(action = gradle_bin + ' build -b' + CURRENT_PATH + '/../../src/testapp/ca/android/casimulator/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PANDROID_NDK=%s' %(target_arch, RELEASE_DIR, ndk_dir))
-            casimulator_gradle_build = jdk_env.Gradle(target=CURRENT_PATH + '/../../src/testapp/ca/android/casimulator/build/outputs/apk/casimulator-debug.apk', source=CURRENT_PATH + '/../../src/testapp/ca/android/casimulator/build.gradle')
-            default_targets += casimulator_gradle_build
+            build_command = gradle_bin + ' build -b' + iotivity_test_root + '/src/testapp/ca/android/casimulator/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PANDROID_NDK=%s -PIOTIVITY_ROOT=%s' %(target_arch, release_dir, ndk_dir, iotivity_root)
+
+            jdk_env['BUILDERS']['Gradle'] = Builder(action = build_command)
+            ca_simulator_gradle_build = jdk_env.Gradle(target = iotivity_test_root + '/src/testapp/ca/android/casimulator/build/outputs/apk/casimulator-debug.apk', source = iotivity_test_root + '/src/testapp/ca/android/casimulator/build.gradle')
+            default_targets += ca_simulator_gradle_build
 
 env_android.Default(default_targets)

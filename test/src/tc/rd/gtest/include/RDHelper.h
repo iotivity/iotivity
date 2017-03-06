@@ -32,6 +32,7 @@
 #include "rd_client.h"
 #include "oic_string.h"
 #include "CommonUtil.h"
+#include "CommonTestUtil.h"
 #include "IotivityTest_Logger.h"
 
 #define SERVER 								"./rd_server"

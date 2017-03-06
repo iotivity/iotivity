@@ -179,5 +179,9 @@ static void vPrintf(const char* timebuffer, const char* const format, ...)
     va_end(args);
 }
 
+
+#define __FUNC_IN__ IOTIVITYTEST_LOG(DEBUG, "%s IN", __func__);
+#define __FUNC_OUT__ IOTIVITYTEST_LOG(DEBUG, "%s OUT", __func__);
+
 #endif
 #endif

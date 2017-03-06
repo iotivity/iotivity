@@ -40,20 +40,25 @@ public:
 
     virtual void handleDeleteRequest(QueryParamsMap& queryParamsMap,
             OCRepresentation incomingRepresentation,
+            std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
 
     virtual void handlePostRequest(QueryParamsMap& queryParamsMap,
             OCRepresentation incomingRepresentation,
+            std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
 
     virtual void handleGetRequest(QueryParamsMap& queryParamsMap,
+            std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
 
     virtual void handlePutRequest(QueryParamsMap& queryParamsMap,
             OCRepresentation incomingRepresentation,
+            std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
 
     virtual void handleInitRequest(QueryParamsMap& queryParamsMap,
+            std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
 
 //    virtual AttributeMap getAttributeMap(void);

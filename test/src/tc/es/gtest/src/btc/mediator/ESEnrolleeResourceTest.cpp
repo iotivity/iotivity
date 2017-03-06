@@ -20,6 +20,7 @@
 
 #include <gtest/gtest.h>
 #include "CommonUtil.h"
+#include "CommonTestUtil.h"
 #include <atomic>
 #include <functional>
 #include <condition_variable>
@@ -46,7 +47,7 @@ protected:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
         vector< string > types =
         { RES_TYPE };
         vector< string > ifaces =
@@ -58,7 +59,7 @@ protected:
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 
 };

@@ -27,12 +27,12 @@ protected:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
     }
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 };
 
@@ -526,9 +526,6 @@ TEST_F(CATest_btc , CAHandleRequestResponse_P)
 #if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
 TEST_F(CATest_btc, CAStartListeningServerWithoutSelectingNetwork_ECRC_N)
 {
-
-    CAResult_t m_result=NULL;
-
     if (!m_caHelper.initialize())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
@@ -566,8 +563,6 @@ TEST_F(CATest_btc, CAStopListeningServerWithoutSelectingNetwork_ECRC_N)
         return;
     }
 
-    CAResult_t m_result=NULL;
-
     if (!m_caHelper.stopListeningServer(CA_STATUS_FAILED))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
@@ -594,8 +589,6 @@ TEST_F(CATest_btc, CAStopListeningServerWithoutSelectingNetwork_ECRC_N)
 #if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
 TEST_F(CATest_btc, CAStartDiscoveryServerWithoutSelectingNetwork_ECRC_N)
 {
-    CAResult_t m_result=NULL;
-
     if (!m_caHelper.initialize())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());

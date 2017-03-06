@@ -27,17 +27,12 @@ protected:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
-        if (!m_caHelper.setConfigFile())
-        {
-            SET_FAILURE("Unable to read configuration file");
-            return;
-        }
+        CommonTestUtil::runCommonTCSetUpPart();
     }
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 };
 
@@ -146,7 +141,7 @@ TEST_F(CANetworkTest_btc, CAStartDiscoveryServer_P)
 #if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CANetworkTest_btc, CACreateEndpoint_P)
 {
-    if (!m_caHelper.createEndpoint(VALID_ENDPOINT_URI))
+    if (!m_caHelper.createEndpoint(false, false))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -174,7 +169,7 @@ TEST_F(CANetworkTest_btc, CACreateEndpoint_Flag_ECRC_N)
 {
     CAEndpoint_t* endpoint = NULL;
 
-    CAResult_t result = CACreateEndpoint(CA_INVALID_FLAG, m_caHelper.m_availableNetwork, ENDPOINT_IP, ENDPOINT_PORT, &endpoint);
+    CAResult_t result = CACreateEndpoint(CA_INVALID_FLAG, (CATransportAdapter_t)m_caHelper.m_availableNetwork, ENDPOINT_IP, ENDPOINT_PORT, &endpoint);
     if (result != CA_STATUS_OK)
     {
         SET_FAILURE(m_caHelper.getFailureMessage("CACreateEndpoint", result, CA_STATUS_OK));
@@ -205,7 +200,7 @@ TEST_F(CANetworkTest_btc, CACreateEndpoint_Address_NV_N)
 {
     CAEndpoint_t* m_endpoint = NULL;
 
-    CAResult_t m_result = CACreateEndpoint(CA_DEFAULT_FLAGS, m_caHelper.m_availableNetwork, NULL, ENDPOINT_PORT, &m_endpoint);
+    CAResult_t m_result = CACreateEndpoint(CA_DEFAULT_FLAGS, (CATransportAdapter_t)m_caHelper.m_availableNetwork, NULL, ENDPOINT_PORT, &m_endpoint);
     if (m_result != CA_STATUS_OK)
     {
         SET_FAILURE(m_caHelper.getFailureMessage("CACreateEndpoint", m_result, CA_STATUS_OK));
@@ -235,7 +230,7 @@ TEST_F(CANetworkTest_btc, CACreateEndpoint_Address_NV_N)
 #if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CANetworkTest_btc, CACreateEndpoint_Endpoint_NV_N)
 {
-    CAResult_t result = CACreateEndpoint(CA_DEFAULT_FLAGS, m_caHelper.m_availableNetwork, ENDPOINT_IP, ENDPOINT_PORT, NULL);
+    CAResult_t result = CACreateEndpoint(CA_DEFAULT_FLAGS, (CATransportAdapter_t)m_caHelper.m_availableNetwork, ENDPOINT_IP, ENDPOINT_PORT, NULL);
     if (result != CA_STATUS_INVALID_PARAM)
     {
         SET_FAILURE(m_caHelper.getFailureMessage("CACreateEndpoint", result, CA_STATUS_INVALID_PARAM));
@@ -261,7 +256,7 @@ TEST_F(CANetworkTest_btc, CACreateEndpoint_ESV_P)
 {
     CAEndpoint_t* m_endpoint = NULL;
 
-    CAResult_t m_result = CACreateEndpoint(CA_DEFAULT_FLAGS, m_caHelper.m_availableNetwork, "", ENDPOINT_PORT, &m_endpoint);
+    CAResult_t m_result = CACreateEndpoint(CA_DEFAULT_FLAGS, (CATransportAdapter_t)m_caHelper.m_availableNetwork, "", ENDPOINT_PORT, &m_endpoint);
     if (m_result != CA_STATUS_OK || m_endpoint == NULL)
     {
         SET_FAILURE(m_caHelper.getFailureMessage("CACreateEndpoint", m_result, CA_STATUS_OK));
@@ -293,7 +288,7 @@ TEST_F(CANetworkTest_btc, CACreateEndpoint_URSV_N)
 {
     CAEndpoint_t** m_endpoint = NULL;
 
-    CAResult_t m_result = CACreateEndpoint(CA_DEFAULT_FLAGS, m_caHelper.m_availableNetwork, ENDPOINT_IP, ENDPOINT_PORT, m_endpoint);
+    CAResult_t m_result = CACreateEndpoint(CA_DEFAULT_FLAGS, (CATransportAdapter_t)m_caHelper.m_availableNetwork, ENDPOINT_IP, ENDPOINT_PORT, m_endpoint);
     if (m_result != CA_STATUS_INVALID_PARAM)
     {
         SET_FAILURE(m_caHelper.getFailureMessage("CACreateEndpoint", m_result, CA_STATUS_INVALID_PARAM));
@@ -412,12 +407,11 @@ TEST_F(CANetworkTest_btc, CASendRequest_P)
         return;
     }
 
-    char* payload = "Temp Data";
+    char* payload = (char*)"Temp Data";
     CAMethod_t method = CA_GET;
     CAMessageType_t type = CA_MSG_NONCONFIRM;
-    int totalMessage = 1;
 
-    if (!m_caHelper.sendRequest(VALID_ENDPOINT_URI, payload, method, type, totalMessage))
+    if (!m_caHelper.sendRequest((char*)VALID_ENDPOINT_URI, payload, method, type))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
     }
@@ -492,12 +486,12 @@ TEST_F(CANetworkTest_btc, CASendRequestWithInvalidMethod_N)
         return;
     }
 
-    CAMethod_t invalidMethod = -1;
+    CAMethod_t invalidMethod = (CAMethod_t)-1;
 
-    char* uri = (char*) m_caHelper.m_simulatorReqAckUri.c_str();
+    char* uri = (char*) SIM_REQ_ACK;
     char* payload = m_caHelper.s_tcInfo.identifier;
 
-    if (!m_caHelper.sendRequest(uri, payload, invalidMethod, CA_MSG_NONCONFIRM, TOTAL_MESSAGE, CA_MEMORY_ALLOC_FAILED))
+    if (!m_caHelper.sendRequest(uri, payload, invalidMethod, CA_MSG_NONCONFIRM, false, CA_MEMORY_ALLOC_FAILED))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -542,12 +536,11 @@ TEST_F(CANetworkTest_btc, CASendResponse_P)
         return;
     }
 
-    char* payload = "Temp Data";
+    char* payload = (char*)"Temp Data";
     CAResponseResult_t responseResult = CA_EMPTY;
     CAMessageType_t type = CA_MSG_NONCONFIRM;
-    int totalMessage = 1;
 
-    if (!m_caHelper.sendResponse(VALID_ENDPOINT_URI, payload, responseResult, type, totalMessage))
+    if (!m_caHelper.sendResponse((char*)SIM_RES_ACK, payload, responseResult, type))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
     }
@@ -832,7 +825,7 @@ TEST_F(CANetworkTest_btc, CAGetNonSecurePortNumber_P)
     }
 #endif
 
-    int port = CAGetAssignedPortNumber(m_caHelper.m_availableNetwork, CA_IPV4);
+    int port = CAGetAssignedPortNumber((CATransportAdapter_t)m_caHelper.m_availableNetwork, CA_IPV4);
 
     if(port <= 0)
     {
@@ -868,8 +861,8 @@ TEST_F(CANetworkTest_btc, CAGetSecurePortNumber_P)
         return;
     }
 
-    CATransportFlags_t secureflag = CA_IPV4 | CA_SECURE;
-    int port = CAGetAssignedPortNumber(m_caHelper.m_availableNetwork, secureflag);
+    CATransportFlags_t secureflag = (CATransportFlags_t)(CA_IPV4 | CA_SECURE);
+    int port = CAGetAssignedPortNumber((CATransportAdapter_t)m_caHelper.m_availableNetwork, secureflag);
 
     if(port <= 0)
     {
@@ -905,7 +898,7 @@ TEST_F(CANetworkTest_btc, CAGetAssignedPortNumberForInvalidAdapter_N)
         return;
     }
 
-    int port = CAGetAssignedPortNumber(CA_INVALID_ADAPTER, CA_TRANSPORT_FLAG);
+    int port = CAGetAssignedPortNumber((CATransportAdapter_t)CA_INVALID_ADAPTER, CA_TRANSPORT_FLAG);
 
     if(port != 0)
     {
@@ -941,7 +934,7 @@ TEST_F(CANetworkTest_btc, CAGetAssignedPortNumberForInvalidFlag_N)
         return;
     }
 
-    int port = CAGetAssignedPortNumber(m_caHelper.m_availableNetwork, CA_INVALID_FLAG);
+    int port = CAGetAssignedPortNumber((CATransportAdapter_t)m_caHelper.m_availableNetwork, CA_INVALID_FLAG);
 
     if(port != 0)
     {
@@ -974,7 +967,7 @@ TEST_F(CANetworkTest_btc, CASetPortNumberToAssign_P)
         return;
     }
 
-    CAResult_t result = CASetPortNumberToAssign(m_caHelper.m_availableNetwork,
+    CAResult_t result = CASetPortNumberToAssign((CATransportAdapter_t)m_caHelper.m_availableNetwork,
                                    CA_TRANSPORT_FLAG, ENDPOINT_PORT);
 
     if(result != CA_STATUS_OK)
@@ -1010,7 +1003,7 @@ TEST_F(CANetworkTest_btc, CASetPortNumberToAssignWithInvalidAdapter_N)
 
     int invalidAdapterType = 0;
 
-    CAResult_t result = CASetPortNumberToAssign(invalidAdapterType,
+    CAResult_t result = CASetPortNumberToAssign((CATransportAdapter_t)invalidAdapterType,
                                    CA_TRANSPORT_FLAG, ENDPOINT_PORT);
 
     if(result != CA_NOT_SUPPORTED)
@@ -1043,7 +1036,7 @@ TEST_F(CANetworkTest_btc, CASetPortNumberToAssignWithInvalidFlag_N)
         return;
     }
 
-    CAResult_t result = CASetPortNumberToAssign(m_caHelper.m_availableNetwork,
+    CAResult_t result = CASetPortNumberToAssign((CATransportAdapter_t)m_caHelper.m_availableNetwork,
                                    CA_INVALID_FLAG, ENDPOINT_PORT);
 
     if(result != CA_NOT_SUPPORTED)

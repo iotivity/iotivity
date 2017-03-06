@@ -27,17 +27,13 @@ protected:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
-        if (!m_caHelper.setConfigFile())
-        {
-            SET_FAILURE("Unable to read configuration file");
-            return;
-        }
+        CommonTestUtil::runCommonTCSetUpPart();
+        m_caHelper.setMulticastRequest(true);
     }
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 };
 
@@ -80,13 +76,13 @@ TEST_F(CAMulticastTest_stc, SendMulticastGetRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_MULTICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    if (!m_caHelper.sendRequestToAll(CA_GET, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(CA_GET, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -141,13 +137,13 @@ TEST_F(CAMulticastTest_stc, SendMulticastPostRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_MULTICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    if (!m_caHelper.sendRequestToAll(CA_POST, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(CA_POST, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -202,13 +198,13 @@ TEST_F(CAMulticastTest_stc, SendMulticastPutRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_MULTICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    if (!m_caHelper.sendRequestToAll(CA_PUT, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(CA_PUT, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -263,13 +259,13 @@ TEST_F(CAMulticastTest_stc, SendMulticastDeleteRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_MULTICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    if (!m_caHelper.sendRequestToAll(CA_DELETE, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(CA_DELETE, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -323,7 +319,7 @@ TEST_F(CAMulticastTest_stc, SendMulticastRequestWithoutHeaderOption_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_HEADER, MESSAGE_MULTICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -331,7 +327,7 @@ TEST_F(CAMulticastTest_stc, SendMulticastRequestWithoutHeaderOption_P)
 
     CAHelper::s_tcInfo.numOptions = 0;
 
-    if (!m_caHelper.sendRequestToAll(CA_GET, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(CA_GET, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -385,7 +381,7 @@ TEST_F(CAMulticastTest_stc, SendMulticastRequestWithHeaderOption_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_HEADER, MESSAGE_MULTICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -393,7 +389,7 @@ TEST_F(CAMulticastTest_stc, SendMulticastRequestWithHeaderOption_P)
 
     CAHelper::s_tcInfo.numOptions = 1;
 
-    if (!m_caHelper.sendRequestToAll(CA_GET, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(CA_GET, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -447,7 +443,7 @@ TEST_F(CAMulticastTest_stc, SendMulticastRequestWithHeaderOptions_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_HEADER, MESSAGE_MULTICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -455,7 +451,7 @@ TEST_F(CAMulticastTest_stc, SendMulticastRequestWithHeaderOptions_P)
 
     CAHelper::s_tcInfo.numOptions = 2;
 
-    if (!m_caHelper.sendRequestToAll(CA_GET, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(CA_GET, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -510,16 +506,16 @@ TEST_F(CAMulticastTest_stc, SendMulticastRequestWithEmptyPayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_URI, MESSAGE_MULTICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    char* uri = (char*) m_caHelper.m_simulatorReqAckUri.c_str();
+    char* uri = (char*) SIM_REQ_ACK;
     char* payload = (char*)"";
 
-    if (!m_caHelper.sendRequestToAll(uri, payload, CA_PUT, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(uri, payload, CA_PUT, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -574,16 +570,16 @@ TEST_F(CAMulticastTest_stc, SendMulticastRequestWithNullPayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_URI, MESSAGE_MULTICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    char* uri = (char*) m_caHelper.m_simulatorReqAckUri.c_str();
+    char* uri = (char*) SIM_REQ_ACK;
     char* payload = NULL;
 
-    if (!m_caHelper.sendRequestToAll(uri, payload, CA_PUT, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(uri, payload, CA_PUT, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -637,16 +633,16 @@ TEST_F(CAMulticastTest_stc, SendMulticastRequestWithInvalidMethod_N)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_MULTICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    char* uri = (char*) m_caHelper.m_simulatorReqAckUri.c_str();
+    char* uri = (char*) SIM_REQ_ACK;
     char* payload = m_caHelper.s_tcInfo.identifier;
 
-    if (!m_caHelper.sendRequestToAll(uri, payload, CA_INVALID_METHOD, CA_MSG_NONCONFIRM, 1, CA_MEMORY_ALLOC_FAILED))
+    if (!m_caHelper.sendRequest(uri, payload, CA_INVALID_METHOD, CA_MSG_NONCONFIRM, false, CA_MEMORY_ALLOC_FAILED))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
     }

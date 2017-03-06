@@ -35,7 +35,7 @@ android {
         }
     }
     compileSdkVersion 21
-    buildToolsVersion "21.0.0"
+    buildToolsVersion "21.1.2"
     defaultConfig {
         applicationId "org.iotivity.ca.simulator"
         minSdkVersion 21
@@ -66,7 +66,7 @@ android {
 
 repositories {
     flatDir {
-        dirs "../../../../../../android/android_api/base/build/outputs/aar/"
+        dirs "${IOTIVITY_ROOT}/android/android_api/base/build/outputs/aar/"
     }
 }
 
@@ -75,7 +75,7 @@ try {
         compile ":iotivity-base-${TARGET_ARCH}-${RELEASE}@aar"
     }
 } catch (all) {
-    print "${ERROR_MSG}"
+    //print "${ERROR_MSG}"
     assert all
 }
 
@@ -97,5 +97,5 @@ tasks.withType(com.android.build.gradle.tasks.PackageApplication) { pkgTask ->
 task buildNative(type: Exec) {
         def ndkBuild = new File("${ANDROID_NDK}", 'ndk-build')
         commandLine ndkBuild, "-C", file("src/main"), "-B", "-j", Runtime.runtime.availableProcessors(),
-                              "APP_ABI=${TARGET_ARCH}", "APP_OPTIM=${RELEASE}", "DEVICE_ARCH=${TARGET_ARCH}"
+                              "APP_ABI=${TARGET_ARCH}", "APP_OPTIM=${RELEASE}"
 }

@@ -21,7 +21,7 @@
 apply from: "../../../../build/android/build.gradle"
 
 project.buildDir = "${binDirectory}/rc"
-
+def rcHueBandleJar = "${secTestRootDirectoryFromModules}/src/tc/rc/junit/assets/lib/"
 def rcAARFileDir = "${iotivityRootDirectoryFromModules}/service/resource-container/android/resource-container/build/outputs/aar"
 def rcAARFile = "iotivity-${architecture}-resource-container-${buildmode}"
 
@@ -51,6 +51,7 @@ android {
         main {
               manifest.srcFile 'AndroidManifest.xml'
               java.srcDirs 'src'
+              //jniLibs.srcDir "${relativeLibDir}/rc/jniLibs"
               jni.srcDirs = [] //disable automatic ndk-build 
               assets.srcDirs = ['assets']
         }
@@ -61,7 +62,7 @@ android {
      }
 
     defaultConfig {
-      applicationId "org.iotivity.service.rc.test"
+      applicationId "org.iotivity.test.rc.tc"
       minSdkVersion 21
       targetSdkVersion 21
     }

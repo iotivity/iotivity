@@ -28,17 +28,12 @@ protected:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
-        if (!m_caHelper.setConfigFile())
-        {
-            SET_FAILURE("Unable to read configuration file");
-            return;
-        }
+        CommonTestUtil::runCommonTCSetUpPart();
     }
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 };
 
@@ -83,10 +78,8 @@ TEST_F(CANetworkCommonTest_stc, CallOtherCAApiWithoutCallingCAInitialize_N)
 {
     CAEndpoint_t* endpoint = NULL;
     uint32_t size = 0;
-    CARequestInfo_t requestInfo =
-    {   0};
-    CAResponseInfo_t responseInfo =
-    {   0};
+    CARequestInfo_t requestInfo;
+    CAResponseInfo_t responseInfo;
 
     m_result = CAStartListeningServer();
     if (m_result != CA_STATUS_NOT_INITIALIZED)
@@ -118,13 +111,13 @@ TEST_F(CANetworkCommonTest_stc, CallOtherCAApiWithoutCallingCAInitialize_N)
         SET_FAILURE(m_caHelper.getFailureMessage("CASendResponse", m_result, CA_STATUS_NOT_INITIALIZED));
     }
 
-    m_result = CASelectNetwork(m_caHelper.m_availableNetwork);
+    m_result = CASelectNetwork((CATransportAdapter_t)m_caHelper.m_availableNetwork);
     if (m_result != CA_STATUS_NOT_INITIALIZED)
     {
         SET_FAILURE(m_caHelper.getFailureMessage("CASelectNetwork", m_result, CA_STATUS_NOT_INITIALIZED));
     }
 
-    m_result = CAUnSelectNetwork(m_caHelper.m_availableNetwork);
+    m_result = CAUnSelectNetwork((CATransportAdapter_t)m_caHelper.m_availableNetwork);
     if (m_result != CA_STATUS_NOT_INITIALIZED)
     {
         SET_FAILURE(m_caHelper.getFailureMessage("CAUnSelectNetwork", m_result, CA_STATUS_NOT_INITIALIZED));
@@ -449,9 +442,6 @@ TEST_F(CANetworkCommonTest_stc, CASelectNetworkUnSelectNetworkLoop_SLCC_P)
 #if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CANetworkCommonTest_stc, CAStartListeningServerStopListeningServer_VLCC_P)
 {
-
-    CAResult_t m_result=NULL;
-
     for (int count = 0; count < TRY_COUNT; count++)
     {
         if (!m_caHelper.initServerNetwork())
@@ -528,7 +518,7 @@ TEST_F(CANetworkCommonTest_stc, CAStartDiscoveryServer_VLCC_P)
 #if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CANetworkCommonTest_stc, CACreateEndpointDestroyEndpoint_VLCC_P)
 {
-    CAResult_t m_result=NULL;
+    CAResult_t m_result = NULL;
 
     for (int count = 0; count < TRY_COUNT; count++)
     {
@@ -540,7 +530,7 @@ TEST_F(CANetworkCommonTest_stc, CACreateEndpointDestroyEndpoint_VLCC_P)
 
         CAEndpoint_t* m_endpoint = NULL;
 
-        CAResult_t m_result = CACreateEndpoint(CA_DEFAULT_FLAGS, m_caHelper.m_availableNetwork, ENDPOINT_IP, ENDPOINT_PORT, &m_endpoint);
+        m_result = CACreateEndpoint(CA_DEFAULT_FLAGS, (CATransportAdapter_t)m_caHelper.m_availableNetwork, ENDPOINT_IP, ENDPOINT_PORT, &m_endpoint);
         if (m_result != CA_STATUS_OK || m_endpoint == NULL)
         {
             SET_FAILURE(m_caHelper.getFailureMessage("CACreateEndpoint", CA_STATUS_OK));

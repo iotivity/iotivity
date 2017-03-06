@@ -34,7 +34,7 @@ protected:
 	
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 		m_rdHelper = RDHelper::getInstance();
         
         PlatformConfig config { OC::ServiceType::InProc, ModeType::Both, "0.0.0.0",0, OC::QualityOfService::LowQos };
@@ -55,7 +55,7 @@ protected:
        	
        	free(m_rdHelper);
        	
-       	CommonUtil::runCommonTCTearDownPart();
+       	CommonTestUtil::runCommonTCTearDownPart();
     }
 };
 

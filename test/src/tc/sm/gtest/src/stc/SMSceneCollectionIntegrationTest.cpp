@@ -39,7 +39,7 @@ public:
     virtual void SetUp() {
         IOTIVITYTEST_LOG(INFO, "SetUp IN");
 
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
         m_pSMHelper = new SMHelper();
         m_pSceneList = m_pSMHelper->getSceneListInstance();
@@ -55,7 +55,7 @@ public:
         delete m_pSMHelper;
         m_pSMHelper = nullptr;
 
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 };
 

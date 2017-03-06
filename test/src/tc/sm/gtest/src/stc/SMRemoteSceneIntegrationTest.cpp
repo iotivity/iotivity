@@ -47,7 +47,7 @@ public:
     virtual void SetUp() {
         IOTIVITYTEST_LOG(INFO, "SetUp IN");
 
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
         CommonUtil::launchApp(FAN_SERVER);
         CommonUtil::waitInSecond(MAX_SLEEP_TIME);
@@ -101,7 +101,7 @@ public:
         delete m_pSMRemoteHelper;
         m_pSMRemoteHelper = nullptr;
 
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 
 public:

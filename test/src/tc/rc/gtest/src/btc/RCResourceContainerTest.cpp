@@ -70,11 +70,11 @@ class RCResourceContainerTest_btc: public ::testing::Test
 {
 
 public:
-    int initialBundleSize;
-    int loadedBundleSize;
-    int initialBundleResourceSize;
-    int loadedBundleResourceSize;
-
+	int initialBundleSize;
+	int loadedBundleSize;
+	int initialBundleResourceSize;
+	int loadedBundleResourceSize;
+	
 protected:
     std::string m_errorMsg;
     RCSResourceContainer *m_pContainer;
@@ -85,11 +85,11 @@ protected:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
         m_errorMsg = EMPTY_STRING;
         m_pContainer = RCSResourceContainer::getInstance();
-
+        
         initialBundleSize = 0;
         loadedBundleSize = 0;
         initialBundleResourceSize = 0;
@@ -98,8 +98,8 @@ protected:
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
-    }
+		CommonTestUtil::runCommonTCTearDownPart();
+	}
 };
 
 /**
@@ -221,7 +221,7 @@ TEST_F(RCResourceContainerTest_btc, StopContainer_SRC_P)
     {
         m_pContainer->startContainer(CONFIG_FILE);
         ASSERT_GT(m_pContainer->listBundles().size(), ZERO_VALUE) << "Container is Not started !";
-
+        
         m_pContainer->stopContainer();
         EXPECT_EQ(m_pContainer->listBundles().size(), ZERO_VALUE) << "Container can't stopped!";
     }
@@ -249,9 +249,9 @@ TEST_F(RCResourceContainerTest_btc, StopContainer_SQV_P)
 {
     try
     {
-        m_pContainer->startContainer(INVALID_INPUT);
-        ASSERT_EQ(ZERO_VALUE, m_pContainer->listBundles().size()) << "Container Started with invalid parameter!";
-
+		m_pContainer->startContainer(INVALID_INPUT);
+        ASSERT_EQ(ZERO_VALUE, m_pContainer->listBundles().size()) << "Container Started with invalid parameter!"; 
+        
         m_pContainer->stopContainer();
         EXPECT_EQ(ZERO_VALUE, m_pContainer->listBundles().size()) << "Container stopped without started before!";
     }
@@ -448,7 +448,7 @@ TEST_F(RCResourceContainerTest_btc, StartBundle_ESV_N)
 {
     try
     {
-        m_pContainer->startContainer(CONFIG_EMPTY_FILE);
+		m_pContainer->startContainer(CONFIG_EMPTY_FILE);
         m_pContainer->startBundle(EMPTY_STRING);
         EXPECT_EQ(m_pContainer->listBundles().size(), ZERO_VALUE)<<"Bundle size is NOT zero!";
         m_pContainer->stopContainer();
@@ -477,7 +477,7 @@ TEST_F(RCResourceContainerTest_btc, StartBundle_USV_N)
 {
     try
     {
-        m_pContainer->startContainer(CONFIG_EMPTY_FILE);
+		m_pContainer->startContainer(CONFIG_EMPTY_FILE);
         m_pContainer->startBundle(INVALID_INPUT);
         EXPECT_EQ(m_pContainer->listBundles().size(), ZERO_VALUE)<<"Bundle size is NOT zero!";
         m_pContainer->stopContainer();
@@ -514,7 +514,7 @@ TEST_F(RCResourceContainerTest_btc, StopBundle_SRC_P)
 
         m_pContainer->startBundle(g_bundleInfo->getID());
         m_pContainer->stopBundle(g_bundleInfo->getID());
-
+        
         m_pContainer->stopContainer();
 
         EXPECT_EQ(m_pContainer->listBundles().size(), ZERO_VALUE)<<"Bundle size is NOT zero!";
@@ -542,7 +542,7 @@ TEST_F(RCResourceContainerTest_btc, StopBundle_ESV_N)
 {
     try
     {
-        m_pContainer->startContainer(CONFIG_EMPTY_FILE);
+		m_pContainer->startContainer(CONFIG_EMPTY_FILE);
         m_pContainer->stopBundle(EMPTY_STRING);
         EXPECT_EQ(m_pContainer->listBundles().size(), ZERO_VALUE)<<"Bundle size is NOT zero!";
         m_pContainer->stopContainer();
@@ -570,7 +570,7 @@ TEST_F(RCResourceContainerTest_btc, StopBundle_USV_N)
 {
     try
     {
-        m_pContainer->startContainer(CONFIG_EMPTY_FILE);
+		m_pContainer->startContainer(CONFIG_EMPTY_FILE);
         m_pContainer->stopBundle(INVALID_INPUT);
         EXPECT_EQ(m_pContainer->listBundles().size(), ZERO_VALUE)<<"Bundle size is NOT zero!";
         m_pContainer->stopContainer();
@@ -598,16 +598,16 @@ TEST_F(RCResourceContainerTest_btc, AddBundle_SRC_P)
 {
     try
     {
-        m_pContainer->startContainer(CONFIG_EMPTY_FILE);
-
-        g_bundles = m_pContainer->listBundles();
+		m_pContainer->startContainer(CONFIG_EMPTY_FILE);
+		
+		g_bundles = m_pContainer->listBundles();
 
         g_params.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
 
         m_pContainer->addBundle(BUNDLE_NAME, BUNDLE_URL, BUNDLE_PATH, BUNDLE_ACTIVATOR, g_params);
 
         EXPECT_GT(m_pContainer->listBundles().size(), g_bundles.size())<<"New bundle is not added!";
-
+        
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -633,9 +633,9 @@ TEST_F(RCResourceContainerTest_btc, AddBundle_ESV_N)
 {
     try
     {
-        m_pContainer->startContainer(CONFIG_EMPTY_FILE);
-        m_pContainer->addBundle( EMPTY_STRING, EMPTY_STRING, EMPTY_STRING, EMPTY_STRING, g_params);
-        m_pContainer->stopContainer();
+		m_pContainer->startContainer(CONFIG_EMPTY_FILE);
+		m_pContainer->addBundle( EMPTY_STRING, EMPTY_STRING, EMPTY_STRING, EMPTY_STRING, g_params);
+		m_pContainer->stopContainer();
     }
     catch (exception& e)
     {
@@ -660,9 +660,9 @@ TEST_F(RCResourceContainerTest_btc, AddBundle_USV_N)
 {
     try
     {
-        m_pContainer->startContainer(CONFIG_EMPTY_FILE);
-        m_pContainer->addBundle( INVALID_INPUT, INVALID_INPUT, INVALID_INPUT, INVALID_INPUT, g_params);
-        m_pContainer->stopContainer();
+		m_pContainer->startContainer(CONFIG_EMPTY_FILE);
+		m_pContainer->addBundle( INVALID_INPUT, INVALID_INPUT, INVALID_INPUT, INVALID_INPUT, g_params);
+		m_pContainer->stopContainer();
     }
     catch (exception& e)
     {
@@ -688,8 +688,8 @@ TEST_F(RCResourceContainerTest_btc, RemoveBundle_SRC_P)
 {
     try
     {
-        m_pContainer->startContainer(CONFIG_EMPTY_FILE);
-
+		m_pContainer->startContainer(CONFIG_EMPTY_FILE);
+		
         g_bundles = m_pContainer->listBundles();
 
         g_params.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
@@ -701,7 +701,7 @@ TEST_F(RCResourceContainerTest_btc, RemoveBundle_SRC_P)
         m_pContainer->removeBundle(BUNDLE_NAME);
 
         EXPECT_EQ(m_pContainer->listBundles().size(), g_bundles.size())<<"Bundle is not removed!";
-
+        
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -727,14 +727,14 @@ TEST_F(RCResourceContainerTest_btc, RemoveBundle_ESV_N)
 {
     try
     {
-        m_pContainer->startContainer(CONFIG_FILE);
-        initialBundleSize = m_pContainer->listBundles().size();
-
+		m_pContainer->startContainer(CONFIG_FILE);
+		initialBundleSize = m_pContainer->listBundles().size();
+		
         m_pContainer->removeBundle(EMPTY_STRING);
         loadedBundleSize = m_pContainer->listBundles().size();
-
+        
         EXPECT_EQ(loadedBundleSize, initialBundleSize)<< "Bundle is removed without bundleID!";
-
+        
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -760,14 +760,14 @@ TEST_F(RCResourceContainerTest_btc, RemoveBundle_USV_N)
 {
     try
     {
-        m_pContainer->startContainer(CONFIG_FILE);
-        initialBundleSize = m_pContainer->listBundles().size();
-
+		m_pContainer->startContainer(CONFIG_FILE);
+		initialBundleSize = m_pContainer->listBundles().size();
+		
         m_pContainer->removeBundle(INVALID_INPUT);
         loadedBundleSize = m_pContainer->listBundles().size();
-
+        
         EXPECT_EQ(loadedBundleSize, initialBundleSize) << "Bundle is removed with invalid bundleID!";
-
+        
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -793,17 +793,17 @@ TEST_F(RCResourceContainerTest_btc, AddResourceConfig_SRC_P)
 {
     try
     {
-        m_pContainer->startContainer(CONFIG_FILE);
+		m_pContainer->startContainer(CONFIG_FILE);
         initialBundleResourceSize = m_pContainer->listBundleResources(HUE_BUNDLE_ID).size();
 
-        g_params.insert(std::make_pair("resourceType", HUE_RESOURCE_TYPE));
+		g_params.insert(std::make_pair("resourceType", HUE_RESOURCE_TYPE));
         g_params.insert(std::make_pair("address", HUE_ADDRESS));
 
         m_pContainer->addResourceConfig(HUE_BUNDLE_ID, HUE_BUNDLE_URI, g_params);
-        loadedBundleResourceSize = m_pContainer->listBundleResources(HUE_BUNDLE_ID).size();
-
-        EXPECT_GT(loadedBundleResourceSize, initialBundleResourceSize) << "Resource Config is not added!";
-
+		loadedBundleResourceSize = m_pContainer->listBundleResources(HUE_BUNDLE_ID).size();
+		
+		EXPECT_GT(loadedBundleResourceSize, initialBundleResourceSize) << "Resource Config is not added!";
+        
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -837,7 +837,7 @@ TEST_F(RCResourceContainerTest_btc, AddResourceConfig_ESV_N)
 
         EXPECT_EQ(m_pContainer->listBundleResources((*m_pContainer->listBundles().begin())->getID()).size(), nValue)
                 << "Resource Config is added with empty string!";
-
+                
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -909,7 +909,7 @@ TEST_F(RCResourceContainerTest_btc, RemoveResourceConfig_SRC_P)
 
         EXPECT_EQ(m_pContainer->listBundleResources((*m_pContainer->listBundles().begin())->getID()).size(), nValue)
                 << "Remove resourceConfig does not work that's why before addResourceConfig list bundle size and after addResourceConfig then removeResourceConfig list bundle size is Not equal!";
-        m_pContainer->stopContainer();
+        m_pContainer->stopContainer();        
     }
     catch (exception& e)
     {
@@ -942,7 +942,7 @@ TEST_F(RCResourceContainerTest_btc, RemoveResourceConfig_ESV_N)
 
         EXPECT_EQ(m_pContainer->listBundleResources((*m_pContainer->listBundles().begin())->getID()).size(), nValue)
                         << "Remove resourceConfig with empty string!";
-        m_pContainer->stopContainer();
+        m_pContainer->stopContainer();                
     }
     catch (exception& e)
     {
@@ -969,13 +969,13 @@ TEST_F(RCResourceContainerTest_btc, RemoveResourceConfig_USV_N)
     {
         m_pContainer->startContainer(CONFIG_FILE);
 
-        nValue = m_pContainer->listBundleResources((*m_pContainer->listBundles().begin())->getID()).size();
+		nValue = m_pContainer->listBundleResources((*m_pContainer->listBundles().begin())->getID()).size();
 
         m_pContainer->removeResourceConfig(INVALID_INPUT, INVALID_INPUT);
 
         EXPECT_EQ(m_pContainer->listBundleResources((*m_pContainer->listBundles().begin())->getID()).size(), nValue)
                                 << "Remove resourceConfig with Invalid parameter!";
-        m_pContainer->stopContainer();
+        m_pContainer->stopContainer();                        
     }
     catch (exception& e)
     {
@@ -1000,11 +1000,11 @@ TEST_F(RCResourceContainerTest_btc, RemoveResourceConfig_USV_N)
 TEST_F(RCResourceContainerTest_btc, ListBundleResources_SRC_P)
 {
     m_pContainer->startContainer(CONFIG_FILE);
-
-    initialBundleResourceSize = m_pContainer->listBundleResources(HUE_BUNDLE_ID).size();
-
-    EXPECT_GT(initialBundleResourceSize, ZERO_VALUE) << "list bundle resource not found!";
-
+	
+	initialBundleResourceSize = m_pContainer->listBundleResources(HUE_BUNDLE_ID).size();
+	
+	EXPECT_GT(initialBundleResourceSize, ZERO_VALUE) << "list bundle resource not found!";
+	
     m_pContainer->stopContainer();
 }
 #endif
@@ -1051,16 +1051,16 @@ TEST_F(RCResourceContainerTest_btc, GetBundleID_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        std::list < std::unique_ptr< RCSBundleInfo > > bundleList;
-        bundleList = m_pContainer->listBundles();
-        string strGetBundleID = "";
-
-        for (auto &bundleinfo : bundleList)
-        {
-            if (bundleinfo->getID().compare(HUE_BUNDLE_ID) == 0)
-                strGetBundleID = bundleinfo->getID();
-        }
-
+		std::list < std::unique_ptr< RCSBundleInfo > > bundleList;
+		bundleList = m_pContainer->listBundles();
+		string strGetBundleID = "";
+		
+		for (auto &bundleinfo : bundleList)
+		{
+			if (bundleinfo->getID().compare(HUE_BUNDLE_ID) == 0)
+				strGetBundleID = bundleinfo->getID();
+		}
+        
         ASSERT_STRCASEEQ(strGetBundleID.c_str(), HUE_BUNDLE_ID.c_str()) << "bundle ID not found!";
 
         m_pContainer->stopContainer();
@@ -1091,17 +1091,17 @@ TEST_F(RCResourceContainerTest_btc, GetBMIBundleID_SRC_P)
     {
         m_pContainer->startContainer(CONFIG_FILE);
         std::list < std::unique_ptr< RCSBundleInfo > > bundleList;
-        bundleList = m_pContainer->listBundles();
-        string strGetBundleID = "";
-
-        for (auto &bundleinfo : bundleList)
-        {
-            if (bundleinfo->getID().compare(BMI_BUNDLE_ID_CONST) == 0)
-                strGetBundleID = bundleinfo->getID();
-        }
-
+		bundleList = m_pContainer->listBundles();
+		string strGetBundleID = "";
+		
+		for (auto &bundleinfo : bundleList)
+		{
+			if (bundleinfo->getID().compare(BMI_BUNDLE_ID_CONST) == 0)
+				strGetBundleID = bundleinfo->getID();
+		}
+		
         ASSERT_STRCASEEQ(strGetBundleID.c_str(), BMI_BUNDLE_ID_CONST.c_str()) << "BMI bundle Id not found.";
-
+        
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -1129,17 +1129,17 @@ TEST_F(RCResourceContainerTest_btc, GetBundlePath_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-
+        
         std::list < std::unique_ptr< RCSBundleInfo > > bundleList;
-        bundleList = m_pContainer->listBundles();
-        string strGetBundlePath = "";
-
-        for (auto &bundleinfo : bundleList)
-        {
-            if (bundleinfo->getPath().compare(HUE_BUNDLE_PATH) == 0)
-                strGetBundlePath = bundleinfo->getPath();
-        }
-
+		bundleList = m_pContainer->listBundles();
+		string strGetBundlePath = "";
+		
+		for (auto &bundleinfo : bundleList)
+		{
+			if (bundleinfo->getPath().compare(HUE_BUNDLE_PATH) == 0)
+				strGetBundlePath = bundleinfo->getPath();
+		}
+		
         ASSERT_STRCASEEQ(strGetBundlePath.c_str(), HUE_BUNDLE_PATH.c_str()) << "HUE bundle path not found.";
 
         m_pContainer->stopContainer();
@@ -1169,19 +1169,19 @@ TEST_F(RCResourceContainerTest_btc, GetBMIBundlePath_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-
-        std::list < std::unique_ptr< RCSBundleInfo > > bundleList;
-        bundleList = m_pContainer->listBundles();
-        string strGetBundlePath = "";
-
-        for (auto &bundleinfo : bundleList)
-        {
-            if (bundleinfo->getPath().compare(BMI_BUNDLE_PATH_CONST) == 0)
-                strGetBundlePath = bundleinfo->getPath();
-        }
-
+		
+		std::list < std::unique_ptr< RCSBundleInfo > > bundleList;
+		bundleList = m_pContainer->listBundles();
+		string strGetBundlePath = "";
+		
+		for (auto &bundleinfo : bundleList)
+		{
+			if (bundleinfo->getPath().compare(BMI_BUNDLE_PATH_CONST) == 0)
+				strGetBundlePath = bundleinfo->getPath();
+		}
+		
         ASSERT_STRCASEEQ(strGetBundlePath.c_str(), BMI_BUNDLE_PATH_CONST.c_str()) << "BMI bundle path not found.";
-
+        
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -1209,20 +1209,20 @@ TEST_F(RCResourceContainerTest_btc, GetBundleVersion_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-
+        
         std::list < std::unique_ptr< RCSBundleInfo > > bundleList;
-        bundleList = m_pContainer->listBundles();
-        string strGetBundleVersion = "";
-
-        for (auto &bundleinfo : bundleList)
-        {
-            if (bundleinfo->getVersion().compare(BUNDLE_VERSION_CONST) == 0)
-            {
-                strGetBundleVersion = bundleinfo->getVersion();
-                break;
-            }
-        }
-
+		bundleList = m_pContainer->listBundles();
+		string strGetBundleVersion = "";
+		
+		for (auto &bundleinfo : bundleList)
+		{
+			if (bundleinfo->getVersion().compare(BUNDLE_VERSION_CONST) == 0)
+			{
+				strGetBundleVersion = bundleinfo->getVersion();
+				break;
+			}
+		}
+		
         ASSERT_STRCASEEQ(strGetBundleVersion.c_str(), BUNDLE_VERSION_CONST.c_str()) << "Bundle version mismatched.";
 
         m_pContainer->stopContainer();
@@ -1252,23 +1252,23 @@ TEST_F(RCResourceContainerTest_btc, GetBMIBundleVersion_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-
+        
         std::list < std::unique_ptr< RCSBundleInfo > > bundleList;
-        bundleList = m_pContainer->listBundles();
-        string strGetBundleVersion = "";
-
-        for (auto &bundleinfo : bundleList)
-        {
-            if (bundleinfo->getID().compare(BMI_BUNDLE_ID_CONST) == 0)
-            {
-                strGetBundleVersion = bundleinfo->getVersion();
-                break;
-            }
-        }
+		bundleList = m_pContainer->listBundles();
+		string strGetBundleVersion = "";
+		
+		for (auto &bundleinfo : bundleList)
+		{
+			if (bundleinfo->getID().compare(BMI_BUNDLE_ID_CONST) == 0)
+			{
+				strGetBundleVersion = bundleinfo->getVersion();
+				break;
+			}
+		}
 
         ASSERT_STRCASEEQ(strGetBundleVersion.c_str(), BUNDLE_VERSION_CONST.c_str()) << "Bundle version mismatched.";
-
-        m_pContainer->stopContainer();
+		
+		m_pContainer->stopContainer();
     }
     catch (exception& e)
     {
@@ -1296,7 +1296,7 @@ TEST_F(RCResourceContainerTest_btc, StartContainer_RSV_P)
         m_pContainer->startContainer(g_config_file_address);
         EXPECT_GT(m_pContainer->listBundles().size(), ZERO_VALUE)
                 << "Container is Not started !";
-        m_pContainer->stopContainer();
+        m_pContainer->stopContainer();        
     }
     catch (exception& e)
     {
@@ -1321,7 +1321,7 @@ TEST_F(RCResourceContainerTest_btc, ListBundleResources_ESV_N)
 {
     try
     {
-        m_pContainer->startContainer(CONFIG_EMPTY_FILE);
+		m_pContainer->startContainer(CONFIG_EMPTY_FILE);
         m_pContainer->listBundleResources(EMPTY_STRING);
         EXPECT_EQ(ZERO_VALUE, m_pContainer->listBundleResources(s_bundleID).size())
                 << "list bundle resource found without start container!";

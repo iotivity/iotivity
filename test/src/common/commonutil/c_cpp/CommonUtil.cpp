@@ -52,47 +52,98 @@ long CommonUtil::s_setUpDynamicMemoryUsage = 0;
 long CommonUtil::s_tearDownDynamicMemoryUsage = 0;
 long CommonUtil::s_memoryDiffSum = 0;
 
-long CommonUtil::getCurrentAllocatedMemory()
+char* CommonUtil::getOCStackResult(OCStackResult ocstackresult)
 {
-    return mallinfo().uordblks;
-}
+    char* resultString = NULL;
 
-void CommonUtil::runCommonTCSetUpPart()
-{
-    s_setUpDynamicMemoryUsage = getCurrentAllocatedMemory();
-}
+    switch (ocstackresult)
+    {
+        case OC_STACK_OK:
+            resultString = (char*) "OC_STACK_OK";
+            break;
+        case OC_STACK_RESOURCE_CREATED:
+            resultString = (char*) "OC_STACK_RESOURCE_CREATED";
+            break;
+        case OC_STACK_RESOURCE_DELETED:
+            resultString = (char*) "OC_STACK_RESOURCE_DELETED";
+            break;
+        case OC_STACK_INVALID_URI:
+            resultString = (char*) "OC_STACK_INVALID_URI";
+            break;
+        case OC_STACK_INVALID_QUERY:
+            resultString = (char*) "OC_STACK_INVALID_QUERY";
+            break;
+        case OC_STACK_INVALID_IP:
+            resultString = (char*) "OC_STACK_INVALID_IP";
+            break;
+        case OC_STACK_INVALID_PORT:
+            resultString = (char*) "OC_STACK_INVALID_PORT";
+            break;
+        case OC_STACK_INVALID_CALLBACK:
+            resultString = (char*) "OC_STACK_INVALID_CALLBACK";
+            break;
+        case OC_STACK_INVALID_METHOD:
+            resultString = (char*) "OC_STACK_INVALID_METHOD";
+            break;
+        case OC_STACK_INVALID_PARAM:
+            resultString = (char*) "OC_STACK_INVALID_PARAM";
+            break;
+        case OC_STACK_INVALID_OBSERVE_PARAM:
+            resultString = (char*) "OC_STACK_INVALID_OBSERVE_PARAM";
+            break;
+        case OC_STACK_NO_MEMORY:
+            resultString = (char*) "OC_STACK_NO_MEMORY";
+            break;
+        case OC_STACK_COMM_ERROR:
+            resultString = (char*) "OC_STACK_COMM_ERROR";
+            break;
+        case OC_STACK_TIMEOUT:
+            resultString = (char*) "OC_STACK_TIMEOUT";
+            break;
+        case OC_STACK_ADAPTER_NOT_ENABLED:
+            resultString = (char*) "OC_STACK_ADAPTER_NOT_ENABLED";
+            break;
+        case OC_STACK_NOTIMPL:
+            resultString = (char*) "OC_STACK_NOTIMPL";
+            break;
+        case OC_STACK_NO_RESOURCE:
+            resultString = (char*) "OC_STACK_NO_RESOURCE";
+            break;
+        case OC_STACK_UNAUTHORIZED_REQ:
+            resultString = (char*) "OC_STACK_UNAUTHORIZED_REQ";
+            break;
+        case OC_STACK_ERROR:
+            resultString = (char*) "OC_STACK_ERROR";
+            break;
+        default:
+            resultString = (char*) "UNKNOWN_STATE";
+            break;
+    }
 
-void CommonUtil::runCommonTCTearDownPart()
-{
-    s_tearDownDynamicMemoryUsage = getCurrentAllocatedMemory();
-    s_memoryDiffSum += s_tearDownDynamicMemoryUsage - s_setUpDynamicMemoryUsage;
-
-    //TODO: It will be printed using new logger
-    //printf("[Memory] Dynamic Memory Diff Sum : %ld bytes\n", s_memoryDiffSum);
-
-    ::testing::Test::RecordProperty("MemoryUsage", s_memoryDiffSum);
-    s_tearDownDynamicMemoryUsage = s_setUpDynamicMemoryUsage = 0;
+    return resultString;
 }
 
 void CommonUtil::launchApp(std::string app, bool withGnome)
 {
-#ifdef __LINUX__
+#if defined(__LINUX__) || defined(__TIZEN__)
     std::string cmd = "";
 
+#ifdef __LINUX__
     if (withGnome)
     {
         cmd += "nohup gnome-terminal -x sh -c ";
     }
+#endif
 
     cmd += app;
     cmd += " &";
-    system(cmd.c_str());
+    printf("Launch App Command %s\nResult: %d\n",cmd.c_str(), system(cmd.c_str()));
 #endif
 }
 
 void CommonUtil::killApp(std::string app)
 {
-#ifdef __LINUX__
+#if defined(__LINUX__) || defined(__TIZEN__)
     int firstSpace = app.find_first_of(" ");
     std::string appName = "";
     if (firstSpace > 0)
@@ -103,17 +154,18 @@ void CommonUtil::killApp(std::string app)
     {
         appName = app.substr(app.find_last_of("/\\") + 1);
     }
+    
+    std::string cmd = "";
+    cmd = "killall " + appName;
+    printf("KILL Command %s\nResult: %d\n",cmd.c_str(), system(cmd.c_str()));
 
     std::string prefix = "kill -9 $(pgrep ";
     std::string postfix = ")";
-    std::string command = prefix + appName + postfix;
-    system(command.c_str());
+    cmd = prefix + appName + postfix;
+    printf("KILL Command %s\nResult: %d\n",cmd.c_str(), system(cmd.c_str()));
 
-    command = "killall " + appName;
-    system(command.c_str());
-
-    command = "pkill -9 " + appName;
-    system(command.c_str());
+    cmd = "pkill -9 " + appName;
+    printf("pKILL Command %s\nResult: %d\n",cmd.c_str(), system(cmd.c_str()));
 
 #endif
 }

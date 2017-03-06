@@ -59,7 +59,7 @@ protected:
 protected:
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
         m_pRCHelper = RCHelper::getInstance();
         m_pContainer = RCSResourceContainer::getInstance();
@@ -67,7 +67,7 @@ protected:
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 };
 
@@ -165,7 +165,7 @@ TEST_F(RCResourceBundleTest_stc, AddBMIBundleFromEmptyContainer_ESV_N)
 #endif
 
 /**
- * @since 2015-09-22
+ * @since 2015-09-22 
  * @see Get container instance
  * @see start container
  * @see add bundle
@@ -1025,8 +1025,8 @@ TEST_F(RCResourceBundleTest_stc, RemoveBMIBundle_SRC_P)
  * @pre_condition 1. Get container instance
  *                2. start container with config having targeted bundle
  *                3. remove bundle
- *                4. Add this bundle again
- *                5. Now remove this bundle for the 2nd time
+ * 				  4. Add this bundle again
+ * 				  5. Now remove this bundle for the 2nd time
  * @procedure Call removeBundle API
  * @post_condition stop container
  * @expected Container can remove hue bundle.
@@ -1037,15 +1037,15 @@ TEST_F(RCResourceBundleTest_stc, RemoveHueBundleMultipleTimes_FSV_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-
+        
         ASSERT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, HUE_BUNDLE_ID))<< "HUE bundle does not exit in default config file!";
         ASSERT_TRUE(m_pRCHelper->removeBundle(m_pContainer, HUE_BUNDLE_ID)) << "HUE bundle is NOT removed with valid HUE_BUNDLE_ID!";
-
+        
         m_pContainer->addBundle(HUE_BUNDLE_ID, EMPTY_STRING, HUE_PATH, HUE_NAME, m_params);
         ASSERT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, HUE_BUNDLE_ID)) << "HUE bundle is not added!";
-
+        
         ASSERT_TRUE(m_pRCHelper->removeBundle(m_pContainer, HUE_BUNDLE_ID)) << "HUE bundle is NOT removed with valid HUE_BUNDLE_ID!";
-
+        
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -1067,8 +1067,8 @@ TEST_F(RCResourceBundleTest_stc, RemoveHueBundleMultipleTimes_FSV_P)
  * @pre_condition 1. Get container instance
  *                2. start container with config having targeted bundle
  *                3. remove bundle
- *                4. Add this bundle again
- *                5. Now remove this bundle for the 2nd time
+ * 				  4. Add this bundle again
+ * 				  5. Now remove this bundle for the 2nd time
  * @procedure Call removeBundle API
  * @post_condition stop container
  * @expected Container can remove di bundle.
@@ -1079,15 +1079,15 @@ TEST_F(RCResourceBundleTest_stc, RemoveDIBundle_MultipleTimes_FSV_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-
+        
         ASSERT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, DI_BUNDLE_ID)) <<"DI bundle does not exit in default config file";
         ASSERT_TRUE(m_pRCHelper->removeBundle(m_pContainer, DI_BUNDLE_ID)) << "DI bundle is NOT removed with valid DI_BUNDLE_ID!";
-
+        
         m_pContainer->addBundle(DI_BUNDLE_ID, EMPTY_STRING, DI_PATH,DI_NAME, m_params);
         ASSERT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, DI_BUNDLE_ID)) << "DI bundle is not added!";
-
+        
         ASSERT_TRUE(m_pRCHelper->removeBundle(m_pContainer, DI_BUNDLE_ID)) << "DI bundle is NOT removed with valid DI_BUNDLE_ID!";
-
+        
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -1109,8 +1109,8 @@ TEST_F(RCResourceBundleTest_stc, RemoveDIBundle_MultipleTimes_FSV_P)
  * @pre_condition 1. Get container instance
  *                2. start container with config having targeted bundle
  *                3. remove bundle
- *                4. Add this bundle again
- *                5. Now remove this bundle for the 2nd time
+ * 				  4. Add this bundle again
+ * 				  5. Now remove this bundle for the 2nd time
  * @procedure Call removeBundle API
  * @post_condition stop container
  * @expected Container can remove bmi bundle.
@@ -1121,15 +1121,15 @@ TEST_F(RCResourceBundleTest_stc, RemoveBMIBundle_MultipleTimes_FSV_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-
+        
         ASSERT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, BMI_BUNDLE_ID))<<"BMI bundle does not exit in default config file";
         ASSERT_TRUE(m_pRCHelper->removeBundle(m_pContainer, BMI_BUNDLE_ID)) << "BMI bundle is NOT removed with valid BMI_BUNDLE_ID!";
-
+        
         m_pContainer->addBundle(BMI_BUNDLE_ID, EMPTY_STRING, BMI_PATH,BMI_NAME, m_params);
         ASSERT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, BMI_BUNDLE_ID)) << "BMI bundle is not added!";
-
+        
         ASSERT_TRUE(m_pRCHelper->removeBundle(m_pContainer, BMI_BUNDLE_ID)) << "BMI bundle is NOT removed with valid BMI_BUNDLE_ID!";
-
+        
         m_pContainer->stopContainer();
     }
     catch (exception& e)

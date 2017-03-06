@@ -34,7 +34,7 @@ protected:
 	
     virtual void SetUp()
     {   
-		CommonUtil::runCommonTCSetUpPart();
+		CommonTestUtil::runCommonTCSetUpPart();
 		
 		m_rdHelper = RDHelper::getInstance();
    	    
@@ -47,7 +47,7 @@ protected:
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
         m_rdHelper->unregisterLocalResources();
         free(m_rdHelper);
     }

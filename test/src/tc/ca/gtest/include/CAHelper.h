@@ -21,14 +21,10 @@
 #ifndef INCLUDE_TESTCASE_CA_CAHELPER_H_
 #define INCLUDE_TESTCASE_CA_CAHELPER_H_
 
-#include <iostream>
-#include <sstream>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
 #include <unistd.h>
-#include <functional>
-#include <bitset>
 #include <map>
 #include <set>
 
@@ -46,6 +42,7 @@
 #endif
 
 #include "CommonUtil.h"
+#include "CommonTestUtil.h"
 #include "IotivityTest_Logger.h"
 
 #ifdef __TIZEN__
@@ -58,40 +55,10 @@
 
 static const int BLOCKWISE_PACKET_SIZE = 1500;
 
-static const char COAP_PREFIX[] =  "coap://";
-static const char COAPS_PREFIX[] = "coaps://";
-static const char COAP_TCP_PREFIX[] =  "coap+tcp://";
-static const char COAPS_TCP_PREFIX[] =  "coaps+tcp://";
-
-static const uint16_t COAP_PREFIX_LEN = sizeof(COAP_PREFIX) - 1;
-static const uint16_t COAPS_PREFIX_LEN = sizeof(COAPS_PREFIX) - 1;
-static const uint16_t COAP_TCP_PREFIX_LEN = sizeof(COAP_TCP_PREFIX) - 1;
-static const uint16_t COAPS_TCP_PREFIX_LEN = sizeof(COAPS_TCP_PREFIX) - 1;
-
 #define RESOURCE_URI_LENGTH 14
-#define CONFIG_SIMULATOR_IP "SIMULATOR.IP"
-#define CONFIG_SIMULATOR_OTHER_IP_LIST "SIMULATOR.OTHER_IP_LIST"
-#define CONFIG_SIMULATOR_PORT "SIMULATOR.PORT"
-#define CONFIG_SIMULATOR_SECURE_PORT "SIMULATOR.SECURE_PORT"
-#define CONFIG_SIMULATOR_CA_IP "SIMULATOR.CA_IP"
-#define CONFIG_SIMULATOR_CA_LE "SIMULATOR.CA_LE"
-#define CONFIG_SIMULATOR_CA_EDR "SIMULATOR.CA_EDR"
-#define CONFIG_SIMULATOR_CA_TCP "SIMULATOR.CA_TCP"
 
 #define IDENTITY     ("1111111111111111")
 #define RS_CLIENT_PSK   ("AAAAAAAAAAAAAAAA")
-
-#ifdef __ANDROID__
-#define CONFIG "config.ini"
-#endif
-
-#ifdef __LINUX__
-#define CONFIG "config.ini"
-#endif
-
-#ifdef __TIZEN__
-#define CONFIG "config.ini"
-#endif
 
 #define SLEEP_TIME 3
 #define WAIT_SIM_CALLBACK 2000000         //waiting for given for simulators callback to be invoked (seconds)
@@ -126,10 +93,10 @@ const char* const VALID_ENDPOINT_URI = (char *) "123.123.123.123:1234/b/light";
 const int ENDPOINT_PORT = 6298;
 const char* const ENDPOINT_IP = (char *) "107.109.214.164";
 const CATransportFlags_t CA_TRANSPORT_FLAG = CA_IPV4;
-const CATransportFlags_t CA_INVALID_FLAG = 0;
-const CATransportAdapter_t CA_INVALID_ADAPTER = 0;
-const CATransportAdapter_t CA_INVALID_UOBV_ADAPTER = 4294967296;
-const CAMethod_t CA_INVALID_METHOD = 100;
+const CATransportFlags_t CA_INVALID_FLAG = (CATransportFlags_t)0;
+const CATransportAdapter_t CA_INVALID_ADAPTER = (CATransportAdapter_t)0;
+const CATransportAdapter_t CA_INVALID_UOBV_ADAPTER = (CATransportAdapter_t)4294967296LL;
+const CAMethod_t CA_INVALID_METHOD = (CAMethod_t)100;
 
 typedef enum
 {
@@ -173,12 +140,6 @@ typedef enum
 
 typedef struct
 {
-    char ipAddress[CA_MACADDR_SIZE];
-    uint16_t port;
-} addressSet_t;
-
-typedef struct
-{
     MessageInOutType inOutType;
     CAMethod_t caMethod;
     MessageDataType validationMethod;
@@ -202,6 +163,7 @@ protected:
     int m_clientReceivedCount;
     int m_clientAckCount;
     bool m_clientPreConditionPass;
+    bool m_multicastRequest;
 
 private:
     static bool checkRequestResponseHandler(const CAEndpoint_t* endpoint,
@@ -220,8 +182,9 @@ public:
     CAHelper();
     static bool s_bufferEmpty;
     static int s_networkCount;
+    static int s_isHostAddressKnown;
     static std::map< std::string, std::map< int, std::map< int, int > >>s_mapReceiveCount;
-    static std::string s_simulatorIp;
+    static char s_simulatorIp[CA_MACADDR_SIZE];
     static int s_simulatorPort;
     static int s_simulatorSecurePort;
     static std::set<std::string> setIp;
@@ -229,8 +192,8 @@ public:
     CAResponseResult_t m_responseResult;
 
 #ifdef __WITH_DTLS__
-    static int s_identityLegth;
-    static int s_pskLength;
+    static size_t s_identityLegth;
+    static size_t s_pskLength;
     bool setDtls();
     static void initCipherSuiteList(bool * list);
     static void dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info);
@@ -244,12 +207,6 @@ public:
     static TestCaseInfo s_tcInfo;
     std::string m_failureMessage;
 
-    std::string m_simulatorUri;
-    std::string m_simulatorSecureUri;
-    std::string m_simulatorConfigUri;
-    std::string m_simulatorResAckUri;
-    std::string m_simulatorReqAckUri;
-    std::string m_simulatorSecureReqAckUri;
     CAEndpoint_t* m_endpoint;
     CAToken_t m_token;
     CAInfo_t m_caInfo;
@@ -268,8 +225,8 @@ public:
     void setResponseResult(CAResponseResult_t responseResult);
     void setTotalMessage(int total);
     void setResultStatus(CAResult_t result);
-    bool createEndpoint(CATransportFlags_t transportFlags, char* address, int port);
-    bool createEndpoint(CATransportFlags_t transportFlags, CATransportAdapter_t adapter, const char *addr, uint16_t port, CAEndpoint_t* endpointObject, CAResult_t expectedResult);
+    bool setMulticastRequest(bool multicastRequest);
+
 
     void clearBuffer();
     static std::string getRandomString(size_t length);
@@ -288,22 +245,23 @@ public:
     bool startDiscoveryServer(CAResult_t expectedResult);
     bool startListeningServer();
     bool startListeningServer(CAResult_t expectedResult);
-    bool createEndpoint(char* uri);
-    bool createEndpoint(char* uri, CATransportFlags_t transportFlags);
-    bool createEndpoint(char* uri, CAResult_t expectedResult);
+    bool createEndpoint(bool isMulticast, bool isSecure);
+    bool createEndpoint(bool isMulticast, bool isSecure, CATransportFlags_t transportFlags);
+    bool createEndpoint(bool isMulticast, bool isSecure, CAResult_t expectedResult);
+    bool createEndpoint(CATransportFlags_t transportFlags, char* address, int port);
+    bool createEndpoint(CATransportFlags_t transportFlags, CATransportAdapter_t adapter, const char *addr, uint16_t port, CAEndpoint_t* endpointObject, CAResult_t expectedResult);
     bool destroyEndpoint();
     bool generateToken();
     bool generateToken(CAResult_t expectedResult);
     bool destroyToken();
 
-    bool setConfigFile();
     bool initNetwork();
     bool initNetwork(bool select);
     bool initClientNetwork();
     bool initClientNetwork(bool select);
     bool initServerNetwork();
     bool initServerNetwork(bool select);
-    bool CAHelper::getNetworkInfo();
+    bool getNetworkInfo();
     bool showNetworkInfo();
 
     static void errorHandler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo);
@@ -315,34 +273,24 @@ public:
     static void responseHandlerSecond(const CAEndpoint_t* endpoint,
             const CAResponseInfo_t* responseInfo);
 
-    static int get_secure_information(CAPayload_t payLoad);
+    bool sendSecuredRequest(CAMethod_t method, CAMessageType_t type);
+    bool sendSecuredRequest(char* payload, CAMethod_t method, CAMessageType_t type);
 
-    bool sendSecuredRequest(CAMethod_t method, CAMessageType_t type, int totalMessages);
-    bool sendSecuredRequest(char* payload, CAMethod_t method, CAMessageType_t type, int totalMessages);
-
-    bool sendRequest(CAMethod_t method, CAMessageType_t type, int totalMessages);
-    bool sendRequest(char* uri, char* payload, CAMethod_t method, CAMessageType_t type,
-            int totalMessages);
-    bool sendRequest(char* uri, char* payload, CAMethod_t method, CAMessageType_t type,
-                int totalMessages, CAResult_t expectedResult);
-
-    bool sendRequestToAll(CAMethod_t method, CAMessageType_t type, int totalMessages);
-    bool sendRequestToAll(char* uri, char* payload, CAMethod_t method, CAMessageType_t type,
-            int totalMessages);
-    bool sendRequestToAll(char* uri, char* payload, CAMethod_t method, CAMessageType_t type,
-                int totalMessages, CAResult_t expectedResult);
+    bool sendRequest(CAMethod_t method, CAMessageType_t type);
+    bool sendRequest(char* uri, char* payload, CAMethod_t method, CAMessageType_t type);
+    bool sendRequest(char* uri, char* payload, CAMethod_t method, CAMessageType_t type, bool isSecure,
+                CAResult_t expectedResult);
 
     bool sendConfigurationRequest(SimulatorTask taskType, MessageCommandType msgType,
             CAMethod_t method);
     bool sendConfigurationRequest(SimulatorTask taskType, MessageCommandType msgType,
             int TOTAL_MESSAGE, int timeInterval, CAMethod_t method);
 
-    bool sendResponse(CAResponseResult_t responseResult, CAMessageType_t type,
-            int totalMessages);
+    bool sendResponse(CAResponseResult_t responseResult, CAMessageType_t type);
     bool sendResponse(char* uri, char* payload, CAResponseResult_t responseResult,
-            CAMessageType_t type, int totalMessages);
+            CAMessageType_t type);
     bool sendResponse(char* uri, char* payload, CAResponseResult_t responseResult,
-                CAMessageType_t type, int totalMessages, CAResult_t expectedResult);
+                CAMessageType_t type, CAResult_t expectedResult);
 
     bool attemptReceiveMessage(int flag);
     bool attemptReceiveMessage(int totalMessages, int maxAttempts, int flag);
@@ -362,26 +310,13 @@ public:
 
     static bool checkHeader(CAHeaderOption_t *options, uint32_t len);
 
-    bool parsingCoapUri(const char* uri, addressSet_t* address, CATransportFlags_t *flags);
-    int getAddressSet(const char *pAddress, addressSet_t* outAddress);
-    void getResourceUri(char *URI, char *resourceURI, int length);
     void getOptionData(CAInfo_t* requestData);
-
-    bool returnRequest(const CAEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo, char* payload, int payloadSize);
-    bool returnRequest(const CAEndpoint_t* endPoint, char* resourceUri, char* payload, int payloadSize,
-            CAMessageType_t type, CAMethod_t method, CAToken_t token, uint8_t tokenLength,
-            CAHeaderOption_t *options, uint8_t numOptions);
-    bool returnResponse(const CAEndpoint_t* endPoint, const CARequestInfo_t* requestInfo, char* payload, int payloadSize);
-    bool returnResponse(const CAEndpoint_t* endPoint, char* resourceUri, char* payload, int payloadSize,
-            CAMessageType_t type, CAResponseResult_t responseCode, uint16_t messageId, CAToken_t token,
-            uint8_t tokenLength, CAHeaderOption_t *options, uint8_t numOptions);
-
-    int readConfigurationFile();
 
     bool stopListeningServer();
     bool stopListeningServer(CAResult_t expectedResult);
-    bool setAvailableNetwork(CATransportAdapter_t interestedNetwork);
+    void setAvailableNetwork(CATransportAdapter_t interestedNetwork);
     bool establishConnectionWithServer();
+    static bool parseAddress(const CAEndpoint_t* endpoint, const CAInfo_t info);
 
 #ifdef TCP_ADAPTER
     static void keepAliveHandler(const CAEndpoint_t *endpoint, bool isConnected);

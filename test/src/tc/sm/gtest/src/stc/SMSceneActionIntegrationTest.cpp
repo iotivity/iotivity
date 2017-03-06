@@ -45,7 +45,7 @@ public:
     virtual void SetUp() {
         IOTIVITYTEST_LOG(INFO, "SetUp IN");
 
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
         CommonUtil::launchApp(LIGHT_SERVER);
         CommonUtil::waitInSecond(MAX_SLEEP_TIME);
@@ -79,7 +79,7 @@ public:
         delete m_pSMHelper;
         m_pSMHelper = nullptr;
 
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 };
 

@@ -21,7 +21,9 @@
 #include "gtest/gtest.h"
 #include "gtest_custom.h"
 #include "IotivityTest_Logger.h"
+#ifdef __COVERAGE__
 #include "trace.h"
+#endif
 
 class IotivityTestEnv: public ::testing::Environment
 {
@@ -50,9 +52,11 @@ int main(int argc, char* argv[])
         {
             std::cout << "found argument" << argc;
             std::cout << argv[1] << "\n";
+#ifdef __COVERAGE__
             std::cout << "Logfile: " << cygprofile_getfilename() << std::endl;
             std::cout << "enabling\n";
             cygprofile_enable();
+#endif
             std::cout << "Done enabling\n";
         }
     }
@@ -65,14 +69,5 @@ int main(int argc, char* argv[])
     testing::InitGoogleTest(&argc, argv);
     testing::AddGlobalTestEnvironment(new IotivityTestEnv());
 
-    int result = 1;
-    try
-    {
-    	result = RUN_ALL_TESTS();
-    }
-    catch (std::exception& e)
-    {
-    	std::cerr << "Exception occurred during test case run, exception message is: " << e.what() << std::endl;
-    }
-    return result;
+    return RUN_ALL_TESTS();
 }

@@ -32,7 +32,7 @@ protected:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
 #ifdef __LINUX__
         CommonUtil::launchApp(RE_SERVER_APP);
@@ -60,7 +60,7 @@ protected:
         CommonUtil::killApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
 #endif
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 
 public:

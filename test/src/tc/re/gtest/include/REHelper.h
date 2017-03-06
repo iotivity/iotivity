@@ -32,6 +32,7 @@
 #include "gtest_custom.h"
 #include "OCPlatform.h"
 #include "CommonUtil.h"
+#include "CommonTestUtil.h"
 #include "IotivityTest_Logger.h"
 #include "RCSAddress.h"
 #include "RCSDiscoveryManager.h"
@@ -66,7 +67,7 @@ namespace PH = std::placeholders;
 #define DEFAULT_TEMPETATURE_KEY "Temperature"
 #define DEFAULT_TEMPETATURE_VALUE "30"
 
-#define RE_SERVER_APP "./retestserver"
+#define RE_SERVER_APP "./iotivity_re_server"
 
 const int CALLBACK_WAIT_DEFAULT = 5;
 const int CALLBACK_WAIT_MAX = 10;

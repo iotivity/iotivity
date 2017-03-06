@@ -41,7 +41,7 @@ public:
     virtual void SetUp() {
         IOTIVITYTEST_LOG(INFO, "SetUp IN");
 
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
         CommonUtil::launchApp(SCENE_SERVER);
         CommonUtil::waitInSecond(MAX_SLEEP_TIME);
@@ -66,7 +66,7 @@ public:
     virtual void TearDown() {
         IOTIVITYTEST_LOG(INFO, "TearDown IN");
 
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
 
         CommonUtil::killApp(SCENE_SERVER);
         CommonUtil::waitInSecond(MAX_SLEEP_TIME);

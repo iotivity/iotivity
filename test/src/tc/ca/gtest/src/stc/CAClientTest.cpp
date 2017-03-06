@@ -27,17 +27,13 @@ protected:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
-        if (!m_caHelper.setConfigFile())
-        {
-            SET_FAILURE("Unable to read configuration file");
-            return;
-        }
+        CommonTestUtil::runCommonTCSetUpPart();
+        m_caHelper.setMulticastRequest(false);
     }
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 };
 
@@ -79,7 +75,7 @@ TEST_F(CAClientTest_stc, SelectNetworkForIncomingMessages_P)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -141,7 +137,7 @@ TEST_F(CAClientTest_stc, SelectUnAvailableNetworkForIncomingMessages_N)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -208,13 +204,13 @@ TEST_F(CAClientTest_stc, SelectNetworkForOutgoingMessages_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    if (!m_caHelper.sendRequest(CA_PUT, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(CA_PUT, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -271,7 +267,7 @@ TEST_F(CAClientTest_stc, SelectNetworkSequentiallyForIncomingMessages_P)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -365,7 +361,7 @@ TEST_F(CAClientTest_stc, SelectNetworkMultipleTimesForIncomingMessages_P)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -450,7 +446,7 @@ TEST_F(CAClientTest_stc, SendRequestMultipleTimes_P)
             return;
         }
 
-        if (!m_caHelper.sendRequest(CA_PUT, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+        if (!m_caHelper.sendRequest(CA_PUT, CA_MSG_NONCONFIRM))
         {
             SET_FAILURE(m_caHelper.getFailureMessage());
             CATerminate();
@@ -506,7 +502,7 @@ TEST_F(CAClientTest_stc, SendRequestWithoutHeaderOption_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_HEADER, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -514,7 +510,7 @@ TEST_F(CAClientTest_stc, SendRequestWithoutHeaderOption_P)
 
     CAHelper::s_tcInfo.numOptions = 0;
 
-    if (!m_caHelper.sendRequest(CA_PUT, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(CA_PUT, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -569,7 +565,7 @@ TEST_F(CAClientTest_stc, SendRequestWithHeaderOption_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_HEADER, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -577,7 +573,7 @@ TEST_F(CAClientTest_stc, SendRequestWithHeaderOption_P)
 
     CAHelper::s_tcInfo.numOptions = 1;
 
-    if (!m_caHelper.sendRequest(CA_PUT, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(CA_PUT, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -632,7 +628,7 @@ TEST_F(CAClientTest_stc, SendRequestWithHeaderOptions_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_HEADER, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -640,7 +636,7 @@ TEST_F(CAClientTest_stc, SendRequestWithHeaderOptions_P)
 
     CAHelper::s_tcInfo.numOptions = 2;
 
-    if (!m_caHelper.sendRequest(CA_PUT, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(CA_PUT, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -696,17 +692,16 @@ TEST_F(CAClientTest_stc, SendRequestWithEmptyPayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_URI, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    char* uri = (char*) m_caHelper.m_simulatorReqAckUri.c_str();
+    char* uri = (char*) SIM_REQ_ACK;
     char* payload = (char*) "";
 
-    if (!m_caHelper.sendRequest(uri, payload, CA_PUT, CA_MSG_NONCONFIRM,
-                    TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(uri, payload, CA_PUT, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -762,16 +757,15 @@ TEST_F(CAClientTest_stc, SendRequestWithNullPayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_URI, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    char* uri = (char*) m_caHelper.m_simulatorReqAckUri.c_str();
+    char* uri = (char*) SIM_REQ_ACK;
 
-    if (!m_caHelper.sendRequest(uri, NULL, CA_PUT, CA_MSG_NONCONFIRM,
-                    TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(uri, NULL, CA_PUT, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -828,13 +822,13 @@ TEST_F(CAClientTest_stc, SendRequestWithMessageTypeConfirm_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    if (!m_caHelper.sendRequest(CA_PUT, CA_MSG_CONFIRM, 1))
+    if (!m_caHelper.sendRequest(CA_PUT, CA_MSG_CONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -889,7 +883,7 @@ TEST_F(CAClientTest_stc, SendRequestWithWrongEndpoint_N)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -898,7 +892,7 @@ TEST_F(CAClientTest_stc, SendRequestWithWrongEndpoint_N)
     char* uri = (char *) SIM_REQ_ACK_WRONG_EP_URI;
     char* payload = m_caHelper.s_tcInfo.identifier;
 
-    if (!m_caHelper.sendRequest(uri, payload, CA_PUT, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(uri, payload, CA_PUT, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -954,13 +948,13 @@ TEST_F(CAClientTest_stc, SendGetRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    if (!m_caHelper.sendRequest(CA_GET, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(CA_GET, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -1016,13 +1010,13 @@ TEST_F(CAClientTest_stc, SendPutRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    if (!m_caHelper.sendRequest(CA_PUT, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(CA_PUT, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -1078,13 +1072,13 @@ TEST_F(CAClientTest_stc, SendPostRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    if (!m_caHelper.sendRequest(CA_POST, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(CA_POST, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -1140,13 +1134,13 @@ TEST_F(CAClientTest_stc, SendDeleteRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    if (!m_caHelper.sendRequest(CA_DELETE, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(CA_DELETE, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -1463,16 +1457,16 @@ TEST_F(CAClientTest_stc, SendNonGetRequestWithLargePayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    char* uri = (char*) m_caHelper.m_simulatorReqAckUri.c_str();
+    char* uri = (char*) SIM_REQ_ACK;
     char* payload = (char*) m_caHelper.getRandomString(BLOCKWISE_PACKET_SIZE).c_str();
 
-    if (!m_caHelper.sendRequest(uri, payload, CA_GET, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(uri, payload, CA_GET, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -1528,16 +1522,16 @@ TEST_F(CAClientTest_stc, SendNonPostRequestWithLargePayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    char* uri = (char*) m_caHelper.m_simulatorReqAckUri.c_str();
+    char* uri = (char*) SIM_REQ_ACK;
     char* payload = (char*) m_caHelper.getRandomString(BLOCKWISE_PACKET_SIZE).c_str();
 
-    if (!m_caHelper.sendRequest(uri, payload, CA_POST, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(uri, payload, CA_POST, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -1593,16 +1587,16 @@ TEST_F(CAClientTest_stc, SendNonPutRequestWithLargePayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    char* uri = (char*) m_caHelper.m_simulatorReqAckUri.c_str();
+    char* uri = (char*) SIM_REQ_ACK;
     char* payload = (char*) m_caHelper.getRandomString(BLOCKWISE_PACKET_SIZE).c_str();
 
-    if (!m_caHelper.sendRequest(uri, payload, CA_PUT, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(uri, payload, CA_PUT, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -1658,16 +1652,16 @@ TEST_F(CAClientTest_stc, SendNonDeleteRequestWithLargePayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    char* uri = (char*) m_caHelper.m_simulatorReqAckUri.c_str();
+    char* uri = (char*) SIM_REQ_ACK;
     char* payload = (char*) m_caHelper.getRandomString(BLOCKWISE_PACKET_SIZE).c_str();
 
-    if (!m_caHelper.sendRequest(uri, payload, CA_DELETE, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(uri, payload, CA_DELETE, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -1724,16 +1718,16 @@ TEST_F(CAClientTest_stc, SendConGetRequestWithLargePayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    char* uri = (char*) m_caHelper.m_simulatorReqAckUri.c_str();
+    char* uri = (char*) SIM_REQ_ACK;
     char* payload = (char*) m_caHelper.getRandomString(BLOCKWISE_PACKET_SIZE).c_str();
 
-    if (!m_caHelper.sendRequest(uri, payload, CA_GET, CA_MSG_CONFIRM, 1))
+    if (!m_caHelper.sendRequest(uri, payload, CA_GET, CA_MSG_CONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -1790,16 +1784,16 @@ TEST_F(CAClientTest_stc, SendConPostRequestWithLargePayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    char* uri = (char*) m_caHelper.m_simulatorReqAckUri.c_str();
+    char* uri = (char*) SIM_REQ_ACK;
     char* payload = (char*) m_caHelper.getRandomString(BLOCKWISE_PACKET_SIZE).c_str();
 
-    if (!m_caHelper.sendRequest(uri, payload, CA_POST, CA_MSG_CONFIRM, 1))
+    if (!m_caHelper.sendRequest(uri, payload, CA_POST, CA_MSG_CONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -1856,16 +1850,16 @@ TEST_F(CAClientTest_stc, SendConPutRequestWithLargePayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    char* uri = (char*) m_caHelper.m_simulatorReqAckUri.c_str();
+    char* uri = (char*) SIM_REQ_ACK;
     char* payload = (char*) m_caHelper.getRandomString(BLOCKWISE_PACKET_SIZE).c_str();
 
-    if (!m_caHelper.sendRequest(uri, payload, CA_PUT, CA_MSG_CONFIRM, 1))
+    if (!m_caHelper.sendRequest(uri, payload, CA_PUT, CA_MSG_CONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -1922,16 +1916,16 @@ TEST_F(CAClientTest_stc, SendConDeleteRequestWithLargePayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    char* uri = (char*) m_caHelper.m_simulatorReqAckUri.c_str();
+    char* uri = (char*) SIM_REQ_ACK;
     char* payload = (char*) m_caHelper.getRandomString(BLOCKWISE_PACKET_SIZE).c_str();
 
-    if (!m_caHelper.sendRequest(uri, payload, CA_DELETE, CA_MSG_CONFIRM, 1))
+    if (!m_caHelper.sendRequest(uri, payload, CA_DELETE, CA_MSG_CONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -1992,7 +1986,7 @@ TEST_F(CAClientTest_stc, SendSecureGetRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -2005,7 +1999,7 @@ TEST_F(CAClientTest_stc, SendSecureGetRequest_P)
         return;
     }
 
-    if (!m_caHelper.sendSecuredRequest(CA_GET, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendSecuredRequest(CA_GET, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -2064,7 +2058,7 @@ TEST_F(CAClientTest_stc, SendSecurePostRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -2077,7 +2071,7 @@ TEST_F(CAClientTest_stc, SendSecurePostRequest_P)
         return;
     }
 
-    if (!m_caHelper.sendSecuredRequest(CA_POST, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendSecuredRequest(CA_POST, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -2136,7 +2130,7 @@ TEST_F(CAClientTest_stc, SendSecurePutRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -2149,7 +2143,7 @@ TEST_F(CAClientTest_stc, SendSecurePutRequest_P)
         return;
     }
 
-    if (!m_caHelper.sendSecuredRequest(CA_PUT, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendSecuredRequest(CA_PUT, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -2208,7 +2202,7 @@ TEST_F(CAClientTest_stc, SendSecureDeleteRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -2221,7 +2215,7 @@ TEST_F(CAClientTest_stc, SendSecureDeleteRequest_P)
         return;
     }
 
-    if (!m_caHelper.sendSecuredRequest(CA_DELETE, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendSecuredRequest(CA_DELETE, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -2280,7 +2274,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmGetRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -2293,7 +2287,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmGetRequest_P)
         return;
     }
 
-    if (!m_caHelper.sendSecuredRequest(CA_GET, CA_MSG_CONFIRM, 1))
+    if (!m_caHelper.sendSecuredRequest(CA_GET, CA_MSG_CONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -2352,7 +2346,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmPostRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -2365,7 +2359,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmPostRequest_P)
         return;
     }
 
-    if (!m_caHelper.sendSecuredRequest(CA_POST, CA_MSG_CONFIRM, 1))
+    if (!m_caHelper.sendSecuredRequest(CA_POST, CA_MSG_CONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -2424,7 +2418,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmPutRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -2437,7 +2431,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmPutRequest_P)
         return;
     }
 
-    if (!m_caHelper.sendSecuredRequest(CA_PUT, CA_MSG_CONFIRM, 1))
+    if (!m_caHelper.sendSecuredRequest(CA_PUT, CA_MSG_CONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -2496,7 +2490,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmDeleteRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -2509,7 +2503,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmDeleteRequest_P)
         return;
     }
 
-    if (!m_caHelper.sendSecuredRequest(CA_DELETE, CA_MSG_CONFIRM, 1))
+    if (!m_caHelper.sendSecuredRequest(CA_DELETE, CA_MSG_CONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -2562,18 +2556,18 @@ TEST_F(CAClientTest_stc, SendSecureConfirmDeleteRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  No acknowledgment should be received
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && defined(__IP__)
+#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecureRequestWithoutDtlsHandler_N)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
 
-    if (!m_caHelper.sendSecuredRequest(CA_PUT, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendSecuredRequest(CA_PUT, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -2631,7 +2625,7 @@ TEST_F(CAClientTest_stc, SendSecureNonGetRequestWithLargePayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -2646,7 +2640,7 @@ TEST_F(CAClientTest_stc, SendSecureNonGetRequestWithLargePayload_P)
 
     char* payload = (char*) m_caHelper.getRandomString(BLOCKWISE_PACKET_SIZE).c_str();
 
-    if (!m_caHelper.sendSecuredRequest(payload, CA_GET, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendSecuredRequest(payload, CA_GET, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -2704,7 +2698,7 @@ TEST_F(CAClientTest_stc, SendSecureNonPostRequestWithLargePayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -2719,7 +2713,7 @@ TEST_F(CAClientTest_stc, SendSecureNonPostRequestWithLargePayload_P)
 
     char* payload = (char*) m_caHelper.getRandomString(BLOCKWISE_PACKET_SIZE).c_str();
 
-    if (!m_caHelper.sendSecuredRequest(payload, CA_POST, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendSecuredRequest(payload, CA_POST, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -2777,7 +2771,7 @@ TEST_F(CAClientTest_stc, SendSecureNonPutRequestWithLargePayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -2792,7 +2786,7 @@ TEST_F(CAClientTest_stc, SendSecureNonPutRequestWithLargePayload_P)
 
     char* payload = (char*) m_caHelper.getRandomString(BLOCKWISE_PACKET_SIZE).c_str();
 
-    if (!m_caHelper.sendSecuredRequest(payload, CA_PUT, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendSecuredRequest(payload, CA_PUT, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -2850,7 +2844,7 @@ TEST_F(CAClientTest_stc, SendSecureNonDeleteRequestWithLargePayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -2865,7 +2859,7 @@ TEST_F(CAClientTest_stc, SendSecureNonDeleteRequestWithLargePayload_P)
 
     char* payload = (char*) m_caHelper.getRandomString(BLOCKWISE_PACKET_SIZE).c_str();
 
-    if (!m_caHelper.sendSecuredRequest(payload, CA_DELETE, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendSecuredRequest(payload, CA_DELETE, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -2923,7 +2917,7 @@ TEST_F(CAClientTest_stc, SendSecureConGetRequestWithLargePayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -2938,7 +2932,7 @@ TEST_F(CAClientTest_stc, SendSecureConGetRequestWithLargePayload_P)
 
     char* payload = (char*) m_caHelper.getRandomString(BLOCKWISE_PACKET_SIZE).c_str();
 
-    if (!m_caHelper.sendSecuredRequest(payload, CA_GET, CA_MSG_CONFIRM, 1))
+    if (!m_caHelper.sendSecuredRequest(payload, CA_GET, CA_MSG_CONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -2996,7 +2990,7 @@ TEST_F(CAClientTest_stc, SendSecureConPostRequestWithLargePayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -3011,7 +3005,7 @@ TEST_F(CAClientTest_stc, SendSecureConPostRequestWithLargePayload_P)
 
     char* payload = (char*) m_caHelper.getRandomString(BLOCKWISE_PACKET_SIZE).c_str();
 
-    if (!m_caHelper.sendSecuredRequest(payload, CA_POST, CA_MSG_CONFIRM, 1))
+    if (!m_caHelper.sendSecuredRequest(payload, CA_POST, CA_MSG_CONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -3069,7 +3063,7 @@ TEST_F(CAClientTest_stc, SendSecureConPutRequestWithLargePayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -3084,7 +3078,7 @@ TEST_F(CAClientTest_stc, SendSecureConPutRequestWithLargePayload_P)
 
     char* payload = (char*) m_caHelper.getRandomString(BLOCKWISE_PACKET_SIZE).c_str();
 
-    if (!m_caHelper.sendSecuredRequest(payload, CA_PUT, CA_MSG_CONFIRM, 1))
+    if (!m_caHelper.sendSecuredRequest(payload, CA_PUT, CA_MSG_CONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -3142,7 +3136,7 @@ TEST_F(CAClientTest_stc, SendSecureConDeleteRequestWithLargePayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -3157,7 +3151,7 @@ TEST_F(CAClientTest_stc, SendSecureConDeleteRequestWithLargePayload_P)
 
     char* payload = (char*) m_caHelper.getRandomString(BLOCKWISE_PACKET_SIZE).c_str();
 
-    if (!m_caHelper.sendSecuredRequest(payload, CA_DELETE, CA_MSG_CONFIRM, 1))
+    if (!m_caHelper.sendSecuredRequest(payload, CA_DELETE, CA_MSG_CONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -3212,7 +3206,7 @@ TEST_F(CAClientTest_stc, CACheckKeepAliveHandler_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initClientNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -3220,7 +3214,7 @@ TEST_F(CAClientTest_stc, CACheckKeepAliveHandler_P)
 
     CARegisterKeepAliveHandler(CAHelper::keepAliveHandler);
 
-    if (!m_caHelper.sendRequest(CA_GET, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    if (!m_caHelper.sendRequest(CA_GET, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();

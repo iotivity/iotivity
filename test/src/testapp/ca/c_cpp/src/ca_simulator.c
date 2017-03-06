@@ -17,20 +17,6 @@
  * limitations under the License.
  *
  ******************************************************************/
-
-#define IDENTITY     ("1111111111111111")
-#define RS_CLIENT_PSK   ("AAAAAAAAAAAAAAAA")
-
-#define SIM_REQ_CONFIG "Configure"
-#define SIM_REQ_ACK "SendReqAck"
-#define SIM_REQ_QUERY "SendReqQry"
-#define SIM_RES_ACK "SendResAck"
-
-#define MAX_BUF_LEN 2048
-#define MAX_OPT_LEN 16
-#define MAX_SLEEP_TIME 1
-#define CH_ZERO '0'
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -45,19 +31,6 @@
 #include <unistd.h>
 #include <glib.h>
 #include <pthread.h>
-
-#endif
-
-#include "casimulator.h"
-
-#include "cacommon.h"
-#include "cainterface.h"
-#include "cautilinterface.h"
-#include "casecurityinterface.h"
-
-#ifdef __WITH_DTLS__
-#include "ca_adapter_net_ssl.h"
-#include "ssl_ciphersuites.h"
 #endif
 
 #ifdef ARDUINO
@@ -68,6 +41,28 @@
 #include "Ethernet.h"
 #endif
 #endif
+
+#include "casimulator.h"
+#include "cacommon.h"
+#include "cainterface.h"
+#include "cautilinterface.h"
+#include "casecurityinterface.h"
+
+#ifdef __WITH_DTLS__
+#include "ca_adapter_net_ssl.h"
+#include "ssl_ciphersuites.h"
+#endif
+
+#define IDENTITY     ("1111111111111111")
+#define RS_CLIENT_PSK   ("AAAAAAAAAAAAAAAA")
+
+char SIM_REQ_ACK[] = "SendReqAck";
+char SIM_RES_ACK[] = "SendResAck";
+char SIM_REQ_CONFIG[] = "Configure";
+
+#define MAX_BUF_LEN 2048
+#define MAX_SLEEP_TIME 1
+#define CH_ZERO '0'
 
 #ifdef __TIZEN__
 static GMainLoop *g_mainloop = NULL;
@@ -89,7 +84,7 @@ typedef struct
     int interval;
     int bufLength;
     char* resourceUri;
-    char payload[MAX_BUF_LEN];
+    unsigned char payload[MAX_BUF_LEN];
     int payloadSize;
     uint16_t messageId;
 } TestConfiguration;
@@ -97,10 +92,13 @@ typedef struct
 bool g_firstMessage = true;
 bool g_simulatorProcess = true;
 
-int g_selectedNetwork = 0;
+int g_selectedTransport = 0;
 int g_messageId = -1;
-int g_identityLegth;
-int g_pskLength;
+size_t g_identityLegth;
+size_t g_pskLength;
+
+char g_filterCommand[10];
+char g_address[CA_MACADDR_SIZE];
 
 void output(const char *format, ...)
 {
@@ -187,7 +185,7 @@ void GMainLoopThread()
 
 int initialize()
 {
-    CAResult_t result = CAInitialize();
+    CAResult_t result = CAInitialize(g_selectedTransport);
 
     if (result != CA_STATUS_OK)
     {
@@ -198,20 +196,14 @@ int initialize()
     return 1;
 }
 
-char* getString(char a[], int length)
+void printChars(unsigned char* p, int length)
 {
-    char str[MAX_BUF_LEN];
-
     int i;
 
     for (i = 0; i < length; i++)
     {
-        str[i] = a[i];
+        output("%c", p[i]);
     }
-
-    str[length] = 0;
-
-    return str;
 }
 
 #ifdef __WITH_DTLS__
@@ -334,7 +326,7 @@ int setupSecurity(int selectedTransport)
 
     if(selectedTransport == CA_ADAPTER_IP)
     {
-        result = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, selectedTransport);
+        result = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, (CATransportAdapter_t)selectedTransport);
     }
     else if(selectedTransport == CA_ADAPTER_TCP)
     {
@@ -361,7 +353,7 @@ int selectNetwork(int argc, char *argv[])
     {
         output("\n=============================================\n");
 
-        output("\tSelect Network\n");
+        output("\tSelect Transport\n");
         output("IP     : 0\n");
         output("GATT   : 1\n");
         output("RFCOMM : 2\n");
@@ -377,16 +369,58 @@ int selectNetwork(int argc, char *argv[])
 
     if (number >= 0 && number <= 4)
     {
-        g_selectedNetwork = 1 << number;
+        g_selectedTransport = 1 << number;
 
         output("Selecting Network ...\n");
 
-        CAResult_t result = CASelectNetwork(g_selectedNetwork);
+        CAResult_t result = CASelectNetwork((CATransportAdapter_t)g_selectedTransport);
 
         if (result == CA_STATUS_OK)
         {
             output("CASelectNetwork Successful\n");
+#ifdef TCP_ADAPTER
+            if (g_selectedTransport == CA_ADAPTER_TCP)
+            {
+                result = CASelectNetwork(CA_ADAPTER_IP);
+                if (result == CA_STATUS_OK)
+                {
+                    output("IP Network selection Successful\n");
+                    ret = 1;
+                }
+                else
+                {
+                    output("IP Network selection Failed\n");
+                    ret = 0;
+                }
+            }
+#endif
+
+#ifdef __LINUX__
+            if (argc < 3)
+            {
+                output("Enter Filter Address: ");
+                scanf("%s", g_address);
+            }
+            else
+            {
+                strcpy(g_address, argv[2]);
+            }
+
+            if (strchr(g_address, '.'))
+            {
+                if (argc < 4)
+                {
+                    output("Enter Filter Command: ");
+                    scanf("%s", g_filterCommand);
+                }
+                else
+                {
+                    strcpy(g_filterCommand, argv[3]);
+                }
+            }
+
             ret = 1;
+#endif
         }
         else
         {
@@ -396,7 +430,7 @@ int selectNetwork(int argc, char *argv[])
     }
     else
     {
-        output("Invalid network number\n");
+        output("Invalid transport number\n");
         ret = 0;
     }
 
@@ -449,14 +483,13 @@ int handleMessage()
     return 1;
 }
 
-int returnResponse(const CAEndpoint_t* endpoint, char* resourceUri, char* payload, int payloadSize,
+int returnResponse(const CAEndpoint_t* endpoint, char* resourceUri, unsigned char* payload, int payloadSize,
         CAMessageType_t type, CAResponseResult_t responseCode, uint16_t messageId, CAToken_t token,
         uint8_t tokenLength, CAHeaderOption_t *options, uint8_t numOptions)
 {
     output("[returnResponse] in\n");
 
-    CAInfo_t responseData =
-    { 0 };
+    CAInfo_t responseData;
 
     responseData.payload = payload;
 
@@ -477,11 +510,13 @@ int returnResponse(const CAEndpoint_t* endpoint, char* resourceUri, char* payloa
     responseData.options = options;
     responseData.numOptions = numOptions;
     responseData.dataType = CA_RESPONSE_DATA;
+    responseData.payloadFormat = CA_FORMAT_UNDEFINED;
+    responseData.acceptFormat = CA_FORMAT_UNDEFINED;
 
-    CAResponseInfo_t responseInfo =
-    { 0 };
+    CAResponseInfo_t responseInfo;
     responseInfo.result = responseCode;
     responseInfo.info = responseData;
+    responseInfo.isMulticast = 0;
 
     output("Sending response....\n");
 
@@ -533,28 +568,6 @@ void processRequestResponse(void)
     }
 }
 
-void selectNetworkWithParam(char *chNetwork)
-{
-
-    int number = (int) (chNetwork - CH_ZERO);
-    number = (number < 0 || number > 3) ? 1 : number;
-    g_selectedNetwork = number;
-    CASelectNetwork(1 << g_selectedNetwork);
-}
-
-void unSelectNetwork(void)
-{
-    output("unselected network in\n");
-
-    CAResult_t res = CAUnSelectNetwork(1 << g_selectedNetwork);
-    if (res != CA_STATUS_OK)
-    {
-        output("UNSelectNetwork fail\n");
-    }
-
-    output("unselected network out\n");
-}
-
 void returnMessage(const CAEndpoint_t* endpoint, TestConfiguration* testConfig)
 {
     int index = 0;
@@ -594,6 +607,23 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
     output("IP %s, Port %d\n", endpoint->addr, endpoint->port);
     output("Message Id: %d\n", requestInfo->info.messageId);
 
+#ifdef __LINUX__
+    if (strcmp(g_address, ""))
+    {
+        if(!strcmp(g_filterCommand, "ne") && !strcmp(g_address, endpoint->addr))
+        {
+            output("Ignoring filter address\n");
+            return;
+        }
+
+        if(!strcmp(g_filterCommand, "eq") && strcmp(g_address, endpoint->addr))
+        {
+            output("Ignoring filter address\n");
+            return;
+        }
+    }
+#endif
+
     if (requestInfo->info.options)
     {
         output("Header Option Found\n");
@@ -622,7 +652,7 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
 
         output("calling returnResponse ...\n");
 
-        returnResponse(endpoint, SIM_RES_ACK, str, strlen(str), CA_MSG_NONCONFIRM, CA_VALID,
+        returnResponse(endpoint, SIM_RES_ACK, (unsigned char*)str, strlen(str), CA_MSG_NONCONFIRM, CA_VALID,
                 requestInfo->info.messageId, requestInfo->info.token, requestInfo->info.tokenLength,
                 requestInfo->info.options, requestInfo->info.numOptions);
 
@@ -633,12 +663,11 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
 
     output("PayloadSize: %d\n", requestInfo->info.payloadSize);
 
-    char *payload = NULL;
-
     if (requestInfo->info.payload)
     {
-        payload = getString(requestInfo->info.payload, requestInfo->info.payloadSize);
-        output("Payload: %s\n", payload);
+        output("Payload: ");
+        printChars(requestInfo->info.payload, requestInfo->info.payloadSize);
+        output("\n");
     }
     else
     {
@@ -657,7 +686,7 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
     {
         output("ResourceUri Type: SIM_REQ_CONFIG\n");
 
-        testConfig.operationType = (requestInfo->info.payload[0] - CH_ZERO);
+        testConfig.operationType = (SimulatorTask)(requestInfo->info.payload[0] - CH_ZERO);
 
         switch (testConfig.operationType)
         {
@@ -665,21 +694,21 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
                 output("OperationType: SEND_MESSAGE\n");
 
                 memset(&numConversion, 0, sizeof(numConversion));
-                strncpy(numConversion, &requestInfo->info.payload[2], sizeof(numConversion));
+                strncpy(numConversion, (const char*)&requestInfo->info.payload[2], sizeof(numConversion));
                 testConfig.numberOfTimes = atoi(numConversion); //4 byte
 
                 memset(&numConversion, 0, sizeof(numConversion));
-                strncpy(numConversion, &requestInfo->info.payload[6], sizeof(numConversion));
+                strncpy(numConversion, (const char*)&requestInfo->info.payload[6], sizeof(numConversion));
                 testConfig.interval = atoi(numConversion); //4 byte
 
                 memset(&numConversion, 0, sizeof(numConversion));
-                strncpy(numConversion, &requestInfo->info.payload[10], sizeof(numConversion));
+                strncpy(numConversion, (const char*)&requestInfo->info.payload[10], sizeof(numConversion));
                 testConfig.bufLength = atoi(numConversion); //4 byte
 
                 memset(&testConfig.payload, 0, sizeof(char) * MAX_BUF_LEN);
-                strncpy(testConfig.payload, &requestInfo->info.payload[14], testConfig.bufLength);
+                strncpy((char*)testConfig.payload, (const char*)&requestInfo->info.payload[14], testConfig.bufLength);
                 testConfig.payload[testConfig.bufLength + 1] = '\0';
-                testConfig.payloadSize = strlen(testConfig.payload);
+                testConfig.payloadSize = strlen((const char*)testConfig.payload);
 
                 testConfig.caMethod = requestInfo->method;
                 testConfig.resourceUri = requestInfo->info.resourceUri;
@@ -692,22 +721,12 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
                 }
                 else
                 {
-                    testConfig.token = "";
+                    testConfig.token[0] = 0;
                     testConfig.tokenLength = 0;
                 }
 
                 returnMessage(endpoint, &testConfig);
 
-                break;
-
-            case SELECT_NETWORK:
-                output("OperationType: SELECT_NETWORK\n");
-                selectNetworkWithParam(&requestInfo->info.payload[1]);
-                break;
-
-            case UNSELECT_NETWORK:
-                output("OperationType: UNSELECT_NETWORK\n");
-                selectNetworkWithParam(&requestInfo->info.payload[1]);
                 break;
 
             case STOP_SIM:
@@ -744,11 +763,45 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
             output("Message Type: CA_MSG_NONCONFIRM\n");
             messageType = CA_MSG_NONCONFIRM;
         }
+        int i;
+        char payload[2000];
+        for (i = 0; i < requestInfo->info.payloadSize; i++)
+        {
+            payload[i] = requestInfo->info.payload[i];
+        }
+        payload[i] = 0;
 
+        if (g_selectedTransport == CA_ADAPTER_IP)
+        {
+            char str[12];
+            strcat(payload, "port:");
+            sprintf(str, "%d", CAGetAssignedPortNumber(CA_ADAPTER_IP, CA_IPV4));
+            strcat(payload, str);
+            strcat(payload, ",secure-port:");
+            sprintf(str, "%d", CAGetAssignedPortNumber(CA_ADAPTER_IP, (CA_SECURE|CA_IPV4)));
+            strcat(payload, str);
+        }
+        else if (g_selectedTransport == CA_ADAPTER_TCP)
+        {
+            char str[12];
+            strcat(payload, "port:");
+            sprintf(str, "%d", CAGetAssignedPortNumber(CA_ADAPTER_TCP, CA_IPV4));
+            strcat(payload, str);
+            strcat(payload, ",secure-port:");
+            sprintf(str, "%d", CAGetAssignedPortNumber(CA_ADAPTER_TCP, (CA_SECURE|CA_IPV4)));
+            strcat(payload, str);
+        }
+        else
+        {
+            strcat(payload, "port:0");
+            strcat(payload, ",secure-port:0");
+        }
+
+        output ("payload %s\n", payload);
         output("calling returnResponse ...\n");
 
-        returnResponse(endpoint, requestInfo->info.resourceUri, requestInfo->info.payload,
-                requestInfo->info.payloadSize, messageType, CA_VALID, requestInfo->info.messageId,
+        returnResponse(endpoint, requestInfo->info.resourceUri, payload,
+                strlen(payload), messageType, CA_VALID, requestInfo->info.messageId,
                 requestInfo->info.token, requestInfo->info.tokenLength, requestInfo->info.options,
                 requestInfo->info.numOptions);
 
@@ -812,7 +865,7 @@ void errorHandler(const CAEndpoint_t *endpoint, const CAErrorInfo_t* errorInfo)
 
     if (info->token)
     {
-        output("token: %s\n", info->token);
+        //output("token: %s\n", info->token);
     }
     else
     {
@@ -835,7 +888,9 @@ void errorHandler(const CAEndpoint_t *endpoint, const CAErrorInfo_t* errorInfo)
 
     if (info->payload)
     {
-        output("payload: %s\n", getString(info->payload, info->payloadSize));
+        output("payload: ");
+        printChars(info->payload, info->payloadSize);
+        output("\n");
     }
     else
     {
@@ -887,7 +942,7 @@ void setup()
     Serial.println("=======================");
 
 #ifdef ARDUINOETH
-    g_selectedNetwork = CA_ADAPTER_IP;
+    g_selectedTransport = CA_ADAPTER_IP;
     // Note: ****Update the MAC address here with your shield's MAC address****
     uint8_t ETHERNET_MAC[] =
     {   0x90, 0xA2, 0xDA, 0x0F, 0xE0, 0xD8};
@@ -905,7 +960,7 @@ void setup()
 #endif
 
 #ifdef ARDUINOWIFI
-    g_selectedNetwork = CA_ADAPTER_IP;
+    g_selectedTransport = CA_ADAPTER_IP;
 
     const char ssid[] = "NETGEAR24"; // your network SSID (name)
     const char pass[] = "mightyrabbit219";// your network password
@@ -931,12 +986,12 @@ void setup()
 #endif
 
 #ifdef LE_ADAPTER
-    g_selectedNetwork = CA_ADAPTER_GATT_BTLE;
+    g_selectedTransport = CA_ADAPTER_GATT_BTLE;
 #endif
 
     CAResult_t result = CA_STATUS_OK;
 
-    result = CAInitialize();
+    result = CAInitialize(g_selectedTransport);
     if (result == CA_STATUS_OK)
     {
         Serial.println("Initialization Successful");
@@ -1012,10 +1067,6 @@ void loop()
 #if defined (__LINUX__) || defined (__ANDROID_NATIVE__) || defined (__TIZEN__)
 int main(int argc, char *argv[])
 {
-    CAResult_t result;
-    CAEndpoint_t *tempInfo = NULL;
-    uint32_t tempSize = 0;
-
     clearDisplay();
 
     output("[CASimulator] IN\n");
@@ -1058,30 +1109,25 @@ int main(int argc, char *argv[])
     }
 
 #ifdef __WITH_DTLS__
-    if(!setupSecurity(g_selectedNetwork))
+    if(!setupSecurity(g_selectedTransport))
     {
         return -1;
     }
 #endif
 
-    if(g_selectedNetwork == CA_ADAPTER_IP)
+    if(g_selectedTransport == CA_ADAPTER_IP)
     {
-        output("Unsecured Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_IP, CA_IPV4));
-        output("Secured Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_IP, CA_SECURE|CA_IPV4));
+        output("Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_IP, CA_IPV4));
+        output("Secure Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_IP, (CATransportFlags_t)(CA_SECURE|CA_IPV4)));
     }
-    else if(g_selectedNetwork == CA_ADAPTER_TCP)
+    else if(g_selectedTransport == CA_ADAPTER_TCP)
     {
-        output("Unsecured Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_TCP, CA_IPV4));
+        output("Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_IP, CA_IPV4));
+        output("Secure Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_IP, (CATransportFlags_t)(CA_SECURE|CA_IPV4)));
+        output("TCP Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_TCP, CA_IPV4));
     }
 
     processRequestResponse();
-
-    result = CAUnSelectNetwork(g_selectedNetwork);
-    if (result != CA_STATUS_OK)
-    {
-        output("CAUnSelectNetwork Failed\n");
-        return -1;
-    }
 
     CATerminate();
 

@@ -41,7 +41,7 @@ public:
     virtual void SetUp() {
         IOTIVITYTEST_LOG(INFO, "SetUp IN");
 
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
         m_pSMHelper = new SMHelper();
         m_pSceneList = m_pSMHelper->getSceneListInstance();
         ASSERT_NE(m_pSceneList,NULL_PTR) << "scenelist pointer is not found";
@@ -56,7 +56,7 @@ public:
         delete m_pSMHelper;
         m_pSMHelper = nullptr;
 
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 };
 

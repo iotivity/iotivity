@@ -36,6 +36,7 @@
 #include "OCPlatform.h"
 
 #include "CommonUtil.h"
+#include "CommonTestUtil.h"
 #include "IotivityTest_Logger.h"
 
 #define MAX_SLEEP_TIME 5

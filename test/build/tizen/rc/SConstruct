@@ -46,6 +46,7 @@ RAPIDXML_SUB_INCLUDE = ORG_SRC_HOME + '/extlibs/'
 RC_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
 RC_RESOURCE_INCLUDE = RC_RESOURCE_DIR + '/include'
 RC_RESOURCE_LIB = ORG_SRC_HOME + '/out/tizen/armv7l/release'
+RC_RESOURCE_CSDK_LIB = RC_RESOURCE_LIB
 RC_RESOURCE_STACK = RC_RESOURCE_DIR + '/csdk/stack/include'
 RC_RESOURCE_SOCKET = RC_RESOURCE_DIR + '/csdk/ocsocket/include'
 RC_RESOURCE_RANDOM = RC_RESOURCE_DIR + '/csdk/ocrandom/include'
@@ -53,6 +54,7 @@ RC_RESOURCE_LOGGER = RC_RESOURCE_DIR + '/csdk/logger/include'
 RC_RESOURCE_OC_LOGGER = RC_RESOURCE_DIR + '/oc_logger/include'
 RC_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
 RC_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
+RC_RESOURCE_OC_LOGGER_LIB = RC_RESOURCE_LIB
 RC_DIR = ORG_SRC_HOME + '/service/resource-container'
 RC_MODULES_DIR = RC_DIR + '/src'
 RC_INCLUDE = RC_DIR + '/include/'
@@ -61,6 +63,8 @@ RC_COMMON_INCLUDE = RC_MODULES_DIR + '/common/primitiveResource/include/'
 RC_COMMON_TIMER_INCLUDE = RC_MODULES_DIR + '/common/expiryTimer/include/'
 RC_COMMON_INTERNAL_INCLUDE = RC_MODULES_DIR + '/common/primitiveResource/include/internal/'
 RC_SERVICE_INCLUDE_DIR =  ORG_SRC_HOME + '/service/resource-encapsulation/include'
+RC_LIB = RC_RESOURCE_LIB
+RC_LIB_TIMER = RC_RESOURCE_LIB + '/extlibs/timer/'
 
 OIC_STRING_INC_DIR = RC_C_COMMON + '/oic_string/include'
 
@@ -107,7 +111,7 @@ TESTAPP_INCLUDE_DIR = INCLUDE_DIR + '/testapp'
 TESTAPP_CA_DIR = TESTAPP_DIR + '/ca/c_cpp'
 
 TARGET = PROJECT_HOME + '/bin'
-#TARGET = env['VARIANT_DIR']
+#TARGET = env['VARIANT_DIR'] 
 
 ######################################################################
 
@@ -127,7 +131,7 @@ RC_CFLAGS = [COMMON_FLAGS]
 
 COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR]
 
-RC_CINCLUDE = [RAPIDXML_SUB_INCLUDE, RC_RESOURCE_LOGGER,RC_C_COMMON, COMMON_CINCLUDE, RC_RESOURCE_INCLUDE, RC_RESOURCE_STACK, RC_RESOURCE_SOCKET, RC_RESOURCE_RANDOM, RC_RESOURCE_OC_LOGGER, RC_RESOURCE_CEREAL, RC_RESOURCE_TIMER,RC_INCLUDE, RC_COMMON_INCLUDE, RC_COMMON_TIMER_INCLUDE, RC_COMMON_INTERNAL_INCLUDE,  RC_INCLUDE_DIR, RC_SERVICE_INCLUDE_DIR,'/usr/include/dlog', OIC_STRING_INC_DIR]
+RC_CINCLUDE = [RAPIDXML_SUB_INCLUDE, RC_RESOURCE_LOGGER,RC_C_COMMON, COMMON_CINCLUDE, RC_RESOURCE_INCLUDE, RC_RESOURCE_STACK, RC_RESOURCE_SOCKET, RC_RESOURCE_RANDOM, RC_RESOURCE_OC_LOGGER, RC_RESOURCE_CEREAL, RC_RESOURCE_TIMER, RC_LIB_TIMER, RC_INCLUDE, RC_COMMON_INCLUDE, RC_COMMON_TIMER_INCLUDE, RC_COMMON_INTERNAL_INCLUDE,  RC_INCLUDE_DIR, RC_SERVICE_INCLUDE_DIR,'/usr/include/dlog', OIC_STRING_INC_DIR]
 
 ######################################################################
 
@@ -135,7 +139,7 @@ RC_CINCLUDE = [RAPIDXML_SUB_INCLUDE, RC_RESOURCE_LOGGER,RC_C_COMMON, COMMON_CINC
 ######################################################################
 
 COMMON_LIB_LOCATION = [GTEST, RCSOURCE_LIB_DIR]
-RC_LIB_LOCATION = [COMMON_LIB_LOCATION, RC_RESOURCE_LIB]
+RC_LIB_LOCATION = [COMMON_LIB_LOCATION, RC_RESOURCE_LIB, RC_RESOURCE_CSDK_LIB, RC_RESOURCE_OC_LOGGER_LIB, RC_LIB]
 
 COMMON_STATIC_LIBS = [GTEST_LIB]
 COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction pthread libglib-2.0 libdlog')
@@ -154,7 +158,7 @@ RC_LIBS = [COMMON_SHARED_LIBS, RC_SHARED_LIBS]
 
 RC_ITC_BIN = 'iotivity_rc_test'
 RC_UTC_BIN = 'iotivity_rc_utc'
-RC_TEST_APP_BIN = 'rc_testApp'
+RC_TEST_APP_BIN = 'iotivity_rc_app'
 
 TEST_MAIN_BIN = 'test_main.o'
 COMMON_UTIL_BIN = 'common_util.o'
@@ -171,14 +175,14 @@ COMMON_CPP = Glob(COMMON_UTIL_DIR + '/*.cpp')
 COMMON_TC_CPP = Glob(COMMON_DIR + '/testcase/*.cpp')
 
 RC_HELPER_CPP = Glob(RC_COMMON_DIR + '/*.cpp')
-COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
+COMMON_UTIL_CPP = [ COMMON_UTIL_DIR + '/CommonUtil.cpp', COMMON_UTIL_DIR + '/CommonTestUtil.cpp' ]
 
 
 #RE_TEST_SERVER_CPP = TESTAPP_DIR + '/re/c_cpp/RETestServers.cpp'
 
 CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
 
-TEST_MAIN = [COMMON_DIR + '/testcase/gtest/IotivitySECTestMain.cpp']
+TEST_MAIN = [COMMON_DIR + '/testcase/gtest/IotivitySECTestMain.cpp'] 
 
 RC_ITC_CPP = Glob(ITC_DIR + '/*.cpp')
 RC_UTC_CPP = Glob(UTC_DIR + '/*.cpp')

@@ -32,7 +32,7 @@ protected:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
         m_pREHelper = REHelper::getInstance();
         m_pBuilder = new RCSResourceObject::Builder(LIGHT_1_URI, RESOURCE_TYPE_LIGHT,
@@ -49,7 +49,7 @@ protected:
         delete m_pBuilder;
         m_pBuilder = NULL;
 
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 
 public:
@@ -85,10 +85,9 @@ public:
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REServerBuilderTest_btc, Builder_SRC_P)
 {
-    RCSResourceObject::Builder* builder = NULL;
-
     try
     {
+        RCSResourceObject::Builder* builder;
         builder = new RCSResourceObject::Builder(LIGHT_1_URI, RESOURCE_TYPE_LIGHT,
                 DEFAULT_INTERFACE);
 
@@ -100,9 +99,6 @@ TEST_F(REServerBuilderTest_btc, Builder_SRC_P)
     {
         SET_FAILURE("Unable to make Builder object, exception occurred: " + std::string(e.what()));
     }
-
-    delete builder;
-    builder = NULL;
 }
 #endif
 
@@ -817,12 +813,11 @@ TEST_F(REServerBuilderTest_btc, IsDiscoverable_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REServerBuilderTest_btc, IsDiscoverable_SRCC_P)
 {
-    RCSResourceObject::Builder* pBuilder = NULL;
     bool discoverable = false;
-
     try
     {
-        pBuilder = new RCSResourceObject::Builder(LIGHT_URI,
+
+        RCSResourceObject::Builder* pBuilder = new RCSResourceObject::Builder(LIGHT_URI,
                 RESOURCE_TYPE_LIGHT, DEFAULT_INTERFACE);
         pBuilder->setDiscoverable(discoverable);
         shared_ptr< RCSResourceObject > resourceObject = pBuilder->build();
@@ -839,9 +834,6 @@ TEST_F(REServerBuilderTest_btc, IsDiscoverable_SRCC_P)
     {
         SET_FAILURE("exception occured inside IsDiscoverable_SRCC_P: " + string(e.what()));
     }
-
-    delete pBuilder;
-    pBuilder = NULL;
 }
 #endif
 
@@ -892,12 +884,10 @@ TEST_F(REServerBuilderTest_btc, IsObservable_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REServerBuilderTest_btc, IsObservable_SRCC_P)
 {
-    RCSResourceObject::Builder* pBuilder = NULL;
     bool observable = false;
-
     try
     {
-        pBuilder = new RCSResourceObject::Builder(LIGHT_URI,
+        RCSResourceObject::Builder* pBuilder = new RCSResourceObject::Builder(LIGHT_URI,
                 RESOURCE_TYPE_LIGHT, DEFAULT_INTERFACE);
         pBuilder->setObservable(observable);
         shared_ptr< RCSResourceObject > resourceObject = pBuilder->build();
@@ -915,8 +905,6 @@ TEST_F(REServerBuilderTest_btc, IsObservable_SRCC_P)
         SET_FAILURE("exception occured inside IsObservable_SRCC_P: " + string(e.what()));
     }
 
-    delete pBuilder;
-    pBuilder = NULL;
 }
 #endif
 
@@ -1109,12 +1097,12 @@ TEST_F(REServerBuilderTest_btc, setSetRequestHandlerPolicy_CLU_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REServerBuilderTest_btc, Build_SRC_P)
 {
-    RCSResourceObject::Builder* builder = NULL;
     string acUri = "/device/ac-1";
     string acType = "core.ac";
 
     try
     {
+        RCSResourceObject::Builder* builder;
         builder = new RCSResourceObject::Builder(acUri, acType, DEFAULT_INTERFACE);
         builder->build();
     }
@@ -1122,9 +1110,6 @@ TEST_F(REServerBuilderTest_btc, Build_SRC_P)
     {
         SET_FAILURE("BUILD FAILED: " + string(e.what()));
     }
-
-    delete builder;
-    builder = NULL;
 }
 #endif
 

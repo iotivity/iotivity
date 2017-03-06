@@ -1,0 +1,214 @@
+'''
+******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# Build script for Linux
+#
+##
+
+print '\n---------------Started Building NS for Linux---------------\n'
+
+Import('env_linux')
+import os
+
+env_linux['CC'] = 'g++'
+
+iotivity_root = env_linux.get('IOTIVITY_ROOT')
+iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
+iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
+variant_dir = env_linux.get('VARIANT_DIR')
+test = env_linux.get('TEST')
+sdk = env_linux.get('SDK')
+common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
+
+install_targets = []
+
+iotivity_include_paths = [
+    iotivity_root + '/resource/include',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/csdk/stack/include',
+    iotivity_root + '/resource/csdk/ocsocket/include',
+    iotivity_root + '/resource/csdk/ocrandom/include',
+    iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/resource/csdk/security/include',
+    iotivity_root + '/resource/c_common',
+    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/c_common/oic_malloc/include',
+    iotivity_root + '/resource/oc_logger/include',
+    iotivity_root + '/service/notification/include',
+    iotivity_root + '/service/notification/cpp-wrapper/common',
+    iotivity_root + '/service/notification/cpp-wrapper/consumer/inc',
+    iotivity_root + '/service/notification/cpp-wrapper/provider/inc',
+    iotivity_root + '/extlibs/cereal/include/',
+    iotivity_root + '/extlibs/timer/',
+    iotivity_root + '/extlibs/tinycbor/tinycbor/src/'
+]
+
+csdk_testapp_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/iBtestapp/modules/ns/c_cpp/csdk/include'
+]
+
+cpp_testapp_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/iBtestapp/modules/ns/c_cpp/cpp/include'
+]
+
+csdk_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/tc/ns/gtest/csdk/include',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
+]
+
+cpp_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/tc/ns/gtest/cpp/include',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
+]
+
+csdk_consumer_src = [
+    Glob(iotivity_test_root + '/src/tc/ns/gtest/csdk/src/btc/*Consumer*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/ns/gtest/csdk/src/stc/*Consumer*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/ns/gtest/csdk/src/helper/*Consumer*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/ns/gtest/csdk/src/helper/NSCommonHelper.cpp')
+]
+
+csdk_provider_src = [
+    Glob(iotivity_test_root + '/src/tc/ns/gtest/csdk/src/btc/*Provider*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/ns/gtest/csdk/src/stc/*Provider*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/ns/gtest/csdk/src/helper/*Provider*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/ns/gtest/csdk/src/helper/NSCommonHelper.cpp')
+]
+
+cpp_consumer_src = [
+    Glob(iotivity_test_root + '/src/tc/ns/gtest/cpp/src/btc/*Consumer*cpp'),
+    Glob(iotivity_test_root + '/src/tc/ns/gtest/cpp/src/stc/*Consumer*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/ns/gtest/cpp/src/helper/*Consumer*.cpp')
+]
+
+cpp_provider_src = [
+    Glob(iotivity_test_root + '/src/tc/ns/gtest/cpp/src/btc/*Provider*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/ns/gtest/cpp/src/stc/*Provider*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/ns/gtest/cpp/src/helper/*Provider*.cpp')
+]
+
+common_defines = Split('LINUX __LINUX__ WITH_TCP IP_ADAPTER NO_EDR_ADAPTER LE_ADAPTER ROUTING_EP WITH_BWT')
+
+common_flags = Split('-s -pthread -march=native -std=gnu++0x -Wall -fpermissive')
+
+csdk_shared_libs = Split('connectivity_abstraction octbstack coap boost_system boost_filesystem boost_thread dl expat resource_directory oc oc_logger oc_logger_core pthread glib-2.0 uuid gcov')
+
+testapp_shared_libs = csdk_shared_libs
+cpp_shared_libs = csdk_shared_libs
+
+provier_shared_libs = Split('notification_provider_wrapper notification_provider pthread')
+consumer_shared_libs = Split('notification_consumer_wrapper notification_consumer pthread')
+
+if 'tc' in test:
+
+    tc_lib_paths = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux', '.']
+    csdk_libs = csdk_shared_libs + ['gtest', 'common_util', 'tc_util', 'dl']
+    cpp_libs = cpp_shared_libs + ['gtest', 'common_util', 'tc_util', 'dl']
+
+    if 'csdk' in sdk:
+        csdk_provider_tc = env_linux.Program(source = csdk_provider_src, target = 'iotivity_ns_csdk_provider_test', 
+                        CPPPATH = iotivity_include_paths + csdk_include_paths, 
+                        LIBS = csdk_libs + provier_shared_libs, LIBPATH =  tc_lib_paths, RPATH = iotivity_lib_path, 
+                        CPPFLAGS = common_flags + common_linux_cppflags, CPPDEFINES = common_defines)
+        install_targets += [csdk_provider_tc]
+
+        csdk_consumer_tc = env_linux.Program(source = csdk_consumer_src, target = 'iotivity_ns_csdk_consumer_test', 
+                        CPPPATH = iotivity_include_paths + csdk_include_paths, 
+                        LIBS = csdk_libs + consumer_shared_libs, LIBPATH =  tc_lib_paths, RPATH = iotivity_lib_path, 
+                        CPPFLAGS = common_flags + common_linux_cppflags, CPPDEFINES = common_defines)
+        install_targets += [csdk_consumer_tc]
+
+    if 'cpp' in sdk:
+        cpp_provider_tc = env_linux.Program(source = cpp_provider_src, target = 'iotivity_ns_cpp_provider_test', 
+                    CPPPATH = iotivity_include_paths + cpp_include_paths, 
+                    LIBS = cpp_libs + provier_shared_libs, LIBPATH =  tc_lib_paths, RPATH = iotivity_lib_path, 
+                    CPPFLAGS = common_flags + common_linux_cppflags, CPPDEFINES = common_defines)
+        install_targets += [cpp_provider_tc]
+
+        cpp_consumer_tc = env_linux.Program(source = cpp_consumer_src, target = 'iotivity_ns_cpp_consumer_test', 
+                    CPPPATH = iotivity_include_paths + cpp_include_paths, 
+                    LIBS = cpp_libs + consumer_shared_libs , LIBPATH =  tc_lib_paths, RPATH = iotivity_lib_path, 
+                    CPPFLAGS = common_flags + common_linux_cppflags, CPPDEFINES = common_defines)
+        install_targets += [cpp_consumer_tc]
+
+if 'app' in test:
+    if 'all' in sdk or 'csdk' in sdk:
+        csdk_provider_interop_testapp = env_linux.Program(
+                            source = iotivity_test_root + '/src/iBtestapp/modules/ns/c_cpp/csdk/src/NSProviderApp.cpp',
+                            target = 'iotivity_ns_csdk_provider_app', 
+                            CPPPATH = iotivity_include_paths + csdk_testapp_include_paths, 
+                            LIBS = testapp_shared_libs + provier_shared_libs, 
+                            LIBPATH = iotivity_lib_path, 
+                            RPATH = iotivity_lib_path, 
+                            CPPFLAGS = common_flags + common_linux_cppflags,
+                            CPPDEFINES = common_defines)
+        install_targets += [csdk_provider_interop_testapp]
+
+        csdk_consumer_interop_testapp = env_linux.Program(
+                            source = iotivity_test_root + '/src/iBtestapp/modules/ns/c_cpp/csdk/src/NSConsumerApp.cpp',
+                            target = 'iotivity_ns_csdk_consumer_app', 
+                            CPPPATH = iotivity_include_paths + csdk_testapp_include_paths, 
+                            LIBS = testapp_shared_libs + consumer_shared_libs, 
+                            LIBPATH = iotivity_lib_path, 
+                            RPATH = iotivity_lib_path, 
+                            CPPFLAGS = common_flags + common_linux_cppflags,
+                            CPPDEFINES = common_defines)
+        install_targets += [csdk_consumer_interop_testapp]
+if 'all' in sdk or 'cpp' in sdk:
+        cpp_provider_interop_testapp = env_linux.Program(
+                            source = iotivity_test_root + '/src/iBtestapp/modules/ns/c_cpp/cpp/src/NSProviderCppApp.cpp',
+                            target = 'iotivity_ns_cpp_provider_app', 
+                            CPPPATH = iotivity_include_paths + cpp_testapp_include_paths, 
+                            LIBS = testapp_shared_libs + provier_shared_libs, 
+                            LIBPATH = iotivity_lib_path, 
+                            RPATH = iotivity_lib_path, 
+                            CPPFLAGS = common_flags + common_linux_cppflags,
+                            CPPDEFINES = common_defines)
+        install_targets += [cpp_provider_interop_testapp]
+
+        cpp_consumer_interop_testapp = env_linux.Program(
+                            source = iotivity_test_root + '/src/iBtestapp/modules/ns/c_cpp/cpp/src/NSConsumerCppApp.cpp',
+                            target = 'iotivity_ns_cpp_consumer_app', 
+                            CPPPATH = iotivity_include_paths + cpp_testapp_include_paths, 
+                            LIBS = testapp_shared_libs + consumer_shared_libs, 
+                            LIBPATH = iotivity_lib_path, 
+                            RPATH = iotivity_lib_path, 
+                            CPPFLAGS = common_flags + common_linux_cppflags,
+                            CPPDEFINES = common_defines)
+        install_targets += [cpp_consumer_interop_testapp]
+
+install = env_linux.Install(iotivity_test_root + '/' + variant_dir, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin += '0'
+    delete_bin[i] = Command(str(i), [], Delete(delete_target))
+    i = i + 1
+
+default_targets = install_targets + install + delete_bin
+
+env_linux.Default(default_targets)

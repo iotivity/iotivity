@@ -32,7 +32,7 @@ protected:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
         m_pREHelper = REHelper::getInstance();
         try
@@ -58,7 +58,7 @@ protected:
         delete m_pBuilder;
         m_pBuilder = NULL;
 
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
 
     }
 
@@ -109,9 +109,6 @@ TEST_F(REServerBuilderAPITest_stc, BuildResourcePointer_SQV_P)
     {
         SET_FAILURE("Unable to build Resource Object");
     }
-
-    delete pBuilder;
-    pBuilder = NULL;
 }
 #endif
 

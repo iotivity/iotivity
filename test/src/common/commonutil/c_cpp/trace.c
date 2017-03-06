@@ -17,6 +17,7 @@
 * limitations under the License.
 *
 ******************************************************************/
+#ifdef __COVERAGE__
 
 #include <errno.h>
 #include <stdio.h>
@@ -195,3 +196,5 @@ static void closelogfile(void)
     if (logfile)
         fclose(logfile);
 }
+
+#endif

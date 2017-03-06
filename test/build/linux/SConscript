@@ -19,141 +19,115 @@
 *
 ******************************************************************/
 '''
-##
-# Build script for Linux
-#
-##
 
 print '\n---------------Started Building Test for Linux---------------\n'
 
 Import('env_linux')
 import os
 
-
-# Initializing Home Dir
-######################################################################
-TARGET = env_linux['VARIANT_DIR']
+variant_dir = env_linux.get('VARIANT_DIR')
 ENV_HOME = '../../..'
 PROJECT_HOME = '../../'
-EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
-
-iotivity_directory = env_linux.get('IOTIVITY_DIR')
-
-print "iotivity root is --------------------------------" + iotivity_directory
-
-if env_linux.get('RELEASE'):
-    target_release = 'release'
-else:
-    target_release = 'debug'
-
-print "target build is --------------------------------" + target_release
-
 ORG_SRC = '../../../'
 ORG_SRC_HOME = ENV_HOME + ORG_SRC
 
-env_linux['ORG_SRC'] = '../../../'
-env_linux['ORG_SRC_HOME'] = ORG_SRC
-
+iotivity_root = env_linux.get('IOTIVITY_ROOT')
+iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
 target_arch = env_linux.get('TARGET_ARCH')
-ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release
-COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
-######################################################################
+release_dir = env_linux.get('RELEASE_DIR')
+test = env_linux.get('TEST')
+module = env_linux.get('MODULE')
+all_modules = env_linux.get('ALL_MODULES')
+tls_mode = env_linux.get('TLS_MODE')
 
-# Initializing Gtest Dir
-######################################################################
-GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
-GTEST_INCLUDE = GTEST + '/include'
-GTEST_BIN = GTEST + '/bin/linux'
-GTEST_LIB = GTEST_BIN + '/libgtest.a'
-######################################################################
+print 'IOTIVITY ROOT: ' + iotivity_root
+print 'IOTIVITY TEST ROOT: ' + iotivity_test_root
+print 'RELEASE DIR: ' + release_dir
+print 'MODULE: ' + str(module)
+print 'TEST: ' + str(test)
 
-# Initializing Build
-######################################################################
+env_linux.Append(IOTIVITY_LIB_PATH = iotivity_root + '/out/linux/' + target_arch + '/' + release_dir)
+
+if target_arch in ['x86']:
+    env_linux.AppendUnique(CCFLAGS = ['-m32'])
+    env_linux.AppendUnique(LINKFLAGS = ['-m32'])
+elif target_arch in ['x86_64']:
+    env_linux.AppendUnique(CCFLAGS = ['-m64'])
+    env_linux.AppendUnique(LINKFLAGS = ['-m64'])
+
+env_linux['ORG_SRC'] = iotivity_root
+env_linux['ORG_SRC_HOME'] = iotivity_root
+
 env_linux.ParseConfig("pkg-config --cflags --libs uuid")
 
-create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
-
+create_target_dir = env_linux.Command('target.out', [], Mkdir(variant_dir))
 pre_job = [create_target_dir]
-######################################################################
-
-# Define Build Targets
-######################################################################
-target_service = env_linux.get('TARGET_SERVICE')
-target_transport = env_linux.get('TARGET_TRANSPORT')
-target_test = env_linux.get('TARGET_TEST')
-es_role = env_linux.get('ES_ROLE')
 default_targets = [pre_job]
 install_targets = []
 
-print "target_service = " + target_service
-print "target_test = " + target_test
-print "es_role = " + es_role
-print "target_transport = " + target_transport
+SConscript(iotivity_test_root + '/extlibs/gtest-1.7.0/SConscript')
 
-SConscript(GTEST + '/SConscript')
+iotivity_common_includes_paths = [ 
+    iotivity_root + '/resource/csdk/logger/include', 
+    iotivity_root + '/resource/csdk/stack/include', 
+    iotivity_root + '/resource/c_common',
+    iotivity_root + '/resource/c_common/oic_malloc/include',
+    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/oc_logger/include',
+    iotivity_root + '/extlibs/tinycbor/tinycbor/src',
+    iotivity_root + '/resource/include',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/csdk/resource-directory/include',
+]
 
-print "---------------service--------------" + target_service + target_test
+iotivity_test_include_paths = [ iotivity_test_root + '/include' ]
+extlibs_include_paths = [ iotivity_test_root + '/extlibs/gtest-1.7.0/include' ]
 
-if 're' in target_service or 'all' in target_service:
-    SConscript('SConscriptRE', exports = 'env_linux')
+common_linux_cppflags = ['-DLINUX', '-D__LINUX__']
 
-if 'rc' in target_service or 'all' in target_service:
-    SConscript('SConscriptRC', exports = 'env_linux')
+cppflags = Split('-s -pthread -march=native -std=gnu++0x -Wall')
 
-if 'tm' in target_service or 'all' in target_service:
-    SConscript('SConscriptTM', exports = 'env_linux')
+if env_linux.get('COVERAGE'):
+    common_linux_cppflags.append('-finstrument-functions')
+    common_linux_cppflags.append('-ftest-coverage')
+    common_linux_cppflags.append('-fprofile-arcs')
+    #common_linux_cppflags.append('-D__COVERAGE__')
 
-if 'ca' in target_service or 'all' in target_service:
-    SConscript('SConscriptCA', exports = 'env_linux')
+env_linux.Append(COMMON_LINUX_CPPFLAGS = common_linux_cppflags)
 
-if 'rh' in target_service or 'all' in target_service:
-    SConscript('SConscriptRH', exports = 'env_linux')
+common_util = env_linux.StaticLibrary('common_util', 
+                    source = [iotivity_test_root + '/src/common/commonutil/c_cpp/CommonUtil.cpp',
+                    iotivity_test_root + '/src/common/commonutil/c_cpp/Configuration.cpp'
+                    ], 
+                    CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths, 
+                    CPPFLAGS = cppflags + common_linux_cppflags)
 
-if 'pmcpp' in target_service or 'all' in target_service:
-    SConscript('SConscriptPMCPP', exports = 'env_linux')
+if 'tc' in test:
+    tc_util = env_linux.StaticLibrary('tc_util', 
+                source = [
+                            iotivity_test_root + '/src/common/commonutil/c_cpp/trace.c',
+                            iotivity_test_root + '/src/common/testcase/gtest/IotivitySECTestMain.cpp',
+                            iotivity_test_root + '/src/common/commonutil/c_cpp/CommonTestUtil.cpp',
+                        ], 
+                CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths,
+                CPPFLAGS = cppflags + common_linux_cppflags)
 
-if 'cscpp' in target_service or 'all' in target_service:
-    SConscript('SConscriptCSCPP', exports = 'env_linux')
+    if 'ic' in module or 'cs' in module:
+        if tls_mode == 1:
+        	cppflags.append(['-D__TLS_ON__'])
+        cloud_util = env_linux.StaticLibrary('cloud_util', 
+                        source = [iotivity_test_root + '/src/common/commonutil/c_cpp/CloudCommonUtil.cpp'], 
+                        CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths,
+                        LIBS = ['curl', 'common_util'],
+                        CPPFLAGS = cppflags + common_linux_cppflags)
 
-if 'pmc' in target_service or 'all' in target_service:
-    SConscript('SConscriptPMC', exports = 'env_linux')
+SConscript('SConscriptSK', exports = 'env_linux')
+for temp in all_modules:
+    if temp in module:
+        SConscript('SConscript' + temp.upper(), exports = 'env_linux')
 
-if 'csc' in target_service or 'all' in target_service:
-    SConscript('SConscriptCSC', exports = 'env_linux')
 
-if 'rd' in target_service or 'all' in target_service:
-    SConscript('SConscriptRD', exports = 'env_linux')
-
-if 'phy' in target_service or 'all' in target_service:
-    SConscript('SConscriptPHY', exports = 'env_linux')
-
-if 'sm' in target_service or 'all' in target_service:
-    SConscript('SConscriptSM', exports = 'env_linux')
-
-if 'ricpp' in target_service or 'all' in target_service:
-    SConscript('SConscriptRICPP', exports = 'env_linux')
-    SConscript('SConscriptRIApp', exports = 'env_linux')
-
-if 'ricsdk' in target_service or 'all' in target_service:
-    SConscript('SConscriptRICSDK', exports = 'env_linux')
-    SConscript('SConscriptRIApp', exports = 'env_linux')
-
-if 'nscsdk' in target_service or 'all' in target_service:
-    SConscript('SConscriptNSCSDK', exports = 'env_linux')
-
-if 'nscpp' in target_service or 'all' in target_service:
-    SConscript('SConscriptNSCPP', exports = 'env_linux')
-
-if 'es' in target_service or 'all' in target_service:
-    SConscript('SConscriptES', exports = 'env_linux')
-
-if 'cloud' in target_service or 'all' in target_service:
-    SConscript('SConscriptIC', exports = 'env_linux')
-
-if 'iut' in target_service or 'all' in target_service:
-    SConscript('SConscriptIUT', exports = 'env_linux')
-
-install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
+install = env_linux.Install(iotivity_test_root + '/' + variant_dir, install_targets)
 
 delete_bin = []
 i = 0
@@ -162,6 +136,12 @@ for delete_target in install_targets:
     delete_bin[i] = Command(str(i), [], Delete(delete_target))
     i = i + 1
 
-default_targets += install_targets + install
+default_targets += install_targets + install + common_util
+
+if 'all' in test or 'tc' in test:
+    default_targets += tc_util
+
+    if 'ic' in module or 'cs' in module:
+        default_targets += cloud_util
 
 env_linux.Default(default_targets)

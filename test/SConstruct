@@ -32,28 +32,36 @@ print '---------------Started Building IotivitySecTest---------------'
 # Load common build config
 SConscript('build/SConscript')
 SConscript('build/configuration.scons')
-SConscript('extlibs/SConstruct')
 
 Import('env')
 
-
 target_os = env.get('TARGET_OS')
 target_arch = env.get('TARGET_ARCH')
-service = env.get('TARGET_SERVICE')
-tc_type = env.get('TARGET_TEST')
+module = env.get('MODULE')
+test = env.get('TEST')
 target_transport = ARGUMENTS.get('TARGET_TRANSPORT')
 shield = ARGUMENTS.get('SHIELD')
+verbose = ARGUMENTS.get('VERBOSE')
 
-print '---------------Target OS : ' + target_os + '---------------'
-print '---------------Target Architecture : ' + target_arch + '---------------'
-print '---------------Target Service : ' + service + '---------------'
-print '---------------Target TC : ' + tc_type + '---------------'
+print 'TARGET OS : ' + str(target_os)
+print 'TARGET ARCH : ' + str(target_arch)
+print 'MODULE : ' + str(module)
+print 'TEST : ' + str(test)
+
+if not verbose:
+    env['CCCOMSTR'] = "Compiling $TARGET"
+    env['SHCCCOMSTR'] = "Compiling $TARGET"
+    env['CXXCOMSTR'] = "Compiling $TARGET"
+    env['SHCXXCOMSTR'] = "Compiling $TARGET"
+    env['LINKCOMSTR'] = "Linking $TARGET"
+    env['SHLINKCOMSTR'] = "Linking $TARGET"
+    env['ARCOMSTR'] = "Archiving $TARGET"
+    env['RANLIBCOMSTR'] = "Indexing Archive $TARGET"
 
 env_linux = env.Clone()
 env_tizen = env.Clone()
 env_android = env.Clone()
 env_windows = env.Clone()
-
 
 
 def build_linux():

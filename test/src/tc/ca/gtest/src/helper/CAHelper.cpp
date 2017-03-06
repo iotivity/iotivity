@@ -14,22 +14,24 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ * limitations under the License.07
  *
  ******************************************************************/
 
 #include "CAHelper.h"
 
+bool m_multicastRequest = false;
 std::set< std::string > CAHelper::setIp;
 std::map< std::string, std::map< int, std::map< int, int > > > CAHelper::s_mapReceiveCount;
 int CAHelper::s_networkCount;
-std::string CAHelper::s_simulatorIp;
+char CAHelper::s_simulatorIp[CA_MACADDR_SIZE];
 int CAHelper::s_simulatorPort;
 int CAHelper::s_simulatorSecurePort;
+int CAHelper::s_isHostAddressKnown;
 bool CAHelper::s_bufferEmpty;
 #ifdef __WITH_DTLS__
-int CAHelper::s_identityLegth;
-int CAHelper::s_pskLength;
+size_t CAHelper::s_identityLegth;
+size_t CAHelper::s_pskLength;
 #endif
 TestCaseInfo CAHelper::s_tcInfo;
 #ifdef TCP_ADAPTER
@@ -105,176 +107,6 @@ void CAHelper::clearBuffer()
     IOTIVITYTEST_LOG(DEBUG, "[clearBuffer] OUT");
 }
 
-int CAHelper::readConfigurationFile()
-{
-    FILE *fp;
-    int sz;
-    int i;
-    int j;
-    int cnt;
-    char buffer[MAX_BUF_LEN + 1];
-    char *word;
-    char words[10][3][50];
-
-    char networkTypesName[][20] =
-    { "CA_IP", "CA_LE", "CA_EDR", "CA_TCP" };
-    int numberOfShifts[] =
-    { 0, 1, 2, 4 };
-
-    m_availableNetwork = 0;
-    m_unAvailableNetwork = 0;
-
-    fp = fopen(CONFIG, "r");
-    if (fp == NULL)
-    {
-        IOTIVITYTEST_LOG(ERROR, "Failed to read the config.ini file");
-        return -1;
-    }
-
-    cnt = 0;
-
-    while (fgets(buffer, MAX_BUF_LEN, fp))
-    {
-        word = strtok(buffer, " \n");
-        strcpy(words[cnt][0], word);
-
-        for (i = 1; i < 3; i++)
-        {
-            word = strtok(NULL, " \n");
-
-            if (!word)
-            {
-                break;
-            }
-
-            strcpy(words[cnt][i], word);
-        }
-
-        if (i < 3)
-        {
-            continue;
-        }
-
-        cnt++;
-    }
-
-    fclose(fp);
-
-    std::string ips;
-
-    for (i = 0; i < cnt; i++)
-    {
-        if (!strcmp(words[i][0], "IP"))
-        {
-            s_simulatorIp = string(words[i][2]);
-        }
-        else if (!strcmp(words[i][0], "OTHER_IP_LIST"))
-        {
-            ips = string(words[i][2]);
-        }
-        else if (!strcmp(words[i][0], "PORT"))
-        {
-            s_simulatorPort = atoi(words[i][2]);
-        }
-        else if (!strcmp(words[i][0], "SECURE_PORT"))
-        {
-            s_simulatorSecurePort = atoi(words[i][2]);
-        }
-    }
-
-    for (i = 0; i < 4; i++)
-    {
-        for (j = 0; j < cnt; j++)
-        {
-            if (!strcmp(words[j][0], networkTypesName[i]))
-            {
-                int bit = atoi(words[j][2]);
-
-                if (bit)
-                {
-                    m_availableNetwork |= (1 << numberOfShifts[i]);
-                }
-
-                break;
-            }
-        }
-    }
-
-    std::string delimiter = " ";
-    size_t pos = 0;
-
-    setIp.clear();
-    setIp.insert(s_simulatorIp);
-
-    std::stringstream stream(ips);
-    std::string ip;
-
-    while (getline(stream, ip, ' '))
-    {
-        setIp.insert(ip);
-    }
-
-    s_networkCount = setIp.size();
-
-    printf("s_simulatorSecurePort = %d %d\n", s_simulatorPort, s_simulatorSecurePort);
-
-    if (m_availableNetwork == CA_ADAPTER_IP)
-    {
-        m_simulatorUri = COAP_PREFIX + s_simulatorIp;
-        m_simulatorSecureUri = COAPS_PREFIX + s_simulatorIp;
-        m_simulatorUri += ":";
-        m_simulatorSecureUri += ":";
-        m_simulatorUri += getNumber(s_simulatorPort);
-        m_simulatorSecureUri += getNumber(s_simulatorSecurePort);
-        m_simulatorUri += "/";
-        m_simulatorSecureUri += "/";
-    }
-    else if (m_availableNetwork == CA_ADAPTER_GATT_BTLE
-            || m_availableNetwork == CA_ADAPTER_RFCOMM_BTEDR)
-    {
-        m_simulatorUri = COAP_PREFIX + s_simulatorIp;
-        m_simulatorSecureUri = COAPS_PREFIX + s_simulatorIp;
-        m_simulatorUri += "/";
-        m_simulatorSecureUri += "/";
-    }
-#ifdef TCP_ADAPTER
-    else if(m_availableNetwork == CA_ADAPTER_TCP)
-    {
-        m_simulatorUri = COAP_TCP_PREFIX + s_simulatorIp;
-        m_simulatorSecureUri = COAPS_TCP_PREFIX + s_simulatorIp;
-        m_simulatorUri += ":";
-        m_simulatorSecureUri += ":";
-        m_simulatorUri += getNumber(s_simulatorPort);
-        m_simulatorSecureUri += getNumber(s_simulatorSecurePort);
-        m_simulatorUri += "/";
-        m_simulatorSecureUri += "/";
-    }
-#endif
-
-    IOTIVITYTEST_LOG(DEBUG, "simulatorIP: %s\n", m_simulatorUri.c_str());
-    m_simulatorResAckUri = m_simulatorUri + SIM_RES_ACK;
-    m_simulatorReqAckUri = m_simulatorUri + SIM_REQ_ACK;
-    m_simulatorConfigUri = m_simulatorUri + SIM_REQ_CONFIG;
-
-    m_simulatorSecureReqAckUri = m_simulatorSecureUri + SIM_REQ_ACK;
-
-    IOTIVITYTEST_LOG(INFO, "Config URI: %s", m_simulatorConfigUri.c_str());
-    IOTIVITYTEST_LOG(INFO, "ReqAck URI: %s", m_simulatorReqAckUri.c_str());
-    IOTIVITYTEST_LOG(INFO, "ResAck URI: %s", m_simulatorResAckUri.c_str());
-    IOTIVITYTEST_LOG(INFO, "m_simulatorSecureReqAckUri: %s", m_simulatorSecureReqAckUri.c_str());
-}
-
-bool CAHelper::setConfigFile()
-{
-    IOTIVITYTEST_LOG(DEBUG, "[setConfigFile] IN");
-
-    readConfigurationFile();
-
-    IOTIVITYTEST_LOG(INFO, "[setConfigFile] OUT");
-
-    return true;
-}
-
 #ifdef __TIZEN__
 void GMainLoopThread()
 {
@@ -285,6 +117,22 @@ void GMainLoopThread()
 bool CAHelper::initialize()
 {
     IOTIVITYTEST_LOG(INFO, "[initialize] IN");
+
+#ifdef __IP__
+    m_availableNetwork = CA_ADAPTER_IP;
+#elif __BT__
+    m_availableNetwork = CA_ADAPTER_BT;
+#elif __BLE__
+    m_availableNetwork = CA_ADAPTER_BLE;
+#elif __TCP__
+    m_availableNetwork = CA_ADAPTER_TCP;
+#else
+    m_availableNetwork = 0;
+#endif
+
+    m_unAvailableNetwork = 0;
+    
+    setIp.clear();
 
 #ifdef __TIZEN__
     g_mainloop = g_main_loop_new(NULL, FALSE);
@@ -302,7 +150,7 @@ bool CAHelper::initialize()
     }
 #endif
 
-    m_result = CAInitialize();
+    m_result = CAInitialize(m_availableNetwork);
 
     if (m_result != CA_STATUS_OK)
     {
@@ -327,13 +175,26 @@ bool CAHelper::selectNetwork(int interestedNetwork, CAResult_t expectedResult)
 {
     IOTIVITYTEST_LOG(DEBUG, "[selectNetwork] IN");
 
-    m_result = CASelectNetwork(interestedNetwork);
+    m_result = CASelectNetwork((CATransportAdapter_t)interestedNetwork);
 
     if (m_result != expectedResult)
     {
         getFailureMessage("CASelectNetwork", expectedResult);
-
         return false;
+    }
+    else
+    {
+#ifdef TCP_ADAPTER
+        if (interestedNetwork == CA_ADAPTER_TCP)
+        {
+            m_result = CASelectNetwork(CA_ADAPTER_IP);
+            if (m_result != CA_STATUS_OK)
+            {
+                getFailureMessage("IP Network selection", expectedResult);
+                return false;
+            }
+        }
+#endif
     }
 
     IOTIVITYTEST_LOG(DEBUG, "[selectNetwork] OUT");
@@ -350,7 +211,7 @@ bool CAHelper::unselectNetwork(int interestedNetwork, CAResult_t expectedResult)
 {
     IOTIVITYTEST_LOG(DEBUG, "[unselectNetwork] IN");
 
-    m_result = CAUnSelectNetwork(interestedNetwork);
+    m_result = CAUnSelectNetwork((CATransportAdapter_t)interestedNetwork);
 
     if (m_result != expectedResult)
     {
@@ -405,47 +266,42 @@ bool CAHelper::startListeningServer(CAResult_t expectedResult)
     return true;
 }
 
-bool CAHelper::createEndpoint(char* uri)
+bool CAHelper::createEndpoint(bool isMulticast, bool isSecure)
 {
-    return createEndpoint(uri, CA_STATUS_OK);
+    return createEndpoint(isMulticast, isSecure, CA_STATUS_OK);
 }
 
-bool CAHelper::createEndpoint(char* uri, CAResult_t expectedResult)
+bool CAHelper::createEndpoint(bool isMulticast, bool isSecure, CAResult_t expectedResult)
 {
     IOTIVITYTEST_LOG(DEBUG, "[createEndpoint] IN");
 
     m_endpoint = NULL;
-    addressSet_t address =
-    { };
+    char address[CA_MACADDR_SIZE] = "";
+    int port;
 
     CATransportFlags_t transportFlags = CA_IPV4;
-
-    IOTIVITYTEST_LOG(DEBUG, "[createEndpoint] URI %s", uri);
-    if (!parsingCoapUri(uri, &address, &transportFlags))
-    {
-        return false;
-    }
 
     if(m_availableNetwork == CA_ADAPTER_RFCOMM_BTEDR || m_availableNetwork == CA_ADAPTER_GATT_BTLE)
     {
         transportFlags = CA_DEFAULT_FLAGS;
     }
 
-    IOTIVITYTEST_LOG(DEBUG, "transportFlags: %d", transportFlags);
-
-    IOTIVITYTEST_LOG(DEBUG, "[createEndpoint function] Address: %s , port: %d  \n",
-            address.ipAddress, address.port);
-    m_result = CACreateEndpoint(transportFlags, m_availableNetwork, (const char*) address.ipAddress,
-            address.port, &m_endpoint);
-    if (m_result != expectedResult)
+    if(isSecure)
     {
-        getFailureMessage("CACreateEndpoint", expectedResult);
-        return false;
+        transportFlags |= CA_SECURE;
+        port = s_simulatorSecurePort;
+    }
+    else
+    {
+        port = s_simulatorPort;
     }
 
-    IOTIVITYTEST_LOG(DEBUG, "[createEndpoint] OUT");
+    if(!isMulticast)
+    {
+        strcpy(address, s_simulatorIp);
+    }
 
-    return true;
+    return createEndpoint(transportFlags, address, port);
 }
 
 bool CAHelper::createEndpoint(CATransportFlags_t transportFlags, char* address, int port)
@@ -455,8 +311,19 @@ bool CAHelper::createEndpoint(CATransportFlags_t transportFlags, char* address, 
     IOTIVITYTEST_LOG(DEBUG, "[createEndpoint] IN");
 
     m_endpoint = NULL;
+    
+    CATransportAdapter_t transportAdapter = m_availableNetwork;
+    if (m_multicastRequest)
+    {
+#ifdef TCP_ADAPTER
+        if(m_availableNetwork == CA_ADAPTER_TCP)
+        {
+            transportAdapter = CA_ADAPTER_IP;
+        }
+#endif
+    }
 
-    m_result = CACreateEndpoint(transportFlags, m_availableNetwork, address, port, &m_endpoint);
+    m_result = CACreateEndpoint(transportFlags, transportAdapter, address, port, &m_endpoint);
     if (m_result != expectedResult)
     {
         getFailureMessage("CACreateEndpoint", expectedResult);
@@ -487,8 +354,6 @@ bool CAHelper::createEndpoint(CATransportFlags_t transportFlags, CATransportAdap
 
 bool CAHelper::destroyEndpoint()
 {
-    int length = 0;
-
     if (m_endpoint != NULL)
     {
         CADestroyEndpoint (m_endpoint);
@@ -542,13 +407,7 @@ bool CAHelper::initNetwork()
 bool CAHelper::initNetwork(bool select)
 {
     IOTIVITYTEST_LOG(DEBUG, "[initNetwork] IN");
-
-    if (!setConfigFile())
-    {
-        IOTIVITYTEST_LOG(DEBUG, "Unable to read configuration file");
-        return false;
-    }
-
+    
     if (!initialize())
     {
         IOTIVITYTEST_LOG(DEBUG, "CAInitialize failed. return value is %d", m_result);
@@ -559,17 +418,13 @@ bool CAHelper::initNetwork(bool select)
 
     if (select)
     {
-        m_result = CASelectNetwork(m_availableNetwork);
-
-        if (m_result != CA_STATUS_OK)
+        if (!selectNetwork())
         {
             IOTIVITYTEST_LOG(DEBUG, "CASelectNetwork failed. return value is %d", m_result);
             CATerminate();
             return false;
         }
     }
-
-    showNetworkInfo();
 
     IOTIVITYTEST_LOG(DEBUG, "[initNetwork] OUT");
 
@@ -654,7 +509,7 @@ bool CAHelper::getNetworkInfo()
 
         CAResult_t res = CAGetNetworkInformation(&tempInfo, &tempSize);
 
-        for (int i = 0; i < tempSize; i++)
+        for (uint32_t i = 0; i < tempSize; i++)
         {
             IOTIVITYTEST_LOG(DEBUG, "port: %d flags = %d", tempInfo[i].port, tempInfo[i].flags);
         }
@@ -673,7 +528,7 @@ bool CAHelper::getNetworkInfo()
                 return false;
             }
 
-            for (int i = 0; i < tempSize; i++)
+            for (uint32_t i = 0; i < tempSize; i++)
             {
                 IOTIVITYTEST_LOG(DEBUG, "port: %d, flags: %d ", tempInfo[i].port,
                         tempInfo[i].flags);
@@ -686,48 +541,10 @@ bool CAHelper::getNetworkInfo()
     if (m_availableNetwork == CA_ADAPTER_TCP)
     {
         IOTIVITYTEST_LOG(DEBUG, "port: %d, flags: CA_IPV4 ",
-                CAGetAssignedPortNumber(m_availableNetwork, CA_IPV4));
+                CAGetAssignedPortNumber((CATransportAdapter_t)m_availableNetwork, CA_IPV4));
     }
 
     IOTIVITYTEST_LOG(DEBUG, "[getNetworkInfo] OUT");
-
-    return true;
-}
-
-bool CAHelper::showNetworkInfo()
-{
-    IOTIVITYTEST_LOG(DEBUG, "[printNetworkInfo] IN");
-
-    IOTIVITYTEST_LOG(DEBUG, "is server: %d;", caglobals.server);
-    IOTIVITYTEST_LOG(DEBUG, "is client: %d;", caglobals.client);
-
-    IOTIVITYTEST_LOG(DEBUG, "Unsecured Port: %d;",
-            CAGetAssignedPortNumber(m_availableNetwork, CA_IPV4));
-    IOTIVITYTEST_LOG(DEBUG, "Secured Port: %d;", m_availableNetwork, CA_SECURE | CA_IPV4);
-
-    IOTIVITYTEST_LOG(DEBUG, "Unsecured IPv6 Port: %d;",
-            CAGetAssignedPortNumber(m_availableNetwork, CA_IPV6));
-    IOTIVITYTEST_LOG(DEBUG, "Secured IPv6 Port: %d;", m_availableNetwork, CA_SECURE | CA_IPV6);
-
-    if (m_availableNetwork != CA_ADAPTER_TCP)
-    {
-        CAEndpoint_t *tempInfo = NULL;
-        uint32_t tempSize = 0;
-
-        CAResult_t res = CAGetNetworkInformation(&tempInfo, &tempSize);
-        if (CA_STATUS_OK != res || NULL == tempInfo || 0 >= tempSize)
-        {
-            IOTIVITYTEST_LOG(DEBUG, "Network not connected\n");
-            free(tempInfo);
-            return;
-        }
-
-        free(tempInfo);
-    }
-
-    IOTIVITYTEST_LOG(DEBUG, "##############################################################");
-
-    IOTIVITYTEST_LOG(DEBUG, "[printNetworkInfo] OUT");
 
     return true;
 }
@@ -789,12 +606,12 @@ void CAHelper::responseHandler(const CAEndpoint_t* endpoint, const CAResponseInf
     if (s_tcInfo.validationMethod == MESSAGE_PAYLOAD)
     {
         int ret = compareAndIncrement(responseInfo->info.resourceUri, SIM_REQ_ACK,
-                responseInfo->info.payload, REC_ACK);
+                (const char*)responseInfo->info.payload, REC_ACK);
 
         if (!ret)
         {
             ret = compareAndIncrement(responseInfo->info.resourceUri, SIM_REQ_CONFIG,
-                    responseInfo->info.payload, REC_NOR);
+                    (const char*)responseInfo->info.payload, REC_NOR);
         }
 
         if (!ret)
@@ -829,7 +646,7 @@ void CAHelper::responseHandlerSecond(const CAEndpoint_t* endpoint,
         return;
     }
 
-    compareAndIncrement(responseInfo->info.resourceUri, SIM_REQ_CONFIG, responseInfo->info.payload,
+    compareAndIncrement(responseInfo->info.resourceUri, SIM_REQ_CONFIG, (const char*)responseInfo->info.payload,
             REC_SECOND_NOR);
 
     IOTIVITYTEST_LOG(DEBUG, "[responseHandlerSecond] OUT");
@@ -898,10 +715,22 @@ bool CAHelper::checkRequestResponseHandler(const CAEndpoint_t* endpoint,
         return false;
     }
 
-    if (CAHelper::isHostUnknown(endpoint))
+    if (s_isHostAddressKnown)
     {
-        return false;
+        if (CAHelper::isHostUnknown(endpoint))
+        {
+            return false;
+        }
     }
+    else
+    {
+        if (!CAHelper::parseAddress(endpoint, requestInfo->info))
+        {
+            return false;
+        }
+    }
+
+    printf("here %d\n", __LINE__);
 
     if (!CheckRequestInfoAttributes(requestInfo))
     {
@@ -923,9 +752,19 @@ bool CAHelper::checkRequestResponseHandler(const CAEndpoint_t* endpoint,
         return false;
     }
 
-    if (CAHelper::isHostUnknown(endpoint))
+    if (s_isHostAddressKnown)
     {
-        return false;
+        if (CAHelper::isHostUnknown(endpoint))
+        {
+            return false;
+        }
+    }
+    else
+    {
+        if (!CAHelper::parseAddress(endpoint, responseInfo->info))
+        {
+            return false;
+        }
     }
 
     if (!CheckResponseInfoAttributes(responseInfo))
@@ -934,6 +773,57 @@ bool CAHelper::checkRequestResponseHandler(const CAEndpoint_t* endpoint,
     }
 
     IOTIVITYTEST_LOG(DEBUG, "[checkRequestResponseHandler] OUT");
+
+    return true;
+}
+
+bool CAHelper::parseAddress(const CAEndpoint_t* endpoint, const CAInfo_t info)
+{
+    int i;
+    int j;
+    int lastPosition;
+    char key[20];
+    char value[20];
+
+    setIp.insert(endpoint->addr);
+    strcpy(s_simulatorIp, endpoint->addr);
+    //printf ("payload %s\n", info.payload);
+
+    for(i = lastPosition = PAYLOAD_SIZE_NORMAL; i <= info.payloadSize; i++)
+    {
+        if (info.payload[i] == ':')
+        {
+            for(j = lastPosition; j < i; j++)
+            {
+                key[j-lastPosition] = info.payload[j];
+            }
+            key[j-lastPosition] = 0;
+            lastPosition = i+1;
+        }
+        if (!info.payload[i] || info.payload[i] == ',')
+        {
+            for(j = lastPosition; j < i; j++)
+            {
+                value[j-lastPosition] = info.payload[j];
+            }
+            value[j-lastPosition] = 0;
+            lastPosition = i+1;
+
+            if (!strcmp(key, "port"))
+            {
+                s_simulatorPort = atoi(value);
+            }
+            else if (!strcmp(key, "secure-port"))
+            {
+                s_simulatorSecurePort = atoi(value);
+            }
+        }
+    }
+
+    printf("port %d\n", s_simulatorPort);
+    printf("secure-port %d\n", s_simulatorSecurePort);
+
+    s_networkCount ++;
 
     return true;
 }
@@ -1053,36 +943,33 @@ bool CAHelper::CheckRequestInfoAttributes(const CARequestInfo_t* requestInfo)
     return true;
 }
 
-bool CAHelper::sendSecuredRequest(CAMethod_t method, CAMessageType_t type, int totalMessages)
+bool CAHelper::sendSecuredRequest(CAMethod_t method, CAMessageType_t type)
 {
-    return sendRequest((char*) m_simulatorSecureReqAckUri.c_str(), s_tcInfo.identifier, method,
-            type, totalMessages);
+    return sendRequest((char*) SIM_REQ_ACK, s_tcInfo.identifier, method,
+            type, true, CA_STATUS_OK);
 }
 
-bool CAHelper::sendSecuredRequest(char* payload, CAMethod_t method, CAMessageType_t type,
-        int totalMessages)
+bool CAHelper::sendSecuredRequest(char* payload, CAMethod_t method, CAMessageType_t type)
 {
-    return sendRequest((char*) m_simulatorSecureReqAckUri.c_str(), payload, method, type,
-            totalMessages);
+    return sendRequest((char*) SIM_REQ_ACK, payload, method, type,
+            true, CA_STATUS_OK);
 }
 
-bool CAHelper::sendRequest(CAMethod_t method, CAMessageType_t type, int totalMessages)
+bool CAHelper::sendRequest(CAMethod_t method, CAMessageType_t type)
 {
-    return sendRequest((char*) m_simulatorReqAckUri.c_str(), s_tcInfo.identifier, method, type,
-            totalMessages);
+    return sendRequest((char*) SIM_REQ_ACK, s_tcInfo.identifier, method, type);
 }
 
-bool CAHelper::sendRequest(char* uri, char* payload, CAMethod_t method, CAMessageType_t type,
-        int totalMessages)
+bool CAHelper::sendRequest(char* uri, char* payload, CAMethod_t method, CAMessageType_t type)
 {
-    return sendRequest(uri, payload, method, type, totalMessages, CA_STATUS_OK);
+    return sendRequest(uri, payload, method, type, false, CA_STATUS_OK);
 }
 
-bool CAHelper::sendRequest(char* uri, char* hidden_payload, CAMethod_t method, CAMessageType_t type,
-        int totalMessages, CAResult_t expectedResult)
+bool CAHelper::sendRequest(char* uri, char* hidden_payload, CAMethod_t method, CAMessageType_t type, bool isSecure, CAResult_t expectedResult)
 {
     IOTIVITYTEST_LOG(DEBUG, "[sendRequest] IN");
 
+    int totalMessage;
     s_tcInfo.caMethod = method;
     s_tcInfo.messageType = type;
 
@@ -1091,34 +978,36 @@ bool CAHelper::sendRequest(char* uri, char* hidden_payload, CAMethod_t method, C
         return false;
     }
 
-    if (!createEndpoint(uri))
+    if (!createEndpoint(m_multicastRequest, isSecure))
     {
         return false;
     }
 
-    char resourceURI[RESOURCE_URI_LENGTH + 1] =
-    { 0 };
-    char payload[MAX_BUF_LEN] =
-    { 0 };
-    getResourceUri(uri, resourceURI, RESOURCE_URI_LENGTH);
+    char resourceUri[RESOURCE_URI_LENGTH + 1];
+    char payload[MAX_BUF_LEN];
+    strcpy(resourceUri, uri);
 
     if (strstr(uri, SIM_REQ_CONFIG) != NULL)
     {
         strcpy(payload, hidden_payload);
+        totalMessage = 1;
         IOTIVITYTEST_LOG(DEBUG, "payload type configure");
-        IOTIVITYTEST_LOG(DEBUG, "payload: %s", payload);
+        //IOTIVITYTEST_LOG(DEBUG, "payload: %s", payload);
     }
     else
     {
         strcpy(payload, s_tcInfo.identifier);
+        totalMessage = TOTAL_MESSAGE;
         IOTIVITYTEST_LOG(DEBUG, "payload type not configure");
     }
 
-    CAInfo_t requestData =
-    { 0 };
+    CAInfo_t requestData;
     requestData.token = m_token;
     requestData.tokenLength = CA_MAX_TOKEN_LEN;
-    requestData.resourceUri = (CAURI_t) resourceURI;
+    requestData.resourceUri = (CAURI_t) resourceUri;
+    requestData.payloadFormat = CA_FORMAT_UNDEFINED;
+    requestData.acceptFormat = CA_FORMAT_UNDEFINED;
+
     int payloadSize = 0;
 
     if (hidden_payload == NULL)
@@ -1139,13 +1028,12 @@ bool CAHelper::sendRequest(char* uri, char* hidden_payload, CAMethod_t method, C
     requestData.dataType = CA_REQUEST_DATA;
     getOptionData(&requestData);
 
-    CARequestInfo_t requestInfo =
-    { 0 };
+    CARequestInfo_t requestInfo;
     requestInfo.method = method;
     requestInfo.info = requestData;
-    requestInfo.isMulticast = false;
+    requestInfo.isMulticast = m_multicastRequest;
 
-    for (int messageCount = 0; messageCount < totalMessages; messageCount++)
+    for (int messageCount = 0; messageCount < totalMessage; messageCount++)
     {
         IOTIVITYTEST_LOG(DEBUG, "Calling CASendRequest request. Attempt No: %d", messageCount + 1);
 
@@ -1171,112 +1059,9 @@ bool CAHelper::sendRequest(char* uri, char* hidden_payload, CAMethod_t method, C
     return true;
 }
 
-bool CAHelper::sendRequestToAll(CAMethod_t method, CAMessageType_t type, int totalMessages)
+bool CAHelper::setMulticastRequest(bool multicastRequest)
 {
-    return sendRequestToAll((char*) m_simulatorReqAckUri.c_str(), s_tcInfo.identifier, method, type,
-            totalMessages);
-}
-
-bool CAHelper::sendRequestToAll(char* uri, char* payload, CAMethod_t method, CAMessageType_t type,
-        int totalMessages)
-{
-    return sendRequestToAll(uri, payload, method, type, totalMessages, CA_STATUS_OK);
-}
-
-bool CAHelper::sendRequestToAll(char* uri, char* hidden_payload, CAMethod_t method,
-        CAMessageType_t type, int totalMessages, CAResult_t expectedResult)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[sendRequestToAll] IN");
-
-    s_tcInfo.caMethod = method;
-    s_tcInfo.messageType = type;
-
-    if (!generateToken())
-    {
-        return false;
-    }
-
-    m_endpoint = NULL;
-    CATransportFlags_t transportFlags = CA_IPV4;
-    const char* address = "";
-    uint16_t port = 0;
-
-    if(m_availableNetwork == CA_ADAPTER_RFCOMM_BTEDR || m_availableNetwork == CA_ADAPTER_GATT_BTLE)
-    {
-        transportFlags = CA_DEFAULT_FLAGS;
-    }
-
-    m_result = CACreateEndpoint(transportFlags, m_availableNetwork, (const char*) address, port,
-            &m_endpoint);
-    if (m_result != CA_STATUS_OK)
-    {
-        getFailureMessage("CACreateEndpoint", CA_STATUS_OK);
-        return false;
-    }
-
-    char resourceURI[RESOURCE_URI_LENGTH + 1] =
-    { 0 };
-    char payload[MAX_BUF_LEN] =
-    { 0 };
-
-    getResourceUri(uri, resourceURI, RESOURCE_URI_LENGTH);
-    strcpy(payload, s_tcInfo.identifier);
-
-    int payloadSize = 0;
-    CAInfo_t requestData =
-    { 0 };
-    requestData.token = m_token;
-    requestData.tokenLength = CA_MAX_TOKEN_LEN;
-    requestData.resourceUri = (CAURI_t) resourceURI;
-
-    if (hidden_payload == NULL)
-    {
-        requestData.payload = NULL;
-        requestData.payloadSize = 0;
-    }
-    else
-    {
-        payloadSize = strlen(payload);
-        requestData.payload = (CAPayload_t) malloc(payloadSize);
-        requestData.payloadSize = payloadSize;
-        memcpy(requestData.payload, payload, payloadSize);
-    }
-
-    requestData.type = type;
-    requestData.resourceUri = (CAURI_t) resourceURI;
-
-    getOptionData(&requestData);
-
-    CARequestInfo_t requestInfo =
-    { 0 };
-    requestInfo.method = method;
-    requestInfo.info = requestData;
-    requestInfo.isMulticast = true;
-
-    for (int messageCount = 0; messageCount < totalMessages; messageCount++)
-    {
-        IOTIVITYTEST_LOG(DEBUG, "Calling CASendRequestToAll request. Attempt No: %d",
-                messageCount + 1);
-
-        m_result = CASendRequest(m_endpoint, &requestInfo);
-
-        if (m_result != expectedResult)
-        {
-            getFailureMessage("CASendRequestToAll", expectedResult);
-            return false;
-        }
-    }
-
-    destroyToken();
-
-    if (requestData.payload)
-    {
-        free(requestData.payload);
-    }
-
-    IOTIVITYTEST_LOG(DEBUG, "[sendRequestToAll] OUT");
-
-    return true;
+    m_multicastRequest = multicastRequest;
 }
 
 bool CAHelper::sendConfigurationRequest(SimulatorTask taskType, MessageCommandType msgType,
@@ -1333,11 +1118,11 @@ bool CAHelper::sendConfigurationRequest(SimulatorTask taskType, MessageCommandTy
     sprintf(buffer, "%04d", timeInterval);
     payload += buffer;
 
-    sprintf(buffer, "%04d", strlen(s_tcInfo.identifier));
+    sprintf(buffer, "%04d", (int)strlen(s_tcInfo.identifier));
     payload += buffer;
 
     payload += s_tcInfo.identifier;
-    IOTIVITYTEST_LOG(DEBUG, "Random String in structure: %s", s_tcInfo.identifier);
+    //IOTIVITYTEST_LOG(DEBUG, "Random String in structure: %s", s_tcInfo.identifier);
 
     IOTIVITYTEST_LOG(DEBUG, "[sendConfigurationRequest] OUT");
 #endif
@@ -1356,57 +1141,54 @@ bool CAHelper::sendConfigurationRequest(SimulatorTask taskType, MessageCommandTy
     free(buffer);
 
     payload.append(s_tcInfo.identifier);
-    IOTIVITYTEST_LOG(DEBUG, "Random String in structure: %s", s_tcInfo.identifier);
+    //IOTIVITYTEST_LOG(DEBUG, "Random String in structure: %s", s_tcInfo.identifier);
 #endif
 
-    return sendRequest((char*) m_simulatorConfigUri.c_str(), (char*) payload.c_str(), method,
-            CA_MSG_NONCONFIRM, 1);
+    return sendRequest(SIM_REQ_CONFIG, (char*) payload.c_str(), method,
+            CA_MSG_NONCONFIRM);
 }
 
-bool CAHelper::sendResponse(CAResponseResult_t responseResult, CAMessageType_t type,
-        int totalMessages)
+bool CAHelper::sendResponse(CAResponseResult_t responseResult, CAMessageType_t type)
 {
-    return sendResponse((char*) m_simulatorResAckUri.c_str(), s_tcInfo.identifier, responseResult,
-            type, totalMessages);
+    return sendResponse((char*) SIM_RES_ACK, s_tcInfo.identifier, responseResult, type);
 }
 
 bool CAHelper::sendResponse(char* uri, char* payload, CAResponseResult_t responseResult,
-        CAMessageType_t type, int totalMessages)
+        CAMessageType_t type)
 {
-    return sendResponse(uri, payload, responseResult, type, totalMessages, CA_STATUS_OK);
+    return sendResponse(uri, payload, responseResult, type, CA_STATUS_OK);
 }
 
 bool CAHelper::sendResponse(char* uri, char* hidden_payload, CAResponseResult_t responseResult,
-        CAMessageType_t type, int totalMessages, CAResult_t expectedResult)
+        CAMessageType_t type, CAResult_t expectedResult)
 {
     IOTIVITYTEST_LOG(DEBUG, "[sendResponse] IN");
 
     s_tcInfo.messageType = type;
-
-    if (!createEndpoint(uri))
-    {
-        return false;
-    }
 
     if (!generateToken())
     {
         return false;
     }
 
-    char resourceURI[RESOURCE_URI_LENGTH + 1] =
-    { 0 };
-    getResourceUri(uri, resourceURI, RESOURCE_URI_LENGTH);
-    IOTIVITYTEST_LOG(DEBUG, "resourceURI : %s\n", resourceURI);
+    if (!createEndpoint(false, false))
+    {
+        return false;
+    }
 
-    CAInfo_t responseData =
-    { 0 };
+    char resourceUri[RESOURCE_URI_LENGTH + 1];
+    strcpy(resourceUri, uri);
+    IOTIVITYTEST_LOG(DEBUG, "resourceURI : %s\n", resourceUri);
+
+    CAInfo_t responseData;
     responseData.type = type;
     responseData.dataType = CA_RESPONSE_DATA;
-    responseData.resourceUri = (CAURI_t) resourceURI;
+    responseData.resourceUri = (CAURI_t) resourceUri;
     responseData.payload = NULL;
+    responseData.payloadFormat = CA_FORMAT_UNDEFINED;
+    responseData.acceptFormat = CA_FORMAT_UNDEFINED;
 
-    char payload[MAX_BUF_LEN] =
-    { 0 };
+    unsigned char payload[MAX_BUF_LEN];
     int payloadSize = 0;
 
     responseData.token = m_token;
@@ -1419,10 +1201,10 @@ bool CAHelper::sendResponse(char* uri, char* hidden_payload, CAResponseResult_t 
     }
     else
     {
-        strcpy(payload, hidden_payload);
-        strcpy(s_tcInfo.identifier, payload);
-        IOTIVITYTEST_LOG(DEBUG, "payload %s", payload);
-        payloadSize = strlen(payload);
+        strcpy((char*)payload, hidden_payload);
+        strcpy(s_tcInfo.identifier, (const char*)payload);
+        //IOTIVITYTEST_LOG(DEBUG, "payload %s", payload);
+        payloadSize = strlen((const char*)payload);
         responseData.payload = (CAPayload_t) malloc(payloadSize);
         responseData.payloadSize = payloadSize;
         memcpy(responseData.payload, payload, payloadSize);
@@ -1430,20 +1212,15 @@ bool CAHelper::sendResponse(char* uri, char* hidden_payload, CAResponseResult_t 
 
     getOptionData(&responseData);
 
-    CAResponseInfo_t responseInfo =
-    { 0 };
+    CAResponseInfo_t responseInfo;
     responseInfo.result = responseResult;
     responseInfo.info = responseData;
 
-    for (int messageCount = 0; messageCount < totalMessages; messageCount++)
+    m_result = CASendResponse(m_endpoint, &responseInfo);
+    if (m_result != expectedResult)
     {
-        IOTIVITYTEST_LOG(DEBUG, "Calling CASendResponse. Attempt No: %d", messageCount + 1);
-        m_result = CASendResponse(m_endpoint, &responseInfo);
-        if (m_result != expectedResult)
-        {
-            getFailureMessage("CASendResponse", expectedResult);
-            return false;
-        }
+        getFailureMessage("CASendResponse", expectedResult);
+        return false;
     }
 
     destroyEndpoint();
@@ -1555,7 +1332,7 @@ bool CAHelper::setDtls()
 
     if(m_availableNetwork == CA_ADAPTER_IP)
     {
-        m_result = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, m_availableNetwork);
+        m_result = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, (CATransportAdapter_t)m_availableNetwork);
     }
     else if(m_availableNetwork == CA_ADAPTER_TCP)
     {
@@ -1822,7 +1599,7 @@ std::string CAHelper::getRandomString(size_t length)
 
     srand (time(NULL));
 
-    for(int i = 0; i < length; i++)
+    for(size_t i = 0; i < length; i++)
     {
         int randomNumber = rand() % totalAlphaNumeric;
 
@@ -1891,76 +1668,6 @@ void CAHelper::getNumber(int num, char str[])
     }
 }
 
-bool CAHelper::parsingCoapUri(const char* uri, addressSet_t* address, CATransportFlags_t *flags)
-{
-    if (NULL == uri)
-    {
-        IOTIVITYTEST_LOG(DEBUG, "parameter is null\n");
-        return false;
-    }
-
-    uint8_t startIndex = 0;
-    if (strncmp(COAPS_PREFIX, uri, COAPS_PREFIX_LEN) == 0)
-    {
-        IOTIVITYTEST_LOG(DEBUG, "uri has '%s' prefix\n", COAPS_PREFIX);
-        startIndex = COAPS_PREFIX_LEN;
-        *flags = CA_SECURE|CA_IPV4;
-    }
-    else if (strncmp(COAP_PREFIX, uri, COAP_PREFIX_LEN) == 0)
-    {
-        IOTIVITYTEST_LOG(DEBUG, "uri has '%s' prefix\n", COAP_PREFIX);
-        startIndex = COAP_PREFIX_LEN;
-        *flags = CA_IPV4;
-    }
-#ifdef TCP_ADAPTER
-    else if (strncmp(COAPS_TCP_PREFIX, uri, COAPS_TCP_PREFIX_LEN) == 0)
-    {
-        IOTIVITYTEST_LOG(DEBUG, "uri has '%s' prefix\n", COAPS_TCP_PREFIX);
-        startIndex = COAPS_TCP_PREFIX_LEN;
-        *flags = CA_SECURE|CA_IPV4;
-    }
-    else if (strncmp(COAP_TCP_PREFIX, uri, COAP_TCP_PREFIX_LEN) == 0)
-    {
-        IOTIVITYTEST_LOG(DEBUG, "uri has '%s' prefix\n", COAP_TCP_PREFIX);
-        startIndex = COAP_TCP_PREFIX_LEN;
-        *flags = CA_IPV4;
-    }
-#endif
-
-    int32_t len = strlen(uri) - startIndex;
-
-    if (len <= 0)
-    {
-        IOTIVITYTEST_LOG(DEBUG, "uri length is 0!\n");
-        return false;
-    }
-
-    char *cloneUri = (char *) calloc(len + 1, sizeof(char));
-    if (NULL == cloneUri)
-    {
-        IOTIVITYTEST_LOG(DEBUG, "Out of memory\n");
-        return false;
-    }
-
-    memcpy(cloneUri, &uri[startIndex], sizeof(char) * len);
-    cloneUri[len] = '\0';
-
-    char *pAddress = cloneUri;
-    printf("pAddress : %s\n", pAddress);
-
-    int res = getAddressSet(pAddress, address);
-    if (res == -1)
-    {
-        IOTIVITYTEST_LOG(DEBUG, "address parse error\n");
-        free(cloneUri);
-        return false;
-    }
-
-    free(cloneUri);
-
-    return true;
-}
-
 void CAHelper::errorHandler(const CAEndpoint_t *rep, const CAErrorInfo_t* errorInfo)
 {
     IOTIVITYTEST_LOG(DEBUG,
@@ -1971,11 +1678,11 @@ void CAHelper::errorHandler(const CAEndpoint_t *rep, const CAErrorInfo_t* errorI
         const CAInfo_t *info = &errorInfo->info;
         IOTIVITYTEST_LOG(DEBUG, "Error Handler, ErrorInfo :\n");
         IOTIVITYTEST_LOG(DEBUG, "Error Handler result    : %d\n", errorInfo->result);
-        IOTIVITYTEST_LOG(DEBUG, "Error Handler token     : %s\n", info->token);
+        //IOTIVITYTEST_LOG(DEBUG, "Error Handler token     : %s\n", info->token);
         IOTIVITYTEST_LOG(DEBUG, "Error Handler messageId : %d\n", (uint16_t) info->messageId);
         IOTIVITYTEST_LOG(DEBUG, "Error Handler type      : %d\n", info->type);
         IOTIVITYTEST_LOG(DEBUG, "Error Handler resourceUri : %s\n", info->resourceUri);
-        IOTIVITYTEST_LOG(DEBUG, "Error Handler payload   : %s\n", info->payload);
+        //IOTIVITYTEST_LOG(DEBUG, "Error Handler payload   : %s\n", info->payload);
 
         if (CA_ADAPTER_NOT_ENABLED == errorInfo->result)
         {
@@ -2002,8 +1709,6 @@ void CAHelper::errorHandler(const CAEndpoint_t *rep, const CAErrorInfo_t* errorI
     }
     IOTIVITYTEST_LOG(DEBUG,
             "++++++++++++++++++++++++++++++++End of ErrorInfo++++++++++++++++++++++++++++++++\n");
-
-    return;
 }
 
 #ifdef TCP_ADAPTER
@@ -2022,78 +1727,6 @@ int CAHelper::getKeepAliveCount()
 }
 #endif
 
-int CAHelper::getAddressSet(const char *uri, addressSet_t* outAddress)
-{
-    if (NULL == uri || NULL == outAddress)
-    {
-        IOTIVITYTEST_LOG(DEBUG, "parameter is null !\n");
-        return -1;
-    }
-
-    int32_t len = strlen(uri);
-    if (len <= 0)
-    {
-        IOTIVITYTEST_LOG(DEBUG, "uri length is 0!\n");
-        return -1;
-    }
-
-    int32_t isIp = 0;
-    int32_t ipLen = 0;
-
-    for (int i = 0; i < len; i++)
-    {
-        if (uri[i] == '.')
-        {
-            isIp = 1;
-        }
-
-        if (isIp && uri[i] == ':')
-        {
-            ipLen = i;
-            outAddress->port = atoi(uri + ipLen + 1);
-            break;
-        }
-
-        if (uri[i] == '/')
-        {
-            break;
-        }
-
-        outAddress->ipAddress[i] = uri[i];
-    }
-
-    return isIp;
-}
-
-void CAHelper::getResourceUri(char *URI, char *resourceURI, int length)
-{
-    char *startPos = URI;
-    char *temp = NULL;
-    if (NULL != (temp = strstr(URI, "://")))
-    {
-        startPos = strchr(temp + 3, '/');
-        if (!startPos)
-        {
-            printf("Resource URI is missing\n");
-            return;
-        }
-    }
-
-    char *endPos = strchr(startPos, '?');
-    if (!endPos)
-    {
-        endPos = URI + strlen(URI);
-    }
-    endPos -= 1;
-
-    if (endPos - startPos <= length)
-    {
-        OICStrcpyPartial(resourceURI, length, startPos + 1, endPos - startPos);
-    }
-
-    printf("URI: %s, ResourceURI:%s\n", URI, resourceURI);
-}
-
 void CAHelper::getOptionData(CAInfo_t* requestData)
 {
     char optionData[][MAX_OPT_LEN] =
@@ -2107,7 +1740,8 @@ void CAHelper::getOptionData(CAInfo_t* requestData)
     if (0 >= optionNum)
     {
         IOTIVITYTEST_LOG(DEBUG, "there is no headerOption!\n");
-        s_tcInfo.options = NULL;
+        requestData->options = s_tcInfo.options = NULL;
+        requestData->numOptions = 0;
     }
     else
     {
@@ -2122,141 +1756,17 @@ void CAHelper::getOptionData(CAInfo_t* requestData)
         int i;
         for (i = 0; i < optionNum; i++)
         {
-            char getOptionID[MAX_BUF_LEN] =
-            { 0 };
-
-            IOTIVITYTEST_LOG(DEBUG, "[%d] Option ID : ", i + 1);
-            int optionID = i + 1;
-            headerOpt[i].optionID = optionID;
-
-            IOTIVITYTEST_LOG(DEBUG, "[%d] Option Data : ", i + 1);
-
+            int optionId = i + 1;
+            headerOpt[i].optionID = optionId;
             memcpy(headerOpt[i].optionData, optionData[i], strlen(optionData[i]));
-
             headerOpt[i].optionLength = (uint16_t) strlen(optionData[i]);
+            IOTIVITYTEST_LOG(DEBUG, "[%d] Option Data : ", optionId);
         }
         requestData->numOptions = optionNum;
         requestData->options = headerOpt;
     }
 
     s_tcInfo.options = headerOpt;
-}
-
-bool CAHelper::returnRequest(const CAEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo,
-        char* payload, int payloadSize)
-{
-    return returnRequest(endPoint, responseInfo->info.resourceUri, payload, payloadSize,
-            CA_MSG_NONCONFIRM, CA_GET, responseInfo->info.token, responseInfo->info.tokenLength,
-            responseInfo->info.options, responseInfo->info.numOptions);
-}
-
-bool CAHelper::returnRequest(const CAEndpoint_t* endPoint, char* resourceUri, char* payload,
-        int payloadSize, CAMessageType_t type, CAMethod_t method, CAToken_t token,
-        uint8_t tokenLength, CAHeaderOption_t *options, uint8_t numOptions)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[returnRequest] IN");
-
-    CAInfo_t requestData =
-    { 0 };
-    requestData.token = token;
-    requestData.tokenLength = tokenLength;
-    requestData.payload = payload;
-    if (payload != NULL)
-    {
-        requestData.payloadSize = payloadSize;
-    }
-    else
-    {
-        requestData.payloadSize = 0;
-    }
-
-    requestData.messageId = 0;
-    requestData.type = type;
-    requestData.resourceUri = (CAURI_t) resourceUri;
-    requestData.options = options;
-    requestData.numOptions = numOptions;
-
-    CARequestInfo_t requestInfo =
-    { 0 };
-    requestInfo.method = method;
-    requestInfo.info = requestData;
-    requestInfo.isMulticast = false;
-
-    CAResult_t res = CASendRequest(endPoint, &requestInfo);
-    if (res != CA_STATUS_OK)
-    {
-        IOTIVITYTEST_LOG(DEBUG, "send request error\n");
-        return false;
-    }
-    else
-    {
-        IOTIVITYTEST_LOG(DEBUG, "send request success\n");
-    }
-
-    IOTIVITYTEST_LOG(DEBUG, "[returnRequest] OUT");
-
-    return true;
-}
-
-bool CAHelper::returnResponse(const CAEndpoint_t* endPoint, const CARequestInfo_t* requestInfo,
-        char* payload, int payloadSize)
-{
-    return returnResponse(endPoint, requestInfo->info.resourceUri, payload, payloadSize,
-            CA_MSG_NONCONFIRM, CA_VALID, requestInfo->info.messageId, requestInfo->info.token,
-            requestInfo->info.tokenLength, requestInfo->info.options, requestInfo->info.numOptions);
-}
-
-bool CAHelper::returnResponse(const CAEndpoint_t* endPoint, char* resourceUri, char* payload,
-        int payloadSize, CAMessageType_t type, CAResponseResult_t responseCode, uint16_t messageId,
-        CAToken_t token, uint8_t tokenLength, CAHeaderOption_t *options, uint8_t numOptions)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[returnResponse] IN");
-
-    CAInfo_t responseData =
-    { 0 };
-
-    responseData.payload = payload;
-
-    if (payload != NULL)
-    {
-        responseData.payloadSize = payloadSize;
-    }
-    else
-    {
-        responseData.payloadSize = 0;
-    }
-
-    responseData.type = type;
-    responseData.messageId = messageId;
-    responseData.resourceUri = resourceUri;
-    responseData.token = token;
-    responseData.tokenLength = tokenLength;
-    responseData.options = options;
-    responseData.numOptions = numOptions;
-
-    CAResponseInfo_t responseInfo =
-    { 0 };
-    responseInfo.result = responseCode;
-    responseInfo.info = responseData;
-
-    IOTIVITYTEST_LOG(DEBUG, "Sending response....\n");
-
-    CAResult_t res = CASendResponse(endPoint, &responseInfo);
-
-    IOTIVITYTEST_LOG(DEBUG, "Response Send....\n");
-
-    if (res != CA_STATUS_OK)
-    {
-        IOTIVITYTEST_LOG(DEBUG, "send response error\n");
-    }
-    else
-    {
-        IOTIVITYTEST_LOG(DEBUG, "send response success\n");
-    }
-
-    IOTIVITYTEST_LOG(DEBUG, "[returnResponse] OUT");
-
-    return true;
 }
 
 bool CAHelper::checkHeader(CAHeaderOption_t *options, uint32_t len)
@@ -2270,8 +1780,8 @@ bool CAHelper::checkHeader(CAHeaderOption_t *options, uint32_t len)
         {
             IOTIVITYTEST_LOG(DEBUG, "Option %d\n", i + 1);
             IOTIVITYTEST_LOG(DEBUG, "ID : %d\n", options[i].optionID);
-            IOTIVITYTEST_LOG(DEBUG, "Data[%d]: %s\n", options[i].optionLength,
-                    options[i].optionData);
+            //IOTIVITYTEST_LOG(DEBUG, "Data[%d]: %s\n", options[i].optionLength,
+            //        options[i].optionData);
         }
 
         IOTIVITYTEST_LOG(DEBUG, "[checkHeader] vaue %d", len);
@@ -2388,29 +1898,37 @@ bool CAHelper::stopListeningServer(CAResult_t expectedResult)
     return true;
 }
 
-bool CAHelper::setAvailableNetwork(CATransportAdapter_t interestedNetwork)
+void CAHelper::setAvailableNetwork(CATransportAdapter_t interestedNetwork)
 {
     m_availableNetwork = interestedNetwork;
 }
 
 bool CAHelper::establishConnectionWithServer()
 {
+    s_isHostAddressKnown = 0;
     if (!initClientNetwork())
     {
         return false;
     }
 
-    if (!sendRequestToAll(CA_GET, CA_MSG_NONCONFIRM, 1))
+    m_multicastRequest = true;
+    if (!sendRequest(CA_GET, CA_MSG_NONCONFIRM))
     {
         return false;
     }
 
-    if (!countMulticastReceiveMessage(REC_ACK))
+    if (!attemptReceiveMessage(1, MAX_ATTEMPT, REC_ACK))
+    {
+        return false;
+    }
+
+    if (!s_networkCount)
     {
         IOTIVITYTEST_LOG(DEBUG, "No response found for multicast request");
         return false;
     }
-
+    m_multicastRequest = false;
+    s_isHostAddressKnown = 1;
     s_mapReceiveCount.clear();
 
     return true;

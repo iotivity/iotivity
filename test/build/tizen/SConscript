@@ -27,101 +27,123 @@
 import os
 import os.path
 
-print '\n---------------Started Building IotivitySecTest for Tizen---------------\n'
+print '\n---------------Started Building for Tizen---------------\n'
 
 Import('env_tizen')
 
-target_arch = env_tizen.get('TARGET_ARCH')
-target_source = env_tizen.get('TARGET_SOURCE')
-target_service = env_tizen.get('TARGET_SERVICE')
-target_test = env_tizen.get('TARGET_TEST')
+iotivity_root = env_tizen.get('IOTIVITY_ROOT')
+iotivity_test_root = env_tizen.get('IOTIVITY_TEST_ROOT')
+module = env_tizen.get('MODULE')
+test = env_tizen.get('TEST')
 variant_dir = env_tizen.get('VARIANT_DIR')
-rpm_path = env_tizen.get('RPMS_DIR')
-is_prevent_enabled = env_tizen.get('PREVENT')
-target_transport = ARGUMENTS.get('TARGET_TRANSPORT')
-target_secured = env_tizen.get('SECURED')
+gbs_root = env_tizen.get('GBS_ROOT')
+version = env_tizen.get('PROJECT_VERSION')
+prevent = env_tizen.get('PREVENT')
+target_transport = env_tizen.get('TARGET_TRANSPORT')
+secured = env_tizen.get('SECURED')
+push = env_tizen.get('PUSH')
+sdk = env_tizen.get('SDK')
+tizen_home = env_tizen.get('TIZEN_HOME')
+target_arch = env_tizen.get('TARGET_ARCH')
+offline = env_tizen.get('OFFLINE')
+all_modules = env_tizen.get('ALL_MODULES')
+cloud_service_build = env_tizen.get('CLOUD_SERVICE')
 
-print 'Value of Prevent: ' + is_prevent_enabled
-print 'target_secured:   ' + target_secured
-print 'target_service:   ' + target_service
-print 'target_test:      ' + target_test
-
-warning_msg = """
-########################################################################################
-#   ERROR... GBS RPM Path is not defined of not a valid directory.                     #
-#   To Set the Path: RPMS_DIR=<your RPMS path>                                         #
-########################################################################################
-"""
-
-if 'PATH_NOT_DEFINED' in rpm_path or not os.path.isdir(rpm_path):
-    print warning_msg
+if gbs_root is None or not os.path.isdir(gbs_root):
+    print 'Set Proper GBS Root Path'
     exit(1)
 
-######################################################################
+rpms_path = gbs_root + '/local/repos/tizen/' + target_arch + '/RPMS'
 
-# Initializing Build
-######################################################################
+if not os.path.isdir(rpms_path):
+    print 'Invalid RPMS path: ' + rpms_path
+    exit(1)
+
+tizen_sdb = ''
+
+if push:
+    if tizen_home is None or not os.path.isdir(tizen_home):
+        tizen_home = os.environ.get('TIZEN_HOME')
+        if not os.path.isdir(tizen_home):
+            print 'No Tizen_HOME found'
+            exit(-1)
+        env_tizen.Replace(TIZEN_HOME = tizen_home)
+
+
+    tizen_sdb = tizen_home + '/tools/sdb'
+
+    if not os.path.isfile(tizen_sdb):
+        print 'Invalid tizen_home: ' + tizen_home
+        exit(1)
+
+if offline:
+    init_mode = '--noinit'
+else:
+    init_mode = ''
+
+parameters = 'IOTIVITY_ROOT' + '=' + iotivity_root
+parameters += ' ' + 'IOTIVITY_TEST_ROOT' + '=' + iotivity_test_root
+parameters += ' ' + 'MODULE' + '=' + str(module)
+parameters += ' ' + 'TARGET_ARCH' + '=' + str(target_arch)
+parameters += ' ' + 'TEST' + '=' + str(test)
+parameters += ' ' + 'VARIANT_DIR' + '=' + str(variant_dir)
+parameters += ' ' + 'GBS_ROOT' + '=' + str(gbs_root)
+parameters += ' ' + 'RPMS_PATH' + '=' + str(rpms_path)
+parameters += ' ' + 'PROJECT_VERSION' + '=' + str(version)
+parameters += ' ' + 'PREVENT' + '=' + str(prevent)
+if target_transport:
+    parameters += ' ' + 'TARGET_TRANSPORT' + '=' + str(target_transport)
+parameters += ' ' + 'SECURED' + '=' + str(secured)
+if push:
+    parameters += ' ' + 'PUSH' + '=' + str(push)
+parameters += ' ' + 'SDK' + '=' + str(sdk)
+if tizen_home:
+    parameters += ' ' + 'TIZEN_HOME' + '=' + str(tizen_home)
+if tizen_sdb:
+    parameters += ' ' + 'TIZEN_SDB' + '=' + str(tizen_sdb)
+if offline:
+    parameters += ' ' + 'OFFLINE' + '=--noinit'
 
 default_targets = []
-
 
 if os.path.isfile("../../extlibs/gtest-1.7.0/bin/tizen/libgtest.a"):
     print "Gtest library exists"
 else:
     print "GTest library for Tizen does not exists, starts building for tizen"
-    gbs_script_gtest = "sh extlibs/gtest-1.7.0/gbsbuild.sh %s" % (rpm_path)
+    gbs_script_gtest = "bash extlibs/gtest-1.7.0/gbsbuild.sh %s %s %s %s %s %s" % (iotivity_root, iotivity_test_root, target_arch, gbs_root, rpms_path, init_mode)
     default_targets += [gbs_script_gtest]
 
-if 'tm' in target_service or 'all' in target_service:
-    gbs_script_tm = "sh build/tizen/tm/gbsbuild_tm.sh %s %s %s %s %s" % (target_arch, rpm_path, variant_dir, target_source, is_prevent_enabled)
-    default_targets += [gbs_script_tm]
+for temp in all_modules:
+    if temp in module:
+        extra_parameters = ''
+        test_res_files = ''
 
+        lib_rpm_names = 'iotivity,iotivity-devel,iotivity-service'
 
-if 'ca' in target_service or 'all' in target_service:
-    gbs_script_ca = "sh build/tizen/ca/gbsbuild_ca.sh %s %s %s %s %s %s %s" % (target_arch, target_transport, target_secured, rpm_path, variant_dir, target_source, is_prevent_enabled)
-    default_targets += [gbs_script_ca]
+        if temp == 'ca':
+            lib_rpm_names = 'com-oic-ri'
 
-if 'rh' in target_service or 'all' in target_service:
-    gbs_script_rh = "sh build/tizen/rh/gbsbuild_rh.sh %s %s %s %s %s" % (target_arch, rpm_path, variant_dir, target_source, is_prevent_enabled)
-    default_targets += [gbs_script_rh]
+        if temp == 'rc':
+            test_res_files = iotivity_test_root + '/res/resource_container_xml'
+        if temp == 'pm':
+            test_res_files = iotivity_test_root + '/res/pm_resource'
+        if temp == 'ic' or temp == 'cs':
+            test_res_files = iotivity_test_root + '/res/cloud_resource'
 
-if 're' in target_service or 'all' in target_service:
-    gbs_script_re = "sh build/tizen/re/gbsbuild_re.sh %s %s %s %s %s" % (target_arch, rpm_path, variant_dir, target_source, is_prevent_enabled)
-    default_targets += [gbs_script_re]
-
-if 'rc' in target_service or 'all' in target_service:
-    gbs_script_rc = "sh build/tizen/rc/gbsbuild_rc.sh %s %s %s %s %s" % (target_arch, rpm_path, variant_dir, target_source, is_prevent_enabled)
-    default_targets += [gbs_script_rc]
-
-if 'es' in target_service or 'all' in target_service:
-    gbs_script_es = "sh build/tizen/es/gbsbuild_es.sh %s %s %s %s %s" % (target_arch, rpm_path, variant_dir, target_source, is_prevent_enabled)
-    default_targets += [gbs_script_es]
-
-if 'ri' in target_service or 'ricsdk' in target_service or 'ricpp' in target_service or 'all' in target_service:
-    rpms_dir = env_tizen.get('RPMS_DIR') 
-    push = env_tizen.get('PUSH')     
-    security_mode = env_tizen.get('SECURITY_MODE')
-
-    gbs_script_ri = "bash build/tizen/ri/gbsbuild.sh stand_alone=false rpms_dir=%s push=%s security_mode=%s target_service=%s target_test=%s" % (rpms_dir, push, security_mode, target_service, target_test)
-    default_targets += [gbs_script_ri]
-
-if 'iut' in target_service or 'all' in target_service:
-
-    rpms_dir = env_tizen.get('RPMS_DIR') 
-    print 'rpms_dir: ' + rpms_dir   
-    push = env_tizen.get('PUSH') 
-    print 'push: ' + str(push)
+        extra_parameters += ' ' + 'lib_rpm_names' + '=' + lib_rpm_names
     
-    security_mode = env_tizen.get('SECURITY_MODE')
+        if test_res_files:
+            extra_parameters += ' ' + 'test_res_files' + '=' + test_res_files
 
-    if target_source != '':
-        target_source_command = 'target_source=' + target_source
-    else:    
-        target_source_command = ''
+        gbs_script = 'bash build/tizen/common/gbsbuild.sh ' + parameters + extra_parameters
+        print gbs_script
+        default_targets += [gbs_script]
 
-    gbs_script_iut = "bash build/tizen/iut/gbsbuild.sh stand_alone=false %s rpms_dir=%s push=%s security_mode=%s" % (target_source_command, rpms_dir, push, security_mode)
-    default_targets += [gbs_script_iut]
-
+        if temp == 'ic' or temp == 'cs':
+            if cloud_service_build:
+                build_command = 'bash ' + iotivity_test_root + '/res/cloud_resource/cloud_build.sh ' + kafka_root + ' ' + iotivity_root
+                cloud_build = env_linux.Command('cloud_build', None, build_command)
+                default_targets += [cloud_build]
 
 gbs_build = env_tizen.Command('gbs_build', None, default_targets)
 
