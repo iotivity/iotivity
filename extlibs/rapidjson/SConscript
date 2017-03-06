@@ -21,4 +21,4 @@ if not os.path.exists(path):
     rapidjson_env = Environment(ENV = os.environ)
     rapidjson_zip = env.Download('v1.0.2.zip', 'https://github.com/miloyip/rapidjson/archive/v1.0.2.zip')
     rapidjson_dir = env.UnpackAll('rapidjson', rapidjson_zip)
-    os.system("mv rapidjson-1.0.2 rapidjson")
+    os.rename("rapidjson-1.0.2", "rapidjson")
