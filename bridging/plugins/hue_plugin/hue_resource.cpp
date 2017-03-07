@@ -35,6 +35,7 @@
 #include <algorithm>
 #include <stdlib.h>
 #include <stdio.h>
+#define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #include <string.h>
 #include <string>
@@ -824,8 +825,8 @@ OCEntityHandlerResult processGetRequest(OCRepPayload *payload, HueLightSharedPtr
         {
             throw "Failed to set 'brightness' in payload";
         }
-        OIC_LOG_V(INFO, TAG, " Brightness State (Hue Bulb): %ld  Brightness(OCF) : %d",
-                              light_state.bri, ocfBrightness);
+        OIC_LOG_V(INFO, TAG, " Brightness State (Hue Bulb): %" PRIu64 " Brightness(OCF) : %d",
+                  light_state.bri, ocfBrightness);
     }
     else if (HUE_CHROMA_RESOURCE_TYPE == resType)
     {
@@ -839,7 +840,7 @@ OCEntityHandlerResult processGetRequest(OCRepPayload *payload, HueLightSharedPtr
         {
             throw  "Failed to set csc in payload" ;
         }
-        OIC_LOG_V(INFO, TAG, "hue: %ld, sat: %ld, csc: [%f, %f] in payload.",
+        OIC_LOG_V(INFO, TAG, "hue: %" PRIu64 ", sat: %" PRIu64 ", csc: [%f, %f] in payload.",
                   light_state.hue,
                   light_state.sat,
                   light_state.csc[0],
@@ -894,7 +895,7 @@ OCEntityHandlerResult processPutRequest(OCEntityHandlerRequest *ehRequest,
         {
             throw "No brightness in representation" ;
         }
-        OIC_LOG_V(INFO, TAG, "PUT/POST brightness:%ld", light_resource.bri);
+        OIC_LOG_V(INFO, TAG, "PUT/POST brightness:%" PRIu64 "", light_resource.bri);
 
         // Sclae up from 1-100 for OCF Light to 1-254 for Hue device
         light_resource.bri *= 2.54;
@@ -928,7 +929,7 @@ OCEntityHandlerResult processPutRequest(OCEntityHandlerRequest *ehRequest,
         {
             state.hue = light_resource.hue;
             isChromaPropertyInPayload = true;
-            OIC_LOG_V(INFO, TAG, "PUT/POST hue :%ld", state.hue);
+            OIC_LOG_V(INFO, TAG, "PUT/POST hue :%" PRIu64 "", state.hue);
         }
 
         if (!OCRepPayloadGetPropInt(input, "saturation", &light_resource.sat))
@@ -939,7 +940,7 @@ OCEntityHandlerResult processPutRequest(OCEntityHandlerRequest *ehRequest,
         {
             state.sat = light_resource.sat;
             isChromaPropertyInPayload = true;
-            OIC_LOG_V(INFO, TAG, "PUT/POST sat :%ld", state.sat);
+            OIC_LOG_V(INFO, TAG, "PUT/POST sat :%" PRIu64 "", state.sat);
         }
 
         if (!OCRepPayloadSetPropInt(payload, "hue", state.hue) ||
