@@ -67,8 +67,8 @@ std::string  systemTime = "2016-01-15T11.01";
 // Set of strings for each of device info fields
 std::string  deviceName = "IoTivity Simple Server";
 std::string  deviceType = "oic.wk.tv";
-std::string  specVersion = "core.1.1.0";
-std::vector<std::string> dataModelVersions = {"res.1.1.0", "sh.1.1.0"};
+std::string  specVersion = "ocf.1.1.0";
+std::vector<std::string> dataModelVersions = {"ocf.res.1.1.0", "ocf.sh.1.1.0"};
 std::string  protocolIndependentID = "fa008167-3bbf-4c9d-8604-c9bcb96cb712";
 
 // OCPlatformInfo Contains all the platform info to be stored

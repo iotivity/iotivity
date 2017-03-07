@@ -414,7 +414,7 @@ OCStackResult SetDeviceInfo()
         return result;
     }
 
-    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, "core.1.1.0");
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, "ocf.1.1.0");
     if (result != OC_STACK_OK)
     {
         cout << "Failed to set spec version" << endl;

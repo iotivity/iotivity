@@ -48,8 +48,8 @@ std::string  systemTime = "2016-01-15T11.01";
 
 // Set of strings for each of device info fields
 std::string  deviceName = "Bill's Battlestar";
-std::string  specVersion = "core.1.1.0";
-std::vector<std::string> dataModelVersions = {"res.1.1.0", "sh.1.1.0"};
+std::string  specVersion = "ocf.1.1.0";
+std::vector<std::string> dataModelVersions = {"ocf.res.1.1.0", "ocf.sh.1.1.0"};
 std::string  protocolIndependentID = "4cae60c1-48cb-47dc-882e-dedec114f45c";
 
 // Device type

@@ -324,13 +324,13 @@ extern "C" {
 #define OC_RSRVD_DATA_MODEL_VERSION     "dmv"
 
 /** Device specification version.*/
-#define OC_SPEC_VERSION                 "core.1.1.0"
+#define OC_SPEC_VERSION                 "ocf.1.1.0"
 
 /** Integer value of spec version.*/
 #define OC_SPEC_VERSION_VALUE           0
 
 /** Device Data Model version.*/
-#define OC_DATA_MODEL_VERSION           "res.1.1.0,sh.1.1.0"
+#define OC_DATA_MODEL_VERSION           "ocf.res.1.1.0,ocf.sh.1.1.0"
 
 /** Protocol-Independent ID.*/
 #define OC_RSRVD_PROTOCOL_INDEPENDENT_ID "piid"

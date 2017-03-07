@@ -61,8 +61,8 @@ std::string  systemTime = "2016-01-15T11.01";
 
 // Set of strings for each of device info fields
 std::string  deviceName = "IoTivity Presence Server";
-std::string  specVersion = "core.1.1.0";
-std::vector<std::string> dataModelVersions = {"res.1.1.0"};
+std::string  specVersion = "ocf.1.1.0";
+std::vector<std::string> dataModelVersions = {"ocf.res.1.1.0"};
 std::string  protocolIndependentID = "41a75d38-83c3-4b83-a794-f2174990b30b";
 
 // OCPlatformInfo Contains all the platform info to be stored
