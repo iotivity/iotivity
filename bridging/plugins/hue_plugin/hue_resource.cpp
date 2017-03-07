@@ -922,7 +922,6 @@ OCEntityHandlerResult processPutRequest(OCEntityHandlerRequest *ehRequest,
 
         if (!OCRepPayloadGetPropInt(input, "hue", &light_resource.hue))
         {
-            isChromaPropertyInPayload = true;
             OIC_LOG(INFO, TAG, "No hue in PUT payload");
         }
         else
@@ -934,7 +933,7 @@ OCEntityHandlerResult processPutRequest(OCEntityHandlerRequest *ehRequest,
 
         if (!OCRepPayloadGetPropInt(input, "saturation", &light_resource.sat))
         {
-            throw "No saturation in PUT payload";
+            OIC_LOG(INFO, TAG, "No saturation in PUT payload");
         }
         else
         {
