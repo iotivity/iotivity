@@ -224,9 +224,9 @@ TEST(StackInit, StackInitNullAddr)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit(0, 5683, OC_SERVER));
-    EXPECT_EQ(1, g_ocStackStartCount);
+    EXPECT_EQ(1u, g_ocStackStartCount);
     EXPECT_EQ(OC_STACK_OK, OCStop());
-    EXPECT_EQ(0, g_ocStackStartCount);
+    EXPECT_EQ(0u, g_ocStackStartCount);
 }
 
 TEST(StackInit, StackInitNullPort)
@@ -247,7 +247,7 @@ TEST(StackInit, StackInitInvalidMode)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_ERROR, OCInit(0, 0, (OCMode)10));
-    EXPECT_EQ(0, g_ocStackStartCount);
+    EXPECT_EQ(0u, g_ocStackStartCount);
 }
 
 TEST(StackStart, StackStartSuccessClient)
@@ -292,15 +292,15 @@ TEST(StackStart, StackStartSuccessClientThenServer)
 TEST(StackStart, StackStartSuccessiveInits)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    EXPECT_EQ(0, g_ocStackStartCount);
+    EXPECT_EQ(0u, g_ocStackStartCount);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
-    EXPECT_EQ(1, g_ocStackStartCount);
+    EXPECT_EQ(1u, g_ocStackStartCount);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.2", 5683, OC_SERVER));
-    EXPECT_EQ(2, g_ocStackStartCount);
+    EXPECT_EQ(2u, g_ocStackStartCount);
     EXPECT_EQ(OC_STACK_OK, OCStop());
-    EXPECT_EQ(1, g_ocStackStartCount);
+    EXPECT_EQ(1u, g_ocStackStartCount);
     EXPECT_EQ(OC_STACK_OK, OCStop());
-    EXPECT_EQ(0, g_ocStackStartCount);
+    EXPECT_EQ(0u, g_ocStackStartCount);
 }
 
 TEST(StackStart, SetPlatformInfoValid)
