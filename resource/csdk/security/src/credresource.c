@@ -117,11 +117,12 @@ static bool ValueWithinBounds(uint64_t value, uint64_t maxValue)
 
 static bool CheckSubjectOfCertificate(OicSecCred_t* cred, OicUuid_t deviceID)
 {
-    OicUuid_t emptyUuid = {.id={0}};
     OIC_LOG(DEBUG, TAG, "IN CheckSubjectOfCertificate");
     VERIFY_NOT_NULL(TAG, cred, ERROR);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    const OicUuid_t emptyUuid = { .id = { 0 } };
+
     if ( SIGNED_ASYMMETRIC_KEY == cred->credType)
     {
         if((0 == memcmp(cred->subject.id, emptyUuid.id, sizeof(cred->subject.id))) ||
@@ -130,6 +131,8 @@ static bool CheckSubjectOfCertificate(OicSecCred_t* cred, OicUuid_t deviceID)
             memcpy(cred->subject.id, deviceID.id, sizeof(deviceID.id));
         }
     }
+#else
+    OC_UNUSED(deviceID);
 #endif
 
     OIC_LOG(DEBUG, TAG, "OUT CheckSubjectOfCertificate");

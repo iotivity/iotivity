@@ -18,7 +18,9 @@ if env['CC'] == 'cl':
     #    - Disabled due to IoTivity not being ANSI compatible
     #  - warning C4214:  bit field types other than int
     #    - Disabled due to IoTivity not being ANSI compatible
-    env.AppendUnique(CCFLAGS=['/wd4127', '/wd4200', '/wd4201', '/wd4214'])
+    #  - warning C4706: assignment within conditional expression
+    #    - Disabled due to the widespread usage in IoTivity and low impact.
+    env.AppendUnique(CCFLAGS=['/wd4127', '/wd4200', '/wd4201', '/wd4214', '/wd4706'])
 
     env.AppendUnique(CCFLAGS=['/EHsc'])
 

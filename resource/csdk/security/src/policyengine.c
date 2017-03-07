@@ -145,6 +145,8 @@ static bool IsRequestFromOwnershipTransferSession(SRMRequestContext_t *context)
         OIC_LOG_V(DEBUG, TAG, "%s: request was %sreceived from Ownership Transfer session",
             __func__, retVal ? "" : "NOT ");
     }
+#else
+    OC_UNUSED(context);
 #endif
 
     return retVal;
