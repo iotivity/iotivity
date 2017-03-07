@@ -1602,6 +1602,8 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ("if.firstitem", parsedPayload->interfaces->value);
         EXPECT_EQ(NULL, parsedPayload->interfaces->next);
 
+        OCRepPayloadValue *originalRootValues = parsedPayload->values;
+
         // To make sure rt and if are not duplicated.
         EXPECT_STREQ("BoolAttr", parsedPayload->values->name);
         EXPECT_EQ(true, parsedPayload->values->b);
@@ -1628,6 +1630,9 @@ namespace OCRepresentationEncodingTest
         parsedPayload->values = parsedPayload->values->next;
 
         EXPECT_EQ(NULL, parsedPayload->values);
+
+        // Recover the original value to ensure a proper cleanup.
+        parsedPayload->values = originalRootValues;
 
         OICFree(cborData);
         OCRepPayloadDestroy(repPayload);

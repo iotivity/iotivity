@@ -261,43 +261,11 @@ namespace OC
      : m_threadRun(false), m_csdkLock(csdkLock),
        m_cfg { cfg }
     {
-        start();
     }
 
     OCStackResult InProcServerWrapper::start()
     {
-        OIC_LOG_V(INFO, TAG, "start ocplatform for server : %d", m_cfg.transportType);
-
-        OCMode initType;
-        if(m_cfg.mode == ModeType::Server)
-        {
-            initType = OC_SERVER;
-        }
-        else if (m_cfg.mode == ModeType::Both)
-        {
-            initType = OC_CLIENT_SERVER;
-        }
-        else if (m_cfg.mode == ModeType::Gateway)
-        {
-            initType = OC_GATEWAY;
-        }
-        else
-        {
-            throw InitializeException(OC::InitException::NOT_CONFIGURED_AS_SERVER,
-                                         OC_STACK_INVALID_PARAM);
-        }
-
-        OCTransportFlags serverFlags =
-                            static_cast<OCTransportFlags>(m_cfg.serverConnectivity & CT_MASK_FLAGS);
-        OCTransportFlags clientFlags =
-                            static_cast<OCTransportFlags>(m_cfg.clientConnectivity & CT_MASK_FLAGS);
-        OCStackResult result = OCInit2(initType, serverFlags, clientFlags,
-                                       m_cfg.transportType);
-
-        if(OC_STACK_OK != result)
-        {
-            throw InitializeException(OC::InitException::STACK_INIT_ERROR, result);
-        }
+        OIC_LOG(INFO, TAG, "start");
 
         if (false == m_threadRun)
         {
@@ -315,13 +283,6 @@ namespace OC
         {
             m_threadRun = false;
             m_processThread.join();
-        }
-
-        OCStackResult res = OCStop();
-
-        if (OC_STACK_OK != res)
-        {
-           throw InitializeException(OC::InitException::STACK_TERMINATE_ERROR, res);
         }
 
         return OC_STACK_OK;

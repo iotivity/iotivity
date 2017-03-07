@@ -40,9 +40,11 @@ namespace OC
         typedef std::shared_ptr<IWrapperFactory> Ptr;
 
         virtual IClientWrapper::Ptr CreateClientWrapper(
-            std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg) =0;
+            std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg,
+            OCStackResult *result) =0;
         virtual IServerWrapper::Ptr CreateServerWrapper(
-            std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg) =0;
+            std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg,
+            OCStackResult *result) =0;
         virtual ~IWrapperFactory(){}
     };
 
@@ -53,30 +55,53 @@ namespace OC
         WrapperFactory(){}
 
         virtual IClientWrapper::Ptr CreateClientWrapper(
-            std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg)
+            std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg, OCStackResult *result)
         {
+            if (result)
+            {
+                *result = OC_STACK_NOTIMPL;
+            }
+
             switch(cfg.serviceType)
             {
             case ServiceType::InProc:
+                if (result)
+                {
+                    *result = OC_STACK_OK;
+                }
                 return std::make_shared<InProcClientWrapper>(csdkLock, cfg);
             case ServiceType::OutOfProc:
+                if (result)
+                {
+                    *result = OC_STACK_OK;
+                }
                 return std::make_shared<OutOfProcClientWrapper>(csdkLock, cfg);
+            default:
+                break;
             }
-			return nullptr;
+            return nullptr;
         }
 
         virtual IServerWrapper::Ptr CreateServerWrapper(
-            std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg)
+            std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg, OCStackResult *result)
         {
+            if (result)
+            {
+                *result = OC_STACK_NOTIMPL;
+            }
+
             switch(cfg.serviceType)
             {
             case ServiceType::InProc:
+                if (result)
+                {
+                    *result = OC_STACK_OK;
+                }
                 return std::make_shared<InProcServerWrapper>(csdkLock, cfg);
-            case ServiceType::OutOfProc:
-                throw OC::OCException(OC::Exception::SVCTYPE_OUTOFPROC, OC_STACK_NOTIMPL);
+            default:
                 break;
             }
-			return nullptr;
+            return nullptr;
         }
 
         virtual ~WrapperFactory(){}

@@ -3467,12 +3467,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
 OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
 {
     OIC_LOG(INFO, TAG, "RegisterPersistentStorageHandler !!");
-    if(!persistentStorageHandler)
-    {
-        OIC_LOG(ERROR, TAG, "The persistent storage handler is invalid");
-        return OC_STACK_INVALID_PARAM;
-    }
-    else
+    if(persistentStorageHandler)
     {
         if( !persistentStorageHandler->open ||
                 !persistentStorageHandler->close ||

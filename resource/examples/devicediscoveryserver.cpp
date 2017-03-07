@@ -156,12 +156,11 @@ int main()
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Server,
-        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-        0,         // Uses randomly available port
-        OC::QualityOfService::LowQos
+        nullptr
     };
 
     OCPlatform::Configure(cfg);
+    OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
 
     std::cout<<"Starting server & setting platform info\n";
 
@@ -196,9 +195,8 @@ int main()
     std::unique_lock<std::mutex> lock(blocker);
     cv.wait(lock, []{return false;});
 
-    // No explicit call to stop the platform.
-    // When OCPlatform::destructor is invoked, internally we do platform cleanup
-
+    // Perform platform clean up.
+    OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     return 0;
 
 }

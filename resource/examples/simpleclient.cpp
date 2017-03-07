@@ -557,16 +557,18 @@ int main(int argc, char* argv[]) {
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Both,
-        OCConnectivityType::CT_ADAPTER_IP,
-        OCConnectivityType::CT_ADAPTER_IP,
-        (OCTransportAdapter)(OCTransportAdapter::OC_ADAPTER_IP|OCTransportAdapter::OC_ADAPTER_TCP),
-        OC::QualityOfService::HighQos,
         &ps
     };
+
+    cfg.transportType = static_cast<OCTransportAdapter>(OCTransportAdapter::OC_ADAPTER_IP | 
+                                                        OCTransportAdapter::OC_ADAPTER_TCP);
+    cfg.QoS = OC::QualityOfService::HighQos;
 
     OCPlatform::Configure(cfg);
     try
     {
+        OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
+
         // makes it so that all boolean values are printed as 'true/false' in this stream
         std::cout.setf(std::ios::boolalpha);
         // Find all resources
@@ -591,6 +593,9 @@ int main(int argc, char* argv[]) {
         std::condition_variable cv;
         std::unique_lock<std::mutex> lock(blocker);
         cv.wait(lock);
+
+        // Perform platform clean up.
+        OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
 
     }catch(OCException& e)
     {

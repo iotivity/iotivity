@@ -672,12 +672,15 @@ int main(int argc, char* argv[])
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Server,
-        (OCTransportAdapter)(OCTransportAdapter::OC_ADAPTER_IP|OCTransportAdapter::OC_ADAPTER_TCP),
-        OC::QualityOfService::LowQos,
         &ps
     };
 
+    cfg.transportType = static_cast<OCTransportAdapter>(OCTransportAdapter::OC_ADAPTER_IP | 
+                                                        OCTransportAdapter::OC_ADAPTER_TCP);
+    cfg.QoS = OC::QualityOfService::LowQos;
+
     OCPlatform::Configure(cfg);
+    OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
     std::cout << "Starting server & setting platform info\n";
 
     OCStackResult result = SetPlatformInfo(platformId, manufacturerName, manufacturerLink,
@@ -731,8 +734,7 @@ int main(int argc, char* argv[])
         std::cout << "OCException in main : " << e.what() << endl;
     }
 
-    // No explicit call to stop the platform.
-    // When OCPlatform::destructor is invoked, internally we do platform cleanup
+    OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
 
     return 0;
 }

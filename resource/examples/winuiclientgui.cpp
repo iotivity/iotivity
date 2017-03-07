@@ -186,8 +186,10 @@ WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
               OCPersistentStorage ps = {client_open, fread, fwrite, fclose, unlink };
               app = new WinUIClient::WinUIClientApp(ps);
-              app->Initialize();
-              app->Run();
+              if (app->Initialize())
+              {
+                  app->Run();
+              }
           }
           break;
       case WM_DESTROY:

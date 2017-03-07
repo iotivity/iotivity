@@ -632,7 +632,7 @@ OCStackResult CreateResetProfile(void)
             if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
             {
                 OIC_LOG(DEBUG, TAG, "Reset Profile already exists!!");
-                return ret;
+                goto exit;
             }
 
             cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_ACL_NAME, &curVal);

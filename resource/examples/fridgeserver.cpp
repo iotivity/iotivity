@@ -570,12 +570,11 @@ int main ()
     {
         ServiceType::InProc,
         ModeType::Server,
-        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-        0,         // Uses randomly available port
-        QualityOfService::LowQos
+        nullptr
     };
 
     OCPlatform::Configure(cfg);
+    OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
     Refrigerator rf;
 
     std::cout << "Starting server & setting platform info\n";
@@ -603,6 +602,7 @@ int main ()
     DeletePlatformInfo();
     // we will keep the server alive for at most 30 minutes
     std::this_thread::sleep_for(std::chrono::minutes(30));
+    OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     return 0;
 }
 

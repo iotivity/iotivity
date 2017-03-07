@@ -51,6 +51,7 @@ namespace OC
 
         /**
          * API for stop Base layer including resource and connectivity abstraction.
+         * The API is reference counted. The calls to start and stop need to be balanced.
          *
          * @return Returns ::OC_STACK_OK if success.
          */
@@ -59,6 +60,7 @@ namespace OC
         /**
          * API for start Base layer including resource and connectivity abstraction.
          * OCInit will be invoked.
+         * The API is reference counted. The calls to start and stop need to be balanced.
          *
          * @return Returns ::OC_STACK_OK if success.
          */

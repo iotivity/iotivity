@@ -408,14 +408,12 @@ int main(int /*argc*/, char** /*argv[]*/)
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Server,
-        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-        0,         // Uses randomly available port
-        OC::QualityOfService::LowQos,
         &ps
     };
 
     OCPlatform::Configure(cfg);
     std::cout << "Starting server & setting platform info\n";
+    OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
 
     OCStackResult result = SetPlatformInfo(platformId, manufacturerName, manufacturerLink,
             modelNumber, dateOfManufacture, platformVersion, operatingSystemVersion,
@@ -465,9 +463,8 @@ int main(int /*argc*/, char** /*argv[]*/)
        oclog() << "Exception in main: "<< e.what();
     }
 
-    // No explicit call to stop the platform.
-    // When OCPlatform::destructor is invoked, internally we do platform cleanup
-
+    // Perform platform clean up.
+    OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     return 0;
 }
 

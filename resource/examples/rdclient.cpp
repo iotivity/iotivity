@@ -246,11 +246,12 @@ int main(int argc, char* argv[])
 
     OCPersistentStorage ps {client_open, fread, fwrite, fclose, unlink };
     PlatformConfig config
-    { OC::ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos, &ps};
+    { OC::ServiceType::InProc, ModeType::Both, &ps};
 
     try
     {
         OCPlatform::Configure(config);
+        OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
 
         int selectedMenu;
         bool isRun = true;
@@ -291,6 +292,7 @@ int main(int argc, char* argv[])
             }
 
         }
+        OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     }
     catch (OCException& e)
     {

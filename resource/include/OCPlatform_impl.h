@@ -348,6 +348,8 @@ namespace OC
         IServerWrapper::Ptr m_server;
         IClientWrapper::Ptr m_client;
         std::shared_ptr<std::recursive_mutex> m_csdkLock;
+        std::mutex m_startCountLock;
+        uint32_t m_startCount;
 
     private:
         /**
@@ -361,7 +363,7 @@ namespace OC
         /**
         * Private function to initialize the platform
         */
-        void init(const PlatformConfig& config);
+        OCStackResult init(const PlatformConfig& config);
 
         /**
         * Private constructor/operators to prevent copying

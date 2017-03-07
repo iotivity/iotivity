@@ -270,12 +270,11 @@ int main(int argc, char* argv[]) {
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Client,
-        "0.0.0.0",
-        0,
-        OC::QualityOfService::LowQos
+        nullptr
     };
 
     OCPlatform::Configure(cfg);
+    OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
 
     try
     {
@@ -293,6 +292,9 @@ int main(int argc, char* argv[]) {
         std::condition_variable cv;
         std::unique_lock<std::mutex> lock(blocker);
         cv.wait(lock);
+
+        // Perform platform clean up.
+        OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
 
     }catch(OCException& e)
     {
