@@ -35,9 +35,9 @@ void GetPkixInfo(PkiInfo_t * inf)
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
-    GetDerOwnCert(&inf->crt, PRIMARY_CERT);
+    GetPemOwnCert(&inf->crt, PRIMARY_CERT);
     GetDerKey(&inf->key, PRIMARY_CERT);
-    GetDerCaCert(&inf->ca, TRUST_CA);
+    (void)GetPemCaCert(&inf->ca, TRUST_CA);
     GetDerCrl(&inf->crl);
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
@@ -51,9 +51,9 @@ void GetManufacturerPkixInfo(PkiInfo_t * inf)
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
-    GetDerOwnCert(&inf->crt, MF_PRIMARY_CERT);
+    GetPemOwnCert(&inf->crt, MF_PRIMARY_CERT);
     GetDerKey(&inf->key, MF_PRIMARY_CERT);
-    GetDerCaCert(&inf->ca, MF_TRUST_CA);
+    (void)GetPemCaCert(&inf->ca, MF_TRUST_CA);
     // CRL not provided
     inf->crl.data = NULL;
     inf->crl.len = 0;

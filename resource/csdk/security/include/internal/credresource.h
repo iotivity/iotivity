@@ -219,19 +219,12 @@ OCStackResult GetCredRownerId(OicUuid_t *rowneruuid);
  */
 OCStackResult GetPemCaCert(ByteArray_t * crt, const char * usage);
 /**
- * Used by mbedTLS to retrieve trusted CA certificates as DER
- *
- * @param[out] crt certificates to be filled.
- * @param[in] usage credential usage string.
- */
-void GetDerCaCert(ByteArray_t * crt, const char * usage);
-/**
  * Used by mbedTLS to retrieve own certificate chain
  *
  * @param[out] crt certificate chain to be filled.
  * @param[in] usage credential usage string.
  */
-void GetDerOwnCert(ByteArray_t * crt, const char * usage);
+void GetPemOwnCert(ByteArray_t * crt, const char * usage);
 /**
  * Used by mbedTLS to retrieve owm private key
  *

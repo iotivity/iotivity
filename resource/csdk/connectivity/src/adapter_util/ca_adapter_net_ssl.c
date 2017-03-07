@@ -562,116 +562,51 @@ static int RecvCallBack(void * tep, unsigned char * data, size_t dataLen)
  * Parse chain of X.509 certificates.
  *
  * @param[out] crt     container for X.509 certificates
- * @param[in]  data    buffer with X.509 certificates. Certificates may be in either in PEM
-                       or DER format in a jumble, delimiting symbols does not matter.
+ * @param[in]  buf     buffer with X.509 certificates. Certificates must be in a single null-terminated
+ *                     string, with each certificate in PEM encoding with headers.
  * @param[in]  bufLen  buffer length
  * @param[in]  errNum  number certificates that failed to parse
  *
  * @return  number of successfully parsed certificates or -1 on error
  */
-static size_t ParseChain(mbedtls_x509_crt * crt, unsigned char * buf, size_t bufLen, int * errNum)
+static int ParseChain(mbedtls_x509_crt * crt, unsigned char * buf, size_t bufLen, int * errNum)
 {
+    int ret;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(crt, NET_SSL_TAG, "Param crt is NULL" , -1);
     VERIFY_NON_NULL_RET(buf, NET_SSL_TAG, "Param buf is NULL" , -1);
 
-    char pemCertHeader[] = {
-        0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x42, 0x45, 0x47, 0x49, 0x4e, 0x20, 0x43, 0x45, 0x52,
-        0x54, 0x49, 0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x2d, 0x2d, 0x2d, 0x2d, 0x2d
-    };
-    char pemCertFooter[] = {
-        0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x45, 0x4e, 0x44, 0x20, 0x43, 0x45, 0x52, 0x54, 0x49,
-        0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x2d, 0x2d, 0x2d, 0x2d, 0x2d
-    };
-    size_t pemCertHeaderLen = sizeof(pemCertHeader);
-    size_t pemCertFooterLen = sizeof(pemCertFooter);
-
-    size_t len = 0;
-    unsigned char * tmp = NULL;
-    size_t count = 0;
-    int ret = 0;
-    size_t pos = 0;
-
-    *errNum = 0;
-    while (pos < bufLen)
+    if (NULL != errNum)
     {
-        if (buf[pos] == 0x30 && buf[pos + 1] == 0x82)
-        {
-            tmp = (unsigned char *)buf + pos + 1;
-            CHECK_MBEDTLS_RET(mbedtls_asn1_get_len, &tmp, buf + bufLen, &len);
-            if (pos + len < bufLen)
-            {
-                ret = mbedtls_x509_crt_parse_der(crt, buf + pos, len + 4);
-                if (0 == ret)
-                {
-                    count++;
-                }
-                else
-                {
-                    (*errNum)++;
-                    OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedtls_x509_crt_parse_der returned -0x%04x\n", -(ret));
-                }
-            }
-            pos += len + 4;
-        }
-        else if ((buf + pos + pemCertHeaderLen < buf + bufLen) &&
-                 (0 == memcmp(buf + pos, pemCertHeader, pemCertHeaderLen)))
-        {
-            void * endPos = NULL;
-            endPos = memmem(&(buf[pos]), bufLen - pos, pemCertFooter, pemCertFooterLen);
-            if (NULL == endPos)
-            {
-                OIC_LOG(ERROR, NET_SSL_TAG, "Error: end of PEM certificate not found.");
-                OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
-                return -1;
-            }
-            len = (char*)endPos - ((char*)buf + pos) + pemCertFooterLen;
-            if (pos + len + 1 <= bufLen)
-            {
-                char con = buf[pos + len];
-                buf[pos + len] = 0x00;
-                ret = mbedtls_x509_crt_parse(crt, buf + pos, len + 1);
-                if (0 == ret)
-                {
-                    count++;
-                }
-                else
-                {
-                    (*errNum)++;
-                    OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedtls_x509_crt_parse returned -0x%04x\n", -(ret));
-                }
-                buf[pos + len] = con;
-            }
-            else
-            {
-                unsigned char * lastCert = (unsigned char *)OICMalloc((len + 1) * sizeof(unsigned char));
-                memcpy(lastCert, buf + pos, len);
-                lastCert[len] = 0x00;
-                ret = mbedtls_x509_crt_parse(crt, lastCert, len + 1);
-                if (0 == ret)
-                {
-                    count++;
-                }
-                else
-                {
-                    (*errNum)++;
-                    OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedtls_x509_crt_parse returned -0x%04x\n", -(ret));
-                }
-                OICFree(lastCert);
-            }
-            pos += len;
-        }
-        else
-        {
-            pos++;
-        }
+        *errNum = 0;
     }
-    OIC_LOG_V(DEBUG, NET_SSL_TAG, "%s successfully parsed %d certificates", __func__, count);
-    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
-    return count;
 
-exit:
-    return -1;
+    if ((bufLen >= 2) && (buf[0] == 0x30) && (buf[1] == 0x82))
+    {
+        OIC_LOG_V(ERROR, NET_SSL_TAG, "DER-encoded certificate passed to ParseChain");
+        return -1;
+    }
+
+    ret = mbedtls_x509_crt_parse(crt, buf, bufLen);
+    if (0 > ret)
+    {
+        OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedtls_x509_crt_parse failed: -0x%04x", -(ret));
+        return -1;
+    }
+
+    if (NULL != errNum)
+    {
+        *errNum = ret;
+    }
+    
+    ret = 0;
+    for (const mbedtls_x509_crt *cur = crt; cur != NULL; cur = cur->next)
+    {
+        ret++;
+    }
+    
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+    return ret;
 }
 
 //Loads PKIX related information from SRM
@@ -706,7 +641,7 @@ static int InitPKIX(CATransportAdapter_t adapter)
     // optional
     int ret;
     int errNum;
-    size_t count = ParseChain(&g_caSslContext->crt, g_pkiInfo.crt.data, g_pkiInfo.crt.len, &errNum);
+    int count = ParseChain(&g_caSslContext->crt, g_pkiInfo.crt.data, g_pkiInfo.crt.len, &errNum);
     if (0 >= count)
     {
         OIC_LOG(WARNING, NET_SSL_TAG, "Own certificate chain parsing error");

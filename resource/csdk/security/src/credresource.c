@@ -65,9 +65,9 @@
 
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 #include <mbedtls/ssl_ciphersuites.h>
-#include "mbedtls/pk.h"
-#include "mbedtls/base64.h"
-#include "mbedtls/pem.h"
+#include <mbedtls/pk.h>
+#include <mbedtls/base64.h>
+#include <mbedtls/pem.h>
 #endif
 
 #define TAG  "OIC_SRM_CREDL"
@@ -2880,7 +2880,7 @@ static int ConvertDerCertToPem(const uint8_t* der, size_t derLen, uint8_t** pem)
     const char* pemHeader = "-----BEGIN CERTIFICATE-----\n";
     const char* pemFooter = "-----END CERTIFICATE-----\n";
 
-    /* Get the length required for output*/
+    /* Get the length required for output */
     size_t pemLen;
     int ret = mbedtls_pem_write_buffer(pemHeader, 
         pemFooter,
@@ -2911,7 +2911,7 @@ static int ConvertDerCertToPem(const uint8_t* der, size_t derLen, uint8_t** pem)
         &pemLen);
     if (ret < 0)
     {
-        OIC_LOG_V(ERROR, TAG, "Couldn't convert cert into PEM, failed getting required length: %d", ret);
+        OIC_LOG_V(ERROR, TAG, "Couldn't convert cert into PEM, failed writing PEM: %d", ret);
         OICFreeAndSetToNull(pem);
         return ret;
     }
@@ -3034,17 +3034,12 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
     return OC_STACK_OK;
 }
 
-void GetDerCaCert(ByteArray_t * crt, const char * usage)
-{
-    (void)GetCaCert(crt, usage, OIC_ENCODING_DER);
-}
-
 OCStackResult GetPemCaCert(ByteArray_t * crt, const char * usage)
 {
     return GetCaCert(crt, usage, OIC_ENCODING_PEM);
 }
 
-void GetDerOwnCert(ByteArray_t * crt, const char * usage)
+void GetPemOwnCert(ByteArray_t * crt, const char * usage)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
     if (NULL == crt || NULL == usage)
@@ -3060,9 +3055,90 @@ void GetDerOwnCert(ByteArray_t * crt, const char * usage)
             temp->credUsage != NULL &&
             0 == strcmp(temp->credUsage, usage))
         {
-            crt->data = OICRealloc(crt->data, crt->len + temp->publicData.len);
-            memcpy(crt->data + crt->len, temp->publicData.data, temp->publicData.len);
-            crt->len += temp->publicData.len;
+            uint8_t *p = NULL;
+            int mbedRet = 0;
+            uint8_t *pem = NULL;
+            size_t pemLen = 0;
+            bool mustFreePem = false;
+            bool mustAddNull = true;
+
+            switch (temp->publicData.encoding)
+            {
+            case OIC_ENCODING_DER:
+            case OIC_ENCODING_RAW:
+                mbedRet = ConvertDerCertToPem(temp->publicData.data, temp->publicData.len, &pem);
+                if (0 > mbedRet)
+                {
+                    OIC_LOG_V(ERROR, TAG, "Failed to ConvertDerCertToPem: %d", mbedRet);
+                    return;
+                }
+                mustFreePem = true;
+                mustAddNull = false; /* mbedTLS always NULL-terminates. */
+                pemLen = strlen((char *)pem) + 1;
+                break;
+                
+            case OIC_ENCODING_PEM:
+            case OIC_ENCODING_BASE64:
+                pem = temp->publicData.data;
+                pemLen = temp->publicData.len;
+
+                /* Make sure the buffer has a terminating NULL. If not, make sure we add one later. */
+                for (size_t i = pemLen - 1; i > 0; i--)
+                {
+                    if ('\0' == (char)pem[i])
+                    {
+                        mustAddNull = false;
+                        break;
+                    }
+                }
+                break;
+
+            default:
+                OIC_LOG_V(ERROR, TAG, "Unsupported encoding %d", temp->publicData.encoding);
+                return;
+            }
+
+            p = crt->data;
+            crt->data = OICRealloc(crt->data, crt->len + pemLen + (mustAddNull ? 1 : 0));
+            if (NULL == crt->data)
+            {
+                OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
+                OICFree(p);
+                if (mustFreePem)
+                {
+                    OICFree(pem);
+                }
+                return;
+            }
+
+            /* If we're appending, subtract one from crt->len below so we overwrite the current terminating
+             * NULL with the beginning of the new data.
+             */
+            if (0 < crt->len) 
+            {
+                assert(crt->data[crt->len - 1] == '\0');
+                memcpy(crt->data + crt->len - 1, pem, pemLen);
+                crt->len += pemLen - 1;
+            }
+            else
+            {
+                memcpy(crt->data, pem, pemLen);
+                crt->len = pemLen;
+            }
+
+            /* If pem doesn't contain a terminating NULL, add one. */
+            if (mustAddNull)
+            {
+                assert(crt->data[crt->len - 1] != '\0');
+                crt->data[crt->len] = '\0';
+                crt->len += 1;
+            }
+
+            if (mustFreePem)
+            {
+                OICFree(pem);
+            }
+
             OIC_LOG_V(DEBUG, TAG, "%s found", usage);
         }
     }

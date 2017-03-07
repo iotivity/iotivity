@@ -114,14 +114,10 @@ typedef void (*CAgetCredentialTypesHandler)(bool * list);
  */
 typedef struct
 {
-    // own certificate chain
-    ByteArray_t crt;
-    // own public key
-    ByteArray_t key;
-    // trusted CA's
-    ByteArray_t ca;
-    // trusted CRL's
-    ByteArray_t crl;
+    ByteArray_t crt;    /**< own certificate chain as a null-terminated PEM string of certificates */
+    ByteArray_t key;    /**< own private key as binary-encoded DER */
+    ByteArray_t ca;     /**< trusted CAs as a null-terminated PEM string of certificates */
+    ByteArray_t crl;    /**< trusted CRLs as binary-encoded DER */
 } PkiInfo_t;
 
 /**
