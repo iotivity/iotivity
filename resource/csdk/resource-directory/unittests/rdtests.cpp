@@ -58,7 +58,7 @@ namespace itst = iotivity::test;
 //-----------------------------------------------------------------------------
 // Private variables
 //-----------------------------------------------------------------------------
-static const char TAG[] = "RDTests";
+#define TAG "RDTests"
 
 std::chrono::seconds const SHORT_TEST_TIMEOUT = std::chrono::seconds(5);
 

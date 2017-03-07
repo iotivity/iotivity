@@ -63,7 +63,7 @@ namespace itst = iotivity::test;
 //-----------------------------------------------------------------------------
 // Private variables
 //-----------------------------------------------------------------------------
-static const char TAG[] = "TestHarness";
+#define TAG "TestHarness"
 
 char gDeviceUUID[] = "fe3f9a68-4931-4cb0-9ea4-81702b43116c";
 char gDevicePIID[] = "32684bf3-4c44-47b0-99fe-6a9a59b73a8d";

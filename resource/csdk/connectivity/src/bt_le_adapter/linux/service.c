@@ -31,7 +31,7 @@
 
 
 // Logging tag.
-static char const TAG[] = "BLE_SERVICE";
+#define TAG "BLE_SERVICE"
 
 static GVariant * CAGattServiceGetProperties(GattService1 * service)
 {
