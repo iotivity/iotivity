@@ -211,8 +211,8 @@ void oc_mutex_unlock(oc_mutex mutex)
 void oc_mutex_assert_owner(const oc_mutex mutex, bool currentThreadIsOwner)
 {
 #ifdef NDEBUG
-    OC_UNUSED(mutex);
-    OC_UNUSED(currentThreadIsOwner);
+    (void)(mutex);
+    (void)(currentThreadIsOwner);
 #else
     assert(NULL != mutex);
     const oc_mutex_internal *mutexInfo = (const oc_mutex_internal*) mutex;
