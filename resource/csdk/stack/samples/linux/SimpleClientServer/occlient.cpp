@@ -618,6 +618,7 @@ int InitGetRequestToUnavailableResource(OCQualityOfService qos)
 
 int InitIntrospection(OCDiscoveryPayload* dis)
 {
+    OC_UNUSED(dis);
     std::ostringstream query;
     query << coapIntrospectionResource;
     OIC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
