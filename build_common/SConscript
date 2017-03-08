@@ -378,7 +378,7 @@ pc_vars = {
 env.Substfile(pc_file, SUBST_DICT = pc_vars)
 
 ######################################################################
-# Setting global CPPDEFINES
+# Setting global compiler flags
 ######################################################################
 target_transport = env.get('TARGET_TRANSPORT')
 with_mq = env.get('WITH_MQ')
@@ -386,6 +386,8 @@ with_ra = env.get('WITH_RA')
 with_tcp = env.get('WITH_TCP')
 rd_mode = env.get('RD_MODE')
 with_ra_ibb = env.get('WITH_RA_IBB')
+
+env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
 if (env.get('WITH_UPSTREAM_LIBCOAP') == '1'):
     env.AppendUnique(CPPDEFINES = ['WITH_UPSTREAM_LIBCOAP'])
