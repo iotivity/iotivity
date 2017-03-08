@@ -502,7 +502,7 @@ OCDevAddr * NSChangeAddress(const char * inputaddress)
     if (strstr(inputaddress, "coap+tcp://"))
     {
         NS_LOG(DEBUG, "address : TCP");
-        adapter |= OC_ADAPTER_TCP;
+        adapter = OC_ADAPTER_TCP;
     }
     else if (strstr(inputaddress, "coaps://"))
     {
@@ -513,7 +513,7 @@ OCDevAddr * NSChangeAddress(const char * inputaddress)
     {
         NS_LOG(DEBUG, "address : TCP + SECURED");
         flags |= OC_FLAG_SECURE;
-        adapter |= OC_ADAPTER_TCP;
+        adapter = OC_ADAPTER_TCP;
     }
     else if (strstr(inputaddress, "coap://"))
     {
