@@ -81,6 +81,11 @@ OCStackResult OCInitPM(const char* dbPath)
     return PDMInit(dbPath);
 }
 
+OCStackResult OCPDMCleanupForTimeout()
+{
+    return PDMDeleteDeviceWithState(PDM_DEVICE_INIT);
+}
+
 /**
  * The function is responsible for discovery of owned/unowned device is specified endpoint/deviceID.
  * And this function will only return the specified device's response.

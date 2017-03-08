@@ -486,6 +486,14 @@ namespace OC
             static OCStackResult setVerifyOptionMask(VerifyOptionBitmask_t optionMask);
 
 
+            /**
+             * API to cleanup PDM in case of timeout.
+             * It will remove the PDM_DEVICE_INIT state devices from PDM.
+             *
+             * @return OC_STACK_OK in case of success and other value otherwise.
+             */
+             static OCStackResult pdmCleanupForTimeout();
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
             /**
              * API to save Trust certificate chain into Cred of SVR.

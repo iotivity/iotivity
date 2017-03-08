@@ -971,6 +971,23 @@ namespace OC
         return result;
     }
 
+    OCStackResult OCSecure::pdmCleanupForTimeout()
+    {
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            result = OCPDMCleanupForTimeout();
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     OCStackResult OCSecure::saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
