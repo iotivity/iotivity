@@ -297,7 +297,6 @@ static OCStackApplicationResult provisionCredentialCB1(void *ctx, OCDoHandle UNU
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-
 /**
  * Internal function for handling credential generation and sending credential to resource server.
  *
@@ -451,10 +450,41 @@ static OCStackApplicationResult provisionCertCB(void *ctx, OCDoHandle UNUSED,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
+static OCStackApplicationResult provisionIdentityCertCB(void *ctx, OCDoHandle UNUSED,
+    OCClientResponse *clientResponse)
+{
+    // Just call the callback provided to SRProvisionCredentials
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    CredentialData_t* credData = (CredentialData_t *)ctx;
+    (void)UNUSED;
+    bool hasError;
+
+    // We expect OC_STACK_RESOURCE_CHANGED, anything else is an error
+    if (clientResponse && (OC_STACK_RESOURCE_CHANGED == clientResponse->result))
+    {
+        hasError = false;
+    }
+    else
+    {
+        hasError = true;
+    }
+
+    OCProvisionResultCB resultCallback = credData->resultCallback;
+    VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR, OC_STACK_DELETE_TRANSACTION);
+
+    ((OCProvisionResultCB)(resultCallback))(credData->ctx, credData->numOfResults,
+        credData->resArr, hasError);
+
+    OICFree(credData);
+
+    return OC_STACK_DELETE_TRANSACTION;
+
+}
+
 OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId,
         const OCProvisionDev_t *selectedDeviceInfo, OCProvisionResultCB resultCallback)
 {
-    OIC_LOG(INFO, TAG, "In SRPProvisionTrustCertChain");
+    OIC_LOG(INFO, TAG, "IN SRPProvisionTrustCertChain");
     VERIFY_NOT_NULL_RETURN(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
     if (SIGNED_ASYMMETRIC_KEY != type)
@@ -478,7 +508,7 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    int secureFlag = 0;
+    int secureFlag = 1; /* Don't send the private key to the device, if it happens to be present */
     if(OC_STACK_OK != CredToCBORPayload(trustCertChainCred, &secPayload->securityData, &secPayload->payloadSize, secureFlag))
     {
         DeleteCredList(trustCertChainCred);
@@ -542,6 +572,9 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
     }
 
     VERIFY_SUCCESS_RETURN(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
+
+    OIC_LOG(INFO, TAG, "OUT SRPProvisionTrustCertChain");
+
     return OC_STACK_OK;
 }
 
@@ -560,12 +593,12 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
     res = GetDoxmDeviceID(&cred->subject);
     if (OC_STACK_OK != res)
     {
-        OIC_LOG(ERROR, TAG, "Cann't get the device id(GetDoxmDeviceID)");
+        OIC_LOG(ERROR, TAG, "Can't get the device id(GetDoxmDeviceID)");
         DeleteCredList(cred);
         return res;
     }
 
-    cred->credUsage= (char *)OICCalloc(1, strlen(TRUST_CA)+1 );
+    cred->credUsage= (char *)OICCalloc(1, strlen(TRUST_CA) + 1);
     VERIFY_NOT_NULL_RETURN(TAG, cred->credUsage, ERROR, OC_STACK_NO_MEMORY);
     OICStrcpy(cred->credUsage, strlen(TRUST_CA) + 1, TRUST_CA);
 
@@ -577,11 +610,17 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
         VERIFY_NOT_NULL_RETURN(TAG, cred->optionalData.data, ERROR, OC_STACK_NO_MEMORY);
         cred->optionalData.len = chainSize + 1;
     }
-    else
+    else if (encodingType == OIC_ENCODING_DER)
     {
         cred->optionalData.data = (uint8_t *)OICCalloc(1, chainSize);
         VERIFY_NOT_NULL_RETURN(TAG, cred->optionalData.data, ERROR, OC_STACK_NO_MEMORY);
         cred->optionalData.len = chainSize;
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "Unknown encoding in %s", __func__);
+        DeleteCredList(cred);
+        return OC_STACK_INVALID_PARAM;
     }
     memcpy(cred->optionalData.data, trustCertChain, chainSize);
     cred->optionalData.encoding = encodingType;
@@ -610,14 +649,15 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
     return res;
 }
 
-OCStackResult SRPSaveOwnCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16_t *credId)
+static OCStackResult saveCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16_t *credId, const char* usage)
 {
-    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
     VERIFY_NOT_NULL_RETURN(TAG, cert, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, cert->data, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, key, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, key->data, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, credId, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, usage, ERROR, OC_STACK_INVALID_PARAM);
 
     OCStackResult res = OC_STACK_ERROR;
 
@@ -634,9 +674,9 @@ OCStackResult SRPSaveOwnCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16_
         return res;
     }
 
-    cred->credUsage= (char *)OICCalloc(1, strlen(PRIMARY_CERT)+1 );
+    cred->credUsage= (char *)OICCalloc(1, strlen(usage) + 1);
     VERIFY_NOT_NULL_RETURN(TAG, cred->credUsage, ERROR, OC_STACK_NO_MEMORY);
-    OICStrcpy(cred->credUsage, strlen(PRIMARY_CERT) + 1, PRIMARY_CERT) ;
+    OICStrcpy(cred->credUsage, strlen(usage) + 1, usage);
 
     cred->credType = SIGNED_ASYMMETRIC_KEY;
 
@@ -662,15 +702,22 @@ OCStackResult SRPSaveOwnCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16_
     }
     *credId = cred->credId;
 
-    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
 
     return res;
 }
+
+OCStackResult SRPSaveOwnCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16_t *credId)
+{
+    return saveCertChain(cert, key, credId, PRIMARY_CERT);
+}
+
 #endif // __WITH_DTLS__ || __WITH_TLS__
 
 OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t keySize,
                                       const OCProvisionDev_t *pDev1,
                                       const OCProvisionDev_t *pDev2,
+                                      const char* pemCert,
                                       OCProvisionResultCB resultCallback)
 {
     VERIFY_NOT_NULL_RETURN(TAG, pDev1, ERROR,  OC_STACK_INVALID_PARAM);
@@ -680,13 +727,13 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
     }
     if (!resultCallback)
     {
-        OIC_LOG(INFO, TAG, "SRPUnlinkDevices : NULL Callback");
+        OIC_LOG(INFO, TAG, "SRPProvisionCredentials: NULL Callback");
         return OC_STACK_INVALID_CALLBACK;
     }
     if (SYMMETRIC_PAIR_WISE_KEY == type &&
         0 == memcmp(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID, sizeof(OicUuid_t)))
     {
-        OIC_LOG(INFO, TAG, "SRPUnlinkDevices : Same device ID");
+        OIC_LOG(INFO, TAG, "SRPProvisionCredentials : Same device ID");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -777,6 +824,55 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
             OIC_LOG_V(INFO, TAG, "provisionCredentials returned: %d",res);
             VERIFY_SUCCESS_RETURN(TAG, (res==OC_STACK_OK), ERROR, OC_STACK_ERROR);
             return res;
+        }
+        case SIGNED_ASYMMETRIC_KEY:
+        {
+            /* pDev1 is the device to be provisioned, checked non-null above */
+            /* pDev2 is not used, should be NULL */
+            /* size param is not used. */
+            /* pemCert is the cerficiate to be provisioned */
+            VERIFY_NOT_NULL_RETURN(TAG, pemCert, ERROR, OC_STACK_INVALID_PARAM);
+
+            OicSecKey_t deviceCert = { 0 };
+            deviceCert.data = (uint8_t*) pemCert; /* Casting away const is OK here */
+            deviceCert.len = strlen(pemCert) + 1;
+            deviceCert.encoding = OIC_ENCODING_PEM;
+
+            /* Create a credential object */
+            OicSecCred_t* cred =  GenerateCredential(&pDev1->doxm->deviceID, SIGNED_ASYMMETRIC_KEY,
+                    &deviceCert, NULL, // oic.sec.cred.publicdata = deviceCert, .privatedata = NULL
+                    &provTooldeviceID, NULL); // rowner is the provisioning tool and no eowner
+            VERIFY_NOT_NULL_RETURN(TAG, cred, ERROR, OC_STACK_ERROR);
+
+            cred->publicData.encoding = OIC_ENCODING_PEM;
+            cred->credUsage = OICStrdup(PRIMARY_CERT);
+
+            /* Create credential data (used by the response handler provisionIdentityCertCB and freed there) */
+            CredentialData_t *credData = (CredentialData_t *)OICCalloc(1, sizeof(CredentialData_t)); 
+            if (NULL == credData)
+            {
+                DeleteCredList(cred);
+                OIC_LOG(ERROR, TAG, "Memory allocation problem");
+                return OC_STACK_NO_MEMORY;
+            }
+            credData->deviceInfo1 = pDev1;
+            credData->deviceInfo2 = NULL;
+            credData->credInfo = cred;
+            credData->ctx = ctx;
+            credData->credInfoFirst = cred;
+            credData->numOfResults = 0;
+            credData->resultCallback = resultCallback;
+            credData->resArr = NULL;
+
+            /* Note: the callback of type OCClientResponseHandler, thin wrapper that calls resultCallback */
+            OCStackResult res = provisionCredentials(cred, pDev1, credData, &provisionIdentityCertCB); 
+            if (res != OC_STACK_OK)
+            {
+                OICFree(credData);
+            }
+
+            DeleteCredList(cred);
+            return OC_STACK_OK;
         }
         default:
         {
@@ -2723,10 +2819,11 @@ static void registerResultForGetCSRResourceCB(GetCsrData_t *getCsrData,
  *          and  OC_STACK_KEEP_TRANSACTION to keep it.
  */
 static OCStackApplicationResult SRPGetCSRResourceCB(void *ctx, OCDoHandle UNUSED,
-                                                    OCClientResponse *clientResponse)
+    OCClientResponse *clientResponse)
 {
-    OIC_LOG_V(INFO, TAG, "Inside SRPGetCSRResourceCB.");
-    OC_UNUSED(UNUSED);
+    size_t i = 0;
+    OIC_LOG_V(INFO, TAG, "IN %s", __func__);
+    (void)UNUSED;
     VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
     GetCsrData_t *getCsrData = (GetCsrData_t*)ctx;
     OCGetCSRResultCB resultCallback = getCsrData->resultCallback;
@@ -2748,16 +2845,17 @@ static OCStackApplicationResult SRPGetCSRResourceCB(void *ctx, OCDoHandle UNUSED
         registerResultForGetCSRResourceCB(getCsrData, OC_STACK_ERROR, NULL, 0);
     }
 
-    resultCallback(getCsrData->ctx, getCsrData->numOfResults,
-                   getCsrData->resArr,
-                   false);
-    OIC_LOG_V(ERROR, TAG, "SRPGetCSRResourceCB received Null clientResponse");
-    for (size_t i = 0; i < getCsrData->numOfResults; i++)
+    ((OCGetCSRResultCB)(resultCallback))(getCsrData->ctx, getCsrData->numOfResults,
+        getCsrData->resArr,
+        false);
+    OIC_LOG_V(ERROR, TAG, "%s: received Null clientResponse", __func__);
+    for (i = 0; i < getCsrData->numOfResults; i++)
     {
         OICFree(getCsrData->resArr[i].csr);
     }
     OICFree(getCsrData->resArr);
     OICFree(getCsrData);
+    OIC_LOG_V(INFO, TAG, "OUT %s", __func__);
 
     return OC_STACK_DELETE_TRANSACTION;
 }

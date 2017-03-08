@@ -15,6 +15,7 @@ InputPinCodeCallback
 LoadSecretJustWorksCallback
 
 OCConfigSelfOwnership
+OCConvertDerCSRToPem
 OCDeleteACLList
 OCDeleteDiscoveredDevices
 OCDeletePdAclList
@@ -33,9 +34,12 @@ OCGetCredResource
 OCGetCSRResource
 OCGetDevInfoFromNetwork
 OCGetLinkedStatus
+OCGetPublicKeyFromCSR
+OCGetUuidFromCSR
 OCInitPM
 OCProvisionACL
 OCSaveACL
+OCProvisionCertificate
 OCProvisionCredentials
 OCProvisionDirectPairing
 OCProvisionPairwiseDevices
@@ -48,9 +52,11 @@ OCRemoveTrustCertChainNotifier
 OCResetDevice
 OCResetSVRDB
 OCSaveTrustCertChain
+OCSaveOwnCertChain
 OCSetOwnerTransferCallbackData
 OCUnlinkDevices
 OCSetOxmAllowStatus
+OCVerifyCSRSignature 
 
 SetClosePinDisplayCB
 SetDisplayPinWithContextCB

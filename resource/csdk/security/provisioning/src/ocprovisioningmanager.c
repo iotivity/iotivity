@@ -420,9 +420,30 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
                                       OCProvisionResultCB resultCallback)
 {
     return SRPProvisionCredentials(ctx, type, keySize,
-                                      pDev1, pDev2, resultCallback);
+                                      pDev1, pDev2, NULL, resultCallback);
 
 }
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+/**
+* API to provision a certificate to a device.
+*
+* @param[in] ctx Application context returned in result callback.
+* @param[in] pDev Pointer to OCProvisionDev_t instance, respresenting the device to be provsioned.
+* @param[in] pemCert Certificate to provision, encoded as PEM
+* @param[in] resultCallback callback provided by API user, callback will be called when
+*            provisioning request receives a response from first resource server.
+* @return OC_STACK_OK in case of success and other value otherwise.
+*/
+OCStackResult OCProvisionCertificate(void *ctx,
+    const OCProvisionDev_t *pDev,
+    const char* pemCert,
+    OCProvisionResultCB resultCallback)
+{
+    return SRPProvisionCredentials(ctx, SIGNED_ASYMMETRIC_KEY, 0,
+        pDev, NULL, pemCert, resultCallback);
+}
+#endif
 
 /**
  * this function sends Direct-Pairing Configuration to a device.
@@ -1166,7 +1187,7 @@ OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_
     link->currentCountResults = 0;
     link->resArr = (OCProvisionResult_t*) OICMalloc(sizeof(OCProvisionResult_t)*noOfResults);
     res = SRPProvisionCredentials(link, type, keySize,
-                                     pDev1, pDev2, &ProvisionCredsCB);
+                                     pDev1, pDev2, NULL, &ProvisionCredsCB);
     if (res != OC_STACK_OK)
     {
         OICFree(link->resArr);
@@ -1414,6 +1435,29 @@ OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
                                     OicEncodingType_t encodingType, uint16_t *credId)
 {
     return SRPSaveTrustCertChain(trustCertChain, chainSize, encodingType, credId);
+}
+
+/**
+ * Function to save an identity certificate chain into Cred of SVR.
+ *
+ * @param[in] cert Certificate chain to be saved in Cred of SVR, PEM encoded, null terminated
+ * @param[in] key key corresponding to the certificate, PEM encoded, null terminated
+ * @param[out] credId CredId of saved certificate chain in Cred of SVR.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCSaveOwnCertChain(char* cert, char* key, uint16_t *credId)
+{
+    OicSecKey_t ownCert = { 0 };
+    ownCert.data = (uint8_t*) cert;
+    ownCert.len = strlen(cert) + 1;
+    ownCert.encoding = OIC_ENCODING_PEM;
+
+    OicSecKey_t ownKey = { 0 };
+    ownKey.data = (uint8_t*) key;
+    ownKey.len = strlen(key) + 1;
+    ownKey.encoding = OIC_ENCODING_PEM;
+
+    return SRPSaveOwnCertChain(&ownCert, &ownKey, credId);
 }
 
 /**

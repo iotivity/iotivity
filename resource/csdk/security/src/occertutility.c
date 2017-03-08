@@ -43,8 +43,11 @@
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/x509_csr.h"
+#include "mbedtls/oid.h"
 #include "mbedtls/x509_crt.h"
 #include "mbedtls/oid.h"
+#include "mbedtls/pem.h"
+#include "mbedtls/base64.h"
 
 #ifndef NDEBUG
 #include "mbedtls/debug.h"
@@ -608,6 +611,218 @@ OCStackResult OCGenerateRoleCertificate(
     }
 
     return res;
+}
+
+
+/* Verify the signature in a CSR is valid. */
+static int VerifyCSRSignature(mbedtls_x509_csr* csr)
+{
+    unsigned char hash[MBEDTLS_MD_MAX_SIZE];
+
+    if (csr->sig_md != MBEDTLS_MD_SHA256)
+    {
+        OIC_LOG(ERROR, TAG, "Unexpected digest used in CSR\n");
+        return -1;
+    }
+
+    if ((csr->cri.len == 0) || (csr->cri.p == NULL))
+    {
+        OIC_LOG(ERROR, TAG, "Missing CertificateRequestInfo field in CSR\n");
+        return -1;
+    }
+
+    if ((csr->sig.len == 0) || (csr->sig.p == NULL))
+    {
+        OIC_LOG(ERROR, TAG, "Missing signature field in CSR\n");
+        return -1;
+    }
+
+    if (MBEDTLS_OID_CMP(MBEDTLS_OID_ECDSA_SHA256, &csr->sig_oid) != 0)
+    {
+        char buf[256];
+        if (mbedtls_oid_get_numeric_string(buf, sizeof(buf), &csr->sig_oid) > 0)
+        {
+            OIC_LOG_V(ERROR, TAG, "Unexpected signature OID in CSR (got %s)\n", buf);
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "Unexpected signature OID in CSR\n");
+        }
+        return -1;
+    }
+
+    if (mbedtls_pk_get_type(&csr->pk) != MBEDTLS_PK_ECKEY)
+    {
+        OIC_LOG(ERROR, TAG, "Unexpected public key type in CSR\n");
+        return -1;
+    }
+
+    /* mbedtls_pk_get_bitlen returns the bit length of the curve */
+    if (mbedtls_pk_get_bitlen(&csr->pk) != 256)
+    {
+        OIC_LOG(ERROR, TAG, "Unexpected public length in CSR\n");
+        return -1;
+    }
+
+    mbedtls_ecp_keypair* ecKey = mbedtls_pk_ec(csr->pk);
+    if ((ecKey != NULL) && (ecKey->grp.id != MBEDTLS_ECP_DP_SECP256R1))
+    {
+        OIC_LOG(ERROR, TAG, "Unexpected curve parameters in CSR\n");
+        return -1;
+    }
+
+    /* Hash the CertificateRequestInfoField (https://tools.ietf.org/html/rfc2986#section-3) */
+    int ret = mbedtls_md(mbedtls_md_info_from_type(csr->sig_md), csr->cri.p, csr->cri.len, hash);
+    if (ret != 0)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to hash CertificateRequestInfoField\n");
+        return ret;
+    }
+
+    /* the length of hash is determined from csr->sig_md*/
+    ret = mbedtls_pk_verify(&csr->pk, csr->sig_md, hash, 0, csr->sig.p, csr->sig.len);
+
+    return ret;
+}
+
+OCStackResult OCVerifyCSRSignature(const char* csr)
+{
+    mbedtls_x509_csr csrObj;
+
+    mbedtls_x509_csr_init(&csrObj);
+    int ret = mbedtls_x509_csr_parse(&csrObj, (const unsigned char*)csr, strlen(csr) + 1);
+    if (ret < 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "Couldn't parse CSR: %d", ret);
+        mbedtls_x509_csr_free(&csrObj);
+        return OC_STACK_ERROR;
+    }
+
+    ret = VerifyCSRSignature(&csrObj);
+
+    mbedtls_x509_csr_free(&csrObj);
+
+    if (ret != 0)
+    {
+        return OC_STACK_ERROR;
+    }
+
+    return OC_STACK_OK;
+}
+
+OCStackResult OCGetUuidFromCSR(const char* csr, OicUuid_t* uuid)
+{
+    mbedtls_x509_csr csrObj;
+
+    mbedtls_x509_csr_init(&csrObj);
+    int ret = mbedtls_x509_csr_parse(&csrObj, (const unsigned char*)csr, strlen(csr) + 1);
+    if (ret < 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "Couldn't parse CSR: %d", ret);
+        mbedtls_x509_csr_free(&csrObj);
+        return OC_STACK_ERROR;
+    }
+
+    char uuidStr[UUID_STRING_SIZE + sizeof(SUBJECT_PREFIX) - 1] = { 0 };   // Both constants count NULL, subtract one
+    ret = mbedtls_x509_dn_gets(uuidStr, sizeof(uuidStr), &csrObj.subject);
+    if (ret != (sizeof(uuidStr) - 1))
+    {
+        OIC_LOG_V(ERROR, TAG, "mbedtls_x509_dn_gets returned length or error: %d, expected %d", ret, sizeof(uuidStr) - 1);
+        mbedtls_x509_csr_free(&csrObj);
+        return OC_STACK_ERROR;
+    }
+
+    if (!OCConvertStringToUuid(uuidStr + sizeof(SUBJECT_PREFIX) - 1, uuid->id))
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to convert UUID: '%s'", uuidStr);
+        mbedtls_x509_csr_free(&csrObj);
+        return OC_STACK_ERROR;
+    }
+
+    mbedtls_x509_csr_free(&csrObj);
+    return OC_STACK_OK;
+}
+
+OCStackResult OCGetPublicKeyFromCSR(const char* csr, char** publicKey)
+{
+    mbedtls_x509_csr csrObj;
+
+    mbedtls_x509_csr_init(&csrObj);
+    int ret = mbedtls_x509_csr_parse(&csrObj, (const unsigned char*)csr, strlen(csr) + 1);
+    if (ret < 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "Couldn't parse CSR: %d", ret);
+        mbedtls_x509_csr_free(&csrObj);
+        return OC_STACK_ERROR;
+    }
+
+    char subjectPublicKey[500] = { 0 };
+    ret = mbedtls_pk_write_pubkey_pem(&csrObj.pk, (unsigned char*)subjectPublicKey, sizeof(subjectPublicKey));
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to write subject public key as PEM: %d", ret);
+        mbedtls_x509_csr_free(&csrObj);
+        return OC_STACK_ERROR;
+    }
+
+    size_t pkLen = strlen(subjectPublicKey) + 1;
+    *publicKey = (char*) OICCalloc(1, pkLen);
+    if (*publicKey == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory for public key");
+        mbedtls_x509_csr_free(&csrObj);
+        return OC_STACK_ERROR;
+    }
+
+    memcpy(*publicKey, subjectPublicKey, pkLen);
+    mbedtls_x509_csr_free(&csrObj);
+
+    return OC_STACK_OK;
+}
+
+OCStackResult OCConvertDerCSRToPem(const char* derCSR, size_t derCSRLen, char** pemCSR)
+{
+    const char* pemHeader = "-----BEGIN CERTIFICATE REQUEST-----\n";
+    const char* pemFooter = "-----END CERTIFICATE REQUEST-----\n";
+
+    /* Get the length required for output*/
+    size_t pemCSRLen;
+    int ret = mbedtls_pem_write_buffer(pemHeader,
+        pemFooter,
+        (const unsigned char*)derCSR,
+        derCSRLen,
+        NULL,
+        0,
+        &pemCSRLen);
+    if (ret != MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL)
+    {
+        OIC_LOG_V(ERROR, TAG, "Couldn't convert CSR into PEM, failed getting required length: %d", ret);
+        return OC_STACK_ERROR;
+    }
+
+    *pemCSR = OICCalloc(1, pemCSRLen + 1);
+    if (*pemCSR == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory for PEM CSR");
+        return OC_STACK_ERROR;
+    }
+
+    /* Try the conversion */
+    ret = mbedtls_pem_write_buffer(pemHeader, pemFooter,
+        (const unsigned char *)derCSR,
+        derCSRLen,
+        (unsigned char*) *pemCSR,
+        pemCSRLen,
+        &pemCSRLen);
+    if (ret < 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "Couldn't convert CSR into PEM, failed getting required length: %d", ret);
+        OICFree(*pemCSR);
+        *pemCSR = NULL;
+        return OC_STACK_ERROR;
+    }
+
+    return OC_STACK_OK;
 }
 
 #endif /* defined(__WITH_TLS__) || defined(__WITH_DTLS__) */

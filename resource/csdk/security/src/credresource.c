@@ -65,6 +65,7 @@
 
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 #include <mbedtls/ssl_ciphersuites.h>
+#include "mbedtls/pk.h"
 #endif
 
 #define TAG  "OIC_SRM_CREDL"
@@ -579,9 +580,57 @@ static CborError DeserializeSecOptFromCbor(CborValue *rootMap, OicSecOpt_t *valu
     return cborFindResult;
 }
 
+/* Produce debugging output for all credentials, output metadata. */
+static void logCredMetadata()
+{
+#if defined(TB_LOG)
+    OicSecCred_t * temp = NULL;
+    size_t count = 0;
+    char uuidString[UUID_STRING_SIZE];
+    OicUuid_t ownUuid;
+
+    OIC_LOG_V(DEBUG, TAG, "IN %s:", __func__);
+
+    if (GetDoxmDeviceID(&ownUuid) == OC_STACK_OK && OCConvertUuidToString(ownUuid.id, uuidString))
+    {
+        OIC_LOG_V(DEBUG, TAG, "Own UUID: %s", uuidString);
+    }
+
+    LL_FOREACH(gCred, temp)
+    {
+        count++;
+        OIC_LOG(DEBUG, TAG, " ");
+        OIC_LOG_V(DEBUG, TAG, "Cred ID: %d", temp->credId);
+        if (OCConvertUuidToString(temp->subject.id, uuidString))
+        {
+            OIC_LOG_V(DEBUG, TAG, "Subject UUID: %s", uuidString);
+        }
+        OIC_LOG_V(DEBUG, TAG, "Cred Type: %d", temp->credType);
+        OIC_LOG_V(DEBUG, TAG, "privateData length: %d, encoding: %d", temp->privateData.len, temp->privateData.encoding);
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+        OIC_LOG_V(DEBUG, TAG, "publicData length: %d, encoding: %d", temp->publicData.len, temp->publicData.encoding);           
+        if (temp->credUsage)
+        {
+            OIC_LOG_V(DEBUG, TAG, "credUsage: %s", temp->credUsage);
+        }
+
+        OIC_LOG_V(DEBUG, TAG, "optionalData length: %d, encoding: %d", temp->optionalData.len, temp->optionalData.encoding);
+#endif
+
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "Found %d credentials.", count);
+
+    OIC_LOG_V(DEBUG, TAG, "OUT %s:", __func__);
+#endif
+}
+
+
 OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload,
                                 size_t *cborSize, int secureFlag)
 {
+    OIC_LOG_V(DEBUG, TAG, "IN %s:", __func__);
     if (NULL == credS || NULL == cborPayload || NULL != *cborPayload || NULL == cborSize)
     {
         return OC_STACK_INVALID_PARAM;
@@ -849,6 +898,8 @@ exit:
         *cborPayload = NULL;
         ret = OC_STACK_ERROR;
     }
+
+    OIC_LOG_V(DEBUG, TAG, "OUT %s:", __func__);
 
     return ret;
 }
@@ -1337,6 +1388,9 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
     }
 
     OIC_LOG(DEBUG, TAG, "OUT Cred UpdatePersistentStorage");
+
+    logCredMetadata();
+
     return ret;
 }
 
@@ -2101,7 +2155,7 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
 #endif//__WITH_DTLS__
     }
 
-    if (OC_EH_CHANGED != ret)
+    if (OC_EH_CHANGED != ret && cred != NULL)
     {
         if(OC_STACK_OK != RemoveCredential(&cred->subject))
         {
@@ -2443,15 +2497,16 @@ OicSecCred_t* GetCredEntryByCredId(const uint16_t credId)
                 cred->privateData.encoding = tmpCred->privateData.encoding;
             }
 #if defined(__WITH_X509__) || defined(__WITH_TLS__)
-            else if (tmpCred->publicData.data)
+            if (tmpCred->publicData.data)
             {
                 cred->publicData.data = (uint8_t *)OICCalloc(1, tmpCred->publicData.len);
                 VERIFY_NOT_NULL(TAG, cred->publicData.data, ERROR);
 
                 memcpy(cred->publicData.data, tmpCred->publicData.data, tmpCred->publicData.len);
                 cred->publicData.len = tmpCred->publicData.len;
+                cred->publicData.encoding = tmpCred->publicData.encoding;
             }
-            else if (tmpCred->optionalData.data)
+            if (tmpCred->optionalData.data)
             {
                 cred->optionalData.data = (uint8_t *)OICCalloc(1, tmpCred->optionalData.len);
                 VERIFY_NOT_NULL(TAG, cred->optionalData.data, ERROR);
@@ -2461,7 +2516,6 @@ OicSecCred_t* GetCredEntryByCredId(const uint16_t credId)
                 cred->optionalData.encoding = tmpCred->optionalData.encoding;
                 cred->optionalData.revstat= tmpCred->optionalData.revstat;
             }
-
             if (tmpCred->credUsage)
             {
                 cred->credUsage = OICStrdup(tmpCred->credUsage);
@@ -2803,6 +2857,7 @@ void GetDerCaCert(ByteArray_t * crt, const char * usage)
     LL_FOREACH(gCred, temp)
     {
         if ((SIGNED_ASYMMETRIC_KEY == temp->credType) &&
+            (temp->credUsage != NULL) &&
             (0 == strcmp(temp->credUsage, usage)) && (false == temp->optionalData.revstat))
         {
             if(OIC_ENCODING_BASE64 == temp->optionalData.encoding)
@@ -2857,6 +2912,7 @@ void GetDerOwnCert(ByteArray_t * crt, const char * usage)
     LL_FOREACH(gCred, temp)
     {
         if (SIGNED_ASYMMETRIC_KEY == temp->credType &&
+            temp->credUsage != NULL &&
             0 == strcmp(temp->credUsage, usage))
         {
             crt->data = OICRealloc(crt->data, crt->len + temp->publicData.len);
@@ -2887,13 +2943,58 @@ void GetDerKey(ByteArray_t * key, const char * usage)
     LL_FOREACH(gCred, temp)
     {
         if ((SIGNED_ASYMMETRIC_KEY == temp->credType || ASYMMETRIC_KEY == temp->credType) && 
-            NULL != temp->credUsage && 
+            NULL != temp->credUsage &&
             0 == strcmp(temp->credUsage, usage))
         {
-            key->data = OICRealloc(key->data, key->len + temp->privateData.len);
-            memcpy(key->data + key->len, temp->privateData.data, temp->privateData.len);
-            key->len += temp->privateData.len;
-            OIC_LOG_V(DEBUG, TAG, "Key for %s found", usage);
+            
+            if (temp->privateData.encoding == OIC_ENCODING_PEM)
+            {
+                /* Convert PEM to DER */
+                mbedtls_pk_context ctx;
+                mbedtls_pk_init(&ctx);
+
+                int ret = mbedtls_pk_parse_key(&ctx, temp->privateData.data, temp->privateData.len, NULL, 0);
+                if (ret != 0)
+                {
+                    mbedtls_pk_free(&ctx);
+                    OIC_LOG_V(ERROR, TAG, "Key for %s found, but failed to convert from PEM to DER (while reading PEM)", usage);
+                    return;
+                }
+
+                key->data = OICRealloc(key->data, key->len + temp->privateData.len);
+                if (key->data == NULL)
+                {
+                    mbedtls_pk_free(&ctx);
+                    OIC_LOG(ERROR, TAG, "Realloc failed to increase key->data length");
+                    return;
+                }
+
+                key->len += temp->privateData.len;
+                ret = mbedtls_pk_write_key_der(&ctx, key->data, key->len);
+                if (ret < 1) /* return value is the number of bytes written, or error */
+                {
+                    mbedtls_pk_free(&ctx);
+                    key->len = 0;
+                    OIC_LOG_V(ERROR, TAG, "Key for %s found, but failed to convert from PEM to DER (while writing DER)", usage);
+                    return;
+                }
+                key->data = OICRealloc(key->data, ret);
+                key->len = ret;
+                break;
+                
+            }
+            else if(temp->privateData.encoding == OIC_ENCODING_DER)
+            {
+                key->data = OICRealloc(key->data, key->len + temp->privateData.len);
+                memcpy(key->data + key->len, temp->privateData.data, temp->privateData.len);
+                key->len += temp->privateData.len;
+                OIC_LOG_V(DEBUG, TAG, "Key for %s found", usage);
+                break;
+            }
+            else
+            {
+                OIC_LOG_V(WARNING, TAG, "Key for %s found, but it has an unknown encoding", usage);
+            }
         }
     }
     if(0 == key->len)
@@ -2931,7 +3032,7 @@ void InitCipherSuiteListInternal(bool * list, const char * usage)
             }
             case SIGNED_ASYMMETRIC_KEY:
             {
-                if (0 == strcmp(temp->credUsage, usage))
+                if (NULL != temp->credUsage && 0 == strcmp(temp->credUsage, usage))
                 {
                     list[1] = true;
                     OIC_LOG_V(DEBUG, TAG, "SIGNED_ASYMMETRIC_KEY found for %s", usage);

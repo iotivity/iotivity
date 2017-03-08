@@ -295,6 +295,21 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
                                       const OCProvisionDev_t *pDev2,
                                       OCProvisionResultCB resultCallback);
 
+/**
+ * API to provision a certificate to a device.
+ *
+ * @param[in] ctx Application context returned in result callback.
+ * @param[in] pDev Pointer to OCProvisionDev_t instance, respresenting the device to be provsioned.
+ * @param[in] pemCert Certificate to provision, encoded as PEM
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request receives a response from first resource server.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCProvisionCertificate(void *ctx,
+                                     const OCProvisionDev_t *pDev,
+                                     const char* pemCert,
+                                     OCProvisionResultCB resultCallback);
+
 #ifdef MULTIPLE_OWNER
 /**
  * API to provision preconfigured PIN to device(NOT LIST).
@@ -388,16 +403,16 @@ OCStackResult OCRemoveDevice(void* ctx,
                              OCProvisionResultCB resultCallback);
 
 /**
-* Function to device revocation
-* This function will remove credential of target device from all devices in subnet.
-*
-* @param[in] ctx Application context would be returned in result callback
-* @param[in] waitTimeForOwnedDeviceDiscovery Maximum wait time for owned device discovery.(seconds)
-* @param[in] pTargetUuid Device information to be revoked.
-* @param[in] resultCallback callback provided by API user, callback will be called when
-*            credential revocation is finished.
+ * Function to device revocation
+ * This function will remove credential of target device from all devices in subnet.
+ *
+ * @param[in] ctx Application context would be returned in result callback
+ * @param[in] waitTimeForOwnedDeviceDiscovery Maximum wait time for owned device discovery.(seconds)
+ * @param[in] pTargetUuid Device information to be revoked.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            credential revocation is finished.
  * @return  OC_STACK_OK in case of success and other value otherwise.
-*/
+ */
 OCStackResult OCRemoveDeviceWithUuid(void* ctx,
                                      unsigned short waitTimeForOwnedDeviceDiscovery,
                                      const OicUuid_t* pTargetUuid,
@@ -531,6 +546,17 @@ OCStackResult OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16
  */
 OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
                                         OicEncodingType_t encodingType, uint16_t *credId);
+
+/**
+ * Function to save an identity certificate chain into Cred of SVR.
+ *
+ * @param[in] cert Certificate chain to be saved in Cred of SVR, PEM encoded, null terminated
+ * @param[in] key private key corresponding to the certificate, PEM encoded, null terminated
+ * @param[out] credId CredId of saved certificate chain in Cred of SVR.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCSaveOwnCertChain(char* cert, char* key, uint16_t *credId);
+
 /**
  * function to register callback, for getting notification for TrustCertChain change.
  *

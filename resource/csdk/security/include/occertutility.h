@@ -170,6 +170,50 @@ OCStackResult OCGenerateRoleCertificate(
     char **certificate,
     size_t *certificateLen);
 
+/**
+ * Extract a UUID from a CSR.
+ *
+ * @param[in]  csr  The CSR containing the UUID as null-terminated PEM.
+ * @param[out] uuid The UUID in the CSR
+ *
+ * @return 0 on success, nonzero otherwise
+ */
+OCStackResult OCGetUuidFromCSR(const char* csr, OicUuid_t* uuid);
+
+/**
+ * Extract a public key from a CSR.
+ *
+ * @param[in]  csr       The CSR containing the public key, as null-terminated PEM.
+ * @param[out] publicKey The public key is output here as null-terminated PEM.
+ *                       Callers must call OICFree when finished.
+ *
+ * @return 0 on success, nonzero otherwise
+ */
+OCStackResult OCGetPublicKeyFromCSR(const char* csr, char** publicKey);
+
+/**
+ * Verify the signature in a CSR is valid.
+ *
+ * @param[in] csr The CSR to check, as null-terminated PEM.
+ *
+ * @returns 0 on success, nonzero otherwise
+ *
+ * @remark Requires that ECDSA with SHA-256 be used for the signature.
+ */
+OCStackResult OCVerifyCSRSignature(const char* csr);
+
+/**
+ * Convert a CSR from DER encoding to PEM encoding.
+ *
+ * @param[in] derCSR The CSR to convert, encoded as DER
+ * @param[in] derCSRLen Then number of bytes in derCSR
+ * @param[out] pemCSR The output, PEM encoded, null-terminated CSR. Callers 
+ *                    call OICFree when finished. 
+ *
+ * @returns 0 on success, nonzero otherwise
+*/
+OCStackResult OCConvertDerCSRToPem(const char* derCSR, size_t derCSRLen, char** pemCSR);
+
 #ifdef __cplusplus
 }
 #endif

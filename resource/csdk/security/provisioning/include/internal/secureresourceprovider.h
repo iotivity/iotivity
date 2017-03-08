@@ -35,7 +35,7 @@ extern "C"
 /**
  * API to send ACL information to resource.
  *
- * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] ctx Application context to be returned in result callback.
  * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] acl ACL to provision.
  * @param[in] resultCallback callback provided by API user, callback will be called when
@@ -56,7 +56,7 @@ OCStackResult SRPSaveACL(const OicSecAcl_t *acl);
 /**
  * API to request CRED information to resource.
  *
- * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] ctx Application context to be returned in result callback.
  * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from resource server.
@@ -68,7 +68,7 @@ OCStackResult SRPGetCredResource(void *ctx, const OCProvisionDev_t *selectedDevi
 /**
  * API to request ACL information to resource.
  *
- * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] ctx Application context to be returned in result callback.
  * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from resource server.
@@ -93,7 +93,7 @@ OCStackResult SRPGetCSRResource(void *ctx, const OCProvisionDev_t *selectedDevic
 /**
  * function to provision Trust certificate chain to devices.
  *
- * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] ctx Application context to be returned in result callback.
  * @param[in] type Type of credentials to be provisioned to the device.
  * @param[in] credId CredId of trust certificate chain to be provisioned to the device.
  * @param[in] selectedDeviceInfo Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
@@ -145,7 +145,7 @@ void SRPRemoveTrustCertChainNotifier(void);
 /**
  * API to send Direct-Pairing Configuration to a device.
  *
- * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] ctx Application context to be returned in result callback.
  * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] pconf PCONF pointer.
  * @param[in] resultCallback callback provided by API user, callback will be called when
@@ -170,11 +170,13 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
 /**
  * API to provision credential to devices.
  *
- * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] ctx Application context to be returned in result callback.
  * @param[in] type Type of credentials to be provisioned to the device.
  * @param[in] keySize size of key
- * @param[in] pDev1 Pointer to PMOwnedDeviceInfo_t instance,respresenting resource to be provsioned.
-   @param[in] pDev2 Pointer to PMOwnedDeviceInfo_t instance,respresenting resource to be provsioned.
+ * @param[in] pDev1 Pointer to PMOwnedDeviceInfo_t instance, respresenting resource to be provsioned.
+ * @param[in] pDev2 Pointer to PMOwnedDeviceInfo_t instance, respresenting resource to be provsioned.
+ * @param[in] pemCert When provisioning a certificate (type is SIGNED_ASYMMETRIC_KEY), this is the 
+ *                    certificate, encoded as PEM. 
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from first resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
@@ -182,13 +184,14 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
 OCStackResult SRPProvisionCredentials(void *ctx,OicSecCredType_t type, size_t keySize,
                                       const OCProvisionDev_t *pDev1,
                                       const OCProvisionDev_t *pDev2,
+                                      const char* pemCert,
                                       OCProvisionResultCB resultCallback);
 
 /**
  * Function to unlink devices.
  * This function will remove the credential & relationship between the two devices.
  *
- * @param[in] ctx Application context would be returned in result callback
+ * @param[in] ctx Application context to be returned in result callback
  * @param[in] pTargetDev1 first device information to be unlinked.
  * @param[in] pTargetDev2 second device information to be unlinked.
  * @param[in] resultCallback callback provided by API user, callback will be called when
@@ -205,7 +208,7 @@ OCStackResult SRPUnlinkDevices(void* ctx,
  * Function to device revocation.
  * This function will remove credential of target device from all devices in subnet.
  *
- * @param[in] ctx Application context would be returned in result callback
+ * @param[in] ctx Application context to be returned in result callback
  * @param[in] waitTimeForOwnedDeviceDiscovery Maximum wait time for owned device discovery.(seconds)
  * @param[in] pTargetDev Device information to be revoked.
  * @param[in] resultCallback callback provided by API user, callback will be called when
@@ -221,18 +224,18 @@ OCStackResult SRPRemoveDevice(void* ctx,
                               OCProvisionResultCB resultCallback);
 
 /**
-* Function to device revocation
-* This function will remove credential of target device from all devices in subnet.
-*
-* @param[in] ctx Application context would be returned in result callback
-* @param[in] pOwnedDevList List of owned devices
-* @param[in] pTargetDev Device information to be revoked.
-* @param[in] resultCallback callback provided by API user, callback will be called when
-*            credential revocation is finished.
-* @return  OC_STACK_OK in case of success and other value otherwise.
-*          If OC_STACK_OK is returned, the caller of this API should wait for callback.
-*          OC_STACK_CONTINUE means operation is success but no request is need to be initiated.
-*/
+ * Function to device revocation
+ * This function will remove credential of target device from all devices in subnet.
+ *
+ * @param[in] ctx Application context to be returned in result callback
+ * @param[in] pOwnedDevList List of owned devices
+ * @param[in] pTargetDev Device information to be revoked.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            credential revocation is finished.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ *          If OC_STACK_OK is returned, the caller of this API should wait for callback.
+ *          OC_STACK_CONTINUE means operation is success but no request is need to be initiated.
+ */
 OCStackResult SRPRemoveDeviceWithoutDiscovery(void* ctx, const OCProvisionDev_t* pOwnedDevList,
                              const OCProvisionDev_t* pTargetDev, OCProvisionResultCB resultCallback);
 
@@ -240,7 +243,7 @@ OCStackResult SRPRemoveDeviceWithoutDiscovery(void* ctx, const OCProvisionDev_t*
  * Function to sync-up credential and ACL of the target device.
  * This function will remove credential and ACL of target device from all devices in subnet.
  *
- * @param[in] ctx Application context would be returned in result callback
+ * @param[in] ctx Application context to be returned in result callback
  * @param[in] waitTimeForOwnedDeviceDiscovery Maximum wait time for owned device discovery.(seconds)
  * @param[in] pTargetDev Device information to be revoked.
  * @param[in] resultCallback callback provided by API user, callback will be called when

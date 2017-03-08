@@ -93,27 +93,27 @@ TEST(SRPProvisionCredentialsTest, NullDevice1)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType,
                                                               OWNER_PSK_LENGTH_128, NULL,
-                                                              &pDev2, &provisioningCB));
+                                                              &pDev2, NULL, &provisioningCB));
 }
 
 TEST(SRPProvisionCredentialsTest, SamelDeviceId)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType,
                                                               OWNER_PSK_LENGTH_128, &pDev1,
-                                                              &pDev1, &provisioningCB));
+                                                              &pDev1, NULL, &provisioningCB));
 }
 
 TEST(SRPProvisionCredentialsTest, NullCallback)
 {
     EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPProvisionCredentials(NULL, credType,
                                                                  OWNER_PSK_LENGTH_128,
-                                                                 &pDev1, &pDev2, NULL));
+                                                                 &pDev1, &pDev2, NULL, NULL));
 }
 
 TEST(SRPProvisionCredentialsTest, InvalidKeySize)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType,
-                                                                0, &pDev1, &pDev2,
+                                                                0, &pDev1, &pDev2, NULL,
                                                                 &provisioningCB));
 }
 
