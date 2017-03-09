@@ -506,7 +506,7 @@ static int initProvisionClient(void)
         return -1;
     }
 
-    if (access(PRVN_DB_FILE_NAME, F_OK) != -1)
+    if (access(PRVN_DB_FILE_NAME, F_OK) == 0)
     {
         printf("************************************************************\n");
         printf("************Provisioning DB file already exists.************\n");
