@@ -39,4 +39,6 @@ public interface ResourceUtil {
   int CALLBACK_WAIT_ONE = 1;
   int CALLBACK_WAIT_MIN = 2;
   int CALLBACK_WAIT_MAX = 5;
+  int CONFIG_WAIT_FIVE = 5;
+  int CONFIG_WAIT_TWO = 2;
 }

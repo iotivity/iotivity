@@ -40,6 +40,7 @@ public class REResourceCacheTest extends InstrumentationTestCase {
   private REAPIHelper                    m_REHelper;
   private static RcsRemoteResourceObject m_Resource;
   private StringBuilder                  m_ErrorMsg = new StringBuilder();
+  int m_count = 10;
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -182,7 +183,7 @@ public class REResourceCacheTest extends InstrumentationTestCase {
     try {
       m_Resource.startCaching(null);
       CacheState cacheState = m_Resource.getCacheState();
-      
+
       if (cacheState != CacheState.UNREADY) {
         fail("Cache state should READY after CachingStart. But got "
             + cacheState);
@@ -469,9 +470,9 @@ public class REResourceCacheTest extends InstrumentationTestCase {
   /**
    * @since 2015-11-04
    * @see None
-   * @objective Test 'getCachedAttribute' function with invalid key
+   * @objective Test 'getCachedAttribute' function without Caching
    * @target void getCachedAttribute(string key)
-   * @test_data key = "invalid_key"
+   * @test_data key = "power"
    * @pre_condition Remote Resource Object should be instantialized
    * @procedure Perform getCachedAttributes(string key) API
    * @post_condition None
@@ -482,6 +483,32 @@ public class REResourceCacheTest extends InstrumentationTestCase {
       m_Resource.getCachedAttribute(ATTR_KEY_POWER);
 
       fail("Successfully got attribute without starting cache.");
+    } catch (RcsException e) {
+      if (e.getLocalizedMessage().compareTo("Caching not started.") != 0) {
+        fail(
+            "Didn't get proper exception message. \"Cheching Caching not started.\" but got "
+                + e.getLocalizedMessage());
+      }
+    }
+  }
+
+  /**
+   * @since 2017-03-02
+   * @see None
+   * @objective Test 'getCachedAttribute' function with invalid key
+   * @target void getCachedAttribute(string key)
+   * @test_data key = "invalid_key"
+   * @pre_condition Remote Resource Object should be instantialized
+   * @procedure Perform getCachedAttributes(string key) API
+   * @post_condition None
+   * @expected returned Attribute is empty
+   **/
+  public void testGetCachedAttributeWithInvalidKey_EG_N() {
+    try {
+      String key = "invalid_key";
+      m_Resource.getCachedAttribute(key);
+
+      fail("Successfully called getCachedAttribute() with invalid key.");
     } catch (RcsException e) {
       if (e.getLocalizedMessage().compareTo("Caching not started.") != 0) {
         fail(
@@ -522,6 +549,85 @@ public class REResourceCacheTest extends InstrumentationTestCase {
       }
     } catch (RcsException e) {
       fail("Exception occurred inside GetCacheState_P: "
+          + e.getLocalizedMessage());
+    }
+  }
+
+  /**
+   * @since 2017-03-02
+   * @see None
+   * @objective Test 'getCacheState' function with State Transition Condition Check
+   * @target CacheState getCacheState()
+   * @test_data None
+   * @pre_condition 1. Remote Resource Object should be instantialized
+   *                2. Perform startCaching() API
+   *                3. Waited for 5 seconds
+   * @procedure Perform getCacheState() API
+   * @post_condition None
+   * @expected Should return CacheState = READY
+   **/
+  public void testGetCacheState_STCC_P() {
+    CacheState cacheState;
+    try {
+      m_Resource.startCaching();
+
+      cacheState = m_Resource.getCacheState();
+      if (cacheState != CacheState.UNREADY) {
+        fail("Cache state should UNREADY atfter CachingStart. But got "
+            + cacheState);
+      }
+      m_REHelper.waitInSecond(CALLBACK_WAIT_MIN);
+
+      cacheState = m_Resource.getCacheState();
+      if (cacheState != CacheState.READY) {
+        fail("Cache state should READY after CachingStart. But got "
+            + cacheState);
+      }
+    } catch (RcsException e) {
+      fail("Exception occurred inside GetCacheState_P: "
+          + e.getLocalizedMessage());
+    }
+  }
+
+  /**
+   * @since 2017-03-02
+   * @see None
+   * @objective Test 'getCacheState' function with State Loop Transition Check
+   * @target CacheState getCacheState()
+   * @test_data None
+   * @pre_condition Remote Resource Object should be instantialized *
+   * @procedure 1. Perform startCaching() API
+   *            2. Perform getCacheState() API
+   *            3. Waited for 5 seconds
+   *            4. Perform getCacheState() API
+   *            5. Perform stopCaching() API
+   *            6. Repeat 1~5 multiple times
+   * @post_condition None
+   * @expected No crash occurs
+   **/
+  public void testGetCacheState_SLCC_P() {
+    CacheState cacheState;
+    try {
+      for (int i = 0; i < m_count; i++)
+      {
+        m_Resource.startCaching();
+
+        cacheState = m_Resource.getCacheState();
+        if (cacheState != CacheState.UNREADY) {
+          fail("Cache state should UNREADY atfter CachingStart. But got "
+              + cacheState);
+        }
+        m_REHelper.waitInSecond(CALLBACK_WAIT_MIN);
+
+        cacheState = m_Resource.getCacheState();
+        if (cacheState != CacheState.READY) {
+          fail("Cache state should READY after CachingStart. But got "
+              + cacheState);
+        }
+        m_Resource.stopCaching();
+      }
+    } catch (RcsException e) {
+      fail("Exception occurred inside testGetCacheState_SLCC_P: "
           + e.getLocalizedMessage());
     }
   }
@@ -665,3 +771,4 @@ public class REResourceCacheTest extends InstrumentationTestCase {
     }
   }
 }
+

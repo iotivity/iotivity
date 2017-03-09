@@ -34,17 +34,21 @@ import org.iotivity.test.re.tc.helper.REAPIHelper;
 import static org.iotivity.test.re.tc.helper.ResourceUtil.*;
 import static org.iotivity.test.re.tc.helper.ResourceProperties.*;
 import android.test.InstrumentationTestCase;
+
 import android.util.Log;
+import java.util.ArrayList;
 
 public class REResourceWrapperTest extends InstrumentationTestCase {
   private static final String     LOG_TAG    = "RETest";
   private StringBuilder           m_ErrorMsg = new StringBuilder();
   private REAPIHelper             m_REHelper;
   private RcsRemoteResourceObject m_Resource;
+  private ArrayList<RcsRemoteResourceObject> m_ResourceList = new ArrayList<RcsRemoteResourceObject>();
+  boolean callbackcheck = false;
 
   protected void setUp() throws Exception {
     super.setUp();
-
+    callbackcheck = false;
     m_REHelper = new REAPIHelper();
     m_ErrorMsg.setLength(0);
 
@@ -61,6 +65,8 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
     @Override
     public void onResourceDiscovered(RcsRemoteResourceObject foundResource) {
       Log.i(LOG_TAG, "onResourceDiscovered in API test case");
+      m_ResourceList.add(foundResource);
+      callbackcheck = true;
     }
   };
 
@@ -233,7 +239,7 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
 
     } catch (NullPointerException e) {
       Log.e(LOG_TAG,
-          "Exception occurs at testDiscoverResourceByTypeForMulticast_ETC_N as expected. Exception: "
+          "Exception occurs at testDiscoverResourceWithURI_ETC_N as expected. Exception: "
               + e.getLocalizedMessage());
       isNullException = true;
     } catch (RcsException e) {
@@ -319,4 +325,281 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
         fail("Should throw NullPointerException");
     }
   }
+
+  /**
+   * @since 2017-03-07
+   * @see None
+   * @objective Test 'discoverResource' function multiple times
+   * @target public DiscoveryTask discoverResource(RcsAddress address, String
+   *         uri, OnResourceDiscoveredListener listener)
+   * @test_data None
+   * @pre_condition Remote Resource Object should be instantialized
+   * @procedure Perform discoverResource() API multiple times
+   * @post_condition None
+   * @expected returned discovery manager should not be null
+   **/
+  public void testDiscoverResourceMultipleTimes_VLCC_P() {
+    for (int i = 1; i <= 10; i++) {
+      if (!m_REHelper.disocverResources(m_ErrorMsg)) {
+        fail("Failed, No Resource Found!! " + m_ErrorMsg.toString());
+      } else {
+        Log.d(LOG_TAG, m_ErrorMsg.toString());
+        if(m_REHelper.getFoundResourceList().size() == 0 ){
+          fail("testDiscoverResourceMultipleTimes_VLCC_P Failed for for iteration no. "+i);
+        }
+      }
+    }
+  }
+
+  /**
+   * @since 2017-03-07
+   * @see None
+   * @objective Test 'discoverResource' function with state transition loop check
+   * @target public DiscoveryTask discoverResource(RcsAddress address, String
+   *         uri, OnResourceDiscoveredListener listener)
+   * @test_data 1. host
+   *            2. uri
+   *            3. Callback
+   * @pre_condition Remote Resource Object should be instantialized
+   * @procedure Perform discoverResource() API multiple times Without Waiting
+   * @post_condition Cancel Discovery Task
+   * @expected The API should not crash
+   **/
+  public void testDiscoverResourceMultipleTimesWithoutWaiting_STLC_N() {
+    int i = 0;
+    try {
+      
+      for (i = 1; i <= 10; i++) {
+        RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
+            .getInstance().discoverResource(RcsAddress.multicast(), OC_RSRVD_WELL_KNOWN_URI,
+                mOnResourceDiscoveredListener);
+        discoveryTask.cancel();
+      }
+    } catch (Exception e) {
+      fail("Iteration:"+i+" Throws exception when discoverResource API called. Exception: "
+          + e.getLocalizedMessage());
+    }
+  }
+
+  /**
+   * @since 2017-03-07
+   * @see None
+   * @objective Test 'discoverResource' function with sequential validation
+   * @target public DiscoveryTask discoverResource(RcsAddress address, String
+   *         uri, OnResourceDiscoveredListener listener)
+   * @test_data 1. host
+   *            2. uri
+   *            3. Callback
+   * @pre_condition Remote Resource Object should be instantialized
+   * @procedure Perform discoverResource() API
+   * @post_condition Cancel Discovery Task
+   * @expected returned discovery manager should not be null
+   **/
+  public void testDiscoverAllResources_SQV_P() {
+    try {
+        m_ResourceList.clear();
+        RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
+            .getInstance().discoverResource(RcsAddress.multicast(), OC_RSRVD_WELL_KNOWN_URI,
+                mOnResourceDiscoveredListener);
+        m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
+        discoveryTask.cancel();
+        if( m_ResourceList.size() < 2 ){
+          fail("All Resources are not Found!!");
+        }
+    } catch (Exception e) {
+      fail("Throws exception when discoverResource API called. Exception: "
+          + e.getLocalizedMessage());
+    }
+  }
+
+  /**
+   * @since 2017-03-07
+   * @see None
+   * @objective Test 'discoverResourceByType' function with callback condition checking
+   * @target public DiscoveryTask discoverResourceByType(RcsAddress address,
+   *         String uri, String resourceType, OnResourceDiscoveredListener
+   *         listener)
+   * @test_data 1. Resource Address 2. Resource Type 3. Callback
+   * @pre_condition None
+   * @procedure Perform discoverResourceByType() API
+   * @post_condition None
+   * @expected returned discovery manager should not be null
+   **/
+  public void testDiscoverResourceByTypeWithoutURI_CCC_P() {
+    try {
+      RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
+          .getInstance().discoverResourceByType(RcsAddress.multicast()
+              , RESOURCE_TYPE_TEMPERATURE, mOnResourceDiscoveredListener);
+
+      m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
+
+      discoveryTask.cancel();
+      if( m_ResourceList.size() < 1 ){
+        fail("Resources are not Found!!");
+      }
+    } catch (RcsException e) {
+      fail("Throws exception when called discoverResourceByType API with uri. "
+          + e.getLocalizedMessage());
+    }
+  }
+
+  /**
+   * @since 2017-03-07
+   * @see None
+   * @objective Test 'discoverResourceByType' function twice
+   * @target public DiscoveryTask discoverResourceByType(RcsAddress address,
+   *         String uri, String resourceType, OnResourceDiscoveredListener
+   *         listener)
+   * @test_data 1. Resource Address 2. Resource Type 3. Callback
+   * @pre_condition None
+   * @procedure Perform discoverResourceByType() API twice
+   * @post_condition None
+   * @expected returned discovery manager should not be null
+   **/
+  public void testDiscoverResourceByTypeWithoutURI_CACC_P() {
+    try {
+      RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
+          .getInstance().discoverResourceByType(RcsAddress.multicast()
+              , RESOURCE_TYPE_TEMPERATURE, mOnResourceDiscoveredListener);
+      m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
+      discoveryTask.cancel();
+
+      RcsDiscoveryManager.DiscoveryTask discoveryTask2 = RcsDiscoveryManager
+          .getInstance().discoverResourceByType(RcsAddress.multicast()
+              , RESOURCE_TYPE_TEMPERATURE, mOnResourceDiscoveredListener);
+      m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
+      discoveryTask2.cancel();
+
+      if( m_ResourceList.size() < 1 ){
+        fail("Resources are not Found!!");
+      }
+    } catch (RcsException e) {
+      fail("Throws exception when called discoverResourceByType API with uri. "
+          + e.getLocalizedMessage());
+    }
+  }
+
+  /**
+   * @since 2017-03-07
+   * @see None
+   * @objective Test 'discoverResourceByType' function multiple times
+   * @target public DiscoveryTask discoverResourceByType(RcsAddress address,
+   *         String uri, String resourceType, OnResourceDiscoveredListener
+   *         listener)
+   * @test_data 1. Resource Address 2. Resource Type 3. Callback
+   * @pre_condition None
+   * @procedure Perform discoverResourceByType() API twice
+   * @post_condition None
+   * @expected returned discovery manager should not be null
+   **/
+  public void testDiscoverResourceByTypeWithoutURI_ALVC_P() {
+    try {
+      for (int i = 1; i <= 10; i++) {
+        RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
+            .getInstance().discoverResourceByType(RcsAddress.multicast()
+                , RESOURCE_TYPE_TEMPERATURE, mOnResourceDiscoveredListener);
+        discoveryTask.cancel();
+      }
+    } catch (RcsException e) {
+      fail("Throws exception when called discoverResourceByType API with uri. "
+          + e.getLocalizedMessage());
+    }
+  }
+
+  /**
+   * @since 2017-03-07
+   * @see None
+   * @objective Test 'discoverResourceByType' function twice with URI
+   * @target public DiscoveryTask discoverResourceByType(RcsAddress address,
+   *         String uri, String resourceType, OnResourceDiscoveredListener
+   *         listener)
+   * @test_data 1. Resource Address 2. Resource Type 3. Callback
+   * @pre_condition None
+   * @procedure Perform discoverResourceByType() API twice
+   * @post_condition None
+   * @expected returned discovery manager should not be null
+   **/
+  public void testDiscoverResourceByType_CACC_P() {
+    try {
+      RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
+          .getInstance().discoverResourceByType(RcsAddress.multicast(),
+              OC_RSRVD_WELL_KNOWN_URI, RESOURCE_TYPE_TEMPERATURE, mOnResourceDiscoveredListener);
+      m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
+      discoveryTask.cancel();
+
+      RcsDiscoveryManager.DiscoveryTask discoveryTask2 = RcsDiscoveryManager
+          .getInstance().discoverResourceByType(RcsAddress.multicast(),
+              OC_RSRVD_WELL_KNOWN_URI, RESOURCE_TYPE_TEMPERATURE, mOnResourceDiscoveredListener);
+      m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
+      discoveryTask2.cancel();
+
+      if( m_ResourceList.size() < 1 ){
+        fail("Resources are not Found!!");
+      }
+    } catch (RcsException e) {
+      fail("Throws exception when called discoverResourceByType API with uri. "
+          + e.getLocalizedMessage());
+    }
+  }
+
+  /**
+   * @since 2017-03-07
+   * @see None
+   * @objective Test 'discoverResourceByType' function twice with URI
+   * @target public DiscoveryTask discoverResourceByType(RcsAddress address,
+   *         String uri, String resourceType, OnResourceDiscoveredListener
+   *         listener)
+   * @test_data 1. Resource Address 2. Resource Type 3. Callback
+   * @pre_condition None
+   * @procedure Perform discoverResourceByType() API twice
+   * @post_condition None
+   * @expected returned discovery manager should not be null
+   **/
+  public void testDiscoverResourceByTypeWithInvalidResType_EG_N() {
+    try {
+      callbackcheck = false;
+      String resType="Hello";
+      RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
+          .getInstance().discoverResourceByType(RcsAddress.multicast()
+              , OC_RSRVD_WELL_KNOWN_URI, resType, mOnResourceDiscoveredListener);
+      m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
+      discoveryTask.cancel();
+
+      if( callbackcheck ){
+        fail("Callback Invoked !");
+      }
+    } catch (RcsException e) {
+      fail("Throws exception when called discoverResourceByType API with uri. "
+          + e.getLocalizedMessage());
+    }
+  }
+
+  /**
+   * @since 2017-03-07
+   * @see None
+   * @objective Test 'discoverResourceByType' function multiple times
+   * @target public DiscoveryTask discoverResourceByType(RcsAddress address,
+   *         String uri, String resourceType, OnResourceDiscoveredListener
+   *         listener)
+   * @test_data 1. Resource Address 2. Resource Type 3. Callback
+   * @pre_condition None
+   * @procedure Perform discoverResourceByType() API twice
+   * @post_condition None
+   * @expected returned discovery manager should not be null
+   **/
+  public void testDiscoverResourceByType_ALVC_P() {
+    try {
+      for (int i = 1; i <= 10; i++) {
+        RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
+            .getInstance().discoverResourceByType(RcsAddress.multicast()
+                , OC_RSRVD_WELL_KNOWN_URI, RESOURCE_TYPE_TEMPERATURE, mOnResourceDiscoveredListener);
+        discoveryTask.cancel();
+      }
+    } catch (RcsException e) {
+      fail("Throws exception when called discoverResourceByType API with uri. "
+          + e.getLocalizedMessage());
+    }
+  }
+
 }
+

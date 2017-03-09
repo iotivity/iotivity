@@ -466,4 +466,36 @@ public class REServerBuilderTest extends InstrumentationTestCase {
     }
   }
 
+  /**
+   * @since 2015-11-06
+   * @see None
+   * @objective Test 'containsAttribute' function with positive basic way
+   * @target boolean containsAttribute(String key)
+   * @test_data key = "power"
+   * @pre_condition 1. Builder class should be initialized 2. Resource object
+   *                should be built
+   * @procedure 1. Perform removeAttribute() API 2. Perform containsAttribute() API
+   *            using key
+   * @post_condition None
+   * @expected The returned value should be false
+   **/
+  public void testRemoveAttributeAndContainsAttribute_SQV_P() {
+    try {
+      boolean isRemoved = m_ResourceObject.removeAttribute(ATTR_KEY_POWER);
+      if(!isRemoved){
+        fail("Can't remove attribute key=power.");
+      }
+
+      boolean hasAttribute = m_ResourceObject.containsAttribute(ATTR_KEY_POWER);
+
+      if (hasAttribute) {
+        fail("\"" + ATTR_KEY_POWER + "\"" + " attribute alredy removed.");
+      }
+    } catch (RcsException e) {
+      fail("Got RcsException while calling removeAttribute/containsAttribute API with "
+          + ATTR_KEY_POWER + "key. Exception is: " + e.getLocalizedMessage());
+    }
+  }
+
 }
+

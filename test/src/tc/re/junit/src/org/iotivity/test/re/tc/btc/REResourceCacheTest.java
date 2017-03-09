@@ -30,7 +30,7 @@ import org.iotivity.service.RcsResourceAttributes;
 import org.iotivity.service.RcsValue;
 import org.iotivity.test.re.tc.helper.REHelper;
 import org.iotivity.test.re.tc.helper.ResourceProperties;
-
+import static org.iotivity.test.re.tc.helper.ResourceUtil.*;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
@@ -45,14 +45,14 @@ public class REResourceCacheTest extends InstrumentationTestCase {
 
     m_REHelper = new REHelper();
     m_ErrorMsg.setLength(0);
-
+    m_REHelper.waitInSecond(CONFIG_WAIT_TWO);
     PlatformConfig platformConfigObj = new PlatformConfig(getInstrumentation()
         .getTargetContext(), ServiceType.IN_PROC, ModeType.CLIENT_SERVER,
         "0.0.0.0", 0, QualityOfService.LOW);
 
     OcPlatform.Configure(platformConfigObj);
     Log.i(LOG_TAG, "Configuration done Successfully");
-
+    m_REHelper.waitInSecond(CONFIG_WAIT_TWO);
     if (!m_REHelper.disocverResources(m_ErrorMsg)) {
       fail("Precondition Failed, No Resource Found!! " + m_ErrorMsg.toString());
       return;
@@ -538,3 +538,4 @@ public class REResourceCacheTest extends InstrumentationTestCase {
   }
 
 }
+

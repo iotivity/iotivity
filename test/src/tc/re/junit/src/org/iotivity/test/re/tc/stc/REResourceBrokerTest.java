@@ -151,7 +151,7 @@ public class REResourceBrokerTest extends InstrumentationTestCase {
     if (!m_REHelper.startMonitoring(m_ErrorMsg)) {
       fail(m_ErrorMsg.toString());
     }
-
+    m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
     if (!m_REHelper.stopMonitoring(m_ErrorMsg)) {
       fail(m_ErrorMsg.toString());
     }
@@ -220,10 +220,9 @@ public class REResourceBrokerTest extends InstrumentationTestCase {
    * @objective Test 'stopMonitoring' function with terminate loop check
    * @target void stopMonitoring()
    * @test_data callback function for receiving changed state
-   * @pre_condition 1. Remote Resource Object should be instantialized 2.
-   *                Perform startMonitoring() API 3. Perform stopMonitoring()
-   *                API
-   * @procedure Perform stopMonitoring() API
+   * @pre_condition Remote Resource Object should be instantialized
+   * @procedure 1. Perform stopMonitoring() API
+   *            2. Perform stopMonitoring() API for twice
    * @post_condition None
    * @expected No crash occurs
    **/
@@ -372,4 +371,80 @@ public class REResourceBrokerTest extends InstrumentationTestCase {
       fail("Exception occurs at testGetState_SCV_P: " + e.getLocalizedMessage());
     }
   }
+
+  /**
+   * @since 2017-03-02
+   * @see void stopMonitoring()
+   * @see boolean startMonitoring()
+   * @objective Test 'isObservable' function with positive basic way
+   * @target boolean isObservable()
+   * @test_data None
+   * @pre_condition Remote Resource Object should be instantialized
+   * @procedure 1. Perform stopMonitoring() API
+   *            2. Perform startMonitoring() API
+   *            3. Check the value of isObservable()
+   * @post_condition None
+   * @expected No crash should occur
+   */
+  public void testIsObseravable_SCV_P() {
+    try {
+      m_Resource.stopMonitoring();
+      m_Resource.startMonitoring(m_REHelper.mOnStateChangedListener);
+    } catch (RcsException e) {
+      fail("Exception occurs at testIsObseravable_SCV_P: " + e.getLocalizedMessage());
+    }
+
+    m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
+
+    boolean isObservable = true;
+    try {
+      isObservable= m_Resource.isObservable();
+    } catch (RcsException e) {
+      fail("Should not throw exception when calling isObservable API.");
+    }
+    if (!isObservable) {
+      fail("isObservable() is false after startMonitoring.");
+    }
+  }
+
+  /**
+   * @since 2017-03-02
+   * @see void stopMonitoring()
+   * @see boolean startMonitoring()
+   * @objective Test 'isObservable' function with negative basic way
+   * @target boolean isObservable()
+   * @test_data None
+   * @pre_condition Remote Resource Object should be instantialized
+   * @procedure 1. Check the value of isMonitoring()
+   *            2. Perform startMonitoring()
+   *            3. Check the value of isObservable()
+   * @post_condition Perform stopMonitoring()
+   * @expected 1. isObservable() should return True
+   *           2. No crash occurs
+   */
+  public void testIsObseravable_USTC_N() {
+    boolean isObservable;
+    try {
+      isObservable = m_Resource.isMonitoring();
+      if (isObservable) {
+        fail("isMonitoring() is true before startMonitoring.");
+      }
+      m_Resource.startMonitoring(m_REHelper.mOnStateChangedListener);
+    } catch (RcsException e) {
+      fail("Exception occurs at testIsObseravable_USTC_N: " + e.getLocalizedMessage());
+    }
+
+    m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
+    try {
+      isObservable= m_Resource.isObservable();
+    } catch (RcsException e) {
+      fail("Should not throw exception when calling isObservable API.");
+    }
+    if (!isObservable) {
+      fail("isObservable() is false after startMonitoring.");
+    }
+    m_Resource.stopMonitoring();
+  }
+
 }
+

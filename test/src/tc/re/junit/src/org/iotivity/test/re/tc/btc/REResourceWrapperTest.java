@@ -51,19 +51,22 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
     PlatformConfig platformConfigObj = new PlatformConfig(getInstrumentation()
         .getTargetContext(), ServiceType.IN_PROC, ModeType.CLIENT_SERVER,
         "0.0.0.0", 0, QualityOfService.LOW);
-
     OcPlatform.Configure(platformConfigObj);
+    m_REHelper.waitInSecond(CONFIG_WAIT_FIVE);
     Log.i(LOG_TAG, "Configuration done Successfully");
+  }
+
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    m_REHelper.distroyResources();
+    Log.d(LOG_TAG, "tearDown called for REResourceWrapperTest");
   }
 
   private OnResourceDiscoveredListener mOnResourceDiscoveredListener = new OnResourceDiscoveredListener() {
 
     @Override
-    public void onResourceDiscovered(
-        RcsRemoteResourceObject foundResource) {
-      Log.i(
-          LOG_TAG,
-          "onResourceDiscovered in test case");
+    public void onResourceDiscovered(RcsRemoteResourceObject foundResource) {
+      Log.i(LOG_TAG,"onResourceDiscovered in test case");
     }
   };
 
@@ -84,7 +87,6 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
       return;
     } else {
       Log.d(LOG_TAG, m_ErrorMsg.toString());
-
       m_Resource = m_REHelper.getFoundResourceList().get(0);
     }
 
@@ -97,8 +99,44 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
         fail("Throws exception when getUri() API called.");
         return;
       }
-
       if (uri.compareTo("") == 0) {
+        fail("Unable to get uri");
+      } else {
+        Log.d(LOG_TAG, "Got uri: " + uri);
+      }
+    }
+  }
+
+  /**
+   * @since 2017-03-02
+   * @see None
+   * @objective Test 'getUri' function with positive basic way
+   * @target String getUri()
+   * @test_data None
+   * @pre_condition Remote Resource Object should be instantialized
+   * @procedure Perform getUri() API
+   * @post_condition None
+   * @expected Returned uri should not be empty
+   **/
+  public void testGetUri_SRCC_P() {
+    if (!m_REHelper.disocverResources(m_ErrorMsg)) {
+      fail("Precondition Failed, No Resource Found!! " + m_ErrorMsg.toString());
+      return;
+    } else {
+      Log.d(LOG_TAG, m_ErrorMsg.toString());
+      m_Resource = m_REHelper.getFoundResourceList().get(0);
+    }
+
+    String uri = "";
+
+    if (m_Resource != null) {
+      try {
+        uri = m_Resource.getUri();
+      } catch (RcsException e) {
+        fail("Throws exception when getUri() API called.");
+        return;
+      }
+      if (!uri.equals(LIGHT_URI)) {
         fail("Unable to get uri");
       } else {
         Log.d(LOG_TAG, "Got uri: " + uri);
@@ -123,7 +161,6 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
       return;
     } else {
       Log.d(LOG_TAG, m_ErrorMsg.toString());
-
       m_Resource = m_REHelper.getFoundResourceList().get(0);
     }
 
@@ -136,7 +173,6 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
         fail("Throws exception when getAddress() API called.");
         return;
       }
-
       if (address.compareTo("") == 0) {
         fail("Unable to get address");
       } else {
@@ -188,6 +224,48 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
   }
 
   /**
+   * @since 2017-03-02
+   * @see None
+   * @objective Test 'getTypes' function with positive basic way
+   * @target String[] getTypes()
+   * @test_data None
+   * @pre_condition Remote Resource Object should be instantialized
+   * @procedure Perform getTypes() API
+   * @post_condition None
+   * @expected 1. Returned type list should not be empty 2. At least one type
+   *           should not be an empty string
+   **/
+  public void testGetTypes_SRCC_P() {
+    if (!m_REHelper.disocverResources(m_ErrorMsg)) {
+      fail("Precondition Failed, No Resource Found!! " + m_ErrorMsg.toString());
+      return;
+    } else {
+      Log.d(LOG_TAG, m_ErrorMsg.toString());
+
+      m_Resource = m_REHelper.getFoundResourceList().get(0);
+    }
+
+    try {
+      String[] types = m_Resource.getTypes();
+
+      if (types.length > 0) {
+        if (!(types[0].equals("core.light"))) {
+          fail("Unable to get any type");
+        } else {
+          for (int i = 0; i < types.length; i++) {
+            Log.d(LOG_TAG, "Got type: " + types[i]);
+          }
+        }
+      } else {
+        fail("Unable to get types");
+      }
+    } catch (RcsException e) {
+      fail("Throws exception when getTypes API called. Exception: "
+          + e.getLocalizedMessage());
+    }
+  }
+
+  /**
    * @since 2015-10-22
    * @see None
    * @objective Test 'getInterfaces' function with positive basic way
@@ -205,13 +283,11 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
       return;
     } else {
       Log.d(LOG_TAG, m_ErrorMsg.toString());
-
       m_Resource = m_REHelper.getFoundResourceList().get(0);
     }
 
     try {
       String[] interfaces = m_Resource.getInterfaces();
-
       if (interfaces.length > 0) {
         if (interfaces[0].compareTo("") == 0) {
           fail("Unable to get any interface");
@@ -740,9 +816,9 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
    * @pre_condition None
    * @procedure Perform discoverResourceByType() API
    * @post_condition None
-   * @expected should throw RcsException
+   * @expected should not throw RcsException
    **/
-  public void testDiscoverResourceByTypeWithURI_ESV_N() {
+  public void testDiscoverResourceByTypeWithURI_ESV_P() {
     try {
       RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
           .getInstance().discoverResourceByType(RcsAddress.multicast(),
@@ -821,4 +897,35 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
       fail("Should throw NullPointerException");
     }
   }
+
+  /**
+   * @since 2017-03-02
+   * @see None
+   * @objective Test 'discoverResource' function with Null Resource Address
+   * @target DiscoveryTask discoverResourceByType(RcsAddress address, String
+   *         uri, String resourceType, OnResourceDiscoveredListener listener)
+   * @test_data 1. muticast hos 2.  uri = "http://www.google.com";
+   *            3. Resource Type = RESOURCE_TYPE_TEMPERATURE 4. Callback
+   * @pre_condition None
+   * @procedure Perform discoverResourceByType() API
+   * @post_condition None
+   * @expected should throw RcsException
+   **/
+  public void testDiscoverResourceByTypeWithURI_URI_USV_N() {
+    try {
+      String uri = "http://www.google.com";
+      RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
+          .getInstance().discoverResourceByType(RcsAddress.multicast(),
+          uri, RESOURCE_TYPE_TEMPERATURE, mOnResourceDiscoveredListener);
+
+      m_REHelper.waitInSecond(CALLBACK_WAIT_MIN);
+
+      fail("Although Invalid uri, API called Successfull !");
+
+      discoveryTask.cancel();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
 }
+

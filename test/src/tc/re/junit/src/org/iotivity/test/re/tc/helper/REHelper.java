@@ -51,7 +51,7 @@ public class REHelper {
                                                                                          .getSimpleName();
   static boolean                             isResourceFound                     = false;
   private static final String                DEFAULT_IP_ADDRESS                  = "107.109.214.139";
-  private static final int                   MAX_WAIT_TIME                       = 10;
+  private static final int                   MAX_WAIT_TIME                       = 20;
 
   private RcsDiscoveryManager.DiscoveryTask  mDiscoveryTask;
   public RcsRemoteResourceObject             mResourceObj;
@@ -356,19 +356,23 @@ public class REHelper {
     }
 
     try {
-      if (mResourceObj.isCaching()) {
-        logMsg.append("Caching (" + msg
-            + ")started successfully when already monitoring started.");
-      } else {
-        logMsg.append("Caching (" + msg + ") started successfully.");
-      }
+        if (mResourceObj != null) {
+            if (mResourceObj.isCaching()) {
+              logMsg.append("Caching (" + msg
+                  + ")started successfully when already monitoring started.");
+            } else {
+              logMsg.append("Caching (" + msg + ") started successfully.");
+            }
 
-      if (withListener) {
-        mResourceObj.startCaching(mOnCacheUpdatedListener);
-      } else {
-        mResourceObj.startCaching();
-      }
-
+            if (withListener) {
+              mResourceObj.startCaching(mOnCacheUpdatedListener);
+            } else {
+              mResourceObj.startCaching();
+            }
+        }else{
+            logMsg.append("ResourceObject is null.");
+            return false;
+        }
     } catch (RcsException e) {
       logMsg.append("Can't startMonitoring because of "
           + e.getLocalizedMessage());
@@ -513,3 +517,4 @@ public class REHelper {
     }
   }
 }
+

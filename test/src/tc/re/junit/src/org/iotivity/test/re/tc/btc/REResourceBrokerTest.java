@@ -27,6 +27,7 @@ import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
 import org.iotivity.service.RcsException;
 import org.iotivity.test.re.tc.helper.REHelper;
+import static org.iotivity.test.re.tc.helper.ResourceUtil.*;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
@@ -44,25 +45,22 @@ public class REResourceBrokerTest extends InstrumentationTestCase {
     PlatformConfig platformConfigObj = new PlatformConfig(getInstrumentation()
         .getTargetContext(), ServiceType.IN_PROC, ModeType.CLIENT_SERVER,
         "0.0.0.0", 0, QualityOfService.LOW);
-
     OcPlatform.Configure(platformConfigObj);
     Log.i(LOG_TAG, "Configuration done Successfully");
+    m_REHelper.waitInSecond(CONFIG_WAIT_FIVE);
 
     if (!m_REHelper.disocverResources(m_ErrorMsg)) {
-      fail("Precondition Failed, No Resource Found!! " + m_ErrorMsg.toString());
+      fail("Setup: Precondition Failed, No Resource Found!! " + m_ErrorMsg.toString());
       return;
     } else {
       Log.d(LOG_TAG, m_ErrorMsg.toString());
     }
-
     m_ErrorMsg.setLength(0);
   }
 
   protected void tearDown() throws Exception {
     super.tearDown();
-
     m_REHelper.distroyResources();
-
     Log.d(LOG_TAG, "tearDown called for REResourceBrokerTest");
   }
 
@@ -155,8 +153,34 @@ public class REResourceBrokerTest extends InstrumentationTestCase {
    * @expected No crash occurs
    */
   public void testIsMonitoring_SRC_P() {
+    if (!m_REHelper.startMonitoring(m_ErrorMsg)) {
+      fail(m_ErrorMsg.toString());
+    }
     boolean isMonitoring = true;
+    try {
+      isMonitoring = m_REHelper.mResourceObj.isMonitoring();
+    } catch (RcsException e) {
+      fail("Should not throw exception when calling isMonitoring API.");
+    }
 
+    if (!isMonitoring) {
+      fail("Fail to start Monitoring API.");
+    }
+  }
+
+  /**
+   * @since 2016-02-23
+   * @see None
+   * @objective Test 'isMonitoring' function without calling startMonitoring()
+   * @target boolean isMonitoring()
+   * @test_data none
+   * @pre_condition Remote Resource Object should be instantialized
+   * @procedure Perform isMonitoring() API
+   * @post_condition Perform stop monotoring
+   * @expected No crash occurs
+   */
+  public void testIsMonitoring_SRCC_P() {
+    boolean isMonitoring = true;
     try {
       isMonitoring = m_REHelper.mResourceObj.isMonitoring();
     } catch (RcsException e) {
@@ -166,5 +190,56 @@ public class REResourceBrokerTest extends InstrumentationTestCase {
     if (isMonitoring) {
       fail("Monitoring is true without calling startMonitoring API.");
     }
+    if (!m_REHelper.stopMonitoring(m_ErrorMsg)) {
+      fail(m_ErrorMsg.toString());
+    }
   }
+
+  /**
+   * @since 2016-02-23
+   * @see None
+   * @objective Test 'isObservable' function with positive basic way
+   * @target boolean isObservable()
+   * @test_data none
+   * @pre_condition 1. Remote Resource Object should be instantialized
+   *                2. call startMonitoring() API
+   * @procedure Perform isObservable() API
+   * @post_condition None
+   * @expected No crash occurs
+   */
+  public void testIsObservable_SRC_P() {
+    if (!m_REHelper.startMonitoring(m_ErrorMsg)) {
+      fail(m_ErrorMsg.toString());
+    }
+    try {
+      m_REHelper.mResourceObj.isObservable();
+    } catch (RcsException e) {
+      fail("Should not throw exception when calling isObservable API.");
+    }
+  }
+
+  /**
+   * @since 2016-02-23
+   * @see None
+   * @objective TTest 'isObservable' function without calling startObservable()
+   * @target boolean isObservable()
+   * @test_data none
+   * @pre_condition Remote Resource Object should be instantialized
+   * @procedure Perform isObservable() API
+   * @post_condition None
+   * @expected No crash occurs
+   */
+  public void testIsObservable_SRCC_P() {
+    boolean isObservable = true;
+    try {
+      isObservable= m_REHelper.mResourceObj.isObservable();
+    } catch (RcsException e) {
+      fail("Should not throw exception when calling isObservable API.");
+    }
+    if (!isObservable) {
+      fail("Failed to start Observable.");
+    }
+  }
+
 }
+
