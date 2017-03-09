@@ -816,4 +816,3 @@ TEST(FinalizeOTMTest, NullParam)
     int interpreter_res2 = system("pkill -f \"sample_server2\"");
     EXPECT_TRUE(0 <= interpreter_res2);
 }
-

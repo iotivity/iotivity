@@ -45,6 +45,7 @@
 
 #include "pmtypes.h"
 #include "pmutility.h"
+#include "pmutilityinternal.h"
 
 #include "srmutility.h"
 
@@ -131,6 +132,116 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
 static OCStackApplicationResult SecVersionDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse);
 #endif
+
+#ifdef MULTIPLE_OWNER
+OicSecMom_t* CloneOicSecMom(const OicSecMom_t* src)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+
+    if (!src)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s : Invalid parameter", __func__);
+        return NULL;
+    }
+
+    OicSecMom_t* newMom = (OicSecMom_t*)OICMalloc(sizeof(*newMom));
+    if (newMom)
+    {
+        *newMom = *src;
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "%s : Failed to allocate memory", __func__);
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
+
+    return newMom;
+}
+
+OicSecSubOwner_t* CloneOicSecSubOwner(const OicSecSubOwner_t* src)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+
+    if (!src)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s : Invalid parameter", __func__);
+        return NULL;
+    }
+
+    OicSecSubOwner_t* newSubOwner = (OicSecSubOwner_t*)OICCalloc(1, sizeof(*newSubOwner));
+    VERIFY_NOT_NULL(TAG, newSubOwner, ERROR);
+
+    memcpy(newSubOwner, src, sizeof(OicSecSubOwner_t));
+
+    if (src->next)
+    {
+        newSubOwner->next = CloneOicSecSubOwner(src->next);
+        VERIFY_NOT_NULL(TAG, newSubOwner->next, ERROR);
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
+
+    return newSubOwner;
+
+exit:
+    OIC_LOG_V(ERROR, TAG, "%s : Failed to allocate memory", __func__);
+    if (newSubOwner)
+    {
+        OICFree(newSubOwner);
+    }
+    return NULL;
+}
+#endif //MULTIPLE_OWNER
+
+OicSecDoxm_t* CloneOicSecDoxm(const OicSecDoxm_t* src)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+
+    if (!src)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s : Invalid parameter", __func__);
+        return NULL;
+    }
+
+    OicSecDoxm_t* newDoxm = (OicSecDoxm_t*)OICCalloc(1, sizeof(OicSecDoxm_t));
+    VERIFY_NOT_NULL(TAG, newDoxm, ERROR);
+
+    memcpy(newDoxm, src, sizeof(OicSecDoxm_t));
+
+#ifdef MULTIPLE_OWNER
+    newDoxm->subOwners = NULL;
+    newDoxm->mom = NULL;
+
+    if (src->subOwners)
+    {
+        newDoxm->subOwners = CloneOicSecSubOwner(src->subOwners);
+        VERIFY_NOT_NULL(TAG, newDoxm->subOwners, ERROR);
+    }
+
+    if (src->mom)
+    {
+        newDoxm->mom = CloneOicSecMom(src->mom);
+        VERIFY_NOT_NULL(TAG, newDoxm->mom, ERROR);
+    }
+#endif //MULTIPLE_OWNER
+
+    // We have to assign NULL for not necessary information to prevent memory corruption.
+    newDoxm->oxmType = NULL;
+    newDoxm->oxmTypeLen = 0;
+    newDoxm->oxm = NULL;
+    newDoxm->oxmLen = 0;
+
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
+
+    return newDoxm;
+
+exit:
+    OIC_LOG_V(ERROR, TAG, "%s : Failed to allocate memory", __func__);
+    DeleteDoxmBinData(newDoxm);
+
+    return NULL;
+}
 
 /**
  * Function to search node in linked list that matches given IP and port.
@@ -350,13 +461,8 @@ OCProvisionDev_t* PMCloneOCProvisionDev(const OCProvisionDev_t* src)
 
     if (src->doxm)
     {
-        newDev->doxm = (OicSecDoxm_t*)OICCalloc(1, sizeof(OicSecDoxm_t));
+        newDev->doxm = CloneOicSecDoxm(src->doxm);
         VERIFY_NOT_NULL(TAG, newDev->doxm, ERROR);
-
-        memcpy(newDev->doxm, src->doxm, sizeof(OicSecDoxm_t));
-        // We have to assign NULL for not necessary information to prevent memory corruption.
-        newDev->doxm->oxmType = NULL;
-        newDev->doxm->oxm = NULL;
     }
 
     if (0 == strlen(src->secVer))
@@ -379,12 +485,39 @@ OCProvisionDev_t* PMCloneOCProvisionDev(const OCProvisionDev_t* src)
 
 exit:
     OIC_LOG(ERROR, TAG, "PMCloneOCProvisionDev : Failed to allocate memory");
-    if (newDev)
+    PMDeleteDeviceList(newDev);
+    return NULL;
+}
+
+OCProvisionDev_t* PMCloneOCProvisionDevList(const OCProvisionDev_t* src)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+
+    if (!src)
     {
-        OICFree(newDev->pstat);
-        OICFree(newDev->doxm);
-        OICFree(newDev);
+        OIC_LOG_V(ERROR, TAG, "%s : Invalid parameter", __func__);
+        return NULL;
     }
+
+    OCProvisionDev_t* newDev = PMCloneOCProvisionDev(src);
+    VERIFY_NOT_NULL(TAG, newDev, ERROR);
+
+    OCProvisionDev_t* current = newDev;
+    for (OCProvisionDev_t* next = src->next; NULL != next; next = next->next)
+    {
+        current->next = PMCloneOCProvisionDev(next);
+        VERIFY_NOT_NULL(TAG, current->next, ERROR);
+
+        current = current->next;
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
+
+    return newDev;
+
+exit:
+    OIC_LOG_V(ERROR, TAG, "%s : Failed to allocate memory", __func__);
+    PMDeleteDeviceList(newDev);
     return NULL;
 }
 
