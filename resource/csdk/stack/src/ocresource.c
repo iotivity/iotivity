@@ -984,6 +984,8 @@ exit:
 OCStackResult BuildIntrospectionPayloadResponse(const OCResource *resourcePtr,
     OCRepPayload** payload, OCDevAddr *devAddr)
 {
+    OC_UNUSED(resourcePtr);
+    OC_UNUSED(devAddr);
     OCRepPayload *tempPayload = NULL;
     OCStackResult ret;
     char *introspectionData = NULL;
@@ -1113,6 +1115,7 @@ void FreeProtocolLL(OCStringLL *protoLL)
 OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourcePtr,
     OCRepPayload** payload, OCDevAddr *devAddr)
 {
+    OC_UNUSED(devAddr);
     size_t dimensions[3] = { 0, 0, 0 };
     OCRepPayload *tempPayload = NULL;
     OCRepPayload **urlInfoPayload = NULL;
@@ -1228,41 +1231,38 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
     }
 #endif
     // Add a urlInfo object for each protocol supported
-    if (dimensions[0] >= 0)
+    urlInfoPayload = (OCRepPayload **)OICMalloc(dimensions[0] * sizeof(OCRepPayload));
+    if (urlInfoPayload)
     {
-        urlInfoPayload = (OCRepPayload **)OICMalloc(dimensions[0] * sizeof(OCRepPayload));
-        if (urlInfoPayload)
+        OCStringLL *proto = protoLL;
+        size_t i = 0;
+        while (proto)
         {
-            OCStringLL *proto = protoLL;
-            size_t i = 0;
-            while (proto)
+            urlInfoPayload[i] = BuildUrlInfoWithProtocol(proto->value);
+            if (!urlInfoPayload[i])
             {
-                urlInfoPayload[i] = BuildUrlInfoWithProtocol(proto->value);
-                if (!urlInfoPayload[i])
-                {
-                    OIC_LOG(ERROR, TAG, "Unable to build urlInfo object for protocol");
-                    ret = OC_STACK_ERROR;
-                    goto exit;
-                }
-                proto = proto->next;
-                i++;
-            }
-            if (!OCRepPayloadSetPropObjectArrayAsOwner(tempPayload,
-                                                       OC_RSRVD_INTROSPECTION_URL_INFO,
-                                                       urlInfoPayload,
-                                                       dimensions))
-            {
-                OIC_LOG(ERROR, TAG, "Unable to add urlInfo object to introspection payload ");
+                OIC_LOG(ERROR, TAG, "Unable to build urlInfo object for protocol");
                 ret = OC_STACK_ERROR;
                 goto exit;
             }
+            proto = proto->next;
+            i++;
         }
-        else
+        if (!OCRepPayloadSetPropObjectArrayAsOwner(tempPayload,
+                                                   OC_RSRVD_INTROSPECTION_URL_INFO,
+                                                   urlInfoPayload,
+                                                   dimensions))
         {
-            OIC_LOG(ERROR, TAG, "Unable to allocate memory for urlInfo ");
-            ret = OC_STACK_NO_MEMORY;
+            OIC_LOG(ERROR, TAG, "Unable to add urlInfo object to introspection payload ");
+            ret = OC_STACK_ERROR;
             goto exit;
         }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory for urlInfo ");
+        ret = OC_STACK_NO_MEMORY;
+        goto exit;
     }
 
     if (!*payload)
