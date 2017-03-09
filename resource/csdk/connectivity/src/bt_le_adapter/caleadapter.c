@@ -176,14 +176,14 @@ static CAErrorHandleCallback g_errorHandler = NULL;
 /**
  * Callback to receive decrypted data from the ssl adapter.
  */
-static void CALESecureReceiveDataCB(const CASecureEndpoint_t *endpoint,
-                                 const void *data, uint32_t dataLength);
+static void CALESecureReceiveDataCB(const CASecureEndpoint_t *sep,
+                                 const void *data, size_t dataLen);
 
 /**
  * Callback to receive encrypted data from the ssl adapter.
  */
-static void CALESecureSendDataCB(CAEndpoint_t *endpoint,
-                             const void *data, uint32_t dataLength);
+static ssize_t CALESecureSendDataCB(CAEndpoint_t *endpoint,
+                             const void *data, size_t dataLen);
 #endif
 
 #ifdef SINGLE_THREAD
@@ -901,16 +901,25 @@ static void CALEDataReceiverHandler(void *threadData, CABLEAdapter_t receiverTyp
 
     oc_mutex bleReceiveDataMutex = NULL;
     bool dataBleReceiverHandlerState = false;
+#ifdef __WITH_DTLS__
+    CADataType_t dataType = CA_REQUEST_DATA;
+#endif
 
     switch (receiverType)
     {
         case ADAPTER_CLIENT:
             bleReceiveDataMutex = g_bleClientReceiveDataMutex;
             dataBleReceiverHandlerState = g_dataBleClientReceiverHandlerState;
+#ifdef __WITH_DTLS__
+            dataType = CA_REQUEST_DATA;
+#endif
             break;
         case ADAPTER_SERVER:
             bleReceiveDataMutex = g_bleServerReceiveDataMutex;
             dataBleReceiverHandlerState = g_dataBleServerReceiverHandlerState;
+#ifdef __WITH_DTLS__
+            dataType = CA_RESPONSE_DATA;
+#endif
             break;
         default:
             OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Unsupported receiver type : %d", receiverType);
@@ -1150,6 +1159,8 @@ static void CALEDataReceiverHandler(void *threadData, CABLEAdapter_t receiverTyp
             if (CA_SECURE & tmp.endpoint.flags)
             {
                 OIC_LOG(ERROR, CALEADAPTER_TAG, "Secure data received");
+                g_dataType = dataType;
+
                 if (CA_STATUS_FAILED == CAdecryptSsl(&tmp,
                                                 senderInfo->defragData,
                                                 senderInfo->recvDataLen))
@@ -2731,10 +2742,11 @@ static CAResult_t CALEAdapterGattClientStop()
 }
 
 #ifdef __WITH_DTLS__
-static void CALESecureSendDataCB(CAEndpoint_t *endpoint, const void *data, uint32_t dataLen)
+static ssize_t CALESecureSendDataCB(CAEndpoint_t *endpoint,
+                             const void *data, size_t dataLen)
 {
-    VERIFY_NON_NULL_VOID(endpoint, CALEADAPTER_TAG, "endpoint is NULL");
-    VERIFY_NON_NULL_VOID(data, CALEADAPTER_TAG, "data is NULL");
+    VERIFY_NON_NULL_RET(endpoint, CALEADAPTER_TAG, "endpoint is NULL", 0);
+    VERIFY_NON_NULL_RET(data, CALEADAPTER_TAG, "data is NULL", 0);
 
     OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Secure Data Send - encrypted datalen = %d", dataLen);
 
@@ -2749,10 +2761,11 @@ static void CALESecureSendDataCB(CAEndpoint_t *endpoint, const void *data, uint3
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "Send unicast data for server failed" );
 
-             if (g_errorHandler)
-             {
-                 g_errorHandler(endpoint, data, dataLen, result);
-             }
+            if (g_errorHandler)
+            {
+                g_errorHandler(endpoint, data, dataLen, result);
+            }
+            return 0;
         }
     }
     else if (ADAPTER_CLIENT == g_adapterType ||
@@ -2764,22 +2777,25 @@ static void CALESecureSendDataCB(CAEndpoint_t *endpoint, const void *data, uint3
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "Send unicast data for client failed" );
 
-             if (g_errorHandler)
-             {
-                 g_errorHandler(endpoint, data, dataLen, result);
-             }
+            if (g_errorHandler)
+            {
+                g_errorHandler(endpoint, data, dataLen, result);
+            }
+            return 0;
         }
     }
     else
     {
         OIC_LOG_V(ERROR, CALEADAPTER_TAG,
                   "Can't Send Message adapterType = %d, dataType = %d", g_adapterType, dataType);
+        return 0;
     }
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
+
+    return (ssize_t)dataLen;
 }
 
-void CALESecureReceiveDataCB(const CASecureEndpoint_t *sep, const void *data,
-                          uint32_t dataLen)
+static void CALESecureReceiveDataCB(const CASecureEndpoint_t *sep,
+                                 const void *data, size_t dataLen)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -2788,8 +2804,21 @@ void CALESecureReceiveDataCB(const CASecureEndpoint_t *sep, const void *data,
 
     OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Secure Data Receive - decrypted datalen = %d", dataLen);
 
+    if (dataLen <= 0)
+    {
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "incorrect dataLen, derecypt fail !");
+        return;
+    }
+
+    OIC_LOG_BUFFER(DEBUG, CALEADAPTER_TAG, data, dataLen);
+
     if (g_networkPacketReceivedCallback)
     {
+        OIC_LOG_V(DEBUG, CALEADAPTER_TAG,
+                  "[CALESecureReceiveDataCB] Secure flags = %d, %x",
+                  sep->endpoint.flags, sep->endpoint.flags);
+        OIC_LOG(DEBUG, CALEADAPTER_TAG,
+                  "[CALESecureReceiveDataCB] Received data up !");
         g_networkPacketReceivedCallback(sep, data, dataLen);
     }
 }
