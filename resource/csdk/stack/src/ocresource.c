@@ -687,7 +687,7 @@ OCStackResult DevicePropertiesToCBORPayload(const OCDeviceProperties *deviceProp
     }
     else
     {
-        result = OC_STACK_NO_MEMORY;
+        return OC_STACK_NO_MEMORY;
     }
 
     // Protocol Independent ID - Mandatory
@@ -987,11 +987,10 @@ OCStackResult BuildIntrospectionPayloadResponse(const OCResource *resourcePtr,
 {
     OC_UNUSED(resourcePtr);
     OC_UNUSED(devAddr);
-    OCRepPayload *tempPayload = NULL;
-    OCStackResult ret;
+
     char *introspectionData = NULL;
     size_t size = 0;
-    ret = GetIntrospectionDataFromPS(&introspectionData, &size);
+    OCStackResult ret = GetIntrospectionDataFromPS(&introspectionData, &size);
     if (OC_STACK_OK == ret)
     {
         OCRepPayload *tempPayload = OCRepPayloadCreate();
@@ -1000,6 +999,11 @@ OCStackResult BuildIntrospectionPayloadResponse(const OCResource *resourcePtr,
             if (OCRepPayloadSetPropStringAsOwner(tempPayload, OC_RSRVD_INTROSPECTION_DATA_NAME, introspectionData))
             {
                 *payload = tempPayload;
+            }
+            else
+            {
+                OCRepPayloadDestroy(tempPayload);
+                ret = OC_STACK_ERROR;
             }
         }
         else
@@ -1010,7 +1014,6 @@ OCStackResult BuildIntrospectionPayloadResponse(const OCResource *resourcePtr,
     if (ret != OC_STACK_OK)
     {
         OICFree(introspectionData);
-        OCRepPayloadDestroy(tempPayload);
     }
 
     return ret;
@@ -1117,6 +1120,7 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
     OCRepPayload** payload, OCDevAddr *devAddr)
 {
     OC_UNUSED(devAddr);
+
     size_t dimensions[3] = { 0, 0, 0 };
     OCRepPayload *tempPayload = NULL;
     OCRepPayload **urlInfoPayload = NULL;
@@ -1837,9 +1841,6 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             discoveryResult = OC_STACK_CONTINUE;
             goto exit;
         }
-
-        char *interfaceQuery = NULL;
-        char *resourceTypeQuery = NULL;
 
         CAEndpoint_t *networkInfo = NULL;
         size_t infoSize = 0;

@@ -1739,7 +1739,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     return;
                 }
 
-                for (uint8_t i = start; i < responseInfo->info.numOptions; i++)
+                for (int i = start; i < responseInfo->info.numOptions; i++)
                 {
                     memcpy (&(response->rcvdVendorSpecificHeaderOptions[i-start]),
                             &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
