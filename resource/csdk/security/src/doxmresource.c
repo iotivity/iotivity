@@ -1986,6 +1986,49 @@ bool IsSubOwner(const OicUuid_t* uuid)
     }
     return retVal;
 }
+
+OCStackResult SetMOTStatus(bool enable)
+{
+    OCStackResult ret = OC_STACK_NO_MEMORY;
+    uint8_t *cborPayload = NULL;
+    size_t size = 0;
+    bool isDeallocateRequired = false;
+
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    if (NULL == gDoxm->mom && !enable)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+        return OC_STACK_OK;
+    }
+
+    if (NULL == gDoxm->mom)
+    {
+        gDoxm->mom = (OicSecMom_t*)OICCalloc(1, sizeof(OicSecMom_t));
+        VERIFY_NOT_NULL(TAG, gDoxm->mom, ERROR);
+        isDeallocateRequired = true;
+    }
+
+    gDoxm->mom->mode = (enable ? OIC_MULTIPLE_OWNER_ENABLE : OIC_MULTIPLE_OWNER_DISABLE);
+
+    ret = DoxmToCBORPayload(gDoxm, &cborPayload, &size, false);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+    ret = UpdateSecureResourceInPS(OIC_JSON_DOXM_NAME, cborPayload, size);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+    isDeallocateRequired = false;
+
+exit:
+    if (isDeallocateRequired)
+    {
+        OICFree(gDoxm->mom);
+    }
+    OICFree(cborPayload);
+    OIC_LOG_V(DEBUG, TAG, "Out %s : %d", __func__, ret);
+    return ret;
+}
+
 #endif //MULTIPLE_OWNER
 
 /**
@@ -2076,7 +2119,7 @@ static bool AreDoxmBinMOTPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* 
 
             if (subOwner1->status != subOwner2->status)
             {
-                OIC_LOG_V(ERROR, TAG, "%s: subOwner status mismatch: (%u, %u)", 
+                OIC_LOG_V(ERROR, TAG, "%s: subOwner status mismatch: (%u, %u)",
                     __func__, (uint32_t)subOwner1->status, (uint32_t)subOwner2->status);
                 return false;
             }
@@ -2086,7 +2129,7 @@ static bool AreDoxmBinMOTPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* 
             subOwner2 = subOwner2->next;
             continue;
         }
-     
+
         OIC_LOG_V(ERROR, TAG, "%s: subOwner list length mismatch", __func__);
         return false;
     }
@@ -2111,7 +2154,7 @@ static bool AreDoxmBinMOTPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* 
 
     if (doxm1->mom->mode != doxm2->mom->mode)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: mom->mode mismatch: (%u, %u)", 
+        OIC_LOG_V(ERROR, TAG, "%s: mom->mode mismatch: (%u, %u)",
             __func__, (uint32_t)doxm1->mom->mode, (uint32_t)doxm2->mom->mode);
         return false;
     }
@@ -2133,7 +2176,7 @@ bool AreDoxmBinPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* doxm2)
 
     if (arrayLength != doxm2->oxmTypeLen)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: oxmTypeLen mismatch: (%" PRIuPTR ", %" PRIuPTR ")", 
+        OIC_LOG_V(ERROR, TAG, "%s: oxmTypeLen mismatch: (%" PRIuPTR ", %" PRIuPTR ")",
             __func__, arrayLength, doxm2->oxmTypeLen);
         return false;
     }
@@ -2149,7 +2192,7 @@ bool AreDoxmBinPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* doxm2)
 
         if (0 != strcmp(doxm1->oxmType[i], doxm2->oxmType[i]))
         {
-            OIC_LOG_V(ERROR, TAG, "%s: oxmType mismatch: (%s, %s)", 
+            OIC_LOG_V(ERROR, TAG, "%s: oxmType mismatch: (%s, %s)",
                 __func__, doxm1->oxmType[i], doxm2->oxmType[i]);
             return false;
         }
@@ -2160,16 +2203,16 @@ bool AreDoxmBinPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* doxm2)
 
     if (arrayLength != doxm2->oxmLen)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: oxmLen mismatch: (%" PRIuPTR ", %" PRIuPTR ")", 
+        OIC_LOG_V(ERROR, TAG, "%s: oxmLen mismatch: (%" PRIuPTR ", %" PRIuPTR ")",
             __func__, arrayLength, doxm2->oxmLen);
         return false;
     }
-   
+
     for (size_t i = 0; i < arrayLength; i++)
     {
         if (doxm1->oxm[i] != doxm2->oxm[i])
         {
-            OIC_LOG_V(ERROR, TAG, "%s: oxmType mismatch: (%u, %u)", 
+            OIC_LOG_V(ERROR, TAG, "%s: oxmType mismatch: (%u, %u)",
                 __func__, (uint32_t)doxm1->oxm[i], (uint32_t)doxm2->oxm[i]);
             return false;
         }
@@ -2178,21 +2221,21 @@ bool AreDoxmBinPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* doxm2)
     //Compare the remaining property values.
     if (doxm1->oxmSel != doxm2->oxmSel)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: oxmSel mismatch: (%u, %u)", 
+        OIC_LOG_V(ERROR, TAG, "%s: oxmSel mismatch: (%u, %u)",
             __func__, (uint32_t)doxm1->oxmSel, (uint32_t)doxm2->oxmSel);
         return false;
     }
 
     if (doxm1->sct != doxm2->sct)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: sct mismatch: (%u, %u)", 
+        OIC_LOG_V(ERROR, TAG, "%s: sct mismatch: (%u, %u)",
             __func__, (uint32_t)doxm1->sct, (uint32_t)doxm2->sct);
         return false;
     }
 
     if (doxm1->owned != doxm2->owned)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: owned mismatch: (%u, %u)", 
+        OIC_LOG_V(ERROR, TAG, "%s: owned mismatch: (%u, %u)",
             __func__, (uint32_t)doxm1->owned, (uint32_t)doxm2->owned);
         return false;
     }
@@ -2202,10 +2245,10 @@ bool AreDoxmBinPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* doxm2)
         OIC_LOG_V(ERROR, TAG, "%s: deviceID mismatch", __func__);
         return false;
     }
-    
+
     if (doxm1->dpc != doxm2->dpc)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: dpc mismatch: (%u, %u)", 
+        OIC_LOG_V(ERROR, TAG, "%s: dpc mismatch: (%u, %u)",
             __func__, (uint32_t)doxm1->dpc, (uint32_t)doxm2->dpc);
         return false;
     }
@@ -2215,7 +2258,7 @@ bool AreDoxmBinPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* doxm2)
         OIC_LOG_V(ERROR, TAG, "%s: owner mismatch", __func__);
         return false;
     }
-    
+
     if (0 != memcmp(&doxm1->rownerID, &doxm2->rownerID, sizeof(doxm1->rownerID)))
     {
         OIC_LOG_V(ERROR, TAG, "%s: rownerID mismatch", __func__);
