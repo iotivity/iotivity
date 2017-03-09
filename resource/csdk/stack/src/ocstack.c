@@ -187,6 +187,10 @@ bool g_multicastServerStopped = false;
 
 #define MILLISECONDS_PER_SECOND   (1000)
 
+// handle case that SCNd64 is not defined in arduino's inttypes.h
+#if defined(WITH_ARDUINO) && !defined(SCNd64)
+#define SCNd64 "lld"
+#endif
 //-----------------------------------------------------------------------------
 // Private internal function prototypes
 //-----------------------------------------------------------------------------
@@ -433,14 +437,6 @@ static void OCDefaultAdapterStateChangedHandler(CATransportAdapter_t adapter, bo
  */
 static void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, bool isConnected);
 
-/**
- * Register network monitoring callback.
- * Network status changes are delivered these callback.
- * @param adapterHandler        Adapter state monitoring callback.
- * @param connectionHandler     Connection state monitoring callback.
- */
-static void OCSetNetworkMonitorHandler(CAAdapterStateChangedCB adapterHandler,
-                                       CAConnectionStateChangedCB connectionHandler);
 /**
  * Map zoneId to endpoint address which scope is ipv6 link-local.
  * @param payload Discovery payload which has Endpoint information.
@@ -5611,7 +5607,7 @@ OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
                  {
                      // Arduino's AVR-GCC doesn't support strtoll().
                      int64_t queryIns;
-                     int matchedItems = sscanf(query + 4, "%lld", &queryIns);
+                     int matchedItems = sscanf(query + 4, "%" SCNd64, &queryIns);
 
                      if (0 == matchedItems)
                      {
@@ -5794,14 +5790,6 @@ void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, bool isCon
         // remove observer list with remote device address.
         DeleteObserverUsingDevAddr(&devAddr);
     }
-}
-
-void OCSetNetworkMonitorHandler(CAAdapterStateChangedCB adapterHandler,
-                                CAConnectionStateChangedCB connectionHandler)
-{
-    OIC_LOG(DEBUG, TAG, "OCSetNetworkMonitorHandler");
-    g_adapterHandler = adapterHandler;
-    g_connectionHandler = connectionHandler;
 }
 
 OCStackResult OCGetDeviceId(OCUUIdentity *deviceId)
