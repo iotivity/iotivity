@@ -73,7 +73,7 @@ elif target_os in ['darwin', 'msys_nt']:
 elif target_os in ['windows']:
 	# Avoid building the same StaticLibrary in more than one environment, by using the
 	# IOTIVITY_GTEST_HAS_BEEN_BUILT environment variable
-	if not env.has_key('IOTIVITY_GTEST_HAS_BEEN_BUILT'):
+	if 'IOTIVITY_GTEST_HAS_BEEN_BUILT' not in env:
 		gtest_env.AppendUnique(CPPPATH = [ gtest_dir ])
 		gtest_build_env = gtest_env.Clone()
 		gtest_build_env.AppendUnique(CPPPATH = [ os.path.join(gtest_dir, 'include') ])
