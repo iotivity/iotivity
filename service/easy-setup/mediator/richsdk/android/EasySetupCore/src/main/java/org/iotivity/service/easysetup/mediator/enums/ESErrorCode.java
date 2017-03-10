@@ -91,6 +91,12 @@ public enum ESErrorCode {
     ES_ERRCODE_FAILED_TO_FIND_REGISTERED_USER_IN_CLOUD(12),
 
     /**
+     * Error Code that an enrollee can not connect to a target WiFi AP because the AP resides in
+     * an unsupported WiFi frequency.
+     */
+    ES_ERRCODE_UNSUPPORTED_WIFI_FREQUENCY(13),
+
+    /**
      * Error Code that Unknown error occured
      */
     ES_ERRCODE_UNKNOWN(255);
