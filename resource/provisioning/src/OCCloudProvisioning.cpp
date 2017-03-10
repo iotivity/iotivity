@@ -24,29 +24,29 @@
 namespace OC
 {
     void OCCloudProvisioning::callbackWrapper(void *ctx,
-            OCStackResult result,
+            OCClientResponse *response,
             void *data)
     {
         CloudProvisionContext* context = static_cast<CloudProvisionContext*>(ctx);
 
-        std::thread exec(context->callback, result, data);
+        std::thread exec(context->callback, response->result, data);
         exec.detach();
 
         delete context;
     }
 
     void OCCloudProvisioning::aclIdResponseWrapper(void *ctx,
-            OCStackResult result,
+            OCClientResponse *response,
             void *data)
     {
         std::string aclId = "";
         AclIdContext* context = static_cast<AclIdContext*>(ctx);
 
-        if ((OC_STACK_OK == result) && data)
+        if ((OC_STACK_OK == response->result) && data)
         {
             aclId = (char *)data;
         }
-        std::thread exec(context->callback, result, aclId);
+        std::thread exec(context->callback, response->result, aclId);
         exec.detach();
 
         delete context;

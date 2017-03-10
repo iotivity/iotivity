@@ -17,11 +17,11 @@ OCCloudAclGetInvitation
 OCCloudAclGroupGetInfo
 OCCloudAclIdCreate
 OCCloudAclIdDelete
-OCCloudAclIndividualDelete
-OCCloudAclIndividualDeleteAce
+OCCloudAclAcesDelete
+OCCloudAclIndividualAceDelete
 OCCloudAclIndividualGetInfo
-OCCloudAclIndividualUpdate
-OCCloudAclIndividualUpdateAce
+OCCloudAclIndividualAceUpdate
+OCCloudAclIndividualAclUpdate
 OCCloudAclInviteUser
 OCCloudAclJoinToInvitedGroup
 OCCloudAclObserveGroup
@@ -33,6 +33,4 @@ OCCloudPostCRL
 OCSaveTrustCertChain
 OIC_RSRC_DOXM_URI
 OIC_RSRC_PSTAT_URI
-printACL
-printCrl
 setCoapPrefix

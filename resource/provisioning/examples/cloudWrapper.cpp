@@ -429,7 +429,7 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
         }
     }
 
-    result = OCCloudAclIndividualUpdateAce(NULL, aclid, aces, endPoint, callback);
+    result = OCCloudAclIndividualAclUpdate(NULL, aclid, aces, endPoint, callback);
 exit:
     if (aces)
     {
@@ -464,7 +464,7 @@ OCStackResult OCWrapperAclIndividualDelete(const OCDevAddr *endPoint, OCCloudRes
 
     readString(aclid, sizeof(aclid), "acl id", ACL_ID_EXAMPLE);
 
-    return OCCloudAclIndividualDelete(NULL, aclid, endPoint, callback);
+    return OCCloudAclAcesDelete(NULL, aclid, endPoint, callback);
 }
 
 OCStackResult OCWrapperAclCreateGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)
