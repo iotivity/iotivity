@@ -56,7 +56,6 @@ if target_os in ['windows']:
 	# On other platforms, octbstack_test is a shared LIB, that includes static LIB ocsrm.
 	unittests_env.AppendUnique(LIBS = ['ocsrm'])
 
-unittests_env.AppendUnique(LIBPATH = [unittests_env.get('BUILD_DIR')])
 unittests_env.PrependUnique(LIBS = [
 		'oc',
 		'octbstack_test',

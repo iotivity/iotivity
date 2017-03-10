@@ -52,7 +52,6 @@ catest_env.PrependUnique(CPPPATH = [
                 '#/resource/oc_logger/include',
                ])
 
-catest_env.AppendUnique(LIBPATH = [catest_env.get('BUILD_DIR')])
 catest_env.PrependUnique(LIBS = ['octbstack_test',
                                  'connectivity_abstraction',
                                  'coap'])

@@ -48,7 +48,6 @@ tools_env.PrependUnique(CPPPATH = ['#/extlibs/cjson',
                                   '../include/internal'
                                   ])
 tools_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra', '-std=c++0x'])
-tools_env.AppendUnique(LIBPATH = [tools_env.get('BUILD_DIR')])
 tools_env.AppendUnique(RPATH = [tools_env.get('BUILD_DIR')])
 
 SConscript('#/extlibs/cjson/SConscript')
