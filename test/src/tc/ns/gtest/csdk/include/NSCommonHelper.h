@@ -41,6 +41,7 @@
 #include "gtest/gtest.h"
 #include "OCPlatform.h"
 #include "CommonUtil.h"
+#include "CommonTestUtil.h"
 #include "IotivityTest_Logger.h"
 
 #define MAX_BUF 51200
@@ -48,11 +49,11 @@
 #define WAIT_TIME_DEFAULT 2
 #define WAIT_TIME_MAX 10
 
-#define PROVIDER_APP_OPTION "./ns_provider_testapp 0 1"
-#define PROVIDER_APP "./ns_provider_testapp"
+#define PROVIDER_APP_OPTION "./iotivity_ns_csdk_provider_app 0 1"
+#define PROVIDER_APP "./iotivity_ns_csdk_provider_app"
 
-#define CONSUMER_APP_OPTION "./ns_consumer_testapp 0 1"
-#define CONSUMER_TESTAPP "./ns_consumer_testapp"
+#define CONSUMER_APP_OPTION "./iotivity_ns_csdk_consumer_app 0 1"
+#define CONSUMER_TESTAPP "./iotivity_ns_csdk_consumer_app"
 
 using namespace OC;
 using namespace std;
@@ -81,7 +82,7 @@ public:
 
     void closePipe();
 
-    void inputMenu(char input[]);
+    void inputMenu(const char input[]);
 
     string getAppLog();
 

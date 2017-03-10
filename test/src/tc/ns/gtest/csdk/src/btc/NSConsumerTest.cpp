@@ -29,7 +29,7 @@ protected:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
         m_pNSHelper = NSConsumerHelper::getInstance();
         m_pCommonHelper = NSCommonHelper::getInstance();
@@ -37,7 +37,7 @@ protected:
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 };
 

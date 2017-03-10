@@ -20,6 +20,7 @@
  ******************************************************************/
 
 #include "../../include/NSConsumerHelper.h"
+using namespace std;
 
 class NSIntegrationConsumerTest_stc: public ::testing::Test
 {
@@ -31,7 +32,7 @@ protected:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
         m_pNSHelper = NSConsumerHelper::getInstance();
         NSConsumerHelper::s_isDiscovered = false;
@@ -54,7 +55,7 @@ protected:
         CommonUtil::killApp(PROVIDER_APP);
         CommonUtil::waitInSecond(WAIT_TIME_MIN);
 
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 };
 
@@ -76,7 +77,7 @@ protected:
 #if defined(__LINUX__)
 TEST_F(NSIntegrationConsumerTest_stc, StartConsumerAndDiscoverProvider_SQV_CV_P)
 {
-    m_pCommonHelper->inputMenu("2");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_2);
     ASSERT_EQ(NSStartConsumer(m_pNSHelper->getConsumerConfig()), NS_OK)<< "NSStartConsumer did not return success";
     IOTIVITYTEST_LOG(INFO, "Waiting for provider");
     CommonUtil::waitInSecond(WAIT_TIME_MAX);
@@ -117,7 +118,7 @@ TEST_F(NSIntegrationConsumerTest_stc, StartConsumerAndRescanProvider_SQV_CV_P)
     ASSERT_EQ(NSConsumerHelper::s_isDiscovered,false) << "onProviderChanged callback should not be called as there is no provider";
     ASSERT_EQ(NSConsumerHelper::s_pProvider,nullptr) << "Provider object should not be found as there is no provider";
 
-    m_pCommonHelper->inputMenu("2");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_2);
     ASSERT_EQ(NSRescanProvider(), NS_OK) << "NSRescanProvider did not return success";
     IOTIVITYTEST_LOG(INFO, "Rescanning provider");
     CommonUtil::waitInSecond(WAIT_TIME_MAX);
@@ -151,7 +152,7 @@ TEST_F(NSIntegrationConsumerTest_stc, StartConsumerAndRescanProvider_SQV_CV_P)
 #if defined(__LINUX__)
 TEST_F(NSIntegrationConsumerTest_stc, SubscribeProvider_SQV_CV_P)
 {
-    m_pCommonHelper->inputMenu("2");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_2);
     NSProvider *provider = m_pNSHelper->getProvider();
 
     ASSERT_NE(provider,nullptr)<< "Provider object was not found in callback";
@@ -201,7 +202,7 @@ TEST_F(NSIntegrationConsumerTest_stc, SubscribeProvider_SQV_CV_P)
 #if defined(__LINUX__)
 TEST_F(NSIntegrationConsumerTest_stc, SendSyncInfo_SQV_CV_P)
 {
-    m_pCommonHelper->inputMenu("1");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_1);
 
     NSConsumerConfig config = m_pNSHelper->getConsumerConfig();
 
@@ -213,7 +214,7 @@ TEST_F(NSIntegrationConsumerTest_stc, SendSyncInfo_SQV_CV_P)
 
     IOTIVITYTEST_LOG(INFO, "Waiting for allowing subscribe");
 
-    m_pCommonHelper->inputMenu("4");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_4);
 
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
@@ -223,16 +224,15 @@ TEST_F(NSIntegrationConsumerTest_stc, SendSyncInfo_SQV_CV_P)
 
     ASSERT_EQ(NSConsumerHelper::s_isConsumerAllowed,true)<< "Subscribe was not allowed by provider";
 
-    m_pCommonHelper->inputMenu("8");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_8);
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
-    m_pCommonHelper->inputMenu("10");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_10);
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
-    m_pCommonHelper->inputMenu("6");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_6);
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
     ASSERT_EQ(true,NSConsumerHelper::s_isNotificationPosted)<< "messageCb was not called";
 
-    uint64_t messageId = 1;
     NSSyncType type = NS_SYNC_READ;
     NSMessage* notification = m_pNSHelper->getNotificationMessage();
     m_pCommonHelper->loggerReader();
@@ -271,7 +271,7 @@ TEST_F(NSIntegrationConsumerTest_stc, SendSyncInfo_SQV_CV_P)
 #if defined(__LINUX__)
 TEST_F(NSIntegrationConsumerTest_stc, StartConsumerAndGetProvider_GSRV_P)
 {
-    m_pCommonHelper->inputMenu("2");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_2);
 
     NSProvider *provider = m_pNSHelper->getProvider();
 
@@ -314,7 +314,7 @@ TEST_F(NSIntegrationConsumerTest_stc, StartConsumerAndGetProvider_GSRV_P)
 #if defined(__LINUX__)
 TEST_F(NSIntegrationConsumerTest_stc, AddTopicAndGetTopicList_GSRV_CV_P)
 {
-    m_pCommonHelper->inputMenu("2");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_2);
 
     NSProvider *provider = m_pNSHelper->getProvider();
 
@@ -330,9 +330,9 @@ TEST_F(NSIntegrationConsumerTest_stc, AddTopicAndGetTopicList_GSRV_CV_P)
 
     IOTIVITYTEST_LOG(INFO, "Waiting for adding topic in provider");
 
-    m_pCommonHelper->inputMenu("8");
-    CommonUtil::waitInSecond(WAIT_TIME_MIN);
-    m_pCommonHelper->inputMenu("8");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_8);
+    CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_8);
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
     ASSERT_EQ(NSConsumerHelper::s_isTopicChanged,true)<< "Callback was not called after adding topic in provider";
@@ -383,7 +383,7 @@ TEST_F(NSIntegrationConsumerTest_stc, AddTopicAndGetTopicList_GSRV_CV_P)
 #if defined(__LINUX__)
 TEST_F(NSIntegrationConsumerTest_stc, DeleteTopicAndGetTopicListAfterUpdate_GSRV_CV_P)
 {
-    m_pCommonHelper->inputMenu("2");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_2);
 
     NSProvider *provider = m_pNSHelper->getProvider();
     const char* providerID = provider->providerId;
@@ -400,9 +400,9 @@ TEST_F(NSIntegrationConsumerTest_stc, DeleteTopicAndGetTopicListAfterUpdate_GSRV
 
     IOTIVITYTEST_LOG(INFO, "Waiting for adding topic in provider");
 
-    m_pCommonHelper->inputMenu("8");
-    CommonUtil::waitInSecond(WAIT_TIME_MIN);
-    m_pCommonHelper->inputMenu("8");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_8);
+    CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_8);
 
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
@@ -416,7 +416,7 @@ TEST_F(NSIntegrationConsumerTest_stc, DeleteTopicAndGetTopicListAfterUpdate_GSRV
 
     IOTIVITYTEST_LOG(INFO, "Waiting for deleting topic in provider");
 
-    m_pCommonHelper->inputMenu("9");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_9);
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
     m_pTopicLL = NSConsumerGetTopicList(providerID);
@@ -466,7 +466,7 @@ TEST_F(NSIntegrationConsumerTest_stc, DeleteTopicAndGetTopicListAfterUpdate_GSRV
 #if defined(__LINUX__)
 TEST_F(NSIntegrationConsumerTest_stc, DeleteTopicAndUpdateInTrueMode_DSCC_N)
 {
-    m_pCommonHelper->inputMenu("1");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_1);
 
     NSConsumerConfig config = m_pNSHelper->getConsumerConfig();
 
@@ -478,7 +478,7 @@ TEST_F(NSIntegrationConsumerTest_stc, DeleteTopicAndUpdateInTrueMode_DSCC_N)
 
     IOTIVITYTEST_LOG(INFO, "Waiting for allowing subscribe");
 
-    m_pCommonHelper->inputMenu("4");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_4);
 
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
@@ -494,9 +494,9 @@ TEST_F(NSIntegrationConsumerTest_stc, DeleteTopicAndUpdateInTrueMode_DSCC_N)
 
     IOTIVITYTEST_LOG(INFO, "Waiting for adding topic in provider");
 
-    m_pCommonHelper->inputMenu("8");
-    CommonUtil::waitInSecond(WAIT_TIME_MIN);
-    m_pCommonHelper->inputMenu("8");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_8);
+    CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_8);
 
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
@@ -510,7 +510,7 @@ TEST_F(NSIntegrationConsumerTest_stc, DeleteTopicAndUpdateInTrueMode_DSCC_N)
 
     IOTIVITYTEST_LOG(INFO, "Waiting for deleting topic in provider");
 
-    m_pCommonHelper->inputMenu("9");
+    m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_9);
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
     m_pTopicLL = NSConsumerGetTopicList(providerID);

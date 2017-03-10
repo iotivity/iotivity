@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -19,27 +19,26 @@
  *
  ******************************************************************/
 
-#include "NSConsumerCppHelper.h"
+#include "NSCppHelper.h"
 
 class NSConsumerCppTest_btc: public ::testing::Test
 {
 public:
-    NSConsumerCppHelper* m_pNSConsumerHelper;
+    NSCppHelper* m_pNSHelper;
     NSConsumerService* m_pNSConsumerServiceInstance;
-    OIC::Service::NSProvider* m_pNSProvider;
+    shared_ptr<OIC::Service::NSProvider> m_pNSProvider;
     OIC::Service::NSResult m_result;
     string m_providerID = "";
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
-        m_pNSConsumerHelper = NSConsumerCppHelper::getInstance();
+        m_pNSHelper = NSCppHelper::getInstance();
 
         m_pNSConsumerServiceInstance = nullptr;
         m_pNSConsumerServiceInstance = NSConsumerService::getInstance();
         ASSERT_NE(nullptr,m_pNSConsumerServiceInstance)<< "NSConsumerService instance could not be found";
-        m_pNSProvider = nullptr;
         m_providerID = "";
 
         IOTIVITYTEST_LOG(INFO, "SetUp called");
@@ -47,7 +46,7 @@ public:
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
 
         m_pNSConsumerServiceInstance->stop();
 
@@ -57,9 +56,10 @@ public:
         IOTIVITYTEST_LOG(INFO, "TearDown called");
     }
 
-    static void onProviderDiscovered(OIC::Service::NSProvider* provider)
+    static void onProviderDiscovered(shared_ptr<OIC::Service::NSProvider> provider)
     {
         IOTIVITYTEST_LOG(INFO, "%s is called", __func__);
+        IOTIVITYTEST_LOG(INFO, "Provider ID is: %s", provider->getProviderId().c_str());
     }
 
     static void onProviderStateChangedCb(OIC::Service::NSProviderState state)
@@ -67,14 +67,16 @@ public:
         IOTIVITYTEST_LOG(INFO, "%s is called", __func__);
     }
 
-    static void onNotificationPostedCb(OIC::Service::NSMessage *notification)
+    static void onNotificationPostedCb(OIC::Service::NSMessage notification)
     {
         IOTIVITYTEST_LOG(INFO, "%s is called", __func__);
+        IOTIVITYTEST_LOG(INFO, "Incoming notification ID is: %ld, notification message is: %s",notification.getMessageId(), notification.getContentText().c_str());
     }
 
-    static void onNotificationSyncCb(OIC::Service::NSSyncInfo *sync)
+    static void onNotificationSyncCb(OIC::Service::NSSyncInfo sync)
     {
         IOTIVITYTEST_LOG(INFO, "%s is called", __func__);
+        NSCppUtility::printSyncInfo(sync);
     }
 };
 
@@ -219,8 +221,8 @@ TEST_F(NSConsumerCppTest_btc, RescanProvider_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSConsumerCppTest_btc, ProviderConstructor_SRC_P)
 {
-    m_pNSProvider = new OIC::Service::NSProvider();
-    ASSERT_NE(nullptr,m_pNSProvider)<< "NSProvider instance could not be created";
+    OIC::Service::NSProvider* nsProvider = new OIC::Service::NSProvider();
+    ASSERT_NE(nullptr, nsProvider)<< "NSProvider instance could not be created";
 }
 #endif
 
@@ -253,7 +255,7 @@ TEST_F(NSConsumerCppTest_btc, ProviderConstructor_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSConsumerCppTest_btc, GetProviderID_SRC_P)
 {
-    m_pNSProvider = m_pNSConsumerHelper->getProvider(true);
+    m_pNSProvider = m_pNSHelper->getProvider(true);
     ASSERT_NE(nullptr,m_pNSProvider)<< "NSProvider instance could not be found";
 
     m_providerID = m_pNSProvider->getProviderId();
@@ -291,10 +293,10 @@ TEST_F(NSConsumerCppTest_btc, GetProviderID_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSConsumerCppTest_btc, GetTopicList_SRC_P)
 {
-    m_pNSProvider = m_pNSConsumerHelper->getProvider(true);
+    m_pNSProvider = m_pNSHelper->getProvider(true);
     ASSERT_NE(nullptr,m_pNSProvider)<< "NSProvider instance could not be found";
 
-    ASSERT_NE(NULL,m_pNSProvider->getTopicList())<< "getTopicList did not return list of topics";
+    ASSERT_NE((size_t) 0, m_pNSProvider->getTopicList()->getTopicsList().size())<< "getTopicList did not return list of topics";
 }
 #endif
 
@@ -329,16 +331,16 @@ TEST_F(NSConsumerCppTest_btc, GetTopicList_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSConsumerCppTest_btc, UpdateTopicList_USV_N)
 {
-    m_pNSProvider = m_pNSConsumerHelper->getProvider(true);
+    m_pNSProvider = m_pNSHelper->getProvider(true);
     ASSERT_NE(nullptr,m_pNSProvider)<< "NSProvider instance could not be found";
 
-    NSTopicsList* nsTopicList = m_pNSProvider->getTopicList();
-    ASSERT_NE(NULL,nsTopicList)<< "getTopicList did not return list of topics";
+    shared_ptr<NSTopicsList> nsTopicList = m_pNSProvider->getTopicList();
+    ASSERT_NE((size_t) 0, nsTopicList->getTopicsList().size())<< "getTopicList did not return list of topics";
 
     m_result = m_pNSProvider->updateTopicList(nsTopicList);
 
     ASSERT_NE(OIC::Service::NSResult::OK,m_result)<< "updateTopicList did not return success. Expected: Not OK. Actual: "
-    << m_pNSConsumerHelper->getResultString(m_result);
+    << NSCppUtility::getResultString(m_result);
 }
 #endif
 
@@ -373,16 +375,16 @@ TEST_F(NSConsumerCppTest_btc, UpdateTopicList_USV_N)
 #if defined(__LINUX__)
 TEST_F(NSConsumerCppTest_btc, UpdateTopicList_NV_N)
 {
-    m_pNSProvider = m_pNSConsumerHelper->getProvider(true);
+    m_pNSProvider = m_pNSHelper->getProvider(true);
     ASSERT_NE(nullptr,m_pNSProvider)<< "NSProvider instance could not be found";
 
-    NSTopicsList* nsTopicList = m_pNSProvider->getTopicList();
-    ASSERT_NE(NULL,nsTopicList)<< "getTopicList did not return list of topics";
+    shared_ptr<NSTopicsList> nsTopicList = m_pNSProvider->getTopicList();
+    ASSERT_NE((size_t) 0, nsTopicList->getTopicsList().size())<< "getTopicList did not return list of topics";
 
     m_result = m_pNSProvider->updateTopicList(NULL);
 
     ASSERT_NE(OIC::Service::NSResult::OK,m_result)<< "updateTopicList did not return success. Expected: Not OK. Actual: "
-    << m_pNSConsumerHelper->getResultString(m_result);
+    << NSCppUtility::getResultString(m_result);
 }
 #endif
 
@@ -415,7 +417,7 @@ TEST_F(NSConsumerCppTest_btc, UpdateTopicList_NV_N)
 #if defined(__LINUX__)
 TEST_F(NSConsumerCppTest_btc, GetProviderState_SRC_P)
 {
-    m_pNSProvider = m_pNSConsumerHelper->getProvider(true);
+    m_pNSProvider = m_pNSHelper->getProvider(true);
     ASSERT_NE(nullptr,m_pNSProvider)<< "NSProvider instance could not be found";
 
     OIC::Service::NSProviderState state;
@@ -455,7 +457,7 @@ TEST_F(NSConsumerCppTest_btc, GetProviderState_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSConsumerCppTest_btc, GetProviderSubscribedState_SRC_P)
 {
-    m_pNSProvider = m_pNSConsumerHelper->getProvider(true);
+    m_pNSProvider = m_pNSHelper->getProvider(true);
     ASSERT_NE(nullptr,m_pNSProvider)<< "NSProvider instance could not be found";
 
     OIC::Service::NSProviderSubscribedState subscribedState;
@@ -494,7 +496,7 @@ TEST_F(NSConsumerCppTest_btc, GetProviderSubscribedState_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSConsumerCppTest_btc, Subscribe_SRC_P)
 {
-    m_pNSProvider = m_pNSConsumerHelper->getProvider(false);
+    m_pNSProvider = m_pNSHelper->getProvider(false);
     ASSERT_NE(nullptr,m_pNSProvider)<< "NSProvider instance could not be found";
 
     try
@@ -537,7 +539,7 @@ TEST_F(NSConsumerCppTest_btc, Subscribe_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSConsumerCppTest_btc, IsSubscribed_SRC_P)
 {
-    m_pNSProvider = m_pNSConsumerHelper->getProvider(true);
+    m_pNSProvider = m_pNSHelper->getProvider(true);
     ASSERT_NE(nullptr,m_pNSProvider)<< "NSProvider instance could not be found";
 
     ASSERT_EQ(true,m_pNSProvider->isSubscribed())<< "correct subscribed state is not found";
@@ -574,7 +576,7 @@ TEST_F(NSConsumerCppTest_btc, IsSubscribed_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSConsumerCppTest_btc, SendSyncInfo_SRC_P)
 {
-    m_pNSProvider = m_pNSConsumerHelper->getProvider(true);
+    m_pNSProvider = m_pNSHelper->getProvider(true);
     ASSERT_NE(nullptr,m_pNSProvider)<< "NSProvider instance could not be found";
 
     uint64_t messageId = 1;
@@ -624,7 +626,7 @@ TEST_F(NSConsumerCppTest_btc, SendSyncInfo_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSConsumerCppTest_btc, SetListener_SRC_P)
 {
-    m_pNSProvider = m_pNSConsumerHelper->getProvider(true);
+    m_pNSProvider = m_pNSHelper->getProvider(true);
     ASSERT_NE(nullptr,m_pNSProvider)<< "NSProvider instance could not be found";
 
     try
@@ -671,7 +673,7 @@ TEST_F(NSConsumerCppTest_btc, SetListener_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSConsumerCppTest_btc, SetListener_NV_P)
 {
-    m_pNSProvider = m_pNSConsumerHelper->getProvider(true);
+    m_pNSProvider = m_pNSHelper->getProvider(true);
     ASSERT_NE(nullptr,m_pNSProvider)<< "NSProvider instance could not be found";
 
     try

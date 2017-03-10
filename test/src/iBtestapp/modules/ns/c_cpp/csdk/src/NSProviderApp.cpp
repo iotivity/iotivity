@@ -144,10 +144,10 @@ void sendNotification()
     NSMessage *msg = NSCreateMessage();
 
     string title = "TESTAPP_Title_" + to_string(++g_ID);
-    msg->title = title.c_str();
+    strcpy(msg->title, title.c_str());
 
     string body = "TESTAPP_Body_" + to_string(g_ID);
-    msg->contentText = body.c_str();
+    strcpy(msg->contentText, body.c_str());
 
     msg->sourceName = OICStrdup("TEST");
 
@@ -472,7 +472,6 @@ void closePipe()
     close(g_WriteFile);
     close(g_ReadFile);
 
-    unlink(FIFO_READ_FILE);
     unlink(FIFO_CONSUMER_FILE);
 }
 

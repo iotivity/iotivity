@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -19,9 +19,9 @@
  *
  ******************************************************************/
 
-#include "NSCommonCppHelper.h"
 #include "NSMediaContents.h"
 #include "NSProviderService.h"
+#include "NSCppUtility.h"
 
 class NSMediaContentsProviderCppTest_btc: public ::testing::Test
 {
@@ -30,18 +30,18 @@ public:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
         m_pNSMediaContents = nullptr;
         m_pNSMediaContents = new OIC::Service::NSMediaContents();
-        ASSERT_NE(nullptr,m_pNSMediaContents)<<
+        ASSERT_NE(nullptr,m_pNSMediaContents) <<
                 "NSMediaContents constructor did not return instance";
         IOTIVITYTEST_LOG(INFO, "SetUp called");
     }
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
 
         IOTIVITYTEST_LOG(INFO, "TearDown called");
     }
@@ -63,7 +63,7 @@ TEST_F(NSMediaContentsProviderCppTest_btc, MediaContentsConstructor_SRC_P)
     OIC::Service::NSMediaContents* nsMediaContents = nullptr;
 
     nsMediaContents = new OIC::Service::NSMediaContents();
-    ASSERT_NE(nullptr,nsMediaContents)<< "NSMediaContents instance is not returned by constructor";
+    ASSERT_NE(nullptr,nsMediaContents) << "NSMediaContents instance is not returned by constructor";
 }
 #endif
 
@@ -112,6 +112,6 @@ TEST_F(NSMediaContentsProviderCppTest_btc, GetIconImage_SRC_P)
     string iconImage = "";
     m_pNSMediaContents->setIconImage(ICONIMAGE_TO_SET);
     iconImage = m_pNSMediaContents->getIconImage();
-    ASSERT_EQ(ICONIMAGE_TO_SET,iconImage)<< "getIconImage did not return the set icon image";
+    ASSERT_EQ(ICONIMAGE_TO_SET,iconImage) << "getIconImage did not return the set icon image";
 }
 #endif

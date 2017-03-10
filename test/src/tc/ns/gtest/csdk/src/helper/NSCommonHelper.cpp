@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -72,10 +72,6 @@ void NSCommonHelper::closePipe() {
 
     unlink(FIFO_INPUT_FILE);
 
-    if (m_isProvider)
-        unlink(PROVIDER_FIFO);
-    else
-        unlink(CONSUMER_FIFO);
 }
 
 void NSCommonHelper::loggerReader() {
@@ -98,7 +94,7 @@ void NSCommonHelper::loggerReader() {
     }
 }
 
-void NSCommonHelper::inputMenu(char input[]) {
+void NSCommonHelper::inputMenu(const char input[]) {
     char in[2];
 
     for (int i=0; i<2; i++) {

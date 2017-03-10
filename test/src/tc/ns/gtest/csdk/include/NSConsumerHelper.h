@@ -32,6 +32,17 @@
 
 #define TOPIC_NAME_2 "TESTAPP_Topic2"
 
+#define PROVIDER_APP_MENU_1 "1"
+#define PROVIDER_APP_MENU_2 "2"
+#define PROVIDER_APP_MENU_3 "3"
+#define PROVIDER_APP_MENU_4 "4"
+#define PROVIDER_APP_MENU_5 "5"
+#define PROVIDER_APP_MENU_6 "6"
+#define PROVIDER_APP_MENU_7 "7"
+#define PROVIDER_APP_MENU_8 "8"
+#define PROVIDER_APP_MENU_9 "9"
+#define PROVIDER_APP_MENU_10 "10"
+
 class NSConsumerHelper
 {
 private:

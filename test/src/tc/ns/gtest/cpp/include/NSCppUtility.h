@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -19,8 +19,8 @@
  *
  ******************************************************************/
 
-#ifndef INCLUDE_TESTCASE_NS_GTEST_NSCOMMON_CPP_HELPER_H_
-#define INCLUDE_TESTCASE_NS_GTEST_NSCOMMON_CPP_HELPER_H_
+#ifndef _NS_CPP_UTILITY_H_
+#define _NS_CPP_UTILITY_H_
 
 #include <algorithm>
 #include <iostream>
@@ -41,10 +41,17 @@
 #include "gtest/gtest.h"
 #include "OCPlatform.h"
 #include "CommonUtil.h"
+#include "CommonTestUtil.h"
 #include "IotivityTest_Logger.h"
+#include "OCPlatform.h"
+#include "NSConsumerService.h"
+#include "NSProvider.h"
+#include "NSProviderService.h"
+#include "NSConsumer.h"
 
 #include "NSMessage.h"
 #include "NSTopic.h"
+#include "NSUtils.h"
 
 #define MAX_BUF 51200
 #define WAIT_TIME_MIN 1
@@ -71,4 +78,15 @@ const OIC::Service::NSTopic::NSTopicState TOPIC_STATE_UNSUBSCRIBED =
         OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED;
 const int PROVIDER_ACCEPT_SUCCESS=100;
 
-#endif /* INCLUDE_TESTCASE_NS_GTEST_NSCOMMON_CPP_HELPER_H_ */
+
+class NSCppUtility
+{
+public:
+    static string getSyncType(OIC::Service::NSSyncInfo::NSSyncType);
+    static void printSyncInfo(OIC::Service::NSSyncInfo);
+    static void printMessage(OIC::Service::NSMessage);
+    static string getResultString(OIC::Service::NSResult result) ;
+
+};
+
+#endif /* _NS_CPP_UTILITY_H_ */

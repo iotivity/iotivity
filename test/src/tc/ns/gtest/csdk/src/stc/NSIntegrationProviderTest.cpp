@@ -21,6 +21,8 @@
 
 #include "NSProviderHelper.h"
 
+using namespace std;
+
 class NSIntegrationProviderTest_stc: public ::testing::Test
 {
 protected:
@@ -37,7 +39,7 @@ protected:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
         m_pNSProviderHelper = NSProviderHelper::getInstance();
 
@@ -59,7 +61,7 @@ protected:
         CommonUtil::killApp(CONSUMER_TESTAPP);
         CommonUtil::waitInSecond(WAIT_TIME_MIN);
 
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 };
 
@@ -88,7 +90,7 @@ TEST_F(NSIntegrationProviderTest_stc, StartProviderAndStartConsumer_SQV_CV_P)
 
     IOTIVITYTEST_LOG(INFO, "Starting consumer app");
     m_pCommonHelper->initPipe(false);
-    m_pCommonHelper->inputMenu("1");
+    m_pCommonHelper->inputMenu(CONSUMER_APP_MENU_1);
     m_pNSConsumer = m_pNSProviderHelper->getConsumer();
 
     m_pCommonHelper->closePipe();
@@ -129,7 +131,7 @@ TEST_F(NSIntegrationProviderTest_stc, AcceptSubscription_SQV_P)
 
     IOTIVITYTEST_LOG(INFO, "Starting consumer app");
     m_pCommonHelper->initPipe(false);
-    m_pCommonHelper->inputMenu("1");
+    m_pCommonHelper->inputMenu(CONSUMER_APP_MENU_1);
     m_pNSConsumer = m_pNSProviderHelper->getConsumer();
 
     ASSERT_EQ(m_pNSProviderHelper->s_isOnSubscribeRequest,true)<< "onSubscribeRequest callback was not called";
@@ -181,7 +183,7 @@ TEST_F(NSIntegrationProviderTest_stc, StopProvider_SQV_P)
 
     IOTIVITYTEST_LOG(INFO, "Starting consumer app");
     m_pCommonHelper->initPipe(false);
-    m_pCommonHelper->inputMenu("1");
+    m_pCommonHelper->inputMenu(CONSUMER_APP_MENU_1);
     m_pNSConsumer = m_pNSProviderHelper->getConsumer();
 
     ASSERT_EQ(m_pNSProviderHelper->s_isOnSubscribeRequest,true)<< "onSubscribeRequest callback was not called";
@@ -245,12 +247,12 @@ TEST_F(NSIntegrationProviderTest_stc, ProviderSendMessage_SQV_P)
 
     IOTIVITYTEST_LOG(INFO, "Starting consumer app");
     m_pCommonHelper->initPipe(false);
-    m_pCommonHelper->inputMenu("1");
+    m_pCommonHelper->inputMenu(CONSUMER_APP_MENU_1);
     m_pNSConsumer = m_pNSProviderHelper->getConsumer();
 
     ASSERT_EQ(m_pNSProviderHelper->s_isOnSubscribeRequest,true)<< "onSubscribeRequest callback was not called";
 
-    ASSERT_NE(m_pNSConsumer,nullptr)<<"consumer was not found";
+    ASSERT_NE(m_pNSConsumer,nullptr) << "consumer was not found";
 
     bool isAccept = true;
 
@@ -262,19 +264,14 @@ TEST_F(NSIntegrationProviderTest_stc, ProviderSendMessage_SQV_P)
 
     NSMessage* msg = nullptr;
     msg = NSCreateMessage();
-    ASSERT_NE(msg,nullptr)<<"NSMessage was not created";
+    ASSERT_NE(msg,nullptr) << "NSMessage was not created";
 
-    string title = "TESTAPP_Title_1";
-    msg->title = title.c_str();
-
-    string body = "TESTAPP_Body_1";
-    msg->contentText = body.c_str();
-
+    msg->title =  OICStrdup(TOPIC_TITLE);
+    msg->contentText =  OICStrdup(TOPIC_BODY);
     msg->sourceName = OICStrdup("TEST");
+    msg->topic =  OICStrdup(TOPIC_NAME_PROVIDER);
 
-    msg->topic = TOPIC_NAME_PROVIDER;
-
-    ASSERT_EQ(NS_OK, NSSendMessage(msg))<< "NSSendMessage did not return success";
+    ASSERT_EQ(NS_OK, NSSendMessage(msg)) << "NSSendMessage did not return success";
 
     m_pCommonHelper->loggerReader();
     IOTIVITYTEST_LOG(INFO, "Checking if callback is called in consumer");
@@ -357,7 +354,7 @@ TEST_F(NSIntegrationProviderTest_stc, UnregisterTopic_SQV_P)
     ASSERT_EQ(NS_OK, NSProviderRegisterTopic(TOPIC_NAME_PROVIDER))<< "NSProviderRegisterTopic did not return success for the first topic";
 
     EXPECT_EQ(NS_OK, NSProviderRegisterTopic(m_TopicName.c_str()))
-            << "NSProviderRegisterTopic did not return success for the second topic";
+    << "NSProviderRegisterTopic did not return success for the second topic";
 
     m_pNSTopicLL = NSProviderGetTopics();
 
@@ -409,7 +406,7 @@ TEST_F(NSIntegrationProviderTest_stc, GetConsumerTopics_SQV_P)
 
     IOTIVITYTEST_LOG(INFO, "Starting consumer app");
     m_pCommonHelper->initPipe(false);
-    m_pCommonHelper->inputMenu("1");
+    m_pCommonHelper->inputMenu(CONSUMER_APP_MENU_1);
     m_pNSConsumer = m_pNSProviderHelper->getConsumer();
 
     ASSERT_EQ(m_pNSProviderHelper->s_isOnSubscribeRequest,true)<< "onSubscribeRequest callback was not called";

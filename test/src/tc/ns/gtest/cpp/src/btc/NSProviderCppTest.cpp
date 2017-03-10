@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -19,28 +19,28 @@
  *
  ******************************************************************/
 
-#include "NSProviderCppHelper.h"
+#include "NSCppHelper.h"
 
 class NSProviderCppTest_btc: public ::testing::Test
 {
 public:
-    NSProviderCppHelper* m_pNSProviderHelper;
+    NSCppHelper* m_pNSHelper;
     NSProviderService* m_pNSProviderServiceInstance;
-    OIC::Service::NSConsumer* m_pNSConsumer;
+    shared_ptr<OIC::Service::NSConsumer> m_pNSConsumer;
     OIC::Service::NSResult m_result;
     string m_consumerID = "";
     NSProviderService::ProviderConfig m_providerCfgTrue;
     NSProviderService::ProviderConfig m_providerCfgFalse;
     bool m_accepted = false;
+    bool m_isProviderStarted = false;
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
-        m_pNSConsumer = nullptr;
         m_consumerID = "";
 
-        m_pNSProviderHelper = NSProviderCppHelper::getInstance();
+        m_pNSHelper = NSCppHelper::getInstance();
 
         m_pNSProviderServiceInstance = nullptr;
         m_pNSProviderServiceInstance = NSProviderService::getInstance();
@@ -54,29 +54,34 @@ public:
         m_providerCfgFalse.m_syncInfoCb = syncCallback;
         m_providerCfgFalse.subControllability = false;
 
-        OIC::Service::NSResult m_result;
+        m_result = OIC::Service::NSResult::FAIL;
 
         IOTIVITYTEST_LOG(INFO, "SetUp called");
     }
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
 
         CommonUtil::killApp(CONSUMER_SIMULATOR);
         CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
-        m_pNSProviderServiceInstance->stop();
+        if (m_isProviderStarted)
+        {
+            m_pNSProviderServiceInstance->stop();
+            m_isProviderStarted = false;
+        }
+
 
         IOTIVITYTEST_LOG(INFO, "TearDown called");
     }
 
-    static void syncCallback(OIC::Service::NSSyncInfo *sync)
+    static void syncCallback(OIC::Service::NSSyncInfo sync)
     {
         IOTIVITYTEST_LOG(INFO, "NSProviderSyncInfoCallback() called !!");
     }
 
-    static void subscribeRequestCallback(OIC::Service::NSConsumer *consumer)
+    static void subscribeRequestCallback(shared_ptr<OIC::Service::NSConsumer> consumer)
     {
         IOTIVITYTEST_LOG(INFO, "subscribeRequestCallback() called !!");
         IOTIVITYTEST_LOG(INFO, "Consumer ID: %s", consumer->getConsumerId().c_str());
@@ -98,7 +103,7 @@ public:
 #if defined(__LINUX__)
 TEST_F(NSProviderCppTest_btc, ProviderServiceGetInstance_SRC_P)
 {
-    ASSERT_NE(nullptr,NSProviderService::getInstance())<< "getInstance does not return instance";
+    ASSERT_NE(nullptr,NSProviderService::getInstance()) << "getInstance does not return instance";
 }
 #endif
 
@@ -121,8 +126,10 @@ TEST_F(NSProviderCppTest_btc, ProviderServiceGetInstance_SRC_P)
 TEST_F(NSProviderCppTest_btc, ProviderServiceStartSubcontrollabilityTrue_SRC_P)
 {
     m_result = m_pNSProviderServiceInstance->start(m_providerCfgTrue);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "start did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    m_isProviderStarted = true;
+    ASSERT_EQ(OIC::Service::NSResult::OK, m_result) << "start did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
+    IOTIVITYTEST_LOG(INFO, "Testcase PAased");
 }
 #endif
 
@@ -145,8 +152,9 @@ TEST_F(NSProviderCppTest_btc, ProviderServiceStartSubcontrollabilityTrue_SRC_P)
 TEST_F(NSProviderCppTest_btc, ProviderServiceStartSubcontrollabilityFalse_SRC_P)
 {
     m_result = m_pNSProviderServiceInstance->start(m_providerCfgFalse);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "start did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    m_isProviderStarted = true;
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "start did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 }
 #endif
 
@@ -170,8 +178,9 @@ TEST_F(NSProviderCppTest_btc, ProviderServiceStart_USV_P)
 {
     NSProviderService::ProviderConfig providerCfg;
     m_result = m_pNSProviderServiceInstance->start(providerCfg);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "start did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    m_isProviderStarted = true;
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "start did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 }
 #endif
 
@@ -195,12 +204,15 @@ TEST_F(NSProviderCppTest_btc, ProviderServiceStart_USV_P)
 TEST_F(NSProviderCppTest_btc, ProviderServiceStop_SRC_P)
 {
     m_result = m_pNSProviderServiceInstance->start(m_providerCfgTrue);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "start did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
-
+    m_isProviderStarted = true;
+    ASSERT_EQ(OIC::Service::NSResult::OK, m_result) << "start did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
+    IOTIVITYTEST_LOG(INFO, "Provider Servuce started successfully");
+    CommonUtil::waitInSecond(WAIT_TIME_MIN + WAIT_TIME_MIN);
     m_result = m_pNSProviderServiceInstance->stop();
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "stop did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    m_isProviderStarted = false;
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "stop did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 }
 #endif
 
@@ -224,12 +236,13 @@ TEST_F(NSProviderCppTest_btc, ProviderServiceStop_SRC_P)
 TEST_F(NSProviderCppTest_btc, CreateMessage_SRC_P)
 {
     m_result = m_pNSProviderServiceInstance->start(m_providerCfgTrue);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "start did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    m_isProviderStarted = true;
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "start did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 
-    OIC::Service::NSMessage* msg = nullptr;
-    msg = m_pNSProviderServiceInstance->createMessage();
-    ASSERT_NE(nullptr,msg)<< "createMessage did not return message";
+    OIC::Service::NSMessage emptyMsg;
+    OIC::Service::NSMessage msg = m_pNSProviderServiceInstance->createMessage();
+    ASSERT_NE(emptyMsg.getProviderId(), msg.getProviderId()) << "createMessage did not return message";
 }
 #endif
 
@@ -255,16 +268,17 @@ TEST_F(NSProviderCppTest_btc, CreateMessage_SRC_P)
 TEST_F(NSProviderCppTest_btc, SendMessage_SRC_P)
 {
     m_result = m_pNSProviderServiceInstance->start(m_providerCfgTrue);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "start did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    m_isProviderStarted = true;
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "start did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 
-    OIC::Service::NSMessage* msg = nullptr;
-    msg = m_pNSProviderServiceInstance->createMessage();
-    ASSERT_NE(nullptr,msg)<< "createMessage did not return message";
+//    NSMessage* msg = nullptr;
+//    *msg = m_pNSProviderServiceInstance->createMessage();
+//    ASSERT_NE(nullptr. msg) << "createMessage did not return message";
 
-    m_result = m_pNSProviderServiceInstance->sendMessage(msg);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "sendMessage did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    m_result = m_pNSProviderServiceInstance->sendMessage(m_pNSProviderServiceInstance->createMessage());
+    ASSERT_EQ(OIC::Service::NSResult::OK, m_result) << "sendMessage did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 }
 #endif
 
@@ -288,12 +302,13 @@ TEST_F(NSProviderCppTest_btc, SendMessage_SRC_P)
 TEST_F(NSProviderCppTest_btc, SendMessage_NV_N)
 {
     m_result = m_pNSProviderServiceInstance->start(m_providerCfgTrue);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "start did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    m_isProviderStarted = true;
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "start did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 
     m_result = m_pNSProviderServiceInstance->sendMessage(nullptr);
-    ASSERT_EQ(OIC::Service::NSResult::ERROR,m_result)<< "sendMessage did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    ASSERT_EQ(OIC::Service::NSResult::ERROR,m_result) << "sendMessage did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 }
 #endif
 
@@ -318,8 +333,9 @@ TEST_F(NSProviderCppTest_btc, SendMessage_NV_N)
 TEST_F(NSProviderCppTest_btc, SendSyncInfo_SRC_P)
 {
     m_result = m_pNSProviderServiceInstance->start(m_providerCfgTrue);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "start did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    m_isProviderStarted = true;
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "start did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 
     uint64_t messageId = 1;
     OIC::Service::NSSyncInfo::NSSyncType type = OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ;
@@ -356,12 +372,13 @@ TEST_F(NSProviderCppTest_btc, SendSyncInfo_SRC_P)
 TEST_F(NSProviderCppTest_btc, RegisterTopic_SRC_P)
 {
     m_result = m_pNSProviderServiceInstance->start(m_providerCfgTrue);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "start did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    m_isProviderStarted = true;
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "start did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 
     m_result = m_pNSProviderServiceInstance->registerTopic(TEST_TOPIC_1);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "registerTopic did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "registerTopic did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 }
 #endif
 
@@ -385,12 +402,13 @@ TEST_F(NSProviderCppTest_btc, RegisterTopic_SRC_P)
 TEST_F(NSProviderCppTest_btc, RegisterTopic_ESV_N)
 {
     m_result = m_pNSProviderServiceInstance->start(m_providerCfgTrue);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "start did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    m_isProviderStarted = true;
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "start did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 
     m_result = m_pNSProviderServiceInstance->registerTopic(EMPTY_STRING);
-    ASSERT_EQ(OIC::Service::NSResult::FAIL,m_result)<< "registerTopic did not "
-    "return success. Expected: FAIL. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    ASSERT_EQ(OIC::Service::NSResult::FAIL,m_result) << "registerTopic did not "
+    "return success. Expected: FAIL. Actual: " << NSCppUtility::getResultString(m_result);
 }
 #endif
 
@@ -416,16 +434,17 @@ TEST_F(NSProviderCppTest_btc, RegisterTopic_ESV_N)
 TEST_F(NSProviderCppTest_btc, UnregisterTopic_SRC_P)
 {
     m_result = m_pNSProviderServiceInstance->start(m_providerCfgTrue);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "start did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    m_isProviderStarted = true;
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "start did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 
     m_result = m_pNSProviderServiceInstance->registerTopic(TEST_TOPIC_1);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "registerTopic did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "registerTopic did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 
     m_result = m_pNSProviderServiceInstance->unregisterTopic(TEST_TOPIC_1);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "unregisterTopic did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "unregisterTopic did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 }
 #endif
 
@@ -451,16 +470,17 @@ TEST_F(NSProviderCppTest_btc, UnregisterTopic_SRC_P)
 TEST_F(NSProviderCppTest_btc, GetRegisteredTopicList_SRC_P)
 {
     m_result = m_pNSProviderServiceInstance->start(m_providerCfgTrue);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "start did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    m_isProviderStarted = true;
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "start did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 
     m_result = m_pNSProviderServiceInstance->registerTopic(TEST_TOPIC_1);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "registerTopic did not "
-    "return success. Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "registerTopic did not "
+    "return success. Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 
-    NSTopicsList* topicList = nullptr;
+    shared_ptr<OIC::Service::NSTopicsList> topicList;
     topicList = m_pNSProviderServiceInstance->getRegisteredTopicList();
-    ASSERT_NE(nullptr,topicList)<< "getRegisteredTopicList does not return topic list";
+    ASSERT_NE(nullptr,topicList) << "getRegisteredTopicList does not return topic list";
 }
 #endif
 
@@ -479,8 +499,8 @@ TEST_F(NSProviderCppTest_btc, GetRegisteredTopicList_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSProviderCppTest_btc, ConsumerConstructor_SRC_P)
 {
-    m_pNSConsumer = new OIC::Service::NSConsumer();
-    ASSERT_NE(nullptr,m_pNSConsumer)<< "NSConsumer instance could not be created";
+    OIC::Service::NSConsumer* nsConsumer = new OIC::Service::NSConsumer("New Consumer");
+    ASSERT_NE(nullptr, nsConsumer) << "NSConsumer instance could not be created";
 }
 #endif
 
@@ -508,12 +528,15 @@ TEST_F(NSProviderCppTest_btc, ConsumerConstructor_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSProviderCppTest_btc, GetConsumerID_SRC_P)
 {
-    m_pNSConsumer = m_pNSProviderHelper->getConsumer(true);
-    ASSERT_NE(nullptr,m_pNSConsumer)<< "NSConsumer instance could not be created";
+    m_pNSConsumer = m_pNSHelper->getConsumer(true);
+    if(!m_pNSConsumer)
+    {
+        ASSERT_TRUE(false) << "NSConsumer instance could not be created";
+    }
 
     m_consumerID = m_pNSConsumer->getConsumerId();
     IOTIVITYTEST_LOG(INFO, "Consumer ID: %s", m_consumerID.c_str());
-    ASSERT_NE("",m_consumerID)<< "getConsumerId did not return Consumer ID";
+    ASSERT_NE("",m_consumerID) << "getConsumerId did not return Consumer ID";
 }
 #endif
 
@@ -541,11 +564,11 @@ TEST_F(NSProviderCppTest_btc, GetConsumerID_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSProviderCppTest_btc, AcceptSubscriptionAllow_SRC_P)
 {
-    m_pNSConsumer = m_pNSProviderHelper->getConsumer(true);
-    ASSERT_NE(nullptr,m_pNSConsumer)<< "NSConsumer instance could not be created";
+    m_pNSConsumer = m_pNSHelper->getConsumer(true);
+    ASSERT_NE(nullptr,m_pNSConsumer) << "NSConsumer instance could not be created";
 
     m_accepted = true;
-    ASSERT_EQ(PROVIDER_ACCEPT_SUCCESS,m_pNSConsumer->acceptSubscription(m_accepted))<< "acceptSubscription did not return success";
+    ASSERT_EQ(OIC::Service::NSResult::OK,  m_pNSConsumer->acceptSubscription(m_accepted)) << "acceptSubscription did not return success";
 }
 #endif
 
@@ -573,11 +596,11 @@ TEST_F(NSProviderCppTest_btc, AcceptSubscriptionAllow_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSProviderCppTest_btc, AcceptSubscriptionDeny_SRC_P)
 {
-    m_pNSConsumer = m_pNSProviderHelper->getConsumer(true);
-    ASSERT_NE(nullptr,m_pNSConsumer)<< "NSConsumer instance could not be created";
+    m_pNSConsumer = m_pNSHelper->getConsumer(true);
+    ASSERT_NE(nullptr,m_pNSConsumer) << "NSConsumer instance could not be created";
 
     m_accepted = false;
-    ASSERT_EQ(PROVIDER_ACCEPT_SUCCESS,m_pNSConsumer->acceptSubscription(m_accepted))<< "acceptSubscription did not return success";
+    ASSERT_EQ(OIC::Service::NSResult::OK, m_pNSConsumer->acceptSubscription(m_accepted)) << "acceptSubscription did not return success";
 }
 #endif
 
@@ -610,20 +633,20 @@ TEST_F(NSProviderCppTest_btc, AcceptSubscriptionDeny_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSProviderCppTest_btc, SetTopic_SRC_P)
 {
-    m_pNSConsumer = m_pNSProviderHelper->getConsumer(true);
-    ASSERT_NE(nullptr,m_pNSConsumer)<< "NSConsumer instance could not be created";
+    m_pNSConsumer = m_pNSHelper->getConsumer(true);
+    ASSERT_NE(nullptr,m_pNSConsumer) << "NSConsumer instance could not be created";
 
     m_accepted = true;
-    ASSERT_EQ(PROVIDER_ACCEPT_SUCCESS,m_pNSConsumer->acceptSubscription(m_accepted))<< "acceptSubscription did not return success";
+    ASSERT_EQ(OIC::Service::NSResult::OK, m_pNSConsumer->acceptSubscription(m_accepted)) << "acceptSubscription did not return success";
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
-    m_result = NSProviderCppHelper::s_pNSProviderService->registerTopic(TEST_TOPIC_1);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "registerTopic did "
-    "not return success. Expected: OK. Actual: " <<m_pNSProviderHelper->getResultString(m_result);
+    m_result = m_pNSHelper->getProviderService()->registerTopic(TEST_TOPIC_1);
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "registerTopic did "
+    "not return success. Expected: OK. Actual: " <<NSCppUtility::getResultString(m_result);
 
     m_result = m_pNSConsumer->setTopic(TEST_TOPIC_1);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "setTopic did not return success."
-    " Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "setTopic did not return success."
+    " Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 }
 #endif
 
@@ -654,20 +677,20 @@ TEST_F(NSProviderCppTest_btc, SetTopic_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSProviderCppTest_btc, SetTopic_USV_N)
 {
-    m_pNSConsumer = m_pNSProviderHelper->getConsumer(true);
-    ASSERT_NE(nullptr,m_pNSConsumer)<< "NSConsumer instance could not be created";
+    m_pNSConsumer = m_pNSHelper->getConsumer(true);
+    ASSERT_NE(nullptr,m_pNSConsumer) << "NSConsumer instance could not be created";
 
     m_consumerID = m_pNSConsumer->getConsumerId();
     IOTIVITYTEST_LOG(INFO, "Consumer ID: %s", m_consumerID.c_str());
-    ASSERT_NE("",m_consumerID)<< "getConsumerId did not return Consumer ID";
+    ASSERT_NE("",m_consumerID) << "getConsumerId did not return Consumer ID";
 
     m_accepted = true;
-    ASSERT_EQ(PROVIDER_ACCEPT_SUCCESS,m_pNSConsumer->acceptSubscription(m_accepted))<< "acceptSubscription did not return success";
+    ASSERT_EQ(OIC::Service::NSResult::OK, m_pNSConsumer->acceptSubscription(m_accepted)) << "acceptSubscription did not return success";
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
     m_result = m_pNSConsumer->setTopic(TEST_TOPIC_1);
-    ASSERT_NE(OIC::Service::NSResult::OK,m_result)<< "setTopic did not return success."
-    " Expected: Not OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    ASSERT_NE(OIC::Service::NSResult::OK,m_result) << "setTopic did not return success."
+    " Expected: Not OK. Actual: " << NSCppUtility::getResultString(m_result);
 }
 #endif
 
@@ -702,28 +725,28 @@ TEST_F(NSProviderCppTest_btc, SetTopic_USV_N)
 #if defined(__LINUX__)
 TEST_F(NSProviderCppTest_btc, UnsetTopic_SRC_P)
 {
-    m_pNSConsumer = m_pNSProviderHelper->getConsumer(true);
-    ASSERT_NE(nullptr,m_pNSConsumer)<< "NSConsumer instance could not be created";
+    m_pNSConsumer = m_pNSHelper->getConsumer(true);
+    ASSERT_NE(nullptr,m_pNSConsumer) << "NSConsumer instance could not be created";
 
     m_consumerID = m_pNSConsumer->getConsumerId();
     IOTIVITYTEST_LOG(INFO, "Consumer ID: %s", m_consumerID.c_str());
-    ASSERT_NE("",m_consumerID)<< "getConsumerId did not return Consumer ID";
+    ASSERT_NE("",m_consumerID) << "getConsumerId did not return Consumer ID";
 
     m_accepted = true;
-    ASSERT_EQ(PROVIDER_ACCEPT_SUCCESS,m_pNSConsumer->acceptSubscription(m_accepted))<< "acceptSubscription did not return success";
+    ASSERT_EQ(OIC::Service::NSResult::OK, m_pNSConsumer->acceptSubscription(m_accepted)) << "acceptSubscription did not return success";
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
-    m_result = NSProviderCppHelper::s_pNSProviderService->registerTopic(TEST_TOPIC_1);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "registerTopic did "
-    "not return success. Expected: OK. Actual: " <<m_pNSProviderHelper->getResultString(m_result);
+    m_result = m_pNSHelper->getProviderService()->registerTopic(TEST_TOPIC_1);
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "registerTopic did "
+    "not return success. Expected: OK. Actual: " <<NSCppUtility::getResultString(m_result);
 
     m_result = m_pNSConsumer->setTopic(TEST_TOPIC_1);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "setTopic did not return success."
-    " Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "setTopic did not return success."
+    " Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 
     m_result = m_pNSConsumer->unsetTopic(TEST_TOPIC_1);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "unsetTopic did not return success."
-    " Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    ASSERT_EQ(OIC::Service::NSResult::OK,m_result) << "unsetTopic did not return success."
+    " Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 }
 #endif
 
@@ -754,20 +777,20 @@ TEST_F(NSProviderCppTest_btc, UnsetTopic_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSProviderCppTest_btc, UnsetTopic_USV_N)
 {
-    m_pNSConsumer = m_pNSProviderHelper->getConsumer(true);
-    ASSERT_NE(nullptr,m_pNSConsumer)<< "NSConsumer instance could not be created";
+    m_pNSConsumer = m_pNSHelper->getConsumer(true);
+    ASSERT_NE(nullptr,m_pNSConsumer) << "NSConsumer instance could not be created";
 
     m_consumerID = m_pNSConsumer->getConsumerId();
     IOTIVITYTEST_LOG(INFO, "Consumer ID: %s", m_consumerID.c_str());
-    ASSERT_NE("",m_consumerID)<< "getConsumerId did not return Consumer ID";
+    ASSERT_NE("",m_consumerID) << "getConsumerId did not return Consumer ID";
 
     m_accepted = true;
-    ASSERT_EQ(PROVIDER_ACCEPT_SUCCESS,m_pNSConsumer->acceptSubscription(m_accepted))<< "acceptSubscription did not return success";
+    ASSERT_EQ(OIC::Service::NSResult::OK, m_pNSConsumer->acceptSubscription(m_accepted)) << "acceptSubscription did not return success";
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
     m_result = m_pNSConsumer->unsetTopic(TEST_TOPIC_1);
-    ASSERT_NE(OIC::Service::NSResult::OK,m_result)<< "unsetTopic did not return success."
-    " Expected: Not OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    ASSERT_NE(OIC::Service::NSResult::OK,m_result) << "unsetTopic did not return success."
+    " Expected: Not OK. Actual: " << NSCppUtility::getResultString(m_result);
 }
 #endif
 
@@ -802,27 +825,27 @@ TEST_F(NSProviderCppTest_btc, UnsetTopic_USV_N)
 #if defined(__LINUX__)
 TEST_F(NSProviderCppTest_btc, GetConsumerTopicList_SRC_P)
 {
-    m_pNSConsumer = m_pNSProviderHelper->getConsumer(true);
-    ASSERT_NE(nullptr,m_pNSConsumer)<< "NSConsumer instance could not be created";
+    m_pNSConsumer = m_pNSHelper->getConsumer(true);
+    ASSERT_NE(nullptr,m_pNSConsumer) << "NSConsumer instance could not be created";
 
     m_consumerID = m_pNSConsumer->getConsumerId();
     IOTIVITYTEST_LOG(INFO, "Consumer ID: %s", m_consumerID.c_str());
-    ASSERT_NE("",m_consumerID)<< "getConsumerId did not return Consumer ID";
+    ASSERT_NE("",m_consumerID) << "getConsumerId did not return Consumer ID";
 
     m_accepted = true;
-    ASSERT_EQ(PROVIDER_ACCEPT_SUCCESS,m_pNSConsumer->acceptSubscription(m_accepted))<< "acceptSubscription did not return success";
+    ASSERT_EQ(OIC::Service::NSResult::OK, m_pNSConsumer->acceptSubscription(m_accepted)) << "acceptSubscription did not return success";
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
-    m_result = NSProviderCppHelper::s_pNSProviderService->registerTopic(TEST_TOPIC_1);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "registerTopic did "
-    "not return success. Expected: OK. Actual: " <<m_pNSProviderHelper->getResultString(m_result);
+    m_result = m_pNSHelper->getProviderService()->registerTopic(TEST_TOPIC_1);
+    ASSERT_EQ(OIC::Service::NSResult::OK, m_result) << "registerTopic did "
+    "not return success. Expected: OK. Actual: " <<NSCppUtility::getResultString(m_result);
 
     m_result = m_pNSConsumer->setTopic(TEST_TOPIC_1);
-    ASSERT_EQ(OIC::Service::NSResult::OK,m_result)<< "setTopic did not return success."
-    " Expected: OK. Actual: " << m_pNSProviderHelper->getResultString(m_result);
+    ASSERT_EQ(OIC::Service::NSResult::OK, m_result) << "setTopic did not return success."
+    " Expected: OK. Actual: " << NSCppUtility::getResultString(m_result);
 
-    OIC::Service::NSTopicsList* topicList = nullptr;
+    shared_ptr<NSTopicsList> topicList;
     topicList = m_pNSConsumer->getConsumerTopicList();
-    ASSERT_NE(nullptr,topicList)<< "Consumer topic list was not found";
+    ASSERT_NE(nullptr,topicList) << "Consumer topic list was not found";
 }
 #endif

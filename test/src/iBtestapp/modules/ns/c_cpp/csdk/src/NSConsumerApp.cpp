@@ -430,7 +430,6 @@ void closePipe()
     close(g_WriteFile);
     close(g_ReadFile);
 
-    unlink(FIFO_READ_FILE);
     unlink(FIFO_WRITE_FILE);
 }
 

@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -19,9 +19,9 @@
  *
  ******************************************************************/
 
-#include "NSCommonCppHelper.h"
 #include "NSSyncInfo.h"
 #include "NSProviderService.h"
+#include "NSCppUtility.h"
 
 class NSSyncInfoProviderCppTest_btc: public ::testing::Test
 {
@@ -33,18 +33,18 @@ public:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
         m_pNSSyncInfo = nullptr;
         m_pNSSyncInfo = new OIC::Service::NSSyncInfo(m_messageID,m_providerID,m_state);
-        ASSERT_NE(nullptr,m_pNSSyncInfo)<<
+        ASSERT_NE(nullptr,m_pNSSyncInfo) <<
                 "NSSyncInfo constructor did not return instance";
         IOTIVITYTEST_LOG(INFO, "SetUp called");
     }
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
 
         IOTIVITYTEST_LOG(INFO, "TearDown called");
     }
@@ -66,7 +66,7 @@ TEST_F(NSSyncInfoProviderCppTest_btc, SyncInfoConstructor_SRC_P)
     OIC::Service::NSSyncInfo* nsSyncInfo = nullptr;
 
     nsSyncInfo = new OIC::Service::NSSyncInfo();
-    ASSERT_NE(nullptr,nsSyncInfo)<< "NSSyncInfo instance is not returned by constructor";
+    ASSERT_NE(nullptr,nsSyncInfo) << "NSSyncInfo instance is not returned by constructor";
 }
 #endif
 
@@ -89,7 +89,7 @@ TEST_F(NSSyncInfoProviderCppTest_btc, SyncInfoConstructorWithParameters_SRC_P)
     OIC::Service::NSSyncInfo* nsSyncInfo = nullptr;
 
     nsSyncInfo = new OIC::Service::NSSyncInfo(m_messageID,m_providerID,m_state);
-    ASSERT_NE(nullptr,nsSyncInfo)<< "NSSyncInfo instance is not returned by constructor";
+    ASSERT_NE(nullptr,nsSyncInfo) << "NSSyncInfo instance is not returned by constructor";
 }
 #endif
 

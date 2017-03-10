@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -19,9 +19,9 @@
  *
  ******************************************************************/
 
-#include "NSCommonCppHelper.h"
 #include "NSTopicsList.h"
 #include "NSProviderService.h"
+#include "NSCppUtility.h"
 
 class NSTopicsListProviderCppTest_btc: public ::testing::Test
 {
@@ -30,18 +30,18 @@ public:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
         m_pNSTopicsList = nullptr;
         m_pNSTopicsList = new OIC::Service::NSTopicsList();
         ASSERT_NE(nullptr,m_pNSTopicsList)<<
-                "NSTopicsList constructor did not return instance";
+        "NSTopicsList constructor did not return instance";
         IOTIVITYTEST_LOG(INFO, "SetUp called");
     }
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
 
         IOTIVITYTEST_LOG(INFO, "TearDown called");
     }
@@ -84,12 +84,11 @@ TEST_F(NSTopicsListProviderCppTest_btc, AddTopic_SRC_P)
 {
     try
     {
-        m_pNSTopicsList->addTopic(TOPIC_NAME_1,OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED);
+        m_pNSTopicsList->addTopic(TOPIC_NAME_1, OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED);
     }
     catch (exception &e)
     {
-        SET_FAILURE(
-                "Exception occurs while calling addTopic. Exception is: " + string(e.what()));
+        FAIL() << "Exception occurred while calling addTopic. Exception is: " << e.what();
     }
 }
 #endif
@@ -110,15 +109,23 @@ TEST_F(NSTopicsListProviderCppTest_btc, AddTopic_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSTopicsListProviderCppTest_btc, RemoveTopic_SRC_P)
 {
-    m_pNSTopicsList->addTopic(TOPIC_NAME_1,OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED);
+    try
+    {
+        m_pNSTopicsList->addTopic(TOPIC_NAME_1, OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED);
+    }
+    catch (exception &e)
+    {
+        IOTIVITYTEST_LOG(WARNING, "Exception occurs while calling removeTopic. Exception is: %s",
+                e.what());
+    }
+    IOTIVITYTEST_LOG(DEBUG, "Topic Added");
     try
     {
         m_pNSTopicsList->removeTopic(TOPIC_NAME_1);
     }
     catch (exception &e)
     {
-        SET_FAILURE(
-                "Exception occurs while calling removeTopic. Exception is: " + string(e.what()));
+        FAIL() << "Exception occurred while calling removeTopic. Exception is: " << e.what();
     }
 }
 #endif
@@ -139,7 +146,7 @@ TEST_F(NSTopicsListProviderCppTest_btc, RemoveTopic_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSTopicsListProviderCppTest_btc, GetTopicsList_SRC_P)
 {
-    m_pNSTopicsList->addTopic(TOPIC_NAME_1,OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED);
-    ASSERT_NE(0,m_pNSTopicsList->getTopicsList().size()) << "getTopicsList returned an empty list";
+    m_pNSTopicsList->addTopic(TOPIC_NAME_1, OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED);
+    ASSERT_NE( (size_t) 0, m_pNSTopicsList->getTopicsList().size() )<< "getTopicsList returned an empty list";
 }
 #endif

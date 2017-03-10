@@ -31,6 +31,18 @@
 #define CONSUMER_SIMULATOR_OPTION "./ns_consumer_simulator 0"
 
 #define TOPIC_NAME_PROVIDER "Test_Topic_1"
+#define TOPIC_BODY "TESTAPP_Body_1"
+#define TOPIC_TITLE "TESTAPP_Title_1"
+
+#define CONSUMER_APP_MENU_1 "1"
+#define CONSUMER_APP_MENU_2 "2"
+#define CONSUMER_APP_MENU_3 "3"
+#define CONSUMER_APP_MENU_4 "4"
+#define CONSUMER_APP_MENU_5 "5"
+#define CONSUMER_APP_MENU_6 "6"
+#define CONSUMER_APP_MENU_7 "7"
+#define CONSUMER_APP_MENU_8 "8"
+#define CONSUMER_APP_MENU_9 "9"
 
 class NSProviderHelper
 {

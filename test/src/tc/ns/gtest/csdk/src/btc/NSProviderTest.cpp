@@ -34,14 +34,14 @@ protected:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
         m_pNSHelper = NSProviderHelper::getInstance();
     }
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 };
 
@@ -615,7 +615,7 @@ TEST_F(NSProviderTest_btc, NSGetConsumerTopics_NV_N)
 TEST_F(NSProviderTest_btc, NSGetTopics_SRC_P)
 {
     NSProviderConfig config = m_pNSHelper->getProviderConfig(true);
-    NSResult result = NSStartProvider(config);
+    NSStartProvider(config);
 
     NSProviderRegisterTopic(m_TopicName.c_str());
 
@@ -638,7 +638,7 @@ TEST_F(NSProviderTest_btc, NSGetTopics_SRC_P)
 TEST_F(NSProviderTest_btc, NSGetTopics_USV_N)
 {
     NSProviderConfig config = m_pNSHelper->getProviderConfig(true);
-    NSResult result = NSStartProvider(config);
+    NSStartProvider(config);
 
     EXPECT_EQ(NULL, NSProviderGetTopics());
 }

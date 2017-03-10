@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -19,9 +19,9 @@
  *
  ******************************************************************/
 
-#include "NSCommonCppHelper.h"
 #include "NSMessage.h"
 #include "NSProviderService.h"
+#include "NSCppUtility.h"
 
 class NSMessageProviderCppTest_btc: public ::testing::Test
 {
@@ -30,18 +30,17 @@ public:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
         m_pNSMessage = nullptr;
         m_pNSMessage = new OIC::Service::NSMessage();
-        ASSERT_NE(nullptr,m_pNSMessage)<<
-                "NSMessage constructor did not return instance";
+        ASSERT_NE(nullptr, m_pNSMessage)<< "NSMessage constructor did not return instance";
         IOTIVITYTEST_LOG(INFO, "SetUp called");
     }
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
 
         IOTIVITYTEST_LOG(INFO, "TearDown called");
     }
@@ -81,9 +80,9 @@ TEST_F(NSMessageProviderCppTest_btc, MessageConstructor_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSMessageProviderCppTest_btc, GetMessageID_SRC_P)
 {
-    uint64_t id = 100;
+    uint64_t id = 0;
     id = m_pNSMessage->getMessageId();
-    ASSERT_NE(100,id)<< "getMessageId did not return ID";
+    ASSERT_NE((uint64_t) 0, id)<< "getMessageId did not return ID";
 }
 #endif
 
@@ -127,8 +126,8 @@ TEST_F(NSMessageProviderCppTest_btc, SetSourceName_SRC_P)
     }
     catch (exception &e)
     {
-        SET_FAILURE(
-                "Exception occurs while calling setSourceName. Exception is: " + string(e.what()));
+        FAIL()<<
+        "Exception occurs while calling setSourceName. Exception is: "<< e.what();
     }
 }
 #endif
@@ -174,7 +173,7 @@ TEST_F(NSMessageProviderCppTest_btc, SetType_SRC_P)
     }
     catch (exception &e)
     {
-        SET_FAILURE("Exception occurs while calling setType. Exception is: " + string(e.what()));
+        FAIL()<< "Exception occurs while calling setType. Exception is: "<< e.what();
     }
 }
 #endif
@@ -220,7 +219,7 @@ TEST_F(NSMessageProviderCppTest_btc, SetTime_SRC_P)
     }
     catch (exception &e)
     {
-        SET_FAILURE("Exception occurs while calling setTime. Exception is: " + string(e.what()));
+        FAIL()<< "Exception occurs while calling setTime. Exception is: "<< e.what();
     }
 }
 #endif
@@ -268,7 +267,7 @@ TEST_F(NSMessageProviderCppTest_btc, SetTTL_SRC_P)
     }
     catch (exception &e)
     {
-        SET_FAILURE("Exception occurs while calling setTTL. Exception is: " + string(e.what()));
+        FAIL()<< "Exception occurs while calling setTTL. Exception is: "<< e.what();
     }
 }
 #endif
@@ -314,7 +313,7 @@ TEST_F(NSMessageProviderCppTest_btc, SetTitle_SRC_P)
     }
     catch (exception &e)
     {
-        SET_FAILURE("Exception occurs while calling setTitle. Exception is: " + string(e.what()));
+        FAIL()<< "Exception occurs while calling setTitle. Exception is: "<< e.what();
     }
 }
 #endif
@@ -360,7 +359,7 @@ TEST_F(NSMessageProviderCppTest_btc, SetContentText_SRC_P)
     }
     catch (exception &e)
     {
-        SET_FAILURE("Exception occurs while calling setContentText. Exception is: " + string(e.what()));
+        FAIL()<< "Exception occurs while calling setContentText. Exception is: "<< e.what();
     }
 }
 #endif
@@ -400,7 +399,7 @@ TEST_F(NSMessageProviderCppTest_btc, GetContentText_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSMessageProviderCppTest_btc, SetMediaContents_SRC_P)
 {
-    OIC::Service::NSMediaContents* mediaContents;
+    OIC::Service::NSMediaContents* mediaContents = new OIC::Service::NSMediaContents();
 
     try
     {
@@ -408,7 +407,7 @@ TEST_F(NSMessageProviderCppTest_btc, SetMediaContents_SRC_P)
     }
     catch (exception &e)
     {
-        SET_FAILURE("Exception occurs while calling setMediaContents. Exception is: " + string(e.what()));
+        FAIL()<< "Exception occurs while calling setMediaContents. Exception is: "<< e.what();
     }
 }
 #endif
@@ -429,7 +428,7 @@ TEST_F(NSMessageProviderCppTest_btc, SetMediaContents_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSMessageProviderCppTest_btc, GetMediaContents_SRC_P)
 {
-    OIC::Service::NSMediaContents* mediaContents;
+    OIC::Service::NSMediaContents* mediaContents = new OIC::Service::NSMediaContents();
     m_pNSMessage->setMediaContents(mediaContents);
     ASSERT_EQ(mediaContents,m_pNSMessage->getMediaContents())<< "getMediaContents did not return media contents";
 }
@@ -455,7 +454,7 @@ TEST_F(NSMessageProviderCppTest_btc, SetTopicFromMessage_SRC_P)
     }
     catch (exception &e)
     {
-        SET_FAILURE("Exception occurs while calling setTopic. Exception is: " + string(e.what()));
+        FAIL()<< "Exception occurs while calling setTopic. Exception is: "<< e.what();
     }
 }
 #endif

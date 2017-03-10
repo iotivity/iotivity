@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -19,9 +19,9 @@
  *
  ******************************************************************/
 
-#include "NSCommonCppHelper.h"
 #include "NSTopic.h"
 #include "NSProviderService.h"
+#include "NSCppUtility.h"
 
 class NSTopicProviderCppTest_btc: public ::testing::Test
 {
@@ -30,18 +30,18 @@ public:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
 
         m_pNSTopic = nullptr;
         m_pNSTopic = new OIC::Service::NSTopic();
-        ASSERT_NE(nullptr,m_pNSTopic)<<
+        ASSERT_NE(nullptr,m_pNSTopic) <<
                 "NSTopic constructor did not return instance";
         IOTIVITYTEST_LOG(INFO, "SetUp called");
     }
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
 
         IOTIVITYTEST_LOG(INFO, "TearDown called");
     }
@@ -63,7 +63,7 @@ TEST_F(NSTopicProviderCppTest_btc, TopicConstructor_SRC_P)
     OIC::Service::NSTopic* nsTopic = nullptr;
 
     nsTopic = new OIC::Service::NSTopic();
-    ASSERT_NE(nullptr,nsTopic)<< "NSTopic instance is not returned by constructor";
+    ASSERT_NE(nullptr,nsTopic) << "NSTopic instance is not returned by constructor";
 }
 #endif
 
@@ -112,7 +112,7 @@ TEST_F(NSTopicProviderCppTest_btc, GetTopicName_SRC_P)
     string topicName = "";
     m_pNSTopic->setTopicName(TOPIC_NAME_1);
     topicName = m_pNSTopic->getTopicName();
-    ASSERT_NE(EMPTY_STRING,topicName)<< "getTopicName did not return topic name";
+    ASSERT_NE(EMPTY_STRING,topicName) << "getTopicName did not return topic name";
 }
 #endif
 
@@ -161,6 +161,6 @@ TEST_F(NSTopicProviderCppTest_btc, GetState_SRC_P)
     OIC::Service::NSTopic::NSTopicState topicState;
     m_pNSTopic->setState(TOPIC_STATE_UNSUBSCRIBED);
     topicState = m_pNSTopic->getState();
-    ASSERT_EQ(OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED,topicState)<< "getState did not return correct state";
+    ASSERT_EQ(OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED,topicState) << "getState did not return correct state";
 }
 #endif
