@@ -60,8 +60,10 @@ def run_test(env, xml_file, test, test_targets = ['test']):
         # Valgrind suppressions file.
         suppression_file = env.File('#tools/valgrind/iotivity.supp').srcnode().path
 
-        # Set up to run the test under Valgrind.
-        test_cmd = '%s valgrind --leak-check=full --suppressions=%s --xml=yes --xml-file=%s %s' % (valgrind_environment, suppression_file, xml_file, test_cmd)
+        # Set up to run the test under Valgrind. The "--num-callers" option specifies the
+        # callstack depth (default, if not specified, is 12). We are increasing it here to
+        # allow unit test name to be visible in the leak report.
+        test_cmd = '%s valgrind --leak-check=full --suppressions=%s --num-callers=24 --xml=yes --xml-file=%s %s' % (valgrind_environment, suppression_file, xml_file, test_cmd)
     if env.get('TARGET_OS') in ['linux']:
         env.Depends('ut' + test , os.path.join(build_dir, test))
     ut = env.Command('ut' + test, None, test_cmd)

@@ -48,6 +48,9 @@ extern "C" {
 // Defines
 //-----------------------------------------------------------------------------
 
+/** Version of IoTivity. */
+#define IOTIVITY_VERSION                      "1.3.0"
+
 /**
  * OIC Virtual resources supported by every OIC device.
  */
@@ -321,13 +324,13 @@ extern "C" {
 #define OC_RSRVD_DATA_MODEL_VERSION     "dmv"
 
 /** Device specification version.*/
-#define OC_SPEC_VERSION                 "core.1.1.0"
+#define OC_SPEC_VERSION                 "ocf.1.1.0"
 
 /** Integer value of spec version.*/
 #define OC_SPEC_VERSION_VALUE           0
 
 /** Device Data Model version.*/
-#define OC_DATA_MODEL_VERSION           "res.1.1.0,sh.1.1.0"
+#define OC_DATA_MODEL_VERSION           "ocf.res.1.1.0,ocf.sh.1.1.0"
 
 /** Protocol-Independent ID.*/
 #define OC_RSRVD_PROTOCOL_INDEPENDENT_ID "piid"
@@ -1123,6 +1126,7 @@ typedef enum
     /** ERROR code from server */
     OC_STACK_FORBIDDEN_REQ,          /** 403*/
     OC_STACK_INTERNAL_SERVER_ERROR,  /** 500*/
+    OC_STACK_GATEWAY_TIMEOUT,        /** 504*/
 
     /** ERROR in stack.*/
     OC_STACK_ERROR = 255

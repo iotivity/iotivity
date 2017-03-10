@@ -146,6 +146,8 @@ static bool IsRequestFromOwnershipTransferSession(SRMRequestContext_t *context)
         OIC_LOG_V(DEBUG, TAG, "%s: request was %sreceived from Ownership Transfer session",
             __func__, retVal ? "" : "NOT ");
     }
+#else
+    OC_UNUSED(context);
 #endif
 
     return retVal;
@@ -218,47 +220,18 @@ static bool IsValidRequestFromSubOwner(SRMRequestContext_t *context)
 }
 #endif //MULTIPLE_OWNER
 
-// TODO - remove these function placeholders as they are implemented
-// in the resource entity handler code.
-// Note that because many SVRs do not have a rowner, in those cases we
-// just return "OC_STACK_ERROR" which results in a "false" return by
-// IsRequestFromResourceOwner().
-// As these SVRs are revised to have a rowner, these functions should be
-// replaced (see pstatresource.c for example of GetPstatRownerId).
-
-OCStackResult GetCrlRownerId(OicUuid_t *rowner)
-{
-    OC_UNUSED(rowner);
-    rowner = NULL;
-    return OC_STACK_ERROR;
-}
-
-OCStackResult GetSaclRownerId(OicUuid_t *rowner)
-{
-    OC_UNUSED(rowner);
-    rowner = NULL;
-    return OC_STACK_ERROR;
-}
-
-OCStackResult GetSvcRownerId(OicUuid_t *rowner)
-{
-    OC_UNUSED(rowner);
-    rowner = NULL;
-    return OC_STACK_ERROR;
-}
-
 static GetSvrRownerId_t GetSvrRownerId[OIC_SEC_SVR_TYPE_COUNT + 1] = {
     NULL,
     GetAclRownerId,
-    GetAmaclRownerId,
+    NULL,               // amacl's rowneruuid has been removed from the OCF 1.0 Security spec.
     GetCredRownerId,
-    GetCrlRownerId,
+    NULL,               // crl doesn't have rowneruuid.
     GetDoxmRownerId,
     GetDpairingRownerId,
     GetPconfRownerId,
     GetPstatRownerId,
-    GetSaclRownerId,
-    GetSvcRownerId
+    NULL,               // sacl is not implemented yet.
+    NULL                // svc has been removed from the OCF 1.0 Security spec.
 };
 
 /**
@@ -279,7 +252,9 @@ bool IsRequestFromResourceOwner(SRMRequestContext_t *context)
     if((OIC_R_ACL_TYPE <= context->resourceType) && \
         (OIC_SEC_SVR_TYPE_COUNT > context->resourceType))
     {
-        if(OC_STACK_OK == GetSvrRownerId[(int)context->resourceType](&resourceOwner))
+        GetSvrRownerId_t getRownerId = GetSvrRownerId[(int)context->resourceType];
+
+        if((NULL != getRownerId) && (OC_STACK_OK == getRownerId(&resourceOwner)))
         {
             retVal = UuidCmp(&context->subjectUuid, &resourceOwner);
         }

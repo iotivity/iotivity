@@ -997,13 +997,28 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
             OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PROVSTATUS, g_ESEasySetupResource.status);
             OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_LAST_ERRORCODE, g_ESEasySetupResource.lastErrCode);
 
-            size_t dimensions[MAX_REP_ARRAY_DEPTH] = {g_ESEasySetupResource.numRequest , 0, 0};
-            int64_t *connectRequest = (int64_t *)OICMalloc(g_ESEasySetupResource.numRequest  * sizeof(int64_t));
-            for(int i = 0 ; i < g_ESEasySetupResource.numRequest  ; ++i)
+            if(g_ESEasySetupResource.numRequest > 0)
             {
-                connectRequest[i] = g_ESEasySetupResource.connectRequest[i];
+                size_t dimensions[MAX_REP_ARRAY_DEPTH] = {g_ESEasySetupResource.numRequest, 0, 0};
+                int64_t *connectRequest = (int64_t *)OICMalloc(g_ESEasySetupResource.numRequest  * sizeof(int64_t));
+                if(!connectRequest)
+                {
+                    OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+                    return NULL;
+                }
+
+                for(int i = 0 ; i < g_ESEasySetupResource.numRequest  ; ++i)
+                {
+                    connectRequest[i] = g_ESEasySetupResource.connectRequest[i];
+                }
+                OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_CONNECT, (int64_t *)connectRequest, dimensions);
             }
-            OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_CONNECT, (int64_t *)connectRequest, dimensions);
+            else
+            {
+                OIC_LOG(DEBUG, ES_RH_TAG, "g_ESEasySetupResource.numRequest is 0");
+                size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
+                OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_CONNECT, NULL, dimensions);
+            }
 
             if(gWriteUserdataCb)
             {
@@ -1061,13 +1076,28 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
 
         OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_PROVSTATUS, g_ESEasySetupResource.status);
         OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_LAST_ERRORCODE, g_ESEasySetupResource.lastErrCode);
-        size_t dimensions[MAX_REP_ARRAY_DEPTH] = {g_ESEasySetupResource.numRequest , 0, 0};
-        int64_t *connectRequest = (int64_t *)OICMalloc(g_ESEasySetupResource.numRequest  * sizeof(int64_t));
-        for(int i = 0 ; i < g_ESEasySetupResource.numRequest  ; ++i)
+        if(g_ESEasySetupResource.numRequest > 0)
         {
-            connectRequest[i] = g_ESEasySetupResource.connectRequest[i];
+            size_t dimensions[MAX_REP_ARRAY_DEPTH] = {g_ESEasySetupResource.numRequest, 0, 0};
+            int64_t *connectRequest = (int64_t *)OICMalloc(g_ESEasySetupResource.numRequest  * sizeof(int64_t));
+            if(!connectRequest)
+            {
+                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+                return NULL;
+            }
+
+            for(int i = 0 ; i < g_ESEasySetupResource.numRequest  ; ++i)
+            {
+                connectRequest[i] = g_ESEasySetupResource.connectRequest[i];
+            }
+            OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_CONNECT, (int64_t *)connectRequest, dimensions);
         }
-        OCRepPayloadSetIntArray(repPayload, OC_RSRVD_ES_CONNECT, (int64_t *)connectRequest, dimensions);
+        else
+        {
+            OIC_LOG(DEBUG, ES_RH_TAG, "g_ESEasySetupResource.numRequest is 0");
+            size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
+            OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_CONNECT, NULL, dimensions);
+        }
 
         if(gWriteUserdataCb)
         {

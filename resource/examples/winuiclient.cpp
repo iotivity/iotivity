@@ -29,29 +29,37 @@ void LabelPrintf (HWND hwndEdit, TCHAR * szFormat, ...);
 
 WinUIClientApp::WinUIClientApp(OCPersistentStorage ps)
     : persistentStorage(ps),
-      OBSERVE_TYPE_TO_USE(ObserveType::Observe)
+      OBSERVE_TYPE_TO_USE(ObserveType::Observe),
+      initialized(false)
 {
 
 }
 
 WinUIClientApp::~WinUIClientApp()
 {
-
+    if (initialized)
+    {
+        OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
+    }
 }
 
-void WinUIClientApp::Initialize()
+bool WinUIClientApp::Initialize()
 {
+    assert(!initialized);
+
     // Create PlatformConfig object
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Both,
-        "0.0.0.0",
-        0,
-        OC::QualityOfService::LowQos,
         &persistentStorage
     };
 
     OCPlatform::Configure(cfg);
+    if (OCPlatform::start() == OC_STACK_OK)
+    {
+        initialized = true;
+    }
+    return initialized;
 }
 
 void WinUIClientApp::Run()

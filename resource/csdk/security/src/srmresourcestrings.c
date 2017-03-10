@@ -72,12 +72,12 @@ const char * OIC_RSRC_TYPE_SEC_CRL = "oic.r.crl";
 const char * OIC_RSRC_CRL_URI =  "/oic/sec/crl";
 const char * OIC_JSON_CRL_NAME = "crl";
 
-//SACL
+//SACL - not implemented yet
 const char * OIC_RSRC_TYPE_SEC_SACL = "oic.r.sacl";
 const char * OIC_RSRC_SACL_URI =  "/oic/sec/sacl";
 const char * OIC_JSON_SACL_NAME = "sacl";
 
-//svc
+//svc - removed from the OCF 1.0 Security spec and from IoTivity
 const char * OIC_RSRC_TYPE_SEC_SVC = "oic.r.svc";
 const char * OIC_RSRC_SVC_URI =  "/oic/sec/svc";
 const char * OIC_JSON_SVC_NAME = "svc";
@@ -100,7 +100,6 @@ const char * OIC_JSON_VER_NAME = "ver";
 //reset profile
 const char * OIC_JSON_RESET_PF_NAME = "resetpf";
 
-const char * OIC_JSON_SUBJECT_NAME = "subject";
 const char * OIC_JSON_RESOURCES_NAME = "resources";
 const char * OIC_JSON_AMSS_NAME = "amss";
 const char * OIC_JSON_AMS_NAME = "ams";
@@ -128,6 +127,7 @@ const char * OIC_JSON_TM_NAME = "tm";
 const char * OIC_JSON_OM_NAME = "om";
 const char * OIC_JSON_SM_NAME = "sm";
 const char * OIC_JSON_CREDID_NAME = "credid";
+const char * OIC_JSON_SUBJECT_NAME = "subject";
 const char * OIC_JSON_SUBJECTID_NAME = "subjectuuid";
 const char * OIC_JSON_ROLEIDS_NAME = "roleid";
 const char * OIC_JSON_CREDTYPE_NAME = "credtype";
@@ -151,7 +151,6 @@ const char * OIC_JSON_EDP_NAME = "edp";
 const char * OIC_JSON_PIN_NAME = "pin";
 const char * OIC_JSON_PDACL_NAME = "pdacl";
 const char * OIC_JSON_PDDEV_LIST_NAME = "pddev";
-const char * OIC_JSON_ROWNER_NAME = "rowner";
 const char * OIC_JSON_PRM_NAME = "prm";
 const char * OIC_JSON_SPM_NAME = "spm";
 const char * OIC_JSON_PDEVICE_ID_NAME = "pdeviceuuid";

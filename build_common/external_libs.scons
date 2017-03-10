@@ -67,7 +67,7 @@ if target_os not in ['windows']:
 # @param script - the building script, by default, it's 'SConscript'
 #
 def __prepare_lib(ienv, libname, lib = None, path = None, script = None):
-	p_env = ienv.Clone()
+	p_env = ienv.Clone(LIBS = [])
 	if p_env.GetOption('clean') or p_env.GetOption('help'):
 		return
 

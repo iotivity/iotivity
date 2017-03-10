@@ -39,6 +39,31 @@ namespace OC
      */
     bool g_displayPinCallbackRegistered = false;
 
+    static void callbackWrapperImpl(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
+    {
+        PMResultList_t *results = nullptr;
+        ProvisionContext* context = static_cast<ProvisionContext*>(ctx);
+
+        try
+        {
+            results = new PMResultList_t;
+        }
+        catch (std::bad_alloc& e)
+        {
+            oclog() <<"Bad alloc exception";
+            return;
+        }
+
+        for (size_t i = 0; i < nOfRes; i++)
+        {
+            results->push_back(arr[i]);
+        }
+
+        std::thread exec(context->callback, results, hasError);
+        exec.detach();
+
+        delete context;
+    }
     OCStackResult OCSecure::provisionInit(const std::string& dbPath)
     {
         OCStackResult result;
@@ -171,6 +196,41 @@ namespace OC
             result = OC_STACK_ERROR;
         }
 
+        return result;
+    }
+
+    OCStackResult OCSecure::setOwnerTransferCallbackData(OicSecOxm_t oxm,
+            OTMCallbackData_t* callbackData, InputPinCallback inputPin)
+    {
+        if (NULL == callbackData || oxm >= OIC_OXM_COUNT)
+        {
+            oclog() <<"Invalid callbackData or OXM type";
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        if ((OIC_RANDOM_DEVICE_PIN == oxm) && !inputPin)
+        {
+            oclog() <<"for OXM type DEVICE_PIN, inputPin callback can't be null";
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCSetOwnerTransferCallbackData(oxm, callbackData);
+            if (result == OC_STACK_OK && (OIC_RANDOM_DEVICE_PIN == oxm))
+            {
+                SetInputPinCB(inputPin);
+            }
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
         return result;
     }
 
@@ -382,7 +442,7 @@ namespace OC
 
         return result;
     }
-    
+
     static void inputPinCallbackWrapper(OicUuid_t deviceId, char* pinBuffer, size_t pinBufferSize, void* context)
     {
         (static_cast<InputPinContext*>(context))->callback(deviceId, pinBuffer, pinBufferSize);
@@ -694,7 +754,7 @@ namespace OC
             if(OC_STACK_OK == result)
             {
                 result = OCRemoveDeviceWithUuid(static_cast<void*>(context), waitTimeForOwnedDeviceDiscovery,
-                        &targetDev, &OCSecureResource::callbackWrapper);
+                        &targetDev, &OCSecure::callbackWrapper);
             }
             else
             {
@@ -911,6 +971,23 @@ namespace OC
         return result;
     }
 
+    OCStackResult OCSecure::pdmCleanupForTimeout()
+    {
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            result = OCPDMCleanupForTimeout();
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     OCStackResult OCSecure::saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
@@ -1044,30 +1121,14 @@ namespace OC
     }
 #endif // __WITH_DTLS__ || __WITH_TLS__
 
+    void OCSecure::callbackWrapper(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
+    {
+        callbackWrapperImpl(ctx, nOfRes, arr, hasError);
+    }
+
     void OCSecureResource::callbackWrapper(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
     {
-        PMResultList_t *results = nullptr;
-        ProvisionContext* context = static_cast<ProvisionContext*>(ctx);
-
-        try
-        {
-            results = new PMResultList_t;
-        }
-        catch (std::bad_alloc& e)
-        {
-            oclog() <<"Bad alloc exception";
-            return;
-        }
-
-        for (size_t i = 0; i < nOfRes; i++)
-        {
-            results->push_back(arr[i]);
-        }
-
-        std::thread exec(context->callback, results, hasError);
-        exec.detach();
-
-        delete context;
+        callbackWrapperImpl(ctx, nOfRes, arr, hasError);
     }
 
     OCSecureResource::OCSecureResource(): m_csdkLock(std::weak_ptr<std::recursive_mutex>()),

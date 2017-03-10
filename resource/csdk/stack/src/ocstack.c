@@ -792,7 +792,7 @@ OCStackResult CAResponseToOCStackResult(CAResponseResult_t caCode)
             ret = OC_STACK_NO_RESOURCE;
             break;
         case CA_RETRANSMIT_TIMEOUT:
-            ret = OC_STACK_COMM_ERROR;
+            ret = OC_STACK_GATEWAY_TIMEOUT;
             break;
         case CA_REQUEST_ENTITY_TOO_LARGE:
             ret = OC_STACK_TOO_LARGE_REQ;
@@ -859,6 +859,9 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
             ret = CA_NOT_FOUND;
             break;
         case OC_STACK_COMM_ERROR:
+            ret = CA_RETRANSMIT_TIMEOUT;
+            break;
+        case OC_STACK_GATEWAY_TIMEOUT:
             ret = CA_RETRANSMIT_TIMEOUT;
             break;
         case OC_STACK_NOT_ACCEPTABLE:
@@ -2483,8 +2486,8 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     return OCInit2(mode, serverFlags, clientFlags, OC_DEFAULT_ADAPTER);
 }
 
-OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags,
-    OCTransportFlags clientFlags, OCTransportAdapter transportType)
+OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags, OCTransportFlags clientFlags,
+                      OCTransportAdapter transportType)
 {
     OIC_LOG(INFO, TAG, "Entering OCInit2");
 
@@ -2498,7 +2501,7 @@ OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags,
         // This is the first call to initialize the stack so it gets to do the real work.
         result = OCInitializeInternal(mode, serverFlags, clientFlags, transportType);
     }
-    
+
     if (result == OC_STACK_OK)
     {
         // Increment the start count since we're about to return success.
@@ -2512,7 +2515,7 @@ OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags,
 }
 
 OCStackResult OCInitializeInternal(OCMode mode, OCTransportFlags serverFlags,
-    OCTransportFlags clientFlags, OCTransportAdapter transportType)
+                                   OCTransportFlags clientFlags, OCTransportAdapter transportType)
 {
     if (stackState == OC_STACK_INITIALIZED)
     {
@@ -2537,6 +2540,7 @@ OCStackResult OCInitializeInternal(OCMode mode, OCTransportFlags serverFlags,
     }
 #endif
 
+    OIC_LOG_V(INFO, TAG, "IoTivity version is v%s", IOTIVITY_VERSION);
     OCStackResult result = OC_STACK_ERROR;
 
     // Validate mode
@@ -3466,12 +3470,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
 OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
 {
     OIC_LOG(INFO, TAG, "RegisterPersistentStorageHandler !!");
-    if(!persistentStorageHandler)
-    {
-        OIC_LOG(ERROR, TAG, "The persistent storage handler is invalid");
-        return OC_STACK_INVALID_PARAM;
-    }
-    else
+    if(persistentStorageHandler)
     {
         if( !persistentStorageHandler->open ||
                 !persistentStorageHandler->close ||
@@ -3594,6 +3593,7 @@ OCStackResult OCProcess()
 {
     if (stackState == OC_STACK_UNINITIALIZED)
     {
+        OIC_LOG(ERROR, TAG, "OCProcess has failed. ocstack is not initialized");
         return OC_STACK_ERROR;
     }
 #ifdef WITH_PRESENCE
@@ -4872,6 +4872,12 @@ OCStackResult initResources()
             result = BindResourceInterfaceToResource((OCResource *)introspectionPayloadResource,
                                                      OC_RSRVD_INTERFACE_READ);
         }
+    }
+
+    // Initialize Device Properties
+    if (OC_STACK_OK == result)
+    {
+        result = InitializeDeviceProperties();
     }
 
     return result;

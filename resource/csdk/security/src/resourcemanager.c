@@ -25,7 +25,6 @@
 #include "pstatresource.h"
 #include "doxmresource.h"
 #include "credresource.h"
-#include "svcresource.h"
 #include "amaclresource.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -110,10 +109,6 @@ OCStackResult InitSecureResources( )
 #endif // __WITH_DTLS__ || __WITH_TLS__
     if(OC_STACK_OK == ret)
     {
-        ret = InitSVCResource();
-    }
-    if(OC_STACK_OK == ret)
-    {
         ret = InitAmaclResource();
     }
 //#ifdef DIRECT_PAIRING
@@ -149,7 +144,6 @@ OCStackResult DestroySecureResources( )
     DeInitCSRResource();
     DeInitRolesResource();
 #endif // __WITH_DTLS__ || __WITH_TLS__
-    DeInitSVCResource();
     DeInitAmaclResource();
 //#ifdef DIRECT_PAIRING
     DeInitPconfResource();

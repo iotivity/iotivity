@@ -2475,7 +2475,6 @@ OCStackResult SRPResetDevice(const OCProvisionDev_t* pTargetDev,
 
     pstat->cm = RESET;
     pstat->isOp = false;
-    memcpy(pstat->deviceID.id, pTargetDev->doxm->deviceID.id, sizeof(OicUuid_t));
     pstat->tm = TAKE_OWNER;
     pstat->om = (OicSecDpom_t)(SINGLE_SERVICE_CLIENT_DRIVEN); // the only mode IoTivity supports currently
     pstat->smLen = 1;

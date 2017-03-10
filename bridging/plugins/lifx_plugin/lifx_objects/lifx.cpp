@@ -19,6 +19,8 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 #include "stringbuffer.h"
 #include "writer.h"
 #include "curlClient.h"
@@ -216,7 +218,7 @@ MPMResult LifxLight::refreshState()
 
     if (parsedLights.size() != 1)
     {
-        OIC_LOG_V(ERROR, TAG, "This is irregular! Instead of 1 light, returned %ld " , parsedLights.size());
+        OIC_LOG_V(ERROR, TAG, "This is irregular! Instead of 1 light, returned %" PRIuPTR "", parsedLights.size());
         return MPM_RESULT_JSON_ERROR;
     }
 

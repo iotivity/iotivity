@@ -83,12 +83,16 @@ if int(containerJavaSupport):
 ######################################################################
 container_gtest_env.AppendUnique(
     CPPPATH = [
-        src_dir + '/extlibs',
+        '#/extlibs',
         '../include',
         '../../resource-encapsulation/include',
         '../../resource-encapsulation/src/common/utils/include',
         '../bundle-api/include',
-        '../src'
+        '../src',
+        '#/resource/include',
+        '#/resource/csdk/include',
+        '#/resource/csdk/stack/include',
+        '#/resource/oc_logger/include'
     ])
 
 if int(containerJavaSupport):
@@ -120,10 +124,19 @@ if int(containerJavaSupport):
         container_gtest_env.AppendUnique(LIBPATH = [os.environ['JAVA_LIB']])
     except KeyError:
         print ''
-container_gtest_env.PrependUnique(LIBS = ['rcs_container', 'rcs_client', 'rcs_server', 'rcs_common',
-  'oc','octbstack', 'oc_logger', 'oc_logger_core',
-  'connectivity_abstraction',
-  'gtest', 'gtest_main'])
+container_gtest_env.PrependUnique(LIBS = [
+    'rcs_container',
+    'rcs_client',
+    'rcs_server',
+    'rcs_common',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'oc_logger_core',
+    'connectivity_abstraction',
+    'gtest',
+    'gtest_main',
+    'boost_system'])
 
 if int(containerJavaSupport):
     try:

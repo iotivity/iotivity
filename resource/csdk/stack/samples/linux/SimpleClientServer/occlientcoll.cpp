@@ -95,7 +95,8 @@ testToTextMap queryInterface[] = {
         {"?if=oic.if.b", TEST_PUT_BATCH},
         {"?if=oic.if.ll", TEST_PUT_LINK_LIST},
         {"", TEST_GET_EMPTY},
-        {NULL, TEST_GET_NULL},
+        {"", TEST_GET_NULL}, // testToTextMap.text[30] can not be set to NULL.
+                             // This is a special case see InitGetRequestOnNullResource.
 };
 
 
@@ -124,6 +125,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 int InitGetRequestToUnavailableResource(OCClientResponse * clientResponse);
 int InitObserveRequest(OCClientResponse * clientResponse);
 int InitPutRequest(OCClientResponse * clientResponse);
+int InitGetRequestOnNullResource(OCClientResponse * clientResponse);
 int InitGetRequest(OCClientResponse * clientResponse);
 int InitDiscovery();
 
@@ -252,6 +254,10 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
     {
         InitGetRequestToUnavailableResource(clientResponse);
     }
+    else if(TestType == TEST_GET_NULL)
+    {
+        InitGetRequestOnNullResource(clientResponse);
+    }
     else
     {
         InitGetRequest(clientResponse);
@@ -340,6 +346,30 @@ int InitPutRequest(OCClientResponse * clientResponse)
     return ret;
 }
 
+int InitGetRequestOnNullResource(OCClientResponse * clientResponse)
+{
+    OCStackResult ret;
+    OCCallbackData cbData;
+
+    //* Make a GET query*/
+    std::ostringstream getQuery;
+    char* nullResource = NULL;
+    getQuery << "/a/room" << nullResource;
+
+    std::cout << "Get Query: " << getQuery.str() << std::endl;
+
+    cbData.cb = getReqCB;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
+    cbData.cd = NULL;
+    ret = OCDoRequest(NULL, OC_REST_GET, getQuery.str().c_str(),
+                      &clientResponse->devAddr, 0, ConnType, OC_LOW_QOS,
+                      &cbData, NULL, 0);
+    if (ret != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
+    }
+    return ret;
+}
 
 int InitGetRequest(OCClientResponse * clientResponse)
 {

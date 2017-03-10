@@ -822,7 +822,7 @@ static void CARegisterForAddressChanges()
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
 #ifdef _WIN32
     caglobals.ip.addressChangeEvent = WSACreateEvent();
-    if (WSA_INVALID_EVENT != caglobals.ip.addressChangeEvent)
+    if (WSA_INVALID_EVENT == caglobals.ip.addressChangeEvent)
     {
         OIC_LOG(ERROR, TAG, "WSACreateEvent failed");
     }

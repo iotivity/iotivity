@@ -60,16 +60,23 @@ if not scene_test_env.get('RELEASE'):
     scene_test_env.PrependUnique(LIBS = ['gcov'])
     scene_test_env.AppendUnique(CXXFLAGS = ['--coverage'])
 
-scene_test_env.PrependUnique(CPPPATH = [ src_dir + '/extlibs/hippomocks-master'])
-scene_test_env.AppendUnique(CPPPATH = ['../include'])
-scene_test_env.AppendUnique(CPPPATH = ['../src'])
-scene_test_env.AppendUnique(CPPPATH = ['../../resource-encapsulation/include'])
-scene_test_env.AppendUnique(CPPPATH = ['../../resource-encapsulation/src/common/primitiveResource/include'])
-scene_test_env.AppendUnique(CPPPATH = ['../../resource-encapsulation/src/common/utils/include'])
+scene_test_env.PrependUnique(CPPPATH = [
+    '#/extlibs/hippomocks-master',
+    '../include',
+    '../src',
+    '#/service/resource-encapsulation/include',
+    '#/service/resource-encapsulation/src/common/primitiveResource/include',
+    '#/service/resource-encapsulation/src/common/utils/include',
+    '#/resource/csdk/security/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/resource/oc_logger/include'
+])
 
 if scene_test_env.get('SECURED') == '1':
-	if scene_test_env.get('WITH_TCP') == True:
-		scene_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    if scene_test_env.get('WITH_TCP') == True:
+        scene_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # Build Test

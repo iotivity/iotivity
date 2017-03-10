@@ -98,8 +98,8 @@ const char *platformVersion = "myPlatformVersion";
 const char *supportLink = "https://www.iotivity.org";
 const char *version = "myVersion";
 const char *systemTime = "2015-05-15T11.04";
-const char *specVersion = "core.1.1.0";
-const char *dataModelVersions = "res.1.1.0,sh.1.1.0";
+const char *specVersion = "ocf.1.1.0";
+const char *dataModelVersions = "ocf.res.1.1.0,ocf.sh.1.1.0";
 const char *deviceType = "oic.d.tv";
 
 OCPlatformInfo platformInfo;

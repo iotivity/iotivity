@@ -57,22 +57,10 @@ namespace OC
 
     OCStackResult InProcClientWrapper::start()
     {
-        OIC_LOG_V(INFO, TAG, "start ocplatform for client : %d", m_cfg.transportType);
+        OIC_LOG(INFO, TAG, "start");
 
         if (m_cfg.mode == ModeType::Client)
         {
-            OCTransportFlags serverFlags =
-                            static_cast<OCTransportFlags>(m_cfg.serverConnectivity & CT_MASK_FLAGS);
-            OCTransportFlags clientFlags =
-                            static_cast<OCTransportFlags>(m_cfg.clientConnectivity & CT_MASK_FLAGS);
-            OCStackResult result = OCInit2(OC_CLIENT, serverFlags, clientFlags,
-                                           m_cfg.transportType);
-
-            if (OC_STACK_OK != result)
-            {
-                throw InitializeException(OC::InitException::STACK_INIT_ERROR, result);
-            }
-
             if (false == m_threadRun)
             {
                 m_threadRun = true;
@@ -84,24 +72,12 @@ namespace OC
 
     OCStackResult InProcClientWrapper::stop()
     {
-        OIC_LOG(INFO, TAG, "stop ocplatform");
+        OIC_LOG(INFO, TAG, "stop");
 
         if (m_threadRun && m_listeningThread.joinable())
         {
             m_threadRun = false;
             m_listeningThread.join();
-        }
-
-        // only stop if we are the ones who actually called 'start'.  We are counting
-        // on the server to do the stop.
-        if (m_cfg.mode == ModeType::Client)
-        {
-            OCStackResult result = OCStop();
-
-            if (OC_STACK_OK != result)
-            {
-               throw InitializeException(OC::InitException::STACK_TERMINATE_ERROR, result);
-            }
         }
         return OC_STACK_OK;
     }

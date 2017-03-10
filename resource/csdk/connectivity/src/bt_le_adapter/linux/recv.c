@@ -27,7 +27,7 @@
 
 
 // Logging tag.
-static char const TAG[] = "BLE_RECV";
+#define TAG "BLE_RECV"
 
 static CAGattRecvInfo const g_null_info =
     {

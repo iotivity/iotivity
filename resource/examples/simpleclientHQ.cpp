@@ -450,15 +450,17 @@ int main(int argc, char* argv[]) {
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Client,
-        "0.0.0.0",
-        0,
-        OC::QualityOfService::HighQos
+        nullptr
     };
+    
+    cfg.QoS = OC::QualityOfService::HighQos;
 
     OCPlatform::Configure(cfg);
 
     try
     {
+        OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
+
         // Find all resources
         requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
 
@@ -482,6 +484,8 @@ int main(int argc, char* argv[]) {
         std::unique_lock<std::mutex> lock(blocker);
         cv.wait(lock);
 
+        // Perform platform clean up.
+        OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     }
     catch(OCException& e)
     {

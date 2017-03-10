@@ -141,6 +141,14 @@ OCStackResult GetDoxmRownerId(OicUuid_t *rowneruuid);
  * @return true if uuid exists in the SubOwner list of doxm, else false.
  */
 bool IsSubOwner(const OicUuid_t* uuid);
+
+/**
+ * Function to set a MOT status
+ *
+ * @param enable whether the MOT is enabled. (true=enable, false=disable)
+ */
+OCStackResult SetMOTStatus(bool enable);
+
 #endif //MULTIPLE_OWNER
 
 /** This function deallocates the memory for OicSecDoxm_t .

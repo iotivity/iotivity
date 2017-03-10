@@ -176,13 +176,14 @@ int main(int /*argc*/, char** /*argv[]*/)
     requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=a.collection";
 
     PlatformConfig config
-    { OC::ServiceType::InProc, ModeType::Client, "0.0.0.0", 0, OC::QualityOfService::LowQos };
+    { OC::ServiceType::InProc, ModeType::Client, nullptr };
 
     bool isRun = true;
 
     try
     {
         OCPlatform::Configure(config);
+        OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
 
         string resourceTypeName = "a.collection";
 
@@ -255,6 +256,7 @@ int main(int /*argc*/, char** /*argv[]*/)
                     break;
             }
         }
+        OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     }
     catch (OCException& e)
     {

@@ -21,6 +21,7 @@
 #include <OCPlatform.h>
 #include <OCApi.h>
 #include <oic_malloc.h>
+#include <iotivity_debug.h>
 #include <gtest/gtest.h>
 
 namespace OCPlatformTest
@@ -138,13 +139,42 @@ namespace OCPlatformTest
         }
     }
 
+    class Framework
+    {
+    public:
+        Framework(ServiceType serviceType = OC::ServiceType::InProc,
+                  ModeType mode = OC::ModeType::Server,
+                  OCPersistentStorage *ps = nullptr)
+                  : m_started(false)
+        {
+            PlatformConfig cfg(serviceType, mode, ps);
+            OCPlatform::Configure(cfg);
+        }
+        ~Framework()
+        {
+            if (m_started)
+            {
+                OC_VERIFY(OC_STACK_OK == OCPlatform::stop());
+                m_started = false;
+            }
+        }
+        OCStackResult start()
+        {
+            OCStackResult result = OCPlatform::start();
+            if (OC_STACK_OK == result)
+            {
+                m_started = true;
+            }
+            return result;
+        }
+
+    private:
+        bool m_started;
+    };
+
     OCResourceHandle RegisterResource(std::string uri, std::string type, std::string iface)
     {
-        PlatformConfig cfg
-        { OC::ServiceType::InProc, OC::ModeType::Server, "0.0.0.0", 0,
-                OC::QualityOfService::LowQos, &gps };
-        OCPlatform::Configure(cfg);
-        EXPECT_EQ(OC_STACK_OK,OCPlatform::registerResource(
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
                                         resourceHandle, uri, type,
                                         iface, entityHandler, gResourceProperty));
         return resourceHandle;
@@ -152,10 +182,6 @@ namespace OCPlatformTest
 
     OCResourceHandle RegisterResource(std::string uri, std::string type)
     {
-        PlatformConfig cfg
-        { OC::ServiceType::InProc, OC::ModeType::Server, "0.0.0.0", 0,
-                OC::QualityOfService::LowQos, &gps };
-        OCPlatform::Configure(cfg);
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
                                         resourceHandle, uri, type,
                                         gResourceInterface, entityHandler, gResourceProperty));
@@ -164,10 +190,6 @@ namespace OCPlatformTest
 
     OCResourceHandle RegisterResource(std::string uri)
     {
-        PlatformConfig cfg
-        { OC::ServiceType::InProc, OC::ModeType::Server, "0.0.0.0", 0,
-                OC::QualityOfService::LowQos, &gps };
-        OCPlatform::Configure(cfg);
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
                                         resourceHandle, uri, gResourceTypeName,
                                         gResourceInterface, entityHandler, gResourceProperty));
@@ -176,10 +198,6 @@ namespace OCPlatformTest
 
     OCResourceHandle RegisterResource(std::string uri, OCTpsSchemeFlags resourceTpsTypes)
     {
-        PlatformConfig cfg
-        { OC::ServiceType::OutOfProc, OC::ModeType::Server, "0.0.0.0", 0,
-                OC::QualityOfService::LowQos, &gps };
-        OCPlatform::Configure(cfg);
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
                                         resourceHandle, uri, gResourceTypeName,
                                         gResourceInterface, entityHandler, gResourceProperty,
@@ -187,104 +205,40 @@ namespace OCPlatformTest
         return resourceHandle;
     }
 
-    //Configure
-    // Enable it when the stack throw an exception
-    // https://jira.iotivity.org/browse/IOT-428
-    TEST(ConfigureTest, DISABLED_ConfigureInvalidModeType)
+    TEST(ConfigureTest, ConfigureInvalidModeType)
     {
-        PlatformConfig cfg {
-             OC::ServiceType::InProc,
-            (OC::ModeType)99,
-             "0.0.0.0",
-             0,
-             OC::QualityOfService::LowQos
-         };
-         OCPlatform::Configure(cfg);
-         EXPECT_ANY_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
-     }
+        Framework framework(OC::ServiceType::InProc, (OC::ModeType)99);
+        EXPECT_EQ(OC_STACK_NOTIMPL, framework.start());
+    }
 
-    // Enable it when the stack throw an exception
-    // https://jira.iotivity.org/browse/IOT-428
-    TEST(ConfigureTest, DISABLED_ConfigureInvalidServiceType)
+    TEST(ConfigureTest, ConfigureInvalidServiceType)
     {
-        PlatformConfig cfg {
-             (OC::ServiceType)99,
-            OC::ModeType::Client,
-             "0.0.0.0",
-             0,
-             OC::QualityOfService::LowQos
-         };
-         OCPlatform::Configure(cfg);
-         EXPECT_ANY_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
-     }
+        Framework framework((OC::ServiceType)99, OC::ModeType::Client);
+        EXPECT_EQ(OC_STACK_NOTIMPL, framework.start());
+    }
 
     // Enable it when the stack throw an exception
     // https://jira.iotivity.org/browse/IOT-428
     TEST(ConfigureTest, DISABLED_ConfigureClientOutProc)
     {
-        PlatformConfig cfg {
-            OC::ServiceType::OutOfProc,
-            OC::ModeType::Client,
-            "0.0.0.0",
-            0,
-            OC::QualityOfService::LowQos
-        };
-        std::string uri = "/a/light66";
-        std::string type = "core.light";
-        uint8_t gResourceProperty = 0;
-        OCPlatform::Configure(cfg);
-        EXPECT_ANY_THROW(OCPlatform::registerResource(
-             resourceHandle, uri, type,
-             gResourceInterface, entityHandler, gResourceProperty));
+        Framework framework(OC::ServiceType::OutOfProc, OC::ModeType::Client, &gps);
+        EXPECT_EQ(OC_STACK_NOTIMPL, framework.start());
     }
 
     TEST(ConfigureTest, ConfigureServerOutProc)
     {
-        PlatformConfig cfg
-        {
-            OC::ServiceType::OutOfProc,
-            OC::ModeType::Server,
-            "0.0.0.0",
-            0,
-            OC::QualityOfService::LowQos, &gps
-        };
-        std::string uri = "/a/light67";
-        std::string type = "core.light";
-        uint8_t gResourceProperty = 0;
-        OCPlatform::Configure(cfg);
-
-        EXPECT_ANY_THROW(OCPlatform::registerResource(
-             resourceHandle, uri, type,
-             gResourceInterface, entityHandler, gResourceProperty));
-    }
-
-    TEST(ConfigureTest, ConfigureDefault)
-    {
-        std::string uri = "/a/light68";
-        std::string type = "core.light";
-        uint8_t gResourceProperty = 0;
-        PlatformConfig cfg = {};
-        OCPlatform::Configure(cfg);
-
-        EXPECT_NO_THROW(OCPlatform::registerResource(
-                 resourceHandle, uri, type,
-                 gResourceInterface, entityHandler, gResourceProperty));
+        Framework framework(OC::ServiceType::OutOfProc, OC::ModeType::Server);
+        EXPECT_EQ(OC_STACK_NOTIMPL, framework.start());
     }
 
     TEST(ConfigureTest, ConfigureServer)
     {
+        Framework framework(OC::ServiceType::InProc, OC::ModeType::Server, &gps);
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string uri = "/a/light69";
         std::string type = "core.light";
         uint8_t gResourceProperty = 0;
-        PlatformConfig cfg {
-            OC::ServiceType::InProc,
-            OC::ModeType::Server,
-            "0.0.0.0",
-            0,
-            OC::QualityOfService::LowQos, &gps
-        };
-        OCPlatform::Configure(cfg);
-
         EXPECT_NO_THROW(OCPlatform::registerResource(
                  resourceHandle, uri, type,
                  gResourceInterface, entityHandler, gResourceProperty));
@@ -292,92 +246,43 @@ namespace OCPlatformTest
 
     TEST(ConfigureTest, ConfigureClient)
     {
-        std::string uri = "/a/light70";
-        std::string type = "core.light";
-        uint8_t gResourceProperty = 0;
-        PlatformConfig cfg
-        {
-            OC::ServiceType::InProc,
-            OC::ModeType::Client,
-            "0.0.0.0",
-            0,
-            OC::QualityOfService::LowQos,
-            &gps
-        };
-
-        EXPECT_NO_THROW(OCPlatform::registerResource(
-                 resourceHandle, uri, type,
-                 gResourceInterface, entityHandler, gResourceProperty));
+        Framework framework(OC::ServiceType::InProc, OC::ModeType::Client, &gps);
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
     }
-    //PersistentStorageTest
-    TEST(ConfigureTest, ConfigureDefaultNULLPersistentStorage)
-    {
-        PlatformConfig cfg {
-             OC::ServiceType::InProc,
-             OC::ModeType::Both,
-             "0.0.0.0",
-             0,
-             OC::QualityOfService::LowQos
-         };
-         OCPlatform::Configure(cfg);
-         EXPECT_NO_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
-     }
 
     //PersistentStorageTest
     TEST(ConfigureTest, ConfigureNULLPersistentStorage)
     {
-        PlatformConfig cfg {
-             OC::ServiceType::InProc,
-             OC::ModeType::Both,
-             "0.0.0.0",
-             0,
-             OC::QualityOfService::LowQos,
-             nullptr
-         };
-         OCPlatform::Configure(cfg);
-         EXPECT_NO_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
-     }
+        Framework framework(OC::ServiceType::InProc, OC::ModeType::Both);
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
 
-    //PersistentStorageTest
-    TEST(ConfigureTest, ConfigurePersistentStorage)
-    {
-         PlatformConfig cfg {
-             OC::ServiceType::InProc,
-             OC::ModeType::Both,
-             "0.0.0.0",
-             0,
-             OC::QualityOfService::LowQos,
-             &gps
-         };
-         OCPlatform::Configure(cfg);
-         EXPECT_NO_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
-     }
+        EXPECT_NO_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
+    }
 
     //PersistentStorageTest
     TEST(ConfigureTest, ConfigureNULLHandlersPersistentStorage)
     {
-        PlatformConfig cfg {
-             OC::ServiceType::InProc,
-             OC::ModeType::Both,
-             "0.0.0.0",
-             0,
-             OC::QualityOfService::LowQos,
-             &gps
-         };
-         OCPlatform::Configure(cfg);
-         EXPECT_NO_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
-     }
+        Framework framework(OC::ServiceType::InProc, OC::ModeType::Both, &gps);
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
 
+        EXPECT_NO_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
+    }
 
     //RegisterResourceTest
     TEST(RegisterResourceTest, RegisterSingleResource)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string uri = "/a/res2";
         EXPECT_NE(HANDLE_ZERO, RegisterResource(uri));
     }
 
     TEST(RegisterResourceTest, RegisterMultipleResources)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string uri = "/a/multi";
         //Good enough for 5 resources.
         for(int i=0; i< 5; i++)
@@ -389,6 +294,9 @@ namespace OCPlatformTest
 
     TEST(RegisterResourceTest, ReregisterResource)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHandle = RegisterResource(std::string("/a/light5"),
             std::string("core.light"));
         EXPECT_EQ(OC_STACK_OK, OC::OCPlatform::unregisterResource(resourceHandle));
@@ -400,6 +308,9 @@ namespace OCPlatformTest
 
     TEST(RegisterResourceTest, RegisterEmptyResource)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         // We should not allow empty URI.
         std::string emptyStr = "";
         EXPECT_ANY_THROW(OCPlatform::registerResource(resourceHandle, emptyStr, emptyStr,
@@ -408,6 +319,9 @@ namespace OCPlatformTest
 
     TEST(RegisterResourceTest, RegisterZeroResourceProperty)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string uri = "/a/light6";
         std::string type = "core.light";
         uint8_t gResourceProperty = 0;
@@ -418,6 +332,9 @@ namespace OCPlatformTest
 
     TEST(RegisterResourceTest, RegisterWithTpsType)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string uri = "/a/light7";
         std::string type = "core.light";
         uint8_t gResourceProperty = 0;
@@ -428,6 +345,9 @@ namespace OCPlatformTest
 
     TEST(RegisterResourceTest, RegisterWithTpsTypeAll)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string uri = "/a/light8";
         std::string type = "core.light";
         uint8_t gResourceProperty = 0;
@@ -438,6 +358,9 @@ namespace OCPlatformTest
 #ifdef TCP_ADAPTER
     TEST(RegisterResourceTest, RegisterWithTpsTypeBitComb)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string uri = "/a/light9";
         std::string type = "core.light";
         uint8_t gResourceProperty = 0;
@@ -450,12 +373,18 @@ namespace OCPlatformTest
     //UnregisterTest
     TEST(UnregisterTest, UnregisterZeroHandleValue)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         EXPECT_ANY_THROW(OC::OCPlatform::unregisterResource(HANDLE_ZERO));
     }
 
     //UnbindResourcesTest
     TEST(UnbindResourcesTest, UnbindResources)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHome = RegisterResource(std::string("a/home"),
             std::string("core.home"));
         OCResourceHandle resourceKitchen = RegisterResource(std::string("a/kitchen"),
@@ -472,6 +401,9 @@ namespace OCPlatformTest
 
     TEST(UnbindResourcesTest, UnbindResourcesWithZero)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHandle1 = 0;
         OCResourceHandle resourceHandle2 = 0;
         OCResourceHandle resourceHandle3 = 0;
@@ -487,6 +419,9 @@ namespace OCPlatformTest
     //BindInterfaceToResourceTest
     TEST(BindInterfaceToResourceTest, BindResourceInterface)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHandle = RegisterResource(std::string("/a/light"),
             std::string("core.light"));
         OCStackResult result = OC::OCPlatform::bindInterfaceToResource(resourceHandle,
@@ -500,6 +435,9 @@ namespace OCPlatformTest
     TEST(BindInterfaceToResourceTest, BindZeroResourceInterface)
 #endif
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHandle = RegisterResource(std::string("/a/light1"),
             std::string("core.light"));
         EXPECT_ANY_THROW(OC::OCPlatform::bindInterfaceToResource(resourceHandle, 0));
@@ -508,6 +446,9 @@ namespace OCPlatformTest
     //BindTypeToResourceTest
     TEST(BindTypeToResourceTest, BindResourceType)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHandle = RegisterResource(std::string("/a/light3"),
             std::string("core.light"));
         OCStackResult result = OC::OCPlatform::bindTypeToResource(resourceHandle,
@@ -521,6 +462,9 @@ namespace OCPlatformTest
     TEST(BindTypeToResourceTest, BindZeroResourceType)
 #endif
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHandle = RegisterResource(std::string("/a/light4"),
             std::string("core.light"));
         EXPECT_ANY_THROW(OC::OCPlatform::bindTypeToResource(resourceHandle, 0));
@@ -529,6 +473,9 @@ namespace OCPlatformTest
     //UnbindResourceTest
     TEST(UnbindResourceTest, BindAndUnbindResource)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHandle1 = RegisterResource(std::string("a/unres"),
             std::string("core.unres"));
         OCResourceHandle resourceHandle2 = RegisterResource(std::string("a/unres2"),
@@ -541,6 +488,9 @@ namespace OCPlatformTest
     //PresenceTest
     TEST(PresenceTest, DISABLED_StartAndStopPresence)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         EXPECT_EQ(OC_STACK_OK, OCPlatform::startPresence(30));
         EXPECT_NE(HANDLE_ZERO, RegisterResource( std::string("/a/Presence"),
             std::string("core.Presence")));
@@ -549,12 +499,18 @@ namespace OCPlatformTest
 
     TEST(OCPlatformTest, UnbindZeroRsourceHandleValue)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         EXPECT_ANY_THROW(OCPlatform::unbindResource(HANDLE_ZERO, HANDLE_ZERO));
     }
 
     //NotifyAllObserverTest
     TEST(NotifyAllObserverTest, NotifyAllObservers)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs1"),
             std::string("core.obs"));
         EXPECT_EQ(OC_STACK_NO_OBSERVERS, OCPlatform::notifyAllObservers(resourceHome));
@@ -562,6 +518,9 @@ namespace OCPlatformTest
 
     TEST(NotifyAllObserverTest, NotifyAllObserversWithLowQos)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs2"),
             std::string("core.obs"));
         EXPECT_EQ(OC_STACK_NO_OBSERVERS, OCPlatform::notifyAllObservers(resourceHome,
@@ -570,6 +529,9 @@ namespace OCPlatformTest
 
     TEST(NotifyAllObserverTest, NotifyAllObserversWithMidQos)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs3"),
             std::string("core.obs"));
         EXPECT_EQ(OC_STACK_NO_OBSERVERS, OCPlatform::notifyAllObservers(resourceHome,
@@ -578,6 +540,9 @@ namespace OCPlatformTest
 
     TEST(NotifyAllObserverTest, NotifyAllObserversWithNaQos)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs4"),
             std::string("core.obs"));
         EXPECT_EQ(OC_STACK_NO_OBSERVERS, OCPlatform::notifyAllObservers(resourceHome,
@@ -586,6 +551,9 @@ namespace OCPlatformTest
 
     TEST(NotifyAllObserverTest, NotifyAllObserversWithHighQos)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs5"),
             std::string("core.obs"));
         EXPECT_EQ(OC_STACK_NO_OBSERVERS, OCPlatform::notifyAllObservers(resourceHome,
@@ -598,6 +566,9 @@ namespace OCPlatformTest
     TEST(NotifyAllObserverTest, NotifyListOfObservers)
 #endif
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs6"),
             std::string("core.obs"));
 
@@ -613,6 +584,9 @@ namespace OCPlatformTest
     TEST(NotifyAllObserverTest, NotifyListOfObserversWithLowQos)
 #endif
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs7"),
             std::string("core.obs"));
 
@@ -628,6 +602,9 @@ namespace OCPlatformTest
     TEST(NotifyAllObserverTest, NotifyListOfObserversWithMidQos)
 #endif
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs8"),
             std::string("core.obs"));
 
@@ -643,6 +620,9 @@ namespace OCPlatformTest
     TEST(NotifyAllObserverTest, NotifyListOfObserversWithNaQos)
 #endif
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs9"),
             std::string("core.obs"));
 
@@ -658,6 +638,9 @@ namespace OCPlatformTest
     TEST(NotifyAllObserverTest, NotifyListOfObserversWithHighQos)
 #endif
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs10"),
             std::string("core.obs"));
 
@@ -670,6 +653,9 @@ namespace OCPlatformTest
     //DeviceEntityHandlerTest
     TEST(DeviceEntityHandlerTest, SetDefaultDeviceEntityHandler)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         EXPECT_EQ(OC_STACK_OK, OCPlatform::setDefaultDeviceEntityHandler(entityHandler));
         EXPECT_EQ(OC_STACK_OK, OCPlatform::setDefaultDeviceEntityHandler(nullptr));
     }
@@ -678,10 +664,13 @@ namespace OCPlatformTest
     //FindResource test
     TEST(FindResourceTest, DISABLED_FindResourceValid)
     {
-      std::ostringstream requestURI;
-      requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
-      EXPECT_EQ(OC_STACK_OK, OCPlatform::findResource("", requestURI.str(),
-              CT_DEFAULT, &foundResource));
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
+        std::ostringstream requestURI;
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::findResource("", requestURI.str(),
+                CT_DEFAULT, &foundResource));
     }
 
 #if defined (_MSC_VER)
@@ -690,8 +679,11 @@ namespace OCPlatformTest
     TEST(FindResourceTest, FindResourceNullResourceURI)
 #endif
     {
-      EXPECT_ANY_THROW(OCPlatform::findResource("", nullptr,
-              CT_DEFAULT, &foundResource));
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
+        EXPECT_ANY_THROW(OCPlatform::findResource("", nullptr,
+                CT_DEFAULT, &foundResource));
     }
 
 
@@ -701,10 +693,13 @@ namespace OCPlatformTest
     TEST(FindResourceTest, FindResourceNullResourceURI1)
 #endif
     {
-      std::ostringstream requestURI;
-      requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
-      EXPECT_ANY_THROW(OCPlatform::findResource(nullptr, requestURI.str(),
-              CT_DEFAULT, &foundResource));
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
+        std::ostringstream requestURI;
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
+        EXPECT_ANY_THROW(OCPlatform::findResource(nullptr, requestURI.str(),
+                CT_DEFAULT, &foundResource));
     }
 
 #if defined (_MSC_VER)
@@ -713,22 +708,31 @@ namespace OCPlatformTest
     TEST(FindResourceTest, FindResourceNullHost)
 #endif
     {
-      std::ostringstream requestURI;
-      requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
-      EXPECT_ANY_THROW(OCPlatform::findResource(nullptr, requestURI.str(),
-              CT_DEFAULT, &foundResource));
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
+        std::ostringstream requestURI;
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
+        EXPECT_ANY_THROW(OCPlatform::findResource(nullptr, requestURI.str(),
+                CT_DEFAULT, &foundResource));
     }
 
     TEST(FindResourceTest, FindResourceNullresourceHandler)
     {
-      std::ostringstream requestURI;
-      requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
-      EXPECT_THROW(OCPlatform::findResource("", requestURI.str(),
-              CT_DEFAULT, nullptr), OC::OCException);
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
+        std::ostringstream requestURI;
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
+        EXPECT_THROW(OCPlatform::findResource("", requestURI.str(),
+                CT_DEFAULT, nullptr), OC::OCException);
     }
 
     TEST(FindResourceTest, DISABLED_FindResourceWithLowQoS)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::ostringstream requestURI;
         requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
         EXPECT_EQ(OC_STACK_OK,
@@ -738,6 +742,9 @@ namespace OCPlatformTest
 
     TEST(FindResourceTest, DISABLED_FindResourceWithMidQos)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::ostringstream requestURI;
         requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
         EXPECT_EQ(OC_STACK_OK,
@@ -747,6 +754,9 @@ namespace OCPlatformTest
 
     TEST(FindResourceTest, DISABLED_FindResourceWithHighQos)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::ostringstream requestURI;
         requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
         EXPECT_EQ(OC_STACK_OK,
@@ -756,6 +766,9 @@ namespace OCPlatformTest
 
     TEST(FindResourceTest, DISABLED_FindResourceWithNaQos)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::ostringstream requestURI;
         requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
         EXPECT_EQ(OC_STACK_OK,
@@ -766,9 +779,10 @@ namespace OCPlatformTest
     //GetDeviceInfo Test
     TEST(GetDeviceInfoTest, DISABLED_GetDeviceInfoWithValidParameters)
     {
+        Framework framework(OC::ServiceType::InProc, OC::ModeType::Both);
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string deviceDiscoveryURI = "/oic/d";
-        PlatformConfig cfg;
-        OCPlatform::Configure(cfg);
         std::ostringstream requestURI;
         requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
         EXPECT_EQ(OC_STACK_OK,
@@ -781,17 +795,19 @@ namespace OCPlatformTest
     TEST(GetDeviceInfoTest, GetDeviceInfoNullDeviceURI)
 #endif
     {
-        PlatformConfig cfg;
-        OCPlatform::Configure(cfg);
+        Framework framework(OC::ServiceType::InProc, OC::ModeType::Both);
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         EXPECT_ANY_THROW(
                 OCPlatform::getDeviceInfo("", nullptr, CT_DEFAULT, &receivedDeviceInfo));
     }
 
     TEST(GetDeviceInfoTest, GetDeviceInfoWithNullDeviceInfoHandler)
     {
+        Framework framework(OC::ServiceType::InProc, OC::ModeType::Both);
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string deviceDiscoveryURI = "/oic/d";
-        PlatformConfig cfg;
-        OCPlatform::Configure(cfg);
         std::ostringstream requestURI;
         requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
         EXPECT_THROW(
@@ -801,9 +817,10 @@ namespace OCPlatformTest
 
     TEST(GetDeviceInfoTest, DISABLED_GetDeviceInfoWithLowQos)
     {
+        Framework framework(OC::ServiceType::InProc, OC::ModeType::Both);
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string deviceDiscoveryURI = "/oic/d";
-        PlatformConfig cfg;
-        OCPlatform::Configure(cfg);
         std::ostringstream requestURI;
         requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
         EXPECT_EQ(OC_STACK_OK,
@@ -813,9 +830,10 @@ namespace OCPlatformTest
 
     TEST(GetDeviceInfoTest, DISABLED_GetDeviceInfoWithMidQos)
     {
+        Framework framework(OC::ServiceType::InProc, OC::ModeType::Both);
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string deviceDiscoveryURI = "/oic/d";
-        PlatformConfig cfg;
-        OCPlatform::Configure(cfg);
         std::ostringstream requestURI;
         requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
         EXPECT_EQ(OC_STACK_OK,
@@ -825,9 +843,10 @@ namespace OCPlatformTest
 
     TEST(GetDeviceInfoTest, DISABLED_GetDeviceInfoWithHighQos)
     {
+        Framework framework(OC::ServiceType::InProc, OC::ModeType::Both);
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string deviceDiscoveryURI = "/oic/d";
-        PlatformConfig cfg;
-        OCPlatform::Configure(cfg);
         std::ostringstream requestURI;
         requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
         EXPECT_EQ(OC_STACK_OK,
@@ -837,9 +856,10 @@ namespace OCPlatformTest
 
     TEST(GetDeviceInfoTest, DISABLED_GetDeviceInfoWithNaQos)
     {
+        Framework framework(OC::ServiceType::InProc, OC::ModeType::Both);
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string deviceDiscoveryURI = "/oic/d";
-        PlatformConfig cfg;
-        OCPlatform::Configure(cfg);
         std::ostringstream requestURI;
         requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
         EXPECT_EQ(OC_STACK_OK,
@@ -856,6 +876,9 @@ namespace OCPlatformTest
     //RegisterDeviceInfo test
     TEST(RegisterDeviceInfoTest, RegisterDeviceInfoWithValidParameters)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCDeviceInfo deviceInfo;
         DuplicateString(&deviceInfo.deviceName, "myDeviceName");
         deviceInfo.types = NULL;
@@ -873,12 +896,18 @@ namespace OCPlatformTest
 
     TEST(RegisterDeviceInfoTest, RegisterDeviceInfoWithEmptyObject)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCDeviceInfo di = {0, 0, 0, 0};
         EXPECT_ANY_THROW(OCPlatform::registerDeviceInfo(di));
     }
 
     TEST(RegisterDeviceInfoTest, RegisterDeviceInfoWithSetPropertyValue)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string deviceName = "myDeviceName";
         EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
             deviceName));
@@ -899,6 +928,9 @@ namespace OCPlatformTest
 
     TEST(RegisterDeviceInfoTest, RegisterDeviceInfoWithGetPropertyValue)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
             "myDeviceName"));
         EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION,
@@ -922,12 +954,14 @@ namespace OCPlatformTest
         EXPECT_STREQ("myDataModelVersions", dmv[0].c_str());
 
         EXPECT_STREQ("oic.wk.d", OCGetResourceTypeName(handle, 0));
-        EXPECT_STREQ("oic.d.tv", OCGetResourceTypeName(handle, 1));
-        EXPECT_STREQ("oic.wk.tv", OCGetResourceTypeName(handle, 2));
+        EXPECT_STREQ("oic.wk.tv", OCGetResourceTypeName(handle, 1));
     }
     //SubscribePresence Test
     TEST(SubscribePresenceTest, DISABLED_SubscribePresenceWithValidParameters)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string hostAddress = "192.168.1.2:5000";
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
@@ -941,8 +975,10 @@ namespace OCPlatformTest
     TEST(SubscribePresenceTest, SubscribePresenceWithNullHost)
 #endif
     {
-        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
 
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
         EXPECT_ANY_THROW(OCPlatform::subscribePresence(presenceHandle, nullptr,
                  CT_DEFAULT, &presenceHandler));
     }
@@ -953,6 +989,9 @@ namespace OCPlatformTest
     TEST(SubscribePresenceTest, SubscribePresenceWithNullPresenceHandler)
 #endif
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
         EXPECT_ANY_THROW(OCPlatform::subscribePresence(presenceHandle, nullptr,
@@ -961,6 +1000,9 @@ namespace OCPlatformTest
 
     TEST(SubscribePresenceTest, DISABLED_SubscribePresenceWithResourceType)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
         EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribePresence(presenceHandle,
@@ -973,6 +1015,9 @@ namespace OCPlatformTest
     TEST(SubscribePresenceTest, SubscribePresenceWithNullResourceType)
 #endif
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
         EXPECT_ANY_THROW(OCPlatform::subscribePresence(presenceHandle,
@@ -981,6 +1026,9 @@ namespace OCPlatformTest
 
     TEST(SubscribePresenceTest, DISABLED_UnsubscribePresenceWithValidHandleAndRT)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
         EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribePresence(presenceHandle,
@@ -990,12 +1038,18 @@ namespace OCPlatformTest
 
     TEST(SubscribePresenceTest, UnsubscribePresenceWithNullHandle)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
         EXPECT_ANY_THROW(OCPlatform::unsubscribePresence(presenceHandle));
     }
 
     TEST(SubscribePresenceTest, DISABLED_UnsubscribePresenceWithValidHandle)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
         EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribePresence(presenceHandle,
@@ -1007,6 +1061,9 @@ namespace OCPlatformTest
     // SubscribeDevicePresence Test
     TEST(SubscribeDevicePresenceTest, DISABLED_SubscribeDevicePresenceWithValidParameters)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string hostAddress = "192.168.1.2:5000";
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
         std::vector<std::string> di;
@@ -1017,6 +1074,9 @@ namespace OCPlatformTest
 
     TEST(SubscribeDevicePresenceTest, SubscribeDevicePresenceWithNullHost)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
         std::vector<std::string> di;
 
@@ -1026,6 +1086,9 @@ namespace OCPlatformTest
 
     TEST(SubscribeDevicePresenceTest, SubscribeDevicePresenceWithNullOnObserve)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string hostAddress = "192.168.1.2:5000";
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
         std::vector<std::string> di;
@@ -1036,6 +1099,9 @@ namespace OCPlatformTest
 
     TEST(SubscribeDevicePresenceTest, DISABLED_UnsubscribePresenceWithValidHandle)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         std::string hostAddress = "192.168.1.2:5000";
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
         std::vector<std::string> di;
@@ -1048,21 +1114,30 @@ namespace OCPlatformTest
 
     TEST(FindDirectPairingTest, FindDirectPairingNullCallback)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
         EXPECT_ANY_THROW(OCPlatform::findDirectPairingDevices(1, nullptr));
     }
 
     TEST(FindDirectPairingTest, FindDirectPairingZeroTimeout)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
         EXPECT_ANY_THROW(OCPlatform::findDirectPairingDevices(0, &pairedHandler));
     }
 
     TEST(GetDirectPairedTest, GetDirectPairedNullCallback)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
         EXPECT_ANY_THROW(OCPlatform::getDirectPairedDevices(nullptr));
     }
 
     TEST(DoDirectPairingTest, DoDirectPairingNullCallback)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCDPDev_t peer;
         OCPrm_t pmSel = DP_PRE_CONFIGURED;
         std::string pin("");
@@ -1072,6 +1147,9 @@ namespace OCPlatformTest
 
     TEST(DoDirectPairingTest, DoDirectPairingNullPeer)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCDPDev_t peer;
         OCPrm_t pmSel = DP_PRE_CONFIGURED;
         std::string pin("");
@@ -1081,6 +1159,9 @@ namespace OCPlatformTest
 
     TEST(DoDirectPairingTest, DoDirectPairingNullPeerNullCallback)
     {
+        Framework framework;
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+
         OCDPDev_t peer;
         OCPrm_t pmSel = DP_PRE_CONFIGURED;
         std::string pin("");

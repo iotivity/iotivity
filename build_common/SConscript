@@ -87,6 +87,9 @@ if ARGUMENTS.get('SECURED') == '1' and target_os in targets_without_dtls_support
 targets_disallow_multitransport = ['arduino']
 
 help_vars = Variables()
+
+help_vars.Add('PROJECT_VERSION', 'The version of IoTivity', project_version)
+
 help_vars.Add(BoolVariable('VERBOSE', 'Show compilation', False))
 help_vars.Add(BoolVariable('RELEASE', 'Build for release?', True)) # set to 'no', 'false' or 0 for debug
 help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map[host]))
@@ -375,7 +378,7 @@ pc_vars = {
 env.Substfile(pc_file, SUBST_DICT = pc_vars)
 
 ######################################################################
-# Setting global CPPDEFINES
+# Setting global compiler flags
 ######################################################################
 target_transport = env.get('TARGET_TRANSPORT')
 with_mq = env.get('WITH_MQ')
@@ -383,6 +386,8 @@ with_ra = env.get('WITH_RA')
 with_tcp = env.get('WITH_TCP')
 rd_mode = env.get('RD_MODE')
 with_ra_ibb = env.get('WITH_RA_IBB')
+
+env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
 if (env.get('WITH_UPSTREAM_LIBCOAP') == '1'):
     env.AppendUnique(CPPDEFINES = ['WITH_UPSTREAM_LIBCOAP'])
@@ -425,7 +430,7 @@ if 'ALL' in target_transport:
         env.AppendUnique(CPPDEFINES = ['RA_ADAPTER'])
     if with_tcp:
         env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER'])
-    if (target_os in ['linux']):
+    if (target_os in ['linux', 'yocto']):
         env.AppendUnique(CPPDEFINES = ['IP_ADAPTER', 'NO_EDR_ADAPTER', 'LE_ADAPTER'])
     elif (target_os == 'android'):
         env.AppendUnique(CPPDEFINES = ['IP_ADAPTER', 'EDR_ADAPTER', 'LE_ADAPTER', 'NFC_ADAPTER'])

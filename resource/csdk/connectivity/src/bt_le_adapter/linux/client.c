@@ -34,7 +34,7 @@
 
 
 // Logging tag.
-static char const TAG[] = "BLE_CLIENT";
+#define TAG "BLE_CLIENT"
 
 typedef struct _CAGattClientContext
 {

@@ -8,11 +8,11 @@ Import('env')
 env.SConscript('../darwin/SConscript')
 
 sys_version = env.get('SYS_VERSION')
-if env.get('TARGET_ARCH') in ['i386', 'x86_64']: #Simulator
-	flag = '-mios-simulator-version-min=' + sys_version
-	env.AppendUnique(CCFLAGS = [flag])
-	env.AppendUnique(LINKFLAGS = [flag])
+if env.get('TARGET_ARCH') in ['i386', 'x86_64']:  # Simulator
+    flag = '-mios-simulator-version-min=' + sys_version
+    env.AppendUnique(CCFLAGS=[flag])
+    env.AppendUnique(LINKFLAGS=[flag])
 else:
-	flag = '-miphoneos-version-min=' + sys_version
-	env.AppendUnique(CCFLAGS = [flag])
-	env.AppendUnique(LINKFLAGS = [flag])
+    flag = '-miphoneos-version-min=' + sys_version
+    env.AppendUnique(CCFLAGS=[flag])
+    env.AppendUnique(LINKFLAGS=[flag])

@@ -44,6 +44,8 @@ public:
         std::vector<OC::OCRepresentation>& representationVector);
     static jobjectArray convertRepresentationVectorToJavaArray(JNIEnv *env,
         const std::vector<OC::OCRepresentation>& representationVector);
+    static jobjectArray convertResourceVectorToJavaArray(JNIEnv *env,
+        const std::vector<std::shared_ptr<OC::OCResource>>& resourceVector);
 
     static OC::ServiceType getServiceType(JNIEnv *env, int type)
     {
@@ -131,6 +133,36 @@ public:
                 ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected OCEntityHandlerResult");
                 return OCEntityHandlerResult::OC_EH_ERROR;
         }
+    }
+
+    static OCTransportAdapter getOCTransportAdapter(int adapter)
+    {
+        int transport = OCTransportAdapter::OC_DEFAULT_ADAPTER;
+        if (adapter & CT_ADAPTER_IP)
+        {
+            transport |= OCTransportAdapter::OC_ADAPTER_IP;
+        }
+
+        if (adapter & CT_ADAPTER_GATT_BTLE)
+        {
+            transport |= OCTransportAdapter::OC_ADAPTER_GATT_BTLE;
+        }
+
+        if (adapter & CT_ADAPTER_RFCOMM_BTEDR)
+        {
+            transport |= OCTransportAdapter::OC_ADAPTER_RFCOMM_BTEDR;
+        }
+
+        if (adapter & CT_ADAPTER_TCP)
+        {
+            transport |= OCTransportAdapter::OC_ADAPTER_TCP;
+        }
+
+        if (adapter & CT_ADAPTER_NFC)
+        {
+            transport |= OCTransportAdapter::OC_ADAPTER_NFC;
+        }
+        return (OCTransportAdapter)transport;
     }
 
     static std::string stackResultToStr(const int result)

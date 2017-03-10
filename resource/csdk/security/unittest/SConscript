@@ -81,7 +81,7 @@ else:
 	srmtest_env.AppendUnique(LIBS = ['octbstack'])
 
 if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	srmtest_env.PrependUnique(LIBS = ['resource_directory'])
+	srmtest_env.PrependUnique(LIBS = ['resource_directory', 'oc'])
 
 srmtest_env.AppendUnique(LIBS = ['timer'])
 
@@ -99,7 +99,6 @@ unittest = srmtest_env.Program('unittest', ['aclresourcetest.cpp',
                                             'iotvticalendartest.cpp',
                                             'base64tests.cpp',
                                             'pbkdf2tests.cpp',
-                                            'svcresourcetest.cpp',
                                             'srmtestcommon.cpp',
                                             'directpairingtest.cpp',
                                             'crlresourcetest.cpp'])

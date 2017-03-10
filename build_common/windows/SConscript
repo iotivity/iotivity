@@ -14,7 +14,13 @@ if env['CC'] == 'cl':
     #    - Disabled due to the widespread usage in IoTivity
     #  - warning C4200: zero-sized array in struct/union.
     #    - It is an acceptable approach for variable size structs.
-    env.AppendUnique(CCFLAGS=['/wd4127', '/wd4200'])
+    #  - warning C4201: nameless struct/union
+    #    - Disabled due to IoTivity not being ANSI compatible
+    #  - warning C4214:  bit field types other than int
+    #    - Disabled due to IoTivity not being ANSI compatible
+    #  - warning C4706: assignment within conditional expression
+    #    - Disabled due to the widespread usage in IoTivity and low impact.
+    env.AppendUnique(CCFLAGS=['/wd4127', '/wd4200', '/wd4201', '/wd4214', '/wd4706'])
 
     env.AppendUnique(CCFLAGS=['/EHsc'])
 

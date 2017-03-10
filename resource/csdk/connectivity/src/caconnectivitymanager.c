@@ -57,7 +57,6 @@ extern void CAsetCredentialTypesCallback(CAgetCredentialTypesHandler credCallbac
 
 CAResult_t CAInitialize(CATransportAdapter_t transportType)
 {
-    OIC_LOG_V(DEBUG, TAG, "IoTivity version is v%s", IOTIVITY_VERSION);
     OIC_LOG_V(DEBUG, TAG, "CAInitialize type : %d", transportType);
 
     if (!g_isInitialized)

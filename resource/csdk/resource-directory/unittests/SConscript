@@ -68,12 +68,14 @@ rd_test_env.AppendUnique(
 
 rd_test_env.AppendUnique(LIBPATH = [lib_env.get('BUILD_DIR')])
 rd_test_env.AppendUnique(RPATH = [lib_env.get('BUILD_DIR')])
-rd_test_env.PrependUnique(LIBS = ['resource_directory', 'octbstack' ])
+rd_test_env.PrependUnique(LIBS = ['octbstack'])
 
 if rd_test_env.get('RD_MODE'):
     rd_mode = rd_test_env.get('RD_MODE')
+    rd_test_env.PrependUnique(LIBS = ['resource_directory'])
     if 'CLIENT' in rd_mode:
         rd_test_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+        rd_test_env.AppendUnique(LIBS = ['oc', 'oc_logger'])
     if 'SERVER' in rd_mode:
         rd_test_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
 

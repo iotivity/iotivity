@@ -39,6 +39,7 @@ OCGetPublicKeyFromCSR
 OCGetRolesResource
 OCGetUuidFromCSR
 OCInitPM
+OCPDMCleanupForTimeout
 OCProvisionACL
 OCSaveACL
 OCProvisionCertificate

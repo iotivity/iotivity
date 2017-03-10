@@ -666,3 +666,37 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_doSelfOwnershiptran
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
     }
 }
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    setDeviceIdSeed1
+ * Signature: (Lorg/iotivity/base/OcProvisioning/provisionTrustCertChain1;)V
+ */
+    JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setDeviceIdSeed1
+(JNIEnv *env, jobject thiz, jbyteArray seed)
+{
+    LOGD("OcProvisioning_setDeviceIdSeed1");
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    jbyte* byteSeed = env->GetByteArrayElements(seed, 0);
+    jsize arrayLength = env->GetArrayLength(seed);
+    try
+    {
+        env->GetByteArrayRegion (seed, 0, arrayLength, byteSeed);
+        OCStackResult result = OCSecure::setDeviceIdSeed((uint8_t*)byteSeed, arrayLength);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcProvisioning_setDeviceIdSeed");
+            return -1;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+    return 0;
+#else
+    ThrowOcException(OC_STACK_INVALID_PARAM, "WITH_TLS not enabled");
+    return -1;
+#endif // __WITH_DTLS__ || __WITH_TLS__
+}

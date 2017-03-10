@@ -868,6 +868,11 @@ static int waitCallbackRet(void)
         }
     }
 
+    if(!g_doneCB)
+    {
+        OCPDMCleanupForTimeout();
+    }
+
     return 0;
 }
 

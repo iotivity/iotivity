@@ -22,10 +22,38 @@
 #define IOTVT_SRM_PSI_H
 
 /**
+ * Reads the database from PS
+ *
+ * @note Caller of this method MUST use OICFree() method to release memory
+ *       referenced by the data argument.
+ *
+ * @param databaseName is the name of the database to access through persistent storage.
+ * @param resourceName is the name of the field for which file content are read.
+ *                     if the value is NULL it will send the content of the whole file.
+ * @param data         is the pointer to the file contents read from the database.
+ * @param size         is the size of the file contents read.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult ReadDatabaseFromPS(const char *databaseName, const char *resourceName, uint8_t **data, size_t *size);
+
+/**
+ * This method updates the database in PS
+ *
+ * @param databaseName  is the name of the database to access through persistent storage.
+ * @param resourceName  is the name of the resource that will be updated.
+ * @param payload       is the pointer to memory where the CBOR payload is located.
+ * @param size          is the size of the CBOR payload.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult UpdateResourceInPS(const char *databaseName, const char *resourceName, const uint8_t *payload, size_t size);
+
+/**
  * Reads the Secure Virtual Database from PS into dynamically allocated
  * memory buffer.
  *
- * @note Caller of this method MUST use OCFree() method to release memory
+ * @note Caller of this method MUST use OICFree() method to release memory
  *       referenced by return value.
  *
  * @return char * reference to memory buffer containing SVR database.
@@ -35,28 +63,28 @@ char * GetSVRDatabase();
 /**
  * Reads the Secure Virtual Database from PS
  *
- * @note Caller of this method MUST use OCFree() method to release memory
+ * @note Caller of this method MUST use OICFree() method to release memory
  *       referenced by return value.
  *
- * @param rsrcName is the name of the field for which file content are read.
-                   if the value is NULL it will send the content of the whole file.
- * @param data is the pointer to the file contents read from the database.
- * @param size is the size to the file contents read.
+ * @param resourceName is the name of the field for which file content are read.
+ *                     if the value is NULL it will send the content of the whole file.
+ * @param data         is the pointer to the file contents read from the database.
+ * @param size         is the size of the file contents read.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **data, size_t *size);
+OCStackResult GetSecureVirtualDatabaseFromPS(const char *resourceName, uint8_t **data, size_t *size);
 
 /**
- * This method converts updates the persistent storage.
+ * This method updates the Secure Virtual Database in PS
  *
- * @param rsrcName is the name of the secure resource that will be updated.
- * @param cborPayload is the pointer holding cbor payload.
- * @param size is the size of the cbor payload.
+ * @param resourceName  is the name of the secure resource that will be updated.
+ * @param payload       is the pointer to memory where the CBOR payload is located.
+ * @param size          is the size of the CBOR payload.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult UpdateSecureResourceInPS(const char* rsrcName, uint8_t* cborPayload, size_t size);
+OCStackResult UpdateSecureResourceInPS(const char *resourceName, const uint8_t *payload, size_t size);
 
 /**
  * This method resets the secure resources according to the reset profile.

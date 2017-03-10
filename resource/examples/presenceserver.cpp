@@ -61,8 +61,8 @@ std::string  systemTime = "2016-01-15T11.01";
 
 // Set of strings for each of device info fields
 std::string  deviceName = "IoTivity Presence Server";
-std::string  specVersion = "core.1.1.0";
-std::vector<std::string> dataModelVersions = {"res.1.1.0"};
+std::string  specVersion = "ocf.1.1.0";
+std::vector<std::string> dataModelVersions = {"ocf.res.1.1.0"};
 std::string  protocolIndependentID = "41a75d38-83c3-4b83-a794-f2174990b30b";
 
 // OCPlatformInfo Contains all the platform info to be stored
@@ -304,13 +304,13 @@ int main()
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Server,
-        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-        0,         // Uses randomly available port
-        OC::QualityOfService::LowQos
+        nullptr
     };
 
     OCPlatform::Configure(cfg);
+
     std::cout << "Starting server & setting platform info\n";
+    OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
 
     OCStackResult result = SetPlatformInfo(platformId, manufacturerName, manufacturerLink,
             modelNumber, dateOfManufacture, platformVersion, operatingSystemVersion,
@@ -321,6 +321,7 @@ int main()
     if (result != OC_STACK_OK)
     {
         std::cout << "Platform Registration failed\n";
+        OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
         return -1;
     }
 
@@ -329,6 +330,7 @@ int main()
     if (result != OC_STACK_OK)
     {
         std::cout << "Device Registration failed\n";
+        OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
         return -1;
     }
 
@@ -386,8 +388,8 @@ int main()
         oclog() << "Exception in main: "<< e.what();
     }
 
-    // No explicit call to stop the platform.
-    // When OCPlatform destructor is invoked, internally we do platform cleanup
+    // Perform platform clean up.
+    OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
 
     return 0;
 }

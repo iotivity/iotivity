@@ -41,13 +41,18 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-scenemanager_env.AppendUnique(CPPPATH = ['./include'])
-scenemanager_env.AppendUnique(CPPPATH = ['./src'])
-scenemanager_env.AppendUnique(CPPPATH = ['../../resource/csdk/connectivity/api'])
-scenemanager_env.AppendUnique(CPPPATH = ['../resource-encapsulation/include'])
-scenemanager_env.AppendUnique(CPPPATH = ['../resource-encapsulation/src/common/primitiveResource/include'])
-scenemanager_env.AppendUnique(CPPPATH = ['../resource-encapsulation/src/common/expiryTimer/include'])
-
+scenemanager_env.AppendUnique(CPPPATH = [
+    './include',
+    './src',
+    '#/resource/csdk/connectivity/api',
+    '../resource-encapsulation/include',
+    '../resource-encapsulation/src/common/primitiveResource/include',
+    '../resource-encapsulation/src/common/expiryTimer/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/resource/oc_logger/include'
+])
 
 scenemanager_env.PrependUnique(LIBS = [
     'coap',

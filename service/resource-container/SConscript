@@ -65,8 +65,12 @@ if int(containerJavaSupport):
 
 resource_container_env.AppendUnique(
     CPPPATH = [
-        env.get('SRC_DIR')+'/extlibs',
-        '../resource-encapsulation/include',
+        '#/extlibs',
+        '#/resource/csdk/include',
+        '#/resource/csdk/stack/include',
+        '#/resource/include',
+        '#/resource/oc_logger/include',
+        '#/service/resource-encapsulation/include',
         'include',
         'bundle-api/include',
         'src'

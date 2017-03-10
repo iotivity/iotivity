@@ -73,7 +73,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 21
         versionCode 1
-        versionName "1.3.0"
+        versionName PROJECT_VERSION
         buildConfigField 'int', 'SECURED', SECURED
         buildConfigField 'int', 'WITH_TCP', WITH_TCP
         buildConfigField 'int', 'WITH_CLOUD', WITH_CLOUD
@@ -137,6 +137,7 @@ task copyNativeLibs(type: Copy) {
         'liboc_logger.so',
         'liboctbstack.so',
         'liboc.so',
+        'libresource_directory.so',
         'libocstack-jni.so'
     ]
     if ("$SECURED" == '1')

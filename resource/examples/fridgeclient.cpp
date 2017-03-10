@@ -316,13 +316,13 @@ int main(int argc, char* argv[])
     {
         ServiceType::InProc,
         ModeType::Client,
-        "0.0.0.0",
-        0,
-        QualityOfService::LowQos
+        nullptr
     };
 
     OCPlatform::Configure(cfg);
+    OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
     ClientFridge cf(connectivityType);
+    OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     return 0;
 }
 

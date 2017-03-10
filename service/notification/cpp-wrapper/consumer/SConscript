@@ -43,11 +43,18 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-notification_env.AppendUnique(CPPPATH = ['../../include'])
-notification_env.AppendUnique(CPPPATH = ['inc'])
-notification_env.AppendUnique(CPPPATH = ['../common'])
-notification_env.AppendUnique(CPPPATH = ['../provider/inc'])
-notification_env.AppendUnique(CPPPATH = ['../../src/common'])
+notification_env.AppendUnique(CPPPATH = [
+    '../../include',
+    'inc',
+    '../common',
+    '../provider/inc',
+    '../../src/common',
+    '#/resource/csdk/security/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/resource/oc_logger/include'
+])
 
 notification_env.PrependUnique(LIBS = [
 	'oc_logger',

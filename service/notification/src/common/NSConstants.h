@@ -45,8 +45,8 @@
 #define NS_LOG_V(level, format, ...) (dlog_print(NS_CONVERT_LEVEL(level), LOG_TAG, (format), __VA_ARGS__))
 #define NS_LOG(level, msg) (dlog_print(NS_CONVERT_LEVEL(level), LOG_TAG, (msg)))
 #else // __TIZEN__
-#define NS_LOG_V(level, format, ...) (OIC_LOG_V((level), __NS_FILE__, (format), __VA_ARGS__))
-#define NS_LOG(level, msg) (OIC_LOG((level), __NS_FILE__, (msg)))
+#define NS_LOG_V(level, format, ...) OIC_LOG_V((level), __NS_FILE__, (format), __VA_ARGS__)
+#define NS_LOG(level, msg) OIC_LOG((level), __NS_FILE__, (msg))
 #endif // __TIZEN__
 #else // TB_LOG
 #if (__PRINTLOG == 1)
@@ -211,7 +211,7 @@
         } \
     }
 
-#define VERSION        "1.3.0"
+#define VERSION        IOTIVITY_VERSION
 
 #define NS_ATTRIBUTE_VERSION "x.org.iotivity.ns.version"
 #define NS_ATTRIBUTE_POLICY "x.org.iotivity.ns.subcontrollability"
