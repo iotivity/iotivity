@@ -138,6 +138,7 @@ if target_os == 'windows':
 
 help_vars.Add(BoolVariable('BUILD_JAVA', 'Build Java bindings', False))
 help_vars.Add(PathVariable('JAVA_HOME', 'JDK directory', os.environ.get('JAVA_HOME'), PathVariable.PathAccept))
+help_vars.Add(EnumVariable('OIC_SUPPORT_TIZEN_TRACE', 'Tizen Trace(T-trace) api availability', 'False', allowed_values=('True', 'False')))
 
 AddOption('--prefix',
                   dest='prefix',

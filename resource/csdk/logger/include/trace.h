@@ -24,7 +24,9 @@
 #ifdef __ANDROID__
 #include "logger.h"
 #elif defined(__TIZEN__)
+#ifdef OIC_SUPPORT_TIZEN_TRACE
 #include <ttrace.h>
+#endif
 #elif defined(ARDUINO)
 #endif
 
@@ -32,28 +34,60 @@
 extern "C"
 {
 #endif
+
 #ifdef __ANDROID__
+
+void oic_trace_begin(const char *name, ...);
+void oic_trace_end();
+void oic_trace_buffer(const char *name, const uint8_t * buffer, size_t bufferSize);
 
 #define OIC_TRACE_BEGIN(MSG, ...) \
         oic_trace_begin("OIC:"#MSG, ##__VA_ARGS__)
 #define OIC_TRACE_END() \
         oic_trace_end()
+#define OIC_TRACE_MARK(MSG, ...) \
+        oic_trace_begin("OIC:"#MSG, ##__VA_ARGS__), \
+        oic_trace_end()
+#define OIC_TRACE_BUFFER(MSG, BUF, SIZ) \
+        oic_trace_buffer(MSG, BUF, SIZ)
 
 #elif defined(__TIZEN__)
 /* trace macro for Tizen. this will call ttrace api internally*/
+#ifdef OIC_SUPPORT_TIZEN_TRACE
+
+#include <ttrace.h>
+
+void oic_trace_buffer(const char *name, const uint8_t * buffer, size_t bufferSize);
+
+/* ttrace api is available on tizen2.4 (or above) only */
 #define OIC_TRACE_BEGIN(MSG, ...) \
-        traceBegin(TTRACE_TAG_APP, "IOTIVITY:"#MSG, ##__VA_ARGS__)
+        traceBegin(TTRACE_TAG_APP, "OIC:"#MSG, ##__VA_ARGS__)
 #define OIC_TRACE_END() \
         traceEnd(TTRACE_TAG_APP)
+#define OIC_TRACE_MARK(MSG, ...) \
+        traceBegin(TTRACE_TAG_APP, "OIC:"#MSG, ##__VA_ARGS__), \
+        traceEnd(TTRACE_TAG_APP)
+#define OIC_TRACE_BUFFER(MSG, BUF, SIZ) \
+        oic_trace_buffer(MSG, BUF, SIZ)
+#else
+#define OIC_TRACE_BEGIN(MSG, ...)
+#define OIC_TRACE_END()
+#define OIC_TRACE_MARK(MSG, ...)
+#define OIC_TRACE_BUFFER(MSG, BUF, SIZ)
+#endif
 
 #elif defined(ARDUINO)
 /* trace macro for Arduino. currently this will call nothing*/
 #define OIC_TRACE_BEGIN(MSG, ...)
 #define OIC_TRACE_END()
+#define OIC_TRACE_MARK(MSG, ...)
+#define OIC_TRACE_BUFFER(MSG, BUF, SIZ)
 
 #else
 #define OIC_TRACE_BEGIN(MSG, ...)
 #define OIC_TRACE_END()
+#define OIC_TRACE_MARK(MSG, ...)
+#define OIC_TRACE_BUFFER(MSG, BUF, SIZ)
 
 #endif //endif
 

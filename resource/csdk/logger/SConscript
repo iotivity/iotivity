@@ -14,6 +14,8 @@ if env.get('TARGET_OS') == 'tizen':
 	env.AppendUnique(LIBPATH = [build_dir])
 else:
 	env.AppendUnique(LIBPATH = [os.path.join(build_dir, 'resource', 'csdk', 'logger')])
+if env.get('OIC_SUPPORT_TIZEN_TRACE') == 'True':
+	env.AppendUnique(CPPDEFINES = ['OIC_SUPPORT_TIZEN_TRACE'])
 
 env.PrependUnique(LIBS = ['logger'])
 

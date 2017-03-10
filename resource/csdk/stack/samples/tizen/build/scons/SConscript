@@ -20,7 +20,10 @@ else:
 if env.get('LOGGING'):
     env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-env.ParseConfig("pkg-config --cflags --libs capi-network-connection dlog ttrace glib-2.0")
+env.ParseConfig("pkg-config --cflags --libs capi-network-connection dlog glib-2.0")
+if env.get('OIC_SUPPORT_TIZEN_TRACE') == 'True':
+	env.ParseConfig("pkg-config --cflags --libs ttrace")
+	env.AppendUnique(CPPDEFINES = ['OIC_SUPPORT_TIZEN_TRACE'])
 if 'ALL' in transport:
 		env.AppendUnique(CPPDEFINES = ['WIFI_ADAPTER', 'NO_ETHERNET_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
 		print "CA Transport is ALL"
