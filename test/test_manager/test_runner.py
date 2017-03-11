@@ -49,7 +49,7 @@ oparser.add_option("--testsuite", action="store", dest="testsuite")
 oparser.add_option("-c", action="store", dest="testcase")
 oparser.add_option("--testcase", action="store", dest="testcase")
 
-oparser.set_defaults(file_filter='', platform='linux', target='', testlist='', testprogress='', testresult='',
+oparser.set_defaults(file_filter='', platform='linux', target='', testlist='', testprogress='', testresult='', 
                      standalone=TEST_STANDALONE, runonce=False)
 
 opts, args = oparser.parse_args()
@@ -71,16 +71,16 @@ if testresult == '':
 
 if not os.path.exists(testresult):
     os.makedirs(testresult)
-
+    
 if not testlist == '':
     list_analyzer = TCListReporter()
     testgroup = list_analyzer.analyze(testlist)
 
-testspec_path = os.path.join(testresult, TEST_SPEC_XML_FOR_RESULT)
+testspec_path = os.path.join(testresult, TEST_SPEC_XML_FOR_RESULT)    
 if not os.path.exists(testspec_path) and os.path.exists(API_TC_SRC_DIR):
     container = TestSpecContainer()
     container.extract_api_testspec(API_TC_SRC_DIR, '')
-
+    
     reporter = TestSpecReporter()
     reporter.generate_testspec_report(container.data)
     reporter.report('XML', testspec_path)
@@ -91,7 +91,7 @@ runner = TestRunner()
 for fname in os.listdir(TC_BIN_DIR):
     if "." in fname:
         continue
-
+    
     if not fname.startswith(TC_BIN_PREFIX):
         continue
 
@@ -107,25 +107,25 @@ for fname in os.listdir(TC_BIN_DIR):
     tname = fname.replace(TC_BIN_PREFIX, '').replace(TC_BIN_SUFFIX, '')
 
     option = TestRunnerOption()
-
+    
     current_filter = ''
     if not testlist == '':
         for tcfile_filter in list(testgroup):
             if tcfile_filter in fname:
-                current_filter = tcfile_filter
+                current_filter = tcfile_filter 
                 break
-
+            
         if current_filter == '':
             continue
-
+        
         option.testset = set(testgroup[current_filter].keys())
         option.testkey = testgroup[current_filter]
-
+        
     elif (file_filter != '') and (not file_filter in tname):
-        continue
-
+        continue    
+    
     filepath = os.path.join(TC_BIN_DIR, fname)
-
+        
     print("### Start to run : " + filepath)
 
     if given_testsuite:
@@ -178,7 +178,7 @@ for fname in os.listdir(TC_BIN_DIR):
     option.testset = testset
     option.exe_path = filepath
     option.platform = platform
-    option.target = target
+    option.target = target 
     option.transport = transport
     option.network = network
     option.result_dir = testresult
@@ -190,7 +190,7 @@ for fname in os.listdir(TC_BIN_DIR):
     if runonce == True:
         option.repeat_failed = False
         option.repeat_crashed = False
-
+    
     runner.run_test_executable(option)
 
 if total_found_tc == 0:

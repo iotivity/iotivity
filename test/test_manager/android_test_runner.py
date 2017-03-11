@@ -55,6 +55,8 @@ oparser.add_option("-r", action="store", dest="testresult", default="")
 oparser.add_option("--result", action="store", dest="testresult", default="")
 oparser.add_option("-f", action="store", dest="file_filter", default="")
 oparser.add_option("--filter", action="store", dest="file_filter", default="")
+oparser.add_option("-m", action="store", dest="module", default="")
+oparser.add_option("--module", action="store", dest="module", default="")
 oparser.add_option("-w", action="store", dest="tc_framework", default=TESTFW_TYPES.JUNIT)
 oparser.add_option("--framework", action="store", dest="tc_framework", default=TESTFW_TYPES.JUNIT)
 oparser.add_option("-i", action="store", dest="tc_scenario", default="")
@@ -70,7 +72,8 @@ transport = opts.transport
 network = opts.network
 testresult = opts.testresult
 device_name = opts.device_name
-binary_name = opts.file_filter
+file_filter = opts.file_filter    #applicable only for android native application, no use in android junit testcase
+given_module = opts.module
 app_path = opts.app_path
 tc_framework = opts.tc_framework
 base_package = opts.base_package
@@ -129,7 +132,7 @@ testspec_path = os.path.join(testresult, TEST_SPEC_XML_FOR_RESULT)
 if not os.path.exists(testspec_path) and os.path.exists(API_TC_SRC_DIR):
     container = TestSpecContainer()
     container.extract_api_testspec(API_TC_SRC_DIR, '')
-
+    
     reporter = TestSpecReporter()
     reporter.generate_testspec_report(container.data)
     reporter.report('XML', testspec_path)
@@ -148,15 +151,18 @@ def remove_invalid_character_from_log(log) :
 
 def run_standalone_tc(suite_name, tc_name, command, pass_msg, platform, target, transport, network, file_suffix):
 
-    xml_output = '<testsuites>\n'
+    xml_output = '<testsuites>\n'    
     xml_output = xml_output + '\t<testsuite name="' + suite_name + '">\n'
     xml_output = xml_output + '\t\t<testcase name="' + tc_name + '" status="run" time="0"'
-
+    
     status = 'failed'
 
+    os.system('adb ' + device_name + ' logcat -c')
+
     try:
+
         rc = subprocess.check_output(command, shell=True, timeout=timeout_seconds)
-        log = re.sub(r'(b\'|\')', '', str(rc))
+        log = re.sub(r'(b\'|\')', '', str(rc))  
         log = log.strip()
         log = log.replace('\\x', '')
         log = log.replace('\\r\\n', '\n')
@@ -180,65 +186,84 @@ def run_standalone_tc(suite_name, tc_name, command, pass_msg, platform, target, 
 
     xml_output = xml_output + '</testsuite>\n'
     xml_output = xml_output + '</testsuites>\n'
-
+    
     timestring = datetime.now().strftime("%Y%m%d_%H%M%S.%f")
-
+        
     file_name = "%s_%s_%s_%s_%s_%s" %(platform, target, transport, network, timestring, file_suffix)
 
     if os.path.isfile(testresult + os.sep + file_name + '.log') or os.path.isfile(testresult + os.sep + file_name + '.xml'):
             print (bcolors.FAIL + 'File name exist !!!\nRunner Internal Error' + bcolors.ENDC)
             exit(0)
 
-    log_file = open(testresult + os.sep + file_name + '.log', 'w')
-    log_file.write('\n' + log)
+    os.system('adb ' + device_name + ' logcat -d > ' + testresult + os.sep + file_name + '.log')
 
+    log_file = open(testresult + os.sep + file_name + '.log', 'a')
+    log_file.write('\n' + log)
+            
     xml_file = open(testresult + os.sep + file_name + '.xml', 'w')
     xml_file.write(xml_output)
 
 
-def run_gtest_testcase(testresult, binary_name, given_testsuites, given_testcases, platform, target, transport, network):
+def run_gtest_testcase(testresult, file_filter, given_testsuites, given_testcases, platform, target, transport, network):
 
-    if not binary_name:
-        print (bcolors.FAIL + 'binary file name is not given. Use -f opiotn' + bcolors.ENDC)
-        exit(0)
+    command = 'adb ' + device_name + ' shell ls ' + app_path + '/' + TC_BIN_PREFIX + '*' + TC_BIN_SUFFIX
+    process= subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    log, err = process.communicate(timeout = 30)
 
-    if not binary_name.startswith(TC_BIN_PREFIX):
-        binary_name = TC_BIN_PREFIX + binary_name
+    binary_list = str(log).replace('b\'', '').replace('\'', '').replace(app_path + '/', '').replace('\\r\\n', ' ').split()
 
-    testset = set()
-    testsuite = ''
+    sz = 0
 
-    command = 'adb ' + device_name + ' shell LD_LIBRARY_PATH=' + app_path + ' ' + app_path + '/' + binary_name + ' --gtest_list_tests'
-    rc = subprocess.check_output(command, shell=True)
-    log = re.sub(r'(b\'|\')', '', str(rc))
+    for binary_name in binary_list:
 
-    for line in log.split('\\r\\n'):
-        line = re.sub(r'(b\'|\')', '', str(line.strip()))
+        if file_filter:
+            if file_filter not in binary_name:
+                continue
 
-        if not line:
-            continue
+        if given_module:
+            if binary_name.split('_')[1] not in given_module:
+                continue
 
-        print (line)
+        testset = set()
+        testsuite = ''
 
-        if line.endswith('.') == True :
-            testsuite = line
-            continue
+        command = 'adb ' + device_name + ' shell LD_LIBRARY_PATH=' + app_path + ' ' + app_path + '/' + binary_name + ' --gtest_list_tests' 
 
-        if given_testsuites and testsuite[:-1] not in given_testsuites:
-            continue
+        rc = subprocess.check_output(command, shell=True)
+        log = re.sub(r'(b\'|\')', '', str(rc))
 
-        if given_testcases and line not in given_testcases:
-            continue
+        for line in log.split('\\r\\n'):
+            line = re.sub(r'(b\'|\')', '', str(line.strip()))
 
-        testset.add(testsuite + line)
+            if not line:
+                continue
 
-    if not testset:
+            print (line)
+
+            if line.endswith('.') == True :
+                testsuite = line
+                continue
+
+            if given_testsuites and testsuite[:-1] not in given_testsuites:
+                continue
+            
+            if given_testcases and line not in given_testcases:
+                continue
+
+            testset.add(testsuite + line)
+
+        sz = sz + len(testset)
+            
+        for tc_name in testset:
+            tc_info = tc_name.split('.')
+            command = 'adb ' + device_name + ' shell ' + app_path + '/runner.sh ' + binary_name + ' ' + tc_name
+            run_standalone_tc (tc_info[0], tc_info[1], command, '[  PASSED  ] 1 test.', platform, target, transport, network, binary_name)
+
+    if sz == 0:
         print (bcolors.FAIL + 'No testcase Found !!!\nPlease, Check command parameter(s)' + bcolors.ENDC)
+    else:
+        print("### Test Is Done!!")
 
-    for tc_name in testset:
-        tc_info = tc_name.split('.')
-        command = 'adb ' + device_name + ' shell ' + app_path + '/runner.sh ' + binary_name + ' ' + tc_name
-        run_standalone_tc (tc_info[0], tc_info[1], command, '[  PASSED  ] 1 test.', platform, target, transport, network, binary_name)
 
 
 def run_junit_testcase(testresult, base_package, given_testsuites, given_testcases, platform, target, transport, network, tc_scenario):
@@ -267,11 +292,15 @@ def run_junit_testcase(testresult, base_package, given_testsuites, given_testcas
                 if not found:
                     continue
 
+            if given_module:
+                if module.lower() not in given_module.lower():
+                    continue
+
             if not base_package:
-                base_package = 'org.iotivity.service.' + module.lower() + '.test'
+                base_package = 'org.iotivity.test.' + module.lower() + '.tc'
 
             cwd = os.getcwd()
-            build_dir = cwd + '/../IotivityOrgSource/1.2.0-RC3/iotivity/test/bin/android/' + module.lower() + '/intermediates/classes/debug/'
+            build_dir = cwd + os.sep + TEST_ROOT + os.sep + 'bin' + os.sep + 'android' + os.sep + module.lower() + os.sep + 'intermediates' + os.sep + 'classes' + os.sep + 'debug' + os.sep
             build_dir = build_dir + base_package.replace('.', os.sep) + os.sep + testcase_type.lower()
             os.chdir(build_dir)
 
@@ -280,7 +309,7 @@ def run_junit_testcase(testresult, base_package, given_testsuites, given_testcas
             for suite in file_list :
                 if "$" not in suite and suite.endswith('Test.class'):
                     suite_name = suite.split('.',1)[0]
-
+                    
                     if given_testsuites and suite_name not in given_testsuites:
                         continue
 
@@ -315,8 +344,11 @@ def run_junit_testcase(testresult, base_package, given_testsuites, given_testcas
 
         run_standalone_tc (tc_info[1], tc_info[2], command, 'OK (1 test)', platform, target, transport, network, tc_info[1].lower() + '_' + tc_info[0])
 
+    if testset:
+        print("### Test Is Done!!")
+
 if TESTFW_TYPES.GTEST in tc_framework:
-    run_gtest_testcase(testresult, binary_name, given_testsuites, given_testcases, platform, target, transport, network)
+    run_gtest_testcase(testresult, file_filter, given_testsuites, given_testcases, platform, target, transport, network)
 
 if TESTFW_TYPES.JUNIT in tc_framework:
     run_junit_testcase(testresult, base_package, given_testsuites, given_testcases, platform, target, transport, network, tc_scenario)

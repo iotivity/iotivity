@@ -5,7 +5,7 @@
  * Copyright (c) 2015 Samsung Electronics Co., Ltd. All right reserved.
  *
  * This software is the confidential and proprietary information of Samsung Electronics, Inc.
- * ("Confidential Information"). You shall not disclose such Confidential Information and shall
+ * ('Confidential Information'). You shall not disclose such Confidential Information and shall
  * use it only in accordance with the terms of the license agreement you entered into with
  * Samsung Electronics.
  ***************************************************************************************************/
@@ -21,44 +21,43 @@ import xml.etree.ElementTree as ET
 import glob
 import datetime as dt
 #import ntpath
+import shutil
 from os.path import basename
-from iotivitybuildtool import *
 
 try :
     import xlsxwriter
 except :
-    print("Install xlsxwriter by  sudo easy_install xlsxwriter or by another way")
+    print('Install xlsxwriter by  sudo easy_install xlsxwriter or by another way')
 
 
 oparser = optparse.OptionParser()
-oparser.add_option("-t", action="store", dest="target_source")
-oparser.add_option("--target", action="store", dest="target_source")
-oparser.add_option("-b", action="store", dest="bit")
-oparser.add_option("--bit", action="store", dest="bit")
-oparser.add_option("-m", action="store", dest="mode")
-oparser.add_option("--mode", action="store", dest="mode")
+oparser.add_option('-b', action='store', dest='bit')
+oparser.add_option('--bit', action='store', dest='bit')
+oparser.add_option('-m', action='store', dest='mode')
+oparser.add_option('--mode', action='store', dest='mode')
+oparser.add_option('--iotivity_root', action='store', dest='iotivity_root')
 
 
 #setting default value for command line arguments
-oparser.set_defaults(target_source = 'target', bit='64', mode= 'release')
+oparser.set_defaults(iotivity_root = '../..', bit='64', mode= 'release')
 opts, args = oparser.parse_args()
 
 #Assigning command-line options value to global variables
-TARGET_SOURCE = opts.target_source
-BUILD_MODE = opts.mode
-BIT = opts.bit
+iotivity_root = os.path.abspath(opts.iotivity_root)
+build_mode = opts.mode
+bit = opts.bit
 
 #checking user input is 32 or 64
-if BIT == "32" :
-    BIT = "x86"
+if bit == '32' :
+    bit = 'x86'
 else :
-    BIT = "x86_64"
-print ("Reporter Target : "+ TARGET_SOURCE)
-print ("Reporter Bit : "+ BIT)
-print ("Reporter Build Mode : "+ BUILD_MODE)
+    bit = 'x86_64'
+print ('Iotivity Root: '+ iotivity_root)
+print ('Reporter Bit: '+ bit)
+print ('Reporter Build Mode: '+ build_mode)
 
 #set dev test result file directory
-DEV_UNIT_TEST_RESULT_DIRECTORY = "../IotivityOrgSource/%s/iotivity/out/linux/%s/%s/test_out/"% (TARGET_SOURCE, BIT, BUILD_MODE)
+DEV_UNIT_TEST_RESULT_DIRECTORY = '%s/out/linux/%s/%s/test_out/'% (iotivity_root, bit, build_mode)
 
 #constant varibales for execel column management
 TEST_MODULE_COLUMN_INDEX = 0
@@ -86,20 +85,20 @@ linux_work_sheet_row_index = 1
 not_run_binary_dict = {}
 
 module = {
-'resource':["unittests"],
-'resource/c_common':["malloctests", "randomtests", "stringtests", "timetests"],
-'resource/csdk/connectivity': ["catests"],
-'resource/csdk/security':["unittest"],
-'resource/csdk/security/provisioning':["security_unittest"],
-'resource/csdk/security/provisioning/ck_manager' :["unittest_1"],
-'resource/csdk/stack':["stacktests"],
-'resource/provisioning': ["provisiontests"],
-'service/scene-manager': ["remote_scene_action_test","remote_scene_col_test","remote_scene_list_test","remote_scene_test", "scene_action_test","scene_collection_test", "scene_list_test", "scene_test"],
-'service/easy-setup/enrollee':["easysetup_enrollee_test"],
-'service/easy-setup/mediator/richsdk':["easysetup_mediator_test"],
-'service/resource-container':["container_test"],
-'service/notification':["notification_consumer_test", "notification_provider_test"],
-'service/resource-encapsulation':["broker_test", "cache_test", "rcs_client_test", "rcs_server_test", "rcs_common_test"]
+'resource':['unittests'],
+'resource/c_common':['malloctests', 'randomtests', 'stringtests', 'timetests'],
+'resource/csdk/connectivity': ['catests'],
+'resource/csdk/security':['unittest'],
+'resource/csdk/security/provisioning':['security_unittest'],
+'resource/csdk/security/provisioning/ck_manager' :['unittest_1'],
+'resource/csdk/stack':['stacktests'],
+'resource/provisioning': ['provisiontests'],
+'service/scene-manager': ['remote_scene_action_test','remote_scene_col_test','remote_scene_list_test','remote_scene_test', 'scene_action_test','scene_collection_test', 'scene_list_test', 'scene_test'],
+'service/easy-setup/enrollee':['easysetup_enrollee_test'],
+'service/easy-setup/mediator/richsdk':['easysetup_mediator_test'],
+'service/resource-container':['container_test'],
+'service/notification':['notification_consumer_test', 'notification_provider_test'],
+'service/resource-encapsulation':['broker_test', 'cache_test', 'rcs_client_test', 'rcs_server_test', 'rcs_common_test']
 }
 
 def set_excel_style() :
@@ -134,9 +133,9 @@ def set_excel_style() :
 def open_excel_workbook() :
     global module_workbook
     date = dt.datetime.today()
-    yy_mm_dd = date.strftime("%Y%m%d")
+    yy_mm_dd = date.strftime('%Y%m%d')
     wk_no = date.isocalendar()[1]
-    MODULE_NAME ="testtsts"
+    MODULE_NAME ='testtsts'
     module_workbook = xlsxwriter.Workbook(DEV_UNIT_TEST_RESULT_DIRECTORY +'TestResult_UnitTest_%s_W%s.xlsx' % (yy_mm_dd, str(wk_no)))
     set_excel_style()
     add_worksheet_to_excel_workbook()
@@ -220,10 +219,10 @@ def add_worksheet_to_excel_workbook() :
     global pass_work_sheet
     global fail_work_sheet
     global defect_work_sheet
-    summary_work_sheet = module_workbook.add_worksheet("Summary")
-    pass_work_sheet = module_workbook.add_worksheet("Linux")
-    fail_work_sheet = module_workbook.add_worksheet("Java")
-    defect_work_sheet = module_workbook.add_worksheet("DefectReport")
+    summary_work_sheet = module_workbook.add_worksheet('Summary')
+    pass_work_sheet = module_workbook.add_worksheet('Linux')
+    fail_work_sheet = module_workbook.add_worksheet('Java')
+    defect_work_sheet = module_workbook.add_worksheet('DefectReport')
     set_summary_work_sheet_header()
     set_pass_work_sheet_header()
     set_fail_work_sheet_header()
@@ -259,11 +258,11 @@ def parse_xml_file(file_list, module_name):
     for file_name in  file_list :
 
 
-        full_file_name = DEV_UNIT_TEST_RESULT_DIRECTORY+file_name+".xml"
-        print("File Name :"+ file_name)
+        full_file_name = DEV_UNIT_TEST_RESULT_DIRECTORY+file_name+'.xml'
+        print('File Name :'+ file_name)
         temp_dict = {}
         pass_work_sheet_module_row_start_index = linux_work_sheet_row_index
-        #file_base_name = basename(filename).split(".")[0]
+        #file_base_name = basename(filename).split('.')[0]
         pass_work_sheet.write(linux_work_sheet_row_index, TEST_MODULE_COLUMN_INDEX, file_name, test_suite_format)
         if not os.path.isfile(full_file_name) :
             missing_binary_list.append(file_name)
@@ -287,9 +286,9 @@ def parse_xml_file(file_list, module_name):
         type_wise_not_run_count += int(not_run_cnt)
 
 
-        print("Total Test Cases count : "+test_count)
+        print('Total Test Cases count : '+test_count)
 
-        print("Total TEst Cases count : "+test_count)
+        print('Total TEst Cases count : '+test_count)
         #Find all tags named <testsuite> and store to testsuites list
         testsuites = root.findall('testsuite')
 
@@ -297,32 +296,32 @@ def parse_xml_file(file_list, module_name):
         for test_suite in testsuites :
             merge_pass_row_suite_start_index = linux_work_sheet_row_index
             test_suite_name = test_suite.get('name')
-            print ("Suite Name : "+test_suite_name+"\n")
+            print ('Suite Name : '+test_suite_name+'\n')
             pass_work_sheet.write(linux_work_sheet_row_index, TEST_SUITE_COLUMN_INDEX, test_suite_name, test_suite_format)
             testcases = test_suite.findall('testcase')
-            failure_message = "N/A"
+            failure_message = 'N/A'
             for test_case in testcases :
-                test_result = "Pass"
-                failure_message = "N/A"
+                test_result = 'Pass'
+                failure_message = 'N/A'
                 test_name = test_case.get('name')
                 test_status = test_case.get('status')
                 test_time = test_case.get('time')
-                print("Test Name : " +test_name)
-                if test_status == "notrun" :
-                    test_result = "Not Run"
-                    failure_message = "Disable by code"
+                print('Test Name : ' +test_name)
+                if test_status == 'notrun' :
+                    test_result = 'Not Run'
+                    failure_message = 'Disable by code'
                 fail = test_case.find('failure')
                 error = test_case.find('error')
                 if error is not None :
-                    test_result = "Error"
+                    test_result = 'Error'
                     failure_message = error.get('message')
                 if fail is not None :
-                    test_result = "Fail"
+                    test_result = 'Fail'
                     failure_message = fail.get('message')
-                    print("Result : Fail "+ failure_message )
-                    print("Result : "+test_result +" Message : "+failure_message+" Time : "+test_time)
+                    print('Result : Fail '+ failure_message )
+                    print('Result : '+test_result +' Message : '+failure_message+' Time : '+test_time)
                 else :
-                    print("Result : "+test_result+ " Time : "+test_time)
+                    print('Result : '+test_result+ ' Time : '+test_time)
                #writing value into pass worksheet
                 pass_work_sheet.write(linux_work_sheet_row_index, TEST_CASE_COLUMN_INDEX, test_name, common_format)
                 pass_work_sheet.write(linux_work_sheet_row_index, TEST_RESULT_COLUMN_INDEX, test_result, common_format)
@@ -332,7 +331,7 @@ def parse_xml_file(file_list, module_name):
 
             #suite wise merging in pass worksheet
             pass_work_sheet.merge_range(merge_pass_row_suite_start_index,2,linux_work_sheet_row_index - 1,2,test_suite_name,test_suite_format)
-            print ("\n")
+            print ('\n')
 
         #Catagory wise merging in pass worksheet
         pass_work_sheet.merge_range(pass_work_sheet_module_row_start_index,1,linux_work_sheet_row_index - 1,1,file_name,test_suite_format)
@@ -370,14 +369,14 @@ def parse_xml_file(file_list, module_name):
 
 
 def print_missing_binary_list_type_wise() :
-    print("===============================Not Run Binary==================================")
+    print('===============================Not Run Binary==================================')
     for module_name in not_run_binary_dict :
         if len(not_run_binary_dict [module_name]) is not 0 :
-            print("Module : "+ module_name)
+            print('Module : '+ module_name)
             for binary_name in not_run_binary_dict [module_name] :
-                print(" "+binary_name+" ")
-            print("\n")
-    print("================================================================================")
+                print(' '+binary_name+' ')
+            print('\n')
+    print('================================================================================')
 
 def close_module_workbook() :
     module_workbook.close()
@@ -392,21 +391,21 @@ def create_excel_report() :
         if len(dev_test_result_files_list) > 0 :
             parse_xml_file(dev_test_result_files_list, module_name)
 
-    summary_work_sheet.write(summary_work_sheet_row_index, 1, "All", common_format)
+    summary_work_sheet.write(summary_work_sheet_row_index, 1, 'All', common_format)
     summary_work_sheet.write(summary_work_sheet_row_index, 2, pass_count, common_format)
     summary_work_sheet.write(summary_work_sheet_row_index, 3, fail_count, common_format)
     summary_work_sheet.write(summary_work_sheet_row_index, 4, error_count, common_format)
     summary_work_sheet.write(summary_work_sheet_row_index, 5, not_run_count, common_format)
     summary_work_sheet.write(summary_work_sheet_row_index, 6, total_count , common_format)
 
-    summary_work_sheet.merge_range(1, 0,summary_work_sheet_row_index, 0 ,"Linux", common_format)
+    summary_work_sheet.merge_range(1, 0,summary_work_sheet_row_index, 0 ,'Linux', common_format)
     close_module_workbook()
 
 def find_and_copy_file() :
-    directory = DEV_UNIT_TEST_RESULT_DIRECTORY+":xml:"
-    print("Directory :"+directory)
-    print(Utility.is_directory_exist(directory))
-    if (Utility.is_directory_exist(directory)) :
+    directory = DEV_UNIT_TEST_RESULT_DIRECTORY+':xml:'
+    print('Directory :'+directory)
+    print(os.path.isdir(directory))
+    if (os.path.isdir(directory)) :
         for root, dirs ,files in os.walk(directory) :
             for file_name in files :
                 if file_name.endswith('.xml') :
@@ -414,20 +413,20 @@ def find_and_copy_file() :
                     print(file_name)
                     file_full_path = os.path.join(root, file_name)
                     directory_path = os.path.dirname(file_full_path)
-                    Utility.copy_file(directory_path+"/unittest.xml", DEV_UNIT_TEST_RESULT_DIRECTORY+"security_unittest.xml")
+                    shutil.copy(directory_path + '/unittest.xml', DEV_UNIT_TEST_RESULT_DIRECTORY + 'security_unittest.xml')
 
 
 def print_summary():
-    print "\n========================Dev Team Unit TCs===================================\n"
-    print("\nTEST RESULT SUMMARY \n")
-    print("\n PLATFORM : %s\n"%("LINUX"))
-    print("\n MODULE : %s\n"%("ALL"))
-    print("     PASS    : " +str(pass_count)+"\n")
-    print("     FAIL    : " +str(fail_count)+"\n")
-    print("     ERROR   : " +str(error_count)+"\n")
-    print("     NOT RUN : " +str(not_run_count)+"\n")
-    print("     TOTAL   : " +str(total_count)+"\n")
-    print "\n==============================================================================\n"
+    print '\n========================Dev Team Unit TCs===================================\n'
+    print('\nTEST RESULT SUMMARY \n')
+    print('\n PLATFORM : %s\n'%('LINUX'))
+    print('\n MODULE : %s\n'%('ALL'))
+    print('     PASS    : ' +str(pass_count)+'\n')
+    print('     FAIL    : ' +str(fail_count)+'\n')
+    print('     ERROR   : ' +str(error_count)+'\n')
+    print('     NOT RUN : ' +str(not_run_count)+'\n')
+    print('     TOTAL   : ' +str(total_count)+'\n')
+    print '\n==============================================================================\n'
 
 
 

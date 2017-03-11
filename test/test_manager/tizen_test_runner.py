@@ -115,7 +115,7 @@ testspec_path = os.path.join(testresult, TEST_SPEC_XML_FOR_RESULT)
 if not os.path.exists(testspec_path) and os.path.exists(API_TC_SRC_DIR):
     container = TestSpecContainer()
     container.extract_api_testspec(API_TC_SRC_DIR, '')
-
+    
     reporter = TestSpecReporter()
     reporter.generate_testspec_report(container.data)
     reporter.report('XML', testspec_path)
@@ -148,7 +148,7 @@ for binary_name in binary_list:
 
     if file_filter and file_filter not in binary_name:
         continue
-
+    
     if not binary_name.startswith(TC_BIN_PREFIX):
         continue
 
@@ -199,12 +199,13 @@ for single_test in testset:
     outXML = outXML + '<testcase name="' + full_tc_name + '" status="run" time="0"'
 
     os.system('sdb ' + device_name + ' dlog -c')
-
+    
     try:
-        command = 'sdb %s shell %s/%s --gtest_filter=%s'%(device_name, app_path, binary_name, full_tc_name)
+        #command = 'sdb %s shell %s/%s --gtest_filter=%s'%(device_name, app_path, binary_name, full_tc_name)
+        command = 'sdb %s shell %s/tizen_runner.sh %s %s --gtest_filter=%s.%s'%(device_name, app_path, app_path, binary_name, suite_name, tc_name)
         print("Start Execution TC:" , command+'\n')
         proc= subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        log, err = proc.communicate(timeout = timeout_seconds)
+        log, err = proc.communicate(timeout = timeout_seconds) 
 
         log = str(log)
         log = remove_invalid_character_from_log(log)
@@ -252,7 +253,7 @@ for single_test in testset:
     logFile.write(logs)
 
     xmlFile = open(testresult + os.sep + file_name + '.xml', 'w')
-    xmlFile.write(outXML)
+    xmlFile.write(outXML) 
 
 
 if testset:
