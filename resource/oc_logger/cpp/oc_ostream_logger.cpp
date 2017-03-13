@@ -67,7 +67,14 @@ try
  auto *target = reinterpret_cast<std::ostream *>(world);
 
  if(nullptr == world)
+ {
+#ifdef TB_LOG
   target = &std::cout;
+#else
+  static std::ostream nullstream(0);
+  target = &nullstream;
+#endif
+ }
 
  oc_ostream_logger_ctx *my_ctx = new oc_ostream_logger_ctx(target);
 
