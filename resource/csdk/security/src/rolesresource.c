@@ -607,7 +607,7 @@ OCStackResult CBORPayloadToRoles(const uint8_t *cborPayload, size_t size, RoleCe
                                 }
                             }
                             // Silently ignore subject field; log anything else.
-                            else if (strcmp(tagName, OIC_JSON_SUBJECT_NAME) == 0)
+                            else if (strcmp(tagName, OIC_JSON_SUBJECTID_NAME) != 0)
                             {
                                 OIC_LOG_V(WARNING, TAG, "Unknown role map tag: %s", tagName);
                             }

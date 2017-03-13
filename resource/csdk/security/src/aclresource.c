@@ -55,6 +55,7 @@ static const uint8_t ACL_MAP_SIZE = 4;
 static const uint8_t ACL_ACLIST_MAP_SIZE = 1;
 static const uint8_t ACL_ACES_MAP_SIZE = 3;
 static const uint8_t ACL_RESOURCE_MAP_SIZE = 3;
+static const uint8_t ACE_ROLE_MAP_SIZE = 2;
 
 
 // CborSize is the default cbor payload size being used.
@@ -398,21 +399,8 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, OicSecAclVersion_t acl
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Creating ACES Map");
 
         // Subject -- Mandatory
-        switch (aclVersion)
-        {
-        case OIC_SEC_ACL_V1:
-            cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_SUBJECTID_NAME,
-                strlen(OIC_JSON_SUBJECTID_NAME));
-            break;
-        case OIC_SEC_ACL_V2:
-            cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_SUBJECT_NAME,
-                strlen(OIC_JSON_SUBJECT_NAME));
-            break;
-        default:
-            assert(!"Unknown ACL version");
-            cborEncoderResult = CborUnknownError;
-            break;
-        }
+        cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_SUBJECTID_NAME,
+            strlen(OIC_JSON_SUBJECTID_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Subject Name Tag.");
         if (OicSecAceUuidSubject == ace->subjectType)
         {
@@ -428,29 +416,8 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, OicSecAclVersion_t acl
             {
                 char *subject = NULL;
                 ret = ConvertUuidToStr(&ace->subjectuuid, &subject);
-                VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
-                if (OIC_SEC_ACL_V2 <= aclVersion)
-                {
-                    /* @todo: The subject field now has a choice of possible types. How do we do this? For now, prefix
-                     * the encoded string with the type.
-                     */
-                    size_t annotatedSubjectSize = strlen(OIC_JSON_SUBJECTID_NAME) + strlen(subject) + sizeof("|");
-                    char *annotatedSubject = (char *)OICCalloc(1, annotatedSubjectSize);
-                    if (NULL == annotatedSubject)
-                    {
-                        cborEncoderResult = CborErrorOutOfMemory;
-                        OICFree(subject);
-                        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed allocating memory for annotated subject");
-                    }
-#ifndef NDEBUG
-                    int bytesWritten =
-#endif
-                    snprintf(annotatedSubject, annotatedSubjectSize, "%s|%s", OIC_JSON_SUBJECTID_NAME, subject);
-                    assert((0 < bytesWritten) && ((size_t)bytesWritten < annotatedSubjectSize));
-                    OICFree(subject);
-                    subject = annotatedSubject;
-                }
-                
+                cborEncoderResult = (OC_STACK_OK == ret) ? CborNoError : CborUnknownError;
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to convert subject UUID to string");
                 cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, subject, strlen(subject));
                 OICFree(subject);
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding Subject UUID Value");
@@ -458,30 +425,25 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, OicSecAclVersion_t acl
         }
         else if (OicSecAceRoleSubject == ace->subjectType)
         {
-            char *annotatedRole = NULL;
-            size_t annotatedRoleSize = strlen(OIC_JSON_ROLEIDS_NAME) + strlen(ace->subjectRole.id) +
-                strlen(ace->subjectRole.authority) + sizeof("|;");
+            assert(OIC_SEC_ACL_V2 <= aclVersion);
+            CborEncoder roleMap;
+            cborEncoderResult = cbor_encoder_create_map(&oicSecAclMap, &roleMap, ACE_ROLE_MAP_SIZE);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed creating role map");
 
-            assert(2 <= aclVersion);
+            cborEncoderResult = cbor_encode_text_string(&roleMap, OIC_JSON_ROLEIDS_NAME, strlen(OIC_JSON_ROLEIDS_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding roleid tag");
 
-            annotatedRole = (char *)OICCalloc(1, annotatedRoleSize);
-            if (NULL == annotatedRole)
-            {
-                cborEncoderResult = CborErrorOutOfMemory;
-                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed allocating memory for annotated role");
-            }
+            cborEncoderResult = cbor_encode_text_string(&roleMap, ace->subjectRole.id, strlen(ace->subjectRole.id));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding roleid value");
 
-            /* @todo: Better way of encoding this? A map or something? */
-#ifndef NDEBUG
-            int bytesWritten =
-#endif
-            snprintf(annotatedRole, annotatedRoleSize, "%s|%s;%s",
-                OIC_JSON_ROLEIDS_NAME, ace->subjectRole.id, ace->subjectRole.authority);
-            assert((0 < bytesWritten) && ((size_t)bytesWritten < annotatedRoleSize));
+            cborEncoderResult = cbor_encode_text_string(&roleMap, OIC_JSON_AUTHORITY_NAME, strlen(OIC_JSON_AUTHORITY_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding authority tag");
 
-            cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, annotatedRole, strlen(annotatedRole));
-            OICFree(annotatedRole);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding subject role value");
+            cborEncoderResult = cbor_encode_text_string(&roleMap, ace->subjectRole.authority, strlen(ace->subjectRole.authority));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding authority value");
+
+            cborEncoderResult = cbor_encoder_close_container(&oicSecAclMap, &roleMap);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed closing role map");
         }
         else
         {
@@ -846,14 +808,15 @@ OicSecAcl_t* CBORPayloadToCloudAcl(const uint8_t *cborPayload, const size_t size
                                 if(strcmp(subject, WILDCARD_RESOURCE_URI) == 0)
                                 {
                                     ace->subjectuuid.id[0] = '*';
+                                    free(subject);
                                 }
                                 else
                                 {
                                     OIC_LOG_V(DEBUG, TAG, "Converting subjectuuid = %s to uuid...", subject);
                                     ret = ConvertStrToUuid(subject, &ace->subjectuuid);
+                                    free(subject);
                                     VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
                                 }
-                                OICFree(subject);
                             }
 
                             // Resources -- Mandatory
@@ -1048,10 +1011,12 @@ OicSecAcl_t* CBORPayloadToCloudAcl(const uint8_t *cborPayload, const size_t size
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Rownerid Value.");
                 OIC_LOG_V(DEBUG, TAG, "Converting rownerid = %s to uuid...", stRowner);
                 ret = ConvertStrToUuid(stRowner, &acl->rownerID);
+                free(stRowner);
                 VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
-                OICFree(stRowner);
             }
-            OICFree(tagName);
+            // Strings allocated with cbor_value_dup_text_string must be freed with free, not OICFree.
+            free(tagName);
+            tagName = NULL;
         }
         if (cbor_value_is_valid(&aclMap))
         {
@@ -1072,7 +1037,7 @@ exit:
 }
 
 // This function converts CBOR format to ACL data.
-// Caller needs to invoke 'free' when done using
+// Caller needs to invoke 'OICFree' on returned value when done using
 // note: This function is used in unit test hence not declared static,
 OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
 {
@@ -1085,6 +1050,8 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
     CborValue aclCbor = { .parser = NULL };
     CborParser parser = { .end = NULL };
     CborError cborFindResult = CborNoError;
+    char *tagName = NULL;
+    char *roleTagName = NULL;
 
     cbor_parser_init(cborPayload, size, 0, &parser, &aclCbor);
 
@@ -1097,7 +1064,6 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
 
     while (cbor_value_is_valid(&aclMap))
     {
-        char* tagName = NULL;
         size_t len = 0;
         CborType type = cbor_value_get_type(&aclMap);
         if (type == CborTextStringType)
@@ -1147,7 +1113,6 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering ACE Map.");
 
                                 OicSecAce_t *ace = NULL;
-                                OicSecAclVersion_t aclVersion = OIC_SEC_ACL_UNKNOWN;
                                 ace = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
                                 VERIFY_NOT_NULL(TAG, ace, ERROR);
                                 LL_APPEND(acl->aces, ace);
@@ -1169,91 +1134,107 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                         // Subject -- Mandatory
                                         if (strcmp(name, OIC_JSON_SUBJECTID_NAME) == 0)
                                         {
-                                            if (OIC_SEC_ACL_UNKNOWN == aclVersion)
+                                            if (cbor_value_is_text_string(&aceMap))
                                             {
-                                                aclVersion = OIC_SEC_ACL_V1;
+                                                /* UUID-type subject */
+                                                char *subject = NULL;
+                                                cborFindResult = cbor_value_dup_text_string(&aceMap, &subject, &tempLen, NULL);
+                                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding subject Value.");
+                                                if (strcmp(subject, WILDCARD_RESOURCE_URI) == 0)
+                                                {
+                                                    ace->subjectuuid.id[0] = '*';
+                                                    ace->subjectType = OicSecAceUuidSubject;
+                                                }
+                                                else
+                                                {
+                                                    ret = ConvertStrToUuid(subject, &ace->subjectuuid);
+                                                    if (OC_STACK_OK != ret)
+                                                    {
+                                                        cborFindResult = CborUnknownError;
+                                                        free(subject);
+                                                        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed converting subject UUID");
+                                                    }
+                                                    ace->subjectType = OicSecAceUuidSubject;
+                                                }
+                                                free(subject);
                                             }
-                                            else
+                                            else if (cbor_value_is_container(&aceMap))
                                             {
-                                                cborFindResult = CborUnknownError;
-                                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Multiple subjects present");
-                                            }
+                                                /* Role subject */
+                                                size_t unusedLen = 0;
+                                                CborValue roleMap;
+                                                memset(&roleMap, 0, sizeof(roleMap));
 
-                                            char *subject = NULL;
-                                            cborFindResult = cbor_value_dup_text_string(&aceMap, &subject, &tempLen, NULL);
-                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding subject Value.");
-                                            if(strcmp(subject, WILDCARD_RESOURCE_URI) == 0)
-                                            {
-                                                ace->subjectuuid.id[0] = '*';
-                                                ace->subjectType = OicSecAceUuidSubject;
-                                            }
-                                            else
-                                            {
-                                                ret = ConvertStrToUuid(subject, &ace->subjectuuid);
-                                                if (OC_STACK_OK != ret)
+                                                cborFindResult = cbor_value_enter_container(&aceMap, &roleMap);
+                                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed entering role map");
+
+                                                while (cbor_value_is_valid(&roleMap) && cbor_value_is_text_string(&roleMap))
+                                                {
+                                                    cborFindResult = cbor_value_dup_text_string(&roleMap, &roleTagName, &unusedLen, NULL);
+                                                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed getting role map tag name");
+                                                    cborFindResult = cbor_value_advance(&roleMap);
+                                                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed advancing role map");
+
+                                                    if (NULL != roleTagName)
+                                                    {
+                                                        if (strcmp(roleTagName, OIC_JSON_ROLEIDS_NAME) == 0)
+                                                        {
+                                                            char *roleId = NULL;
+                                                            cborFindResult = cbor_value_dup_text_string(&roleMap, &roleId, &unusedLen, NULL);
+                                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed getting role id value");
+                                                            if (strlen(roleId) >= sizeof(ace->subjectRole.id))
+                                                            {
+                                                                cborFindResult = CborUnknownError;
+                                                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Role ID is too long");
+                                                            }
+                                                            OICStrcpy(ace->subjectRole.id, sizeof(ace->subjectRole.id), roleId);
+                                                            free(roleId);
+                                                        }
+                                                        else if (strcmp(roleTagName, OIC_JSON_AUTHORITY_NAME) == 0)
+                                                        {
+                                                            char *authorityName = NULL;
+                                                            cborFindResult = cbor_value_dup_text_string(&roleMap, &authorityName, &unusedLen, NULL);
+                                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed getting role authority value");
+                                                            if (strlen(authorityName) >= sizeof(ace->subjectRole.authority))
+                                                            {
+                                                                cborFindResult = CborUnknownError;
+                                                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Authority name is too long");
+                                                            }
+                                                            OICStrcpy(ace->subjectRole.authority, sizeof(ace->subjectRole.authority), authorityName);
+                                                            free(authorityName);
+                                                        }
+                                                        else
+                                                        {
+                                                            OIC_LOG_V(WARNING, TAG, "Unknown tag name in role map: %s", roleTagName);
+                                                        }
+
+                                                        free(roleTagName);
+                                                        roleTagName = NULL;
+                                                    }
+
+                                                    if (cbor_value_is_valid(&roleMap))
+                                                    {
+                                                        cborFindResult = cbor_value_advance(&roleMap);
+                                                        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed advancing role map");
+                                                    }
+                                                }
+
+                                                /* Make sure at least the id is present. */
+                                                if ('\0' == ace->subjectRole.id[0])
                                                 {
                                                     cborFindResult = CborUnknownError;
-                                                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed converting subject UUID");
+                                                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "ID for role was not present in role map");
                                                 }
-                                                ace->subjectType = OicSecAceUuidSubject;
-                                            }
-                                            OICFree(subject);
-                                        }
 
-                                        if (strcmp(name, OIC_JSON_SUBJECT_NAME) == 0)
-                                        {
-                                            if (OIC_SEC_ACL_UNKNOWN == aclVersion)
-                                            {
-                                                aclVersion = OIC_SEC_ACL_V2;
-                                            }
-                                            else
-                                            {
-                                                cborFindResult = CborUnknownError;
-                                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Multiple subjects present");
-                                            }
-
-                                            char *subject = NULL;
-                                            cborFindResult = cbor_value_dup_text_string(&aceMap, &subject, &len, NULL);
-                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding subject Value.");
-                                            if (strcmp(subject, WILDCARD_RESOURCE_URI) == 0)
-                                            {
-                                                ace->subjectuuid.id[0] = '*';
-                                                ace->subjectType = OicSecAceUuidSubject;
-                                            }
-                                            else if (strncmp(subject, OIC_JSON_SUBJECTID_NAME, strlen(OIC_JSON_SUBJECTID_NAME)) == 0)
-                                            {
-                                                /* Skip ahead past type name and pipe in string */
-                                                ret = ConvertStrToUuid(subject + strlen(OIC_JSON_SUBJECTID_NAME) + 1, &ace->subjectuuid);
-                                                if (OC_STACK_OK != ret)
-                                                {
-                                                    cborFindResult = CborUnknownError;
-                                                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed converting subject UUID");
-                                                }
-                                                ace->subjectType = OicSecAceUuidSubject;
-                                            }
-                                            else if (strncmp(subject, OIC_JSON_ROLEIDS_NAME, strlen(OIC_JSON_ROLEIDS_NAME)) == 0)
-                                            {
-                                                /* Skip ahead past type name and pipe in string */
-                                                const char *start = subject + strlen(OIC_JSON_ROLEIDS_NAME) + 1;
-                                                const char *p = strstr(start, ";");
-                                                if ((NULL == p) || (start == p))
-                                                {
-                                                    cborFindResult = CborUnknownError;
-                                                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Malformed role name");
-                                                }
-                                                memset(&ace->subjectRole, 0, sizeof(ace->subjectRole));
-                                                OICStrcpyPartial(ace->subjectRole.id, sizeof(ace->subjectRole.id),
-                                                                 start, (p - start));
-                                                if (*(p + 1) != '\0')
-                                                {
-                                                    OICStrcpy(ace->subjectRole.authority, sizeof(ace->subjectRole.authority),
-                                                              p + 1);
-                                                }
                                                 ace->subjectType = OicSecAceRoleSubject;
                                             }
-
-                                            /* Strings from tinycbor must be freed with 'free' */
-                                            free(subject);
+                                            else
+                                            {
+                                                cborFindResult = CborUnknownError;
+                                                CborType subjectCborType = cbor_value_get_type(&aceMap);
+                                                OIC_LOG_V(ERROR, TAG, "Unknown subject value type: %d", subjectCborType);
+                                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Type of subject value was not expected");
+                                            }
                                         }
 
                                         // Resources -- Mandatory
@@ -1473,14 +1454,15 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                 cborFindResult = cbor_value_dup_text_string(&aclMap, &stRowner, &len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Rownerid Value.");
                 ret = ConvertStrToUuid(stRowner, &acl->rownerID);
+                free(stRowner);
                 VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
-                OICFree(stRowner);
             }
             else if (NULL != gAcl)
             {
                 memcpy(&(acl->rownerID), &(gAcl->rownerID), sizeof(OicUuid_t));
             }
-            OICFree(tagName);
+            free(tagName);
+            tagName = NULL;
         }
         if (cbor_value_is_valid(&aclMap))
         {
@@ -1496,6 +1478,9 @@ exit:
         DeleteACLList(acl);
         acl = NULL;
     }
+
+    free(tagName);
+    free(roleTagName);
 
     return acl;
 }
