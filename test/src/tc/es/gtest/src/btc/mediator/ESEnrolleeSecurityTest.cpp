@@ -19,7 +19,6 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <gtest/gtest.h>
-#include "CommonUtil.h"
 #include "CommonTestUtil.h"
 #include <atomic>
 #include <functional>
@@ -129,9 +128,10 @@ TEST_F(ESEnrolleeSecurityTest_btc, getUUID_SRC_P)
     try
     {
         std::shared_ptr < EnrolleeSecurity > m_enrolleeSecurity;
-        m_enrolleeSecurity = std::make_shared < EnrolleeSecurity > (g_resource, "");
+        m_enrolleeSecurity = std::make_shared < EnrolleeSecurity > (g_resource);
         std::shared_ptr < SecProvisioningStatus > securityProvisioningStatus = std::make_shared
                 < SecProvisioningStatus > (m_enrolleeSecurity->getUUID(), ES_ERROR);
+
         if (securityProvisioningStatus == NULL)
         {
             SET_FAILURE("Security Provisioning Status  is null.");
@@ -158,7 +158,7 @@ TEST_F(ESEnrolleeSecurityTest_btc, getUUID_ETC_N)
     try
     {
         std::shared_ptr < EnrolleeSecurity > m_enrolleeSecurity;
-        m_enrolleeSecurity = std::make_shared < EnrolleeSecurity > (g_resource, "");
+        m_enrolleeSecurity = std::make_shared < EnrolleeSecurity > (g_resource);
         if (m_enrolleeSecurity->getUUID() != "")
         {
             SET_FAILURE("Expected UUID not found");
@@ -183,8 +183,8 @@ TEST_F(ESEnrolleeSecurityTest_btc, getUUID_ETC_N)
 TEST_F(ESEnrolleeSecurityTest_btc, provisionOwnership_SRC_P)
 {
     std::shared_ptr < EnrolleeSecurity > m_enrolleeSecurity;
-    m_enrolleeSecurity = std::make_shared < EnrolleeSecurity > (g_resource, "");
-    if (m_enrolleeSecurity->provisionOwnership() == NULL)
+    m_enrolleeSecurity = std::make_shared < EnrolleeSecurity > (g_resource);
+    if (m_enrolleeSecurity->provisionOwnership(NULL) != ES_OK)
         {
             SET_FAILURE("Provision Ownership is null");
         }
@@ -205,8 +205,8 @@ TEST_F(ESEnrolleeSecurityTest_btc, provisionOwnership_ETC_N)
     try
     {
         std::shared_ptr < EnrolleeSecurity > m_enrolleeSecurity;
-        m_enrolleeSecurity = std::make_shared < EnrolleeSecurity > (g_resource, "");
-        ASSERT_EQ(ES_SECURE_RESOURCE_DISCOVERY_FAILURE, m_enrolleeSecurity->provisionOwnership())<<"Expect result ES_SECURE_RESOURCE_DISCOVERY_FAILURE is not found.";
+        m_enrolleeSecurity = std::make_shared < EnrolleeSecurity > (g_resource);
+        ASSERT_EQ(ES_SECURE_RESOURCE_DISCOVERY_FAILURE, m_enrolleeSecurity->provisionOwnership(NULL))<<"Expect result ES_SECURE_RESOURCE_DISCOVERY_FAILURE is not found.";
     }
     catch (exception& e)
     {

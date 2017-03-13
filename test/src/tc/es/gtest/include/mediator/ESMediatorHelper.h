@@ -36,7 +36,7 @@
 #include "ESEnrolleeCommon.h"
 #include <iostream>
 #include <pthread.h>
-#include "EasySetup.h"
+#include "EasySetup.hpp"
 #include "EnrolleeResource.h"
 #include "IotivityTest_Logger.h"
 

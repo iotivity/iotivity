@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,6 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-//#define OC_RSRVD_ES_RES_TYPE_PROV "oic.wk.prov"
 #define JSON_DB_PATH "./oic_svr_db_client.dat"
 using namespace std;
 
@@ -316,7 +315,7 @@ void ESMediatorHelper::foundResource(std::shared_ptr< OC::OCResource > resource)
     {
         // Do some operations with resource object.
         if (resource && !s_curResource
-                && resource->getResourceTypes().at(0) == OC_RSRVD_ES_RES_TYPE_PROV)
+                && resource->getResourceTypes().at(0) == OC_RSRVD_ES_RES_TYPE_EASYSETUP)
         {
             IOTIVITYTEST_LOG(INFO, "DISCOVERED Resource:");
             // Get the resource URI
@@ -381,7 +380,7 @@ void ESMediatorHelper::findEnrolleeResource()
 
     OCPlatform::Configure(config);
 
-    requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=" << OC_RSRVD_ES_RES_TYPE_PROV;
+    requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=" << OC_RSRVD_ES_RES_TYPE_EASYSETUP;
 
     OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &ESMediatorHelper::foundResource);
 

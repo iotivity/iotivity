@@ -49,15 +49,15 @@ protected:
     virtual void SetUp()
     {
         OCStackResult r = OC_STACK_ERROR;
-        CommonUtil::runCommonTCSetUpPart();
-        m_callBacks.WiFiProvCb = &m_esEnrolleeHelper.wiFiProvCbInApp;
+        CommonTestUtil::runCommonTCSetUpPart();
+        m_callBacks.WiFiConfProvCb = &m_esEnrolleeHelper.wiFiProvCbInApp;
         m_callBacks.DevConfProvCb = &m_esEnrolleeHelper.devConfProvCbInApp;
-        m_callBacks.CloudDataProvCb = &m_esEnrolleeHelper.cloudDataProvCbInApp;
+        m_callBacks.CoapCloudConfProvCb = &m_esEnrolleeHelper.cloudDataProvCbInApp;
 
     }
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 };
 
@@ -65,9 +65,9 @@ protected:
  * @since 2016-08-19
  * @objective Test 'ESInitEnrollee' invoke callback for wifi resource
  * @target ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvisioningCallbacks callbacks);
- * @test_data 		1. isSecured false
- *            		2. resourceMask ES_WIFI_RESOURCE
- *            		3. callbacks
+ * @test_data 1. isSecured false
+ *            2. resourceMask ES_WIFICONF_RESOURCE
+ *            3. callbacks
  * @pre_condition None
  * @procedure Perform ESInitEnrollee and check if ES_OK	is returned and wifi prov callback is ivoked in non-secured mode
  * @post_condition None
@@ -78,7 +78,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESWIFIRESOURCENonSecuredSuc
 {
 
     ESResult m_result;
-    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE);
+    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFICONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
@@ -108,9 +108,9 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESWIFIRESOURCENonSecuredSuc
  * @since 2016-08-23
  * @objective Test 'ESInitEnrollee' invoke callback for wifi resource
  * @target ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvisioninm_callBacks callbacks);
- * @test_data 		1. isSecured true
- *            		2. resourceMask ES_WIFI_RESOURCE
- *            		3. callbacks
+ * @test_data 1. isSecured true
+ *            2. resourceMask ES_WIFICONF_RESOURCE
+ *            3. callbacks
  * @pre_condition None
  * @procedure Perform ESInitEnrollee and check if ES_OK	is returned and wifi prov callback is ivoked in secured mode
  * @post_condition None
@@ -120,7 +120,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESWIFIRESOURCENonSecuredSuc
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESWIFIRESOURCESecuredSuccessCallBack_SRC_P)
 {
     ESResult m_result;
-    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE);
+    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFICONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
@@ -146,9 +146,9 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESWIFIRESOURCESecuredSucces
  * @since 2016-08-19
  * @objective Test 'ESInitEnrollee' invoke callback for cloud resource
  * @target ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvisioningCallbacks callbacks);
- * @test_data 		1. isSecured false
- *            		2. resourceMask ES_CLOUD_RESOURCE
- *            		3. callbacks
+ * @test_data 1. isSecured false
+ *            2. resourceMask ES_COAPCLOUDCONF_RESOURCE
+ *            3. callbacks
  * @pre_condition None
  * @procedure Perform ESInitEnrollee and check if ES_OK	is returned and CloudDataProv Cb is ivoked in non-secured mode
  * @post_condition None close the apps
@@ -159,7 +159,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESWIFIRESOURCESecuredSucces
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESCLOUDRESOURCENonSecuredSuccessCallBack_SRC_P)
 {
     ESResult m_result;
-    ESResourceMask resourcemMask = (ESResourceMask)(ES_CLOUD_RESOURCE);
+    ESResourceMask resourcemMask = (ESResourceMask)(ES_COAPCLOUDCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
@@ -185,9 +185,9 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESCLOUDRESOURCENonSecuredSu
  * @since 2016-08-23
  * @objective Test 'ESInitEnrollee' invoke callback for cloud resource
  * @target ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvisioningCallbacks callbacks);
- * @test_data 		1. isSecured true
- *            		2. resourceMask ES_CLOUD_RESOURCE
- *            		3. callbacks
+ * @test_data 1. isSecured true
+ *            2. resourceMask ES_COAPCLOUDCONF_RESOURCE
+ *            3. callbacks
  * @pre_condition None
  * @procedure Perform ESInitEnrollee and check if ES_OK	is returned and CloudDataProv Cb is ivoked in secured mode
  * @post_condition None close the apps
@@ -198,7 +198,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESCLOUDRESOURCENonSecuredSu
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESCLOUDRESOURCESecuredSuccessCallBack_SRC_P)
 {
     ESResult m_result;
-    ESResourceMask resourcemMask = (ESResourceMask)(ES_CLOUD_RESOURCE);
+    ESResourceMask resourcemMask = (ESResourceMask)(ES_COAPCLOUDCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
@@ -224,9 +224,9 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESCLOUDRESOURCESecuredSucce
  * @since 2016-08-19
  * @objective Test 'ESInitEnrollee' Invoke devconf collback
  * @target ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvisioningCallbacks callbacks);
- * @test_data 		1. isSecured false
- *            		2. resourceMask ES_DEVCONF_RESOURCE
- *            		3. callbacks
+ * @test_data 1. isSecured false
+ *            2. resourceMask ES_DEVCONF_RESOURCE
+ *            3. callbacks
  * @pre_condition None
  * @procedure Perform ESInitEnrollee and check if ES_OK	is returned and devconf Cb is ivoked in non-secured mode
  * @post_condition None
@@ -262,9 +262,9 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCENonSecured
  * @since 2016-08-23
  * @objective Test 'ESInitEnrollee' Invoke devconf collback
  * @target ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvisioningCallbacks callbacks);
- * @test_data 		1. isSecured true
- *            		2. resourceMask ES_DEVCONF_RESOURCE
- *            		3. callbacks
+ * @test_data 1. isSecured true
+ *            2. resourceMask ES_DEVCONF_RESOURCE
+ *            3. callbacks
  * @pre_condition None
  * @procedure Perform ESInitEnrollee and check if ES_OK	is returned and devconf Cb is ivoked in secured mode
  * @post_condition None
@@ -300,9 +300,9 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCESecuredSuc
  * @since 2016-08-19
  * @objective Test 'ESInitEnrollee' invoke all callback
  * @target ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvisioningCallbacks callbacks);
- * @test_data 		1. isSecured false
- *            		2. resourceMask ALL
- *            		3. callbacks
+ * @test_data 1. isSecured false
+ *            2. resourceMask ALL
+ *            3. callbacks
  * @pre_condition None
  * @procedure Perform ESInitEnrollee and check if ES_OK	is returned and invoke all cb in non-secured mode
  * @post_condition None
@@ -312,7 +312,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCESecuredSuc
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskAllNonSecuredSuccesscallback_SRC_P)
 {
     ESResult m_result;
-    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
+    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFICONF_RESOURCE | ES_COAPCLOUDCONF_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
@@ -338,9 +338,9 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskAllNonSecuredSuccesscallbac
  * @since 2016-08-19
  * @objective Test 'ESInitEnrollee' invoke all cb with secure mode
  * @target ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvisioningCallbacks callbacks);
- * @test_data 		1. isSecured true
- *            		2. resourceMask ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE
- *            		3. callbacks
+ * @test_data 1. isSecured true
+ *            2. resourceMask ES_WIFICONF_RESOURCE | ES_COAPCLOUDCONF_RESOURCE | ES_DEVCONF_RESOURCE
+ *            3. callbacks
  * @pre_condition None
  * @procedure Perform ESInitEnrollee and check if ES_OK	is returned and invoke all cb in secured mode
  * @post_condition None
@@ -351,7 +351,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskAllNonSecuredSuccesscallbac
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskAllSecuredSuccessCallBack_SRC_P)
 {
     ESResult m_result;
-    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
+    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFICONF_RESOURCE | ES_COAPCLOUDCONF_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
@@ -377,9 +377,9 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskAllSecuredSuccessCallBack_S
  * @since 2016-08-11
  * @objective Test 'ESSetDeviceProperty' works properly
  * @target ESResult ESSetDeviceProperty(ESDeviceProperty *deviceProperty)
- * @test_data 		1. isSecured true
- *            		2. resourceMask
- *            		3. Callback
+ * @test_data 1. isSecured true
+ *            2. resourceMask
+ *            3. Callback
  * @pre_condition None
  * @procedure Perform ESSetDeviceProperty and check if ES_OK is returned
  * @post_condition None
@@ -389,7 +389,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskAllSecuredSuccessCallBack_S
 TEST_F(ESEnrolleeTest_stc, ESSetDevicePropertySetDevicePropertyWithSuccessSecured_SRC_P)
 {
     ESResult m_result;
-    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
+    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFICONF_RESOURCE | ES_COAPCLOUDCONF_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
@@ -410,9 +410,9 @@ TEST_F(ESEnrolleeTest_stc, ESSetDevicePropertySetDevicePropertyWithSuccessSecure
  * @since 2016-08-11
  * @objective Test 'ESSetDeviceProperty' works properly
  * @target ESResult ESSetDeviceProperty(ESDeviceProperty *deviceProperty)
- * @test_data 		1. isSecured false
- *            		2. resourceMask
- *            		3. Callback
+ * @test_data 1. isSecured false
+ *            2. resourceMask
+ *            3. Callback
  * @pre_condition None
  * @procedure Perform ESSetDeviceProperty and check if ES_OK is returned
  * @post_condition None
@@ -422,7 +422,7 @@ TEST_F(ESEnrolleeTest_stc, ESSetDevicePropertySetDevicePropertyWithSuccessSecure
 TEST_F(ESEnrolleeTest_stc, ESSetDevicePropertySetDevicePropertyWithSuccessNonSecured_SRC_P)
 {
     ESResult m_result;
-    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
+    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFICONF_RESOURCE | ES_COAPCLOUDCONF_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
@@ -442,9 +442,9 @@ TEST_F(ESEnrolleeTest_stc, ESSetDevicePropertySetDevicePropertyWithSuccessNonSec
  * @since 2016-08-23
  * @objective Test 'ESTerminateEnrollee()' terminate Provisioning and Network resources successfully
  * @target ESResult ESTerminateEnrollee()
- * @test_data 		1. isSecured false
- *            		2. resourceMask
- *            		3. Callback
+ * @test_data 1. isSecured false
+ *            2. resourceMask
+ *            3. Callback
  * @pre_condition None
  * @procedure Perform ESTerminateEnrollee and check if ES_OK is returned, also checked all provisioning
  * and network resource terminate properly
@@ -455,7 +455,7 @@ TEST_F(ESEnrolleeTest_stc, ESSetDevicePropertySetDevicePropertyWithSuccessNonSec
 TEST_F(ESEnrolleeTest_stc, ESTerminateEnrolleeWorkProperly_SRC_N)
 {
     ESResult m_result;
-    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
+    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFICONF_RESOURCE | ES_COAPCLOUDCONF_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {

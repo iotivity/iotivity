@@ -26,7 +26,7 @@
 #include <chrono>
 #include "escommon.h"
 #include "ESRichCommon.h"
-#include "EasySetup.h"
+#include "EasySetup.hpp"
 #include "RemoteEnrollee.h"
 #include <iostream>
 #include "ESEnrolleeCommon.h"

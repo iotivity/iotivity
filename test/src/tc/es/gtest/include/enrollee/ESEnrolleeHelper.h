@@ -20,6 +20,7 @@
 
 #include <gtest/gtest.h>
 #include "CommonUtil.h"
+#include "CommonTestUtil.h"
 #include <atomic>
 #include <functional>
 #include <condition_variable>
@@ -41,9 +42,9 @@ class ESEnrolleeHelper
 public:
     ESEnrolleeHelper();
     static bool isCallbackInvoked;
-    static void wiFiProvCbInApp(ESWiFiProvData *eventData);
-    static void devConfProvCbInApp(ESDevConfProvData *eventData);
-    static void cloudDataProvCbInApp(ESCloudProvData *eventData);
+    static void wiFiProvCbInApp(ESWiFiConfData *eventData);
+    static void devConfProvCbInApp(ESDevConfData *eventData);
+    static void cloudDataProvCbInApp(ESCoapCloudConfData *eventData);
     ESResult setDeviceProperty();
     static void *listeningFunc(void * data);
     void waitForResponse();

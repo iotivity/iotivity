@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -67,7 +67,7 @@ void* ESEnrolleeHelper::listeningFunc(void *arg)
     pthread_exit (NULL);
 }
 
-void ESEnrolleeHelper::wiFiProvCbInApp(ESWiFiProvData *eventData)
+void ESEnrolleeHelper::wiFiProvCbInApp(ESWiFiConfData *eventData)
 {
     IOTIVITYTEST_LOG(INFO,"wiFiProvCbInApp IN\n");
     ESEnrolleeHelper::isCallbackInvoked = true;
@@ -119,7 +119,7 @@ void ESEnrolleeHelper::wiFiProvCbInApp(ESWiFiProvData *eventData)
     IOTIVITYTEST_LOG(INFO,"wiFiProvCbInApp OUT\n");
 }
 
-void ESEnrolleeHelper::devConfProvCbInApp(ESDevConfProvData *eventData)
+void ESEnrolleeHelper::devConfProvCbInApp(ESDevConfData *eventData)
 {
     IOTIVITYTEST_LOG(INFO,"devConfProvCbInApp IN\n");
     ESEnrolleeHelper::isCallbackInvoked = true;
@@ -146,7 +146,7 @@ void ESEnrolleeHelper::devConfProvCbInApp(ESDevConfProvData *eventData)
     IOTIVITYTEST_LOG(INFO,"devConfProvCbInApp OUT\n");
 }
 
-void ESEnrolleeHelper::cloudDataProvCbInApp(ESCloudProvData *eventData)
+void ESEnrolleeHelper::cloudDataProvCbInApp(ESCoapCloudConfData *eventData)
 {
     IOTIVITYTEST_LOG(INFO,"cloudDataProvCbInApp IN\n");
     ESEnrolleeHelper::isCallbackInvoked = true;
