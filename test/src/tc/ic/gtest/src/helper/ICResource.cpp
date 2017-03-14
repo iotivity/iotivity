@@ -1,25 +1,27 @@
-#include <memory>
-#include <iostream>
-#include <stdexcept>
-#include <condition_variable>
-#include <map>
-#include <vector>
-#include <string>
-#include <unistd.h>
+/******************************************************************
+*
+* Copyright 2017 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
 
-#include "ocstack.h"
-#include "ocpayload.h"
-#include "rd_client.h"
-#include "rd_server.h"
-#include "rd_database.h"
-
-#include <OCApi.h>
-#include <OCPlatform.h>
 #include "ICHelper.h"
-
+#include "ICResource.h"
 using namespace OC;
 using namespace std;
-
 
 ICResource::ICResource(string uri, vector<string> rt, vector<string> itf)
 {
@@ -35,7 +37,7 @@ string ICResource::getResourceUri()
 
 vector<string> ICResource::getResourceType()
 {
-	return m_representation.getResourceTypes();
+    return m_representation.getResourceTypes();
 }
 
 vector<string> ICResource::getInterfaces()
@@ -84,7 +86,6 @@ OCStackResult ICResource::sendRepresentation(shared_ptr<OCResourceRequest> pRequ
       pResponse->setResourceRepresentation(getRepresentation(), DEFAULT_INTERFACE);
     }
 
-    pResponse->setErrorCode(200);
     pResponse->setResponseResult(OC_EH_OK);
 
     return OCPlatform::sendResponse(pResponse);
@@ -96,10 +97,8 @@ OCStackResult ICResource::propagate()
     {
      shared_ptr<OCResourceResponse> resourceResponse =
      {
-       make_shared<OCResourceResponse>() 
+       make_shared<OCResourceResponse>()
      };
-
-     resourceResponse->setErrorCode(200);
      resourceResponse->setResourceRepresentation(getRepresentation(), DEFAULT_INTERFACE);
 
      return OCPlatform::notifyListOfObservers(m_handle,

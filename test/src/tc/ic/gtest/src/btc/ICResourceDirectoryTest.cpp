@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -18,12 +18,6 @@
  *
  ******************************************************************/
 #include "ICHelper.h"
-
-using namespace OC;
-using namespace OC::OCPlatform;
-
-#define INVALID_PARAMETER ""
-#define EMPTY_VALUE       ""
 
 class ICResourceDirectoryTest_btc: public ::testing::Test
 {
@@ -47,7 +41,7 @@ protected:
 
     virtual void SetUp()
     {
-        CommonUtil::runCommonTCSetUpPart();
+        CommonTestUtil::runCommonTCSetUpPart();
         m_ICHelper = ICHelper::getInstance();
         m_actualResult = OC_STACK_ERROR;
         m_isCallbackInvoked = false;
@@ -55,7 +49,7 @@ protected:
 
     virtual void TearDown()
     {
-        CommonUtil::runCommonTCTearDownPart();
+        CommonTestUtil::runCommonTCTearDownPart();
     }
 
 public:
@@ -110,7 +104,6 @@ TEST_F(ICResourceDirectoryTest_btc, SubscribeDevicePresenceWithValidParameters_S
     {
         FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
     }
-
     SUCCEED();
 }
 #endif
@@ -147,7 +140,6 @@ TEST_F(ICResourceDirectoryTest_btc, SubscribeDevicePresenceWithInvalidHostAddres
     {
         EXPECT_EQ(OC_STACK_INVALID_URI, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
     }
-
     SUCCEED();
 }
 #endif
@@ -183,7 +175,6 @@ TEST_F(ICResourceDirectoryTest_btc, SubscribeDevicePresenceWithEmptyHost_ESV_N)
     {
         EXPECT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
     }
-
     SUCCEED();
 }
 #endif
@@ -219,7 +210,6 @@ TEST_F(ICResourceDirectoryTest_btc, SubscribeDevicePresenceWithNullCallback_NV_N
     {
         ASSERT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
     }
-
     SUCCEED();
 }
 #endif
@@ -257,7 +247,6 @@ TEST_F(ICResourceDirectoryTest_btc, UnsubscribePresenceWithValidParameters_SRC_F
     {
         FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
     }
-
     SUCCEED();
 }
 #endif
@@ -287,7 +276,6 @@ TEST_F(ICResourceDirectoryTest_btc, UnSubscribeDevicePresenceWithInvalidOCPresen
     {
         ASSERT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
     }
-
     SUCCEED();
 }
 #endif
@@ -302,7 +290,6 @@ TEST_F(ICResourceDirectoryTest_btc, UnSubscribeDevicePresenceWithInvalidOCPresen
  * @pre_condition   none
  * @procedure       1. Call constructAccountManagerObject API
  *                  2. Check it's return value
- *                
  * @post_condition  none
  * @expected        It will return an object
  */
@@ -312,13 +299,12 @@ TEST_F(ICResourceDirectoryTest_btc, ConstructAccountManagerObjectWithValidParame
 {
     try
     {
-    	ASSERT_NE(nullptr, OCPlatform::constructAccountManagerObject(IC_HOST_ADDRESS,IC_CONNECTIVITY_TYPE));
+        ASSERT_NE(nullptr, OCPlatform::constructAccountManagerObject(IC_HOST_ADDRESS,IC_CONNECTIVITY_TYPE));
     }
     catch(OCException ex)
     {
         FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
     }
-
     SUCCEED();
 }
 #endif
@@ -342,14 +328,13 @@ TEST_F(ICResourceDirectoryTest_btc, ConstructAccountManagerObjectWithEmptyHost_E
 {
     try
     {
-    	OCPlatform::constructAccountManagerObject(EMPTY_VALUE, IC_CONNECTIVITY_TYPE);
-    	FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
+        OCPlatform::constructAccountManagerObject(EMPTY_VALUE, IC_CONNECTIVITY_TYPE);
+        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
     }
     catch(OCException ex)
     {
-    	ASSERT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
+        ASSERT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
     }
-
     SUCCEED();
 }
 #endif
@@ -373,14 +358,14 @@ TEST_F(ICResourceDirectoryTest_btc, ConstructAccountManagerObjectWithInvalidHost
 {
     try
     {
-    	OCPlatform::constructAccountManagerObject(INVALID_PARAMETER, IC_CONNECTIVITY_TYPE);
-    	FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
+        ICHelper::waitForServerResponse();
+        OCPlatform::constructAccountManagerObject(INVALID_PARAMETER, IC_CONNECTIVITY_TYPE);
+        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
     }
     catch(OCException ex)
     {
-    	ASSERT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
+        ASSERT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
     }
-
     SUCCEED();
 }
 #endif

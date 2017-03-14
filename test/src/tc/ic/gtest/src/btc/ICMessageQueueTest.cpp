@@ -1,17 +1,24 @@
-#include <OCApi.h>
-#include <OCPlatform.h>
-#include <string>
-#include <map>
+/******************************************************************
+*
+* Copyright 2017 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
 
-#include "gtest/gtest.h"
-#include "gtest_custom.h"
-
-#define HOST "coap://192.168.1.2:5000"
-#define URI "/resource"
-#define TOPIC_URI "/ps/nweTopic"
-
-#define INVALID_INPUT "Hello"
-#define EMPTY_STRING ""
+#include "ICHelper.h"
 
 using namespace OC;
 
@@ -21,7 +28,7 @@ public:
     std::vector< std::string > m_types = { "oic.ps" };
     std::vector< std::string > m_iFaces = { DEFAULT_INTERFACE };
 
-    OCResource::Ptr m_OCResource ;
+    OC::OCResource::Ptr m_OCResource ;
 
     QueryParamsMap m_queryParametersMap;
     QualityOfService m_qos;
@@ -29,7 +36,8 @@ public:
     ObserveType m_observe;
     QueryParamsMap m_query;
 
-    static void foundResource(const int, const std::string&, std::shared_ptr<OCResource>)
+    static void foundResource(const int ecode, const string &originUri,
+            shared_ptr< OC::OCResource > topic)
     {
 
     }
@@ -68,7 +76,7 @@ protected:
  * @pre_condition constructResourceObject(host, uri, connectivity type, true, types, iFaces) API
  * @procedure Perform createMQTopic(const OCRepresentation& rep, const std::string& topicUri, const QueryParamsMap& queryParametersMap, &createCallback) API
  * @post_condition None
- * @expected createMQTopic that's provide OC_STACK_OK
+ * @expected createMQTopic should return OC_STACK_OK
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICMessageQueueTest_btc, CreateMQTopic_SRC_P)
@@ -127,7 +135,7 @@ TEST_F(ICMessageQueueTest_btc, CreateMQTopic_ESV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICMessageQueueTest_btc, CreateMQTopic_USV_N)
 {
-    EXPECT_ANY_THROW(m_OCResource->createMQTopic(m_rep, INVALID_INPUT, m_queryParametersMap, &foundResource, m_qos))<<"CreateMQTopic is creating Topic into MQ Broker with invalid string as topic uri";
+    EXPECT_ANY_THROW(m_OCResource->createMQTopic(m_rep, INVALID, m_queryParametersMap, &foundResource, m_qos))<<"CreateMQTopic is creating Topic into MQ Broker with invalid string as topic uri";
 }
 #endif
 
@@ -176,7 +184,7 @@ TEST_F(ICMessageQueueTest_btc, DiscoveryMQTopicsCallback_NV_N)
  * @pre_condition constructResourceObject(host, uri, connectivity type, true, types, iFaces) API
  * @procedure Perform requestMQPublish(const QueryParamsMap& queryParametersMap, &publishCallback) API
  * @post_condition None
- * @expected requestMQPublish that's provide OC_STACK_OK
+ * @expected requestMQPublish should return OC_STACK_OK
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICMessageQueueTest_btc, RequestMQPublish_SRC_P)
@@ -212,7 +220,7 @@ TEST_F(ICMessageQueueTest_btc, RequestMQPublishNULLCallback_NV_N)
  * @pre_condition constructResourceObject(host, uri, connectivity type, true, types, iFaces) API
  * @procedure Perform subscribeMQTopic(ObserveType observeType, const QueryParamsMap& queryParametersMap, &observeCallback) API
  * @post_condition None
- * @expected subscribeMQTopic that's provide OC_STACK_OK
+ * @expected subscribeMQTopic should return OC_STACK_OK
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICMessageQueueTest_btc, SubscribeMQTopic_SRC_P)
@@ -248,13 +256,13 @@ TEST_F(ICMessageQueueTest_btc, SubscribeMQTopicNULLCallback_NV_N)
  * @pre_condition constructResourceObject(host, uri, connectivity type, true, types, iFaces) API
  * @procedure Perform unsubscribeMQTopic() API
  * @post_condition None
- * @expected unsubscribeMQTopic that's provide OC_STACK_OK
+ * @expected unsubscribeMQTopic should return OC_STACK_OK
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICMessageQueueTest_btc, UnsubscribeMQTopic_SRC_P)
 {
-	EXPECT_EQ(OC_STACK_OK,m_OCResource->subscribeMQTopic(m_observe, m_queryParametersMap, observeHandler, m_qos))<<"SubscribeMQTopic is NOT to subscribe Topic to MQ Broker with NULL callback.";
-	EXPECT_EQ(OC_STACK_OK, m_OCResource->unsubscribeMQTopic(m_qos))<<"UnsubscribeMQTopic is not to unsubscribe Topic to MQ Broker.";
+    EXPECT_EQ(OC_STACK_OK,m_OCResource->subscribeMQTopic(m_observe, m_queryParametersMap, observeHandler, m_qos))<<"SubscribeMQTopic is NOT to subscribe Topic to MQ Broker with NULL callback.";
+    EXPECT_EQ(OC_STACK_OK, m_OCResource->unsubscribeMQTopic(m_qos))<<"UnsubscribeMQTopic is not to unsubscribe Topic to MQ Broker.";
 }
 #endif
 
@@ -267,7 +275,7 @@ TEST_F(ICMessageQueueTest_btc, UnsubscribeMQTopic_SRC_P)
  * @pre_condition constructResourceObject(host, uri, connectivity type, true, types, iFaces) API
  * @procedure Perform publishMQTopic(const OCRepresentation& rep, const QueryParamsMap& queryParametersMap, &publishCallback) API
  * @post_condition None
- * @expected publishMQTopic that's provide OC_STACK_OK
+ * @expected publishMQTopic should return OC_STACK_OK
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICMessageQueueTest_btc, PublishMQTopic_SRC_P)

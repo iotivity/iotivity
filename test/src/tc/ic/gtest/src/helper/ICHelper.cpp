@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -20,40 +20,77 @@
 
 #include "ICHelper.h"
 
-using namespace std;
-using namespace OC;
-using namespace OC::OCPlatform;
-
-std::mutex ICHelper::s_mutex;
+std::mutex ICHelper::s_Mutex;
 ICHelper* ICHelper::s_ICHelper = NULL;
 
-string ICHelper::UID = "";
-string ICHelper::ACCESS_TOKEN = "";
-string ICHelper::GROUP_ID="";
-string ICHelper::GROUP_TYPE="";
-std::vector<std::string> ICHelper::DEVICE_ID={};
+string ICHelper::s_Uid = "";
+string ICHelper::s_AccessToken = "";
+string ICHelper::s_GroupID = "";
+string ICHelper::s_GroupType = "";
+string ICHelper::s_GName = "";
+string ICHelper::s_GroupUUID = "";
+string ICHelper::s_SearchQuery = "/oic/res?di=";
+bool ICHelper::s_IsGetSuccessful;
+bool ICHelper::s_IsObserveSuccessful;
+bool ICHelper::s_IsDeleteSuccessful;
+bool ICHelper::s_IsPublishSuccessful;
+std::vector< std::string > ICHelper::s_DeviceID =
+{ };
 
-bool ICHelper::isServerResponsed = false;
-bool ICHelper::isSignedUp = false;
-static bool ICHelper::isPostRequestSuccess = false;
+bool ICHelper::s_IsServerResponsed = false;
+bool ICHelper::s_IsSignedUp = false;
+static bool ICHelper::s_IsPostRequestSuccess = false;
 
-ResourceHandles ICHelper::g_ResourceHandles;
-OC::OCResource::Ptr ICHelper::m_binaryswitchResource;
+ResourceHandles ICHelper::s_ResourceHandles;
+OC::OCResource::Ptr ICHelper::s_binaryswitchResource;
+OCResourceHandle m_resourceHandles2;
 
 ICHelper::ICHelper()
 {
     IOTIVITYTEST_LOG(DEBUG, "[ICHelper] IN");
 }
 
+FILE* controllerOpen(const char * /*path*/, const char *mode)
+{
+    return fopen(CLOUD_CLIENT_DAT, mode);
+}
+
+bool ICHelper::initCloudClient()
+{
+    __FUNC_IN__
+
+    static OCPersistentStorage pstStr;
+    pstStr.open = controllerOpen;
+    pstStr.read = fread;
+    pstStr.write = fwrite;
+    pstStr.close = fclose;
+    pstStr.unlink = unlink;
+
+    if (OC_STACK_OK != OCRegisterPersistentStorageHandler(&pstStr))
+    {
+        IOTIVITYTEST_LOG(ERROR, "[ICHelper] OCRegisterPersistentStorageHandler error");
+        return false;
+    }
+
+    // initialize OC stack and provisioning manager
+    if (OC_STACK_OK != OCInit(NULL, 0, OC_CLIENT_SERVER))
+    {
+        IOTIVITYTEST_LOG(ERROR, "[ICHelper] OCStack init error");
+        return false;
+    }
+    __FUNC_OUT__
+    return true;
+}
+
 ICHelper* ICHelper::getInstance(void)
 {
     if (s_ICHelper == NULL)
     {
-        s_mutex.lock();
+        s_Mutex.lock();
 
         s_ICHelper = new ICHelper();
 
-        s_mutex.unlock();
+        s_Mutex.unlock();
     }
 
     return s_ICHelper;
@@ -64,15 +101,13 @@ ICHelper::~ICHelper()
     IOTIVITYTEST_LOG(DEBUG, "[ICHelper] OUT");
     if (s_ICHelper != NULL)
     {
-        delete s_ICHelper;
-
         s_ICHelper = NULL;
     }
 }
 
 void ICHelper::waitForServerResponse()
 {
-    isServerResponsed = false;
+    s_IsServerResponsed = false;
 
     void* ret = NULL;
     pthread_t serverlistiningThread;
@@ -84,20 +119,20 @@ void* ICHelper::executeThread(void *arg)
 {
     int second = 0;
 
-    cout
-            << "\nWaiting For Server Response..........................................................\n";
+    IOTIVITYTEST_LOG(INFO,
+            "\nWaiting For Server Response..........................................................\n");
 
-    while (!isServerResponsed)
+    while (!s_IsServerResponsed)
     {
         sleep(1);
         if (++second == CALLBACK_TIMEOUT)
         {
-            cout << "\nTimeout For Server Response!Please Try Again\n\n";
+            IOTIVITYTEST_LOG(INFO,"\nTimeout For Server Response!Please Try Again");
             break;
         }
     }
 
-    pthread_exit (NULL);
+    pthread_exit(NULL);
 }
 
 FILE* ICHelper::readResourceDATFile(const char * /*path*/, const char *mode)
@@ -109,7 +144,7 @@ void ICHelper::icPrintRepresentation(OCRepresentation rep)
 {
     for (auto itr = rep.begin(); itr != rep.end(); ++itr)
     {
-        cout << "\t" << itr->attrname() << ":\t" << itr->getValueToString() << endl;
+        IOTIVITYTEST_LOG(INFO, "%s \t : %s \t", itr->attrname() , itr->getValueToString());
         if (itr->type() == AttributeType::Vector)
         {
             switch (itr->base_type())
@@ -124,19 +159,19 @@ void ICHelper::icPrintRepresentation(OCRepresentation rep)
                 case AttributeType::Integer:
                     for (auto itr2 : (*itr).getValue< vector< int > >())
                     {
-                        cout << "\t\t" << itr2 << endl;
+                        IOTIVITYTEST_LOG(INFO, "\t\t %d", itr2 );
                     }
                     break;
 
                 case AttributeType::String:
                     for (auto itr2 : (*itr).getValue< vector< string > >())
                     {
-                        cout << "\t\t" << itr2 << endl;
+                        IOTIVITYTEST_LOG(INFO, "\t\t%s" , itr2 );
                     }
                     break;
 
                 default:
-                    cout << "Unhandled base type " << itr->base_type() << endl;
+                    IOTIVITYTEST_LOG(INFO, "Unhandled base type %s" , itr->base_type() );
                     break;
             }
         }
@@ -157,294 +192,270 @@ bool ICHelper::isResourceRegistered()
         { IC_RESOURCE_TYPE_AIRCON },
         { DEFAULT_INTERFACE, BATCH_INTERFACE, LINK_INTERFACE });
 
-        ICBinarySwitchResource binarySwitch(IC_RESOURCE_URI_BSWITCH,
-        { IC_RESOURCE_TYPE_BSWITCH },
-        { DEFAULT_INTERFACE });
-
-        ICTemperatureResource temperature(IC_RESOURCE_URI_TEMP,
-        { IC_RESOURCE_TYPE_TEMP },
-        { DEFAULT_INTERFACE });
-
         string uri = airConditioner.getResourceUri();
         string rt = airConditioner.getResourceType()[0];
         string itf = airConditioner.getInterfaces()[0];
         ocResult = OC_STACK_ERROR;
+
         ocResult = OCPlatform::registerResource(airConditioner.m_handle, uri, rt, itf,
                 bind(&ICAirconditionerResource::entityHandler, &airConditioner, placeholders::_1),
                 OC_DISCOVERABLE);
+
         if (ocResult != OC_STACK_OK)
         {
-            cout << "ICAirconditionerResource registration is unsuccessful" << endl;
+            IOTIVITYTEST_LOG(INFO, "ICAirconditionerResource registration is unsuccessful");
             return false;
         }
 
-        itf = airConditioner.getInterfaces()[1];
-        ocResult = OC_STACK_ERROR;
-        ocResult = OCPlatform::bindInterfaceToResource(airConditioner.m_handle, itf);
-        if (ocResult != OC_STACK_OK)
-        {
-            cout << "Binding second interface for airConditioner is unsuccessful" << endl;
-            return false;
-        }
-
-        itf = airConditioner.getInterfaces()[2];
-        ocResult = OC_STACK_ERROR;
-        ocResult = OCPlatform::bindInterfaceToResource(airConditioner.m_handle, itf);
-        if (ocResult != OC_STACK_OK)
-        {
-            cout << "Binding third interface for airConditioner is unsuccessful" << endl;
-            return false;
-        }
-
-        uri = binarySwitch.getResourceUri();
-        rt = binarySwitch.getResourceType()[0];
-        itf = binarySwitch.getInterfaces()[0];
-        ocResult = OC_STACK_ERROR;
-        ocResult = OCPlatform::registerResource(binarySwitch.m_handle, uri, rt, itf,
-                bind(&ICBinarySwitchResource::entityHandler, &binarySwitch, placeholders::_1),OC_OBSERVABLE);
-        if (ocResult != OC_STACK_OK)
-        {
-            cout << "ICBinarySwitchResource registration is unsuccessful" << endl;
-            return false;
-        }
-
-        uri = temperature.getResourceUri();
-        rt = temperature.getResourceType()[0];
-        itf = temperature.getInterfaces()[0];
-        ocResult = OC_STACK_ERROR;
-        ocResult = OCPlatform::registerResource(temperature.m_handle, uri, rt, itf,
-                bind(&ICTemperatureResource::entityHandler, &temperature, placeholders::_1),
-                OC_OBSERVABLE);
-        if (ocResult != OC_STACK_OK)
-        {
-            cout << "ICTemperatureResource registration is unsuccessful" << endl;
-            return false;
-        }
-
-        ocResult = OC_STACK_ERROR;
-        ocResult = airConditioner.addChildResource(&binarySwitch);
-        if (ocResult != OC_STACK_OK)
-        {
-            cout << "Add ICBinarySwitchResource as a child resource of Air conditioner is unsuccessful" << endl;
-            return false;
-        }
-
-        ocResult = OC_STACK_ERROR;
-        ocResult = airConditioner.addChildResource(&temperature);
-        if (ocResult != OC_STACK_OK)
-        {
-            cout << "Add ICTemperatureResource as a child resource of Air conditioner is unsuccessful" << endl;
-            return false;
-        }
-
-        cout << "Publishing resources to cloud ";
+        IOTIVITYTEST_LOG(INFO, "Publishing resources to cloud");
 
         ResourceHandles resourceHandles;
 
         OCDeviceInfo devInfoAirConditioner;
         OCStringLL deviceType;
 
-        deviceType.value = "oic.d.airconditioner";
-        deviceType.next = NULL;
-        devInfoAirConditioner.deviceName = "FAC_2016";
-        devInfoAirConditioner.types = &deviceType;
-        devInfoAirConditioner.specVersion = NULL;
-        devInfoAirConditioner.dataModelVersions = NULL;
-        ocResult = OC_STACK_ERROR;
-        ocResult = OCPlatform::registerDeviceInfo(devInfoAirConditioner);
-        if (ocResult != OC_STACK_OK)
-        {
-            cout << "RegisterDeviceInfo is unsuccessful" << endl;
-            return false;
-        }
-
+        m_resourceHandles2 = airConditioner.m_handle;
         resourceHandles.push_back(airConditioner.m_handle);
-        g_ResourceHandles = resourceHandles;
-        ICHelper::isServerResponsed = true;
+        ICHelper::s_ResourceHandles = resourceHandles;
+
+        ICHelper::s_IsServerResponsed = true;
         return true;
     }
-    catch(OCException &ex)
+    catch (OCException &ex)
     {
-        cout << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
+        IOTIVITYTEST_LOG(INFO, "OCException result string : %s", CommonUtil::s_OCStackResultString.at(ex.code()));
         return false;
     }
 }
 
-void ICHelper::init_string(stringstr *str) {
+bool ICHelper::isUnResourceRegistered()
+{
+    try
+    {
+        if (!ICHelper::s_ResourceHandles.empty())
+        {
+
+            if (OCPlatform::unregisterResource(m_resourceHandles2) == OC_STACK_OK)
+            {
+                IOTIVITYTEST_LOG(INFO, "resource unregistering success");
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+    catch (OCException &ex)
+    {
+        IOTIVITYTEST_LOG(INFO, "OCException result string : %s", CommonUtil::s_OCStackResultString.at(ex.code()));
+        return false;
+    }
+
+}
+
+void ICHelper::init_string(stringstr *str)
+{
     str->len = 0;
-    str->ptr = malloc(str->len+1);
-  if (str->ptr == NULL) {
-    fprintf(stderr, "malloc() failed\n");
-    exit(EXIT_FAILURE);
-  }
-  str->ptr[0] = '\0';
+    str->ptr = malloc(str->len + 1);
+    if (str->ptr == NULL)
+    {
+        fprintf(stderr, "malloc() failed\n");
+        exit(EXIT_FAILURE);
+    }
+    str->ptr[0] = '\0';
 }
 
 size_t writefunc(void *ptr, size_t size, size_t nmemb, stringstr *str)
 {
-  size_t new_len = str->len + size*nmemb;
-  str->ptr = realloc(str->ptr, new_len+1);
-  if (str->ptr == NULL) {
-    fprintf(stderr, "realloc() failed\n");
-    exit(EXIT_FAILURE);
-  }
-  memcpy(str->ptr+str->len, ptr, size*nmemb);
-  str->ptr[new_len] = '\0';
-  str->len = new_len;
+    size_t new_len = str->len + size * nmemb;
+    str->ptr = realloc(str->ptr, new_len + 1);
+    if (str->ptr == NULL)
+    {
+        fprintf(stderr, "realloc() failed\n");
+        exit(EXIT_FAILURE);
+    }
+    memcpy(str->ptr + str->len, ptr, size * nmemb);
+    str->ptr[new_len] = '\0';
+    str->len = new_len;
 
-  return size*nmemb;
+    return size * nmemb;
 }
 
 char* ICHelper::get_authenticity_token(const char* resposeTxt)
 {
-	char* authLast="";
-	char* auth_token=strstr(resposeTxt,"<input name=\"authenticity_token\" type=\"hidden\" value=\"");
-	auth_token=strstr(auth_token,"value=\"");
-	auth_token=&auth_token[strlen("value=\"")];
-	authLast=strstr(auth_token,"\" />");
-	auth_token[(authLast-auth_token)]='\0';
-	return auth_token;
+    char* authLast = "";
+    char* auth_token = strstr(resposeTxt,
+            "<input name=\"authenticity_token\" type=\"hidden\" value=\"");
+    auth_token = strstr(auth_token, "value=\"");
+    auth_token = &auth_token[strlen("value=\"")];
+    authLast = strstr(auth_token, "\" />");
+    auth_token[(authLast - auth_token)] = '\0';
+    return auth_token;
 }
 
-char* ICHelper::get_auth_token_code(const char* resposeTxt,char *code)
+char* ICHelper::get_auth_token_code(const char* resposeTxt, char *code)
 {
-    char* authLast="";
+    char* authLast = "";
     char *authcode;
     int len;
-    char* auth_token=strstr(resposeTxt,"<a href=\"http://www.example.com/oauth_callback/?code=");
-    authLast=strstr(auth_token,"\">");
-    auth_token[(authLast-auth_token)]='\0';
-    auth_token=strstr(auth_token,"code=");
-    auth_token=strstr(auth_token,"=");
+    char* auth_token = strstr(resposeTxt, "<a href=\"http://www.example.com/oauth_callback/?code=");
+    authLast = strstr(auth_token, "\">");
+    auth_token[(authLast - auth_token)] = '\0';
+    auth_token = strstr(auth_token, "code=");
+    auth_token = strstr(auth_token, "=");
     len = strlen(auth_token);
-    memset(code,0,len);
-    strncpy(code,auth_token+1,len-1);
+    memset(code, 0, len);
+    strncpy(code, auth_token + 1, len - 1);
     return code;
 }
 
-char* ICHelper::getgithubcode(char gitlogin[],char gitpassword[], char *code)
+void ICHelper::cloudConnectGetHandler(const HeaderOptions &head, const OCRepresentation &rep,
+        const int ecode)
 {
-    char demoPost[1000]={0};
-    char *auth_text="";
-    char *auth_url_text="";
-    char *code_text = "";
-    CURL *curl;
-    CURLcode res;
+    IOTIVITYTEST_LOG(INFO, "GET callback is invoked.");
+    IOTIVITYTEST_LOG(INFO," ecode is %d", ecode);
 
-    struct curl_slist *cookies;
-    struct curl_slist *nc;
-    struct curl_slist *header;
-    struct curl_slist *rheader;
-
-    int i;
-    int http_code=0;
-    stringstr str;
-    init_string(&str);
-
-    curl_global_init(CURL_GLOBAL_ALL);
-
-    //get login page
-    curl = curl_easy_init();
-
-    if(curl)
+    if (ecode == OC_STACK_OK || ecode == OC_STACK_RESOURCE_CHANGED)
     {
-        //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-        //Get Github login page
-        curl_easy_setopt(curl, CURLOPT_URL, INIT_GET_LOGIN_URL);
-        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, ""); /* start cookie engine */
-        curl_easy_setopt(curl, CURLOPT_AUTOREFERER, 1L);
+        IOTIVITYTEST_LOG(INFO, "ecode = %s", CommonUtil::getOCStackResult(ecode));
+        ICHelper::s_IsGetSuccessful = true;
+        ICHelper::icPrintRepresentation(rep);
 
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_COOKIELIST, "ALL"); // clear all cookies
-        curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
-
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writefunc);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &str);
-
-        res = curl_easy_perform(curl);
-
-        if(res != CURLE_OK) {
-          fprintf(stderr, "Curl perform failed: %s\n", curl_easy_strerror(res));
-          return 1;
+        if (ecode == 4)
+        {
+            ICHelper::s_GroupType = rep.getValueToString("gtype");
+            ICHelper::s_GroupID = rep.getValueToString("gid");
+            ICHelper::s_GName = rep.getValueToString("gname");
+            ICHelper::s_GroupUUID = rep.getValueToString("owner");
         }
+    }
+    else
+    {
+        ICHelper::s_IsGetSuccessful = false;
+        IOTIVITYTEST_LOG(INFO, "GET callback is Fail. ecode = %s",
+                CommonUtil::getOCStackResult(ecode));
+    }
 
-        auth_text=get_authenticity_token(str.ptr);
-        auth_url_text=curl_easy_escape(curl, auth_text, strlen(auth_text));
-        sprintf(demoPost,"%s%s%s%s%s",PAR_POST_VAL,AUTHENTICITY_TOKEN,auth_url_text,gitlogin,gitpassword);
-        free(str.ptr);
-
-        init_string(&str);
-        res = curl_easy_getinfo(curl, CURLINFO_COOKIELIST, &cookies);
-          if(res != CURLE_OK) {
-            fprintf(stderr, "Curl curl_easy_getinfo failed: %s\n",
-                    curl_easy_strerror(res));
-            exit(1);
-          }
-
-          //github login
-          curl_easy_setopt(curl, CURLOPT_URL, LOGIN_URL);
-          curl_easy_setopt(curl, CURLOPT_POST, 1L); /* start cookie engine */
-          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writefunc);
-          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &str);
-          curl_easy_setopt(curl,CURLOPT_POSTFIELDS,demoPost);
-
-
-          nc = cookies, i = 1;
-              while(nc) {
-                curl_easy_setopt(curl, CURLOPT_COOKIELIST, nc->data);
-                nc = nc->next;
-                i++;
-              }
-
-          res = curl_easy_perform(curl);
-          res = curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
-
-          printf("\n\nResposecode: %d\n\n\n",http_code);
-
-          res = curl_easy_getinfo(curl, CURLINFO_COOKIELIST, &cookies);
-              if(res != CURLE_OK) {
-                fprintf(stderr, "Curl curl_easy_getinfo failed: %s\n",
-                        curl_easy_strerror(res));
-                exit(1);
-              }
-            free(str.ptr);
-
-            //request for cloud code
-            init_string(&str);
-            curl_easy_setopt(curl, CURLOPT_URL, IOTIVITY_CLOUD_URL);
-            curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
-
-            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writefunc);
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &str);
-            nc = cookies, i = 1;
-                  while(nc) {
-                    curl_easy_setopt(curl, CURLOPT_COOKIELIST, nc->data);
-                    nc = nc->next;
-                    i++;
-                  }
-            res = curl_easy_perform(curl);
-            if(res != CURLE_OK) {
-                  fprintf(stderr, "Curl perform failed: %s\n", curl_easy_strerror(res));
-                  return 1;
-                }
-
-            code_text = get_auth_token_code(str.ptr, code);
-
-            curl_easy_cleanup(curl);
-        }
-        curl_global_cleanup();
-        free(str.ptr);
-
-        return code_text;
 }
 
-char* ICHelper::getGitLoginAuthCodeMain()
+void ICHelper::cloudConnectObserveHandler(const HeaderOptions /*headerOptions*/,
+        const OCRepresentation &rep, const int &eCode, const int &sequenceNumber)
 {
-	char gitlogin[]="&login=iotsrbd@gmail.com";
-	char gitpassword[]="&password=Iotivity@123";
-	char *code = new char[30];
-	code=getgithubcode(gitlogin,gitpassword,code);
-	printf("%s\n",code);
 
-	return code;
+    if (eCode == OC_STACK_OK && sequenceNumber != maxSequenceNumber + 1)
+    {
+        if (sequenceNumber == OC_OBSERVE_REGISTER)
+        {
+            ICHelper::s_IsObserveSuccessful = true;
+            IOTIVITYTEST_LOG(INFO, "Observe registration action is successful");
+        }
+
+        IOTIVITYTEST_LOG(INFO, "OBSERVE RESULT:");
+        ICHelper::icPrintRepresentation(rep);
+    }
+    else
+    {
+        if (eCode == OC_STACK_OK)
+        {
+            ICHelper::s_IsObserveSuccessful = true;
+
+            IOTIVITYTEST_LOG(INFO, "Observe callback is Successful.");
+        }
+        else
+        {
+            IOTIVITYTEST_LOG(INFO, "Observe callback is Fail.");
+        }
+    }
 }
+
+void ICHelper::onDeleteHandler(const HeaderOptions & /*headerOptions*/, const int eCode)
+{
+    if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_DELETED)
+    {
+        IOTIVITYTEST_LOG(INFO, "Delete was successful:");
+        ICHelper::s_IsDeleteSuccessful = true;
+    }
+    else
+    {
+        IOTIVITYTEST_LOG(INFO, "ecode = %s", CommonUtil::getOCStackResult(eCode));
+        IOTIVITYTEST_LOG(INFO, "Delete Response error:");
+        ICHelper::s_IsDeleteSuccessful = false;
+    }
+}
+
+void ICHelper::createTopicCB(const int ecode, const string &originUri,
+        shared_ptr< OC::OCResource > topic)
+{
+    IOTIVITYTEST_LOG(INFO, "Create topic response received, code:  %s",
+            CommonUtil::getOCStackResult(ecode));
+
+    if (ecode == OCStackResult::OC_STACK_RESOURCE_CREATED)
+    {
+        IOTIVITYTEST_LOG(INFO,"Created topic : %s", topic->uri());
+    }
+    else
+    {
+        IOTIVITYTEST_LOG(INFO, "Topic creation failed : %s", originUri);
+    }
+}
+
+void ICHelper::onPublish(const OCRepresentation &, const int &eCode)
+{
+    ICHelper::s_IsPublishSuccessful = true;
+    if (eCode == 4)
+    {
+        IOTIVITYTEST_LOG(INFO, "onPublish callback is invoked with received code : %d", eCode );
+    }
+
+}
+
+void ICHelper::onDelete(const int& eCode)
+{
+    ICHelper::s_IsDeleteSuccessful = true;
+    IOTIVITYTEST_LOG(INFO, "onDelete callback is invoked with received code : %d" , eCode );
+}
+
+void ICHelper::foundDevice(shared_ptr< OC::OCResource > resource)
+{
+    IOTIVITYTEST_LOG(INFO, "Found device called!" );
+
+    vector< string > rt = resource->getResourceTypes();
+
+    IOTIVITYTEST_LOG(INFO, "Device found: %s", resource->uri());
+    IOTIVITYTEST_LOG(INFO, "DI: %s", resource->sid());
+
+    for (auto it = rt.begin(); it != rt.end(); it++)
+    {
+        if (it->compare("oic.d.airconditioner") == 0)
+        {
+            s_SearchQuery += resource->sid();
+            IOTIVITYTEST_LOG(INFO, "Airconditioner found");
+            OCPlatform::findResource(COAP_HOST_ADDRESS, s_SearchQuery,
+                    static_cast< OCConnectivityType >(CT_ADAPTER_TCP | CT_IP_USE_V4),
+                    &ICAirconditionerResource::foundAirconditionerResource);
+
+            OCPlatform::OCPresenceHandle handle;
+            if (OCPlatform::subscribeDevicePresence(handle, COAP_HOST_ADDRESS,
+            { resource->sid() }, static_cast< OCConnectivityType >(CT_ADAPTER_TCP | CT_IP_USE_V4),
+                    &ICAirconditionerResource::onObserve) != OC_STACK_OK)
+            {
+                IOTIVITYTEST_LOG(INFO, "Device presence failed");
+            }
+        }
+    }
+}
+
+void ICHelper::errorFoundDevice(const std::string &uri, const int ecode)
+{
+    IOTIVITYTEST_LOG(INFO, "Found device error on %s  code %d ", uri, ecode );
+}
+
+void ICHelper::deleteResponse(const HeaderOptions&, const int)
+{
+}
+
