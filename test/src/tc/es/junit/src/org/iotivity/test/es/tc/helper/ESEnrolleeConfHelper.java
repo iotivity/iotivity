@@ -41,8 +41,8 @@ public class ESEnrolleeConfHelper {
         OcRepresentation mWiFiRep = new OcRepresentation();
         OcRepresentation mCloudRep = new OcRepresentation();
         mDevConfRep.setUri(ESConstants.OC_RSRVD_ES_URI_DEVCONF);
-        mWiFiRep.setUri(ESConstants.OC_RSRVD_ES_URI_WIFI);
-        mCloudRep.setUri(ESConstants.OC_RSRVD_ES_URI_CLOUDSERVER);
+        mWiFiRep.setUri(ESConstants.OC_RSRVD_ES_URI_WIFICONF);
+        mCloudRep.setUri(ESConstants.OC_RSRVD_ES_URI_COAPCLOUDCONF);
         mDevConfRep.setValue(ESConstants.OC_RSRVD_ES_DEVNAME, DEVICE_NAME);
         mWiFiRep.setValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIMODE,
                 WIFI_MODES);
@@ -54,3 +54,4 @@ public class ESEnrolleeConfHelper {
         return ocRepresentation;
     }
 }
+

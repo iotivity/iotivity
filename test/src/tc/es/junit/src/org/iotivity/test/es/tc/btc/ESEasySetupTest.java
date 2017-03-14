@@ -103,7 +103,7 @@ public class ESEasySetupTest extends AndroidTestCase {
      */
     public void testESCreateRemoteEnrollee_P_RSV() {
         ocResource = eSEnrolleeHelper.createEnrolleeResource(getContext(),
-                RESOURCE_NAME, ESConstants.OC_RSRVD_ES_RES_TYPE_PROV, BATCH_INTERFACE_TYPE);
+                RESOURCE_NAME, ESConstants.OC_RSRVD_ES_RES_TYPE_EASYSETUP, BATCH_INTERFACE_TYPE);
         assertNotNull("Resource object should not null", ocResource);
         assertNotNull("RemoteEnrollee should not null", EasySetup
                 .getInstance(getContext()).createRemoteEnrollee(ocResource));

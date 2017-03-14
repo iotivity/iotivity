@@ -148,7 +148,7 @@ public class ESEnrolleeHelper {
 
     public OcResource findEnrolleeResource(Context context) {
         String requestUri = OcPlatform.WELL_KNOWN_QUERY + RT
-                + ESConstants.OC_RSRVD_ES_RES_TYPE_PROV;
+                + ESConstants.OC_RSRVD_ES_RES_TYPE_EASYSETUP;
         configurePlatform(context);
         try {
             OcPlatform.findResource(EMPTY_STRING, requestUri,
@@ -173,10 +173,11 @@ public class ESEnrolleeHelper {
 
     public RemoteEnrollee createRemoteEnrollee(Context context) {
         OcResource ocResource = createEnrolleeResource(context, RESOURCE_NAME,
-                ESConstants.OC_RSRVD_ES_RES_TYPE_PROV, BATCH_INTERFACE_TYPE);
+                ESConstants.OC_RSRVD_ES_RES_TYPE_EASYSETUP, BATCH_INTERFACE_TYPE);
         if (ocResource == null) {
             return null;
         }
         return EasySetup.getInstance(context).createRemoteEnrollee(ocResource);
     }
 }
+
