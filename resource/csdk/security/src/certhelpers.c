@@ -451,12 +451,14 @@ static const mbedtls_x509_crt_profile s_certProfile = {
 
 OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificate, const OicSecOpt_t *optData,
                                               const uint8_t *trustedCaCerts, size_t trustedCaCertsLength,
-                                              OicSecRole_t **roles, size_t *rolesLength)
+                                              OicSecRole_t **roles, size_t *rolesLength,
+                                              struct tm *notValidAfter)
 {
     VERIFY_NOT_NULL_RETURN(TAG, certificate, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, trustedCaCerts, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, roles, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, rolesLength, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, notValidAfter, ERROR, OC_STACK_INVALID_PARAM);
 
     OCStackResult res = OC_STACK_ERROR;
     int mbedRet;
@@ -589,6 +591,15 @@ OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificate, co
         memcpy(*roles, rolesTmp, sizeof(rolesTmp[0]) * rolesTmpCount);
         *rolesLength = rolesTmpCount;
     }
+
+    memset(notValidAfter, 0, sizeof(*notValidAfter));
+
+    notValidAfter->tm_year = certChain.valid_to.year - 1900;
+    notValidAfter->tm_mon = certChain.valid_to.mon - 1;
+    notValidAfter->tm_mday = certChain.valid_to.day;
+    notValidAfter->tm_hour = certChain.valid_to.hour;
+    notValidAfter->tm_min = certChain.valid_to.min;
+    notValidAfter->tm_sec = certChain.valid_to.sec;
 
     res = OC_STACK_OK;
 

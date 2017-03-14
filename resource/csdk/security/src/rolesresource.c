@@ -56,6 +56,10 @@ typedef struct RolesEntry {
     size_t                  publicKeyLength;    /**< length of publicKey */
     RoleCertChain_t         *chains;            /**< stored certificates */
 
+    struct tm               cacheValidUntil;    /**< Cache valid until time; use 0 if cache is not yet set */
+    OicSecRole_t            *cachedRoles;       /**< Cached roles; must free with OICFree */
+    size_t                  cachedRolesLength;  /**< Length of cachedRoles array */
+
     struct RolesEntry       *next;
 } RolesEntry_t;
 
@@ -78,6 +82,14 @@ static const char EMPTY_UUID[] = "00000000-0000-0000-0000-000000000000";
  * Mandatory parts of a role map cred entry: 4 key/value pairs: credId, subject, publicData, and credType.
  */
 static const uint8_t ROLE_MAP_SIZE = 4;
+
+static void InvalidateRoleCache(RolesEntry_t *entry)
+{
+    memset(&entry->cacheValidUntil, 0, sizeof(entry->cacheValidUntil));
+    OICFree(entry->cachedRoles);
+    entry->cachedRoles = NULL;
+    entry->cachedRolesLength = 0;
+}
 
 /* Caller must call OICFree on publicKey when finished. */
 static OCStackResult GetPeerPublicKeyFromEndpoint(const CAEndpoint_t *endpoint,
@@ -158,6 +170,7 @@ static void FreeRolesEntry(RolesEntry_t *rolesEntry)
     FreeRoleCertChainList(rolesEntry->chains);
     OICFree(rolesEntry->chains);
     OICFree(rolesEntry->publicKey);
+    OICFree(rolesEntry->cachedRoles);
     OICFree(rolesEntry);
 }
 
@@ -262,7 +275,11 @@ static OCStackResult AddRoleCertificate(const RoleCertChain_t *roleCert, const u
         }
     }
 
-    if (NULL == targetEntry)
+    if (NULL != targetEntry)
+    {
+        InvalidateRoleCache(targetEntry);
+    }
+    else
     {
         /* We haven't seen this public key before and need a new entry. */
         targetEntry = (RolesEntry_t *)OICCalloc(1, sizeof(RolesEntry_t *));
@@ -861,6 +878,8 @@ static OCEntityHandlerResult HandleDeleteRequest(OCEntityHandlerRequest *ehReque
         goto exit;
     }
 
+    InvalidateRoleCache(entry);
+
     RoleCertChain_t *curr1 = NULL;
     RoleCertChain_t *curr2 = NULL;
     LL_FOREACH_SAFE(entry->chains, curr1, curr2)
@@ -959,6 +978,56 @@ OCStackResult DeInitRolesResource()
     return res;
 }
 
+/*
+ * true if before < after, false if before >= after
+ */
+static bool IsBefore(const struct tm *before, const struct tm *after)
+{
+    if (before->tm_year > after->tm_year)
+    {
+        return false;
+    }
+
+    if (before->tm_year == after->tm_year)
+    {
+        if (before->tm_mon > after->tm_mon)
+        {
+            return false;
+        }
+
+        if (before->tm_mon == after->tm_mon)
+        {
+            if (before->tm_mday > after->tm_mday)
+            {
+                return false;
+            }
+
+            if (before->tm_mday == after->tm_mday)
+            {
+                if (before->tm_hour > after->tm_hour)
+                {
+                    return false;
+                }
+
+                if (before->tm_hour == after->tm_hour)
+                {
+                    if (before->tm_min > after->tm_min)
+                    {
+                        return false;
+                    }
+
+                    if (before->tm_min == after->tm_min)
+                    {
+                        return (before->tm_sec < after->tm_sec);
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
 OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **roles, size_t *roleCount)
 {
     VERIFY_NOT_NULL_RETURN(TAG, endpoint, ERROR, OC_STACK_INVALID_PARAM);
@@ -967,7 +1036,7 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
 
     uint8_t *publicKey = NULL;
     size_t publicKeyLength = 0;
-    const RolesEntry_t *targetEntry = NULL;
+    RolesEntry_t *targetEntry = NULL;
     OicSecRole_t *rolesToReturn = NULL;
     size_t rolesToReturnCount = 0;
     ByteArray_t trustedCaCerts;
@@ -1009,6 +1078,52 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
         return OC_STACK_OK;
     }
 
+    /* Is the cache still valid? */
+    struct tm now;
+    memset(&now, 0, sizeof(now));
+#ifndef WITH_ARDUINO /* No reliable time on Arduino, so assume the cache is valid if present. */
+    time_t nowTimeT = 0;
+    nowTimeT = time(NULL);
+    /* If we failed to get the current time, assume the cache is valid if present. */
+    if ((time_t)-1 != nowTimeT)
+    {
+        /* gmtime_{s,r} should not ever fail. */
+#ifdef HAVE_WINDOWS_H
+        if (0 != gmtime_s(&now, &nowTimeT))
+        {
+            assert(!"gmtime_s failed");
+            OIC_LOG(WARNING, TAG, "gmtime_s failed; assuming role cache is valid");
+            memset(&now, 0, sizeof(now));
+        }
+#else
+        if (NULL == gmtime_r(&nowTimeT, &now))
+        {
+            assert(!"gmtime_r failed");
+            OIC_LOG(WARNING, TAG, "gmtime_r failed; assuming role cache is valid");
+            memset(&now, 0, sizeof(now));
+        }
+#endif
+    }
+#endif /* WITH_ARDUINO */
+
+    if (IsBefore(&now, &targetEntry->cacheValidUntil))
+    {
+        /* now < cacheValidUntil: provide caller with a copy of the cached roles */
+        *roles = (OicSecRole_t *)OICCalloc(targetEntry->cachedRolesLength, sizeof(OicSecRole_t));
+        if (NULL == *roles)
+        {
+            OICFree(publicKey);
+            return OC_STACK_NO_MEMORY;
+        }
+        memcpy(*roles, targetEntry->cachedRoles, (targetEntry->cachedRolesLength * sizeof(OicSecRole_t)));
+        *roleCount = targetEntry->cachedRolesLength;
+
+        OICFree(publicKey);
+        return OC_STACK_OK;
+    }
+
+    InvalidateRoleCache(targetEntry);
+
     /* Retrieve the current set of trusted CAs from the cred resource. */
     res = GetPemCaCert(&trustedCaCerts, TRUST_CA);
     if (OC_STACK_OK != res)
@@ -1022,10 +1137,13 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
     {
         OicSecRole_t *currCertRoles = NULL;
         size_t currCertRolesCount = 0;
+        struct tm notValidAfter;
+        memset(&notValidAfter, 0, sizeof(notValidAfter));
 
         res = OCInternalVerifyRoleCertificate(&chain->certificate, &chain->optData,
                                               trustedCaCerts.data, trustedCaCerts.len,
-                                              &currCertRoles, &currCertRolesCount);
+                                              &currCertRoles, &currCertRolesCount,
+                                              &notValidAfter);
 
         if (OC_STACK_OK != res)
         {
@@ -1040,10 +1158,12 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
                 sizeof(rolesToReturn[0]) * (rolesToReturnCount + currCertRolesCount));
             if (NULL == rolesToReturn)
             {
+                OIC_LOG(ERROR, TAG, "No memory reallocating rolesToReturn");
+                memset(&targetEntry->cacheValidUntil, 0, sizeof(targetEntry->cacheValidUntil));
+                OICFree(trustedCaCerts.data);
                 OICFree(savePtr);
                 OICFree(currCertRoles);
                 OICFree(publicKey);
-                OIC_LOG(ERROR, TAG, "No memory reallocating rolesToReturn");
                 return OC_STACK_NO_MEMORY;
             }
             memcpy(rolesToReturn + (rolesToReturnCount * sizeof(rolesToReturn[0])), 
@@ -1052,11 +1172,38 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
             rolesToReturnCount += currCertRolesCount;
             OICFree(currCertRoles);
         }
+
+        /* 
+         * Set the cacheValidUntil value to be the earliest notValidUntil date amongst
+         * all the certificates.
+         *
+         * Assumption is that if tm_year is zero, the cacheValidUntil is all zero, and so the
+         * cacheValidUntil value hasn't yet been set. tm_year of 0 means the year 1900, and we
+         * should never see this value in a certificate.
+         */
+        if ((0 == targetEntry->cacheValidUntil.tm_year) ||
+            IsBefore(&notValidAfter, &targetEntry->cacheValidUntil))
+        {
+            memcpy(&targetEntry->cacheValidUntil, &notValidAfter, sizeof(targetEntry->cacheValidUntil));
+        }
     }
 
-    *roles = rolesToReturn;
-    *roleCount = rolesToReturnCount;
+    targetEntry->cachedRoles = rolesToReturn;
+    targetEntry->cachedRolesLength = rolesToReturnCount;
+
+    /* Make a copy for the caller. */
+    *roles = (OicSecRole_t *)OICCalloc(targetEntry->cachedRolesLength, sizeof(OicSecRole_t));
+    if (NULL == *roles)
+    {
+        OICFree(publicKey);
+        OICFree(trustedCaCerts.data);
+        return OC_STACK_NO_MEMORY;
+    }
+    memcpy(*roles, targetEntry->cachedRoles, (targetEntry->cachedRolesLength * sizeof(OicSecRole_t)));
+    *roleCount = targetEntry->cachedRolesLength;
+
     OICFree(publicKey);
+    OICFree(trustedCaCerts.data);
     return OC_STACK_OK;
 }
 

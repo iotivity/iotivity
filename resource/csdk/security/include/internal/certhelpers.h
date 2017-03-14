@@ -24,6 +24,7 @@
 #if defined(__WITH_TLS__) || defined(__WITH_DTLS__)
 
 #include "mbedtls/pk.h"
+#include <time.h>
 
 /**
  * Internal certificate request function; used by CSR resource handler
@@ -115,6 +116,7 @@ OCStackResult OCInternalIsValidCertChain(const uint8_t *buf, size_t bufLen);
  * @param[out] roles                Pointer to receive array of OicSecRole_t objects listing roles
  *                                  Caller must call OICFree to release this memory when finished
  * @param[out] rolesLength          Length of returned roles array
+ * @param[out] notValidAfter        struct tm to receive notValidAfter time of the certificate
  *
  * @return OC_STACK_OK if the certificate is valid.
  *         OC_STACK_INVALID_PARAM if the certificate is not valid.
@@ -122,5 +124,6 @@ OCStackResult OCInternalIsValidCertChain(const uint8_t *buf, size_t bufLen);
  */
 OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificate, const OicSecOpt_t *optData,
                                               const uint8_t *trustedCaCerts, size_t trustedCaCertsLength,
-                                              OicSecRole_t **roles, size_t *rolesLength);
+                                              OicSecRole_t **roles, size_t *rolesLength,
+                                              struct tm *notValidAfter);
 #endif
