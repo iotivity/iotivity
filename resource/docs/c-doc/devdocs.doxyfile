@@ -94,30 +94,48 @@ WARN_IF_UNDOCUMENTED   = YES
 WARN_IF_DOC_ERROR      = YES
 WARN_NO_PARAMDOC       = NO
 WARN_FORMAT            = "$file:$line: $text"
-WARN_LOGFILE           =
+WARN_LOGFILE           = ./doxygen_dev.log
 #---------------------------------------------------------------------------
 # Configuration options related to the input files
 #---------------------------------------------------------------------------
 INPUT                  = devdox \
-                         ../include \
-                         ../src \
-                         ../csdk/connectivity/api \
-                         ../csdk/connectivity/common/inc \
-                         ../csdk/connectivity/common/src \
-                         ../csdk/connectivity/inc \
-                         ../csdk/connectivity/src \
-                         ../csdk/logger/include \
-                         ../csdk/logger/src \
-                         ../csdk/ocrandom/include \
-                         ../csdk/ocrandom/src \
-                         ../csdk/security/include \
-                         ../csdk/security/src \
-                         ../csdk/stack/include \
-                         ../csdk/stack/src \
-                         ../c_common/oic_malloc/include \
-                         ../c_common/oic_malloc/src \
-                         ../c_common/oic_string/include \
-                         ../c_common/oic_string/src
+                         ../../include \
+                         ../../src \
+                         ../../csdk/include \
+                         ../../csdk/connectivity/api \
+                         ../../csdk/connectivity/common/inc \
+                         ../../csdk/connectivity/common/src \
+                         ../../csdk/connectivity/inc \
+                         ../../csdk/connectivity/src \
+                         ../../csdk/connectivity/util/inc \
+                         ../../csdk/logger/include \
+                         ../../csdk/logger/src \
+                         ../../csdk/resource-directory/include \
+                         ../../csdk/resource-directory/src \
+                         ../../csdk/routing/include \
+                         ../../csdk/routing/src \
+                         ../../csdk/security/include \
+                         ../../csdk/security/src \
+                         ../../csdk/security/provisioning/include \
+                         ../../csdk/security/provisioning/src \
+                         ../../csdk/stack/include \
+                         ../../csdk/stack/src \
+                         ../../c_common/ocatomic/include \
+                         ../../c_common/ocatomic/src \
+                         ../../c_common/ocrandom/include \
+                         ../../c_common/ocrandom/src \
+                         ../../c_common/octhread/include \
+                         ../../c_common/octhread/src \
+                         ../../c_common/oic_malloc/include \
+                         ../../c_common/oic_malloc/src \
+                         ../../c_common/oic_string/include \
+                         ../../c_common/oic_string/src \
+                         ../../c_common/oic_time/include \
+                         ../../c_common/oic_time/src \
+                         ../../c_common/windows/include \
+                         ../../c_common/windows/src \
+                         ../../c_common/ocrandom/include \
+                         ../../c_common/ocrandom/src
 
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          =
