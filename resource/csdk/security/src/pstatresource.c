@@ -46,7 +46,7 @@ static const uint16_t CBOR_MAX_SIZE = 4400;
 static const uint8_t PSTAT_MAP_SIZE = 6;
 
 // Number of writeable property
-static const uint8_t WRITEABLE_PROPERTY_SIZE = 3;
+static const uint8_t WRITEABLE_PROPERTY_SIZE = 2;
 
 static OicSecDpom_t gSm = SINGLE_SERVICE_CLIENT_DRIVEN;
 static OicSecPstat_t gDefaultPstat =
