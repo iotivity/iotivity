@@ -21,6 +21,8 @@
 #ifndef TRACE_H_
 #define TRACE_H_
 
+#include <stddef.h>
+
 #ifdef __ANDROID__
 #include "logger.h"
 #elif defined(__TIZEN__)
