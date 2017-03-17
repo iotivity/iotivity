@@ -41,8 +41,6 @@ void DeleteAction(OCAction** action);
 
 void DeleteActionSet(OCActionSet** actionset);
 
-OCStackResult DeleteActionSets(OCResource** resource);
-
 OCStackResult FindAndDeleteActionSet(OCResource **resource, const char * actionsetName);
 
 OCStackResult ExtractKeyValueFromRequest(OCEntityHandlerRequest *ehRequest, char **key, char **value);
