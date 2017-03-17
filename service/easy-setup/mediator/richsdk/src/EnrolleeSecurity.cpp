@@ -220,7 +220,7 @@ namespace OIC
 
             bool ret = false;
             std::string subOwnerID;
-            char uuidString[UUID_STRING_SIZE];
+            char uuidString[UUID_STRING_SIZE] = {};
 
             OicSecSubOwner_t* subOwnerList = foundDevice->getDevPtr()->doxm->subOwners;
 
