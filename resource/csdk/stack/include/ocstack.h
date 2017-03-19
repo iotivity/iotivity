@@ -101,19 +101,20 @@ OCStackResult OCSetRAInfo(const OCRAInfo_t *raInfo);
 OCStackResult OCStop();
 
 /**
- * This function starts receiving the multicast traffic. This can be only called
- * when stack is in OC_STACK_INITIALIZED state but device is not receiving multicast
- * traffic.
+ * This function starts responding to multicast /oic/res requests.  This can be
+ * only called when stack is in OC_STACK_INITIALIZED state but device is not
+ * receiving multicast traffic.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCStartMulticastServer();
 
 /**
- * This function stops receiving the multicast traffic. The rest of the stack
- * keeps working and no resource are deleted. Device can still receive the unicast
- * traffic. Once this is set, no response to multicast /oic/res will be sent by the
- * device. This is to be used for devices that uses other entity to push resources.
+ * This function stops responding to multicast /oic/res requests.  This is to be
+ * used for devices that uses other entity to push resources.
+ *
+ * Note that other multicast requests, such as those used during ownership
+ * transfer, continue to be responded to.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
@@ -878,59 +879,6 @@ OCPersistentStorage *OCGetPersistentStorageHandler();
 */
 OCStackResult OCGetLinkLocalZoneId(uint32_t ifindex, char **zoneId);
 
-/**
- *  Add a header option to the given header option array.
- *
- * @param ocHdrOpt            Pointer to existing options.
- * @param numOptions          Number of existing options.
- * @param optionID            COAP option ID.
- * @param optionData          Option data value.
- * @param optionDataLength    Size of Option data value.
- *
- * @return ::OC_STACK_OK on success and other value otherwise.
- */
-OCStackResult
-OCSetHeaderOption(OCHeaderOption* ocHdrOpt,
-                  size_t* numOptions,
-                  uint16_t optionID,
-                  void* optionData,
-                  size_t optionDataLength);
-
-/**
- *  Get data value of the option with specified option ID from given header option array.
- *
- * @param ocHdrOpt            Pointer to existing options.
- * @param numOptions          Number of existing options.
- * @param optionID            COAP option ID.
- * @param optionData          Pointer to option data.
- * @param optionDataLength    Size of option data value.
- * @param receivedDatalLength Pointer to the actual length of received data.
- *
- * @return ::OC_STACK_OK on success and other value otherwise.
- */
-OCStackResult
-OCGetHeaderOption(OCHeaderOption* ocHdrOpt,
-                  size_t numOptions,
-                  uint16_t optionID,
-                  void* optionData,
-                  size_t optionDataLength,
-                  uint16_t* receivedDatalLength);
-
-/**
- * gets the deviceId of the client
- *
- * @param deviceId pointer.
- * @return Returns ::OC_STACK_OK if success.
- */
-OCStackResult OCGetDeviceId(OCUUIdentity *deviceId);
-
-/**
- * sets the deviceId of the client
- *
- * @param deviceId pointer.
- * @return Returns ::OC_STACK_OK if success.
- */
-OCStackResult OCSetDeviceId(const OCUUIdentity *deviceId);
 #ifdef __cplusplus
 }
 #endif // __cplusplus

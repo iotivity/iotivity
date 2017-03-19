@@ -53,8 +53,6 @@ if (not os.path.isfile(config_h_file_path)) and (not env.GetOption('clean')):
 
 #include "platform_features.h"
 
-#include "platform_features.h"
-
 #endif // IOTIVITY_CONFIG_H__
 
 '''

@@ -176,14 +176,14 @@ static CAErrorHandleCallback g_errorHandler = NULL;
 /**
  * Callback to receive decrypted data from the ssl adapter.
  */
-static void CALESecureReceiveDataCB(const CASecureEndpoint_t *endpoint,
-                                 const void *data, uint32_t dataLength);
+static void CALESecureReceiveDataCB(const CASecureEndpoint_t *sep,
+                                 const void *data, size_t dataLen);
 
 /**
  * Callback to receive encrypted data from the ssl adapter.
  */
-static void CALESecureSendDataCB(CAEndpoint_t *endpoint,
-                             const void *data, uint32_t dataLength);
+static ssize_t CALESecureSendDataCB(CAEndpoint_t *endpoint,
+                             const void *data, size_t dataLen);
 #endif
 
 #ifdef SINGLE_THREAD
@@ -560,7 +560,7 @@ static CAResult_t CALEGetSenderInfo(const char *leAddress,
                                     const uint16_t port,
                                     u_arraylist_t *senderInfoList,
                                     CABLESenderInfo_t **senderInfo,
-                                    uint32_t *senderIndex);
+                                    size_t *senderIndex);
 
 /**
  * get ports related to remote address. It is need because multi application
@@ -857,7 +857,7 @@ static CAResult_t CALEGetSenderInfo(const char *leAddress,
                                     const uint16_t port,
                                     u_arraylist_t *senderInfoList,
                                     CABLESenderInfo_t **senderInfo,
-                                    uint32_t *senderIndex)
+                                    size_t *senderIndex)
 {
     VERIFY_NON_NULL_RET(leAddress,
                         CALEADAPTER_TAG,
@@ -868,9 +868,9 @@ static CAResult_t CALEGetSenderInfo(const char *leAddress,
                         "NULL index argument",
                         CA_STATUS_INVALID_PARAM);
 
-    const uint32_t listLength = u_arraylist_length(senderInfoList);
-    const uint32_t addrLength = strlen(leAddress);
-    for (uint32_t index = 0; index < listLength; index++)
+    const size_t listLength = u_arraylist_length(senderInfoList);
+    const size_t addrLength = strlen(leAddress);
+    for (size_t index = 0; index < listLength; index++)
     {
         CABLESenderInfo_t *info = (CABLESenderInfo_t *) u_arraylist_get(senderInfoList, index);
         if (!info || !(info->remoteEndpoint))
@@ -901,16 +901,25 @@ static void CALEDataReceiverHandler(void *threadData, CABLEAdapter_t receiverTyp
 
     oc_mutex bleReceiveDataMutex = NULL;
     bool dataBleReceiverHandlerState = false;
+#ifdef __WITH_DTLS__
+    CADataType_t dataType = CA_REQUEST_DATA;
+#endif
 
     switch (receiverType)
     {
         case ADAPTER_CLIENT:
             bleReceiveDataMutex = g_bleClientReceiveDataMutex;
             dataBleReceiverHandlerState = g_dataBleClientReceiverHandlerState;
+#ifdef __WITH_DTLS__
+            dataType = CA_REQUEST_DATA;
+#endif
             break;
         case ADAPTER_SERVER:
             bleReceiveDataMutex = g_bleServerReceiveDataMutex;
             dataBleReceiverHandlerState = g_dataBleServerReceiverHandlerState;
+#ifdef __WITH_DTLS__
+            dataType = CA_RESPONSE_DATA;
+#endif
             break;
         default:
             OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Unsupported receiver type : %d", receiverType);
@@ -944,7 +953,7 @@ static void CALEDataReceiverHandler(void *threadData, CABLEAdapter_t receiverTyp
         }
 
         CABLESenderInfo_t *senderInfo = NULL;
-        uint32_t senderIndex = 0;
+        size_t senderIndex = 0;
 
         //packet parsing
         CABLEPacketStart_t startFlag = CA_BLE_PACKET_NOT_START;
@@ -1032,7 +1041,7 @@ static void CALEDataReceiverHandler(void *threadData, CABLEAdapter_t receiverTyp
                 bleData->dataLen - (CA_BLE_HEADER_SIZE + CA_BLE_LENGTH_HEADER_SIZE);
             OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Total data to be accumulated [%u] bytes",
                       newSender->totalDataLen);
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "data received in the first packet [%zu] bytes",
+            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "data received in the first packet [%" PRIuPTR "] bytes",
                       dataOnlyLen);
 
             newSender->defragData = OICCalloc(newSender->totalDataLen + 1,
@@ -1106,7 +1115,7 @@ static void CALEDataReceiverHandler(void *threadData, CABLEAdapter_t receiverTyp
             if (senderInfo->recvDataLen + dataOnlyLen > senderInfo->totalDataLen)
             {
                 OIC_LOG_V(ERROR, CALEADAPTER_TAG,
-                          "Data Length exceeding error!! Receiving [%zu] total length [%u]",
+                          "Data Length exceeding error!! Receiving [%" PRIuPTR "] total length [%u]",
                           senderInfo->recvDataLen + dataOnlyLen, senderInfo->totalDataLen);
                 u_arraylist_remove(bleData->senderInfo, senderIndex);
                 OICFree(senderInfo->defragData);
@@ -1114,7 +1123,7 @@ static void CALEDataReceiverHandler(void *threadData, CABLEAdapter_t receiverTyp
                 oc_mutex_unlock(bleReceiveDataMutex);
                 return;
             }
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Copying the data of length [%zu]",
+            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Copying the data of length [%" PRIuPTR "]",
                       dataOnlyLen);
             memcpy(senderInfo->defragData + senderInfo->recvDataLen,
                    bleData->data + CA_BLE_HEADER_SIZE,
@@ -1150,6 +1159,8 @@ static void CALEDataReceiverHandler(void *threadData, CABLEAdapter_t receiverTyp
             if (CA_SECURE & tmp.endpoint.flags)
             {
                 OIC_LOG(ERROR, CALEADAPTER_TAG, "Secure data received");
+                g_dataType = dataType;
+
                 if (CA_STATUS_FAILED == CAdecryptSsl(&tmp,
                                                 senderInfo->defragData,
                                                 senderInfo->recvDataLen))
@@ -1237,12 +1248,12 @@ static void CALEServerSendDataThread(void *threadData)
     }
 
     OIC_LOG_V(DEBUG, CALEADAPTER_TAG,
-              "Packet info: data size[%d] midPacketCount[%u] remainingLen[%zu] totalLength[%zu]",
+              "Packet info: data size[%d] midPacketCount[%u] remainingLen[%" PRIuPTR "] totalLength[%" PRIuPTR "]",
               bleData->dataLen, midPacketCount, remainingLen, totalLength);
 
     OIC_LOG_V(DEBUG,
               CALEADAPTER_TAG,
-              "Server total Data length with header is [%zu]",
+              "Server total Data length with header is [%" PRIuPTR "]",
               totalLength);
 
     uint8_t dataSegment[CA_SUPPORTED_BLE_MTU_SIZE] = {0};
@@ -1434,7 +1445,7 @@ static void CALEServerSendDataThread(void *threadData)
             }
             OIC_LOG_V(DEBUG,
                       CALEADAPTER_TAG,
-                      "Server Sent Unicast Last Data - data length [%zu]",
+                      "Server Sent Unicast Last Data - data length [%" PRIuPTR "]",
                       remainingLen + CA_BLE_HEADER_SIZE);
         }
      }
@@ -1539,7 +1550,7 @@ static void CALEServerSendDataThread(void *threadData)
             }
             OIC_LOG_V(DEBUG,
                       CALEADAPTER_TAG,
-                      "Server Sent Multicast Last Data - data length [%zu]",
+                      "Server Sent Multicast Last Data - data length [%" PRIuPTR "]",
                       remainingLen + CA_BLE_HEADER_SIZE);
         }
 #else
@@ -1613,7 +1624,7 @@ static void CALEClientSendDataThread(void *threadData)
     }
 
     OIC_LOG_V(DEBUG, CALEADAPTER_TAG,
-              "Packet info: data size[%d] midPacketCount[%u] remainingLen[%zu] totalLength[%zu]",
+              "Packet info: data size[%d] midPacketCount[%u] remainingLen[%" PRIuPTR "] totalLength[%" PRIuPTR "]",
               bleData->dataLen, midPacketCount, remainingLen, totalLength);
 
     uint8_t dataSegment[CA_SUPPORTED_BLE_MTU_SIZE] = {0};
@@ -1807,7 +1818,7 @@ static void CALEClientSendDataThread(void *threadData)
             }
             OIC_LOG_V(DEBUG,
                       CALEADAPTER_TAG,
-                      "Client Sent Unicast Last Data - data length [%zu]",
+                      "Client Sent Unicast Last Data - data length [%" PRIuPTR "]",
                       remainingLen + CA_BLE_HEADER_SIZE);
         }
     }
@@ -1915,7 +1926,7 @@ static void CALEClientSendDataThread(void *threadData)
             }
             OIC_LOG_V(DEBUG,
                       CALEADAPTER_TAG,
-                      "Client Sent Multicast Last Data - data length [%zu]",
+                      "Client Sent Multicast Last Data - data length [%" PRIuPTR "]",
                       remainingLen + CA_BLE_HEADER_SIZE);
         }
 #else
@@ -2499,7 +2510,7 @@ static int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint,
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
 static CAResult_t CAGetLEInterfaceInformation(CAEndpoint_t **info,
-                                              uint32_t *size);
+                                              size_t *size);
 
 /**
  * Read Synchronous API callback.
@@ -2731,10 +2742,11 @@ static CAResult_t CALEAdapterGattClientStop()
 }
 
 #ifdef __WITH_DTLS__
-static void CALESecureSendDataCB(CAEndpoint_t *endpoint, const void *data, uint32_t dataLen)
+static ssize_t CALESecureSendDataCB(CAEndpoint_t *endpoint,
+                             const void *data, size_t dataLen)
 {
-    VERIFY_NON_NULL_VOID(endpoint, CALEADAPTER_TAG, "endpoint is NULL");
-    VERIFY_NON_NULL_VOID(data, CALEADAPTER_TAG, "data is NULL");
+    VERIFY_NON_NULL_RET(endpoint, CALEADAPTER_TAG, "endpoint is NULL", 0);
+    VERIFY_NON_NULL_RET(data, CALEADAPTER_TAG, "data is NULL", 0);
 
     OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Secure Data Send - encrypted datalen = %d", dataLen);
 
@@ -2749,10 +2761,11 @@ static void CALESecureSendDataCB(CAEndpoint_t *endpoint, const void *data, uint3
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "Send unicast data for server failed" );
 
-             if (g_errorHandler)
-             {
-                 g_errorHandler(endpoint, data, dataLen, result);
-             }
+            if (g_errorHandler)
+            {
+                g_errorHandler(endpoint, data, dataLen, result);
+            }
+            return 0;
         }
     }
     else if (ADAPTER_CLIENT == g_adapterType ||
@@ -2764,22 +2777,25 @@ static void CALESecureSendDataCB(CAEndpoint_t *endpoint, const void *data, uint3
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "Send unicast data for client failed" );
 
-             if (g_errorHandler)
-             {
-                 g_errorHandler(endpoint, data, dataLen, result);
-             }
+            if (g_errorHandler)
+            {
+                g_errorHandler(endpoint, data, dataLen, result);
+            }
+            return 0;
         }
     }
     else
     {
         OIC_LOG_V(ERROR, CALEADAPTER_TAG,
                   "Can't Send Message adapterType = %d, dataType = %d", g_adapterType, dataType);
+        return 0;
     }
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
+
+    return (ssize_t)dataLen;
 }
 
-void CALESecureReceiveDataCB(const CASecureEndpoint_t *sep, const void *data,
-                          uint32_t dataLen)
+static void CALESecureReceiveDataCB(const CASecureEndpoint_t *sep,
+                                 const void *data, size_t dataLen)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -2788,8 +2804,21 @@ void CALESecureReceiveDataCB(const CASecureEndpoint_t *sep, const void *data,
 
     OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Secure Data Receive - decrypted datalen = %d", dataLen);
 
+    if (dataLen <= 0)
+    {
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "incorrect dataLen, derecypt fail !");
+        return;
+    }
+
+    OIC_LOG_BUFFER(DEBUG, CALEADAPTER_TAG, data, dataLen);
+
     if (g_networkPacketReceivedCallback)
     {
+        OIC_LOG_V(DEBUG, CALEADAPTER_TAG,
+                  "[CALESecureReceiveDataCB] Secure flags = %d, %x",
+                  sep->endpoint.flags, sep->endpoint.flags);
+        OIC_LOG(DEBUG, CALEADAPTER_TAG,
+                  "[CALESecureReceiveDataCB] Received data up !");
         g_networkPacketReceivedCallback(sep, data, dataLen);
     }
 }
@@ -2826,14 +2855,14 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     }
     CAInitializeLEAdapter();
 
-    CASetLEClientThreadPoolHandle(handle);
-
     result = CAInitializeLEGattClient();
     if (CA_STATUS_OK != result)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitializeLEGattClient() failed");
         return CA_STATUS_FAILED;
     }
+
+    CASetLEClientThreadPoolHandle(handle);
 
     CASetLEReqRespClientCallback(CALEAdapterClientReceivedData);
     CASetLEServerThreadPoolHandle(handle);
@@ -3253,7 +3282,7 @@ static int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint,
     return dataLen;
 }
 
-static CAResult_t CAGetLEInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
+static CAResult_t CAGetLEInterfaceInformation(CAEndpoint_t **info, size_t *size)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -3778,13 +3807,13 @@ static void CALERemoveReceiveQueueData(u_arraylist_t *dataInfoList, const char* 
     VERIFY_NON_NULL_VOID(address, CALEADAPTER_TAG, "address");
 
     CABLESenderInfo_t *senderInfo = NULL;
-    uint32_t senderIndex = 0;
+    size_t senderIndex = 0;
 
     u_arraylist_t *portList = u_arraylist_create();
     if (CA_STATUS_OK == CALEGetPortsFromSenderInfo(address, dataInfoList, portList))
     {
-        uint32_t arrayLength = u_arraylist_length(portList);
-        for (uint32_t i = 0; i < arrayLength; i++)
+        size_t arrayLength = u_arraylist_length(portList);
+        for (size_t i = 0; i < arrayLength; i++)
         {
             uint16_t *port = (uint16_t *)u_arraylist_get(portList, i);
             if (!port)
@@ -3825,10 +3854,10 @@ static CAResult_t CALEGetPortsFromSenderInfo(const char *leAddress,
                     CALEADAPTER_TAG,
                     "NULL BLE address argument");
 
-    const uint32_t listLength = u_arraylist_length(senderInfoList);
-    const uint32_t addrLength = strlen(leAddress);
+    const size_t listLength = u_arraylist_length(senderInfoList);
+    const size_t addrLength = strlen(leAddress);
 
-    for (uint32_t index = 0; index < listLength; index++)
+    for (size_t index = 0; index < listLength; index++)
     {
         CABLESenderInfo_t *info = (CABLESenderInfo_t *) u_arraylist_get(senderInfoList, index);
         if (!info || !(info->remoteEndpoint))

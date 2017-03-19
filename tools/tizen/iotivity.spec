@@ -19,6 +19,10 @@ Source1002: %{name}-test.manifest
 %define TARGET_TRANSPORT IP
 %endif
 
+%if "%{tizen}" == "3.0"
+%define OIC_SUPPORT_TIZEN_TRACE True
+%endif
+
 %if "%{profile}" == "ivi"
 %define TARGET_TRANSPORT IP
 %endif
@@ -82,6 +86,7 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?WITH_MQ: %define WITH_MQ OFF}
 %{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?WITH_TCP: %define WITH_TCP 0}
+%{!?OIC_SUPPORT_TIZEN_TRACE: %define OIC_SUPPORT_TIZEN_TRACE False}
 
 BuildRequires:  expat-devel
 BuildRequires:  python, libcurl-devel
@@ -97,7 +102,9 @@ BuildRequires:  pkgconfig(sqlite3)
 %if "%{TARGET_OS}" == "tizen"
 BuildRequires:  gettext-tools
 BuildRequires:  pkgconfig(dlog)
+%if "%{OIC_SUPPORT_TIZEN_TRACE}" == "True"
 BuildRequires:  pkgconfig(ttrace)
+%endif
 BuildRequires:  pkgconfig(capi-network-connection)
 BuildRequires:  pkgconfig(capi-network-bluetooth) >= 0.1.52
 %else
@@ -189,6 +196,7 @@ scons %{?_smp_mflags} --prefix=%{_prefix} \
     WITH_MQ=%{WITH_MQ} \
     WITH_PROXY=%{WITH_PROXY} \
     WITH_TCP=%{WITH_TCP} \
+    OIC_SUPPORT_TIZEN_TRACE=%{OIC_SUPPORT_TIZEN_TRACE} \
     #eol
 
 
@@ -212,6 +220,7 @@ scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
     WITH_MQ=%{WITH_MQ} \
     WITH_PROXY=%{WITH_PROXY} \
     WITH_TCP=%{WITH_TCP} \
+    OIC_SUPPORT_TIZEN_TRACE=%{OIC_SUPPORT_TIZEN_TRACE} \
     #eol
 
 mkdir -p %{ex_install_dir}
@@ -266,13 +275,6 @@ cp resource/c_common/*.h %{buildroot}%{_includedir}
 cp resource/csdk/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
-
-install -d %{buildroot}%{_includedir}/iotivity
-ln -fs ../resource %{buildroot}%{_includedir}/iotivity/
-ln -fs ../service %{buildroot}%{_includedir}/iotivity/
-ln -fs ../c_common %{buildroot}%{_includedir}/iotivity/
-
-rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 
 install -d %{buildroot}%{_includedir}/iotivity
 ln -fs ../resource %{buildroot}%{_includedir}/iotivity/

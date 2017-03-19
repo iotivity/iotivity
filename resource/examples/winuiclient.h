@@ -48,7 +48,7 @@ namespace WinUIClient{
             WinUIClientApp(OCPersistentStorage ps);
             ~WinUIClientApp();
 
-            void Initialize();
+            bool Initialize();
             void Run();
             void FindResources();
             void GetMediaRepresentation();
@@ -81,6 +81,7 @@ namespace WinUIClient{
             std::shared_ptr<OCResource> curResource;
             ObserveType OBSERVE_TYPE_TO_USE;
             std::mutex curResourceLock;
+            bool initialized;
     };
 
 }

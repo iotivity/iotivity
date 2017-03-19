@@ -27,7 +27,7 @@
 
 
 // Logging tag.
-static char const TAG[] = "BLE_SERVER";
+#define TAG "BLE_SERVER"
 
 static CAResult_t CAGattServerSendResponseNotificationImpl(
     CAGattService * service,

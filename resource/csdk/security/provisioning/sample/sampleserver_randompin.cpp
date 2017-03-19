@@ -48,9 +48,6 @@
 #define TAG "SAMPLE_RANDOMPIN"
 
 int gQuitFlag = 0;
-#ifdef _ENABLE_MULTIPLE_OWNER_
-static bool g_LoopFlag = true;
-#endif //_ENABLE_MULTIPLE_OWNER_
 
 /* Structure to represent a LED resource */
 typedef struct LEDRESOURCE{

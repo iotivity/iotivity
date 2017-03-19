@@ -857,25 +857,6 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
         }
     }
 
-    // if rowneruuid is empty, set it to device ID
-    OicUuid_t emptyOwner = {.id = {0} };
-    if (memcmp(&(acl->rownerID.id), &emptyOwner, UUID_IDENTITY_SIZE) == 0)
-    {
-        OIC_LOG(DEBUG, TAG, "Set Rowner to PT's deviceId, because Rowner of ACL is empty");
-        OicUuid_t oicUuid;
-
-        if (OC_STACK_OK == GetDoxmDeviceID(&oicUuid))
-        {
-            memcpy(&(acl->rownerID.id), &oicUuid, UUID_IDENTITY_SIZE);
-        }
-        else
-        {
-            OIC_LOG(DEBUG, TAG, "Failed to set Rowner to PT's deviceID\
-                becuase it failed to retrieve Doxm DeviceID");
-            return OC_STACK_ERROR;
-        }
-    }
-
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if(!secPayload)
     {

@@ -1406,8 +1406,7 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t *info,
     VERIFY_NON_NULL(options, TAG, "options");
     VERIFY_TRUE(((*pdu)->transport_hdr->udp.token_length <= UINT8_MAX), TAG,
                 "pdu->transport_hdr->udp.token_length");
-    VERIFY_TRUE((info->payloadSize <= COAP_MAX_PDU_SIZE), TAG,
-                    "info->payloadSize");
+    VERIFY_TRUE((info->payloadSize <= UINT_MAX), TAG, "info->payloadSize");
 
     CAResult_t res = CA_STATUS_OK;
     unsigned int dataLength = 0;
@@ -1526,7 +1525,7 @@ CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
     VERIFY_NON_NULL(info, TAG, "info");
     VERIFY_NON_NULL(blockID, TAG, "blockID");
     VERIFY_NON_NULL(options, TAG, "options");
-    VERIFY_TRUE((dataLength <= COAP_MAX_PDU_SIZE), TAG, "dataLength");
+    VERIFY_TRUE((dataLength <= UINT_MAX), TAG, "dataLength");
 
     // get set block data from CABlock list-set.
     coap_block_t *block1 = CAGetBlockOption(blockID, COAP_OPTION_BLOCK1);
@@ -1633,7 +1632,7 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
     VERIFY_NON_NULL(info, TAG, "info");
     VERIFY_NON_NULL(blockID, TAG, "blockID");
     VERIFY_NON_NULL(options, TAG, "options");
-    VERIFY_TRUE((dataLength <= COAP_MAX_PDU_SIZE), TAG, "dataLength");
+    VERIFY_TRUE((dataLength <= UINT_MAX), TAG, "dataLength");
 
     // get set block data from CABlock list-set.
     coap_block_t *block1 = CAGetBlockOption(blockID, COAP_OPTION_BLOCK1);

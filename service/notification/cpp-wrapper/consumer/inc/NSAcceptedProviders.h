@@ -55,6 +55,19 @@ namespace OIC
                 }
 
                 /**
+                    * Copy Constructor of NSAcceptedProviders.
+                    *
+                    */
+                NSAcceptedProviders(const NSAcceptedProviders &);
+
+                /**
+                    * Copy assignment operator of NSAcceptedProviders.
+                    *
+                    * @return NSAcceptedProviders object reference
+                    */
+                NSAcceptedProviders &operator=(const NSAcceptedProviders &);
+
+                /**
                       * Destructor of NSAcceptedProviders.
                       */
                 ~NSAcceptedProviders()
@@ -107,11 +120,11 @@ namespace OIC
                       *  get the map of providers accepted.
                       * @return m_providers  -map of accepted providers
                       */
-                std::map<std::string, std::shared_ptr<NSProvider> > getProviders();
+                std::map<std::string, std::shared_ptr<NSProvider> > getProviders() const;
 
             private :
                 std::map<std::string, std::shared_ptr<NSProvider> > m_providers;
-                std::mutex m_mutex;
+                mutable std::mutex m_mutex;
         };
     }
 }

@@ -23,7 +23,6 @@ package org.iotivity.cloud.accountserver.resources.acl.invite;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 
 import org.iotivity.cloud.accountserver.Constants;

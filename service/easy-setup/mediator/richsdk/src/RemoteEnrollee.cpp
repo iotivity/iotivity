@@ -478,11 +478,6 @@ namespace OIC
                 throw ESBadRequestException ("Device not created");
             }
 
-            if(deviceProp.getSsid().empty())
-            {
-                throw ESBadRequestException ("Invalid Provisiong Data.");
-            }
-
             DevicePropProvStatusCb devicePropProvStatusCb = std::bind(
                     &RemoteEnrollee::onDevicePropProvisioningStatusHandlerCallback,
                     std::placeholders::_1,

@@ -434,7 +434,6 @@ std::string selectResourceType()
             return RESOURCE_TYPE_LIGHT;
         }
     }
-    }
 
     throw std::logic_error("unreachable");
 }

@@ -25,7 +25,7 @@
 
 
 // Logging tag.
-static char const TAG[] = "BLE_UTILS";
+#define TAG "BLE_UTILS"
 
 bool CAGetBlueZManagedObjectProxies(GList ** proxies,
                                     char const * interface,

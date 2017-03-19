@@ -71,7 +71,7 @@ public final class OcPlatform {
     private static volatile boolean sIsPlatformInitialized = false;
     private static QualityOfService sPlatformQualityOfService = QualityOfService.NA;
 
-    private static volatile boolean sIsStopPlatform = false;
+    private static volatile boolean sIsStopPlatform = true;
 
     private OcPlatform() {
     }
@@ -85,12 +85,6 @@ public final class OcPlatform {
      * @param platformConfig platform configuration
      */
     public synchronized static void Configure(PlatformConfig platformConfig) {
-        if (sIsStopPlatform)
-        {
-            OcPlatform.start();
-            sIsStopPlatform = false;
-        }
-
         if (!sIsPlatformInitialized) {
             CaInterface.initialize();
 
@@ -107,6 +101,12 @@ public final class OcPlatform {
             );
 
             sIsPlatformInitialized = true;
+        }
+
+        if (sIsStopPlatform)
+        {
+            OcPlatform.start();
+            sIsStopPlatform = false;
         }
     }
 

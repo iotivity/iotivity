@@ -375,7 +375,6 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
                         endpoint = NULL;
                         int pri = 0;
                         char *endpointStr = NULL;
-                        OCStackResult ret = OC_STACK_ERROR;
                         endpoint = (OCEndpointPayload *)OICCalloc(1, sizeof(OCEndpointPayload));
                         VERIFY_PARAM_NON_NULL(TAG, endpoint, "Failed allocating endpoint payload");
 
@@ -385,10 +384,10 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
                         err = cbor_value_dup_text_string(&curVal, &endpointStr, &len, NULL);
                         VERIFY_CBOR_SUCCESS(TAG, err, "to find endpoint value");
 
-                        ret = OCParseEndpointString(endpointStr, endpoint);
+                        OCStackResult parseResult = OCParseEndpointString(endpointStr, endpoint);
                         OICFree(endpointStr);
 
-                        if (OC_STACK_OK == ret)
+                        if (OC_STACK_OK == parseResult)
                         {
                             // pri
                             err = cbor_value_map_find_value(&epMap, OC_RSRVD_PRIORITY, &curVal);
@@ -401,7 +400,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
                         }
                         else
                         {
-                            if (OC_STACK_ADAPTER_NOT_ENABLED == ret)
+                            if (OC_STACK_ADAPTER_NOT_ENABLED == parseResult)
                             {
                                 OIC_LOG(ERROR, TAG, "Ignore unrecognized endpoint info");
                             }

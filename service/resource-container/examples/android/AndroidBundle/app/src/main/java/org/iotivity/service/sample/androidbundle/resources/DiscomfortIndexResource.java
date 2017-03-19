@@ -93,6 +93,10 @@ public class DiscomfortIndexResource extends BundleSoftSensorResource {
     }
 
     @Override
+    public void deactivateResource() {
+    }
+
+    @Override
     public RcsResourceAttributes handleGetAttributesRequest() {
         return this.getAttributes();
     }

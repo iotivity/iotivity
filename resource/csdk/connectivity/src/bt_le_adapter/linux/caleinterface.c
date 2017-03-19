@@ -37,7 +37,7 @@
 #define MICROSECS_PER_SEC 1000000
 
 // Logging tag.
-static char const TAG[] = "BLE_INTERFACE";
+#define TAG "BLE_INTERFACE"
 
 /*
     The IoTivity adapter interface currently doesn't provide a means to

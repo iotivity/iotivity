@@ -28,9 +28,12 @@ Source0: http://mirrors.kernel.org/%{name}/%{version}/%{name}-%{version}.tar.gz
 %{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
 %{!?VERBOSE: %define VERBOSE 1}
 %{!?WITH_TCP: %define WITH_TCP 0}
+%{!?OIC_SUPPORT_TIZEN_TRACE: %define OIC_SUPPORT_TIZEN_TRACE False}
 
 BuildRequires: pkgconfig(dlog)
+%if "%{OIC_SUPPORT_TIZEN_TRACE}" == "True"
 BuildRequires: pkgconfig(ttrace)
+%endif
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(capi-network-connection)
 BuildRequires: pkgconfig(capi-network-bluetooth)
@@ -57,6 +60,7 @@ scons %{JOB} \
     TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
     VERBOSE=%{VERBOSE} \
     WITH_TCP=%{WITH_TCP} \
+    OIC_SUPPORT_TIZEN_TRACE=%{OIC_SUPPORT_TIZEN_TRACE} \
     #eol
 
 

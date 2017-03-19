@@ -61,8 +61,8 @@ std::string  systemTime = "2016-01-15T11.01";
 
 // Set of strings for each of device info fields
 std::string  deviceName = "IoTivity Fridge Server";
-std::string  specVersion = "core.1.1.0";
-std::vector<std::string> dataModelVersions = {"res.1.1.0"};
+std::string  specVersion = "ocf.1.1.0";
+std::vector<std::string> dataModelVersions = {"ocf.res.1.1.0"};
 std::string  protocolIndependentID = "054718eb-b1e7-4e9e-9892-30e718a6a8f3";
 
 // OCPlatformInfo Contains all the platform info to be stored
@@ -570,12 +570,11 @@ int main ()
     {
         ServiceType::InProc,
         ModeType::Server,
-        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-        0,         // Uses randomly available port
-        QualityOfService::LowQos
+        nullptr
     };
 
     OCPlatform::Configure(cfg);
+    OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
     Refrigerator rf;
 
     std::cout << "Starting server & setting platform info\n";
@@ -603,6 +602,7 @@ int main ()
     DeletePlatformInfo();
     // we will keep the server alive for at most 30 minutes
     std::this_thread::sleep_for(std::chrono::minutes(30));
+    OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     return 0;
 }
 

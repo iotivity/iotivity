@@ -418,6 +418,12 @@ typedef enum
     ES_ERRCODE_FAILED_TO_FIND_REGISTERED_USER_IN_CLOUD,
 
     /**
+     * Error Code that an enrollee can not connect to a target WiFi AP because the AP resides in
+     * an unsupported WiFi frequency.
+     */
+    ES_ERRCODE_UNSUPPORTED_WIFI_FREQUENCY,
+
+    /**
      * Error Code that Unknown error occured
      */
     ES_ERRCODE_UNKNOWN = 255

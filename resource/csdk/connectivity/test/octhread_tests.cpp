@@ -518,7 +518,7 @@ TEST(ConditionTests, TC_07_WAITDURATION)
     uint64_t beg = getAbsTime();
 
     OCWaitResult_t ret = oc_cond_wait_for(sharedCond, sharedMutex,
-                                          TARGET_WAIT * USECS_PER_SEC);
+                                          (uint64_t)(TARGET_WAIT * USECS_PER_SEC));
     EXPECT_EQ(OC_WAIT_TIMEDOUT,ret);
 
     uint64_t end = getAbsTime();

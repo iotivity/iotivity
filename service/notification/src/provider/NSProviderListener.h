@@ -21,6 +21,10 @@
 #ifndef _NS_PROVIDER_LISTENER__H_
 #define _NS_PROVIDER_LISTENER__H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 #include <octypes.h>
 #include "ocstack.h"
 #include "logger.h"
@@ -60,3 +64,7 @@ OCStackApplicationResult NSProviderPublishMQResponseCB(void *ctx, OCDoHandle han
 #endif
 
 #endif /* _NS_PROVIDER_LISTENER__H_ */
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus

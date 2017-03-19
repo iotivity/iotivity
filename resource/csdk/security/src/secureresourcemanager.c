@@ -32,6 +32,7 @@
 #include "secureresourcemanager.h"
 #include "srmresourcestrings.h"
 #include "ocresourcehandler.h"
+#include "ocrandom.h"
 
 #if defined( __WITH_TLS__) || defined(__WITH_DTLS__)
 #include "pkix_interface.h"
@@ -105,7 +106,7 @@ void SRMGenerateResponse(SRMRequestContext_t *context)
     // on to resource endpoint.
     if (IsAccessGranted(context->responseVal))
     {
-        if(NULL != gRequestHandler
+        if (NULL != gRequestHandler
             && NULL != context->endPoint
             && NULL != context->requestInfo)
         {
@@ -174,7 +175,7 @@ void CheckRequestForSecResourceOverUnsecureChannel(SRMRequestContext_t *context)
         context->resourceType, context->resourceUri);
 
     // if request is over unsecure channel, check resource type
-    if(false == context->secureChannel)
+    if (false == context->secureChannel)
     {
         OCResource *resPtr = FindResourceByUri(context->resourceUri);
 
@@ -240,22 +241,34 @@ void ClearRequestContext(SRMRequestContext_t *context)
 }
 
 // Returns true iff Request arrived over secure channel
+// Note: context->subjectUuid must be copied from requestInfo prior to calling
+// this function, or this function may incorrectly read the nil-UUID (0s)
+// and assume CoAP request (which can result in request being incorrectly
+// denied).
 bool isRequestOverSecureChannel(SRMRequestContext_t *context)
 {
     OicUuid_t nullSubjectId = {.id = {0}};
 
-    // if flag set, return true
-    if(context->endPoint->flags & CA_SECURE)
+    // If flag set, return true
+    if (context->endPoint->flags & CA_SECURE)
     {
-        return true;
-    }
-    // a null subject ID indicates CoAP, so if non-null, also return true
-    else if(memcmp(context->requestInfo->info.identity.id,
-        nullSubjectId.id, sizeof(context->requestInfo->info.identity.id)) != 0)
-    {
+        OIC_LOG(DEBUG, TAG, "CA_SECURE flag is set; indicates secure channel.");
         return true;
     }
 
+    // A null subject ID indicates CoAP, so if non-null, also return true
+    if (SUBJECT_ID_TYPE_UUID == context->subjectIdType)
+    {
+        if (memcmp(context->subjectUuid.id, nullSubjectId.id,
+            sizeof(context->subjectUuid.id)) != 0)
+        {
+            OIC_LOG(DEBUG, TAG, "Subject ID is non-null; indicates secure channel.");
+            return true;
+        }
+    }
+
+    OIC_LOG(DEBUG, TAG, "CA_SECURE flag is not set, and Subject ID of requester \
+        is NULL; indicates unsecure channel.");
     return false;
 }
 
@@ -284,10 +297,26 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
         ctx->requestInfo = requestInfo;
         ctx->requestedPermission = GetPermissionFromCAMethod_t(requestInfo->method);
 
-        // Copy the subjectID.
+        // Copy the subjectID, truncating to 16-byte UUID (32 hex-digits).
+        // TODO IOT-1894 "Determine appropriate CA_MAX_ENDPOINT_IDENTITY_LEN"
+        ctx->subjectIdType = SUBJECT_ID_TYPE_UUID; // only supported type for now
         memcpy(ctx->subjectUuid.id,
             requestInfo->info.identity.id, sizeof(ctx->subjectUuid.id));
-        ctx->subjectIdType = SUBJECT_ID_TYPE_UUID; // only supported type for now
+
+#ifndef NDEBUG // if debug build, log the ID being used for matching ACEs
+        if (SUBJECT_ID_TYPE_UUID == ctx->subjectIdType)
+        {
+            char strUuid[UUID_STRING_SIZE] = "UUID_ERROR";
+            if (OCConvertUuidToString(ctx->subjectUuid.id, strUuid))
+            {
+                OIC_LOG_V(DEBUG, TAG, "ctx->subjectUuid for request: %s.", strUuid);
+            }
+            else
+            {
+                OIC_LOG(ERROR, TAG, "failed to convert ctx->subjectUuid to str.");
+            }
+        }
+#endif
 
         // Set secure channel boolean.
         ctx->secureChannel = isRequestOverSecureChannel(ctx);
@@ -306,7 +335,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
         CheckRequestForSecResourceOverUnsecureChannel(ctx);
 
         // If DENIED response wasn't sent already, then it's time to check ACL.
-        if(false == ctx->responseSent)
+        if (false == ctx->responseSent)
         {
 #ifdef MULTIPLE_OWNER // TODO Samsung: please verify that these two calls belong
                       // here inside this conditional statement.
@@ -328,7 +357,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
         }
     }
 
-    if(false == ctx->responseSent)
+    if (false == ctx->responseSent)
     {
         OIC_LOG(ERROR, TAG, "Exiting SRM without responding to requester!");
     }
@@ -383,7 +412,7 @@ OCStackResult SRMRegisterHandler(CARequestCallback reqHandler,
     CAResponseCallback respHandler, CAErrorCallback errHandler)
 {
     OIC_LOG(DEBUG, TAG, "SRMRegisterHandler !!");
-    if( !reqHandler || !respHandler || !errHandler)
+    if (!reqHandler || !respHandler || !errHandler)
     {
         OIC_LOG(ERROR, TAG, "Callback handlers are invalid");
         return OC_STACK_INVALID_PARAM;
@@ -512,90 +541,90 @@ OicSecSvrType_t GetSvrTypeFromUri(const char* uri)
     size_t svrLen = 0;
 
     svrLen = strlen(OIC_RSRC_ACL_URI);
-    if(uriLen == svrLen)
+    if (uriLen == svrLen)
     {
-        if(0 == strncmp(uri, OIC_RSRC_ACL_URI, svrLen))
+        if (0 == strncmp(uri, OIC_RSRC_ACL_URI, svrLen))
         {
             return OIC_R_ACL_TYPE;
         }
     }
 
     svrLen = strlen(OIC_RSRC_AMACL_URI);
-    if(uriLen == svrLen)
+    if (uriLen == svrLen)
     {
-        if(0 == strncmp(uri, OIC_RSRC_AMACL_URI, svrLen))
+        if (0 == strncmp(uri, OIC_RSRC_AMACL_URI, svrLen))
         {
             return OIC_R_AMACL_TYPE;
         }
     }
 
     svrLen = strlen(OIC_RSRC_CRED_URI);
-    if(uriLen == svrLen)
+    if (uriLen == svrLen)
     {
-        if(0 == strncmp(uri, OIC_RSRC_CRED_URI, svrLen))
+        if (0 == strncmp(uri, OIC_RSRC_CRED_URI, svrLen))
         {
             return OIC_R_CRED_TYPE;
         }
     }
 
     svrLen = strlen(OIC_RSRC_CRL_URI);
-    if(uriLen == svrLen)
+    if (uriLen == svrLen)
     {
-        if(0 == strncmp(uri, OIC_RSRC_CRL_URI, svrLen))
+        if (0 == strncmp(uri, OIC_RSRC_CRL_URI, svrLen))
         {
             return OIC_R_CRL_TYPE;
         }
     }
 
     svrLen = strlen(OIC_RSRC_DOXM_URI);
-    if(uriLen == svrLen)
+    if (uriLen == svrLen)
     {
-        if(0 == strncmp(uri, OIC_RSRC_DOXM_URI, svrLen))
+        if (0 == strncmp(uri, OIC_RSRC_DOXM_URI, svrLen))
         {
             return OIC_R_DOXM_TYPE;
         }
     }
 
     svrLen = strlen(OIC_RSRC_DPAIRING_URI);
-    if(uriLen == svrLen)
+    if (uriLen == svrLen)
     {
-        if(0 == strncmp(uri, OIC_RSRC_DPAIRING_URI, svrLen))
+        if (0 == strncmp(uri, OIC_RSRC_DPAIRING_URI, svrLen))
         {
             return OIC_R_DPAIRING_TYPE;
         }
     }
 
     svrLen = strlen(OIC_RSRC_PCONF_URI);
-    if(uriLen == svrLen)
+    if (uriLen == svrLen)
     {
-        if(0 == strncmp(uri, OIC_RSRC_PCONF_URI, svrLen))
+        if (0 == strncmp(uri, OIC_RSRC_PCONF_URI, svrLen))
         {
             return OIC_R_PCONF_TYPE;
         }
     }
 
     svrLen = strlen(OIC_RSRC_PSTAT_URI);
-    if(uriLen == svrLen)
+    if (uriLen == svrLen)
     {
-        if(0 == strncmp(uri, OIC_RSRC_PSTAT_URI, svrLen))
+        if (0 == strncmp(uri, OIC_RSRC_PSTAT_URI, svrLen))
         {
             return OIC_R_PSTAT_TYPE;
         }
     }
 
     svrLen = strlen(OIC_RSRC_SVC_URI);
-    if(uriLen == svrLen)
+    if (uriLen == svrLen)
     {
-        if(0 == strncmp(uri, OIC_RSRC_SVC_URI, svrLen))
+        if (0 == strncmp(uri, OIC_RSRC_SVC_URI, svrLen))
         {
             return OIC_R_SVC_TYPE;
         }
     }
 
     svrLen = strlen(OIC_RSRC_SACL_URI);
-    if(uriLen == svrLen)
+    if (uriLen == svrLen)
     {
-        if(0 == strncmp(uri, OIC_RSRC_SACL_URI, svrLen))
+        if (0 == strncmp(uri, OIC_RSRC_SACL_URI, svrLen))
         {
             return OIC_R_SACL_TYPE;
         }

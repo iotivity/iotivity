@@ -18,6 +18,7 @@
  *
  ******************************************************************/
 
+#include "caadapterutils.h"
 #include "camanagerleinterface.h"
 #include "cabtpairinginterface.h"
 #include "cautilinterface.h"

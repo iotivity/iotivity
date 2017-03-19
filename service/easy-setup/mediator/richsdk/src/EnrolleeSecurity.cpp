@@ -220,7 +220,7 @@ namespace OIC
 
             bool ret = false;
             std::string subOwnerID;
-            char uuidString[UUID_STRING_SIZE];
+            char uuidString[UUID_STRING_SIZE] = {};
 
             OicSecSubOwner_t* subOwnerList = foundDevice->getDevPtr()->doxm->subOwners;
 
@@ -352,7 +352,6 @@ namespace OIC
                 delete result;
                 m_cond.notify_all();
             }
-            m_cond.notify_all();
         }
 
         ESResult EnrolleeSecurity::requestSetPreconfPinData(const ESOwnershipTransferData& MOTData)
@@ -430,6 +429,7 @@ namespace OIC
 
         ESResult EnrolleeSecurity::requestEnableMOTMode()
         {
+            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "requestEnableMOTMode IN");
             ESResult res = ESResult:: ES_ERROR;
 
             OC::ResultCallBack changeMOTMethodCB = std::bind(
@@ -461,6 +461,7 @@ namespace OIC
 
         ESResult EnrolleeSecurity::provisionMOTConfig(const ESOwnershipTransferData& MOTData)
         {
+            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "provisionMOTConfig IN");
             ESResult res = ESResult:: ES_ERROR;
 
             if(!m_securedResource->isMOTEnabled())
@@ -881,10 +882,7 @@ namespace OIC
                         res = ESResult::ES_OWNERSHIP_IS_NOT_SYNCHRONIZED;
                         return res;
                     }
-
-                    res = performOwnershipTransfer();
-
-                    if(res != ESResult::ES_OK)
+                    else
                     {
                         OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,
                             "The found device is already owned by Other Mediator.(FAILED)");
@@ -914,7 +912,8 @@ namespace OIC
                         return res;
                     }
 #ifdef MULTIPLE_OWNER
-                    if( m_securedResource->isMOTSupported())
+                    if( m_securedResource->isMOTSupported() &&
+                        ownershipTransferData.getMOTMethod() != OIC_OXM_COUNT)
                     {
                         res = provisionMOTConfig(ownershipTransferData);
                     }

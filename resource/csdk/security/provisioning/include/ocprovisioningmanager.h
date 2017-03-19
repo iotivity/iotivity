@@ -106,20 +106,6 @@ OCStackResult OCDoOwnershipTransfer(void* ctx,
                                     OCProvisionDev_t *targetDevices,
                                     OCProvisionResultCB resultCallback);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
-/**
- * API to perfrom multiple ownership transfer for MOT enabled device.
- *
- * @param[in] ctx Application context would be returned in result callback
- * @param[in] targetDevices List of devices to perform ownership transfer.
- * @param[in] resultCallback Result callback function to be invoked when ownership transfer finished.
- * @return OC_STACK_OK in case of success and other value otherwise.
- */
-OCStackResult OCDoMultipleOwnershipTransfer(void* ctx,
-                                      OCProvisionDev_t *targetDevices,
-                                      OCProvisionResultCB resultCallback);
-#endif //_ENABLE_MULTIPLE_OWNER_
-
 /**
  * API to set a allow status of OxM
  *
@@ -412,21 +398,6 @@ OCStackResult OCRemoveDeviceWithUuid(void* ctx,
                                      unsigned short waitTimeForOwnedDeviceDiscovery,
                                      const OicUuid_t* pTargetUuid,
                                      OCProvisionResultCB resultCallback);
-
-/*
- * Function to reset the target device.
- * This function will remove credential and ACL of target device from all devices in subnet.
- *
- * @param[in] ctx Application context would be returned in result callback
- * @param[in] waitTimeForOwnedDeviceDiscovery Maximum wait time for owned device discovery.(seconds)
- * @param[in] pTargetDev Device information to be revoked.
- * @param[in] resultCallback callback provided by API user, callback will be called when
- *            credential revocation is finished.
- * @return  OC_STACK_OK in case of success and other value otherwise.
- */
-OCStackResult OCResetDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
-                            const OCProvisionDev_t* pTargetDev,
-                            OCProvisionResultCB resultCallback);
 
 /**
  * Function to reset the target device.

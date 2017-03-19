@@ -107,16 +107,6 @@ def build_linux_secured_with_java(flag, extra_option_str):
                     }
     call_scons(build_options, extra_option_str)
 
-def build_linux_secured_with_tcp(flag, extra_option_str):
-    print ("*********** Build for linux with Secured TCP ************")
-    build_options = {
-                        'RELEASE':flag,
-                        'WITH_TCP': 1,
-                        'WITH_CLOUD':1,
-                        'SECURED':1,
-                    }
-    call_scons(build_options, extra_option_str)
-
 def build_linux_unsecured_with_tcp(flag, extra_option_str):
     print ("*********** Build for linux with TCP ************")
     build_options = {

@@ -121,6 +121,7 @@ help_vars.Add(EnumVariable('MULTIPLE_OWNER', 'Enable multiple owner', '0', allow
 help_vars.Add(EnumVariable('EXC_PROV_SUPPORT', 'Except OCPMAPI library(libocpmapi.so)', '0', allowed_values=('0', '1')))
 help_vars.Add(EnumVariable('TEST', 'Run unit tests', '0', allowed_values=('0', '1')))
 help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', logging_default))
+help_vars.Add(EnumVariable('LOG_LEVEL', 'Enable stack logging level', 'DEBUG', allowed_values=('DEBUG', 'INFO', 'ERROR', 'WARNING', 'FATAL')))
 help_vars.Add(BoolVariable('UPLOAD', 'Upload binary ? (For Arduino)', require_upload))
 help_vars.Add(EnumVariable('ROUTING', 'Enable routing', 'EP', allowed_values=('GW', 'EP')))
 help_vars.Add(EnumVariable('BUILD_SAMPLE', 'Build with sample', 'ON', allowed_values=('ON', 'OFF')))
@@ -137,6 +138,7 @@ if target_os == 'windows':
 
 help_vars.Add(BoolVariable('BUILD_JAVA', 'Build Java bindings', False))
 help_vars.Add(PathVariable('JAVA_HOME', 'JDK directory', os.environ.get('JAVA_HOME'), PathVariable.PathAccept))
+help_vars.Add(EnumVariable('OIC_SUPPORT_TIZEN_TRACE', 'Tizen Trace(T-trace) api availability', 'False', allowed_values=('True', 'False')))
 
 AddOption('--prefix',
                   dest='prefix',
@@ -378,7 +380,7 @@ pc_vars = {
 env.Substfile(pc_file, SUBST_DICT = pc_vars)
 
 ######################################################################
-# Setting global CPPDEFINES
+# Setting global compiler flags
 ######################################################################
 target_transport = env.get('TARGET_TRANSPORT')
 with_mq = env.get('WITH_MQ')
@@ -386,6 +388,8 @@ with_ra = env.get('WITH_RA')
 with_tcp = env.get('WITH_TCP')
 rd_mode = env.get('RD_MODE')
 with_ra_ibb = env.get('WITH_RA_IBB')
+
+env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
 if (env.get('WITH_UPSTREAM_LIBCOAP') == '1'):
     env.AppendUnique(CPPDEFINES = ['WITH_UPSTREAM_LIBCOAP'])
@@ -428,7 +432,7 @@ if 'ALL' in target_transport:
         env.AppendUnique(CPPDEFINES = ['RA_ADAPTER'])
     if with_tcp:
         env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER'])
-    if (target_os in ['linux']):
+    if (target_os in ['linux', 'yocto']):
         env.AppendUnique(CPPDEFINES = ['IP_ADAPTER', 'NO_EDR_ADAPTER', 'LE_ADAPTER'])
     elif (target_os == 'android'):
         env.AppendUnique(CPPDEFINES = ['IP_ADAPTER', 'EDR_ADAPTER', 'LE_ADAPTER', 'NFC_ADAPTER'])

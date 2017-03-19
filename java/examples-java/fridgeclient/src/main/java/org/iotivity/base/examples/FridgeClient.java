@@ -163,12 +163,7 @@ public class FridgeClient extends Activity implements
         OcHeaderOption clientToken = new OcHeaderOption(CLIENT_TOKEN_KEY, CLIENT_TOKEN);
         headerOptions.add(apiVersion);
         headerOptions.add(clientToken);
-        try {
-            mFridgeResource.setHeaderOptions(headerOptions);
-        } catch (OcException e) {
-            logMessage("Error in setHeaderOptions");
-            Log.e(TAG, e.getMessage());
-        }
+        mFridgeResource.setHeaderOptions(headerOptions);
 
         logMessage("Calling GET api on mFridgeResource and other component resources");
         try {

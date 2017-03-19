@@ -76,42 +76,11 @@ class ClientFridge
     void foundDevice(std::shared_ptr<OCResource> resource)
     {
         using namespace OC::OCPlatform;
-        std::string platformDiscoveryURI = "/oic/p";
-        std::string deviceDiscoveryURI   = "/oic/d";
         if(resource && resource->uri() == "/device")
         {
             std::cout << "Discovered a device object"<<std::endl;
             std::cout << "\tHost: "<<resource->host()<<std::endl;
             std::cout << "\tURI:  "<<resource->uri() <<std::endl;
-        }
-
-        OCStackResult ret;
-
-        std::cout << "Querying for platform information... " << std::endl;
-
-        ret = OCPlatform::getPlatformInfo("", platformDiscoveryURI, CT_ADAPTER_IP, NULL);
-
-        if (ret == OC_STACK_OK)
-        {
-            std::cout << "Get platform information is done." << std::endl;
-        }
-        else
-        {
-            std::cout << "Get platform information failed." << std::endl;
-        }
-
-        std::cout << "Querying for device information... " << std::endl;
-
-        ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI, 
-                                resource->connectivityType(), NULL);
-
-        if (ret == OC_STACK_OK)
-        {
-            std::cout << "Getting device information is done." << std::endl;
-        }
-        else
-        {
-            std::cout << "Getting device information failed." << std::endl;
         }
 
         // we have now found a resource, so lets create a few resource objects
@@ -347,13 +316,13 @@ int main(int argc, char* argv[])
     {
         ServiceType::InProc,
         ModeType::Client,
-        "0.0.0.0",
-        0,
-        QualityOfService::LowQos
+        nullptr
     };
 
     OCPlatform::Configure(cfg);
+    OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
     ClientFridge cf(connectivityType);
+    OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     return 0;
 }
 

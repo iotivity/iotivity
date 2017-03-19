@@ -103,15 +103,6 @@ OCStackResult SetDisplayPinWithContextCB(DisplayPinCallbackWithContext displayPi
  */
 void SetInputPinCB(InputPinCallback pinCB);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
-/**
- * Function to save the preconfig PIN getter from user.
- *
- * @param pinCB implementation of preconfig PIN function.
- */
-void SetGetPreconfigPinCB(InputPinCallback pinCB);
-#endif //_ENABLE_MULTIPLE_OWNER_
-
 /**
  * Function to set the input PIN callback from the user with context.
  *
@@ -220,29 +211,6 @@ OCStackResult SetPreconfigPin(const char *pinBuffer, size_t pinLength);
  * @return ::OC_STACK_OK in case of success or other value in case of error.
  */
 OCStackResult SetRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType);
-
-
-#ifdef _ENABLE_MULTIPLE_OWNER_
-/**
- * Function to save the Pre-configured PIN.
- *
- * @param[in] pinBuffer PIN data
- * @param[in] pinLength byte length of PIN
- *
- * @return ::OC_STACK_SUCCESS in case of success or other value in ccase of error.
- */
-OCStackResult SetPreconfigPin(const char* pinBuffer, size_t pinLength);
-
-/**
- * Function to read preconfig PIN.
- *
- * @param[in,out] pinBuffer is the reference to the buffer to store the preconfigured PIN.
- * @param[in] bufferSize is the size of buffer.
- *
- * @return ::OC_STACK_SUCCESS in case of success or other value in ccase of error.
- */
-OCStackResult GetPreconfigPin(char* pinBuffer, size_t bufferSize);
-#endif
 
 #ifdef __WITH_DTLS__
 

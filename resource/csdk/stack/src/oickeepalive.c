@@ -389,24 +389,6 @@ OCStackResult HandleKeepAliveRequest(OCServerRequest *request,
     {
         OIC_LOG_V(ERROR, TAG, "SendKeepAliveResponse failed with result %u", ret);
     }
-    else
-    {
-        OIC_LOG(DEBUG, TAG, "Not Supported by KeepAlive");
-        result = OC_STACK_UNAUTHORIZED_REQ;
-    }
-
-    // convert OCStackResult to CAResponseResult_t.
-    CAResponseResult_t caResult = OCToCAStackResult(result, request->method);
-    CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
-    CopyDevAddrToEndpoint(&request->devAddr, &endpoint);
-
-    // Send response message.
-    SendDirectStackResponse(&endpoint, request->coapID, caResult,
-                           qualityOfServiceToMessageType(request->qos),
-                           request->numRcvdVendorSpecificHeaderOptions,
-                           request->rcvdVendorSpecificHeaderOptions,
-                           request->requestToken, request->tokenLength,
-                           request->resourceUrl, CA_RESPONSE_DATA);
 
     OIC_LOG(DEBUG, TAG, "HandleKeepAliveRequest OUT");
     return ret;

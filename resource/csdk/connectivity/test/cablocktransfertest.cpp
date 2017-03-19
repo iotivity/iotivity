@@ -18,11 +18,15 @@
  *
  ******************************************************************/
 
+// Warning disabled globally but VS2013 ignores the /wd4200 option in C++ files.
+#if defined(_MSC_VER) && _MSC_VER < 1900
+#pragma warning(disable : 4200)
+#endif
+
 #include "gtest/gtest.h"
 #include "cainterface.h"
 #include "cautilinterface.h"
 #include "cacommon.h"
-#include "caprotocolmessage.h"
 #include "cablockwisetransfer.h"
 
 #define LARGE_PAYLOAD_LENGTH    1024

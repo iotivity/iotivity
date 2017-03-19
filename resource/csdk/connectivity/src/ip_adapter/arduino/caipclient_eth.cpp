@@ -38,8 +38,6 @@
 
 #define TAG "IPC"
 
-#define UINT16_MAX 65535
-
 static int g_sockID = 0;
 
 /**

@@ -108,10 +108,6 @@ public class ResourceFind extends Resource {
                 return null;
             }
 
-            if (deviceList == null) {
-                return null;
-            }
-
             if (deviceList.isEmpty()) {
                 return null;
             }

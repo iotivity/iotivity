@@ -351,16 +351,6 @@ TEST_F(ProvisionDevicePropertiesTest,
 }
 
 TEST_F(ProvisionDevicePropertiesTest,
-          ThrowExceptionWhenProvisionDeviceProperiesFailedWithoutSSID)
-{
-    DeviceProp devProp;
-    devProp.setWiFiProp("", "Iotivity_PWD", WPA2_PSK, TKIP_AES);
-    devProp.setDevConfProp("korean", "Korea", "Location");
-    EXPECT_ANY_THROW(g_remoteEnrollee->provisionDeviceProperties(devProp,
-                                                                 deviceProvisioningStatusCb));
-}
-
-TEST_F(ProvisionDevicePropertiesTest,
           ProvisionDeviceProperiesSucceed)
 {
     DeviceProp devProp;

@@ -60,11 +60,6 @@ import org.iotivity.base.OcConnectivityType;
 import org.iotivity.ca.CaInterface;
 
 
-import org.iotivity.ca.OicCipher;
-import org.iotivity.base.OcConnectivityType;
-import org.iotivity.ca.CaInterface;
-
-
 public class ProvisioningClient extends Activity implements
 OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwiseDevicesListener {
 

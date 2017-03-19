@@ -26,7 +26,7 @@
 
 
 // Logging tag.
-static char const TAG[] = "BLE_ADVERTISEMENT";
+#define TAG "BLE_ADVERTISEMENT"
 
 bool CALEAdvertisementInitialize(CALEAdvertisement * a,
                                  GDBusConnection * connection,

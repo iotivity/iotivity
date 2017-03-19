@@ -137,8 +137,3 @@ OCStop
 OCStopPresence
 OCStopMulticastServer
 OCUnBindResource
-OCSetHeaderOption
-OCGetHeaderOption
-FindResourceByUri
-OCGetDeviceId
-OCSetDeviceId

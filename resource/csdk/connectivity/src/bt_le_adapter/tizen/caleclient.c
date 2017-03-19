@@ -165,8 +165,8 @@ bool CALEIsDeviceDiscovered(const char * address)
     if (g_deviceDiscoveredList)
     {
         oc_mutex_lock(g_deviceDiscoveredListMutex);
-        uint32_t arrayLength = u_arraylist_length(g_deviceDiscoveredList);
-        for (int i = 0; i < arrayLength; i++)
+        size_t arrayLength = u_arraylist_length(g_deviceDiscoveredList);
+        for (size_t i = 0; i < arrayLength; i++)
         {
             char *deviceAddr = u_arraylist_get(g_deviceDiscoveredList, i);
             if (0 == strcasecmp(deviceAddr, address))
@@ -1019,8 +1019,8 @@ CAResult_t CALEGattDiscoverServices(const char *remoteAddress)
     if (g_multicastDataList)
     {
         oc_mutex_lock(g_multicastDataListMutex);
-        uint32_t arrayLength = u_arraylist_length(g_multicastDataList);
-        for (int i = 0; i < arrayLength; i++)
+        size_t arrayLength = u_arraylist_length(g_multicastDataList);
+        for (size_t i = 0; i < arrayLength; i++)
         {
             CALEData_t *multicastData = u_arraylist_get(g_multicastDataList, i);
             if (NULL == multicastData)

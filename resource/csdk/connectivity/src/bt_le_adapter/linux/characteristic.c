@@ -31,7 +31,7 @@
 
 
 // Logging tag.
-static char const TAG[] = "BLE_CHARACTERISTIC";
+#define TAG "BLE_CHARACTERISTIC"
 
 // ---------------------------------------------------------------------
 //                      GATT Request Handling

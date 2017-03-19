@@ -1379,7 +1379,6 @@ OCStackResult OCSelectOwnershipTransferMethod(const OicSecOxm_t *supportedMethod
     return OTMSelectOwnershipTransferMethod(supportedMethods, numberOfMethods,
                                             selectedMethod, ownerType);
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 /**

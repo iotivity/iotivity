@@ -78,8 +78,6 @@ typedef int (*CAgetPskCredentialsHandler)(CADtlsPskCredType_t type,
 const CASecureEndpoint_t *CAGetSecureEndpointData(const CAEndpoint_t *peer);
 #endif //MULTIPLE_OWNER
 
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-#ifdef _ENABLE_MULTIPLE_OWNER_
 /**
  * Adds a bit to the attributes field of a secure endpoint.
  *

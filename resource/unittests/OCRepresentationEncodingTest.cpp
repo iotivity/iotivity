@@ -143,8 +143,8 @@ namespace OCRepresentationEncodingTest
         size_t dim1[MAX_REP_ARRAY_DEPTH] = {2, 0, 0};
         char **dt1 = (char **)OICMalloc(sizeof(char *) * 2);
         EXPECT_TRUE(dt1);
-        dt1[0] = OICStrdup("res.1.1.0");
-        dt1[1] = OICStrdup("sh.1.1.0");
+        dt1[0] = OICStrdup("ocf.res.1.1.0");
+        dt1[1] = OICStrdup("ocf.sh.1.1.0");
         OCRepPayloadSetStringArray(device, OC_RSRVD_DATA_MODEL_VERSION, (const char**)dt1, dim1);
         EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)device, &cborData, &cborSize));
         EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedDevice, PAYLOAD_TYPE_REPRESENTATION, cborData, cborSize));
@@ -155,8 +155,8 @@ namespace OCRepresentationEncodingTest
         char **dmv1 = NULL;
         parsedRep = (OCRepPayload *)parsedDevice;
         EXPECT_TRUE(OCRepPayloadGetStringArray(parsedRep, OC_RSRVD_DATA_MODEL_VERSION, &dmv1, dim));
-        EXPECT_STREQ("res.1.1.0", dmv1[0]);
-        EXPECT_STREQ("sh.1.1.0", dmv1[1]);
+        EXPECT_STREQ("ocf.res.1.1.0", dmv1[0]);
+        EXPECT_STREQ("ocf.sh.1.1.0", dmv1[1]);
         OICFree(dmv1[0]);
         OICFree(dmv1[1]);
         OICFree(dmv1);
@@ -166,8 +166,8 @@ namespace OCRepresentationEncodingTest
         EXPECT_EQ(1u, mc2.representations().size());
         const OC::OCRepresentation r2 = mc2.representations()[0];
         std::vector<std::string> dmv3 = r2.getValue<std::vector<std::string>>(OC_RSRVD_DATA_MODEL_VERSION);
-        EXPECT_STREQ("res.1.1.0", dmv3[0].c_str());
-        EXPECT_STREQ("sh.1.1.0", dmv3[1].c_str());
+        EXPECT_STREQ("ocf.res.1.1.0", dmv3[0].c_str());
+        EXPECT_STREQ("ocf.sh.1.1.0", dmv3[1].c_str());
         OCPayloadDestroy(parsedDevice);
     }
 
@@ -1602,6 +1602,8 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ("if.firstitem", parsedPayload->interfaces->value);
         EXPECT_EQ(NULL, parsedPayload->interfaces->next);
 
+        OCRepPayloadValue *originalRootValues = parsedPayload->values;
+
         // To make sure rt and if are not duplicated.
         EXPECT_STREQ("BoolAttr", parsedPayload->values->name);
         EXPECT_EQ(true, parsedPayload->values->b);
@@ -1628,6 +1630,9 @@ namespace OCRepresentationEncodingTest
         parsedPayload->values = parsedPayload->values->next;
 
         EXPECT_EQ(NULL, parsedPayload->values);
+
+        // Recover the original value to ensure a proper cleanup.
+        parsedPayload->values = originalRootValues;
 
         OICFree(cborData);
         OCRepPayloadDestroy(repPayload);

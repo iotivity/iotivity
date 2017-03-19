@@ -49,12 +49,6 @@ Java_org_iotivity_service_easysetup_mediator_EasySetup_nativeCreateRemoteEnrolle
         return NULL;
     }
 
-    if(!jResource)
-    {
-        ES_LOGE("JniEasySetup::nativeCreateRemoteEnrollee Invalid param.");
-        return NULL;
-    }
-
     JniOcResource* jniOcResource = JniOcResource::getJniOcResourcePtr(env, jResource);
 
     if (!jniOcResource)

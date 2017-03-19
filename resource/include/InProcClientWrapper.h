@@ -56,15 +56,6 @@ namespace OC
                 : callback(cb), clientWrapper(cw){}
         };
 
-        struct ListenContext2
-        {
-            FindResListCallback callback;
-            std::weak_ptr<IClientWrapper> clientWrapper;
-
-            ListenContext2(FindResListCallback cb, std::weak_ptr<IClientWrapper> cw)
-                : callback(cb), clientWrapper(cw){}
-        };
-
         struct ListenErrorContext
         {
             FindCallback callback;

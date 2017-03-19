@@ -936,14 +936,16 @@ OCPayload* BuildActionCBOR(OCAction* action)
     return (OCPayload*) payload;
 }
 
-unsigned int GetNumOfTargetResource(OCAction *actionset)
+uint8_t GetNumOfTargetResource(OCAction *actionset)
 {
-    int numOfResource = 0;
+    uint8_t numOfResource = 0;
 
     OCAction *pointerAction = actionset;
 
     while (pointerAction != NULL)
     {
+        assert(numOfResource < UINT8_MAX);
+
         numOfResource++;
         pointerAction = pointerAction->next;
     }
@@ -1244,11 +1246,13 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                     {
                         OIC_LOG_V(INFO, TAG, "Execute ActionSet : %s",
                                 actionset->actionsetName);
-                        unsigned int num = GetNumOfTargetResource(
-                                actionset->head);
+                        uint8_t num = GetNumOfTargetResource(actionset->head);
 
                         ((OCServerRequest *) ehRequest->requestHandle)->ehResponseHandler =
                                 HandleAggregateResponse;
+
+                        assert(num < UINT8_MAX);
+
                         ((OCServerRequest *) ehRequest->requestHandle)->numResponses =
                                 num + 1;
 
@@ -1324,12 +1328,12 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
         else if (strcmp(doWhat, GET_ACTIONSET) == 0)
         {
             char *plainText = NULL;
-            OCActionSet *actionset = NULL;
+            OCActionSet *tempActionSet = NULL;
 
-            GetActionSet(details, resource->actionsetHead, &actionset);
-            if (actionset != NULL)
+            GetActionSet(details, resource->actionsetHead, &tempActionSet);
+            if (tempActionSet != NULL)
             {
-                BuildStringFromActionSet(actionset, &plainText);
+                BuildStringFromActionSet(tempActionSet, &plainText);
 
                 if (plainText != NULL)
                 {

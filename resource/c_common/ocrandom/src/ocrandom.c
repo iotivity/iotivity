@@ -58,6 +58,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <ctype.h>
 
 #define OC_MIN(A,B) ((A)<(B)?(A):(B))
 

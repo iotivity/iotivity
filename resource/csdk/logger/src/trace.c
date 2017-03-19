@@ -18,25 +18,46 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-// Defining _POSIX_C_SOURCE macro with 199309L (or greater) as value
-// causes header files to expose definitions
-// corresponding to the POSIX.1b, Real-time extensions
-// (IEEE Std 1003.1b-1993) specification
-//
-// For this specific file, see use of clock_gettime,
-// Refer to http://pubs.opengroup.org/stage7tc1/functions/clock_gettime.html
-// and to http://man7.org/linux/man-pages/man2/clock_gettime.2.html
-#ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 200809L
+#include "iotivity_config.h"
+#include "trace.h"
+
+#if (defined(__ANDROID__)) || (defined(__TIZEN__) && defined(OIC_SUPPORT_TIZEN_TRACE))
+
+#define MAX_BUFFER_SIZE 8
+#define MAX_LINE_LEN ((MAX_BUFFER_SIZE) * 2) + 1
+
+void oic_trace_buffer(const char *name, const uint8_t * buffer, size_t bufferSize)
+{
+    if (!name || !buffer || (0 == bufferSize))
+    {
+        return;
+    }
+
+    char lineBuffer[MAX_LINE_LEN] = {0};
+    size_t count = (MAX_BUFFER_SIZE > bufferSize) ? bufferSize : MAX_BUFFER_SIZE;
+    size_t remainSize = MAX_LINE_LEN;
+    int writtenSize = 0;
+    char* buf = &lineBuffer[0];
+
+    for (size_t i = 0; i < count; i++)
+    {
+        writtenSize = snprintf(buf, remainSize, "%02x", buffer[i]);
+        if (2 != writtenSize)
+        {
+            break;
+        }
+        buf += writtenSize;
+        remainSize -= 2;
+    }
+
+    OIC_TRACE_BEGIN(%s:%s, name, lineBuffer);
+    OIC_TRACE_END();
+}
+
 #endif
 
-#include "iotivity_config.h"
-
-// Pull in _POSIX_TIMERS feature test macro to check for
-// clock_gettime() support.
 #ifndef __TIZEN__
 
-#include "trace.h"
 #include "logger.h"
 
 #ifdef HAVE_UNISTD_H
@@ -73,10 +94,10 @@ int g_trace_marker_hd=FD_INITIAL_VALUE;
 int oic_trace_init()
 {
     OIC_LOG(INFO, TAG, "entering oic_trace_init");
-    int mounts;
+    int mounts = -1;
     char buf[MAX_BUF_SIZE] = {0};
-    ssize_t buflen;
-    char *line, *tmp1, *path = NULL;
+    ssize_t buflen = -1;
+    char *line = NULL, *tmp1 = NULL, *path = NULL;
 
     if(g_trace_marker_hd == FD_INITIAL_VALUE)
     {
@@ -99,7 +120,7 @@ int oic_trace_init()
         line = strtok_r(buf, "\n", &tmp1);
         while (line)
         {
-            char *tmp2, *tmp_path, *fstype;
+            char *tmp2 = NULL, *tmp_path = NULL, *fstype = NULL;
             /* "<dev> <mountpoint> <fs type> ..." */
             strtok_r(line, " ", &tmp2);
             tmp_path = strtok_r(NULL, " ", &tmp2);
@@ -123,12 +144,13 @@ int oic_trace_init()
         g_trace_marker_hd = open(buf, O_WRONLY);
         if (g_trace_marker_hd < 0)
         {
-            OIC_LOG_V(INFO, TAG, "failed to open trace_marker file: %s (%d)", strerror(errno), errno);
+            OIC_LOG_V(INFO, TAG, "failed to open trace_marker file: %s (%d)",
+                      strerror(errno), errno);
             return -1;
         }
     }
     OIC_LOG_V(INFO, TAG,  "exit oic_trace_init with: %d", g_trace_marker_hd);
-    return 0;
+    return g_trace_marker_hd;
 }
 
 void oic_trace_begin(const char *name, ...)

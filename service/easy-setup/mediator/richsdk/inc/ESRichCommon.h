@@ -1013,7 +1013,7 @@ namespace OIC
         public:
 #ifdef __WITH_DTLS__
             ESOwnershipTransferData() :
-                m_MOTMethod(OIC_JUST_WORKS), m_preconfiguredPin("")
+                m_MOTMethod(OIC_OXM_COUNT), m_preconfiguredPin("")
             {
             }
 

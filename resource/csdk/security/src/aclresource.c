@@ -2549,8 +2549,6 @@ OCStackResult AppendACL2(const OicSecAcl_t* acl)
 
     printACL(gAcl);
 
-    printACL(gAcl);
-
     size_t size = 0;
     uint8_t *payload = NULL;
     ret = AclToCBORPayload(gAcl, &payload, &size);

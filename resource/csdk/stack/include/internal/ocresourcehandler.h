@@ -48,6 +48,16 @@ extern "C" {
 #define OC_RESOURCE_SECURE       1
 
 /**
+ * Device properties persistent store name.
+ */
+#define OC_DEVICE_PROPS_FILE_NAME  "device_properties.dat"
+
+/**
+ * Device properties name
+ */
+#define OC_JSON_DEVICE_PROPS_NAME "DeviceProperties"
+
+/**
  *  OIC Virtual resources supported by every OIC device.
  */
 typedef enum
@@ -214,6 +224,47 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
  * @ref OCStackResult type.
  */
 OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult);
+
+/**
+ * Data structure for holding enhanced device information
+ */
+typedef struct _OCDeviceProperties
+{
+    /** Protocol Independent Id.*/
+    char protocolIndependentId[UUID_STRING_SIZE];
+} OCDeviceProperties;
+
+/**
+ * Internal API used to initialize device properties.
+ * @return ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult InitializeDeviceProperties();
+
+/**
+ * Internal API used to clean up device properties.
+ * @param deviceProperties Pointer to OCDeviceProperties to clean up.
+ */
+void CleanUpDeviceProperties(OCDeviceProperties **deviceProperties);
+
+/**
+ * This method converts OCDeviceProperties into CBOR format.
+ * @param deviceProperties   Pointer to OCDeviceProperties to convert to CBOR.
+ * @param payload            JSON payload converted to CBOR. Passed parameter should not be NULL.
+ * @note Caller needs to invoke OICFree when they are finished using the returned string.
+ * @param size               Size of the cbor payload. Passed parameter should not be NULL.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult DevicePropertiesToCBORPayload(const OCDeviceProperties *deviceProperties, uint8_t **payload, size_t *size);
+
+/**
+ * This method converts CBOR data into OCDeviceProperties format.
+ * @param payload            CBOR payload to convert to OCDeviceProperties.
+ * @param size               Size of the cborPayload.
+ * @param deviceProperties   CBOR payload converted to OCDeviceProperties. Passed parameter should not be NULL.
+ * @note Caller needs to invoke CleanUpDeviceProperties after they are finished using the returned pointer.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult CBORPayloadToDeviceProperties(const uint8_t *payload, size_t size, OCDeviceProperties **deviceProperties);
 
 #ifdef __cplusplus
 }

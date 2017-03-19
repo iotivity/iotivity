@@ -152,6 +152,11 @@ void CAIPDeinitializeQueueHandles()
     CAQueueingThreadDestroy(g_sendQueueHandle);
     OICFree(g_sendQueueHandle);
     g_sendQueueHandle = NULL;
+
+    // Since the items in g_ownIpEndpointList are allocated once in a big chunk, we only need to
+    // free the first item. Another location this is done is in the CA_INTERFACE_DOWN handler
+    // in CAUpdateStoredIPAddressInfo().
+    OICFree(u_arraylist_get(g_ownIpEndpointList, 0));
     u_arraylist_free(&g_ownIpEndpointList);
     g_ownIpEndpointList = NULL;
 }

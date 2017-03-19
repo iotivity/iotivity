@@ -296,8 +296,6 @@ OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
 
         OICFree(uuid);
 
-        OICFree(uuid);
-
         int reslist_count = 0;
         //code below duplicates LL_COUNT, implemented in newer version of utlist.h
         {

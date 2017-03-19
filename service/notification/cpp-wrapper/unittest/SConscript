@@ -58,8 +58,8 @@ notification_wrapper_test_env.AppendUnique(LIBS = [
 
 if env.get('WITH_TCP') == True:
 	notification_wrapper_test_env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
-	if env.get('SECURED') == '1':
-		notification_wrapper_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+if env.get('SECURED') == '1':
+	notification_wrapper_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if target_os not in ['windows', 'winrt']:
     notification_wrapper_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
@@ -106,8 +106,8 @@ env.AppendTarget('notification_provider_wrapper_test')
 
 if env.get('TEST') == '1':
     if env.get('SECURED') != '1':
-# TODO: fix this test on linux and remove this comment line
-        if target_os in []:
+# TODO: fix this test for MLK and remove this comment line
+        if target_os in ['linux'] and env.get('SECURED') != '1':
             from tools.scons.RunTest import *
             run_test(notification_consumer_wrapper_test_env,
                      '',

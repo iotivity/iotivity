@@ -22,14 +22,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cathreadpool.h"
-#include "octhread.h"
-#include "uarraylist.h"
-#include "cacommon.h"
+#include "oic_string.h"
 #include "logger.h"
 
 #include "caconnectionmanager.h"
-#include "capolicymanager.h"
 
 #define TAG "OIC_CM_POLICY"
 

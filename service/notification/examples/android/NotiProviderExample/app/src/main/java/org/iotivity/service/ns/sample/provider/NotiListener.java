@@ -110,6 +110,10 @@ public class NotiListener extends NotificationListenerService {
         Log.i(TAG, "Title : " + title);
         Log.i(TAG, "Body : " + body);
 
+        if(mProviderSample == null) {
+            Log.e(TAG, "mProviderSample NULL");
+            return;
+        }
         Message notiMessage = mProviderSample.createMessage();
         if(notiMessage == null)
         {
@@ -126,11 +130,7 @@ public class NotiListener extends NotificationListenerService {
         notiMessage.setTime("12:10");
         MediaContents media = new MediaContents("daasd");
         notiMessage.setMediaContents(media);
-        if (mProviderSample != null) {
-            mProviderSample.sendMessage(notiMessage);
-        } else {
-            Log.i(TAG, "providerExample is NULL");
-        }
+        mProviderSample.sendMessage(notiMessage);
     }
 
     @Override

@@ -18,6 +18,11 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+// Warning disabled globally but VS2013 ignores the /wd4200 option in C++ files.
+#if defined(_MSC_VER) && _MSC_VER < 1900
+#pragma warning(disable : 4200)
+#endif
+
 #include <stdio.h>
 
 #include "gtest/gtest.h"
@@ -198,9 +203,12 @@ TEST(CAProtocolMessage, CAGetTokenFromPDU)
     coap_transport_t transport = COAP_UDP;
 
     CAInfo_t inData;
+    size_t tokenLength = 0;
     memset(&inData, 0, sizeof(CAInfo_t));
     inData.token = (CAToken_t)"token";
-    inData.tokenLength = strlen(inData.token);
+    tokenLength = strlen(inData.token);
+    ASSERT_LE(tokenLength, UINT8_MAX);
+    inData.tokenLength = (uint8_t)tokenLength;
     inData.type = CA_MSG_NONCONFIRM;
 
     pdu = CAGeneratePDU(CA_GET, &inData, &tempRep, &options, &transport);
@@ -229,7 +237,7 @@ TEST(CAProtocolMessage, CAGetInfoFromPDU)
     CAInfo_t inData;
     memset(&inData, 0, sizeof(CAInfo_t));
     inData.token = (CAToken_t)"token";
-    inData.tokenLength = strlen(inData.token);
+    inData.tokenLength = (uint8_t)strlen(inData.token);
     inData.type = CA_MSG_NONCONFIRM;
     inData.payload = (CAPayload_t) "requestPayload";
     inData.payloadSize = sizeof(inData.payload);;

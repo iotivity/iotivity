@@ -45,7 +45,7 @@ using namespace std;
 //-----------------------------------------------------------------------------
 // Private variables
 //-----------------------------------------------------------------------------
-static const char TAG[] = "TestHarness";
+#define TAG "TestHarness"
 static OCUri SERVICE_URI = "coap://127.0.0.1:5683/";
 
 void EXPECT_EQ(int a, int b)  {

@@ -324,7 +324,7 @@ static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family
     CAInterface_t *ifitem = (CAInterface_t *)OICCalloc(1, sizeof (CAInterface_t));
     if (!ifitem)
     {
-        OIC_LOG(ERROR, TAG, "Malloc failed in CANewInterfaceItem");
+        OIC_LOG(ERROR, TAG, "Malloc failed");
         return NULL;
     }
 

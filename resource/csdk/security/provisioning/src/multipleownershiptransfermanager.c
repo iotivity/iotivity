@@ -47,6 +47,7 @@
 #include "oxmjustworks.h"
 #include "pmtypes.h"
 #include "pmutility.h"
+#include "pmutilityinternal.h"
 #include "srmutility.h"
 #include "provisioningdatabasemanager.h"
 #include "oxmrandompin.h"
@@ -155,12 +156,13 @@ static OCStackResult MOTSendPostDoxm(void *ctx,
     VERIFY_SUCCESS(TAG, (true == queryGenRes), ERROR);
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    localTargetDeviceInfo = PMCloneOCProvisionDev(targetDeviceInfo);
-    VERIFY_NOT_NULL(TAG, localTargetDeviceInfo, ERROR);
-
     //Create the MOT Context to handle the response message
     motCtx = (OTMContext_t*)OICCalloc(1, sizeof(OTMContext_t));
     VERIFY_NOT_NULL(TAG, motCtx, ERROR);
+
+    localTargetDeviceInfo = PMCloneOCProvisionDevList(targetDeviceInfo);
+    VERIFY_NOT_NULL(TAG, localTargetDeviceInfo, ERROR);
+
     motCtx->selectedDeviceInfo = localTargetDeviceInfo;
     motCtx->ctxResultCallback = resultCallback;
     motCtx->ctxResultArraySize = 1;
@@ -428,12 +430,13 @@ OCStackResult MOTProvisionPreconfigPIN(void *ctx, const OCProvisionDev_t *target
     VERIFY_SUCCESS(TAG, (true == queryGenRes), ERROR);
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    localTargetDeviceInfo = PMCloneOCProvisionDev(targetDeviceInfo);
-    VERIFY_NOT_NULL(TAG, localTargetDeviceInfo, ERROR);
-
     //Create the MOT Context to handle the response message
     motCtx = (OTMContext_t*)OICCalloc(1, sizeof(OTMContext_t));
     VERIFY_NOT_NULL(TAG, motCtx, ERROR);
+
+    localTargetDeviceInfo = PMCloneOCProvisionDevList(targetDeviceInfo);
+    VERIFY_NOT_NULL(TAG, localTargetDeviceInfo, ERROR);
+
     motCtx->selectedDeviceInfo= localTargetDeviceInfo;
     motCtx->ctxResultCallback = resultCallback;
     motCtx->ctxResultArraySize =1;

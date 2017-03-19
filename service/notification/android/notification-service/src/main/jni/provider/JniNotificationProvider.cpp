@@ -1489,27 +1489,6 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
         return JNI_ERR;
     }
 
-    //OcRepresentation
-    jclass localOcRepresentation = env->FindClass("org/iotivity/base/OcRepresentation");
-    if (!localOcRepresentation)
-    {
-        LOGE("Failed to get local OcRepresentation class");
-        return JNI_ERR;
-    }
-    g_cls_OcRepresentation = (jclass) env->NewGlobalRef(localOcRepresentation);
-    if (!g_cls_OcRepresentation)
-    {
-        LOGE("Failed to set Global OcRepresentation reference");
-        return JNI_ERR;
-    }
-
-    g_mid_OcRepresentation_N_ctor_bool = env->GetMethodID(g_cls_OcRepresentation, "<init>", "(JZ)V");
-    if (!g_mid_OcRepresentation_N_ctor_bool)
-    {
-        LOGE("Failed to get Global OcRepresentation Constructor reference");
-        return JNI_ERR;
-    }
-
     env->DeleteLocalRef(localMessage);
     env->DeleteLocalRef(localMessageType);
     env->DeleteLocalRef(localConsumer);

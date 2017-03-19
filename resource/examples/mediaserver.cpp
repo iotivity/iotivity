@@ -414,7 +414,7 @@ OCStackResult SetDeviceInfo()
         return result;
     }
 
-    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, "core.1.1.0");
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, "ocf.1.1.0");
     if (result != OC_STACK_OK)
     {
         cout << "Failed to set spec version" << endl;
@@ -669,15 +669,14 @@ int main(int argc, char* argv[])
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Server,
-        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-        0,         // Uses randomly available port
-        OC::QualityOfService::LowQos,
         &ps
     };
 
     OCPlatform::Configure(cfg);
     try
     {
+        OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
+        
         // Create the instance of the resource class
         // (in this case instance of class 'MediaResource').
         MediaResource myMedia;
@@ -695,14 +694,14 @@ int main(int argc, char* argv[])
         std::unique_lock<std::mutex> lock(blocker);
         cout <<"Waiting" << std::endl;
         cv.wait(lock, []{return false;});
+
+        // Perform platform clean up.
+        OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     }
     catch(OCException &e)
     {
         cout << "OCException in main : " << e.what() << endl;
     }
-
-    // No explicit call to stop the platform.
-    // When OCPlatform::destructor is invoked, internally we do platform cleanup
 
     return 0;
 }
