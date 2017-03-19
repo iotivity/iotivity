@@ -62,6 +62,8 @@ TEST(PstatResourceTest, PstatEntityHandlerWithPostRequest)
 {
     OicSecPstat_t *defaultPstat = (OicSecPstat_t *) OICCalloc(1, sizeof(*defaultPstat));
     ASSERT_TRUE(defaultPstat != NULL);
+    defaultPstat->dos.state = DOS_RFOTM;
+    defaultPstat->dos.pending = false;
     defaultPstat->isOp = false;
     defaultPstat->commitHash = 1234;
     defaultPstat->cm = 63;
@@ -117,6 +119,8 @@ TEST(PstatResourceTest, CBORPayloadToPstat)
 TEST(PstatResourceTest, PstatToCBORPayloadAndCBORPayloadToPstat)
 {
     OicSecPstat_t pstat;
+    pstat.dos.state = DOS_RFNOP;
+    pstat.dos.pending = false;
     pstat.cm = NORMAL;
     pstat.commitHash = 0;
     pstat.isOp = true;
@@ -140,6 +144,8 @@ TEST(PstatResourceTest, PstatToCBORPayloadAndCBORPayloadToPstat)
     OicSecPstat_t *pstat1 = NULL;
     EXPECT_EQ(OC_STACK_OK, CBORPayloadToPstat(cbor, size, &pstat1));
     ASSERT_TRUE(NULL != pstat1);
+    EXPECT_EQ(pstat.dos.state, pstat1->dos.state);
+    EXPECT_EQ(pstat.dos.pending, pstat1->dos.pending);
     EXPECT_EQ(pstat.commitHash, pstat1->commitHash);
     EXPECT_EQ(pstat.isOp, pstat1->isOp);
     EXPECT_EQ(pstat.tm, pstat1->tm);

@@ -49,6 +49,7 @@
         "rowneruuid" : "61646D69-6E44-6576-6963-655575696430"
     },
     "pstat": {
+        "dos": {"s": 3, "p": false},
         "isop": true,
         "cm": 2,
         "tm": 0,
