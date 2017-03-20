@@ -253,6 +253,10 @@ class OCFFramework
         template <typename _T>
         void ThreadSafeCopy(const _T& source, _T& dest);
 
+        // Helper functions to set platform & device info.
+        IPCAStatus SetPlatformInfo(const OCPlatformInfo* platformInfo);
+        IPCAStatus SetDeviceInfo(const OCDeviceInfo* deviceInfo);
+
     private:
         // Lock for sync access to protected members in OCFFramework.
         std::recursive_mutex m_OCFFrameworkMutex;

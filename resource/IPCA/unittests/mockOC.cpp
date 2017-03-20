@@ -505,7 +505,7 @@ void defaultCallback(const HeaderOptions&, const OCRepresentation&, const int)
 }
 
 void defaultDeleteCallback(const HeaderOptions&, const int)
-{
+{
 }
 
 void defaultObserveCallback(const HeaderOptions&, const OCRepresentation&, const int, const int)
