@@ -2121,6 +2121,7 @@ CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint
         OIC_LOG(ERROR, TAG, "out of memory");
         if (NULL != requestInfo)
         {
+            OICFree(requestInfo->info.resourceUri);
             OICFree(requestInfo->info.token);
             OICFree(requestInfo);
         }
