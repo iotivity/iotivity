@@ -27,8 +27,9 @@ from shutil import copyfile
 
 target_os = env.get('TARGET_OS')
 root_dir = env.get('SRC_DIR')
-mbedtls_dir = os.path.join(root_dir, 'extlibs','mbedtls','mbedtls/')
+mbedtls_dir = os.path.join(root_dir, 'extlibs','mbedtls','mbedtls')
 start_dir = os.getcwd()
+mbedtls_config_file = 'config-iotivity.h' if target_os != 'windows' else 'config-iotivity_windows.h'
 # Right now this script assumes the revision is a tag, and not a branch or an arbitrary
 # commit. If this changes, update the check below, or else the script will always conclude
 # the repo is not up to date because a tag with that name doesn't exist.
@@ -64,11 +65,11 @@ if os.path.exists('.git/HEAD'):
         Exit(1)
 
 
-pattern = 'TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256'
+pattern = '#define MBEDTLS_HAVE_WINSOCK2'
 found = False
 import re
 import sys
-mbedtls_header = os.path.join('include', 'mbedtls', 'compat-1.3.h')
+mbedtls_header = os.path.join('include', 'mbedtls', 'config.h')
 with open(mbedtls_header, 'r') as stream:
     for line in stream:
         if pattern in line:
@@ -88,7 +89,7 @@ os.chdir(start_dir)
 # Copy IoTivity's version of the mbedtls build configuration file
 # from extlibs/mbedtls/iotivity-config.h
 # to extlibs/mbedtls/mbedtls/include/mbedtls/config.h
-iotivity_config = os.path.join(root_dir, 'extlibs', 'mbedtls', 'config-iotivity.h')
+iotivity_config = os.path.join(root_dir, 'extlibs', 'mbedtls', mbedtls_config_file)
 mbedtls_config = os.path.join(root_dir, 'extlibs', 'mbedtls', 'mbedtls', 'include', 'mbedtls', 'config.h')
 
 try:
@@ -101,8 +102,15 @@ else:
     print 'Copied IoTivity version of config.h to ' + mbedtls_config
 
 mbedtls_env = env.Clone()
-mbedtls_env.PrependUnique(CPPPATH = [mbedtls_dir])
-mbedtls_env.AppendUnique(CPPPATH = [mbedtls_dir+'include/'])
+
+if mbedtls_env['CC'] == 'cl':
+    mbedtls_env.AppendUnique(CCFLAGS = ['/W4', '/WX'])
+
+mbedtls_env.AppendUnique(CPPPATH = [
+    mbedtls_dir,
+    os.path.join(mbedtls_dir, 'include'),
+    os.path.join(mbedtls_dir, 'include', 'mbedtls')
+    ])
 if 'g++' in mbedtls_env.get('CXX'):
     mbedtls_env.AppendUnique(CFLAGS = ['-Wall'])
 

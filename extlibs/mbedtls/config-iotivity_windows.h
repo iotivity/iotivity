@@ -1995,7 +1995,7 @@
  *
  * Uncomment if your system has winsock2.h.
  */
-//#define MBEDTLS_HAVE_WINSOCK2
+#define MBEDTLS_HAVE_WINSOCK2
 
 /**
  * \def MBEDTLS_NET_C
