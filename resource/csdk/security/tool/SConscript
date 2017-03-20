@@ -63,7 +63,6 @@ else:
     tools_env.PrependUnique(LIBS = ['octbstack', 'ocsrm', 'm'])
 
 tools_env.PrependUnique(LIBS = ['cjson'])
-tools_env.AppendUnique(LIBS = ['timer'])
 
 ######################################################################
 # Source files and Targets

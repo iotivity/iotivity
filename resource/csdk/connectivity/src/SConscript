@@ -67,7 +67,7 @@ else:
     connectivity_env.AppendUnique(CPPPATH = ['#' + tls_path + '/' + tls_headers_path])
 
 if connectivity_env.get('SECURED') == '1':
-	connectivity_env.AppendUnique(CPPPATH = ['#extlibs/timer'])
+	connectivity_env.AppendUnique(CPPPATH = ['#/resource/c_common/octimer/include'])
 	connectivity_env.AppendUnique(CPPPATH = [src_dir + '/resource/csdk/security/include'])
 	connectivity_env.AppendUnique(CPPPATH = [os.path.join(root_dir, 'external/inc')])
 	if ca_os != 'tizen' or os.path.exists(root_dir + '/' + tls_path) == False:
@@ -160,7 +160,7 @@ if ca_os == 'android':
 	connectivity_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libconnectivity_abstraction.so'])
 
 if connectivity_env.get('SECURED') == '1':
-	connectivity_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto', 'timer'])
+	connectivity_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
 
 if ca_os in ['android', 'tizen', 'linux', 'yocto']:
 	connectivity_env.AppendUnique(LIBS = ['coap'])

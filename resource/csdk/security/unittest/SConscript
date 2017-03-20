@@ -82,7 +82,6 @@ else:
 if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
 	srmtest_env.PrependUnique(LIBS = ['resource_directory', 'oc'])
 
-srmtest_env.AppendUnique(LIBS = ['timer'])
 
 ######################################################################
 # Source files and Targets

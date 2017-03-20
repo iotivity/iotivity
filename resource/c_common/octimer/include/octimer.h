@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef TIMER_H_
-#define TIMER_H_
+#ifndef OCTIMER_H_
+#define OCTIMER_H_
 
 #include "iotivity_config.h"
 #ifdef HAVE_TIME_H
@@ -49,14 +49,26 @@ extern "C"
 
 typedef void(*TimerCallback)();
 
+/**
+ * This must be async-signal safe, so it cannot use difftime().
+ * @param[in] after time to be substracted
+ * @param[in] before reference time to be compared to
+ * @return number of seconds between before and after, (after - before).
+ */
 time_t timespec_diff(const time_t after, const time_t before);
-void timespec_add(time_t * to, const time_t seconds);
+
+/**
+ * Add positive seconds to a timespec, nothing if seconds is negative.
+ * @param[out] to time result to be added
+ * @param[in] seconds amount of sec to add
+ */
+void timespec_add(time_t *to, const time_t seconds);
 void checkTimeout();
 
 #ifndef WITH_ARDUINO
-long int getSeconds(struct tm* tp);
-time_t getRelativeIntervalOfWeek(struct tm* tp);
-time_t getSecondsFromAbsTime(struct tm* tp);
+long int getSeconds(struct tm *tp);
+time_t getRelativeIntervalOfWeek(struct tm *tp);
+time_t getSecondsFromAbsTime(struct tm *tp);
 
 int initThread();
 void *loop(void *threadid);
@@ -75,5 +87,4 @@ void unregisterTimer(int id);
 #ifdef __cplusplus
 }
 #endif
-#endif /* TIMER_H_ */
-
+#endif /* OCTIMER_H_ */

@@ -41,7 +41,7 @@ else:
     catest_env.AppendUnique(CPPPATH = [ os.path.join('#', 'resource', 'csdk', 'connectivity', 'lib', 'libcoap-4.1.1', 'include')])
 
 catest_env.PrependUnique(CPPPATH = [
-                '#/extlibs/timer',
+                '#/resource/c_common/octimer/include',
                 '#/extlibs/mbedtls/mbedtls/include',
                 '#/resource/csdk/connectivity/api',
                 '#/resource/csdk/connectivity/inc',
@@ -72,7 +72,6 @@ if target_os not in ['msys_nt', 'windows']:
 else:
     catest_env.AppendUnique(CCFLAGS=['/W3', '/WX'])
 
-catest_env.AppendUnique(LIBS = ['timer'])
 
 ######################################################################
 # Source files and Targets

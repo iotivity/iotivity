@@ -33,7 +33,7 @@
 #include "ocrandom.h"
 #include "byte_array.h"
 #include "octhread.h"
-#include "timer.h"
+#include "octimer.h"
 
 // headers required for mbed TLS
 #include "mbedtls/platform.h"

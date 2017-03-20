@@ -85,7 +85,6 @@ else:
 if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
 	sptest_env.PrependUnique(LIBS = ['resource_directory'])
 
-sptest_env.AppendUnique(LIBS = ['timer'])
 
 ######################################################################
 # Source files and Targets

@@ -7,7 +7,6 @@ sim_env = lib_env.Clone()
 # Build flags
 ######################################################################
 sim_env.AppendUnique(CPPPATH = [
-    '#/extlibs/timer',
     '../../inc',
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',

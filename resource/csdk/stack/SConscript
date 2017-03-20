@@ -56,7 +56,7 @@ else:
     liboctbstack_env.PrependUnique(CPPPATH = ['#resource/csdk/connectivity/lib/libcoap-4.1.1/include'])
 
 liboctbstack_env.PrependUnique(CPPPATH = [
-        '#/extlibs/timer/',
+        '#resource/c_common/octimer/include',
         '#resource/c_common/ocatomic/include',
         '#resource/csdk/logger/include',
         '#resource/csdk/include',
@@ -92,7 +92,7 @@ elif liboctbstack_env.get('ROUTING') == 'EP':
 if target_os not in ['windows']:
     liboctbstack_env.AppendUnique(CFLAGS = ['-Wall'])
 
-liboctbstack_env.PrependUnique(LIBS = ['ocsrm', 'coap', 'timer'])
+liboctbstack_env.PrependUnique(LIBS = ['ocsrm', 'coap'])
 
 if target_os in ['linux'] and liboctbstack_env.get('SIMULATOR', False):
     liboctbstack_env.Append( RPATH = liboctbstack_env.Literal('\\$$ORIGIN'))

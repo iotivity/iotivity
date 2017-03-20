@@ -135,15 +135,16 @@ env.AppendUnique(CPPPATH = [os.path.join(src_dir, 'resource', 'c_common')])
 ######################################################################
 
 env.AppendUnique(CPPPATH = [
-            os.path.join(Dir('.').abspath, 'oic_malloc', 'include'),
-            os.path.join(Dir('.').abspath, 'oic_string', 'include'),
-            os.path.join(Dir('.').abspath, 'oic_time', 'include'),
-            os.path.join(Dir('.').abspath, 'ocatomic', 'include'),
-            os.path.join(Dir('.').abspath, 'ocrandom', 'include'),
-            os.path.join(Dir('.').abspath, 'octhread', 'include'),
-            os.path.join(Dir('.').abspath, 'oic_platform', 'include'),
-            '#/extlibs/mbedtls/mbedtls/include'
-        ])
+    os.path.join(Dir('.').abspath, 'oic_malloc', 'include'),
+    os.path.join(Dir('.').abspath, 'oic_string', 'include'),
+    os.path.join(Dir('.').abspath, 'oic_time', 'include'),
+    os.path.join(Dir('.').abspath, 'ocatomic', 'include'),
+    os.path.join(Dir('.').abspath, 'ocrandom', 'include'),
+    os.path.join(Dir('.').abspath, 'octhread', 'include'),
+    os.path.join(Dir('.').abspath, 'oic_platform', 'include'),
+    os.path.join(Dir('.').abspath, 'octimer', 'include'),
+   '#/extlibs/mbedtls/mbedtls/include'
+])
 
 if target_os not in ['tizen']:
     env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'c_common')])
@@ -176,7 +177,7 @@ common_src = [
     'oic_time/src/oic_time.c',
     'ocrandom/src/ocrandom.c',
     'oic_platform/src/oic_platform.c'
-    ]
+]
 
 if env['POSIX_SUPPORTED']:
     common_src.append('octhread/src/posix/octhread.c')
@@ -186,11 +187,21 @@ else:
     common_src.append('octhread/src/noop/octhread.c')
 
 if target_os in ['windows', 'msys_nt']:
-	common_src.append('ocatomic/src/windows/ocatomic.c')
+    common_src.append('ocatomic/src/windows/ocatomic.c')
 elif target_os in ['arduino']:
-	common_src.append('ocatomic/src/arduino/ocatomic.c')
+    common_src.append('ocatomic/src/arduino/ocatomic.c')
 else:
-	common_src.append('ocatomic/src/others/ocatomic.c')
+    common_src.append('ocatomic/src/others/ocatomic.c')
+
+# C++ Arduino's <Timer.h> is included so use C++ compiler/flags
+if target_os in ['arduino']:
+    octimer_env = common_env.Clone()
+    octimer_env.Replace(CC = env.get('CXX'))
+    octimer_env.Replace(CFLAGS = env.get('CXXFLAGS'))
+    octimer = octimer_env.Object('octimer/src/octimer.c')
+    common_src.append(octimer)
+else:
+    common_src.append('octimer/src/octimer.c')
 
 common_env.AppendUnique(LIBS = ['logger'])
 common_env.AppendUnique(CPPPATH = ['#resource/csdk/logger/include'])

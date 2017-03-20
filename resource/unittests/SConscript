@@ -62,7 +62,6 @@ unittests_env.PrependUnique(LIBS = [
 		'oc_logger',
 		'connectivity_abstraction',
 		'coap',
-		'timer',
 		'mbedcrypto'])
 
 if unittests_env.get('SECURED') == '1':

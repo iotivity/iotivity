@@ -44,7 +44,7 @@
 
 #include <stdio.h>
 
-#include "timer.h"
+#include "octimer.h"
 
 #define SECOND (1)
 
@@ -65,19 +65,12 @@ struct timelist_t
     TimerCallback cb;
 } timeout_list[TIMEOUTS];
 
-/*
- * Return the number of seconds between before and after, (after - before).
- * This must be async-signal safe, so it cannot use difftime().
- */
 time_t timespec_diff(const time_t after, const time_t before)
 {
     return after - before;
 }
 
-/*
- * Add positive seconds to a timespec, nothing if seconds is negative.
- */
-void timespec_add(time_t * to, const time_t seconds)
+void timespec_add(time_t *to, const time_t seconds)
 {
     if (to && seconds > 0)
     {
@@ -87,7 +80,7 @@ void timespec_add(time_t * to, const time_t seconds)
 
 #ifndef WITH_ARDUINO
 
-long int getSeconds(struct tm* tp)
+long int getSeconds(struct tm *tp)
 {
     long int nInterval = 0;
 
@@ -102,30 +95,30 @@ long int getSeconds(struct tm* tp)
 
 long int getRelativeSecondsOfDayofweek(int ia, int ib)
 {
-    if( ia > ib )
+    if (ia > ib)
         return (((long int)(7 - (ib - ia))) * SECS_PER_DAY);
 
     return (((long int)((ib - ia))) * SECS_PER_DAY);
 }
 
-time_t getRelativeIntervalOfWeek(struct tm* tp)
+time_t getRelativeIntervalOfWeek(struct tm *tp)
 {
     time_t current_time;
-    struct tm* current, *midnight;
+    struct tm *current, *midnight;
     time_t delayed_time = 0;
 
     time(&current_time);
     current = localtime(&current_time);
 
-    if(current == NULL)
+    if (current == NULL)
     {
         printf("ERROR; Getting local time fails\n");
         return 0;
     }
 
-    midnight = (struct tm* )malloc(sizeof(struct tm));
+    midnight = (struct tm *)malloc(sizeof(struct tm));
 
-    if(midnight == NULL)
+    if (midnight == NULL)
     {
         printf("ERROR; Memory allocation fails\n");
         return 0;
@@ -148,17 +141,17 @@ time_t getRelativeIntervalOfWeek(struct tm* tp)
     return delayed_time;
 }
 
-time_t getSecondsFromAbsTime(struct tm* tp)
+time_t getSecondsFromAbsTime(struct tm *tp)
 {
-   time_t current_time;
-   time_t delayed_time = 0;
+    time_t current_time;
+    time_t delayed_time = 0;
 
-   time(&current_time);
-   localtime(&current_time);
+    time(&current_time);
+    localtime(&current_time);
 
-   delayed_time = mktime(tp) - current_time;
+    delayed_time = mktime(tp) - current_time;
 
-   return delayed_time;
+    return delayed_time;
 }
 
 time_t registerTimer(const time_t seconds, int *id, TimerCallback cb)
@@ -221,7 +214,7 @@ time_t registerTimer(const time_t seconds, int *id, TimerCallback cb)
 
 void unregisterTimer(int idx)
 {
-    if( 0 <= idx && idx < TIMEOUTS)
+    if (0 <= idx && idx < TIMEOUTS)
         timeout_list[idx].timeout_state = TIMEOUT_UNUSED;
 }
 
@@ -292,17 +285,17 @@ time_t registerTimer(const time_t seconds, int *id, TimerCallback cb)
     int i, idx;
 
     if (seconds <= 0)
-    return -1;
+        return -1;
 
     // get the current time
     t = now();
 
     for (idx = 0; idx < TIMEOUTS; ++idx)
-    if (!((timeout_list[idx].timeout_state & TIMEOUT_USED) & TIMEOUT_USED))
-    break;
+        if (!((timeout_list[idx].timeout_state & TIMEOUT_USED) & TIMEOUT_USED))
+            break;
 
     if (TIMEOUTS == idx)// reach to end of timer list
-    return -1;
+        return -1;
 
     // idx th timeout will be used.
     // Reset and set state of the timer
@@ -325,13 +318,13 @@ time_t registerTimer(const time_t seconds, int *id, TimerCallback cb)
     for (i = 0; i < TIMEOUTS; i++)
     {
         if ((timeout_list[i].timeout_state & (TIMEOUT_USED | TIMEOUT_UNUSED))
-                == TIMEOUT_USED)
+            == TIMEOUT_USED)
         {
             const time_t secs = timespec_diff(timeout_list[i].timeout_time,
-                    t);
+                                              t);
 
             if (secs >= 0 && secs < next)
-            next = secs;
+                next = secs;
         }
     }
 
@@ -342,7 +335,7 @@ time_t registerTimer(const time_t seconds, int *id, TimerCallback cb)
 
 void unregisterTimer(int idx)
 {
-    if( 0 <= idx && idx < TIMEOUTS)
+    if (0 <= idx && idx < TIMEOUTS)
         timeout_list[idx].timeout_state = TIMEOUT_UNUSED;
 }
 
@@ -357,10 +350,10 @@ void checkTimeout()
     for (i = 0; i < TIMEOUTS; i++)
     {
         if ((timeout_list[i].timeout_state & (TIMEOUT_USED | TIMEOUT_UNUSED))
-                == TIMEOUT_USED)
+            == TIMEOUT_USED)
         {
             const time_t seconds = timespec_diff(timeout_list[i].timeout_time,
-                    t);
+                                                 t);
 
             if (seconds <= 0)
             {
