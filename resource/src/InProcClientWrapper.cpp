@@ -448,8 +448,9 @@ namespace OC
             oclog() << "listenResListWithErrorCallback(): failed to create resource. clientResponse: "
                     << result << std::flush;
 
-             //send the error callback
-            std::thread exec(context->errorCallback, clientResponse->resourceUri, result);
+            //send the error callback
+            std::string uri = clientResponse->resourceUri;
+            std::thread exec(context->errorCallback, uri, result);
             exec.detach();
             return OC_STACK_KEEP_TRANSACTION;
         }
