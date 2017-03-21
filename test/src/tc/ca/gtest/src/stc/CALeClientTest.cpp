@@ -70,7 +70,7 @@ protected:
  *                  3. [Client] Terminate CA
  * @expected  The requested amount of response messages should be received
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__)  || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSelectNetworkForIncomingMessages_P)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -130,7 +130,7 @@ TEST_F(CALeClientTest_stc, LeSelectNetworkForIncomingMessages_P)
  *                  3. [Client]Terminate CA
  * @expected  The received amount should be zero
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSelectUnAvailableNetworkForIncomingMessages_N)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -203,7 +203,7 @@ TEST_F(CALeClientTest_stc, LeSelectUnAvailableNetworkForIncomingMessages_N)
  *                  3. [Client] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSelectNetworkForOutgoingMessages_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -265,7 +265,7 @@ TEST_F(CALeClientTest_stc, LeSelectNetworkForOutgoingMessages_P)
  * @post_condition Terminate CA
  * @expected  The requested amount of response messages should be received each time
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSelectNetworkSequentiallyForIncomingMessages_P)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -350,7 +350,7 @@ TEST_F(CALeClientTest_stc, LeSelectNetworkSequentiallyForIncomingMessages_P)
  * @post_condition Terminate CA
  * @expected  The requested amount of response messages should be received each time
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSelectNetworkMultipleTimesForIncomingMessages_P)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -429,7 +429,7 @@ TEST_F(CALeClientTest_stc, LeSelectNetworkMultipleTimesForIncomingMessages_P)
  * @post_condition none
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each times
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSendRequestMultipleTimes_P)
 {
     for(int i = 0; i < TRY_COUNT; i++)
@@ -492,7 +492,7 @@ TEST_F(CALeClientTest_stc, LeSendRequestMultipleTimes_P)
  *                  3. [Client]Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages and received response without header
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSendRequestWithoutHeaderOption_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_HEADER, MESSAGE_UNICAST);
@@ -554,7 +554,7 @@ TEST_F(CALeClientTest_stc, LeSendRequestWithoutHeaderOption_P)
  *                  3. [Client]Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages and received response with one header
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSendRequestWithHeaderOption_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_HEADER, MESSAGE_UNICAST);
@@ -616,7 +616,7 @@ TEST_F(CALeClientTest_stc, LeSendRequestWithHeaderOption_P)
  *                  3. [Client]Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages and received response with one header
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSendRequestWithHeaderOptions_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_HEADER, MESSAGE_UNICAST);
@@ -678,7 +678,7 @@ TEST_F(CALeClientTest_stc, LeSendRequestWithHeaderOptions_P)
  *                  3. [Client]Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages and received a response empty payload
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSendRequestWithEmptyPayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_URI, MESSAGE_UNICAST);
@@ -741,7 +741,7 @@ TEST_F(CALeClientTest_stc, LeSendRequestWithEmptyPayload_P)
  *                  3. [Client]Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages and received a response with null payload
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSendRequestWithNullPayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_URI, MESSAGE_UNICAST);
@@ -803,7 +803,7 @@ TEST_F(CALeClientTest_stc, LeSendRequestWithNullPayload_P)
  *                  3. [Client]Terminate CA
  * @expected  The request message should be acknowledged
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSendRequestWithMessageTypeConfirm_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -863,7 +863,7 @@ TEST_F(CALeClientTest_stc, LeSendRequestWithMessageTypeConfirm_P)
  *                  3. [Client]Terminate CA
  * @expected  The received amount should be zero
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSendRequestWithWrongEndpoint_N)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -927,7 +927,7 @@ TEST_F(CALeClientTest_stc, LeSendRequestWithWrongEndpoint_N)
  *                  3. [Client]Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSendGetRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -987,7 +987,7 @@ TEST_F(CALeClientTest_stc, LeSendGetRequest_P)
  *                  3. [Client]Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSendPutRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -1047,7 +1047,7 @@ TEST_F(CALeClientTest_stc, LeSendPutRequest_P)
  *                  3. [Client]Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSendPostRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -1107,7 +1107,7 @@ TEST_F(CALeClientTest_stc, LeSendPostRequest_P)
  *                  3. [Client]Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSendDeleteRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -1167,7 +1167,7 @@ TEST_F(CALeClientTest_stc, LeSendDeleteRequest_P)
  *                  3. [Client]Terminate CA
  * @expected No response messages should be received
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeReceiveWithNullResponseHandler_N)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -1226,7 +1226,7 @@ TEST_F(CALeClientTest_stc, LeReceiveWithNullResponseHandler_N)
  *                  3. [Client]Terminate CA
  * @expected No response messages should be received
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeReceiveResponseWithoutCallingCARegisterHandler_N)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -1286,7 +1286,7 @@ TEST_F(CALeClientTest_stc, LeReceiveResponseWithoutCallingCARegisterHandler_N)
  *                  3. [Client]Terminate CA
  * @expected Second handler will receive requested amount of response messages and first handler will receive no response message
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeReceiveWithSecondResponseHandler_P)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -1351,7 +1351,7 @@ TEST_F(CALeClientTest_stc, LeReceiveWithSecondResponseHandler_P)
  *                  3. [Client] Terminate CA
  * @expected No response messages should be received
  */
-#if defined(__TIZEN__) && defined(__BLE__)
+#if (defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeReceiveAfterRegisteringWithValidFollowedByNullResponseHandler_N)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);

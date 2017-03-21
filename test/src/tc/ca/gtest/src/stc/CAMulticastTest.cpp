@@ -71,7 +71,7 @@ protected:
  *                  2. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages for each devices
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
+#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
 TEST_F(CAMulticastTest_stc, SendMulticastGetRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_MULTICAST);
@@ -132,7 +132,7 @@ TEST_F(CAMulticastTest_stc, SendMulticastGetRequest_P)
  *                  2. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages for each devices
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
+#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
 TEST_F(CAMulticastTest_stc, SendMulticastPostRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_MULTICAST);
@@ -193,7 +193,7 @@ TEST_F(CAMulticastTest_stc, SendMulticastPostRequest_P)
  *                  2. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages for each devices
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
+#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
 TEST_F(CAMulticastTest_stc, SendMulticastPutRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_MULTICAST);
@@ -314,7 +314,7 @@ TEST_F(CAMulticastTest_stc, SendMulticastDeleteRequest_P)
  *                  2. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages and received header options should be same NULL for each devices
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
+#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
 TEST_F(CAMulticastTest_stc, SendMulticastRequestWithoutHeaderOption_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_HEADER, MESSAGE_MULTICAST);
@@ -376,7 +376,7 @@ TEST_F(CAMulticastTest_stc, SendMulticastRequestWithoutHeaderOption_P)
  *                  2. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages and received header option should be same as send header option for each devices
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
+#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
 TEST_F(CAMulticastTest_stc, SendMulticastRequestWithHeaderOption_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_HEADER, MESSAGE_MULTICAST);
@@ -438,7 +438,7 @@ TEST_F(CAMulticastTest_stc, SendMulticastRequestWithHeaderOption_P)
  *                  2. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages and received header option should be same as send header options for each devices
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
+#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
 TEST_F(CAMulticastTest_stc, SendMulticastRequestWithHeaderOptions_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_HEADER, MESSAGE_MULTICAST);
@@ -501,7 +501,7 @@ TEST_F(CAMulticastTest_stc, SendMulticastRequestWithHeaderOptions_P)
  *                  2. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
+#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
 TEST_F(CAMulticastTest_stc, SendMulticastRequestWithEmptyPayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_URI, MESSAGE_MULTICAST);
@@ -565,7 +565,7 @@ TEST_F(CAMulticastTest_stc, SendMulticastRequestWithEmptyPayload_P)
  *                  2. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages for each devices
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
+#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
 TEST_F(CAMulticastTest_stc, SendMulticastRequestWithNullPayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_URI, MESSAGE_MULTICAST);
@@ -628,7 +628,7 @@ TEST_F(CAMulticastTest_stc, SendMulticastRequestWithNullPayload_P)
  *                  2. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be zero for each devices
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
+#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__IP__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
 TEST_F(CAMulticastTest_stc, SendMulticastRequestWithInvalidMethod_N)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_MULTICAST);

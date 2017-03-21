@@ -322,7 +322,7 @@ int setupSecurity(int selectedTransport)
         }
     }
 
-    CAsetCredentialTypesCallback(initCipherSuiteList);
+    CAsetCredentialTypesCallback((CAgetCredentialTypesHandler)initCipherSuiteList);
 
     if(selectedTransport == CA_ADAPTER_IP)
     {
@@ -1063,7 +1063,6 @@ void loop()
 
 #endif
 
-#if defined (__LINUX__) || defined (__ANDROID_NATIVE__) || defined (__TIZEN__)
 int main(int argc, char *argv[])
 {
     clearDisplay();
@@ -1138,5 +1137,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-#endif

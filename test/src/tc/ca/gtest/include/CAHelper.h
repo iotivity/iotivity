@@ -24,7 +24,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <map>
 #include <set>
 

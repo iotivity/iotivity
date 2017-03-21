@@ -47,7 +47,7 @@ protected:
  * @post_condition Terminate CA using CATerminate() API
  * @expected Initialization will succeed and return CA_STATUS_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc , CAInitialize_P)
 {
     if (!m_caHelper.initialize())
@@ -75,7 +75,7 @@ TEST_F(CATest_btc , CAInitialize_P)
  * @post_condition Terminate CA using CATerminate() API
  * @expected CARegisterHandler() will register the handlers
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc , CARegisterHandler_P)
 {
     if (!m_caHelper.initialize())
@@ -102,7 +102,7 @@ TEST_F(CATest_btc , CARegisterHandler_P)
  * @expected 1. It will generate a token and return CA_STATUS_OK
  *           2. Token variable is not NULL
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc , CAGenerateToken_P)
 {
     if (!m_caHelper.generateToken())
@@ -128,7 +128,7 @@ TEST_F(CATest_btc , CAGenerateToken_P)
  * @expected 1. It will generate a token and return CA_STATUS_OK
  *           2. Token variable is not NULL
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc , CAGenerateToken_LBV_P)
 {
     CAToken_t token = NULL;
@@ -160,7 +160,7 @@ TEST_F(CATest_btc , CAGenerateToken_LBV_P)
  * @post_condition none
  * @expected It will return CA_STATUS_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc , CAGenerateToken_LOBV_N)
 {
     CAToken_t token = NULL;
@@ -185,7 +185,7 @@ TEST_F(CATest_btc , CAGenerateToken_LOBV_N)
  * @post_condition none
  * @expected It will return CA_STATUS_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc , CAGenerateToken_UOBV_N)
 {
     CAToken_t m_token = NULL;
@@ -210,7 +210,7 @@ TEST_F(CATest_btc , CAGenerateToken_UOBV_N)
  * @post_condition none
  * @expected It will not generate token & will return CA_STATUS_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc , CAGenerateToken_UFRV_N)
 {
     CAToken_t *m_token = NULL;
@@ -234,7 +234,7 @@ TEST_F(CATest_btc , CAGenerateToken_UFRV_N)
  * @post_condition none
  * @expected It will return CA_STATUS_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc , CAGenerateToken_N)
 {
     if (!m_caHelper.generateToken(CA_STATUS_INVALID_PARAM))
@@ -257,7 +257,7 @@ TEST_F(CATest_btc , CAGenerateToken_N)
  * @post_condition Terminate CA using CATerminate function
  * @expected It will return CA_NOT_SUPPORTED
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc, CASelectNetwork_LBV_P)
 {
     if (!m_caHelper.initialize())
@@ -288,7 +288,7 @@ TEST_F(CATest_btc, CASelectNetwork_LBV_P)
  * @post_condition Terminate CA using CATerminate function
  * @expected It will return CA_STATUS_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc, CASelectNetwork_UBV_P)
 {
     if (!m_caHelper.initialize())
@@ -319,7 +319,7 @@ TEST_F(CATest_btc, CASelectNetwork_UBV_P)
  * @post_condition Terminate CA using CATerminate function
  * @expected It will return CA_NOT_SUPPORTED
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc, CASelectNetwork_LOBV_N)
 {
     if (!m_caHelper.initialize())
@@ -356,7 +356,7 @@ TEST_F(CATest_btc, CASelectNetwork_LOBV_N)
  * @post_condition Terminate CA using CATerminate function
  * @expected It will return CA_NOT_SUPPORTED
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc, CASelectNetwork_UOBV_N)
 {
     if (!m_caHelper.initialize())
@@ -387,7 +387,7 @@ TEST_F(CATest_btc, CASelectNetwork_UOBV_N)
  * @post_condition Terminate CA using CATerminate function
  * @expected It will fail to select a network and will return CA_NOT_SUPPORTED
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc, CASelectNetwork_N)
 {
     if (!m_caHelper.initialize())
@@ -421,7 +421,7 @@ TEST_F(CATest_btc, CASelectNetwork_N)
  * @post_condition Terminate CA using CATerminate function
  * @expected It will unselect the network and will return CA_STATUS_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc, CAUnSelectNetwork_UBV_P)
 {
     if (!m_caHelper.initialize())
@@ -459,7 +459,7 @@ TEST_F(CATest_btc, CAUnSelectNetwork_UBV_P)
  * @post_condition Terminate CA using CATerminate
  * @expected It will fail to un-select the network and will return CA_STATUS_FAILED
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc, CAUnSelectNetwork_N)
 {
     if (!m_caHelper.initialize())
@@ -490,7 +490,7 @@ TEST_F(CATest_btc, CAUnSelectNetwork_N)
  * @post_condition Terminate CA using CATerminate()
  * @expected CAHandleRequestResponse() will return CA_STATUS_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc , CAHandleRequestResponse_P)
 {
     if (!m_caHelper.initialize())
@@ -523,7 +523,7 @@ TEST_F(CATest_btc , CAHandleRequestResponse_P)
  * @post_condition Terminate CA using CATerminate
  * @expected It will return CA_STATUS_FAILED
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc, CAStartListeningServerWithoutSelectingNetwork_ECRC_N)
 {
     if (!m_caHelper.initialize())
@@ -554,7 +554,7 @@ TEST_F(CATest_btc, CAStartListeningServerWithoutSelectingNetwork_ECRC_N)
  * @post_condition Terminate CA using CATerminate
  * @expected It will return CA_STATUS_FAILED
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc, CAStopListeningServerWithoutSelectingNetwork_ECRC_N)
 {
     if (!m_caHelper.initialize())
@@ -586,7 +586,7 @@ TEST_F(CATest_btc, CAStopListeningServerWithoutSelectingNetwork_ECRC_N)
  * @post_condition Terminate CA using CATerminate
  * @expected It will return CA_STATUS_FAILED
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc, CAStartDiscoveryServerWithoutSelectingNetwork_ECRC_N)
 {
     if (!m_caHelper.initialize())
@@ -617,7 +617,7 @@ TEST_F(CATest_btc, CAStartDiscoveryServerWithoutSelectingNetwork_ECRC_N)
  * @post_condition none
  * @expected It will fail to create end point and return CA_STATUS_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc, CACreateEndpoint_Adapter_ECRC_N)
 {
     CAEndpoint_t* m_endpoint = NULL;
@@ -642,7 +642,7 @@ TEST_F(CATest_btc, CACreateEndpoint_Adapter_ECRC_N)
  * @post_condition none
  * @expected It will invoke the API without any error/exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc, CADestroyEndpoint_NV_N)
 {
     CADestroyEndpoint(NULL);
@@ -664,7 +664,7 @@ TEST_F(CATest_btc, CADestroyEndpoint_NV_N)
  * @post_condition Terminate CA using CATerminate
  * @expected CAregisterPskCredentialsHandler return value will be CA_STATUS_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc, RegisterDtls_P)
 {
     if (!m_caHelper.initialize())
@@ -696,7 +696,7 @@ TEST_F(CATest_btc, RegisterDtls_P)
  * @post_condition Terminate CA using CATerminate
  * @expected CAregisterPskCredentialsHandler return value won't be CA_STATUS_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CATest_btc, RegisterDtlsCredentialsWithNullHandler_N)
 {
     if (!m_caHelper.initialize())

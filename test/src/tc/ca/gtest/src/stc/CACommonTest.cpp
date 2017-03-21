@@ -53,7 +53,7 @@ protected:
  * @post_condition none
  * @expected each time CAInitialize() will return CA_STATUS_OK & CATerminate() will terminate successfully
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CACommonTest_stc , CAInitializeAndCATerminateLoop_P)
 {
     for (int count = 0; count < TRY_COUNT; count++)
@@ -90,7 +90,7 @@ TEST_F(CACommonTest_stc , CAInitializeAndCATerminateLoop_P)
  * @expected 1. Each time CAInitialize() will return CA_STATUS_OK
  *           2. Each time CATerminate() will terminate successfully
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CACommonTest_stc , CAInitializeAndCATerminateLoop_N)
 {
     for (int count = 0; count < TRY_COUNT; count++)
@@ -128,7 +128,7 @@ TEST_F(CACommonTest_stc , CAInitializeAndCATerminateLoop_N)
  * @expected 1. CAGenerateToken() will generate the token & will return CA_STATUS_OK
  *           2. CADestroyToken() will destroy the generated token successfully
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CACommonTest_stc , CAGenerateTokenAndCADestroyToken_GSRV_P)
 {
     m_caHelper.m_token = NULL;
@@ -165,7 +165,7 @@ TEST_F(CACommonTest_stc , CAGenerateTokenAndCADestroyToken_GSRV_P)
  * @expected 1. Each time CAGenerateToken() will generate the token & will return CA_STATUS_OK
  *           2. Each time CADestroyToken() will destroy the generated token successfully
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)
 TEST_F(CACommonTest_stc , CAGenerateTokenAndCADestroyTokenLoop_VLCC_P)
 {
     for (int count = 0; count < TRY_COUNT; count++)

@@ -150,7 +150,7 @@ bool CAHelper::initialize()
     }
 #endif
 
-    m_result = CAInitialize(m_availableNetwork);
+    m_result = CAInitialize((CATransportAdapter_t)m_availableNetwork);
 
     if (m_result != CA_STATUS_OK)
     {
@@ -312,7 +312,7 @@ bool CAHelper::createEndpoint(CATransportFlags_t transportFlags, char* address, 
 
     m_endpoint = NULL;
     
-    CATransportAdapter_t transportAdapter = m_availableNetwork;
+    CATransportAdapter_t transportAdapter = (CATransportAdapter_t)m_availableNetwork;
     if (m_multicastRequest)
     {
 #ifdef TCP_ADAPTER
@@ -1282,9 +1282,7 @@ bool CAHelper::attemptReceiveMessage(int totalMessages, int maxAttempts, int fla
     for (int i = 0; i < maxAttempts; i++)
     {
         IOTIVITYTEST_LOG(DEBUG, "Receive Attempt No. %d", (i + 1));
-
         usleep (waitTimes[flag % 2]);
-
         m_result = CAHandleRequestResponse();
 
         if (m_result != CA_STATUS_OK)
@@ -1328,7 +1326,7 @@ bool CAHelper::setDtls()
         }
     }
 
-    CAsetCredentialTypesCallback(CAHelper::initCipherSuiteList);
+    CAsetCredentialTypesCallback((CAgetCredentialTypesHandler)CAHelper::initCipherSuiteList);
 
     if(m_availableNetwork == CA_ADAPTER_IP)
     {
@@ -1750,7 +1748,7 @@ void CAHelper::getOptionData(CAInfo_t* requestData)
         {
             IOTIVITYTEST_LOG(DEBUG, "Memory allocation failed!\n");
             s_tcInfo.options = NULL;
-            return NULL;
+            return;
         }
 
         int i;
