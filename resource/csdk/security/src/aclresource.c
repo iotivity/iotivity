@@ -1231,8 +1231,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                             else
                                             {
                                                 cborFindResult = CborUnknownError;
-                                                CborType subjectCborType = cbor_value_get_type(&aceMap);
-                                                OIC_LOG_V(ERROR, TAG, "Unknown subject value type: %d", subjectCborType);
+                                                OIC_LOG_V(ERROR, TAG, "Unknown subject value type: %d", cbor_value_get_type(&aceMap));
                                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Type of subject value was not expected");
                                             }
                                         }
