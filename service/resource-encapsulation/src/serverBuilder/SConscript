@@ -70,8 +70,8 @@ if target_os in ['android']:
     server_builder_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
 
 if server_builder_env.get('SECURED') == '1':
-	if server_builder_env.get('WITH_TCP') == True:
-		server_builder_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    if server_builder_env.get('WITH_TCP') == True:
+        server_builder_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # Source files and Targets
@@ -91,31 +91,36 @@ else:
 # Build Test
 ######################################################################
 if target_os in ['linux']:
-	server_builder_test_env = server_builder_env.Clone();
+    server_builder_test_env = server_builder_env.Clone();
 
-	server_builder_test_env.AppendUnique(CPPPATH = [
-		'#/extlibs/hippomocks/hippomocks',
-		'../common/utils/include'
-		])
+    server_builder_test_env.AppendUnique(CPPPATH = [
+        '#/extlibs/hippomocks/hippomocks',
+        '../common/utils/include'
+        ])
 
-	server_builder_test_env.PrependUnique(LIBS = [
-		'rcs_server',
-		'octbstack',
-		'oc_logger',
-		'connectivity_abstraction',
-		'coap'])
+    if server_builder_test_env.get('SECURED') == '1':
+        server_builder_test_env.AppendUnique(CPPPATH = ['#/resource/csdk/security/include'])
 
-	server_builder_test_src = server_builder_test_env.Glob('unittests/*.cpp')
+    server_builder_test_env.PrependUnique(LIBS = [
+        'rcs_server',
+        'octbstack',
+        'oc_logger',
+        'connectivity_abstraction',
+        'coap'])
 
-	server_builder_test = server_builder_test_env.Program('rcs_server_test', server_builder_test_src)
-	Alias("rcs_server_test", server_builder_test)
-	server_builder_test_env.AppendTarget('rcs_server_test')
+    unitTestHelperWithFakeOCPlatform_obj = server_builder_test_env.SharedObject(
+        server_builder_test_env.Glob('../common/utils/include/UnitTestHelperWithFakeOCPlatform.cpp'))
+    server_builder_test_src = [server_builder_test_env.Glob('unittests/*.cpp'),
+    unitTestHelperWithFakeOCPlatform_obj]
 
-	if server_builder_test_env.get('TEST') == '1':
-		from tools.scons.RunTest import *
-		run_test(server_builder_test_env,
-# TODO: fix this test on linux and remove commented lines
-			'',
-#			'service_resource-encapsulation_src_serverBuilder_rcs_server_test.memcheck',
-			'service/resource-encapsulation/src/serverBuilder/rcs_server_test',
-			server_builder_test)
+    server_builder_test = server_builder_test_env.Program('rcs_server_test', server_builder_test_src)
+    Alias("rcs_server_test", server_builder_test)
+    server_builder_test_env.AppendTarget('rcs_server_test')
+
+    if server_builder_test_env.get('TEST') == '1':
+        server_builder_test_env.AppendUnique(CPPDEFINES = ['HIPPOMOCKS_ISSUE'])
+        from tools.scons.RunTest import *
+        run_test(server_builder_test_env,
+            'service_resource-encapsulation_src_serverBuilder_rcs_server_test.memcheck',
+            'service/resource-encapsulation/src/serverBuilder/rcs_server_test',
+            server_builder_test)

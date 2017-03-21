@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "UnitTestHelper.h"
+#include "UnitTestHelperWithFakeOCPlatform.h"
 
 #include "RequestHandler.h"
 #include "RCSResourceObject.h"
@@ -59,8 +59,7 @@ TEST(RequestHandlerTest, CustomRepresentationContainsSameAttributesPassedToConst
     ASSERT_EQ(attrs, converted);
 }
 
-
-class SetRequestHandlerAcceptanceTest: public TestWithMock
+class SetRequestHandlerAcceptanceTest: public TestWithExternMock
 {
 public:
     RCSResourceObject::Ptr server;
@@ -72,12 +71,15 @@ public:
 protected:
     void SetUp()
     {
-        TestWithMock::SetUp();
+        TestWithExternMock::SetUp();
 
-        mocks.OnCallFuncOverload(static_cast<RegisterResource>(OC::OCPlatform::registerResource))
-                .Return(OC_STACK_OK);
+        mocks.OnCall(
+                mockFakePlatform, FakeOCPlatform::registerResource)
+                        .Return(OC_STACK_OK);
 
-        mocks.OnCallFunc(OC::OCPlatform::unregisterResource).Return(OC_STACK_OK);
+        mocks.OnCall(
+                mockFakePlatform, FakeOCPlatform::unregisterResource)
+                        .Return(OC_STACK_OK);
 
         server = RCSResourceObject::Builder("a/test", "resourcetype", "").build();
 

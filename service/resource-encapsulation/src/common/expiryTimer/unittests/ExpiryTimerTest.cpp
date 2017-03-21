@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <UnitTestHelper.h>
+#include "UnitTestHelper.h"
 
 #include <mutex>
 #include <atomic>
@@ -92,10 +92,10 @@ TEST_F(ExpiryTimerImplTest, CallbackBeInvokedWithinTolerance)
     ExpiryTimerImpl::getInstance()->post(10,
             std::bind(&FunctionObject::execute, functor, std::placeholders::_1));
 
-    Wait();
+    Wait(TOLERANCE_IN_MILLIS * 2);
 }
 
-TEST_F(ExpiryTimerImplTest, CallbackBeInvokedWithTimerId)
+TEST_F(ExpiryTimerImplTest, DISABLED_CallbackBeInvokedWithTimerId)
 {
     ExpiryTimerImpl::Id returnedId = 0;
     FunctionObject* functor = mocks.Mock< FunctionObject >();
@@ -160,7 +160,11 @@ TEST_F(ExpiryTimerImplTest, CancelReturnsFalseIfAlreadyExecuted)
 
 TEST_F(ExpiryTimerImplTest, CallbackBeInvokedWithinToleranceWithMultiplePost)
 {
+#ifdef HIPPOMOCKS_ISSUE
+    constexpr int NUM_OF_POST{ 10 };
+#else
     constexpr int NUM_OF_POST{ 10000 };
+#endif
     std::atomic_int called{ 0 };
 
     for (int i=0; i<NUM_OF_POST; ++i)
@@ -228,7 +232,7 @@ TEST_F(ExpiryTimerTest, CallbackBeInvokedWithinTolerance)
             }
     );
 
-    timer.post(10,
+    timer.post(20,
             std::bind(&FunctionObject::execute, functor, std::placeholders::_1));
 
     Wait();
@@ -251,7 +255,7 @@ TEST_F(ExpiryTimerTest, CallbackBeInvokedWithTimerId)
             }
     );
 
-    returnedId = timer.post(1, std::bind(&FunctionObject::execute, functor, std::placeholders::_1));
+    returnedId = timer.post(10, std::bind(&FunctionObject::execute, functor, std::placeholders::_1));
 
     Wait();
 }
@@ -295,8 +299,13 @@ TEST_F(ExpiryTimerTest, CancelReturnsFalseIfAlreadyExecuted)
 
 TEST_F(ExpiryTimerTest, NumOfPendingReturnsNumberOfNotExecuted)
 {
+#ifdef HIPPOMOCKS_ISSUE
+    constexpr size_t numOfFutureTask{ 10 };
+    constexpr size_t numOfShortDelayTask{ 10 };
+#else
     constexpr size_t numOfFutureTask{ 100 };
     constexpr size_t numOfShortDelayTask{ 100 };
+#endif
 
     for (size_t i=0; i<numOfFutureTask; ++i)
     {
@@ -321,7 +330,11 @@ TEST_F(ExpiryTimerTest, NumOfPendingReturnsNumberOfNotExecuted)
 
 TEST_F(ExpiryTimerTest, CancelAllCancelsAllTasks)
 {
+#ifdef HIPPOMOCKS_ISSUE
+    constexpr size_t numOfTask{ 10 };
+#else
     constexpr size_t numOfTask{ 100 };
+#endif
 
     for (size_t i=0; i<numOfTask; ++i)
     {

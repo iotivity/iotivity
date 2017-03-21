@@ -204,8 +204,11 @@ TEST_F(DiscoverResourceTest, CallbackIsInvokedWhenResourceIsDiscovered)
 
     discoverResource("", "", OCConnectivityType{ }, discovered);
 }
-
+#ifdef HIPPOMOCKS_ISSUE
+TEST_F(DiscoverResourceTest, DISABLED_ThrowsdWhenOCPlatformFindResourceReturnsNotOK)
+#else
 TEST_F(DiscoverResourceTest, ThrowsdWhenOCPlatformFindResourceReturnsNotOK)
+#endif
 {
     mocks.ExpectCallFuncOverload(static_cast<FindResource>(OC::OCPlatform::findResource)).
             Return(OC_STACK_ERROR);
