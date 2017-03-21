@@ -149,6 +149,7 @@ static void OCCopyPropertyValueArray(OCRepPayloadValue* dest, OCRepPayloadValue*
             for(size_t i = 0; i < dimTotal; ++i)
             {
                 dest->arr.strArray[i] = OICStrdup(source->arr.strArray[i]);
+                VERIFY_PARAM_NON_NULL(TAG, dest->arr.strArray[i], "Failed to duplicate string");
             }
             break;
         case OCREP_PROP_OBJECT:

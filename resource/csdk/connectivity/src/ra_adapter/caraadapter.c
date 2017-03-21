@@ -144,6 +144,13 @@ static void CARAUpdateObsList(int option, char *sid)
     if (option == OBSERVE_REGISTER)
     {
         obs_item_t *item = (obs_item_t *) OICMalloc(sizeof(*item));
+
+        if (NULL == item)
+        {
+            OIC_LOG(ERROR, RA_ADAPTER_TAG, "Memory allocation failed for obs item");
+            return;
+        }
+
         OICStrcpy(item->sessid, sizeof(item->sessid), sid);
         item->option = OBSERVE_REGISTER;
         ilist_add(g_observerList, item);
