@@ -29,10 +29,10 @@ if local_env.get('LOGGING'):
     local_env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
 
 if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS = ['-Os'])
-    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+    local_env.AppendUnique(CCFLAGS = ['-Os'])
+    local_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
-    env.AppendUnique(CCFLAGS = ['-g'])
+    local_env.AppendUnique(CCFLAGS = ['-g'])
 
 target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
@@ -44,16 +44,17 @@ local_env.AppendUnique(CPPPATH = ['include',
                         os.path.join(src_dir, 'resource/csdk/include'),
                         os.path.join(src_dir, 'resource/csdk/stack/include'),
                         os.path.join(src_dir, 'resource/csdk/connectivity/common/inc/'),
+                        os.path.join(src_dir, 'resource/csdk/security/include'),
                         os.path.join(src_dir, 'extlibs/cjson'),
 		])
 
-with_upstream_libcoap = env.get('WITH_UPSTREAM_LIBCOAP')
+with_upstream_libcoap = local_env.get('WITH_UPSTREAM_LIBCOAP')
 if with_upstream_libcoap == '1':
     # For bring up purposes only,
     # we manually copy the forked version to where the unforked version is downloaded.
-    env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+    local_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
 else:
-    env.AppendUnique(CPPPATH = ['#resource/csdk/connectivity/lib/libcoap-4.1.1/include'])
+    local_env.AppendUnique(CPPPATH = ['#resource/csdk/connectivity/lib/libcoap-4.1.1/include'])
 
 local_env.PrependUnique(LIBS = ['cjson', 'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
 if target_os not in ['windows']:
@@ -67,7 +68,7 @@ if target_os == 'android':
     local_env.AppendUnique(LIBS = ['gnustl_static'])
 
     if not env.get('RELEASE'):
-        rd_env.AppendUnique(LIBS = ['log'])
+        local_env.AppendUnique(LIBS = ['log'])
 ######################################################################
 # Source files and Targets
 ######################################################################
