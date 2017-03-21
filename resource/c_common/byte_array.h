@@ -65,6 +65,19 @@ typedef struct ByteArray
         (array).len = 0;            \
     }while(0)
 
+/**@def DEINIT_BYTE_ARRAY(array)
+ *
+ * Deinitializes of existing byte array \a array.
+ *
+ * @param array ByteArray_t
+ */
+#undef DEINIT_BYTE_ARRAY
+#define DEINIT_BYTE_ARRAY(array) do{  \
+        OICFree((array).data);       \
+        (array).data = NULL;        \
+        (array).len = 0;            \
+    }while(0)
+
 /**@def PRINT_BYTE_ARRAY(msg, array)
  *
  * Prints out byte array \a array in hex representation with message \a msg.

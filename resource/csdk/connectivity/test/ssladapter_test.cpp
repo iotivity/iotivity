@@ -894,12 +894,23 @@ static void PacketReceive(unsigned char *data, int * datalen)
 
 static void infoCallback_that_loads_x509(PkiInfo_t * inf)
 {
-    inf->crt.data = (uint8_t*)serverCert;
     inf->crt.len = sizeof(serverCert);
-    inf->key.data = (uint8_t*)serverPrivateKey;
+    inf->crt.data = (uint8_t*)OICMalloc(inf->crt.len);
+    ASSERT_TRUE(inf->crt.data != NULL);
+    memcpy(inf->crt.data, serverCert, inf->crt.len);
+
     inf->key.len = sizeof(serverPrivateKey);
-    inf->ca.data = (uint8_t*)caCert;
+    inf->key.data = (uint8_t*)OICMalloc(inf->key.len);
+    ASSERT_TRUE(inf->key.data != NULL);
+    memcpy(inf->key.data, serverPrivateKey, inf->key.len);
+
+
     inf->ca.len = sizeof(caCert);
+    inf->ca.data = (uint8_t*)OICMalloc(inf->ca.len);
+    ASSERT_TRUE(inf->ca.data != NULL);
+    memcpy(inf->ca.data, caCert, inf->ca.len);
+
+
     inf->crl.data = NULL;
     inf->crl.len = 0;
 }

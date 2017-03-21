@@ -112,6 +112,10 @@ typedef void (*CAgetCredentialTypesHandler)(bool * list, const char* deviceId);
 /**
  * Binary structure containing PKIX related info
  * own certificate chain, public key, CA's and CRL's
+ * The data member of each ByteArray_t must be allocated with OICMalloc or OICCalloc.
+ * The SSL adapter takes ownership of this memory and will free it internally after use.
+ * Callers should not reference this memory after it has been provided to the SSL adapter via the
+ * callback.
  */
 typedef struct
 {

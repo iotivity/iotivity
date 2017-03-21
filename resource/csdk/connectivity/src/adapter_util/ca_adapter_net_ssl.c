@@ -67,7 +67,6 @@
 #include <unistd.h>
 #endif
 
-
 /**
  * @def MBED_TLS_VERSION_LEN
  * @brief mbedTLS version string length
@@ -277,8 +276,6 @@ mbedtls_ecp_group_id curve[ADAPTER_CURVE_MAX][2] =
 {
     {MBEDTLS_ECP_DP_SECP256R1, MBEDTLS_ECP_DP_NONE}
 };
-
-static PkiInfo_t g_pkiInfo = {{NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}};
 
 typedef struct  {
     int code;
@@ -620,15 +617,46 @@ static int ParseChain(mbedtls_x509_crt * crt, unsigned char * buf, size_t bufLen
     return ret;
 }
 
+/**
+ * Deinit Pki Info
+ *
+ * @param[out] inf structure with certificate, private key and crl to be free.
+ *
+ */
+static void DeInitPkixInfo(PkiInfo_t * inf)
+{
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
+    if (NULL == inf)
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "NULL passed");
+        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+        return;
+    }
+
+    DEINIT_BYTE_ARRAY(inf->crt);
+    DEINIT_BYTE_ARRAY(inf->key);
+    DEINIT_BYTE_ARRAY(inf->ca);
+    DEINIT_BYTE_ARRAY(inf->crl);
+
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+}
+
 //Loads PKIX related information from SRM
 static int InitPKIX(CATransportAdapter_t adapter)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(g_getPkixInfoCallback, NET_SSL_TAG, "PKIX info callback is NULL", -1);
     // load pk key, cert, trust chain and crl
+    PkiInfo_t pkiInfo = {
+        BYTE_ARRAY_INITIALIZER,
+        BYTE_ARRAY_INITIALIZER,
+        BYTE_ARRAY_INITIALIZER,
+        BYTE_ARRAY_INITIALIZER
+    };
+
     if (g_getPkixInfoCallback)
     {
-        g_getPkixInfoCallback(&g_pkiInfo);
+        g_getPkixInfoCallback(&pkiInfo);
     }
 
     VERIFY_NON_NULL_RET(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL", -1);
@@ -652,7 +680,7 @@ static int InitPKIX(CATransportAdapter_t adapter)
     // optional
     int ret;
     int errNum;
-    int count = ParseChain(&g_caSslContext->crt, g_pkiInfo.crt.data, g_pkiInfo.crt.len, &errNum);
+    int count = ParseChain(&g_caSslContext->crt, pkiInfo.crt.data, pkiInfo.crt.len, &errNum);
     if (0 >= count)
     {
         OIC_LOG(WARNING, NET_SSL_TAG, "Own certificate chain parsing error");
@@ -663,7 +691,7 @@ static int InitPKIX(CATransportAdapter_t adapter)
         OIC_LOG_V(WARNING, NET_SSL_TAG, "Own certificate chain parsing error: %d certs failed to parse", errNum);
         goto required;
     }
-    ret =  mbedtls_pk_parse_key(&g_caSslContext->pkey, g_pkiInfo.key.data, g_pkiInfo.key.len,
+    ret =  mbedtls_pk_parse_key(&g_caSslContext->pkey, pkiInfo.key.data, pkiInfo.key.len,
                                                                                NULL, 0);
     if (0 != ret)
     {
@@ -701,11 +729,12 @@ static int InitPKIX(CATransportAdapter_t adapter)
     }
 
     required:
-    count = ParseChain(&g_caSslContext->ca, g_pkiInfo.ca.data, g_pkiInfo.ca.len, &errNum);
+    count = ParseChain(&g_caSslContext->ca, pkiInfo.ca.data, pkiInfo.ca.len, &errNum);
     if(0 >= count)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "CA chain parsing error");
         OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+        DeInitPkixInfo(&pkiInfo);
         return -1;
     }
     if(0 != errNum)
@@ -713,7 +742,7 @@ static int InitPKIX(CATransportAdapter_t adapter)
         OIC_LOG_V(WARNING, NET_SSL_TAG, "CA chain parsing warning: %d certs failed to parse", errNum);
     }
 
-    ret = mbedtls_x509_crl_parse_der(&g_caSslContext->crl, g_pkiInfo.crl.data, g_pkiInfo.crl.len);
+    ret = mbedtls_x509_crl_parse_der(&g_caSslContext->crl, pkiInfo.crl.data, pkiInfo.crl.len);
     if(0 != ret)
     {
         OIC_LOG(WARNING, NET_SSL_TAG, "CRL parsing error");
@@ -724,6 +753,8 @@ static int InitPKIX(CATransportAdapter_t adapter)
         CONF_SSL(clientConf, serverConf, mbedtls_ssl_conf_ca_chain,
                  &g_caSslContext->ca, &g_caSslContext->crl);
     }
+
+    DeInitPkixInfo(&pkiInfo);
 
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return 0;
@@ -2081,7 +2112,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
                     /* If UUID_PREFIX is present, ensure there's enough data for the prefix plus an entire
                      * UUID, to make sure we don't read past the end of the buffer.
                      */
-                    if ((NULL != uuidPos) && 
+                    if ((NULL != uuidPos) &&
                         (name->val.len >= ((uuidPos - name->val.p) + (sizeof(UUID_PREFIX) - 1) + uuidBufLen)))
                     {
                         memcpy(uuid, uuidPos + sizeof(UUID_PREFIX) - 1, uuidBufLen);
