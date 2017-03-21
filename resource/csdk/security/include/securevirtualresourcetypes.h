@@ -527,6 +527,8 @@ struct OicSecMom{
 /**
  * /oic/sec/doxm (Device Owner Transfer Methods) data type
  * Derived from OIC Security Spec; see Spec for details.
+ * @note If the struct is updated please update
+ * DoxmUpdateWriteableProperty appropriately.
  */
 struct OicSecDoxm
 {
