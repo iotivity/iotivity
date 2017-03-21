@@ -91,6 +91,8 @@ namespace
         OCEntityHandlerRequest * request =
                 (OCEntityHandlerRequest *)malloc(sizeof(OCEntityHandlerRequest));
         EXPECT_NE((void *)NULL, request);
+        request->requestHandle = NULL;
+        request->resource = NULL;
 
         if (OC_REST_OBSERVE == method)
         {
@@ -99,11 +101,13 @@ namespace
 
             std::string query = std::string(NS_QUERY_CONSUMER_ID)
                     + "=" + testConsumerId;
-            request->query = (char *)malloc(sizeof(char) * query.size() + 1);
+            request->query = (char *)malloc(query.size() + 1);
+            EXPECT_NE((void *)NULL, request->query);
             strncpy(request->query, query.c_str(), query.size() + 1);
         }
         request->method = method;
         request->numRcvdVendorSpecificHeaderOptions = 0;
+        request->payload = NULL;
 
         return request;
     }
@@ -113,6 +117,8 @@ namespace
         OCEntityHandlerRequest * request =
                 (OCEntityHandlerRequest *)malloc(sizeof(OCEntityHandlerRequest));
         EXPECT_NE((void *)NULL, request);
+        request->requestHandle = NULL;
+        request->resource = NULL;
 
         request->method = OC_REST_POST;
         request->numRcvdVendorSpecificHeaderOptions = 0;
@@ -208,6 +214,10 @@ TEST(NotificationProviderTest, ExpectCallbackSubscribeRequestWithAccepterProvide
 
     OCEntityHandlerRequest * syncRequest = getEntityRequest(OC_REST_OBSERVE, OC_OBSERVE_REGISTER);
     NSEntityHandlerSyncCb(flag, syncRequest, NULL);
+    {
+        std::unique_lock< std::mutex > lock{ responseProviderSubLock };
+        responseProviderSub.wait_for(lock, g_waitForResponse);
+    }
 
     free(syncRequest->query);
     free(syncRequest);
@@ -506,12 +516,20 @@ TEST(NotificationProviderTest, ExpectSuccessUnsub)
     OCEntityHandlerRequest * msgRequest =
             getEntityRequest(OC_REST_OBSERVE, OC_OBSERVE_DEREGISTER);
     NSEntityHandlerMessageCb(flag, msgRequest, NULL);
+    {
+        std::unique_lock< std::mutex > lock{ responseProviderSubLock };
+        responseProviderSub.wait_for(lock, g_waitForResponse);
+    }
     free(msgRequest->query);
     free(msgRequest);
 
     OCEntityHandlerRequest * syncRequest =
             getEntityRequest(OC_REST_OBSERVE, OC_OBSERVE_DEREGISTER);
     NSEntityHandlerSyncCb(flag, syncRequest, NULL);
+    {
+        std::unique_lock< std::mutex > lock{ responseProviderSubLock };
+        responseProviderSub.wait_for(lock, g_waitForResponse);
+    }
     free(syncRequest->query);
     free(syncRequest);
 
