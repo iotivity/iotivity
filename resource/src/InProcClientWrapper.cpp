@@ -214,8 +214,8 @@ namespace OC
         {
             if (!clientResponse->payload || clientResponse->payload->type != PAYLOAD_TYPE_DISCOVERY)
             {
-                oclog() << "listenCallback(): clientResponse payload was null or the wrong type"
-                    << std::flush;
+                OIC_LOG_V(DEBUG, TAG, "%s: clientResponse payload was null or the wrong type",
+                          __func__);
                 return OC_STACK_KEEP_TRANSACTION;
             }
 
@@ -223,8 +223,8 @@ namespace OC
 
             if (!clientWrapper)
             {
-                oclog() << "listenCallback(): failed to get a shared_ptr to the client wrapper"
-                        << std::flush;
+                OIC_LOG_V(DEBUG, TAG, "%s: failed to get a shared_ptr to the client wrapper",
+                          __func__);
                 return OC_STACK_KEEP_TRANSACTION;
             }
 
@@ -239,6 +239,7 @@ namespace OC
             return OC_STACK_KEEP_TRANSACTION;
         }
 
+        OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
         std::string resourceURI = clientResponse->resourceUri;
         std::thread exec(context->errorCallback, resourceURI, result);
         exec.detach();
@@ -376,6 +377,7 @@ namespace OC
             ListenOCContainer container(clientWrapper, clientResponse->devAddr,
                                     reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
 
+            OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
             std::thread exec(context->callback, container.Resources());
             exec.detach();
         }
@@ -473,6 +475,7 @@ namespace OC
             ListenOCContainer container(clientWrapper, clientResponse->devAddr,
                             reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
 
+            OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
             std::thread exec(context->callback, container.Resources());
             exec.detach();
         }
@@ -646,6 +649,7 @@ namespace OC
 
         try
         {
+            OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
             OCRepresentation rep = parseGetSetCallback(clientResponse);
             std::thread exec(context->callback, rep);
             exec.detach();
@@ -793,6 +797,7 @@ namespace OC
             }
             else
             {
+                OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
                 std::thread exec(context->callback, result,
                                  createdUri,
                                  nullptr);
@@ -873,6 +878,7 @@ namespace OC
             result = e.code();
         }
 
+        OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
         std::thread exec(context->callback, serverHeaderOptions, rep, result);
         exec.detach();
         return OC_STACK_DELETE_TRANSACTION;
@@ -947,6 +953,7 @@ namespace OC
             result = e.code();
         }
 
+        OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
         std::thread exec(context->callback, serverHeaderOptions, attrs, result);
         exec.detach();
         return OC_STACK_DELETE_TRANSACTION;
@@ -1147,6 +1154,7 @@ namespace OC
 
         parseServerHeaderOptions(clientResponse, serverHeaderOptions);
 
+        OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
         std::thread exec(context->callback, serverHeaderOptions, clientResponse->result);
         exec.detach();
         return OC_STACK_DELETE_TRANSACTION;
@@ -1220,6 +1228,7 @@ namespace OC
             result = e.code();
         }
 
+        OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
         std::thread exec(context->callback, serverHeaderOptions, attrs,
                     result, sequenceNumber);
         exec.detach();
@@ -1332,6 +1341,7 @@ namespace OC
          */
         std::string url = clientResponse->devAddr.addr;
 
+        OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
         std::thread exec(context->callback, clientResponse->result,
                     clientResponse->sequenceNumber, url);
 
@@ -1521,6 +1531,7 @@ namespace OC
                     << std::flush;
             }
             else {
+                OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
                 convert(list, dpDeviceList);
                 std::thread exec(callback, dpDeviceList);
                 exec.detach();
@@ -1556,10 +1567,10 @@ namespace OC
             if (NULL == list)
             {
                 result = OC_STACK_NO_RESOURCE;
-                oclog() << "findDirectPairingDevices(): No device found for direct pairing"
-                    << std::flush;
+                OIC_LOG_V(DEBUG, TAG, "%s: No device found for direct pairing", __func__);
             }
             else {
+                OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
                 convert(list, dpDeviceList);
                 std::thread exec(callback, dpDeviceList);
                 exec.detach();
@@ -1581,6 +1592,7 @@ namespace OC
         ClientCallbackContext::DirectPairingContext* context =
             static_cast<ClientCallbackContext::DirectPairingContext*>(ctx);
 
+        OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
         std::thread exec(context->callback, cloneDevice(peer), result);
         exec.detach();
     }
