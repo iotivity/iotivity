@@ -145,7 +145,7 @@ if 'ca' in module:
     if 'junit' in framework:
 
         if 'tc' in test:
-            build_command = "bash build/android/ca/junit/native_build.sh test=simulator stand_alone=0 android_ndk=%s release=%s target_arch=%s iotivity_root=%s iotivity_test_root=%s" % (ndk_dir, release_dir, target_arch, iotivity_root, iotivity_test_root)
+            build_command = "bash build/android/ca/junit/native_build.sh test=tc stand_alone=0 android_ndk=%s release=%s target_arch=%s iotivity_root=%s iotivity_test_root=%s" % (ndk_dir, release_dir, target_arch, iotivity_root, iotivity_test_root)
             ca_tc_native_build = env_android.Command('ca_tc_native_build', None, build_command)
             default_targets += ca_tc_native_build
 

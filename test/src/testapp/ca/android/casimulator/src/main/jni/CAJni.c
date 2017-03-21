@@ -473,7 +473,7 @@ detach_thread :
 
 int initialize()
 {
-    CAResult_t result = CAInitialize();
+    CAResult_t result = CAInitialize(CA_DEFAULT_ADAPTER);
 
    if (result != CA_STATUS_OK)
    {

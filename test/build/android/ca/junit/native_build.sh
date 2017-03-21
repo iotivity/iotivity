@@ -97,6 +97,6 @@ fi
 ${android_ndk}/ndk-build
 
 mkdir -p ${IOTIVITY_TEST_ROOT}/extlibs/android/ca/${target_arch}
-cp -r ./libs/armeabi/* ${IOTIVITY_TEST_ROOT}/extlibs/android/ca/${target_arch}
+cp -r ./libs/${target_arch}/* ${IOTIVITY_TEST_ROOT}/extlibs/android/ca/${target_arch}
 
 cd ${current_path}

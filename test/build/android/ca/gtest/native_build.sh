@@ -1,6 +1,6 @@
 #!/bin/bash
 
-push='1'
+push='exe'
 clean='1'
 release_dir='debug'
 total_device=1
@@ -10,6 +10,7 @@ reset=`tput sgr0`
 stand_alone='1'
 android_home=${ANDROID_HOME}
 android_ndk=${ANDROID_NDK}
+target_arch='x86'
 
 for i in `seq 1 $#` 
 do
@@ -41,6 +42,8 @@ while [ $i -lt $len ]; do
         IOTIVITY_TEST_ROOT=${arg}
     elif [[ "${arg_parts[i]}" = "clean" ]]; then
         clean=${arg}
+    elif [[ "${arg_parts[i]}" = "target_arch" ]]; then
+        target_arch=${arg_parts[i+1]}
     elif [[ "${arg_parts[i]}" = "release_dir" ]]; then
         release_dir=${arg}
     elif [[ "${arg_parts[i]}" = "android_home" ]]; then
@@ -53,7 +56,7 @@ done
 
 adb_path=${android_home}'/platform-tools/adb'
 
-if [[ "${push}" = "*exe*" || "${push}" = "*simulator*" ]]; then
+if [[ "${push}" = "exe" || "${push}" = "lib" ]]; then
 
     device_ids=$(${adb_path} devices | awk '/[a-zA-Z0-9]+[ \t]+device$/{print $1}')
     
@@ -97,7 +100,7 @@ i=0
 
 while [ $i -lt $total_file ]; do
   
-    if [ ! -f build/android/ca/gtest/libs/armeabi/${file_list[i]}  ]; then
+    if [ ! -f build/android/ca/gtest/libs/${target_arch}/${file_list[i]}  ]; then
         echo ${red}'File '${file_list[i]}' isn not created !!!'${reset}
         echo ${red}'Build Failed'${reset}
         exit 127
@@ -109,7 +112,7 @@ while [ $i -lt $total_file ]; do
 done
 
 
-if [[ "${push}" = "1" ]]; then
+if [[ "${push}" = "exe" || "${push}" = "lib" ]]; then
     i=0
     while [ $i -lt $total_device ]; do
     
@@ -122,7 +125,7 @@ if [[ "${push}" = "1" ]]; then
         echo 'total_file: '${total_file}
         j=0    
         while [ $j -lt $total_file ]; do
-            ${adb_path} $device_id push build/android/ca/gtest/libs/armeabi/${file_list[j]} /data/local/tmp/
+            ${adb_path} $device_id push build/android/ca/gtest/libs/${target_arch}/${file_list[j]} /data/local/tmp/
             echo ${green}${file_list[j]}' pushed /data/local/tmp folder in device '${device_id}${reset}
             let j=j+1
         done

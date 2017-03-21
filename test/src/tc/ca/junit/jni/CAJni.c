@@ -419,7 +419,7 @@ Java_org_iotivity_CAJni_initialize(JNIEnv *env, jclass cls)
         return false;
     }
 
-    CAResult_t res = CAInitialize();
+    CAResult_t res = CAInitialize(CA_DEFAULT_ADAPTER);
 
     if (CA_STATUS_OK != res)
     {
@@ -1624,7 +1624,7 @@ Java_org_iotivity_CAJni_handleRequestResponse(JNIEnv *env, jclass cls)
 JNIEXPORT bool JNICALL 
 Java_org_iotivity_CAJni_initNetwork(JNIEnv *env, jclass cls)
 {
-    CAResult_t result = CAInitialize();
+    CAResult_t result = CAInitialize(CA_DEFAULT_ADAPTER);
     if (result != CA_STATUS_OK)
     {
         return false;
@@ -1642,7 +1642,7 @@ Java_org_iotivity_CAJni_initNetwork(JNIEnv *env, jclass cls)
 JNIEXPORT bool JNICALL 
 Java_org_iotivity_CAJni_initServerNetwork(JNIEnv *env, jclass cls)
 {
-    CAResult_t result = CAInitialize();
+    CAResult_t result = CAInitialize(CA_DEFAULT_ADAPTER);
     if (result != CA_STATUS_OK)
     {
         LOGE("CAInitialize Failed");
@@ -1674,7 +1674,7 @@ Java_org_iotivity_CAJni_initServerNetwork(JNIEnv *env, jclass cls)
 JNIEXPORT bool JNICALL 
 Java_org_iotivity_CAJni_initClientNetwork(JNIEnv *env, jclass cls)
 {
-    CAResult_t result = CAInitialize();
+    CAResult_t result = CAInitialize(CA_DEFAULT_ADAPTER);
     if (result != CA_STATUS_OK)
     {
         return false;
