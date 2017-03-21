@@ -53,7 +53,7 @@ target_os = CoAP_test_env.get('TARGET_OS')
 
 CoAP_test_env.AppendUnique(LIBPATH = [lib_env.get('BUILD_DIR')])
 CoAP_test_env.AppendUnique(LIBS = [
-    'coap_http_proxy','oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
+    'coap_http_proxy','oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'cjson'])
 
 if target_os not in ['windows']:
     CoAP_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0'])
@@ -92,3 +92,10 @@ Alias("CoAP_unit_test", CoAP_unit_test)
 CoAP_test_env.AppendTarget('CoAP_unit_test')
 CoAP_test_env.InstallTarget(CoAP_unit_test, 'CoAP_unit_test')
 
+if CoAP_test_env.get('TEST') == '1':
+    if target_os in ['linux']:
+        from tools.scons.RunTest import run_test
+        run_test(CoAP_test_env,
+                 '',
+                 'service/coap-http-proxy/unittests/CoAP_unit_test',
+                 CoAP_unit_test)

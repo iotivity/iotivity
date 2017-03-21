@@ -24,7 +24,6 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "logger.h"
-#include "ocpayload.h"
 #include "uarraylist.h"
 #include "CoapHttpParser.h"
 #include "CoapHttpMap.h"
@@ -40,7 +39,7 @@ typedef struct
 {
     OCMethod method;
     OCRequestHandle requestHandle;
-}CHPRequest_t; 
+}CHPRequest_t;
 
 static int g_quitFlag = 0;
 static int g_secureFlag = 0;

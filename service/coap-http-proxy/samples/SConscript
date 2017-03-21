@@ -42,7 +42,8 @@ else:
 
 proxy_sample_app_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 proxy_sample_app_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-proxy_sample_app_env.PrependUnique(LIBS = ['coap_http_proxy', 'oc', 'octbstack', 'curl', 'connectivity_abstraction'])
+proxy_sample_app_env.PrependUnique(LIBS = ['coap_http_proxy', 'oc', 'octbstack', 'curl', 'connectivity_abstraction', 'cjson', 'm'])
+proxy_sample_app_env.AppendUnique(CPPPATH = ['#resource/csdk/security/include'])
 
 if env.get('SECURED') == '1':
     proxy_sample_app_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
