@@ -30,6 +30,8 @@ iotivity_root = env_linux.get('IOTIVITY_ROOT')
 iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
 iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
 variant_dir = env_linux.get('VARIANT_DIR')
+install_dir = env_linux.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
 test = env_linux.get('TEST')
 sdk = env_linux.get('SDK')
 common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
@@ -85,19 +87,19 @@ cert_include_paths = [
 
 csdk_tc_include_paths = [
     iotivity_test_root + '/include',
-    iotivity_test_root + '/src/tc/pm/gtest/csdk/include',
+    test_src_root + '/tc/pm/gtest/csdk/include',
     iotivity_test_root + '/extlibs/gtest-1.7.0/include',
 ]
 
 cpp_tc_include_paths = [
     iotivity_test_root + '/include',
-    iotivity_test_root + '/src/tc/pm/gtest/cpp/include',
+    test_src_root + '/tc/pm/gtest/cpp/include',
     iotivity_test_root + '/extlibs/gtest-1.7.0/include',
 ]
 
-csdk_testapp_include_paths = [iotivity_test_root + '/src/iBtestapp/modules/pm/c_cpp/csdk/include']
+csdk_testapp_include_paths = [test_src_root + '/iBtestapp/modules/pm/c_cpp/csdk/include']
 
-cpp_testapp_include_paths = [iotivity_test_root + '/src/iBtestapp/modules/pm/c_cpp/cpp/include']
+cpp_testapp_include_paths = [test_src_root + '/iBtestapp/modules/pm/c_cpp/cpp/include']
 
 simulator_include_paths = [iotivity_test_root + '/include']
 
@@ -112,35 +114,23 @@ lib_paths = [
 ]
 
 csdk_tc_src = [
-    Glob(iotivity_lib_path + '/resource/csdk/security/src/*.o'),
-    Glob(iotivity_root + '/extlibs/asn1cert/*.o'),
-    Glob(iotivity_lib_path + '/resource/csdk/connectivity/src/adapter_util/pkix/*.o'),
-    Glob(iotivity_test_root + '/src/tc/pm/gtest/csdk/src/helper/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/pm/gtest/csdk/src/btc/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/pm/gtest/csdk/src/stc/*.cpp')
+    Glob(test_src_root + '/tc/pm/gtest/csdk/src/helper/*.cpp'),
+    Glob(test_src_root + '/tc/pm/gtest/csdk/src/btc/*.cpp'),
+    Glob(test_src_root + '/tc/pm/gtest/csdk/src/stc/*.cpp')
 ]
 
 cpp_tc_src = [
-    Glob( iotivity_lib_path + '/resource/csdk/security/src/*.o'),
-    Glob(iotivity_root + '/extlibs/asn1cert/*.o'),
-    Glob(iotivity_lib_path + '/resource/csdk/connectivity/src/adapter_util/pkix/*.o'),
-    Glob(iotivity_test_root + '/src/tc/pm/gtest/cpp/src/helper/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/pm/gtest/cpp/src/btc/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/pm/gtest/cpp/src/stc/*.cpp')
+    Glob(test_src_root + '/tc/pm/gtest/cpp/src/helper/*.cpp'),
+    Glob(test_src_root + '/tc/pm/gtest/cpp/src/btc/*.cpp'),
+    Glob(test_src_root + '/tc/pm/gtest/cpp/src/stc/*.cpp')
 ]
 
 csdk_testapp_src = [
-    Glob( iotivity_lib_path + '/resource/csdk/security/src/*.o'),
-    Glob(iotivity_root + '/extlibs/asn1cert/*.o'),
-    Glob(iotivity_lib_path + '/resource/csdk/connectivity/src/adapter_util/pkix/*.o'),
-    Glob(iotivity_test_root + '/src/iBtestapp/modules/pm/c_cpp/csdk/src/*.cpp')
+    Glob(test_src_root + '/iBtestapp/modules/pm/c_cpp/csdk/src/*.cpp')
 ]
 
 cpp_testapp_src = [
-    Glob( iotivity_lib_path + '/resource/csdk/security/src/*.o'),
-    Glob(iotivity_root + '/extlibs/asn1cert/*.o'),
-    Glob(iotivity_lib_path + '/resource/csdk/connectivity/src/adapter_util/pkix/*.o'),
-    Glob(iotivity_test_root + '/src/iBtestapp/modules/pm/c_cpp/cpp/src/*.cpp')
+    Glob(test_src_root + '/iBtestapp/modules/pm/c_cpp/cpp/src/*.cpp')
 ]
 
 cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -DMULTIPLE_OWNER -DCA_DBUS_GATT_SERVICE_NAME -DWITH_SHA256 -DDTLS_CHECK_CONTENTTYPE -DROUTING_EP -DGLIB_VERSION_MIN_REQUIRED -DTB_LOG -D__WITH_DTLS__ -DWITH_BWT -DROUTING_EP -DSHA2_USE_INTTYPES_H -DGLIB_VERSION_2_32 -DWITH_BWT -DTB_LOG -DIP_ADAPTER -DLE_ADAPTER -DNO_EDR_ADAPTER -DHAVE_SYS_TIME_H -DDTLSV12 -DRD_CLIENT -DWITH_CLOUD -D_ENABLE_MULTIPLE_OWNER_ -DWITH_POSIX -DNDEBUG -DTCP_ADAPTER -fpermissive -D__WITH_DTLS__ -D__WITH_TLS__ -DWITH_TCP')
@@ -188,7 +178,7 @@ if 'tc' in test:
         install_targets += cpp_tc
 
 if 'tc' in test or 'simulator' in test:
-    test_simulator = env_linux.Program(source = iotivity_test_root + '/src/testapp/pm/test_server.cpp',
+    test_simulator = env_linux.Program(source = test_src_root + '/testapp/pm/test_server.cpp',
                     target = 'iotivity_pm_server',
                     CPPPATH = iotivity_include_paths + simulator_include_paths,
                     LIBS = csdk_lib_list,
@@ -224,23 +214,19 @@ if 'app' in test:
         install_targets += pm_test_app
 
 
-if 'tc' in test or 'simulator' in test:
+if 'tc' in test or 'simulator' in test or 'app' in test:
     pm_resource_path = iotivity_test_root + '/res/pm_resource'
     pm_resource_list = Glob(pm_resource_path + '/*.*')
 
-install = env_linux.Install(iotivity_test_root + '/' + variant_dir, install_targets)
-install_res = env_linux.Install(iotivity_test_root + '/' + variant_dir, pm_resource_list)
+install_res = env_linux.Install(iotivity_test_root + '/' + install_dir, pm_resource_list)
 install_res += env_linux.Install(iotivity_test_root + '/bin', pm_resource_list)
-
-install = env_linux.Install(iotivity_test_root + '/' + variant_dir, install_targets)
+install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
 
 delete_bin = []
 i = 0
 for delete_target in install_targets:
-    delete_bin += '0'
-    delete_bin[i] = Command(str(i), [], Delete(delete_target))
-    i = i + 1
+    delete_bin.append(Command(str(i), [], Delete(delete_target)))
+    i = i +1
 
-default_targets = install_targets + install + install_res + delete_bin
-
+default_targets = install_bin + install_res + delete_bin
 env_linux.Default(default_targets)
