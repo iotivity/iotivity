@@ -19,7 +19,7 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 Import('env')
-
+import SCons.Errors
 import os
 import sys
 import subprocess
@@ -80,10 +80,13 @@ if not found:
     if os.path.exists('.git/HEAD'):
         # Apply ocf patch on git revision
         cmd = 'git checkout development && git reset --hard ' + mbedtls_revision + ' && git clean -f && git apply --whitespace=fix ../ocf.patch'
-        os.system(cmd)
+        res = os.system(cmd)
     else:
-        print "mbedtls: error: missing %s" % pattern
-        Exit(1)
+        # Fallback to regular patch command
+        cmd = 'patch -p1 -l -f < ../ocf.patch'
+        res = os.system(cmd)
+    if 0 != res:
+        raise SCons.Errors.StopError('mbedtls: issue on applying patch: %d' % res)
 
 os.chdir(start_dir)
 
