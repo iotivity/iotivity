@@ -18,16 +18,17 @@
  *
  ******************************************************************/
 
- #include "ocendpoint.h"
- #include "logger.h"
- #include "oic_malloc.h"
- #include "oic_string.h"
- #include <string.h>
- #include "cainterface.h"
+#include "ocendpoint.h"
+#include "logger.h"
+#include "oic_malloc.h"
+#include "oic_string.h"
+#include <string.h>
+#include "cainterface.h"
 
 #define VERIFY_NON_NULL(arg) { if (!arg) {OIC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
 #define VERIFY_GT_ZERO(arg) { if (arg < 1) {OIC_LOG(FATAL, TAG, #arg " < 1"); goto exit;} }
 #define VERIFY_GT(arg1, arg2) { if (arg1 <= arg2) {OIC_LOG(FATAL, TAG, #arg1 " <= " #arg2); goto exit;} }
+#define VERIFY_LT_OR_EQ(arg1, arg2) { if (arg1 > arg2) {OIC_LOG(FATAL, TAG, #arg1 " > " #arg2); goto exit;} }
 #define TAG  "OIC_RI_ENDPOINT"
 
 OCStackResult OCGetSupportedEndpointFlags(const OCTpsSchemeFlags givenFlags, OCTpsSchemeFlags* out)
@@ -400,12 +401,15 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
 
         // port start pos
         tokPos = tmp + 1;
-        VERIFY_GT_ZERO(atoi(tokPos));
+        char* end = NULL;
+        long port = strtol(tokPos, &end, 10);
+        VERIFY_GT_ZERO(port);
+        VERIFY_LT_OR_EQ(port, UINT16_MAX);
         OIC_LOG_V(INFO, TAG, "parsed port is:%s", tokPos);
 
         out->tps = tps;
         out->addr = addr;
-        out->port = atoi(tokPos);
+        out->port = (uint16_t)port;
     }
 
     OICFree(origin);

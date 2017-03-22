@@ -417,7 +417,9 @@ static void CAReceiveThreadProcess(void *threadData)
 {
 #ifndef SINGLE_HANDLE
     CAData_t *data = (CAData_t *) threadData;
+    OIC_TRACE_BEGIN(%s:CAProcessReceivedData, TAG);
     CAProcessReceivedData(data);
+    OIC_TRACE_END();
 #else
     (void)threadData;
 #endif
@@ -503,8 +505,6 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
     VERIFY_NON_NULL(data, TAG, "data");
     VERIFY_NON_NULL(data->remoteEndpoint, TAG, "remoteEndpoint");
 
-    OIC_TRACE_BEGIN(%s:CAProcessSendData, TAG);
-
     CAResult_t res = CA_STATUS_FAILED;
 
     CASendDataType_t type = data->type;
@@ -551,7 +551,6 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
         else
         {
             OIC_LOG(DEBUG, TAG, "request info, response info is empty");
-            OIC_TRACE_END();
             return CA_STATUS_INVALID_PARAM;
         }
 
@@ -573,7 +572,6 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                         CAErrorHandler(data->remoteEndpoint, pdu->transport_hdr, pdu->length, res);
                         coap_delete_list(options);
                         coap_delete_pdu(pdu);
-                        OIC_TRACE_END();
                         return res;
                     }
                 }
@@ -589,7 +587,6 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                 CAErrorHandler(data->remoteEndpoint, pdu->transport_hdr, pdu->length, res);
                 coap_delete_list(options);
                 coap_delete_pdu(pdu);
-                OIC_TRACE_END();
                 return res;
             }
 
@@ -615,7 +612,6 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                     OIC_LOG_V(INFO, TAG, "retransmission is not enabled due to error, res : %d", res);
                     coap_delete_list(options);
                     coap_delete_pdu(pdu);
-                    OIC_TRACE_END();
                     return res;
                 }
             }
@@ -627,7 +623,6 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
         {
             OIC_LOG(ERROR,TAG,"Failed to generate unicast PDU");
             CASendErrorInfo(data->remoteEndpoint, info, CA_SEND_FAILED);
-            OIC_TRACE_END();
             return CA_SEND_FAILED;
         }
     }
@@ -665,7 +660,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
         CAProcessMulticastData(data);
 #endif
     }
-    OIC_TRACE_END();
+
     return CA_STATUS_OK;
 }
 
@@ -673,7 +668,9 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
 static void CASendThreadProcess(void *threadData)
 {
     CAData_t *data = (CAData_t *) threadData;
+    OIC_TRACE_BEGIN(%s:CAProcessSendData, TAG);
     CAProcessSendData(data);
+    OIC_TRACE_END();
 }
 #endif
 
@@ -744,7 +741,6 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
 {
     VERIFY_NON_NULL_VOID(sep, TAG, "remoteEndpoint");
     VERIFY_NON_NULL_VOID(data, TAG, "data");
-
     OIC_TRACE_BEGIN(%s:CAReceivedPacketCallback, TAG);
 
     if (0 == dataLen)
@@ -1370,6 +1366,7 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
 
     VERIFY_NON_NULL_VOID(data, TAG, "data");
     VERIFY_NON_NULL_VOID(pdu, TAG, "pdu");
+    OIC_TRACE_BEGIN(%s:CALogPDUInfo, TAG);
 
     OIC_LOG(DEBUG, ANALYZER_TAG, "=================================================");
     if(SEND_TYPE_MULTICAST == data->type)
@@ -1448,7 +1445,10 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
     {
         OIC_LOG(DEBUG, ANALYZER_TAG, "Coap Token");
         OIC_LOG_BUFFER(DEBUG, ANALYZER_TAG, (const uint8_t *) info->token, info->tokenLength);
+        OIC_TRACE_BUFFER("OIC_CA_MSG_HANDLE:CALogPDUInfo:token:", (const uint8_t *) info->token,
+                         info->tokenLength);
         OIC_LOG_V(DEBUG, ANALYZER_TAG, "Res URI = [%s]", info->resourceUri);
+        OIC_TRACE_MARK(%s:CALogPDUInfo:uri:%s, TAG, info->resourceUri);
 
         if (CA_FORMAT_APPLICATION_CBOR == info->payloadFormat)
         {
@@ -1471,6 +1471,7 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
 //    OIC_LOG_BUFFER(DEBUG, ANALYZER_TAG, pdu->data, payloadLen);
     OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Payload Size = [%lu]", payloadLen);
     OIC_LOG(DEBUG, ANALYZER_TAG, "=================================================");
+    OIC_TRACE_END();
 }
 #else
 static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)

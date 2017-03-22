@@ -411,10 +411,10 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
                 err |= cbor_encoder_create_array(&linkMap, &epsArray, epsCount);
                 VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting endpoints array");
 
-                for (size_t i = 0; i < epsCount; ++i)
+                for (size_t j = 0; j < epsCount; ++j)
                 {
                     CborEncoder endpointMap;
-                    OCEndpointPayload* endpoint = OCEndpointPayloadGetEndpoint(resource->eps, i);
+                    OCEndpointPayload* endpoint = OCEndpointPayloadGetEndpoint(resource->eps, j);
                     VERIFY_PARAM_NON_NULL(TAG, endpoint, "Failed retrieving endpoint");
 
                     char* endpointStr = OCCreateEndpointString(endpoint);

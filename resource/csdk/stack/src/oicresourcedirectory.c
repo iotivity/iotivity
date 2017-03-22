@@ -187,8 +187,8 @@ static OCStackResult ResourcePayloadCreate(sqlite3_stmt *stmt, OCDiscoveryPayloa
         VERIFY_SQLITE(sqlite3_bind_int64(stmtIF, sqlite3_bind_parameter_index(stmtIF, "@id"), id));
         while (SQLITE_ROW == sqlite3_step(stmtIF))
         {
-            const unsigned char *itf = sqlite3_column_text(stmtIF, if_value_index);
-            result = appendStringLL(&resourcePayload->interfaces, itf);
+            const unsigned char *tempItf = sqlite3_column_text(stmtIF, if_value_index);
+            result = appendStringLL(&resourcePayload->interfaces, tempItf);
             if (OC_STACK_OK != result)
             {
                 goto exit;
@@ -215,9 +215,9 @@ static OCStackResult ResourcePayloadCreate(sqlite3_stmt *stmt, OCDiscoveryPayloa
         if (SQLITE_ROW == res || SQLITE_DONE == res)
         {
             const unsigned char *di = sqlite3_column_text(stmt1, di_index);
-            const unsigned char *address = sqlite3_column_text(stmt1, address_index);
-            OIC_LOG_V(DEBUG, TAG, " %s %s", di, address);
-            discPayload->baseURI = OICStrdup((char *)address);
+            const unsigned char *tempAddress = sqlite3_column_text(stmt1, address_index);
+            OIC_LOG_V(DEBUG, TAG, " %s %s", di, tempAddress);
+            discPayload->baseURI = OICStrdup((char *)tempAddress);
             if (!discPayload->baseURI)
             {
                 result = OC_STACK_NO_MEMORY;

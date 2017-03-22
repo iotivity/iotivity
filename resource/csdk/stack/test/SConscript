@@ -62,7 +62,7 @@ if stacktest_env.get('LOGGING'):
 
 if target_os in ['msys_nt', 'windows']:
     stacktest_env.PrependUnique(LIBS = ['sqlite3'])
-    stacktest_env.AppendUnique(CCFLAGS=['/W3', '/WX'])
+    stacktest_env.AppendUnique(CCFLAGS=['/W4', '/WX'])
 else:
     stacktest_env.PrependUnique(LIBS = ['m'])
 

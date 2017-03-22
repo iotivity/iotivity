@@ -101,19 +101,20 @@ OCStackResult OCSetRAInfo(const OCRAInfo_t *raInfo);
 OCStackResult OCStop();
 
 /**
- * This function starts receiving the multicast traffic. This can be only called
- * when stack is in OC_STACK_INITIALIZED state but device is not receiving multicast
- * traffic.
+ * This function starts responding to multicast /oic/res requests.  This can be
+ * only called when stack is in OC_STACK_INITIALIZED state but device is not
+ * receiving multicast traffic.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCStartMulticastServer();
 
 /**
- * This function stops receiving the multicast traffic. The rest of the stack
- * keeps working and no resource are deleted. Device can still receive the unicast
- * traffic. Once this is set, no response to multicast /oic/res will be sent by the
- * device. This is to be used for devices that uses other entity to push resources.
+ * This function stops responding to multicast /oic/res requests.  This is to be
+ * used for devices that uses other entity to push resources.
+ *
+ * Note that other multicast requests, such as those used during ownership
+ * transfer, continue to be responded to.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */

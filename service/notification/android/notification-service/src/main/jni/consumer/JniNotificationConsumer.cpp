@@ -71,6 +71,24 @@ static JNIEnv *GetJNIEnv(jint *ret)
     }
 }
 
+static jlong getNativeProvider(JNIEnv *env, jobject jObj)
+{
+
+    jclass providerClass = env->GetObjectClass(jObj);
+    if (!providerClass)
+    {
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
+        return 0;
+    }
+    jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
+    if (!nativeHandle)
+    {
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to get nativeHandle for Provider");
+        return 0;
+    }
+    return (env->GetLongField(jObj, nativeHandle));
+}
+
 jobject getJavaProviderState(JNIEnv *env, OIC::Service::NSProviderState state)
 {
     NS_LOGD ("ConsumerService_getJavaProviderState - IN");
@@ -297,7 +315,7 @@ const char *getNativeTopicName(JNIEnv *env,  jobject jTopic)
     }
     else
     {
-        NS_LOGI (TAG, "Info: topicName is null");
+        NS_LOGI ("topicName is null");
     }
     NS_LOGD ("ConsumerService_getNativeTopicName - OUT");
     return topicName;
@@ -394,6 +412,7 @@ jobject getJavaProvider(JNIEnv *env, std::shared_ptr<OIC::Service::NSProvider> p
     if (!cls_provider)
     {
         NS_LOGE ("Failed to Get ObjectClass for Provider");
+        delete objectHolder;
         return NULL;
     }
     jmethodID mid_provider = env->GetMethodID(
@@ -401,12 +420,14 @@ jobject getJavaProvider(JNIEnv *env, std::shared_ptr<OIC::Service::NSProvider> p
     if (!mid_provider)
     {
         NS_LOGE ("Failed to Get MethodID for Provider<init>");
+        delete objectHolder;
         return NULL;
     }
     jobject obj_provider = env->NewObject(cls_provider, mid_provider, jProviderId);
     if (!obj_provider)
     {
         NS_LOGE ("Failed to create new Object for Provider");
+        delete objectHolder;
         return NULL;
     }
 
@@ -414,6 +435,7 @@ jobject getJavaProvider(JNIEnv *env, std::shared_ptr<OIC::Service::NSProvider> p
     if (!nativeHandle)
     {
         NS_LOGE ("Failed to get nativeHandle for Provider");
+        delete objectHolder;
         return NULL;
     }
     env->SetLongField(obj_provider, nativeHandle, pProvider);
@@ -1066,20 +1088,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSubs
 {
     NS_LOGD ("Provider_Subscribe -IN");
     OIC::Service::NSResult result  = OIC::Service::NSResult::ERROR;
-    jclass providerClass = env->GetObjectClass(jObj);
-    if (!providerClass)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
-        return ;
-    }
 
-    jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
-    if (!nativeHandle)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to get nativeHandle for Provider");
-        return ;
-    }
-    jlong jProvider = env->GetLongField(jObj, nativeHandle);
+    jlong jProvider = getNativeProvider(env, jObj);
     if (jProvider)
     {
         NS_LOGD ("calling subscribe on mNativeHandle");
@@ -1114,20 +1124,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeUnsu
 {
     NS_LOGD ("Provider_UnSubscribe -IN");
     OIC::Service::NSResult result  = OIC::Service::NSResult::ERROR;
-    jclass providerClass = env->GetObjectClass(jObj);
-    if (!providerClass)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
-        return ;
-    }
-
-    jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
-    if (!nativeHandle)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to get nativeHandle for Provider");
-        return ;
-    }
-    jlong jProvider = env->GetLongField(jObj, nativeHandle);
+    jlong jProvider = getNativeProvider(env, jObj);
     if (jProvider)
     {
         NS_LOGD ("calling subscribe on mNativeHandle");
@@ -1168,25 +1165,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSend
         return ;
     }
 
-    jclass providerClass = env->GetObjectClass(jObj);
-    if (!providerClass)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
-        return ;
-    }
-
-    jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
-    if (!nativeHandle)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to get nativeHandle for Provider");
-        return ;
-    }
     uint64_t messageId = (uint64_t) jMessageId;
 
     NS_LOGD ("!!!!!!jMessageId: %lld", jMessageId);
     NS_LOGD ("!!!!!!messageId: %lld", messageId);
 
-    jlong jProvider = env->GetLongField(jObj, nativeHandle);
+    jlong jProvider = getNativeProvider(env, jObj);
     if (jProvider)
     {
         NS_LOGD ("calling SendSyncInfo on mNativeHandle");
@@ -1228,20 +1212,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSetL
         return ;
     }
 
-    jclass providerClass = env->GetObjectClass(jObj);
-    if (!providerClass)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
-        return ;
-    }
-
-    jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
-    if (!nativeHandle)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to get nativeHandle for Provider");
-        return ;
-    }
-    jlong jProvider = env->GetLongField(jObj, nativeHandle);
+    jlong jProvider = getNativeProvider(env, jObj);
     if (jProvider)
     {
         NS_LOGD ("calling SetListener on mNativeHandle");
@@ -1278,20 +1249,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeG
 (JNIEnv *env, jobject jObj)
 {
     NS_LOGD ("Provider_nativeGetTopicList - IN");
-    jclass providerClass = env->GetObjectClass(jObj);
-    if (!providerClass)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
-        return NULL;
-    }
-
-    jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
-    if (!nativeHandle)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to get nativeHandle for Provider");
-        return NULL;
-    }
-    jlong jProvider = env->GetLongField(jObj, nativeHandle);
+    jlong jProvider = getNativeProvider(env, jObj);
     std::shared_ptr<OIC::Service::NSTopicsList> topicList = nullptr;
     if (jProvider)
     {
@@ -1341,20 +1299,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeUpda
         return;
     }
 
-    jclass providerClass = env->GetObjectClass(jObj);
-    if (!providerClass)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
-        return;
-    }
-
-    jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
-    if (!nativeHandle)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to get nativeHandle for Provider");
-        return;
-    }
-    jlong jProvider = env->GetLongField(jObj, nativeHandle);
+    jlong jProvider = getNativeProvider(env, jObj);
     OIC::Service::NSResult result = OIC::Service::NSResult::ERROR;
     if (jProvider)
     {
@@ -1389,20 +1334,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeG
 (JNIEnv *env, jobject jObj)
 {
     NS_LOGD ("Provider_nativeGetProviderState - IN");
-    jclass providerClass = env->GetObjectClass(jObj);
-    if (!providerClass)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
-        return NULL;
-    }
-
-    jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
-    if (!nativeHandle)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to get nativeHandle for Provider");
-        return NULL;
-    }
-    jlong jProvider = env->GetLongField(jObj, nativeHandle);
+    jlong jProvider = getNativeProvider(env, jObj);
     OIC::Service::NSProviderState state = OIC::Service::NSProviderState::DENY;
     if (jProvider)
     {
@@ -1434,20 +1366,9 @@ JNIEXPORT jboolean JNICALL Java_org_iotivity_service_ns_consumer_Provider_native
 (JNIEnv *env, jobject jObj)
 {
     NS_LOGD ("nativeIsSubscribed - IN");
-    jclass providerClass = env->GetObjectClass(jObj);
-    if (!providerClass)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
-        return (jboolean)false;
-    }
+    jboolean subscribedState = false;
 
-    jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
-    if (!nativeHandle)
-    {
-        ThrowNSException(JNI_INVALID_VALUE, "Failed to get nativeHandle for Provider");
-        return (jboolean)false;
-    }
-    jlong jProvider = env->GetLongField(jObj, nativeHandle);
+    jlong jProvider = getNativeProvider(env, jObj);
     if (jProvider)
     {
         NS_LOGD ("calling isSubscribe on mNativeHandle");
@@ -1455,13 +1376,14 @@ JNIEXPORT jboolean JNICALL Java_org_iotivity_service_ns_consumer_Provider_native
             reinterpret_cast<JniSharedObjectHolder<OIC::Service::NSProvider> *>(jProvider);
         try
         {
-            return (jboolean) objectHolder->get()->isSubscribed();
+            subscribedState = (jboolean)objectHolder->get()->isSubscribed();
         }
         catch (OIC::Service::NSException ex)
         {
             ThrowNSException(NATIVE_EXCEPTION, ex.what());
             return (jboolean)false;
         }
+        return subscribedState;
     }
     else
     {

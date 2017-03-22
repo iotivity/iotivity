@@ -83,6 +83,7 @@ static const uint16_t CBOR_SIZE = 512;
 static const uint16_t CBOR_MAX_SIZE = 4400;
 
 extern OCResource *headResource;
+extern bool g_multicastServerStopped;
 
 /**
  * Prepares a Payload for response.
@@ -686,7 +687,7 @@ OCStackResult DevicePropertiesToCBORPayload(const OCDeviceProperties *deviceProp
     }
     else
     {
-        result = OC_STACK_NO_MEMORY;
+        return OC_STACK_NO_MEMORY;
     }
 
     // Protocol Independent ID - Mandatory
@@ -984,11 +985,12 @@ exit:
 OCStackResult BuildIntrospectionPayloadResponse(const OCResource *resourcePtr,
     OCRepPayload** payload, OCDevAddr *devAddr)
 {
-    OCRepPayload *tempPayload = NULL;
-    OCStackResult ret;
+    OC_UNUSED(resourcePtr);
+    OC_UNUSED(devAddr);
+
     char *introspectionData = NULL;
     size_t size = 0;
-    ret = GetIntrospectionDataFromPS(&introspectionData, &size);
+    OCStackResult ret = GetIntrospectionDataFromPS(&introspectionData, &size);
     if (OC_STACK_OK == ret)
     {
         OCRepPayload *tempPayload = OCRepPayloadCreate();
@@ -997,6 +999,11 @@ OCStackResult BuildIntrospectionPayloadResponse(const OCResource *resourcePtr,
             if (OCRepPayloadSetPropStringAsOwner(tempPayload, OC_RSRVD_INTROSPECTION_DATA_NAME, introspectionData))
             {
                 *payload = tempPayload;
+            }
+            else
+            {
+                OCRepPayloadDestroy(tempPayload);
+                ret = OC_STACK_ERROR;
             }
         }
         else
@@ -1007,7 +1014,6 @@ OCStackResult BuildIntrospectionPayloadResponse(const OCResource *resourcePtr,
     if (ret != OC_STACK_OK)
     {
         OICFree(introspectionData);
-        OCRepPayloadDestroy(tempPayload);
     }
 
     return ret;
@@ -1113,6 +1119,8 @@ void FreeProtocolLL(OCStringLL *protoLL)
 OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourcePtr,
     OCRepPayload** payload, OCDevAddr *devAddr)
 {
+    OC_UNUSED(devAddr);
+
     size_t dimensions[3] = { 0, 0, 0 };
     OCRepPayload *tempPayload = NULL;
     OCRepPayload **urlInfoPayload = NULL;
@@ -1228,41 +1236,38 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
     }
 #endif
     // Add a urlInfo object for each protocol supported
-    if (dimensions[0] >= 0)
+    urlInfoPayload = (OCRepPayload **)OICMalloc(dimensions[0] * sizeof(OCRepPayload));
+    if (urlInfoPayload)
     {
-        urlInfoPayload = (OCRepPayload **)OICMalloc(dimensions[0] * sizeof(OCRepPayload));
-        if (urlInfoPayload)
+        OCStringLL *proto = protoLL;
+        size_t i = 0;
+        while (proto)
         {
-            OCStringLL *proto = protoLL;
-            size_t i = 0;
-            while (proto)
+            urlInfoPayload[i] = BuildUrlInfoWithProtocol(proto->value);
+            if (!urlInfoPayload[i])
             {
-                urlInfoPayload[i] = BuildUrlInfoWithProtocol(proto->value);
-                if (!urlInfoPayload[i])
-                {
-                    OIC_LOG(ERROR, TAG, "Unable to build urlInfo object for protocol");
-                    ret = OC_STACK_ERROR;
-                    goto exit;
-                }
-                proto = proto->next;
-                i++;
-            }
-            if (!OCRepPayloadSetPropObjectArrayAsOwner(tempPayload,
-                                                       OC_RSRVD_INTROSPECTION_URL_INFO,
-                                                       urlInfoPayload,
-                                                       dimensions))
-            {
-                OIC_LOG(ERROR, TAG, "Unable to add urlInfo object to introspection payload ");
+                OIC_LOG(ERROR, TAG, "Unable to build urlInfo object for protocol");
                 ret = OC_STACK_ERROR;
                 goto exit;
             }
+            proto = proto->next;
+            i++;
         }
-        else
+        if (!OCRepPayloadSetPropObjectArrayAsOwner(tempPayload,
+                                                   OC_RSRVD_INTROSPECTION_URL_INFO,
+                                                   urlInfoPayload,
+                                                   dimensions))
         {
-            OIC_LOG(ERROR, TAG, "Unable to allocate memory for urlInfo ");
-            ret = OC_STACK_NO_MEMORY;
+            OIC_LOG(ERROR, TAG, "Unable to add urlInfo object to introspection payload ");
+            ret = OC_STACK_ERROR;
             goto exit;
         }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory for urlInfo ");
+        ret = OC_STACK_NO_MEMORY;
+        goto exit;
     }
 
     if (!*payload)
@@ -1829,8 +1834,13 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 #endif
             )
     {
-        char *interfaceQuery = NULL;
-        char *resourceTypeQuery = NULL;
+        if (g_multicastServerStopped && !isUnicast(request))
+        {
+            // Ignore the discovery request
+            FindAndDeleteServerRequest(request);
+            discoveryResult = OC_STACK_CONTINUE;
+            goto exit;
+        }
 
         CAEndpoint_t *networkInfo = NULL;
         size_t infoSize = 0;
@@ -1988,7 +1998,6 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         OIC_LOG_PAYLOAD(DEBUG, payload);
         if(discoveryResult == OC_STACK_OK)
         {
-
             SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
         }
         else // Error handling
@@ -2083,7 +2092,6 @@ HandleResourceWithEntityHandler(OCServerRequest *request,
     if (request && request->resourceUrl && SRMIsSecurityResourceURI(request->resourceUrl))
     {
         type = PAYLOAD_TYPE_SECURITY;
-
     }
 
     result = EHRequest(&ehRequest, type, request, resource);

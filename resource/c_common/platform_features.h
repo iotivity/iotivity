@@ -101,4 +101,11 @@
 #  define SIZE_MAX ((size_t)-1)
 #endif
 
+#ifdef WITH_ARDUINO
+/**
+ * UINT16_MAX does not appear to be defined on Arduino so we define it here.
+ */
+#  define UINT16_MAX 65535
+#endif
+
 #endif

@@ -380,6 +380,7 @@ OCStackResult UpdateResourceInPS(const char *databaseName, const char *resourceN
             cborEncoderResult |= cbor_encoder_create_map(&encoder, &resource, CborIndefiniteLength);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PS Map.");
 
+            // Encode the updated payload and add it to our map so it will be stored in the database.
             if (payload && size)
             {
                 cborEncoderResult |= cbor_encode_text_string(&resource, resourceName, strlen(resourceName));
@@ -388,6 +389,10 @@ OCStackResult UpdateResourceInPS(const char *databaseName, const char *resourceN
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Value.");
             }
 
+            // Check all of the resources from a particular database to see if we need to encode them. If the resource
+            // currently exists in the database and has not been updated then we need to encode it and add it to the
+            // map. If the resource has been updated then it was encoded and added to the map above so we skip it to
+            // avoid having duplicate entries for the resource in the database.
             if (PS_DATABASE_SECURITY == database)
             {
                 // Security database
@@ -398,49 +403,49 @@ OCStackResult UpdateResourceInPS(const char *databaseName, const char *resourceN
                     cborEncoderResult |= cbor_encode_byte_string(&resource, aclCbor, aclCborLen);
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ACL Value.");
                 }
-                else if (strcmp(OIC_JSON_PSTAT_NAME, resourceName) && pstatCborLen)
+                if (strcmp(OIC_JSON_PSTAT_NAME, resourceName) && pstatCborLen)
                 {
                     cborEncoderResult |= cbor_encode_text_string(&resource, OIC_JSON_PSTAT_NAME, strlen(OIC_JSON_PSTAT_NAME));
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PSTAT Name.");
                     cborEncoderResult |= cbor_encode_byte_string(&resource, pstatCbor, pstatCborLen);
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PSTAT Value.");
                 }
-                else if (strcmp(OIC_JSON_DOXM_NAME, resourceName) && doxmCborLen)
+                if (strcmp(OIC_JSON_DOXM_NAME, resourceName) && doxmCborLen)
                 {
                     cborEncoderResult |= cbor_encode_text_string(&resource, OIC_JSON_DOXM_NAME, strlen(OIC_JSON_DOXM_NAME));
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Doxm Name.");
                     cborEncoderResult |= cbor_encode_byte_string(&resource, doxmCbor, doxmCborLen);
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Doxm Value.");
                 }
-                else if (strcmp(OIC_JSON_AMACL_NAME, resourceName) && amaclCborLen)
+                if (strcmp(OIC_JSON_AMACL_NAME, resourceName) && amaclCborLen)
                 {
                     cborEncoderResult |= cbor_encode_text_string(&resource, OIC_JSON_AMACL_NAME, strlen(OIC_JSON_AMACL_NAME));
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Amacl Name.");
                     cborEncoderResult |= cbor_encode_byte_string(&resource, amaclCbor, amaclCborLen);
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Amacl Value.");
                 }
-                else if (strcmp(OIC_JSON_CRED_NAME, resourceName) && credCborLen)
+                if (strcmp(OIC_JSON_CRED_NAME, resourceName) && credCborLen)
                 {
                     cborEncoderResult |= cbor_encode_text_string(&resource, OIC_JSON_CRED_NAME, strlen(OIC_JSON_CRED_NAME));
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Name.");
                     cborEncoderResult |= cbor_encode_byte_string(&resource, credCbor, credCborLen);
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Value.");
                 }
-                else if (strcmp(OIC_JSON_PCONF_NAME, resourceName) && pconfCborLen)
+                if (strcmp(OIC_JSON_PCONF_NAME, resourceName) && pconfCborLen)
                 {
                     cborEncoderResult |= cbor_encode_text_string(&resource, OIC_JSON_PCONF_NAME, strlen(OIC_JSON_PCONF_NAME));
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Pconf Name.");
                     cborEncoderResult |= cbor_encode_byte_string(&resource, pconfCbor, pconfCborLen);
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Pconf Value.");
                 }
-                else if (strcmp(OIC_JSON_RESET_PF_NAME, resourceName) && resetPfCborLen)
+                if (strcmp(OIC_JSON_RESET_PF_NAME, resourceName) && resetPfCborLen)
                 {
                     cborEncoderResult |= cbor_encode_text_string(&resource, OIC_JSON_RESET_PF_NAME, strlen(OIC_JSON_RESET_PF_NAME));
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Reset Profile Name.");
                     cborEncoderResult |= cbor_encode_byte_string(&resource, resetPfCbor, resetPfCborLen);
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Reset Profile Value.");
                 }
-                else if (strcmp(OIC_JSON_CRL_NAME, resourceName) && crlCborLen)
+                if (strcmp(OIC_JSON_CRL_NAME, resourceName) && crlCborLen)
                 {
                     cborEncoderResult |= cbor_encode_text_string(&resource, OIC_JSON_CRL_NAME, strlen(OIC_JSON_CRL_NAME));
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Crl Name.");

@@ -259,7 +259,7 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
     VERIFY_NON_NULL_RET(info, TAG, "info", NULL);
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
     VERIFY_NON_NULL_RET(transport, TAG, "transport", NULL);
-    VERIFY_TRUE_RET((info->payloadSize <= COAP_MAX_PDU_SIZE), TAG,
+    VERIFY_TRUE_RET((info->payloadSize <= UINT_MAX), TAG,
                     "info->payloadSize", NULL);
 
     size_t length = COAP_MAX_PDU_SIZE;

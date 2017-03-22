@@ -64,13 +64,13 @@ TEST(PstatResourceTest, PstatEntityHandlerWithPostRequest)
     ASSERT_TRUE(defaultPstat != NULL);
     defaultPstat->isOp = false;
     defaultPstat->commitHash = 1234;
-    defaultPstat->cm = (OicSecDpm_t) 63;
-    defaultPstat->tm = (OicSecDpm_t) 48;
-    defaultPstat->om = (OicSecDpom_t) 0;
+    defaultPstat->cm = 63;
+    defaultPstat->tm = 48;
+    defaultPstat->om = 0;
     defaultPstat->smLen = 1;
     defaultPstat->sm = (OicSecDpom_t *)OICCalloc(defaultPstat->smLen, sizeof(*defaultPstat->sm));
     ASSERT_TRUE(defaultPstat->sm != NULL);
-    defaultPstat->sm[0] = (OicSecDpom_t) 3;
+    defaultPstat->sm[0] = 3;
     size_t size = 0;
     uint8_t *cbor = NULL;
     EXPECT_EQ(OC_STACK_OK, PstatToCBORPayload(defaultPstat, &cbor, &size, true));

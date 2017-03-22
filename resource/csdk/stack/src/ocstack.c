@@ -167,6 +167,8 @@ uint32_t g_ocStackStartCount = 0;
 // Number of threads currently executing OCInit2 or OCStop
 volatile int32_t g_ocStackStartStopThreadCount = 0;
 
+bool g_multicastServerStopped = false;
+
 //-----------------------------------------------------------------------------
 // Macros
 //-----------------------------------------------------------------------------
@@ -586,12 +588,14 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
 {
     VERIFY_NON_NULL(object, FATAL, OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL(requestInfo, FATAL, OC_STACK_INVALID_PARAM);
+    OIC_TRACE_BEGIN(%s:OCSendRequest, TAG);
 
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     OCStackResult rmResult = RMAddInfo(object->routeData, requestInfo, true, NULL);
     if (OC_STACK_OK != rmResult)
     {
         OIC_LOG(ERROR, TAG, "Add destination option failed");
+        OIC_TRACE_END();
         return rmResult;
     }
 #endif
@@ -632,8 +636,10 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
     if(CA_STATUS_OK != result)
     {
         OIC_LOG_V(ERROR, TAG, "CASendRequest failed with CA error %u", result);
+        OIC_TRACE_END();
         return CAResultToOCResult(result);
     }
+    OIC_TRACE_END();
     return OC_STACK_OK;
 }
 //-----------------------------------------------------------------------------
@@ -1353,7 +1359,7 @@ OCStackResult HandleBatchResponse(char *requestUri, OCRepPayload **payload)
         {
             if (OC_STACK_OK == ExtractFiltersFromQuery(uriQuery, &interfaceName, &rtTypeName))
             {
-                if (0 == strcmp(OC_RSRVD_INTERFACE_BATCH, interfaceName))
+                if (interfaceName && (0 == strcmp(OC_RSRVD_INTERFACE_BATCH, interfaceName)))
                 {
                     char *uri = (*payload)->uri;
                     if (uri && 0 != strcmp(uriWithoutQuery, uri))
@@ -1369,6 +1375,7 @@ OCStackResult HandleBatchResponse(char *requestUri, OCRepPayload **payload)
                 }
             }
         }
+
         OICFree(interfaceName);
         OICFree(rtTypeName);
         OICFree(uriQuery);
@@ -1436,6 +1443,7 @@ OCStackResult OCMapZoneIdToLinkLocalEndpoint(OCDiscoveryPayload *payload, uint32
 void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
 {
     OIC_LOG(DEBUG, TAG, "Enter OCHandleResponse");
+    OIC_TRACE_MARK(%s:OCHandleResponse:%s, TAG, responseInfo->info.resourceUri);
 
     if(responseInfo->info.resourceUri &&
         strcmp(responseInfo->info.resourceUri, OC_RSRVD_PRESENCE_URI) == 0)
@@ -1737,7 +1745,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     return;
                 }
 
-                for (uint8_t i = start; i < responseInfo->info.numOptions; i++)
+                for (int i = start; i < responseInfo->info.numOptions; i++)
                 {
                     memcpy (&(response->rcvdVendorSpecificHeaderOptions[i-start]),
                             &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
@@ -1952,6 +1960,7 @@ void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *er
         if (!response)
         {
             OIC_LOG(ERROR, TAG, "Allocating memory for response failed");
+            OIC_TRACE_END();
             return;
         }
 
@@ -2159,6 +2168,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
 
 void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* requestInfo)
 {
+    OIC_TRACE_MARK(%s:OCHandleRequests:%s, TAG, requestInfo->info.resourceUri);
     OIC_LOG(DEBUG, TAG, "Enter OCHandleRequests");
     OIC_LOG_V(INFO, TAG, "Endpoint URI : %s", requestInfo->info.resourceUri);
 
@@ -2704,6 +2714,7 @@ OCStackResult OCDeInitializeInternal()
     // Ensure that the TTL associated with ANY and ALL presence notifications originating from
     // here send with the code "OC_STACK_PRESENCE_STOPPED" result.
     presenceResource.presenceTTL = 0;
+    presenceState = OC_PRESENCE_UNINITIALIZED;
 #endif // WITH_PRESENCE
 
 #ifdef ROUTING_GATEWAY
@@ -2755,23 +2766,13 @@ OCStackResult OCStartMulticastServer()
         OIC_LOG(ERROR, TAG, "OCStack is not initalized. Cannot start multicast server.");
         return OC_STACK_ERROR;
     }
-    CAResult_t ret = CAStartListeningServer();
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG_V(ERROR, TAG, "Failed starting listening server: %d", ret);
-        return OC_STACK_ERROR;
-    }
+    g_multicastServerStopped = false;
     return OC_STACK_OK;
 }
 
 OCStackResult OCStopMulticastServer()
 {
-    CAResult_t ret = CAStopListeningServer();
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG_V(ERROR, TAG, "Failed stopping listening server: %d", ret);
-        return OC_STACK_ERROR;
-    }
+    g_multicastServerStopped = true;
     return OC_STACK_OK;
 }
 
@@ -3051,8 +3052,10 @@ OCStackResult OCDoResource(OCDoHandle *handle,
                             OCHeaderOption *options,
                             uint8_t numOptions)
 {
+    OIC_TRACE_BEGIN(%s:OCDoRequest, TAG);
     OCStackResult ret = OCDoRequest(handle, method, requestUri,destination, payload,
                 connectivityType, qos, cbData, options, numOptions);
+    OIC_TRACE_END();
 
     // This is the owner of the payload object, so we free it
     OCPayloadDestroy(payload);
@@ -4659,6 +4662,7 @@ OCNotifyListOfObservers (OCResourceHandle handle,
 
 OCStackResult OCDoResponse(OCEntityHandlerResponse *ehResponse)
 {
+    OIC_TRACE_BEGIN(%s:OCDoResponse, TAG);
     OCStackResult result = OC_STACK_ERROR;
     OCServerRequest *serverRequest = NULL;
 
@@ -4677,6 +4681,7 @@ OCStackResult OCDoResponse(OCEntityHandlerResponse *ehResponse)
         result = serverRequest->ehResponseHandler(ehResponse);
     }
 
+    OIC_TRACE_END();
     return result;
 }
 

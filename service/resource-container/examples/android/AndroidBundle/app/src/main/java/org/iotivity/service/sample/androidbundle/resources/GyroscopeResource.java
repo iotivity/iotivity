@@ -64,6 +64,11 @@ public class GyroscopeResource extends BundleResource implements SensorEventList
     }
 
     @Override
+    public void deactivateResource() {
+
+    }
+
+    @Override
     public RcsResourceAttributes handleGetAttributesRequest() {
         Log.i(LOG_TAG, "Get Attributes called");
         Log.i(LOG_TAG, "Returning: ");

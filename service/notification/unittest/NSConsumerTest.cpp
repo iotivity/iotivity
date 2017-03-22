@@ -44,8 +44,8 @@ namespace
 
     /// Reasonable timeout is set to 1000 ms in unsecured mode.
     unsigned int g_timeout = 1000;
-#ifndef SECURED
-    g_timeout = 2 * g_timeout
+#ifdef SECURED
+    g_timeout = 2 * g_timeout;
 #endif
     std::chrono::milliseconds g_waitForResponse(g_timeout);
  

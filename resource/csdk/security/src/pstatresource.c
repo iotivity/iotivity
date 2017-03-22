@@ -46,7 +46,7 @@ static const uint16_t CBOR_MAX_SIZE = 4400;
 static const uint8_t PSTAT_MAP_SIZE = 6;
 
 // Number of writeable property
-static const uint8_t WRITEABLE_PROPERTY_SIZE = 3;
+static const uint8_t WRITEABLE_PROPERTY_SIZE = 2;
 
 static OicSecDpom_t gSm = SINGLE_SERVICE_CLIENT_DRIVEN;
 static OicSecPstat_t gDefaultPstat =
@@ -565,11 +565,23 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
                 }
                 else
                 {
-                    OIC_LOG(DEBUG, TAG, "Invalid Device provisionig state");
+                    OIC_LOG(DEBUG, TAG, "Invalid Device provisioning state");
                     OIC_LOG_BUFFER(DEBUG, TAG, payload, size);
                     ehRet = OC_EH_BAD_REQ;
                     goto exit;
                 }
+            }
+
+            if (!(gPstat->tm & VERIFY_SOFTWARE_VERSION)
+                && (pstat->tm & VERIFY_SOFTWARE_VERSION)) { // ISVV bit goes from 0 to 1
+                OIC_LOG (INFO, TAG, "Software Version Validation process initiated");
+                pstat->cm &= ~VERIFY_SOFTWARE_VERSION; // Unset the cm bit, per spec
+            }
+
+            if (!(gPstat->tm & UPDATE_SOFTWARE)
+                && (pstat->tm & UPDATE_SOFTWARE)) { // ISSU bit goes from 0 to 1
+                OIC_LOG (INFO, TAG, "Software Update process initiated");
+                pstat->cm &= ~UPDATE_SOFTWARE; // Unset the cm bit, per spec
             }
 
             if (!validReq)

@@ -35,7 +35,7 @@ namespace OIC
             while (topicsNode != nullptr)
             {
                 m_topicsList.push_back(new NSTopic(
-                    topicsNode->topicName, (NSTopic::NSTopicState)topicsNode->state));
+                                           topicsNode->topicName, (NSTopic::NSTopicState)topicsNode->state));
                 topicsNode = topicsNode->next;
             }
 
@@ -55,8 +55,8 @@ namespace OIC
             {
                 this->m_topicsList.push_back(new NSTopic(it.getTopicName(), it.getState()));
             }
-            return *this;
             m_modifiable = false;
+            return *this;
         }
 
         NSTopicsList::~NSTopicsList()
@@ -70,7 +70,7 @@ namespace OIC
 
         void NSTopicsList::addTopic(const std::string &topicName, NSTopic::NSTopicState state)
         {
-            if(m_modifiable)
+            if (m_modifiable)
             {
                 m_topicsList.push_back(new NSTopic(topicName, state));
             }
@@ -82,7 +82,7 @@ namespace OIC
 
         void NSTopicsList::removeTopic(const std::string &topicName)
         {
-            if(m_modifiable)
+            if (m_modifiable)
             {
                 for (auto it : m_topicsList)
                 {
@@ -108,7 +108,7 @@ namespace OIC
             }
             return topicList;
         }
-       
+
         //Below method restricts the application from illegally modifying Topics when
         //Provider is in Invalid state. By calling the API, the service prevents and protects
         //the integrity of TopicsList updation when the associated object is Invalid

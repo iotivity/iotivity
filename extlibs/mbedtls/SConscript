@@ -49,7 +49,7 @@ os.chdir(mbedtls_dir)
 # the mbedtls_revision tag selected is the same as in extlibs/mbedtls/prep.sh.
 # This code also assumes mbedtls_revision is a tag; if it changes to
 # a branch or an arbitrary commit, disable this check below.
-if target_os != 'tizen':
+if os.path.exists('.git/HEAD'):
     out = subprocess.check_output('git tag -l ' + mbedtls_revision, shell = True)
     if mbedtls_revision not in out:
         print out

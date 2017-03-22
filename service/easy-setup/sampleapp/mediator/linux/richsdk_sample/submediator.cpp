@@ -401,11 +401,11 @@ void discoveryEnrolleeResource()
 
         std::unique_lock<std::mutex> lck(g_discoverymtx);
         g_cond.wait_for(lck, std::chrono::seconds(5));
-	}
-	catch (OCException& e)
-	{
-		std::cout << "Exception in discoveryEnrolleeResource: "<<e.what();
-	}
+    }
+    catch (OCException& e)
+    {
+        std::cout << "Exception in discoveryEnrolleeResource: "<<e.what();
+    }
 }
 
 void DisplayMenu()
