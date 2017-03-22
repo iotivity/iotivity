@@ -56,7 +56,6 @@ provisiontests_env.PrependUnique(CPPPATH = [
 		'../../../extlibs/hippomocks-master/HippoMocksTest'
 		])
 
-provisiontests_env.AppendUnique(LIBPATH = [provisiontests_env.get('BUILD_DIR')])
 provisiontests_env.PrependUnique(LIBS = [
         'ocprovision',
 		'oc',

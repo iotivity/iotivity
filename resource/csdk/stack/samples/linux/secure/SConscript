@@ -41,7 +41,6 @@ if target_os not in ['windows']:
 		samples_env.AppendUnique(LIBS = ['pthread'])
 	samples_env.Append(LINKFLAGS = ['-Wl,--no-as-needed'])
 
-samples_env.AppendUnique(LIBPATH = [samples_env.get('BUILD_DIR')])
 if target_os in ['windows', 'msys_nt']:
 	samples_env.PrependUnique(LIBS = ['ocsrm', 'ws2_32', 'iphlpapi'])
 else:
