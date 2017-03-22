@@ -276,7 +276,14 @@ int main(void)
 
     if (g_isPresenceStarted)
     {
-        stopPresence();
+        try
+        {
+            stopPresence();
+        }
+        catch(...)
+        {
+            std::cout << "presence stop fail" << std::endl;
+        }
     }
 }
 
