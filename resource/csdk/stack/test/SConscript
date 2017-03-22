@@ -49,12 +49,13 @@ stacktest_env.PrependUnique(CPPPATH = [
 stacktest_env.PrependUnique(LIBS = ['octbstack_test',
                                     'ocsrm',
                                     'connectivity_abstraction',
-                                    'coap'])
+                                    'coap',
+                                    'mbedcrypto'])
 if target_os != 'darwin':
     stacktest_env.PrependUnique(LIBS = ['oc_logger'])
 
 if stacktest_env.get('SECURED') == '1':
-    stacktest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+    stacktest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509'])
 
 if stacktest_env.get('LOGGING'):
     stacktest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])

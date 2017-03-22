@@ -70,6 +70,7 @@
 #include "ocendpoint.h"
 #include "ocatomic.h"
 #include "platform_features.h"
+#include "oic_platform.h"
 
 #if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
 #include "occonnectionmanager.h"
@@ -4894,6 +4895,34 @@ OCStackResult initResources()
     if (OC_STACK_OK == result)
     {
         result = InitializeDeviceProperties();
+    }
+
+    // Initialize platform ID of OC_RSRVD_RESOURCE_TYPE_PLATFORM.
+    // Multiple devices or applications running on the same IoTivity platform should have the same
+    // platform ID.
+    if (OC_STACK_OK == result)
+    {
+        uint8_t platformID[OIC_UUID_LENGTH];
+        char uuidString[UUID_STRING_SIZE];
+
+        if (!OICGetPlatformUuid(platformID))
+        {
+            OIC_LOG(WARNING, TAG, "Failed OICGetPlatformUuid(), generate random uuid.");
+            OCGenerateUuid(platformID);
+        }
+
+        if (OCConvertUuidToString(platformID, uuidString))
+        {
+            // Set the platform ID.
+            // Application can overwrite the value set here by calling similar
+            // OCSetPropertyValue(OC_RSRVD_PLATFORM_ID, ...).
+            result = OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_ID, uuidString);
+        }
+        else
+        {
+            result = OC_STACK_ERROR;
+            OIC_LOG(ERROR, TAG, "Failed OCConvertUuidToString() for platform ID.");
+        }
     }
 
     return result;
