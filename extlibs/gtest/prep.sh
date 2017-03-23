@@ -21,7 +21,7 @@ set -e
 
 package="gtest"
 packageRevision='1.7.0'
-packageUrl='http://pkgs.fedoraproject.org/repo/pkgs/gtest/gtest-1.7.0.zip/2d6ec8ccdf5c46b05ba54a9fd1d130d7/gtest-1.7.0.zip'
+packageUrl='https://github.com/google/googletest/archive/release-1.7.0.zip'
 packageArchive=$(basename -- "${packageUrl}")
 packageDir="extlibs/${package}/${package}-${packageRevision}"
 packageSourceFile="${packageDir}/CMakeLists.txt"
