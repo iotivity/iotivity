@@ -219,7 +219,7 @@ TCL_SUBST              =
 # For instance, some of the names that are used will be different. The list
 # of all members will be omitted, etc.
 
-OPTIMIZE_OUTPUT_FOR_C  = NO
+OPTIMIZE_OUTPUT_FOR_C  = YES
 
 # Set the OPTIMIZE_OUTPUT_JAVA tag to YES if your project consists of Java
 # sources only. Doxygen will then generate output that is more tailored for
@@ -670,7 +670,8 @@ INPUT                  = . \
              ../../c_common/oic_malloc/include/oic_malloc.h \
              ../../c_common/oic_string/include/oic_string.h \
              ../../c_common/oic_time/include/oic_time.h \
-             ../../csdk/connectivity/api \
+             ../../csdk/connectivity/api/cacommon.h \
+             ../../csdk/connectivity/api/cautilinterface.h \
              guides \
              ../../csdk/security/include \
              ../../csdk/security/provisioning/include \
