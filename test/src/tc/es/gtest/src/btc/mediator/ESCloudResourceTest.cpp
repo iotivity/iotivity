@@ -117,7 +117,7 @@ TEST_F(ESCloudResourceTest_btc, ProvisionEnrolleeWithoutAuthCode_NV_N)
     }
     catch (exception& e)
     {
-        ASSERT_EQ(std::string(e.what()), "basic_string::_S_construct null not valid")<<"Exception occurred in provisionProperties but not null type";
+        ASSERT_EQ(std::string(e.what()), "basic_string::_M_construct null not valid")<<"Exception occurred in provisionProperties but not null type";
     }
 }
 
