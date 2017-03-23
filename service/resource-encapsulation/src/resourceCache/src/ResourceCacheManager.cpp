@@ -128,7 +128,16 @@ namespace OIC
 
             if (observeIns != observeCacheIDmap.end())
             {
-                (observeIns->second)->stopCache();
+                try
+                {
+                    (observeIns->second)->stopCache();
+                }
+                catch (...)
+                {
+                    (observeIns->second).reset();
+                    observeCacheIDmap.erase(observeIns);
+                    throw;
+                }
                 (observeIns->second).reset();
                 observeCacheIDmap.erase(observeIns);
                 return;
