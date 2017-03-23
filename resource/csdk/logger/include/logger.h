@@ -89,13 +89,13 @@ typedef enum {
     FATAL,
     DEBUG_LITE,       // The DEBUG log for Lite device
     INFO_LITE,        // The INFO log for Lite device
-    INFO_PRIVATE,     // The log contained private data
+    INFO_PRIVATE      // The log contained private data
 } LogLevel;
 
 #endif // __TIZEN__
 
 #ifdef SET_LOG_INFO
-#define IF_OC_PRINT_LOG_LEVEL(level) if (INFO <= (level) && INFO_PRIVATE != (level))
+#define IF_OC_PRINT_LOG_LEVEL(level) if (INFO <= (level))
 #elif defined(SET_LOG_ERROR)
 #define IF_OC_PRINT_LOG_LEVEL(level) if (ERROR <= (level) && INFO_PRIVATE != (level))
 #elif defined(SET_LOG_WARNING)
