@@ -24,9 +24,12 @@
 #include <unistd.h>
 #endif
 #include <stdlib.h>
+#include <string.h>
 
 static int g_quitFlag = 0;
 static int g_secureFlag = 0;
+
+static char CRED_FILE[] = "oic_svr_db_server.dat";
 
 void handleSigInt(int signum);
 
@@ -37,11 +40,25 @@ static void PrintUsage()
     printf("-s 1 : Launch proxy in secure mode.\n");
 }
 
+FILE* server_fopen(const char *path, const char *mode)
+{
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CRED_FILE, mode);
+    }
+
+    return fopen(path, mode);
+}
+
 /*
 * This method is an entry point of CoAP-HTTP Proxy.
 */
 int main(int argc, char* argv[])
 {
+    // Initialize Persistent Storage for SVR database
+    OCPersistentStorage ps = { server_fopen, fread, fwrite, fclose, unlink };
+    OCRegisterPersistentStorageHandler(&ps);
+
     int opt = 0;
     while ((opt = getopt(argc, argv, "s:")) != -1)
     {
