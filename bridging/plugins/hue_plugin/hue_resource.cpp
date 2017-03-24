@@ -722,7 +722,7 @@ OCEntityHandlerResult handleEntityHandlerRequests(
 
     try
     {
-        if ((entityHandlerRequest == NULL))
+        if (entityHandlerRequest == NULL)
         {
             throw "Entity handler received a null entity request context" ;
         }

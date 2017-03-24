@@ -207,7 +207,7 @@ static bool parseAuthorizedBridge(cJSON *object)
 
 bool collectAuthorizedClients(const char *macAddrString, char *clientArray, uint32_t *numClients)
 {
-    if ((macAddrString == NULL))
+    if (macAddrString == NULL)
     {
         OIC_LOG_V(ERROR, TAG, "Mac id is NULL");
         return false;
