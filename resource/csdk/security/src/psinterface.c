@@ -77,7 +77,7 @@ static OCStackResult WritePayloadToPS(const char *databaseName, uint8_t *payload
 {
     if (!databaseName || !payload || (size <= 0))
     {
-        OC_STACK_INVALID_PARAM;
+        return OC_STACK_INVALID_PARAM;
     }
 
     OCStackResult result = OC_STACK_ERROR;
