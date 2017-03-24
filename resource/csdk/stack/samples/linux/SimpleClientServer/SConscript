@@ -43,6 +43,7 @@ samples_env.PrependUnique(CPPPATH=[
     '../../../../logger/include',
     '../../../../include',
     '../../../../stack/include',
+    '../../../../connectivity/api',
     '../../../../security/include',
     '../../../../../../extlibs/boost/boost',
     '../../../../../oc_logger/include',

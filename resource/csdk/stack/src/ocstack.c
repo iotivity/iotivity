@@ -612,7 +612,7 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
     }
 #endif
 
-    uint16_t acceptVersion = OC_SPEC_VERSION_VALUE;
+    uint16_t acceptVersion = 0;
     CAPayloadFormat_t acceptFormat = CA_FORMAT_APPLICATION_CBOR;
     // Check settings of version option and content format.
     if (requestInfo->info.numOptions > 0 && requestInfo->info.options)
@@ -644,11 +644,21 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
         }
     }
 
-    requestInfo->info.acceptVersion = acceptVersion;
     requestInfo->info.acceptFormat = acceptFormat;
+    if (CA_FORMAT_APPLICATION_VND_OCF_CBOR == acceptFormat)
+    {
+        if (!acceptVersion)
+        {
+            requestInfo->info.acceptVersion = OC_SPEC_VERSION_VALUE;
+        }
+        else
+        {
+            requestInfo->info.acceptVersion = acceptVersion;
+        }
+    }
 
     CAResult_t result = CASendRequest(object, requestInfo);
-    if(CA_STATUS_OK != result)
+    if (CA_STATUS_OK != result)
     {
         OIC_LOG_V(ERROR, TAG, "CASendRequest failed with CA error %u", result);
         OIC_TRACE_END();
@@ -2317,6 +2327,10 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     }
 
     serverRequest.acceptFormat = CAToOCPayloadFormat(requestInfo->info.acceptFormat);
+    if (OC_FORMAT_VND_OCF_CBOR == serverRequest.acceptFormat)
+    {
+        serverRequest.acceptVersion = requestInfo->info.acceptVersion;
+    }
     if (requestInfo->info.type == CA_MSG_CONFIRM)
     {
         serverRequest.qos = OC_HIGH_QOS;
@@ -3242,9 +3256,9 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
 
     if (payload)
     {
-        uint16_t payloadVersion = OC_SPEC_VERSION_VALUE;
+        uint16_t payloadVersion = 0;
         CAPayloadFormat_t payloadFormat = CA_FORMAT_APPLICATION_CBOR;
-        // From OCF onwards, check version option settings
+        // Check version option settings
         if (numOptions > 0 && options)
         {
             for (uint8_t i = 0; i < numOptions; i++)
@@ -3272,12 +3286,21 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
             }
         }
 
-        requestInfo.info.payloadVersion = payloadVersion;
         requestInfo.info.payloadFormat = payloadFormat;
-
-        if((result =
+        if (CA_FORMAT_APPLICATION_VND_OCF_CBOR == payloadFormat)
+        {
+            if (!payloadVersion)
+            {
+                requestInfo.info.payloadVersion = OC_SPEC_VERSION_VALUE;
+            }
+            else
+            {
+                requestInfo.info.payloadVersion = payloadVersion;
+            }
+        }
+        if ((result =
             OCConvertPayload(payload, CAToOCPayloadFormat(requestInfo.info.payloadFormat),
-                             &requestInfo.info.payload, &requestInfo.info.payloadSize))
+                            &requestInfo.info.payload, &requestInfo.info.payloadSize))
                 != OC_STACK_OK)
         {
             OIC_LOG(ERROR, TAG, "Failed to create CBOR Payload");

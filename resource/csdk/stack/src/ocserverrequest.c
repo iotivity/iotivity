@@ -666,11 +666,16 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                     {
                         responseInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
                     }
-                    if (!serverRequest->acceptVersion)
+                    if ((OC_FORMAT_VND_OCF_CBOR == serverRequest->acceptFormat))
                     {
-                        serverRequest->acceptVersion = DEFAULT_VERSION_VALUE;
+                        // Add versioning information for this format
+                        responseInfo.info.payloadVersion = serverRequest->acceptVersion;
+                        if (!responseInfo.info.payloadVersion)
+                        {
+                            responseInfo.info.payloadVersion = DEFAULT_VERSION_VALUE;
+                        }
+
                     }
-                    responseInfo.info.payloadVersion = serverRequest->acceptVersion;
                 }
                 break;
             default:
