@@ -18,6 +18,15 @@
  *
  ******************************************************************/
 
+/**
+ * @file
+ *
+ * This file contains APIs to handle adapters of connectivity abstraction layer
+ * for network operations.
+ * Application can use functions including network callback, BLE scan/advertisements,
+ * set configurations of the adapters,  set port number Etc.
+ */
+
 #ifndef CA_UTILS_INTERFACE_H_
 #define CA_UTILS_INTERFACE_H_
 
