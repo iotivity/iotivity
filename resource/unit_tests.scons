@@ -35,7 +35,7 @@ if target_os in ['linux', 'windows', 'darwin', 'msys_nt']:
     if target_os in ['linux', 'windows']:
         # Verify that 'hippomocks' mocking code is installed.  If not,
         # get it and install it
-        SConscript('#extlibs/hippomocks.scons')
+        SConscript('#extlibs/hippomocks/SConscript')
 
         # Build Common unit tests
         SConscript('c_common/unittests/SConscript', 'test_env')

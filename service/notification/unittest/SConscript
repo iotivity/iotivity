@@ -68,7 +68,7 @@ notification_test_env.AppendUnique(LINKFLAGS = ['-Wl,--no-as-needed'])
 notification_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
 notification_test_env.AppendUnique(LIBS = ['pthread'])
 
-notification_test_env.PrependUnique(CPPPATH = [ src_dir + '/extlibs/hippomocks-master', gtest_dir + '/include'])
+notification_test_env.PrependUnique(CPPPATH = [ '#/extlibs/hippomocks/hippomocks', gtest_dir + '/include'])
 notification_test_env.AppendUnique(CPPPATH = ['../include'])
 notification_test_env.AppendUnique(CPPPATH = ['../src/consumer'])
 notification_test_env.AppendUnique(CPPPATH = ['../src/provider'])

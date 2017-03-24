@@ -62,7 +62,7 @@ if not CoAP_test_env.get('RELEASE'):
     CoAP_test_env.PrependUnique(LIBS = ['gcov'])
     CoAP_test_env.AppendUnique(CXXFLAGS = ['--coverage'])
 
-CoAP_test_env.AppendUnique(CPPPATH = [src_dir + '/extlibs/hippomocks-master',
+CoAP_test_env.AppendUnique(CPPPATH = ['#/extlibs/hippomocks/hippomocks',
                         '../include',
                         os.path.join(src_dir, 'resource/csdk/include'),
                         os.path.join(src_dir, 'resource/csdk/stack/include'),

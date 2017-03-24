@@ -41,9 +41,7 @@ if lib_env.get('LOGGING'):
 SConscript('#resource/third_party_libs.scons', 'lib_env')
 
 if target_os in ['linux']:
-    # Verify that 'hippomocks' mocking code is installed.  If not,
-    # get it and install it
-    SConscript('#extlibs/hippomocks.scons')
+    SConscript('#extlibs/hippomocks/SConscript')
 
 rd_test_env = lib_env.Clone()
 
@@ -57,7 +55,7 @@ src_dir = lib_env.get('SRC_DIR')
 ######################################################################
 rd_test_env.AppendUnique(
         CPPPATH = [
-                src_dir + '/extlibs/hippomocks-master',
+                src_dir + '/extlibs/hippomocks/hippomocks',
                 '../include',
                 src_dir + '/resource/include',
                 src_dir + '/resource/csdk/connectivity/api',

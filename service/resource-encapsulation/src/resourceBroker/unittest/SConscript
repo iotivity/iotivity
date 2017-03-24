@@ -60,7 +60,7 @@ broker_test_env.AppendUnique(CPPPATH = [
     '#/resource/oc_logger/include'
 ])
 
-broker_test_env.PrependUnique(CPPPATH = [broker_test_env.get('SRC_DIR')+'/extlibs/hippomocks-master'])
+broker_test_env.PrependUnique(CPPPATH = ['#/extlibs/hippomocks/hippomocks'])
 broker_test_env.AppendUnique(LIBPATH = [broker_test_env.get('BUILD_DIR')])
 
 broker_test_env.PrependUnique(LIBS = ['coap'])

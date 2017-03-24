@@ -32,26 +32,18 @@ target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 
 if target_os in ['linux', 'windows']:
-	print '*** Checking for installation of hippomocks ***'
-
-	hippomocks_sha      = '8e210c5808d490b26fff69151c801fa28d291fcb'
-	hippomocks_dir_src  = src_dir + '/extlibs/hippomocks-' + hippomocks_sha
-	hippomocks_dir_dest = src_dir + '/extlibs/hippomocks-master'
-	hippomocks_zip_file = src_dir + '/extlibs/hippomocks-' + hippomocks_sha + '.zip'
-	hippomocks_url      = 'https://github.com/dascandy/hippomocks/archive/' + hippomocks_sha + '.zip'
-
-	if not os.path.exists(hippomocks_dir_dest):
-		# If the hippomocks zip file is not already present, download it
-		if not os.path.exists(hippomocks_zip_file):
-			hippomocks_zip = env.Download(hippomocks_zip_file, hippomocks_url)
-		else:
-			hippomocks_zip = hippomocks_zip_file
-
-		# Unzip hippomocks
-		print 'Unzipping hippomocks'
-		env.UnpackAll(hippomocks_dir_src, hippomocks_zip)
-		print 'Renaming hippomocks directory'
-		os.rename(hippomocks_dir_src, hippomocks_dir_dest)
-
-
-
+    print '*** Checking for installation of hippomocks ***'
+    hippomocks_version = '5.0'
+    hippomocks_revision = 'v' + hippomocks_version
+    hippomocks_src_dir = src_dir + '/extlibs/hippomocks/hippomocks-' + hippomocks_version
+    hippomocks_dest_dir = src_dir + '/extlibs/hippomocks/hippomocks'
+    hippomocks_zip_file = src_dir + '/extlibs/hippomocks/' + hippomocks_revision + '.zip'
+    hippomocks_url = 'https://github.com/dascandy/hippomocks/archive/' + hippomocks_revision + '.zip'
+    if not os.path.exists(hippomocks_dest_dir):
+        if not os.path.exists(hippomocks_zip_file):
+            hippomocks_zip = env.Download(hippomocks_zip_file, hippomocks_url)
+        else:
+            hippomocks_zip = hippomocks_zip_file
+        print 'hippomocks: Unzipping %s to %s' % (hippomocks_zip_file, hippomocks_dest_dir)
+        env.UnpackAll(hippomocks_src_dir, hippomocks_zip)
+        os.rename(hippomocks_src_dir, hippomocks_dest_dir)

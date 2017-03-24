@@ -97,7 +97,7 @@ if target_os in ['linux']:
 	server_builder_test_env = server_builder_env.Clone();
 
 	server_builder_test_env.AppendUnique(CPPPATH = [
-		server_builder_test_env.get('SRC_DIR')+'/extlibs/hippomocks-master',
+		'#/extlibs/hippomocks/hippomocks',
 		'../common/utils/include'
 		])
 

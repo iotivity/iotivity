@@ -45,8 +45,7 @@ unittests_env.PrependUnique(CPPPATH = [
 		'../csdk/ocsocket/include',
 		'../c_common/ocrandom/include',
 		'../csdk/logger/include',
-		'#extlibs/hippomocks-master/HippoMocks',
-		'#extlibs/hippomocks-master/HippoMocksTest'
+		'#extlibs/hippomocks/hippomocks',
 		])
 
 if target_os in ['windows']:

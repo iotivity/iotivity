@@ -70,7 +70,7 @@ notification_wrapper_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
 notification_wrapper_test_env.AppendUnique(LIBS = ['pthread'])
 
 notification_wrapper_test_env.PrependUnique(CPPPATH = [
-    '#/extlibs/hippomocks-master',
+    '#/extlibs/hippomocks/hippomocks',
     gtest_dir + '/include',
     '../provider/inc',
     '../consumer/inc',
