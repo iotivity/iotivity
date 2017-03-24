@@ -610,8 +610,8 @@ struct OicSecSacl
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
     //TODO fill in from OIC Security Spec
-#if defined(_MSC_VER)
-    uint8_t unused; // VS doesn't like empty structs
+#if defined(_MSC_VER) || defined(__clang__)
+    uint8_t unused; // some compilers refuse empty structs
 #endif
 };
 
