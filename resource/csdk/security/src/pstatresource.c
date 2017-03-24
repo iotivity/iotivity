@@ -42,14 +42,17 @@ static const uint16_t CBOR_SIZE = 512;
 // Max cbor size payload.
 static const uint16_t CBOR_MAX_SIZE = 4400;
 
-// PSTAT Map size - Number of mandatory items
-static const uint8_t PSTAT_MAP_SIZE = 7;
+// PSTAT Map size - Number of read-write items +2 for rt and if.
+// TODO [IOT-1958] isOp becomes read-only; -1 here
+static const uint8_t PSTAT_MIN_MAP_SIZE = 7; // dos, isOp, tm, om, rowneruuid, rt, if
 
 // .dos Property map size
-static const uint8_t PSTAT_DOS_MAP_SIZE = 2;
+static const uint8_t PSTAT_DOS_MAP_SIZE = 2; // s, p
 
-// Number of writeable property
-static const uint8_t WRITEABLE_PROPERTY_SIZE = 3;
+// Number of read-only Properties, added to map if not creating a writable-only
+// representation.
+// TODO [IOT-1958] isOp becomes read-only; +1 here
+static const uint8_t READ_ONLY_PROPERTY_SIZE = 2; // cm, sm
 
 static OicSecDpom_t gSm = SINGLE_SERVICE_CLIENT_DRIVEN;
 static OicSecPstat_t gDefaultPstat =
@@ -62,7 +65,7 @@ static OicSecPstat_t gDefaultPstat =
     1,                                        // the number of elts in Sms
     &gSm,                                     // OicSecDpom_t *sm
     0,                                        // uint16_t commitHash
-    {.id = {0}},                              // OicUuid_t rownerID
+    {.id = {0}},                              // OicUuid_t rowneruuid
 };
 
 static OicSecPstat_t    *gPstat = NULL;
@@ -139,7 +142,7 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
     *size = 0;
 
     OCStackResult ret = OC_STACK_ERROR;
-    size_t pstatMapSize = PSTAT_MAP_SIZE;
+    size_t pstatMapSize = PSTAT_MIN_MAP_SIZE;
     CborEncoder encoder;
     CborEncoder pstatMap;
     char* strUuid = NULL;
@@ -151,9 +154,11 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
 
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
+    // If not creating a writable-Properties-only pstat, grow map to include
+    // read-only Properties as well.
     if (false == writableOnly)
     {
-        pstatMapSize += WRITEABLE_PROPERTY_SIZE;
+        pstatMapSize += READ_ONLY_PROPERTY_SIZE;
     }
 
     // Top Level Pstat Map
@@ -187,19 +192,24 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
     cborEncoderResult = cbor_encoder_close_container(&pstatMap, &dosMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed closing pstat.dos map");
 
-    // IsOp Property
+    // isop Property
+    // TODO [IOT-1958] move isOp inside !writableOnly check
     cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_ISOP_NAME,
         strlen(OIC_JSON_ISOP_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ISOP Name Tag.");
     cborEncoderResult = cbor_encode_boolean(&pstatMap, pstat->isOp);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ISOP Name Value.");
 
-    // cm Property
-    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_CM_NAME,
-        strlen(OIC_JSON_CM_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CM Name Tag.");
-    cborEncoderResult = cbor_encode_int(&pstatMap, pstat->cm);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CM Name Value.");
+    // If not creating a writable-Properties-only pstat, add read-only cm.
+    if (false == writableOnly)
+    {
+        // cm Property
+        cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_CM_NAME,
+            strlen(OIC_JSON_CM_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CM Name Tag.");
+        cborEncoderResult = cbor_encode_int(&pstatMap, pstat->cm);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CM Name Value.");
+    }
 
     // tm Property
     cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_TM_NAME,
@@ -215,6 +225,7 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
     cborEncoderResult = cbor_encode_int(&pstatMap, pstat->om);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding OM Name Value.");
 
+    // If not creating a writable-Properties-only pstat, add read-only sm.
     if (false == writableOnly)
     {
         // sm Property
@@ -223,18 +234,18 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Name Tag.");
         cborEncoderResult = cbor_encode_int(&pstatMap, pstat->sm[0]);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Name Value.");
-
-        // rowneruuid property
-        cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_ROWNERID_NAME,
-            strlen(OIC_JSON_ROWNERID_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROwner Id Tag.");
-        ret = ConvertUuidToStr(&pstat->rownerID, &strUuid);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
-        cborEncoderResult = cbor_encode_text_string(&pstatMap, strUuid, strlen(strUuid));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROwner Id Value.");
-        OICFree(strUuid);
-        strUuid = NULL;
     }
+
+    // rowneruuid property
+    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_ROWNERID_NAME,
+        strlen(OIC_JSON_ROWNERID_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROwner Id Tag.");
+    ret = ConvertUuidToStr(&pstat->rownerID, &strUuid);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
+    cborEncoderResult = cbor_encode_text_string(&pstatMap, strUuid, strlen(strUuid));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROwner Id Value.");
+    OICFree(strUuid);
+    strUuid = NULL;
 
     //RT -- Mandatory
     CborEncoder rtArray;
@@ -253,12 +264,12 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing RT.");
 
     //IF-- Mandatory
-     CborEncoder ifArray;
-     cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_IF_NAME,
-             strlen(OIC_JSON_IF_NAME));
-     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
-     cborEncoderResult = cbor_encoder_create_array(&pstatMap, &ifArray, 1);
-     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
+    CborEncoder ifArray;
+    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_IF_NAME,
+       strlen(OIC_JSON_IF_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
+    cborEncoderResult = cbor_encoder_create_array(&pstatMap, &ifArray, 1);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
     for (size_t i = 0; i < 1; i++)
     {
         cborEncoderResult = cbor_encode_text_string(&ifArray, OC_RSRVD_INTERFACE_DEFAULT,
@@ -420,13 +431,20 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
         pstat->dos.pending = gPstat->dos.pending;
         cborFindResult = CborNoError;
     }
-    // end pstat.dos map
 
+    // pstat.isop Property
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_ISOP_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_boolean(&pstatMap))
     {
         cborFindResult = cbor_value_get_boolean(&pstatMap, &pstat->isOp);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding isOp Value.");
+
+        // TODO [IOT-1958] will make this Property read-only... for now, leave
+        // as writable
+        // if (roParsed)
+        // {
+        //     *roParsed = true;
+        // }
     }
     else
     {
@@ -434,6 +452,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
         cborFindResult = CborNoError;
     }
 
+    // pstat.cm Property
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_CM_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&pstatMap))
     {
@@ -442,6 +461,11 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
         cborFindResult = cbor_value_get_int(&pstatMap, &cm);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CM.");
         pstat->cm = (OicSecDpm_t)cm;
+
+        if (roParsed)
+        {
+            *roParsed = true;
+        }
     }
     else
     {
@@ -449,6 +473,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
         cborFindResult = CborNoError;
     }
 
+    // pstat.tm Property
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_TM_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&pstatMap))
     {
@@ -464,6 +489,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
         cborFindResult = CborNoError;
     }
 
+    // pstat.om Property
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_OM_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&pstatMap))
     {
@@ -479,6 +505,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
         cborFindResult = CborNoError;
     }
 
+    // pstat.sm Property
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_SM_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&pstatMap))
     {
@@ -504,6 +531,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
         cborFindResult = CborNoError;
     }
 
+    // pstat.rowneruuid Property
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_ROWNERID_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_text_string(&pstatMap))
     {
@@ -588,8 +616,8 @@ static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest
     }
 
     /*
-     * For GET or Valid Query request return doxm resource CBOR payload.
-     * For non-valid query return NULL json payload.
+     * For GET or Valid Query request return pstat resource CBOR payload.
+     * For non-valid query return NULL payload.
      * A device will 'always' have a default Pstat, so PstatToCBORPayload will
      * return valid pstat resource json.
      */
@@ -614,7 +642,7 @@ static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest
  * The entity handler determines how to process a POST request.
  * Per the REST paradigm, POST can also be used to update representation of existing
  * resource or create a new resource.
- * For pstat, it updates only dos, isOp, tm, om, and rowneruuid.
+ * For pstat, it updates only dos, tm, om, and rowneruuid.
  */
 static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRequest)
 {
@@ -655,7 +683,7 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
                     goto exit;
             }
 
-            //operation mode(om) should be one of supported modes(sm)
+            // operation mode (om) should be one of supported modes (sm)
             for(size_t i = 0; i < gPstat->smLen; i++)
             {
                 if(gPstat->sm[i] == pstat->om)
@@ -729,9 +757,9 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
             gPstat->dos.state = pstat->dos.state;
             gPstat->dos.pending = pstat->dos.pending;
             gPstat->isOp = pstat->isOp;
-            gPstat->om = pstat->om;
             gPstat->tm = pstat->tm;
-            gPstat->cm = pstat->cm; // TODO [IOT-1900]: remove once tm change is done in prov tool etc.
+            gPstat->cm = pstat->tm; // TODO [IOT-1763]: remove once dos state is functional
+            gPstat->om = pstat->om;
             memcpy(&(gPstat->rownerID), &(pstat->rownerID), sizeof(OicUuid_t));
 
             // Convert pstat data into CBOR for update to persistent storage
@@ -758,47 +786,48 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
             }
         }
     }
- exit:
 
-     if(OC_EH_OK != ehRet)
-     {
-         /*
-           * If some error is occured while ownership transfer,
-           * ownership transfer related resource should be revert back to initial status.
-           */
-         const OicSecDoxm_t* doxm = GetDoxmResourceData();
-         if(doxm)
-         {
-             if(!doxm->owned)
-             {
-                OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request");
+    exit:
 
+    if (OC_EH_OK != ehRet)
+    {
+        /*
+         * If some error is occured while ownership transfer,
+         * ownership transfer related resource should be revert back to initial status.
+         */
+        OIC_LOG(WARNING, TAG, "The operation failed during handle pstat POST request");
+        const OicSecDoxm_t* doxm = GetDoxmResourceData();
+        if (doxm)
+        {
+            if (!doxm->owned)
+            {
                 if (!isDuplicatedMsg)
                 {
+                    OIC_LOG(WARNING, TAG, "DOXM and PSTAT will be reverted.");
                     RestoreDoxmToInitState();
                     RestorePstatToInitState();
-                    OIC_LOG(WARNING, TAG, "DOXM will be reverted.");
                 }
-             }
-         }
-         else
-         {
-             OIC_LOG(ERROR, TAG, "Invalid DOXM resource.");
-         }
-     }
-     else
-     {
-        if(ehRequest->devAddr.adapter == OC_ADAPTER_IP)
+            }
+        }
+        else
+        {
+           OIC_LOG(ERROR, TAG, "Invalid DOXM resource.");
+        }
+    }
+    else
+    {
+        if (ehRequest->devAddr.adapter == OC_ADAPTER_IP)
         {
             previousMsgId = ehRequest->messageID;
         }
-     }
+    }
 
     // Send response payload to request originator
     ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
-                   OC_EH_OK : OC_EH_ERROR;
+        OC_EH_OK : OC_EH_ERROR;
 
     DeletePstatBinData(pstat);
+
     return ehRet;
 }
 
@@ -825,7 +854,7 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
                 break;
             default:
                 ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
-                               OC_EH_OK : OC_EH_ERROR;
+                    OC_EH_OK : OC_EH_ERROR;
                 break;
         }
     }
