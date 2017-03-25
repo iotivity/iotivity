@@ -45,15 +45,7 @@ if "%MULTIPLE_OWNER%" == "" (
   set MULTIPLE_OWNER=1
 )
 
-REM  Temporary solution to build single threaded in Jenkins to fix random build break.
-REM  This change will be reverted after pywin is installed in Jenkins and problem is confirmed fixed.
-REM  Difference between multi and single threaded Jenkins build for Windows is 5 minutes.
-REM  Tracking revert: https://jira.iotivity.org/browse/IOT-1948.
-if "%JENKINS_HOME%" == "" (
-  set THREAD_COUNT=%NUMBER_OF_PROCESSORS%
-) else (
-  set THREAD_COUNT=1
-)
+set THREAD_COUNT=%NUMBER_OF_PROCESSORS%
 
 set ROUTING=EP
 set WITH_UPSTREAM_LIBCOAP=1
