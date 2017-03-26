@@ -268,23 +268,28 @@ void OCFFramework::WorkerThread(OCFFramework* ocfFramework)
             ocfFramework->GetCommonResources(device);
         }
 
-        // Make a snapshot of all callbacks.
+        // Take a snapshot of callbacks for thread safe iteration.
         std::vector<Callback::Ptr> callbackSnapshot;
-        {
-            std::lock_guard<std::recursive_mutex> lock(ocfFramework->m_OCFFrameworkMutex);
-            callbackSnapshot = ocfFramework->m_callbacks;
-        }
+        ocfFramework->ThreadSafeCopy(ocfFramework->m_callbacks, callbackSnapshot);
 
         // Callback to apps.
         for (const auto& device : devicesThatAreNotResponding)
         {
+            // Take a snapshot of device->discoveredResourceTypes and deviceInfo
+            // for thread safe use by the callee.
+            std::vector<std::string> resourceTypesSnapshot;
+            ocfFramework->ThreadSafeCopy(device->discoveredResourceTypes, resourceTypesSnapshot);
+
+            InternalDeviceInfo deviceInfoSnapshot;
+            ocfFramework->ThreadSafeCopy(device->deviceInfo, deviceInfoSnapshot);
+
             for (const auto& callback : callbackSnapshot)
             {
                 callback->DeviceDiscoveryCallback(
                                         false, /* device is no longer responding to discovery */
                                         false,
-                                        device->deviceInfo,
-                                        device->discoveredResourceTypes);
+                                        deviceInfoSnapshot,
+                                        resourceTypesSnapshot);
             }
         }
 
@@ -298,6 +303,8 @@ void OCFFramework::WorkerThread(OCFFramework* ocfFramework)
 
 IPCAStatus OCFFramework::IPCADeviceOpenCalled(std::string& deviceId)
 {
+    std::lock_guard<std::recursive_mutex> lock(m_OCFFrameworkMutex);
+
     // Has the app discovered the device?
     DeviceDetails::Ptr deviceDetails;
     IPCAStatus status = FindDeviceDetails(deviceId, deviceDetails);
@@ -455,12 +462,17 @@ void OCFFramework::OnResourceFound(std::shared_ptr<OCResource> resource)
     }
 
     // Inform apps. If new device, the device info may come in subsequent discovery callbacks with
-    // IPCA_DEVICE_UPDATED_INFO status. Make a snapshot of all callbacks.
+    // IPCA_DEVICE_UPDATED_INFO status.
+
+    // Take a snapshot of variables that may be updated by the stack during the callback.
     std::vector<Callback::Ptr> callbackSnapshot;
-    {
-        std::lock_guard<std::recursive_mutex> lock(m_OCFFrameworkMutex);
-        callbackSnapshot = m_callbacks;
-    }
+    ThreadSafeCopy(m_callbacks, callbackSnapshot);
+
+    std::vector<std::string> resourceTypesSnapshot;
+    ThreadSafeCopy(deviceDetails->discoveredResourceTypes, resourceTypesSnapshot);
+
+    InternalDeviceInfo deviceInfoSnapshot;
+    ThreadSafeCopy(deviceDetails->deviceInfo, deviceInfoSnapshot);
 
     // Indicate discovery to apps.
     for (const auto& callback : callbackSnapshot)
@@ -468,8 +480,8 @@ void OCFFramework::OnResourceFound(std::shared_ptr<OCResource> resource)
         callback->DeviceDiscoveryCallback(
                     true,
                     updatedDeviceInformation,
-                    deviceDetails->deviceInfo,
-                    deviceDetails->discoveredResourceTypes);
+                    deviceInfoSnapshot,
+                    resourceTypesSnapshot);
     }
 
 
@@ -595,12 +607,15 @@ void OCFFramework::OnDeviceInfoCallback(const OCRepresentation& rep)
     }
 
     // Inform apps.
-    // Make a snapshot of all callbacks.
+    // Take snapshots of variables that may be updated during the callback.
     std::vector<Callback::Ptr> callbackSnapshot;
-    {
-        std::lock_guard<std::recursive_mutex> lock(m_OCFFrameworkMutex);
-        callbackSnapshot = m_callbacks;
-    }
+    ThreadSafeCopy(m_callbacks, callbackSnapshot);
+
+    std::vector<std::string> resourceTypesSnapshot;
+    ThreadSafeCopy(deviceDetails->discoveredResourceTypes, resourceTypesSnapshot);
+
+    InternalDeviceInfo deviceInfoSnapshot;
+    ThreadSafeCopy(deviceDetails->deviceInfo, deviceInfoSnapshot);
 
     // Indicate discovery to apps.
     for (const auto& callback : callbackSnapshot)
@@ -608,8 +623,8 @@ void OCFFramework::OnDeviceInfoCallback(const OCRepresentation& rep)
         callback->DeviceDiscoveryCallback(
                     true,   /* device is responding */
                     true,   /* this is an updated device info */
-                    deviceDetails->deviceInfo,
-                    deviceDetails->discoveredResourceTypes);
+                    deviceInfoSnapshot,
+                    resourceTypesSnapshot);
     }
 
     DebugOutputOCFDevices();
@@ -795,7 +810,11 @@ void OCFFramework::OnPostPut(const HeaderOptions& headerOptions,
 
     IPCAStatus status = MapOCStackResultToIPCAStatus((OCStackResult)eCode);
 
-    for (const auto& callback : m_callbacks)
+    // Take a snapshot of callbacks for thread safe iteration.
+    std::vector<Callback::Ptr> callbackSnapshot;
+    ThreadSafeCopy(m_callbacks, callbackSnapshot);
+
+    for (const auto& callback : callbackSnapshot)
     {
         callback->SetCallback(status, rep, callbackInfo);
     }
@@ -816,7 +835,11 @@ void OCFFramework::OnGet(const HeaderOptions& headerOptions,
         status = IPCA_FAIL;
     }
 
-    for (const auto& callback : m_callbacks)
+    // Take a snapshot of callbacks for thread safe iteration.
+    std::vector<Callback::Ptr> callbackSnapshot;
+    ThreadSafeCopy(m_callbacks, callbackSnapshot);
+
+    for (const auto& callback : callbackSnapshot)
     {
         callback->GetCallback(status, rep, callbackInfo);
     }
@@ -837,7 +860,11 @@ void OCFFramework::OnObserve(
         status = IPCA_FAIL;
     }
 
-    for (const auto& callback : m_callbacks)
+    // Take a snapshot of callbacks for thread safe iteration.
+    std::vector<Callback::Ptr> callbackSnapshot;
+    ThreadSafeCopy(m_callbacks, callbackSnapshot);
+
+    for (const auto& callback : callbackSnapshot)
     {
         callback->ObserveCallback(status, rep, callbackInfo);
     }
@@ -851,7 +878,11 @@ void OCFFramework::OnDelete(const HeaderOptions& headerOptions,
 
     IPCAStatus status = MapOCStackResultToIPCAStatus((OCStackResult)eCode);
 
-    for (const auto& callback : m_callbacks)
+    // Take a snapshot of callbacks for thread safe iteration.
+    std::vector<Callback::Ptr> callbackSnapshot;
+    ThreadSafeCopy(m_callbacks, callbackSnapshot);
+
+    for (const auto& callback : callbackSnapshot)
     {
         callback->DeleteResourceCallback(status, callbackInfo);
     }
@@ -1038,6 +1069,8 @@ std::shared_ptr<OCResource> OCFFramework::FindOCResource(
                                                 const std::string& targetResourcePath,
                                                 const std::string& targetRT)
 {
+    std::lock_guard<std::recursive_mutex> lock(m_OCFFrameworkMutex);
+
     // Return resource matching resource path.
     if (deviceDetails->resourceMap.find(targetResourcePath) != deviceDetails->resourceMap.end())
     {
@@ -1061,6 +1094,8 @@ std::shared_ptr<OCResource> OCFFramework::FindOCResource(
 
 IPCAStatus OCFFramework::CopyDeviceInfo(std::string& deviceId, IPCADeviceInfo** callerDeviceInfo)
 {
+    std::lock_guard<std::recursive_mutex> lock(m_OCFFrameworkMutex);
+
     *callerDeviceInfo = nullptr;
 
     DeviceDetails::Ptr deviceDetails;
@@ -1143,6 +1178,8 @@ void OCFFramework::FreeDeviceInfo(IPCADeviceInfo* deviceInfo)
 IPCAStatus OCFFramework::CopyPlatformInfo(std::string& deviceId,
                                           IPCAPlatformInfo** callerPlatformInfo)
 {
+    std::lock_guard<std::recursive_mutex> lock(m_OCFFrameworkMutex);
+
     *callerPlatformInfo = nullptr;
 
     DeviceDetails::Ptr deviceDetails;
@@ -1240,6 +1277,8 @@ IPCAStatus OCFFramework::CopyResourcePaths(const std::string& resourceInterface,
                                 std::string& deviceId,
                                 std::vector<std::string>& resourcePathList)
 {
+    std::lock_guard<std::recursive_mutex> lock(m_OCFFrameworkMutex);
+
     DeviceDetails::Ptr deviceDetails;
     IPCAStatus status = FindDeviceDetails(deviceId, deviceDetails);
     if (status != IPCA_OK)
@@ -1272,6 +1311,8 @@ IPCAStatus OCFFramework::CopyResourceInfo(const std::string& deviceId,
                             ResourceInfoType resourceInfoType,
                             std::vector<std::string>& resourceInfo)
 {
+    std::lock_guard<std::recursive_mutex> lock(m_OCFFrameworkMutex);
+
     DeviceDetails::Ptr deviceDetails;
     IPCAStatus status = FindDeviceDetails(deviceId, deviceDetails);
     if (status != IPCA_OK)
@@ -1518,9 +1559,13 @@ void OCFFramework::RequestAccessWorkerThread(RequestAccessContext* requestContex
                         size_t passwordBufferSize = OXM_PRECONFIG_PIN_MAX_SIZE + 1;
                         memset(passwordBuffer, 0, passwordBufferSize);
 
+                        // Take a snapshot of callbacks for thread safe iteration.
+                        std::vector<Callback::Ptr> callbackSnapshot;
+                        ocfFramework->ThreadSafeCopy(ocfFramework->m_callbacks, callbackSnapshot);
+
                         // We need to set the preconfigured pin before attempting to do MOT.
                         // Callback to the app asking for the password.
-                        for (const auto& callback : ocfFramework->m_callbacks)
+                        for (const auto& callback : callbackSnapshot)
                         {
                             callback->PasswordInputCallback(deviceId,
                                         IPCA_OWNERSHIP_TRANSFER_PRECONFIGURED_PIN,
@@ -1590,8 +1635,12 @@ void OCFFramework::RequestAccessWorkerThread(RequestAccessContext* requestContex
             }
             else
             {
+                // Take a snapshot of callbacks for thread safe iteration.
+                std::vector<Callback::Ptr> callbackSnapshot;
+                ocfFramework->ThreadSafeCopy(ocfFramework->m_callbacks, callbackSnapshot);
+
                 // This app is already a subowner of the device
-                for (const auto& callback : ocfFramework->m_callbacks)
+                for (const auto& callback : callbackSnapshot)
                 {
                     callback->RequestAccessCompletionCallback(
                                     IPCA_SECURITY_UPDATE_REQUEST_FINISHED,
@@ -1611,14 +1660,19 @@ void OCFFramework::RequestAccessWorkerThread(RequestAccessContext* requestContex
     // success or failure of doMultipleOwnershipTransfer.
     if (IPCA_OK != status)
     {
-        for (const auto& callback : ocfFramework->m_callbacks)
+        // Take a snapshot of callbacks for thread safe iteration.
+        std::vector<Callback::Ptr> callbackSnapshot;
+        ocfFramework->ThreadSafeCopy(ocfFramework->m_callbacks, callbackSnapshot);
+
+        for (const auto& callback : callbackSnapshot)
         {
             callback->RequestAccessCompletionCallback(callbackStatus, callbackInfo);
         }
     }
 }
 
-void OCFFramework::OnMultipleOwnershipTransferCompleteCallback(PMResultList_t* result,
+void OCFFramework::OnMultipleOwnershipTransferCompleteCallback(
+                                    PMResultList_t* result,
                                     bool error,
                                     std::string deviceId,
                                     CallbackInfo::Ptr callbackInfo)
@@ -1635,7 +1689,11 @@ void OCFFramework::OnMultipleOwnershipTransferCompleteCallback(PMResultList_t* r
         status = IPCA_SECURITY_UPDATE_REQUEST_FAILED;
     }
 
-    for (const auto& callback : m_callbacks)
+    // Take a snapshot of callbacks for thread safe iteration.
+    std::vector<Callback::Ptr> callbackSnapshot;
+    ThreadSafeCopy(m_callbacks, callbackSnapshot);
+
+    for (const auto& callback : callbackSnapshot)
     {
         callback->RequestAccessCompletionCallback(status, callbackInfo);
     }
@@ -1675,7 +1733,11 @@ void OCFFramework::OnPasswordInputCallback(OicUuid_t deviceId,
     OCConvertUuidToString(deviceId.id, uuidString);
     strDeviceId = uuidString;
 
-    for (const auto& callback : m_callbacks)
+    // Take a snapshot of callbacks for thread safe iteration.
+    std::vector<Callback::Ptr> callbackSnapshot;
+    ThreadSafeCopy(m_callbacks, callbackSnapshot);
+
+    for (const auto& callback : callbackSnapshot)
     {
         callback->PasswordInputCallback(
                     strDeviceId,
@@ -1706,7 +1768,11 @@ void OCFFramework::OnPasswordDisplayCallback(char* passwordBuffer,
 {
     OC_UNUSED(passwordBufferSize);
 
-    for (const auto& callback : m_callbacks)
+    // Take a snapshot of callbacks for thread safe iteration.
+    std::vector<Callback::Ptr> callbackSnapshot;
+    ThreadSafeCopy(m_callbacks, callbackSnapshot);
+
+    for (const auto& callback : callbackSnapshot)
     {
         callback->PasswordDisplayCallback("",
                     IPCA_OWNERSHIP_TRANSFER_RANDOM_PIN,
@@ -1757,4 +1823,11 @@ void OCFFramework::CleanupRequestAccessDevices()
             m_OCFRequestAccessContexts.erase(device->deviceId);
         }
     }
+}
+
+template <typename _T>
+void OCFFramework::ThreadSafeCopy(const _T& source, _T& dest)
+{
+    std::lock_guard<std::recursive_mutex> lock(m_OCFFrameworkMutex);
+    dest = source;
 }

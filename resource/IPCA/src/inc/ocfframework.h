@@ -233,7 +233,7 @@ class OCFFramework
         // Entry point for the thread that will request access to a device.
         static void RequestAccessWorkerThread(RequestAccessContext* requestContext);
 
-        // Get DeviceDetails for devieId.
+        // Get DeviceDetails for deviceId.
         IPCAStatus FindDeviceDetails(const std::string& deviceId,
                     DeviceDetails::Ptr& deviceDetails);
 
@@ -248,6 +248,10 @@ class OCFFramework
         // Some helper functions to help debugging.
         void DebugOutputOCFDevices();
         void DebugOutputOCRep(const OCRepresentation& rep);
+
+        // Thread safe copy.
+        template <typename _T>
+        void ThreadSafeCopy(const _T& source, _T& dest);
 
     private:
         // Lock for sync access to protected members in OCFFramework.

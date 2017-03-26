@@ -118,6 +118,7 @@ void SetMockOCDevAddr(OCDevAddr& addr)
 // Forward decl.
 OCEntityHandlerResult MockEntityHandler(OCEntityHandlerFlag flag,
                             OCMethod method,
+                            bool isCancelObserve,
                             const OCRepresentation& rep,
                             const QueryParamsMap& queryParametersMap,
                             PostCallback postCallback,
@@ -462,6 +463,13 @@ OCStackResult OCPlatform::sendResponse(const std::shared_ptr<OCResourceResponse>
         }
     }
 
+    // One time request is responded, remove the pending request.
+    if (pendingRequest->method & (OC_REST_POST | OC_REST_GET | OC_REST_DELETE))
+    {
+        std::lock_guard<std::recursive_mutex> lock(g_globalMutex);
+        g_requestList.erase(pendingRequest->requestNumber);
+    }
+
     return OC_STACK_OK;
 }
 
@@ -512,6 +520,7 @@ OCStackResult OCResource::deleteResource(DeleteCallback deleteHandler)
     OCEntityHandlerResult result = MockEntityHandler(
                                         OC_REQUEST_FLAG,
                                         OC_REST_DELETE,
+                                        false,
                                         rep,
                                         queryParametersMap,
                                         &defaultCallback,
@@ -533,6 +542,7 @@ OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap,
     OCEntityHandlerResult result = MockEntityHandler(
                                         OC_REQUEST_FLAG,
                                         OC_REST_GET,
+                                        false,
                                         rep,
                                         queryParametersMap,
                                         &defaultCallback,
@@ -554,6 +564,7 @@ OCStackResult OCResource::post(const OCRepresentation& rep,
     OCEntityHandlerResult result = MockEntityHandler(
                                         OC_REQUEST_FLAG,
                                         OC_REST_POST,
+                                        false,
                                         rep,
                                         queryParametersMap,
                                         attributeHandler,
@@ -577,6 +588,7 @@ OCStackResult OCResource::observe(ObserveType observeType,
                                         OC_OBSERVE_FLAG,
                                         (observeType == ObserveType::Observe) ?
                                             OC_REST_OBSERVE : OC_REST_OBSERVE_ALL,
+                                        false,
                                         rep,
                                         queryParametersMap,
                                         &defaultCallback,
@@ -591,23 +603,22 @@ OCStackResult OCResource::observe(ObserveType observeType,
 // Client app's request to cancel observe request.
 OCStackResult OCResource::cancelObserve()
 {
-    std::lock_guard<std::recursive_mutex> lock(g_globalMutex);
+    OCRepresentation rep;
+    QueryParamsMap queryParametersMap;
 
-    for (auto request : g_requestList)
-    {
-        PendingRequest::Ptr pendingRequest = request.second;
-        if ((pendingRequest->method == OC_REST_OBSERVE) ||
-            (pendingRequest->method == OC_REST_OBSERVE_ALL))
-        {
-            if (pendingRequest->mockOCResource->m_uri.compare(uri()) == 0)
-            {
-                g_requestList.erase(pendingRequest->requestNumber);
-                break;
-            }
-        }
-    }
+    OCEntityHandlerResult result = MockEntityHandler(
+                                        OC_OBSERVE_FLAG,
+                                        OC_REST_OBSERVE,
+                                        true,
+                                        rep,
+                                        queryParametersMap,
+                                        &defaultCallback,
+                                        &defaultCallback,
+                                        &defaultObserveCallback,
+                                        &defaultDeleteCallback,
+                                        uri());
 
-    return OC_STACK_OK;
+    return (result == OC_EH_OK) ? OC_STACK_OK : OC_STACK_ERROR;
 }
 
 // Is resource observable.
@@ -765,6 +776,7 @@ OCResourceIdentifier OCResource::uniqueIdentifier() const
 // Every callback to server app is performed by this function.
 OCEntityHandlerResult MockEntityHandler(OCEntityHandlerFlag flag,
                             OCMethod method,
+                            bool isCancelObserve,
                             const OCRepresentation& rep,
                             const QueryParamsMap& queryParametersMap,
                             PostCallback postCallback,
@@ -773,6 +785,7 @@ OCEntityHandlerResult MockEntityHandler(OCEntityHandlerFlag flag,
                             DeleteCallback deleteCallback,
                             const std::string& uri)
 {
+    OCObservationId observationIdToCancel = 0;
     size_t requestNumber;
     MockOCResource::Ptr mockOCResource = nullptr;
     {
@@ -799,10 +812,30 @@ OCEntityHandlerResult MockEntityHandler(OCEntityHandlerFlag flag,
     pendingRequest->getCallback     = getCallback;
     pendingRequest->observeCallback = observeCallback;
     pendingRequest->deleteCallback  = deleteCallback;
+
+    if (!isCancelObserve)
     {
         // Store the request for response.
         std::lock_guard<std::recursive_mutex> lock(g_globalMutex);
         g_requestList[requestNumber] = pendingRequest;
+    }
+    else
+    {
+        // Observe request is canceled. Remove the request for observe.
+        std::lock_guard<std::recursive_mutex> lock(g_globalMutex);
+        for (auto request : g_requestList)
+        {
+            PendingRequest::Ptr pendingRequest = request.second;
+            if (pendingRequest->method & (OC_REST_OBSERVE | OC_REST_OBSERVE_ALL))
+            {
+                if (pendingRequest->mockOCResource->m_uri.compare(uri) == 0)
+                {
+                    observationIdToCancel = pendingRequest->observationId;
+                    g_requestList.erase(pendingRequest->requestNumber);
+                    break;
+                }
+            }
+        }
     }
 
     auto pRequest = std::make_shared<OC::OCResourceRequest>();
@@ -830,8 +863,10 @@ OCEntityHandlerResult MockEntityHandler(OCEntityHandlerFlag flag,
     if (flag & OC_OBSERVE_FLAG)
     {
         std::lock_guard<std::recursive_mutex> lock(g_globalMutex);
-        entityHandlerRequest.obsInfo.action = OC_OBSERVE_REGISTER;
-        entityHandlerRequest.obsInfo.obsId = ++g_observationId;
+        entityHandlerRequest.obsInfo.action = isCancelObserve ?
+                                                    OC_OBSERVE_DEREGISTER : OC_OBSERVE_REGISTER;
+        entityHandlerRequest.obsInfo.obsId = isCancelObserve ?
+                                                    observationIdToCancel : ++g_observationId;
         pendingRequest->observationId = entityHandlerRequest.obsInfo.obsId;
     }
 
