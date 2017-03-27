@@ -416,10 +416,10 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                 return CA_STATUS_FAILED;
             }
 
-            coap_block_t *block = CAGetBlockOption(blockDataID, data->type);
-            if (!block)
+            coap_block_t *tempBlock = CAGetBlockOption(blockDataID, data->type);
+            if (!tempBlock)
             {
-                OIC_LOG(ERROR, TAG, "block is null");
+                OIC_LOG(ERROR, TAG, "tempBlock is null");
                 CADestroyBlockID(blockDataID);
                 return CA_STATUS_FAILED;
             }
@@ -427,7 +427,7 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             CAResult_t res = CA_STATUS_OK;
             if (COAP_OPTION_BLOCK2 == data->type)
             {
-                res = CASetNextBlockOption2(pdu, endpoint, receivedData, *block, dataLen);
+                res = CASetNextBlockOption2(pdu, endpoint, receivedData, *tempBlock, dataLen);
                 if (CA_STATUS_OK != res)
                 {
                     OIC_LOG(ERROR, TAG, "setting has failed");
@@ -437,7 +437,7 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             }
             else if (COAP_OPTION_BLOCK1 == data->type)
             {
-                res = CASetNextBlockOption1(pdu, endpoint, receivedData, *block, dataLen);
+                res = CASetNextBlockOption1(pdu, endpoint, receivedData, *tempBlock, dataLen);
                 if (CA_STATUS_OK != res)
                 {
                     OIC_LOG(ERROR, TAG, "setting has failed");
@@ -955,9 +955,9 @@ CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     else
     {
         // received message type is response
-        uint32_t code = CA_RESPONSE_CODE(pdu->transport_hdr->udp.code);
-        if (0 == block.m && (CA_REQUEST_ENTITY_INCOMPLETE != code
-                && CA_REQUEST_ENTITY_TOO_LARGE != code))
+        uint32_t responseCode = CA_RESPONSE_CODE(pdu->transport_hdr->udp.code);
+        if (0 == block.m && (CA_REQUEST_ENTITY_INCOMPLETE != responseCode
+                && CA_REQUEST_ENTITY_TOO_LARGE != responseCode))
         {
             int isBlock2 = coap_get_block(pdu, COAP_OPTION_BLOCK2, &block);
             if (isBlock2)
@@ -1101,8 +1101,8 @@ CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                                                           COAP_OPTION_SIZE2,
                                                                           &(data->payloadLength));
 
-            uint32_t code = CA_RESPONSE_CODE(pdu->transport_hdr->udp.code);
-            if (CA_REQUEST_ENTITY_INCOMPLETE != code && CA_REQUEST_ENTITY_TOO_LARGE != code)
+            uint32_t responseCode = CA_RESPONSE_CODE(pdu->transport_hdr->udp.code);
+            if (CA_REQUEST_ENTITY_INCOMPLETE != responseCode && CA_REQUEST_ENTITY_TOO_LARGE != responseCode)
             {
                 // check if received payload is exact
                 blockWiseStatus = CACheckBlockErrorType(data, &block, receivedData,
@@ -1579,9 +1579,10 @@ CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
             goto exit;
         }
 
+        assert(block2->szx <= UINT8_MAX);
         if (!coap_add_block(*pdu, (unsigned int)dataLength,
                             (const unsigned char *) info->payload,
-                            block2->num, block2->szx))
+                            block2->num, (unsigned char)block2->szx))
         {
             OIC_LOG(ERROR, TAG, "Data length is smaller than the start index");
             return CA_STATUS_FAILED;
@@ -1676,9 +1677,10 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
         }
 
         // add the payload data as the block size.
+        assert(block1->szx <= UINT8_MAX);
         if (!coap_add_block(*pdu, (unsigned int)dataLength,
                             (const unsigned char *) info->payload, block1->num,
-                            block1->szx))
+                            (unsigned char)block1->szx))
         {
             OIC_LOG(ERROR, TAG, "Data length is smaller than the start index");
             return CA_STATUS_FAILED;

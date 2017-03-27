@@ -282,7 +282,7 @@ static PkiInfo_t g_pkiInfo = {{NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}};
 
 typedef struct  {
     int code;
-    int alert;
+    unsigned char alert;
 } CrtVerifyAlert_t;
 
 static const CrtVerifyAlert_t crtVerifyAlerts[] = {
@@ -309,7 +309,7 @@ static const CrtVerifyAlert_t crtVerifyAlerts[] = {
     {0, 0}
 };
 
-static int GetAlertCode(uint32_t flags)
+static unsigned char GetAlertCode(uint32_t flags)
 {
     const CrtVerifyAlert_t *cur;
 
@@ -518,7 +518,11 @@ static int SendCallBack(void * tep, const unsigned char * data, size_t dataLen)
         size_t dataToSend = (dataLen > INT_MAX) ? INT_MAX : dataLen;
         CAPacketSendCallback sendCallback = g_caSslContext->adapterCallbacks[adapterIndex].sendCallback;
         sentLen = sendCallback(&(((SslEndPoint_t * )tep)->sep.endpoint), (const void *) data, dataToSend);
-        if (sentLen != dataLen)
+        if (0 > sentLen)
+        {
+            OIC_LOG(ERROR, NET_SSL_TAG, "Error sending packet. The error will be reported in the adapter.");
+        }
+        else if ((size_t)sentLen != dataLen)
         {
             OIC_LOG_V(DEBUG, NET_SSL_TAG,
                       "Packet was partially sent - sent/total/remained bytes : %d/%" PRIuPTR "/%" PRIuPTR,
@@ -580,8 +584,8 @@ static int ParseChain(mbedtls_x509_crt * crt, unsigned char * buf, size_t bufLen
 {
     int ret;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
-    VERIFY_NON_NULL_RET(crt, NET_SSL_TAG, "Param crt is NULL" , -1);
-    VERIFY_NON_NULL_RET(buf, NET_SSL_TAG, "Param buf is NULL" , -1);
+    VERIFY_NON_NULL_RET(crt, NET_SSL_TAG, "Param crt is NULL", -1);
+    VERIFY_NON_NULL_RET(buf, NET_SSL_TAG, "Param buf is NULL", -1);
 
     if (NULL != errNum)
     {
@@ -605,13 +609,13 @@ static int ParseChain(mbedtls_x509_crt * crt, unsigned char * buf, size_t bufLen
     {
         *errNum = ret;
     }
-    
+
     ret = 0;
     for (const mbedtls_x509_crt *cur = crt; cur != NULL; cur = cur->next)
     {
         ret++;
     }
-    
+
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return ret;
 }
@@ -1029,6 +1033,8 @@ static bool checkSslOperation(SslEndPoint_t*  peer,
                               const char* str,
                               unsigned char msg)
 {
+    OC_UNUSED(str);
+
     if ((0 != ret) &&
         (MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY != ret) &&
         (MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED != ret) &&
@@ -2289,7 +2295,6 @@ CAResult_t CAsetTlsCipherSuite(const uint32_t cipher)
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(g_caSslContext, NET_SSL_TAG, "SSL context is not initialized." , CA_STATUS_NOT_INITIALIZED);
 
-    CAResult_t res = CA_STATUS_FAILED;
     SslCipher_t index = GetCipherIndex(cipher);
     if (SSL_CIPHER_MAX == index)
     {

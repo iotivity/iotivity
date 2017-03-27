@@ -2745,8 +2745,8 @@ static CAResult_t CALEAdapterGattClientStop()
 static ssize_t CALESecureSendDataCB(CAEndpoint_t *endpoint,
                              const void *data, size_t dataLen)
 {
-    VERIFY_NON_NULL_RET(endpoint, CALEADAPTER_TAG, "endpoint is NULL", 0);
-    VERIFY_NON_NULL_RET(data, CALEADAPTER_TAG, "data is NULL", 0);
+    VERIFY_NON_NULL_RET(endpoint, CALEADAPTER_TAG, "endpoint is NULL", -1);
+    VERIFY_NON_NULL_RET(data, CALEADAPTER_TAG, "data is NULL", -1);
 
     OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Secure Data Send - encrypted datalen = %d", dataLen);
 
@@ -2765,7 +2765,7 @@ static ssize_t CALESecureSendDataCB(CAEndpoint_t *endpoint,
             {
                 g_errorHandler(endpoint, data, dataLen, result);
             }
-            return 0;
+            return -1;
         }
     }
     else if (ADAPTER_CLIENT == g_adapterType ||
@@ -2781,14 +2781,14 @@ static ssize_t CALESecureSendDataCB(CAEndpoint_t *endpoint,
             {
                 g_errorHandler(endpoint, data, dataLen, result);
             }
-            return 0;
+            return -1;
         }
     }
     else
     {
         OIC_LOG_V(ERROR, CALEADAPTER_TAG,
                   "Can't Send Message adapterType = %d, dataType = %d", g_adapterType, dataType);
-        return 0;
+        return -1;
     }
 
     return (ssize_t)dataLen;

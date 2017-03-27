@@ -70,7 +70,7 @@ if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
 if target_os not in ['msys_nt', 'windows']:
     catest_env.AppendUnique(LIBS = ['m'])
 else:
-    catest_env.AppendUnique(CCFLAGS=['/W3', '/WX'])
+    catest_env.AppendUnique(CCFLAGS=['/W4', '/WX'])
 
 
 ######################################################################

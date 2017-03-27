@@ -123,7 +123,7 @@ CAResult_t CAParseURI(const char *uriInfo, coap_list_t **options);
  * @param[out]  optlist              options information.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, int target,
+CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, uint16_t target,
                              coap_list_t **optlist);
 
 /**
@@ -171,9 +171,10 @@ int CAOrderOpts(void *a, void *b);
 /**
  * number of options count.
  * @param[in]   opt_iter            option iteration for count.
- * @return number of options.
+ * @param[out]  optionCount         number of options.
+ * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
-uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter);
+CAResult_t CAGetOptionCount(coap_opt_iterator_t opt_iter, uint8_t *optionCount);
 
 /**
  * gets option data.

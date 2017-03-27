@@ -587,9 +587,9 @@ CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uin
             sentDataLen = g_adapterHandler[index].sendData(endpoint, data, length, dataType);
         }
 
-        if (sentDataLen != length)
+        if ((0 > sentDataLen) || ((uint32_t)sentDataLen != length))
         {
-            OIC_LOG(ERROR, TAG, "error in sending data. Error will be reported in adapter");
+            OIC_LOG(ERROR, TAG, "Error sending data. The error will be reported in adapter.");
 #ifdef SINGLE_THREAD
             //in case of single thread, no error handler. Report error immediately
             return CA_SEND_FAILED;
