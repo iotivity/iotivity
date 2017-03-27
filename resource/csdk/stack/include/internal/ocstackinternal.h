@@ -360,6 +360,9 @@ void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload *payload, const OCR
 void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload *payload, const OCResource *res,
                                           uint16_t securePort, void *networkInfo, size_t infoSize,
                                           const OCDevAddr *devAddr, uint16_t tcpPort);
+
+/* This method will retrieve the tcp port */
+OCStackResult GetTCPPortInfo(OCDevAddr *endpoint, uint16_t *port, bool secured);
 #endif
 #ifdef __cplusplus
 }

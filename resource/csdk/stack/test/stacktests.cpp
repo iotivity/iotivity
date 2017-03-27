@@ -2710,3 +2710,108 @@ TEST(StackZoneId, getZoneIdWithInvalidParams)
     EXPECT_EQ(OC_STACK_ERROR, OCGetLinkLocalZoneId(9999, &zoneId));
     EXPECT_EQ(OC_STACK_ERROR, OCGetLinkLocalZoneId(UINT32_MAX, &zoneId));
 }
+
+TEST(LinksPayloadValue, createLinksPayloadValue)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    OIC_LOG(INFO, TAG, "Starting createLinksPayloadValue test");
+    InitStack(OC_SERVER);
+
+    size_t numResources = 0;
+    uint8_t inBitmap[3] = { OC_DISCOVERABLE | OC_OBSERVABLE,
+                            OC_DISCOVERABLE | OC_OBSERVABLE,
+                            OC_DISCOVERABLE };
+    int64_t outBitmap[3] = {0};
+
+    OCResourceHandle containerHandle;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&containerHandle,
+        "core.led",
+        "core.col",
+        "/a/kitchen",
+        0,
+        NULL,
+        inBitmap[0]));
+    ++numResources;
+
+    OCResourceHandle handle0;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle0,
+        "core.led",
+        "core.rw",
+        "/a/led0",
+        0,
+        NULL,
+        inBitmap[1]));
+    ++numResources;
+
+    OCResourceHandle handle1;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle1,
+        "core.led",
+        "core.r",
+        "/a/led1",
+        0,
+        NULL,
+        inBitmap[2]));
+    ++numResources;
+
+    EXPECT_EQ(OC_STACK_OK, OCBindResource(containerHandle, handle0));
+    EXPECT_EQ(OC_STACK_OK, OCBindResource(containerHandle, handle1));
+
+    EXPECT_EQ(handle0, OCGetResourceHandleFromCollection(containerHandle, 0));
+    EXPECT_EQ(handle1, OCGetResourceHandleFromCollection(containerHandle, 1));
+
+    OCRepPayloadValue* linksRepPayloadValue;
+    OCDevAddr* devAddr = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCLinksPayloadValueCreate("/a/kitchen", &linksRepPayloadValue, devAddr));
+    ASSERT_TRUE(NULL != linksRepPayloadValue);
+
+    OCRepPayload *collectionPayload = OCRepPayloadCreate();
+    ASSERT_TRUE(NULL != collectionPayload);
+
+    size_t dim[MAX_REP_ARRAY_DEPTH] = { numResources, 0, 0 };
+
+    ASSERT_TRUE(OCRepPayloadSetPropObjectArrayAsOwner(collectionPayload, OC_RSRVD_LINKS,
+                                              linksRepPayloadValue->arr.objArray, dim));
+
+    OCRepPayload *policyMap = NULL;
+    OCRepPayload **linksMap = NULL;
+    ASSERT_TRUE(OCRepPayloadGetPropObjectArray(collectionPayload, OC_RSRVD_LINKS, &linksMap, dim));
+
+    for (size_t i = 0; i < numResources; i++)
+    {
+        ASSERT_TRUE(OCRepPayloadGetPropObject(linksMap[i], OC_RSRVD_POLICY, &policyMap));
+        ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_BITMAP, &outBitmap[i]));
+        EXPECT_EQ(inBitmap[i], outBitmap[i]);
+
+        if (devAddr)
+        {
+#ifdef TCP_ADAPTER
+#ifdef __WITH_TLS__
+            // tls
+            int64_t outTlsPort = 0;
+            ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_TLS_PORT, &outTlsPort));
+
+            uint16_t tlsPort = 0;
+            GetTCPPortInfo(devAddr, &tlsPort, true);
+
+            EXPECT_EQ(tlsPort, outTlsPort);
+#else
+            // tcp
+            int64_t outTcpPort = 0;
+            ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_TCP_PORT, &outTcpPort));
+
+            uint16_t tcpPort = 0;
+            GetTCPPortInfo(devAddr, &tcpPort, false);
+
+            EXPECT_EQ(tcpPort, outTcpPort);
+#endif
+#endif
+        }
+        OCRepPayloadDestroy(linksMap[i]);
+    }
+
+    OICFree(linksMap);
+    OCRepPayloadDestroy(policyMap);
+    OCRepPayloadDestroy(collectionPayload);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}

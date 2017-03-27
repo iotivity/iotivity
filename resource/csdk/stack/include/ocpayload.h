@@ -292,6 +292,20 @@ char* OCCreateString(const OCStringLL* ll);
  **/
 bool OCByteStringCopy(OCByteString *dest, const OCByteString *source);
 
+/**
+* This function creates the payloadValue for links parameter of collection resource.
+* @param[in] resourceUri Resource uri (this should be a collection resource)
+* @param[out] linksRepPayloadValue The payloadValue for links parameter of collection
+* @param[in] devAddr Structure pointing to the address. (from OCEntityHandlerRequest)
+*
+* @note: The destroy of OCRepPayloadValue is not supported. Instead, use
+*        OCRepPayloadDestroy(...) to destroy RepPayload of the collection Resource
+*
+* @return ::OC_STACK_OK if successful or else other value.
+*/
+OCStackResult OCLinksPayloadValueCreate(const char *resourceUri,
+                      OCRepPayloadValue **linksRepPayloadValue, OCDevAddr *devAddr);
+
 #ifdef __cplusplus
 }
 #endif

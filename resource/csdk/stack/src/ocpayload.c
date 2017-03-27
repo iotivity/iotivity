@@ -24,6 +24,7 @@
 #include "iotivity_config.h"
 #include <stdio.h>
 #include "ocpayload.h"
+#include "occollection.h"
 #include "octypes.h"
 #include <string.h>
 #include "oic_malloc.h"
@@ -2134,4 +2135,16 @@ void OCPresencePayloadDestroy(OCPresencePayload* payload)
     }
     OICFree(payload->resourceType);
     OICFree(payload);
+}
+
+OCStackResult OCLinksPayloadValueCreate(const char* resourceUri, OCRepPayloadValue** linksRepPayloadValue,
+    OCDevAddr* devAddr)
+{
+    OIC_LOG(DEBUG, TAG, "OCLinksPayloadValueCreate");
+    OCStackResult result = OC_STACK_ERROR;
+    if ((resourceUri != NULL) & (linksRepPayloadValue != NULL) )
+    {
+        result = BuildCollectionLinksPayloadValue(resourceUri, linksRepPayloadValue, devAddr);
+    }
+    return result;
 }
