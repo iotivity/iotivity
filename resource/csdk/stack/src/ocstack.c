@@ -1652,6 +1652,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     {
                         OIC_LOG_V(ERROR, TAG, "Unknown Payload type in Discovery: %d %s",
                                 cbNode->method, cbNode->requestUri);
+                        OICFree(response);
                         return;
                     }
                 }
@@ -1704,6 +1705,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     {
                         OIC_LOG(ERROR, TAG, "Error converting payload");
                         OCPayloadDestroy(response->payload);
+                        OICFree(response);
                         return;
                     }
 
@@ -1718,6 +1720,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                         {
                             OIC_LOG(ERROR, TAG, "failed at map zone-id for link-local address");
                             OCPayloadDestroy(response->payload);
+                            OICFree(response);
                             return;
                         }
                     }
