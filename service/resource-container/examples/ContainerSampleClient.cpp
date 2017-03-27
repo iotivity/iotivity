@@ -722,9 +722,9 @@ int main(int argc, char *argv[])
         cv.wait(lock);
 
     }
-    catch (OCException &e)
+    catch (const OCException &e)
     {
-        oclog() << "Exception in main: " << e.what();
+        std::cout << "Exception in main: " << e.what();
     }
 
     return 0;

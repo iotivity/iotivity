@@ -57,7 +57,6 @@ srmtest_env.PrependUnique(CPPPATH = [
 		'../include'
 		])
 
-srmtest_env.AppendUnique(LIBPATH = [srmtest_env.get('BUILD_DIR')])
 srmtest_env.PrependUnique(LIBS = ['ocsrm',
                                     'octbstack_test',
                                     'oc_logger',

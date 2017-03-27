@@ -151,8 +151,8 @@ extern "C"
 #define CA_OPTION_ACCEPT_VERSION 2049
 #define CA_OPTION_CONTENT_VERSION 2053
 
-#define DEFAULT_ACCEPT_VERSION_VALUE 2048   // OCF version 1.0.0
-#define DEFAULT_CONTENT_VERSION_VALUE 2048  // OCF version 1.0.0
+// The Accept Version and Content-Format Version for OCF 1.0.0 (0b0000 1000 0000 0000).
+#define DEFAULT_VERSION_VALUE 2048
 
 /**
  * Payload information from resource model.
@@ -619,7 +619,7 @@ typedef struct
 #else
         int netlinkFd;              /**< netlink */
         int shutdownFds[2];         /**< fds used to signal threads to stop */
-        int maxfd;                  /**< highest fd (for select) */
+        CASocketFd_t maxfd;         /**< highest fd (for select) */
 #endif
         int selectTimeout;          /**< in seconds */
         bool started;               /**< the IP adapter has started */
@@ -662,7 +662,7 @@ typedef struct
 #else
         int shutdownFds[2];     /**< shutdown pipe */
         int connectionFds[2];   /**< connection pipe */
-        int maxfd;              /**< highest fd (for select) */
+        CASocketFd_t maxfd;     /**< highest fd (for select) */
 #endif
         bool started;           /**< the TCP adapter has started */
         volatile bool terminate;/**< the TCP adapter needs to stop */

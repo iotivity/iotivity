@@ -218,6 +218,21 @@ typedef unsigned int OSCTBitmask_t;
  */
 typedef OSCTBitmask_t OicSecCredType_t;
 
+typedef enum OicSecDeviceOnboardingState
+{
+    DOS_RESET = 0,
+    DOS_RFOTM,
+    DOS_RFPRO,
+    DOS_RFNOP,
+    DOS_SRESET
+} OicSecDeviceOnboardingState_t;
+
+typedef struct OicSecDostype
+{
+    OicSecDeviceOnboardingState_t state;
+    bool                          pending;
+} OicSecDostype_t;
+
 typedef struct OicSecDoxm OicSecDoxm_t;
 
 /**
@@ -546,6 +561,8 @@ struct OicSecMom{
 /**
  * /oic/sec/doxm (Device Owner Transfer Methods) data type
  * Derived from OIC Security Spec; see Spec for details.
+ * @note If the struct is updated please update
+ * DoxmUpdateWriteableProperty appropriately.
  */
 struct OicSecDoxm
 {
@@ -575,6 +592,7 @@ struct OicSecDoxm
 struct OicSecPstat
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
+    OicSecDostype_t     dos;            // -:RW:S:Y:oic.sec.dostype
     bool                isOp;           // 0:R:S:Y:Boolean
     OicSecDpm_t         cm;             // 1:R:S:Y:oic.sec.dpmtype
     OicSecDpm_t         tm;             // 2:RW:S:Y:oic.sec.dpmtype

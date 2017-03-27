@@ -52,7 +52,6 @@ if 'CLIENT' in rd_mode:
 if 'SERVER' in rd_mode:
     rd_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
 
-rd_env.PrependUnique(LIBPATH = [rd_env.get('BUILD_DIR')])
 if target_os != 'android':
     rd_env.PrependUnique(RPATH = [rd_env.get('BUILD_DIR')])
 rd_env.PrependUnique(LIBS = ['octbstack', 'oc', 'oc_logger'])

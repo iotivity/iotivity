@@ -211,10 +211,14 @@ public:
         SetPersistentHandler(&ps);
         OCStackResult res = OCRegisterPersistentStorageHandler(&ps);
         ASSERT_TRUE(res == OC_STACK_OK);
+        res = OCInit(NULL, 0, OC_SERVER);
+        ASSERT_TRUE(res == OC_STACK_OK);
     }
 
     static void TearDownTestCase()
     {
+        OCStackResult res = OCStop();
+        ASSERT_TRUE(res == OC_STACK_OK);
     }
 
     static const ByteArray g_caPublicKey;
@@ -270,25 +274,21 @@ static uint8_t keyData[] = {
         0x3d, 0x96, 0x23, 0xe2, 0x24, 0x64, 0x98, 0x63, 0x21, 0xba, 0x02, 0x21
     };
 
-// Disabled since always fails due to IOT-1846
-TEST_F(SRPTest, DISABLED_SRPSaveTrustCertChainDER)
+TEST_F(SRPTest, SRPSaveTrustCertChainDER)
 {
     int result;
     uint16_t credId;
 
     result = SRPSaveTrustCertChain(certData, sizeof(certData), OIC_ENCODING_DER, &credId);
-
     EXPECT_EQ(OC_STACK_OK, result);
 }
 
-// Disabled since always fails due to IOT-1846
-TEST_F(SRPTest, DISABLED_SRPSaveTrustCertChainPEM)
+TEST_F(SRPTest, SRPSaveTrustCertChainPEM)
 {
     int result;
     uint16_t credId;
 
     result = SRPSaveTrustCertChain(certData, sizeof(certData), OIC_ENCODING_PEM, &credId);
-
     EXPECT_EQ(OC_STACK_OK, result);
 }
 
@@ -323,10 +323,9 @@ TEST_F(SRPTest, SRPSaveOwnCertChainTest)
     key.data = keyData;
     key.len = sizeof(keyData);
 
-    //This test case cannot succeed. because doxm resource has not been initialized.
     result = SRPSaveOwnCertChain(&cert, &key, &credId);
 
-    EXPECT_EQ(OC_STACK_ERROR, result);
+    EXPECT_EQ(OC_STACK_OK, result);
 }
 
 TEST_F(SRPTest, SRPSaveOwnCertChainTestNullCert)

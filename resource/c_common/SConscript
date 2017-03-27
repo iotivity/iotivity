@@ -143,9 +143,7 @@ env.AppendUnique(CPPPATH = [
             os.path.join(Dir('.').abspath, 'octhread', 'include')
         ])
 
-if target_os == 'tizen':
-    env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-else:
+if target_os not in ['tizen']:
     env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'c_common')])
 
 if target_os in ['tizen', 'linux']:

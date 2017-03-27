@@ -798,8 +798,8 @@ static OCStackResult CHPInitializeEasyHandle(CURL** easyHandle, HttpRequest_t *r
     if (req->headerOptions)
     {
         HttpHeaderOption_t *option = NULL;
-        int headerCount = u_arraylist_length(req->headerOptions);
-        for(int i = 0; i < headerCount; i++)
+        size_t headerCount = u_arraylist_length(req->headerOptions);
+        for(size_t i = 0; i < headerCount; i++)
         {
             option = u_arraylist_get(req->headerOptions, i);
             if(option)

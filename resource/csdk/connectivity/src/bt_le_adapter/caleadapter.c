@@ -3523,10 +3523,6 @@ static CAResult_t CALEAdapterClientSendData(const CAEndpoint_t *remoteEndpoint,
                         "g_bleClientSendDataMutex is NULL",
                         CA_STATUS_FAILED);
 
-    VERIFY_NON_NULL_RET(g_bleClientSendQueueHandle, CALEADAPTER_TAG,
-                        "g_bleClientSendQueueHandle",
-                        CA_STATUS_FAILED);
-
     OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Data Sending to LE layer [%u]", dataLen);
 
     CALEData_t *bleData = CACreateLEData(remoteEndpoint, data, dataLen, NULL);

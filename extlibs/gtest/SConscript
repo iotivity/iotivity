@@ -23,7 +23,7 @@ gtest_url = 'https://github.com/google/googletest/archive/release-1.7.0.zip'
 
 if target_os in targets_need_gtest:
 	print '*** Checking for installation of google unit test 1.7.0 ***'
-	if not os.path.exists(os.path.join(gtest_dir, 'configure')):
+	if not os.path.exists(os.path.join(gtest_dir, 'CMakeLists.txt')):
 		# If the gtest zip file is not already present, download it
 		if not os.path.exists(gtest_zip_file):
 			gtest_zip = gtest_env.Download(gtest_zip_file, gtest_url)

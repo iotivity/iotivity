@@ -171,6 +171,9 @@ extern const char * OIC_JSON_EOWNERID_NAME;
 extern const char * OIC_JSON_ENCODING_NAME;
 extern const char * OIC_JSON_DATA_NAME;
 extern const char * OIC_JSON_SEC_V_NAME;
+extern const char * OIC_JSON_DOS_NAME;
+extern const char * OIC_JSON_S_NAME;
+extern const char * OIC_JSON_P_NAME;
 
 extern const char * OIC_JSON_EMPTY_STRING;
 

@@ -19,11 +19,6 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "NSProviderSystem.h"
 
-#if (defined WITH_CLOUD)
-#define MAX_SERVER_ADDRESS 32
-static char NSRemoteServerAddress[MAX_SERVER_ADDRESS] = {0,};
-#endif
-
 #ifdef WITH_MQ
 static NSMQServerInfo * mqServerInfo = NULL;
 #endif
@@ -47,33 +42,6 @@ NSConnectionState NSGetProviderConnectionState()
 
     return NSProviderConnectionState;
 }
-
-#if (defined WITH_CLOUD)
-void NSSetRemoteServerAddress(char *serverAddress)
-{
-
-    OICStrcpy(NSRemoteServerAddress, MAX_SERVER_ADDRESS, serverAddress);
-}
-
-void NSDeleteRemoteServerAddress(char *serverAddress)
-{
-    NS_LOG_V(INFO_PRIVATE, "Delete cloud address: %s", serverAddress);
-
-    memset(NSRemoteServerAddress, 0, MAX_SERVER_ADDRESS);
-}
-
-bool NSIsRemoteServerAddress(char *serverAddress)
-{
-    NS_LOG_V(INFO_PRIVATE, "Check server address: %s", serverAddress);
-
-    if (serverAddress != NULL)
-    {
-        return strstr(NSRemoteServerAddress, serverAddress);
-    }
-
-    return false;
-}
-#endif
 
 void NSInitProviderInfo(const char * userInfo)
 {

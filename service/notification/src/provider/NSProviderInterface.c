@@ -183,10 +183,6 @@ NSResult NSProviderDisableRemoteService(char *serverAddress)
     }
 
     NS_LOG_V(INFO_PRIVATE, "Remote server address: %s", serverAddress);
-
-    NS_LOG(DEBUG, "Delete remote server info");
-    NSDeleteRemoteServerAddress(serverAddress);
-
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderDisableRemoteService - OUT");
     return NS_OK;

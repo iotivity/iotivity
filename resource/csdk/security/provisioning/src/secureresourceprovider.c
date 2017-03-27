@@ -898,7 +898,7 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
 static void registerResultForACLProvisioning(ACLData_t *aclData,
                                              OCStackResult stackresult)
 {
-   OIC_LOG_V(INFO, TAG, "Inside registerResultForACLProvisioning aclData->numOfResults is %d\n",
+   OIC_LOG_V(INFO, TAG, "Inside registerResultForACLProvisioning aclData->numOfResults is %d",
                        aclData->numOfResults);
    memcpy(aclData->resArr[(aclData->numOfResults)].deviceId.id,
           aclData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
@@ -1073,7 +1073,7 @@ static void registerResultForDirectPairingProvisioning(PconfData_t *pconfData,
                                              OCStackResult stackresult)
 {
    OIC_LOG_V(INFO, TAG, "Inside registerResultForDirectPairingProvisioning "
-           "pconfData->numOfResults is %d\n", pconfData->numOfResults);
+           "pconfData->numOfResults is %d", pconfData->numOfResults);
    memcpy(pconfData->resArr[(pconfData->numOfResults)].deviceId.id,
           pconfData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
    pconfData->resArr[(pconfData->numOfResults)].res = stackresult;
@@ -1228,7 +1228,7 @@ static void registerResultForUnlinkDevices(UnlinkData_t *unlinkData, OCStackResu
 {
     if (NULL != unlinkData)
     {
-        OIC_LOG_V(INFO, TAG, "Inside registerResultForUnlinkDevices unlinkData->numOfResults is %d\n",
+        OIC_LOG_V(INFO, TAG, "Inside registerResultForUnlinkDevices unlinkData->numOfResults is %d",
                             unlinkData->numOfResults);
         OIC_LOG_V(INFO, TAG, "Stack result :: %d", stackresult);
 
@@ -1275,7 +1275,7 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
                                                      destDev->endpoint.addr);
     if (OC_STACK_OK != result)
     {
-        OIC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : encoding error %d\n", result);
+        OIC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : encoding error %d", result);
         return OC_STACK_ERROR;
     }
 
@@ -1295,12 +1295,12 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
     OICFree(subID);
     if (snRet < 0)
     {
-        OIC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : Error (snprintf) %d\n", snRet);
+        OIC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : Error (snprintf) %d", snRet);
         return OC_STACK_ERROR;
     }
     else if ((size_t)snRet >= sizeof(reqBuf))
     {
-        OIC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : Truncated (snprintf) %d\n", snRet);
+        OIC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : Truncated (snprintf) %d", snRet);
         return OC_STACK_ERROR;
     }
 
@@ -1351,7 +1351,7 @@ static OCStackResult SendDeleteACLRequest(void* ctx,
                                                      destDev->endpoint.addr);
     if (OC_STACK_OK != result)
     {
-        OIC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : encoding error %d\n", result);
+        OIC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : encoding error %d", result);
         return OC_STACK_ERROR;
     }
 
@@ -1363,12 +1363,12 @@ static OCStackResult SendDeleteACLRequest(void* ctx,
     OICFree(subID);
     if (snRet < 0)
     {
-        OIC_LOG_V(ERROR, TAG, "SendDeleteACLRequest : Error (snprintf) %d\n", snRet);
+        OIC_LOG_V(ERROR, TAG, "SendDeleteACLRequest : Error (snprintf) %d", snRet);
         return OC_STACK_ERROR;
     }
     else if ((size_t)snRet >= sizeof(reqBuf))
     {
-        OIC_LOG_V(ERROR, TAG, "SendDeleteACLRequest : Truncated (snprintf) %d\n", snRet);
+        OIC_LOG_V(ERROR, TAG, "SendDeleteACLRequest : Truncated (snprintf) %d", snRet);
         return OC_STACK_ERROR;
     }
 
@@ -1632,7 +1632,7 @@ static void DeleteRemoveData_t(RemoveData_t* pRemoveData)
 static void registerResultForRemoveDevice(RemoveData_t *removeData, OicUuid_t *pLinkedDevId,
                                           OCStackResult stackresult, bool hasError)
 {
-    OIC_LOG_V(INFO, TAG, "Inside registerResultForRemoveDevice removeData->numOfResults is %zu\n",
+    OIC_LOG_V(INFO, TAG, "Inside registerResultForRemoveDevice removeData->numOfResults is %" PRIuPTR,
                          removeData->numOfResults + 1);
     if (pLinkedDevId)
     {
@@ -1669,7 +1669,7 @@ static void registerResultForRemoveDevice(RemoveData_t *removeData, OicUuid_t *p
 static void registerResultForResetDevice(RemoveData_t *removeData, OicUuid_t *pLinkedDevId,
                                           OCStackResult stackresult, bool hasError)
 {
-    OIC_LOG_V(INFO, TAG, "Inside registerResultForResetDevice removeData->numOfResults is %zu\n",
+    OIC_LOG_V(INFO, TAG, "Inside registerResultForResetDevice removeData->numOfResults is %" PRIuPTR,
                          removeData->numOfResults + 1);
     if (pLinkedDevId)
     {
@@ -2557,7 +2557,7 @@ static void registerResultForGetCredResourceCB(GetSecData_t *GetSecData,
                                              OCStackResult stackresult)
 {
    OIC_LOG_V(INFO, TAG, "Inside registerResultForGetCredResourceCB "
-           "GetSecData->numOfResults is %d\n", GetSecData->numOfResults);
+           "GetSecData->numOfResults is %d", GetSecData->numOfResults);
    memcpy(GetSecData->resArr[(GetSecData->numOfResults)].deviceId.id,
           GetSecData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
    GetSecData->resArr[(GetSecData->numOfResults)].res = stackresult;
@@ -2679,7 +2679,7 @@ static void registerResultForGetACLResourceCB(GetSecData_t *GetSecData,
                                              OCStackResult stackresult)
 {
    OIC_LOG_V(INFO, TAG, "Inside registerResultForGetACLResourceCB "
-           "GetSecData->numOfResults is %d\n", GetSecData->numOfResults);
+           "GetSecData->numOfResults is %d", GetSecData->numOfResults);
    memcpy(GetSecData->resArr[(GetSecData->numOfResults)].deviceId.id,
           GetSecData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
    GetSecData->resArr[(GetSecData->numOfResults)].res = stackresult;

@@ -166,6 +166,9 @@ const char * OIC_JSON_EOWNERID_NAME = "x.org.iotivity.eowneruuid";
 const char * OIC_JSON_ENCODING_NAME = "encoding";
 const char * OIC_JSON_DATA_NAME = "data";
 const char * OIC_JSON_SEC_V_NAME = "secv";
+const char * OIC_JSON_DOS_NAME = "dos";
+const char * OIC_JSON_S_NAME = "s";
+const char * OIC_JSON_P_NAME = "p";
 
 const char * OIC_JSON_EMPTY_STRING = "";
 

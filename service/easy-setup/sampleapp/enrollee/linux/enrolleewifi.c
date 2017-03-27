@@ -211,7 +211,7 @@ void SetDeviceInfo()
     char userValue_str[] = "user_str";
     g_userProperties.userValue_int = 0;
 
-    strncpy(g_userProperties.userValue_str, userValue_str, strlen(userValue_str));
+    strncpy(g_userProperties.userValue_str, userValue_str, strlen(userValue_str) + 1);
     SetUserProperties(&g_userProperties);
 
     if(ESSetDeviceProperty(&deviceProperty) == ES_ERROR)

@@ -60,7 +60,7 @@ OCStackResult OCParsePayload(OCPayload **outPayload, OCPayloadType payloadType,
     VERIFY_PARAM_NON_NULL(TAG, outPayload, "Conversion of outPayload failed");
     VERIFY_PARAM_NON_NULL(TAG, payload, "Invalid cbor payload value");
 
-    OIC_LOG_V(INFO, TAG, "CBOR Parsing size: %zu of Payload Type: %d, Payload:",
+    OIC_LOG_V(INFO, TAG, "CBOR Parsing size: %" PRIuPTR " of Payload Type: %d, Payload:",
             payloadSize, payloadType);
 
     CborParser parser;

@@ -92,8 +92,6 @@ elif liboctbstack_env.get('ROUTING') == 'EP':
 if target_os not in ['windows']:
     liboctbstack_env.AppendUnique(CFLAGS = ['-Wall'])
 
-liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-
 liboctbstack_env.PrependUnique(LIBS = ['ocsrm', 'coap', 'timer'])
 
 if target_os in ['linux'] and liboctbstack_env.get('SIMULATOR', False):
@@ -145,7 +143,6 @@ elif target_os not in ['darwin','ios', 'msys_nt', 'windows']:
 if target_os in ['darwin', 'ios']:
     env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
     liboctbstack_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
-    liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 if target_os not in ['arduino', 'windows']:
     liboctbstack_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 if target_os == 'android':

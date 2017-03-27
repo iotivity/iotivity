@@ -29,38 +29,47 @@
 
 #define TAG "CHPMap"
 
-int CHPGetOptionID(const char *httpOptionName)
+int CHPGetOptionID(const char *httpOptionNameStr)
 {
-    if (!httpOptionName)
+    if (!httpOptionNameStr)
     {
         OIC_LOG(ERROR, TAG, "HTTP option name is NULL");
         return 0;
     }
 
-    OICStringToLower((char *)httpOptionName);
+    char *httpOptionName = OICStrdup(httpOptionNameStr);
+    if (NULL == httpOptionName)
+    {
+        OIC_LOG(ERROR, TAG, "Could not duplicate HTTP option name");
+        return 0;
+    }
+
+    OICStringToLower(httpOptionName);
+    int ret = 0;
     if (0 == strcmp(httpOptionName, HTTP_OPTION_CACHE_CONTROL) ||
         0 == strcmp(httpOptionName, HTTP_OPTION_EXPIRES))
     {
-        return COAP_OPTION_MAXAGE;
+        ret = COAP_OPTION_MAXAGE;
     }
     else if (0 == strcmp(httpOptionName, HTTP_OPTION_IF_MATCH))
     {
-        return COAP_OPTION_IF_MATCH;
+        ret = COAP_OPTION_IF_MATCH;
     }
     else if (0 == strcmp(httpOptionName, HTTP_OPTION_IF_NONE_MATCH))
     {
-        return COAP_OPTION_IF_NONE_MATCH;
+        ret = COAP_OPTION_IF_NONE_MATCH;
     }
     else if (0 == strcmp(httpOptionName, HTTP_OPTION_ETAG))
     {
-        return COAP_OPTION_ETAG;
+        ret = COAP_OPTION_ETAG;
     }
     else
     {
         OIC_LOG_V(ERROR, TAG, "No Mapping found for %s", httpOptionName);
     }
 
-    return 0;
+    OICFree(httpOptionName);
+    return ret;
 }
 
 OCStackResult CHPGetOCCode(const HttpResponseResult_t httpCode, const OCMethod method,
@@ -156,22 +165,31 @@ OCStackResult CHPGetOCOption(const HttpHeaderOption_t *httpOption, OCHeaderOptio
     return OC_STACK_OK;
 }
 
-OCPayloadFormat CHPGetOCContentType(const char *httpContentType)
+OCPayloadFormat CHPGetOCContentType(const char *httpContentTypeStr)
 {
     OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
 
-    OICStringToLower((char *)httpContentType);
+    char *httpContentType = OICStrdup(httpContentTypeStr);
+    if (NULL == httpContentType)
+    {
+        OIC_LOG(ERROR, TAG, "Could not duplicate HTTP content type");
+        return OC_FORMAT_UNSUPPORTED;
+    }
+
+    OICStringToLower(httpContentType);
+    OCPayloadFormat ret = OC_FORMAT_UNSUPPORTED;
     if (strstr(httpContentType, CBOR_CONTENT_TYPE))
     {
-        return OC_FORMAT_CBOR;
+        ret = OC_FORMAT_CBOR;
     }
     else if (strstr(httpContentType, JSON_CONTENT_TYPE))
     {
-        return OC_FORMAT_JSON;
+        ret = OC_FORMAT_JSON;
     }
 
+    OICFree(httpContentType);
     OIC_LOG_V(DEBUG, TAG, "%s OUT", __func__);
-    return OC_FORMAT_UNSUPPORTED;
+    return ret;
 }
 
 OCStackResult CHPGetHttpMethod(const OCMethod method, HttpMethod_t *httpMethod)

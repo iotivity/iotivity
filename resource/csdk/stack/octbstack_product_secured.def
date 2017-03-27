@@ -23,6 +23,7 @@ OCDeleteRoleCertificateByCredId
 OCDeleteUuidList
 OCDiscoverOwnedDevices
 OCDiscoverSingleDevice
+OCDiscoverSingleDeviceInUnicast
 OCDiscoverUnownedDevices
 OCDoOwnershipTransfer
 OCGenerateCACertificate
@@ -56,6 +57,7 @@ OCResetDevice
 OCResetSVRDB
 OCSaveTrustCertChain
 OCSaveOwnCertChain
+OCSelectOwnershipTransferMethod
 OCSetOwnerTransferCallbackData
 OCUnlinkDevices
 OCSetOxmAllowStatus

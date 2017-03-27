@@ -24,7 +24,6 @@
 #include <string>
 #include <map>
 #include <cstdlib>
-#include <cinttypes>
 #include <pthread.h>
 #include <mutex>
 #include <condition_variable>
@@ -410,7 +409,7 @@ static int InputACL(OicSecAcl_t *acl)
     //Set Resource.
     size_t resourcesLen = 0;
     printf("Num. of Resource : ");
-    ret = scanf("%zu", &resourcesLen);
+    ret = scanf("%" PRIuPTR, &resourcesLen);
     if ((1 != ret) || (resourcesLen <= 0 || resourcesLen > 50))
     {
         deleteACL(acl);
@@ -431,7 +430,7 @@ static int InputACL(OicSecAcl_t *acl)
 
         LL_APPEND(ace->resources, rsrc);
 
-        printf("[%zu]Resource : ", i + 1);
+        printf("[%" PRIuPTR "]Resource : ", i + 1);
         ret = scanf("%64ms", &temp_rsc);
         if (1 != ret)
         {
@@ -666,7 +665,7 @@ static OicSecPdAcl_t* InputPdACL()
 
     //Set Resource.
     printf("Num. of Resource : ");
-    ret = scanf("%zu", &acl->resourcesLen);
+    ret = scanf("%" PRIuPTR, &acl->resourcesLen);
     if ((1 != ret) || (acl->resourcesLen <= 0 || acl->resourcesLen > 50))
     {
         printf("Error while input\n");
@@ -684,7 +683,7 @@ static OicSecPdAcl_t* InputPdACL()
     }
     for (size_t i = 0; i < acl->resourcesLen; i++)
     {
-        printf("[%zu]Resource : ", i + 1);
+        printf("[%" PRIuPTR "]Resource : ", i + 1);
         ret = scanf("%64ms", &temp_rsc);
         if (1 != ret)
         {

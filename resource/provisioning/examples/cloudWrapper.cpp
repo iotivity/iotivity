@@ -254,7 +254,7 @@ static int ReadFile(const char *name, OCByteString *crl)
     realLen = fread(buffer, length, 1, file);
     if (realLen != (size_t)length)
     {
-        OIC_LOG_V(ERROR, TAG, "Length mismatch: read %zu instead of %d bytes", realLen, length);
+        OIC_LOG_V(ERROR, TAG, "Length mismatch: read %" PRIuPTR " instead of %d bytes", realLen, length);
         goto exit;
     }
 
