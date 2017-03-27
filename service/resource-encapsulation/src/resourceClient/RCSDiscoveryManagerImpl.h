@@ -130,7 +130,8 @@ namespace OIC
                  * @see PrimitiveResource
                  */
                 void onResourceFound(std::shared_ptr< PrimitiveResource > resource, ID discoveryId,
-                        const RCSDiscoveryManager::ResourceDiscoveredCallback& cb);
+                        const RCSDiscoveryManager::ResourceDiscoveredCallback& cb,
+                        const std::string& uri);
 
                 /**
                  * Discover resource on all requests and posting timer when timer is expired
