@@ -770,7 +770,7 @@ static void CAReceiveMessage(CASocketFd_t fd)
             nbRead = tlsLength - svritem->tlsLen;
         }
 
-        len = recv(fd, svritem->tlsdata + svritem->tlsLen, (int)nbRead, 0);
+        len = recv(fd, (char*)svritem->tlsdata + svritem->tlsLen, (int)nbRead, 0);
         if (len < 0)
         {
             OIC_LOG_V(ERROR, TAG, "recv failed %s", strerror(errno));
@@ -802,7 +802,7 @@ static void CAReceiveMessage(CASocketFd_t fd)
         svritem->protocol = COAP;
 
         // svritem->tlsdata can also be used as receiving buffer in case of raw tcp
-        len = recv(fd, svritem->tlsdata, sizeof(svritem->tlsdata), 0);
+        len = recv(fd, (char*)svritem->tlsdata, sizeof(svritem->tlsdata), 0);
         if (len < 0)
         {
             OIC_LOG_V(ERROR, TAG, "recv failed %s", strerror(errno));
@@ -887,7 +887,7 @@ static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
     svritem->fd = fd;
 
     // #2. convert address from string to binary.
-    struct sockaddr_storage sa = { .ss_family = family };
+    struct sockaddr_storage sa = { .ss_family = (short)family };
     CAResult_t res = CAConvertNameToAddr(svritem->sep.endpoint.addr,
                                          svritem->sep.endpoint.port, &sa);
     if (CA_STATUS_OK != res)
@@ -943,7 +943,7 @@ static CASocketFd_t CACreateAcceptSocket(int family, CASocket_t *sock)
     }
 
     socklen_t socklen = 0;
-    struct sockaddr_storage server = { .ss_family = family };
+    struct sockaddr_storage server = { .ss_family = (short)family };
 
     CASocketFd_t fd = socket(family, SOCK_STREAM, IPPROTO_TCP);
     if (OC_INVALID_SOCKET == fd)
@@ -1198,13 +1198,13 @@ void CATCPSetConnectionChangedCallback(CATCPConnectionHandleCallback connHandler
 
 size_t CACheckPayloadLengthFromHeader(const void *data, size_t dlen)
 {
-    VERIFY_NON_NULL_RET(data, TAG, "data", -1);
+    VERIFY_NON_NULL_RET(data, TAG, "data", 0);
 
     coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(
             ((unsigned char *)data)[0] >> 4);
 
     coap_pdu_t *pdu = coap_pdu_init2(0, 0,
-                                     ntohs(COAP_INVALID_TID),
+                                     ntohs((unsigned short)COAP_INVALID_TID),
                                      dlen, transport);
     if (!pdu)
     {

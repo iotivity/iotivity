@@ -292,10 +292,10 @@ void CATCPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
 
 static void CAInitializeTCPGlobals()
 {
-    caglobals.tcp.ipv4.fd = -1;
-    caglobals.tcp.ipv4s.fd = -1;
-    caglobals.tcp.ipv6.fd = -1;
-    caglobals.tcp.ipv6s.fd = -1;
+    caglobals.tcp.ipv4.fd = OC_INVALID_SOCKET;
+    caglobals.tcp.ipv4s.fd = OC_INVALID_SOCKET;
+    caglobals.tcp.ipv6.fd = OC_INVALID_SOCKET;
+    caglobals.tcp.ipv6s.fd = OC_INVALID_SOCKET;
 
     // Set the port number received from application.
     caglobals.tcp.ipv4.port = caglobals.ports.tcp.u4;
@@ -568,7 +568,6 @@ void CATCPSendDataThread(void *threadData)
     else
     {
         // Check payload length from CoAP over TCP format header.
-        CAResult_t result = CA_STATUS_OK;
         size_t payloadLen = CACheckPayloadLengthFromHeader(tcpData->data, tcpData->dataLen);
         if (!payloadLen)
         {
@@ -585,32 +584,33 @@ void CATCPSendDataThread(void *threadData)
         }
 
 #ifdef __WITH_TLS__
-         if (tcpData->remoteEndpoint && tcpData->remoteEndpoint->flags & CA_SECURE)
-         {
-             OIC_LOG(DEBUG, TAG, "CAencryptSsl called!");
-             result = CAencryptSsl(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen);
+        CAResult_t result = CA_STATUS_OK;
+        if (tcpData->remoteEndpoint && tcpData->remoteEndpoint->flags & CA_SECURE)
+        {
+            OIC_LOG(DEBUG, TAG, "CAencryptSsl called!");
+            result = CAencryptSsl(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen);
 
-             if (CA_STATUS_OK != result)
-             {
-                 OIC_LOG(ERROR, TAG, "CAAdapterNetDtlsEncrypt failed!");
-                 CASearchAndDeleteTCPSession(tcpData->remoteEndpoint);
-                 CATCPErrorHandler(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen,
-                                   CA_SEND_FAILED);
-             }
-             OIC_LOG_V(DEBUG, TAG,
-                       "CAAdapterNetDtlsEncrypt returned with result[%d]", result);
-            return;
-         }
+            if (CA_STATUS_OK != result)
+            {
+                OIC_LOG(ERROR, TAG, "CAAdapterNetDtlsEncrypt failed!");
+                CASearchAndDeleteTCPSession(tcpData->remoteEndpoint);
+                CATCPErrorHandler(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen,
+                                  CA_SEND_FAILED);
+            }
+            OIC_LOG_V(DEBUG, TAG,
+                      "CAAdapterNetDtlsEncrypt returned with result[%d]", result);
+           return;
+        }
 #endif
         //Processing for sending unicast
-         ssize_t dlen = CATCPSendData(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen);
-         if (-1 == dlen)
-         {
-             OIC_LOG(ERROR, TAG, "CATCPSendData failed");
-             CASearchAndDeleteTCPSession(tcpData->remoteEndpoint);
-             CATCPErrorHandler(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen,
-                               CA_SEND_FAILED);
-         }
+        ssize_t dlen = CATCPSendData(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen);
+        if (-1 == dlen)
+        {
+            OIC_LOG(ERROR, TAG, "CATCPSendData failed");
+            CASearchAndDeleteTCPSession(tcpData->remoteEndpoint);
+            CATCPErrorHandler(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen,
+                              CA_SEND_FAILED);
+        }
     }
 }
 

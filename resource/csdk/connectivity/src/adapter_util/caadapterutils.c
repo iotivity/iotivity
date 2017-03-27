@@ -374,6 +374,13 @@ void CALogSendStateInfo(CATransportAdapter_t adapter,
                         const char *addr, uint16_t port, ssize_t sentLen,
                         bool isSuccess, const char* message)
 {
+#ifndef TB_LOG
+    OC_UNUSED(addr);
+    OC_UNUSED(port);
+    OC_UNUSED(sentLen);
+    OC_UNUSED(message);
+#endif
+
     OIC_LOG(DEBUG, CA_ADAPTER_UTILS_TAG, "CALogSendStateInfo");
     OIC_LOG(DEBUG, ANALYZER_TAG, "=================================================");
 
