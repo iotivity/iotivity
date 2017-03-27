@@ -94,14 +94,24 @@ notification_consumer_wrapper_test_env.AppendUnique(LIBS = ['notification_consum
 notification_provider_wrapper_test_env = notification_wrapper_test_env.Clone()
 notification_provider_wrapper_test_env.AppendUnique(LIBS = ['notification_provider_wrapper','notification_provider'])
 
-notification_consumer_wrapper_test_src = env.Glob('./NSConsumerServiceTest.cpp')
+notification_consumer_wrapper_test_src = env.Glob('./NSConsumerServiceTest2.cpp')
 notification_consumer_wrapper_test = notification_consumer_wrapper_test_env.Program('notification_consumer_wrapper_test', notification_consumer_wrapper_test_src)
 Alias("notification_consumer_wrapper_test", notification_consumer_wrapper_test)
 env.AppendTarget('notification_consumer_wrapper_test')
 
-notification_provider_wrapper_test_src = env.Glob('./NSProviderServiceTest.cpp')
+notification_consumer_wrapper_test_src = env.Glob('./NSConsumerServiceTest.cpp')
+notification_consumer_wrapper_internaltest = notification_consumer_wrapper_test_env.Program('notification_consumer_wrapper_internaltest', notification_consumer_wrapper_test_src)
+Alias("notification_consumer_wrapper_internaltest", notification_consumer_wrapper_internaltest)
+env.AppendTarget('notification_consumer_wrapper_test')
+
+notification_provider_wrapper_test_src = env.Glob('./NSProviderServiceTest2.cpp')
 notification_provider_wrapper_test = notification_provider_wrapper_test_env.Program('notification_provider_wrapper_test', notification_provider_wrapper_test_src)
 Alias("notification_provider_wrapper_test", notification_provider_wrapper_test)
+env.AppendTarget('notification_provider_wrapper_test')
+
+notification_provider_wrapper_test_src = env.Glob('./NSProviderServiceTest.cpp')
+notification_provider_wrapper_internaltest = notification_provider_wrapper_test_env.Program('notification_provider_wrapper_internaltest', notification_provider_wrapper_test_src)
+Alias("notification_provider_wrapper_internaltest", notification_provider_wrapper_internaltest)
 env.AppendTarget('notification_provider_wrapper_test')
 
 if env.get('TEST') == '1':
