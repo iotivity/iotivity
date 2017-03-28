@@ -133,7 +133,7 @@ bool NSStopScheduler()
             NSTask* temp = NSHeadMsg[i];
             NSHeadMsg[i] = NSHeadMsg[i]->nextTask;
             NSFreeData(i, temp);
-            OICFree(temp);
+            NSOICFree(temp);
         }
 
         NSTailMsg[i] = NSHeadMsg[i] = NULL;
@@ -277,14 +277,14 @@ void NSFreeData(NSSchedulerType type, NSTask * task)
             case TASK_UNSUBSCRIBE_TOPIC:
             {
                 NSCacheTopicSubData * data = task->taskData;
-                OICFree(data->topicName);
-                OICFree(data);
+                NSOICFree(data->topicName);
+                NSOICFree(data);
             }
                 break;
             case TASK_REGISTER_TOPIC:
             case TASK_UNREGISTER_TOPIC:
             {
-                OICFree(task->taskData);
+                NSOICFree(task->taskData);
             }
                 break;
             case TASK_SEND_TOPICS:
