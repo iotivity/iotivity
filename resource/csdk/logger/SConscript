@@ -1,6 +1,5 @@
 Import('env')
 import os
-log_level = env.get('LOG_LEVEL')
 
 build_dir = env.get('BUILD_DIR')
 
@@ -33,19 +32,5 @@ if env.get('TARGET_OS') in ['arduino']:
 else:
 	logger_src = ['./src/logger.c', './src/trace.c']
 
-if log_level == 'INFO':
-	env.AppendUnique(CPPDEFINES = ['SET_LOG_INFO'])
-	print "SET_LOG_INFO"
-if log_level == 'ERROR':
-	env.AppendUnique(CPPDEFINES = ['SET_LOG_ERROR'])
-	print "SET_LOG_ERROR"
-if log_level == 'WARNING':
-	env.AppendUnique(CPPDEFINES = ['SET_LOG_WARNING'])
-	print "SET_LOG_WARNING"
-if log_level == 'FATAL':
-	env.AppendUnique(CPPDEFINES = ['SET_LOG_FATAL'])
-	print "SET_LOG_FATAL"
-
 loggerlib = local_env.StaticLibrary('logger', logger_src)
 local_env.InstallTarget(loggerlib, 'logger')
-

@@ -62,6 +62,11 @@ extern "C"
 // Max buffer size used in variable argument log function
 #define MAX_LOG_V_BUFFER_SIZE (256)
 
+// Setting this flag for a log level means that the corresponding log message
+// contains private data. This kind of message is logged only when a call to
+// OCSetLogLevel() enabled private data logging.
+#define OC_LOG_PRIVATE_DATA (1 << 31)
+
 // Log levels
 #ifdef __TIZEN__
 typedef enum {
@@ -72,7 +77,6 @@ typedef enum {
     FATAL = DLOG_ERROR,
     DEBUG_LITE = DLOG_INFO,
     INFO_LITE = DLOG_INFO,
-    INFO_PRIVATE = 255,
 } LogLevel;
 #else
 
@@ -89,22 +93,26 @@ typedef enum {
     FATAL,
     DEBUG_LITE,       // The DEBUG log for Lite device
     INFO_LITE,        // The INFO log for Lite device
-    INFO_PRIVATE      // The log contained private data
 } LogLevel;
 
 #endif // __TIZEN__
 
-#ifdef SET_LOG_INFO
-#define IF_OC_PRINT_LOG_LEVEL(level) if (INFO <= (level))
-#elif defined(SET_LOG_ERROR)
-#define IF_OC_PRINT_LOG_LEVEL(level) if (ERROR <= (level) && INFO_PRIVATE != (level))
-#elif defined(SET_LOG_WARNING)
-#define IF_OC_PRINT_LOG_LEVEL(level) if (WARNING <= (level) && INFO_PRIVATE != (level))
-#elif defined(SET_LOG_FATAL)
-#define IF_OC_PRINT_LOG_LEVEL(level) if (FATAL <= (level) && INFO_PRIVATE != (level))
+#define DEBUG_PRIVATE       ((OC_LOG_PRIVATE_DATA) | (DEBUG))
+#define INFO_PRIVATE        ((OC_LOG_PRIVATE_DATA) | (INFO))
+#define WARNING_PRIVATE     ((OC_LOG_PRIVATE_DATA) | (WARNING))
+#define ERROR_PRIVATE       ((OC_LOG_PRIVATE_DATA) | (ERROR))
+#define FATAL_PRIVATE       ((OC_LOG_PRIVATE_DATA) | (FATAL))
+
+#ifndef OC_LOG_LEVEL
+#define OC_MINIMUM_LOG_LEVEL    (DEBUG)
 #else
-#define IF_OC_PRINT_LOG_LEVEL(level) if (INFO_PRIVATE != (level))
+#define OC_MINIMUM_LOG_LEVEL    (OC_LOG_LEVEL)
 #endif
+
+// Perform signed comparison here, to avoid compiler warnings caused by
+// unsigned comparison with DEBUG (i.e., with value 0 on some platforms).
+#define IF_OC_PRINT_LOG_LEVEL(level) \
+    if (((int)OC_MINIMUM_LOG_LEVEL) <= ((int)(level & (~OC_LOG_PRIVATE_DATA))))
 
 /**
  * Set log level and privacy log to print.
@@ -123,10 +131,10 @@ void OCSetLogLevel(LogLevel level, bool hidePrivateLogEntries);
  * @param[in]    buffer     pointer to buffer of bytes
  * @param[in]    bufferSize max number of byte in buffer
  */
-void OCLogBuffer(LogLevel level, const char* tag, const uint8_t* buffer, size_t bufferSize);
+void OCLogBuffer(int level, const char* tag, const uint8_t* buffer, size_t bufferSize);
 
-#define OCLog(level,tag,mes) LOG_(LOG_ID_MAIN, (level), (tag), mes)
-#define OCLogv(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, (level),tag,fmt,##args)
+#define OCLog(level,tag,mes) LOG_(LOG_ID_MAIN, ((level) & (~OC_LOG_PRIVATE_DATA)), (tag), mes)
+#define OCLogv(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, ((level) & (~OC_LOG_PRIVATE_DATA)),tag,fmt,##args)
 #elif !defined(ARDUINO)
     /**
      * Configure logger to use a context that defines a custom logger function
@@ -155,7 +163,7 @@ void OCLogBuffer(LogLevel level, const char* tag, const uint8_t* buffer, size_t 
      * @param tag    - Module name
      * @param format - variadic log string
      */
-    void OCLogv(LogLevel level, const char * tag, const char * format, ...)
+    void OCLogv(int level, const char * tag, const char * format, ...)
 #if defined(__GNUC__)
     __attribute__ ((format(printf, 3, 4)))
 #endif
@@ -169,7 +177,7 @@ void OCLogBuffer(LogLevel level, const char* tag, const uint8_t* buffer, size_t 
      * @param tag    - Module name
      * @param logStr - log string
      */
-    void OCLog(LogLevel level, const char * tag, const char * logStr);
+    void OCLog(int level, const char * tag, const char * logStr);
 
     /**
      * Output the contents of the specified buffer (in hex) with the specified priority level.
@@ -179,7 +187,7 @@ void OCLogBuffer(LogLevel level, const char* tag, const uint8_t* buffer, size_t 
      * @param buffer     - pointer to buffer of bytes
      * @param bufferSize - max number of byte in buffer
      */
-    void OCLogBuffer(LogLevel level, const char* tag, const uint8_t* buffer, size_t bufferSize);
+    void OCLogBuffer(int level, const char* tag, const uint8_t* buffer, size_t bufferSize);
 #else  // For arduino platforms
     /**
      * Initialize the serial logger for Arduino
@@ -196,7 +204,7 @@ void OCLogBuffer(LogLevel level, const char* tag, const uint8_t* buffer, size_t 
      * @param lineNum- line Number
      * @param logStr - log string
      */
-    void OCLog(LogLevel level, PROGMEM const char *tag, const int lineNum,
+    void OCLog(int level, PROGMEM const char *tag, const int lineNum,
                PROGMEM const char *logStr);
 
     /**
@@ -207,7 +215,7 @@ void OCLogBuffer(LogLevel level, const char* tag, const uint8_t* buffer, size_t 
      * @param buffer     - pointer to buffer of bytes
      * @param bufferSize - max number of byte in buffer
      */
-    void OCLogBuffer(LogLevel level, const char* tag, const uint8_t* buffer, size_t bufferSize);
+    void OCLogBuffer(int level, const char* tag, const uint8_t* buffer, size_t bufferSize);
 
     /**
      * Output a variable argument list log string with the specified priority level.
@@ -217,7 +225,7 @@ void OCLogBuffer(LogLevel level, const char* tag, const uint8_t* buffer, size_t 
      * @param lineNum- line Number
      * @param format - variadic log string
      */
-    void OCLogv(LogLevel level, PROGMEM const char *tag, const int lineNum,
+    void OCLogv(int level, PROGMEM const char *tag, const int lineNum,
                 PROGMEM const char *format, ...)
 #if defined(__GNUC__)
     __attribute__ ((format(printf, 4, 5)))

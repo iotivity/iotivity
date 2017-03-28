@@ -513,6 +513,8 @@ if ('PUB' in with_mq):
 if ('BROKER' in with_mq):
     env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
 
+env.AppendUnique(CPPDEFINES = {'OC_LOG_LEVEL' : env.get('LOG_LEVEL')})
+
 if env.get('LOGGING'):
     env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
