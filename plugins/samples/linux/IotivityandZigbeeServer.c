@@ -69,7 +69,7 @@ int main()
     }
 
     // PIStartPlugin
-    PIPlugin* plugin = NULL;
+    PIPluginPtr plugin = NULL;
     OIC_LOG(INFO, TAG, "IoTivity Initialized properly, Starting Zigbee Plugin...");
     result = PIStartPlugin(defaultComPort, PLUGIN_ZIGBEE, &plugin);
     if (result != OC_STACK_OK)
