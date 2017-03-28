@@ -22,7 +22,7 @@ def cleanup(iotivity_base_path, exe_path):
     dat_file_dest = exe_path
     shutil.copy(dat_file_src, dat_file_dest)
 
-    # Copy fresh oic_svr_db_client.dat 
+    # Copy fresh oic_svr_db_client.dat
     dat_file_src = os.path.join(iotivity_base_path, 'resource', 'examples', 'oic_svr_db_client.dat' )
     dat_file_dest = exe_path
     shutil.copy(dat_file_src, dat_file_dest)
@@ -41,6 +41,9 @@ def print_environment():
 
 ### main ###
 
+# Number of unit tests in autoprovisioningclient
+NUM_TESTS = 5
+
 usage = '''
  Run end-to-end certificate tests between autoprovisioningclient and sampleserver_justworks
  Usage Notes
@@ -58,13 +61,11 @@ parser = argparse.ArgumentParser(
     description=usage
 )
 
-parser.add_argument('--arch', nargs='?', choices = ['amd64', 'x86', 'arm'], help= 'Architecture, one of x86, amd64 or arm. Defaults to amd64', default='amd64')
-parser.add_argument('--build', nargs='?', choices = ['debug', 'release'], help= 'Build type, one of debug or release. Defaults to debug', default='debug')
+parser.add_argument('--arch', nargs='?', choices = ['amd64', 'x86', 'arm'], help= 'Architecture, one of x86, amd64 or arm. Defaults to amd64.', default='amd64')
+parser.add_argument('--build', nargs='?', choices = ['debug', 'release'], help= 'Build type, one of debug or release. Defaults to debug.', default='debug')
+parser.add_argument('--onetest', nargs='?', choices = ['1', '...', str(NUM_TESTS)], help= 'Run a single test, specified by number. By default all tests are run.')
 
 args = parser.parse_args()
-
-# Number of unit tests in autoprovisioningclient
-NUM_TESTS = 3
 
 iotivity_base_path = os.getcwd()
 os_name = platform.system()
@@ -85,7 +86,16 @@ os.chdir(exe_path)
 
 output_text = ""
 num_failures = 0
-for i in range(1, NUM_TESTS + 1):
+
+test_range = range(1, NUM_TESTS + 1)    #default to running all tests
+if args.onetest:
+    try:
+        test_range = range(int(args.onetest), int(args.onetest) + 1)
+    except ValueError:
+        print 'invalid argument to --onetest'
+        sys.exit(-1)
+
+for i in test_range:
     print '\nRunning test %d...\n' % i
 
     # Clear state from previous test
@@ -114,7 +124,7 @@ for i in range(1, NUM_TESTS + 1):
 
 
 print "\n------------------------------------"
-print " Test Results: %d of %d tests passed" % (NUM_TESTS - num_failures, NUM_TESTS)
+print " Test Results: %d of %d tests passed" % (len(test_range) - num_failures, len(test_range))
 print "------------------------------------"
 print output_text
 print '\n'

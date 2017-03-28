@@ -24,6 +24,7 @@
 #include "cainterface.h"
 #include "securevirtualresourcetypes.h"
 #include "octypes.h"
+#include "rolesresource.h"
 #include <cbor.h>
 
 #ifdef __cplusplus
@@ -125,13 +126,13 @@ OCStackResult AddCredential(OicSecCred_t * cred);
 
 /**
  * Function to remove credentials from the SVR DB for the given subject UUID.
- * If multiple credentials exist for the UUID, they will all be removed. 
+ * If multiple credentials exist for the UUID, they will all be removed.
  *
  * @param subject is the Credential Subject to be deleted.
  *
- * @return ::OC_STACK_RESOURCE_DELETED if credentials were removed, or 
+ * @return ::OC_STACK_RESOURCE_DELETED if credentials were removed, or
  * if there are no credentials with the given UUID.  An error is returned if
- * removing credentials failed. 
+ * removing credentials failed.
  */
 OCStackResult RemoveCredential(const OicUuid_t *subject);
 
@@ -221,6 +222,18 @@ OCStackResult GetCredRownerId(OicUuid_t *rowneruuid);
  * @param[in] usage credential usage string.
  */
 OCStackResult GetPemCaCert(ByteArray_t * crt, const char * usage);
+
+/**
+ * Get a list of all role certificates. Used when asserting roles.
+ *
+ * @param[out] roleCerts list of role certificates
+ * @return When ::OC_STACK_OK is returned, a list of certificates (roleCerts)
+ *         that must be freed with FreeRoleCertChainList. roleCerts can still
+ *         be NULL in this case, if no role certs are installed. On error, an
+ *         error value is returned and roleCerts is NULL.
+ */
+OCStackResult GetAllRoleCerts(RoleCertChain_t** roleCerts);
+
 /**
  * Used by mbedTLS to retrieve own certificate chain
  *

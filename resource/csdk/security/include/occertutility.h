@@ -132,7 +132,7 @@ OCStackResult OCGenerateIdentityCertificate(
     size_t *certificateLen);
 
 /**
- * Generate a certificate for a device's role.
+ * Generate a role certificate for a device.
  *
  * @param subjectUuid           UUID for the device to use the certificate.
  * @param subjectPublicKey      Subject's public key in PEM format
@@ -176,7 +176,7 @@ OCStackResult OCGenerateRoleCertificate(
  * @param[in]  csr  The CSR containing the UUID as null-terminated PEM.
  * @param[out] uuid The UUID in the CSR
  *
- * @return 0 on success, nonzero otherwise
+ * @return OC_STACK_OK if successful, error code otherwise
  */
 OCStackResult OCGetUuidFromCSR(const char* csr, OicUuid_t* uuid);
 
@@ -187,7 +187,7 @@ OCStackResult OCGetUuidFromCSR(const char* csr, OicUuid_t* uuid);
  * @param[out] publicKey The public key is output here as null-terminated PEM.
  *                       Callers must call OICFree when finished.
  *
- * @return 0 on success, nonzero otherwise
+ * @return OC_STACK_OK if successful, error code otherwise
  */
 OCStackResult OCGetPublicKeyFromCSR(const char* csr, char** publicKey);
 
@@ -196,7 +196,7 @@ OCStackResult OCGetPublicKeyFromCSR(const char* csr, char** publicKey);
  *
  * @param[in] csr The CSR to check, as null-terminated PEM.
  *
- * @returns 0 on success, nonzero otherwise
+ * @return OC_STACK_OK if successful, error code otherwise
  *
  * @remark Requires that ECDSA with SHA-256 be used for the signature.
  */
@@ -207,11 +207,11 @@ OCStackResult OCVerifyCSRSignature(const char* csr);
  *
  * @param[in] derCSR The CSR to convert, encoded as DER
  * @param[in] derCSRLen Then number of bytes in derCSR
- * @param[out] pemCSR The output, PEM encoded, null-terminated CSR. Callers 
- *                    call OICFree when finished. 
+ * @param[out] pemCSR The output, PEM encoded, null-terminated CSR. Callers
+ *                    call OICFree when finished.
  *
- * @returns 0 on success, nonzero otherwise
-*/
+ * @return OC_STACK_OK if successful, error code otherwise
+ */
 OCStackResult OCConvertDerCSRToPem(const char* derCSR, size_t derCSRLen, char** pemCSR);
 
 #ifdef __cplusplus

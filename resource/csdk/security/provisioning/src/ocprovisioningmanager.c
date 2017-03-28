@@ -179,7 +179,7 @@ OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **
  * The function will return when security information for device with deviceID has been obtained or the
  * timeout has been exceeded.
  *
- * @param[in]  timeoutSeconds  Maximum time, in seconds, this function will listen for responses from 
+ * @param[in]  timeoutSeconds  Maximum time, in seconds, this function will listen for responses from
  *                             servers before returning.
  * @param[in]  deviceID        deviceID of target device.
  * @param[out] ppFoundDevice   OCProvisionDev_t of discovered device. Caller should use
@@ -187,7 +187,7 @@ OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **
  * @return OC_STACK_OK in case of success and other values otherwise.
  */
 OCStackResult OCDiscoverMultipleOwnerEnabledSingleDevice(unsigned short timeoutSeconds,
-                                                         const OicUuid_t* deviceID, 
+                                                         const OicUuid_t* deviceID,
                                                          OCProvisionDev_t **ppFoundDevice)
 {
     if ((NULL == ppFoundDevice) || (NULL != *ppFoundDevice) || (0 == timeoutSeconds) || (NULL == deviceID))
@@ -340,29 +340,49 @@ void OCDeleteDiscoveredDevices(OCProvisionDev_t *pList)
 }
 
 /**
- * this function sends ACL information to resource.
+ * This function sends ACL information to resource.
  *
  * @param[in] ctx Application context would be returned in result callback.
  * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] acl ACL to provision.
  * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
-              request recieves a response from resource server.
+ *            request receives a response from resource server.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OCProvisionACL(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecAcl_t *acl,
                              OCProvisionResultCB resultCallback)
 {
-    return SRPProvisionACL(ctx, selectedDeviceInfo, acl, OIC_SEC_ACL_V1, resultCallback);
+    /*
+     * Determine whether this is a version 1 or version 2 ACL. We can't just always use V2 here
+     * since we may be provisioning an IoTivity 1.2 device.
+     */
+
+    OicSecAclVersion_t aclVersion = OIC_SEC_ACL_V1; /* default to v1 */
+    if (acl->aces != NULL)
+    {
+        /* If any of the aces have the role subject, the ACL is v2 */
+        OicSecAce_t* ace = NULL;
+        LL_FOREACH(acl->aces, ace)
+        {
+            if (ace->subjectType == OicSecAceRoleSubject)
+            {
+                aclVersion = OIC_SEC_ACL_V2;
+                break;
+            }
+        }
+    }
+
+    return SRPProvisionACL(ctx, selectedDeviceInfo, acl, aclVersion, resultCallback);
 }
 
 /**
- * this function sends ACL information to resource.
+ * This function sends ACL information to resource.
  *
  * @param[in] ctx Application context would be returned in result callback.
  * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] acl ACL to provision.
  * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
-              request recieves a response from resource server.
+ *            request recieves a response from resource server.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OCProvisionACL2(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecAcl_t *acl,
@@ -1501,6 +1521,26 @@ OCStackResult OCSaveOwnCertChain(const char* cert, const char* key, uint16_t *cr
     ownKey.encoding = OIC_ENCODING_PEM;
 
     return SRPSaveOwnCertChain(&ownCert, &ownKey, credId);
+}
+
+/**
+ * Function to save own role certificate into Cred of SVR.
+ *
+ * @param[in] cert own role certificate to be saved in Cred of SVR.
+ * @param[out] credId CredId of saved trust certificate chain in Cred of SVR.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ *
+ * @note The certificate public key must be the same as public key in the identity
+ *       certificate (installed by OCSaveOwnCertChain).
+ */
+OCStackResult OCSaveOwnRoleCert(const char* cert, uint16_t *credId)
+{
+    OicSecKey_t ownCert = { 0 };
+    ownCert.data = (uint8_t*)cert;
+    ownCert.len = strlen(cert) + 1;
+    ownCert.encoding = OIC_ENCODING_PEM;
+
+    return SRPSaveOwnRoleCert(&ownCert, credId);
 }
 
 /**

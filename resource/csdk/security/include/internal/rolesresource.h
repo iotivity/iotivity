@@ -61,7 +61,7 @@ OCStackResult DeInitRolesResource();
  *                          On success, caller must free the received array with OICFree when finished
  * @param[out] roleCount    Variable to receive length of roles array.
  *
- * @note If the endpoint is found but has not asserted any roles with certificates, 
+ * @note If the endpoint is found but has not asserted any roles with certificates,
  *       OC_STACK_OK will be returned, but NULL will be returned in roles and 0 in roleCount.
  *
  * @return OC_STACK_OK if list of roles is successfully populated; error otherwise.
@@ -76,9 +76,23 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
  * @param[in] size Size of cborPayload
  * @param[out] roleCertList Pointer to receive linked list of RoleCertChain_t objects
  *             On success, caller must call FreeRoleCertChainList on *roleCertList when finished
+ *
  * @return OC_STACK_OK if payload is successfully converted; error code otherwise
  */
 OCStackResult CBORPayloadToRoles(const uint8_t *cborPayload, size_t size, RoleCertChain_t **roleCertList);
+
+/**
+ * This function converts a list of role certificates into a CBOR payload.
+ * Caller needs to call 'OICFree' on *cborPayload after use.
+ *
+ * @param[in] roles Linked list of RoleCertChain_t objects
+ * @param[out] cborPayload Pointer to receive the CBOR payload
+ *             On success, caller must call OICFree on *cborPayload when finished
+ * @param[out] size Pointer to receive size of cborPayload
+ *
+ * @return OC_STACK_OK if payload is successfully converted; error code otherwise
+ */
+OCStackResult RolesToCBORPayload(const RoleCertChain_t *roles, uint8_t **cborPayload, size_t *cborSize);
 
 /**
  * Free the memory used by a list of RoleCertChain_t objects created by CBORPayloadToRoles.

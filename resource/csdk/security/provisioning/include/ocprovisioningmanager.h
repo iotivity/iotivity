@@ -153,10 +153,10 @@ OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **
 #ifdef MULTIPLE_OWNER
 /**
  * The function is responsible for the discovery of an MOT-enabled device with the specified deviceID.
- * The function will return when security information for device with deviceID has been obtained or the 
+ * The function will return when security information for device with deviceID has been obtained or the
  * timeout has been exceeded.
  *
- * @param[in]  timeoutSeconds  Maximum time, in seconds, this function will listen for responses from 
+ * @param[in]  timeoutSeconds  Maximum time, in seconds, this function will listen for responses from
  *                             servers before returning.
  * @param[in]  deviceID        deviceID of target device.
  * @param[out] ppFoundDevice   OCProvisionDev_t of discovered device. Caller should use
@@ -164,7 +164,7 @@ OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **
  * @return OC_STACK_OK in case of success and other values otherwise.
  */
 OCStackResult OCDiscoverMultipleOwnerEnabledSingleDevice(unsigned short timeoutSeconds,
-                                                         const OicUuid_t *deviceID, 
+                                                         const OicUuid_t *deviceID,
                                                          OCProvisionDev_t **ppFoundDevice);
 
 /**
@@ -400,7 +400,7 @@ OCStackResult OCProvisionPreconfigPin(void *ctx,
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OCAddPreconfigPin(const OCProvisionDev_t *targetDeviceInfo,
-                                const char *preconfigPin, 
+                                const char *preconfigPin,
                                 size_t preconfigPinLen);
 
 /**
@@ -626,6 +626,18 @@ OCStackResult OCSaveTrustCertChain(const uint8_t *trustCertChain, size_t chainSi
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OCSaveOwnCertChain(const char* cert, const char* key, uint16_t *credId);
+
+/**
+ * Function to save own role certificate into Cred of SVR.
+ *
+ * @param[in] cert Certificate chain to be saved in Cred of SVR, PEM encoded, null terminated
+ * @param[out] credId CredId of saved trust certificate chain in Cred of SVR.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ *
+ * @note The certificate public key must be the same as public key in the identity
+ *       certificate (installed by OCSaveOwnCertChain).
+ */
+OCStackResult OCSaveOwnRoleCert(const char* cert, uint16_t *credId);
 
 /**
  * function to register callback, for getting notification for TrustCertChain change.

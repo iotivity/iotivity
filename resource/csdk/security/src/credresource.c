@@ -324,7 +324,7 @@ size_t GetCredKeyDataSize(const OicSecCred_t* cred)
 #endif
         }
     }
-    OIC_LOG_V(DEBUG, TAG, "Cred Key Data Size : %zd\n", size);
+    OIC_LOG_V(DEBUG, TAG, "Cred Key Data Size : %u", (unsigned int) size);
     return size;
 }
 
@@ -614,7 +614,7 @@ static void logCredMetadata()
         OIC_LOG_V(DEBUG, TAG, "privateData length: %d, encoding: %d", temp->privateData.len, temp->privateData.encoding);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-        OIC_LOG_V(DEBUG, TAG, "publicData length: %d, encoding: %d", temp->publicData.len, temp->publicData.encoding);           
+        OIC_LOG_V(DEBUG, TAG, "publicData length: %d, encoding: %d", temp->publicData.len, temp->publicData.encoding);
         if (temp->credUsage)
         {
             OIC_LOG_V(DEBUG, TAG, "credUsage: %s", temp->credUsage);
@@ -694,7 +694,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         }
 #endif //MULTIPLE_OWNER
 
-        if ((SIGNED_ASYMMETRIC_KEY == cred->credType || ASYMMETRIC_KEY == cred->credType) 
+        if ((SIGNED_ASYMMETRIC_KEY == cred->credType || ASYMMETRIC_KEY == cred->credType)
             && cred->publicData.data)
         {
             mapSize++;
@@ -753,7 +753,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         //PublicData -- Not Mandatory
-        if ((SIGNED_ASYMMETRIC_KEY == cred->credType || ASYMMETRIC_KEY == cred->credType) 
+        if ((SIGNED_ASYMMETRIC_KEY == cred->credType || ASYMMETRIC_KEY == cred->credType)
             && cred->publicData.data)
         {
             cborEncoderResult = SerializeEncodingToCbor(&credMap,
@@ -2918,7 +2918,7 @@ static int ConvertDerCertToPem(const uint8_t* der, size_t derLen, uint8_t** pem)
     }
 
     /* Try the conversion */
-    ret = mbedtls_pem_write_buffer(pemHeader, 
+    ret = mbedtls_pem_write_buffer(pemHeader,
         pemFooter,
         der,
         derLen,
@@ -2943,7 +2943,7 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return OC_STACK_INVALID_PARAM;
     }
-    
+
     switch (desiredEncoding)
     {
     case OIC_ENCODING_PEM:
@@ -3064,6 +3064,116 @@ OCStackResult GetPemCaCert(ByteArray_t * crt, const char * usage)
     return GetCaCert(crt, usage, OIC_ENCODING_PEM);
 }
 
+static int cloneSecKey(OicSecKey_t * dst, OicSecKey_t * src)
+{
+    if ((src == NULL) || (dst == NULL))
+    {
+        return -1;
+    }
+
+    if (src->len > 0)
+    {
+        dst->data = OICCalloc(src->len, 1);
+        if (dst->data == NULL)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s memory allocation failed", __func__);
+            return -1;
+        }
+        memcpy(dst->data, src->data, src->len);
+    }
+    else
+    {
+        dst->data = NULL;
+    }
+
+    dst->len = src->len;
+    dst->encoding = src->encoding;
+
+    return 0;
+}
+
+static int cloneSecOpt(OicSecOpt_t * dst, OicSecOpt_t * src)
+{
+    if ((src == NULL) || (dst == NULL))
+    {
+        return -1;
+    }
+
+    if (src->len > 0)
+    {
+        dst->data = OICCalloc(src->len, 1);
+        if (dst == NULL)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s memory allocation failed", __func__);
+            OICFree(dst);
+            return -1;
+        }
+        memcpy(dst->data, src->data, src->len);
+    }
+    else
+    {
+        dst->data = NULL;
+    }
+
+    dst->len = src->len;
+    dst->encoding = src->encoding;
+    dst->revstat = src->revstat;
+
+    return 0;
+}
+
+/* Caller must call FreeRoleCertChainList on roleEntries when finished. */
+OCStackResult GetAllRoleCerts(RoleCertChain_t ** output)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    *output = NULL;
+
+    OicSecCred_t * temp = NULL;
+    LL_FOREACH(gCred, temp)
+    {
+        if ((SIGNED_ASYMMETRIC_KEY == temp->credType) &&
+            (temp->credUsage != NULL) &&
+            (0 == strcmp(temp->credUsage, ROLE_CERT)))
+        {
+            if (temp->publicData.data == NULL)
+            {
+                OIC_LOG_V(WARNING, TAG, "%s missing certificate data in role certificate", __func__);
+                continue;
+            }
+
+            RoleCertChain_t * add = (RoleCertChain_t *) OICCalloc(1, sizeof(RoleCertChain_t));
+            if (add == NULL)
+            {
+                OIC_LOG_V(ERROR, TAG, "%s Failed to allocate memory", __func__);
+                goto error;
+            }
+            LL_APPEND(*output, add);
+            add->credId = temp->credId;
+            if (cloneSecKey(&add->certificate, &temp->publicData) != 0)
+            {
+                OIC_LOG_V(ERROR, TAG, "%s failed to copy certificate data", __func__);
+                goto error;
+            }
+
+            if (cloneSecOpt(&add->optData, &temp->optionalData) != 0)
+            {
+                OIC_LOG_V(ERROR, TAG, "%s failed to copy optional data", __func__);
+                goto error;
+            }
+        }
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    return OC_STACK_OK;
+
+error:
+    FreeRoleCertChainList(*output);
+    *output = NULL;
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    return OC_STACK_ERROR;
+}
+
 void GetPemOwnCert(ByteArray_t * crt, const char * usage)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
@@ -3101,7 +3211,7 @@ void GetPemOwnCert(ByteArray_t * crt, const char * usage)
                 mustAddNull = false; /* mbedTLS always NULL-terminates. */
                 pemLen = strlen((char *)pem) + 1;
                 break;
-                
+
             case OIC_ENCODING_PEM:
             case OIC_ENCODING_BASE64:
                 pem = temp->publicData.data;
@@ -3139,7 +3249,7 @@ void GetPemOwnCert(ByteArray_t * crt, const char * usage)
             /* If we're appending, subtract one from crt->len below so we overwrite the current terminating
              * NULL with the beginning of the new data.
              */
-            if (0 < crt->len) 
+            if (0 < crt->len)
             {
                 assert(crt->data[crt->len - 1] == '\0');
                 memcpy(crt->data + crt->len - 1, pem, pemLen);
@@ -3188,7 +3298,7 @@ void GetDerKey(ByteArray_t * key, const char * usage)
     key->len = 0;
     LL_FOREACH(gCred, temp)
     {
-        if ((SIGNED_ASYMMETRIC_KEY == temp->credType || ASYMMETRIC_KEY == temp->credType) && 
+        if ((SIGNED_ASYMMETRIC_KEY == temp->credType || ASYMMETRIC_KEY == temp->credType) &&
             temp->privateData.len > 0 &&
             NULL != temp->credUsage &&
             0 == strcmp(temp->credUsage, usage))

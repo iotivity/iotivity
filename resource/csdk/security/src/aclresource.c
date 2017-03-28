@@ -1877,7 +1877,18 @@ static bool IsSameACE(OicSecAce_t* ace1, OicSecAce_t* ace2)
 {
     if(ace1 && ace2)
     {
-        if(memcmp(ace1->subjectuuid.id, ace2->subjectuuid.id, sizeof(ace1->subjectuuid.id)) != 0)
+        if(ace1->subjectType != ace2->subjectType)
+        {
+            return false;
+        }
+        if(ace1->subjectType == OicSecAceUuidSubject &&
+            memcmp(ace1->subjectuuid.id, ace2->subjectuuid.id, sizeof(ace1->subjectuuid.id)) != 0)
+        {
+            return false;
+        }
+        else if(ace1->subjectType == OicSecAceRoleSubject &&
+            strcmp(ace1->subjectRole.id, ace2->subjectRole.id) != 0 &&
+            strcmp(ace1->subjectRole.authority, ace2->subjectRole.authority) != 0)
         {
             return false;
         }
@@ -1919,10 +1930,22 @@ static void printACE(const OicSecAce_t *ace)
     OIC_LOG_V(INFO, TAG, "ACE @ %p", ace);
     OIC_LOG_V(INFO, TAG, "    permission = %#x", (uint32_t)ace->permission);
 
-    // Log the subjectuuid.
-    char uuidString[UUID_STRING_SIZE];
-    bool convertedUUID = OCConvertUuidToString(ace->subjectuuid.id, uuidString);
-    OIC_LOG_V(INFO, TAG, "    subjectuuid = %s", convertedUUID ? uuidString : "incorrect format");
+    // Log the subject
+    if (ace->subjectType == OicSecAceUuidSubject)
+    {
+        char uuidString[UUID_STRING_SIZE];
+        bool convertedUUID = OCConvertUuidToString(ace->subjectuuid.id, uuidString);
+        OIC_LOG_V(INFO, TAG, "    subject UUID = %s", convertedUUID ? uuidString : "incorrect format");
+    }
+    else if (ace->subjectType == OicSecAceRoleSubject)
+    {
+        OIC_LOG_V(DEBUG, TAG, "    role id = %s", ace->subjectRole.id);
+        OIC_LOG_V(DEBUG, TAG, "    authority = %s", ace->subjectRole.authority);
+    }
+    else
+    {
+        OIC_LOG(INFO, TAG, "    subject = (subject of unknown type)");
+    }
 
     // Log all resources this ACE applies to.
     OicSecRsrc_t *resource = NULL;
@@ -2248,6 +2271,11 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
                 }
             }
         }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "ACL post request with no payload.");
+        ehRet = OC_EH_ERROR;
     }
 
     //Send response to request originator
@@ -2725,7 +2753,7 @@ const OicSecAce_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAce_t **
     // Find the next ACL corresponding to the 'subjectID' and return it.
     LL_FOREACH(begin, ace)
     {
-        if ((OicSecAceUuidSubject == ace->subjectType) && 
+        if ((OicSecAceUuidSubject == ace->subjectType) &&
             (0 == memcmp(&(ace->subjectuuid), subjectId, sizeof(OicUuid_t))))
         {
             OIC_LOG(DEBUG, TAG, "GetACLResourceData: found matching ACE:");

@@ -181,6 +181,7 @@ extern const char * OIC_JSON_EMPTY_STRING;
 extern const char * TRUST_CA;
 extern const char * PRIMARY_CERT;
 extern const char * PRIMARY_KEY;
+extern const char * ROLE_CERT;
 
 // Certificates provided by manufacturer
 extern const char * MF_TRUST_CA;

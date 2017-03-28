@@ -175,6 +175,7 @@ const char * OIC_JSON_EMPTY_STRING = "";
 // Certificates provided by Cloud
 const char * TRUST_CA = "oic.sec.cred.trustca";
 const char * PRIMARY_CERT = "oic.sec.cred.cert";
+const char * ROLE_CERT = "oic.sec.cred.rolecert";
 
 // Certificates provided by manufacturer
 const char * MF_TRUST_CA = "oic.sec.cred.mfgtrustca";

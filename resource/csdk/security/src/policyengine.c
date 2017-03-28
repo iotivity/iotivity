@@ -468,10 +468,11 @@ static void ProcessAccessRequest(SRMRequestContext_t *context)
             OCStackResult res = GetEndpointRoles(context->endPoint, &roles, &roleCount);
             if (OC_STACK_OK != res)
             {
-                OIC_LOG_V(ERROR, TAG, "Could not locate any roles for endpoint: %d", res);
+                OIC_LOG_V(ERROR, TAG, "Error getting asserted roles for endpoint: %d", res);
             }
             else
             {
+                OIC_LOG_V(DEBUG, TAG, "Found %u asserted roles for endpoint", (unsigned int) roleCount);
                 do
                 {
                     currentAce = GetACLResourceDataByRoles(roles, roleCount, &aceSavePtr);

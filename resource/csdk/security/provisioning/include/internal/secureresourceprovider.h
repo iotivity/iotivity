@@ -157,6 +157,31 @@ OCStackResult SRPSaveTrustCertChain(const uint8_t *trustCertChain, size_t chainS
 OCStackResult SRPSaveOwnCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16_t *credId);
 
 /**
+ * function to save own role certificate into Cred of SVR.
+ *
+ * @param[in] cert Certificate chain to be saved in Cred of SVR
+ * @param[out] credId CredId of saved trust certificate chain in Cred of SVR.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ *
+ * @note The certificate public key must be the same as public key in the identity
+ *       certificate (installed by SRPSaveOwnCertChain).
+ */
+OCStackResult SRPSaveOwnRoleCert(OicSecKey_t * cert, uint16_t *credId);
+
+/**
+ * Assert all roles to a device. This POSTs all role certificates from the
+ * local cred resource to /oic/sec/roles.
+ *
+ * @param[in] ctx User context to be passed.
+ * @param[in] device The device to assert the roles to
+ * @param[in] resultCallback Callback that is called with the response from the device
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ *
+ * @note If no role certificates are installed, this will fail. See GetAllRoleCerts in credresource.h
+ */
+OCStackResult SRPAssertRoles(void *ctx, const OCProvisionDev_t *device, OCProvisionResultCB resultCallback);
+
+/**
  * function to register callback, for getting notification for TrustCertChain change.
  *
  * @param[in] ctx user context to be passed.
@@ -204,8 +229,8 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
  * @param[in] keySize size of key
  * @param[in] pDev1 Pointer to PMOwnedDeviceInfo_t instance, respresenting resource to be provsioned.
  * @param[in] pDev2 Pointer to PMOwnedDeviceInfo_t instance, respresenting resource to be provsioned.
- * @param[in] pemCert When provisioning a certificate (type is SIGNED_ASYMMETRIC_KEY), this is the 
- *                    certificate, encoded as PEM. 
+ * @param[in] pemCert When provisioning a certificate (type is SIGNED_ASYMMETRIC_KEY), this is the
+ *                    certificate, encoded as PEM.
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from first resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.

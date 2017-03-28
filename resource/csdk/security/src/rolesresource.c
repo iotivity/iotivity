@@ -67,9 +67,9 @@ static OCResourceHandle gRolesHandle        = NULL;
 static RolesEntry_t     *gRoles             = NULL;
 static uint32_t         gIdCounter          = 1;
 
-/** 
+/**
  * Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
- * The value of payload size is increased until reaching max cbor size. 
+ * The value of payload size is increased until reaching max cbor size.
  */
 static const uint16_t CBOR_SIZE = 2048;
 
@@ -93,7 +93,7 @@ static void InvalidateRoleCache(RolesEntry_t *entry)
 
 /* Caller must call OICFree on publicKey when finished. */
 static OCStackResult GetPeerPublicKeyFromEndpoint(const CAEndpoint_t *endpoint,
-                                                  uint8_t **publicKey, 
+                                                  uint8_t **publicKey,
                                                   size_t *publicKeyLength)
 {
     CASecureEndpoint_t sep;
@@ -168,7 +168,6 @@ static void FreeRolesEntry(RolesEntry_t *rolesEntry)
     }
 
     FreeRoleCertChainList(rolesEntry->chains);
-    OICFree(rolesEntry->chains);
     OICFree(rolesEntry->publicKey);
     OICFree(rolesEntry->cachedRoles);
     OICFree(rolesEntry);
@@ -282,7 +281,7 @@ static OCStackResult AddRoleCertificate(const RoleCertChain_t *roleCert, const u
     else
     {
         /* We haven't seen this public key before and need a new entry. */
-        targetEntry = (RolesEntry_t *)OICCalloc(1, sizeof(RolesEntry_t *));
+        targetEntry = (RolesEntry_t *)OICCalloc(1, sizeof(RolesEntry_t));
         if (NULL == targetEntry)
         {
             OIC_LOG(ERROR, TAG, "No memory for new targetEntry");
@@ -303,7 +302,7 @@ static OCStackResult AddRoleCertificate(const RoleCertChain_t *roleCert, const u
         LL_PREPEND(gRoles, targetEntry);
     }
 
-    // @todo: Detect duplicates and don't add them again
+    // @todo: (IOT-1949) Detect duplicates and don't add them again
     res = DuplicateRoleCertChain(roleCert, &copy);
     if (OC_STACK_OK != res)
     {
@@ -313,7 +312,6 @@ static OCStackResult AddRoleCertificate(const RoleCertChain_t *roleCert, const u
 
     // Assign our own credId.
     copy->credId = gIdCounter++;
-
     LL_APPEND(targetEntry->chains, copy);
 
     res = OC_STACK_OK;
@@ -325,12 +323,12 @@ exit:
         FreeRoleCertChain(copy);
     }
 
-    OIC_LOG_V(DEBUG, TAG, "AddRoleCertificate IN: %d", res);
+    OIC_LOG_V(DEBUG, TAG, "AddRoleCertificate Out: %d", res);
 
     return res;
 }
 
-static OCStackResult RolesToCBORPayload(const RoleCertChain_t *roles, uint8_t **cborPayload,
+OCStackResult RolesToCBORPayload(const RoleCertChain_t *roles, uint8_t **cborPayload,
                                         size_t *cborSize)
 {
     OCStackResult ret = OC_STACK_OK;
@@ -400,7 +398,7 @@ static OCStackResult RolesToCBORPayload(const RoleCertChain_t *roles, uint8_t **
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding subject tag");
         cborEncoderResult = cbor_encode_text_string(&roleMap, EMPTY_UUID, sizeof(EMPTY_UUID) - 1);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding subject value");
-        
+
         // publicData - mandatory
         cborEncoderResult = SerializeEncodingToCbor(&roleMap, OIC_JSON_PUBLICDATA_NAME, &currChain->certificate);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding publicData");
@@ -489,7 +487,7 @@ exit:
     return ret;
 }
 
-/* Caller must call DeleteRoleCredentials on roleEntries when finished. */
+/* Caller must call FreeRoleCertChainList on roleEntries when finished. */
 OCStackResult CBORPayloadToRoles(const uint8_t *cborPayload, size_t size, RoleCertChain_t **roleEntries)
 {
     if (NULL == cborPayload || 0 == size || NULL == roleEntries)
@@ -727,7 +725,7 @@ static OCEntityHandlerResult HandleGetRequest(OCEntityHandlerRequest *ehRequest)
     ehRet = (OC_STACK_OK == res) ? OC_EH_OK : OC_EH_ERROR;
 
 exit:
-    
+
     ehRet = ((SendSRMResponse(ehRequest, ehRet, payload, size)) == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
 
     OICFree(payload);
@@ -755,7 +753,7 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest *ehRequest
     if (OC_STACK_OK != res)
     {
         OIC_LOG_V(ERROR, TAG, "Could not get peer's public key: %d", res);
-        ehRet = OC_EH_ERROR; 
+        ehRet = OC_EH_ERROR;
         goto exit;
     }
 
@@ -829,7 +827,7 @@ static OCEntityHandlerResult HandleDeleteRequest(OCEntityHandlerRequest *ehReque
     {
         return ehRet;
     }
-    
+
     // Parsing REST query to get the credId
     ParseQueryIterInit((unsigned char *)ehRequest->query, &parseIter);
     while (GetNextQuery(&parseIter))
@@ -884,7 +882,7 @@ static OCEntityHandlerResult HandleDeleteRequest(OCEntityHandlerRequest *ehReque
     RoleCertChain_t *curr2 = NULL;
     LL_FOREACH_SAFE(entry->chains, curr1, curr2)
     {
-        // credId of zero means all creds; we never assign zero as a credId.
+        // credId of zero means delete all creds; we never assign zero as a credId.
         if ((0 == credId) || (curr1->credId == credId))
         {
             LL_DELETE(entry->chains, curr1);
@@ -972,7 +970,7 @@ OCStackResult DeInitRolesResource()
     gRolesHandle = NULL;
 
     FreeRolesList(gRoles);
-    
+
     gRoles = NULL;
 
     return res;
@@ -1133,7 +1131,7 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
         return res;
     }
 
-    for (const RoleCertChain_t *chain = targetEntry->chains; NULL != chain; chain = chain->next)
+    for (RoleCertChain_t *chain = targetEntry->chains; NULL != chain; chain = chain->next)
     {
         OicSecRole_t *currCertRoles = NULL;
         size_t currCertRolesCount = 0;
@@ -1148,7 +1146,9 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
         if (OC_STACK_OK != res)
         {
             OIC_LOG_V(ERROR, TAG, "Failed to verify a role certificate: %d", res);
-            /* Don't exit; try all certificates presented. */
+            /* Remove the invalid cert chain, but don't exit; try all certificates presented. */
+            LL_DELETE(targetEntry->chains, chain);
+            FreeRoleCertChain(chain);
         }
         else
         {
@@ -1166,14 +1166,14 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
                 OICFree(publicKey);
                 return OC_STACK_NO_MEMORY;
             }
-            memcpy(rolesToReturn + (rolesToReturnCount * sizeof(rolesToReturn[0])), 
-                currCertRoles, 
+            memcpy(rolesToReturn + (rolesToReturnCount * sizeof(rolesToReturn[0])),
+                currCertRoles,
                 currCertRolesCount * sizeof(currCertRoles[0]));
             rolesToReturnCount += currCertRolesCount;
             OICFree(currCertRoles);
         }
 
-        /* 
+        /*
          * Set the cacheValidUntil value to be the earliest notValidUntil date amongst
          * all the certificates.
          *

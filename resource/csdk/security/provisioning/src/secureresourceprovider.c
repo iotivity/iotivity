@@ -49,6 +49,7 @@
 #include "utlist.h"
 #include "ocpayload.h"
 #include "srmutility.h"
+#include "certhelpers.h"
 
 #ifdef __WITH_DTLS__
 #include "crlresource.h"
@@ -112,6 +113,15 @@ struct GetRolesData {
     const OCProvisionDev_t *deviceInfo;         /**< Pointer to PMDevInfo_t.**/
     OCGetRolesResultCB resultCallback;          /**< Pointer to result callback.**/
     OCPMGetRolesResult_t *resArr;               /**< Result array.**/
+    size_t numOfResults;                        /**< Number of results in result array.**/
+};
+
+typedef struct AssertRolesData AssertRolesData_t;
+struct AssertRolesData {
+    void *ctx;                                  /**< User-provided context **/
+    const OCProvisionDev_t *deviceInfo;         /**< Pointer to PMDevInfo_t.**/
+    OCProvisionResultCB resultCallback;         /**< Pointer to result callback.**/
+    OCProvisionResult_t *resArr;                /**< Result array.**/
     size_t numOfResults;                        /**< Number of results in result array.**/
 };
 
@@ -322,7 +332,7 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if (!secPayload)
     {
-        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
@@ -460,7 +470,7 @@ static OCStackApplicationResult provisionCertCB(void *ctx, OCDoHandle UNUSED,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-static OCStackApplicationResult provisionIdentityCertCB(void *ctx, OCDoHandle UNUSED,
+static OCStackApplicationResult provisionCertificateCB(void *ctx, OCDoHandle UNUSED,
     OCClientResponse *clientResponse)
 {
     // Just call the callback provided to SRProvisionCredentials
@@ -514,7 +524,7 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
     if(!secPayload)
     {
         DeleteCredList(trustCertChainCred);
-        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
@@ -664,8 +674,11 @@ static OCStackResult saveCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
     VERIFY_NOT_NULL_RETURN(TAG, cert, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, cert->data, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NOT_NULL_RETURN(TAG, key, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NOT_NULL_RETURN(TAG, key->data, ERROR,  OC_STACK_INVALID_PARAM);
+    if (key != NULL)
+    {
+        /* Key is optional. */
+        VERIFY_NOT_NULL_RETURN(TAG, key->data, ERROR, OC_STACK_INVALID_PARAM);
+    }
     VERIFY_NOT_NULL_RETURN(TAG, credId, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, usage, ERROR, OC_STACK_INVALID_PARAM);
 
@@ -679,7 +692,7 @@ static OCStackResult saveCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16
     res = GetDoxmDeviceID(&cred->subject);
     if (OC_STACK_OK != res)
     {
-        OIC_LOG(ERROR, TAG, "Cann't get the device id(GetDoxmDeviceID)");
+        OIC_LOG(ERROR, TAG, "Can't get the device id(GetDoxmDeviceID)");
         DeleteCredList(cred);
         return res;
     }
@@ -697,12 +710,15 @@ static OCStackResult saveCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16
     publicData->len = cert->len;
     publicData->encoding = cert->encoding;
 
-    OicSecKey_t *privateData = &cred->privateData;
-    privateData->data = (uint8_t *)OICCalloc(1, key->len);
-    VERIFY_NOT_NULL_RETURN(TAG, privateData->data, ERROR, OC_STACK_NO_MEMORY);
-    memcpy(privateData->data, key->data, key->len);
-    privateData->len = key->len;
-    privateData->encoding = key->encoding;
+    if (key != NULL)
+    {
+        OicSecKey_t *privateData = &cred->privateData;
+        privateData->data = (uint8_t *)OICCalloc(1, key->len);
+        VERIFY_NOT_NULL_RETURN(TAG, privateData->data, ERROR, OC_STACK_NO_MEMORY);
+        memcpy(privateData->data, key->data, key->len);
+        privateData->len = key->len;
+        privateData->encoding = key->encoding;
+    }
 
     res = AddCredential(cred);
     if(res != OC_STACK_OK)
@@ -720,6 +736,155 @@ static OCStackResult saveCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16
 OCStackResult SRPSaveOwnCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16_t *credId)
 {
     return saveCertChain(cert, key, credId, PRIMARY_CERT);
+}
+
+OCStackResult SRPSaveOwnRoleCert(OicSecKey_t * cert, uint16_t *credId)
+{
+    return saveCertChain(cert, NULL, credId, ROLE_CERT);
+}
+
+/**
+ * Callback handler of SRPAssertRoles.
+ *
+ * @param[in] ctx             ctx value passed to callback from calling function.
+ * @param[in] UNUSED          handle to an invocation
+ * @param[in] clientResponse  Response from queries to remote servers.
+ * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
+ *          and  OC_STACK_KEEP_TRANSACTION to keep it.
+ */
+static OCStackApplicationResult SRPAssertRolesCB(void *ctx, OCDoHandle UNUSED,
+    OCClientResponse *clientResponse)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    OC_UNUSED(UNUSED);
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    AssertRolesData_t *assertRolesData = (AssertRolesData_t*)ctx;
+    OCProvisionResultCB resultCallback = assertRolesData->resultCallback;
+    bool hasError = true;
+
+    if (clientResponse && (OC_STACK_RESOURCE_CHANGED == clientResponse->result))
+    {
+        hasError = false;
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "%s : NULL client response, or response indicating failure (%d)", __func__);
+    }
+
+    ((OCProvisionResultCB)(resultCallback))(assertRolesData->ctx, assertRolesData->numOfResults,
+        assertRolesData->resArr,
+        hasError);
+
+    OICFree(assertRolesData->resArr);
+    OICFree(assertRolesData);
+
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+OCStackResult SRPAssertRoles(void *ctx, const OCProvisionDev_t *device, OCProvisionResultCB resultCallback)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    VERIFY_NOT_NULL_RETURN(TAG, device, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR, OC_STACK_INVALID_CALLBACK);
+
+    OC_UNUSED(device);
+    OC_UNUSED(ctx);
+    OC_UNUSED(resultCallback);
+
+    /* 1. Retrieve all our stored role certificates */
+    RoleCertChain_t *roles = NULL;
+    OCStackResult res = GetAllRoleCerts(&roles);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to retrieve role certs");
+        return OC_STACK_ERROR;
+    }
+    if (roles == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Can't assert roles, no role certs installed");
+        return OC_STACK_ERROR;
+    }
+
+    /* 2. Encode them for transfer */
+    OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
+    if (!secPayload)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+        FreeRoleCertChainList(roles);
+        return OC_STACK_NO_MEMORY;
+    }
+    secPayload->base.type = PAYLOAD_TYPE_SECURITY;
+    if(OC_STACK_OK != RolesToCBORPayload(roles, &secPayload->securityData, &secPayload->payloadSize))
+    {
+        OCPayloadDestroy((OCPayload *)secPayload);
+        OIC_LOG(ERROR, TAG, "RolesToCBORPayload failed");
+        FreeRoleCertChainList(roles);
+        return OC_STACK_NO_MEMORY;
+    }
+    OIC_LOG(DEBUG, TAG, "Created payload for asserting roles:");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
+    FreeRoleCertChainList(roles);
+
+    /* 3. Post roles to the roles resource on the server */
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = { 0 };
+    if (!PMGenerateQuery(true,
+        device->endpoint.addr,
+        device->securePort,
+        device->connType,
+        query, sizeof(query), OIC_RSRC_ROLES_URI))
+    {
+        OCPayloadDestroy((OCPayload *)secPayload);
+        OIC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
+    OCCallbackData cbData = { .context = NULL,.cb = NULL,.cd = NULL };
+    cbData.cb = &SRPAssertRolesCB;
+    AssertRolesData_t *assertRolesData = (AssertRolesData_t *)OICCalloc(1, sizeof(AssertRolesData_t));
+    if (assertRolesData == NULL)
+    {
+        OCPayloadDestroy((OCPayload *)secPayload);
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
+        return OC_STACK_NO_MEMORY;
+    }
+    assertRolesData->deviceInfo = device;
+    assertRolesData->resultCallback = resultCallback;
+    assertRolesData->numOfResults = 0;
+    assertRolesData->ctx = ctx;
+
+    int noOfRiCalls = 1;
+    assertRolesData->resArr = (OCProvisionResult_t*)OICCalloc(noOfRiCalls, sizeof(OCProvisionResult_t));
+    if (assertRolesData->resArr == NULL)
+    {
+        OICFree(assertRolesData);
+        OCPayloadDestroy((OCPayload *)secPayload);
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
+        return OC_STACK_NO_MEMORY;
+    }
+    cbData.context = (void *)assertRolesData;
+    cbData.cd = NULL;
+    OCMethod method = OC_REST_POST;
+    OCDoHandle handle = NULL;
+
+    OIC_LOG(DEBUG, TAG, "Sending roles to server");
+    OCStackResult ret = OCDoRequest(&handle, method, query,
+        &device->endpoint, (OCPayload*)secPayload,
+        device->connType, OC_HIGH_QOS, &cbData, NULL, 0);
+    if (ret != OC_STACK_OK)
+    {
+        OICFree(assertRolesData->resArr);
+        OICFree(assertRolesData);
+        OIC_LOG_V(ERROR, TAG, "%s OCDoRequest failed", __func__);
+    }
+    OCPayloadDestroy((OCPayload *)secPayload);
+
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    VERIFY_SUCCESS_RETURN(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
+
+    return ret;
 }
 
 #endif // __WITH_DTLS__ || __WITH_TLS__
@@ -855,11 +1020,19 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
             VERIFY_NOT_NULL_RETURN(TAG, cred, ERROR, OC_STACK_ERROR);
 
             cred->publicData.encoding = OIC_ENCODING_PEM;
-            cred->credUsage = OICStrdup(PRIMARY_CERT);
 
-            /* Create credential data (used by the response handler provisionIdentityCertCB and freed there) */
-            CredentialData_t *credData = (CredentialData_t *)OICCalloc(1, sizeof(CredentialData_t)); 
-            if (NULL == credData)
+            if (OCInternalIsValidRoleCertificate(deviceCert.data, deviceCert.len, NULL, NULL) == OC_STACK_OK)
+            {
+                cred->credUsage = OICStrdup(ROLE_CERT);
+            }
+            else
+            {
+                cred->credUsage = OICStrdup(PRIMARY_CERT);
+            }
+
+            /* Create credential data (used by the response handler provisionCertificateCB and freed there) */
+            CredentialData_t *credData = (CredentialData_t *)OICCalloc(1, sizeof(CredentialData_t));
+            if ((NULL == credData) || (NULL == cred->credUsage))
             {
                 DeleteCredList(cred);
                 OIC_LOG(ERROR, TAG, "Memory allocation problem");
@@ -874,8 +1047,8 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
             credData->resultCallback = resultCallback;
             credData->resArr = NULL;
 
-            /* Note: the callback of type OCClientResponseHandler, thin wrapper that calls resultCallback */
-            OCStackResult res = provisionCredentials(cred, pDev1, credData, &provisionIdentityCertCB); 
+            /* Note: the callback is of type OCClientResponseHandler, thin wrapper that calls resultCallback */
+            OCStackResult res = provisionCredentials(cred, pDev1, credData, &provisionCertificateCB);
             if (res != OC_STACK_OK)
             {
                 OICFree(credData);
@@ -990,7 +1163,7 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if(!secPayload)
     {
-        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
@@ -1146,7 +1319,7 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if(!secPayload)
     {
-        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
@@ -2074,7 +2247,7 @@ OCStackResult SRPRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDi
     removeData = (RemoveData_t*)OICCalloc(1, sizeof(RemoveData_t));
     if (!removeData)
     {
-        OIC_LOG(ERROR, TAG, "SRPRemoveDevices : Failed to memory allocation");
+        OIC_LOG(ERROR, TAG, "SRPRemoveDevices : Failed to allocate memory");
         res = OC_STACK_NO_MEMORY;
         goto error;
     }
@@ -2091,7 +2264,7 @@ OCStackResult SRPRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDi
         (OCProvisionResult_t*)OICCalloc(numOfLinkedDev, sizeof(OCProvisionResult_t));
     if (!removeData->removeRes)
     {
-        OIC_LOG(ERROR, TAG, "SRPRemoveDevices : Failed to memory allocation");
+        OIC_LOG(ERROR, TAG, "SRPRemoveDevices : Failed to allocate memory");
         res = OC_STACK_NO_MEMORY;
         goto error;
     }
@@ -2216,7 +2389,7 @@ OCStackResult SRPRemoveDeviceWithoutDiscovery(void* ctx, const OCProvisionDev_t*
     removeData = (RemoveData_t*)OICCalloc(1, sizeof(RemoveData_t));
     if (!removeData)
     {
-        OIC_LOG(ERROR, TAG, "SRPRemoveDeviceWithoutDiscovery : Failed to memory allocation");
+        OIC_LOG(ERROR, TAG, "SRPRemoveDeviceWithoutDiscovery : Failed to allocate memory");
         res = OC_STACK_NO_MEMORY;
         goto error;
     }
@@ -2233,7 +2406,7 @@ OCStackResult SRPRemoveDeviceWithoutDiscovery(void* ctx, const OCProvisionDev_t*
         (OCProvisionResult_t*)OICCalloc(numOfLinkedDev, sizeof(OCProvisionResult_t));
     if (!removeData->removeRes)
     {
-        OIC_LOG(ERROR, TAG, "SRPRemoveDeviceWithoutDiscovery : Failed to memory allocation");
+        OIC_LOG(ERROR, TAG, "SRPRemoveDeviceWithoutDiscovery : Failed to allocate memory");
         res = OC_STACK_NO_MEMORY;
         goto error;
     }
@@ -2362,7 +2535,7 @@ OCStackResult SRPSyncDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDisc
     removeData = (RemoveData_t*)OICCalloc(1, sizeof(RemoveData_t));
     if (!removeData)
     {
-        OIC_LOG(ERROR, TAG, "SRPSyncDevice : Failed to memory allocation");
+        OIC_LOG(ERROR, TAG, "SRPSyncDevice : Failed to allocate memory");
         res = OC_STACK_NO_MEMORY;
         goto error;
     }
@@ -3006,7 +3179,7 @@ static void registerResultForGetRolesResourceCB(GetRolesData_t *getRolesData,
                     /* Take ownership of the buffers from certificate and optData, rather than copy. */
                     currentEntry->chains[i].certificate = curr->certificate;
                     currentEntry->chains[i].optData = curr->optData;
-                    
+
                     curr->certificate.data = NULL;
                     curr->certificate.len = 0;
                     curr->optData.data = NULL;

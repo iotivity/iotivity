@@ -50,6 +50,9 @@
 #include "occertutility.h"
 #include "pmutility.h"
 
+#include "secureresourceprovider.h" /* @todo: For SRPAssertRoles. Remove once IOT-1952 is resolved. */
+
+
 #ifdef _MSC_VER
 #include <io.h>
 
@@ -64,7 +67,7 @@ extern "C"
 
 #define DISCOVERY_TIMEOUT   3  // 3 sec
 #define CALLBACK_TIMEOUT    60  // 1 min
-#define TAG "provisioningclient"
+#define TAG "autoprovisioningclient"
 
 static const char* SVR_DB_FILE_NAME = "oic_svr_db_client.dat";
         // '_' for separaing from the same constant variable in |srmresourcestrings.c|
@@ -72,6 +75,12 @@ static const char* PRVN_DB_FILE_NAME = "oic_autoprvn_mng.db";
 
 static const char* TEST_CERT_NOT_BEFORE = "20170101000000"; // Not before field for certificates, in format YYYYMMDDhhmmss
 static const char* TEST_CERT_NOT_AFTER = "20270101000000";  // + ten years
+static const char* TEST_CERT_ROLE1 = "IoTivity-test-role1";
+static const char* TEST_CERT_ROLE2 = "IoTivity-test-role2";
+static const char* TEST_CERT_AUTHORITY = "IoTivity-test-OBT-authority-name";
+
+static OicUuid_t WILDCARD_SUBJECT_ID = { "*" };
+static size_t WILDCARD_SUBJECT_ID_LEN = 1;
 
 // |g_ctx| means provision manager application context and
 // the following, includes |un/own_list|, could be variables, which |g_ctx| has,
@@ -85,6 +94,7 @@ static int g_own_cnt;
 static int g_unown_cnt;
 static char* g_csr;    /* Certificate signing request from device */
 static OicUuid_t g_uuidDev1;
+static char* g_idPublicKey = NULL;
 
 static volatile bool g_doneCB;    /* Set to true by the callback to indicate it completed. */
 static bool g_successCB; /* Set to true by the callback to indicate success. */
@@ -268,6 +278,22 @@ static void provisionAclCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, b
     else
     {
         OIC_LOG_V(ERROR, TAG, "Provision ACL FAILED - ctx: %s", (char*)ctx);
+        printResultList((const OCProvisionResult_t*)arr, nOfRes);
+        g_successCB = false;
+    }
+    g_doneCB = true;
+}
+
+static void assertRolesCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if (!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "Asserting roles SUCCEEDED - ctx: %s", (char*)ctx);
+        g_successCB = true;
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "Asserting roles FAILED - ctx: %s", (char*)ctx);
         printResultList((const OCProvisionResult_t*)arr, nOfRes);
         g_successCB = false;
     }
@@ -647,11 +673,13 @@ static int provisionCert(int dev_num, char* cert)
 }
 
 /*
- * Create an identity certificate for a device, based on the information in its CSR.
- * Assumes the csr has already been validated wtih OCVerifyCSRSignature.
+ * Create a role or identity certificate for a device, based on the information in its CSR.
+ * Assumes the CSR has already been validated wtih OCVerifyCSRSignature.
+ * If role is not NULL, a role certificate is created, otherwise an identity certificate
+ * is created.
  */
-static int createIdentityCertFromCSR(const char* caKeyPem, const char* caCertPem, char* csr,
-    char** deviceCert)
+static int createCertFromCSR(const char* caKeyPem, const char* caCertPem, char* csr,
+    const char* role, const char* authority, char** deviceCert)
 {
     char* publicKey = NULL;
     char* serial = NULL;
@@ -682,20 +710,37 @@ static int createIdentityCertFromCSR(const char* caKeyPem, const char* caCertPem
     }
 
     size_t deviceCertLen;
-    res = OCGenerateIdentityCertificate(
-        &uuid,
-        publicKey,
-        caCertPem,
-        caKeyPem,
-        serial,
-        TEST_CERT_NOT_BEFORE,
-        TEST_CERT_NOT_AFTER,
-        deviceCert,
-        &deviceCertLen);
-
+    if (role != NULL)
+    {
+        res = OCGenerateRoleCertificate(
+            &uuid,
+            publicKey,
+            caCertPem,
+            caKeyPem,
+            serial,
+            TEST_CERT_NOT_BEFORE,
+            TEST_CERT_NOT_AFTER,
+            role,
+            authority,
+            deviceCert,
+            &deviceCertLen);
+    }
+    else
+    {
+        res = OCGenerateIdentityCertificate(
+            &uuid,
+            publicKey,
+            caCertPem,
+            caKeyPem,
+            serial,
+            TEST_CERT_NOT_BEFORE,
+            TEST_CERT_NOT_AFTER,
+            deviceCert,
+            &deviceCertLen);
+    }
     if (res != OC_STACK_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "OCGenerateIdentityCertificate failed, error: %d", res);
+        OIC_LOG_V(ERROR, TAG, "Failed generating certificate, error: %d", res);
         goto exit;
     }
 
@@ -712,7 +757,6 @@ static int setupOwnCert(OicUuid_t* inputUuid)
     uint16_t caCredId;
     char* serial = NULL;
     size_t serialLen = 0;
-    char* idPublicKey = NULL;
     size_t idPublicKeyLen = 0;
     char* idKey = NULL;
     size_t idKeyLen = 0;
@@ -730,7 +774,7 @@ static int setupOwnCert(OicUuid_t* inputUuid)
     }
 
     /* Create identity certificate for use by the CA. */
-    res = OCGenerateKeyPair(&idPublicKey, &idPublicKeyLen, &idKey, &idKeyLen);
+    res = OCGenerateKeyPair(&g_idPublicKey, &idPublicKeyLen, &idKey, &idKeyLen);
     if (res != OC_STACK_OK)
     {
         OIC_LOG_V(ERROR, TAG, "OCGenerateKeyPair failed, error: %d", res);
@@ -763,7 +807,7 @@ static int setupOwnCert(OicUuid_t* inputUuid)
 
     res = OCGenerateIdentityCertificate(
         uuidForCert,
-        idPublicKey,
+        g_idPublicKey,
         g_caCertPem,
         g_caKeyPem,
         serial,
@@ -787,7 +831,6 @@ static int setupOwnCert(OicUuid_t* inputUuid)
 
 exit:
     OICFree(serial);
-    OICFree(idPublicKey);
     if (idKey != NULL)
     {
         OICClearMemory(idKey, idKeyLen);
@@ -800,8 +843,89 @@ exit:
     return (res == OC_STACK_OK) ? 0 : -1;
 }
 
-// Caller must call OCDeleteACLList(newAcl)
-static int createLedAcl(OicSecAcl_t** newAcl)
+static int setupOwnRoleCert(OicUuid_t* inputUuid, const char* role, const char* authority)
+{
+    OCUUIdentity deviceId = { 0 };
+    char* serial = NULL;
+    size_t serialLen = 0;
+    char* roleCert = NULL;
+    size_t roleCertLen = 0;
+
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    if (g_idPublicKey == NULL)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s failed because own public key is NULL, has setupOwnCert been called?", __func__);
+        return -1;
+    }
+
+    /* Create role certificate. */
+    OCStackResult res = OCGenerateRandomSerialNumber(&serial, &serialLen);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCGenerateRandomSerialNumber failed, error: %d", res);
+        goto exit;
+    }
+
+    OicUuid_t* uuidForCert = inputUuid;
+    OicUuid_t uuid = { 0 };
+    if (inputUuid == NULL)
+    {
+        res = OCGetDeviceId(&deviceId);
+        if (res != OC_STACK_OK)
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to get own UUID, error: %d", res);
+            goto exit;
+        }
+        memcpy(uuid.id, deviceId.id, sizeof(uuid.id));
+        uuidForCert = &uuid;
+    }
+
+    OIC_LOG(DEBUG, TAG, "Creating own role cert with UUID:");
+    printUuid(uuidForCert);
+
+    res = OCGenerateRoleCertificate(
+        uuidForCert,
+        g_idPublicKey,
+        g_caCertPem,
+        g_caKeyPem,
+        serial,
+        TEST_CERT_NOT_BEFORE,
+        TEST_CERT_NOT_AFTER,
+        role,
+        authority,
+        &roleCert,
+        &roleCertLen);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to create role cert, error: %d", res);
+        goto exit;
+    }
+
+    uint16_t roleCertCredId = 0;
+    res = OCSaveOwnRoleCert(roleCert, &roleCertCredId);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to save role cert, error: %d", res);
+        goto exit;
+    }
+
+exit:
+    OICFree(serial);
+    OICFree(roleCert);
+
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+
+    return (res == OC_STACK_OK) ? 0 : -1;
+}
+
+/*
+ * Create an ACL for the /a/led resource.
+ * Caller must call OCDeleteACLList(newAcl).
+ * The role and authority parameters are optional.  If role is not NULL, a
+ * role-based ACL will be created. Otherwise a subject-based ACL is created.
+ */
+static int createLedAcl(OicSecAcl_t** newAcl, const char* role, const char* authority)
 {
     int ret = -1;
     OCUUIdentity ownUuid = { 0 };
@@ -828,20 +952,122 @@ static int createLedAcl(OicSecAcl_t** newAcl)
     }
     LL_APPEND(acl->aces, ace);
 
-    /* Set uuid to our own */
-    OCStackResult res = OCGetDeviceId(&ownUuid);
-    if (res != OC_STACK_OK)
+    if (role != NULL)    /* Create a role-based ACL */
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to get own UUID, error: %d", res);
+        ace->subjectType = OicSecAceRoleSubject;
+        assert(strlen(role) + 1 < ROLEID_LENGTH);
+        memcpy(ace->subjectRole.id, role, strlen(role) + 1);
+
+        if (authority != NULL)
+        {
+            assert(strlen(authority) + 1 < ROLEAUTHORITY_LENGTH);
+            memcpy(ace->subjectRole.authority, role, strlen(authority) + 1);
+        }
+        OIC_LOG_V(DEBUG, TAG, "Creating ACE with role id = %s, authority = %s:", ace->subjectRole.id, ace->subjectRole.authority);
+    }
+    else /* Create a subject based ACL */
+    {
+        /* Set uuid to our own */
+        OCStackResult res = OCGetDeviceId(&ownUuid);
+        if (res != OC_STACK_OK)
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to get own UUID, error: %d", res);
+            goto exit;
+        }
+        ace->subjectType = OicSecAceUuidSubject;
+        memcpy(ace->subjectuuid.id, ownUuid.id, sizeof(ace->subjectuuid.id));
+
+        OicUuid_t uuid = { 0 };
+        memcpy(uuid.id, ownUuid.id, sizeof(uuid.id));
+        OIC_LOG(DEBUG, TAG, "Creating ACE with UUID:");
+        printUuid(&uuid);
+    }
+
+    /* Add a resource (e.g. '/a/led') to the ACE */
+    rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+    if (!rsrc)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: OICCalloc failed (rsrc)", __func__);
         goto exit;
     }
-    ace->subjectType = OicSecAceUuidSubject;
-    memcpy(ace->subjectuuid.id, ownUuid.id, sizeof(ace->subjectuuid.id));
+    LL_APPEND(ace->resources, rsrc);
+    rsrc->href = OICStrdup(resource);
 
-    OicUuid_t uuid = { 0 };
-    memcpy(uuid.id, ownUuid.id, sizeof(uuid.id));
-    OIC_LOG(DEBUG, TAG, "Creating ACE with UUID:");
-    printUuid(&uuid);
+    /* Set resource type, e.g., 'core.led' */
+    rsrc->typeLen = 1;
+    rsrc->types = (char**)OICCalloc(rsrc->typeLen, sizeof(char*));
+    if (!rsrc->types)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: OICCalloc failed (rsrc->types)", __func__);
+        goto exit;
+    }
+    rsrc->types[0] = OICStrdup(resource_type);
+
+    /* Set interface, e.g., 'oic.if.baseline' */
+    rsrc->interfaceLen = 1;
+    rsrc->interfaces = (char**)OICCalloc(rsrc->interfaceLen, sizeof(char*));
+    if (!rsrc->interfaces)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: OICCalloc failed (rsrc->interfaces)", __func__);
+        goto exit;
+    }
+    rsrc->interfaces[0] = OICStrdup(resource_interface);
+
+    if (!rsrc->href || !rsrc->types[0] || !rsrc->interfaces[0])
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: OICStrdup failed", __func__);
+        goto exit;
+    }
+
+    /* Set permission for the ACE */
+    ace->permission = perms;
+
+    ret = 0; /* success */
+    *newAcl = acl;
+
+exit:
+
+    if (ret != 0)
+    {
+        *newAcl = NULL;
+        OCDeleteACLList(acl);
+    }
+
+    return ret;
+}
+
+/* Once IOT-1950 is resolved, this can be removed. */
+static int createRolesAcl(OicSecAcl_t** newAcl)
+{
+    int ret = -1;
+    OicSecAcl_t* acl = NULL;
+    OicSecAce_t* ace = NULL;
+    OicSecRsrc_t* rsrc = NULL;
+    const char* resource = "/oic/sec/roles";
+    const char* resource_type = "oic.sec.role";
+    const char* resource_interface = "oic.if.baseline";
+    uint16_t perms = PERMISSION_FULL_CONTROL;
+
+    /* Create an ACL with one ACE */
+    acl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
+    if (!acl)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: OICCalloc failed (acl)", __func__);
+        goto exit;
+    }
+    ace = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
+    if (!ace)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: OICCalloc failed (ace)", __func__);
+        goto exit;
+    }
+    LL_APPEND(acl->aces, ace);
+
+    /* Set uuid to "*", everyone */
+    ace->subjectType = OicSecAceUuidSubject;
+    memcpy(&ace->subjectuuid, &WILDCARD_SUBJECT_ID, WILDCARD_SUBJECT_ID_LEN);
+
+    OIC_LOG(DEBUG, TAG, "Creating ACE with wildcard UUID");
 
     /* Add a resource (e.g. '/a/led') to the ACE */
     rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
@@ -931,7 +1157,9 @@ exit:
 }
 
 
-/* Fucntion to work around IOT-1927.  The ocrandom.h include is only required for the workaround. */
+/* Function to work around IOT-1927.  The ocrandom.h include is only required for the workaround.
+ * @todo: when IOT-1927 is resolved remove this function
+ */
 #include "ocrandom.h"
 int workAroundBug()
 {
@@ -980,7 +1208,7 @@ static int testCertUse(int dev_num)
         return -1;
     }
 
-    int ret = createIdentityCertFromCSR(g_caKeyPem, g_caCertPem, csr, &deviceCert);
+    int ret = createCertFromCSR(g_caKeyPem, g_caCertPem, csr, NULL, NULL, &deviceCert);
     if (ret != 0)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to create identity certificate", __func__);
@@ -1002,7 +1230,7 @@ static int testCertUse(int dev_num)
         goto exit;
     }
 
-    ret = createLedAcl(&acl);
+    ret = createLedAcl(&acl, NULL, NULL);
     if (ret != 0)
     {
         OIC_LOG_V(ERROR, TAG, "%s failed to create ACL", __func__);
@@ -1029,7 +1257,7 @@ static int testCertUse(int dev_num)
 
     /*
      * Work around bug IOT-1927
-     * When that bug is resolved, remove this call and the function workAroundBug
+     * @todo: When that bug is resolved, remove this call and the function workAroundBug
      */
     if (workAroundBug() != 0)
     {
@@ -1050,7 +1278,7 @@ static int testCertUse(int dev_num)
     ret = doGetRequest(uri, dev_num);
     if (ret == 0)
     {
-        OIC_LOG_V(ERROR, TAG, "%s Get request to %s suceeded, but should have failed", __func__, uri);
+        OIC_LOG_V(ERROR, TAG, "%s Get request to %s succeeded, but should have failed", __func__, uri);
         goto exit;
     }
 
@@ -1070,7 +1298,6 @@ static int testCertUse(int dev_num)
         goto exit;
     }
 
-
     /* Try a get request, expect success */
     ret = doGetRequest(uri, dev_num);
     if (ret != 0)
@@ -1088,8 +1315,265 @@ exit:
     return ret;
 }
 
+static int testRoleProvisioning(int dev_num)
+{
+    char* csr = NULL;
+    char* idCert = NULL;
+    char* roleCert = NULL;
+
+    // Make sure we own at least one device to provision
+    if (!g_own_list || g_own_cnt == 0)
+    {
+        OIC_LOG(ERROR, TAG, "Owned device list empty, must discover unowned devices first");
+        return -1;  // Error, we should have registered unowned devices already
+    }
+
+    /* Provision the device with the CA root, and issue it a role and identity cert. */
+    if (provisionTrustAnchor(dev_num) != 0)
+    {
+        return -1;
+    }
+
+    if (getCsr(dev_num, &csr) != 0)
+    {
+        return -1;
+    }
+
+    int ret = createCertFromCSR(g_caKeyPem, g_caCertPem, csr, NULL, NULL, &idCert);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to create identity certificate", __func__);
+        goto exit;
+    }
+
+    ret = provisionCert(dev_num, idCert);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to provision id certificate", __func__);
+        goto exit;
+    }
+
+    /* The first role cert will have no authority field (it's optional) */
+    ret = createCertFromCSR(g_caKeyPem, g_caCertPem, csr, TEST_CERT_ROLE1, NULL, &roleCert);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to create role certificate", __func__);
+        goto exit;
+    }
+
+    ret = provisionCert(dev_num, roleCert);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to provision role certificate", __func__);
+        goto exit;
+    }
+    OICFreeAndSetToNull(&roleCert);
+
+    /* The second will have the authority field set */
+    ret = createCertFromCSR(g_caKeyPem, g_caCertPem, csr, TEST_CERT_ROLE2, TEST_CERT_AUTHORITY, &roleCert);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to create role certificate", __func__);
+        goto exit;
+    }
+
+    ret = provisionCert(dev_num, roleCert);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to provision role certificate", __func__);
+        goto exit;
+    }
+
+exit:
+
+    OICFree(csr);
+    OICFree(idCert);
+    OICFree(roleCert);
+
+    return ret;
+}
+
+static int testRoleAssertionAndUse(int dev_num)
+{
+    char* csr = NULL;
+    char* idCert = NULL;
+    char* roleCert = NULL;
+    const char* uri = "/a/led";
+    OicSecAcl_t* acl = NULL;
+
+    // Make sure we own at least one device to provision
+    if (!g_own_list || g_own_cnt == 0)
+    {
+        OIC_LOG(ERROR, TAG, "Owned device list empty, must discover unowned devices first");
+        return -1;  // Error, we should have registered unowned devices already
+    }
+
+    /* Provision the device with the CA root, and issue it an identity cert. */
+    if (provisionTrustAnchor(dev_num) != 0)
+    {
+        return -1;
+    }
+
+    if (getCsr(dev_num, &csr) != 0)
+    {
+        return -1;
+    }
+
+    int ret = createCertFromCSR(g_caKeyPem, g_caCertPem, csr, NULL, NULL, &idCert);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to create identity certificate", __func__);
+        goto exit;
+    }
+
+    ret = provisionCert(dev_num, idCert);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to provision id certificate", __func__);
+        goto exit;
+    }
+
+    /* Create and provision a role-based ACL allowing ROLE1 to access '/a/led'. */
+    ret = createLedAcl(&acl, TEST_CERT_ROLE1, NULL);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s failed to create led ACL", __func__);
+        goto exit;
+    }
+
+    ret = provisionAcl(dev_num, acl);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s failed to provision led ACL", __func__);
+        goto exit;
+    }
+
+    /* Create and provision an ACL to allow anyone access to the roles resource. Since all actions
+     * on the roles resource first requires authentication by public key, this is effectively "any
+     * authenticated" access.
+     * @todo: This should be done by default and not be necessary here (IOT-1950).
+     */
+    OCDeleteACLList(acl);
+    acl = NULL;
+    ret = createRolesAcl(&acl);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s failed to create roles ACL", __func__);
+        goto exit;
+    }
+
+    ret = provisionAcl(dev_num, acl);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s failed to provision roles ACL", __func__);
+        goto exit;
+    }
+
+    /* Provision ourselves an identity and role cert.
+     * For the identity cert we use a random UUID, since the server has an ACE granting our UUID
+     * access to everything (as owner). We don't want to remove this ACE because it would lock
+     * us out. Using another UUID makes us appear as another device on the network.
+     */
+    OicUuid_t notOurUuid;
+    (void) OCGenerateUuid(notOurUuid.id);
+    ret = setupOwnCert(&notOurUuid);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s Failed to self-provision a key/certificate", __func__);
+        goto exit;
+    }
+
+    ret = setupOwnRoleCert(NULL, TEST_CERT_ROLE1, NULL);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s Failed to self-provision a key/certificate", __func__);
+        goto exit;
+    }
+
+    /* Remove the owner credential so that we don't use it when asserting role certs. */
+    OCStackResult res = OCRemoveCredential(&g_uuidDev1);
+    if (res != OC_STACK_RESOURCE_DELETED)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s failed to remove owner credential for subject UUID: ", __func__);
+        OIC_LOG_BUFFER(DEBUG, TAG, g_uuidDev1.id, UUID_LENGTH);
+        ret = -1;
+        goto exit;
+    }
+
+    /*
+    * Work around bug IOT-1927
+    * @todo: When that bug is resolved, remove this call and the function workAroundBug
+    */
+    if (workAroundBug() != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s bug workaround failed: ", __func__);
+        ret = -1;
+        goto exit;
+    }
+
+    /* Close all secure sessions*/
+    if (closeAllSessions() != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s Failed to close sessions", __func__);
+        ret = -1;
+        goto exit;
+    }
+
+    /* Try a GET request, expect failure, we haven't asserted our role cert yet. */
+    ret = doGetRequest(uri, dev_num);
+    if (ret == 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s Get request to %s succeeded, but should have failed", __func__, uri);
+        goto exit;
+    }
+
+    /* Assert our role cert.  (@todo: This should be done automatically, IOT-1952) */
+    OCProvisionDev_t* dev = getDevInst((const OCProvisionDev_t*)g_own_list, dev_num);
+    if (!dev)
+    {
+        OIC_LOG(ERROR, TAG, "getDevInst: device instance empty");
+        return -1;
+    }
+
+    g_doneCB = false;
+    res = SRPAssertRoles(g_ctx, dev, &assertRolesCB);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s Failed assert roles", __func__);
+        ret = -1;
+        goto exit;
+    }
+    if (waitCallbackRet())
+    {
+        OIC_LOG(ERROR, TAG, "SRPAssertRoles callback error");
+        goto exit;
+    }
+    if (!g_successCB)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s callback completed, but failed", __func__);
+        goto exit;
+    }
+
+    /* Try a get request, expect success */
+    ret = doGetRequest(uri, dev_num);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s Get request to %s failed, but should have succeeded", __func__, uri);
+        goto exit;
+    }
+
+exit:
+    OICFree(csr);
+    OICFree(idCert);
+    OICFree(roleCert);
+    OCDeleteACLList(acl);
+
+    return ret;
+}
+
 /* Get a specific device from the provided device list. The devices in the list
- * are numbered starting from 1. */
+ * are numbered starting from 1.
+ */
 static OCProvisionDev_t* getDevInst(const OCProvisionDev_t* dev_lst, const int dev_num)
 {
     if (!dev_lst || 0 >= dev_num)
@@ -1289,7 +1773,7 @@ int TestTrustAnchorProvisioning()
 
     if(initDiscoverRegisterAllDevices())
     {
-        OIC_LOG_V(ERROR, TAG, "%s: Failed discover and provision devices", __func__);
+        OIC_LOG_V(ERROR, TAG, "%s: Failed to discover and provision devices", __func__);
         goto exit;
     }
 
@@ -1317,7 +1801,7 @@ int TestCSRResource()
 
     if(initDiscoverRegisterAllDevices())
     {
-        OIC_LOG_V(ERROR, TAG, "%s: Failed discover and provision devices", __func__);
+        OIC_LOG_V(ERROR, TAG, "%s: Failed to discover and provision devices", __func__);
         goto exit;
     }
 
@@ -1345,7 +1829,7 @@ int TestCertUse()
 
     if (initDiscoverRegisterAllDevices())
     {
-        OIC_LOG_V(ERROR, TAG, "%s: Failed discover and provision devices", __func__);
+        OIC_LOG_V(ERROR, TAG, "%s: Failed to discover and provision devices", __func__);
         goto exit;
     }
 
@@ -1353,6 +1837,62 @@ int TestCertUse()
     if (testCertUse(1))
     {
         OIC_LOG(ERROR, TAG, "Failed to authenticate to device with certificate");
+        goto exit;
+    }
+
+    ret = 0;
+
+exit:
+
+    shutdownProvisionClient();
+
+    return ret;
+}
+
+int TestRoleProvisioning()
+{
+    int ret = -1;
+
+    OIC_LOG_V(ERROR, TAG, "Running %s", __func__);
+
+    if (initDiscoverRegisterAllDevices())
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: Failed to discover and provision devices", __func__);
+        goto exit;
+    }
+
+    /* There should be one owned device with number 1. */
+    if (testRoleProvisioning(1))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to provision roles to device");
+        goto exit;
+    }
+
+    ret = 0;
+
+exit:
+
+    shutdownProvisionClient();
+
+    return ret;
+}
+
+int TestRoleAssertionAndUse()
+{
+    int ret = -1;
+
+    OIC_LOG_V(ERROR, TAG, "Running %s", __func__);
+
+    if (initDiscoverRegisterAllDevices())
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: Failed to discover and provision devices", __func__);
+        goto exit;
+    }
+
+    /* There should be one owned device with number 1. */
+    if (testRoleAssertionAndUse(1))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to assert and use roles");
         goto exit;
     }
 
@@ -1383,6 +1923,10 @@ int main(int argc, char** argv)
             return TestCSRResource();
         case 3:
             return TestCertUse();
+        case 4:
+            return TestRoleProvisioning();
+        case 5:
+            return TestRoleAssertionAndUse();
         default:
             printf("%s: Invalid test number\n", argv[0]);
             return 1;

@@ -321,8 +321,8 @@ OCStackResult OCInternalIsValidRoleCertificate(const uint8_t *buf, size_t bufLen
 
     valid = false;
     /* Check for at least one subjAltName with a role in it. */
-    for (const mbedtls_x509_general_names *nameCur = &parsedCert.subject_alt_names; 
-            NULL != nameCur; 
+    for (const mbedtls_x509_general_names *nameCur = &parsedCert.subject_alt_names;
+            NULL != nameCur;
             nameCur = nameCur->next)
     {
         if (MBEDTLS_X509_GENERALNAME_DIRECTORYNAME == nameCur->general_name.name_type)
@@ -444,7 +444,8 @@ OCStackResult OCInternalIsValidCertChain(const uint8_t *buf, size_t bufLen)
 
 static const mbedtls_x509_crt_profile s_certProfile = {
     MBEDTLS_X509_ID_FLAG(MBEDTLS_MD_SHA256),            /* MD algorithms */
-    MBEDTLS_X509_ID_FLAG(MBEDTLS_PK_ECKEY),             /* Allowed key type */
+    MBEDTLS_X509_ID_FLAG(MBEDTLS_PK_ECKEY) |            /* Allowed key types */
+    MBEDTLS_X509_ID_FLAG(MBEDTLS_PK_ECDSA),
     MBEDTLS_X509_ID_FLAG(MBEDTLS_ECP_DP_SECP256R1),     /* EC curves */
     0                                                   /* RSA minimum key length - not used because we only use EC key pairs */
 };
@@ -489,7 +490,7 @@ OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificate, co
         goto exit;
     }
 
-    if (NULL != optData)
+    if ((NULL != optData) && (0 != optData->len))
     {
         mbedRet = mbedtls_x509_crt_parse(&certChain, optData->data, optData->len);
         if (0 > mbedRet)
@@ -541,20 +542,22 @@ OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificate, co
                      dirName = dirName->next)
                 {
                     if ((MBEDTLS_OID_SIZE(MBEDTLS_OID_AT_CN) == dirName->oid.len) &&
-                        (0 == memcmp(MBEDTLS_OID_AT_CN, dirName->oid.p, MBEDTLS_OID_SIZE(MBEDTLS_OID_AT_CN))))
+                        (0 == memcmp(MBEDTLS_OID_AT_CN, dirName->oid.p, MBEDTLS_OID_SIZE(MBEDTLS_OID_AT_CN))) &&
+                        (rolesTmp[rolesTmpCount].id[0] == '\0'))
                     {
                         /* When checking validity above, we made sure the role ID and authority were not too
                          * long to fit in an OicSecRole_t. Here we only assert, but don't check again in release code.
-                         * id was also initialized as all zeroes, so string will automatically be null-terminated.
+                         * id was also initialized as all zeroes, so the string will automatically be null-terminated.
                          */
-                        assert(dirName->val.len < ROLEID_LENGTH); 
+                        assert(dirName->val.len < ROLEID_LENGTH);
                         memcpy(rolesTmp[rolesTmpCount].id, dirName->val.p, dirName->val.len);
                         advanceCount = true;
                     }
                     else if ((MBEDTLS_OID_SIZE(MBEDTLS_OID_AT_ORG_UNIT) == dirName->oid.len) &&
-                             (0 == memcmp(MBEDTLS_OID_AT_ORG_UNIT, dirName->oid.p, MBEDTLS_OID_SIZE(MBEDTLS_OID_AT_ORG_UNIT))))
+                             (0 == memcmp(MBEDTLS_OID_AT_ORG_UNIT, dirName->oid.p, MBEDTLS_OID_SIZE(MBEDTLS_OID_AT_ORG_UNIT)))&&
+                             (rolesTmp[rolesTmpCount].authority[0] == '\0'))
                     {
-                        assert(dirName->val.len < ROLEID_LENGTH); 
+                        assert(dirName->val.len < ROLEID_LENGTH);
                         memcpy(rolesTmp[rolesTmpCount].authority, dirName->val.p, dirName->val.len);
                     }
 
