@@ -612,8 +612,8 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
     }
 #endif
 
-    uint16_t acceptVersion = 0;
-    CAPayloadFormat_t acceptFormat = CA_FORMAT_APPLICATION_CBOR;
+    uint16_t acceptVersion = OC_SPEC_VERSION_VALUE;
+    CAPayloadFormat_t acceptFormat = CA_FORMAT_APPLICATION_VND_OCF_CBOR;
     // Check settings of version option and content format.
     if (requestInfo->info.numOptions > 0 && requestInfo->info.options)
     {
@@ -645,17 +645,11 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
     }
 
     requestInfo->info.acceptFormat = acceptFormat;
-    if (CA_FORMAT_APPLICATION_VND_OCF_CBOR == acceptFormat)
+    if (CA_FORMAT_APPLICATION_CBOR == acceptFormat && acceptVersion)
     {
-        if (!acceptVersion)
-        {
-            requestInfo->info.acceptVersion = OC_SPEC_VERSION_VALUE;
-        }
-        else
-        {
-            requestInfo->info.acceptVersion = acceptVersion;
-        }
+        acceptVersion = 0;
     }
+    requestInfo->info.acceptVersion = acceptVersion;
 
     CAResult_t result = CASendRequest(object, requestInfo);
     if (CA_STATUS_OK != result)
@@ -2331,6 +2325,7 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     {
         serverRequest.acceptVersion = requestInfo->info.acceptVersion;
     }
+
     if (requestInfo->info.type == CA_MSG_CONFIRM)
     {
         serverRequest.qos = OC_HIGH_QOS;
@@ -3256,8 +3251,8 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
 
     if (payload)
     {
-        uint16_t payloadVersion = 0;
-        CAPayloadFormat_t payloadFormat = CA_FORMAT_APPLICATION_CBOR;
+        uint16_t payloadVersion = OC_SPEC_VERSION_VALUE;
+        CAPayloadFormat_t payloadFormat = CA_FORMAT_APPLICATION_VND_OCF_CBOR;
         // Check version option settings
         if (numOptions > 0 && options)
         {
@@ -3287,17 +3282,12 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
         }
 
         requestInfo.info.payloadFormat = payloadFormat;
-        if (CA_FORMAT_APPLICATION_VND_OCF_CBOR == payloadFormat)
+        if (CA_FORMAT_APPLICATION_CBOR == payloadFormat && payloadVersion)
         {
-            if (!payloadVersion)
-            {
-                requestInfo.info.payloadVersion = OC_SPEC_VERSION_VALUE;
-            }
-            else
-            {
-                requestInfo.info.payloadVersion = payloadVersion;
-            }
+            payloadVersion = 0;
         }
+        requestInfo.info.payloadVersion = payloadVersion;
+
         if ((result =
             OCConvertPayload(payload, CAToOCPayloadFormat(requestInfo.info.payloadFormat),
                             &requestInfo.info.payload, &requestInfo.info.payloadSize))

@@ -44,6 +44,7 @@ samples_env.PrependUnique(CPPPATH=[
     '../../../../include',
     '../../../../stack/include',
     '../../../../connectivity/api',
+    '../../../../connectivity/lib/libcoap-4.1.1/include/coap',
     '../../../../security/include',
     '../../../../../../extlibs/boost/boost',
     '../../../../../oc_logger/include',

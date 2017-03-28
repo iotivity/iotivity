@@ -1454,6 +1454,10 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
         {
             OIC_LOG(DEBUG, ANALYZER_TAG, "Payload Format = [CA_FORMAT_APPLICATION_CBOR]");
         }
+        else if (CA_FORMAT_APPLICATION_VND_OCF_CBOR == info->payloadFormat)
+        {
+            OIC_LOG(DEBUG, ANALYZER_TAG, "Payload Format = [CA_FORMAT_APPLICATION_VND_OCF_CBOR]");
+        }
         else
         {
             OIC_LOG_V(DEBUG, ANALYZER_TAG, "Payload Format = [%d]", info->payloadFormat);
