@@ -643,6 +643,7 @@ CAResult_t CARetransmissionDestroy(CARetransmission_t *context)
         }
         CAFreeEndpoint(data->endpoint);
         OICFree(data->pdu);
+        OICFree(data);
     }
     oc_mutex_unlock(context->threadMutex);
 
