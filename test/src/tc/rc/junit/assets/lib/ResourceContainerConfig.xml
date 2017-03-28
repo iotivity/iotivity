@@ -2,8 +2,8 @@
 <container>
     <bundle>
         <id>oic.bundle.discomfortIndexSensor</id>
-        <path>/data/data/org.iotivity.service.rc.test/files/libDISensorBundle.so</path>
-        <libraryPath>/data/data/org.iotivity.service.rc.test/files/libDISensorBundle.so</libraryPath>
+        <path>/data/data/org.iotivity.test.rc.tc/files/libDISensorBundle.so</path>
+        <libraryPath>/data/data/org.iotivity.test.rc.tc/files/libDISensorBundle.so</libraryPath>
         <activator>disensor</activator>
         <version>1.0.0</version>
         <resources>
@@ -44,8 +44,8 @@
 
     <bundle>
         <id>oic.bundle.BMISensor</id>
-        <path>/data/data/org.iotivity.service.rc.test/files/libBMISensorBundle.so</path>
-        <libraryPath>/data/data/org.iotivity.service.rc.test/files/libBMISensorBundle.so</libraryPath>
+        <path>/data/data/org.iotivity.test.rc.tc/files/libBMISensorBundle.so</path>
+        <libraryPath>/data/data/org.iotivity.test.rc.tc/files/libBMISensorBundle.so</libraryPath>
         <activator>bmisensor</activator>
         <version>1.0.0</version>
         <resources>
@@ -79,7 +79,7 @@
     <!--
     <bundle>
         <id>oic.bundle.hueSample</id>
-        <path>/data/data/org.iotivity.service.rc.test/files/libHueBundle.so</path>
+        <path>/data/data/org.iotivity.test.rc.tc/files/libHueBundle.so</path>
         <activator>huesample</activator>
         <version>1.0.0</version>
         <resources>

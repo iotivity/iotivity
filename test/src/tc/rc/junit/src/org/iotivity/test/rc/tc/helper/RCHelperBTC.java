@@ -131,7 +131,7 @@ public class RCHelperBTC {
 			protected void initAttributes() {
 				this.m_name = "hueBundle";
 				this.m_resourceType = "oic.r.light";
-				this.m_uri = "data/data/org.iotivity.service.rc.utc/files/hue-0.1.jar";
+				this.m_uri = "data/data/org.iotivity.test.rc.tc/files/hue-0.1.jar";
 				this.m_attributes.put(DI_SENSOR_KEY, 0);
 				this.m_attributes.put(HUMIDITY_SENSOR_KEY, 0);
 				this.m_attributes.put(TEMPERATURE_SENSOR_KEY, 0);
