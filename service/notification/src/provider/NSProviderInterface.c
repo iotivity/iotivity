@@ -338,7 +338,7 @@ NSTopicLL * NSProviderGetConsumerTopics(const char * consumerId)
 
     NSPushQueue(TOPIC_SCHEDULER, TAST_GET_CONSUMER_TOPICS, &topicSync);
     pthread_cond_wait(topicSync.condition, &nsInitMutex);
-    OICFree(topicSync.consumerId);
+    NSOICFree(topicSync.consumerId);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderGetConsumerTopics - OUT");
@@ -427,7 +427,7 @@ NSResult NSProviderUnregisterTopic(const char * topicName)
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
-    OICFree(topicSyncResult.topicData);
+    NSOICFree(topicSyncResult.topicData);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderDeleteTopics - OUT");

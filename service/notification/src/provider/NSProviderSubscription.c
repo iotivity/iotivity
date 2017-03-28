@@ -91,7 +91,7 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
         OCResourcePayloadAddStringLL(&payload->types, NS_ROOT_TYPE);
     }
 
-    OICFree(copyReq);
+    NSOICFree(copyReq);
     OCRepPayloadSetUri(payload, NS_ROOT_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_VERSION, VERSION);
@@ -129,7 +129,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 
     if (!id)
     {
-        OICFree(copyReq);
+        NSOICFree(copyReq);
         NSFreeOCEntityHandlerRequest(entityHandlerRequest);
         NS_LOG(ERROR, "Invalid ConsumerID");
         return;
@@ -214,7 +214,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 
         NSFreeOCEntityHandlerRequest(entityHandlerRequest);
     }
-    OICFree(copyReq);
+    NSOICFree(copyReq);
 
     NS_LOG(DEBUG, "NSHandleSubscription - OUT");
 }
@@ -304,7 +304,7 @@ NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest * entityHandlerRequest
 
     if (!id)
     {
-        OICFree(copyReq);
+        NSOICFree(copyReq);
         NSFreeOCEntityHandlerRequest(entityHandlerRequest);
         NS_LOG(ERROR, "Invalid ConsumerID");
         return NS_ERROR;
@@ -312,7 +312,7 @@ NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest * entityHandlerRequest
 
     NSCacheUpdateSubScriptionState(consumerSubList, id, true);
     NSSendResponse(id, true);
-    OICFree(copyReq);
+    NSOICFree(copyReq);
     NSFreeOCEntityHandlerRequest(entityHandlerRequest);
     NS_LOG(DEBUG, "NSSendSubscriptionResponse - OUT");
     return NS_OK;
@@ -330,7 +330,7 @@ void NSProviderMQSubscription(NSMQTopicAddress * topicAddr)
     OCCallbackData cbdata = { NULL, NULL, NULL };
     cbdata.cb = NSProviderGetMQResponseCB;
     cbdata.context = OICStrdup(topicName);
-    cbdata.cd = OICFree;
+    cbdata.cd = NSOICFree;
 
     char requestUri[100] = "coap+tcp://";
 
@@ -344,9 +344,9 @@ void NSProviderMQSubscription(NSMQTopicAddress * topicAddr)
 
     NSOCResultToSuccess(ret);
 
-    OICFree(topicAddr->serverAddr);
-    OICFree(topicAddr->topicName);
-    OICFree(topicAddr);
+    NSOICFree(topicAddr->serverAddr);
+    NSOICFree(topicAddr->topicName);
+    NSOICFree(topicAddr);
 }
 #endif
 
@@ -392,7 +392,7 @@ void * NSSubScriptionSchedule(void *ptr)
 
                     NSCacheUpdateSubScriptionState(consumerSubList, consumerId, true);
                     NSSendResponse(consumerId, true);
-                    OICFree(consumerId);
+                    NSOICFree(consumerId);
                     break;
                 }
                 case TASK_SEND_DENY:
@@ -402,7 +402,7 @@ void * NSSubScriptionSchedule(void *ptr)
 
                     NSCacheUpdateSubScriptionState(consumerSubList, consumerId, false);
                     NSSendResponse(consumerId, false);
-                    OICFree(consumerId);
+                    NSOICFree(consumerId);
 
                     break;
                 }
@@ -421,7 +421,7 @@ void * NSSubScriptionSchedule(void *ptr)
                     break;
 
             }
-            OICFree(node);
+            NSOICFree(node);
         }
 
         pthread_mutex_unlock(&NSMutex[SUBSCRIPTION_SCHEDULER]);

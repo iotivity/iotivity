@@ -89,7 +89,7 @@ void * NSDiscoverySchedule(void * ptr)
                     break;
             }
 
-            OICFree(node);
+            NSOICFree(node);
         }
 
         pthread_mutex_unlock(&NSMutex[DISCOVERY_SCHEDULER]);

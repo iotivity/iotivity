@@ -334,7 +334,7 @@ void * NSNotificationSchedule(void *ptr)
                     break;
 
             }
-            OICFree(node);
+            NSOICFree(node);
         }
 
         pthread_mutex_unlock(&NSMutex[NOTIFICATION_SCHEDULER]);

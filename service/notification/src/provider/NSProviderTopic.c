@@ -73,8 +73,8 @@ NSResult NSRegisterTopic(const char * topicName)
     NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
     if (!element)
     {
-        OICFree(data->topicName);
-        OICFree(data);
+        NSOICFree(data->topicName);
+        NSOICFree(data);
         return NS_FAIL;
     }
 
@@ -261,7 +261,7 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
     if (!payload)
     {
         NS_LOG(ERROR, "payload is NULL");
-        OICFree(copyReq);
+        NSOICFree(copyReq);
         return NS_ERROR;
     }
 
@@ -271,7 +271,7 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
         OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_CONSUMER_ID, id);
     }
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
-    OICFree(copyReq);
+    NSOICFree(copyReq);
 
     if (topics)
     {
@@ -303,8 +303,8 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
                     (int) topics->state);
 
             NSTopicLL * next = topics->next;
-            OICFree(topics->topicName);
-            OICFree(topics);
+            NSOICFree(topics->topicName);
+            NSOICFree(topics);
             topics = next;
         }
 
@@ -314,7 +314,7 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
         {
             OCRepPayloadDestroy(payloadTopicArray[i]);
         }
-        OICFree(payloadTopicArray);
+        NSOICFree(payloadTopicArray);
     }
     else
     {
@@ -334,7 +334,7 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
         OCResourcePayloadAddStringLL(&payload->types, NS_ROOT_TYPE);
     }
 
-    OICFree(copyReq);
+    NSOICFree(copyReq);
     response.requestHandle = entityHandlerRequest->requestHandle;
     response.resourceHandle = entityHandlerRequest->resource;
     response.persistentBufferFlag = 0;
@@ -405,9 +405,9 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
 
             if (!newObj)
             {
-                OICFree(topicSubData->topicName);
-                OICFree(topicSubData);
-                OICFree(consumerId);
+                NSOICFree(topicSubData->topicName);
+                NSOICFree(topicSubData);
+                NSOICFree(consumerId);
                 return NS_FAIL;
             }
 
@@ -418,7 +418,7 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
         }
     }
     NSSendTopicUpdationToConsumer(consumerId);
-    OICFree(consumerId);
+    NSOICFree(consumerId);
     NS_LOG(DEBUG, "NSPostConsumerTopics() - OUT");
     return NS_OK;
 }
@@ -457,8 +457,8 @@ void * NSTopicSchedule(void * ptr)
                             (NSCacheTopicSubData *) topicSyncResult->topicData;
                     if (!newObj)
                     {
-                        OICFree(subData->topicName);
-                        OICFree(subData);
+                        NSOICFree(subData->topicName);
+                        NSOICFree(subData);
                         pthread_cond_signal(topicSyncResult->condition);
                         pthread_mutex_unlock(topicSyncResult->mutex);
                     }
@@ -477,9 +477,9 @@ void * NSTopicSchedule(void * ptr)
                         }
                         else
                         {
-                            OICFree(subData->topicName);
-                            OICFree(subData);
-                            OICFree(newObj);
+                            NSOICFree(subData->topicName);
+                            NSOICFree(subData);
+                            NSOICFree(newObj);
                         }
                     }
                     pthread_cond_signal(topicSyncResult->condition);
@@ -500,8 +500,8 @@ void * NSTopicSchedule(void * ptr)
                         topicSyncResult->result = NS_OK;
                     }
 
-                    OICFree(topicSubData->topicName);
-                    OICFree(topicSubData);
+                    NSOICFree(topicSubData->topicName);
+                    NSOICFree(topicSubData);
                     pthread_cond_signal(topicSyncResult->condition);
                     pthread_mutex_unlock(topicSyncResult->mutex);
 
@@ -564,7 +564,7 @@ void * NSTopicSchedule(void * ptr)
                     break;
             }
 
-            OICFree(node);
+            NSOICFree(node);
         }
 
         pthread_mutex_unlock(&NSMutex[TOPIC_SCHEDULER]);
