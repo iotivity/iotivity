@@ -35,6 +35,10 @@ if "%LOGGING%" == "" (
   set LOGGING=0
 )
 
+if "%LOG_LEVEL%" == "" (
+  set LOG_LEVEL=DEBUG
+)
+
 if "%RELEASE%" == "" (
   set RELEASE=0
 )
@@ -84,6 +88,10 @@ IF NOT "%1"=="" (
   IF /I "%1"=="-logging" (
     SET LOGGING=1
   )
+  IF /I "%1"=="-logLevel" (
+    SET LOG_LEVEL=%2
+    SHIFT
+  )
   IF /I "%1"=="-debugger" (
     set DEBUG="%ProgramFiles(x86)%\Windows Kits\10\Debuggers\x64\cdb.exe" -2 -c "g"
   )
@@ -128,7 +136,7 @@ IF "%BUILD_MSYS%" == "" (
   set PATH=!PATH!;!BUILD_DIR!;C:\msys64\mingw64\bin
 )
 
-set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% UWP_APP=%UWP_APP% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% RD_MODE=%RD_MODE% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER% AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE%
+set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% UWP_APP=%UWP_APP% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% LOG_LEVEL=%LOG_LEVEL% RD_MODE=%RD_MODE% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER% AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE%
 
 REM Use MSVC_VERSION=12.0 for VS2013, or MSVC_VERSION=14.0 for VS2015.
 REM If MSVC_VERSION has not been defined here, SCons chooses automatically a VS version.
@@ -192,6 +200,7 @@ if "!RUN_ARG!"=="server" (
   echo   RELEASE=%RELEASE%
   echo   TEST=%TEST%
   echo   LOGGING=%LOGGING%
+  echo   LOG_LEVEL=%LOG_LEVEL%
   echo   ROUTING=%ROUTING%
   echo   WITH_TCP=%WITH_TCP%
   echo   WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP%
@@ -277,6 +286,9 @@ echo   -noTest                      - Don't run the unittests after building the
 echo.
 echo   -logging                     - Enable logging while building the binaries
 echo.
+echo   -logLevel LEVEL              - Enable logging while building the binaries, and ignore log entries less severe than LEVEL.
+echo                                  Valid levels are: DEBUG, INFO, WARNING, ERROR, and FATAL. Default level is DEBUG.
+echo.
 echo   -debugger                    - Debug the requested application
 echo.
 echo   -release                     - Build release binaries
@@ -316,6 +328,9 @@ echo      %0 build -arch x86
 echo.
 echo   Build amd64 release binaries with logging enabled:
 echo      %0 build -arch amd64 -release -logging
+echo.
+echo   Build debug binaries with logging enabled, and ignore log entries less severe than WARNING:
+echo      %0 build -logging -logLevel WARNING
 echo.
 echo   Build using only one thread:
 echo      %0 build -threads 1

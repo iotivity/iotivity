@@ -33,24 +33,44 @@
 #undef LOG_TAG
 #endif // LOG_TAG
 #define LOG_TAG "NotificationService"
-#define NS_CONVERT_LEVEL(level) ( \
-        ((level) == 0) ? DLOG_DEBUG : \
-        ((level) == 1) ? DLOG_INFO : \
-        ((level) == 2) ? DLOG_WARN : \
-        ((level) == 3) ? DLOG_ERROR : \
-        ((level) == 4) ? DLOG_ERROR : \
-        ((level) == 5) ? DLOG_INFO : \
-        ((level) == 6) ? DLOG_INFO : \
-        ((level) == 7) ? DLOG_INFO : DLOG_INFO)
-#define NS_LOG_V(level, format, ...) (dlog_print(NS_CONVERT_LEVEL(level), LOG_TAG, (format), __VA_ARGS__))
-#define NS_LOG(level, msg) (dlog_print(NS_CONVERT_LEVEL(level), LOG_TAG, (msg)))
+
+inline log_priority NSConvertLogLevel(int level)
+{
+    // Always log private data on Tizen.
+    level &= ~OC_LOG_PRIVATE_DATA;
+
+    if (level == DEBUG)
+    {
+        return DLOG_DEBUG;
+    }
+
+    if ((level == INFO) || (level == DEBUG_LITE) || (level == INFO_LITE))
+    {
+        return DLOG_INFO;
+    }
+
+    if (level == WARNING)
+    {
+        return DLOG_WARN;
+    }
+
+    if ((level == ERROR) || (level == FATAL))
+    {
+        return DLOG_ERROR;
+    }
+
+    return DLOG_INFO;
+}
+
+#define NS_LOG_V(level, format, ...) (dlog_print(NSConvertLogLevel(level), LOG_TAG, (format), __VA_ARGS__))
+#define NS_LOG(level, msg) (dlog_print(NSConvertLogLevel(level), LOG_TAG, (msg)))
 #else // __TIZEN__
 #define NS_LOG_V(level, format, ...) OIC_LOG_V((level), __NS_FILE__, (format), __VA_ARGS__)
 #define NS_LOG(level, msg) OIC_LOG((level), __NS_FILE__, (msg))
 #endif // __TIZEN__
 #else // TB_LOG
 #if (__PRINTLOG == 1)
-#define NS_CONVERT_LEVEL(level) ( \
+#define NSConvertLogLevel(level) ( \
         ((level) == 0) ? "DEBUG" : \
         ((level) == 1) ? "INFO" : \
         ((level) == 2) ? "WARNING" : \
@@ -61,18 +81,18 @@
         ((level) == 7) ? "INFO_PRIVATE" : "INFO_PRIVATE")
 #define NS_LOG_V(level, format, ...) \
     { \
-        printf("%s: %s ", NS_CONVERT_LEVEL(level), __NS_FILE__); \
+        printf("%s: %s ", NSConvertLogLevel(level), __NS_FILE__); \
         printf((format), __VA_ARGS__); \
         printf("\n"); \
     }
 #define NS_LOG(level, msg) \
     { \
-        printf("%s: %s ", NS_CONVERT_LEVEL(level), __NS_FILE__); \
+        printf("%s: %s ", NSConvertLogLevel(level), __NS_FILE__); \
         printf((msg)); \
         printf("\n"); \
     }
 #else // (__PRINTLOG == 1)
-#define NS_CONVERT_LEVEL(level)
+#define NSConvertLogLevel(level)
 #define NS_LOG(level, msg)
 #define NS_LOG_V(level, format, ...) NS_LOG((level), ((format), __VA_ARGS__))
 #endif // (__PRINTLOG == 1)
