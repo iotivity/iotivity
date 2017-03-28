@@ -152,7 +152,7 @@ void piObserveNotificationUpdate(PIPluginBase * plugin, OCResourceHandle resourc
     }
 }
 
-OCStackResult PIStartPlugin(const char * comPort, PIPluginType pluginType, PIPlugin ** plugin)
+OCStackResult PIStartPlugin(const char * comPort, PIPluginType pluginType, PIPluginPtr * plugin)
 {
     if (!plugin || !comPort || strlen(comPort) == 0)
     {
@@ -182,7 +182,7 @@ OCStackResult PIStartPlugin(const char * comPort, PIPluginType pluginType, PIPlu
     return result;
 }
 
-OCStackResult PIStopPlugin(PIPlugin * plugin)
+OCStackResult PIStopPlugin(PIPluginPtr plugin)
 {
     if (!plugin)
     {
@@ -197,7 +197,7 @@ OCStackResult PIStopAll()
     return DeletePluginList();
 }
 
-OCStackResult PISetup(PIPlugin * plugin)
+OCStackResult PISetup(PIPluginPtr plugin)
 {
     if (!plugin)
     {
@@ -215,7 +215,7 @@ OCStackResult PISetup(PIPlugin * plugin)
     return result;
 }
 
-OCStackResult PIProcess(PIPlugin * p_plugin)
+OCStackResult PIProcess(PIPluginPtr p_plugin)
 {
     PIPluginBase * plugin = (PIPluginBase *) p_plugin;
     if (!plugin)
