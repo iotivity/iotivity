@@ -259,7 +259,7 @@ int main()
     printf("EasySetup Enrollee SAMPLE\n");
     printf("#########################\n");
     PrintMenu();
-    char option = "";
+    char option = 0;
 
     while(true)
     {
