@@ -104,7 +104,6 @@ static void FreeACE(OicSecAce_t *ace)
 {
     if (NULL == ace)
     {
-        OIC_LOG(ERROR, TAG, "Invalid Parameter");
         return;
     }
 
@@ -253,7 +252,7 @@ OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
                 {
                     newValidity->recurrenceLen = validity->recurrenceLen;
 
-                    newValidity->recurrences = (char**)OICMalloc(sizeof(char*) * validity->recurrenceLen);
+                    newValidity->recurrences = (char**)OICCalloc(validity->recurrenceLen, sizeof(char*));
                     VERIFY_NOT_NULL(TAG, newValidity->recurrences, ERROR);
 
                     for(size_t i = 0; i < validity->recurrenceLen; i++)
@@ -2363,11 +2362,20 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     OicSecAcl_t *acl = NULL;
     OicSecAce_t *readOnlyAce = NULL;
     OicSecAce_t *readWriteAce = NULL;
+    OicSecAce_t *fullPermAce = NULL;
     OicSecRsrc_t* resRsrc = NULL;
     OicSecRsrc_t* deviceRsrc = NULL;
     OicSecRsrc_t* platformRsrc = NULL;
     OicSecRsrc_t* doxmRsrc = NULL;
     OicSecRsrc_t* pstatRsrc = NULL;
+    OicSecRsrc_t* credRsrc = NULL;
+    OicSecRsrc_t* rolesRsrc = NULL;
+
+    /* 
+     * Note that all Ace_t and Rsrc_t objects will be freed on error by 
+     * DeleteACLList(acl). We LL_APPEND these objects to the acl object as soon
+     * as they are allocated.
+     */
 
     /*
      * TODO In future, when new virtual resources will be added in OIC
@@ -2387,6 +2395,9 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     // Default ACE allowing read-only access, for discovery
     readOnlyAce = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
     VERIFY_NOT_NULL(TAG, readOnlyAce, ERROR);
+    readOnlyAce->permission = PERMISSION_READ;
+    readOnlyAce->validities = NULL;
+    LL_APPEND(acl->aces, readOnlyAce);
 
     // Subject -- Mandatory
     readOnlyAce->subjectType = OicSecAceUuidSubject;
@@ -2450,16 +2461,12 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     platformRsrc->interfaces[1] = OICStrdup(OC_RSRVD_INTERFACE_READ);
     VERIFY_NOT_NULL(TAG, platformRsrc->interfaces[1], ERROR);
 
-    readOnlyAce->permission = PERMISSION_READ;
-    readOnlyAce->validities = NULL;
-    LL_APPEND(acl->aces, readOnlyAce);
-
-    // The entire list of ACEs will be freed later, by DeleteACLList.
-    readOnlyAce = NULL;
-
     // Default ACE allowing read + write access, for ownership transfer
     readWriteAce = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
     VERIFY_NOT_NULL(TAG, readWriteAce, ERROR);
+    readWriteAce->permission = PERMISSION_READ | PERMISSION_WRITE;
+    readWriteAce->validities = NULL;
+    LL_APPEND(acl->aces, readWriteAce);
 
     // Subject -- Mandatory
     readWriteAce->subjectType = OicSecAceUuidSubject;
@@ -2501,30 +2508,52 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     VERIFY_NOT_NULL(TAG, pstatRsrc->interfaces[0], ERROR);
 
     // /oic/sec/cred
-    resRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-    VERIFY_NOT_NULL(TAG, resRsrc, ERROR);
-    LL_APPEND(readWriteAce->resources, resRsrc);
-    resRsrc->href = OICStrdup(OIC_RSRC_CRED_URI);
-    VERIFY_NOT_NULL(TAG, (resRsrc->href), ERROR);
-    resRsrc->typeLen = 1;
-    resRsrc->types = (char**)OICCalloc(1, sizeof(char*));
-    VERIFY_NOT_NULL(TAG, resRsrc->types, ERROR);
-    resRsrc->types[0] = OICStrdup(OIC_RSRC_TYPE_SEC_CRED);
-    VERIFY_NOT_NULL(TAG, resRsrc->types[0], ERROR);
-    resRsrc->interfaceLen = 2;
-    resRsrc->interfaces = (char**)OICCalloc(resRsrc->interfaceLen, sizeof(char*));
-    VERIFY_NOT_NULL(TAG, resRsrc->interfaces, ERROR);
-    resRsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-    VERIFY_NOT_NULL(TAG, resRsrc->interfaces[0], ERROR);
-    resRsrc->interfaces[1] = OICStrdup(OC_RSRVD_INTERFACE_READ);
-    VERIFY_NOT_NULL(TAG, resRsrc->interfaces[1], ERROR);
+    credRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+    VERIFY_NOT_NULL(TAG, credRsrc, ERROR);
+    LL_APPEND(readWriteAce->resources, credRsrc);
+    credRsrc->href = OICStrdup(OIC_RSRC_CRED_URI);
+    VERIFY_NOT_NULL(TAG, (credRsrc->href), ERROR);
+    credRsrc->typeLen = 1;
+    credRsrc->types = (char**)OICCalloc(1, sizeof(char*));
+    VERIFY_NOT_NULL(TAG, credRsrc->types, ERROR);
+    credRsrc->types[0] = OICStrdup(OIC_RSRC_TYPE_SEC_CRED);
+    VERIFY_NOT_NULL(TAG, credRsrc->types[0], ERROR);
+    credRsrc->interfaceLen = 2;
+    credRsrc->interfaces = (char**)OICCalloc(credRsrc->interfaceLen, sizeof(char*));
+    VERIFY_NOT_NULL(TAG, credRsrc->interfaces, ERROR);
+    credRsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
+    VERIFY_NOT_NULL(TAG, credRsrc->interfaces[0], ERROR);
+    credRsrc->interfaces[1] = OICStrdup(OC_RSRVD_INTERFACE_READ);
+    VERIFY_NOT_NULL(TAG, credRsrc->interfaces[1], ERROR);
 
-    readWriteAce->permission = PERMISSION_READ | PERMISSION_WRITE;
-    readWriteAce->validities = NULL;
-    LL_APPEND(acl->aces, readWriteAce);
+    // Default ACE allowing full permissions (create, read, write, delete)
+    fullPermAce = (OicSecAce_t *)OICCalloc(1, sizeof(OicSecAce_t));
+    VERIFY_NOT_NULL(TAG, fullPermAce, ERROR);
+    fullPermAce->permission = PERMISSION_FULL_CONTROL;
+    fullPermAce->validities = NULL;
+    LL_APPEND(acl->aces, fullPermAce);
 
-    // The entire list of ACEs will be freed later, by DeleteACLList.
-    readWriteAce = NULL;
+    // Subject: set to wildcard "*"
+    fullPermAce->subjectType = OicSecAceUuidSubject;
+    memcpy(&fullPermAce->subjectuuid, &WILDCARD_SUBJECT_ID, sizeof(fullPermAce->subjectuuid));
+
+    // Resources -- Mandatory
+    // /oic/sec/roles 
+    rolesRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+    VERIFY_NOT_NULL(TAG, rolesRsrc, ERROR);
+    LL_APPEND(fullPermAce->resources, rolesRsrc);
+    rolesRsrc->href = OICStrdup(OIC_RSRC_ROLES_URI);
+    VERIFY_NOT_NULL(TAG, (rolesRsrc->href), ERROR);
+    rolesRsrc->typeLen = 1;
+    rolesRsrc->types = (char**)OICCalloc(1, sizeof(char*));
+    VERIFY_NOT_NULL(TAG, rolesRsrc->types, ERROR);
+    rolesRsrc->types[0] = OICStrdup(OIC_RSRC_TYPE_SEC_CRED);
+    VERIFY_NOT_NULL(TAG, rolesRsrc->types[0], ERROR);
+    rolesRsrc->interfaceLen = 1;
+    rolesRsrc->interfaces = (char**)OICCalloc(rolesRsrc->interfaceLen, sizeof(char*));
+    VERIFY_NOT_NULL(TAG, rolesRsrc->interfaces, ERROR);
+    rolesRsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
+    VERIFY_NOT_NULL(TAG, rolesRsrc->interfaces[0], ERROR);
 
     // Device ID is the owner of this default ACL
     if (GetDoxmResourceData() != NULL)
@@ -2546,16 +2575,6 @@ exit:
 
     if (ret != OC_STACK_OK)
     {
-        if (readOnlyAce != NULL)
-        {
-            FreeACE(readOnlyAce);
-        }
-
-        if (readWriteAce != NULL)
-        {
-            FreeACE(readWriteAce);
-        }
-
         DeleteACLList(acl);
     }
 

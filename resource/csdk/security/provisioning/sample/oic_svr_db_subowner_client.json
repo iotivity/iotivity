@@ -59,6 +59,18 @@
                         }
                     ],
                     "permission": 2
+                }, 
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/sec/roles",
+                            "rel": "",
+                            "rt": ["oic.r.cred"],
+                            "if": ["oic.if.baseline"]
+                        }
+                    ],
+                    "permission": 31
                 }
             ]
         },

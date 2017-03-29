@@ -1036,92 +1036,6 @@ exit:
     return ret;
 }
 
-/* Once IOT-1950 is resolved, this can be removed. */
-static int createRolesAcl(OicSecAcl_t** newAcl)
-{
-    int ret = -1;
-    OicSecAcl_t* acl = NULL;
-    OicSecAce_t* ace = NULL;
-    OicSecRsrc_t* rsrc = NULL;
-    const char* resource = "/oic/sec/roles";
-    const char* resource_type = "oic.sec.role";
-    const char* resource_interface = "oic.if.baseline";
-    uint16_t perms = PERMISSION_FULL_CONTROL;
-
-    /* Create an ACL with one ACE */
-    acl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
-    if (!acl)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: OICCalloc failed (acl)", __func__);
-        goto exit;
-    }
-    ace = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
-    if (!ace)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: OICCalloc failed (ace)", __func__);
-        goto exit;
-    }
-    LL_APPEND(acl->aces, ace);
-
-    /* Set uuid to "*", everyone */
-    ace->subjectType = OicSecAceUuidSubject;
-    memcpy(&ace->subjectuuid, &WILDCARD_SUBJECT_ID, WILDCARD_SUBJECT_ID_LEN);
-
-    OIC_LOG(DEBUG, TAG, "Creating ACE with wildcard UUID");
-
-    /* Add a resource (e.g. '/a/led') to the ACE */
-    rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-    if (!rsrc)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: OICCalloc failed (rsrc)", __func__);
-        goto exit;
-    }
-    LL_APPEND(ace->resources, rsrc);
-    rsrc->href = OICStrdup(resource);
-
-    /* Set resource type, e.g., 'core.led' */
-    rsrc->typeLen = 1;
-    rsrc->types = (char**)OICCalloc(rsrc->typeLen, sizeof(char*));
-    if (!rsrc->types)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: OICCalloc failed (rsrc->types)", __func__);
-        goto exit;
-    }
-    rsrc->types[0] = OICStrdup(resource_type);
-
-    /* Set interface, e.g., 'oic.if.baseline' */
-    rsrc->interfaceLen = 1;
-    rsrc->interfaces = (char**)OICCalloc(rsrc->interfaceLen, sizeof(char*));
-    if (!rsrc->interfaces)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: OICCalloc failed (rsrc->interfaces)", __func__);
-        goto exit;
-    }
-    rsrc->interfaces[0] = OICStrdup(resource_interface);
-
-    if (!rsrc->href || !rsrc->types[0] || !rsrc->interfaces[0])
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: OICStrdup failed", __func__);
-        goto exit;
-    }
-
-    /* Set permission for the ACE */
-    ace->permission = perms;
-
-    ret = 0; /* success */
-    *newAcl = acl;
-
-exit:
-
-    if (ret != 0)
-    {
-        *newAcl = NULL;
-        OCDeleteACLList(acl);
-    }
-
-    return ret;
-}
-
 static int provisionAcl(int dev_num, OicSecAcl_t* acl)
 {
     OCStackResult res = OC_STACK_ERROR;
@@ -1155,7 +1069,6 @@ exit:
 
     return (res == OC_STACK_OK) ? 0 : -1;
 }
-
 
 /* Function to work around IOT-1927.  The ocrandom.h include is only required for the workaround.
  * @todo: when IOT-1927 is resolved remove this function
@@ -1445,27 +1358,6 @@ static int testRoleAssertionAndUse(int dev_num)
     if (ret != 0)
     {
         OIC_LOG_V(ERROR, TAG, "%s failed to provision led ACL", __func__);
-        goto exit;
-    }
-
-    /* Create and provision an ACL to allow anyone access to the roles resource. Since all actions
-     * on the roles resource first requires authentication by public key, this is effectively "any
-     * authenticated" access.
-     * @todo: This should be done by default and not be necessary here (IOT-1950).
-     */
-    OCDeleteACLList(acl);
-    acl = NULL;
-    ret = createRolesAcl(&acl);
-    if (ret != 0)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s failed to create roles ACL", __func__);
-        goto exit;
-    }
-
-    ret = provisionAcl(dev_num, acl);
-    if (ret != 0)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s failed to provision roles ACL", __func__);
         goto exit;
     }
 
