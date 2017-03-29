@@ -17,40 +17,42 @@
  * limitations under the License.
  *
  ******************************************************************/
-#include <SHBaseRemoteDevice.h>
-#include <SHBaseRemoteDevice_Impl.h>
 
+#include <ClientCallbackContext.h>
 namespace OIC
 {
     namespace Service
     {
         namespace SH
         {
-            SHBaseRemoteDevice::SHBaseRemoteDevice()
+            ClientCallbackContext::ClientCallbackContext(void* userDelegate)
+            : delegate(userDelegate), query("")
             {
-                m_remoteDeviceImpl = new SHBaseRemoteDevice_Impl;
+
             }
 
-            SHBaseRemoteDevice::~SHBaseRemoteDevice()
+            ClientCallbackContext::ClientCallbackContext(void* userDelegate,
+                                                         const std::string& userQuery)
+            : delegate(userDelegate), query(userQuery)
             {
-                delete m_remoteDeviceImpl;
+
             }
 
-            std::string SHBaseRemoteDevice::getType()
+            ClientCallbackContext::~ClientCallbackContext()
             {
-                return m_remoteDeviceImpl->getType();
+
             }
 
-            std::list<SHBaseRemoteResource*> SHBaseRemoteDevice::getResourceWithResourceType(
-                    const std::string &resourceType)
+            void* ClientCallbackContext::getDelegate()
             {
-                return m_remoteDeviceImpl->getResourceWithResourceType(resourceType);
+                void* ret = (void*)delegate;
+                return ret;
             }
 
-            const SHBaseRemoteResource* SHBaseRemoteDevice::getResourceWithResourceUri(
-                    const std::string &resourceUri)
+            std::string ClientCallbackContext::getQuery()
             {
-                return m_remoteDeviceImpl->getResourceWithResourceUri(resourceUri);
+                std::string ret = query;
+                return ret;
             }
         }
     }

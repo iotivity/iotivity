@@ -23,6 +23,9 @@
 #include <list>
 #include <string>
 
+#include <ClientCallbackWrapper.h>
+#include "octypes.h"
+
 /**
  * @file
  *
@@ -40,15 +43,16 @@ namespace OIC
             class ResourceQuery;
             class SHBaseRemoteResourceDelegate;
 
-           /**
-            * @class SHBaseRemoteResource_Impl
-            *
-            * @brief This class contains a set of functions to implement
-            * SHBaseRemoteResoource class.
-            */
+            /**
+             * @class SHBaseRemoteResource_Impl
+             *
+             * @brief This class contains a set of functions to implement
+             * SHBaseRemoteResoource class.
+             */
             class SHBaseRemoteResource_Impl
             {
-            friend class SHBaseRemoteResource;
+                friend class SHBaseRemoteResource;
+                friend class ClientCallbackWrapper::CallbackHelper;
 
             public:
                 ~SHBaseRemoteResource_Impl();

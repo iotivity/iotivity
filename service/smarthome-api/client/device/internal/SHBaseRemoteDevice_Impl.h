@@ -29,6 +29,8 @@
 
 #include <string>
 #include <list>
+#include <ClientCallbackWrapper.h>
+#include "octypes.h"
 
 namespace OIC
 {
@@ -46,6 +48,7 @@ namespace OIC
             class SHBaseRemoteDevice_Impl
             {
                 friend class SHBaseRemoteDevice;
+                friend class ClientCallbackWrapper::CallbackHelper;
 
             public:
                 ~SHBaseRemoteDevice_Impl();
@@ -58,7 +61,7 @@ namespace OIC
                 std::list<SHBaseRemoteResource*> getResourceWithResourceType(
                         const std::string &resourceType);
 
-                SHBaseRemoteResource* getResourceWithResourceUri(
+                const SHBaseRemoteResource* getResourceWithResourceUri(
                         const std::string &resourceUri);
 
                 /**
@@ -66,12 +69,19 @@ namespace OIC
                  *
                  * @param[in] resource Pointer of remote resource
                  */
-                void addResource(SHBaseRemoteResource *resource);
+                std::list<SHBaseRemoteResource*> getAllResources();
 
             private:
                 SHBaseRemoteDevice_Impl();
                 std::list<SHBaseRemoteResource*> m_resources;
                 std::string m_deviceType;
+
+                /**
+                 * Function to add remote resource to remote device.
+                 *
+                 * @param[in] resource Pointer of remote resource
+                 */
+                void addResource(SHBaseRemoteResource *resource);
             };
         }
     }

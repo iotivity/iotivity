@@ -73,7 +73,8 @@ namespace OIC
                  * @param[in] resourceUri Uri of remote resource
                  * @return found remote resource
                  */
-                SHBaseRemoteResource* getResourceWithResourceUri(const std::string &resourceUri);
+                const SHBaseRemoteResource* getResourceWithResourceUri(
+                                            const std::string &resourceUri);
 
             protected:
                 SHBaseRemoteDevice();

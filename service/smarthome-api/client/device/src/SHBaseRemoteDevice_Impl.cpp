@@ -17,9 +17,9 @@
  * limitations under the License.
  *
  ******************************************************************/
+#include <algorithm>
 #include <SHBaseRemoteDevice_Impl.h>
 #include <SHBaseRemoteResource.h>
-#include <algorithm>
 
 namespace OIC
 {
@@ -63,7 +63,7 @@ namespace OIC
                 return resources;
             }
 
-            SHBaseRemoteResource* SHBaseRemoteDevice_Impl::getResourceWithResourceUri(
+            const SHBaseRemoteResource* SHBaseRemoteDevice_Impl::getResourceWithResourceUri(
                     const std::string &resourceUri)
             {
                 std::list<SHBaseRemoteResource*>::const_iterator iter;
@@ -71,11 +71,16 @@ namespace OIC
                 {
                     if ((*iter)->getUri() == resourceUri)
                     {
-                        return (*iter);
+                        return (const SHBaseRemoteResource*)(*iter);
                     }
                 }
 
                 return NULL;
+            }
+
+            std::list<SHBaseRemoteResource*> SHBaseRemoteDevice_Impl::getAllResources()
+            {
+                return m_resources;
             }
 
             void SHBaseRemoteDevice_Impl::addResource(SHBaseRemoteResource *resource)
