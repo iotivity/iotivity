@@ -307,7 +307,7 @@ void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* in
         if (!connectRequest)
         {
             OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
-            return NULL;
+            return;
         }
 
         int cntRequest = 0;
