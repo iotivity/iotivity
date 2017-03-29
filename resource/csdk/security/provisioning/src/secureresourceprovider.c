@@ -175,27 +175,47 @@ struct RemoveData {
 /**
  * Function prototype
  */
-static OCStackResult provisionCredentials(const OicSecCred_t *cred,
+static OCStackResult provisionCredentials(OicSecCred_t *cred,
         const OCProvisionDev_t *deviceInfo, CredentialData_t *credData,
         OCClientResponseHandler responseHandler);
+
+typedef enum {
+    DEVICE_1_FINISHED,
+    DEVICE_2_FINISHED,
+    DEVICE_LOCAL_FINISHED
+} CredProvisioningResultCause_t;
 
 /**
  * Internal function to update result in result array.
  */
 static void registerResultForCredProvisioning(CredentialData_t *credData,
-                                              OCStackResult stackresult, int cause)
+                                              OCStackResult stackresult, CredProvisioningResultCause_t cause)
 {
-
+   OCStackResult res = OC_STACK_ERROR;
    OIC_LOG_V(INFO,TAG,"value of credData->numOfResults is %d",credData->numOfResults);
-   if(1 == cause)
+   switch (cause)
    {
+   case DEVICE_1_FINISHED:
        memcpy(credData->resArr[(credData->numOfResults)].deviceId.id,
               credData->deviceInfo1->doxm->deviceID.id,UUID_LENGTH);
-   }
-   else
-   {
+       break;
+   case DEVICE_2_FINISHED:
        memcpy(credData->resArr[(credData->numOfResults)].deviceId.id,
               credData->deviceInfo2->doxm->deviceID.id,UUID_LENGTH);
+       break;
+   case DEVICE_LOCAL_FINISHED:
+       res = GetDoxmDeviceID(&credData->resArr[(credData->numOfResults)].deviceId);
+       if (OC_STACK_OK != res)
+       {
+           OIC_LOG_V(WARNING, TAG, "%s: Could not retrieve own device ID to populate result for cred provisioning: %d", __func__, res);
+           memset(credData->resArr[(credData->numOfResults)].deviceId.id, 0, UUID_LENGTH);
+       }
+       break;
+   default:
+       assert(!"Unknown value for cause");
+       OIC_LOG_V(ERROR, TAG, "%s: unknown value of cause: %d", __func__, cause);
+       memset(credData->resArr[(credData->numOfResults)].deviceId.id, 0, UUID_LENGTH);
+       break;
    }
    credData->resArr[(credData->numOfResults)].res = stackresult;
    ++(credData->numOfResults);
@@ -223,7 +243,7 @@ static OCStackApplicationResult provisionCredentialCB2(void *ctx, OCDoHandle UNU
     {
         if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
         {
-            registerResultForCredProvisioning(credData, OC_STACK_RESOURCE_CHANGED, 2);
+            registerResultForCredProvisioning(credData, OC_STACK_RESOURCE_CHANGED, DEVICE_2_FINISHED);
             OCStackResult res =  PDMLinkDevices(&credData->deviceInfo1->doxm->deviceID,
                     &credData->deviceInfo2->doxm->deviceID);
             if (OC_STACK_OK != res)
@@ -243,7 +263,7 @@ static OCStackApplicationResult provisionCredentialCB2(void *ctx, OCDoHandle UNU
 
     }
     OIC_LOG(INFO, TAG, "provisionCredentialCB2 received Null clientResponse");
-    registerResultForCredProvisioning(credData, OC_STACK_ERROR, 2);
+    registerResultForCredProvisioning(credData, OC_STACK_ERROR, DEVICE_2_FINISHED);
     ((OCProvisionResultCB)(resultCallback))(credData->ctx, credData->numOfResults,
                                             credData->resArr,
                                             true);
@@ -276,10 +296,16 @@ static OCStackApplicationResult provisionCredentialCB1(void *ctx, OCDoHandle UNU
         if (OC_STACK_RESOURCE_CHANGED == clientResponse->result)
         {
             // send credentials to second device
-            registerResultForCredProvisioning(credData, OC_STACK_RESOURCE_CHANGED,1);
+            registerResultForCredProvisioning(credData, OC_STACK_RESOURCE_CHANGED, DEVICE_1_FINISHED);
             OCStackResult res = provisionCredentials(credInfo, deviceInfo, credData,
                     provisionCredentialCB2);
-            DeleteCredList(credInfo);
+            // If deviceInfo is NULL, this device is the second device. Don't delete the cred
+            // because provisionCredentials added it to the local cred store and it now owns
+            // the memory.
+            if ((NULL != deviceInfo) || (OC_STACK_OK != res))
+            {
+                DeleteCredList(credInfo);
+            }
             if (OC_STACK_OK != res)
             {
                 registerResultForCredProvisioning(credData, res,2);
@@ -293,7 +319,7 @@ static OCStackApplicationResult provisionCredentialCB1(void *ctx, OCDoHandle UNU
         }
         else
         {
-            registerResultForCredProvisioning(credData, OC_STACK_ERROR,1);
+            registerResultForCredProvisioning(credData, OC_STACK_ERROR, DEVICE_1_FINISHED);
             ((OCProvisionResultCB)(resultCallback))(credData->ctx, credData->numOfResults,
                                                     credData->resArr,
                                                     true);
@@ -305,7 +331,7 @@ static OCStackApplicationResult provisionCredentialCB1(void *ctx, OCDoHandle UNU
     else
     {
         OIC_LOG(INFO, TAG, "provisionCredentialCB received Null clientResponse for first device");
-        registerResultForCredProvisioning(credData, OC_STACK_ERROR,1);
+        registerResultForCredProvisioning(credData, OC_STACK_ERROR, DEVICE_1_FINISHED);
        ((OCProvisionResultCB)(resultCallback))(credData->ctx, credData->numOfResults,
                                                      credData->resArr,
                                                      true);
@@ -325,58 +351,73 @@ static OCStackApplicationResult provisionCredentialCB1(void *ctx, OCDoHandle UNU
  * @param[in] responseHandler callbak called by OC stack when request API receives response.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-static OCStackResult provisionCredentials(const OicSecCred_t *cred,
+static OCStackResult provisionCredentials(OicSecCred_t *cred,
         const OCProvisionDev_t *deviceInfo, CredentialData_t *credData,
         OCClientResponseHandler responseHandler)
 {
-    OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    if (!secPayload)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
-        return OC_STACK_NO_MEMORY;
-    }
-    secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    int secureFlag = 0;
-    OCStackResult res = CredToCBORPayload(cred, &secPayload->securityData,
-                                          &secPayload->payloadSize, secureFlag);
-    if((OC_STACK_OK != res) && (NULL == secPayload->securityData))
-    {
-        OCPayloadDestroy((OCPayload *)secPayload);
-        OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
-        return OC_STACK_NO_MEMORY;
-    }
+    OCStackResult res = OC_STACK_OK;
 
-    OIC_LOG(DEBUG, TAG, "Created payload for Cred:");
-    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
-    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
-    if(!PMGenerateQuery(true,
-                        deviceInfo->endpoint.addr,
-                        deviceInfo->securePort,
-                        deviceInfo->connType,
-                        query, sizeof(query), OIC_RSRC_CRED_URI))
+    if (NULL != deviceInfo)
     {
-        OIC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
-        OCPayloadDestroy((OCPayload *)secPayload);
-        return OC_STACK_ERROR;
-    }
-    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+        OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
+        if (!secPayload)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+            return OC_STACK_NO_MEMORY;
+        }
+        secPayload->base.type = PAYLOAD_TYPE_SECURITY;
+        int secureFlag = 0;
+        res = CredToCBORPayload(cred, &secPayload->securityData, &secPayload->payloadSize, secureFlag);
+        if ((OC_STACK_OK != res) && (NULL == secPayload->securityData))
+        {
+            OCPayloadDestroy((OCPayload *)secPayload);
+            OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
+            return OC_STACK_NO_MEMORY;
+        }
 
-    OCCallbackData cbData = {.context=NULL, .cb=NULL, .cd=NULL};
-    cbData.cb = responseHandler;
-    cbData.context = (void *) credData;
-    cbData.cd = NULL;
+        OIC_LOG(DEBUG, TAG, "Created payload for Cred:");
+        OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
+        char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = { 0 };
+        if (!PMGenerateQuery(true,
+            deviceInfo->endpoint.addr,
+            deviceInfo->securePort,
+            deviceInfo->connType,
+            query, sizeof(query), OIC_RSRC_CRED_URI))
+        {
+            OIC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+            OCPayloadDestroy((OCPayload *)secPayload);
+            return OC_STACK_ERROR;
+        }
+        OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    OCDoHandle handle = NULL;
-    OCMethod method = OC_REST_POST;
-    OCStackResult ret = OCDoResource(&handle, method, query, 0, (OCPayload*)secPayload,
+        OCCallbackData cbData = { .context = NULL, .cb = NULL, .cd = NULL };
+        cbData.cb = responseHandler;
+        cbData.context = (void *)credData;
+        cbData.cd = NULL;
+
+        OCDoHandle handle = NULL;
+        OCMethod method = OC_REST_POST;
+        res = OCDoResource(&handle, method, query, 0, (OCPayload*)secPayload,
             deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
-    OIC_LOG_V(INFO, TAG, "OCDoResource::Credential provisioning returned : %d",ret);
-    if (ret != OC_STACK_OK)
-    {
-        OIC_LOG(ERROR, TAG, "OCStack resource error");
-        return ret;
+        OIC_LOG_V(INFO, TAG, "OCDoResource::Credential provisioning returned : %d", res);
+        if (res != OC_STACK_OK)
+        {
+            OIC_LOG(ERROR, TAG, "OCStack resource error");
+            return res;
+        }
+        return OC_STACK_OK;
     }
-    return OC_STACK_OK;
+    else
+    {
+        /* Provision this credential to the local cred store. On success, the cred resource takes
+         * ownership of the memory. On failure, provisionCredentialCB1 will delete the cred object.
+         */
+        res = AddCredential(cred);
+        /* Call the result callback directly. */
+        registerResultForCredProvisioning(credData, OC_STACK_RESOURCE_CHANGED, DEVICE_LOCAL_FINISHED);
+        (credData->resultCallback)(credData->ctx, credData->numOfResults, credData->resArr, false);
+        return res;
+    }
 }
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
@@ -893,20 +934,19 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
                                       const OCProvisionDev_t *pDev1,
                                       const OCProvisionDev_t *pDev2,
                                       const char* pemCert,
+                                      const OicSecRole_t *role1,
+                                      const OicSecRole_t *role2,
                                       OCProvisionResultCB resultCallback)
 {
     VERIFY_NOT_NULL_RETURN(TAG, pDev1, ERROR,  OC_STACK_INVALID_PARAM);
-    if (SYMMETRIC_PAIR_WISE_KEY == type)
-    {
-        VERIFY_NOT_NULL_RETURN(TAG, pDev2, ERROR,  OC_STACK_INVALID_PARAM);
-    }
     if (!resultCallback)
     {
         OIC_LOG(INFO, TAG, "SRPProvisionCredentials: NULL Callback");
         return OC_STACK_INVALID_CALLBACK;
     }
-    if (SYMMETRIC_PAIR_WISE_KEY == type &&
-        0 == memcmp(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID, sizeof(OicUuid_t)))
+    if ((SYMMETRIC_PAIR_WISE_KEY == type) && 
+        (NULL != pDev2) &&
+        (0 == memcmp(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID, sizeof(OicUuid_t))))
     {
         OIC_LOG(INFO, TAG, "SRPProvisionCredentials : Same device ID");
         return OC_STACK_INVALID_PARAM;
@@ -921,7 +961,7 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
 
     OIC_LOG(INFO, TAG, "In SRPProvisionCredentials");
 
-    if (SYMMETRIC_PAIR_WISE_KEY == type)
+    if ((SYMMETRIC_PAIR_WISE_KEY == type) && (NULL != pDev2))
     {
         bool linkExisits = true;
         OCStackResult res = PDMIsLinkExists(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID, &linkExisits);
@@ -955,7 +995,8 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
             OicSecCred_t *firstCred = NULL;
             OicSecCred_t *secondCred = NULL;
             OCStackResult res = PMGeneratePairWiseCredentials(type, keySize, &provTooldeviceID,
-                    &firstDevice->doxm->deviceID, &secondDevice->doxm->deviceID,
+                    &firstDevice->doxm->deviceID, (NULL != secondDevice) ? &secondDevice->doxm->deviceID : &provTooldeviceID,
+                    role1, role2,
                     &firstCred, &secondCred);
             VERIFY_SUCCESS_RETURN(TAG, (res==OC_STACK_OK), ERROR, OC_STACK_ERROR);
             OIC_LOG(INFO, TAG, "Credentials generated successfully");

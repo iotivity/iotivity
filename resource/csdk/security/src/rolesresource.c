@@ -48,6 +48,7 @@
 #include "ca_adapter_net_ssl.h"
 #include "ocstackinternal.h"
 #include "rolesresource.h"
+#include "secureresourcemanager.h"
 
 #define TAG  "OIC_SRM_ROLES"
 
@@ -63,11 +64,19 @@ typedef struct RolesEntry {
     struct RolesEntry       *next;
 } RolesEntry_t;
 
-static OCResourceHandle gRolesHandle        = NULL;
-static RolesEntry_t     *gRoles             = NULL;
-static uint32_t         gIdCounter          = 1;
+typedef struct SymmetricRoleEntry {
+    OicUuid_t                 subject;          /**< Subject of the symmetric credential */
+    OicSecRole_t              role;             /**< Role of the symmetric credential */
 
-/**
+    struct SymmetricRoleEntry *next;
+} SymmetricRoleEntry_t;
+
+static OCResourceHandle     gRolesHandle        = NULL;
+static RolesEntry_t         *gRoles             = NULL;
+static SymmetricRoleEntry_t *gSymmetricRoles    = NULL;
+static uint32_t             gIdCounter          = 1;
+
+/** 
  * Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching max cbor size.
  */
@@ -107,7 +116,7 @@ static OCStackResult GetPeerPublicKeyFromEndpoint(const CAEndpoint_t *endpoint,
     if ((NULL == sep.publicKey) || (0 == sep.publicKeyLength))
     {
         OIC_LOG_V(ERROR, TAG, "%s: Peer did not have a public key", __func__);
-        return OC_STACK_ERROR;
+        return OC_STACK_INVALID_PARAM;
     }
 
     *publicKey = OICCalloc(1, sep.publicKeyLength);
@@ -185,6 +194,67 @@ static void FreeRolesList(RolesEntry_t *roles)
             FreeRolesEntry(entryTmp1);
         }
     }
+}
+
+static void FreeSymmetricRoleEntry(SymmetricRoleEntry_t *symRoleEntry)
+{
+    OICFree(symRoleEntry);
+}
+
+static void FreeSymmetricRolesList(SymmetricRoleEntry_t *head)
+{
+    if (NULL != head)
+    {
+        SymmetricRoleEntry_t *entryTmp1 = NULL;
+        SymmetricRoleEntry_t *entryTmp2 = NULL;
+
+        LL_FOREACH_SAFE(head, entryTmp1, entryTmp2)
+        {
+            LL_DELETE(head, entryTmp1);
+            FreeSymmetricRoleEntry(entryTmp1);
+        }
+    }
+}
+
+OCStackResult RegisterSymmetricCredentialRole(const OicSecCred_t *cred)
+{
+    VERIFY_NON_NULL_RET(cred, TAG, "Parameter cred is NULL", OC_STACK_INVALID_PARAM);
+    VERIFY_SUCCESS_RETURN(TAG, (SYMMETRIC_PAIR_WISE_KEY == cred->credType), ERROR, OC_STACK_INVALID_PARAM);
+
+    SymmetricRoleEntry_t *curr = NULL;
+
+    LL_FOREACH(gSymmetricRoles, curr)
+    {
+        if (0 == memcmp(&cred->subject, &curr->subject, sizeof(curr->subject)))
+        {
+            if (!IsNonEmptyRole(&cred->roleId))
+            {
+                LL_DELETE(gSymmetricRoles, curr);
+            }
+            else
+            {
+                curr->role = cred->roleId;
+            }
+
+            return OC_STACK_OK;
+        }
+    }
+
+    /* No entry found; add a new one if we're setting a role. */
+    if (IsNonEmptyRole(&cred->roleId))
+    {
+        curr = (SymmetricRoleEntry_t *)OICCalloc(1, sizeof(SymmetricRoleEntry_t));
+        if (NULL == curr)
+        {
+            OIC_LOG(ERROR, TAG, "No memory allocating new symmetric role entry");
+            return OC_STACK_NO_MEMORY;
+        }
+        LL_APPEND(gSymmetricRoles, curr);
+        curr->subject = cred->subject;
+        curr->role = cred->roleId;
+    }
+
+    return OC_STACK_OK;
 }
 
 static OCStackResult DuplicateRoleCertChain(const RoleCertChain_t *roleCert, RoleCertChain_t **duplicate)
@@ -970,6 +1040,7 @@ OCStackResult DeInitRolesResource()
     gRolesHandle = NULL;
 
     FreeRolesList(gRoles);
+    FreeSymmetricRolesList(gSymmetricRoles);
 
     gRoles = NULL;
 
@@ -1045,8 +1116,37 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
     {
         /*
          * OC_STACK_INVALID_PARAM means the endpoint didn't authenticate with a certificate.
-         * Succeed and return no roles.
+         * Look for a symmetric key-based role and return that if present.
          */
+        CASecureEndpoint_t sep;
+        CAResult_t caRes = GetCASecureEndpointData(endpoint, &sep);
+        if (CA_STATUS_OK != caRes)
+        {
+            *roles = NULL;
+            *roleCount = 0;
+            return OC_STACK_OK;
+        }
+
+        SymmetricRoleEntry_t *curr = NULL;
+        LL_FOREACH(gSymmetricRoles, curr)
+        {
+            if ((UUID_LENGTH == sep.identity.id_length) && 
+                (0 == memcmp(curr->subject.id, sep.identity.id, sizeof(curr->subject.id))))
+            {
+                *roles = (OicSecRole_t *)OICCalloc(1, sizeof(OicSecRole_t));
+                if (NULL == *roles)
+                {
+                    OIC_LOG(ERROR, TAG, "No memory allocating roles for symmetric credential");
+                    return OC_STACK_NO_MEMORY;
+                }
+
+                (*roles)[0] = curr->role;
+                *roleCount = 1;
+                return OC_STACK_OK;
+            }
+        }
+
+        /* No symmetric role found. Return empty list. */
         *roles = NULL;
         *roleCount = 0;
         return OC_STACK_OK;

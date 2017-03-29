@@ -1571,6 +1571,136 @@ exit:
     return ret;
 }
 
+static int provisionSymmetricRoleCred(int dev_num)
+{
+    OicSecRole_t role;
+    memset(&role, 0, sizeof(role));
+    OICStrcpy(role.id, sizeof(role.id), TEST_CERT_ROLE1);
+
+    // call |OCProvisionCredentials| API
+    // calling this API with callback actually acts like blocking
+    // for error checking, the return value saved and printed
+    g_doneCB = false;
+    OCStackResult rst =
+        OCProvisionSymmetricRoleCredentials((void*) g_ctx,
+                    SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
+                    getDevInst((const OCProvisionDev_t*) g_own_list, dev_num),
+                    NULL, NULL, &role,
+                    provisionCredCB);
+    if (OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCProvisionCredentials API error: %d", rst);
+        return -1;
+    }
+    if (waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int testSymmetricRoleUse(int dev_num)
+{
+    const char* uri = "/a/led";
+    OicSecAcl_t* acl = NULL;
+
+    // Make sure we own at least one device to provision
+    if (!g_own_list || (g_own_cnt == 0))
+    {
+        OIC_LOG(ERROR, TAG, "Owned device list empty, must discover unowned devices first");
+        return -1;  // Error, we should have registered unowned devices already
+    }
+
+    /* Create and provision a role-based ACL allowing ROLE1 to access '/a/led'. */
+    int ret = createLedAcl(&acl, TEST_CERT_ROLE1, NULL);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s failed to create led ACL", __func__);
+        return ret;
+    }
+
+    ret = provisionAcl(dev_num, acl);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s failed to provision led ACL", __func__);
+        goto exit;
+    }
+
+    /* Create and provision an ACL to allow anyone access to the roles resource. Since all actions
+     * on the roles resource first requires authentication by public key, this is effectively "any
+     * authenticated" access.
+     * @todo: This should be done by default and not be necessary here (IOT-1950).
+     */
+    OCDeleteACLList(acl);
+    acl = NULL;
+    ret = createRolesAcl(&acl);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s failed to create roles ACL", __func__);
+        goto exit;
+    }
+
+    ret = provisionAcl(dev_num, acl);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s failed to provision roles ACL", __func__);
+        goto exit;
+    }
+
+    /* Remove the owner credential so that we don't use it when asserting role certs. */
+    OCStackResult res = OCRemoveCredential(&g_uuidDev1);
+    if (res != OC_STACK_RESOURCE_DELETED)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s failed to remove owner credential for subject UUID: ", __func__);
+        OIC_LOG_BUFFER(DEBUG, TAG, g_uuidDev1.id, UUID_LENGTH);
+        ret = -1;
+        goto exit;
+    }
+
+    /* The server has an owner PSK associated with our GUID. Change our GUID to something else,
+     * which will both be used to generate the role credential and for the later connection.
+     */
+    const OCUUIdentity newIdentity = { .id = { 0x46, 0x46, 0x46, 0x46, 0x46, 0x46, 0x46, 0x46, 0x46, 0x46, 0x46, 0x46, 0x46, 0x46, 0x46, 0x46 } };
+    if (OC_STACK_OK != OCSetDeviceId(&newIdentity))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s failed to set device ID", __func__);
+        ret = -1;
+        goto exit;
+    }
+
+    /* Create a new symmetric credential with the role. */
+    ret = provisionSymmetricRoleCred(dev_num);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s failed to provision symmetric role pair-wise keys", __func__);
+        goto exit;
+    }
+
+    /* Close all secure sessions */
+    if (closeAllSessions() != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s Failed to close sessions", __func__);
+        ret = -1;
+        goto exit;
+    }
+
+    /* Try a get request, expect success */
+    ret = doGetRequest(uri, dev_num);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s Get request to %s failed, but should have succeeded", __func__, uri);
+        goto exit;
+    }
+
+exit:
+
+    OCDeleteACLList(acl);
+
+    return ret;
+}
+
 /* Get a specific device from the provided device list. The devices in the list
  * are numbered starting from 1.
  */
@@ -1905,6 +2035,32 @@ exit:
     return ret;
 }
 
+int TestSymmetricRoleUse()
+{
+    int ret = -1;
+
+    OIC_LOG_V(ERROR, TAG, "Running %s", __func__);
+
+    if (initDiscoverRegisterAllDevices())
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: Failed to discover and provision devices", __func__);
+        goto exit;
+    }
+
+    /* There should be one owned device with number 1. */
+    if (testSymmetricRoleUse(1))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to use symmetric key role");
+        goto exit;
+    }
+
+exit:
+
+    shutdownProvisionClient();
+
+    return ret;
+}
+
 // main function for provisioning client using C-level provisioning API
 int main(int argc, char** argv)
 {
@@ -1927,6 +2083,8 @@ int main(int argc, char** argv)
             return TestRoleProvisioning();
         case 5:
             return TestRoleAssertionAndUse();
+        case 6:
+            return TestSymmetricRoleUse();
         default:
             printf("%s: Invalid test number\n", argv[0]);
             return 1;

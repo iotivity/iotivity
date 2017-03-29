@@ -227,10 +227,17 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
  * @param[in] ctx Application context to be returned in result callback.
  * @param[in] type Type of credentials to be provisioned to the device.
  * @param[in] keySize size of key
- * @param[in] pDev1 Pointer to PMOwnedDeviceInfo_t instance, respresenting resource to be provsioned.
- * @param[in] pDev2 Pointer to PMOwnedDeviceInfo_t instance, respresenting resource to be provsioned.
+ * @param[in] pDev1 Pointer to PMOwnedDeviceInfo_t instance, representing the resource to be provisioned.
+ * @param[in] pDev2 Pointer to PMOwnedDeviceInfo_t instance, representing the resource to be provisioned.
+ *                  Use NULL to indicate the local device.
  * @param[in] pemCert When provisioning a certificate (type is SIGNED_ASYMMETRIC_KEY), this is the
  *                    certificate, encoded as PEM.
+ * @param[in] role1 When provisioning a PSK (type is SYMMETRIC_PAIR_WISE_KEY), this is the role which
+ *                  the device indicated by pDev1 will also have when communicating with pDev2. Use NULL
+ *                  to associate no role with this credential.
+ * @param[in] role2 When provisioning a PSK (type is SYMMETRIC_PAIR_WISE_KEY), this is the role which
+ *                  the device indicated by pDev1 will also have when communicating with pDev2. Use NULL
+ *                  to associate no role with this credential.
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from first resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
@@ -239,6 +246,8 @@ OCStackResult SRPProvisionCredentials(void *ctx,OicSecCredType_t type, size_t ke
                                       const OCProvisionDev_t *pDev1,
                                       const OCProvisionDev_t *pDev2,
                                       const char* pemCert,
+                                      const OicSecRole_t *role1,
+                                      const OicSecRole_t *role2,
                                       OCProvisionResultCB resultCallback);
 
 /**

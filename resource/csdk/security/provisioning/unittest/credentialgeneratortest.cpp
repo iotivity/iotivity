@@ -38,7 +38,7 @@ TEST(PMGeneratePairWiseCredentialsTest, InvalidProvisioningtoolDevID)
     OicSecCred_t *cred2 = NULL;
     size_t keySize = OWNER_PSK_LENGTH_128;
     EXPECT_EQ(OC_STACK_INVALID_PARAM, PMGeneratePairWiseCredentials(NO_SECURITY_MODE,
-             keySize, NULL, firstDevID, SecondDevID, &cred1, &cred2));
+             keySize, NULL, firstDevID, SecondDevID, NULL, NULL, &cred1, &cred2));
     OICFree(firstDevID);
     OICFree(SecondDevID);
 }
@@ -59,7 +59,7 @@ TEST(PMGeneratePairWiseCredentialsTest, InvalidFirstDevID)
     OicSecCred_t *cred2 = NULL;
     size_t keySize = OWNER_PSK_LENGTH_128;
     EXPECT_EQ(OC_STACK_INVALID_PARAM, PMGeneratePairWiseCredentials(NO_SECURITY_MODE,
-              keySize, provisioningDevID, NULL, SecondDevID, &cred1, &cred2));
+              keySize, provisioningDevID, NULL, SecondDevID, NULL, NULL, &cred1, &cred2));
     OICFree(SecondDevID);
     OICFree(provisioningDevID);
 }
@@ -80,7 +80,7 @@ TEST(PMGeneratePairWiseCredentialsTest, InvalidSecondDevID)
     OicSecCred_t *cred2 = NULL;
     size_t keySize = OWNER_PSK_LENGTH_128;
     EXPECT_EQ(OC_STACK_INVALID_PARAM, PMGeneratePairWiseCredentials(NO_SECURITY_MODE, keySize,
-              provisioningDevID, firstDevID, NULL, &cred1, &cred2));
+              provisioningDevID, firstDevID, NULL, NULL, NULL, &cred1, &cred2));
     OICFree(firstDevID);
     OICFree(provisioningDevID);
 }
@@ -104,9 +104,8 @@ TEST(PMGeneratePairWiseCredentialsTest, InvalidCred)
     }
     size_t keySize = OWNER_PSK_LENGTH_128;
     EXPECT_EQ(OC_STACK_INVALID_PARAM, PMGeneratePairWiseCredentials(NO_SECURITY_MODE, keySize,
-              provisioningDevID, firstDevID, SecondDevID, NULL, NULL));
+              provisioningDevID, firstDevID, SecondDevID, NULL, NULL, NULL, NULL));
     OICFree(firstDevID);
     OICFree(SecondDevID);
     OICFree(provisioningDevID);
 }
-

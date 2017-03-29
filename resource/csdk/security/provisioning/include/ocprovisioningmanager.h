@@ -344,8 +344,8 @@ OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *select
  * @param[in] ctx Application context returned in the result callback.
  * @param[in] type Type of credentials to be provisioned to the device.
  * @param[in] keySize size of key
- * @param[in] pDev1 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
-   @param[in] pDev2 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
+ * @param[in] pDev1 Pointer to OCProvisionDev_t instance, representing the resource to be provisioned.
+ * @param[in] pDev2 Pointer to OCProvisionDev_t instance, representing the resource to be provisioned.
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from first resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
@@ -354,6 +354,30 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
                                       const OCProvisionDev_t *pDev1,
                                       const OCProvisionDev_t *pDev2,
                                       OCProvisionResultCB resultCallback);
+
+/**
+ * API to provision symmetric pair-wise key credentials to devices that grant a role.
+ *
+ * @param[in] ctx Application context returned in the result callback.
+ * @param[in] type Type of credentials to be provisioned to the device.
+ * @param[in] keySize size of key
+ * @param[in] pDev1 Pointer to OCProvisionDev_t instance, representing the resource to be provisioned.
+ * @param[in] pDev2 Pointer to OCProvisionDev_t instance, representing the resource to be provisioned. 
+ *                  Use NULL to indicate the local device.
+ * @param[in] role1 The role which the device indicated by pDev1 will have when communicating with pDev2.
+ *                  Use NULL to associate no role with this credential.
+ * @param[in] role2 The role which the device indicated by pDev2 will have when communicating with pDev1.
+ *                  Use NULL to associate no role with this credential.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request receives a response from first resource server.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCProvisionSymmetricRoleCredentials(void *ctx, OicSecCredType_t type, size_t keySize,
+                                                  const OCProvisionDev_t *pDev1,
+                                                  const OCProvisionDev_t *pDev2,
+                                                  const OicSecRole_t *role1,
+                                                  const OicSecRole_t *role2,
+                                                  OCProvisionResultCB resultCallback);
 
 /**
  * API to provision a certificate to a device.

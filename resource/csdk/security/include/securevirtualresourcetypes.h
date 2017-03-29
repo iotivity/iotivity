@@ -528,10 +528,8 @@ struct OicSecCred
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
     uint16_t            credId;         // 0:R:S:Y:UINT16
     OicUuid_t           subject;        // 1:R:S:Y:oic.uuid
-    //Note: Need further clarification on roleID data type
-    //NOTE: Need further clarification on roleId datatype.
-    //size_t              roleIdsLen;     // the number of elts in RoleIds
-    //OicSecRole_t        *roleIds;       // 2:R:M:N:oic.sec.role
+    // If roleId.id is all zeroes, this property is not set.
+    OicSecRole_t        roleId;         // 2:R:M:N:oic.sec.roletype
     OicSecCredType_t    credType;       // 3:R:S:Y:oic.sec.credtype
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     OicSecKey_t         publicData;     // own cerificate chain

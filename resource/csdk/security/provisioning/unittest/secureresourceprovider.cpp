@@ -98,38 +98,33 @@ TEST(SRPProvisionCredentialsTest, NullDevice1)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType,
                                                               OWNER_PSK_LENGTH_128, NULL,
-                                                              &pDev2, NULL, &provisioningCB));
+                                                              &pDev2, NULL, NULL, NULL, &provisioningCB));
 }
 
 TEST(SRPProvisionCredentialsTest, SamelDeviceId)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType,
                                                               OWNER_PSK_LENGTH_128, &pDev1,
-                                                              &pDev1, NULL, &provisioningCB));
+                                                              &pDev1, NULL, NULL, NULL, &provisioningCB));
 }
 
 TEST(SRPProvisionCredentialsTest, NullCallback)
 {
     EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPProvisionCredentials(NULL, credType,
                                                                  OWNER_PSK_LENGTH_128,
-                                                                 &pDev1, &pDev2, NULL, NULL));
+                                                                 &pDev1, &pDev2, NULL, NULL, NULL, NULL));
 }
 
 TEST(SRPProvisionCredentialsTest, InvalidKeySize)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType,
-                                                                0, &pDev1, &pDev2, NULL,
+                                                                0, &pDev1, &pDev2, NULL, NULL, NULL, 
                                                                 &provisioningCB));
 }
 
 TEST(SRPUnlinkDevicesTest, NullDevice1)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, NULL, &pDev2, provisioningCB));
-}
-
-TEST(SRPUnlinkDevicesTest, NullDevice2)
-{
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, &pDev1, NULL, provisioningCB));
 }
 
 TEST(SRPUnlinkDevicesTest, SamelDeviceId)

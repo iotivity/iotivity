@@ -662,3 +662,13 @@ OicSecSvrType_t GetSvrTypeFromUri(const char* uri)
 
     return NOT_A_SVR_RESOURCE;
 }
+
+/**
+ * An unset role, used in comparisons.
+ */
+const OicSecRole_t EMPTY_ROLE = { .id = { 0 }, .authority = { 0 } };
+
+bool IsNonEmptyRole(const OicSecRole_t *role)
+{
+    return (0 != memcmp(&role->id, &EMPTY_ROLE.id, sizeof(role->id)));
+}

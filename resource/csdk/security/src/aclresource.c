@@ -40,10 +40,12 @@
 #include "srmresourcestrings.h"
 #include "aclresource.h"
 #include "doxmresource.h"
+#include "rolesresource.h"
 #include "resourcemanager.h"
 #include "srmutility.h"
 #include "psinterface.h"
 #include "ocpayloadcbor.h"
+#include "secureresourcemanager.h"
 
 #include "security_internals.h"
 
@@ -56,7 +58,7 @@ static const uint8_t ACL_MAP_SIZE = 4;
 static const uint8_t ACL_ACLIST_MAP_SIZE = 1;
 static const uint8_t ACL_ACES_MAP_SIZE = 3;
 static const uint8_t ACL_RESOURCE_MAP_SIZE = 3;
-static const uint8_t ACE_ROLE_MAP_SIZE = 2;
+static const uint8_t ACE_ROLE_MAP_SIZE = 1;
 
 
 // CborSize is the default cbor payload size being used.
@@ -428,20 +430,26 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, OicSecAclVersion_t acl
         {
             assert(OIC_SEC_ACL_V2 <= aclVersion);
             CborEncoder roleMap;
-            cborEncoderResult = cbor_encoder_create_map(&oicSecAclMap, &roleMap, ACE_ROLE_MAP_SIZE);
+
+            bool includeAuthority = (0 != memcmp(&ace->subjectRole.authority, &EMPTY_ROLE.authority, sizeof(EMPTY_ROLE.authority)));
+
+            cborEncoderResult = cbor_encoder_create_map(&oicSecAclMap, &roleMap, ACE_ROLE_MAP_SIZE + includeAuthority?1:0);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed creating role map");
 
-            cborEncoderResult = cbor_encode_text_string(&roleMap, OIC_JSON_ROLEIDS_NAME, strlen(OIC_JSON_ROLEIDS_NAME));
+            cborEncoderResult = cbor_encode_text_string(&roleMap, OIC_JSON_ROLE_NAME, strlen(OIC_JSON_ROLE_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding roleid tag");
 
             cborEncoderResult = cbor_encode_text_string(&roleMap, ace->subjectRole.id, strlen(ace->subjectRole.id));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding roleid value");
 
-            cborEncoderResult = cbor_encode_text_string(&roleMap, OIC_JSON_AUTHORITY_NAME, strlen(OIC_JSON_AUTHORITY_NAME));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding authority tag");
+            if (includeAuthority)
+            {
+                cborEncoderResult = cbor_encode_text_string(&roleMap, OIC_JSON_AUTHORITY_NAME, strlen(OIC_JSON_AUTHORITY_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding authority tag");
 
-            cborEncoderResult = cbor_encode_text_string(&roleMap, ace->subjectRole.authority, strlen(ace->subjectRole.authority));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding authority value");
+                cborEncoderResult = cbor_encode_text_string(&roleMap, ace->subjectRole.authority, strlen(ace->subjectRole.authority));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding authority value");
+            }
 
             cborEncoderResult = cbor_encoder_close_container(&oicSecAclMap, &roleMap);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed closing role map");
@@ -1178,7 +1186,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
 
                                                     if (NULL != roleTagName)
                                                     {
-                                                        if (strcmp(roleTagName, OIC_JSON_ROLEIDS_NAME) == 0)
+                                                        if (strcmp(roleTagName, OIC_JSON_ROLE_NAME) == 0)
                                                         {
                                                             char *roleId = NULL;
                                                             cborFindResult = cbor_value_dup_text_string(&roleMap, &roleId, &unusedLen, NULL);
@@ -1186,6 +1194,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                                             if (strlen(roleId) >= sizeof(ace->subjectRole.id))
                                                             {
                                                                 cborFindResult = CborUnknownError;
+                                                                free(roleId);
                                                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Role ID is too long");
                                                             }
                                                             OICStrcpy(ace->subjectRole.id, sizeof(ace->subjectRole.id), roleId);
@@ -1199,6 +1208,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                                             if (strlen(authorityName) >= sizeof(ace->subjectRole.authority))
                                                             {
                                                                 cborFindResult = CborUnknownError;
+                                                                free(authorityName);
                                                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Authority name is too long");
                                                             }
                                                             OICStrcpy(ace->subjectRole.authority, sizeof(ace->subjectRole.authority), authorityName);

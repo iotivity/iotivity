@@ -54,6 +54,16 @@ OCStackResult InitRolesResource();
 OCStackResult DeInitRolesResource();
 
 /**
+ * Register the PSK credential being used for authentication. This is used by the cred resource
+ * to inform the roles resource a symmetric PSK has a particular role associated with it.
+ *
+ * @param[in]  cred         PSK credential to register
+ *
+ * @return OC_STACK_OK if role credential is successfully registered; error otherwise.
+ */
+OCStackResult RegisterSymmetricCredentialRole(const OicSecCred_t *cred);
+
+/**
  * Retrieve the roles asserted by a given endpoint with certificates.
  *
  * @param[in] endpoint      Endpoint to retrieve roles for

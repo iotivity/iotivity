@@ -42,7 +42,7 @@ def print_environment():
 ### main ###
 
 # Number of unit tests in autoprovisioningclient
-NUM_TESTS = 5
+NUM_TESTS = 6
 
 usage = '''
  Run end-to-end certificate tests between autoprovisioningclient and sampleserver_justworks

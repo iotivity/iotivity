@@ -55,6 +55,7 @@
 #include "pinoxmcommon.h"
 #include "certhelpers.h"
 #include "cacommon.h"
+#include "secureresourcemanager.h"
 
 #ifdef __unix__
 #include <sys/types.h>
@@ -86,6 +87,7 @@ static const uint16_t CBOR_SIZE = 2048;
 /** CRED size - Number of mandatory items. */
 static const uint8_t CRED_ROOT_MAP_SIZE = 4;
 static const uint8_t CRED_MAP_SIZE = 3;
+static const uint8_t ROLEID_MAP_SIZE = 1;
 
 
 static OicSecCred_t        *gCred = NULL;
@@ -233,6 +235,7 @@ static bool IsEmptyCred(const OicSecCred_t* cred)
     OicUuid_t emptyUuid = {.id={0}};
 
     VERIFY_SUCCESS(TAG, (0 == memcmp(cred->subject.id, emptyUuid.id, sizeof(emptyUuid))), ERROR);
+    VERIFY_SUCCESS(TAG, !IsNonEmptyRole(&cred->roleId), ERROR);
     VERIFY_SUCCESS(TAG, (0 == cred->credId), ERROR);
     VERIFY_SUCCESS(TAG, (0 == cred->credType), ERROR);
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
@@ -400,8 +403,8 @@ CborError SerializeEncodingToCbor(CborEncoder *rootMap, const char* tag, const O
     cborEncoderResult = cbor_encoder_create_map(rootMap, &map, mapSize);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Map");
 
-    VERIFY_CBOR_SUCCESS(TAG, SerializeEncodingToCborInternal(&map, value),
-                        "Failed adding OicSecKey_t structure");
+    cborEncoderResult = SerializeEncodingToCborInternal(&map, value);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding OicSecKey_t structure");
 
     cborEncoderResult = cbor_encoder_close_container(rootMap, &map);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Map.");
@@ -427,8 +430,8 @@ CborError SerializeSecOptToCbor(CborEncoder *rootMap, const char* tag, const Oic
     in.encoding = value->encoding;
     in.len = value->len;
 
-    VERIFY_CBOR_SUCCESS(TAG, SerializeEncodingToCborInternal(&map, &in),
-                        "Failed adding OicSecKey_t structure");
+    cborEncoderResult = SerializeEncodingToCborInternal(&map, &in);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding OicSecKey_t structure");
 
     cborEncoderResult = cbor_encode_text_string(&map, OIC_JSON_REVOCATION_STATUS_NAME,
         strlen(OIC_JSON_REVOCATION_STATUS_NAME));
@@ -524,8 +527,8 @@ CborError DeserializeEncodingFromCbor(CborValue *rootMap, OicSecKey_t *value)
         }
         if (name)
         {
-            VERIFY_CBOR_SUCCESS(TAG, DeserializeEncodingFromCborInternal(&map, name, value),
-                                "Failed to read OicSecKey_t value");
+            cborFindResult = DeserializeEncodingFromCborInternal(&map, name, value);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to read OicSecKey_t value");
         }
         if (cbor_value_is_valid(&map))
         {
@@ -566,8 +569,8 @@ CborError DeserializeSecOptFromCbor(CborValue *rootMap, OicSecOpt_t *value)
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding revstat Value.")
             }
             OicSecKey_t out;
-            VERIFY_CBOR_SUCCESS(TAG, DeserializeEncodingFromCborInternal(&map, name, &out),
-                                "Failed to read OicSecKey_t value");
+            cborFindResult = DeserializeEncodingFromCborInternal(&map, name, &out);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to read OicSecKey_t value");
 
             value->data = out.data;
             value->encoding = out.encoding;
@@ -610,6 +613,11 @@ static void logCredMetadata()
         {
             OIC_LOG_V(DEBUG, TAG, "Subject UUID: %s", uuidString);
         }
+        if (IsNonEmptyRole(&temp->roleId))
+        {
+            OIC_LOG_V(DEBUG, TAG, "Role ID: %s", temp->roleId.id);
+            OIC_LOG_V(DEBUG, TAG, "Role authority: %s", temp->roleId.authority);
+        }
         OIC_LOG_V(DEBUG, TAG, "Cred Type: %d", temp->credType);
         OIC_LOG_V(DEBUG, TAG, "privateData length: %d, encoding: %d", temp->privateData.len, temp->privateData.encoding);
 
@@ -631,7 +639,6 @@ static void logCredMetadata()
 #endif
 }
 
-
 OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload,
                                 size_t *cborSize, int secureFlag)
 {
@@ -652,6 +659,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
     CborEncoder encoder;
     CborEncoder credArray;
     CborEncoder credRootMap;
+    CborEncoder roleIdMap;
 
     if (0 == cborLen)
     {
@@ -707,6 +715,10 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         {
             mapSize++;
         }
+        if (IsNonEmptyRole(&cred->roleId))
+        {
+            mapSize++;
+        }
 #endif /* __WITH_DTLS__ ||  __WITH_TLS__*/
         if (!secureFlag && cred->privateData.data)
         {
@@ -742,6 +754,37 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             cborEncoderResult = cbor_encode_text_string(&credMap, subject, strlen(subject));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Subject Id Value.");
             OICFree(subject);
+        }
+
+        //Role ID -- optional
+        if (IsNonEmptyRole(&cred->roleId))
+        {
+            cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_ROLEID_NAME,
+                strlen(OIC_JSON_ROLEID_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding role ID map tag");
+
+            bool includeAuthority = (0 != memcmp(&cred->roleId.authority, &EMPTY_ROLE.authority, sizeof(EMPTY_ROLE.authority)));
+
+            cborEncoderResult = cbor_encoder_create_map(&credMap, &roleIdMap, ROLEID_MAP_SIZE + includeAuthority ? 1 : 0);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding role ID map");
+
+            cborEncoderResult = cbor_encode_text_string(&roleIdMap, OIC_JSON_ROLE_NAME, strlen(OIC_JSON_ROLE_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding role tag");
+            
+            cborEncoderResult = cbor_encode_text_string(&roleIdMap, cred->roleId.id, strlen(cred->roleId.id));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding role value");
+
+            if (includeAuthority)
+            {
+                cborEncoderResult = cbor_encode_text_string(&roleIdMap, OIC_JSON_AUTHORITY_NAME, strlen(OIC_JSON_AUTHORITY_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding authority tag");
+
+                cborEncoderResult = cbor_encode_text_string(&roleIdMap, cred->roleId.authority, strlen(cred->roleId.authority));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding authority value");
+            }
+
+            cborEncoderResult = cbor_encoder_close_container(&credMap, &roleIdMap);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed closing role ID map");
         }
 
         //CredType -- Mandatory
@@ -917,6 +960,9 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
         return OC_STACK_INVALID_PARAM;
     }
 
+    char* tagName = NULL;
+    char* roleIdTagName = NULL;
+    char* name = NULL;
     OCStackResult ret = OC_STACK_ERROR;
     CborValue credCbor = { .parser = NULL };
     CborParser parser = { .end = NULL };
@@ -940,7 +986,6 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
 
     while (cbor_value_is_valid(&CredRootMap))
     {
-        char* tagName = NULL;
         size_t len = 0;
         CborType type = cbor_value_get_type(&CredRootMap);
         if (type == CborTextStringType && cbor_value_is_text_string(&CredRootMap))
@@ -988,7 +1033,6 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
 
                     while(cbor_value_is_valid(&credMap) && cbor_value_is_text_string(&credMap))
                     {
-                        char* name = NULL;
                         CborType cmType = cbor_value_get_type(&credMap);
                         if (cmType == CborTextStringType)
                         {
@@ -1025,6 +1069,77 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 //Because cbor using malloc directly
                                 //It is required to use free() instead of OICFree
                                 free(subjectid);
+                            }
+                            // roleid
+                            if (strcmp(name, OIC_JSON_ROLEID_NAME) == 0)
+                            {
+                                /* Role subject */
+                                size_t unusedLen = 0;
+                                CborValue roleIdMap;
+                                memset(&roleIdMap, 0, sizeof(roleIdMap));
+
+                                cborFindResult = cbor_value_enter_container(&credMap, &roleIdMap);
+                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed entering role ID map");
+
+                                while (cbor_value_is_valid(&roleIdMap) && cbor_value_is_text_string(&roleIdMap))
+                                {
+                                    cborFindResult = cbor_value_dup_text_string(&roleIdMap, &roleIdTagName, &unusedLen, NULL);
+                                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed getting role ID map tag name");
+                                    cborFindResult = cbor_value_advance(&roleIdMap);
+                                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed advancing role ID map");
+
+                                    if (NULL != roleIdTagName)
+                                    {
+                                        if (strcmp(roleIdTagName, OIC_JSON_ROLE_NAME) == 0)
+                                        {
+                                            char *roleId = NULL;
+                                            cborFindResult = cbor_value_dup_text_string(&roleIdMap, &roleId, &unusedLen, NULL);
+                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed getting role id value");
+                                            if (strlen(roleId) >= sizeof(cred->roleId.id))
+                                            {
+                                                cborFindResult = CborUnknownError;
+                                                free(roleId);
+                                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Role ID is too long");
+                                            }
+                                            OICStrcpy(cred->roleId.id, sizeof(cred->roleId.id), roleId);
+                                            free(roleId);
+                                        }
+                                        else if (strcmp(roleIdTagName, OIC_JSON_AUTHORITY_NAME) == 0)
+                                        {
+                                            char *authorityName = NULL;
+                                            cborFindResult = cbor_value_dup_text_string(&roleIdMap, &authorityName, &unusedLen, NULL);
+                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed getting role authority value");
+                                            if (strlen(authorityName) >= sizeof(cred->roleId.authority))
+                                            {
+                                                cborFindResult = CborUnknownError;
+                                                free(authorityName);
+                                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Authority name is too long");
+                                            }
+                                            OICStrcpy(cred->roleId.authority, sizeof(cred->roleId.authority), authorityName);
+                                            free(authorityName);
+                                        }
+                                        else
+                                        {
+                                            OIC_LOG_V(WARNING, TAG, "Unknown tag name in role ID map: %s", roleIdTagName);
+                                        }
+
+                                        free(roleIdTagName);
+                                        roleIdTagName = NULL;
+                                    }
+
+                                    if (cbor_value_is_valid(&roleIdMap))
+                                    {
+                                        cborFindResult = cbor_value_advance(&roleIdMap);
+                                        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed advancing role map");
+                                    }
+                                }
+
+                                /* Make sure at least the id is present. */
+                                if ('\0' == cred->roleId.id[0])
+                                {
+                                    cborFindResult = CborUnknownError;
+                                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "ID for role was not present in role map");
+                                }
                             }
                             // credtype
                             if (strcmp(name, OIC_JSON_CREDTYPE_NAME)  == 0)
@@ -1095,6 +1210,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                             //Because cbor using malloc directly
                             //It is required to use free() instead of OICFree
                             free(name);
+                            name = NULL;
                         }
                     }
                     cred->next = NULL;
@@ -1114,10 +1230,10 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Rownerid Value.");
 
                 ret = ConvertStrToUuid(stRowner, &headCred->rownerID);
-                VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
                 //Because cbor using malloc directly
                 //It is required to use free() instead of OICFree
                 free(stRowner);
+                VERIFY_SUCCESS(TAG, (ret == OC_STACK_OK), ERROR);
             }
             else if (NULL != gCred)
             {
@@ -1126,6 +1242,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
             //Because cbor using malloc directly
             //It is required to use free() instead of OICFree
             free(tagName);
+            tagName = NULL;
         }
         if (cbor_value_is_valid(&CredRootMap))
         {
@@ -1145,6 +1262,10 @@ exit:
         *secCred = NULL;
         ret = OC_STACK_ERROR;
     }
+
+    free(tagName);
+    free(roleIdTagName);
+    free(name);
 
     return ret;
 }
@@ -1524,6 +1645,7 @@ static CredCompareResult_t CompareCredential(const OicSecCred_t * l, const OicSe
 
     VERIFY_SUCCESS(TAG, (l->credType == r->credType), INFO);
     VERIFY_SUCCESS(TAG, (0 == memcmp(l->subject.id, r->subject.id, sizeof(l->subject.id))), INFO);
+    VERIFY_SUCCESS(TAG, (0 == memcmp(&l->roleId, &r->roleId, sizeof(l->roleId))), INFO);
 
     switch(l->credType)
     {
@@ -2634,6 +2756,11 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                             }
 
                             OICFree(outKey);
+                        }
+
+                        if (OC_STACK_OK != RegisterSymmetricCredentialRole(cred))
+                        {
+                            OIC_LOG(WARNING, TAG, "Couldn't RegisterRoleForSubject");
                         }
 
                         return ret;
