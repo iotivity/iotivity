@@ -94,7 +94,7 @@ static OCStackResult StoreKeyPair(mbedtls_pk_context *keyPair, const OicUuid_t *
 
     cred = GenerateCredential(myUuid, ASYMMETRIC_KEY, &publicData, &privateData, myUuid, NULL);
     VERIFY_NOT_NULL(TAG, cred, ERROR);
-    cred->credUsage = OICStrdup(PRIMARY_KEY); // @todo: we may be able to use PRIMARY_CERT here too; need to investigate
+    cred->credUsage = OICStrdup(PRIMARY_CERT);
     VERIFY_NOT_NULL(TAG, cred->credUsage, ERROR);
 
     VERIFY_SUCCESS(TAG, OC_STACK_OK == AddCredential(cred), ERROR);
@@ -394,22 +394,14 @@ static OCEntityHandlerResult HandleCsrGetRequest(OCEntityHandlerRequest * ehRequ
 
     OIC_LOG(INFO, TAG, "HandleCsrGetRequest  processing GET request");
 
-    mbedtls_pk_init(&keyPair);
-
-    // Retrieve our current certificate, if we have one, and use that key
-    GetDerKey(&keyData, PRIMARY_CERT);
-
-    if (0 == keyData.len)
-    {
-        // No cert? Get our primary key pair, or generate it if absent.
-        GetDerKey(&keyData, PRIMARY_KEY);
-    }
-
     res = GetDoxmDeviceID(&myUuid);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);
     res = ConvertUuidToStr(&myUuid, &myUuidStr);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);
 
+    // Retrieve the key from our current certificate if present, otherwise create a new key
+    GetDerKey(&keyData, PRIMARY_CERT);
+    mbedtls_pk_init(&keyPair);
     if (0 < keyData.len)
     {
         ret = mbedtls_pk_parse_key(&keyPair, keyData.data, keyData.len, NULL, 0);

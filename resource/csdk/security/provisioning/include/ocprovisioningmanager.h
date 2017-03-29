@@ -540,6 +540,16 @@ OCStackResult OCGetLinkedStatus(const OicUuid_t* uuidOfDevice,
                                   size_t* numOfDevices);
 
 /**
+ * Remove locally stored credentials with the specified subject UUID.
+ *
+ * @param[in] subjectUuid The subject UUID of the credentials to remove
+ *
+ * @return OC_STACK_RESOURCE_DELETED if credentials were removed, or
+ * OC_STACK_ERROR if no credentials were removed.
+ */
+OCStackResult OCRemoveCredential(const OicUuid_t* subjectUuid);
+
+/**
  * API to delete memory allocated to linked list created by OCDiscover_XXX_Devices API.
  *
  * @param[in] pList Pointer to OCProvisionDev_t which should be deleted.
@@ -604,8 +614,8 @@ OCStackResult OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16
  * @param[out] credId CredId of saved trust certificate chain in Cred of SVR.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
-                                        OicEncodingType_t encodingType, uint16_t *credId);
+OCStackResult OCSaveTrustCertChain(const uint8_t *trustCertChain, size_t chainSize,
+                                   OicEncodingType_t encodingType, uint16_t *credId);
 
 /**
  * Function to save an identity certificate chain into Cred of SVR.
@@ -615,7 +625,7 @@ OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
  * @param[out] credId CredId of saved certificate chain in Cred of SVR.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCSaveOwnCertChain(char* cert, char* key, uint16_t *credId);
+OCStackResult OCSaveOwnCertChain(const char* cert, const char* key, uint16_t *credId);
 
 /**
  * function to register callback, for getting notification for TrustCertChain change.

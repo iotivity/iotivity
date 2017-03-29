@@ -588,7 +588,7 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
     return OC_STACK_OK;
 }
 
-OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
+OCStackResult SRPSaveTrustCertChain(const uint8_t *trustCertChain, size_t chainSize,
                                             OicEncodingType_t encodingType, uint16_t *credId)
 {
     OIC_LOG(DEBUG, TAG, "IN SRPSaveTrustCertChain");

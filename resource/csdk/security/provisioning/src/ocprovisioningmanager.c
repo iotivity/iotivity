@@ -1367,6 +1367,11 @@ OCStackResult OCGetLinkedStatus(const OicUuid_t* uuidOfDevice, OCUuidList_t** uu
     return PDMGetLinkedDevices(uuidOfDevice, uuidList, numOfDevices);
 }
 
+OCStackResult OCRemoveCredential(const OicUuid_t* subjectUuid)
+{
+    return RemoveCredential(subjectUuid);
+}
+
 void OCDeleteUuidList(OCUuidList_t* pList)
 {
     PDMDestoryOicUuidLinkList(pList);
@@ -1469,7 +1474,7 @@ OCStackResult OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16
  * @param[out] credId CredId of saved trust certificate chain in Cred of SVR.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
+OCStackResult OCSaveTrustCertChain(const uint8_t *trustCertChain, size_t chainSize,
                                     OicEncodingType_t encodingType, uint16_t *credId)
 {
     return SRPSaveTrustCertChain(trustCertChain, chainSize, encodingType, credId);
@@ -1483,7 +1488,7 @@ OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
  * @param[out] credId CredId of saved certificate chain in Cred of SVR.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCSaveOwnCertChain(char* cert, char* key, uint16_t *credId)
+OCStackResult OCSaveOwnCertChain(const char* cert, const char* key, uint16_t *credId)
 {
     OicSecKey_t ownCert = { 0 };
     ownCert.data = (uint8_t*) cert;

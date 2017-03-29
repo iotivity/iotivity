@@ -35,9 +35,25 @@ void GetPkixInfo(PkiInfo_t * inf)
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
+
     GetPemOwnCert(&inf->crt, PRIMARY_CERT);
+    if (inf->crt.len == 0)
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: empty certificate", __func__);
+    }
+
     GetDerKey(&inf->key, PRIMARY_CERT);
+    if (inf->key.len == 0)
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: empty key", __func__);
+    }
+
     (void)GetPemCaCert(&inf->ca, TRUST_CA);
+    if (inf->ca.len == 0)
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: empty CA cert", __func__);
+    }
+
     GetDerCrl(&inf->crl);
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }

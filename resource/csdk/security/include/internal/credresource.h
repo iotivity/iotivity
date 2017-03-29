@@ -124,11 +124,14 @@ OicSecCred_t * GenerateCredential(const OicUuid_t* subject, OicSecCredType_t cre
 OCStackResult AddCredential(OicSecCred_t * cred);
 
 /**
- * Function to remove the credential from SVR DB.
+ * Function to remove credentials from the SVR DB for the given subject UUID.
+ * If multiple credentials exist for the UUID, they will all be removed. 
  *
  * @param subject is the Credential Subject to be deleted.
  *
- * @return ::OC_STACK_OK for success, or errorcode otherwise.
+ * @return ::OC_STACK_RESOURCE_DELETED if credentials were removed, or 
+ * if there are no credentials with the given UUID.  An error is returned if
+ * removing credentials failed. 
  */
 OCStackResult RemoveCredential(const OicUuid_t *subject);
 

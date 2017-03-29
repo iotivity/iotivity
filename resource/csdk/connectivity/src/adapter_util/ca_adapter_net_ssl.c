@@ -97,6 +97,7 @@
 /**
  * @def MMBED_TLS_DEBUG_LEVEL
  * @brief Logging level for mbedTLS library
+ * Level 1 logs errors only, level 4 is verbose logging.
  */
 #define MBED_TLS_DEBUG_LEVEL (4)
 
@@ -199,6 +200,12 @@ if (g_sslCallback)                                                              
     errorInfo.result = (status);                                                                   \
     g_sslCallback(&(peer)->sep.endpoint, &errorInfo);                                              \
 }
+
+/* OCF-defined EKU value indicating an identity certificate, that can be used for
+ * TLS client and server authentication.  This is the DER encoding of the OID
+ * 1.3.6.1.4.1.44924.1.6.
+ */
+static const unsigned char EKU_IDENTITY[] = { 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0xDE, 0x7C, 0x01, 0x06 };
 
 /**@def CONF_SSL(clientConf, serverConf, fn, ...)
  *
@@ -673,6 +680,22 @@ static int InitPKIX(CATransportAdapter_t adapter)
         goto required;
     }
 
+    /* If we get here, certificates could be used, so configure OCF EKUs. */
+    ret = mbedtls_ssl_conf_ekus(serverConf, (const char*)EKU_IDENTITY, sizeof(EKU_IDENTITY),
+        (const char*)EKU_IDENTITY, sizeof(EKU_IDENTITY));
+    if (0 == ret)
+    {
+        ret = mbedtls_ssl_conf_ekus(clientConf, (const char*)EKU_IDENTITY, sizeof(EKU_IDENTITY),
+            (const char*)EKU_IDENTITY, sizeof(EKU_IDENTITY));
+    }
+    if (0 != ret)
+    {
+        /* Cert-based ciphersuites will fail, but if PSK ciphersuites are in
+         * the list they might work, so don't return error.
+         */
+        OIC_LOG(WARNING, NET_SSL_TAG, "EKU configuration error");
+    }
+
     required:
     count = ParseChain(&g_caSslContext->ca, g_pkiInfo.ca.data, g_pkiInfo.ca.len, &errNum);
     if(0 >= count)
@@ -733,6 +756,9 @@ static int GetPskCredentialsCallback(void * notUsed, mbedtls_ssl_context * ssl,
         ((SslEndPoint_t *) ssl)->sep.identity.id_length = (uint16_t)descLen;
         OIC_LOG(DEBUG, NET_SSL_TAG, "PSK:");
         OIC_LOG_BUFFER(DEBUG, NET_SSL_TAG, keyBuf, ret);
+
+        OIC_LOG(DEBUG, NET_SSL_TAG, "Identity:");
+        OIC_LOG_BUFFER(DEBUG, NET_SSL_TAG, desc, descLen);
 
         OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
         return(mbedtls_ssl_set_hs_psk(ssl, keyBuf, ret));
@@ -2026,15 +2052,11 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
                 /* Find the CN component of the subject name. */
                 for (name = &peerCert->subject; NULL != name; name = name->next)
                 {
-                    if (!name->oid.p)
+                    if (name->oid.p &&
+                       (name->oid.len <= MBEDTLS_OID_SIZE(MBEDTLS_OID_AT_CN)) &&
+                       (0 == memcmp(MBEDTLS_OID_AT_CN, name->oid.p, name->oid.len)))
                     {
-                        continue;
-                    }
-
-                    if ((name->oid.len < MBEDTLS_OID_SIZE(MBEDTLS_OID_AT_CN) ||
-                        (0 != memcmp(MBEDTLS_OID_AT_CN, name->oid.p, name->oid.len))))
-                    {
-                        continue;
+                        break;
                     }
                 }
 

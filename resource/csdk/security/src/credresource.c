@@ -381,7 +381,7 @@ static CborError SerializeEncodingToCborInternal(CborEncoder *map, const OicSecK
     }
     else
     {
-        OIC_LOG_V(ERROR, TAG, "Unknown encoding type: %u.", value->encoding);
+        OIC_LOG_V(ERROR, TAG, "%s: Unknown encoding type: %u.", __func__, value->encoding);
         return CborErrorUnknownType;
     }
     exit:
@@ -496,7 +496,7 @@ static CborError DeserializeEncodingFromCborInternal(CborValue *map, char *name,
         {
             //For unit test
             value->encoding = OIC_ENCODING_RAW;
-            OIC_LOG(WARNING, TAG, "Unknown encoding type detected.");
+            OIC_LOG_V(WARNING, TAG, "%s: Unknown encoding type detected.", __func__);
         }
         //Because cbor using malloc directly, it is required to use free() instead of OICFree
         free(strEncoding);
@@ -1674,7 +1674,7 @@ exit:
 
 OCStackResult RemoveCredential(const OicUuid_t *subject)
 {
-    OCStackResult ret = OC_STACK_ERROR;
+    OCStackResult ret = OC_STACK_RESOURCE_DELETED;
     OicSecCred_t *cred = NULL;
     OicSecCred_t *tempCred = NULL;
     bool deleteFlag = false;
@@ -1691,9 +1691,9 @@ OCStackResult RemoveCredential(const OicUuid_t *subject)
 
     if (deleteFlag)
     {
-        if (UpdatePersistentStorage(gCred))
+        if (!UpdatePersistentStorage(gCred))
         {
-            ret = OC_STACK_RESOURCE_DELETED;
+            ret = OC_STACK_ERROR;
         }
     }
     return ret;
@@ -2853,25 +2853,40 @@ OCStackResult GetCredRownerId(OicUuid_t *rowneruuid)
 /* Caller must call OICFree on *der when finished. */
 static int ConvertPemCertToDer(const char *pem, size_t pemLen, uint8_t** der, size_t* derLen)
 {
-    size_t bufSize = B64DECODE_OUT_SAFESIZE(pemLen + 1);
-    uint8_t *buf = OICCalloc(1, bufSize);
+    const char* pemHeader = "-----BEGIN CERTIFICATE-----"; /* no newlines allowed here */
+    const char* pemFooter = "-----END CERTIFICATE-----";
+
+    mbedtls_pem_context ctx;
+    int ret;
+
+    OC_UNUSED(pemLen);
+
+    mbedtls_pem_init(&ctx);
+    size_t usedLen;
+    ret = mbedtls_pem_read_buffer(&ctx, pemHeader, pemFooter, (const uint8_t*) pem, NULL, 0, &usedLen);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: failed reading PEM cert", __func__);
+        goto exit;
+    }
+
+    uint8_t *buf = OICCalloc(1, ctx.buflen);
     if (NULL == buf)
     {
         OIC_LOG(ERROR, TAG, "Failed to allocate memory");
-        return -1;
+        ret = -1;
+        goto exit;
     }
-    size_t outSize = 0;
-    if (B64_OK != b64Decode(pem, pemLen, buf, bufSize, &outSize))
-    {
-        OICFree(buf);
-        OIC_LOG(ERROR, TAG, "Failed to decode base64 data");
-        return -1;
-    }
+
+    memcpy(buf, ctx.buf, ctx.buflen);
 
     *der = buf;
-    *derLen = outSize;
+    *derLen = ctx.buflen;
 
-    return 0;
+exit:
+    mbedtls_pem_free(&ctx);
+
+    return ret;
 }
 
 /* Caller must call OICFree on *pem when finished. */
@@ -2882,7 +2897,7 @@ static int ConvertDerCertToPem(const uint8_t* der, size_t derLen, uint8_t** pem)
 
     /* Get the length required for output */
     size_t pemLen;
-    int ret = mbedtls_pem_write_buffer(pemHeader, 
+    int ret = mbedtls_pem_write_buffer(pemHeader,
         pemFooter,
         der,
         derLen,
@@ -2903,7 +2918,8 @@ static int ConvertDerCertToPem(const uint8_t* der, size_t derLen, uint8_t** pem)
     }
 
     /* Try the conversion */
-    ret = mbedtls_pem_write_buffer(pemHeader, pemFooter,
+    ret = mbedtls_pem_write_buffer(pemHeader, 
+        pemFooter,
         der,
         derLen,
         *pem,
@@ -2938,7 +2954,7 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
         OIC_LOG_V(ERROR, TAG, "%s: Unsupported encoding %d", __func__, desiredEncoding);
         return OC_STACK_INVALID_PARAM;
     }
-    
+
     crt->len = 0;
     OicSecCred_t* temp = NULL;
 
@@ -2948,14 +2964,23 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
             (temp->credUsage != NULL) &&
             (0 == strcmp(temp->credUsage, usage)) && (false == temp->optionalData.revstat))
         {
+
+            if ((OIC_ENCODING_BASE64 != temp->optionalData.encoding) &&
+                (OIC_ENCODING_PEM != temp->optionalData.encoding) &&
+                (OIC_ENCODING_DER != temp->optionalData.encoding))
+            {
+                OIC_LOG_V(WARNING, TAG, "%s: Unknown encoding type", __func__);
+                continue;
+            }
+
             if (OIC_ENCODING_DER == desiredEncoding)
             {
                 if ((OIC_ENCODING_BASE64 == temp->optionalData.encoding) ||
                     (OIC_ENCODING_PEM == temp->optionalData.encoding))
                 {
-                    uint8_t *buf = NULL;
+                    uint8_t* buf = NULL;
                     size_t outSize = 0;
-                    int ret = ConvertPemCertToDer((const char *)temp->optionalData.data, temp->optionalData.len, &buf, &outSize);
+                    int ret = ConvertPemCertToDer((const char*)temp->optionalData.data, temp->optionalData.len, &buf, &outSize);
                     if (0 > ret)
                     {
                         OIC_LOG(ERROR, TAG, "Could not convert PEM cert to DER");
@@ -3164,45 +3189,48 @@ void GetDerKey(ByteArray_t * key, const char * usage)
     LL_FOREACH(gCred, temp)
     {
         if ((SIGNED_ASYMMETRIC_KEY == temp->credType || ASYMMETRIC_KEY == temp->credType) && 
+            temp->privateData.len > 0 &&
             NULL != temp->credUsage &&
             0 == strcmp(temp->credUsage, usage))
         {
-            
+
             if (temp->privateData.encoding == OIC_ENCODING_PEM)
             {
                 /* Convert PEM to DER */
-                mbedtls_pk_context ctx;
-                mbedtls_pk_init(&ctx);
+                const char* pemHeader = "-----BEGIN EC PRIVATE KEY-----"; /* no newlines allowed here */
+                const char* pemFooter = "-----END EC PRIVATE KEY-----";
 
-                int ret = mbedtls_pk_parse_key(&ctx, temp->privateData.data, temp->privateData.len, NULL, 0);
+                if (temp->privateData.data[temp->privateData.len - 1] != 0)
+                {
+                    OIC_LOG(ERROR, TAG, "Bad PEM private key data (not null terminated)");
+                    return;
+                }
+
+                mbedtls_pem_context ctx;
+                int ret;
+                size_t usedLen;
+
+                mbedtls_pem_init(&ctx);
+                ret = mbedtls_pem_read_buffer(&ctx, pemHeader, pemFooter, (const uint8_t*)temp->privateData.data, NULL, 0, &usedLen);
                 if (ret != 0)
                 {
-                    mbedtls_pk_free(&ctx);
-                    OIC_LOG_V(ERROR, TAG, "Key for %s found, but failed to convert from PEM to DER (while reading PEM)", usage);
+                    OIC_LOG_V(ERROR, TAG, "%s: failed reading PEM key", __func__);
+                    mbedtls_pem_free(&ctx);
                     return;
                 }
 
-                key->data = OICRealloc(key->data, key->len + temp->privateData.len);
-                if (key->data == NULL)
+                key->data = OICRealloc(key->data, ctx.buflen);
+                if (NULL == key->data)
                 {
-                    mbedtls_pk_free(&ctx);
-                    OIC_LOG(ERROR, TAG, "Realloc failed to increase key->data length");
+                    OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+                    mbedtls_pem_free(&ctx);
                     return;
                 }
 
-                key->len += temp->privateData.len;
-                ret = mbedtls_pk_write_key_der(&ctx, key->data, key->len);
-                if (ret < 1) /* return value is the number of bytes written, or error */
-                {
-                    mbedtls_pk_free(&ctx);
-                    key->len = 0;
-                    OIC_LOG_V(ERROR, TAG, "Key for %s found, but failed to convert from PEM to DER (while writing DER)", usage);
-                    return;
-                }
-                key->data = OICRealloc(key->data, ret);
-                key->len = ret;
+                memcpy(key->data, ctx.buf, ctx.buflen);
+                key->len = ctx.buflen;
+                mbedtls_pem_free(&ctx);
                 break;
-                
             }
             else if(temp->privateData.encoding == OIC_ENCODING_DER)
             {
@@ -3214,7 +3242,7 @@ void GetDerKey(ByteArray_t * key, const char * usage)
             }
             else
             {
-                OIC_LOG_V(WARNING, TAG, "Key for %s found, but it has an unknown encoding", usage);
+                OIC_LOG_V(WARNING, TAG, "Key for %s found, but it has an unknown encoding (%d)", usage, temp->privateData.encoding);
             }
         }
     }

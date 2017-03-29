@@ -115,8 +115,16 @@ static bool IsRequestFromDevOwner(SRMRequestContext_t *context)
     if (doxm)
     {
         retVal = UuidCmp(&doxm->owner, &context->subjectUuid);
-        OIC_LOG_V(DEBUG, TAG, "%s: request was %sreceived from device owner",
+        OIC_LOG_V(DEBUG, TAG, "%s: request was %s received from device owner",
             __func__, retVal ? "" : "NOT ");
+
+        if (!retVal)
+        {
+            OIC_LOG(DEBUG, TAG, "Owner UUID  :");
+            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)&doxm->owner.id, sizeof(&doxm->owner.id));
+            OIC_LOG(DEBUG, TAG, "Request UUID:");
+            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)&context->subjectUuid.id, sizeof(&context->subjectUuid.id));
+        }
     }
 
     return retVal;

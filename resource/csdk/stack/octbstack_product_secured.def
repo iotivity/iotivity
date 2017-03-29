@@ -50,6 +50,7 @@ OCProvisionPairwiseDevices
 OCProvisionTrustCertChain
 OCReadTrustCertChain
 OCRegisterTrustCertChainNotifier
+OCRemoveCredential
 OCRemoveDevice
 OCRemoveDeviceWithUuid
 OCRemoveTrustCertChainNotifier
@@ -59,9 +60,9 @@ OCSaveTrustCertChain
 OCSaveOwnCertChain
 OCSelectOwnershipTransferMethod
 OCSetOwnerTransferCallbackData
-OCUnlinkDevices
 OCSetOxmAllowStatus
-OCVerifyCSRSignature 
+OCUnlinkDevices
+OCVerifyCSRSignature
 
 SetClosePinDisplayCB
 SetDisplayPinWithContextCB

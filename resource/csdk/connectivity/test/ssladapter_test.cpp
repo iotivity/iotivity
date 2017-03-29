@@ -85,7 +85,6 @@
 #include "platform_features.h"
 #include "logger.h"
 
-#define MBED_TLS_DEBUG_LEVEL (4) // Verbose
 
 #define SEED "PREDICTED_SEED"
 #define dummyHandler 0xF123

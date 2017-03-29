@@ -444,7 +444,7 @@ OCStackResult OCInternalIsValidCertChain(const uint8_t *buf, size_t bufLen)
 
 static const mbedtls_x509_crt_profile s_certProfile = {
     MBEDTLS_X509_ID_FLAG(MBEDTLS_MD_SHA256),            /* MD algorithms */
-    MBEDTLS_X509_ID_FLAG(MBEDTLS_PK_ECDSA),             /* Signature algorithms */
+    MBEDTLS_X509_ID_FLAG(MBEDTLS_PK_ECKEY),             /* Allowed key type */
     MBEDTLS_X509_ID_FLAG(MBEDTLS_ECP_DP_SECP256R1),     /* EC curves */
     0                                                   /* RSA minimum key length - not used because we only use EC key pairs */
 };

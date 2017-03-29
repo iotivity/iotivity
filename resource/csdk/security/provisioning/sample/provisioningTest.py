@@ -64,7 +64,7 @@ parser.add_argument('--build', nargs='?', choices = ['debug', 'release'], help= 
 args = parser.parse_args()
 
 # Number of unit tests in autoprovisioningclient
-NUM_TESTS = 2
+NUM_TESTS = 3
 
 iotivity_base_path = os.getcwd()
 os_name = platform.system()

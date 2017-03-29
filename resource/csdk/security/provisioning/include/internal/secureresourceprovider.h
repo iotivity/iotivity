@@ -143,7 +143,7 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
  * @param[out] credId CredId of saved trust certificate chain in Cred of SVR.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
+OCStackResult SRPSaveTrustCertChain(const uint8_t *trustCertChain, size_t chainSize,
                                         OicEncodingType_t encodingType,uint16_t *credId);
 
 /**

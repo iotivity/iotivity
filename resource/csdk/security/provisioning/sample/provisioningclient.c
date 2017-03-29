@@ -875,8 +875,8 @@ static int provisionCred(void)
  *   3. Saves this root as a trust anchor locally.
  *   4. Generate and store an IoTivity key and cert (issued from the CA root cert).
  *      This is an EE cert the CA/OBT will use in DTLS.
- *
- *   @param[out] credid parameter for the ID of the CA credential
+ *   
+ *   The CA's key and cert are written to g_caKeyPem and g_caCertPem (resp.). 
  */
 static int setupCA()
 {
