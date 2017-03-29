@@ -425,13 +425,13 @@ static void CAFindReadyMessage()
         CAPushEvent(OC_INVALID_SOCKET, socketArray,
                     caglobals.tcp.updateEvent, eventArray, &arraySize, _countof(socketArray));
     }
-    
+
     int svrlistBeginIndex = arraySize;
 
     while (!caglobals.tcp.terminate)
     {
         CATCPSessionInfo_t *session = NULL;
-        LL_FOREACH(g_sessionList, session);
+        LL_FOREACH(g_sessionList, session)
         {
             if (session && OC_INVALID_SOCKET != session->fd && (arraySize < EVENT_ARRAY_SIZE))
             {
@@ -1438,7 +1438,7 @@ void CATCPDisconnectAll()
     oc_mutex_lock(g_mutexObjectList);
     CATCPSessionInfo_t *session = NULL;
     CATCPSessionInfo_t *tmp = NULL;
-    LL_FOREACH_SAFE(g_sessionList, session, tmp);
+    LL_FOREACH_SAFE(g_sessionList, session, tmp)
     {
         if (session)
         {
