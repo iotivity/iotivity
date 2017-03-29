@@ -133,6 +133,16 @@ void OCPlatform::Configure(const PlatformConfig& config)
     g_platformConfig = config;
 }
 
+OCStackResult OCPlatform::start()
+{
+    return OC_STACK_OK;
+}
+
+OCStackResult OCPlatform::stop()
+{
+    return OC_STACK_OK;
+}
+
 OCStackResult OCPlatform::setPropertyValue(OCPayloadType type, const std::string& tag,
                                        const std::string& value)
 {

@@ -206,17 +206,20 @@ IPCAStatus OCFFramework::Start(const IPCAAppInfoInternal& appInfo, bool isUnitTe
     PlatformConfig Configuration {
                         ServiceType::InProc,
                         ModeType::Both,  // Server mode is required for security provisioning.
-                        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-                        0,         // Uses randomly available port
-                        QualityOfService::NaQos,
                         &ps};
 
     OCPlatform::Configure(Configuration);
 
+    if (OCPlatform::start() != OC_STACK_OK)
+    {
+        OIC_LOG(FATAL, TAG, "Failed OCPlatform::start()");
+        return IPCA_FAIL;
+    }
+
     // Initialize the database that will be used for provisioning
     if (OCSecure::provisionInit("") != OC_STACK_OK)
     {
-        OIC_LOG_V(FATAL, TAG, "Failed provisionInit()");
+        OIC_LOG(FATAL, TAG, "Failed provisionInit()");
         return IPCA_FAIL;
     }
 
@@ -298,19 +301,20 @@ IPCAStatus OCFFramework::Start(const IPCAAppInfoInternal& appInfo, bool isUnitTe
 IPCAStatus OCFFramework::Stop(InputPinCallbackHandle passwordInputCallbackHandle,
                               DisplayPinCallbackHandle passwordDisplayCallbackHandle)
 {
+    IPCAStatus status = IPCA_OK;
+
     std::lock_guard<std::mutex> lock(m_startStopMutex);
 
     if (m_isStarted == false)
     {
         // not started yet.
-        return IPCA_OK;
+        return status;
     }
 
     CleanupRequestAccessDevices();
 
     OCSecure::deregisterInputPinCallback(passwordInputCallbackHandle);
     OCSecure::deregisterDisplayPinCallback(passwordDisplayCallbackHandle);
-
 
     m_isStopping = true;
 
@@ -320,17 +324,21 @@ IPCAStatus OCFFramework::Stop(InputPinCallbackHandle passwordInputCallbackHandle
         m_workerThread.join();
     }
 
-// @future: OCFFramework can't shut down because there's no cancellation for all underlying apis
-// like OCPlatform::findResource, etc.
-#if 0
+    if (OCPlatform::stop() != OC_STACK_OK)
+    {
+        assert(false);
+        status = IPCA_FAIL;
+        OIC_LOG(ERROR, TAG, "Failed OCPlatform::stop()");
+    }
+
+    std::lock_guard<std::recursive_mutex> ocfFrameworkLock(m_OCFFrameworkMutex);
     m_OCFDevices.clear();
     m_OCFDevicesIndexedByDeviceURI.clear();
-#endif
 
     m_isStopping = false;
     m_isStarted = false;
 
-    return IPCA_OK;
+    return status;
 }
 
 void OCFFramework::WorkerThread(OCFFramework* ocfFramework)

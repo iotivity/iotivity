@@ -412,6 +412,7 @@ void Callback::CompleteAndRemoveExpiredCallbackInfo(std::vector<CallbackInfo::Pt
             // RemoveCallbackInfo().
             if (entry.second->markedToBeRemoved == true)
             {
+                m_expiredCallbacksInprogress++;
                 cbInfoList.push_back(entry.second);
                 continue;
             }
@@ -481,7 +482,7 @@ void Callback::CompleteAndRemoveExpiredCallbackInfo(std::vector<CallbackInfo::Pt
                     break;
 
                 default:
-                    assert(false); // check the filter code above to match the handling here.
+                    // The rest of the callback types are nop.
                     break;
             }
         }
