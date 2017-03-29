@@ -138,6 +138,9 @@ SConscript('tools/UnpackAll.py')
 # tinycbor build/fetch
 SConscript(os.path.join(env.get('SRC_DIR'), 'extlibs', 'tinycbor', 'SConscript'))
 
+#cJSON lib
+SConscript(os.path.join(env.get('SRC_DIR'), 'extlibs', 'cjson', 'SConscript'))
+
 with_ra = env.get('WITH_RA')
 if with_ra:
 	SConscript(os.path.join(env.get('SRC_DIR'), 'extlibs', 'raxmpp', 'SConscript'))

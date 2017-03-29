@@ -7,7 +7,6 @@ import subprocess
 
 Import('env')
 
-SConscript('../external_libs.scons')
 help_vars = Variables()
 if not env.get('ANDROID_NDK'):
     SConscript('../../extlibs/android/ndk/SConscript')

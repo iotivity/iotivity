@@ -24,7 +24,6 @@ lib_env = env.Clone()
 SConscript('#service/third_party_libs.scons', 'lib_env')
 raml_env = lib_env.Clone()
 
-SConscript('#/extlibs/cjson/SConscript')
 SConscript('#/extlibs/yaml/SConscript')
 ######################################################################
 # Build flags

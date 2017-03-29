@@ -8,7 +8,6 @@ Import('env')
 
 print "Reading linux configuration script"
 
-SConscript('../external_libs.scons')
 help_vars = Variables()
 if env.get('BUILD_JAVA') == True:
     if not env.get('ANDROID_GRADLE'):
