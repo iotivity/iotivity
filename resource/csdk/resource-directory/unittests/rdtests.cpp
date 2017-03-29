@@ -28,6 +28,8 @@ extern "C"
     #include "oic_malloc.h"
     #include "oic_string.h"
     #include "payload_logging.h"
+    #include "cacommon.h"
+    #include "coap/pdu.h"
 }
 
 #include "gtest/gtest.h"
@@ -298,12 +300,15 @@ TEST_F(RDTests, RDDeleteSpecificResource)
 #endif
 
 #if (defined(RD_SERVER) && defined(RD_CLIENT))
-class RDDiscoverTests : public testing::Test
+class RDDiscoverTests : public ::testing::TestWithParam<uint16_t>
 {
     protected:
         virtual void SetUp()
         {
             remove("RD.db");
+            numOptions = 0;
+            uint16_t format = GetParam();
+            OCSetHeaderOption(options, &numOptions, CA_OPTION_ACCEPT, &format, sizeof(format));
             EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT_SERVER));
             EXPECT_EQ(OC_STACK_OK, OCRDStart());
         }
@@ -315,6 +320,8 @@ class RDDiscoverTests : public testing::Test
         }
     public:
         static const unsigned char *di[3];
+        OCHeaderOption options[1];
+        size_t numOptions;
 };
 const unsigned char *RDDiscoverTests::di[3] =
 {
@@ -322,6 +329,17 @@ const unsigned char *RDDiscoverTests::di[3] =
     (const unsigned char *) "983656a7-c7e5-49c2-a201-edbeb7606fb5",
     (const unsigned char *) "9338c0b2-2373-4324-ba78-17c0ef79506d"
 };
+
+static bool EndsWith(const char *str, const char *suffix)
+{
+    size_t len = strlen(str);
+    size_t suffixLen = strlen(suffix);
+    if (len < suffixLen)
+    {
+        return false;
+    }
+    return !strcmp(&str[len - suffixLen], suffix);
+}
 
 static OCStackApplicationResult DiscoverAllResourcesVerify(void *ctx,
         OCDoHandle handle,
@@ -345,13 +363,13 @@ static OCStackApplicationResult DiscoverAllResourcesVerify(void *ctx,
                 foundId = true;
                 for (OCResourcePayload *resource = payload->resources; resource; resource = resource->next)
                 {
-                    if (!strcmp("/a/light", resource->uri))
-                    {
-                        foundLight = true;
-                    }
-                    if (!strcmp("/a/light2", resource->uri))
+                    if (EndsWith(resource->uri, "/a/light2"))
                     {
                         foundLight2 = true;
+                    }
+                    else if (EndsWith(resource->uri, "/a/light"))
+                    {
+                        foundLight = true;
                     }
                 }
             }
@@ -363,7 +381,7 @@ static OCStackApplicationResult DiscoverAllResourcesVerify(void *ctx,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-TEST_F(RDDiscoverTests, DiscoverAllResources)
+TEST_P(RDDiscoverTests, DiscoverAllResources)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
 
@@ -381,7 +399,7 @@ TEST_F(RDDiscoverTests, DiscoverAllResources)
 
     itst::Callback discoverCB(&DiscoverAllResourcesVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res", NULL, 0, CT_DEFAULT,
-                                        OC_HIGH_QOS, discoverCB, NULL, 0));
+                    OC_HIGH_QOS, discoverCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
@@ -401,10 +419,9 @@ static OCStackApplicationResult ResourceQueryMatchesLocalAndRemoteVerify(void *c
              payload = payload->next)
         {
             EXPECT_TRUE(payload->resources != NULL);
-            if (payload->resources)
+            for (OCResourcePayload *resource = payload->resources; resource; resource = resource->next)
             {
-                EXPECT_TRUE(payload->resources->next == NULL);
-                EXPECT_STREQ("/a/light", payload->resources->uri);
+                EXPECT_TRUE(EndsWith(payload->resources->uri, "/a/light"));
                 EXPECT_STREQ("core.light", payload->resources->types->value);
                 EXPECT_TRUE(payload->resources->types->next == NULL);
             }
@@ -413,7 +430,7 @@ static OCStackApplicationResult ResourceQueryMatchesLocalAndRemoteVerify(void *c
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-TEST_F(RDDiscoverTests, ResourceQueryMatchesLocalAndRemote)
+TEST_P(RDDiscoverTests, ResourceQueryMatchesLocalAndRemote)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
 
@@ -428,8 +445,7 @@ TEST_F(RDDiscoverTests, ResourceQueryMatchesLocalAndRemote)
 
     itst::Callback discoverCB(&ResourceQueryMatchesLocalAndRemoteVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=core.light", NULL, 0,
-                                        CT_DEFAULT,
-                                        OC_HIGH_QOS, discoverCB, NULL, 0));
+                    CT_DEFAULT, OC_HIGH_QOS, discoverCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
@@ -451,7 +467,7 @@ static OCStackApplicationResult ResourceQueryMatchesLocalOnlyVerify(void *ctx,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-TEST_F(RDDiscoverTests, ResourceQueryMatchesLocalOnly)
+TEST_P(RDDiscoverTests, ResourceQueryMatchesLocalOnly)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
 
@@ -471,8 +487,7 @@ TEST_F(RDDiscoverTests, ResourceQueryMatchesLocalOnly)
 
     itst::Callback discoverCB(&ResourceQueryMatchesLocalOnlyVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=core.light", NULL, 0,
-                                        CT_DEFAULT,
-                                        OC_HIGH_QOS, discoverCB, NULL, 0));
+                    CT_DEFAULT, OC_HIGH_QOS, discoverCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
@@ -502,7 +517,7 @@ static void SetStringArray(OCRepPayload *payload, const char *name, const char *
     OCRepPayloadSetStringArray(payload, name, (const char **)ss, dim);
 }
 
-TEST_F(RDDiscoverTests, ResourceQueryMatchesRemoteOnly)
+TEST_P(RDDiscoverTests, ResourceQueryMatchesRemoteOnly)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
 
@@ -541,13 +556,12 @@ TEST_F(RDDiscoverTests, ResourceQueryMatchesRemoteOnly)
 
     itst::Callback publishCB(&handlePublishCB);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_POST, "127.0.0.1/oic/rd?rt=oic.wk.rdpub", NULL,
-                                        (OCPayload *)repPayload, CT_DEFAULT, OC_HIGH_QOS, publishCB, NULL, 0));
+                    (OCPayload *)repPayload, CT_DEFAULT, OC_HIGH_QOS, publishCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, publishCB.Wait(100));
 
     itst::Callback discoverCB(&ResourceQueryMatchesRemoteOnlyVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=core.light2", NULL, 0,
-                                        CT_DEFAULT,
-                                        OC_HIGH_QOS, discoverCB, NULL, 0));
+                    CT_DEFAULT,OC_HIGH_QOS, discoverCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
@@ -568,7 +582,7 @@ static OCStackApplicationResult DatabaseHas0ResourceQueryMatchesVerify(void *ctx
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-TEST_F(RDDiscoverTests, DatabaseHas0ResourceQueryMatches)
+TEST_P(RDDiscoverTests, DatabaseHas0ResourceQueryMatches)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
 
@@ -600,8 +614,7 @@ TEST_F(RDDiscoverTests, DatabaseHas0ResourceQueryMatches)
 
     itst::Callback discoverCB(&DatabaseHas0ResourceQueryMatchesVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=core.light", NULL, 0,
-                                        CT_DEFAULT,
-                                        OC_HIGH_QOS, discoverCB, NULL, 0));
+                    CT_DEFAULT,OC_HIGH_QOS, discoverCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
@@ -622,10 +635,9 @@ static OCStackApplicationResult DatabaseHas1ResourceQueryMatchVerify(void *ctx,
         {
             payload = payload->next;
             EXPECT_TRUE(payload->resources != NULL);
-            if (payload->resources)
+            for (OCResourcePayload *resource = payload->resources; resource; resource = resource->next)
             {
-                EXPECT_TRUE(payload->resources->next == NULL);
-                EXPECT_STREQ("/a/light2", payload->resources->uri);
+                EXPECT_TRUE(EndsWith(payload->resources->uri, "/a/light2"));
                 EXPECT_STREQ("core.light2", payload->resources->types->value);
                 EXPECT_TRUE(payload->resources->types->next == NULL);
             }
@@ -636,7 +648,7 @@ static OCStackApplicationResult DatabaseHas1ResourceQueryMatchVerify(void *ctx,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-TEST_F(RDDiscoverTests, DatabaseHas1ResourceQueryMatch)
+TEST_P(RDDiscoverTests, DatabaseHas1ResourceQueryMatch)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
 
@@ -668,8 +680,7 @@ TEST_F(RDDiscoverTests, DatabaseHas1ResourceQueryMatch)
 
     itst::Callback discoverCB(&DatabaseHas1ResourceQueryMatchVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=core.light2", NULL, 0,
-                                        CT_DEFAULT,
-                                        OC_HIGH_QOS, discoverCB, NULL, 0));
+                    CT_DEFAULT, OC_HIGH_QOS, discoverCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
@@ -692,9 +703,8 @@ static OCStackApplicationResult DatabaseHasNResourceQueryMatchesVerify(void *ctx
             for (int i = 0; i < 3; ++i)
             {
                 EXPECT_TRUE(payload->resources != NULL);
-                if (payload->resources)
+                for (OCResourcePayload *resource = payload->resources; resource; resource = resource->next)
                 {
-                    EXPECT_TRUE(payload->resources->next == NULL);
                     EXPECT_STREQ("core.light", payload->resources->types->value);
                     EXPECT_TRUE(payload->resources->types->next == NULL);
                 }
@@ -706,7 +716,7 @@ static OCStackApplicationResult DatabaseHasNResourceQueryMatchesVerify(void *ctx
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-TEST_F(RDDiscoverTests, DatabaseHasNResourceQueryMatches)
+TEST_P(RDDiscoverTests, DatabaseHasNResourceQueryMatches)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
 
@@ -738,8 +748,7 @@ TEST_F(RDDiscoverTests, DatabaseHasNResourceQueryMatches)
 
     itst::Callback discoverCB(&DatabaseHasNResourceQueryMatchesVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=core.light", NULL, 0,
-                                        CT_DEFAULT,
-                                        OC_HIGH_QOS, discoverCB, NULL, 0));
+                    CT_DEFAULT, OC_HIGH_QOS, discoverCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
@@ -760,7 +769,7 @@ static OCStackApplicationResult DatabaseHas0InterfaceQueryMatchesVerify(void *ct
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-TEST_F(RDDiscoverTests, DatabaseHas0InterfaceQueryMatches)
+TEST_P(RDDiscoverTests, DatabaseHas0InterfaceQueryMatches)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
 
@@ -792,8 +801,7 @@ TEST_F(RDDiscoverTests, DatabaseHas0InterfaceQueryMatches)
 
     itst::Callback discoverCB(&DatabaseHas0InterfaceQueryMatchesVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?if=oic.if.one", NULL, 0,
-                                        CT_DEFAULT,
-                                        OC_HIGH_QOS, discoverCB, NULL, 0));
+                    CT_DEFAULT, OC_HIGH_QOS, discoverCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
@@ -816,10 +824,9 @@ static OCStackApplicationResult DatabaseHas1InterfaceQueryMatchVerify(void *ctx,
             for (int i = 0; i < 1; ++i)
             {
                 EXPECT_TRUE(payload->resources != NULL);
-                if (payload->resources)
+                for (OCResourcePayload *resource = payload->resources; resource; resource = resource->next)
                 {
-                    EXPECT_TRUE(payload->resources->next == NULL);
-                    EXPECT_STREQ("/a/light2", payload->resources->uri);
+                    EXPECT_TRUE(EndsWith(payload->resources->uri, "/a/light2"));
                     bool foundInterface = false;
                     for (OCStringLL *iface = payload->resources->interfaces; iface; iface = iface->next)
                     {
@@ -838,7 +845,7 @@ static OCStackApplicationResult DatabaseHas1InterfaceQueryMatchVerify(void *ctx,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-TEST_F(RDDiscoverTests, DatabaseHas1InterfaceQueryMatch)
+TEST_P(RDDiscoverTests, DatabaseHas1InterfaceQueryMatch)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
 
@@ -870,8 +877,7 @@ TEST_F(RDDiscoverTests, DatabaseHas1InterfaceQueryMatch)
 
     itst::Callback discoverCB(&DatabaseHas1InterfaceQueryMatchVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?if=oic.if.two", NULL, 0,
-                                        CT_DEFAULT,
-                                        OC_HIGH_QOS, discoverCB, NULL, 0));
+                    CT_DEFAULT, OC_HIGH_QOS, discoverCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
@@ -894,9 +900,8 @@ static OCStackApplicationResult DatabaseHasNInterfaceQueryMatchesVerify(void *ct
             for (int i = 0; i < 3; ++i)
             {
                 EXPECT_TRUE(payload->resources != NULL);
-                if (payload->resources)
+                for (OCResourcePayload *resource = payload->resources; resource; resource = resource->next)
                 {
-                    EXPECT_TRUE(payload->resources->next == NULL);
                     bool foundInterface = false;
                     for (OCStringLL *iface = payload->resources->interfaces; iface; iface = iface->next)
                     {
@@ -915,7 +920,7 @@ static OCStackApplicationResult DatabaseHasNInterfaceQueryMatchesVerify(void *ct
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-TEST_F(RDDiscoverTests, DatabaseHasNInterfaceQueryMatches)
+TEST_P(RDDiscoverTests, DatabaseHasNInterfaceQueryMatches)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
 
@@ -947,8 +952,7 @@ TEST_F(RDDiscoverTests, DatabaseHasNInterfaceQueryMatches)
 
     itst::Callback discoverCB(&DatabaseHasNInterfaceQueryMatchesVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?if=oic.if.a", NULL, 0,
-                                        CT_DEFAULT,
-                                        OC_HIGH_QOS, discoverCB, NULL, 0));
+                    CT_DEFAULT, OC_HIGH_QOS, discoverCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
@@ -971,10 +975,9 @@ static OCStackApplicationResult ResourceAndInterfaceQueryMatchVerify(void *ctx,
             for (int i = 0; i < 1; ++i)
             {
                 EXPECT_TRUE(payload->resources != NULL);
-                if (payload->resources)
+                for (OCResourcePayload *resource = payload->resources; resource; resource = resource->next)
                 {
-                    EXPECT_TRUE(payload->resources->next == NULL);
-                    EXPECT_STREQ("/a/light2", payload->resources->uri);
+                    EXPECT_TRUE(EndsWith(payload->resources->uri, "/a/light2"));
                     EXPECT_STREQ("core.light2", payload->resources->types->value);
                     EXPECT_TRUE(payload->resources->types->next == NULL);
                     bool foundInterface = false;
@@ -995,7 +998,7 @@ static OCStackApplicationResult ResourceAndInterfaceQueryMatchVerify(void *ctx,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-TEST_F(RDDiscoverTests, ResourceAndInterfaceQueryMatch)
+TEST_P(RDDiscoverTests, ResourceAndInterfaceQueryMatch)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
 
@@ -1019,8 +1022,7 @@ TEST_F(RDDiscoverTests, ResourceAndInterfaceQueryMatch)
 
     itst::Callback discoverCB(&ResourceAndInterfaceQueryMatchVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=core.light2&if=oic.if.two",
-                                        NULL, 0, CT_DEFAULT,
-                                        OC_HIGH_QOS, discoverCB, NULL, 0));
+                    NULL, 0, CT_DEFAULT, OC_HIGH_QOS, discoverCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
@@ -1037,7 +1039,7 @@ static OCStackApplicationResult BaselineVerify(void *ctx, OCDoHandle handle,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-TEST_F(RDDiscoverTests, Baseline)
+TEST_P(RDDiscoverTests, Baseline)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
 
@@ -1052,8 +1054,7 @@ TEST_F(RDDiscoverTests, Baseline)
 
     itst::Callback discoverCB(&BaselineVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?if=oic.if.baseline", NULL, 0,
-                                        CT_DEFAULT,
-                                        OC_HIGH_QOS, discoverCB, NULL, 0));
+                    CT_DEFAULT, OC_HIGH_QOS, discoverCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
@@ -1076,7 +1077,7 @@ static OCStackApplicationResult DeleteDeviceVerify(void *ctx, OCDoHandle handle,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-TEST_F(RDDiscoverTests, DeleteDevice)
+TEST_P(RDDiscoverTests, DeleteDevice)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
 
@@ -1096,8 +1097,7 @@ TEST_F(RDDiscoverTests, DeleteDevice)
 
     itst::Callback discoverCB(&DeleteDeviceVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res", NULL, 0,
-                                        CT_DEFAULT,
-                                        OC_HIGH_QOS, discoverCB, NULL, 0));
+                    CT_DEFAULT, OC_HIGH_QOS, discoverCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
@@ -1122,13 +1122,13 @@ static OCStackApplicationResult Delete1Verify(void *ctx, OCDoHandle handle,
                 foundId = true;
                 for (OCResourcePayload *resource = payload->resources; resource; resource = resource->next)
                 {
-                    if (!strcmp("/a/light", resource->uri))
-                    {
-                        foundLight = true;
-                    }
-                    if (!strcmp("/a/light2", resource->uri))
+                    if (EndsWith(resource->uri, "/a/light2"))
                     {
                         foundLight2 = true;
+                    }
+                    else if (EndsWith(resource->uri, "/a/light"))
+                    {
+                        foundLight = true;
                     }
                 }
             }
@@ -1140,7 +1140,7 @@ static OCStackApplicationResult Delete1Verify(void *ctx, OCDoHandle handle,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-TEST_F(RDDiscoverTests, Delete1)
+TEST_P(RDDiscoverTests, Delete1)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
 
@@ -1163,8 +1163,7 @@ TEST_F(RDDiscoverTests, Delete1)
 
     itst::Callback discoverCB(&Delete1Verify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res", NULL, 0,
-                                        CT_DEFAULT,
-                                        OC_HIGH_QOS, discoverCB, NULL, 0));
+                    CT_DEFAULT, OC_HIGH_QOS, discoverCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
 
@@ -1190,17 +1189,17 @@ static OCStackApplicationResult DeleteNVerify(void *ctx, OCDoHandle handle,
                 foundId = true;
                 for (OCResourcePayload *resource = payload->resources; resource; resource = resource->next)
                 {
-                    if (!strcmp("/a/light", resource->uri))
+                    if (EndsWith(resource->uri, "/a/light3"))
                     {
-                        foundLight = true;
+                        foundLight3 = true;
                     }
-                    if (!strcmp("/a/light2", resource->uri))
+                    else if (EndsWith(resource->uri, "/a/light2"))
                     {
                         foundLight2 = true;
                     }
-                    if (!strcmp("/a/light3", resource->uri))
+                    else if (EndsWith(resource->uri, "/a/light"))
                     {
-                        foundLight3 = true;
+                        foundLight = true;
                     }
                 }
             }
@@ -1213,7 +1212,7 @@ static OCStackApplicationResult DeleteNVerify(void *ctx, OCDoHandle handle,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-TEST_F(RDDiscoverTests, DeleteN)
+TEST_P(RDDiscoverTests, DeleteN)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
 
@@ -1239,9 +1238,11 @@ TEST_F(RDDiscoverTests, DeleteN)
 
     itst::Callback discoverCB(&DeleteNVerify);
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res", NULL, 0,
-                                        CT_DEFAULT,
-                                        OC_HIGH_QOS, discoverCB, NULL, 0));
+                    CT_DEFAULT, OC_HIGH_QOS, discoverCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, discoverCB.Wait(100));
 }
+
+INSTANTIATE_TEST_CASE_P(ContentFormat, RDDiscoverTests,
+        ::testing::Values(COAP_MEDIATYPE_APPLICATION_VND_OCF_CBOR, COAP_MEDIATYPE_APPLICATION_CBOR));
 #endif
 

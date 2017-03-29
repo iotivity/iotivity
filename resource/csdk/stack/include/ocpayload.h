@@ -82,7 +82,6 @@ bool OCRepPayloadSetUri(OCRepPayload* payload, const char* uri);
 
 bool OCRepPayloadAddResourceType(OCRepPayload* payload, const char* resourceType);
 bool OCRepPayloadAddInterface(OCRepPayload* payload, const char* iface);
-bool OCRepPayloadAddModelVersion(OCRepPayload* payload, const char* dmv);
 
 bool OCRepPayloadAddResourceTypeAsOwner(OCRepPayload* payload, char* resourceType);
 bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* iface);

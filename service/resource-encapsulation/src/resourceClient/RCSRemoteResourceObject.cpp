@@ -332,7 +332,19 @@ namespace OIC
                 return;
             }
 
-            ResourceCacheManager::getInstance()->cancelResourceCache(m_cacheId);
+            try
+            {
+                ResourceCacheManager::getInstance()->cancelResourceCache(m_cacheId);
+            }
+            catch (const RCSInvalidParameterException &)
+            {
+                throw;
+            }
+            catch (...)
+            {
+                m_cacheId = 0;
+                throw;
+            }
             m_cacheId = 0;
         }
 

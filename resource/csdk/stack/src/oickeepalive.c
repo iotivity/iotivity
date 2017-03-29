@@ -472,7 +472,7 @@ OCEntityHandlerResult HandleKeepAlivePOSTRequest(OCServerRequest *request,
     }
 
     OCPayload *ocPayload = NULL;
-    OCParsePayload(&ocPayload, PAYLOAD_TYPE_REPRESENTATION,
+    OCParsePayload(&ocPayload, request->payloadFormat, PAYLOAD_TYPE_REPRESENTATION,
                    request->payload, request->payloadSize);
     OCRepPayload *repPayload = (OCRepPayload *)ocPayload;
 

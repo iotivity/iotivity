@@ -139,15 +139,15 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
  * Helper to parse content format and accept format header options
  * and populate the supplied options list.
  *
- * @param[in]   format               content or accept format.
  * @param[in]   formatOption         CoAP format header option.
+ * @param[in]   format               content or accept format.
  * @param[in]   versionOption        CoAP version header option.
  * @param[in]   version              value of version.
  * @param[out]  optlist              options information.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
 
-CAResult_t CAParsePayloadFormatHeadOption(CAPayloadFormat_t format, uint16_t formatOption,
+CAResult_t CAParsePayloadFormatHeadOption(uint16_t formatOption, CAPayloadFormat_t format,
         uint16_t versionOption, uint16_t version, coap_list_t **optlist);
 
 /**

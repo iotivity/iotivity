@@ -51,12 +51,14 @@ typedef struct _tagMutexInfo_t
 #endif
 } oc_mutex_internal;
 
+#ifndef NDEBUG
 static DWORD oc_get_current_thread_id()
 {
     DWORD id = GetCurrentThreadId();
     assert(OC_INVALID_THREAD_ID != id);
     return id;
 }
+#endif
 
 typedef struct _tagEventInfo_t
 {

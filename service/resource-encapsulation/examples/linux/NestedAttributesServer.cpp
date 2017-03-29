@@ -324,6 +324,10 @@ int main(void)
     {
         std::cout << "main exception  : " << e.what() << std::endl;
     }
+    catch (...)
+    {
+        std::cout << "main exception  : unknown" << std::endl;
+    }
 
     std::cout << "Stopping the server" << std::endl;
 }

@@ -110,12 +110,14 @@ typedef struct _tagThreadInfo_t
     pthread_attr_t  threadattr;
 } oc_thread_internal;
 
+#ifndef NDEBUG
 static pthread_t oc_get_current_thread_id()
 {
     pthread_t id = pthread_self();
     assert(OC_INVALID_THREAD_ID != id);
     return id;
 }
+#endif
 
 OCThreadResult_t oc_thread_new(oc_thread *t, void *(*start_routine)(void *), void *arg)
 {

@@ -254,7 +254,7 @@ static int ReadFile(const char *name, OCByteString *crl)
     realLen = fread(buffer, length, 1, file);
     if (realLen != (size_t)length)
     {
-        OIC_LOG_V(ERROR, TAG, "Length mismatch: read %zu instead of %d bytes", realLen, length);
+        OIC_LOG_V(ERROR, TAG, "Length mismatch: read %" PRIuPTR " instead of %d bytes", realLen, length);
         goto exit;
     }
 
@@ -429,7 +429,7 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
         }
     }
 
-    result = OCCloudAclIndividualUpdateAce(NULL, aclid, aces, endPoint, callback);
+    result = OCCloudAclIndividualAclUpdate(NULL, aclid, aces, endPoint, callback);
 exit:
     if (aces)
     {
@@ -464,7 +464,7 @@ OCStackResult OCWrapperAclIndividualDelete(const OCDevAddr *endPoint, OCCloudRes
 
     readString(aclid, sizeof(aclid), "acl id", ACL_ID_EXAMPLE);
 
-    return OCCloudAclIndividualDelete(NULL, aclid, endPoint, callback);
+    return OCCloudAclAcesDelete(NULL, aclid, endPoint, callback);
 }
 
 OCStackResult OCWrapperAclCreateGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)

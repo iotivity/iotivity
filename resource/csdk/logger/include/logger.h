@@ -21,7 +21,6 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
-#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -33,13 +32,19 @@
 #elif defined(__TIZEN__)
 #include <dlog.h>
 #elif defined(ARDUINO)
+#include <inttypes.h>
 #include "Arduino.h"
 #include "avr/pgmspace.h"
 #endif
 
 #ifdef __cplusplus
+#ifndef ARDUINO
+#include <cinttypes>
+#endif
 extern "C"
 {
+#else
+#include <inttypes.h>
 #endif
 
 // Use the PCF macro to wrap strings stored in FLASH on the Arduino

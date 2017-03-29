@@ -125,7 +125,7 @@ namespace OC
              * @param result result of the request performed
              * @param data response data
              */
-            static void callbackWrapper(void* ctx, OCStackResult result, void* data);
+            static void callbackWrapper(void* ctx, OCClientResponse *response, void* data);
 
             /**
              * Callback wrapper for Acl ID get request
@@ -133,7 +133,7 @@ namespace OC
              * @param result result of the request performed
              * @param data AclID for the device
              */
-            static void aclIdResponseWrapper(void* ctx, OCStackResult result, void* data);
+            static void aclIdResponseWrapper(void* ctx, OCClientResponse *response, void* data);
     };
 }
 #endif //OC_CLOUD_PROVISIONING_CXX_H_

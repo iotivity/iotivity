@@ -1347,17 +1347,17 @@ static int changeMultipleOwnershipTrnasferMode(void)
     int mom = 0;
     for( ; ; )
     {
-        printf("   0. Disable Multuple Ownership Transfer\n");
-        printf("   1. Enable Multuple Ownership Transfer\n");
-        printf("   2. (Not Supported yet) Timely Enable Multuple Ownership Transfer\n");
-        printf("   > Enter Mode of Multuple Ownership Transfer : ");
+        printf("   0. Disable Multiple Ownership Transfer\n");
+        printf("   1. Enable Multiple Ownership Transfer\n");
+        printf("   2. (Not Supported yet) Timely Enable Multiple Ownership Transfer\n");
+        printf("   > Enter Mode of Multiple Ownership Transfer : ");
         for(int ret=0; 1!=ret; )
         {
             ret = scanf("%d", &mom);
             for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                         // '0x20<=code' is character region
         }
-        if(0 <= dev_num && OIC_NUMBER_OF_MOM_TYPE > dev_num)
+        if((0 <= mom) && (OIC_NUMBER_OF_MOM_TYPE > mom))
         {
             break;
         }
@@ -1977,7 +1977,7 @@ static size_t printUuidList(const OCUuidList_t* uid_lst)
     size_t lst_cnt = 0;
     for( ; lst; )
     {
-        printf("     [%zu] ", ++lst_cnt);
+        printf("     [%" PRIuPTR "] ", ++lst_cnt);
         printUuid((const OicUuid_t*) &lst->dev);
         printf("\n");
         lst = lst->next;

@@ -22,6 +22,7 @@
 #include "pbkdf2.h"
 #include <stdlib.h>
 #include <stdint.h>
+#include <cinttypes>
 
 /*
  * Tests for the PBKDF2 implementation. 
@@ -59,7 +60,7 @@ static void print_vector(const char* label,
     printf("%s\n", label);
     print_buffer("Password", passwd, pLen);
     print_buffer("Salt", salt, saltLen);
-    printf("Iterations: %zu\n", iterations);
+    printf("Iterations: %" PRIuPTR "\n", iterations);
     print_buffer("Derived Key", derivedKey, keyLen);
 }
 

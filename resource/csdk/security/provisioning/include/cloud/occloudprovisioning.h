@@ -27,7 +27,7 @@
 extern "C" {
 #endif // __cplusplus
 
-typedef void (*OCCloudResponseCB )(void* ctx, OCStackResult result, void* data);
+typedef void (*OCCloudResponseCB )(void* ctx, OCClientResponse* response, void* data);
 
 typedef struct cloudAce cloudAce_t;
 
@@ -168,7 +168,7 @@ OCStackResult OCCloudAclIndividualGetInfo(void* ctx,
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
-OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
+OCStackResult OCCloudAclIndividualAclUpdate(void* ctx,
                                             const char *aclId,
                                             const cloudAce_t *aces,
                                             const OCDevAddr *endPoint,
@@ -185,7 +185,7 @@ OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
-OCStackResult OCCloudAclIndividualUpdate(void* ctx,
+OCStackResult OCCloudAclIndividualAceUpdate(void* ctx,
                                             const char *aclId,
                                             const char *aceId,
                                             const cloudAce_t *aces,
@@ -201,7 +201,7 @@ OCStackResult OCCloudAclIndividualUpdate(void* ctx,
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
-OCStackResult OCCloudAclIndividualDelete(void* ctx,
+OCStackResult OCCloudAclAcesDelete(void* ctx,
                                          const char *aclId,
                                          const OCDevAddr *endPoint,
                                          OCCloudResponseCB callback);
@@ -216,7 +216,7 @@ OCStackResult OCCloudAclIndividualDelete(void* ctx,
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
-OCStackResult OCCloudAclIndividualDeleteAce(void* ctx,
+OCStackResult OCCloudAclIndividualAceDelete(void* ctx,
                                          const char *aclId,
                                          const char *aceId,
                                          const OCDevAddr *endPoint,

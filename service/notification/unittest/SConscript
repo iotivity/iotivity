@@ -55,7 +55,9 @@ GTest_Main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
 notification_test_env.AppendUnique(LIBPATH = [lib_env.get('BUILD_DIR')])
 notification_test_env.AppendUnique(LIBS = [
-    'connectivity_abstraction', 'oc', 'octbstack', 'oc_logger', 'coap', 'resource_directory',
+    'resource_directory', 'oc', 
+    'octbstack', 'connectivity_abstraction', 'oc_logger', 
+    'coap',
     GTest_Main, GTest])
 
 if target_os not in ['windows', 'winrt']:

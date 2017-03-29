@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "utlist.h"
+#include "crl_logging.h"
 #include "payload_logging.h"
 #include "psinterface.h"
 #include "resourcemanager.h"
@@ -73,24 +74,6 @@ void DeleteCrl(OicSecCrl_t *crl)
         //Clean crl itself
         OICFree(crl);
     }
-}
-
-void printCrl(const OicSecCrl_t *crl)
-{
-    if (NULL == crl)
-    {
-        OIC_LOG(INFO, TAG, "Received NULL CRL");
-        return;
-    }
-
-    OIC_LOG(INFO, TAG, "Crl object contain:");
-    OIC_LOG_V(INFO, TAG, "id = %d", crl->CrlId);
-    OIC_LOG_V(INFO, TAG, "this update = %s", crl->ThisUpdate.data);
-
-    OIC_LOG(INFO, TAG, "crl:");
-    OIC_LOG_V(INFO, TAG, "encoding = %d", crl->CrlData.encoding);
-    OIC_LOG_V(INFO, TAG, "data (length = %zu):", crl->CrlData.len);
-    OIC_LOG_BUFFER(INFO, TAG, crl->CrlData.data, crl->CrlData.len);
 }
 
 static bool copyByteArray(const uint8_t *in, size_t in_len, uint8_t **out, size_t *out_len)
@@ -309,7 +292,7 @@ OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t
         mapSize++;
     }
 
-    printCrl(crl);
+    OIC_LOG_CRL(INFO, crl);
 
     OCStackResult ret = OC_STACK_ERROR;
 
@@ -436,7 +419,7 @@ OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
     cborFindResult = getPubDataType(&crlCbor, OC_RSRVD_CRL, &crl->CrlData);
     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to read CRL.");
 
-    printCrl(crl);
+    OIC_LOG_CRL(INFO, crl);
 
     *secCrl = crl;
     ret = OC_STACK_OK;
@@ -737,7 +720,7 @@ OCStackResult getLastUpdateFromDB(char **lastUpdate)
         goto exit;
     }
 
-    result = OCParsePayload(&payload, PAYLOAD_TYPE_REPRESENTATION, data, size);
+    result = OCParsePayload(&payload, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION, data, size);
     if (result != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "Can't parse cbor data from DB");

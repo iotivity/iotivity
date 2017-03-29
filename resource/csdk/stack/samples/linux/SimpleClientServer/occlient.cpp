@@ -19,7 +19,6 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "iotivity_config.h"
-#include <cinttypes>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -91,13 +90,13 @@ void handleSigInt(int signum)
     }
 }
 
-OCPayload* putPayload()
+OCPayload* createPayload()
 {
     OCRepPayload* payload = OCRepPayloadCreate();
 
     if (!payload)
     {
-        std::cout << "Failed to create put payload object"<<std::endl;
+        std::cout << "Failed to create payload object"<<std::endl;
         std::exit(1);
     }
 
@@ -168,7 +167,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    OCPayload* payload = (method == OC_REST_PUT) ? putPayload() : NULL;
+    OCPayload* payload = (method == OC_REST_PUT || method == OC_REST_POST) ? createPayload() : NULL;
 
     ret = OCDoRequest(&handle, method, query.str().c_str(), remoteAddr,
                       payload, (ConnType), qos, &cbData, options, numOptions);

@@ -73,6 +73,7 @@
         "rowneruuid" : "756E6B6E-6F77-6564-4465-766963654964"
     },
     "pstat": {
+        "dos": {"s": 1, "p": false},
         "isop": false,
         "deviceuuid": "756E6B6E-6F77-6564-4465-766963654964",
         "rowneruuid": "756E6B6E-6F77-6564-4465-766963654964",

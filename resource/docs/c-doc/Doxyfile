@@ -219,7 +219,7 @@ TCL_SUBST              =
 # For instance, some of the names that are used will be different. The list
 # of all members will be omitted, etc.
 
-OPTIMIZE_OUTPUT_FOR_C  = NO
+OPTIMIZE_OUTPUT_FOR_C  = YES
 
 # Set the OPTIMIZE_OUTPUT_JAVA tag to YES if your project consists of Java
 # sources only. Doxygen will then generate output that is more tailored for
@@ -666,26 +666,15 @@ INPUT                  = . \
              ../../csdk/stack/include/ocpresence.h \
              ../../csdk/stack/include/payload_logging.h \
              ../../csdk/stack/include/ocstackconfig.h \
-             ../../csdk/stack/include/internal/occlientcb.h \
-             ../../csdk/stack/include/internal/occollection.h \
-             ../../csdk/stack/include/internal/ocobserve.h \
-             ../../csdk/stack/include/internal/ocpayloadcbor.h \
-             ../../csdk/stack/include/internal/ocresource.h \
-             ../../csdk/stack/include/internal/ocresourcehandler.h \
-             ../../csdk/stack/include/internal/ocserverrequest.h \
-             ../../csdk/stack/include/internal/ocstackinternal.h \
-             ../../csdk/stack/include/internal/oicgroup.h \
-             ../../csdk/stack/include/internal/oickeepalive.h \
              ../../c_common/ocrandom/include/ocrandom.h \
              ../../c_common/oic_malloc/include/oic_malloc.h \
              ../../c_common/oic_string/include/oic_string.h \
              ../../c_common/oic_time/include/oic_time.h \
-             ../../csdk/connectivity/api \
+             ../../csdk/connectivity/api/cacommon.h \
+             ../../csdk/connectivity/api/cautilinterface.h \
              guides \
              ../../csdk/security/include \
-             ../../csdk/security/include/internal \
              ../../csdk/security/provisioning/include \
-             ../../csdk/security/provisioning/include/internal \
              ../../csdk/security/provisioning/include/oxm \
              ../../csdk/security/provisioning/include/cloud \
              ../../csdk/resource-directory/include \

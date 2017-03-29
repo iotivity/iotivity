@@ -39,7 +39,6 @@
 #include "iotivity_config.h"
 #include "iotivity_debug.h"
 #include <stdlib.h>
-#include <inttypes.h>
 #include <string.h>
 #include <ctype.h>
 #ifdef HAVE_UNISTD_H
@@ -66,10 +65,12 @@
 #include "ocpayloadcbor.h"
 #include "cautilinterface.h"
 #include "cainterface.h"
+#include "caprotocolmessage.h"
 #include "oicgroup.h"
 #include "ocendpoint.h"
 #include "ocatomic.h"
 #include "platform_features.h"
+#include "oic_platform.h"
 
 #if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
 #include "occonnectionmanager.h"
@@ -187,6 +188,10 @@ bool g_multicastServerStopped = false;
 
 #define MILLISECONDS_PER_SECOND   (1000)
 
+// handle case that SCNd64 is not defined in arduino's inttypes.h
+#if defined(WITH_ARDUINO) && !defined(SCNd64)
+#define SCNd64 "lld"
+#endif
 //-----------------------------------------------------------------------------
 // Private internal function prototypes
 //-----------------------------------------------------------------------------
@@ -434,14 +439,6 @@ static void OCDefaultAdapterStateChangedHandler(CATransportAdapter_t adapter, bo
 static void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, bool isConnected);
 
 /**
- * Register network monitoring callback.
- * Network status changes are delivered these callback.
- * @param adapterHandler        Adapter state monitoring callback.
- * @param connectionHandler     Connection state monitoring callback.
- */
-static void OCSetNetworkMonitorHandler(CAAdapterStateChangedCB adapterHandler,
-                                       CAConnectionStateChangedCB connectionHandler);
-/**
  * Map zoneId to endpoint address which scope is ipv6 link-local.
  * @param payload Discovery payload which has Endpoint information.
  * @param ifindex index which indicate network interface.
@@ -474,6 +471,21 @@ static OCStackResult OCDeInitializeInternal();
 //-----------------------------------------------------------------------------
 // Internal functions
 //-----------------------------------------------------------------------------
+static OCPayloadFormat CAToOCPayloadFormat(CAPayloadFormat_t caFormat)
+{
+    switch (caFormat)
+    {
+    case CA_FORMAT_UNDEFINED:
+        return OC_FORMAT_UNDEFINED;
+    case CA_FORMAT_APPLICATION_CBOR:
+        return OC_FORMAT_CBOR;
+    case CA_FORMAT_APPLICATION_VND_OCF_CBOR:
+        return OC_FORMAT_VND_OCF_CBOR;
+    default:
+        return OC_FORMAT_UNSUPPORTED;
+    }
+}
+
 static void OCEnterInitializer()
 {
     for (;;)
@@ -601,36 +613,39 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
 #endif
 
     uint16_t acceptVersion = OC_SPEC_VERSION_VALUE;
-    // From OCF onwards, check settings of version option.
-    if (DEFAULT_ACCEPT_VERSION_VALUE <= acceptVersion)
+    CAPayloadFormat_t acceptFormat = CA_FORMAT_APPLICATION_CBOR;
+    // Check settings of version option and content format.
+    if (requestInfo->info.numOptions > 0 && requestInfo->info.options)
     {
-        if (requestInfo->info.numOptions > 0 && requestInfo->info.options)
+        for (uint8_t i = 0; i < requestInfo->info.numOptions; i++)
         {
-            for (uint8_t i = 0; i < requestInfo->info.numOptions; i++)
+            if (COAP_OPTION_ACCEPT_VERSION == requestInfo->info.options[i].optionID)
             {
-                if (COAP_OPTION_ACCEPT_VERSION == requestInfo->info.options[i].protocolID)
+                acceptVersion = *(uint16_t*) requestInfo->info.options[i].optionData;
+            }
+            else if (COAP_OPTION_ACCEPT == requestInfo->info.options[i].optionID)
+            {
+                if (1 == requestInfo->info.options[i].optionLength)
                 {
-                    acceptVersion = requestInfo->info.options[i].optionData[0];
-                    break;
+                    acceptFormat = CAConvertFormat(
+                            *(uint8_t*) requestInfo->info.options[i].optionData);
                 }
-                else if (COAP_OPTION_CONTENT_VERSION == requestInfo->info.options[i].protocolID)
+                else if (2 == requestInfo->info.options[i].optionLength)
                 {
-                    acceptVersion = requestInfo->info.options[i].optionData[0];
-                    break;
+                    acceptFormat = CAConvertFormat(
+                            *(uint16_t*) requestInfo->info.options[i].optionData);
+                }
+                else
+                {
+                    acceptFormat = CA_FORMAT_UNSUPPORTED;
+                    OIC_LOG_V(DEBUG, TAG, "option has an unsupported format");
                 }
             }
         }
     }
 
-    if (DEFAULT_CONTENT_VERSION_VALUE <= acceptVersion)
-    {
-        requestInfo->info.acceptFormat = CA_FORMAT_APPLICATION_VND_OCF_CBOR;
-        requestInfo->info.acceptVersion = acceptVersion;
-    }
-    else
-    {
-      requestInfo->info.acceptFormat = CA_FORMAT_APPLICATION_CBOR;
-    }
+    requestInfo->info.acceptVersion = acceptVersion;
+    requestInfo->info.acceptFormat = acceptFormat;
 
     CAResult_t result = CASendRequest(object, requestInfo);
     if(CA_STATUS_OK != result)
@@ -666,7 +681,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                 OC_REST_NOMETHOD,
                                                 &observer->devAddr,
                                                 (OCResourceHandle)NULL,
-                                                NULL, PAYLOAD_TYPE_REPRESENTATION,
+                                                NULL,
+                                                PAYLOAD_TYPE_REPRESENTATION, OC_FORMAT_CBOR,
                                                 NULL, 0, 0, NULL,
                                                 OC_OBSERVE_DEREGISTER,
                                                 observer->observeId,
@@ -722,7 +738,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                     OC_REST_NOMETHOD,
                                                     &observer->devAddr,
                                                     (OCResourceHandle)NULL,
-                                                    NULL, PAYLOAD_TYPE_REPRESENTATION,
+                                                    NULL,
+                                                    PAYLOAD_TYPE_REPRESENTATION, OC_FORMAT_CBOR,
                                                     NULL, 0, 0, NULL,
                                                     OC_OBSERVE_DEREGISTER,
                                                     observer->observeId,
@@ -1017,7 +1034,7 @@ OCStackResult OCEncodeAddressForRFC6874(char *outputAddress,
     {
         OIC_LOG_V(ERROR, TAG,
                   "OCEncodeAddressForRFC6874 failed: "
-                  "outputSize (%zu) < inputSize (%zu)",
+                  "outputSize (%" PRIuPTR ") < inputSize (%" PRIuPTR ")",
                   outputSize, inputSize);
 
         return OC_STACK_ERROR;
@@ -1207,6 +1224,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     if (responseInfo->info.payload)
     {
         result = OCParsePayload(&response->payload,
+                CAToOCPayloadFormat(responseInfo->info.payloadFormat),
                 PAYLOAD_TYPE_PRESENCE,
                 responseInfo->info.payload,
                 responseInfo->info.payloadSize);
@@ -1635,6 +1653,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     {
                         OIC_LOG_V(ERROR, TAG, "Unknown Payload type in Discovery: %d %s",
                                 cbNode->method, cbNode->requestUri);
+                        OICFree(response);
                         return;
                     }
                 }
@@ -1680,12 +1699,14 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 if (OCResultToSuccess(response->result) || PAYLOAD_TYPE_REPRESENTATION == type)
                 {
                     if (OC_STACK_OK != OCParsePayload(&response->payload,
+                            CAToOCPayloadFormat(responseInfo->info.payloadFormat),
                             type,
                             responseInfo->info.payload,
                             responseInfo->info.payloadSize))
                     {
                         OIC_LOG(ERROR, TAG, "Error converting payload");
                         OCPayloadDestroy(response->payload);
+                        OICFree(response);
                         return;
                     }
 
@@ -1700,6 +1721,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                         {
                             OIC_LOG(ERROR, TAG, "failed at map zone-id for link-local address");
                             OCPayloadDestroy(response->payload);
+                            OICFree(response);
                             return;
                         }
                     }
@@ -2121,10 +2143,11 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
                 protocolRequest->numRcvdVendorSpecificHeaderOptions,
                 protocolRequest->observationOption, protocolRequest->qos,
                 protocolRequest->query, protocolRequest->rcvdVendorSpecificHeaderOptions,
-                protocolRequest->payload, protocolRequest->requestToken,
-                protocolRequest->tokenLength, protocolRequest->resourceUrl,
-                protocolRequest->reqTotalSize, protocolRequest->acceptFormat,
-                protocolRequest->acceptVersion, &protocolRequest->devAddr);
+                protocolRequest->payloadFormat, protocolRequest->payload,
+                protocolRequest->requestToken, protocolRequest->tokenLength,
+                protocolRequest->resourceUrl, protocolRequest->reqTotalSize,
+                protocolRequest->acceptFormat, protocolRequest->acceptVersion,
+                &protocolRequest->devAddr);
         if (OC_STACK_OK != result)
         {
             OIC_LOG(ERROR, TAG, "Error adding server request");
@@ -2229,6 +2252,7 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
 
     if ((requestInfo->info.payload) && (0 < requestInfo->info.payloadSize))
     {
+        serverRequest.payloadFormat = CAToOCPayloadFormat(requestInfo->info.payloadFormat);
         serverRequest.reqTotalSize = requestInfo->info.payloadSize;
         serverRequest.payload = (uint8_t *) OICMalloc(requestInfo->info.payloadSize);
         if (!serverRequest.payload)
@@ -2292,21 +2316,7 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         memcpy(serverRequest.requestToken, requestInfo->info.token, requestInfo->info.tokenLength);
     }
 
-    switch (requestInfo->info.acceptFormat)
-    {
-        case CA_FORMAT_APPLICATION_CBOR:
-            serverRequest.acceptFormat = OC_FORMAT_CBOR;
-            break;
-        case CA_FORMAT_APPLICATION_VND_OCF_CBOR:
-            serverRequest.acceptFormat = OC_FORMAT_VND_OCF_CBOR;
-            break;
-        case CA_FORMAT_UNDEFINED:
-            serverRequest.acceptFormat = OC_FORMAT_UNDEFINED;
-            break;
-        default:
-            serverRequest.acceptFormat = OC_FORMAT_UNSUPPORTED;
-    }
-
+    serverRequest.acceptFormat = CAToOCPayloadFormat(requestInfo->info.acceptFormat);
     if (requestInfo->info.type == CA_MSG_CONFIRM)
     {
         serverRequest.qos = OC_HIGH_QOS;
@@ -3232,44 +3242,46 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
 
     if (payload)
     {
-        if((result =
-            OCConvertPayload(payload, &requestInfo.info.payload, &requestInfo.info.payloadSize))
-                != OC_STACK_OK)
-        {
-            OIC_LOG(ERROR, TAG, "Failed to create CBOR Payload");
-            goto exit;
-        }
-
         uint16_t payloadVersion = OC_SPEC_VERSION_VALUE;
+        CAPayloadFormat_t payloadFormat = CA_FORMAT_APPLICATION_CBOR;
         // From OCF onwards, check version option settings
-        if (DEFAULT_CONTENT_VERSION_VALUE <= payloadVersion)
+        if (numOptions > 0 && options)
         {
-            if (numOptions > 0 && options)
+            for (uint8_t i = 0; i < numOptions; i++)
             {
-                for (uint8_t i = 0; i < numOptions; i++)
+                if (COAP_OPTION_CONTENT_VERSION == options[i].optionID)
                 {
-                    if (COAP_OPTION_CONTENT_VERSION == options[i].optionID)
+                    payloadVersion = *(uint16_t*) options[i].optionData;
+                }
+                else if (COAP_OPTION_CONTENT_FORMAT == options[i].optionID)
+                {
+                    if (1 == options[i].optionLength)
                     {
-                        payloadVersion = options[i].optionData[0];
-                        break;
+                        payloadFormat = CAConvertFormat(*(uint8_t*) options[i].optionData);
                     }
-                    else if (COAP_OPTION_ACCEPT_VERSION == options[i].optionID)
+                    else if (2 == options[i].optionLength)
                     {
-                        payloadVersion = options[i].optionData[0];
-                        break;
+                        payloadFormat = CAConvertFormat(*(uint16_t*) options[i].optionData);
+                    }
+                    else
+                    {
+                        payloadFormat = CA_FORMAT_UNSUPPORTED;
+                        OIC_LOG_V(DEBUG, TAG, "option has an unsupported format");
                     }
                 }
             }
         }
 
-        if (DEFAULT_CONTENT_VERSION_VALUE <= payloadVersion)
+        requestInfo.info.payloadVersion = payloadVersion;
+        requestInfo.info.payloadFormat = payloadFormat;
+
+        if((result =
+            OCConvertPayload(payload, CAToOCPayloadFormat(requestInfo.info.payloadFormat),
+                             &requestInfo.info.payload, &requestInfo.info.payloadSize))
+                != OC_STACK_OK)
         {
-            requestInfo.info.payloadFormat = CA_FORMAT_APPLICATION_VND_OCF_CBOR;
-            requestInfo.info.payloadVersion = payloadVersion;
-        }
-        else
-        {
-            requestInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
+            OIC_LOG(ERROR, TAG, "Failed to create CBOR Payload");
+            goto exit;
         }
     }
     else
@@ -4885,6 +4897,34 @@ OCStackResult initResources()
         result = InitializeDeviceProperties();
     }
 
+    // Initialize platform ID of OC_RSRVD_RESOURCE_TYPE_PLATFORM.
+    // Multiple devices or applications running on the same IoTivity platform should have the same
+    // platform ID.
+    if (OC_STACK_OK == result)
+    {
+        uint8_t platformID[OIC_UUID_LENGTH];
+        char uuidString[UUID_STRING_SIZE];
+
+        if (!OICGetPlatformUuid(platformID))
+        {
+            OIC_LOG(WARNING, TAG, "Failed OICGetPlatformUuid(), generate random uuid.");
+            OCGenerateUuid(platformID);
+        }
+
+        if (OCConvertUuidToString(platformID, uuidString))
+        {
+            // Set the platform ID.
+            // Application can overwrite the value set here by calling similar
+            // OCSetPropertyValue(OC_RSRVD_PLATFORM_ID, ...).
+            result = OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_ID, uuidString);
+        }
+        else
+        {
+            result = OC_STACK_ERROR;
+            OIC_LOG(ERROR, TAG, "Failed OCConvertUuidToString() for platform ID.");
+        }
+    }
+
     return result;
 }
 
@@ -5611,7 +5651,7 @@ OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
                  {
                      // Arduino's AVR-GCC doesn't support strtoll().
                      int64_t queryIns;
-                     int matchedItems = sscanf(query + 4, "%lld", &queryIns);
+                     int matchedItems = sscanf(query + 4, "%" SCNd64, &queryIns);
 
                      if (0 == matchedItems)
                      {
@@ -5794,14 +5834,6 @@ void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, bool isCon
         // remove observer list with remote device address.
         DeleteObserverUsingDevAddr(&devAddr);
     }
-}
-
-void OCSetNetworkMonitorHandler(CAAdapterStateChangedCB adapterHandler,
-                                CAConnectionStateChangedCB connectionHandler)
-{
-    OIC_LOG(DEBUG, TAG, "OCSetNetworkMonitorHandler");
-    g_adapterHandler = adapterHandler;
-    g_connectionHandler = connectionHandler;
 }
 
 OCStackResult OCGetDeviceId(OCUUIdentity *deviceId)

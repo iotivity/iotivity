@@ -56,17 +56,17 @@ if target_os in ['windows']:
 	# On other platforms, octbstack_test is a shared LIB, that includes static LIB ocsrm.
 	unittests_env.AppendUnique(LIBS = ['ocsrm'])
 
-unittests_env.AppendUnique(LIBPATH = [unittests_env.get('BUILD_DIR')])
 unittests_env.PrependUnique(LIBS = [
 		'oc',
 		'octbstack_test',
 		'oc_logger',
 		'connectivity_abstraction',
 		'coap',
-		'timer'])
+		'timer',
+		'mbedcrypto'])
 
 if unittests_env.get('SECURED') == '1':
-	unittests_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+	unittests_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509'])
 
 if unittests_env.get('LOGGING'):
 	unittests_env.AppendUnique(CPPDEFINES = ['TB_LOG'])

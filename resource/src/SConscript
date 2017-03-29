@@ -58,8 +58,6 @@ oclib_env.AppendUnique(CPPPATH = [
 		'../csdk/connectivity/api'
 		])
 
-oclib_env.AppendUnique(LIBPATH = [oclib_env.get('BUILD_DIR')])
-
 oclib_env.AppendUnique(LIBS = ['oc_logger'])
 oclib_env.PrependUnique(LIBS = ['octbstack', 'connectivity_abstraction', 'ocsrm'])
 

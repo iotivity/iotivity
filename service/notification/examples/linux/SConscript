@@ -22,11 +22,11 @@ notification_sample_env.AppendUnique(CPPPATH = ['#/resource/csdk/resource-direct
 notification_sample_env.AppendUnique(CPPPATH = ['#/resource/csdk/connectivity/api'])
 
 notification_sample_env.PrependUnique(LIBS = [
+	'resource_directory',
 	'octbstack',
-	'oc_logger',
 	'connectivity_abstraction',
+	'oc_logger',
 	'libcoap',
-        'resource_directory'
 	])
 
 if target_os not in ['windows', 'winrt']:

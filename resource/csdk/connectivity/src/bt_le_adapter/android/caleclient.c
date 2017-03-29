@@ -4298,6 +4298,7 @@ void CALEClientUpdateSendCnt(JNIEnv *env)
         }
         // notity the thread
         oc_cond_signal(g_threadCond);
+        oc_cond_signal(g_threadWriteCharacteristicCond);
 
         CALEClientSetSendFinishFlag(true);
         OIC_LOG(DEBUG, TAG, "set signal for send data");
@@ -4841,12 +4842,11 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
                                                STATE_DISCONNECTED,
                                                g_deviceStateList,
                                                g_deviceStateListMutex);
-        (*env)->ReleaseStringUTFChars(env, jni_address, address);
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "CALEUpdateDeviceState has failed");
-            goto error_exit;
         }
+        (*env)->ReleaseStringUTFChars(env, jni_address, address);
 
         res = CALEClientGattClose(env, gatt);
         if (CA_STATUS_OK != res)
@@ -4859,16 +4859,14 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
             // this state is unexpected reason to disconnect
             // if the reason is suitable, connection logic of the device will be destroyed.
             OIC_LOG(INFO, TAG, "connection logic destroy");
-            goto error_exit;
         }
         else
         {
             // other reason except for gatt_success is expected to running
             // background connection in BT platform.
             OIC_LOG(INFO, TAG, "unknown status or manual disconnected state");
-            CALEClientUpdateSendCnt(env);
-            return;
         }
+        CALEClientUpdateSendCnt(env);
     }
     return;
 

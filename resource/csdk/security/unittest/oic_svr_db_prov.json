@@ -6,7 +6,8 @@
                 "subjectuuid": "61646d69-6e44-6576-6963-655575696430",
                 "credtype": 1,
                 "privatedata": {
-                    "data": "AAAAAAAAAAAAAAAA",
+
+"data": "AAAAAAAAAAAAAAAA",
                     "encoding": "oic.sec.encoding.raw"
                 }
             },
@@ -24,7 +25,8 @@
                 }
             }
         ],
-        "rowneruuid": "61646d69-6e44-6576-6963-655575696430"
+
+"rowneruuid": "61646d69-6e44-6576-6963-655575696430"
     },
     "acl": {
         "aclist": {
@@ -82,6 +84,7 @@
         "rowneruuid": "61646d69-6e44-6576-6963-655575696430"
     },
     "pstat": {
+        "dos": {"s": 3, "p": false},
         "isop": true,
         "deviceuuid": "646f6f72-4465-7669-6365-555549443030",
         "cm": 0,

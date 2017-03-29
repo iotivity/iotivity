@@ -371,9 +371,9 @@ void CHPHandleHttpResponse(const HttpResponse_t *httpResponse, void *context)
     response.numSendVendorSpecificHeaderOptions = 0;
     OCHeaderOption *optionsPointer = response.sendVendorSpecificHeaderOptions;
 
-    uint8_t tempOptionNumber = u_arraylist_length(httpResponse->headerOptions);
-    for (int numOptions = 0; numOptions < tempOptionNumber &&
-                             response.numSendVendorSpecificHeaderOptions < MAX_HEADER_OPTIONS;
+    size_t tempOptionNumber = u_arraylist_length(httpResponse->headerOptions);
+    for (size_t numOptions = 0; (numOptions < tempOptionNumber) &&
+                             (response.numSendVendorSpecificHeaderOptions < MAX_HEADER_OPTIONS);
                              numOptions++)
     {
         HttpHeaderOption_t *httpOption = u_arraylist_get(httpResponse->headerOptions, numOptions);

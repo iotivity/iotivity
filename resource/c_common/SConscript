@@ -140,12 +140,12 @@ env.AppendUnique(CPPPATH = [
             os.path.join(Dir('.').abspath, 'oic_time', 'include'),
             os.path.join(Dir('.').abspath, 'ocatomic', 'include'),
             os.path.join(Dir('.').abspath, 'ocrandom', 'include'),
-            os.path.join(Dir('.').abspath, 'octhread', 'include')
+            os.path.join(Dir('.').abspath, 'octhread', 'include'),
+            os.path.join(Dir('.').abspath, 'oic_platform', 'include'),
+            '#/extlibs/mbedtls/mbedtls/include'
         ])
 
-if target_os == 'tizen':
-    env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-else:
+if target_os not in ['tizen']:
     env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'c_common')])
 
 if target_os in ['tizen', 'linux']:
@@ -174,7 +174,8 @@ common_src = [
     'oic_string/src/oic_string.c',
     'oic_malloc/src/oic_malloc.c',
     'oic_time/src/oic_time.c',
-    'ocrandom/src/ocrandom.c'
+    'ocrandom/src/ocrandom.c',
+    'oic_platform/src/oic_platform.c'
     ]
 
 if env['POSIX_SUPPORTED']:

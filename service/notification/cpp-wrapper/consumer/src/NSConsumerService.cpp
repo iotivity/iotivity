@@ -147,7 +147,10 @@ namespace OIC
                 else if (state == NS_STOPPED)
                 {
                     oldProvider->setProviderSubscribedState(NSProviderSubscribedState::DENY);
-                    oldProvider->getTopicList()->unsetModifiability();
+                    if (NULL != oldProvider->getTopicList())
+                    {
+                        oldProvider->getTopicList()->unsetModifiability();
+                    }
                     NSConsumerService::getInstance()->getAcceptedProviders()->removeProvider(
                         oldProvider->getProviderId());
                     NS_LOG(DEBUG, "initiating the State callback : NS_STOPPED");

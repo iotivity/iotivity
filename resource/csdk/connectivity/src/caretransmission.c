@@ -45,9 +45,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef TB_LOG
-#include <inttypes.h>
-#endif
 
 #ifndef SINGLE_THREAD
 #ifdef HAVE_UNISTD_H
