@@ -1093,11 +1093,7 @@ static bool checkSslOperation(SslEndPoint_t*  peer,
         (MBEDTLS_SSL_ALERT_MSG_NO_APPLICATION_PROTOCOL != ret))
     {
         OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: -0x%x", (str), -ret);
-        if ((MBEDTLS_ERR_SSL_FATAL_ALERT_MESSAGE != ret) &&
-            (MBEDTLS_ERR_SSL_BAD_HS_CLIENT_HELLO != ret))
-        {
-            mbedtls_ssl_send_alert_message(&(peer)->ssl, MBEDTLS_SSL_ALERT_LEVEL_FATAL, (msg));
-        }
+        (void)msg;
 
         if (MBEDTLS_ERR_SSL_BAD_HS_CLIENT_HELLO != ret)
         {
