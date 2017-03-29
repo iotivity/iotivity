@@ -1031,7 +1031,7 @@ OCStackResult SetPstatSelfOwnership(const OicUuid_t* newROwner)
         return ret;
     }
 
-    if( newROwner && (false == gPstat->isOp) && (true == (TAKE_OWNER && gPstat->cm)) )
+    if( newROwner && (false == gPstat->isOp) && (TAKE_OWNER & gPstat->cm) )
     {
         gPstat->cm = (OicSecDpm_t)(gPstat->cm & (~TAKE_OWNER));
         gPstat->isOp = true;
