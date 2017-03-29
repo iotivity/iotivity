@@ -36,7 +36,6 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#include <boost/config.hpp>
 #include <list>
 #include "ocstack.h"
 #include "oic_malloc.h"
@@ -49,11 +48,11 @@
 volatile sig_atomic_t gQuitFlag = 0;
 
 static std::list<OCEntityHandlerRequest *> gRequestList;
-BOOST_STATIC_CONSTEXPR unsigned int SLOW_RESPONSE_DELAY_SEC = 5;
+static const unsigned int SLOW_RESPONSE_DELAY_SEC = 5;
 
 static LEDResource LED;
 
-BOOST_STATIC_CONSTEXPR unsigned int SAMPLE_MAX_NUM_POST_INSTANCE = 2;
+static const unsigned int SAMPLE_MAX_NUM_POST_INSTANCE = 2;
 static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
 
 //char *gResourceUri= const_cast<char *>("/a/led");
