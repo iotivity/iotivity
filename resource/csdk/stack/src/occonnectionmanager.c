@@ -222,6 +222,7 @@ OCStackResult OCCMDiscoveryResource(OCClientResponse *clientResponse)
 
 static void OCAdapterStateChangedHandler(CATransportAdapter_t adapter, bool enabled)
 {
+    OC_UNUSED(adapter);
     // check user configuration
     CAConnectUserPref_t connPrefer = CA_USER_PREF_CLOUD;
     CAResult_t ret = CAUtilCMGetConnectionUserConfig(&connPrefer);
