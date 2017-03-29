@@ -207,7 +207,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         element->data = (void*) subData;
         element->next = NULL;
 
-        if (NSProviderStorageWrite(consumerSubList, element) != NS_OK)
+        if (NS_OK != NSProviderStorageWrite(consumerSubList, element))
         {
             NS_LOG(ERROR, "Fail to write cache");
         }

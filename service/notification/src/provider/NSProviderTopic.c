@@ -312,13 +312,8 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
             topics = next;
         }
 
-        OCRepPayloadSetPropObjectArray(payload, NS_ATTRIBUTE_TOPIC_LIST,
-                (const OCRepPayload**) (payloadTopicArray), dimensions);
-        for (int i = 0; i < (int) dimensionSize; ++i)
-        {
-            OCRepPayloadDestroy(payloadTopicArray[i]);
-        }
-        NSOICFree(payloadTopicArray);
+        OCRepPayloadSetPropObjectArrayAsOwner(payload, NS_ATTRIBUTE_TOPIC_LIST,
+                    payloadTopicArray, dimensions);
     }
     else
     {
@@ -393,8 +388,10 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
         int64_t topicState = 0;
 
         OCRepPayloadGetPropString(topicListPayload[i], NS_ATTRIBUTE_TOPIC_NAME, &topicName);
-        OCRepPayloadGetPropInt(topicListPayload[i], NS_ATTRIBUTE_TOPIC_SELECTION, &topicState);
-        NS_LOG_V(DEBUG, "Topic Name(state):  %s(%d)", topicName, (int)topicState);
+        if (OCRepPayloadGetPropInt(topicListPayload[i], NS_ATTRIBUTE_TOPIC_SELECTION, &topicState))
+        {
+            NS_LOG_V(DEBUG, "Topic Name(state):  %s(%d)", topicName, (int)topicState);
+        }
 
         if (NS_TOPIC_SUBSCRIBED == (NSTopicState) topicState)
         {
@@ -418,7 +415,10 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
             newObj->data = (NSCacheData *) topicSubData;
             newObj->next = NULL;
 
-            NSProviderStorageWrite(consumerTopicList, newObj);
+            if (NS_OK != NSProviderStorageWrite(consumerTopicList, newObj))
+            {
+                NS_LOG(ERROR, "Fail to write cache");
+            }
         }
     }
     NSSendTopicUpdationToConsumer(consumerId);

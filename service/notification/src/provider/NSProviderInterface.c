@@ -261,6 +261,7 @@ NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type)
     if (!initProvider || !syncInfo)
     {
         NS_LOG(ERROR, "Provider is not started");
+        NSOICFree(syncInfo);
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }

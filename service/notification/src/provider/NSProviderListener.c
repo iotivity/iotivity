@@ -300,8 +300,7 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
             // Accepter is provider. our service is not support sendtopiclist from OC_REST_POST
             // Accepter is consumer. our service is support sendtopiclist from OC_REST_POST
             if (NSGetPolicy() == false &&
-                    NSProviderIsTopicAttributes(OCRepPayloadClone((OCRepPayload *)
-                            entityHandlerRequest->payload)))
+                    NSProviderIsTopicAttributes((OCRepPayload *)entityHandlerRequest->payload))
             {
                 NSPushQueue(TOPIC_SCHEDULER, TASK_POST_TOPIC,
                         NSCopyOCEntityHandlerRequest(entityHandlerRequest));
@@ -633,21 +632,21 @@ bool NSProviderIsTopicAttributes(OCRepPayload * payload)
                     {
                         for(int j = i; j < (int) dimensionSize; ++j)
                         {
-                            OCRepPayloadDestroy(topicListPayload[i]);
+                            OCRepPayloadDestroy(topicListPayload[j]);
                         }
 
-                        OCRepPayloadDestroy(payload);
+                        NSOICFree(topicListPayload);
                         return false;
                     }
                     subCurr = subCurr->next;
                 }
                 OCRepPayloadDestroy(topicListPayload[i]);
             }
+            NSOICFree(topicListPayload);
         }
         curr = curr->next;
     }
 
-    OCRepPayloadDestroy(payload);
     return true;
 }
 
