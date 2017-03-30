@@ -103,7 +103,7 @@ typedef enum {
 #elif defined(SET_LOG_FATAL)
 #define IF_OC_PRINT_LOG_LEVEL(level) if (FATAL <= (level) && INFO_PRIVATE != (level))
 #else
-#define IF_OC_PRINT_LOG_LEVEL(level) if (DEBUG <= (level) && INFO_PRIVATE != (level))
+#define IF_OC_PRINT_LOG_LEVEL(level) if (INFO_PRIVATE != (level))
 #endif
 
 /**
