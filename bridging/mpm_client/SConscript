@@ -44,10 +44,6 @@ mpmclient_env.PrependUnique(CPPPATH = [
 #  Otherwise you will need to prepend LD_LIBRARY_PATH to your execution command.
 mpmclient_env.PrependUnique(LIBS = ['minipluginmanager'])
 
-if target_arch in ['x86_64', 'arm64']:
-    mpmclient_env.AppendUnique(CPPFLAGS = ['-Llib64'])
-else:
-    mpmclient_env.AppendUnique(CPPFLAGS = ['-Llib'])
 mpmclient_env.AppendUnique(LIBS = ['pthread'])
 
 mpmclient_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
