@@ -867,7 +867,7 @@ OCEntityHandlerResult processGetRequest(PIPluginBase * plugin,
 
         if (stackResult != OC_STACK_OK || !outVal)
         {
-            stackResult = OC_EH_ERROR;
+            stackResult = OC_STACK_ERROR;
             OCRepPayloadDestroy(*payload);
             goto exit;
         }
@@ -978,7 +978,7 @@ OCEntityHandlerResult processGetRequest(PIPluginBase * plugin,
 
     if (boolRes == false)
     {
-        stackResult = OC_EH_ERROR;
+        stackResult = OC_STACK_ERROR;
         goto exit;
     }
 
@@ -987,7 +987,8 @@ exit:
     {
         OICFree(attributeList.list[attributeListIndex].oicAttribute);
     }
-    return stackResult;
+
+    return (stackResult != OC_STACK_OK) ? OC_EH_ERROR : OC_EH_OK;
 }
 
 OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
@@ -1030,7 +1031,7 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
         if (attributeList.list[i].oicType == OIC_ATTR_INT)
         {
             char value[MAX_STRLEN_INT] = {};
-            if (attributeList.CIEMask || CIE_MOVE_TO_LEVEL)
+            if (attributeList.CIEMask & CIE_MOVE_TO_LEVEL)
             {
                 int64_t rangeDiff = 0;
                 // OIC Dimming operates between 0-100, while Zigbee
@@ -1134,7 +1135,7 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
         else if (attributeList.list[i].oicType == OIC_ATTR_BOOL)
         {
             char * value = attributeList.list[i].val.b ? "1" : "0";
-            if (attributeList.CIEMask || CIE_RON_OFF)
+            if (attributeList.CIEMask & CIE_RON_OFF)
             {
                 stackResult = TWSwitchOnOff(piResource->nodeId, piResource->endpointId, value,
                                             (PIPlugin_Zigbee*)plugin);
