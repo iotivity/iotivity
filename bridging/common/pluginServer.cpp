@@ -208,7 +208,7 @@ MPMResult MPMPluginService(MPMCommonPluginCtx *ctx)
         OIC_LOG_V(ERROR, TAG, "Error (%d) initializing OCF infrastructure", result);
         goto HandleError;
     }
-    if (ctx->reconnect_file_name != NULL)
+    if ('\0' != ctx->reconnect_file_name[0])
     {
         strncpy(g_plugin_context->reconnect_file_name, ctx->reconnect_file_name,
                 strlen(ctx->reconnect_file_name));
