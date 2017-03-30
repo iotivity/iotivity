@@ -60,7 +60,7 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
     memset(&privKey, 0, sizeof(privKey));
     privKey.data = privData;
     privKey.len = keySize;
-    privKey.encoding = OIC_ENCODING_UNKNOW;
+    privKey.encoding = OIC_ENCODING_RAW;
 
     if (!OCGetRandomBytes(privData, privDataKeySize))
     {

@@ -678,7 +678,7 @@ static OCStackResult SaveSubOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
     memset(&ownerKey, 0, sizeof(ownerKey));
     ownerKey.data = ownerPSK;
     ownerKey.len = OWNER_PSK_LENGTH_128;
-    ownerKey.encoding = OIC_ENCODING_UNKNOW;
+    ownerKey.encoding = OIC_ENCODING_RAW;
 
     //Generating SubOwnerPSK
     CAResult_t pskRet = CAGenerateOwnerPSK(&endpoint,
