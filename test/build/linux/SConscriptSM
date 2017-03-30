@@ -131,6 +131,6 @@ for delete_target in install_targets:
     delete_bin[i] = Command(str(i), [], Delete(delete_target))
     i = i + 1
 
-default_targets = install_targets + install + delete_bin
+default_targets += install_targets + install + delete_bin
 
 env_linux.Default(default_targets)
