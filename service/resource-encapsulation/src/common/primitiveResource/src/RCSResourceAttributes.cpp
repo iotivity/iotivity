@@ -30,7 +30,7 @@
 #include "boost/mpl/size.hpp"
 #include "boost/mpl/deref.hpp"
 
-#ifdef __APPLE__
+#if defined(__clang__) || defined(__APPLE__)
 #define OC_CONSTEXPR_INLINE inline
 #else
 #define OC_CONSTEXPR_INLINE constexpr inline
