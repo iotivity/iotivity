@@ -595,7 +595,7 @@ TEST_F(CANetworkTest_btc, CASendResponse_N)
  * @see CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
  * @see void CATerminate()
  * @objective Test CAGetNetworkInformation positively with valid value
- * @target CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size)
+ * @target CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, size_t *size)
  * @test_data none
  * @pre_condition 1. Initialize CA using CAInitialize
  *                2. Call CASelectNetwork to select network
@@ -627,7 +627,7 @@ TEST_F(CANetworkTest_btc, CAGetNetworkInformation_P)
  * @see CAResult_t CAInitialize()
  * @see void CATerminate()
  * @objective Test CAGetNetworkInformation negatively with invalid value
- * @target CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size)
+ * @target CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, size_t *size)
  * @test_data Pass NULL value as endpoint and size argument
  * @pre_condition Initialize CA using CAInitialize
  * @procedure call CAGetNetworkInformation with NULL
@@ -659,7 +659,7 @@ TEST_F(CANetworkTest_btc, CAGetNetworkInformation_N)
  * @see CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
  * @see void CATerminate()
  * @objective Test CAGetNetworkInformation negatively with invalid sample value in Info parameter [Info_USV]
- * @target CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size)
+ * @target CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, size_t *size)
  * @test_data unformated sample value as tempInfo argument
  * @pre_condition 1. Initialize CA using CAInitialize
  *                2. Call CASelectNetwork to select the network
@@ -679,7 +679,7 @@ TEST_F(CANetworkTest_btc, CAGetNetworkInformation_Info_USV_N)
 
     CAResult_t m_res = NULL;
     CAEndpoint_t **tempInfo = NULL;
-    uint32_t tempSize = 0;
+    size_t tempSize = 0;
 
     m_res = CAGetNetworkInformation(tempInfo, &tempSize);
     if (m_res != CA_STATUS_INVALID_PARAM)
@@ -697,7 +697,7 @@ TEST_F(CANetworkTest_btc, CAGetNetworkInformation_Info_USV_N)
  * @see CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
  * @see void CATerminate()
  * @objective Test CAGetNetworkInformation negatively with invalid sample value in size parameter [Size_USV]
- * @target CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size)
+ * @target CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, size_t *size)
  * @test_data unformated sample value as size argument
  * @pre_condition 1. Initialize CA using CAInitialize
  *                2. Call CASelectNetwork to select the network
@@ -717,7 +717,7 @@ TEST_F(CANetworkTest_btc, CAGetNetworkInformation_temSize_USV_N)
 
     CAResult_t m_res = NULL;
     CAEndpoint_t *tempInfo = NULL;
-    uint32_t *tempSize = 0;
+    size_t *tempSize = 0;
 
     m_res = CAGetNetworkInformation(&tempInfo, tempSize);
     if (m_res != CA_STATUS_INVALID_PARAM)

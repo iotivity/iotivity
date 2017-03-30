@@ -92,7 +92,7 @@ const uint8_t TOKEN_UOBV_LENGTH = CA_MAX_TOKEN_LEN + 1;
 const char* const VALID_ENDPOINT_URI = (char *) "123.123.123.123:1234/b/light";
 const int ENDPOINT_PORT = 6298;
 const char* const ENDPOINT_IP = (char *) "107.109.214.164";
-const CATransportFlags_t CA_TRANSPORT_FLAG = CA_IPV4;
+const CATransportFlags_t CA_TRANSPORT_FLAG = (CATransportFlags_t)CA_IPV4;
 const CATransportFlags_t CA_INVALID_FLAG = (CATransportFlags_t)0;
 const CATransportAdapter_t CA_INVALID_ADAPTER = (CATransportAdapter_t)0;
 const CATransportAdapter_t CA_INVALID_UOBV_ADAPTER = (CATransportAdapter_t)4294967296LL;
@@ -214,8 +214,8 @@ public:
     CARequestInfo_t m_requestInfo;
     CAResponseInfo_t m_responseInfo;
 
-    int m_availableNetwork;
-    int m_unAvailableNetwork;
+    CATransportAdapter_t m_availableNetwork;
+    CATransportAdapter_t m_unAvailableNetwork;
 
     void setUriType(TcUriType uriType);
     void setPayloadType(TcPayloadType payloadType);
@@ -225,7 +225,7 @@ public:
     void setResponseResult(CAResponseResult_t responseResult);
     void setTotalMessage(int total);
     void setResultStatus(CAResult_t result);
-    bool setMulticastRequest(bool multicastRequest);
+    void setMulticastRequest(bool multicastRequest);
 
 
     void clearBuffer();
@@ -319,7 +319,7 @@ public:
     static bool parseAddress(const CAEndpoint_t* endpoint, const CAInfo_t info);
 
 #ifdef TCP_ADAPTER
-    static void keepAliveHandler(const CAEndpoint_t *endpoint, bool isConnected);
+    static void keepAliveHandler(const CAEndpoint_t *endpoint, bool isConnected, bool isClient);
     int getKeepAliveCount();
 #endif
 

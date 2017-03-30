@@ -92,7 +92,7 @@ typedef struct
 bool g_firstMessage = true;
 bool g_simulatorProcess = true;
 
-int g_selectedTransport = 0;
+CATransportAdapter_t g_selectedTransport = (CATransportAdapter_t)0;
 int g_messageId = -1;
 size_t g_identityLegth;
 size_t g_pskLength;
@@ -369,7 +369,7 @@ int selectNetwork(int argc, char *argv[])
 
     if (number >= 0 && number <= 4)
     {
-        g_selectedTransport = 1 << number;
+        g_selectedTransport = (CATransportAdapter_t)(1 << number);
 
         output("Selecting Network ...\n");
 
@@ -765,7 +765,7 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
         }
         int i;
         char payload[2000];
-        for (i = 0; i < requestInfo->info.payloadSize; i++)
+        for (i = 0; i < (int)requestInfo->info.payloadSize; i++)
         {
             payload[i] = requestInfo->info.payload[i];
         }
@@ -778,7 +778,7 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
             sprintf(str, "%d", CAGetAssignedPortNumber(CA_ADAPTER_IP, CA_IPV4));
             strcat(payload, str);
             strcat(payload, ",secure-port:");
-            sprintf(str, "%d", CAGetAssignedPortNumber(CA_ADAPTER_IP, (CA_SECURE|CA_IPV4)));
+            sprintf(str, "%d", CAGetAssignedPortNumber(CA_ADAPTER_IP, (CATransportFlags_t)(CA_SECURE|CA_IPV4)));
             strcat(payload, str);
         }
         else if (g_selectedTransport == CA_ADAPTER_TCP)
@@ -788,7 +788,7 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
             sprintf(str, "%d", CAGetAssignedPortNumber(CA_ADAPTER_TCP, CA_IPV4));
             strcat(payload, str);
             strcat(payload, ",secure-port:");
-            sprintf(str, "%d", CAGetAssignedPortNumber(CA_ADAPTER_TCP, (CA_SECURE|CA_IPV4)));
+            sprintf(str, "%d", CAGetAssignedPortNumber(CA_ADAPTER_TCP, (CATransportFlags_t)(CA_SECURE|CA_IPV4)));
             strcat(payload, str);
         }
         else
@@ -800,7 +800,7 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
         output ("payload %s\n", payload);
         output("calling returnResponse ...\n");
 
-        returnResponse(endpoint, requestInfo->info.resourceUri, payload,
+        returnResponse(endpoint, requestInfo->info.resourceUri, (unsigned char*)payload,
                 strlen(payload), messageType, CA_VALID, requestInfo->info.messageId,
                 requestInfo->info.token, requestInfo->info.tokenLength, requestInfo->info.options,
                 requestInfo->info.numOptions);

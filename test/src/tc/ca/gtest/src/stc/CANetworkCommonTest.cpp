@@ -48,7 +48,7 @@ protected:
  * @target CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo)
  * @target CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
  * @target CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork)
- * @target CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size)
+ * @target CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, size_t *size)
  * @target CAResult_t CAHandleRequestResponse()
  * @test_data none
  * @pre_condition Do not call CAInitialize
@@ -77,7 +77,7 @@ protected:
 TEST_F(CANetworkCommonTest_stc, CallOtherCAApiWithoutCallingCAInitialize_N)
 {
     CAEndpoint_t* endpoint = NULL;
-    uint32_t size = 0;
+    size_t size = 0;
     CARequestInfo_t requestInfo;
     CAResponseInfo_t responseInfo;
 

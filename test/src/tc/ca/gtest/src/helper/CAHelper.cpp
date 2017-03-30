@@ -127,10 +127,10 @@ bool CAHelper::initialize()
 #elif __TCP__
     m_availableNetwork = CA_ADAPTER_TCP;
 #else
-    m_availableNetwork = 0;
+    m_availableNetwork = CA_DEFAULT_ADAPTER;
 #endif
 
-    m_unAvailableNetwork = 0;
+    m_unAvailableNetwork = CA_DEFAULT_ADAPTER;
     
     setIp.clear();
 
@@ -288,7 +288,7 @@ bool CAHelper::createEndpoint(bool isMulticast, bool isSecure, CAResult_t expect
 
     if(isSecure)
     {
-        transportFlags |= CA_SECURE;
+        transportFlags = (CATransportFlags_t)(transportFlags | CA_SECURE );
         port = s_simulatorSecurePort;
     }
     else
@@ -505,18 +505,18 @@ bool CAHelper::getNetworkInfo()
     if (m_availableNetwork != CA_ADAPTER_TCP)
     {
         CAEndpoint_t *tempInfo = NULL;
-        uint32_t tempSize = 0;
+        size_t tempSize = 0;
 
         CAResult_t res = CAGetNetworkInformation(&tempInfo, &tempSize);
 
-        for (uint32_t i = 0; i < tempSize; i++)
+        for (size_t i = 0; i < tempSize; i++)
         {
             IOTIVITYTEST_LOG(DEBUG, "port: %d flags = %d", tempInfo[i].port, tempInfo[i].flags);
         }
         if (CA_STATUS_OK != res || NULL == tempInfo || 0 >= tempSize)
         {
             CAEndpoint_t *tempInfo = NULL;
-            uint32_t tempSize = 0;
+            size_t tempSize = 0;
 
             CAResult_t res = CAGetNetworkInformation(&tempInfo, &tempSize);
             if (CA_STATUS_OK != res || NULL == tempInfo || 0 >= tempSize)
@@ -528,7 +528,7 @@ bool CAHelper::getNetworkInfo()
                 return false;
             }
 
-            for (uint32_t i = 0; i < tempSize; i++)
+            for (size_t i = 0; i < tempSize; i++)
             {
                 IOTIVITYTEST_LOG(DEBUG, "port: %d, flags: %d ", tempInfo[i].port,
                         tempInfo[i].flags);
@@ -789,7 +789,7 @@ bool CAHelper::parseAddress(const CAEndpoint_t* endpoint, const CAInfo_t info)
     strcpy(s_simulatorIp, endpoint->addr);
     //printf ("payload %s\n", info.payload);
 
-    for(i = lastPosition = PAYLOAD_SIZE_NORMAL; i <= info.payloadSize; i++)
+    for(i = lastPosition = PAYLOAD_SIZE_NORMAL; i <= (int)info.payloadSize; i++)
     {
         if (info.payload[i] == ':')
         {
@@ -1059,7 +1059,7 @@ bool CAHelper::sendRequest(char* uri, char* hidden_payload, CAMethod_t method, C
     return true;
 }
 
-bool CAHelper::setMulticastRequest(bool multicastRequest)
+void CAHelper::setMulticastRequest(bool multicastRequest)
 {
     m_multicastRequest = multicastRequest;
 }
@@ -1144,7 +1144,7 @@ bool CAHelper::sendConfigurationRequest(SimulatorTask taskType, MessageCommandTy
     //IOTIVITYTEST_LOG(DEBUG, "Random String in structure: %s", s_tcInfo.identifier);
 #endif
 
-    return sendRequest(SIM_REQ_CONFIG, (char*) payload.c_str(), method,
+    return sendRequest((char*) SIM_REQ_CONFIG, (char*) payload.c_str(), method,
             CA_MSG_NONCONFIRM);
 }
 
@@ -1712,7 +1712,7 @@ void CAHelper::errorHandler(const CAEndpoint_t *rep, const CAErrorInfo_t* errorI
 }
 
 #ifdef TCP_ADAPTER
-void CAHelper::keepAliveHandler(const CAEndpoint_t *endpoint, bool isConnected)
+void CAHelper::keepAliveHandler(const CAEndpoint_t *endpoint, bool isConnected, bool isClient)
 {
     keepAliveCount ++;
     IOTIVITYTEST_LOG(DEBUG, "KeepAliveHandler in");
