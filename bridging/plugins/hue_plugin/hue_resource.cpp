@@ -550,7 +550,7 @@ MPMResult pluginReconnect(MPMPluginCtx *, MPMPipeMessage *message)
               plugindetails->clientId,
               plugindetails->lightNo, plugindetails->prefix);
 
-    if ((plugindetails->bridgeMac != NULL) && ( plugindetails->clientId != NULL))
+    if (('\0' != plugindetails->bridgeMac[0]) && ('\0' != plugindetails->clientId[0]))
     {
         if (authorizedBridges.find(plugindetails->bridgeMac) == authorizedBridges.end())
         {
