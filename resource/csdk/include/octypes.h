@@ -22,7 +22,7 @@
 /**
  * @file
  *
- * This file contains the definition, types and APIs for resource(s) be implemented.
+ * This file contains the definitions, types and APIs for resources to be implemented.
  */
 
 #ifndef OCTYPES_H_

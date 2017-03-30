@@ -18,6 +18,11 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file
+ * Time value functions.
+ */
+
 #ifndef OCTIMER_H_
 #define OCTIMER_H_
 
@@ -50,7 +55,9 @@ extern "C"
 typedef void(*TimerCallback)();
 
 /**
- * This must be async-signal safe, so it cannot use difftime().
+ * Calculate time difference.
+ *
+ * Needs to be be async-signal safe, so cannot use difftime().
  * @param[in] after time to be substracted
  * @param[in] before reference time to be compared to
  * @return number of seconds between before and after, (after - before).
@@ -58,11 +65,14 @@ typedef void(*TimerCallback)();
 time_t timespec_diff(const time_t after, const time_t before);
 
 /**
- * Add positive seconds to a timespec, nothing if seconds is negative.
+ * Increase a time value by a specified amount.
+ *
+ * Adds positive seconds to a time value, nothing if seconds is negative.
  * @param[out] to time result to be added
  * @param[in] seconds amount of sec to add
  */
 void timespec_add(time_t *to, const time_t seconds);
+
 void checkTimeout();
 
 #ifndef WITH_ARDUINO

@@ -658,6 +658,8 @@ WARN_LOGFILE           = ./doxygen.log
 # documented source files. You may enter file names like "myfile.cpp" or
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
+#
+# see also EXCLUDE for any files to be omitted from these paths
 
 INPUT                  = . \
              ../../csdk/include/octypes.h \
@@ -749,7 +751,8 @@ RECURSIVE              = NO
 # Note that relative paths are relative to the directory from which doxygen is
 # run.
 
-EXCLUDE                =
+EXCLUDE                = \
+             ../../csdk/resource-directory/include/RDClient.h
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
