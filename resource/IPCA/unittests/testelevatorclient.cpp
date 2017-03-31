@@ -17,7 +17,7 @@
  *
  ******************************************************************/
 
-#include "TestElevatorClient.h"
+#include "testelevatorclient.h"
 #include "ipcatestdata.h"
 
 #define VERBOSE_INFO  0   // set to 1 for extra output.

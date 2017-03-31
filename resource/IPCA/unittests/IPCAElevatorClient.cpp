@@ -29,7 +29,7 @@
 #include "oic_time.h"
 #include "ipca.h"
 #include "ipcatestdata.h"
-#include "ipcaelevatorclient.h"
+#include "IPCAElevatorClient.h"
 
 extern IPCAUuid IPCATestAppUuid;
 extern char IPCATestAppName[];

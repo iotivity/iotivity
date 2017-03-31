@@ -27,6 +27,7 @@
 #include <chrono>
 #include <memory>
 #include <functional>
+#include <algorithm>
 
 #include "ipca.h"
 

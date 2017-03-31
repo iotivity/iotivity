@@ -29,9 +29,11 @@ namespace OC
     // There is no implementation in this file since the mock directly links the client and server
     // apps.
     InProcClientWrapper::InProcClientWrapper(
-            std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg)
-                : m_threadRun(false), m_csdkLock(csdkLock),
-                  m_cfg { cfg }
+                            std::weak_ptr<std::recursive_mutex> csdkLock,
+                            PlatformConfig cfg) :
+        m_threadRun(false),
+        m_csdkLock(csdkLock),
+        m_cfg { cfg }
     {
     }
 
@@ -54,10 +56,11 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::ListenForResource(
-            const std::string& serviceUrl,
-            const std::string& resourceType,
-            OCConnectivityType connectivityType,
-            FindCallback& callback, QualityOfService QoS)
+                                                const std::string& serviceUrl,
+                                                const std::string& resourceType,
+                                                OCConnectivityType connectivityType,
+                                                FindCallback& callback,
+                                                QualityOfService QoS)
     {
         OC_UNUSED(serviceUrl);
         OC_UNUSED(resourceType);
@@ -69,11 +72,12 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::ListenErrorForResource(
-            const std::string& serviceUrl,
-            const std::string& resourceType,
-            OCConnectivityType connectivityType,
-            FindCallback& callback, FindErrorCallback& errorCallback,
-            QualityOfService QoS)
+                                                const std::string& serviceUrl,
+                                                const std::string& resourceType,
+                                                OCConnectivityType connectivityType,
+                                                FindCallback& callback,
+                                                FindErrorCallback& errorCallback,
+                                                QualityOfService QoS)
     {
         OC_UNUSED(serviceUrl);
         OC_UNUSED(resourceType);
@@ -87,10 +91,11 @@ namespace OC
 
 
     OCStackResult InProcClientWrapper::ListenForResourceList(
-            const std::string& serviceUrl,
-            const std::string& resourceType,
-            OCConnectivityType connectivityType,
-            FindResListCallback& callback, QualityOfService QoS)
+                                                const std::string& serviceUrl,
+                                                const std::string& resourceType,
+                                                OCConnectivityType connectivityType,
+                                                FindResListCallback& callback,
+                                                QualityOfService QoS)
     {
         OC_UNUSED(serviceUrl);
         OC_UNUSED(resourceType);
@@ -102,11 +107,12 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::ListenForResourceListWithError(
-            const std::string& serviceUrl,
-            const std::string& resourceType,
-            OCConnectivityType connectivityType,
-            FindResListCallback& callback,
-            FindErrorCallback& errorCallback, QualityOfService QoS)
+                                                const std::string& serviceUrl,
+                                                const std::string& resourceType,
+                                                OCConnectivityType connectivityType,
+                                                FindResListCallback& callback,
+                                                FindErrorCallback& errorCallback,
+                                                QualityOfService QoS)
     {
         OC_UNUSED(serviceUrl);
         OC_UNUSED(resourceType);
@@ -119,11 +125,11 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::ListenForDevice(
-            const std::string& serviceUrl,
-            const std::string& deviceURI,
-            OCConnectivityType connectivityType,
-            FindDeviceCallback& callback,
-            QualityOfService QoS)
+                                                const std::string& serviceUrl,
+                                                const std::string& deviceURI,
+                                                OCConnectivityType connectivityType,
+                                                FindDeviceCallback& callback,
+                                                QualityOfService QoS)
     {
         OC_UNUSED(serviceUrl);
         OC_UNUSED(deviceURI);
@@ -135,11 +141,13 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::GetResourceRepresentation(
-        const OCDevAddr& devAddr,
-        const std::string& resourceUri,
-        const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-        OCConnectivityType connectivityType,
-        GetCallback& callback, QualityOfService QoS)
+                                                const OCDevAddr& devAddr,
+                                                const std::string& resourceUri,
+                                                const QueryParamsMap& queryParams,
+                                                const HeaderOptions& headerOptions,
+                                                OCConnectivityType connectivityType,
+                                                GetCallback& callback,
+                                                QualityOfService QoS)
     {
         OC_UNUSED(devAddr);
         OC_UNUSED(resourceUri);
@@ -153,11 +161,13 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::PutResourceRepresentation(
-        const OCDevAddr& devAddr,
-        const std::string& uri,
-        const OCRepresentation& rep,
-        const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-        PutCallback& callback, QualityOfService QoS)
+                                                const OCDevAddr& devAddr,
+                                                const std::string& uri,
+                                                const OCRepresentation& rep,
+                                                const QueryParamsMap& queryParams,
+                                                const HeaderOptions& headerOptions,
+                                                PutCallback& callback,
+                                                QualityOfService QoS)
     {
         OC_UNUSED(devAddr);
         OC_UNUSED(uri);
@@ -171,12 +181,14 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::PostResourceRepresentation(
-                    const OCDevAddr& devAddr,
-                    const std::string& uri,
-                    const OCRepresentation& rep,
-                    const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-                    OCConnectivityType connectivityType,
-                    PostCallback& callback, QualityOfService QoS)
+                                                const OCDevAddr& devAddr,
+                                                const std::string& uri,
+                                                const OCRepresentation& rep,
+                                                const QueryParamsMap& queryParams,
+                                                const HeaderOptions& headerOptions,
+                                                OCConnectivityType connectivityType,
+                                                PostCallback& callback,
+                                                QualityOfService QoS)
     {
         OC_UNUSED(devAddr);
         OC_UNUSED(uri);
@@ -192,12 +204,12 @@ namespace OC
 
 
     OCStackResult InProcClientWrapper::DeleteResource(
-                    const OCDevAddr& devAddr,
-                    const std::string& uri,
-                    const HeaderOptions& headerOptions,
-                    OCConnectivityType connectivityType,
-                    DeleteCallback& callback,
-                    QualityOfService /*QoS*/)
+                                                const OCDevAddr& devAddr,
+                                                const std::string& uri,
+                                                const HeaderOptions& headerOptions,
+                                                OCConnectivityType connectivityType,
+                                                DeleteCallback& callback,
+                                                QualityOfService /*QoS*/)
     {
         OC_UNUSED(devAddr);
         OC_UNUSED(uri);
@@ -209,11 +221,15 @@ namespace OC
     }
 
 
-    OCStackResult InProcClientWrapper::ObserveResource(ObserveType observeType, OCDoHandle* handle,
-        const OCDevAddr& devAddr,
-        const std::string& uri,
-        const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-        ObserveCallback& callback, QualityOfService QoS)
+    OCStackResult InProcClientWrapper::ObserveResource(
+                                                ObserveType observeType,
+                                                OCDoHandle* handle,
+                                                const OCDevAddr& devAddr,
+                                                const std::string& uri,
+                                                const QueryParamsMap& queryParams,
+                                                const HeaderOptions& headerOptions,
+                                                ObserveCallback& callback,
+                                                QualityOfService QoS)
 
     {
         OC_UNUSED(observeType);
@@ -243,9 +259,12 @@ namespace OC
         return OC_STACK_OK;
     }
 
-    OCStackResult InProcClientWrapper::SubscribePresence(OCDoHandle* handle,
-        const std::string& host, const std::string& resourceType,
-        OCConnectivityType connectivityType, SubscribeCallback& presenceHandler)
+    OCStackResult InProcClientWrapper::SubscribePresence(
+                                                OCDoHandle* handle,
+                                                const std::string& host,
+                                                const std::string& resourceType,
+                                                OCConnectivityType connectivityType,
+                                                SubscribeCallback& presenceHandler)
     {
         OC_UNUSED(handle);
         OC_UNUSED(host);
@@ -270,8 +289,9 @@ namespace OC
     }
 
 
-    OCStackResult InProcClientWrapper::FindDirectPairingDevices(unsigned short waittime,
-            GetDirectPairedCallback& callback)
+    OCStackResult InProcClientWrapper::FindDirectPairingDevices(
+                                                unsigned short waittime,
+                                                GetDirectPairedCallback& callback)
     {
         OC_UNUSED(waittime);
         OC_UNUSED(callback);
@@ -284,8 +304,11 @@ namespace OC
         return OC_STACK_OK;
     }
 
-    OCStackResult InProcClientWrapper::DoDirectPairing(std::shared_ptr<OCDirectPairing> peer,
-            const OCPrm_t& pmSel, const std::string& pinNumber, DirectPairingCallback& callback)
+    OCStackResult InProcClientWrapper::DoDirectPairing(
+                                                std::shared_ptr<OCDirectPairing> peer,
+                                                const OCPrm_t& pmSel,
+                                                const std::string& pinNumber,
+                                                DirectPairingCallback& callback)
     {
         OC_UNUSED(peer);
         OC_UNUSED(pmSel);
@@ -293,4 +316,20 @@ namespace OC
         OC_UNUSED(callback);
         return OC_STACK_OK;
     }
+
+#ifdef WITH_CLOUD
+    OCStackResult InProcClientWrapper::SubscribeDevicePresence(
+                                                OCDoHandle* handle,
+                                                const std::string& host,
+                                                const std::vector<std::string>& di,
+                                                OCConnectivityType connectivityType,
+                                                ObserveCallback& callback)
+    {
+        OC_UNUSED(handle);
+        OC_UNUSED(host);
+        OC_UNUSED(di);
+        OC_UNUSED(connectivityType);
+        OC_UNUSED(callback);
+    }
+#endif
 }

@@ -18,7 +18,7 @@
  ******************************************************************/
 
 #include "logger.h"
-#include "TestElevatorServer.h"
+#include "testelevatorserver.h"
 #include "ipcatestdata.h"
 
 using namespace OC;

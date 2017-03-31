@@ -24,7 +24,7 @@ using namespace std::placeholders;
 
 #include "oic_malloc.h"
 #include "oic_time.h"
-#include "ocapi.h"
+#include "OCApi.h"
 #include "pinoxmcommon.h"
 #include "srmutility.h"
 #include "ocrandom.h"
@@ -851,7 +851,7 @@ IPCAStatus OCFFramework::GetCommonResources(DeviceDetails::Ptr deviceDetails)
         if (result != OC_STACK_OK)
         {
             OIC_LOG_V(WARNING, TAG, "Failed getPlatformInfo() for: [%s] OC result: [%d]",
-                deviceDetails->deviceUris[0], result);
+                deviceDetails->deviceUris[0].c_str(), result);
         }
 
         deviceDetails->platformInfoRequestCount++;
@@ -878,7 +878,7 @@ IPCAStatus OCFFramework::GetCommonResources(DeviceDetails::Ptr deviceDetails)
         if (result != OC_STACK_OK)
         {
             OIC_LOG_V(WARNING, TAG, "Failed getDeviceInfo() for [%s] OC result: [%d]",
-                deviceDetails->deviceUris[0], result);
+                deviceDetails->deviceUris[0].c_str(), result);
         }
 
         deviceDetails->deviceInfoRequestCount++;
@@ -1626,6 +1626,10 @@ IPCAStatus OCFFramework::RequestAccess(std::string& deviceId,
 
 void OCFFramework::RequestAccessWorkerThread(RequestAccessContext* requestContext)
 {
+#ifndef MULTIPLE_OWNER
+    OC_UNUSED(requestContext);
+    return;
+#else
     IPCAStatus status = IPCA_OK;
     IPCAStatus callbackStatus = IPCA_SECURITY_UPDATE_REQUEST_FAILED;
     OCStackResult result = OC_STACK_OK;
@@ -1811,6 +1815,7 @@ void OCFFramework::RequestAccessWorkerThread(RequestAccessContext* requestContex
             callback->RequestAccessCompletionCallback(callbackStatus, callbackInfo);
         }
     }
+#endif
 }
 
 void OCFFramework::OnMultipleOwnershipTransferCompleteCallback(

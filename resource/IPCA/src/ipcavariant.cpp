@@ -140,7 +140,7 @@ IPCAStatus IPCA_CALL IPCAPropertyBagSetValueArray(
     OC::OCRepresentation* ocRep = reinterpret_cast<OC::OCRepresentation*>(propertyBagHandle);
 
     std::vector<_T> array;
-    for (int i = 0; i < arrayCount; i++)
+    for (size_t i = 0; i < arrayCount; i++)
     {
         array.insert(array.end(), valueArray[i]);
     }
@@ -200,7 +200,7 @@ IPCAStatus IPCA_CALL IPCAPropertyBagSetValueStringArray(
     OC::OCRepresentation* ocRep = reinterpret_cast<OC::OCRepresentation*>(propertyBagHandle);
 
     std::vector<std::string> array;
-    for (int i = 0; i < arrayCount; i++)
+    for (size_t i = 0; i < arrayCount; i++)
     {
         array.insert(array.end(), valueArray[i]);
     }
@@ -232,7 +232,7 @@ IPCAStatus IPCA_CALL IPCAPropertyBagSetValuePropertyBagArray(
     OC::OCRepresentation* ocRep = reinterpret_cast<OC::OCRepresentation*>(propertyBagHandle);
 
     std::vector<OC::OCRepresentation> ocRepArray;
-    for (int i = 0; i < valueCount; i++)
+    for (size_t i = 0; i < valueCount; i++)
     {
         ocRepArray.insert(ocRepArray.end(),
             *(reinterpret_cast<OC::OCRepresentation*>((valueArray[i]))));
@@ -410,7 +410,7 @@ IPCAStatus IPCA_CALL IPCAPropertyBagGetValuePropertyBagArray(
         return IPCA_OUT_OF_MEMORY;
     }
 
-    int i = 0;
+    size_t i = 0;
     IPCAStatus status = IPCA_FAIL;
     for (auto& ocrep : array)
     {
@@ -446,7 +446,7 @@ void IPCA_CALL IPCAPropertyBagFreePropertyBagArray(
                                         IPCAPropertyBagHandle* valueArray,
                                         size_t valueCount)
 {
-    for (int i = 0; i < valueCount; i++)
+    for (size_t i = 0; i < valueCount; i++)
     {
         IPCAPropertyBagDestroy(valueArray[i]);
     }

@@ -17,19 +17,21 @@
  *
  ******************************************************************/
 
-#include "ipcainternal.h"
+#include "OCPlatform.h"
+#include "OCApi.h"
+#include "OCProvisioningManager.hpp"
+#include "logger.h"
+
+#include "oic_malloc.h"
 
 #include "ocstack.h"
-#include "srmutility.h"
 #include "base64.h"
 
-#include <thread>
-
 #include "pinoxmcommon.h"
-#include "srmutility.h"
-#include "common.h"
 
 // These APIs are used when building with SECURED=0.
+using namespace OC;
+
 OCStackResult OCSecure::provisionInit(const std::string& dbPath)
 {
     OC_UNUSED(dbPath);
@@ -44,12 +46,6 @@ OCStackResult OCSecure::registerInputPinCallback(InputPinCB inputPinCB,
     return OC_STACK_OK;
 }
 
-OCStackResult OCSecure::deregisterInputPinCallback(InputPinCallbackHandle inputPinCallbackHandle)
-{
-    OC_UNUSED(inputPinCallbackHandle);
-    return OC_STACK_OK;
-}
-
 OCStackResult OCSecure::registerDisplayPinCallback(DisplayPinCB displayPinCB,
                             DisplayPinCallbackHandle* displayPinCallbackHandle)
 {
@@ -57,6 +53,13 @@ OCStackResult OCSecure::registerDisplayPinCallback(DisplayPinCB displayPinCB,
     OC_UNUSED(displayPinCallbackHandle);
     return OC_STACK_OK;
 }
+
+OCStackResult OCSecure::deregisterInputPinCallback(InputPinCallbackHandle inputPinCallbackHandle)
+{
+    OC_UNUSED(inputPinCallbackHandle);
+    return OC_STACK_OK;
+}
+
 
 OCStackResult OCSecure::deregisterDisplayPinCallback(
                 DisplayPinCallbackHandle displayPinCallbackHandle)
@@ -71,6 +74,19 @@ OicSecOxm_t OCSecureResource::getSelectedOwnershipTransferMethod()
 }
 
 #ifdef MULTIPLE_OWNER
+OCStackResult OCSecureResource::addPreconfigPIN(const char* preconfPIN, size_t preconfPINLength)
+{
+    OC_UNUSED(preconfPIN);
+    OC_UNUSED(preconfPINLength);
+    return OC_STACK_OK;
+}
+
+OCStackResult OCSecureResource::isSubownerOfDevice(bool* subowner)
+{
+    OC_UNUSED(subowner);
+    return OC_STACK_OK;
+}
+
 OCStackResult OCSecure::discoverMultipleOwnerEnabledDevices(unsigned short timeout,
                                                             DeviceList_t &list)
 {
@@ -89,22 +105,9 @@ OCStackResult OCSecure::discoverMultipleOwnerEnabledDevice(unsigned short timeou
     return OC_STACK_OK;
 }
 
-OCStackResult OCSecureResource::addPreconfigPIN(const char* preconfPIN, size_t preconfPINLength)
-{
-    OC_UNUSED(preconfPIN);
-    OC_UNUSED(preconfPINLength);
-    return OC_STACK_OK;
-}
-
 OCStackResult OCSecureResource::doMultipleOwnershipTransfer(ResultCallBack resultCallback)
 {
     OC_UNUSED(resultCallback);
-    return OC_STACK_OK;
-}
-
-OCStackResult OCSecureResource::isSubownerOfDevice(bool* subowner)
-{
-    OC_UNUSED(subowner);
     return OC_STACK_OK;
 }
 #endif

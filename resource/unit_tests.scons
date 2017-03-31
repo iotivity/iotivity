@@ -48,9 +48,8 @@ if target_os in ['linux', 'windows', 'darwin', 'msys_nt']:
         if (env.get('SECURED') == '1') and (target_os != 'windows'):
             SConscript('provisioning/unittests/SConscript', 'test_env')
 
-        if target_os in ['windows']:
-            # Build IPCA unit tests
-            SConscript('IPCA/unittests/SConscript', 'test_env')
+        # Build IPCA unit tests
+        SConscript('IPCA/unittests/SConscript', 'test_env')
 
     # Build C unit tests
     SConscript('csdk/unittests/SConscript', 'test_env')

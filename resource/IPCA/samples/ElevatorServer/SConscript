@@ -68,6 +68,17 @@ if target_os in ['msys_nt', 'windows']:
 if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
     elevator_server_env.PrependUnique(LIBS = ['resource_directory'])
 
+if target_os not in ['windows', 'msys_nt']:
+    elevator_server_env.AppendUnique(LIBS = ['dl'])
+
+if 'g++' in elevator_server_env.get('CXX'):
+    elevator_server_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
+
+if target_os in ['linux']:
+    if not elevator_server_env.get('RELEASE'):
+        elevator_server_env.PrependUnique(LIBS = ['gcov'])
+        elevator_server_env.AppendUnique(CXXFLAGS = ['--coverage'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -77,9 +88,9 @@ elevator_server_src = [
         ]
 
 elevator_server_src_dir = os.path.join(elevator_server_env.get('SRC_DIR'),
-                              'resource', 'ipca', 'samples', 'ElevatorServer') + os.sep
+                              'resource', 'IPCA', 'samples', 'ElevatorServer') + os.sep
 elevator_server_build_dir = os.path.join(elevator_server_env.get('BUILD_DIR'),
-                              'resource', 'ipca', 'samples', 'ElevatorServer') + os.sep
+                              'resource', 'IPCA', 'samples', 'ElevatorServer') + os.sep
 
 elevator_server_env.Install(elevator_server_build_dir,
                             elevator_server_src_dir + 'ElevatorServerSecurityDB.json')
