@@ -91,7 +91,6 @@ typedef struct Resource
     const char *uri;
     const char *rt;
     const char *itf;
-    const char *mt;
     uint8_t bm;
 } Resource;
 
@@ -112,6 +111,9 @@ static OCRepPayload *CreateRDPublishPayload(const char *deviceId,
     {
         OCRepPayload *link = OCRepPayloadCreate();
         OCRepPayloadSetPropString(link, OC_RSRVD_HREF, resources[i].uri);
+        char anchor[MAX_URI_LENGTH];
+        snprintf(anchor, MAX_URI_LENGTH, "ocf://%s", deviceId);
+        OCRepPayloadSetPropString(link, OC_RSRVD_URI, anchor);
         size_t rtDim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
         char **rt = (char **)OICMalloc(sizeof(char *) * 1);
         rt[0] = OICStrdup(resources[i].rt);
@@ -122,14 +124,18 @@ static OCRepPayload *CreateRDPublishPayload(const char *deviceId,
         itf[0] = OICStrdup(resources[i].itf);
         OCRepPayloadSetStringArray(link, OC_RSRVD_INTERFACE, (const char **)itf,
                                    itfDim);
-        size_t mtDim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
-        char **mt = (char **)OICMalloc(sizeof(char *) * 1);
-        mt[0] = OICStrdup(resources[i].mt);
-        OCRepPayloadSetStringArray(link, OC_RSRVD_MEDIA_TYPE, (const char **)mt,
-                                   mtDim);
         OCRepPayload *policy = OCRepPayloadCreate();
         OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP, resources[i].bm);
         OCRepPayloadSetPropObjectAsOwner(link, OC_RSRVD_POLICY, policy);
+        size_t epsDim[MAX_REP_ARRAY_DEPTH] = {2, 0, 0};
+        OCRepPayload *eps[2];
+        eps[0] = OCRepPayloadCreate();
+        OCRepPayloadSetPropString(eps[0], OC_RSRVD_ENDPOINT, "coap://127.0.0.1:1234");
+        OCRepPayloadSetPropInt(eps[0], OC_RSRVD_PRIORITY, 1);
+        eps[1] = OCRepPayloadCreate();
+        OCRepPayloadSetPropString(eps[1], OC_RSRVD_ENDPOINT, "coaps://[::1]:5678");
+        OCRepPayloadSetPropInt(eps[1], OC_RSRVD_PRIORITY, 1);
+        OCRepPayloadSetPropObjectArray(link, OC_RSRVD_ENDPOINTS, (const OCRepPayload **)eps, epsDim);
         linkArr[i] = link;
     }
 
@@ -139,11 +145,26 @@ static OCRepPayload *CreateRDPublishPayload(const char *deviceId,
     return repPayload;
 }
 
+static void EndpointsVerify(const OCEndpointPayload *eps)
+{
+    EXPECT_STREQ(eps->tps, "coap");
+    EXPECT_STREQ(eps->addr, "127.0.0.1");
+    EXPECT_EQ(eps->family, OC_IP_USE_V4);
+    EXPECT_EQ(eps->port, 1234);
+    EXPECT_EQ(eps->pri, 1);
+    EXPECT_STREQ(eps->next->tps, "coaps");
+    EXPECT_STREQ(eps->next->addr, "::1");
+    EXPECT_EQ(eps->next->family, (OC_FLAG_SECURE | OC_IP_USE_V6));
+    EXPECT_EQ(eps->next->port, 5678);
+    EXPECT_EQ(eps->next->pri, 1);
+    EXPECT_TRUE(eps->next->next == NULL);
+}
+
 static OCRepPayload *CreateResources(const char *deviceId)
 {
     Resource resources[] = {
-        { "/a/thermostat", "core.thermostat", OC_RSRVD_INTERFACE_DEFAULT, OC_MEDIA_TYPE_APPLICATION_JSON, OC_DISCOVERABLE },
-        { "/a/light", "core.light", OC_RSRVD_INTERFACE_DEFAULT, OC_MEDIA_TYPE_APPLICATION_JSON, OC_DISCOVERABLE }
+        { "/a/thermostat", "core.thermostat", OC_RSRVD_INTERFACE_DEFAULT, OC_DISCOVERABLE },
+        { "/a/light", "core.light", OC_RSRVD_INTERFACE_DEFAULT, OC_DISCOVERABLE }
     };
     return CreateRDPublishPayload(deviceId, resources, 2);
 }
@@ -158,11 +179,8 @@ TEST_F(RDDatabaseTests, StoreResources)
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     const char *deviceId = "7a960f46-a52e-4837-bd83-460b1a6dd56b";
     OCRepPayload *repPayload = CreateResources(deviceId);
-    OCDevAddr address;
-    address.port = 54321;
-    OICStrcpy(address.addr, MAX_ADDR_STR_SIZE, "192.168.1.1");
 
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload, &address));
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
 
     OCDiscoveryPayload *discPayload = NULL;
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(NULL, "core.light", &discPayload));
@@ -185,19 +203,16 @@ TEST_F(RDDatabaseTests, AddResources)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     const char *deviceId = "7a960f46-a52e-4837-bd83-460b1a6dd56b";
-    OCDevAddr address;
-    address.port = 54321;
-    OICStrcpy(address.addr, MAX_ADDR_STR_SIZE, "192.168.1.1");
 
     OCRepPayload *repPayload = CreateResources(deviceId);
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload, &address));
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
     OCPayloadDestroy((OCPayload *)repPayload);
 
     Resource resources[] = {
-        { "/a/light2", "core.light", OC_RSRVD_INTERFACE_DEFAULT, OC_MEDIA_TYPE_APPLICATION_JSON, OC_DISCOVERABLE }
+        { "/a/light2", "core.light", OC_RSRVD_INTERFACE_DEFAULT, OC_DISCOVERABLE }
     };
     repPayload = CreateRDPublishPayload(deviceId, resources, 1);
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload, &address));
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
     OCPayloadDestroy((OCPayload *)repPayload);
 
     OCDiscoveryPayload *discPayload = NULL;
@@ -225,34 +240,28 @@ TEST_F(RDDatabaseTests, AddResources)
     EXPECT_TRUE(foundLight2);
     OCDiscoveryPayloadDestroy(discPayload);
     discPayload = NULL;
-
-    OCPayloadDestroy((OCPayload *)repPayload);
 }
 
 TEST_F(RDDatabaseTests, UpdateResources)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    const char *deviceId = "7a960f46-a52e-4837-bd83-460b1a6dd56b";
-    OCDevAddr address;
-    address.port = 54321;
-    OICStrcpy(address.addr, MAX_ADDR_STR_SIZE, "192.168.1.1");
+    const char *anchor = "ocf://7a960f46-a52e-4837-bd83-460b1a6dd56b";
+    const char *deviceId = &anchor[6];
 
     OCRepPayload *repPayload = CreateResources(deviceId);
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload, &address));
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
     OCPayloadDestroy((OCPayload *)repPayload);
 
     Resource resources[] = {
-        { "/a/thermostat", "x.core.r.thermostat", "x.core.if.thermostat", "application/cbor", OC_DISCOVERABLE | OC_OBSERVABLE },
-        { "/a/light", "x.core.r.light", "x.core.if.light", "application/cbor", OC_DISCOVERABLE | OC_OBSERVABLE }
+        { "/a/thermostat", "x.core.r.thermostat", "x.core.if.thermostat", OC_DISCOVERABLE | OC_OBSERVABLE },
+        { "/a/light", "x.core.r.light", "x.core.if.light", OC_DISCOVERABLE | OC_OBSERVABLE }
     };
     repPayload = CreateRDPublishPayload(deviceId, resources, 2);
-    address.port = 12345;
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload, &address));
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
     OCPayloadDestroy((OCPayload *)repPayload);
 
     OCDiscoveryPayload *discPayload = NULL;
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(OC_RSRVD_INTERFACE_LL, NULL, &discPayload));
-    EXPECT_STREQ("192.168.1.1:12345", discPayload->baseURI);
     bool foundThermostat = false;
     bool foundLight = false;
     for (OCResourcePayload *resource = discPayload->resources; resource; resource = resource->next)
@@ -265,6 +274,8 @@ TEST_F(RDDatabaseTests, UpdateResources)
             EXPECT_STREQ("x.core.if.thermostat", resource->interfaces->value);
             EXPECT_TRUE(resource->interfaces->next == NULL);
             EXPECT_EQ(OC_DISCOVERABLE | OC_OBSERVABLE, resource->bitmap);
+            EXPECT_STREQ(anchor, resource->anchor);
+            EndpointsVerify(resource->eps);
         }
         else if (!strcmp("/a/light", resource->uri))
         {
@@ -274,41 +285,37 @@ TEST_F(RDDatabaseTests, UpdateResources)
             EXPECT_STREQ("x.core.if.light", resource->interfaces->value);
             EXPECT_TRUE(resource->interfaces->next == NULL);
             EXPECT_EQ(OC_DISCOVERABLE | OC_OBSERVABLE, resource->bitmap);
+            EXPECT_STREQ(anchor, resource->anchor);
+            EndpointsVerify(resource->eps);
         }
     }
     EXPECT_TRUE(foundThermostat);
     EXPECT_TRUE(foundLight);
     OCDiscoveryPayloadDestroy(discPayload);
     discPayload = NULL;
-
-    OCPayloadDestroy((OCPayload *)repPayload);
 }
 
 TEST_F(RDDatabaseTests, AddAndUpdateResources)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    const char *deviceId = "7a960f46-a52e-4837-bd83-460b1a6dd56b";
-    OCDevAddr address;
-    address.port = 54321;
-    OICStrcpy(address.addr, MAX_ADDR_STR_SIZE, "192.168.1.1");
+    const char *anchor = "ocf://7a960f46-a52e-4837-bd83-460b1a6dd56b";
+    const char *deviceId = &anchor[6];
 
     OCRepPayload *repPayload = CreateResources(deviceId);
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload, &address));
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
     OCPayloadDestroy((OCPayload *)repPayload);
 
     Resource resources[] = {
-        { "/a/thermostat", "x.core.r.thermostat", "x.core.if.thermostat", "application/cbor", OC_DISCOVERABLE | OC_OBSERVABLE },
-        { "/a/light", "x.core.r.light", "x.core.if.light", "application/cbor", OC_DISCOVERABLE | OC_OBSERVABLE },
-        { "/a/light2", "core.light", OC_RSRVD_INTERFACE_DEFAULT, OC_MEDIA_TYPE_APPLICATION_JSON, OC_DISCOVERABLE }
+        { "/a/thermostat", "x.core.r.thermostat", "x.core.if.thermostat", OC_DISCOVERABLE | OC_OBSERVABLE },
+        { "/a/light", "x.core.r.light", "x.core.if.light", OC_DISCOVERABLE | OC_OBSERVABLE },
+        { "/a/light2", "core.light", OC_RSRVD_INTERFACE_DEFAULT, OC_DISCOVERABLE }
     };
     repPayload = CreateRDPublishPayload(deviceId, resources, 3);
-    address.port = 12345;
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload, &address));
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
     OCPayloadDestroy((OCPayload *)repPayload);
 
     OCDiscoveryPayload *discPayload = NULL;
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(OC_RSRVD_INTERFACE_LL, NULL, &discPayload));
-    EXPECT_STREQ("192.168.1.1:12345", discPayload->baseURI);
     bool foundThermostat = false;
     bool foundLight = false;
     bool foundLight2 = false;
@@ -322,6 +329,8 @@ TEST_F(RDDatabaseTests, AddAndUpdateResources)
             EXPECT_STREQ("x.core.if.thermostat", resource->interfaces->value);
             EXPECT_TRUE(resource->interfaces->next == NULL);
             EXPECT_EQ(OC_DISCOVERABLE | OC_OBSERVABLE, resource->bitmap);
+            EXPECT_STREQ(anchor, resource->anchor);
+            EndpointsVerify(resource->eps);
         }
         else if (!strcmp("/a/light", resource->uri))
         {
@@ -331,6 +340,8 @@ TEST_F(RDDatabaseTests, AddAndUpdateResources)
             EXPECT_STREQ("x.core.if.light", resource->interfaces->value);
             EXPECT_TRUE(resource->interfaces->next == NULL);
             EXPECT_EQ(OC_DISCOVERABLE | OC_OBSERVABLE, resource->bitmap);
+            EXPECT_STREQ(anchor, resource->anchor);
+            EndpointsVerify(resource->eps);
         }
         else if (!strcmp("/a/light2", resource->uri))
         {
@@ -340,6 +351,8 @@ TEST_F(RDDatabaseTests, AddAndUpdateResources)
             EXPECT_STREQ(OC_RSRVD_INTERFACE_DEFAULT, resource->interfaces->value);
             EXPECT_TRUE(resource->interfaces->next == NULL);
             EXPECT_EQ(OC_DISCOVERABLE, resource->bitmap);
+            EXPECT_STREQ(anchor, resource->anchor);
+            EndpointsVerify(resource->eps);
         }
     }
     EXPECT_TRUE(foundThermostat);
@@ -347,8 +360,6 @@ TEST_F(RDDatabaseTests, AddAndUpdateResources)
     EXPECT_TRUE(foundLight2);
     OCDiscoveryPayloadDestroy(discPayload);
     discPayload = NULL;
-
-    OCPayloadDestroy((OCPayload *)repPayload);
 }
 
 TEST_F(RDDatabaseTests, DeleteResourcesDevice)
@@ -362,11 +373,8 @@ TEST_F(RDDatabaseTests, DeleteResourcesDevice)
     OCRepPayload *payloads[2];
     payloads[0] = CreateResources(deviceIds[0]);
     payloads[1] = CreateResources(deviceIds[1]);
-    OCDevAddr address;
-    address.port = 54321;
-    OICStrcpy(address.addr, MAX_ADDR_STR_SIZE, "192.168.1.1");
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(payloads[0], &address));
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(payloads[1], &address));
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(payloads[0]));
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(payloads[1]));
 
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDeleteResources(deviceIds[0], NULL, 0));
 

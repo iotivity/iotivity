@@ -80,14 +80,14 @@ void StopElevator1()
 }
 
 // Start the test elevator once and use it through out the rest of the tests.
-TEST(ElevatorServerStart, DISABLED_start)
+TEST(ElevatorServerStart, start)
 {
     IPCASetUnitTestMode();
     ASSERT_TRUE(StartElevator1());
 }
 
 // Test IoTivity api directly before subsequent tests which use IPCA apis.
-TEST(IoTivityDirect, DISABLED_IsIoTivityWorking)
+TEST(IoTivityDirect, IsIoTivityWorking)
 {
     ElevatorClient elevatorClient;
     int loopCount;
@@ -164,20 +164,20 @@ class IPCAPropertyBagTest : public testing::Test
         }
 };
 
-TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagNonExistenceAttribute)
+TEST_F(IPCAPropertyBagTest, PropertyBagNonExistenceAttribute)
 {
     EXPECT_EQ(IPCA_FAIL, IPCAPropertyBagGetValueInt(m_propertyBagHandle,
                                 "NonexistenceAttribute", &m_intValue));
 }
 
-TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagInt)
+TEST_F(IPCAPropertyBagTest, PropertyBagInt)
 {
     ASSERT_EQ(IPCA_OK, IPCAPropertyBagSetValueInt(m_propertyBagHandle, "IntValue", 3));
     ASSERT_EQ(IPCA_OK, IPCAPropertyBagGetValueInt(m_propertyBagHandle, "IntValue", &m_intValue));
     EXPECT_EQ(3, m_intValue);
 }
 
-TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagDouble)
+TEST_F(IPCAPropertyBagTest, PropertyBagDouble)
 {
     ASSERT_EQ(IPCA_OK, IPCAPropertyBagSetValueDouble(m_propertyBagHandle,
                                 "DoubleValue", 12345678));
@@ -195,7 +195,7 @@ TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagDouble)
                                 "doubleValue", &m_doubleValue)); // incorrect capital case
 }
 
-TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagBool)
+TEST_F(IPCAPropertyBagTest, PropertyBagBool)
 {
     bool trueBool, falseBool;
 
@@ -212,7 +212,7 @@ TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagBool)
     EXPECT_FALSE(falseBool);
 }
 
-TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagString)
+TEST_F(IPCAPropertyBagTest, PropertyBagString)
 {
     ASSERT_EQ(IPCA_OK, IPCAPropertyBagSetValueString(m_propertyBagHandle,
                                 "MyString", "Hello World"));
@@ -222,7 +222,7 @@ TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagString)
     IPCAPropertyBagFreeString(m_charPointerValue);
 }
 
-TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagPropertyBagType)
+TEST_F(IPCAPropertyBagTest, PropertyBagPropertyBagType)
 {
     IPCAPropertyBagHandle propertyBagHandle1, propertyBagHandle2, propertyBagHandle3;
     CreateIntPropertyBag(propertyBagHandle1, "IntValue1", 1);
@@ -269,7 +269,7 @@ TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagPropertyBagType)
     IPCAPropertyBagDestroy(propertyBag3);
 }
 
-TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagIntArrayType)
+TEST_F(IPCAPropertyBagTest, PropertyBagIntArrayType)
 {
     // array of int
     int intArray[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
@@ -286,7 +286,7 @@ TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagIntArrayType)
     IPCAPropertyBagFreeIntArray(readBackIntArray);
 }
 
-TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagDoubleArrayType)
+TEST_F(IPCAPropertyBagTest, PropertyBagDoubleArrayType)
 {
     // array of double
     double doubleArray[] = {1.01, 2.02, 3.03, 4.04, 5.05, 6.06, 7.07, 8.08, 9.09, 10.010};
@@ -303,7 +303,7 @@ TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagDoubleArrayType)
     IPCAPropertyBagFreeDoubleArray(readBackDoubleArray);
 }
 
-TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagBoolArrayType)
+TEST_F(IPCAPropertyBagTest, PropertyBagBoolArrayType)
 {
     // array of bool
     bool boolArray[] = {true, true, false, false, true, false, true, false, false, false};
@@ -320,7 +320,7 @@ TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagBoolArrayType)
     IPCAPropertyBagFreeBoolArray(readBackBoolArray);
 }
 
-TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagStringArrayType)
+TEST_F(IPCAPropertyBagTest, PropertyBagStringArrayType)
 {
     // array of string
     char* stringArray[] = {"hello world 1", "hello world 2", "hello world 3"};
@@ -338,7 +338,7 @@ TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagStringArrayType)
     IPCAPropertyBagFreeStringArray(readBackString, readbackStringSize);
 }
 
-TEST_F(IPCAPropertyBagTest, DISABLED_PropertyBagPropertyBagArrayType)
+TEST_F(IPCAPropertyBagTest, PropertyBagPropertyBagArrayType)
 {
     IPCAPropertyBagHandle propertyBagHandle1, propertyBagHandle1A;
     EXPECT_EQ(IPCA_OK, IPCAPropertyBagCreate(&propertyBagHandle1));
@@ -452,12 +452,12 @@ class IPCAMiscTest : public testing::Test
         }
 };
 
-TEST_F(IPCAMiscTest, DISABLED_ShouldNotAllowMultipleCallsToIPCOpen)
+TEST_F(IPCAMiscTest, ShouldNotAllowMultipleCallsToIPCOpen)
 {
     EXPECT_EQ(IPCA_ALREADY_OPENED, DoAnotherIPCAOpen());
 }
 
-TEST_F(IPCAMiscTest, DISABLED_IPCAOpenShouldBeAllowedAfterIPCAClose)
+TEST_F(IPCAMiscTest, IPCAOpenShouldBeAllowedAfterIPCAClose)
 {
     IPCAClose(m_ipcaAppHandle);
     m_ipcaAppHandle = NULL;
@@ -468,7 +468,7 @@ TEST_F(IPCAMiscTest, DISABLED_IPCAOpenShouldBeAllowedAfterIPCAClose)
 /*
  * IPCADiscoverDevices() must be called before IPCAOpenDevice().
  */
-TEST_F(IPCAMiscTest, DISABLED_ShouldFailOpenDeviceWithoutDiscoveryFirst)
+TEST_F(IPCAMiscTest, ShouldFailOpenDeviceWithoutDiscoveryFirst)
 {
     IPCADeviceHandle deviceHandle;
 
@@ -478,32 +478,32 @@ TEST_F(IPCAMiscTest, DISABLED_ShouldFailOpenDeviceWithoutDiscoveryFirst)
                                                 &deviceHandle));
 }
 
-TEST_F(IPCAElevatorClient, DISABLED_DiscoveryShouldFindElevatorServer)
+TEST_F(IPCAElevatorClient, DiscoveryShouldFindElevatorServer)
 {
     EXPECT_TRUE(IsElevator1Discovered());
 }
 
-TEST_F(IPCAElevatorClient, DISABLED_DiscoveryShouldFindDeviceAndPlatformInfo)
+TEST_F(IPCAElevatorClient, DiscoveryShouldFindDeviceAndPlatformInfo)
 {
     EXPECT_EQ(IPCA_OK, ConfirmDeviceAndPlatformInfo());
 }
 
-TEST_F(IPCAElevatorClient, DISABLED_DiscoveryShouldFindElevatorResources)
+TEST_F(IPCAElevatorClient, DiscoveryShouldFindElevatorResources)
 {
     EXPECT_EQ(IPCA_OK, ConfirmResources());
 }
 
-TEST_F(IPCAElevatorClient, DISABLED_DiscoveryShouldFindTargetedResourceTypes)
+TEST_F(IPCAElevatorClient, DiscoveryShouldFindTargetedResourceTypes)
 {
     EXPECT_EQ(IPCA_OK, ConfirmResourceTypes());
 }
 
-TEST_F(IPCAElevatorClient, DISABLED_ShouldBeAbleToFilterOnResourceInterface)
+TEST_F(IPCAElevatorClient, ShouldBeAbleToFilterOnResourceInterface)
 {
     EXPECT_EQ(IPCA_OK, ConfirmResourceInterfaces());
 }
 
-TEST_F(IPCAElevatorClient, DISABLED_SuccessfullyGetDataFromElevatorServer)
+TEST_F(IPCAElevatorClient, SuccessfullyGetDataFromElevatorServer)
 {
     // Directly set target floor of the elevator to 8.
     g_testElevator1.SetTargetFloor(8);
@@ -516,24 +516,24 @@ TEST_F(IPCAElevatorClient, DISABLED_SuccessfullyGetDataFromElevatorServer)
     EXPECT_EQ(8, elevatorTargetFloor);
 }
 
-TEST_F(IPCAElevatorClient, DISABLED_ShouldFailGetUnknownResource)
+TEST_F(IPCAElevatorClient, ShouldFailGetUnknownResource)
 {
     EXPECT_EQ(IPCA_RESOURCE_NOT_FOUND, GetUnknownResource());
 }
 
-TEST_F(IPCAElevatorClient, DISABLED_ShouldFailSetUnknownResource)
+TEST_F(IPCAElevatorClient, ShouldFailSetUnknownResource)
 {
     EXPECT_EQ(IPCA_RESOURCE_NOT_FOUND, SetUnknownResource());
 }
 
-TEST_F(IPCAElevatorClient, DISABLED_ShouldFailSetWithUnknownInterface)
+TEST_F(IPCAElevatorClient, ShouldFailSetWithUnknownInterface)
 {
     size_t incorrectInterfaceCount = g_testElevator1.GetIncorrectInterfaceCount();
     EXPECT_EQ(true, SetUnknoownInterface());
     EXPECT_EQ((incorrectInterfaceCount + 1), g_testElevator1.GetIncorrectInterfaceCount());
 }
 
-TEST_F(IPCAElevatorClient, DISABLED_SuccessfullySetElevatorServerProperties)
+TEST_F(IPCAElevatorClient, SuccessfullySetElevatorServerProperties)
 {
     g_testElevator1.SetTargetFloor(1); // Set to known target floor.
 
@@ -546,7 +546,7 @@ TEST_F(IPCAElevatorClient, DISABLED_SuccessfullySetElevatorServerProperties)
     EXPECT_EQ(8, newTargetFloor);
 }
 
-TEST_F(IPCAElevatorClient, DISABLED_SuccessfullyCreateAndDeleteResources)
+TEST_F(IPCAElevatorClient, SuccessfullyCreateAndDeleteResources)
 {
     // Do a few rounds of create resource with relative path.
     size_t beforeCreateCount, afterCreateCount;
@@ -572,7 +572,7 @@ TEST_F(IPCAElevatorClient, DISABLED_SuccessfullyCreateAndDeleteResources)
     }
 }
 
-TEST_F(IPCAElevatorClient, DISABLED_SuccessfullyReceiveResourceChangeNotifications)
+TEST_F(IPCAElevatorClient, SuccessfullyReceiveResourceChangeNotifications)
 {
     // Set to known target floor.
     g_testElevator1.SetTargetFloor(1);
@@ -597,18 +597,18 @@ TEST_F(IPCAElevatorClient, DISABLED_SuccessfullyReceiveResourceChangeNotificatio
     StopObserve();
 }
 
-TEST_F(IPCAElevatorClient, DISABLED_SuccessfulFactoryReset)
+TEST_F(IPCAElevatorClient, SuccessfulFactoryReset)
 {
     EXPECT_EQ(IPCA_OK, FactoryResetElevator());
 }
 
-TEST_F(IPCAElevatorClient, DISABLED_SuccessfulReboot)
+TEST_F(IPCAElevatorClient, SuccessfulReboot)
 {
     EXPECT_EQ(IPCA_OK, RebootElevator());
 }
 
 
-TEST(ElevatorServerStop, DISABLED_Stop)
+TEST(ElevatorServerStop, Stop)
 {
     StopElevator1();
 }

@@ -42,7 +42,7 @@
 // then we are guaranteed that the 'double' type is 64-bit. Otherwise, the
 // compilation of this file should fail because we are no longer guaranteed.
 #ifndef __STDC_IEC_559__
-#error "Requires IEEE 754 floating point!"
+#warning "Requires IEEE 754 floating point!"
 #endif
 
 #include "zigbee_wrapper.h"
@@ -435,6 +435,10 @@ OCStackResult ZigbeeInit(const char * comPort, PIPlugin_Zigbee ** plugin,
                          PINewResourceFound newResourceCB,
                          PIObserveNotificationUpdate observeNotificationUpdate)
 {
+    if (sizeof(double) != 64/8)
+    {
+        return OC_STACK_ERROR;
+    }
     if (!plugin)
     {
         return OC_STACK_INVALID_PARAM;

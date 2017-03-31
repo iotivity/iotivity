@@ -60,6 +60,8 @@ rd_test_env.AppendUnique(
                 src_dir + '/extlibs/hippomocks-master',
                 '../include',
                 src_dir + '/resource/include',
+                src_dir + '/resource/csdk/connectivity/api',
+                src_dir + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include',
                 src_dir + '/resource/csdk/include',
                 src_dir + '/resource/csdk/stack/include',
                 src_dir + '/resource/csdk/security/include',

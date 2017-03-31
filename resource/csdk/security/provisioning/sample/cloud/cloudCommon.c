@@ -28,6 +28,8 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 #include "aclresource.h"
+#include "acl_logging.h"
+#include "crl_logging.h"
 #include "crlresource.h"
 #include "ocprovisioningmanager.h"
 #include "casecurityinterface.h"
@@ -221,12 +223,25 @@ void unlockMenu(void *data)
  * @param[in] result       result
  * @param[in] data         data
  */
-static void handleCB(void* ctx, OCStackResult result, void* data)
+static void handleCB(void* ctx, OCClientResponse *response, void* data)
 {
     OC_UNUSED(ctx);
     OC_UNUSED(data);
 
-    OIC_LOG_V(INFO, TAG, "%s: Received result = %d", __func__, result);
+    if (response)
+    {
+        OIC_LOG_V(INFO, TAG, "%s: Received result = %d", __func__, response->result);
+
+        if (response->payload)
+        {
+            OIC_LOG(INFO, TAG, "Payload received:");
+            OIC_LOG_PAYLOAD(INFO, response->payload);
+        }
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: Received NULL response", __func__);
+    }
 
     unlockMenu(NULL);
 }
@@ -238,10 +253,10 @@ static void handleCB(void* ctx, OCStackResult result, void* data)
  * @param[in] result       result
  * @param[in] aclId        acl id
  */
-static void handleAclIdCB(void* ctx, OCStackResult result, void* aclId)
+static void handleAclIdCB(void* ctx, OCClientResponse *response, void* aclId)
 {
     OIC_LOG_V(INFO, TAG, "Received Acl id = %s", (char *)aclId);
-    handleCB(ctx, result, aclId);
+    handleCB(ctx, response, aclId);
     OICFree(aclId);
 }
 
@@ -252,10 +267,10 @@ static void handleAclIdCB(void* ctx, OCStackResult result, void* aclId)
  * @param[in] result       result
  * @param[in] groupId      group id
  */
-static void handleAclCreateGroupCB(void* ctx, OCStackResult result, void* groupId)
+static void handleAclCreateGroupCB(void* ctx, OCClientResponse *response, void* groupId)
 {
     OIC_LOG_V(INFO, TAG, "Received gid = %s", (char *)groupId);
-    handleCB(ctx, result, groupId);
+    handleCB(ctx, response, groupId);
     OICFree(groupId);
 }
 
@@ -266,10 +281,10 @@ static void handleAclCreateGroupCB(void* ctx, OCStackResult result, void* groupI
  * @param[in] result       result
  * @param[in] gp           group policy
  */
-static void handleAclPolicyCheckCB(void* ctx, OCStackResult result, void* gp)
+static void handleAclPolicyCheckCB(void* ctx, OCClientResponse *response, void* gp)
 {
     OIC_LOG_V(INFO, TAG, "Received gp = %s", (char *)gp);
-    handleCB(ctx, result, gp);
+    handleCB(ctx, response, gp);
     OICFree(gp);
 }
 
@@ -280,10 +295,10 @@ static void handleAclPolicyCheckCB(void* ctx, OCStackResult result, void* gp)
  * @param[in] result       result
  * @param[in] acl          acl
  */
-static void handleAclIndividualGetInfoCB(void* ctx, OCStackResult result, void* acl)
+static void handleAclIndividualGetInfoCB(void* ctx, OCClientResponse *response, void* acl)
 {
-    printACL((OicSecAcl_t* )acl);
-    handleCB(ctx, result, acl);
+    OIC_LOG_ACL(INFO, acl);
+    handleCB(ctx, response, acl);
     //can't delete acl here because its ACE's were added to gAcl
     //TODO: changes in aclresources.c required to fix that
 }
@@ -295,10 +310,10 @@ static void handleAclIndividualGetInfoCB(void* ctx, OCStackResult result, void* 
  * @param[in] result       result
  * @param[in] gidList      group id list
  */
-static void handleAclFindMyGroupCB(void* ctx, OCStackResult result, void* gidList)
+static void handleAclFindMyGroupCB(void* ctx, OCClientResponse *response, void* gidList)
 {
     printStringArray((stringArray_t *)gidList);
-    handleCB(ctx, result, gidList);
+    handleCB(ctx, response, gidList);
     clearStringArray((stringArray_t *)gidList);
 }
 
@@ -309,10 +324,10 @@ static void handleAclFindMyGroupCB(void* ctx, OCStackResult result, void* gidLis
  * @param[in] result       result
  * @param[in] crl          crl
  */
-static void handleGetCrlCB(void* ctx, OCStackResult result, void* crl)
+static void handleGetCrlCB(void* ctx, OCClientResponse *response, void* crl)
 {
-    printCrl((OicSecCrl_t *)crl);
-    handleCB(ctx, result, crl);
+    OIC_LOG_CRL(INFO, crl);
+    handleCB(ctx, response, crl);
     DeleteCrl((OicSecCrl_t *)crl);
 }
 
@@ -323,10 +338,10 @@ static void handleGetCrlCB(void* ctx, OCStackResult result, void* crl)
  * @param[in] result       result
  * @param[in] invite       invitation response (it has inviteResponse_t* type)
  */
-static void handleAclGetInvitationCB(void* ctx, OCStackResult result, void* invite)
+static void handleAclGetInvitationCB(void* ctx, OCClientResponse *response, void* invite)
 {
     printInviteResponse((inviteResponse_t *)invite);
-    handleCB(ctx, result, invite);
+    handleCB(ctx, response, invite);
     clearInviteResponse((inviteResponse_t *)invite);
     OICFree(invite);
 }

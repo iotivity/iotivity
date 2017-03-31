@@ -19,8 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <iostream>
-#include <gtest/gtest.h>
-#include <HippoMocks/hippomocks.h>
+#include <mutex>
 
 #include "ResourceCacheManager.h"
 #include "UnitTestHelper.h"
@@ -31,20 +30,25 @@ class ResourceCacheManagerTest : public TestWithMock
 {
     public:
         ResourceCacheManager *cacheInstance;
-        PrimitiveResource::Ptr pResource;
         CacheCB cb;
         CacheID id;
+        static PrimitiveResource::Ptr pResource;
+        static MockRepository mocks;
+        static bool isLast;
 
     protected:
         virtual void SetUp()
         {
             TestWithMock::SetUp();
+            id = 0;
             cacheInstance = ResourceCacheManager::getInstance();
-            pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(),
-                                               [](PrimitiveResource *)
-                                               {
 
-                                               });
+            static std::once_flag flag;
+            std::call_once(flag, [this]()
+            {
+                isLast = false;
+                pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >());
+            });
             mocks.OnCall(pResource.get(), PrimitiveResource::isObservable).Return(false);
             cb = ([](std::shared_ptr<PrimitiveResource >, const RCSResourceAttributes &)->OCStackResult
                     {
@@ -54,10 +58,17 @@ class ResourceCacheManagerTest : public TestWithMock
 
         virtual void TearDown()
         {
-            pResource.reset();
-            TestWithMock::TearDown();
+            //TestWithMock::TearDown();
+            if (isLast)
+            {
+                mocks.reset();
+            }
         }
 };
+
+PrimitiveResource::Ptr ResourceCacheManagerTest::pResource;
+MockRepository ResourceCacheManagerTest::mocks;
+bool ResourceCacheManagerTest::isLast;
 
 TEST_F(ResourceCacheManagerTest, requestResourceCache_resourceIsNULL)
 {
@@ -85,7 +96,6 @@ TEST_F(ResourceCacheManagerTest, requestResourceCache_cacheCBIsNULL)
 
 TEST_F(ResourceCacheManagerTest, requestResourceCache_reportTimeIsNULL)
 {
-
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestGet);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::isObservable).Return(true);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestObserve);
@@ -104,7 +114,6 @@ TEST_F(ResourceCacheManagerTest, requestResourceCache_reportTimeIsNULL)
 
 TEST_F(ResourceCacheManagerTest, requestResourceCache_normalCase)
 {
-
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestGet);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::isObservable).Return(true);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestObserve);
@@ -130,7 +139,6 @@ TEST_F(ResourceCacheManagerTest, cancelResourceCache_cacheIDIsZero)
 
 TEST_F(ResourceCacheManagerTest, cancelResourceCache_normalCase)
 {
-
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestGet);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::isObservable).Return(true);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestObserve);
@@ -162,7 +170,6 @@ TEST_F(ResourceCacheManagerTest, updateResourceCacheCacheID_cacheIsNULL)
 
 TEST_F(ResourceCacheManagerTest, updateResourceCacheCacheID_normalCase)
 {
-
     mocks.OnCall(pResource.get(), PrimitiveResource::requestGet);
     mocks.OnCall(pResource.get(), PrimitiveResource::isObservable).Return(true);
     mocks.OnCall(pResource.get(), PrimitiveResource::requestObserve);
@@ -210,7 +217,6 @@ TEST_F(ResourceCacheManagerTest, getResourceCacheStateCacheID_handlerIsNULL)
 
 TEST_F(ResourceCacheManagerTest, getResourceCacheStateCacheID_normalCase)
 {
-
     mocks.OnCall(pResource.get(), PrimitiveResource::requestGet);
     mocks.OnCall(pResource.get(), PrimitiveResource::isObservable).Return(true);
     mocks.OnCall(pResource.get(), PrimitiveResource::requestObserve);
@@ -229,4 +235,6 @@ TEST_F(ResourceCacheManagerTest, getResourceCacheStateCacheID_normalCase)
     cacheInstance->cancelResourceCache(id);
 
     ASSERT_EQ(state, CACHE_STATE::READY_YET);
+    ResourceCacheManager::stopResourceCacheManager();
+    isLast = true;
 }

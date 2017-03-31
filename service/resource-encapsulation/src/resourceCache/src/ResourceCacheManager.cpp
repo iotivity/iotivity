@@ -26,10 +26,16 @@ namespace OIC
 {
     namespace Service
     {
-        ResourceCacheManager *ResourceCacheManager::s_instance = NULL;
+        ResourceCacheManager *ResourceCacheManager::s_instance = nullptr;
         std::mutex ResourceCacheManager::s_mutexForCreation;
         std::mutex ResourceCacheManager::s_mutex;
         std::unique_ptr<std::list<DataCachePtr>> ResourceCacheManager::s_cacheDataList(nullptr);
+
+        void ResourceCacheManager::stopResourceCacheManager()
+        {
+            delete s_instance;
+            s_instance = nullptr;
+        }
 
         ResourceCacheManager::~ResourceCacheManager()
         {
@@ -37,6 +43,7 @@ namespace OIC
             if (s_cacheDataList != nullptr)
             {
                 s_cacheDataList->clear();
+                s_cacheDataList.reset();
             }
         }
 

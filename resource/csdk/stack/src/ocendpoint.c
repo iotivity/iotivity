@@ -173,6 +173,37 @@ OCStackResult OCGetMatchedTpsFlags(const CATransportAdapter_t adapter,
     return OC_STACK_OK;
 }
 
+static const char *ConvertTpsToString(const OCTpsSchemeFlags tps)
+{
+    switch (tps)
+    {
+        case OC_COAP:
+            return COAP_STR;
+
+        case OC_COAPS:
+            return COAPS_STR;
+#ifdef TCP_ADAPTER
+        case OC_COAP_TCP:
+            return COAP_TCP_STR;
+
+        case OC_COAPS_TCP:
+            return COAPS_TCP_STR;
+#endif
+#ifdef HTTP_ADAPTER
+        case OC_HTTP:
+            return HTTP_STR;
+
+        case OC_HTTPS:
+            return HTTPS_STR;
+#endif
+#ifdef EDR_ADAPTER
+        case OC_COAP_RFCOMM:
+            return COAP_RFCOMM_STR;
+#endif
+        default:
+            return NULL;
+    }
+}
 
 OCStackResult OCConvertTpsToString(const OCTpsSchemeFlags tps, char** out)
 {
@@ -184,41 +215,7 @@ OCStackResult OCConvertTpsToString(const OCTpsSchemeFlags tps, char** out)
         return OC_STACK_INVALID_PARAM;
     }
 
-    switch (tps)
-    {
-        case OC_COAP:
-            *out = OICStrdup(COAP_STR);
-            break;
-
-        case OC_COAPS:
-            *out = OICStrdup(COAPS_STR);
-            break;
-#ifdef TCP_ADAPTER
-        case OC_COAP_TCP:
-            *out = OICStrdup(COAP_TCP_STR);
-            break;
-
-        case OC_COAPS_TCP:
-            *out = OICStrdup(COAPS_TCP_STR);
-            break;
-#endif
-#ifdef HTTP_ADAPTER
-        case OC_HTTP:
-            *out = OICStrdup(HTTP_STR);
-            break;
-
-        case OC_HTTPS:
-            *out = OICStrdup(HTTPS_STR);
-            break;
-#endif
-#ifdef EDR_ADAPTER
-        case OC_COAP_RFCOMM:
-            *out = OICStrdup(COAP_RFCOMM_STR);
-            break;
-#endif
-        default:
-            return OC_STACK_INVALID_PARAM;
-    }
+    *out = OICStrdup(ConvertTpsToString(tps));
     VERIFY_NON_NULL(*out);
     return OC_STACK_OK;
 
@@ -275,6 +272,60 @@ exit:
     return NULL;
 }
 
+char* OCCreateEndpointStringFromCA(const CAEndpoint_t* endpoint)
+{
+    if (!endpoint)
+    {
+        return NULL;
+    }
+
+    OCTpsSchemeFlags tps = OC_NO_TPS;
+    OCStackResult result = OCGetMatchedTpsFlags(endpoint->adapter, endpoint->flags, &tps);
+    if (OC_STACK_OK != result)
+    {
+        return NULL;
+    }
+
+    char* buf = (char*)OICCalloc(MAX_ADDR_STR_SIZE, sizeof(char));
+    VERIFY_NON_NULL(buf);
+
+    switch (tps)
+    {
+    case OC_COAP: case OC_COAPS:
+#ifdef TCP_ADAPTER
+    case OC_COAP_TCP: case OC_COAPS_TCP:
+#endif
+#ifdef HTTP_ADAPTER
+    case OC_HTTP: case OC_HTTPS:
+#endif
+        // checking addr is ipv4 or not
+        if (endpoint->flags & CA_IPV4)
+        {
+            // ipv4
+            sprintf(buf, "%s://%s:%d", ConvertTpsToString(tps), endpoint->addr, endpoint->port);
+        }
+        else
+        {
+            // ipv6
+            sprintf(buf, "%s://[%s]:%d", ConvertTpsToString(tps), endpoint->addr, endpoint->port);
+        }
+        break;
+#ifdef EDR_ADAPTER
+    case OC_COAP_RFCOMM:
+        // coap+rfcomm
+        sprintf(buf, "%s://%s", ConvertTpsToString(tps), endpoint->addr);
+        break;
+#endif
+    default:
+        OIC_LOG_V(ERROR, TAG, "Payload has invalid TPS!!! %d", tps);
+        return NULL;
+    }
+    return buf;
+
+exit:
+    return NULL;
+}
+
 OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* out)
 {
     if (!endpointStr || !out)
@@ -292,6 +343,7 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
     size_t addrCharsToWrite = 0;
     OCStackResult isEnabledAdapter = OC_STACK_ADAPTER_NOT_ENABLED;
     OCTransportAdapter parsedAdapter = OC_DEFAULT_ADAPTER;
+    bool isSecure = false;
 
     tps = (char*)OICCalloc(OC_MAX_TPS_STR_SIZE, sizeof(char));
     VERIFY_NON_NULL(tps);
@@ -324,6 +376,7 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
     {
         isEnabledAdapter = OC_STACK_OK;
         parsedAdapter = OC_ADAPTER_IP;
+        isSecure = true;
     }
 #ifdef TCP_ADAPTER
     else if (strcmp(tps, COAP_TCP_STR) == 0)
@@ -335,6 +388,7 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
     {
         isEnabledAdapter = OC_STACK_OK;
         parsedAdapter = OC_ADAPTER_TCP;
+        isSecure = true;
     }
 #endif
 #ifdef HTTP_ADAPTER
@@ -387,6 +441,10 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
             tmp = strrchr(origin, OC_ENDPOINT_ADDR_TOKEN);
         }
         VERIFY_NON_NULL(tmp);
+        if (isSecure)
+        {
+            out->family = (OCTransportFlags)(out->family | OC_FLAG_SECURE);
+        }
 
         // copy addr
         addrCharsToWrite = tmp - tokPos;

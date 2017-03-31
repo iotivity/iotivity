@@ -147,8 +147,8 @@ class Callback
         // Device discovery related.
         void DeviceDiscoveryCallback(bool deviceResponding,
                 bool newInfoLearntAboutDevice,
-                InternalDeviceInfo deviceInfo,
-                std::vector<std::string> resourceTypes);
+                const InternalDeviceInfo& deviceInfo,
+                const std::vector<std::string>& resourceTypes);
 
         // resource->get() callback.
         void GetCallback(IPCAStatus status,
@@ -185,8 +185,8 @@ class Callback
         void RequestAccessCompletionCallback(IPCAStatus status, CallbackInfo::Ptr cbInfo);
 
     private:
-        bool MatchAllRequiredResourceTypes(std::vector<std::string>& requiredResourceTypes,
-                                           std::vector<std::string>& deviceResourceTypes);
+        bool MatchAllRequiredResourceTypes(const std::vector<std::string>& requiredResourceTypes,
+                                           const std::vector<std::string>& deviceResourceTypes);
 
     private:
         // Mutex for synchronization use.

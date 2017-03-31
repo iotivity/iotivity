@@ -35,6 +35,7 @@ OCClearResourceProperties
 OCCreateOCStringLL
 OCCreateResource
 OCDecodeAddressForRFC6874
+OCCreateEndpointStringFromCA
 OCCreateResourceWithEp
 OCDeleteResource
 OCDiscoverDirectPairingDevices
@@ -119,6 +120,7 @@ OCRepPayloadSetPropObjectArray
 OCRepPayloadSetPropObjectArrayAsOwner
 OCRepPayloadSetPropObjectAsOwner
 OCRepPayloadSetPropString
+OCRepPayloadSetPropStringAsOwner
 OCRepPayloadSetStringArray
 OCRepPayloadSetStringArrayAsOwner
 OCRepPayloadSetUri

@@ -49,9 +49,11 @@ libcoap_repo_url    = 'https://github.com/dthaler/libcoap'
 # Right now this script assumes the revision is a tag, and not a branch or an arbitrary
 # commit. If this changes, update the check below, or else the script will always conclude
 # the repo is not up to date because a tag with that name doesn't exist.
-libcoap_version          = 'IoTivity-1.2.1'
+libcoap_version          = 'IoTivity-1.2.1c'
 libcoap_dir              = os.path.join(src_dir, 'extlibs', 'libcoap', 'libcoap')
 libcoap_checkout_command = 'git clone ' + libcoap_repo_url + '.git extlibs/libcoap/libcoap -b ' + libcoap_version
+libcoap_update_command = 'git fetch && git checkout -f ' + libcoap_version
+libcoap_change_dir_command = 'cd ' + libcoap_dir
 
 if with_upstream_libcoap == '1':
     print '*** Checking for installation of libCoAP ***'
@@ -59,23 +61,22 @@ if with_upstream_libcoap == '1':
         print '''
 *********************************** Error: ****************************************
 * Please download libcoap using the following command:                            *
-*     $ %s                              
+*     $ %s
 ***********************************************************************************
  ''' % libcoap_checkout_command
         Exit(1)
 
     os.chdir(libcoap_dir)
-    out = subprocess.check_output('git tag -l ' + libcoap_version, shell = True)
+    out = subprocess.check_output('git log --format=%d -n 1', shell = True)
     if libcoap_version not in out:
-        print out
         print '''
-*********************************** Error: ****************************************
-* Your libCoAP repo is not up to date with the latest version we require. Please  *
-* update with the following commands:                                             *
-*     $ cd extlibs/libcoap/libcoap                                                *
-*     $ git fetch                                                                 *
+*********************************** Info: *****************************************
+* Your libCoAP repo is not up to date with the latest version we require (%s).
+* Please update using the following commands:
+*   %s
+*   %s
 ***********************************************************************************
- '''
+ ''' %(libcoap_version, libcoap_change_dir_command, libcoap_update_command)
         Exit(1)
 
 else:

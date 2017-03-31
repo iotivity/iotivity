@@ -429,9 +429,6 @@ extern "C" {
 /** Resource URI used to discover Proxy */
 #define OC_RSRVD_PROXY_OPTION_ID 35
 
-/** Base URI. */
-#define OC_RSRVD_BASE_URI                "baseURI"
-
 /** Unique value per collection/link. */
 #define OC_RSRVD_INS                     "ins"
 
@@ -1537,6 +1534,7 @@ typedef struct OCResourcePayload
 {
     char* uri;
     char* rel;
+    char* anchor;
     OCStringLL* types;
     OCStringLL* interfaces;
     uint8_t bitmap;
@@ -1555,9 +1553,6 @@ typedef struct OCDiscoveryPayload
 
     /** Device Id */
     char *sid;
-
-    /** A special case for handling RD address. */
-    char* baseURI;
 
     /** Name */
     char *name;

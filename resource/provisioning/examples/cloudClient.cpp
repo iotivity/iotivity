@@ -184,12 +184,12 @@ void printMenu()
  * @param[in] result       result
  * @param[in] data         data
  */
-void handleCB(void* ctx, OCStackResult result, void* data)
+void handleCB(void* ctx, OCClientResponse *response, void* data)
 {
     OC_UNUSED(ctx);
     OC_UNUSED(data);
 
-    printf("Cloud request Result is == %d", result);
+    printf("Cloud request Result is == %d", response->result);
     oc_mutex_lock(mutex);
     oc_cond_signal(cond);
     oc_mutex_unlock(mutex);

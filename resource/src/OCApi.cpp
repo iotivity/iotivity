@@ -28,7 +28,12 @@ namespace OC
 {
     std::ostream& oclog()
     {
+#ifdef TB_LOG
         return std::cout;
+#else
+        static std::ostream nullstream(0);
+        return nullstream;
+#endif
     }
 }
 #endif

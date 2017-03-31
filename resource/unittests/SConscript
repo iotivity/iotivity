@@ -62,10 +62,11 @@ unittests_env.PrependUnique(LIBS = [
 		'oc_logger',
 		'connectivity_abstraction',
 		'coap',
-		'timer'])
+		'timer',
+		'mbedcrypto'])
 
 if unittests_env.get('SECURED') == '1':
-	unittests_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+	unittests_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509'])
 
 if unittests_env.get('LOGGING'):
 	unittests_env.AppendUnique(CPPDEFINES = ['TB_LOG'])

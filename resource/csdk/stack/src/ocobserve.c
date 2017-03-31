@@ -112,7 +112,7 @@ static OCStackResult SendObserveNotification(ResourceObserver *observer,
 
     result = AddServerRequest(&request, 0, 0, 1, OC_REST_GET,
                               0, observer->resource->sequenceNum, qos,
-                              observer->query, NULL, NULL,
+                              observer->query, NULL, OC_FORMAT_UNDEFINED, NULL,
                               observer->token, observer->tokenLength,
                               observer->resUri, 0, observer->acceptFormat,
                               observer->acceptVersion, &observer->devAddr);
@@ -179,7 +179,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                 OIC_LOG(DEBUG, TAG, "This notification is for Presence");
                 result = AddServerRequest(&request, 0, 0, 1, OC_REST_GET,
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
-                        NULL, NULL,
+                        NULL, OC_FORMAT_UNDEFINED, NULL,
                         resourceObserver->token, resourceObserver->tokenLength,
                         resourceObserver->resUri, 0, resourceObserver->acceptFormat,
                         resourceObserver->acceptVersion, &resourceObserver->devAddr);
@@ -267,7 +267,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
 
                 result = AddServerRequest(&request, 0, 0, 1, OC_REST_GET,
                         0, resource->sequenceNum, qos, observer->query,
-                        NULL, NULL, observer->token, observer->tokenLength,
+                        NULL, OC_FORMAT_UNDEFINED, NULL, observer->token, observer->tokenLength,
                         observer->resUri, 0, observer->acceptFormat,
                         observer->acceptVersion, &observer->devAddr);
 

@@ -35,6 +35,7 @@
 #include "ocrandom.h"
 #include "ocpayload.h"
 #include "utlist.h"
+#include "acl_logging.h"
 #include "payload_logging.h"
 #include "srmresourcestrings.h"
 #include "aclresource.h"
@@ -1921,108 +1922,6 @@ static bool IsSameACE(OicSecAce_t* ace1, OicSecAce_t* ace2)
     return false;
 }
 
-static void printACE(const OicSecAce_t *ace)
-{
-#ifndef TB_LOG
-    OC_UNUSED(ace);
-#else
-    OIC_LOG(INFO, TAG, "=================================================");
-    OIC_LOG_V(INFO, TAG, "ACE @ %p", ace);
-    OIC_LOG_V(INFO, TAG, "    permission = %#x", (uint32_t)ace->permission);
-
-    // Log the subject
-    if (ace->subjectType == OicSecAceUuidSubject)
-    {
-        char uuidString[UUID_STRING_SIZE];
-        bool convertedUUID = OCConvertUuidToString(ace->subjectuuid.id, uuidString);
-        OIC_LOG_V(INFO, TAG, "    subject UUID = %s", convertedUUID ? uuidString : "incorrect format");
-    }
-    else if (ace->subjectType == OicSecAceRoleSubject)
-    {
-        OIC_LOG_V(DEBUG, TAG, "    role id = %s", ace->subjectRole.id);
-        OIC_LOG_V(DEBUG, TAG, "    authority = %s", ace->subjectRole.authority);
-    }
-    else
-    {
-        OIC_LOG(INFO, TAG, "    subject = (subject of unknown type)");
-    }
-
-    // Log all resources this ACE applies to.
-    OicSecRsrc_t *resource = NULL;
-    uint32_t resourceCount = 0;
-    LL_FOREACH(ace->resources, resource)
-    {
-        OIC_LOG_V(INFO, TAG, "    resources[%u]:", resourceCount);
-        OIC_LOG_V(INFO, TAG, "        href = %s", resource->href ? resource->href : "null");
-
-        for (size_t i = 0; i < resource->typeLen; i++)
-        {
-            OIC_LOG_V(INFO, TAG, "        types[%" PRIuPTR "] = %s", i,
-                resource->types[i] ? resource->types[i] : "null");
-        }
-
-        for (size_t i = 0; i < resource->interfaceLen; i++)
-        {
-            OIC_LOG_V(INFO, TAG, "        interfaces[%" PRIuPTR "] = %s", i,
-                resource->interfaces[i] ? resource->interfaces[i] : "null");
-        }
-
-        resourceCount++;
-    }
-
-    // Log the validities.
-    OicSecValidity_t *validity = NULL;
-    uint32_t validityCount = 0;
-    LL_FOREACH(ace->validities, validity)
-    {
-        OIC_LOG_V(INFO, TAG, "    validities[%u]:", validityCount);
-        OIC_LOG_V(INFO, TAG, "        period = %s", validity->period);
-        for (size_t i = 0; i < validity->recurrenceLen; i++)
-        {
-            OIC_LOG_V(INFO, TAG, "    recurrences[%" PRIuPTR "] = %s", i,
-                validity->recurrences[i] ? validity->recurrences[i] : "null");
-        }
-        validityCount++;
-    }
-
-    OIC_LOG(INFO, TAG, "=================================================");
-#endif
-}
-
-void printACL(const OicSecAcl_t* acl)
-{
-#ifndef TB_LOG
-    OC_UNUSED(acl);
-#else
-    OIC_LOG_V(INFO, TAG, "Print ACL @ %p:", acl);
-
-    if (NULL == acl)
-    {
-        return;
-    }
-
-    char rowner[UUID_STRING_SIZE];
-    if (OCConvertUuidToString(acl->rownerID.id, rowner))
-    {
-        OIC_LOG_V(INFO, TAG, "rowner id = %s", rowner);
-    }
-    else
-    {
-        OIC_LOG(ERROR, TAG, "Can't convert rowner uuid to string");
-    }
-
-    const OicSecAce_t *ace = acl->aces;
-    int ace_count = 0;
-    while (ace)
-    {
-        ace_count++;
-        OIC_LOG_V(INFO, TAG, "Print ace[%d]:", ace_count);
-        printACE(ace);
-        ace = ace->next;
-    }
-#endif
-}
-
 /**
  * Internal function to remove all ACL data on ACL resource and persistent storage
  *
@@ -2237,7 +2136,7 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
                     if(insertAce)
                     {
                         OIC_LOG(DEBUG, TAG, "Prepending new ACE:");
-                        printACE(insertAce);
+                        OIC_LOG_ACE(DEBUG, insertAce);
                         LL_PREPEND(gAcl->aces, insertAce);
                     }
                     else
@@ -2757,7 +2656,7 @@ const OicSecAce_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAce_t **
             (0 == memcmp(&(ace->subjectuuid), subjectId, sizeof(OicUuid_t))))
         {
             OIC_LOG(DEBUG, TAG, "GetACLResourceData: found matching ACE:");
-            printACE(ace);
+            OIC_LOG_ACE(DEBUG, ace);
             *savePtr = ace;
             return ace;
         }
@@ -2856,7 +2755,7 @@ OCStackResult AppendACLObject(const OicSecAcl_t* acl)
         gAcl->aces = acl->aces;
     }
 
-    printACL(gAcl);
+    OIC_LOG_ACL(INFO, gAcl);
 
     size_t size = 0;
     uint8_t *payload = NULL;
@@ -2915,7 +2814,7 @@ OCStackResult InstallACL(const OicSecAcl_t* acl)
             if(insertAce)
             {
                 OIC_LOG(DEBUG, TAG, "Prepending new ACE:");
-                printACE(insertAce);
+                OIC_LOG_ACE(DEBUG, insertAce);
 
                 if (!newInstallAcl)
                 {

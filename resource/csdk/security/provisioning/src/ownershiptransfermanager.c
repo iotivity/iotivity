@@ -2412,8 +2412,8 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
         return OC_STACK_INVALID_PARAM;
     }
 
-    //Change the TAKE_OWNER bit of CM to 0.
-    otmCtx->selectedDeviceInfo->pstat->cm &= (~TAKE_OWNER);
+    //Change the TAKE_OWNER bit of TM to 0.
+    otmCtx->selectedDeviceInfo->pstat->tm &= (~TAKE_OWNER);
 
     OCSecurityPayload *secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
     if (!secPayload)

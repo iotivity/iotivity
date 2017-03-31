@@ -80,6 +80,9 @@ typedef struct
     /** The REST method retrieved from received request PDU.*/
     OCMethod method;
 
+    /** the provided payload format. */
+    OCPayloadFormat payloadFormat;
+
     /** the requested payload format. */
     OCPayloadFormat acceptFormat;
 
@@ -335,14 +338,12 @@ void OCDeleteResourceAttributes(OCAttribute *rsrcAttributes);
  * @param payload       Pointer to discovery payload.
  * @param res           Pointer to OCresource structure.
  * @param securePort    Secure port number.
- * @param isVirtual     true: virtual resource (e.g., oic/res), false: resource.
  * @param networkInfo   List of CAEndpoint_t.
  * @param infoSize      Size of CAEndpoint_t list.
  * @param devAddr       Pointer to OCDevAddr structure.
  */
 void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload *payload, const OCResource *res,
-                                          uint16_t securePort, bool isVirtual,
-                                          void *networkInfo, size_t infoSize,
+                                          uint16_t securePort, void *networkInfo, size_t infoSize,
                                           const OCDevAddr *devAddr);
 #else
 /**
@@ -351,15 +352,13 @@ void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload *payload, const OCR
  * @param payload       Pointer to discovery payload.
  * @param res           Pointer to OCresource structure.
  * @param securePort    Secure port number.
- * @param isVirtual     true: virtual resource (e.g., oic/res, oic/d), false: resource.
  * @param networkInfo   List of CAEndpoint_t.
  * @param infoSize      Size of CAEndpoint_t list.
  * @param devAddr       Pointer to OCDevAddr structure.
  * @param tcpPort       TCP port number.
  */
 void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload *payload, const OCResource *res,
-                                          uint16_t securePort, bool isVirtual,
-                                          void *networkInfo, size_t infoSize,
+                                          uint16_t securePort, void *networkInfo, size_t infoSize,
                                           const OCDevAddr *devAddr, uint16_t tcpPort);
 #endif
 #ifdef __cplusplus

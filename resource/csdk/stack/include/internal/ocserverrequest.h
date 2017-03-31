@@ -111,6 +111,9 @@ typedef struct OCServerRequest
     /** Flag indicating notification.*/
     uint8_t notificationFlag;
 
+    /** Payload format retrieved from the received request PDU. */
+    OCPayloadFormat payloadFormat;
+
     /** Payload Size.*/
     size_t payloadSize;
 
@@ -225,7 +228,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
         OCQualityOfService qos, char * query,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
-        uint8_t * payload, CAToken_t requestToken,
+        OCPayloadFormat payloadFormat, uint8_t * payload, CAToken_t requestToken,
         uint8_t tokenLength,
         char * resourceUrl, size_t reqTotalSize,
         OCPayloadFormat acceptFormat,
@@ -241,6 +244,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
  * @param endpoint                  Device address of the requester.
  * @param resource                  Resource handle.
  * @param queryBuf                  Resource query of request.
+ * @param payloadFormat             Content format of payload.
  * @param payloadType               Type of payload.
  * @param payload                   cbor value of the payload.
  * @param payloadSize               Size of payload.
@@ -261,6 +265,7 @@ OCStackResult FormOCEntityHandlerRequest(
         OCResourceHandle resource,
         char * queryBuf,
         OCPayloadType payloadType,
+        OCPayloadFormat payloadFormat,
         uint8_t * payload,
         size_t payloadSize,
         uint8_t numVendorOptions,

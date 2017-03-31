@@ -191,14 +191,6 @@ OCStackResult GetAclRownerId(OicUuid_t *rowneruuid);
  */
 OicSecAcl_t* CBORPayloadToCloudAcl(const uint8_t *cborPayload, const size_t size);
 
-/**
- * This function prints ACL to stdin
- * For debug purposes only
- *
- * @param acl  acl to print
- */
-void printACL(const OicSecAcl_t* acl);
-
 #ifdef __cplusplus
 }
 #endif

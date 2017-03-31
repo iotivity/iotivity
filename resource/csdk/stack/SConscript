@@ -98,7 +98,7 @@ if target_os in ['linux'] and liboctbstack_env.get('SIMULATOR', False):
     liboctbstack_env.Append( RPATH = liboctbstack_env.Literal('\\$$ORIGIN'))
 
 if env.get('SECURED') == '1':
-    liboctbstack_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
+    liboctbstack_env.AppendUnique(LIBS = ['mbedtls','mbedx509'])
 
 if target_os in ['android', 'linux', 'tizen', 'msys_nt', 'windows']:
     liboctbstack_env.PrependUnique(LIBS = ['connectivity_abstraction'])
@@ -151,7 +151,7 @@ if target_os == 'android':
 if env.get('LOGGING'):
     liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-liboctbstack_env.Append(LIBS = ['c_common'])
+liboctbstack_env.Append(LIBS = ['c_common', 'mbedcrypto'])
 
 if liboctbstack_env.get('ROUTING') in ['GW', 'EP']:
     liboctbstack_env.Prepend(LIBS = ['routingmanager'])

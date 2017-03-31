@@ -508,8 +508,8 @@ void Callback::GetCallbackInfoList(CallbackType type, std::vector<CallbackInfo::
 }
 
 bool Callback::MatchAllRequiredResourceTypes(
-                    std::vector<std::string>& requiredResourceTypes,
-                    std::vector<std::string>& deviceResourceTypes)
+                    const std::vector<std::string>& requiredResourceTypes,
+                    const std::vector<std::string>& deviceResourceTypes)
 {
     for (auto const& targetResourceType : requiredResourceTypes)
     {
@@ -538,8 +538,8 @@ bool Callback::MatchAllRequiredResourceTypes(
 void Callback::DeviceDiscoveryCallback(
                     bool deviceResponding,
                     bool newInfoLearntAboutDevice,
-                    InternalDeviceInfo deviceInfo,
-                    std::vector<std::string> deviceResourceTypeList)
+                    const InternalDeviceInfo& deviceInfo,
+                    const std::vector<std::string>& deviceResourceTypeList)
 {
     // Create IPCADiscoveredDeviceInfo object for callback.
     IPCADiscoveredDeviceInfo  deviceInfoUsedForCallback = {0};

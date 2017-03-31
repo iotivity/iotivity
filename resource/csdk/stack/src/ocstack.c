@@ -70,6 +70,7 @@
 #include "ocendpoint.h"
 #include "ocatomic.h"
 #include "platform_features.h"
+#include "oic_platform.h"
 
 #if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
 #include "occonnectionmanager.h"
@@ -612,7 +613,7 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
 #endif
 
     uint16_t acceptVersion = OC_SPEC_VERSION_VALUE;
-    CAPayloadFormat_t acceptFormat = CA_FORMAT_APPLICATION_CBOR;
+    CAPayloadFormat_t acceptFormat = CA_FORMAT_APPLICATION_VND_OCF_CBOR;
     // Check settings of version option and content format.
     if (requestInfo->info.numOptions > 0 && requestInfo->info.options)
     {
@@ -643,11 +644,15 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
         }
     }
 
-    requestInfo->info.acceptVersion = acceptVersion;
     requestInfo->info.acceptFormat = acceptFormat;
+    if (CA_FORMAT_APPLICATION_CBOR == acceptFormat && acceptVersion)
+    {
+        acceptVersion = 0;
+    }
+    requestInfo->info.acceptVersion = acceptVersion;
 
     CAResult_t result = CASendRequest(object, requestInfo);
-    if(CA_STATUS_OK != result)
+    if (CA_STATUS_OK != result)
     {
         OIC_LOG_V(ERROR, TAG, "CASendRequest failed with CA error %u", result);
         OIC_TRACE_END();
@@ -680,7 +685,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                 OC_REST_NOMETHOD,
                                                 &observer->devAddr,
                                                 (OCResourceHandle)NULL,
-                                                NULL, PAYLOAD_TYPE_REPRESENTATION,
+                                                NULL,
+                                                PAYLOAD_TYPE_REPRESENTATION, OC_FORMAT_CBOR,
                                                 NULL, 0, 0, NULL,
                                                 OC_OBSERVE_DEREGISTER,
                                                 observer->observeId,
@@ -736,7 +742,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                     OC_REST_NOMETHOD,
                                                     &observer->devAddr,
                                                     (OCResourceHandle)NULL,
-                                                    NULL, PAYLOAD_TYPE_REPRESENTATION,
+                                                    NULL,
+                                                    PAYLOAD_TYPE_REPRESENTATION, OC_FORMAT_CBOR,
                                                     NULL, 0, 0, NULL,
                                                     OC_OBSERVE_DEREGISTER,
                                                     observer->observeId,
@@ -1221,6 +1228,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     if (responseInfo->info.payload)
     {
         result = OCParsePayload(&response->payload,
+                CAToOCPayloadFormat(responseInfo->info.payloadFormat),
                 PAYLOAD_TYPE_PRESENCE,
                 responseInfo->info.payload,
                 responseInfo->info.payloadSize);
@@ -1649,6 +1657,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     {
                         OIC_LOG_V(ERROR, TAG, "Unknown Payload type in Discovery: %d %s",
                                 cbNode->method, cbNode->requestUri);
+                        OICFree(response);
                         return;
                     }
                 }
@@ -1694,12 +1703,14 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 if (OCResultToSuccess(response->result) || PAYLOAD_TYPE_REPRESENTATION == type)
                 {
                     if (OC_STACK_OK != OCParsePayload(&response->payload,
+                            CAToOCPayloadFormat(responseInfo->info.payloadFormat),
                             type,
                             responseInfo->info.payload,
                             responseInfo->info.payloadSize))
                     {
                         OIC_LOG(ERROR, TAG, "Error converting payload");
                         OCPayloadDestroy(response->payload);
+                        OICFree(response);
                         return;
                     }
 
@@ -1714,6 +1725,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                         {
                             OIC_LOG(ERROR, TAG, "failed at map zone-id for link-local address");
                             OCPayloadDestroy(response->payload);
+                            OICFree(response);
                             return;
                         }
                     }
@@ -2135,10 +2147,11 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
                 protocolRequest->numRcvdVendorSpecificHeaderOptions,
                 protocolRequest->observationOption, protocolRequest->qos,
                 protocolRequest->query, protocolRequest->rcvdVendorSpecificHeaderOptions,
-                protocolRequest->payload, protocolRequest->requestToken,
-                protocolRequest->tokenLength, protocolRequest->resourceUrl,
-                protocolRequest->reqTotalSize, protocolRequest->acceptFormat,
-                protocolRequest->acceptVersion, &protocolRequest->devAddr);
+                protocolRequest->payloadFormat, protocolRequest->payload,
+                protocolRequest->requestToken, protocolRequest->tokenLength,
+                protocolRequest->resourceUrl, protocolRequest->reqTotalSize,
+                protocolRequest->acceptFormat, protocolRequest->acceptVersion,
+                &protocolRequest->devAddr);
         if (OC_STACK_OK != result)
         {
             OIC_LOG(ERROR, TAG, "Error adding server request");
@@ -2243,6 +2256,7 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
 
     if ((requestInfo->info.payload) && (0 < requestInfo->info.payloadSize))
     {
+        serverRequest.payloadFormat = CAToOCPayloadFormat(requestInfo->info.payloadFormat);
         serverRequest.reqTotalSize = requestInfo->info.payloadSize;
         serverRequest.payload = (uint8_t *) OICMalloc(requestInfo->info.payloadSize);
         if (!serverRequest.payload)
@@ -2307,6 +2321,11 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     }
 
     serverRequest.acceptFormat = CAToOCPayloadFormat(requestInfo->info.acceptFormat);
+    if (OC_FORMAT_VND_OCF_CBOR == serverRequest.acceptFormat)
+    {
+        serverRequest.acceptVersion = requestInfo->info.acceptVersion;
+    }
+
     if (requestInfo->info.type == CA_MSG_CONFIRM)
     {
         serverRequest.qos = OC_HIGH_QOS;
@@ -3232,17 +3251,9 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
 
     if (payload)
     {
-        if((result =
-            OCConvertPayload(payload, &requestInfo.info.payload, &requestInfo.info.payloadSize))
-                != OC_STACK_OK)
-        {
-            OIC_LOG(ERROR, TAG, "Failed to create CBOR Payload");
-            goto exit;
-        }
-
         uint16_t payloadVersion = OC_SPEC_VERSION_VALUE;
-        CAPayloadFormat_t payloadFormat = CA_FORMAT_APPLICATION_CBOR;
-        // From OCF onwards, check version option settings
+        CAPayloadFormat_t payloadFormat = CA_FORMAT_APPLICATION_VND_OCF_CBOR;
+        // Check version option settings
         if (numOptions > 0 && options)
         {
             for (uint8_t i = 0; i < numOptions; i++)
@@ -3270,8 +3281,21 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
             }
         }
 
-        requestInfo.info.payloadVersion = payloadVersion;
         requestInfo.info.payloadFormat = payloadFormat;
+        if (CA_FORMAT_APPLICATION_CBOR == payloadFormat && payloadVersion)
+        {
+            payloadVersion = 0;
+        }
+        requestInfo.info.payloadVersion = payloadVersion;
+
+        if ((result =
+            OCConvertPayload(payload, CAToOCPayloadFormat(requestInfo.info.payloadFormat),
+                            &requestInfo.info.payload, &requestInfo.info.payloadSize))
+                != OC_STACK_OK)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to create CBOR Payload");
+            goto exit;
+        }
     }
     else
     {
@@ -4884,6 +4908,34 @@ OCStackResult initResources()
     if (OC_STACK_OK == result)
     {
         result = InitializeDeviceProperties();
+    }
+
+    // Initialize platform ID of OC_RSRVD_RESOURCE_TYPE_PLATFORM.
+    // Multiple devices or applications running on the same IoTivity platform should have the same
+    // platform ID.
+    if (OC_STACK_OK == result)
+    {
+        uint8_t platformID[OIC_UUID_LENGTH];
+        char uuidString[UUID_STRING_SIZE];
+
+        if (!OICGetPlatformUuid(platformID))
+        {
+            OIC_LOG(WARNING, TAG, "Failed OICGetPlatformUuid(), generate random uuid.");
+            OCGenerateUuid(platformID);
+        }
+
+        if (OCConvertUuidToString(platformID, uuidString))
+        {
+            // Set the platform ID.
+            // Application can overwrite the value set here by calling similar
+            // OCSetPropertyValue(OC_RSRVD_PLATFORM_ID, ...).
+            result = OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_ID, uuidString);
+        }
+        else
+        {
+            result = OC_STACK_ERROR;
+            OIC_LOG(ERROR, TAG, "Failed OCConvertUuidToString() for platform ID.");
+        }
     }
 
     return result;
