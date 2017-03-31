@@ -128,7 +128,7 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
     {
         OicSecAcl_t *acl = JSONToAclBin(jsonStr);
         VERIFY_NOT_NULL(TAG, acl, FATAL);
-        ret = AclToCBORPayload(acl, &aclCbor, &aclCborSize);
+        ret = AclToCBORPayload(acl, OIC_SEC_ACL_V2, &aclCbor, &aclCborSize);
         if(OC_STACK_OK != ret)
         {
             OIC_LOG (ERROR, TAG, "Failed converting Acl to Cbor Payload");
@@ -364,6 +364,7 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                 ret = ConvertStrToUuid(jsonObj->valuestring, &ace->subjectuuid);
                 VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
             }
+            ace->subjectType = OicSecAceUuidSubject;
             // Resources -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_RESOURCES_NAME);
             VERIFY_NOT_NULL(TAG, jsonObj, ERROR);

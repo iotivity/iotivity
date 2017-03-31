@@ -78,10 +78,12 @@ else:
 ######################################################################
 
 provisioningclient = provisioning_sample_env.Program('provisioningclient', 'provisioningclient.c')
+autoprovisioningclient = provisioning_sample_env.Program('autoprovisioningclient', 'autoprovisioningclient.c')
 sampleserver_justworks = provisioning_sample_env.Program('sampleserver_justworks', 'sampleserver_justworks.cpp')
 sampleserver_randompin = provisioning_sample_env.Program('sampleserver_randompin', 'sampleserver_randompin.cpp')
 sampleserver_mfg = provisioning_sample_env.Program('sampleserver_mfg', 'sampleserver_mfg.cpp')
 sampleserver_mvjustworks = provisioning_sample_env.Program('sampleserver_mvjustworks', 'sampleserver_mvjustworks.cpp')
+certgenerator = provisioning_sample_env.Program('certgenerator', 'certgenerator.cpp')
 
 if provisioning_sample_env.get('MULTIPLE_OWNER') == '1':
 	subownerclient = provisioning_sample_env.Program('subownerclient', 'subownerclient.c')
@@ -130,7 +132,7 @@ if provisioning_sample_env.get('WITH_TCP') == True:
 
 if provisioning_sample_env.get('MULTIPLE_OWNER') == '1':
 	Alias("samples", [
-					provisioningclient, subownerclient,
+					provisioningclient, subownerclient, autoprovisioningclient,
 					sampleserver_justworks, sampleserver_randompin, sampleserver_mfg,
 					sampleserver_preconfpin,
 					clientdat, subownerclientdat, preconfserverdat,
@@ -139,7 +141,7 @@ if provisioning_sample_env.get('MULTIPLE_OWNER') == '1':
 				])
 else:
 	Alias("samples", [
-					provisioningclient,
+					provisioningclient, autoprovisioningclient,
 					sampleserver_justworks, sampleserver_randompin, sampleserver_mfg,
 					clientdat,
 					justworksdat, randompindat, mfgdat, randompin_with_emptyuuid_dat,

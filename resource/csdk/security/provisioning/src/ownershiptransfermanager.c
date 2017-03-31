@@ -1667,6 +1667,7 @@ static OicSecAcl_t* GenerateOwnerAcl(const OicUuid_t* owner)
     ownerAce->permission = PERMISSION_FULL_CONTROL;
 
     //Set subject as PT's UUID
+    ownerAce->subjectType = OicSecAceUuidSubject;
     memcpy(ownerAce->subjectuuid.id, owner->id, sizeof(owner->id));
 
     wildcardRsrc->href = OICStrdup(WILDCARD_RESOURCE_URI);
@@ -1774,7 +1775,7 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
         goto error;
     }
 
-    res = AclToCBORPayload(ownerAcl, &secPayload->securityData, &secPayload->payloadSize);
+    res = AclToCBORPayload(ownerAcl, OIC_SEC_ACL_V1, &secPayload->securityData, &secPayload->payloadSize);
     if (OC_STACK_OK != res)
     {
         OICFree(secPayload);

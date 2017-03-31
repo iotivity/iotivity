@@ -52,15 +52,30 @@ OCStackResult DeInitACLResource();
 const OicSecAce_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAce_t **savePtr);
 
 /**
+ * This method is used by PolicyEngine to retrieve ACLs for a set of roles.
+ *
+ * @param[in] roles Array of roles to check for.
+ * @param[in] roleCount Length of roles array.
+ * @param[out] savePtr is used internally by @ref GetACLResourceDataByRoles to maintain index between
+ *                     successive calls for the same roles list.
+ *
+ * @note On the first call to @ref GETAclResourceDataByRoles, savePtr should point to NULL.
+ * 
+ * @return reference to @ref OicSecAce_t if ACE is found, else NULL.
+ */
+const OicSecAce_t* GetACLResourceDataByRoles(const OicSecRole_t *roles, size_t roleCount, OicSecAce_t **savePtr);
+
+/**
  * This function converts ACL data into CBOR format.
  *
  * @param acl instance of @ref OicSecAcl_t structure.
+ * @param aclVersion Version of ACL resource to produce; can be OIC_SEC_ACL_V1 or OIC_SEC_ACL_V2
  * @param outPayload is the pointer to allocated memory for cbor payload.
  * @param size of the cbor payload.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult AclToCBORPayload(const OicSecAcl_t * acl, uint8_t **outPayload, size_t *size);
+OCStackResult AclToCBORPayload(const OicSecAcl_t *acl, OicSecAclVersion_t aclVersion, uint8_t **outPayload, size_t *size);
 
 #ifdef MULTIPLE_OWNER
 /**
@@ -138,7 +153,7 @@ OCStackResult AppendACL(const uint8_t* payload, const size_t size);
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult AppendACL2(const OicSecAcl_t* acl);
+OCStackResult AppendACLObject(const OicSecAcl_t* acl);
 
 /**
  * This function updates default ACE which is required for ownership transfer.
@@ -174,7 +189,7 @@ OCStackResult GetAclRownerId(OicUuid_t *rowneruuid);
  *
  * @return instance of @ref OicSecAcl_t structure or NULL if error occurs
  */
-OicSecAcl_t* CBORPayloadToAcl2(const uint8_t *cborPayload, const size_t size);
+OicSecAcl_t* CBORPayloadToCloudAcl(const uint8_t *cborPayload, const size_t size);
 
 #ifdef __cplusplus
 }

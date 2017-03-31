@@ -178,6 +178,10 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
         {
             info->identity = *identity;
         }
+        else
+        {
+            OIC_LOG_V(INFO, TAG, "%s: No identity information provided", __func__);
+        }
         OIC_LOG(DEBUG, TAG, "Response Info :");
         CALogPayloadInfo(info);
     }

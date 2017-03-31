@@ -906,11 +906,12 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
 
     if(CA_STATUS_OK == errorInfo->result)
     {
-        const CASecureEndpoint_t* authenticatedSubOwnerInfo = CAGetSecureEndpointData(object);
-        if(authenticatedSubOwnerInfo)
+        CASecureEndpoint_t authenticationSubOwnerInfo;
+        CAResult_t caRes = CAGetSecureEndpointData(object, &authenticationSubOwnerInfo);
+        if (CA_STATUS_OK == caRes)
         {
-            if (0 == memcmp(authenticatedSubOwnerInfo->identity.id, gDoxm->owner.id,
-                            authenticatedSubOwnerInfo->identity.id_length))
+            if (0 == memcmp(authenticationSubOwnerInfo.identity.id, gDoxm->owner.id,
+                            authenticationSubOwnerInfo.identity.id_length))
             {
                 OIC_LOG(WARNING, TAG, "Super owner tried MOT, this request will be ignored.");
                 return;
@@ -920,8 +921,8 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
             LL_FOREACH(gDoxm->subOwners, subOwnerInst)
             {
                 if(0 == memcmp(subOwnerInst->uuid.id,
-                               authenticatedSubOwnerInfo->identity.id,
-                               authenticatedSubOwnerInfo->identity.id_length))
+                               authenticationSubOwnerInfo.identity.id,
+                               authenticationSubOwnerInfo.identity.id_length))
                 {
                     break;
                 }
@@ -933,8 +934,8 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
                 if(subOwnerInst)
                 {
                     char* strUuid = NULL;
-                    memcpy(subOwnerInst->uuid.id, authenticatedSubOwnerInfo->identity.id,
-                           authenticatedSubOwnerInfo->identity.id_length);
+                    memcpy(subOwnerInst->uuid.id, authenticationSubOwnerInfo.identity.id,
+                           authenticationSubOwnerInfo.identity.id_length);
                     if(OC_STACK_OK != ConvertUuidToStr(&subOwnerInst->uuid, &strUuid))
                     {
                         OIC_LOG(ERROR, TAG, "Failed to allocate memory.");
@@ -949,6 +950,10 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
                     }
                 }
             }
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, TAG, "Could not CAGetSecureEndpointData: %d", caRes);
         }
     }
 

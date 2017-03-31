@@ -36,6 +36,7 @@
 #include "pconfresource.h"
 #include "amaclresource.h"
 #include "credresource.h"
+#include "rolesresource.h"
 
 #define TAG "OIC_SRM_PE"
 
@@ -114,8 +115,16 @@ static bool IsRequestFromDevOwner(SRMRequestContext_t *context)
     if (doxm)
     {
         retVal = UuidCmp(&doxm->owner, &context->subjectUuid);
-        OIC_LOG_V(DEBUG, TAG, "%s: request was %sreceived from device owner",
+        OIC_LOG_V(DEBUG, TAG, "%s: request was %s received from device owner",
             __func__, retVal ? "" : "NOT ");
+
+        if (!retVal)
+        {
+            OIC_LOG(DEBUG, TAG, "Owner UUID  :");
+            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)&doxm->owner.id, sizeof(&doxm->owner.id));
+            OIC_LOG(DEBUG, TAG, "Request UUID:");
+            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)&context->subjectUuid.id, sizeof(&context->subjectUuid.id));
+        }
     }
 
     return retVal;
@@ -377,6 +386,31 @@ static bool IsResourceInAce(const char *resource, const OicSecAce_t *ace)
     return false;
 }
 
+static void ProcessMatchingACE(SRMRequestContext_t *context, const OicSecAce_t *currentAce)
+{
+    // Found the subject, so how about resource?
+    OIC_LOG_V(DEBUG, TAG, "%s:found ACE matching subject", __func__);
+
+    // Subject was found, so err changes to Rsrc not found for now.
+    context->responseVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
+    OIC_LOG_V(DEBUG, TAG, "%s:Searching for resource...", __func__);
+    if (IsResourceInAce(context->resourceUri, currentAce))
+    {
+        OIC_LOG_V(INFO, TAG, "%s:found matching resource in ACE", __func__);
+
+        // Found the resource, so it's down to valid period & permission.
+        context->responseVal = ACCESS_DENIED_INVALID_PERIOD;
+        if (IsAccessWithinValidTime(currentAce))
+        {
+            context->responseVal = ACCESS_DENIED_INSUFFICIENT_PERMISSION;
+            if (IsPermissionAllowingRequest(currentAce->permission,
+                context->requestedPermission))
+            {
+                context->responseVal = ACCESS_GRANTED;
+            }
+        }
+    }
+}
 
 /**
  * Find ACLs containing context->subject.
@@ -414,36 +448,49 @@ static void ProcessAccessRequest(SRMRequestContext_t *context)
 
         if (NULL != currentAce)
         {
-            // Found the subject, so how about resource?
-            OIC_LOG_V(DEBUG, TAG, "%s:found ACE matching subject" ,__func__);
-
-            // Subject was found, so err changes to Rsrc not found for now.
-            context->responseVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
-            OIC_LOG_V(DEBUG, TAG, "%s:Searching for resource..." ,__func__);
-            if (IsResourceInAce(context->resourceUri, currentAce))
-            {
-                OIC_LOG_V(INFO, TAG, "%s:found matching resource in ACE" ,__func__);
-
-                // Found the resource, so it's down to valid period & permission.
-                context->responseVal = ACCESS_DENIED_INVALID_PERIOD;
-                if (IsAccessWithinValidTime(currentAce))
-                {
-                    context->responseVal = ACCESS_DENIED_INSUFFICIENT_PERMISSION;
-                    if (IsPermissionAllowingRequest(currentAce->permission,
-                        context->requestedPermission))
-                    {
-                        context->responseVal = ACCESS_GRANTED;
-                    }
-                }
-            }
+            ProcessMatchingACE(context, currentAce);
         }
         else
         {
-            OIC_LOG_V(INFO, TAG, "%s:no ACE found matching subject for resource %s",
+            OIC_LOG_V(INFO, TAG, "%s:no ACL found matching subject for resource %s",
                 __func__, context->resourceUri);
         }
-    } while ((NULL != currentAce)
-        && (false == IsAccessGranted(context->responseVal)));
+    } while ((NULL != currentAce) && !IsAccessGranted(context->responseVal));
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+        // If no subject ACE granted access, try role ACEs.
+        if (!IsAccessGranted(context->responseVal))
+        {
+            currentAce = NULL;
+            aceSavePtr = NULL;
+            OicSecRole_t *roles = NULL;
+            size_t roleCount = 0;
+            OCStackResult res = GetEndpointRoles(context->endPoint, &roles, &roleCount);
+            if (OC_STACK_OK != res)
+            {
+                OIC_LOG_V(ERROR, TAG, "Error getting asserted roles for endpoint: %d", res);
+            }
+            else
+            {
+                OIC_LOG_V(DEBUG, TAG, "Found %u asserted roles for endpoint", (unsigned int) roleCount);
+                do
+                {
+                    currentAce = GetACLResourceDataByRoles(roles, roleCount, &aceSavePtr);
+                    if (NULL != currentAce)
+                    {
+                        ProcessMatchingACE(context, currentAce);
+                    }
+                    else
+                    {
+                        OIC_LOG_V(INFO, TAG, "%s:no ACL found matching roles for resource %s",
+                            __func__, context->resourceUri);
+                    }
+                } while ((NULL != currentAce) && !IsAccessGranted(context->responseVal));
+
+                OICFree(roles);
+            }
+        }
+#endif /* defined(__WITH_DTLS__) || defined(__WITH_TLS__) */
 
     OIC_LOG_V(INFO, TAG, "%s:Leaving with responseVal = %s", __func__,
         IsAccessGranted(context->responseVal) ? "ACCESS_GRANTED" : "ACCESS_DENIED");
