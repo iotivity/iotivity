@@ -103,6 +103,7 @@ static oc_mutex g_threadScanIntervalMutex = NULL;
 static oc_cond g_threadScanIntervalCond = NULL;
 
 static oc_mutex g_threadSendStateMutex = NULL;
+static oc_mutex g_setValueMutex = NULL;
 
 static int32_t g_scanIntervalTime = WAIT_TIME_SCAN_INTERVAL_DEFAULT;
 static int32_t g_scanIntervalTimePrev = WAIT_TIME_SCAN_INTERVAL_DEFAULT;
@@ -142,6 +143,23 @@ static bool CALECheckConnectionStateValue(jint state)
         default:
             return false;
     }
+}
+
+/**
+ * delete global reference for g_sendBuffer
+ * @param[in]   env                   JNI interface pointer.
+ */
+static void CALEDeleteSendBuffer(JNIEnv *env)
+{
+    OIC_LOG(INFO, TAG, "CALEDeleteSendBuffer");
+    oc_mutex_lock(g_setValueMutex);
+    if (g_sendBuffer)
+    {
+        OIC_LOG(INFO, TAG, "delete send buffer");
+        (*env)->DeleteGlobalRef(env, g_sendBuffer);
+        g_sendBuffer = NULL;
+    }
+    oc_mutex_unlock(g_setValueMutex);
 }
 
 void CALEClientSetScanInterval(int32_t intervalTime, int32_t workingCount,
@@ -541,11 +559,7 @@ void CALEClientTerminate()
         g_leGattCallback = NULL;
     }
 
-    if (g_sendBuffer)
-    {
-        (*env)->DeleteGlobalRef(env, g_sendBuffer);
-        g_sendBuffer = NULL;
-    }
+    CALEDeleteSendBuffer(env);
 
     if (g_uuidList)
     {
@@ -949,11 +963,7 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
                 (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
                 (*env)->DeleteLocalRef(env, jni_setAddress);
 
-                if (g_sendBuffer)
-                {
-                    (*env)->DeleteGlobalRef(env, g_sendBuffer);
-                    g_sendBuffer = NULL;
-                }
+                CALEDeleteSendBuffer(env);
 
                 if (data && dataLen > 0)
                 {
@@ -1067,11 +1077,7 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
     CALEClientSetSendFinishFlag(false);
 
     OIC_LOG(DEBUG, TAG, "set byteArray for data");
-    if (g_sendBuffer)
-    {
-        (*env)->DeleteGlobalRef(env, g_sendBuffer);
-        g_sendBuffer = NULL;
-    }
+    CALEDeleteSendBuffer(env);
 
     CAResult_t res = CALEClientIsThereScannedDevices(env, NULL);
     if (CA_STATUS_OK != res)
@@ -2886,12 +2892,36 @@ CAResult_t CALESetValueAndWriteCharacteristic(JNIEnv* env, jobject gatt)
 
     oc_mutex_unlock(g_threadSendStateMutex);
 
+    jbyteArray sendData = NULL;
+    oc_mutex_lock(g_setValueMutex);
+    if (g_sendBuffer)
+    {
+        OIC_LOG(INFO, TAG, "alloc local reference for data");
+        sendData = (jbyteArray)(*env)->NewLocalRef(env, g_sendBuffer);
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "send Buffer is empty");
+        oc_mutex_unlock(g_setValueMutex);
+        return CA_STATUS_FAILED;
+    }
+    oc_mutex_unlock(g_setValueMutex);
+
     // send data
-    jobject jni_obj_character = CALEClientCreateGattCharacteristic(env, gatt, g_sendBuffer);
+    jobject jni_obj_character = CALEClientCreateGattCharacteristic(env, gatt, sendData);
     if (!jni_obj_character)
     {
+        if (sendData)
+        {
+            (*env)->DeleteLocalRef(env, sendData);
+        }
         CALEClientSendFinish(env, gatt);
         return CA_STATUS_FAILED;
+    }
+
+    if (sendData)
+    {
+        (*env)->DeleteLocalRef(env, sendData);
     }
 
     CAResult_t ret = CALEClientWriteCharacteristicImpl(env, gatt, jni_obj_character);
@@ -3218,6 +3248,7 @@ jobject CALEClientCreateGattCharacteristic(JNIEnv *env, jobject bluetoothGatt, j
         goto error_exit;
     }
 
+    OIC_LOG(DEBUG, TAG, "CALL API - setValue");
     jboolean ret = (*env)->CallBooleanMethod(env, jni_obj_GattCharacteristic, jni_mid_setValue,
                                              data);
     if (JNI_TRUE == ret)
@@ -4291,11 +4322,8 @@ void CALEClientUpdateSendCnt(JNIEnv *env)
         g_targetCnt = 0;
         g_currentSentCnt = 0;
 
-        if (g_sendBuffer)
-        {
-            (*env)->DeleteGlobalRef(env, g_sendBuffer);
-            g_sendBuffer = NULL;
-        }
+        CALEDeleteSendBuffer(env);
+
         // notity the thread
         oc_cond_signal(g_threadCond);
         oc_cond_signal(g_threadWriteCharacteristicCond);
@@ -4435,6 +4463,16 @@ CAResult_t CALEClientInitGattMutexVaraibles()
         }
     }
 
+    if (NULL == g_setValueMutex)
+    {
+        g_setValueMutex = oc_mutex_new();
+        if (NULL == g_setValueMutex)
+        {
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
+            return CA_STATUS_FAILED;
+        }
+    }
+
     return CA_STATUS_OK;
 }
 
@@ -4475,6 +4513,9 @@ void CALEClientTerminateGattMutexVariables()
 
     oc_mutex_free(g_deviceStateListMutex);
     g_deviceStateListMutex = NULL;
+
+    oc_mutex_free(g_setValueMutex);
+    g_setValueMutex = NULL;
 }
 
 void CALEClientSetSendFinishFlag(bool flag)
