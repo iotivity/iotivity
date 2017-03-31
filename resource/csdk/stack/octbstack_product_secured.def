@@ -3,17 +3,6 @@
 
 ConvertUuidToStr
 
-CreateJustWorksOwnerTransferPayload
-CreateJustWorksSelectOxmPayload
-CreateMVJustWorksSelectOxmPayload
-CreateConMCertificateBasedSelectOxmPayload
-CreatePinBasedSelectOxmPayload
-CreatePinBasedOwnerTransferPayload
-CreateSecureSessionJustWorksCallback
-CreateSecureSessionRandomPinCallback
-InputPinCodeCallback
-LoadSecretJustWorksCallback
-
 OCConfigSelfOwnership
 OCConvertDerCSRToPem
 OCDeleteACLList
