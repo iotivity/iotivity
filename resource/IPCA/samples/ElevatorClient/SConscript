@@ -29,10 +29,21 @@ elevator_client_env = ipca_env.Clone()
 # Build flags
 ######################################################################
 elevator_client_env.PrependUnique(CPPPATH = [
-        '..\..\inc',
+        '../../inc',
         ])
 
 elevator_client_env.PrependUnique(LIBS = ['ipca'])
+
+if target_os not in ['windows', 'msys_nt']:
+    elevator_client_env.AppendUnique(LIBS = ['dl'])
+
+if 'g++' in elevator_client_env.get('CXX'):
+    elevator_client_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
+
+if target_os in ['linux']:
+    if not elevator_client_env.get('RELEASE'):
+        elevator_client_env.PrependUnique(LIBS = ['gcov'])
+        elevator_client_env.AppendUnique(CXXFLAGS = ['--coverage'])
 
 elevator_client_src = [
     'ElevatorClient.cpp',

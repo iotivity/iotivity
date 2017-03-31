@@ -28,7 +28,7 @@
 #include "testelevatorserver.h"
 #include "testelevatorclient.h"
 #include "ipcatestdata.h"
-#include "ipcaelevatorclient.h"
+#include "IPCAElevatorClient.h"
 
 using namespace std;
 using namespace std::placeholders;

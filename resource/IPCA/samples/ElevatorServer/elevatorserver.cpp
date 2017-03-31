@@ -18,7 +18,7 @@
  ******************************************************************/
 
 #include "logger.h"
-#include "ElevatorServer.h"
+#include "elevatorserver.h"
 
 using namespace OC;
 using namespace std::placeholders;

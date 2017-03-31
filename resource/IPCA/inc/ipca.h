@@ -20,6 +20,7 @@
 #ifndef IPCA_H_  // IoTivity Procedural Client API
 #define IPCA_H_
 
+#include <stdio.h>
 #include <stdint.h>
 
 #ifdef __cplusplus

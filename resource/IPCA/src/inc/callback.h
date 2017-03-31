@@ -204,7 +204,7 @@ class Callback
         volatile bool m_stopCalled;    // Set to true when Stop() is called.
 
         // Number of expired callbacks in progress.
-        size_t m_expiredCallbacksInprogress;
+        size_t m_expiredCallbacksInProgress;
 
         // Indicate that callback is in progress for callbackInfo matching mapKey.
         // Return false if the callback is already cancelled by app.

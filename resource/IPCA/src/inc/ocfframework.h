@@ -138,7 +138,7 @@ class OCFFramework
                         std::vector<std::string>& resourceInfo);
 
         // Get/Set/Observe requests.
-        IPCAStatus OCFFramework::SendCommandToDevice(
+        IPCAStatus SendCommandToDevice(
                         std::string& deviceId,
                         CallbackInfo::Ptr callbackInfo,
                         OCRepresentation* rep);

@@ -26,5 +26,5 @@
 Import('ipca_env')
 
 SConscript('ipcaapp/SConscript', 'ipca_env')
-SConscript('elevatorserver/SConscript', 'ipca_env')
-SConscript('elevatorclient/SConscript', 'ipca_env')
+SConscript('ElevatorServer/SConscript', 'ipca_env')
+SConscript('ElevatorClient/SConscript', 'ipca_env')

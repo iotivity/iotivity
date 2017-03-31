@@ -26,6 +26,7 @@
 #include <thread>
 #include <chrono>
 #include <condition_variable>
+#include <climits>
 
 #include "iotivity_config.h"
 #include "ipca.h"

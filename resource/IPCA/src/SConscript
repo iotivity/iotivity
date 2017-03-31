@@ -24,7 +24,6 @@
 Import('ipca_env')
 target_os = ipca_env.get('TARGET_OS')
 ipca_lib_env = ipca_env.Clone()
-rd_mode = ipca_lib_env.get('RD_MODE')
 
 ######################################################################
 # Build flags
@@ -75,6 +74,18 @@ if ipca_env.get('SECURED') == '1':
             'mbedcrypto',
             'ocprovision'
             ])
+
+if target_os not in ['windows', 'msys_nt']:
+    ipca_lib_env.AppendUnique(LIBS = ['dl'])
+
+if 'g++' in ipca_lib_env.get('CXX'):
+    ipca_lib_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
+
+if target_os in ['linux']:
+    ipca_lib_env.AppendUnique(LIBS = ['pthread'])
+    if not ipca_lib_env.get('RELEASE'):
+        ipca_lib_env.PrependUnique(LIBS = ['gcov'])
+        ipca_lib_env.AppendUnique(CXXFLAGS = ['--coverage'])
 
 ######################################################################
 # Source files and Targets

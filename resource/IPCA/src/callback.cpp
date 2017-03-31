@@ -31,7 +31,7 @@ Callback::Callback(App* app) :
     m_nextKey(0),
     m_app(app),
     m_stopCalled(false),
-    m_expiredCallbacksInprogress(0)
+    m_expiredCallbacksInProgress(0)
 {
 }
 
@@ -80,8 +80,8 @@ void Callback::Stop()
         }
 
         // There are 2 group of callbacks.
-        // One tracked by m_callbackInfoList and the other tracked by m_expiredCallbacksInprogress.
-        if ((m_callbackInfoList.size() == 0) && (m_expiredCallbacksInprogress == 0))
+        // One tracked by m_callbackInfoList and the other tracked by m_expiredCallbacksInProgress.
+        if ((m_callbackInfoList.size() == 0) && (m_expiredCallbacksInProgress == 0))
         {
             allStopped = true;
             break;
@@ -93,7 +93,14 @@ void Callback::Stop()
 
     if (allStopped == false)
     {
-        OIC_LOG_V(WARNING, TAG, "Stop() time out waiting for pending callbacks to complete.");
+        std::cout << "Stop() timed out: m_callbackInfoList count = " << m_callbackInfoList.size();
+        std::cout << " m_expiredCallbacksInProgress = " << m_expiredCallbacksInProgress;
+        OIC_LOG_V(
+            ERROR,
+            TAG,
+            "Stop() timed out: m_callbackInfoList count = [%d] m_expiredCallbacksInProgress = [%d]",
+            m_callbackInfoList.size(),
+            m_expiredCallbacksInProgress);
         throw timeoutException;
     }
 
@@ -133,6 +140,10 @@ CallbackInfo::Ptr Callback::CreatePasswordCallbackInfo(
 
         case CallbackType_PasswordDisplayCallback:
             cbInfo->passwordDisplayCallback = passwordDisplayCb;
+            break;
+
+        default:
+            assert(false);  // Other types are coding error.
             break;
     }
 
@@ -266,7 +277,7 @@ IPCAStatus Callback::AddCallbackInfo(CallbackInfo::Ptr cbInfo)
     }
 
     uint32_t i = 0;
-    while (i++ < UINT32_MAX)
+    while (i++ < UINT_MAX)
     {
         uint32_t newKey = m_nextKey++;
         if (m_callbackInfoList.find(newKey) == m_callbackInfoList.end())
@@ -411,7 +422,7 @@ void Callback::CompleteAndRemoveExpiredCallbackInfo(std::vector<CallbackInfo::Pt
             // RemoveCallbackInfo().
             if (entry.second->markedToBeRemoved == true)
             {
-                m_expiredCallbacksInprogress++;
+                m_expiredCallbacksInProgress++;
                 cbInfoList.push_back(entry.second);
                 continue;
             }
@@ -427,7 +438,7 @@ void Callback::CompleteAndRemoveExpiredCallbackInfo(std::vector<CallbackInfo::Pt
             {
                 if ((currentTime - entry.second->requestSentTimestamp) > RequestTimeoutMs)
                 {
-                    m_expiredCallbacksInprogress++;
+                    m_expiredCallbacksInProgress++;
                     cbInfoList.push_back(entry.second);
                 }
             }
@@ -488,7 +499,7 @@ void Callback::CompleteAndRemoveExpiredCallbackInfo(std::vector<CallbackInfo::Pt
 
         {
             std::lock_guard<std::mutex> lock(m_callbackMutex);
-            m_expiredCallbacksInprogress--;
+            m_expiredCallbacksInProgress--;
         }
     }
 
