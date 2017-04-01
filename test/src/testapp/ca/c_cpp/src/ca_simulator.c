@@ -418,9 +418,8 @@ int selectNetwork(int argc, char *argv[])
                     strcpy(g_filterCommand, argv[3]);
                 }
             }
-
-            ret = 1;
 #endif
+            ret = 1;
         }
         else
         {

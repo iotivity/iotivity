@@ -82,6 +82,7 @@ echo '-----------------------Environment Variable-----------------------'
 export RELEASE_DIR=${release_dir}
 export IOTIVITY_TEST_ROOT=${IOTIVITY_TEST_ROOT}
 export IOTIVITY_ROOT=${IOTIVITY_ROOT}
+export IOTIVITY_TARGET_ARCH=${target_arch}
 echo ${IOTIVITY_ROOT}
 echo ${IOTIVITY_TEST_ROOT}
 echo '-----------------------End-----------------------'

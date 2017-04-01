@@ -92,32 +92,37 @@ if target_os == 'all' and target_arch != 'all':
     print error_msg
     exit(1)
 
-all_modules=['ca', 'ri', 'iut', 'pm', 'cs', 'ic', 'rd',  're', 'rc', 'es', 'sm', 'ns']
+all_modules=['ca', 'ri', 'iut', 'pm', 'cs', 'ic', 'rd',  're', 'rc', 'es', 'sm', 'ns', 'chp']
+all_transports = ['BT', 'BLE', 'IP', 'ETH', 'WIFI', 'TCP']
+all_sdk = ['csdk', 'cpp']
+all_test_option = ['tc', 'btc', 'stc', 'simulator', 'app']
+all_push_options = ['exe', 'lib']
+all_frameworks = ['gtest', 'junit', 'arduinojunit']
 
 help_vars = Variables()
 help_vars.Add(BoolVariable('RELEASE', 'Build for release?', True))
 help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', False))
 help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map[host]))
-help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'all', ['BT', 'BLE', 'IP', 'ETH', 'WIFI', 'TCP']))
+help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'all', all_transports))
 help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
 help_vars.Add(ListVariable('MODULE', 'Name of target module', 'all', all_modules))
-help_vars.Add(ListVariable('SDK', 'Name of programming platform', ['csdk', 'cpp'], ['csdk', 'cpp']))
-help_vars.Add(ListVariable('TEST', 'Type of the TEST', 'tc', ['tc', 'btc', 'stc', 'simulator', 'app']))
+help_vars.Add(ListVariable('SDK', 'Name of programming platform', all_sdk, all_sdk))
+help_vars.Add(ListVariable('TEST', 'Type of the TEST', 'tc', all_test_option))
 help_vars.Add(EnumVariable('SECURED', 'Build with Security', '1', allowed_values=('0', '1')))
 help_vars.Add(BoolVariable('TLS_MODE', 'Build with TLS mode or not', False))
 help_vars.Add(BoolVariable('CLOUD_SERVICE', 'Build Cloud Service Dev Source', False))
 help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('ANDROID_HOME', 'Android SDK path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('ANDROID_GRADLE', 'Gradle binary file', None, PathVariable.PathIsFile))
-help_vars.Add('PROJECT_VERSION', 'Set the version needed for RPMS', '1.2.0-0')
+help_vars.Add('PROJECT_VERSION', 'Set the version needed for RPMS', '1.3.0-0')
 help_vars.Add(PathVariable('TIZEN_HOME', 'Root path of tizen SDK', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('GBS_ROOT', 'GBS Root Path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('KAFKA_ROOT', 'KAFKA Root Path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('IOTIVITY_ROOT', 'IOTIVITY Root Path', Dir('../..').srcnode().abspath, PathVariable.PathAccept))
-help_vars.Add(ListVariable('PUSH', 'To push binary to device', 'none', ['exe', 'lib']))
+help_vars.Add(ListVariable('PUSH', 'To push binary to device', 'none', all_push_options))
 help_vars.Add(BoolVariable('OFFLINE', 'Build in offline mode', False))
 help_vars.Add(EnumVariable('ES_ROLE', 'Target ES Role', 'all', allowed_values=('all', 'mediator', 'enrollee')))
-help_vars.Add(ListVariable('FRAMEWORK', 'TC Framework Type', 'all', ['gtest', 'junit', 'arduinojunit']))
+help_vars.Add(ListVariable('FRAMEWORK', 'TC Framework Type', 'all', all_frameworks))
 help_vars.Add(BoolVariable('COVERAGE', 'Add Code coverage', False))
 help_vars.Add(BoolVariable('VERBOSE', 'Show compilation', False))
 
@@ -169,6 +174,40 @@ target_os = env.get('TARGET_OS')
 module = env.get('MODULE')
 framework = env.get('FRAMEWORK')
 test = env.get('TEST')
+transport = env.get('TARGET_TRANSPORT')
+sdk = env.get('SDK')
+push = env.get('PUSH')
+
+if 'all' in str(module):
+    env.Replace(MODULE = all_modules)
+    module = all_modules
+
+if 'all' in str(framework):
+    env.Replace(FRAMEWORK = all_frameworks)
+    framework = all_frameworks
+
+if 'all' in str(test):
+    env.Replace(TEST = all_test_option)
+    test = all_test_option
+
+if 'all' in str(transport):
+    env.Replace(TARGET_TRANSPORT = all_transports)
+    transport = all_transports
+
+if 'all' in str(push):
+    env.Replace(PUSH = all_push_options)
+    push = all_push_options
+
+if 'all' in str(sdk):
+    env.Replace(SDK = all_sdk)
+    sdk = all_sdk
+
+print target_os
+print module
+print framework
+print test
+print transport
+print sdk
 
 if 'tc' in test:
     if 'linux' in target_os or 'tizen' in target_os:

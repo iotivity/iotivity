@@ -20,43 +20,57 @@ parameters=''
 offline_mode=''
 i=0
 while [ ${i} -lt ${len} ]; do
+    arg_value=${arg_parts[i+1]}
+    arg_value=${arg_value//+/}
+    arg_value=${arg_value//\'/}
+    arg_value=${arg_value//[/}
+    arg_value=${arg_value//]/}
     if [[ "${arg_parts[i]}" = "IOTIVITY_ROOT" ]]; then
-        iotivity_root=${arg_parts[i+1]}
+         iotivity_root=${arg_value}
     elif [[ "${arg_parts[i]}" = "IOTIVITY_TEST_ROOT" ]]; then
-        iotivity_test_root=${arg_parts[i+1]}
+         iotivity_test_root=${arg_value}
     elif [[ "${arg_parts[i]}" = "MODULE" ]]; then
-        module=${arg_parts[i+1]}
-        parameters+=" --define 'MODULE ${module}'"
+         module=${arg_value}
+         parameters+=" --define 'MODULE ${module}'"
     elif [[ "${arg_parts[i]}" = "TARGET_TRANSPORT" ]]; then
-        target_transport=${arg_parts[i+1]}
-        parameters+=" --define 'TARGET_TRANSPORT ${target_transport}'"
+         target_transport=${arg_value}
+         parameters+=" --define 'TARGET_TRANSPORT ${target_transport}'"
     elif [[ "${arg_parts[i]}" = "TARGET_ARCH" ]]; then
-        target_arch=${arg_parts[i+1]}
-        parameters+=" --define 'TARGET_ARCH ${target_arch}'"
+         target_arch=${arg_value}
+         parameters+=" --define 'TARGET_ARCH ${target_arch}'"
     elif [[ "${arg_parts[i]}" = "TEST" ]]; then
-        test=${arg_parts[i+1]}
-        parameters+=" --define 'TEST ${test}'"
+         test=${arg_value}
+         parameters+=" --define 'TEST ${test}'"
     elif [[ "${arg_parts[i]}" = "SDK" ]]; then
-       sdk=${arg_parts[i+1]}
-       parameters+=" --define 'SDK ${sdk}'"
+         sdk=${arg_value}
+        parameters+=" --define 'SDK ${sdk}'"
+    elif [[ "${arg_parts[i]}" = "KAFKA_ROOT" ]]; then
+        kafka_root=${arg_value}
+        parameters+=" --define 'KAFKA_ROOT ${kafka_root}'"
+    elif [[ "${arg_parts[i]}" = "TLS_MODE" ]]; then
+        tls_mode=${arg_value}
+        parameters+=" --define 'TLS_MODE ${tls_mode}'"
+    elif [[ "${arg_parts[i]}" = "CLOUD_SERVICE" ]]; then
+        cloud_service=${arg_value}
+        parameters+=" --define 'CLOUD_SERVICE ${cloud_service}'"
     elif [[ "${arg_parts[i]}" = "GBS_ROOT" ]]; then
-        gbs_root=${arg_parts[i+1]}
+        gbs_root=${arg_value}
     elif [[ "${arg_parts[i]}" = "TIZEN_SDB" ]]; then
-        tizen_sdb=${arg_parts[i+1]}
+        tizen_sdb=${arg_value}
     elif [[ "${arg_parts[i]}" = "RPMS_PATH" ]]; then
-        rpms_path=${arg_parts[i+1]}
+        rpms_path=${arg_value}
     elif [[ "${arg_parts[i]}" = "PROJECT_VERSION" ]]; then
-        project_version=${arg_parts[i+1]}
+        project_version=${arg_value}
     elif [[ "${arg_parts[i]}" = "PUSH" ]]; then
-       push=${arg_parts[i+1]}
+        push=${arg_value}
     elif [[ "${arg_parts[i]}" = "lib_rpm_names" ]]; then
-        temp=${arg_parts[i+1]}
+        temp=${arg_value}
         lib_rpm_names=(${temp//,/ })
     elif [[ "${arg_parts[i]}" = "test_res_files" ]]; then
-        test_res_files=${arg_parts[i+1]}
+        test_res_files=${arg_value}
         test_res_files=(${test_res_files//,/ })
     elif [[ "${arg_parts[i]}" = "OFFLINE" ]]; then
-        offline_mode=${arg_parts[i+1]}
+        offline_mode=${arg_value}
     fi
     let i=i+2
 done
@@ -142,7 +156,7 @@ fi
 
 echo "Calling core gbs build command"
 
-gbscommand="gbs build -A ${target_arch} -B ${gbs_root} --repository ./ --include-all ${parameters} --threads=4"
+gbscommand="gbs build -A ${target_arch} -B ${gbs_root} --repository ./ --include-all ${parameters}"
 
 echo ${gbscommand}
 
@@ -170,7 +184,10 @@ if eval ${gbscommand}; then
         do
             ${tizen_sdb} -s ${device} root on
 
-            ${tizen_sdb} -s ${device} shell mkdir -p /usr/bin/${module}
+            ${tizen_sdb} -s ${device} shell rm -rf /usr/bin/${module}
+            ${tizen_sdb} -s ${device} shell rm -rf /usr/apps/com.oic.${module}.test
+            ${tizen_sdb} -s ${device} shell mkdir -p /usr/bin/${module}/bin
+            ${tizen_sdb} -s ${device} shell mkdir -p /usr/apps/com.oic.${module}.test/bin
 
             if [[ "${push}" == *"lib"* ]]; then
                 for lib_rpm_name in "${lib_rpm_names[@]}";

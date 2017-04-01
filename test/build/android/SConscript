@@ -152,17 +152,19 @@ if 'ca' in module:
             build_command = gradle_bin + ' ca -b' + iotivity_test_root + '/build/android/build.gradle -Parch=%s -Pm=%s -Piotivity_root=%s  -Pp=%s' %(target_arch, release_dir, iotivity_root, iotivity_test_root + '/build/android/')
 
             jdk_env['BUILDERS']['Gradle'] = Builder(action = build_command)
-            cajunit_gradle_build = jdk_env.Gradle(target = iotivity_test_root + '/bin/android/ca/outputs/apk/catest-debug.apk', source = iotivity_test_root + '/src/tc/ca/junit/build.gradle')
+            source_list = Glob(iotivity_test_root + '/src/tc/ca/junit/*.java')
+            cajunit_gradle_build = jdk_env.Gradle(target='cajunit_gradle_build', source=source_list)
             default_targets += cajunit_gradle_build
 
-        if 'simulator' in test:
+        if 'tc' in test or 'simulator' in test:
             build_command = "bash build/android/ca/junit/native_build.sh test=simulator stand_alone=0 android_ndk=%s release=%s target_arch=%s iotivity_root=%s iotivity_test_root=%s" % (ndk_dir, release_dir, target_arch, iotivity_root, iotivity_test_root)
             default_targets += env_android.Command('ca_simulator_native_build', None, build_command)
 
-            build_command = gradle_bin + ' build -b' + iotivity_test_root + '/src/testapp/ca/android/casimulator/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PANDROID_NDK=%s -PIOTIVITY_ROOT=%s' %(target_arch, release_dir, ndk_dir, iotivity_root)
+            build_command = gradle_bin + ' installDebug -b' + iotivity_test_root + '/src/testapp/ca/android/casimulator/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PANDROID_NDK=%s -PIOTIVITY_ROOT=%s' %(target_arch, release_dir, ndk_dir, iotivity_root)
 
             jdk_env['BUILDERS']['Gradle'] = Builder(action = build_command)
-            ca_simulator_gradle_build = jdk_env.Gradle(target = iotivity_test_root + '/src/testapp/ca/android/casimulator/build/outputs/apk/casimulator-debug.apk', source = iotivity_test_root + '/src/testapp/ca/android/casimulator/build.gradle')
+            source_list = Glob(iotivity_test_root + 'src/testapp/ca/android/casimulator/*.java')
+            ca_simulator_gradle_build = jdk_env.Gradle(target = 'ca_simulator_gradle_build', source = source_list)
             default_targets += ca_simulator_gradle_build
 
 env_android.Default(default_targets)

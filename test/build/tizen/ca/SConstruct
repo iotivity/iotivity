@@ -88,7 +88,6 @@ gtest_bt_network_src = gtest_ip_network_src
 gtest_ble_network_src = [
     iotivity_test_root + '/src/tc/ca/gtest/src/btc/CANetworkTest.cpp',
     iotivity_test_root + '/src/tc/ca/gtest/src/stc/CANetworkCommonTest.cpp',
-    iotivity_test_root + '/src/tc/ca/gtest/src/stc/CALeClientTest.cpp',
     iotivity_test_root + '/src/tc/ca/gtest/src/stc/CAMulticastTest.cpp'
 ]
 
@@ -128,8 +127,8 @@ if 'tc' in test:
 
         i = i + 1
 
-        if target_transport != 'ALL':
-            if target_transport != transport:
+        if transport != 'None':
+            if transport not in target_transport:
                 continue
 
         tc_cppdefines = common_cppdefines + transport_cppdefines[i]
@@ -166,7 +165,7 @@ if 'tc' in test:
 if 'tc' in test or 'simulator' in test:
     simulator_cppdefines = common_cppdefines
 
-    if target_transport != None and 'BT' in target_transport:
+    if 'BT' in target_transport:
         simulator_cppdefines.append('EDR_ADAPTER')
         simulator_cppdefines.append('BT_ADAPTER_TEST')
 

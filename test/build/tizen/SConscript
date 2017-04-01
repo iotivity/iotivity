@@ -48,6 +48,8 @@ target_arch = env_tizen.get('TARGET_ARCH')
 offline = env_tizen.get('OFFLINE')
 all_modules = env_tizen.get('ALL_MODULES')
 cloud_service_build = env_tizen.get('CLOUD_SERVICE')
+tls_mode = env_tizen.get('TLS_MODE')
+kafka_root = env_tizen.get('KAFKA_ROOT')
 
 if gbs_root is None or not os.path.isdir(gbs_root):
     print 'Set Proper GBS Root Path'
@@ -85,18 +87,22 @@ parameters = 'IOTIVITY_ROOT' + '=' + iotivity_root
 parameters += ' ' + 'IOTIVITY_TEST_ROOT' + '=' + iotivity_test_root
 parameters += ' ' + 'MODULE' + '=' + str(module)
 parameters += ' ' + 'TARGET_ARCH' + '=' + str(target_arch)
-parameters += ' ' + 'TEST' + '=' + str(test)
+parameters += ' ' + 'TEST' + '=' + '\"' + str(test) + '\"'
 parameters += ' ' + 'VARIANT_DIR' + '=' + str(variant_dir)
 parameters += ' ' + 'GBS_ROOT' + '=' + str(gbs_root)
 parameters += ' ' + 'RPMS_PATH' + '=' + str(rpms_path)
 parameters += ' ' + 'PROJECT_VERSION' + '=' + str(version)
+parameters += ' ' + 'TLS_MODE' + '=' + str(tls_mode)
+parameters += ' ' + 'CLOUD_SERVICE' + '=' + str(cloud_service_build)
+if kafka_root:
+    parameters += ' ' + 'KAFKA_ROOT' + '=' + str(kafka_root)
 parameters += ' ' + 'PREVENT' + '=' + str(prevent)
 if target_transport:
-    parameters += ' ' + 'TARGET_TRANSPORT' + '=' + str(target_transport)
+    parameters += ' ' + 'TARGET_TRANSPORT' + '=' + '\"' + str(target_transport) + '\"'
 parameters += ' ' + 'SECURED' + '=' + str(secured)
 if push:
-    parameters += ' ' + 'PUSH' + '=' + str(push)
-parameters += ' ' + 'SDK' + '=' + str(sdk)
+    parameters += ' ' + 'PUSH' + '=' + '\"' + str(push) + '\"'
+parameters += ' ' + 'SDK' + '=' + '\"' + str(sdk) + '\"'
 if tizen_home:
     parameters += ' ' + 'TIZEN_HOME' + '=' + str(tizen_home)
 if tizen_sdb:
@@ -123,12 +129,14 @@ for temp in all_modules:
         if temp == 'ca':
             lib_rpm_names = 'com-oic-ri'
 
+        test_res_files = iotivity_test_root + '/res/common'
+
         if temp == 'rc':
-            test_res_files = iotivity_test_root + '/res/resource_container_xml'
+            test_res_files += ',' + iotivity_test_root + '/res/resource_container_xml'
         if temp == 'pm':
-            test_res_files = iotivity_test_root + '/res/pm_resource'
+            test_res_files += ',' + iotivity_test_root + '/res/pm_resource'
         if temp == 'ic' or temp == 'cs':
-            test_res_files = iotivity_test_root + '/res/cloud_resource'
+            test_res_files += ',' + iotivity_test_root + '/res/cloud_resource'
 
         extra_parameters += ' ' + 'lib_rpm_names' + '=' + lib_rpm_names
     

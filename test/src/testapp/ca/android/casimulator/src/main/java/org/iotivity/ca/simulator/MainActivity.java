@@ -116,6 +116,22 @@ public class MainActivity extends Activity {
         caJni.initialize(getApplicationContext(), this);
 
         caJni.registerHandler();
+
+        String transport = getIntent().getStringExtra("transport");
+
+        if(transport !=null)
+        {
+            Log.d("CASimulator", "transport not null");
+            selectedNetwork = Integer.parseInt(transport);
+            caJni.selectNetwork(selectedNetwork);
+            mCurrentMode = Mode.SERVER;
+            caJni.startListeningServer();
+            handleResponse();
+            mMode_tv.setText("MODE: " + mCurrentMode.toString());
+            Log.i(TAG, "MODE: " + mCurrentMode.toString());
+            mReceiveLayout.setVisibility(View.VISIBLE);
+            mNetwork_tv.setText("");
+        }
     }
 
     private void showSelectModeView()

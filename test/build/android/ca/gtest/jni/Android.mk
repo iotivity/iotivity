@@ -10,7 +10,7 @@ COMMON_UTIL_SRC_PATH = $(IOTIVITY_TEST_ROOT)/src/common/commonutil/c_cpp
 COMMON_UTIL_HEADER_PATH = $(IOTIVITY_TEST_ROOT)/include
 CURRENT_PATH = $(IOTIVITY_TEST_ROOT)/build/android/ca/gtest/jni
 EXTERNAL_PATH = $(CURRENT_PATH)/external
-GTEST_PATH = $(IOTIVITY_ROOT)/extlibs/gtest/googletest-release-1.7.0
+GTEST_PATH = $(IOTIVITY_TEST_ROOT)/extlibs/gtest-1.7.0
 BOOST_PATH = $(IOTIVITY_ROOT)/extlibs/boost/boost_1_58_0
 
 include $(CLEAR_VARS)
@@ -62,7 +62,7 @@ COMMON_TC_INCLUDE += $(COMMON_UTIL_HEADER_PATH) $(EXTERNAL_PATH) $(HELPER_HEADER
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := connectivity_abstraction
-LOCAL_SRC_FILES := $(IOTIVITY_ROOT)/out/android/$(TARGET_ARCH)/${RELEASE_DIR}/libconnectivity_abstraction.so
+LOCAL_SRC_FILES := $(IOTIVITY_ROOT)/out/android/$(IOTIVITY_TARGET_ARCH)/${RELEASE_DIR}/libconnectivity_abstraction.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
