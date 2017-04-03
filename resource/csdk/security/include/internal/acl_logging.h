@@ -50,10 +50,22 @@ INLINE_API void printACE(LogLevel level, const OicSecAce_t *ace)
 
     OIC_LOG_V(level, ACL_TAG, "    permission = %#x", (uint32_t)ace->permission);
 
-    // Log the subjectuuid.
-    char uuidString[UUID_STRING_SIZE] = { 0 };
-    bool convertedUUID = OCConvertUuidToString(ace->subjectuuid.id, uuidString);
-    OIC_LOG_V(level, ACL_TAG, "    subjectuuid = %s", convertedUUID ? uuidString : "incorrect format");
+    // Log the subject
+    if (ace->subjectType == OicSecAceUuidSubject)
+    {
+        char uuidString[UUID_STRING_SIZE] = { 0 };
+        bool convertedUUID = OCConvertUuidToString(ace->subjectuuid.id, uuidString);
+        OIC_LOG_V(level, ACL_TAG, "    subject UUID = %s", convertedUUID ? uuidString : "incorrect format");
+    }
+    else if (ace->subjectType == OicSecAceRoleSubject)
+    {
+        OIC_LOG_V(level, ACL_TAG, "    role id = %s", ace->subjectRole.id);
+        OIC_LOG_V(level, ACL_TAG, "    authority = %s", ace->subjectRole.authority);
+    }
+    else
+    {
+        OIC_LOG(level, ACL_TAG, "    subject = (subject of unknown type)");
+    }
 
     // Log all resources this ACE applies to.
     OicSecRsrc_t *resource = NULL;

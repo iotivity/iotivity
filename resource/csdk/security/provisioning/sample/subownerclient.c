@@ -515,6 +515,7 @@ static OicSecAcl_t* createAclForLEDAccess(const OicUuid_t* subject)
         return NULL;  // not need to 'goto' |ERROR| before allocating |acl|
     }
     LL_APPEND(acl->aces, ace);
+    ace->subjectType = OicSecAceUuidSubject;
     memcpy(ace->subjectuuid.id, subject->id, sizeof(subject->id));
 
     // fill the href

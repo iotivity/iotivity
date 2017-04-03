@@ -128,6 +128,18 @@ extern "C"
 #define CA_OPTION_URI_QUERY 15
 #define CA_OPTION_ACCEPT 17
 #define CA_OPTION_LOCATION_QUERY 20
+        
+/**
+ * @def UUID_PREFIX
+ * @brief uuid prefix in certificate subject field
+ */
+#define UUID_PREFIX "uuid:"
+
+/**
+ * @def SUBJECT_PREFIX
+ * @brief prefix for specifying part of a cert's subject for a particular uuid
+ */
+#define SUBJECT_PREFIX "CN=" UUID_PREFIX
 
 /**
 * TODO: Move these COAP defines to CoAP lib once approved.
@@ -316,6 +328,8 @@ typedef struct
 #endif
 } CAEndpoint_t;
 
+#define CA_SECURE_ENDPOINT_PUBLIC_KEY_MAX_LENGTH    (128)
+
 /**
  * Endpoint information for secure messages.
  */
@@ -326,6 +340,8 @@ typedef struct
     CARemoteId_t identity;      /**< endpoint device uuid */
     CARemoteId_t userId;        /**< endpoint user uuid */
     uint32_t attributes;
+    uint8_t publicKey[CA_SECURE_ENDPOINT_PUBLIC_KEY_MAX_LENGTH]; /**< Peer's DER-encoded public key (if using certificate) */
+    size_t publicKeyLength;     /**< Length of publicKey; zero if not using certificate */
 } CASecureEndpoint_t;
 
 /**

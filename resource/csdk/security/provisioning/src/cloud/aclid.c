@@ -185,7 +185,7 @@ static OCStackResult handleAclGetInfoResponse(void *ctx, void **data, OCClientRe
         goto exit;
     }
 
-    OicSecAcl_t* acl = CBORPayloadToAcl2(cbor, size);
+    OicSecAcl_t* acl = CBORPayloadToCloudAcl(cbor, size);
     if (NULL == acl)
     {
         OIC_LOG(ERROR, TAG, "Can't parse CBOR payload");

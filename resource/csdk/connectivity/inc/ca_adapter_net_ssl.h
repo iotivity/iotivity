@@ -179,16 +179,15 @@ CAResult_t CAsslGenerateOwnerPsk(const CAEndpoint_t *endpoint,
                     const uint8_t* provServerDeviceId, const size_t provServerDeviceIdLen,
                     uint8_t* ownerPsk, const size_t ownerPskSize);
 
-#ifdef MULTIPLE_OWNER
 /**
- * Gets CA secure endpoint info corresponding for endpoint.
+ * Gets a copy of CA secure endpoint info corresponding for endpoint.
  *
  * @param[in]  peer    remote address
+ * @param[out] sep     copy of secure endpoint data
  *
- * @return  CASecureEndpoint or NULL
+ * @return  CA_STATUS_OK on success; other error code on failure
  */
-const CASecureEndpoint_t *GetCASecureEndpointData(const CAEndpoint_t* peer);
-#endif
+CAResult_t GetCASecureEndpointData(const CAEndpoint_t* peer, CASecureEndpoint_t *sep);
 
 /**
  * Adds a bit to the attributes field of a secure endpoint.

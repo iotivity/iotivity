@@ -481,12 +481,15 @@ bool SRMIsSecurityResourceURI(const char* uri)
         OIC_RSRC_AMACL_URI,
         OIC_RSRC_CRL_URI,
         OIC_RSRC_CRED_URI,
+        OIC_RSRC_CSR_URI,
         OIC_RSRC_ACL_URI,
+        OIC_RSRC_ACL2_URI,
         OIC_RSRC_DOXM_URI,
         OIC_RSRC_PSTAT_URI,
         OIC_RSRC_PCONF_URI,
         OIC_RSRC_DPAIRING_URI,
         OIC_RSRC_VER_URI,
+        OIC_RSRC_ROLES_URI,
         OC_RSRVD_PROV_CRL_URL
     };
 
@@ -549,6 +552,15 @@ OicSecSvrType_t GetSvrTypeFromUri(const char* uri)
         }
     }
 
+    svrLen = strlen(OIC_RSRC_ACL2_URI);
+    if (uriLen == svrLen)
+    {
+        if (0 == strncmp(uri, OIC_RSRC_ACL2_URI, svrLen))
+        {
+            return OIC_R_ACL2_TYPE;
+        }
+    }
+
     svrLen = strlen(OIC_RSRC_AMACL_URI);
     if (uriLen == svrLen)
     {
@@ -573,6 +585,15 @@ OicSecSvrType_t GetSvrTypeFromUri(const char* uri)
         if (0 == strncmp(uri, OIC_RSRC_CRL_URI, svrLen))
         {
             return OIC_R_CRL_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_CSR_URI);
+    if (uriLen == svrLen)
+    {
+        if (0 == strncmp(uri, OIC_RSRC_CSR_URI, svrLen))
+        {
+            return OIC_R_CSR_TYPE;
         }
     }
 
@@ -609,6 +630,15 @@ OicSecSvrType_t GetSvrTypeFromUri(const char* uri)
         if (0 == strncmp(uri, OIC_RSRC_PSTAT_URI, svrLen))
         {
             return OIC_R_PSTAT_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_ROLES_URI);
+    if (uriLen == svrLen)
+    {
+        if (0 == strncmp(uri, OIC_RSRC_ROLES_URI, svrLen))
+        {
+            return OIC_R_ROLES_TYPE;
         }
     }
 

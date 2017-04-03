@@ -139,18 +139,18 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 #ifdef MULTIPLE_OWNER
-const CASecureEndpoint_t *CAGetSecureEndpointData(const CAEndpoint_t *peer)
+CAResult_t CAGetSecureEndpointData(const CAEndpoint_t *peer, CASecureEndpoint_t *sep)
 {
     OIC_LOG(DEBUG, TAG, "IN CAGetSecurePeerInfo");
 
     if (!g_isInitialized)
     {
         OIC_LOG(DEBUG, TAG, "CA is not initialized");
-        return NULL;
+        return CA_STATUS_NOT_INITIALIZED;
     }
 
     OIC_LOG(DEBUG, TAG, "OUT CAGetSecurePeerInfo");
-    return GetCASecureEndpointData(peer);
+    return GetCASecureEndpointData(peer, sep);
 }
 #endif //MULTIPLE_OWNER
 
