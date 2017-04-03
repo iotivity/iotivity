@@ -131,6 +131,7 @@ help_vars.Add(PathVariable('ANDROID_HOME', 'Android SDK path', None, PathVariabl
 help_vars.Add(PathVariable('ANDROID_GRADLE', 'Gradle binary file', None, PathVariable.PathIsFile))
 help_vars.Add(EnumVariable('WITH_UPSTREAM_LIBCOAP', 'Use latest stable version of LibCoAP downloaded from github', default_with_upstream_libcoap, allowed_values=('0','1')))
 help_vars.Add(BoolVariable('WITH_ENV', 'Use compiler options from environment', False))
+help_vars.Add(BoolVariable('AUTOMATIC_UPDATE', 'Makes libcoap update automatically to the required versions if needed.', False))
 
 if target_os == 'windows':
 	# For VS2013, MSVC_VERSION is '12.0'. For VS2015, MSVC_VERSION is '14.0'.

@@ -17,6 +17,12 @@ IF /I "%1" == "msys" (
 REM *** Default BUILD OPTIONS ***
 set TARGET_OS=windows
 
+if "%JENKINS_HOME%" == "" (
+  set AUTOMATIC_UPDATE=0
+) else (
+  set AUTOMATIC_UPDATE=1
+)
+
 if "%TARGET_ARCH%" == "" (
   set TARGET_ARCH=amd64
 )
@@ -88,6 +94,9 @@ IF NOT "%1"=="" (
   IF /I "%1"=="-noMOT" (
     set MULTIPLE_OWNER=0
   )
+  IF /I "%1"=="-automaticUpdate" (
+    set AUTOMATIC_UPDATE=1
+  )
 
   SHIFT
   GOTO :processArgs
@@ -106,7 +115,7 @@ IF "%BUILD_MSYS%" == "" (
   set PATH=!PATH!;!BUILD_DIR!;C:\msys64\mingw64\bin
 )
 
-set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% RD_MODE=%RD_MODE% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER% -j %THREAD_COUNT%
+set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% RD_MODE=%RD_MODE% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER% -j %THREAD_COUNT% AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE%
 
 REM Use MSVC_VERSION=12.0 for VS2013, or MSVC_VERSION=14.0 for VS2015.
 REM If MSVC_VERSION has not been defined here, SCons chooses automatically a VS version.
@@ -174,6 +183,7 @@ if "!RUN_ARG!"=="server" (
   echo   MULTIPLE_OWNER=%MULTIPLE_OWNER%
   echo   MSVC_VERSION=%MSVC_VERSION%
   echo   THREAD_COUNT=%THREAD_COUNT%
+  echo   AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE%
   echo.scons VERBOSE=1 %BUILD_OPTIONS%
   scons VERBOSE=1 %BUILD_OPTIONS%
 ) else if "!RUN_ARG!"=="clean" (
@@ -222,6 +232,9 @@ echo.
 echo   -noSecurity                  - Remove security support (results in code that cannot be certified by OCF)
 echo.
 echo   -noMOT                       - Remove Multiple Ownership Transfer support.
+echo.
+echo   -automaticUpdate             - Automatically update libcoap to required version.
+echo.
 echo.
 echo. Usage examples:
 echo.

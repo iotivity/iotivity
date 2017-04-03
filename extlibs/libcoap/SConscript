@@ -49,10 +49,10 @@ libcoap_repo_url    = 'https://github.com/dthaler/libcoap'
 # Right now this script assumes the revision is a tag, and not a branch or an arbitrary
 # commit. If this changes, update the check below, or else the script will always conclude
 # the repo is not up to date because a tag with that name doesn't exist.
-libcoap_version          = 'IoTivity-1.2.1c'
+libcoap_version          = 'IoTivity-1.2.1d'
 libcoap_dir              = os.path.join(src_dir, 'extlibs', 'libcoap', 'libcoap')
 libcoap_checkout_command = 'git clone ' + libcoap_repo_url + '.git extlibs/libcoap/libcoap -b ' + libcoap_version
-libcoap_update_command = 'git fetch && git checkout -f ' + libcoap_version
+libcoap_update_command = 'git fetch --tags && git checkout -f ' + libcoap_version
 libcoap_change_dir_command = 'cd ' + libcoap_dir
 
 if with_upstream_libcoap == '1':
@@ -72,12 +72,24 @@ if with_upstream_libcoap == '1':
         print '''
 *********************************** Info: *****************************************
 * Your libCoAP repo is not up to date with the latest version we require (%s).
+***********************************************************************************
+ ''' %(libcoap_version)
+        if libcoap_env.get('AUTOMATIC_UPDATE'):
+            print '''
+*********************************** Info: *****************************************
+* Automatically updating libcoap to version %s.
+***********************************************************************************
+ ''' %(libcoap_version)
+            subprocess.check_output(libcoap_update_command, shell = True)
+        else:
+            print '''
+*********************************** Info: *****************************************
 * Please update using the following commands:
 *   %s
 *   %s
 ***********************************************************************************
- ''' %(libcoap_version, libcoap_change_dir_command, libcoap_update_command)
-        Exit(1)
+ ''' %(libcoap_change_dir_command, libcoap_update_command)
+            Exit(1)
 
 else:
     print '''
@@ -272,6 +284,9 @@ else:
     # For bring up purposes only, the forked version will live here.
     libcoap_src_root = src_dir + '/resource/csdk/connectivity/lib/libcoap-4.1.1'
     libcoap_src = glob.glob(os.path.join(libcoap_src_root, '*.c'))
+
+if libcoap_env['CC'] == 'cl':
+    libcoap_env.AppendUnique(CCFLAGS = ['/W4', '/WX'])
 
 libcoap = libcoap_env.StaticLibrary('coap', libcoap_src, OBJPREFIX='libcoap_')
 
