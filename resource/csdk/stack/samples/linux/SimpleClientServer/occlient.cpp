@@ -34,7 +34,6 @@
 #include <sstream>
 #include <getopt.h>
 #include "ocstack.h"
-#include "pdu.h"
 #include "logger.h"
 #include "occlient.h"
 #include "ocpayload.h"
@@ -402,6 +401,14 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
     if (clientResponse)
     {
         OIC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
+
+        if (OC_STACK_NOT_ACCEPTABLE == clientResponse->result)
+        {
+            // Re-initiate discovery with OIC format. This is applicable for the case that
+            // a OCF 1.x client speaks to a OIC 1.1 server.
+            InitDiscovery(OC_LOW_QOS, 0);
+            return OC_STACK_KEEP_TRANSACTION;
+        }
 
         std::string connectionType = getConnectivityType (clientResponse->connType);
         OIC_LOG_V(INFO, TAG, "Discovered on %s", connectionType.c_str());
@@ -873,9 +880,14 @@ int InitDiscovery(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOption
         memset(options, 0, sizeof(OCHeaderOption) * MAX_HEADER_OPTIONS);
         size_t numOptions = 0;
 
-        uint8_t format = COAP_MEDIATYPE_APPLICATION_CBOR;
+        uint16_t format = COAP_MEDIATYPE_APPLICATION_VND_OCF_CBOR;
         uint16_t optionID = CA_OPTION_ACCEPT;
         OCSetHeaderOption(options, &numOptions, optionID, &format, sizeof(format));
+
+        uint16_t version = 2048;
+        optionID = CA_OPTION_ACCEPT_VERSION;
+        numOptions = 1;
+        OCSetHeaderOption(options, &numOptions, optionID, &version, sizeof(version));
 
         ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
                               (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
@@ -1095,7 +1107,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        InitDiscovery(OC_LOW_QOS, 0);
+        InitDiscovery(OC_LOW_QOS, 1);
     }
 
     // Break from loop with Ctrl+C
