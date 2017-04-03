@@ -75,7 +75,7 @@ namespace OIC
         std::string SceneUtils::getNetAddress()
         {
             CAEndpoint_t * netInfo = nullptr;
-            uint32_t size = 0;
+            size_t size = 0;
             CAGetNetworkInformation(&netInfo, &size);
 
             if (size == 0)
@@ -85,7 +85,7 @@ namespace OIC
             }
             std::string address_ipv4 = "", address_ipv6 = "";
 
-            for (uint32_t i = 0; i < size; ++i)
+            for (size_t i = 0; i < size; ++i)
             {
                 if (netInfo[i].adapter == CATransportAdapter_t::CA_ADAPTER_IP)
                 {

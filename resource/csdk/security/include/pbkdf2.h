@@ -31,8 +31,8 @@ extern "C"
 
 /**
  * The number of iterations desired to derived key.
- * As specified in the OCF Security Specification. This choice is required for 
- * interoperability in the Random PIN OTM. 
+ * As specified in the OCF Security Specification. This choice is required for
+ * interoperability in the Random PIN OTM.
  */
 #define PBKDF_ITERATIONS 1000
 
@@ -43,8 +43,8 @@ extern "C"
  * @param passwd is the master password from which a derived key is generated.
  * @param pLen is the byte size of the passwd.
  * @param salt is a cryptographic salt.
- * @param saltlen is the byte size of the salt.
- * @param iteration is the number of iterations desired.
+ * @param saltLen is the byte size of the salt.
+ * @param iterations is the number of iterations desired.
  * @param keyLen is the desired byte size of the derived key. (should be the same as
  *       derivedKey size)
  * @param derivedKey is the generated derived key
@@ -52,9 +52,9 @@ extern "C"
  * @return  0 on success
  */
 int DeriveCryptoKeyFromPassword(const unsigned char* passwd, size_t pLen,
-                                const uint8_t* salt, const size_t saltLen,
-                                const size_t iterations,
-                                const size_t keyLen, uint8_t* derivedKey);
+                                const uint8_t* salt, size_t saltLen,
+                                size_t iterations,
+                                size_t keyLen, uint8_t* derivedKey);
 
 #ifdef __cplusplus
 }

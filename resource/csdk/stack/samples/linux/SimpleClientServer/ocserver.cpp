@@ -97,8 +97,8 @@ const char *platformVersion = "myPlatformVersion";
 const char *supportLink = "https://www.iotivity.org";
 const char *version = "myVersion";
 const char *systemTime = "2015-05-15T11.04";
-const char *specVersion = "core.1.1.0";
-const char *dataModelVersions = "res.1.1.0,sh.1.1.0";
+const char *specVersion = "ocf.1.1.0";
+const char *dataModelVersions = "ocf.res.1.1.0,ocf.sh.1.1.0";
 const char *deviceType = "oic.d.tv";
 
 OCPlatformInfo platformInfo;
@@ -186,10 +186,17 @@ bool checkIfQueryForPowerPassed(char * query)
 
         if (pointerToOperator)
         {
-            int powerRequested = atoi(pointerToOperator + 1);
+            int64_t powerRequested;
+            int matchedItems = sscanf((pointerToOperator + 1), "%" SCNd64, &powerRequested);
+
+            if (1 != matchedItems)
+            {
+                return true;
+            }
+
             if (Light.power > powerRequested)
             {
-                OIC_LOG_V(INFO, TAG, "Current power: %d. Requested: <%d", Light.power,
+                OIC_LOG_V(INFO, TAG, "Current power: %" PRId64 ". Requested: <%" PRId64, Light.power,
                           powerRequested);
                 return false;
             }
@@ -730,7 +737,7 @@ void *ChangeLightRepresentation (void *param)
         Light.power += 5;
         if (gLightUnderObservation)
         {
-            OIC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %d\n", Light.power);
+            OIC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %" PRId64 "\n", Light.power);
             if (gObserveNotifyType == 1)
             {
                 // Notify list of observers. Alternate observers on the list will be notified.

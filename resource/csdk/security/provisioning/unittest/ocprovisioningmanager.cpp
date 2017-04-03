@@ -55,7 +55,7 @@ static OicSecDoxm_t defaultDoxm2 =
     {{0}},            /* OicUuid_t owner */
 };
 
-static void provisioningCB (void* UNUSED1, int UNUSED2, OCProvisionResult_t *UNUSED3, bool UNUSED4)
+static void provisioningCB (void* UNUSED1, size_t UNUSED2, OCProvisionResult_t *UNUSED3, bool UNUSED4)
 {
     //dummy callback
     (void) UNUSED1;

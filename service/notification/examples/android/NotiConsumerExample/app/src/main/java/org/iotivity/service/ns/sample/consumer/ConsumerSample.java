@@ -113,17 +113,15 @@ public class ConsumerSample
         }
     }
 
-    public int subscribeMQService(String servAdd, String topicName) {
+    public void subscribeMQService(String servAdd, String topicName) {
         Log.i(TAG, "SubscribeMQService  - IN");
-        int result = 0;
         try {
-            result = consumerService.subscribeMQService(servAdd, topicName);
-            Log.i(TAG, "Notification SubscribeMQService: " + result);
+            consumerService.subscribeMQService(servAdd, topicName);
         } catch (Exception e) {
             Log.e(TAG, "Exception: subscribeMQService : " + e);
         }
         Log.i(TAG, "SubscribeMQService  - OUT");
-        return result;
+        return;
     }
 
     public void rescanProvider() {

@@ -56,8 +56,8 @@ IotvtICalResult_t ParsePeriod(const char *periodStr, IotvtICalPeriod_t *period)
 
     char *endDTPos;
     char *fmt = "";
-    int   startDTLen;
-    int   endDTLen;
+    size_t  startDTLen;
+    size_t  endDTLen;
 
     //Finding length of startDateTime and endDateTime in period
     //startDateTime and endDateTime can have form YYYYmmdd or YYYYmmddTHHMMSS

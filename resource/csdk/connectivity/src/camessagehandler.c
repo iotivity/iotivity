@@ -28,6 +28,7 @@
 #include "caremotehandler.h"
 #include "caprotocolmessage.h"
 #include "logger.h"
+#include "trace.h"
 #ifndef WITH_UPSTREAM_LIBCOAP
 #include "coap/config.h"
 #endif
@@ -47,6 +48,9 @@
 #include "cathreadpool.h" /* for thread pool */
 #include "caqueueingthread.h"
 
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+#include "caconnectionmanager.h"
+#endif
 #define SINGLE_HANDLE
 #define MAX_THREAD_POOL_SIZE    20
 
@@ -413,7 +417,9 @@ static void CAReceiveThreadProcess(void *threadData)
 {
 #ifndef SINGLE_HANDLE
     CAData_t *data = (CAData_t *) threadData;
+    OIC_TRACE_BEGIN(%s:CAProcessReceivedData, TAG);
     CAProcessReceivedData(data);
+    OIC_TRACE_END();
 #else
     (void)threadData;
 #endif
@@ -662,7 +668,9 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
 static void CASendThreadProcess(void *threadData)
 {
     CAData_t *data = (CAData_t *) threadData;
+    OIC_TRACE_BEGIN(%s:CAProcessSendData, TAG);
     CAProcessSendData(data);
+    OIC_TRACE_END();
 }
 #endif
 
@@ -704,13 +712,10 @@ static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, ui
         if (id == item->messageId && tokenLength == item->tokenLength
             && ep->ifindex == item->ifindex && memcmp(item->token, token, tokenLength) == 0)
         {
-            if ((familyFlags ^ item->flags) == CA_IPFAMILY_MASK)
-            {
-                OIC_LOG_V(INFO, TAG, "IPv%c duplicate message ignored",
-                          familyFlags & CA_IPV6 ? '6' : '4');
-                ret = true;
-                break;
-            }
+            OIC_LOG_V(INFO, TAG, "IPv%c duplicate message ignored",
+                      familyFlags & CA_IPV6 ? '6' : '4');
+            ret = true;
+            break;
         }
     }
 
@@ -736,10 +741,12 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
 {
     VERIFY_NON_NULL_VOID(sep, TAG, "remoteEndpoint");
     VERIFY_NON_NULL_VOID(data, TAG, "data");
+    OIC_TRACE_BEGIN(%s:CAReceivedPacketCallback, TAG);
 
     if (0 == dataLen)
     {
         OIC_LOG(ERROR, TAG, "dataLen is zero");
+        OIC_TRACE_END();
         return;
     }
 
@@ -841,6 +848,8 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
 exit:
     OIC_LOG(DEBUG, TAG, "received pdu data :");
     OIC_LOG_BUFFER(DEBUG, TAG,  data, dataLen);
+
+    OIC_TRACE_END();
 }
 
 void CAHandleRequestResponseCallbacks()
@@ -992,6 +1001,14 @@ CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg
     }
 
     OIC_LOG_V(DEBUG, TAG, "device ID of endpoint of this message is %s", endpoint->remoteId);
+
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+    CAResult_t ret = CACMGetMessageData(data);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(DEBUG, TAG, "Ignore ConnectionManager");
+    }
+#endif
 
 #ifdef SINGLE_THREAD
     CAResult_t result = CAProcessSendData(data);
@@ -1152,10 +1169,9 @@ void CATerminateMessageHandler()
 #ifndef SINGLE_THREAD
     CATransportAdapter_t connType;
     u_arraylist_t *list = CAGetSelectedNetworkList();
-    uint32_t length = u_arraylist_length(list);
+    size_t length = u_arraylist_length(list);
 
-    uint32_t i = 0;
-    for (i = 0; i < length; i++)
+    for (size_t i = 0; i < length; i++)
     {
         void* ptrType = u_arraylist_get(list, i);
 
@@ -1232,7 +1248,7 @@ static void CALogPayloadInfo(CAInfo_t *info)
 
         if (info->payload)
         {
-            OIC_LOG_V(DEBUG, TAG, "payload: %p(%zu)", info->payload,
+            OIC_LOG_V(DEBUG, TAG, "payload: %p(%" PRIuPTR ")", info->payload,
                       info->payloadSize);
         }
 
@@ -1350,6 +1366,7 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
 
     VERIFY_NON_NULL_VOID(data, TAG, "data");
     VERIFY_NON_NULL_VOID(pdu, TAG, "pdu");
+    OIC_TRACE_BEGIN(%s:CALogPDUInfo, TAG);
 
     OIC_LOG(DEBUG, ANALYZER_TAG, "=================================================");
     if(SEND_TYPE_MULTICAST == data->type)
@@ -1364,10 +1381,8 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
     if (NULL != data->remoteEndpoint)
     {
         CALogAdapterTypeInfo(data->remoteEndpoint->adapter);
-        OIC_LOG(DEBUG, ANALYZER_TAG, "-------------------------------------------------");
         OIC_LOG_V(DEBUG, ANALYZER_TAG, "Address = [%s]:[%d]", data->remoteEndpoint->addr,
                   data->remoteEndpoint->port);
-        OIC_LOG(DEBUG, ANALYZER_TAG, "-------------------------------------------------");
     }
 
     switch(data->dataType)
@@ -1422,19 +1437,26 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
 
     if (pdu->transport_hdr)
     {
-        OIC_LOG_V(DEBUG, ANALYZER_TAG, "Msg ID = [%d]", pdu->transport_hdr->udp.id);
+        OIC_LOG_V(DEBUG, ANALYZER_TAG, "Msg ID = [%u]", 
+            (uint32_t)ntohs(pdu->transport_hdr->udp.id));
     }
 
     if (info)
     {
         OIC_LOG(DEBUG, ANALYZER_TAG, "Coap Token");
         OIC_LOG_BUFFER(DEBUG, ANALYZER_TAG, (const uint8_t *) info->token, info->tokenLength);
+        OIC_TRACE_BUFFER("OIC_CA_MSG_HANDLE:CALogPDUInfo:token:", (const uint8_t *) info->token,
+                         info->tokenLength);
         OIC_LOG_V(DEBUG, ANALYZER_TAG, "Res URI = [%s]", info->resourceUri);
-        OIC_LOG(DEBUG, ANALYZER_TAG, "-------------------------------------------------");
+        OIC_TRACE_MARK(%s:CALogPDUInfo:uri:%s, TAG, info->resourceUri);
 
         if (CA_FORMAT_APPLICATION_CBOR == info->payloadFormat)
         {
             OIC_LOG(DEBUG, ANALYZER_TAG, "Payload Format = [CA_FORMAT_APPLICATION_CBOR]");
+        }
+        else if (CA_FORMAT_APPLICATION_VND_OCF_CBOR == info->payloadFormat)
+        {
+            OIC_LOG(DEBUG, ANALYZER_TAG, "Payload Format = [CA_FORMAT_APPLICATION_VND_OCF_CBOR]");
         }
         else
         {
@@ -1450,9 +1472,10 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
     OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Header size = [%lu]", pdu->length - payloadLen);
 
     OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Payload");
-    OIC_LOG_BUFFER(DEBUG, ANALYZER_TAG, pdu->data, payloadLen);
+//    OIC_LOG_BUFFER(DEBUG, ANALYZER_TAG, pdu->data, payloadLen);
     OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Payload Size = [%lu]", payloadLen);
     OIC_LOG(DEBUG, ANALYZER_TAG, "=================================================");
+    OIC_TRACE_END();
 }
 #else
 static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)

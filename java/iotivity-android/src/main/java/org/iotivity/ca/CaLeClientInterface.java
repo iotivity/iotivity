@@ -38,25 +38,41 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
 
+// For using bluetooth.le APIs
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanFilter;
+import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
+import android.os.ParcelUuid;
+import java.util.Iterator;
+import android.os.Build;
+
 public class CaLeClientInterface {
 
     private static String SERVICE_UUID = "ADE3D529-C784-4F63-A987-EB69F70EE816";
     private static String TAG          = "OIC_LE_CB_INTERFACE";
     private static Context mContext;
+    private static volatile boolean isLeClientInitialized = false;
 
     private CaLeClientInterface(Context context) {
-        caLeRegisterLeScanCallback(mLeScanCallback);
+        getLeScanCallback();
         caLeRegisterGattCallback(mGattCallback);
         synchronized(CaLeClientInterface.class) {
             mContext = context;
         }
-        registerIntentFilter();
+        if (!isLeClientInitialized) {
+            registerIntentFilter();
+            isLeClientInitialized = true;
+        }
     }
 
-
-
     public static void getLeScanCallback() {
-        caLeRegisterLeScanCallback(mLeScanCallback);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            caLeRegisterLeScanCallbackForV21(mLeScanCallbackForV21);
+        } else {
+            caLeRegisterLeScanCallback(mLeScanCallback);
+        }
     }
 
     public static void getLeGattCallback() {
@@ -72,15 +88,25 @@ public class CaLeClientInterface {
     }
 
     public static void destroyLeInterface() {
-        mContext.unregisterReceiver(mReceiver);
+        if (isLeClientInitialized) {
+            mContext.unregisterReceiver(mReceiver);
+            isLeClientInitialized = false;
+        }
     }
 
+    // register scan callback instance into le adapter.
     private native static void caLeRegisterLeScanCallback(BluetoothAdapter.LeScanCallback callback);
+
+    // register scan callback instance for level 21 into le adapter.
+    private native static void caLeRegisterLeScanCallbackForV21(ScanCallback callback);
 
     private native static void caLeRegisterGattCallback(BluetoothGattCallback callback);
 
     // BluetoothAdapter.LeScanCallback
     private native static void caLeScanCallback(BluetoothDevice device);
+
+    // scan failed callback for ca layer
+    private native static void caLeScanFailedCallback(int errorCode);
 
     // BluetoothGattCallback
     private native static void caLeGattConnectionStateChangeCallback(
@@ -135,28 +161,57 @@ public class CaLeClientInterface {
     private native static void caLeGattMtuChangedCallback(BluetoothGatt gatt, int mtu,
                                                           int status);
 
-    // Callback
+    // Le Scan Callback which lower than API 21
     private static BluetoothAdapter.LeScanCallback mLeScanCallback =
                    new BluetoothAdapter.LeScanCallback() {
 
         @Override
         public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-
-            try {
-                List<UUID> uuids = getUuids(scanRecord);
-                for (UUID uuid : uuids) {
-                    Log.d(TAG, "UUID : " + uuid.toString());
-                    if(uuid.toString().contains(SERVICE_UUID.toLowerCase())) {
-                        Log.d(TAG, "we found that has the Device");
-                        Log.d(TAG, "scanned device address : " + device.getAddress());
-                        caLeScanCallback(device);
-                    }
-                }
-            } catch(UnsatisfiedLinkError e) {
-
-            }
+            filteringScanResult(device, scanRecord);
         }
     };
+
+    // Le Scan Callback which upper than API 21
+    private static ScanCallback mLeScanCallbackForV21 = new ScanCallback() {
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            super.onScanResult(callbackType, result);
+            Log.d(TAG, "onScanResult from ScanCallback");
+            filteringScanResult(result.getDevice(), result.getScanRecord().getBytes());
+        }
+
+        @Override
+        public void onBatchScanResults(List<ScanResult> results) {
+            super.onBatchScanResults(results);
+            Iterator<ScanResult> itr = results.iterator();
+            while (itr.hasNext()) {
+                filteringScanResult(itr.next().getDevice(),
+                        itr.next().getScanRecord().getBytes());
+            }
+        }
+
+        @Override
+        public void onScanFailed(int errorCode) {
+            super.onScanFailed(errorCode);
+            caLeScanFailedCallback(errorCode);
+        }
+    };
+
+    private static void filteringScanResult(BluetoothDevice device, byte[] scanRecord) {
+        try {
+            List<UUID> uuids = getUuids(scanRecord);
+            for (UUID uuid : uuids) {
+                Log.d(TAG, "UUID : " + uuid.toString());
+                if(uuid.toString().contains(SERVICE_UUID.toLowerCase())) {
+                    Log.d(TAG, "we found that has the Device");
+                    Log.d(TAG, "scanned device address : " + device.getAddress());
+                    caLeScanCallback(device);
+                }
+            }
+        } catch(UnsatisfiedLinkError e) {
+            e.printStackTrace();
+        }
+    }
 
     private static List<UUID> getUuids(final byte[] scanRecord) {
         List<UUID> uuids = new ArrayList<UUID>();

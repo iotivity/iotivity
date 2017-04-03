@@ -28,6 +28,7 @@
 #include "cacommonutil.h"
 #include "aclresource.h"
 #include "ocpayloadcbor.h"
+#include "acl_logging.h"
 #include "payload_logging.h"
 #include "utlist.h"
 
@@ -177,7 +178,7 @@ static OCStackResult handleAclGetInfoResponse(void *ctx, void **data, OCClientRe
         return OC_STACK_INVALID_PARAM;
     }
 
-    result = OCConvertPayload(response->payload, &cbor, &size);
+    result = OCConvertPayload(response->payload, OC_FORMAT_CBOR, &cbor, &size);
     if (result != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "Can't convert OCPayload to cbor");
@@ -191,7 +192,7 @@ static OCStackResult handleAclGetInfoResponse(void *ctx, void **data, OCClientRe
         goto exit;
     }
 
-    printACL(acl);
+    OIC_LOG_ACL(INFO, acl);
 
     result = InstallACL(acl);
     if (result != OC_STACK_OK)
@@ -225,7 +226,7 @@ OCStackResult OCCloudAclIndividualGetInfo(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
+OCStackResult OCCloudAclIndividualAclUpdate(void* ctx,
                                             const char *aclId,
                                             const cloudAce_t *aces,
                                             const OCDevAddr *endPoint,
@@ -276,13 +277,13 @@ OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
 
     LL_FOREACH((cloudAce_t*)aces, ace)
     {
-        OCRepPayload *payload = OCRepPayloadCreate();
-        if (!payload)
+        OCRepPayload *acePayload = OCRepPayloadCreate();
+        if (!acePayload)
         {
             OIC_LOG_V(DEBUG, TAG, "Can't allocate memory for helperPayload[i]");
             goto no_memory;
         }
-        helperPayload[i++] = payload;
+        helperPayload[i++] = acePayload;
 
         char *uuid = NULL;
         if (OC_STACK_OK != ConvertUuidToStr(&ace->subjectuuid, &uuid))
@@ -290,9 +291,9 @@ OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
             OIC_LOG(ERROR, TAG, "Can't convert subjectuuid to string");
         }
 
-        OCRepPayloadSetPropString(payload, OC_RSRVD_SUBJECT_UUID, (const char *)uuid);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_SUBJECT_TYPE, ace->stype);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_PERMISSION_MASK, ace->permission);
+        OCRepPayloadSetPropString(acePayload, OC_RSRVD_SUBJECT_UUID, (const char *)uuid);
+        OCRepPayloadSetPropInt(acePayload, OC_RSRVD_SUBJECT_TYPE, ace->stype);
+        OCRepPayloadSetPropInt(acePayload, OC_RSRVD_PERMISSION_MASK, ace->permission);
 
         OICFree(uuid);
 
@@ -318,26 +319,26 @@ OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
 
         LL_FOREACH(ace->resources, res)
         {
-            OCRepPayload *payload = OCRepPayloadCreate();
-            if (!payload)
+            OCRepPayload *aceResourcePayload = OCRepPayloadCreate();
+            if (!aceResourcePayload)
             {
                 OIC_LOG_V(DEBUG, TAG, "Can't allocate memory for helperPayload2[j]");
                 goto no_memory;
             }
-            helperPayload2[j++] = payload;
+            helperPayload2[j++] = aceResourcePayload;
 
-            OCRepPayloadSetPropString(payload, OC_RSRVD_HREF, res->href);
+            OCRepPayloadSetPropString(aceResourcePayload, OC_RSRVD_HREF, res->href);
 
             dimensions[0] = res->typeLen;
-            OCRepPayloadSetStringArray(payload, OC_RSRVD_RESOURCE_TYPE,
+            OCRepPayloadSetStringArray(aceResourcePayload, OC_RSRVD_RESOURCE_TYPE,
                                        (const char **)res->types, dimensions);
 
             dimensions[0] = res->interfaceLen;
-            OCRepPayloadSetStringArray(payload, OC_RSRVD_INTERFACE,
+            OCRepPayloadSetStringArray(aceResourcePayload, OC_RSRVD_INTERFACE,
                                        (const char **)res->interfaces, dimensions);
         }
         dimensions[0] = reslist_count;
-        OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_RESOURCES,
+        OCRepPayloadSetPropObjectArray(acePayload, OC_RSRVD_RESOURCES,
                 (const OCRepPayload **)helperPayload2, dimensions);
     }
     dimensions[0] = acllist_count;
@@ -367,7 +368,7 @@ no_memory:
     return OC_STACK_NO_MEMORY;
 }
 
-OCStackResult OCCloudAclIndividualUpdate(void* ctx,
+OCStackResult OCCloudAclIndividualAceUpdate(void* ctx,
                                             const char *aclId,
                                             const char *aceId,
                                             const cloudAce_t *aces,
@@ -411,13 +412,13 @@ OCStackResult OCCloudAclIndividualUpdate(void* ctx,
 
     LL_FOREACH((cloudAce_t*)aces, ace)
     {
-        OCRepPayload *payload = OCRepPayloadCreate();
-        if (!payload)
+        OCRepPayload *acePayload = OCRepPayloadCreate();
+        if (!acePayload)
         {
             OIC_LOG_V(DEBUG, TAG, "Can't allocate memory for helperPayload[i]");
             goto no_memory;
         }
-        helperPayload[i++] = payload;
+        helperPayload[i++] = acePayload;
 
         char *uuid = NULL;
         if (OC_STACK_OK != ConvertUuidToStr(&ace->subjectuuid, &uuid))
@@ -425,9 +426,9 @@ OCStackResult OCCloudAclIndividualUpdate(void* ctx,
             OIC_LOG(ERROR, TAG, "Can't convert subjectuuid to string");
         }
 
-        OCRepPayloadSetPropString(payload, OC_RSRVD_SUBJECT_UUID, (const char *)uuid);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_SUBJECT_TYPE, ace->stype);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_PERMISSION_MASK, ace->permission);
+        OCRepPayloadSetPropString(acePayload, OC_RSRVD_SUBJECT_UUID, (const char *)uuid);
+        OCRepPayloadSetPropInt(acePayload, OC_RSRVD_SUBJECT_TYPE, ace->stype);
+        OCRepPayloadSetPropInt(acePayload, OC_RSRVD_PERMISSION_MASK, ace->permission);
 
         OICFree(uuid);
 
@@ -453,26 +454,26 @@ OCStackResult OCCloudAclIndividualUpdate(void* ctx,
 
         LL_FOREACH(ace->resources, res)
         {
-            OCRepPayload *payload = OCRepPayloadCreate();
-            if (!payload)
+            OCRepPayload *aceResourcePayload = OCRepPayloadCreate();
+            if (!aceResourcePayload)
             {
                 OIC_LOG_V(DEBUG, TAG, "Can't allocate memory for helperPayload2[j]");
                 goto no_memory;
             }
-            helperPayload2[j++] = payload;
+            helperPayload2[j++] = aceResourcePayload;
 
-            OCRepPayloadSetPropString(payload, OC_RSRVD_HREF, res->href);
+            OCRepPayloadSetPropString(aceResourcePayload, OC_RSRVD_HREF, res->href);
 
             dimensions[0] = res->typeLen;
-            OCRepPayloadSetStringArray(payload, OC_RSRVD_RESOURCE_TYPE,
+            OCRepPayloadSetStringArray(aceResourcePayload, OC_RSRVD_RESOURCE_TYPE,
                                        (const char **)res->types, dimensions);
 
             dimensions[0] = res->interfaceLen;
-            OCRepPayloadSetStringArray(payload, OC_RSRVD_INTERFACE,
+            OCRepPayloadSetStringArray(aceResourcePayload, OC_RSRVD_INTERFACE,
                                        (const char **)res->interfaces, dimensions);
         }
         dimensions[0] = reslist_count;
-        OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_RESOURCES,
+        OCRepPayloadSetPropObjectArray(acePayload, OC_RSRVD_RESOURCES,
                 (const OCRepPayload **)helperPayload2, dimensions);
     }
     dimensions[0] = acllist_count;
@@ -504,7 +505,7 @@ no_memory:
 
 
 
-OCStackResult OCCloudAclIndividualDelete(void* ctx,
+OCStackResult OCCloudAclAcesDelete(void* ctx,
                                          const char *aclId,
                                          const OCDevAddr *endPoint,
                                          OCCloudResponseCB callback)
@@ -524,7 +525,7 @@ OCStackResult OCCloudAclIndividualDelete(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclIndividualDeleteAce(void* ctx,
+OCStackResult OCCloudAclIndividualAceDelete(void* ctx,
                                          const char *aclId,
                                          const char *aceId,
                                          const OCDevAddr *endPoint,

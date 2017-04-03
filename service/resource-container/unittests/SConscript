@@ -50,9 +50,6 @@ else:
 if lib_env.get('LOGGING'):
     lib_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-
-
-
 # Add third party libraries
 SConscript(src_dir + '/service/third_party_libs.scons', 'lib_env')
 
@@ -86,12 +83,16 @@ if int(containerJavaSupport):
 ######################################################################
 container_gtest_env.AppendUnique(
     CPPPATH = [
-        src_dir + '/extlibs',
+        '#/extlibs',
         '../include',
         '../../resource-encapsulation/include',
         '../../resource-encapsulation/src/common/utils/include',
         '../bundle-api/include',
-        '../src'
+        '../src',
+        '#/resource/include',
+        '#/resource/csdk/include',
+        '#/resource/csdk/stack/include',
+        '#/resource/oc_logger/include'
     ])
 
 if int(containerJavaSupport):
@@ -123,10 +124,19 @@ if int(containerJavaSupport):
         container_gtest_env.AppendUnique(LIBPATH = [os.environ['JAVA_LIB']])
     except KeyError:
         print ''
-container_gtest_env.PrependUnique(LIBS = ['rcs_container', 'rcs_client', 'rcs_server', 'rcs_common',
-  'oc','octbstack', 'oc_logger', 'oc_logger_core',
-  'connectivity_abstraction',
-  'gtest', 'gtest_main'])
+container_gtest_env.PrependUnique(LIBS = [
+    'rcs_container',
+    'rcs_client',
+    'rcs_server',
+    'rcs_common',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'oc_logger_core',
+    'connectivity_abstraction',
+    'gtest',
+    'gtest_main',
+    'boost_system'])
 
 if int(containerJavaSupport):
     try:
@@ -136,8 +146,8 @@ if int(containerJavaSupport):
         print ''
 
 if container_gtest_env.get('SECURED') == '1':
-	if container_gtest_env.get('WITH_TCP') == True:
-		container_gtest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    container_gtest_env.AppendUnique(CPPDEFINES = ['SECURED'])
+    container_gtest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
 	container_gtest_env.AppendUnique(LIBS = ['resource_directory'])
@@ -165,7 +175,10 @@ test_bundle_env.InstallTarget(TestBundle, 'libTestBundle')
 ######################################################################
 # Build Test
 ######################################################################
-container_gtest_src = container_gtest_env.Glob('./*.cpp')
+if 'g++' in container_gtest_env.get('CXX'):
+    container_gtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x'])
+
+container_gtest_src = container_gtest_env.Glob('./ResourceContainerTest.cpp')
 
 container_test = container_gtest_env.Program('container_test', container_gtest_src)
 Alias("container_test", container_test)
@@ -181,9 +194,10 @@ Ignore("./TestBundleJava/hue-0.1-jar-with-dependencies.jar", "./TestBundleJava/h
 
 # TODO: fix this test and edit commented lines
 if container_gtest_env.get('TEST') == '1':
-    if target_os in ['linux'] and container_gtest_env.get('SECURED') != '1':
+    if target_os in ['TODO/linux'] and container_gtest_env.get('SECURED') != '1':
         from tools.scons.RunTest import run_test
         run_test(container_gtest_env,
 #                'service_resource-container_unittests_container_test.memcheck',
                  '',
-                 'service/resource-container/unittests/container_test')
+                 'service/resource-container/unittests/container_test',
+                 container_test)

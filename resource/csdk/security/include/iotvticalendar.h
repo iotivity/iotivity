@@ -107,7 +107,7 @@ struct IotvtICalPeriod
     IotvtICalDateTime_t endDateTime;
 };
 
-/*
+/**
  * Grammar for iCalendar data type RECUR.
  *
  * recur      = "FREQ"=freq *(
@@ -169,7 +169,7 @@ IotvtICalResult_t IsRequestWithinValidTime(const char *period, const char *recur
  * @return ::IOTVTICAL_VALID_ACCESS, if the request is within valid time period
  * ::IOTVTICAL_INVALID_PARAMETER, if parameter are invalid
  * ::IOTVTICAL_INVALID_PERIOD, if period string has invalid format
- * ::IOTVTICAL_INVALID_SUCCESS, if no error while parsing.
+ * ::IOTVTICAL_SUCCESS, if no error while parsing.
  */
 IotvtICalResult_t ParsePeriod(const char *periodStr, IotvtICalPeriod_t *period);
 

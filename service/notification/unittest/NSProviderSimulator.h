@@ -23,6 +23,7 @@
 
 #include <iostream>
 #include <memory>
+#include <list>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
@@ -79,7 +80,7 @@ public:
     NSProviderSimulator()
     : m_notificationHandle(), m_messageHandle(), m_syncHandle(), m_topicHandle(),
       m_syncRep(), m_messageRep(), m_accepter(0),
-      m_notificationUri(std::string("/notification")),
+      m_notificationUri(std::string("/notificationTest")),
       m_messageUri(std::string("/message")),
       m_syncUri(std::string("/sync")),
       m_topicUri(std::string("/topic")),
@@ -123,11 +124,11 @@ private:
                     std::string syncUri = m_notificationUri + m_syncUri;
                     std::string topicUri = m_notificationUri + m_topicUri;
                     std::string providerId = "123456789012345678901234567890123456";
-                    rep.setValue("subcontrollability", m_accepter);
-                    rep.setValue("messageuri", msgUri);
-                    rep.setValue("syncuri", syncUri);
-                    rep.setValue("topicuri", topicUri);
-                    rep.setValue("providerid", providerId);
+                    rep.setValue("x.org.iotivity.ns.subcontrollability", m_accepter);
+                    rep.setValue("x.org.iotivity.ns.messageuri", msgUri);
+                    rep.setValue("x.org.iotivity.ns.syncuri", syncUri);
+                    rep.setValue("x.org.iotivity.ns.topicuri", topicUri);
+                    rep.setValue("x.org.iotivity.ns.providerid", providerId);
                 }
                 else if (type == requestType::NS_SYNC)
                 {
@@ -157,14 +158,14 @@ private:
                         [& topicArr](const NS_TopicState & topicState)
                         {
                             OC::OCRepresentation topic;
-                            topic.setValue("topicname", topicState.first);
-                            topic.setValue("topicstate", (int) topicState.second);
+                            topic.setValue("x.org.iotivity.ns.topicname", topicState.first);
+                            topic.setValue("x.org.iotivity.ns.topicstate", (int) topicState.second);
                             topicArr.push_back(topic);
                         }
                     );
 
                     rep.setValue<std::vector<OC::OCRepresentation>>
-                        ("topiclist", topicArr);
+                        ("x.org.iotivity.ns.topiclist", topicArr);
                 }
                 else
                 {
@@ -182,8 +183,8 @@ private:
                     m_syncRep = requests->getResourceRepresentation();
 
                     std::cout << "Receive POST for Sync" << std::endl;
-                    std::cout << "provider Id : " << m_syncRep.getValueToString("providerid") << std::endl;
-                    std::cout << "Sync State : " << m_syncRep.getValueToString("state") << std::endl;
+                    std::cout << "provider Id : " << m_syncRep.getValueToString("x.org.iotivity.ns.providerid") << std::endl;
+                    std::cout << "Sync State : " << m_syncRep.getValueToString("x.org.iotivity.ns.state") << std::endl;
 
                     response->setResourceRepresentation(m_syncRep);
 
@@ -195,15 +196,15 @@ private:
                 {
                     auto receivePayload =
                             requests->getResourceRepresentation()
-                            .getValue<std::vector<OC::OCRepresentation>>("topiclist");
+                            .getValue<std::vector<OC::OCRepresentation>>("x.org.iotivity.ns.topiclist");
 
                     std::for_each (receivePayload.begin(), receivePayload.end(),
                           [this](const OC::OCRepresentation & rep)
                           {
-                              auto tmp = m_allowedTopicList.find(rep.getValueToString("topicname"));
+                              auto tmp = m_allowedTopicList.find(rep.getValueToString("x.org.iotivity.ns.topicname"));
                               if (tmp != m_allowedTopicList.end())
                               {
-                                  tmp->second = (TopicAllowState) rep.getValue<int>("topicstate");
+                                  tmp->second = (TopicAllowState) rep.getValue<int>("x.org.iotivity.ns.topicstate");
                               }
                           }
                     );
@@ -234,8 +235,8 @@ private:
         {
             OC::OCRepresentation rep;
             std::string providerId = "123456789012345678901234567890123456";
-            rep.setValue<int>("messageid", (int)messageType::NS_ALLOW);
-            rep.setValue("providerid", providerId);
+            rep.setValue<int>("x.org.iotivity.ns.messageid", (int)messageType::NS_ALLOW);
+            rep.setValue("x.org.iotivity.ns.providerid", providerId);
 
             auto response = std::make_shared<OC::OCResourceResponse>();
             response->setRequestHandle(requests->getRequestHandle());
@@ -306,27 +307,27 @@ public:
     void sendRead(const uint64_t & id)
     {
         std::string providerId = "123456789012345678901234567890123456";
-        m_syncRep.setValue<int>("messageid", id);
-        m_syncRep.setValue("state", (int)1);
-        m_syncRep.setValue("providerid", providerId);
+        m_syncRep.setValue<int>("x.org.iotivity.ns.messageid", id);
+        m_syncRep.setValue("x.org.iotivity.ns.state", (int)1);
+        m_syncRep.setValue("x.org.iotivity.ns.providerid", providerId);
         OC::OCPlatform::notifyAllObservers(m_syncHandle);
     }
     void sendDismiss(const uint64_t & id)
     {
         std::string providerId = "123456789012345678901234567890123456";
-        m_syncRep.setValue<int>("messageid", id);
-        m_syncRep.setValue("state", (int)2);
-        m_syncRep.setValue("providerid", providerId);
+        m_syncRep.setValue<int>("x.org.iotivity.ns.messageid", id);
+        m_syncRep.setValue("x.org.iotivity.ns.state", (int)2);
+        m_syncRep.setValue("x.org.iotivity.ns.providerid", providerId);
         OC::OCPlatform::notifyAllObservers(m_syncHandle);
     }
 
     void setMessage(const uint64_t & id, const std::string & title, const std::string & content)
     {
         std::string providerId = "123456789012345678901234567890123456";
-        m_messageRep.setValue<int>("messageid", id);
-        m_messageRep.setValue("title", title);
-        m_messageRep.setValue("contenttext", content);
-        m_messageRep.setValue("providerid", providerId);
+        m_messageRep.setValue<int>("x.org.iotivity.ns.messageid", id);
+        m_messageRep.setValue<std::string>("x.org.iotivity.ns.title", title);
+        m_messageRep.setValue<std::string>("x.org.iotivity.ns.contenttext", content);
+        m_messageRep.setValue<std::string>("x.org.iotivity.ns.providerid", providerId);
     }
 
     void setTopics(const NS_TopicList & topics)

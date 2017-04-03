@@ -62,7 +62,7 @@ struct timelist_t
     int timeout_state;
     time_t timeout_seconds;
     time_t timeout_time;
-    void (*cb)();
+    TimerCallback cb;
 } timeout_list[TIMEOUTS];
 
 /*
@@ -108,7 +108,7 @@ long int getRelativeSecondsOfDayofweek(int ia, int ib)
     return (((long int)((ib - ia))) * SECS_PER_DAY);
 }
 
-long int getRelativeIntervalOfWeek(struct tm* tp)
+time_t getRelativeIntervalOfWeek(struct tm* tp)
 {
     time_t current_time;
     struct tm* current, *midnight;
@@ -148,7 +148,7 @@ long int getRelativeIntervalOfWeek(struct tm* tp)
     return delayed_time;
 }
 
-long int getSecondsFromAbsTime(struct tm* tp)
+time_t getSecondsFromAbsTime(struct tm* tp)
 {
    time_t current_time;
    time_t delayed_time = 0;
@@ -161,7 +161,7 @@ long int getSecondsFromAbsTime(struct tm* tp)
    return delayed_time;
 }
 
-time_t registerTimer(const time_t seconds, int *id, void *cb)
+time_t registerTimer(const time_t seconds, int *id, TimerCallback cb)
 {
     time_t now, then;
     time_t next;
@@ -255,13 +255,11 @@ void checkTimeout()
 void *loop(void *threadid)
 {
     (void)threadid;
-    while (1)
+    for (;;)
     {
         sleep(SECOND);
         checkTimeout();
     }
-
-    return NULL ;
 }
 
 int initThread()
@@ -287,7 +285,7 @@ time_t timeToSecondsFromNow(tmElements_t *t_then)
     return (time_t) (then - t);
 }
 
-time_t registerTimer(const time_t seconds, int *id,  void (*cb)())
+time_t registerTimer(const time_t seconds, int *id, TimerCallback cb)
 {
     time_t t, then;
     time_t next;

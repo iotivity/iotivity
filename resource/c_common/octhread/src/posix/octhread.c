@@ -88,6 +88,14 @@ static const uint64_t NANOSECS_PER_SEC      = 1000000000L;
 typedef struct _tagMutexInfo_t
 {
     pthread_mutex_t mutex;
+
+    /**
+     * Catch some of the incorrect mutex usage, by tracking the mutex owner,
+     * on Debug builds.
+     */
+#ifndef NDEBUG
+    pthread_t owner;
+#endif
 } oc_mutex_internal;
 
 typedef struct _tagEventInfo_t
@@ -101,6 +109,15 @@ typedef struct _tagThreadInfo_t
     pthread_t thread;
     pthread_attr_t  threadattr;
 } oc_thread_internal;
+
+#ifndef NDEBUG
+static pthread_t oc_get_current_thread_id()
+{
+    pthread_t id = pthread_self();
+    assert(OC_INVALID_THREAD_ID != id);
+    return id;
+}
+#endif
 
 OCThreadResult_t oc_thread_new(oc_thread *t, void *(*start_routine)(void *), void *arg)
 {
@@ -170,6 +187,9 @@ oc_mutex oc_mutex_new(void)
         int ret=pthread_mutex_init(&(mutexInfo->mutex), PTHREAD_MUTEX_DEFAULT);
         if (0 == ret)
         {
+#ifndef NDEBUG
+            mutexInfo->owner = OC_INVALID_THREAD_ID;
+#endif
             retVal = (oc_mutex) mutexInfo;
         }
         else
@@ -222,6 +242,14 @@ void oc_mutex_lock(oc_mutex mutex)
             OIC_LOG_V(ERROR, TAG, "Pthread Mutex lock failed: %d", ret);
             exit(ret);
         }
+
+#ifndef NDEBUG
+        /**
+         * Updating the owner field must be performed while owning the lock,
+         * to solve race conditions with other threads using the same lock.
+         */
+        mutexInfo->owner = oc_get_current_thread_id();
+#endif
     }
     else
     {
@@ -234,6 +262,14 @@ void oc_mutex_unlock(oc_mutex mutex)
     oc_mutex_internal *mutexInfo = (oc_mutex_internal*) mutex;
     if (mutexInfo)
     {
+#ifndef NDEBUG
+        /**
+         * Updating the owner field must be performed while owning the lock,
+         * to solve race conditions with other threads using the same lock.
+         */
+        mutexInfo->owner = OC_INVALID_THREAD_ID;
+#endif
+
         int ret = pthread_mutex_unlock(&mutexInfo->mutex);
         if(ret != 0)
         {
@@ -246,6 +282,27 @@ void oc_mutex_unlock(oc_mutex mutex)
     {
         OIC_LOG_V(ERROR, TAG, "%s: Invalid mutex !", __func__);
     }
+}
+
+void oc_mutex_assert_owner(const oc_mutex mutex, bool currentThreadIsOwner)
+{
+#ifdef NDEBUG
+    (void)mutex;
+    (void)currentThreadIsOwner;
+#else
+    assert(NULL != mutex);
+    const oc_mutex_internal *mutexInfo = (const oc_mutex_internal*) mutex;
+
+    pthread_t currentThreadID = oc_get_current_thread_id();
+    if (currentThreadIsOwner)
+    {
+        assert(pthread_equal(mutexInfo->owner, currentThreadID));
+    }
+    else
+    {
+        assert(!pthread_equal(mutexInfo->owner, currentThreadID));
+    }
+#endif
 }
 
 oc_cond oc_cond_new(void)

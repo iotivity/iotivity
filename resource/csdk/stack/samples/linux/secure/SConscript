@@ -18,9 +18,9 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-Import('env')
+Import('stacksamples_env')
 
-samples_env = env.Clone()
+samples_env = stacksamples_env.Clone()
 ######################################################################
 # Build flags
 ######################################################################
@@ -29,11 +29,10 @@ samples_env.PrependUnique(CPPPATH = [
 		'../../../../include',
 		'../../../../stack/include',
 		'../../../../security/include',
-		'../../../../../../extlibs/tinydtls',
 		'../../../../../oc_logger/include'
 		])
 
-target_os = env.get('TARGET_OS')
+target_os = samples_env.get('TARGET_OS')
 if target_os not in ['windows']:
 	samples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 
@@ -42,13 +41,12 @@ if target_os not in ['windows']:
 		samples_env.AppendUnique(LIBS = ['pthread'])
 	samples_env.Append(LINKFLAGS = ['-Wl,--no-as-needed'])
 
-samples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 if target_os in ['windows', 'msys_nt']:
 	samples_env.PrependUnique(LIBS = ['ocsrm', 'ws2_32', 'iphlpapi'])
 else:
 	samples_env.PrependUnique(LIBS = ['m'])
 samples_env.PrependUnique(LIBS = ['octbstack', 'connectivity_abstraction', 'coap'])
-if env.get('SECURED') == '1':
+if samples_env.get('SECURED') == '1':
 	samples_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 
@@ -57,7 +55,7 @@ if target_os == 'android':
 	samples_env.AppendUnique(LIBS = ['gnustl_shared'])
 	samples_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
 
-	if not env.get('RELEASE'):
+	if not samples_env.get('RELEASE'):
 		samples_env.AppendUnique(LIBS = ['log'])
 
 if target_os in ['darwin', 'ios']:
@@ -72,17 +70,17 @@ samples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 ocserverbasicops = samples_env.Program('ocserverbasicops', ['common.cpp', 'ocserverbasicops.cpp'])
 occlientbasicops = samples_env.Program('occlientbasicops', ['common.cpp', 'occlientbasicops.cpp'])
 ocamsservice = samples_env.Program('ocamsservice', ['common.cpp', 'ocamsservice.cpp'])
-if env.get('SECURED') == '1':
+if samples_env.get('SECURED') == '1':
 	occlientdirectpairing = samples_env.Program('occlientdirectpairing', 'occlientdirectpairing.cpp')
 	Alias("samples", [ocserverbasicops, occlientbasicops, ocamsservice, occlientdirectpairing])
 else:
 	Alias("samples", [ocserverbasicops, occlientbasicops, ocamsservice])
 
-env.AppendTarget('samples')
+samples_env.AppendTarget('samples')
 
 src_dir = samples_env.get('SRC_DIR')
 sec_samples_src_dir = src_dir + '/resource/csdk/stack/samples/linux/secure/'
-sec_samples_build_dir = env.get('BUILD_DIR') +'/resource/csdk/stack/samples/linux/secure'
+sec_samples_build_dir = samples_env.get('BUILD_DIR') +'/resource/csdk/stack/samples/linux/secure'
 
 samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
     sec_samples_src_dir + 'oic_svr_db_server.json'))
@@ -92,7 +90,7 @@ samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
     sec_samples_src_dir + 'oic_svr_db_client_nondevowner.json'))
 samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
     sec_samples_src_dir + 'oic_amss_db.json'))
-if env.get('SECURED') == '1':
+if samples_env.get('SECURED') == '1':
 	samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
 		sec_samples_src_dir + 'oic_svr_db_client_directpairing.json'))
 	samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,

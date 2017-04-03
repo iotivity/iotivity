@@ -37,8 +37,6 @@
 #include "cacommon.h"
 #include "cainterface.h"
 #include "base64.h"
-#include "global.h"
-
 #include "srmresourcestrings.h"
 #include "doxmresource.h"
 #include "pstatresource.h"
@@ -49,6 +47,7 @@
 #include "oxmjustworks.h"
 #include "pmtypes.h"
 #include "pmutility.h"
+#include "pmutilityinternal.h"
 #include "srmutility.h"
 #include "provisioningdatabasemanager.h"
 #include "oxmrandompin.h"
@@ -58,6 +57,8 @@
 #include "oxmpreconfpin.h"
 #include "oxmrandompin.h"
 #include "otmcontextlist.h"
+#include "mbedtls/ssl_ciphersuites.h"
+#include "ocrandom.h"
 
 #define TAG "OIC_MULTIPLE_OTM"
 
@@ -80,9 +81,9 @@ static OCStackApplicationResult MOTUpdateSecurityResourceCB(void *ctx, OCDoHandl
     OIC_LOG_V(INFO, TAG, "Inside MOTUpdateMomCB.");
     (void)UNUSED;
     OTMContext_t *motCtx = (OTMContext_t*)ctx;
-    VERIFY_NON_NULL(TAG, motCtx, ERROR);
-    VERIFY_NON_NULL(TAG, motCtx->ctxResultCallback, ERROR);
-    VERIFY_NON_NULL(TAG, motCtx->ctxResultArray, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx->ctxResultCallback, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx->ctxResultArray, ERROR);
 
     if(clientResponse)
     {
@@ -113,6 +114,7 @@ static OCStackApplicationResult MOTUpdateSecurityResourceCB(void *ctx, OCDoHandl
 exit:
     if(motCtx)
     {
+        PMDeleteDeviceList(motCtx->selectedDeviceInfo);
         OICFree(motCtx->ctxResultArray);
         OICFree(motCtx);
     }
@@ -130,13 +132,14 @@ static OCStackResult MOTSendPostDoxm(void *ctx,
     OCStackResult postMomRes = OC_STACK_ERROR;
     OCSecurityPayload* secPayload = NULL;
     OTMContext_t *motCtx = NULL;
+    OCProvisionDev_t *localTargetDeviceInfo = NULL;
     bool freeFlag = true;
 
     OIC_LOG(DEBUG, TAG, "IN MOTSendPostDoxm");
 
     //Generate the security payload using updated doxm
     secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    VERIFY_NON_NULL(TAG, secPayload, ERROR);
+    VERIFY_NOT_NULL(TAG, secPayload, ERROR);
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
 
     postMomRes = DoxmToCBORPayload(doxm, &secPayload->securityData, &secPayload->payloadSize, true);
@@ -156,14 +159,18 @@ static OCStackResult MOTSendPostDoxm(void *ctx,
 
     //Create the MOT Context to handle the response message
     motCtx = (OTMContext_t*)OICCalloc(1, sizeof(OTMContext_t));
-    VERIFY_NON_NULL(TAG, motCtx, ERROR);
-    motCtx->selectedDeviceInfo = targetDeviceInfo;
+    VERIFY_NOT_NULL(TAG, motCtx, ERROR);
+
+    localTargetDeviceInfo = PMCloneOCProvisionDevList(targetDeviceInfo);
+    VERIFY_NOT_NULL(TAG, localTargetDeviceInfo, ERROR);
+
+    motCtx->selectedDeviceInfo = localTargetDeviceInfo;
     motCtx->ctxResultCallback = resultCallback;
     motCtx->ctxResultArraySize = 1;
     motCtx->ctxHasError = false;
     motCtx->userCtx = ctx;
     motCtx->ctxResultArray= (OCProvisionResult_t*)OICCalloc(1, sizeof(OCProvisionResult_t));
-    VERIFY_NON_NULL(TAG, motCtx->ctxResultArray, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx->ctxResultArray, ERROR);
 
     //Send POST request
     OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
@@ -183,6 +190,7 @@ exit:
     //If POST request successfully sent, motCtx will be cleaned from response handler.
     if(freeFlag && motCtx)
     {
+        PMDeleteDeviceList(motCtx->selectedDeviceInfo);
         OICFree(motCtx->ctxResultArray);
         OICFree(motCtx);
     }
@@ -210,9 +218,9 @@ OCStackResult MOTChangeMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
     OIC_LOG(DEBUG, TAG, "IN MOTChangeMode");
 
     VERIFY_SUCCESS(TAG, (OIC_NUMBER_OF_MOM_TYPE > momType), ERROR);
-    VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
+    VERIFY_NOT_NULL(TAG, targetDeviceInfo, ERROR);
     postMomRes = OC_STACK_INVALID_CALLBACK;
-    VERIFY_NON_NULL(TAG, resultCallback, ERROR);
+    VERIFY_NOT_NULL(TAG, resultCallback, ERROR);
 
     //Dulpicate doxm resource to update the 'mom' property
     postMomRes = DoxmToCBORPayload(targetDeviceInfo->doxm, &doxmPayload, &doxmPayloadLen, false);
@@ -220,13 +228,13 @@ OCStackResult MOTChangeMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
 
     postMomRes = CBORPayloadToDoxm(doxmPayload, doxmPayloadLen, &doxm);
     VERIFY_SUCCESS(TAG, (OC_STACK_OK == postMomRes), ERROR);
-    VERIFY_NON_NULL(TAG, doxm, ERROR);
+    VERIFY_NOT_NULL(TAG, doxm, ERROR);
 
     if(NULL == doxm->mom)
     {
         postMomRes = OC_STACK_NO_MEMORY;
         doxm->mom = (OicSecMom_t*)OICCalloc(1, sizeof(OicSecMom_t));
-        VERIFY_NON_NULL(TAG, (doxm->mom), ERROR);
+        VERIFY_NOT_NULL(TAG, (doxm->mom), ERROR);
     }
     doxm->mom->mode = momType;
 
@@ -246,7 +254,7 @@ exit:
  * API to add 'doxm.oxms' to resource server.
  *
  * @param[in] targetDeviceInfo Selected target device.
- * @param[in] newOxm  OxMs to be added (ref. oic.sec.oxm)
+ * @param[in] newOxm  OxMs to be added (ref. oic.sec.doxmtype)
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            POST 'oxms' request recieves a response from resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
@@ -257,14 +265,13 @@ OCStackResult MOTAddMOTMethod(void *ctx, OCProvisionDev_t *targetDeviceInfo,
     OCStackResult postOxmRes = OC_STACK_INVALID_PARAM;
     OicSecOxm_t* newOxms = NULL;
     uint8_t* doxmPayload = NULL;
-    size_t doxmPayloadLen = 0;
 
     OIC_LOG(DEBUG, TAG, "IN MOTAddMOTMethod");
 
     VERIFY_SUCCESS(TAG, (OIC_OXM_COUNT > newOxm || OIC_PRECONFIG_PIN == newOxm), ERROR);
-    VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
+    VERIFY_NOT_NULL(TAG, targetDeviceInfo, ERROR);
     postOxmRes = OC_STACK_INVALID_CALLBACK;
-    VERIFY_NON_NULL(TAG, resultCallback, ERROR);
+    VERIFY_NOT_NULL(TAG, resultCallback, ERROR);
     postOxmRes = OC_STACK_NO_MEMORY;
 
     for(size_t i = 0; i < targetDeviceInfo->doxm->oxmLen; i++)
@@ -273,7 +280,7 @@ OCStackResult MOTAddMOTMethod(void *ctx, OCProvisionDev_t *targetDeviceInfo,
         {
             OIC_LOG_V(INFO, TAG, "[%d] OxM already supported", (int)newOxm);
             OCProvisionResult_t* resArr = (OCProvisionResult_t*)OICCalloc(1, sizeof(OCProvisionResult_t));
-            VERIFY_NON_NULL(TAG, resArr, ERROR);
+            VERIFY_NOT_NULL(TAG, resArr, ERROR);
             resArr->res = OC_STACK_OK;
             memcpy(resArr->deviceId.id, targetDeviceInfo->doxm->deviceID.id, sizeof(resArr->deviceId.id));
             resultCallback(ctx, 1, resArr, false);
@@ -282,7 +289,7 @@ OCStackResult MOTAddMOTMethod(void *ctx, OCProvisionDev_t *targetDeviceInfo,
     }
 
     newOxms = (OicSecOxm_t*)OICMalloc(sizeof(OicSecOxm_t) * (targetDeviceInfo->doxm->oxmLen + 1));
-    VERIFY_NON_NULL(TAG, newOxms , ERROR);
+    VERIFY_NOT_NULL(TAG, newOxms , ERROR);
 
     for(size_t i = 0; i < targetDeviceInfo->doxm->oxmLen; i++)
     {
@@ -308,7 +315,7 @@ exit:
  * API to update 'doxm.oxmsel' to resource server.
  *
  * @param[in] targetDeviceInfo Selected target device.
-  * @param[in] oxmSelValue Method of multiple ownership transfer (ref. oic.sec.oxm)
+  * @param[in] oxmSelValue Method of multiple ownership transfer (ref. oic.sec.doxmtype)
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            POST 'oxmsel' request recieves a response from resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
@@ -323,9 +330,9 @@ OCStackResult MOTSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDevice
 
     OIC_LOG(DEBUG, TAG, "IN MOTSelectOTMethod");
 
-    VERIFY_NON_NULL(TAG, resultCallback, ERROR);
+    VERIFY_NOT_NULL(TAG, resultCallback, ERROR);
     postMomRes = OC_STACK_INVALID_PARAM;
-    VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
+    VERIFY_NOT_NULL(TAG, targetDeviceInfo, ERROR);
 
     bool isValidOxmsel = false;
     for(size_t i = 0; i < targetDeviceInfo->doxm->oxmLen; i++)
@@ -344,7 +351,7 @@ OCStackResult MOTSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDevice
 
     postMomRes = CBORPayloadToDoxm(doxmPayload, doxmPayloadLen, &doxm);
     VERIFY_SUCCESS(TAG, (OC_STACK_OK == postMomRes), ERROR);
-    VERIFY_NON_NULL(TAG, doxm, ERROR);
+    VERIFY_NOT_NULL(TAG, doxm, ERROR);
 
     doxm->oxmSel = oxmSelValue;
 
@@ -378,34 +385,35 @@ OCStackResult MOTProvisionPreconfigPIN(void *ctx, const OCProvisionDev_t *target
     OCSecurityPayload* secPayload = NULL;
     OTMContext_t *motCtx = NULL;
     OicSecCred_t* pinCred = NULL;
+    OCProvisionDev_t* localTargetDeviceInfo = NULL;
 
     OIC_LOG(DEBUG, TAG, "IN MOTProvisionPreconfigPIN");
 
-    VERIFY_NON_NULL(TAG, resultCallback, ERROR);
+    VERIFY_NOT_NULL(TAG, resultCallback, ERROR);
     postCredRes = OC_STACK_INVALID_PARAM;
-    VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
-    VERIFY_NON_NULL(TAG, preconfPIN, ERROR);
+    VERIFY_NOT_NULL(TAG, targetDeviceInfo, ERROR);
+    VERIFY_NOT_NULL(TAG, preconfPIN, ERROR);
     VERIFY_SUCCESS(TAG, (0 != preconfPINLen), ERROR);
     VERIFY_SUCCESS(TAG, (0 != preconfPINLen && OXM_PRECONFIG_PIN_MAX_SIZE >= preconfPINLen), ERROR);
 
     postCredRes = OC_STACK_NO_MEMORY;
     //Generate PIN based credential
     pinCred = (OicSecCred_t*)OICCalloc(1, sizeof(OicSecCred_t));
-    VERIFY_NON_NULL(TAG, pinCred, ERROR);
+    VERIFY_NOT_NULL(TAG, pinCred, ERROR);
 
     pinCred->privateData.data = (uint8_t*)OICMalloc(preconfPINLen + 1);
-    VERIFY_NON_NULL(TAG, pinCred->privateData.data, ERROR);
+    VERIFY_NOT_NULL(TAG, pinCred->privateData.data, ERROR);
 
     memcpy(pinCred->privateData.data, preconfPIN, preconfPINLen);
     pinCred->privateData.data[preconfPINLen] = '\0';
     pinCred->privateData.len = preconfPINLen;
     pinCred->privateData.encoding = OIC_ENCODING_RAW;
     pinCred->credType = PIN_PASSWORD;
-    OICStrcpy(pinCred->subject.id, sizeof(pinCred->subject.id), WILDCARD_SUBJECT_ID.id);
+    memcpy(&pinCred->subject, &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t));
 
     //Generate the security payload using updated doxm
     secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    VERIFY_NON_NULL(TAG, secPayload, ERROR);
+    VERIFY_NOT_NULL(TAG, secPayload, ERROR);
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
 
     postCredRes = CredToCBORPayload(pinCred, &secPayload->securityData, &secPayload->payloadSize, false);
@@ -425,14 +433,18 @@ OCStackResult MOTProvisionPreconfigPIN(void *ctx, const OCProvisionDev_t *target
 
     //Create the MOT Context to handle the response message
     motCtx = (OTMContext_t*)OICCalloc(1, sizeof(OTMContext_t));
-    VERIFY_NON_NULL(TAG, motCtx, ERROR);
-    motCtx->selectedDeviceInfo= targetDeviceInfo;
+    VERIFY_NOT_NULL(TAG, motCtx, ERROR);
+
+    localTargetDeviceInfo = PMCloneOCProvisionDevList(targetDeviceInfo);
+    VERIFY_NOT_NULL(TAG, localTargetDeviceInfo, ERROR);
+
+    motCtx->selectedDeviceInfo= localTargetDeviceInfo;
     motCtx->ctxResultCallback = resultCallback;
     motCtx->ctxResultArraySize =1;
     motCtx->ctxHasError = false;
     motCtx->userCtx = ctx;
     motCtx->ctxResultArray = (OCProvisionResult_t*)OICCalloc(1, sizeof(OCProvisionResult_t));
-    VERIFY_NON_NULL(TAG, motCtx->ctxResultArray, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx->ctxResultArray, ERROR);
 
     //Send POST request
     OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
@@ -454,14 +466,17 @@ exit:
     //If POST request successfully sent, motCtx will be cleaned from response handler.
     if(freeFlag && motCtx)
     {
+        PMDeleteDeviceList(motCtx->selectedDeviceInfo);
         OICFree(motCtx->ctxResultArray);
         OICFree(motCtx);
     }
+
     if(pinCred)
     {
         OICFree(pinCred->privateData.data);
         OICFree(pinCred);
     }
+
     return postCredRes;
 }
 
@@ -497,7 +512,7 @@ static bool IsComplete(OTMContext_t* otmCtx)
 static void SetMOTResult(OTMContext_t* motCtx, const OCStackResult res)
 {
     OIC_LOG_V(DEBUG, TAG, "IN SetMOTResult : %d ", res);
-    VERIFY_NON_NULL(TAG, motCtx, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx, ERROR);
 
     if(motCtx->selectedDeviceInfo)
     {
@@ -586,12 +601,11 @@ OCStackResult MOTAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
 {
     OCStackResult addCredRes = OC_STACK_INVALID_PARAM;
     OicSecCred_t* pinCred = NULL;
-    bool freeFlag = true;
 
     OIC_LOG(DEBUG, TAG, "IN MOTAddPreconfigPIN");
 
-    VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
-    VERIFY_NON_NULL(TAG, preconfPIN, ERROR);
+    VERIFY_NOT_NULL(TAG, targetDeviceInfo, ERROR);
+    VERIFY_NOT_NULL(TAG, preconfPIN, ERROR);
     VERIFY_SUCCESS(TAG, (0 != preconfPINLen), ERROR);
     VERIFY_SUCCESS(TAG, (0 != preconfPINLen && OXM_PRECONFIG_PIN_MAX_SIZE >= preconfPINLen), ERROR);
 
@@ -605,10 +619,10 @@ OCStackResult MOTAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
     addCredRes = OC_STACK_NO_MEMORY;
     //Generate PIN based credential
     pinCred = (OicSecCred_t*)OICCalloc(1, sizeof(OicSecCred_t));
-    VERIFY_NON_NULL(TAG, pinCred, ERROR);
+    VERIFY_NOT_NULL(TAG, pinCred, ERROR);
 
     pinCred->privateData.data = (uint8_t*)OICMalloc(preconfPINLen + 1);
-    VERIFY_NON_NULL(TAG, pinCred->privateData.data, ERROR);
+    VERIFY_NOT_NULL(TAG, pinCred->privateData.data, ERROR);
 
     memcpy(pinCred->privateData.data, preconfPIN, preconfPINLen);
     pinCred->privateData.data[preconfPINLen] = '\0';
@@ -660,7 +674,11 @@ static OCStackResult SaveSubOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
     }
 
     uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = {0};
-    OicSecKey_t ownerKey = {ownerPSK, OWNER_PSK_LENGTH_128};
+    OicSecKey_t ownerKey;
+    memset(&ownerKey, 0, sizeof(ownerKey));
+    ownerKey.data = ownerPSK;
+    ownerKey.len = OWNER_PSK_LENGTH_128;
+    ownerKey.encoding = OIC_ENCODING_UNKNOW;
 
     //Generating SubOwnerPSK
     CAResult_t pskRet = CAGenerateOwnerPSK(&endpoint,
@@ -678,19 +696,19 @@ static OCStackResult SaveSubOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
         OicSecCred_t *cred = GenerateCredential(&selectedDeviceInfo->doxm->deviceID,
                                       SYMMETRIC_PAIR_WISE_KEY, NULL,
                                       &ownerKey, &ownerDeviceID, &ownerDeviceID);
-        VERIFY_NON_NULL(TAG, cred, ERROR);
+        VERIFY_NOT_NULL(TAG, cred, ERROR);
 
-        uint32_t outSize = 0;
+        size_t outSize = 0;
         size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
-        char* b64Buf = (uint8_t *)OICCalloc(1, b64BufSize);
-        VERIFY_NON_NULL(TAG, b64Buf, ERROR);
+        char* b64Buf = (char*)OICCalloc(1, b64BufSize);
+        VERIFY_NOT_NULL(TAG, b64Buf, ERROR);
         b64Encode(cred->privateData.data, cred->privateData.len, b64Buf, b64BufSize, &outSize);
 
-        OICFree( cred->privateData.data );
+        OICFree(cred->privateData.data);
         cred->privateData.data = (uint8_t *)OICCalloc(1, outSize + 1);
-        VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
+        VERIFY_NOT_NULL(TAG, cred->privateData.data, ERROR);
 
-        strncpy(cred->privateData.data, b64Buf, outSize);
+        strncpy((char*)(cred->privateData.data), b64Buf, outSize);
         cred->privateData.data[outSize] = '\0';
         cred->privateData.encoding = OIC_ENCODING_BASE64;
         cred->privateData.len = outSize;
@@ -727,8 +745,8 @@ exit:
 static OCStackApplicationResult SubOwnerCredentialHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse)
 {
-    VERIFY_NON_NULL(TAG, clientResponse, WARNING);
-    VERIFY_NON_NULL(TAG, ctx, WARNING);
+    VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
+    VERIFY_NOT_NULL(TAG, ctx, WARNING);
 
     OIC_LOG(DEBUG, TAG, "IN SubOwnerCredentialHandler");
     (void)UNUSED;
@@ -749,11 +767,10 @@ static OCStackApplicationResult SubOwnerCredentialHandler(void *ctx, OCDoHandle 
                 return OC_STACK_DELETE_TRANSACTION;
             }
 
-            // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 = 0xC037, /**< see RFC 5489 */
-            caResult = CASelectCipherSuite(0xC037, endpoint->adapter);
+            caResult = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, endpoint->adapter);
             if(CA_STATUS_OK != caResult)
             {
-                OIC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
+                OIC_LOG(ERROR, TAG, "Failed to select TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256");
                 SetMOTResult(motCtx, OC_STACK_ERROR);
                 return OC_STACK_DELETE_TRANSACTION;
             }
@@ -835,7 +852,7 @@ static OCStackResult PostSubOwnerCredential(OTMContext_t* motCtx)
         memcpy(newCredential.eownerID->id, ownerId.id, sizeof(ownerId.id));
 
         //Fill private data as empty string
-        newCredential.privateData.data = "";
+        newCredential.privateData.data = (uint8_t*)"";
         newCredential.privateData.len = 0;
         newCredential.privateData.encoding = ownerCredential->privateData.encoding;
 
@@ -878,6 +895,106 @@ static OCStackResult PostSubOwnerCredential(OTMContext_t* motCtx)
     return OC_STACK_OK;
 }
 
+static void MOTSessionEstablished(const CAEndpoint_t *endpoint, OicSecDoxm_t *newDevDoxm, OTMContext_t *motCtx)
+{
+    OC_UNUSED(endpoint);
+    OC_UNUSED(newDevDoxm);
+
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+
+    // Delete previous credential such as preconfigured-pin
+    OCStackResult res = RemoveCredential(&(motCtx->selectedDeviceInfo->doxm->deviceID));
+    if (OC_STACK_RESOURCE_DELETED != res)
+    {
+        OIC_LOG(WARNING, TAG, "Cannot find credential.");
+    }
+
+    res = SaveSubOwnerPSK(motCtx->selectedDeviceInfo);
+    if (OC_STACK_OK == res)
+    {
+        // POST sub owner credential to new device.
+        res = PostSubOwnerCredential(motCtx);
+        if (OC_STACK_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to send POST request for SubOwner Credential");
+            SetMOTResult(motCtx, res);
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Failed to save the SubOwner PSK.");
+        SetMOTResult(motCtx, res);
+    }    
+
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
+}
+
+static void MOTSessionFailed(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info, OicSecDoxm_t *newDevDoxm, OTMContext_t *motCtx)
+{
+    OC_UNUSED(endpoint);
+
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+
+    if (CA_DTLS_AUTHENTICATION_FAILURE != info->result)
+    {
+        OIC_LOG_V(ERROR, TAG, "Ownership Transfer session establishment failed, error %u", info->result);
+        goto exit;
+    }
+
+    // Reset for the next attempt
+    RemoveOTMContext(motCtx->selectedDeviceInfo->endpoint.addr, motCtx->selectedDeviceInfo->securePort);
+
+    OCStackResult res = PDMDeleteDevice(&(motCtx->selectedDeviceInfo->doxm->deviceID));
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "PDMDeleteDevice failed");
+        SetMOTResult(motCtx, res);
+        goto exit;
+    }
+
+    if (OIC_RANDOM_DEVICE_PIN == newDevDoxm->oxmSel)
+    {
+        OIC_LOG(DEBUG, TAG, "The PIN may be incorrect.");
+
+        motCtx->attemptCnt++;
+        
+        if (WRONG_PIN_MAX_ATTEMP > motCtx->attemptCnt)
+        {
+            res = StartMultipleOwnershipTransfer(motCtx, motCtx->selectedDeviceInfo);
+            if (OC_STACK_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "Failed to Re-StartMultipleOwnershipTransfer");
+                SetMOTResult(motCtx, res);
+            }
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "User has exceeded the number of authentication attempts.");
+            SetMOTResult(motCtx, OC_STACK_AUTHENTICATION_FAILURE);
+        }
+    }
+    else if (OIC_PRECONFIG_PIN == newDevDoxm->oxmSel)
+    {
+        OIC_LOG(DEBUG, TAG, "The PIN may be incorrect.");
+
+        // Delete previous credential
+        res = RemoveCredential(&(motCtx->selectedDeviceInfo->doxm->deviceID));
+        if (OC_STACK_RESOURCE_DELETED != res)
+        {
+            OIC_LOG(WARNING, TAG, "Cannot find credential.");
+        }
+
+        SetMOTResult(motCtx, OC_STACK_AUTHENTICATION_FAILURE);
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Failed to establish secure session.");
+        SetMOTResult(motCtx, OC_STACK_AUTHENTICATION_FAILURE);
+    }
+
+exit:
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
+}
 
 /**
  * Function to handle the handshake result in MOT.
@@ -888,107 +1005,165 @@ static OCStackResult PostSubOwnerCredential(OTMContext_t* motCtx)
  */
 static void MOTDtlsHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
-    OIC_LOG(INFO, TAG, "IN MOTDtlsHandshakeCB");
+    OIC_LOG_V(INFO, TAG, "In %s(endpoint = %p, info = %p)", __func__, endpoint, info);
 
-    if(NULL != endpoint && NULL != info)
+    if (!endpoint || !info)
     {
-        OIC_LOG_V(INFO, TAG, "Received status from remote device(%s:%d) : %d",
-                 endpoint->addr, endpoint->port, info->result);
+        goto exit;
+    }
 
-        OTMContext_t* motCtx = GetOTMContext(endpoint->addr, endpoint->port);
-        if(motCtx)
+    OIC_LOG_V(INFO, TAG, "Received status from remote device(%s:%d) : %d",
+              endpoint->addr, endpoint->port, info->result);
+
+    OTMContext_t* motCtx = GetOTMContext(endpoint->addr, endpoint->port);
+    if (!motCtx)
+    {
+        OIC_LOG(ERROR, TAG, "MOT context not found!");
+        goto exit;
+    }
+
+    OicSecDoxm_t* newDevDoxm = motCtx->selectedDeviceInfo->doxm;
+    if (!newDevDoxm)
+    {
+        OIC_LOG(ERROR, TAG, "New device doxm not found!");
+        goto exit;
+    }
+
+    // Make sure the address matches.
+    if ((0 != strncmp(motCtx->selectedDeviceInfo->endpoint.addr, endpoint->addr, sizeof(endpoint->addr))) ||
+        (motCtx->selectedDeviceInfo->securePort != endpoint->port))
+    {
+        OIC_LOG_V(ERROR, TAG, "Mismatched: expected address %s:%u",
+                  motCtx->selectedDeviceInfo->endpoint.addr, motCtx->selectedDeviceInfo->securePort);
+        goto exit;
+    }
+
+    // If temporal secure session established successfully
+    if (CA_STATUS_OK == info->result)
+    {
+        MOTSessionEstablished(endpoint, newDevDoxm, motCtx);
+    }
+    else
+    {
+        MOTSessionFailed(endpoint, info, newDevDoxm, motCtx);
+    }
+
+exit:
+    OIC_LOG_V(INFO, TAG, "Out %s", __func__);
+}
+
+/**
+ * Function to add a device to the provisioning database via the 
+ * Provisioning Database Manager (PDM).
+ * @param  selectedDevice [IN] Device to add to the provisioning database.
+ * @return OC_STACK_OK in case of success and other values otherwise.
+ */
+static OCStackResult SetupMOTPDM(OCProvisionDev_t* selectedDevice)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+   
+    OCStackResult res = OC_STACK_INVALID_PARAM;
+    PdmDeviceState_t pdmState = PDM_DEVICE_UNKNOWN;
+    char deviceId[UUID_STRING_SIZE];
+    bool isSubowner = false;
+    bool isDuplicate = true;
+
+    VERIFY_NOT_NULL(TAG, selectedDevice, ERROR);
+    VERIFY_NOT_NULL(TAG, selectedDevice->doxm, ERROR);
+
+    res = PMIsSubownerOfDevice(selectedDevice, &isSubowner);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Internal error in PMIsSubownerOfDevice : %d", res);
+        return res;
+    }
+    
+    res = PDMGetDeviceState(&selectedDevice->doxm->deviceID, &pdmState);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Internal error in PDMGetDeviceState : %d", res);
+        return res;
+    }
+
+    if (!OCConvertUuidToString(selectedDevice->doxm->deviceID.id, deviceId))
+    {
+        OIC_LOG(WARNING, TAG, "Failed to covert uuid to string");
+        return OC_STACK_ERROR;
+    }
+
+    if ((PDM_DEVICE_ACTIVE == pdmState) && !isSubowner)
+    {
+        OIC_LOG_V(WARNING, TAG, "Not a subowner for device[%s] dectected in PDM.", deviceId);
+        OIC_LOG_V(WARNING, TAG, "[%s] will be removed from PDM.", deviceId);
+
+        res = PDMDeleteDevice(&selectedDevice->doxm->deviceID);
+        if (OC_STACK_OK != res)
         {
-            OicSecDoxm_t* newDevDoxm = motCtx->selectedDeviceInfo->doxm;
-
-            if(NULL != newDevDoxm)
-            {
-                OicUuid_t emptyUuid = {.id={0}};
-
-                //Make sure the address matches.
-                if(strncmp(motCtx->selectedDeviceInfo->endpoint.addr,
-                   endpoint->addr,
-                   sizeof(endpoint->addr)) == 0 &&
-                   motCtx->selectedDeviceInfo->securePort == endpoint->port)
-                {
-                    OCStackResult res = OC_STACK_ERROR;
-
-                    //If temporal secure sesstion established successfully
-                    if(CA_STATUS_OK == info->result)
-                    {
-                        //Delete previous credential such as preconfigured-pin
-                        RemoveCredential(&(motCtx->selectedDeviceInfo->doxm->deviceID));
-
-                        res = SaveSubOwnerPSK(motCtx->selectedDeviceInfo);
-                        if(OC_STACK_OK == res)
-                        {
-                            //POST sub owner credential to new device.
-                            res = PostSubOwnerCredential(motCtx);
-                            if(OC_STACK_OK != res)
-                            {
-                                OIC_LOG(ERROR, TAG,
-                                        "Failed to send POST request for SubOwner Credential");
-                                SetMOTResult(motCtx, res);
-                            }
-                        }
-                        else
-                        {
-                            OIC_LOG(ERROR, TAG, "Failed to save the SubOwner PSK.");
-                            SetMOTResult(motCtx, res);
-                        }
-                    }
-                    //In case of authentication failure
-                    else if(CA_DTLS_AUTHENTICATION_FAILURE == info->result)
-                    {
-                        //in case of error from wrong PIN, re-start the ownership transfer
-                        if(OIC_RANDOM_DEVICE_PIN == newDevDoxm->oxmSel)
-                        {
-                            OIC_LOG(ERROR, TAG, "The PIN number may incorrect.");
-
-                            motCtx->attemptCnt++;
-
-                            if(WRONG_PIN_MAX_ATTEMP > motCtx->attemptCnt)
-                            {
-                                res = StartMultipleOwnershipTransfer(motCtx, motCtx->selectedDeviceInfo);
-                                if(OC_STACK_OK != res)
-                                {
-                                    SetMOTResult(motCtx, res);
-                                    OIC_LOG(ERROR, TAG, "Failed to Re-StartOwnershipTransfer");
-                                }
-                            }
-                            else
-                            {
-                                OIC_LOG(ERROR, TAG, "User has exceeded the number of authentication attempts.");
-                                SetMOTResult(motCtx, OC_STACK_AUTHENTICATION_FAILURE);
-                            }
-                        }
-                        else
-                        {
-                            OIC_LOG(ERROR, TAG, "Failed to establish DTLS session.");
-                            SetMOTResult(motCtx, OC_STACK_AUTHENTICATION_FAILURE);
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            OIC_LOG_V(ERROR, TAG, "Can not find the [%s:%d]'s OTMContext for MOT", endpoint->addr, endpoint->port);
+            OIC_LOG_V(ERROR, TAG, "Failed to remove [%s] information from PDM.", deviceId);
+            goto exit;
         }
     }
 
-    OIC_LOG(INFO, TAG, "OUT MOTDtlsHandshakeCB");
+    // Checking duplication of Device ID.
+    res = PDMIsDuplicateDevice(&selectedDevice->doxm->deviceID, &isDuplicate);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Internal error in PDMIsDuplicateDevice : %d", res);
+        goto exit;
+    }
+
+    if (isDuplicate)
+    {
+        if (PDM_DEVICE_STALE == pdmState)
+        {
+            OIC_LOG(INFO, TAG, "Detected duplicated UUID in stale status, "
+                "device status will revert back to initial status.");
+            res = PDMSetDeviceState(&selectedDevice->doxm->deviceID, PDM_DEVICE_INIT);
+            if (OC_STACK_OK != res)
+            {
+                OIC_LOG_V(ERROR, TAG, "Internal error in PDMSetDeviceState : %d", res);
+                goto exit;
+            }
+        }
+        else if (PDM_DEVICE_INIT == pdmState)
+        {
+            OIC_LOG_V(ERROR, TAG, "[%s]'s ownership transfer process is already started.", deviceId);
+            res = OC_STACK_DUPLICATE_REQUEST;
+            goto exit;
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "Unknown device status while OTM.");
+            res = OC_STACK_ERROR;
+            goto exit;
+        }
+    }
+    else
+    {
+        res = PDMAddDevice(&selectedDevice->doxm->deviceID);
+        if (OC_STACK_OK != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "Internal error in PDMAddDevice : %d", res);
+            goto exit;
+        }
+    }
+
+exit:
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
+    return res;
 }
 
 static OCStackResult StartMultipleOwnershipTransfer(OTMContext_t* motCtx,
                                                     OCProvisionDev_t* selectedDevice)
 {
     OIC_LOG(INFO, TAG, "IN StartMultipleOwnershipTransfer");
+
     OCStackResult res = OC_STACK_INVALID_PARAM;
     OicUuid_t myUuid = {.id={0}};
 
-    VERIFY_NON_NULL(TAG, motCtx, ERROR);
-    VERIFY_NON_NULL(TAG, selectedDevice, ERROR);
-    VERIFY_NON_NULL(TAG, selectedDevice->doxm, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx, ERROR);
+    VERIFY_NOT_NULL(TAG, selectedDevice, ERROR);
+    VERIFY_NOT_NULL(TAG, selectedDevice->doxm, ERROR);
     motCtx->selectedDeviceInfo = selectedDevice;
 
     res = GetDoxmDeviceID(&myUuid);
@@ -998,6 +1173,7 @@ static OCStackResult StartMultipleOwnershipTransfer(OTMContext_t* motCtx,
         SetMOTResult(motCtx, res);
         return res;
     }
+
     if(memcmp(selectedDevice->doxm->owner.id, myUuid.id, sizeof(myUuid.id)) == 0)
     {
         res = OC_STACK_INVALID_DEVICE_INFO;
@@ -1005,62 +1181,27 @@ static OCStackResult StartMultipleOwnershipTransfer(OTMContext_t* motCtx,
         SetMOTResult(motCtx, res);
         return res;
     }
-    if (NULL == selectedDevice->doxm->mom ||
+
+    if ((NULL == selectedDevice->doxm->mom) ||
         (selectedDevice->doxm->mom &&
-         OIC_MULTIPLE_OWNER_DISABLE == selectedDevice->doxm->mom->mode))
+        (OIC_MULTIPLE_OWNER_DISABLE == selectedDevice->doxm->mom->mode)))
     {
         res = OC_STACK_NOT_ACCEPTABLE;
-        OIC_LOG(ERROR, TAG, "Selected device's MOT is disabled.");
+        OIC_LOG(ERROR, TAG, "MOT is disabled for the selected device.");
         SetMOTResult(motCtx, res);
         return res;
     }
 
-    //Checking duplication of Device ID.
-    char* strUuid = NULL;
-    PdmDeviceState_t deviceState = PDM_DEVICE_UNKNOWN;
-    res = PDMGetDeviceState(&selectedDevice->doxm->deviceID, &deviceState);
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);
-
-    res = ConvertUuidToStr(&selectedDevice->doxm->deviceID, &strUuid);
-    if(OC_STACK_OK != res)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to convert UUID to str");
-        SetMOTResult(motCtx, res);
-        return res;
-    }
-
-    if(PDM_DEVICE_STALE == deviceState)
-    {
-        OIC_LOG_V(WARNING, TAG, "Detected duplicated UUID in stale status, "
-                           "[%s] will be removed from PDM", strUuid);
-
-        res = PDMDeleteDevice(&selectedDevice->doxm->deviceID);
-        if(OC_STACK_OK != res)
-        {
-            OIC_LOG(ERROR, TAG, "Internal error in PDMDeleteDevice");
-            OICFree(strUuid);
-            SetMOTResult(motCtx, res);
-        }
-    }
-    else if(PDM_DEVICE_INIT == deviceState)
-    {
-        OIC_LOG_V(ERROR, TAG, "[%s]'s multiple owner transfer process is already started.", strUuid);
-        OICFree(strUuid);
-        SetMOTResult(motCtx, OC_STACK_DUPLICATE_REQUEST);
-        return OC_STACK_OK;
-    }
-
-    res = PDMAddDevice(&selectedDevice->doxm->deviceID);
+    // Setup PDM to perform the MOT, PDM will be cleanup if necessary.
+    res = SetupMOTPDM(selectedDevice);
     if (OC_STACK_OK != res)
     {
-        OIC_LOG_V(INFO, TAG, "Error in PDMAddDevice for [%s]", strUuid);
-        OICFree(strUuid);
+        OIC_LOG_V(ERROR, TAG, "SetupMOTPDM error : %d", res);
         SetMOTResult(motCtx, res);
         return res;
     }
-    OICFree(strUuid);
 
-    //Register DTLS event handler to catch the dtls event while handshake
+    // Register DTLS event handler to catch the dtls event while handshake
     if(CA_STATUS_OK != CAregisterSslHandshakeCallback(MOTDtlsHandshakeCB))
     {
         OIC_LOG(WARNING, TAG, "StartOwnershipTransfer : Failed to register DTLS handshake callback.");
@@ -1069,7 +1210,7 @@ static OCStackResult StartMultipleOwnershipTransfer(OTMContext_t* motCtx,
     OicSecOxm_t oxmSel = selectedDevice->doxm->oxmSel;
     OIC_LOG_V(DEBUG, TAG, "Multiple Ownership Transfer method = %d", (int)oxmSel);
 
-    if(OIC_PRECONFIG_PIN != oxmSel && OIC_RANDOM_DEVICE_PIN != oxmSel)
+    if((OIC_PRECONFIG_PIN != oxmSel) && (OIC_RANDOM_DEVICE_PIN != oxmSel))
     {
         OIC_LOG(ERROR, TAG, "Unsupported OxM");
         return OC_STACK_ERROR;
@@ -1081,9 +1222,10 @@ static OCStackResult StartMultipleOwnershipTransfer(OTMContext_t* motCtx,
         OIC_LOG_V(ERROR, TAG, "Error in OTMSetOTCallback : %d", res);
         return res;
     }
-    //Only two functions required for MOT
-    VERIFY_NON_NULL(TAG, motCtx->otmCallback.loadSecretCB, ERROR);
-    VERIFY_NON_NULL(TAG, motCtx->otmCallback.createSecureSessionCB, ERROR);
+
+    // Only two functions required for MOT
+    VERIFY_NOT_NULL(TAG, motCtx->otmCallback.loadSecretCB, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx->otmCallback.createSecureSessionCB, ERROR);
 
     if(OIC_RANDOM_DEVICE_PIN == oxmSel)
     {
@@ -1093,7 +1235,7 @@ static OCStackResult StartMultipleOwnershipTransfer(OTMContext_t* motCtx,
         }
     }
 
-    //Save the current context instance to use on the dtls handshake callback
+    // Save the current context instance to use on the dtls handshake callback
     res = AddOTMContext(motCtx, selectedDevice->endpoint.addr, selectedDevice->securePort);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);
 
@@ -1118,12 +1260,12 @@ OCStackResult MOTDoOwnershipTransfer(void* ctx,
     OTMContext_t* motCtx = NULL;
     OCProvisionDev_t* pCurDev = NULL;
 
-    VERIFY_NON_NULL(TAG, selectedDevicelist, ERROR);
-    VERIFY_NON_NULL(TAG, resultCallback, ERROR);
+    VERIFY_NOT_NULL(TAG, selectedDevicelist, ERROR);
+    VERIFY_NOT_NULL(TAG, resultCallback, ERROR);
 
     res = OC_STACK_NO_MEMORY;
     motCtx = (OTMContext_t*)OICCalloc(1,sizeof(OTMContext_t));
-    VERIFY_NON_NULL(TAG, motCtx, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx, ERROR);
 
     motCtx->ctxResultCallback = resultCallback;
     motCtx->ctxHasError = false;
@@ -1136,7 +1278,7 @@ OCStackResult MOTDoOwnershipTransfer(void* ctx,
 
     motCtx->ctxResultArray =
         (OCProvisionResult_t*)OICCalloc(motCtx->ctxResultArraySize, sizeof(OCProvisionResult_t));
-    VERIFY_NON_NULL(TAG, motCtx->ctxResultArray, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx->ctxResultArray, ERROR);
 
     //Fill the device UUID for result array.
     size_t devIdx = 0;

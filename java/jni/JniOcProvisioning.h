@@ -116,6 +116,20 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_unsetConfirmNumList
  * Signature: (I)I
  */
 JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setMVJustWorksOptions0
+(JNIEnv *, jclass, jint);
+/*
+ * Method:    discoverMOTEnabledDevices1
+ * Signature: (I)[Lorg/iotivity/base/OcSecureResource;
+ */
+JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverMOTEnabledDevices1
+  (JNIEnv *, jclass, jint);
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    discoverMOTEnabledOwnedDevices1
+ * Signature: (I)[Lorg/iotivity/base/OcSecureResource;
+ */
+JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverMOTEnabledOwnedDevices1
   (JNIEnv *, jclass, jint);
 
 /*
@@ -133,6 +147,39 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_getDeviceSt
  */
 JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_saveTrustCertChain1
     (JNIEnv *, jobject, jbyteArray, jint);
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    setPinType0
+ * Signature: (II)I
+ */
+JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setPinType0
+  (JNIEnv *, jclass, jint, jint);
+
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    saveACL
+ * Signature: (Ljava/lang/Object;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_saveACL
+  (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    doSelfOwnershiptransfer
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_doSelfOwnershiptransfer
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    setDeviceIdSeed1
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setDeviceIdSeed1
+  (JNIEnv *, jobject, jbyteArray);
 #ifdef __cplusplus
 }
 #endif

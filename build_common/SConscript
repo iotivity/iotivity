@@ -6,7 +6,7 @@
 import os
 import platform
 
-project_version = '1.2.0'
+project_version = '1.3.0'
 
 # Map of host os and allowed target os (host: allowed target os)
 host_target_map = {
@@ -53,6 +53,8 @@ if target_os == 'android':
     default_arch = 'x86'
 else:
     default_arch = platform.machine()
+    if target_os == 'windows':
+        default_arch = default_arch.lower()
 
 target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch) # target arch
 
@@ -85,6 +87,9 @@ if ARGUMENTS.get('SECURED') == '1' and target_os in targets_without_dtls_support
 targets_disallow_multitransport = ['arduino']
 
 help_vars = Variables()
+
+help_vars.Add('PROJECT_VERSION', 'The version of IoTivity', project_version)
+
 help_vars.Add(BoolVariable('VERBOSE', 'Show compilation', False))
 help_vars.Add(BoolVariable('RELEASE', 'Build for release?', True)) # set to 'no', 'false' or 0 for debug
 help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map[host]))
@@ -116,6 +121,7 @@ help_vars.Add(EnumVariable('MULTIPLE_OWNER', 'Enable multiple owner', '0', allow
 help_vars.Add(EnumVariable('EXC_PROV_SUPPORT', 'Except OCPMAPI library(libocpmapi.so)', '0', allowed_values=('0', '1')))
 help_vars.Add(EnumVariable('TEST', 'Run unit tests', '0', allowed_values=('0', '1')))
 help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', logging_default))
+help_vars.Add(EnumVariable('LOG_LEVEL', 'Enable stack logging level', 'DEBUG', allowed_values=('DEBUG', 'INFO', 'ERROR', 'WARNING', 'FATAL')))
 help_vars.Add(BoolVariable('UPLOAD', 'Upload binary ? (For Arduino)', require_upload))
 help_vars.Add(EnumVariable('ROUTING', 'Enable routing', 'EP', allowed_values=('GW', 'EP')))
 help_vars.Add(EnumVariable('BUILD_SAMPLE', 'Build with sample', 'ON', allowed_values=('ON', 'OFF')))
@@ -124,6 +130,7 @@ help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK path', None, PathVariable
 help_vars.Add(PathVariable('ANDROID_HOME', 'Android SDK path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('ANDROID_GRADLE', 'Gradle binary file', None, PathVariable.PathIsFile))
 help_vars.Add(EnumVariable('WITH_UPSTREAM_LIBCOAP', 'Use latest stable version of LibCoAP downloaded from github', default_with_upstream_libcoap, allowed_values=('0','1')))
+help_vars.Add(BoolVariable('WITH_ENV', 'Use compiler options from environment', False))
 
 if target_os == 'windows':
 	# For VS2013, MSVC_VERSION is '12.0'. For VS2015, MSVC_VERSION is '14.0'.
@@ -132,6 +139,7 @@ if target_os == 'windows':
 
 help_vars.Add(BoolVariable('BUILD_JAVA', 'Build Java bindings', False))
 help_vars.Add(PathVariable('JAVA_HOME', 'JDK directory', os.environ.get('JAVA_HOME'), PathVariable.PathAccept))
+help_vars.Add(EnumVariable('OIC_SUPPORT_TIZEN_TRACE', 'Tizen Trace(T-trace) api availability', 'False', allowed_values=('True', 'False')))
 
 AddOption('--prefix',
                   dest='prefix',
@@ -165,9 +173,33 @@ else:
             )
 Help(help_vars.GenerateHelpText(env))
 
+if env.get('WITH_ENV'):
+    env['ENV'] = os.environ
+    if 'CC' in os.environ:
+        env['CC'] = Split(os.environ['CC'])
+        print "using CC from environment: %s" % env['CC']
+    if 'CXX' in os.environ:
+        env['CXX'] = Split(os.environ['CXX'])
+        print "using CXX from environment: %s" % env['CXX']
+    if 'CFLAGS' in os.environ:
+        env['CFLAGS'] = Split(os.environ['CFLAGS'])
+        print "using CFLAGS from environment: %s" % env['CFLAGS']
+    if 'CXXFLAGS' in os.environ:
+        env['CXXFLAGS'] = Split(os.environ['CXXFLAGS'])
+        print "using CXXFLAGS from environment: %s" % env['CXXFLAGS']
+    if 'CCFLAGS' in os.environ:
+        env['CCFLAGS'] = Split(os.environ['CCFLAGS'])
+        print "using CCFLAGS from environment: %s" % env['CCFLAGS']
+    if 'CPPFLAGS' in os.environ:
+        env['CPPFLAGS'] = Split(os.environ['CPPFLAGS'])
+        print "using CPPFLAGS from environment: %s" % env['CPPFLAGS']
+    if 'LDFLAGS' in os.environ:
+        env['LINKFLAGS'] = Split(os.environ['LDFLAGS'])
+        print "using LDFLAGS/LINKFLAGS from environment: %s" % env['LINKFLAGS']
+
 tc_set_msg = '''
 ************************************ Warning **********************************
-*   Enviornment variable TC_PREFIX/TC_PATH is set. It will change the default *
+*   Environment variable TC_PREFIX/TC_PATH is set. It will change the default *
 * toolchain, if it isn't what you expect you should unset it, otherwise it may*
 * cause inexplicable errors.                                                  *
 *******************************************************************************
@@ -373,6 +405,128 @@ pc_vars = {
 env.Substfile(pc_file, SUBST_DICT = pc_vars)
 
 ######################################################################
+# Setting global compiler flags
+######################################################################
+target_transport = env.get('TARGET_TRANSPORT')
+with_mq = env.get('WITH_MQ')
+with_ra = env.get('WITH_RA')
+with_tcp = env.get('WITH_TCP')
+rd_mode = env.get('RD_MODE')
+with_ra_ibb = env.get('WITH_RA_IBB')
+
+env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+
+if (env.get('WITH_UPSTREAM_LIBCOAP') == '1'):
+    env.AppendUnique(CPPDEFINES = ['WITH_UPSTREAM_LIBCOAP'])
+
+if (target_os not in ['arduino', 'windows']):
+    env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
+
+if (target_os in ['darwin','ios']):
+    env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
+
+if (env.get('SECURED') == '1'):
+    env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
+
+if ((env.get('SECURED') == '1') and with_tcp):
+    env.AppendUnique(CPPDEFINES = ['__WITH_TLS__'])
+
+if (env.get('MULTIPLE_OWNER') == '1'):
+    env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
+
+if (env.get('ROUTING') == 'GW'):
+    env.AppendUnique(CPPDEFINES = ['ROUTING_GATEWAY'])
+elif (env.get('ROUTING') == 'EP'):
+    env.AppendUnique(CPPDEFINES = ['ROUTING_EP'])
+
+if (target_os == 'arduino'):
+    env.AppendUnique(CPPDEFINES = ['SINGLE_THREAD'])
+    env.AppendUnique(CPPDEFINES = ['WITH_ARDUINO'])
+elif (('IP' in target_transport) or ('ALL' in target_transport)):
+        env.AppendUnique(CPPDEFINES = ['WITH_BWT'])
+
+if (target_os in ['linux', 'tizen', 'android'] and with_tcp):
+    env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
+
+if (target_os in ['linux', 'tizen', 'android', 'arduino', 'ios']):
+    if (('BLE' in target_transport) or ('BT' in target_transport) or ('ALL' in target_transport)):
+        env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
+
+if 'ALL' in target_transport:
+    if with_ra:
+        env.AppendUnique(CPPDEFINES = ['RA_ADAPTER'])
+    if with_tcp:
+        env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER'])
+    if (target_os in ['linux', 'yocto']):
+        env.AppendUnique(CPPDEFINES = ['IP_ADAPTER', 'NO_EDR_ADAPTER', 'LE_ADAPTER'])
+    elif (target_os == 'android'):
+        env.AppendUnique(CPPDEFINES = ['IP_ADAPTER', 'EDR_ADAPTER', 'LE_ADAPTER', 'NFC_ADAPTER'])
+    elif (target_os in['darwin', 'ios', 'msys_nt', 'windows']):
+        env.AppendUnique(CPPDEFINES = ['IP_ADAPTER', 'NO_EDR_ADAPTER', 'NO_LE_ADAPTER'])
+    else:
+        env.AppendUnique(CPPDEFINES = ['IP_ADAPTER', 'EDR_ADAPTER', 'LE_ADAPTER'])
+else:
+    if ('BT' in target_transport):
+        if (target_os == 'linux'):
+            print "CA Transport BT is not supported "
+            Exit(1)
+        else:
+            env.AppendUnique(CPPDEFINES = ['EDR_ADAPTER'])
+    else:
+        env.AppendUnique(CPPDEFINES = ['NO_EDR_ADAPTER'])
+
+    if ('BLE' in target_transport):
+        env.AppendUnique(CPPDEFINES = ['LE_ADAPTER'])
+    else:
+        env.AppendUnique(CPPDEFINES = ['NO_LE_ADAPTER'])
+
+    if ('IP' in target_transport):
+        env.AppendUnique(CPPDEFINES = ['IP_ADAPTER'])
+    else:
+        env.AppendUnique(CPPDEFINES = ['NO_IP_ADAPTER'])
+
+    if with_tcp:
+        if (target_os in ['linux', 'tizen', 'android', 'arduino', 'ios', 'windows']):
+            env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER', 'WITH_TCP'])
+        else:
+            print "CA Transport TCP is not supported "
+            Exit(1)
+    else:
+        env.AppendUnique(CPPDEFINES = ['NO_TCP_ADAPTER'])
+
+    if ('NFC' in target_transport):
+        if (target_os == 'android'):
+            env.AppendUnique(CPPDEFINES = ['NFC_ADAPTER'])
+        else:
+            print "CA Transport NFC is not supported "
+            Exit(1)
+    else:
+        env.AppendUnique(CPPDEFINES = ['NO_NFC_ADAPTER'])
+
+if ('SUB' in with_mq):
+    env.AppendUnique(CPPDEFINES = ['MQ_SUBSCRIBER', 'WITH_MQ'])
+
+if ('PUB' in with_mq):
+    env.AppendUnique(CPPDEFINES = ['MQ_PUBLISHER', 'WITH_MQ'])
+
+if ('BROKER' in with_mq):
+    env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
+
+if env.get('LOGGING'):
+    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+if env.get('WITH_CLOUD') and with_tcp:
+    env.AppendUnique(CPPDEFINES = ['WITH_CLOUD'])
+
+if 'CLIENT' in rd_mode:
+    env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+
+if 'SERVER' in rd_mode:
+    env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
+
+if with_ra_ibb:
+    env.AppendUnique(CPPDEFINES = ['RA_ADAPTER_IBB'])
+######################################################################
 # Link scons to Yocto cross-toolchain ONLY when target_os is yocto
 ######################################################################
 if target_os == "yocto":
@@ -425,9 +579,7 @@ if target_os == "yocto":
     '''
     if env.get('RELEASE'):
         env.AppendUnique(CPPDEFINES = ['NDEBUG'])
-    if env.get('LOGGING'):
-        env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-    env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__', '_GNU_SOURCE'])
+    env.AppendUnique(CPPDEFINES = ['__linux__', '_GNU_SOURCE'])
     env.AppendUnique(CFLAGS = ['-std=gnu99'])
     env.AppendUnique(CCFLAGS = ['-Wall', '-Wextra', '-fPIC'])
     env.AppendUnique(LIBS = ['dl', 'pthread', 'uuid'])

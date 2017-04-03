@@ -31,6 +31,8 @@
 #include <functional>
 #endif
 
+#include "iotivity_debug.h"
+
 #include "octypes.h"
 #include "OCHeaderOption.h"
 #include <OCException.h>
@@ -161,7 +163,34 @@ namespace OC
         /** persistant storage Handler structure (open/read/write/close/unlink). */
         OCPersistentStorage        *ps;
 
+        /**
+         * This flag allows legacy app to opt in the previous behavior of OCPlatform being
+         * cleaned up by the C++ static storage (de)initializer.
+         *
+         * The flag is set to false by default, unless a legacy constructor is used.
+         *
+         * When the flag is set to false (i.e., the new preferred behavior), users of OCPlatform
+         * are responsible for calling start() and stop() explicitly while ensuring that the calls
+         * to them are balanced as the last call to stop() shuts down the underlying stack.
+         */
+        bool                       useLegacyCleanup;
+
         public:
+            PlatformConfig(const ServiceType serviceType_,
+            const ModeType mode_,
+            OCPersistentStorage *ps_)
+                : serviceType(serviceType_),
+                mode(mode_),
+                serverConnectivity(CT_DEFAULT),
+                clientConnectivity(CT_DEFAULT),
+                transportType(OC_DEFAULT_ADAPTER),
+                ipAddress(""),
+                port(0),
+                QoS(QualityOfService::NaQos),
+                ps(ps_),
+                useLegacyCleanup(false)
+        {}
+            /* @deprecated: Use a non deprecated constructor. */
             PlatformConfig()
                 : serviceType(ServiceType::InProc),
                 mode(ModeType::Both),
@@ -171,8 +200,10 @@ namespace OC
                 ipAddress("0.0.0.0"),
                 port(0),
                 QoS(QualityOfService::NaQos),
-                ps(nullptr)
+                ps(nullptr),
+                useLegacyCleanup(true)
         {}
+            /* @deprecated: Use a non deprecated constructor. */
             PlatformConfig(const ServiceType serviceType_,
             const ModeType mode_,
             OCConnectivityType serverConnectivity_,
@@ -187,9 +218,10 @@ namespace OC
                 ipAddress(""),
                 port(0),
                 QoS(QoS_),
-                ps(ps_)
+                ps(ps_),
+                useLegacyCleanup(true)
         {}
-            // for backward compatibility
+            /* @deprecated: Use a non deprecated constructor. */
             PlatformConfig(const ServiceType serviceType_,
             const ModeType mode_,
             const std::string& ipAddress_,
@@ -201,6 +233,25 @@ namespace OC
                 serverConnectivity(CT_DEFAULT),
                 clientConnectivity(CT_DEFAULT),
                 transportType(OC_DEFAULT_ADAPTER),
+                ipAddress(ipAddress_),
+                port(port_),
+                QoS(QoS_),
+                ps(ps_),
+                useLegacyCleanup(true)
+        {}
+            /* @deprecated: Use a non deprecated constructor. */
+            PlatformConfig(const ServiceType serviceType_,
+            const ModeType mode_,
+            const std::string& ipAddress_,
+            const uint16_t port_,
+            const OCTransportAdapter transportType_,
+            const QualityOfService QoS_,
+            OCPersistentStorage *ps_ = nullptr)
+                : serviceType(serviceType_),
+                mode(mode_),
+                serverConnectivity(CT_DEFAULT),
+                clientConnectivity(CT_DEFAULT),
+                transportType(transportType_),
                 ipAddress(ipAddress_),
                 port(port_),
                 QoS(QoS_),
@@ -219,8 +270,10 @@ namespace OC
                 ipAddress(""),
                 port(0),
                 QoS(QoS_),
-                ps(ps_)
+                ps(ps_),
+                useLegacyCleanup(true)
         {}
+            /* @deprecated: Use a non deprecated constructor. */
             PlatformConfig(const ServiceType serviceType_,
             const ModeType mode_,
             OCConnectivityType serverConnectivity_,
@@ -236,7 +289,8 @@ namespace OC
                 ipAddress(""),
                 port(0),
                 QoS(QoS_),
-                ps(ps_)
+                ps(ps_),
+                useLegacyCleanup(true)
         {}
 
     };

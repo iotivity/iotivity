@@ -108,7 +108,7 @@ std::string JniSecureUtils::convertUUIDtoStr(OicUuid_t uuid)
 {
     std::ostringstream deviceId("");
     char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*)0)->id)) + 1] = {0,};
-    uint32_t outLen = 0;
+    size_t outLen = 0;
     B64Result b64Ret = B64_OK;
 
     b64Ret = b64Encode(uuid.id, sizeof(uuid.id), base64Buff,

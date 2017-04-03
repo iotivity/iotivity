@@ -135,6 +135,8 @@ NSResult NSSendNotification(NSMessage *msg)
     if (consumerSubList->head == NULL)
     {
         NS_LOG(ERROR, "SubList->head is NULL, empty SubList");
+        OCRepPayloadDestroy(payload);
+        msg->extraInfo = NULL;
         return NS_ERROR;
     }
 
@@ -143,11 +145,9 @@ NSResult NSSendNotification(NSMessage *msg)
     while (it)
     {
         NSCacheSubData * subData = (NSCacheSubData *) it->data;
-        NS_LOG_V(DEBUG, "message subData->id = %s", subData->id);
+        NS_LOG_V(INFO_PRIVATE, "message subData->id = %s", subData->id);
         NS_LOG_V(DEBUG, "subData->messageId = %d", subData->messageObId);
-        NS_LOG_V(DEBUG, "subData->cloud_messageId = %d", subData->remote_messageObId);
         NS_LOG_V(DEBUG, "subData->syncId = %d", subData->syncObId);
-        NS_LOG_V(DEBUG, "subData->cloud_syncId = %d", subData->remote_syncObId);
         NS_LOG_V(DEBUG, "subData->isWhite = %d", subData->isWhite);
 
         if (subData->isWhite)
@@ -168,25 +168,6 @@ NSResult NSSendNotification(NSMessage *msg)
                     obArray[obCount++] = subData->messageObId;
                 }
             }
-
-#if (defined WITH_CLOUD)
-            if (subData->remote_messageObId != 0)
-            {
-                if (msg->topic && (msg->topic)[0] != '\0')
-                {
-                    NS_LOG_V(DEBUG, "this is topic message via remote server: %s", msg->topic);
-                    if (NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
-                    {
-                        obArray[obCount++] = subData->remote_messageObId;
-                    }
-                }
-                else
-                {
-                    obArray[obCount++] = subData->remote_messageObId;
-                }
-            }
-#endif
-
         }
         it = it->next;
     }
@@ -201,6 +182,8 @@ NSResult NSSendNotification(NSMessage *msg)
     if (!obCount)
     {
         NS_LOG(ERROR, "observer count is zero");
+        OCRepPayloadDestroy(payload);
+        msg->extraInfo = NULL;
         return NS_ERROR;
     }
 
@@ -244,11 +227,9 @@ NSResult NSSendSync(NSSyncInfo *sync)
     while (it)
     {
         NSCacheSubData * subData = (NSCacheSubData *) it->data;
-        NS_LOG_V(DEBUG, "sync subData->id = %s", subData->id);
+        NS_LOG_V(INFO_PRIVATE, "sync subData->id = %s", subData->id);
         NS_LOG_V(DEBUG, "subData->messageId = %d", subData->messageObId);
-        NS_LOG_V(DEBUG, "subData->cloud_messageId = %d", subData->remote_messageObId);
         NS_LOG_V(DEBUG, "subData->syncId = %d", subData->syncObId);
-        NS_LOG_V(DEBUG, "subData->cloud_syncId = %d", subData->remote_syncObId);
         NS_LOG_V(DEBUG, "subData->isWhite = %d", subData->isWhite);
 
         if (subData->isWhite)
@@ -257,13 +238,6 @@ NSResult NSSendSync(NSSyncInfo *sync)
             {
                 obArray[obCount++] = subData->syncObId;
             }
-
-#if (defined WITH_CLOUD)
-            if (subData->remote_syncObId != 0)
-            {
-                obArray[obCount++] = subData->remote_syncObId;
-            }
-#endif
         }
         it = it->next;
     }

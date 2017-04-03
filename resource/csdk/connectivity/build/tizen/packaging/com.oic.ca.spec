@@ -4,7 +4,7 @@
 %define DEST_LIB_DIR  %{buildroot}/%{_libdir}
 
 Name: com-oic-ca
-Version:    1.2.0
+Version:    1.3.0
 Release:    0
 Summary: Tizen oicca application
 Group: Network & Connectivity / IoT Connectivity
@@ -28,11 +28,14 @@ Source0: http://mirrors.kernel.org/%{name}/%{version}/%{name}-%{version}.tar.gz
 %{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
 %{!?VERBOSE: %define VERBOSE 1}
 %{!?WITH_TCP: %define WITH_TCP 0}
+%{!?OIC_SUPPORT_TIZEN_TRACE: %define OIC_SUPPORT_TIZEN_TRACE False}
 
 BuildRequires: pkgconfig(dlog)
+%if "%{OIC_SUPPORT_TIZEN_TRACE}" == "True"
+BuildRequires: pkgconfig(ttrace)
+%endif
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(capi-network-connection)
-BuildRequires: pkgconfig(capi-network-wifi)
 BuildRequires: pkgconfig(capi-network-bluetooth)
 BuildRequires: boost-devel
 BuildRequires: boost-thread
@@ -57,6 +60,7 @@ scons %{JOB} \
     TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
     VERBOSE=%{VERBOSE} \
     WITH_TCP=%{WITH_TCP} \
+    OIC_SUPPORT_TIZEN_TRACE=%{OIC_SUPPORT_TIZEN_TRACE} \
     #eol
 
 
@@ -67,10 +71,9 @@ mkdir -p %{DEST_LIB_DIR}/pkgconfig
 cp -f %{ROOTDIR}/con/src/libconnectivity_abstraction.so %{buildroot}/%{_libdir}
 cp -f %{ROOTDIR}/extlibs/libcoap/libcoap.a %{buildroot}/%{_libdir}
 if echo %{SECURED}|grep -qi '1'; then
-	cp -f %{ROOTDIR}/con/extlibs/tinydtls/libtinydtls.a %{buildroot}/%{_libdir}
 	cp -f %{ROOTDIR}/con/extlibs/mbedtls/libmbedcrypto.a %{buildroot}/%{_libdir}
-	cp -f %{ROOTDIR}/con/extlibs/tinydtls/libmbedtls.a %{buildroot}/%{_libdir}
-	cp -f %{ROOTDIR}/con/extlibs/tinydtls/libmbedx509.a %{buildroot}/%{_libdir}
+	cp -f %{ROOTDIR}/con/extlibs/mbedtls/libmbedtls.a %{buildroot}/%{_libdir}
+	cp -f %{ROOTDIR}/con/extlibs/mbedtls/libmbedx509.a %{buildroot}/%{_libdir}
 fi
 cp -rf %{ROOTDIR}/con/api/cacommon.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/inc/caadapterinterface.h* %{DEST_INC_DIR}/

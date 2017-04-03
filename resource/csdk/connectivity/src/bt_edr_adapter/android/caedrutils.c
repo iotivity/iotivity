@@ -788,7 +788,7 @@ void CAEDRNativeRemoveDeviceSocketBaseAddr(JNIEnv *env, jstring address)
     return;
 }
 
-jobject CAEDRNativeGetDeviceSocket(uint32_t index)
+jobject CAEDRNativeGetDeviceSocket(size_t index)
 {
     if (!g_deviceObjectList)
     {
@@ -864,7 +864,7 @@ jobject CAEDRNativeGetDeviceSocketBaseAddr(JNIEnv *env, const char* remoteAddres
     return NULL;
 }
 
-jobject CAEDRNativeGetInputStream(uint32_t index)
+jobject CAEDRNativeGetInputStream(size_t index)
 {
     if (!g_deviceObjectList)
     {
@@ -889,7 +889,7 @@ jobject CAEDRNativeGetInputStream(uint32_t index)
     return jarrayObj;
 }
 
-uint32_t CAEDRGetSocketListLength()
+size_t CAEDRGetSocketListLength()
 {
     if (!g_deviceObjectList)
     {

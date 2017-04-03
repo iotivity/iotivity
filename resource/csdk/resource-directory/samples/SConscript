@@ -38,12 +38,12 @@ rd_sample_app_env.AppendUnique(CPPPATH = ['../include',
                                           '../src/internal',
                                           src_dir + '/resource/csdk/include',
                                           src_dir + '/resource/csdk/stack/include',
+                                          src_dir + '/resource/csdk/security/include',
                                           src_dir + '/resource/include',
                                           src_dir + '/resource/oc_logger/include',])
 
 if target_os not in ['windows']:
     rd_sample_app_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra', '-std=c++0x'])
-rd_sample_app_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 rd_sample_app_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 rd_sample_app_env.PrependUnique(LIBS = ['resource_directory', 'octbstack'])
 

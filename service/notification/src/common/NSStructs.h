@@ -69,8 +69,6 @@ typedef struct
     char id[NS_UUID_STRING_SIZE];
     int syncObId; // sync resource observer ID for local consumer
     int messageObId; // message resource observer ID for local consumer
-    int remote_syncObId; //sync observer ID subscribed through remote server
-    int remote_messageObId; //message observer ID subscribed through remote server
     bool isWhite; // access state -> True: allowed / False: blocked
 
 } NSCacheSubData;

@@ -87,11 +87,9 @@ TEST(CRLResourceTest, CBORPayloadToCrl)
 //GetDerCrl Tests
 TEST(CRLResourceTest, GetDerCrl)
 {
-#define CRL_MAX_LEN 1024
-    uint8_t crlData[CRL_MAX_LEN] = {0};
-    ByteArray crlArray = {crlData, CRL_MAX_LEN};
+    ByteArray crlArray = {NULL, 0};
     GetDerCrl(&crlArray);
-    EXPECT_NE(0, crlArray.len);
+    EXPECT_NE(static_cast<size_t>(0), crlArray.len);
 }
 
 #endif

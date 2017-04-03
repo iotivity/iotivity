@@ -42,31 +42,45 @@ static const uint16_t CBOR_SIZE = 512;
 // Max cbor size payload.
 static const uint16_t CBOR_MAX_SIZE = 4400;
 
-// PSTAT Map size - Number of mandatory items
-static const uint8_t PSTAT_MAP_SIZE = 6;
+// PSTAT Map size - Number of read-write items +2 for rt and if.
+// TODO [IOT-1958] isOp becomes read-only; -1 here
+static const uint8_t PSTAT_MIN_MAP_SIZE = 7; // dos, isOp, tm, om, rowneruuid, rt, if
 
-// Number of writeable property
-static const uint8_t WRITEABLE_PROPERTY_SIZE = 3;
+// .dos Property map size
+static const uint8_t PSTAT_DOS_MAP_SIZE = 2; // s, p
+
+// Number of read-only Properties, added to map if not creating a writable-only
+// representation.
+// TODO [IOT-1958] isOp becomes read-only; +1 here
+static const uint8_t READ_ONLY_PROPERTY_SIZE = 2; // cm, sm
 
 static OicSecDpom_t gSm = SINGLE_SERVICE_CLIENT_DRIVEN;
 static OicSecPstat_t gDefaultPstat =
 {
+    {DOS_RFOTM, false},                       // OicSecDostype_t dos
     false,                                    // bool isop
-    (OicSecDpm_t)(BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES |
-    PROVISION_CREDENTIALS | PROVISION_ACLS),   // OicSecDpm_t cm
-    (OicSecDpm_t)(TAKE_OWNER | BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES |
-    PROVISION_CREDENTIALS | PROVISION_ACLS),   // OicSecDpm_t tm
-    {.id = {0}},                              // OicUuid_t deviceID
+    TAKE_OWNER,                               // OicSecDpm_t cm
+    NORMAL,                                   // OicSecDpm_t tm
     SINGLE_SERVICE_CLIENT_DRIVEN,             // OicSecDpom_t om */
     1,                                        // the number of elts in Sms
     &gSm,                                     // OicSecDpom_t *sm
     0,                                        // uint16_t commitHash
-    {.id = {0}},                              // OicUuid_t rownerID
+    {.id = {0}},                              // OicUuid_t rowneruuid
 };
 
 static OicSecPstat_t    *gPstat = NULL;
 
 static OCResourceHandle gPstatHandle = NULL;
+
+/**
+ * Get the default value.
+ *
+ * @return the gDefaultPstat pointer.
+ */
+static OicSecPstat_t* GetPstatDefault()
+{
+    return &gDefaultPstat;
+}
 
 /**
  * This method is internal method.
@@ -88,6 +102,28 @@ void DeletePstatBinData(OicSecPstat_t* pstat)
     }
 }
 
+/**
+ * Function to update persistent storage
+ */
+static bool UpdatePersistentStorage(OicSecPstat_t *pstat)
+{
+    bool bRet = false;
+
+    size_t size = 0;
+    uint8_t *cborPayload = NULL;
+    OCStackResult ret = PstatToCBORPayload(pstat, &cborPayload, &size, false);
+    if (OC_STACK_OK == ret)
+    {
+        if (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_PSTAT_NAME, cborPayload, size))
+        {
+            bRet = true;
+        }
+        OICFree(cborPayload);
+    }
+
+    return bRet;
+}
+
 OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, size_t *size,
                                  bool writableOnly)
 {
@@ -106,7 +142,7 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
     *size = 0;
 
     OCStackResult ret = OC_STACK_ERROR;
-    size_t pstatMapSize = PSTAT_MAP_SIZE;
+    size_t pstatMapSize = PSTAT_MIN_MAP_SIZE;
     CborEncoder encoder;
     CborEncoder pstatMap;
     char* strUuid = NULL;
@@ -114,69 +150,102 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
     int64_t cborEncoderResult = CborNoError;
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_ERROR);
+
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
+    // If not creating a writable-Properties-only pstat, grow map to include
+    // read-only Properties as well.
     if (false == writableOnly)
     {
-        pstatMapSize += WRITEABLE_PROPERTY_SIZE;
+        pstatMapSize += READ_ONLY_PROPERTY_SIZE;
     }
 
+    // Top Level Pstat Map
     cborEncoderResult = cbor_encoder_create_map(&encoder, &pstatMap, pstatMapSize);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Pstat Map.");
 
+    // Device Onboarding State Property tag
+    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_DOS_NAME,
+        strlen(OIC_JSON_DOS_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding dos Name Tag.");
+
+    // Device Onboarding State Property map
+    CborEncoder dosMap;
+    cborEncoderResult = cbor_encoder_create_map(&pstatMap, &dosMap, PSTAT_DOS_MAP_SIZE);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed creating pstat.dos map");
+
+    cborEncoderResult = cbor_encode_text_string(&dosMap, OIC_JSON_S_NAME,
+        strlen(OIC_JSON_S_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding pstat.dos.s tag.");
+
+    cborEncoderResult = cbor_encode_int(&dosMap, pstat->dos.state);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding pstat.dos.s value.");
+
+    cborEncoderResult = cbor_encode_text_string(&dosMap, OIC_JSON_P_NAME,
+        strlen(OIC_JSON_P_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding pstat.dos.p tag.");
+
+    cborEncoderResult = cbor_encode_boolean(&dosMap, pstat->dos.pending);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding pstat.dos.p value.");
+
+    cborEncoderResult = cbor_encoder_close_container(&pstatMap, &dosMap);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed closing pstat.dos map");
+
+    // isop Property
+    // TODO [IOT-1958] move isOp inside !writableOnly check
     cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_ISOP_NAME,
         strlen(OIC_JSON_ISOP_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ISOP Name Tag.");
     cborEncoderResult = cbor_encode_boolean(&pstatMap, pstat->isOp);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ISOP Name Value.");
 
-    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_CM_NAME,
-        strlen(OIC_JSON_CM_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CM Name Tag.");
-    cborEncoderResult = cbor_encode_int(&pstatMap, pstat->cm);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CM Name Value.");
+    // If not creating a writable-Properties-only pstat, add read-only cm.
+    if (false == writableOnly)
+    {
+        // cm Property
+        cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_CM_NAME,
+            strlen(OIC_JSON_CM_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CM Name Tag.");
+        cborEncoderResult = cbor_encode_int(&pstatMap, pstat->cm);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CM Name Value.");
+    }
 
+    // tm Property
     cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_TM_NAME,
         strlen(OIC_JSON_TM_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding TM Name Tag.");
     cborEncoderResult = cbor_encode_int(&pstatMap, pstat->tm);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding TM Name Value.");
 
+    // om Property
     cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_OM_NAME,
         strlen(OIC_JSON_OM_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding OM Name Tag.");
     cborEncoderResult = cbor_encode_int(&pstatMap, pstat->om);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding OM Name Value.");
 
+    // If not creating a writable-Properties-only pstat, add read-only sm.
     if (false == writableOnly)
     {
+        // sm Property
         cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_SM_NAME,
             strlen(OIC_JSON_SM_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Name Tag.");
         cborEncoderResult = cbor_encode_int(&pstatMap, pstat->sm[0]);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Name Value.");
-
-        cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_DEVICE_ID_NAME,
-            strlen(OIC_JSON_DEVICE_ID_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Tag.");
-        ret = ConvertUuidToStr(&pstat->deviceID, &strUuid);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
-        cborEncoderResult = cbor_encode_text_string(&pstatMap, strUuid, strlen(strUuid));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Value.");
-        OICFree(strUuid);
-        strUuid = NULL;
-
-        cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_ROWNERID_NAME,
-            strlen(OIC_JSON_ROWNERID_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROwner Id Tag.");
-        ret = ConvertUuidToStr(&pstat->rownerID, &strUuid);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
-        cborEncoderResult = cbor_encode_text_string(&pstatMap, strUuid, strlen(strUuid));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROwner Id Value.");
-        OICFree(strUuid);
-        strUuid = NULL;
     }
+
+    // rowneruuid property
+    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_ROWNERID_NAME,
+        strlen(OIC_JSON_ROWNERID_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROwner Id Tag.");
+    ret = ConvertUuidToStr(&pstat->rownerID, &strUuid);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
+    cborEncoderResult = cbor_encode_text_string(&pstatMap, strUuid, strlen(strUuid));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROwner Id Value.");
+    OICFree(strUuid);
+    strUuid = NULL;
 
     //RT -- Mandatory
     CborEncoder rtArray;
@@ -195,12 +264,12 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing RT.");
 
     //IF-- Mandatory
-     CborEncoder ifArray;
-     cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_IF_NAME,
-             strlen(OIC_JSON_IF_NAME));
-     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
-     cborEncoderResult = cbor_encoder_create_array(&pstatMap, &ifArray, 1);
-     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
+    CborEncoder ifArray;
+    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_IF_NAME,
+       strlen(OIC_JSON_IF_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
+    cborEncoderResult = cbor_encoder_create_array(&pstatMap, &ifArray, 1);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
     for (size_t i = 0; i < 1; i++)
     {
         cborEncoderResult = cbor_encode_text_string(&ifArray, OC_RSRVD_INTERFACE_DEFAULT,
@@ -224,6 +293,7 @@ exit:
     {
         // reallocate and try again!
         OICFree(outPayload);
+        outPayload = NULL;
         // Since the allocated initial memory failed, double the memory.
         cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         cborEncoderResult = CborNoError;
@@ -261,29 +331,120 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
     }
 
     OCStackResult ret = OC_STACK_ERROR;
-    *secPstat = NULL;
-
-    CborValue pstatCbor;
-    CborParser parser;
+    CborValue pstatCbor = { .parser = NULL };
+    CborValue pstatMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+    CborValue dosMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+    CborParser parser = { .end = NULL };
     CborError cborFindResult = CborNoError;
     char *strUuid = NULL;
+    char *dosTagName = NULL;
     size_t len = 0;
-
-    cbor_parser_init(cborPayload, size, 0, &parser, &pstatCbor);
-    CborValue pstatMap = { .parser = NULL };
-
+    size_t dosLen = 0;
     OicSecPstat_t *pstat = NULL;
-    cborFindResult = cbor_value_enter_container(&pstatCbor, &pstatMap);
-    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding PSTAT Map.");
 
+    *secPstat = NULL;
+
+    // init cbor parser
+    cbor_parser_init(cborPayload, size, 0, &parser, &pstatCbor);
+
+    // allocate pstat struct
     pstat = (OicSecPstat_t *)OICCalloc(1, sizeof(OicSecPstat_t));
-    VERIFY_NON_NULL(TAG, pstat, ERROR);
+    VERIFY_NOT_NULL(TAG, pstat, ERROR);
 
+    // Individual Properties missing from cbor representation may result in
+    // pstat Property assignment to existing gPstat values.  Therefore,
+    // we must ensure that gPstat to a valid value, to avoid null deref.
+    if (!gPstat)
+    {
+        gPstat = GetPstatDefault();
+    }
+    VERIFY_NOT_NULL(TAG, gPstat, FATAL);
+
+    // Enter pstat Map
+    cborFindResult = cbor_value_enter_container(&pstatCbor, &pstatMap);
+    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering pstat Map.");
+
+    // Find pstat.dos tag
+    cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_DOS_NAME, &pstatMap);
+    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding dos tag.");
+
+    if (CborInvalidType != pstatMap.type)
+    {
+        // found pstat.dos tag "dos" in pstatMap
+        OIC_LOG(INFO, TAG, "Found pstat.dos tag in pstatMap.");
+        if (CborNoError == cborFindResult && cbor_value_is_container(&pstatMap))
+        {
+            OIC_LOG(INFO, TAG, "Found pstat.dos cbor container; entering.");
+            cborFindResult = cbor_value_enter_container(&pstatMap, &dosMap);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering dos map.");
+        }
+        while (cbor_value_is_valid(&dosMap) && cbor_value_is_text_string(&dosMap))
+        {
+            cborFindResult = cbor_value_dup_text_string(&dosMap, &dosTagName, &dosLen, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed getting dos map next tag.");
+            cborFindResult = cbor_value_advance(&dosMap);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed advancing dos map.");
+
+            if (NULL != dosTagName)
+            {
+                if (strcmp(dosTagName, OIC_JSON_S_NAME) == 0)
+                {
+                    OIC_LOG(INFO, TAG, "Found pstat.dos.s tag; getting int value.");
+                    int s = -1;
+                    cborFindResult = cbor_value_get_int(&dosMap, &s);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed getting pstat.dos.s value.");
+                    OIC_LOG_V(INFO, TAG, "Read pstat.dos.s value = %d.", s);
+                    pstat->dos.state = (OicSecDeviceOnboardingState_t)s;
+                }
+                else if (strcmp(dosTagName, OIC_JSON_P_NAME) == 0)
+                {
+                    OIC_LOG(INFO, TAG, "Found pstat.dos.p tag; getting boolean value.");
+                    bool p = false;
+                    cborFindResult = cbor_value_get_boolean(&dosMap, &p);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed getting pstat.dos.p value.");
+                    OIC_LOG_V(INFO, TAG, "Read pstat.dos.p value = %s.", p?"true":"false");
+                    pstat->dos.pending = p;
+                }
+                else
+                {
+                    OIC_LOG_V(WARNING, TAG, "Unknown tag name in dos map: %s", dosTagName);
+                }
+                free(dosTagName);
+                dosTagName = NULL;
+            }
+
+            if (cbor_value_is_valid(&dosMap))
+            {
+                cborFindResult = cbor_value_advance(&dosMap);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed advancing dos map.");
+            }
+        }
+    }
+    else
+    {
+        // didn't find pstat.dos tag "dos" in pstatMap
+        OIC_LOG(WARNING, TAG, "Did not find mandatory pstat.dos tag in pstatMap.");
+        OIC_LOG(WARNING, TAG, "If this is not an intentionally-partial pstat representation,");
+        OIC_LOG(WARNING, TAG, "it may be an outdated .dat file that is missing the \"dos\" Property.");
+        OIC_LOG(WARNING, TAG, "Using existing pstat.dos value from gPstat.");
+        pstat->dos.state = gPstat->dos.state;
+        pstat->dos.pending = gPstat->dos.pending;
+        cborFindResult = CborNoError;
+    }
+
+    // pstat.isop Property
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_ISOP_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_boolean(&pstatMap))
     {
         cborFindResult = cbor_value_get_boolean(&pstatMap, &pstat->isOp);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding isOp Value.");
+
+        // TODO [IOT-1958] will make this Property read-only... for now, leave
+        // as writable
+        // if (roParsed)
+        // {
+        //     *roParsed = true;
+        // }
     }
     else
     {
@@ -291,23 +452,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
         cborFindResult = CborNoError;
     }
 
-    cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_DEVICE_ID_NAME, &pstatMap);
-    if (CborNoError == cborFindResult && cbor_value_is_text_string(&pstatMap))
-    {
-        cborFindResult = cbor_value_dup_text_string(&pstatMap, &strUuid , &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Device Id Value.");
-        ret = ConvertStrToUuid(strUuid , &pstat->deviceID);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-        OICFree(strUuid );
-        strUuid  = NULL;
-
-    }
-    else
-    {
-        memcpy(&pstat->deviceID, &gPstat->deviceID, sizeof(OicUuid_t));
-        cborFindResult = CborNoError;
-    }
-
+    // pstat.cm Property
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_CM_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&pstatMap))
     {
@@ -316,6 +461,11 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
         cborFindResult = cbor_value_get_int(&pstatMap, &cm);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CM.");
         pstat->cm = (OicSecDpm_t)cm;
+
+        if (roParsed)
+        {
+            *roParsed = true;
+        }
     }
     else
     {
@@ -323,6 +473,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
         cborFindResult = CborNoError;
     }
 
+    // pstat.tm Property
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_TM_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&pstatMap))
     {
@@ -338,6 +489,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
         cborFindResult = CborNoError;
     }
 
+    // pstat.om Property
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_OM_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&pstatMap))
     {
@@ -353,6 +505,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
         cborFindResult = CborNoError;
     }
 
+    // pstat.sm Property
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_SM_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&pstatMap))
     {
@@ -371,13 +524,14 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
     }
     else
     {
-        VERIFY_NON_NULL(TAG, gPstat, ERROR);
+        VERIFY_NOT_NULL(TAG, gPstat, ERROR);
         pstat->smLen = gPstat->smLen;
         pstat->sm = (OicSecDpom_t*)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
         *pstat->sm = *gPstat->sm;
         cborFindResult = CborNoError;
     }
 
+    // pstat.rowneruuid Property
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_ROWNERID_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_text_string(&pstatMap))
     {
@@ -390,12 +544,13 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
     }
     else
     {
-        VERIFY_NON_NULL(TAG, gPstat, ERROR);
+        VERIFY_NOT_NULL(TAG, gPstat, ERROR);
         memcpy(pstat->rownerID.id, gPstat->rownerID.id, sizeof(gPstat->rownerID.id));
         cborFindResult = CborNoError;
     }
 
     *secPstat = pstat;
+
     ret = OC_STACK_OK;
 
 exit:
@@ -409,28 +564,6 @@ exit:
     }
 
     return ret;
-}
-
-/**
- * Function to update persistent storage
- */
-static bool UpdatePersistentStorage(OicSecPstat_t *pstat)
-{
-    bool bRet = false;
-
-    size_t size = 0;
-    uint8_t *cborPayload = NULL;
-    OCStackResult ret = PstatToCBORPayload(pstat, &cborPayload, &size, false);
-    if (OC_STACK_OK == ret)
-    {
-        if (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_PSTAT_NAME, cborPayload, size))
-        {
-            bRet = true;
-        }
-        OICFree(cborPayload);
-    }
-
-    return bRet;
 }
 
 static bool ValidateQuery(const char * query)
@@ -483,8 +616,8 @@ static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest
     }
 
     /*
-     * For GET or Valid Query request return doxm resource CBOR payload.
-     * For non-valid query return NULL json payload.
+     * For GET or Valid Query request return pstat resource CBOR payload.
+     * For non-valid query return NULL payload.
      * A device will 'always' have a default Pstat, so PstatToCBORPayload will
      * return valid pstat resource json.
      */
@@ -509,7 +642,7 @@ static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest
  * The entity handler determines how to process a POST request.
  * Per the REST paradigm, POST can also be used to update representation of existing
  * resource or create a new resource.
- * For pstat, it updates only tm and om.
+ * For pstat, it updates only dos, tm, om, and rowneruuid.
  */
 static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRequest)
 {
@@ -523,11 +656,11 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
     {
         uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData;
         size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
-        VERIFY_NON_NULL(TAG, payload, ERROR);
+        VERIFY_NOT_NULL(TAG, payload, ERROR);
 
         bool roParsed = false;
         OCStackResult ret = CBORPayloadToPstatBin(payload, size, &pstat, &roParsed);
-        VERIFY_NON_NULL(TAG, pstat, ERROR);
+        VERIFY_NOT_NULL(TAG, pstat, ERROR);
         if (OC_STACK_OK == ret)
         {
             bool validReq = false;
@@ -550,7 +683,7 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
                     goto exit;
             }
 
-            //operation mode(om) should be one of supported modes(sm)
+            // operation mode (om) should be one of supported modes (sm)
             for(size_t i = 0; i < gPstat->smLen; i++)
             {
                 if(gPstat->sm[i] == pstat->om)
@@ -568,7 +701,8 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
             }
             validReq = false;
 
-            //Currently, IoTivity only supports Single Service Client Directed provisioning
+            // Currently, IoTivity only supports Single Service Client Directed provisioning
+            // TODO [IOT-1763]: update this state management logic as part of CR 32.
             if (pstat->om == SINGLE_SERVICE_CLIENT_DRIVEN)
             {
                 if ((pstat->cm & RESET) && false == pstat->isOp)
@@ -593,11 +727,23 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
                 }
                 else
                 {
-                    OIC_LOG(DEBUG, TAG, "Invalid Device provisionig state");
+                    OIC_LOG(DEBUG, TAG, "Invalid Device provisioning state");
                     OIC_LOG_BUFFER(DEBUG, TAG, payload, size);
                     ehRet = OC_EH_BAD_REQ;
                     goto exit;
                 }
+            }
+
+            if (!(gPstat->tm & VERIFY_SOFTWARE_VERSION)
+                && (pstat->tm & VERIFY_SOFTWARE_VERSION)) { // ISVV bit goes from 0 to 1
+                OIC_LOG (INFO, TAG, "Software Version Validation process initiated");
+                pstat->cm &= ~VERIFY_SOFTWARE_VERSION; // Unset the cm bit, per spec
+            }
+
+            if (!(gPstat->tm & UPDATE_SOFTWARE)
+                && (pstat->tm & UPDATE_SOFTWARE)) { // ISSU bit goes from 0 to 1
+                OIC_LOG (INFO, TAG, "Software Update process initiated");
+                pstat->cm &= ~UPDATE_SOFTWARE; // Unset the cm bit, per spec
             }
 
             if (!validReq)
@@ -607,11 +753,13 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
                 goto exit;
             }
 
+            // TODO [IOT-1763]: use SetState() function on dos as part of CR 32.
+            gPstat->dos.state = pstat->dos.state;
+            gPstat->dos.pending = pstat->dos.pending;
             gPstat->isOp = pstat->isOp;
-            gPstat->om = pstat->om;
             gPstat->tm = pstat->tm;
-            gPstat->cm = pstat->cm;
-            memcpy(&(gPstat->deviceID), &(pstat->deviceID), sizeof(OicUuid_t));
+            gPstat->cm = pstat->tm; // TODO [IOT-1763]: remove once dos state is functional
+            gPstat->om = pstat->om;
             memcpy(&(gPstat->rownerID), &(pstat->rownerID), sizeof(OicUuid_t));
 
             // Convert pstat data into CBOR for update to persistent storage
@@ -638,47 +786,48 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
             }
         }
     }
- exit:
 
-     if(OC_EH_OK != ehRet)
-     {
-         /*
-           * If some error is occured while ownership transfer,
-           * ownership transfer related resource should be revert back to initial status.
-           */
-         const OicSecDoxm_t* doxm = GetDoxmResourceData();
-         if(doxm)
-         {
-             if(!doxm->owned)
-             {
-                OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request");
+    exit:
 
+    if (OC_EH_OK != ehRet)
+    {
+        /*
+         * If some error is occured while ownership transfer,
+         * ownership transfer related resource should be revert back to initial status.
+         */
+        OIC_LOG(WARNING, TAG, "The operation failed during handle pstat POST request");
+        const OicSecDoxm_t* doxm = GetDoxmResourceData();
+        if (doxm)
+        {
+            if (!doxm->owned)
+            {
                 if (!isDuplicatedMsg)
                 {
+                    OIC_LOG(WARNING, TAG, "DOXM and PSTAT will be reverted.");
                     RestoreDoxmToInitState();
                     RestorePstatToInitState();
-                    OIC_LOG(WARNING, TAG, "DOXM will be reverted.");
                 }
-             }
-         }
-         else
-         {
-             OIC_LOG(ERROR, TAG, "Invalid DOXM resource.");
-         }
-     }
-     else
-     {
-        if(ehRequest->devAddr.adapter == OC_ADAPTER_IP)
+            }
+        }
+        else
+        {
+           OIC_LOG(ERROR, TAG, "Invalid DOXM resource.");
+        }
+    }
+    else
+    {
+        if (ehRequest->devAddr.adapter == OC_ADAPTER_IP)
         {
             previousMsgId = ehRequest->messageID;
         }
-     }
+    }
 
     // Send response payload to request originator
     ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
-                   OC_EH_OK : OC_EH_ERROR;
+        OC_EH_OK : OC_EH_ERROR;
 
     DeletePstatBinData(pstat);
+
     return ehRet;
 }
 
@@ -705,7 +854,7 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
                 break;
             default:
                 ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
-                               OC_EH_OK : OC_EH_ERROR;
+                    OC_EH_OK : OC_EH_ERROR;
                 break;
         }
     }
@@ -734,16 +883,6 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
     return ret;
 }
 
-/**
- * Get the default value.
- *
- * @return the gDefaultPstat pointer.
- */
-static OicSecPstat_t* GetPstatDefault()
-{
-    return &gDefaultPstat;
-}
-
 OCStackResult InitPstatResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
@@ -751,7 +890,6 @@ OCStackResult InitPstatResource()
     // Read Pstat resource from PS
     uint8_t *data = NULL;
     size_t size = 0;
-    OicUuid_t emptyUuid = {.id={0}};
     ret = GetSecureVirtualDatabaseFromPS(OIC_JSON_PSTAT_NAME, &data, &size);
     // If database read failed
     if (OC_STACK_OK != ret)
@@ -773,17 +911,7 @@ OCStackResult InitPstatResource()
     {
         gPstat = GetPstatDefault();
     }
-    VERIFY_NON_NULL(TAG, gPstat, FATAL);
-
-    //In case of Pstat's device id is empty, fill the device id as doxm's device id.
-    if(0 == memcmp(&gPstat->deviceID, &emptyUuid, sizeof(OicUuid_t)))
-    {
-        OicUuid_t doxmUuid = {.id={0}};
-        if(OC_STACK_OK == GetDoxmDeviceID(&doxmUuid))
-        {
-            memcpy(&gPstat->deviceID, &doxmUuid, sizeof(OicUuid_t));
-        }
-    }
+    VERIFY_NOT_NULL(TAG, gPstat, FATAL);
 
     // Instantiate 'oic.sec.pstat'
     ret = CreatePstatResource();
@@ -815,7 +943,8 @@ void RestorePstatToInitState()
     if(gPstat)
     {
         OIC_LOG(INFO, TAG, "PSTAT resource will revert back to initial status.");
-
+        gPstat->dos.state = DOS_RFOTM;
+        gPstat->dos.pending = false;
         gPstat->cm = (OicSecDpm_t)(gPstat->cm | TAKE_OWNER);
         gPstat->tm = (OicSecDpm_t)(gPstat->tm & (~TAKE_OWNER));
         gPstat->om = SINGLE_SERVICE_CLIENT_DRIVEN;
@@ -902,12 +1031,11 @@ OCStackResult SetPstatSelfOwnership(const OicUuid_t* newROwner)
         return ret;
     }
 
-    if( newROwner && (false == gPstat->isOp) && (true == (TAKE_OWNER && gPstat->cm)) )
+    if( newROwner && (false == gPstat->isOp) && (TAKE_OWNER & gPstat->cm) )
     {
         gPstat->cm = (OicSecDpm_t)(gPstat->cm & (~TAKE_OWNER));
         gPstat->isOp = true;
 
-        memcpy(gPstat->deviceID.id, newROwner->id, sizeof(newROwner->id));
         memcpy(gPstat->rownerID.id, newROwner->id, sizeof(newROwner->id));
 
         ret = PstatToCBORPayload(gPstat, &cborPayload, &size, false);

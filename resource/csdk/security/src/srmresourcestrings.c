@@ -58,12 +58,12 @@ const char * OIC_RSRC_TYPE_SEC_CRL = "oic.r.crl";
 const char * OIC_RSRC_CRL_URI =  "/oic/sec/crl";
 const char * OIC_JSON_CRL_NAME = "crl";
 
-//SACL
+//SACL - not implemented yet
 const char * OIC_RSRC_TYPE_SEC_SACL = "oic.r.sacl";
 const char * OIC_RSRC_SACL_URI =  "/oic/sec/sacl";
 const char * OIC_JSON_SACL_NAME = "sacl";
 
-//svc
+//svc - removed from the OCF 1.0 Security spec and from IoTivity
 const char * OIC_RSRC_TYPE_SEC_SVC = "oic.r.svc";
 const char * OIC_RSRC_SVC_URI =  "/oic/sec/svc";
 const char * OIC_JSON_SVC_NAME = "svc";
@@ -86,7 +86,6 @@ const char * OIC_JSON_VER_NAME = "ver";
 //reset profile
 const char * OIC_JSON_RESET_PF_NAME = "resetpf";
 
-const char * OIC_JSON_SUBJECT_NAME = "subject";
 const char * OIC_JSON_RESOURCES_NAME = "resources";
 const char * OIC_JSON_AMSS_NAME = "amss";
 const char * OIC_JSON_AMS_NAME = "ams";
@@ -95,13 +94,13 @@ const char * OIC_JSON_OWNERS_NAME = "ownrs";
 const char * OIC_JSON_OWNER_NAME = "ownr";
 const char * OIC_JSON_DEVOWNERID_NAME = "devowneruuid";
 #ifdef MULTIPLE_OWNER
-const char * OIC_JSON_SUBOWNERID_NAME = "subowneruuid";
+const char * OIC_JSON_SUBOWNERID_NAME = "x.org.iotivity.subowneruuid";
 #endif //MULTIPLE_OWNER
 const char * OIC_JSON_OWNED_NAME = "owned";
 const char * OIC_JSON_OXM_NAME = "oxm";
 const char * OIC_JSON_OXMS_NAME = "oxms";
 #ifdef MULTIPLE_OWNER
-const char * OIC_JSON_MOM_NAME = "mom";
+const char * OIC_JSON_MOM_NAME = "x.org.iotivity.mom";
 #endif //MULTIPLE_OWNER
 const char * OIC_JSON_OXM_TYPE_NAME = "oxmtype";
 const char * OIC_JSON_OXM_SEL_NAME = "oxmsel";
@@ -126,7 +125,7 @@ const char * OIC_JSON_CREDUSAGE_NAME = "credusage";
 const char * OIC_JSON_REVOCATION_STATUS_NAME = "revstat";
 const char * OIC_JSON_SERVICE_DEVICE_ID = "svcdid";
 const char * OIC_JSON_SERVICE_TYPE = "svct";
-const char* OIC_JSON_VALIDITY_NAME = "validity";
+const char * OIC_JSON_VALIDITY_NAME = "validity";
 const char * OIC_JSON_PERIOD_NAME = "period";
 const char * OIC_JSON_PERIODS_NAME = "prds";
 const char * OIC_JSON_CRMS_NAME = "crms";
@@ -137,7 +136,6 @@ const char * OIC_JSON_EDP_NAME = "edp";
 const char * OIC_JSON_PIN_NAME = "pin";
 const char * OIC_JSON_PDACL_NAME = "pdacl";
 const char * OIC_JSON_PDDEV_LIST_NAME = "pddev";
-const char * OIC_JSON_ROWNER_NAME = "rowner";
 const char * OIC_JSON_PRM_NAME = "prm";
 const char * OIC_JSON_SPM_NAME = "spm";
 const char * OIC_JSON_PDEVICE_ID_NAME = "pdeviceuuid";
@@ -148,21 +146,24 @@ const char * OIC_JSON_RT_NAME = OC_RSRVD_RESOURCE_TYPE;
 const char * OIC_JSON_IF_NAME = OC_RSRVD_INTERFACE;
 const char * OIC_JSON_ROWNERID_NAME = "rowneruuid";
 #ifdef MULTIPLE_OWNER
-const char * OIC_JSON_EOWNERID_NAME = "eowneruuid";
+const char * OIC_JSON_EOWNERID_NAME = "x.org.iotivity.eowneruuid";
 #endif //MULTIPLE_OWNER
 const char * OIC_JSON_ENCODING_NAME = "encoding";
 const char * OIC_JSON_DATA_NAME = "data";
 const char * OIC_JSON_SEC_V_NAME = "secv";
+const char * OIC_JSON_DOS_NAME = "dos";
+const char * OIC_JSON_S_NAME = "s";
+const char * OIC_JSON_P_NAME = "p";
 
 const char * OIC_JSON_EMPTY_STRING = "";
 
 // Certificates provided by Cloud
-const char * TRUST_CA = "trust_ca";
-const char * PRIMARY_CERT = "primary_cert";
+const char * TRUST_CA = "oic.sec.cred.trustca";
+const char * PRIMARY_CERT = "oic.sec.cred.cert";
 
 // Certificates provided by manufacturer
-const char * MF_TRUST_CA = "mfg_trust_ca";
-const char * MF_PRIMARY_CERT = "mfg_primary_cert";
+const char * MF_TRUST_CA = "oic.sec.cred.mfgtrustca";
+const char * MF_PRIMARY_CERT = "oic.sec.cred.mfgcert";
 
 OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
 OicUuid_t WILDCARD_SUBJECT_B64_ID = { .id = {'2', '2', '2', '2', '2', '2', '2', '2',
@@ -175,9 +176,9 @@ const char * OXM_JUST_WORKS = "oic.sec.doxm.jw";
 const char * OXM_RANDOM_DEVICE_PIN = "oic.sec.doxm.rdp";
 const char * OXM_MANUFACTURER_CERTIFICATE = "oic.sec.doxm.mfgcert";
 #ifdef MULTIPLE_OWNER
-const char * OXM_PRECONF_PIN = "oic.sec.doxm.pcp";
+const char * OXM_PRECONF_PIN = "x.org.iotivity.sec.doxm.pcp";
 #endif //MULTIPLE_OWNER
-const char * OXM_MV_JUST_WORKS = "oic.sec.doxm.mvjw";
+const char * OXM_MV_JUST_WORKS = "x.org.iotivity.sec.doxm.mvjw";
 const char * OXM_CON_MFG_CERT = "x.org.iotivity.conmfgcert";
 
 //Mutual Verified Just-Works Message Prefix

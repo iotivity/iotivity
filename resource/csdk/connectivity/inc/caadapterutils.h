@@ -320,6 +320,14 @@ void CALogAdapterStateInfo(CATransportAdapter_t adapter, CANetworkStatus_t state
  * @param[in]   adapter          transport adapter type.
  */
 void CALogAdapterTypeInfo(CATransportAdapter_t adapter);
+
+/**
+ * return scope level of given ip address.
+ * @param[in]    address    remote address.
+ * @param[out]   scopeLevel scope level of given ip address.
+ * @return      ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CAGetIpv6AddrScopeInternal(const char *addr, CATransportFlags_t *scopeLevel);
 #endif
 
 #ifdef __cplusplus

@@ -297,6 +297,8 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
     }
     clone->payloadFormat = info->payloadFormat;
     clone->acceptFormat = info->acceptFormat;
+    clone->payloadVersion = info->payloadVersion;
+    clone->acceptVersion = info->acceptVersion;
 
     if (info->resourceUri)
     {

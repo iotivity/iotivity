@@ -429,6 +429,16 @@ Java_org_iotivity_ca_CaInterface_stopLeAdvertisingImpl(JNIEnv *env, jclass clazz
     CAUtilStopLEAdvertising();
 }
 
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaInterface_setBTConfigureImpl(JNIEnv *env, jclass clazz, jint flag)
+{
+    LOGI("setConfigureImpl");
+    (void)env;
+    (void)clazz;
+    CAUtilConfig_t configs = {(CATransportBTFlags_t)flag};
+    CAUtilSetBTConfigure(configs);
+}
+
 JNIEXPORT jint JNICALL Java_org_iotivity_ca_CaInterface_setCipherSuiteImpl
   (JNIEnv *env, jclass clazz, jint cipherSuite, jint adapter)
 {
@@ -441,5 +451,24 @@ JNIEXPORT jint JNICALL Java_org_iotivity_ca_CaInterface_setCipherSuiteImpl
         LOGE("CASelectCipherSuite has failed");
     }
     return ret;
+}
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaInterface_caManagerSetConnectionUserConfig(JNIEnv *env, jclass clazz,
+                                                                  jint connPriority)
+{
+    (void)env;
+    (void)clazz;
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+    LOGI("CaManager_SetConnecitonUserConfig connPriority: %d", connPriority);
+    CAResult_t ret = CAUtilCMSetConnectionUserConfig(connPriority);
+    if (CA_STATUS_OK != ret)
+    {
+        LOGE("CASetIpConnSwitchConfig has failed");
+    }
+#else
+    LOGI("[CaManager_SetConnecitonUserConfig] stack doesn't support TCP and CLOUD");
+    (void)connPriority;
+#endif
 }
 

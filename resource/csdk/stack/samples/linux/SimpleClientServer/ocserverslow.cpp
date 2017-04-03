@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "iotivity_config.h"
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -35,7 +36,6 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#include <boost/config.hpp>
 #include <list>
 #include "ocstack.h"
 #include "oic_malloc.h"
@@ -48,11 +48,11 @@
 volatile sig_atomic_t gQuitFlag = 0;
 
 static std::list<OCEntityHandlerRequest *> gRequestList;
-BOOST_STATIC_CONSTEXPR unsigned int SLOW_RESPONSE_DELAY_SEC = 5;
+static const unsigned int SLOW_RESPONSE_DELAY_SEC = 5;
 
 static LEDResource LED;
 
-BOOST_STATIC_CONSTEXPR unsigned int SAMPLE_MAX_NUM_POST_INSTANCE = 2;
+static const unsigned int SAMPLE_MAX_NUM_POST_INSTANCE = 2;
 static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
 
 //char *gResourceUri= const_cast<char *>("/a/led");
@@ -201,14 +201,14 @@ OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest
 void AlarmHandler(int sig);
 int WINAPI AlarmThread(void *seconds)
 {
-    sleep((unsigned int)seconds);
+    sleep(PtrToUlong(seconds));
     AlarmHandler(0);
     return 0;
 }
 
 void alarm(unsigned int seconds)
 {
-    CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AlarmThread, (void*)seconds, 0, NULL);
+    CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AlarmThread, ULongToPtr(seconds), 0, NULL);
 }
 #endif
 
@@ -367,7 +367,7 @@ int main(int /*argc*/, char** /*argv[]*/)
     return 0;
 }
 
-int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int resourcePower)
+int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int64_t resourcePower)
 {
     if (!uri)
     {

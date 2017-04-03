@@ -24,7 +24,7 @@ package org.iotivity.base;
 
 import android.content.Context;
 import android.app.Activity;
-
+import java.util.EnumSet;
 /**
  * Data structure to provide the configuration.
  */
@@ -38,6 +38,7 @@ public class PlatformConfig {
     private QualityOfService mQualityOfService;
     private String mSvrDbPath; //TODO: Instead of SVRDB file, it should be Persistent Storage.
                               //this is only for 0.9.2
+    private int mTransportType;
     /**
      * @param activity         app activity
      * @param context          app context
@@ -68,6 +69,7 @@ public class PlatformConfig {
         this.mPort = port;
         this.mQualityOfService = qualityOfService;
         this.mSvrDbPath = dbPath;
+        this.mTransportType = 0;
     }
 
     /**
@@ -170,4 +172,14 @@ public class PlatformConfig {
         return mActivity;
     }
 
+    public void setAvailableTransportType(EnumSet<OcConnectivityType> type) {
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (type.contains(connType))
+                mTransportType |= connType.getValue();
+        }
+    }
+
+    public int getAvailableTransportType() {
+        return mTransportType;
+    }
 }

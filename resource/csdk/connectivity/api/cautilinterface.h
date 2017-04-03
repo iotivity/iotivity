@@ -18,6 +18,15 @@
  *
  ******************************************************************/
 
+/**
+ * @file
+ *
+ * This file contains APIs to handle adapters of connectivity abstraction layer
+ * for network operations.
+ * Application can use functions including network callback, BLE scan/advertisements,
+ * set configurations of the adapters,  set port number Etc.
+ */
+
 #ifndef CA_UTILS_INTERFACE_H_
 #define CA_UTILS_INTERFACE_H_
 
@@ -31,26 +40,26 @@ extern "C"
 #endif
 
 /**
- * this level depends on transmission time.
- * unicast based UDP will be checked by caretransmission.
+ * User Preference of connectivity channel for connection manager
  */
 typedef enum
 {
-    HIGH_SPEED = 0,
-    NORMAL_SPEED
-} CMSpeedLevel_t;
+    /** Cloud TCP (Default) */
+    CA_USER_PREF_CLOUD = 0,
+    /** local UDP */
+    CA_USER_PREF_LOCAL_UDP = 1,
+    /** local TCP */
+    CA_USER_PREF_LOCAL_TCP = 2
+} CAConnectUserPref_t;
 
+/*
+ * CAUtilConfig_t structure.
+ */
 typedef struct
 {
-    /** address for all **/
-    char addr[MAX_ADDR_STR_SIZE_CA];
-
-    /** adapter priority of all transmissions. **/
-    CATransportAdapter_t adapter;
-
-    /** level about speed of response. **/
-    CMSpeedLevel_t level;
-} CMConfigureInfo_t;
+    CATransportBTFlags_t bleFlags;
+    CAConnectUserPref_t connUserPref;
+} CAUtilConfig_t;
 
 /**
  * Callback function type for connection status changes delivery.
@@ -123,6 +132,48 @@ CAResult_t CASetPortNumberToAssign(CATransportAdapter_t adapter,
  * @return  assigned port number information.
  */
 uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_t flag);
+
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+/**
+ * Initializes the Connection Manager
+ * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAUtilCMInitailize();
+
+/**
+ * Terminate the Connection Manager
+ * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAUtilCMTerminate();
+
+/**
+ * Update RemoteDevice Information for Connection Manager
+ * @param[in]  endpoint   Remote device information with specific device ID.
+ * @param[in]  isCloud    with cloud or not.
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CAUtilCMUpdateRemoteDeviceInfo(const CAEndpoint_t endpoint, bool isCloud);
+
+/**
+ * Reset RemoteDevice Info. for Connection Manager
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CAUtilCMResetRemoteDeviceInfo();
+
+/**
+ * Set Connection Manager configuration
+ * @param[in]  connPrefer  enum type of CAConnectUserPref_t.(default:CA_USER_PREF_CLOUD)
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CAUtilCMSetConnectionUserConfig(CAConnectUserPref_t connPrefer);
+
+/**
+ * Get Connection Manager configuration
+ * @param[out]  connPrefer  enum type of CAConnectUserPref_t.
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CAUtilCMGetConnectionUserConfig(CAConnectUserPref_t *connPrefer);
+#endif //TCP_ADAPTER & WITH_CLOUD
 
 #ifdef __JAVA__
 #ifdef __ANDROID__
@@ -208,6 +259,32 @@ CAResult_t CAUtilStartLEAdvertising();
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAUtilStopLEAdvertising();
+
+/**
+ * set CAUtil BT configure.
+ * @param[in]  config       ::CAUtilConfig_t value
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAUtilSetBTConfigure(CAUtilConfig_t config);
+
+/**
+ * return scope level of given ip address.
+ * @param[in] addr         remote address.
+ * @param[out] scopeLevel  scope level of given ip address.
+ * @return      ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CAGetIpv6AddrScope(const char *addr, CATransportFlags_t *scopeLevel);
+
+/**
+ * set CAUtil log preference.
+ * @param[in]  level                     ::CAUtilLogLevel_t value
+ * @param[in]  hidePrivateLogEntries     Private Log Entries.
+ *                                       Example:
+ *                                       true : hide private log.
+ *                                       false : show private log.
+ *                                       (privacy : uid, did, access token, etc)
+ */
+void CAUtilSetLogLevel(CAUtilLogLevel_t level, bool hidePrivateLogEntries);
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -67,9 +67,9 @@ class NSConsumerSimulator
             }
 
             OC::OCRepresentation rep;
-            rep.setValue("providerid", providerID);
-            rep.setValue("messageid", id);
-            rep.setValue("state", type);
+            rep.setValue("x.org.iotivity.ns.providerid", providerID);
+            rep.setValue("x.org.iotivity.ns.messageid", id);
+            rep.setValue("x.org.iotivity.ns.state", type);
 
             m_syncResource->post(rep, OC::QueryParamsMap(), &onPost, OC::QualityOfService::LowQos);
         }
@@ -115,7 +115,7 @@ class NSConsumerSimulator
         {
 
             OC::QueryParamsMap map;
-            map.insert(std::pair<std::string, std::string>(std::string("consumerid"),
+            map.insert(std::pair<std::string, std::string>(std::string("x.org.iotivity.ns.consumerid"),
                        std::string("123456789012345678901234567890123456")));
 
             try
@@ -160,14 +160,14 @@ class NSConsumerSimulator
                        std::shared_ptr<OC::OCResource> )
         {
 
-            if (rep.getUri() == "/notification/message" && rep.hasAttribute("messageid")
-                && rep.getValue<int>("messageid") != 1)
+            if (rep.getUri() == "/notification/message" && rep.hasAttribute("x.org.iotivity.ns.messageid")
+                && rep.getValue<int>("x.org.iotivity.ns.messageid") != 1)
             {
-                m_messageFunc(int(rep.getValue<int>("messageid")),
-                              std::string(rep.getValueToString("title")),
-                              std::string(rep.getValueToString("contenttext")),
-                              std::string(rep.getValueToString("source")));
-                if (rep.getValue<int>("messageid") == 3)
+                m_messageFunc(int(rep.getValue<int>("x.org.iotivity.ns.messageid")),
+                              std::string(rep.getValueToString("x.org.iotivity.ns.title")),
+                              std::string(rep.getValueToString("x.org.iotivity.ns.contenttext")),
+                              std::string(rep.getValueToString(".x.org.iotivity.ns.source")));
+                if (rep.getValue<int>("x.org.iotivity.ns.messageid") == 3)
                 {
                     m_topicResource->get(OC::QueryParamsMap(),
                                          std::bind(&NSConsumerSimulator::onTopicGet, this, std::placeholders::_1,
@@ -177,7 +177,7 @@ class NSConsumerSimulator
             }
             else if (rep.getUri() == "/notification/sync")
             {
-                m_syncFunc(int(rep.getValue<int>("state")), int(rep.getValue<int>("messageid")));
+                m_syncFunc(int(rep.getValue<int>("x.org.iotivity.ns.state")), int(rep.getValue<int>("x.org.iotivity.ns.messageid")));
             }
         }
         void onTopicGet(const OC::HeaderOptions &/*headerOption*/,

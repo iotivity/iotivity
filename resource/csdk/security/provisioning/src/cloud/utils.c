@@ -68,39 +68,30 @@ void setCoapPrefix(bool secure)
  */
 static OCStackApplicationResult handleResponse(void *ctx,
                                               OCDoHandle handle,
-                                              OCClientResponse *clientResponse)
+                                              OCClientResponse *response)
 {
     OC_UNUSED(handle);
 
-    if (NULL == clientResponse)
+    if (NULL == response)
     {
         OIC_LOG_V(ERROR, TAG, "Received null response from client");
         return OC_STACK_DELETE_TRANSACTION;
     }
 
-    OIC_LOG_V(DEBUG, TAG, "Received callback with response code: %d", clientResponse->result);
-
-    if (clientResponse->payload)
-    {
-        OIC_LOG(DEBUG, TAG, "Payload received:");
-        OIC_LOG_PAYLOAD(DEBUG, clientResponse->payload);
-    }
-
     if (ctx)
     {
-        OCStackResult result = clientResponse->result;
         void *data = NULL;
 
         ContextInfo_t *info = (ContextInfo_t *)ctx;
 
         if (info->fn)
         {
-            result = ((UserFunctionCB)info->fn)(info->params, &data, clientResponse);
+            response->result = ((UserFunctionCB)info->fn)(info->params, &data, response);
         }
 
         if (info->cb)
         {
-            ((OCCloudResponseCB)info->cb)(info->ctx, result, data);
+            ((OCCloudResponseCB)info->cb)(info->ctx, response, data);
         }
     }
 

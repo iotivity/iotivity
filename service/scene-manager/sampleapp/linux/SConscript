@@ -12,10 +12,17 @@ rd_mode = lib_env.get('RD_MODE')
 ######################################################################
 # Build flags
 ######################################################################
-scenemanager_sample_env.AppendUnique(CPPPATH = ['../../include', '../../src'])
-scenemanager_sample_env.AppendUnique(CPPPATH = ['../../../resource-encapsulation/include'])
-scenemanager_sample_env.AppendUnique(CPPPATH = ['../../../../extlibs/cjson'])
-scenemanager_sample_env.AppendUnique(CPPPATH = ['../../../../resource/csdk/connectivity/api'])
+scenemanager_sample_env.AppendUnique(CPPPATH = [
+    '../../include',
+    '../../src',
+    '#/service/resource-encapsulation/include',
+    '#/extlibs/cjson',
+    '#/resource/csdk/connectivity/api',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/resource/oc_logger/include'
+])
 scenemanager_sample_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 scenemanager_sample_env.PrependUnique(LIBS = ['scene_manager'])

@@ -58,8 +58,15 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <ctype.h>
 
 #define OC_MIN(A,B) ((A)<(B)?(A):(B))
+
+#define OC_UUID_HYPHEN_1 9
+#define OC_UUID_HYPHEN_2 14
+#define OC_UUID_HYPHEN_3 19
+#define OC_UUID_HYPHEN_4 24
+#define OC_UUID_HYPHEN_COUNT 4
 
 /**
 * @def OCRANDOM_TAG
@@ -71,7 +78,7 @@
 #include "Arduino.h"
 
 /*
- * ARM GCC compiler doesnt define random/srandom functions, fallback to 
+ * ARM GCC compiler doesnt define random/srandom functions, fallback to
  * rand/srand.
  */
 #if !defined(ARDUINO_ARCH_SAM)
@@ -123,9 +130,9 @@ uint8_t GetRandomBit()
     }
 }
 
-/* 
- * Currently, only the Arduino platform requires seeding. It's done 
- * automatically on the first call to OCGetRandomBytes. 
+/*
+ * Currently, only the Arduino platform requires seeding. It's done
+ * automatically on the first call to OCGetRandomBytes.
  */
 uint8_t g_isSeeded = 0;
 static void OCSeedRandom()
@@ -134,7 +141,7 @@ static void OCSeedRandom()
     {
         return;
     }
-    
+
     uint32_t result =0;
     uint8_t i;
     for (i=32; i--;)
@@ -256,24 +263,24 @@ uint32_t OCGetRandomRange(uint32_t firstBound, uint32_t secondBound)
     uint32_t rangeBase = OC_MIN(firstBound, secondBound);
     uint32_t rangeWidth = (firstBound > secondBound) ? (firstBound - secondBound) : (secondBound - firstBound);
 
-    /* 
-     * Compute a random number between 0 and rangeWidth. Avoid using floating 
+    /*
+     * Compute a random number between 0 and rangeWidth. Avoid using floating
      * point types to avoid overflow when rangeWidth is large. The condition
-     * in the while loop will be false with probability at least 1/2. 
+     * in the while loop will be false with probability at least 1/2.
      */
     uint32_t rangeMask = 0xFFFFFFFF >> nlz(rangeWidth);
     uint32_t offset = 0;
-    do 
+    do
     {
         if(!OCGetRandomBytes((uint8_t*)&offset, sizeof(offset)))
         {
             OIC_LOG(FATAL, OCRANDOM_TAG, "OCGetRandomBytes failed");
             assert(false);
-            return rangeBase; 
+            return rangeBase;
         }
         offset = offset & rangeMask;
-    } 
-    while (offset > rangeWidth);    
+    }
+    while (offset > rangeWidth);
 
     return rangeBase + offset;
 }
@@ -349,6 +356,49 @@ bool OCConvertStringToUuid(const char uuidString[UUID_STRING_SIZE],
     }
 
     memcpy(uuid, convertedUuid, UUID_SIZE);
+
+    return true;
+}
+
+bool OCIsUUID(const char *uuid)
+{
+    size_t hyphens[OC_UUID_HYPHEN_COUNT] = {OC_UUID_HYPHEN_1, OC_UUID_HYPHEN_2,
+                                            OC_UUID_HYPHEN_3, OC_UUID_HYPHEN_4};
+    if (strlen(uuid) != UUID_STRING_SIZE -1)
+    {
+        //The length doesn't match
+        return false;
+    }
+
+    for (size_t i = 0, counter = 0; i < (UUID_STRING_SIZE - 1); i++)
+    {
+        char var = uuid[i];
+
+        //Check if a hyphen is expected here.
+        if (i == (hyphens[counter] - 1))
+        {
+            //We need a hyphen here.
+            if ('-' != var)
+            {
+                //The character is not a hyphen.
+                return false;
+            }
+            else
+            {
+                //Move on to the next expected hyphen position.
+                counter++;
+            }
+        }
+        else
+        {
+            //The character here should be a simple xdigit
+            if (0 == isxdigit(var))
+            {
+                //The current character is not a xdigit.
+                return false;
+            }
+        }
+    }
 
     return true;
 }

@@ -118,7 +118,7 @@ CAResult_t CASetAdapterRAInfo(const CARAInfo_t *caraInfo);
  * @param[out]   size           number of connectivity information structures.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size);
+CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, size_t *size);
 
 /**
  * Sends unicast data to the remote endpoint.

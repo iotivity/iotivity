@@ -38,7 +38,11 @@ src_dir = rcs_common_env.get('SRC_DIR')
 # Build flags
 ######################################################################
 rcs_common_env.AppendUnique(CPPPATH = [
-    rcs_common_env.get('SRC_DIR')+'/extlibs',
+    '#/extlibs',
+    '#/resource/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/oc_logger/include',
     '../../include',
     'primitiveResource/include'])
 
@@ -86,9 +90,13 @@ rcs_common_src = [
         ]
 
 rcs_common_static = rcs_common_env.StaticLibrary('rcs_common', rcs_common_src)
-rcs_common_shared = rcs_common_env.SharedLibrary('rcs_common', rcs_common_src)
-rcs_common_env.InstallTarget([rcs_common_static,rcs_common_shared], 'rcs_common')
-rcs_common_env.UserInstallTargetLib([rcs_common_static,rcs_common_shared], 'rcs_common')
+if target_os not in ['ios']:
+    rcs_common_shared = rcs_common_env.SharedLibrary('rcs_common', rcs_common_src)
+    rcs_common_env.InstallTarget([rcs_common_static,rcs_common_shared], 'rcs_common')
+    rcs_common_env.UserInstallTargetLib([rcs_common_static,rcs_common_shared], 'rcs_common')
+else:
+    rcs_common_env.InstallTarget([rcs_common_static], 'rcs_common')
+    rcs_common_env.UserInstallTargetLib([rcs_common_static], 'rcs_common')
 
 ######################################################################
 # Build Test Expiry Timer and primitive Resource
@@ -123,4 +131,5 @@ if target_os in ['linux']:
 		run_test(rcs_common_test_env,
 #			'service_resource-encapsulation_src_common_rcs_common_test.memcheck',
 			'',
-			'service/resource-encapsulation/src/common/rcs_common_test')
+			'service/resource-encapsulation/src/common/rcs_common_test',
+			rcs_common_test)

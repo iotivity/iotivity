@@ -84,7 +84,7 @@ typedef struct
 /**
  * The Header of the MTU supported for BLE spec
  */
-#define CA_BLE_MTU_HEADER_SIZE  3
+#define CA_BLE_MTU_HEADER_SIZE  5
 
 /**
  * This will be used to notify device status changes to the LE adapter layer.

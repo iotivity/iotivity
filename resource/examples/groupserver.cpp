@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
     }
 
     PlatformConfig config
-    { OC::ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos };
+    { OC::ServiceType::InProc, ModeType::Both, nullptr };
 
     try
     {
@@ -132,6 +132,7 @@ int main(int argc, char* argv[])
         string resourceTypeName = "a.collection";
         string resourceInterface = BATCH_INTERFACE;
         OCPlatform::Configure(config);
+        OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
 
         // EntityHandler cb = std::bind(, PH::_1, PH::_2);
 
@@ -175,6 +176,8 @@ int main(int argc, char* argv[])
             }
 
         }
+
+        OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     }
     catch (OCException& e)
     {

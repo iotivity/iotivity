@@ -54,7 +54,7 @@ int gQuitFlag = 0;
 typedef struct LEDRESOURCE{
     OCResourceHandle handle;
     bool state;
-    int power;
+    int64_t power;
 } LEDResource;
 
 static LEDResource LED;
@@ -265,8 +265,8 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
         {
             // Create new LED instance
             char newLedUri[15] = "/a/led/";
-            int newLedUriLength = strlen(newLedUri);
-            snprintf (newLedUri + newLedUriLength, sizeof(newLedUri)-newLedUriLength, "%d", gCurrLedInstance);
+            size_t newLedUriLength = strlen(newLedUri);
+            snprintf(newLedUri + newLedUriLength, sizeof(newLedUri) - newLedUriLength, "%d", gCurrLedInstance);
 
             respPLPost_led = OCRepPayloadCreate();
             OCRepPayloadSetUri(respPLPost_led, gResourceUri);

@@ -1,36 +1,72 @@
-#!/bin/sh
+#!/bin/bash
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 set -e
 
-# Keep mbedtls_revision in sync with extlibs/mbedtls/SConscript's setting. Right now this script
-# assumes mbedtls_revision is a tag; comment out the second clause if mbedtls_revision becomes
-# a branch or a specific commit.
-mbedtls_dir=`dirname -- "$(readlink -f "$0")"`/mbedtls
-mbedtls_revision="mbedtls-2.4.0"
-if [ ! -d ${mbedtls_dir} ]; then
-    echo ""
-    echo "*********************************** Error: ****************************************"
-    echo "* Please download mbedTLS using the following command:                            *"
-    echo "*     $ git clone https://github.com/ARMmbed/mbedtls.git extlibs/mbedtls/mbedtls  *"
-    echo "***********************************************************************************"
-    echo ""
-    exit
-elif [ ! -z $(git tag -l $mbedtls_revision) ]; then
-    echo ""
-    echo "*********************************** Error: ****************************************"
-    echo "* mbedTLS repo is out of date. Please update mbedtls using the following commands:*"
-    echo "*     $ cd (authoritative mbedTLS source repo location)                           *"
-    echo "*     $ git fetch                                                                 *"
-    echo "***********************************************************************************"
-    echo ""
-    exit
-elif [ -d ${mbedtls_dir}/.git ]; then
-    cd ${mbedtls_dir}
-    git reset --hard ${mbedtls_revision} ; git apply --whitespace=fix ../ocf.patch
-    cd -
-    rm -rf ${mbedtls_dir}/.git*
-else
-    echo "tizen: Checking if ocf.patch is applied in ${mbedtls_dir}"
-    grep -r 'TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256' "${mbedtls_dir}"
-fi
+[ ! -z ${EXEC_MODE} ] || EXEC_MODE=false
 
+
+# Right now this script assumes packageRevision is a tag; 
+# comment out the second clause if packageRevision becomes a branch or a specific commit.
+package="mbedtls"
+packageRevision='mbedtls-2.4.0'
+packageUrl="https://github.com/ARMmbed/mbedtls"
+packageDir="extlibs/${package}/${package}"
+
+
+do_()
+{
+    set +f
+    if $EXEC_MODE; then
+        echo "warning: fetching online resources may not be reproductible"
+        printf "%s \n" "trying: \"$@\""
+        eval "$@"
+    else
+        cat<<EOF
+error: Something should be prepared, please manually execute from shell
+EOF
+        printf "%s \n" "$@"
+        exit 1
+    fi
+}
+
+
+main_()
+{
+    if [ ! -d "${packageDir}" ]; then
+        do_ "git clone ${packageUrl} ${packageDir} -b ${packageRevision}"
+    elif [ ! -z $(git tag -l "${packageRevision}") ]; then
+        cat<<EOF
+error: $packageDir is unaligned with supported release of ${package}
+Please update ${package} using "cd ${packageDir} && git fetch"
+For more support please refer to:
+https://wiki.iotivity.org/build
+EOF
+        exit 2
+    elif [ -d "${packageDir}/.git" ]; then
+        cd "${packageDir}"
+        git reset --hard "${packageRevision}"
+        git apply --whitespace=fix "../ocf.patch"
+        cd -
+        rm -rf -- "${packageDir}/.git"
+    else
+        echo "log: Assuming ${package} is already on correct revision: \"${packageRevision}\""
+    fi
+}
+
+
+main_ "$@"

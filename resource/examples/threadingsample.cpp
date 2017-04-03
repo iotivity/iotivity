@@ -341,15 +341,15 @@ int main(int /*argc*/, char** /*argv[]*/)
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Both,
-        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-        0,         // Uses randomly available port
-        OC::QualityOfService::LowQos
+        nullptr
     };
 
     OCPlatform::Configure(cfg);
 
     try
     {
+        OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
+
         // main thread running as server
         FooResource fooRes("/q/foo1");
         if(!fooRes.createResource())
@@ -379,6 +379,9 @@ int main(int /*argc*/, char** /*argv[]*/)
         std::condition_variable cv;
         std::unique_lock<std::mutex> lock(blocker);
         cv.wait(lock);
+        
+        // Perform platform clean up.
+        OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     }
     catch(OCException& e)
     {

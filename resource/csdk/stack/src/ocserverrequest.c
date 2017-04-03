@@ -140,7 +140,7 @@ static void DeleteServerResponse(OCServerResponse * serverResponse)
  * outgoing response.
  *
  * @param object CA remote endpoint.
- * @param requestInfo CA request info.
+ * @param responseInfo CA response info.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
@@ -167,6 +167,20 @@ static OCStackResult OCSendResponse(const CAEndpoint_t *object, CAResponseInfo_t
     return OC_STACK_OK;
 }
 
+static CAPayloadFormat_t OCToCAPayloadFormat(OCPayloadFormat ocFormat)
+{
+    switch (ocFormat)
+    {
+    case OC_FORMAT_UNDEFINED:
+        return CA_FORMAT_UNDEFINED;
+    case OC_FORMAT_CBOR:
+        return CA_FORMAT_APPLICATION_CBOR;
+    case OC_FORMAT_VND_OCF_CBOR:
+        return CA_FORMAT_APPLICATION_VND_OCF_CBOR;
+    default:
+        return CA_FORMAT_UNSUPPORTED;
+    }
+}
 //-------------------------------------------------------------------------------------------------
 // Internal APIs
 //-------------------------------------------------------------------------------------------------
@@ -261,9 +275,9 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
         OCQualityOfService qos, char * query,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
-        uint8_t * payload, CAToken_t requestToken, uint8_t tokenLength,
-        char * resourceUrl, size_t reqTotalSize, OCPayloadFormat acceptFormat,
-        const OCDevAddr *devAddr)
+        OCPayloadFormat payloadFormat, uint8_t * payload, CAToken_t requestToken,
+        uint8_t tokenLength, char * resourceUrl, size_t reqTotalSize, OCPayloadFormat acceptFormat,
+        uint16_t acceptVersion, const OCDevAddr *devAddr)
 {
     if (!request)
     {
@@ -289,6 +303,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     serverRequest->observeResult = OC_STACK_ERROR;
     serverRequest->qos = qos;
     serverRequest->acceptFormat = acceptFormat;
+    serverRequest->acceptVersion = acceptVersion;
     serverRequest->ehResponseHandler = HandleSingleResponse;
     serverRequest->numResponses = 1;
 
@@ -308,6 +323,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         // last character
         memcpy(serverRequest->payload, payload, reqTotalSize);
         serverRequest->payloadSize = reqTotalSize;
+        serverRequest->payloadFormat = payloadFormat;
     }
 
     serverRequest->requestComplete = 0;
@@ -356,6 +372,7 @@ OCStackResult FormOCEntityHandlerRequest(
         OCResourceHandle resource,
         char * queryBuf,
         OCPayloadType payloadType,
+        OCPayloadFormat payloadFormat,
         uint8_t * payload,
         size_t payloadSize,
         uint8_t numVendorOptions,
@@ -377,7 +394,7 @@ OCStackResult FormOCEntityHandlerRequest(
 
         if(payload && payloadSize)
         {
-            if(OCParsePayload(&entityHandlerRequest->payload, payloadType,
+            if(OCParsePayload(&entityHandlerRequest->payload, payloadFormat, payloadType,
                         payload, payloadSize) != OC_STACK_OK)
             {
                 return OC_STACK_ERROR;
@@ -441,7 +458,7 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMe
         case OC_EH_OK:
         case OC_EH_CHANGED: // 2.04
         case OC_EH_CONTENT: // 2.05
-            if (method == OC_REST_POST || method == OC_REST_PUT)
+            if (method == OC_REST_POST || method == OC_REST_PUT || method == OC_REST_DELETE)
             {
                 caResult = CA_CHANGED;
             }
@@ -631,8 +648,9 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             case OC_FORMAT_UNDEFINED:
                 // No preference set by the client, so default to CBOR then
             case OC_FORMAT_CBOR:
-                if((result = OCConvertPayload(ehResponse->payload, &responseInfo.info.payload,
-                                &responseInfo.info.payloadSize))
+            case OC_FORMAT_VND_OCF_CBOR:
+                if((result = OCConvertPayload(ehResponse->payload, serverRequest->acceptFormat,
+                                &responseInfo.info.payload, &responseInfo.info.payloadSize))
                         != OC_STACK_OK)
                 {
                     OIC_LOG(ERROR, TAG, "Error converting payload");
@@ -642,7 +660,22 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                 // Add CONTENT_FORMAT OPT if payload exist
                 if (responseInfo.info.payloadSize > 0)
                 {
-                    responseInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
+                    responseInfo.info.payloadFormat = OCToCAPayloadFormat(
+                            serverRequest->acceptFormat);
+                    if (CA_FORMAT_UNDEFINED == responseInfo.info.payloadFormat)
+                    {
+                        responseInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
+                    }
+                    if ((OC_FORMAT_VND_OCF_CBOR == serverRequest->acceptFormat))
+                    {
+                        // Add versioning information for this format
+                        responseInfo.info.payloadVersion = serverRequest->acceptVersion;
+                        if (!responseInfo.info.payloadVersion)
+                        {
+                            responseInfo.info.payloadVersion = DEFAULT_VERSION_VALUE;
+                        }
+
+                    }
                 }
                 break;
             default:

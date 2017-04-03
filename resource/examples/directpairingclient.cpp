@@ -249,9 +249,6 @@ int main(void)
     PlatformConfig cfg {
         OC::ServiceType::InProc,
             OC::ModeType::Both,
-            "0.0.0.0",
-            0,
-            OC::QualityOfService::LowQos,
             &ps
     };
 
@@ -259,6 +256,8 @@ int main(void)
 
     try
     {
+        OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
+
         unsigned int choice;
         for (int out = 0; !out;)
         {
@@ -408,6 +407,8 @@ int main(void)
                     }
             }
         }
+
+        OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     }
     catch(OCException& e)
     {

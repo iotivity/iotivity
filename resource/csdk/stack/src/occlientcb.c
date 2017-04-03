@@ -22,6 +22,7 @@
 #include "occlientcb.h"
 #include <coap/coap.h>
 #include "logger.h"
+#include "trace.h"
 #include "oic_malloc.h"
 #include <string.h>
 
@@ -52,6 +53,8 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
         return OC_STACK_INVALID_PARAM;
     }
 
+    OIC_TRACE_BEGIN(%s:AddClientCB, TAG);
+
     ClientCB *cbNode = NULL;
 
 #ifdef WITH_PRESENCE
@@ -73,6 +76,8 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
         {
             OIC_LOG(INFO, TAG, "Adding client callback with token");
             OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
+            OIC_TRACE_BUFFER("OIC_RI_CLIENTCB:AddClientCB:token:",
+                             (const uint8_t *)token, tokenLength);
             cbNode->callBack = cbData->cb;
             cbNode->context = cbData->context;
             cbNode->deleteCallback = cbData->cd;
@@ -101,6 +106,7 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
             cbNode->requestUri = requestUri;    // I own it now
             cbNode->devAddr = devAddr;          // I own it now
             OIC_LOG_V(INFO, TAG, "Added Callback for uri : %s", requestUri);
+            OIC_TRACE_MARK(%s:AddClientCB:uri:%s, TAG, requestUri);
             LL_APPEND(cbList, cbNode);
             *clientCB = cbNode;
         }
@@ -126,6 +132,7 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
 
     if (method == OC_REST_PRESENCE && resourceTypeName)
     {
+        OIC_TRACE_END();
         // Amend the found or created node by adding a new resourceType to it.
         return InsertResourceTypeFilter(cbNode,(char *)resourceTypeName);
         // I own resourceTypName now.
@@ -138,25 +145,31 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
     OICFree(resourceTypeName);
 #endif
 
+    OIC_TRACE_END();
     return OC_STACK_OK;
 
 exit:
+    OIC_TRACE_END();
     return OC_STACK_NO_MEMORY;
 }
 
 void DeleteClientCB(ClientCB * cbNode)
 {
+    OIC_TRACE_BEGIN(%s:DeleteClientCB, TAG);
     if (cbNode)
     {
         LL_DELETE(cbList, cbNode);
         OIC_LOG (INFO, TAG, "Deleting token");
         OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)cbNode->token, cbNode->tokenLength);
+        OIC_TRACE_BUFFER("OIC_RI_CLIENTCB:DeleteClientCB:token:",
+                         (const uint8_t *)cbNode->token, cbNode->tokenLength);
         CADestroyToken (cbNode->token);
         OICFree(cbNode->devAddr);
         OICFree(cbNode->handle);
         if (cbNode->requestUri)
         {
             OIC_LOG_V (INFO, TAG, "Deleting callback with uri %s", cbNode->requestUri);
+            OIC_TRACE_MARK(%s:DeleteClientCB:uri:%s, TAG, cbNode->requestUri);
             OICFree(cbNode->requestUri);
         }
         if (cbNode->deleteCallback)
@@ -186,6 +199,7 @@ void DeleteClientCB(ClientCB * cbNode)
         OICFree(cbNode);
         cbNode = NULL;
     }
+    OIC_TRACE_END();
 }
 
 /*

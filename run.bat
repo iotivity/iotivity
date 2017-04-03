@@ -7,7 +7,7 @@ if [%1]==[] goto USAGE
 set IOTIVITY_DIR=%~dp0
 set HOME=%USERPROFILE%
 
-IF "%1" == "msys" (
+IF /I "%1" == "msys" (
   set BUILD_MSYS="YES"
   SHIFT
 ) ELSE (
@@ -19,7 +19,7 @@ set TARGET_OS=windows
 
 if "%TARGET_ARCH%" == "" (
   set TARGET_ARCH=amd64
-) 
+)
 
 if "%TEST%" == "" (
   set TEST=1
@@ -33,12 +33,24 @@ if "%RELEASE%" == "" (
   set RELEASE=0
 )
 
-set SECURED=1
+if "%WITH_TCP%" == "" (
+  set WITH_TCP=1
+)
+
+if "%SECURED%" == "" (
+  set SECURED=1
+)
+
+if "%MULTIPLE_OWNER%" == "" (
+  set MULTIPLE_OWNER=1
+)
+
+set THREAD_COUNT=%NUMBER_OF_PROCESSORS%
+
 set ROUTING=EP
-set WITH_TCP=1
 set WITH_UPSTREAM_LIBCOAP=1
 set BINDIR=debug
-set MULTIPLE_OWNER=1
+set RD_MODE=CLIENT,SERVER
 
 set RUN_ARG=%1
 SHIFT
@@ -47,21 +59,34 @@ set DEBUG=
 
 :processArgs
 IF NOT "%1"=="" (
-  IF "%1"=="-arch" (
+  IF /I "%1"=="-arch" (
     SET TARGET_ARCH=%2
     SHIFT
   )
-  IF "%1"=="-noTest" (
+  IF /I "%1"=="-threads" (
+    SET THREAD_COUNT=%2
+    SHIFT
+  )
+  IF /I "%1"=="-noTest" (
     SET TEST=0
   )
-  IF "%1"=="-logging" (
+  IF /I "%1"=="-logging" (
     SET LOGGING=1
-  )    
-  IF "%1"=="-debugger" (
-    set DEBUG="%ProgramFiles(x86)%\Windows Kits\10\Debuggers\x64\cdb.exe" -2 -c "g" 
   )
-  IF "%1"=="-release" (
+  IF /I "%1"=="-debugger" (
+    set DEBUG="%ProgramFiles(x86)%\Windows Kits\10\Debuggers\x64\cdb.exe" -2 -c "g"
+  )
+  IF /I "%1"=="-release" (
     SET RELEASE=1
+  )
+  IF /I "%1"=="-noTCP" (
+    SET WITH_TCP=0
+  )
+  IF /I "%1"=="-noSecurity" (
+    set SECURED=0
+  )
+  IF /I "%1"=="-noMOT" (
+    set MULTIPLE_OWNER=0
   )
 
   SHIFT
@@ -81,7 +106,7 @@ IF "%BUILD_MSYS%" == "" (
   set PATH=!PATH!;!BUILD_DIR!;C:\msys64\mingw64\bin
 )
 
-set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% RD_MODE=CLIENT ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER%
+set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% RD_MODE=%RD_MODE% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER% -j %THREAD_COUNT%
 
 REM Use MSVC_VERSION=12.0 for VS2013, or MSVC_VERSION=14.0 for VS2015.
 REM If MSVC_VERSION has not been defined here, SCons chooses automatically a VS version.
@@ -148,19 +173,12 @@ if "!RUN_ARG!"=="server" (
   echo   WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP%
   echo   MULTIPLE_OWNER=%MULTIPLE_OWNER%
   echo   MSVC_VERSION=%MSVC_VERSION%
+  echo   THREAD_COUNT=%THREAD_COUNT%
   echo.scons VERBOSE=1 %BUILD_OPTIONS%
   scons VERBOSE=1 %BUILD_OPTIONS%
 ) else if "!RUN_ARG!"=="clean" (
-  scons VERBOSE=1 %BUILD_OPTIONS% -c clean
-  rd /s /q out
-  del .sconsign.dblite
-  del extlibs\gtest\googletest*.lib
-  del extlibs\gtest\googletest-release-1.7.0\src\gtest*.obj
-  erase /s *.obj
-  erase resource\c_common\iotivity_config.h
-  erase extlibs\libcoap\coap.lib
-  erase extlibs\libcoap\libcoap\include\coap\coap_config.h
-  erase extlibs\mbedtls\mbed*.lib
+  del /S *.ilk
+  scons VERBOSE=1 %BUILD_OPTIONS% -c
 ) else if "!RUN_ARG!"=="cleangtest" (
   rd /s /q extlibs\gtest\googletest-release-1.7.0
   del extlibs\gtest\release-1.7.0.zip
@@ -182,18 +200,31 @@ echo.
 echo. Default build settings are: debug binaries run unittests and no logging
 echo.
 echo. Default build parameters can be overridden using the following arguments
-echo. 
-echo   -arch [x86 ^| amd64]    - Build either amd64 or x86 architecture binaries
 echo.
-echo   -noTest                - Don't run the unittests after building the binaries
+REM At a quick look, the "Build either amd64 or x86 architecture binaries" message
+REM below seems out of alignment with the other messages underneath it. But, "^|"
+REM gets echoed as a single character, so the messages are actually aligned correctly
+REM in the output of "run.bat".
+echo   -arch [x86 ^| amd64]          - Build either amd64 or x86 architecture binaries
 echo.
-echo   -logging               - Enable logging while building the binaries
+echo   -noTest                      - Don't run the unittests after building the binaries
 echo.
-echo   -debugger              - Debug the requested application
+echo   -logging                     - Enable logging while building the binaries
 echo.
-echo   -release               - Build release binaries
+echo   -debugger                    - Debug the requested application
+echo.
+echo   -release                     - Build release binaries
+echo.
+echo   -threads [NUMBER_OF_THREADS] - Build in parallel using [NUMBER_OF_THREADS] threads. Default: %NUMBER_OF_PROCESSORS%.
+echo.
+echo   -noTCP                       - Build with the TCP adapter disabled
+echo.
+echo   -noSecurity                  - Remove security support (results in code that cannot be certified by OCF)
+echo.
+echo   -noMOT                       - Remove Multiple Ownership Transfer support.
 echo.
 echo. Usage examples:
+echo.
 echo   Launch SimpleClient with debugger:
 echo      %0 client -debugger
 echo.
@@ -214,6 +245,18 @@ echo      %0 build -arch x86
 echo.
 echo   Build amd64 release binaries with logging enabled:
 echo      %0 build -arch amd64 -release -logging
+echo.
+echo   Build using only one thread:
+echo      %0 build -threads 1
+echo.
+echo   Build with TCP adapter disabled and run unit tests:
+echo      %0 build -noTCP
+echo.
+echo   Build without security support and run unit tests:
+echo      %0 build -noSecurity
+echo.
+echo   Build without Multiple Ownership Transfer support and run unit tests:
+echo      %0 build -noMOT
 echo.
 echo   Run all tests:
 echo      %0 test

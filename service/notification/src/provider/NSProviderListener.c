@@ -291,7 +291,7 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
             // Receive interesting topic list from consumers
-            // Send topic notice message(id = TOPIC) to the consumer 
+            // Send topic notice message(id = TOPIC) to the consumer
             // which requests to post.
             NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OC_REST_POST");
             // Accepter is provider. our service is not support sendtopiclist from OC_REST_POST
@@ -340,7 +340,7 @@ OCStackApplicationResult NSProviderMQListener(void * ctx, OCDoHandle handle,
     NS_VERIFY_NOT_NULL(clientResponse->payload, OC_STACK_KEEP_TRANSACTION);
 
     NS_LOG(DEBUG, "income observe response of MQ notification");
-    NS_LOG_V(DEBUG, "MQ OBS response income : %s:%d",
+    NS_LOG_V(INFO_PRIVATE, "MQ OBS response income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
     NS_LOG_V(DEBUG, "MQ OBS response result : %d",
             clientResponse->result);
@@ -362,7 +362,7 @@ OCStackApplicationResult NSProviderMQListener(void * ctx, OCDoHandle handle,
     {
         char * pId = NULL;
         getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, &pId);
-        NS_LOG_V (DEBUG, "provider id: %s", pId);
+        NS_LOG_V (INFO_PRIVATE, "provider id: %s", pId);
 
         if (getResult && strcmp(pId, NSGetProviderInfo()->providerId) == 0)
         {
@@ -389,7 +389,7 @@ OCStackApplicationResult NSProviderGetMQResponseCB(void * ctx, OCDoHandle handle
     NS_VERIFY_NOT_NULL(clientResponse->payload, OC_STACK_KEEP_TRANSACTION);
 
     NS_LOG(DEBUG, "income get response of MQ broker");
-    NS_LOG_V(DEBUG, "MQ GET response income : %s:%d",
+    NS_LOG_V(INFO_PRIVATE, "MQ GET response income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
     NS_LOG_V(DEBUG, "MQ GET response result : %d",
             clientResponse->result);
@@ -493,7 +493,7 @@ void NSProviderConnectionStateListener(const CAEndpoint_t * info, bool connected
 
         if (info->adapter == CA_ADAPTER_TCP)
         {
-            NS_LOG_V(DEBUG, "TCP Connected remote address: %s:%d", info->addr, info->port);
+            NS_LOG_V(INFO_PRIVATE, "TCP Connected remote address: %s:%d", info->addr, info->port);
         }
     }
     else
@@ -505,7 +505,7 @@ void NSProviderConnectionStateListener(const CAEndpoint_t * info, bool connected
 
         if (info->adapter == CA_ADAPTER_TCP)
         {
-            NS_LOG_V(DEBUG, "TCP Disconnected remote address: %s:%d", info->addr, info->port);
+            NS_LOG_V(INFO_PRIVATE, "TCP Disconnected remote address: %s:%d", info->addr, info->port);
         }
     }
 

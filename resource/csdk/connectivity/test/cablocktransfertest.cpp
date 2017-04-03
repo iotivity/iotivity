@@ -18,11 +18,15 @@
  *
  ******************************************************************/
 
+// Warning disabled globally but VS2013 ignores the /wd4200 option in C++ files.
+#if defined(_MSC_VER) && _MSC_VER < 1900
+#pragma warning(disable : 4200)
+#endif
+
 #include "gtest/gtest.h"
 #include "cainterface.h"
 #include "cautilinterface.h"
 #include "cacommon.h"
-#include "caprotocolmessage.h"
 #include "cablockwisetransfer.h"
 
 #define LARGE_PAYLOAD_LENGTH    1024
@@ -717,6 +721,10 @@ TEST_F(CABlockTransferTests, CAUpdatePayloadToCADataWithRequest)
     EXPECT_EQ(CA_STATUS_OK, CAUpdatePayloadToCAData(&cadata, payload, payloadLen));
 
     EXPECT_STREQ((const char*) payload, (const char*) cadata.requestInfo->info.payload);
+
+    free(cadata.requestInfo->info.payload);
+    CADestroyToken(tempToken);
+    CADestroyEndpoint(tempRep);
 }
 
 TEST_F(CABlockTransferTests, CAUpdatePayloadToCADataWithResponse)
@@ -751,4 +759,8 @@ TEST_F(CABlockTransferTests, CAUpdatePayloadToCADataWithResponse)
     EXPECT_EQ(CA_STATUS_OK, CAUpdatePayloadToCAData(&cadata, payload, payloadLen));
 
     EXPECT_STREQ((const char*) payload, (const char*) cadata.responseInfo->info.payload);
+
+    free(cadata.responseInfo->info.payload);
+    CADestroyToken(tempToken);
+    CADestroyEndpoint(tempRep);
 }

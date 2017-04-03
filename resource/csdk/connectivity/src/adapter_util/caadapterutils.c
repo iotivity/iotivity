@@ -43,6 +43,12 @@
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+#ifdef HAVE_IN6ADDR_H
+#include <in6addr.h>
+#endif
 
 #ifdef __JAVA__
 #include <jni.h>
@@ -183,6 +189,10 @@ CAResult_t CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_
     int r = getaddrinfo(host, NULL, &hints, &addrs);
     if (r)
     {
+        if (NULL != addrs)
+        {
+            freeaddrinfo(addrs);
+        }
 #if defined(EAI_SYSTEM)
         if (EAI_SYSTEM == r)
         {
@@ -401,6 +411,50 @@ void CALogAdapterTypeInfo(CATransportAdapter_t adapter)
         default:
             OIC_LOG_V(DEBUG, ANALYZER_TAG, "Transport Type = [%d]", adapter);
             break;
+    }
+}
+
+CAResult_t CAGetIpv6AddrScopeInternal(const char *addr, CATransportFlags_t *scopeLevel)
+{
+    if (!addr || !scopeLevel)
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+    // check addr is ipv6
+    struct in6_addr inAddr6;
+    if (1 == inet_pton(AF_INET6, addr, &inAddr6))
+    {
+        // check addr is multicast
+        if (IN6_IS_ADDR_MULTICAST(&inAddr6))
+        {
+            *scopeLevel = (CATransportFlags_t)(inAddr6.s6_addr[1] & 0xf);
+            return CA_STATUS_OK;
+        }
+        else
+        {
+            // check addr is linklocal or loopback
+            if (IN6_IS_ADDR_LINKLOCAL(&inAddr6) || IN6_IS_ADDR_LOOPBACK(&inAddr6))
+            {
+                *scopeLevel = CA_SCOPE_LINK;
+                return CA_STATUS_OK;
+            }
+            // check addr is sitelocal
+            else if (IN6_IS_ADDR_SITELOCAL(&inAddr6))
+            {
+                *scopeLevel = CA_SCOPE_SITE;
+                return CA_STATUS_OK;
+            }
+            else
+            {
+                *scopeLevel = CA_SCOPE_GLOBAL;
+                return CA_STATUS_OK;
+            }
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Failed at parse ipv6 address using inet_pton");
+        return CA_STATUS_FAILED;
     }
 }
 #endif

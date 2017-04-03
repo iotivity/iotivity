@@ -63,7 +63,6 @@ NSMediaContents * NSDuplicateMediaContents(NSMediaContents * copyObj);
 
 OCRepPayloadValue* NSPayloadFindValue(const OCRepPayload* payload, const char* name);
 
-char * NSGetQueryAddress(const char * serverFullAddress);
 OCDevAddr * NSChangeAddress(const char * address);
 bool NSOCResultToSuccess(OCStackResult ret);
 

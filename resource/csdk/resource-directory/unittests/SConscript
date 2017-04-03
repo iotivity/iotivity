@@ -60,19 +60,23 @@ rd_test_env.AppendUnique(
                 src_dir + '/extlibs/hippomocks-master',
                 '../include',
                 src_dir + '/resource/include',
+                src_dir + '/resource/csdk/connectivity/api',
+                src_dir + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include',
                 src_dir + '/resource/csdk/include',
                 src_dir + '/resource/csdk/stack/include',
+                src_dir + '/resource/csdk/security/include',
                 src_dir + '/resource/csdk/stack/test/',
                 src_dir + '/resource/oc_logger/include',])
 
-rd_test_env.AppendUnique(LIBPATH = [lib_env.get('BUILD_DIR')])
 rd_test_env.AppendUnique(RPATH = [lib_env.get('BUILD_DIR')])
-rd_test_env.PrependUnique(LIBS = ['resource_directory', 'octbstack' ])
+rd_test_env.PrependUnique(LIBS = ['octbstack'])
 
 if rd_test_env.get('RD_MODE'):
     rd_mode = rd_test_env.get('RD_MODE')
+    rd_test_env.PrependUnique(LIBS = ['resource_directory'])
     if 'CLIENT' in rd_mode:
         rd_test_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+        rd_test_env.AppendUnique(LIBS = ['oc', 'oc_logger'])
     if 'SERVER' in rd_mode:
         rd_test_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
 
@@ -92,4 +96,5 @@ if rd_test_env.get('TEST') == '1':
     if target_os in ['linux']:
         run_test(rd_test_env,
                  'resource_csdk_resource-directory_unittests_rdtests.memcheck',
-                 'resource/csdk/resource-directory/unittests/rdtests')
+                 'resource/csdk/resource-directory/unittests/rdtests',
+                 rd_client_test)

@@ -65,17 +65,21 @@ if target_os not in ['windows', 'winrt']:
 easysetup_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
 easysetup_test_env.AppendUnique(LIBS = ['pthread'])
 
-easysetup_test_env.PrependUnique(CPPPATH = [ src_dir + '/extlibs/hippomocks-master', gtest_dir + '/include'])
-
-easysetup_test_env.AppendUnique(CPPPATH = [src_dir + '/resource/include',
-					   src_dir + '/resource/csdk/connectivity/api',
-					   src_dir + '/service/easy-setup/inc',
-					   src_dir + '/service/easy-setup/enrollee/inc',
-					   src_dir + '/service/easy-setup/mediator/richsdk/inc'])
+easysetup_test_env.PrependUnique(CPPPATH = [
+    '#/extlibs/hippomocks-master',
+    gtest_dir + '/include',
+    '#/resource/include',
+    '#/resource/csdk/connectivity/api',
+    '#/resource/csdk/stack/include',
+    '#/resource/csdk/include',
+    '#/resource/oc_logger/include',
+    '#/service/easy-setup/inc',
+    '#/service/easy-setup/enrollee/inc',
+    '#/service/easy-setup/mediator/richsdk/inc'
+])
 
 if easysetup_test_env.get('SECURED') == '1':
-	if easysetup_test_env.get('WITH_TCP') == True:
-		easysetup_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    easysetup_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # Build Test
@@ -94,4 +98,5 @@ if env.get('TEST') == '1':
     if target_os in []:
         run_test(easysetup_enrollee_test_env,
                  'service_easy-setup_enrollee_unittests_easysetup_enrollee_test.memcheck',
-                 'service/easy-setup/enrollee/unittests/easysetup_enrollee_test')
+                 'service/easy-setup/enrollee/unittests/easysetup_enrollee_test',
+                 easysetup_enrollee_test)

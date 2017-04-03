@@ -19,12 +19,19 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <StringConstants.h>
+#include <sstream>
+#include <cstring>
 #include "ocpayload.h"
 #include "ocrandom.h"
 #include "oic_string.h"
 
 namespace OC
 {
+    static const char EP_ADDR_SPLIT[]   = "://";
+    static const char EP_PORT_SPLIT[]   = ":";
+    static const char EP_BRAKET_START[] = "[";
+    static const char EP_BRAKET_END[]   = "]";
+
     class ListenOCContainer
     {
         private:
@@ -35,6 +42,40 @@ namespace OC
                 {
                     strs.push_back(ll->value);
                     ll = ll->next;
+                }
+                return strs;
+            }
+
+            static std::vector<std::string> EpsLLToVector(OCEndpointPayload* head)
+            {
+                std::vector<std::string> strs;
+                while (head)
+                {
+                    std::ostringstream endpoint;
+                    endpoint << head->tps << EP_ADDR_SPLIT;
+
+                    switch (head->family)
+                    {
+                        case OC_DEFAULT_FLAGS:
+                            // mac
+                            endpoint << head->addr;
+                            break;
+
+                        case OC_IP_USE_V4:
+                            endpoint << head->addr << EP_PORT_SPLIT << head->port;
+                            break;
+
+                        case OC_IP_USE_V6:
+                            endpoint << EP_BRAKET_START << head->addr << EP_BRAKET_END
+                                     << EP_PORT_SPLIT << head->port;
+                            break;
+                        default:
+                            head = head->next;
+                            continue;
+                    }
+
+                    strs.push_back(endpoint.str());
+                    head = head->next;
                 }
                 return strs;
             }
@@ -56,54 +97,41 @@ namespace OC
 
                         currentDevAddr.port = (res->port != 0) ? res->port : devAddr.port;
 
-                        if (payload->baseURI)
+                        OCEndpointPayload* eps = res->eps;
+                        std::vector<std::string> epsVector;
+                        if (eps)
                         {
-                            OCDevAddr rdPubAddr = currentDevAddr;
+                            //parsing eps from payload
+                            epsVector = EpsLLToVector(eps);
+                        }
 
-                            std::string baseURI = std::string(payload->baseURI);
-                            size_t len = baseURI.length();
-                            int addressLen = baseURI.find_first_of(":");
-                            std::string ipaddress = baseURI.substr(0, addressLen);
-                            int port = atoi(baseURI.substr(addressLen + 1, len).c_str());
-                            OICStrcpy(rdPubAddr.addr, addressLen + 1, ipaddress.c_str());
-                            rdPubAddr.port = port;
+                        m_resources.push_back(std::shared_ptr<OC::OCResource>(
+                                new OC::OCResource(cw, currentDevAddr,
+                                    std::string(res->uri),
+                                    std::string(payload->sid),
+                                    res->bitmap,
+                                    StringLLToVector(res->types),
+                                    StringLLToVector(res->interfaces),
+                                    epsVector
+                                    )));
+
+#ifdef TCP_ADAPTER
+                        if (res->tcpPort != 0)
+                        {
+                            OCDevAddr tcpDevAddr = currentDevAddr;
+                            tcpDevAddr.port = res->tcpPort;
+                            tcpDevAddr.adapter = OC_ADAPTER_TCP;
                             m_resources.push_back(std::shared_ptr<OC::OCResource>(
-                                        new OC::OCResource(cw, rdPubAddr,
+                                        new OC::OCResource(cw, tcpDevAddr,
                                             std::string(res->uri),
                                             std::string(payload->sid),
                                             res->bitmap,
                                             StringLLToVector(res->types),
-                                            StringLLToVector(res->interfaces)
+                                            StringLLToVector(res->interfaces),
+                                            epsVector
                                             )));
                         }
-                        else
-                        {
-                            m_resources.push_back(std::shared_ptr<OC::OCResource>(
-                                    new OC::OCResource(cw, currentDevAddr,
-                                        std::string(res->uri),
-                                        std::string(payload->sid),
-                                        res->bitmap,
-                                        StringLLToVector(res->types),
-                                        StringLLToVector(res->interfaces)
-                                        )));
-
-#ifdef TCP_ADAPTER
-                            if (res->tcpPort != 0)
-                            {
-                                OCDevAddr tcpDevAddr = currentDevAddr;
-                                tcpDevAddr.port = res->tcpPort;
-                                tcpDevAddr.adapter = OC_ADAPTER_TCP;
-                                m_resources.push_back(std::shared_ptr<OC::OCResource>(
-                                            new OC::OCResource(cw, tcpDevAddr,
-                                                std::string(res->uri),
-                                                std::string(payload->sid),
-                                                res->bitmap,
-                                                StringLLToVector(res->types),
-                                                StringLLToVector(res->interfaces)
-                                                )));
-                            }
 #endif
-                        }
                         res = res->next;
                     }
                     payload = payload->next;

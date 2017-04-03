@@ -64,17 +64,13 @@ void DeleteAmaclList(OicSecAmacl_t* amacl)
             }
             OICFree(amaclTmp1->resources);
 
-            // Clean Amss
-            OICFree(amaclTmp1->amss);
-
             // Clean Amacl node itself
             OICFree(amaclTmp1);
         }
     }
 }
 
-OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayload,
-                                 size_t *cborSize)
+OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayload, size_t *cborSize)
 {
     if (NULL == amaclS || NULL == cborPayload || NULL != *cborPayload || NULL == cborSize)
     {
@@ -96,12 +92,11 @@ OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayl
     int64_t cborEncoderResult = CborNoError;
     CborEncoder rsrcMap;
     CborEncoder rlistArray;
-    CborEncoder amss;
-    char *stRowner = NULL;
 
     const OicSecAmacl_t *amacl = amaclS;
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_ERROR);
+
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     // Create AMACL Map
@@ -168,35 +163,6 @@ OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayl
 
     cborEncoderResult = cbor_encoder_close_container(&amaclMap, &rsrcMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Resource Map.");
-
-    // TODO : Need to modify type of OicSecAmacl_t->amss based on RAML spec.
-    // ams -- Mandatory
-    cborEncoderResult = cbor_encode_text_string(&amaclMap, OIC_JSON_AMS_NAME,
-                strlen(OIC_JSON_AMS_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding AMSS Name Tag.");
-
-    cborEncoderResult = cbor_encoder_create_array(&amaclMap, &amss, amacl->amssLen);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding AMS Name Array.");
-    for (size_t i = 0; i < amacl->amssLen; i++)
-    {
-        cborEncoderResult = cbor_encode_text_string(&amss, (const char *)amacl->amss[i].id,
-            sizeof(amacl->amss[i].id));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding AMS Name Value.");
-    }
-    cborEncoderResult = cbor_encoder_close_container(&amaclMap, &amss);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing AMSS Array.");
-
-    // TODO : Need to check owner property in the RAML spec.
-    // rowner -- Mandatory
-    cborEncoderResult = cbor_encode_text_string(&amaclMap, OIC_JSON_ROWNERID_NAME,
-                strlen(OIC_JSON_ROWNERID_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding ROwnerID Name Tag.");
-
-    ret = ConvertUuidToStr(&amacl->rownerID, &stRowner);
-    VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
-    cborEncoderResult = cbor_encode_text_string(&amaclMap, stRowner, strlen(stRowner));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding ROwner Value.");
-    OICFree(stRowner);
 
     cborEncoderResult = cbor_encoder_close_container(&encoder, &amaclMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Amacl Map.");
@@ -305,7 +271,7 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
 
                     // TODO : Need to check data structure of OicSecAmacl_t based on RAML spec.
                     headAmacl->resources = (char **) OICCalloc(headAmacl->resourcesLen, sizeof(*headAmacl->resources));
-                    VERIFY_NON_NULL(TAG, headAmacl->resources, ERROR);
+                    VERIFY_NOT_NULL(TAG, headAmacl->resources, ERROR);
 
                     while (cbor_value_is_valid(&rsrcArray))
                     {
@@ -374,51 +340,8 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
                 }
                 OICFree(rsrcName);
             }
-
         }
 
-        // TODO : Need to modify type of OicSecAmacl_t->amss based on RAML spec.
-         // Ams -- Mandatory
-        if (0 == strcmp(OIC_JSON_AMS_NAME, name))
-        {
-            int i = 0;
-            CborValue amsArray = { .parser = NULL };
-            cborFindResult = cbor_value_get_array_length(&amaclMap, &headAmacl->amssLen);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding AMS Array Len.");
-            cborFindResult = cbor_value_enter_container(&amaclMap, &amsArray);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering AMS Array Container.");
-            headAmacl->amss = (OicUuid_t *)OICCalloc(headAmacl->amssLen, sizeof(*headAmacl->amss));
-            VERIFY_NON_NULL(TAG, headAmacl->amss, ERROR);
-            while (cbor_value_is_valid(&amsArray) && cbor_value_is_text_string(&amsArray))
-            {
-                char *amssId = NULL;
-                cborFindResult = cbor_value_dup_text_string(&amsArray, &amssId, &len, NULL);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding AMS Id.");
-                cborFindResult = cbor_value_advance(&amsArray);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing AMS.");
-                memcpy(headAmacl->amss[i++].id, (OicUuid_t *)amssId, len);
-                OICFree(amssId);
-            }
-        }
-
-        // Rowner -- Mandatory
-        if (0 == strcmp(OIC_JSON_ROWNERID_NAME, name) && cbor_value_is_text_string(&amaclMap))
-        {
-            char *stRowner = NULL;
-            cborFindResult = cbor_value_dup_text_string(&amaclMap, &stRowner, &len, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding ROwner Value.");
-
-            ret = ConvertStrToUuid(stRowner, &headAmacl->rownerID);
-            VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
-            OICFree(stRowner);
-        }
-
-        //if (CborMapType != type && cbor_value_is_valid(&amaclMap))
-        if (cbor_value_is_valid(&amaclMap))
-        {
-            cborFindResult = cbor_value_advance(&amaclMap);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Amacl Map.");
-        }
         OICFree(name);
     }
 
@@ -470,12 +393,12 @@ static OCEntityHandlerResult HandleAmaclPostRequest (const OCEntityHandlerReques
         {
             // Append the new Amacl to existing Amacl
             LL_APPEND(gAmacl, newAmacl);
-            size_t size = 0;
+            size_t cborSize = 0;
             // Convert Amacl data into JSON for update to persistent storage.
             uint8_t *cborPayload = NULL;
-            res = AmaclToCBORPayload(gAmacl, &cborPayload, &size);
+            res = AmaclToCBORPayload(gAmacl, &cborPayload, &cborSize);
             if (cborPayload && (OC_STACK_OK == res) &&
-                (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_AMACL_NAME, cborPayload, size)))
+                (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_AMACL_NAME, cborPayload, cborSize)))
             {
                 ehRet = OC_EH_RESOURCE_CREATED;
             }
@@ -595,77 +518,4 @@ void DeInitAmaclResource()
 
     DeleteAmaclList(gAmacl);
     gAmacl = NULL;
-}
-
-OCStackResult AmaclGetAmsDeviceId(const char *resource, OicUuid_t *amsDeviceId)
-{
-    OicSecAmacl_t *amacl = NULL;
-
-    VERIFY_NON_NULL(TAG, resource, ERROR);
-    VERIFY_NON_NULL(TAG, amsDeviceId, ERROR);
-
-    LL_FOREACH(gAmacl, amacl)
-    {
-        for(size_t i = 0; i < amacl->resourcesLen; i++)
-        {
-            if (0 == strncmp((amacl->resources[i]), resource, strlen(amacl->resources[i])))
-            {
-                //Returning the ID of the first AMS service for the resource
-                memcpy(amsDeviceId, &amacl->amss[0], sizeof(*amsDeviceId));
-                return OC_STACK_OK;
-            }
-        }
-    }
-
-exit:
-    return OC_STACK_ERROR;
-}
-
-OCStackResult SetAmaclRownerId(const OicUuid_t* newROwner)
-{
-    OCStackResult ret = OC_STACK_ERROR;
-    uint8_t *cborPayload = NULL;
-    size_t size = 0;
-    OicUuid_t prevId = {.id={0}};
-
-    if(NULL == newROwner)
-    {
-        ret = OC_STACK_INVALID_PARAM;
-    }
-    if(NULL == gAmacl)
-    {
-        ret = OC_STACK_NO_RESOURCE;
-    }
-
-    if(newROwner && gAmacl)
-    {
-        memcpy(prevId.id, gAmacl->rownerID.id, sizeof(prevId.id));
-        memcpy(gAmacl->rownerID.id, newROwner->id, sizeof(newROwner->id));
-
-        ret = AmaclToCBORPayload(gAmacl, &cborPayload, &size);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-
-        ret = UpdateSecureResourceInPS(OIC_JSON_AMACL_NAME, cborPayload, size);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-
-        OICFree(cborPayload);
-    }
-
-    return ret;
-
-exit:
-    OICFree(cborPayload);
-    memcpy(gAmacl->rownerID.id, prevId.id, sizeof(prevId.id));
-    return ret;
-}
-
-OCStackResult GetAmaclRownerId(OicUuid_t *rowneruuid)
-{
-    OCStackResult retVal = OC_STACK_ERROR;
-    if (gAmacl)
-    {
-        *rowneruuid = gAmacl->rownerID;
-        retVal = OC_STACK_OK;
-    }
-    return retVal;
 }

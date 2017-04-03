@@ -477,14 +477,14 @@ CAPayload_t CAGetPayloadInfo(const CAData_t *data, size_t *payloadLen);
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAUpdateBlockOptionType(const CABlockDataID_t *blockID,
-                                   uint8_t blockType);
+                                   uint16_t blockType);
 
 /**
  * Get the block option type from block-wise transfer list.
  * @param[in]   blockID     ID set of CABlockData.
  * @return block option type.
  */
-uint8_t CAGetBlockOptionType(const CABlockDataID_t *blockID);
+uint16_t CAGetBlockOptionType(const CABlockDataID_t *blockID);
 
 /**
  * Get the block data from block-wise transfer list.
@@ -497,7 +497,7 @@ CAData_t *CAGetDataSetFromBlockDataList(const CABlockDataID_t *blockID);
  * Update the block data from block-wise transfer list.
  * @param[in]   blockID     ID set of CABlockData.
  * @param[in]   sendData    New block date should be sent.
- * @return CAData structure.
+ * @return CABlockData_t structure.
  */
 CABlockData_t *CAUpdateDataSetFromBlockDataList(const CABlockDataID_t *blockID,
                                                 const CAData_t *sendData);

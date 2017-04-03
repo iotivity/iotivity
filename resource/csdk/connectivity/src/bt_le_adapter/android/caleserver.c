@@ -27,6 +27,7 @@
 #include "caleutils.h"
 #include "caleinterface.h"
 #include "caadapterutils.h"
+#include "calestate.h"
 
 #include "logger.h"
 #include "oic_malloc.h"
@@ -51,6 +52,7 @@ static CAPacketReceiveCallback g_packetReceiveCallback = NULL;
 static CABLEErrorHandleCallback g_serverErrorCallback;
 
 static u_arraylist_t *g_connectedDeviceList = NULL;
+static u_arraylist_t *g_deviceStateList = NULL;
 
 static bool g_isStartServer = false;
 static bool g_isInitializedServer = false;
@@ -67,6 +69,8 @@ static oc_mutex g_threadSendMutex = NULL;
 static oc_mutex g_threadSendNotifyMutex = NULL;
 static oc_cond g_threadSendNotifyCond = NULL;
 static bool g_isSignalSetFlag = false;
+
+static oc_mutex g_deviceStateListMutex = NULL;
 
 static jint g_state_connected = INVALID_STATE;
 static jint g_state_disconnected = INVALID_STATE;
@@ -413,6 +417,13 @@ CAResult_t CALEServerSendResponse(JNIEnv *env, jobject device, jint requestId, j
 
 CAResult_t CALEServerStartAdvertise()
 {
+    if ((caglobals.bleFlags & CA_LE_ADV_DISABLE) || CA_DEFAULT_BT_FLAGS == caglobals.bleFlags)
+    {
+        OIC_LOG_V(INFO, TAG, "the advertisement of the bleFlags is disable[%d]",
+                  caglobals.bleFlags);
+        return CA_STATUS_OK;
+    }
+
     if (!g_jvm)
     {
         OIC_LOG(ERROR, TAG, "g_jvm is null");
@@ -1051,8 +1062,8 @@ jobject CALEServerCreateGattService(JNIEnv *env)
         goto error_exit;
     }
 
-    jfieldID jni_fid_readProperties;
-    jfieldID jni_fid_writeProperties;
+    jfieldID jni_fid_readProperties = NULL;
+    jfieldID jni_fid_writeProperties = NULL;
     if (g_setHighQoS)
     {
         jni_fid_readProperties = (*env)->GetStaticFieldID(env,
@@ -1414,8 +1425,8 @@ CAResult_t CALEServerDisconnectAllDevices(JNIEnv *env)
         return CA_STATUS_FAILED;
     }
 
-    uint32_t length = u_arraylist_length(g_connectedDeviceList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_connectedDeviceList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_connectedDeviceList, index);
         if (!jarrayObj)
@@ -1798,7 +1809,7 @@ CAResult_t CALEServerStartMulticastServer()
     }
 
     // start advertise
-    ret = CALEServerStartAdvertise(env, g_leAdvertiseCallback);
+    ret = CALEServerStartAdvertise();
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "CALEServerStartAdvertise has failed");
@@ -1862,8 +1873,8 @@ CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, co
 
     oc_mutex_lock(g_threadSendMutex);
 
-    uint32_t length = u_arraylist_length(g_connectedDeviceList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_connectedDeviceList);
+    for (size_t index = 0; index < length; index++)
     {
         OIC_LOG(DEBUG, TAG, "check device address");
         jobject jarrayObj = (jobject) u_arraylist_get(g_connectedDeviceList, index);
@@ -1889,7 +1900,7 @@ CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, co
         OIC_LOG_V(DEBUG, TAG, "setAddress : %s", setAddress);
         OIC_LOG_V(DEBUG, TAG, "address : %s", address);
 
-        if (!strcmp(setAddress, address))
+        if (!strcasecmp(setAddress, address))
         {
             OIC_LOG(DEBUG, TAG, "found the device");
 
@@ -1986,8 +1997,8 @@ CAResult_t CALEServerSendMulticastMessageImpl(JNIEnv *env, const uint8_t *data, 
     g_sendBuffer = (jbyteArray)(*env)->NewGlobalRef(env, jni_arr);
     CACheckJNIException(env);
 
-    uint32_t length = u_arraylist_length(g_connectedDeviceList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_connectedDeviceList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_connectedDeviceList, index);
         if (!jarrayObj)
@@ -2065,6 +2076,15 @@ void CALEServerCreateCachedDeviceList()
         g_connectedDeviceList = u_arraylist_create();
     }
     oc_mutex_unlock(g_connectedDeviceListMutex);
+
+    oc_mutex_lock(g_deviceStateListMutex);
+    // create new object array
+    if (!g_deviceStateList)
+    {
+        OIC_LOG(DEBUG, TAG, "Create device list");
+        g_deviceStateList = u_arraylist_create();
+    }
+    oc_mutex_unlock(g_deviceStateListMutex);
 }
 
 bool CALEServerIsDeviceInList(JNIEnv *env, const char* remoteAddress)
@@ -2078,8 +2098,8 @@ bool CALEServerIsDeviceInList(JNIEnv *env, const char* remoteAddress)
         return false;
     }
 
-    uint32_t length = u_arraylist_length(g_connectedDeviceList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_connectedDeviceList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_connectedDeviceList, index);
 
@@ -2103,7 +2123,7 @@ bool CALEServerIsDeviceInList(JNIEnv *env, const char* remoteAddress)
             return false;
         }
 
-        if (!strcmp(remoteAddress, setAddress))
+        if (!strcasecmp(remoteAddress, setAddress))
         {
             OIC_LOG(ERROR, TAG, "the device is already set");
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
@@ -2177,8 +2197,8 @@ CAResult_t CALEServerRemoveAllDevices(JNIEnv *env)
         return CA_STATUS_FAILED;
     }
 
-    uint32_t length = u_arraylist_length(g_connectedDeviceList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_connectedDeviceList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_connectedDeviceList, index);
         if (jarrayObj)
@@ -2209,8 +2229,8 @@ CAResult_t CALEServerRemoveDevice(JNIEnv *env, jstring address)
         return CA_STATUS_FAILED;
     }
 
-    uint32_t length = u_arraylist_length(g_connectedDeviceList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_connectedDeviceList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_connectedDeviceList, index);
 
@@ -2237,7 +2257,7 @@ CAResult_t CALEServerRemoveDevice(JNIEnv *env, jstring address)
                 continue;
             }
 
-            if (!strcmp(setAddress, remoteAddress))
+            if (!strcasecmp(setAddress, remoteAddress))
             {
                 OIC_LOG_V(DEBUG, TAG, "device address : %s", remoteAddress);
 
@@ -2306,25 +2326,24 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
     VERIFY_NON_NULL_VOID(device, TAG, "device");
 
+    jstring jni_remoteAddress = CALEGetAddressFromBTDevice(env, device);
+    if (!jni_remoteAddress)
+    {
+        OIC_LOG(ERROR, TAG, "jni_remoteAddress is null");
+        return;
+    }
+
+    const char* remoteAddress = (*env)->GetStringUTFChars(env, jni_remoteAddress, NULL);
+    if (!remoteAddress)
+    {
+        OIC_LOG(ERROR, TAG, "remoteAddress is null");
+        CACheckJNIException(env);
+        return;
+    }
+
     if (newState == g_state_connected)
     {
-
         OIC_LOG(DEBUG, TAG, "LE CONNECTED");
-
-        jstring jni_remoteAddress = CALEGetAddressFromBTDevice(env, device);
-        if (!jni_remoteAddress)
-        {
-            OIC_LOG(ERROR, TAG, "jni_remoteAddress is null");
-            return;
-        }
-
-        const char* remoteAddress = (*env)->GetStringUTFChars(env, jni_remoteAddress, NULL);
-        if (!remoteAddress)
-        {
-            OIC_LOG(ERROR, TAG, "remoteAddress is null");
-            CACheckJNIException(env);
-            return;
-        }
 
         if (false == CALEServerIsDeviceInList(env, remoteAddress))
         {
@@ -2332,28 +2351,46 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
             CALEServerAddDeviceToList(env, device);
         }
 
-        CAResult_t res = CALEServerStopAdvertise();
+        CAResult_t res = CALEUpdateDeviceState(remoteAddress,
+                                               CA_LE_CONNECTION_STATE,
+                                               STATE_CONNECTED,
+                                               g_deviceStateList,
+                                               g_deviceStateListMutex);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CALEUpdateDeviceState has failed");
+        }
+
+        res = CALEServerStopAdvertise();
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(DEBUG, TAG, "CALEServerStopAdvertise has failed");
         }
-
-        (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
     }
     else if (newState == g_state_disconnected)
     {
         OIC_LOG(DEBUG, TAG, "LE DISCONNECTED");
 
         jstring jni_remoteAddress = CALEGetAddressFromBTDevice(env, device);
-        CAResult_t ret = CALEServerRemoveDevice(env, jni_remoteAddress);
-        if (CA_STATUS_OK != ret)
+        CAResult_t res = CALEServerRemoveDevice(env, jni_remoteAddress);
+        if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "CALEServerRemoveDevice has failed");
         }
 
+        res = CALEUpdateDeviceState(remoteAddress,
+                                    CA_LE_CONNECTION_STATE,
+                                    STATE_DISCONNECTED,
+                                    g_deviceStateList,
+                                    g_deviceStateListMutex);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CALEUpdateDeviceState has failed");
+        }
+
         // start advertise
-        ret = CALEServerStartAdvertise();
-        if (CA_STATUS_OK != ret)
+        res = CALEServerStartAdvertise();
+        if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "CALEServerStartAdvertise has failed");
         }
@@ -2366,6 +2403,8 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
         OIC_LOG_V(DEBUG, TAG, "LE Connection state is [newState : %d, status %d]", newState,
                 status);
     }
+    (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
+    (*env)->DeleteLocalRef(env, jni_remoteAddress);
 }
 
 JNIEXPORT void JNICALL
@@ -2593,6 +2632,41 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerMtuChangedCallback(JNIEnv
     VERIFY_NON_NULL_VOID(device, TAG, "device");
 
     OIC_LOG_V(INFO, TAG, "gatt MTU size is changed (%d byte)", mtu);
+
+    jstring jni_address = CALEGetAddressFromBTDevice(env, device);
+    if (!jni_address)
+    {
+        OIC_LOG(ERROR, TAG, "jni_address is null");
+        return;
+    }
+
+    const char* address = (*env)->GetStringUTFChars(env, jni_address, NULL);
+    if (!address)
+    {
+        OIC_LOG(ERROR, TAG, "address is not available");
+        (*env)->DeleteLocalRef(env, jni_address);
+        return;
+    }
+
+    // update mtu size
+    CAResult_t res = CALESetMtuSize(address, mtu - CA_BLE_MTU_HEADER_SIZE,
+                                    g_deviceStateList, g_deviceStateListMutex);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "CALESetMtuSize has failed");
+    }
+
+    res = CALEUpdateDeviceState(address, CA_LE_SEND_STATE,
+                                STATE_SEND_MTU_NEGO_SUCCESS,
+                                g_deviceStateList,
+                                g_deviceStateListMutex);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "CALEUpdateDeviceState has failed");
+    }
+
+    (*env)->ReleaseStringUTFChars(env, jni_address, address);
+    (*env)->DeleteLocalRef(env, jni_address);
 }
 
 /**
@@ -2804,6 +2878,16 @@ CAResult_t CALEServerInitMutexVaraibles()
         }
     }
 
+    if (NULL == g_deviceStateListMutex)
+    {
+        g_deviceStateListMutex = oc_mutex_new();
+        if (NULL == g_deviceStateListMutex)
+        {
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
+            return CA_STATUS_FAILED;
+        }
+    }
+
     return CA_STATUS_OK;
 }
 
@@ -2823,6 +2907,9 @@ void CALEServerTerminateMutexVaraibles()
 
     oc_mutex_free(g_threadSendNotifyMutex);
     g_threadSendNotifyMutex = NULL;
+
+    oc_mutex_free(g_deviceStateListMutex);
+    g_deviceStateListMutex = NULL;
 }
 
 void CALEServerTerminateConditionVaraibles()
@@ -2832,17 +2919,20 @@ void CALEServerTerminateConditionVaraibles()
 
 bool CALEServerIsConnected(const char* address)
 {
-    //@Todo
-    //it will be implemented next patch.
-    return true;
+    if (CALEIsValidState(address, CA_LE_CONNECTION_STATE,
+                         STATE_SERVICE_CONNECTED,
+                         g_deviceStateList,
+                         g_deviceStateListMutex))
+    {
+        OIC_LOG(DEBUG, TAG, "current state is connected");
+        return true;
+    }
+    OIC_LOG(DEBUG, TAG, "current state is not connected");
+    return false;
 }
 
 uint16_t CALEServerGetMtuSize(const char* address)
 {
-    VERIFY_NON_NULL_RET(address, TAG, "address is null", CA_DEFAULT_BLE_MTU_SIZE);
-
-    //@Todo
-    //it will be implemented next patch.
-    return CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_MTU_HEADER_SIZE;
+    return CALEGetMtuSize(address, g_deviceStateList, g_deviceStateListMutex);
 }
 

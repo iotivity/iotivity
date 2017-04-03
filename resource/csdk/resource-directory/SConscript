@@ -35,13 +35,16 @@ rd_mode = env.get('RD_MODE')
 ######################################################################
 # Build flags
 ######################################################################
-rd_env.AppendUnique(CPPPATH = ['include',
+rd_env.AppendUnique(CPPPATH = [ '#/resource/csdk/security/include',
+                                'include',
                                 'src/internal',
-                                '../include',
-                                '../stack/include',
-                                '../../include',
-                                '../logger/include',
-                                '../../oc_logger/include',
+                                '#/resource/csdk/include',
+                                '#/resource/csdk/stack/include',
+                                '#/resource/csdk/stack/include/internal',
+                                '#/resource/include',
+                                '#/resource/csdk/logger/include',
+                                '#/resource/oc_logger/include',
+                                '#/resource/csdk/connectivity/api'
 ])
 
 if 'CLIENT' in rd_mode:
@@ -49,10 +52,9 @@ if 'CLIENT' in rd_mode:
 if 'SERVER' in rd_mode:
     rd_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
 
-rd_env.PrependUnique(LIBPATH = [rd_env.get('BUILD_DIR')])
 if target_os != 'android':
     rd_env.PrependUnique(RPATH = [rd_env.get('BUILD_DIR')])
-rd_env.PrependUnique(LIBS = ['octbstack', 'oc', 'oc_logger'])
+rd_env.PrependUnique(LIBS = ['octbstack', 'oc', 'oc_logger', 'connectivity_abstraction'])
 
 if target_os not in ['windows']:
     rd_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra', '-std=c++0x'])
@@ -80,7 +82,7 @@ if 'SERVER' in rd_mode:
         RD_SRC_DIR + 'internal/rd_database.c',
         RD_SRC_DIR + 'rd_server.c',
         ]
-    if target_os not in ['linux', 'tizen'] :
+    if target_os not in ['linux', 'tizen', 'windows'] :
         rd_src += [ '../../../extlibs/sqlite3/sqlite3.c' ]
 
 if 'CLIENT' in rd_mode:

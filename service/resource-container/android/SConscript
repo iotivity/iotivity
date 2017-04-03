@@ -53,4 +53,5 @@ jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
 
 cmdResourceContainerApp = jdk_env.Gradle(target="resource-container/objs",
     source="resource-container/src/main/java/org/iotivity/service/resourcecontainer/RcsBundleInfo.java")
-jdk_env.Clean(cmdResourceContainerApp, '#/service/resource-container/android//build')
+jdk_env.Clean(cmdResourceContainerApp, '#/service/resource-container/android/build')
+jdk_env.Clean(cmdResourceContainerApp, '#/service/resource-container/android/resource-container/build')

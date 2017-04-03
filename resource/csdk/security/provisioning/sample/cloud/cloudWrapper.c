@@ -116,6 +116,13 @@ void readInteger(int* item, const char* description, const char* example)
     skipSpecialCharacters();
 }
 
+void readUInt16(uint16_t* item, const char* description, const char* example)
+{
+    printf("Enter %s (f.e. %s):\n", description, example);
+    scanf("%hu", item);
+    skipSpecialCharacters();
+}
+
 /**
  * Read user input (expect array of strings)
  *
@@ -197,11 +204,11 @@ void printStringArray(stringArray_t *list)
         return;
     }
 
-    OIC_LOG_V(INFO, TAG, "List contains %zu items", list->length);
+    OIC_LOG_V(INFO, TAG, "List contains %" PRIuPTR " items", list->length);
 
     for (size_t i = 0; i < list->length; i++)
     {
-        OIC_LOG_V(INFO, TAG, "item[%zu] = %s", i, list->array[i]);
+        OIC_LOG_V(INFO, TAG, "item[%" PRIuPTR "] = %s", i, list->array[i]);
     }
 }
 
@@ -288,7 +295,7 @@ bool readFile(const char *name, OCByteString *out)
     size_t realCount = fread(buffer, length, count, file);
     if (realCount != count)
     {
-        OIC_LOG_V(ERROR, TAG, "Read %d bytes %zu times instead of %zu", length, realCount, count);
+        OIC_LOG_V(ERROR, TAG, "Read %d bytes %" PRIuPTR " times instead of %" PRIuPTR, length, realCount, count);
         goto exit;
     }
 
@@ -446,16 +453,16 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
 
         char aceid[MAX_ID_LENGTH] = { 0 };
         char subjectuuid[MAX_ID_LENGTH] = { 0 };
-        int stype = 0;
-        int permission = 0;
+        uint16_t stype = 0;
+        uint16_t permission = 0;
 
         do
         {
             readString(subjectuuid, sizeof(subjectuuid), "subjectuuid", SUBJECT_ID_EXAMPLE);
         } while (OC_STACK_OK != ConvertStrToUuid(subjectuuid, &ace->subjectuuid));
 
-        readInteger(&stype, "subject type", "0 – Device, 1 – User, 2 - Group");
-        readInteger(&permission, "permission", "6");
+        readUInt16(&stype, "subject type", "0 – Device, 1 – User, 2 - Group");
+        readUInt16(&permission, "permission", "6");
 
         ace->aceId = OICStrdup(aceid);
         ace->stype = stype;
@@ -464,7 +471,7 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
         int reslist_count = 0;
         readInteger(&reslist_count, "resources list count", "1");
 
-        for (int i = 0; i < reslist_count; i++)
+        for (int j = 0; j < reslist_count; j++)
         {
             OicSecRsrc_t *res = OICCalloc(1, sizeof(OicSecRsrc_t));
             if (!res)
@@ -491,7 +498,7 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
         }
     }
 
-    result = OCCloudAclIndividualUpdateAce(NULL, aclid, aces, endPoint, callback);
+    result = OCCloudAclIndividualAclUpdate(NULL, aclid, aces, endPoint, callback);
 exit:
     deleteCloudAceList(aces);
     return result;
@@ -513,8 +520,8 @@ OCStackResult OCWrapperAclIndividualUpdate(const OCDevAddr *endPoint, OCCloudRes
 
     char aceid[MAX_ID_LENGTH] = { 0 };
     char subjectuuid[MAX_ID_LENGTH] = { 0 };
-    int stype = 0;
-    int permission = 0;
+    uint16_t stype = 0;
+    uint16_t permission = 0;
 
     readString(aceid, sizeof(aceid), "ace id", ACE_ID_EXAMPLE);
     do
@@ -522,8 +529,8 @@ OCStackResult OCWrapperAclIndividualUpdate(const OCDevAddr *endPoint, OCCloudRes
         readString(subjectuuid, sizeof(subjectuuid), "subjectuuid", SUBJECT_ID_EXAMPLE);
     } while (OC_STACK_OK != ConvertStrToUuid(subjectuuid, &ace->subjectuuid));
 
-    readInteger(&stype, "subject type", "0 – Device, 1 – User, 2 - Group");
-    readInteger(&permission, "permission", "6");
+    readUInt16(&stype, "subject type", "0 – Device, 1 – User, 2 - Group");
+    readUInt16(&permission, "permission", "6");
 
     ace->stype = stype;
     ace->permission = permission;
@@ -558,7 +565,7 @@ OCStackResult OCWrapperAclIndividualUpdate(const OCDevAddr *endPoint, OCCloudRes
     }
 
 
-    result = OCCloudAclIndividualUpdate(NULL, aclid,aceid, ace, endPoint, callback);
+    result = OCCloudAclIndividualAceUpdate(NULL, aclid,aceid, ace, endPoint, callback);
 exit:
     return result;
 }
@@ -569,7 +576,7 @@ OCStackResult OCWrapperAclIndividualDelete(const OCDevAddr *endPoint, OCCloudRes
 
     readString(aclid, sizeof(aclid), "acl id", ACL_ID_EXAMPLE);
 
-    return OCCloudAclIndividualDelete(NULL, aclid, endPoint, callback);
+    return OCCloudAclAcesDelete(NULL, aclid, endPoint, callback);
 }
 
 OCStackResult OCWrapperAclIndividualDeleteAce(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -580,7 +587,7 @@ OCStackResult OCWrapperAclIndividualDeleteAce(const OCDevAddr *endPoint, OCCloud
     readString(aclid, sizeof(aclid), "acl id", ACL_ID_EXAMPLE);
     readString(aceid, sizeof(aceid), "ace id", ACE_ID_EXAMPLE);
 
-    return OCCloudAclIndividualDeleteAce(NULL, aclid, aceid, endPoint, callback);
+    return OCCloudAclIndividualAceDelete(NULL, aclid, aceid, endPoint, callback);
 }
 
 OCStackResult OCWrapperAclCreateGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)

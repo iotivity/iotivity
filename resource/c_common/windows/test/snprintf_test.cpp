@@ -24,7 +24,7 @@
 void OutputBufferLargerThanNeeded(size_t outputBufferSize, size_t inputBufferSize, int callerLineNumber)
 {
     ASSERT_GT(outputBufferSize, inputBufferSize);
-    ASSERT_GT(inputBufferSize, 1);
+    ASSERT_GT(inputBufferSize, 1U);
 
     char *inputBuffer = new char[inputBufferSize];
     memset(inputBuffer, 'i', inputBufferSize - 1);
@@ -45,7 +45,7 @@ void OutputBufferLargerThanNeeded(size_t outputBufferSize, size_t inputBufferSiz
 void OutputBufferSmallerThanNeeded(size_t outputBufferSize, size_t inputBufferSize, int callerLineNumber)
 {
     ASSERT_GT(inputBufferSize, outputBufferSize);
-    ASSERT_GT(outputBufferSize, 1);
+    ASSERT_GT(outputBufferSize, 1U);
 
     char *inputBuffer = new char[inputBufferSize];
     memset(inputBuffer, 'i', inputBufferSize - 1);

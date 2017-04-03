@@ -136,6 +136,21 @@ CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, int target
 CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **optlist);
 
 /**
+ * Helper to parse content format and accept format header options
+ * and populate the supplied options list.
+ *
+ * @param[in]   formatOption         CoAP format header option.
+ * @param[in]   format               content or accept format.
+ * @param[in]   versionOption        CoAP version header option.
+ * @param[in]   version              value of version.
+ * @param[out]  optlist              options information.
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ */
+
+CAResult_t CAParsePayloadFormatHeadOption(uint16_t formatOption, CAPayloadFormat_t format,
+        uint16_t versionOption, uint16_t version, coap_list_t **optlist);
+
+/**
  * creates option node from key length and data.
  * @param[in]   key                  key for the that needs to be sent.
  * @param[in]   length               length of the data that needs to be sent.
@@ -248,7 +263,7 @@ CAResponseResult_t CAGetCodeFromPduBinaryData(const void *pdu, uint32_t size);
  * @param[in]   format              coap format code.
  * @return format.
  */
-CAPayloadFormat_t CAConvertFormat(uint8_t format);
+CAPayloadFormat_t CAConvertFormat(uint16_t format);
 
 #ifdef WITH_TCP
 /**

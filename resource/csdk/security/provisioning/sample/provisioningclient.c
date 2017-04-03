@@ -25,7 +25,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include <payload_logging.h>
+#include "payload_logging.h"
 #include "utlist.h"
 #include "logger.h"
 #include "oic_malloc.h"
@@ -37,6 +37,13 @@
 #include "srmutility.h"
 #include "pmtypes.h"
 #include "oxmverifycommon.h"
+
+#ifdef _MSC_VER
+#include <io.h>
+
+#define F_OK 0
+#define access _access_s
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -97,7 +104,7 @@ static const OicSecPrm_t  SUPPORTED_PRMS[1] =
 // |g_ctx| means provision manager application context and
 // the following, includes |un/own_list|, could be variables, which |g_ctx| has,
 // for accessing all function(s) for these, they are declared on global domain
-static const char* g_ctx = "Provision Manager Client Application Context";
+static char* g_ctx = "Provision Manager Client Application Context";
 static char* g_svr_fname;
 static char* g_prvn_fname;
 static OCProvisionDev_t* g_own_list;
@@ -121,14 +128,14 @@ static OicSecPdAcl_t* createPdAcl(const int);
 static OCProvisionDev_t* getDevInst(const OCProvisionDev_t*, const int);
 static int printDevList(const OCProvisionDev_t*);
 static size_t printUuidList(const OCUuidList_t*);
-static int printResultList(const OCProvisionResult_t*, const int);
+static size_t printResultList(const OCProvisionResult_t*, const size_t);
 static void printUuid(const OicUuid_t*);
 static FILE* fopen_prvnMng(const char*, const char*);
 static int waitCallbackRet(void);
 static int selectTwoDiffNum(int*, int*, const int, const char*);
 
 // callback function(s) for provisioning client using C-level provisioning API
-static void ownershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void ownershipTransferCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -142,7 +149,7 @@ static void ownershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t* arr,
     g_doneCB = true;
 }
 
-static void provisionPairwiseCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void provisionPairwiseCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -156,7 +163,7 @@ static void provisionPairwiseCB(void* ctx, int nOfRes, OCProvisionResult_t* arr,
     g_doneCB = true;
 }
 
-static void provisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void provisionCredCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -170,7 +177,7 @@ static void provisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, boo
     g_doneCB = true;
 }
 
-static void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void provisionAclCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -184,7 +191,7 @@ static void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool
     g_doneCB = true;
 }
 
-static void getCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void getCredCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -198,7 +205,7 @@ static void getCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasE
     g_doneCB = true;
 }
 
-static void getAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void getAclCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -212,7 +219,7 @@ static void getAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasEr
     g_doneCB = true;
 }
 
-static void provisionDPCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void provisionDPCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -226,7 +233,7 @@ static void provisionDPCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool 
     g_doneCB = true;
 }
 
-static void unlinkDevicesCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void unlinkDevicesCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -240,7 +247,7 @@ static void unlinkDevicesCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, boo
     g_doneCB = true;
 }
 
-static void removeDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void removeDeviceCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -254,7 +261,7 @@ static void removeDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool
     g_doneCB = true;
 }
 
-static void syncDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void syncDeviceCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -269,7 +276,7 @@ static void syncDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool h
 }
 
 #ifdef MULTIPLE_OWNER
-static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void updateDoxmForMOTCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -286,6 +293,9 @@ static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, 
 
 static void inputPinCB(OicUuid_t deviceId, char *pin, size_t len, void *context)
 {
+    OC_UNUSED(deviceId);
+    OC_UNUSED(context);
+
     if(!pin || OXM_RANDOM_PIN_MIN_SIZE > len)
     {
         OIC_LOG(ERROR, TAG, "inputPinCB invalid parameters");
@@ -311,7 +321,7 @@ static int initProvisionClient(void)
         .read = fread,
         .write = fwrite,
         .close = fclose,
-        .unlink = unlink
+        .unlink = remove
     };
     if(OC_STACK_OK != OCRegisterPersistentStorageHandler(&pstStr))
     {
@@ -1258,6 +1268,8 @@ static int removeDeviceWithUuid(void)
 
 OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
 {
+    OC_UNUSED(ctx);
+
     OIC_LOG(INFO, TAG, "IN displayMutualVerifNumCB");
     if (NULL != mutualVerifNum)
     {
@@ -1275,6 +1287,8 @@ OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_L
 
 OCStackResult confirmNumCB(void * ctx)
 {
+    OC_UNUSED(ctx);
+
     for (;;)
     {
         int userConfirm;
@@ -1333,17 +1347,17 @@ static int changeMultipleOwnershipTrnasferMode(void)
     int mom = 0;
     for( ; ; )
     {
-        printf("   0. Disable Multuple Ownership Transfer\n");
-        printf("   1. Enable Multuple Ownership Transfer\n");
-        printf("   2. (Not Supported yet) Timely Enable Multuple Ownership Transfer\n");
-        printf("   > Enter Mode of Multuple Ownership Transfer : ");
+        printf("   0. Disable Multiple Ownership Transfer\n");
+        printf("   1. Enable Multiple Ownership Transfer\n");
+        printf("   2. (Not Supported yet) Timely Enable Multiple Ownership Transfer\n");
+        printf("   > Enter Mode of Multiple Ownership Transfer : ");
         for(int ret=0; 1!=ret; )
         {
             ret = scanf("%d", &mom);
             for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                         // '0x20<=code' is character region
         }
-        if(0 <= dev_num && OIC_NUMBER_OF_MOM_TYPE > dev_num)
+        if((0 <= mom) && (OIC_NUMBER_OF_MOM_TYPE > mom))
         {
             break;
         }
@@ -1398,7 +1412,6 @@ static int selectMultipleOwnershipTrnasferMethod(void)
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
-    const int preconfOxm = 4;
     int oxm = 0;
     for( ; ; )
     {
@@ -1687,17 +1700,17 @@ static OicSecAcl_t* createAcl(const int dev_num)
             goto CRACL_ERROR;
         }
 
-        for(size_t i = 0; i < arrLen; i++)
+        for(size_t j = 0; j < arrLen; j++)
         {
-            printf("         Enter ResourceType[%zu] Name (e.g. core.led): ", i+1);
+            printf("         Enter ResourceType[%zu] Name (e.g. core.led): ", j+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
-            rsrc->types[i] = OICStrdup(rsrc_in);
-            if(!rsrc->types[i])
+            rsrc->types[j] = OICStrdup(rsrc_in);
+            if(!rsrc->types[j])
             {
                 OIC_LOG(ERROR, TAG, "createAcl: OICStrdup error return");
                 goto CRACL_ERROR;
@@ -1728,17 +1741,17 @@ static OicSecAcl_t* createAcl(const int dev_num)
             goto CRACL_ERROR;
         }
 
-        for(size_t i = 0; i < arrLen; i++)
+        for(size_t j = 0; j < arrLen; j++)
         {
-            printf("         Enter Interface[%zu] Name (e.g. oic.if.baseline): ", i+1);
+            printf("         Enter Interface[%zu] Name (e.g. oic.if.baseline): ", j+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
-            rsrc->interfaces[i] = OICStrdup(rsrc_in);
-            if(!rsrc->interfaces[i])
+            rsrc->interfaces[j] = OICStrdup(rsrc_in);
+            if(!rsrc->interfaces[j])
             {
                 OIC_LOG(ERROR, TAG, "createAcl: OICStrdup error return");
                 goto CRACL_ERROR;
@@ -1879,16 +1892,16 @@ static OicSecPdAcl_t* createPdAcl(const int dev_num)
     pdAcl->resourcesLen = 1;
 
     // resource
-    int num = pdAcl->resourcesLen;
+    size_t num = pdAcl->resourcesLen;
     pdAcl->resources = (char**) OICCalloc(num, sizeof(char*));
     if(!pdAcl->resources)
     {
         OIC_LOG(ERROR, TAG, "createPdAcl: OICCalloc error return");
         goto CRPDACL_ERROR;
     }
-    for(int i=0; num>i; ++i)
+    for (size_t i = 0; num > i; ++i)
     {
-        size_t len = strlen(rsrc_in[i])+1;  // '1' for null termination
+        size_t len = strlen(rsrc_in[i]) + 1;  // '1' for null termination
         char* rsrc = (char*) OICCalloc(len, sizeof(char));
         if(!rsrc)
         {
@@ -1964,7 +1977,7 @@ static size_t printUuidList(const OCUuidList_t* uid_lst)
     size_t lst_cnt = 0;
     for( ; lst; )
     {
-        printf("     [%zu] ", ++lst_cnt);
+        printf("     [%" PRIuPTR "] ", ++lst_cnt);
         printUuid((const OicUuid_t*) &lst->dev);
         printf("\n");
         lst = lst->next;
@@ -1974,19 +1987,19 @@ static size_t printUuidList(const OCUuidList_t* uid_lst)
     return lst_cnt;
 }
 
-static int printResultList(const OCProvisionResult_t* rslt_lst, const int rslt_cnt)
+static size_t printResultList(const OCProvisionResult_t* rslt_lst, const size_t rslt_cnt)
 {
-    if(!rslt_lst || 0>=rslt_cnt)
+    if (!rslt_lst || (0 == rslt_cnt))
     {
         printf("     Device List is Empty..\n\n");
         return 0;
     }
 
-    int lst_cnt = 0;
-    for( ; rslt_cnt>lst_cnt; ++lst_cnt)
+    size_t lst_cnt = 0;
+    for (; rslt_cnt > lst_cnt; ++lst_cnt)
     {
-        printf("     [%d] ", lst_cnt+1);
-        printUuid((const OicUuid_t*) &rslt_lst[lst_cnt].deviceId);
+        printf("     [%" PRIuPTR "] ", lst_cnt + 1);
+        printUuid((const OicUuid_t*)&rslt_lst[lst_cnt].deviceId);
         printf(" - result: %d\n", rslt_lst[lst_cnt].res);
     }
     printf("\n");
@@ -2046,6 +2059,9 @@ const char* getResult(OCStackResult result)
 OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
     OCClientResponse* clientResponse)
 {
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
+
     if (clientResponse == NULL)
     {
         OIC_LOG(INFO, TAG, "getReqCB received NULL clientResponse");
@@ -2057,7 +2073,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
     OIC_LOG_V(INFO, TAG, "Payload Size: %d", 
               ((OCRepPayload*)clientResponse->payload)->values->str);
     OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-    OIC_LOG(INFO, TAG, ("=============> Get Response"));
+    OIC_LOG(INFO, TAG, "=============> Get Response");
 
     if (clientResponse->numRcvdVendorSpecificHeaderOptions > 0)
     {
@@ -2245,31 +2261,36 @@ static int waitCallbackRet(void)
         }
     }
 
+    if(!g_doneCB)
+    {
+        OCPDMCleanupForTimeout();
+    }
+
     return 0;
 }
 
 static int selectTwoDiffNum(int* a, int* b, const int max, const char* str)
 {
-    if(!a || !b || 2>max || !str)
+    if(!a || !b || (2 > max) || !str)
     {
         return -1;
     }
 
     for( ; ; )
     {
-        for(int i=0; 2>i; ++i)
+        for(int i = 0; 2 > i; ++i)
         {
-            int* num = 0==i?a:b;
+            int* num = (0 == i) ? a : b;
             for( ; ; )
             {
-                printf("   > Enter Device[%d] Number, %s: ", i+1, str);
-                for(int ret=0; 1!=ret; )
+                printf("   > Enter Device[%d] Number, %s: ", (i + 1), str);
+                for(int ret = 0; 1 != ret;)
                 {
                     ret = scanf("%d", num);
                     for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                                 // '0x20<=code' is character region
                 }
-                if(0<*num && max>=*num)
+                if((0 < *num) && (max >= *num))
                 {
                     break;
                 }
@@ -2282,8 +2303,6 @@ static int selectTwoDiffNum(int* a, int* b, const int max, const char* str)
             return 0;
         }
     }
-
-    return -1;
 }
 
 #ifdef __WITH_TLS__

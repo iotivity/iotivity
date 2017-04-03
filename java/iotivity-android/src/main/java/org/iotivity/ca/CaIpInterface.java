@@ -26,87 +26,52 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.wifi.WifiManager;
 import android.util.Log;
 
 public class CaIpInterface {
     private static Context mContext;
-
-    public enum WifiAPState{
-        WIFI_AP_STATE_DISABLING (10),
-        WIFI_AP_STATE_DISABLED (11),
-        WIFI_AP_STATE_ENABLING (12),
-        WIFI_AP_STATE_ENABLED (13),
-        WIFI_AP_STATE_FAILED (14)
-        ; // semicolon needed when fields / methods follow
-
-
-        private final int apstate;
-
-        WifiAPState(int apstate)
-        {
-            this.apstate = apstate;
-        }
-        public int getIntValue() {
-           return this.apstate;
-        }
-    }
+    private static volatile boolean isIpInitialized = false;
+    private static String TAG          = "OIC_IP_CB_INTERFACE";
 
     private CaIpInterface(Context context) {
         synchronized(CaIpInterface.class) {
             mContext = context;
         }
-        registerIpStateReceiver();
+        if (!isIpInitialized) {
+            registerIpStateReceiver();
+            isIpInitialized = true;
+        }
     }
 
     private void registerIpStateReceiver() {
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        intentFilter.addAction("android.net.wifi.WIFI_AP_STATE_CHANGED");
 
         mContext.registerReceiver(mReceiver, intentFilter);
     }
 
     public static void destroyIpInterface() {
-        mContext.unregisterReceiver(mReceiver);
+        if (isIpInitialized) {
+            mContext.unregisterReceiver(mReceiver);
+            isIpInitialized = false;
+        }
     }
 
     private static BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-                ConnectivityManager manager = (ConnectivityManager)
-                        mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-                NetworkInfo wifiInfo = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-                NetworkInfo mobileInfo = manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
-
-                if (mobileInfo != null && mobileInfo.isConnected() || wifiInfo.isConnected()) {
+                NetworkInfo activeNetwork = ((ConnectivityManager) mContext
+                        .getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
+                if (activeNetwork != null && activeNetwork.isConnected()) {
+                    Log.d(TAG, "CONNECTIVITY_ACTION - activeNetwork: "
+                            + activeNetwork.getTypeName());
                     caIpStateEnabled();
                 } else {
+                    Log.d(TAG, "CONNECTIVITY_ACTION - activeNetwork: NONE");
                     caIpStateDisabled();
                 }
             }
-
-            if (intent.getAction().equals("android.net.wifi.WIFI_AP_STATE_CHANGED")) {
-                if (intent.getIntExtra("wifi_state",
-                    WifiAPState.WIFI_AP_STATE_DISABLED.getIntValue())
-                    == WifiAPState.WIFI_AP_STATE_DISABLED.getIntValue())
-                {
-                    caIpStateDisabled();
-                }else if(intent.getIntExtra("wifi_state",
-                    WifiAPState.WIFI_AP_STATE_DISABLED.getIntValue())
-                    == WifiAPState.WIFI_AP_STATE_ENABLED.getIntValue())
-                {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                    caIpStateEnabled();
-                }
-           }
         }
     };
 

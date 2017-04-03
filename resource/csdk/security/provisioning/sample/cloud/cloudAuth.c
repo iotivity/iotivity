@@ -48,7 +48,7 @@ typedef struct
     char *accesstoken;
     char *refreshtoken;
     char *tokentype;
-    long  expiresin;
+    int64_t  expiresin;
     char *uid;
     char *redirecturi;
     char *certificate;
@@ -103,14 +103,9 @@ static OCStackResult SessionParsePayload(OCRepPayload *payload)
     {
         OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_TOKEN_TYPE);
     }
-    int64_t tmp = 0;
-    if (!OCRepPayloadGetPropInt(payload, OC_RSRVD_EXPIRES_IN, &tmp))
+    if (!OCRepPayloadGetPropInt(payload, OC_RSRVD_EXPIRES_IN, &(sessionObject.expiresin)))
     {
         OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_EXPIRES_IN);
-    }
-    else
-    {
-        sessionObject.expiresin = tmp;
     }
     if (!OCRepPayloadGetPropString(payload, OC_RSRVD_USER_UUID,
                                    &sessionObject.uid))
@@ -234,14 +229,9 @@ static OCStackApplicationResult handleCloudSignInResponse(void *ctx,
     }
 
     sessionObject.expiresin = 0;
-    int64_t tmp = 0;
-    if (!OCRepPayloadGetPropInt((OCRepPayload*)response->payload, OC_RSRVD_EXPIRES_IN, &tmp))
+    if (!OCRepPayloadGetPropInt((OCRepPayload*)response->payload, OC_RSRVD_EXPIRES_IN, &(sessionObject.expiresin)))
     {
         OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_EXPIRES_IN);
-    }
-    else
-    {
-        sessionObject.expiresin = tmp;
     }
 
     OIC_LOG(INFO, TAG, "Sign In OK");

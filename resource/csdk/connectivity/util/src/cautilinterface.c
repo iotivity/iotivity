@@ -18,6 +18,7 @@
  *
  ******************************************************************/
 
+#include "caadapterutils.h"
 #include "camanagerleinterface.h"
 #include "cabtpairinginterface.h"
 #include "cautilinterface.h"
@@ -25,6 +26,9 @@
 #include "cacommon.h"
 #include "logger.h"
 
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+#include "caconnectionmanager.h"
+#endif
 #define TAG "OIC_CA_COMMON_UTILS"
 
 CAResult_t CARegisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateCB,
@@ -164,6 +168,38 @@ uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_
 #endif
     return 0;
 }
+
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+CAResult_t CAUtilCMInitailize()
+{
+    return CACMInitialize();
+}
+
+CAResult_t CAUtilCMTerminate()
+{
+    return CACMTerminate();
+}
+
+CAResult_t CAUtilCMUpdateRemoteDeviceInfo(const CAEndpoint_t endpoint, bool isCloud)
+{
+    return CACMUpdateRemoteDeviceInfo(endpoint, isCloud);
+}
+
+CAResult_t CAUtilCMResetRemoteDeviceInfo()
+{
+    return CACMResetRemoteDeviceInfo();
+}
+
+CAResult_t CAUtilCMSetConnectionUserConfig(CAConnectUserPref_t connPrefer)
+{
+    return CACMSetConnUserConfig(connPrefer);
+}
+
+CAResult_t CAUtilCMGetConnectionUserConfig(CAConnectUserPref_t *connPrefer)
+{
+    return CACMGetConnUserConfig(connPrefer);
+}
+#endif
 
 #ifdef __JAVA__
 #ifdef __ANDROID__
@@ -317,7 +353,7 @@ CAResult_t CAUtilStopLEScan()
 CAResult_t CAUtilStartLEAdvertising()
 {
     OIC_LOG(DEBUG, TAG, "CAUtilStartLEAdvertising");
-#if defined(LE_ADAPTER) && defined(__ANDROID__)
+#if (defined(__ANDROID__) || defined(__TIZEN__)) && defined(LE_ADAPTER)
     return CAManagerLEStartAdvertising();
 #else
     OIC_LOG(DEBUG, TAG, "it is not supported");
@@ -328,10 +364,47 @@ CAResult_t CAUtilStartLEAdvertising()
 CAResult_t CAUtilStopLEAdvertising()
 {
     OIC_LOG(DEBUG, TAG, "CAUtilStopLEAdvertising");
-#if defined(LE_ADAPTER) && defined(__ANDROID__)
+#if (defined(__ANDROID__) || defined(__TIZEN__)) && defined(LE_ADAPTER)
     return CAManagerLEStopAdvertising();
 #else
     OIC_LOG(DEBUG, TAG, "it is not supported");
     return CA_NOT_SUPPORTED;
 #endif
+}
+
+CAResult_t CAUtilSetBTConfigure(CAUtilConfig_t config)
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilSetConfigure");
+#if (defined(__ANDROID__) && defined(LE_ADAPTER))
+    OIC_LOG_V(DEBUG, TAG, "bleFlag [%d]", config.bleFlags);
+    CAManagerSetConfigure(config);
+    return CA_STATUS_OK;
+#else
+    (void) config;
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
+#endif
+}
+
+CAResult_t CAGetIpv6AddrScope(const char *addr, CATransportFlags_t *scopeLevel)
+{
+    return CAGetIpv6AddrScopeInternal(addr, scopeLevel);
+}
+
+void CAUtilSetLogLevel(CAUtilLogLevel_t level, bool hidePrivateLogEntries)
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilSetLogLevel");
+    LogLevel logLevel = DEBUG;
+    switch(level)
+    {
+        case CA_LOG_LEVEL_INFO:
+            logLevel = INFO;
+            break;
+        case CA_LOG_LEVEL_ALL:
+        default:
+            logLevel = DEBUG;
+            break;
+    }
+
+    OCSetLogLevel(logLevel, hidePrivateLogEntries);
 }

@@ -77,7 +77,27 @@ typedef int (*CAgetPskCredentialsHandler)(CADtlsPskCredType_t type,
  */
 const CASecureEndpoint_t *CAGetSecureEndpointData(const CAEndpoint_t *peer);
 #endif //MULTIPLE_OWNER
-#endif
+
+/**
+ * Adds a bit to the attributes field of a secure endpoint.
+ *
+ * @param[in]  peer         remote address
+ * @param[in]  newAttribute bit to be added to the attributes field
+ *
+ * @return  true if the secure endpoint has been found, false otherwise.
+ */
+bool CASetSecureEndpointAttribute(const CAEndpoint_t* peer, uint32_t newAttribute);
+
+/**
+ * Gets the attributes field of a secure endpoint.
+ *
+ * @param[in]  peer          remote address
+ * @param[out] allAttributes all the attributes bits for that remote address
+ *
+ * @return  true if the secure endpoint has been found, false otherwise.
+ */
+bool CAGetSecureEndpointAttributes(const CAEndpoint_t* peer, uint32_t* allAttributes);
+#endif // #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 
 /**
  * This internal callback is used by CA layer to
@@ -119,7 +139,7 @@ CAResult_t CAregisterSslHandshakeCallback(CAErrorCallback tlsHandshakeCallback);
 
 /**
  * Register callback to get TLS PSK credentials.
- * @param[in]   getTLSCredentials    GetDTLS Credetials callback.
+ * @param[in]   getTlsCredentials    GetDTLS Credetials callback.
  * @return  ::CA_STATUS_OK
  */
 CAResult_t CAregisterPskCredentialsHandler(CAgetPskCredentialsHandler getTlsCredentials);
@@ -246,7 +266,7 @@ CAResult_t CAcloseSslConnection(const CAEndpoint_t *endpoint);
 /**
  * Close All of DTLS sessions.
  */
-void CAcloseSslConnectionAll();
+void CAcloseSslConnectionAll(CATransportAdapter_t transportType);
 
 #ifdef __cplusplus
 } /* extern "C" */

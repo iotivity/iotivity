@@ -80,7 +80,7 @@ int utclose(FILE *fp)
 int utunlink(const char *path)
 {
     EXPECT_TRUE((path != NULL)) << "utunlink\n";
-    return unlink(path);
+    return remove(path);
 }
 static OCPersistentStorage gpsi;
 
@@ -108,7 +108,8 @@ TEST(RegisterHandlerTest, RegisterValidHandler)
 // PersistentStorageHandler Tests
 TEST(PersistentStorageHandlerTest, RegisterNullHandler)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM,
+    // Revert to the default storage handler by setting it to null.
+    EXPECT_EQ(OC_STACK_OK,
             SRMRegisterPersistentStorageHandler(NULL));
 }
 

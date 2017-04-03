@@ -313,18 +313,27 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
         List<RcsBundleInfo> bundles = listBundles();
 
         for(RcsBundleInfo bundleInfo : bundles){
-            if(bundleInfo.getID().equals(bundleId) && bundleInfo.getPath().endsWith(".apk")){
-                Log.d(TAG, "Have to start android bundle");
-                Log.d(TAG, "bundle-id: " + bundleInfo.getID() + ", " + bundleInfo.getPath());
-                if(bundleInfo.getPath().endsWith(".apk")){
-                    startBundleFromStandaloneApp(bundleInfo);
-                }else if(bundleInfo.getID().equals(bundleId) &&
-                        bundleInfo.getPath().endsWith(".jar")){ // load classes from library
-                    startBundleFromJar(bundleInfo);
-                }
-            }else{
+            String fileName = bundleInfo.getPath();
+            String extension = fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length());
+
+            //* Unknown bundle handle it on native level
+            if(!bundleInfo.getID().equals(bundleId)) {
                 nativeStartBundle(bundleId);
             }
+            else
+                switch(extension)  {
+                    case "apk":
+                            Log.d(TAG, "Starting android bundle from APK");
+                            startBundleFromStandaloneApp(bundleInfo);
+                        break;
+                    case "jar":
+                            Log.d(TAG, "Starting android bundle from jar file");
+                            startBundleFromJar(bundleInfo);
+                        break;
+                    default:
+                        nativeStartBundle(bundleId);
+                        break;
+                }
         }
     }
 

@@ -191,6 +191,9 @@ public class OcRepresentation {
     private native void setValueByteArray(String key, byte[] value) throws OcException;
 
     /**
+     * Get Value
+     * @param key the key for the value
+     * @return the value as an integer
      * @deprecated use {@link #getValue(String key)} instead.
      */
     @Deprecated
@@ -206,6 +209,9 @@ public class OcRepresentation {
     }
 
     /**
+     * Get value
+     * @param key the key for the value
+     * @return the value as a boolean
      * @deprecated use {@link #getValue(String key)} instead.
      */
     @Deprecated
@@ -221,6 +227,9 @@ public class OcRepresentation {
     }
 
     /**
+     * Get value
+     * @param key the key for the value
+     * @return the value as a String
      * @deprecated use {@link #getValue(String key)} instead.
      */
     @Deprecated
@@ -236,6 +245,9 @@ public class OcRepresentation {
     }
 
     /**
+     * Set key/value pair
+     * @param key the value key
+     * @param value integer value
      * @deprecated use {@link #setValue(String key, int value)} instead.
      */
     @Deprecated
@@ -249,6 +261,9 @@ public class OcRepresentation {
     }
 
     /**
+     * Set key/value pair
+     * @param key the value key
+     * @param value boolean value
      * @deprecated use {@link #setValue(String key, boolean value)} instead.
      */
     @Deprecated
@@ -262,6 +277,9 @@ public class OcRepresentation {
     }
 
     /**
+     * Set key/value pair
+     * @param key the value key
+     * @param value String value
      * @deprecated use {@link #setValue(String key, String value)} instead.
      */
     @Deprecated

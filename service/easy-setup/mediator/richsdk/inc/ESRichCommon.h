@@ -34,6 +34,7 @@
 #ifdef __WITH_DTLS__
 #include "securevirtualresourcetypes.h"
 #include "OCProvisioningManager.hpp"
+#include "ocrandom.h"
 #endif
 
 #include "escommon.h"
@@ -147,6 +148,7 @@ namespace OIC
 
             /**
              * Constructor with OCRepresentation object. This is used for JNI communication.
+             * @param rep OCRepresentation object
              */
             CloudProp(const OCRepresentation &rep)
             {
@@ -343,6 +345,7 @@ namespace OIC
 
             /**
              * Constructor with OCRepresentation object. This is used for JNI communication.
+             * @param rep OCRepresentation object
              */
             DeviceProp(const OCRepresentation &rep)
             {
@@ -373,6 +376,7 @@ namespace OIC
              *
              * @param language IETF language tag using ISO 639X
              * @param country ISO Country Code (ISO 3166-1 Alpha-2)
+             * @param location location information
              */
             void setDevConfProp(string language, string country, string location)
             {
@@ -512,6 +516,7 @@ namespace OIC
                 m_selectedOTMethod = OIC_JUST_WORKS;
                 m_isMOTEnabled = false;
                 m_isOwned = false;
+                m_ownerID = {};
 #endif
             }
 #ifdef __WITH_DTLS__
@@ -531,6 +536,19 @@ namespace OIC
                     {
                         m_selectedOTMethod = OIC_OXM_COUNT; // Out-of-range
                     }
+
+                    if(resource->getOwnedStatus())
+                    {
+                        char uuidString[UUID_STRING_SIZE] = {};
+                        if(OCConvertUuidToString(resource->getDevPtr()->doxm->owner.id, uuidString))
+                        {
+                            m_ownerID = uuidString;
+                        }
+                        else
+                        {
+                            m_ownerID = {};
+                        }
+                    }
                 }
             }
 
@@ -547,6 +565,11 @@ namespace OIC
             bool isOwnedDevice() const
             {
                 return m_isOwned;
+            }
+
+            const std::string getOwnerID()
+            {
+                return m_ownerID;
             }
 #endif
             const std::string getDeviceUUID()
@@ -573,11 +596,12 @@ namespace OIC
             OicSecOxm_t m_selectedOTMethod;
             bool m_isMOTEnabled;
             bool m_isOwned;
+            std::string m_ownerID;
 #endif
         };
 
         /**
-         * @breif This provide a set of getter APIs from received response for getConfiguration().
+         * @brief This provide a set of getter APIs from received response for getConfiguration().
          *        Received information includes a device name, WiFi supported mode, and frequency.
          *        Additionally, you can know if Enrollee can be access to cloud server with this
          *        object.
@@ -951,12 +975,45 @@ namespace OIC
             ESResult m_result;
         };
 
+        /**
+         * Status object for connect API. This object is given to application
+         * when a response for 'Connect' request from Enrollee is arrived.
+         */
+        class ConnectRequestStatus
+        {
+        public:
+            /**
+             * Constructor
+             */
+            ConnectRequestStatus(ESResult result) :
+                    m_result(result)
+            {
+            }
+
+            /**
+             * Get a result of Connect request
+             *
+             * @return ::ES_OK\n
+             *         ::ES_COMMUNICATION_ERROR\n
+             *         ::ES_ERROR\n
+             *
+             * @see ESResult
+             */
+            ESResult getESResult()
+            {
+                return m_result;
+            }
+
+        private:
+            ESResult m_result;
+        };
+
         class ESOwnershipTransferData
         {
         public:
 #ifdef __WITH_DTLS__
             ESOwnershipTransferData() :
-                m_MOTMethod(OIC_JUST_WORKS), m_preconfiguredPin("")
+                m_MOTMethod(OIC_OXM_COUNT), m_preconfiguredPin("")
             {
             }
 
@@ -1037,6 +1094,12 @@ namespace OIC
          * Callback function definition for providing Enrollee cloud property provisioning status
          */
         typedef function< void(shared_ptr< CloudPropProvisioningStatus >) > CloudPropProvStatusCb;
+
+        /**
+         * Callback function definition for providing 'Connect' request status
+         */
+        typedef function< void(shared_ptr< ConnectRequestStatus >) > ConnectRequestStatusCb;
+
 
         /**
          * Callback function definition for providing Enrollee security provisioning status

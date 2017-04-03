@@ -68,7 +68,7 @@ CAResult_t CAEDRStopReceiveThread();
  * @param[in]  id               index of remote address.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id);
+CAResult_t CAEDRNativeReadData(JNIEnv *env, size_t id);
 
 /**
  * Start Listen Task.

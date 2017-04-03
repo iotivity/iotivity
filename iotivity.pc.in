@@ -13,6 +13,8 @@ URL: https://www.iotivity.org
 Requires:
 Libs: -L${libdir} -loc -loc_logger -loc_logger_core -loctbstack -lconnectivity_abstraction @LIBS@
 Cflags: -I${includedir}/resource \
+			-I${includedir}/resource/stack \
+			-I${includedir}/resource/oc_logger \
 			-I${includedir}/c_common \
 			-I${svcincludedir}/easy-setup \
 			-I${svcincludedir}/notification \

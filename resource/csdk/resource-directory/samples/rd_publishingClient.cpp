@@ -143,7 +143,7 @@ int main()
                 cbData.cb = &handleDiscoveryCB;;
                 cbData.cd = NULL;
                 cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
-                OCRDDiscover(CT_ADAPTER_IP, &cbData, OC_LOW_QOS);
+                OCRDDiscover(nullptr, CT_ADAPTER_IP, &cbData, OC_LOW_QOS);
                 break;
             }
             case 2:
@@ -153,7 +153,7 @@ int main()
                 cbData.cd = NULL;
                 cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
                 std::string address = rdAddress.str();
-                OCRDPublish(address.c_str(), CT_ADAPTER_IP, handles,
+                OCRDPublish(nullptr, address.c_str(), CT_ADAPTER_IP, handles,
                             2, &cbData, OC_LOW_QOS);
                 break;
             }

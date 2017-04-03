@@ -69,7 +69,7 @@ void *OCProcessThread(void *ptr)
     return NULL;
 }
 
-void subscribeRequestCallback(OIC::Service::NSConsumer *consumer)
+void subscribeRequestCallback(std::shared_ptr<OIC::Service::NSConsumer> consumer)
 {
     std::cout << "consumer requested to subscribe" << std::endl;
 
@@ -78,15 +78,15 @@ void subscribeRequestCallback(OIC::Service::NSConsumer *consumer)
     consumer->acceptSubscription(true);
 }
 
-void syncCallback(OIC::Service::NSSyncInfo *sync)
+void syncCallback(OIC::Service::NSSyncInfo sync)
 {
     std::cout << "SyncInfo Received " << std::endl;
-    std::cout << "Sync ID : " <<  sync->getMessageId() << std::endl;
-    std::cout << "Provider ID : " <<  sync->getProviderId() << std::endl;
-    std::cout << "Sync State: " << (int) sync->getState() << std::endl;
+    std::cout << "Sync ID : " <<  sync.getMessageId() << std::endl;
+    std::cout << "Provider ID : " <<  sync.getProviderId() << std::endl;
+    std::cout << "Sync State: " << (int) sync.getState() << std::endl;
 }
 
-OIC::Service::NSConsumer *printAvailableConsumers()
+std::shared_ptr<OIC::Service::NSConsumer> printAvailableConsumers()
 {
     std::cout << "Choose the Consumer ID for operation" << std::endl;
     int pos = 1;
@@ -108,8 +108,8 @@ OIC::Service::NSConsumer *printAvailableConsumers()
         return NULL;
     }
     std::string consumerId = discoveredConsumers[option];
-    OIC::Service::NSConsumer *consumer = NSProviderService::getInstance()->getConsumer(
-            consumerId);
+    std::shared_ptr<OIC::Service::NSConsumer> consumer =
+        NSProviderService::getInstance()->getConsumer(consumerId);
     return consumer;
 }
 
@@ -182,7 +182,7 @@ int main()
             case 3:
                 {
                     std::cout << "Allow Subscription" << std::endl;
-                    OIC::Service::NSConsumer *consumer = printAvailableConsumers();
+                    std::shared_ptr<OIC::Service::NSConsumer> consumer = printAvailableConsumers();
                     if (consumer != nullptr)
                     {
                         std::cout << "ALLOW" << std::endl;
@@ -193,7 +193,7 @@ int main()
             case 4:
                 {
                     std::cout << "Deny Subscription" << std::endl;
-                    OIC::Service::NSConsumer *consumer = printAvailableConsumers();
+                    std::shared_ptr<OIC::Service::NSConsumer>consumer = printAvailableConsumers();
                     if (consumer != nullptr)
                     {
                         std::cout << "DENY" << std::endl;
@@ -228,30 +228,29 @@ int main()
                     std::cout << "app - mContentText : " << body << std::endl;
                     std::cout << "app - mTopic : " << topic << std::endl;
 
-                    OIC::Service::NSMessage *msg = NSProviderService::getInstance()->createMessage();
+                    OIC::Service::NSMessage msg = NSProviderService::getInstance()->createMessage();
 
-                    msg->setType(OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_INFO);
-                    msg->setTitle(title.c_str());
-                    msg->setContentText(body.c_str());
-                    msg->setSourceName("OCF");
-                    msg->setTopic(topic);
-                    msg->setTTL(40);
-                    msg->setTime("12:30");
+                    msg.setType(OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_INFO);
+                    msg.setTitle(title.c_str());
+                    msg.setContentText(body.c_str());
+                    msg.setSourceName("OCF");
+                    msg.setTopic(topic);
+                    msg.setTTL(40);
+                    msg.setTime("12:30");
                     OIC::Service::NSMediaContents *mediaContents =
                         new OIC::Service::NSMediaContents("iconImage");
-                    msg->setMediaContents(mediaContents);
+                    msg.setMediaContents(mediaContents);
 
                     OC::OCRepresentation rep;
                     rep.setValue("Key1", "Value1");
                     rep.setValue("Key2", "Value2");
-                    msg->setExtraInfo(rep);
+                    msg.setExtraInfo(rep);
 
-                    mainMessageId = msg->getMessageId();
-                    std::cout << "ProviderID for Message : " << msg->getProviderId() << std::endl;
-                    std::cout << "MessageID for Message : " << msg->getMessageId() << std::endl;
+                    mainMessageId = msg.getMessageId();
+                    std::cout << "ProviderID for Message : " << msg.getProviderId() << std::endl;
+                    std::cout << "MessageID for Message : " << msg.getMessageId() << std::endl;
 
                     NSProviderService::getInstance()->sendMessage(msg);
-                    delete msg;
                     break;
                 }
             case 6:
@@ -280,15 +279,15 @@ int main()
                                 std::cout << "Sending Read Sync" << std::endl;
                                 NSProviderService::getInstance()->sendSyncInfo(mainMessageId,
                                         OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
-                                break;
                             }
+                            break;
                         case 2:
                             {
                                 std::cout << "Sending Delete Sync" << std::endl;
                                 NSProviderService::getInstance()->sendSyncInfo(mainMessageId,
                                         OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_DELETED);
-                                break;
                             }
+                            break;
                         default:
                             {
                                 cout << "Invalid Input!. sending default Read Sync";
@@ -320,7 +319,7 @@ int main()
             case 9:
                 {
                     std::cout <<  "SetTopic" << std::endl;
-                    OIC::Service::NSConsumer *consumer = printAvailableConsumers();
+                    std::shared_ptr<OIC::Service::NSConsumer> consumer = printAvailableConsumers();
                     if (consumer != nullptr)
                     {
                         consumer->setTopic("OCF_TOPIC1");
@@ -333,7 +332,7 @@ int main()
             case 10:
                 {
                     std::cout <<  "UnsetTopic" << std::endl;
-                    OIC::Service::NSConsumer *consumer = printAvailableConsumers();
+                    std::shared_ptr<OIC::Service::NSConsumer> consumer = printAvailableConsumers();
                     if (consumer != nullptr)
                     {
                         consumer->unsetTopic("OCF_TOPIC1");
@@ -345,7 +344,7 @@ int main()
             case 11:
                 {
                     std::cout <<  "GetConsumerTopicList" << std::endl;
-                    OIC::Service::NSConsumer *consumer = printAvailableConsumers();
+                    std::shared_ptr<OIC::Service::NSConsumer> consumer = printAvailableConsumers();
                     if (consumer != nullptr)
                     {
                         auto nsTopics = consumer->getConsumerTopicList();
@@ -354,10 +353,9 @@ int main()
                             for (auto it : nsTopics->getTopicsList())
                             {
 
-                                std::cout << it->getTopicName() << std::endl;
-                                std::cout << (int) it->getState() << std::endl;
+                                std::cout << it.getTopicName() << std::endl;
+                                std::cout << (int) it.getState() << std::endl;
                             }
-                            delete nsTopics;
                         }
                         std::cout <<  "GetConsumerTopicList completed" << std::endl;
                     }
@@ -371,10 +369,9 @@ int main()
                     for (auto it : nsTopics->getTopicsList())
                     {
 
-                        std::cout << it->getTopicName() << std::endl;
-                        std::cout << (int) it->getState() << std::endl;
+                        std::cout << it.getTopicName() << std::endl;
+                        std::cout << (int) it.getState() << std::endl;
                     }
-                    delete nsTopics;
                     break;
                 }
 #ifdef WITH_CLOUD

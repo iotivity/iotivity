@@ -105,13 +105,11 @@ public class ConsumerService {
      * @param topicName
      *            the interest Topic name for subscription
      *
-     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
-     *
      * @throws NSException failed to subscribe to MQ server
      */
-    public int subscribeMQService(String servAdd, String topicName)
+    public void subscribeMQService(String servAdd, String topicName)
             throws NSException {
-        return nativeSubscribeMQService(servAdd, topicName);
+        nativeSubscribeMQService(servAdd, topicName);
     }
 
     /**
@@ -146,7 +144,7 @@ public class ConsumerService {
     private native void nativeEnableRemoteService(String serverAddress)
             throws NSException;
 
-    private native int nativeSubscribeMQService(String servAdd,
+    private native void nativeSubscribeMQService(String servAdd,
             String topicName) throws NSException;
 
     private native void nativeRescanProvider() throws NSException;

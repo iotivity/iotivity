@@ -6,22 +6,26 @@ import os.path
 
 # Set common flags
 if env['CC'] == 'cl':
+    #  - warning C4133: incompatible type conversion
+    env.AppendUnique(CCFLAGS=['/we4133'])
 
-    # TODO: re-enable warnings, especially: 4244, 4267, 4365
-    env.AppendUnique(CXXFLAGS=[
-        '/wd4244',   # C4244 conversion from one type to another type results in a possible loss of data.
-        '/wd4267',   # C4267 conversion from size_t to a smaller type.
-        '/wd4355',   # C4355 'this' used in base member initializer list.
-        '/wd4800',   # C4800 forcing value to bool 'true' or 'false'.
-        '/wd4996',   # C4996 deprecated declaration.
-        '/wd4820',   # C4820 added padding to the end of a struct.
-        '/wd4514',   # C4514 unreferenced inline function has been removed
-        '/wd4365',   # C4365 signed/unsigned mismatch
-        '/wd4503'])  # C4503 decorated name length exceeded, name was truncated
-
-    # Enable warnings as errors.
-    env.AppendUnique(CCFLAGS=[
-        '/we4133'])  # C4133 incompatible type conversion
+    # Disable the following warnings:
+    #  - warning C4127: conditional expression is constant
+    #    - Disabled due to the widespread usage in IoTivity
+    #  - warning C4200: zero-sized array in struct/union.
+    #    - It is an acceptable approach for variable size structs.
+    #  - warning C4201: nameless struct/union
+    #    - Disabled due to IoTivity not being ANSI compatible
+    #  - warning C4204: nonstandard extension used: non-constant aggregate initializer
+    #    - Disabled due to IoTivity not being ANSI compatible and this is an appropriate way to intialize
+    #      structs for non-legacy compilers.
+    #  - warning C4214:  bit field types other than int
+    #    - Disabled due to IoTivity not being ANSI compatible
+    #  - warning C4232: nonstandard extension used: 'read': address of dllimport 'fread' is not static, identity not guaranteed
+    #    - fread, frwrite, etc are provided by the platform and cannot be changed.
+    #  - warning C4706: assignment within conditional expression
+    #    - Disabled due to the widespread usage in IoTivity and low impact.
+    env.AppendUnique(CCFLAGS=['/wd4127', '/wd4200', '/wd4201', '/wd4204', '/wd4214', '/wd4232', '/wd4706'])
 
     env.AppendUnique(CCFLAGS=['/EHsc'])
 
@@ -30,10 +34,12 @@ if env['CC'] == 'cl':
         env.AppendUnique(CCFLAGS = ['/MD', '/O2', '/GF'])
         env.AppendUnique(CPPDEFINES = ['NDEBUG'])
     else:
-        env.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/Zi', '/RTC1', '/Gm'])
+        env.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/RTC1'])
         env.AppendUnique(LINKFLAGS = ['/debug'])
     env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
     env.AppendUnique(PATH = os.environ['PATH'])
+    env['PDB'] = '${TARGET.base}.pdb'
+    env.Append(LINKFLAGS=['/PDB:${TARGET.base}.pdb'])
 
     # Add Windows-specific libraries
     env.AppendUnique(LIBS = ['bcrypt', 'ws2_32', 'advapi32', 'iphlpapi', 'crypt32', 'kernel32'])

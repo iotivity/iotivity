@@ -67,8 +67,8 @@ std::string  systemTime = "2016-01-15T11.01";
 // Set of strings for each of device info fields
 std::string  deviceName = "IoTivity Simple Server";
 std::string  deviceType = "oic.wk.tv";
-std::string  specVersion = "core.1.1.0";
-std::vector<std::string> dataModelVersions = {"res.1.1.0", "sh.1.1.0"};
+std::string  specVersion = "ocf.1.1.0";
+std::vector<std::string> dataModelVersions = {"ocf.res.1.1.0", "ocf.sh.1.1.0"};
 std::string  protocolIndependentID = "fa008167-3bbf-4c9d-8604-c9bcb96cb712";
 
 // OCPlatformInfo Contains all the platform info to be stored
@@ -672,12 +672,15 @@ int main(int argc, char* argv[])
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Server,
-        (OCTransportAdapter)(OCTransportAdapter::OC_ADAPTER_IP|OCTransportAdapter::OC_ADAPTER_TCP),
-        OC::QualityOfService::LowQos,
         &ps
     };
 
+    cfg.transportType = static_cast<OCTransportAdapter>(OCTransportAdapter::OC_ADAPTER_IP | 
+                                                        OCTransportAdapter::OC_ADAPTER_TCP);
+    cfg.QoS = OC::QualityOfService::LowQos;
+
     OCPlatform::Configure(cfg);
+    OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
     std::cout << "Starting server & setting platform info\n";
 
     OCStackResult result = SetPlatformInfo(platformId, manufacturerName, manufacturerLink,
@@ -731,8 +734,7 @@ int main(int argc, char* argv[])
         std::cout << "OCException in main : " << e.what() << endl;
     }
 
-    // No explicit call to stop the platform.
-    // When OCPlatform::destructor is invoked, internally we do platform cleanup
+    OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
 
     return 0;
 }

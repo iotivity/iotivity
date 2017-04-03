@@ -40,18 +40,26 @@ else:
 if env.get('LOGGING'):
     env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
+target_os = env.get('TARGET_OS')
+
+if target_os in ['ios']:
+    env.AppendUnique(CPPDEFINES = ['TARGET_OS_IPHONE'])
+
 # Add third party libraries
 lib_env = env.Clone()
 SConscript('#service/third_party_libs.scons', 'lib_env')
 
 resourceClient_env = lib_env.Clone()
-target_os = env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
 ######################################################################
 resourceClient_env.AppendUnique(CPPPATH = [
     'include',
+    '#/resource/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/oc_logger/include',
     'src/common/primitiveResource/include',
     'src/common/expiryTimer/include',
     'src/common/utils/include',
@@ -59,7 +67,7 @@ resourceClient_env.AppendUnique(CPPPATH = [
     'src/resourceCache/include'
 ])
 
-resourceClient_env.PrependUnique(LIBS = ['oc', 'rcs_common', 'octbstack','oc_logger'])
+resourceClient_env.PrependUnique(LIBS = ['resource_directory', 'oc', 'rcs_common', 'octbstack','oc_logger'])
 
 if target_os not in ['windows']:
     resourceClient_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
@@ -96,10 +104,13 @@ client_src = [
         RESOURCECLIENT_DIR + 'RCSRemoteResourceObject.cpp'
         ]
 ResourceClientsdk_static = resourceClient_env.StaticLibrary('rcs_client', client_src)
-ResourceClientsdk_shared = resourceClient_env.SharedLibrary('rcs_client', client_src)
-
-resourceClient_env.InstallTarget([ResourceClientsdk_static,ResourceClientsdk_shared], 'rcs_client')
-resourceClient_env.UserInstallTargetLib([ResourceClientsdk_static,ResourceClientsdk_shared], 'rcs_client')
+if target_os not in ['ios']:
+    ResourceClientsdk_shared = resourceClient_env.SharedLibrary('rcs_client', client_src)
+    resourceClient_env.InstallTarget([ResourceClientsdk_static,ResourceClientsdk_shared], 'rcs_client')
+    resourceClient_env.UserInstallTargetLib([ResourceClientsdk_static,ResourceClientsdk_shared], 'rcs_client')
+else:
+    resourceClient_env.InstallTarget([ResourceClientsdk_static], 'rcs_client')
+    resourceClient_env.UserInstallTargetLib([ResourceClientsdk_static], 'rcs_client')
 resourceClient_env.UserInstallTargetHeader('include/RCSAddress.h', 'service/resource-encapsulation', 'RCSAddress.h')
 resourceClient_env.UserInstallTargetHeader('include/RCSDiscoveryManager.h', 'service/resource-encapsulation', 'RCSDiscoveryManager.h')
 resourceClient_env.UserInstallTargetHeader('include/RCSRemoteResourceObject.h', 'service/resource-encapsulation', 'RCSRemoteResourceObject.h')

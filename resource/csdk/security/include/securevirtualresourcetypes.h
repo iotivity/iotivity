@@ -34,6 +34,11 @@
  * will have to be written by hand to marshal these structures (e.g. to/from
  * Persistent Storage, or across memory boundaries).
  *
+ * We're using uint typedefs for all enum types to avoid C++ type conversion
+ * errors and enable bitfield operations on these fields (causes compilation
+ * errors on arduino builds). This may miss some type checks, but it's
+ * nearly impossible to do int/bitfield operations on enum types in C++.
+ *
  * TODO reconcile against latest OIC Security Spec to ensure all fields correct.
  * (Last checked against v0.95)
  */
@@ -57,20 +62,20 @@ extern "C" {
  * Values used to create bit-maskable enums for single-value response with
  * embedded code.
  */
-#define ACCESS_GRANTED_DEF            (1 << 0)
-#define ACCESS_DENIED_DEF             (1 << 1)
-#define INSUFFICIENT_PERMISSION_DEF   (1 << 2)
-#define SUBJECT_NOT_FOUND_DEF         (1 << 3)
-#define RESOURCE_NOT_FOUND_DEF        (1 << 4)
-#define POLICY_ENGINE_ERROR_DEF       (1 << 5)
-#define INVALID_PERIOD_DEF            (1 << 6)
-#define ACCESS_WAITING_DEF            (1 << 7)
-#define AMS_SERVICE_DEF               (1 << 8)
+#define ACCESS_GRANTED_DEF                      (1 << 0)
+#define ACCESS_DENIED_DEF                       (1 << 1)
+#define INSUFFICIENT_PERMISSION_DEF             (1 << 2)
+#define SUBJECT_NOT_FOUND_DEF                   (1 << 3)
+#define RESOURCE_NOT_FOUND_DEF                  (1 << 4)
+#define POLICY_ENGINE_ERROR_DEF                 (1 << 5)
+#define INVALID_PERIOD_DEF                      (1 << 6)
+#define SEC_RESOURCE_OVER_UNSECURE_CHANNEL_DEF  (1 << 7)
 #define REASON_MASK_DEF               (INSUFFICIENT_PERMISSION_DEF | \
                                        INVALID_PERIOD_DEF | \
                                        SUBJECT_NOT_FOUND_DEF | \
                                        RESOURCE_NOT_FOUND_DEF | \
-                                       POLICY_ENGINE_ERROR_DEF)
+                                       POLICY_ENGINE_ERROR_DEF | \
+                                       SEC_RESOURCE_OVER_UNSECURE_CHANNEL_DEF)
 
 
 /**
@@ -81,6 +86,7 @@ extern "C" {
  * 4th lsb:  D (Delete)
  * 5th lsb:  N (Notify)
  */
+#define PERMISSION_ERROR        (0x0)
 #define PERMISSION_CREATE       (1 << 0)
 #define PERMISSION_READ         (1 << 1)
 #define PERMISSION_WRITE        (1 << 2)
@@ -107,7 +113,7 @@ extern "C" {
  *     }
  * }
  */
-typedef enum
+enum
 {
     ACCESS_GRANTED = ACCESS_GRANTED_DEF,
     ACCESS_DENIED = ACCESS_DENIED_DEF,
@@ -121,22 +127,24 @@ typedef enum
         | RESOURCE_NOT_FOUND_DEF,
     ACCESS_DENIED_POLICY_ENGINE_ERROR = ACCESS_DENIED_DEF
         | POLICY_ENGINE_ERROR_DEF,
-    ACCESS_WAITING_FOR_AMS = ACCESS_WAITING_DEF
-        | AMS_SERVICE_DEF,
-    ACCESS_DENIED_AMS_SERVICE_ERROR = ACCESS_DENIED
-        | AMS_SERVICE_DEF
-} SRMAccessResponse_t;
+    ACCESS_DENIED_SEC_RESOURCE_OVER_UNSECURE_CHANNEL = ACCESS_DENIED_DEF
+        | SEC_RESOURCE_OVER_UNSECURE_CHANNEL_DEF,
+};
+
+typedef unsigned int SRMAccessResponse_t;
 
 /**
  * Reason code for SRMAccessResponse.
  */
-typedef enum
+enum
 {
     NO_REASON_GIVEN = 0,
     INSUFFICIENT_PERMISSION = INSUFFICIENT_PERMISSION_DEF,
     SUBJECT_NOT_FOUND = SUBJECT_NOT_FOUND_DEF,
     RESOURCE_NOT_FOUND = RESOURCE_NOT_FOUND_DEF,
-} SRMAccessResponseReasonCode_t;
+};
+
+typedef unsigned int SRMAccessResponseReasonCode_t;
 
 /**
  * Extract Reason Code from Access Response.
@@ -185,7 +193,7 @@ typedef struct OicSecCred OicSecCred_t;
  *      // ct contains PIN_PASSWORD flag.
  *  }
  */
-typedef enum OSCTBitmask
+enum OSCTBitmask
 {
     NO_SECURITY_MODE                = 0x0,
     SYMMETRIC_PAIR_WISE_KEY         = (0x1 << 0),
@@ -194,7 +202,9 @@ typedef enum OSCTBitmask
     SIGNED_ASYMMETRIC_KEY           = (0x1 << 3),
     PIN_PASSWORD                    = (0x1 << 4),
     ASYMMETRIC_ENCRYPTION_KEY       = (0x1 << 5),
-} OSCTBitmask_t;
+};
+
+typedef unsigned int OSCTBitmask_t;
 
 /**
  * /oic/sec/credtype (Credential Type) data type.
@@ -208,9 +218,27 @@ typedef enum OSCTBitmask
  */
 typedef OSCTBitmask_t OicSecCredType_t;
 
+typedef enum OicSecDeviceOnboardingState
+{
+    DOS_RESET = 0,
+    DOS_RFOTM,
+    DOS_RFPRO,
+    DOS_RFNOP,
+    DOS_SRESET
+} OicSecDeviceOnboardingState_t;
+
+typedef struct OicSecDostype
+{
+    OicSecDeviceOnboardingState_t state;
+    bool                          pending;
+} OicSecDostype_t;
+
 typedef struct OicSecDoxm OicSecDoxm_t;
 
-typedef enum OicSecDpm
+/**
+ * The oic.sec.dpmtype
+ */
+enum OicSecDpm
 {
     NORMAL                          = 0x0,
     RESET                           = (0x1 << 0),
@@ -219,40 +247,49 @@ typedef enum OicSecDpm
     SECURITY_MANAGEMENT_SERVICES    = (0x1 << 3),
     PROVISION_CREDENTIALS           = (0x1 << 4),
     PROVISION_ACLS                  = (0x1 << 5),
+    VERIFY_SOFTWARE_VERSION         = (0x1 << 6),
+    UPDATE_SOFTWARE                 = (0x1 << 7),
 #ifdef MULTIPLE_OWNER
-    TAKE_SUB_OWNER                  = (0x1 << 6),
+    TAKE_SUB_OWNER                  = (0x1 << 13),
 #endif
-    // << 7 THROUGH 15 RESERVED
-} OicSecDpm_t;
+};
+
+typedef unsigned int OicSecDpm_t;
 
 // These types are taken from the Security Spec v1.1.12 /pstat resource definition
 // Note that per the latest spec, there is NO definition for Multiple Service Client Directed
 // provisioning mode, so that enum value has been removed.
-typedef enum OicSecDpom
+enum OicSecDpom
 {
     MULTIPLE_SERVICE_SERVER_DRIVEN    = (0x1 << 0),
     SINGLE_SERVICE_SERVER_DRIVEN      = (0x1 << 1),
     SINGLE_SERVICE_CLIENT_DRIVEN      = (0x1 << 2),
-} OicSecDpom_t;
+};
 
-typedef enum OicSecSvcType
+typedef unsigned int OicSecDpom_t;
+
+enum OicSecSvcType
 {
     SERVICE_UNKNOWN                 = 0x0,
     ACCESS_MGMT_SERVICE             = 0x1,  //urn:oic.sec.ams
-} OicSecSvcType_t;
+};
 
+typedef unsigned int OicSecSvcType_t;
 
 //TODO: Need more clarification on deviceIDFormat field type.
 #if 0
-typedef enum
+enum
 {
     URN = 0x0
-}OicSecDvcIdFrmt_t;
+};
+
+typedef unsigned int OicSecDvcIdFrmt_t;
 #endif
 
-typedef enum
+enum
 {
-    OIC_R_ACL_TYPE = 0,
+    OIC_RESOURCE_TYPE_ERROR = 0,
+    OIC_R_ACL_TYPE,
     OIC_R_AMACL_TYPE,
     OIC_R_CRED_TYPE,
     OIC_R_CRL_TYPE,
@@ -264,9 +301,11 @@ typedef enum
     OIC_R_SVC_TYPE,
     OIC_SEC_SVR_TYPE_COUNT, //define the value to number of SVR
     NOT_A_SVR_RESOURCE = 99
-}OicSecSvrType_t;
+};
 
-typedef enum
+typedef unsigned int OicSecSvrType_t;
+
+enum
 {
     OIC_JUST_WORKS                          = 0x0,
     OIC_RANDOM_DEVICE_PIN                   = 0x1,
@@ -278,40 +317,48 @@ typedef enum
 #endif //MULTIPLE_OWNER
     OIC_MV_JUST_WORKS                       = 0xFF01,
     OIC_CON_MFG_CERT                        = 0xFF02,
-}OicSecOxm_t;
+};
 
-typedef enum
+typedef unsigned int OicSecOxm_t;
+
+enum
 {
     OIC_ENCODING_UNKNOW = 0,
     OIC_ENCODING_RAW = 1,
     OIC_ENCODING_BASE64 = 2,
     OIC_ENCODING_PEM = 3,
     OIC_ENCODING_DER = 4
-}OicEncodingType_t;
+};
+
+typedef unsigned int OicEncodingType_t;
 
 #ifdef MULTIPLE_OWNER
-typedef enum
+enum
 {
     MOT_STATUS_READY = 0,
     MOT_STATUS_IN_PROGRESS = 1,
     MOT_STATUS_DONE = 2,
-}MotStatus_t;
+};
+
+typedef unsigned int MotStatus_t;
 #endif //MULTIPLE_OWNER
 
-/*
+/**
  * oic.sec.mom type definition
  * TODO: This type will be included to OIC Security Spec.
  * 0 : Disable multiple owner
  * 1 : Enable multiple owner (Always on)
  * 2 : Timely multiple owner enable
  */
-typedef enum
+enum
 {
     OIC_MULTIPLE_OWNER_DISABLE = 0,
     OIC_MULTIPLE_OWNER_ENABLE = 1,
     OIC_MULTIPLE_OWNER_TIMELY_ENABLE = 2,
     OIC_NUMBER_OF_MOM_TYPE = 3
-}OicSecMomType_t;
+};
+
+typedef unsigned int OicSecMomType_t;
 
 typedef struct OicSecKey OicSecKey_t;
 
@@ -434,9 +481,6 @@ struct OicSecAmacl
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
     size_t              resourcesLen;   // the number of elts in Resources
     char                **resources;    // 0:R:M:Y:String
-    size_t              amssLen;        // the number of elts in Amss
-    OicUuid_t           *amss;          // 1:R:M:Y:acl
-    OicUuid_t           rownerID;        // 2:R:S:Y:oic.uuid
     OicSecAmacl_t         *next;
 };
 
@@ -483,6 +527,8 @@ struct OicSecMom{
 /**
  * /oic/sec/doxm (Device Owner Transfer Methods) data type
  * Derived from OIC Security Spec; see Spec for details.
+ * @note If the struct is updated please update
+ * DoxmUpdateWriteableProperty appropriately.
  */
 struct OicSecDoxm
 {
@@ -512,10 +558,10 @@ struct OicSecDoxm
 struct OicSecPstat
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
+    OicSecDostype_t     dos;            // -:RW:S:Y:oic.sec.dostype
     bool                isOp;           // 0:R:S:Y:Boolean
-    OicSecDpm_t         cm;             // 1:R:S:Y:oic.sec.dpm
-    OicSecDpm_t         tm;             // 2:RW:S:Y:oic.sec.dpm
-    OicUuid_t           deviceID;       // 3:R:S:Y:oic.uuid
+    OicSecDpm_t         cm;             // 1:R:S:Y:oic.sec.dpmtype
+    OicSecDpm_t         tm;             // 2:RW:S:Y:oic.sec.dpmtype
     OicSecDpom_t        om;             // 4:RW:M:Y:oic.sec.dpom
     size_t              smLen;          // the number of elts in Sm
     OicSecDpom_t        *sm;            // 5:R:M:Y:oic.sec.dpom
@@ -547,20 +593,6 @@ struct OicSecSacl
 #endif
 };
 
-/**
- * /oic/sec/svc (Service requiring a secure connection) data type.
- * Derived from OIC Security Spec; see Spec for details.
- */
-struct OicSecSvc
-{
-    // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    OicUuid_t               svcdid;                 //0:R:S:Y:oic.uuid
-    OicSecSvcType_t         svct;                   //1:R:M:Y:OIC Service Type
-    size_t                  ownersLen;              //2:the number of elts in Owners
-    OicUuid_t               *owners;                //3:R:M:Y:oic.uuid
-    OicSecSvc_t             *next;
-};
-
 #if defined(__WITH_DTLS__) ||  defined(__WITH_TLS__)
 struct OicSecCrl
 {
@@ -589,14 +621,14 @@ typedef struct OicSecDpairing OicSecDpairing_t;
  *              1:  pre-configured pin
  *              2:  random pin
  */
-typedef enum PRMBitmask
+enum PRMBitmask
 {
     PRM_NOT_ALLOWED             = 0x0,
     PRM_PRE_CONFIGURED        = (0x1 << 0),
     PRM_RANDOM_PIN               = (0x1 << 1),
-} PRMBitmask_t;
+};
 
-typedef PRMBitmask_t OicSecPrm_t;
+typedef unsigned int OicSecPrm_t;
 
 
 struct OicPin

@@ -63,12 +63,26 @@ struct OicParseQueryIter
             {OIC_LOG((logLevel), tag, #op " failed!!"); goto exit; } }while(0)
 
 /**
+ * Macro to verify success of operation.
+ * eg: VERIFY_SUCCESS_RETURN(TAG, OC_STACK_OK == foo(), ERROR, OC_STACK_ERROR);
+ */
+#define VERIFY_SUCCESS_RETURN(tag, op, logLevel, retValue) do { if (!(op)) \
+            {OIC_LOG((logLevel), tag, #op " failed!!"); return retValue;} } while(0)
+
+/**
  * Macro to verify argument is not equal to NULL.
- * eg: VERIFY_NON_NULL(TAG, ptrData, ERROR);
+ * eg: VERIFY_NOT_NULL(TAG, ptrData, ERROR);
  * @note Invoking function must define "exit:" label for goto functionality to work correctly.
  */
-#define VERIFY_NON_NULL(tag, arg, logLevel) do{ if (NULL == (arg)) \
+#define VERIFY_NOT_NULL(tag, arg, logLevel) do{ if (NULL == (arg)) \
             { OIC_LOG((logLevel), tag, #arg " is NULL"); goto exit; } }while(0)
+
+/**
+ * Macro to verify argument is not equal to NULL.
+ * eg: VERIFY_NOT_NULL_RETURN(TAG, ptrData, ERROR, OC_STACK_ERROR);
+ */
+#define VERIFY_NOT_NULL_RETURN(tag, arg, logLevel, retValue) do { if (NULL == (arg)) \
+            { OIC_LOG((logLevel), tag, #arg " is NULL"); return retValue; } } while(0)
 
 /**
  * This method initializes the @ref OicParseQueryIter_t struct.
@@ -93,13 +107,13 @@ OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter);
 /**
  * Function to getting string of ownership transfer method
  *
- * @prarm oxmType ownership transfer method
+ * @param oxmType ownership transfer method
  *
  * @return string value of ownership transfer method
  */
 const char* GetOxmString(OicSecOxm_t oxmType);
 
-/*
+/**
  * This method converts UUID to canonical format string.
  *
  * @param uuid Device UUID
@@ -111,7 +125,7 @@ const char* GetOxmString(OicSecOxm_t oxmType);
 OCStackResult ConvertUuidToStr(const OicUuid_t* uuid, char** strUuid);
 
 
-/*
+/**
  * This method converts string UUID to OicUuid_t.
  *
  * @param strUuid Device UUID in string format
@@ -121,6 +135,19 @@ OCStackResult ConvertUuidToStr(const OicUuid_t* uuid, char** strUuid);
  */
 OCStackResult ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid);
 
+
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+/**
+ * API to save the seed value to generate device UUID.
+ * Seed value MUST be unique per device (e.g. MAC address)
+ *
+ * @param seed buffer of seed value.
+ * @param seedSize byte length of seed
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult SetDeviceIdSeed(const uint8_t* seed, size_t seedSize);
+#endif
 
 #ifdef __cplusplus
 }

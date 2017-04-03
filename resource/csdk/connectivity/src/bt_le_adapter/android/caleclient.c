@@ -23,6 +23,7 @@
 #include <jni.h>
 #include <unistd.h>
 
+#include "calestate.h"
 #include "caleclient.h"
 #include "caleserver.h"
 #include "caleutils.h"
@@ -53,6 +54,9 @@
 #define GATT_READ_NOT_PERMITTED             2
 #define GATT_REQUEST_NOT_SUPPORTED          6
 #define GATT_WRITE_NOT_PERMITTED            3
+
+#define BLE_SCAN_API_LEVEL (21)
+#define BLE_MIN_API_LEVEL  (18)
 
 static ca_thread_pool_t g_threadPoolHandle = NULL;
 
@@ -108,8 +112,10 @@ static CALEScanState_t g_curScanningStep = BLE_SCAN_NONE;
 static CALEScanState_t g_nextScanningStep = BLE_SCAN_ENABLE;
 
 static CABLEDataReceivedCallback g_CABLEClientDataReceivedCallback = NULL;
+static int32_t g_jniIntSdk = -1;
 
 static bool g_setHighQoS = true;
+static bool g_setFullScanFlag = true;
 
 /**
  * check if retry logic for connection routine has to be stopped or not.
@@ -178,7 +184,6 @@ static void CALEScanThread(void* object)
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -266,8 +271,6 @@ static void CALEScanThread(void* object)
 
 CAResult_t CALEClientStartScanWithInterval()
 {
-    OIC_LOG(DEBUG, TAG, "IN - CALEClientStartScanWithInterval");
-
     if (g_isWorkingScanThread)
     {
         OIC_LOG(DEBUG, TAG, "scan interval logic already running");
@@ -289,7 +292,6 @@ CAResult_t CALEClientStartScanWithInterval()
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT - CALEClientStartScanWithInterval");
     return CA_STATUS_OK;
 }
 
@@ -333,7 +335,6 @@ CAResult_t CALECreateJniInterfaceObject()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -414,7 +415,6 @@ CAResult_t CALEClientInitialize()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -425,8 +425,8 @@ CAResult_t CALEClientInitialize()
         isAttached = true;
     }
 
-    CAResult_t ret = CALECheckPlatformVersion(env, 18);
-    if (CA_STATUS_OK != ret)
+    g_jniIntSdk = CALEGetBuildVersion(env);
+    if (g_jniIntSdk < BLE_MIN_API_LEVEL)
     {
         OIC_LOG(ERROR, TAG, "it is not supported");
 
@@ -434,11 +434,10 @@ CAResult_t CALEClientInitialize()
         {
             (*g_jvm)->DetachCurrentThread(g_jvm);
         }
-
-        return ret;
+        return CA_STATUS_FAILED;
     }
 
-    ret = CALEClientInitGattMutexVaraibles();
+    CAResult_t ret = CALEClientInitGattMutexVaraibles();
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "CALEClientInitGattMutexVaraibles has failed!");
@@ -513,7 +512,6 @@ void CALEClientTerminate()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -555,11 +553,17 @@ void CALEClientTerminate()
         g_uuidList = NULL;
     }
 
-    ret = CALEClientRemoveAllDeviceState();
+    ret = CALERemoveAllDeviceState(g_deviceStateList,
+                                   g_deviceStateListMutex);
     if (CA_STATUS_OK != ret)
     {
-        OIC_LOG(ERROR, TAG, "CALEClientRemoveAllDeviceState has failed");
+        OIC_LOG(ERROR, TAG, "CALERemoveAllDeviceState has failed");
     }
+
+    oc_mutex_lock(g_deviceStateListMutex);
+    OICFree(g_deviceStateList);
+    g_deviceStateList = NULL;
+    oc_mutex_unlock(g_deviceStateListMutex);
 
     ret = CALEClientRemoveAllScanDevices(env);
     if (CA_STATUS_OK != ret)
@@ -616,7 +620,6 @@ CAResult_t CALEClientDestroyJniInterface()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -690,7 +693,6 @@ void CALEClientSendFinish(JNIEnv *env, jobject gatt)
 
 CAResult_t CALEClientSendNegotiationMessage(const char* address)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALEClientSendNegotiationMessage(%s)", address);
     VERIFY_NON_NULL(address, TAG, "address is null");
 
     return CALEClientSendUnicastMessageImpl(address, NULL, 0);
@@ -700,7 +702,6 @@ CAResult_t CALEClientSendUnicastMessage(const char* address,
                                         const uint8_t* data,
                                         const uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALEClientSendUnicastMessage(%s, %p)", address, data);
     VERIFY_NON_NULL(address, TAG, "address is null");
     VERIFY_NON_NULL(data, TAG, "data is null");
 
@@ -724,7 +725,6 @@ CAResult_t CALEClientSendMulticastMessage(const uint8_t* data,
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -882,7 +882,7 @@ CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address)
 CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* data,
                                             const uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALEClientSendUnicastMessageImpl, address: %s, data: %p", address,
+    OIC_LOG_V(INFO, TAG, "CALEClientSendUnicastMessageImpl, address: %s, data: %p", address,
               data);
     VERIFY_NON_NULL(address, TAG, "address is null");
 
@@ -897,7 +897,6 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
         if (JNI_OK != res)
         {
@@ -920,8 +919,8 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
 
     if (g_context && g_deviceList)
     {
-        uint32_t length = u_arraylist_length(g_deviceList);
-        for (uint32_t index = 0; index < length; index++)
+        size_t length = u_arraylist_length(g_deviceList);
+        for (size_t index = 0; index < length; index++)
         {
             jobject jarrayObj = (jobject) u_arraylist_get(g_deviceList, index);
             if (!jarrayObj)
@@ -945,9 +944,7 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
                 goto error_exit;
             }
 
-            OIC_LOG_V(DEBUG, TAG, "remote device address is %s", setAddress);
-
-            if (!strcmp(setAddress, address))
+            if (!strcasecmp(setAddress, address))
             {
                 (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
                 (*env)->DeleteLocalRef(env, jni_setAddress);
@@ -1006,14 +1003,18 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
 
     oc_mutex_unlock(g_threadSendMutex);
     OIC_LOG(INFO, TAG, "unicast - send logic has finished");
-    if (CALEClientIsValidState(address, CA_LE_SEND_STATE,
-                               STATE_SEND_SUCCESS))
+    if (CALEIsValidState(address, CA_LE_SEND_STATE,
+                         STATE_SEND_SUCCESS,
+                         g_deviceStateList,
+                         g_deviceStateListMutex))
     {
         OIC_LOG(INFO, TAG, "send success");
         ret = CA_STATUS_OK;
     }
-    else if (CALEClientIsValidState(address, CA_LE_SEND_STATE,
-                                    STATE_SEND_MTU_NEGO_SUCCESS))
+    else if (CALEIsValidState(address, CA_LE_SEND_STATE,
+                              STATE_SEND_MTU_NEGO_SUCCESS,
+                              g_deviceStateList,
+                              g_deviceStateListMutex))
     {
         OIC_LOG(INFO, TAG, "mtu nego success");
         ret = CA_STATUS_OK;
@@ -1025,11 +1026,13 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
     }
 
     // reset send state
-    CAResult_t resetRet = CALEClientUpdateDeviceState(address, CA_LE_SEND_STATE,
-                                                      STATE_SEND_NONE);
+    CAResult_t resetRet = CALEUpdateDeviceState(address, CA_LE_SEND_STATE,
+                                                STATE_SEND_NONE,
+                                                g_deviceStateList,
+                                                g_deviceStateListMutex);
     if (CA_STATUS_OK != resetRet)
     {
-        OIC_LOG_V(ERROR, TAG, "CALEClientUpdateDeviceState has failed (%d)", resetRet);
+        OIC_LOG_V(ERROR, TAG, "CALEUpdateDeviceState has failed (%d)", resetRet);
         ret = CA_SEND_FAILED;
     }
 
@@ -1077,14 +1080,14 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
         goto error_exit;
     }
 
-    uint32_t length = u_arraylist_length(g_deviceList);
+    size_t length = u_arraylist_length(g_deviceList);
     g_targetCnt = length;
 
     jbyteArray jni_arr = (*env)->NewByteArray(env, dataLen);
     (*env)->SetByteArrayRegion(env, jni_arr, 0, dataLen, (jbyte*) data);
     g_sendBuffer = (jbyteArray)(*env)->NewGlobalRef(env, jni_arr);
 
-    for (uint32_t index = 0; index < length; index++)
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_deviceList, index);
         if (!jarrayObj)
@@ -1142,7 +1145,7 @@ CAResult_t CALEClientSendData(JNIEnv *env, jobject device)
             return CA_STATUS_FAILED;
         }
         oc_mutex_lock(g_deviceStateListMutex);
-        state = CALEClientGetStateInfo(address);
+        state = CALEGetStateInfo(address, g_deviceStateList);
         oc_mutex_unlock(g_deviceStateListMutex);
     }
 
@@ -1193,8 +1196,10 @@ CAResult_t CALEClientSendData(JNIEnv *env, jobject device)
     }
     else
     {
-        if (CALEClientIsValidState(address, CA_LE_CONNECTION_STATE,
-                                   STATE_SERVICE_CONNECTED))
+        if (CALEIsValidState(address, CA_LE_CONNECTION_STATE,
+                             STATE_SERVICE_CONNECTED,
+                             g_deviceStateList,
+                             g_deviceStateListMutex))
         {
             OIC_LOG(INFO, TAG, "GATT has already connected");
 
@@ -1215,13 +1220,17 @@ CAResult_t CALEClientSendData(JNIEnv *env, jobject device)
             }
             (*env)->ReleaseStringUTFChars(env, jni_address, address);
         }
-        else if(CALEClientIsValidState(address, CA_LE_CONNECTION_STATE,
-                                       STATE_CONNECTED))
+        else if(CALEIsValidState(address, CA_LE_CONNECTION_STATE,
+                                 STATE_CONNECTED,
+                                 g_deviceStateList,
+                                 g_deviceStateListMutex))
         {
             OIC_LOG(INFO, TAG, "service connecting...");
         }
-        else if(CALEClientIsValidState(address, CA_LE_CONNECTION_STATE,
-                                       STATE_DISCONNECTED))
+        else if(CALEIsValidState(address, CA_LE_CONNECTION_STATE,
+                                 STATE_DISCONNECTED,
+                                 g_deviceStateList,
+                                 g_deviceStateListMutex))
         {
             OIC_LOG(INFO, TAG, "STATE_DISCONNECTED - start to connect LE");
 
@@ -1243,8 +1252,10 @@ CAResult_t CALEClientSendData(JNIEnv *env, jobject device)
 
             OIC_LOG(DEBUG, TAG, "start to connect LE");
             jobject gatt = CALEClientConnect(env, device,
-                                             CALEClientGetFlagFromState(env, jni_address,
-                                                                        CA_LE_AUTO_CONNECT_FLAG));
+                                             CALEGetFlagFromState(env, jni_address,
+                                                                  CA_LE_AUTO_CONNECT_FLAG,
+                                                                  g_deviceStateList,
+                                                                  g_deviceStateListMutex));
 
             if (NULL == gatt)
             {
@@ -1340,8 +1351,6 @@ CAResult_t CALEClientStartScan()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
-
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
         if (JNI_OK != res)
         {
@@ -1357,11 +1366,31 @@ CAResult_t CALEClientStartScan()
     // scan gatt server with UUID
     if (g_leScanCallback && g_uuidList)
     {
-#ifdef UUID_SCAN
-        ret = CALEClientStartScanWithUUIDImpl(env, g_uuidList, g_leScanCallback);
-#else
-        ret = CALEClientStartScanImpl(env, g_leScanCallback);
-#endif
+        if (g_jniIntSdk >= BLE_SCAN_API_LEVEL)
+        {
+            if (!g_setFullScanFlag)
+            {
+                //new uuid scan with callback
+                ret = CALEClientStartScanWithUUIDImplForV21(env, g_uuidList, g_leScanCallback);
+            }
+            else
+            {
+                //new full scan with callback
+                ret = CALEClientStartScanImplForV21(env, g_leScanCallback);
+            }
+        }
+        else
+        {
+            if (!g_setFullScanFlag)
+            {
+                ret = CALEClientStartScanWithUUIDImpl(env, g_uuidList, g_leScanCallback);
+            }
+            else
+            {
+                ret = CALEClientStartScanImpl(env, g_leScanCallback);
+            }
+        }
+
         if (CA_STATUS_OK != ret)
         {
             if (CA_ADAPTER_NOT_ENABLED == ret)
@@ -1385,6 +1414,7 @@ CAResult_t CALEClientStartScan()
 
 CAResult_t CALEClientStartScanImpl(JNIEnv *env, jobject callback)
 {
+    OIC_LOG(DEBUG, TAG, "CALEClientStartScanImpl IN");
     VERIFY_NON_NULL(callback, TAG, "callback is null");
     VERIFY_NON_NULL(env, TAG, "env is null");
 
@@ -1457,8 +1487,113 @@ CAResult_t CALEClientStartScanImpl(JNIEnv *env, jobject callback)
     return CA_STATUS_OK;
 }
 
+CAResult_t CALEClientStartScanImplForV21(JNIEnv *env, jobject callback)
+{
+    OIC_LOG(DEBUG, TAG, "CALEClientStartScanImplForV21 IN");
+    VERIFY_NON_NULL(callback, TAG, "callback is null");
+    VERIFY_NON_NULL(env, TAG, "env is null");
+
+    if (!CALEIsEnableBTAdapter(env))
+    {
+        OIC_LOG(INFO, TAG, "BT adapter is not enabled");
+        return CA_ADAPTER_NOT_ENABLED;
+    }
+
+    CAResult_t res = CA_STATUS_FAILED;
+    // get default bt adapter class
+    jclass jni_cid_BTAdapter = (*env)->FindClass(env, CLASSPATH_BT_ADAPTER);
+    if (!jni_cid_BTAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "getState From BTAdapter: jni_cid_BTAdapter is null");
+        CACheckJNIException(env);
+        return CA_STATUS_FAILED;
+    }
+
+    jmethodID jni_mid_getDefaultAdapter = (*env)->GetStaticMethodID(env, jni_cid_BTAdapter,
+                                                                    "getDefaultAdapter",
+                                                                    "()Landroid/bluetooth/"
+                                                                    "BluetoothAdapter;");
+    if (!jni_mid_getDefaultAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_getDefaultAdapter is null");
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        return CA_STATUS_FAILED;
+    }
+
+    jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter,
+                                                               jni_mid_getDefaultAdapter);
+    if (!jni_obj_BTAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "jni_obj_BTAdapter is null");
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        return CA_STATUS_FAILED;
+    }
+
+    // get bluetoothLeScanner class
+    jclass jni_cid_leScanner = (*env)->FindClass(env, CLASSPATH_LE_SCANNER);
+    if (!jni_cid_leScanner)
+    {
+        OIC_LOG(ERROR, TAG, "getState From leScanner: jni_cid_leScanner is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        return CA_STATUS_FAILED;
+    }
+
+    // get remote bt adapter method
+    jmethodID jni_mid_getBluetoothLeScanner = (*env)->GetMethodID(env, jni_cid_BTAdapter,
+                                                                  "getBluetoothLeScanner",
+                                                                  "()Landroid/bluetooth/"
+                                                                  "le/BluetoothLeScanner;");
+    if (!jni_mid_getBluetoothLeScanner)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_getBluetoothLeScanner is null");
+        CACheckJNIException(env);
+        goto error_exit;
+    }
+
+    // get startScan(ScanCallback callback) method
+    jmethodID jni_mid_startScan = (*env)->GetMethodID(env, jni_cid_leScanner, "startScan",
+                                                      "(Landroid/bluetooth/le/ScanCallback;)V");
+    if (!jni_mid_startScan)
+    {
+        OIC_LOG(ERROR, TAG, "startScan: jni_mid_startScan is null");
+        CACheckJNIException(env);
+        goto error_exit;
+    }
+
+    // gat le scanner object
+    jobject jni_obj_leScanner = (*env)->CallObjectMethod(env, jni_obj_BTAdapter,
+                                                         jni_mid_getBluetoothLeScanner);
+    if (!jni_obj_leScanner)
+    {
+        OIC_LOG(ERROR, TAG, "getState From BTAdapter: jni_obj_leScanner is null");
+        CACheckJNIException(env);
+        goto error_exit;
+    }
+
+    // call startScan method
+    OIC_LOG(INFO, TAG, "CALL API - startScan(for level21)");
+    (*env)->CallVoidMethod(env, jni_obj_leScanner, jni_mid_startScan, callback);
+    if (CACheckJNIException(env))
+    {
+        OIC_LOG(INFO, TAG, "startScan has failed");
+        (*env)->DeleteLocalRef(env, jni_obj_leScanner);
+        goto error_exit;
+    }
+    res = CA_STATUS_OK;
+    (*env)->DeleteLocalRef(env, jni_obj_leScanner);
+
+error_exit:
+    (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+    (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+    (*env)->DeleteLocalRef(env, jni_cid_leScanner);
+    return res;
+}
+
 CAResult_t CALEClientStartScanWithUUIDImpl(JNIEnv *env, jobjectArray uuids, jobject callback)
 {
+    OIC_LOG(DEBUG, TAG, "CALEClientStartScanWithUUIDImpl IN");
     VERIFY_NON_NULL(callback, TAG, "callback is null");
     VERIFY_NON_NULL(uuids, TAG, "uuids is null");
     VERIFY_NON_NULL(env, TAG, "env is null");
@@ -1531,6 +1666,379 @@ CAResult_t CALEClientStartScanWithUUIDImpl(JNIEnv *env, jobjectArray uuids, jobj
     return CA_STATUS_OK;
 }
 
+CAResult_t CALEClientStartScanWithUUIDImplForV21(JNIEnv *env, jobjectArray uuids, jobject callback)
+{
+    OIC_LOG(DEBUG, TAG, "CALEClientStartScanWithUUIDImplForV21 IN");
+    VERIFY_NON_NULL(callback, TAG, "callback is null");
+    VERIFY_NON_NULL(uuids, TAG, "uuids is null");
+    VERIFY_NON_NULL(env, TAG, "env is null");
+
+    if (!CALEIsEnableBTAdapter(env))
+    {
+        OIC_LOG(INFO, TAG, "BT adapter is not enabled");
+        return CA_ADAPTER_NOT_ENABLED;
+    }
+
+    // get bluetoothLeScanner class
+    jclass jni_cid_leScanner = (*env)->FindClass(env, CLASSPATH_LE_SCANNER);
+    if (!jni_cid_leScanner)
+    {
+        OIC_LOG(ERROR, TAG, "getState From leScanner: jni_cid_leScanner is null");
+        CACheckJNIException(env);
+        return CA_STATUS_FAILED;
+    }
+
+    // get startScan(with UUID) method
+    jmethodID jni_mid_startScan = (*env)->GetMethodID(env, jni_cid_leScanner,
+                                                      "startScan",
+                                                      "(Ljava/util/List;"
+                                                      "Landroid/bluetooth/le/ScanSettings;"
+                                                      "Landroid/bluetooth/le/ScanCallback;"
+                                                      ")V");
+    if (!jni_mid_startScan)
+    {
+        OIC_LOG(ERROR, TAG, "startScan: jni_mid_startScan is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_leScanner);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_cid_leScanner);
+
+    // get scanfilter.Builder class id
+    jclass jni_cid_scanfilterBuilder = (*env)->FindClass(env,
+                                                         "android/bluetooth/le/"
+                                                         "ScanFilter$Builder");
+    if (!jni_cid_scanfilterBuilder)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_cid_scanfilterBuilder is null");
+        CACheckJNIException(env);
+        return CA_STATUS_FAILED;
+    }
+
+    // get scanfilter.Builder(ctor) method id
+    jmethodID jni_mid_scanfilterBuilderCtor = (*env)->GetMethodID(env, jni_cid_scanfilterBuilder,
+                                                                  "<init>", "()V");
+    if (!jni_mid_scanfilterBuilderCtor)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_cid_scanfilterBuilderCtor is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_scanfilterBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    // call scanfilter.Builder()
+    jobject jni_obj_scanfilterBuilder = (*env)->NewObject(env, jni_cid_scanfilterBuilder,
+                                                          jni_mid_scanfilterBuilderCtor);
+    if (!jni_obj_scanfilterBuilder)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_obj_scanfilterBuilder is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_scanfilterBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    // get scanfilter.Builder.setServiceUuid method id
+    jmethodID jni_mid_setServiceUuid = (*env)->GetMethodID(env, jni_cid_scanfilterBuilder,
+                                                           "setServiceUuid",
+                                                           "(Landroid/os/ParcelUuid;)Landroid/"
+                                                           "bluetooth/le/ScanFilter$Builder;");
+    if (!jni_mid_setServiceUuid)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_mid_setServiceUuid is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_scanfilterBuilder);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilterBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    // get scanfilter.Builder.build method id
+    jmethodID jni_mid_build_scanfilterBuilder = (*env)->GetMethodID(env,
+                                                                    jni_cid_scanfilterBuilder,
+                                                                    "build",
+                                                                    "()Landroid/bluetooth/le/"
+                                                                    "ScanFilter;");
+    if (!jni_mid_build_scanfilterBuilder)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_mid_build_scanfilterBuilder is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_scanfilterBuilder);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilterBuilder);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_cid_scanfilterBuilder);
+
+    // call ParcelUuid.fromSting(uuid)
+    jobject jni_obj_parcelUuid = CALEGetParcelUuidFromString(env, OIC_GATT_SERVICE_UUID);
+    if (!jni_obj_parcelUuid)
+    {
+        OIC_LOG(ERROR, TAG, "scanSettings: jni_obj_parcelUuid is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilterBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    // call setServiceUuid(uuid)
+    jobject jni_obj_setServiceUuid = (*env)->CallObjectMethod(env,
+                                                              jni_obj_scanfilterBuilder,
+                                                              jni_mid_setServiceUuid,
+                                                              jni_obj_parcelUuid);
+    if (!jni_obj_setServiceUuid)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_obj_setServiceUuid is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilterBuilder);
+        (*env)->DeleteLocalRef(env, jni_obj_parcelUuid);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_obj_parcelUuid);
+    (*env)->DeleteLocalRef(env, jni_obj_setServiceUuid);
+
+    // call build()
+    jobject jni_obj_scanfilter = (*env)->CallObjectMethod(env,
+                                                          jni_obj_scanfilterBuilder,
+                                                          jni_mid_build_scanfilterBuilder);
+    if (!jni_obj_scanfilter)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_obj_scanfilter is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilterBuilder);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_obj_scanfilterBuilder);
+
+    // get scanSettings.Builder class id
+    jclass jni_cid_scanSettingsBuilder = (*env)->FindClass(env,
+                                                          "android/bluetooth/le/"
+                                                          "ScanSettings$Builder");
+    if (!jni_cid_scanSettingsBuilder)
+    {
+        OIC_LOG(ERROR, TAG, "scanSettings: jni_cid_scanSettingsBuilder is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        return CA_STATUS_FAILED;
+    }
+
+    // get scanSettings.Builder(ctor) method id
+    jmethodID jni_mid_scanSettingsBuilderCtor = (*env)->GetMethodID(env, jni_cid_scanSettingsBuilder,
+                                                                    "<init>", "()V");
+    if (!jni_mid_scanSettingsBuilderCtor)
+    {
+        OIC_LOG(ERROR, TAG, "scanSettings: jni_mid_scanSettingsBuilderCtor is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_cid_scanSettingsBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    // get scanSettings.Builder.setScanMode method id
+    jmethodID jni_mid_setScanMode = (*env)->GetMethodID(env, jni_cid_scanSettingsBuilder,
+                                                        "setScanMode",
+                                                         "(I)Landroid/"
+                                                         "bluetooth/le/ScanSettings$Builder;");
+    if (!jni_mid_setScanMode)
+    {
+        OIC_LOG(ERROR, TAG, "scanSettings: jni_mid_setScanMode is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_cid_scanSettingsBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    // get scanSettings.Builder.build method id
+    jmethodID jni_mid_build_scanSettings = (*env)->GetMethodID(env,
+                                                               jni_cid_scanSettingsBuilder,
+                                                               "build",
+                                                               "()Landroid/bluetooth/le/"
+                                                               "ScanSettings;");
+    if (!jni_mid_build_scanSettings)
+    {
+        OIC_LOG(ERROR, TAG, "scanSettings: jni_mid_build_scanSettings is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_cid_scanSettingsBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    // call scanSettings.Builder()
+    jobject jni_obj_scanSettingBuilder = (*env)->NewObject(env, jni_cid_scanSettingsBuilder,
+                                                           jni_mid_scanSettingsBuilderCtor);
+    if (!jni_obj_scanSettingBuilder)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_obj_scanSettingBuilder is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_cid_scanSettingsBuilder);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_cid_scanSettingsBuilder);
+
+    jclass jni_cid_arrayList = (*env)->FindClass(env, "java/util/ArrayList");
+    if (!jni_cid_arrayList)
+    {
+        OIC_LOG(ERROR, TAG, "ArrayList: jni_cid_arrayList is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_obj_scanSettingBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    jmethodID jni_mid_arrayListCtor = (*env)->GetMethodID(env, jni_cid_arrayList, "<init>", "()V");
+    if (!jni_mid_arrayListCtor)
+    {
+        OIC_LOG(ERROR, TAG, "ArrayList: jni_mid_arrayListCtor is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_cid_arrayList);
+        (*env)->DeleteLocalRef(env, jni_obj_scanSettingBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    jmethodID jni_mid_arrayListAdd = (*env)->GetMethodID(env, jni_cid_arrayList,
+                                                         "add", "(Ljava/lang/Object;)Z");
+    if (!jni_mid_arrayListAdd)
+    {
+        OIC_LOG(ERROR, TAG, "ArrayList: jni_mid_arrayListAdd is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_cid_arrayList);
+        (*env)->DeleteLocalRef(env, jni_obj_scanSettingBuilder);
+        return CA_STATUS_FAILED;
+    }
+
+    jobject jni_obj_filterList = (*env)->NewObject(env, jni_cid_arrayList, jni_mid_arrayListCtor);
+    if (!jni_obj_filterList)
+    {
+        OIC_LOG(ERROR, TAG, "ArrayList: jni_obj_filterList is null");
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_cid_arrayList);
+        (*env)->DeleteLocalRef(env, jni_obj_scanSettingBuilder);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_cid_arrayList);
+
+    jboolean jni_bool_arrayListIsAdded = (*env)->CallBooleanMethod(env, jni_obj_filterList,
+                                                                   jni_mid_arrayListAdd,
+                                                                   jni_obj_scanfilter);
+    if (!jni_bool_arrayListIsAdded)
+    {
+        OIC_LOG(ERROR, TAG, "ArrayList: jni_bool_arrayListIsAdded is null");
+        (*env)->DeleteLocalRef(env, jni_obj_filterList);
+        (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+        (*env)->DeleteLocalRef(env, jni_obj_scanSettingBuilder);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_obj_scanfilter);
+
+    // get ScanSettings.SCAN_MODE_BALANCED jint value
+    jint jni_int_scanBalancedMode = CALEGetConstantsValue(env, CLASSPATH_LE_SCANSETTINGS,
+                                                          "SCAN_MODE_BALANCED");
+    CACheckJNIException(env);
+
+    // call setScanMode(SCAN_MODE_BALANCED)
+    jobject jni_obj_setScanMode = (*env)->CallObjectMethod(env, jni_obj_scanSettingBuilder,
+                                                           jni_mid_setScanMode,
+                                                           jni_int_scanBalancedMode);
+    if (!jni_obj_setScanMode)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_obj_setScanMode is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_scanSettingBuilder);
+        (*env)->DeleteLocalRef(env, jni_obj_filterList);
+        return CA_STATUS_FAILED;
+    }
+
+    // call build
+    jobject jni_obj_scanSettings = (*env)->CallObjectMethod(env, jni_obj_scanSettingBuilder,
+                                                                 jni_mid_build_scanSettings);
+    if (!jni_obj_scanSettings)
+    {
+        OIC_LOG(ERROR, TAG, "scanfilter: jni_obj_scanSettings is null");
+        (*env)->DeleteLocalRef(env, jni_obj_scanSettingBuilder);
+        (*env)->DeleteLocalRef(env, jni_obj_filterList);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_obj_scanSettingBuilder);
+
+    CAResult_t res = CA_STATUS_FAILED;
+    // get default bt adapter class
+    jclass jni_cid_BTAdapter = (*env)->FindClass(env, CLASSPATH_BT_ADAPTER);
+    if (!jni_cid_BTAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "getState From BTAdapter: jni_cid_BTAdapter is null");
+        CACheckJNIException(env);
+        goto error_exit;
+    }
+
+    jmethodID jni_mid_getDefaultAdapter = (*env)->GetStaticMethodID(env, jni_cid_BTAdapter,
+                                                                    "getDefaultAdapter",
+                                                                    "()Landroid/bluetooth/"
+                                                                    "BluetoothAdapter;");
+    if (!jni_mid_getDefaultAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_getDefaultAdapter is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        goto error_exit;
+    }
+
+    jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter,
+                                                               jni_mid_getDefaultAdapter);
+    if (!jni_obj_BTAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "jni_obj_BTAdapter is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        goto error_exit;
+    }
+
+    // get remote bt adapter method
+    jmethodID jni_mid_getBluetoothLeScanner = (*env)->GetMethodID(env, jni_cid_BTAdapter,
+                                                                  "getBluetoothLeScanner",
+                                                                  "()Landroid/bluetooth/"
+                                                                  "le/BluetoothLeScanner;");
+    if (!jni_mid_getBluetoothLeScanner)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_getBluetoothLeScanner is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        goto error_exit;
+    }
+
+    // get le scanner object
+    jobject jni_obj_leScanner = (*env)->CallObjectMethod(env, jni_obj_BTAdapter,
+                                                         jni_mid_getBluetoothLeScanner);
+    if (!jni_obj_leScanner)
+    {
+        OIC_LOG(ERROR, TAG, "jni_obj_leScanner is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        goto error_exit;
+    }
+    (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+    (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+
+    // call startScan method
+    OIC_LOG(INFO, TAG, "CALL API - startScanWithUUID(for level 21)");
+    (*env)->CallVoidMethod(env, jni_obj_leScanner, jni_mid_startScan, jni_obj_filterList,
+                           jni_obj_scanSettings, callback);
+    if (CACheckJNIException(env))
+    {
+        OIC_LOG(INFO, TAG, "startScan has failed");
+    }
+    else
+    {
+        res = CA_STATUS_OK;
+    }
+    (*env)->DeleteLocalRef(env, jni_obj_leScanner);
+
+error_exit:
+    (*env)->DeleteLocalRef(env, jni_obj_scanSettings);
+    (*env)->DeleteLocalRef(env, jni_obj_filterList);
+    return res;
+}
+
 jobject CALEClientGetUUIDObject(JNIEnv *env, const char* uuid)
 {
     VERIFY_NON_NULL_RET(uuid, TAG, "uuid is null", NULL);
@@ -1583,7 +2091,6 @@ CAResult_t CALEClientStopScan()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
         if (JNI_OK != res)
         {
@@ -1593,7 +2100,17 @@ CAResult_t CALEClientStopScan()
         isAttached = true;
     }
 
-    CAResult_t ret = CALEClientStopScanImpl(env, g_leScanCallback);
+    CAResult_t ret = CA_STATUS_FAILED;
+
+    if (g_jniIntSdk >= BLE_SCAN_API_LEVEL)
+    {
+        ret = CALEClientStopScanImplForV21(env, g_leScanCallback);
+    }
+    else
+    {
+        ret = CALEClientStopScanImpl(env, g_leScanCallback);
+    }
+
     if (CA_STATUS_OK != ret)
     {
         if (CA_ADAPTER_NOT_ENABLED == ret)
@@ -1616,7 +2133,7 @@ CAResult_t CALEClientStopScan()
 
 CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback)
 {
-    OIC_LOG(DEBUG, TAG, "CALEClientStopScanImpl");
+    OIC_LOG(DEBUG, TAG, "CALEClientStopScanImpl IN");
     VERIFY_NON_NULL(callback, TAG, "callback is null");
     VERIFY_NON_NULL(env, TAG, "env is null");
 
@@ -1659,7 +2176,7 @@ CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback)
         return CA_STATUS_FAILED;
     }
 
-    // gat bt adapter object
+    // get bt adapter object
     jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter,
                                                                jni_mid_getDefaultAdapter);
     if (!jni_obj_BTAdapter)
@@ -1686,96 +2203,111 @@ CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback)
     return CA_STATUS_OK;
 }
 
-CAResult_t CALEClientSetFlagToState(JNIEnv *env, jstring jni_address, jint state_idx, jboolean flag)
+CAResult_t CALEClientStopScanImplForV21(JNIEnv *env, jobject callback)
 {
-    OIC_LOG(DEBUG, TAG, "IN - CALEClientSetFlagToState");
-    VERIFY_NON_NULL(env, TAG, "env");
-    VERIFY_NON_NULL(jni_address, TAG, "jni_address");
+    OIC_LOG(DEBUG, TAG, "CALEClientStopScanImplForV21 IN");
+    VERIFY_NON_NULL(callback, TAG, "callback is null");
+    VERIFY_NON_NULL(env, TAG, "env is null");
 
-    oc_mutex_lock(g_deviceStateListMutex);
-
-    char* address = (char*)(*env)->GetStringUTFChars(env, jni_address, NULL);
-    if (!address)
+    if (!CALEIsEnableBTAdapter(env))
     {
-        OIC_LOG(ERROR, TAG, "address is not available");
+        OIC_LOG(INFO, TAG, "BT adapter is not enabled");
+        return CA_ADAPTER_NOT_ENABLED;
+    }
+
+    // get default bt adapter class
+    jclass jni_cid_BTAdapter = (*env)->FindClass(env, CLASSPATH_BT_ADAPTER);
+    if (!jni_cid_BTAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "getState From BTAdapter: jni_cid_BTAdapter is null");
         CACheckJNIException(env);
         return CA_STATUS_FAILED;
     }
 
-    if (CALEClientIsDeviceInList(address))
+    jmethodID jni_mid_getDefaultAdapter = (*env)->GetStaticMethodID(env, jni_cid_BTAdapter,
+                                                                    "getDefaultAdapter",
+                                                                    "()Landroid/bluetooth/"
+                                                                    "BluetoothAdapter;");
+    if (!jni_mid_getDefaultAdapter)
     {
-        CALEState_t* curState = CALEClientGetStateInfo(address);
-        if(!curState)
-        {
-            OIC_LOG(ERROR, TAG, "curState is null");
-            (*env)->ReleaseStringUTFChars(env, jni_address, address);
-            oc_mutex_unlock(g_deviceStateListMutex);
-            return CA_STATUS_FAILED;
-        }
-        OIC_LOG_V(INFO, TAG, "%d flag is set : %d", state_idx, flag);
-
-        switch(state_idx)
-        {
-            case CA_LE_AUTO_CONNECT_FLAG:
-                curState->autoConnectFlag = flag;
-                break;
-            case CA_LE_DESCRIPTOR_FOUND:
-                curState->isDescriptorFound = flag;
-                break;
-            default:
-                break;
-        }
-    }
-
-    (*env)->ReleaseStringUTFChars(env, jni_address, address);
-    oc_mutex_unlock(g_deviceStateListMutex);
-    OIC_LOG(DEBUG, TAG, "OUT - CALEClientSetFlagToState");
-    return CA_STATUS_OK;
-}
-
-jboolean CALEClientGetFlagFromState(JNIEnv *env, jstring jni_address, jint state_idx)
-{
-    OIC_LOG(DEBUG, TAG, "IN - CALEClientGetFlagFromState");
-    VERIFY_NON_NULL_RET(env, TAG, "env", false);
-    VERIFY_NON_NULL_RET(jni_address, TAG, "jni_address", false);
-
-    oc_mutex_lock(g_deviceStateListMutex);
-
-    char* address = (char*)(*env)->GetStringUTFChars(env, jni_address, NULL);
-    if (!address)
-    {
-        OIC_LOG(ERROR, TAG, "address is not available");
+        OIC_LOG(ERROR, TAG, "jni_mid_getDefaultAdapter is null");
         CACheckJNIException(env);
-        oc_mutex_unlock(g_deviceStateListMutex);
-        return JNI_FALSE;
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        return CA_STATUS_FAILED;
     }
 
-    CALEState_t* curState = CALEClientGetStateInfo(address);
-    (*env)->ReleaseStringUTFChars(env, jni_address, address);
-    if(!curState)
+    jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter,
+                                                               jni_mid_getDefaultAdapter);
+    if (!jni_obj_BTAdapter)
     {
-        OIC_LOG(INFO, TAG, "there is no information. auto connect flag is false");
-        oc_mutex_unlock(g_deviceStateListMutex);
-        return JNI_FALSE;
+        OIC_LOG(ERROR, TAG, "jni_obj_BTAdapter is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        return CA_STATUS_FAILED;
     }
 
-    jboolean ret = JNI_FALSE;
-    switch(state_idx)
+    // get bluetoothLeScanner class
+    jclass jni_cid_leScanner = (*env)->FindClass(env, CLASSPATH_LE_SCANNER);
+    if (!jni_cid_leScanner)
     {
-        case CA_LE_AUTO_CONNECT_FLAG:
-            ret = curState->autoConnectFlag;
-            break;
-        case CA_LE_DESCRIPTOR_FOUND:
-            ret = curState->isDescriptorFound;
-            break;
-        default:
-            break;
+        OIC_LOG(ERROR, TAG, "getState From leScanner: jni_cid_leScanner is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        return CA_STATUS_FAILED;
     }
-    oc_mutex_unlock(g_deviceStateListMutex);
 
-    OIC_LOG_V(INFO, TAG, "%d flag is %d", state_idx, ret);
-    OIC_LOG(DEBUG, TAG, "OUT - CALEClientGetFlagFromState");
-    return ret;
+    // get remote bt adapter method
+    jmethodID jni_mid_getBluetoothLeScanner = (*env)->GetMethodID(env, jni_cid_BTAdapter,
+                                                                  "getBluetoothLeScanner",
+                                                                  "()Landroid/bluetooth/"
+                                                                  "le/BluetoothLeScanner;");
+    if (!jni_mid_getBluetoothLeScanner)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_getBluetoothLeScanner is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_cid_leScanner);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+
+    // get stopScan(ScanCallback callback) method
+    jmethodID jni_mid_stopScan = (*env)->GetMethodID(env, jni_cid_leScanner, "stopScan",
+                                                      "(Landroid/bluetooth/le/ScanCallback;)V");
+    if (!jni_mid_stopScan)
+    {
+        OIC_LOG(ERROR, TAG, "stopScan: jni_mid_stopScan is null");
+        CACheckJNIException(env);
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_cid_leScanner);
+        return CA_STATUS_FAILED;
+    }
+    (*env)->DeleteLocalRef(env, jni_cid_leScanner);
+
+    // gat le scanner object
+    jobject jni_obj_leScanner = (*env)->CallObjectMethod(env, jni_obj_BTAdapter,
+                                                         jni_mid_getBluetoothLeScanner);
+    if (!jni_obj_leScanner)
+    {
+        OIC_LOG(ERROR, TAG, "getState From BTAdapter: jni_obj_leScanner is null");
+        CACheckJNIException(env);
+        return CA_STATUS_FAILED;
+    }
+
+    // call stopScan method
+    OIC_LOG(INFO, TAG, "CALL API - stopScan for level 21");
+    (*env)->CallVoidMethod(env, jni_obj_leScanner, jni_mid_stopScan, callback);
+    if (CACheckJNIException(env))
+    {
+        OIC_LOG(INFO, TAG, "stopScan for level 21 has failed");
+        (*env)->DeleteLocalRef(env, jni_obj_leScanner);
+        return CA_STATUS_FAILED;
+    }
+
+    (*env)->DeleteLocalRef(env, jni_obj_leScanner);
+    return CA_STATUS_OK;
 }
 
 CAResult_t CALEClientDirectConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autoconnect)
@@ -1804,8 +2336,10 @@ CAResult_t CALEClientDirectConnect(JNIEnv *env, jobject bluetoothDevice, jboolea
     }
 
     CAResult_t res = CA_STATUS_OK;
-    if(CALEClientIsValidState(address, CA_LE_CONNECTION_STATE,
-                              STATE_DISCONNECTED))
+    if(CALEIsValidState(address, CA_LE_CONNECTION_STATE,
+                        STATE_DISCONNECTED,
+                        g_deviceStateList,
+                        g_deviceStateListMutex))
     {
         jobject newGatt = CALEClientConnect(env, bluetoothDevice, autoconnect);
         if (NULL == newGatt)
@@ -1978,8 +2512,10 @@ jobject CALEClientGattConnect(JNIEnv *env, jobject bluetoothDevice, jboolean aut
 
 bool CALEClientIsConnected(const char* address)
 {
-    if (CALEClientIsValidState(address, CA_LE_CONNECTION_STATE,
-                               STATE_SERVICE_CONNECTED))
+    if (CALEIsValidState(address, CA_LE_CONNECTION_STATE,
+                         STATE_SERVICE_CONNECTED,
+                         g_deviceStateList,
+                         g_deviceStateListMutex))
     {
         OIC_LOG(DEBUG, TAG, "current state is connected");
         return true;
@@ -2109,9 +2645,9 @@ CAResult_t CALEClientDisconnectAll(JNIEnv *env)
         return CA_STATUS_OK;
     }
 
-    uint32_t length = u_arraylist_length(g_gattObjectList);
+    size_t length = u_arraylist_length(g_gattObjectList);
     OIC_LOG_V(DEBUG, TAG, "list length : %d", length);
-    for (uint32_t index = 0; index < length; index++)
+    for (size_t index = 0; index < length; index++)
     {
         OIC_LOG(DEBUG, TAG, "start CALEClientDisconnectAll");
         jobject jarrayObj = (jobject) u_arraylist_get(g_gattObjectList, index);
@@ -2150,8 +2686,8 @@ CAResult_t CALEClientDisconnectforAddress(JNIEnv *env, jstring remote_address)
         return CA_STATUS_FAILED;
     }
 
-    uint32_t length = u_arraylist_length(g_gattObjectList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_gattObjectList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_gattObjectList, index);
         if (!jarrayObj)
@@ -2178,7 +2714,7 @@ CAResult_t CALEClientDisconnectforAddress(JNIEnv *env, jstring remote_address)
         }
 
         OIC_LOG_V(DEBUG, TAG, "target address : %s, set address : %s", address, setAddress);
-        if (!strcmp(address, setAddress))
+        if (!strcasecmp(address, setAddress))
         {
             CAResult_t res = CALEClientDisconnect(env, jarrayObj);
             if (CA_STATUS_OK != res)
@@ -2277,7 +2813,6 @@ static void CALEWriteCharacteristicThread(void* object)
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -2325,7 +2860,9 @@ CAResult_t CALESetValueAndWriteCharacteristic(JNIEnv* env, jobject gatt)
 
     oc_mutex_lock(g_threadSendStateMutex);
 
-    if (CALEClientIsValidState(address, CA_LE_SEND_STATE, STATE_SENDING))
+    if (CALEIsValidState(address, CA_LE_SEND_STATE, STATE_SENDING,
+                         g_deviceStateList,
+                         g_deviceStateListMutex))
     {
         OIC_LOG(INFO, TAG, "current state is SENDING");
         (*env)->ReleaseStringUTFChars(env, jni_address, address);
@@ -2333,10 +2870,12 @@ CAResult_t CALESetValueAndWriteCharacteristic(JNIEnv* env, jobject gatt)
         return CA_STATUS_OK;
     }
 
-    if (CA_STATUS_OK != CALEClientUpdateDeviceState(address, CA_LE_SEND_STATE,
-                                                    STATE_SENDING))
+    if (CA_STATUS_OK != CALEUpdateDeviceState(address, CA_LE_SEND_STATE,
+                                              STATE_SENDING,
+                                              g_deviceStateList,
+                                              g_deviceStateListMutex))
     {
-        OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+        OIC_LOG(ERROR, TAG, "CALEUpdateDeviceState has failed");
         (*env)->ReleaseStringUTFChars(env, jni_address, address);
         CALEClientSendFinish(env, gatt);
         oc_mutex_unlock(g_threadSendStateMutex);
@@ -2772,7 +3311,6 @@ CAResult_t CALEClientCreateUUIDList()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -2886,7 +3424,7 @@ CAResult_t CALEClientSetUUIDToDescriptor(JNIEnv *env, jobject bluetoothGatt,
         goto error_exit;
     }
 
-    jfieldID jni_fid_NotiValue;
+    jfieldID jni_fid_NotiValue = NULL;
     if (g_setHighQoS)
     {
         OIC_LOG(DEBUG, TAG, "get ENABLE_INDICATION_VALUE");
@@ -3028,8 +3566,8 @@ bool CALEClientIsDeviceInScanDeviceList(JNIEnv *env, const char* remoteAddress)
         return true;
     }
 
-    uint32_t length = u_arraylist_length(g_deviceList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_deviceList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_deviceList, index);
         if (!jarrayObj)
@@ -3054,19 +3592,17 @@ bool CALEClientIsDeviceInScanDeviceList(JNIEnv *env, const char* remoteAddress)
             return true;
         }
 
-        if (!strcmp(remoteAddress, setAddress))
+        if (!strcasecmp(remoteAddress, setAddress))
         {
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             (*env)->DeleteLocalRef(env, jni_setAddress);
+            OIC_LOG_V(INFO, TAG, "[%s] exist in scanned device list", remoteAddress);
             return true;
         }
 
         (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
         (*env)->DeleteLocalRef(env, jni_setAddress);
     }
-
-    OIC_LOG_V(DEBUG, TAG, "[%s] doesn't exist in scanned device list", remoteAddress);
-
     return false;
 }
 
@@ -3084,8 +3620,8 @@ CAResult_t CALEClientRemoveAllScanDevices(JNIEnv *env)
         return CA_STATUS_FAILED;
     }
 
-    uint32_t length = u_arraylist_length(g_deviceList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_deviceList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_deviceList, index);
         if (!jarrayObj)
@@ -3119,8 +3655,8 @@ CAResult_t CALEClientRemoveDeviceInScanDeviceList(JNIEnv *env, jstring address)
         return CA_STATUS_FAILED;
     }
 
-    uint32_t length = u_arraylist_length(g_deviceList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_deviceList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_deviceList, index);
         if (!jarrayObj)
@@ -3157,7 +3693,7 @@ CAResult_t CALEClientRemoveDeviceInScanDeviceList(JNIEnv *env, jstring address)
             return CA_STATUS_FAILED;
         }
 
-        if (!strcmp(setAddress, remoteAddress))
+        if (!strcasecmp(setAddress, remoteAddress))
         {
             OIC_LOG_V(DEBUG, TAG, "remove object : %s", remoteAddress);
             (*env)->DeleteGlobalRef(env, jarrayObj);
@@ -3237,12 +3773,11 @@ CAResult_t CALEClientAddGattobjToList(JNIEnv *env, jobject gatt)
 
 bool CALEClientIsGattObjInList(JNIEnv *env, const char* remoteAddress)
 {
-    OIC_LOG(DEBUG, TAG, "CALEClientIsGattObjInList");
     VERIFY_NON_NULL(env, TAG, "env is null");
     VERIFY_NON_NULL_RET(remoteAddress, TAG, "remoteAddress is null", true);
 
-    uint32_t length = u_arraylist_length(g_gattObjectList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_gattObjectList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_gattObjectList, index);
         if (!jarrayObj)
@@ -3267,7 +3802,7 @@ bool CALEClientIsGattObjInList(JNIEnv *env, const char* remoteAddress)
             return true;
         }
 
-        if (!strcmp(remoteAddress, setAddress))
+        if (!strcasecmp(remoteAddress, setAddress))
         {
             OIC_LOG(DEBUG, TAG, "the device is already set");
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
@@ -3289,8 +3824,8 @@ jobject CALEClientGetGattObjInList(JNIEnv *env, const char* remoteAddress)
     VERIFY_NON_NULL_RET(remoteAddress, TAG, "remoteAddress is null", NULL);
 
     oc_mutex_lock(g_gattObjectMutex);
-    uint32_t length = u_arraylist_length(g_gattObjectList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_gattObjectList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_gattObjectList, index);
         if (!jarrayObj)
@@ -3318,7 +3853,7 @@ jobject CALEClientGetGattObjInList(JNIEnv *env, const char* remoteAddress)
             return NULL;
         }
 
-        if (!strcmp(remoteAddress, setAddress))
+        if (!strcasecmp(remoteAddress, setAddress))
         {
             OIC_LOG(DEBUG, TAG, "the device is already set");
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
@@ -3347,8 +3882,8 @@ CAResult_t CALEClientRemoveAllGattObjs(JNIEnv *env)
         return CA_STATUS_OK;
     }
 
-    uint32_t length = u_arraylist_length(g_gattObjectList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_gattObjectList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_gattObjectList, index);
         if (!jarrayObj)
@@ -3381,8 +3916,8 @@ CAResult_t CALEClientRemoveGattObj(JNIEnv *env, jobject gatt)
         return CA_STATUS_OK;
     }
 
-    uint32_t length = u_arraylist_length(g_gattObjectList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_gattObjectList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_gattObjectList, index);
         if (!jarrayObj)
@@ -3428,7 +3963,7 @@ CAResult_t CALEClientRemoveGattObj(JNIEnv *env, jobject gatt)
             return CA_STATUS_FAILED;
         }
 
-        if (!strcmp(setAddress, remoteAddress))
+        if (!strcasecmp(setAddress, remoteAddress))
         {
             OIC_LOG_V(DEBUG, TAG, "remove object : %s", remoteAddress);
             (*env)->DeleteGlobalRef(env, jarrayObj);
@@ -3468,8 +4003,8 @@ CAResult_t CALEClientRemoveGattObjForAddr(JNIEnv *env, jstring addr)
         return CA_STATUS_OK;
     }
 
-    uint32_t length = u_arraylist_length(g_gattObjectList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_gattObjectList);
+    for (size_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_gattObjectList, index);
         if (!jarrayObj)
@@ -3505,7 +4040,7 @@ CAResult_t CALEClientRemoveGattObjForAddr(JNIEnv *env, jstring addr)
             return CA_STATUS_FAILED;
         }
 
-        if (!strcmp(setAddress, remoteAddress))
+        if (!strcasecmp(setAddress, remoteAddress))
         {
             OIC_LOG_V(DEBUG, TAG, "remove object : %s", remoteAddress);
             (*env)->DeleteGlobalRef(env, jarrayObj);
@@ -3532,8 +4067,6 @@ CAResult_t CALEClientRemoveGattObjForAddr(JNIEnv *env, jstring addr)
 
 jstring CALEClientGetLEAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
 {
-    OIC_LOG(DEBUG, TAG, "CALEClientGetLEAddressFromBTDevice");
-
     VERIFY_NON_NULL_RET(env, TAG, "env", NULL);
     VERIFY_NON_NULL_RET(bluetoothDevice, TAG, "bluetoothDevice", NULL);
 
@@ -3613,7 +4146,7 @@ jstring CALEClientGetLEAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
         }
 
         OIC_LOG_V(DEBUG, TAG, "btAddress : %s (idx: %d)", btAddress, index);
-        if (!strcmp(targetAddress, btAddress))
+        if (!strcasecmp(targetAddress, btAddress))
         {
             OIC_LOG(DEBUG, TAG, "Found Gatt object from BT device");
 
@@ -3668,17 +4201,21 @@ CAResult_t CALEClientUpdateDeviceStateWithBtDevice(JNIEnv *env,
         return CA_STATUS_FAILED;
     }
 
-    if (CALEClientIsValidState(address, state_type, target_state))
+    if (CALEIsValidState(address, state_type, target_state,
+                         g_deviceStateList,
+                         g_deviceStateListMutex))
     {
         (*env)->DeleteLocalRef(env, jni_Address);
         return CA_STATUS_OK;
     }
 
-    CAResult_t res = CALEClientUpdateDeviceState(address, state_type,
-                                                 target_state);
+    CAResult_t res = CALEUpdateDeviceState(address, state_type,
+                                           target_state,
+                                           g_deviceStateList,
+                                           g_deviceStateListMutex);
     if (CA_STATUS_OK != res)
     {
-        OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+        OIC_LOG(ERROR, TAG, "CALEUpdateDeviceState has failed");
     }
     (*env)->ReleaseStringUTFChars(env, jni_Address, address);
     (*env)->DeleteLocalRef(env, jni_Address);
@@ -3686,359 +4223,22 @@ CAResult_t CALEClientUpdateDeviceStateWithBtDevice(JNIEnv *env,
     return res;
 }
 
-CAResult_t CALEClientSetMtuSize(const char* address, uint16_t mtuSize)
+CAResult_t CALEClientSetFlagToState(JNIEnv *env, jstring jni_address,
+                                    jint state_idx, jboolean flag)
 {
-    VERIFY_NON_NULL(address, TAG, "address is null");
+    return CALESetFlagToState(env, jni_address, state_idx, flag,
+                              g_deviceStateList, g_deviceStateListMutex);
+}
 
-    oc_mutex_lock(g_deviceStateListMutex);
-    if (CALEClientIsDeviceInList(address))
-    {
-        CALEState_t* curState = CALEClientGetStateInfo(address);
-        if(!curState)
-        {
-            OIC_LOG(ERROR, TAG, "curState is null");
-            oc_mutex_unlock(g_deviceStateListMutex);
-            return CA_STATUS_FAILED;
-        }
-
-        curState->mtuSize = mtuSize;
-        OIC_LOG_V(INFO, TAG, "update state - addr: %s, mtu: %d",
-                  curState->address, curState->mtuSize);
-    }
-    else
-    {
-        OIC_LOG(ERROR, TAG, "there is no state info in the list");
-    }
-    oc_mutex_unlock(g_deviceStateListMutex);
-    return CA_STATUS_OK;
+jboolean CALEClientGetFlagFromState(JNIEnv *env, jstring jni_address, jint state_idx)
+{
+    return CALEGetFlagFromState(env, jni_address, state_idx, g_deviceStateList,
+                                g_deviceStateListMutex);
 }
 
 uint16_t CALEClientGetMtuSize(const char* address)
 {
-    VERIFY_NON_NULL_RET(address, TAG, "address is null", CA_DEFAULT_BLE_MTU_SIZE);
-
-    oc_mutex_lock(g_deviceStateListMutex);
-    if (CALEClientIsDeviceInList(address))
-    {
-        CALEState_t* curState = CALEClientGetStateInfo(address);
-        if(!curState)
-        {
-            OIC_LOG(ERROR, TAG, "curState is null");
-            oc_mutex_unlock(g_deviceStateListMutex);
-            return CA_DEFAULT_BLE_MTU_SIZE;
-        }
-
-        OIC_LOG_V(INFO, TAG, "state - addr: %s, mtu: %d",
-                  curState->address, curState->mtuSize);
-        oc_mutex_unlock(g_deviceStateListMutex);
-        return curState->mtuSize;
-    }
-
-    oc_mutex_unlock(g_deviceStateListMutex);
-    return CA_DEFAULT_BLE_MTU_SIZE;
-}
-
-CAResult_t CALEClientUpdateDeviceState(const char* address, uint16_t state_type,
-                                       uint16_t target_state)
-{
-    VERIFY_NON_NULL(address, TAG, "address is null");
-
-    if (!g_deviceStateList)
-    {
-        OIC_LOG(ERROR, TAG, "gdevice_list is null");
-        return CA_STATUS_FAILED;
-    }
-
-    oc_mutex_lock(g_deviceStateListMutex);
-
-    if (CALEClientIsDeviceInList(address))
-    {
-        CALEState_t* curState = CALEClientGetStateInfo(address);
-        if(!curState)
-        {
-            OIC_LOG(ERROR, TAG, "curState is null");
-            oc_mutex_unlock(g_deviceStateListMutex);
-            return CA_STATUS_FAILED;
-        }
-
-        switch(state_type)
-        {
-            case CA_LE_CONNECTION_STATE:
-                curState->connectedState = target_state;
-                break;
-            case CA_LE_SEND_STATE:
-                curState->sendState = target_state;
-                break;
-            default:
-                break;
-        }
-        OIC_LOG_V(INFO, TAG, "update state - addr: %s, conn: %d, send: %d, ACFlag: %d, mtu: %d",
-                  curState->address, curState->connectedState, curState->sendState,
-                  curState->autoConnectFlag, curState->mtuSize);
-    }
-    else /** state is added newly **/
-    {
-        if (strlen(address) > CA_MACADDR_SIZE)
-        {
-            OIC_LOG(ERROR, TAG, "address is not proper");
-            oc_mutex_unlock(g_deviceStateListMutex);
-            return CA_STATUS_INVALID_PARAM;
-        }
-
-        CALEState_t *newstate = (CALEState_t*) OICCalloc(1, sizeof(*newstate));
-        if (!newstate)
-        {
-            OIC_LOG(ERROR, TAG, "out of memory");
-            oc_mutex_unlock(g_deviceStateListMutex);
-            return CA_MEMORY_ALLOC_FAILED;
-        }
-
-        OICStrcpy(newstate->address, sizeof(newstate->address), address);
-        newstate->mtuSize = CA_DEFAULT_BLE_MTU_SIZE;
-        switch(state_type)
-        {
-            case CA_LE_CONNECTION_STATE:
-                newstate->connectedState = target_state;
-                newstate->sendState = STATE_SEND_NONE;
-                break;
-            case CA_LE_SEND_STATE:
-                newstate->connectedState = STATE_DISCONNECTED;
-                newstate->sendState = target_state;
-                break;
-            default:
-                break;
-        }
-        OIC_LOG_V(INFO, TAG, "add a new state to List - addr : %s, "
-                  "conn : %d, send : %d, ACFlag : %d",
-                  newstate->address, newstate->connectedState, newstate->sendState,
-                  newstate->autoConnectFlag);
-        u_arraylist_add(g_deviceStateList, newstate); // update new state
-    }
-    oc_mutex_unlock(g_deviceStateListMutex);
-
-    return CA_STATUS_OK;
-}
-
-bool CALEClientIsDeviceInList(const char* remoteAddress)
-{
-    VERIFY_NON_NULL_RET(remoteAddress, TAG, "remoteAddress is null", false);
-
-    if (!g_deviceStateList)
-    {
-        OIC_LOG(ERROR, TAG, "g_deviceStateList is null");
-        return false;
-    }
-
-    uint32_t length = u_arraylist_length(g_deviceStateList);
-    for (uint32_t index = 0; index < length; index++)
-    {
-        CALEState_t* state = (CALEState_t*) u_arraylist_get(g_deviceStateList, index);
-        if (!state)
-        {
-            OIC_LOG(ERROR, TAG, "CALEState_t object is null");
-            return false;
-        }
-
-        if (!strcmp(remoteAddress, state->address))
-        {
-            OIC_LOG(DEBUG, TAG, "the device is already set");
-            return true;
-        }
-        else
-        {
-            continue;
-        }
-    }
-
-    OIC_LOG(DEBUG, TAG, "there are no the device in list.");
-    return false;
-}
-
-CAResult_t CALEClientRemoveAllDeviceState()
-{
-    OIC_LOG(DEBUG, TAG, "CALEClientRemoveAllDeviceState");
-
-    oc_mutex_lock(g_deviceStateListMutex);
-    if (!g_deviceStateList)
-    {
-        OIC_LOG(ERROR, TAG, "g_deviceStateList is null");
-        oc_mutex_unlock(g_deviceStateListMutex);
-        return CA_STATUS_FAILED;
-    }
-
-    uint32_t length = u_arraylist_length(g_deviceStateList);
-    for (uint32_t index = 0; index < length; index++)
-    {
-        CALEState_t* state = (CALEState_t*) u_arraylist_get(g_deviceStateList, index);
-        if (!state)
-        {
-            OIC_LOG(ERROR, TAG, "jarrayObj is null");
-            continue;
-        }
-        OICFree(state);
-    }
-
-    OICFree(g_deviceStateList);
-    g_deviceStateList = NULL;
-    oc_mutex_unlock(g_deviceStateListMutex);
-
-    return CA_STATUS_OK;
-}
-
-CAResult_t CALEClientResetDeviceStateForAll()
-{
-    OIC_LOG(DEBUG, TAG, "CALEClientResetDeviceStateForAll");
-
-    oc_mutex_lock(g_deviceStateListMutex);
-    if (!g_deviceStateList)
-    {
-        OIC_LOG(ERROR, TAG, "g_deviceStateList is null");
-        oc_mutex_unlock(g_deviceStateListMutex);
-        return CA_STATUS_FAILED;
-    }
-
-    size_t length = u_arraylist_length(g_deviceStateList);
-    for (size_t index = 0; index < length; index++)
-    {
-        CALEState_t* state = (CALEState_t*) u_arraylist_get(g_deviceStateList, index);
-        if (!state)
-        {
-            OIC_LOG(ERROR, TAG, "jarrayObj is null");
-            continue;
-        }
-
-        // autoConnectFlag value will be not changed,
-        // since it has reset only termination case.
-        state->connectedState = STATE_DISCONNECTED;
-        state->sendState = STATE_SEND_NONE;
-    }
-    oc_mutex_unlock(g_deviceStateListMutex);
-
-    return CA_STATUS_OK;
-}
-
-CAResult_t CALEClientRemoveDeviceState(const char* remoteAddress)
-{
-    OIC_LOG(DEBUG, TAG, "CALEClientRemoveDeviceState");
-    VERIFY_NON_NULL(remoteAddress, TAG, "remoteAddress is null");
-
-    if (!g_deviceStateList)
-    {
-        OIC_LOG(ERROR, TAG, "g_deviceStateList is null");
-        return CA_STATUS_FAILED;
-    }
-
-    uint32_t length = u_arraylist_length(g_deviceStateList);
-    for (uint32_t index = 0; index < length; index++)
-    {
-        CALEState_t* state = (CALEState_t*) u_arraylist_get(g_deviceStateList, index);
-        if (!state)
-        {
-            OIC_LOG(ERROR, TAG, "CALEState_t object is null");
-            continue;
-        }
-
-        if (!strcmp(state->address, remoteAddress))
-        {
-            OIC_LOG_V(DEBUG, TAG, "remove state : %s", state->address);
-
-            CALEState_t* targetState  = (CALEState_t*)u_arraylist_remove(g_deviceStateList,
-                                                                         index);
-            if (NULL == targetState)
-            {
-                OIC_LOG(ERROR, TAG, "List removal failed.");
-                return CA_STATUS_FAILED;
-            }
-
-            OICFree(targetState);
-            return CA_STATUS_OK;
-        }
-    }
-
-    return CA_STATUS_OK;
-}
-
-CALEState_t* CALEClientGetStateInfo(const char* remoteAddress)
-{
-    VERIFY_NON_NULL_RET(remoteAddress, TAG, "remoteAddress is null", NULL);
-
-    if (!g_deviceStateList)
-    {
-        OIC_LOG(ERROR, TAG, "g_deviceStateList is null");
-        return NULL;
-    }
-
-    uint32_t length = u_arraylist_length(g_deviceStateList);
-    OIC_LOG_V(DEBUG, TAG, "length of deviceStateList : %d", length);
-    OIC_LOG_V(DEBUG, TAG, "target address : %s", remoteAddress);
-
-    for (uint32_t index = 0; index < length; index++)
-    {
-        CALEState_t* state = (CALEState_t*) u_arraylist_get(g_deviceStateList, index);
-        if (!state)
-        {
-            OIC_LOG(ERROR, TAG, "CALEState_t object is null");
-            continue;
-        }
-
-        OIC_LOG_V(DEBUG, TAG, "state address : %s (idx: %d)", state->address, index);
-
-        if (!strcmp(state->address, remoteAddress))
-        {
-            OIC_LOG(DEBUG, TAG, "found state");
-            return state;
-        }
-    }
-
-    OIC_LOG_V(DEBUG, TAG, "[%s] doesn't exist in deviceStateList", remoteAddress);
-    return NULL;
-}
-
-bool CALEClientIsValidState(const char* remoteAddress, uint16_t state_type,
-                             uint16_t target_state)
-{
-    OIC_LOG_V(DEBUG, TAG, "CALEClientIsValidState : type[%d], target state[%d]",
-              state_type, target_state);
-    VERIFY_NON_NULL_RET(remoteAddress, TAG, "remoteAddress is null", false);
-
-    oc_mutex_lock(g_deviceStateListMutex);
-    if (!g_deviceStateList)
-    {
-        OIC_LOG(ERROR, TAG, "g_deviceStateList is null");
-        oc_mutex_unlock(g_deviceStateListMutex);
-        return false;
-    }
-
-    CALEState_t* state = CALEClientGetStateInfo(remoteAddress);
-    if (NULL == state)
-    {
-        OIC_LOG(DEBUG, TAG, "state is not updated yet");
-        oc_mutex_unlock(g_deviceStateListMutex);
-        return false;
-    }
-
-    uint16_t curValue = 0;
-    switch(state_type)
-    {
-        case CA_LE_CONNECTION_STATE:
-            curValue = state->connectedState;
-            break;
-        case CA_LE_SEND_STATE:
-            curValue = state->sendState;
-            break;
-        default:
-            break;
-    }
-    oc_mutex_unlock(g_deviceStateListMutex);
-
-    if (target_state == curValue)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return CALEGetMtuSize(address, g_deviceStateList, g_deviceStateListMutex);
 }
 
 void CALEClientCreateDeviceList()
@@ -4068,6 +4268,11 @@ void CALEClientCreateDeviceList()
     }
 }
 
+CAResult_t CALEClientResetDeviceStateForAll()
+{
+    return CALEResetDeviceStateForAll(g_deviceStateList, g_deviceStateListMutex);
+}
+
 /**
  * Check Sent Count for remove g_sendBuffer
  */
@@ -4093,6 +4298,7 @@ void CALEClientUpdateSendCnt(JNIEnv *env)
         }
         // notity the thread
         oc_cond_signal(g_threadCond);
+        oc_cond_signal(g_threadWriteCharacteristicCond);
 
         CALEClientSetSendFinishFlag(true);
         OIC_LOG(DEBUG, TAG, "set signal for send data");
@@ -4263,6 +4469,12 @@ void CALEClientTerminateGattMutexVariables()
 
     oc_mutex_free(g_threadScanIntervalMutex);
     g_threadScanIntervalMutex = NULL;
+
+    oc_mutex_free(g_gattObjectMutex);
+    g_gattObjectMutex = NULL;
+
+    oc_mutex_free(g_deviceStateListMutex);
+    g_deviceStateListMutex = NULL;
 }
 
 void CALEClientSetSendFinishFlag(bool flag)
@@ -4327,7 +4539,6 @@ void CAStopLEGattClient()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -4346,21 +4557,16 @@ void CAStopLEGattClient()
 
     CALEClientStopScanWithInterval();
 
-    oc_mutex_lock(g_threadMutex);
-    OIC_LOG(DEBUG, TAG, "signal - connection cond");
-    oc_cond_signal(g_threadCond);
-    CALEClientSetSendFinishFlag(true);
-    oc_mutex_unlock(g_threadMutex);
-
-    oc_mutex_lock(g_threadSendMutex);
-    OIC_LOG(DEBUG, TAG, "signal - g_deviceDesc cond");
-    oc_cond_signal(g_deviceDescCond);
-    oc_mutex_unlock(g_threadSendMutex);
-
     oc_mutex_lock(g_threadWriteCharacteristicMutex);
     OIC_LOG(DEBUG, TAG, "signal - WriteCharacteristic cond");
     oc_cond_signal(g_threadWriteCharacteristicCond);
     oc_mutex_unlock(g_threadWriteCharacteristicMutex);
+
+    CALEClientSetSendFinishFlag(true);
+    oc_mutex_lock(g_threadMutex);
+    OIC_LOG(DEBUG, TAG, "signal - g_threadCond cond");
+    oc_cond_signal(g_threadCond);
+    oc_mutex_unlock(g_threadMutex);
 
     oc_mutex_lock(g_deviceScanRetryDelayMutex);
     OIC_LOG(DEBUG, TAG, "signal - delay cond");
@@ -4371,6 +4577,11 @@ void CAStopLEGattClient()
     OIC_LOG(DEBUG, TAG, "signal - delay cond");
     oc_cond_signal(g_threadScanIntervalCond);
     oc_mutex_unlock(g_threadScanIntervalMutex);
+
+    oc_mutex_lock(g_threadSendMutex);
+    OIC_LOG(DEBUG, TAG, "signal - g_deviceDesc cond");
+    oc_cond_signal(g_deviceDescCond);
+    oc_mutex_unlock(g_threadSendMutex);
 
     oc_cond_free(g_deviceDescCond);
     oc_cond_free(g_threadCond);
@@ -4400,16 +4611,17 @@ CAResult_t CAInitializeLEGattClient()
 
 void CATerminateLEGattClient()
 {
-    OIC_LOG(DEBUG, TAG, "Terminate GATT Client");
+    OIC_LOG(INFO, TAG, "IN - Terminate GATT Client");
     CAStopLEGattClient();
     CALEClientTerminate();
+    OIC_LOG(INFO, TAG, "OUT - Terminate GATT Client");
 }
 
 CAResult_t CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const uint8_t  *data,
                                                uint32_t dataLen, CALETransferType_t type,
                                                int32_t position)
 {
-    OIC_LOG(DEBUG, TAG, "call CALEClientSendUnicastMessage");
+    OIC_LOG(INFO, TAG, "call CALEClientSendUnicastMessage");
     VERIFY_NON_NULL(remoteAddress, TAG, "remoteAddress is null");
 
     if (LE_UNICAST != type || position < 0)
@@ -4444,7 +4656,6 @@ void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle)
 CAResult_t CAGetLEAddress(char **local_address)
 {
     VERIFY_NON_NULL(local_address, TAG, "local_address");
-    OIC_LOG(INFO, TAG, "CAGetLEAddress is not support");
     return CA_NOT_SUPPORTED;
 }
 
@@ -4453,6 +4664,20 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeRegisterLeScanCallback(JNIEnv *env,
                                                                     jobject callback)
 {
     OIC_LOG(DEBUG, TAG, "CaLeRegisterLeScanCallback");
+    VERIFY_NON_NULL_VOID(env, TAG, "env is null");
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
+    VERIFY_NON_NULL_VOID(callback, TAG, "callback is null");
+
+    g_leScanCallback = (*env)->NewGlobalRef(env, callback);
+    CACheckJNIException(env);
+}
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaLeClientInterface_caLeRegisterLeScanCallbackForV21(JNIEnv *env,
+                                                                          jobject obj,
+                                                                          jobject callback)
+{
+    OIC_LOG(DEBUG, TAG, "caLeRegisterLeScanCallbackForV21");
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
     VERIFY_NON_NULL_VOID(callback, TAG, "callback is null");
@@ -4486,6 +4711,38 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeScanCallback(JNIEnv *env, jobject o
     if (CA_STATUS_OK != res)
     {
         OIC_LOG_V(ERROR, TAG, "CALEClientAddScanDeviceToList has failed : %d", res);
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaLeClientInterface_caLeScanFailedCallback(JNIEnv *env, jobject obj,
+                                                                jint errorCode)
+{
+    VERIFY_NON_NULL_VOID(env, TAG, "env is null");
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
+
+    switch (errorCode)
+    {
+        case 1:
+            OIC_LOG(ERROR, TAG, "BLE scan has failed, error is SCAN_FAILED_ALREADY_STARTED");
+            break;
+
+        case 2:
+            OIC_LOG(ERROR, TAG,
+                    "BLE scan has failed, error is SCAN_FAILED_APPLICATION_REGISTRATION_FAILED");
+            break;
+
+        case 3:
+            OIC_LOG(ERROR, TAG, "BLE scan has failed, error is SCAN_FAILED_INTERNAL_ERROR");
+            break;
+
+        case 4:
+            OIC_LOG(ERROR, TAG, "BLE scan has failed, error is SCAN_FAILED_FEATURE_UNSUPPORTED");
+            break;
+
+        default:
+            OIC_LOG(ERROR, TAG, "BLE scan has failed with unknown error");
+            break;
     }
 }
 
@@ -4523,20 +4780,22 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
         CACheckJNIException(env);
         goto error_exit;
     }
-    OIC_LOG_V(DEBUG, TAG, "CALeGattConnectionStateChangeCallback - address [%s]", address);
+    OIC_LOG_V(INFO, TAG, "CALeGattConnectionStateChangeCallback - address [%s]", address);
 
     if (state_connected == newstate)
     {
         OIC_LOG(DEBUG, TAG, "LE is connected");
         if (GATT_SUCCESS == status)
         {
-            CAResult_t res = CALEClientUpdateDeviceState(address,
-                                                         CA_LE_CONNECTION_STATE,
-                                                         STATE_CONNECTED);
+            CAResult_t res = CALEUpdateDeviceState(address,
+                                                   CA_LE_CONNECTION_STATE,
+                                                   STATE_CONNECTED,
+                                                   g_deviceStateList,
+                                                   g_deviceStateListMutex);
             (*env)->ReleaseStringUTFChars(env, jni_address, address);
             if (CA_STATUS_OK != res)
             {
-                OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+                OIC_LOG(ERROR, TAG, "CALEUpdateDeviceState has failed");
                 goto error_exit;
             }
 
@@ -4564,26 +4823,30 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
     {
         OIC_LOG(DEBUG, TAG, "LE is disconnected");
 
-        if (CALEClientIsValidState(address, CA_LE_SEND_STATE, STATE_SEND_PREPARING))
+        if (CALEIsValidState(address, CA_LE_SEND_STATE, STATE_SEND_PREPARING,
+                             g_deviceStateList, g_deviceStateListMutex))
         {
             OIC_LOG(INFO, TAG, "current state is STATE_SEND_PREPARING");
-            CAResult_t res = CALEClientUpdateDeviceState(address, CA_LE_SEND_STATE,
-                                                         STATE_SEND_FAIL);
+            CAResult_t res = CALEUpdateDeviceState(address, CA_LE_SEND_STATE,
+                                                   STATE_SEND_FAIL,
+                                                   g_deviceStateList,
+                                                   g_deviceStateListMutex);
             if (CA_STATUS_OK != res)
             {
-                OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+                OIC_LOG(ERROR, TAG, "CALEUpdateDeviceState has failed");
             }
         }
 
-        CAResult_t res = CALEClientUpdateDeviceState(address,
-                                                     CA_LE_CONNECTION_STATE,
-                                                     STATE_DISCONNECTED);
-        (*env)->ReleaseStringUTFChars(env, jni_address, address);
+        CAResult_t res = CALEUpdateDeviceState(address,
+                                               CA_LE_CONNECTION_STATE,
+                                               STATE_DISCONNECTED,
+                                               g_deviceStateList,
+                                               g_deviceStateListMutex);
         if (CA_STATUS_OK != res)
         {
-            OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
-            goto error_exit;
+            OIC_LOG(ERROR, TAG, "CALEUpdateDeviceState has failed");
         }
+        (*env)->ReleaseStringUTFChars(env, jni_address, address);
 
         res = CALEClientGattClose(env, gatt);
         if (CA_STATUS_OK != res)
@@ -4596,16 +4859,14 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
             // this state is unexpected reason to disconnect
             // if the reason is suitable, connection logic of the device will be destroyed.
             OIC_LOG(INFO, TAG, "connection logic destroy");
-            goto error_exit;
         }
         else
         {
             // other reason except for gatt_success is expected to running
             // background connection in BT platform.
             OIC_LOG(INFO, TAG, "unknown status or manual disconnected state");
-            CALEClientUpdateSendCnt(env);
-            return;
         }
+        CALEClientUpdateSendCnt(env);
     }
     return;
 
@@ -4679,18 +4940,21 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
     {
         OIC_LOG_V(INFO, TAG, "Descriptor is not found : %d", res);
 
-        res = CALEClientSetFlagToState(env, jni_address, CA_LE_DESCRIPTOR_FOUND, JNI_FALSE);
+        res = CALESetFlagToState(env, jni_address, CA_LE_DESCRIPTOR_FOUND, JNI_FALSE,
+                                 g_deviceStateList, g_deviceStateListMutex);
         if (CA_STATUS_OK != res)
         {
-            OIC_LOG(ERROR, TAG, "CALEClientSetFlagToState has failed");
+            OIC_LOG(ERROR, TAG, "CALESetFlagToState has failed");
             goto error_exit;
         }
 
-        res = CALEClientUpdateDeviceState(address, CA_LE_CONNECTION_STATE,
-                                          STATE_SERVICE_CONNECTED);
+        res = CALEUpdateDeviceState(address, CA_LE_CONNECTION_STATE,
+                                    STATE_SERVICE_CONNECTED,
+                                    g_deviceStateList,
+                                    g_deviceStateListMutex);
         if (CA_STATUS_OK != res)
         {
-            OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+            OIC_LOG(ERROR, TAG, "CALEUpdateDeviceState has failed");
             goto error_exit;
         }
 
@@ -4703,10 +4967,11 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
     }
     else
     {
-        res = CALEClientSetFlagToState(env, jni_address, CA_LE_DESCRIPTOR_FOUND, JNI_TRUE);
+        res = CALESetFlagToState(env, jni_address, CA_LE_DESCRIPTOR_FOUND, JNI_TRUE,
+                                 g_deviceStateList, g_deviceStateListMutex);
         if (CA_STATUS_OK != res)
         {
-            OIC_LOG(ERROR, TAG, "CALEClientSetFlagToState has failed");
+            OIC_LOG(ERROR, TAG, "CALESetFlagToState has failed");
             goto error_exit;
         }
     }
@@ -4770,11 +5035,13 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicWriteCallback(
             oc_cond_signal(g_threadWriteCharacteristicCond);
             oc_mutex_unlock(g_threadWriteCharacteristicMutex);
 
-            CAResult_t res = CALEClientUpdateDeviceState(address, CA_LE_SEND_STATE,
-                                                         STATE_SEND_FAIL);
+            CAResult_t res = CALEUpdateDeviceState(address, CA_LE_SEND_STATE,
+                                                   STATE_SEND_FAIL,
+                                                   g_deviceStateList,
+                                                   g_deviceStateListMutex);
             if (CA_STATUS_OK != res)
             {
-                OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+                OIC_LOG(ERROR, TAG, "CALEUpdateDeviceState has failed");
             }
 
             if (g_clientErrorCallback)
@@ -4793,11 +5060,13 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicWriteCallback(
     else
     {
         OIC_LOG(DEBUG, TAG, "send success");
-        CAResult_t res = CALEClientUpdateDeviceState(address, CA_LE_SEND_STATE,
-                                                     STATE_SEND_SUCCESS);
+        CAResult_t res = CALEUpdateDeviceState(address, CA_LE_SEND_STATE,
+                                               STATE_SEND_SUCCESS,
+                                               g_deviceStateList,
+                                               g_deviceStateListMutex);
         if (CA_STATUS_OK != res)
         {
-            OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+            OIC_LOG(ERROR, TAG, "CALEUpdateDeviceState has failed");
         }
 
         oc_mutex_lock(g_threadWriteCharacteristicMutex);
@@ -4843,9 +5112,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicChangedCallback(
     jbyte *jni_byte_responseData = (jbyte*) (*env)->GetByteArrayElements(env, data, &isCopy);
     CACheckJNIException(env);
 
-    OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicChangedCallback - raw data received : %p",
-            jni_byte_responseData);
-
     uint8_t* receivedData = OICMalloc(length);
     if (!receivedData)
     {
@@ -4873,7 +5139,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicChangedCallback(
         return;
     }
 
-    OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicChangedCallback - data. : %p, %d",
+    OIC_LOG_V(INFO, TAG, "CALeGattCharacteristicChangedCallback - data. : %p, %d",
               receivedData, length);
 
     uint32_t sentLength = 0;
@@ -4917,23 +5183,22 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattDescriptorWriteCallback(JNIEnv 
         goto error_exit;
     }
 
-    CAResult_t res = CALEClientUpdateDeviceState(address, CA_LE_CONNECTION_STATE,
-                                                 STATE_SERVICE_CONNECTED);
+    CAResult_t res = CALEUpdateDeviceState(address, CA_LE_CONNECTION_STATE,
+                                           STATE_SERVICE_CONNECTED,
+                                           g_deviceStateList,
+                                           g_deviceStateListMutex);
     (*env)->ReleaseStringUTFChars(env, jni_address, address);
     if (CA_STATUS_OK != res)
     {
-        OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+        OIC_LOG(ERROR, TAG, "CALEUpdateDeviceState has failed");
         goto error_exit;
     }
 
-    if (g_sendBuffer)
+    res = CALEClientRequestMTU(env, gatt, CA_SUPPORTED_BLE_MTU_SIZE);
+    if (CA_STATUS_OK != res)
     {
-        CAResult_t res = CALEClientWriteCharacteristic(env, gatt);
-        if (CA_STATUS_OK != res)
-        {
-            OIC_LOG(ERROR, TAG, "CALEClientWriteCharacteristic has failed");
-            goto error_exit;
-        }
+        OIC_LOG(ERROR, TAG, "CALEClientRequestMTU has failed");
+        goto error_exit;
     }
     return;
 
@@ -4951,8 +5216,8 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattMtuChangedCallback(JNIEnv *env,
                                                                     jint mtu,
                                                                     jint status)
 {
-    OIC_LOG_V(INFO, TAG, "caLeGattMtuChangedCallback - mtu[%d-including Header size 3 byte)", mtu);
-    OIC_LOG_V(INFO, TAG, "caLeGattMtuChangedCallback - status %d", status);
+    OIC_LOG_V(INFO, TAG, "caLeGattMtuChangedCallback - status %d, "
+              "mtu[%d-including Header size 3 byte]", mtu, status);
 
     (void)obj;
 
@@ -4986,17 +5251,20 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattMtuChangedCallback(JNIEnv *env,
             }
 
             // update mtu size
-            CAResult_t res = CALEClientSetMtuSize(address, mtu - CA_BLE_MTU_HEADER_SIZE);
+            CAResult_t res = CALESetMtuSize(address, mtu - CA_BLE_MTU_HEADER_SIZE,
+                                            g_deviceStateList, g_deviceStateListMutex);
             if (CA_STATUS_OK != res)
             {
-                OIC_LOG(ERROR, TAG, "CALEClientSetMtuSize has failed");
+                OIC_LOG(ERROR, TAG, "CALESetMtuSize has failed");
             }
 
-            res = CALEClientUpdateDeviceState(address, CA_LE_SEND_STATE,
-                                              STATE_SEND_MTU_NEGO_SUCCESS);
+            res = CALEUpdateDeviceState(address, CA_LE_SEND_STATE,
+                                        STATE_SEND_MTU_NEGO_SUCCESS,
+                                        g_deviceStateList,
+                                        g_deviceStateListMutex);
             if (CA_STATUS_OK != res)
             {
-                OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+                OIC_LOG(ERROR, TAG, "CALEUpdateDeviceState has failed");
             }
             CALEClientUpdateSendCnt(env);
             (*env)->ReleaseStringUTFChars(env, jni_address, address);

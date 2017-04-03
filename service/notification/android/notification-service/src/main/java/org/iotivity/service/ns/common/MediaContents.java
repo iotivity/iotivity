@@ -31,7 +31,7 @@ public class MediaContents {
 
     private static final String LOG_TAG    = "NotificationService_MediaContents";
 
-    public String               mIconImage = null;
+    private String               mIconImage = null;
 
     public MediaContents(String iconImage) {
         Log.i(LOG_TAG, "MediaContents()");

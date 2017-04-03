@@ -56,7 +56,7 @@ typedef struct
 
 static sessionObject_t sessionObject = {0,0,0,0,0,0,0,0};
 
-extern void handleCB(void* ctx, OCStackResult result, void* data);
+extern void handleCB(void* ctx, OCClientResponse *response, void* data);
 
 /**
  * Session free function
@@ -104,7 +104,7 @@ OCStackResult SessionParsePayload(OCRepPayload *payload)
 {
     OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
 
-    VERIFY_NON_NULL(TAG, payload, ERROR);
+    VERIFY_NOT_NULL(TAG, payload, ERROR);
 
     SessionInit();
 
@@ -188,7 +188,8 @@ OCStackApplicationResult handleCloudSignUpResponse(void *ctx,
         SessionParsePayload((OCRepPayload*)response->payload);
     }
 exit:
-    handleCB(NULL, OC_STACK_OK, NULL);
+    response->result = OC_STACK_OK;
+    handleCB(NULL, response, NULL);
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -297,7 +298,8 @@ OCStackApplicationResult handleCloudSignInResponse(void *ctx,
     OIC_LOG_V(DEBUG, TAG, "OUT: %s", __func__);
 
 exit:
-    handleCB(NULL, OC_STACK_OK, NULL);
+    response->result = OC_STACK_OK;
+    handleCB(NULL, response, NULL);
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -404,7 +406,8 @@ OCStackApplicationResult handleCloudSignOutResponse(void *ctx,
     OIC_LOG_V(DEBUG, TAG, "OUT: %s", __func__);
 
 exit:
-    handleCB(NULL, OC_STACK_OK, NULL);
+    response->result = OC_STACK_OK;
+    handleCB(NULL, response, NULL);
     return OC_STACK_DELETE_TRANSACTION;
 }
 /**

@@ -42,7 +42,7 @@ OCStackResult InitVerResource();
 OCStackResult DeInitVerResource();
 
 /**
- * This method is used by SRM to retrieve VER resource data..
+ * This method is used by SRM to retrieve VER resource data.
  *
  * @return reference to @ref OicSecDoxm_t, binary format of Doxm resource data.
  */
@@ -55,8 +55,8 @@ const OicSecVer_t* GetVerResourceData();
  *
  * @param cborPayload is a ver data in cbor.
  * @note Caller needs to invoke OCFree after done using the return pointer.
- * @param doxm is the pointer to @ref OicSecVer_t.
  * @param size of the cborPayload. In case value is 0, CBOR_SIZE value is assigned.
+ * @param ver is the pointer to @ref OicSecVer_t.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */

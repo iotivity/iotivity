@@ -81,6 +81,11 @@ OCStackResult OCInitPM(const char* dbPath)
     return PDMInit(dbPath);
 }
 
+OCStackResult OCPDMCleanupForTimeout()
+{
+    return PDMDeleteDeviceWithState(PDM_DEVICE_INIT);
+}
+
 /**
  * The function is responsible for discovery of owned/unowned device is specified endpoint/deviceID.
  * And this function will only return the specified device's response.
@@ -435,8 +440,10 @@ OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *select
 }
 
 #ifdef MULTIPLE_OWNER
-static void AddPreconfPinOxMCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+static void AddPreconfPinOxMCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
+    OC_UNUSED(hasError);
+
     ProvPreconfPINCtx_t* provCtx = (ProvPreconfPINCtx_t*)ctx;
     if(provCtx)
     {
@@ -925,7 +932,7 @@ static void UpdateLinkResults(Linkdata_t *link, int device, OCStackResult stackr
 /**
  * Callback to handle ACL provisioning for device 2.
  */
-static void AclProv2CB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+static void AclProv2CB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
 
     if (NULL == ctx)
@@ -961,7 +968,7 @@ static void AclProv2CB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool has
 /**
  * Callback to handle ACL provisioning for device 1
  */
-static void AclProv1CB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+static void AclProv1CB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
 
     if (NULL == ctx)
@@ -1012,7 +1019,7 @@ static void AclProv1CB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool has
 /**
  * Callback to handle credential provisioning.
  */
-static void ProvisionCredsCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+static void ProvisionCredsCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
     if (NULL == ctx)
     {
@@ -1345,7 +1352,7 @@ OCStackResult OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInf
  * API to update 'doxm.oxmsel' to resource server.
  *
  * @param[in] targetDeviceInfo Selected target device.
-  * @param[in] oxmSelValue Method of multiple ownership transfer (ref. oic.sec.oxm)
+  * @param[in] oxmSelValue Method of multiple ownership transfer (ref. oic.sec.doxmtype)
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            POST 'oxmsel' request recieves a response from resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.

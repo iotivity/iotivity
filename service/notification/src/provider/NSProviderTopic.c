@@ -156,13 +156,6 @@ NSResult NSSendTopicUpdation()
             {
                 obArray[obCount++] = subData->messageObId;
             }
-
-#if (defined WITH_CLOUD)
-            if (subData->remote_messageObId != 0)
-            {
-                obArray[obCount++] = subData->remote_messageObId;
-            }
-#endif
         }
 
         it = it->next;
@@ -374,7 +367,7 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
         return NS_FAIL;
     }
 
-    NS_LOG_V(DEBUG, "TOPIC consumer ID = %s", consumerId);
+    NS_LOG_V(INFO_PRIVATE, "TOPIC consumer ID = %s", consumerId);
 
     consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_CID;
 

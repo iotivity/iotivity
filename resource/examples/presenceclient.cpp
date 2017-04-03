@@ -257,15 +257,15 @@ int main(int argc, char* argv[]) {
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Client,
-        "0.0.0.0",
-        0,
-        OC::QualityOfService::LowQos
+        nullptr
     };
 
     OCPlatform::Configure(cfg);
 
     try
     {
+        OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
+
         std::cout << "Created Platform..."<<std::endl;
 
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
@@ -359,6 +359,7 @@ int main(int argc, char* argv[]) {
         std::unique_lock<std::mutex> lock(blocker);
         cv.wait(lock);
 
+        OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     }
     catch(OCException& e)
     {

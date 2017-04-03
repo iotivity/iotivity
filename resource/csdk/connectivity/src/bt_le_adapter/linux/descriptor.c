@@ -29,7 +29,7 @@
 
 
 // Logging tag.
-static char const TAG[] = "BLE_DESCRIPTOR";
+#define TAG "BLE_DESCRIPTOR"
 
 /**
  * Implementation of the @c org.bluez.GattDescriptor1.ReadValue()

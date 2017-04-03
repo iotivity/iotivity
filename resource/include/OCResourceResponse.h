@@ -143,7 +143,7 @@ namespace OC
         /**
         *  API to set the entire resource attribute representation
         *  @param rep reference to the resource's representation
-        *  @param interface specifies the interface
+        *  @param iface specifies the interface
         */
         void setResourceRepresentation(OCRepresentation& rep, std::string iface) {
             m_interface = iface;
@@ -153,7 +153,7 @@ namespace OC
         /**
         *  API to set the entire resource attribute representation
         *  @param rep rvalue reference to the resource's representation
-        *  @param interface specifies the interface
+        *  @param iface specifies the interface
         */
         void setResourceRepresentation(OCRepresentation&& rep, std::string iface) {
             setResourceRepresentation(rep, iface);

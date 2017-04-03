@@ -34,7 +34,7 @@
 /** Label Length */
 #define LABEL_LEN (30)
 
-/* Verification Method Option definition
+/** Verification Method Option definition
  * This type supports multiple bit set.
  */
  typedef enum VerifyOptionBitmask
@@ -49,7 +49,7 @@
  */
 typedef OCStackResult (*DisplayNumCallback)(void * ctx, uint8_t verifNum[MUTUAL_VERIF_NUM_LEN]);
 
-/*
+/**
  * Function pointer to get user confirmation
  */
 typedef OCStackResult (*UserConfirmCallback)(void * ctx);
@@ -72,33 +72,33 @@ typedef struct UserConfirmContext
     void * context;
 } UserConfirmContext_t;
 
-/*
+/**
  * Set Callback for displaying verification PIN
  */
 void SetDisplayNumCB(void * ptr, DisplayNumCallback displayNumCB);
 
-/*
+/**
  * Unset Callback for displaying verification PIN
  */
-void UnsetDisplayNumCB();
+void* UnsetDisplayNumCB();
 
-/*
+/**
  * Set Callback for getting user confirmation
  */
 void SetUserConfirmCB(void * ptr, UserConfirmCallback userConfirmCB);
 
-/*
+/**
  * Unset Callback for getting user confirmation
  */
-void UnsetUserConfirmCB();
+void* UnsetUserConfirmCB();
 
-/*
+/**
  * Set verification method option.
  * The default is both display PIN and get user confirmation.
  */
 void SetVerifyOption(VerifyOptionBitmask_t verifyOption);
 
-/*
+/**
  * Call the Callback for Verifying Ownership Transfer process.
  */
 OCStackResult VerifyOwnershipTransfer(uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN],

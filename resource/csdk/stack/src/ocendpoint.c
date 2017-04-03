@@ -18,16 +18,17 @@
  *
  ******************************************************************/
 
- #include "ocendpoint.h"
- #include "logger.h"
- #include "oic_malloc.h"
- #include "oic_string.h"
- #include <string.h>
- #include "cainterface.h"
+#include "ocendpoint.h"
+#include "logger.h"
+#include "oic_malloc.h"
+#include "oic_string.h"
+#include <string.h>
+#include "cainterface.h"
 
 #define VERIFY_NON_NULL(arg) { if (!arg) {OIC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
 #define VERIFY_GT_ZERO(arg) { if (arg < 1) {OIC_LOG(FATAL, TAG, #arg " < 1"); goto exit;} }
 #define VERIFY_GT(arg1, arg2) { if (arg1 <= arg2) {OIC_LOG(FATAL, TAG, #arg1 " <= " #arg2); goto exit;} }
+#define VERIFY_LT_OR_EQ(arg1, arg2) { if (arg1 > arg2) {OIC_LOG(FATAL, TAG, #arg1 " > " #arg2); goto exit;} }
 #define TAG  "OIC_RI_ENDPOINT"
 
 OCStackResult OCGetSupportedEndpointFlags(const OCTpsSchemeFlags givenFlags, OCTpsSchemeFlags* out)
@@ -63,6 +64,24 @@ OCStackResult OCGetSupportedEndpointFlags(const OCTpsSchemeFlags givenFlags, OCT
     if ((givenFlags & OC_COAP_RFCOMM) && (SelectedNetwork & CA_ADAPTER_RFCOMM_BTEDR))
     {
         *out = (OCTpsSchemeFlags)(*out | OC_COAP_RFCOMM);
+    }
+#endif
+#ifdef LE_ADAPTER
+    if ((givenFlags & OC_COAP_GATT) && (SelectedNetwork & CA_ADAPTER_GATT_BTLE))
+    {
+        *out = (OCTpsSchemeFlags)(*out | OC_COAP_GATT);
+    }
+#endif
+#ifdef NFC_ADAPTER
+    if ((givenFlags & OC_COAP_NFC) && (SelectedNetwork & CA_ADAPTER_NFC))
+    {
+        *out = (OCTpsSchemeFlags)(*out | OC_COAP_NFC);
+    }
+#endif
+#ifdef RA_ADAPTER
+    if ((givenFlags & OC_COAP_RA) && (SelectedNetwork & CA_ADAPTER_REMOTE_ACCESS))
+    {
+        *out = (OCTpsSchemeFlags)(*out | OC_COAP_RA);
     }
 #endif
 
@@ -121,16 +140,70 @@ OCStackResult OCGetMatchedTpsFlags(const CATransportAdapter_t adapter,
 #endif
 #ifdef EDR_ADAPTER
     // OC_COAP_RFCOMM
-    if ((adapter & OC_ADAPTER_RFCOMM_BTEDR) && (flags == OC_DEFAULT_FLAGS))
+    if (adapter & OC_ADAPTER_RFCOMM_BTEDR)
     {
         // typecasting to support C90(arduino)
         *out = (OCTpsSchemeFlags)(*out | OC_COAP_RFCOMM);
     }
 #endif
-
+#ifdef LE_ADAPTER
+    // OC_COAP_GATT
+    if (adapter & CA_ADAPTER_GATT_BTLE)
+    {
+        // typecasting to support C90(arduino)
+        *out = (OCTpsSchemeFlags)(*out | OC_COAP_GATT);
+    }
+#endif
+#ifdef NFC_ADAPTER
+    // OC_COAP_NFC
+    if (adapter & CA_ADAPTER_NFC)
+    {
+        // typecasting to support C90(arduino)
+        *out = (OCTpsSchemeFlags)(*out | OC_COAP_NFC);
+    }
+#endif
+#ifdef RA_ADAPTER
+    // OC_COAP_RA
+    if (adapter & CA_ADAPTER_REMOTE_ACCESS)
+    {
+        // typecasting to support C90(arduino)
+        *out = (OCTpsSchemeFlags)(*out | OC_COAP_RA);
+    }
+#endif
     return OC_STACK_OK;
 }
 
+static const char *ConvertTpsToString(const OCTpsSchemeFlags tps)
+{
+    switch (tps)
+    {
+        case OC_COAP:
+            return COAP_STR;
+
+        case OC_COAPS:
+            return COAPS_STR;
+#ifdef TCP_ADAPTER
+        case OC_COAP_TCP:
+            return COAP_TCP_STR;
+
+        case OC_COAPS_TCP:
+            return COAPS_TCP_STR;
+#endif
+#ifdef HTTP_ADAPTER
+        case OC_HTTP:
+            return HTTP_STR;
+
+        case OC_HTTPS:
+            return HTTPS_STR;
+#endif
+#ifdef EDR_ADAPTER
+        case OC_COAP_RFCOMM:
+            return COAP_RFCOMM_STR;
+#endif
+        default:
+            return NULL;
+    }
+}
 
 OCStackResult OCConvertTpsToString(const OCTpsSchemeFlags tps, char** out)
 {
@@ -142,41 +215,7 @@ OCStackResult OCConvertTpsToString(const OCTpsSchemeFlags tps, char** out)
         return OC_STACK_INVALID_PARAM;
     }
 
-    switch (tps)
-    {
-        case OC_COAP:
-            *out = OICStrdup(COAP_STR);
-            break;
-
-        case OC_COAPS:
-            *out = OICStrdup(COAPS_STR);
-            break;
-#ifdef TCP_ADAPTER
-        case OC_COAP_TCP:
-            *out = OICStrdup(COAP_TCP_STR);
-            break;
-
-        case OC_COAPS_TCP:
-            *out = OICStrdup(COAPS_TCP_STR);
-            break;
-#endif
-#ifdef HTTP_ADAPTER
-        case OC_HTTP:
-            *out = OICStrdup(HTTP_STR);
-            break;
-
-        case OC_HTTPS:
-            *out = OICStrdup(HTTPS_STR);
-            break;
-#endif
-#ifdef EDR_ADAPTER
-        case OC_COAP_RFCOMM:
-            *out = OICStrdup(COAP_RFCOMM_STR);
-            break;
-#endif
-        default:
-            return OC_STACK_INVALID_PARAM;
-    }
+    *out = OICStrdup(ConvertTpsToString(tps));
     VERIFY_NON_NULL(*out);
     return OC_STACK_OK;
 
@@ -204,7 +243,7 @@ char* OCCreateEndpointString(const OCEndpointPayload* endpoint)
         )
     {
         // checking addr is ipv4 or not
-        if (endpoint->family == OC_IP_USE_V4)
+        if (endpoint->family & OC_IP_USE_V4)
         {
             // ipv4
             sprintf(buf, "%s://%s:%d", endpoint->tps, endpoint->addr, endpoint->port);
@@ -233,6 +272,60 @@ exit:
     return NULL;
 }
 
+char* OCCreateEndpointStringFromCA(const CAEndpoint_t* endpoint)
+{
+    if (!endpoint)
+    {
+        return NULL;
+    }
+
+    OCTpsSchemeFlags tps = OC_NO_TPS;
+    OCStackResult result = OCGetMatchedTpsFlags(endpoint->adapter, endpoint->flags, &tps);
+    if (OC_STACK_OK != result)
+    {
+        return NULL;
+    }
+
+    char* buf = (char*)OICCalloc(MAX_ADDR_STR_SIZE, sizeof(char));
+    VERIFY_NON_NULL(buf);
+
+    switch (tps)
+    {
+    case OC_COAP: case OC_COAPS:
+#ifdef TCP_ADAPTER
+    case OC_COAP_TCP: case OC_COAPS_TCP:
+#endif
+#ifdef HTTP_ADAPTER
+    case OC_HTTP: case OC_HTTPS:
+#endif
+        // checking addr is ipv4 or not
+        if (endpoint->flags & CA_IPV4)
+        {
+            // ipv4
+            sprintf(buf, "%s://%s:%d", ConvertTpsToString(tps), endpoint->addr, endpoint->port);
+        }
+        else
+        {
+            // ipv6
+            sprintf(buf, "%s://[%s]:%d", ConvertTpsToString(tps), endpoint->addr, endpoint->port);
+        }
+        break;
+#ifdef EDR_ADAPTER
+    case OC_COAP_RFCOMM:
+        // coap+rfcomm
+        sprintf(buf, "%s://%s", ConvertTpsToString(tps), endpoint->addr);
+        break;
+#endif
+    default:
+        OIC_LOG_V(ERROR, TAG, "Payload has invalid TPS!!! %d", tps);
+        return NULL;
+    }
+    return buf;
+
+exit:
+    return NULL;
+}
+
 OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* out)
 {
     if (!endpointStr || !out)
@@ -250,6 +343,7 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
     size_t addrCharsToWrite = 0;
     OCStackResult isEnabledAdapter = OC_STACK_ADAPTER_NOT_ENABLED;
     OCTransportAdapter parsedAdapter = OC_DEFAULT_ADAPTER;
+    bool isSecure = false;
 
     tps = (char*)OICCalloc(OC_MAX_TPS_STR_SIZE, sizeof(char));
     VERIFY_NON_NULL(tps);
@@ -282,6 +376,7 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
     {
         isEnabledAdapter = OC_STACK_OK;
         parsedAdapter = OC_ADAPTER_IP;
+        isSecure = true;
     }
 #ifdef TCP_ADAPTER
     else if (strcmp(tps, COAP_TCP_STR) == 0)
@@ -293,6 +388,7 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
     {
         isEnabledAdapter = OC_STACK_OK;
         parsedAdapter = OC_ADAPTER_TCP;
+        isSecure = true;
     }
 #endif
 #ifdef HTTP_ADAPTER
@@ -345,6 +441,10 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
             tmp = strrchr(origin, OC_ENDPOINT_ADDR_TOKEN);
         }
         VERIFY_NON_NULL(tmp);
+        if (isSecure)
+        {
+            out->family = (OCTransportFlags)(out->family | OC_FLAG_SECURE);
+        }
 
         // copy addr
         addrCharsToWrite = tmp - tokPos;
@@ -359,12 +459,15 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
 
         // port start pos
         tokPos = tmp + 1;
-        VERIFY_GT_ZERO(atoi(tokPos));
+        char* end = NULL;
+        long port = strtol(tokPos, &end, 10);
+        VERIFY_GT_ZERO(port);
+        VERIFY_LT_OR_EQ(port, UINT16_MAX);
         OIC_LOG_V(INFO, TAG, "parsed port is:%s", tokPos);
 
         out->tps = tps;
         out->addr = addr;
-        out->port = atoi(tokPos);
+        out->port = (uint16_t)port;
     }
 
     OICFree(origin);
@@ -419,6 +522,23 @@ OCTpsSchemeFlags OCGetSupportedTpsFlags()
         ret = (OCTpsSchemeFlags)(ret | OC_COAP_RFCOMM);
     }
 #endif
-
+#ifdef LE_ADAPTER
+    if (SelectedNetwork & CA_ADAPTER_GATT_BTLE)
+    {
+        ret = (OCTpsSchemeFlags)(ret | OC_COAP_GATT);
+    }
+#endif
+#ifdef NFC_ADAPTER
+    if (SelectedNetwork & CA_ADAPTER_NFC)
+    {
+        ret = (OCTpsSchemeFlags)(ret | OC_COAP_NFC);
+    }
+#endif
+#ifdef RA_ADAPTER
+    if (SelectedNetwork & CA_ADAPTER_REMOTE_ACCESS)
+    {
+        ret = (OCTpsSchemeFlags)(ret | OC_COAP_RA);
+    }
+#endif
     return ret;
 }

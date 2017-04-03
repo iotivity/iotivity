@@ -114,6 +114,15 @@ OCStackResult PDMUnlinkDevices(const OicUuid_t *uuidOfDevice1, const OicUuid_t *
 OCStackResult PDMDeleteDevice(const OicUuid_t *uuidOfDevice);
 
 /**
+ * This method is used by OTM & PDM to remove device information with device state.
+ *
+ * @param[in] state device state to be removed.
+ *
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult PDMDeleteDeviceWithState(const PdmDeviceState_t state);
+
+/**
  * This method is used by provisioning manager to get owned devices' Device IDs.
  *
  * @param[out] uuidList information about the list of owned devices' uuids.
@@ -150,7 +159,7 @@ OCStackResult PDMSetLinkStale(const OicUuid_t* uuidOfDevice1, const OicUuid_t* u
  *
  * @note in case of sqllite, the caller should set NULL for parameters.
  *
- * @param[out] staleDevices information about the list of "To be Removed" devices' uuid.
+ * @param[out] staleDevList information about the list of "To be Removed" devices' uuid.
  * @param[out] numOfDevices total number of devices to be removed.
  *
  * @return OC_STACK_OK in case of success and other value otherwise.

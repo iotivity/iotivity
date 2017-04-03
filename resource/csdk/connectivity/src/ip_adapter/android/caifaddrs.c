@@ -196,7 +196,6 @@ CAResult_t CAGetIfaddrsUsingNetlink(struct ifaddrs **ifap)
                     goto exit;
 
                 case RTM_NEWADDR:
-                    OIC_LOG(DEBUG, TAG, "RTM_NEWADDR");
                     node = CAParsingAddr(recvMsg);
                     state = CA_MEMORY_ALLOC_FAILED;
                     VERIFY_NON_NULL(node);

@@ -29,6 +29,7 @@
 
 
 #include <string>
+#include <memory>
 #include "NSCommon.h"
 #include "NSUtils.h"
 #include "NSTopicsList.h"
@@ -104,10 +105,11 @@ namespace OIC
                      * Request topic list with selection state for the consumer
                      * @return :: Topic list
                      */
-                NSTopicsList *getConsumerTopicList();
+                std::shared_ptr<NSTopicsList> getConsumerTopicList();
 
             private:
                 ::NSConsumer *getNSConsumer();
+                bool isValid() const;
 
             private:
                 std::string m_consumerId;

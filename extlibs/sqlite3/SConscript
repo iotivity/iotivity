@@ -11,7 +11,7 @@ sqlite_env = env.Clone()
 target_os = sqlite_env.get('TARGET_OS')
 src_dir = sqlite_env.get('SRC_DIR')
 
-targets_need_sqlite = ['android', 'msys_nt', 'windows']
+targets_need_sqlite = ['android', 'msys_nt', 'windows', 'ios']
 sqlite_dir = src_dir + '/extlibs/sqlite3/'
 sqlite_build_dir = src_dir + '/extlibs/sqlite3/sqlite-amalgamation-3081101/'
 sqlite_zip_file = src_dir + '/extlibs/sqlite3/sqlite-amalgamation-3081101.zip'
@@ -38,3 +38,11 @@ if target_os in targets_need_sqlite:
         os.rename(sqlite_h_tmp, sqlite_h)
         os.remove(sqlite_zip_file)
         shutil.rmtree(sqlite_tmp_dir)
+
+if target_os in ['windows']:
+    sqlite_env.AppendUnique(CCFLAGS = ['/W4', '/WX'])
+    libsqlite3 = sqlite_env.StaticLibrary('sqlite3', sqlite_c)
+    # In multi-threaded builds, SCons appears to proceed to using sqlite3.lib
+    # before finishing InstallTarget(libsqlite3, 'sqlite3') here. So, use the
+    # generated LIB directly, without installing it.
+    env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'extlibs/sqlite3')])

@@ -187,16 +187,36 @@ namespace OC
                                  platformInfoHandler, QoS);
         }
 
+        OCStackResult getSupportedTransportsInfo(OCTpsSchemeFlags& supportedTps)
+        {
+            return OCPlatform_impl::Instance().getSupportedTransportsInfo(supportedTps);
+        }
+
         OCStackResult registerResource(OCResourceHandle& resourceHandle,
                                  std::string& resourceURI,
                                  const std::string& resourceTypeName,
                                  const std::string& resourceInterface,
                                  EntityHandler entityHandler,
-                                 uint8_t resourceProperty)
+                                 uint8_t resourceProperty
+                                 )
         {
             return OCPlatform_impl::Instance().registerResource(resourceHandle, resourceURI,
                                  resourceTypeName, resourceInterface,
                                  entityHandler, resourceProperty);
+        }
+
+        OCStackResult registerResource(OCResourceHandle& resourceHandle,
+                                 std::string& resourceURI,
+                                 const std::string& resourceTypeName,
+                                 const std::string& resourceInterface,
+                                 EntityHandler entityHandler,
+                                 uint8_t resourceProperty,
+                                 OCTpsSchemeFlags resourceTpsTypes)
+        {
+            return OCPlatform_impl::Instance().registerResource(resourceHandle, resourceURI,
+                                 resourceTypeName, resourceInterface,
+                                 entityHandler, resourceProperty,
+                                 resourceTpsTypes);
         }
 
         OCStackResult registerResource(OCResourceHandle& resourceHandle,

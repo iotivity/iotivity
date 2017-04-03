@@ -18,10 +18,16 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+// Warning disabled globally but VS2013 ignores the /wd4200 option in C++ files.
+#if defined(_MSC_VER) && _MSC_VER < 1900
+#pragma warning(disable : 4200)
+#endif
+
 #include <stdio.h>
 
 #include "gtest/gtest.h"
 
+#include "oic_malloc.h"
 #include "caprotocolmessage.h"
 
 namespace {
@@ -33,8 +39,6 @@ public:
     unsigned int length;
     std::string dataStr; // data could be binary... for testing we'll use str
 };
-
-
 
 /**
  * Helper to validate the state of CoAP URI parsing.
@@ -200,9 +204,12 @@ TEST(CAProtocolMessage, CAGetTokenFromPDU)
     coap_transport_t transport = COAP_UDP;
 
     CAInfo_t inData;
+    size_t tokenLength = 0;
     memset(&inData, 0, sizeof(CAInfo_t));
     inData.token = (CAToken_t)"token";
-    inData.tokenLength = strlen(inData.token);
+    tokenLength = strlen(inData.token);
+    ASSERT_LE(tokenLength, UINT8_MAX);
+    inData.tokenLength = (uint8_t)tokenLength;
     inData.type = CA_MSG_NONCONFIRM;
 
     pdu = CAGeneratePDU(CA_GET, &inData, &tempRep, &options, &transport);
@@ -212,4 +219,45 @@ TEST(CAProtocolMessage, CAGetTokenFromPDU)
     outData.type = CA_MSG_NONCONFIRM;
 
     EXPECT_EQ(CA_STATUS_OK, CAGetTokenFromPDU(pdu->transport_hdr, &outData, &tempRep));
+
+    OICFree(outData.token);
+    coap_delete_list(options);
+    coap_delete_pdu(pdu);
+}
+
+TEST(CAProtocolMessage, CAGetInfoFromPDU)
+{
+    CAEndpoint_t tempRep;
+    memset(&tempRep, 0, sizeof(CAEndpoint_t));
+    tempRep.flags = CA_DEFAULT_FLAGS;
+    tempRep.adapter = CA_ADAPTER_IP;
+    tempRep.port = 5683;
+
+    coap_pdu_t *pdu = NULL;
+    coap_list_t *options = NULL;
+    coap_transport_t transport = COAP_UDP;
+
+    CAInfo_t inData;
+    memset(&inData, 0, sizeof(CAInfo_t));
+    inData.token = (CAToken_t)"token";
+    inData.tokenLength = (uint8_t)strlen(inData.token);
+    inData.type = CA_MSG_NONCONFIRM;
+    inData.payload = (CAPayload_t) "requestPayload";
+    inData.payloadSize = sizeof(inData.payload);;
+    inData.payloadFormat = CA_FORMAT_APPLICATION_VND_OCF_CBOR;
+    inData.acceptFormat = CA_FORMAT_APPLICATION_VND_OCF_CBOR;
+    inData.payloadVersion = 2048;
+    inData.acceptVersion = 2048;
+
+    pdu = CAGeneratePDU(CA_GET, &inData, &tempRep, &options, &transport);
+
+    uint32_t code = CA_NOT_FOUND;
+    CAInfo_t outData;
+    memset(&outData, 0, sizeof(CAInfo_t));
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetInfoFromPDU(pdu, &tempRep, &code, &outData));
+
+    OICFree(outData.token);
+    coap_delete_list(options);
+    coap_delete_pdu(pdu);
 }

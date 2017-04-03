@@ -30,39 +30,31 @@ extern "C" {
 /**
  * Opens the RD publish database.
  *
- * @param path to the database file.
- *
  * @return ::OC_STACK_OK in case of success or else other value.
  */
-OCStackResult OCRDDatabaseInit(const char *path);
+OCStackResult OCRDDatabaseInit();
 
 /**
  * Stores in database the published resource.
  *
  * @param payload is the the published resource payload.
- * @param address provide information about endpoint connectivity details.
  *
  * @return ::OC_STACK_OK in case of success or else other value.
  */
-OCStackResult OCRDDatabaseStoreResources(const OCRepPayload *payload, const OCDevAddr *address);
+OCStackResult OCRDDatabaseStoreResources(const OCRepPayload *payload);
 
 /**
- * Updates the RD resource
+ * Delete the RD resources
  *
- * @param deviceId of the device for which resources will be update.
- *
- * @return ::OC_STACK_OK in case of success or else other value.
- */
-OCStackResult OCRDDatabaseUpdateDevice(const char *deviceId);
-
-/**
- * Delete the RD resource
- *
- * @param deviceId of the device for which resources will be deleted.
+ * @param deviceId of the device containing the resource(s) to be deleted.
+ * @param instanceIds the resource(s) to be deleted.  If NULL then all resources
+ *                    belonging to the device will be deleted.
+ * @param nInstanceIds the number of instanceIds
  *
  * @return ::OC_STACK_OK in case of success or else other value.
  */
-OCStackResult OCRDDatabaseDeleteDevice(const char *deviceId);
+OCStackResult OCRDDatabaseDeleteResources(const char *deviceId, const uint8_t *instanceIds,
+                                          uint8_t nInstanceIds);
 
 /**
  * Close the RD publish database.

@@ -34,11 +34,11 @@ extern "C"
 #define OC_RSRVD_ES_INTERFACE             "if"
 #define OC_RSRVD_ES_RES_TYPE              "rt"
 
-
-
-#define OIC_STRING_MAX_VALUE    64
-#define MAX_WEBLINKLEN          3
-#define NUM_WIFIMODE            5
+#define OIC_STRING_MAX_VALUE        64
+#define OIC_URI_STRING_MAX_VALUE    256
+#define MAX_WEBLINKLEN              3
+#define NUM_WIFIMODE                10
+#define NUM_CONNECT_TYPE            3
 
 /**
  * Attributes used to form a proper easysetup conforming JSON message.
@@ -64,6 +64,7 @@ extern "C"
 #define OC_RSRVD_ES_MODELNUMBER            "mnmo"
 #define OC_RSRVD_ES_LOCATION               "loc"
 #define OC_RSRVD_ES_HREF                   "href"
+#define OC_RSRVD_ES_CONNECT                "cn"
 
 /**
  * Easysetup defined resoruce types and uris.
@@ -138,6 +139,16 @@ typedef enum
 } OAUTH_TOKENTYPE;
 
 /**
+ * @brief  A target configuration type to be connected (or executed)
+ */
+typedef enum
+{
+    ES_CONNECT_NONE = 0,        /**< Init value **/
+    ES_CONNECT_WIFI = 1,        /**< WiFi Conf resource **/
+    ES_CONNECT_COAPCLOUD = 2    /**< Coap Cloud Conf resource **/
+} ES_CONNECT_TYPE;
+
+/**
  * @brief A result of Easy Setup
  */
 typedef enum
@@ -166,7 +177,7 @@ typedef enum
     /**
      * Security opertion is not supported because Mediator is built as unsecured mode.
      */
-    ES_SEC_OPERATION_IS_NOT_SUPPORTED = 20,
+    ES_SEC_OPERATION_IS_NOT_SUPPORTED,
 
     /**
      * Security resource discovery fails due to loss of discovery packet or absence of the resource in a network
@@ -179,39 +190,7 @@ typedef enum
      * E.g. Mediator's owned status is 'unowned'
      * E.g. A user confirmation for random pin-based or certificate-based OT fails
      */
-    ES_OWNERSHIP_TRANSFER_FAILURE,
-
-    /**
-     * ACL provisioning fails in cloud provisioning.
-     * It could be that UUID format of cloud server is wrong.
-     * Or any response for the provisioning request is not arrived at Mediator
-     */
-    ES_ACL_PROVISIONING_FAILURE,
-
-    /**
-     * Cert. provisioning fails in cloud provisioning.
-     * It could be that you put a wrong cred ID of which the corresponding certificate does not exist in SVR DB.
-     * Or any response for the provisioning request is not arrived at Mediator
-     */
-    ES_CERT_PROVISIONING_FAILURE,
-
-    /**
-     * MOT method selection is failed
-     */
-    ES_MOT_METHOD_SELECTION_FAILURE,
-
-    /**
-     * A provisioning of Pre-configured pin number for MOT is failed
-     */
-    ES_PRE_CONFIG_PIN_PROVISIONING_FAILURE,
-
-    /**
-     * The found enrollee's owner ID indicates a same ID of mediator.
-     * However, a list of owned devices managed in mediator's PMD db has no element for the found enrollee.
-     * That can happen where only mediator is reset without any inform to the enrollee.
-     * To proceed an ownership transfer to the enrollee, it needs to reset the enrollee's SVR DB for its owner, i.e. the mediator
-     */
-    ES_OWNERSHIP_IS_NOT_SYNCHRONIZED,
+    ES_OWNERSHIP_TRANSFER_FAILURE = 20,
 
     /**
      * Ownership transfer which is cert-based method fails due to user confirmation is denied.
@@ -229,8 +208,70 @@ typedef enum
     ES_AUTHENTICATION_FAILURE_WITH_WRONG_PIN,
 
     /**
+     * Ownership information is not synchronized between Mediator and Enrollee.
+     * e.g. A mediator's PDM DB has an ownership information to the found enrollee
+     *      but it is actually owned by other mediator.
+     *      That can happen where the found enrollee is reset and performed in easy setup without any inform to the first mediator.
+     * e.g. A list of owned devices managed in mediator's PMD db has no element for the found enrollee.
+     *      That can happen where only mediator is reset without any inform to the enrollee.
+     * To proceed an ownership transfer to the enrollee, it needs to reset the enrollee's SVR DB for its owner, i.e. the mediator
+     */
+    ES_OWNERSHIP_IS_NOT_SYNCHRONIZED,
+
+    /**
+     * MOT is not supported at the target Enrollee device.
+     *
+     * @note This ESResult values will be returned ONLY IF a mediator is a first owner to an Enrollee.
+     * @note If the mediator gets this values, it means OT has been successfully done
+     * (or already took an ownership, before), but failed MOT configuration.
+     */
+    ES_MOT_NOT_SUPPORTED = 30,
+
+    /**
+     * MOT enabling is failed.
+     *
+     * @note This ESResult values will be returned ONLY IF a mediator is a first owner to an Enrollee.
+     * @note If the mediator gets this values, it means OT has been successfully done
+     * (or already took an ownership, before), but failed MOT configuration.
+     */
+    ES_MOT_ENABLING_FAILURE,
+
+    /**
+     * MOT method selection is failed
+     *
+     * @note This ESResult values will be returned ONLY IF a mediator is a first owner to an Enrollee.
+     * @note If the mediator gets this values, it means OT has been successfully done
+     * (or already took an ownership, before), but failed MOT configuration.
+     */
+    ES_MOT_METHOD_SELECTION_FAILURE,
+
+    /**
+     * A provisioning of Pre-configured pin number for MOT is failed
+     *
+     * @note This ESResult values will be returned ONLY IF a mediator is a first owner to an Enrollee.
+     * @note If the mediator gets this values, it means OT has been successfully done
+     * (or already took an ownership, before), but failed MOT configuration.
+     */
+    ES_PRE_CONFIG_PIN_PROVISIONING_FAILURE,
+
+    /**
+     * ACL provisioning fails in cloud provisioning.
+     * It could be that UUID format of cloud server is wrong.
+     * Or any response for the provisioning request is not arrived at Mediator
+     */
+    ES_ACL_PROVISIONING_FAILURE = 40,
+
+    /**
+     * Cert. provisioning fails in cloud provisioning.
+     * It could be that you put a wrong cred ID of which the corresponding certificate does not exist in SVR DB.
+     * Or any response for the provisioning request is not arrived at Mediator
+     */
+    ES_CERT_PROVISIONING_FAILURE,
+
+    /**
      * Provisioning fails for some reason.
      */
+
     ES_ERROR = 255
 } ESResult;
 
@@ -375,6 +416,12 @@ typedef enum
      * Error Code that a target user does not exist in cloud server.
      */
     ES_ERRCODE_FAILED_TO_FIND_REGISTERED_USER_IN_CLOUD,
+
+    /**
+     * Error Code that an enrollee can not connect to a target WiFi AP because the AP resides in
+     * an unsupported WiFi frequency.
+     */
+    ES_ERRCODE_UNSUPPORTED_WIFI_FREQUENCY,
 
     /**
      * Error Code that Unknown error occured

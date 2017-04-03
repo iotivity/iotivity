@@ -109,48 +109,28 @@ static OCStackResult SendObserveNotification(ResourceObserver *observer,
 {
     OCStackResult result = OC_STACK_ERROR;
     OCServerRequest * request = NULL;
-    OCEntityHandlerRequest ehRequest = {0};
-    OCEntityHandlerResult ehResult = OC_EH_ERROR;
 
     result = AddServerRequest(&request, 0, 0, 1, OC_REST_GET,
                               0, observer->resource->sequenceNum, qos,
-                              observer->query, NULL, NULL,
+                              observer->query, NULL, OC_FORMAT_UNDEFINED, NULL,
                               observer->token, observer->tokenLength,
                               observer->resUri, 0, observer->acceptFormat,
-                              &observer->devAddr);
+                              observer->acceptVersion, &observer->devAddr);
 
     if (request)
     {
         request->observeResult = OC_STACK_OK;
         if (result == OC_STACK_OK)
         {
-            result = FormOCEntityHandlerRequest(
-                        &ehRequest,
-                        (OCRequestHandle) request,
-                        request->method,
-                        &request->devAddr,
-                        (OCResourceHandle) observer->resource,
-                        request->query,
-                        PAYLOAD_TYPE_REPRESENTATION,
-                        request->payload,
-                        request->payloadSize,
-                        request->numRcvdVendorSpecificHeaderOptions,
-                        request->rcvdVendorSpecificHeaderOptions,
-                        OC_OBSERVE_NO_OPTION,
-                        0,
-                        request->coapID);
+            ResourceHandling resHandling = OC_RESOURCE_VIRTUAL;
+            OCResource *resource = NULL;
+            result = DetermineResourceHandling (request, &resHandling, &resource);
             if (result == OC_STACK_OK)
             {
-                ehResult = observer->resource->entityHandler(OC_REQUEST_FLAG, &ehRequest,
-                                    observer->resource->entityHandlerCallbackParam);
-                if (ehResult == OC_EH_ERROR)
-                {
-                    FindAndDeleteServerRequest(request);
-                }
+                result = ProcessRequest(resHandling, resource, request);
                 // Reset Observer TTL.
                 observer->TTL = GetTicks(MAX_OBSERVER_TTL_SECONDS * MILLISECONDS_PER_SECOND);
             }
-            OCPayloadDestroy(ehRequest.payload);
         }
     }
 
@@ -199,10 +179,10 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                 OIC_LOG(DEBUG, TAG, "This notification is for Presence");
                 result = AddServerRequest(&request, 0, 0, 1, OC_REST_GET,
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
-                        NULL, NULL,
+                        NULL, OC_FORMAT_UNDEFINED, NULL,
                         resourceObserver->token, resourceObserver->tokenLength,
                         resourceObserver->resUri, 0, resourceObserver->acceptFormat,
-                        &resourceObserver->devAddr);
+                        resourceObserver->acceptVersion, &resourceObserver->devAddr);
 
                 if (result == OC_STACK_OK)
                 {
@@ -287,9 +267,9 @@ OCStackResult SendListObserverNotification (OCResource * resource,
 
                 result = AddServerRequest(&request, 0, 0, 1, OC_REST_GET,
                         0, resource->sequenceNum, qos, observer->query,
-                        NULL, NULL, observer->token, observer->tokenLength,
+                        NULL, OC_FORMAT_UNDEFINED, NULL, observer->token, observer->tokenLength,
                         observer->resUri, 0, observer->acceptFormat,
-                        &observer->devAddr);
+                        observer->acceptVersion, &observer->devAddr);
 
                 if (request)
                 {
@@ -369,7 +349,7 @@ OCStackResult GenerateObserverId (OCObservationId *observationId)
     {
         if (!OCGetRandomBytes((uint8_t*)observationId, sizeof(OCObservationId)))
         {
-            OIC_LOG_V(ERROR, TAG, "Failed to generate random observationId");
+            OIC_LOG(ERROR, TAG, "Failed to generate random observationId");
             goto exit;
         }
 
@@ -392,6 +372,7 @@ OCStackResult AddObserver (const char         *resUri,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
                            OCPayloadFormat    acceptFormat,
+                           uint16_t           acceptVersion,
                            const OCDevAddr    *devAddr)
 {
     // Check if resource exists and is observable.
@@ -419,6 +400,7 @@ OCStackResult AddObserver (const char         *resUri,
 
         obsNode->qos = qos;
         obsNode->acceptFormat = acceptFormat;
+        obsNode->acceptVersion = acceptVersion;
         if (query)
         {
             obsNode->query = OICStrdup(query);
@@ -680,4 +662,96 @@ GetObserveHeaderOption (uint32_t * observationOption,
         }
     }
     return OC_STACK_OK;
+}
+
+OCStackResult
+HandleVirtualObserveRequest(OCServerRequest *request)
+{
+    OCStackResult result = OC_STACK_OK;
+    if (request->notificationFlag)
+    {
+        // The request is to send an observe payload, not register/deregister an observer
+        goto exit;
+    }
+    OCVirtualResources virtualUriInRequest;
+    virtualUriInRequest = GetTypeOfVirtualURI(request->resourceUrl);
+    if (virtualUriInRequest != OC_WELL_KNOWN_URI)
+    {
+        // OC_WELL_KNOWN_URI is currently the only virtual resource that may be observed
+        goto exit;
+    }
+    OCResource *resourcePtr;
+    resourcePtr = FindResourceByUri(OC_RSRVD_WELL_KNOWN_URI);
+    if (NULL == resourcePtr)
+    {
+        OIC_LOG(FATAL, TAG, "Well-known URI not found.");
+        result = OC_STACK_ERROR;
+        goto exit;
+    }
+    if (request->observationOption == OC_OBSERVE_REGISTER)
+    {
+        OIC_LOG(INFO, TAG, "Observation registration requested");
+        ResourceObserver *obs = GetObserverUsingToken (request->requestToken,
+                                                       request->tokenLength);
+        if (obs)
+        {
+            OIC_LOG (INFO, TAG, "Observer with this token already present");
+            OIC_LOG (INFO, TAG, "Possibly re-transmitted CON OBS request");
+            OIC_LOG (INFO, TAG, "Not adding observer. Not responding to client");
+            OIC_LOG (INFO, TAG, "The first request for this token is already ACKED.");
+            result = OC_STACK_DUPLICATE_REQUEST;
+            goto exit;
+        }
+        OCObservationId obsId;
+        result = GenerateObserverId(&obsId);
+        if (result == OC_STACK_OK)
+        {
+            result = AddObserver ((const char*)(request->resourceUrl),
+                                  (const char *)(request->query),
+                                  obsId, request->requestToken, request->tokenLength,
+                                  resourcePtr, request->qos, request->acceptFormat,
+                                  request->acceptVersion, &request->devAddr);
+        }
+        if (result == OC_STACK_OK)
+        {
+            OIC_LOG(INFO, TAG, "Added observer successfully");
+            request->observeResult = OC_STACK_OK;
+        }
+        else if (result == OC_STACK_RESOURCE_ERROR)
+        {
+            OIC_LOG(INFO, TAG, "The Resource is not active, discoverable or observable");
+            request->observeResult = OC_STACK_ERROR;
+        }
+        else
+        {
+            // The error in observeResult for the request will be used when responding to this
+            // request by omitting the observation option/sequence number.
+            request->observeResult = OC_STACK_ERROR;
+            OIC_LOG(ERROR, TAG, "Observer Addition failed");
+        }
+    }
+    else if (request->observationOption == OC_OBSERVE_DEREGISTER)
+    {
+        OIC_LOG(INFO, TAG, "Deregistering observation requested");
+        result = DeleteObserverUsingToken (request->requestToken, request->tokenLength);
+        if (result == OC_STACK_OK)
+        {
+            OIC_LOG(INFO, TAG, "Removed observer successfully");
+            request->observeResult = OC_STACK_OK;
+            // There should be no observe option header for de-registration response.
+            // Set as an invalid value here so we can detect it later and remove the field in response.
+            request->observationOption = MAX_SEQUENCE_NUMBER + 1;
+        }
+        else
+        {
+            request->observeResult = OC_STACK_ERROR;
+            OIC_LOG(ERROR, TAG, "Observer Removal failed");
+        }
+    }
+    // Whether the observe request succeeded or failed, the request is processed as normal
+    // and excludes/includes the OBSERVE option depending on request->observeResult
+    result = OC_STACK_OK;
+
+exit:
+    return result;
 }

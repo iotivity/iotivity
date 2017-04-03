@@ -38,7 +38,6 @@ randomtest_env.PrependUnique(CPPPATH = [
                '../../../oc_logger/include',
                ])
  
-randomtest_env.AppendUnique(LIBPATH = [randomtest_env.get('BUILD_DIR')])
 randomtest_env.PrependUnique(LIBS = ['octbstack',
                                       'connectivity_abstraction',
                                       'uuid'])

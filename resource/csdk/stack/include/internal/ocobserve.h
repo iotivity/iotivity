@@ -29,6 +29,8 @@
 #ifndef OC_OBSERVE_H
 #define OC_OBSERVE_H
 
+#include "ocserverrequest.h"
+
 /** Maximum number of observers to reach */
 
 #define MAX_OBSERVER_FAILED_COMM         (2)
@@ -94,6 +96,9 @@ typedef struct ResourceObserver
     /** requested payload encoding format. */
     OCPayloadFormat acceptFormat;
 
+    /** requested payload content version. */
+    uint16_t acceptVersion;
+
 } ResourceObserver;
 
 #ifdef WITH_PRESENCE
@@ -131,7 +136,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
  * @param resource                  Observed resource.
  * @param obsIdList                 List of observation ids that need to be notified.
  * @param numberOfIds               Number of observation ids included in obsIdList.
- * @param notificationJSONPayload   JSON encoded payload to send in notification.
+ * @param payload                   JSON encoded payload to send in notification.
  * @param maxAge                    Time To Live (in seconds) of observation.
  * @param qos                       Desired quality of service of the observation notifications.
  *
@@ -166,6 +171,8 @@ OCStackResult GenerateObserverId (OCObservationId *observationId);
  * @param tokenLength     Length of token.
  * @param resHandle       Resource handle.
  * @param qos             Quality of service of observation.
+ * @param acceptFormat    Accept payload format.
+ * @param acceptVersion   Accept payload version.
  * @param devAddr         Device address.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
@@ -178,6 +185,7 @@ OCStackResult AddObserver (const char         *resUri,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
                            OCPayloadFormat    acceptFormat,
+                           uint16_t           acceptVersion,
                            const OCDevAddr    *devAddr);
 
 /**
@@ -254,6 +262,19 @@ OCStackResult
 GetObserveHeaderOption (uint32_t * observationOption,
                         CAHeaderOption_t *options,
                         uint8_t * numOptions);
+
+/**
+ * Handle registering/deregistering of observers of virtual resources.  Currently only the
+ * well-known virtual resource (/oic/res) may be observable.
+ *
+ * @param request a virtual resource server request
+ *
+ * @return ::OC_STACK_OK on success, ::OC_STACK_DUPLICATE_REQUEST when registering a duplicate
+ *         observer, some other value upon failure.
+ */
+OCStackResult
+HandleVirtualObserveRequest(OCServerRequest *request);
+
 
 #endif //OC_OBSERVE_H
 

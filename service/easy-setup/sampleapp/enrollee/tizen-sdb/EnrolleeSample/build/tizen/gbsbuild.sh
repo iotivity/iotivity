@@ -34,7 +34,6 @@ cp -LR ./extlibs/tinycbor $sourcedir/tmp/extlibs
 cp -R ./extlibs/cjson $sourcedir/tmp/extlibs
 cp -R ./extlibs/mbedtls $sourcedir/tmp/extlibs
 cp -R ./extlibs/gtest $sourcedir/tmp/extlibs
-cp -R ./extlibs/tinydtls $sourcedir/tmp/extlibs
 cp -LR ./extlibs/sqlite3 $sourcedir/tmp/extlibs
 cp -R ./extlibs/timer $sourcedir/tmp/extlibs
 cp -R ./extlibs/rapidxml $sourcedir/tmp/extlibs
@@ -74,7 +73,7 @@ if [ ! -d .git ]; then
    git commit -m "Initial commit"
 fi
 
-buildoption="--define 'TARGET_TRANSPORT '$1 --define 'SECURED '$2 --define 'ROUTING '$3 --define 'RELEASE '$4 --define 'LOGGING '$5 --define 'ES_TARGET_ENROLLEE '$6 --define 'WITH_TCP '$7 --define 'WITH_CLOUD '$8" 
+buildoption="--define 'TARGET_TRANSPORT '$1 --define 'SECURED '$2 --define 'ROUTING '$3 --define 'RELEASE '$4 --define 'LOGGING '$5 --define 'ES_TARGET_ENROLLEE '$6 --define 'WITH_TCP '$7 --define 'WITH_CLOUD '$8"
 echo "Calling core gbs build command"
 gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-OIC $buildoption --include-all --repository ./"
 echo $gbscommand

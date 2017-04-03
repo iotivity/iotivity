@@ -261,43 +261,11 @@ namespace OC
      : m_threadRun(false), m_csdkLock(csdkLock),
        m_cfg { cfg }
     {
-        start();
     }
 
     OCStackResult InProcServerWrapper::start()
     {
-        OIC_LOG_V(INFO, TAG, "start ocplatform for server : %d", m_cfg.transportType);
-
-        OCMode initType;
-        if(m_cfg.mode == ModeType::Server)
-        {
-            initType = OC_SERVER;
-        }
-        else if (m_cfg.mode == ModeType::Both)
-        {
-            initType = OC_CLIENT_SERVER;
-        }
-        else if (m_cfg.mode == ModeType::Gateway)
-        {
-            initType = OC_GATEWAY;
-        }
-        else
-        {
-            throw InitializeException(OC::InitException::NOT_CONFIGURED_AS_SERVER,
-                                         OC_STACK_INVALID_PARAM);
-        }
-
-        OCTransportFlags serverFlags =
-                            static_cast<OCTransportFlags>(m_cfg.serverConnectivity & CT_MASK_FLAGS);
-        OCTransportFlags clientFlags =
-                            static_cast<OCTransportFlags>(m_cfg.clientConnectivity & CT_MASK_FLAGS);
-        OCStackResult result = OCInit2(initType, serverFlags, clientFlags,
-                                       m_cfg.transportType);
-
-        if(OC_STACK_OK != result)
-        {
-            throw InitializeException(OC::InitException::STACK_INIT_ERROR, result);
-        }
+        OIC_LOG(INFO, TAG, "start");
 
         if (false == m_threadRun)
         {
@@ -315,13 +283,6 @@ namespace OC
         {
             m_threadRun = false;
             m_processThread.join();
-        }
-
-        OCStackResult res = OCStop();
-
-        if (OC_STACK_OK != res)
-        {
-           throw InitializeException(OC::InitException::STACK_TERMINATE_ERROR, res);
         }
 
         return OC_STACK_OK;
@@ -435,7 +396,19 @@ namespace OC
                     const std::string& resourceInterface,
                     EntityHandler& eHandler,
                     uint8_t resourceProperties)
+    {
+        return registerResourceWithTps(resourceHandle, resourceURI, resourceTypeName,
+                                       resourceInterface, eHandler, resourceProperties, OC_ALL);
+    }
 
+    OCStackResult InProcServerWrapper::registerResourceWithTps(
+                    OCResourceHandle& resourceHandle,
+                    std::string& resourceURI,
+                    const std::string& resourceTypeName,
+                    const std::string& resourceInterface,
+                    EntityHandler& eHandler,
+                    uint8_t resourceProperties,
+                    OCTpsSchemeFlags resourceTpsTypes)
     {
         OCStackResult result = OC_STACK_ERROR;
 
@@ -447,25 +420,27 @@ namespace OC
 
             if(NULL != eHandler)
             {
-                result = OCCreateResource(&resourceHandle, // OCResourceHandle *handle
+                result = OCCreateResourceWithEp(&resourceHandle, // OCResourceHandle *handle
                             resourceTypeName.c_str(), // const char * resourceTypeName
-                            resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix this
+                            //const char * resourceInterfaceName //TODO fix this
+                            resourceInterface.c_str(),
                             resourceURI.c_str(), // const char * uri
                             EntityHandlerWrapper, // OCEntityHandler entityHandler
                             NULL,
-                            resourceProperties // uint8_t resourceProperties
-                            );
+                            resourceProperties, // uint8_t resourceProperties
+                            resourceTpsTypes);  // OCTpsSchemeFlags resourceTpsTypes
             }
             else
             {
-                result = OCCreateResource(&resourceHandle, // OCResourceHandle *handle
+                result = OCCreateResourceWithEp(&resourceHandle, // OCResourceHandle *handle
                             resourceTypeName.c_str(), // const char * resourceTypeName
-                            resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix this
+                            //const char * resourceInterfaceName //TODO fix this
+                            resourceInterface.c_str(),
                             resourceURI.c_str(), // const char * uri
                             NULL, // OCEntityHandler entityHandler
                             NULL,
-                            resourceProperties // uint8_t resourceProperties
-                            );
+                            resourceProperties, // uint8_t resourceProperties
+                            resourceTpsTypes);  // OCTpsSchemeFlags resourceTpsTypes
             }
 
             if(result != OC_STACK_OK)
@@ -687,6 +662,23 @@ namespace OC
             OCPayloadDestroy(response.payload);
             return result;
         }
+    }
+
+    OCStackResult InProcServerWrapper::getSupportedTransportsInfo(OCTpsSchemeFlags& supportedTps)
+    {
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result = OC_STACK_ERROR;
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            supportedTps = OCGetSupportedEndpointTpsFlags();
+
+            if (OC_NO_TPS != supportedTps)
+            {
+                result = OC_STACK_OK;
+            }
+        }
+        return result;
     }
 
     InProcServerWrapper::~InProcServerWrapper()

@@ -229,7 +229,7 @@ namespace OC
         ((int64_t*)array)[pos] = item;
     }
 
-#if !defined(_MSC_VER)
+#if !(defined(_MSC_VER) || defined(__APPLE__))
     template<>
     void get_payload_array::copy_to_array(std::_Bit_reference br, void* array, size_t pos)
     {
@@ -631,14 +631,14 @@ namespace OC
         m_children = children;
     }
 
-    void OCRepresentation::setDevAddr(const OCDevAddr m_devAddr)
+    void OCRepresentation::setDevAddr(const OCDevAddr& devAddr)
     {
         std::ostringstream ss;
-        if (m_devAddr.flags & OC_SECURE)
+        if (devAddr.flags & OC_SECURE)
         {
             ss << COAPS;
         }
-        else if (m_devAddr.adapter & OC_ADAPTER_TCP)
+        else if (devAddr.adapter & OC_ADAPTER_TCP)
         {
             ss << COAP_TCP;
         }
@@ -646,13 +646,13 @@ namespace OC
         {
             ss << COAP;
         }
-        if (m_devAddr.flags & OC_IP_USE_V6)
+        if (devAddr.flags & OC_IP_USE_V6)
         {
             char addressEncoded[128] = {0};
 
             OCStackResult result = OCEncodeAddressForRFC6874(addressEncoded,
                                                              sizeof(addressEncoded),
-                                                             m_devAddr.addr);
+                                                             devAddr.addr);
             if (OC_STACK_OK != result)
             {
                 throw OC::OCException("Invalid address in setDevAddr");
@@ -661,11 +661,11 @@ namespace OC
         }
         else
         {
-            ss << m_devAddr.addr;
+            ss << devAddr.addr;
         }
-        if (m_devAddr.port)
+        if (devAddr.port)
         {
-            ss << ':' << m_devAddr.port;
+            ss << ':' << devAddr.port;
         }
         m_host = ss.str();
     }

@@ -152,6 +152,11 @@ void CAIPDeinitializeQueueHandles()
     CAQueueingThreadDestroy(g_sendQueueHandle);
     OICFree(g_sendQueueHandle);
     g_sendQueueHandle = NULL;
+
+    // Since the items in g_ownIpEndpointList are allocated once in a big chunk, we only need to
+    // free the first item. Another location this is done is in the CA_INTERFACE_DOWN handler
+    // in CAUpdateStoredIPAddressInfo().
+    OICFree(u_arraylist_get(g_ownIpEndpointList, 0));
     u_arraylist_free(&g_ownIpEndpointList);
     g_ownIpEndpointList = NULL;
 }
@@ -176,7 +181,7 @@ void CAIPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
         OIC_LOG(DEBUG, TAG, "Network status for IP is down");
 #ifdef __WITH_DTLS__
         OIC_LOG(DEBUG, TAG, "close all ssl session");
-        CAcloseSslConnectionAll();
+        CAcloseSslConnectionAll(CA_ADAPTER_IP);
 #endif
     }
 }
@@ -188,7 +193,7 @@ static void CAUpdateStoredIPAddressInfo(CANetworkStatus_t status)
         OIC_LOG(DEBUG, TAG, "IP adapter status is on. Store the own IP address info");
 
         CAEndpoint_t *eps = NULL;
-        uint32_t numOfEps = 0;
+        size_t numOfEps = 0;
 
         CAResult_t res = CAGetIPInterfaceInformation(&eps, &numOfEps);
         if (CA_STATUS_OK != res)
@@ -206,11 +211,14 @@ static void CAUpdateStoredIPAddressInfo(CANetworkStatus_t status)
     {
         OIC_LOG(DEBUG, TAG, "IP adapter status is off. Remove the own IP address info");
 
-        uint32_t len = u_arraylist_length(g_ownIpEndpointList);
-        for (uint32_t i = len; i > 0; i--)
+        CAEndpoint_t *headEp = u_arraylist_get(g_ownIpEndpointList, 0);
+        OICFree(headEp);
+        headEp = NULL;
+
+        size_t len = u_arraylist_length(g_ownIpEndpointList);
+        for (size_t i = len; i > 0; i--)
         {
-            CAEndpoint_t *ep = u_arraylist_remove(g_ownIpEndpointList, i - 1);
-            OICFree(ep);
+            u_arraylist_remove(g_ownIpEndpointList, i - 1);
         }
     }
 }
@@ -266,7 +274,7 @@ bool CAIPIsLocalEndpoint(const CAEndpoint_t *ep)
 }
 
 void CAIPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
-                      uint32_t dataLength, CAResult_t result)
+                      size_t dataLength, CAResult_t result)
 {
     VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");

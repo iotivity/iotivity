@@ -42,23 +42,18 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 #include "cainterface.h"
-
 #include "directpairing.h"
 #include "srmresourcestrings.h" //@note: SRM's internal header
 #include "doxmresource.h"       //@note: SRM's internal header
 #include "pconfresource.h"       //@note: SRM's internal header
 #include "dpairingresource.h"       //@note: SRM's internal header
 #include "credresource.h"
-
 #include "pmtypes.h"
 #include "pmutility.h"
-
 #include "srmutility.h"
-
-#ifdef __WITH_DTLS__
-#include "global.h"
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+#include <mbedtls/ssl_ciphersuites.h>
 #endif
-
 
 #define TAG ("OIC_DP")
 static const uint16_t CBOR_SIZE = 1024;
@@ -346,7 +341,7 @@ void DPDeleteLists()
 static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHandle UNUSED,
                                                   OCClientResponse *clientResponse)
 {
-    OIC_LOG_V(INFO, TAG, "IN DirectPairingFinalizeHandler()");
+    OIC_LOG(INFO, TAG, "IN DirectPairingFinalizeHandler()");
     (void)UNUSED;
     if(NULL == ctx)
     {
@@ -395,12 +390,6 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
             if(CA_STATUS_OK != caResult)
             {
                 OIC_LOG(INFO, TAG, "Fail to close temporary dtls session");
-            }
-
-            caResult = CASelectCipherSuite(TLS_NULL_WITH_NULL_NULL, CA_ADAPTER_IP);
-            if(CA_STATUS_OK != caResult)
-            {
-                OIC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
             }
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
@@ -535,7 +524,7 @@ OCStackResult FinalizeDirectPairing(void *ctx, OCDirectPairingDev_t* peer,
  */
 void DirectPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
-    OIC_LOG_V(INFO, TAG, "IN DirectPairingDTLSHandshakeCB");
+    OIC_LOG(INFO, TAG, "IN DirectPairingDTLSHandshakeCB");
 
 
     if(g_dp_proceed_ctx && g_dp_proceed_ctx->peer && endpoint && info)
@@ -583,11 +572,11 @@ void DirectPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInf
         }
         else
         {
-            OIC_LOG_V(INFO, TAG, "DirectPairingDTLSHandshakeCB - Not matched to peer address");
+            OIC_LOG(INFO, TAG, "DirectPairingDTLSHandshakeCB - Not matched to peer address");
         }
     }
 
-    OIC_LOG_V(INFO, TAG, "OUT DirectPairingDTLSHandshakeCB");
+    OIC_LOG(INFO, TAG, "OUT DirectPairingDTLSHandshakeCB");
 }
 
 /**
@@ -602,7 +591,7 @@ void DirectPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInf
 static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSED,
                                                   OCClientResponse *clientResponse)
 {
-    OIC_LOG_V(INFO, TAG, "IN DirectPairingHandler.");
+    OIC_LOG(INFO, TAG, "IN DirectPairingHandler.");
     (void)UNUSED;
     if(NULL == ctx)
     {
@@ -637,7 +626,7 @@ static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSE
             caresult = CAEnableAnonECDHCipherSuite(false);
             VERIFY_SUCCESS(TAG, CA_STATUS_OK == caresult, ERROR);
 
-            caresult = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256, CA_ADAPTER_IP);
+            caresult = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, CA_ADAPTER_IP);
             VERIFY_SUCCESS(TAG, CA_STATUS_OK == caresult, ERROR);
 
             //Register proceeding peer info. & DTLS event handler to catch the dtls event while handshake
@@ -647,7 +636,7 @@ static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSE
 
             // initiate dtls
             CAEndpoint_t *endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
-            VERIFY_NON_NULL(TAG, endpoint, FATAL);
+            VERIFY_NOT_NULL(TAG, endpoint, FATAL);
             memcpy(endpoint,&dpairData->peer->endpoint,sizeof(CAEndpoint_t));
             endpoint->port = dpairData->peer->securePort;
             OIC_LOG_V(INFO, TAG, "Initiate DTLS handshake to %s(%d)", endpoint->addr,
@@ -682,11 +671,13 @@ exit:
             RemoveCredential(&dpairData->peer->deviceID);
             OICFree(dpairData);
             g_dp_proceed_ctx = NULL;
+            OIC_LOG_V(INFO, TAG, "OUT DirectPairingHandler.");
+            return OC_STACK_DELETE_TRANSACTION;
         }
 
         resultCallback(dpairData->userCtx, dpairData->peer, res);
     }
-    OIC_LOG_V(INFO, TAG, "OUT DirectPairingHandler.");
+    OIC_LOG(INFO, TAG, "OUT DirectPairingHandler.");
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -906,15 +897,13 @@ static OCStackApplicationResult DirectPairingDiscoveryHandler(void* ctx, OCDoHan
                 OCDevAddr endpoint;
                 memcpy(&endpoint, &clientResponse->devAddr, sizeof(OCDevAddr));
 
-                OCStackResult res = addDev(&g_dp_discover, &endpoint,
-                            clientResponse->connType, pconf);
+                res = addDev(&g_dp_discover, &endpoint, clientResponse->connType, pconf);
                 DeletePconfBinData(pconf);
                 if (OC_STACK_OK != res)
                 {
                     OIC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
                     return OC_STACK_KEEP_TRANSACTION;
                 }
-
 
                 char rsrc_uri[MAX_URI_LENGTH+1] = {0};
                 int wr_len = snprintf(rsrc_uri, sizeof(rsrc_uri), "%s?%s=%s",
@@ -941,9 +930,9 @@ static OCStackApplicationResult DirectPairingDiscoveryHandler(void* ctx, OCDoHan
                 cbData.cb = &DirectPairingPortDiscoveryHandler;
                 cbData.context = NULL;
                 cbData.cd = NULL;
-                OCStackResult ret = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
+                res = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
                         clientResponse->connType, OC_LOW_QOS, &cbData, NULL, 0);
-                if(OC_STACK_OK != ret)
+                if(OC_STACK_OK != res)
                 {
                     OIC_LOG(ERROR, TAG, "Failed to Secure Port Discovery");
                     return OC_STACK_KEEP_TRANSACTION;
@@ -1005,7 +994,7 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
 
     int clock_res = -1;
 #if defined(_MSC_VER)
-    time_t startTime = NULL;
+    time_t startTime = 0;
     clock_res = (time(&startTime) == -1);
 #else
     struct timespec startTime = {.tv_sec=0, .tv_nsec=0};
@@ -1026,7 +1015,7 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
     while (1)
     {
 #if defined(_MSC_VER)
-        time_t currTime = NULL;
+        time_t currTime = 0;
         clock_res = (time(&currTime) == -1);
 #else
         struct timespec currTime  = {.tv_sec=0, .tv_nsec=0};
@@ -1041,9 +1030,9 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
             break;
         }
 #if defined(_MSC_VER)
-        long elapsed = currTime - startTime;
+        time_t elapsed = currTime - startTime;
 #else
-        long elapsed = (currTime.tv_sec - startTime.tv_sec);
+        time_t elapsed = (currTime.tv_sec - startTime.tv_sec);
 #endif
         if (elapsed > waittime)
         {

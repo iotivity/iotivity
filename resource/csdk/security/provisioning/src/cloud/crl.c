@@ -155,7 +155,8 @@ OCStackResult OCCloudPostCRL(void* ctx,
     //add next fields if they were filled
     if (serialNumbers)
     {
-        size_t dimensions[MAX_REP_ARRAY_DEPTH] = {serialNumbers->length, 0 ,0};
+        size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
+        dimensions[0] = serialNumbers->length;
         OCRepPayloadSetStringArray(payload, OC_RSRVD_SERIAL_NUMBERS,
                                    (const char**)serialNumbers->array, dimensions);
 
@@ -172,7 +173,7 @@ OCStackResult OCCloudPostCRL(void* ctx,
         goto exit;
     }
 
-    result = OCConvertPayload((OCPayload *)payload, &cbor, &cbor_len);
+    result = OCConvertPayload((OCPayload *)payload, OC_FORMAT_CBOR, &cbor, &cbor_len);
     if (result != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "Can't convert OCPayload to cbor");

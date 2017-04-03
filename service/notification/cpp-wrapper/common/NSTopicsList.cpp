@@ -19,20 +19,23 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSTopicsList.h"
+#include "NSException.h"
 #include "oic_malloc.h"
 
 namespace OIC
 {
     namespace Service
     {
-        NSTopicsList::NSTopicsList(::NSTopicLL *topics)
+        NSTopicsList::NSTopicsList(::NSTopicLL *topics, bool modify)
         {
             ::NSTopicLL *topicsNode = nullptr;
             topicsNode = topics;
+            m_modifiable = modify;
 
             while (topicsNode != nullptr)
             {
-                addTopic(topicsNode->topicName, (NSTopic::NSTopicState)topicsNode->state);
+                m_topicsList.push_back(new NSTopic(
+                                           topicsNode->topicName, (NSTopic::NSTopicState)topicsNode->state));
                 topicsNode = topicsNode->next;
             }
 
@@ -41,47 +44,78 @@ namespace OIC
         {
             for (auto it : topicsList.getTopicsList())
             {
-                addTopic(it->getTopicName(), it->getState());
+                m_topicsList.push_back(new NSTopic(it.getTopicName(), it.getState()));
             }
+            m_modifiable = false;
         }
 
         NSTopicsList &NSTopicsList::operator=(const NSTopicsList &topicsList)
         {
             for (auto it : topicsList.getTopicsList())
             {
-                this->addTopic(it->getTopicName(), it->getState());
+                this->m_topicsList.push_back(new NSTopic(it.getTopicName(), it.getState()));
             }
+            m_modifiable = false;
             return *this;
         }
 
         NSTopicsList::~NSTopicsList()
         {
-            for (auto it : getTopicsList())
+            for (auto it : m_topicsList)
             {
                 delete it;
             }
-            getTopicsList().clear();
+            m_topicsList.clear();
         }
 
         void NSTopicsList::addTopic(const std::string &topicName, NSTopic::NSTopicState state)
         {
-            m_topicsList.push_back(new NSTopic(topicName, state));
+            if (m_modifiable)
+            {
+                m_topicsList.push_back(new NSTopic(topicName, state));
+            }
+            else
+            {
+                throw NSException("Invalid Operation. Method not supported as the object state is invalid");
+            }
         }
 
         void NSTopicsList::removeTopic(const std::string &topicName)
         {
-            for (auto it : getTopicsList())
+            if (m_modifiable)
             {
-                if (it->getTopicName().compare(topicName) == 0)
+                for (auto it : m_topicsList)
                 {
-                    m_topicsList.remove(it);
+                    if (it->getTopicName().compare(topicName) == 0)
+                    {
+                        m_topicsList.remove(it);
+                    }
                 }
+            }
+            else
+            {
+                throw NSException("Invalid Operation. Method not supported as the object state is invalid");
             }
         }
 
-        std::list<NSTopic *> NSTopicsList::getTopicsList() const
+        std::list<NSTopic> NSTopicsList::getTopicsList() const
         {
-            return m_topicsList;
+            std::list<NSTopic> topicList;
+            for (auto it : m_topicsList)
+            {
+                NSTopic topic(it->getTopicName(), it->getState());
+                topicList.push_back(topic);
+            }
+            return topicList;
+        }
+
+        //Below method restricts the application from illegally modifying Topics when
+        //Provider is in Invalid state. By calling the API, the service prevents and protects
+        //the integrity of TopicsList updation when the associated object is Invalid
+        //The default value of the variable is 'false' in the provider side. Also, the state is irreversible.
+        void NSTopicsList::unsetModifiability()
+        {
+            m_modifiable = false;
         }
     }
 }

@@ -70,8 +70,8 @@ CAConnectedDeviceInfo_t *CAEDRGetDeviceInfoFromAddress(const char *remoteAddress
         return NULL;
     }
 
-    uint32_t length = u_arraylist_length(g_deviceStateList);
-    for (uint32_t index = 0; index < length; index++)
+    size_t length = u_arraylist_length(g_deviceStateList);
+    for (size_t index = 0; index < length; index++)
     {
         CAConnectedDeviceInfo_t* deviceInfo =
                 (CAConnectedDeviceInfo_t*) u_arraylist_get(g_deviceStateList, index);

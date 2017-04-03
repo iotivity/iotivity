@@ -55,12 +55,11 @@ using namespace std;
 namespace itst = iotivity::test;
 
 #define DEFAULT_CONTEXT_VALUE 0x99
-#define DEFAULT_MESSAGE_TYPE "application/json"
 
 //-----------------------------------------------------------------------------
 // Private variables
 //-----------------------------------------------------------------------------
-static const char TAG[] = "RDDatabaseTests";
+#define TAG "RDDatabaseTests"
 
 std::chrono::seconds const SHORT_TEST_TIMEOUT = std::chrono::seconds(5);
 
@@ -75,99 +74,330 @@ class RDDatabaseTests : public testing::Test {
     protected:
     virtual void SetUp()
     {
+        remove("RD.db");
         OCInit("127.0.0.1", 5683, OC_CLIENT_SERVER);
+        EXPECT_EQ(OC_STACK_OK, OCRDDatabaseInit());
     }
 
     virtual void TearDown()
     {
+        EXPECT_EQ(OC_STACK_OK, OCRDDatabaseClose());
         OCStop();
     }
 };
 
-TEST_F(RDDatabaseTests, CreateDatabase)
+typedef struct Resource
 {
-    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseInit(NULL));
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseClose());
-}
+    const char *uri;
+    const char *rt;
+    const char *itf;
+    uint8_t bm;
+} Resource;
 
-TEST_F(RDDatabaseTests, PublishDatabase)
+static OCRepPayload *CreateRDPublishPayload(const char *deviceId,
+                                            Resource *resources,
+                                            size_t nresources)
 {
-    // itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseInit(NULL));
     OCRepPayload *repPayload = OCRepPayloadCreate();
     EXPECT_TRUE(repPayload != NULL);
-    const char *deviceId = OCGetServerInstanceIDString();
     EXPECT_TRUE(deviceId != NULL);
     EXPECT_TRUE(OCRepPayloadSetPropString(repPayload, OC_RSRVD_DEVICE_ID, deviceId));
     EXPECT_TRUE(OCRepPayloadSetPropInt(repPayload, OC_RSRVD_DEVICE_TTL, 86400));
-    OCDevAddr address;
-    address.port = 54321;
-    OICStrcpy(address.addr,MAX_ADDR_STR_SIZE, "192.168.1.1");
 
-    std::string resourceURI_thermostat = "/a/thermostat";
-    std::string resourceTypeName_thermostat = "core.thermostat";
-    std::string resourceURI_light = "/a/light";
-    std::string resourceTypeName_light = "core.light";
+    const OCRepPayload *linkArr[nresources];
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {nresources, 0, 0};
 
-    const OCRepPayload *linkArr[2];
-    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {2, 0, 0};
+    for (size_t i = 0; i < nresources; ++i)
+    {
+        OCRepPayload *link = OCRepPayloadCreate();
+        OCRepPayloadSetPropString(link, OC_RSRVD_HREF, resources[i].uri);
+        char anchor[MAX_URI_LENGTH];
+        snprintf(anchor, MAX_URI_LENGTH, "ocf://%s", deviceId);
+        OCRepPayloadSetPropString(link, OC_RSRVD_URI, anchor);
+        size_t rtDim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
+        char **rt = (char **)OICMalloc(sizeof(char *) * 1);
+        rt[0] = OICStrdup(resources[i].rt);
+        OCRepPayloadSetStringArray(link, OC_RSRVD_RESOURCE_TYPE, (const char **)rt,
+                                   rtDim);
+        size_t itfDim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
+        char **itf = (char **)OICMalloc(sizeof(char *) * 1);
+        itf[0] = OICStrdup(resources[i].itf);
+        OCRepPayloadSetStringArray(link, OC_RSRVD_INTERFACE, (const char **)itf,
+                                   itfDim);
+        OCRepPayload *policy = OCRepPayloadCreate();
+        OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP, resources[i].bm);
+        OCRepPayloadSetPropObjectAsOwner(link, OC_RSRVD_POLICY, policy);
+        size_t epsDim[MAX_REP_ARRAY_DEPTH] = {2, 0, 0};
+        OCRepPayload *eps[2];
+        eps[0] = OCRepPayloadCreate();
+        OCRepPayloadSetPropString(eps[0], OC_RSRVD_ENDPOINT, "coap://127.0.0.1:1234");
+        OCRepPayloadSetPropInt(eps[0], OC_RSRVD_PRIORITY, 1);
+        eps[1] = OCRepPayloadCreate();
+        OCRepPayloadSetPropString(eps[1], OC_RSRVD_ENDPOINT, "coaps://[::1]:5678");
+        OCRepPayloadSetPropInt(eps[1], OC_RSRVD_PRIORITY, 1);
+        OCRepPayloadSetPropObjectArray(link, OC_RSRVD_ENDPOINTS, (const OCRepPayload **)eps, epsDim);
+        linkArr[i] = link;
+    }
 
-    OCRepPayload *link = OCRepPayloadCreate();
-    OCRepPayloadSetPropString(link, OC_RSRVD_HREF, resourceURI_thermostat.c_str());
-    size_t rtDim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
-    char **rt = (char **)OICMalloc(sizeof(char *) * 1);
-    rt[0] = OICStrdup(resourceTypeName_thermostat.c_str());
-    OCRepPayloadSetStringArray(link, OC_RSRVD_RESOURCE_TYPE, (const char **)rt,
-                               rtDim);
-
-    size_t itfDim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
-    char **itf = (char **)OICMalloc(sizeof(char *) * 1);
-    itf[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-    OCRepPayloadSetStringArray(link, OC_RSRVD_INTERFACE, (const char **)itf,
-                              itfDim);
-    OCRepPayloadSetPropInt(link, OC_RSRVD_INS, 0);
-    size_t mtDim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
-    char **mt = (char **)OICMalloc(sizeof(char *) * 1);
-    mt[0] = OICStrdup(DEFAULT_MESSAGE_TYPE);
-    OCRepPayloadSetStringArray(link, OC_RSRVD_MEDIA_TYPE, (const char **)mt,
-                               mtDim);
-    OCRepPayload *policy = OCRepPayloadCreate();
-    OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP, OC_DISCOVERABLE);
-    OCRepPayloadSetPropObjectAsOwner(link, OC_RSRVD_POLICY, policy);
-    linkArr[0] = link;
-
-    OCRepPayload *link1 = OCRepPayloadCreate();
-    OCRepPayloadSetPropString(link1, OC_RSRVD_HREF, resourceURI_light.c_str());
-    char **rt1 = (char **)OICMalloc(sizeof(char *) * 1);
-    rt1[0] = OICStrdup(resourceTypeName_light.c_str());
-    OCRepPayloadSetStringArray(link1, OC_RSRVD_RESOURCE_TYPE, (const char **)rt1,
-                               rtDim);
-    OCRepPayloadSetStringArray(link1, OC_RSRVD_INTERFACE, (const char **)itf,
-                              itfDim);
-    OCRepPayloadSetPropInt(link1, OC_RSRVD_INS, 1);
-    OCRepPayloadSetStringArray(link1, OC_RSRVD_MEDIA_TYPE, (const char **)mt,
-                               mtDim);
-    OCRepPayloadSetPropObjectAsOwner(link1, OC_RSRVD_POLICY, policy);
-    linkArr[1] = link1;
     OCRepPayloadSetPropObjectArray(repPayload, OC_RSRVD_LINKS, linkArr, dimensions);
 
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *)repPayload);
+    return repPayload;
+}
 
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload, &address));
-    OCDiscoveryPayload *discPayload = OCDiscoveryPayloadCreate();
-    EXPECT_TRUE(discPayload != NULL);
-    EXPECT_EQ(discPayload->base.type, PAYLOAD_TYPE_DISCOVERY);
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseCheckResources(NULL, "core.light", discPayload));
+static void EndpointsVerify(const OCEndpointPayload *eps)
+{
+    EXPECT_STREQ(eps->tps, "coap");
+    EXPECT_STREQ(eps->addr, "127.0.0.1");
+    EXPECT_EQ(eps->family, OC_IP_USE_V4);
+    EXPECT_EQ(eps->port, 1234);
+    EXPECT_EQ(eps->pri, 1);
+    EXPECT_STREQ(eps->next->tps, "coaps");
+    EXPECT_STREQ(eps->next->addr, "::1");
+    EXPECT_EQ(eps->next->family, (OC_FLAG_SECURE | OC_IP_USE_V6));
+    EXPECT_EQ(eps->next->port, 5678);
+    EXPECT_EQ(eps->next->pri, 1);
+    EXPECT_TRUE(eps->next->next == NULL);
+}
+
+static OCRepPayload *CreateResources(const char *deviceId)
+{
+    Resource resources[] = {
+        { "/a/thermostat", "core.thermostat", OC_RSRVD_INTERFACE_DEFAULT, OC_DISCOVERABLE },
+        { "/a/light", "core.light", OC_RSRVD_INTERFACE_DEFAULT, OC_DISCOVERABLE }
+    };
+    return CreateRDPublishPayload(deviceId, resources, 2);
+}
+
+TEST_F(RDDatabaseTests, Create)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+}
+
+TEST_F(RDDatabaseTests, StoreResources)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    const char *deviceId = "7a960f46-a52e-4837-bd83-460b1a6dd56b";
+    OCRepPayload *repPayload = CreateResources(deviceId);
+
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
+
+    OCDiscoveryPayload *discPayload = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(NULL, "core.light", &discPayload));
     OCDiscoveryPayloadDestroy(discPayload);
-    OCDiscoveryPayload *discPayload1 = OCDiscoveryPayloadCreate();
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseCheckResources(OC_RSRVD_INTERFACE_DEFAULT, NULL, discPayload1));
-    OCDiscoveryPayloadDestroy(discPayload1);
-    OCDiscoveryPayload *discPayload2 = OCDiscoveryPayloadCreate();
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseCheckResources(NULL, "core.light", discPayload2));
-    OCDiscoveryPayloadDestroy(discPayload2);
-    OCDiscoveryPayload *discPayload3 = OCDiscoveryPayloadCreate();
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseCheckResources(OC_RSRVD_INTERFACE_DEFAULT, "core.light", discPayload3));
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDeleteDevice(deviceId));
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseClose());
+    discPayload = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(OC_RSRVD_INTERFACE_DEFAULT, NULL, &discPayload));
+    OCDiscoveryPayloadDestroy(discPayload);
+    discPayload = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(NULL, "core.light", &discPayload));
+    OCDiscoveryPayloadDestroy(discPayload);
+    discPayload = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(OC_RSRVD_INTERFACE_DEFAULT, "core.light", &discPayload));
+    OCDiscoveryPayloadDestroy(discPayload);
+    discPayload = NULL;
+
+    OCPayloadDestroy((OCPayload *)repPayload);
+}
+
+TEST_F(RDDatabaseTests, AddResources)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    const char *deviceId = "7a960f46-a52e-4837-bd83-460b1a6dd56b";
+
+    OCRepPayload *repPayload = CreateResources(deviceId);
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
+    OCPayloadDestroy((OCPayload *)repPayload);
+
+    Resource resources[] = {
+        { "/a/light2", "core.light", OC_RSRVD_INTERFACE_DEFAULT, OC_DISCOVERABLE }
+    };
+    repPayload = CreateRDPublishPayload(deviceId, resources, 1);
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
+    OCPayloadDestroy((OCPayload *)repPayload);
+
+    OCDiscoveryPayload *discPayload = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(OC_RSRVD_INTERFACE_LL, NULL, &discPayload));
+    bool foundThermostat = false;
+    bool foundLight = false;
+    bool foundLight2 = false;
+    for (OCResourcePayload *resource = discPayload->resources; resource; resource = resource->next)
+    {
+        if (!strcmp("/a/thermostat", resource->uri))
+        {
+            foundThermostat = true;
+        }
+        else if (!strcmp("/a/light", resource->uri))
+        {
+            foundLight = true;
+        }
+        else if (!strcmp("/a/light2", resource->uri))
+        {
+            foundLight2 = true;
+        }
+    }
+    EXPECT_TRUE(foundThermostat);
+    EXPECT_TRUE(foundLight);
+    EXPECT_TRUE(foundLight2);
+    OCDiscoveryPayloadDestroy(discPayload);
+    discPayload = NULL;
+}
+
+TEST_F(RDDatabaseTests, UpdateResources)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    const char *anchor = "ocf://7a960f46-a52e-4837-bd83-460b1a6dd56b";
+    const char *deviceId = &anchor[6];
+
+    OCRepPayload *repPayload = CreateResources(deviceId);
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
+    OCPayloadDestroy((OCPayload *)repPayload);
+
+    Resource resources[] = {
+        { "/a/thermostat", "x.core.r.thermostat", "x.core.if.thermostat", OC_DISCOVERABLE | OC_OBSERVABLE },
+        { "/a/light", "x.core.r.light", "x.core.if.light", OC_DISCOVERABLE | OC_OBSERVABLE }
+    };
+    repPayload = CreateRDPublishPayload(deviceId, resources, 2);
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
+    OCPayloadDestroy((OCPayload *)repPayload);
+
+    OCDiscoveryPayload *discPayload = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(OC_RSRVD_INTERFACE_LL, NULL, &discPayload));
+    bool foundThermostat = false;
+    bool foundLight = false;
+    for (OCResourcePayload *resource = discPayload->resources; resource; resource = resource->next)
+    {
+        if (!strcmp("/a/thermostat", resource->uri))
+        {
+            foundThermostat = true;
+            EXPECT_STREQ("x.core.r.thermostat", resource->types->value);
+            EXPECT_TRUE(resource->types->next == NULL);
+            EXPECT_STREQ("x.core.if.thermostat", resource->interfaces->value);
+            EXPECT_TRUE(resource->interfaces->next == NULL);
+            EXPECT_EQ(OC_DISCOVERABLE | OC_OBSERVABLE, resource->bitmap);
+            EXPECT_STREQ(anchor, resource->anchor);
+            EndpointsVerify(resource->eps);
+        }
+        else if (!strcmp("/a/light", resource->uri))
+        {
+            foundLight = true;
+            EXPECT_STREQ("x.core.r.light", resource->types->value);
+            EXPECT_TRUE(resource->types->next == NULL);
+            EXPECT_STREQ("x.core.if.light", resource->interfaces->value);
+            EXPECT_TRUE(resource->interfaces->next == NULL);
+            EXPECT_EQ(OC_DISCOVERABLE | OC_OBSERVABLE, resource->bitmap);
+            EXPECT_STREQ(anchor, resource->anchor);
+            EndpointsVerify(resource->eps);
+        }
+    }
+    EXPECT_TRUE(foundThermostat);
+    EXPECT_TRUE(foundLight);
+    OCDiscoveryPayloadDestroy(discPayload);
+    discPayload = NULL;
+}
+
+TEST_F(RDDatabaseTests, AddAndUpdateResources)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    const char *anchor = "ocf://7a960f46-a52e-4837-bd83-460b1a6dd56b";
+    const char *deviceId = &anchor[6];
+
+    OCRepPayload *repPayload = CreateResources(deviceId);
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
+    OCPayloadDestroy((OCPayload *)repPayload);
+
+    Resource resources[] = {
+        { "/a/thermostat", "x.core.r.thermostat", "x.core.if.thermostat", OC_DISCOVERABLE | OC_OBSERVABLE },
+        { "/a/light", "x.core.r.light", "x.core.if.light", OC_DISCOVERABLE | OC_OBSERVABLE },
+        { "/a/light2", "core.light", OC_RSRVD_INTERFACE_DEFAULT, OC_DISCOVERABLE }
+    };
+    repPayload = CreateRDPublishPayload(deviceId, resources, 3);
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
+    OCPayloadDestroy((OCPayload *)repPayload);
+
+    OCDiscoveryPayload *discPayload = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(OC_RSRVD_INTERFACE_LL, NULL, &discPayload));
+    bool foundThermostat = false;
+    bool foundLight = false;
+    bool foundLight2 = false;
+    for (OCResourcePayload *resource = discPayload->resources; resource; resource = resource->next)
+    {
+        if (!strcmp("/a/thermostat", resource->uri))
+        {
+            foundThermostat = true;
+            EXPECT_STREQ("x.core.r.thermostat", resource->types->value);
+            EXPECT_TRUE(resource->types->next == NULL);
+            EXPECT_STREQ("x.core.if.thermostat", resource->interfaces->value);
+            EXPECT_TRUE(resource->interfaces->next == NULL);
+            EXPECT_EQ(OC_DISCOVERABLE | OC_OBSERVABLE, resource->bitmap);
+            EXPECT_STREQ(anchor, resource->anchor);
+            EndpointsVerify(resource->eps);
+        }
+        else if (!strcmp("/a/light", resource->uri))
+        {
+            foundLight = true;
+            EXPECT_STREQ("x.core.r.light", resource->types->value);
+            EXPECT_TRUE(resource->types->next == NULL);
+            EXPECT_STREQ("x.core.if.light", resource->interfaces->value);
+            EXPECT_TRUE(resource->interfaces->next == NULL);
+            EXPECT_EQ(OC_DISCOVERABLE | OC_OBSERVABLE, resource->bitmap);
+            EXPECT_STREQ(anchor, resource->anchor);
+            EndpointsVerify(resource->eps);
+        }
+        else if (!strcmp("/a/light2", resource->uri))
+        {
+            foundLight2 = true;
+            EXPECT_STREQ("core.light", resource->types->value);
+            EXPECT_TRUE(resource->types->next == NULL);
+            EXPECT_STREQ(OC_RSRVD_INTERFACE_DEFAULT, resource->interfaces->value);
+            EXPECT_TRUE(resource->interfaces->next == NULL);
+            EXPECT_EQ(OC_DISCOVERABLE, resource->bitmap);
+            EXPECT_STREQ(anchor, resource->anchor);
+            EndpointsVerify(resource->eps);
+        }
+    }
+    EXPECT_TRUE(foundThermostat);
+    EXPECT_TRUE(foundLight);
+    EXPECT_TRUE(foundLight2);
+    OCDiscoveryPayloadDestroy(discPayload);
+    discPayload = NULL;
+}
+
+TEST_F(RDDatabaseTests, DeleteResourcesDevice)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    const char *deviceIds[2] =
+    {
+        "7a960f46-a52e-4837-bd83-460b1a6dd56b",
+        "983656a7-c7e5-49c2-a201-edbeb7606fb5",
+    };
+    OCRepPayload *payloads[2];
+    payloads[0] = CreateResources(deviceIds[0]);
+    payloads[1] = CreateResources(deviceIds[1]);
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(payloads[0]));
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(payloads[1]));
+
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDeleteResources(deviceIds[0], NULL, 0));
+
+    OCDiscoveryPayload *discPayload = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(OC_RSRVD_INTERFACE_LL, NULL, &discPayload));
+    bool found0 = false;
+    bool found1 = false;
+    for (OCDiscoveryPayload *payload = discPayload; payload; payload = payload->next)
+    {
+        if (!strcmp((const char *) deviceIds[0], payload->sid))
+        {
+            found0 = true;
+        }
+        if (!strcmp((const char *) deviceIds[1], payload->sid))
+        {
+            found1 = true;
+        }
+    }
+    EXPECT_FALSE(found0);
+    EXPECT_TRUE(found1);
+    OCDiscoveryPayloadDestroy(discPayload);
+    discPayload = NULL;
+
+    OCPayloadDestroy((OCPayload *)payloads[0]);
+    OCPayloadDestroy((OCPayload *)payloads[1]);
 }

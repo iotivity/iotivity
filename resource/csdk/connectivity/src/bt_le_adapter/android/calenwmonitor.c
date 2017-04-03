@@ -108,7 +108,6 @@ CAResult_t CAStopLEAdapter()
 
 CAResult_t CAInitLENwkMonitorMutexVaraibles()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     if (NULL == g_bleDeviceStateChangedCbMutex)
     {
         g_bleDeviceStateChangedCbMutex = oc_mutex_new();
@@ -130,27 +129,20 @@ CAResult_t CAInitLENwkMonitorMutexVaraibles()
         }
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 void CATerminateLENwkMonitorMutexVaraibles()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     oc_mutex_free(g_bleDeviceStateChangedCbMutex);
     g_bleDeviceStateChangedCbMutex = NULL;
 
     oc_mutex_free(g_bleConnectionStateChangedCbMutex);
     g_bleConnectionStateChangedCbMutex = NULL;
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 CAResult_t CAGetLEAdapterState()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     if (!g_jvm)
     {
         OIC_LOG(ERROR, TAG, "g_jvm is null");
@@ -188,14 +180,11 @@ CAResult_t CAGetLEAdapterState()
         (*g_jvm)->DetachCurrentThread(g_jvm);
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAInitializeLENetworkMonitor()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     CAResult_t res = CAInitLENwkMonitorMutexVaraibles();
     if (CA_STATUS_OK != res)
     {
@@ -206,32 +195,24 @@ CAResult_t CAInitializeLENetworkMonitor()
     CALENetworkMonitorJNISetContext();
     CALENetworkMonitorJniInit();
 
-    OIC_LOG(DEBUG, TAG, "OUT");
-
     return CA_STATUS_OK;
-
 }
 
 void CATerminateLENetworkMonitor()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "CATerminateLENetworkMonitor");
 
     CATerminateLENwkMonitorMutexVaraibles();
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     OIC_LOG(DEBUG, TAG, "Setting CALEDeviceStateChangedCallback");
 
     oc_mutex_lock(g_bleDeviceStateChangedCbMutex);
     CALESetAdapterStateCallback(callback);
     oc_mutex_unlock(g_bleDeviceStateChangedCbMutex);
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -243,21 +224,19 @@ CAResult_t CAUnSetLEAdapterStateChangedCb()
 
 CAResult_t CASetLENWConnectionStateChangedCb(CALEConnectionStateChangedCallback callback)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "CASetLENWConnectionStateChangedCb");
     oc_mutex_lock(g_bleConnectionStateChangedCbMutex);
     g_bleConnectionStateChangedCallback = callback;
     oc_mutex_unlock(g_bleConnectionStateChangedCbMutex);
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAUnsetLENWConnectionStateChangedCb()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "CAUnsetLENWConnectionStateChangedCb");
     oc_mutex_lock(g_bleConnectionStateChangedCbMutex);
     g_bleConnectionStateChangedCallback = NULL;
     oc_mutex_unlock(g_bleConnectionStateChangedCbMutex);
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -296,7 +275,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
 
-    OIC_LOG_V(DEBUG, TAG, "CaLeClientInterface - Network State Changed : status(%d)", status);
+    OIC_LOG_V(INFO, TAG, "CaLeClientInterface - Network State Changed : status(%d)", status);
 
     if (!g_bleDeviceStateChangedCallback)
     {
@@ -312,7 +291,11 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
     {
         CANetworkStatus_t newStatus = CA_INTERFACE_UP;
         CALEClientCreateDeviceList();
-        CALEServerCreateCachedDeviceList();
+
+        if (!(caglobals.bleFlags & CA_LE_SERVER_DISABLE))
+        {
+            CALEServerCreateCachedDeviceList();
+        }
 
         g_bleDeviceStateChangedCallback(newStatus);
     }
@@ -395,7 +378,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattNWConnectionStateChangeCallback
                                                                                  jint status,
                                                                                  jint newState)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALeGattNWConnectionStateChangeCallback - status %d, newstate %d",
+    OIC_LOG_V(INFO, TAG, "CALeGattNWConnectionStateChangeCallback - status %d, newstate %d",
               status, newState);
     VERIFY_NON_NULL_VOID(env, TAG, "env");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
@@ -424,7 +407,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattNWConnectionStateChangeCallback
         {
             if (g_bleConnectionStateChangedCallback)
             {
-                OIC_LOG_V(DEBUG, TAG, "LE Disconnected state is %d, %s", newState, address);
+                OIC_LOG_V(DEBUG, TAG, "LE Disconnected state is %s", address);
                 g_bleConnectionStateChangedCallback(CA_ADAPTER_GATT_BTLE, address, false);
             }
         }
@@ -496,7 +479,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattNWServicesDiscoveredCallback(JN
                                                                               jobject gatt,
                                                                               jint status)
 {
-    OIC_LOG_V(DEBUG, TAG, "caLeGattNWServicesDiscoveredCallback - status %d", status);
+    OIC_LOG_V(INFO, TAG, "caLeGattNWServicesDiscoveredCallback - status %d", status);
     VERIFY_NON_NULL_VOID(env, TAG, "env");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
     VERIFY_NON_NULL_VOID(gatt, TAG, "gatt");
@@ -525,7 +508,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattNWDescriptorWriteCallback(JNIEn
                                                                            jobject gatt,
                                                                            jint status)
 {
-    OIC_LOG_V(DEBUG, TAG, "caLeGattNWDescriptorWriteCallback - status %d", status);
+    OIC_LOG_V(INFO, TAG, "caLeGattNWDescriptorWriteCallback - status %d", status);
     VERIFY_NON_NULL_VOID(env, TAG, "env");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
     VERIFY_NON_NULL_VOID(gatt, TAG, "gatt");

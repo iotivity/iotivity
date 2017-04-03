@@ -32,7 +32,6 @@ rm -rf $sourcedir/tmp/extlibs/tinycbor/tinycbor/.git
 cp -R ./extlibs/cjson $sourcedir/tmp/extlibs
 cp -R ./extlibs/mbedtls $sourcedir/tmp/extlibs
 cp -R ./extlibs/gtest $sourcedir/tmp/extlibs
-cp -R ./extlibs/tinydtls $sourcedir/tmp/extlibs
 cp -LR ./extlibs/sqlite3 $sourcedir/tmp/extlibs
 cp -R ./extlibs/timer $sourcedir/tmp/extlibs
 cp -R ./extlibs/rapidxml $sourcedir/tmp/extlibs
@@ -55,7 +54,7 @@ cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp
 
 cd $sourcedir/tmp
 
-secured=0
+secured=1
 gbscommand="gbs build -A armv7l "
 
 for ARGUMENT_VALUE in $*

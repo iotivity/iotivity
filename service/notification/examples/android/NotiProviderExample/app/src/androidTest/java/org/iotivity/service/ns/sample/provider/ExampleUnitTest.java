@@ -30,6 +30,8 @@ import org.iotivity.base.OcPlatform;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
+import org.iotivity.service.ns.common.NSException;
+import org.iotivity.service.ns.common.NSErrorCode;
 import org.iotivity.service.ns.common.SyncInfo;
 import org.iotivity.service.ns.common.Topic;
 
@@ -152,38 +154,35 @@ public class ExampleUnitTest extends ApplicationTestCase<Application> {
 
     @Test
     public void StartProviderPositiveWithPolicyTrue() {
-        int result = 0;
         try {
-            result = gProviderRes.start(subCb, syncCb, true, "ok", false);
+            gProviderRes.start(subCb, syncCb, true, "ok", false);
             gProviderRes.stop();
-        } catch (Exception e) {
+        } catch (NSException e) {
             e.printStackTrace();
+            assertEquals(NSErrorCode.OK, e.getErrorCode());
         }
-        assertEquals(100, result);
     }
 
     @Test
     public void StartProviderPositiveWithPolicyFalse() {
-        int result = 0;
         try {
-            result = gProviderRes.start(subCb, syncCb, false, "ok", false);
+            gProviderRes.start(subCb, syncCb, false, "ok", false);
             gProviderRes.stop();
-        } catch (Exception e) {
+        } catch (NSException e) {
             e.printStackTrace();
+            assertEquals(NSErrorCode.OK, e.getErrorCode());
         }
-        assertEquals(100, result);
     }
 
     @Test
     public void StopProviderPositive() {
-        int result = 0;
         try {
             gProviderRes.start(subCb, syncCb, true, "ok", false);
-            result = gProviderRes.stop();
-        } catch (Exception e) {
+            gProviderRes.stop();
+        } catch (NSException e) {
             e.printStackTrace();
+            assertEquals(NSErrorCode.OK, e.getErrorCode());
         }
-        assertEquals(100, result);
     }
 
     @Test

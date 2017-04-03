@@ -58,8 +58,8 @@ std::string  systemTime = "2016-01-15T11.01";
 
 // Set of strings for each of device info fields
 std::string  deviceName = "IoTivity Room Server";
-std::string  specVersion = "core.1.1.0";
-std::vector<std::string> dataModelVersions = {"res.1.1.0"};
+std::string  specVersion = "ocf.1.1.0";
+std::vector<std::string> dataModelVersions = {"ocf.res.1.1.0"};
 std::string  protocolIndependentID = "ac1b42a7-0518-448f-9b11-bfe328837bbf";
 
 // OCPlatformInfo Contains all the platform info to be stored
@@ -656,13 +656,12 @@ int main(int argc, char* argv[])
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Server,
-        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-        0,         // Uses randomly available port
-        OC::QualityOfService::LowQos
+        nullptr
     };
 
     OCPlatform::Configure(cfg);
     std::cout << "Starting server & setting platform info\n";
+    OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
 
     OCStackResult result = SetPlatformInfo(platformId, manufacturerName, manufacturerLink,
             modelNumber, dateOfManufacture, platformVersion, operatingSystemVersion,
@@ -705,8 +704,8 @@ int main(int argc, char* argv[])
         std::cout << "Exception in main: " << e.what();
     }
 
-    // No explicit call to stop the platform.
-    // When OCPlatform destructor is invoked, internally we do platform cleanup
+    // Perform platform clean up.
+    OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
 
     return 0;
 }

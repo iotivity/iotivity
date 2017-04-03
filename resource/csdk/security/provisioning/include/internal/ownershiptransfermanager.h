@@ -58,7 +58,7 @@ OCStackResult OTMDoOwnershipTransfer(void* ctx,
 OCStackResult OTMSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus);
 
 
-/*
+/**
  *Callback for load secret for temporal secure session
  *
  * e.g) in case of PIN based, input the pin through this callback
@@ -66,12 +66,12 @@ OCStackResult OTMSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus
  */
 typedef OCStackResult (*OTMLoadSecret)(OTMContext_t* otmCtx);
 
-/*
+/**
  * Callback for create secure channel using secret inputed from OTMLoadSecret callback
  */
 typedef OCStackResult (*OTMCreateSecureSession)(OTMContext_t* otmCtx);
 
-/*
+/**
  * Callback for creating CoAP payload.
  */
 typedef OCStackResult (*OTMCreatePayloadCallback)(OTMContext_t* otmCtx, uint8_t **payload,

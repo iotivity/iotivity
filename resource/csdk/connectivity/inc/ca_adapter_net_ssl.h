@@ -123,7 +123,7 @@ void CAdeinitSslAdapter();
  *
  */
 
-CAResult_t CAencryptSsl(const CAEndpoint_t *endpoint, void *data, uint32_t dataLen);
+CAResult_t CAencryptSsl(const CAEndpoint_t *endpoint, void *data, size_t dataLen);
 
 /**
  * Performs TLS decryption of the data.
@@ -138,7 +138,7 @@ CAResult_t CAencryptSsl(const CAEndpoint_t *endpoint, void *data, uint32_t dataL
  * @retval  ::CA_STATUS_FAILED Operation failed.
  *
  */
-CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t dataLen);
+CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dataLen);
 
 /**
  * Initiate TLS handshake with selected cipher suite.
@@ -189,6 +189,26 @@ CAResult_t CAsslGenerateOwnerPsk(const CAEndpoint_t *endpoint,
  */
 const CASecureEndpoint_t *GetCASecureEndpointData(const CAEndpoint_t* peer);
 #endif
+
+/**
+ * Adds a bit to the attributes field of a secure endpoint.
+ *
+ * @param[in]  peer         remote address
+ * @param[in]  newAttribute bit to be added to the attributes field
+ *
+ * @return  true if the secure endpoint has been found, false otherwise.
+ */
+bool SetCASecureEndpointAttribute(const CAEndpoint_t* peer, uint32_t newAttribute);
+
+/**
+ * Gets the attributes field of a secure endpoint.
+ *
+ * @param[in]  peer          remote address
+ * @param[out] allAttributes all the attributes bits for that remote address
+ *
+ * @return  true if the secure endpoint has been found, false otherwise.
+ */
+bool GetCASecureEndpointAttributes(const CAEndpoint_t* peer, uint32_t* allAttributes);
 
 #ifdef __cplusplus
 }

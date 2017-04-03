@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include "cacommon.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -33,6 +34,7 @@
 #include <sstream>
 #include <getopt.h>
 #include "ocstack.h"
+#include "pdu.h"
 #include "logger.h"
 #include "occlient.h"
 #include "ocpayload.h"
@@ -90,13 +92,13 @@ void handleSigInt(int signum)
     }
 }
 
-OCPayload* putPayload()
+OCPayload* createPayload()
 {
     OCRepPayload* payload = OCRepPayloadCreate();
 
     if (!payload)
     {
-        std::cout << "Failed to create put payload object"<<std::endl;
+        std::cout << "Failed to create payload object"<<std::endl;
         std::exit(1);
     }
 
@@ -167,9 +169,12 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(&handle, method, query.str().c_str(), remoteAddr,
-                       (method == OC_REST_PUT) ? putPayload() : NULL,
-                       (ConnType), qos, &cbData, options, numOptions);
+    OCPayload* payload = (method == OC_REST_PUT || method == OC_REST_POST) ? createPayload() : NULL;
+
+    ret = OCDoRequest(&handle, method, query.str().c_str(), remoteAddr,
+                      payload, (ConnType), qos, &cbData, options, numOptions);
+
+    OCPayloadDestroy(payload);
 
     if (ret != OC_STACK_OK)
     {
@@ -606,6 +611,7 @@ int InitGetRequestToUnavailableResource(OCQualityOfService qos)
 
 int InitIntrospection(OCDiscoveryPayload* dis)
 {
+    OC_UNUSED(dis);
     std::ostringstream query;
     query << coapIntrospectionResource;
     OIC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
@@ -788,9 +794,9 @@ int InitPlatformDiscovery(OCQualityOfService qos)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
-                       (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
-                       &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+                      (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+                      &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack device error");
@@ -813,9 +819,9 @@ int InitDeviceDiscovery(OCQualityOfService qos)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
-                       (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
-                       &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+                      (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+                      &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack device error");
@@ -838,9 +844,9 @@ int InitIntrospectionDiscovery(OCQualityOfService qos)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
-        (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
-        &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+                      (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+                      &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack device error");
@@ -849,7 +855,7 @@ int InitIntrospectionDiscovery(OCQualityOfService qos)
     return ret;
 }
 
-int InitDiscovery(OCQualityOfService qos)
+int InitDiscovery(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions)
 {
     OCStackResult ret;
     OCCallbackData cbData;
@@ -861,9 +867,26 @@ int InitDiscovery(OCQualityOfService qos)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
-                       (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
-                       &cbData, NULL, 0);
+    if (withVendorSpecificHeaderOptions)
+    {
+        OCHeaderOption options[MAX_HEADER_OPTIONS];
+        memset(options, 0, sizeof(OCHeaderOption) * MAX_HEADER_OPTIONS);
+        size_t numOptions = 0;
+
+        uint8_t format = COAP_MEDIATYPE_APPLICATION_CBOR;
+        uint16_t optionID = CA_OPTION_ACCEPT;
+        OCSetHeaderOption(options, &numOptions, optionID, &format, sizeof(format));
+
+        ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+                              (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+                              &cbData, options, 2);
+    }
+    else
+    {
+        ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+                           (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+                           &cbData, NULL, 0);
+    }
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -1072,7 +1095,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        InitDiscovery(OC_LOW_QOS);
+        InitDiscovery(OC_LOW_QOS, 0);
     }
 
     // Break from loop with Ctrl+C

@@ -1,5 +1,5 @@
 Name: iotivity
-Version: 1.2.0
+Version: 1.3.0
 Release: 0
 Summary: IoT Connectivity sponsored by the OCF
 Group: Network & Connectivity / IoT Connectivity
@@ -17,6 +17,10 @@ Source1002: %{name}-test.manifest
 
 %if "%{tizen}" == "2.3"
 %define TARGET_TRANSPORT IP
+%endif
+
+%if "%{tizen}" == "3.0"
+%define OIC_SUPPORT_TIZEN_TRACE True
 %endif
 
 %if "%{profile}" == "ivi"
@@ -73,15 +77,16 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?RD_MODE: %define RD_MODE CLIENT}
 %{!?RELEASE: %define RELEASE 1}
 %{!?ROUTING: %define ROUTING EP}
-%{!?SECURED: %define SECURED 0}
+%{!?SECURED: %define SECURED 1}
 %{!?TARGET_ARCH: %define TARGET_ARCH %{_arch}}
 %{!?TARGET_OS: %define TARGET_OS tizen}
 %{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
 %{!?VERBOSE: %define VERBOSE 1}
-%{!?WITH_CLOUD: %define WITH_CLOUD 0}
+%{!?WITH_CLOUD: %define WITH_CLOUD 1}
 %{!?WITH_MQ: %define WITH_MQ OFF}
 %{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?WITH_TCP: %define WITH_TCP 0}
+%{!?OIC_SUPPORT_TIZEN_TRACE: %define OIC_SUPPORT_TIZEN_TRACE False}
 
 BuildRequires:  expat-devel
 BuildRequires:  python, libcurl-devel
@@ -97,9 +102,14 @@ BuildRequires:  pkgconfig(sqlite3)
 %if "%{TARGET_OS}" == "tizen"
 BuildRequires:  gettext-tools
 BuildRequires:  pkgconfig(dlog)
+%if "%{OIC_SUPPORT_TIZEN_TRACE}" == "True"
+BuildRequires:  pkgconfig(ttrace)
+%endif
 BuildRequires:  pkgconfig(capi-network-connection)
-BuildRequires:  pkgconfig(capi-network-wifi)
 BuildRequires:  pkgconfig(capi-network-bluetooth) >= 0.1.52
+%if 3 <= 0%{?tizen_version_major}
+BuildRequires:  bluetooth-tools-profile_%{profile}
+%endif
 %else
 %if 0%{?fedora:1}
 BuildRequires:  sqlite-devel
@@ -189,6 +199,7 @@ scons %{?_smp_mflags} --prefix=%{_prefix} \
     WITH_MQ=%{WITH_MQ} \
     WITH_PROXY=%{WITH_PROXY} \
     WITH_TCP=%{WITH_TCP} \
+    OIC_SUPPORT_TIZEN_TRACE=%{OIC_SUPPORT_TIZEN_TRACE} \
     #eol
 
 
@@ -212,6 +223,7 @@ scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
     WITH_MQ=%{WITH_MQ} \
     WITH_PROXY=%{WITH_PROXY} \
     WITH_TCP=%{WITH_TCP} \
+    OIC_SUPPORT_TIZEN_TRACE=%{OIC_SUPPORT_TIZEN_TRACE} \
     #eol
 
 mkdir -p %{ex_install_dir}
@@ -307,6 +319,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %{_libdir}/librcs_server.so
 %{_libdir}/libresource_directory.so
 %{_libdir}/libESEnrolleeSDK.so
+%{_libdir}/libESMediatorRich.so
 %{_libdir}/libnotification*.so
 %if 0%{?WITH_PROXY} == 1
 %{_libdir}/libcoap_http_proxy.so

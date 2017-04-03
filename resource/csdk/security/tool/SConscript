@@ -18,9 +18,10 @@
 # //
 # //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
-Import('env')
+Import('libocsrm_env')
+import os
 
-tools_env = env.Clone()
+tools_env = libocsrm_env.Clone()
 src_dir = tools_env.get('SRC_DIR')
 target_os = tools_env.get('TARGET_OS')
 
@@ -35,7 +36,7 @@ else:
     # For bring up purposes only, the forked version will live here.
     tools_env.AppendUnique(CPPPATH = ['../../connectivity/lib/libcoap-4.1.1/include'])
 
-tools_env.PrependUnique(CPPPATH = ['../../../../extlibs/cjson',
+tools_env.PrependUnique(CPPPATH = ['#/extlibs/cjson',
                                   '../../include',
                                   '../../stack/include',
                                   '../../stack/include/internal',
@@ -47,24 +48,27 @@ tools_env.PrependUnique(CPPPATH = ['../../../../extlibs/cjson',
                                   '../include/internal'
                                   ])
 tools_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra', '-std=c++0x'])
-tools_env.AppendUnique(LIBPATH = [tools_env.get('BUILD_DIR')])
 tools_env.AppendUnique(RPATH = [tools_env.get('BUILD_DIR')])
+
+SConscript('#/extlibs/cjson/SConscript')
 
 if target_os in ['msys_nt', 'windows']:
     # octbstack.dll doesn't export all the functions called by this app, so use static LIBs instead.
-    tools_env.AppendUnique(LIBS = ['coap', 'tinydtls', 'mbedtls', 'mbedx509', 'mbedcrypto',
-                                   'octbstack_static', 'ocsrm', 'connectivity_abstraction'])
+    tools_env.AppendUnique(LIBS = ['coap', 'mbedtls', 'mbedx509', 'mbedcrypto',
+                                   'octbstack_static', 'ocsrm', 'connectivity_abstraction', 'sqlite3'])
 elif target_os in ['darwin']:
-    tools_env.AppendUnique(LIBS = ['coap', 'tinydtls', 'mbedtls', 'mbedx509', 'mbedcrypto',
+    tools_env.AppendUnique(LIBS = ['coap', 'mbedtls', 'mbedx509', 'mbedcrypto',
                                    'octbstack', 'ocsrm', 'connectivity_abstraction'])
 else:
-    tools_env.PrependUnique(LIBS = ['octbstack', 'm'])
+    tools_env.PrependUnique(LIBS = ['octbstack', 'ocsrm', 'm'])
+
+tools_env.PrependUnique(LIBS = ['cjson'])
+tools_env.AppendUnique(LIBS = ['timer'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-json2cbor_src = ['../../../../extlibs/cjson/cJSON.c',
-                 'json2cbor.c',]
+json2cbor_src = ['json2cbor.c']
 json2cbor = tools_env.Program('json2cbor', json2cbor_src)
 Alias("json2cbor", [json2cbor])
-env.AppendTarget('json2cbor')
+tools_env.AppendTarget('json2cbor')

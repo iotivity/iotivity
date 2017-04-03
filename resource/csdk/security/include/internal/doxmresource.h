@@ -45,7 +45,7 @@ OCStackResult InitDoxmResource();
 OCStackResult DeInitDoxmResource();
 
 /**
- * This method is used by SRM to retrieve DOXM resource data..
+ * This method is used by SRM to retrieve DOXM resource data.
  *
  * @return reference to @ref OicSecDoxm_t, binary format of Doxm resource data.
  */
@@ -82,6 +82,18 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
 OCStackResult DoxmToCBORPayload(const OicSecDoxm_t * doxm, uint8_t **cborPayload,
                                 size_t *cborSize, bool rwOnly);
 
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+/**
+ * API to save the seed value to generate device UUID.
+ *
+ * @param seed buffer of seed value.
+ * @param seedSize byte length of seed
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult SetDoxmDeviceIDSeed(const uint8_t* seed, size_t seedSize);
+#endif
+
 /**
  * This method returns the SRM device ID for this device.
  *
@@ -95,7 +107,6 @@ OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID);
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult SetDoxmDeviceID(const OicUuid_t *deviceID);
-
 
 /**
  * Gets the OicUuid_t value for the owner of this device.
@@ -130,6 +141,14 @@ OCStackResult GetDoxmRownerId(OicUuid_t *rowneruuid);
  * @return true if uuid exists in the SubOwner list of doxm, else false.
  */
 bool IsSubOwner(const OicUuid_t* uuid);
+
+/**
+ * Function to set a MOT status
+ *
+ * @param enable whether the MOT is enabled. (true=enable, false=disable)
+ */
+OCStackResult SetMOTStatus(bool enable);
+
 #endif //MULTIPLE_OWNER
 
 /** This function deallocates the memory for OicSecDoxm_t .
@@ -137,6 +156,15 @@ bool IsSubOwner(const OicUuid_t* uuid);
  * @param doxm is the pointer to @ref OicSecDoxm_t.
  */
 void DeleteDoxmBinData(OicSecDoxm_t* doxm);
+
+/** This function checks if two sets of /oic/sec/doxm properties are identical.
+ *
+ * @param doxm1 is a pointer to the first @ref OicSecDoxm_t data.
+ * @param doxm2 is a pointer to the second @ref OicSecDoxm_t data.
+ *
+ * @return true if all of the properties are identical, else false.
+ */
+bool AreDoxmBinPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* doxm2);
 
 /**
  * Function to restore doxm resurce to initial status.
@@ -162,6 +190,17 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
  * @retval ::OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult SetDoxmSelfOwnership(const OicUuid_t* newROwner);
+
+/**
+ * Internal function to update the writable properties of an /oic/sec/doxm
+ * struct with the values from another /oic/sec/doxm struct.
+ *
+ * @param src is a pointer to the source @ref OicSecDoxm_t data.
+ * @param dst is a pointer to the destination @ref OicSecDoxm_t data. 
+ *
+ * @retval ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult DoxmUpdateWriteableProperty(const OicSecDoxm_t* src, OicSecDoxm_t* dst);
 
 #ifdef __cplusplus
 }

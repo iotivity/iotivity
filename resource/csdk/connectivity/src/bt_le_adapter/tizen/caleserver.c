@@ -34,9 +34,9 @@
 #define TAG "OIC_CA_LE_SERVER"
 
 /**
- * Initial buffer size for Gatt Server.
+ * Initial buffer size(attr value max size) for Gatt Server.
  */
-#define CA_LE_INITIAL_BUF_SIZE 512
+#define CA_LE_INITIAL_BUF_SIZE (512)
 
 /**
  * The handle of the OIC server.
@@ -159,7 +159,7 @@ void CALEGattServerConnectionStateChanged(bool connected, const char *remoteAddr
         CARemoveLEClientInfoFromList(&g_LEClientList, remoteAddress);
         oc_mutex_unlock(g_LEClientListMutex);
 
-        res = CALEStartAdvertise(CA_GATT_SERVICE_UUID);
+        res = CALEStartAdvertise();
         if (CA_STATUS_OK != res)
         {
             OIC_LOG_V(ERROR, TAG, "Failed to start advertising [%d]", res);
@@ -195,9 +195,7 @@ CAResult_t CAStartLEGattServer()
         return CA_STATUS_FAILED;
     }
 
-    char *serviceUUID = CA_GATT_SERVICE_UUID;
-
-    ret  = CAAddNewLEServiceInGattServer(serviceUUID);
+    ret  = CAAddNewLEServiceInGattServer(CA_GATT_SERVICE_UUID);
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG_V(ERROR, TAG, "CAAddNewLEServiceInGattServer failed[%d]", ret);
@@ -243,7 +241,7 @@ CAResult_t CAStartLEGattServer()
         return CA_STATUS_FAILED;
     }
 
-    ret = CALEStartAdvertise(serviceUUID);
+    ret = CALEStartAdvertise();
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG_V(ERROR, TAG, "CALEStartAdvertise failed[%d]", ret);
@@ -271,7 +269,21 @@ void CALENotificationCb(bool notify, bt_gatt_server_h server, bt_gatt_h gatt_han
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-CAResult_t CALEStartAdvertise(const char *serviceUUID)
+CAResult_t CALEStartAdvertise()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    CAResult_t res = CALEStartAdvertiseImpl(CA_GATT_SERVICE_UUID);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "CALEStartAdvertiseImpl failed[%d]", res);
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return res;
+}
+
+CAResult_t CALEStartAdvertiseImpl(const char *serviceUUID)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -712,7 +724,7 @@ CAResult_t CAAddNewCharacteristicsToGattServer(const bt_gatt_h svcPath, const ch
     int properties;
     if (read)
     {
-        properties = BT_GATT_PROPERTY_NOTIFY | BT_GATT_PROPERTY_READ;
+        properties = BT_GATT_PROPERTY_INDICATE | BT_GATT_PROPERTY_READ;
     }
     else
     {

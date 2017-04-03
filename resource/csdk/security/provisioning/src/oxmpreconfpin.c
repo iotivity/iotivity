@@ -28,14 +28,15 @@
 #include "cainterface.h"
 #include "ocrandom.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "logger.h"
 #include "pbkdf2.h"
-#include "global.h"
 #include "base64.h"
 #include "oxmpreconfpin.h"
 #include "ownershiptransfermanager.h"
 #include "pinoxmcommon.h"
 #include "srmresourcestrings.h"
+#include "mbedtls/ssl_ciphersuites.h"
 
 #define TAG "OIC_OXM_PreconfigPIN"
 
@@ -80,7 +81,7 @@ OCStackResult LoadPreconfigPinCodeCallback(OTMContext_t *otmCtx)
     if(NULL == cred)
     {
         OicUuid_t uuid = {.id={0}};
-        OICStrcpy(uuid.id, sizeof(uuid.id), WILDCARD_SUBJECT_ID.id);
+        memcpy(&uuid, &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t));
         cred = GetCredResourceData(&uuid);
         if(NULL == cred)
         {
@@ -102,8 +103,8 @@ OCStackResult LoadPreconfigPinCodeCallback(OTMContext_t *otmCtx)
             OIC_LOG(ERROR, TAG, "Failed to memory allocation.");
             return OC_STACK_NO_MEMORY;
         }
-        uint32_t pinLen = 0;
-        if(B64_OK != b64Decode(cred->privateData.data, cred->privateData.len, pinBuffer, pinBufLen, &pinLen))
+        size_t pinLen = 0;
+        if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, pinBuffer, pinBufLen, &pinLen))
         {
             OIC_LOG(ERROR, TAG, "Failed to base64 deconding for preconfig PIN");
             OICFree(pinBuffer);
@@ -185,13 +186,13 @@ OCStackResult CreateSecureSessionPreconfigPinCallback(OTMContext_t* otmCtx)
     }
     OIC_LOG(INFO, TAG, "Anonymous cipher suite disabled.");
 
-    caresult  = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256, otmCtx->selectedDeviceInfo->endpoint.adapter);
+    caresult  = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, otmCtx->selectedDeviceInfo->endpoint.adapter);
     if (CA_STATUS_OK != caresult)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256");
+        OIC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256");
         return OC_STACK_ERROR;
     }
-    OIC_LOG(INFO, TAG, "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 cipher suite selected.");
+    OIC_LOG(INFO, TAG, "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 cipher suite selected.");
 
     OCProvisionDev_t* selDevInfo = otmCtx->selectedDeviceInfo;
     CAEndpoint_t *endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));

@@ -52,8 +52,7 @@ namespace OIC
         class EnrolleeSecurity : public std::enable_shared_from_this<EnrolleeSecurity>
         {
         public:
-            EnrolleeSecurity(std::shared_ptr< OC::OCResource > resource,
-            const std::string secDbPath);
+            EnrolleeSecurity(std::shared_ptr< OC::OCResource > resource);
             ESResult provisionOwnership(SecurityProvStatusCbWithOption callback);
             std::string getUUID() const;
 
@@ -65,12 +64,14 @@ namespace OIC
 
             std::mutex m_mtx;
             std::condition_variable m_cond;
-            std::atomic<bool> OTMResult;
-            std::atomic<bool> MOTMethodProvResult;
-            std::atomic<bool> PreConfigPinProvResult;
+            std::atomic<bool> otmResult;
+            std::atomic<bool> enableMOTModeResult;
+            std::atomic<bool> motMethodProvResult;
+            std::atomic<bool> preConfigPinProvResult;
             std::atomic<bool> removeDeviceResult;
             std::atomic<bool> aclResult;
             std::atomic<bool> certResult;
+            std::string m_mediatorID;
 
             std::shared_ptr< OC::OCSecureResource > m_securedResource;
 
@@ -79,19 +80,32 @@ namespace OIC
                                     ESSecurityCb cb,
                                     std::weak_ptr<EnrolleeSecurity> this_ptr);
 
-            ESResult performOwnershipTransfer(ESResult& res);
-            bool isOwnedDeviceRegisteredInSVRDB();
+            ESResult performOwnershipTransfer();
+            bool isOwnedDeviceRegisteredInDB();
             void removeDeviceWithUuidCB(OC::PMResultList_t *result, int hasError);
+            ESResult discoverTargetSecureResource();
+            ESOwnershipTransferData getOwnershipTransferDataFromUser
+                                        (SecurityProvStatusCbWithOption callback);
+            ESResult syncUpWithMediatorDB();
 #ifdef MULTIPLE_OWNER
             ESResult performMultipleOwnershipTransfer(const ESOwnershipTransferData& MOTdata);
-            void SelectMOTMethodCB(PMResultList_t *result, int hasError);
-            void PreconfigPinProvCB(PMResultList_t *result, int hasError);
-            void MultipleOwnershipTransferCb(OC::PMResultList_t *result, int hasError);
+            void changeMOTMethodCB(PMResultList_t *result, int hasError);
+
+            void selectMOTMethodCB(PMResultList_t *result, int hasError);
+            void preconfigPinProvCB(PMResultList_t *result, int hasError);
+            void multipleOwnershipTransferCb(OC::PMResultList_t *result, int hasError);
+            bool isSubOwnerIDMatched(std::shared_ptr< OC::OCSecureResource > foundDevice);
+            ESResult requestSetPreconfPinData(const ESOwnershipTransferData& MOTData);
+            ESResult requestSetMOTMethod(const ESOwnershipTransferData& MOTData);
+            ESResult requestEnableMOTMode();
+            ESResult provisionMOTConfig(const ESOwnershipTransferData& MOTData);
 #endif
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError, ESResult& res);
             void convertUUIDToString(const uint8_t uuid[UUID_SIZE],
                                                 std::string& uuidString);
             std::string getResourceDeviceAddress(const std::string& host);
+            bool isOwnerIDMatched(std::shared_ptr< OC::OCSecureResource > foundDevice);
+            std::string getMediatorDevID();
 
 #if defined(__WITH_DTLS__) && defined(__WITH_TLS__)
         public:
@@ -105,8 +119,8 @@ namespace OIC
                 std::shared_ptr< OC::OCSecureResource > ownedDevice,
                 std::string& cloudUuid);
             OicSecAcl_t* createAcl(const OicUuid_t cloudUuid);
-            void ACLProvisioningCb(PMResultList_t *result, int hasError);
-            void CertProvisioningCb(PMResultList_t *result, int hasError);
+            void aclProvisioningCb(PMResultList_t *result, int hasError);
+            void certProvisioningCb(PMResultList_t *result, int hasError);
 #endif //defined(__WITH_DTLS__) && defined(__WITH_TLS__)
         };
     }

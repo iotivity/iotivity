@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -37,6 +38,13 @@
 #include "srmutility.h"
 #include "pmtypes.h"
 #include "pmutility.h"
+
+#ifdef _MSC_VER
+#include <io.h>
+
+#define F_OK 0
+#define access _access_s
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -73,7 +81,7 @@ static const OicSecPrm_t  SUPPORTED_PRMS[1] =
 // |g_ctx| means provision manager application context and
 // the following, includes |un/own_list|, could be variables, which |g_ctx| has,
 // for accessing all function(s) for these, they are declared on global domain
-static const char* g_ctx = "SubOwner Client Application Context";
+static char* g_ctx = "SubOwner Client Application Context";
 static char* g_svr_fname;
 static char* g_prvn_fname;
 static OCProvisionDev_t* g_own_list;
@@ -90,14 +98,14 @@ static bool g_doneCB;
 static OCProvisionDev_t* getDevInst(const OCProvisionDev_t*, const int);
 static int printDevList(const OCProvisionDev_t*);
 static size_t printUuidList(const OCUuidList_t*);
-static int printResultList(const OCProvisionResult_t*, const int);
+static size_t printResultList(const OCProvisionResult_t*, const size_t);
 static void printUuid(const OicUuid_t*);
 static FILE* fopen_prvnMng(const char*, const char*);
 static int waitCallbackRet(void);
 static int selectTwoDiffNum(int*, int*, const int, const char*);
 
 // callback function(s) for provisioning client using C-level provisioning API
-static void multipleOwnershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void multipleOwnershipTransferCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -112,7 +120,7 @@ static void multipleOwnershipTransferCB(void* ctx, int nOfRes, OCProvisionResult
 }
 
 // callback function(s) for provisioning client using C-level provisioning API
-static void ownershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void ownershipTransferCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -126,7 +134,7 @@ static void ownershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t* arr,
     g_doneCB = true;
 }
 
-static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void updateDoxmForMOTCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -140,7 +148,7 @@ static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, 
     g_doneCB = true;
 }
 
-static void provisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void provisionCredCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -154,7 +162,7 @@ static void provisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, boo
     g_doneCB = true;
 }
 
-static void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void provisionAclCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -171,6 +179,9 @@ static void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool
 // response handler for LED requests.
 static OCStackApplicationResult LedCB(void *ctx, OCDoHandle UNUSED, OCClientResponse *clientResponse)
 {
+    OC_UNUSED(ctx);
+    OC_UNUSED(UNUSED);
+
     if(clientResponse)
     {
         if(OC_STACK_OK == clientResponse->result)
@@ -178,7 +189,7 @@ static OCStackApplicationResult LedCB(void *ctx, OCDoHandle UNUSED, OCClientResp
             printf("Received OC_STACK_OK from server\n");
             if(clientResponse->payload)
             {
-                printf("Response ===================> %s\n", clientResponse->payload);
+                printf("Response ===================> %s\n", (char*)clientResponse->payload);
             }
         }
         else if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
@@ -328,8 +339,16 @@ static int multipleOwnershipTransfer(void)
         if(OIC_PRECONFIG_PIN == dev->doxm->oxmSel)
         {
             //Pre-Configured PIN initialization
-            const char* testPreconfigPin = "12341234";
-            if(OC_STACK_OK != OCAddPreconfigPin(dev, testPreconfigPin, strlen(testPreconfigPin)))
+            char preconfigPin[OXM_PRECONFIG_PIN_MAX_SIZE + 1] = { 0 };
+            printf("   > INPUT PIN: ");
+            for (int ret = 0; 1 != ret; )
+            {
+                ret = scanf("%32s", preconfigPin);
+                for (; 0x20 <= getchar(); );  // for removing overflow garbages
+                                              // '0x20<=code' is character region
+            }
+
+            if(OC_STACK_OK != OCAddPreconfigPin(dev, preconfigPin, strlen(preconfigPin)))
             {
                 printf("\n\n\n*** %60s ***\n", "WARNNING : Failed to save the pre-configured PIN");
                 printf("*** %60s ***\n\n\n", "WARNNING : You can't use the pre-configured PIN OxM for MOT");
@@ -594,7 +613,7 @@ static int provisionAclForLed()
             for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                         // '0x20<=code' is character region
         }
-        if(0<dev_num && g_mowned_list>=dev_num)
+        if (0 < dev_num && g_mowned_cnt >= dev_num)
         {
             break;
         }
@@ -763,7 +782,7 @@ static int printDevList(const OCProvisionDev_t* dev_lst)
 
     OCProvisionDev_t* lst = (OCProvisionDev_t*) dev_lst;
     int lst_cnt = 0;
-    for( ; lst; )
+    while(lst)
     {
         printf("     [%d] ", ++lst_cnt);
         printUuid((const OicUuid_t*) &lst->doxm->deviceID);
@@ -785,9 +804,9 @@ static size_t printUuidList(const OCUuidList_t* uid_lst)
 
     OCUuidList_t* lst = (OCUuidList_t*) uid_lst;
     size_t lst_cnt = 0;
-    for( ; lst; )
+    while(lst)
     {
-        printf("     [%zu] ", ++lst_cnt);
+        printf("     [%" PRIuPTR "] ", ++lst_cnt);
         printUuid((const OicUuid_t*) &lst->dev);
         printf("\n");
         lst = lst->next;
@@ -797,21 +816,21 @@ static size_t printUuidList(const OCUuidList_t* uid_lst)
     return lst_cnt;
 }
 
-static int printResultList(const OCProvisionResult_t* rslt_lst, const int rslt_cnt)
+static size_t printResultList(const OCProvisionResult_t* rslt_lst, const size_t rslt_cnt)
 {
-    if(!rslt_lst || 0>=rslt_cnt)
+    if (!rslt_lst || (0 == rslt_cnt))
     {
         printf("     Device List is Empty..\n\n");
         return 0;
     }
 
-    int lst_cnt = 0;
-    for( ; rslt_cnt>lst_cnt; ++lst_cnt)
+    size_t lst_cnt = 0;
+    do
     {
-        printf("     [%d] ", lst_cnt+1);
-        printUuid((const OicUuid_t*) &rslt_lst[lst_cnt].deviceId);
+        printf("     [%" PRIuPTR "] ", lst_cnt + 1);
+        printUuid((const OicUuid_t*)&rslt_lst[lst_cnt].deviceId);
         printf(" - result: %d\n", rslt_lst[lst_cnt].res);
-    }
+    } while (++lst_cnt < rslt_cnt);
     printf("\n");
 
     return lst_cnt;
@@ -854,6 +873,11 @@ static int waitCallbackRet(void)
             OIC_LOG(ERROR, TAG, "OCStack process error");
             return -1;
         }
+    }
+
+    if(!g_doneCB)
+    {
+        OCPDMCleanupForTimeout();
     }
 
     return 0;
@@ -936,7 +960,6 @@ int main()
 
     // main loop for provisioning manager
     int mnNum = 0;
-    int selDevNum = 0;
     for( ; ; )
     {
         printf("\n");

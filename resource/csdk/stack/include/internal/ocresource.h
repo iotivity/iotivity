@@ -144,7 +144,7 @@ typedef struct attr_t {
      */
     char *attrName;
 
-    /** value of the attribute as void. To support both string and @OCStringLL value*/
+    /** value of the attribute as void. To support both string and ::OCStringLL value*/
     void *attrValue;
 } OCAttribute;
 
@@ -232,7 +232,7 @@ typedef struct OCResource {
     union
     {
         /** An ordinal number that is not repeated - must be unique in the collection context. */
-        uint8_t ins;
+        int64_t ins;
         /** Any unique string including a URI. */
         char *uniqueStr;
         /** Use UUID for universal uniqueness - used in /oic/res to identify the device. */

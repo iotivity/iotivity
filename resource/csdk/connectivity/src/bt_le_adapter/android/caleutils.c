@@ -106,6 +106,50 @@ error_exit:
     return NULL;
 }
 
+jobject CALEGetParcelUuidFromString(JNIEnv *env, const char* uuid)
+{
+    VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
+    VERIFY_NON_NULL_RET(uuid, TAG, "uuid is null", NULL);
+
+    jclass jni_cid_ParcelUuid = (*env)->FindClass(env, "android/os/ParcelUuid");
+    if (!jni_cid_ParcelUuid)
+    {
+        OIC_LOG(ERROR, TAG, "jni_cid_ParcelUuid is not available");
+        goto error_exit;
+    }
+
+    jmethodID jni_mid_fromString = (*env)->GetStaticMethodID(env, jni_cid_ParcelUuid,
+                                                             "fromString",
+                                                             "(Ljava/lang/String;)"
+                                                             "Landroid/os/ParcelUuid;");
+    if (!jni_mid_fromString)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_fromString is not available");
+        goto error_exit;
+    }
+
+    jstring str_uuid = (*env)->NewStringUTF(env, uuid);
+    if (!str_uuid)
+    {
+        OIC_LOG(ERROR, TAG, "str_uuid is not available");
+        goto error_exit;
+    }
+
+    jobject jni_obj_parcelUuid = (*env)->CallStaticObjectMethod(env, jni_cid_ParcelUuid,
+                                                                jni_mid_fromString,
+                                                                str_uuid);
+    if (!jni_obj_parcelUuid)
+    {
+        OIC_LOG(ERROR, TAG, "Fail to get jni uuid object");
+        goto error_exit;
+    }
+
+    return jni_obj_parcelUuid;
+error_exit:
+    CACheckJNIException(env);
+    return NULL;
+}
+
 bool CALEIsBondedDevice(JNIEnv *env, jobject bluetoothDevice)
 {
     VERIFY_NON_NULL_RET(env, TAG, "env is null", false);
@@ -405,7 +449,7 @@ jint CALEGetConstantsValue(JNIEnv *env, const char* classType, const char* name)
 
 jobject CALEGetRemoteDevice(JNIEnv *env, jstring address)
 {
-    OIC_LOG(DEBUG, TAG, "IN - CALEGetRemoteDevice");
+    OIC_LOG(DEBUG, TAG, "CALEGetRemoteDevice");
 
     VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
     VERIFY_NON_NULL_RET(address, TAG, "address is null", NULL);
@@ -453,8 +497,6 @@ jobject CALEGetRemoteDevice(JNIEnv *env, jstring address)
         OIC_LOG(ERROR, TAG, "jni_obj_device is null");
         goto error_exit;
     }
-
-    OIC_LOG(DEBUG, TAG, "OUT - CALEGetRemoteDevice");
     return jni_obj_device;
 
 error_exit:
@@ -464,7 +506,7 @@ error_exit:
 
 jstring CALEGetAddressFromGatt(JNIEnv *env, jobject gatt)
 {
-    OIC_LOG(DEBUG, TAG, "IN - CALEGetAddressFromGatt");
+    OIC_LOG(DEBUG, TAG, "CALEGetAddressFromGatt");
 
     VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
     VERIFY_NON_NULL_RET(gatt, TAG, "gatt is null", NULL);
@@ -492,6 +534,5 @@ jstring CALEGetAddressFromGatt(JNIEnv *env, jobject gatt)
         return NULL;
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT - CALEGetAddressFromGatt");
     return jni_address;
 }

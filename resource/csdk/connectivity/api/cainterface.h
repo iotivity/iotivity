@@ -216,7 +216,7 @@ CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork);
  * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_NOT_INITIALIZED or
  *          ::CA_STATUS_INVALID_PARAM or ::CA_MEMORY_ALLOC_FAILED
  */
-CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size);
+CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, size_t *size);
 
 /**
  * Get supported network adapter.
@@ -249,6 +249,16 @@ CAResult_t CASetRAInfo(const CARAInfo_t *caraInfo);
  * @return  ::CA_STATUS_OK or ::CA_STATUS_INVALID_PARAM
  */
 CAResult_t CASetProxyUri(const char *uri);
+
+/**
+ * This function return zone id related from ifindex and address.
+ *
+ * @param[in] ifindex     interface index.
+ * @param[out] zoneId     pointer of zoneId string.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_INVALID_PARAM
+ */
+CAResult_t CAGetLinkLocalZoneId(uint32_t ifindex, char **zoneId);
 
 #ifdef __cplusplus
 } /* extern "C" */

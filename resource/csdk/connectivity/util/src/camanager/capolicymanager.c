@@ -22,43 +22,82 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cathreadpool.h"
-#include "octhread.h"
-#include "uarraylist.h"
-#include "cacommon.h"
+#include "oic_string.h"
 #include "logger.h"
 
 #include "caconnectionmanager.h"
-#include "capolicymanager.h"
 
 #define TAG "OIC_CM_POLICY"
 
-static CMConfigureInfo_t g_configure = {.addr = NULL,
-                                        .adapter = CA_ADAPTER_IP,
-                                        .level = NORMAL_SPEED};
+/**
+ * Mutex to synchronize the access to g_userConfigureMutex variable.
+ */
+static oc_mutex g_userConfigureMutex = NULL;
 
-void CMSetConfigure(CMConfigureInfo_t info)
+/**
+ * User prefer variable to process connection manager logic.
+ * default: Cloud TCP
+ */
+static CAConnectUserPref_t g_connectUserPrefer = CA_USER_PREF_CLOUD;
+
+CAResult_t CAPolicyMgrSetConfiguration(CAConnectUserPref_t connPrefer)
 {
-    OIC_LOG(DEBUG, TAG, "CMSetConfigurePolicy");
-    OICStrcpy(g_configure.addr, sizeof(g_configure.addr), info.addr);
-    g_configure.adapter = info.adapter;
-    g_configure.level = info.level;
+    OIC_LOG(DEBUG, TAG, "CAPolicyMgrSetConfiguration");
+
+    switch (connPrefer)
+    {
+        case CA_USER_PREF_CLOUD:
+            OIC_LOG_V(DEBUG, TAG, "connPrefer: %d(CLOUD)", connPrefer);
+            break;
+        case CA_USER_PREF_LOCAL_UDP:
+            OIC_LOG_V(DEBUG, TAG, "connPrefer: %d(LOCAL UDP)", connPrefer);
+            break;
+        case CA_USER_PREF_LOCAL_TCP:
+            OIC_LOG_V(DEBUG, TAG, "connPrefer: %d(LOCAL TCP)", connPrefer);
+            break;
+        default:
+            OIC_LOG_V(DEBUG, TAG, "Unsupported connPrefer type : %d", connPrefer);
+            return CA_STATUS_FAILED;
+    }
+
+    if (NULL == g_userConfigureMutex)
+    {
+        g_userConfigureMutex = oc_mutex_new();
+        if (NULL == g_userConfigureMutex)
+        {
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
+            return CA_MEMORY_ALLOC_FAILED;
+        }
+    }
+    oc_mutex_lock(g_userConfigureMutex);
+    g_connectUserPrefer = connPrefer;
+    oc_mutex_unlock(g_userConfigureMutex);
+
+    return CA_STATUS_OK;
 }
 
-const char* CMGetTargetAddress()
+CAResult_t CAPolicyMgrGetConfigure(CAConnectUserPref_t *connPrefer)
 {
-    OIC_LOG(DEBUG, TAG, "CMGetTargetAddress");
-    return g_configure.addr;
+    if (NULL == g_userConfigureMutex)
+    {
+        g_userConfigureMutex = oc_mutex_new();
+        if (NULL == g_userConfigureMutex)
+        {
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
+            return CA_MEMORY_ALLOC_FAILED;
+        }
+    }
+    oc_mutex_lock(g_userConfigureMutex);
+    *connPrefer = g_connectUserPrefer;
+    oc_mutex_unlock(g_userConfigureMutex);
+    return CA_STATUS_OK;
 }
 
-CATransportAdapter_t CMGetAdapterType()
+void CAPolicyMgrTerminate()
 {
-    OIC_LOG(DEBUG, TAG, "CMGetAdapterType");
-    return g_configure.adapter;
-}
-
-CMSpeedLevel_t CMGetSpeedOfResponseLevel()
-{
-    OIC_LOG(DEBUG, TAG, "CMGetSpeedOfResponseLevel");
-    return g_configure.level;
+    if (g_userConfigureMutex)
+    {
+        oc_mutex_free(g_userConfigureMutex);
+        g_userConfigureMutex = NULL;
+    }
 }

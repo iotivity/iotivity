@@ -80,8 +80,14 @@ typedef struct
     /** The REST method retrieved from received request PDU.*/
     OCMethod method;
 
+    /** the provided payload format. */
+    OCPayloadFormat payloadFormat;
+
     /** the requested payload format. */
     OCPayloadFormat acceptFormat;
+
+    /** the requested payload version. */
+    uint16_t acceptVersion;
 
     /** resourceUrl will be filled in occoap using the path options in received request PDU.*/
     char resourceUrl[MAX_URI_LENGTH];
@@ -200,17 +206,6 @@ OCStackResult SendStopNotification();
 #endif // WITH_PRESENCE
 
 /**
- * Function to parse the IPv4 address.
- *
- * @param ipAddrStr       Pointer to a string of IPv4 address.
- * @param ipAddr          pointer to IPv4 adress.
- * @param port            Port number.
- *
- * @return true on success, false upon failure.
- */
-bool ParseIPv4Address(char * ipAddrStr, uint8_t * ipAddr, uint16_t * port);
-
-/**
  * Bind a resource interface to a resource.
  *
  * @param resource Target resource.
@@ -318,7 +313,7 @@ OCStackResult ExtractFiltersFromQuery(const char *query, char **filterOne, char 
 #if defined(RD_CLIENT) || defined(RD_SERVER)
 /**
  * This function binds an resource unique ins value to the resource. This can be only called
- * when stack is received response from resource-directory.
+ * when the stack has received a response from resource-directory.
  *
  * @param requestUri URI of the resource.
  * @param response Response from queries to remote servers.
@@ -332,7 +327,7 @@ OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
 /**
  * Delete all of the dynamically allocated elements that were created for the resource attributes.
  *
- * @param resourceAttr Specified resource attribute.
+ * @param rsrcAttributes Specified resource attribute.
  */
 void OCDeleteResourceAttributes(OCAttribute *rsrcAttributes);
 
@@ -343,14 +338,12 @@ void OCDeleteResourceAttributes(OCAttribute *rsrcAttributes);
  * @param payload       Pointer to discovery payload.
  * @param res           Pointer to OCresource structure.
  * @param securePort    Secure port number.
- * @param isVirtual     true: virtual resource (e.g., oic/res), false: resource.
  * @param networkInfo   List of CAEndpoint_t.
  * @param infoSize      Size of CAEndpoint_t list.
  * @param devAddr       Pointer to OCDevAddr structure.
  */
 void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload *payload, const OCResource *res,
-                                          uint16_t securePort, bool isVirtual,
-                                          void *networkInfo, uint32_t infoSize,
+                                          uint16_t securePort, void *networkInfo, size_t infoSize,
                                           const OCDevAddr *devAddr);
 #else
 /**
@@ -359,15 +352,13 @@ void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload *payload, const OCR
  * @param payload       Pointer to discovery payload.
  * @param res           Pointer to OCresource structure.
  * @param securePort    Secure port number.
- * @param isVirtual     true: virtual resource (e.g., oic/res, oic/d), false: resource.
  * @param networkInfo   List of CAEndpoint_t.
  * @param infoSize      Size of CAEndpoint_t list.
  * @param devAddr       Pointer to OCDevAddr structure.
  * @param tcpPort       TCP port number.
  */
 void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload *payload, const OCResource *res,
-                                          uint16_t securePort, bool isVirtual,
-                                          void *networkInfo, uint32_t infoSize,
+                                          uint16_t securePort, void *networkInfo, size_t infoSize,
                                           const OCDevAddr *devAddr, uint16_t tcpPort);
 #endif
 #ifdef __cplusplus

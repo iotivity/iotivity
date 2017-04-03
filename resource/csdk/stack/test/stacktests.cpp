@@ -27,6 +27,8 @@ extern "C"
     #include "logger.h"
     #include "oic_malloc.h"
     #include "oic_string.h"
+    #include "oic_time.h"
+    #include "ocresourcehandler.h"
 }
 
 #include "gtest/gtest.h"
@@ -61,15 +63,17 @@ namespace itst = iotivity::test;
 //-----------------------------------------------------------------------------
 // Private variables
 //-----------------------------------------------------------------------------
-static const char TAG[] = "TestHarness";
+#define TAG "TestHarness"
 
 char gDeviceUUID[] = "fe3f9a68-4931-4cb0-9ea4-81702b43116c";
+char gDevicePIID[] = "32684bf3-4c44-47b0-99fe-6a9a59b73a8d";
 char gManufacturerName[] = "myName";
 static OCPrm_t pmSel;
 static char pinNumber;
 static OCDPDev_t peer;
 
 std::chrono::seconds const SHORT_TEST_TIMEOUT = std::chrono::seconds(5);
+std::chrono::seconds const LONG_TEST_TIMEOUT = std::chrono::seconds(450);
 
 //-----------------------------------------------------------------------------
 // Callback functions
@@ -176,6 +180,42 @@ uint8_t InitResourceIndex()
     return 0;
 #endif
 }
+
+extern "C" uint32_t g_ocStackStartCount;
+
+OCDeviceProperties* getTestDeviceProps()
+{
+    OCDeviceProperties* deviceProps = (OCDeviceProperties*)OICCalloc(1, sizeof(OCDeviceProperties));
+    if (NULL != deviceProps)
+    {
+        OICStrcpy(deviceProps->protocolIndependentId, UUID_STRING_SIZE, gDevicePIID);
+    }
+
+    return deviceProps;
+}
+
+class OCDiscoverTests : public testing::Test
+{
+    protected:
+        virtual void SetUp()
+        {
+            EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT_SERVER));
+        }
+
+        virtual void TearDown()
+        {
+            OCStop();
+        }
+};
+
+class OCDevicePropertiesTests : public testing::Test
+{
+protected:
+    virtual void SetUp()
+    {
+        itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    }
+};
 //-----------------------------------------------------------------------------
 //  Tests
 //-----------------------------------------------------------------------------
@@ -184,7 +224,9 @@ TEST(StackInit, StackInitNullAddr)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit(0, 5683, OC_SERVER));
+    EXPECT_EQ(1u, g_ocStackStartCount);
     EXPECT_EQ(OC_STACK_OK, OCStop());
+    EXPECT_EQ(0u, g_ocStackStartCount);
 }
 
 TEST(StackInit, StackInitNullPort)
@@ -205,7 +247,7 @@ TEST(StackInit, StackInitInvalidMode)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_ERROR, OCInit(0, 0, (OCMode)10));
-    EXPECT_EQ(OC_STACK_ERROR, OCStop());
+    EXPECT_EQ(0u, g_ocStackStartCount);
 }
 
 TEST(StackStart, StackStartSuccessClient)
@@ -250,9 +292,15 @@ TEST(StackStart, StackStartSuccessClientThenServer)
 TEST(StackStart, StackStartSuccessiveInits)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(0u, g_ocStackStartCount);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    EXPECT_EQ(1u, g_ocStackStartCount);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.2", 5683, OC_SERVER));
+    EXPECT_EQ(2u, g_ocStackStartCount);
     EXPECT_EQ(OC_STACK_OK, OCStop());
+    EXPECT_EQ(1u, g_ocStackStartCount);
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+    EXPECT_EQ(0u, g_ocStackStartCount);
 }
 
 TEST(StackStart, SetPlatformInfoValid)
@@ -557,7 +605,7 @@ TEST(StackStart, GetDeviceInfoAPI)
 
     EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, &value));
     ASSERT_TRUE(value != NULL);
-    ASSERT_TRUE(((OCStringLL *)value)->value);
+    ASSERT_TRUE(((OCStringLL *)value)->value != NULL);
     EXPECT_STREQ("Data Model Version", ((OCStringLL *)value)->value);
     OCFreeOCStringLL((OCStringLL *) value);
     value = NULL;
@@ -594,20 +642,6 @@ TEST(StackDiscovery, DISABLED_DoResourceDeviceDiscovery)
                                         NULL,
                                         0));
     EXPECT_EQ(OC_STACK_OK, OCStop());
-}
-
-TEST(StackStop, StackStopWithoutInit)
-{
-    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    EXPECT_EQ(OC_STACK_ERROR, OCStop());
-}
-
-TEST(StackStop, StackStopRepeated)
-{
-    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
-    EXPECT_EQ(OC_STACK_OK, OCStop());
-    EXPECT_EQ(OC_STACK_ERROR, OCStop());
 }
 
 TEST(StackResource, DISABLED_UpdateResourceNullURI)
@@ -1185,6 +1219,60 @@ TEST(StackResource, GetResourceProperties)
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
+TEST(StackResource, SetResourceProperties)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    OIC_LOG(INFO, TAG, "Starting SetResourceProperties test");
+    InitStack(OC_SERVER);
+
+    OCResourceHandle handle;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led",
+                                            0,
+                                            NULL,
+                                            0));
+
+    EXPECT_EQ(OC_STACK_OK, OCSetResourceProperties(handle, OC_DISCOVERABLE|OC_OBSERVABLE));
+#ifdef MQ_PUBLISHER
+    EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE|OC_MQ_PUBLISHER, OCGetResourceProperties(handle));
+#else
+    EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE, OCGetResourceProperties(handle));
+#endif
+
+    EXPECT_EQ(OC_STACK_OK, OCDeleteResource(handle));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackResource, ClearResourceProperties)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    OIC_LOG(INFO, TAG, "Starting ClearResourceProperties test");
+    InitStack(OC_SERVER);
+
+    OCResourceHandle handle;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    EXPECT_EQ(OC_STACK_OK, OCClearResourceProperties(handle, OC_DISCOVERABLE|OC_OBSERVABLE));
+#ifdef MQ_PUBLISHER
+    EXPECT_EQ(OC_ACTIVE|OC_MQ_PUBLISHER, OCGetResourceProperties(handle));
+#else
+    EXPECT_EQ(OC_ACTIVE, OCGetResourceProperties(handle));
+#endif
+
+    EXPECT_EQ(OC_STACK_OK, OCDeleteResource(handle));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
 TEST(StackResource, StackTestResourceDiscoverOneResourceBad)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
@@ -1298,6 +1386,147 @@ TEST(StackResource, StackTestResourceDiscoverManyResources)
     EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle4, OC_RSRVD_INTERFACE_BATCH));
 
     //EXPECT_EQ(OC_STACK_OK, OCHandleServerRequest(&res, uri, query, req, rsp));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST_F(OCDevicePropertiesTests, DevicePropertiesToCBORPayloadllNULL)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, DevicePropertiesToCBORPayload(NULL, NULL, NULL));
+}
+
+TEST_F(OCDevicePropertiesTests, DevicePropertiesToCBORPayloadNULLPayload)
+{
+    OCDeviceProperties* deviceProps = getTestDeviceProps();
+    ASSERT_TRUE(NULL != deviceProps);
+    size_t size = 0;
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, DevicePropertiesToCBORPayload(deviceProps, NULL, &size));
+
+    CleanUpDeviceProperties(&deviceProps);
+}
+
+TEST_F(OCDevicePropertiesTests, DevicePropertiesToCBORPayloadNULLSize)
+{
+    OCDeviceProperties* deviceProps = getTestDeviceProps();
+    ASSERT_TRUE(NULL != deviceProps);
+    uint8_t* payload = NULL;
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, DevicePropertiesToCBORPayload(deviceProps, &payload, NULL));
+
+    CleanUpDeviceProperties(&deviceProps);
+}
+
+TEST_F(OCDevicePropertiesTests, DevicePropertiesToCBORPayloadNULLDeviceProperties)
+{
+    uint8_t* payload = NULL;
+    size_t size = 0;
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, DevicePropertiesToCBORPayload(NULL, &payload, &size));
+}
+
+TEST_F(OCDevicePropertiesTests, DevicePropertiesToCBORPayloadVALID)
+{
+    OCDeviceProperties* deviceProps = getTestDeviceProps();
+    ASSERT_TRUE(NULL != deviceProps);
+    uint8_t* payload = NULL;
+    size_t size = 0;
+
+    EXPECT_EQ(OC_STACK_OK, DevicePropertiesToCBORPayload(deviceProps, &payload, &size));
+    EXPECT_TRUE(payload != NULL);
+
+    CleanUpDeviceProperties(&deviceProps);
+    OICFree(payload);
+}
+
+TEST_F(OCDevicePropertiesTests, CBORPayloadToDevicePropertiesAllNULL)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, CBORPayloadToDeviceProperties(NULL, 0, NULL));
+}
+
+TEST_F(OCDevicePropertiesTests, CBORPayloadToDevicePropertiesNULLPayload)
+{
+    OCDeviceProperties* deviceProps = NULL;
+    size_t size = 10;
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, CBORPayloadToDeviceProperties(NULL, size, &deviceProps));
+}
+
+TEST_F(OCDevicePropertiesTests, CBORPayloadToDevicePropertiesInvalidSize)
+{
+    OCDeviceProperties* deviceProps = NULL;
+    uint8_t* payload = (uint8_t*)OICCalloc(1, sizeof(uint8_t));
+    ASSERT_TRUE(NULL != payload);
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, CBORPayloadToDeviceProperties(payload, 0, &deviceProps));
+
+    OICFree(payload);
+}
+
+TEST_F(OCDevicePropertiesTests, CBORPayloadToDevicePropertiesNULLDeviceProperties)
+{
+    uint8_t* payload = (uint8_t*)OICCalloc(1, sizeof(uint8_t));
+    ASSERT_TRUE(NULL != payload);
+    size_t size = 10;
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, CBORPayloadToDeviceProperties(payload, size, NULL));
+
+    OICFree(payload);
+}
+
+TEST_F(OCDevicePropertiesTests, CBORPayloadToDevicePropertiesVALID)
+{
+    OCDeviceProperties* controlDeviceProps = getTestDeviceProps();
+    ASSERT_TRUE(NULL != controlDeviceProps);
+    OCDeviceProperties* testDeviceProps = NULL;
+    uint8_t* payload = NULL;
+    size_t size = 0;
+
+    EXPECT_EQ(OC_STACK_OK, DevicePropertiesToCBORPayload(controlDeviceProps, &payload, &size));
+    EXPECT_TRUE(payload != NULL);
+
+    EXPECT_EQ(OC_STACK_OK, CBORPayloadToDeviceProperties(payload, size, &testDeviceProps));
+    ASSERT_TRUE(testDeviceProps != NULL);
+    EXPECT_STREQ(gDevicePIID, testDeviceProps->protocolIndependentId);
+
+    CleanUpDeviceProperties(&controlDeviceProps);
+    CleanUpDeviceProperties(&testDeviceProps);
+    OICFree(payload);
+}
+
+TEST_F(OCDevicePropertiesTests, PIIDAvailableAfterInit)
+{
+    void *piid = NULL;
+
+    InitStack(OC_SERVER);
+
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, &piid));
+    ASSERT_TRUE(piid != NULL);
+
+    OICFree(piid);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST_F(OCDevicePropertiesTests, UpdatePIID)
+{
+    void *originalPIID = NULL;
+    void *newPIID = NULL;
+
+    InitStack(OC_SERVER);
+
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, &originalPIID));
+    ASSERT_TRUE(originalPIID != NULL);
+
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, gDevicePIID));
+
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, &newPIID));
+    ASSERT_TRUE(newPIID != NULL);
+    EXPECT_STREQ(gDevicePIID, (char *)newPIID);
+    EXPECT_STRNE((char *)originalPIID, (char *)newPIID);
+
+    OICFree(newPIID);
+    OICFree(originalPIID);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -2240,4 +2469,244 @@ TEST(StackEndpoints, OCGetSupportedEndpointTpsFlags)
     EXPECT_LE(INVALID_TPS_FLAGS_ZERO, OCGetSupportedEndpointTpsFlags());
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+static OCStackApplicationResult DiscoverBaselineResource(void *ctx, OCDoHandle handle,
+    OCClientResponse *response)
+{
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
+    EXPECT_EQ(OC_STACK_OK, response->result);
+    EXPECT_TRUE(NULL != response->payload);
+    if (NULL != response->payload)
+    {
+        EXPECT_EQ(PAYLOAD_TYPE_DISCOVERY, response->payload->type);
+
+        OCDiscoveryPayload *payload = (OCDiscoveryPayload *)response->payload;
+        EXPECT_TRUE(NULL != payload->sid);
+        EXPECT_STREQ("StackTest", payload->name);
+        EXPECT_STREQ(OC_RSRVD_RESOURCE_TYPE_RES, payload->type->value);
+        EXPECT_STREQ(OC_RSRVD_INTERFACE_LL, payload->iface->value);
+        EXPECT_STREQ(OC_RSRVD_INTERFACE_DEFAULT, payload->iface->next->value);
+
+        for (OCResourcePayload *resource = payload->resources; resource; resource = resource->next)
+        {
+            if (0 == strcmp("/a/light", resource->uri))
+            {
+                EXPECT_STREQ("/a/light", resource->uri);
+                EXPECT_STREQ("core.light", resource->types->value);
+                EXPECT_EQ(NULL, resource->types->next);
+                EXPECT_STREQ("oic.if.baseline", resource->interfaces->value);
+                EXPECT_EQ(NULL, resource->interfaces->next);
+                EXPECT_TRUE(resource->bitmap & OC_DISCOVERABLE);
+                EXPECT_FALSE(resource->secure);
+                EXPECT_EQ(0, resource->port);
+                EXPECT_EQ(NULL, resource->next);
+            }
+        }
+    }
+
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+static OCStackApplicationResult DiscoverLinkedListResource(void *ctx, OCDoHandle handle,
+    OCClientResponse *response)
+{
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
+    EXPECT_EQ(OC_STACK_OK, response->result);
+    EXPECT_TRUE(NULL != response->payload);
+    if (NULL != response->payload)
+    {
+        EXPECT_EQ(PAYLOAD_TYPE_DISCOVERY, response->payload->type);
+
+        OCDiscoveryPayload *payload = (OCDiscoveryPayload *)response->payload;
+        EXPECT_NE((char *)NULL, payload->sid);
+        EXPECT_EQ(NULL, payload->name);
+        EXPECT_EQ(NULL, payload->type);
+        EXPECT_EQ(NULL, payload->iface);
+
+        for (OCResourcePayload *resource = payload->resources; resource; resource = resource->next)
+        {
+            if (0 == strcmp("/a/light", resource->uri))
+            {
+                EXPECT_STREQ("/a/light", resource->uri);
+                EXPECT_STREQ("core.light", resource->types->value);
+                EXPECT_EQ(NULL, resource->types->next);
+                EXPECT_STREQ("oic.if.baseline", resource->interfaces->value);
+                EXPECT_EQ(NULL, resource->interfaces->next);
+                EXPECT_TRUE(resource->bitmap & OC_DISCOVERABLE);
+                EXPECT_FALSE(resource->secure);
+                EXPECT_EQ(0, resource->port);
+                EXPECT_EQ(NULL, resource->next);
+            }
+        }
+    }
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+
+static OCStackApplicationResult DiscoverResourceTypeResponse(void *ctx, OCDoHandle handle,
+    OCClientResponse *response)
+{
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
+    EXPECT_EQ(OC_STACK_OK, response->result);
+    EXPECT_TRUE(NULL != response->payload);
+    if (NULL != response->payload)
+    {
+        EXPECT_EQ(PAYLOAD_TYPE_DISCOVERY, response->payload->type);
+
+        OCDiscoveryPayload *payload = (OCDiscoveryPayload *)response->payload;
+        EXPECT_NE((char *)NULL, payload->sid);
+        EXPECT_EQ(NULL, payload->name);
+        EXPECT_EQ(NULL, payload->type);
+        EXPECT_EQ(NULL, payload->iface);
+        EXPECT_TRUE(NULL != payload->resources);
+
+        OCResourcePayload *resource = payload->resources;
+
+        if (0 == strcmp("/a/light", resource->uri))
+        {
+            EXPECT_STREQ("/a/light", resource->uri);
+            EXPECT_STREQ("core.light", resource->types->value);
+            EXPECT_EQ(NULL, resource->types->next);
+            EXPECT_STREQ("oic.if.baseline", resource->interfaces->value);
+            EXPECT_EQ(NULL, resource->interfaces->next);
+            EXPECT_TRUE(resource->bitmap & OC_DISCOVERABLE);
+            EXPECT_FALSE(resource->secure);
+            EXPECT_EQ(0, resource->port);
+            EXPECT_EQ(NULL, resource->next);
+        }
+    }
+
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+static OCStackApplicationResult DiscoverUnicastErrorResponse(void *ctx, OCDoHandle handle,
+    OCClientResponse *response)
+{
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
+    EXPECT_NE(OC_STACK_OK, response->result);
+    EXPECT_TRUE(NULL == response->payload);
+
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+// Disabled to unblock other developers untill IOT-1807 is done.
+TEST_F(OCDiscoverTests, DISABLED_DiscoverResourceWithValidQueries)
+{
+    itst::DeadmanTimer killSwitch(LONG_TEST_TIMEOUT);
+
+    OCResourceHandle handles;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles, "core.light", "oic.if.baseline", "/a/light",
+        entityHandler, NULL, OC_DISCOVERABLE));
+    OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, "StackTest");
+
+    itst::Callback discoverBaselineCB(&DiscoverBaselineResource);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?if=oic.if.baseline", NULL,
+        0, CT_DEFAULT, OC_HIGH_QOS, discoverBaselineCB, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, discoverBaselineCB.Wait(100));
+
+    // Disabled temporarily on Windows to unblock other developers. Will be enabled in IOT-1806.
+#ifndef _MSC_VER
+    itst::Callback discoverDefaultCB(&DiscoverLinkedListResource);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res", NULL, 0, CT_DEFAULT,
+        OC_HIGH_QOS, discoverDefaultCB, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, discoverDefaultCB.Wait(100));
+#endif
+
+    itst::Callback discoverLinkedListCB(&DiscoverLinkedListResource);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?if=oic.if.ll", NULL, 0,
+        CT_DEFAULT, OC_HIGH_QOS, discoverLinkedListCB, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, discoverLinkedListCB.Wait(100));
+
+    itst::Callback discoverRTCB(&DiscoverResourceTypeResponse);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=core.light", NULL, 0,
+        CT_DEFAULT, OC_HIGH_QOS, discoverRTCB, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, discoverRTCB.Wait(100));
+}
+
+// Disabled to unblock other developers untill IOT-1807 is done.
+TEST_F(OCDiscoverTests, DISABLED_DiscoverResourceWithInvalidQueries)
+{
+    itst::DeadmanTimer killSwitch(LONG_TEST_TIMEOUT);
+
+    OCResourceHandle handles;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles, "core.light", "oic.if.baseline", "/a/light",
+        entityHandler, NULL, OC_DISCOVERABLE));
+    OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, "deviceName", "StackTest");
+
+    itst::Callback discoverRTInvalidCB(&DiscoverUnicastErrorResponse);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=invalid", NULL, 0,
+    CT_DEFAULT, OC_HIGH_QOS, discoverRTInvalidCB, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, discoverRTInvalidCB.Wait(10));
+
+    itst::Callback discoverRTEmptyCB(&DiscoverUnicastErrorResponse);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=", NULL, 0, CT_DEFAULT,
+    OC_HIGH_QOS, discoverRTEmptyCB, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, discoverRTEmptyCB.Wait(10));
+
+    itst::Callback discoverIfInvalidCB(&DiscoverUnicastErrorResponse);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?if=invalid", NULL, 0,
+        CT_DEFAULT, OC_HIGH_QOS, discoverIfInvalidCB, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, discoverIfInvalidCB.Wait(10));
+
+    itst::Callback discoverIfEmptyCB(&DiscoverUnicastErrorResponse);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?if=", NULL, 0, CT_DEFAULT,
+    OC_HIGH_QOS, discoverIfEmptyCB, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, discoverIfEmptyCB.Wait(10));
+
+    // Unicast
+    char targetUri[MAX_URI_LENGTH * 2] ={ 0, };
+
+    itst::Callback discoverUnicastIfInvalidCB(&DiscoverUnicastErrorResponse);
+    snprintf(targetUri, MAX_URI_LENGTH * 2, "127.0.0.1/oic/res?if=invalid");
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, targetUri, NULL, 0,
+    CT_DEFAULT, OC_HIGH_QOS, discoverUnicastIfInvalidCB, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, discoverUnicastIfInvalidCB.Wait(10));
+
+    itst::Callback discoverUnicastIfEmptyCB(&DiscoverUnicastErrorResponse);
+    snprintf(targetUri, MAX_URI_LENGTH * 2, "127.0.0.1/oic/res?if=");
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, targetUri, NULL, 0, CT_DEFAULT,
+    OC_HIGH_QOS, discoverUnicastIfEmptyCB, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, discoverUnicastIfEmptyCB.Wait(10));
+
+    itst::Callback discoverUnicastRTInvalidCB(&DiscoverUnicastErrorResponse);
+    snprintf(targetUri, MAX_URI_LENGTH * 2, "127.0.0.1/oic/res?rt=invalid");
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, targetUri, NULL, 0,
+    CT_DEFAULT, OC_HIGH_QOS, discoverUnicastRTInvalidCB, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, discoverUnicastRTInvalidCB.Wait(10));
+
+    itst::Callback discoverUnicastRTEmptyCB(&DiscoverUnicastErrorResponse);
+    snprintf(targetUri, MAX_URI_LENGTH * 2, "127.0.0.1/oic/res?rt=");
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, targetUri, NULL, 0, CT_DEFAULT,
+    OC_HIGH_QOS, discoverUnicastRTEmptyCB, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, discoverUnicastRTEmptyCB.Wait(10));
+}
+
+TEST(StackZoneId, getZoneId)
+{
+    size_t tempSize = 0;
+    CAEndpoint_t *tempInfo = NULL;
+    CAGetNetworkInformation(&tempInfo, &tempSize);
+
+    for (size_t i = 0; i < tempSize; i++)
+    {
+        char *zoneId = NULL;
+        EXPECT_EQ(OC_STACK_OK, OCGetLinkLocalZoneId(tempInfo[i].ifindex, &zoneId));
+        OICFree(zoneId);
+        zoneId = NULL;
+    }
+
+    OICFree(tempInfo);
+}
+
+TEST(StackZoneId, getZoneIdWithInvalidParams)
+{
+    char *zoneId = NULL;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCGetLinkLocalZoneId(0, NULL));
+    EXPECT_EQ(OC_STACK_ERROR, OCGetLinkLocalZoneId(9999, &zoneId));
+    EXPECT_EQ(OC_STACK_ERROR, OCGetLinkLocalZoneId(UINT32_MAX, &zoneId));
 }

@@ -31,5 +31,4 @@ SConscript('../connectivity/test/SConscript', 'test_env')
 
 # Build Security Resource Manager and Provisioning API unit test
 if (target_os in ['linux', 'windows']) and (test_env.get('SECURED') == '1'):
-    SConscript('../security/unittest/SConscript', 'test_env')
-    SConscript('../security/provisioning/unittest/SConscript', 'test_env')
+    SConscript('../security/unittests/SConscript', 'test_env')

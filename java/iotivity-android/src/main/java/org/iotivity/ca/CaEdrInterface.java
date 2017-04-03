@@ -30,12 +30,16 @@ import android.util.Log;
 
 public class CaEdrInterface {
     private static Context mContext;
+    private static volatile boolean isEdrInitialized = false;
 
     private CaEdrInterface(Context context) {
         synchronized(CaEdrInterface.class) {
             mContext = context;
         }
-        registerIntentFilter();
+        if (!isEdrInitialized) {
+            registerIntentFilter();
+            isEdrInitialized = true;
+        }
     }
 
     private static IntentFilter registerIntentFilter() {
@@ -48,7 +52,10 @@ public class CaEdrInterface {
     }
 
     public static void destroyEdrInterface() {
-        mContext.unregisterReceiver(mReceiver);
+        if (isEdrInitialized) {
+            mContext.unregisterReceiver(mReceiver);
+            isEdrInitialized = false;
+        }
     }
 
     // Network Monitor

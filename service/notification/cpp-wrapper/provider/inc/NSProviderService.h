@@ -38,26 +38,26 @@ namespace OIC
 {
     namespace Service
     {
+        class NSAcceptedConsumers;
         /**
          * @class   NSProviderService
          * @brief   This class provides a set of C++APIs for Notification Provider.
          */
         class NSProviderService
         {
-
             public:
                 /**
                       * Provider uses this callback function to receive subscription request of consumer
                       * @param[in] consumer  Consumer who subscribes the notification message resource
                       */
-                typedef void (*ConsumerSubscribedCallback)(NSConsumer *);
+                typedef void (*ConsumerSubscribedCallback)(std::shared_ptr<NSConsumer> );
 
                 /**
                       * Provider use this callback function to receive the status of the message
                       * synchronization
                       * @param[in] sync Synchronization information of the notification message
                       */
-                typedef void (*MessageSynchronizedCallback)(NSSyncInfo *);
+                typedef void (*MessageSynchronizedCallback)(NSSyncInfo );
 
 
                 /**
@@ -119,7 +119,7 @@ namespace OIC
 
                 /**
                       * Request to subscribe to remote MQ address as parameter.
-                      * @param[in] server address combined with IP address and port number and MQ broker uri using delimiter :
+                      * @param[in] serverAddress server address combined with IP address and port number and MQ broker uri using delimiter :
                       * @param[in] topicName the interest Topic name for subscription.
                       * @return ::NS_OK or result code of NSResult
                       */
@@ -130,7 +130,7 @@ namespace OIC
                       * @param[in]  msg  Notification message including id, title, contentText
                       * @return :: result code of Provider Service
                       */
-                NSResult sendMessage(NSMessage *msg);
+                NSResult sendMessage(const NSMessage &msg);
 
 
                 /**
@@ -145,7 +145,7 @@ namespace OIC
                      * Initialize NSMessage class, This function is valid only when subControllability is set true.
                      * @return NSMessage *
                      */
-                NSMessage *createMessage();
+                NSMessage createMessage();
 
                 /**
                      * Add topic to topic list which is located in provider service storage
@@ -165,7 +165,7 @@ namespace OIC
                      * Request topics list already registered by provider user
                      * @return :: Topic list
                      */
-                NSTopicsList *getRegisteredTopicList();
+                std::shared_ptr<NSTopicsList> getRegisteredTopicList();
 
                 /**
                       *  get Provider config values
@@ -177,33 +177,31 @@ namespace OIC
                       *  request to get NSConsumer pointer
                       * @param id -id as string
                       *
-                      * @return pointer to NSConsumer
+                      * @return shared pointer to NSConsumer
                       */
-                NSConsumer *getConsumer(const std::string &id);
+                std::shared_ptr<NSConsumer> getConsumer(const std::string &id);
 
                 /**
-                      *  get list of Consumers accepted.
-                      * @return m_acceptedConsumers -list of accepted Consumers
+                      *  get handle of Consumers accepted.
+                      * @return m_acceptedConsumers -accepted Consumers
                       */
-                std::list<NSConsumer *> &getAcceptedConsumers();
+                NSAcceptedConsumers *getAcceptedConsumers();
 
             private :
                 ProviderConfig m_config;
-                std::list<NSConsumer *> m_acceptedConsumers;
+                NSAcceptedConsumers *m_acceptedConsumers;
 
             private:
-                NSProviderService()
-                {
-                    m_config.m_subscribeRequestCb = NULL;
-                    m_config.m_syncInfoCb = NULL;
-                }
+                NSProviderService();
                 ~NSProviderService();
                 NSProviderService(const NSProviderService &) = delete;
                 NSProviderService &operator=(const NSProviderService &) = delete;
                 NSProviderService(const NSProviderService &&) = delete;
                 NSProviderService &operator=(const NSProviderService && ) = delete;
 
-                ::NSMessage *getNSMessage(NSMessage *msg);
+                ::NSMessage *getNSMessage(const NSMessage &msg);
+                static void onConsumerSubscribedCallback(::NSConsumer *consumer);
+                static void onMessageSynchronizedCallback(::NSSyncInfo *syncInfo);
         };
     }
 }

@@ -46,19 +46,6 @@ OCStackResult InitAmaclResource();
 void DeInitAmaclResource();
 
 /**
- * This method is used by PolicyEngine to retrieve amsId for the resource.
- * If the Amacl is found for the given resource then populate the parameter
- * amsId with Amacl resource amss id.
- *
- * @param resource for which AMS service is required.
- * @param amsId of the ams service for the given resource.
- *
- * @return ::OC_STACK_OK, if Amacl is found for the resource, else ::OC_STACK_ERROR,
- *  if no Amacl found for the resource.
- */
-OCStackResult AmaclGetAmsDeviceId(const char *resource, OicUuid_t *amsId);
-
-/**
  * This function converts Amacl data into CBOR format.
  * Caller needs to invoke 'free' when done using returned string.
  *
@@ -67,28 +54,11 @@ OCStackResult AmaclGetAmsDeviceId(const char *resource, OicUuid_t *amsId);
  * @param cborSize is the size of the cbor payload. This value is the size of the
  * cborPayload. It should not be NON-NULL value.
  *
- * @return ::OC_STACK_OK for Success. ::OC_STACK_INVALID in case of invalid parameters.
+ * @return ::OC_STACK_OK for Success. ::OC_STACK_INVALID_PARAM in case of invalid parameters.
  * ::OC_STACK_ERROR in case of error in converting to cbor.
  */
 OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amacl, uint8_t **cborPayload,
                                  size_t *cborSize);
-
-/**
- * Internal function to update resource owner
- *
- * @param newROwner new owner
- *
- * @retval ::OC_STACK_OK for Success, otherwise some error value
- */
-OCStackResult SetAmaclRownerId(const OicUuid_t* newROwner);
-
-/**
- * Gets the OicUuid_t value for the rownerid of the amacl resource.
- *
- * @param rowneruuid a pointer to be assigned to the rowneruuid property
- * @return ::OC_STACK_OK if rowneruuid is assigned correctly, else ::OC_STACK_ERROR.
- */
-OCStackResult GetAmaclRownerId(OicUuid_t *rowneruuid);
 
 #ifdef __cplusplus
 }

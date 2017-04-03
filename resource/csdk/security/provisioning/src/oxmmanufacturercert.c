@@ -31,7 +31,6 @@
 #include "oic_malloc.h"
 #include "logger.h"
 #include "pbkdf2.h"
-#include "global.h"
 #include "base64.h"
 #include "oxmmanufacturercert.h"
 #include "ownershiptransfermanager.h"

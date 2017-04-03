@@ -26,6 +26,7 @@
 #include "oic_malloc.h"
 #include "base64.h"
 #include "ocrandom.h"
+#include "doxmresource.h"
 
 #define TAG  "OIC_SRM_UTILITY"
 
@@ -117,7 +118,7 @@ OCStackResult ConvertUuidToStr(const OicUuid_t* uuid, char** strUuid)
     size_t urnIdx = 0;
     const size_t urnBufSize = (UUID_LENGTH * 2) + 4 + 1;
     char* convertedUrn = (char*)OICCalloc(urnBufSize, sizeof(char));
-    VERIFY_NON_NULL(TAG, convertedUrn, ERROR);
+    VERIFY_NOT_NULL(TAG, convertedUrn, ERROR);
 
     for(uuidIdx=0, urnIdx=0;  uuidIdx < UUID_LENGTH && urnIdx < urnBufSize; uuidIdx++, urnIdx+=2)
     {
@@ -161,3 +162,10 @@ OCStackResult ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid)
 
     return OC_STACK_OK;
 }
+
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+OCStackResult SetDeviceIdSeed(const uint8_t* seed, size_t seedSize)
+{
+    return SetDoxmDeviceIDSeed(seed, seedSize);
+}
+#endif

@@ -111,7 +111,6 @@ void CAManagerTerminateMutexVariables()
 
 static CAManagerACData_t *CAManagerCreateACData(jstring jaddress)
 {
-    OIC_LOG(DEBUG, TAG, "IN - CAManagerCreateACData");
     VERIFY_NON_NULL_RET(jaddress, TAG, "jaddress", NULL);
 
     // create AC data
@@ -124,8 +123,6 @@ static CAManagerACData_t *CAManagerCreateACData(jstring jaddress)
 
     data->address = jaddress;
     data->isAutoConnecting = false;
-
-    OIC_LOG(DEBUG, TAG, "OUT - CAManagerCreateACData");
     return data;
 }
 
@@ -185,8 +182,6 @@ bool CAManagerIsInACDataList(JNIEnv *env, jstring jaddress)
 
 void CAManagerAddACData(JNIEnv *env, jstring jaddress)
 {
-    OIC_LOG(DEBUG, TAG, "IN - CAManagerAddACData");
-
     VERIFY_NON_NULL_VOID(env, TAG, "env");
     VERIFY_NON_NULL_VOID(jaddress, TAG, "jaddress");
 
@@ -206,8 +201,6 @@ void CAManagerAddACData(JNIEnv *env, jstring jaddress)
     {
         OIC_LOG(DEBUG, TAG, "the address is already in ACData list");
     }
-
-    OIC_LOG(DEBUG, TAG, "OUT - CAManagerAddACData");
 }
 
 CAResult_t CAManagerRemoveACData(JNIEnv *env, jstring jaddress)

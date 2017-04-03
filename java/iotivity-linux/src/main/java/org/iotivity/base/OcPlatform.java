@@ -71,7 +71,7 @@ public final class OcPlatform {
     private static volatile boolean sIsPlatformInitialized = false;
     private static QualityOfService sPlatformQualityOfService = QualityOfService.NA;
 
-    private static volatile boolean sIsStopPlatform = false;
+    private static volatile boolean sIsStopPlatform = true;
 
     private OcPlatform() {
     }
@@ -85,12 +85,6 @@ public final class OcPlatform {
      * @param platformConfig platform configuration
      */
     public synchronized static void Configure(PlatformConfig platformConfig) {
-        if (sIsStopPlatform)
-        {
-            OcPlatform.start();
-            sIsStopPlatform = false;
-        }
-
         if (!sIsPlatformInitialized) {
             CaInterface.initialize();
 
@@ -102,10 +96,17 @@ public final class OcPlatform {
                     platformConfig.getIpAddress(),
                     platformConfig.getPort(),
                     platformConfig.getQualityOfService().getValue(),
-                    platformConfig.getSvrDbPath()
+                    platformConfig.getSvrDbPath(),
+                    platformConfig.getAvailableTransportType()
             );
 
             sIsPlatformInitialized = true;
+        }
+
+        if (sIsStopPlatform)
+        {
+            OcPlatform.start();
+            sIsStopPlatform = false;
         }
     }
 
@@ -114,7 +115,8 @@ public final class OcPlatform {
                                          String ipAddress,
                                          int port,
                                          int qualityOfService,
-                                         String dbPath);
+                                         String dbPath,
+                                         int transport);
 
     /**
      * API for stop all process of the OcPlatform.
@@ -348,6 +350,93 @@ public final class OcPlatform {
             String resourceUri,
             int connectivityType,
             OnResourceFoundListener onResourceFoundListener,
+            int qualityOfService) throws OcException;
+
+    /**
+     * API for Service and Resource Discovery
+     * <p>
+     * Note: This API is for client side only.
+     * </p>
+     *
+     * @param host                     Host Address of a service to direct resource discovery query.
+     *                                 If empty, performs multicast resource discovery query
+     * @param resourceUri              name of the resource. If null or empty, performs search for all
+     *                                 resource names
+     * @param connectivityTypeSet      Set of types of connectivity. Example: IP
+     * @param onResourcesFoundListener Handles events, success states and failure states.
+     * @throws OcException if failure
+     */
+    public static void findResources(
+            String host,
+            String resourceUri,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            OnResourcesFoundListener onResourcesFoundListener) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
+
+        OcPlatform.findResources0(
+                host,
+                resourceUri,
+                connTypeInt,
+                onResourcesFoundListener
+        );
+    }
+
+    private static native void findResources0(
+            String host,
+            String resourceUri,
+            int connectivityType,
+            OnResourcesFoundListener onResourcesFoundListener) throws OcException;
+
+    /**
+     * API for Service and Resource Discovery.
+     * <p>
+     * Note: This API is for client side only.
+     * </p>
+     *
+     * @param host                     Host IP Address of a service to direct resource discovery query.
+     *                                 If empty, performs multicast resource discovery query
+     * @param resourceUri              name of the resource. If null or empty, performs search for all
+     *                                 resource names
+     * @param connectivityTypeSet      Set of types of connectivity. Example: IP
+     * @param onResourcesFoundListener Handles events, success states and failure states.
+     * @param qualityOfService         the quality of communication
+     * @throws OcException if failure
+     */
+    public static void findResources(
+            String host,
+            String resourceUri,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            OnResourcesFoundListener onResourcesFoundListener,
+            QualityOfService qualityOfService) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
+
+        OcPlatform.findResources1(host,
+                resourceUri,
+                connTypeInt,
+                onResourcesFoundListener,
+                qualityOfService.getValue()
+        );
+    }
+
+    private static native void findResources1(
+            String host,
+            String resourceUri,
+            int connectivityType,
+            OnResourcesFoundListener onResourcesFoundListener,
             int qualityOfService) throws OcException;
 
     /**
@@ -1125,6 +1214,15 @@ public final class OcPlatform {
     }
 
     /**
+     * An OnResourcesFoundListener can be registered via the OcPlatform.findResources call.
+     * Event listeners are notified asynchronously
+     */
+    public interface OnResourcesFoundListener {
+        public void onResourcesFound(OcResource[] resources);
+        public void onFindResourcesFailed(Throwable ex, String uri);
+    }
+
+    /**
      * An OnDeviceFoundListener can be registered via the OcPlatform.getDeviceInfo call.
      * Event listeners are notified asynchronously
      */
@@ -1225,4 +1323,9 @@ public final class OcPlatform {
      * Method to set DeviceId.
      */
     public static native void setDeviceId(byte[] deviceId) throws OcException;
+
+    /**
+     * Method to get the version of IoTivity.
+     */
+    public static native String getIoTivityVersion();
 }

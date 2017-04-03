@@ -22,6 +22,7 @@
 
 #include "JniUtils.h"
 #include "JniOcRepresentation.h"
+#include "JniOcResource.h"
 
 jobject JniUtils::convertStrVectorToJavaStrList(JNIEnv *env, std::vector<std::string> &vector)
 {
@@ -263,4 +264,36 @@ jobjectArray JniUtils::convertRepresentationVectorToJavaArray(JNIEnv *env,
     }
 
     return repArr;
+}
+
+jobjectArray JniUtils::convertResourceVectorToJavaArray(JNIEnv *env,
+    const std::vector<std::shared_ptr<OC::OCResource>>& resourceVector)
+{
+    jsize len = static_cast<jsize>(resourceVector.size());
+    jobjectArray resourceArray = env->NewObjectArray(len, g_cls_OcResource, NULL);
+
+    if (!resourceArray)
+    {
+        return nullptr;
+    }
+
+    for (jsize i = 0; i < len; ++i)
+    {
+        JniOcResource *resource = new JniOcResource(resourceVector[i]);
+        jobject jResource = env->NewObject(g_cls_OcResource, g_mid_OcResource_ctor);
+
+        SetHandle<JniOcResource>(env, jResource, resource);
+        if (!jResource)
+        {
+            return nullptr;
+        }
+
+        env->SetObjectArrayElement(resourceArray, i, jResource);
+        if (env->ExceptionCheck())
+        {
+            return nullptr;
+        }
+        env->DeleteLocalRef(jResource);
+    }
+    return resourceArray;
 }

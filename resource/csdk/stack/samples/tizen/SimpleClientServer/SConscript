@@ -54,7 +54,7 @@ help_vars.Add(BoolVariable('RELEASE', 'Build for release?', True)) # set to 'no'
 help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map[host]))
 help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ALL', ['ALL', 'IP', 'BT', 'BLE']))
 help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
-help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))
+help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '1', allowed_values=('0', '1')))
 help_vars.Add(EnumVariable('ROUTING', 'Enable routing', 'EP', allowed_values=('GW', 'EP')))
 help_vars.Add(BoolVariable('WITH_PROXY', 'CoAP-HTTP Proxy', False)) # set to 'no', 'false' or 0 for debug
 help_vars.Add(ListVariable('WITH_MQ', 'Build with MQ publisher/subscriber/broker', 'OFF', ['OFF', 'SUB', 'PUB', 'BROKER']))
@@ -82,7 +82,7 @@ Help(help_vars.GenerateHelpText(env))
 
 tc_set_msg = '''
 ************************************ Warning **********************************
-*   Enviornment variable TC_PREFIX/TC_PATH is set. It will change the default *
+*   Environment variable TC_PREFIX/TC_PATH is set. It will change the default *
 * toolchain, if it isn't what you expect you should unset it, otherwise it may*
 * cause inexplicable errors.                                                  *
 *******************************************************************************

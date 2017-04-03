@@ -124,6 +124,8 @@ NSResult NSStopProvider()
 
     if (initProvider)
     {
+        CAUnregisterNetworkMonitorHandler((CAAdapterStateChangedCB)NSProviderAdapterStateListener,
+                (CAConnectionStateChangedCB)NSProviderConnectionStateListener);
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_STOP_PRESENCE, NULL);
         NSRegisterSubscribeRequestCb((NSSubscribeRequestCallback)NULL);
         NSRegisterSyncCb((NSProviderSyncInfoCallback)NULL);
@@ -153,7 +155,7 @@ NSResult NSProviderEnableRemoteService(char *serverAddress)
         return NS_FAIL;
     }
 
-    NS_LOG_V(DEBUG, "Remote server address: %s", serverAddress);
+    NS_LOG_V(INFO_PRIVATE, "Remote server address: %s", serverAddress);
     NS_LOG(DEBUG, "Request to publish resource");
     NSPushQueue(DISCOVERY_SCHEDULER, TASK_PUBLISH_RESOURCE, serverAddress);
 
@@ -163,7 +165,7 @@ NSResult NSProviderEnableRemoteService(char *serverAddress)
 #else
     (void) serverAddress;
 #endif
-    NS_LOG_V(DEBUG, "Not logged in remote server: %s", serverAddress);
+    NS_LOG_V(INFO_PRIVATE, "Not logged in remote server: %s", serverAddress);
     return NS_FAIL;
 }
 
@@ -176,21 +178,18 @@ NSResult NSProviderDisableRemoteService(char *serverAddress)
     if (!initProvider || !serverAddress)
     {
         NS_LOG(DEBUG, "Provider service has not been started yet");
+        pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
 
-    NS_LOG_V(DEBUG, "Remote server address: %s", serverAddress);
-
-    NS_LOG(DEBUG, "Delete remote server info");
-    NSDeleteRemoteServerAddress(serverAddress);
-
+    NS_LOG_V(INFO_PRIVATE, "Remote server address: %s", serverAddress);
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderDisableRemoteService - OUT");
     return NS_OK;
 #else
     (void) serverAddress;
 #endif
-    NS_LOG_V(DEBUG, "Not logged in remote server : %s", serverAddress);
+    NS_LOG_V(INFO_PRIVATE, "Not logged in remote server : %s", serverAddress);
     return NS_FAIL;
 }
 
@@ -449,6 +448,10 @@ NSResult NSProviderSetConsumerTopic(const char * consumerId, const char * topicN
         NS_LOG(DEBUG, "provider is not started or "
                 "consumer id should be set for topic subscription or "
                 "Configuration must set to true.");
+        if (topicSubData)
+        {
+            OICFreeAndSetToNull(&topicSubData);
+        }
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
@@ -484,6 +487,10 @@ NSResult NSProviderUnsetConsumerTopic(const char * consumerId, const char * topi
         NS_LOG(DEBUG, "provider is not started or "
                 "consumer id should be set for topic subscription or "
                 "Configuration must set to true.");
+        if (topicSubData)
+        {
+            OICFreeAndSetToNull(&topicSubData);
+        }
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }

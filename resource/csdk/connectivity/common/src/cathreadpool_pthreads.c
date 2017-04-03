@@ -188,7 +188,7 @@ CAResult_t ca_thread_pool_add_task(ca_thread_pool_t thread_pool, ca_thread_func 
     int thrRet = oc_thread_new(&threadInfo->thread, ca_thread_pool_pthreads_delegate, info);
     if (thrRet != 0)
     {
-        uint32_t index = 0;
+        size_t index = 0;
         if (u_arraylist_get_index(thread_pool->details->threads_list, threadInfo, &index))
         {
             u_arraylist_remove(thread_pool->details->threads_list, index);
@@ -216,7 +216,7 @@ void ca_thread_pool_free(ca_thread_pool_t thread_pool)
 
     oc_mutex_lock(thread_pool->details->list_lock);
 
-    for (uint32_t i = 0; i < u_arraylist_length(thread_pool->details->threads_list); ++i)
+    for (size_t i = 0; i < u_arraylist_length(thread_pool->details->threads_list); ++i)
     {
         ca_thread_pool_thread_info_t *threadInfo = (ca_thread_pool_thread_info_t *)
                 u_arraylist_get(thread_pool->details->threads_list, i);

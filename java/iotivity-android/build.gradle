@@ -73,7 +73,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 21
         versionCode 1
-        versionName "1.2.0"
+        versionName PROJECT_VERSION
         buildConfigField 'int', 'SECURED', SECURED
         buildConfigField 'int', 'WITH_TCP', WITH_TCP
         buildConfigField 'int', 'WITH_CLOUD', WITH_CLOUD
@@ -84,6 +84,7 @@ android {
         buildConfigField "int", 'WITH_TRANSPORT_EDR', WITH_TRANSPORT_EDR
         buildConfigField "int", 'WITH_TRANSPORT_BLE', WITH_TRANSPORT_BLE
         buildConfigField "int", 'WITH_TRANSPORT_NFC', WITH_TRANSPORT_NFC
+        buildConfigField "int", 'MULTIPLE_OWNER', MULTIPLE_OWNER
     }
     buildTypes {
         release {
@@ -130,13 +131,14 @@ dependencies {
 
 task copyNativeLibs(type: Copy) {
     String[] libraries = [
-        'libca-interface.so',
-        'libconnectivity_abstraction.so',
         'libgnustl_shared.so',
+        'libconnectivity_abstraction.so',
+        'libca-interface.so',
         'liboc_logger.so',
+        'liboctbstack.so',
         'liboc.so',
-        'libocstack-jni.so',
-        'liboctbstack.so'
+        'libresource_directory.so',
+        'libocstack-jni.so'
     ]
     if ("$SECURED" == '1')
         libraries += [
@@ -159,7 +161,7 @@ task buildNative(type: Exec) {
         //for windows use 'ndk-build.cmd'
         //def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build.cmd')
         def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build')
-        commandLine ndkBuild, "APP_ABI=$TARGET_ARCH", "APP_OPTIM=$RELEASE", "SECURE=$SECURED", "WITH_CLOUD=$WITH_CLOUD", "RD_MODE=$RD_MODE", "WITH_MQ_PUB=$WITH_MQ_PUB", "WITH_MQ_SUB=$WITH_MQ_SUB", "WITH_MQ_BROKER=$WITH_MQ_BROKER", "WITH_TCP=$WITH_TCP"
+        commandLine ndkBuild, "APP_ABI=$TARGET_ARCH", "APP_OPTIM=$RELEASE", "SECURE=$SECURED", "WITH_CLOUD=$WITH_CLOUD", "RD_MODE=$RD_MODE", "WITH_MQ_PUB=$WITH_MQ_PUB", "WITH_MQ_SUB=$WITH_MQ_SUB", "WITH_MQ_BROKER=$WITH_MQ_BROKER", "WITH_TCP=$WITH_TCP","MULTIPLE_OWNER=$MULTIPLE_OWNER"
     } else {
         println '##################'
         println 'Skipping NDK build'

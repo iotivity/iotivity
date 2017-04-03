@@ -19,11 +19,6 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "NSProviderSystem.h"
 
-#if (defined WITH_CLOUD)
-#define MAX_SERVER_ADDRESS 32
-static char NSRemoteServerAddress[MAX_SERVER_ADDRESS] = {0,};
-#endif
-
 #ifdef WITH_MQ
 static NSMQServerInfo * mqServerInfo = NULL;
 #endif
@@ -48,40 +43,13 @@ NSConnectionState NSGetProviderConnectionState()
     return NSProviderConnectionState;
 }
 
-#if (defined WITH_CLOUD)
-void NSSetRemoteServerAddress(char *serverAddress)
-{
-
-    OICStrcpy(NSRemoteServerAddress, MAX_SERVER_ADDRESS, serverAddress);
-}
-
-void NSDeleteRemoteServerAddress(char *serverAddress)
-{
-    NS_LOG_V(DEBUG, "Delete cloud address: %s", serverAddress);
-
-    memset(NSRemoteServerAddress, 0, MAX_SERVER_ADDRESS);
-}
-
-bool NSIsRemoteServerAddress(char *serverAddress)
-{
-    NS_LOG_V(DEBUG, "Check server address: %s", serverAddress);
-
-    if (serverAddress != NULL)
-    {
-        return strstr(NSRemoteServerAddress, serverAddress);
-    }
-
-    return false;
-}
-#endif
-
 void NSInitProviderInfo(const char * userInfo)
 {
     NS_LOG(DEBUG, "NSInitProviderInfo");
 
     providerInfo = (NSProviderInfo *) OICMalloc(sizeof(NSProviderInfo));
     const char * generatedUuid = (char *)OCGetServerInstanceIDString();
-    NS_LOG_V(DEBUG, "Generate Provider ID: %s", generatedUuid);
+    NS_LOG_V(INFO_PRIVATE, "Generate Provider ID: %s", generatedUuid);
     OICStrcpy(providerInfo->providerId, UUID_STRING_SIZE, generatedUuid);
 
     providerInfo->providerName = NULL;
@@ -121,7 +89,7 @@ void NSDeinitProviderInfo()
 
 NSProviderInfo * NSGetProviderInfo()
 {
-    NS_LOG_V(DEBUG, "ProviderInfo: %s", providerInfo->providerId);
+    NS_LOG_V(INFO_PRIVATE, "ProviderInfo: %s", providerInfo->providerId);
 
     return providerInfo;
 }

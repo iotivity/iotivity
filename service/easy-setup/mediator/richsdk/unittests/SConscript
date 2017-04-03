@@ -25,13 +25,13 @@
 Import('env')
 
 if env.get('RELEASE'):
-	env.AppendUnique(CCFLAGS = ['-Os'])
-	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+    env.AppendUnique(CCFLAGS = ['-Os'])
+    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
-	env.AppendUnique(CCFLAGS = ['-g'])
+    env.AppendUnique(CCFLAGS = ['-g'])
 
 if env.get('LOGGING'):
-	env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 lib_env = env.Clone()
 SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
@@ -62,17 +62,22 @@ if target_os not in ['windows', 'winrt']:
 easysetup_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
 easysetup_test_env.AppendUnique(LIBS = ['pthread'])
 
-easysetup_test_env.PrependUnique(CPPPATH = [ src_dir + '/extlibs/hippomocks-master', gtest_dir + '/include'])
-
-easysetup_test_env.AppendUnique(CPPPATH = [ src_dir + '/resource/include',
-					    src_dir + '/resource/csdk/connectivity/api',
-                                            src_dir + '/service/easy-setup/mediator/richsdk/inc',
-                                            src_dir + '/service/easy-setup/inc',
-                                            src_dir + '/service/easy-setup/enrollee/inc'])
+easysetup_test_env.PrependUnique(CPPPATH = [
+    '#/extlibs/hippomocks-master',
+    gtest_dir + '/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/connectivity/api',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/resource/oc_logger/include',
+    '#/service/easy-setup/inc',
+    '#/service/easy-setup/enrollee/inc',
+    '#/service/easy-setup/mediator/richsdk/inc'
+])
 
 if env.get('SECURED') == '1':
-	if env.get('WITH_TCP') == True:
-		easysetup_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    if env.get('WITH_TCP') == True:
+        easysetup_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 ######################################################################
 # Build Test
 ######################################################################
@@ -92,4 +97,5 @@ if env.get('TEST') == '1':
         run_test(easysetup_mediator_test_env,
 #                'service_easy-setup_mediator_richsdk_unittests_easysetup_mediator_test.memcheck',
                  '',
-                 'service/easy-setup/mediator/richsdk/unittests/easysetup_mediator_test')
+                 'service/easy-setup/mediator/richsdk/unittests/easysetup_mediator_test',
+                 easysetup_mediator_test)

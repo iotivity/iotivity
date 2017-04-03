@@ -99,6 +99,38 @@ public class OcProvisioning {
         public String pinCallbackListener();
     }
 
+
+    /**
+     * Method to Discover devices which are MOT (Multiple owner transfer) enabled
+     * and unowned.
+     *
+     * @param timeout     Timeout in sec.Time to listen for responses before
+     *                    returining the Array.
+     * @return            Array of OcSecureResource class objects.
+     * @throws OcException
+     */
+    public static List<OcSecureResource> discoverMOTEnabledDevices(int timeout)
+        throws OcException {
+            return Arrays.asList(OcProvisioning.discoverMOTEnabledDevices1(timeout));
+        }
+    private static native OcSecureResource[] discoverMOTEnabledDevices1(int timeout)
+        throws OcException;
+
+    /**
+     * Method to Discover devices which are MOT (Multiple owner transfer) enabled and Owned.
+     *
+     * @param timeout     Timeout in sec.Time to listen for responses before
+     *                    returining the Array.
+     * @return            Array of OcSecureResource class objects.
+     * @throws OcException
+     */
+    public static List<OcSecureResource> discoverMOTEnabledOwnedDevices(int timeout)
+        throws OcException {
+            return Arrays.asList(OcProvisioning.discoverMOTEnabledOwnedDevices1(timeout));
+        }
+    private static native OcSecureResource[] discoverMOTEnabledOwnedDevices1(int timeout)
+        throws OcException;
+
     /**
      * Server API to set Callback for Displaying stack generated PIN.
      *
@@ -220,5 +252,51 @@ public class OcProvisioning {
         return saveTrustCertChain1(trustCertChain,encodingType.getValue());
     }
     private static native int saveTrustCertChain1(byte[] trustCertChain, int encodingType)
+        throws OcException;
+
+    /**
+     *  Method to save pin type.
+     *
+     *  @param pinSize Byte Len of Random pin.
+     *  @param pinType Enumset of pin, see PinType for enums
+     *  @throws OcException
+     */
+    public static int setPinType(int pinSize, EnumSet<PinType>  pinType) throws OcException {
+
+        int pinTypeInt = 0;
+
+        for (PinType ops : PinType.values()) {
+            if (pinType.contains(ops))
+                pinTypeInt |= ops.getValue();
+        }
+        return setPinType0(pinSize, pinTypeInt);
+    }
+    private static native int setPinType0(int pinSize, int pinType) throws OcException;
+
+    /**
+     * API to save ACL, having multiple ACE's
+     *
+     *@param acl object
+     *@throws OcException
+     */
+    public static native void saveACL(Object acl) throws OcException;
+
+    /**
+     * API to do self ownership transfer.
+     *
+     *@throws OcException
+     */
+    public static native void doSelfOwnershiptransfer() throws OcException;
+    
+    /**
+     *  Method to save the seed value to generate device UUID
+     *
+     *  @param seed   buffer of seed value
+     *  @throws OcException
+     */
+    public static int setDeviceIdSeed(byte[] seed) throws OcException {
+        return setDeviceIdSeed1(seed);
+    }
+    private static native int setDeviceIdSeed1(byte[] seed)
         throws OcException;
 }

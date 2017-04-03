@@ -28,6 +28,7 @@
 #include "srmresourcestrings.h"
 #include "doxmresource.h"
 #include "security_internals.h"
+#include "ocrandom.h"
 
 #define TAG  "SRM-DOXM"
 
@@ -221,3 +222,937 @@ TEST(HandleDoxmPostRequestTest, HandleDoxmPostRequestValidInput)
     OICFree(ehRequest.reqJSONPayload);
 }
 #endif
+
+#ifdef MULTIPLE_OWNER
+typedef struct _DoxmMotParameters
+{
+    OicUuid_t m_uuid;
+    MotStatus_t m_status;
+} DoxmMotParameters;
+#endif
+
+typedef struct _DoxmTestParameter
+{
+    std::vector<std::string>        m_oxmTypeArray;
+    std::vector<OicSecOxm_t>        m_oxmArray;
+    OicSecOxm_t                     m_oxmSel;
+    OicSecCredType_t                m_sct;
+    bool                            m_owned;
+    OicUuid_t                       m_deviceID;
+    bool                            m_dpc;
+    OicUuid_t                       m_owner;
+
+#ifdef MULTIPLE_OWNER
+    std::vector<DoxmMotParameters>  m_subOwnersList;
+    OicSecMomType_t                 m_mom;
+#endif
+
+    OicUuid_t                       m_rownerID;
+} DoxmTestParameter;
+
+class DoxmComparisonTests : public testing::Test
+{
+public:
+    DoxmComparisonTests() : m_doxm1(nullptr), m_doxm2(nullptr)
+    {};
+
+protected:
+    virtual void TearDown()
+    {
+        DeleteDoxmBinData(m_doxm1);
+        DeleteDoxmBinData(m_doxm2);
+    }
+
+    void GenerateDoxmTestParameterUUIDs(DoxmTestParameter *param)
+    {
+        ASSERT_TRUE(OCGenerateUuid(param->m_deviceID.id));
+        ASSERT_TRUE(OCGenerateUuid(param->m_owner.id));
+        ASSERT_TRUE(OCGenerateUuid(param->m_rownerID.id));
+    }
+
+    void DoxmBinFromParameters(const DoxmTestParameter &param1, const DoxmTestParameter &param2)
+    {
+        DoxmBinFromParameter(param1, &m_doxm1);
+        DoxmBinFromParameter(param2, &m_doxm2);
+    }
+
+    OicSecDoxm_t *m_doxm1;
+    OicSecDoxm_t *m_doxm2;
+
+private:
+    void DoxmBinFromParameter(const DoxmTestParameter &param, OicSecDoxm_t **doxmBin);
+};
+
+void DoxmComparisonTests::DoxmBinFromParameter(const DoxmTestParameter &param, OicSecDoxm_t **doxmBin)
+{
+    OicSecDoxm_t *newDoxmBin = (OicSecDoxm_t *)OICCalloc(1, sizeof(OicSecDoxm_t));
+    ASSERT_NE(nullptr, newDoxmBin);
+
+    // oxmType and oxmTypeLen.
+    size_t arrayLength = param.m_oxmTypeArray.size();
+    if (arrayLength == 0)
+    {
+        newDoxmBin->oxmType = nullptr;
+    }
+    else
+    {
+        newDoxmBin->oxmType = (OicUrn_t *)OICCalloc(sizeof(OicUrn_t), arrayLength);
+        ASSERT_NE(nullptr, newDoxmBin->oxmType);
+
+        for (size_t i = 0; i < arrayLength; i++)
+        {
+            newDoxmBin->oxmType[i] = OICStrdup(param.m_oxmTypeArray[i].c_str());
+            ASSERT_NE(nullptr, newDoxmBin->oxmType[i]);
+        }
+    }
+    newDoxmBin->oxmTypeLen = arrayLength;
+
+    // oxm and oxmLen.
+    arrayLength = param.m_oxmArray.size();
+    if (arrayLength == 0)
+    {
+        newDoxmBin->oxm = nullptr;
+    }
+    else
+    {
+        newDoxmBin->oxm = (OicSecOxm_t *)OICCalloc(sizeof(OicSecOxm_t), arrayLength);
+        ASSERT_NE(nullptr, newDoxmBin->oxm);
+
+        for (size_t i = 0; i < arrayLength; i++)
+        {
+            newDoxmBin->oxm[i] = param.m_oxmArray[i];
+        }
+    }
+    newDoxmBin->oxmLen = arrayLength;
+
+    // Other doxm fields.
+    newDoxmBin->oxmSel = param.m_oxmSel;
+    newDoxmBin->sct = param.m_sct;
+    newDoxmBin->owned = param.m_owned;
+    newDoxmBin->deviceID = param.m_deviceID;
+    newDoxmBin->dpc = param.m_dpc;
+    newDoxmBin->owner = param.m_owner;
+    newDoxmBin->rownerID = param.m_rownerID;
+
+    // doxm MOT fields.
+#ifdef MULTIPLE_OWNER
+    newDoxmBin->subOwners = nullptr;
+    arrayLength = param.m_subOwnersList.size();
+    for (size_t i = 0; i < arrayLength; i++)
+    {
+        OicSecSubOwner_t *newSubOwner = (OicSecSubOwner_t *)OICCalloc(1, sizeof(OicSecSubOwner_t));
+        ASSERT_NE(nullptr, newSubOwner);
+
+        newSubOwner->uuid = param.m_subOwnersList[i].m_uuid;
+        newSubOwner->status = param.m_subOwnersList[i].m_status;
+        newSubOwner->next = newDoxmBin->subOwners;
+        newDoxmBin->subOwners = newSubOwner;
+    }
+
+    newDoxmBin->mom = (OicSecMom_t *)OICCalloc(1, sizeof(OicSecMom_t));
+    ASSERT_NE(nullptr, newDoxmBin->mom);
+    newDoxmBin->mom->mode = param.m_mom;
+#endif
+
+    *doxmBin = newDoxmBin;
+}
+
+TEST_F(DoxmComparisonTests, Equal1)
+{
+#ifdef MULTIPLE_OWNER
+    DoxmMotParameters mot1 = { {0}, MOT_STATUS_IN_PROGRESS };
+    ASSERT_TRUE(OCGenerateUuid(mot1.m_uuid.id));
+#endif
+
+    DoxmTestParameter param1 =
+    {
+        {"oxmType1"},
+        {OIC_JUST_WORKS},
+        OIC_JUST_WORKS,
+        SYMMETRIC_PAIR_WISE_KEY,
+        false,
+        {0},    // m_deviceID
+        false,
+        {0},    // m_owner
+
+#ifdef MULTIPLE_OWNER
+        {mot1}, // m_rownerID
+        OIC_MULTIPLE_OWNER_TIMELY_ENABLE,
+#endif
+        {0}
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_TRUE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, Equal2)
+{
+#ifdef MULTIPLE_OWNER
+    DoxmMotParameters mot1 = { {0}, MOT_STATUS_IN_PROGRESS };
+    ASSERT_TRUE(OCGenerateUuid(mot1.m_uuid.id));
+    DoxmMotParameters mot2 = { {0}, MOT_STATUS_READY };
+    ASSERT_TRUE(OCGenerateUuid(mot2.m_uuid.id));
+    DoxmMotParameters mot3 = { {0}, MOT_STATUS_DONE };
+    ASSERT_TRUE(OCGenerateUuid(mot3.m_uuid.id));
+    DoxmMotParameters mot4 = { {0}, MOT_STATUS_DONE };
+    ASSERT_TRUE(OCGenerateUuid(mot4.m_uuid.id));
+#endif
+
+    DoxmTestParameter param1 =
+    {
+        {"oxmType10"},
+        {OIC_RANDOM_DEVICE_PIN, OIC_JUST_WORKS},
+        OIC_RANDOM_DEVICE_PIN,
+        SYMMETRIC_PAIR_WISE_KEY,
+        false,
+        {0},    // m_deviceID
+        false,
+        {0},    // m_owner
+
+#ifdef MULTIPLE_OWNER
+        {mot1, mot2, mot3, mot4},
+        OIC_MULTIPLE_OWNER_TIMELY_ENABLE,
+#endif
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_TRUE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, Equal3)
+{
+#ifdef MULTIPLE_OWNER
+    DoxmMotParameters mot1 = { {0}, MOT_STATUS_IN_PROGRESS };
+    ASSERT_TRUE(OCGenerateUuid(mot1.m_uuid.id));
+#endif
+
+    DoxmTestParameter param1 =
+    {
+        {"oxmType10", "oxmType20"},
+        {OIC_RANDOM_DEVICE_PIN, OIC_JUST_WORKS},
+        OIC_RANDOM_DEVICE_PIN,
+        SYMMETRIC_PAIR_WISE_KEY,
+        false,
+        {0},    // m_deviceID
+        false,
+        {0},    // m_owner
+
+#ifdef MULTIPLE_OWNER
+        {mot1},
+        OIC_MULTIPLE_OWNER_TIMELY_ENABLE,
+#endif
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_TRUE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, Equal4)
+{
+    DoxmTestParameter param1 =
+    {
+        {"oxmType100"},
+        {OIC_RANDOM_DEVICE_PIN, OIC_JUST_WORKS},
+        OIC_RANDOM_DEVICE_PIN,
+        SYMMETRIC_PAIR_WISE_KEY,
+        false,
+        {0},    // m_deviceID
+        false,
+        {0},    // m_owner
+
+#ifdef MULTIPLE_OWNER
+        {},
+        OIC_MULTIPLE_OWNER_TIMELY_ENABLE,
+#endif
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_TRUE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, Equal5)
+{
+    DoxmTestParameter param1 =
+    {
+        {"oxmType100", "foo"},
+        {OIC_RANDOM_DEVICE_PIN, OIC_JUST_WORKS},
+        OIC_JUST_WORKS,
+        SYMMETRIC_GROUP_KEY,
+        true,
+        {0},    // m_deviceID
+        false,
+        {0},    // m_owner
+
+#ifdef MULTIPLE_OWNER
+        {},
+        OIC_MULTIPLE_OWNER_DISABLE,
+#endif
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_TRUE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, Equal6)
+{
+    DoxmTestParameter param1 =
+    {
+        {"type", "bar", "Fred"},
+        {OIC_MANUFACTURER_CERTIFICATE},
+        OIC_JUST_WORKS,
+        SYMMETRIC_GROUP_KEY,
+        false,
+        {0},    // m_deviceID
+        true,
+        {0},    // m_owner
+
+#ifdef MULTIPLE_OWNER
+        {},
+        OIC_MULTIPLE_OWNER_ENABLE,
+#endif
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_TRUE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, oxmTypeMismatch)
+{
+    DoxmTestParameter param1 =
+    {
+        {"type", "bar", "Fred"},
+        {OIC_MANUFACTURER_CERTIFICATE},
+        OIC_JUST_WORKS,
+        SYMMETRIC_GROUP_KEY,
+        false,
+        {0},    // m_deviceID
+        true,
+        {0},    // m_owner
+
+#ifdef MULTIPLE_OWNER
+        {},
+        OIC_MULTIPLE_OWNER_ENABLE,
+#endif
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    param2.m_oxmTypeArray[1] = "foo";
+
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, oxmTypeLenMismatch)
+{
+    DoxmTestParameter param1 =
+    {
+        {"type1", "type2", "type3", "type4", "type5"},
+        {OIC_MANUFACTURER_CERTIFICATE},
+        OIC_JUST_WORKS,
+        SYMMETRIC_GROUP_KEY,
+        false,
+        {0},    // m_deviceID
+        true,
+        {0},    // m_owner
+
+#ifdef MULTIPLE_OWNER
+        {},
+        OIC_MULTIPLE_OWNER_ENABLE,
+#endif
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    param2.m_oxmTypeArray.erase(param2.m_oxmTypeArray.begin());
+
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, oxmMismatch)
+{
+    DoxmTestParameter param1 =
+    {
+        {"test oxmtype"},
+        {OIC_MANUFACTURER_CERTIFICATE},
+        OIC_JUST_WORKS,
+        SYMMETRIC_GROUP_KEY,
+        false,
+        {0},    // m_deviceID
+        true,
+        {0},    // m_owner
+
+#ifdef MULTIPLE_OWNER
+        {},
+        OIC_MULTIPLE_OWNER_ENABLE,
+#endif
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    param2.m_oxmArray[0] = OIC_CON_MFG_CERT;
+
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, oxmLenMismatch)
+{
+    DoxmTestParameter param1 =
+    {
+        {"test oxmtype"},
+        {OIC_MANUFACTURER_CERTIFICATE},
+        OIC_JUST_WORKS,
+        SYMMETRIC_GROUP_KEY,
+        false,
+        {0},    // m_deviceID
+        true,
+        {0},    // m_owner
+
+#ifdef MULTIPLE_OWNER
+        {},
+        OIC_MULTIPLE_OWNER_ENABLE,
+#endif
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    param1.m_oxmArray.push_back(OIC_JUST_WORKS);
+
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, oxmSelMismatch)
+{
+    DoxmTestParameter param1 =
+    {
+        {"oxmtype1"},
+        {OIC_MANUFACTURER_CERTIFICATE, OIC_JUST_WORKS, OIC_DECENTRALIZED_PUBLIC_KEY, OIC_RANDOM_DEVICE_PIN},
+        OIC_RANDOM_DEVICE_PIN,
+        SYMMETRIC_GROUP_KEY,
+        false,
+        {0},    // m_deviceID
+        true,
+        {0},    // m_owner
+
+#ifdef MULTIPLE_OWNER
+        {},
+        OIC_MULTIPLE_OWNER_ENABLE,
+#endif
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    param2.m_oxmSel = OIC_JUST_WORKS;
+
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, sctMismatch)
+{
+    DoxmTestParameter param1 =
+    {
+        {"oxmtype10000"},
+        {OIC_MANUFACTURER_CERTIFICATE, OIC_JUST_WORKS, OIC_DECENTRALIZED_PUBLIC_KEY, OIC_RANDOM_DEVICE_PIN},
+        OIC_RANDOM_DEVICE_PIN,
+        ASYMMETRIC_KEY,
+        false,
+        {0},    // m_deviceID
+        true,
+        {0},    // m_owner
+
+#ifdef MULTIPLE_OWNER
+        {},
+        OIC_MULTIPLE_OWNER_ENABLE,
+#endif
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    param1.m_sct = SYMMETRIC_PAIR_WISE_KEY;
+
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, ownedMismatch)
+{
+    DoxmTestParameter param1 =
+    {
+        {"oxmtype10000"},
+        {OIC_MANUFACTURER_CERTIFICATE, OIC_JUST_WORKS, OIC_DECENTRALIZED_PUBLIC_KEY, OIC_RANDOM_DEVICE_PIN},
+        OIC_RANDOM_DEVICE_PIN,
+        ASYMMETRIC_KEY,
+        false,
+        {0},    // m_deviceID
+        true,
+        {0},    // m_owner
+
+#ifdef MULTIPLE_OWNER
+        {},
+        OIC_MULTIPLE_OWNER_ENABLE,
+#endif
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    param2.m_owned = !param2.m_owned;
+
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, deviceIDMismatch)
+{
+    DoxmTestParameter param1 =
+    {
+        {"Jack", "in", "The", "Box"},
+        {OIC_MANUFACTURER_CERTIFICATE, OIC_DECENTRALIZED_PUBLIC_KEY, OIC_RANDOM_DEVICE_PIN},
+        OIC_MANUFACTURER_CERTIFICATE,
+        PIN_PASSWORD,
+        false,
+        {0},    // m_deviceID
+        true,
+        {0},    // m_owner
+
+#ifdef MULTIPLE_OWNER
+        {},
+        OIC_MULTIPLE_OWNER_DISABLE,
+#endif
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    ASSERT_TRUE(OCGenerateUuid(param2.m_deviceID.id));
+
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, dpcMismatch)
+{
+    DoxmTestParameter param1 =
+    {
+        {"Jack", "in", "The", "Box"},
+        {OIC_MANUFACTURER_CERTIFICATE, OIC_DECENTRALIZED_PUBLIC_KEY, OIC_RANDOM_DEVICE_PIN},
+        OIC_MANUFACTURER_CERTIFICATE,
+        PIN_PASSWORD,
+        true,
+        {0},    // m_deviceID
+        true,
+        {0},    // m_owner
+
+#ifdef MULTIPLE_OWNER
+        {},
+        OIC_MULTIPLE_OWNER_DISABLE,
+#endif
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    param1.m_dpc = !param1.m_dpc;
+
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, ownerMismatch)
+{
+    DoxmTestParameter param1 =
+    {
+        {"dpcMismatch test"},
+        {OIC_RANDOM_DEVICE_PIN},
+        OIC_RANDOM_DEVICE_PIN,
+        PIN_PASSWORD,
+        false,
+        {0},    // m_deviceID
+        false,
+        {0},    // m_owner
+
+#ifdef MULTIPLE_OWNER
+        {},
+        OIC_MULTIPLE_OWNER_DISABLE,
+#endif
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    ASSERT_TRUE(OCGenerateUuid(param2.m_owner.id));
+
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, rownerIDMismatch)
+{
+    DoxmTestParameter param1 =
+    {
+        {"abc"},
+        {OIC_JUST_WORKS, OIC_RANDOM_DEVICE_PIN},
+        OIC_JUST_WORKS,
+        ASYMMETRIC_KEY,
+        true,
+        {0},    // m_deviceID
+        true,
+        {0},    // m_owner
+
+#ifdef MULTIPLE_OWNER
+        {},
+        OIC_MULTIPLE_OWNER_DISABLE,
+#endif
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    ASSERT_TRUE(OCGenerateUuid(param1.m_rownerID.id));
+
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+#ifdef MULTIPLE_OWNER
+TEST_F(DoxmComparisonTests, subOwnersLengthMismatch1)
+{
+    DoxmMotParameters mot1 = { {0}, MOT_STATUS_READY };
+    ASSERT_TRUE(OCGenerateUuid(mot1.m_uuid.id));
+
+    DoxmTestParameter param1 =
+    {
+        {"oxmType1"},
+        {OIC_JUST_WORKS},
+        OIC_JUST_WORKS,
+        SYMMETRIC_PAIR_WISE_KEY,
+        false,
+        {0},    // m_deviceID
+        false,
+        {0},    // m_owner
+        {mot1},
+        OIC_MULTIPLE_OWNER_TIMELY_ENABLE,
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    param1.m_subOwnersList.erase(param1.m_subOwnersList.begin());
+
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, subOwnersLengthMismatch2)
+{
+    DoxmMotParameters mot1 = { {0}, MOT_STATUS_IN_PROGRESS };
+    ASSERT_TRUE(OCGenerateUuid(mot1.m_uuid.id));
+    DoxmMotParameters mot2 = { {0}, MOT_STATUS_READY };
+    ASSERT_TRUE(OCGenerateUuid(mot2.m_uuid.id));
+    DoxmMotParameters mot3 = { {0}, MOT_STATUS_DONE };
+    ASSERT_TRUE(OCGenerateUuid(mot3.m_uuid.id));
+    DoxmMotParameters mot4 = { {0}, MOT_STATUS_DONE };
+    ASSERT_TRUE(OCGenerateUuid(mot4.m_uuid.id));
+
+    DoxmTestParameter param1 =
+    {
+        {"oxmType1"},
+        {OIC_JUST_WORKS},
+        OIC_JUST_WORKS,
+        SYMMETRIC_PAIR_WISE_KEY,
+        false,
+        {0},    // m_deviceID
+        false,
+        {0},    // m_owner
+        {mot1, mot2, mot3},
+        OIC_MULTIPLE_OWNER_TIMELY_ENABLE,
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    param2.m_subOwnersList.insert(param2.m_subOwnersList.begin(), mot4);
+
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, subOwnerIDMismatch)
+{
+    DoxmMotParameters mot1 = { {0}, MOT_STATUS_DONE };
+    ASSERT_TRUE(OCGenerateUuid(mot1.m_uuid.id));
+    DoxmMotParameters mot2 = { {0}, MOT_STATUS_READY };
+    ASSERT_TRUE(OCGenerateUuid(mot2.m_uuid.id));
+    DoxmMotParameters mot3 = { {0}, MOT_STATUS_DONE };
+    ASSERT_TRUE(OCGenerateUuid(mot3.m_uuid.id));
+    DoxmMotParameters mot4 = { {0}, MOT_STATUS_READY };
+    ASSERT_TRUE(OCGenerateUuid(mot4.m_uuid.id));
+
+    DoxmTestParameter param1 =
+    {
+        {"oxmType1"},
+        {OIC_JUST_WORKS},
+        OIC_JUST_WORKS,
+        SYMMETRIC_PAIR_WISE_KEY,
+        false,
+        {0},    // m_deviceID
+        false,
+        {0},    // m_owner
+        {mot1, mot2, mot3, mot4},
+        OIC_MULTIPLE_OWNER_TIMELY_ENABLE,
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+
+    DoxmMotParameters mot5 = { {0}, MOT_STATUS_DONE };
+    ASSERT_TRUE(OCGenerateUuid(mot5.m_uuid.id));
+    param1.m_subOwnersList[2] = mot5;
+
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, subOwnerStateMismatch)
+{
+    DoxmMotParameters mot1 = { {0}, MOT_STATUS_DONE };
+    ASSERT_TRUE(OCGenerateUuid(mot1.m_uuid.id));
+
+    DoxmTestParameter param1 =
+    {
+        {"oxmType1"},
+        {OIC_JUST_WORKS},
+        OIC_JUST_WORKS,
+        SYMMETRIC_PAIR_WISE_KEY,
+        false,
+        {0},    // m_deviceID
+        false,
+        {0},    // m_owner
+        {mot1},
+        OIC_MULTIPLE_OWNER_TIMELY_ENABLE,
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+
+    DoxmMotParameters mot2 = mot1;
+    mot2.m_status = MOT_STATUS_READY;
+    param2.m_subOwnersList[0] = mot2;
+
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, subOwnerMomMismatch)
+{
+    DoxmMotParameters mot1 = { {0}, MOT_STATUS_READY };
+    ASSERT_TRUE(OCGenerateUuid(mot1.m_uuid.id));
+    DoxmMotParameters mot2 = { {0}, MOT_STATUS_IN_PROGRESS };
+    ASSERT_TRUE(OCGenerateUuid(mot2.m_uuid.id));
+
+    DoxmTestParameter param1 =
+    {
+        {"oxmType1"},
+        {OIC_JUST_WORKS},
+        OIC_JUST_WORKS,
+        SYMMETRIC_PAIR_WISE_KEY,
+        false,
+        {0},    // m_deviceID
+        false,
+        {0},    // m_owner
+        {mot1, mot2},
+        OIC_MULTIPLE_OWNER_DISABLE,
+        {0}     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+    param1.m_mom = OIC_MULTIPLE_OWNER_ENABLE;
+
+    DoxmBinFromParameters(param1, param2);
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, createMom)
+{
+    DoxmTestParameter param1 =
+    {
+        { "oxmType1" },
+        { OIC_JUST_WORKS },
+        OIC_JUST_WORKS,
+        SYMMETRIC_PAIR_WISE_KEY,
+        false,
+        { 0 },    // m_deviceID
+        false,
+        { 0 },    // m_owner
+        {},
+        OIC_MULTIPLE_OWNER_ENABLE,
+        { 0 }     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+
+    DoxmBinFromParameters(param1, param2);
+
+    OICFreeAndSetToNull(reinterpret_cast<void**>(&m_doxm2->mom));
+
+    OCStackResult result = DoxmUpdateWriteableProperty(m_doxm1, m_doxm2);
+    EXPECT_TRUE(OC_STACK_OK == result);
+
+    EXPECT_TRUE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, updateMomEnable)
+{
+    DoxmTestParameter param1 =
+    {
+        { "oxmType1" },
+        { OIC_JUST_WORKS },
+        OIC_JUST_WORKS,
+        SYMMETRIC_PAIR_WISE_KEY,
+        false,
+        { 0 },    // m_deviceID
+        false,
+        { 0 },    // m_owner
+        {},
+        OIC_MULTIPLE_OWNER_DISABLE,
+        { 0 }     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+
+    DoxmBinFromParameters(param1, param2);
+
+    m_doxm1->mom->mode = OIC_MULTIPLE_OWNER_ENABLE;
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+
+    OCStackResult result = DoxmUpdateWriteableProperty(m_doxm1, m_doxm2);
+    EXPECT_TRUE(OC_STACK_OK == result);
+
+    EXPECT_TRUE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, updateMomDisable)
+{
+    DoxmTestParameter param1 =
+    {
+        { "oxmType1" },
+        { OIC_JUST_WORKS },
+        OIC_JUST_WORKS,
+        SYMMETRIC_PAIR_WISE_KEY,
+        false,
+        { 0 },    // m_deviceID
+        false,
+        { 0 },    // m_owner
+        {},
+        OIC_MULTIPLE_OWNER_ENABLE,
+        { 0 }     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+
+    DoxmBinFromParameters(param1, param2);
+
+    m_doxm1->mom->mode = OIC_MULTIPLE_OWNER_DISABLE;
+
+    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+
+    OCStackResult result = DoxmUpdateWriteableProperty(m_doxm1, m_doxm2);
+    EXPECT_TRUE(OC_STACK_OK == result);
+
+    EXPECT_TRUE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+
+TEST_F(DoxmComparisonTests, updateMomEnableDisable)
+{
+    DoxmTestParameter param1 =
+    {
+        { "oxmType1" },
+        { OIC_JUST_WORKS },
+        OIC_JUST_WORKS,
+        SYMMETRIC_PAIR_WISE_KEY,
+        false,
+        { 0 },    // m_deviceID
+        false,
+        { 0 },    // m_owner
+        {},
+        OIC_MULTIPLE_OWNER_DISABLE,
+        { 0 }     // m_rownerID
+    };
+    GenerateDoxmTestParameterUUIDs(&param1);
+
+    DoxmTestParameter param2 = param1;
+
+    DoxmBinFromParameters(param1, param2);
+
+    m_doxm1->mom->mode = OIC_MULTIPLE_OWNER_ENABLE;
+
+    OCStackResult result = DoxmUpdateWriteableProperty(m_doxm1, m_doxm2);
+    EXPECT_TRUE(OC_STACK_OK == result);
+
+    EXPECT_TRUE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+
+    m_doxm1->mom->mode = OIC_MULTIPLE_OWNER_DISABLE;
+
+    result = DoxmUpdateWriteableProperty(m_doxm1, m_doxm2);
+    EXPECT_TRUE(OC_STACK_OK == result);
+
+    EXPECT_TRUE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
+}
+#endif // #ifdef MULTIPLE_OWNER

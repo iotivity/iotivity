@@ -30,6 +30,15 @@ extern "C"
 #endif
 
 /**
+ * @brief Data structure for connect request from Mediator
+ */
+typedef struct
+{
+    ES_CONNECT_TYPE connect[NUM_CONNECT_TYPE];
+    int numRequest;
+} ESConnectRequest;
+
+/**
  * @brief Data structure delivered from mediator, which provides WiFi information
  */
 typedef struct
@@ -61,7 +70,7 @@ typedef struct
     char accessToken[OIC_STRING_MAX_VALUE];     /**< Access token resolved with an auth code **/
     OAUTH_TOKENTYPE accessTokenType;            /**< Access token type **/
     char authProvider[OIC_STRING_MAX_VALUE];    /**< Auth provider ID **/
-    char ciServer[OIC_STRING_MAX_VALUE];        /**< Cloud interface server URL which an Enrollee is going to registered **/
+    char ciServer[OIC_URI_STRING_MAX_VALUE];    /**< Cloud interface server URL which an Enrollee is going to registered **/
     void *userdata;                             /**< Vender-specific data**/
 } ESCoapCloudConfData;
 
@@ -95,6 +104,7 @@ typedef struct
  */
 typedef struct
 {
+    void (*ConnectRequestCb) (ESConnectRequest *);
     void (*WiFiConfProvCb) (ESWiFiConfData *);
     void (*DevConfProvCb) (ESDevConfData *);
     void (*CoapCloudConfProvCb) (ESCoapCloudConfData *);

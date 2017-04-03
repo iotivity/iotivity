@@ -21,6 +21,7 @@
 #include "NSConsumerService.h"
 #include <cstring>
 #include "NSConsumerInterface.h"
+#include "NSAcceptedProviders.h"
 #include "NSMessage.h"
 #include "NSCommon.h"
 #include "NSConstants.h"
@@ -31,30 +32,36 @@ namespace OIC
 {
     namespace Service
     {
-        void onProviderStateReceived(::NSProvider *provider, ::NSProviderState state)
+        void NSConsumerService::onProviderStateReceived(::NSProvider *provider, ::NSProviderState state)
         {
             NS_LOG(DEBUG, "onNSProviderStateChanged - IN");
-            NS_LOG_V(DEBUG, "provider Id : %s", provider->providerId);
+            NS_LOG_V(INFO_PRIVATE, "provider Id : %s", provider->providerId);
             NS_LOG_V(DEBUG, "state : %d", (int)state);
 
             std::string provId;
             provId.assign(provider->providerId, NS_UTILS_UUID_STRING_SIZE - 1);
-            NSProvider *oldProvider = NSConsumerService::getInstance()->getProvider(provId);
+            std::shared_ptr<NSProvider> oldProvider =
+                NSConsumerService::getInstance()->getProvider(provId);
 
             if (oldProvider == nullptr)
             {
-                NSProvider *nsProvider = new NSProvider(provider);
+                //Callback received for First time from new Provider as there is no reference to
+                //previous Provider with same ID in internal map.
+                //States received during discovery of Provider : NS_DISCOVERED and NS_ALLOW
+                std::shared_ptr<NSProvider> nsProvider = std::make_shared<NSProvider>(provider);
                 NS_LOG(DEBUG, "Provider with same Id do not exist. updating Data for New Provider");
                 auto discoveredCallback = NSConsumerService::getInstance()->getProviderDiscoveredCb();
                 nsProvider->setProviderState((NSProviderState)state);
                 auto topicLL = NSConsumerGetTopicList(provider->providerId);
-                nsProvider->setTopicList(new NSTopicsList(topicLL));
+                nsProvider->setTopicList(std::make_shared<NSTopicsList>(topicLL, false));
+                NSConsumerService::getInstance()->getAcceptedProviders()->addProvider(nsProvider);
                 if (state == NS_DISCOVERED)
                 {
                     nsProvider->setProviderSubscribedState(NSProviderSubscribedState::DISCOVERED);
                     if (discoveredCallback != NULL)
                     {
-                        NS_LOG(DEBUG, "initiating the Discovered callback : NS_DISCOVERED, policy false");
+                        NS_LOG(DEBUG,
+                               "initiating the Discovered callback : NS_DISCOVERED, policy false, Accepter: Consumer");
                         discoveredCallback(nsProvider);
                     }
                 }
@@ -63,14 +70,15 @@ namespace OIC
                     nsProvider->setProviderSubscribedState(NSProviderSubscribedState::SUBSCRIBED);
                     if (discoveredCallback != NULL)
                     {
-                        NS_LOG(DEBUG, "initiating the Discovered callback : NS_ALLOW, policy true");
+                        NS_LOG(DEBUG, "initiating the Discovered callback : NS_ALLOW, policy true, Accepter: Provider");
                         discoveredCallback(nsProvider);
                     }
                 }
-                NSConsumerService::getInstance()->getAcceptedProviders().push_back(nsProvider);
             }
             else
             {
+                //Callback received from already discovered and existing Provider in internal map.
+                //States received Post discovery of Provider.
                 NS_LOG(DEBUG, "Provider with same Id exists. updating the old Provider data");
                 auto changeCallback = oldProvider->getProviderStateReceivedCb();
                 auto prevState = oldProvider->getProviderState();
@@ -87,7 +95,10 @@ namespace OIC
                     {
                         oldProvider->setProviderSubscribedState(NSProviderSubscribedState::SUBSCRIBED);
                         auto discoveredCallback = NSConsumerService::getInstance()->getProviderDiscoveredCb();
-                        discoveredCallback(oldProvider);
+                        if (discoveredCallback != NULL)
+                        {
+                            discoveredCallback(oldProvider);
+                        }
                         auto changeCallback = oldProvider->getProviderStateReceivedCb();
                         if (changeCallback != NULL)
                         {
@@ -98,18 +109,18 @@ namespace OIC
                 else if (state == NS_DENY)
                 {
                     oldProvider->setProviderSubscribedState(NSProviderSubscribedState::DENY);
-                    NSConsumerService::getInstance()->getAcceptedProviders().remove(oldProvider);
+                    NSConsumerService::getInstance()->getAcceptedProviders()->removeProvider(
+                        oldProvider->getProviderId());
                     if (changeCallback != NULL)
                     {
                         NS_LOG(DEBUG, "initiating the callback for Response : NS_DENY");
                         changeCallback((NSProviderState)state);
                     }
-                    delete oldProvider;
                 }
                 else if (state == NS_TOPIC)
                 {
                     auto topicLL = NSConsumerGetTopicList(provider->providerId);
-                    oldProvider->setTopicList(new NSTopicsList(topicLL));
+                    oldProvider->setTopicList(std::make_shared<NSTopicsList>(topicLL, false));
                     if (changeCallback != NULL)
                     {
                         NS_LOG(DEBUG, "initiating the callback for Response : NS_TOPIC");
@@ -136,85 +147,85 @@ namespace OIC
                 else if (state == NS_STOPPED)
                 {
                     oldProvider->setProviderSubscribedState(NSProviderSubscribedState::DENY);
-                    NSConsumerService::getInstance()->getAcceptedProviders().remove(oldProvider);
+                    if (NULL != oldProvider->getTopicList())
+                    {
+                        oldProvider->getTopicList()->unsetModifiability();
+                    }
+                    NSConsumerService::getInstance()->getAcceptedProviders()->removeProvider(
+                        oldProvider->getProviderId());
                     NS_LOG(DEBUG, "initiating the State callback : NS_STOPPED");
                     if (changeCallback != NULL)
                     {
                         NS_LOG(DEBUG, "initiating the callback for Response : NS_STOPPED");
                         changeCallback((NSProviderState)state);
                     }
-                    delete oldProvider;
                 }
             }
             NS_LOG(DEBUG, "onNSProviderStateChanged - OUT");
         }
 
-        void onNSMessageReceived(::NSMessage *message)
+        void NSConsumerService::onNSMessageReceived(::NSMessage *message)
         {
             NS_LOG(DEBUG, "onNSMessageReceived - IN");
-            NS_LOG_V(DEBUG, "message->providerId : %s", message->providerId);
+            NS_LOG_V(INFO_PRIVATE, "message->providerId : %s", message->providerId);
 
-            NSMessage *nsMessage = new NSMessage(message);
+            NSMessage nsMessage(message);
 
-            NS_LOG_V(DEBUG, "getAcceptedProviders Size : %d", (int)
-                     NSConsumerService::getInstance()->getAcceptedProviders().size());
-            for (auto it : NSConsumerService::getInstance()->getAcceptedProviders())
+            if (NSConsumerService::getInstance()->getAcceptedProviders()->isAccepted(
+                    nsMessage.getProviderId()))
             {
-                NS_LOG_V(DEBUG, "it->getProviderId : %s", it->getProviderId().c_str());
-                if (it->getProviderId() == nsMessage->getProviderId())
+                auto provider = NSConsumerService::getInstance()->getProvider(
+                                    nsMessage.getProviderId());
+                if (provider != nullptr)
                 {
                     NS_LOG(DEBUG, "Found Provider with given ID");
-                    auto callback = it->getMessageReceivedCb();
+                    auto callback = provider->getMessageReceivedCb();
                     if (callback != NULL)
                     {
                         NS_LOG(DEBUG, "initiating the callback for messageReceived");
                         callback(nsMessage);
                     }
-                    break;
                 }
             }
-            delete nsMessage;
             NS_LOG(DEBUG, "onNSMessageReceived - OUT");
         }
 
-        void onNSSyncInfoReceived(::NSSyncInfo *syncInfo)
+        void NSConsumerService::onNSSyncInfoReceived(::NSSyncInfo *syncInfo)
         {
             NS_LOG(DEBUG, "onNSSyncInfoReceived - IN");
-            NS_LOG_V(DEBUG, "syncInfo->providerId : %s", syncInfo->providerId);
+            NS_LOG_V(INFO_PRIVATE, "syncInfo->providerId : %s", syncInfo->providerId);
 
-            NSSyncInfo *nsSyncInfo = new NSSyncInfo(syncInfo);
+            NSSyncInfo nsSyncInfo(syncInfo);
 
-            for (auto it : NSConsumerService::getInstance()->getAcceptedProviders())
+            if (NSConsumerService::getInstance()->getAcceptedProviders()->isAccepted(
+                    nsSyncInfo.getProviderId()))
             {
-                NS_LOG_V(DEBUG, "it->getProviderId : %s", it->getProviderId().c_str());
-                if (it->getProviderId() == nsSyncInfo->getProviderId())
+                auto provider = NSConsumerService::getInstance()->getProvider(
+                                    nsSyncInfo.getProviderId());
+                if (provider != nullptr)
                 {
                     NS_LOG(DEBUG, "Found Provider with given ID");
-                    auto callback = it->getSyncInfoReceivedCb();
+                    auto callback = provider->getSyncInfoReceivedCb();
                     if (callback != NULL)
                     {
                         NS_LOG(DEBUG, "initiating the callback for SyncInfoReceived");
                         callback(nsSyncInfo);
                     }
-                    break;
                 }
             }
-            delete nsSyncInfo;
             NS_LOG(DEBUG, "onNSSyncInfoReceived - OUT");
         }
 
         NSConsumerService::NSConsumerService()
         {
             m_providerDiscoveredCb = NULL;
+            m_acceptedProviders = new NSAcceptedProviders();
         }
 
         NSConsumerService::~NSConsumerService()
         {
-            for (auto it : getAcceptedProviders())
-            {
-                delete it;
-            }
-            getAcceptedProviders().clear();
+            m_acceptedProviders->removeProviders();
+            delete m_acceptedProviders;
         }
 
         NSConsumerService *NSConsumerService::getInstance()
@@ -226,11 +237,7 @@ namespace OIC
         NSResult NSConsumerService::start(NSConsumerService::ProviderDiscoveredCallback providerDiscovered)
         {
             NS_LOG(DEBUG, "start - IN");
-            for (auto it : getAcceptedProviders())
-            {
-                delete it;
-            }
-            getAcceptedProviders().clear();
+            m_acceptedProviders->removeProviders();
 
             m_providerDiscoveredCb = providerDiscovered;
             NSConsumerConfig nsConfig;
@@ -247,11 +254,7 @@ namespace OIC
         {
             NS_LOG(DEBUG, "stop - IN");
             m_providerDiscoveredCb = NULL;
-            for (auto it : getAcceptedProviders())
-            {
-                delete it;
-            }
-            getAcceptedProviders().clear();
+            m_acceptedProviders->removeProviders();
 
             NSResult result = (NSResult) NSStopConsumer();
             NS_LOG(DEBUG, "stop - OUT");
@@ -261,7 +264,7 @@ namespace OIC
         NSResult NSConsumerService::enableRemoteService(const std::string &serverAddress)
         {
             NS_LOG(DEBUG, "enableRemoteService - IN");
-            NS_LOG_V(DEBUG, "Server Address : %s", serverAddress.c_str());
+            NS_LOG_V(INFO_PRIVATE, "Server Address : %s", serverAddress.c_str());
             NSResult result = NSResult::ERROR;
 #ifdef WITH_CLOUD
             result = (NSResult) NSConsumerEnableRemoteService(OICStrdup(serverAddress.c_str()));
@@ -277,7 +280,7 @@ namespace OIC
                 const std::string &topicName)
         {
             NS_LOG(DEBUG, "subscribeMQService - IN");
-            NS_LOG_V(DEBUG, "Server Address : %s", serverAddress.c_str());
+            NS_LOG_V(INFO_PRIVATE, "Server Address : %s", serverAddress.c_str());
             NSResult result = NSResult::ERROR;
 #ifdef WITH_MQ
             result = (NSResult) NSConsumerSubscribeMQService(
@@ -304,24 +307,12 @@ namespace OIC
             return m_providerDiscoveredCb;
         }
 
-        NSProvider *NSConsumerService::getProvider(const std::string &id)
+        std::shared_ptr<NSProvider> NSConsumerService::getProvider(const std::string &id)
         {
-            NS_LOG_V(DEBUG, "getAcceptedProviders size  : %d", (int) getAcceptedProviders().size());
-            for (auto it : getAcceptedProviders())
-            {
-                NS_LOG_V(DEBUG, "getProvider  stored providerId : %s", it->getProviderId().c_str());
-                NS_LOG_V(DEBUG, "getProvider  requesting providerId : %s", id.c_str());
-                if (it->getProviderId() == id)
-                {
-                    NS_LOG(DEBUG, "getProvider : Found Provider with given ID");
-                    return it;
-                }
-            }
-            NS_LOG(DEBUG, "getProvider : Not Found Provider with given ID");
-            return NULL;
+            return m_acceptedProviders->getProvider(id);
         }
 
-        std::list<NSProvider *> &NSConsumerService::getAcceptedProviders()
+        NSAcceptedProviders *NSConsumerService::getAcceptedProviders()
         {
             return m_acceptedProviders;
         }

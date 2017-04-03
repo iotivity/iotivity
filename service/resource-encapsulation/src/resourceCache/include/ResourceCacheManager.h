@@ -68,6 +68,8 @@ namespace OIC
                 // throw InvalidParameterException;
                 bool isCachedData(CacheID id) const;
 
+                static void stopResourceCacheManager();
+
             private:
                 static ResourceCacheManager *s_instance;
                 static std::mutex s_mutex;

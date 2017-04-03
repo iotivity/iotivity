@@ -2,7 +2,7 @@
 %define ROOTDIR  %{_builddir}/%{name}-%{version}
 
 Name: com-oic-ri-sample
-Version:    1.2.0
+Version:    1.3.0
 Release:    0
 Summary: Tizen adapter interfacesample application
 Group: Network & Connectivity / IoT Connectivity
@@ -38,7 +38,6 @@ BuildRequires: boost-thread
 BuildRequires: boost-system
 BuildRequires: boost-filesystem
 BuildRequires: pkgconfig(capi-network-connection)
-BuildRequires: pkgconfig(capi-network-wifi)
 BuildRequires: pkgconfig(capi-network-bluetooth)
 BuildRequires: scons
 BuildRequires: com-oic-ri

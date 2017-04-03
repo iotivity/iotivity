@@ -10,6 +10,16 @@ android {
         pickFirst 'lib/x86/libocstack-jni.so'
         pickFirst 'lib/x86_64/libocstack-jni.so'
         pickFirst 'lib/arm64-v8a/libocstack-jni.so'
+        pickFirst 'lib/armeabi/libca-interface.so'
+        pickFirst 'lib/armeabi-v7a/libca-interface.so'
+        pickFirst 'lib/x86/libca-interface.so'
+        pickFirst 'lib/x86_64/libca-interface.so'
+        pickFirst 'lib/arm64-v8a/libca-interface.so'
+        pickFirst 'lib/armeabi/libresource_directory.so'
+        pickFirst 'lib/armeabi-v7a/libresource_directory.so'
+        pickFirst 'lib/x86/libresource_directory.so'
+        pickFirst 'lib/x86_64/libresource_directory.so'
+        pickFirst 'lib/arm64-v8a/libresource_directory.so'
     }
 
     defaultConfig {

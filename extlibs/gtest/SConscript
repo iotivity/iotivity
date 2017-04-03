@@ -23,7 +23,7 @@ gtest_url = 'https://github.com/google/googletest/archive/release-1.7.0.zip'
 
 if target_os in targets_need_gtest:
 	print '*** Checking for installation of google unit test 1.7.0 ***'
-	if not os.path.exists(os.path.join(gtest_dir, 'configure')):
+	if not os.path.exists(os.path.join(gtest_dir, 'CMakeLists.txt')):
 		# If the gtest zip file is not already present, download it
 		if not os.path.exists(gtest_zip_file):
 			gtest_zip = gtest_env.Download(gtest_zip_file, gtest_url)
@@ -74,9 +74,13 @@ elif target_os in ['windows']:
 	# Avoid building the same StaticLibrary in more than one environment, by using the
 	# IOTIVITY_GTEST_HAS_BEEN_BUILT environment variable
 	if not env.has_key('IOTIVITY_GTEST_HAS_BEEN_BUILT'):
-		gtest_env.Append(CPPPATH = [ gtest_dir ])
-		gtest = gtest_env.StaticLibrary(target = 'gtest', source = [ '%s/src/gtest-all.cc' % gtest_dir ])
-		gtest_main = gtest_env.StaticLibrary(target = 'gtest_main', source = [ '%s/src/gtest_main.cc' % gtest_dir ])
+		gtest_env.AppendUnique(CPPPATH = [ gtest_dir ])
+		gtest_build_env = gtest_env.Clone()
+		gtest_build_env.AppendUnique(CPPPATH = [ os.path.join(gtest_dir, 'include') ])
+		gtest_build_env.AppendUnique(CXXFLAGS = ['/EHsc'])
+		gtest_build_env.AppendUnique(CCFLAGS = ['/W4', '/WX'])
+		gtest = gtest_build_env.StaticLibrary(target = 'gtest', source = [ '%s/src/gtest-all.cc' % gtest_dir ])
+		gtest_main = gtest_build_env.StaticLibrary(target = 'gtest_main', source = [ '%s/src/gtest_main.cc' % gtest_dir ])
 		gtest_env.InstallTarget(gtest, 'gtest')
 		gtest_env.InstallTarget(gtest_main, 'gtest_main')
 

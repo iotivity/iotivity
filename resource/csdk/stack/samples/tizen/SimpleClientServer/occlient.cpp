@@ -161,9 +161,12 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(&handle, method, query.str().c_str(), remoteAddr,
-                       (method == OC_REST_PUT) ? putPayload() : NULL,
-                       (g_connType), qos, &cbData, options, numOptions);
+    OCPayload* payload = (method == OC_REST_PUT) ? putPayload() : NULL;
+
+    ret = OCDoRequest(&handle, method, query.str().c_str(), remoteAddr,
+                      payload, (g_connType), qos, &cbData, options, numOptions);
+
+    OCPayloadDestroy(payload);
 
     if (ret != OC_STACK_OK)
     {
@@ -728,9 +731,9 @@ int InitPlatformDiscovery(OCQualityOfService qos)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
-                       (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
-                       &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+                      (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+                      &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         cout << "\nOCStack device error";
@@ -753,9 +756,9 @@ int InitDeviceDiscovery(OCQualityOfService qos)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
-                       (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
-                       &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+                      (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+                      &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         cout << "\nOCStack device error";
@@ -776,9 +779,9 @@ int InitDiscovery(OCQualityOfService qos)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
-                       (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
-                       &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+                      (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+                      &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         cout << "\nOCStack resource error";

@@ -36,7 +36,7 @@ extern "C" {
  *
  * @param otmCtx Context of OTM, It includes current device information.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult InputPinCodeCallback(OTMContext_t *otmCtx);
 
@@ -45,7 +45,7 @@ OCStackResult InputPinCodeCallback(OTMContext_t *otmCtx);
  *
  * @param otmCtx Context of OTM, It includes current device information.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult CreateSecureSessionRandomPinCallback(OTMContext_t *otmCtx);
 
@@ -53,11 +53,11 @@ OCStackResult CreateSecureSessionRandomPinCallback(OTMContext_t *otmCtx);
  * Generate payload for select OxM request.
  *
  * @param otmCtx Context of OTM, It includes current device information.
- * @param cborPaylaod is the DOXM CBOR payload including the selected OxM.
+ * @param cborPayload is the DOXM CBOR payload including the selected OxM.
  * @note Returned memory should be deallocated by caller.
  * @param cborSize is the size of the cborPayload.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult CreatePinBasedSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
                                              size_t *cborSize);
@@ -66,11 +66,11 @@ OCStackResult CreatePinBasedSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **cbo
  * Generate payload for owner transfer request.
  *
  * @param otmCtx Context of OTM, It includes current device information.
- * @param cborPaylaod is the DOXM CBOR payload including the owner information.
+ * @param cborPayload is the DOXM CBOR payload including the owner information.
  * @note Returned memory should be deallocated by caller.
  * @param cborSize is the size of the cborPayload.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult CreatePinBasedOwnerTransferPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
                                                  size_t *cborSize);

@@ -78,7 +78,17 @@ CAResult_t CAInitGattServerMutexVariables();
  * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval  ::CA_STATUS_FAILED Operation failed.
  */
-CAResult_t CALEStartAdvertise(const char *serviceUUID);
+CAResult_t CALEStartAdvertise();
+
+/**
+ * Used to start advertising with service UUID.
+ *
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
+ */
+CAResult_t CALEStartAdvertiseImpl(const char *serviceUUID);
 
 /**
  * Used to stop advertising.

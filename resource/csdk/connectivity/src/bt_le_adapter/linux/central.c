@@ -28,7 +28,7 @@
 
 
 // Logging tag.
-static char const TAG[] = "BLE_CENTRAL";
+#define TAG "BLE_CENTRAL"
 
 static bool CACentralGetBooleanProperty(GDBusProxy * device,
                                         char const * property)

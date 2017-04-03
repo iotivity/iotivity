@@ -53,7 +53,7 @@ int gQuitFlag = 0;
 typedef struct LEDRESOURCE{
     OCResourceHandle handle;
     bool state;
-    int power;
+    int64_t power;
 } LEDResource;
 
 static LEDResource LED;
@@ -73,7 +73,7 @@ static char CRED_FILE[] = "oic_svr_db_server_randompin.dat";
 /* Function that creates a new LED resource by calling the
  * OCCreateResource() method.
  */
-int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int resourcePower);
+int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int64_t resourcePower);
 
 /* This method converts the payload to JSON format */
 OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest);
@@ -225,7 +225,7 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
         int64_t pow;
         if(OCRepPayloadGetPropInt(input, "power", &pow))
         {
-            currLEDResource->power =pow;
+            currLEDResource->power = pow;
         }
 
         bool state;
@@ -301,7 +301,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
         {
             // Create new LED instance
             char newLedUri[15] = "/a/led/";
-            int newLedUriLength = strlen(newLedUri);
+            size_t newLedUriLength = strlen(newLedUri);
             snprintf (newLedUri + newLedUriLength, sizeof(newLedUri)-newLedUriLength, "%d", gCurrLedInstance);
 
             respPLPost_led = OCRepPayloadCreate();
@@ -456,6 +456,8 @@ FILE* server_fopen(const char *path, const char *mode)
 
 void DisplayPinCB(char *pin, size_t pinSize, void *context)
 {
+    OC_UNUSED(context);
+
     if(NULL == pin || pinSize <= 0)
     {
         OIC_LOG(INFO, TAG, "Invalid PIN");
@@ -467,12 +469,19 @@ void DisplayPinCB(char *pin, size_t pinSize, void *context)
     OIC_LOG(INFO, TAG, "============================");
 }
 
+void ClosePinDisplayCB(void)
+{
+    OIC_LOG(INFO, TAG, "============================");
+    OIC_LOG(INFO, TAG, "    PIN DISPLAY CLOSED.");
+    OIC_LOG(INFO, TAG, "============================");
+}
+
 int main()
 {
     OIC_LOG(DEBUG, TAG, "OCServer is starting...");
 
     // Initialize Persistent Storage for SVR database
-    OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
+    OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, remove};
     OCRegisterPersistentStorageHandler(&ps);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -486,6 +495,13 @@ int main()
      * to display a PIN should be registered before running the server.
      */
     SetDisplayPinWithContextCB(DisplayPinCB, NULL);
+
+    /**
+     * If the server supports random pin based OTM,
+     * the callback to close PIN display can be registered.
+     * This callback will be invoked when random PIN based OTM is done.
+     */
+    SetClosePinDisplayCB(ClosePinDisplayCB);
 
     /**
      * Random PIN generation policy can be changed through SetRandomPinPolicy() API.
@@ -514,7 +530,7 @@ int main()
     {
         printf("Press 'G' to generate random PIN...\n");
         printf("Press 'E' to exit...\n");
-        char in = getchar();
+        char in = (char)getchar();
         if('G' == in || 'g' == in)
         {
             char ranPin[OXM_RANDOM_PIN_MAX_SIZE + 1] = {0};
@@ -553,7 +569,7 @@ int main()
     return 0;
 }
 
-int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int resourcePower)
+int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int64_t resourcePower)
 {
     if (!uri)
     {

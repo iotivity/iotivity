@@ -92,6 +92,12 @@ CAResult_t CAManagerLEStartAdvertising();
  */
 CAResult_t CAManagerLEStopAdvertising();
 
+/**
+ * set CAUtilConfig_t configure.
+ * @param[in]  config       ::CAUtilConfig_t value
+ */
+void CAManagerSetConfigure(CAUtilConfig_t config);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

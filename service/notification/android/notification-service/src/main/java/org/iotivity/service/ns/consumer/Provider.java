@@ -53,7 +53,7 @@ public class Provider {
         }
     };
 
-    public String mProviderId   = null;
+    private String mProviderId   = null;
     private long  mNativeHandle = 0;
 
     /**
@@ -68,6 +68,16 @@ public class Provider {
         mProviderId = providerId;
     }
 
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            nativeDispose();
+        } catch (Throwable t) {
+            throw t;
+        } finally {
+            super.finalize();
+        }
+    }
     /**
      * API for getting providerId
      *
@@ -100,7 +110,13 @@ public class Provider {
     }
 
     /**
-     * API for for requesting subscription of Notification service
+     * API for requesting subscription of Notification service
+     * This API should be called with a valid Provider object obtained from Discovery callback.
+     * The API should not be called when the Provider is in STOPPED state.
+     *
+     * Discovery APIs to discover Providers are as below.
+     * Start/rescanProvider for D2D,
+     * enableRemoteService for D2S,
      *
      * @throws NSException failure to subscribe
      */
@@ -109,7 +125,11 @@ public class Provider {
     }
 
     /**
-     * API for for requesting unsubscription of Notification service
+     * API for requesting unsubscription of Notification service
+     *
+     * This API should be called with a valid Provider object obtained from Discovery callback.
+     * The API should not be called when the Provider is in STOPPED state.
+     *
      * @throws NSException failure to subscribe
      */
     public void unsubscribe() throws NSException {
@@ -117,7 +137,7 @@ public class Provider {
     }
 
     /**
-     * API for for requesting subscription status from Provider of Notification
+     * API for requesting subscription status from Provider of Notification
      * service
      *
      * @return true if the notification service is subscribed to
@@ -167,12 +187,10 @@ public class Provider {
      * @param topicsList
      *            TopicsList of interested Topics
      *
-     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
-     *
      * @throws NSException failure to update topic list. 
      */
-    public int updateTopicList(TopicsList topicsList) throws NSException {
-        return nativeUpdateTopicList(topicsList);
+    public void updateTopicList(TopicsList topicsList) throws NSException {
+        nativeUpdateTopicList(topicsList);
     }
 
     /**
@@ -231,13 +249,15 @@ public class Provider {
             OnSyncInfoReceivedListener onSyncInfoReceivedListener)
             throws NSException;
 
-    public native TopicsList nativeGetTopicList() throws NSException;
+    private native TopicsList nativeGetTopicList() throws NSException;
 
-    private native int nativeUpdateTopicList(TopicsList topicsList)
+    private native void nativeUpdateTopicList(TopicsList topicsList)
             throws NSException;
 
     private native ProviderState nativeGetProviderState() throws NSException;
 
-    public native boolean nativeIsSubscribed() throws NSException;
+    private native boolean nativeIsSubscribed() throws NSException;
+
+    private native void nativeDispose();
 
 }

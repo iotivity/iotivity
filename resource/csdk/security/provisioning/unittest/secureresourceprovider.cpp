@@ -57,7 +57,7 @@ static OicSecDoxm_t defaultDoxm2 =
     {{0}},            /* OicUuid_t owner */
 };
 
-static void provisioningCB (void* UNUSED1, int UNUSED2, OCProvisionResult_t *UNUSED3, bool UNUSED4)
+static void provisioningCB (void* UNUSED1, size_t UNUSED2, OCProvisionResult_t *UNUSED3, bool UNUSED4)
 {
     //dummy callback
     (void) UNUSED1;
@@ -186,15 +186,15 @@ static FILE* TestFopen(const char *path, const char *mode)
     }
 }
 
-void SetPersistentHandler(OCPersistentStorage *ps)
+void SetPersistentHandler(OCPersistentStorage *persistentStorage)
 {
-    if(ps)
+    if(persistentStorage)
     {
-        ps->open = TestFopen;
-        ps->read = fread;
-        ps->write = fwrite;
-        ps->close = fclose;
-        ps->unlink = unlink;
+        persistentStorage->open = TestFopen;
+        persistentStorage->read = fread;
+        persistentStorage->write = fwrite;
+        persistentStorage->close = fclose;
+        persistentStorage->unlink = remove;
     }
 }
 
@@ -206,10 +206,14 @@ public:
         SetPersistentHandler(&ps);
         OCStackResult res = OCRegisterPersistentStorageHandler(&ps);
         ASSERT_TRUE(res == OC_STACK_OK);
+        res = OCInit(NULL, 0, OC_SERVER);
+        ASSERT_TRUE(res == OC_STACK_OK);
     }
 
     static void TearDownTestCase()
     {
+        OCStackResult res = OCStop();
+        ASSERT_TRUE(res == OC_STACK_OK);
     }
 
     static const ByteArray g_caPublicKey;
@@ -271,7 +275,6 @@ TEST_F(SRPTest, SRPSaveTrustCertChainDER)
     uint16_t credId;
 
     result = SRPSaveTrustCertChain(certData, sizeof(certData), OIC_ENCODING_DER, &credId);
-
     EXPECT_EQ(OC_STACK_OK, result);
 }
 
@@ -281,7 +284,6 @@ TEST_F(SRPTest, SRPSaveTrustCertChainPEM)
     uint16_t credId;
 
     result = SRPSaveTrustCertChain(certData, sizeof(certData), OIC_ENCODING_PEM, &credId);
-
     EXPECT_EQ(OC_STACK_OK, result);
 }
 
@@ -298,7 +300,6 @@ TEST_F(SRPTest, SRPSaveTrustCertChainNullCertData)
 TEST_F(SRPTest, SRPSaveTrustCertChainNullCredId)
 {
     int result;
-    uint16_t credId;
 
     result = SRPSaveTrustCertChain(certData, sizeof(certData), OIC_ENCODING_DER, NULL);
 
@@ -317,10 +318,9 @@ TEST_F(SRPTest, SRPSaveOwnCertChainTest)
     key.data = keyData;
     key.len = sizeof(keyData);
 
-    //This test case cannot succeed. because doxm resource has not been initialized.
     result = SRPSaveOwnCertChain(&cert, &key, &credId);
 
-    EXPECT_EQ(OC_STACK_ERROR, result);
+    EXPECT_EQ(OC_STACK_OK, result);
 }
 
 TEST_F(SRPTest, SRPSaveOwnCertChainTestNullCert)
@@ -419,9 +419,9 @@ TEST(SRPProvisionTrustCertChainTest, SRPProvisionTrustCertChainNullResultCallbac
     int ctx;
     OicSecCredType_t type = SIGNED_ASYMMETRIC_KEY;
     uint16_t credId = 0;
-    OCProvisionDev_t selectedDeviceInfo;
+    OCProvisionDev_t deviceInfo;
 
-    result = SRPProvisionTrustCertChain(&ctx, type, credId, &selectedDeviceInfo, NULL);
+    result = SRPProvisionTrustCertChain(&ctx, type, credId, &deviceInfo, NULL);
     EXPECT_EQ(OC_STACK_INVALID_CALLBACK, result);
 }
 
@@ -431,9 +431,9 @@ TEST(SRPProvisionTrustCertChainTest, SRPProvisionTrustCertChainInvalidOicSecCred
     int ctx;
     OicSecCredType_t type = PIN_PASSWORD;
     uint16_t credId = 0;
-    OCProvisionDev_t selectedDeviceInfo;
+    OCProvisionDev_t deviceInfo;
 
-    result = SRPProvisionTrustCertChain(&ctx, type, credId, &selectedDeviceInfo, provisioningCB);
+    result = SRPProvisionTrustCertChain(&ctx, type, credId, &deviceInfo, provisioningCB);
     EXPECT_EQ(OC_STACK_INVALID_PARAM, result);
 }
 
@@ -443,9 +443,9 @@ TEST_F(SRPTest, SRPProvisionTrustCertChainNoResource)
     int ctx;
     OicSecCredType_t type = SIGNED_ASYMMETRIC_KEY;
     uint16_t credId = 0;
-    OCProvisionDev_t selectedDeviceInfo;
+    OCProvisionDev_t deviceInfo;
 
-    result = SRPProvisionTrustCertChain(&ctx, type, credId, &selectedDeviceInfo, provisioningCB);
+    result = SRPProvisionTrustCertChain(&ctx, type, credId, &deviceInfo, provisioningCB);
     EXPECT_EQ(OC_STACK_NO_RESOURCE, result);
 }
 

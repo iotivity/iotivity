@@ -269,7 +269,7 @@ OCStackResult RMAddObserverToStack(const OCServerRequest *request, OCObservation
                 (const char *)(request->query),
                 *obsID, request->requestToken, request->tokenLength,
                 (OCResource *)g_gateWayHandle, request->qos, OC_FORMAT_CBOR,
-                &request->devAddr);
+                OC_SPEC_VERSION_VALUE, &request->devAddr);
     OIC_LOG(DEBUG, TAG, "RMAddObserverToStack OUT");
     return result;
 }

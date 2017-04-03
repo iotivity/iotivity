@@ -16,7 +16,7 @@ android_ndk = env.get('ANDROID_NDK')
 if not android_ndk:
 	print '''
 *************************************** Error *********************************
-*    Android NDK path isn't set, you can set enviornment variable ANDROID_NDK *
+*    Android NDK path isn't set, you can set environment variable ANDROID_NDK *
 * or add it in command line as:                                               *
 *      # scons ANDROID_NDK=<path to android NDK> ...                          *
 *******************************************************************************
@@ -73,7 +73,7 @@ if ANDROID_HOME is not None:
 if ANDROID_HOME is None or not os.path.exists(ANDROID_HOME):
 	print '''
 *************************************** Warning *******************************
-*   Enviornment variable ANDROID_HOME is not set properly. It should be the   *
+*   Environment variable ANDROID_HOME is not set properly. It should be the   *
 * root directory of android sdk. If you'd like build Java code, it's required.*
 *******************************************************************************
 '''
@@ -169,7 +169,6 @@ if env.get('LOGGING'):
 env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__ANDROID__'])
 env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
 
-env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 src_dir = env.get('SRC_DIR')
 env.AppendUnique(LIBPATH = [src_dir + '/lib/android'])
 env.AppendUnique(LIBS = ['log', 'coap'])

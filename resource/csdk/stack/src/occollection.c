@@ -264,6 +264,9 @@ OCStackResult DefaultCollectionEntityHandler(OCEntityHandlerFlag flag, OCEntityH
     {
         ifQueryParam = OICStrdup(OC_RSRVD_INTERFACE_LL);
     }
+
+    VERIFY_PARAM_NON_NULL(TAG, ifQueryParam, "Invalid Parameter ifQueryParam");
+
     if (0 == strcmp(ifQueryParam, OC_RSRVD_INTERFACE_LL) || 0 == strcmp (ifQueryParam, OC_RSRVD_INTERFACE_DEFAULT))
     {
         if (ehRequest->method == OC_REST_PUT || ehRequest->method == OC_REST_POST)

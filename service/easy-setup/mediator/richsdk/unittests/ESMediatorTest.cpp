@@ -144,16 +144,16 @@ private:
         }
 
         CAEndpoint_t *tempInfo = NULL;
-        uint32_t tempSize = 0;
+        size_t tempSize = 0;
 
         CAResult_t res = CAGetNetworkInformation(&tempInfo, &tempSize);
-        if (CA_STATUS_OK != res || NULL == tempInfo || 0 >= tempSize)
+        if (CA_STATUS_OK != res || NULL == tempInfo || 0 == tempSize)
         {
             free(tempInfo);
             return false;
         }
 
-        for (uint32_t index = 0; index  < tempSize; index++)
+        for (size_t index = 0; index  < tempSize; index++)
         {
             if (CA_ADAPTER_IP == tempInfo[index].adapter)
             {
@@ -348,16 +348,6 @@ TEST_F(ProvisionDevicePropertiesTest,
     devProp.setDevConfProp("korean", "Korea", "Location");
 
     EXPECT_ANY_THROW(g_remoteEnrollee->provisionDeviceProperties(devProp, nullptr));
-}
-
-TEST_F(ProvisionDevicePropertiesTest,
-          ThrowExceptionWhenProvisionDeviceProperiesFailedWithoutSSID)
-{
-    DeviceProp devProp;
-    devProp.setWiFiProp("", "Iotivity_PWD", WPA2_PSK, TKIP_AES);
-    devProp.setDevConfProp("korean", "Korea", "Location");
-    EXPECT_ANY_THROW(g_remoteEnrollee->provisionDeviceProperties(devProp,
-                                                                 deviceProvisioningStatusCb));
 }
 
 TEST_F(ProvisionDevicePropertiesTest,

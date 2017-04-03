@@ -33,134 +33,54 @@
 #include "caadapterutils.h"
 
 #include "caconnectionmanager.h"
+#include "camessagearbiter.h"
 #include "capolicymanager.h"
+#include "camanagerutil.h"
 
 #define TAG "OIC_CM"
 
-static oc_mutex g_threadCMConfigureMutex = NULL;
 
-// context for connection manager
-static CAConnectionManagerContext_t g_context = {.sendThreadFunc = NULL,
-                                                 .receivedThreadFunc = NULL,
-                                                 .dataList = NULL};
-
-void CAStartConnectionManagerService(CMConfigureInfo_t info)
+CAResult_t CACMInitialize()
 {
-    OIC_LOG(DEBUG, TAG, "CAStartConnectionManagerService");
-
-    oc_mutex_lock(g_threadCMConfigureMutex);
-    CMSetConfigure(info);
-    oc_mutex_unlock(g_threadCMConfigureMutex);
+    OIC_LOG(DEBUG, TAG, "CACMInitialize");
+    return CAMsgArbiterInitialize();
 }
 
-CAData_t* CAGetConnectionManagerMessageData(CAData_t *data)
+CAResult_t CACMTerminate()
 {
-    OIC_LOG(DEBUG, TAG, "CAGetConnectionManagerMessageData");
+    OIC_LOG(DEBUG, TAG, "CACMTerminate");
 
-    VERIFY_NON_NULL_RET(data, TAG, "data is null", NULL);
-
-    // TODO
-    // decide specific reqeust/response message
-
-    return data;
+    return CAMsgArbiterTerminate();
 }
 
-CAResult_t CAInitializeConnectionManager(CASendThreadFunc sendThreadFunc,
-                                         CAReceiveThreadFunc receivedThreadFunc)
+CAResult_t CACMSetConnUserConfig(CAConnectUserPref_t connPrefer)
 {
-    OIC_LOG(DEBUG, TAG, "CAInitializeConnectionManager");
+    OIC_LOG(DEBUG, TAG, "CACMSetConnUserConfig");
 
-    if (!g_context.sendThreadFunc)
-    {
-        g_context.sendThreadFunc = sendThreadFunc;
-    }
-
-    if (!g_context.receivedThreadFunc)
-    {
-        g_context.receivedThreadFunc = receivedThreadFunc;
-    }
-
-    if (!g_context.dataList)
-    {
-        g_context.dataList = u_arraylist_create();
-    }
-
-    CAResult_t res = CAInitConnectionManagerMutexVariables();
-    if (CA_STATUS_OK != res)
-    {
-        u_arraylist_free(&g_context.dataList);
-        g_context.dataList = NULL;
-        OIC_LOG(ERROR, TAG, "init has failed");
-    }
-    return res;
+    return CAPolicyMgrSetConfiguration(connPrefer);
 }
 
-void CATerminateConnectionManager()
+CAResult_t CACMGetConnUserConfig(CAConnectUserPref_t *connPrefer)
 {
-    OIC_LOG(DEBUG, TAG, "CATerminateConnectionManager");
-
-    if (g_context.dataList)
-    {
-        // TODO
-        // Remove all of management data();
-        u_arraylist_free(&g_context.dataList);
-    }
-    CATerminateConnectionManagerMutexVariables();
+    OIC_LOG(DEBUG, TAG, "CACMGetConnUserConfig");
+    return CAPolicyMgrGetConfigure(connPrefer);
 }
 
-CAResult_t CAInitConnectionManagerMutexVariables()
+CAResult_t CACMGetMessageData(CAData_t *data)
 {
-    if (!g_context.dataListMutex)
-    {
-        g_context.dataListMutex = oc_mutex_new();
-        if (!g_context.dataListMutex)
-        {
-            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
-            return CA_STATUS_FAILED;
-        }
-    }
+    OIC_LOG(DEBUG, TAG, "CACMGetMessageData");
 
-    if (!g_context.dataSenderMutex)
-    {
-        g_context.dataSenderMutex = oc_mutex_new();
-        if (!g_context.dataSenderMutex)
-        {
-            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
-            CATerminateConnectionManagerMutexVariables();
-            return CA_STATUS_FAILED;
-        }
-    }
+    VERIFY_NON_NULL(data, TAG, "data is null");
 
-    if (NULL == g_threadCMConfigureMutex)
-    {
-        g_threadCMConfigureMutex = oc_mutex_new();
-        if (NULL == g_threadCMConfigureMutex)
-        {
-            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
-            return CA_STATUS_FAILED;
-        }
-    }
-
-    return CA_STATUS_OK;
+    return CAMsgArbiterGetMessageData(data);
 }
 
-void CATerminateConnectionManagerMutexVariables()
+CAResult_t CACMUpdateRemoteDeviceInfo(const CAEndpoint_t endpoint, bool isCloud)
 {
-    if (g_context.dataListMutex)
-    {
-        oc_mutex_free(g_context.dataListMutex);
-        g_context.dataListMutex = NULL;
-    }
+    return CAMsgArbiterUpdateDeviceInfo(endpoint, isCloud);
+}
 
-    if (g_context.dataSenderMutex)
-    {
-        oc_mutex_free(g_context.dataSenderMutex);
-        g_context.dataSenderMutex = NULL;
-    }
-
-    if (g_threadCMConfigureMutex)
-    {
-        oc_mutex_free(g_threadCMConfigureMutex);
-        g_threadCMConfigureMutex = NULL;
-    }
+CAResult_t CACMResetRemoteDeviceInfo()
+{
+    return CAMsgArbiterResetDeviceInfo();
 }

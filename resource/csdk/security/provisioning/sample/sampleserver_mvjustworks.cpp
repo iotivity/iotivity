@@ -55,7 +55,7 @@ int gQuitFlag = 0;
 typedef struct LEDRESOURCE{
     OCResourceHandle handle;
     bool state;
-    int power;
+    int64_t power;
 } LEDResource;
 
 static LEDResource LED;
@@ -75,7 +75,7 @@ static char CRED_FILE[] = "oic_svr_db_server_mvjustworks.dat";
 /* Function that creates a new LED resource by calling the
  * OCCreateResource() method.
  */
-int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int resourcePower);
+int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int64_t resourcePower);
 
 /* This method converts the payload to JSON format */
 OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest);
@@ -190,7 +190,7 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
         int64_t pow;
         if(OCRepPayloadGetPropInt(input, "power", &pow))
         {
-            currLEDResource->power =pow;
+            currLEDResource->power = pow;
         }
 
         bool state;
@@ -266,7 +266,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
         {
             // Create new LED instance
             char newLedUri[15] = "/a/led/";
-            int newLedUriLength = strlen(newLedUri);
+            size_t newLedUriLength = strlen(newLedUri);
             snprintf (newLedUri + newLedUriLength, sizeof(newLedUri)-newLedUriLength, "%d", gCurrLedInstance);
 
             respPLPost_led = OCRepPayloadCreate();
@@ -397,8 +397,10 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     return ehResult;
 }
 
-OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
+OCStackResult displayNumCB(void *ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
 {
+    OC_UNUSED(ctx);
+
     OIC_LOG(INFO, TAG, "IN displayNumCB");
     OIC_LOG(INFO, TAG, "############ mutualVerifNum ############");
     OIC_LOG_BUFFER(INFO, TAG, mutualVerifNum, MUTUAL_VERIF_NUM_LEN);
@@ -407,8 +409,10 @@ OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_L
     return OC_STACK_OK;
 }
 
-OCStackResult confirmNumCB(void * ctx)
+OCStackResult confirmNumCB(void *ctx)
 {
+    OC_UNUSED(ctx);
+
     for (;;)
     {
         int userConfirm;
@@ -471,7 +475,7 @@ int main()
     SetVerifyOption((VerifyOptionBitmask_t)(DISPLAY_NUM | USER_CONFIRM));
 
     // Initialize Persistent Storage for SVR database
-    OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
+    OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, remove};
 
     OCRegisterPersistentStorageHandler(&ps);
 
@@ -512,7 +516,7 @@ int main()
     return 0;
 }
 
-int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int resourcePower)
+int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int64_t resourcePower)
 {
     if (!uri)
     {

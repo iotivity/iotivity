@@ -148,6 +148,42 @@ namespace OC
 
     class OCSecure
     {
+        private:
+            /**
+             * Common callback wrapper, which will be called from OC-APIs.
+             */
+            static void callbackWrapper(void* ctx, size_t nOfRes,
+                                         OCProvisionResult_t *arr, bool hasError);
+
+            /**
+             * Callback function to display Verification Number.
+             *
+             * @param[in] ctx  User context returned in callback
+             * @param[in] verifNum  Array of MUTUAL_VERIF_NUM_LEN size bytes
+             *
+             * @return OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult displayNumCallbackWrapper(void* ctx,
+                    uint8_t verifNum[MUTUAL_VERIF_NUM_LEN]);
+
+            /**
+             * Callback function to get 'Num' verification result.
+             *
+             * @return OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult confirmUserCallbackWrapper(void* ctx);
+
+            /**
+             * Notifier wrapper for trustCertChain change.
+             *
+             * @param[in] ctx  User context returned in callback
+             * @param[in] credId  trustCertChain changed for this ID
+             * @param[in] trustCertChain trustcertchain binary blob
+             * @param[in] chainSize size of trustCertChain
+             */
+            static void certCallbackWrapper(void* ctx, uint16_t credId, uint8_t *trustCertChain,
+                                size_t chainSize);
+
         public:
             /**
              * The API is responsible for initialization of the provisioning manager. It will load
@@ -198,6 +234,19 @@ namespace OC
             static OCStackResult discoverSingleDevice(unsigned short timeout,
                     const OicUuid_t* deviceID,
                     std::shared_ptr<OCSecureResource> &foundDevice);
+
+            /**
+             * API for registering Ownership transfer methods for a particular transfer Type.
+             * @deprecated Use setInputPinCallback to set input pin callback value.
+             *
+             * @param oxm Ownership transfer method.
+             * @param callbackData CallbackData Methods for ownership transfer.
+             * @param inputPin Callback method to input pin for verification.
+             * @return ::OC_STACK_OK in case of success and other value otherwise.
+             *
+             */
+            static OCStackResult setOwnerTransferCallbackData(OicSecOxm_t oxm,
+                    OTMCallbackData_t* callbackData, InputPinCallback inputPin);
 
             /**
              * API is responsible for discovery of devices in specified endpoint/deviceID.
@@ -265,12 +314,12 @@ namespace OC
 
             /**
              * API for registering a pin input callback. Only one input pin callback is allowed
-             * to be registered at a time by setInputPinCallback and registerInputPinCallback. 
-             * Use unsetInputPinCallback to unregister a callback set by setInputPinCallback. 
+             * to be registered at a time by setInputPinCallback and registerInputPinCallback.
+             * Use unsetInputPinCallback to unregister a callback set by setInputPinCallback.
              *
              * @deprecated Use registerInputPinCallback instead.
              *
-             * @param InputPinCallback inputPin callback function.
+             * @param inputPin inputPin callback function.
              * @return OC_STACK_OK in case of success and other value otherwise.
              *         OC_STACK_INVALID_CALLBACK if inputPin is invalid.
              *         OC_STACK_DUPLICATE_REQUEST if an input pin callback has already been set.
@@ -288,7 +337,7 @@ namespace OC
 
             /**
              * API to register for a callback to input a pin. Only one input pin callback is allowed
-             * to be registered at a time by setInputPinCallback and registerInputPinCallback. Use 
+             * to be registered at a time by setInputPinCallback and registerInputPinCallback. Use
              * deregisterInputPinCallback to unregister a callback set by registerInputPinCallback.
              *
              * @param inputPinCB             Callback which is to be registered.
@@ -330,6 +379,15 @@ namespace OC
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */
             static OCStackResult unsetDisplayPinCB();
+
+            /**
+             * API to set Pin Type policy.
+             *
+             * @param  pinSize pin Size
+             * @param  pinType Type of the pin.
+             * @return OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult setRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType);
 
             /**
              * API to register for a callback to display a pin. Only one display pin callback is
@@ -421,29 +479,20 @@ namespace OC
              */
             static OCStackResult deregisterUserConfirmCallback();
 
-             /*
+             /**
              * Set option for Mutual Verified Just-Works
              * The default is both display PIN and get user confirmation.
              */
             static OCStackResult setVerifyOptionMask(VerifyOptionBitmask_t optionMask);
 
-            /**
-             * Callback function to display Verification Number.
-             *
-             * @param[in] ctx  User context returned in callback
-             * @param[in] verifNum  Array of MUTUAL_VERIF_NUM_LEN size bytes
-             *
-             * @return OC_STACK_OK in case of success and other value otherwise.
-             */
-            static OCStackResult displayNumCallbackWrapper(void* ctx,
-                    uint8_t verifNum[MUTUAL_VERIF_NUM_LEN]);
 
-             /**
-             * Callback function to get 'Num' verification result.
+            /**
+             * API to cleanup PDM in case of timeout.
+             * It will remove the PDM_DEVICE_INIT state devices from PDM.
              *
              * @return OC_STACK_OK in case of success and other value otherwise.
              */
-            static OCStackResult confirmUserCallbackWrapper(void* ctx);
+             static OCStackResult pdmCleanupForTimeout();
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
             /**
@@ -457,7 +506,6 @@ namespace OC
              */
             static OCStackResult saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
                                         OicEncodingType_t encodingType, uint16_t *credId);
-
 
             /**
              * API to read Trust certificate chain from SVR.
@@ -488,15 +536,12 @@ namespace OC
             static OCStackResult removeTrustCertChangeNotifier();
 
             /**
-             * Notifier wrapper for trustCertChain change.
+             * Wrapper to save the seed value to generate device UUID
              *
-             * @param[in] ctx  User context returned in callback
-             * @param[in] credId  trustCertChain changed for this ID
-             * @param[in] trustCertChain trustcertchain binary blob
-             * @param[in] chainSize size of trustCertChain
+             * @param[in] seed  buffer of seed value
+             * @param[in] seedSize byte length of seed
              */
-            static void certCallbackWrapper(void* ctx, uint16_t credId, uint8_t *trustCertChain,
-                                size_t chainSize);
+             static OCStackResult setDeviceIdSeed(const uint8_t* seed, size_t seedSize);
 #endif // __WITH_DTLS__ || __WITH_TLS__
 
 
@@ -506,7 +551,6 @@ namespace OC
              *@return OC_STACK_OK in case of successful configue and other value otherwise.
              */
             static OCStackResult configSelfOwnership();
-
     };
 
     /**
@@ -639,7 +683,7 @@ namespace OC
 
             /**
              * API to get the information of device for provisioning.
-             * @return  @ref OCProvisionDev_t Reference provides information of device for provisioning.
+             * @return OCProvisionDev_t Reference provides information of device for provisioning.
              */
             OCProvisionDev_t* getDevPtr()const;
 
@@ -675,12 +719,6 @@ namespace OC
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */
             OCStackResult getOTMethod(OicSecOxm_t* oxm);
-
-            /**
-             * Common callback wrapper, which will be called from OC-APIs.
-             */
-            static void callbackWrapper(void* ctx, int nOfRes,
-                    OCProvisionResult_t *arr, bool hasError);
 
 #ifdef MULTIPLE_OWNER
             /**
@@ -771,6 +809,12 @@ namespace OC
 #endif // MULTIPLE_OWNER
 
         private:
+            /**
+             * Common callback wrapper, which will be called from OC-APIs.
+             */
+            static void callbackWrapper(void* ctx, size_t nOfRes,
+                                           OCProvisionResult_t *arr, bool hasError);
+
             void validateSecureResource();
     };
 

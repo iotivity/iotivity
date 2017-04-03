@@ -29,6 +29,9 @@
 #include "CAManager.h"
 #include "cautilinterface.h"
 #include "casecurityinterface.h"
+#include "logger.h"
+
+#define TAG "OIC_CAMANAGER"
 
 using namespace OC;
 
@@ -127,6 +130,21 @@ uint16_t CAManager::getAssignedPortNumber(OCTransportAdapter adapter, OCTranspor
 {
     return CAGetAssignedPortNumber((CATransportAdapter_t) adapter, (CATransportFlags_t) flag);
 }
+
+OCStackResult CAManager::setBTConfigure(const CAUtilConfig& config)
+{
+    OIC_LOG(INFO, TAG, "setBTConfigure");
+    CAUtilConfig_t configs = {(CATransportBTFlags_t)config.bleFlag};
+    CAResult_t ret = CAUtilSetBTConfigure(configs);
+    return convertCAResultToOCResult(ret);
+}
+
+void CAManager::setLogLevel(OCLogLevel level, bool hidePrivateLogEntries)
+{
+    OIC_LOG(INFO, TAG, "setLogLevel");
+    CAUtilSetLogLevel((CAUtilLogLevel_t) level, hidePrivateLogEntries);
+}
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 OCStackResult CAManager::setCipherSuite(const uint16_t cipher, OCTransportAdapter adapter)
 {
@@ -134,3 +152,26 @@ OCStackResult CAManager::setCipherSuite(const uint16_t cipher, OCTransportAdapte
     return convertCAResultToOCResult(ret);
 }
 #endif // defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+
+OCStackResult CAManager::startLEAdvertising()
+{
+    CAResult_t ret = CAUtilStartLEAdvertising();
+
+    return convertCAResultToOCResult(ret);
+}
+
+OCStackResult CAManager::stopLEAdvertising()
+{
+    CAResult_t ret = CAUtilStopLEAdvertising();
+
+    return convertCAResultToOCResult(ret);
+}
+
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+OCStackResult CAManager::setConnectionManagerUserConfig(OCConnectUserPref_t connPriority)
+{
+    CAResult_t ret = CAUtilCMSetConnectionUserConfig((CAConnectUserPref_t)connPriority);
+
+    return convertCAResultToOCResult(ret);
+}
+#endif

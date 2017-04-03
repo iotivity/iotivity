@@ -40,12 +40,6 @@
                             "if": ["oic.if.baseline"]
                         },
                         {
-                            "href": "/oic/sec/acl",
-                            "rel": "",
-                            "rt": ["oic.r.acl"],
-                            "if": ["oic.if.baseline"]
-                        },
-                        {
                             "href": "/oic/sec/cred",
                             "rel": "",
                             "rt": ["oic.r.cred"],
@@ -59,6 +53,7 @@
         "rowneruuid" : "50726563-6F6E-6669-6775-72656450494E"
     },
     "pstat": {
+        "dos": {"s": 1, "p": false},
         "isop": false,
         "deviceuuid": "50726563-6F6E-6669-6775-72656450494E",
         "rowneruuid": "50726563-6F6E-6669-6775-72656450494E",

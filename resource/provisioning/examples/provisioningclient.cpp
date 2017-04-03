@@ -37,7 +37,7 @@
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
 #include "aclresource.h"
-#include "utlist.h"
+#include "coap/utlist.h"
 
 #define MAX_PERMISSION_LENGTH (5)
 #define ACL_RESRC_ARRAY_SIZE (3)
@@ -121,6 +121,7 @@ void moveTransferredDevice()
 
 void OnInputPinCB(OicUuid_t deviceId, char* pinBuf, size_t bufSize)
 {
+    OC_UNUSED(deviceId);
     if(pinBuf)
     {
         std::cout <<"INPUT PIN : ";
@@ -408,7 +409,7 @@ static int InputACL(OicSecAcl_t *acl)
     //Set Resource.
     size_t resourcesLen = 0;
     printf("Num. of Resource : ");
-    ret = scanf("%zu", &resourcesLen);
+    ret = scanf("%" PRIuPTR, &resourcesLen);
     if ((1 != ret) || (resourcesLen <= 0 || resourcesLen > 50))
     {
         deleteACL(acl);
@@ -429,7 +430,7 @@ static int InputACL(OicSecAcl_t *acl)
 
         LL_APPEND(ace->resources, rsrc);
 
-        printf("[%zu]Resource : ", i + 1);
+        printf("[%" PRIuPTR "]Resource : ", i + 1);
         ret = scanf("%64ms", &temp_rsc);
         if (1 != ret)
         {
@@ -447,7 +448,7 @@ static int InputACL(OicSecAcl_t *acl)
             printf("         Enter Number of resource type for [%s]: ", rsrc->href);
             for(int ret=0; 1!=ret; )
             {
-                ret = scanf("%d", &arrLen);
+                ret = scanf("%" SCNuPTR, &arrLen);
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
@@ -466,9 +467,9 @@ static int InputACL(OicSecAcl_t *acl)
             goto error;
         }
 
-        for(int i = 0; i < arrLen; i++)
+        for(size_t i = 0; i < arrLen; i++)
         {
-            printf("         Enter ResourceType[%d] Name (e.g. core.led): ", i+1);
+            printf("         Enter ResourceType[%" PRIuPTR "] Name (e.g. core.led): ", i+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%64ms", &rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
@@ -489,7 +490,7 @@ static int InputACL(OicSecAcl_t *acl)
             printf("         Enter Number of interface name for [%s]: ", rsrc->href);
             for(int ret=0; 1!=ret; )
             {
-                ret = scanf("%d", &arrLen);
+                ret = scanf("%" SCNuPTR, &arrLen);
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
@@ -508,9 +509,9 @@ static int InputACL(OicSecAcl_t *acl)
             goto error;
         }
 
-        for(int i = 0; i < arrLen; i++)
+        for(size_t i = 0; i < arrLen; i++)
         {
-            printf("         Enter interfnace[%d] Name (e.g. oic.if.baseline): ", i+1);
+            printf("         Enter interfnace[%" PRIuPTR "] Name (e.g. oic.if.baseline): ", i+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%64ms", &rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
@@ -664,7 +665,7 @@ static OicSecPdAcl_t* InputPdACL()
 
     //Set Resource.
     printf("Num. of Resource : ");
-    ret = scanf("%zu", &acl->resourcesLen);
+    ret = scanf("%" PRIuPTR, &acl->resourcesLen);
     if ((1 != ret) || (acl->resourcesLen <= 0 || acl->resourcesLen > 50))
     {
         printf("Error while input\n");
@@ -682,7 +683,7 @@ static OicSecPdAcl_t* InputPdACL()
     }
     for (size_t i = 0; i < acl->resourcesLen; i++)
     {
-        printf("[%zu]Resource : ", i + 1);
+        printf("[%" PRIuPTR "]Resource : ", i + 1);
         ret = scanf("%64ms", &temp_rsc);
         if (1 != ret)
         {
@@ -817,6 +818,7 @@ PVDP_ERROR:
 
 OCStackResult displayMutualVerifNumCB(uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
 {
+    OC_UNUSED(mutualVerifNum);
     OIC_LOG(INFO, TAG, "IN displayMutualVerifNumCB");
     OIC_LOG(INFO, TAG, "############ mutualVerifNum ############");
     OIC_LOG_BUFFER(INFO, TAG, mutualVerifNum, MUTUAL_VERIF_NUM_LEN);
@@ -868,7 +870,7 @@ static int saveTrustCert(void)
 
     if (fp)
     {
-        size_t fsize;
+        off_t fsize;
         if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)) >= 0)
         {
             trustCertChainArray.data = (uint8_t*)OICCalloc(1, fsize);
@@ -880,8 +882,7 @@ static int saveTrustCert(void)
                 return -1;
             }
             rewind(fp);
-            fsize = fread(trustCertChainArray.data, 1, fsize, fp);
-            if(0 == fsize)
+            if (0 == fread(trustCertChainArray.data, 1, fsize, fp))
             {
                 OIC_LOG(ERROR,TAG,"Read error");
             }
@@ -901,8 +902,11 @@ static int saveTrustCert(void)
     return 0;
 }
 
-void certChainCallBack(uint16_t credId, uint8_t *trustCertChain,size_t chainSize)
+void certChainCallBack(uint16_t credId, uint8_t *trustCertChain, size_t chainSize)
 {
+    OC_UNUSED(credId);
+    OC_UNUSED(trustCertChain);
+    OC_UNUSED(chainSize);
     OIC_LOG_V(INFO, TAG, "trustCertChain Changed for credId %u", credId);
     return;
 }

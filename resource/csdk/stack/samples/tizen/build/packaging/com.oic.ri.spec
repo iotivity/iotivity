@@ -4,7 +4,7 @@
 %define DEST_LIB_DIR  %{buildroot}/%{_libdir}
 
 Name: com-oic-ri
-Version:    1.2.0
+Version:    1.3.0
 Release:    0
 Summary: Tizen oicri application
 Group: Network & Connectivity / IoT Connectivity
@@ -32,9 +32,9 @@ Source0: http://mirrors.kernel.org/%{name}/%{version}/%{name}-%{version}.tar.gz
 %{!?WITH_TCP: %define WITH_TCP 0}
 
 BuildRequires: pkgconfig(dlog)
+BuildRequires: pkgconfig(ttrace)
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(capi-network-connection)
-BuildRequires: pkgconfig(capi-network-wifi)
 BuildRequires: pkgconfig(capi-network-bluetooth)
 BuildRequires: pkgconfig(uuid)
 BuildRequires: pkgconfig(sqlite3)
@@ -68,7 +68,7 @@ scons %{JOB} --prefix=%{_prefix} \
 mkdir -p %{DEST_INC_DIR}
 mkdir -p %{DEST_LIB_DIR}/pkgconfig
 
-cp -f %{ROOTDIR}/resource/csdk/liboctbstack.so %{buildroot}/%{_libdir}
+cp -f %{ROOTDIR}/resource/csdk/stack/liboctbstack.so %{buildroot}/%{_libdir}
 cp -f %{ROOTDIR}/resource/c_common/libc_common.a %{buildroot}/%{_libdir}
 cp -f %{ROOTDIR}/resource/csdk/security/libocsrm.a %{buildroot}/%{_libdir}
 cp -f %{ROOTDIR}/resource/csdk/connectivity/src/libconnectivity_abstraction.so %{buildroot}/%{_libdir}
@@ -78,7 +78,6 @@ cp -f %{ROOTDIR}/extlibs/libcoap/libcoap.a %{buildroot}/%{_libdir}
 cp -av /usr/lib*/libuuid.so.1 %{buildroot}%{_libdir}/libuuid1.so ||:
 
 if echo %{SECURED}|grep -qi '1'; then
-	cp -f %{ROOTDIR}/out/tizen/*/*/extlibs/tinydtls/libtinydtls.a %{buildroot}/%{_libdir}
 	cp -f %{ROOTDIR}/out/tizen/*/*/libmbedcrypto.a %{buildroot}/%{_libdir}
 	cp -f %{ROOTDIR}/out/tizen/*/*/libmbedtls.a %{buildroot}/%{_libdir}
 	cp -f %{ROOTDIR}/out/tizen/*/*/libmbedx509.a %{buildroot}/%{_libdir}

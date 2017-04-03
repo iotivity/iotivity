@@ -23,6 +23,8 @@
 #include "JniOcProvisioning.h"
 #include "JniPinCheckListener.h"
 #include "JniDisplayPinListener.h"
+#include "oic_malloc.h"
+#include "aclresource.h"
 #include "oxmverifycommon.h"
 #include "JniDisplayVerifyNumListener.h"
 #include "JniConfirmNumListener.h"
@@ -338,6 +340,33 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_unsetDisplayNumList
 
 /*
  * Class:     org_iotivity_base_OcProvisioning
+ * Method:    setPinType0
+ * Signature: (II)I
+ */
+JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setPinType0
+  (JNIEnv *env, jclass thiz, jint pinSize, jint pinType)
+{
+    LOGI("OcProvisioning_setPinType0");
+
+    OCStackResult result = OC_STACK_ERROR;
+    try
+    {
+        result = OCSecure::setRandomPinPolicy((size_t)pinSize, (OicSecPinType_t)pinType);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Failed to set PinType");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+    }
+    return result;
+}
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
  * Method:    setConfirmNumListener
  * Signature: (Lorg/iotivity/base/OcProvisioning/ConfirmNumListener;)V
  */
@@ -445,6 +474,91 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListen
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
     }
 }
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    discoverMOTEnabledDevices1
+ * Signature: (I)[Lorg/iotivity/base/OcSecureResource;
+ */
+JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverMOTEnabledDevices1
+  (JNIEnv *env, jclass thiz, jint timeout)
+{
+    LOGI("OcProvisioning_discoverMOTEnabledDevices1");
+#if defined(MULTIPLE_OWNER)
+    DeviceList_t list;
+
+    try
+    {
+        if (timeout < 0)
+        {
+            ThrowOcException(OC_STACK_INVALID_PARAM, "Timeout value cannot be negative");
+            return nullptr;
+        }
+        OCStackResult result = OCSecure::discoverMultipleOwnerEnabledDevices(
+                (unsigned short)timeout, list);
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Failed to discover MOT Enabled devices");
+            return nullptr;
+        }
+
+        return JniSecureUtils::convertDeviceVectorToJavaArray(env, list);
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        return nullptr;
+    }
+#else
+    ThrowOcException(OC_STACK_INVALID_PARAM, "MULTIPLE_OWNER not enabled");
+    return nullptr;
+#endif
+}
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    discoverMOTEnabledOwnedDevices1
+ * Signature: (I)[Lorg/iotivity/base/OcSecureResource;
+ */
+JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverMOTEnabledOwnedDevices1
+  (JNIEnv *env, jclass thiz, jint timeout)
+{
+    LOGI("OcProvisioning_discoverMOTEnabledOwnedDevices1");
+#if defined(MULTIPLE_OWNER)
+    DeviceList_t list;
+
+    try
+    {
+        if (timeout < 0)
+        {
+            ThrowOcException(OC_STACK_INVALID_PARAM, "Timeout value cannot be negative");
+            return nullptr;
+        }
+        OCStackResult result = OCSecure::discoverMultipleOwnedDevices(
+                (unsigned short)timeout, list);
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Failed to discover MOT Enabled Owned devices");
+            return nullptr;
+        }
+
+        return JniSecureUtils::convertDeviceVectorToJavaArray(env, list);
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        return nullptr;
+    }
+#else
+    ThrowOcException(OC_STACK_INVALID_PARAM, "MULTIPLE_OWNER not enabled");
+    return nullptr;
+#endif
+}
+
 /*
  * Class:     org_iotivity_base_OcProvisioning
  * Method:    saveTrustCertChain1
@@ -457,7 +571,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListen
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     jbyte* trustCertChainBytes = env->GetByteArrayElements(trustCertChain, 0);
     jsize arrayLength = env->GetArrayLength(trustCertChain);
-    uint16_t credId;
+    uint16_t credId = -1;
     unsigned char* trustedCertChar = new unsigned char[arrayLength];
     try
     {
@@ -476,6 +590,111 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListen
         ThrowOcException(e.code(), e.reason().c_str());
     }
     return (jint)credId;
+#else
+    ThrowOcException(OC_STACK_INVALID_PARAM, "WITH_TLS not enabled");
+    return -1;
+#endif // __WITH_DTLS__ || __WITH_TLS__
+}
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    saveACL
+ * Signature: (Ljava/lang/Object;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_saveACL
+  (JNIEnv *env , jclass thiz, jobject jacl)
+{
+    LOGD("OcProvisioning_saveACL");
+
+    if (!jacl)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "acl can't be null");
+    }
+
+    OicSecAcl_t *acl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
+    if (!acl)
+    {
+        ThrowOcException(OC_STACK_NO_MEMORY, "acl allocation failed");
+        return;
+    }
+
+    if (OC_STACK_OK != JniSecureUtils::convertJavaACLToOCAcl(env, jacl, acl))
+    {
+        DeleteACLList(acl);
+        ThrowOcException(OC_STACK_INVALID_PARAM, "Failed to convert Java acl to OC acl");
+        return ;
+    }
+
+    try
+    {
+        OCStackResult result = OCSecure::saveACL(acl);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OCSecure::saveACL Failed");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+    }
+}
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    doSelfOwnershiptransfer
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_doSelfOwnershiptransfer
+  (JNIEnv *env, jclass thiz)
+{
+
+    LOGD("OcProvisioning_doSelfOwnershiptransfer");
+    try
+    {
+        OCStackResult result = OCSecure::configSelfOwnership();
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OCSecure::configSelfOwnership Failed");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+    }
+}
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    setDeviceIdSeed1
+ * Signature: (Lorg/iotivity/base/OcProvisioning/provisionTrustCertChain1;)V
+ */
+    JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setDeviceIdSeed1
+(JNIEnv *env, jobject thiz, jbyteArray seed)
+{
+    LOGD("OcProvisioning_setDeviceIdSeed1");
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    jbyte* byteSeed = env->GetByteArrayElements(seed, 0);
+    jsize arrayLength = env->GetArrayLength(seed);
+    try
+    {
+        env->GetByteArrayRegion (seed, 0, arrayLength, byteSeed);
+        OCStackResult result = OCSecure::setDeviceIdSeed((uint8_t*)byteSeed, arrayLength);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcProvisioning_setDeviceIdSeed");
+            return -1;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+    return 0;
 #else
     ThrowOcException(OC_STACK_INVALID_PARAM, "WITH_TLS not enabled");
     return -1;

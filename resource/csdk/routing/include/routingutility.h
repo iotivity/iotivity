@@ -117,7 +117,7 @@ void RMSetStackMode(OCMode mode);
  * Adds the destination address to the Route options.
  * If Route option is already present, it adds the destination address information to
  * Route option else creates a new Route option with the destination address info.
- * @param[in]       endpoint        Destination address.
+ * @param[in]       destination     Destination address.
  * @param[in,out]   message         Request/response message to add the route option
  * @param[in]       isRequest       True if message is request else false.
  * @param[out]      doPost          True if a POST message be sent for empty packet to

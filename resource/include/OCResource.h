@@ -123,6 +123,7 @@ namespace OC
             m_resourceTypes(std::move(o.m_resourceTypes)),
             m_interfaces(std::move(o.m_interfaces)),
             m_children(std::move(m_children)),
+            m_endpoints(std::move(m_endpoints)),
             m_observeHandle(std::move(m_observeHandle)),
             m_headerOptions(std::move(m_headerOptions))
         {
@@ -485,6 +486,12 @@ namespace OC
         std::string host() const;
 
         /**
+        * Function to get the endpoints information of this resource
+        * @return std::vector<std::string> endpoints information
+        */
+        std::vector<std::string> getAllHosts() const;
+
+        /**
         * Function to get the URI for this resource
         * @return std::string resource URI
         */
@@ -503,6 +510,12 @@ namespace OC
         */
         bool isObservable() const;
 
+        /**
+        * Function to change host of this reource
+        * @return std::string New host Address.
+        *         not observable.
+        */
+        std::string setHost(const std::string& host);
 #ifdef WITH_MQ
         /**
         * Function to provide ability to check if this resource is publisher or not
@@ -654,7 +667,6 @@ namespace OC
         bool operator>=(const OCResource &other) const;
 
     private:
-        void setHost(const std::string& host);
         std::weak_ptr<IClientWrapper> m_clientWrapper;
         std::string m_uri;
         OCResourceIdentifier m_resourceId;
@@ -665,6 +677,7 @@ namespace OC
         std::vector<std::string> m_resourceTypes;
         std::vector<std::string> m_interfaces;
         std::vector<std::string> m_children;
+        std::vector<std::string> m_endpoints;
         OCDoHandle m_observeHandle;
         HeaderOptions m_headerOptions;
 
@@ -676,11 +689,26 @@ namespace OC
                     const std::vector<std::string>& interfaces);
 
         OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
+                    const OCDevAddr& devAddr, const std::string& uri,
+                    const std::string& serverId, uint8_t property,
+                    const std::vector<std::string>& resourceTypes,
+                    const std::vector<std::string>& interfaces,
+                    const std::vector<std::string>& endpoints);
+
+        OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                     const std::string& host, const std::string& uri,
                     const std::string& serverId,
                     OCConnectivityType connectivityType, uint8_t property,
                     const std::vector<std::string>& resourceTypes,
                     const std::vector<std::string>& interfaces);
+
+        OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
+                    const std::string& host, const std::string& uri,
+                    const std::string& serverId,
+                    OCConnectivityType connectivityType, uint8_t property,
+                    const std::vector<std::string>& resourceTypes,
+                    const std::vector<std::string>& interfaces,
+                    const std::vector<std::string>& endpoints);
     };
 
 } // namespace OC

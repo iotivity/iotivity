@@ -220,6 +220,21 @@ public class CaInterface {
 
     /**
      *  start BLE Advertising.
+     *  precondition : since android gatt server in IoTivity doesn't start to advertise by default.
+     *                 (it can prevent battery consumption issue)
+     *                 ble adv flag should be set to enable flag, if you want to use this method.
+     *                 we provide BT configure setter API which has ble adv flag like below method
+     *                 'void setBTConfigure(...)'
+     *                 it should be set before call init ocstack like PlatformConfig setter.
+     *
+     *  1. gatt server stop advertisement after connect with someone by default.
+     *     thur, you should call this method, if you want to connect others continuously.
+     *
+     *  2. if you want to start advertisement in initialization step,
+     *     you can call just setBTConfigure API.
+     *     since advertisement will be triggered by the flag, when gatt server is started.
+     *     to conclude, you don't need to call startLeAdvertising API,
+     *     if adv enable flag is set in setBTConfigure API.
      */
     public synchronized static void startLeAdvertising(){
         CaInterface.startLeAdvertisingImpl();
@@ -228,15 +243,38 @@ public class CaInterface {
 
     /**
      *  stop BLE Advertising.
+     *  it can stop to advertise le for gatt server even though there is no connected endpoint.
+     *  it will help to reduce battery consumption,
+     *  when someone doesn't want to advertise by user scenario.
+     *
+     *  if you want to stop advertiment in initialize step.
+     *  you can call just setBTConfigure API with adv disable flag.
      */
     public synchronized static void stopLeAdvertising(){
         CaInterface.stopLeAdvertisingImpl();
     }
     private static native void stopLeAdvertisingImpl();
 
+    /**
+     *  set BT configure
+     */
+    public synchronized static void setBTConfigure(int flag){
+        CaInterface.setBTConfigureImpl(flag);
+    }
+    private static native void setBTConfigureImpl(int flag);
+
     public synchronized static int setCipherSuite(OicCipher cipher, OcConnectivityType connType){
         return CaInterface.setCipherSuiteImpl(cipher.getValue(), connType.getValue());
     }
     private static native int setCipherSuiteImpl(int cipher, int adapter);
 
+    /**
+     * Set Connection Manager configuration.
+     * It can be set a connection manager configuration.(default: CA_CLOUD)
+     */
+    public synchronized static void setConnectionUserConfig(CaIpConnectionPreference connPriority) {
+        CaInterface.caManagerSetConnectionUserConfig(connPriority.getValue());
+    }
+
+    private static native void caManagerSetConnectionUserConfig(int connPriority);
 }

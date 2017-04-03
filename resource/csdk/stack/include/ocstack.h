@@ -101,19 +101,20 @@ OCStackResult OCSetRAInfo(const OCRAInfo_t *raInfo);
 OCStackResult OCStop();
 
 /**
- * This function starts receiving the multicast traffic. This can be only called
- * when stack is in OC_STACK_INITIALIZED state but device is not receiving multicast
- * traffic.
+ * This function starts responding to multicast /oic/res requests.  This can be
+ * only called when stack is in OC_STACK_INITIALIZED state but device is not
+ * receiving multicast traffic.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCStartMulticastServer();
 
 /**
- * This function stops receiving the multicast traffic. The rest of the stack
- * keeps working and no resource are deleted. Device can still receive the unicast
- * traffic. Once this is set, no response to multicast /oic/res will be sent by the
- * device. This is to be used for devices that uses other entity to push resources.
+ * This function stops responding to multicast /oic/res requests.  This is to be
+ * used for devices that uses other entity to push resources.
+ *
+ * Note that other multicast requests, such as those used during ownership
+ * transfer, continue to be responded to.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
@@ -131,6 +132,8 @@ OCStackResult OCProcess();
  * This function discovers or Perform requests on a specified resource
  * (specified by that Resource's respective URI).
  *
+ * @deprecated: Use OCDoRequest instead which does not free given payload.
+ *
  * @param handle            To refer to the request sent out on behalf of
  *                          calling this API. This handle can be used to cancel this operation
  *                          via the OCCancel API.
@@ -138,10 +141,11 @@ OCStackResult OCProcess();
  *                          the consumer.  A NULL handle is permitted in the event where the caller
  *                          has no use for the return value.
  * @param method            To perform on the resource.
- * @param requestUri       URI of the resource to interact with. (Address prefix is deprecated in
+ * @param requestUri        URI of the resource to interact with. (Address prefix is deprecated in
  *                          favor of destination.)
  * @param destination       Complete description of destination.
- * @param payload           Encoded request payload.
+ * @param payload           Encoded request payload,
+                            OCDoResource will free given payload when return OC_STATUS_OK.
  * @param connectivityType  Modifier flags when destination is not given.
  * @param qos               Quality of service. Note that if this API is called on a uri with the
  *                          well-known multicast IP address, the qos will be forced to ::OC_LOW_QOS
@@ -170,6 +174,52 @@ OCStackResult OCDoResource(OCDoHandle *handle,
                            OCCallbackData *cbData,
                            OCHeaderOption *options,
                            uint8_t numOptions);
+
+/**
+ * This function discovers or Perform requests on a specified resource
+ * (specified by that Resource's respective URI).
+ *
+ * @param handle            To refer to the request sent out on behalf of
+ *                          calling this API. This handle can be used to cancel this operation
+ *                          via the OCCancel API.
+ *                          @note: This reference is handled internally, and should not be free'd by
+ *                          the consumer.  A NULL handle is permitted in the event where the caller
+ *                          has no use for the return value.
+ * @param method            To perform on the resource.
+ * @param requestUri        URI of the resource to interact with. (Address prefix is deprecated in
+ *                          favor of destination.)
+ * @param destination       Complete description of destination.
+ * @param payload           Encoded request payload.
+                            OCDoRequest does not free given payload.
+ * @param connectivityType  Modifier flags when destination is not given.
+ * @param qos               Quality of service. Note that if this API is called on a uri with the
+ *                          well-known multicast IP address, the qos will be forced to ::OC_LOW_QOS
+ *                          since it is impractical to send other QOS levels on such addresses.
+ * @param cbData            Asynchronous callback function that is invoked by the stack when
+ *                          discovery or resource interaction is received. The discovery could be
+ *                          related to filtered/scoped/particular resource. The callback is
+ *                          generated for each response received.
+ * @param options           The address of an array containing the vendor specific header options
+ *                          to be sent with the request.
+ * @param numOptions        Number of header options to be included.
+ *
+ * @note: Presence subscription amendments (i.e. adding additional resource type filters by calling
+ * this API again) require the use of the same base URI as the original request to successfully
+ * amend the presence filters.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCDoRequest(OCDoHandle *handle,
+                          OCMethod method,
+                          const char *requestUri,
+                          const OCDevAddr *destination,
+                          OCPayload* payload,
+                          OCConnectivityType connectivityType,
+                          OCQualityOfService qos,
+                          OCCallbackData *cbData,
+                          OCHeaderOption *options,
+                          uint8_t numOptions);
+
 /**
  * This function cancels a request associated with a specific @ref OCDoResource invocation.
  *
@@ -241,7 +291,8 @@ OCStackResult OCStopPresence();
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandler, void* callbackParameter);
+OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandler,
+                                              void* callbackParameter);
 
 /**
  * This function sets device information.
@@ -462,6 +513,28 @@ const char *OCGetResourceUri(OCResourceHandle handle);
 OCResourceProperty OCGetResourceProperties(OCResourceHandle handle);
 
 /**
+ * This function sets the properties of the resource specified by handle.
+ *
+ * @param handle                Handle of resource.
+ * @param resourceProperties    Properties supported by resource.
+ *                              Example: ::OC_DISCOVERABLE|::OC_OBSERVABLE.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCSetResourceProperties(OCResourceHandle handle, uint8_t resourceProperties);
+
+/**
+ * This function removes the properties of the resource specified by handle.
+ *
+ * @param handle                Handle of resource.
+ * @param resourceProperties    Properties not supported by resource.
+ *                              Example: ::OC_DISCOVERABLE|::OC_OBSERVABLE.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCClearResourceProperties(OCResourceHandle handle, uint8_t resourceProperties);
+
+/**
  * This function gets the number of resource types of the resource.
  *
  * @param handle            Handle of resource.
@@ -501,16 +574,6 @@ OCStackResult OCGetNumberOfResourceInterfaces(OCResourceHandle handle,
  * @return Resource interface name if resource found or NULL if resource not found.
  */
 const char *OCGetResourceInterfaceName(OCResourceHandle handle, uint8_t index);
-
-/**
- * This function gets methods of resource interface of the resource.
- *
- * @param handle      Handle of resource.
- * @param index       Index of resource, 0 to Count - 1.
- *
- * @return Allowed methods if resource found or NULL if resource not found.
- */
-uint8_t OCGetResourceInterfaceAllowedMethods(OCResourceHandle handle, uint8_t index);
 
 /**
  * This function gets resource handle from the collection resource by index.
@@ -561,13 +624,11 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult
-OCNotifyListOfObservers (OCResourceHandle handle,
-                         OCObservationId  *obsIdList,
-                         uint8_t          numberOfIds,
-                         const OCRepPayload *payload,
-                         OCQualityOfService qos);
-
+OCStackResult OCNotifyListOfObservers (OCResourceHandle handle,
+                                       OCObservationId  *obsIdList,
+                                       uint8_t          numberOfIds,
+                                       const OCRepPayload *payload,
+                                       OCQualityOfService qos);
 
 /**
  * This function sends a response to a request.
@@ -586,8 +647,8 @@ OCStackResult OCDoResponse(OCEntityHandlerResponse *response);
  * all the device in subnet which support direct-pairing.
  * Caller must NOT free returned constant pointer
  *
- * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
- *                    client before returning the list of devices.
+ * @param[in] waittime Timeout in seconds, value till which function will listen to responses from
+ *                     client before returning the list of devices.
  * @return OCDirectPairingDev_t pointer in case of success and NULL otherwise.
  */
 const OCDPDev_t* OCDiscoverDirectPairingDevices(unsigned short waittime);
@@ -605,6 +666,7 @@ const OCDPDev_t* OCGetDirectPairedDevices();
  * The function is responsible for establishment of direct-pairing. It will proceed mode negotiation
  * and connect PIN based dtls session.
  *
+ * @param[in] ctx user context passed back with resultCallback.
  * @param[in] peer Target device to establish direct-pairing.
  * @param[in] pmSel Selected mode of pairing.
  * @param[in] pinNumber PIN number for authentication, pin lenght is defined DP_PIN_LENGTH(8).
@@ -613,6 +675,7 @@ const OCDPDev_t* OCGetDirectPairedDevices();
  */
 OCStackResult OCDoDirectPairing(void *ctx, OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
                                 OCDirectPairingCB resultCallback);
+//#endif // DIRECT_PAIRING
 
 /**
  * This function sets uri being used for proxy.
@@ -630,7 +693,7 @@ OCStackResult OCSetProxyURI(const char *uri);
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, uint8_t ins);
+OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, int64_t ins);
 
 /**
  * This function gets the resource unique id for a resource.
@@ -640,9 +703,39 @@ OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, uint8_t ins);
  *
  * @return Ins if resource found or 0 resource not found.
  */
-OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins);
+OCStackResult OCGetResourceIns(OCResourceHandle handle, int64_t *ins);
 
-#endif
+#ifdef RD_SERVER
+/**
+ * Sets the filename to be used for database persistent storage.
+ * @param   filename            [IN] the filename.
+ *
+ * @return  ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCRDDatabaseSetStorageFilename(const char *filename);
+
+/**
+ * Returns the filename to be used for database persistent storage.
+ *
+ * @return the filename
+ */
+const char *OCRDDatabaseGetStorageFilename();
+
+/**
+* Search the RD database for queries.
+*
+* @param interfaceType is the interface type that is queried.
+* @param resourceType is the resource type that is queried.
+* @param discPayload NULL if no resource found or else OCDiscoveryPayload with the details
+* about the resources.
+*
+* @return ::OC_STACK_OK in case of success or else other value.
+*/
+OCStackResult OCRDDatabaseDiscoveryPayloadCreate(const char *interfaceType,
+                                                 const char *resourceType,
+                                                 OCDiscoveryPayload **discPayload);
+#endif // RD_SERVER
+#endif // RD_CLIENT || RD_SERVER
 
 /**
 * This function gets a resource handle by resource uri.
@@ -652,22 +745,6 @@ OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins);
 * @return Found  resource handle or NULL if not found.
 */
 OCResourceHandle OCGetResourceHandleAtUri(const char *uri);
-
-#ifdef RD_SERVER
-/**
-* Search the RD database for queries.
-*
-* @param interfaceType is the interface type that is queried.
-* @param resourceType is the resource type that is queried.
-* @param discPayload is NULL if no resource found or else OCDiscoveryPayload with the details
-* about the resource.
-*
-* @return ::OC_STACK_OK in case of success or else other value.
-*/
-OCStackResult OCRDDatabaseCheckResources(const char *interfaceType, const char *resourceType,
-    OCDiscoveryPayload *discPayload);
-#endif
-//#endif // DIRECT_PAIRING
 
 /**
  *  Add a header option to the given header option array.
@@ -680,12 +757,11 @@ OCStackResult OCRDDatabaseCheckResources(const char *interfaceType, const char *
  *
  * @return ::OC_STACK_OK on success and other value otherwise.
  */
-OCStackResult
-OCSetHeaderOption(OCHeaderOption* ocHdrOpt,
-                  size_t* numOptions,
-                  uint16_t optionID,
-                  void* optionData,
-                  size_t optionDataLength);
+OCStackResult OCSetHeaderOption(OCHeaderOption* ocHdrOpt,
+                                size_t* numOptions,
+                                uint16_t optionID,
+                                void* optionData,
+                                size_t optionDataLength);
 
 /**
  *  Get data value of the option with specified option ID from given header option array.
@@ -699,13 +775,12 @@ OCSetHeaderOption(OCHeaderOption* ocHdrOpt,
  *
  * @return ::OC_STACK_OK on success and other value otherwise.
  */
-OCStackResult
-OCGetHeaderOption(OCHeaderOption* ocHdrOpt,
-                  size_t numOptions,
-                  uint16_t optionID,
-                  void* optionData,
-                  size_t optionDataLength,
-                  uint16_t* receivedDatalLength);
+OCStackResult OCGetHeaderOption(OCHeaderOption* ocHdrOpt,
+                                size_t numOptions,
+                                uint16_t optionID,
+                                void* optionData,
+                                size_t optionDataLength,
+                                uint16_t* receivedDatalLength);
 
 /**
  * gets the deviceId of the client
@@ -735,9 +810,7 @@ OCStackResult OCGetDeviceOwnedState(bool *isOwned);
  * Encode an address string to match RFC 6874.
  *
  * @param outputAddress    a char array to be written with the encoded string.
- *
  * @param outputSize       size of outputAddress buffer.
- *
  * @param inputAddress     a char array of size <= CA_MAX_URI_LENGTH
  *                         containing a valid IPv6 address string.
  *
@@ -751,11 +824,8 @@ OCStackResult OCEncodeAddressForRFC6874(char* outputAddress,
  * Decode an address string according to RFC 6874.
  *
  * @param outputAddress    a char array to be written with the decoded string.
- *
  * @param outputSize       size of outputAddress buffer.
- *
  * @param inputAddress     a valid percent-encoded address string.
- *
  * @param end              NULL if the entire entire inputAddress is a null-terminated percent-
  *                         encoded address string.  Otherwise, a pointer to the first byte that
  *                         is not part of the address string (e.g., ']' in a URI).
@@ -792,12 +862,22 @@ OCStackResult OCSetPropertyValue(OCPayloadType type, const char *propName, const
 OCStackResult OCGetPropertyValue(OCPayloadType type, const char *propName, void **value);
 
 /**
-* Get the registered persistent storage handler. All modules must use this to obtain access to 
+* Get the registered persistent storage handler. All modules must use this to obtain access to
 * persistent storage.
 *
 * @return pointer to OCPersistentStorage structure on success and NULL otherwise.
 */
 OCPersistentStorage *OCGetPersistentStorageHandler();
+
+/**
+* This function return link local zone id related from ifindex.
+*
+* @param[in] ifindex     interface index.
+* @param[out] zoneId     pointer of zoneId string, caller should free
+*                        zoneId using OICFree() when it returned CA_STATUS_OK.
+* @return Returns ::OC_STACK_OK if success.
+*/
+OCStackResult OCGetLinkLocalZoneId(uint32_t ifindex, char **zoneId);
 
 #ifdef __cplusplus
 }

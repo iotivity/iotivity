@@ -54,8 +54,13 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
     size_t privDataKeySize = keySize;
 
     uint8_t *privData = (uint8_t *)OICCalloc(privDataKeySize, sizeof(uint8_t));
-    VERIFY_NON_NULL(TAG, privData, ERROR);
-    OicSecKey_t privKey = {.data=privData, .len=keySize};
+    VERIFY_NOT_NULL(TAG, privData, ERROR);
+
+    OicSecKey_t privKey;
+    memset(&privKey, 0, sizeof(privKey));
+    privKey.data = privData;
+    privKey.len = keySize;
+    privKey.encoding = OIC_ENCODING_UNKNOW;
 
     if (!OCGetRandomBytes(privData, privDataKeySize))
     {
@@ -66,11 +71,11 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
 
     // TODO: currently owner array is 1. only provisioning tool's id.
     tempFirstCred =  GenerateCredential(secondDeviceId, type, NULL, &privKey, ptDeviceId, NULL);
-    VERIFY_NON_NULL(TAG, tempFirstCred, ERROR);
+    VERIFY_NOT_NULL(TAG, tempFirstCred, ERROR);
 
     // TODO: currently owner array is 1. only provisioning tool's id.
     tempSecondCred =  GenerateCredential(firstDeviceId, type, NULL, &privKey, ptDeviceId, NULL);
-    VERIFY_NON_NULL(TAG, tempSecondCred, ERROR);
+    VERIFY_NOT_NULL(TAG, tempSecondCred, ERROR);
 
     *firstCred = tempFirstCred;
     *secondCred = tempSecondCred;

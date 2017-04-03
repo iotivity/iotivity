@@ -99,7 +99,7 @@ namespace OIC
             if (subscriberList != nullptr)
             {
                 subscriberList->clear();
-                subscriberList.release();
+                subscriberList.reset();
             }
 
             if (sResource->isObservable())

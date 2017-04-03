@@ -32,6 +32,23 @@ namespace OC
     */
     namespace CAManager
     {
+        /**
+         *  Data structure to provide the configuration for cautil.
+         */
+        struct CAUtilConfig
+        {
+            /** the flag for ble advertising. */
+            OCTransportBTFlags_t       bleFlag;
+
+            public:
+                CAUtilConfig()
+                    : bleFlag(OC_DEFAULT_BT_FLAGS)
+            {}
+                CAUtilConfig(OCTransportBTFlags_t bleFlag_)
+                    : bleFlag(bleFlag_)
+            {}
+        };
+
         // typedef to get adapter status changes from CA.
         typedef std::function<void(const std::string&, OCConnectivityType,
                                    bool)> ConnectionChangedCallback;
@@ -74,6 +91,36 @@ namespace OC
         */
         uint16_t getAssignedPortNumber(OCTransportAdapter adapter, OCTransportFlags flag);
 
+        /**
+         * start BLE advertising.
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult startLEAdvertising();
+
+        /**
+         * stop BLE advertising.
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult stopLEAdvertising();
+
+        /**
+         * set BT configure.
+         * @param[in]  config       ::CAUtilConfig data
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult setBTConfigure(const CAUtilConfig& config);
+
+        /**
+         * set CAUtil log preference.
+         * @param[in]  level                     ::OCLogLevel value.
+         * @param[in]  hidePrivateLogEntries     Private Log Entries.
+         *                                       Example:
+         *                                       true : hide private log.
+         *                                       false : show private log.
+         *                                       (privacy : uid, did, access token, etc)
+         */
+        void setLogLevel(OCLogLevel level, bool hidePrivateLogEntries);
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         /**
          * Select the cipher suite for TLS/DTLS handshake.
@@ -93,6 +140,18 @@ namespace OC
          */
         OCStackResult setCipherSuite(const uint16_t cipher, OCTransportAdapter adapter);
 #endif // defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+        /**
+         * Set User Preference
+         * @param user preference
+         *        0: OC_USER_PREF_CLOUD (default)
+         *        1: OC_USER_PREF_LOCAL_UDP
+         *        2: OC_USER_PREF_LOCAL_TCP
+         * @return ::OC_STACK_OK if sucess.
+         */
+        OCStackResult setConnectionManagerUserConfig(OCConnectUserPref_t connPriority);
+#endif
     }
 }
 

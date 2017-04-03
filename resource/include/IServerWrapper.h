@@ -51,6 +51,15 @@ namespace OC
                     EntityHandler& entityHandler,
                     uint8_t resourceProperty) = 0;
 
+        virtual OCStackResult registerResourceWithTps(
+                    OCResourceHandle& resourceHandle,
+                    std::string& resourceURI,
+                    const std::string& resourceTypeName,
+                    const std::string& resourceInterface,
+                    EntityHandler& entityHandler,
+                    uint8_t resourceProperty,
+                    OCTpsSchemeFlags resourceTpsTypes) = 0;
+
         // @deprecated: Use setPropertyValue instead.
         virtual OCStackResult registerDeviceInfo(
                     const OCDeviceInfo deviceInfo) = 0;
@@ -86,6 +95,8 @@ namespace OC
         virtual OCStackResult stop() = 0;
 
         virtual OCStackResult start() = 0;
+
+        virtual OCStackResult getSupportedTransportsInfo(OCTpsSchemeFlags& supportedTps) = 0;
     };
 }
 

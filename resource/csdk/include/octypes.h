@@ -48,6 +48,9 @@ extern "C" {
 // Defines
 //-----------------------------------------------------------------------------
 
+/** Version of IoTivity. */
+#define IOTIVITY_VERSION                      "1.3.0"
+
 /**
  * OIC Virtual resources supported by every OIC device.
  */
@@ -97,6 +100,9 @@ extern "C" {
 
 /** Separator for multiple query string.*/
 #define OC_QUERY_SEPARATOR                    "&;"
+
+/** Delimeter for keys and values in query string.*/
+#define OC_KEY_VALUE_DELIMITER                "="
 
 /**
  *  OC_DEFAULT_PRESENCE_TTL_SECONDS sets the default time to live (TTL) for presence.
@@ -159,6 +165,9 @@ extern "C" {
 
 /** To represent resource type with platform.*/
 #define OC_RSRVD_RESOURCE_TYPE_PLATFORM "oic.wk.p"
+
+/** To represent resource type with maintenance.*/
+#define OC_RSRVD_RESOURCE_TYPE_MAINTENANCE "oic.wk.mnt"
 
 /** To represent resource type with collection.*/
 #define OC_RSRVD_RESOURCE_TYPE_COLLECTION "oic.wk.col"
@@ -245,10 +254,10 @@ extern "C" {
 #define OC_RSRVD_HOSTING_PORT           "port"
 
 /** TCP Port. */
-#define OC_RSRVD_TCP_PORT               "tcp"
+#define OC_RSRVD_TCP_PORT               "x.org.iotivity.tcp"
 
 /** TLS Port. */
-#define OC_RSRVD_TLS_PORT               "tls"
+#define OC_RSRVD_TLS_PORT               "x.org.iotivity.tls"
 
 /** For Server instance ID.*/
 #define OC_RSRVD_SERVER_INSTANCE_ID     "sid"
@@ -318,10 +327,13 @@ extern "C" {
 #define OC_RSRVD_DATA_MODEL_VERSION     "dmv"
 
 /** Device specification version.*/
-#define OC_SPEC_VERSION                 "core.1.1.0"
+#define OC_SPEC_VERSION                 "ocf.1.1.0"
+
+/** Integer value of spec version (OCF1.0 0b0000:1000:0000:0000).*/
+#define OC_SPEC_VERSION_VALUE           2048
 
 /** Device Data Model version.*/
-#define OC_DATA_MODEL_VERSION           "res.1.1.0,sh.1.1.0"
+#define OC_DATA_MODEL_VERSION           "ocf.res.1.1.0,ocf.sh.1.1.0"
 
 /** Protocol-Independent ID.*/
 #define OC_RSRVD_PROTOCOL_INDEPENDENT_ID "piid"
@@ -416,9 +428,6 @@ extern "C" {
 
 /** Resource URI used to discover Proxy */
 #define OC_RSRVD_PROXY_OPTION_ID 35
-
-/** Base URI. */
-#define OC_RSRVD_BASE_URI                "baseURI"
 
 /** Unique value per collection/link. */
 #define OC_RSRVD_INS                     "ins"
@@ -671,6 +680,32 @@ typedef enum
     OC_ADAPTER_NFC           = (1 << 5)
 } OCTransportAdapter;
 
+typedef enum
+{
+    /** default flag is 0.*/
+    OC_DEFAULT_BT_FLAGS = 0,
+    /** disable BLE advertisement.*/
+    OC_LE_ADV_DISABLE   = 0x1,
+    /** enable BLE advertisement.*/
+    OC_LE_ADV_ENABLE    = 0x2,
+    /** disable gatt server.*/
+    OC_LE_SERVER_DISABLE = (1 << 4),
+    /** disable rfcomm server.*/
+    OC_EDR_SERVER_DISABLE = (1 << 7)
+} OCTransportBTFlags_t;
+
+/**
+ * Log level to print can be controlled through this enum.
+ * And privacy logs contained uid, Token, Device id, etc can also disable.
+ * This enum (OCLogLevel) must be kept synchronized with
+ * CAUtilLogLevel_t (in CACommon.h).
+ */
+typedef enum
+{
+    OC_LOG_LEVEL_ALL = 1,             // all logs.
+    OC_LOG_LEVEL_INFO,                // debug level is disabled.
+} OCLogLevel;
+
 /**
  *  Enum layout assumes some targets have 16-bit integer (e.g., Arduino).
  */
@@ -901,6 +936,7 @@ typedef enum
 typedef enum
 {
     OC_FORMAT_CBOR,
+    OC_FORMAT_VND_OCF_CBOR,
     OC_FORMAT_JSON,
     OC_FORMAT_UNDEFINED,
     OC_FORMAT_UNSUPPORTED,
@@ -1090,6 +1126,7 @@ typedef enum
     /** ERROR code from server */
     OC_STACK_FORBIDDEN_REQ,          /** 403*/
     OC_STACK_INTERNAL_SERVER_ERROR,  /** 500*/
+    OC_STACK_GATEWAY_TIMEOUT,        /** 504*/
 
     /** ERROR in stack.*/
     OC_STACK_ERROR = 255
@@ -1336,6 +1373,18 @@ typedef enum
     /** coap + rfcomm */
     OC_COAP_RFCOMM    = (1 << 6),
 #endif
+#ifdef LE_ADAPTER
+    /** coap + gatt */
+    OC_COAP_GATT      = (1 << 7),
+#endif
+#ifdef NFC_ADAPTER
+    /** coap + nfc */
+    OC_COAP_NFC       = (1 << 8),
+#endif
+#ifdef RA_ADAPTER
+    /** coap + remote_access */
+    OC_COAP_RA        = (1 << 9),
+#endif
     /** Allow all endpoint.*/
     OC_ALL       = 0xffff
 } OCTpsSchemeFlags;
@@ -1484,6 +1533,8 @@ typedef struct OCEndpointPayload
 typedef struct OCResourcePayload
 {
     char* uri;
+    char* rel;
+    char* anchor;
     OCStringLL* types;
     OCStringLL* interfaces;
     uint8_t bitmap;
@@ -1503,14 +1554,8 @@ typedef struct OCDiscoveryPayload
     /** Device Id */
     char *sid;
 
-    /** A special case for handling RD address. */
-    char* baseURI;
-
     /** Name */
     char *name;
-
-    /** HREF */
-    char *uri;
 
     /** Resource Type */
     OCStringLL *type;
@@ -1821,7 +1866,6 @@ typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
  */
 typedef void (*OCDirectPairingCB)(void *ctx, OCDPDev_t *peer, OCStackResult result);
 //#endif // DIRECT_PAIRING
-
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 /**
  * Callback function definition for Change in TrustCertChain
@@ -1842,6 +1886,22 @@ typedef struct trustCertChainContext
     TrustCertChainChangeCB callback;
     void *context;
 } trustCertChainContext_t;
+#endif
+
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+/**
+ * User Preference of connectivity channel
+ */
+typedef enum
+{
+    /** Cloud TCP */
+    OC_USER_PREF_CLOUD = 0,
+    /** local UDP */
+    OC_USER_PREF_LOCAL_UDP = 1,
+    /** local TCP */
+    OC_USER_PREF_LOCAL_TCP =2
+} OCConnectUserPref_t;
+
 #endif
 
 #ifdef __cplusplus

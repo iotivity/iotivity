@@ -29,7 +29,7 @@ import java.util.Vector;
  */
 public class Consumer {
 
-    public String mConsumerId = null;
+    private String mConsumerId = null;
 
     /**
      * Constructor of Consumer
@@ -57,12 +57,10 @@ public class Consumer {
      *            boolean variable representing Subscription response as
      *            TRUE/FALSE.
      *
-     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
-     *
      * @throws NSException failure accepting subscription request
      */
-    public int acceptSubscription(boolean accepted) throws NSException {
-        return nativeAcceptSubscription(mConsumerId, accepted);
+    public void acceptSubscription(boolean accepted) throws NSException {
+        nativeAcceptSubscription(mConsumerId, accepted);
     }
 
     /**
@@ -71,12 +69,10 @@ public class Consumer {
      * @param topicName
      *            Topic name to select
      *
-     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
-     *
      * @throws NSException failure selecting a topic
      */
-    public int setTopic(String topicName) throws NSException {
-        return nativeSetConsumerTopic(mConsumerId, topicName);
+    public void setTopic(String topicName) throws NSException {
+        nativeSetConsumerTopic(mConsumerId, topicName);
     }
 
     /**
@@ -85,12 +81,10 @@ public class Consumer {
      * @param topicName
      *            Topic name to Unselect
      *
-     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
-     *
      * @throws NSException failure unselecting topic
      */
-    public int unsetTopic(String topicName) throws NSException {
-        return nativeUnsetConsumerTopic(mConsumerId, topicName);
+    public void unsetTopic(String topicName) throws NSException {
+        nativeUnsetConsumerTopic(mConsumerId, topicName);
     }
 
     /**
@@ -104,15 +98,15 @@ public class Consumer {
         return nativeGetConsumerTopicList(mConsumerId);
     }
 
-    public native int nativeAcceptSubscription(String consumerId,
+    private native void nativeAcceptSubscription(String consumerId,
             boolean accepted) throws NSException;
 
-    public native int nativeSetConsumerTopic(String consumerId,
+    private native void nativeSetConsumerTopic(String consumerId,
             String topicName) throws NSException;
 
-    public native int nativeUnsetConsumerTopic(String consumerId,
+    private native void nativeUnsetConsumerTopic(String consumerId,
             String topicName) throws NSException;
 
-    public native TopicsList nativeGetConsumerTopicList(String consumerId)
+    private native TopicsList nativeGetConsumerTopicList(String consumerId)
             throws NSException;
 }

@@ -8,7 +8,7 @@
       $ sudo apt-get install git-core scons ssh build-essential g++ doxygen valgrind
 
     Install external libraries:
-      $ sudo apt-get install libboost-dev libboost-program-options-dev libboost-thread-dev uuid-dev libssl-dev libtool libglib2.0-dev
+      $ sudo apt-get install libboost-dev libboost-program-options-dev libboost-thread-dev uuid-dev libssl-dev libtool libglib2.0-dev libcap-dev libcurl4-openssl-dev autotools-dev autoconf
 
     Build release binaries:
       $ scons
@@ -31,7 +31,7 @@ message to install tinycbor)
 ('<iotivity>' is the path to 'iotivity' project. If your device is x86, arm,
 or arm64, please change 'x86_64' to the proper arch)
 
-3. To build and test IoTivity with Security enabled (required for certification) 
+3. To build and test IoTivity with Security enabled (required for certification)
 follow the instructions found in:
   <iotivity>/resource/csdk/security/README-building-and-running-secure-IoTivity-stack.txt
 
@@ -286,6 +286,13 @@ See run.bat for more example usage parameters
  * SIMULATOR=true or false (Build with simulator module)
  * Possible values for <WITH_MQ> are: PUB,SUB,BROKER (Build including Message Queue)
    -> PUB : publisher, SUB : subscriber, BROKER : MQ broker(not supported yet)
+ * LOG_LEVEL=DEBUG or INFO or WARNING or ERROR or FATAL
+   (select log level to print, LOGGING option should be true)
+    ex) LOG_LEVEL=DEBUG : All logs including DEBUG, INFO, WARNING, ERROR, FATAL level is printed.
+        LOG_LEVEL=INFO : The logs including INFO, WARNING, ERROR, FATAL level is printed.
+        LOG_LEVEL=WARNING : The logs including WARNING, ERROR, FATAL level is printed.
+        LOG_LEVEL=ERROR : The logs including ERROR, FATAL level is printed.
+        LOG_LEVEL=FATAL : FATAL level is printed.
 
 Note:
 1) for convenience, a script (auto_build.sh) is provided to run possible build

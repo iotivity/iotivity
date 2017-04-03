@@ -37,12 +37,16 @@
         ((level) == 0) ? DLOG_DEBUG : \
         ((level) == 1) ? DLOG_INFO : \
         ((level) == 2) ? DLOG_WARN : \
-    ((level) == 3) ? DLOG_ERROR : DLOG_ERROR)
+        ((level) == 3) ? DLOG_ERROR : \
+        ((level) == 4) ? DLOG_ERROR : \
+        ((level) == 5) ? DLOG_INFO : \
+        ((level) == 6) ? DLOG_INFO : \
+        ((level) == 7) ? DLOG_INFO : DLOG_INFO)
 #define NS_LOG_V(level, format, ...) (dlog_print(NS_CONVERT_LEVEL(level), LOG_TAG, (format), __VA_ARGS__))
 #define NS_LOG(level, msg) (dlog_print(NS_CONVERT_LEVEL(level), LOG_TAG, (msg)))
 #else // __TIZEN__
-#define NS_LOG_V(level, format, ...) (OIC_LOG_V((level), __NS_FILE__, (format), __VA_ARGS__))
-#define NS_LOG(level, msg) (OIC_LOG((level), __NS_FILE__, (msg)))
+#define NS_LOG_V(level, format, ...) OIC_LOG_V((level), __NS_FILE__, (format), __VA_ARGS__)
+#define NS_LOG(level, msg) OIC_LOG((level), __NS_FILE__, (msg))
 #endif // __TIZEN__
 #else // TB_LOG
 #if (__PRINTLOG == 1)
@@ -50,7 +54,11 @@
         ((level) == 0) ? "DEBUG" : \
         ((level) == 1) ? "INFO" : \
         ((level) == 2) ? "WARNING" : \
-    ((level) == 3) ? "ERROR" : "FATAL")
+        ((level) == 3) ? "ERROR" : \
+        ((level) == 4) ? "FATAL" : \
+        ((level) == 5) ? "DEBUG_LITE" : \
+        ((level) == 6) ? "INFO_LITE" : \
+        ((level) == 7) ? "INFO_PRIVATE" : "INFO_PRIVATE")
 #define NS_LOG_V(level, format, ...) \
     { \
         printf("%s: %s ", NS_CONVERT_LEVEL(level), __NS_FILE__); \
@@ -76,9 +84,9 @@
 #define THREAD_COUNT               5
 
 // NOTIOBJ //
-#define NOTIOBJ_TITLE_KEY          "title"
-#define NOTIOBJ_ID_KEY             "id"
-#define NOTOOBJ_CONTENT_KEY        "contenttext"
+#define NOTIOBJ_TITLE_KEY          "x.org.iotivity.ns.title"
+#define NOTIOBJ_ID_KEY             "x.org.iotivity.ns.id"
+#define NOTOOBJ_CONTENT_KEY        "x.org.iotivity.ns.contenttext"
 
 #define DISCOVERY_TAG              "NS_PROVIDER_DISCOVERY"
 #define SUBSCRIPTION_TAG           "NS_PROVIDER_SUBSCRIPTION"
@@ -96,7 +104,7 @@
 
 #define NS_INTERFACE_READ          "oic.if.r"
 #define NS_INTERFACE_READWRITE     "oic.if.rw"
-#define NS_INTERFACE_BASELINE       "oic.if.baseline"
+#define NS_INTERFACE_BASELINE      "oic.if.baseline"
 
 #define NS_ROOT_URI                "/notification"
 #define NS_COLLECTION_MESSAGE_URI  "/notification/message"
@@ -106,8 +114,8 @@
 #define NS_QUERY_SEPARATOR         "&;"
 #define NS_KEY_VALUE_DELIMITER     "="
 
-#define NS_QUERY_CONSUMER_ID       "consumerid"
-#define NS_QUERY_PROVIDER_ID       "providerid"
+#define NS_QUERY_CONSUMER_ID       "x.org.iotivity.ns.consumerid"
+#define NS_QUERY_PROVIDER_ID       "x.org.iotivity.ns.providerid"
 #define NS_QUERY_INTERFACE         "if"
 
 #define NS_QUERY_ID_SIZE           10
@@ -118,8 +126,8 @@
 #define NS_RD_PUBLISH_QUERY        "/oic/rd?rt=oic.wk.rdpub"
 
 #ifdef WITH_MQ
-#define NS_ATTRIBUTE_MQ_MESSAGE "message"
-#define NS_ATTIRBUTE_MQ_TOPICLIST "topiclist"
+#define NS_ATTRIBUTE_MQ_MESSAGE   "x.org.iotivity.ns.message"
+#define NS_ATTIRBUTE_MQ_TOPICLIST "x.org.iotivity.ns.topiclist"
 #endif
 
 #define NS_VERIFY_NOT_NULL_V(obj) \
@@ -203,28 +211,28 @@
         } \
     }
 
-#define VERSION        "1.2.0"
+#define VERSION        IOTIVITY_VERSION
 
-#define NS_ATTRIBUTE_VERSION "version"
-#define NS_ATTRIBUTE_POLICY "subcontrollability"
-#define NS_ATTRIBUTE_MESSAGE "messageuri"
-#define NS_ATTRIBUTE_SYNC "syncuri"
-#define NS_ATTRIBUTE_TOPIC "topicuri"
-#define NS_ATTRIBUTE_MESSAGE_ID "messageid"
-#define NS_ATTRIBUTE_PROVIDER_ID "providerid"
-#define NS_ATTRIBUTE_CONSUMER_ID "consumerid"
-#define NS_ATTRIBUTE_TOPIC_LIST "topiclist"
-#define NS_ATTRIBUTE_TOPIC_NAME "topicname"
-#define NS_ATTRIBUTE_TOPIC_SELECTION "topicstate"
-#define NS_ATTRIBUTE_TITLE "title"
-#define NS_ATTRIBUTE_TEXT "contenttext"
-#define NS_ATTRIBUTE_SOURCE "source"
-#define NS_ATTRIBUTE_STATE "state"
-#define NS_ATTRIBUTE_DEVICE "device"
-#define NS_ATTRIBUTE_TYPE "type"
-#define NS_ATTRIBUTE_DATETIME "datetime"
-#define NS_ATTRIBUTE_TTL "ttl"
-#define NS_ATTRIBUTE_ICON_IMAGE "iconimage"
+#define NS_ATTRIBUTE_VERSION "x.org.iotivity.ns.version"
+#define NS_ATTRIBUTE_POLICY "x.org.iotivity.ns.subcontrollability"
+#define NS_ATTRIBUTE_MESSAGE "x.org.iotivity.ns.messageuri"
+#define NS_ATTRIBUTE_SYNC "x.org.iotivity.ns.syncuri"
+#define NS_ATTRIBUTE_TOPIC "x.org.iotivity.ns.topicuri"
+#define NS_ATTRIBUTE_MESSAGE_ID "x.org.iotivity.ns.messageid"
+#define NS_ATTRIBUTE_PROVIDER_ID "x.org.iotivity.ns.providerid"
+#define NS_ATTRIBUTE_CONSUMER_ID "x.org.iotivity.ns.consumerid"
+#define NS_ATTRIBUTE_TOPIC_LIST "x.org.iotivity.ns.topiclist"
+#define NS_ATTRIBUTE_TOPIC_NAME "x.org.iotivity.ns.topicname"
+#define NS_ATTRIBUTE_TOPIC_SELECTION "x.org.iotivity.ns.topicstate"
+#define NS_ATTRIBUTE_TITLE "x.org.iotivity.ns.title"
+#define NS_ATTRIBUTE_TEXT "x.org.iotivity.ns.contenttext"
+#define NS_ATTRIBUTE_SOURCE "x.org.iotivity.ns.source"
+#define NS_ATTRIBUTE_STATE "x.org.iotivity.ns.state"
+#define NS_ATTRIBUTE_DEVICE "x.org.iotivity.ns.device"
+#define NS_ATTRIBUTE_TYPE "x.org.iotivity.ns.type"
+#define NS_ATTRIBUTE_DATETIME "x.org.iotivity.ns.datetime"
+#define NS_ATTRIBUTE_TTL "x.org.iotivity.ns.ttl"
+#define NS_ATTRIBUTE_ICON_IMAGE "x.org.iotivity.ns.iconimage"
 
 typedef enum eConnectionState
 {

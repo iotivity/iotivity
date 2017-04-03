@@ -40,29 +40,25 @@ extern "C"
 #endif
 
 /**
- * Set connection manager configure.
- * Target address and connectivity priority and speed level can be set in this method.
- * @param[in] info  configuration data for connection manager policy
+ * Set connection Preference for Cloud or Local TCP or Local UDP
+ * @param[in] user connection preference
+ *
+ * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-void CMSetConfigure(CMConfigureInfo_t info);
+CAResult_t CAPolicyMgrSetConfiguration(CAConnectUserPref_t connPrefer);
 
 /**
- * get target address.
- * @return address
+ * Get connection Preference
+ *
+ * @param[out]  connPrefer  Cloud | local TCP | local UDP
+ * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-const char* CMGetTargetAddress();
+CAResult_t CAPolicyMgrGetConfigure(CAConnectUserPref_t *connPrefer);
 
 /**
- * get Adapter Type of current priority.
- * @return ::CATransportAdapter_t value.
+ * terminate mutex
  */
-CATransportAdapter_t CMGetAdapterType();
-
-/**
- * get speed of response level.
- * @return ::CMSpeedLevel_t value.
- */
-CMSpeedLevel_t CMGetSpeedOfResponseLevel();
+void CAPolicyMgrTerminate();
 
 #ifdef __cplusplus
 } /* extern "C" */

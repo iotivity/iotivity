@@ -72,7 +72,6 @@
 #    include "windows/include/vs12_snprintf.h"
 #  endif
 #  define ssize_t SSIZE_T
-#  define F_OK                0
 #  define SHUT_RDWR           SD_BOTH
 #  define sleep(SECS)         Sleep(1000*(SECS))
 #  ifdef __cplusplus
@@ -89,6 +88,24 @@
 #else
 #  define OPTVAL_T(t)    (t)
 #  define OC_CLOSE_SOCKET(s) close(s)
+#endif
+
+#ifndef SIZE_MAX
+/* Some systems fail to define SIZE_MAX in <stdint.h>, even though C99 requires it...
+ * Conversion from signed to unsigned is defined in 6.3.1.3 (Signed and unsigned integers) p2,
+ * which says: "the value is converted by repeatedly adding or subtracting one more than the
+ * maximum value that can be represented in the new type until the value is in the range of the
+ * new type."
+ * So -1 gets converted to size_t by adding SIZE_MAX + 1, which results in SIZE_MAX.
+ */
+#  define SIZE_MAX ((size_t)-1)
+#endif
+
+#ifdef WITH_ARDUINO
+/**
+ * UINT16_MAX does not appear to be defined on Arduino so we define it here.
+ */
+#  define UINT16_MAX 65535
 #endif
 
 #endif
