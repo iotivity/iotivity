@@ -71,6 +71,8 @@ int processUserInput(int min = std::numeric_limits<int>::min(),
 void printConfiguration(const EnrolleeConf& conf)
 {
     cout << "===========================================" << endl;
+    cout << "\tProvStatus : " << conf.getProvStatus() << endl;
+    cout << "\tLastErrCode : " << conf.getLastErrCode() << endl;
     cout << "\tDevice Name : " << conf.getDeviceName() << endl;
     cout << "\tModel Number : " << conf.getModelNumber() << endl;
 

@@ -768,6 +768,56 @@ namespace OIC
             }
 
             /**
+             * Get a provisioning status property of Enrollee.
+             *
+             * @return a provisioning status property of Enrollee
+             */
+            ProvStatus getProvStatus() const
+            {
+                OCRepresentation rep;
+                if(m_EasySetupRep.hasAttribute(OC_RSRVD_REPRESENTATION))
+                {
+                    rep = m_EasySetupRep.getValue<OCRepresentation>(OC_RSRVD_REPRESENTATION);
+                }
+                else
+                {
+                    return ES_STATE_INIT;
+                }
+
+                if(rep.hasAttribute(OC_RSRVD_ES_PROVSTATUS))
+                {
+                    return static_cast<ProvStatus>(
+                                        rep.getValue<int>(OC_RSRVD_ES_PROVSTATUS));
+                }
+                return ES_STATE_INIT;
+            }
+
+            /**
+             * Get a last error code property of Enrollee.
+             *
+             * @return a last error code property of Enrollee.
+             */
+            ESErrorCode getLastErrCode() const
+            {
+                OCRepresentation rep;
+                if(m_EasySetupRep.hasAttribute(OC_RSRVD_REPRESENTATION))
+                {
+                    rep = m_EasySetupRep.getValue<OCRepresentation>(OC_RSRVD_REPRESENTATION);
+                }
+                else
+                {
+                    return ES_ERRCODE_NO_ERROR;
+                }
+
+                if(rep.hasAttribute(OC_RSRVD_ES_LAST_ERRORCODE))
+                {
+                    return static_cast<ESErrorCode>(
+                                        rep.getValue<int>(OC_RSRVD_ES_LAST_ERRORCODE));
+                }
+                return ES_ERRCODE_NO_ERROR;
+            }
+
+            /**
              * Get an accessibility to cloud server of an Enrollee
              *
              * @return an accessibility to cloud server of an Enrollee
