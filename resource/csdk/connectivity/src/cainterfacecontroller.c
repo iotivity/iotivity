@@ -198,6 +198,7 @@ static CAResult_t RemoveNetworkStateChangedCallback(CAAdapterStateChangedCB adap
             OIC_LOG(DEBUG, TAG, "remove specific callback");
             LL_DELETE(g_networkChangeCallbackList, callback);
             OICFree(callback);
+            callback = NULL;
             return CA_STATUS_OK;
         }
     }
@@ -212,13 +213,14 @@ static void RemoveAllNetworkStateChangedCallback()
     OIC_LOG(DEBUG, TAG, "Remove All NetworkStateChanged Callback");
 
     CANetworkCallback_t *callback = NULL;
-    LL_FOREACH(g_networkChangeCallbackList, callback)
+    CANetworkCallback_t *tmp = NULL;
+    LL_FOREACH_SAFE(g_networkChangeCallbackList, callback, tmp)
     {
-        OIC_LOG(DEBUG, TAG, "remove all callbacks");
         LL_DELETE(g_networkChangeCallbackList, callback);
         OICFree(callback);
         callback = NULL;
     }
+    g_networkChangeCallbackList = NULL;
 }
 
 #ifdef RA_ADAPTER
@@ -825,6 +827,8 @@ void CATerminateAdapters()
     OICFree(g_adapterHandler);
     g_adapterHandler = NULL;
     g_numberOfAdapters = 0;
+
+    RemoveAllNetworkStateChangedCallback();
 }
 
 #ifdef SINGLE_THREAD
