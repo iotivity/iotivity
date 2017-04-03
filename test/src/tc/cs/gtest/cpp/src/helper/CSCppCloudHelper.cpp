@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -84,7 +84,8 @@ FILE* CSCppCloudHelper::controllerOpen(const char * /*path*/, const char *mode)
 
 CSCppCloudHelper::CSCppCloudHelper()
 {
-    IOTIVITYTEST_LOG(DEBUG, "[CSCppCloudHelper] Constructor Called");
+    __FUNC_IN__
+    m_failureMessage = "";
 }
 
 void CSCppCloudHelper::handleLoginoutCB(const HeaderOptions &, const OCRepresentation &rep,

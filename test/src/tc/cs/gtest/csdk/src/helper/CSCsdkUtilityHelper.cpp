@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@
  *
  *
  ******************************************************************/
-
 #include "CSCsdkUtilityHelper.h"
 
 OCDevAddr CSCsdkUtilityHelper::getOCDevAddrEndPoint()
@@ -46,9 +45,7 @@ static void readStringArray(stringArray_t *list, int length, const char* descrip
     for (i = 0; i < count; i++)
     {
         item[i] = (char*) OICCalloc(length, sizeof(char));
-
         OICStrdup(example);
-        //readString(item[i], length, "", example);
     }
     list->array = item;
     list->length = count;
@@ -65,7 +62,6 @@ cloudAce_t* CSCsdkUtilityHelper::createCloudAces()
 
     for (i = 0; i < acllistCount; i++)
     {
-        //cloudAce_t *ace = &aces[i];
         cloudAce_t *ace = (cloudAce_t*) OICCalloc(1, sizeof(cloudAce_t));
         if (!ace)
         {
@@ -83,7 +79,7 @@ cloudAce_t* CSCsdkUtilityHelper::createCloudAces()
 
         ace->aceId = OICStrdup(aceid);
         ace->stype = 0;
-        ace->permission = 31;
+        ace->permission = 0;
 
         int reslist_count = 1;
 
@@ -271,12 +267,12 @@ std::string CSCsdkUtilityHelper::readfile(std::string filename)
 
     if (NULL == fp)
     {
-        IOTIVITYTEST_LOG(ERROR, "[CSC Helper] ERROR Opening File");
+        IOTIVITYTEST_LOG(ERROR, "[CSC Helper] ERROR Opening File : %s", filename.c_str());
     }
 
     if (NULL == fgets(buff, 100, (FILE*) fp))
     {
-        IOTIVITYTEST_LOG(ERROR, "[CSC Helper] Unable to Get input from File");
+        IOTIVITYTEST_LOG(ERROR, "[CSC Helper] Unable to Get input from File: %s", filename.c_str());
     }
 
     fclose(fp);

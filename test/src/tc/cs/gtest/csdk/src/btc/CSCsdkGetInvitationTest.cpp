@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -56,18 +56,8 @@ protected:
         }
 
         m_hostAddress = CloudCommonUtil::getDefaultHostAddess();
-
-#ifdef __TLS_ON__
-        setCoapPrefix(true);
-        CASelectCipherSuite(MBEDTLS_TLS_RSA_WITH_AES_128_GCM_SHA256, CA_ADAPTER_TCP);
-#endif
-
-        CSCsdkCloudHelper::readFile(ROOT_CERT_FILE, (OCByteString *) &m_trustCertChainArray);
         m_accountMgrControlee = OCPlatform::constructAccountManagerObject(m_hostAddress,
                 CT_ADAPTER_TCP);
-        m_uidControlee = CSCsdkUtilityHelper::readfile(CLOUD_UUID_TXT);
-        m_authTokenControlee = CSCsdkUtilityHelper::readfile(CLOUD_ACCESSTOKEN_TXT);
-
     }
 
     virtual void TearDown()
@@ -77,213 +67,171 @@ protected:
 };
 
 /**
- * @since           2017-02-23
+ * @since           2017-04-01
  * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
  * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             void setCoapPrefix(bool secured)
- * @see             CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
- * @see             OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
- * @see            OCStackResult signIn(const std::string& userUuid, const std::string& accessToken, PostCallback cloudConnectHandler)
- * @objective       Test OCCloudAclGetInvitation positively with regular data
+ * @objective       Test OCCloudAclGetInvitation negatively with OCDevAddr as NULL
  * @target          OCStackResult OCCloudAclGetInvitation(void* ctx, const char *userId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
- * @test_data       regular data for target API
+ * @test_data       OCDevAddr as NULL
  * @pre_condition   none
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
- *                  3. call setCoapPrefix wtih true param
- *                  4. call CASelectCipherSuite with MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA and CA_ADAPTER_TCP
- *                  5. call signIn
- *                  6. call OCCloudAclGetInvitation
+ *                  3. call OCCloudAclGetInvitation
  * @post_condition  none
- * @expected        OCCloudAclGetInvitation will return OC_STACK_OK
+ * @expected        OCCloudAclGetInvitation will return OC_STACK_INVALID_PARAM
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(CSCsdkGetInvitationTest_btc, OCCloudAclGetInvitation_SRC_P)
+TEST_F(CSCsdkGetInvitationTest_btc, OCCloudAclGetInvitationDevAddr_NV_N)
 {
-    if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudAclGetInvitation((void*)CTX_GET_GROUP_INVITATION, NULL, NULL, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!CloudCommonUtil::signIn(m_accountMgrControlee))
-    {
-        SET_FAILURE(ERROR_SIGN_IN);
-        return;
-    }
-
-    if (!m_CloudAclHelper.cloudAclGetInvitation((void*)CTX_GET_GROUP_INVITATION, NULL, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
     }
 }
 #endif
 
 /**
- * @since           2017-02-23
+ * @since           2017-04-01
  * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
  * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             void setCoapPrefix(bool secured)
- * @see             CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
- * @see             OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
- * @see             OCStackResult signIn(const std::string& userUuid, const std::string& accessToken, PostCallback cloudConnectHandler)
- * @see             OCStackResult OCCloudAclGetInvitation(void* ctx, const char *userId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
- * @objective       Test OCCloudAclGetInvitation positively with regular data
+ * @objective       Test OCCloudAclGetInvitation negatively with groupId as NULL
  * @target          OCStackResult OCCloudAclDeleteInvitation(void* ctx, const char *userId, const char *groupId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
- * @test_data       regular data for target API
+ * @test_data       groupId as NULL
  * @pre_condition   none
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
- *                  3. call setCoapPrefix wtih true param
- *                  4. call CASelectCipherSuite with MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA and CA_ADAPTER_TCP
- *                  5. call signIn
- *                  6. call OCCloudAclGetInvitation
- *                  7. call OCCloudAclDeleteInvitation
+ *                  3. call OCCloudAclDeleteInvitation
  * @post_condition  none
- * @expected        OCCloudAclDeleteInvitation will return OC_STACK_OK
+ * @expected        OCCloudAclDeleteInvitation will return OC_STACK_INVALID_PARAM
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(CSCsdkGetInvitationTest_btc, OCCloudAclDeleteInvitation_SRC_P)
+TEST_F(CSCsdkGetInvitationTest_btc, OCCloudAclDeleteInvitationGroupId_NV_N)
 {
-    if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudAclDeleteInvitation((void*)CTX_DELETE_INVITATION, NULL, NULL, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!CloudCommonUtil::signIn(m_accountMgrControlee))
-    {
-        SET_FAILURE(ERROR_SIGN_IN);
-        return;
-    }
-
-    if (!m_CloudAclHelper.cloudAclGetInvitation((void*)CTX_GET_GROUP_INVITATION, NULL, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_CloudAclHelper.cloudAclDeleteInvitation((void*)CTX_DELETE_INVITATION, NULL, m_groupId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
     }
 }
 #endif
 
 /**
- * @since           2017-02-23
+ * @since           2017-04-01
  * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
  * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             void setCoapPrefix(bool secured)
- * @see             CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
- * @see             OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
- * @see             OCStackResult signIn(const std::string& userUuid, const std::string& accessToken, PostCallback cloudConnectHandler)
- * @see             OCStackResult OCCloudAclGetInvitation(void* ctx, const char *userId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
- * @objective       Test OCCloudAclJoinToInvitedGroup positively with regular data
+ * @objective       Test OCCloudAclGetInvitation negatively with OCDevAddr as NULL
+ * @target          OCStackResult OCCloudAclDeleteInvitation(void* ctx, const char *userId, const char *groupId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
+ * @test_data       OCDevAddr as NULL
+ * @pre_condition   none
+ * @procedure       1. call OCRegisterPersistentStorageHandler
+ *                  2. call OCInit
+ *                  3. call OCCloudAclDeleteInvitation
+ * @post_condition  none
+ * @expected        OCCloudAclDeleteInvitation will return OC_STACK_INVALID_PARAM
+ */
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(CSCsdkGetInvitationTest_btc, OCCloudAclDeleteInvitationDevAddr_NV_N)
+{
+    if (!m_CloudAclHelper.cloudAclDeleteInvitation((void*)CTX_DELETE_INVITATION, NULL, m_groupId.c_str(), NULL, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+    {
+        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
+    }
+}
+#endif
+
+/**
+ * @since           2017-04-01
+ * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
+ * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
+ * @objective       Test OCCloudAclJoinToInvitedGroup negatively with groupId as NULL
  * @target          OCStackResult OCCloudAclJoinToInvitedGroup(void* ctx, const char *groupId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
- * @test_data       regular data for target API
+ * @test_data       groupId as NULL
  * @pre_condition   none
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
- *                  3. call setCoapPrefix wtih true param
- *                  4. call CASelectCipherSuite with MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA and CA_ADAPTER_TCP
- *                  5. call signIn
- *                  6. call OCCloudAclGetInvitation
- *                  7. call OCCloudAclJoinToInvitedGroup
+ *                  3. call OCCloudAclJoinToInvitedGroup
  * @post_condition  none
- * @expected        OCCloudAclJoinToInvitedGroup will return OC_STACK_OK
+ * @expected        OCCloudAclJoinToInvitedGroup will return OC_STACK_INVALID_PARAM
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(CSCsdkGetInvitationTest_btc, OCCloudAclJoinToInvitedGroup_SRC_P)
+TEST_F(CSCsdkGetInvitationTest_btc, OCCloudAclJoinToInvitedGroupGroupId_NV_N)
 {
-    if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudAclJoinToInvitedGroup((void*)CTX_JOIN_GROUP, NULL, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!CloudCommonUtil::signIn(m_accountMgrControlee))
-    {
-        SET_FAILURE(ERROR_SIGN_IN);
-        return;
-    }
-
-    if (!m_CloudAclHelper.cloudAclGetInvitation((void*)CTX_GET_GROUP_INVITATION, NULL, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_CloudAclHelper.cloudAclJoinToInvitedGroup((void*)CTX_JOIN_GROUP, m_groupId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
     }
 }
 #endif
 
 /**
- * @since           2017-02-23
+ * @since           2017-04-01
  * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
  * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             void setCoapPrefix(bool secured)
- * @see             CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
- * @see             OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
- * @see             OCStackResult signIn(const std::string& userUuid, const std::string& accessToken, PostCallback cloudConnectHandler)
- * @see             OCStackResult OCCloudAclGetInvitation(void* ctx, const char *userId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
- * @see             OCStackResult OCCloudAclJoinToInvitedGroup(void* ctx, const char *groupId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
- * @objective       Test OCCloudAclObserveGroup positively with regular data
- * @target          OCStackResult OCCloudAclObserveGroup(void* ctx,const char *groupId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
- * @test_data       regular data for target API
+ * @objective       Test OCCloudAclJoinToInvitedGroup negatively with OCDevAddr as NULL
+ * @target          OCStackResult OCCloudAclJoinToInvitedGroup(void* ctx, const char *groupId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
+ * @test_data       OCDevAddr as NULL
  * @pre_condition   none
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
- *                  3. call setCoapPrefix wtih true param
- *                  4. call CASelectCipherSuite with MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA and CA_ADAPTER_TCP
- *                  5. call signIn
- *                  6. call OCCloudAclGetInvitation
- *                  7. call OCCloudAclJoinToInvitedGroup
+ *                  3. call OCCloudAclJoinToInvitedGroup
+ * @post_condition  none
+ * @expected        OCCloudAclJoinToInvitedGroup will return OC_STACK_INVALID_PARAM
+ */
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(CSCsdkGetInvitationTest_btc, OCCloudAclJoinToInvitedGroupDevAddr_NV_N)
+{
+    if (!m_CloudAclHelper.cloudAclJoinToInvitedGroup((void*)CTX_JOIN_GROUP, m_groupId.c_str(), NULL, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+    {
+        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
+    }
+}
+#endif
+
+/**
+ * @since           2017-04-01
+ * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
+ * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
+ * @see             OCStackResult OCCloudAclJoinToInvitedGroup(void* ctx, const char *groupId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
+ * @objective       Test OCCloudAclObserveGroup negatively with groupId as NULL
+ * @target          OCStackResult OCCloudAclObserveGroup(void* ctx,const char *groupId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
+ * @test_data       groupId as NULL
+ * @pre_condition   none
+ * @procedure       1. call OCRegisterPersistentStorageHandler
+ *                  2. call OCInit
  *                  8. call OCCloudAclObserveGroup
  * @post_condition  none
- * @expected        OCCloudAclObserveGroup will return OC_STACK_OK
+ * @expected        OCCloudAclObserveGroup will return OC_STACK_INVALID_PARAM
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(CSCsdkGetInvitationTest_btc, OCCloudAclObserveGroup_SRC_P)
+TEST_F(CSCsdkGetInvitationTest_btc, OCCloudAclObserveGroupGroupId_NV_N)
 {
-    if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudAclObserveGroup((void*)CTX_OBSERVER_GROUP, NULL, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
     }
+}
+#endif
 
-    if (!CloudCommonUtil::signIn(m_accountMgrControlee))
-    {
-        SET_FAILURE(ERROR_SIGN_IN);
-        return;
-    }
-
-    if (!m_CloudAclHelper.cloudAclGetInvitation((void*)CTX_GET_GROUP_INVITATION, NULL, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+/**
+ * @since           2017-04-01
+ * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
+ * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
+ * @see             OCStackResult OCCloudAclJoinToInvitedGroup(void* ctx, const char *groupId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
+ * @objective       Test OCCloudAclObserveGroup negatively with OCDevAddr as NULL
+ * @target          OCStackResult OCCloudAclObserveGroup(void* ctx,const char *groupId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
+ * @test_data       OCDevAddr as NULL
+ * @pre_condition   none
+ * @procedure       1. call OCRegisterPersistentStorageHandler
+ *                  2. call OCInit
+ *                  8. call OCCloudAclObserveGroup
+ * @post_condition  none
+ * @expected        OCCloudAclObserveGroup will return OC_STACK_INVALID_PARAM
+ */
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(CSCsdkGetInvitationTest_btc, OCCloudAclObserveGroupDevAddr_NV_N)
+{
+    if (!m_CloudAclHelper.cloudAclObserveGroup((void*)CTX_OBSERVER_GROUP, m_groupId.c_str(), NULL, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_CloudAclHelper.cloudAclJoinToInvitedGroup((void*)CTX_JOIN_GROUP, m_groupId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_CloudAclHelper.cloudAclObserveGroup((void*)CTX_OBSERVER_GROUP, m_groupId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
     }
 }
 #endif

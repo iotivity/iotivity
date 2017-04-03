@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -56,13 +56,6 @@ protected:
         }
 
         m_hostAddress = CloudCommonUtil::getDefaultHostAddess();
-
-#ifdef __TLS_ON__
-        setCoapPrefix(true);
-        CASelectCipherSuite(MBEDTLS_TLS_RSA_WITH_AES_128_GCM_SHA256, CA_ADAPTER_TCP);
-#endif
-
-        CSCppCloudHelper::readFile(ROOT_CERT_FILE, (OCByteString *) &m_trustCertChainArray);
         m_accountMgrControlee = OCPlatform::constructAccountManagerObject(m_hostAddress,
                 CT_ADAPTER_TCP);
     }
@@ -72,84 +65,6 @@ protected:
         CommonTestUtil::runCommonTCTearDownPart();
     }
 };
-
-/**
- * @since           2016-09-23
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             void setCoapPrefix(bool secured)
- * @see             CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
- * @see             OCStackResult saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
- * @objective       Test saveTrustCertChain positively with regular data
- * @target          static OCStackResult saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
- * @test_data       regular data for target API
- * @pre_condition   none
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call setCoapPrefix wtih true param
- *                  4. call CASelectCipherSuite with MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA and CA_ADAPTER_TCP
- *                  5. call saveTrustCertChain
- * @post_condition  none
- * @expected        saveTrustCertChain will return OC_STACK_OK
- */
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(CSCppCloudTest_btc, SaveTrustCertChain_SRC_RV_P)
-{
-    if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-    }
-}
-#endif
-
-/**
- * @since           2016-09-23
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             void setCoapPrefix(bool secured)
- * @see             CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
- * @see             static OCStackResult saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
- * @see             OCStackResult signIn(const std::string& userUuid, const std::string& accessToken, PostCallback cloudConnectHandler)
- * @objective       Test requestCertificate positively with regular data
- * @target          OCStackResult requestCertificate(ResponseCallBack callback)
- * @test_data       regular data
- * @pre_condition   none
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call setCoapPrefix
- *                  4. call CASelectCipherSuite
- *                  5. call saveTrustCertChain
- *                  6. call signIn
- *                  7. call requestCertificate
- * @post_condition  none
- * @expected        requestCertificate will return OC_STACK_OK
- */
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(CSCppCloudTest_btc, RequestCertificate_SRC_RV_P)
-{
-    if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!CloudCommonUtil::signIn(m_accountMgrControlee))
-    {
-        SET_FAILURE(ERROR_SIGN_IN);
-        return;
-    }
-
-    std::string ip(DEFAULT_HOST);
-    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
-
-    if (!m_CloudAclHelper.requestCertificate(cloudProv, CSCppCloudHelper::cloudResponseCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-    }
-}
-#endif
 
 /**
  * @since           2016-09-23
@@ -176,79 +91,10 @@ TEST_F(CSCppCloudTest_btc, RequestCertificate_SRC_RV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCppCloudTest_btc, RequestCertificateCb_NV_N)
 {
-    if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!CloudCommonUtil::signIn(m_accountMgrControlee))
-    {
-        SET_FAILURE(ERROR_SIGN_IN);
-        return;
-    }
-
     std::string ip(DEFAULT_HOST);
     OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
 
     if (!m_CloudAclHelper.requestCertificate(cloudProv, NULL, OC_STACK_INVALID_CALLBACK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-    }
-}
-#endif
-
-/**
- * @since           2016-09-23
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             void setCoapPrefix(bool secured)
- * @see             CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
- * @see             static OCStackResult saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
- * @see             OCStackResult signIn(const std::string& userUuid, const std::string& accessToken, PostCallback cloudConnectHandler)
- * @see             OCStackResult requestCertificate(ResponseCallBack callback)
- * @objective       Test getCRL positively with regular data
- * @target          OCStackResult getCRL(ResponseCallBack callback)
- * @test_data       regular data
- * @pre_condition   none
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call setCoapPrefix
- *                  4. call CASelectCipherSuite
- *                  5. call saveTrustCertChain
- *                  6. call signIm
- *                  7. call requestCertificate
- *                  8. call getCRL
- * @post_condition  none
- * @expected        getCRL will return OC_STACK_OK
- */
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(CSCppCloudTest_btc, GetCRL_SRC_RV_P)
-{
-    if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!CloudCommonUtil::signIn(m_accountMgrControlee))
-    {
-        SET_FAILURE(ERROR_SIGN_IN);
-        return;
-    }
-
-    std::string ip(DEFAULT_HOST);
-    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
-
-    if (!m_CloudAclHelper.requestCertificate(cloudProv, CSCppCloudHelper::cloudResponseCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_CloudAclHelper.getCRL(cloudProv, CSCppCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -283,19 +129,6 @@ TEST_F(CSCppCloudTest_btc, GetCRL_SRC_RV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCppCloudTest_btc, GetCRLCb_NV_N)
 {
-    if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!CloudCommonUtil::signIn(m_accountMgrControlee))
-    {
-        SET_FAILURE(ERROR_SIGN_IN);
-        return;
-    }
-
     std::string ip(DEFAULT_HOST);
     OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
 
@@ -310,58 +143,22 @@ TEST_F(CSCppCloudTest_btc, GetCRLCb_NV_N)
  * @since           2016-09-23
  * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
  * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             void setCoapPrefix(bool secured)
- * @see             CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
- * @see             static OCStackResult saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
- * @see             OCStackResult signIn(const std::string& userUuid, const std::string& accessToken, PostCallback cloudConnectHandler)
- * @see             OCStackResult requestCertificate(ResponseCallBack callback)
- * @see             OCStackResult getCRL(ResponseCallBack callback)
- * @objective       Test postCRL positively with regular data
+ * @objective       Test postCRL negatively with callback as NULL
  * @target          OCStackResult postCRL(const std::string& thisUpdate, const std::string& nextUpdate, const OCByteString *crl, const stringArray_t *serialNumbers, ResponseCallBack callback)
- * @test_data       Regular data
+ * @test_data       callback as NULL
  * @pre_condition   none
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
- *                  3. call setCoapPrefix
- *                  4. call CASelectCipherSuite
- *                  5. call saveTrustCertChain
- *                  6. call signIn
- *                  7. call requestCertificate
- *                  8. call getCRL
- *                  9. call postCRL
+ *                  3. call postCRL
  * @post_condition  none
- * @expected        postCRL will return OC_STACK_OK
+ * @expected        postCRL will return OC_STACK_INVALID_CALLBACK
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(CSCppCloudTest_btc, PostCRL_SRC_RV_P)
+TEST_F(CSCppCloudTest_btc, PostCRLCb_NV_N)
 {
-    if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!CloudCommonUtil::signIn(m_accountMgrControlee))
-    {
-        SET_FAILURE(ERROR_SIGN_IN);
-        return;
-    }
-
     std::string ip(DEFAULT_HOST);
     OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
 
-    if (!m_CloudAclHelper.requestCertificate(cloudProv, CSCppCloudHelper::cloudResponseCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_CloudAclHelper.getCRL(cloudProv, CSCppCloudHelper::cloudResponseCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
     OCByteString crlData =
     {   0, 0};
 
@@ -386,7 +183,7 @@ TEST_F(CSCppCloudTest_btc, PostCRL_SRC_RV_P)
     rcsn = serialNumbers.array? &serialNumbers : NULL;
     crl = crlData.bytes? &crlData : NULL;
 
-    if (!m_CloudAclHelper.postCRL(cloudProv, CRL_THIS_UPDATE, CRL_NEXT_DATE, crl, rcsn, CSCppCloudHelper::cloudResponseCB, OC_STACK_OK))
+    if (!m_CloudAclHelper.postCRL(cloudProv, CRL_THIS_UPDATE, CRL_NEXT_DATE, crl, rcsn, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -397,90 +194,19 @@ TEST_F(CSCppCloudTest_btc, PostCRL_SRC_RV_P)
  * @since           2016-10-20
  * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
  * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             void setCoapPrefix(bool secured)
- * @see             CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
- * @see             static OCStackResult saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
- * @see             OCStackResult signUp(const std::string& authProvider, const std::string& authCode, PostCallback cloudConnectHandler)
- * @see             OCStackResult signIn(const std::string& userUuid, const std::string& accessToken, PostCallback cloudConnectHandler)
- * @objective       Test getAclIdByDevice positively with regular data
- * @target          OCStackResult getAclIdByDevice(const std::string& deviceId, AclIdResponseCallBack callback)
- * @test_data       regular data for target API
- * @pre_condition   none
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call setCoapPrefix
- *                  4. call CASelectCipherSuite
- *                  5. call saveTrustCertChain
- *                  6. call signIn
- *                  7. call getAclIdByDevice
- * @post_condition  none
- * @expected        getAclIdByDevice will return OC_STACK_OK
- */
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(CSCppCloudTest_btc, GetAclIdByDevice_SRC_RV_P)
-{
-    if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!CloudCommonUtil::signIn(m_accountMgrControlee))
-    {
-        SET_FAILURE(ERROR_SIGN_IN);
-        return;
-    }
-
-    std::string ip(DEFAULT_HOST);
-    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
-    std::string aclID = "";
-
-    if (!m_CloudAclHelper.getAclIdByDevice(cloudProv, DEFAULT_DEV_ID, CSCppCloudHelper::cloudAclResponseCB, aclID, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-    }
-}
-#endif
-
-/**
- * @since           2016-10-20
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             void setCoapPrefix(bool secured)
- * @see             CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
- * @see             static OCStackResult saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
- * @see             OCStackResult signIn(const std::string& userUuid, const std::string& accessToken, PostCallback cloudConnectHandler)
  * @objective       Test getAclIdByDevice negatively with AclIdResponseCallBack as NULL
  * @target          OCStackResult getAclIdByDevice(const std::string& deviceId, AclIdResponseCallBack callback)
  * @test_data       AclIdResponseCallBack as NULL
  * @pre_condition   none
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
- *                  3. call setCoapPrefix
- *                  4. call CASelectCipherSuite
- *                  5. call saveTrustCertChain
- *                  6. call signIn
- *                  7. call getAclIdByDevice
+ *                  3. call getAclIdByDevice
  * @post_condition  none
  * @expected        getAclIdByDevice will return OC_STACK_INVALID_CALLBACK
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCppCloudTest_btc, GetAclIdByDeviceCb_NV_N)
 {
-    if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!CloudCommonUtil::signIn(m_accountMgrControlee))
-    {
-        SET_FAILURE(ERROR_SIGN_IN);
-        return;
-    }
-
     std::string ip(DEFAULT_HOST);
     OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
     const std::string deviceID = DEFAULT_DEV_ID;
@@ -497,116 +223,23 @@ TEST_F(CSCppCloudTest_btc, GetAclIdByDeviceCb_NV_N)
  * @since           2016-10-20
  * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
  * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             void setCoapPrefix(bool secured)
- * @see             CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
- * @see             static OCStackResult saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
- * @see             OCStackResult signIn(const std::string& userUuid, const std::string& accessToken, PostCallback cloudConnectHandler)
- * @see             OCStackResult getAclIdByDevice(const std::string& deviceId, AclIdResponseCallBack callback)
- * @objective       Test getIndividualAclInfo positively with regular data
- * @target          OCStackResult getIndividualAclInfo(const std::string& aclId, ResponseCallBack callback)
- * @test_data       Regular data
- * @pre_condition   none
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call setCoapPrefix
- *                  4. call CASelectCipherSuite
- *                  5. call saveTrustCertChain
- *                  7. call signIn
- *                  8. call getAclIdByDevice
- *                  9. call getIndividualAclInfo
- * @post_condition  none
- * @expected        getIndividualAclInfo will return OC_STACK_OK
- */
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(CSCppCloudTest_btc, GetIndividualAclInfo_RV_SRC_P)
-{
-    if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!CloudCommonUtil::signIn(m_accountMgrControlee))
-    {
-        SET_FAILURE(ERROR_SIGN_IN);
-        return;
-    }
-
-    std::string ip(DEFAULT_HOST);
-    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
-
-    const std::string deviceID = DEFAULT_DEV_ID;
-    std::string aclID = "";
-    if (!m_CloudAclHelper.getAclIdByDevice(cloudProv, deviceID, CSCppCloudHelper::cloudAclResponseCB, aclID, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_CloudAclHelper.getIndividualAclInfo(cloudProv, aclID, CSCppCloudHelper::cloudResponseCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-    }
-}
-#endif
-
-/**
- * @since           2016-10-20
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             void setCoapPrefix(bool secured)
- * @see             CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
- * @see             static OCStackResult saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
- * @see             OCStackResult signIn(const std::string& userUuid, const std::string& accessToken, PostCallback cloudConnectHandler)
- * @see             OCStackResult getAclIdByDevice(const std::string& deviceId, AclIdResponseCallBack callback)
  * @objective       Test getIndividualAclInfo negatively with ResponseCallBack as NULL
  * @target          OCStackResult getIndividualAclInfo(const std::string& aclId, ResponseCallBack callback)
  * @test_data       ResponseCallBack as NULL
  * @pre_condition   none
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
- *                  3. call setCoapPrefix
- *                  4. call CASelectCipherSuite
- *                  5. call saveTrustCertChain
- *                  6. call signIn
- *                  7. call getAclIdByDevice
- *                  8. call getIndividualAclInfo
+ *                  3. call getIndividualAclInfo
  * @post_condition  none
  * @expected        getIndividualAclInfo will return OC_STACK_INVALID_CALLBACK
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCppCloudTest_btc, GetIndividualAclInfoCb_NV_N)
 {
-    if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!CloudCommonUtil::signIn(m_accountMgrControlee))
-    {
-        SET_FAILURE(ERROR_SIGN_IN);
-        return;
-    }
-
     std::string ip(DEFAULT_HOST);
     OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
-
-    if (!m_CloudAclHelper.requestCertificate(cloudProv, CSCppCloudHelper::cloudResponseCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
     const std::string deviceID = DEFAULT_DEV_ID;
     std::string aclID = "";
-    if (!m_CloudAclHelper.getAclIdByDevice(cloudProv, deviceID, CSCppCloudHelper::cloudAclResponseCB, aclID, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
 
     if (!m_CloudAclHelper.getIndividualAclInfo(cloudProv, aclID, NULL, OC_STACK_INVALID_CALLBACK))
     {
