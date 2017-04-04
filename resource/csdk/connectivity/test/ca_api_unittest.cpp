@@ -213,12 +213,12 @@ void provide_x509_cert_and_key(PkiInfo_t* inf)
     return;
 }
 // Empty version, for testing.
-void badPkixInfoHandler(PkiInfo_t* inf)
+void badPkixInfoHandler(PkiInfo_t* /*inf*/)
 {
     return;
 }
 
-void provide_supported_credential_types(bool* list)
+void provide_supported_credential_types(bool* list, const char* /*deviceId*/)
 {
     list[1] = true;
     /*
@@ -369,7 +369,7 @@ TEST_F(CATests, DISABLED_PkiTest)
     // provide data on the heap, but the CA stack should not be changing data provided to it
     // by callbacks. 
 
-    char* local_addr = "127.0.0.1";
+    const char* local_addr = "127.0.0.1";
     uint16_t local_port = 5503;
     CAEndpoint_t* serverAddr = NULL;
 
