@@ -477,12 +477,14 @@ CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, int target
     {
         unsigned char uriBuffer[CA_MAX_URI_LENGTH] = { 0 };
         unsigned char *pBuf = uriBuffer;
-        size_t buflen = sizeof(uriBuffer);
-        int res = (target == COAP_OPTION_URI_PATH) ? coap_split_path(str, length, pBuf, &buflen) :
-                                                     coap_split_query(str, length, pBuf, &buflen);
+        size_t unusedBufferSize = sizeof(uriBuffer);
+        int res = (target == COAP_OPTION_URI_PATH) ? coap_split_path(str, length, pBuf, &unusedBufferSize) :
+                                                     coap_split_query(str, length, pBuf, &unusedBufferSize);
 
         if (res > 0)
         {
+            assert(unusedBufferSize < sizeof(uriBuffer));
+            size_t usedBufferSize = sizeof(uriBuffer) - unusedBufferSize;
             size_t prevIdx = 0;
             while (res--)
             {
@@ -496,11 +498,13 @@ CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, int target
                 }
 
                 size_t optSize = COAP_OPT_SIZE(pBuf);
-                if ((prevIdx + optSize) < buflen)
+                if (prevIdx + optSize > usedBufferSize)
                 {
-                    pBuf += optSize;
-                    prevIdx += optSize;
+                    assert(false);
+                    return CA_STATUS_INVALID_PARAM;
                 }
+                pBuf += optSize;
+                prevIdx += optSize;
             }
         }
         else
