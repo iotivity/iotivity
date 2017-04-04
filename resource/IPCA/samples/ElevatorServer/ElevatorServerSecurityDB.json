@@ -50,12 +50,12 @@
                 }
             ]
         },
-        "rowneruuid" : "E068A3E6-90EF-4A26-A75F-9B098D43F54D"
+        "rowneruuid" : ""
     },
     "pstat": {
         "isop": false,
-        "deviceuuid": "E068A3E6-90EF-4A26-A75F-9B098D43F54D",
-        "rowneruuid": "E068A3E6-90EF-4A26-A75F-9B098D43F54D",
+        "deviceuuid": "",
+        "rowneruuid": "",
         "cm": 2,
         "tm": 0,
         "om": 4,
@@ -66,8 +66,8 @@
         "oxmsel": 0,
         "sct": 1,
         "owned": false,
-        "deviceuuid": "E068A3E6-90EF-4A26-A75F-9B098D43F54D",
+        "deviceuuid": "",
         "devowneruuid": "",
-        "rowneruuid": "E068A3E6-90EF-4A26-A75F-9B098D43F54D"
+        "rowneruuid": ""
     }
 }

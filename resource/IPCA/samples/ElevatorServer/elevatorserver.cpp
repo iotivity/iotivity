@@ -321,6 +321,21 @@ bool ElevatorServer::Start(const std::string& elevatorName)
                                     std::bind(&ElevatorServer::ElevatorEntityHandler, this, _1),
                                     OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
 
+
+        if (result == OC_STACK_OK)
+        {
+            const char* deviceID = OCGetServerInstanceIDString();
+            std::cout << "Elevator server's device ID: ";
+            if (deviceID != nullptr)
+            {
+                 std::cout << deviceID << std::endl;
+            }
+            else
+            {
+                std::cout << "Unknown" << std::endl;
+            }
+        }
+
         return (result == OC_STACK_OK);
     }
 
