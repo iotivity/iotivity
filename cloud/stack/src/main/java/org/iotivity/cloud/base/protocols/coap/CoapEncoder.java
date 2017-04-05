@@ -30,6 +30,8 @@ import io.netty.handler.codec.MessageToByteEncoder;
 
 public class CoapEncoder extends MessageToByteEncoder<CoapMessage> {
 
+    private boolean isboolWebSocket = false;
+
     @Override
     protected void encode(ChannelHandlerContext ctx, CoapMessage msg,
             ByteBuf out) throws Exception {
@@ -42,11 +44,16 @@ public class CoapEncoder extends MessageToByteEncoder<CoapMessage> {
          * encode options
          */
         encodeOptions(optBuf, coapMessage);
+
         long length = optBuf.readableBytes();
 
         if (coapMessage.getPayloadSize() > 0) {
             // + 1 means 8bits delimiter
             length += 1 + coapMessage.getPayloadSize();
+        }
+
+        if (isboolWebSocket) {
+            length = 0;
         }
 
         calcShimHeader(coapMessage, out, length);
@@ -70,7 +77,9 @@ public class CoapEncoder extends MessageToByteEncoder<CoapMessage> {
         }
     }
 
-    public void encode(CoapMessage msg, ByteBuf out) throws Exception {
+    public void encode(CoapMessage msg, ByteBuf out, boolean isWebsocket)
+            throws Exception {
+        isboolWebSocket = isWebsocket;
         encode(null, msg, out);
     }
 

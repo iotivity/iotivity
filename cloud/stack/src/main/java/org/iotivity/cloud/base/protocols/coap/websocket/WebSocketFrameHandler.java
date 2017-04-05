@@ -21,19 +21,6 @@
  */
 package org.iotivity.cloud.base.protocols.coap.websocket;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpServerCodec;
-import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +34,19 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.util.Cbor;
 import org.iotivity.cloud.util.JSONUtil;
 import org.iotivity.cloud.util.Log;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 
 public class WebSocketFrameHandler extends ChannelDuplexHandler {
 
@@ -77,7 +77,8 @@ public class WebSocketFrameHandler extends ChannelDuplexHandler {
 
             List<Object> messages = new ArrayList<>();
             new CoapDecoder().decode(((BinaryWebSocketFrame) msg).content(),
-                    messages);
+                    messages,
+                    ((BinaryWebSocketFrame) msg).content().readableBytes());
 
             for (Object message : messages) {
                 if (message instanceof CoapMessage) {
@@ -85,12 +86,12 @@ public class WebSocketFrameHandler extends ChannelDuplexHandler {
 
                     // convert content format to cbor if content format is json.
                     if (coapMessage.getPayloadSize() != 0
-                            && coapMessage.getContentFormat().equals(
-                                    ContentFormat.APPLICATION_JSON)) {
+                            && coapMessage.getContentFormat()
+                                    .equals(ContentFormat.APPLICATION_JSON)) {
                         byte[] payload = coapMessage.getPayload();
                         coapMessage.setPayload(convertJsonToCbor(payload));
-                        coapMessage
-                                .setContentFormat(ContentFormat.APPLICATION_CBOR);
+                        coapMessage.setContentFormat(
+                                ContentFormat.APPLICATION_CBOR);
                     }
                     ctx.fireChannelRead(coapMessage);
                 }
@@ -138,7 +139,7 @@ public class WebSocketFrameHandler extends ChannelDuplexHandler {
             }
 
             ByteBuf encodedBytes = Unpooled.buffer();
-            new CoapEncoder().encode((CoapMessage) msg, encodedBytes);
+            new CoapEncoder().encode((CoapMessage) msg, encodedBytes, true);
             WebSocketFrame frame = new BinaryWebSocketFrame(encodedBytes);
             newMsg = frame;
         } else {
