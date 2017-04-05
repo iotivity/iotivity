@@ -20,6 +20,7 @@
  ******************************************************************/
 
 #include "RIHelper.h"
+#include "ocpayload.h"
 
 RIHelper* RIHelper::s_riHelperInstance = NULL;
 std::mutex RIHelper::s_mutex;
@@ -258,7 +259,9 @@ OCDeviceInfo RIHelper::getDeviceInfo()
     configClientServerPlatform();
     OCDeviceInfo deviceInfo;
     duplicateString(&deviceInfo.deviceName, DEVICE_NAME);
-
+    duplicateString(&deviceInfo.specVersion, SPEC_VERSION);
+    deviceInfo.types = NULL;
+    OCResourcePayloadAddStringLL(&deviceInfo.types, OC_RSRVD_RESOURCE_TYPE_DEVICE);
     OCSetDeviceInfo(deviceInfo);
 
     return deviceInfo;

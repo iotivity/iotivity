@@ -1529,8 +1529,8 @@ TEST_F(RICsdkServerTest_btc, OCRegisterPersistentStorageHandler_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCRegisterPersistentStorageHandler_USV_N)
 {
     OCPersistentStorage ps2 =
-    {   NULL, NULL, NULL, NULL, NULL};
-    m_result = OCRegisterPersistentStorageHandler(NULL);
+    {   NULL, fread, fwrite, fclose, unlink};
+    m_result = OCRegisterPersistentStorageHandler(&ps2);
     ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCRegisterPersistentStorageHandler failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif

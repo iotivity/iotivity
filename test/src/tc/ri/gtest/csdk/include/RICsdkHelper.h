@@ -60,7 +60,7 @@ namespace PH = std::placeholders;
 #define MANUFACTURER_NAME "myManufacturer"
 #define OS_VERSION "myOS"
 #define HW_VERSION "myHardwareVersion"
-#define PLATFORM_ID "myPlatformID"
+#define PLATFORM_ID "0A3E0D6F-DBF5-404E-8719-D6880042463A"
 #define MANUFACTURER_URL "www.myurl.com"
 #define MODEL_NO "myModelNumber"
 #define PLATFORM_VERSION "platformVersion"
@@ -195,7 +195,8 @@ public:
     //server functions
     OCStackResult initServer();
     void duplicateString(char ** targetString, std::string sourceString);
-    OCPlatformInfo getPlatformInfo();bool OCResourcePayloadAddStringLL(OCStringLL **stringLL,
+    OCPlatformInfo getPlatformInfo();
+    bool OCResourcePayloadAddStringLL(OCStringLL **stringLL,
             std::string value);
     OCDeviceInfo getDeviceInfo();
     static OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,

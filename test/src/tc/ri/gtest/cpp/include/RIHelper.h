@@ -67,6 +67,7 @@ namespace PH = std::placeholders;
 #define SUPPORT_URL "support.default-vendor.com"
 #define SYSTEM_TIME "2016-06-20T10:10:10Z"
 #define DEVICE_NAME "IotivitySmartRoom"
+#define SPEC_VERSION "myDeviceSpecVersion"
 
 #define DEFAULT_RESOURCE_TYPE "core.res"
 #define AC_TEMPERATURE_URI "/TemperatureResURI"
