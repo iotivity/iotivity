@@ -107,6 +107,11 @@
 #define UINT32_MAX   (0xFFFFFFFFUL)
 #endif
 
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+#include "ocsecurity.h"
+#include "srmresourcestrings.h"
+#endif
+
 //-----------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------
@@ -3065,6 +3070,7 @@ static OCStackResult OCPreparePresence(CAEndpoint_t *endpoint,
 
 /**
  * Discover or Perform requests on a specified resource
+ * Deprecated: use OCDoRequest instead
  */
 OCStackResult OCDoResource(OCDoHandle *handle,
                             OCMethod method,
@@ -3086,6 +3092,23 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     OCPayloadDestroy(payload);
     return ret;
 }
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+static const char* ASSERT_ROLES_CTX = "Asserting roles from OCDoRequest";
+static void assertRolesCB(void* ctx, bool hasError)
+{
+    OC_UNUSED(ctx); // Not used in release builds
+
+    if (!hasError)
+    {
+        OIC_LOG_V(DEBUG, TAG, "%s: Asserting roles SUCCEEDED - ctx: %s", __func__, (char*)ctx);
+    }
+    else
+    {
+        OIC_LOG_V(DEBUG, TAG, "%s: Asserting roles FAILED - ctx: %s", __func__, (char*)ctx);
+    }
+}
+#endif // __WITH_DTLS__ || __WITH_TLS__
 
 /**
  * Discover or Perform requests on a specified resource
@@ -3130,6 +3153,7 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
      */
     adapter = (OCTransportAdapter)(connectivityType >> CT_ADAPTER_SHIFT);
     flags = (OCTransportFlags)(connectivityType & CT_MASK_FLAGS);
+    OIC_LOG_V(DEBUG, TAG, "%s: adapter = %d, flags = %d", __func__, adapter, flags);
 
     if (requestUri)
     {
@@ -3366,6 +3390,52 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
         goto exit;
     }
 #endif
+    
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    /* Check whether we should assert role certificates before making this request. */
+    if ((endpoint.flags & CA_SECURE) && 
+        (strcmp(requestInfo.info.resourceUri, OIC_RSRC_ROLES_URI) != 0))
+    {
+        CASecureEndpoint_t sep;
+        CAResult_t caRes = CAGetSecureEndpointData(&endpoint, &sep);
+        if (caRes != CA_STATUS_OK)
+        {
+            /* 
+             * This is a secure request but we do not have a secure connection with 
+             * this peer, try to assert roles. There's no way to tell if the peer 
+             * uses certificates without asking, so just try to assert roles.  If 
+             * it fails, that's OK, roles will get asserted "automatically" when PSK
+             * credentials are used.
+             */
+            OIC_LOG_V(DEBUG, TAG, "%s: going to try to assert roles before doing request to %s ", 
+                      __func__, requestInfo.info.resourceUri);
+            OCDevAddr da;
+            CopyEndpointToDevAddr(&endpoint, &da);
+            OCStackResult assertResult = OCAssertRoles((void*)ASSERT_ROLES_CTX, &da, &assertRolesCB);
+            if (assertResult == OC_STACK_OK)
+            {
+                OIC_LOG_V(DEBUG, TAG, "%s: Call to OCAssertRoles succeeded", __func__);
+            }
+            else if (assertResult == OC_STACK_INCONSISTENT_DB)
+            {
+                OIC_LOG_V(DEBUG, TAG, "%s: No role certificates to assert", __func__);
+            }
+            else
+            {
+                OIC_LOG_V(DEBUG, TAG, "%s: Call to OCAssertRoles failed", __func__);
+            }
+            
+            /* 
+             * We don't block waiting for OCAssertRoles to complete.  Because the roles assertion
+             * request is queued before the actual request, it will happen first.  If it fails, we
+             * log the error, but don't retry; the actually request made to OCDorequest may or may
+             * not fail (with permission denied), the caller can decide whether to retry. 
+             */
+        }
+
+    }
+#endif // __WITH_DTLS__ || __WITH_TLS__
+
 
     // send request
     result = OCSendRequest(&endpoint, &requestInfo);

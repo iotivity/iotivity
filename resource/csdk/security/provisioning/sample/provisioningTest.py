@@ -42,7 +42,7 @@ def print_environment():
 ### main ###
 
 # Number of unit tests in autoprovisioningclient
-NUM_TESTS = 6
+NUM_TESTS = 7
 
 usage = '''
  Run end-to-end certificate tests between autoprovisioningclient and sampleserver_justworks
@@ -63,7 +63,7 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument('--arch', nargs='?', choices = ['amd64', 'x86', 'arm'], help= 'Architecture, one of x86, amd64 or arm. Defaults to amd64.', default='amd64')
 parser.add_argument('--build', nargs='?', choices = ['debug', 'release'], help= 'Build type, one of debug or release. Defaults to debug.', default='debug')
-parser.add_argument('--onetest', nargs='?', choices = ['1', '...', str(NUM_TESTS)], help= 'Run a single test, specified by number. By default all tests are run.')
+parser.add_argument('--onetest', nargs='?', help= 'Run a single test, specified by number (1, ..., ' + str(NUM_TESTS) + '). By default all tests are run.')
 
 args = parser.parse_args()
 
@@ -90,6 +90,9 @@ num_failures = 0
 test_range = range(1, NUM_TESTS + 1)    #default to running all tests
 if args.onetest:
     try:
+        if int(args.onetest) > NUM_TESTS or int(args.onetest) < 1:
+            print 'Argument to --onetest out of range'
+            sys.exit(-1)
         test_range = range(int(args.onetest), int(args.onetest) + 1)
     except ValueError:
         print 'invalid argument to --onetest'

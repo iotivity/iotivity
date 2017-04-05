@@ -169,19 +169,6 @@ OCStackResult SRPSaveOwnCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16_
 OCStackResult SRPSaveOwnRoleCert(OicSecKey_t * cert, uint16_t *credId);
 
 /**
- * Assert all roles to a device. This POSTs all role certificates from the
- * local cred resource to /oic/sec/roles.
- *
- * @param[in] ctx User context to be passed.
- * @param[in] device The device to assert the roles to
- * @param[in] resultCallback Callback that is called with the response from the device
- * @return OC_STACK_OK in case of success and other value otherwise.
- *
- * @note If no role certificates are installed, this will fail. See GetAllRoleCerts in credresource.h
- */
-OCStackResult SRPAssertRoles(void *ctx, const OCProvisionDev_t *device, OCProvisionResultCB resultCallback);
-
-/**
  * function to register callback, for getting notification for TrustCertChain change.
  *
  * @param[in] ctx user context to be passed.

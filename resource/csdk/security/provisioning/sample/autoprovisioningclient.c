@@ -48,10 +48,9 @@
 #include "pmtypes.h"
 #include "oxmverifycommon.h"
 #include "occertutility.h"
+#include "ocsecurity.h"
+#include "ocstackinternal.h"
 #include "pmutility.h"
-
-#include "secureresourceprovider.h" /* @todo: For SRPAssertRoles. Remove once IOT-1952 is resolved. */
-
 
 #ifdef _MSC_VER
 #include <io.h>
@@ -284,17 +283,18 @@ static void provisionAclCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, b
     g_doneCB = true;
 }
 
-static void assertRolesCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void assertRolesCB(void* ctx, bool hasError)
 {
+    OC_UNUSED(ctx); // unused in release builds
+
     if (!hasError)
     {
-        OIC_LOG_V(INFO, TAG, "Asserting roles SUCCEEDED - ctx: %s", (char*)ctx);
+        OIC_LOG_V(INFO, TAG, "%s: Asserting roles SUCCEEDED - ctx: %s", __func__, (char*)ctx);
         g_successCB = true;
     }
     else
     {
-        OIC_LOG_V(ERROR, TAG, "Asserting roles FAILED - ctx: %s", (char*)ctx);
-        printResultList((const OCProvisionResult_t*)arr, nOfRes);
+        OIC_LOG_V(DEBUG, TAG, "%s: Asserting roles FAILED - ctx: %s", __func__, (char*)ctx);
         g_successCB = false;
     }
     g_doneCB = true;
@@ -1104,7 +1104,7 @@ static int testCertUse(int dev_num)
     OicSecAcl_t* acl = NULL;
 
     // Make sure we own at least one device to provision
-    if (!g_own_list || g_own_cnt == 0)
+    if (!g_own_list || (g_own_cnt == 0))
     {
         OIC_LOG(ERROR, TAG, "Owned device list empty, must discover unowned devices first");
         return -1;  // Error, we should have registered unowned devices already
@@ -1235,7 +1235,7 @@ static int testRoleProvisioning(int dev_num)
     char* roleCert = NULL;
 
     // Make sure we own at least one device to provision
-    if (!g_own_list || g_own_cnt == 0)
+    if (!g_own_list || (g_own_cnt == 0))
     {
         OIC_LOG(ERROR, TAG, "Owned device list empty, must discover unowned devices first");
         return -1;  // Error, we should have registered unowned devices already
@@ -1306,6 +1306,150 @@ exit:
     return ret;
 }
 
+static int testRoleAssertion(int dev_num)
+{
+    char* csr = NULL;
+    char* idCert = NULL;
+    char* roleCert = NULL;
+    OicSecAcl_t* acl = NULL;
+
+    /* Make sure we own at least one device to provision */
+    if (!g_own_list || (g_own_cnt == 0))
+    {
+        OIC_LOG(ERROR, TAG, "Owned device list empty, must discover unowned devices first");
+        return -1;  // Error, we should have registered unowned devices already
+    }
+
+    /* Provision the device with the CA root, and issue it an identity cert. */
+    if (provisionTrustAnchor(dev_num) != 0)
+    {
+        return -1;
+    }
+
+    if (getCsr(dev_num, &csr) != 0)
+    {
+        return -1;
+    }
+
+    int ret = createCertFromCSR(g_caKeyPem, g_caCertPem, csr, NULL, NULL, &idCert);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to create identity certificate", __func__);
+        goto exit;
+    }
+
+    ret = provisionCert(dev_num, idCert);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to provision id certificate", __func__);
+        goto exit;
+    }
+
+    /* Create and provision a role-based ACL allowing ROLE1 to access '/a/led'. */
+    ret = createLedAcl(&acl, TEST_CERT_ROLE1, NULL);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s failed to create led ACL", __func__);
+        goto exit;
+    }
+
+    ret = provisionAcl(dev_num, acl);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s failed to provision led ACL", __func__);
+        goto exit;
+    }
+
+    /* Provision ourselves an identity and role cert.
+     * For the identity cert we use a random UUID, since the server has an ACE granting our UUID
+     * access to everything (as owner). We don't want to remove this ACE because it would lock
+     * us out. Using another UUID makes us appear as another device on the network.
+     */
+    OicUuid_t notOurUuid;
+    (void)OCGenerateUuid(notOurUuid.id);
+    ret = setupOwnCert(&notOurUuid);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s Failed to self-provision a key/certificate", __func__);
+        goto exit;
+    }
+
+    ret = setupOwnRoleCert(NULL, TEST_CERT_ROLE1, NULL);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s Failed to self-provision a key/certificate", __func__);
+        goto exit;
+    }
+
+    /* Remove the owner credential so that we don't use it when asserting role certs. */
+    OCStackResult res = OCRemoveCredential(&g_uuidDev1);
+    if (res != OC_STACK_RESOURCE_DELETED)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s failed to remove owner credential for subject UUID: ", __func__);
+        OIC_LOG_BUFFER(DEBUG, TAG, g_uuidDev1.id, UUID_LENGTH);
+        ret = -1;
+        goto exit;
+    }
+
+    /*
+     * Work around bug IOT-1927
+     * @todo: When that bug is resolved, remove this call and the function workAroundBug
+     */
+    if (workAroundBug() != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s bug workaround failed: ", __func__);
+        ret = -1;
+        goto exit;
+    }
+
+    /* Close all secure sessions */
+    if (closeAllSessions() != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s Failed to close sessions", __func__);
+        ret = -1;
+        goto exit;
+    }
+
+    /* Assert role certificate */
+    OCProvisionDev_t *device = NULL;
+    device = getDevInst(g_own_list, dev_num);
+    if (!device)
+    {
+        OIC_LOG(ERROR, TAG, "Selected device does not exist");
+        ret = -1;
+        goto exit;
+    }
+
+    OCDevAddr devAddr = device->endpoint;
+    devAddr.port = device->securePort;
+
+    g_doneCB = false;
+    res = OCAssertRoles(g_ctx, &devAddr, assertRolesCB);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCAssertRoles returned error %d with method", res);
+        ret = -1;
+        goto exit;
+    }
+    if (waitCallbackRet())
+    {
+        OIC_LOG_V(ERROR, TAG, "%s callback error", __func__);
+    }
+    if (!g_successCB)
+    {
+        ret = -1;
+        goto exit;
+    }
+
+exit:
+    OICFree(csr);
+    OICFree(idCert);
+    OICFree(roleCert);
+    OCDeleteACLList(acl);
+
+    return ret;
+}
+
 static int testRoleAssertionAndUse(int dev_num)
 {
     char* csr = NULL;
@@ -1315,7 +1459,7 @@ static int testRoleAssertionAndUse(int dev_num)
     OicSecAcl_t* acl = NULL;
 
     // Make sure we own at least one device to provision
-    if (!g_own_list || g_own_cnt == 0)
+    if (!g_own_list || (g_own_cnt == 0))
     {
         OIC_LOG(ERROR, TAG, "Owned device list empty, must discover unowned devices first");
         return -1;  // Error, we should have registered unowned devices already
@@ -1403,7 +1547,7 @@ static int testRoleAssertionAndUse(int dev_num)
         goto exit;
     }
 
-    /* Close all secure sessions*/
+    /* Close all secure sessions */
     if (closeAllSessions() != 0)
     {
         OIC_LOG_V(ERROR, TAG, "%s Failed to close sessions", __func__);
@@ -1411,42 +1555,7 @@ static int testRoleAssertionAndUse(int dev_num)
         goto exit;
     }
 
-    /* Try a GET request, expect failure, we haven't asserted our role cert yet. */
-    ret = doGetRequest(uri, dev_num);
-    if (ret == 0)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s Get request to %s succeeded, but should have failed", __func__, uri);
-        goto exit;
-    }
-
-    /* Assert our role cert.  (@todo: This should be done automatically, IOT-1952) */
-    OCProvisionDev_t* dev = getDevInst((const OCProvisionDev_t*)g_own_list, dev_num);
-    if (!dev)
-    {
-        OIC_LOG(ERROR, TAG, "getDevInst: device instance empty");
-        return -1;
-    }
-
-    g_doneCB = false;
-    res = SRPAssertRoles(g_ctx, dev, &assertRolesCB);
-    if (res != OC_STACK_OK)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s Failed assert roles", __func__);
-        ret = -1;
-        goto exit;
-    }
-    if (waitCallbackRet())
-    {
-        OIC_LOG(ERROR, TAG, "SRPAssertRoles callback error");
-        goto exit;
-    }
-    if (!g_successCB)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s callback completed, but failed", __func__);
-        goto exit;
-    }
-
-    /* Try a get request, expect success */
+    /* Try a get request, expect success, role certificate will be automatically asserted */
     ret = doGetRequest(uri, dev_num);
     if (ret != 0)
     {
@@ -1878,6 +1987,34 @@ exit:
     return ret;
 }
 
+int TestRoleAssertion()
+{
+    int ret = -1;
+
+    OIC_LOG_V(ERROR, TAG, "Running %s", __func__);
+
+    if (initDiscoverRegisterAllDevices())
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: Failed to discover and provision devices", __func__);
+        goto exit;
+    }
+
+    /* There should be one owned device with number 1. */
+    if (testRoleAssertion(1))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to assert roles");
+        goto exit;
+    }
+
+    ret = 0;
+
+exit:
+
+    shutdownProvisionClient();
+
+    return ret;
+}
+
 int TestRoleAssertionAndUse()
 {
     int ret = -1;
@@ -1925,6 +2062,8 @@ int TestSymmetricRoleUse()
         goto exit;
     }
 
+    ret = 0;
+
 exit:
 
     shutdownProvisionClient();
@@ -1953,8 +2092,10 @@ int main(int argc, char** argv)
         case 4:
             return TestRoleProvisioning();
         case 5:
-            return TestRoleAssertionAndUse();
+            return TestRoleAssertion();
         case 6:
+            return TestRoleAssertionAndUse();
+        case 7:
             return TestSymmetricRoleUse();
         default:
             printf("%s: Invalid test number\n", argv[0]);
