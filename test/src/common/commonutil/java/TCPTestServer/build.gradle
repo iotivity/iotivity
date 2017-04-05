@@ -1,0 +1,26 @@
+apply plugin: 'java'
+
+sourceSets {
+   main {
+      java {
+        srcDirs 'src', '../util'
+      }
+   }
+}
+
+jar {
+    archiveName 'TcpTestServer.jar'
+    manifest {
+      attributes(
+            'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
+            'Main-Class': 'org.iotivity.test.tcpserver.SocketMainServer'
+      )
+    }
+}
+
+task install(type: Copy) {
+    from 'build/libs/TcpTestServer.jar'
+    into "${IOTIVITY_TEST_ROOT}/bin/linux/"
+}
+
+install.dependsOn assemble
