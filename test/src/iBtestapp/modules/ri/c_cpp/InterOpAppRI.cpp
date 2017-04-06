@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -71,21 +71,24 @@
 using namespace OC;
 using namespace std;
 
+enum class ResourceSelectionType
+{
+    VERTICAL_RESOURCE = 0,
+    SYSTEM_RESOURCE,
+    VERTICAL_OBSERVABLE_RESOURCE,
+    VERTICAL_NON_OBSERVABLE_RESOURCE
+};
+
 vector< SampleResource * > g_createdResourceList;
 vector< shared_ptr< OCResource > > g_foundResourceList;
 vector< OCResourceHandle > g_handleList;
 OCRepresentation g_resourceRepresentation;
 
-SampleResource *g_tvDevice;
-SampleResource *g_acDevice;
-SampleResource *g_tvSwitchResource;
-SampleResource *g_tvAudioResource;
-SampleResource *g_tvMediaSourceListResource;
 SampleResource *g_acSwitchResource;
 SampleResource *g_acAirFlowResource;
 SampleResource *g_acTemperatureResource;
 SampleResource *g_acTimerResource;
-SampleResource *g_acChildLockResource;
+SampleResource *g_acSwingResource;
 
 bool g_hasCallbackArrived = false;
 bool g_isObservingResource = false;
@@ -95,6 +98,8 @@ QualityOfService g_qos = QualityOfService::LowQos;
 OCConnectivityType g_connectivityType = CT_DEFAULT;
 bool g_isSecuredServer = false;
 bool g_isSecuredClient = false;
+string g_commonSmartHomeUri = "URI";
+string g_commonVendorUri = "Vendor";
 ResourceHelper *g_resourceHelper;
 
 static mutex s_mutex;
@@ -122,20 +127,17 @@ void findResource(string resourceType, string host = "");
 void findAllResources(string host = "", string query = "");
 void discoverDevice(bool);
 void discoverPlatform(bool isMulticast = true);
-void sendGetRequest();
-void sendGetRequestWithQuery(string, string);
-void sendPutRequestUpdate(void);
-void sendPostRequestUpdateUserInput(void);
-void sendPutRequestCreate(void);
-void sendPostRequestCreate(void);
-void sendDeleteRequest(void);
+void sendGetRequest(ResourceSelectionType type);
+void sendPutRequest(ResourceSelectionType type);
+void sendPostRequest(ResourceSelectionType type);
+void sendBlockwisePost(void);
+void sendDeleteRequest(ResourceSelectionType type);
 void waitForCallback(void);
-void observeResource(void);
-void cancelObserveResource(void);
-void cancelObservePassively(void);
-int selectResource(void);
-int selectLocalResource(void);
-AttributeValue getAttributeValueFromUser(void);
+void observeResource(ResourceSelectionType type);
+void cancelObserveResource(ResourceSelectionType type);
+vector< shared_ptr< OCResource > > getRemoteResourceList(ResourceSelectionType type);
+void updateLocalResources(void);
+AttributeValue getResourceAttributeValue(string uri, string& key);
 string getHost();
 FILE* server_fopen(const char*, const char*);
 FILE* client_fopen(const char*, const char*);
@@ -343,13 +345,11 @@ void onDeviceInfoReceived(const OCRepresentation& rep)
 // callback handler on GET request
 void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
-    if (eCode == SUCCESS_RESPONSE)
+    if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_OK)
     {
         cout << "Response: GET request was successful" << endl;
 
-//        g_resourceHelper->printIncomingRepresentation(rep);
-
-        vector < string > interfacelist = rep.getResourceInterfaces();
+        vector< string > interfacelist = rep.getResourceInterfaces();
 
         bool isCollection = false;
         for (auto interface = interfacelist.begin(); interface != interfacelist.end(); interface++)
@@ -364,7 +364,7 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
 
         if (isCollection)
         {
-            vector < OCRepresentation > children = rep.getChildren();
+            vector< OCRepresentation > children = rep.getChildren();
 
             cout << "\nCHILD RESOURCE OF GROUP" << endl;
             for (auto iter = children.begin(); iter != children.end(); ++iter)
@@ -390,7 +390,8 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
 // callback handler on PUT request
 void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
-    if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED)
+    if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_CREATED
+            || eCode == OC_STACK_RESOURCE_CHANGED)
     {
         cout << "Response: PUT request was successful" << endl;
         cout << "THe PUT response has the following representation:" << endl;
@@ -406,7 +407,8 @@ void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
 // callback handler on POST request
 void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
-    if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED)
+    if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_CHANGED
+            || eCode == OC_STACK_RESOURCE_CREATED)
     {
         cout << "Response: POST request was successful" << endl;
         cout << "THe POST Response has the following representation:" << endl;
@@ -423,7 +425,7 @@ void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, con
 // callback handler on DELETE request
 void onDelete(const HeaderOptions &headerOptions, const int eCode)
 {
-    if (eCode == SUCCESS_RESPONSE)
+    if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_DELETED)
     {
         cout << "Response: DELETE request was successful" << endl;
     }
@@ -644,7 +646,6 @@ void createAirConDevice(bool isSecured)
         }
 
         g_acTimerResource = new SampleResource();
-        setlocale(LC_ALL, "");
         g_acTimerResource->setResourceProperties(AC_TIMER_URI, TIMER_RESOURCE_TYPE,
         TIMER_RESOURCE_INTERFACE);
         g_acTimerResource->setAsDiscoverableResource();
@@ -662,6 +663,9 @@ void createAirConDevice(bool isSecured)
         clockRep.setValue(key, TIMER_SECOND_VALUE);
         key = TIMER_RESET_KEY;
         clockRep.setValue(key, TIMER_RESET_VALUE);
+        value = REGION_KEY;
+        key = TIMER_LOCATION_KEY;
+        clockRep.setValue(key, value);
 
         g_acTimerResource->setResourceRepresentation(clockRep);
 
@@ -679,31 +683,36 @@ void createAirConDevice(bool isSecured)
             cout << "Unable to create Air Conditioner Timer resource" << endl;
         }
 
-        g_acChildLockResource = new SampleResource();
-        g_acChildLockResource->setResourceProperties(AC_CHILD_LOCK_URI, CHILD_LOCK_RESOURCE_TYPE,
-        CHILD_LOCK_RESOURCE_INTERFACE);
-        g_acChildLockResource->setAsObservableResource();
+        g_acSwingResource = new SampleResource();
+        g_acSwingResource->setResourceProperties(AC_SWING_URI, SWING_RESOURCE_TYPE,
+        SWING_RESOURCE_INTERFACE);
         if (isSecured)
         {
-            g_acChildLockResource->setAsSecuredResource();
+            g_acSwingResource->setAsSecuredResource();
         }
 
-        OCRepresentation childLockRep;
-        key = CHILD_LOCK_KEY;
-        childLockRep.setValue(key, CHILD_LOCK_VALUE);
-        g_acChildLockResource->setResourceRepresentation(childLockRep);
+        OCRepresentation swingRep;
+        swingRep.setValue(SWING_STATE_KEY, SWING_STATE_VALUE);
+        value = SWING_MOVEMENT_VALUE;
+        swingRep.setValue(SWING_MOVEMENT_KEY, value);
+        string supportedDirection[2] =
+        { "horizontal", "vertical" };
+        swingRep.setValue(SWING_SUPPOTED_DIRECTION_KEY, supportedDirection);
 
-        result = g_acChildLockResource->startResource();
+        g_acSwingResource->setResourceRepresentation(swingRep);
+        g_acSwingResource->setAsReadOnly("x.com.vendor.swing.supported.direction");
+
+        result = g_acSwingResource->startResource();
 
         if (result == OC_STACK_OK)
         {
-            cout << "Air Conditioner Timer Resource created successfully" << endl;
-            g_createdResourceList.push_back(g_acChildLockResource);
+            cout << "Air Conditioner Swing Resource created successfully" << endl;
+            g_createdResourceList.push_back(g_acSwingResource);
             g_isAirConDeviceCreated = true;
         }
         else
         {
-            cout << "Unable to create Air Conditioner Timer resource" << endl;
+            cout << "Unable to create Air Conditioner Swing resource" << endl;
         }
     }
     else
@@ -711,72 +720,6 @@ void createAirConDevice(bool isSecured)
         cout << "Already Smart Home AirCon Device Resources are  created!!" << endl;
     }
 
-}
-
-void handleResponse(std::shared_ptr< OCResourceRequest > request)
-{
-    auto pResponse = std::make_shared< OC::OCResourceResponse >();
-    pResponse->setRequestHandle(request->getRequestHandle());
-    pResponse->setResourceHandle(request->getResourceHandle());
-
-    // Get the request type and request flag
-    std::string requestType = request->getRequestType();
-    RequestHandlerFlag requestFlag = (RequestHandlerFlag) request->getRequestHandlerFlag();
-
-    if (requestFlag == RequestHandlerFlag::RequestFlag)
-    {
-        cout << "\t\trequestFlag : Request\n";
-
-        // If the request type is GET
-        if (requestType == "GET")
-        {
-            cout << "\t\t\trequestType : GET\n";
-
-            // Check for query params (if any)
-            QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-        }
-        else if (requestType == "PUT")
-        {
-            cout << "\t\t\trequestType : PUT\n";
-
-            OCRepresentation incomingRepresentation = request->getResourceRepresentation();
-
-            // Check for query params (if any)
-            QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-        }
-        else if (requestType == "POST")
-        {
-            // POST request operations
-            cout << "\t\t\trequestType : POST\n";
-
-            OCRepresentation incomingRepresentation = request->getResourceRepresentation();
-
-            // Check for query params (if any)
-            QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-        }
-        else if (requestType == "DELETE")
-        {
-            // DELETE request operations
-            cout << "\t\t\trequestType : Delete\n";
-
-            OCRepresentation incomingRepresentation = request->getResourceRepresentation();
-            // Check for query params (if any)
-            QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-        }
-    }
-    else if (requestFlag & RequestHandlerFlag::ObserverFlag)
-    {
-        // OBSERVE flag operations
-        cout << "\t\t\trequestType : Observe\n";
-
-        // Check for query params (if any)
-        QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-    }
 }
 
 void deleteResource()
@@ -792,14 +735,13 @@ void deleteResource()
     if (g_createdResourceList.size() != 0)
     {
 
-        for (auto resource : g_createdResourceList)
+        for (unsigned int i = 0; i < g_createdResourceList.size(); i++)
         {
-            result = resource->stopResource();
+            result = g_createdResourceList[i]->stopResource();
             if (result == OC_STACK_OK)
             {
                 cout << "Successfully stopped Resource with URI: "
-                        << resource->getUri() << endl;
-                delete resource;
+                        << g_createdResourceList[i]->getUri() << endl;
             }
         }
     }
@@ -976,17 +918,96 @@ void discoverPlatform(bool isMulticast)
     }
 }
 
-void sendGetRequest()
+AttributeValue getResourceAttributeValue(string uri, string& key)
 {
-    int selection = selectResource();
-    if (selection != -1)
+    AttributeValue value;
+    static double temperatureValue = 25;
+    static string directionValue = "left";
+    static int hourValue = 1;
+    static bool swingerValue = true;
+    static bool binaryValue = false;
+
+    if (!uri.compare(AC_SWITCH_URI) || !uri.compare(AC_SWITCH_URI_CHILD))
+    {
+        key = string(ON_OFF_KEY);
+        value = binaryValue = !binaryValue;
+    }
+    else if (!uri.compare(AC_TEMPERATURE_URI) || !uri.compare(AC_TEMPERATURE_URI_CHILD))
+    {
+        key = string(TEMPERATURE_KEY);
+        value = temperatureValue =
+                temperatureValue > 0 ? (temperatureValue - 26) : (temperatureValue + 26);
+    }
+    else if (!uri.compare(AC_AIR_FLOW_URI) || !uri.compare(AC_AIR_FLOW_URI_CHILD))
+    {
+        key = string(DIRECTION_KEY);
+        value = directionValue = directionValue.compare("left") ? "left" : "right";
+    }
+    else if (!uri.compare(AC_TIMER_URI) || !uri.compare(AC_TIMER_URI_CHILD))
+    {
+        key = string(TIMER_HOUR_KEY);
+        value = (hourValue % 2) ? (hourValue * 2) : (hourValue / 2);
+    }
+    else if (!uri.compare(AC_SWING_URI) || !uri.compare(AC_SWING_URI_CHILD))
+    {
+        key = string("x.com.vendor.swing.on");
+        value = swingerValue = !swingerValue;
+    }
+
+    return value;
+}
+
+void updateLocalResources()
+{
+
+    static bool binaryValue = false;
+
+    if (g_createdResourceList.size() > 0)
+
+    {
+        for (auto resource : g_createdResourceList)
+        {
+            string key = "";
+            AttributeValue value;
+
+            value = getResourceAttributeValue(resource->getUri(), key);
+            OCRepresentation rep = resource->getRepresentation();
+            if (rep.hasAttribute(key))
+            {
+                rep.setValue(key, value);
+                resource->setResourceRepresentation(rep);
+                cout << "Successfully updated resource attribute!!" << endl;
+                ResourceHelper::getInstance()->printRepresentation(rep);
+                resource->notifyObservers(resource);
+            }
+            else
+            {
+                cout << "The resource does not have the mentioned attribute" << endl;
+            }
+        }
+
+    }
+    else
+    {
+        cout << "No resource to Update!!" << endl;
+    }
+}
+
+void sendGetRequest(ResourceSelectionType type)
+{
+    vector< shared_ptr< OCResource > > remoteResourceList = getRemoteResourceList(type);
+    if (remoteResourceList.size() > 0)
     {
         QueryParamsMap qpMap;
-        shared_ptr < OCResource > targetResource = g_foundResourceList.at(selection);
-        cout << "Sending Get Request to the resource with: " << targetResource->host()
-                << targetResource->uri() << endl;
-        targetResource->get(qpMap, onGet, g_qos);
-        cout << "GET request sent!!" << endl;
+        for (auto resource : remoteResourceList)
+        {
+            g_hasCallbackArrived = false;
+            cout << "Sending Get Request to the resource: " << resource->host() << resource->uri()
+                    << endl;
+            resource->get(qpMap, onGet, g_qos);
+            cout << "GET request sent!!" << endl;
+        }
+
         waitForCallback();
 
     }
@@ -996,33 +1017,14 @@ void sendGetRequest()
     }
 }
 
-void sendGetRequestWithQuery(string key, string value)
+void sendPutRequest(ResourceSelectionType type)
 {
-    int selection = selectResource();
-    if (selection != -1)
-    {
-        QueryParamsMap qpMap;
-        qpMap[key] = value;
-        g_foundResourceList.at(selection)->get(qpMap, onGet, g_qos);
-        cout << "GET request sent!!" << endl;
-        waitForCallback();
 
-    }
-    else
-    {
-        cout << "No resource to send GET!!" << endl;
-    }
-}
-
-void sendPutRequestUpdate()
-{
-    int selection = selectResource();
-    if (selection != -1)
+    vector< shared_ptr< OCResource > > remoteResourceList = getRemoteResourceList(type);
+    if (remoteResourceList.size() > 0)
     {
         OCRepresentation rep;
-
-        cout << "Sending Complete Update Message(PUT)..." << endl;
-
+        QueryParamsMap qpMap;
         string key = REGION_KEY;
         string value = DEFAULT_REGION;
         rep.setValue(key, value);
@@ -1036,10 +1038,15 @@ void sendPutRequestUpdate()
         value = DEFAULT_MANUFACTURER;
         rep.setValue(key, value);
 
-// Invoke resource's put API with rep, query map and the callback parameter
-        QueryParamsMap query;
-        g_foundResourceList.at(selection)->put(rep, query, &onPut, g_qos);
-        cout << "PUT request sent!!" << endl;
+        for (auto resource : remoteResourceList)
+        {
+            g_hasCallbackArrived = false;
+            cout << "Sending PUT Request to the resource: " << resource->host() << resource->uri()
+                    << endl;
+            resource->put(rep, qpMap, onPut, g_qos);
+            cout << "PUT request sent!!" << endl;
+        }
+
         waitForCallback();
 
     }
@@ -1049,243 +1056,133 @@ void sendPutRequestUpdate()
     }
 }
 
-void sendPutRequestCreate()
+void sendPostRequest(ResourceSelectionType type)
 {
-    int selection = selectResource();
-    if (selection != -1)
+    vector< shared_ptr< OCResource > > remoteResourceList = getRemoteResourceList(type);
+    if (remoteResourceList.size() > 0)
     {
         OCRepresentation rep;
-
-        cout << "Sending Create Resource Message(PUT)..." << endl;
-
-        vector < string > resourceTypes;
-        string key = URI_KEY;
-        string value = NEW_RESOURCE_URI;
-        rep.setUri(value);
-        value = SWITCH_RESOURCE_TYPE;
-        resourceTypes.push_back(value);
-        rep.setResourceTypes(resourceTypes);
-        key = BINARY_SWITCH_KEY;
-        rep.setValue(key, BINARY_SWITCH_VALUE);
-
-        // Invoke resource's post API with rep, query map and the callback parameter
-        QueryParamsMap query;
-        g_foundResourceList.at(selection)->put(rep, query, &onPut, g_qos);
-        cout << "PUT request sent!!" << endl;
-        waitForCallback();
-
-    }
-    else
-    {
-        cout << "No resource to send PUT!!" << endl;
-    }
-}
-
-AttributeValue getAttributeValueFromUser()
-{
-    AttributeValue value;
-    string valueString = "";
-    bool valueBool = false;
-    int valueInt = 0;
-    float valueFloat = 0.0;
-    double valueDouble = 0.0;
-    string valueArray = "";
-    string userInput = "";
-    char valueLine[MAX_ATTRIBUTE_VALUE_LENGTH];
-    long int choice = 0;
-    bool validChoice = false;
-
-    do
-    {
-        cout << "Please select attribute data type and press Enter: " << endl;
-        cout << "\t\t 1. Integer" << endl;
-        cout << "\t\t 2. Floating Point - Single Precision" << endl;
-        cout << "\t\t 3. Floating Point - Double Precision" << endl;
-        cout << "\t\t 4. Boolean" << endl;
-        cout << "\t\t 5. String" << endl;
-        cout << "\t\t 6. Array" << endl;
-
-        cin >> userInput;
-
-        choice = strtol(userInput.c_str(), NULL, 10);
-        if (choice > 0 && choice < 6)
-        {
-            validChoice = true;
-        }
-        else
-        {
-            validChoice = false;
-            cout << "Invalid input for attribute data type. Please select between 1 and 5" << endl;
-        }
-
-    } while (!validChoice);
-
-    cout << "Please input Attribute Value: ";
-    switch (choice)
-    {
-        case 1:
-            cin >> valueInt;
-            value = valueInt;
-            break;
-        case 2:
-            cin >> valueFloat;
-            value = valueFloat;
-            break;
-        case 3:
-            cin >> valueDouble;
-            value = valueDouble;
-            break;
-        case 4:
-            cout << "Please provide boolean value(O for False, 1 for True) : ";
-            cin >> valueBool;
-            value = valueBool;
-            break;
-        case 5:
-            cin.getline(valueLine, sizeof(value));
-            getline(cin, valueString);
-            value = valueString;
-            break;
-        case 6:
-            cin.getline(valueLine, sizeof(value));
-            getline(cin, valueArray);
-            value = valueArray;
-            break;
-    }
-
-    return value;
-}
-
-void updateLocalResource()
-{
-    int selection = selectLocalResource();
-    if (selection != -1)
-    {
+        QueryParamsMap qpMap;
         string key = "";
         AttributeValue value;
 
-        cout << "Please input Attribute Key: ";
-        cin >> key;
-        value = getAttributeValueFromUser();
-
-        OCRepresentation rep = g_createdResourceList.at(selection)->getRepresentation();
-        if (rep.hasAttribute(key))
+        for (auto resource : remoteResourceList)
         {
+            g_hasCallbackArrived = false;
+            if (ResourceSelectionType::VERTICAL_RESOURCE == type)
+            {
+                value = getResourceAttributeValue(resource->uri(), key);
+            }
+            else if (ResourceSelectionType::SYSTEM_RESOURCE == type)
+            {
+                key = REGION_KEY;
+                value = DEFAULT_REGION;
+            }
+
             rep.setValue(key, value);
-            g_createdResourceList.at(selection)->setResourceRepresentation(rep);
-            cout << "Successfully updated resource attribute!!" << endl;
-            ResourceHelper::getInstance()->printRepresentation(rep);
-            g_createdResourceList.at(selection)->notifyObservers(
-                    g_createdResourceList.at(selection));
+            cout << "Sending POST Request to the resource: " << resource->host() << resource->uri()
+                    << endl;
+            resource->post(rep, qpMap, onPost, g_qos);
+            cout << "POST request sent!!" << endl;
         }
-        else
+
+        waitForCallback();
+
+    }
+    else
+    {
+        cout << "No resource to send POST!!" << endl;
+    }
+}
+
+void sendBlockwisePost()
+{
+    for (auto resource : getRemoteResourceList(ResourceSelectionType::VERTICAL_RESOURCE))
+    {
+        if (resource->uri().compare(AC_TIMER_URI) == 0)
         {
-            cout << "The resource does not have the mentioned attribute" << endl;
+            g_hasCallbackArrived = false;
+            OCRepresentation rep;
+            QueryParamsMap qpMap;
+            string bigValue = VERY_BIG_VALUE;
+            AttributeValue value = bigValue;
+            rep.setValue(TIMER_LOCATION_KEY, value);
+            cout << "Sending POST Request with Blockwise Payload to the resource: "
+                    << resource->host() << resource->uri() << endl;
+            resource->post(rep, qpMap, onPost, g_qos);
+            cout << "POST with Bloackwise Payload request sent!!" << endl;
+            break;
+        }
+    }
+}
+
+void sendDeleteRequest(ResourceSelectionType type)
+{
+    vector< shared_ptr< OCResource > > remoteResourceList = getRemoteResourceList(type);
+    if (remoteResourceList.size() > 0)
+    {
+        for (auto resource : remoteResourceList)
+        {
+            g_hasCallbackArrived = false;
+            cout << "Sending Delete Request to the resource: " << resource->host()
+                    << resource->uri() << endl;
+            resource->deleteResource(onDelete, g_qos);
+            cout << "Delete request sent!!" << endl;
         }
 
-    }
-    else
-    {
-        cout << "No resource to Update!!" << endl;
-    }
-}
-
-void sendPostRequestUpdateUserInput()
-{
-    int selection = selectResource();
-    if (selection != -1)
-    {
-        OCRepresentation rep;
-        string key = "";
-        AttributeValue value;
-
-        cout << "Please input Attribute Key: ";
-        cin >> key;
-        value = getAttributeValueFromUser();
-        rep.setValue(key, value);
-
-        // Invoke resource's put API with rep, query map and the callback parameter
-        cout << "Sending Partial Update Message(POST)..." << endl;
-        QueryParamsMap query;
-        g_foundResourceList.at(selection)->post(rep, query, &onPost, g_qos);
-        cout << "POST request sent!!" << endl;
         waitForCallback();
 
     }
     else
     {
-        cout << "No resource to send POST!!" << endl;
+        cout << "No resource to send Delete!!" << endl;
     }
 }
 
-void sendPostRequestCreate()
+void observeResource(ResourceSelectionType type)
 {
-    int selection = selectResource();
-    if (selection != -1)
+    vector< shared_ptr< OCResource > > remoteResourceList = getRemoteResourceList(type);
+    if (remoteResourceList.size() > 0)
     {
-        OCRepresentation rep;
-
-        cout << "Sending Subordinate Resource Create Message(POST)..." << endl;
-
-        vector < string > resourceTypes;
-        string key = URI_KEY;
-        string value = "/subordinate-device/subordinate-light-1";
-        rep.setUri(value);
-        value = "core.light";
-        resourceTypes.push_back(value);
-        rep.setResourceTypes(resourceTypes);
-        key = "power";
-        value = "off";
-        rep.setValue(key, value);
-        key = "intensity";
-        value = "0";
-        rep.setValue(key, value);
-
-        // Invoke resource's post API with rep, query map and the callback parameter
-        g_foundResourceList.at(selection)->post(rep, QueryParamsMap(), &onPost, g_qos);
-        cout << "POST request sent!!" << endl;
-        waitForCallback();
-
-    }
-    else
-    {
-        cout << "No resource to send POST!!" << endl;
-    }
-}
-
-void sendDeleteRequest()
-{
-    int selection = selectResource();
-    if (selection != -1)
-    {
-        OCRepresentation rep;
-
-        cout << "Sending Delete Request..." << endl;
-
-        // Invoke resource's delete API with the callback parameter
-        shared_ptr < OCResource > resource = g_foundResourceList.at(selection);
-        resource->deleteResource(&onDelete);
-        cout << "DELETE request sent!!" << endl;
-        waitForCallback();
-    }
-    else
-    {
-        cout << "No resource to send DELETE!!" << endl;
-    }
-}
-
-void observeResource()
-{
-    int selection = selectResource();
-    if (selection != -1)
-    {
-        OCRepresentation rep;
-
-        cout << "Observing resource..." << endl;
-
-        shared_ptr < OCResource > resource = g_foundResourceList.at(selection);
-        resource->observe(ObserveType::Observe, QueryParamsMap(), &onObserve, g_qos);
-        cout << "Observe request sent!!" << endl;
+        for (auto resource : remoteResourceList)
+        {
+            g_hasCallbackArrived = false;
+            cout << "Sending Observe Request to the resource: " << resource->host()
+                    << resource->uri() << endl;
+            resource->observe(ObserveType::Observe, QueryParamsMap(), &onObserve, g_qos);
+            cout << "Observe request sent!!" << endl;
+        }
         g_isObservingResource = true;
+        waitForCallback();
+    }
+    else
+    {
+        cout << "No resource to Observe!!" << endl;
+    }
+}
+
+void cancelObserveResource(ResourceSelectionType type)
+{
+    vector< shared_ptr< OCResource > > remoteResourceList = getRemoteResourceList(type);
+    if (remoteResourceList.size() > 0)
+    {
+        for (auto resource : remoteResourceList)
+        {
+            g_hasCallbackArrived = false;
+            cout << "Sending Observe Cancel Request to the resource: " << resource->host()
+                    << resource->uri() << endl;
+            resource->cancelObserve(g_qos);
+            if (g_qos == QualityOfService::HighQos)
+            {
+                cout << "Observe Cancel request sent!!" << endl;
+            }
+            else
+            {
+                cout << "Observe Cancel request will be sent when a CON Notification is received!!"
+                        << endl;
+            }
+        }
+        g_isObservingResource = false;
         waitForCallback();
 
     }
@@ -1295,139 +1192,70 @@ void observeResource()
     }
 }
 
-void cancelObserveResource()
-{
-    int selection = selectResource();
-    if (selection != -1)
-    {
-        if (g_isObservingResource)
-        {
-            OCRepresentation rep;
-
-            cout << "Canceling Observe resource..." << endl;
-
-            shared_ptr < OCResource > resource = g_foundResourceList.at(selection);
-            resource->cancelObserve(g_qos);
-            cout << "Cancel Observe request sent!!" << endl;
-            g_isObservingResource = false;
-        }
-        else
-        {
-            cout << "No resource is being Observed currently!!" << endl;
-        }
-    }
-    else
-    {
-        cout << "No resource to cancel Observe!!" << endl;
-    }
-}
-
-void cancelObservePassively()
-{
-    int selection = selectResource();
-    if (selection != -1)
-    {
-        if (g_isObservingResource)
-        {
-            OCRepresentation rep;
-
-            cout << "Canceling Observe passively..." << endl;
-
-            // Currently, there is no api to cancel observe passively
-            shared_ptr < OCResource > resource = g_foundResourceList.at(selection);
-            cout << "Cancel Observe request not sent!! Currently there is no API!!" << endl;
-        }
-        else
-        {
-            cout << "No resource is being Observed currently!!" << endl;
-        }
-    }
-    else
-    {
-        cout << "No resource to cancel Observe!!" << endl;
-    }
-}
-
 string getHost()
 {
     string host = "";
-    string ip = "";
-    string port = "";
 
-    int selection = selectResource();
-    if (selection != -1)
+    for (auto resource : g_foundResourceList)
     {
-        host = g_foundResourceList.at(selection)->host();
+        if (resource->uri().compare(AC_TEMPERATURE_URI) == 0)
+        {
+            host = resource->host();
+            break;
+        }
     }
-    else
+    if (host.compare("") == 0)
     {
-        cout << "Please enter the IP of the Resource host, then press Enter: ";
-        cin >> ip;
-        cout << "Please enter the port of the Resource host, then press Enter: ";
-        cin >> port;
-
-        host = ip + ":" + port;
+        cout << "No remote resource found to send Unicast" << endl;
     }
-
     return host;
 }
 
-int selectResource()
+vector< shared_ptr< OCResource > > getRemoteResourceList(ResourceSelectionType type)
 {
-    int selection = -1;
-    int totalResource = g_foundResourceList.size();
-    if (totalResource > 0)
+    vector< shared_ptr< OCResource > > desiredResourceList;
+    desiredResourceList.clear();
+    string remoteHost = getHost();
+
+    for (auto resource : g_foundResourceList)
     {
-        cout << "\t" << "Please select your desired resource no. to send request and press Enter:"
-                << endl;
-
-        for (int i = 1; i <= totalResource; i++)
+        if (ResourceSelectionType::VERTICAL_NON_OBSERVABLE_RESOURCE == type)
         {
-            cout << "\t\t" << i << ". " << g_foundResourceList.at(i - 1)->uniqueIdentifier()
-                    << endl;
+            if (resource->uri().compare(AC_TIMER_URI) == 0)
+            {
+                desiredResourceList.clear();
+                desiredResourceList.push_back(resource);
+                break;
+            }
         }
-
-        cin >> selection;
-
-        while (selection < 1 || selection > totalResource)
+        else if (ResourceSelectionType::VERTICAL_OBSERVABLE_RESOURCE == type)
         {
-            cout << "Invalid selection of resource. Please select a resource no. between 1 & "
-                    << totalResource << endl;
-            cin >> selection;
+            if (resource->uri().find(g_commonSmartHomeUri) != string::npos)
+            {
+                desiredResourceList.push_back(resource);
+            }
+
         }
-        selection--;
+        else if (ResourceSelectionType::VERTICAL_RESOURCE == type)
+        {
+            if ((resource->uri().find(g_commonVendorUri) != string::npos)
+                    || (resource->uri().find(g_commonSmartHomeUri) != string::npos))
+            {
+                desiredResourceList.push_back(resource);
+            }
+
+        }
+        else
+        {
+            if ((remoteHost.compare(resource->host()) == 0)
+                    && ((resource->uri().compare(OC_RSRVD_DEVICE_URI) == 0)
+                            || (resource->uri().compare(OC_RSRVD_PLATFORM_URI) == 0)))
+            {
+                desiredResourceList.push_back(resource);
+            }
+        }
     }
-
-    return selection;
-}
-
-int selectLocalResource()
-{
-    int selection = -1;
-    int totalResource = g_createdResourceList.size();
-    if (totalResource > 0)
-    {
-        cout << "\t" << "Please select your desired resource no. to update attribute:" << endl;
-
-        int resourceCount = 1;
-        setlocale(LC_ALL, "");
-        for (SampleResource* localResource : g_createdResourceList)
-        {
-            cout << "\t\t" << resourceCount++ << ". " << localResource->getUri() << endl;
-        }
-
-        cin >> selection;
-
-        while (selection < 1 || selection > totalResource)
-        {
-            cout << "Invalid selection of resource. Please select a resource no. between 1 & "
-                    << totalResource << endl;
-            cin >> selection;
-        }
-        selection--;
-    }
-
-    return selection;
+    return desiredResourceList;
 }
 
 void onlyShowMenu()
@@ -1456,27 +1284,27 @@ void onlyShowMenu()
         cout << "\t\t 1. Create Non-Secured Air Conditioner Device" << endl;
         cout << "\t\t 2. Create Secured Air Conditioner Device" << endl;
         cout << "\t\t 3. Delete All Resources" << endl;
+        cout << "\t\t 4. Update Local Resource" << endl;
         cout << endl;
         cout << "\t Client Operations:" << endl;
-        cout << "\t\t 10. Find Resource using Interface Query" << endl;
-        cout << "\t\t 11. Find Specific Type Of Resource" << endl;
-        cout << "\t\t 12. Find All Resources" << endl;
-        cout << "\t\t 13. Find Resource using Interface Query - Unicast" << endl;
-        cout << "\t\t 14. Find Specific Type Of Resource - Unicast" << endl;
-        cout << "\t\t 15. Find All Resources - Unicast" << endl;
-        cout << "\t\t 16. Send GET Request" << endl;
-        cout << "\t\t 17. Send GET Request with query" << endl;
-        cout << "\t\t 18. Send PUT Request - Create Resource" << endl;
-        cout << "\t\t 19. Send PUT Request - Complete Update" << endl;
-        cout << "\t\t 20. Send POST Request - Partial Update - User Input" << endl;
-        cout << "\t\t 21. Send POST Request - Create Sub-Ordinate Resource" << endl;
-        cout << "\t\t 22. Send Delete Request" << endl;
-        cout << "\t\t 23. Observe Resource - Retrieve Request with Observe" << endl;
-        cout << "\t\t 24. Cancel Observing Resource" << endl;
-        cout << "\t\t 25. Cancel Observing Resource Passively" << endl;
-        cout << "\t\t 26. Discover Device - Multicast" << endl;
-        cout << "\t\t 27. Discover Platform - Multicast" << endl;
-        cout << "\t\t 28. Update Local Resource" << endl;
+        cout << "\t\t 10. Discover Device - Multicast" << endl;
+        cout << "\t\t 11. Discover Platform - Multicast" << endl;
+        cout << "\t\t 12. Discover Resources - Multicast" << endl;
+        cout << "\t\t 13. Discover Resources - Unicast" << endl;
+        cout << "\t\t 14. Discover Resources - Multicast with Query" << endl;
+        cout << "\t\t 15. Send GET Request to Vertical Resources" << endl;
+        cout << "\t\t 16. Send GET Request to Core Resources" << endl;
+        cout << "\t\t 17. Send PUT Request to Vertical Resources" << endl;
+        cout << "\t\t 18. Send PUT Request to Core Resources" << endl;
+        cout << "\t\t 19. Send POST Request to Vertical Resources" << endl;
+        cout << "\t\t 20. Send POST Request to Core Resources" << endl;
+        cout << "\t\t 21. Send Delete Request to Vertical Resources" << endl;
+        cout << "\t\t 22. Send Delete Request to Core Resources" << endl;
+        cout << "\t\t 23. Send Observe Request to Vertical Observable Resources" << endl;
+        cout << "\t\t 24. Send Observe Request to Core Resources" << endl;
+        cout << "\t\t 25. Send Observe Request to Vertical Non-observable Resources" << endl;
+        cout << "\t\t 26. Cancel Observing Resource" << endl;
+        cout << "\t\t 27. Send POST Request with Blockwise Payload" << endl;
     }
 
 }
@@ -1508,213 +1336,186 @@ void handleMenu()
     {
         s_isFirstTime = false;
     }
-    if ((choice > 28 && choice < 100) || choice < 0 || (choice > 3 && choice < 10) || choice > 108)
-    {
-        cout << "Invalid Input. Please input your choice again" << endl;
-    }
-    else
-    {
-        switch (choice)
-        {
-            case 1:
-                createAirConDevice();
-                break;
 
-            case 2:
-                isSecured = true;
-                createAirConDevice(isSecured);
-                break;
+    switch (choice)
+    {
+        case 1:
+            createAirConDevice();
+            break;
 
-            case 3:
+        case 2:
+            isSecured = true;
+            createAirConDevice(isSecured);
+            break;
+
+        case 3:
+            deleteResource();
+            break;
+            break;
+
+        case 4:
+            updateLocalResources();
+            break;
+            break;
+
+        case 10:
+            isMulticast = true;
+            discoverDevice(isMulticast);
+            break;
+
+        case 11:
+            discoverPlatform();
+            break;
+
+        case 12:
+            findAllResources();
+            if (g_foundResourceList.size() == 0)
+            {
+                cout << "No resource found!!" << endl;
+            }
+            break;
+
+        case 13:
+            findAllResources();
+            resourceHost = getHost();
+            findAllResources(resourceHost);
+            if (g_foundResourceList.size() == 0)
+            {
+                cout << "No resource found!!" << endl;
+            }
+            break;
+
+        case 14:
+            findResource(string(TEMPERATURE_RESOURCE_TYPE));
+            if (g_foundResourceList.size() == 0)
+            {
+                cout << "No resource found!!" << endl;
+            }
+            break;
+
+        case 15:
+            sendGetRequest(ResourceSelectionType::VERTICAL_RESOURCE);
+            break;
+
+        case 16:
+            sendGetRequest(ResourceSelectionType::SYSTEM_RESOURCE);
+            break;
+
+        case 17:
+            sendPutRequest(ResourceSelectionType::VERTICAL_RESOURCE);
+            break;
+
+        case 18:
+            sendPutRequest(ResourceSelectionType::SYSTEM_RESOURCE);
+            break;
+
+        case 19:
+            sendPostRequest(ResourceSelectionType::VERTICAL_RESOURCE);
+            break;
+
+        case 20:
+            sendPostRequest(ResourceSelectionType::SYSTEM_RESOURCE);
+            break;
+
+        case 21:
+            sendDeleteRequest(ResourceSelectionType::VERTICAL_RESOURCE);
+            break;
+
+        case 22:
+            sendDeleteRequest(ResourceSelectionType::SYSTEM_RESOURCE);
+            break;
+
+        case 23:
+            observeResource(ResourceSelectionType::VERTICAL_OBSERVABLE_RESOURCE);
+            break;
+
+        case 24:
+            observeResource(ResourceSelectionType::SYSTEM_RESOURCE);
+            break;
+
+        case 25:
+            observeResource(ResourceSelectionType::VERTICAL_NON_OBSERVABLE_RESOURCE);
+            break;
+
+        case 26:
+            cancelObserveResource(ResourceSelectionType::VERTICAL_OBSERVABLE_RESOURCE);
+
+        case 27:
+            sendBlockwisePost();
+            break;
+
+        case 100:
+            g_qos = QualityOfService::HighQos;
+            if (s_isFirstTime)
+            {
+                cout << "CON Type Message Selected for Server/Client" << endl;
+            }
+            else
+            {
+                cout << "CON Type Message Selected for Client" << endl;
+            }
+            break;
+
+        case 101:
+            g_qos = QualityOfService::LowQos;
+            if (s_isFirstTime)
+            {
+                cout << "NON Type Message Selected for Server/Client" << endl;
+            }
+            else
+            {
+                cout << "NON Type Message Selected for Client" << endl;
+            }
+            break;
+
+        case 102:
+            g_connectivityType = CT_IP_USE_V4;
+            initiateServer();
+            break;
+
+        case 103:
+            g_connectivityType = CT_IP_USE_V6;
+            initiateServer();
+            break;
+
+        case 104:
+            g_connectivityType = CT_ADAPTER_IP;
+            initiateServer();
+            break;
+
+        case 105:
+            g_connectivityType = CT_ADAPTER_GATT_BTLE;
+            initiateServer();
+            break;
+
+        case 106:
+            g_connectivityType = CT_ADAPTER_RFCOMM_BTEDR;
+            initiateServer();
+            break;
+
+        case 107:
+            g_connectivityType = CT_ADAPTER_TCP;
+            initiateServer();
+            break;
+
+        case 108:
+            g_connectivityType = CT_ADAPTER_NFC;
+            initiateServer();
+            break;
+
+        case 0:
+            if (g_createdResourceList.size() > 0)
+            {
                 deleteResource();
-                break;
+            }
+            g_createdResourceList.clear();
+            g_foundResourceList.clear();
+            return;
+            break;
 
-            case 10:
-                cout << "Please type query(key=value), then press Enter: ";
-                cin >> userInterfaceType;
-                resourceHost = "";
-                findAllResources(resourceHost, userInterfaceType);
-                if (g_foundResourceList.size() == 0)
-                {
-                    cout << "No resource found!!" << endl;
-                }
-                break;
-
-            case 11:
-                cout << "Please type the Resource Type to find, then press Enter: ";
-                cin >> userResourceType;
-                findResource(userResourceType);
-                if (g_foundResourceList.size() == 0)
-                {
-                    cout << "No resource found!!" << endl;
-                }
-                break;
-
-            case 12:
-                findAllResources();
-                if (g_foundResourceList.size() == 0)
-                {
-                    cout << "No resource found!!" << endl;
-                }
-                break;
-
-            case 13:
-                resourceHost = getHost();
-                cout << "Please type query(key=value), then press Enter: ";
-                cin >> userInterfaceType;
-                findAllResources(resourceHost, userInterfaceType);
-                if (g_foundResourceList.size() == 0)
-                {
-                    cout << "No resource found!!" << endl;
-                }
-                break;
-
-            case 14:
-                resourceHost = getHost();
-                cout << "Please type the Resource Type to find, then press Enter: ";
-                cin >> userResourceType;
-                findResource(userResourceType, resourceHost);
-                if (g_foundResourceList.size() == 0)
-                {
-                    cout << "No resource found!!" << endl;
-                }
-                break;
-
-            case 15:
-                resourceHost = getHost();
-                findAllResources(resourceHost);
-                if (g_foundResourceList.size() == 0)
-                {
-                    cout << "No resource found!!" << endl;
-                }
-                break;
-
-            case 16:
-                sendGetRequest();
-                break;
-
-            case 17:
-                cout << "Please type query key, then press Enter: ";
-                cin >> queryKey;
-                cout << "Please type query value, then press Enter: ";
-                cin >> queryValue;
-                sendGetRequestWithQuery(queryKey, queryValue);
-                break;
-
-            case 18:
-                sendPutRequestCreate();
-                break;
-
-            case 19:
-                sendPutRequestUpdate();
-                break;
-
-            case 20:
-                sendPostRequestUpdateUserInput();
-                break;
-
-            case 21:
-                sendPostRequestCreate();
-                break;
-
-            case 22:
-                sendDeleteRequest();
-                break;
-
-            case 23:
-                observeResource();
-                break;
-
-            case 24:
-                cancelObserveResource();
-                break;
-
-            case 25:
-                cancelObservePassively();
-                break;
-
-            case 26:
-                isMulticast = true;
-                discoverDevice(isMulticast);
-                break;
-
-            case 27:
-                discoverPlatform();
-                break;
-
-            case 28:
-                updateLocalResource();
-                break;
-
-            case 100:
-                g_qos = QualityOfService::HighQos;
-                if (s_isFirstTime)
-                {
-                    cout << "CON Type Message Selected for Server/Client" << endl;
-                }
-                else
-                {
-                    cout << "CON Type Message Selected for Client" << endl;
-                }
-                break;
-
-            case 101:
-                g_qos = QualityOfService::LowQos;
-                if (s_isFirstTime)
-                {
-                    cout << "NON Type Message Selected for Server/Client" << endl;
-                }
-                else
-                {
-                    cout << "NON Type Message Selected for Client" << endl;
-                }
-                break;
-
-            case 102:
-                g_connectivityType = CT_IP_USE_V4;
-                initiateServer();
-                break;
-
-            case 103:
-                g_connectivityType = CT_IP_USE_V6;
-                initiateServer();
-                break;
-
-            case 104:
-                g_connectivityType = CT_ADAPTER_IP;
-                initiateServer();
-                break;
-
-            case 105:
-                g_connectivityType = CT_ADAPTER_GATT_BTLE;
-                initiateServer();
-                break;
-
-            case 106:
-                g_connectivityType = CT_ADAPTER_RFCOMM_BTEDR;
-                initiateServer();
-                break;
-
-            case 107:
-                g_connectivityType = CT_ADAPTER_TCP;
-                initiateServer();
-                break;
-
-            case 108:
-                g_connectivityType = CT_ADAPTER_NFC;
-                initiateServer();
-                break;
-
-            case 0:
-                if (g_createdResourceList.size() > 0)
-                {
-                    deleteResource();
-                }
-                g_createdResourceList.clear();
-                g_foundResourceList.clear();
-                return;
-                break;
-        }
+        default:
+            cout << "Invalid Input. Please input your choice again" << endl;
     }
+
     showMenu();
 }

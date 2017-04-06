@@ -1,6 +1,6 @@
 /******************************************************************
 *
-* Copyright 2016 Samsung Electronics All Rights Reserved.
+* Copyright 2017 Samsung Electronics All Rights Reserved.
 *
 *
 *
@@ -206,7 +206,8 @@ void ResourceHelper::printRepresentation(OCRepresentation rep)
 
     if (rep.hasAttribute(RESOURCE_TYPE_KEY))
     {
-        cout << "The representation has interface: " << rep.getValueToString(RESOURCE_TYPE_KEY) << endl;
+        cout << "The representation has interface: " << rep.getValueToString(RESOURCE_TYPE_KEY)
+                << endl;
     }
 
     printPayload(rep.getPayload(), rep);
@@ -220,7 +221,7 @@ void ResourceHelper::printPayload(OCRepPayload* incomingPayload, OCRepresentatio
 
     OCStringLL* interfaces = incomingPayload->interfaces;
     string interfaceInfo = "The representation Interfaces are: [";
-    while(interfaces)
+    while (interfaces)
     {
         hasInterface = true;
 
@@ -228,13 +229,14 @@ void ResourceHelper::printPayload(OCRepPayload* incomingPayload, OCRepresentatio
         interfaces = interfaces->next;
     }
 
-    if (hasInterface){
+    if (hasInterface)
+    {
         cout << interfaceInfo << "]" << endl;
     }
 
     OCStringLL* types = incomingPayload->types;
     string typeInfo = "The representation Types are: [";
-    while(types)
+    while (types)
     {
         hasType = true;
 
@@ -242,7 +244,8 @@ void ResourceHelper::printPayload(OCRepPayload* incomingPayload, OCRepresentatio
         types = types->next;
     }
 
-    if (hasType){
+    if (hasType)
+    {
         cout << typeInfo << "]" << endl;
     }
 
@@ -250,7 +253,6 @@ void ResourceHelper::printPayload(OCRepPayload* incomingPayload, OCRepresentatio
     {
         cout << "The representation has following Attributes: " << endl;
     }
-
 
     while (incomingPayload)
     {
@@ -289,7 +291,7 @@ void ResourceHelper::printPayload(OCRepPayload* incomingPayload, OCRepresentatio
             {
                 value = string(repValue->str);
             }
-            if (repValue->type == OCRepPayloadPropType::OCREP_PROP_ARRAY )
+            if (repValue->type == OCRepPayloadPropType::OCREP_PROP_ARRAY)
             {
                 if (repValue->arr.type == OCRepPayloadPropType::OCREP_PROP_OBJECT)
                 {
@@ -299,9 +301,9 @@ void ResourceHelper::printPayload(OCRepPayload* incomingPayload, OCRepresentatio
                     for (size_t sz = 0; sz < arraySize; sz++)
                     {
                         OCRepPayload* payload = *objectArray;
-                        cout << "\t\t\t\t\t {" <<endl;
+                        cout << "\t\t\t\t\t {" << endl;
                         printPayload(payload, rep, level);
-                        cout << "\t\t\t\t\t }" <<endl;
+                        cout << "\t\t\t\t\t }" << endl;
                         objectArray++;
                     }
                     cout << "\t\t\t\t ]" << endl;
@@ -313,9 +315,9 @@ void ResourceHelper::printPayload(OCRepPayload* incomingPayload, OCRepresentatio
             }
             if (repValue->type == OCRepPayloadPropType::OCREP_PROP_OBJECT)
             {
-                cout << "\t{" <<endl;
+                cout << "\t{" << endl;
                 printPayload(repValue->obj, rep, level);
-                cout << "\t}" <<endl;
+                cout << "\t}" << endl;
             }
             cout << value << endl;
             repValue = repValue->next;
