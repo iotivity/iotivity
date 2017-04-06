@@ -19,11 +19,6 @@
 *
 ******************************************************************/
 '''
-##
-# Build script for Linux
-#
-##
-
 print '\n---------------Started Building Resource Encapsulation for Linux---------------\n'
 
 Import('env_linux')
@@ -35,6 +30,8 @@ iotivity_root = env_linux.get('IOTIVITY_ROOT')
 iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
 iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
 variant_dir = env_linux.get('VARIANT_DIR')
+install_dir = env_linux.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
 test = env_linux.get('TEST')
 common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
 
@@ -60,27 +57,27 @@ iotivity_include_paths = [
 
 tc_include_paths = [
     iotivity_test_root + '/include',
-    iotivity_test_root + '/src/tc/re/gtest/include',
+    test_src_root + '/tc/re/gtest/include',
     iotivity_test_root + '/extlibs/gtest-1.7.0/include'
 ]
 
 tc_src = [
-    Glob(iotivity_test_root + '/src/tc/re/gtest/src/btc/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/re/gtest/src/stc/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/re/gtest/src/helper/*.cpp')
+    Glob(test_src_root + '/tc/re/gtest/src/btc/*.cpp'),
+    Glob(test_src_root + '/tc/re/gtest/src/stc/*.cpp'),
+    Glob(test_src_root + '/tc/re/gtest/src/helper/*.cpp')
 ]
 
 server_src = [
-    Glob(iotivity_test_root + '/src/testapp/re/c_cpp/src/retestservers.cpp'),
-    Glob(iotivity_test_root + '/src/tc/re/gtest/src/helper/*.cpp')
+    Glob(test_src_root + '/testapp/re/c_cpp/src/retestservers.cpp'),
+    Glob(test_src_root + '/tc/re/gtest/src/helper/*.cpp')
 ]
 
 testapp_include_paths = [
     iotivity_test_root + '/include',
-    iotivity_test_root + '/src/iBtestapp/modules/re/c_cpp/include'
+    test_src_root + '/iBtestapp/modules/re/c_cpp/include'
 ]
 
-testapp_src = Glob(iotivity_test_root + '/src/iBtestapp/modules/re/c_cpp/src/*.cpp')
+testapp_src = Glob(test_src_root + '/iBtestapp/modules/re/c_cpp/src/*.cpp')
 
 cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -fpermissive -D __WITH_DTLS__ -DWITH_TCP -finstrument-functions -O2 -g -Wall -fmessage-length=0 -std=c++0x -Os -Wall -Wextra -fPIC -pthread -DNDEBUG -DWITH_POSIX -D__linux__ -DIP_ADAPTER -DNO_EDR_ADAPTER -DLE_ADAPTER -DROUTING_EP -DWITH_BWT -DCA_DBUS_GATT_SERVICE_NAME='"org.iotivity.gatt.service"' -DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_32')
 
@@ -107,7 +104,7 @@ if 'tc' in test:
 
 if 'app' in test:
     re_testapp = env_linux.Program(source = testapp_src, 
-                    target = 're_testapp', 
+                    target = 'iotivity_re_app', 
                     CPPPATH = iotivity_include_paths + testapp_include_paths, 
                     LIBS = libs + ['octbstack', 'connectivity_abstraction', 'dl'], 
                     LIBPATH = [iotivity_lib_path, '.'],
@@ -115,15 +112,14 @@ if 'app' in test:
                     RPATH = iotivity_lib_path)
     install_targets += re_testapp
 
-install = env_linux.Install(iotivity_test_root + '/' + variant_dir, install_targets)
+install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
 
 delete_bin = []
 i = 0
 for delete_target in install_targets:
-    delete_bin += '0'
-    delete_bin[i] = Command(str(i), [], Delete(delete_target))
-    i = i + 1
+    delete_bin.append(Command(str(i), [], Delete(delete_target)))
+    i = i +1
 
-default_targets = install_targets + install + delete_bin
+default_targets = install_bin + delete_bin
 
 env_linux.Default(default_targets)

@@ -24,7 +24,7 @@
 #
 ##
 
-print '\n---------------Started Building Conformance Test App for Linux---------------\n'
+print '\n---------------Started Building Kill for Linux---------------\n'
 
 Import('env_linux')
 import os
@@ -35,6 +35,8 @@ iotivity_root = env_linux.get('IOTIVITY_ROOT')
 iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
 iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
 variant_dir = env_linux.get('VARIANT_DIR')
+install_dir = env_linux.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
 secured = env_linux.get('SECURED')
 common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
 
@@ -69,23 +71,22 @@ include_paths = [
 libs = Split('libcommon_util libboost_filesystem libboost_thread libboost_system libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction libcoap pthread libglib-2.0 gcov')
 
 src = [
-    iotivity_test_root + '/src/common/commonutil/c_cpp/ResourceHelper.cpp',
-    iotivity_test_root + '/src/common/app/c_cpp/SerialKiller.cpp'
+    test_src_root + '/common/commonutil/c_cpp/ResourceHelper.cpp',
+    test_src_root + '/common/app/c_cpp/SerialKiller.cpp'
 ]
 
 sk_app = env_linux.Program(source = src, target = 'SerialKiller', CPPPATH = include_paths, 
                 LIBS = libs, LIBPATH = [iotivity_lib_path, '.'] , RPATH = iotivity_lib_path, CPPFLAGS = cppflags + common_linux_cppflags)
 install_targets += [sk_app]
 
-install = env_linux.Install(iotivity_test_root + '/' + variant_dir, install_targets)
+install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
 
 delete_bin = []
 i = 0
 for delete_target in install_targets:
-    delete_bin += '0'
-    delete_bin[i] = Command(str(i), [], Delete(delete_target))
-    i = i + 1
+    delete_bin.append(Command(str(i), [], Delete(delete_target)))
+    i = i +1
 
-default_targets += install_targets + install + delete_bin
+default_targets = install_bin + delete_bin
 
 env_linux.Default(default_targets)

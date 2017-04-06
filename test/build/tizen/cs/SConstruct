@@ -25,6 +25,7 @@ env = Environment(CC='g++')
 
 test = ARGUMENTS.get('TEST')
 SDK = ARGUMENTS.get('SDK')
+tls_mode = ARGUMENTS.get('TLS_MODE')
 
 print 'test: ' + test
 print 'sdk: ' + SDK
@@ -61,54 +62,49 @@ iotivity_include_paths = [
     iotivity_root + '/extlibs/base64',
     iotivity_root + '/extlibs/tinycbor/tinycbor/src',
     iotivity_root + '/extlibs/mbedtls/mbedtls/include',
-    iotivity_root + '/extlibs/mbedtls/mbedtls/include/mbedtls'
-]
-
-cs_cert_include_path = [
-    iotivity_root + '/resource/csdk/security/include/internal',
-    iotivity_root + '/resource/csdk/connectivity/inc/pkix',
-    iotivity_root + '/extlibs/asn1cert',
-    iotivity_root + '/extlibs/asn1cert/'
-]
-
-test_include_paths = [
-    iotivity_test_root + '/include',
-    iotivity_test_root + '/extlibs/include',
-    iotivity_test_root + '/include/commonutil'
+    iotivity_root + '/extlibs/mbedtls/mbedtls/include/mbedtls',
+    '/usr/include/dlog'
 ]
 
 tc_include_paths = [
     iotivity_test_root + '/include',
-    iotivity_test_root + '/extlibs/gtest-1.7.0/include',
-    iotivity_test_root + '/src/tc/cs/gtest/include',
+    iotivity_test_root + '/src/tc/ic/gtest/include',
     iotivity_test_root + '/extlibs/gtest-1.7.0/include'
 ]
 
-csdk_include_paths = [ iotivity_test_root + '/src/tc/cs/gtest/cscsdk/include' ]
-
-cpp_include_paths = [ iotivity_test_root + '/src/tc/cs/gtest/cscpp/include' ]
-
-csdk_test_src = [
-    Glob(iotivity_test_root + '/src/tc/cs/gtest/cscsdk/src/btc/*.cpp'), 
-    Glob(iotivity_test_root + '/src/tc/cs/gtest/cscsdk/src/stc/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/cs/gtest/cscsdk/src/helper/*.cpp')
+simulator_include_paths = [
+    iotivity_test_root + '/include'
 ]
 
-cpp_test_src = [
-    Glob(iotivity_test_root + '/src/tc/cs/gtest/cscpp/src/btc/*.cpp'), 
-    Glob(iotivity_test_root + '/src/tc/cs/gtest/cscpp/src/stc/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/cs/gtest/cscpp/src/helper/*.cpp')
+common_src = [ 
+    iotivity_test_root + '/src/common/commonutil/c_cpp/CommonUtil.cpp',
+    iotivity_test_root + '/src/common/commonutil/c_cpp/CloudCommonUtil.cpp',
+    iotivity_test_root + '/src/common/commonutil/c_cpp/Configuration.cpp'
 ]
 
 tc_common_src = [ 
     iotivity_test_root + '/src/common/testcase/gtest/IotivitySECTestMain.cpp',
-    iotivity_test_root + '/src/common/commonutil/c_cpp/CommonUtil.cpp',
     iotivity_test_root + '/src/common/commonutil/c_cpp/CommonTestUtil.cpp',
 ]
 
+csdk_include_paths = [ iotivity_test_root + '/src/tc/cs/gtest/csdk/include' ]
+
+cpp_include_paths = [ iotivity_test_root + '/src/tc/cs/gtest/cpp/include' ]
+
+csdk_test_src = [
+    Glob(iotivity_test_root + '/src/tc/cs/gtest/csdk/src/btc/*.cpp'), 
+    Glob(iotivity_test_root + '/src/tc/cs/gtest/csdk/src/stc/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/cs/gtest/csdk/src/helper/*.cpp')
+]
+
+cpp_test_src = [
+    Glob(iotivity_test_root + '/src/tc/cs/gtest/cpp/src/btc/*.cpp'), 
+    Glob(iotivity_test_root + '/src/tc/cs/gtest/cpp/src/stc/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/cs/gtest/cpp/src/helper/*.cpp')
+]
+
 simulator_include_paths = [
-    iotivity_test_root + '/include',
-    iotivity_test_root + '/src/tc/cs/gtest/cscsdk/include',
+    iotivity_test_root + '/include'
 ]
 
 simulator_src = [
@@ -117,7 +113,7 @@ simulator_src = [
 
 lib_list = Split('m pthread rt dl stdc++ gobject-2.0 gio-2.0 glib-2.0 dlog capi-network-wifi capi-network-bluetooth  boost_system boost_filesystem boost_thread connectivity_abstraction dl expat gcov oc oc_logger ocpmapi ocprovision octbstack uuid mbedtls curl')
 
-cppdefines = Split('WITH_POSIX SLP_SDK_LOG _GNU_SOURCE TIZEN_DEBUG_ENABLE TB_LOG TIZEN __TIZEN__ __CLOUD__ CA_DBUS_GATT_SERVICE_NAME GLIB_VERSION_MIN_REQUIRED NO_EDR_ADAPTER RD_CLIENT _ENABLE_MULTIPLE_OWNER_ ROUTING_EP GLIB_VERSION_2_32 WITH_BWT IP_ADAPTER LE_ADAPTER HAVE_SYS_TIME_H DTLSV12 NDEBUG TCP_ADAPTER __WITH_DTLS__ __WITH_TLS__ WITH_TCP WITH_SHA256 SHA2_USE_INTTYPES_H DTLS_CHECK_CONTENTTYPE WITH_CLOUD')
+cppdefines = Split('__CLOUD__ WITH_CLOUD WITH_POSIX SLP_SDK_LOG _GNU_SOURCE TIZEN_DEBUG_ENABLE TB_LOG TIZEN __TIZEN__ __CLOUD__ CA_DBUS_GATT_SERVICE_NAME GLIB_VERSION_MIN_REQUIRED NO_EDR_ADAPTER RD_CLIENT _ENABLE_MULTIPLE_OWNER_ ROUTING_EP GLIB_VERSION_2_32 WITH_BWT IP_ADAPTER LE_ADAPTER HAVE_SYS_TIME_H DTLSV12 NDEBUG TCP_ADAPTER __WITH_DTLS__ __WITH_TLS__ WITH_TCP WITH_SHA256 SHA2_USE_INTTYPES_H DTLS_CHECK_CONTENTTYPE WITH_CLOUD')
 
 cppflags = ['-std=c++0x', '-std=gnu++0x', '-s', '-w', '-fPIC', '-Wall', '-g', '`pkg-config', '--cflags', '--libs','dlog', 'capi-network-wifi', 'gobject-2.0','glib-2.0`', '-fpermissive']
 
@@ -127,10 +123,17 @@ tc_lib_path = [ iotivity_test_root + '/extlibs/gtest-1.7.0/bin/tizen' ]
 
 if 'tc' in test:
 
+    csdk_target_binary = 'iotivity_cs_csdk_tlsoff_test'
+    cpp_target_binary = 'iotivity_cs_cpp_tlsoff_test'
+    if tls_mode:
+        cppflags.append(['-D__TLS_ON__'])
+        csdk_target_binary = 'iotivity_cs_csdk_tlson_test'
+        cpp_target_binary = 'iotivity_cs_cpp_tlson_test'
+        
     if 'csdk' in SDK:
-        env.Program (source = csdk_test_src + tc_common_src, 
-                    target = 'iotivity_cs_csdk_test', 
-                    CPPPATH = iotivity_include_paths + test_include_paths + tc_include_paths + csdk_include_paths, 
+        env.Program (source = csdk_test_src + tc_common_src + common_src, 
+                    target = csdk_target_binary,
+                    CPPPATH = iotivity_include_paths + tc_include_paths + csdk_include_paths, 
                     LIBS = lib_list + ['gtest'], 
                     LIBPATH = tc_lib_path, 
                     CPPFLAGS = cppflags,
@@ -138,9 +141,9 @@ if 'tc' in test:
                     CPPDEFINES = cppdefines)
 
     if 'cpp' in SDK:
-        env.Program (source = cpp_test_src + tc_common_src, 
-                    target = 'iotivity_cs_cpp_test', 
-                    CPPPATH = iotivity_include_paths + test_include_paths + tc_include_paths + cpp_include_paths, 
+        env.Program (source = cpp_test_src + tc_common_src + common_src, 
+                    target = cpp_target_binary, 
+                    CPPPATH = iotivity_include_paths + tc_include_paths + cpp_include_paths, 
                     LIBS = lib_list + ['gtest'], 
                     LIBPATH = tc_lib_path, 
                     CPPFLAGS = cppflags,
@@ -148,10 +151,11 @@ if 'tc' in test:
                     CPPDEFINES = cppdefines)
 
 if 'tc' in test or 'simulator' in test:
-    env.Program(source= simulator_src,
+    env.Program(source= simulator_src + common_src,
               target='iotivity_cs_server',
               CPPPATH= iotivity_include_paths + simulator_include_paths,
               LIBS=lib_list,
               CPPFLAGS=cppflags,
-              CXXFLAGS=cxxflags)
+              CXXFLAGS=cxxflags,
+              CPPDEFINES = cppdefines)
 

@@ -65,32 +65,36 @@ env_windows = env.Clone()
 
 
 def build_linux():
-    build_dir = 'bin/linux/'
-    env_linux.Append(VARIANT_DIR = build_dir)
-    env_linux.VariantDir(build_dir, 'src', duplicate=0)
+    variant_dir = 'bin/linux'
+    install_dir = 'bin/linux'
+    env_linux.Append(VARIANT_DIR = variant_dir)
+    env_linux.Append(INSTALL_DIR = install_dir)
+    env_linux.VariantDir(variant_dir, 'src', duplicate=0)
 
     if target_os == 'all':
         env_linux.Replace(TARGET_ARCH = 'x86')
         print "Target_Arch " + env.get('TARGET_ARCH')
-        
-        env_linux.Replace(TARGET_OS = 'linux')
-        
-    SConscript('build/linux/SConscript', exports = 'env_linux')
 
+        env_linux.Replace(TARGET_OS = 'linux')
+
+    SConscript('build/linux/SConscript', exports = 'env_linux')
 
 def build_tizen():
     build_dir = 'bin/tizen/'
     env_tizen.Append(VARIANT_DIR = build_dir)
     env_tizen.VariantDir(build_dir, 'src', duplicate=0)
-    
+
     if target_os == 'all':
         env_tizen.Replace(TARGET_ARCH = 'armv7l')
         env_tizen.Replace(TARGET_OS = 'tizen')
-            
+
     SConscript('build/tizen/SConscript', exports = 'env_tizen')
 
 def build_windows():
-    print "Windows is not supported yet "
+    build_dir = 'bin/windows/'
+    env_windows.Append(VARIANT_DIR = build_dir)
+    env_windows.VariantDir(build_dir, 'src', duplicate=0)
+    SConscript('build/windows/SConscript', exports = 'env_windows')
 
 
 def build_android():

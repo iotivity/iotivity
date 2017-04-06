@@ -35,6 +35,8 @@ iotivity_root = env_linux.get('IOTIVITY_ROOT')
 iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
 iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
 variant_dir = env_linux.get('VARIANT_DIR')
+install_dir = env_linux.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
 test = env_linux.get('TEST')
 sdk = env_linux.get('SDK')
 common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
@@ -61,33 +63,33 @@ testapp_include_paths = [ iotivity_test_root + '/include' ]
 
 csdk_include_paths = [
     iotivity_test_root + '/include',
-    iotivity_test_root + '/src/tc/ri/gtest/csdk/include',
+    test_src_root + '/tc/ri/gtest/csdk/include',
     iotivity_test_root + '/extlibs/gtest-1.7.0/include'
 ]
 
 cpp_include_paths = [
     iotivity_test_root + '/include',
-    iotivity_test_root + '/src/tc/ri/gtest/cpp/include',
+    test_src_root + '/tc/ri/gtest/cpp/include',
     iotivity_test_root + '/extlibs/gtest-1.7.0/include'
 ]
 
 csdk_src = [
-    Glob(iotivity_test_root + '/src/tc/ri/gtest/csdk/src/btc/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/ri/gtest/csdk/src/stc/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/ri/gtest/csdk/src/helper/*.cpp')
+    Glob(test_src_root + '/tc/ri/gtest/csdk/src/btc/*.cpp'),
+    Glob(test_src_root + '/tc/ri/gtest/csdk/src/stc/*.cpp'),
+    Glob(test_src_root + '/tc/ri/gtest/csdk/src/helper/*.cpp')
 ]
 
 cpp_src = [
-    Glob(iotivity_test_root + '/src/tc/ri/gtest/cpp/src/btc/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/ri/gtest/cpp/src/stc/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/ri/gtest/cpp/src/helper/*.cpp')
+    Glob(test_src_root + '/tc/ri/gtest/cpp/src/btc/*.cpp'),
+    Glob(test_src_root + '/tc/ri/gtest/cpp/src/stc/*.cpp'),
+    Glob(test_src_root + '/tc/ri/gtest/cpp/src/helper/*.cpp')
 ]
 
 testapp_src = [
-    iotivity_test_root + '/src/common/commonutil/c_cpp/ResourceServer.cpp',
-    iotivity_test_root + '/src/common/commonutil/c_cpp/SampleResource.cpp',
-    iotivity_test_root + '/src/common/commonutil/c_cpp/ResourceHelper.cpp',
-    iotivity_test_root + '/src/iBtestapp/modules/ri/c_cpp/InterOpAppRI.cpp',
+    test_src_root + '/common/commonutil/c_cpp/ResourceServer.cpp',
+    test_src_root + '/common/commonutil/c_cpp/SampleResource.cpp',
+    test_src_root + '/common/commonutil/c_cpp/ResourceHelper.cpp',
+    test_src_root + '/iBtestapp/modules/ri/c_cpp/InterOpAppRI.cpp',
 ]
 
 common_defines = Split('WITH_TCP IP_ADAPTER NO_EDR_ADAPTER LE_ADAPTER ROUTING_EP WITH_BWT')
@@ -136,7 +138,7 @@ if 'app' in test:
                         CPPDEFINES = common_defines)
     install_targets += [ri_interop_app]
 
-install = env_linux.Install(iotivity_test_root + '/' + variant_dir, install_targets)
+install = env_linux.Install(test_src_root, install_targets)
 
 delete_bin = []
 i = 0

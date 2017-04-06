@@ -40,6 +40,8 @@ iotivity_root = env_linux.get('IOTIVITY_ROOT')
 iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
 iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
 variant_dir = env_linux.get('VARIANT_DIR')
+install_dir = env_linux.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
 test = env_linux.get('TEST')
 common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
 
@@ -69,25 +71,25 @@ iotivity_include_paths = [
 
 tc_include_paths = [
     iotivity_test_root + '/include',
-    iotivity_test_root + '/src/tc/rc/gtest/include',
+    test_src_root + '/tc/rc/gtest/include',
     iotivity_test_root + '/extlibs/gtest-1.7.0/include'
 ]
 
 tc_src = [
-    Glob(iotivity_test_root + '/src/tc/rc/gtest/src/btc/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/rc/gtest/src/stc/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/rc/gtest/src/helper/*.cpp')
+    Glob(test_src_root + '/tc/rc/gtest/src/btc/*.cpp'),
+    Glob(test_src_root + '/tc/rc/gtest/src/stc/*.cpp'),
+    Glob(test_src_root + '/tc/rc/gtest/src/helper/*.cpp')
 ]
 
 testapp_include_paths = [
     iotivity_test_root + '/include',
-    iotivity_test_root + '/src/iBtestapp/common/include',
-    iotivity_test_root + '/src/iBtestapp/modules/rc/c_cpp/include'
+    test_src_root + '/iBtestapp/common/include',
+    test_src_root + '/iBtestapp/modules/rc/c_cpp/include'
 ]
 
 testapp_src = [ 
-    Glob(iotivity_test_root + '/src/iBtestapp/modules/rc/c_cpp/src/*.cpp'),
-    iotivity_test_root + '/src/iBtestapp/common/src/IBtestappCommonUtil.cpp'
+    Glob(test_src_root + '/iBtestapp/modules/rc/c_cpp/src/*.cpp'),
+    test_src_root + '/iBtestapp/common/src/IBtestappCommonUtil.cpp'
 ]
 
 cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -fpermissive')
@@ -96,12 +98,12 @@ libs = Split('connectivity_abstraction octbstack coap boost_system boost_filesys
 
 env_linux.ParseConfig("pkg-config --cflags --libs uuid")
 
-default_targets += env_linux.Command('rc_hue_lib', [], Copy(iotivity_test_root + '/' + variant_dir, iotivity_lib_path + '/libHueBundle.so'))
-default_targets += env_linux.Command('rc_di_lib', [], Copy(iotivity_test_root + '/' + variant_dir, iotivity_lib_path + '/libDISensorBundle.so'))
-default_targets += env_linux.Command('rc_bmi_lib', [], Copy(iotivity_test_root + '/' + variant_dir, iotivity_lib_path + '/libBMISensorBundle.so'))
-default_targets += env_linux.Command('rc_container_xml', [], Copy(iotivity_test_root + '/' + variant_dir, iotivity_test_root + '/res/resource_container_xml/ResourceContainerConfig.xml'))
-default_targets += env_linux.Command('rc_empty_xml', [], Copy(iotivity_test_root + '/' + variant_dir, iotivity_test_root + '/res/resource_container_xml/ResourceContainerEmptyConfig.xml'))
-default_targets += env_linux.Command('rc_testapp_xml', [], Copy(iotivity_test_root + '/' + variant_dir, iotivity_test_root + '/res/resource_container_xml/ResourceContainerConfigTestApp.xml'))
+default_targets += env_linux.Command('rc_hue_lib', [], Copy(test_src_root, iotivity_lib_path + '/libHueBundle.so'))
+default_targets += env_linux.Command('rc_di_lib', [], Copy(test_src_root, iotivity_lib_path + '/libDISensorBundle.so'))
+default_targets += env_linux.Command('rc_bmi_lib', [], Copy(test_src_root, iotivity_lib_path + '/libBMISensorBundle.so'))
+default_targets += env_linux.Command('rc_container_xml', [], Copy(test_src_root, iotivity_test_root + '/res/resource_container_xml/ResourceContainerConfig.xml'))
+default_targets += env_linux.Command('rc_empty_xml', [], Copy(test_src_root, iotivity_test_root + '/res/resource_container_xml/ResourceContainerEmptyConfig.xml'))
+default_targets += env_linux.Command('rc_testapp_xml', [], Copy(test_src_root, iotivity_test_root + '/res/resource_container_xml/ResourceContainerConfigTestApp.xml'))
 
 if 'tc' in test:
     rc_tc = env_linux.Program(source = tc_src, 
@@ -123,15 +125,14 @@ if 'app' in test:
                     CPPFLAGS = cppflags + common_linux_cppflags)
     install_targets += rc_testapp
 
-install = env_linux.Install(iotivity_test_root + '/' + variant_dir, install_targets)
+install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
 
 delete_bin = []
 i = 0
 for delete_target in install_targets:
-    delete_bin += '0'
-    delete_bin[i] = Command(str(i), [], Delete(delete_target))
-    i = i + 1
+    delete_bin.append(Command(str(i), [], Delete(delete_target)))
+    i = i +1
 
-default_targets += install_targets + install + delete_bin
+default_targets = install_bin + delete_bin
 
 env_linux.Default(default_targets)

@@ -19,179 +19,72 @@
 *
 ******************************************************************/
 '''
-##
-# Build script for Tizen
-#
-##
 
 print '\n---------------Started Building IotivitySecTest for Tizen---------------\n'
 
 env = Environment(CC='g++')
 
-# Initializing Home Dir
-######################################################################
+test = ARGUMENTS.get('TEST')
 
-ENV_HOME = ''
-PROJECT_HOME = 'test'
-EXT_LIB_HOME = 'test/extlibs'
-ORG_SRC_HOME = 'iotivity'
-SRC_HOME = ''
+iotivity_root = 'iotivity'
+iotivity_test_root = 'test'
 
-######################################################################
+iotivity_include_paths = [
+    iotivity_root + '/resource/include',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/c_common',
+    iotivity_root + '/resource/csdk/stack/include',
+    iotivity_root + '/resource/csdk/ocsocket/include',
+    iotivity_root + '/resource/csdk/ocrandom/include',
+    iotivity_root + '/resource/oc_logger/include',
+    iotivity_root + '/resource/csdk/resource-directory/include',
+    iotivity_root + '/extlibs/cereal/include',
+    iotivity_root + '/extlibs/timer',
+    iotivity_root + '/extlibs/timer/',
+    iotivity_root + '/resource/c_common/oic_malloc/include',
+    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/extlibs/tinycbor/tinycbor/src',
+    iotivity_root + '/extlibs/timer/',
+    iotivity_root + '/service/easy-setup/enrollee/inc',
+    '/usr/include/dlog'
+]
 
-# Initializing ES Dir
-######################################################################
+tc_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/tc/es/gtest/include/enrollee',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
+]
 
-ES_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
-ES_C_COMMON_DIR = ES_RESOURCE_DIR + '/c_common'
-ES_RESOURCE_INCLUDE = ES_RESOURCE_DIR + '/include'
-ES_RESOURCE_LIB = ORG_SRC_HOME + '/out/tizen/armv7l/release'
-ES_RESOURCE_CSDK_LIB = ES_RESOURCE_LIB
-ES_RESOURCE_STACK = ES_RESOURCE_DIR + '/csdk/stack/include'
-ES_RESOURCE_SOCKET = ES_RESOURCE_DIR + '/csdk/ocsocket/include'
-ES_RESOURCE_RANDOM = ES_RESOURCE_DIR + '/csdk/ocrandom/include'
-ES_RESOURCE_LOGGER = ES_RESOURCE_DIR + '/csdk/logger/include'
-ES_RESOURCE_OC_LOGGER = ES_RESOURCE_DIR + '/oc_logger/include'
-ES_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
-ES_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
-ES_RESOURCE_OC_LOGGER_LIB = ES_RESOURCE_LIB
-ES_DIR = ORG_SRC_HOME + '/service/easy-setup'
-ES_INCLUDE = ES_DIR + '/inc'
-ES_SDK_INCLUDE = ES_DIR + '/sdk/src'
-ES_LIB = ES_RESOURCE_LIB
-ES_LIB_TIMER = ES_RESOURCE_LIB + '/extlibs/timer/'
-ES_ENROLLEE_INC = ORG_SRC_HOME + '/service/easy-setup/enrollee/inc'
+cppflags = Split('-s -pthread -std=gnu++0x -pthread -Wall -DTIZEN -fpermissive -D__TIZEN__ -finstrument-functions')
 
-DLOG_INC = '/usr/include/dlog'
+libs = Split('boost_system boost_filesystem boost_thread dl expat oc octbstack oc_logger connectivity_abstraction pthread libglib-2.0 dlog ESEnrolleeSDK')
 
-######################################################################
+es_tc_src = [
+    iotivity_test_root + '/src/common/testcase/gtest/IotivitySECTestMain.cpp', 
+    iotivity_test_root + '/src/common/commonutil/c_cpp/CommonUtil.cpp', 
+    iotivity_test_root + '/src/common/commonutil/c_cpp/CommonTestUtil.cpp', 
+    Glob(iotivity_test_root + '/src/tc/es/gtest/src/helper/enrollee/*.cpp'), 
+    Glob(iotivity_test_root + '/src/tc/es/gtest/src/btc/enrollee/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/es/gtest/src/stc/enrollee/*.cpp')
+]
 
+es_simulator_src = [
+    iotivity_test_root + '/src/testapp/TcpClientApp/tcpclient.cpp', 
+    iotivity_test_root + '/src/common/commonutil/c_cpp/Configuration.cpp'
+]
 
-# Initializing Gtest Dir
-######################################################################
+if 'tc' in test:
+    env.Program(source = es_tc_src, 
+                target = 'iotivity_es_test', 
+                CPPPATH = iotivity_include_paths + tc_include_paths, 
+                LIBS = libs + ['gtest'], 
+                LIBPATH = [iotivity_test_root + '/extlibs/gtest-1.7.0/bin/tizen'], 
+                CPPFLAGS = cppflags)
 
-GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
-GTEST_INCLUDE = GTEST + '/include'
-GTEST_BIN = GTEST + '/bin/tizen'
-GTEST_LIB = GTEST_BIN + '/libgtest.a'
-
-######################################################################
-
-# Initializing Project Dir
-######################################################################
-
-RESOURCE_LIB_DIR = ORG_SRC_HOME + '/out/tizen/armv7l/release'
-
-TC_DIR = PROJECT_HOME + '/src/tc'
-ITC_DIR = TC_DIR + '/es/gtest/src/stc/enrollee'
-UTC_DIR = TC_DIR + '/es/gtest/src/btc/enrollee'
-
-TESTAPP_CINCOUDE = PROJECT_HOME + '/include/testapp'
-
-COMMON_DIR = PROJECT_HOME + '/src/common'
-COMMON_UTIL_DIR =COMMON_DIR + '/commonutil/c_cpp'
-ES_COMMON_DIR = TC_DIR + '/es/gtest/src/helper/enrollee'
-
-INCLUDE_DIR = PROJECT_HOME + '/include'
-TC_INCLUDE_DIR = INCLUDE_DIR + '/testcase'
-ES_INCLUDE_DIR = TC_DIR + '/es/gtest/include/enrollee'
-COMMON_UTIL_INCLUDE_DIR = INCLUDE_DIR + '/commonutil'
-
-
-TARGET = PROJECT_HOME + '/bin'
-#TARGET = env['VARIANT_DIR'] 
-
-######################################################################
-
-# Initializing Flags
-######################################################################
-
-env['CC'] = 'g++'
-
-COMMON_FLAGS = Split('-s -pthread -std=gnu++0x -pthread -Wall -DTIZEN -fpermissive -D__TIZEN__ -finstrument-functions')
-
-ES_CFLAGS = [COMMON_FLAGS]
-
-######################################################################
-
-# Initializing Includes
-######################################################################
-
-COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR]
-
-ES_CINCLUDE = [COMMON_CINCLUDE, ES_RESOURCE_INCLUDE, ES_RESOURCE_STACK, ES_RESOURCE_SOCKET, ES_RESOURCE_RANDOM, ES_RESOURCE_OC_LOGGER, ES_INCLUDE, ES_RESOURCE_CEREAL, ES_RESOURCE_TIMER, ES_LIB_TIMER, ES_SDK_INCLUDE, ES_INCLUDE_DIR, ES_C_COMMON_DIR, ES_RESOURCE_LOGGER, DLOG_INC, ES_ENROLLEE_INC]
-
-######################################################################
-
-# Initializing Libraries
-######################################################################
-
-COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR]
-ES_LIB_LOCATION = [COMMON_LIB_LOCATION, ES_RESOURCE_LIB, ES_RESOURCE_CSDK_LIB, ES_RESOURCE_OC_LOGGER_LIB, ES_LIB]
-
-COMMON_STATIC_LIBS = [GTEST_LIB]
-COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction pthread libglib-2.0 libdlog ESEnrolleeSDK')
-
-
-ES_STATIC_LIBS = []
-ES_STATIC_RESOURCE_LIBS = []
-
-ES_LIBS = [COMMON_SHARED_LIBS]
-
-######################################################################
-
-# Initializing Targets
-######################################################################
-
-ES_TC_BIN = 'iotivity_es_test'
-TEST_MAIN_BIN = 'test_main.o'
-
-
-TC_BINS = [ES_TC_BIN]
-
-######################################################################
-
-# Initializing Sources
-######################################################################
-
-COMMON_CPP = Glob(COMMON_UTIL_DIR + '/*.cpp')
-COMMON_TC_CPP = Glob(COMMON_DIR + '/testcase/*.cpp')
-
-ES_HELPER_CPP = Glob(ES_COMMON_DIR + '/*.cpp')
-COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
-
-
-TEST_MAIN = [COMMON_DIR + '/testcase/gtest/IotivitySECTestMain.cpp'] 
-
-ES_STC_CPP = Glob(ITC_DIR + '/*.cpp')
-ES_BTC_CPP = Glob(UTC_DIR + '/*.cpp')
-
-ES_CPP = [TEST_MAIN, COMMON_UTIL_CPP, ES_HELPER_CPP]
-
-ES_TC_SRC = [ES_CPP, ES_STC_CPP, ES_BTC_CPP, COMMON_STATIC_LIBS, ES_STATIC_LIBS, ES_STATIC_RESOURCE_LIBS]
-
-######################################################################
-
-# Initializing Build
-######################################################################
-
-create_target_dir = env.Command('target.out', [], Mkdir(TARGET))
-
-test_main = env.Object(source = TEST_MAIN, target = TEST_MAIN_BIN, CPPPATH = COMMON_CINCLUDE, CPPFLAGS = COMMON_FLAGS )
-
-es_tc = env.Program(source = ES_TC_SRC, target = ES_TC_BIN, CPPPATH = ES_CINCLUDE, LIBS = ES_LIBS, LIBPATH = ES_LIB_LOCATION, CPPFLAGS = ES_CFLAGS)
-
-
-pre_job = [create_target_dir]
-
-######################################################################
-# Define Build Targets
-######################################################################
-
-target_service = env.get('TARGET_SERVICE')
-target_tc = env.get('TARGET_TC')
-default_targets = []
-
-default_targets += [es_tc]
-
-env.Default(default_targets)
+if 'simulator' in test:
+    env.Program(source = es_simulator_src, 
+                target = 'iotivity_es_tcp_client', 
+                CPPPATH = tc_include_paths + [ '/usr/include/dlog' ],
+                LIBS = libs,
+                CPPFLAGS = cppflags)

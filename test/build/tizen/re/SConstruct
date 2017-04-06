@@ -19,214 +19,96 @@
 *
 ******************************************************************/
 '''
-##
-# Build script for Tizen
-#
-##
-
 print '\n---------------Started Building IotivitySecTest for Tizen---------------\n'
 
 env = Environment(CC='g++')
 
-# Initializing Home Dir
-######################################################################
+test = ARGUMENTS.get('TEST')
 
-ENV_HOME = ''
-PROJECT_HOME = 'test'
-EXT_LIB_HOME = 'test/extlibs'
-ORG_SRC_HOME = 'iotivity'
-SRC_HOME = ''
+iotivity_root = 'iotivity'
+iotivity_test_root = 'test'
 
-######################################################################
+iotivity_include_paths = [
+    iotivity_root + '/resource/include',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/csdk/stack/include',
+    iotivity_root + '/resource/csdk/ocsocket/include',
+    iotivity_root + '/resource/csdk/ocrandom/include',
+    iotivity_root + '/resource/oc_logger/include',
+    iotivity_root + '/resource/csdk/resource-directory/include',
+    iotivity_root + '/extlibs/cereal/include',
+    iotivity_root + '/extlibs/timer',
+    iotivity_root + '/resource/c_common/oic_malloc/include',
+    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/extlibs/tinycbor/tinycbor/src',
+    iotivity_root + '/service/resource-encapsulation/include',
+    '/usr/include/dlog'
+]
 
-# Initializing RE Dir
-######################################################################
+tc_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/tc/re/gtest/include',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
+]
 
-RAPIDXML_SUB_INCLUDE = ORG_SRC_HOME + '/extlibs/'
-RE_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
-RE_RESOURCE_INCLUDE = RE_RESOURCE_DIR + '/include'
-RE_RESOURCE_LIB = ORG_SRC_HOME + '/out/tizen/armv7l/release'
-RE_RESOURCE_CSDK_LIB = RE_RESOURCE_LIB
-RE_RESOURCE_STACK = RE_RESOURCE_DIR + '/csdk/stack/include'
-RE_RESOURCE_SOCKET = RE_RESOURCE_DIR + '/csdk/ocsocket/include'
-RE_RESOURCE_RANDOM = RE_RESOURCE_DIR + '/csdk/ocrandom/include'
-RE_RESOURCE_LOGGER = RE_RESOURCE_DIR + '/csdk/logger/include'
-RE_RESOURCE_OC_LOGGER = RE_RESOURCE_DIR + '/oc_logger/include'
-RE_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
-RE_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
-RE_RESOURCE_OC_LOGGER_LIB = RE_RESOURCE_LIB
-RE_DIR = ORG_SRC_HOME + '/service/resource-encapsulation'
-RE_MODULES_DIR = RE_DIR + '/src'
-RE_INCLUDE = RE_DIR + '/include/'
-RE_C_COMMON = ORG_SRC_HOME + '/resource/c_common'
-RE_COMMON_INCLUDE = RE_MODULES_DIR + '/common/primitiveResource/include/'
-RE_COMMON_TIMER_INCLUDE = RE_MODULES_DIR + '/common/expiryTimer/include/'
-RE_COMMON_INTERNAL_INCLUDE = RE_MODULES_DIR + '/common/primitiveResource/include/internal/'
-RE_BROKER_INCLUDE = RE_MODULES_DIR + '/resourceBroker/include/'
-RE_CACHE_INCLUDE = RE_MODULES_DIR + '/resourceCache/include/'
-RE_CONTAINER_INCLUDE = RE_MODULES_DIR + '/resourceContainer/include/'
-RE_CONTAINER_BUNDLE_INCLUDE = RE_MODULES_DIR + '/resourceContainer/bundle-api/include/'
-RE_SERVER_BUILDER_INCLUDE = RE_MODULES_DIR + '/serverBuilder/include/'
-RE_LIB = RE_RESOURCE_LIB
-RE_LIB_TIMER = RE_RESOURCE_LIB + '/extlibs/timer/'
+simulator_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/tc/re/gtest/include',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
+]
 
-######################################################################
+app_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/iBtestapp/modules/re/c_cpp/include',
+    iotivity_test_root + '/src/iBtestapp/common/include'
+]
 
+common_src = [ 
+    iotivity_test_root + '/src/common/commonutil/c_cpp/CommonUtil.cpp'
+]
 
-# Initializing Gtest Dir
-######################################################################
+tc_src = [
+    Glob(iotivity_test_root + '/src/tc/re/gtest/src/btc/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/re/gtest/src/stc/*.cpp'),
+    iotivity_test_root + '/src/common/testcase/gtest/IotivitySECTestMain.cpp',
+    iotivity_test_root + '/src/common/commonutil/c_cpp/CommonTestUtil.cpp',
+    Glob(iotivity_test_root + '/src/tc/re/gtest/src/helper/*.cpp')
+]
 
-GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
-GTEST_INCLUDE = GTEST + '/include'
-GTEST_BIN = GTEST + '/bin/tizen'
-GTEST_LIB = GTEST_BIN + '/libgtest.a'
+simulator_src = [
+    Glob(iotivity_test_root + '/src/testapp/re/c_cpp/src/*.cpp')
+]
 
-######################################################################
+app_src = [
+    Glob(iotivity_test_root + '/src/iBtestapp/modules/re/c_cpp/src/*.cpp'),
+    iotivity_test_root + '/src/iBtestapp/common/src/IBtestappCommonUtil.cpp'
+]
 
-# Initializing Project Dir
-######################################################################
+cppflags = Split('-s -pthread -std=gnu++0x -pthread -Wall -DTIZEN -fpermissive -D__TIZEN__')
 
-RESOURCE_LIB_DIR = ORG_SRC_HOME + '/out/tizen/armv7l/release'
+common_libs = Split('boost_system boost_filesystem boost_thread dl expat oc octbstack oc_logger connectivity_abstraction pthread glib-2.0 dlog')
+rc_libs = Split('-lHueBundle -lDISensorBundle -lBMISensorBundle -lrcs_common -lrcs_container -lrcs_server -lrcs_client')
 
-TC_DIR = PROJECT_HOME + '/src/tc/re/gtest'
-ITC_DIR = TC_DIR + '/src/stc'
-UTC_DIR = TC_DIR + '/src/btc'
-TESTAPP_DIR = PROJECT_HOME + '/src/testapp'
-TESTAPP_CINCLUDE = PROJECT_HOME + '/include/testapp'
-INTEROP_APP_DIR = PROJECT_HOME + '/src/iBtestapp/modules/re/c_cpp'
+if 'tc' in test:
+    env.Program(source = tc_src + common_src, 
+                target = 'iotivity_re_test', 
+                CPPPATH = iotivity_include_paths + tc_include_paths, 
+                LIBS = ['gtest'] + rc_libs + common_libs,
+                LIBPATH = [iotivity_test_root + '/extlibs/gtest-1.7.0/bin/tizen'],
+                CPPFLAGS = cppflags)
 
-COMMON_DIR = PROJECT_HOME + '/src/common'
-COMMON_UTIL_DIR = PROJECT_HOME + '/src/common/commonutil/c_cpp'
-TC_COMMON_DIR = COMMON_DIR + '/testcase'
-RE_COMMON_DIR = COMMON_DIR + '/testcase/re/gtest'
-TESTAPP_COMMON_DIR = COMMON_DIR + '/testapp/c_cpp'
-
-INCLUDE_DIR = PROJECT_HOME + '/include'
-TC_INCLUDE_DIR = INCLUDE_DIR + '/testcase'
-RE_INCLUDE_DIR = PROJECT_HOME + '/src/tc/re/gtest/include'
-COMMON_UTIL_INCLUDE_DIR = INCLUDE_DIR + '/commonutil'
-
-TESTAPP_INCLUDE_DIR = INCLUDE_DIR + '/testapp'
-INTEROP_APP_INCLUDE_DIR = INTEROP_APP_DIR + '/include'
-INTEROP_APP_SRC_DIR = INTEROP_APP_DIR + '/src'
-
-TARGET = PROJECT_HOME + '/bin'
-#TARGET = env['VARIANT_DIR'] 
-
-######################################################################
-
-# Initializing Flags
-######################################################################
-
-env['CC'] = 'g++'
-
-COMMON_FLAGS = Split('-s -pthread -std=gnu++0x -pthread -Wall -DTIZEN -fpermissive -D__TIZEN__ -finstrument-functions')
-
-RE_CFLAGS = [COMMON_FLAGS]
-
-######################################################################
-
-# Initializing Includes
-######################################################################
-
-COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR]
-
-RE_CINCLUDE = [RAPIDXML_SUB_INCLUDE, RE_C_COMMON, COMMON_CINCLUDE, RE_RESOURCE_INCLUDE, RE_RESOURCE_STACK, RE_RESOURCE_SOCKET, RE_RESOURCE_RANDOM, RE_RESOURCE_OC_LOGGER, RE_RESOURCE_CEREAL, RE_RESOURCE_TIMER, RE_LIB_TIMER, RE_INCLUDE, RE_COMMON_INCLUDE, RE_COMMON_TIMER_INCLUDE, RE_COMMON_INTERNAL_INCLUDE, RE_BROKER_INCLUDE, RE_CACHE_INCLUDE, RE_CONTAINER_INCLUDE, RE_CONTAINER_BUNDLE_INCLUDE, RE_SERVER_BUILDER_INCLUDE, RE_INCLUDE_DIR, RE_RESOURCE_LOGGER, '/usr/include/dlog', INTEROP_APP_INCLUDE_DIR]
-
-######################################################################
-
-# Initializing Libraries
-######################################################################
-
-COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR]
-RE_LIB_LOCATION = [COMMON_LIB_LOCATION, RE_RESOURCE_LIB, RE_RESOURCE_CSDK_LIB, RE_RESOURCE_OC_LOGGER_LIB, RE_LIB]
-
-COMMON_STATIC_LIBS = [GTEST_LIB]
-COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction pthread libglib-2.0 libdlog')
-
-# liboc_logger_core  libcoap
-
-#TM_STATIC_LIBS = [TM_LIB + '/libTGMSDKLibrary.a']
-#TM_STATIC_RESOURCE_LIBS = [TM_RESOURCE_LIB + '/liboc.a', TM_RESOURCE_CSDK_LIB + '/liboctbstack.a', TM_RESOURCE_OC_LOGGER_LIB + '/liboc_logger.a', TM_RESOURCE_OC_LOGGER_LIB + '/libcoap.a']
-
-#RE_STATIC_LIBS = [RE_LIB + '/librcs_client.a', RE_LIB + '/librcs_common.a', RE_LIB + '/librcs_container.a', RE_LIB + '/librcs_server.a', RE_LIB + '/libocsrm.a']
-RE_STATIC_RESOURCE_LIBS = []
-RE_STATIC_LIBS = []
-RE_SHARED_LIBS = Split('-lHueBundle -lDISensorBundle -lBMISensorBundle -lrcs_common -lrcs_container -lrcs_server -lrcs_client')
-RE_LIBS = [COMMON_SHARED_LIBS, RE_SHARED_LIBS]
-
-######################################################################
-
-# Initializing Targets
-######################################################################
-
-RE_ITC_BIN = 'iotivity_re_test'
-RE_TEST_SERVER_BIN = 'iotivity_re_server'
-RE_INTEROP_APP_BIN = 'iotivity_re_app'
-
-TEST_MAIN_BIN = 'test_main.o'
-COMMON_UTIL_BIN = 'common_util.o'
-RE_HELPER_BIN = 're_helper.o'
-
-
-######################################################################
-
-# Initializing Sources
-######################################################################
-
-COMMON_CPP = Glob(COMMON_UTIL_DIR + '/*.cpp')
-COMMON_TC_CPP = Glob(COMMON_DIR + '/testcase/*.cpp')
-
-RE_HELPER_CPP = Glob(TC_DIR + '/src/helper/*.cpp')
-COMMON_UTIL_CPP = [ COMMON_UTIL_DIR + '/CommonUtil.cpp', COMMON_UTIL_DIR + '/CommonTestUtil.cpp' ]
-
-RE_TEST_SERVER_CPP = TESTAPP_DIR + '/re/c_cpp/src/retestservers.cpp'
-
-CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
-
-TEST_MAIN = [PROJECT_HOME + '/src/common/testcase/gtest/IotivitySECTestMain.cpp'] 
-
-RE_ITC_CPP = Glob(ITC_DIR + '/*.cpp')
-RE_UTC_CPP = Glob(UTC_DIR + '/*.cpp')
-RE_INTEROP_CPP = Glob(INTEROP_APP_SRC_DIR + '/*.cpp')
-
-RE_CPP = [TEST_MAIN, COMMON_UTIL_CPP, RE_HELPER_CPP, CALL_GRAPH_CPP]
-
-RE_ITC_SRC = [RE_CPP, RE_ITC_CPP, RE_UTC_CPP, COMMON_STATIC_LIBS, RE_STATIC_LIBS, RE_STATIC_RESOURCE_LIBS]
-RE_UTC_SRC = [RE_CPP, RE_UTC_CPP, COMMON_STATIC_LIBS, RE_STATIC_LIBS, RE_STATIC_RESOURCE_LIBS]
-
-RE_TEST_SERVER_SRC = [RE_TEST_SERVER_CPP, COMMON_UTIL_CPP, RE_HELPER_CPP, COMMON_STATIC_LIBS, RE_STATIC_LIBS, RE_STATIC_RESOURCE_LIBS]
-RE_INTEROP_APP_SRC = [RE_INTEROP_CPP, COMMON_STATIC_LIBS, RE_STATIC_LIBS, RE_STATIC_RESOURCE_LIBS]
-######################################################################
-
-# Initializing Build
-######################################################################
-
-create_target_dir = env.Command('target.out', [], Mkdir(TARGET))
-
-test_main = env.Object(source = TEST_MAIN, target = TEST_MAIN_BIN, CPPPATH = COMMON_CINCLUDE, CPPFLAGS = COMMON_FLAGS )
-
-re_itc = env.Program(source = RE_ITC_SRC, target = RE_ITC_BIN, CPPPATH = RE_CINCLUDE, LIBS = RE_LIBS, LIBPATH = RE_LIB_LOCATION, CPPFLAGS = RE_CFLAGS)
-
-#re_utc = env.Program(source = RE_UTC_SRC, target = RE_UTC_BIN, CPPPATH = RE_CINCLUDE, LIBS = RE_LIBS, LIBPATH = RE_LIB_LOCATION, CPPFLAGS = RE_CFLAGS)
-
-re_test_server = env.Program(source = RE_TEST_SERVER_SRC, target = RE_TEST_SERVER_BIN, CPPPATH = RE_CINCLUDE, LIBS = RE_LIBS, LIBPATH = RE_LIB_LOCATION, CPPFLAGS = RE_CFLAGS)
-
-re_interop_app = env.Program(source = RE_INTEROP_APP_SRC, target = RE_INTEROP_APP_BIN, CPPPATH = RE_CINCLUDE, LIBS = RE_LIBS, LIBPATH = RE_LIB_LOCATION, CPPFLAGS = RE_CFLAGS)
-
-pre_job = [create_target_dir]
-
-######################################################################
-
-# Define Build Targets
-######################################################################
-
-target_service = env.get('TARGET_SERVICE')
-target_tc = env.get('TARGET_TC')
-default_targets = []
-
-default_targets += [re_test_server]
-default_targets += [re_itc]
-default_targets += [re_interop_app]
-
-env.Default(default_targets)
+if 'tc' in test or 'simulator' in test:
+    env.Program(source = simulator_src + common_src, 
+                target = 'iotivity_re_server', 
+                CPPPATH = iotivity_include_paths + simulator_include_paths, 
+                LIBS = rc_libs + common_libs,
+                LIBPATH = [iotivity_test_root + '/extlibs/gtest-1.7.0/bin/tizen'],
+                CPPFLAGS = cppflags)
+  
+if 'app' in test:
+    env.Program(source = app_src + common_src, 
+                target = 'iotivity_re_app', 
+                CPPPATH = iotivity_include_paths + app_include_paths, 
+                LIBS = rc_libs + common_libs,
+                CPPFLAGS = cppflags)

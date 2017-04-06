@@ -36,6 +36,8 @@ iotivity_root = env_linux.get('IOTIVITY_ROOT')
 iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
 iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
 variant_dir = env_linux.get('VARIANT_DIR')
+install_dir = env_linux.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
 test = env_linux.get('TEST')
 common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
 
@@ -72,42 +74,42 @@ iotivity_include_paths = [
 
 enrollee_tc_include_paths = [
     iotivity_test_root + '/include',
-    iotivity_test_root + '/src/tc/es/gtest/include/enrollee',
+    test_src_root + '/tc/es/gtest/include/enrollee',
     iotivity_test_root + '/extlibs/gtest-1.7.0/include',
 ]
 
 mediator_tc_include_paths = [
     iotivity_test_root + '/include',
-    iotivity_test_root + '/src/tc/es/gtest/include/mediator',
+    test_src_root + '/tc/es/gtest/include/mediator',
     iotivity_test_root + '/extlibs/gtest-1.7.0/include',
 ]
 
 enrollee_tc_src = [
-    Glob(iotivity_test_root + '/src/tc/es/gtest/src/helper/enrollee/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/es/gtest/src/btc/enrollee/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/es/gtest/src/stc/enrollee/*.cpp')
+    Glob(test_src_root + '/tc/es/gtest/src/helper/enrollee/*.cpp'),
+    Glob(test_src_root + '/tc/es/gtest/src/btc/enrollee/*.cpp'),
+    Glob(test_src_root + '/tc/es/gtest/src/stc/enrollee/*.cpp')
 ]
 
 if secured:
     mediator_tc_src = [
-        Glob(iotivity_test_root + '/src/tc/es/gtest/src/helper/mediator/*.cpp'),
-        Glob(iotivity_test_root + '/src/tc/es/gtest/src/btc/mediator/ESCloudResourceTest.cpp'),
-        Glob(iotivity_test_root + '/src/tc/es/gtest/src/btc/mediator/ESEasySetupTest.cpp'),
-        Glob(iotivity_test_root + '/src/tc/es/gtest/src/btc/mediator/ESEnrolleeResourceTest.cpp'),
-        Glob(iotivity_test_root + '/src/tc/es/gtest/src/btc/mediator/ESEnrolleeSecurityTest.cpp'),
-        Glob(iotivity_test_root + '/src/tc/es/gtest/src/btc/mediator/ESRemoteEnrolleeTest.cpp'),
-        Glob(iotivity_test_root + '/src/tc/es/gtest/src/btc/mediator/ESRichCommonTest.cpp'),
-        Glob(iotivity_test_root + '/src/tc/es/gtest/src/stc/mediator/*.cpp')
+        Glob(test_src_root + '/tc/es/gtest/src/helper/mediator/*.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESCloudResourceTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESEasySetupTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESEnrolleeResourceTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESEnrolleeSecurityTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESRemoteEnrolleeTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESRichCommonTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/stc/mediator/*.cpp')
 ]
 else:
     mediator_tc_src = [
-        Glob(iotivity_test_root + '/src/tc/es/gtest/src/helper/mediator/*.cpp'),
-        Glob(iotivity_test_root + '/src/tc/es/gtest/src/btc/mediator/ESCloudResourceTest.cpp'),
-        Glob(iotivity_test_root + '/src/tc/es/gtest/src/btc/mediator/ESEasySetupTest.cpp'),
-        Glob(iotivity_test_root + '/src/tc/es/gtest/src/btc/mediator/ESEnrolleeResourceTest.cpp'),
-        Glob(iotivity_test_root + '/src/tc/es/gtest/src/btc/mediator/ESRemoteEnrolleeTest.cpp'),
-        Glob(iotivity_test_root + '/src/tc/es/gtest/src/btc/mediator/ESRichCommonTest.cpp'),
-        Glob(iotivity_test_root + '/src/tc/es/gtest/src/stc/mediator/*.cpp')
+        Glob(test_src_root + '/tc/es/gtest/src/helper/mediator/*.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESCloudResourceTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESEasySetupTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESEnrolleeResourceTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESRemoteEnrolleeTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESRichCommonTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/stc/mediator/*.cpp')
 ]
 
 cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -fpermissive -DWITH_TCP')
@@ -144,15 +146,14 @@ mediator_tc = env_linux.Program(source = mediator_tc_src,
                         CPPFLAGS = cppflags + common_linux_cppflags)
 install_targets += mediator_tc
 
-install = env_linux.Install(iotivity_test_root + '/' + variant_dir, install_targets)
+install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
 
 delete_bin = []
 i = 0
 for delete_target in install_targets:
-    delete_bin += '0'
-    delete_bin[i] = Command(str(i), [], Delete(delete_target))
-    i = i + 1
+    delete_bin.append(Command(str(i), [], Delete(delete_target)))
+    i = i +1
 
-default_targets += install_targets + install + delete_bin
+default_targets = install_bin + delete_bin
 
 env_linux.Default(default_targets)

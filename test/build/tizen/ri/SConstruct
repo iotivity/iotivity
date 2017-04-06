@@ -21,13 +21,13 @@ interop_includes = [
 
 csdk_includes = [ 
                     ENV_HOME + '/test/include',
-                    ENV_HOME + '/test/src/tc/ri/gtest/ricsdk/include',
+                    ENV_HOME + '/test/src/tc/ri/gtest/csdk/include',
                     ENV_HOME + '/test/extlibs/gtest-1.7.0/include'
                 ]
 
 cpp_includes = [ 
                     ENV_HOME + '/test/include',
-                    ENV_HOME + '/test/src/tc/ri/gtest/ricpp/include',
+                    ENV_HOME + '/test/src/tc/ri/gtest/cpp/include',
                     ENV_HOME + '/test/extlibs/gtest-1.7.0/include'
                ]
 
@@ -45,9 +45,9 @@ csdk_src = [
                 Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceHelper.cpp'), 
                 Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceServer.cpp'),
                 Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/SampleResource.cpp'),
-                Glob(ENV_HOME + '/test/src/tc/ri/gtest/ricsdk/src/helper/*.cpp'),
-                Glob(ENV_HOME + '/test/src/tc/ri/gtest/ricsdk/src/btc/*.cpp'),
-                Glob(ENV_HOME + '/test/src/tc/ri/gtest/ricsdk/src/stc/*.cpp')
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/csdk/src/helper/*.cpp'),
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/csdk/src/btc/*.cpp'),
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/csdk/src/stc/*.cpp')
            ]
 
 CPP_SRC = [
@@ -57,9 +57,9 @@ CPP_SRC = [
                 Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceHelper.cpp'), 
                 Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceServer.cpp'),
                 Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/SampleResource.cpp'),
-                Glob(ENV_HOME + '/test/src/tc/ri/gtest/ricpp/src/helper/*.cpp'),
-                Glob(ENV_HOME + '/test/src/tc/ri/gtest/ricpp/src/btc/*.cpp'),
-                Glob(ENV_HOME + '/test/src/tc/ri/gtest/ricpp/src/stc/*.cpp')
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/cpp/src/helper/*.cpp'),
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/cpp/src/btc/*.cpp'),
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/cpp/src/stc/*.cpp')
           ]
 
 libs = Split('-lm -lpthread -lrt -ldl -lstdc++ -lgobject-2.0 -lgio-2.0 -lglib-2.0 -lcapi-network-wifi -ldlog -lconnectivity_abstraction -loc -loc_logger -loc_logger_core -loctbstack -lexpat -lboost_system -lboost_filesystem -lboost_thread -ldl')

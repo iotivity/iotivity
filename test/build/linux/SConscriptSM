@@ -35,6 +35,8 @@ iotivity_root = env_linux.get('IOTIVITY_ROOT')
 iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
 iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
 variant_dir = env_linux.get('VARIANT_DIR')
+install_dir = env_linux.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
 test = env_linux.get('TEST')
 common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
 
@@ -62,28 +64,28 @@ iotivity_include_paths = [
 
 tc_include_paths = [
     iotivity_test_root + '/include',
-    iotivity_test_root + '/src/tc/sm/gtest/include',
+    test_src_root + '/tc/sm/gtest/include',
     iotivity_test_root + '/extlibs/gtest-1.7.0/include'
 ]
 
 tc_src = [
-    Glob(iotivity_test_root + '/src/tc/sm/gtest/src/btc/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/sm/gtest/src/stc/*.cpp'),
-    Glob(iotivity_test_root + '/src/tc/sm/gtest/src/helper/*.cpp')
+    Glob(test_src_root + '/tc/sm/gtest/src/btc/*.cpp'),
+    Glob(test_src_root + '/tc/sm/gtest/src/stc/*.cpp'),
+    Glob(test_src_root + '/tc/sm/gtest/src/helper/*.cpp')
 ]
 
-scene_server_src = Glob(iotivity_test_root + '/src/testapp/sm/c_cpp/src/sceneserver.cpp')
+scene_server_src = Glob(test_src_root + '/testapp/sm/c_cpp/src/sceneserver.cpp')
 
 testapp_include_paths = [
     iotivity_test_root + '/include',
-    iotivity_test_root + '/src/iBtestapp/modules/sm/c_cpp/include'
+    test_src_root + '/iBtestapp/modules/sm/c_cpp/include'
 ]
 
 testapp_src = [
-    iotivity_test_root + '/src/common/commonutil/c_cpp/ResourceServer.cpp',
-    iotivity_test_root + '/src/common/commonutil/c_cpp/SampleResource.cpp',
-    iotivity_test_root + '/src/common/commonutil/c_cpp/ResourceHelper.cpp',
-    Glob(iotivity_test_root + '/src/iBtestapp/modules/sm/c_cpp/src/*.cpp'),
+    test_src_root + '/common/commonutil/c_cpp/ResourceServer.cpp',
+    test_src_root + '/common/commonutil/c_cpp/SampleResource.cpp',
+    test_src_root + '/common/commonutil/c_cpp/ResourceHelper.cpp',
+    Glob(test_src_root + '/iBtestapp/modules/sm/c_cpp/src/*.cpp'),
 ]
 
 cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -fpermissive -D __WITH_DTLS__ -DWITH_TCP -O2 -g -Wall -fmessage-length=0 -std=c++0x -Os -Wall -Wextra -fPIC -pthread -DNDEBUG -DWITH_POSIX -DIP_ADAPTER -DNO_EDR_ADAPTER -DLE_ADAPTER -DROUTING_EP -DWITH_BWT -DCA_DBUS_GATT_SERVICE_NAME='"org.iotivity.gatt.service"' -DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_32')
@@ -91,46 +93,42 @@ cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -fpermis
 libs = Split('connectivity_abstraction oc octbstack coap resource_directory boost_system boost_filesystem boost_thread dl expat oc oc_logger oc_logger_core coap glib-2.0 gcov uuid scene_manager rcs_client rcs_server rcs_common common_util pthread')
 
 if 'tc' in test:
-    sm_tc = env_linux.Program(source = tc_src, 
+    install_targets += env_linux.Program(source = tc_src, 
                 target = 'iotivity_sm_test', 
                 CPPPATH = iotivity_include_paths + tc_include_paths, 
                 LIBS = libs + ['gtest', 'tc_util', 'pthread', 'octbstack', 'connectivity_abstraction', 'dl'], 
                 LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux', '.'], 
                 CPPFLAGS = cppflags + common_linux_cppflags, 
                 RPATH = iotivity_lib_path)
-    install_targets += sm_tc
 
-    scene_server = env_linux.Program(source = scene_server_src,
+    install_targets += env_linux.Program(source = scene_server_src,
                     target = 'sceneserver', 
                     CPPPATH = iotivity_include_paths, 
                     LIBS = libs + ['octbstack', 'connectivity_abstraction', 'dl'], 
                     LIBPATH = [iotivity_lib_path, '.'],
                     CPPFLAGS = cppflags + common_linux_cppflags, 
                     RPATH = iotivity_lib_path)
-    install_targets += scene_server
 
-    default_targets += env_linux.Command('fanserver', [], Copy(variant_dir, iotivity_lib_path + '/service/scene-manager/sampleapp/linux/fanserver'))
-    default_targets += env_linux.Command('lightserver', [], Copy(variant_dir, iotivity_lib_path + '/service/scene-manager/sampleapp/linux/lightserver'))
+    default_targets += env_linux.Command('fanserver', [], Copy(iotivity_test_root + '/' + install_dir, iotivity_lib_path + '/service/scene-manager/sampleapp/linux/fanserver'))
+    default_targets += env_linux.Command('lightserver', [], Copy(iotivity_test_root + '/' + install_dir, iotivity_lib_path + '/service/scene-manager/sampleapp/linux/lightserver'))
 
 if 'app' in test:
-    sm_testapp = env_linux.Program(source = testapp_src, 
+    install_targets += env_linux.Program(source = testapp_src, 
                     target = 'iotivity_sm_app', 
                     CPPPATH = iotivity_include_paths + testapp_include_paths, 
                     LIBS = libs + ['octbstack', 'connectivity_abstraction', 'dl'], 
                     LIBPATH = [iotivity_lib_path, '.'],
                     CPPFLAGS = cppflags + common_linux_cppflags, 
                     RPATH = iotivity_lib_path)
-    install_targets += sm_testapp
 
-install = env_linux.Install(iotivity_test_root + '/' + variant_dir, install_targets)
+install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
 
 delete_bin = []
 i = 0
 for delete_target in install_targets:
-    delete_bin += '0'
-    delete_bin[i] = Command(str(i), [], Delete(delete_target))
+    delete_bin.append(Command(str(i), [], Delete(delete_target)))
     i = i + 1
 
-default_targets += install_targets + install + delete_bin
+default_targets += install_bin + delete_bin
 
 env_linux.Default(default_targets)

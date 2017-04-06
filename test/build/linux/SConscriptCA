@@ -30,6 +30,8 @@ iotivity_root = env_linux.get('IOTIVITY_ROOT')
 iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
 iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
 variant_dir = env_linux.get('VARIANT_DIR')
+install_dir = env_linux.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
 target_transport = env_linux.get('TARGET_TRANSPORT')
 test = env_linux.get('TEST')
 common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
@@ -69,11 +71,11 @@ iotivity_include_paths = [
 
 tc_include_paths = [
     iotivity_test_root + '/include',
-    iotivity_test_root + '/src/tc/ca/gtest/include',
+    test_src_root + '/tc/ca/gtest/include',
     iotivity_test_root + '/extlibs/gtest-1.7.0/include',
-    iotivity_test_root + '/src/tc/ca/gtest/include/testcase/ca'
+    test_src_root + '/tc/ca/gtest/include/testcase/ca'
 ]
-simulator_include_paths = [ iotivity_test_root + '/src/testapp/ca/c_cpp/include' ]
+simulator_include_paths = [ test_src_root + '/testapp/ca/c_cpp/include' ]
 
 lib_paths = [
     iotivity_lib_path,
@@ -88,26 +90,26 @@ common_cppflags = Split('-s -pthread -march=native -std=gnu++0x -Wall -fpermissi
 common_cppdefines = []
 
 gtest_unspecified_network_src = [ 
-    iotivity_test_root + '/src/tc/ca/gtest/src/btc/CATest.cpp', 
-    iotivity_test_root + '/src/tc/ca/gtest/src/stc/CACommonTest.cpp' 
+    test_src_root + '/tc/ca/gtest/src/btc/CATest.cpp', 
+    test_src_root + '/tc/ca/gtest/src/stc/CACommonTest.cpp' 
 ]
 
 gtest_ip_network_src = [
-    iotivity_test_root + '/src/tc/ca/gtest/src/btc/CANetworkTest.cpp',
-    iotivity_test_root + '/src/tc/ca/gtest/src/stc/CANetworkCommonTest.cpp',
-    iotivity_test_root + '/src/tc/ca/gtest/src/stc/CAClientTest.cpp',
-    iotivity_test_root + '/src/tc/ca/gtest/src/stc/CAMulticastTest.cpp'
+    test_src_root + '/tc/ca/gtest/src/btc/CANetworkTest.cpp',
+    test_src_root + '/tc/ca/gtest/src/stc/CANetworkCommonTest.cpp',
+    test_src_root + '/tc/ca/gtest/src/stc/CAClientTest.cpp',
+    test_src_root + '/tc/ca/gtest/src/stc/CAMulticastTest.cpp'
 ]
 
 gtest_tcp_network_src = [
-    iotivity_test_root + '/src/tc/ca/gtest/src/btc/CANetworkTest.cpp',
-    iotivity_test_root + '/src/tc/ca/gtest/src/stc/CANetworkCommonTest.cpp',
-    iotivity_test_root + '/src/tc/ca/gtest/src/stc/CAClientTest.cpp'
+    test_src_root + '/tc/ca/gtest/src/btc/CANetworkTest.cpp',
+    test_src_root + '/tc/ca/gtest/src/stc/CANetworkCommonTest.cpp',
+    test_src_root + '/tc/ca/gtest/src/stc/CAClientTest.cpp'
 ]
 
 gtest_src = [ gtest_unspecified_network_src, gtest_ip_network_src, gtest_tcp_network_src ]
 
-tc_common_src = [ iotivity_test_root + '/src/tc/ca/gtest/src/helper/CAHelper.cpp' ]
+tc_common_src = [ test_src_root + '/tc/ca/gtest/src/helper/CAHelper.cpp' ]
 
 lib_list = Split('libboost_system libboost_filesystem libboost_thread rt gio-2.0 gobject-2.0 glib-2.0 uuid libdl libexpat pthread gcov coap octbstack connectivity_abstraction ocsrm c_common')
 
@@ -167,7 +169,7 @@ if 'simulator' in test or 'tc' in test:
         simulator_cpp_defines.append('WITH_TCP')
         simulator_cpp_defines.append('TCP_ADAPTER')
 
-    ca_simulator = env_linux.Program(source = [iotivity_test_root + '/src/testapp/ca/c_cpp/src/ca_simulator.c'],
+    ca_simulator = env_linux.Program(source = [test_src_root + '/testapp/ca/c_cpp/src/ca_simulator.c'],
                         target = 'iotivity_ca_simulator',
                         CPPPATH = iotivity_include_paths + simulator_include_paths,
                         LIBS = lib_list,
@@ -178,17 +180,16 @@ if 'simulator' in test or 'tc' in test:
                         )
     install_targets += ca_simulator
 
-    default_targets += env_linux.Command('config_file', [], Copy(iotivity_test_root + '/' + variant_dir, iotivity_test_root + '/res/ca_resource/config.ini'))
+    default_targets += env_linux.Command('config_file', [], Copy(test_src_root, iotivity_test_root + '/res/ca_resource/config.ini'))
 
-install = env_linux.Install(iotivity_test_root + '/' + variant_dir, install_targets)
+install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
 
 delete_bin = []
 i = 0
 for delete_target in install_targets:
-    delete_bin += '0'
-    delete_bin[i] = Command(str(i), [], Delete(delete_target))
-    i = i + 1
+    delete_bin.append(Command(str(i), [], Delete(delete_target)))
+    i = i +1
 
-default_targets += install_targets + install + delete_bin
+default_targets = install_bin + delete_bin
 
 env_linux.Default(default_targets)
