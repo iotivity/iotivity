@@ -26,6 +26,7 @@ typedef std::shared_ptr<CallbackInfo> CallbackInfoPtr;
 struct IPCAAppInfoInternal
 {
     IPCAUuid     appId;
+    std::string  appIdString;
     std::string  appName;
     std::string  appSoftwareVersion;
     std::string  appCompanyName;
@@ -46,12 +47,17 @@ typedef struct _DiscoveryDetails
 class App
 {
     public:
+        typedef std::shared_ptr<App> Ptr;
+
         App(const IPCAAppInfo* ipcaAppInfo, IPCAVersion ipcaVersion);
         ~App();
 
         // Application calls IPCAOpen()/IPCAClose().
-        IPCAStatus Start(bool unitTestMode);
+        IPCAStatus Start(bool unitTestMode, App::Ptr thisSharedPtr);
         void Stop();
+
+        // Returns application's ID.
+        std::string GetAppId();
 
         // Application calls IPCADiscoverDevices().
         IPCAStatus DiscoverDevices(
@@ -62,7 +68,11 @@ class App
                         IPCAHandle* handle);
 
         // Application calls IPCAOpenDevice().
-        IPCAStatus OpenDevice(const char* deviceId, IPCADeviceHandle* deviceHandle);
+        IPCAStatus OpenDevice(
+                        App::Ptr thisApp,
+                        const char* deviceId,
+                        IPCADeviceHandle* deviceHandle);
+
         void CloseDevice(IPCADeviceHandle deviceHandle);
 
         // Application calls IPCAGetProperties().
@@ -128,17 +138,19 @@ class App
                             IPCAHandle* handle);
 
         // Close handle returned in DiscoverDevices(), GetProperties(), SetProperties(),
-        // ObserveResource(), CreateResource() and RequestAccess().
+        // ObserveResource(), CreateResource() or RequestAccess().
+        // Return IPCA_OK if successful.  Or failure, for example, if handle is already closed.
         IPCAStatus CloseIPCAHandle(
                         IPCAHandle handle,
                         IPCACloseHandleComplete closeHandleComplete,
                         const void* context);
-
     private:
         std::mutex m_appMutex;
+        App::Ptr m_thisSharedPtr;   // shared_ptr of this object.
         volatile bool m_isStopped;  // set to true when Stop() is called.
 
         IPCAAppInfoInternal m_ipcaAppInfo;
+        std::string m_appId;        // String of m_ipcaAppInfo.appId.
         IPCAVersion m_ipcaVersion;  // IPCA version requested in the call to IPCAOpen().
 
         // Object that implements callbacks to the app.
@@ -174,7 +186,7 @@ class App
                                     const void* context = nullptr);
 
         // Thread performing periodic discovery.
-        static void AppWorkerThread(App* app);
+        static void AppWorkerThread(App::Ptr app);
 
         // List of resource types to discover periodically.
         // Key is cbInfo->mapKey of each IPCADiscoverDevices() request.

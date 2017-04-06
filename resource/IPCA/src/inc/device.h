@@ -23,6 +23,8 @@
 class App;
 class OCFFramework;
 
+typedef std::shared_ptr<App> AppPtr;
+
 /* Type of resource info requested in GetResourceInfo() */
 enum class ResourceInfoType
 {
@@ -35,10 +37,10 @@ class Device
     public:
         typedef std::shared_ptr<Device> Ptr;
 
-        Device(const char* deviceId, OCFFramework* ocf, App* app);
+        Device(const char* deviceId, OCFFramework* ocf, AppPtr app);
         ~Device();
 
-        App* GetApp() { return m_app; }
+        AppPtr GetApp() { return m_app; }
         std::string GetDeviceId() { return m_deviceId; }
 
         // Make sure OCFFramework has found this device and let it know that it's opened.
@@ -94,7 +96,7 @@ class Device
 
     private:
         std::string m_deviceId;   // from IPCAOpenDevice()
-        App* m_app;
+        AppPtr m_app;
         OCFFramework* m_ocfFramework;
         bool m_isClosed;  // set to true after Close().
 };
@@ -102,7 +104,7 @@ class Device
 // returned as IPCAHandle to the app.
 typedef struct
 {
-    App* app;
+    AppPtr app;
     Device::Ptr device;
 } DeviceWrapper;
 

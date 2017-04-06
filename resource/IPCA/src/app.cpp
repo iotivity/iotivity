@@ -19,6 +19,7 @@
 
 #include "oic_time.h"
 #include "ipcainternal.h"
+#include "ocrandom.h"
 
 // Object that implements interface to IoTivity.
 // @future: Consider having an instance of this per app when there's mechanism to unregister
@@ -45,9 +46,18 @@ App::~App()
 {
 }
 
-IPCAStatus App::Start(bool unitTestMode)
+IPCAStatus App::Start(bool unitTestMode, App::Ptr thisSharedPtr)
 {
-    m_callback = std::shared_ptr<Callback>(new Callback(this));
+    char appId[UUID_STRING_SIZE];
+    if (!OCConvertUuidToString(m_ipcaAppInfo.appId.uuid, appId))
+    {
+        return IPCA_FAIL;
+    }
+
+    m_appId = appId;
+    m_thisSharedPtr = thisSharedPtr;
+
+    m_callback = std::make_shared<Callback>(m_thisSharedPtr);
     if (m_callback == nullptr)
     {
         return IPCA_OUT_OF_MEMORY;
@@ -70,7 +80,7 @@ IPCAStatus App::Start(bool unitTestMode)
     }
 
     // Start periodic discovery thread.
-    m_appWorkerThread = std::thread(&App::AppWorkerThread, this);
+    m_appWorkerThread = std::thread(&App::AppWorkerThread, m_thisSharedPtr);
     return IPCA_OK;
 }
 
@@ -121,9 +131,16 @@ void App::Stop()
         DeleteAndUnregisterCallbackInfo(m_passwordDisplayCallbackInfo->mapKey);
         m_passwordDisplayCallbackInfo = nullptr;
     }
+
+    m_thisSharedPtr = nullptr;  // Release reference to self.
 }
 
-void App::AppWorkerThread(App* app)
+std::string App::GetAppId()
+{
+    return m_appId;
+}
+
+void App::AppWorkerThread(App::Ptr app)
 {
     const uint64_t FastDiscoveryCount = 4;  // First 4 periodic discovery requests use fast period.
     const uint64_t SlowDiscoveryPeriodMs = 30000;
@@ -211,7 +228,7 @@ void App::AppWorkerThread(App* app)
     OIC_LOG_V(INFO, TAG, "-AppWorkerThread exit.");
 }
 
-IPCAStatus App::OpenDevice(const char* deviceId, IPCADeviceHandle* deviceHandle)
+IPCAStatus App::OpenDevice(App::Ptr thisApp, const char* deviceId, IPCADeviceHandle* deviceHandle)
 {
     *deviceHandle = nullptr;
 
@@ -221,7 +238,7 @@ IPCAStatus App::OpenDevice(const char* deviceId, IPCADeviceHandle* deviceHandle)
         return IPCA_OUT_OF_MEMORY;
     }
 
-    Device::Ptr device = std::shared_ptr<Device>(new Device(deviceId, &ocfFramework, this));
+    Device::Ptr device = std::shared_ptr<Device>(new Device(deviceId, &ocfFramework, thisApp));
     if (device == nullptr)
     {
         return IPCA_OUT_OF_MEMORY;
@@ -233,10 +250,10 @@ IPCAStatus App::OpenDevice(const char* deviceId, IPCADeviceHandle* deviceHandle)
         return status;
     }
 
-    deviceWrapper->app = this;
-    deviceWrapper->device = device;
+    deviceWrapper->app = thisApp;
+    deviceWrapper->device = device;  // Take a device reference.
     *deviceHandle =  reinterpret_cast<IPCADeviceHandle>(deviceWrapper.get());
-    m_openedDevices[deviceWrapper.get()] = deviceWrapper.get();  // Take a device reference.
+    m_openedDevices[deviceWrapper.get()] = deviceWrapper.get();
     deviceWrapper.release();
     return IPCA_OK;
 }
