@@ -1,6 +1,6 @@
 /******************************************************************
 *
-* Copyright 2016 Samsung Electronics All Rights Reserved.
+* Copyright 2017 Samsung Electronics All Rights Reserved.
 *
 *
 *
@@ -66,7 +66,6 @@ public class SampleResource extends ResourceServer {
         boolean shouldReturnError = false;
         String responseInterface = OcPlatform.DEFAULT_INTERFACE;
 
-        response.setErrorCode(ResourceConstants.COAP_RESPONSE_CODE_RETRIEVED);
         OcRepresentation rep = m_representation;
         System.out.println("Current Resource Representation to send : ");
         m_resourceHelper.printRepresentation(rep);
@@ -147,13 +146,11 @@ public class SampleResource extends ResourceServer {
         m_resourceHelper.printRepresentation(incomingRepresentation);
 
         // handle PUT request
-        response.setErrorCode(ResourceConstants.COAP_RESPONSE_CODE_SUCCESS);
 
         boolean shouldChange = true;
         boolean result = true;
 
         if (shouldAllowUpdate(queryParamsMap,  response)) {
-            response.setErrorCode(ResourceConstants.COAP_RESPONSE_CODE_ERROR);
             response.setResponseResult(EntityHandlerResult.ERROR);
         }
 
@@ -184,7 +181,6 @@ public class SampleResource extends ResourceServer {
         m_resourceHelper.printRepresentation(incomingRepresentation);
 
         // handle POST request
-        response.setErrorCode(ResourceConstants.COAP_RESPONSE_CODE_ERROR);
 
         String uriValue = "";
 
@@ -196,8 +192,6 @@ public class SampleResource extends ResourceServer {
                     System.out.println(
                             "Resource representation is updated!! Sending Notification to observers");
                     notifyObservers(this);
-                    response.setErrorCode(
-                            ResourceConstants.COAP_RESPONSE_CODE_UPDATED);
                     response.setResponseResult(EntityHandlerResult.OK);
                 } else {
                     if (isAttributeReadOnly) {
@@ -211,8 +205,6 @@ public class SampleResource extends ResourceServer {
                                 "Incoming Representation not supported by this resource!!");
                     }
 
-                    response.setErrorCode(
-                            ResourceConstants.COAP_RESPONSE_CODE_ERROR);
                     response.setResponseResult(EntityHandlerResult.ERROR);
                 }
         }
@@ -241,7 +233,6 @@ public class SampleResource extends ResourceServer {
         // handle DELETE
 
         if (shouldAllowUpdate(queryParamsMap, response)) {
-            response.setErrorCode(ResourceConstants.COAP_RESPONSE_CODE_DELETED);
             response.setResponseResult(EntityHandlerResult.RESOURCE_DELETED);
         }
 
@@ -265,7 +256,6 @@ public class SampleResource extends ResourceServer {
         // handle observe request
         if (isObservableResource() == false) {
             System.out.println("Observe not supported!!");
-            response.setErrorCode(ResourceConstants.COAP_RESPONSE_CODE_ERROR);
             response.setResponseResult(EntityHandlerResult.FORBIDDEN);
             System.out.println("Resource does not support Observe!!");
 
@@ -288,7 +278,6 @@ public class SampleResource extends ResourceServer {
             System.out.println(
                     "Sending notification from from register observer - for the first time");
 
-            response.setErrorCode(ResourceConstants.COAP_RESPONSE_CODE_SUCCESS);
             response.setResponseResult(EntityHandlerResult.OK);
             try {
                 OcPlatform.sendResponse(response);
@@ -303,12 +292,8 @@ public class SampleResource extends ResourceServer {
                 System.out
                         .println("Observe Info: " + observationInfo.toString());
                 m_listOfObservers.remove(observationInfo.getOcObservationId());
-                response.setErrorCode(
-                        ResourceConstants.COAP_RESPONSE_CODE_SUCCESS);
                 response.setResponseResult(EntityHandlerResult.OK);
             } else {
-                response.setErrorCode(
-                        ResourceConstants.COAP_RESPONSE_CODE_ERROR);
                 response.setResponseResult(EntityHandlerResult.ERROR);
                 System.out
                         .println("No observer found!! Unable cancel observe!!");
@@ -338,8 +323,6 @@ public class SampleResource extends ResourceServer {
                 System.out.println("Sending Notification to Observers....");
                 OcResourceResponse resourceResponse = new OcResourceResponse();
 
-                resourceResponse.setErrorCode(
-                        ResourceConstants.COAP_RESPONSE_CODE_RETRIEVED);
                 resourceResponse.setResponseResult(EntityHandlerResult.OK);
                 resourceResponse.setResourceRepresentation(
                         resource.getRepresentation(),
@@ -388,8 +371,7 @@ public class SampleResource extends ResourceServer {
             if (resourceType == "") {
                 System.out.println(
                         "No resource type received!! Unable to create resource.");
-                response.setErrorCode(
-                        ResourceConstants.COAP_RESPONSE_CODE_ERROR);
+
                 response.setResponseResult(EntityHandlerResult.ERROR);
                 response.setResourceRepresentation(blankRep,
                         OcPlatform.DEFAULT_INTERFACE);
@@ -427,8 +409,6 @@ public class SampleResource extends ResourceServer {
 
                 if (result != true) {
                     System.out.println("unable to start resource!!");
-                    response.setErrorCode(
-                            ResourceConstants.COAP_RESPONSE_CODE_ERROR);
                     if (result == false) {
                         response.setResponseResult(
                                 EntityHandlerResult.FORBIDDEN);
@@ -440,8 +420,6 @@ public class SampleResource extends ResourceServer {
                             OcPlatform.DEFAULT_INTERFACE);
                 } else {
                     System.out.println("resource started!!");
-                    response.setErrorCode(
-                            ResourceConstants.COAP_RESPONSE_CODE_CREATED);
                     response.setResponseResult(
                             EntityHandlerResult.RESOURCE_CREATED);
                     response.setResourceRepresentation(
@@ -505,8 +483,6 @@ public class SampleResource extends ResourceServer {
                 response.setResourceRepresentation(rep,
                         OcPlatform.DEFAULT_INTERFACE);
                 response.setResponseResult(EntityHandlerResult.OK);
-                response.setErrorCode(
-                        ResourceConstants.COAP_RESPONSE_CODE_UPDATED);
 
             }
 
@@ -620,7 +596,6 @@ public class SampleResource extends ResourceServer {
             notifyObservers(this);
             response.setResourceRepresentation(rep,
                     OcPlatform.DEFAULT_INTERFACE);
-            response.setErrorCode(ResourceConstants.COAP_RESPONSE_CODE_UPDATED);
             response.setResponseResult(EntityHandlerResult.OK);
             try {
                 OcPlatform.sendResponse(response);
@@ -643,8 +618,6 @@ public class SampleResource extends ResourceServer {
                                 "Update/Delete request received via interface: "
                                         + value
                                         + " . This interface is not authorized to update/delete resource!!");
-                        response.setErrorCode(
-                                ResourceConstants.COAP_RESPONSE_CODE_RESOURCE_UNAUTHORIZED);
                         response.setResponseResult(
                                 EntityHandlerResult.FORBIDDEN);
                         shouldChange = false;

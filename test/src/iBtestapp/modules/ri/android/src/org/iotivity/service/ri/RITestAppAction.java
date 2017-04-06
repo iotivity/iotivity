@@ -1,14 +1,14 @@
 /******************************************************************
- * Copyright 2016 Samsung Electronics All Rights Reserved.
- * <p/>
- * <p/>
- * <p/>
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,21 +18,17 @@
 
 package org.iotivity.service.ri;
 
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
+import android.content.Context;
 
-import org.iotivity.base.OcPlatform.OnDeviceFoundListener;
-import org.iotivity.base.OcPlatform.OnPlatformFoundListener;
-import org.iotivity.base.OcPlatform.OnResourceFoundListener;
 import org.iotivity.base.ModeType;
 import org.iotivity.base.ObserveType;
 import org.iotivity.base.OcConnectivityType;
 import org.iotivity.base.OcException;
 import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcPlatform;
+import org.iotivity.base.OcPlatform.OnDeviceFoundListener;
+import org.iotivity.base.OcPlatform.OnPlatformFoundListener;
+import org.iotivity.base.OcPlatform.OnResourceFoundListener;
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.OcResource;
 import org.iotivity.base.OcResource.OnDeleteListener;
@@ -55,8 +51,11 @@ public class RITestAppAction extends Base {
 
     private static final String DEFAULT_IP = "0.0.0.0";
     private static final int DEFAULT_PORT = 0;
-    private static double targetTemp = 31.234;
-    private static double tempDeviation = 3.33333;
+    private static double s_targetTemp = 31.234;
+    private static double s_tempDeviation = 3.33333;
+    private static String s_directionValue = "left";
+    private static int s_hourValue = 1;
+    private static boolean s_swingerValue = true;
 
     private Vector<OcResource> m_foundResourceList;
     private Vector<SampleResource> m_createdResourceList;
@@ -72,38 +71,48 @@ public class RITestAppAction extends Base {
     private String m_clientDBPath = "";
     private String m_latestUserInput = "";
 
+    private String m_commonSmartHomeUri = "URI";
+    private String m_commonVendorUri = "Vendor";
+
     private SampleResource m_acSwitchResource;
     private SampleResource m_acTemperatureResource;
     private SampleResource m_acAirFlowResource;
     private SampleResource m_acTimerResource;
-    private SampleResource m_acChildLockResource;
+    private SampleResource m_acSwingerResource;
 
     private OcConnectivityType m_connectivityType = OcConnectivityType.CT_ADAPTER_IP;
     private QualityOfService m_qos = QualityOfService.HIGH;
+
+    private enum ResourceSelectionType {
+        VERTICAL_RESOURCE,
+        SYSTEM_RESOURCE,
+        VERTICAL_OBSERVABLE_RESOURCE,
+        VERTICAL_NON_OBSERVABLE_RESOURCE
+    };
 
     public RITestAppAction(Context context) {
         m_appContext = context;
         m_createdResourceList = new Vector<SampleResource>();
         m_foundResourceList = new Vector<OcResource>();
         m_resourceHelper = ResourceHelper.getInstance();
-        m_serverDBPath = m_appContext.getFilesDir().getPath() + "/" + ResourceConstants.SERVER_DATABASE_FILE_NAME;
-        m_clientDBPath = m_appContext.getFilesDir().getPath() + "/" + ResourceConstants.CLIENT_DATABASE_FILE_NAME;
+        m_serverDBPath = m_appContext.getFilesDir().getPath() + "/"
+                + ResourceConstants.SERVER_DATABASE_FILE_NAME;
+        m_clientDBPath = m_appContext.getFilesDir().getPath() + "/"
+                + ResourceConstants.CLIENT_DATABASE_FILE_NAME;
     }
 
-    public void printOutput(final String toPrint){
+    public void printOutput(final String toPrint) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 Base.showOutPut(toPrint);
-           }
-       });
+            }
+        });
     }
 
     public void exitApplication() {
         printOutput("Quit from InterOpAppRI...");
-
         m_resourceHelper.waitInSecond(ResourceConstants.CALLBACK_WAIT_MIN);
-
         android.os.Process.killProcess(android.os.Process.myPid());
     }
 
@@ -116,7 +125,8 @@ public class RITestAppAction extends Base {
 
                 printOutput("uri of the found resource is " + resource.getUri());
                 printOutput("Host of found resource: " + resource.getHost());
-                printOutput("di( OCResource.sid() ) of found resource is = " + resource.getServerId());
+                printOutput("di( OCResource.sid() ) of found resource is = "
+                        + resource.getServerId());
 
                 m_hasCallbackArrived = true;
             } else {
@@ -127,7 +137,7 @@ public class RITestAppAction extends Base {
 
         @Override
         public void onFindResourceFailed(Throwable exception, String message) {
-            printOutput( "Failed to discover resource, reason: " + message );
+            printOutput("Failed to discover resource, reason: " + message);
 
         }
     };
@@ -187,7 +197,6 @@ public class RITestAppAction extends Base {
 
             m_resourceHelper.printRepresentation(rep);
             m_hasCallbackArrived = true;
-
         }
     };
 
@@ -310,6 +319,8 @@ public class RITestAppAction extends Base {
 
     boolean initiateServer() {
         boolean result = false;
+        PlatformConfig cfg = new PlatformConfig(m_appContext, ServiceType.IN_PROC, ModeType.CLIENT_SERVER, DEFAULT_IP, DEFAULT_PORT, m_qos);
+        result = SampleResource.constructServer(cfg);
 
         if (result == false) {
             printOutput("Unable to start Iotivity servers");
@@ -470,32 +481,33 @@ public class RITestAppAction extends Base {
                 printOutput("Unable to create Air Conditioner Timer resource");
             }
 
-            m_acChildLockResource = new SampleResource();
-            m_acChildLockResource.setResourceProperties(ResourceConstants.AC_CHILD_LOCK_URI, ResourceConstants.CHILD_LOCK_RESOURCE_TYPE,
+            m_acSwingerResource = new SampleResource();
+            m_acSwingerResource.setResourceProperties(ResourceConstants.AC_CHILD_LOCK_URI, ResourceConstants.CHILD_LOCK_RESOURCE_TYPE,
                     ResourceConstants.CHILD_LOCK_RESOURCE_INTERFACE);
-            m_acChildLockResource.setAsObservableResource();
+            m_acSwingerResource.setAsObservableResource();
             if (isSecured) {
-                m_acChildLockResource.setAsSecuredResource();
+                m_acSwingerResource.setAsSecuredResource();
             }
 
-            OcRepresentation childLockRep = new OcRepresentation();
-            key = ResourceConstants.CHILD_LOCK_KEY;
+            OcRepresentation swingerRep = new OcRepresentation();
             try {
-                childLockRep.setValue(key, ResourceConstants.CHILD_LOCK_VALUE);
+                swingerRep.setValue(ResourceConstants.SWINGER_SWING_KEY, ResourceConstants.SWINGER_SWING_VALUE);
+                swingerRep.setValue(ResourceConstants.SWINGER_BLADE_KEY, ResourceConstants.SWINGER_BLADE_VALUE);
+                swingerRep.setValue(ResourceConstants.SWINGER_DIRECTION_KEY, ResourceConstants.SWINGER_DIRECTION_VALUE);
             } catch (OcException e) {
                 e.printStackTrace();
-                printOutput("Failed to set value to Representation : " + e.getMessage());
+                printOutput("Failed to set value to Swinger Representation : " + e.getMessage());
             }
-            m_acChildLockResource.setResourceRepresentation(childLockRep);
+            m_acSwingerResource.setResourceRepresentation(swingerRep);
 
-            result = m_acChildLockResource.startResource();
+            result = m_acSwingerResource.startResource();
 
             if (result == true) {
-                printOutput("Air Conditioner Timer Resource created successfully");
-                m_createdResourceList.add(m_acChildLockResource);
+                printOutput("Air Conditioner Swinger Resource created successfully");
+                m_createdResourceList.add(m_acSwingerResource);
                 m_isAirConDeviceCreated = true;
             } else {
-                printOutput("Unable to create Air Conditioner Timer resource");
+                printOutput("Unable to create Air Conditioner Swinger resource");
             }
         } else {
             printOutput("Already Smart Home AirCon Device Resources are  created!!");
@@ -518,7 +530,6 @@ public class RITestAppAction extends Base {
 
         m_createdResourceList.clear();
         m_isAirConDeviceCreated = false;
-
     }
 
     public void findResource(String resourceType, String host) {
@@ -592,7 +603,6 @@ public class RITestAppAction extends Base {
                 printOutput("Sending Multicast Device discovery request...");
                 deviceDiscoveryRequest = OcPlatform.WELL_KNOWN_DEVICE_QUERY;
             }
-
         }
 
         try {
@@ -601,7 +611,6 @@ public class RITestAppAction extends Base {
 
             printOutput("Device discovery done successfully");
             waitForCallback();
-
         } catch (OcException e) {
             printOutput("Exception occurred while discovering device, reason is: " + e.getMessage());
         }
@@ -639,60 +648,58 @@ public class RITestAppAction extends Base {
         }
     }
 
-    public void sendGetRequest() {
-        int selection = selectResource();
-        if (selection > -1) {
-            Map<String, String> qpMap = new HashMap<String, String>();
-            OcResource targetResource = m_foundResourceList.get(selection);
-            printOutput("Sending Get Request to the resource with: " + targetResource.getHost()
-                    + targetResource.getUri());
-            try {
-                targetResource.get(qpMap, onGet, m_qos);
-            } catch (OcException e) {
-                printOutput("Unable to send GET request, Exception Occured!! reason: " + e.getMessage());
-            }
-            printOutput("GET request sent!!");
-            waitForCallback();
+    public void sendGetRequestVertical() {
+        sendGetRequest(ResourceSelectionType.VERTICAL_RESOURCE);
+    }
 
+    public void sendGetRequestCore() {
+        sendGetRequest(ResourceSelectionType.SYSTEM_RESOURCE);
+    }
+
+    void sendGetRequest(ResourceSelectionType type) {
+        Vector<OcResource> remoteResourceList = getRemoteResourceList(type);
+        if (remoteResourceList.size() > 0) {
+            Map<String, String> qpMap = new HashMap<String, String>();
+            for (OcResource resource : remoteResourceList) {
+                m_hasCallbackArrived = false;
+                printOutput("Sending Get Request to the resource: " + resource.getHost() + resource.getUri());
+                try {
+                    resource.get(qpMap, onGet, m_qos);
+                } catch (OcException e) {
+                    printOutput("Unable to send GET request, Exception Occured!! reason: " + e.getMessage());
+                }
+                printOutput("GET request sent!!");
+            }
+
+            waitForCallback();
         } else {
             printOutput("No resource to send GET!!");
         }
     }
 
-    public void sendGetRequestWithQuery(String key, String value) {
-        int selection = selectResource();
-        if (selection != -1) {
-            Map<String, String> qpMap = new HashMap<String, String>();
-            qpMap.put(key, value);
-            try {
-                m_foundResourceList.get(selection).get(qpMap, onGet, m_qos);
-            } catch (OcException e) {
-                printOutput("Unable to send GET request, Exception Occured!! reason: " + e.getMessage());
-            }
-            printOutput("GET request sent!!");
-            waitForCallback();
-
-        } else {
-            printOutput("No resource to send GET!!");
-        }
+    public void sendPutRequestVertical() {
+        sendPutRequest(ResourceSelectionType.VERTICAL_RESOURCE);
     }
 
-    public void sendPutRequestUpdate() {
-        int selection = selectResource();
-        if (selection != -1) {
+    public void sendPutRequestCore() {
+        sendPutRequest(ResourceSelectionType.SYSTEM_RESOURCE);
+    }
+
+    public void sendPutRequest(ResourceSelectionType type) {
+        Vector<OcResource> remoteResourceList = getRemoteResourceList(type);
+        if (remoteResourceList.size() > 0) {
+            Map<String, String> qpMap = new HashMap<String, String>();
             OcRepresentation rep = new OcRepresentation();
 
-            printOutput("Sending Complete Update Message(PUT)...");
-
+            String key = ResourceConstants.REGION_KEY;
+            String value = ResourceConstants.DEFAULT_REGION;
+            int intensity = ResourceConstants.DEFAULT_INTENSITY;
             try {
-                String key = ResourceConstants.REGION_KEY;
-                String value = ResourceConstants.DEFAULT_REGION;
                 rep.setValue(key, value);
                 key = ResourceConstants.POWER_KEY;
                 value = ResourceConstants.DEFAULT_POWER_STATE;
                 rep.setValue(key, value);
                 key = ResourceConstants.INTENSITY_KEY;
-                int intensity = ResourceConstants.DEFAULT_INTENSITY;
                 rep.setValue(key, intensity);
                 key = ResourceConstants.MANUFACTURER_KEY;
                 value = ResourceConstants.DEFAULT_MANUFACTURER;
@@ -701,137 +708,34 @@ public class RITestAppAction extends Base {
                 printOutput("Unable to set representation, Exception Occured!! reason: " + e.getMessage());
             }
 
-            // Invoke resource's put API with rep, query map and the callback parameter
-            Map<String, String> qpMap = new HashMap<String, String>();
-            try {
-                m_foundResourceList.get(selection).put(rep, qpMap, onPut, m_qos);
-            } catch (OcException e) {
-                printOutput("Unable to send PUT request, Exception Occured!! reason: " + e.getMessage());
+            for (OcResource resource : remoteResourceList) {
+                m_hasCallbackArrived = false;
+                printOutput("Sending PUT Request to the resource: " + resource.getHost() + resource.getUri());
+                try {
+                    resource.put(rep, qpMap, onPut, m_qos);
+                } catch (OcException e) {
+                    printOutput("Unable to send PUT request, Exception Occured!! reason: " + e.getMessage());
+                }
+                printOutput("PUT request sent!!");
+                waitForCallback();
             }
-            printOutput("PUT request sent!!");
-            waitForCallback();
 
         } else {
             printOutput("No resource to send PUT!!");
         }
-    }
-
-    public void sendPutRequestCreate() {
-        int selection = selectResource();
-        if (selection != -1) {
-            OcRepresentation rep = new OcRepresentation();
-
-            printOutput("Sending Create Resource Message(PUT)...");
-
-            try {
-                Vector<String> resourceTypes = new Vector<String>();
-                String key = ResourceConstants.URI_KEY;
-                String value = ResourceConstants.NEW_RESOURCE_URI;
-                rep.setUri(value);
-                value = ResourceConstants.SWITCH_RESOURCE_TYPE;
-                resourceTypes.add(value);
-                rep.setResourceTypes(resourceTypes);
-                key = ResourceConstants.BINARY_SWITCH_KEY;
-                rep.setValue(key, ResourceConstants.BINARY_SWITCH_VALUE);
-            } catch (OcException e) {
-                printOutput("Unable to set representation, Exception Occured!! reason: " + e.getMessage());
-            }
-
-            // Invoke resource's post API with rep, query map and the callback parameter
-            Map<String, String> qpMap = new HashMap<String, String>();
-            try {
-                m_foundResourceList.get(selection).put(rep, qpMap, onPut, m_qos);
-            } catch (OcException e) {
-                printOutput("Unable to send PUT request, Exception Occured!! reason: " + e.getMessage());
-            }
-            printOutput("PUT request sent!!");
-            waitForCallback();
-
-        } else {
-            printOutput("No resource to send PUT!!");
-        }
-    }
-
-    public OcRepresentation setAttributeValueFromUser(OcRepresentation rep, String key) {
-        //unblock later
-        String valueString = "";
-        boolean valueBool = false;
-        int valueInt = 0;
-        float valueFloat = (float) 0.0;
-        double valueDouble = 0.0;
-        int choice = 0;
-        boolean validChoice = false;
-
-        do {
-            printOutput("Please select attribute data type and press Enter: ");
-            printOutput("\t\t 1. Integer");
-            printOutput("\t\t 2. Floating Point - Single Precision");
-            printOutput("\t\t 3. Floating Point - Double Precision");
-            printOutput("\t\t 4. Boolean");
-            printOutput("\t\t 5. String");
-            choice = (int) Integer.valueOf(waitAndGetInputFromUser());
-
-            if (choice > 0 && choice < 5) {
-                validChoice = true;
-            } else {
-                validChoice = false;
-                printOutput("Invalid input for attribute data type. Please select between 1 and 5");
-            }
-
-        } while (!validChoice);
-
-        printOutput("Please input Attribute Value: ");
-
-        try {
-            switch (choice) {
-                case 1:
-                    valueInt = (int) Integer.valueOf(waitAndGetInputFromUser());
-                    rep.setValue(key, valueInt);
-                    break;
-                case 2:
-                    valueFloat = (float) Float.valueOf(waitAndGetInputFromUser());
-                    rep.setValue(key, valueFloat);
-                    break;
-                case 3:
-                    valueDouble = (double) Double.valueOf(waitAndGetInputFromUser());
-                    rep.setValue(key, valueDouble);
-                    break;
-                case 4:
-                    printOutput("Please provide boolean value(O for False, 1 for True) : ");
-                    valueBool = (boolean) Boolean.valueOf(waitAndGetInputFromUser());
-                    rep.setValue(key, valueBool);
-                    break;
-                case 5:
-                    valueString = waitAndGetInputFromUser();
-                    rep.setValue(key, valueString);
-                    break;
-            }
-        } catch (OcException e) {
-            printOutput("Unable to set representation, exception occurred: " + e.getMessage());
-        }
-
-        return rep;
     }
 
     public void updateLocalResource() {
-        int selection = selectLocalResource();
-        if (selection != -1) {
-            String key = "";
-
-            printOutput("Please input Attribute Key: ");
-            key = waitAndGetInputFromUser();
-
-            OcRepresentation rep = m_createdResourceList.get(selection).getRepresentation();
-
-            if (rep.hasAttribute(key)) {
-                rep = setAttributeValueFromUser(rep, key);
-                m_createdResourceList.get(selection).setResourceRepresentation(rep);
+        if (m_createdResourceList.size() > 0) {
+            for (SampleResource resource : m_createdResourceList) {
+                String uri = resource.getUri();
+                OcRepresentation rep = getupdatedAttributes(uri, resource.getRepresentation());
+                resource.setResourceRepresentation(rep);
                 printOutput("Successfully updated resource attribute!!");
                 m_resourceHelper.printRepresentation(rep);
-                m_createdResourceList.get(selection).notifyObservers(
-                        m_createdResourceList.get(selection));
-            } else {
-                printOutput("The resource does not have the mentioned attribute");
+                if (!uri.equals(ResourceConstants.AC_SWINGER_URI) && !uri.equals(ResourceConstants.AC_TIMER_URI)) {
+                    resource.notifyObservers(resource);
+                }
             }
 
         } else {
@@ -839,123 +743,134 @@ public class RITestAppAction extends Base {
         }
     }
 
-    public void sendPostRequestUpdateUserInput() {
-        int selection = selectResource();
-        if (selection != -1) {
-            OcRepresentation rep = new OcRepresentation();
-            String key = ResourceConstants.TEMPERATURE_KEY;
-            tempDeviation = tempDeviation * (-1);
-            double value = targetTemp - tempDeviation;
+    public void sendPostRequestVertical() {
+        sendPostRequest(ResourceSelectionType.VERTICAL_RESOURCE);
+    }
 
-            printOutput("Please input Attribute Key: ");
-            key = waitAndGetInputFromUser();
+    public void sendPostRequestCore() {
+        sendPostRequest(ResourceSelectionType.SYSTEM_RESOURCE);
+    }
 
-            // Invoke resource's put API with rep, query map and the callback parameter
-            printOutput("Sending Partial Update Message(POST)...");
-            Map<String, String> qpMap = new HashMap<String, String>();
+    public void sendPostRequest(ResourceSelectionType type) {
+        Vector<OcResource> remoteResourceList = getRemoteResourceList(type);
+        Map<String, String> qpMap = new HashMap<String, String>();
+        OcRepresentation rep = new OcRepresentation();
+        if (type == ResourceSelectionType.SYSTEM_RESOURCE) {
+
+            String key = ResourceConstants.REGION_KEY;
+            String value = ResourceConstants.DEFAULT_REGION;
             try {
                 rep.setValue(key, value);
-                m_foundResourceList.get(selection).post(rep, qpMap, onPost, m_qos);
-            } catch (OcException e) {
-                printOutput("Unbable tosend POST request, Exception occurred: " + e.getMessage());
+                key = ResourceConstants.MANUFACTURER_KEY;
+                value = ResourceConstants.DEFAULT_MANUFACTURER;
+                rep.setValue(key, value);
+            } catch (OcException e1) {
+                printOutput("Failed to set representation!!");
             }
-            printOutput("POST request sent!!");
-            waitForCallback();
 
+            for (OcResource resource : remoteResourceList) {
+                try {
+                    rep.setValue(key, value);
+                    resource.post(rep, qpMap, onPost, m_qos);
+                } catch (OcException e) {
+                    printOutput("Unbable to send POST request to Core System Resource, Exception occurred: " + e.getMessage());
+                }
+                printOutput("POST request sent!!");
+                waitForCallback();
+            }
+
+        } else if (type == ResourceSelectionType.VERTICAL_RESOURCE) {
+            for (OcResource resource : remoteResourceList) {
+                rep = getupdatedAttributes(resource.getUri(), null);
+                try {
+                    resource.post(rep, qpMap, onPost, m_qos);
+                } catch (OcException e) {
+                    printOutput("Unbable to send POST request to Vertical Resource, Exception occurred: " + e.getMessage());
+                }
+                printOutput("POST request sent!!");
+                waitForCallback();
+            }
         } else {
             printOutput("No resource to send POST!!");
         }
     }
 
-    public void sendPostRequestCreate() {
-        int selection = selectResource();
-        if (selection != -1) {
-            OcRepresentation rep = new OcRepresentation();
-
-            printOutput("Sending Subordinate Resource Create Message(POST)...");
-
-            Vector<String> resourceTypes = new Vector<String>();
-            String key = ResourceConstants.URI_KEY;
-            String value = ResourceConstants.NEW_RESOURCE_URI;
-            rep.setUri(value);
-            value = ResourceConstants.SWITCH_RESOURCE_TYPE;
-            resourceTypes.add(value);
-            rep.setResourceTypes(resourceTypes);
-            key = ResourceConstants.BINARY_SWITCH_KEY;
-            boolean attrValue = ResourceConstants.BINARY_SWITCH_VALUE;
-            try {
-                rep.setValue(key, attrValue);
-            } catch (OcException e) {
-                printOutput("Unbable to set representation, Exception occurred: " + e.getMessage());
-            }
-
-            // Invoke resource's post API with rep, query map and the callback parameter
-            try {
-                m_foundResourceList.get(selection).post(rep, new HashMap<String, String>(), onPost, m_qos);
-            } catch (OcException e) {
-                printOutput("Unbable to send POST request, Exception occurred: " + e.getMessage());
-            }
-            printOutput("POST request sent!!");
-            waitForCallback();
-
-        } else {
-            printOutput("No resource to send POST!!");
-        }
+    public void sendDeleteRequestVertical() {
+        sendDeleteRequest(ResourceSelectionType.VERTICAL_RESOURCE);
     }
 
-    public void sendDeleteRequest() {
-        int selection = selectResource();
-        if (selection != -1) {
-            printOutput("Sending Delete Request...");
+    public void sendDeleteRequestCore() {
+        sendDeleteRequest(ResourceSelectionType.SYSTEM_RESOURCE);
+    }
 
-            // Invoke resource's delete API with the callback parameter
-            OcResource resource = m_foundResourceList.get(selection);
-            try {
-                resource.deleteResource(onDelete);
-            } catch (OcException e) {
-                printOutput("Unbable to send DELETE request, Exception occurred: " + e.getMessage());
+    void sendDeleteRequest(ResourceSelectionType type) {
+        Vector<OcResource> remoteResourceList = getRemoteResourceList(type);
+        if (remoteResourceList.size() > 0) {
+
+            for (OcResource resource : remoteResourceList) {
+                printOutput("Sending Delete Request to resource: " + resource.getHost() + resource.getUri());
+                m_hasCallbackArrived = false;
+                try {
+                    resource.deleteResource(onDelete);
+                } catch (OcException e) {
+                    printOutput("Unbable to send DELETE request, Exception occurred: " + e.getMessage());
+                }
+                printOutput("DELETE request sent!!");
+                waitForCallback();
             }
-            printOutput("DELETE request sent!!");
-            waitForCallback();
         } else {
             printOutput("No resource to send DELETE!!");
         }
     }
 
-    public void observeResource() {
-        int selection = selectResource();
-        if (selection != -1) {
-            printOutput("Observing resource...");
+    public void sendObserveRequestNonObservable() {
+        sendObserveRequest(ResourceSelectionType.VERTICAL_NON_OBSERVABLE_RESOURCE);
+    }
 
-            OcResource resource = m_foundResourceList.get(selection);
-            try {
-                resource.observe(ObserveType.OBSERVE, new HashMap<String, String>(), onObserve, m_qos);
-            } catch (OcException e) {
-                printOutput("Unbable to Observe resource, Exception occurred: " + e.getMessage());
+    public void sendObserveRequestVertical() {
+        sendObserveRequest(ResourceSelectionType.VERTICAL_OBSERVABLE_RESOURCE);
+    }
+
+    public void sendObserveRequestCore() {
+        sendObserveRequest(ResourceSelectionType.SYSTEM_RESOURCE);
+    }
+
+    void sendObserveRequest(ResourceSelectionType type) {
+        Vector<OcResource> remoteResourceList = getRemoteResourceList(type);
+        if (remoteResourceList.size() > 0) {
+
+            for (OcResource resource : remoteResourceList) {
+                printOutput("Sending Delete Request to resource: " + resource.getHost() + resource.getUri());
+                m_hasCallbackArrived = false;
+                try {
+                    resource.observe(ObserveType.OBSERVE, new HashMap<String, String>(), onObserve, m_qos);
+                } catch (OcException e) {
+                    printOutput("Unbable to Observe resource, Exception occurred: " + e.getMessage());
+                }
+                printOutput("Observe request sent!!");
+                m_isObservingResource = true;
+                waitForCallback();
             }
-            printOutput("Observe request sent!!");
-            m_isObservingResource = true;
-            waitForCallback();
-
         } else {
             printOutput("No resource to Observe!!");
         }
     }
 
     public void cancelObserveResource() {
-        int selection = selectResource();
-        if (selection != -1) {
+        Vector<OcResource> remoteResourceList = getRemoteResourceList(ResourceSelectionType.VERTICAL_OBSERVABLE_RESOURCE);
+        if (remoteResourceList.size() > 0) {
             if (m_isObservingResource) {
                 printOutput("Canceling Observe resource...");
 
-                OcResource resource = m_foundResourceList.get(selection);
-                try {
-                    resource.cancelObserve(m_qos);
-                } catch (OcException e) {
-                    printOutput("Unbable to Cancel Observe resource, Exception occurred: " + e.getMessage());
+                for (OcResource resource : remoteResourceList) {
+                    try {
+                        resource.cancelObserve(m_qos);
+                    } catch (OcException e) {
+                        printOutput("Unbable to Cancel Observe resource, Exception occurred: " + e.getMessage());
+                    }
+                    printOutput("Cancel Observe request sent!!");
+                    m_isObservingResource = false;
                 }
-                printOutput("Cancel Observe request sent!!");
-                m_isObservingResource = false;
             } else {
                 printOutput("No resource is being Observed currently!!");
             }
@@ -964,86 +879,56 @@ public class RITestAppAction extends Base {
         }
     }
 
-    public void cancelObservePassively() {
-        int selection = selectResource();
-        if (selection != -1) {
-            if (m_isObservingResource) {
-                printOutput("Canceling Observe passively...");
+    String getHost() {
+        String host = "";
 
-                // Currently, there is no api to cancel observe passively
-                OcResource resource = m_foundResourceList.get(selection);
-                printOutput("Cancel Observe request not sent!! Currently there is no API!!");
-            } else {
-                printOutput("No resource is being Observed currently!!");
+        for (OcResource resource : m_foundResourceList) {
+            if (resource.getUri().equals(ResourceConstants.AC_TEMPERATURE_URI)) {
+                host = resource.getHost();
+                break;
             }
-        } else {
-            printOutput("No resource to cancel Observe!!");
         }
+        if (host.equals("")) {
+            printOutput("No remote resource found to send Unicast");
+        }
+        return host;
     }
 
+    Vector<OcResource> getRemoteResourceList(ResourceSelectionType type) {
+        Vector<OcResource> desiredResourceList = new Vector<OcResource>();
+        desiredResourceList.clear();
+        String remoteHost = getHost();
 
-    int selectResource() {
-        int selection = -1;
-        int totalResource = m_foundResourceList.size();
-        if (totalResource > 0) {
-            printOutput("\tPlease select your desired resource no. to send request and press Enter:");
-
-            for (int i = 1; i <= totalResource; i++) {
-                String targetResUri =  m_foundResourceList.get(i - 1).getUri();
-                if (targetResUri.equals(ResourceConstants.AC_AIR_FLOW_URI)){
-                    selection = i;
-                    printOutput("Selecting resource for CRUDN having URI: " + targetResUri);
+        for (OcResource resource : m_foundResourceList) {
+            if (ResourceSelectionType.VERTICAL_NON_OBSERVABLE_RESOURCE == type) {
+                if (resource.getUri().equals(ResourceConstants.AC_TIMER_URI)) {
+                    desiredResourceList.clear();
+                    desiredResourceList.add(resource);
+                    break;
+                }
+            } else if (ResourceSelectionType.VERTICAL_OBSERVABLE_RESOURCE == type) {
+                if (resource.getUri().indexOf(m_commonSmartHomeUri) != -1) {
+                    desiredResourceList.add(resource);
+                }
+            } else if (ResourceSelectionType.VERTICAL_RESOURCE == type) {
+                if ((resource.getUri().indexOf(m_commonVendorUri) != -1)
+                        || (resource.getUri().indexOf(m_commonSmartHomeUri) != -1)) {
+                    desiredResourceList.add(resource);
+                }
+            } else {
+                if ((remoteHost.equals(resource.getHost()))
+                        && ((resource.getUri().equals(OcPlatform.WELL_KNOWN_DEVICE_QUERY))
+                        || (resource.getUri().equals(OcPlatform.WELL_KNOWN_PLATFORM_QUERY)))) {
+                    desiredResourceList.add(resource);
                 }
             }
-
-
-            while (selection < 1 || selection > totalResource) {
-                printOutput("Invalid selection of resource. Please select a resource no. between 1 & "
-                        + totalResource);
-                selection = (int) Integer.valueOf(waitAndGetInputFromUser());
-            }
-            selection--;
         }
-
-        return selection;
-    }
-
-    int selectLocalResource() {
-        int selection = -1;
-        int totalResource = m_createdResourceList.size();
-        if (totalResource > 0) {
-            printOutput("\tPlease select your desired resource no. to update attribute:");
-
-            int resourceCount = 1;
-            for (SampleResource localResource : m_createdResourceList) {
-                printOutput("\t\t" + resourceCount++ + ". " + localResource.getUri());
-            }
-
-            selection = (int) Integer.valueOf(waitAndGetInputFromUser());
-
-            while (selection < 1 || selection > totalResource) {
-                printOutput("Invalid selection of resource. Please select a resource no. between 1 & "
-                        + totalResource);
-                selection = (int) Integer.valueOf(waitAndGetInputFromUser());
-            }
-            selection--;
-        }
-
-        return selection;
+        return desiredResourceList;
     }
 
     public void getUserInput(String userArgument) {
         m_latestUserInput = userArgument;
         m_hasUserResponded = true;
-    }
-
-    String waitAndGetInputFromUser() {
-        while (m_hasUserResponded == false) {
-            m_resourceHelper.waitInSecond(ResourceConstants.CALLBACK_WAIT_MIN);
-        }
-
-        m_hasUserResponded = false;
-        return m_latestUserInput;
     }
 
     public void setLowQoS() {
@@ -1100,67 +985,74 @@ public class RITestAppAction extends Base {
     }
 
     public void findResourceWithType() {
-        printOutput("\tPlease type the Resource Type to find, then press Enter: ");
-        String resourceType = waitAndGetInputFromUser();
+        String resourceType = ResourceConstants.TEMPERATURE_RESOURCE_TYPE;
         String host = "";
         findResource(resourceType, host);
     }
 
-    public void findResourceWithQuery() {
-        printOutput("\tPlease type the Query to find resource, then press Enter: ");
-        String query = waitAndGetInputFromUser();
-        String host = "";
-        findAllResources(host, query);
-    }
+    OcRepresentation getupdatedAttributes(String uri, OcRepresentation rep) {
+        double temperatureValue = 25;
+        boolean binaryValue = false;
+        String key = "";
 
-    String getResourceHost() {
-        String host = "";
-        String ip = "";
-        String port = "";
-
-        int selection = selectResource();
-        if (selection != -1) {
-            host = m_foundResourceList.get(selection).getHost();
-        } else {
-            printOutput("Please enter the IP of the Resource host, then press Enter: ");
-            ip = waitAndGetInputFromUser();
-            printOutput("Please enter the port of the Resource host, then press Enter: ");
-            port = waitAndGetInputFromUser();
-
-            host = ip + ":" + port;
+        if (rep == null) {
+            rep = new OcRepresentation();
         }
 
-        return host;
+        try {
+            if (uri.equals(ResourceConstants.AC_SWITCH_URI)) {
+                key = ResourceConstants.BINARY_SWITCH_KEY;
+                if (rep.hasAttribute(key)) {
+                    binaryValue = ((Boolean) rep.getValue(key)).booleanValue();
+                }
+                binaryValue = !binaryValue;
+                rep.setValue(key, binaryValue);
+
+            } else if (uri.equals(ResourceConstants.AC_TEMPERATURE_URI)) {
+                key = ResourceConstants.TEMPERATURE_KEY;
+                if (rep.hasAttribute(key)) {
+                    temperatureValue = ((Double) rep.getValue(key)).doubleValue();
+                }
+                temperatureValue = temperatureValue > 0 ?
+                        (temperatureValue - 26) : (temperatureValue + 26);
+                rep.setValue(key, temperatureValue);
+            } else if (uri.equals(ResourceConstants.AC_AIR_FLOW_URI)) {
+                key = ResourceConstants.AIRFLOW_DIRECTION_KEY;
+                if (rep.hasAttribute(key)) {
+                    s_directionValue = rep.getValue(key);
+                }
+                ;
+                s_directionValue = s_directionValue.equals("left") ?
+                        "right" : "left";
+                rep.setValue(key, s_directionValue);
+            } else if (uri.equals(ResourceConstants.AC_TIMER_URI)) {
+                key = ResourceConstants.TIMER_HOUR_KEY;
+                if (rep.hasAttribute(key)) {
+                    s_hourValue = ((Integer) rep.getValue(key)).intValue();
+                }
+                s_hourValue = (s_hourValue % 2) > 0 ?
+                        (s_hourValue * 2) : (s_hourValue / 2);
+                rep.setValue(key, s_hourValue);
+            } else if (uri.equals(ResourceConstants.AC_SWINGER_URI)) {
+                key = ResourceConstants.SWINGER_SWING_KEY;
+                if (rep.hasAttribute(key)) {
+                    s_swingerValue = ((Boolean) rep.getValue(key)).booleanValue();
+                }
+                s_swingerValue = !s_swingerValue;
+                rep.setValue(key, s_swingerValue);
+            }
+        } catch (OcException e) {
+            printOutput("Failed to update Attributes, reason" + e.getLocalizedMessage());
+        }
+
+        return rep;
     }
 
     public void findAllResourceUnicast() {
-        String host = getResourceHost();
+        findAllResources();
+        String host = getHost();
         String query = "";
         findAllResources(host, query);
-    }
-
-    public void findAllResourceUnicastWithQuery() {
-        String host = getResourceHost();
-        printOutput("\tPlease type the Query to find resource, then press Enter: ");
-        String query = waitAndGetInputFromUser();
-        findAllResources(host, query);
-    }
-
-    public void findResourceUnicast() {
-        String host = getResourceHost();
-        printOutput("\tPlease type the resource type to find, then press Enter: ");
-        String resourceType = waitAndGetInputFromUser();
-        findResource(resourceType, host);
-    }
-
-    public void sendGetWithQuery() {
-        String queryKey = "";
-        String queryValue = "";
-        printOutput("Please type query key, then press Enter: ");
-        queryKey = waitAndGetInputFromUser();
-        printOutput("Please type query value, then press Enter: ");
-        queryValue = waitAndGetInputFromUser();
-        sendGetRequestWithQuery(queryKey, queryValue);
     }
 
     public void discoverDeviceMulticast() {

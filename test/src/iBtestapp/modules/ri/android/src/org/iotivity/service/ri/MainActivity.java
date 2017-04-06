@@ -1,14 +1,14 @@
 /******************************************************************
- * Copyright 2016 Samsung Electronics All Rights Reserved.
- * <p/>
- * <p/>
- * <p/>
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * <p>
+ * <p>
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,6 @@ import android.util.Log;
 
 import org.iotivity.service.testapp.framework.Base;
 import org.iotivity.service.testapp.framework.MenuInfo;
-import org.iotivity.service.testapp.framework.DialogInfo;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -61,55 +59,28 @@ public class MainActivity extends Base {
         menuMap.put("2", new MenuInfo("Create Secured Air Conditioner Device",
                 "createSecuredAirCon"));
         menuMap.put("3", new MenuInfo("Delete All Resources", "deleteResource"));
-        menuMap.put("10", new MenuInfo("Find Resource using Interface Query", "findResourceWithQuery"));
-        menuMap.put("11", new MenuInfo("Find Specific Type Of Resource", "findResourceWithType"));
-        menuMap.put("12", new MenuInfo("Find All Resources", "findAllResources"));
-        menuMap.put("13", new MenuInfo("Find Resource using Interface Query - Unicast", "findAllResourceUnicastWithQuery"));
-        menuMap.put("14", new MenuInfo("Find Specific Type Of Resource - Unicast", "findResourceUnicast"));
-        menuMap.put("15", new MenuInfo("Find All Resources - Unicast", "findAllResourceUnicast"));
-        menuMap.put("16", new MenuInfo("Send GET Request", "sendGetRequest"));
-        menuMap.put("17", new MenuInfo("Send GET Request with query", "sendGetWithQuery"));
-        menuMap.put("18", new MenuInfo("Send PUT Request - Create Resource", "sendPutRequestCreate"));
-        menuMap.put("19", new MenuInfo("Send PUT Request - Complete Update", "sendPutRequestUpdate"));
-        menuMap.put("20", new MenuInfo("Send POST Request - Partial Update - User Input", "sendPostRequestUpdateUserInput"));
-        menuMap.put("21", new MenuInfo("Send POST Request - Create Sub-Ordinate Resource", "sendPostRequestCreate"));
-        menuMap.put("22", new MenuInfo("Send Delete Request", "sendDeleteRequest"));
-        menuMap.put("23", new MenuInfo("Observe Resource - Retrieve Request with Observe", "observeResource"));
-        menuMap.put("24", new MenuInfo("Cancel Observing Resource", "cancelObserveResource"));
-        menuMap.put("25", new MenuInfo("Cancel Observing Resource Passively", "cancelObservePassively"));
-        menuMap.put("26", new MenuInfo("Discover Device - Multicast", "discoverDeviceMulticast"));
-        menuMap.put("27", new MenuInfo("Discover Platform - Multicast", "discoverPlatform"));
-        menuMap.put("28", new MenuInfo("Update Local Resource", "updateLocalResource"));
-        menuMap.put("29", new MenuInfo("Get Input From User", "getUserInput"));
+        menuMap.put("4", new MenuInfo("Update Local Resource", "updateLocalResource"));
+        menuMap.put("10", new MenuInfo("Discover Device - Multicast", "discoverDeviceMulticast"));
+        menuMap.put("11", new MenuInfo("Discover Platform - Multicast", "discoverPlatform"));
+        menuMap.put("12", new MenuInfo("Discover Resources - Multicast", "findAllResources"));
+        menuMap.put("13", new MenuInfo("Discover Resources - Unicast", "findAllResourceUnicast"));
+        menuMap.put("14", new MenuInfo("Discover Resources - Multicast with Query", "findResourceWithType"));
+        menuMap.put("15", new MenuInfo("Send GET Request to Vertical Resources", "sendGetRequestVertical"));
+        menuMap.put("16", new MenuInfo("Send GET Request to Core Resources", "sendGetRequestCore"));
+        menuMap.put("17", new MenuInfo("Send PUT Request to Vertical Resources", "sendPutRequestVertical"));
+        menuMap.put("18", new MenuInfo("Send PUT Request to Core Resources", "sendPutRequestCore"));
+        menuMap.put("19", new MenuInfo("Send POST Request to Vertical Resources", "sendPostRequestVertical"));
+        menuMap.put("20", new MenuInfo("Send POST Request to Core Resources", "sendPostRequestCore"));
+        menuMap.put("21", new MenuInfo("Send Delete Request to Vertical Resources", "sendDeleteRequestVertical"));
+        menuMap.put("22", new MenuInfo("Send Delete Request to Core Resources", "sendDeleteRequestCore"));
+        menuMap.put("23", new MenuInfo("Send Observe Request to Vertical Observable Resources", "observeResource"));
+        menuMap.put("24", new MenuInfo("Send Observe Request to Core Resources", "cancelObserveResource"));
+        menuMap.put("25", new MenuInfo("Send Observe Request to Vertical Non-observable Resources", "cancelObservePassively"));
+        menuMap.put("26", new MenuInfo("Cancel Observing Resource", "cancelObserveResource"));
+        menuMap.put("27", new MenuInfo("Send POST Request with Blockwise Payload", "sendPostRequestBlockwise"));
+        menuMap.put("28", new MenuInfo("Get Input From User", "getUserInput"));
 
         RegisterApp("Resource Introspection", menuMap, new RITestAppAction(getApplicationContext()));
     }
 
-    private boolean isWifiConnected() {
-        ConnectivityManager connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-        return connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
-                .isConnected();
-    }
-
-    private void showWifiUnavailableDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Error")
-                .setMessage(
-                        "WiFi is not enabled/connected! Please connect the WiFi and start application again...")
-                .setCancelable(false)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        finish();
-                    }
-                }).create().show();
-    }
-
-    private void configurePlatform() {
-        OcPlatform.Configure(new PlatformConfig(getApplicationContext(),
-                ServiceType.IN_PROC, ModeType.CLIENT_SERVER, "0.0.0.0", 0,
-                QualityOfService.LOW));
-
-        Log.i("InterOpAppRI", "Configuration done Successfully");
-    }
 }
