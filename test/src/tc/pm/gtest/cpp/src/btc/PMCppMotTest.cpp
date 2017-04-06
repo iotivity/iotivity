@@ -2108,8 +2108,13 @@ TEST_F(PMCppMotTest_btc, ProvisionACLForMultipleOwnedDevices_RV_SRC_P)
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
-    PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_motOwnedDevList);
+    if(!m_PMCppHelper.convertStrToUuid(m_motOwnedDevList[0]->getDeviceID(), &devUuid, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    OicSecAcl_t* m_acl1 = PMCppHelper::createAclForLEDAccess(&m_motOwnedDevList[0]->getDevPtr()->doxm->subOwners->uuid);
 
     if(!m_PMCppHelper.provisionACL(m_motOwnedDevList, m_acl1, PMCppHelper::provisionCB, OC_STACK_OK))
     {

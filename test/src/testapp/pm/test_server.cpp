@@ -32,6 +32,7 @@
 #include "srmutility.h"
 #include "doxmresource.h"
 #include "pinoxmcommon.h"
+#include "oxmverifycommon.h"
 
 #include "IotivityTest_Logger.h"
 
@@ -41,8 +42,7 @@
 /* Structure to represent a LED resource */
 typedef struct LEDRESOURCE
 {
-    OCResourceHandle handle;
-    bool state;
+    OCResourceHandle handle;bool state;
     int power;
 } LEDResource;
 
@@ -408,9 +408,57 @@ void GeneratePinCB(char* pin, size_t pinSize)
     create_file(pin);
 }
 
+OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
+{
+    IOTIVITYTEST_LOG(DEBUG, "[Test Server] displayNumCB IN");
+    IOTIVITYTEST_LOG(DEBUG, "[Test Server] ############ mutualVerifNum ############");
+
+    for(int i = 0; i< MUTUAL_VERIF_NUM_LEN ; i++)
+    {
+        IOTIVITYTEST_LOG(DEBUG, "[Test Server] %02X ", mutualVerifNum[i] );
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "[Test Server] ############ mutualVerifNum ############");
+    IOTIVITYTEST_LOG(DEBUG, "[Test Server] displayNumCB OUT");
+    return OC_STACK_OK;
+}
+
+OCStackResult confirmNumCB(void * ctx)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[Test Server] confirmNumCB IN");
+
+    for (;;)
+    {
+        int confirm;
+
+        confirm = 1;
+
+        if (1 == confirm)
+        {
+            break;
+        }
+        else if (0 == confirm)
+        {
+            return OC_STACK_ERROR;
+        }
+
+        IOTIVITYTEST_LOG(ERROR, "[Test Server] Entered Wrong Number. Please Enter Again");
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "[Test Server] confirmNumCB OUT");
+    return OC_STACK_OK;
+}
+
 FILE* server_fopen(const char *path, const char *mode)
 {
-    return fopen(fileName, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(fileName, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int main(int argc, char **argv)
@@ -418,6 +466,13 @@ int main(int argc, char **argv)
     struct timespec timeout;
 
     strcpy(fileName, argv[1]);
+
+    if(!strcmp(argv[2], "4"))
+    {
+        SetDisplayNumCB(NULL, displayNumCB);
+        SetUserConfirmCB(NULL, confirmNumCB);
+        SetVerifyOption((VerifyOptionBitmask_t)(0 | 1|2|3|4));
+    }
 
     // Initialize Persistent Storage for SVR database
     OCPersistentStorage ps =
@@ -453,10 +508,25 @@ int main(int argc, char **argv)
     if (!strcmp(argv[2], "2"))
     {
         SetGeneratePinCB(&GeneratePinCB);
+
+        if (OC_STACK_OK != SetRandomPinPolicy(OXM_RANDOM_PIN_DEFAULT_SIZE, LOWERCASE_CHAR_PIN))
+        {
+            OIC_LOG(ERROR, TAG, "Failed to setting PIN policy");
+            return 0;
+        }
+
         strcpy(g_serverType, "RandomPin Server");
-    } else if (!strcmp(argv[2], "3")) {
+    }
+    else if (!strcmp(argv[2], "3"))
+    {
         strcpy(g_serverType, "Pre-Config Server");
-    } else {
+    }
+    else if (!strcmp(argv[2], "4"))
+    {
+        strcpy(g_serverType, "MV Just Work Server");
+    }
+    else
+    {
         strcpy(g_serverType, "JustWorks Server");
     }
 

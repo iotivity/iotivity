@@ -29,8 +29,15 @@ static int g_cbInvoked = CALLBACK_NOT_INVOKED;
 
 FILE* PMCppMotHelper::fopenMotClient(const char *UNUSED_PARAM, const char *mode)
 {
-    (void) UNUSED_PARAM;
-    return fopen(MOT_CBOR_FILE, mode);
+    //(void) UNUSED_PARAM;
+    if (0 == strcmp(UNUSED_PARAM, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(MOT_CBOR_FILE, mode);
+    }
+    else
+    {
+        return fopen(UNUSED_PARAM, mode);
+    }
 }
 
 PMCppMotHelper::PMCppMotHelper()

@@ -34,8 +34,15 @@ PMCsdkMotHelper::PMCsdkMotHelper()
 
 FILE* PMCsdkMotHelper::fopenMotClient(const char* path, const char* mode)
 {
-    OC_UNUSED(path);
-    return fopen(MOT_CBOR_FILE, mode);
+    //OC_UNUSED(path);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(MOT_CBOR_FILE, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 bool PMCsdkMotHelper::initMotClient()

@@ -28,13 +28,32 @@ int g_motCbInvoked = CALLBACK_NOT_INVOKED;
 
 FILE* fopenMotClient(const char* path, const char* mode)
 {
-    OC_UNUSED(path);
-    return fopen(MOT_CBOR_FILE, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        // input |g_svr_db_fname| internally by force, not using |path| parameter
+        // because |OCPersistentStorage::open| is called |OCPersistentStorage| internally
+        // with its own |SVR_DB_FILE_NAME|
+        return fopen(MOT_CBOR_FILE, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
+    //return fopen(MOT_CBOR_FILE, mode);
 }
 
+/**
+ * Helper Method for initMotClient
+ */
 bool initMotClient()
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] initMotClient IN");
+
+    //setup
+    removeAllResFile(MOTCLIENT);
+    CommonUtil::waitInSecond(DELAY_LONG);
+    copyAllResFile(MOTCLIENT);
+    CommonUtil::waitInSecond(DELAY_LONG);
 
     // initialize persistent storage for SVR DB
     static OCPersistentStorage g_pstMot;
@@ -81,6 +100,9 @@ bool initMotClient()
     return true;
 }
 
+/**
+ * Helper Method for OCProvisionPreconfigPin
+ */
 bool provisionPreconfPin(void* ctx, OCProvisionDev_t *targetDeviceInfo,
         const char * preconfPin, size_t preconfPinLen, OCProvisionResultCB resultCallback,
         OCStackResult expectedResult)
@@ -113,6 +135,9 @@ bool provisionPreconfPin(void* ctx, OCProvisionDev_t *targetDeviceInfo,
     return true;
 }
 
+/**
+ * Helper Method for OCChangeMOTMode
+ */
 bool changeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
         const OicSecMomType_t momType, OCProvisionResultCB resultCallback,
         OCStackResult expectedResult)
@@ -143,6 +168,9 @@ bool changeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
     return true;
 }
 
+/**
+ * Helper Method for OCSelectMOTMethod
+ */
 bool selectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
         const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback,
         OCStackResult expectedResult)
@@ -173,7 +201,7 @@ bool selectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
     return true;
 }
 
-void provisionPreconfPinCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+void provisionPreconfPinCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if (!hasError)
     {
@@ -188,7 +216,7 @@ void provisionPreconfPinCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool
     g_motCbInvoked = true;
 }
 
-void changeMOTModeCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+void changeMOTModeCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if (!hasError)
     {
@@ -203,7 +231,7 @@ void changeMOTModeCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasEr
     g_motCbInvoked = true;
 }
 
-void selectMOTMethodCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+void selectMOTMethodCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if (!hasError)
     {
@@ -218,6 +246,55 @@ void selectMOTMethodCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool has
     g_motCbInvoked = true;
 }
 
+void multipleOwnershipTransferCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if (!hasError)
+    {
+        IOTIVITYTEST_LOG(INFO, "Multiple Ownership Transfer SUCCEEDED - ctx: %s", (char* ) ctx);
+    }
+    else
+    {
+        IOTIVITYTEST_LOG(ERROR, "Ownership Transfer FAILED - ctx: %s", (char* ) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+
+    g_motCbInvoked = CALLBACK_INVOKED;
+}
+
+OCStackResult LedCB(void *ctx, OCDoHandle UNUSED, OCClientResponse *clientResponse)
+{
+    if(clientResponse)
+    {
+        if(OC_STACK_OK == clientResponse->result)
+        {
+            IOTIVITYTEST_LOG(DEBUG, "Received OC_STACK_OK from server\n");
+
+            if(clientResponse->payload)
+            {
+                IOTIVITYTEST_LOG(DEBUG, "Response ===================> %s\n",(char*)clientResponse->payload);
+            }
+        }
+        else if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
+        {
+            IOTIVITYTEST_LOG(DEBUG, "Received OC_STACK_RESOURCE_CHANGED from server\n");
+        }
+        else
+        {
+            IOTIVITYTEST_LOG(ERROR, "Error in response : %d\n", clientResponse->result);
+        }
+    }
+    else
+    {
+        IOTIVITYTEST_LOG(ERROR, "Hit the response callback but can not find response data\n");
+    }
+
+    g_motCbInvoked = true;
+    return OC_STACK_OK;
+}
+
+/**
+ * Helper Method for OCDiscoverMultipleOwnerEnabledDevices
+ */
 bool discoverMultipleOwnerEnabledDevices(int nTime, OCProvisionDev_t** motdev_list,
         OCStackResult expectedResult)
 {
@@ -244,6 +321,9 @@ bool discoverMultipleOwnerEnabledDevices(int nTime, OCProvisionDev_t** motdev_li
     return true;
 }
 
+/**
+ * Helper Method for OCDiscoverMultipleOwnedDevices
+ */
 bool discoverMultipleOwnedDevices(int nTime, OCProvisionDev_t** motOnwedDev_list,
         OCStackResult expectedResult)
 {
@@ -270,6 +350,9 @@ bool discoverMultipleOwnedDevices(int nTime, OCProvisionDev_t** motOnwedDev_list
     return true;
 }
 
+/**
+ * Helper Method for OCAddPreconfigPin
+ */
 bool addPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
         const char* preconfPIN, size_t preconfPINLen, OCStackResult expectedResult)
 {
@@ -288,6 +371,9 @@ bool addPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
     return true;
 }
 
+/**
+ * Helper Method for OCDoMultipleOwnershipTransfer
+ */
 bool doMultipleOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices,
         OCProvisionResultCB resultCallback, OCStackResult expectedResult)
 {
@@ -321,19 +407,122 @@ bool doMultipleOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices,
     return true;
 }
 
-void multipleOwnershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+/**
+ * Helper Method for OCDoResource
+ */
+bool getLedResources(OCProvisionDev_t *selDev,OCStackResult expectedResult)
 {
-    if (!hasError)
-    {
-        IOTIVITYTEST_LOG(INFO, "Multiple Ownership Transfer SUCCEEDED - ctx: %s", (char* ) ctx);
-    }
-    else
-    {
-        IOTIVITYTEST_LOG(ERROR, "Ownership Transfer FAILED - ctx: %s", (char* ) ctx);
-        printResultList((const OCProvisionResult_t*) arr, nOfRes);
-    }
+	IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getLedResource IN");
+	char query[256] = {0};
+	OCCallbackData cbData;
+	cbData.cb = &LedCB;
+	cbData.context = NULL;
+	cbData.cd = NULL;
 
-    g_motCbInvoked = CALLBACK_INVOKED;
+	if(PMGenerateQuery(true, selDev->endpoint.addr, selDev->securePort, selDev->connType, query, sizeof(query), MOT_LED_RESOURCE))
+		{
+			g_motCbInvoked = CALLBACK_NOT_INVOKED;
+			IOTIVITYTEST_LOG(DEBUG, "[PMHelper] query=%s\n",query);
+
+			OCStackResult res = OCDoResource(NULL, OC_REST_GET, query, NULL, NULL, selDev->connType, OC_HIGH_QOS, &cbData, NULL, 0);
+			if (expectedResult != res)
+			{
+				IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
+				return false;
+			}
+			if (OC_STACK_OK == res)
+			{
+				if (CALLBACK_NOT_INVOKED == waitCallbackRetMot())
+				{
+					IOTIVITYTEST_LOG(ERROR, "Callback not Invoked");
+					return false;
+				}
+			}
+		}
+		else
+		{
+			IOTIVITYTEST_LOG(ERROR, "Failed to generate GET request for /a/led\n");
+			return false;
+		}
+
+	IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getLedResource OUT");
+}
+
+bool putLedResources(OCProvisionDev_t *selDev,OCStackResult expectedResult)
+{
+	IOTIVITYTEST_LOG(DEBUG, "[PMHelper] putLedResources IN");
+	char query[256] = {0};
+	OCCallbackData cbData;
+	cbData.cb = &LedCB;
+	cbData.context = NULL;
+	cbData.cd = NULL;
+
+	if(PMGenerateQuery(true, selDev->endpoint.addr, selDev->securePort, selDev->connType, query, sizeof(query), MOT_LED_RESOURCE))
+		{
+			g_motCbInvoked = CALLBACK_NOT_INVOKED;
+			IOTIVITYTEST_LOG(DEBUG, "[PMHelper] query=%s\n",query);
+			OCStackResult res = OCDoResource(NULL, OC_REST_PUT, query, NULL, NULL, selDev->connType, OC_LOW_QOS, &cbData, NULL, 0);
+			if (expectedResult != res)
+			{
+				IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
+				return false;
+			}
+			if (OC_STACK_OK == res)
+			{
+				if (CALLBACK_NOT_INVOKED == waitCallbackRetMot())
+				{
+					IOTIVITYTEST_LOG(ERROR, "Callback not Invoked");
+					return false;
+				}
+			}
+		}
+		else
+		{
+			IOTIVITYTEST_LOG(ERROR, "Failed to generate GET request for /a/led\n");
+			return false;
+		}
+
+	IOTIVITYTEST_LOG(DEBUG, "[PMHelper] putLedResources OUT");
+}
+
+OicSecAcl_t* createAclForLEDAccess(const OicUuid_t* subject)
+{
+	IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAclForLEDAccess In");
+
+    OicSecAcl_t* acl = (OicSecAcl_t*) OICCalloc(1, sizeof(OicSecAcl_t));
+    OicSecAce_t* ace = (OicSecAce_t*) OICCalloc(1, sizeof(OicSecAce_t));
+
+    LL_APPEND(acl->aces, ace);
+    memcpy(ace->subjectuuid.id, subject->id, sizeof(subject->id));
+
+    // fill the href
+    char* rsrc_in = "/a/led";  // '1' for null termination
+    OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+
+    size_t len = strlen(rsrc_in)+1;  // '1' for null termination
+    rsrc->href = (char*) OICCalloc(len, sizeof(char));
+
+    OICStrcpy(rsrc->href, len, rsrc_in);
+
+    //fill the resource type (rt)
+    rsrc->typeLen = 1;
+    rsrc->types = (char**)OICCalloc(1, sizeof(char*));
+    rsrc->types[0] = OICStrdup("oic.r.core");
+    rsrc->interfaceLen = 1;
+    rsrc->interfaces = (char**)OICCalloc(1, sizeof(char*));
+    rsrc->interfaces[0] = OICStrdup("oic.if.baseline");
+
+    LL_APPEND(ace->resources, rsrc);
+
+    ace->permission = PERMISSION_FULL_CONTROL;
+
+    ace->eownerID = (OicUuid_t*)OICCalloc(1, sizeof(OicUuid_t));
+
+    memcpy(ace->eownerID->id, subject->id, sizeof(subject->id));
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAclForLEDAccess OUT");
+
+    return acl;
 }
 
 int waitCallbackRetMot(void)

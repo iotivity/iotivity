@@ -186,6 +186,7 @@ void PMCsdkUtilityHelper::removeAllResFile()
     CommonUtil::rmFile(RANDOMPIN_SERVER_CBOR);
     CommonUtil::rmFile(PRECONFIG_SERVER1_CBOR);
     CommonUtil::rmFile(PRECONFIG_SERVER2_CBOR);
+    CommonUtil::rmFile(MV_JUSTWORKS_SERVER_CBOR);
 
     CommonUtil::rmFile(CLIENT_DATABASE);
     CommonUtil::rmFile(CLIENT_CBOR);

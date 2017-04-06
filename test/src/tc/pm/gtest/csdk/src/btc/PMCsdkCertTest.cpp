@@ -242,7 +242,7 @@ TEST_F(PMCsdkCertTest_btc, SaveTrustCertChainCrtChain_NV_N)
 
     uint16_t g_credId = 0;
     if (!m_PMCertHelper.saveTrustCertChain(NULL, g_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
+                    OIC_ENCODING_PEM, &g_credId, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -255,9 +255,9 @@ TEST_F(PMCsdkCertTest_btc, SaveTrustCertChainCrtChain_NV_N)
  * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
  * @see             OCStackResult OCInitPM(const char* dbPath)
  * @see             OCStackResult OCRegisterTrustCertChainNotifier(void *cb, TrustCertChainChangeCB CB)
- * @objective       Test OCSaveTrustCertChain negatively with chainSize as NULL
+ * @objective       Test OCSaveTrustCertChain negatively with chainSize as -1
  * @target          OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
- * @test_data       chainSize as NULL
+ * @test_data       chainSize as -1
  * @pre_condition   Start two justworks simulators
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
@@ -265,7 +265,7 @@ TEST_F(PMCsdkCertTest_btc, SaveTrustCertChainCrtChain_NV_N)
  *                  4. call OCRegisterTrustCertChainNotifier
  *                  5. call OCSaveTrustCertChain
  * @post_condition  None
- * @expected        OCSaveTrustCertChain will return OC_STACK_INVALID_PARAM
+ * @expected        OCSaveTrustCertChain will return OC_STACK_NO_MEMORY
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(PMCsdkCertTest_btc, SaveTrustCertChainCrtChainLen_NV_N)
@@ -288,7 +288,7 @@ TEST_F(PMCsdkCertTest_btc, SaveTrustCertChainCrtChainLen_NV_N)
 
     uint16_t g_credId = 0;
     if (!m_PMCertHelper.saveTrustCertChain(g_trustCertChainArray.data, -1,
-                    OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
+                    OIC_ENCODING_PEM, &g_credId, OC_STACK_NO_MEMORY))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -369,7 +369,7 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChain_SRC_RV_P)
  *                  5. call OCSaveTrustCertChain
  *                  6. call OCReadTrustCertChain
  * @post_condition  None
- * @expected        OCReadTrustCertChain will return OC_STACK_INVALID_PARAM
+ * @expected        OCReadTrustCertChain will return OC_STACK_ERROR
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(PMCsdkCertTest_btc, ReadTrustCertChainCredId_LOBV_N)
@@ -400,7 +400,7 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChainCredId_LOBV_N)
     ByteArray_t g_trustCertChainArray1 =
     {   0, 0};
 
-    if (!m_PMCertHelper.readTrustCertChain(-1, &g_trustCertChainArray1.data, &g_trustCertChainArray1.len, OC_STACK_INVALID_PARAM))
+    if (!m_PMCertHelper.readTrustCertChain(-1, &g_trustCertChainArray1.data, &g_trustCertChainArray1.len, OC_STACK_ERROR))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -763,7 +763,7 @@ TEST_F(PMCsdkCertTest_btc, ProvisionTrustCertChainCb_NV_N)
 
     OCProvisionDev_t *device1 = m_OwnList;
 
-    if (!m_PMCertHelper.provisionTrustCertChain((void*)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY, 1, device1, NULL, OC_STACK_OK))
+    if (!m_PMCertHelper.provisionTrustCertChain((void*)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY, 1, device1, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }

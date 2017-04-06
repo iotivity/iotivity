@@ -39,12 +39,28 @@
 #include "OCProvisioningManager.hpp"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
+#include "oxmverifycommon.h"
 #include "utlist.h"
+#include "srmutility.h"
+#include "aclresource.h"
 
 #include "CommonUtil.h"
 #include "IotivityTest_Logger.h"
 
 using namespace OC;
+
+/**
+ * Remove Resource file
+ */
+#define JUSTWORK1 0
+#define JUSTWORK2 1
+#define JUSTWORK7 2
+#define RANDOMPIN 3
+#define PRECONFIGPIN1 4
+#define PRECONFIGPIN2 5
+#define CLIENT 6
+#define MOTCLIENT 7
+#define MVJUSTWORK 8
 
 #define DASH "-"
 #define EMPTY_STRING ""
@@ -111,12 +127,26 @@ using namespace OC;
 /**
  *  Server and Client Resources
  */
+#define KILL_SERVERS "./iotivity_pm_server"
+#define JUSTWORKS_SERVER1_CBOR "./oic_svr_db_server.dat"
+#define JUSTWORKS_SERVER1_CBOR_BACKUP "../oic_svr_db_server.dat"
+#define JUSTWORKS_SERVER2_CBOR "./oic_svr_db_server_justworks.dat"
+#define JUSTWORKS_SERVER2_CBOR_BACKUP "../oic_svr_db_server_justworks.dat"
+#define RANDOMPIN_SERVER_CBOR "./oic_svr_db_server_randompin.dat"
+#define RANDOMPIN_SERVER_CBOR_BACKUP "../oic_svr_db_server_randompin.dat"
+#define CLIENT_CBOR_BACKUP "../oic_svr_db_client.dat"
 #define SVR_DB_FILE_NAME "oic_svr_db_client.dat"
-#define PRVN_DB_FILE_NAME "oic_prvn_mng.db"
+#define PRVN_DB_FILE_NAME "oic_prvn_mng.db".
+#define MOT_DB_FILE_NAME "oic_mot_mng.db"
 #define JUSTWORKS_SERVER "./sampleserver_justworks"
 #define RANDOMPIN_SERVER "./sampleserver_randompin"
 #define CLIENT_CBOR "./oic_svr_db_client.dat"
+#define CLIENT_MOT_CBOR "./oic_svr_db_subowner_client.dat"
 #define DATABASE_PDM "./PDM.db"
+
+#define MVJUSTWORKS_SERVER "./iotivity_pm_server oic_svr_db_server_mvjustworks.dat 5"
+#define MVJUSTWORKS_SERVER_CBOR "./oic_svr_db_server_mvjustworks.dat"
+#define MVJUSTWORKS_SERVER_CBOR_BACKUP "../oic_svr_db_server_mvjustworks.dat"
 
 /**
  *  Time Related Resources
@@ -130,15 +160,41 @@ using namespace OC;
 #define DISCOVERY_TIMEOUT_TWO 2
 #define DISCOVERY_TIMEOUT_INVALID -1
 
+/**
+ *  MOT Related Resources
+ */
+#define MOT_DEFAULT_PRE_CONFIG_PIN "12341234"
+#define JUSTWORKS_SERVER "./sampleserver_justworks"
+#define JUSTWORKS_SERVER7 "./iotivity_pm_server mot_preconfig_pin_server.dat 1"
+#define JUSTWORKS_SERVER7_CBOR "./mot_preconfig_pin_server.dat"
+#define JUSTWORKS_SERVER7_CBOR_BACKUP "../mot_preconfig_pin_server.dat"
+#define JUSTWORKS_SERVER2_CBOR "./oic_svr_db_server_justworks.dat"
+#define JUSTWORKS_SERVER2_CBOR_BACKUP "../oic_svr_db_server_justworks.dat"
+
+#define PRECONFIG_SERVER1 "./iotivity_pm_server preconfig_server_1.dat 3"
+#define PRECONFIG_SERVER2 "./iotivity_pm_server preconfig_server_2.dat 3"
+#define PRECONFIG_SERVER1_CBOR "./preconfig_server_1.dat"
+#define PRECONFIG_SERVER1_CBOR_BACKUP "../preconfig_server_1.dat"
+#define PRECONFIG_SERVER2_CBOR "./preconfig_server_2.dat"
+#define PRECONFIG_SERVER2_CBOR_BACKUP "../preconfig_server_2.dat"
+#define MOT_CLIENT_CBOR "./oic_svr_db_subowner_client.dat"
+#define MOT_CLIENT_CBOR_BACKUP "../oic_svr_db_subowner_client.dat"
+
 FILE* clientCppAppOpen(const char *UNUSED_PARAM, const char *mode);
+FILE* clientCppMOTAppOpen(const char *UNUSED_PARAM, const char *mode);
 OicSecAcl_t* createAcl(const int dev_num, int permission, DeviceList_t& deviceList);
 const char *getResult(OCStackResult result);
-void InputPinCB(char* pinBuf, size_t bufSize);
+//void InputPinCB(char* pinBuf, size_t bufSize);
+void OnInputPinCB(OicUuid_t deviceId, char* pinBuf, size_t bufSize);
 std::string getOCStackResultCPP(OCStackResult ocstackresult);
+void printDevices(DeviceList_t &list);
+void printUuid(OicUuid_t uuid);
 
 int startServer(int serverType);
 bool provisionInit();
 bool discoverUnownedDevices(int time, DeviceList_t& data, OCStackResult expectedResult);
+bool discoverSingleDevice(unsigned short timeout, const OicUuid_t* deviceID,
+		std::shared_ptr<OCSecureResource> &foundDevice, OCStackResult expectedResult);
 bool discoverOwnedDevices(int time, DeviceList_t& data, OCStackResult expectedResult);
 bool getDevInfoFromNetwork(unsigned short time, DeviceList_t& ownedDevList,
         DeviceList_t &unownedDevList, OCStackResult expectedResult);
@@ -148,6 +204,7 @@ bool doOwnershipTransfer(DeviceList_t &data, ResultCallBack resultCallback,
         OCStackResult expectedResult);
 bool provisionACL(DeviceList_t& deviceList, const OicSecAcl_t* acl, ResultCallBack resultCallback,
         OCStackResult expectedResult);
+bool saveACL(const OicSecAcl_t* acl,OCStackResult expectedResult);
 bool provisionCredentials(DeviceList_t& deviceList, const Credential &cred,
         const OCSecureResource &device2, ResultCallBack resultCallback,
         OCStackResult expectedResult);
@@ -159,6 +216,8 @@ bool unlinkDevices(DeviceList_t& deviceList, const OCSecureResource &device2,
         ResultCallBack resultCallback, OCStackResult expectedResult);
 bool removeDevice(DeviceList_t& deviceList, unsigned short waitTimeForOwnedDeviceDiscovery,
         ResultCallBack resultCallback, OCStackResult expectedResult);
+bool removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery,
+        std::string uuid, ResultCallBack resultCallback, OCStackResult expectedResult);
 
 void ownershipTransferCB(PMResultList_t *result, int hasError);
 void provisionCB(PMResultList_t *result, int hasError);
@@ -166,4 +225,35 @@ void provisionCB(PMResultList_t *result, int hasError);
 std::string getFailureMessage();
 OCProvisionDev_t* getDevInst(const OCProvisionDev_t* dev_lst, const int dev_num);
 int waitCallbackRet();
+bool convertStrToUuid(std::string uuid, OicUuid_t* deviceID,OCStackResult expectedResult);
+void removeAllResFile(int resFile);
+void copyAllResFile(int resFile);
+
+//MOT
+
+bool changeMOTMode(DeviceList_t& deviceList, const OicSecMomType_t momType, ResultCallBack resultCallback,
+        OCStackResult expectedResult);
+bool discoverMultipleOwnerEnabledDevices(unsigned short timeout, DeviceList_t &list,
+        OCStackResult expectedResult);
+bool addPreconfigPIN(DeviceList_t &list,const char * preconfPin,
+        size_t preconfPinLength, OCStackResult expectedResult);
+bool provisionPreconfPin(DeviceList_t &list,const char * preconfPin, size_t preconfPinLength, ResultCallBack resultCallback,
+		OCStackResult expectedResult);
+bool selectMOTMethod(DeviceList_t &list, const OicSecOxm_t oxmSelVal,
+                    ResultCallBack resultCallback, OCStackResult expectedResult);
+bool doMultipleOwnershipTransfer(DeviceList_t &list,ResultCallBack resultCallback,OCStackResult expectedResult);
+bool discoverMultipleOwnedDevices(unsigned short timeout, DeviceList_t &list, OCStackResult expectedResult);
+bool getLedResource(DeviceList_t &list,GetCallback attributeHandler,OCStackResult expectedResult);
+
+int waitCallbackRetMot(void);
+void changeMOTModeCB(PMResultList_t *result, int hasError);
+void selectMOTMethodCB(PMResultList_t *result, int hasError);
+void preConfigPinCB(PMResultList_t *result, int hasError);
+void multipleOwnershipTransferCB(PMResultList_t *result, int hasError);
+void getCallback(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode);
+OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN]);
+OCStackResult confirmNumCB(void * ctx);
+
+OCStackResult displayMutualVerifNumCB(uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN]);
+OCStackResult confirmMutualVerifNumCB(void);
 #endif

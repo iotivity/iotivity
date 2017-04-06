@@ -39,6 +39,7 @@
 #include "crlresource.h"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
+#include "oxmverifycommon.h"
 #include "OCAccountManager.h"
 #include "OCApi.h"
 #include "OCPlatform.h"
@@ -71,6 +72,7 @@ using namespace OC;
 #define JUSTWORKS_SERVER1 "./iotivity_pm_server oic_svr_db_server.dat 1"
 #define JUSTWORKS_SERVER2 "./iotivity_pm_server oic_svr_db_server_justworks.dat 1"
 #define RANDOMPIN_SERVER "./iotivity_pm_server oic_svr_db_server_randompin.dat 2"
+#define MV_JUSTWORKS_SERVER "./iotivity_pm_server oic_svr_db_server_mvjustworks.dat 4"
 
 #define JUSTWORKS_SERVER1_CBOR "./oic_svr_db_server.dat"
 #define JUSTWORKS_SERVER1_CBOR_BACKUP "../oic_svr_db_server.dat"
@@ -82,6 +84,9 @@ using namespace OC;
 #define CLIENT_CBOR_BACKUP "../oic_svr_db_client.dat"
 #define CLIENT_DATABASE "./oic_prvn_mng.db"
 #define DATABASE_PDM "./PDM.db"
+
+#define MV_JUSTWORKS_SERVER_CBOR "./oic_svr_db_server_mvjustworks.dat"
+#define MV_JUSTWORKS_SERVER_CBOR_BACKUP "../oic_svr_db_server_mvjustworks.dat"
 
 /**
  * MOT Resources

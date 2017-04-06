@@ -53,6 +53,8 @@ char *gResourceUri = (char *) "/a/led";
 static char CRED_FILE1[] = "oic_svr_db_server_justworks.dat";
 static char CRED_FILE2[] = "oic_svr_db_server.dat"; // Direct Pairing Not Supported
 static char CRED_FILE3[] = "oic_svr_db_server_randompin.dat";
+static char CRED_FILE4[] = "preconfig_server_1.dat";
+static char CRED_FILE5[] = "oic_svr_db_server_mvjustworks.dat";
 static int gCurrentIndex = 0;
 
 /* Function that creates a new LED resource by calling the
@@ -392,18 +394,33 @@ void handleSigInt(int signum)
 
 FILE* server_fopen(const char *path, const char *mode)
 {
-    (void) path;
-    if (gCurrentIndex == 1)
+    //(void) path;
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
     {
-        return fopen(CRED_FILE1, mode);
-    }
-    if (gCurrentIndex == 2)
-    {
-        return fopen(CRED_FILE2, mode);
+        if (gCurrentIndex == 1)
+        {
+            return fopen(CRED_FILE1, mode);
+        }
+        else if (gCurrentIndex == 2)
+        {
+            return fopen(CRED_FILE2, mode);
+        }
+        else if (gCurrentIndex == 3)
+        {
+            return fopen(CRED_FILE3, mode);
+        }
+        else if (gCurrentIndex == 4)
+        {
+            return fopen(CRED_FILE4, mode);
+        }
+        else if (gCurrentIndex == 5)
+        {
+            return fopen(CRED_FILE5, mode);
+        }
     }
     else
     {
-        return fopen(CRED_FILE3, mode);
+        return fopen(path, mode);
     }
 }
 
@@ -416,8 +433,55 @@ void GeneratePinCB(char* pin, size_t pinSize)
     }
 
     IOTIVITYTEST_LOG(INFO, "============================");
-    IOTIVITYTEST_LOG(INFO, "    PIN CODE : %s", pin);
+    IOTIVITYTEST_LOG(INFO, "    PIN CODE : [%s]", pin);
     IOTIVITYTEST_LOG(INFO, "============================");
+}
+
+OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
+{
+    IOTIVITYTEST_LOG(DEBUG, "[Test Server] displayNumCB IN");
+    IOTIVITYTEST_LOG(DEBUG, "[Test Server] ############ mutualVerifNum ############");
+
+    for(int i = 0; i< MUTUAL_VERIF_NUM_LEN ; i++)
+    {
+        IOTIVITYTEST_LOG(DEBUG, "[Test Server] %02X ", mutualVerifNum[i] );
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "[Test Server] ############ mutualVerifNum ############");
+    IOTIVITYTEST_LOG(DEBUG, "[Test Server] displayNumCB OUT");
+    return OC_STACK_OK;
+}
+
+OCStackResult confirmNumCB(void * ctx)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[Test Server] confirmNumCB IN");
+
+    for (;;)
+    {
+        int serverConfirm;
+        printf("   > Press 1 for confirmation\n");
+        printf("   > Press 0 otherwise\n");
+        for (int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &serverConfirm);
+            for (; 0x20<=getchar(); );  // for removing overflow garbage
+                                        // '0x20<=code' is character region
+        }
+
+        if (1 == serverConfirm)
+        {
+            break;
+        }
+        else if (0 == serverConfirm)
+        {
+            return OC_STACK_ERROR;
+        }
+
+        IOTIVITYTEST_LOG(ERROR, "[Test Server] Entered Wrong Number. Please Enter Again");
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "[Test Server] confirmNumCB OUT");
+    return OC_STACK_OK;
 }
 
 int startServer(int serverType)
@@ -425,6 +489,55 @@ int startServer(int serverType)
     struct timespec timeout;
 
     gCurrentIndex = serverType;
+
+    if (gCurrentIndex == 1)
+        {
+            //setup
+            removeAllResFile(JUSTWORK1);
+            CommonUtil::waitInSecond(DELAY_LONG);
+            copyAllResFile(JUSTWORK1);
+            CommonUtil::waitInSecond(DELAY_LONG);
+        }
+        else if (gCurrentIndex == 2)
+        {
+            //setup
+            removeAllResFile(JUSTWORK2);
+            CommonUtil::waitInSecond(DELAY_LONG);
+            copyAllResFile(JUSTWORK2);
+            CommonUtil::waitInSecond(DELAY_LONG);
+        }
+        else if (gCurrentIndex == 3)
+        {
+            //setup
+            removeAllResFile(RANDOMPIN);
+            CommonUtil::waitInSecond(DELAY_LONG);
+            copyAllResFile(RANDOMPIN);
+            CommonUtil::waitInSecond(DELAY_LONG);
+        }
+        else if (gCurrentIndex == 4)
+        {
+            //setup
+            removeAllResFile(PRECONFIGPIN1);
+            CommonUtil::waitInSecond(DELAY_LONG);
+            copyAllResFile(PRECONFIGPIN1);
+            CommonUtil::waitInSecond(DELAY_LONG);
+        }
+        else if (gCurrentIndex == 5)
+        {
+            //setup
+            removeAllResFile(MVJUSTWORK);
+            CommonUtil::waitInSecond(DELAY_LONG);
+            copyAllResFile(MVJUSTWORK);
+            CommonUtil::waitInSecond(DELAY_LONG);
+
+            // Set callbacks for verification
+            SetDisplayNumCB(NULL, displayNumCB);
+            SetUserConfirmCB(NULL, confirmNumCB);
+
+            // Set Verification Option for ownership transfer
+            // Currently, BOTH display AND confirm
+            SetVerifyOption((VerifyOptionBitmask_t)(DISPLAY_NUM | USER_CONFIRM));
+        }
 
     IOTIVITYTEST_LOG(DEBUG, "[Server %d] OCServer is starting...", gCurrentIndex);
 

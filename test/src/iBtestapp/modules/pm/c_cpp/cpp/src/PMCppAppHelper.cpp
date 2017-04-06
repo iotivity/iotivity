@@ -21,6 +21,7 @@
 #include "PMCppAppHelper.h"
 
 int g_cbInvoked = CALLBACK_NOT_INVOKED;
+
 static const OicSecPrm_t SUPPORTED_PRMS[1] =
 { PRM_PRE_CONFIGURED, };
 
@@ -49,8 +50,28 @@ void printUuid(OicUuid_t uuid)
 
 FILE* clientCppAppOpen(const char *UNUSED_PARAM, const char *mode)
 {
-    (void) UNUSED_PARAM;
-    return fopen(CLIENT_CBOR, mode);
+    //(void) UNUSED_PARAM;
+    if (0 == strcmp(UNUSED_PARAM, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CLIENT_CBOR, mode);
+    }
+    else
+    {
+        return fopen(UNUSED_PARAM, mode);
+    }
+}
+
+FILE* clientCppMOTAppOpen(const char *UNUSED_PARAM, const char *mode)
+{
+    //(void) UNUSED_PARAM;
+    if (0 == strcmp(UNUSED_PARAM, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CLIENT_MOT_CBOR, mode);
+    }
+    else
+    {
+        return fopen(UNUSED_PARAM, mode);
+    }
 }
 
 void InputPinCB(char* pin, size_t len)
@@ -71,6 +92,64 @@ void InputPinCB(char* pin, size_t len)
               // '0x20<=code' is character region
     }
 
+}
+
+void OnInputPinCB(OicUuid_t deviceId, char* pinBuf, size_t bufSize)
+{
+    if(pinBuf)
+    {
+        std::cout <<"INPUT PIN : ";
+        std::string ptr;
+        std::cin >> ptr;
+        strcpy(pinBuf, (const char*) ptr.c_str());
+        return;
+    }
+}
+
+OCStackResult displayMutualVerifNumCB(uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] displayNumCB IN");
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] ############ mutualVerifNum ############");
+
+    for(int i = 0; i< MUTUAL_VERIF_NUM_LEN ; i++)
+    {
+        IOTIVITYTEST_LOG(DEBUG, "[Test Server] %02X ", mutualVerifNum[i] );
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] ############ mutualVerifNum ############");
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] displayNumCB OUT");
+    return OC_STACK_OK;
+}
+
+OCStackResult confirmMutualVerifNumCB(void)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] confirmMutualVerifNumCB IN");
+    for (;;)
+    {
+        int clientConfirm;
+        CommonUtil::waitInSecond(DELAY_SHORT);
+        printf("   > Press 1 if the mutual verification numbers are the same\n");
+        printf("   > Press 0 if the mutual verification numbers are not the same\n");
+
+        for (int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &clientConfirm);
+            for (; 0x20<=getchar(); );  // for removing overflow garbage
+                                        // '0x20<=code' is character region
+        }
+
+        if (1 == clientConfirm)
+        {
+            break;
+        }
+        else if (0 == clientConfirm)
+        {
+            return OC_STACK_USER_DENIED_REQ;
+        }
+        printf("   Entered Wrong Number. Please Enter Again\n");
+    }
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] confirmMutualVerifNumCB OUT");
+    return OC_STACK_OK;
 }
 
 OicSecAcl_t* createAcl(const int dev_num, int nPermission, DeviceList_t &m_OwnedDevList)
@@ -129,6 +208,19 @@ OicSecAcl_t* createAcl(const int dev_num, int nPermission, DeviceList_t &m_Owned
 
 bool provisionInit()
 {
+    CommonUtil::killApp(KILL_SERVERS);
+    CommonUtil::waitInSecond(DELAY_MEDIUM);
+    //removeAllResFile();
+    CommonUtil::waitInSecond(DELAY_MEDIUM);
+    CommonUtil::copyFile(JUSTWORKS_SERVER1_CBOR_BACKUP, JUSTWORKS_SERVER1_CBOR);
+    CommonUtil::copyFile(JUSTWORKS_SERVER2_CBOR_BACKUP, JUSTWORKS_SERVER2_CBOR);
+    CommonUtil::copyFile(PRECONFIG_SERVER1_CBOR_BACKUP, PRECONFIG_SERVER1_CBOR);
+    CommonUtil::copyFile(RANDOMPIN_SERVER_CBOR_BACKUP, RANDOMPIN_SERVER_CBOR);
+    CommonUtil::copyFile(JUSTWORKS_SERVER7_CBOR_BACKUP, JUSTWORKS_SERVER7_CBOR);
+    CommonUtil::copyFile(PRECONFIG_SERVER2_CBOR_BACKUP, PRECONFIG_SERVER2_CBOR);
+    CommonUtil::copyFile(MOT_CLIENT_CBOR_BACKUP, MOT_CLIENT_CBOR);
+    CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
+
     OCPersistentStorage ps
     { clientCppAppOpen, fread, fwrite, fclose, unlink };
 
@@ -142,6 +234,7 @@ bool provisionInit()
         printf("Provision Initialization failed");
         return false;
     }
+
 
     IOTIVITYTEST_LOG(DEBUG, "Provision Initialization Successful\n");
     return true;
@@ -171,6 +264,31 @@ bool discoverUnownedDevices(int time, DeviceList_t& deviceList, OCStackResult ex
     }
 
     IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] discoverUnownedDevices OUT\n");
+    return true;
+}
+
+bool discoverSingleDevice(unsigned short timeout, const OicUuid_t* deviceID,
+		std::shared_ptr<OCSecureResource> &foundDevice, OCStackResult expectedResult)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] discoverSingleDevice IN");
+
+    OCStackResult res = OC_STACK_OK;
+    res = OCSecure::discoverSingleDevice(timeout, deviceID,foundDevice);
+    IOTIVITYTEST_LOG(INFO, "[API Return Code] discoverSingleDevice returns : %s",
+    		getOCStackResultCPP(res).c_str());
+
+    if (res != expectedResult)
+    {
+    	IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
+        return false;
+    }
+
+    if (foundDevice!=NULL)
+	{
+    	std::cout << "[PMCppHelper] Found secure devices: " << foundDevice->getDeviceID() << endl;
+	}
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] discoverSingleDevice OUT");
     return true;
 }
 
@@ -238,7 +356,7 @@ bool setOwnerTransferCallbackData(int num, OTMCallbackData_t &data, InputPinCall
         OCStackResult expectedResult)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] setOwnerTransferCallbackData IN");
-
+#ifdef __1.2.1__
     OCStackResult res = OC_STACK_OK;
 
     res = OCSecure::setOwnerTransferCallbackData((OicSecOxm_t) num, &data, inputPin);
@@ -250,7 +368,7 @@ bool setOwnerTransferCallbackData(int num, OTMCallbackData_t &data, InputPinCall
         IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
         return false;
     }
-
+#endif
     IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] setOwnerTransferCallbackData OUT");
     return true;
 }
@@ -319,6 +437,27 @@ bool provisionACL(DeviceList_t& deviceList, const OicSecAcl_t* acl, ResultCallBa
     IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] provisionACL OUT\n");
     return true;
 }
+
+bool saveACL(const OicSecAcl_t* acl,OCStackResult expectedResult)
+{
+	IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] saveACL IN");
+	    OCStackResult res = OC_STACK_OK;
+	    g_cbInvoked = CALLBACK_NOT_INVOKED;
+
+	    res = OCSecure::saveACL(acl);
+	    IOTIVITYTEST_LOG(DEBUG, "[API Return Code] saveACL returns : %s",
+	    		getOCStackResultCPP(res).c_str());
+
+	    if (res != expectedResult)
+	    {
+	        IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
+	        return false;
+	    }
+
+	    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] saveACL OUT");
+	    return true;
+}
+
 
 bool provisionCredentials(DeviceList_t& deviceList, const Credential &cred,
         const OCSecureResource &device2, ResultCallBack resultCallback,
@@ -474,6 +613,36 @@ bool removeDevice(DeviceList_t& deviceList, unsigned short waitTimeForOwnedDevic
     return true;
 }
 
+bool removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery,
+        std::string uuid, ResultCallBack resultCallback, OCStackResult expectedResult)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] removeDeviceWithUuid IN");
+    OCStackResult res = OC_STACK_OK;
+    g_cbInvoked = CALLBACK_NOT_INVOKED;
+
+    res = OCSecure::removeDeviceWithUuid(waitTimeForOwnedDeviceDiscovery, uuid,resultCallback);
+    IOTIVITYTEST_LOG(DEBUG, "[API Return Code] removeDeviceWithUuid returns : %s",
+    		getOCStackResultCPP(res).c_str());
+
+    if (res != expectedResult)
+    {
+    	IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
+        return false;
+    }
+
+    if (OC_STACK_OK == res)
+    {
+        if (CALLBACK_NOT_INVOKED == waitCallbackRet())
+        {
+            IOTIVITYTEST_LOG(ERROR, "Callback Not Invoked");
+            return false;
+        }
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] removeDeviceWithUuid OUT");
+    return true;
+}
+
 /**
  * Callback function for doOwnership Transfer
  *
@@ -494,7 +663,9 @@ void ownershipTransferCB(PMResultList_t *result, int hasError)
         IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] \nTransferred Ownership successfully for device : ");
         printUuid(result->at(0).deviceId);
         delete result;
+        g_cbInvoked = CALLBACK_INVOKED;
     }
+
 
     IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] ownershipTransferCB OUT");
 }
@@ -523,6 +694,8 @@ void provisionCB(PMResultList_t *result, int hasError)
             IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] Result is = %d for device : ",
                     result->at(i).res);
             printUuid(result->at(i).deviceId);
+
+            g_cbInvoked = CALLBACK_INVOKED;
         }
 
         delete result;
@@ -591,6 +764,12 @@ std::string getOCStackResultCPP(OCStackResult ocstackresult)
         case OC_STACK_ERROR:
             return "OC_STACK_ERROR";
             break;
+        case OC_STACK_INVALID_DEVICE_INFO:
+			return "OC_STACK_INVALID_DEVICE_INFO";
+			break;
+        case OC_STACK_NOT_ACCEPTABLE:
+			return "OC_STACK_NOT_ACCEPTABLE";
+			break;
         default:
             resultString = "UNKNOWN_STATE";
             break;
@@ -623,4 +802,102 @@ int waitCallbackRet()
 
     printf("waitCallbackRet OUT\n");
     return CALLBACK_NOT_INVOKED;
+}
+
+/**
+ * Function for Convert String to Device Uuid
+ */
+bool convertStrToUuid(std::string uuid,OicUuid_t* deviceID,OCStackResult expectedResult)
+{
+	IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] convertStrToUuid IN");
+
+	OCStackResult rst;
+
+	rst = ConvertStrToUuid(uuid.c_str(), deviceID);
+	IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] convertStrToUuid returns : %s",
+			getOCStackResultCPP(rst).c_str());
+
+	if(OC_STACK_OK != rst)
+	{
+		IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
+		return false;
+	}
+
+	IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] convertStrToUuid OUT");
+
+	return true;
+}
+
+void removeAllResFile(int resFile)
+{
+    if(resFile == JUSTWORK1)
+    {
+        CommonUtil::rmFile(JUSTWORKS_SERVER2_CBOR);
+    }
+    else if(resFile == JUSTWORK2)
+    {
+        CommonUtil::rmFile(JUSTWORKS_SERVER1_CBOR);
+    }
+    else if(resFile == MVJUSTWORK)
+    {
+        CommonUtil::rmFile(MVJUSTWORKS_SERVER_CBOR);
+    }
+    else if(resFile == RANDOMPIN)
+    {
+        CommonUtil::rmFile(RANDOMPIN_SERVER_CBOR);
+    }
+    else if(resFile == PRECONFIGPIN1)
+    {
+        CommonUtil::rmFile(PRECONFIG_SERVER1_CBOR);
+    }
+    else if(resFile == PRECONFIGPIN2)
+    {
+        CommonUtil::rmFile(PRECONFIG_SERVER2_CBOR);
+    }
+    else if(resFile == CLIENT)
+    {
+        CommonUtil::rmFile(DATABASE_PDM);
+        CommonUtil::rmFile(CLIENT_CBOR);
+    }
+    else if(resFile == MOTCLIENT)
+    {
+        CommonUtil::rmFile(MOT_DB_FILE_NAME);
+        CommonUtil::rmFile(MOT_CLIENT_CBOR);
+    }
+}
+
+void copyAllResFile(int resFile)
+{
+    if(resFile == JUSTWORK1)
+    {
+        CommonUtil::copyFile(JUSTWORKS_SERVER2_CBOR_BACKUP, JUSTWORKS_SERVER2_CBOR);
+    }
+    else if(resFile == JUSTWORK2)
+    {
+        CommonUtil::copyFile(JUSTWORKS_SERVER1_CBOR_BACKUP, JUSTWORKS_SERVER1_CBOR);
+    }
+    else if(resFile == MVJUSTWORK)
+    {
+        CommonUtil::copyFile(MVJUSTWORKS_SERVER_CBOR_BACKUP, MVJUSTWORKS_SERVER_CBOR);
+    }
+    else if(resFile == RANDOMPIN)
+    {
+        CommonUtil::copyFile(RANDOMPIN_SERVER_CBOR_BACKUP, RANDOMPIN_SERVER_CBOR);
+    }
+    else if(resFile == PRECONFIGPIN1)
+    {
+        CommonUtil::copyFile(PRECONFIG_SERVER1_CBOR_BACKUP, PRECONFIG_SERVER1_CBOR);
+    }
+    else if(resFile == PRECONFIGPIN2)
+    {
+        CommonUtil::copyFile(PRECONFIG_SERVER2_CBOR_BACKUP, PRECONFIG_SERVER2_CBOR);
+    }
+    else if(resFile == CLIENT)
+    {
+        CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
+    }
+    else if(resFile == MOTCLIENT)
+    {
+        CommonUtil::copyFile(MOT_CLIENT_CBOR_BACKUP, MOT_CLIENT_CBOR);
+    }
 }

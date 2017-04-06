@@ -123,6 +123,8 @@ public:
     static void createAcl(OicSecAcl_t *acl, const int dev_num, int nPermission,
             DeviceList_t &m_OwnedDevList);
 
+    static OicSecAcl_t* createAclForLEDAccess(const OicUuid_t* subject);
+
     static void ownershipTransferCB(PMResultList_t *result, int hasError);
 
     static void provisionCB(PMResultList_t *result, int hasError);

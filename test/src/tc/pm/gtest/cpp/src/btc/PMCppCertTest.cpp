@@ -139,7 +139,7 @@ TEST_F(PMCppCertTest_btc, SaveTrustCertChainCredId_NV_N)
  * @procedure       1. call provisionInit
  *                  2. call saveTrustCertChain
  * @post_condition  None
- * @expected        saveTrustCertChain will return OC_STACK_INVALID_PARAM
+ * @expected        saveTrustCertChain will return OC_STACK_NO_MEMORY
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(PMCppCertTest_btc, SaveTrustCertChainCertChainLen_LOBV_N)
@@ -153,7 +153,7 @@ TEST_F(PMCppCertTest_btc, SaveTrustCertChainCertChainLen_LOBV_N)
     PMCppUtilityHelper::readFile(ROOT_CERT_FILE, (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
 
     if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data, -1,
-                    OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_INVALID_PARAM))
+                    OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_NO_MEMORY))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -245,7 +245,7 @@ TEST_F(PMCppCertTest_btc, ReadTrustCertChain_SRC_RV_P)
  *                  2. call saveTrustCertChain
  *                  3. call readTrustCertChain
  * @post_condition  None
- * @expected        readTrustCertChain will return OC_STACK_INVALID_PARAM
+ * @expected        readTrustCertChain will return OC_STACK_ERROR
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(PMCppCertTest_btc, ReadTrustCertChainCredId_LOBV_N)
@@ -268,7 +268,7 @@ TEST_F(PMCppCertTest_btc, ReadTrustCertChainCredId_LOBV_N)
     {   0, 0};
 
     if (!m_PMCppCertHelper.readTrustCertChain(-1, &trustCertChainArray.data,
-                    &trustCertChainArray.len, OC_STACK_INVALID_PARAM))
+                    &trustCertChainArray.len, OC_STACK_ERROR))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }

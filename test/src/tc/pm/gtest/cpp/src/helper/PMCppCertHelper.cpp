@@ -146,12 +146,14 @@ bool PMCppCertHelper::saveTrustCertChain(uint8_t *trustCertChain, size_t chainSi
     IOTIVITYTEST_LOG(INFO, "[PM CERT] OCSaveTrustCertChain returns %s",
             CommonUtil::getOCStackResult(result));
 
-    IOTIVITYTEST_LOG(INFO, "CredId of Saved Trust Cert. Chain into Cred of SVR : %d", *credId);
-
     if (expectedResult != result)
     {
         m_failureMessage = PMCppUtilityHelper::setFailureMessage(result, expectedResult);
         return false;
+    }
+
+    if(OC_STACK_OK == result && OC_STACK_OK == expectedResult) {
+        IOTIVITYTEST_LOG(INFO, "CredId of Saved Trust Cert. Chain into Cred of SVR : %d", *credId);
     }
 
     __FUNC_OUT__

@@ -28,7 +28,14 @@ OCPersistentStorage PMCppHelper::s_ps =
 
 FILE* PMCppHelper::clientOpen(const char *UNUSED_PARAM, const char *mode)
 {
-    return fopen(CBOR_DB_PATH, mode);
+    if (0 == strcmp(UNUSED_PARAM, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CBOR_DB_PATH, mode);
+    }
+    else
+    {
+        return fopen(UNUSED_PARAM, mode);
+    }
 }
 
 bool PMCppHelper::provisionInit(const std::string& dbPath)
@@ -203,6 +210,46 @@ void PMCppHelper::createAcl(OicSecAcl_t *acl, const int dev_num, int nPermission
     }
 
     ace->permission = nPermission;
+}
+
+OicSecAcl_t* PMCppHelper::createAclForLEDAccess(const OicUuid_t* subject)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAclForLEDAccess In");
+
+    OicSecAcl_t* acl = (OicSecAcl_t*) OICCalloc(1, sizeof(OicSecAcl_t));
+    OicSecAce_t* ace = (OicSecAce_t*) OICCalloc(1, sizeof(OicSecAce_t));
+
+    LL_APPEND(acl->aces, ace);
+    memcpy(ace->subjectuuid.id, subject->id, sizeof(subject->id));
+
+    // fill the href
+    char* rsrc_in = "/a/led";  // '1' for null termination
+    OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+
+    size_t len = strlen(rsrc_in)+1;  // '1' for null termination
+    rsrc->href = (char*) OICCalloc(len, sizeof(char));
+
+    OICStrcpy(rsrc->href, len, rsrc_in);
+
+    //fill the resource type (rt)
+    rsrc->typeLen = 1;
+    rsrc->types = (char**)OICCalloc(1, sizeof(char*));
+    rsrc->types[0] = OICStrdup("oic.r.core");
+    rsrc->interfaceLen = 1;
+    rsrc->interfaces = (char**)OICCalloc(1, sizeof(char*));
+    rsrc->interfaces[0] = OICStrdup("oic.if.baseline");
+
+    LL_APPEND(ace->resources, rsrc);
+
+    ace->permission = PERMISSION_FULL_CONTROL;
+
+    ace->eownerID = (OicUuid_t*)OICCalloc(1, sizeof(OicUuid_t));
+
+    memcpy(ace->eownerID->id, subject->id, sizeof(subject->id));
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAclForLEDAccess OUT");
+
+    return acl;
 }
 
 bool PMCppHelper::setRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType,

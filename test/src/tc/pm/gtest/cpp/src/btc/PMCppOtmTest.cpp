@@ -2313,7 +2313,7 @@ TEST_F(PMCppOtmTest_btc, deregisterUserConfirmCallback_SRC_P)
  * @expected        doOwnershipTransfer will return OC_STACK_OK
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(PMCppOtmTest_btc, test)
+TEST_F(PMCppOtmTest_btc, OwnershipTransferMVJustwork_RV_SRC_P)
 {
     CommonUtil::launchApp(MV_JUSTWORKS_SERVER);
     CommonUtil::waitInSecond(DELAY_MEDIUM);

@@ -29,8 +29,15 @@ bool g_inputPinCbInvoked = CALLBACK_NOT_INVOKED;
 
 FILE* fopenProvManager(const char* path, const char* mode)
 {
-    OC_UNUSED(path);
-    return fopen(SVR_DB_FILE_NAME, mode);
+    //OC_UNUSED(path);
+    if (0 == strncmp(path, OC_SECURITY_DB_DAT_FILE_NAME, strlen(OC_SECURITY_DB_DAT_FILE_NAME)))
+    {
+        return fopen(SVR_DB_FILE_NAME, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int waitCallbackRet(void)
@@ -224,6 +231,44 @@ static void inputPinCB(char* pin, size_t len)
     __FUNC_OUT__
 }
 
+OCStackResult PMCsdkHelper::displayMutualVerifNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] displayMutualVerifNumCB IN");
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] ############ mutualVerifNum ############");
+
+    for(int i = 0; i< MUTUAL_VERIF_NUM_LEN ; i++)
+    {
+        IOTIVITYTEST_LOG(DEBUG, "[PMHelper] %02X ", mutualVerifNum[i] );
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] ############ mutualVerifNum ############");
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] displayMutualVerifNumCB OUT");
+    return OC_STACK_OK;
+}
+
+OCStackResult PMCsdkHelper::confirmMutualVerifNumCB(void * ctx)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] confirmMutualVerifNumCB IN");
+    for (;;)
+    {
+        int userConfirm;
+        CommonUtil::waitInSecond(DELAY_SHORT);
+        userConfirm = 1;
+
+        if (1 == userConfirm)
+        {
+            break;
+        }
+        else if (0 == userConfirm)
+        {
+            return OC_STACK_USER_DENIED_REQ;
+        }
+        printf("   Entered Wrong Number. Please Enter Again\n");
+    }
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] confirmMutualVerifNumCB OUT");
+    return OC_STACK_OK;
+}
+
 // CAPI for Provisioning Manager
 
 PMCsdkHelper::PMCsdkHelper()
@@ -316,6 +361,11 @@ bool PMCsdkHelper::initProvisionClient(int clientOTMType, char* chDBPath)
         IOTIVITYTEST_LOG(ERROR, "[PMHelper] OCSetOxmAllowStatus error: OIC_RANDOM_DEVICE_PIN");
         return false;
     }
+
+    SetDisplayNumCB(NULL, displayMutualVerifNumCB);
+    SetUserConfirmCB(NULL, confirmMutualVerifNumCB);
+
+    //SetPreconfigPin("12341234", 8);
 
     __FUNC_OUT__
     return true;
@@ -1238,6 +1288,46 @@ bool multiple_dev)
     ace->permission = permission;
 
     __FUNC_OUT__
+    return acl;
+}
+
+OicSecAcl_t* createAclForLEDAccess(const OicUuid_t* subject)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAclForLEDAccess In");
+
+    OicSecAcl_t* acl = (OicSecAcl_t*) OICCalloc(1, sizeof(OicSecAcl_t));
+    OicSecAce_t* ace = (OicSecAce_t*) OICCalloc(1, sizeof(OicSecAce_t));
+
+    LL_APPEND(acl->aces, ace);
+    memcpy(ace->subjectuuid.id, subject->id, sizeof(subject->id));
+
+    // fill the href
+    char* rsrc_in = "/a/led";  // '1' for null termination
+    OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+
+    size_t len = strlen(rsrc_in)+1;  // '1' for null termination
+    rsrc->href = (char*) OICCalloc(len, sizeof(char));
+
+    OICStrcpy(rsrc->href, len, rsrc_in);
+
+    //fill the resource type (rt)
+    rsrc->typeLen = 1;
+    rsrc->types = (char**)OICCalloc(1, sizeof(char*));
+    rsrc->types[0] = OICStrdup("oic.r.core");
+    rsrc->interfaceLen = 1;
+    rsrc->interfaces = (char**)OICCalloc(1, sizeof(char*));
+    rsrc->interfaces[0] = OICStrdup("oic.if.baseline");
+
+    LL_APPEND(ace->resources, rsrc);
+
+    ace->permission = PERMISSION_FULL_CONTROL;
+
+    ace->eownerID = (OicUuid_t*)OICCalloc(1, sizeof(OicUuid_t));
+
+    memcpy(ace->eownerID->id, subject->id, sizeof(subject->id));
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAclForLEDAccess OUT");
+
     return acl;
 }
 

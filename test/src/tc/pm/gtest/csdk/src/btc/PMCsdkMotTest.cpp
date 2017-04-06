@@ -2021,4 +2021,83 @@ TEST_F(PMCsdkMotTest_btc, OCSelectMOTMethodCb_NV_N)
 }
 #endif
 
+/**
+ * @since           2017-03-30
+ * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
+ * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
+ * @see             OCStackResult OCInitPM(const char* dbPath)
+ * @see             OCStackResult OCDiscoverMultipleOwnerEnabledDevices(unsigned short timeout, OCProvisionDev_t **ppList)
+ * @see             OCStackResult OCAddPreconfigPin(const OCProvisionDev_t *targetDeviceInfo, const char* preconfPIN, size_t preconfPINLen)
+ * @see             OCDoMultipleOwnershipTransfer(void* ctx,OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
+ * @objective       Test provision ACL  positively with MOT device
+ * @target          OCStackResult OCProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecAcl_t *acl, OCProvisionResultCB resultCallback)
+ * @test_data       regular data for the API
+ * @pre_condition   Start Mot Enabled justworks simulators
+ * @procedure       1. call OCRegisterPersistentStorageHandler
+ *                  2. call OCInit
+ *                  3. call OCInitPM
+ *                  4. call OCDiscoverMultipleOwnerEnabledDevices
+ *                  5. call OCAddPreconfigPin
+ *                  6. call OCDoMultipleOwnershipTransfer
+ *                  7. call OCProvisionACL
+ * @post_condition  none
+ * @expected        OCProvisionACL will return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(PMCsdkMotTest_btc, ProvisionACLForMultipleOwnedDevices_RV_SRC_P)
+{
+    CommonUtil::launchApp(JUSTWORKS_SERVER7);
+    CommonUtil::waitInSecond(DELAY_LONG);
+
+    if (!m_PMMotHelper.initMotClient())
+    {
+        SET_FAILURE(m_PMMotHelper.getFailureMessage());
+        return;
+    }
+
+    if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
+                    &m_motEnabledDevList, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMMotHelper.getFailureMessage());
+        return;
+    }
+
+    OCProvisionDev_t* targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_motEnabledDevList, DEVICE_INDEX_ONE);
+
+    if (!m_PMMotHelper.addPreconfigPIN(targetDev, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMMotHelper.getFailureMessage());
+        return;
+    }
+
+    if (!m_PMMotHelper.doMultipleOwnershipTransfer((void*)MOT_CTX, m_motEnabledDevList,
+                    PMCsdkMotHelper::multipleOwnershipTransferCB, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMMotHelper.getFailureMessage());
+    }
+
+    if (!m_PMMotHelper.discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT,
+                    &m_motOwnedDevList, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMMotHelper.getFailureMessage());
+    }
+
+    OCProvisionDev_t* targetMOTDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_motOwnedDevList, DEVICE_INDEX_ONE);
+    OicUuid_t deviceUuid = targetMOTDev->doxm->subOwners->uuid;
+
+    m_Acl = createAclForLEDAccess(&deviceUuid);
+
+    if (!m_PMHelper.provisionACL((void*)g_ctx, m_motOwnedDevList, m_Acl,
+                    m_PMHelper.provisionAclCB, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMHelper.getFailureMessage());
+    }
+
+    if (!m_PMHelper.deleteACLList(m_Acl))
+    {
+        SET_FAILURE(m_PMHelper.getFailureMessage());
+    }
+}
+#endif
+
 #endif /*__MOT__*/

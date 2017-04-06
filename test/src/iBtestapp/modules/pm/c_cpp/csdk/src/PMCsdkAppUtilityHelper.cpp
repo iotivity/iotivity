@@ -20,7 +20,7 @@
  ******************************************************************/
 
 #include "../include/PMCsdkAppUtilityHelper.h"
-#include "PMCsdkHelper.h"
+//#include "PMCsdkHelper.h"
 
 OCDevAddr getOCDevAddrEndPoint()
 {
@@ -49,6 +49,7 @@ OCProvisionDev_t* getDevInst(OCProvisionDev_t* dev_lst, const int dev_num)
     {
         if (dev_num == ++i)
         {
+            lst->next = NULL;
             IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getDevInst OUT");
             return lst;
         }
@@ -219,6 +220,80 @@ char* getOCStackResult(OCStackResult ocstackresult)
     }
 
     return resultString;
+}
+
+void removeAllResFile(int resFile)
+{
+    if(resFile == JUSTWORK1)
+    {
+        CommonUtil::rmFile(JUSTWORKS_SERVER2_CBOR);
+    }
+    else if(resFile == JUSTWORK2)
+    {
+        CommonUtil::rmFile(JUSTWORKS_SERVER1_CBOR);
+    }
+    else if(resFile == MVJUSTWORK)
+    {
+        CommonUtil::rmFile(MVJUSTWORKS_SERVER_CBOR);
+    }
+    else if(resFile == RANDOMPIN)
+    {
+        CommonUtil::rmFile(RANDOMPIN_SERVER_CBOR);
+    }
+    else if(resFile == PRECONFIGPIN1)
+    {
+        CommonUtil::rmFile(PRECONFIG_SERVER1_CBOR);
+    }
+    else if(resFile == PRECONFIGPIN2)
+    {
+        CommonUtil::rmFile(PRECONFIG_SERVER2_CBOR);
+    }
+    else if(resFile == CLIENT)
+    {
+        CommonUtil::rmFile(CLIENT_DATABASE);
+        CommonUtil::rmFile(CLIENT_CBOR);
+    }
+    else if(resFile == MOTCLIENT)
+    {
+        CommonUtil::rmFile(MOT_CLIENT_DATABASE);
+        CommonUtil::rmFile(MOT_CLIENT_CBOR);
+    }
+}
+
+void copyAllResFile(int resFile)
+{
+    if(resFile == JUSTWORK1)
+    {
+        CommonUtil::copyFile(JUSTWORKS_SERVER2_CBOR_BACKUP, JUSTWORKS_SERVER2_CBOR);
+    }
+    else if(resFile == JUSTWORK2)
+    {
+        CommonUtil::copyFile(JUSTWORKS_SERVER1_CBOR_BACKUP, JUSTWORKS_SERVER1_CBOR);
+    }
+    else if(resFile == MVJUSTWORK)
+    {
+        CommonUtil::copyFile(MVJUSTWORKS_SERVER_CBOR_BACKUP, MVJUSTWORKS_SERVER_CBOR);
+    }
+    else if(resFile == RANDOMPIN)
+    {
+        CommonUtil::copyFile(RANDOMPIN_SERVER_CBOR_BACKUP, RANDOMPIN_SERVER_CBOR);
+    }
+    else if(resFile == PRECONFIGPIN1)
+    {
+        CommonUtil::copyFile(PRECONFIG_SERVER1_CBOR_BACKUP, PRECONFIG_SERVER1_CBOR);
+    }
+    else if(resFile == PRECONFIGPIN2)
+    {
+        CommonUtil::copyFile(PRECONFIG_SERVER2_CBOR_BACKUP, PRECONFIG_SERVER2_CBOR);
+    }
+    else if(resFile == CLIENT)
+    {
+        CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
+    }
+    else if(resFile == MOTCLIENT)
+    {
+        CommonUtil::copyFile(MOT_CLIENT_CBOR_BACKUP, MOT_CLIENT_CBOR);
+    }
 }
 
 /**

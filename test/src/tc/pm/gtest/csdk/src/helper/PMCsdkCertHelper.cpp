@@ -277,7 +277,9 @@ bool PMCsdkCertHelper::readTrustCertChain(uint16_t credId, uint8_t **trustCertCh
         return false;
     }
 
-    OIC_LOG_BUFFER(DEBUG, TAG, *trustCertChain, *chainSize);
+    if( OC_STACK_OK == result && OC_STACK_OK == expectedResult) {
+        OIC_LOG_BUFFER(DEBUG, TAG, *trustCertChain, *chainSize);
+    }
 
     __FUNC_OUT__
     return true;

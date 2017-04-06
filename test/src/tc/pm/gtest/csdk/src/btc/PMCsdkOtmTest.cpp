@@ -40,6 +40,7 @@ protected:
         CommonUtil::copyFile(JUSTWORKS_SERVER2_CBOR_BACKUP, JUSTWORKS_SERVER2_CBOR);
         CommonUtil::copyFile(RANDOMPIN_SERVER_CBOR_BACKUP, RANDOMPIN_SERVER_CBOR);
         CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
+        CommonUtil::copyFile(MV_JUSTWORKS_SERVER_CBOR_BACKUP, MV_JUSTWORKS_SERVER_CBOR);
         CommonUtil::launchApp(JUSTWORKS_SERVER1);
         CommonUtil::launchApp(JUSTWORKS_SERVER2);
         CommonUtil::waitInSecond(DELAY_LONG);
@@ -1506,6 +1507,58 @@ TEST_F(PMCsdkOtmTest_btc, OCDoOwnershipTransferRandomPin_SRC_P)
     CommonUtil::waitInSecond(DELAY_LONG);
 
     if (!m_PMHelper.initProvisionClient(OTM_ALL))
+    {
+        SET_FAILURE(m_PMHelper.getFailureMessage());
+        return;
+    }
+
+    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
+                    &m_UnownList, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMHelper.getFailureMessage());
+        return;
+    }
+
+    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
+                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMHelper.getFailureMessage());
+    }
+}
+#endif
+
+/**
+ * @since           2015-02-29
+ * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
+ * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
+ * @see             OCStackResult OCInitPM(const char* dbPath)
+ * @objective       Test OCDoOwnershipTransfer positively for MV JUSTWORKS
+ * @target          OCDoOwnershipTransfer(void* ctx,OCProvisionDev_t *targetDevices,OCProvisionResultCB resultCallback)
+ * @test_data       OIC_MV_JUST_WORKS ownership transfer
+ * @pre_condition   Start MV JUSTWORKS simulator
+ * @procedure       1. call OCRegisterPersistentStorageHandler
+ *                  2. call OCInit
+ *                  3. call OCInitPM
+ *                  4. call OCDiscoverUnownedDevices
+ *                  5. call OCDoOwnershipTransfer
+ * @post_condition  None
+ * @expected        OCDoOwnershipTransfer will return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(PMCsdkOtmTest_btc, OCDoOwnershipTransferMVJustWork_SRC_P)
+{
+
+    CommonUtil::killApp(KILL_SERVERS);
+    CommonUtil::launchApp(MV_JUSTWORKS_SERVER);
+    CommonUtil::waitInSecond(DELAY_LONG);
+
+    if (!m_PMHelper.initProvisionClient())
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;

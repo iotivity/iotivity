@@ -21,46 +21,20 @@
 #ifndef PMCsdkAppHelper_H_
 #define PMCsdkAppHelper_H_
 
-#include "CommonUtil.h"
-#include "IotivityTest_Logger.h"
 #include "PMCsdkAppUtilityHelper.h"
 
-#define DASH "-"
 #define g_ctx "Provision Manager Client Application Context"
+#define g_mctx "SubOwner Client Application Context"
 #define ctxProvCreadential "ProvisionCredentials Context"
 #define ctxProvPairwise "ctxProvPairwise"
 #define ctxProvDirectPairing "ctxProvDirectPairing"
 #define ctxUnlinkDevice "ctxUnlinkDevice"
 #define ctxRemoveDevice "ctxRemoveDevice"
+#define ctxRemoveDeviceWithUuid "ctxRemoveDeviceWithUuid"
+#define ctxResetDevice "ctxResetDevice"
 #define RANDOM_PIN_TEXT_FILE "server_pincode.txt"
 #define PIN_MAX_SIZE 9
 #define MAX_TIME_INPUT_PROMPT_FOR_PASSWORD 5
-#define DEVICE_INDEX_ONE 1
-#define DEVICE_INDEX_TWO 2
-
-/*
- * ACL Releated Resources
- */
-#define ACL_SUBJECT_UUID_01 "DeviceID_01"
-#define ACL_SUBJECT_UUID_02 "DeviceID_02"
-#define ACL_RESOURCE_LEN 2
-#define LIGHT_RESOURCE_URI_01 "/rsrc/light1"
-#define LIGHT_RESOURCE_URI_02 "/rsrc/light2"
-#define ACL_ROWNER_UUID_01 "OwnerDeviceID01"
-#define ACL_ROWNER_UUID_02 "OwnerDeviceID02"
-#define ACL_RESRC_MAX_NUM   16
-#define ACL_RESRC_MAX_LEN   128
-#define ACL_PEMISN_CNT      5
-#define DEFAULT_DP_PROVSIONING_PIN "00000000"
-#define DEFAULT_DP_PROVSIONING_PIN2 "00000011"
-#define FULL_PERMISSION 31
-#define NO_PERMISSION 0
-#define MAX_PERMISSION_RANGE 65535
-
-#define ACL_RESOURCE_URI "sensor/light"
-#define ACL_RESOURCE_LENGTH 6 // Check ACL_RESOURCE_NAME for the length. ACL_RESOURCE_LENGTH = len(ACL_RESOURCE_URI) + 1
-#define ACL_RES_TYPE_NAME "light"
-#define ACL_RES_IF_TYPE_NAME "sensor"
 
 /*
  * Ownership Transfer Related Resource
@@ -87,14 +61,12 @@
 #define CLIENT_CBOR "./oic_svr_db_client.dat"
 #define DATABASE_PDM "./PDM.db"
 
-static const OicSecPrm_t SUPPORTED_PRMS[1] =
-{ PRM_PRE_CONFIGURED, };
-
 // function declaration(s) for calling them before implementing
 FILE* fopenProvManager(const char*, const char*);
 
 int waitCallbackRet(void);
 OicSecAcl_t* createAcl(const int dev_num, int permission, OCProvisionDev_t** m_own_list);
+OicSecAcl_t* createSimpleAcl(const OicUuid_t uuid);
 OicSecPdAcl_t* createPdAcl(const int dev_num);
 OTMCallbackData_t otmCbRegister(int otmType);
 
@@ -105,6 +77,8 @@ int startServer(int serverType);
 bool initProvisionClient();
 bool discoverAllDevices(int nTime, OCProvisionDev_t** own_list, OCProvisionDev_t** unown_list,
         OCStackResult expectedResult);
+bool discoverSingleDevice(unsigned short nTime, const OicUuid_t* deviceID,
+        OCProvisionDev_t** ppFoundDevice, OCStackResult expectedResult);
 bool discoverUnownedDevices(int nTime, OCProvisionDev_t** unown_list, OCStackResult expectedResult);
 bool discoverOwnedDevices(int nTime, OCProvisionDev_t** own_list, OCStackResult expectedResult);
 bool doOwnerShipTransfer(void *ctx, OCProvisionDev_t** unown_list,
@@ -123,18 +97,31 @@ bool unlinkDevices(void* ctx, const OCProvisionDev_t* pTargetDev1,
 bool removeDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
         const OCProvisionDev_t* pTargetDev, OCProvisionResultCB resultCallback,
         OCStackResult expectedResult);
+bool removeDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
+        const OicUuid_t* pTargetUuid, OCProvisionResultCB resultCallback,
+        OCStackResult expectedResult);
+bool resetDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
+        const OCProvisionDev_t* pTargetDev, OCProvisionResultCB resultCallback,
+        OCStackResult expectedResult);
+bool resetSVRDB(OCStackResult expectedResult);
 bool getLinkedStatus(const OicUuid_t* uuidOfDevice, OCUuidList_t** uuidList, size_t* numOfDevices,
         OCStackResult expectedResult);
+bool saveACL(const OicSecAcl_t* acl, OCStackResult expectedResult);
 
 /**
  * All Callback Methods for Provision Manager
  */
-void ownershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
-void provisionDPCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
-void provisionPairwiseCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
-void provisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
-void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
-void unlinkDevicesCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
-void removeDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
+void ownershipTransferCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
+void provisionPairwiseCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
+void provisionCredCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
+void provisionAclCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
+void unlinkDevicesCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
+void removeDeviceCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
+void syncDeviceCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
+OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN]);
+OCStackResult confirmNumCB(void * ctx);
+
+OCStackResult displayMutualVerifNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN]);
+OCStackResult confirmMutualVerifNumCB(void * ctx);
 
 #endif

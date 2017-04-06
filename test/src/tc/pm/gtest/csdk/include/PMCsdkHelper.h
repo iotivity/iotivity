@@ -56,7 +56,9 @@
 FILE* fopenProvManager(const char*, const char*);
 
 OicSecAcl_t* createAcl(const int dev_num, int permission, OCProvisionDev_t** m_own_list,
-        bool multiple_dev = true);
+bool multiple_dev = true);
+
+OicSecAcl_t* createAclForLEDAccess(const OicUuid_t* subject);
 
 OicSecPdAcl_t* createPdAcl(int nPermission);
 
@@ -148,18 +150,18 @@ public:
     bool getLinkedStatus(const OicUuid_t* uuidOfDevice, OCUuidList_t** uuidList,
             size_t* numOfDevices, OCStackResult expectedResult);
 
-    bool selectOwnershipTransferMethod(const OicSecOxm_t *supportedMethods,
-            size_t numberOfMethods, OicSecOxm_t *selectedMethod, OwnerType_t ownerType,
-            OCStackResult expectedResult, OicSecOxm_t expectedOxm);
+    bool selectOwnershipTransferMethod(const OicSecOxm_t *supportedMethods, size_t numberOfMethods,
+            OicSecOxm_t *selectedMethod, OwnerType_t ownerType, OCStackResult expectedResult,
+            OicSecOxm_t expectedOxm);
 
     /**
      * All Callback Methods for Provision Manager
      */
     static void ownershipTransferCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr,
-            bool hasError);
+    bool hasError);
 
     static void provisionPairwiseCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr,
-            bool hasError);
+    bool hasError);
 
     static void provisionCredCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
 
@@ -174,6 +176,10 @@ public:
     static void removeDeviceCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
 
     static void syncDeviceCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
+
+    static OCStackResult displayMutualVerifNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN]);
+
+    static OCStackResult confirmMutualVerifNumCB(void * ctx);
 
     static ByteArray getTrustCertChainArray();
 
