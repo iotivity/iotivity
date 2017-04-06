@@ -116,7 +116,7 @@ void App::AppWorkerThread(App* app)
 
     const uint64_t PingPeriodMS = 30000;  // Do device ping for Observed devices every 30 seconds.
 
-    // Outstanding requests should time out in 2 seconds per rfc 7252.
+    // Outstanding requests should time out in 247 seconds (EXCHANGE_LIFETIME) per rfc 7252.
     // Wake up every second to check.
     const size_t AppThreadSleepTimeSeconds = 1;
     std::chrono::seconds appThreadSleepTime(AppThreadSleepTimeSeconds);

@@ -392,8 +392,7 @@ void Callback::RemoveCallbackInfo(size_t mapKey)
 
 void Callback::CompleteAndRemoveExpiredCallbackInfo(std::vector<CallbackInfo::Ptr>& cbInfoList)
 {
-    // @tbd: determine a good value for response timeout.
-    const int RequestTimeoutMs = 2000;    // 2 seconds for request timeout.
+    const int RequestTimeoutMs = 247000;    // This is EXCHANGE_LIFETIME defined in RFC7252.
 
     uint64_t currentTime = OICGetCurrentTime(TIME_IN_MS);
 
