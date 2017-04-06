@@ -53,7 +53,7 @@
 
 #ifdef __WITH_DTLS__
 #include "crlresource.h"
-#endif // WITH_X509__
+#endif
 
 #define TAG "OIC_SRPAPI"
 

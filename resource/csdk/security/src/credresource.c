@@ -2503,7 +2503,7 @@ OicSecCred_t* GetCredEntryByCredId(const uint16_t credId)
                 cred->privateData.len = tmpCred->privateData.len;
                 cred->privateData.encoding = tmpCred->privateData.encoding;
             }
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
             if (tmpCred->publicData.data)
             {
                 cred->publicData.data = (uint8_t *)OICCalloc(1, tmpCred->publicData.len);
@@ -2527,7 +2527,7 @@ OicSecCred_t* GetCredEntryByCredId(const uint16_t credId)
             {
                 cred->credUsage = OICStrdup(tmpCred->credUsage);
             }
-#endif /* __WITH_X509__  or __WITH_TLS__*/
+#endif /* __WITH_DTLS__  or __WITH_TLS__*/
 
             return cred;
         }
