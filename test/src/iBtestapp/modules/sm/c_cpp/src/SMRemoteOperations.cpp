@@ -29,7 +29,7 @@ SMRemoteOperations::SMRemoteOperations()
     { OC::ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos };
     OCPlatform::Configure(config);
     m_resourceTypes =
-    {   "oic.wk.sceneList", "core.light", "core.fan"};
+    {   "oic.wk.scenelist", "core.light", "core.fan"};
     m_relativetUri = OC_RSRVD_WELL_KNOWN_URI;
     m_pRemoteSceneList = nullptr;
     m_pRemoteSceneCollection = nullptr;
@@ -87,7 +87,7 @@ void SMRemoteOperations::onRemoteResourceDiscovered(
     cout << "Resource URI : " << hostAddress << endl;
 
     // if the found resource is a scene list resource
-    if (std::find(vecRTs.begin(), vecRTs.end(), "oic.wk.sceneList") != vecRTs.end())
+    if (std::find(vecRTs.begin(), vecRTs.end(), "oic.wk.scenelist") != vecRTs.end())
         m_pFoundSceneList = foundResource;
 
     // if the found resource is a light resource

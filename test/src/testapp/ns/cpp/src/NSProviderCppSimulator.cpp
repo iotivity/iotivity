@@ -25,12 +25,12 @@ int id = 0;
 OIC::Service::NSProviderService* g_nsProviderService;
 const string TEST_TOPIC_1 = "TEST_TOPIC_1";
 
-void syncCallback(OIC::Service::NSSyncInfo *sync)
+void syncCallback(OIC::Service::NSSyncInfo sync)
 {
     IOTIVITYTEST_LOG(INFO, "NSProviderSyncInfoCallback() called !!");
 }
 
-void subscribeRequestCallback(OIC::Service::NSConsumer *consumer)
+void subscribeRequestCallback(shared_ptr<OIC::Service::NSConsumer> consumer)
 {
     IOTIVITYTEST_LOG(INFO, "subscribeRequestCallback() called !!");
 

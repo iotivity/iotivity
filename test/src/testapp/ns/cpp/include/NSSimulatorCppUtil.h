@@ -30,8 +30,8 @@
 #include "oic_string.h"
 #include "OCPlatform.h"
 #include "CommonUtil.h"
-#include "IotivityTest_Logger.h"
 #include "NSCommon.h"
+#include "IotivityTest_Logger.h"
 #include "NSConsumerService.h"
 #include "NSProviderService.h"
 

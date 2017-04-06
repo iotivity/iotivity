@@ -24,7 +24,7 @@
 bool isStarted = false;
 NSConsumerService* g_pNSConsumerServiceInstance = nullptr;
 
-static void onProviderDiscovered(OIC::Service::NSProvider* provider)
+static void onProviderDiscovered(shared_ptr<OIC::Service::NSProvider> provider)
 {
     IOTIVITYTEST_LOG(INFO, "%s is called", __func__);
     string providerId = provider->getProviderId();
@@ -55,7 +55,7 @@ void stopConsumer()
     }
     catch (exception &e)
     {
-        SET_FAILURE("Exception occurs while calling stop. Exception is: " + string(e.what()));
+        IOTIVITYTEST_LOG(WARNING, "Exception occurs while calling stop. Exception is: %s",e.what());
     }
 }
 
@@ -77,7 +77,7 @@ void chooseOption(int a)
 int main(int argc, char **argv)
 {
     PlatformConfig config
-    { ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, QualityOfService::LowQos };
+    { ServiceType::InProc, ModeType::Both, CT_DEFAULT, CT_DEFAULT, QualityOfService::HighQos };
     OCPlatform::Configure(config);
     IOTIVITYTEST_LOG(INFO, "Platform Configuration Done!!");
 
