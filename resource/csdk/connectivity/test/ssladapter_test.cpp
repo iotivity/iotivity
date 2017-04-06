@@ -645,20 +645,20 @@ unsigned char certChain[] = {
 int certChainLen = sizeof(certChain);
 
 unsigned char serverCert[] =
-    "-----BEGIN CERTIFICATE-----"
-    "MIICOTCCAd8CAQEwCgYIKoZIzj0EAwIwfDELMAkGA1UEBhMCVVMxEjAQBgNVBAgM"
-    "CVNvbWVzdGF0ZTERMA8GA1UEBwwIU29tZWNpdHkxCzAJBgNVBAoMAkJCMRYwFAYD"
-    "VQQLDA1TZXF1cml0eSBQYXJ0MQswCQYDVQQDDAJvYjEUMBIGCSqGSIb3DQEJARYF"
-    "b2JAYmIwHhcNMTYwODE1MTMxMTE3WhcNMTkwNTEyMTMxMTE3WjCB1DELMAkGA1UE"
-    "BhMCVUExDDAKBgNVBAgMA0FzZDEPMA0GA1UEBwwGR290aGFtMQswCQYDVQQKDAJa"
-    "WjERMA8GA1UECwwIQmVhbVRlYW0xHDAaBgkqhkiG9w0BCQEWDXJhaWxAbWFpbC5j"
-    "b20xMjAwBgNVBAMMKXV1aWQ6MzIzMjMyMzItMzIzMi0zMjMyLTMyMzItMzIzMjMy"
-    "MzIzMjMyMTQwMgYDVR0RDCt1c2VyaWQ6Njc2NzY3NjctNjc2Ny02NzY3LTY3Njct"
-    "Njc2NzY3Njc2NzY3MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE9xNcc3LOEOUJ"
-    "l5r48nCmPYn1xeRE4kq2YagSjbTcK0eEYAwlZung5awivxXccbGITxa/wnc3dj/g"
-    "Z8YdI/58izAKBggqhkjOPQQDAgNIADBFAiBHzEGKJ8fQqrSrhb8JTQbXfg05+Tah"
-    "PZYj4iRkmGMhugIhAOWPf/GmggNqGHpU5w4ld9hG+paKfhTEyyEyPonZuow/"
-    "-----END CERTIFICATE-----";
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIICOTCCAd8CAQEwCgYIKoZIzj0EAwIwfDELMAkGA1UEBhMCVVMxEjAQBgNVBAgM\n"
+    "CVNvbWVzdGF0ZTERMA8GA1UEBwwIU29tZWNpdHkxCzAJBgNVBAoMAkJCMRYwFAYD\n"
+    "VQQLDA1TZXF1cml0eSBQYXJ0MQswCQYDVQQDDAJvYjEUMBIGCSqGSIb3DQEJARYF\n"
+    "b2JAYmIwHhcNMTYwODE1MTMxMTE3WhcNMTkwNTEyMTMxMTE3WjCB1DELMAkGA1UE\n"
+    "BhMCVUExDDAKBgNVBAgMA0FzZDEPMA0GA1UEBwwGR290aGFtMQswCQYDVQQKDAJa\n"
+    "WjERMA8GA1UECwwIQmVhbVRlYW0xHDAaBgkqhkiG9w0BCQEWDXJhaWxAbWFpbC5j\n"
+    "b20xMjAwBgNVBAMMKXV1aWQ6MzIzMjMyMzItMzIzMi0zMjMyLTMyMzItMzIzMjMy\n"
+    "MzIzMjMyMTQwMgYDVR0RDCt1c2VyaWQ6Njc2NzY3NjctNjc2Ny02NzY3LTY3Njct\n"
+    "Njc2NzY3Njc2NzY3MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE9xNcc3LOEOUJ\n"
+    "l5r48nCmPYn1xeRE4kq2YagSjbTcK0eEYAwlZung5awivxXccbGITxa/wnc3dj/g\n"
+    "Z8YdI/58izAKBggqhkjOPQQDAgNIADBFAiBHzEGKJ8fQqrSrhb8JTQbXfg05+Tah\n"
+    "PZYj4iRkmGMhugIhAOWPf/GmggNqGHpU5w4ld9hG+paKfhTEyyEyPonZuow/\n"
+    "-----END CERTIFICATE-----\n";
 int serverCertLen = sizeof(serverCert);
 
 unsigned char serverPrivateKey[] = {
@@ -675,21 +675,21 @@ unsigned char serverPrivateKey[] = {
 int serverPrivateKeyLen = sizeof(serverPrivateKey);
 
 unsigned char caCert[] = 
-    "-----BEGIN CERTIFICATE-----"
-    "MIICPjCCAeWgAwIBAgIJAIenaAF86fjwMAoGCCqGSM49BAMCMHwxCzAJBgNVBAYT"
-    "AlVTMRIwEAYDVQQIDAlTb21lc3RhdGUxETAPBgNVBAcMCFNvbWVjaXR5MQswCQYD"
-    "VQQKDAJCQjEWMBQGA1UECwwNU2VxdXJpdHkgUGFydDELMAkGA1UEAwwCb2IxFDAS"
-    "BgkqhkiG9w0BCQEWBW9iQGJiMB4XDTE2MDcyNTExMTYxMVoXDTE5MDUxNTExMTYx"
-    "MVowfDELMAkGA1UEBhMCVVMxEjAQBgNVBAgMCVNvbWVzdGF0ZTERMA8GA1UEBwwI"
-    "U29tZWNpdHkxCzAJBgNVBAoMAkJCMRYwFAYDVQQLDA1TZXF1cml0eSBQYXJ0MQsw"
-    "CQYDVQQDDAJvYjEUMBIGCSqGSIb3DQEJARYFb2JAYmIwWTATBgcqhkjOPQIBBggq"
-    "hkjOPQMBBwNCAAQuz8P6LgQRYjRjb9+2Z/taUIwVc8nBVzqe+PSoDBrpkVGdAyZI"
-    "qkaEEgYt/Ga+Qe39zTKjmzTyqpUfjl1Jd4DCo1AwTjAdBgNVHQ4EFgQUHoHDYv+M"
-    "WpiQrCzDZbk/jwRV+nwwHwYDVR0jBBgwFoAUHoHDYv+MWpiQrCzDZbk/jwRV+nww"
-    "DAYDVR0TBAUwAwEB/zAKBggqhkjOPQQDAgNHADBEAiAcoVWoBLxbAKisL+a3PHzz"
-    "fpPO4N9uNuQ2IMs2nBM7xAIgfxgTfRuM41vZrHSMwOm/G0hvtmpFA6ZdTWX3lqAI"
-    "g3w="
-    "-----END CERTIFICATE-----";
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIICPjCCAeWgAwIBAgIJAIenaAF86fjwMAoGCCqGSM49BAMCMHwxCzAJBgNVBAYT\n"
+    "AlVTMRIwEAYDVQQIDAlTb21lc3RhdGUxETAPBgNVBAcMCFNvbWVjaXR5MQswCQYD\n"
+    "VQQKDAJCQjEWMBQGA1UECwwNU2VxdXJpdHkgUGFydDELMAkGA1UEAwwCb2IxFDAS\n"
+    "BgkqhkiG9w0BCQEWBW9iQGJiMB4XDTE2MDcyNTExMTYxMVoXDTE5MDUxNTExMTYx\n"
+    "MVowfDELMAkGA1UEBhMCVVMxEjAQBgNVBAgMCVNvbWVzdGF0ZTERMA8GA1UEBwwI\n"
+    "U29tZWNpdHkxCzAJBgNVBAoMAkJCMRYwFAYDVQQLDA1TZXF1cml0eSBQYXJ0MQsw\n"
+    "CQYDVQQDDAJvYjEUMBIGCSqGSIb3DQEJARYFb2JAYmIwWTATBgcqhkjOPQIBBggq\n"
+    "hkjOPQMBBwNCAAQuz8P6LgQRYjRjb9+2Z/taUIwVc8nBVzqe+PSoDBrpkVGdAyZI\n"
+    "qkaEEgYt/Ga+Qe39zTKjmzTyqpUfjl1Jd4DCo1AwTjAdBgNVHQ4EFgQUHoHDYv+M\n"
+    "WpiQrCzDZbk/jwRV+nwwHwYDVR0jBBgwFoAUHoHDYv+MWpiQrCzDZbk/jwRV+nww\n"
+    "DAYDVR0TBAUwAwEB/zAKBggqhkjOPQQDAgNHADBEAiAcoVWoBLxbAKisL+a3PHzz\n"
+    "fpPO4N9uNuQ2IMs2nBM7xAIgfxgTfRuM41vZrHSMwOm/G0hvtmpFA6ZdTWX3lqAI\n"
+    "g3w=\n"
+    "-----END CERTIFICATE-----\n";
 int caCertLen = sizeof(caCert);
 
 unsigned char control_server_message_ECDHE_ECDSA_WITH_AES_128_CCM[] = {
@@ -3262,4 +3262,19 @@ TEST(TLSAdapter, Test_ParseChain)
 
     EXPECT_EQ(7, ret);
     EXPECT_EQ(0, errNum);
+}
+
+TEST(TLSAdapter, TestCertsValid)
+{
+    mbedtls_x509_crt cert;
+
+    mbedtls_x509_crt_init(&cert);
+    int ret = mbedtls_x509_crt_parse(&cert, (const unsigned char *)serverCert, serverCertLen);
+    EXPECT_EQ(0, ret) << "Failed to parse server cert";
+    mbedtls_x509_crt_free(&cert);
+
+    mbedtls_x509_crt_init(&cert);
+    ret = mbedtls_x509_crt_parse(&cert, (const unsigned char *)caCert, caCertLen);
+    EXPECT_EQ(0, ret) << "Failed to parse CA cert";
+    mbedtls_x509_crt_free(&cert);
 }
