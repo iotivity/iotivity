@@ -1,0 +1,126 @@
+'''
+/******************************************************************
+*
+* Copyright 2017 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+
+##
+# Build script for Linux
+#
+##
+
+print '\n---------------Started Building Resource Container Module for Linux---------------\n'
+
+Import('env_linux')
+import os
+
+
+Import('env_linux')
+import os
+
+env_linux['CC'] = 'g++'
+
+iotivity_root = env_linux.get('IOTIVITY_ROOT')
+iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
+iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
+variant_dir = env_linux.get('VARIANT_DIR')
+install_dir = env_linux.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
+test = env_linux.get('TEST')
+common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
+
+install_targets = []
+default_targets = []
+
+iotivity_include_paths = [
+    iotivity_root + '/resource/include',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/c_common',
+    iotivity_root + '/resource/csdk/stack/include',
+    iotivity_root + '/resource/csdk/ocsocket/include',
+    iotivity_root + '/resource/csdk/ocrandom/include',
+    iotivity_root + '/resource/oc_logger/include',
+    iotivity_root + '/resource/csdk/connectivity/common/inc/',
+    iotivity_root + '/resource/csdk/connectivity/lib/libcoap-4.1.1',
+    iotivity_root + '/extlibs/cereal/include',
+    iotivity_root + '/extlibs/timer',
+    iotivity_root + '/extlibs/cjson',
+    iotivity_root + '/extlibs/hippomocks-master',
+    iotivity_root + '/extlibs/tinycbor/tinycbor/src',
+    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/resource/csdk/security/include',
+    iotivity_root + '/service/coap-http-proxy/include',
+    iotivity_root + '/service/resource-encapsulation/include',
+    iotivity_root + '/service/resource-encapsulation/src/common/primitiveResource/include',
+    iotivity_root + '/service/resource-encapsulation/src/common/utils/include',
+]
+
+tc_include_paths = [
+    iotivity_test_root + '/include',
+    test_src_root + '/tc/chp/gtest/include',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
+]
+
+tc_src = [
+    Glob(test_src_root + '/tc/chp/gtest/src/btc/*.cpp'),
+    Glob(test_src_root + '/tc/chp/gtest/src/stc/*.cpp'),
+    Glob(test_src_root + '/tc/chp/gtest/src/helper/*.cpp')
+]
+
+testapp_include_paths = [
+    iotivity_test_root + '/include',
+    test_src_root + '/iBtestapp/common/include',
+    test_src_root + '/iBtestapp/modules/chp/c_cpp/include'
+]
+
+testapp_src = [ 
+    Glob(test_src_root + '/iBtestapp/modules/chp/c_cpp/src/*.cpp'),
+    test_src_root + '/iBtestapp/common/src/IBtestappCommonUtil.cpp'
+]
+
+cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -fpermissive')
+
+libs = Split('coap_http_proxy connectivity_abstraction octbstack coap dl expat oc oc_logger oc_logger_core glib-2.0 uuid gcov ocsrm HueBundle common_util curl cjson pthread boost_system boost_filesystem boost_thread')
+
+env_linux.ParseConfig("pkg-config --cflags --libs uuid")
+
+if 'tc' in test:
+    chp_tc = env_linux.Program(source = tc_src,
+                target = 'iotivity_chp_test',
+                CPPPATH = iotivity_include_paths + tc_include_paths,
+                LIBS = ['tc_util', 'gtest'] + libs,
+                RPATH = iotivity_lib_path,
+                LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux', '.'],
+                CPPFLAGS = cppflags + common_linux_cppflags)
+    install_targets += chp_tc
+
+
+
+install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin.append(Command(str(i), [], Delete(delete_target)))
+    i = i +1
+
+default_targets = install_bin + delete_bin
+
+env_linux.Default(default_targets)
