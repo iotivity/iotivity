@@ -22,6 +22,12 @@
 package org.iotivity.cloud.base;
 
 public class OICConstants {
+    /*
+     * OCF version 1.0.0 default value for Accept Version and Content-Format
+     * Version
+     */
+    public static final int    DEFAULT_VERSION_VALUE         = 2048;
+
     /* resource Interface for keep-alive */
     public static final String DEFAULT_INTERFACE             = "oic.if.baseline";
 

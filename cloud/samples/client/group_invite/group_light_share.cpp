@@ -14,12 +14,19 @@
 #include <OCApi.h>
 #include <OCPlatform.h>
 
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+#include "ocprovisioningmanager.h"
+#include "mbedtls/ssl_ciphersuites.h"
+#include <ca_adapter_net_ssl.h>
+#endif // WITH_DTLS__ or __WITH_TLS__
+
 #define maxSequenceNumber 0xFFFFFF
 
 using namespace OC;
 using namespace std;
 
-string g_host = "coap+tcp://";
+string g_host;
+string g_invitedGroup;
 condition_variable g_callbackLock;
 
 class LightResource
@@ -141,6 +148,9 @@ void printRepresentation(OCRepresentation rep)
     for (auto itr = rep.begin(); itr != rep.end(); ++itr)
     {
         cout << "\t" << itr->attrname() << ":\t" << itr->getValueToString() << endl;
+		if (!strcmp(itr->attrname().c_str(), "gid")) {
+			g_invitedGroup = itr->getValueToString();
+		}
         if (itr->type() == AttributeType::Vector)
         {
             switch (itr->base_type())
@@ -237,26 +247,37 @@ void onObserveGroup(const HeaderOptions /*headerOptions*/, const OCRepresentatio
     g_callbackLock.notify_all();
 }
 
-string g_invitedGroup;
 void onInvite(const HeaderOptions /*headerOptions*/, const OCRepresentation &rep, const int &eCode,
         const int &sequenceNumber)
 {
     cout << "onInvite response received code: " << eCode << endl;
 
-    if (eCode == OC_STACK_OK)
-    {
-        printRepresentation(rep);
+	if (eCode == OC_STACK_OK && sequenceNumber <= MAX_SEQUENCE_NUMBER)
+	{
+		if (sequenceNumber == OC_OBSERVE_REGISTER)
+		{
+			cout << "Observe registration action is successful" << endl;
+		}
 
-        if (sequenceNumber != OC_OBSERVE_REGISTER)
-        {
-            vector < OCRepresentation > invited = rep.getValue < vector< OCRepresentation >
-                    > ("invited");
+		cout << "OBSERVE RESULT:" << endl;
+		printRepresentation(rep);
 
-            g_invitedGroup = invited[0].getValueToString("gid");
-        }
-    }
+	}
+	else
+	{
+		if (eCode == OC_STACK_OK)
+		{
+			cout << "Observe registration failed or de-registration action failed/succeeded"
+				<< endl;
+		}
+		else
+		{
+			cout << "onObserve Response error: " << eCode << endl;
+			exit(-1);
+		}
+	}
 
-    g_callbackLock.notify_all();
+	g_callbackLock.notify_all();
 }
 
 string g_gid;
@@ -295,6 +316,18 @@ void onPost(const HeaderOptions & /*headerOptions*/, const OCRepresentation &rep
     g_callbackLock.notify_all();
 }
 
+void onDelete(const HeaderOptions & /*headerOptions*/, const int eCode)
+{
+	if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_DELETED)
+	{
+		cout << "\tDelete was successful" << endl;
+	}
+	else
+	{
+		cout << "\tDelete Response error: " << eCode << endl;
+	}
+}
+
 string g_uid;
 string g_accesstoken;
 
@@ -319,55 +352,121 @@ void handleLoginoutCB(const HeaderOptions &, const OCRepresentation &rep, const 
 
 string g_option;
 
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+int saveTrustCert(void)
+{
+	OCStackResult res = OC_STACK_ERROR;
+	uint16_t g_credId = 0;
+
+	cout << "Save Trust Cert. Chain into Cred of SVR" << endl;
+
+	ByteArray trustCertChainArray = { 0, 0 };
+
+	FILE *fp = fopen("rootca.crt", "rb+");
+
+	if (fp)
+	{
+		size_t fsize;
+		if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)) > 0)
+		{
+			trustCertChainArray.data = (uint8_t *)malloc(fsize);
+			trustCertChainArray.len = fsize;
+			if (NULL == trustCertChainArray.data)
+			{
+				cout << "Failed to allocate memory" << endl;
+				fclose(fp);
+				return res;
+			}
+			rewind(fp);
+			if (fsize != fread(trustCertChainArray.data, 1, fsize, fp))
+			{
+				cout << "Certiface not read completely" << endl;
+			}
+			fclose(fp);
+		}
+	}
+
+	res = OCSaveTrustCertChain(trustCertChainArray.data, trustCertChainArray.len, OIC_ENCODING_PEM,
+		&g_credId);
+
+	if (OC_STACK_OK != res)
+	{
+		cout << "OCSaveTrustCertChainBin API error" << endl;
+		return res;
+	}
+	cout << "CredId of Saved Trust Cert. Chain into Cred of SVR : " << g_credId << endl;
+
+	return res;
+}
+#endif
+
 static FILE *client_open(const char *path, const char *mode)
 {
-    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
-    {
-        string option = "./";
-        option += g_option;
-        option += ".dat";
-        return fopen(option.c_str(), mode);
-    }
-    else
-    {
-        return fopen(path, mode);
-    }
+	if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+	{
+		return fopen("./group_light_share.dat", mode);
+	}
+	else
+	{
+		return fopen(path, mode);
+	}
 }
 
 int main(int argc, char **argv)
 {
     if (argc != 5)
     {
-        cout
-                << "Put \"[host-ipaddress:port] [authprovider] [authcode] [\'owner\'|\'member\']\" for sign-up and sign-in"
-                << endl;
-        cout << "Put \"[host-ipaddress:port] [uid] [accessToken] 1\" for sign-in" << endl;
+		cout
+			<< "Put \"[host-ipaddress:port] [uid] [accessToken] [\'owner\'|\'member\']\" for sign-up and sign-in"
+			<< endl;
         return 0;
     }
 
-    g_option = argv[4];
+	g_option = argv[argc-1];
 
-    OCPersistentStorage ps
-    { client_open, fread, fwrite, fclose, unlink };
+//   OCPersistentStorage ps
+//    { client_open, fread, fwrite, fclose, unlink };
 
     PlatformConfig cfg
     { ServiceType::InProc, ModeType::Both, "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
             0, // Uses randomly available port
-            QualityOfService::LowQos, &ps };
+            QualityOfService::LowQos, 0 };
 
     OCPlatform::Configure(cfg);
 
     OCStackResult result = OC_STACK_ERROR;
 
-    g_host += argv[1];
+	g_host = "coap+tcp://";
 
-    OCAccountManager::Ptr accountMgr = OCPlatform::constructAccountManagerObject(g_host,
-            CT_ADAPTER_TCP);
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+	g_host = "coaps+tcp://";
+#endif
+
+	g_host += argv[1];
+
+	OCAccountManager::Ptr accountMgr = OCPlatform::constructAccountManagerObject(g_host,
+		CT_ADAPTER_TCP);
+
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+	cout << "Security Mode" << endl;
+	if (CA_STATUS_OK != saveTrustCert())
+	{
+		cout << "saveTrustCert returned an error" << endl;
+	}
+
+	uint16_t cipher = MBEDTLS_TLS_RSA_WITH_AES_128_GCM_SHA256;
+	if (CA_STATUS_OK != CASelectCipherSuite(cipher, CA_ADAPTER_TCP))
+	{
+		cout << "CASelectCipherSuite returned an error" << endl;
+	}
+#endif
 
     mutex blocker;
     unique_lock < mutex > lock(blocker);
 
-    if (g_option == "1")
+	if (strlen(argv[2]) > 35)
     {
         accountMgr->signIn(argv[2], argv[3], &handleLoginoutCB);
         g_callbackLock.wait(lock);
@@ -388,21 +487,37 @@ int main(int argc, char **argv)
     ResourceHandles resourceHandles;
     resourceHandles.push_back(lightResource.m_resourceHandle);
 
-    RDClient::Instance().publishResourceToRD(g_host, OCConnectivityType::CT_ADAPTER_TCP, resourceHandles,
+	result = RDClient::Instance().publishResourceToRD(g_host, OCConnectivityType::CT_ADAPTER_TCP, resourceHandles,
             &onPublish);
+
+	cout << " result: " << result << " Waiting Publish user resource response from cloud" << endl;
+
     g_callbackLock.wait(lock);
-/* TODO: need to modify the below according to the OCAccountManager API changed.
+// TODO: need to modify the below according to the OCAccountManager API changed.
     if (g_option == "owner")
     {
         cout << "Creating group" << endl;
-        accountMgr->createGroup(AclGroupType::PUBLIC, &onCreateGroup);
+		QueryParamsMap queryParam =
+		{};
+		queryParam.insert(pair< string, string >("gname", "test"));
+		accountMgr->createGroup(queryParam, &onCreateGroup);
         g_callbackLock.wait(lock);
         cout << "Adding device " << OCGetServerInstanceIDString() << " to group " << g_gid << endl;
-        accountMgr->addDeviceToGroup(g_gid,
-        { OCGetServerInstanceIDString() }, &onPost);
+
+//		accountMgr->addDeviceToGroup(g_gid,
+//        { OCGetServerInstanceIDString() }, &onPost);
+		OCRepresentation propertyValue;
+		vector< string > values;
+		values.push_back(OCGetServerInstanceIDString());
+
+		propertyValue.setValue < vector < string >>("devices", values);
+
+		accountMgr->addPropertyValueToGroup(g_gid,
+			propertyValue, &onPost);
         g_callbackLock.wait(lock);
 
-        accountMgr->observeGroup(g_gid, &onObserveGroup);
+
+        accountMgr->observeGroup(&onObserveGroup);
         g_callbackLock.wait(lock);
         cout << "Put userUUID to send invitation" << endl;
         cin >> cmd;
@@ -410,6 +525,7 @@ int main(int argc, char **argv)
         accountMgr->sendInvitation(g_gid, cmd, &onPost);
         g_callbackLock.wait(lock);
 
+		cout << "Success to group invite...press any key to quit" << endl;
         cin >> cmd;
     }
     else if (g_option == "member")
@@ -420,7 +536,8 @@ int main(int argc, char **argv)
         cout << "Waiting invitation" << endl;
         g_callbackLock.wait(lock);
         cout << "Joining group " << g_invitedGroup << endl;
-        accountMgr->joinGroup(g_invitedGroup, &onPost);
+ //       accountMgr->joinGroup(g_invitedGroup, &onPost);
+		accountMgr->replyToInvitation(g_invitedGroup, true, &onDelete);
         g_callbackLock.wait(lock);
 
         cout << "find my resource " << cmd << endl;
@@ -428,11 +545,12 @@ int main(int argc, char **argv)
                 static_cast< OCConnectivityType >(CT_ADAPTER_TCP | CT_IP_USE_V4), &foundMyDevice);
         g_callbackLock.wait(lock);
 
-        accountMgr->observeGroup(g_invitedGroup, &onObserveGroup);
+        accountMgr->observeGroup(&onObserveGroup);
         g_callbackLock.wait(lock);
 
+		cout << "Success to group invite...press any key to quit" << endl;
         cin >> cmd;
     }
-*/
+	
     return 0;
 }

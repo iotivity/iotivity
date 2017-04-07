@@ -1,6 +1,6 @@
 To build cloud client samples, add WITH_TCP, TARGET_TRANSPORT=IP, WITH_CLOUD and WITH_MQ option to build command line
 
-ex) scons WITH_TCP=yes TARGET_TRANSPORT=IP WITH_CLOUD=yes WITH_MQ=PUB,SUB SECURED=1
+ex) scons WITH_TCP=yes TARGET_TRANSPORT=IP WITH_CLOUD=yes WITH_MQ=PUB,SUB SECURED=0 or 1(TLS MODE)
 
 Cloud clients runs over CoAP over TCP transport. So you should declare WITH_TCP option.
 

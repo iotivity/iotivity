@@ -21,7 +21,14 @@
  */
 package org.iotivity.cloud.base.protocols.coap;
 
+import java.util.ArrayList;
+
+import org.iotivity.cloud.base.OICConstants;
+import org.iotivity.cloud.base.protocols.enums.ContentFormat;
+import org.iotivity.cloud.util.Cbor;
 import org.iotivity.cloud.util.Log;
+
+import com.google.gson.Gson;
 
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -37,7 +44,10 @@ import io.netty.channel.ChannelPromise;
 @Sharable
 public class CoapLogHandler extends ChannelDuplexHandler {
 
-    static final int MAX_LOGLEN = 100;
+    private Cbor<Object> mCbor      = new Cbor<>();
+    private Gson         mGson      = new Gson();
+
+    static final int     MAX_LOGLEN = 100;
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -50,19 +60,31 @@ public class CoapLogHandler extends ChannelDuplexHandler {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        ctx.fireChannelInactive();
         Log.v(ctx.channel().id().asLongText().substring(26)
                 + " Disconnected, Address: "
                 + ctx.channel().remoteAddress().toString());
+
+        ctx.fireChannelInactive();
     }
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg,
             ChannelPromise promise) {
 
-        String log = getCoapLog(ctx, msg);
+        String log = null;
 
-        Log.v(log);
+        if (msg instanceof CoapRequest) {
+            log = composeCoapRequest(
+                    ctx.channel().id().asLongText().substring(26),
+                    (CoapRequest) msg);
+        } else if (msg instanceof CoapResponse) {
+            log = composeCoapResponse(ctx.channel().id().asLongText()
+                    .substring(26), (CoapResponse) msg);
+        }
+
+        if (log != null) {
+            Log.v(log);
+        }
 
         ctx.writeAndFlush(msg);
     }
@@ -71,70 +93,22 @@ public class CoapLogHandler extends ChannelDuplexHandler {
     public void channelRead(ChannelHandlerContext ctx, Object msg)
             throws Exception {
 
-        String log = getCoapLog(ctx, msg);
+        String log = null;
 
-        Log.v(log);
-
-        ctx.fireChannelRead(msg);
-
-    }
-
-    private String getCoapLog(ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof CoapRequest) {
-            return composeCoapRequest(
+            log = composeCoapRequest(
                     ctx.channel().id().asLongText().substring(26),
                     (CoapRequest) msg);
-        } else if (msg instanceof CoapSignaling) {
-            return composeCoapSignaling(
-                    ctx.channel().id().asLongText().substring(26),
-                    (CoapSignaling) msg);
-        } else {
-            return composeCoapResponse(
-                    ctx.channel().id().asLongText().substring(26),
-                    (CoapResponse) msg);
-        }
-    }
-
-    private String composeCoapSignaling(String channelId,
-            CoapSignaling signaling) {
-        StringBuilder strBuilder = new StringBuilder();
-
-        strBuilder.append(channelId);
-        strBuilder.append(" " + signaling.getTokenString());
-
-        switch (signaling.getSignalingMethod()) {
-            case CSM:
-                strBuilder.append(" 7.01 CSM");
-                strBuilder.append(" SERVER-NAME:");
-                strBuilder.append(signaling.getCsmServerName());
-                strBuilder.append(" MAX-MESSAGE-SIZE:");
-                strBuilder.append(signaling.getCsmMaxMessageSize());
-                strBuilder.append(" BLOCK-WISE-TRANSFER:");
-                strBuilder.append(signaling.getCsmBlockWiseTransfer());
-                break;
-            case PING:
-                strBuilder.append(" 7.02 PING");
-                break;
-            case PONG:
-                strBuilder.append(" 7.03 PONG");
-                break;
-            case RELEASE:
-                strBuilder.append(" 7.04 RELEASE");
-                break;
-            case ABORT:
-                strBuilder.append(" 7.05 ABORT");
-                break;
-            default:
-                break;
+        } else if (msg instanceof CoapResponse) {
+            log = composeCoapResponse(ctx.channel().id().asLongText()
+                    .substring(26), (CoapResponse) msg);
         }
 
-        if (signaling.getPayloadSize() > 0) {
-            strBuilder.append(" SZ:" + signaling.getPayloadSize() + " P:"
-                    + new String(signaling.getPayload(), 0,
-                            signaling.getPayloadSize() > MAX_LOGLEN ? MAX_LOGLEN
-                                    : signaling.getPayloadSize()));
+        if (log != null) {
+            Log.v(log);
         }
-        return strBuilder.toString();
+
+        ctx.fireChannelRead(msg);
     }
 
     private String composeCoapRequest(String channelId, CoapRequest request) {
@@ -175,12 +149,9 @@ public class CoapLogHandler extends ChannelDuplexHandler {
         }
 
         if (request.getPayloadSize() > 0) {
-            strBuilder
-                    .append(" SZ:" + request.getPayloadSize() + " P:"
-                            + new String(request.getPayload(), 0,
-                                    request.getPayloadSize() > MAX_LOGLEN
-                                            ? MAX_LOGLEN
-                                            : request.getPayloadSize()));
+            strBuilder.append(" CT:" + request.getContentFormat());
+            strBuilder.append(" SZ:" + request.getPayloadSize() + " P:"
+                    + getJsonPayloadString(request));
         }
 
         return strBuilder.toString();
@@ -277,14 +248,30 @@ public class CoapLogHandler extends ChannelDuplexHandler {
         }
 
         if (response.getPayloadSize() > 0) {
-            strBuilder
-                    .append(" SZ:" + response.getPayloadSize() + " P:"
-                            + new String(response.getPayload(), 0,
-                                    response.getPayloadSize() > MAX_LOGLEN
-                                            ? MAX_LOGLEN
-                                            : response.getPayloadSize()));
+            strBuilder.append(" CT:" + response.getContentFormat());
+            strBuilder.append(" SZ:" + response.getPayloadSize() + " P:"
+                    + getJsonPayloadString(response));
         }
 
         return strBuilder.toString();
+    }
+
+    private String getJsonPayloadString(CoapMessage coapMessage) {
+        String jsonPayload = null;
+        if (coapMessage.getContentFormat() == ContentFormat.APPLICATION_CBOR) {
+
+            Object mapPayload = mCbor.parsePayloadFromCbor(
+                    coapMessage.getPayload(), Object.class);
+            if (coapMessage.getUriPath()
+                    .contains(OICConstants.WELL_KNOWN_FULL_URI)) {
+                jsonPayload = mGson.toJson((ArrayList<Object>) mapPayload);
+                return jsonPayload.length() <= MAX_LOGLEN ? jsonPayload
+                        : jsonPayload.substring(0, MAX_LOGLEN);
+            }
+            jsonPayload = mGson.toJson(mapPayload);
+            return jsonPayload.length() <= MAX_LOGLEN ? jsonPayload
+                    : jsonPayload.substring(0, MAX_LOGLEN);
+        }
+        return jsonPayload;
     }
 }

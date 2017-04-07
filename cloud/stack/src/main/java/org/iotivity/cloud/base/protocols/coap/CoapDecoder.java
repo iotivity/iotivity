@@ -43,6 +43,7 @@ public class CoapDecoder extends ByteToMessageDecoder {
     private int          tokenLength         = 0;
     private int          optionPayloadLength = 0;
     private CoapMessage  partialMsg          = null;
+    private int          websocketLength     = -1;
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in,
@@ -121,6 +122,12 @@ public class CoapDecoder extends ByteToMessageDecoder {
                             partialMsg.setToken(token);
                         }
 
+                        if (websocketLength != -1) {
+                            optionPayloadLength = websocketLength
+                                    - (bufferToRead + 1); // shimheader + code +
+                                                          // tokenLength
+                        }
+
                         if (optionPayloadLength > 0) {
                             int optionLen = parseOptions(partialMsg, in,
                                     optionPayloadLength);
@@ -166,6 +173,12 @@ public class CoapDecoder extends ByteToMessageDecoder {
         }
     }
 
+    public void decode(ByteBuf in, List<Object> out, int length)
+            throws Exception {
+        websocketLength = length;
+        decode(null, in, out);
+    }
+
     private int parseOptions(CoapMessage coapMessage, ByteBuf byteBuf,
             int maxLength) {
 
@@ -207,7 +220,7 @@ public class CoapDecoder extends ByteToMessageDecoder {
             }
         }
 
-        /// return option length
+        // return option length
         return byteBuf.readerIndex() - startPos;
     }
 }
