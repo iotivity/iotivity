@@ -17,8 +17,6 @@ OCIsSubownerOfDevice
 OCProvisionPreconfigPin
 OCSelectMOTMethod
 
-PMGenerateQuery
-
 SetPreconfigPin
 
 ; Depending on the outcome of IOT-1480 this export should be removed. For now
