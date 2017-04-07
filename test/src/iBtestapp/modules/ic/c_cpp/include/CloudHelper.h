@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,10 +38,16 @@
 #include "OCApi.h"
 #include "OCPlatform.h"
 #include "OCPlatform_impl.h"
+#include "RDClient.h"
+#include "OCResource.h"
 
 #include "IotivityTest_Logger.h"
 #include "CloudResourceHelper.h"
 #include "BinarySwitchResourceHelper.h"
+#include "CommonUtil.h"
+#include "Configuration.h"
+#include "CloudCommonUtil.h"
+#include "CommonProperties.h"
 
 using namespace OC;
 using namespace std;
@@ -62,6 +68,10 @@ using namespace std;
 #define CALLBACK_TIMEOUT 60
 #define CALLBACK_INVOKED 1
 #define CALLBACK_NOT_INVOKED 0
+#define DEFAULT_MQ_BROKER_URI "/oic/ps"
+
+extern vector< shared_ptr< OC::OCResource > > g_topicList;
+extern std::string g_accesstoken;
 
 void handleLoginoutCB(const HeaderOptions &, const OCRepresentation &rep, const int ecode);
 void onRefreshTokenCB(const HeaderOptions &, const OCRepresentation &rep, const int ecode);
@@ -70,9 +80,7 @@ void onDeleteDevice(const HeaderOptions &headerOptions, const int eCode);
 
 void onCreateGroup(const HeaderOptions &, const OCRepresentation &rep, const int ecode);
 void onJoinGroup(const HeaderOptions &, const OCRepresentation &rep, const int ecode);
-void onGetGroupList(const HeaderOptions &, const OCRepresentation &rep, const int ecode);
 void onGetGroupInfo(const HeaderOptions &, const OCRepresentation &rep, const int ecode);
-void onAddDeviceToGroup(const HeaderOptions &, const OCRepresentation &rep, const int ecode);
 void onDeleteDeviceFromGroup(const HeaderOptions &headerOptions, const int eCode);
 void onDeleteGroup(const HeaderOptions &headerOptions, const int eCode);
 void onLeaveGroup(const HeaderOptions &headerOptions, const int eCode);
@@ -81,77 +89,84 @@ void foundDevice(shared_ptr< OC::OCResource > resource);
 void onObserveDevPresence(const HeaderOptions headerOptions, const OCRepresentation &rep,
         const int &eCode, const int &sequenceNumber);
 
-void onObserveGroup(const HeaderOptions headerOptions, const OCRepresentation &rep, const int &eCode,
-        const int &sequenceNumber);
-void onObserveInvitation(const HeaderOptions headerOptions, const OCRepresentation &rep, const int &eCode,
-        const int &sequenceNumber);
+void onObserveGroup(const HeaderOptions headerOptions, const OCRepresentation &rep,
+        const int &eCode, const int &sequenceNumber);
+void onObserveInvitation(const HeaderOptions headerOptions, const OCRepresentation &rep,
+        const int &eCode, const int &sequenceNumber);
 void onSendInvitation(const HeaderOptions &, const OCRepresentation &rep, const int ecode);
 void onCancelInvitation(const HeaderOptions &headerOptions, const int eCode);
 void onDeleteInvitation(const HeaderOptions &headerOptions, const int eCode);
 
-std::shared_ptr<OC::OCResource>  getFoundResource();
+std::shared_ptr< OC::OCResource > getFoundResource();
 
 FILE *controleeOpen(const char * /*path*/, const char *mode);
 FILE *controllerOpen(const char * /*path*/, const char *mode);
 
 // API Helper
-bool signUp(OCAccountManager::Ptr accountMgr, std::string authprovider, std::string authCode,
-        PostCallback cloudConnectHandler, std::string &devID, std::string &devAccessToken,
-        std::string &devRefreshToken);
-bool signIn(OCAccountManager::Ptr accountMgr, const std::string& userUuid,
-        const std::string& accessToken, PostCallback cloudConnectHandler);
-bool signOut(OCAccountManager::Ptr accountMgr, PostCallback cloudConnectHandler);
 bool refreshAccessToken(OCAccountManager::Ptr accountMgr, std::string userUuid,
         const std::string refreshToken, PostCallback cloudConnectHandler);
-bool searchUser(OCAccountManager::Ptr accountMgr, const std::string& userUuid,
+bool searchUser(OCAccountManager::Ptr accountMgr, QueryParamsMap query,
         GetCallback cloudConnectHandler);
 bool deleteDevice(OCAccountManager::Ptr accountMgr, const std::string& deviceId,
-        DeleteCallback cloudConnectHandler);
+        const std::string& accessToken, DeleteCallback cloudConnectHandler);
 
-
-bool createGroup(OCAccountManager::Ptr accountMgr, AclGroupType groupType,
-        PostCallback cloudConnectHandler, std::string &strGroupID);
-bool joinGroup(OCAccountManager::Ptr accountMgr, const std::string& groupId,
+bool createGroup(OCAccountManager::Ptr accountMgr, QueryParamsMap query,
         PostCallback cloudConnectHandler);
-bool leaveGroup(OCAccountManager::Ptr accountMgr, const std::string& groupId,
-        DeleteCallback cloudConnectHandler);
 bool deleteGroup(OCAccountManager::Ptr accountMgr, const std::string& groupId,
         DeleteCallback cloudConnectHandler);
 bool getGroupInfo(OCAccountManager::Ptr accountMgr, const std::string& groupId,
         GetCallback cloudConnectHandler);
-bool getGroupList(OCAccountManager::Ptr accountMgr, PostCallback cloudConnectHandler);
 
-bool addDeviceToGroup(OCAccountManager::Ptr accountMgr, const std::string& groupId,
-        const std::vector< std::string >& deviceId, PostCallback cloudConnectHandler);
 bool deleteDeviceFromGroup(OCAccountManager::Ptr accountMgr, const std::string& groupId,
         const std::vector< std::string >& deviceId, DeleteCallback cloudConnectHandler);
 
-bool publishResourceToRD(std::string host, OCConnectivityType connectivityType,
+bool publishResourceToRD(std::string host, OCConnectivityType connectivityType, ResourceHandles resourceHandles,
         PublishResourceCallback callback);
 bool findResource(std::string host, const std::string& resourceURI,
         OCConnectivityType connectivityType, FindCallback resourceHandler);
 
-
-bool observeGroup(OCAccountManager::Ptr accountMgr, const std::string& groupId,
-        ObserveCallback cloudConnectHandler);
-bool cancelObserveGroup(OCAccountManager::Ptr accountMgr, const std::string& groupId);
+bool observeGroup(OCAccountManager::Ptr accountMgr, ObserveCallback cloudConnectHandler);
+bool cancelObserveGroup(OCAccountManager::Ptr accountMgr);
 bool observeInvitation(OCAccountManager::Ptr accountMgr, ObserveCallback cloudConnectHandler);
 bool cancelObserveInvitation(OCAccountManager::Ptr accountMgr);
-bool sendInvitation(OCAccountManager::Ptr accountMgr,const std::string& groupId,
-        const std::string& userUuid,
-        PostCallback cloudConnectHandler);
+bool sendInvitation(OCAccountManager::Ptr accountMgr, const std::string& groupId,
+        const std::string& userUuid, PostCallback cloudConnectHandler);
 bool cancelInvitation(OCAccountManager::Ptr accountMgr, const std::string& groupId,
-        const std::string& userUuid,
-        DeleteCallback cloudConnectHandler);
-bool deleteInvitation(OCAccountManager::Ptr accountMgr, const std::string& groupId,
-        DeleteCallback cloudConnectHandler);
+        const std::string& userUuid, DeleteCallback cloudConnectHandler);
 void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep, const int &eCode,
         const int &sequenceNumber);
 void onDelete(const HeaderOptions &headerOptions, const int eCode);
 void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode);
 void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode);
 void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode);
+void discoverTopicCB(const int ecode, const string &, shared_ptr< OC::OCResource > topic);
+void publishMessageCB(const HeaderOptions &, const OCRepresentation &, const int eCode);
+void createTopicCB(const int ecode, const string &originUri, shared_ptr< OC::OCResource > topic);
+void subscribeCB(const HeaderOptions &, const OCRepresentation &rep, const int eCode,
+        const int sequenceNumber);
 
+bool replyToInvitation(OCAccountManager::Ptr accountMgr, const std::string& groupId,
+        const std::string& accept, DeleteCallback cloudConnectHandler);
+bool addPropertyValueToGroup(OCAccountManager::Ptr accountMgr, const std::string& groupId,
+        const OCRepresentation propertyValue, PostCallback cloudConnectHandler);
+bool deletePropertyValueFromGroup(OCAccountManager::Ptr accountMgr, const std::string& groupId,
+        const OCRepresentation propertyValue, PostCallback cloudConnectHandler);
+bool updatePropertyValueOnGroup(OCAccountManager::Ptr accountMgr, const std::string& groupId,
+        const OCRepresentation propertyValue, PostCallback cloudConnectHandler);
+bool discoveryMQTopics(OC::OCResource::Ptr &g_mqBrokerResource,
+        const QueryParamsMap& queryParametersMap, MQTopicCallback attributeHandler,
+        QualityOfService qos);
+bool publishMQTopic(OC::OCResource::Ptr g_mqBrokerResource, const OCRepresentation& rep,
+        const QueryParamsMap& queryParametersMap, PostCallback attributeHandler,
+        QualityOfService qos);
+bool createMQTopic(OC::OCResource::Ptr g_mqBrokerResource, const OCRepresentation& rep,
+        const std::string& topicUri, const QueryParamsMap& queryParametersMap,
+        MQTopicCallback attributeHandler, QualityOfService qos);
+bool subscribeMQTopic(OC::OCResource::Ptr g_mqBrokerResource, ObserveType observeType,
+        const QueryParamsMap& queryParametersMap, ObserveCallback observeHandler,
+        QualityOfService qos);
+bool unsubscribeMQTopic(OC::OCResource::Ptr g_mqBrokerResource, QualityOfService qos);
+bool turnOnOffSwitch(bool bolean);
 
 #endif
 

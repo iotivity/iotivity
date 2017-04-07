@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -85,7 +85,6 @@ OCStackResult Resource::sendRepresentation(std::shared_ptr< OCResourceRequest > 
         pResponse->setResourceRepresentation(getRepresentation(), DEFAULT_INTERFACE);
     }
 
-    pResponse->setErrorCode(TCP_RESPONSE_OK);
     pResponse->setResponseResult(OC_EH_OK);
 
     return OCPlatform::sendResponse(pResponse);
@@ -95,15 +94,12 @@ OCStackResult Resource::propagate()
 {
     if (m_interestedObservers.size() > 0)
     {
-        std::shared_ptr<OCResourceResponse> resourceResponse =
-        {   std::make_shared<OCResourceResponse>()};
+        std::shared_ptr< OCResourceResponse > resourceResponse =
+        { std::make_shared< OCResourceResponse >() };
 
-        resourceResponse->setErrorCode(200);
         resourceResponse->setResourceRepresentation(getRepresentation(), DEFAULT_INTERFACE);
 
-        return OCPlatform::notifyListOfObservers(m_handle,
-                m_interestedObservers,
-                resourceResponse);
+        return OCPlatform::notifyListOfObservers(m_handle, m_interestedObservers, resourceResponse);
     }
 
     return OC_STACK_OK;
