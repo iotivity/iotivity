@@ -753,6 +753,28 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
             {
                 securePort = resPayload->port;
             }
+            else if (resPayload && resPayload->eps)
+            {
+                OCEndpointPayload* eps = resPayload->eps;
+                while (eps != NULL)
+                {
+                    if ((eps->family & OC_FLAG_SECURE) &&
+                        ((OC_IP_USE_V6 == clientResponse->devAddr.flags &&
+                          strchr(eps->addr, ':')) ||
+                         (OC_IP_USE_V4 == clientResponse->devAddr.flags &&
+                          strchr(eps->addr, ','))))
+                    {
+                            securePort = eps->port;
+                            break;
+                    }
+                    eps = eps->next;
+                }
+                if (!securePort)
+                {
+                    OIC_LOG(INFO, TAG, "Can not find secure port information.");
+                    return OC_STACK_DELETE_TRANSACTION;
+                }
+            }
             else
             {
                 OIC_LOG(INFO, TAG, "Can not find secure port information.");
@@ -763,8 +785,8 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
 #endif
             DiscoveryInfo* pDInfo = (DiscoveryInfo*)ctx;
             OCProvisionDev_t *ptr = GetDevice(&pDInfo->pCandidateList,
-                                                         clientResponse->devAddr.addr,
-                                                         clientResponse->devAddr.port);
+                                              clientResponse->devAddr.addr,
+                                              clientResponse->devAddr.port);
             if(!ptr)
             {
                 OIC_LOG(ERROR, TAG, "Can not find device information in the discovery candidate device list");
