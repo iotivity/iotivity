@@ -1520,27 +1520,6 @@ static int testSymmetricRoleUse(int dev_num)
         goto exit;
     }
 
-    /* Create and provision an ACL to allow anyone access to the roles resource. Since all actions
-     * on the roles resource first requires authentication by public key, this is effectively "any
-     * authenticated" access.
-     * @todo: This should be done by default and not be necessary here (IOT-1950).
-     */
-    OCDeleteACLList(acl);
-    acl = NULL;
-    ret = createRolesAcl(&acl);
-    if (ret != 0)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s failed to create roles ACL", __func__);
-        goto exit;
-    }
-
-    ret = provisionAcl(dev_num, acl);
-    if (ret != 0)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s failed to provision roles ACL", __func__);
-        goto exit;
-    }
-
     /* Remove the owner credential so that we don't use it when asserting role certs. */
     OCStackResult res = OCRemoveCredential(&g_uuidDev1);
     if (res != OC_STACK_RESOURCE_DELETED)
