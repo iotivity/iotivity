@@ -32,21 +32,24 @@ examples_env = lib_env.Clone()
 # Build flags
 ######################################################################
 examples_env.PrependUnique(CPPPATH = ['../include'])
-examples_env.AppendUnique(LIBS = ['oc_logger'])
 examples_env.Append(LIBS = ['c_common'])
 
 compiler = env.get('CC')
 if compiler != 'cl':
-	examples_env.AppendUnique(LIBS = ['stdc++'])
+    examples_env.AppendUnique(LIBS = ['stdc++'])
 
 target_os = env.get('TARGET_OS')
-if target_os == 'android':
-	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	examples_env.AppendUnique(LIBS = ['gnustl_shared'])
 
-if target_os not in ['arduino', 'windows']:
-	examples_env.AppendUnique(CFLAGS = Split('-Wall -std=c99 -Werror'))
-	examples_env.AppendUnique(CXXFLAGS = Split('-Wall -std=c++0x'))
+if target_os not in ['arduino', 'msys_nt', 'windows']:
+    examples_env.AppendUnique(CFLAGS = Split('-Wall -std=c99 -Werror'))
+    examples_env.AppendUnique(CXXFLAGS = Split('-Wall -std=c++0x'))
+    examples_env.AppendUnique(LIBS = ['oc_logger'])
+
+    if target_os == 'android':
+        examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+        examples_env.PrependUnique(LIBS = ['gnustl_shared'])
+else:
+    examples_env.AppendUnique(LIBS = ['octbstack'])
 
 ######################################################################
 # Source files and Targets
@@ -56,4 +59,3 @@ examples_cpp = examples_env.Program('examples_cpp', 'test_logging.cpp')
 
 Alias('liboc_logger_examples', [examples_c, examples_cpp])
 examples_env.AppendTarget('liboc_logger_examples')
-

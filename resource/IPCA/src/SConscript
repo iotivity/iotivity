@@ -49,14 +49,18 @@ ipca_lib_env.PrependUnique(CPPPATH = [
         '#/extlibs/cjson',
         ])
 
-ipca_lib_env.Replace(WINDOWS_INSERT_DEF = ['1'])
+if target_os in ['windows', 'msys_nt']:
+    ipca_lib_env.Replace(WINDOWS_INSERT_DEF = ['1'])
+else:
+    ipca_lib_env.PrependUnique(LIBS = [
+        'oc_logger'
+        ])
 
 ipca_lib_env.PrependUnique(LIBS = [
         'oc',
         'connectivity_abstraction',
         'coap',
-        'octbstack',
-        'oc_logger'
+        'octbstack'
         ])
 
 if ipca_env.get('SECURED') == '1':

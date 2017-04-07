@@ -51,8 +51,6 @@ stacktest_env.PrependUnique(LIBS = ['octbstack_test',
                                     'connectivity_abstraction',
                                     'coap',
                                     'mbedcrypto'])
-if target_os != 'darwin':
-    stacktest_env.PrependUnique(LIBS = ['oc_logger'])
 
 if stacktest_env.get('SECURED') == '1':
     stacktest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509'])

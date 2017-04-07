@@ -56,7 +56,7 @@ ipcatest_env.AppendUnique(CPPPATH = [
         ])
 
 ipcatest_env.PrependUnique(LIBS = [
-        'oc_logger',
+        'oc_logger_internal',
         'octbstack',
         'ipca_static'
         ])

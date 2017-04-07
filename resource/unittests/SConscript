@@ -58,7 +58,7 @@ if target_os in ['windows']:
 unittests_env.PrependUnique(LIBS = [
 		'oc',
 		'octbstack_test',
-		'oc_logger',
+		'oc_logger_internal',
 		'connectivity_abstraction',
 		'coap',
 		'mbedcrypto'])

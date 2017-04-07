@@ -45,7 +45,7 @@ provisioning_env.AppendUnique(CPPDEFINES= ['__WITH_DTLS__'])
 if 'g++' in provisioning_env.get('CXX'):
     provisioning_env.AppendUnique(CXXFLAGS = ['-std=c++0x'])
 
-provisioning_env.PrependUnique(LIBS = ['octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
+provisioning_env.PrependUnique(LIBS = ['octbstack', 'connectivity_abstraction', 'coap'])
 
 if target_os not in ['msys_nt', 'windows']:
 	# octbstack.dll is exporting ocpmapi and ocsrm APIs on Windows.
