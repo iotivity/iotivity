@@ -443,7 +443,7 @@ static void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, boo
  * @param payload Discovery payload which has Endpoint information.
  * @param ifindex index which indicate network interface.
  */
-#ifndef WITH_ARDUINO
+#if defined (IP_ADAPTER) && !defined (WITH_ARDUINO)
 static OCStackResult OCMapZoneIdToLinkLocalEndpoint(OCDiscoveryPayload *payload, uint32_t ifindex);
 #endif
 
@@ -1414,7 +1414,7 @@ OCStackResult HandleBatchResponse(char *requestUri, OCRepPayload **payload)
     return OC_STACK_INVALID_PARAM;
 }
 
-#ifndef WITH_ARDUINO
+#if defined (IP_ADAPTER) && !defined (WITH_ARDUINO)
 OCStackResult OCMapZoneIdToLinkLocalEndpoint(OCDiscoveryPayload *payload, uint32_t ifindex)
 {
     if (!payload)
@@ -1723,7 +1723,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 
                     // Check endpoints has link-local ipv6 address.
                     // if there is, map zone-id which parsed from ifindex
-#ifndef WITH_ARDUINO
+#if defined (IP_ADAPTER) && !defined (WITH_ARDUINO)
                     if (PAYLOAD_TYPE_DISCOVERY == response->payload->type)
                     {
                         OCDiscoveryPayload *disPayload = (OCDiscoveryPayload*)(response->payload);
@@ -5908,7 +5908,9 @@ OCStackResult OCGetDeviceOwnedState(bool *isOwned)
     return ret;
 }
 
+#ifdef IP_ADAPTER
 OCStackResult OCGetLinkLocalZoneId(uint32_t ifindex, char **zoneId)
 {
     return CAResultToOCResult(CAGetLinkLocalZoneId(ifindex, zoneId));
 }
+#endif

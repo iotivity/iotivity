@@ -2686,6 +2686,7 @@ TEST_F(OCDiscoverTests, DISABLED_DiscoverResourceWithInvalidQueries)
     EXPECT_EQ(OC_STACK_OK, discoverUnicastRTEmptyCB.Wait(10));
 }
 
+#ifdef IP_ADAPTER
 TEST(StackZoneId, getZoneId)
 {
     size_t tempSize = 0;
@@ -2710,6 +2711,7 @@ TEST(StackZoneId, getZoneIdWithInvalidParams)
     EXPECT_EQ(OC_STACK_ERROR, OCGetLinkLocalZoneId(9999, &zoneId));
     EXPECT_EQ(OC_STACK_ERROR, OCGetLinkLocalZoneId(UINT32_MAX, &zoneId));
 }
+#endif
 
 TEST(LinksPayloadValue, createLinksPayloadValue)
 {
