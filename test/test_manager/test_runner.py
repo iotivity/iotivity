@@ -85,7 +85,7 @@ if not os.path.exists(testspec_path) and os.path.exists(API_TC_SRC_DIR):
     reporter.generate_testspec_report(container.data)
     reporter.report('XML', testspec_path)
 
-file_filter = file_filter.replace(TC_BIN_PREFIX, '').replace(TC_BIN_SUFFIX, '')
+file_filter = file_filter.replace(TC_BIN_PREFIX, '')
 total_found_tc = 0
 runner = TestRunner()
 for fname in os.listdir(TC_BIN_DIR):
@@ -104,7 +104,7 @@ for fname in os.listdir(TC_BIN_DIR):
     if file_filter and file_filter not in fname:
         continue
 
-    tname = fname.replace(TC_BIN_PREFIX, '').replace(TC_BIN_SUFFIX, '')
+    tname = fname.replace(TC_BIN_PREFIX, '')
 
     option = TestRunnerOption()
     

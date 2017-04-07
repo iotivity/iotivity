@@ -227,7 +227,7 @@ def run_gtest_testcase(testresult, file_filter, given_testsuites, given_testcase
         testset = set()
         testsuite = ''
 
-        command = 'adb ' + device_name + ' shell LD_LIBRARY_PATH=' + app_path + ' ' + app_path + '/' + binary_name + ' --gtest_list_tests' 
+        command = 'adb ' + device_name + ' shell LD_LIBRARY_PATH=' + app_path + ' ' + app_path + '/' + binary_name + ' --gtest_list_tests'
 
         rc = subprocess.check_output(command, shell=True)
         log = re.sub(r'(b\'|\')', '', str(rc))
@@ -246,14 +246,15 @@ def run_gtest_testcase(testresult, file_filter, given_testsuites, given_testcase
 
             if given_testsuites and testsuite[:-1] not in given_testsuites:
                 continue
-            
+
             if given_testcases and line not in given_testcases:
                 continue
 
-            testset.add(testsuite + line)
+            if testsuite != '' and line != '':
+                testset.add(testsuite + line)
 
         sz = sz + len(testset)
-            
+
         for tc_name in testset:
             tc_info = tc_name.split('.')
             command = 'adb ' + device_name + ' shell ' + app_path + '/runner.sh ' + binary_name + ' ' + tc_name

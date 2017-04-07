@@ -181,7 +181,8 @@ for binary_name in binary_list:
         if given_testcases and line not in given_testcases:
             continue
 
-        testset.add(binary_name + '.' + testsuite +line)
+        if testsuite != '' and line != '':
+            testset.add(binary_name + '.' + testsuite + line)
 
 if not testset:
     print (bcolors.FAIL + 'no testcase is found with given parameter' + bcolors.ENDC)
