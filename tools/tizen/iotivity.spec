@@ -86,6 +86,7 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?WITH_MQ: %define WITH_MQ OFF}
 %{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?WITH_TCP: %define WITH_TCP 0}
+%{!?MULTIPLE_OWNER: %define MULTIPLE_OWNER 0}
 %{!?OIC_SUPPORT_TIZEN_TRACE: %define OIC_SUPPORT_TIZEN_TRACE False}
 
 BuildRequires:  expat-devel
@@ -199,6 +200,7 @@ scons %{?_smp_mflags} --prefix=%{_prefix} \
     WITH_MQ=%{WITH_MQ} \
     WITH_PROXY=%{WITH_PROXY} \
     WITH_TCP=%{WITH_TCP} \
+    MULTIPLE_OWNER=%{MULTIPLE_OWNER} \
     OIC_SUPPORT_TIZEN_TRACE=%{OIC_SUPPORT_TIZEN_TRACE} \
     #eol
 
@@ -223,6 +225,7 @@ scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
     WITH_MQ=%{WITH_MQ} \
     WITH_PROXY=%{WITH_PROXY} \
     WITH_TCP=%{WITH_TCP} \
+    MULTIPLE_OWNER=%{MULTIPLE_OWNER} \
     OIC_SUPPORT_TIZEN_TRACE=%{OIC_SUPPORT_TIZEN_TRACE} \
     #eol
 
