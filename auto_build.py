@@ -35,11 +35,14 @@ def call_scons(build_options, extra_option_str):
 
     cmd_line += " " + str(extra_option_str)
 
-    print ("Running : " + cmd_line)
-    sys.stdout.flush()
-    exit_code = subprocess.Popen(cmd_line, shell=True).wait()
-    if exit_code != 0:
-        exit(exit_code)
+    if not EXEC_MODE:
+        print ("Would run : " + cmd_line)
+    else:
+        print ("Running : " + cmd_line)
+        sys.stdout.flush()
+        exit_code = subprocess.Popen(cmd_line, shell=True).wait()
+        if exit_code != 0:
+            exit(exit_code)
 
 def build_all(flag, extra_option_str):
     if platform.system() == "Linux":
@@ -385,10 +388,13 @@ def build_arduino(flag, extra_option_str):
 def build_tizen(flag, extra_option_str):
     print ("*********** Build for Tizen *************")
     cmd_line = "/bin/sh " + os.getcwd() + "/gbsbuild.sh"
-    print ("Running : " + cmd_line)
-    exit_code = subprocess.Popen([cmd_line], shell=True).wait()
-    if exit_code != 0:
-        exit(exit_code)
+    if not EXEC_MODE:
+        print ("Would run : " + cmd_line)
+    else:
+        print ("Running : " + cmd_line)
+        exit_code = subprocess.Popen([cmd_line], shell=True).wait()
+        if exit_code != 0:
+            exit(exit_code)
 
     print ("*********** Build for Tizen octbstack lib and sample with security *************")
     build_extra_options = "-f resource/csdk/stack/samples/tizen/build/SConscript " + extra_option_str
@@ -527,6 +533,9 @@ script_name = sys.argv[0]
 
 # May be overridden in user's shell
 VERBOSE = os.getenv("VERBOSE", "1")
+EXEC_MODE = os.getenv("EXEC_MODE", True)
+if EXEC_MODE in ['false', 'False', '0']:
+    EXEC_MODE = False
 
 if arg_num == 1:
     build_all("true", "")
