@@ -371,8 +371,6 @@ typedef struct OicSecPstat OicSecPstat_t;
 
 typedef struct OicSecRole OicSecRole_t;
 
-typedef struct OicSecSacl OicSecSacl_t;
-
 typedef struct OicSecSvc OicSecSvc_t;
 
 typedef char *OicUrn_t; //TODO is URN type defined elsewhere?
@@ -602,18 +600,6 @@ struct OicSecPstat
     OicUuid_t           rownerID;       // 7:R:S:Y:oic.uuid
 };
 
-/**
- * /oic/sec/sacl (Signed Access Control List) data type.
- * Derived from OIC Security Spec; see Spec for details.
- */
-struct OicSecSacl
-{
-    // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    //TODO fill in from OIC Security Spec
-#if defined(_MSC_VER) || defined(__clang__)
-    uint8_t unused; // some compilers refuse empty structs
-#endif
-};
 
 #if defined(__WITH_DTLS__) ||  defined(__WITH_TLS__)
 struct OicSecCrl
