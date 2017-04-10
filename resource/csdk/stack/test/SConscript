@@ -66,9 +66,6 @@ if target_os in ['msys_nt', 'windows']:
 else:
     stacktest_env.PrependUnique(LIBS = ['m'])
 
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-    stacktest_env.PrependUnique(LIBS = ['resource_directory'])
-
 ######################################################################
 # Source files and Targets
 ######################################################################

@@ -67,9 +67,6 @@ if ipca_env.get('SECURED') == '1':
             'ocprovision'
             ])
 
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-    ipca_lib_env.PrependUnique(LIBS = ['resource_directory'])
-
 ######################################################################
 # Source files and Targets
 ######################################################################

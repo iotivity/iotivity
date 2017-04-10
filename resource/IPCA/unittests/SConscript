@@ -79,9 +79,6 @@ if use_iotivity == 1:
 if target_os in ['msys_nt', 'windows']:
     ipcatest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
 
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-    ipcatest_env.PrependUnique(LIBS = ['resource_directory'])
-
 ######################################################################
 # Source files and Targets
 ######################################################################

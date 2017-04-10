@@ -82,10 +82,6 @@ if target_os in ['msys_nt', 'windows']:
 else:
 	sptest_env.AppendUnique(LIBS = ['octbstack'])
 
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	sptest_env.PrependUnique(LIBS = ['resource_directory'])
-
-
 ######################################################################
 # Source files and Targets
 ######################################################################
