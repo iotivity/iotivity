@@ -36,6 +36,7 @@
 #include "payload_logging.h"
 #include "pmutility.h"
 #include "srmutility.h"
+#include "srmresourcestrings.h"
 
 // headers required for mbed TLS
 #include "mbedtls/config.h"
@@ -735,6 +736,13 @@ OCStackResult OCGetUuidFromCSR(const char* csr, OicUuid_t* uuid)
     if (!OCConvertStringToUuid(uuidStr + sizeof(SUBJECT_PREFIX) - 1, uuid->id))
     {
         OIC_LOG_V(ERROR, TAG, "Failed to convert UUID: '%s'", uuidStr);
+        mbedtls_x509_csr_free(&csrObj);
+        return OC_STACK_ERROR;
+    }
+
+    if (memcmp(uuid->id, &WILDCARD_SUBJECT_ID, sizeof(uuid->id)) == 0)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid UUID in CSR: '*'");
         mbedtls_x509_csr_free(&csrObj);
         return OC_STACK_ERROR;
     }
