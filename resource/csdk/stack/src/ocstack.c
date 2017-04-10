@@ -1293,7 +1293,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
         goto exit;
     }
     OIC_LOG(INFO, TAG, "check for unicast presence");
-    cbNode = GetClientCB(NULL, 0, NULL, presenceUri);
+    cbNode = GetClientCBUsingUri(presenceUri);
     if (cbNode)
     {
         presenceSubscribe = 1;
@@ -1302,7 +1302,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     {
         // check for multicast presence
         OIC_LOG(INFO, TAG, "check for multicast presence");
-        cbNode = GetClientCB(NULL, 0, NULL, OC_RSRVD_PRESENCE_URI);
+        cbNode = GetClientCBUsingUri(OC_RSRVD_PRESENCE_URI);
         if (cbNode)
         {
             multicastPresenceSubscribe = 1;
@@ -1380,10 +1380,10 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     }
 
     // Ensure that a filter is actually applied.
-    if (resourceTypeName && cbNode->filterResourceType)
+    if (resourceTypeName && cbNode->interestingPresenceResourceType)
     {
         OIC_LOG_V(INFO, TAG, "find resource type : %s", resourceTypeName);
-        if(!findResourceType(cbNode->filterResourceType, resourceTypeName))
+        if(!findResourceType(cbNode->interestingPresenceResourceType, resourceTypeName))
         {
             goto exit;
         }
@@ -1395,7 +1395,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
 
     if (cbResult == OC_STACK_DELETE_TRANSACTION)
     {
-        FindAndDeleteClientCB(cbNode);
+        DeleteClientCB(cbNode);
     }
 
 exit:
@@ -1509,8 +1509,8 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
         return;
     }
 
-    ClientCB *cbNode = GetClientCB(responseInfo->info.token,
-            responseInfo->info.tokenLength, NULL, NULL);
+    ClientCB *cbNode = GetClientCBUsingToken(responseInfo->info.token,
+                                             responseInfo->info.tokenLength);
 
     ResourceObserver * observer = GetObserverUsingToken (responseInfo->info.token,
             responseInfo->info.tokenLength);
@@ -1688,7 +1688,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             response->result = CAResponseToOCStackResult(responseInfo->result);
             cbNode->callBack(cbNode->context,
                     cbNode->handle, response);
-            FindAndDeleteClientCB(cbNode);
+            DeleteClientCB(cbNode);
             OICFree(response);
         }
         else if ((cbNode->method == OC_REST_OBSERVE || cbNode->method == OC_REST_OBSERVE_ALL)
@@ -1718,7 +1718,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             cbNode->callBack(cbNode->context,
                              cbNode->handle,
                              response);
-            FindAndDeleteClientCB(cbNode);
+            DeleteClientCB(cbNode);
             OICFree(response);
         }
         else
@@ -1982,7 +1982,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 
                 if (appFeedback == OC_STACK_DELETE_TRANSACTION)
                 {
-                    FindAndDeleteClientCB(cbNode);
+                    DeleteClientCB(cbNode);
                 }
                 else
                 {
@@ -2125,8 +2125,8 @@ void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *er
     OIC_LOG(INFO, TAG, "Enter HandleCAErrorResponse");
     OIC_TRACE_BEGIN(%s:HandleCAErrorResponse, TAG);
 
-    ClientCB *cbNode = GetClientCB(errorInfo->info.token,
-                                   errorInfo->info.tokenLength, NULL, NULL);
+    ClientCB *cbNode = GetClientCBUsingToken(errorInfo->info.token,
+                                             errorInfo->info.tokenLength);
     if (cbNode)
     {
         OCClientResponse *response = NULL;
@@ -3692,7 +3692,7 @@ exit:
     if (result != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCDoResource error");
-        FindAndDeleteClientCB(clientCB);
+        DeleteClientCB(clientCB);
         CADestroyToken(token);
         if (handle)
         {
@@ -3738,7 +3738,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
         return OC_STACK_INVALID_PARAM;
     }
 
-    ClientCB *clientCB = GetClientCB(NULL, 0, handle, NULL);
+    ClientCB *clientCB = GetClientCBUsingHandle(handle);
     if (!clientCB)
     {
         OIC_LOG(ERROR, TAG, "Callback not found. Called OCCancel on same resource twice?");
@@ -3756,7 +3756,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
 
             if ((endpoint.adapter & CA_ADAPTER_IP) && qos != OC_HIGH_QOS)
             {
-                FindAndDeleteClientCB(clientCB);
+                DeleteClientCB(clientCB);
                 break;
             }
 
@@ -3791,12 +3791,12 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
         case OC_REST_DISCOVER:
             OIC_LOG_V(INFO, TAG, "Cancelling discovery callback for resource %s",
                                            clientCB->requestUri);
-            FindAndDeleteClientCB(clientCB);
+            DeleteClientCB(clientCB);
             break;
 
 #ifdef WITH_PRESENCE
         case OC_REST_PRESENCE:
-            FindAndDeleteClientCB(clientCB);
+            DeleteClientCB(clientCB);
             break;
 #endif
         case OC_REST_GET:
@@ -3805,7 +3805,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
         case OC_REST_DELETE:
             OIC_LOG_V(INFO, TAG, "Cancelling request callback for resource %s",
                                            clientCB->requestUri);
-            FindAndDeleteClientCB(clientCB);
+            DeleteClientCB(clientCB);
             break;
 
         default:
@@ -3861,7 +3861,7 @@ OCStackResult OCProcessPresence()
     OCClientResponse clientResponse;
     OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
 
-    LL_FOREACH_SAFE(cbList, cbNode, cbTemp)
+    LL_FOREACH_SAFE(g_cbList, cbNode, cbTemp)
     {
         if (OC_REST_PRESENCE != cbNode->method || !cbNode->presence)
         {
@@ -3902,7 +3902,7 @@ OCStackResult OCProcessPresence()
             cbResult = cbNode->callBack(cbNode->context, cbNode->handle, &clientResponse);
             if (cbResult == OC_STACK_DELETE_TRANSACTION)
             {
-                FindAndDeleteClientCB(cbNode);
+                DeleteClientCB(cbNode);
             }
         }
 
