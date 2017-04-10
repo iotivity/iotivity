@@ -22,8 +22,6 @@
 #include <mutex>
 
 #ifdef RD_CLIENT
-#include "RDClient.h"
-#include "rd_client.h"
 
 #include "OCApi.h"
 #include "OCRepresentation.h"
@@ -32,6 +30,9 @@
 #include "OCPlatform.h"
 #include "OCException.h"
 #include "ocpayload.h"
+
+#include "RDClient.h"
+#include "rd_client.h"
 
 using namespace OC;
 
