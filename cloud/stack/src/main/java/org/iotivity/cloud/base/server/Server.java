@@ -68,7 +68,7 @@ public abstract class Server {
         }
 
         @Override
-        public void initChannel(SocketChannel ch) {
+        public void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline p = ch.pipeline();
 
             if (mSslContext != null) {
@@ -112,6 +112,9 @@ public abstract class Server {
             b.childHandler(mServerInitializer);
 
             b.bind(mInetSocketAddress).sync();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
         } finally {
         }
     }

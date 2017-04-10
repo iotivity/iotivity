@@ -46,6 +46,7 @@ import org.iotivity.cloud.base.protocols.enums.SignalingMethod;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.base.server.HttpServer;
 import org.iotivity.cloud.base.server.Server;
+import org.iotivity.cloud.base.server.WebSocketServer;
 import org.iotivity.cloud.util.Bytes;
 import org.iotivity.cloud.util.Cbor;
 import org.iotivity.cloud.util.Log;
@@ -299,8 +300,12 @@ public class DeviceServerSystem extends ServerSystem {
             try {
 
                 if (!(msg instanceof CoapResponse)) {
-                    throw new BadRequestException(
-                            "this msg type is not CoapResponse");
+                    // throw new BadRequestException(
+                    // "this msg type is not CoapResponse");
+
+                    // TODO check websocket handshake response
+                    ctx.writeAndFlush(msg);
+                    return;
                 }
                 // This is CoapResponse
                 // Once the response is valid, add this to deviceList
@@ -523,6 +528,10 @@ public class DeviceServerSystem extends ServerSystem {
     public void addServer(Server server) {
         if (server instanceof CoapServer) {
             server.addHandler(new CoapSignalingHandler());
+            server.addHandler(new CoapAuthHandler());
+        }
+
+        if (server instanceof WebSocketServer) {
             server.addHandler(new CoapAuthHandler());
         }
 

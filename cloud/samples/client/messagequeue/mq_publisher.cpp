@@ -150,6 +150,7 @@ void handleLoginoutCB(const HeaderOptions &,
     g_callbackLock.notify_all();
 }
 
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 int saveTrustCert(void)
 {
     OCStackResult res = OC_STACK_ERROR;
@@ -194,26 +195,27 @@ int saveTrustCert(void)
 
     return res;
 }
+#endif
 
 static FILE *client_open(const char *path, const char *mode)
 {
-    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
-    {
-        return fopen("./mq_publisher.dat", mode);
-    }
-    else
-    {
-        return fopen(path, mode);
-    }
+	if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+	{
+		return fopen("./mq_publisher.dat", mode);
+	}
+	else
+	{
+		return fopen(path, mode);
+	}
 }
 
 int main(int argc, char *argv[])
 {
-	if (argc != 5)
+	if (argc != 4)
 	{
-		cout << "Put \"[host-ipaddress:port] [authprovider] [authcode] [tls mode(0,1)]\" for sign-up and sign-in and publish resources"
+		cout << "Put \"[host-ipaddress:port] [authprovider] [authcode] \" for sign-up and sign-in and publish resources"
 			<< endl;
-		cout << "Put \"[host-ipaddress:port] [uid] [accessToken] [tls mode(0,1)]\" for sign-in and publish resources" <<
+		cout << "Put \"[host-ipaddress:port] [uid] [accessToken] \" for sign-in and publish resources" <<
 			endl;
 		return 0;
 	}
@@ -236,34 +238,32 @@ int main(int argc, char *argv[])
 
 	g_host = "coap+tcp://";
 
-	if (!strcmp(argv[4], "1"))
-	{
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-		g_host = "coaps+tcp://";
+	g_host = "coaps+tcp://";
 #endif
-	}
+
 
 	g_host += argv[1];
 
 	OCAccountManager::Ptr accountMgr = OCPlatform::constructAccountManagerObject(g_host,
                                        CT_ADAPTER_TCP);
 
-	if (!strcmp(argv[4], "1"))
-	{
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-		cout << "Security Mode" << endl;
-		if (CA_STATUS_OK != saveTrustCert())
-		{
-			cout << "saveTrustCert returned an error" << endl;
-		}
 
-		uint16_t cipher = MBEDTLS_TLS_RSA_WITH_AES_128_GCM_SHA256;
-		if (CA_STATUS_OK != CASelectCipherSuite(cipher, CA_ADAPTER_TCP))
-		{
-			cout << "CASelectCipherSuite returned an error" << endl;
-		}
-#endif
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+	cout << "Security Mode" << endl;
+	if (CA_STATUS_OK != saveTrustCert())
+	{
+		cout << "saveTrustCert returned an error" << endl;
 	}
+
+	uint16_t cipher = MBEDTLS_TLS_RSA_WITH_AES_128_GCM_SHA256;
+	if (CA_STATUS_OK != CASelectCipherSuite(cipher, CA_ADAPTER_TCP))
+	{
+		cout << "CASelectCipherSuite returned an error" << endl;
+	}
+#endif
+
 
 	mutex blocker;
 	unique_lock<mutex> lock(blocker);
@@ -348,7 +348,7 @@ int main(int argc, char *argv[])
 
                     cout << "Put message to selected topic: ";
                     cin >> cmd;
-                    rep["message"] = cmd;
+                    rep["samplemessage"] = cmd;
                     result = g_mqSelectedTopicResource->publishMQTopic(rep, query, &publishMessageCB,
                              QualityOfService::LowQos);
                     break;

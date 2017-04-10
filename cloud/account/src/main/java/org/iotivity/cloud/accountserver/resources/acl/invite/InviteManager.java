@@ -121,6 +121,10 @@ public class InviteManager {
             uidList.add(getInviteTable.getInviteUser());
         }
 
+        if (getInviteList == null || getInviteList.isEmpty()) {
+            throw new BadRequestException("mid or gid is not valid");
+        }
+
         AccountDBManager.getInstance().deleteRecord(Constants.INVITE_TABLE,
                 condition);
 
