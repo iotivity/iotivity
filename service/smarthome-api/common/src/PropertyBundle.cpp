@@ -17,10 +17,9 @@
  * limitations under the License.
  *
  ******************************************************************/
-#ifndef SMARTHOME_API_COMMON_PROPERTYBUNDLE_H_
-#define SMARTHOME_API_COMMON_PROPERTYBUNDLE_H_
-
-#include <PropertyBundle_Impl.h>
+#include <iostream>
+#include <PropertyBundle.h>
+#include <CommonException.h>
 
 namespace OIC
 {
@@ -28,26 +27,30 @@ namespace OIC
     {
         namespace SH
         {
-            /*
-             * Container class to store multiple properties.
-             */
-            class PropertyBundle: public PropertyBundle_Impl
+            bool PropertyBundle::contains(const std::string& key) const
             {
-            public:
-                template <typename T>
-                bool getValue(const std::string& key, T& val) const
+                std::map<std::string, PropertyValue*>::const_iterator it = m_values.find(key);
+                if (it != m_values.end())
                 {
-                    return PropertyBundle_Impl::getValue(key, val);
+                    return true;
                 }
+                return false;
+            }
 
-                template <typename T>
-                bool setValue(const std::string& key, T& val)
+            size_t PropertyBundle::size() const
+            {
+                return m_values.size();
+            }
+
+            PropertyType PropertyBundle::getType(const std::string& key)
+            {
+                std::map<std::string, PropertyValue*>::const_iterator iter = m_values.find(key);
+                if (iter != m_values.end())
                 {
-                    return PropertyBundle_Impl::setValue(key, val);
+                    return iter->second->getType();
                 }
-            };
+                return Unknown;
+            }
         }
     }
 }
-
-#endif /* SMARTHOME_API_COMMON_PROPERTYBUNDLE_H_ */

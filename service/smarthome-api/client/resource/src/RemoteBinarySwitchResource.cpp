@@ -48,20 +48,21 @@ namespace OIC
 
             void RemoteBinarySwitchResource::onGet(PropertyBundle bundle, ResultCode ret)
             {
-                bool value;
-
-                if (NULL != m_delegate && bundle.getValue(BINARY_SWITCH_VALUE_KEY, value))
+                if (NULL != m_delegate && bundle.contains(BINARY_SWITCH_VALUE_KEY))
                 {
+                    bool value;
+                    bundle.getValue(BINARY_SWITCH_VALUE_KEY, value);
                     m_delegate->onGetState(value, ret);
                 }
             }
 
             void RemoteBinarySwitchResource::onSet(PropertyBundle bundle, ResultCode ret)
             {
-                bool value;
-
-                if (NULL != m_delegate && bundle.getValue(BINARY_SWITCH_VALUE_KEY, value))
+                if (NULL != m_delegate && bundle.contains(BINARY_SWITCH_VALUE_KEY))
                 {
+                    bool value;
+                    bundle.getValue(BINARY_SWITCH_VALUE_KEY, value);
+
                     if (true == value)
                     {
                         m_delegate->onTurnOn(ret);

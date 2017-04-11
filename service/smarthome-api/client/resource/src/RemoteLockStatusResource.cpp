@@ -44,11 +44,7 @@ namespace OIC
             void RemoteLockStatusResource::lock()
             {
                 PropertyBundle bundle;
-                if (!bundle.setValue(KEY_LOCKSTATE, VALUE_LOCKED))
-                {
-                    throw CommonException("Exception on set VALUE_LOCKED");
-                }
-
+                bundle.setValue(KEY_LOCKSTATE, VALUE_LOCKED);
                 setPropertyBundle(bundle);
 
                 std::cout << "[RemoteLockStatusResource] lock requested.." << std::endl;
@@ -57,11 +53,7 @@ namespace OIC
             void RemoteLockStatusResource::unlock()
             {
                 PropertyBundle bundle;
-                if (!bundle.setValue(KEY_LOCKSTATE, VALUE_UNLOCKED))
-                {
-                    throw CommonException("Exception on set VALUE_UNLOCKED");
-                }
-
+                bundle.setValue(KEY_LOCKSTATE, VALUE_UNLOCKED);
                 setPropertyBundle(bundle);
 
                 std::cout << "[RemoteLockStatusResource] unlock requested.." << std::endl;
@@ -83,16 +75,16 @@ namespace OIC
 
             void RemoteLockStatusResource::onGet(PropertyBundle bundle, ResultCode ret)
             {
-                std::string value;
-
                 if (NULL != m_delegate)
                 {
                     std::cout << "[RemoteLockStatusResource]m_delegate is NULL" << std::endl;
                     return;
                 }
 
-                if (bundle.getValue(KEY_LOCKSTATE, value))
+                if (bundle.contains(KEY_LOCKSTATE))
                 {
+                    std::string value;
+                    bundle.getValue(KEY_LOCKSTATE, value);
                     m_delegate->onGetStatus(value, ret);
                 }
                 else
@@ -109,9 +101,11 @@ namespace OIC
                     return;
                 }
 
-                std::string value;
-                if (bundle.getValue(KEY_LOCKSTATE, value))
+                if (bundle.contains(KEY_LOCKSTATE))
                 {
+                    std::string value;
+                    bundle.getValue(KEY_LOCKSTATE, value);
+
                     if (value.compare(VALUE_LOCKED) == 0)
                     {
                         m_delegate->onLock(ret);

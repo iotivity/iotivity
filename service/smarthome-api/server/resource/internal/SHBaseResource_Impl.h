@@ -67,11 +67,9 @@ namespace OIC
 
                 void setInterfaces(const std::list<std::string>& interfaces);
 
-                bool setPropertyBundle(const PropertyBundle& bundle);
+                void setPropertyBundle(const PropertyBundle& bundle);
 
                 const PropertyBundle& getPropertyBundle() const;
-
-                bool deletePropertyBundle();
 
                 bool sendResponse(int requestId, const PropertyBundle& bundle);
 

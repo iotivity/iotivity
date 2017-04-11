@@ -17,6 +17,7 @@
  * limitations under the License.
  *
  ******************************************************************/
+#include <iostream>
 #include <SHBaseResource_Impl.h>
 
 namespace OIC
@@ -75,23 +76,16 @@ namespace OIC
                 m_resourceInterface = interfaces;
             }
 
-            bool SHBaseResource_Impl::setPropertyBundle(const PropertyBundle& bundle)
+            void SHBaseResource_Impl::setPropertyBundle(const PropertyBundle& bundle)
             {
                 std::cout << "[Resource] setPropertyBundle" << std::endl;
                 m_propertyBundle = bundle;
-                return true;
             }
 
             const PropertyBundle& SHBaseResource_Impl::getPropertyBundle() const
             {
                 std::cout << "[Resource] getPropertyBundle" << std::endl;
                 return m_propertyBundle;
-            }
-
-            bool SHBaseResource_Impl::deletePropertyBundle()
-            {
-                std::cout << "[Resource] deletePropertyBundle" << std::endl;
-                return true;
             }
 
             bool SHBaseResource_Impl::sendResponse(int requestId, const PropertyBundle& bundle)

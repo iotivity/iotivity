@@ -40,15 +40,8 @@ namespace OIC
                 setTypes(types);
 
                 PropertyBundle bundle;
-                if (!bundle.setValue(KEY_LOCKSTATE, VALUE_LOCKED))
-                {
-                    throw CommonException("Exception on set VALUE_LOCKED");
-                }
-
-                if (!setPropertyBundle(bundle))
-                {
-                    throw CommonException("Exception on set Bundle");
-                }
+                bundle.setValue(KEY_LOCKSTATE, VALUE_LOCKED);
+                setPropertyBundle(bundle);
             }
 
             LockStatusResource::~LockStatusResource()
@@ -61,10 +54,7 @@ namespace OIC
                 storedBundle = getPropertyBundle();
 
                 std::string state;
-                if (!storedBundle.getValue(KEY_LOCKSTATE, state))
-                {
-                    throw CommonException("Exception on get VALUE_LOCKED");
-                }
+                storedBundle.getValue(KEY_LOCKSTATE, state);
 
                 std::cout << "[LockStatusResource] getState" << std::endl;
 
@@ -74,19 +64,10 @@ namespace OIC
             bool LockStatusResource::setState(std::string state)
             {
                 PropertyBundle bundle;
-
-                if (!bundle.setValue(KEY_LOCKSTATE, state))
-                {
-                    throw CommonException("Exception on set VALUE_LOCKED");
-                }
-
-                if (!setPropertyBundle(bundle))
-                {
-                    throw CommonException("Exception on set Bundle");
-                }
+                bundle.setValue(KEY_LOCKSTATE, state);
+                setPropertyBundle(bundle);
 
                 std::cout << "[LockStatusResource] setState" << std::endl;
-
                 return true;
             }
 
@@ -112,10 +93,10 @@ namespace OIC
                 std::cout << "[LockStatusResource] onSet" << std::endl;
 
                 ResultCode retCode = FAIL;
-
-                std::string value;
-                if (NULL != this->m_delegate && bundle.getValue(KEY_LOCKSTATE, value))
+                if (NULL != this->m_delegate && bundle.contains(KEY_LOCKSTATE))
                 {
+                    std::string value;
+                    bundle.getValue(KEY_LOCKSTATE, value);
                     if (value.compare(VALUE_LOCKED) == 0)
                     {
                         retCode = this->m_delegate->onLock();

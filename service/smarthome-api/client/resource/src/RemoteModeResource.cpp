@@ -71,13 +71,10 @@ namespace OIC
                 {
                     return;
                 }
-                PropertyBundle bundle;
-                if (bundle.setValue(MODE_VALUE_MODES, mode))
-                {
-                    setPropertyBundle(bundle);
-                    return;
-                }
 
+                PropertyBundle bundle;
+                bundle.setValue(MODE_VALUE_MODES, mode);
+                setPropertyBundle(bundle);
                 return;
             }
         }

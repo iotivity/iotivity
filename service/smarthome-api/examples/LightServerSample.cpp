@@ -51,7 +51,6 @@ UserColorResource::UserColorResource() : SHBaseResource(USER_RESOURCE_URI)
 
 UserColorResource::~UserColorResource()
 {
-    deletePropertyBundle();
 }
 
 void UserColorResource::setColor(std::string color)

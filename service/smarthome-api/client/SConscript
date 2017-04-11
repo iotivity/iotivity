@@ -30,6 +30,7 @@ smarthome_env.AppendUnique(CPPPATH = [
         '../../../resource/csdk/stack/include',
         '../../../resource/c_common/ocrandom/include',
         '../../../resource/csdk/logger/include',
+        '../../../resource/csdk/security/include',
         ])
 
 smarthome_env.AppendUnique(LIBPATH = [smarthome_env.get('BUILD_DIR')])
@@ -46,14 +47,15 @@ if 'g++' in smarthome_env.get('CXX'):
 discovery_dir = './discovery/'
 device_dir = './device/'
 resource_dir = './resource/'
+common_dir = '../common/'
 
 smarthome_env.AppendUnique(CPPPATH= [discovery_dir+'include',
         device_dir+'include',
         device_dir+'internal',
         resource_dir+'include',
         resource_dir+'internal',
-        '../common',
-        '../common/internal'])
+        common_dir+'include',
+        common_dir+'internal'])
 
 smarthome_client_src = [discovery_dir+'src/DeviceDiscovery.cpp',
                     discovery_dir+'src/DiscoveryQuery.cpp',

@@ -42,28 +42,13 @@ namespace OIC
 
                 std::list< std::string > emptylist;
                 PropertyBundle bundle;
-                if (!bundle.setValue(KEY_SUPPORTEDMODES, emptylist))
-                {
-                    throw CommonException("Exception on set SUPPORTED_MODES_PROP_KEY");
-                }
-
-                if (!bundle.setValue(KEY_MODES, emptylist))
-                {
-                    throw CommonException("Exception on set MODES_PROP_KEY");
-                }
-
-                if (!setPropertyBundle(bundle))
-                {
-                    throw CommonException("Exception on set Bundle");
-                }
+                bundle.setValue(KEY_SUPPORTEDMODES, emptylist);
+                bundle.setValue(KEY_MODES, emptylist);
+                setPropertyBundle(bundle);
             }
 
             ModeResource::~ModeResource()
             {
-                if (!deletePropertyBundle())
-                {
-                    throw CommonException("Exception on delete Bundle");
-                }
             }
 
             void ModeResource::addSupportedMode(const std::list< std::string >& supportedMode)
@@ -78,23 +63,14 @@ namespace OIC
                 PropertyBundle storedBundle = getPropertyBundle();
 
                 std::list< std::string > curSupportedMode;
-                if (!storedBundle.getValue(KEY_SUPPORTEDMODES, curSupportedMode))
-                {
-                    throw CommonException("Exception on get SUPPORTED_MODES_PROP_KEY");
-                }
+                storedBundle.getValue(KEY_SUPPORTEDMODES, curSupportedMode);
 
                 std::list< std::string > newSupportedMode = curSupportedMode;
 
                 if (curSupportedMode.empty())
                 {
-                    if (!storedBundle.setValue(KEY_SUPPORTEDMODES, supportedMode))
-                    {
-                        throw CommonException("Exception on set SUPPORTED_MODES_PROP_KEY");
-                    }
-                    if (!setPropertyBundle(storedBundle))
-                    {
-                        throw CommonException("Exception on set Bundle");
-                    }
+                    storedBundle.setValue(KEY_SUPPORTEDMODES, supportedMode);
+                    setPropertyBundle(storedBundle);
                     return;
                 }
 
@@ -118,15 +94,8 @@ namespace OIC
                     }
                 }
 
-                if (!storedBundle.setValue(KEY_SUPPORTEDMODES, newSupportedMode))
-                {
-                    throw CommonException("Exception on get SUPPORTED_MODES_PROP_KEY");
-                }
-
-                if (!setPropertyBundle(storedBundle))
-                {
-                    throw CommonException("Exception on set bundle");
-                }
+                storedBundle.setValue(KEY_SUPPORTEDMODES, newSupportedMode);
+                setPropertyBundle(storedBundle);
                 return;
             }
 
@@ -145,10 +114,7 @@ namespace OIC
 
                 bool isFound = false;
                 std::list< std::string > supportedMode;
-                if (!storedBundle.getValue(KEY_SUPPORTEDMODES, supportedMode))
-                {
-                    throw CommonException("Exception on get SUPPORTED_MODES_PROP_KEY");
-                }
+                storedBundle.getValue(KEY_SUPPORTEDMODES, supportedMode);
 
                 for (std::list< std::string >::iterator itr = supportedMode.begin();
                         itr != supportedMode.end(); itr++)
@@ -163,15 +129,8 @@ namespace OIC
 
                 if (isFound)
                 {
-                    if (!storedBundle.setValue(KEY_SUPPORTEDMODES, supportedMode))
-                    {
-                        throw CommonException("Exception on set SUPPORTED_MODES_PROP_KEY");
-                    }
-
-                    if (!setPropertyBundle(storedBundle))
-                    {
-                        throw CommonException("Exception on set bundle");
-                    }
+                    storedBundle.setValue(KEY_SUPPORTEDMODES, supportedMode);
+                    setPropertyBundle(storedBundle);
                 }
                 else
                 {
@@ -189,11 +148,7 @@ namespace OIC
                 std::list< std::string > supportedMode;
 
                 PropertyBundle storedBundle = getPropertyBundle();
-
-                if (!storedBundle.getValue(KEY_SUPPORTEDMODES, supportedMode))
-                {
-                    throw CommonException("Exception on get SUPPORTED_MODES_PROP_KEY");
-                }
+                storedBundle.getValue(KEY_SUPPORTEDMODES, supportedMode);
 
                 return supportedMode;
             }
@@ -203,16 +158,8 @@ namespace OIC
                 std::cout << "[ModeResource] setCurrentMode" << std::endl;
 
                 PropertyBundle storedBundle = getPropertyBundle();
-
-                if (!storedBundle.setValue(KEY_MODES, currentMode))
-                {
-                    throw CommonException("Exception on set MODES_PROP_KEY");
-                }
-
-                if (!setPropertyBundle(storedBundle))
-                {
-                    throw CommonException("Exception on set bundle");
-                }
+                storedBundle.setValue(KEY_MODES, currentMode);
+                setPropertyBundle(storedBundle);
                 return;
             }
 
@@ -223,12 +170,7 @@ namespace OIC
                 std::list< std::string > currentMode;
 
                 PropertyBundle storedBundle = getPropertyBundle();
-
-                if (!storedBundle.getValue(KEY_MODES, currentMode))
-                {
-                    throw CommonException("Exception on get MODES_PROP_KEY");
-                }
-
+                storedBundle.getValue(KEY_MODES, currentMode);
                 return currentMode;
             }
 
@@ -245,22 +187,19 @@ namespace OIC
                 std::cout << "[ModeResource] onGet" << std::endl;
 
                 PropertyBundle storedBundle = getPropertyBundle();
-                std::list< std::string > currentModeList;
-                std::list< std::string > supportedModesList;
 
-                if (!storedBundle.getValue(KEY_MODES, currentModeList))
+                if (!storedBundle.contains(KEY_MODES))
                 {
                     return FAIL;
                 }
 
-                if (!storedBundle.getValue(KEY_SUPPORTEDMODES, supportedModesList))
+                if (!storedBundle.contains(KEY_SUPPORTEDMODES))
                 {
                     return FAIL;
                 }
 
                 sendResponse(requestId, storedBundle);
                 return KEEP;
-
             }
 
             ResultCode ModeResource::onSet(int requestId, const PropertyBundle& bundle,
@@ -274,26 +213,24 @@ namespace OIC
                 // client side delegate callback
 
                 PropertyBundle storedBundle = getPropertyBundle();
-                PropertyBundle responseBundle;
+
+                if (!bundle.contains(KEY_MODES))
+                {
+                    return FAIL;
+                }
+
+                if (!storedBundle.contains(KEY_MODES))
+                {
+                    return FAIL;
+                }
+
+                if (!storedBundle.contains(KEY_SUPPORTEDMODES))
+                {
+                    return FAIL;
+                }
+
                 std::list< std::string > requestList;
-                std::list< std::string > currentModeList;
-                std::list< std::string > supportedModesList;
-
-                if (!bundle.getValue(KEY_MODES, requestList))
-                {
-                    return FAIL;
-                }
-
-                if (!storedBundle.getValue(KEY_MODES, currentModeList))
-                {
-                    return FAIL;
-                }
-
-                if (!storedBundle.getValue(KEY_SUPPORTEDMODES, supportedModesList))
-                {
-                    return FAIL;
-                }
-
+                bundle.getValue(KEY_MODES, requestList);
                 ResultCode retCode = m_userDelegate->setModeCallback(requestList);
 
                 switch (retCode)

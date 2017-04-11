@@ -41,23 +41,12 @@ namespace OIC
 
                 bool state = false;
                 PropertyBundle bundle;
-                if (!bundle.setValue(KEY_VALUE, state))
-                {
-                    throw CommonException("Exception on set BINARY_SWITCH_PROP_KEY");
-                }
-
-                if (!setPropertyBundle(bundle))
-                {
-                    throw CommonException("Exception on set PropertyBundle");
-                }
+                bundle.setValue(KEY_VALUE, state);
+                setPropertyBundle(bundle);
             }
 
             BinarySwitchResource::~BinarySwitchResource()
             {
-                if (!deletePropertyBundle())
-                {
-                    throw CommonException("Exception on delete PropertyBundle");
-                }
             }
 
             bool BinarySwitchResource::getState()
@@ -66,10 +55,7 @@ namespace OIC
 
                 // Get "value" property value from bundle.
                 bool state = false;
-                if (!getPropertyBundle().getValue(KEY_VALUE, state))
-                {
-                    throw CommonException("Exception on get BINARY_SWITCH_PROP_KEY");
-                }
+                getPropertyBundle().getValue(KEY_VALUE, state);
                 return state;
             }
 
@@ -78,15 +64,8 @@ namespace OIC
                 std::cout << "[BinarySwitchResource] setState" << std::endl;
 
                 PropertyBundle bundle;
-                if (!bundle.setValue(KEY_VALUE, state))
-                {
-                    throw CommonException("Exception on set BINARY_SWITCH_PROP_KEY");
-                }
-
-                if (!setPropertyBundle(bundle))
-                {
-                    throw CommonException("Exception on set PropertyBundle");
-                }
+                bundle.setValue(KEY_VALUE, state);
+                setPropertyBundle(bundle);
             }
 
             void BinarySwitchResource::setBinarySwitchResourceDelegate(
@@ -114,10 +93,12 @@ namespace OIC
                     return FAIL;
                 }
 
-                PropertyBundle storedBundle = getPropertyBundle();
-                bool value = false;
-                if (bundle.getValue(KEY_VALUE, value))
+                if (bundle.contains(KEY_VALUE))
                 {
+                    PropertyBundle storedBundle = getPropertyBundle();
+                    bool value = false;
+                    bundle.getValue(KEY_VALUE, value);
+
                     // Call application callback.
                     ResultCode retCode = FAIL;
                     if (value)
@@ -134,20 +115,8 @@ namespace OIC
                     {
                         case SUCCESS:
                             // Update property with the requested value.
-                            ret = storedBundle.setValue(KEY_VALUE, value);
-                            if (!ret)
-                            {
-                                // Error response will be sent by Resource Class.
-                                std::cout << "Failed to update value property" << std::endl;
-                                return FAIL;
-                            }
-                            ret = setPropertyBundle(storedBundle);
-                            if (!ret)
-                            {
-                                // Error response will be sent by Resource Class.
-                                std::cout << "Failed to replace PropertyBundle" << std::endl;
-                                return FAIL;
-                            }
+                            storedBundle.setValue(KEY_VALUE, value);
+                            setPropertyBundle(storedBundle);
                             return SUCCESS;
                         case FAIL:
                             return FAIL;

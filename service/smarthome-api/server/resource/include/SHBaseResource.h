@@ -137,9 +137,8 @@ namespace OIC
                 * API to set the properties of a resource
                 *
                 * @param[in] bundle resource interfaces
-                * @return true if success
                 */
-                bool setPropertyBundle(const PropertyBundle& bundle);
+                void setPropertyBundle(const PropertyBundle& bundle);
 
                 /**
                 * API to get the properties of a resource
@@ -147,13 +146,6 @@ namespace OIC
                 * @return PropertyBundle the properties of a resource
                 */
                 const PropertyBundle& getPropertyBundle() const;
-
-                /**
-                * API to delete the properties of a resource
-                *
-                * @return true if success
-                */
-                bool deletePropertyBundle();
 
                 /**
                 * API to send response to an incoming request

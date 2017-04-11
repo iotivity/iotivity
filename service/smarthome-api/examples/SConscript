@@ -30,6 +30,7 @@ smarthome_example_env.AppendUnique(CPPPATH = [
         '../../../resource/csdk/stack/include',
         '../../../resource/c_common/ocrandom/include',
         '../../../resource/csdk/logger/include',
+        '../../../resource/csdk/security/include',
         ])
 
 smarthome_example_env.AppendUnique(LIBPATH = [smarthome_example_env.get('BUILD_DIR')])
@@ -40,6 +41,7 @@ smarthome_example_env.AppendUnique(LIBS = ['oc_logger'])
 smarthome_example_env.AppendUnique(LIBS = ['octbstack'])
 smarthome_example_env.AppendUnique(LIBS = ['smarthome_client_api'])
 smarthome_example_env.AppendUnique(LIBS = ['smarthome_server_api'])
+smarthome_example_env.AppendUnique(LIBS = ['smarthome_common_api'])
 
 if 'g++' in smarthome_example_env.get('CXX'):
     smarthome_example_env.AppendUnique(CXXFLAGS = ['-Wall'])
@@ -54,7 +56,7 @@ smarthome_example_env.AppendUnique(CPPPATH= [
         '../server/device/include',
         '../server/resource/include',
         '../server/resource/internal',
-        '../common',
+        '../common/include',
         '../common/internal'])
 
 smarthome_example_env.Program('LightClientSample', 'LightClientSample.cpp')

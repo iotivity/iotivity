@@ -23,4 +23,5 @@
 ######################################################################
 SConscript('client/SConscript')
 SConscript('server/SConscript')
+SConscript('common/SConscript')
 SConscript('examples/SConscript')

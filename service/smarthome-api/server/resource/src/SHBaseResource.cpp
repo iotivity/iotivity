@@ -73,19 +73,14 @@ namespace OIC
                 SHBaseResource_Impl::setInterfaces(interfaces);
             }
 
-            bool SHBaseResource::setPropertyBundle(const PropertyBundle& bundle)
+            void SHBaseResource::setPropertyBundle(const PropertyBundle& bundle)
             {
-                return SHBaseResource_Impl::setPropertyBundle(bundle);
+                SHBaseResource_Impl::setPropertyBundle(bundle);
             }
 
             const PropertyBundle& SHBaseResource::getPropertyBundle() const
             {
                 return SHBaseResource_Impl::getPropertyBundle();
-            }
-
-            bool SHBaseResource::deletePropertyBundle()
-            {
-                return SHBaseResource_Impl::deletePropertyBundle();
             }
 
             bool SHBaseResource::sendResponse(int requestId, const PropertyBundle& bundle)

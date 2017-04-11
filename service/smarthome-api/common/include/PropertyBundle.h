@@ -17,13 +17,13 @@
  * limitations under the License.
  *
  ******************************************************************/
-#ifndef SMARTHOME_API_COMMON_PROPERTYBUNDLE_IMPL_H_
-#define SMARTHOME_API_COMMON_PROPERTYBUNDLE_IMPL_H_
+#ifndef SMARTHOME_API_COMMON_PROPERTYBUNDLE_H_
+#define SMARTHOME_API_COMMON_PROPERTYBUNDLE_H_
 
-#include <iostream>
 #include <map>
 #include <list>
 #include <typeinfo>
+#include <CommonException.h>
 
 namespace OIC
 {
@@ -31,6 +31,7 @@ namespace OIC
     {
         namespace SH
         {
+
             /*
              * Types of PropertyValues.
              */
@@ -53,62 +54,93 @@ namespace OIC
             class PropertyValue
             {
             public:
+                PropertyValue(PropertyType t) : m_type(t)
+                {
+                }
                 virtual ~PropertyValue(){};
+                PropertyType getType()
+                {
+                    return m_type;
+                }
+            private:
+                PropertyType m_type;
             };
 
             /*
              * Derived class for all types of PropertyValues.
              */
             template <typename T>
-            class PropertyValue_
+            class PropertyValue_ : public PropertyValue
             {
             public:
-                PropertyValue_(T val, PropertyType t) : m_value(val), m_type(t)
+                PropertyValue_(T val, PropertyType t) : PropertyValue(t), m_value(val)
                 {
                 }
+                virtual ~PropertyValue_(){};
+
+                T getValue() const
+                {
+                    return m_value;
+                }
+
             public:
                 T m_value;
-                PropertyType m_type;
             };
 
             /*
              * Container class to store multiple properties.
              */
-            class PropertyBundle_Impl
+            class PropertyBundle
             {
+            friend class PayloadConverter;
             public:
                 template <typename T>
-                bool getValue(const std::string& key, T& val) const
+                void getValue(const std::string& key, T& val) const
                 {
                     std::map<std::string, PropertyValue*>::const_iterator it = m_values.find(key);
-                    if (it != m_values.end())
+                    if (it == m_values.end())
                     {
-                        PropertyValue_<T>* propValue = (PropertyValue_<T>*) it->second;
-                        val = propValue->m_value;
-                        return true;
+                        throw CommonException("Invalid property key exception");
                     }
-                    val = T();
-                    return false;
+                    PropertyValue_<T>* propValue = (PropertyValue_<T>*) it->second;
+                    val = propValue->m_value;
                 }
 
                 template <typename T>
-                bool setValue(const std::string& key, T& val)
+                T getValue(const std::string& key) const
+                {
+                    std::map<std::string, PropertyValue*>::const_iterator it = m_values.find(key);
+                    if (it == m_values.end())
+                    {
+                        throw CommonException("Invalid property key exception");
+                    }
+                    PropertyValue_<T>* propValue = (PropertyValue_<T>*) it->second;
+                    T val = propValue->m_value;
+                    return val;
+                }
+
+                template <typename T>
+                void setValue(const std::string& key, const T& val)
                 {
                     // Check if input property type exists in supported type lists.
                     PropertyType type = checkPropertyType(val);
                     if (type == Unknown)
                     {
-                        // TODO: Throw invalid property type exception.
-                        return false;
+                        throw CommonException("Invalid property type exception");
                     }
                     m_values[key] = (PropertyValue*) new PropertyValue_<T>(val, type);
-                    return true;
                 }
+
+                bool contains(const std::string& key) const;
+                size_t size() const;
+                PropertyType getType(const std::string& key);
 
             private:
                 template <typename T>
                 PropertyType checkPropertyType(T& val)
                 {
+                    (void) val;
+
                     PropertyType type = Unknown;
 
                     if (typeid(T) == typeid(int))
@@ -152,4 +184,5 @@ namespace OIC
         }
     }
 }
-#endif /* SMARTHOME_API_COMMON_PROPERTYBUNDLE_IMPL_H_ */
+
+#endif /* SMARTHOME_API_COMMON_PROPERTYBUNDLE_H_ */
