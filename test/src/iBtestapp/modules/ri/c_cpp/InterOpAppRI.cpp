@@ -1061,13 +1061,13 @@ void sendPostRequest(ResourceSelectionType type)
     vector< shared_ptr< OCResource > > remoteResourceList = getRemoteResourceList(type);
     if (remoteResourceList.size() > 0)
     {
-        OCRepresentation rep;
         QueryParamsMap qpMap;
         string key = "";
         AttributeValue value;
 
         for (auto resource : remoteResourceList)
         {
+            OCRepresentation rep;
             g_hasCallbackArrived = false;
             if (ResourceSelectionType::VERTICAL_RESOURCE == type)
             {
@@ -1099,18 +1099,19 @@ void sendBlockwisePost()
 {
     for (auto resource : getRemoteResourceList(ResourceSelectionType::VERTICAL_RESOURCE))
     {
+        QueryParamsMap qpMap;
+        static string bigValue = VERY_BIG_VALUE;
         if (resource->uri().compare(AC_TIMER_URI) == 0)
         {
             g_hasCallbackArrived = false;
             OCRepresentation rep;
-            QueryParamsMap qpMap;
-            string bigValue = VERY_BIG_VALUE;
-            AttributeValue value = bigValue;
+            bigValue = string(DEFAULT_REGION) + bigValue;
+            AttributeValue value = bigValue ;
             rep.setValue(TIMER_LOCATION_KEY, value);
             cout << "Sending POST Request with Blockwise Payload to the resource: "
                     << resource->host() << resource->uri() << endl;
             resource->post(rep, qpMap, onPost, g_qos);
-            cout << "POST with Bloackwise Payload request sent!!" << endl;
+            cout << "POST with Blockwise Payload request sent!!" << endl;
             break;
         }
     }
@@ -1439,6 +1440,7 @@ void handleMenu()
 
         case 26:
             cancelObserveResource(ResourceSelectionType::VERTICAL_OBSERVABLE_RESOURCE);
+            break;
 
         case 27:
             sendBlockwisePost();
