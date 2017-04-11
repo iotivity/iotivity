@@ -119,6 +119,8 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         case CA_REQUEST_ENTITY_INCOMPLETE:
         case CA_REQUEST_ENTITY_TOO_LARGE:
         case CA_INTERNAL_SERVER_ERROR:
+        case CA_BAD_GATEWAY:
+        case CA_SERVICE_UNAVAILABLE:
         case CA_RETRANSMIT_TIMEOUT:
             break;
         default:

@@ -864,6 +864,9 @@ OCStackResult CAResponseToOCStackResult(CAResponseResult_t caCode)
         case CA_INTERNAL_SERVER_ERROR:
             ret = OC_STACK_INTERNAL_SERVER_ERROR;
             break;
+        case CA_SERVICE_UNAVAILABLE:
+            ret = OC_STACK_SERVICE_UNAVAILABLE;
+            break;
         default:
             break;
     }
@@ -936,6 +939,10 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
             break;
         case OC_STACK_BAD_ENDPOINT:
             ret = CA_BAD_REQ;
+            break;
+        case OC_STACK_SERVICE_UNAVAILABLE:
+            ret = CA_SERVICE_UNAVAILABLE;
+            break;
         default:
             break;
     }

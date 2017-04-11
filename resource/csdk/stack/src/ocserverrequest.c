@@ -491,6 +491,9 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMe
         case OC_EH_INTERNAL_SERVER_ERROR: // 5.00
             caResult = CA_INTERNAL_SERVER_ERROR;
             break;
+        case OC_EH_SERVICE_UNAVAILABLE: // 5.03
+            caResult = CA_SERVICE_UNAVAILABLE;
+            break;
         case OC_EH_RETRANSMIT_TIMEOUT: // 5.04
             caResult = CA_RETRANSMIT_TIMEOUT;
             break;

@@ -1133,6 +1133,7 @@ typedef enum
     OC_STACK_FORBIDDEN_REQ,          /** 403*/
     OC_STACK_INTERNAL_SERVER_ERROR,  /** 500*/
     OC_STACK_GATEWAY_TIMEOUT,        /** 504*/
+    OC_STACK_SERVICE_UNAVAILABLE,    /** 503*/
 
     /** ERROR in stack.*/
     OC_STACK_ERROR = 255
