@@ -98,6 +98,9 @@ if target_os in ['linux'] and liboctbstack_env.get('SIMULATOR', False):
 if env.get('SECURED') == '1':
     liboctbstack_env.AppendUnique(LIBS = ['mbedtls','mbedx509'])
 
+# c_common calls into mbedcrypto.
+liboctbstack_env.AppendUnique(LIBS = ['mbedcrypto'])
+
 if target_os in ['android', 'linux', 'tizen', 'msys_nt', 'windows']:
     liboctbstack_env.PrependUnique(LIBS = ['connectivity_abstraction'])
 
@@ -173,8 +176,6 @@ if target_os == 'android':
 if env.get('LOGGING'):
     liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-liboctbstack_env.Append(LIBS = ['c_common', 'mbedcrypto'])
-
 if liboctbstack_env.get('ROUTING') in ['GW', 'EP']:
     liboctbstack_env.Prepend(LIBS = ['routingmanager'])
 
@@ -222,25 +223,18 @@ if 'SERVER' in rd_mode:
     if target_os not in ['linux', 'tizen', 'windows']:
         liboctbstack_src.append('#extlibs/sqlite3/sqlite3.c')
 
-if target_os in ['linux']:
-    # Linux uses a Shared library because SCons chooses the shared library on Linux
-    # when only 'octbstack' is added to the LIBS.
-    # TODO: Switch Linux to use a Static library for testing like every other OS.
-    test_liboctbstack = liboctbstack_env.SharedLibrary('octbstack_internal', liboctbstack_src)
-else:
-    test_liboctbstack = liboctbstack_env.StaticLibrary('octbstack_internal', liboctbstack_src)
+internal_liboctbstack = liboctbstack_env.StaticLibrary('octbstack_internal', liboctbstack_src)
+octbstack_libs = Flatten(internal_liboctbstack)
 
-octbstack_libs = Flatten(test_liboctbstack)
-
-if target_os not in ['windows', 'msys_nt']:
-    static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
-    octbstack_libs += Flatten(static_liboctbstack)
-
-if target_os not in ['arduino','darwin','ios'] :
+if target_os not in ['arduino', 'darwin', 'ios'] :
     shared_liboctbstack = liboctbstack_env.SharedLibrary('octbstack', liboctbstack_src)
     octbstack_libs += Flatten(shared_liboctbstack)
     liboctbstack_env.UserInstallTargetHeader('include/ocstack.h', 'resource', 'ocstack.h')
     liboctbstack_env.UserInstallTargetHeader('include/ocpresence.h', 'resource', 'ocpresence.h')
+
+if target_os not in ['windows', 'msys_nt']:
+    static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
+    octbstack_libs += Flatten(static_liboctbstack)
 
 liboctbstack_env.InstallTarget(octbstack_libs, 'octbstack')
 liboctbstack_env.UserInstallTargetLib(octbstack_libs, 'octbstack')

@@ -45,9 +45,6 @@ randomtest_env.PrependUnique(CPPPATH = ['../include'])
 if target_os in ['linux']:
     randomtest_env.AppendUnique(LIBS = ['m'])
 
-#if randomtest_env.get('SECURED') == '1':
-#	randomtest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
-
 if randomtest_env.get('LOGGING'):
 	randomtest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 

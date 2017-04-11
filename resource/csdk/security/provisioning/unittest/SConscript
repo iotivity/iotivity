@@ -76,10 +76,11 @@ if not sptest_env.get('RELEASE'):
 if sptest_env.get('MULTIPLE_OWNER') == '1':
 	sptest_env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
 
+sptest_env.AppendUnique(LIBS = ['octbstack_internal'])
+
 if target_os in ['msys_nt', 'windows']:
-    sptest_env.AppendUnique(LIBS = ['octbstack_internal', 'sqlite3'])
+    sptest_env.AppendUnique(LIBS = ['sqlite3'])
 else:
-    sptest_env.AppendUnique(LIBS = ['octbstack'])
     if target_os in ['linux', 'tizen']:
         sptest_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 

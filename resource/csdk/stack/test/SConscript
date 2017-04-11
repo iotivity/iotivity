@@ -50,10 +50,13 @@ stacktest_env.PrependUnique(LIBS = ['octbstack_internal',
                                     'ocsrm',
                                     'connectivity_abstraction',
                                     'coap',
-                                    'mbedcrypto'])
+                                    ])
 
 if stacktest_env.get('SECURED') == '1':
     stacktest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509'])
+
+# c_common calls into mbedcrypto.
+stacktest_env.AppendUnique(LIBS = ['mbedcrypto'])
 
 if stacktest_env.get('LOGGING'):
     stacktest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
