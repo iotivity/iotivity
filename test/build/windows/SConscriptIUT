@@ -1,0 +1,137 @@
+'''
+******************************************************************
+*
+* Copyright 2017 Granite River Labs All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# Build script for Windows
+#
+##
+
+print '\n---------------Started Building Conformance Test App for Windows---------------\n'
+
+Import('env_windows')
+import os
+
+
+env_windows['CC'] = 'cl'
+
+iotivity_root = env_windows.get('IOTIVITY_ROOT')
+iotivity_lib_path = env_windows.get('IOTIVITY_LIB_PATH')
+iotivity_test_root = env_windows.get('IOTIVITY_TEST_ROOT')
+variant_dir = env_windows.get('VARIANT_DIR')
+install_dir = env_windows.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
+secured = env_windows.get('SECURED')
+common_windows_cppflags = env_windows.get('COMMON_WINDOWS_CPPFLAGS')
+
+install_targets = []
+default_targets = []
+
+if env_windows.get('RELEASE'):
+    target_release = 'release'
+else:
+    target_release = 'debug'
+
+print "target build is --------------------------------" + target_release
+# TODO: re-enable warnings, especially: 4244, 4267, 4365
+env_windows.AppendUnique(CXXFLAGS=[
+    '/wd4244',   # C4244 conversion from one type to another type results in a possible loss of data.
+    '/wd4267',   # C4267 conversion from size_t to a smaller type.
+    '/wd4355',   # C4355 'this' used in base member initializer list.
+    '/wd4800',   # C4800 forcing value to bool 'true' or 'false'.
+    '/wd4996',   # C4996 deprecated declaration.
+    '/wd4820',   # C4820 added padding to the end of a struct.
+    '/wd4514',   # C4514 unreferenced inline function has been removed
+    '/wd4365',   # C4365 signed/unsigned mismatch
+    '/wd4503'])  # C4503 decorated name length exceeded, name was truncated
+
+env_windows.AppendUnique(CCFLAGS=['-D__WINDOWS__','/EHsc'])
+
+vs_version = env_windows['MSVC_VERSION']
+
+# Set release/debug flags
+#env_windows.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/ZI', '/RTC1', '/Gm'])
+if env_windows.get('RELEASE'):
+    env_windows.AppendUnique(CCFLAGS = ['/MD','/O2', '/GF'])
+    env_windows.AppendUnique(CPPDEFINES = ['NDEBUG'])
+elif env_windows.get('TARGET_ARCH') in ['x86', 'x86_64'] or "14.0" in vs_version:
+    env_windows.AppendUnique(CCFLAGS = ['/Od', '/ZI', '/RTC1', '/Gm'])
+    env_windows.AppendUnique(LINKFLAGS = ['/debug'])
+else:
+    env_windows.AppendUnique(CCFLAGS = ['/Od', '/Zi', '/RTC1', '/Gm'])
+    env_windows.AppendUnique(LINKFLAGS = ['/debug'])
+    env_windows.AppendUnique(LIBPATH = [env_windows.get('BUILD_DIR')])
+    env_windows.AppendUnique(PATH = os.environ['PATH'])
+
+cppflags = Split('-D__WINDOWS__ -D_WIN32 -DHAVE_STRUCT_TIMESPEC -D_MSC_VER=1900-DBOOST_ASIO_WINDOWS_RUNTIME')
+
+if secured == '1':
+    cppflags.append('-D__SECURED__')
+    cppflags.append('-D__WITH_DTLS__')
+
+include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_root + '/resource/include',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/csdk/connectivity/api',
+    iotivity_root + '/resource/csdk/stack/include',
+    iotivity_root + '/resource/csdk/security/include',
+    iotivity_root + '/resource/csdk/ocsocket/include',
+    iotivity_root + '/resource/csdk/ocrandom/include',
+    iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/resource/c_common/',
+    iotivity_root + '/resource/oc_logger/include',
+    iotivity_root + '/extlibs/cereal/include/',
+    iotivity_root + '/extlibs/timer/',
+    iotivity_root + '/extlibs/tinycbor/tinycbor/src/',
+    iotivity_root + '/extlibs/mbedtls/mbedtls/include',
+    iotivity_root + '/extlibs/timer/',
+    iotivity_root + '/extlibs/boost/boost'
+]
+
+libs = Split('connectivity_abstraction mbedx509 mbedtls mbedcrypto octbstack coap oc oc_logger logger c_common win_helper bcrypt iphlpapi Ws2_32')
+env_windows.AppendUnique(LIBS = ['bcrypt', 'Ws2_32', 'advapi32', 'iphlpapi', 'crypt32', 'kernel32'])
+
+src = [
+    test_src_root + '/common/commonutil/c_cpp/ResourceHelper.cpp',
+    test_src_root + '/common/commonutil/c_cpp/ResourceServer.cpp',
+    test_src_root + '/common/commonutil/c_cpp/SampleResource.cpp',
+    test_src_root + '/testapp/IUTSimulatorApp/c_cpp/IUTSimulator.cpp',
+]
+
+iut_app = env_windows.Program(source = src, target = 'IUTSimulator', CPPPATH = include_paths,
+                LIBS = libs, LIBPATH = iotivity_lib_path, RPATH = iotivity_lib_path, CPPFLAGS = cppflags + common_windows_cppflags)
+install_targets += [iut_app]
+
+default_targets += env_windows.Command('copy_justworks_dat_file', [], Copy('.', iotivity_root + '/resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat'))
+default_targets += env_windows.Command('copy_randompin_dat_file', [], Copy('.', iotivity_root + '/resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat'))
+default_targets += env_windows.Command('copy_mfg_dat_file', [], Copy('.', iotivity_root + '/resource/csdk/security/provisioning/sample/oic_svr_db_server_mfg.dat'))
+
+install_bin = env_windows.Install(iotivity_test_root + '/' + install_dir, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin.append(Command(str(i), [], Delete(delete_target)))
+    i = i + 1
+
+default_targets += install_bin + delete_bin
+
+env_windows.Default(default_targets)

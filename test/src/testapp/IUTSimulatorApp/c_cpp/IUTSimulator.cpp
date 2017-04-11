@@ -26,10 +26,13 @@
 #ifdef __LINUX__
 #include <execinfo.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include <signal.h>
 #include <stdlib.h>
-#include <unistd.h>
+
 #include <iomanip>
 #include "SampleResource.h"
 #include "ResourceHelper.h"
@@ -38,6 +41,17 @@
 #include "pinoxmcommon.h"
 #include "cautilinterface.h"
 #include "cacommon.h"
+
+#ifdef HAVE_WINDOWS_H
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+#include <windows.h>
+#endif
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
 
 using namespace OC;
 using namespace std;
@@ -1042,9 +1056,9 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
         vector< string > interfacelist = rep.getResourceInterfaces();
 
         bool isCollection = false;
-        for (auto interface : interfacelist)
+        for (auto iter : interfacelist)
         {
-            if (interface.compare(BATCH_INTERFACE) == 0)
+            if (iter.compare(BATCH_INTERFACE) == 0)
             {
                 isCollection = true;
                 break;
@@ -1813,10 +1827,10 @@ void createInvisibleResource()
             cout << "Unable to create resource" << endl;
         }
 
-        string interface = string(ACTUATOR_INTERFACE) + " " + string(DEFAULT_INTERFACE);
+        string iter = string(ACTUATOR_INTERFACE) + " " + string(DEFAULT_INTERFACE);
         g_invisibleLightResource = new SampleResource();
         g_invisibleLightResource->setResourceProperties(LIGHT_INVISIBLE_URI, RESOURCE_TYPE_LIGHT,
-                interface);
+                iter);
         resourceProperty = OC_ACTIVE | OC_OBSERVABLE | OC_EXPLICIT_DISCOVERABLE;
         result = g_invisibleLightResource->startResource(resourceProperty);
 
