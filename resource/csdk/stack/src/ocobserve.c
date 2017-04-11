@@ -281,7 +281,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                         ehResponse.payload = (OCPayload*)OCRepPayloadCreate();
                         if (!ehResponse.payload)
                         {
-                            FindAndDeleteServerRequest(request);
+                            DeleteServerRequest(request);
                             continue;
                         }
                         memcpy(ehResponse.payload, payload, sizeof(*payload));
@@ -308,7 +308,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                     }
                     else
                     {
-                        FindAndDeleteServerRequest(request);
+                        DeleteServerRequest(request);
                     }
                 }
                 // Since we are in a loop, set an error flag to indicate

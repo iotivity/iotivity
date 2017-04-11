@@ -1823,7 +1823,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         // for the request in ocserverrequest.c : HandleSingleResponse()
         // Since we are making an early return and not responding, the server request
         // needs to be deleted.
-        FindAndDeleteServerRequest (request);
+        DeleteServerRequest (request);
         discoveryResult = OC_STACK_OK;
         goto exit;
     }
@@ -1842,7 +1842,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         if (g_multicastServerStopped && !isUnicast(request))
         {
             // Ignore the discovery request
-            FindAndDeleteServerRequest(request);
+            DeleteServerRequest(request);
             discoveryResult = OC_STACK_CONTINUE;
             goto exit;
         }
@@ -1988,7 +1988,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             SendDirectStackResponse(&endpoint, request->coapID, CA_EMPTY, CA_MSG_ACKNOWLEDGE,
                                     0, NULL, NULL, 0, NULL, CA_RESPONSE_FOR_RES);
         }
-        FindAndDeleteServerRequest(request);
+        DeleteServerRequest(request);
 
         // Presence uses observer notification api to respond via SendPresenceNotification.
         SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
@@ -2021,7 +2021,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                 OIC_LOG(INFO, TAG, "Silently ignoring the request since no useful data to send.");
                 // the request should be removed.
                 // since it never remove and causes a big memory waste.
-                FindAndDeleteServerRequest(request);
+                DeleteServerRequest(request);
             }
             discoveryResult = OC_STACK_CONTINUE;
         }
@@ -2067,7 +2067,7 @@ HandleDefaultDeviceEntityHandler(OCServerRequest *request)
     }
     else if(ehResult == OC_EH_ERROR)
     {
-        FindAndDeleteServerRequest(request);
+        DeleteServerRequest(request);
     }
     result = EntityHandlerCodeToOCStackCode(ehResult);
 exit:
@@ -2125,7 +2125,7 @@ HandleResourceWithEntityHandler(OCServerRequest *request,
             // for the request in ocserverrequest.c : HandleSingleResponse()
             // Since we are making an early return and not responding, the server request
             // needs to be deleted.
-            FindAndDeleteServerRequest (request);
+            DeleteServerRequest (request);
             return OC_STACK_OK;
         }
 
@@ -2157,7 +2157,7 @@ HandleResourceWithEntityHandler(OCServerRequest *request,
             request->observeResult = OC_STACK_ERROR;
             OIC_LOG(ERROR, TAG, "Observer Addition failed");
             ehFlag = OC_REQUEST_FLAG;
-            FindAndDeleteServerRequest(request);
+            DeleteServerRequest(request);
             goto exit;
         }
 
@@ -2192,7 +2192,7 @@ HandleResourceWithEntityHandler(OCServerRequest *request,
         {
             request->observeResult = OC_STACK_ERROR;
             OIC_LOG(ERROR, TAG, "Observer Removal failed");
-            FindAndDeleteServerRequest(request);
+            DeleteServerRequest(request);
             goto exit;
         }
     }
@@ -2210,7 +2210,7 @@ HandleResourceWithEntityHandler(OCServerRequest *request,
     }
     else if(ehResult == OC_EH_ERROR)
     {
-        FindAndDeleteServerRequest(request);
+        DeleteServerRequest(request);
     }
     result = EntityHandlerCodeToOCStackCode(ehResult);
 exit:
