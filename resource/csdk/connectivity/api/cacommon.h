@@ -400,6 +400,7 @@ typedef enum
     CA_REQUEST_ENTITY_TOO_LARGE = 413,      /**< Request Entity Too Large */
     CA_INTERNAL_SERVER_ERROR = 500,         /**< Internal Server Error */
     CA_BAD_GATEWAY = 502,
+    CA_SERVICE_UNAVAILABLE = 503,           /**< Server Unavailable */
     CA_RETRANSMIT_TIMEOUT = 504,            /**< Retransmit timeout */
     CA_PROXY_NOT_SUPPORTED = 505            /**< Proxy not enabled to service a request */
     /* Response status code - END HERE */
