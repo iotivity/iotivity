@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -61,6 +61,7 @@ public:
 
     void presenceHandler(OCStackResult result, const unsigned int nonce, const string& hostAddress)
     {
+        IOTIVITYTEST_LOG(INFO, "Presence Handler called, nonce = %d, host = %s", nonce, hostAddress.c_str());
     }
 };
 
@@ -590,7 +591,8 @@ TEST_F(RIClientTest_btc, SubscribePresence_SRC_P)
     OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
     EXPECT_EQ(OC_STACK_OK,
-            OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, CT_DEFAULT, bind(&RIClientTest_btc::presenceHandler, this, PH::_1, PH::_2, PH::_3)));
+            OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, CT_DEFAULT,
+                    bind(&RIClientTest_btc::presenceHandler, this, PH::_1, PH::_2, PH::_3)));
 
     EXPECT_NE(nullptr, presenceHandle);
 }
@@ -669,7 +671,8 @@ TEST_F(RIClientTest_btc, SubscribePresenceWithResourceType_SRC_P)
     string resourceType = "core.light";
 
     EXPECT_EQ(OC_STACK_OK,
-            OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, resourceType, CT_DEFAULT, bind(&RIClientTest_btc::presenceHandler, this, PH::_1, PH::_2, PH::_3)));
+            OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, resourceType, CT_DEFAULT,
+                    bind(&RIClientTest_btc::presenceHandler, this, PH::_1, PH::_2, PH::_3)));
 }
 #endif
 
@@ -695,7 +698,8 @@ TEST_F(RIClientTest_btc, SubscribePresenceWithResourceType_NV_N)
     OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
     EXPECT_ANY_THROW(
-            OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, nullptr, CT_DEFAULT, bind(&RIClientTest_btc::presenceHandler, this, PH::_1, PH::_2, PH::_3)));
+            OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, nullptr, CT_DEFAULT,
+                    bind(&RIClientTest_btc::presenceHandler, this, PH::_1, PH::_2, PH::_3)));
 }
 #endif
 
@@ -741,20 +745,34 @@ TEST_F(RIClientTest_btc, UnsubscribePresence_SRC_P)
 TEST_F(RIClientTest_btc, UnsubscribePresence_ESV_N)
 {
     OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+    OCStackResult result = OC_STACK_OK;
     const std::string host = "";
-
-    OCPlatform::subscribePresence(presenceHandle, host, CT_DEFAULT,
-            bind(&RIClientTest_btc::presenceHandler, this, PH::_1, PH::_2, PH::_3));
-
     try
     {
-        OCPlatform::unsubscribePresence(presenceHandle);
-        SET_FAILURE("Exception should occur");
+        result = OCPlatform::subscribePresence(presenceHandle, host, CT_DEFAULT,
+                bind(&RIClientTest_btc::presenceHandler, this, PH::_1, PH::_2, PH::_3));
     }
     catch (exception &e)
     {
         IOTIVITYTEST_LOG(INFO, e.what());
     }
+
+    CommonUtil::waitInSecond(CALLBACK_WAIT_MAX*2);
+
+    EXPECT_EQ(OC_STACK_OK, result)
+    << "Empty host should invoke error response, got success response";
+
+    try
+    {
+        result = OCPlatform::unsubscribePresence(presenceHandle);
+    }
+    catch (exception &e)
+    {
+        SET_FAILURE("Exception should not occur");
+        IOTIVITYTEST_LOG(INFO, e.what());
+    }
+
+    EXPECT_NE(OC_STACK_OK, result) << "NullPtr should invoke error response, got success response";
 }
 #endif
 

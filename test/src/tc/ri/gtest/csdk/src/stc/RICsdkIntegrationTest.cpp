@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -42,7 +42,8 @@ public:
         RICsdkHelper::s_isCallback == false;
 
         m_result = m_pRICsdkHelper->initClientServer();
-        ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for client-server. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+        ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for client-server. Actual m_result : "
+                << CommonUtil::s_OCStackResultString.at(m_result);
 
         m_pRICsdkHelper->startOCProcess();
     }
@@ -96,14 +97,15 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetPlatformInfoNON_CV_P)
     OCStackResult m_result;
 
     m_result = OCSetPlatformInfo(m_pRICsdkHelper->getPlatformInfo());
-    ASSERT_EQ(OC_STACK_OK,m_result) << "Server: OCSetPlatformInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "Server: OCSetPlatformInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,PLATFORM_DISCOVERY_QUERY,OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, PLATFORM_DISCOVERY_QUERY,
+            OC_LOW_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: PlatformDiscoveryReqCB callback is not called");
     }
@@ -152,14 +154,15 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetPlatformInfoCON_CV_P)
     OCStackResult m_result;
 
     m_result = OCSetPlatformInfo(m_pRICsdkHelper->getPlatformInfo());
-    ASSERT_EQ(OC_STACK_OK,m_result) << "Server: OCSetPlatformInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "Server: OCSetPlatformInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,PLATFORM_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, PLATFORM_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: PlatformDiscoveryReqCB callback is not called");
     }
@@ -208,14 +211,15 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetPlatformInfoPayloadCheckNON_SQV_P)
     OCStackResult m_result;
 
     m_result = OCSetPlatformInfo(m_pRICsdkHelper->getPlatformInfo());
-    ASSERT_EQ(OC_STACK_OK,m_result) << "Server: OCSetPlatformInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "Server: OCSetPlatformInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,PLATFORM_DISCOVERY_QUERY,OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, PLATFORM_DISCOVERY_QUERY,
+            OC_LOW_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
+    if (RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
     }
@@ -264,14 +268,15 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetPlatformInfoPayloadCheckCON_SQV_P)
     OCStackResult m_result;
 
     m_result = OCSetPlatformInfo(m_pRICsdkHelper->getPlatformInfo());
-    ASSERT_EQ(OC_STACK_OK,m_result) << "Server: OCSetPlatformInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "Server: OCSetPlatformInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,PLATFORM_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, PLATFORM_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
+    if (RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
     }
@@ -317,23 +322,24 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetPlatformInfoPayloadCheckCON_SQV_P)
 TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoNON_CV_P)
 {
     OCStackResult m_result;
+    static OCDeviceInfo deviceInfo = m_pRICsdkHelper->getDeviceInfo();
 
     try
     {
-        m_result = OCSetDeviceInfo(m_pRICsdkHelper->getDeviceInfo());
-        ASSERT_EQ(OC_STACK_OK,m_result) << "OCSetDeviceInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+        m_result = OCSetDeviceInfo(deviceInfo);
+        ASSERT_EQ(OC_STACK_OK,m_result)<< "OCSetDeviceInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
     }
     catch(exception &e)
     {
         SET_FAILURE("Exception occured. Exception is " + std::string(e.what()));
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,DEVICE_DISCOVERY_QUERY,OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, DEVICE_DISCOVERY_QUERY, OC_LOW_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("PlatformDiscoveryReqCB callback is not called");
     }
@@ -379,23 +385,24 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoNON_CV_P)
 TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoCON_CV_P)
 {
     OCStackResult m_result;
+    static OCDeviceInfo deviceInfo = m_pRICsdkHelper->getDeviceInfo();
 
     try
     {
-        m_result = OCSetDeviceInfo(m_pRICsdkHelper->getDeviceInfo());
-        ASSERT_EQ(OC_STACK_OK,m_result) << "OCSetDeviceInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+        m_result = OCSetDeviceInfo(deviceInfo);
+        ASSERT_EQ(OC_STACK_OK,m_result)<< "OCSetDeviceInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
     }
     catch(exception &e)
     {
         SET_FAILURE("Exception occured. Exception is " + std::string(e.what()));
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,DEVICE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, DEVICE_DISCOVERY_QUERY, OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("PlatformDiscoveryReqCB callback is not called");
     }
@@ -442,23 +449,24 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoCON_CV_P)
 TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoPayloadCheckNON_SQV_P)
 {
     OCStackResult m_result;
+    static OCDeviceInfo deviceInfo = m_pRICsdkHelper->getDeviceInfo();
 
     try
     {
-        m_result = OCSetDeviceInfo(m_pRICsdkHelper->getDeviceInfo());
-        ASSERT_EQ(OC_STACK_OK,m_result) << "OCSetDeviceInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+        m_result = OCSetDeviceInfo(deviceInfo);
+        ASSERT_EQ(OC_STACK_OK,m_result)<< "OCSetDeviceInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
     }
     catch(exception &e)
     {
         SET_FAILURE("Exception occured. Exception is " + std::string(e.what()));
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,DEVICE_DISCOVERY_QUERY,OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, DEVICE_DISCOVERY_QUERY, OC_LOW_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
+    if (RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
     }
@@ -505,23 +513,24 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoPayloadCheckNON_SQV_P)
 TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoPayloadCheckCON_SQV_P)
 {
     OCStackResult m_result;
+    static OCDeviceInfo deviceInfo = m_pRICsdkHelper->getDeviceInfo();
 
     try
     {
-        m_result = OCSetDeviceInfo(m_pRICsdkHelper->getDeviceInfo());
-        ASSERT_EQ(OC_STACK_OK,m_result) << "OCSetDeviceInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+        m_result = OCSetDeviceInfo(deviceInfo);
+        ASSERT_EQ(OC_STACK_OK,m_result)<< "OCSetDeviceInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
     }
     catch(exception &e)
     {
         SET_FAILURE("Exception occured. Exception is " + std::string(e.what()));
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,DEVICE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, DEVICE_DISCOVERY_QUERY, OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
+    if (RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
     }
@@ -578,21 +587,23 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoPayloadCheckCON_SQV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndDiscoverResourceNON_CV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_LOW_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
     }
@@ -649,21 +660,23 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndDiscoverResourceNON_CV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndDiscoverResourceCON_CV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
     }
@@ -721,20 +734,22 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndDiscoverResourceCON_CV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndDiscoverResourcePayloadCheckNON_SQV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_LOW_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
+    if (RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
@@ -793,20 +808,22 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndDiscoverResourcePayloadCheckN
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndDiscoverResourceCheckPayloadCheckCON_SQV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
+    if (RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
@@ -866,21 +883,23 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndDiscoverResourceCheckPayloadC
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestNON_CV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
@@ -888,12 +907,13 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestNON_CV_P)
 
     RICsdkHelper::s_isCallback = false;
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_LOW_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: getReqCB callback is not called");
     }
@@ -952,21 +972,23 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestNON_CV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestCON_CV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
@@ -974,12 +996,13 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestCON_CV_P)
 
     RICsdkHelper::s_isCallback = false;
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: getReqCB callback is not called");
     }
@@ -1041,38 +1064,41 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestCON_CV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestPayloadCheckNON_SQV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false)
+    if (RICsdkHelper::s_isServerResponse == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
         return;
     }
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_LOW_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
+    if (RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
     }
@@ -1134,38 +1160,41 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestPayloadCheckNON
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestPayloadCheckCON_SQV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false)
+    if (RICsdkHelper::s_isServerResponse == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
         return;
     }
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
+    if (RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
     }
@@ -1224,21 +1253,23 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendGetRequestPayloadCheckCON
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestNON_CV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
@@ -1246,12 +1277,13 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestNON_CV_P)
 
     RICsdkHelper::s_isCallback = false;
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_LOW_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: putReqCB callback is not called");
     }
@@ -1310,21 +1342,23 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestNON_CV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestCON_CV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
@@ -1332,12 +1366,13 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestCON_CV_P)
 
     RICsdkHelper::s_isCallback = false;
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: putReqCB callback is not called");
     }
@@ -1399,38 +1434,41 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestCON_CV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestPayloadCheckNON_SQV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false)
+    if (RICsdkHelper::s_isServerResponse == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
         return;
     }
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_LOW_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
+    if (RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
     }
@@ -1492,38 +1530,41 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestPayloadCheckNON
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestPayloadCheckCON_SQV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false)
+    if (RICsdkHelper::s_isServerResponse == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
         return;
     }
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
     }
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
+    if (RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
     }
@@ -1582,21 +1623,23 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPutRequestPayloadCheckCON
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestNON_CV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
@@ -1604,12 +1647,13 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestNON_CV_P)
 
     RICsdkHelper::s_isCallback = false;
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_LOW_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: postReqCB callback is not called");
     }
@@ -1668,21 +1712,23 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestNON_CV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestCON_CV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
@@ -1690,12 +1736,13 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestCON_CV_P)
 
     RICsdkHelper::s_isCallback = false;
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: postReqCB callback is not called");
     }
@@ -1757,27 +1804,29 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestCON_CV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestPayloadCheckNON_SQV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false)
+    if (RICsdkHelper::s_isServerResponse == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
         return;
     }
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
@@ -1785,12 +1834,13 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestPayloadCheckNO
 
     RICsdkHelper::s_isCallback = false;
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_LOW_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
+    if (RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
     }
@@ -1852,27 +1902,29 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestPayloadCheckNO
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestPayloadCheckCON_SQV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false)
+    if (RICsdkHelper::s_isServerResponse == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
         return;
     }
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
@@ -1880,12 +1932,13 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestPayloadCheckCO
 
     RICsdkHelper::s_isCallback = false;
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
+    if (RICsdkHelper::s_isServerResponse == false || RICsdkHelper::s_isPayloadCorrect == false)
     {
         SET_FAILURE(RICsdkHelper::s_failureMsg);
     }
@@ -1944,21 +1997,23 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendPostRequestPayloadCheckCO
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestNON_CV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
@@ -1966,12 +2021,13 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestNON_CV_P)
 
     RICsdkHelper::s_isCallback = false;
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_LOW_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: deleteReqCB callback is not called");
     }
@@ -2030,21 +2086,23 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestNON_CV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestCON_CV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
@@ -2052,12 +2110,13 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestCON_CV_P)
 
     RICsdkHelper::s_isCallback = false;
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: deleteReqCB callback is not called");
     }
@@ -2118,21 +2177,23 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestCON_CV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestAndCheckIfResourceDeleted_CV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
@@ -2140,30 +2201,33 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestAndCheckIfRe
 
     RICsdkHelper::s_isCallback = false;
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: deleteReqCB callback is not called");
     }
 
     RICsdkHelper::s_isCallback = false;
+    RICsdkHelper::s_isResourceFound = false;
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == true)
     {
-        SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
+        SET_FAILURE("Client: ResourceDiscoveryReqCB callback is called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == true)
+    if (RICsdkHelper::s_isResourceFound == true)
     {
         SET_FAILURE("Client: Resource should not be found");
     }
@@ -2222,21 +2286,23 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestAndCheckIfRe
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendObserveRequestNON_CV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
@@ -2244,12 +2310,13 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendObserveRequestNON_CV_P)
 
     RICsdkHelper::s_isCallback = false;
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_OBSERVE,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_OBSERVE, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_LOW_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: observeReqCB callback is not called");
     }
@@ -2308,21 +2375,23 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendObserveRequestNON_CV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendObserveRequestCON_CV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called");
         return;
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
         return;
@@ -2330,12 +2399,13 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendObserveRequestCON_CV_P)
 
     RICsdkHelper::s_isCallback = false;
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_OBSERVE,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_OBSERVE, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
         SET_FAILURE("Client: observeReqCB callback is not called");
     }
@@ -2380,20 +2450,23 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendObserveRequestCON_CV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, StopMulticastAndDiscoverResource_SQV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCStopMulticastServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "Server: OCStopMulticastServer failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "Server: OCStopMulticastServer failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,TEMPERATURE_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == true)
+    if (RICsdkHelper::s_isCallback == true)
     {
-        SET_FAILURE("Client: ResourceDiscoveryReqCB callback should not be called as multicast is stopped");
+        SET_FAILURE(
+                "Client: ResourceDiscoveryReqCB callback should not be called as multicast is stopped");
     }
 }
 #endif
@@ -2447,23 +2520,26 @@ TEST_F(RICsdkIntegrationTest_stc, StopMulticastAndDiscoverResource_SQV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RICsdkIntegrationTest_stc, BindResourceTypeToResourceAndCheckIfResourceFoundUsingType_GSRV_P)
 {
-    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_TEMPERATURE);
-    ASSERT_NE(m_resourceHandle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_resourceHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_TEMPERATURE,
+            RESOURCE_INTERFACE_DEFAULT, RESOURCE_URI_TEMPERATURE);
+    ASSERT_NE(m_resourceHandle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResourceTypeToResource(m_resourceHandle, RESOURCE_TYPE_LIGHT);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "Server: OCBindResourceTypeToResource failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "Server: OCBindResourceTypeToResource failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,LIGHT_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
-    ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+    m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER, LIGHT_RESOURCE_DISCOVERY_QUERY,
+            OC_HIGH_QOS);
+    ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
 
     CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-    if(RICsdkHelper::s_isCallback == false)
+    if (RICsdkHelper::s_isCallback == false)
     {
-        SET_FAILURE("Client: ResourceDiscoveryReqCB callback is not called while finding using added resource type");
+        SET_FAILURE(
+                "Client: ResourceDiscoveryReqCB callback is not called while finding using added resource type");
     }
 
-    if(RICsdkHelper::s_isResourceFound == false)
+    if (RICsdkHelper::s_isResourceFound == false)
     {
         SET_FAILURE("Client: Resource is not found");
     }

@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,9 +33,10 @@ OCEntityHandlerResult RICsdkHelper::s_responseErrorCode;
 int RICsdkHelper::s_unicastDiscovery = 5;
 char RICsdkHelper::s_szQueryUri[100] =
 { 0 };
-char RICsdkHelper::s_discoveryAddr[100];
+char RICsdkHelper::s_discoveryAddr[100] =
+{ 0 };;
 string RICsdkHelper::s_coapQuery;
-OCDevAddr* RICsdkHelper::s_remoteAddr;
+OCDevAddr RICsdkHelper::s_remoteAddr;
 OCResourceHandle RICsdkHelper::s_handle;
 int64_t RICsdkHelper::s_temp = 10;
 char* RICsdkHelper::s_units = "C";
@@ -51,7 +52,6 @@ RICsdkHelper::RICsdkHelper()
     s_isPayloadCorrect = false;
     s_isServerResponse = true;
     s_coapQuery = "";
-    s_remoteAddr = nullptr;
     m_targetPayload = nullptr;
     s_isResourceFound = false;
 }
@@ -137,7 +137,6 @@ OCDeviceInfo RICsdkHelper::getDeviceInfo()
 
     duplicateString(&deviceInfo.deviceName, DEVICE_NAME);
     duplicateString(&deviceInfo.specVersion, SPEC_VERSION);
-    deviceInfo.types = NULL;
     OCResourcePayloadAddStringLL(&deviceInfo.types, OC_RSRVD_RESOURCE_TYPE_DEVICE);
 
     return deviceInfo;
@@ -290,7 +289,7 @@ OCEntityHandlerResult RICsdkHelper::OCEntityHandlerCb(OCEntityHandlerFlag flag,
         else if (OC_REST_DELETE == entityHandlerRequest->method)
         {
             IOTIVITYTEST_LOG(INFO, "Received OC_REST_DELETE from client");
-            ehResult = ProcessDeleteRequest(entityHandlerRequest);
+            ehResult = OC_EH_RESOURCE_DELETED;
         }
         else
         {
@@ -336,6 +335,12 @@ OCEntityHandlerResult RICsdkHelper::OCEntityHandlerCb(OCEntityHandlerFlag flag,
         {
             IOTIVITYTEST_LOG(INFO, "Received OC_OBSERVE_DEREGISTER from client");
         }
+    }
+
+    if (OC_REST_DELETE == entityHandlerRequest->method)
+    {
+        IOTIVITYTEST_LOG(INFO, "Received OC_REST_DELETE from client");
+        ehResult = ProcessDeleteRequest(entityHandlerRequest);
     }
 
     return ehResult;
@@ -813,6 +818,9 @@ void RICsdkHelper::getPayloadData(OCClientResponse * clientResponse)
             if (checkPayload)
             {
                 IOTIVITYTEST_LOG(INFO, "received payload is correct");
+                s_remoteAddr = clientResponse->devAddr;
+                IOTIVITYTEST_LOG(INFO, "Device Address: %s, Device Port: %d", s_remoteAddr.addr,
+                        s_remoteAddr.port);
                 s_isPayloadCorrect = true;
             }
             else
@@ -957,13 +965,15 @@ OCStackApplicationResult RICsdkHelper::ResourceDiscoveryReqCB(void* ctx, OCDoHan
                 "Callback Context for Resource DISCOVER query received successfully");
     }
 
-    if (clientResponse)
+    if (clientResponse && (OC_STACK_NOT_ACCEPTABLE != clientResponse->result))
     {
         s_isCallback = true;
+
+        s_remoteAddr = clientResponse->devAddr;
         IOTIVITYTEST_LOG(INFO, "Discovery Response:");
-        IOTIVITYTEST_LOG(INFO, "Device Address: %s, Device Port: %d", clientResponse->devAddr.addr,
-                clientResponse->devAddr.port);
-        s_remoteAddr = &clientResponse->devAddr;
+        IOTIVITYTEST_LOG(INFO, "Device Address: %s, Device Port: %d", s_remoteAddr.addr,
+                s_remoteAddr.port);
+
         IOTIVITYTEST_LOG(INFO, "PAYLOAD RECEIVED: %s", clientResponse->payload);
         IOTIVITYTEST_LOG(INFO, "Result is: %s \n",
                 CommonUtil::s_OCStackResultString.at(clientResponse->result).c_str());
@@ -1257,18 +1267,25 @@ OCDoHandle RICsdkHelper::doResource(OCMethod method, const char *requestUri, OCQ
     m_cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
     m_cbData.cd = NULL;
     OCDoHandle doHandle;
-    snprintf(s_szQueryUri, sizeof(s_szQueryUri) - 1, requestUri, s_discoveryAddr);
+    snprintf(s_szQueryUri, sizeof(s_szQueryUri) - 1, requestUri, "");
     std::string userQuery = std::string(s_szQueryUri) + s_coapQuery;
 
-    if (s_remoteAddr)
-    {
-        IOTIVITYTEST_LOG(INFO, "Sending request to:\t coap://%s:%d", s_remoteAddr->addr,
-                s_remoteAddr->port);
-    }
+
+    IOTIVITYTEST_LOG(INFO, "Sending request to:\t coap://%s:%d", s_remoteAddr.addr,
+            s_remoteAddr.port);
+
     IOTIVITYTEST_LOG(INFO, "sending using query:%s", userQuery.c_str());
 
-    m_result = OCDoResource(&doHandle, method, userQuery.c_str(), s_remoteAddr, m_targetPayload,
-            CT_DEFAULT, qos, &m_cbData, INT_ZERO, INT_ZERO);
+    if (method == OC_REST_DISCOVER)
+    {
+        m_result = OCDoResource(&doHandle, method, userQuery.c_str(), NULL, m_targetPayload,
+                CT_DEFAULT, qos, &m_cbData, INT_ZERO, INT_ZERO);
+    }
+    else
+    {
+        m_result = OCDoResource(&doHandle, method, userQuery.c_str(), &s_remoteAddr, m_targetPayload,
+                CT_DEFAULT, qos, &m_cbData, INT_ZERO, INT_ZERO);
+    }
 
     if (m_result == OC_STACK_OK)
     {

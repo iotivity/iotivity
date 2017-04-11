@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -77,7 +77,7 @@ public:
 TEST_F(RIServerTest_btc, ConfigureInProc_SRC_P)
 {
     PlatformConfig config
-    {   OC::ServiceType::InProc, OC::ModeType::Server, "0.0.0.0", 0, OC::QualityOfService::LowQos};
+    { OC::ServiceType::InProc, OC::ModeType::Server, "0.0.0.0", 0, OC::QualityOfService::LowQos };
 
     try
     {
@@ -105,7 +105,7 @@ TEST_F(RIServerTest_btc, ConfigureInProc_SRC_P)
 TEST_F(RIServerTest_btc, ConfigureOutOfProc_SRC_P)
 {
     PlatformConfig config
-    {   OC::ServiceType::OutOfProc, OC::ModeType::Server, "0.0.0.0", 0, OC::QualityOfService::LowQos};
+    { OC::ServiceType::OutOfProc, OC::ModeType::Server, "0.0.0.0", 0, OC::QualityOfService::LowQos };
 
     try
     {
@@ -134,7 +134,7 @@ TEST_F(RIServerTest_btc, ConfigureOutOfProc_SRC_P)
 TEST_F(RIServerTest_btc, ConfigureDefault_SRC_P)
 {
     PlatformConfig config
-    {};
+    { };
 
     try
     {
@@ -228,7 +228,7 @@ TEST_F(RIServerTest_btc, RegisterDeviceInfo_SRC_P)
 {
     try
     {
-        OCDeviceInfo deviceInfo = m_RIHelper->getDeviceInfo();
+        static OCDeviceInfo deviceInfo = m_RIHelper->getDeviceInfo();
         ASSERT_EQ(OC_STACK_OK, OCPlatform::registerDeviceInfo(deviceInfo))<< "registerDeviceInfo does not return OC_STACK_OK";
     }
     catch (exception& e)
@@ -274,7 +274,7 @@ TEST_F(RIServerTest_btc, registerResource_SRC_P)
     {
         SET_FAILURE(
                 "Found exception while performing registerResource() API. Exception: "
-                + string(e.what()));
+                        + string(e.what()));
     }
 }
 #endif

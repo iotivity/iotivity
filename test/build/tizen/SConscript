@@ -137,9 +137,11 @@ for temp in all_modules:
             test_res_files += ',' + iotivity_test_root + '/res/pm_resource'
         if temp == 'ic' or temp == 'cs':
             test_res_files += ',' + iotivity_test_root + '/res/cloud_resource'
+        if temp == 'ri':
+            test_res_files += ',' + iotivity_root + '/resource/examples/oic_svr_db_server.dat'
 
         extra_parameters += ' ' + 'lib_rpm_names' + '=' + lib_rpm_names
-    
+
         if test_res_files:
             extra_parameters += ' ' + 'test_res_files' + '=' + test_res_files
 

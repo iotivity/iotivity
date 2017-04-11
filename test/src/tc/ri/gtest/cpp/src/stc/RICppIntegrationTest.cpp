@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -743,7 +743,7 @@ TEST_F(RICppIntegrationTest_stc, RegisterAndGetDeviceInfo_GSRV_CV_P)
 {
     try
     {
-        OCDeviceInfo deviceInfo = m_RIHelper->getDeviceInfo();
+        static OCDeviceInfo deviceInfo = m_RIHelper->getDeviceInfo();
         ASSERT_EQ(OC_STACK_OK,OCPlatform::registerDeviceInfo(deviceInfo)) << "registerDeviceInfo does not return success";
 
         std::ostringstream deviceDiscoveryRequest;
@@ -798,7 +798,7 @@ TEST_F(RICppIntegrationTest_stc, RegisterAndGetDeviceInfoWithQos_GSRV_CV_P)
 {
     try
     {
-        OCDeviceInfo deviceInfo = m_RIHelper->getDeviceInfo();
+        static OCDeviceInfo deviceInfo = m_RIHelper->getDeviceInfo();
         ASSERT_EQ(OC_STACK_OK,OCPlatform::registerDeviceInfo(deviceInfo)) << "registerDeviceInfo does not return success";
 
         std::ostringstream deviceDiscoveryRequest;

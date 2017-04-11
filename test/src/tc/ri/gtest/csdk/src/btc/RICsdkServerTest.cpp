@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -81,7 +81,7 @@ public:
 TEST_F(RICsdkServerTest_btc, OCInitServer_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -106,7 +106,7 @@ TEST_F(RICsdkServerTest_btc, OCInitClientServer_SRC_P)
     const char* ipAddress = nullptr;
 
     m_result = OCInit(ipAddress, portZero, m_ClientServerMode);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client-server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for client-server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -131,7 +131,7 @@ TEST_F(RICsdkServerTest_btc, OCInit_USV_N)
     const char* ipAddress = nullptr;
 
     m_result = OCInit(ipAddress, portZero, m_GatewayMode);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -154,7 +154,7 @@ TEST_F(RICsdkServerTest_btc, OCInit_USV_N)
 TEST_F(RICsdkServerTest_btc, OCInit1Server_SRC_P)
 {
     m_result = OCInit1(m_ServerMode, m_DefaultTransportFlags, m_DefaultTransportFlags);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit1 failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit1 failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -177,7 +177,7 @@ TEST_F(RICsdkServerTest_btc, OCInit1Server_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCInit1ClientServer_SRC_P)
 {
     m_result = OCInit1(m_ClientServerMode, m_DefaultTransportFlags, m_DefaultTransportFlags);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit1 failed for client-server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit1 failed for client-server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -200,7 +200,7 @@ TEST_F(RICsdkServerTest_btc, OCInit1ClientServer_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCInit1Server_USV_N)
 {
     m_result = OCInit1(m_GatewayMode, m_DefaultTransportFlags, m_DefaultTransportFlags);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCInit1 failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCInit1 failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -220,10 +220,10 @@ TEST_F(RICsdkServerTest_btc, OCInit1Server_USV_N)
 TEST_F(RICsdkServerTest_btc, OCStop_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_result = OCStop();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCStop failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCStop failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -243,10 +243,10 @@ TEST_F(RICsdkServerTest_btc, OCStop_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCSetPlatformInfo_SRC_FSV_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_result = OCSetPlatformInfo(m_pRICsdkHelper->getPlatformInfo());
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCSetPlatformInfo failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCSetPlatformInfo failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -266,11 +266,11 @@ TEST_F(RICsdkServerTest_btc, OCSetPlatformInfo_SRC_FSV_P)
 TEST_F(RICsdkServerTest_btc, OCSetPlatformInfo_USV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     OCPlatformInfo platformInfo;
     m_result = OCSetPlatformInfo(platformInfo);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCSetPlatformInfo failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCSetPlatformInfo failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -290,12 +290,13 @@ TEST_F(RICsdkServerTest_btc, OCSetPlatformInfo_USV_N)
 TEST_F(RICsdkServerTest_btc, OCSetDeviceInfo_SRC_FSV_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    static OCDeviceInfo deviceInfo = m_pRICsdkHelper->getDeviceInfo();
 
     try
     {
-        m_result = OCSetDeviceInfo(m_pRICsdkHelper->getDeviceInfo());
-        ASSERT_EQ(OC_STACK_OK,m_result) << "OCSetDeviceInfo failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+        m_result = OCSetDeviceInfo(deviceInfo);
+        ASSERT_EQ(OC_STACK_OK,m_result)<< "OCSetDeviceInfo failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
     }
     catch(exception &e)
     {
@@ -332,10 +333,11 @@ TEST_F(RICsdkServerTest_btc, OCSetDeviceInfo_SRC_FSV_P)
 TEST_F(RICsdkServerTest_btc, OCCreateResource_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_result = OCCreateResource(&m_handle,RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT,OCEntityHandlerCb,NULL,OC_DISCOVERABLE|OC_OBSERVABLE);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCCreateResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCCreateResource(&m_handle, RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT, OCEntityHandlerCb, NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCCreateResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -367,10 +369,11 @@ TEST_F(RICsdkServerTest_btc, OCCreateResource_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCCreateResourceTypeName_ESV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_result = OCCreateResource(&m_handle,EMPTY_STRING,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT,OCEntityHandlerCb,NULL,OC_DISCOVERABLE|OC_OBSERVABLE);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCCreateResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCCreateResource(&m_handle, EMPTY_STRING, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT, OCEntityHandlerCb, NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCCreateResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -402,10 +405,11 @@ TEST_F(RICsdkServerTest_btc, OCCreateResourceTypeName_ESV_N)
 TEST_F(RICsdkServerTest_btc, OCCreateResourceURI_ESV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_result = OCCreateResource(&m_handle,RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,EMPTY_STRING,OCEntityHandlerCb,NULL,OC_DISCOVERABLE|OC_OBSERVABLE);
-    ASSERT_EQ(OC_STACK_INVALID_URI,m_result) << "OCCreateResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCCreateResource(&m_handle, RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+    EMPTY_STRING, OCEntityHandlerCb, NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
+    ASSERT_EQ(OC_STACK_INVALID_URI,m_result)<< "OCCreateResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -432,13 +436,14 @@ TEST_F(RICsdkServerTest_btc, OCCreateResourceURI_ESV_N)
 TEST_F(RICsdkServerTest_btc, OCDeleteResource_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCDeleteResource(m_handle);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCDeleteResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCDeleteResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -465,13 +470,14 @@ TEST_F(RICsdkServerTest_btc, OCDeleteResource_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCDeleteResourceResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCDeleteResource(NULL);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCDeleteResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCDeleteResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -501,13 +507,14 @@ TEST_F(RICsdkServerTest_btc, OCDeleteResourceResourceHandle_NV_N)
 TEST_F(RICsdkServerTest_btc, OCBindResourceTypeToResource_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResourceTypeToResource(m_handle, RESOURCE_TYPE_FAN);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCBindResourceTypeToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResourceTypeToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -537,13 +544,14 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceTypeToResource_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCBindResourceTypeToResourceResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResourceTypeToResource(NULL, RESOURCE_TYPE_LIGHT);
-    ASSERT_EQ(OC_STACK_ERROR,m_result) << "OCBindResourceTypeToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_ERROR,m_result)<< "OCBindResourceTypeToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -573,13 +581,14 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceTypeToResourceResourceHandle_NV_N)
 TEST_F(RICsdkServerTest_btc, OCBindResourceTypeToResourceResourceType_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResourceTypeToResource(m_handle, NULL);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCBindResourceTypeToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCBindResourceTypeToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -609,13 +618,14 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceTypeToResourceResourceType_NV_N)
 TEST_F(RICsdkServerTest_btc, OCBindResourceInterfaceToResource_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResourceInterfaceToResource(m_handle, RESOURCE_INTERFACE_RW);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCBindResourceInterfaceToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResourceInterfaceToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -645,13 +655,14 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceInterfaceToResource_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCBindResourceInterfaceToResourceResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResourceInterfaceToResource(NULL, RESOURCE_INTERFACE_RW);
-    ASSERT_EQ(OC_STACK_ERROR,m_result) << "OCBindResourceInterfaceToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_ERROR,m_result)<< "OCBindResourceInterfaceToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -681,13 +692,14 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceInterfaceToResourceResourceHandle_NV_
 TEST_F(RICsdkServerTest_btc, OCBindResourceInterfaceToResourceResourceType_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResourceInterfaceToResource(m_handle, NULL);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCBindResourceInterfaceToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCBindResourceInterfaceToResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -716,16 +728,18 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceInterfaceToResourceResourceType_NV_N)
 TEST_F(RICsdkServerTest_btc, OCBindResource_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL) << "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
-    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL) << "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_FAN);
+    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_fanHandle, m_lightHandle);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -754,16 +768,18 @@ TEST_F(RICsdkServerTest_btc, OCBindResource_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCBindResourceCollectionHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL) << "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
-    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL) << "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_FAN);
+    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(NULL, m_lightHandle);
-    ASSERT_EQ(OC_STACK_ERROR,m_result) << "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_ERROR,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -792,16 +808,18 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceCollectionHandle_NV_N)
 TEST_F(RICsdkServerTest_btc, OCBindResourceResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL) << "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
-    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL) << "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_FAN);
+    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_fanHandle, NULL);
-    ASSERT_EQ(OC_STACK_ERROR,m_result) << "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_ERROR,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -830,16 +848,18 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceResourceHandle_NV_N)
 TEST_F(RICsdkServerTest_btc, OCBindResourceSameHandle_ECRC_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL) << "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
-    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL) << "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_FAN);
+    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_lightHandle, m_lightHandle);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -869,19 +889,21 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceSameHandle_ECRC_N)
 TEST_F(RICsdkServerTest_btc, OCUnBindResource_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL) << "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
-    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL) << "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_FAN);
+    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_fanHandle, m_lightHandle);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_result = OCUnBindResource(m_fanHandle, m_lightHandle);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCUnBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCUnBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -911,19 +933,21 @@ TEST_F(RICsdkServerTest_btc, OCUnBindResource_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCUnBindResourceCollectionHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL) << "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
-    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL) << "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_FAN);
+    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_fanHandle, m_lightHandle);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_result = OCUnBindResource(NULL, m_lightHandle);
-    ASSERT_EQ(OC_STACK_ERROR,m_result) << "OCUnBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_ERROR,m_result)<< "OCUnBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -953,19 +977,21 @@ TEST_F(RICsdkServerTest_btc, OCUnBindResourceCollectionHandle_NV_N)
 TEST_F(RICsdkServerTest_btc, OCUnBindResourceResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL) << "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
-    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL) << "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_FAN);
+    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_fanHandle, m_lightHandle);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_result = OCUnBindResource(m_fanHandle, NULL);
-    ASSERT_EQ(OC_STACK_ERROR,m_result) << "OCUnBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_ERROR,m_result)<< "OCUnBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -995,19 +1021,21 @@ TEST_F(RICsdkServerTest_btc, OCUnBindResourceResourceHandle_NV_N)
 TEST_F(RICsdkServerTest_btc, OCUnBindResourceSameHandle_ECRC_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL) << "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
-    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL) << "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_FAN);
+    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_fanHandle, m_lightHandle);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_result = OCUnBindResource(m_lightHandle, m_lightHandle);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCUnBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCUnBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1027,15 +1055,15 @@ TEST_F(RICsdkServerTest_btc, OCUnBindResourceSameHandle_ECRC_N)
 TEST_F(RICsdkServerTest_btc, OCStartPresence_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     const uint32_t ttl = 0;
     m_result = OCStartPresence(ttl);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCStartPresence failed for time 0. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCStartPresence failed for time 0. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     const uint32_t ttl2 = 50;
     m_result = OCStartPresence(ttl2);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCStartPresence failed for time 10. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCStartPresence failed for time 10. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1055,14 +1083,14 @@ TEST_F(RICsdkServerTest_btc, OCStartPresence_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCStopPresence_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     const uint32_t ttl = 0;
     m_result = OCStartPresence(ttl);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCStartPresence failed for time 10. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCStartPresence failed for time 10. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_result = OCStopPresence();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCStopPresence failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCStopPresence failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1091,14 +1119,15 @@ TEST_F(RICsdkServerTest_btc, OCStopPresence_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCNotifyAllObserversNON_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCQualityOfService qos = OC_LOW_QOS;
-    m_result = OCNotifyAllObservers(m_handle,qos);
-    ASSERT_EQ(OC_STACK_NO_OBSERVERS,m_result) << "OCNotifyAllObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCNotifyAllObservers(m_handle, qos);
+    ASSERT_EQ(OC_STACK_NO_OBSERVERS,m_result)<< "OCNotifyAllObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1127,14 +1156,15 @@ TEST_F(RICsdkServerTest_btc, OCNotifyAllObserversNON_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCNotifyAllObserversCON_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCQualityOfService qos = OC_HIGH_QOS;
-    m_result = OCNotifyAllObservers(m_handle,qos);
-    ASSERT_EQ(OC_STACK_NO_OBSERVERS,m_result) << "OCNotifyAllObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCNotifyAllObservers(m_handle, qos);
+    ASSERT_EQ(OC_STACK_NO_OBSERVERS,m_result)<< "OCNotifyAllObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1163,14 +1193,15 @@ TEST_F(RICsdkServerTest_btc, OCNotifyAllObserversCON_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCNotifyAllObserversResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCQualityOfService qos = OC_HIGH_QOS;
-    m_result = OCNotifyAllObservers(NULL,qos);
-    ASSERT_EQ(OC_STACK_ERROR,m_result) << "OCNotifyAllObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCNotifyAllObservers(NULL, qos);
+    ASSERT_EQ(OC_STACK_ERROR,m_result)<< "OCNotifyAllObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1206,10 +1237,11 @@ TEST_F(RICsdkServerTest_btc, OCNotifyAllObserversResourceHandle_NV_N)
 TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversNON_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCObservationId obsIdList = 1;
     uint8_t numberOfIds = 0;
@@ -1218,8 +1250,8 @@ TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversNON_SRC_P)
     const OCRepPayload payload2 = payload;
     OCQualityOfService qos = OC_LOW_QOS;
 
-    m_result = OCNotifyListOfObservers(m_handle,&obsIdList,numberOfIds,&payload2,qos);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCNotifyListOfObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCNotifyListOfObservers(m_handle, &obsIdList, numberOfIds, &payload2, qos);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCNotifyListOfObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1255,10 +1287,11 @@ TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversNON_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversCON_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCObservationId obsIdList = 1;
     uint8_t numberOfIds = 0;
@@ -1267,8 +1300,8 @@ TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversCON_SRC_P)
     const OCRepPayload payload2 = payload;
     OCQualityOfService qos = OC_HIGH_QOS;
 
-    m_result = OCNotifyListOfObservers(m_handle,&obsIdList,numberOfIds,&payload2,qos);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCNotifyListOfObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCNotifyListOfObservers(m_handle, &obsIdList, numberOfIds, &payload2, qos);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCNotifyListOfObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1304,18 +1337,19 @@ TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversCON_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCObservationId *obsIdList;
     uint8_t numberOfIds = 0;
     const OCRepPayload *payload;
     OCQualityOfService qos = OC_HIGH_QOS;
 
-    m_result = OCNotifyListOfObservers(NULL,obsIdList,numberOfIds,payload,qos);
-    ASSERT_EQ(OC_STACK_ERROR,m_result) << "OCNotifyListOfObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCNotifyListOfObservers(NULL, obsIdList, numberOfIds, payload, qos);
+    ASSERT_EQ(OC_STACK_ERROR,m_result)<< "OCNotifyListOfObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1351,17 +1385,18 @@ TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversResourceHandle_NV_N)
 TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversOCObservationId_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t numberOfIds = 0;
     const OCRepPayload *payload;
     OCQualityOfService qos = OC_HIGH_QOS;
 
-    m_result = OCNotifyListOfObservers(m_handle,NULL,numberOfIds,payload,qos);
-    ASSERT_EQ(OC_STACK_ERROR,m_result) << "OCNotifyListOfObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCNotifyListOfObservers(m_handle, NULL, numberOfIds, payload, qos);
+    ASSERT_EQ(OC_STACK_ERROR,m_result)<< "OCNotifyListOfObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1397,18 +1432,19 @@ TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversOCObservationId_NV_N)
 TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversPayload_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCObservationId *obsIdList;
     uint8_t numberOfIds = 0;
     const OCRepPayload *payload;
     OCQualityOfService qos = OC_HIGH_QOS;
 
-    m_result = OCNotifyListOfObservers(m_handle,obsIdList,numberOfIds,NULL,qos);
-    ASSERT_EQ(OC_STACK_ERROR,m_result) << "OCNotifyListOfObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCNotifyListOfObservers(m_handle, obsIdList, numberOfIds, NULL, qos);
+    ASSERT_EQ(OC_STACK_ERROR,m_result)<< "OCNotifyListOfObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1437,11 +1473,11 @@ TEST_F(RICsdkServerTest_btc, OCNotifyListOfObserversPayload_NV_N)
 TEST_F(RICsdkServerTest_btc, OCSetDefaultDeviceEntityHandler_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     void* callbackParameter;
-    m_result = OCSetDefaultDeviceEntityHandler(OCEntityHandlerCb,callbackParameter);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCNotifyListOfObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCSetDefaultDeviceEntityHandler(OCEntityHandlerCb, callbackParameter);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCNotifyListOfObservers failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1461,10 +1497,10 @@ TEST_F(RICsdkServerTest_btc, OCSetDefaultDeviceEntityHandler_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCDoResponse_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_result = OCDoResponse(NULL);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCDoResponse failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCDoResponse failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1484,10 +1520,10 @@ TEST_F(RICsdkServerTest_btc, OCDoResponse_NV_N)
 TEST_F(RICsdkServerTest_btc, OCProcess_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_result = OCProcess();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCProcess failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCProcess failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1507,9 +1543,9 @@ TEST_F(RICsdkServerTest_btc, OCProcess_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCRegisterPersistentStorageHandler_SRC_P)
 {
     OCPersistentStorage ps =
-    {   server_fopen, fread, fwrite, fclose, unlink};
+    { server_fopen, fread, fwrite, fclose, unlink };
     m_result = OCRegisterPersistentStorageHandler(&ps);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCRegisterPersistentStorageHandler failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCRegisterPersistentStorageHandler failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1529,9 +1565,9 @@ TEST_F(RICsdkServerTest_btc, OCRegisterPersistentStorageHandler_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCRegisterPersistentStorageHandler_USV_N)
 {
     OCPersistentStorage ps2 =
-    {   NULL, fread, fwrite, fclose, unlink};
+    { NULL, NULL, NULL, NULL, NULL };
     m_result = OCRegisterPersistentStorageHandler(&ps2);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCRegisterPersistentStorageHandler failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCRegisterPersistentStorageHandler failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1563,14 +1599,15 @@ TEST_F(RICsdkServerTest_btc, OCRegisterPersistentStorageHandler_USV_N)
 TEST_F(RICsdkServerTest_btc, OCBindResourceHandler_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_result = OCCreateResource(&m_handle,RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT,NULL,NULL,OC_DISCOVERABLE|OC_OBSERVABLE);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCCreateResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCCreateResource(&m_handle, RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT, NULL, NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCCreateResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     void* callbackParam;
-    m_result = OCBindResourceHandler(m_handle,OCEntityHandlerCb,callbackParam);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCBindResourceHandler failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCBindResourceHandler(m_handle, OCEntityHandlerCb, callbackParam);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResourceHandler failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1602,14 +1639,15 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceHandler_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCBindResourceHandlerResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_result = OCCreateResource(&m_handle,RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT,NULL,NULL,OC_DISCOVERABLE|OC_OBSERVABLE);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCCreateResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCCreateResource(&m_handle, RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT, NULL, NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCCreateResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     void* callbackParam;
-    m_result = OCBindResourceHandler(NULL,OCEntityHandlerCb,callbackParam);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCBindResourceHandler failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCBindResourceHandler(NULL, OCEntityHandlerCb, callbackParam);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCBindResourceHandler failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1637,14 +1675,15 @@ TEST_F(RICsdkServerTest_btc, OCBindResourceHandlerResourceHandle_NV_N)
 TEST_F(RICsdkServerTest_btc, OCGetNumberOfResources_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    uint8_t numResources=0;
+    uint8_t numResources = 0;
     m_result = OCGetNumberOfResources(&numResources);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCGetNumberOfResources failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCGetNumberOfResources failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1672,13 +1711,14 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResources_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCGetNumberOfResources_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCGetNumberOfResources(NULL);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCGetNumberOfResources failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCGetNumberOfResources failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1706,15 +1746,16 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResources_NV_N)
 TEST_F(RICsdkServerTest_btc, OCGetResourceHandle_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t index = 0;
-    OCResourceHandle receivedHandle=NULL;
+    OCResourceHandle receivedHandle = NULL;
     receivedHandle = OCGetResourceHandle(index);
-    ASSERT_NE(receivedHandle,NULL) << "OCGetResourceHandle failed. Received handle is null";
+    ASSERT_NE(receivedHandle,NULL)<< "OCGetResourceHandle failed. Received handle is null";
 }
 #endif
 
@@ -1734,11 +1775,11 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceHandle_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCGetServerInstanceIDString_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     const char* receivedIDString;
     receivedIDString = OCGetServerInstanceIDString();
-    ASSERT_NE(NULL,receivedIDString) << "OCGetServerInstanceIDString failed. Received id is null";
+    ASSERT_NE(NULL,receivedIDString)<< "OCGetServerInstanceIDString failed. Received id is null";
 }
 #endif
 
@@ -1766,14 +1807,15 @@ TEST_F(RICsdkServerTest_btc, OCGetServerInstanceIDString_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCGetResourceUri_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    const char* receivedUri=NULL;
+    const char* receivedUri = NULL;
     receivedUri = OCGetResourceUri(m_handle);
-    ASSERT_NE(NULL,receivedUri) << "OCGetResourceUri failed. Received uri is null";
+    ASSERT_NE(NULL,receivedUri)<< "OCGetResourceUri failed. Received uri is null";
 }
 #endif
 
@@ -1801,14 +1843,15 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceUri_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCGetResourceUri_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    const char* receivedUri=NULL;
+    const char* receivedUri = NULL;
     receivedUri = OCGetResourceUri(NULL);
-    ASSERT_EQ(NULL,receivedUri) << "OCGetResourceUri failed. Received uri should be null";
+    ASSERT_EQ(NULL,receivedUri)<< "OCGetResourceUri failed. Received uri should be null";
 }
 #endif
 
@@ -1836,14 +1879,15 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceUri_NV_N)
 TEST_F(RICsdkServerTest_btc, OCGetResourceProperties_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCResourceProperty receivedProperty = NULL;
     receivedProperty = OCGetResourceProperties(m_handle);
-    ASSERT_NE(NULL,receivedProperty) << "OCGetResourceProperties failed. Received property is null";
+    ASSERT_NE(NULL,receivedProperty)<< "OCGetResourceProperties failed. Received property is null";
 }
 #endif
 
@@ -1872,14 +1916,15 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceProperties_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceTypes_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    uint8_t numResourceTypes=0;
-    m_result = OCGetNumberOfResourceTypes(m_handle,&numResourceTypes);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCGetNumberOfResourceTypes failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    uint8_t numResourceTypes = 0;
+    m_result = OCGetNumberOfResourceTypes(m_handle, &numResourceTypes);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCGetNumberOfResourceTypes failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1908,14 +1953,15 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceTypes_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceTypesResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    uint8_t numResourceTypes=0;
-    m_result = OCGetNumberOfResourceTypes(NULL,&numResourceTypes);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCGetNumberOfResourceTypes failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    uint8_t numResourceTypes = 0;
+    m_result = OCGetNumberOfResourceTypes(NULL, &numResourceTypes);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCGetNumberOfResourceTypes failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1944,13 +1990,14 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceTypesResourceHandle_NV_N)
 TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceTypesResourceTypes_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_result = OCGetNumberOfResourceTypes(m_handle,NULL);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCGetNumberOfResourceTypes failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCGetNumberOfResourceTypes(m_handle, NULL);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCGetNumberOfResourceTypes failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1979,15 +2026,16 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceTypesResourceTypes_NV_N)
 TEST_F(RICsdkServerTest_btc, OCGetResourceTypeName_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t index = 0;
     const char* receivedResourceType = NULL;
-    receivedResourceType = OCGetResourceTypeName(m_handle,index);
-    ASSERT_NE(NULL,receivedResourceType) << "OCGetResourceTypeName failed. Received resource type is null";
+    receivedResourceType = OCGetResourceTypeName(m_handle, index);
+    ASSERT_NE(NULL,receivedResourceType)<< "OCGetResourceTypeName failed. Received resource type is null";
 }
 #endif
 
@@ -2016,15 +2064,16 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceTypeName_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCGetResourceTypeNameResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t index = 0;
     const char* receivedResourceType = NULL;
-    receivedResourceType = OCGetResourceTypeName(NULL,index);
-    ASSERT_EQ(NULL,receivedResourceType) << "OCGetResourceTypeName failed. Received resource type should be null";
+    receivedResourceType = OCGetResourceTypeName(NULL, index);
+    ASSERT_EQ(NULL,receivedResourceType)<< "OCGetResourceTypeName failed. Received resource type should be null";
 }
 #endif
 
@@ -2054,14 +2103,15 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceTypeNameResourceHandle_NV_N)
 TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceInterfaces_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t numResourceInterfaces = 0;
-    m_result = OCGetNumberOfResourceInterfaces(m_handle,&numResourceInterfaces);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCGetNumberOfResourceInterfaces failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCGetNumberOfResourceInterfaces(m_handle, &numResourceInterfaces);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCGetNumberOfResourceInterfaces failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -2091,14 +2141,15 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceInterfaces_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceInterfacesResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t numResourceInterfaces = 0;
-    m_result = OCGetNumberOfResourceInterfaces(NULL,&numResourceInterfaces);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCGetNumberOfResourceInterfaces failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCGetNumberOfResourceInterfaces(NULL, &numResourceInterfaces);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCGetNumberOfResourceInterfaces failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -2128,13 +2179,14 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceInterfacesResourceHandle_NV_N)
 TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceInterfacesNumResourceInterfaces_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
-    m_result = OCGetNumberOfResourceInterfaces(m_handle,NULL);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCGetNumberOfResourceInterfaces failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCGetNumberOfResourceInterfaces(m_handle, NULL);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCGetNumberOfResourceInterfaces failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -2163,15 +2215,16 @@ TEST_F(RICsdkServerTest_btc, OCGetNumberOfResourceInterfacesNumResourceInterface
 TEST_F(RICsdkServerTest_btc, OCGetResourceInterfaceName_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t index = 0;
     const char* receivedResourceInterfaceName = NULL;
-    receivedResourceInterfaceName = OCGetResourceInterfaceName(m_handle,index);
-    ASSERT_NE(NULL,receivedResourceInterfaceName) << "OCGetResourceInterfaceName failed. Received resource interface is null";
+    receivedResourceInterfaceName = OCGetResourceInterfaceName(m_handle, index);
+    ASSERT_NE(NULL,receivedResourceInterfaceName)<< "OCGetResourceInterfaceName failed. Received resource interface is null";
 }
 #endif
 
@@ -2200,15 +2253,16 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceInterfaceName_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCGetResourceInterfaceNameResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     uint8_t index = 0;
     const char* receivedResourceInterfaceName = NULL;
-    receivedResourceInterfaceName = OCGetResourceInterfaceName(NULL,index);
-    ASSERT_EQ(NULL,receivedResourceInterfaceName) << "OCGetResourceInterfaceName failed. Received resource interface should be null";
+    receivedResourceInterfaceName = OCGetResourceInterfaceName(NULL, index);
+    ASSERT_EQ(NULL,receivedResourceInterfaceName)<< "OCGetResourceInterfaceName failed. Received resource interface should be null";
 }
 #endif
 
@@ -2240,21 +2294,23 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceInterfaceNameResourceHandle_NV_N)
 TEST_F(RICsdkServerTest_btc, OCGetResourceHandleFromCollection_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL) << "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
-    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL) << "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_FAN);
+    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_fanHandle, m_lightHandle);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     OCResourceHandle receivedHandle = NULL;
     uint8_t index = 0;
-    receivedHandle = OCGetResourceHandleFromCollection(m_fanHandle,index);
-    ASSERT_NE(NULL,receivedHandle) << "OCGetResourceHandleFromCollection failed. Received handle is null";
+    receivedHandle = OCGetResourceHandleFromCollection(m_fanHandle, index);
+    ASSERT_NE(NULL,receivedHandle)<< "OCGetResourceHandleFromCollection failed. Received handle is null";
 }
 #endif
 
@@ -2284,21 +2340,23 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceHandleFromCollection_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCGetResourceHandleFromCollectionResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_lightHandle,NULL) << "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_lightHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_lightHandle,NULL)<< "Light Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
-    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_FAN);
-    ASSERT_NE(m_fanHandle,NULL) << "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
+    m_fanHandle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_FAN, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_FAN);
+    ASSERT_NE(m_fanHandle,NULL)<< "Fan Resource was not created. " + m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCBindResource(m_fanHandle, m_lightHandle);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCBindResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     OCResourceHandle receivedHandle = NULL;
     uint8_t index = 0;
-    receivedHandle = OCGetResourceHandleFromCollection(NULL,index);
-    ASSERT_EQ(NULL,receivedHandle) << "OCGetResourceHandleFromCollection failed. Received handle should be null";
+    receivedHandle = OCGetResourceHandleFromCollection(NULL, index);
+    ASSERT_EQ(NULL,receivedHandle)<< "OCGetResourceHandleFromCollection failed. Received handle should be null";
 }
 #endif
 
@@ -2326,14 +2384,15 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceHandleFromCollectionResourceHandle_NV_
 TEST_F(RICsdkServerTest_btc, OCGetResourceHandler_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCEntityHandler entityHandler = NULL;
     entityHandler = OCGetResourceHandler(m_handle);
-    ASSERT_NE(NULL,entityHandler) << "OCGetResourceHandler failed. Received entity handler is null";
+    ASSERT_NE(NULL,entityHandler)<< "OCGetResourceHandler failed. Received entity handler is null";
 }
 #endif
 
@@ -2361,14 +2420,15 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceHandler_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCGetResourceHandlerResourceHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT,RESOURCE_INTERFACE_DEFAULT,RESOURCE_URI_LIGHT);
-    ASSERT_NE(m_handle,NULL) << m_pRICsdkHelper->getFailureMessage();
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,NULL)<< m_pRICsdkHelper->getFailureMessage();
 
     OCEntityHandler entityHandler = NULL;
     entityHandler = OCGetResourceHandler(NULL);
-    ASSERT_EQ(NULL,entityHandler) << "OCGetResourceHandler failed. Received entity handler should be null";
+    ASSERT_EQ(NULL,entityHandler)<< "OCGetResourceHandler failed. Received entity handler should be null";
 }
 #endif
 
@@ -2388,10 +2448,10 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceHandlerResourceHandle_NV_N)
 TEST_F(RICsdkServerTest_btc, OCStartMulticastServer_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_result = OCStartMulticastServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCStartMulticastServer failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCStartMulticastServer failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -2411,9 +2471,9 @@ TEST_F(RICsdkServerTest_btc, OCStartMulticastServer_SRC_P)
 TEST_F(RICsdkServerTest_btc, OCStopMulticastServer_SRC_P)
 {
     m_result = m_pRICsdkHelper->initServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_result = OCStopMulticastServer();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCStopMulticastServer failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCStopMulticastServer failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif

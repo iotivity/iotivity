@@ -104,39 +104,41 @@ cpp_shared_libs = Split('connectivity_abstraction octbstack coap resource_direct
 if 'tc' in test:
     if 'csdk' in sdk:
         csdk_tc = env_linux.Program(
-                    source = csdk_src, 
-                    target = 'iotivity_ri_csdk_test', 
-                    CPPPATH = iotivity_include_paths + csdk_include_paths, 
-                    LIBS = csdk_shared_libs + ['common_util', 'tc_util', 'dl'], 
-                    LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux', '.'], 
-                    RPATH = [iotivity_lib_path], 
+                    source = csdk_src,
+                    target = 'iotivity_ri_csdk_test',
+                    CPPPATH = iotivity_include_paths + csdk_include_paths,
+                    LIBS = csdk_shared_libs + ['common_util', 'tc_util', 'dl'],
+                    LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux', '.'],
+                    RPATH = [iotivity_lib_path],
                     CPPFLAGS = common_flags + common_linux_cppflags,
                     CPPDEFINES = common_defines)
         install_targets += [csdk_tc]
 
     if 'cpp' in sdk:
         cpp_tc = env_linux.Program(
-                    source = cpp_src, 
-                    target = 'iotivity_ri_cpp_test', 
-                    CPPPATH = iotivity_include_paths + cpp_include_paths, 
-                    LIBS = cpp_shared_libs + ['common_util', 'tc_util', 'dl'], 
-                    LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux', '.'], 
-                    RPATH = [iotivity_lib_path], 
+                    source = cpp_src,
+                    target = 'iotivity_ri_cpp_test',
+                    CPPPATH = iotivity_include_paths + cpp_include_paths,
+                    LIBS = cpp_shared_libs + ['common_util', 'tc_util', 'dl'],
+                    LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux', '.'],
+                    RPATH = [iotivity_lib_path],
                     CPPFLAGS = common_flags + common_linux_cppflags,
                     CPPDEFINES = common_defines)
         install_targets += [cpp_tc]
 
 if 'app' in test:
     ri_interop_app = env_linux.Program(
-                        source = testapp_src, 
-                        target = 'InterOpAppRI', 
-                        CPPPATH = iotivity_include_paths + testapp_include_paths, 
-                        LIBS = testapp_shared_libs, 
-                        LIBPATH = iotivity_lib_path, 
-                        RPATH = iotivity_lib_path, 
+                        source = testapp_src,
+                        target = 'InterOpAppRI',
+                        CPPPATH = iotivity_include_paths + testapp_include_paths,
+                        LIBS = testapp_shared_libs,
+                        LIBPATH = iotivity_lib_path,
+                        RPATH = iotivity_lib_path,
                         CPPFLAGS = common_flags + common_linux_cppflags,
                         CPPDEFINES = common_defines)
     install_targets += [ri_interop_app]
+
+default_targets = env_linux.Command('Copy_Security_dat_file', [], Copy('.', iotivity_root + '/resource/examples/oic_svr_db_server.dat'))
 
 install = env_linux.Install(test_src_root, install_targets)
 
@@ -147,6 +149,6 @@ for delete_target in install_targets:
     delete_bin[i] = Command(str(i), [], Delete(delete_target))
     i = i + 1
 
-default_targets = install_targets + install + delete_bin
+default_targets += delete_bin + install
 
 env_linux.Default(default_targets)

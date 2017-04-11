@@ -123,11 +123,11 @@ public class RIServerTest extends InstrumentationTestCase {
         try {
             PlatformConfig cfg = new PlatformConfig(getInstrumentation()
                     .getTargetContext(), ServiceType.OUT_OF_PROC,
-                    ModeType.SERVER, "0.0.0.0", 0, QualityOfService.HIGH);
+                    ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.HIGH);
             OcPlatform.Configure(cfg);
         } catch (Exception e) {
             e.printStackTrace();
-            fail("Exception occured");
+            fail("Exception occured!!, reason: " + e.getMessage());
         }
     }
 

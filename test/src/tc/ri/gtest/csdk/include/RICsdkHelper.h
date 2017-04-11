@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -64,8 +64,8 @@ namespace PH = std::placeholders;
 #define MANUFACTURER_URL "www.myurl.com"
 #define MODEL_NO "myModelNumber"
 #define PLATFORM_VERSION "platformVersion"
-#define SUPPORT_URL "www.mysupporturl.com"
-#define SYSTEM_TIME "mySystemTime"
+#define SUPPORT_URL "https://www.iotivity.org"
+#define SYSTEM_TIME "2015-05-15T11.04"
 
 //Set of strings for each of platform info fields
 #define DEVICE_NAME "TestName"
@@ -178,7 +178,7 @@ public:
     static char s_szQueryUri[100];
     static char s_discoveryAddr[100];
     static string s_coapQuery;
-    static OCDevAddr *s_remoteAddr;
+    static OCDevAddr s_remoteAddr;
     static OCResourceHandle s_handle;
     static int64_t s_temp;
     static char* s_units;
@@ -195,8 +195,7 @@ public:
     //server functions
     OCStackResult initServer();
     void duplicateString(char ** targetString, std::string sourceString);
-    OCPlatformInfo getPlatformInfo();
-    bool OCResourcePayloadAddStringLL(OCStringLL **stringLL,
+    OCPlatformInfo getPlatformInfo();bool OCResourcePayloadAddStringLL(OCStringLL **stringLL,
             std::string value);
     OCDeviceInfo getDeviceInfo();
     static OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
