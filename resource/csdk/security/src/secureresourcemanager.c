@@ -151,7 +151,7 @@ void SetResourceUriAndType(SRMRequestContext_t *context)
     {
         position = strlen(context->requestInfo->info.resourceUri);
     }
-    if (MAX_URI_LENGTH < position  || 0 > position)
+    if (MAX_URI_LENGTH < position)
     {
         OIC_LOG(ERROR, TAG, "Incorrect URI length.");
         return;
