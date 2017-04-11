@@ -61,7 +61,7 @@ sptest_env.PrependUnique(CPPPATH = [
 		'../../../connectivity/api'
 		])
 
-sptest_env.PrependUnique(LIBS = [   'ocpmapi',
+sptest_env.PrependUnique(LIBS = [   'ocpmapi_internal',
                                     'oc',
                                     'octbstack_test',
                                     'ocsrm',
@@ -81,7 +81,9 @@ if sptest_env.get('MULTIPLE_OWNER') == '1':
 if target_os in ['msys_nt', 'windows']:
     sptest_env.AppendUnique(LIBS = ['octbstack_static', 'sqlite3'])
 else:
-	sptest_env.AppendUnique(LIBS = ['octbstack'])
+    sptest_env.AppendUnique(LIBS = ['octbstack'])
+    if target_os in ['linux', 'tizen']:
+        sptest_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 
 ######################################################################
 # Source files and Targets
