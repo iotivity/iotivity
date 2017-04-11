@@ -50,6 +50,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, OCPayloadFo
 static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *repParent, bool isRoot);
 static OCStackResult OCParseRepPayload(OCPayload **outPayload, CborValue *arrayVal);
 static OCStackResult OCParsePresencePayload(OCPayload **outPayload, CborValue *arrayVal);
+static OCStackResult OCParseDiagnosticPayload(OCPayload **outPayload, CborValue *arrayVal);
 static OCStackResult OCParseSecurityPayload(OCPayload **outPayload, const uint8_t *payload, size_t size);
 
 OCStackResult OCParsePayload(OCPayload **outPayload, OCPayloadFormat payloadFormat,
@@ -80,6 +81,9 @@ OCStackResult OCParsePayload(OCPayload **outPayload, OCPayloadFormat payloadForm
             break;
         case PAYLOAD_TYPE_PRESENCE:
             result = OCParsePresencePayload(outPayload, &rootValue);
+            break;
+        case PAYLOAD_TYPE_DIAGNOSTIC:
+            result = OCParseDiagnosticPayload(outPayload, &rootValue);
             break;
         case PAYLOAD_TYPE_SECURITY:
             result = OCParseSecurityPayload(outPayload, payload, payloadSize);
@@ -1325,5 +1329,35 @@ static OCStackResult OCParsePresencePayload(OCPayload **outPayload, CborValue *r
 exit:
     OIC_LOG(ERROR, TAG, "CBOR error Parse Presence Payload");
     OCPresencePayloadDestroy(payload);
+    return ret;
+}
+
+static OCStackResult OCParseDiagnosticPayload(OCPayload **outPayload, CborValue *rootValue)
+{
+    OCStackResult ret = OC_STACK_INVALID_PARAM;
+    OCDiagnosticPayload *payload = NULL;
+    VERIFY_PARAM_NON_NULL(TAG, outPayload, "Invalid Parameter outPayload");
+
+    *outPayload = NULL;
+
+    payload = (OCDiagnosticPayload *)OICCalloc(1, sizeof(OCDiagnosticPayload));
+    ret = OC_STACK_NO_MEMORY;
+    VERIFY_PARAM_NON_NULL(TAG, payload, "Failed allocating diagnostic payload");
+    payload->base.type = PAYLOAD_TYPE_DIAGNOSTIC;
+    ret = OC_STACK_MALFORMED_RESPONSE;
+
+    if (cbor_value_is_text_string(rootValue))
+    {
+        size_t len = 0;
+        CborError err = cbor_value_dup_text_string(rootValue, &payload->message, &len, NULL);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding message value");
+    }
+
+    *outPayload = (OCPayload *)payload;
+    return OC_STACK_OK;
+
+exit:
+    OIC_LOG(ERROR, TAG, "CBOR error Parse Diagnostic Payload");
+    OCDiagnosticPayloadDestroy(payload);
     return ret;
 }

@@ -658,7 +658,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                     return result;
                 }
                 // Add CONTENT_FORMAT OPT if payload exist
-                if (responseInfo.info.payloadSize > 0)
+                if (ehResponse->payload->type != PAYLOAD_TYPE_DIAGNOSTIC &&
+                        responseInfo.info.payloadSize > 0)
                 {
                     responseInfo.info.payloadFormat = OCToCAPayloadFormat(
                             serverRequest->acceptFormat);

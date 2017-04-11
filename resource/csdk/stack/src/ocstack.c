@@ -1692,9 +1692,18 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                         }
                         if (type == PAYLOAD_TYPE_INVALID)
                         {
-                            OIC_LOG_V(INFO, TAG, "Assuming PAYLOAD_TYPE_REPRESENTATION: %d %s",
-                                    cbNode->method, cbNode->requestUri);
-                            type = PAYLOAD_TYPE_REPRESENTATION;
+                            if (responseInfo->info.payloadFormat == CA_FORMAT_UNDEFINED)
+                            {
+                                OIC_LOG_V(INFO, TAG, "Assuming PAYLOAD_TYPE_DIAGNOSTIC: %d %s",
+                                        cbNode->method, cbNode->requestUri);
+                                type = PAYLOAD_TYPE_DIAGNOSTIC;
+                            }
+                            else
+                            {
+                                OIC_LOG_V(INFO, TAG, "Assuming PAYLOAD_TYPE_REPRESENTATION: %d %s",
+                                        cbNode->method, cbNode->requestUri);
+                                type = PAYLOAD_TYPE_REPRESENTATION;
+                            }
                         }
                     }
                     else
@@ -1712,7 +1721,8 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 }
 
                 // In case of error, still want application to receive the error message.
-                if (OCResultToSuccess(response->result) || PAYLOAD_TYPE_REPRESENTATION == type)
+                if (OCResultToSuccess(response->result) || PAYLOAD_TYPE_REPRESENTATION == type ||
+                        PAYLOAD_TYPE_DIAGNOSTIC == type)
                 {
                     if (OC_STACK_OK != OCParsePayload(&response->payload,
                             CAToOCPayloadFormat(responseInfo->info.payloadFormat),
