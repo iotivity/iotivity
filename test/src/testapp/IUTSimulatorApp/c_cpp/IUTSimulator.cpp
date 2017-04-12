@@ -93,6 +93,7 @@ ResourceHelper *g_resourceHelper;
 static mutex s_mutex;
 static const char CRED_FILE_SERVER[] = "oic_svr_db_server.dat";
 static const char CRED_FILE_CLIENT[] = "oic_svr_db_client.dat";
+static const char INTROSPECTION_SWAGGER_FILE[] = "airconditioner-swagger.json";
 static const string JUST_WORKS_DI = "6A757374-776F-726B-4465-765575696430";
 static const string RANDOM_PIN_DI = "72616E64-5069-6E44-6576-557569643030";
 static const string MFG_DI = "4d617566-6163-7475-7265-724365727430";
@@ -1112,8 +1113,14 @@ void waitForCallback()
 
 FILE* server_fopen(const char *path, const char *mode)
 {
-    (void) path;
-    return fopen(CRED_FILE_SERVER, mode);
+    if (0 == strcmp(path, OC_INTROSPECTION_FILE_NAME))
+    {
+        return fopen(INTROSPECTION_SWAGGER_FILE, mode);
+    }
+    else
+    {
+        return fopen(CRED_FILE_SERVER, mode);
+    }
 }
 
 FILE* client_fopen(const char *path, const char *mode)
@@ -1498,18 +1505,17 @@ void createAirConDevice(bool isSecured)
         SWING_RESOURCE_INTERFACE);
 
         OCRepresentation swingRep;
-        swingRep.setValue("x.com.vendor.swing.on", false);
-        value = "horizontal";
-        swingRep.setValue("x.com.vendor.swing.blade.movement.direction", value);
-        string supportedDirection[2] =
-        { "horizontal", "vertical" };
-        swingRep.setValue("x.com.vendor.swing.supported.direction", supportedDirection);
+        swingRep.setValue(SWING_STATE_KEY, SWING_STATE_VALUE);
+        value = SWING_MOVEMENT_VALUE;
+        swingRep.setValue(SWING_MOVEMENT_KEY, value);
+        string supportedDirection[2] = { "আনুভূমিক", "উল্লম্ব" };
+        swingRep.setValue(SWING_SUPPOTED_DIRECTION_KEY, supportedDirection);
 
         g_acSwingResource->setResourceRepresentation(swingRep);
         g_acSwingResourceHidden->setResourceRepresentation(swingRep);
 
-        g_acSwingResource->setAsReadOnly("x.com.vendor.swing.supported.direction");
-        g_acSwingResourceHidden->setAsReadOnly("x.com.vendor.swing.supported.direction");
+        g_acSwingResource->setAsReadOnly(SWING_SUPPOTED_DIRECTION_KEY);
+        g_acSwingResourceHidden->setAsReadOnly(SWING_SUPPOTED_DIRECTION_KEY);
 
         result = g_acSwingResource->startResource(resourceProperty);
         result = g_acSwingResourceHidden->startResource(resourcePropertyHidden);
@@ -2150,7 +2156,6 @@ void discoverIntrospection(bool isMulticast){
 
 void discoverDevice(bool isMulticast)
 {
-
     string host = "";
     g_hasCallbackArrived = false;
     ostringstream deviceDiscoveryRequest;
@@ -2595,7 +2600,7 @@ void updateLocalResourceAutomatically()
         }
         else if (!uri.compare(AC_SWING_URI) || !uri.compare(AC_SWING_URI_CHILD))
         {
-            key = string("x.com.vendor.swing.on");
+            key = string(SWING_STATE_KEY);
             value = swingerValue = !swingerValue;
         }
 

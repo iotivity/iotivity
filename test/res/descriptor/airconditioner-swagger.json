@@ -1,0 +1,119 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "airconditioner",
+    "version": "v1.0.0",
+    "license": {
+      "name": "copyright 2016 Open Connectivity Foundation, Inc. All rights reserved."
+    }
+  },
+  "schemes": ["http"],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "paths": {
+    "/TemperatureResURI" : {
+      "get": {
+        "parameters": [
+          {"$ref": "#/parameters/interface"},
+          {
+            "in": "query",
+            "description": "Units",
+            "type": "string",
+            "enum": ["C", "F", "K"],
+            "name": "units"
+          }
+        ],
+        "responses": {
+            "200": {
+              "description" : "",
+              "schema": { "$ref": "#/definitions/Temperature" }
+            },
+            "403": {
+              "description" : "",
+              "schema": { "$ref": "#/definitions/Temperature" }
+            }
+        }
+      },
+      "post": {
+        "parameters": [
+          {"$ref": "#/parameters/interface"},
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Temperature" }
+          }
+        ],
+        "responses": {
+            "200": {
+              "description" : "",
+              "schema": { "$ref": "#/definitions/Temperature" }
+            },
+            "403": {
+              "description" : "",
+             "schema": { "$ref": "#/definitions/Temperature" }
+            }
+        }
+      }
+    }
+  },
+  "parameters": {
+    "interface" : {
+      "in" : "query",
+      "name" : "if",
+      "type" : "string",
+      "enum" : ["oic.if.a", "oic.if.baseline"]
+    }
+  },
+  "definitions": {
+    "Temperature" :
+            {
+        "properties": {
+          "range": {
+            "items": {
+              "type": "number"
+            },
+            "readOnly": true,
+            "type": "array"
+          },
+          "rt": {
+            "items": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              }
+            ],
+            "minItems": 1,
+            "readOnly": true,
+            "type": "array"
+          },
+          "temperature": {
+            "type": "number"
+          },
+          "units": {
+            "oneOf": [
+              {
+                "enum": [
+                  "C"
+                ],
+                "readOnly": true
+              },
+              {
+                "items": {
+                  "enum": [
+                    "C"
+                  ]
+                },
+                "type": "array"
+              }
+            ]
+          }
+        },
+        "required": [
+          "temperature"
+        ],
+        "type": "object"
+      }
+
+  }
+}

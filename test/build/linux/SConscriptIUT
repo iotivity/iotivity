@@ -84,6 +84,7 @@ install_targets += [iut_app]
 default_targets += env_linux.Command('copy_justworks_dat_file', [], Copy('.', iotivity_root + '/resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat'))
 default_targets += env_linux.Command('copy_randompin_dat_file', [], Copy('.', iotivity_root + '/resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat'))
 default_targets += env_linux.Command('copy_mfg_dat_file', [], Copy('.', iotivity_root + '/resource/csdk/security/provisioning/sample/oic_svr_db_server_mfg.dat'))
+default_targets += env_linux.Command('copy_swagger_file', [], Copy(iotivity_test_root + '/' + install_dir, iotivity_test_root + '/res/descriptor/airconditioner-swagger.json'))
 
 install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
 
