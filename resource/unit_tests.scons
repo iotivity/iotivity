@@ -44,8 +44,7 @@ if target_os in ['linux', 'windows', 'darwin', 'msys_nt']:
         SConscript('unittests/SConscript', 'test_env')
 
         # Build Security Resource Manager and Provisioning API unit test
-        # TODO: Enable provisioning and associated unit tests for Windows
-        if (env.get('SECURED') == '1') and (target_os != 'windows'):
+        if env.get('SECURED') == '1':
             SConscript('provisioning/unittests/SConscript', 'test_env')
 
         if target_os in ['windows']:
