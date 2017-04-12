@@ -17,6 +17,8 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+#include "iotivity_config.h"
 #include <iostream>
 #include <sstream>
 #include <limits>

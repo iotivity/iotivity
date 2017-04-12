@@ -2462,7 +2462,8 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    OCCallbackData cbData = {.context=NULL, .cb=NULL, .cd=NULL};
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(cbData));
     cbData.cb = &ProvisioningStatusHandler;
     cbData.context = (void*)otmCtx;
     cbData.cd = NULL;
@@ -2522,7 +2523,8 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    OCCallbackData cbData = {.context=NULL, .cb=NULL, .cd=NULL};
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(cbData));
     cbData.cb = &ReadyForNomalStatusHandler;
     cbData.context = (void*)otmCtx;
     cbData.cd = NULL;

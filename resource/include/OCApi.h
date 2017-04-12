@@ -31,6 +31,7 @@
 #include <functional>
 #endif
 
+#include "iotivity_config.h"
 #include "iotivity_debug.h"
 
 #include "octypes.h"

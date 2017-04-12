@@ -390,7 +390,8 @@ static OCStackResult provisionCredentials(OicSecCred_t *cred,
         }
         OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-        OCCallbackData cbData = { .context = NULL, .cb = NULL, .cd = NULL };
+        OCCallbackData cbData;
+        memset(&cbData, 0, sizeof(cbData));
         cbData.cb = responseHandler;
         cbData.context = (void *)credData;
         cbData.cd = NULL;

@@ -25,6 +25,7 @@
 // except for resource-specific IoTivity APIs (ie. OCCreateResource(),
 // OCDeleteResource(), EntityHandler()..etc.)
 
+#include "iotivity_config.h"
 #include "IotivityandZigbeeClient.h"
 #include <stdio.h>
 #include <stdlib.h>
