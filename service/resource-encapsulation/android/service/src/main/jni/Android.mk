@@ -19,6 +19,11 @@ LOCAL_SRC_FILES := $(IOTIVITY_LIB_PATH)/librcs_server.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := ca-interface
+LOCAL_SRC_FILES := $(IOTIVITY_LIB_PATH)/libca-interface.so
+include $(PREBUILT_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
 OIC_SRC_DIR := ../../../../../..
 LOCAL_MODULE := rcs_jni
 
