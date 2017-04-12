@@ -16,7 +16,7 @@ Source1002: %{name}-test.manifest
 %endif
 
 %if "%{tizen}" == "2.3"
-%define TARGET_TRANSPORT IP
+%define TARGET_TRANSPORT IP,BT
 %endif
 
 %if "%{tizen}" == "3.0"
