@@ -55,7 +55,6 @@ mkdir ./tmp/extlibs/
 mkdir ./tmp/packaging
 cp -LR ./extlibs/tinycbor $sourcedir/tmp/extlibs
 cp -Rf ./extlibs/mbedtls $sourcedir/tmp/extlibs
-cp -R ./extlibs/timer $sourcedir/tmp/extlibs
 cp -R ./extlibs/rapidxml $sourcedir/tmp/extlibs
 cp -R ./extlibs/libcoap $sourcedir/tmp/extlibs
 cp -LR ./extlibs/sqlite3 $sourcedir/tmp/extlibs

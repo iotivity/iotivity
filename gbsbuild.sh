@@ -33,7 +33,6 @@ cp -R ./extlibs/cjson $sourcedir/tmp/extlibs
 cp -R ./extlibs/mbedtls $sourcedir/tmp/extlibs
 cp -R ./extlibs/gtest $sourcedir/tmp/extlibs
 cp -LR ./extlibs/sqlite3 $sourcedir/tmp/extlibs
-cp -R ./extlibs/timer $sourcedir/tmp/extlibs
 cp -R ./extlibs/rapidxml $sourcedir/tmp/extlibs
 cp -R ./extlibs/libcoap $sourcedir/tmp/extlibs
 cp -R ./resource $sourcedir/tmp
