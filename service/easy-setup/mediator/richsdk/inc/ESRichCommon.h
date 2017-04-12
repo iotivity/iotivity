@@ -372,20 +372,6 @@ namespace OIC
             }
 
             /**
-             * Set DevConf resource properties to be delivered to Enrollee
-             *
-             * @param language IETF language tag using ISO 639X
-             * @param country ISO Country Code (ISO 3166-1 Alpha-2)
-             * @param location location information
-             */
-            void setDevConfProp(string language, string country, string location)
-            {
-                m_rep.setValue(OC_RSRVD_ES_LANGUAGE, language);
-                m_rep.setValue(OC_RSRVD_ES_COUNTRY, country);
-                m_rep.setValue(OC_RSRVD_ES_LOCATION, location);
-            }
-
-            /**
              * Get a SSID of Enroller
              *
              * @return a SSID of enroller
@@ -443,50 +429,6 @@ namespace OIC
                     return static_cast<WIFI_ENCTYPE>(m_rep.getValue<int>(OC_RSRVD_ES_ENCTYPE));
                 }
                 return NONE_ENC;
-            }
-
-            /**
-             * Get a language to be set. A language is expressed in IETF language tag
-             * using ISO 639X.
-             *
-             * @return a language to be set
-             */
-            std::string getLanguage() const
-            {
-                if(m_rep.hasAttribute(OC_RSRVD_ES_LANGUAGE))
-                {
-                    return m_rep.getValue<std::string>(OC_RSRVD_ES_LANGUAGE);
-                }
-                return std::string("");
-            }
-
-            /**
-             * Get a country to be set. A country is expressed in ISO Country Code
-             * (ISO 3166-1 Alpha-2)
-             *
-             * @return a country to be set
-             */
-            std::string getCountry() const
-            {
-                if(m_rep.hasAttribute(OC_RSRVD_ES_COUNTRY))
-                {
-                    return m_rep.getValue<std::string>(OC_RSRVD_ES_COUNTRY);
-                }
-                return std::string("");
-            }
-
-            /**
-             * Get a location to be set. A location is GPS information
-             *
-             * @return a country to be set
-             */
-            std::string getLocation() const
-            {
-                if(m_rep.hasAttribute(OC_RSRVD_ES_LOCATION))
-                {
-                    return m_rep.getValue<std::string>(OC_RSRVD_ES_LOCATION);
-                }
-                return std::string("");
             }
 
             /**
@@ -656,37 +598,6 @@ namespace OIC
                         if(rep.hasAttribute(OC_RSRVD_ES_DEVNAME))
                         {
                             return rep.getValue<std::string>(OC_RSRVD_ES_DEVNAME);
-                        }
-                    }
-                }
-                return std::string("");
-            }
-
-            /**
-             * Get a model number of Enrollee.
-             *
-             * @return a model number of Enrollee
-             */
-            std::string getModelNumber() const
-            {
-                std::vector<OCRepresentation> children = m_EasySetupRep.getChildren();
-                for(auto child = children.begin(); child != children.end(); ++child)
-                {
-                    if(child->getUri().find(OC_RSRVD_ES_URI_DEVCONF) != std::string::npos)
-                    {
-                        OCRepresentation rep;
-                        if(child->hasAttribute(OC_RSRVD_REPRESENTATION))
-                        {
-                            rep = child->getValue<OCRepresentation>(OC_RSRVD_REPRESENTATION);
-                        }
-                        else
-                        {
-                            return std::string("");
-                        }
-
-                        if(rep.hasAttribute(OC_RSRVD_ES_MODELNUMBER))
-                        {
-                            return rep.getValue<std::string>(OC_RSRVD_ES_MODELNUMBER);
                         }
                     }
                 }

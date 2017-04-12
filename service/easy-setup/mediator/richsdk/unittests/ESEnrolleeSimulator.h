@@ -62,7 +62,7 @@ public:
     ESResult setDeviceProperty()
     {
         ESDeviceProperty deviceProperty = {
-            {{WIFI_11G, WiFi_EOF}, WIFI_5G}, {"Test Device", "Test Model Number"}
+            {{WIFI_11G, WiFi_EOF}, WIFI_5G}, {"Test Device"}
         };
 
         return ESSetDeviceProperty(&deviceProperty);

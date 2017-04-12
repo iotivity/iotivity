@@ -55,9 +55,7 @@ typedef struct
  */
 typedef struct
 {
-    char location[OIC_STRING_MAX_VALUE];    /**< GPS information of device. Longitude and latitude in json format **/
-    char language[OIC_STRING_MAX_VALUE];    /**< IETF language tag using ISO 639X **/
-    char country[OIC_STRING_MAX_VALUE];     /**< ISO Country Code (ISO 3166-1 Alpha-2) **/
+    // TODO: variables can be added when some properties in oic.r.devconf resource are specified.
     void *userdata;                         /**< Vender-specific data**/
 } ESDevConfData;
 
@@ -94,7 +92,6 @@ typedef struct
     struct
     {
         char deviceName[OIC_STRING_MAX_VALUE];
-        char modelNumber[OIC_STRING_MAX_VALUE];
     } DevConf;
 } ESDeviceProperty;
 
