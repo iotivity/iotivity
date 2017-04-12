@@ -56,6 +56,8 @@ cd $sourcedir/tmp
 
 secured=1
 gbscommand="gbs build -A armv7l "
+nproc=$(expr 1 + $(expr `nproc --ignore=1` / 2 ) )
+gbscommand=$gbscommand" --define '_smp_mflags -j$nproc'"
 
 for ARGUMENT_VALUE in $*
 do
