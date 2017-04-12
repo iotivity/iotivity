@@ -1314,11 +1314,6 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, size_t *size)
     }
 
     size_t len = u_arraylist_length(iflist);
-    size_t length = len;
-
-#ifdef __WITH_TLS__
-    length = len * 2;
-#endif
 
     CAEndpoint_t *ep = (CAEndpoint_t *)OICCalloc(len, sizeof (CAEndpoint_t));
     if (!ep)
@@ -1354,25 +1349,6 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, size_t *size)
             continue;
         }
         OICStrcpy(ep[j].addr, sizeof(ep[j].addr), ifitem->addr);
-
-#ifdef __WITH_TLS__
-        j++;
-
-        ep[j].adapter = CA_ADAPTER_TCP;
-        ep[j].ifindex = ifitem->index;
-
-        if (ifitem->family == AF_INET6)
-        {
-            ep[j].flags = CA_IPV6 | CA_SECURE;
-            ep[j].port = caglobals.tcp.ipv6s.port;
-        }
-        else
-        {
-            ep[j].flags = CA_IPV4 | CA_SECURE;
-            ep[j].port = caglobals.tcp.ipv4s.port;
-        }
-        OICStrcpy(ep[j].addr, sizeof(ep[j].addr), ifitem->addr);
-#endif
         j++;
     }
 
