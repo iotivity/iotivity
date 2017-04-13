@@ -158,7 +158,7 @@ void SimulatorManager::getDeviceInfo(const std::string &host, DeviceInfoCallback
     {
         std::string deviceName = rep.getValue<std::string>("n");
         std::string deviceID = rep.getValue<std::string>("di");
-        std::string deviceSpecVersion = rep.getValue<std::string>("lcv");
+        std::string deviceSpecVersion = rep.getValue<std::string>("icv");
         std::string deviceDMV = rep.getValue<std::string>("dmv");
 
         DeviceInfo deviceInfo(deviceName, deviceID, deviceSpecVersion, deviceDMV);
