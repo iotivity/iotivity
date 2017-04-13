@@ -71,9 +71,3 @@ server_env.AppendUnique(LIBS = 'rcs_server')
 sampleResourceServer = server_env.Program('sampleResourceServer', 'SampleResourceServer.cpp')
 separateResponseServer = server_env.Program('separateResponseServer', 'SeparateResponseServer.cpp')
 nestedAttributesServer = server_env.Program('nestedAttributesServer', 'NestedAttributesServer.cpp')
-
-######################################################################
-# ##### Build the RE Secure Resource Example #####
-######################################################################
-if env.get('SECURED') == '1':
-    SConscript('secureResourceExample/SConscript')
