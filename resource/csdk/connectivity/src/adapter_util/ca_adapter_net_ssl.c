@@ -1330,8 +1330,9 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
 
     g_getCredentialTypesCallback(g_caSslContext->cipherFlag, deviceId);
 
-    // Retrieve the PSK credential from SRM
-    if (true == g_caSslContext->cipherFlag[0] && 0 != InitPskIdentity(config))
+    // Retrieve the PSK credential from SRM or use PIN based generation
+    if ((SSL_ECDHE_PSK_WITH_AES_128_CBC_SHA256 == g_caSslContext->cipher ||
+         true == g_caSslContext->cipherFlag[0]) && 0 != InitPskIdentity(config))
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "PSK identity initialization failed!");
     }
