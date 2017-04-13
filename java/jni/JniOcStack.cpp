@@ -616,6 +616,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
 
     g_mid_OcOicSecPdAcl_get_recurrences = env->GetMethodID(g_cls_OcOicSecPdAcl, "getRecurrences", "(I)Ljava/lang/String;");
     VERIFY_VARIABLE_NULL(g_mid_OcOicSecPdAcl_get_recurrences);
+#ifdef SECURED
 #ifdef WITH_CLOUD
 #ifdef __WITH_TLS__
     //OcCloudProvisioning
@@ -629,6 +630,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
 
     g_mid_OcCloudProvisioning_getPort = env->GetMethodID(g_cls_OcCloudProvisioning, "getPort", "()I");
     VERIFY_VARIABLE_NULL(g_mid_OcCloudProvisioning_getPort);
+#endif
 #endif
 #endif
     return JNI_CURRENT_VERSION;
