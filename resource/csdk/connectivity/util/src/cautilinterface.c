@@ -180,7 +180,7 @@ CAResult_t CAUtilCMTerminate()
     return CACMTerminate();
 }
 
-CAResult_t CAUtilCMUpdateRemoteDeviceInfo(const CAEndpoint_t endpoint, bool isCloud)
+CAResult_t CAUtilCMUpdateRemoteDeviceInfo(const CAEndpoint_t *endpoint, bool isCloud)
 {
     return CACMUpdateRemoteDeviceInfo(endpoint, isCloud);
 }
