@@ -23,6 +23,7 @@
 #include "ocstack.h"
 #include <stdlib.h>
 #include "cbor.h"
+#include "platform_features.h"
 
 #define STRINGIZE2(x) #x
 #define STRINGIZE(x) STRINGIZE2(x)

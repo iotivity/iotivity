@@ -17,6 +17,7 @@
  *
  ******************************************************************/
 
+#include "iotivity_config.h"
 #include "oic_malloc.h"
 #include "ipca.h"
 #include "ipcainternal.h"

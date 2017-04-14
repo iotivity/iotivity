@@ -27,6 +27,7 @@
 #include <chrono>
 #include <condition_variable>
 
+#include "iotivity_config.h"
 #include "ipca.h"
 #include "OCFDevice.h"
 

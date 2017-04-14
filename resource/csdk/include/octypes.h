@@ -28,7 +28,6 @@
 #ifndef OCTYPES_H_
 #define OCTYPES_H_
 
-#include "iotivity_config.h"
 #include "ocstackconfig.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -1250,7 +1249,7 @@ typedef struct OCHeaderOption
     /** pointer to its data.*/
     uint8_t optionData[MAX_HEADER_OPTION_DATA_LENGTH];
 
-#ifdef SUPPORTS_DEFAULT_CTOR
+#ifdef __cplusplus
     OCHeaderOption() = default;
     OCHeaderOption(OCTransportProtocolID pid,
                    uint16_t optId,
@@ -1267,7 +1266,7 @@ typedef struct OCHeaderOption
         memcpy(optionData, optData, optionLength);
         optionData[optionLength - 1] = '\0';
     }
-#endif
+#endif // __cplusplus
 } OCHeaderOption;
 
 /**
@@ -1784,11 +1783,11 @@ typedef struct OCCallbackData
     /** A pointer to a function to delete the context when this callback is removed.*/
     OCClientContextDeleter cd;
 
-#ifdef SUPPORTS_DEFAULT_CTOR
+#ifdef __cplusplus
     OCCallbackData() = default;
     OCCallbackData(void* ctx, OCClientResponseHandler callback, OCClientContextDeleter deleter)
         :context(ctx), cb(callback), cd(deleter){}
-#endif
+#endif // __cplusplus
 } OCCallbackData;
 
 /**

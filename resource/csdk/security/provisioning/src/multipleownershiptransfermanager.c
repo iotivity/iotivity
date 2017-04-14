@@ -174,7 +174,8 @@ static OCStackResult MOTSendPostDoxm(void *ctx,
     VERIFY_NOT_NULL(TAG, motCtx->ctxResultArray, ERROR);
 
     //Send POST request
-    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(cbData));
     cbData.cb = &MOTUpdateSecurityResourceCB;
     cbData.context = (void *)motCtx;
     OIC_LOG(DEBUG, TAG, "Sending POST 'doxm' request to resource server");
@@ -448,7 +449,8 @@ OCStackResult MOTProvisionPreconfigPIN(void *ctx, const OCProvisionDev_t *target
     VERIFY_NOT_NULL(TAG, motCtx->ctxResultArray, ERROR);
 
     //Send POST request
-    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(cbData));
     cbData.cb = &MOTUpdateSecurityResourceCB;
     cbData.context = (void *)motCtx;
     OIC_LOG(DEBUG, TAG, "Sending POST Preconfiged PIN credenatial request to resource server");
