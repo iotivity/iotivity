@@ -17,6 +17,7 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#include "iotivity_config.h"
 #include "rd_server.h"
 
 #include "rd_database.h"
