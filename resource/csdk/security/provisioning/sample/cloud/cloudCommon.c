@@ -559,7 +559,7 @@ static void *userRequests(void *data)
             readInteger(&tmp, "Select Cipher Suite", "0 - ECDSA, other - RSA");
             uint16_t cipher = tmp? MBEDTLS_TLS_RSA_WITH_AES_128_GCM_SHA256:
                                    MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
-            if (CA_STATUS_OK != CASelectCipherSuite(cipher, CA_ADAPTER_TCP))
+            if (OC_STACK_OK != OCSelectCipherSuite(cipher, OC_ADAPTER_TCP))
             {
                 OIC_LOG(ERROR, TAG, "CASelectCipherSuite returned an error");
             }
