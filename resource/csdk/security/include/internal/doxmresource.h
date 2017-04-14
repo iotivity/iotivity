@@ -95,42 +95,68 @@ OCStackResult SetDoxmDeviceIDSeed(const uint8_t* seed, size_t seedSize);
 #endif
 
 /**
- * This method returns the SRM device ID for this device.
+ * Get the doxm.deviceuuid value for this device.
  *
- * @return ::OC_STACK_OK for Success, otherwise some error value.
+ * @param[out] deviceuuid ptr to contain a copy of doxm.deviceuuid value.
+ * @return ::OC_STACK_OK if value is copied successfully, else ::OC_STACK_ERROR.
  */
-OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID);
+OCStackResult GetDoxmDeviceID(OicUuid_t *deviceuuid);
 
 /**
- * This method changes the SRM device ID for this device.
- * This api will update device Id iff device is in unowned state.
- * @return ::OC_STACK_OK for Success, otherwise some error value.
+ * Set the doxm.deviceuuid value for this device.
+ *
+ * @param[in] deviceuuid ptr to value to be copied into doxm.deviceuuid.
+ * @return ::OC_STACK_OK if value is copied successfully, else ::OC_STACK_ERROR.
  */
-OCStackResult SetDoxmDeviceID(const OicUuid_t *deviceID);
+OCStackResult SetDoxmDeviceID(const OicUuid_t *deviceuuid);
 
 /**
- * Gets the OicUuid_t value for the owner of this device.
+ * Get the doxm.devowneruuid value for this device.
  *
- * @param devownerid a pointer to be assigned to the devownerid property
- * @return ::OC_STACK_OK if devownerid is assigned correctly, else ::OC_STACK_ERROR.
+ * @param[out] devowneruuid ptr to contain a copy of doxm.devowneruuid value.
+ * @return ::OC_STACK_OK if value is copied successfully, else ::OC_STACK_ERROR.
  */
-OCStackResult GetDoxmDevOwnerId(OicUuid_t *devownerid);
+OCStackResult GetDoxmDevOwnerId(OicUuid_t *devowneruuid);
 
 /**
- * Gets the bool state of "isOwned" property on the doxm resource.
+ * Set the doxm.deviceuuid value for this device.
  *
- * @param isOwned a pointer to be assigned to isOwned property
- * @return ::OC_STACK_OK if isOwned is assigned correctly, else ::OC_STACK_ERROR.
+ * @param[in] deviceuuid ptr to value to be copied into doxm.deviceuuid.
+ * @return ::OC_STACK_OK if value is copied successfully, else ::OC_STACK_ERROR.
  */
-OCStackResult GetDoxmIsOwned(bool *isOwned);
+OCStackResult SetDoxmDevOwnerId(const OicUuid_t *devowneruuid);
 
 /**
- * Gets the OicUuid_t value for the rowneruuid of the doxm resource.
+ * Get the doxm.isowned value for this device.
  *
- * @param rowneruuid a pointer to be assigned to the rowneruuid property
- * @return ::OC_STACK_OK if rowneruuid is assigned correctly, else ::OC_STACK_ERROR.
+ * @param[out] isowned ptr to contain a copy of doxm.isowned value.
+ * @return ::OC_STACK_OK if value is copied successfully, else ::OC_STACK_ERROR.
+ */
+OCStackResult GetDoxmIsOwned(bool *isowned);
+
+/**
+ * Set the doxm.isowned value for this device.
+ *
+ * @param[in] isowned ptr to value to be copied into doxm.isowned.
+ * @return ::OC_STACK_OK if value is copied successfully, else ::OC_STACK_ERROR.
+ */
+OCStackResult SetDoxmIsOwned(const bool isowned);
+
+/**
+ * Get the doxm.rowneruuid value for this device.
+ *
+ * @param[out] rowneruuid ptr to contain a copy of rowneruuid value.
+ * @return ::OC_STACK_OK if value is copied successfully, else ::OC_STACK_ERROR.
  */
 OCStackResult GetDoxmRownerId(OicUuid_t *rowneruuid);
+
+/**
+ * Set the doxm.rowneruuid value for this device.
+ *
+ * @param[in] rowneruuid ptr to value to be copied into doxm.rowneruuid.
+ * @return ::OC_STACK_OK if value is copied successfully, else ::OC_STACK_ERROR.
+ */
+OCStackResult SetDoxmRownerId(const OicUuid_t *rowneruuid);
 
 #ifdef MULTIPLE_OWNER
 /**
@@ -196,7 +222,7 @@ OCStackResult SetDoxmSelfOwnership(const OicUuid_t* newROwner);
  * struct with the values from another /oic/sec/doxm struct.
  *
  * @param src is a pointer to the source @ref OicSecDoxm_t data.
- * @param dst is a pointer to the destination @ref OicSecDoxm_t data. 
+ * @param dst is a pointer to the destination @ref OicSecDoxm_t data.
  *
  * @retval ::OC_STACK_OK for Success, otherwise some error value
  */
