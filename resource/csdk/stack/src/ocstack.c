@@ -1092,8 +1092,8 @@ OCStackResult OCEncodeAddressForRFC6874(char *outputAddress,
 
     // Restore the null terminator with an escaped '%' character, per RFC 6874
     OICStrcpy(outputAddress, scopeIdPart - addressPart, addressPart);
-    strcat(outputAddress, "%25");
-    strcat(outputAddress, scopeIdPart);
+    OICStrcat(outputAddress, outputSize, "%25");
+    OICStrcat(outputAddress, outputSize, scopeIdPart);
 
     return OC_STACK_OK;
 }
@@ -3011,7 +3011,7 @@ static OCStackResult ParseRequestUri(const char *fullUri,
                 result = OC_STACK_NO_MEMORY;
                 goto error;
             }
-            strcpy(*resourceUri, slash);
+            OICStrcpy(*resourceUri, (ulen + 1), slash);
         }
         // resource type
         if (type && resourceType)
@@ -3023,7 +3023,7 @@ static OCStackResult ParseRequestUri(const char *fullUri,
                 goto error;
             }
 
-            OICStrcpy(*resourceType, (tlen+1), type);
+            OICStrcpy(*resourceType, (tlen + 1), type);
         }
     }
 

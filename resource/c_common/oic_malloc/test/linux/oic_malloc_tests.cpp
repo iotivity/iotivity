@@ -63,6 +63,7 @@ class OICAllocTestsBase : public testing::Test
 {
 public:
     OICAllocTestsBase() :
+        m_allocatedSize(0),
         m_pBuffer(NULL)
     {}
 
