@@ -1751,6 +1751,17 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
     CAEndpoint_t endpoint;
     CopyDevAddrToEndpoint(&deviceInfo->endpoint, &endpoint);
 
+    if (CA_ADAPTER_IP == endpoint.adapter)
+    {
+        endpoint.port = deviceInfo->securePort;
+    }
+#ifdef WITH_TCP
+    else if (CA_ADAPTER_TCP == endpoint.adapter)
+    {
+        endpoint.port = deviceInfo->tcpPort;
+    }
+#endif
+
     if (CA_STATUS_OK != CAInitiateHandshake(&endpoint))
     {
         OIC_LOG(ERROR, TAG, "Failed to pass ssl handshake");
