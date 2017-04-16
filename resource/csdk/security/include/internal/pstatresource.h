@@ -25,6 +25,17 @@
 extern "C" {
 #endif
 
+typedef enum {
+    PSTAT_DOS = 0,
+    PSTAT_ISOP,
+    PSTAT_CM,
+    PSTAT_TM,
+    PSTAT_OM,
+    PSTAT_SM,
+    PSTAT_ROWNERUUID,
+    PSTAT_PROPERTY_COUNT
+} PstatProperty_t;
+
 /**
  * Initialize Pstat resource by loading data from persistent storage.
  *
@@ -40,18 +51,36 @@ OCStackResult InitPstatResource();
 OCStackResult DeInitPstatResource();
 
 /**
- * This method converts PSTAT into the cbor payload.
+ * Converts PSTAT into the cbor payload, including only the
+ * Properties marked "true" in the propertiesToInclude array.
  *
  * @param pstat pointer to the initialized pstat structure.
- * @param cborPayload pointer to pstat cbor payload.
- * @param cborSize of the cbor payload converted. It is 0 in case of error,
+ * @param payload pointer to pstat cbor payload.
+ * @param size of the cbor payload converted. It is 0 in case of error,
  * else a positive value if succcessful.
- * @param writableOnly indicates whether it is writable only or not.
+ * @param propertiesToInclude Array of bools, size "PSTAT_PROPERTY_COUNT",
+ * where "true" indicates the corresponding property should be
+ * included in the CBOR representation that is created.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
- OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **cborPayload,
-                                  size_t *cborSize, bool writableOnly);
+ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
+ 	uint8_t **payload, size_t *size, const bool *propertiesToInclude);
+
+
+/**
+ * Converts PSTAT into the cbor payload, including all Properties for a
+ * full representation.
+ *
+ * @param pstat pointer to the initialized pstat structure.
+ * @param payload pointer to pstat cbor payload.
+ * @param size of the cbor payload converted. It is 0 in case of error,
+ * else a positive value if succcessful.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat,
+	uint8_t **payload, size_t *size);
 
 /**
  * This method converts cbor into PSTAT data.
@@ -59,11 +88,11 @@ OCStackResult DeInitPstatResource();
  * @param cborPayload is the pstat data in cbor format.
  * @param cborSize of the cborPayload. In case 0 is provided it assigns CBOR_SIZE (255) value.
  * @param pstat pointer to @ref OicSecPstat_t.
-  *
-  * @return ::OC_STACK_OK for Success, otherwise some error value.
- */
- OCStackResult CBORPayloadToPstat(const uint8_t *cborPayload, const size_t cborSize,
-                                  OicSecPstat_t **pstat);
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+*/
+OCStackResult CBORPayloadToPstat(const uint8_t *cborPayload, const size_t cborSize,
+	OicSecPstat_t **pstat);
 
 /** This function deallocates the memory for OicSecPstat_t.
  *

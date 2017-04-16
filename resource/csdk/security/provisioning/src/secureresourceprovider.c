@@ -791,7 +791,7 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
         OIC_LOG(INFO, TAG, "SRPProvisionCredentials: NULL Callback");
         return OC_STACK_INVALID_CALLBACK;
     }
-    if ((SYMMETRIC_PAIR_WISE_KEY == type) && 
+    if ((SYMMETRIC_PAIR_WISE_KEY == type) &&
         (NULL != pDev2) &&
         (0 == memcmp(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID, sizeof(OicUuid_t))))
     {
@@ -2534,6 +2534,8 @@ OCStackResult SRPResetDevice(const OCProvisionDev_t* pTargetDev,
         return OC_STACK_NO_MEMORY;
     }
 
+    pstat->dos.state = DOS_RESET; // Note [IOT-2052] in OCF 1.0 this is the only
+                                  // value that needs to be set to cause RESET
     pstat->cm = RESET;
     pstat->isOp = false;
     pstat->tm = TAKE_OWNER;
@@ -2557,8 +2559,16 @@ OCStackResult SRPResetDevice(const OCProvisionDev_t* pTargetDev,
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
 
-    if (OC_STACK_OK != PstatToCBORPayload(pstat, &(secPayload->securityData),
-                &(secPayload->payloadSize), true))
+    // Note [IOT-2052] all the POST payloads in the provisioningclient app
+    // should be updated to use the Partial payload APIs for the SVRs, so they
+    // do not include read-only Properties for the Server device current
+    // state.
+    bool propertiesToInclude[PSTAT_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[PSTAT_DOS] = true;
+
+    if (OC_STACK_OK != PstatToCBORPayloadPartial(pstat, &(secPayload->securityData),
+                &(secPayload->payloadSize), propertiesToInclude))
     {
         OCPayloadDestroy((OCPayload *) secPayload);
         OIC_LOG(ERROR, TAG, "Failed to PstatToCBORPayload");
