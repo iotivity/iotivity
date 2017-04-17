@@ -33,6 +33,7 @@ import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.device.IResponseEventHandler;
 import org.iotivity.cloud.base.exception.ServerException;
+import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
@@ -81,17 +82,21 @@ public class RouteResource extends Resource {
         List<String> uriPathSegment = request.getUriPathSegments();
 
         // Remove prefix path
-        for (String path : getUriPathSegments()) {
-            uriPathSegment.remove(path);
-        }
-        uriPathSegment.remove(0);
+        if (uriPathSegment != null) {
+            for (String path : getUriPathSegments()) {
+                uriPathSegment.remove(path);
+            }
+            uriPathSegment.remove(0);
 
-        StringBuilder uriPath = new StringBuilder();
-        for (String path : uriPathSegment) {
-            uriPath.append("/" + path);
-        }
+            StringBuilder uriPath = new StringBuilder();
+            for (String path : uriPathSegment) {
+                uriPath.append("/" + path);
+            }
 
-        return uriPath.toString();
+            return uriPath.toString();
+        }
+        throw new InternalServerErrorException(
+                "Can not extract TargetUriPath from uriPath!");
     }
 
     private IResponse convertReponseUri(IResponse response, String di) {
@@ -105,7 +110,9 @@ public class RouteResource extends Resource {
             uriPath.append("/" + path);
         }
 
-        if (coapResponse.getUriPath().isEmpty() == false) {
+        String resUriPath = coapResponse.getUriPath();
+
+        if (resUriPath != null && !resUriPath.isEmpty()) {
             convertedUri = uriPath.toString() + "/" + di
                     + coapResponse.getUriPath();
         }
@@ -115,7 +122,12 @@ public class RouteResource extends Resource {
     }
 
     private String getDeviceId(IRequest request) {
-        return request.getUriPathSegments().get(getUriPathSegments().size());
+        List<String> uriPathSegment = request.getUriPathSegments();
+        if (uriPathSegment == null)
+            throw new InternalServerErrorException(
+                    "Can not find deviceId from uriPath!");
+
+        return uriPathSegment.get(getUriPathSegments().size());
     }
 
     /**

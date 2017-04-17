@@ -21,6 +21,25 @@
  */
 package org.iotivity.cloud.accountserver.resources.credprov.crl;
 
+import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.ACCOUNT_DB_MANAGER;
+import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.CERTIFICATE_FACTORY;
+import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.DER;
+import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.NEXT_UPDATE_INTERVAL;
+import static org.iotivity.cloud.accountserver.x509.crl.CrlIssuer.CRL_ISSUER;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.security.cert.CRLException;
+import java.security.cert.X509CRL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bson.types.Binary;
 import org.iotivity.cloud.accountserver.Constants;
@@ -29,19 +48,9 @@ import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.util.Log;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.security.cert.CRLException;
-import java.security.cert.X509CRL;
-import java.text.ParseException;
-import java.util.*;
-
-import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.*;
-import static org.iotivity.cloud.accountserver.x509.crl.CrlIssuer.CRL_ISSUER;
-
 /**
- * Class is used to manage CRLs. It helps to create,
- * update CRLS, revoke certificates.
+ * Class is used to manage CRLs. It helps to create, update CRLS, revoke
+ * certificates.
  */
 public final class CrlManager {
 
@@ -53,12 +62,12 @@ public final class CrlManager {
     /**
      * X509 CRL presentation.
      */
-    private X509CRL x509CRL;
+    private X509CRL                             x509CRL;
 
     /**
      * Static manager for CRLs.
      */
-    public static final CrlManager CRL_MANAGER = new CrlManager();
+    public static final CrlManager              CRL_MANAGER    = new CrlManager();
 
     /**
      * Private constructor to make this class non-instantiable.
@@ -69,9 +78,11 @@ public final class CrlManager {
             Date thisUpdate = calendar.getTime();
             calendar.add(Calendar.DAY_OF_MONTH,
                     Integer.parseInt(NEXT_UPDATE_INTERVAL));
-            byte[] data = CRL_ISSUER.generate(thisUpdate, calendar.getTime(), Collections.emptyList());
+            byte[] data = CRL_ISSUER.generate(thisUpdate, calendar.getTime(),
+                    Collections.emptyList());
             ACCOUNT_DB_MANAGER.insertRecord(Constants.CRL_TABLE,
-                    castingManager.convertObjectToMap(new CRLTable(thisUpdate, new Binary(data))));
+                    castingManager.convertObjectToMap(
+                            new CRLTable(thisUpdate, new Binary(data))));
             setX509CRL(data);
         } catch (CRLException | IOException | OperatorCreationException e) {
             Log.e(e.getMessage());
@@ -81,43 +92,53 @@ public final class CrlManager {
     /**
      * Revokes specified serial numbers. Puts them to database.
      *
-     * @param serialNumbers specified var args serial numbers from 0.
+     * @param serialNumbers
+     *            specified var args serial numbers from 0.
      */
-    public void revoke(String... serialNumbers) throws CRLException, IOException, OperatorCreationException {
+    public void revoke(String... serialNumbers)
+            throws CRLException, IOException, OperatorCreationException {
         if (x509CRL != null) {
             update(x509CRL.getThisUpdate(),
-                    CRL_ISSUER.generate(x509CRL.getThisUpdate(), x509CRL.getNextUpdate(),
+                    CRL_ISSUER.generate(x509CRL.getThisUpdate(),
+                            x509CRL.getNextUpdate(),
                             x509CRL.getRevokedCertificates(), serialNumbers));
         }
     }
 
     /**
-     * Checks last update less than crl this update and returns response payload,
-     * including this update, next update, and CRL in DER encoding.
+     * Checks last update less than crl this update and returns response
+     * payload, including this update, next update, and CRL in DER encoding.
      */
-    Map<String, Object> getPayload(String lastUpdate) throws ServerException.PreconditionFailedException, CRLException {
+    Map<String, Object> getPayload(String lastUpdate)
+            throws ServerException.PreconditionFailedException, CRLException {
         if (checkLastUpdate(lastUpdate) && x509CRL != null) {
             Map<String, Object> responsePayload = new HashMap<>();
-            responsePayload.put(Constants.REQ_THIS_UPDATE, DATE_FORMAT.format(x509CRL.getThisUpdate()));
-            responsePayload.put(Constants.REQ_NEXT_UPDATE, DATE_FORMAT.format(x509CRL.getNextUpdate()));
-            responsePayload.put(Constants.REQ_CRL, new CRL(DER, x509CRL.getEncoded()));
+            responsePayload.put(Constants.REQ_THIS_UPDATE,
+                    new SimpleDateFormat("yyyyMMddHHmmss")
+                            .format(x509CRL.getThisUpdate()));
+            responsePayload.put(Constants.REQ_NEXT_UPDATE,
+                    new SimpleDateFormat("yyyyMMddHHmmss")
+                            .format(x509CRL.getNextUpdate()));
+            responsePayload.put(Constants.REQ_CRL,
+                    new CRL(DER, x509CRL.getEncoded()));
             return responsePayload;
         }
         return Collections.emptyMap();
     }
 
-
     /**
      * Checks if last update is before CRL this update.
      *
-     * @param lastUpdate specified last update;
+     * @param lastUpdate
+     *            specified last update;
      * @return true if before and false - otherwise.
      */
     private boolean checkLastUpdate(String lastUpdate) {
         boolean checkCondition = false;
         try {
             if (x509CRL != null) {
-                checkCondition = DATE_FORMAT.parse(lastUpdate).before(x509CRL.getThisUpdate());
+                checkCondition = new SimpleDateFormat("yyyyMMddHHmmss")
+                        .parse(lastUpdate).before(x509CRL.getThisUpdate());
             }
         } catch (ParseException e) {
             Log.e(e.getMessage());
@@ -125,18 +146,19 @@ public final class CrlManager {
         return checkCondition;
     }
 
-
     /**
      * Updates CRLTable with specified this update and binary CRL data.
      */
     void update(Date thisUpdate, byte[] data) throws CRLException {
-        ArrayList<HashMap<String, Object>> crlList = ACCOUNT_DB_MANAGER.selectRecord(Constants.CRL_TABLE,
-                new HashMap<>());
+        ArrayList<HashMap<String, Object>> crlList = ACCOUNT_DB_MANAGER
+                .selectRecord(Constants.CRL_TABLE, new HashMap<>());
         if (crlList != null && !crlList.isEmpty()) {
-            CRLTable crlTable = castingManager.convertMaptoObject(crlList.get(0), new CRLTable());
+            CRLTable crlTable = castingManager
+                    .convertMaptoObject(crlList.get(0), new CRLTable());
             crlTable.setThisUpdate(thisUpdate);
             crlTable.setBinaryData(new Binary(data));
-            ACCOUNT_DB_MANAGER.updateRecord(Constants.CRL_TABLE, castingManager.convertObjectToMap(crlTable));
+            ACCOUNT_DB_MANAGER.updateRecord(Constants.CRL_TABLE,
+                    castingManager.convertObjectToMap(crlTable));
             setX509CRL(data);
         }
     }
@@ -145,7 +167,8 @@ public final class CrlManager {
      * Updates currect x509 CRL state by parsing specified data.
      */
     private void setX509CRL(byte[] data) throws CRLException {
-        x509CRL = (X509CRL) CERTIFICATE_FACTORY.generateCRL(new ByteArrayInputStream(data));
+        x509CRL = (X509CRL) CERTIFICATE_FACTORY
+                .generateCRL(new ByteArrayInputStream(data));
     }
 
     /**

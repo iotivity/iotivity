@@ -53,7 +53,7 @@ public class PresenceManager {
 
     private Cbor<HashMap<String, Object>> mCbor            = new Cbor<>();
 
-    private class PresenceSubscriber {
+    private static class PresenceSubscriber {
         PresenceSubscriber(Device subscriber, IRequest request) {
             mSubscriber = subscriber;
             mRequest = request;
@@ -63,7 +63,7 @@ public class PresenceManager {
         public IRequest mRequest;
     }
 
-    private class PresenceInfo {
+    private static class PresenceInfo {
 
         PresenceInfo() {
             mSubscriber = new HashMap<>();

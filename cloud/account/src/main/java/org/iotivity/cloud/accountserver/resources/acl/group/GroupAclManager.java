@@ -274,9 +274,6 @@ public class GroupAclManager {
         ArrayList<AceTable> getAceTableList = new ArrayList<>();
         ArrayList<HashMap<String, Object>> getAceList = AccountDBManager
                 .getInstance().selectRecord(Constants.ACE_TABLE, condition);
-        if (getAceList == null) {
-            return null;
-        }
         for (HashMap<String, Object> getAce : getAceList) {
             AceTable getAceTable = new AceTable();
             getAceTable = mTypeAceTable.convertMaptoObject(getAce, getAceTable);

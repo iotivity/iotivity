@@ -79,14 +79,15 @@ public class ResourcePresence extends Resource {
 
                     String additionalQuery = makeAdditionalQuery(payloadData,
                             mSrcDevice.getDeviceId());
+                    if (additionalQuery != null) {
+                        String uriQuery = additionalQuery.toString()
+                                + (mRequest.getUriQuery() != null
+                                        ? (";" + mRequest.getUriQuery()) : "");
+                        mRequest = MessageBuilder.modifyRequest(mRequest, null,
+                                uriQuery, null, null);
 
-                    String uriQuery = additionalQuery.toString()
-                            + (mRequest.getUriQuery() != null
-                                    ? (";" + mRequest.getUriQuery()) : "");
-                    mRequest = MessageBuilder.modifyRequest(mRequest, null,
-                            uriQuery, null, null);
-
-                    mRDServer.sendRequest(mRequest, mSrcDevice);
+                        mRDServer.sendRequest(mRequest, mSrcDevice);
+                    }
                     break;
 
                 default:
