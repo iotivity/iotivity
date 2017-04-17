@@ -95,7 +95,7 @@ public class ResourceClientActivity extends Activity
             Log.i(LOG_TAG, "onStateChanged");
 
             mHandler.obtainMessage(MSG_ID_PRINT_LOG,
-                    "Current Resource State : " + resourceState);
+                   "Current Resource State : " + resourceState).sendToTarget();
         }
     };
 

@@ -527,6 +527,9 @@ if 'SERVER' in rd_mode:
 
 if with_ra_ibb:
     env.AppendUnique(CPPDEFINES = ['RA_ADAPTER_IBB'])
+
+env.SConscript('external_builders.scons')
+
 ######################################################################
 # Link scons to Yocto cross-toolchain ONLY when target_os is yocto
 ######################################################################
@@ -623,5 +626,9 @@ conf.CheckPThreadsSupport()
 env = conf.Finish()
 ######################################################################
 
+# must call external_builders.scons second time to properly setup
+# UnpackAll builder this is due to the system path not being pulled
+# in for windows till after the windows target has run.
+env.SConscript('external_builders.scons')
 env.SConscript('external_libs.scons')
 Return('env')

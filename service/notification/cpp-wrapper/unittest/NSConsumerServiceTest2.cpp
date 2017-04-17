@@ -264,8 +264,6 @@ TEST_F(NotificationServiceConsumerTest, ExpectSuccessSendSyncInfo)
 
 TEST_F(NotificationServiceConsumerTest, ExpectSuccessGetTopicsList)
 {
-    uint64_t msgId = 10;
-    OIC::Service::NSResult res = OIC::Service::NSResult::FAIL;
     std::string provId;
 
     ::NSProvider *provider = (::NSProvider *)malloc(sizeof(::NSProvider));

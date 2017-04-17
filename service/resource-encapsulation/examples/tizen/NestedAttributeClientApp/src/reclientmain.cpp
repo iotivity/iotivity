@@ -71,7 +71,7 @@ create_list_view(appdata_s *ad)
     // Main Menu Items Here
     elm_list_item_append(list, "Resource Client", NULL, NULL, group_cb, nf);
 
-    elm_list_item_append(list, "Resource Container", NULL, NULL, containerCreateUI, nf);
+    //elm_list_item_append(list, "Resource Container", NULL, NULL, containerCreateUI, nf);
 
     elm_list_go(list);
 

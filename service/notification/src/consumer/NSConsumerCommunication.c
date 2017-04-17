@@ -27,11 +27,7 @@
 #include "oic_string.h"
 #include "ocpayload.h"
 
-#ifdef LOCAL_RUNNING
 #define NS_SYNC_URI "/notification/sync"
-#else
-#define NS_SYNC_URI "/notificationTest/sync"
-#endif
 
 NSSyncInfo * NSCreateSyncInfo_consumer(uint64_t msgId, const char * providerId, NSSyncType state);
 
