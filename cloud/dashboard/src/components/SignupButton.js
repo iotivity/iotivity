@@ -22,8 +22,6 @@
 import React from 'react';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import RaisedButton from 'material-ui/RaisedButton';
-import SelectField from 'material-ui/SelectField';
-import MenuItem from 'material-ui/MenuItem';
 import TextField from 'material-ui/TextField';
 import FlatButton from 'material-ui/FlatButton';
 import Dialog from 'material-ui/Dialog';
@@ -80,28 +78,38 @@ class SignupButton extends React.Component {
     };
 
     handleAuthcodeButtonClicked = (value) => {
-        this.setState({ provider : value });
-    };
-
-    handleSelectfieldChange = (event, index, value) => {
-        this.setState({ provider : value });
+        this.setState({ provider : value, providerError : '' });
     };
 
     handleTextChange = (event) => {
+        var currentProviderErr = this.state.providerError;
         var currentCodeErr = this.state.codeError;
 
-        this.setState({ code : event.target.value });
-        if (event.target.value.length !== 0) {
-            currentCodeErr = '';
-        } else {
-            currentCodeErr = errorText;
+        switch(event.target.id) {
+            case "provider":
+                this.setState({ provider : event.target.value });
+                if (event.target.value.length !== 0) {
+                    currentProviderErr = '';
+                } else {
+                    currentProviderErr = errorText;
+                }
+                break;
+            case "code":
+                this.setState({ code : event.target.value });
+                if (event.target.value.length !== 0) {
+                    currentCodeErr = '';
+                } else {
+                    currentCodeErr = errorText;
+                }
+                break;
+            default:
+                return;
         }
-
-        this.setState({ codeError : currentCodeErr });
+        this.setState({ providerError : currentProviderErr, codeError : currentCodeErr })
     };
 
     handleSubmit = () => {
-        if (this.state.code.length === 0) {
+        if (this.state.provider.length === 0 || this.state.code.length === 0) {
             return;
         }
 
@@ -123,6 +131,7 @@ class SignupButton extends React.Component {
             open: false,
             provider: 'github',
             code: '',
+            providerError: '',
             codeError: errorText,
             dialogMessage: '',
             signup: false
@@ -134,15 +143,14 @@ class SignupButton extends React.Component {
                 <RaisedButton label="Github" backgroundColor="#E0E0E0" style={style.basic} onTouchTap={this.handleAuthcodeButtonClicked.bind(this, "github")}
                     href="https://github.com/login?return_to=%2Flogin%2Foauth%2Fauthorize%3Fclient_id%3Dea9c18f540323b0213d0%26redirect_uri%3Dhttp%253A%252F%252Fwww.example.com%252Foauth_callback%252F"
                     target="_blank" />, <br />,
-                <SelectField
+                <TextField
                     floatingLabelText="OAuth provider"
+                    id="provider"
                     value={this.state.provider}
-                    onChange={this.handleSelectfieldChange}
-                    style={style.selectfield}
-                >
-                    <MenuItem value={'github'} primaryText="Github" />
-                    <MenuItem value={'samsung'} primaryText="Samsung" />
-                </SelectField>, <br />,
+                    errorText={this.state.providerError}
+                    errorStyle={style.error}
+                    onChange={this.handleTextChange}
+                />, <br />,
                 <TextField
                     floatingLabelText="Device Id"
                     disabled={true}
@@ -150,6 +158,7 @@ class SignupButton extends React.Component {
                 />, <br />,
                 <TextField
                     floatingLabelText="Auth Code"
+                    id="code"
                     errorText={this.state.codeError}
                     errorStyle={style.error}
                     onChange={this.handleTextChange}
