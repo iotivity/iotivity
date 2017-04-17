@@ -53,7 +53,7 @@ public class Topic {
 
     private byte[]                 mLatestData   = null;
 
-    private class TopicSubscriber {
+    private static class TopicSubscriber {
         TopicSubscriber(Device subscriber, IRequest request) {
             mSubscriber = subscriber;
             mRequest = request;
@@ -144,7 +144,12 @@ public class Topic {
 
         IResponse response = MessageBuilder.createResponse(request,
                 ResponseStatus.CREATED);
-        response.setLocationPath(request.getUriPath());
+        String uriPath = request.getUriPath();
+        if (uriPath == null) {
+            throw new InternalServerErrorException(
+                    "uriPath is null in handleCreateSubtopic");
+        }
+        response.setLocationPath(uriPath);
         return response;
     }
 

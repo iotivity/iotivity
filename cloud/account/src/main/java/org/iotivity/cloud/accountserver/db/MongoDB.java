@@ -21,10 +21,10 @@
  */
 package org.iotivity.cloud.accountserver.db;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -276,7 +276,7 @@ public class MongoDB {
             Document doc) {
 
         if (tableName == null || doc == null)
-            return null;
+            return new ArrayList<>();
 
         MongoCollection<Document> collection = db.getCollection(tableName);
         MongoCursor<Document> cursor = collection.find(doc).iterator();
@@ -306,7 +306,8 @@ public class MongoDB {
 
         while (entryIter.hasNext()) {
 
-            Map.Entry<String, Object> entry = (Map.Entry<String, Object>) entryIter.next();
+            Map.Entry<String, Object> entry = (Map.Entry<String, Object>) entryIter
+                    .next();
 
             String entryKey = entry.getKey();
 
@@ -314,13 +315,15 @@ public class MongoDB {
             if (entry.getValue() != null && !entryKey.equals("_id")) {
 
                 // if value is Array
-                if (entry.getValue() instanceof List && !((List) entry.getValue()).isEmpty()
+                if (entry.getValue() instanceof List
+                        && !((List) entry.getValue()).isEmpty()
                         && ((List) entry.getValue()).get(0) instanceof Document)
 
                 {
                     List<HashMap<String, Object>> list = new ArrayList<HashMap<String, Object>>();
 
-                    for (Document document : (List<Document>) entry.getValue()) {
+                    for (Document document : (List<Document>) entry
+                            .getValue()) {
                         list.add(convertDocumentToHashMap(document));
                     }
                     resourceMap.put(entry.getKey(), list);

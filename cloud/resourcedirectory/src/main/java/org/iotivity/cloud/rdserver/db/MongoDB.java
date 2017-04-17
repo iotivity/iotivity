@@ -269,7 +269,7 @@ public class MongoDB {
             Document doc) {
 
         if (tableName == null || doc == null)
-            return null;
+            return new ArrayList<>();
 
         MongoCollection<Document> collection = db.getCollection(tableName);
         MongoCursor<Document> cursor = collection.find(doc).iterator();

@@ -48,7 +48,7 @@ public class InviteManager {
 
     private TypeCastingManager<InviteTable> mTypeInvite = new TypeCastingManager<>();
 
-    private class InviteSubscriber {
+    private static class InviteSubscriber {
         InviteSubscriber(Device subscriber, IRequest request) {
             mSubscriber = subscriber;
             mRequest = request;

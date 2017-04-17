@@ -30,6 +30,12 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.I0Itec.zkclient.ZkClient;
+import org.I0Itec.zkclient.ZkConnection;
+import org.iotivity.cloud.mqserver.Constants;
+import org.iotivity.cloud.mqserver.topic.Topic;
+import org.iotivity.cloud.util.Log;
+
 import kafka.admin.AdminUtils;
 import kafka.api.FetchRequest;
 import kafka.api.FetchRequestBuilder;
@@ -47,12 +53,6 @@ import kafka.message.MessageAndMetadata;
 import kafka.message.MessageAndOffset;
 import kafka.utils.ZKStringSerializer$;
 import kafka.utils.ZkUtils;
-
-import org.I0Itec.zkclient.ZkClient;
-import org.I0Itec.zkclient.ZkConnection;
-import org.iotivity.cloud.mqserver.Constants;
-import org.iotivity.cloud.mqserver.topic.Topic;
-import org.iotivity.cloud.util.Log;
 
 /**
  *
@@ -118,8 +118,8 @@ public class KafkaConsumerWrapper {
         }
 
         // remove consumer group info if already exist
-        List<String> subscribers = mZkClient.getChildren(ZkUtils
-                .ConsumersPath());
+        List<String> subscribers = mZkClient
+                .getChildren(ZkUtils.ConsumersPath());
 
         if (subscribers.contains(mTopicName)) {
             AdminUtils.deleteConsumerGroupInZK(mZkUtils, mTopicName);
@@ -152,8 +152,8 @@ public class KafkaConsumerWrapper {
 
                     for (final MessageAndMetadata<byte[], byte[]> messageAndMetadata : stream) {
 
-                        mInternalConsumer.onMessagePublished(messageAndMetadata
-                                .message());
+                        mInternalConsumer.onMessagePublished(
+                                messageAndMetadata.message());
                     }
                 }
             });
@@ -175,8 +175,8 @@ public class KafkaConsumerWrapper {
         Log.d("kafka unsubscribeTopic - " + mTopicName);
 
         // remove consumer group info in zookeeper
-        List<String> subscribers = mZkClient.getChildren(ZkUtils
-                .ConsumersPath());
+        List<String> subscribers = mZkClient
+                .getChildren(ZkUtils.ConsumersPath());
 
         if (subscribers.contains(mTopicName)) {
             AdminUtils.deleteConsumerGroupInZK(mZkUtils, mTopicName);
@@ -213,8 +213,8 @@ public class KafkaConsumerWrapper {
         Log.d("kafka get all messages - " + mTopicName);
 
         String brokerHost = mBroker.substring(0, mBroker.indexOf(':'));
-        int brokerPort = Integer.parseInt(mBroker.substring(mBroker
-                .indexOf(':') + 1));
+        int brokerPort = Integer
+                .parseInt(mBroker.substring(mBroker.indexOf(':') + 1));
 
         Log.d("host " + brokerHost + ", port " + brokerPort);
 
@@ -255,10 +255,12 @@ public class KafkaConsumerWrapper {
                 lastOffset = messageAndOffset.nextOffset();
                 ByteBuffer payload = messageAndOffset.message().payload();
 
-                byte[] bytes = new byte[payload.limit()];
-                payload.get(bytes);
+                if (payload != null) {
+                    byte[] bytes = new byte[payload.limit()];
+                    payload.get(bytes);
 
-                initialData.add(bytes);
+                    initialData.add(bytes);
+                }
             }
         }
 
@@ -289,8 +291,8 @@ public class KafkaConsumerWrapper {
                 partition);
 
         Map<TopicAndPartition, PartitionOffsetRequestInfo> requestInfo = new HashMap<>();
-        requestInfo.put(topicAndPartition, new PartitionOffsetRequestInfo(
-                whichTime, 1));
+        requestInfo.put(topicAndPartition,
+                new PartitionOffsetRequestInfo(whichTime, 1));
 
         kafka.javaapi.OffsetRequest request = new kafka.javaapi.OffsetRequest(
                 requestInfo, kafka.api.OffsetRequest.CurrentVersion(),

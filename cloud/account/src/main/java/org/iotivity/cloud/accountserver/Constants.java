@@ -58,6 +58,8 @@ public class Constants extends OICConstants {
 
     // Database table key
 
+    public static final String RESP_GROUP_PERMISSION      = "gp";
+
     public static final String KEYFIELD_SN                = "serialNumber";
 
     public static final String KEYFIELD_NA                = "notAfter";

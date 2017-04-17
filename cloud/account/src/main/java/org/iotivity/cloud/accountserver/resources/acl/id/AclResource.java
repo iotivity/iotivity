@@ -88,10 +88,14 @@ public class AclResource extends Resource {
             throws ServerException {
 
         if (getUriPathSegments().containsAll(request.getUriPathSegments())) {
-            String oid = request.getUriQueryMap().get(Constants.REQ_OWNER_ID)
-                    .get(0);
-            String di = request.getUriQueryMap().get(Constants.REQ_DEVICE_ID)
-                    .get(0);
+            HashMap<String, List<String>> queryMap = request.getUriQueryMap();
+
+            checkQueryException(Arrays.asList(Constants.REQ_OWNER_ID,
+                    Constants.REQ_DEVICE_ID), queryMap);
+
+            String oid = queryMap.get(Constants.REQ_OWNER_ID).get(0);
+            String di = queryMap.get(Constants.REQ_DEVICE_ID).get(0);
+
             if (mAclManager.getAclid(di) == null) {
                 return MessageBuilder.createResponse(request,
                         ResponseStatus.CREATED, ContentFormat.APPLICATION_CBOR,
@@ -116,13 +120,26 @@ public class AclResource extends Resource {
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
-        if (null != request.getUriQueryMap()) {
+        HashMap<String, List<String>> queryMap = request.getUriQueryMap();
+
+        if (null != queryMap) {
             String aclid = request.getUriPathSegments()
                     .get(getUriPathSegments().size());
-            String aceid = request.getUriQueryMap().get(Constants.REQ_ACE_ID)
-                    .get(0);
+
+            checkQueryException(Constants.REQ_ACE_ID, queryMap);
+
+            String aceid = queryMap.get(Constants.REQ_ACE_ID).get(0);
+
+            checkPayloadException(Constants.REQ_ACL_LIST, payloadData);
+
             List<HashMap<String, Object>> aclist = (List<HashMap<String, Object>>) payloadData
                     .get(Constants.REQ_ACL_LIST);
+
+            if (aclist == null) {
+                throw new BadRequestException(
+                        Constants.REQ_ACL_LIST + " payload value is null");
+            }
+
             mAclManager.updateACE(aclid, aceid, aclist.get(0));
             return MessageBuilder.createResponse(request,
                     ResponseStatus.CHANGED);
@@ -153,8 +170,10 @@ public class AclResource extends Resource {
 
         HashMap<String, Object> responsePayload = null;
         String di = null;
-
+        HashMap<String, List<String>> queryMap = request.getUriQueryMap();
         if (getUriPathSegments().containsAll(request.getUriPathSegments())) {
+            checkQueryException(Arrays.asList(Constants.REQ_DEVICE_ID),
+                    queryMap);
             di = request.getUriQueryMap().get(Constants.REQ_DEVICE_ID).get(0);
             if (di == null) {
                 throw new PreconditionFailedException("di is invalid");
@@ -168,14 +187,16 @@ public class AclResource extends Resource {
                     responsePayload = mAclManager.getAclInfo(aclid);
                     break;
                 case SUBSCRIBE:
-                    di = request.getUriQueryMap().get(Constants.REQ_DEVICE_ID)
-                            .get(0);
+                    checkQueryException(Arrays.asList(Constants.REQ_DEVICE_ID),
+                            queryMap);
+                    di = queryMap.get(Constants.REQ_DEVICE_ID).get(0);
                     responsePayload = mAclManager.addAclSubscriber(aclid, di,
                             srcDevice, request);
                     break;
                 case UNSUBSCRIBE:
-                    di = request.getUriQueryMap().get(Constants.REQ_DEVICE_ID)
-                            .get(0);
+                    checkQueryException(Arrays.asList(Constants.REQ_DEVICE_ID),
+                            queryMap);
+                    di = queryMap.get(Constants.REQ_DEVICE_ID).get(0);
                     responsePayload = mAclManager.removeAclSubscriber(aclid,
                             di);
                     break;
