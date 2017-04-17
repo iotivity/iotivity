@@ -110,6 +110,7 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
                     && strcmp(reqInterface, NS_INTERFACE_READ) != 0)
             {
                 NS_LOG(ERROR, "Invalid interface");
+                NSOICFree(reqInterface);
                 return ehResult;
             }
             ehResult = OC_EH_OK;
@@ -185,6 +186,7 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
                     && strcmp(reqInterface, NS_INTERFACE_READWRITE) != 0)
             {
                 NS_LOG(ERROR, "Invalid interface");
+                NSOICFree(reqInterface);
                 return ehResult;
             }
 
@@ -279,6 +281,7 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
                     && strcmp(reqInterface, NS_INTERFACE_READWRITE) != 0)
             {
                 NS_LOG(ERROR, "Invalid interface");
+                NSOICFree(reqInterface);
                 return ehResult;
             }
             // send consumer's interesting topic list if consumer id exists

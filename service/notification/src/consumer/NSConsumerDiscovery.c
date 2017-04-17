@@ -68,7 +68,7 @@ OCStackApplicationResult NSConsumerPresenceListener(
         memcpy(addr, clientResponse->addr, sizeof(OCDevAddr));
 
         NSTask * task = NSMakeTask(TASK_CONSUMER_PROVIDER_DELETED, addr);
-        NS_VERIFY_NOT_NULL(task, OC_STACK_KEEP_TRANSACTION);
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(task, OC_STACK_KEEP_TRANSACTION, NSOICFree(addr));
 
         NSConsumerPushEvent(task);
     }
@@ -76,6 +76,7 @@ OCStackApplicationResult NSConsumerPresenceListener(
     else if (payload->trigger == OC_PRESENCE_TRIGGER_CREATE)
     {
         NS_LOG(DEBUG, "started presence or resource is created.");
+        NS_VERIFY_NOT_NULL(clientResponse->addr, OC_STACK_KEEP_TRANSACTION);
         NSInvokeRequest(NULL, OC_REST_DISCOVER, clientResponse->addr,
             NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener, NULL, NULL,
             clientResponse->addr->adapter);

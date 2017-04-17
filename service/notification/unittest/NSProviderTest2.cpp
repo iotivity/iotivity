@@ -130,8 +130,12 @@ namespace
         bool ret = OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, id);
         OCUUIdentity provider;
         OC::OCPlatform::getDeviceId(&provider);
+
+        char providerId[UUID_IDENTITY_SIZE] = {0,};
+        OICStrcpy(providerId, UUID_IDENTITY_SIZE, (const char *)provider.id);
+
         ret &= OCRepPayloadSetPropString(payload,
-                     NS_ATTRIBUTE_PROVIDER_ID, (const char *)provider.id);
+                     NS_ATTRIBUTE_PROVIDER_ID, (const char*)providerId);
         ret &= OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_STATE, NS_SYNC_READ);
         EXPECT_EQ(true, ret);
 
@@ -307,13 +311,17 @@ TEST(NotificationProviderTest, ExpectCallbackReceiveSync)
     int type = NS_SYNC_READ;
 
     OCEntityHandlerFlag flag = OC_REQUEST_FLAG;
-    NSEntityHandlerSyncCb(flag, getPostSyncEntityRequest(id), NULL);
+    auto request = getPostSyncEntityRequest(id);
+    NSEntityHandlerSyncCb(flag, request, NULL);
 
     std::unique_lock< std::mutex > lock{ responseProviderSyncLock };
     responseProviderSync.wait_for(lock, g_waitForResponse);
 
     EXPECT_EQ(expectedMsgId, id);
     EXPECT_EQ(expectedSyncType, type);
+
+    OCRepPayloadDestroy((OCRepPayload *)request->payload);
+    free(request);
 }
 
 TEST(NotificationProviderTest, ExpectSuccessSetTopics)

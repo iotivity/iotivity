@@ -133,6 +133,7 @@ NSResult NSSendTopicUpdation()
     if (NSPutMessageResource(NULL, &rHandle) != NS_OK)
     {
         NS_LOG(ERROR, "Fail to put message resource");
+        OCRepPayloadDestroy(payload);
         return NS_ERROR;
     }
 
@@ -164,6 +165,7 @@ NSResult NSSendTopicUpdation()
     if (!obCount)
     {
         NS_LOG(ERROR, "observer count is zero");
+        OCRepPayloadDestroy(payload);
         return NS_ERROR;
     }
 
@@ -196,6 +198,7 @@ NSResult NSSendTopicUpdationToConsumer(char *consumerId)
     if (NSPutMessageResource(NULL, &rHandle) != NS_OK)
     {
         NS_LOG(ERROR, "Fail to put message resource");
+        OCRepPayloadDestroy(payload);
         return NS_ERROR;
     }
 
@@ -208,6 +211,7 @@ NSResult NSSendTopicUpdationToConsumer(char *consumerId)
     if (element == NULL)
     {
         NS_LOG(ERROR, "element is NULL");
+        OCRepPayloadDestroy(payload);
         return NS_ERROR;
     }
 
@@ -526,6 +530,7 @@ void * NSTopicSchedule(void * ptr)
                     pthread_mutex_lock(topicSyncResult->mutex);
                     topicSyncResult->result = NSUnregisterTopic(
                             (const char *) topicSyncResult->topicData);
+                    NSOICFree(topicSyncResult->topicData);
                     pthread_cond_signal(topicSyncResult->condition);
                     pthread_mutex_unlock(topicSyncResult->mutex);
                 }

@@ -36,6 +36,26 @@ namespace OIC
 {
     namespace Service
     {
+        namespace
+        {
+            void removeTopicLL(NSTopicLL * topicHead)
+            {
+                NSTopicLL * iter = topicHead;
+                NSTopicLL * following = NULL;
+
+                while (iter)
+                {
+                    following = iter->next;
+
+                    OICFree(iter->topicName);
+                    iter->next = NULL;
+                    OICFree(iter);
+
+                    iter = following;
+                }
+            }
+        }
+
         void NSProviderService::onConsumerSubscribedCallback(::NSConsumer *consumer)
         {
             NS_LOG(DEBUG, "onConsumerSubscribedCallback - IN");
@@ -264,6 +284,7 @@ namespace OIC
 
             std::shared_ptr<NSTopicsList> nsTopics = std::make_shared<NSTopicsList>(topics, false);
             NS_LOG(DEBUG, "getRegisteredTopicList - OUT");
+            removeTopicLL(topics);
             return nsTopics;
         }
 
