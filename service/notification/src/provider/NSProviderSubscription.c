@@ -257,6 +257,7 @@ NSResult NSSendResponse(const char * id, bool accepted)
     if (NSPutMessageResource(NULL, &rHandle) != NS_OK)
     {
         NS_LOG(ERROR, "Fail to put notification resource");
+        OCRepPayloadDestroy(payload);
         return NS_ERROR;
     }
 
@@ -270,6 +271,7 @@ NSResult NSSendResponse(const char * id, bool accepted)
     if (element == NULL)
     {
         NS_LOG(ERROR, "element is NULL");
+        OCRepPayloadDestroy(payload);
         return NS_ERROR;
     }
 

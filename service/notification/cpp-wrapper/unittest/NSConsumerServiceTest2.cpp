@@ -216,7 +216,7 @@ TEST_F(NotificationServiceConsumerTest, ExpectGetProviderSuccessWithInvalidProvi
 TEST_F(NotificationServiceConsumerTest, ExpectGetProviderSuccessWithValidProviderId)
 {
     ::NSProvider *provider = (::NSProvider *)malloc(sizeof(::NSProvider));
-    strcpy(provider->providerId, "test");
+    strcpy(provider->providerId, "098765432109876543210987654321098765");
     std::string provId;
     provId.assign(provider->providerId, NS_UTILS_UUID_STRING_SIZE - 1);
 
@@ -242,7 +242,7 @@ TEST_F(NotificationServiceConsumerTest, ExpectSuccessSendSyncInfo)
     std::string provId;
 
     ::NSProvider *provider = (::NSProvider *)malloc(sizeof(::NSProvider));
-    strcpy(provider->providerId, "test");
+    strcpy(provider->providerId, "098765432109876543210987654321098765");
     provId.assign(provider->providerId, NS_UTILS_UUID_STRING_SIZE - 1);
 
     std::shared_ptr<OIC::Service::NSProvider> providerTemp = std::make_shared<OIC::Service::NSProvider>
@@ -260,6 +260,10 @@ TEST_F(NotificationServiceConsumerTest, ExpectSuccessSendSyncInfo)
         res = resProvider->sendSyncInfo(msgId, OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
     }
     EXPECT_EQ(OIC::Service::NSResult::OK, res);
+
+    OIC::Service::NSConsumerService::getInstance()
+        ->getAcceptedProviders()->removeProvider(provider->providerId);
+    free(provider);
 }
 
 TEST_F(NotificationServiceConsumerTest, ExpectSuccessGetTopicsList)
@@ -267,7 +271,7 @@ TEST_F(NotificationServiceConsumerTest, ExpectSuccessGetTopicsList)
     std::string provId;
 
     ::NSProvider *provider = (::NSProvider *)malloc(sizeof(::NSProvider));
-    strcpy(provider->providerId, "test");
+    strcpy(provider->providerId, "098765432109876543210987654321098765");
     provId.assign(provider->providerId, NS_UTILS_UUID_STRING_SIZE - 1);
 
     std::shared_ptr<OIC::Service::NSProvider> providerTemp = std::make_shared<OIC::Service::NSProvider>
@@ -283,5 +287,11 @@ TEST_F(NotificationServiceConsumerTest, ExpectSuccessGetTopicsList)
     auto topicList = resProvider->getTopicList();
 
     ASSERT_NE(nullptr, topicList) << "Get topics list failure";
+
+    OIC::Service::NSConsumerService::getInstance()
+        ->getAcceptedProviders()->removeProvider(provider->providerId);
+    free(provider);
+
+    OIC::Service::NSConsumerService::getInstance()->stop();
 }
 
