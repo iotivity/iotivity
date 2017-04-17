@@ -125,10 +125,6 @@ public class AccountResource extends Resource {
 
     private IResponse handleGetSearch(IRequest request) {
 
-        if (!request.getUriPath().equals(Constants.ACCOUNT_SEARCH_FULL_URI)) {
-            throw new BadRequestException("invalid request uri");
-        }
-
         HashMap<String, List<String>> queryData = request.getUriQueryMap();
 
         if (queryData == null) {
@@ -137,9 +133,11 @@ public class AccountResource extends Resource {
 
         HashMap<String, Object> responsePayload = null;
 
+        String uriQuery = request.getUriQuery();
+
         // AND or OR operation to find users
-        if (request.getUriQuery().contains(",")) {
-            queryData = mAsManager.getQueryMap(request.getUriQuery(), ",");
+        if (uriQuery != null && uriQuery.contains(",")) {
+            queryData = mAsManager.getQueryMap(uriQuery, ",");
             responsePayload = (mAsManager.searchUserUsingCriteria(queryData,
                     SearchOperation.AND));
         } else {

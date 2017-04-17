@@ -32,11 +32,9 @@ import org.iotivity.cloud.accountserver.db.AclTable;
 import org.iotivity.cloud.accountserver.resources.acl.id.Ace;
 import org.iotivity.cloud.accountserver.resources.acl.id.AceResource;
 import org.iotivity.cloud.accountserver.resources.acl.id.Acl;
-import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
-import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
@@ -51,119 +49,123 @@ public class AclVerifyResource extends Resource {
 
     public AclVerifyResource() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACL_URI,
-                    Constants.VERIFY_URI));
+                Constants.VERIFY_URI));
     }
 
     @Override
-        public void onDefaultRequestReceived(Device srcDevice, IRequest request)
-        throws ServerException {
+    public void onDefaultRequestReceived(Device srcDevice, IRequest request)
+            throws ServerException {
 
-            IResponse response = null;
+        IResponse response = null;
 
-            switch (request.getMethod()) {
-                case GET:
-                    response = handleGetRequest(request);
-                    break;
-                default:
-                    throw new BadRequestException(request.getMethod()
-                            + " request type is not supported");
-            }
-
-            srcDevice.sendResponse(response);
+        switch (request.getMethod()) {
+            case GET:
+                response = handleGetRequest(request);
+                break;
+            default:
+                throw new BadRequestException(
+                        request.getMethod() + " request type is not supported");
         }
+
+        srcDevice.sendResponse(response);
+    }
 
     private boolean checkPermission(int permissionValue, String rme)
-        throws ServerException {
-            Permission per = null;
-            int rm_value = 0;
-            if (rme.equals("get")) {
-                per = Permission.Read;
-            } else if (rme.equals("post")) {
-                per = Permission.Update;
-            } else if (rme.equals("delete")) {
-                per = Permission.Delete;
-            }
-            if (per != null) {
-                rm_value = per.getValue();
-            }
-            // bit and operation
-            return ((permissionValue & rm_value) == rm_value);
+            throws ServerException {
+        Permission per = null;
+        int rm_value = 0;
+        if (rme.equals("get")) {
+            per = Permission.Read;
+        } else if (rme.equals("post")) {
+            per = Permission.Update;
+        } else if (rme.equals("delete")) {
+            per = Permission.Delete;
         }
+        if (per != null) {
+            rm_value = per.getValue();
+        }
+        // bit and operation
+        return ((permissionValue & rm_value) == rm_value);
+    }
 
     private boolean checkResourceUri(List<AceResource> aceResources, String uri)
-        throws ServerException {
-            for (AceResource aceResource : aceResources) {
-                if (aceResource.getHref().trim().equals("*") || aceResource.getHref().equals(uri)) {
-                    return true;
-                }
+            throws ServerException {
+        for (AceResource aceResource : aceResources) {
+            if (aceResource.getHref().trim().equals("*")
+                    || aceResource.getHref().equals(uri)) {
+                return true;
             }
+        }
+        return false;
+    }
+
+    private boolean verifyAcl(String sid, String di, String rm, String uri)
+            throws ServerException {
+
+        HashMap<String, Object> condition = new HashMap<>();
+        condition.put(Constants.KEYFIELD_DI, di);
+
+        // Query AclTable with condition deviceId(di)
+        ArrayList<HashMap<String, Object>> aclResult = AccountDBManager
+                .getInstance().selectRecord(Constants.ACL_TABLE, condition);
+
+        // if aclResult size is zero then (di) does not exist
+        if (aclResult == null || aclResult.size() == 0) {
             return false;
         }
 
-    private boolean verifyAcl(String sid, String di, String rm, String uri)
-        throws ServerException {
+        for (HashMap<String, Object> eachAclMap : aclResult) {
 
-            HashMap<String, Object> condition = new HashMap<>();
-            condition.put(Constants.KEYFIELD_DI, di);
-
-            // Query AclTable with condition deviceId(di)
-            ArrayList<HashMap<String, Object>> aclResult = AccountDBManager
-                .getInstance().selectRecord(Constants.ACL_TABLE, condition);
-
-            // if aclResult size is zero then (di) does not exist
-            if (aclResult == null || aclResult.size() == 0) {
+            AclTable aclTable = Acl.convertMaptoAclObject(eachAclMap);
+            if (aclTable.getOid().equals(sid)) {
+                return true;
+            }
+            if (aclTable.getAclist() == null) {
                 return false;
             }
 
-            for (HashMap<String, Object> eachAclMap : aclResult) {
-
-                AclTable aclTable = Acl.convertMaptoAclObject(eachAclMap);
-                if (aclTable.getOid().equals(sid)) {
-                    return true;
-                }
-                if (aclTable.getAclist() == null) {
-                    return false;
-                }
-
-                for (Ace ace : aclTable.getAclist()) {
-                    if (ace.getSubjectuuid().equals(sid)) {
-                        // check permission matches
-                        if (checkPermission(ace.getPermission(), rm.toLowerCase())) {
-                            // check resource uri matches
-                            if (checkResourceUri(ace.getResources(), uri)) {
-                                return true;
-                            }
+            for (Ace ace : aclTable.getAclist()) {
+                if (ace.getSubjectuuid().equals(sid)) {
+                    // check permission matches
+                    if (checkPermission(ace.getPermission(),
+                            rm.toLowerCase())) {
+                        // check resource uri matches
+                        if (checkResourceUri(ace.getResources(), uri)) {
+                            return true;
                         }
                     }
                 }
             }
-            return false;
         }
+        return false;
+    }
 
-    private IResponse handleGetRequest(IRequest request) throws ServerException {
+    private IResponse handleGetRequest(IRequest request)
+            throws ServerException {
 
         String sid = null;
         String di = null;
         String rm = null;
         String uri = null;
 
-        if (getUriPathSegments().containsAll(request.getUriPathSegments())) {
-            sid = request.getUriQueryMap().get(Constants.REQ_SEARCH_USER_ID)
-                .get(0);
-            di = request.getUriQueryMap().get(Constants.REQ_DEVICE_ID).get(0);
-            rm = request.getUriQueryMap().get(Constants.REQ_REQUEST_METHOD)
-                .get(0);
-            uri = request.getUriQueryMap().get(Constants.REQ_REQUEST_URI)
-                .get(0);
-        } else {
-            throw new BadRequestException("uriPath is invalid");
-        }
+        HashMap<String, List<String>> queryMap = request.getUriQueryMap();
+
+        checkQueryException(Arrays.asList(Constants.REQ_SEARCH_USER_ID,
+                Constants.REQ_DEVICE_ID, Constants.REQ_REQUEST_METHOD,
+                Constants.REQ_REQUEST_URI), queryMap);
+
+        sid = queryMap.get(Constants.REQ_SEARCH_USER_ID).get(0);
+        di = queryMap.get(Constants.REQ_DEVICE_ID).get(0);
+        rm = queryMap.get(Constants.REQ_REQUEST_METHOD).get(0);
+        uri = queryMap.get(Constants.REQ_REQUEST_URI).get(0);
 
         HashMap<String, Object> responsePayload = new HashMap<>();
         if (verifyAcl(sid, di, rm, uri)) {
-            responsePayload.put("gp", Constants.RESP_ACL_ALLOWED);
+            responsePayload.put(Constants.RESP_GROUP_PERMISSION,
+                    Constants.RESP_ACL_ALLOWED);
         } else {
-            responsePayload.put("gp", Constants.RESP_ACL_DENIED);
+            responsePayload.put(Constants.RESP_GROUP_PERMISSION,
+                    Constants.RESP_ACL_DENIED);
         }
 
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,

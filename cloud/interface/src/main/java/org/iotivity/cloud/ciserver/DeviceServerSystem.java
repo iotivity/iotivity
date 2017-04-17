@@ -23,6 +23,7 @@ package org.iotivity.cloud.ciserver;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.ServerSystem;
@@ -34,6 +35,7 @@ import org.iotivity.cloud.base.exception.ClientException;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadOptionException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
+import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
 import org.iotivity.cloud.base.exception.ServerException.UnAuthorizedException;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
@@ -79,7 +81,7 @@ public class DeviceServerSystem extends ServerSystem {
      * This class provides a set of APIs to manage device pool.
      *
      */
-    public class CoapDevicePool {
+    public static class CoapDevicePool {
         HashMap<String, Device> mMapDevice = new HashMap<>();
 
         /**
@@ -112,12 +114,14 @@ public class DeviceServerSystem extends ServerSystem {
         }
 
         private void removeObserveDevice(Device device) throws ClientException {
-            Iterator<String> iterator = mMapDevice.keySet().iterator();
-            while (iterator.hasNext()) {
-                String deviceId = iterator.next();
-                CoapDevice getDevice = (CoapDevice) queryDevice(deviceId);
-                getDevice.removeObserveChannel(
-                        ((CoapDevice) device).getRequestChannel());
+            synchronized (mMapDevice) {
+                Iterator<String> iterator = mMapDevice.keySet().iterator();
+                while (iterator.hasNext()) {
+                    String deviceId = iterator.next();
+                    CoapDevice getDevice = (CoapDevice) queryDevice(deviceId);
+                    getDevice.removeObserveChannel(
+                            ((CoapDevice) device).getRequestChannel());
+                }
             }
         }
 
@@ -159,15 +163,24 @@ public class DeviceServerSystem extends ServerSystem {
 
                     CoapRequest coapRequest = (CoapRequest) msg;
                     IRequestChannel targetChannel = null;
-                    if (coapRequest.getUriPath()
-                            .contains(Constants.ROUTE_FULL_URI)) {
+                    String urlPath = coapRequest.getUriPath();
+
+                    if (urlPath == null) {
+                        throw new InternalServerErrorException(
+                                "request uriPath is null");
+                    }
+
+                    if (urlPath.contains(Constants.ROUTE_FULL_URI)) {
 
                         int RouteResourcePathSize = Constants.ROUTE_FULL_URI
                                 .split("/").length;
-                        CoapDevice targetDevice = (CoapDevice) mDevicePool
-                                .queryDevice(coapRequest.getUriPathSegments()
-                                        .get(RouteResourcePathSize - 1));
-                        targetChannel = targetDevice.getRequestChannel();
+                        List<String> uriPath = coapRequest.getUriPathSegments();
+                        if (uriPath != null && !uriPath.isEmpty()) {
+                            CoapDevice targetDevice = (CoapDevice) mDevicePool
+                                    .queryDevice(uriPath
+                                            .get(RouteResourcePathSize - 1));
+                            targetChannel = targetDevice.getRequestChannel();
+                        }
                     }
                     switch (coapRequest.getObserve()) {
                         case SUBSCRIBE:
@@ -209,7 +222,14 @@ public class DeviceServerSystem extends ServerSystem {
                 // Once the response is valid, add this to deviceList
                 CoapResponse response = (CoapResponse) msg;
 
-                switch (response.getUriPath()) {
+                String urlPath = response.getUriPath();
+
+                if (urlPath == null) {
+                    throw new InternalServerErrorException(
+                            "request uriPath is null");
+                }
+
+                switch (urlPath) {
                     case OICConstants.ACCOUNT_SESSION_FULL_URI:
                         if (response.getStatus() != ResponseStatus.CHANGED) {
                             bCloseConnection = true;
@@ -312,7 +332,14 @@ public class DeviceServerSystem extends ServerSystem {
 
                 CoapResponse response = (CoapResponse) msg;
 
-                switch (response.getUriPath()) {
+                String urlPath = response.getUriPath();
+
+                if (urlPath == null) {
+                    throw new InternalServerErrorException(
+                            "request uriPath is null");
+                }
+
+                switch (urlPath) {
 
                     case OICConstants.ACCOUNT_SESSION_FULL_URI:
                         HashMap<String, Object> payloadData = mCbor
@@ -363,7 +390,14 @@ public class DeviceServerSystem extends ServerSystem {
                 // And check first response is VALID then add or cut
                 CoapRequest request = (CoapRequest) msg;
 
-                switch (request.getUriPath()) {
+                String urlPath = request.getUriPath();
+
+                if (urlPath == null) {
+                    throw new InternalServerErrorException(
+                            "request uriPath is null");
+                }
+
+                switch (urlPath) {
                     // Check whether request is about account
                     case OICConstants.ACCOUNT_FULL_URI:
                     case OICConstants.ACCOUNT_TOKENREFRESH_FULL_URI:
@@ -424,7 +458,7 @@ public class DeviceServerSystem extends ServerSystem {
     }
 
     @Sharable
-    class HttpAuthHandler extends ChannelDuplexHandler {
+    static class HttpAuthHandler extends ChannelDuplexHandler {
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             // After current channel authenticated, raise to upper layer

@@ -37,7 +37,7 @@ public abstract class Message implements IRequest, IResponse, ISignaling {
     @Override
     public List<String> getUriPathSegments() {
         if (uri_path == null) {
-            return null;
+            return new ArrayList<>();
         }
         List<String> segments = new ArrayList<>();
         for (byte[] pathSegment : uri_path) {
@@ -81,7 +81,7 @@ public abstract class Message implements IRequest, IResponse, ISignaling {
     @Override
     public List<String> getUriQuerySegments() {
         if (uri_query == null) {
-            return null;
+            return new ArrayList<>();
         }
         List<String> segments = new ArrayList<>();
         for (byte[] querySegment : uri_query) {
@@ -95,7 +95,7 @@ public abstract class Message implements IRequest, IResponse, ISignaling {
 
         List<String> segments = getUriQuerySegments();
         if (segments == null) {
-            return null;
+            return new HashMap<>();
         }
 
         HashMap<String, List<String>> queryMap = new HashMap<>();

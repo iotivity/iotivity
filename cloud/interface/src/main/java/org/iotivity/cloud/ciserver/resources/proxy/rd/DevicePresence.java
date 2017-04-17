@@ -95,12 +95,14 @@ public class DevicePresence extends Resource {
                     } else {
                         String additionalQuery = makeAdditionalQuery(
                                 payloadData, mSrcDevice.getDeviceId());
-
-                        String uriQuery = additionalQuery.toString()
-                                + (mRequest.getUriQuery() != null
-                                        ? (";" + mRequest.getUriQuery()) : "");
-                        mRequest = MessageBuilder.modifyRequest(mRequest, null,
-                                uriQuery, null, null);
+                        if (additionalQuery != null) {
+                            String uriQuery = additionalQuery.toString()
+                                    + (mRequest.getUriQuery() != null
+                                            ? (";" + mRequest.getUriQuery())
+                                            : "");
+                            mRequest = MessageBuilder.modifyRequest(mRequest,
+                                    null, uriQuery, null, null);
+                        }
                     }
 
                     mRDServer.sendRequest(mRequest, mSrcDevice);

@@ -52,7 +52,7 @@ public class Account extends Resource {
         mASServer = ConnectorPool.getConnection("account");
     }
 
-    class RDReceiveHandler implements IResponseEventHandler {
+    static class RDReceiveHandler implements IResponseEventHandler {
 
         private Device    mSrcDevice;
         private IResponse mResponse;
@@ -79,7 +79,7 @@ public class Account extends Resource {
         }
     }
 
-    class AccountReceiveHandler implements IResponseEventHandler {
+    static class AccountReceiveHandler implements IResponseEventHandler {
 
         IRequestChannel  mRDServer = null;
         private Device   mSrcDevice;

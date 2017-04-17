@@ -156,7 +156,7 @@ public class DBManager {
         ArrayList<HashMap<String, Object>> records = _selectRecord(tableName,
                 condition);
 
-        if (records.size() > 1) {
+        if (records != null && records.size() > 1) {
             throw new InternalServerErrorException(
                     "Database record select failed");
         }

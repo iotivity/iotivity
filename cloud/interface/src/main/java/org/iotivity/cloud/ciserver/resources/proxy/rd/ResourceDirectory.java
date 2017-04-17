@@ -159,7 +159,7 @@ public class ResourceDirectory extends Resource {
 
     // handles response to convert href in response payload into original href
     // when resource published or updated
-    class PublishResponseHandler implements IResponseEventHandler {
+    static class PublishResponseHandler implements IResponseEventHandler {
 
         private Device mSrcDevice;
 
