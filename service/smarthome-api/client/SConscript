@@ -76,6 +76,7 @@ smarthome_client_src = [discovery_dir+'src/DeviceDiscovery.cpp',
                     resource_dir+'src/RemoteMediaResource.cpp',
                     resource_dir+'src/RemoteOperationalStateResource.cpp',
                     resource_dir+'src/RemoteAutomaticDocumentFeederResource.cpp',
+                    resource_dir+'src/RemoteTemperatureResource.cpp',
                     device_dir+'src/SHBaseRemoteDevice.cpp',
                     device_dir+'src/SHBaseRemoteDevice_Impl.cpp',
                     device_dir+'src/SHBaseRemoteDeviceBuilder.cpp',
@@ -91,7 +92,8 @@ smarthome_client_src = [discovery_dir+'src/DeviceDiscovery.cpp',
                     device_dir+'src/RemotePrinterDevice.cpp',
                     device_dir+'src/RemoteScannerDevice.cpp',
                     device_dir+'src/RemoteSmartPlugDevice.cpp',
-                    device_dir+'src/RemoteSecurityPanelDevice.cpp']
+                    device_dir+'src/RemoteSecurityPanelDevice.cpp',
+                    device_dir+'src/RemoteAirConditionerDevice.cpp']
 
 smarthomelib = smarthome_env.SharedLibrary('smarthome_client_api', smarthome_client_src)
 

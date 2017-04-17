@@ -82,6 +82,7 @@ namespace OIC
                 const std::string SWITCH = "oic.d.switch";
                 const std::string SMART_PLUG = "oic.d.smartplug";
                 const std::string SECURITY_PANEL = "oic.d.securitypanel";
+                const std::string AIRCONDITIONER = "oic.d.airconditioner";
             }
 
             namespace RESOURCE_TYPE
@@ -96,6 +97,7 @@ namespace OIC
                 const std::string MEDIA = "oic.r.media";
                 const std::string OPERATIONAL_STATE = "oic.r.operational.state";
                 const std::string AUTOMATICDOCUMENT_FEEDER = "oic.r.automaticdocumentfeeder";
+                const std::string TEMPERATURE = "oic.r.temperature";
             }
 
             namespace INTERFACE

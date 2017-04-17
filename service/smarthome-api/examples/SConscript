@@ -67,3 +67,5 @@ smarthome_example_env.Program('WaterValveClientSample', 'WaterValveClientSample.
 smarthome_example_env.Program('WaterValveServerSample', 'WaterValveServerSample.cpp')
 smarthome_example_env.Program('BlindClientSample', 'BlindClientSample.cpp')
 smarthome_example_env.Program('BlindServerSample', 'BlindServerSample.cpp')
+smarthome_example_env.Program('AirConditionerClientSample', 'AirConditionerClientSample.cpp')
+smarthome_example_env.Program('AirConditionerServerSample', 'AirConditionerServerSample.cpp')

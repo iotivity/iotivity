@@ -80,6 +80,7 @@ smarthome_server_src = [device_dir + 'src/SHBaseDevice.cpp',
                         device_dir + 'src/ScannerDevice.cpp',
                         device_dir + 'src/SmartPlugDevice.cpp',
                         device_dir + 'src/SecurityPanelDevice.cpp',
+                        device_dir + 'src/AirConditionerDevice.cpp',
                         resource_dir + 'src/SHBaseResource.cpp',
                         resource_dir + 'src/SHBaseResource_Impl.cpp',
                         resource_dir + 'src/BinarySwitchResource.cpp',
@@ -94,7 +95,8 @@ smarthome_server_src = [device_dir + 'src/SHBaseDevice.cpp',
                         resource_dir + 'src/MediaSourceOutputResource.cpp',
                         resource_dir + 'src/MediaResource.cpp',
                         resource_dir + 'src/OperationalStateResource.cpp',
-                        resource_dir + 'src/AutomaticDocumentFeederResource.cpp']
+                        resource_dir + 'src/AutomaticDocumentFeederResource.cpp',
+                        resource_dir + 'src/TemperatureResource.cpp']
 
 smarthomelib = smarthome_env.SharedLibrary('smarthome_server_api', smarthome_server_src)
 #env.StaticLibrary('smarthome_server_api', smarthome_server_src)
