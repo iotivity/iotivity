@@ -35,9 +35,25 @@ void GetPkixInfo(PkiInfo_t * inf)
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
-    GetDerOwnCert(&inf->crt, PRIMARY_CERT);
+
+    GetPemOwnCert(&inf->crt, PRIMARY_CERT);
+    if (inf->crt.len == 0)
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: empty certificate", __func__);
+    }
+
     GetDerKey(&inf->key, PRIMARY_CERT);
-    GetDerCaCert(&inf->ca, TRUST_CA);
+    if (inf->key.len == 0)
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: empty key", __func__);
+    }
+
+    (void)GetPemCaCert(&inf->ca, TRUST_CA);
+    if (inf->ca.len == 0)
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: empty CA cert", __func__);
+    }
+
     GetDerCrl(&inf->crl);
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
@@ -51,16 +67,16 @@ void GetManufacturerPkixInfo(PkiInfo_t * inf)
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
-    GetDerOwnCert(&inf->crt, MF_PRIMARY_CERT);
+    GetPemOwnCert(&inf->crt, MF_PRIMARY_CERT);
     GetDerKey(&inf->key, MF_PRIMARY_CERT);
-    GetDerCaCert(&inf->ca, MF_TRUST_CA);
+    (void)GetPemCaCert(&inf->ca, MF_TRUST_CA);
     // CRL not provided
     inf->crl.data = NULL;
     inf->crl.len = 0;
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
 
-void InitCipherSuiteList(bool * list)
+void InitCipherSuiteList(bool * list, const char* deviceId)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
     if (NULL == list)
@@ -69,11 +85,11 @@ void InitCipherSuiteList(bool * list)
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
-    InitCipherSuiteListInternal(list, TRUST_CA);
+    InitCipherSuiteListInternal(list, TRUST_CA, deviceId);
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
 
-void InitManufacturerCipherSuiteList(bool * list)
+void InitManufacturerCipherSuiteList(bool * list, const char* deviceId)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
     if (NULL == list)
@@ -82,6 +98,6 @@ void InitManufacturerCipherSuiteList(bool * list)
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
-    InitCipherSuiteListInternal(list, MF_TRUST_CA);
+    InitCipherSuiteListInternal(list, MF_TRUST_CA, deviceId);
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }

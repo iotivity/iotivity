@@ -25,7 +25,6 @@
  * functions to write to the pipe and read from the pipe.
  */
 
-#include <cinttypes>
 #include <string.h>
 #include <errno.h>
 #include "messageHandler.h"

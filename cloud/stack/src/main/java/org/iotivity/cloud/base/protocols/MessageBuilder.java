@@ -21,6 +21,7 @@
  */
 package org.iotivity.cloud.base.protocols;
 
+import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.coap.CoapSignaling;
@@ -88,6 +89,8 @@ public class MessageBuilder {
                 }
             }
 
+            coapResponse.setVersionValue(OICConstants.DEFAULT_VERSION_VALUE);
+
             response = coapResponse;
         }
 
@@ -138,6 +141,8 @@ public class MessageBuilder {
             coapRequest.setPayload(payload);
         }
 
+        coapRequest.setVersionValue(OICConstants.DEFAULT_VERSION_VALUE);
+
         return coapRequest;
     }
 
@@ -156,6 +161,8 @@ public class MessageBuilder {
             coapRequest.setContentFormat(contentFormat);
             coapRequest.setPayload(payload);
         }
+
+        coapRequest.setVersionValue(OICConstants.DEFAULT_VERSION_VALUE);
 
         return coapRequest;
     }
@@ -178,6 +185,8 @@ public class MessageBuilder {
             coapResponse.setContentFormat(contentFormat);
             coapResponse.setPayload(payload);
         }
+
+        coapResponse.setVersionValue(OICConstants.DEFAULT_VERSION_VALUE);
 
         return coapResponse;
     }

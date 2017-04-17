@@ -25,6 +25,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include <assert.h>
 #include "ca_adapter_net_ssl.h"
 #include "cacommon.h"
 #include "caipinterface.h"
@@ -32,7 +33,7 @@
 #include "ocrandom.h"
 #include "byte_array.h"
 #include "octhread.h"
-#include "timer.h"
+#include "octimer.h"
 
 // headers required for mbed TLS
 #include "mbedtls/platform.h"
@@ -42,6 +43,7 @@
 #include "mbedtls/pkcs12.h"
 #include "mbedtls/ssl_internal.h"
 #include "mbedtls/net_sockets.h"
+#include "mbedtls/oid.h"
 #ifdef __WITH_DTLS__
 #include "mbedtls/timing.h"
 #include "mbedtls/ssl_cookie.h"
@@ -77,11 +79,6 @@
  */
 #define PERSONALIZATION_STRING "IOTIVITY_RND"
 /**
- * @def UUID_PREFIX
- * @brief uuid prefix in certificate subject field
- */
-#define UUID_PREFIX "uuid:"
-/**
  * @def USERID_PREFIX
  * @brief userid prefix in certificate alternative subject name field
  */
@@ -100,6 +97,7 @@
 /**
  * @def MMBED_TLS_DEBUG_LEVEL
  * @brief Logging level for mbedTLS library
+ * Level 1 logs errors only, level 4 is verbose logging.
  */
 #define MBED_TLS_DEBUG_LEVEL (4)
 
@@ -203,6 +201,12 @@ if (g_sslCallback)                                                              
     g_sslCallback(&(peer)->sep.endpoint, &errorInfo);                                              \
 }
 
+/* OCF-defined EKU value indicating an identity certificate, that can be used for
+ * TLS client and server authentication.  This is the DER encoding of the OID
+ * 1.3.6.1.4.1.44924.1.6.
+ */
+static const unsigned char EKU_IDENTITY[] = { 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0xDE, 0x7C, 0x01, 0x06 };
+
 /**@def CONF_SSL(clientConf, serverConf, fn, ...)
  *
  * Calls \a fn for \a clientConf and \a serverConf.
@@ -278,7 +282,7 @@ static PkiInfo_t g_pkiInfo = {{NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}};
 
 typedef struct  {
     int code;
-    int alert;
+    unsigned char alert;
 } CrtVerifyAlert_t;
 
 static const CrtVerifyAlert_t crtVerifyAlerts[] = {
@@ -305,7 +309,7 @@ static const CrtVerifyAlert_t crtVerifyAlerts[] = {
     {0, 0}
 };
 
-static int GetAlertCode(uint32_t flags)
+static unsigned char GetAlertCode(uint32_t flags)
 {
     const CrtVerifyAlert_t *cur;
 
@@ -514,7 +518,11 @@ static int SendCallBack(void * tep, const unsigned char * data, size_t dataLen)
         size_t dataToSend = (dataLen > INT_MAX) ? INT_MAX : dataLen;
         CAPacketSendCallback sendCallback = g_caSslContext->adapterCallbacks[adapterIndex].sendCallback;
         sentLen = sendCallback(&(((SslEndPoint_t * )tep)->sep.endpoint), (const void *) data, dataToSend);
-        if (sentLen != dataLen)
+        if (0 > sentLen)
+        {
+            OIC_LOG(ERROR, NET_SSL_TAG, "Error sending packet. The error will be reported in the adapter.");
+        }
+        else if ((size_t)sentLen != dataLen)
         {
             OIC_LOG_V(DEBUG, NET_SSL_TAG,
                       "Packet was partially sent - sent/total/remained bytes : %d/%" PRIuPTR "/%" PRIuPTR,
@@ -565,116 +573,51 @@ static int RecvCallBack(void * tep, unsigned char * data, size_t dataLen)
  * Parse chain of X.509 certificates.
  *
  * @param[out] crt     container for X.509 certificates
- * @param[in]  data    buffer with X.509 certificates. Certificates may be in either in PEM
-                       or DER format in a jumble, delimiting symbols does not matter.
+ * @param[in]  buf     buffer with X.509 certificates. Certificates must be in a single null-terminated
+ *                     string, with each certificate in PEM encoding with headers.
  * @param[in]  bufLen  buffer length
  * @param[in]  errNum  number certificates that failed to parse
  *
  * @return  number of successfully parsed certificates or -1 on error
  */
-static size_t ParseChain(mbedtls_x509_crt * crt, unsigned char * buf, size_t bufLen, int * errNum)
+static int ParseChain(mbedtls_x509_crt * crt, unsigned char * buf, size_t bufLen, int * errNum)
 {
+    int ret;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
-    VERIFY_NON_NULL_RET(crt, NET_SSL_TAG, "Param crt is NULL" , -1);
-    VERIFY_NON_NULL_RET(buf, NET_SSL_TAG, "Param buf is NULL" , -1);
+    VERIFY_NON_NULL_RET(crt, NET_SSL_TAG, "Param crt is NULL", -1);
+    VERIFY_NON_NULL_RET(buf, NET_SSL_TAG, "Param buf is NULL", -1);
 
-    char pemCertHeader[] = {
-        0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x42, 0x45, 0x47, 0x49, 0x4e, 0x20, 0x43, 0x45, 0x52,
-        0x54, 0x49, 0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x2d, 0x2d, 0x2d, 0x2d, 0x2d
-    };
-    char pemCertFooter[] = {
-        0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x45, 0x4e, 0x44, 0x20, 0x43, 0x45, 0x52, 0x54, 0x49,
-        0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x2d, 0x2d, 0x2d, 0x2d, 0x2d
-    };
-    size_t pemCertHeaderLen = sizeof(pemCertHeader);
-    size_t pemCertFooterLen = sizeof(pemCertFooter);
-
-    size_t len = 0;
-    unsigned char * tmp = NULL;
-    size_t count = 0;
-    int ret = 0;
-    size_t pos = 0;
-
-    *errNum = 0;
-    while (pos < bufLen)
+    if (NULL != errNum)
     {
-        if (buf[pos] == 0x30 && buf[pos + 1] == 0x82)
-        {
-            tmp = (unsigned char *)buf + pos + 1;
-            CHECK_MBEDTLS_RET(mbedtls_asn1_get_len, &tmp, buf + bufLen, &len);
-            if (pos + len < bufLen)
-            {
-                ret = mbedtls_x509_crt_parse_der(crt, buf + pos, len + 4);
-                if (0 == ret)
-                {
-                    count++;
-                }
-                else
-                {
-                    (*errNum)++;
-                    OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedtls_x509_crt_parse_der returned -0x%04x\n", -(ret));
-                }
-            }
-            pos += len + 4;
-        }
-        else if ((buf + pos + pemCertHeaderLen < buf + bufLen) &&
-                 (0 == memcmp(buf + pos, pemCertHeader, pemCertHeaderLen)))
-        {
-            void * endPos = NULL;
-            endPos = memmem(&(buf[pos]), bufLen - pos, pemCertFooter, pemCertFooterLen);
-            if (NULL == endPos)
-            {
-                OIC_LOG(ERROR, NET_SSL_TAG, "Error: end of PEM certificate not found.");
-                OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
-                return -1;
-            }
-            len = (char*)endPos - ((char*)buf + pos) + pemCertFooterLen;
-            if (pos + len + 1 <= bufLen)
-            {
-                char con = buf[pos + len];
-                buf[pos + len] = 0x00;
-                ret = mbedtls_x509_crt_parse(crt, buf + pos, len + 1);
-                if (0 == ret)
-                {
-                    count++;
-                }
-                else
-                {
-                    (*errNum)++;
-                    OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedtls_x509_crt_parse returned -0x%04x\n", -(ret));
-                }
-                buf[pos + len] = con;
-            }
-            else
-            {
-                unsigned char * lastCert = (unsigned char *)OICMalloc((len + 1) * sizeof(unsigned char));
-                memcpy(lastCert, buf + pos, len);
-                lastCert[len] = 0x00;
-                ret = mbedtls_x509_crt_parse(crt, lastCert, len + 1);
-                if (0 == ret)
-                {
-                    count++;
-                }
-                else
-                {
-                    (*errNum)++;
-                    OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedtls_x509_crt_parse returned -0x%04x\n", -(ret));
-                }
-                OICFree(lastCert);
-            }
-            pos += len;
-        }
-        else
-        {
-            pos++;
-        }
+        *errNum = 0;
     }
-    OIC_LOG_V(DEBUG, NET_SSL_TAG, "%s successfully parsed %d certificates", __func__, count);
-    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
-    return count;
 
-exit:
-    return -1;
+    if ((bufLen >= 2) && (buf[0] == 0x30) && (buf[1] == 0x82))
+    {
+        OIC_LOG_V(ERROR, NET_SSL_TAG, "DER-encoded certificate passed to ParseChain");
+        return -1;
+    }
+
+    ret = mbedtls_x509_crt_parse(crt, buf, bufLen);
+    if (0 > ret)
+    {
+        OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedtls_x509_crt_parse failed: -0x%04x", -(ret));
+        return -1;
+    }
+
+    if (NULL != errNum)
+    {
+        *errNum = ret;
+    }
+
+    ret = 0;
+    for (const mbedtls_x509_crt *cur = crt; cur != NULL; cur = cur->next)
+    {
+        ret++;
+    }
+
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+    return ret;
 }
 
 //Loads PKIX related information from SRM
@@ -709,7 +652,7 @@ static int InitPKIX(CATransportAdapter_t adapter)
     // optional
     int ret;
     int errNum;
-    size_t count = ParseChain(&g_caSslContext->crt, g_pkiInfo.crt.data, g_pkiInfo.crt.len, &errNum);
+    int count = ParseChain(&g_caSslContext->crt, g_pkiInfo.crt.data, g_pkiInfo.crt.len, &errNum);
     if (0 >= count)
     {
         OIC_LOG(WARNING, NET_SSL_TAG, "Own certificate chain parsing error");
@@ -739,6 +682,22 @@ static int InitPKIX(CATransportAdapter_t adapter)
     {
         OIC_LOG(WARNING, NET_SSL_TAG, "Own certificate configuration error");
         goto required;
+    }
+
+    /* If we get here, certificates could be used, so configure OCF EKUs. */
+    ret = mbedtls_ssl_conf_ekus(serverConf, (const char*)EKU_IDENTITY, sizeof(EKU_IDENTITY),
+        (const char*)EKU_IDENTITY, sizeof(EKU_IDENTITY));
+    if (0 == ret)
+    {
+        ret = mbedtls_ssl_conf_ekus(clientConf, (const char*)EKU_IDENTITY, sizeof(EKU_IDENTITY),
+            (const char*)EKU_IDENTITY, sizeof(EKU_IDENTITY));
+    }
+    if (0 != ret)
+    {
+        /* Cert-based ciphersuites will fail, but if PSK ciphersuites are in
+         * the list they might work, so don't return error.
+         */
+        OIC_LOG(WARNING, NET_SSL_TAG, "EKU configuration error");
     }
 
     required:
@@ -802,6 +761,9 @@ static int GetPskCredentialsCallback(void * notUsed, mbedtls_ssl_context * ssl,
         OIC_LOG(DEBUG, NET_SSL_TAG, "PSK:");
         OIC_LOG_BUFFER(DEBUG, NET_SSL_TAG, keyBuf, ret);
 
+        OIC_LOG(DEBUG, NET_SSL_TAG, "Identity:");
+        OIC_LOG_BUFFER(DEBUG, NET_SSL_TAG, desc, descLen);
+
         OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
         return(mbedtls_ssl_set_hs_psk(ssl, keyBuf, ret));
     }
@@ -850,15 +812,15 @@ static SslEndPoint_t *GetSslPeer(const CAEndpoint_t *peer)
     return NULL;
 }
 
-#ifdef MULTIPLE_OWNER
 /**
- * Gets CA secure endpoint info corresponding for endpoint.
+ * Gets a copy of CA secure endpoint info corresponding for endpoint.
  *
  * @param[in]  peer    remote address
+ * @param[out] sep     copy of secure endpoint data
  *
- * @return  CASecureEndpoint or NULL
+ * @return  CA_STATUS_OK on success; other error code on failure
  */
-const CASecureEndpoint_t *GetCASecureEndpointData(const CAEndpoint_t* peer)
+CAResult_t GetCASecureEndpointData(const CAEndpoint_t* peer, CASecureEndpoint_t* sep)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
 
@@ -867,23 +829,23 @@ const CASecureEndpoint_t *GetCASecureEndpointData(const CAEndpoint_t* peer)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Context is NULL");
         oc_mutex_unlock(g_sslContextMutex);
-        return NULL;
+        return CA_STATUS_NOT_INITIALIZED;
     }
 
     SslEndPoint_t* sslPeer = GetSslPeer(peer);
     if(sslPeer)
     {
         OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+        memcpy(sep, &sslPeer->sep, sizeof(sslPeer->sep));
         oc_mutex_unlock(g_sslContextMutex);
-        return &sslPeer->sep;
+        return CA_STATUS_OK;
     }
 
     OIC_LOG(DEBUG, NET_SSL_TAG, "Return NULL");
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     oc_mutex_unlock(g_sslContextMutex);
-    return NULL;
+    return CA_STATUS_INVALID_PARAM;
 }
-#endif
 
 /**
  * Adds a bit to the attributes field of a secure endpoint.
@@ -1071,6 +1033,8 @@ static bool checkSslOperation(SslEndPoint_t*  peer,
                               const char* str,
                               unsigned char msg)
 {
+    OC_UNUSED(str);
+
     if ((0 != ret) &&
         (MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY != ret) &&
         (MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED != ret) &&
@@ -1093,11 +1057,7 @@ static bool checkSslOperation(SslEndPoint_t*  peer,
         (MBEDTLS_SSL_ALERT_MSG_NO_APPLICATION_PROTOCOL != ret))
     {
         OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: -0x%x", (str), -ret);
-        if ((MBEDTLS_ERR_SSL_FATAL_ALERT_MESSAGE != ret) &&
-            (MBEDTLS_ERR_SSL_BAD_HS_CLIENT_HELLO != ret))
-        {
-            mbedtls_ssl_send_alert_message(&(peer)->ssl, MBEDTLS_SSL_ALERT_LEVEL_FATAL, (msg));
-        }
+        (void)msg;
 
         if (MBEDTLS_ERR_SSL_BAD_HS_CLIENT_HELLO != ret)
         {
@@ -1317,7 +1277,8 @@ static int InitPskIdentity(mbedtls_ssl_config * config)
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return 0;
 }
-static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapter)
+static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapter,
+                        const char* deviceId)
 {
     int index = 0;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
@@ -1336,9 +1297,10 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
         return;
     }
 
-    g_getCredentialTypesCallback(g_caSslContext->cipherFlag);
+    g_getCredentialTypesCallback(g_caSslContext->cipherFlag, deviceId);
+
     // Retrieve the PSK credential from SRM
-    if (0 != InitPskIdentity(config))
+    if (true == g_caSslContext->cipherFlag[0] && 0 != InitPskIdentity(config))
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "PSK identity initialization failed!");
     }
@@ -1423,7 +1385,7 @@ static SslEndPoint_t * InitiateTlsHandshake(const CAEndpoint_t *endpoint)
     }
 
     //Load allowed SVR suites from SVR DB
-    SetupCipher(config, endpoint->adapter);
+    SetupCipher(config, endpoint->adapter, endpoint->remoteId);
 
     ret = u_arraylist_add(g_caSslContext->peerList, (void *) tep);
     if (!ret)
@@ -1974,7 +1936,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
             return CA_STATUS_FAILED;
         }
         //Load allowed TLS suites from SVR DB
-        SetupCipher(config, sep->endpoint.adapter);
+        SetupCipher(config, sep->endpoint.adapter, sep->endpoint.remoteId);
 
         ret = u_arraylist_add(g_caSslContext->peerList, (void *) peer);
         if (!ret)
@@ -2053,10 +2015,9 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
             if (MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 != selectedCipher &&
                 MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256 != selectedCipher)
             {
-                char uuid[UUID_LENGTH * 2 + 5] = {0};
-                void * uuidPos = NULL;
-                void * userIdPos = NULL;
                 const mbedtls_x509_crt * peerCert = mbedtls_ssl_get_peer_cert(&peer->ssl);
+                const mbedtls_x509_name * name = NULL;
+                uint8_t pubKeyBuf[CA_SECURE_ENDPOINT_PUBLIC_KEY_MAX_LENGTH] = { 0 };
                 ret = (NULL == peerCert ? -1 : 0);
                 if (!checkSslOperation(peer,
                                        ret,
@@ -2067,49 +2028,111 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
                     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
                     return CA_STATUS_FAILED;
                 }
-                uuidPos = memmem(peerCert->subject_raw.p, peerCert->subject_raw.len,
-                                                 UUID_PREFIX, sizeof(UUID_PREFIX) - 1);
 
-                if (NULL != uuidPos)
+                /* mbedtls_pk_write_pubkey_der takes a non-const mbedtls_pk_context, but inspection
+                 * shows that every place it's used internally treats it as const, so casting its
+                 * constness away is safe.
+                 */
+                ret = mbedtls_pk_write_pubkey_der((mbedtls_pk_context *)&peerCert->pk, pubKeyBuf, sizeof(pubKeyBuf));
+                if (ret <= 0)
                 {
-                    memcpy(uuid, (char*) uuidPos + sizeof(UUID_PREFIX) - 1, UUID_LENGTH * 2 + 4);
-                    OIC_LOG_V(DEBUG, NET_SSL_TAG, "certificate uuid string: %s" , uuid);
-                    ret = (OCConvertStringToUuid(uuid, peer->sep.identity.id)) ? 0 : -1;
-                    if (!checkSslOperation(peer,
-                                           ret,
-                                           "Failed to convert subject",
-                                           MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT))
+                    OIC_LOG_V(ERROR, NET_SSL_TAG, "Failed to copy public key of remote peer: -0x%x", ret);
+                    oc_mutex_unlock(g_sslContextMutex);
+                    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+                    return CA_STATUS_FAILED;
+                }
+                else if (ret > sizeof(peer->sep.publicKey))
+                {
+                    assert(!"publicKey field of CASecureEndpoint_t is too small for the public key!");
+                    OIC_LOG(ERROR, NET_SSL_TAG, "Public key of remote peer was too large");
+                    oc_mutex_unlock(g_sslContextMutex);
+                    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+                    return CA_STATUS_FAILED;
+                }
+                /* DER data is written to the end of the buffer, so we have to skip ahead in it. */
+                memcpy(peer->sep.publicKey, (pubKeyBuf + sizeof(pubKeyBuf) - ret), ret);
+                peer->sep.publicKeyLength = ret;
+
+                /* Find the CN component of the subject name. */
+                for (name = &peerCert->subject; NULL != name; name = name->next)
+                {
+                    if (name->oid.p &&
+                       (name->oid.len <= MBEDTLS_OID_SIZE(MBEDTLS_OID_AT_CN)) &&
+                       (0 == memcmp(MBEDTLS_OID_AT_CN, name->oid.p, name->oid.len)))
                     {
-                        oc_mutex_unlock(g_sslContextMutex);
-                        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
-                        return CA_STATUS_FAILED;
+                        break;
                     }
+                }
+
+                if (NULL == name)
+                {
+                    OIC_LOG(WARNING, NET_SSL_TAG, "no CN RDN found in subject name");
                 }
                 else
                 {
-                    OIC_LOG(WARNING, NET_SSL_TAG, "uuid not found");
-                }
+                    const size_t uuidBufLen = UUID_STRING_SIZE - 1;
+                    char uuid[UUID_STRING_SIZE] = { 0 };
+                    const unsigned char * uuidPos = NULL;
+                    const unsigned char * userIdPos = NULL;
 
-                userIdPos = memmem(peerCert->subject_raw.p, peerCert->subject_raw.len,
-                                             USERID_PREFIX, sizeof(USERID_PREFIX) - 1);
-                if (NULL != userIdPos)
-                {
-                    memcpy(uuid, (char*) userIdPos + sizeof(USERID_PREFIX) - 1, UUID_LENGTH * 2 + 4);
-                    ret = (OCConvertStringToUuid(uuid, peer->sep.userId.id)) ? 0 : -1;
-                    if (!checkSslOperation(peer,
-                                           ret,
-                                           "Failed to convert subject alt name",
-                                           MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT))
+                    uuidPos = (const unsigned char*)memmem(name->val.p, name->val.len,
+                                                           UUID_PREFIX, sizeof(UUID_PREFIX) - 1);
+
+                    /* If UUID_PREFIX is present, ensure there's enough data for the prefix plus an entire
+                     * UUID, to make sure we don't read past the end of the buffer.
+                     */
+                    if ((NULL != uuidPos) && 
+                        (name->val.len >= ((uuidPos - name->val.p) + (sizeof(UUID_PREFIX) - 1) + uuidBufLen)))
                     {
-                        oc_mutex_unlock(g_sslContextMutex);
-                        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
-                        return CA_STATUS_FAILED;
+                        memcpy(uuid, uuidPos + sizeof(UUID_PREFIX) - 1, uuidBufLen);
+                        OIC_LOG_V(DEBUG, NET_SSL_TAG, "certificate uuid string: %s", uuid);
+                        ret = (OCConvertStringToUuid(uuid, peer->sep.identity.id)) ? 0 : -1;
+                        if (!checkSslOperation(peer,
+                                               ret,
+                                               "Failed to convert subject",
+                                               MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT))
+                        {
+                            oc_mutex_unlock(g_sslContextMutex);
+                            OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+                            return CA_STATUS_FAILED;
+                        }
+                    }
+                    else
+                    {
+                        OIC_LOG(WARNING, NET_SSL_TAG, "uuid not found");
+                    }
+
+                    /* If USERID_PREFIX is present, ensure there's enough data for the prefix plus an entire
+                     * UUID, to make sure we don't read past the end of the buffer.
+                     */
+                    userIdPos = (const unsigned char*)memmem(name->val.p, name->val.len,
+                                                             USERID_PREFIX, sizeof(USERID_PREFIX) - 1);
+                    if ((NULL != userIdPos) &&
+                        (name->val.len >= ((userIdPos - name->val.p) + (sizeof(USERID_PREFIX) - 1) + uuidBufLen)))
+                    {
+                        memcpy(uuid, userIdPos + sizeof(USERID_PREFIX) - 1, uuidBufLen);
+                        ret = (OCConvertStringToUuid(uuid, peer->sep.userId.id)) ? 0 : -1;
+                        if (!checkSslOperation(peer,
+                                               ret,
+                                               "Failed to convert subject alt name",
+                                               MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT))
+                        {
+                            oc_mutex_unlock(g_sslContextMutex);
+                            OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+                            return CA_STATUS_FAILED;
+                        }
+                    }
+                    else
+                    {
+                        OIC_LOG(WARNING, NET_SSL_TAG, "Subject alternative name not found");
                     }
                 }
-                else
-                {
-                    OIC_LOG(WARNING, NET_SSL_TAG, "Subject alternative name not found");
-                }
+            }
+            else
+            {
+                /* No public key information for non-certificate-using ciphersuites. */
+                memset(&peer->sep.publicKey, 0, sizeof(peer->sep.publicKey));
+                peer->sep.publicKeyLength = 0;
             }
 
             oc_mutex_unlock(g_sslContextMutex);
@@ -2272,7 +2295,6 @@ CAResult_t CAsetTlsCipherSuite(const uint32_t cipher)
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(g_caSslContext, NET_SSL_TAG, "SSL context is not initialized." , CA_STATUS_NOT_INITIALIZED);
 
-    CAResult_t res = CA_STATUS_FAILED;
     SslCipher_t index = GetCipherIndex(cipher);
     if (SSL_CIPHER_MAX == index)
     {
@@ -2337,10 +2359,11 @@ static int pHash (const unsigned char *key, size_t keyLen,
      const unsigned char *random2, size_t random2Len,
      unsigned char *buf, size_t bufLen)
 {
-    unsigned char A[RANDOM_LEN] = {0};
-    unsigned char tmp[RANDOM_LEN] = {0};
+    unsigned char A[MBEDTLS_MD_MAX_SIZE] = {0};
+    unsigned char tmp[MBEDTLS_MD_MAX_SIZE] = {0};
     size_t dLen;   /* digest length */
     size_t len = 0;   /* result length */
+    const mbedtls_md_type_t hashAlg = MBEDTLS_MD_SHA256;
 
     VERIFY_TRUE_RET(bufLen <= INT_MAX, NET_SSL_TAG, "buffer too large", -1);
     VERIFY_NON_NULL_RET(key, NET_SSL_TAG, "key is NULL", -1);
@@ -2355,8 +2378,8 @@ static int pHash (const unsigned char *key, size_t keyLen,
     mbedtls_md_init(&hmacA);
     mbedtls_md_init(&hmacP);
 
-    CHECK_MBEDTLS_RET(mbedtls_md_setup, &hmacA, mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), 1);
-    CHECK_MBEDTLS_RET(mbedtls_md_setup, &hmacP, mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), 1);
+    CHECK_MBEDTLS_RET(mbedtls_md_setup, &hmacA, mbedtls_md_info_from_type(hashAlg), 1);
+    CHECK_MBEDTLS_RET(mbedtls_md_setup, &hmacP, mbedtls_md_info_from_type(hashAlg), 1);
 
     CHECK_MBEDTLS_RET(mbedtls_md_hmac_starts, &hmacA, key, keyLen );
     CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacA, label, labelLen);
@@ -2364,7 +2387,7 @@ static int pHash (const unsigned char *key, size_t keyLen,
     CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacA, random2, random2Len);
     CHECK_MBEDTLS_RET(mbedtls_md_hmac_finish, &hmacA, A);
 
-    dLen = RANDOM_LEN;
+    dLen = mbedtls_md_get_size(mbedtls_md_info_from_type(hashAlg));
 
     CHECK_MBEDTLS_RET(mbedtls_md_hmac_starts, &hmacP, key, keyLen);
 
@@ -2376,10 +2399,9 @@ static int pHash (const unsigned char *key, size_t keyLen,
         CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, label, labelLen);
         CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, random1, random1Len);
         CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, random2, random2Len);
-
         CHECK_MBEDTLS_RET(mbedtls_md_hmac_finish, &hmacP, tmp);
 
-        len += RANDOM_LEN;
+        len += dLen;
 
         memcpy(buf, tmp, dLen);
         buf += dLen;
@@ -2390,16 +2412,18 @@ static int pHash (const unsigned char *key, size_t keyLen,
         CHECK_MBEDTLS_RET(mbedtls_md_hmac_finish, &hmacA, A);
     }
 
-    CHECK_MBEDTLS_RET(mbedtls_md_hmac_reset, &hmacP);
-    CHECK_MBEDTLS_RET(mbedtls_md_hmac_starts, &hmacP, key, keyLen);
-    CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, A, dLen);
+    if ((bufLen % dLen) != 0)
+    {
+        CHECK_MBEDTLS_RET(mbedtls_md_hmac_reset, &hmacP);
+        CHECK_MBEDTLS_RET(mbedtls_md_hmac_starts, &hmacP, key, keyLen);
+        CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, A, dLen);
+        CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, label, labelLen);
+        CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, random1, random1Len);
+        CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, random2, random2Len);
+        CHECK_MBEDTLS_RET(mbedtls_md_hmac_finish, &hmacP, tmp);
 
-    CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, label, labelLen);
-    CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, random1, random1Len);
-    CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, random2, random2Len);
-    CHECK_MBEDTLS_RET(mbedtls_md_hmac_finish, &hmacP, tmp);
-
-    memcpy(buf, tmp, bufLen - len);
+        memcpy(buf, tmp, bufLen - len);
+    }
 
     mbedtls_md_free(&hmacA);
     mbedtls_md_free(&hmacP);

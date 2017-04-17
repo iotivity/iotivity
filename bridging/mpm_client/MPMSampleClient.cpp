@@ -257,19 +257,19 @@ MPMCbResult onCallback(uint32_t msgType, MPMMessage message, size_t size, const 
     log("Message from:", std::string(plugin_name), "\n");
     log("Interpreting payload as string:\n");
 
-    char* message_char = (char*) calloc(1, size+1);
+    char* message_char = (char*) calloc(1, size + 1);
     if (message_char == NULL)
     {
         log("Message_char is null\n");
         return MPM_CB_RESULT_ERROR;
     }
-    memset(message_char, 0, size+1);
+    memset(message_char, 0, size + 1);
     memcpy(message_char, message, size);
     log(std::string(message_char), "\n");
 
     if (msgType == MPM_SCAN && autoAddMode)
     {
-        MPMAddDevice(g_loadedPlugins[std::string(plugin_name)], message, size);
+        MPMAddDevice(g_loadedPlugins[std::string(plugin_name)], message_char, size + 1);
     }
     else if (msgType == MPM_ADD)
     {

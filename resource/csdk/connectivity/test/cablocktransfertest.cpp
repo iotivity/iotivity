@@ -721,6 +721,10 @@ TEST_F(CABlockTransferTests, CAUpdatePayloadToCADataWithRequest)
     EXPECT_EQ(CA_STATUS_OK, CAUpdatePayloadToCAData(&cadata, payload, payloadLen));
 
     EXPECT_STREQ((const char*) payload, (const char*) cadata.requestInfo->info.payload);
+
+    free(cadata.requestInfo->info.payload);
+    CADestroyToken(tempToken);
+    CADestroyEndpoint(tempRep);
 }
 
 TEST_F(CABlockTransferTests, CAUpdatePayloadToCADataWithResponse)
@@ -755,4 +759,8 @@ TEST_F(CABlockTransferTests, CAUpdatePayloadToCADataWithResponse)
     EXPECT_EQ(CA_STATUS_OK, CAUpdatePayloadToCAData(&cadata, payload, payloadLen));
 
     EXPECT_STREQ((const char*) payload, (const char*) cadata.responseInfo->info.payload);
+
+    free(cadata.responseInfo->info.payload);
+    CADestroyToken(tempToken);
+    CADestroyEndpoint(tempRep);
 }

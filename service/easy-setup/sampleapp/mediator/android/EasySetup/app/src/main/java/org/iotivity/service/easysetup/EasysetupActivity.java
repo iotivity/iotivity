@@ -98,7 +98,7 @@ public class EasysetupActivity extends Activity
     PlatformConfig cfg;
     OcAccountManager m_accountManager = null;
     final String deviceID = "9E09F4FE-978A-4BC3-B356-1F93BCA37829";
-    final String CIServer = "coap+tcp://52.69.149.85:5683";
+    final String CIServer = "coap+tcp://13.124.29.169:5683";
 
     private static final int BUFFER_SIZE = 1024;
 
@@ -1004,7 +1004,6 @@ public class EasysetupActivity extends Activity
                 });
 
                 mAccessToken = ocRepresentation.getValue("accesstoken");
-                mRefreshtoken = ocRepresentation.getValue("refreshtoken");
                 mUserID = ocRepresentation.getValue("uid");
 
                 if(mAccessToken != null)

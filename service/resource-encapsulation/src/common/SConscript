@@ -105,7 +105,7 @@ if target_os in ['linux']:
 	rcs_common_test_env = rcs_common_env.Clone();
 
 	rcs_common_test_env.PrependUnique(CPPPATH = [
-		rcs_common_test_env.get('SRC_DIR')+'/extlibs/hippomocks-master',
+		'#/extlibs/hippomocks/hippomocks',
 		'utils/include'
 		])
 

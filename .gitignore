@@ -103,6 +103,7 @@ tmp/
 extlibs/libcoap/libcoap
 extlibs/gtest/gtest-*
 extlibs/hippomocks-master/
+extlibs/hippomocks/hippomocks/
 extlibs/master.zip
 extlibs/cereal/cereal
 extlibs/cereal

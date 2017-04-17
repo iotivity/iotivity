@@ -173,7 +173,7 @@ OCStackResult OCCloudPostCRL(void* ctx,
         goto exit;
     }
 
-    result = OCConvertPayload((OCPayload *)payload, &cbor, &cbor_len);
+    result = OCConvertPayload((OCPayload *)payload, OC_FORMAT_CBOR, &cbor, &cbor_len);
     if (result != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "Can't convert OCPayload to cbor");

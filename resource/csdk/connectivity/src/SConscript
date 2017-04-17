@@ -55,19 +55,22 @@ if (('BLE' in ca_transport) or ('ALL' in ca_transport)):
 	connectivity_env.AppendUnique(CA_SRC = [os.path.join(ca_path,
                                           'adapter_util/cafragmentation.c')])
 
+# Build mbedtls as ocstack uses hash functions from mbedcrypto.lib.
+tls_path = 'extlibs/mbedtls';
+tls_headers_path = 'mbedtls/include';
+if ca_os == 'tizen' and os.path.exists(root_dir + '/' + tls_path):
+    connectivity_env.SConscript(os.path.join(root_dir, tls_path + '/SConscript'))
+    connectivity_env.AppendUnique(CPPPATH = [os.path.join(root_dir, tls_path + '/' + tls_headers_path)])
+else:
+    if ca_os != 'android':
+        connectivity_env.SConscript('#' + tls_path + '/SConscript')
+    connectivity_env.AppendUnique(CPPPATH = ['#' + tls_path + '/' + tls_headers_path])
+
 if connectivity_env.get('SECURED') == '1':
-	connectivity_env.AppendUnique(CPPPATH = ['#extlibs/timer'])
+	connectivity_env.AppendUnique(CPPPATH = ['#/resource/c_common/octimer/include'])
 	connectivity_env.AppendUnique(CPPPATH = [src_dir + '/resource/csdk/security/include'])
 	connectivity_env.AppendUnique(CPPPATH = [os.path.join(root_dir, 'external/inc')])
-	tls_path = 'extlibs/mbedtls';
-	tls_headers_path = 'mbedtls/include';
-	if ca_os == 'tizen' and os.path.exists(root_dir + '/' + tls_path):
-		connectivity_env.SConscript(os.path.join(root_dir, tls_path + '/SConscript'))
-		connectivity_env.AppendUnique(CPPPATH = [os.path.join(root_dir, tls_path + '/' + tls_headers_path)])
-	else:
-		if ca_os != 'android':
-			connectivity_env.SConscript('#' + tls_path + '/SConscript')
-		connectivity_env.AppendUnique(CPPPATH = ['#' + tls_path + '/' + tls_headers_path])
+	if ca_os != 'tizen' or os.path.exists(root_dir + '/' + tls_path) == False:
 		connectivity_env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'adapter_util/ca_adapter_net_ssl.c')])
 
 ca_common_src = None
@@ -157,7 +160,7 @@ if ca_os == 'android':
 	connectivity_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libconnectivity_abstraction.so'])
 
 if connectivity_env.get('SECURED') == '1':
-	connectivity_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto', 'timer'])
+	connectivity_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
 
 if ca_os in ['android', 'tizen', 'linux', 'yocto']:
 	connectivity_env.AppendUnique(LIBS = ['coap'])

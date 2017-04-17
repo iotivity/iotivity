@@ -355,7 +355,7 @@ TEST(CredResourceTest, GenerateAndAddCredentialValidInput)
     OICStrcpy((char *)subject.id, sizeof(subject.id), "subject11");
 
     uint8_t privateKey[] = "My private Key11";
-    OicSecKey_t key = {privateKey, sizeof(privateKey)};
+    OicSecKey_t key = {privateKey, sizeof(privateKey), OIC_ENCODING_RAW};
 
     OicSecCred_t *cred1  = NULL;
     OicSecCred_t *headCred = NULL;

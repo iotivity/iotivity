@@ -135,6 +135,17 @@ bool SRMIsSecurityResourceURI(const char* uri);
  */
 OicSecSvrType_t GetSvrTypeFromUri(const char* uri);
 
+extern const OicSecRole_t EMPTY_ROLE;
+
+/**
+ * Determine if a role is non-empty.
+ *
+ * @param[in]  role     Role to check
+ *
+ * @return true if role is non-empty, false if role is empty
+ */
+bool IsNonEmptyRole(const OicSecRole_t *role);
+
 #ifdef __cplusplus
 }
 #endif

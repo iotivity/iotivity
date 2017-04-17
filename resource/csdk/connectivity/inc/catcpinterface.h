@@ -236,7 +236,7 @@ CAResult_t CASearchAndDeleteTCPSession(const CAEndpoint_t *endpoint);
  *
  * @param[in]   data    Data to be send.
  * @param[in]   dlen    Total data length.
- * @return  Payload length
+ * @return  Payload length or 0 on error.
  */
 size_t CACheckPayloadLengthFromHeader(const void *data, size_t dlen);
 

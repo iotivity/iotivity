@@ -3,9 +3,7 @@ import os
 
 env.AppendUnique(CPPPATH = [os.path.join(Dir('.').abspath, './include')])
 
-if env.get('TARGET_OS') == 'tizen':
-	env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-else:
+if env.get('TARGET_OS') not in ['tizen']:
 	env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource/csdk/routing/')])
 
 env.AppendUnique(LIBS = ['routingmanager'])

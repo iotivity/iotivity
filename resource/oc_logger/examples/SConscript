@@ -32,7 +32,6 @@ examples_env = lib_env.Clone()
 # Build flags
 ######################################################################
 examples_env.PrependUnique(CPPPATH = ['../include'])
-examples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 examples_env.AppendUnique(LIBS = ['oc_logger'])
 examples_env.Append(LIBS = ['c_common'])
 

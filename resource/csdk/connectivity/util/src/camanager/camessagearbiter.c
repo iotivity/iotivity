@@ -207,14 +207,14 @@ CAResult_t CAMsgArbiterGetMessageData(CAData_t *data)
     return ret;
 }
 
-CAResult_t CAMsgArbiterUpdateDeviceInfo(const CAEndpoint_t endpoint, bool isCloud)
+CAResult_t CAMsgArbiterUpdateDeviceInfo(const CAEndpoint_t *endpoint, bool isCloud)
 {
     OIC_LOG(DEBUG, TAG, "IN - CAMsgArbiterUpdateDeviceInfo");
 
-    VERIFY_NON_NULL(endpoint.remoteId, TAG, "remoteId");
+    VERIFY_NON_NULL(endpoint, TAG, "endpoint");
+    VERIFY_NON_NULL(endpoint->remoteId, TAG, "remoteId");
 
     CAResult_t ret = CA_STATUS_FAILED;
-    const char *deviceId = endpoint.remoteId;
 
     if (isCloud)
     {
@@ -228,7 +228,8 @@ CAResult_t CAMsgArbiterUpdateDeviceInfo(const CAEndpoint_t endpoint, bool isClou
             return ret;
         }
 
-        OIC_LOG_V(DEBUG, TAG, "device id[%s] is successfully added into list!", deviceId);
+        OIC_LOG_V(DEBUG, TAG, "device id[%s] is successfully added into list!",
+                  endpoint->remoteId);
     }
     else
     {
@@ -238,11 +239,12 @@ CAResult_t CAMsgArbiterUpdateDeviceInfo(const CAEndpoint_t endpoint, bool isClou
 
         if (CA_STATUS_OK != ret)
         {
-            OIC_LOG_V(ERROR, TAG, "device id[%s] is not included in list", deviceId);
+            OIC_LOG_V(ERROR, TAG, "device id[%s] is not included in list", endpoint->remoteId);
             return ret;
         }
 
-        OIC_LOG_V(DEBUG, TAG, "device id[%s] is successfully updated into list!", deviceId);
+        OIC_LOG_V(DEBUG, TAG, "device id[%s] is successfully updated into list!",
+                  endpoint->remoteId);
     }
 
     OIC_LOG(DEBUG, TAG, "OUT - CAMsgArbiterUpdateDeviceInfo");

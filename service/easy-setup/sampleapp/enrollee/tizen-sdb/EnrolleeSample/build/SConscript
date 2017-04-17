@@ -30,7 +30,7 @@ es_target_enrollee_map = {
 
 host = platform.system().lower()
 
-if not host_target_map.has_key(host):
+if host not in host_target_map:
 	print "\nError: Current system (%s) isn't supported\n" % host
 	Exit(1)
 

@@ -436,7 +436,7 @@ namespace OIC
 
                 }
             }
-            OIC_LOG_V(INFO, CONTAINER_TAG, "Container get request for %s finished, %zu attributes",strResourceUri.c_str(), attr.size());
+            OIC_LOG_V(INFO, CONTAINER_TAG, "Container get request for %s finished, %" PRIuPTR " attributes",strResourceUri.c_str(), attr.size());
 
             return RCSGetResponse::create(std::move(attr), 200);
         }
@@ -449,7 +449,7 @@ namespace OIC
             std::string strResourceUri = request.getResourceUri();
             const std::map< std::string, std::string > &queryParams  = request.getQueryParams();
 
-            OIC_LOG_V(INFO, CONTAINER_TAG, "Container set request for %s, %zu attributes",strResourceUri.c_str(), attributes.size());
+            OIC_LOG_V(INFO, CONTAINER_TAG, "Container set request for %s, %" PRIuPTR " attributes",strResourceUri.c_str(), attributes.size());
 
             if (m_mapServers.find(strResourceUri) != m_mapServers.end()
                 && m_mapResources.find(strResourceUri) != m_mapResources.end())

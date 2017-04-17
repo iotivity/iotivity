@@ -250,6 +250,7 @@ CAResult_t CASetRAInfo(const CARAInfo_t *caraInfo);
  */
 CAResult_t CASetProxyUri(const char *uri);
 
+#ifdef IP_ADAPTER
 /**
  * This function return zone id related from ifindex and address.
  *
@@ -259,6 +260,7 @@ CAResult_t CASetProxyUri(const char *uri);
  * @return  ::CA_STATUS_OK or ::CA_STATUS_INVALID_PARAM
  */
 CAResult_t CAGetLinkLocalZoneId(uint32_t ifindex, char **zoneId);
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

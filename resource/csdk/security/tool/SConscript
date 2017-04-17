@@ -48,10 +48,11 @@ tools_env.PrependUnique(CPPPATH = ['#/extlibs/cjson',
                                   '../include/internal'
                                   ])
 tools_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra', '-std=c++0x'])
-tools_env.AppendUnique(LIBPATH = [tools_env.get('BUILD_DIR')])
 tools_env.AppendUnique(RPATH = [tools_env.get('BUILD_DIR')])
 
-SConscript('#/extlibs/cjson/SConscript')
+if target_os in ['windows', 'msys_nt']:
+    # Macro needed for Windows builds to avoid __declspec(dllexport) and __declspec(dllimport) for cJSON APIs.
+    tools_env.AppendUnique(CPPDEFINES = ['CJSON_HIDE_SYMBOLS'])
 
 if target_os in ['msys_nt', 'windows']:
     # octbstack.dll doesn't export all the functions called by this app, so use static LIBs instead.
@@ -64,7 +65,6 @@ else:
     tools_env.PrependUnique(LIBS = ['octbstack', 'ocsrm', 'm'])
 
 tools_env.PrependUnique(LIBS = ['cjson'])
-tools_env.AppendUnique(LIBS = ['timer'])
 
 ######################################################################
 # Source files and Targets

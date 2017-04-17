@@ -236,6 +236,16 @@ static bool CAGattClientSetupCharacteristics(
         if (strcasecmp(uuid, CA_GATT_REQUEST_CHRC_UUID) == 0)
         {
             char     * const addr = OICStrdup(address);
+
+            if (NULL == addr)
+            {
+                OIC_LOG(ERROR, TAG, "Could not duplicate addr");
+                g_variant_unref(uuid_prop);
+                g_object_unref(characteristic);
+                success = false;
+                break;
+            }
+
             gpointer * const chrc = g_object_ref(characteristic);
 
             // Map LE (MAC) address to request characteristic.
@@ -254,6 +264,16 @@ static bool CAGattClientSetupCharacteristics(
         {
             char * const p    = OICStrdup(*path);
             char * const addr = OICStrdup(address);
+
+            if (NULL == addr || NULL == p)
+            {
+                OIC_LOG_V(ERROR, TAG,
+                          "OICStrdup failed, addr= %p, path= %p", addr, p);
+                g_variant_unref(uuid_prop);
+                g_object_unref(characteristic);
+                success = false;
+                break;
+            }
 
             // Map GATT service D-Bus object path to client address.
             if (!CAGattClientMapInsert(address_map, p, addr))

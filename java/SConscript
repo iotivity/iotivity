@@ -6,26 +6,26 @@ PROJECT_VERSION = env.get('PROJECT_VERSION')
 
 TARGET_ARCH = env.get('TARGET_ARCH')
 if env.get('RELEASE'):
-	RELEASE="release"
+    RELEASE="release"
 else:
-	RELEASE="debug"
+    RELEASE="debug"
 SECURED = env.get('SECURED')
 
 target_os = env.get('TARGET_OS')
 
 if env.get('WITH_CLOUD'):
-	CLOUD=1
+    CLOUD=1
 else:
-	CLOUD=0
+    CLOUD=0
 
 if env.get('WITH_TCP'):
-	TCP=1
+    TCP=1
 else:
-	TCP=0
+    TCP=0
 if env.get('MULTIPLE_OWNER'):
-	ANDROID_MULTIPLE_OWNER=1
+    ANDROID_MULTIPLE_OWNER=1
 else:
-	ANDROID_MULTIPLE_OWNER=0
+    ANDROID_MULTIPLE_OWNER=0
 
 MQ = env.get('WITH_MQ')
 MQ_SUB = 0
@@ -38,31 +38,31 @@ TRANSPORT_BLE = 0
 TRANSPORT_NFC = 0
 
 if 'SUB' in MQ:
-	MQ_SUB = 1
+    MQ_SUB = 1
 if 'PUB' in MQ:
-	MQ_PUB = 1
+    MQ_PUB = 1
 if 'BROKER' in MQ:
-	MQ_BROKER = 1
+    MQ_BROKER = 1
 
 if 'ALL' in TARGET_TRANSPORT:
-	TRANSPORT_EDR = 1
-	TRANSPORT_BLE = 1
-	TRANSPORT_NFC = 1
-	print "Android Transport is ALL"
+    TRANSPORT_EDR = 1
+    TRANSPORT_BLE = 1
+    TRANSPORT_NFC = 1
+    print "Android Transport is ALL"
 else:
-	if 'BT' in TARGET_TRANSPORT:
-		TRANSPORT_EDR = 1
-	if 'BLE' in TARGET_TRANSPORT:
-		TRANSPORT_BLE = 1
-	if 'NFC' in TARGET_TRANSPORT:
-		TRANSPORT_NFC = 1
+    if 'BT' in TARGET_TRANSPORT:
+        TRANSPORT_EDR = 1
+    if 'BLE' in TARGET_TRANSPORT:
+        TRANSPORT_BLE = 1
+    if 'NFC' in TARGET_TRANSPORT:
+        TRANSPORT_NFC = 1
 
 if target_os == "android":
-	android_home = env.get('ANDROID_HOME')
-	os.environ['ANDROID_HOME'] = env.get('ANDROID_HOME')
-	os.environ['ANDROID_NDK_HOME'] = env.get('ANDROID_NDK')
-	if not os.path.exists(android_home + '/platforms/android-21') or not os.path.exists(android_home + '/build-tools/20.0.0'):
-		print '''
+    android_home = env.get('ANDROID_HOME')
+    os.environ['ANDROID_HOME'] = env.get('ANDROID_HOME')
+    os.environ['ANDROID_NDK_HOME'] = env.get('ANDROID_NDK')
+    if not os.path.exists(android_home + '/platforms/android-21') or not os.path.exists(android_home + '/build-tools/20.0.0'):
+        print '''
 ***************************************** Info ********************************
 *   Either 'Android API 21' is not installed or 'Android SDK Build Tools      *
 *   20.0.0' is not installed. The Android SDK Manager will now open. Please   *
@@ -88,12 +88,15 @@ if target_os == "android":
 
 ...Opening Android SDK Manager now. Once you are finished, the build will continue.
 '''
-		os.system(android_home + '/tools/android')
+        os.system(android_home + '/tools/android')
 
 def ensure_libs(target, source, env):
-	return target, [source, env.get('BUILD_DIR') + 'liboc.so', env.get('BUILD_DIR') + 'liboc_logger.so', env.get('BUILD_DIR') + 'libocstack-jni.so']
+    return target, [source, env.get('BUILD_DIR') + 'libca-interface.so',
+                            env.get('BUILD_DIR') + 'liboc.so', 
+                            env.get('BUILD_DIR') + 'liboc_logger.so',
+                            env.get('BUILD_DIR') + 'libocstack-jni.so']
 
-SConscript('jni/SConscript')
+jniOut = SConscript('jni/SConscript')
 
 jdk_env = Environment(ENV=os.environ)
 jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b ' + env.get('SRC_DIR') + '/java/iotivity-%s/build.gradle -PPROJECT_VERSION=%s -PWITH_TRANSPORT_EDR=%s -PWITH_TRANSPORT_BLE=%s -PWITH_TRANSPORT_NFC=%s -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_CLOUD=%s -PRD_MODE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s -PWITH_TCP=%s -PMULTIPLE_OWNER=%s -PBUILD_DIR=%s --stacktrace' %(target_os, PROJECT_VERSION, TRANSPORT_EDR, TRANSPORT_BLE, TRANSPORT_NFC, TARGET_ARCH, RELEASE, SECURED, SECURED, CLOUD, RD_MODE, MQ_PUB, MQ_SUB, MQ_BROKER, TCP, ANDROID_MULTIPLE_OWNER, env.get('BUILD_DIR')), emitter = ensure_libs)
@@ -102,44 +105,45 @@ cmdBuildApi=jdk_env.Gradle(target="base/objs", source="common/src/main/java/org/
 
 examples_target = "java"
 if target_os == 'android':
-	examples_target = "android"
+    examples_target = "android"
 jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b ' + 'java/examples-%s/build.gradle -PPROJECT_VERSION=%s -DWITH_TRANSPORT_EDR=%s -DWITH_TRANSPORT_BLE=%s -DWITH_TRANSPORT_NFC=%s -PTARGET_OS=%s -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_CLOUD=%s -PRD_MODE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s -PWITH_TCP=%s -PMULTIPLE_OWNER=%s -PBUILD_DIR=%s --stacktrace' %(examples_target, PROJECT_VERSION, TRANSPORT_EDR, TRANSPORT_BLE, TRANSPORT_NFC, target_os, TARGET_ARCH, RELEASE, SECURED, SECURED, CLOUD, RD_MODE, MQ_PUB, MQ_SUB, MQ_BROKER, TCP, ANDROID_MULTIPLE_OWNER, env.get('BUILD_DIR')))
 #cmdBuildExamples=jdk_env.Gradle(target="../examples-%s/devicediscoveryclient/apk" % (examples_target, ), source="examples-%s/devicediscoveryclient/src/main/java/org/iotivity/base/examples/DeviceDiscoveryClient.java" % (examples_target, ))
 cmdBuildExamples=jdk_env.Gradle(target="examples-%s/simpleclient/jar" % (examples_target, ), source="examples-%s/simpleclient/src/main/java/org/iotivity/base/examples/SimpleClient.java" % (examples_target, ))
 
 if target_os != 'android':
-	exampleAclFiles = jdk_env.Install('#java/examples-java/simpleserver/build/libs/', 'examples-java/simpleserver/src/main/assets/oic_svr_db_server.dat')
-	exampleAclFiles += jdk_env.Install('#java/examples-java/simpleclientserver/build/libs/', 'examples-java/simpleserver/src/main/assets/oic_svr_db_server.dat')
-	Depends(exampleAclFiles, cmdBuildExamples)
+    exampleAclFiles = jdk_env.Install('#java/examples-java/simpleserver/build/libs/', 'examples-java/simpleserver/src/main/assets/oic_svr_db_server.dat')
+    exampleAclFiles += jdk_env.Install('#java/examples-java/simpleclientserver/build/libs/', 'examples-java/simpleserver/src/main/assets/oic_svr_db_server.dat')
+    Depends(exampleAclFiles, cmdBuildExamples)
 
 Depends(cmdBuildExamples, cmdBuildApi)
+Depends(cmdBuildExamples, jniOut)
 
 if target_os == 'android':
-	jdk_env.Clean(cmdBuildExamples, '#/java/iotivity-android/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/cloudprovisioningclient/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/devicediscoveryclient/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/devicediscoveryserver/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/DirectPairing/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/fridgeclient/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/fridgegroupclient/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/fridgegroupserver/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/fridgeserver/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/groupclient/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/groupserver/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/presenceclient/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/presenceserver/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/provisioningclient/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/simplebase/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/simpleclient/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/simpleserver/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/simpleclientserver/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/simpleserver/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/iotivity-android/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/cloudprovisioningclient/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/devicediscoveryclient/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/devicediscoveryserver/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/DirectPairing/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/fridgeclient/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/fridgegroupclient/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/fridgegroupserver/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/fridgeserver/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/groupclient/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/groupserver/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/presenceclient/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/presenceserver/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/provisioningclient/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/simplebase/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/simpleclient/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/simpleserver/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/simpleclientserver/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-android/simpleserver/build/')
 else:
-	jdk_env.Clean(cmdBuildExamples, '#/java/iotivity-linux/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-java/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-java/simpleclient/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-java/simpleclientserver/build/')
-	jdk_env.Clean(cmdBuildExamples, '#/java/examples-java/simpleserver/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/iotivity-linux/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-java/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-java/simpleclient/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-java/simpleclientserver/build/')
+    jdk_env.Clean(cmdBuildExamples, '#/java/examples-java/simpleserver/build/')
 
 env.AppendUnique(baseAAR = cmdBuildApi)

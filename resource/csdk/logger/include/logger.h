@@ -21,7 +21,6 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
-#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -33,13 +32,19 @@
 #elif defined(__TIZEN__)
 #include <dlog.h>
 #elif defined(ARDUINO)
+#include <inttypes.h>
 #include "Arduino.h"
 #include "avr/pgmspace.h"
 #endif
 
 #ifdef __cplusplus
+#ifndef ARDUINO
+#include <cinttypes>
+#endif
 extern "C"
 {
+#else
+#include <inttypes.h>
 #endif
 
 // Use the PCF macro to wrap strings stored in FLASH on the Arduino
@@ -84,13 +89,13 @@ typedef enum {
     FATAL,
     DEBUG_LITE,       // The DEBUG log for Lite device
     INFO_LITE,        // The INFO log for Lite device
-    INFO_PRIVATE,     // The log contained private data
+    INFO_PRIVATE      // The log contained private data
 } LogLevel;
 
 #endif // __TIZEN__
 
 #ifdef SET_LOG_INFO
-#define IF_OC_PRINT_LOG_LEVEL(level) if (INFO <= (level) && INFO_PRIVATE != (level))
+#define IF_OC_PRINT_LOG_LEVEL(level) if (INFO <= (level))
 #elif defined(SET_LOG_ERROR)
 #define IF_OC_PRINT_LOG_LEVEL(level) if (ERROR <= (level) && INFO_PRIVATE != (level))
 #elif defined(SET_LOG_WARNING)
@@ -98,7 +103,7 @@ typedef enum {
 #elif defined(SET_LOG_FATAL)
 #define IF_OC_PRINT_LOG_LEVEL(level) if (FATAL <= (level) && INFO_PRIVATE != (level))
 #else
-#define IF_OC_PRINT_LOG_LEVEL(level) if (DEBUG <= (level) && INFO_PRIVATE != (level))
+#define IF_OC_PRINT_LOG_LEVEL(level) if (INFO_PRIVATE != (level))
 #endif
 
 /**

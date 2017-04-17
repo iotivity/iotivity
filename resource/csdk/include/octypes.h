@@ -166,6 +166,9 @@ extern "C" {
 /** To represent resource type with platform.*/
 #define OC_RSRVD_RESOURCE_TYPE_PLATFORM "oic.wk.p"
 
+/** To represent resource type with maintenance.*/
+#define OC_RSRVD_RESOURCE_TYPE_MAINTENANCE "oic.wk.mnt"
+
 /** To represent resource type with collection.*/
 #define OC_RSRVD_RESOURCE_TYPE_COLLECTION "oic.wk.col"
 
@@ -326,8 +329,8 @@ extern "C" {
 /** Device specification version.*/
 #define OC_SPEC_VERSION                 "ocf.1.1.0"
 
-/** Integer value of spec version.*/
-#define OC_SPEC_VERSION_VALUE           0
+/** Integer value of spec version (OCF1.0 0b0000:1000:0000:0000).*/
+#define OC_SPEC_VERSION_VALUE           2048
 
 /** Device Data Model version.*/
 #define OC_DATA_MODEL_VERSION           "ocf.res.1.1.0,ocf.sh.1.1.0"
@@ -425,9 +428,6 @@ extern "C" {
 
 /** Resource URI used to discover Proxy */
 #define OC_RSRVD_PROXY_OPTION_ID 35
-
-/** Base URI. */
-#define OC_RSRVD_BASE_URI                "baseURI"
 
 /** Unique value per collection/link. */
 #define OC_RSRVD_INS                     "ins"
@@ -639,17 +639,6 @@ extern "C" {
 #define OC_RSRVD_REDIRECT_URI             "redirecturi"
 
 #define OC_RSRVD_CERTIFICATE              "certificate"
-/**
- * Mark a parameter as unused. Used to prevent unused variable compiler warnings.
- * Used in three cases:
- * 1. in callbacks when one of the parameters are unused
- * 2. when due to code changes a functions parameter is no longer
- *    used but must be left in place for backward compatibility
- *    reasons.
- * 3. a variable is only used in the debug build variant and would
- *    give a build warning in release mode.
- */
-#define OC_UNUSED(x) (void)(x)
 
 /**
  * These enums (OCTransportAdapter and OCTransportFlags) must
@@ -1534,6 +1523,7 @@ typedef struct OCResourcePayload
 {
     char* uri;
     char* rel;
+    char* anchor;
     OCStringLL* types;
     OCStringLL* interfaces;
     uint8_t bitmap;
@@ -1552,9 +1542,6 @@ typedef struct OCDiscoveryPayload
 
     /** Device Id */
     char *sid;
-
-    /** A special case for handling RD address. */
-    char* baseURI;
 
     /** Name */
     char *name;

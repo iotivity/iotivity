@@ -35,24 +35,28 @@ import org.iotivity.cloud.util.Bytes;
 
 public abstract class CoapMessage extends Message {
 
-    protected byte[]       mToken         = null;
-    protected int          mObserve       = -1;
+    protected byte[]       mToken          = null;
+    protected int          mObserve        = -1;
 
     // Option fields
-    protected List<byte[]> if_match       = null;
-    protected byte[]       uri_host       = null;
-    protected List<byte[]> etag           = null;
-    protected boolean      if_none_match  = false;
-    protected byte[]       uri_port       = null;
-    protected List<byte[]> location_path  = null;
+    protected List<byte[]> if_match        = null;
+    protected byte[]       uri_host        = null;
+    protected List<byte[]> etag            = null;
+    protected boolean      if_none_match   = false;
+    protected byte[]       uri_port        = null;
+    protected List<byte[]> location_path   = null;
 
-    protected byte[]       max_age        = null;
-    protected byte[]       accept         = null;
-    protected List<byte[]> location_query = null;
-    protected byte[]       proxy_uri      = null;
-    protected byte[]       proxy_scheme   = null;
-    protected byte[]       size1          = null;
-    protected byte[]       content_format = null;
+    protected byte[]       max_age         = null;
+    protected byte[]       accept          = null;
+    protected List<byte[]> location_query  = null;
+    protected byte[]       proxy_uri       = null;
+    protected byte[]       proxy_scheme    = null;
+    protected byte[]       size1           = null;
+    protected byte[]       content_format  = null;
+
+    // OCF spec Option fields
+    protected byte[]       accept_version  = null;
+    protected byte[]       content_version = null;
 
     public CoapMessage() {
     }
@@ -158,6 +162,17 @@ public abstract class CoapMessage extends Message {
             case 6:
                 mObserve = Bytes.bytesToInt(value);
                 break;
+
+            // ACCEPT_VERSION
+            case 2049:
+                accept_version = value;
+                break;
+
+            // CONTENT_VERSION
+            case 2053:
+                content_version = value;
+                break;
+
             default: {
                 if (optnum % 2 == 1) {
                     throw new BadOptionException(
@@ -236,6 +251,16 @@ public abstract class CoapMessage extends Message {
             case 6:
                 return mObserve != -1
                         ? Arrays.asList(Bytes.intToMax4Bytes(mObserve)) : null;
+
+            // ACCEPT_VERSION
+            case 2049:
+                return accept_version != null ? Arrays.asList(accept_version)
+                        : null;
+
+            // CONTENT_VERSION
+            case 2053:
+                return content_version != null ? Arrays.asList(content_version)
+                        : null;
         }
 
         return null;
@@ -400,7 +425,9 @@ public abstract class CoapMessage extends Message {
             return ContentFormat.NO_CONTENT;
         }
 
-        switch (content_format[0]) {
+        int contentFormat = Bytes.bytesToInt(content_format);
+
+        switch (contentFormat) {
             case 40:
                 return ContentFormat.APPLICATION_LINK_FORMAT;
 
@@ -417,10 +444,50 @@ public abstract class CoapMessage extends Message {
                 return ContentFormat.APPLICATION_JSON;
 
             case 60:
+            case 10000:
                 return ContentFormat.APPLICATION_CBOR;
         }
 
         return ContentFormat.NO_CONTENT;
+    }
+
+    public int getContentFormatValue() {
+        if (content_format == null) {
+            return 0;
+        } else {
+            return Bytes.bytesToInt(content_format);
+        }
+    }
+
+    public int getAcceptVersionValue() {
+        if (accept_version == null) {
+            return 0;
+        } else {
+            return Bytes.bytesToInt(accept_version);
+        }
+    }
+
+    public void setVersionValue(int value) {
+        setAcceptVersionValue(value);
+        setContentVersionValue(value);
+    }
+
+    public void setAcceptVersionValue(int value) {
+        accept_version = new byte[] { (byte) ((value >> 8) & 0xFF),
+                (byte) (value & 0xFF) };
+    }
+
+    public int getContentVersionValue() {
+        if (content_version == null) {
+            return 0;
+        } else {
+            return Bytes.bytesToInt(content_version);
+        }
+    }
+
+    public void setContentVersionValue(int value) {
+        content_version = new byte[] { (byte) ((value >> 8) & 0xFF),
+                (byte) (value & 0xFF) };
     }
 
     @Override

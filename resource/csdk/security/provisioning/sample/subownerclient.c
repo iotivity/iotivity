@@ -339,8 +339,16 @@ static int multipleOwnershipTransfer(void)
         if(OIC_PRECONFIG_PIN == dev->doxm->oxmSel)
         {
             //Pre-Configured PIN initialization
-            const char* testPreconfigPin = "12341234";
-            if(OC_STACK_OK != OCAddPreconfigPin(dev, testPreconfigPin, strlen(testPreconfigPin)))
+            char preconfigPin[OXM_PRECONFIG_PIN_MAX_SIZE + 1] = { 0 };
+            printf("   > INPUT PIN: ");
+            for (int ret = 0; 1 != ret; )
+            {
+                ret = scanf("%32s", preconfigPin);
+                for (; 0x20 <= getchar(); );  // for removing overflow garbages
+                                              // '0x20<=code' is character region
+            }
+
+            if(OC_STACK_OK != OCAddPreconfigPin(dev, preconfigPin, strlen(preconfigPin)))
             {
                 printf("\n\n\n*** %60s ***\n", "WARNNING : Failed to save the pre-configured PIN");
                 printf("*** %60s ***\n\n\n", "WARNNING : You can't use the pre-configured PIN OxM for MOT");
@@ -507,6 +515,7 @@ static OicSecAcl_t* createAclForLEDAccess(const OicUuid_t* subject)
         return NULL;  // not need to 'goto' |ERROR| before allocating |acl|
     }
     LL_APPEND(acl->aces, ace);
+    ace->subjectType = OicSecAceUuidSubject;
     memcpy(ace->subjectuuid.id, subject->id, sizeof(subject->id));
 
     // fill the href

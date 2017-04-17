@@ -76,55 +76,55 @@ TEST(SRPProvisionACLTest, NullDeviceInfo)
     uint8_t deviceId2[] = {0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x63};
     memcpy(pDev2.doxm->deviceID.id, deviceId2, sizeof(deviceId2));
 
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionACL(NULL, NULL, &acl, &provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionACL(NULL, NULL, &acl, OIC_SEC_ACL_V2, &provisioningCB));
 }
 
 TEST(SRPProvisionACLTest, NullCallback)
 {
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPProvisionACL(NULL, &pDev1, &acl, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPProvisionACL(NULL, &pDev1, &acl, OIC_SEC_ACL_V2, NULL));
 }
 
 TEST(SRPProvisionACLTest, NullACL)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionACL(NULL, &pDev1, NULL, &provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionACL(NULL, &pDev1, NULL, OIC_SEC_ACL_V2, &provisioningCB));
+}
+
+TEST(SRPProvisionACLTest, InvalidVersion)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionACL(NULL, &pDev1, &acl, OIC_SEC_ACL_UNKNOWN, &provisioningCB));
 }
 
 TEST(SRPProvisionCredentialsTest, NullDevice1)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType,
                                                               OWNER_PSK_LENGTH_128, NULL,
-                                                              &pDev2, &provisioningCB));
+                                                              &pDev2, NULL, NULL, NULL, &provisioningCB));
 }
 
 TEST(SRPProvisionCredentialsTest, SamelDeviceId)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType,
                                                               OWNER_PSK_LENGTH_128, &pDev1,
-                                                              &pDev1, &provisioningCB));
+                                                              &pDev1, NULL, NULL, NULL, &provisioningCB));
 }
 
 TEST(SRPProvisionCredentialsTest, NullCallback)
 {
     EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPProvisionCredentials(NULL, credType,
                                                                  OWNER_PSK_LENGTH_128,
-                                                                 &pDev1, &pDev2, NULL));
+                                                                 &pDev1, &pDev2, NULL, NULL, NULL, NULL));
 }
 
 TEST(SRPProvisionCredentialsTest, InvalidKeySize)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType,
-                                                                0, &pDev1, &pDev2,
+                                                                0, &pDev1, &pDev2, NULL, NULL, NULL, 
                                                                 &provisioningCB));
 }
 
 TEST(SRPUnlinkDevicesTest, NullDevice1)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, NULL, &pDev2, provisioningCB));
-}
-
-TEST(SRPUnlinkDevicesTest, NullDevice2)
-{
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, &pDev1, NULL, provisioningCB));
 }
 
 TEST(SRPUnlinkDevicesTest, SamelDeviceId)
@@ -206,10 +206,14 @@ public:
         SetPersistentHandler(&ps);
         OCStackResult res = OCRegisterPersistentStorageHandler(&ps);
         ASSERT_TRUE(res == OC_STACK_OK);
+        res = OCInit(NULL, 0, OC_SERVER);
+        ASSERT_TRUE(res == OC_STACK_OK);
     }
 
     static void TearDownTestCase()
     {
+        OCStackResult res = OCStop();
+        ASSERT_TRUE(res == OC_STACK_OK);
     }
 
     static const ByteArray g_caPublicKey;
@@ -265,25 +269,21 @@ static uint8_t keyData[] = {
         0x3d, 0x96, 0x23, 0xe2, 0x24, 0x64, 0x98, 0x63, 0x21, 0xba, 0x02, 0x21
     };
 
-// Disabled since always fails due to IOT-1846
-TEST_F(SRPTest, DISABLED_SRPSaveTrustCertChainDER)
+TEST_F(SRPTest, SRPSaveTrustCertChainDER)
 {
     int result;
     uint16_t credId;
 
     result = SRPSaveTrustCertChain(certData, sizeof(certData), OIC_ENCODING_DER, &credId);
-
     EXPECT_EQ(OC_STACK_OK, result);
 }
 
-// Disabled since always fails due to IOT-1846
-TEST_F(SRPTest, DISABLED_SRPSaveTrustCertChainPEM)
+TEST_F(SRPTest, SRPSaveTrustCertChainPEM)
 {
     int result;
     uint16_t credId;
 
     result = SRPSaveTrustCertChain(certData, sizeof(certData), OIC_ENCODING_PEM, &credId);
-
     EXPECT_EQ(OC_STACK_OK, result);
 }
 
@@ -318,10 +318,9 @@ TEST_F(SRPTest, SRPSaveOwnCertChainTest)
     key.data = keyData;
     key.len = sizeof(keyData);
 
-    //This test case cannot succeed. because doxm resource has not been initialized.
     result = SRPSaveOwnCertChain(&cert, &key, &credId);
 
-    EXPECT_EQ(OC_STACK_ERROR, result);
+    EXPECT_EQ(OC_STACK_OK, result);
 }
 
 TEST_F(SRPTest, SRPSaveOwnCertChainTestNullCert)
@@ -452,12 +451,12 @@ TEST_F(SRPTest, SRPProvisionTrustCertChainNoResource)
 
 TEST(SRPProvisionTrustCertChainTest, SRPGetACLResourceNoCallback)
 {
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPGetACLResource(NULL, &pDev1, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPGetACLResource(NULL, &pDev1, OIC_SEC_ACL_V2, NULL));
 }
 
 TEST(SRPProvisionTrustCertChainTest, SRPGetACLResourceNoDevice)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPGetACLResource(NULL, NULL, provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPGetACLResource(NULL, NULL, OIC_SEC_ACL_V2, provisioningCB));
 }
 
 TEST(SRPProvisionTrustCertChainTest, SRPGetCredResourceNoCallback)

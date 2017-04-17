@@ -776,12 +776,18 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
     OCStackResult res = OC_STACK_ERROR;
 
     CAEndpoint_t endpoint;
-    memset(&endpoint, 0x00, sizeof(CAEndpoint_t));
-    OICStrcpy(endpoint.addr, MAX_ADDR_STR_SIZE_CA, selectedDeviceInfo->endpoint.addr);
-    endpoint.addr[MAX_ADDR_STR_SIZE_CA - 1] = '\0';
-    endpoint.port = selectedDeviceInfo->securePort;
-    endpoint.adapter = selectedDeviceInfo->endpoint.adapter;
-    uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = { 0 };
+    CopyDevAddrToEndpoint(&selectedDeviceInfo->endpoint, &endpoint);
+
+    if (CA_ADAPTER_IP == endpoint.adapter)
+    {
+        endpoint.port = selectedDeviceInfo->securePort;
+    }
+#ifdef WITH_TCP
+    else if (CA_ADAPTER_TCP == endpoint.adapter)
+    {
+        endpoint.port = selectedDeviceInfo->tcpPort;
+    }
+#endif
 
     OicUuid_t ownerDeviceID = {.id={0}};
     if (OC_STACK_OK != GetDoxmDeviceID(&ownerDeviceID))
@@ -792,6 +798,8 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
 
     OicSecKey_t ownerKey;
     memset(&ownerKey, 0, sizeof(ownerKey));
+
+    uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = { 0 };
     ownerKey.data = ownerPSK;
     ownerKey.len = OWNER_PSK_LENGTH_128;
     ownerKey.encoding = OIC_ENCODING_RAW;
@@ -1667,6 +1675,7 @@ static OicSecAcl_t* GenerateOwnerAcl(const OicUuid_t* owner)
     ownerAce->permission = PERMISSION_FULL_CONTROL;
 
     //Set subject as PT's UUID
+    ownerAce->subjectType = OicSecAceUuidSubject;
     memcpy(ownerAce->subjectuuid.id, owner->id, sizeof(owner->id));
 
     wildcardRsrc->href = OICStrdup(WILDCARD_RESOURCE_URI);
@@ -1739,6 +1748,15 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
     OicSecAcl_t* ownerAcl = NULL;
     assert(deviceInfo->connType & CT_FLAG_SECURE);
 
+    CAEndpoint_t endpoint;
+    CopyDevAddrToEndpoint(&deviceInfo->endpoint, &endpoint);
+
+    if (CA_STATUS_OK != CAInitiateHandshake(&endpoint))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to pass ssl handshake");
+        return OC_STACK_ERROR;
+    }
+
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr, deviceInfo->securePort,
                         deviceInfo->connType,
@@ -1774,7 +1792,7 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
         goto error;
     }
 
-    res = AclToCBORPayload(ownerAcl, &secPayload->securityData, &secPayload->payloadSize);
+    res = AclToCBORPayload(ownerAcl, OIC_SEC_ACL_V1, &secPayload->securityData, &secPayload->payloadSize);
     if (OC_STACK_OK != res)
     {
         OICFree(secPayload);
@@ -2411,8 +2429,8 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
         return OC_STACK_INVALID_PARAM;
     }
 
-    //Change the TAKE_OWNER bit of CM to 0.
-    otmCtx->selectedDeviceInfo->pstat->cm &= (~TAKE_OWNER);
+    //Change the TAKE_OWNER bit of TM to 0.
+    otmCtx->selectedDeviceInfo->pstat->tm &= (~TAKE_OWNER);
 
     OCSecurityPayload *secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
     if (!secPayload)

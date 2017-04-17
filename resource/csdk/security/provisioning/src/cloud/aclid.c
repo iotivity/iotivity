@@ -28,6 +28,7 @@
 #include "cacommonutil.h"
 #include "aclresource.h"
 #include "ocpayloadcbor.h"
+#include "acl_logging.h"
 #include "payload_logging.h"
 #include "utlist.h"
 
@@ -177,21 +178,21 @@ static OCStackResult handleAclGetInfoResponse(void *ctx, void **data, OCClientRe
         return OC_STACK_INVALID_PARAM;
     }
 
-    result = OCConvertPayload(response->payload, &cbor, &size);
+    result = OCConvertPayload(response->payload, OC_FORMAT_CBOR, &cbor, &size);
     if (result != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "Can't convert OCPayload to cbor");
         goto exit;
     }
 
-    OicSecAcl_t* acl = CBORPayloadToAcl2(cbor, size);
+    OicSecAcl_t* acl = CBORPayloadToCloudAcl(cbor, size);
     if (NULL == acl)
     {
         OIC_LOG(ERROR, TAG, "Can't parse CBOR payload");
         goto exit;
     }
 
-    printACL(acl);
+    OIC_LOG_ACL(INFO, acl);
 
     result = InstallACL(acl);
     if (result != OC_STACK_OK)
@@ -225,7 +226,7 @@ OCStackResult OCCloudAclIndividualGetInfo(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
+OCStackResult OCCloudAclIndividualAclUpdate(void* ctx,
                                             const char *aclId,
                                             const cloudAce_t *aces,
                                             const OCDevAddr *endPoint,
@@ -367,7 +368,7 @@ no_memory:
     return OC_STACK_NO_MEMORY;
 }
 
-OCStackResult OCCloudAclIndividualUpdate(void* ctx,
+OCStackResult OCCloudAclIndividualAceUpdate(void* ctx,
                                             const char *aclId,
                                             const char *aceId,
                                             const cloudAce_t *aces,
@@ -504,7 +505,7 @@ no_memory:
 
 
 
-OCStackResult OCCloudAclIndividualDelete(void* ctx,
+OCStackResult OCCloudAclAcesDelete(void* ctx,
                                          const char *aclId,
                                          const OCDevAddr *endPoint,
                                          OCCloudResponseCB callback)
@@ -524,7 +525,7 @@ OCStackResult OCCloudAclIndividualDelete(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclIndividualDeleteAce(void* ctx,
+OCStackResult OCCloudAclIndividualAceDelete(void* ctx,
                                          const char *aclId,
                                          const char *aceId,
                                          const OCDevAddr *endPoint,

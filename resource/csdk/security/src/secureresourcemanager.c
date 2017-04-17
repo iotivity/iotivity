@@ -481,12 +481,15 @@ bool SRMIsSecurityResourceURI(const char* uri)
         OIC_RSRC_AMACL_URI,
         OIC_RSRC_CRL_URI,
         OIC_RSRC_CRED_URI,
+        OIC_RSRC_CSR_URI,
         OIC_RSRC_ACL_URI,
+        OIC_RSRC_ACL2_URI,
         OIC_RSRC_DOXM_URI,
         OIC_RSRC_PSTAT_URI,
         OIC_RSRC_PCONF_URI,
         OIC_RSRC_DPAIRING_URI,
         OIC_RSRC_VER_URI,
+        OIC_RSRC_ROLES_URI,
         OC_RSRVD_PROV_CRL_URL
     };
 
@@ -549,6 +552,15 @@ OicSecSvrType_t GetSvrTypeFromUri(const char* uri)
         }
     }
 
+    svrLen = strlen(OIC_RSRC_ACL2_URI);
+    if (uriLen == svrLen)
+    {
+        if (0 == strncmp(uri, OIC_RSRC_ACL2_URI, svrLen))
+        {
+            return OIC_R_ACL2_TYPE;
+        }
+    }
+
     svrLen = strlen(OIC_RSRC_AMACL_URI);
     if (uriLen == svrLen)
     {
@@ -573,6 +585,15 @@ OicSecSvrType_t GetSvrTypeFromUri(const char* uri)
         if (0 == strncmp(uri, OIC_RSRC_CRL_URI, svrLen))
         {
             return OIC_R_CRL_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_CSR_URI);
+    if (uriLen == svrLen)
+    {
+        if (0 == strncmp(uri, OIC_RSRC_CSR_URI, svrLen))
+        {
+            return OIC_R_CSR_TYPE;
         }
     }
 
@@ -612,6 +633,15 @@ OicSecSvrType_t GetSvrTypeFromUri(const char* uri)
         }
     }
 
+    svrLen = strlen(OIC_RSRC_ROLES_URI);
+    if (uriLen == svrLen)
+    {
+        if (0 == strncmp(uri, OIC_RSRC_ROLES_URI, svrLen))
+        {
+            return OIC_R_ROLES_TYPE;
+        }
+    }
+
     svrLen = strlen(OIC_RSRC_SVC_URI);
     if (uriLen == svrLen)
     {
@@ -631,4 +661,14 @@ OicSecSvrType_t GetSvrTypeFromUri(const char* uri)
     }
 
     return NOT_A_SVR_RESOURCE;
+}
+
+/**
+ * An unset role, used in comparisons.
+ */
+const OicSecRole_t EMPTY_ROLE = { .id = { 0 }, .authority = { 0 } };
+
+bool IsNonEmptyRole(const OicSecRole_t *role)
+{
+    return (0 != memcmp(&role->id, &EMPTY_ROLE.id, sizeof(role->id)));
 }

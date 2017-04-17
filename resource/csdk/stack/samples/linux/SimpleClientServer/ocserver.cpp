@@ -35,7 +35,6 @@
 #include <pthread.h>
 #endif
 #include <array>
-#include <cinttypes>
 #include "oic_malloc.h"
 #include <getopt.h>
 #include "ocstack.h"

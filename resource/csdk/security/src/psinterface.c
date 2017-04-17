@@ -77,7 +77,7 @@ static OCStackResult WritePayloadToPS(const char *databaseName, uint8_t *payload
 {
     if (!databaseName || !payload || (size <= 0))
     {
-        OC_STACK_INVALID_PARAM;
+        return OC_STACK_INVALID_PARAM;
     }
 
     OCStackResult result = OC_STACK_ERROR;
@@ -174,7 +174,7 @@ OCStackResult ReadDatabaseFromPS(const char *databaseName, const char *resourceN
     VERIFY_NOT_NULL(TAG, ps, ERROR);
 
     fileSize = GetDatabaseSize(ps, databaseName);
-    OIC_LOG_V(DEBUG, TAG, "File Read Size: %zu", fileSize);
+    OIC_LOG_V(DEBUG, TAG, "File Read Size: %" PRIuPTR, fileSize);
     if (fileSize)
     {
         fsData = (uint8_t *) OICCalloc(1, fileSize);

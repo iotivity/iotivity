@@ -29,8 +29,8 @@ import org.iotivity.cloud.accountserver.resources.account.session.SessionResourc
 import org.iotivity.cloud.accountserver.resources.account.tokenrefresh.TokenRefreshResource;
 import org.iotivity.cloud.accountserver.resources.acl.group.GroupResource;
 import org.iotivity.cloud.accountserver.resources.acl.id.AclResource;
-import org.iotivity.cloud.accountserver.resources.acl.verify.AclVerifyResource;
 import org.iotivity.cloud.accountserver.resources.acl.invite.InviteResource;
+import org.iotivity.cloud.accountserver.resources.acl.verify.AclVerifyResource;
 import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateResource;
 import org.iotivity.cloud.accountserver.resources.credprov.crl.CrlResource;
 import org.iotivity.cloud.base.ServerSystem;
@@ -45,13 +45,20 @@ import org.iotivity.cloud.util.Log;
 public class AccountServer {
 
     public static void main(String[] args) throws Exception {
-        Log.Init();
-
         System.out.println("-----Account SERVER-----");
 
-        if (args.length != 2) {
-            Log.e("coap server port and TLS mode required\n" + "ex) 5685 0\n");
+        Log.Init();
+
+        if (!(args.length == 2 || args.length == 4)) {
+            Log.e("coap server <Port> and TLS mode required\n"
+                    + "and WebSocketLog-Server <Address> <Port> (optional)\n"
+                    + "ex) 5685 0 127.0.0.1 8080\n");
             return;
+        }
+
+        if (args.length == 4) {
+            Log.InitWebLog(args[2], args[3],
+                    AccountServer.class.getSimpleName().toString());
         }
 
         ServerSystem serverSystem = new ServerSystem();

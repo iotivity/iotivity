@@ -82,7 +82,7 @@ CAResult_t CACMGetConnUserConfig(CAConnectUserPref_t *connPrefer);
  * @param[in]  isCloud        with cloud or not .
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CACMUpdateRemoteDeviceInfo(const CAEndpoint_t endpoint, bool isCloud);
+CAResult_t CACMUpdateRemoteDeviceInfo(const CAEndpoint_t *endpoint, bool isCloud);
 
 /**
  * Reset Remote Device Info.

@@ -106,6 +106,7 @@
                                              <listOptionValue builtIn="false" value="&quot;..\..\..\..\src\common\primitiveResource\include&quot;"/>
                                              <listOptionValue builtIn="false" value="&quot;..\..\..\..\include&quot;"/>
                                              <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\include&quot;"/>
+                                             <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\include&quot;"/>
                                              <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\c_common&quot;"/>
                                              <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\stack\include&quot;"/>
                                              <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\logger\include&quot;"/>

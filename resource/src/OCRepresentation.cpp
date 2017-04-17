@@ -411,6 +411,8 @@ namespace OC
     template<typename T>
     T OCRepresentation::payload_array_helper_copy(size_t index, const OCRepPayloadValue* pl)
     {
+        OC_UNUSED(index);
+        OC_UNUSED(pl);
         throw std::logic_error("payload_array_helper_copy: unsupported type");
     }
     template<>

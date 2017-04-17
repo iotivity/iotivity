@@ -28,6 +28,7 @@
 #include "logger.h"
 #include "pmtypes.h"
 #include "ownershiptransfermanager.h"
+#include "ocstackinternal.h"
 #include "mbedtls/ssl_ciphersuites.h"
 
 #define TAG "OIC_OXM_JustWorks"
@@ -108,26 +109,22 @@ OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
     }
     OIC_LOG(INFO, TAG, "TLS_ECDH_anon_WITH_AES_128_CBC_SHA256 cipher suite selected.");
 
-    OCProvisionDev_t *selDevInfo = otmCtx->selectedDeviceInfo;
     CAEndpoint_t endpoint;
-    memcpy(&endpoint, &selDevInfo->endpoint, sizeof(CAEndpoint_t));
+    OCProvisionDev_t *selDevInfo = otmCtx->selectedDeviceInfo;
+    CopyDevAddrToEndpoint(&selDevInfo->endpoint, &endpoint);
 
-    if(CA_ADAPTER_IP == endpoint.adapter)
+    if (CA_ADAPTER_IP == endpoint.adapter)
     {
         endpoint.port = selDevInfo->securePort;
-        caresult = CAInitiateHandshake(&endpoint);
     }
-    else if (CA_ADAPTER_GATT_BTLE == endpoint.adapter)
-    {
-        caresult = CAInitiateHandshake(&endpoint);
-    }
-#ifdef __WITH_TLS__
-    else
+#ifdef WITH_TCP
+    else if (CA_ADAPTER_TCP == endpoint.adapter)
     {
         endpoint.port = selDevInfo->tcpPort;
-        caresult = CAinitiateSslHandshake(&endpoint);
     }
 #endif
+
+    caresult = CAInitiateHandshake(&endpoint);
     if (CA_STATUS_OK != caresult)
     {
         OIC_LOG_V(ERROR, TAG, "DTLS/TLS handshake failure.");

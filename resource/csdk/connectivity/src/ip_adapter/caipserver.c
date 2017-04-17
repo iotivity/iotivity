@@ -537,14 +537,13 @@ void CADeInitializeIPGlobals()
 static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
 {
     char recvBuffer[COAP_MAX_PDU_SIZE] = {0};
-
-    size_t len = 0;
     int level = 0;
     int type = 0;
     int namelen = 0;
     struct sockaddr_storage srcAddr = { .ss_family = 0 };
     unsigned char *pktinfo = NULL;
 #if !defined(WSA_CMSG_DATA)
+    size_t len = 0;
     struct cmsghdr *cmp = NULL;
     struct iovec iov = { .iov_base = recvBuffer, .iov_len = sizeof (recvBuffer) };
     union control
@@ -615,11 +614,11 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
                   .namelen = namelen,
                   .lpBuffers = &iov,
                   .dwBufferCount = 1,
-                  .Control = {.buf = cmsg.data, .len = sizeof (cmsg)}
+                  .Control = {.buf = (char*)cmsg.data, .len = sizeof (cmsg)}
                  };
 
     uint32_t recvLen = 0;
-    uint32_t ret = caglobals.ip.wsaRecvMsg(fd, &msg, &recvLen, 0,0);
+    uint32_t ret = caglobals.ip.wsaRecvMsg(fd, &msg, (LPDWORD)&recvLen, 0,0);
     OIC_LOG_V(DEBUG, TAG, "WSARecvMsg recvd %u bytes", recvLen);
     if (OC_SOCKET_ERROR == ret)
     {
@@ -678,11 +677,14 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
     if (flags & CA_SECURE)
     {
 #ifdef __WITH_DTLS__
-        int ret = CAdecryptSsl(&sep, (uint8_t *)recvBuffer, recvLen);
-        OIC_LOG_V(DEBUG, TAG, "CAdecryptSsl returns [%d]", ret);
+#ifdef TB_LOG
+        int decryptResult = 
+#endif
+        CAdecryptSsl(&sep, (uint8_t *)recvBuffer, recvLen);
+        OIC_LOG_V(DEBUG, TAG, "CAdecryptSsl returns [%d]", decryptResult);
 #else
         OIC_LOG(ERROR, TAG, "Encrypted message but no DTLS");
-#endif
+#endif // __WITH_DTLS__
     }
     else
     {
@@ -723,7 +725,7 @@ static CASocketFd_t CACreateSocket(int family, uint16_t *port, bool isMulticast)
         return OC_INVALID_SOCKET;
     }
 #endif
-    struct sockaddr_storage sa = { .ss_family = family };
+    struct sockaddr_storage sa = { .ss_family = (short)family };
     socklen_t socklen = 0;
 
     if (family == AF_INET6)
@@ -1350,7 +1352,7 @@ static void sendData(CASocketFd_t fd, const CAEndpoint_t *endpoint,
         else
         {
             sent += len;
-            if (sent != len)
+            if (sent != (size_t)len)
             {
                 OIC_LOG_V(DEBUG, TAG, "%s%s %s sendTo (Partial Send) is successful: "
                                       "currently sent: %ld bytes, "

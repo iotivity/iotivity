@@ -21,6 +21,11 @@
  */
 package org.iotivity.cloud.base;
 
+import io.netty.channel.ChannelHandler.Sharable;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.util.AttributeKey;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +36,7 @@ import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.exception.ClientException;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
+import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapMessage;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
@@ -40,17 +46,17 @@ import org.iotivity.cloud.base.resource.ResourceManager;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.base.server.HttpServer;
 import org.iotivity.cloud.base.server.Server;
+import org.iotivity.cloud.base.server.WebSocketServer;
 import org.iotivity.cloud.util.Log;
 
-import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.util.AttributeKey;
 
 public class ServerSystem extends ResourceManager {
-    private List<Server>                  mServerList = new ArrayList<>();
-    protected static AttributeKey<Device> keyDevice   = AttributeKey
+    private List<Server>               mServerList = new ArrayList<>();
+    public static AttributeKey<Device> keyDevice   = AttributeKey
             .newInstance("device");
 
     @Sharable
@@ -58,7 +64,6 @@ public class ServerSystem extends ResourceManager {
             extends SimpleChannelInboundHandler<CoapMessage> {
         @Override
         public void channelActive(ChannelHandlerContext ctx) {
-
             StringBuilder deviceId = new StringBuilder(
                     ctx.channel().id().asLongText().substring(26));
             deviceId.deleteCharAt(25);
@@ -67,7 +72,7 @@ public class ServerSystem extends ResourceManager {
             deviceId.insert(23, '-');
             CoapDevice device = new CoapDevice(ctx);
             device.updateDevice(deviceId.toString(), null, null);
-            ctx.channel().attr(keyDevice).set(device);
+            ctx.channel().attr(ServerSystem.keyDevice).set(device);
 
             device.onConnected();
         }
@@ -77,7 +82,8 @@ public class ServerSystem extends ResourceManager {
                 CoapMessage msg) {
             try {
                 // Find proper device and raise event.
-                Device targetDevice = ctx.channel().attr(keyDevice).get();
+                Device targetDevice = ctx.channel().attr(ServerSystem.keyDevice)
+                        .get();
 
                 if (targetDevice == null) {
                     throw new InternalServerErrorException(
@@ -112,35 +118,46 @@ public class ServerSystem extends ResourceManager {
         @Override
         public void channelInactive(ChannelHandlerContext ctx)
                 throws Exception {
-            Device device = ctx.channel().attr(keyDevice).get();
+            Device device = ctx.channel().attr(ServerSystem.keyDevice).get();
             device.onDisconnected();
-            ctx.channel().attr(keyDevice).remove();
+            ctx.channel().attr(ServerSystem.keyDevice).remove();
         }
     }
 
     @Sharable
-    public class NonPersistentPacketReceiver extends ChannelDuplexHandler {
-        @Override
-        public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            // onDeviceConnected(ctx)
-        }
+    public class NonPersistentPacketReceiver
+            extends SimpleChannelInboundHandler<IRequest> {
 
         @Override
-        public void channelRead(ChannelHandlerContext ctx, Object msg)
+        public void channelRead0(ChannelHandlerContext ctx, IRequest msg)
                 throws Exception {
-            // Find proper device and raise event.
-            // onRequestReceived(new Device(ctx), msg);
+
+            try {
+                // Find proper device and raise event.
+                Device targetDevice = ctx.channel().attr(ServerSystem.keyDevice)
+                        .get();
+
+                onRequestReceived(targetDevice, msg);
+
+            } catch (ServerException e) {
+                Log.f(ctx.channel(), e);
+                ctx.writeAndFlush(MessageBuilder.createResponse(msg,
+                        e.getErrorResponse()));
+            } catch (Throwable t) {
+                Log.f(ctx.channel(), t);
+                ctx.writeAndFlush(MessageBuilder.createResponse(msg,
+                        ResponseStatus.INTERNAL_SERVER_ERROR));
+            }
         }
     }
 
     public void addServer(Server server) {
-        if (server instanceof CoapServer) {
+        if (server instanceof CoapServer || server instanceof WebSocketServer) {
             server.addHandler(new PersistentPacketReceiver());
-        }
-
-        if (server instanceof HttpServer) {
+        } else if (server instanceof HttpServer) {
             server.addHandler(new NonPersistentPacketReceiver());
         }
+
         mServerList.add(server);
     }
 

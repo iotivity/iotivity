@@ -32,8 +32,6 @@ bridging_path = os.path.join(src_dir, 'bridging')
 
 hue_env = env.Clone()
 
-SConscript('#/extlibs/cjson/SConscript')
-
 print "Reading Hue Plugin script"
 
 ######################################################################

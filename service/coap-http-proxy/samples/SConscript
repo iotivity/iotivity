@@ -42,7 +42,8 @@ else:
 
 proxy_sample_app_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 proxy_sample_app_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-proxy_sample_app_env.PrependUnique(LIBS = ['coap_http_proxy', 'oc', 'octbstack', 'curl', 'connectivity_abstraction'])
+proxy_sample_app_env.PrependUnique(LIBS = ['coap_http_proxy', 'oc', 'octbstack', 'curl', 'connectivity_abstraction', 'cjson', 'm'])
+proxy_sample_app_env.AppendUnique(CPPPATH = ['#resource/csdk/security/include'])
 
 if env.get('SECURED') == '1':
     proxy_sample_app_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
@@ -55,3 +56,11 @@ proxy_client = proxy_sample_app_env.Program('proxy_client', 'proxy_client.c')
 Alias("coap_http_proxy", [proxy_server])
 
 env.AppendTarget('coap_http_proxy')
+
+if env.get('SECURED') == '1':
+    proxy_sample_src_dir = proxy_sample_app_env.get('SRC_DIR') + '/service/coap-http-proxy/samples/'
+    proxy_sample_build_dir = proxy_sample_app_env.get('BUILD_DIR') +'/service/coap-http-proxy/samples'
+    proxy_sample_app_env.Alias("install", proxy_sample_app_env.Install( proxy_sample_build_dir,
+        proxy_sample_src_dir + 'oic_svr_db_server.dat'))
+    proxy_sample_app_env.Alias("install", proxy_sample_app_env.Install( proxy_sample_build_dir,
+        proxy_sample_src_dir + 'oic_svr_db_client_devowner.dat'))

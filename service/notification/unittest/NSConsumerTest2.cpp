@@ -239,8 +239,8 @@ namespace
         EXPECT_NE((void *)NULL, payload);
         bool getResult = OCRepPayloadSetPropString(payload,
                         NS_ATTRIBUTE_CONSUMER_ID, testProviderID.c_str());
-        getResult &= OCRepPayloadSetPropObjectArray(payload,
-                        NS_ATTRIBUTE_TOPIC_LIST, (const OCRepPayload **)topicList, dimensions);
+        getResult &= OCRepPayloadSetPropObjectArrayAsOwner(payload,
+                        NS_ATTRIBUTE_TOPIC_LIST, topicList, dimensions);
         if (getResult == false)
         {
             OCRepPayloadDestroy(payload);
@@ -250,7 +250,7 @@ namespace
         return payload;
     }
 
-    OCClientResponse * getResponse()
+    OCClientResponse * createResponse()
     {
         OCClientResponse * testResponse =
                 (OCClientResponse *)malloc(sizeof(OCClientResponse));
@@ -355,6 +355,10 @@ namespace
             NSRemoveProvider(g_provider);
             g_provider = NULL;
         }
+    }
+
+    void removeGlobalResponse()
+    {
         if (g_testResponse)
         {
             free((void*)(g_testResponse->resourceUri));
@@ -424,7 +428,7 @@ TEST(NotificationConsumerTest, ExpectCallbackDiscovered)
     revState = NS_STOPPED;
     expectedState = NS_DISCOVERED;
 
-    g_testResponse = getResponse();
+    g_testResponse = createResponse();
     g_testResponse->payload = (OCPayload *)getDiscoverPayload();
     NSIntrospectProvider(NULL, NULL, g_testResponse);
 
@@ -433,6 +437,7 @@ TEST(NotificationConsumerTest, ExpectCallbackDiscovered)
 
     OCRepPayloadDestroy((OCRepPayload *)g_testResponse->payload);
     g_testResponse->payload = NULL;
+    removeGlobalResponse();
 
     EXPECT_EQ(NS_DISCOVERED, revState);
 }
@@ -442,6 +447,7 @@ TEST(NotificationConsumerTest, ExpectCallbackAllow)
     revState = NS_STOPPED;
     expectedState = NS_ALLOW;
 
+    g_testResponse = createResponse();
     g_testResponse->payload = (OCPayload *)getMsgPayload(NS_ALLOW);
     NSConsumerMessageListener(NULL,NULL, g_testResponse);
 
@@ -450,6 +456,7 @@ TEST(NotificationConsumerTest, ExpectCallbackAllow)
 
     OCRepPayloadDestroy((OCRepPayload *)g_testResponse->payload);
     g_testResponse->payload = NULL;
+    removeGlobalResponse();
 
     EXPECT_EQ(NS_ALLOW, revState);
 }
@@ -458,6 +465,7 @@ TEST(NotificationConsumerTest, ExpectReceiveNotification)
 {
     uint64_t id = 100;
 
+    g_testResponse = createResponse();
     g_testResponse->payload = (OCPayload *)getMsgPayload(id);
     NSConsumerMessageListener(NULL,NULL, g_testResponse);
 
@@ -466,6 +474,7 @@ TEST(NotificationConsumerTest, ExpectReceiveNotification)
 
     OCRepPayloadDestroy((OCRepPayload *)g_testResponse->payload);
     g_testResponse->payload = NULL;
+    removeGlobalResponse();
 
     EXPECT_EQ(id, revId);
 }
@@ -475,6 +484,7 @@ TEST(NotificationConsumerTest, ExpectReceiveSyncInfo)
     uint64_t id = 100;
     type = NS_SYNC_DELETED;
 
+    g_testResponse = createResponse();
     g_testResponse->payload = (OCPayload *)getSyncPayload(id, NS_SYNC_READ);
     NSConsumerSyncInfoListener(NULL,NULL, g_testResponse);
 
@@ -483,6 +493,7 @@ TEST(NotificationConsumerTest, ExpectReceiveSyncInfo)
 
     OCRepPayloadDestroy((OCRepPayload *)g_testResponse->payload);
     g_testResponse->payload = NULL;
+    removeGlobalResponse();
 
     EXPECT_EQ(NS_SYNC_READ, type);
 }
@@ -525,6 +536,7 @@ TEST(NotificationConsumerTest, ExpectCallbackTopicUpdated)
 {
     revState = NS_STOPPED;
 
+    g_testResponse = createResponse();
     g_testResponse->payload = (OCPayload *)getTopicPayload();
     g_provider_internal = getProvider(testAddr);
     NSIntrospectTopic((void *)g_provider_internal, NULL, g_testResponse);
@@ -537,6 +549,7 @@ TEST(NotificationConsumerTest, ExpectCallbackTopicUpdated)
 
     OCRepPayloadDestroy((OCRepPayload *)g_testResponse->payload);
     g_testResponse->payload = NULL;
+    removeGlobalResponse();
 
     expectedState = NS_STOPPED;
 }
@@ -552,7 +565,7 @@ TEST(NotificationConsumerTest, ExpectEQTopicList)
     topics.push_back("3");
 
     NSTopicLL * retTopic = NSConsumerGetTopicList(g_provider_internal->providerId);
-    EXPECT_NE((void *)NULL, retTopic);
+    EXPECT_NE((void *)NULL, (void *)retTopic);
 
     NSTopicLL * iter = retTopic;
     std::for_each (topics.begin(), topics.end(),
@@ -598,6 +611,7 @@ TEST(NotificationConsumerTest, ExpectUnsubscribeSuccess)
 
 TEST(NotificationConsumerTest, ExpectUnsubscribeWithPresenceStart)
 {
+    g_testResponse = createResponse();
     OCPresencePayload * payload = OCPresencePayloadCreate(1, 2, OC_PRESENCE_TRIGGER_CREATE, NULL);
     EXPECT_NE((void *)NULL, payload);
     g_testResponse->payload = (OCPayload *)payload;
@@ -606,10 +620,12 @@ TEST(NotificationConsumerTest, ExpectUnsubscribeWithPresenceStart)
 
     EXPECT_EQ(OC_STACK_KEEP_TRANSACTION, ret);
     OCPresencePayloadDestroy(payload);
+    removeGlobalResponse();
 }
 
 TEST(NotificationConsumerTest, ExpectUnsubscribeWithPresenceStop)
 {
+    g_testResponse = createResponse();
     OCPresencePayload * payload = OCPresencePayloadCreate(2, 2, OC_PRESENCE_TRIGGER_DELETE, NULL);
     EXPECT_NE((void *)NULL, payload);
     g_testResponse->payload = (OCPayload *)payload;

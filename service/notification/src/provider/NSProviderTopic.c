@@ -156,13 +156,6 @@ NSResult NSSendTopicUpdation()
             {
                 obArray[obCount++] = subData->messageObId;
             }
-
-#if (defined WITH_CLOUD)
-            if (subData->remote_messageObId != 0)
-            {
-                obArray[obCount++] = subData->remote_messageObId;
-            }
-#endif
         }
 
         it = it->next;

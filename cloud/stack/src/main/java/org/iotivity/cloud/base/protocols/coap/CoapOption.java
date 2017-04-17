@@ -22,11 +22,12 @@
 package org.iotivity.cloud.base.protocols.coap;
 
 public enum CoapOption {
-    IF_MATCH(1), URI_HOST(3), ETAG(4), IF_NONE_MATCH(5), URI_PORT(
+    IF_MATCH(1), URI_HOST(3), ETAG(4), IF_NONE_MATCH(5), OBSERVE(6), URI_PORT(
             7), LOCATION_PATH(8), URI_PATH(11), CONTENT_FORMAT(12), MAX_AGE(
                     14), URI_QUERY(15), ACCEPT(17), LOCATION_QUERY(
                             20), PROXY_URI(35), PROXY_SCHEME(39), SIZE1(
-                                    60), OBSERVE(6);
+                                    60), ACCEPT_VERSION(
+                                            2049), CONTENT_VERSION(2053);
 
     public static CoapOption valueOf(int option) {
         switch (option) {
@@ -77,6 +78,12 @@ public enum CoapOption {
 
             case 6:
                 return CoapOption.OBSERVE;
+
+            case 2049:
+                return CoapOption.ACCEPT_VERSION;
+
+            case 2053:
+                return CoapOption.CONTENT_VERSION;
         }
 
         throw new IllegalArgumentException("Invalid option value");

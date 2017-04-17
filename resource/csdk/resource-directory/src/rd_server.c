@@ -116,7 +116,7 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
         OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) payload);
         if (OC_STACK_OK == OCRDDatabaseInit(NULL))
         {
-            if (OC_STACK_OK == OCRDDatabaseStoreResources(payload, &ehRequest->devAddr))
+            if (OC_STACK_OK == OCRDDatabaseStoreResources(payload))
             {
                 OIC_LOG_V(DEBUG, TAG, "Stored resources.");
                 resPayload = payload;

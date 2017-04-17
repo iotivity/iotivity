@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include "caadapterutils.h"
 #include "logger.h"
@@ -57,24 +58,25 @@ static void CAMgrUtilDevInfoListPrint(CMDeviceInfoList_t *devInfoList);
  *
  * @return :: new alloced CMDeviceInfo_t pointer structure or NULL.
  */
-static CMDeviceInfo_t* CAMgrUtilDevInfoCreate(const CAEndpoint_t endpoint);
+static CMDeviceInfo_t* CAMgrUtilDevInfoCreate(const CAEndpoint_t *endpoint);
 
 
 CAResult_t CAMgrUtilAddDevInfoToList(CMDeviceInfoList_t **devInfoList,
-                                     const CAEndpoint_t endpoint)
+                                     const CAEndpoint_t *endpoint)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
     VERIFY_NON_NULL(devInfoList, TAG, "devInfoList");
-    VERIFY_NON_NULL(endpoint.remoteId, TAG, "deviceId");
-    VERIFY_NON_NULL(endpoint.addr, TAG, "address");
+    VERIFY_NON_NULL(endpoint, TAG, "endpoint");
+    VERIFY_NON_NULL(endpoint->remoteId, TAG, "deviceId");
+    VERIFY_NON_NULL(endpoint->addr, TAG, "address");
 
     CMDeviceInfo_t *node = NULL;
-    CAResult_t ret = CAMgrUtilGetDevInfo(*devInfoList, endpoint.remoteId, &node);
+    CAResult_t ret = CAMgrUtilGetDevInfo(*devInfoList, endpoint->remoteId, &node);
 
     if (CA_STATUS_OK == ret)
     {
-        OIC_LOG_V(ERROR, TAG, "deviceId[%s] is already added into list", endpoint.remoteId);
+        OIC_LOG_V(ERROR, TAG, "deviceId[%s] is already added into list", endpoint->remoteId);
         return CA_STATUS_FAILED;
     }
 
@@ -132,39 +134,40 @@ CAResult_t CAMgrUtilGetDevInfo(CMDeviceInfoList_t *devInfoList, const char *devi
     return CA_STATUS_FAILED;
 }
 
-CAResult_t CAMgrUtilUpdateDevInfo(CMDeviceInfoList_t *devInfoList, const CAEndpoint_t endpoint)
+CAResult_t CAMgrUtilUpdateDevInfo(CMDeviceInfoList_t *devInfoList, const CAEndpoint_t *endpoint)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
     VERIFY_NON_NULL(devInfoList, TAG, "devInfoList");
-    VERIFY_NON_NULL(endpoint.remoteId, TAG, "deviceId");
-    VERIFY_NON_NULL(endpoint.addr, TAG, "localAddr");
+    VERIFY_NON_NULL(endpoint, TAG, "endpoint");
+    VERIFY_NON_NULL(endpoint->remoteId, TAG, "deviceId");
+    VERIFY_NON_NULL(endpoint->addr, TAG, "localAddr");
 
     CMDeviceInfo_t *node = NULL;
-    CAResult_t ret = CAMgrUtilGetDevInfo(devInfoList, endpoint.remoteId, &node);
+    CAResult_t ret = CAMgrUtilGetDevInfo(devInfoList, endpoint->remoteId, &node);
 
     if (CA_STATUS_OK != ret || NULL == node)
     {
-        OIC_LOG_V(ERROR, TAG, "deviceId[%s] isn't included in list", endpoint.remoteId);
+        OIC_LOG_V(ERROR, TAG, "deviceId[%s] isn't included in list", endpoint->remoteId);
         return ret;
     }
 
-    node->d2dInfo.adapter |= endpoint.adapter;
-    node->d2dInfo.flags |= endpoint.flags;
+    node->d2dInfo.adapter |= endpoint->adapter;
+    node->d2dInfo.flags |= endpoint->flags;
 
     if (NULL != node->d2dInfo.addr)
     {
         OICFree(node->d2dInfo.addr);
     }
-    node->d2dInfo.addr = OICStrdup(endpoint.addr);
+    node->d2dInfo.addr = OICStrdup(endpoint->addr);
 
-    if (CA_ADAPTER_IP & endpoint.adapter)
+    if (CA_ADAPTER_IP & endpoint->adapter)
     {
-        node->d2dInfo.udpPort = endpoint.port;
+        node->d2dInfo.udpPort = endpoint->port;
     }
-    else if (CA_ADAPTER_TCP & endpoint.adapter)
+    else if (CA_ADAPTER_TCP & endpoint->adapter)
     {
-        node->d2dInfo.tcpPort = endpoint.port;
+        node->d2dInfo.tcpPort = endpoint->port;
     }
 
     CAMgrUtilDevInfoListPrint(devInfoList);
@@ -221,12 +224,13 @@ void CAMgrUtilDestroyDevInfoList(CMDeviceInfoList_t *devInfoList)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-static CMDeviceInfo_t* CAMgrUtilDevInfoCreate(const CAEndpoint_t endpoint)
+static CMDeviceInfo_t* CAMgrUtilDevInfoCreate(const CAEndpoint_t *endpoint)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    VERIFY_NON_NULL_RET(endpoint.remoteId, TAG, "remoteId", NULL);
-    VERIFY_NON_NULL_RET(endpoint.addr, TAG, "cloudAddr", NULL);
+    assert(endpoint);
+    assert(endpoint->remoteId);
+    assert(endpoint->addr);
 
     CMDeviceInfo_t *node = (CMDeviceInfo_t *)OICCalloc(1, sizeof(CMDeviceInfo_t));
     if (NULL == node)
@@ -235,13 +239,13 @@ static CMDeviceInfo_t* CAMgrUtilDevInfoCreate(const CAEndpoint_t endpoint)
         return NULL;
     }
 
-    node->deviceId = OICStrdup(endpoint.remoteId);
+    node->deviceId = OICStrdup(endpoint->remoteId);
 
-    node->d2sInfo.adapter = endpoint.adapter;
-    node->d2sInfo.flags = endpoint.flags;
-    node->d2sInfo.addr = OICStrdup(endpoint.addr);
+    node->d2sInfo.adapter = endpoint->adapter;
+    node->d2sInfo.flags = endpoint->flags;
+    node->d2sInfo.addr = OICStrdup(endpoint->addr);
     node->d2sInfo.udpPort = 0;
-    node->d2sInfo.tcpPort = endpoint.port;
+    node->d2sInfo.tcpPort = endpoint->port;
 
     node->d2dInfo.adapter = 0;
     node->d2dInfo.flags = 0;

@@ -82,7 +82,7 @@ static CANewAddress_t *g_CAIPNetworkMonitorNewAddressQueue = NULL;
  */
 static struct CAIPCBData_t *g_CAIPNetworkMonitorAdapterCallbackList = NULL;
 
-static CAInterface_t *AllocateCAInterface(int index, const char *name, int family,
+static CAInterface_t *AllocateCAInterface(int index, const char *name, uint16_t family,
                                           const char *addr, int flags);
 
 static u_arraylist_t *GetInterfaceInformation(int desiredIndex);
@@ -176,6 +176,10 @@ static void CALLBACK IpAddressChangeCallback(void *context,
                                              MIB_UNICASTIPADDRESS_ROW *row,
                                              MIB_NOTIFICATION_TYPE notificationType)
 {
+    OC_UNUSED(notificationType);
+    OC_UNUSED(row);
+    OC_UNUSED(context);
+
     oc_mutex_lock(g_CAIPNetworkMonitorMutex);
 
     // Fetch new network address info.
@@ -584,7 +588,7 @@ CAResult_t CAIPUnSetNetworkMonitorCallback(CATransportAdapter_t adapter)
 /**
  * Allocate a new CAInterface_t entry for a given IP address.
  */
-static CAInterface_t *AllocateCAInterface(int index, const char *name, int family,
+static CAInterface_t *AllocateCAInterface(int index, const char *name, uint16_t family,
                                           const char *addr, int flags)
 {
     CAInterface_t *ifitem = (CAInterface_t *)OICCalloc(1, sizeof(*ifitem));
@@ -664,7 +668,7 @@ static bool IsValidNetworkAdapter(PIP_ADAPTER_ADDRESSES pAdapterAddr, int desire
 
     // If desiredIndex is non-zero, then only retrieve adapter corresponding to desiredIndex.
     // If desiredIndex is zero, then retrieve all adapters.
-    if (desiredIndex && (pAdapterAddr->IfIndex != desiredIndex))
+    if (desiredIndex && ((int)pAdapterAddr->IfIndex != desiredIndex))
     {
         OIC_LOG_V(DEBUG, TAG, "\t\tInterface %i not interesting.", pAdapterAddr->IfIndex);
         valid = false;
@@ -888,6 +892,8 @@ static u_arraylist_t *GetInterfaceInformation(int desiredIndex)
 
 u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
 {
+    OC_UNUSED(desiredIndex);
+
     u_arraylist_t *iflist = u_arraylist_create();
     if (!iflist)
     {

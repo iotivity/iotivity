@@ -4,6 +4,14 @@ android {
     compileSdkVersion 21
     buildToolsVersion "20.0.0"
 
+    packagingOptions {
+        pickFirst 'lib/armeabi/libca-interface.so'
+        pickFirst 'lib/armeabi-v7a/libca-interface.so'
+        pickFirst 'lib/x86/libca-interface.so'
+        pickFirst 'lib/x86_64/libca-interface.so'
+        pickFirst 'lib/arm64-v8a/libca-interface.so'
+    }
+
     defaultConfig {
         applicationId "org.iotivity.service.sample.client"
         minSdkVersion 21

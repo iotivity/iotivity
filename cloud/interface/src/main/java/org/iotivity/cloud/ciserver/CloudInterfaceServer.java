@@ -26,9 +26,11 @@ import java.util.Scanner;
 
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.server.CoapServer;
+import org.iotivity.cloud.base.server.HttpServer;
+import org.iotivity.cloud.base.server.WebSocketServer;
 import org.iotivity.cloud.ciserver.DeviceServerSystem.CoapDevicePool;
-import org.iotivity.cloud.ciserver.resources.RouteResource;
 import org.iotivity.cloud.ciserver.resources.KeepAliveResource;
+import org.iotivity.cloud.ciserver.resources.RouteResource;
 import org.iotivity.cloud.ciserver.resources.proxy.account.Account;
 import org.iotivity.cloud.ciserver.resources.proxy.account.AccountSession;
 import org.iotivity.cloud.ciserver.resources.proxy.account.Acl;
@@ -46,27 +48,42 @@ import org.iotivity.cloud.util.Log;
 public class CloudInterfaceServer {
 
     public static void main(String[] args) throws Exception {
+
         Log.Init();
 
         System.out.println("-----CI SERVER-------");
 
-        if (args.length != 8) {
-            Log.e("coap server port and RDServer_Address port AccountServer_Address Port MQBroker_Address Port and TLS mode required\n"
-                    + "ex) 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686 0\n");
+        if (args.length < 8 || args.length > 12) {
+            Log.e("\nCoAP-server <Port> and RD-server <Address> <Port> Account-server <Address> <Port> "
+                    + "MQ-broker <Address> <Port> HC-proxy <HTTP-port> Websocket-server <Port> and TLS-mode <0|1> are required.\n"
+                    + "and WebSocketLog-Server <Address> <Port> (optional)\n"
+                    + "ex) 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686 80 8000 0 127.0.0.1 8080\n");
             return;
         }
 
-        boolean tlsMode = Integer.parseInt(args[7]) == 1;
+        // CoAP-TCP server port
+        int coapPort = Integer.parseInt(args[0]);
+        // HTTP-CoAP proxy server port
+        int hcProxyPort = Integer.parseInt(args[7]);
+        // CoAP-Websocket server port
+        int websocketPort = Integer.parseInt(args[8]);
 
-        ConnectorPool.addConnection("rd",
-                new InetSocketAddress(args[1], Integer.parseInt(args[2])),
-                tlsMode);
-        ConnectorPool.addConnection("account",
-                new InetSocketAddress(args[3], Integer.parseInt(args[4])),
-                tlsMode);
-        ConnectorPool.addConnection("mq",
-                new InetSocketAddress(args[5], Integer.parseInt(args[6])),
-                tlsMode);
+        boolean hcProxyMode = hcProxyPort > 0;
+        boolean websocketMode = websocketPort > 0;
+
+        boolean tlsMode = Integer.parseInt(args[9]) == 1;
+
+        if (args.length >= 11) {
+            Log.InitWebLog(args[10], args[11], CloudInterfaceServer.class
+                    .getSimpleName().toString());
+        }
+
+        ConnectorPool.addConnection("rd", new InetSocketAddress(args[1],
+                Integer.parseInt(args[2])), tlsMode);
+        ConnectorPool.addConnection("account", new InetSocketAddress(args[3],
+                Integer.parseInt(args[4])), tlsMode);
+        ConnectorPool.addConnection("mq", new InetSocketAddress(args[5],
+                Integer.parseInt(args[6])), tlsMode);
 
         DeviceServerSystem deviceServer = new DeviceServerSystem();
 
@@ -81,7 +98,7 @@ public class CloudInterfaceServer {
         AclGroup aclGroupHandler = new AclGroup();
         Certificate certHandler = new Certificate();
         AclInvite aclInviteHandler = new AclInvite();
-	Crl crlHandler = new Crl();
+        Crl crlHandler = new Crl();
         CoapDevicePool devicePool = deviceServer.getDevicePool();
 
         deviceServer.addResource(acHandler);
@@ -106,7 +123,7 @@ public class CloudInterfaceServer {
 
         deviceServer.addResource(aclInviteHandler);
 
-	deviceServer.addResource(crlHandler);
+        deviceServer.addResource(crlHandler);
 
         KeepAliveResource resKeepAlive = new KeepAliveResource(
                 new int[] { 1, 2, 4, 8 });
@@ -115,10 +132,18 @@ public class CloudInterfaceServer {
 
         deviceServer.addResource(new RouteResource(devicePool));
 
-        deviceServer.addServer(new CoapServer(
-                new InetSocketAddress(Integer.parseInt(args[0]))));
+        deviceServer.addServer(new CoapServer(new InetSocketAddress(coapPort)));
 
-        // deviceServer.addServer(new HttpServer(new InetSocketAddress(8080)));
+        // Add HTTP Server for HTTP-to-CoAP Proxy
+        if (hcProxyMode) {
+            deviceServer.addServer(new HttpServer(new InetSocketAddress(
+                    hcProxyPort)));
+        }
+
+        if (websocketMode) {
+            deviceServer.addServer(new WebSocketServer(new InetSocketAddress(
+                    websocketPort)));
+        }
 
         deviceServer.startSystem(tlsMode);
 

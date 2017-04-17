@@ -61,7 +61,7 @@ if not scene_test_env.get('RELEASE'):
     scene_test_env.AppendUnique(CXXFLAGS = ['--coverage'])
 
 scene_test_env.PrependUnique(CPPPATH = [
-    '#/extlibs/hippomocks-master',
+    '#/extlibs/hippomocks/hippomocks',
     '../include',
     '../src',
     '#/service/resource-encapsulation/include',

@@ -858,7 +858,7 @@ void RMSendDeleteToNeighbourNodes()
         RTMGatewayEntry_t *entry = (RTMGatewayEntry_t *) u_linklist_get_data(iterTable);
         if (entry)
         {
-            for (uint32_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
+            for (size_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
             {
                 RTMDestIntfInfo_t *dest = u_arraylist_get(entry->destination->destIntfAddr, i);
                 if (!dest)
