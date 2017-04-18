@@ -29,6 +29,12 @@ rd_mode = ipca_lib_env.get('RD_MODE')
 ######################################################################
 # Build flags
 ######################################################################
+with_upstream_libcoap = ipca_lib_env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+    ipca_lib_env.PrependUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+else:
+    ipca_lib_env.PrependUnique(CPPPATH = ['#resource/csdk/connectivity/lib/libcoap-4.1.1/include'])
+
 ipca_lib_env.PrependUnique(CPPPATH = [
         '../inc',
         'inc',
@@ -41,7 +47,6 @@ ipca_lib_env.PrependUnique(CPPPATH = [
         '#/resource/csdk/security/provisioning/include/internal',
         '#/resource/csdk/connectivity/api',
         '#/resource/csdk/connectivity/external/inc',
-        '#/resource/csdk/connectivity/lib/libcoap-4.1.1/include',
         '#/resource/csdk/ocsocket/include',
         '#/resource/csdk/logger/include',
         '#/resource/c_common/ocrandom/include',

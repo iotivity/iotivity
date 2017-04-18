@@ -109,10 +109,8 @@ if target_os in ['android','ios','linux','tizen']:
 	if env.get('SECURED') == '1':
 		with_upstream_libcoap = easy_setup_env.get('WITH_UPSTREAM_LIBCOAP')
 		if with_upstream_libcoap == '1':
-			# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
 			easy_setup_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
 		else:
-			# For bring up purposes only, the forked version will live here.
 			easy_setup_env.AppendUnique(CPPPATH = [env.get('SRC_DIR') + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include'])
 		easy_setup_env.AppendUnique(CPPPATH = [
 			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include',

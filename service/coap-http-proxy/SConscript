@@ -50,8 +50,6 @@ local_env.AppendUnique(CPPPATH = ['include',
 
 with_upstream_libcoap = local_env.get('WITH_UPSTREAM_LIBCOAP')
 if with_upstream_libcoap == '1':
-    # For bring up purposes only,
-    # we manually copy the forked version to where the unforked version is downloaded.
     local_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
 else:
     local_env.AppendUnique(CPPPATH = ['#resource/csdk/connectivity/lib/libcoap-4.1.1/include'])

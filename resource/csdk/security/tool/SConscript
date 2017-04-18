@@ -30,10 +30,8 @@ target_os = tools_env.get('TARGET_OS')
 ######################################################################
 with_upstream_libcoap = tools_env.get('WITH_UPSTREAM_LIBCOAP')
 if with_upstream_libcoap == '1':
-    # For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
     tools_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
 else:
-    # For bring up purposes only, the forked version will live here.
     tools_env.AppendUnique(CPPPATH = ['../../connectivity/lib/libcoap-4.1.1/include'])
 
 tools_env.PrependUnique(CPPPATH = ['#/extlibs/cjson',

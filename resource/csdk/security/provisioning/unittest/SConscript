@@ -35,10 +35,8 @@ rd_mode = sptest_env.get('RD_MODE')
 ######################################################################
 with_upstream_libcoap = sptest_env.get('WITH_UPSTREAM_LIBCOAP')
 if with_upstream_libcoap == '1':
-	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
 	sptest_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
 else:
-	# For bring up purposes only, the forked version will live here.
 	sptest_env.AppendUnique(CPPPATH = ['../../../connectivity/lib/libcoap-4.1.1/include'])
 
 sptest_env.PrependUnique(CPPPATH = [
