@@ -165,7 +165,6 @@ static void DeleteServerResponse (OCServerResponse * serverResponse)
     assert(serverResponse);
 
     RB_REMOVE(ServerResponseTree, &g_serverResponseTree, serverResponse);
-    OCPayloadDestroy(serverResponse->payload);
     OICFree(serverResponse);
     serverResponse = NULL;
     OIC_LOG(INFO, TAG, "Server Response Removed");
