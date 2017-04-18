@@ -152,7 +152,7 @@ CAResult_t CAUtilCMTerminate();
  * @param[in]  isCloud    with cloud or not.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAUtilCMUpdateRemoteDeviceInfo(const CAEndpoint_t endpoint, bool isCloud);
+CAResult_t CAUtilCMUpdateRemoteDeviceInfo(const CAEndpoint_t *endpoint, bool isCloud);
 
 /**
  * Reset RemoteDevice Info. for Connection Manager

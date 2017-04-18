@@ -51,7 +51,7 @@ CAResult_t CAMsgArbiterTerminate();
  * @param[in]  isCloud        with cloud or not .
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAMsgArbiterUpdateDeviceInfo(const CAEndpoint_t endpoint, bool isCloud);
+CAResult_t CAMsgArbiterUpdateDeviceInfo(const CAEndpoint_t *endpoint, bool isCloud);
 
 /**
  * Reset Device Info in managed data

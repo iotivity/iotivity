@@ -35,7 +35,6 @@ cp -R ./extlibs/cjson $sourcedir/tmp/extlibs
 cp -R ./extlibs/mbedtls $sourcedir/tmp/extlibs
 cp -R ./extlibs/gtest $sourcedir/tmp/extlibs
 cp -LR ./extlibs/sqlite3 $sourcedir/tmp/extlibs
-cp -R ./extlibs/timer $sourcedir/tmp/extlibs
 cp -R ./extlibs/rapidxml $sourcedir/tmp/extlibs
 cp -R ./extlibs/libcoap $sourcedir/tmp/extlibs
 cp -R ./resource $sourcedir/tmp
@@ -51,6 +50,9 @@ cp ./tools/tizen/*.rpm ./tmp
 cp ./tools/tizen/.gbs.conf ./tmp
 cp ./tools/tizen/*.rpm $sourcedir/tmp/service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample
 cp ./tools/tizen/.gbs.conf ./tmp/service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample
+cp -R ./build_common/tizen ./tmp/service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample
+cp -R ./build_common/iotivityconfig ./tmp/service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample
+cp -R ./iotivity.pc.in ./tmp/service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample
 
 cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp
 

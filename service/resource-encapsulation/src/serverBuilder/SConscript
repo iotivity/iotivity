@@ -73,9 +73,6 @@ if server_builder_env.get('SECURED') == '1':
 	if server_builder_env.get('WITH_TCP') == True:
 		server_builder_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	server_builder_env.AppendUnique(LIBS = ['resource_directory'])
-
 ######################################################################
 # Source files and Targets
 ######################################################################

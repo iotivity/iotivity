@@ -55,7 +55,6 @@ mkdir -p $sourcedir/tmp/con/sample/external/inc
 cp -R $cur_dir/external/inc/* $sourcedir/tmp/con/sample/external/inc/
 
 cp -R ./extlibs/mbedtls/ $sourcedir/tmp/con/mbedtls/
-cp -R ./extlibs/timer/ $sourcedir/tmp/con/extlibs/
 cp -R ./extlibs/libcoap/ $sourcedir/tmp/con/extlibs/
 mkdir -p $sourcedir/tmp/con/c_common
 cp -R ./resource/c_common/* $sourcedir/tmp/con/c_common/

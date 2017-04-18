@@ -43,11 +43,13 @@ if env['CC'] == 'cl':
 
     # Work around [IOT-1986]
     # During some Windows multi-threaded builds, SCons/Python/Pywin32 appear to try
-    # linking with oc.lib while another SCons thread started executing InstallTarget()
-    # for this static LIB, but didn't finish yet. That behavior results in linker errors.
-    # Work around this issue by linking with the source of InstallTarget(), rather
-    # than the target.
+    # linking with these static libraries while another SCons thread started executing
+    # InstallTarget() for this static LIB, but didn't finish yet. That behavior results
+    # in linker errors. Work around this issue by linking with the source of InstallTarget(),
+    # rather than the target.
     env.PrependUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'src')])
+    env.PrependUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'oc_logger')])
+    env.PrependUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk', 'resource-directory')])
 
     env.AppendUnique(PATH = os.environ['PATH'])
     env['PDB'] = '${TARGET.base}.pdb'

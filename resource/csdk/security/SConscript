@@ -128,6 +128,7 @@ if libocsrm_env.get('SECURED') == '1':
 	libocsrm_src = libocsrm_src + [OCSRM_SRC + 'certhelpers.c', OCSRM_SRC + 'occertutility.c']
 	libocsrm_src = libocsrm_src + [OCSRM_SRC + 'csrresource.c']
 	libocsrm_src = libocsrm_src + [OCSRM_SRC + 'rolesresource.c']
+	libocsrm_src = libocsrm_src + [OCSRM_SRC + 'ocsecurity.c']
 
 if target_os in ['windows', 'msys_nt']:
 	libocsrm_src  = libocsrm_src + [OCSRM_SRC + 'strptime.c']

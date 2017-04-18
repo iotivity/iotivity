@@ -263,6 +263,8 @@ CborError SerializeEncodingToCbor(CborEncoder *rootMap, const char *tag, const O
 CborError SerializeSecOptToCbor(CborEncoder *rootMap, const char *tag, const OicSecOpt_t *value);
 CborError DeserializeEncodingFromCbor(CborValue *rootMap, OicSecKey_t *value);
 CborError DeserializeSecOptFromCbor(CborValue *rootMap, OicSecOpt_t *value);
+bool IsSameSecOpt(const OicSecOpt_t* sk1, const OicSecOpt_t* sk2);
+bool IsSameSecKey(const OicSecKey_t* sk1, const OicSecKey_t* sk2);
 
 #ifdef __cplusplus
 }

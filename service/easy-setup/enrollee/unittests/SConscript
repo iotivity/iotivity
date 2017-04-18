@@ -94,9 +94,11 @@ Alias("easysetup_enrollee_test", easysetup_enrollee_test)
 env.AppendTarget('easysetup_enrollee_test')
 
 if env.get('TEST') == '1':
-# TODO: fix this test on linux and remove this comment line
-    if target_os in []:
+    if target_os in ['linux'] and env.get('SECURED') != '1':
+        from tools.scons.RunTest import run_test
         run_test(easysetup_enrollee_test_env,
-                 'service_easy-setup_enrollee_unittests_easysetup_enrollee_test.memcheck',
+#      temporary blocking until valigrind error resolved in /resource layer
+#                'service_easy-setup_enrollee_unittests_easysetup_enrollee_test.memcheck',
+                 '',
                  'service/easy-setup/enrollee/unittests/easysetup_enrollee_test',
                  easysetup_enrollee_test)

@@ -41,9 +41,6 @@ if env.get('SECURED') == '1':
 if 'rt' in scenemanager_sample_env.get('LIBS'):
     scenemanager_sample_env.Append(LIBS = ['rt'])
 
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-    scenemanager_sample_env.AppendUnique(LIBS = ['resource_directory'])
-
 if not env.get('RELEASE'):
     scenemanager_sample_env.PrependUnique(LIBS = ['gcov'])
     scenemanager_sample_env.AppendUnique(CXXFLAGS = ['--coverage'])

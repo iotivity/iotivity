@@ -54,6 +54,8 @@ static int64_t OCConvertRepPayload(OCRepPayload *payload, uint8_t *outPayload, s
 static int64_t OCConvertRepMap(CborEncoder *map, const OCRepPayload *payload);
 static int64_t OCConvertPresencePayload(OCPresencePayload *payload, uint8_t *outPayload,
         size_t *size);
+static int64_t OCConvertDiagnosticPayload(OCDiagnosticPayload *payload, uint8_t *outPayload,
+        size_t *size);
 static int64_t OCConvertSecurityPayload(OCSecurityPayload *payload, uint8_t *outPayload,
         size_t *size);
 static int64_t OCConvertSingleRepPayloadValue(CborEncoder *parent, const OCRepPayloadValue *value);
@@ -147,6 +149,8 @@ static int64_t OCConvertPayloadHelper(OCPayload* payload, OCPayloadFormat format
             return OCConvertRepPayload((OCRepPayload*)payload, outPayload, size);
         case PAYLOAD_TYPE_PRESENCE:
             return OCConvertPresencePayload((OCPresencePayload*)payload, outPayload, size);
+        case PAYLOAD_TYPE_DIAGNOSTIC:
+            return OCConvertDiagnosticPayload((OCDiagnosticPayload*)payload, outPayload, size);
         case PAYLOAD_TYPE_SECURITY:
             return OCConvertSecurityPayload((OCSecurityPayload*)payload, outPayload, size);
         default:
@@ -1006,6 +1010,22 @@ static int64_t OCConvertPresencePayload(OCPresencePayload *payload, uint8_t *out
     // Close Map
     err |= cbor_encoder_close_container(&encoder, &map);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing presence map");
+
+exit:
+    return checkError(err, &encoder, outPayload, size);
+}
+
+static int64_t OCConvertDiagnosticPayload(OCDiagnosticPayload *payload, uint8_t *outPayload,
+        size_t *size)
+{
+    int64_t err = CborNoError;
+    CborEncoder encoder;
+
+    cbor_encoder_init(&encoder, outPayload, *size, 0);
+
+    // Message
+    err |= cbor_encode_text_string(&encoder, payload->message, strlen(payload->message));
+    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding message");
 
 exit:
     return checkError(err, &encoder, outPayload, size);

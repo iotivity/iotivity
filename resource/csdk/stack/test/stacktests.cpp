@@ -2686,6 +2686,7 @@ TEST_F(OCDiscoverTests, DISABLED_DiscoverResourceWithInvalidQueries)
     EXPECT_EQ(OC_STACK_OK, discoverUnicastRTEmptyCB.Wait(10));
 }
 
+#ifdef IP_ADAPTER
 TEST(StackZoneId, getZoneId)
 {
     size_t tempSize = 0;
@@ -2710,6 +2711,7 @@ TEST(StackZoneId, getZoneIdWithInvalidParams)
     EXPECT_EQ(OC_STACK_ERROR, OCGetLinkLocalZoneId(9999, &zoneId));
     EXPECT_EQ(OC_STACK_ERROR, OCGetLinkLocalZoneId(UINT32_MAX, &zoneId));
 }
+#endif
 
 TEST(LinksPayloadValue, createLinksPayloadValue)
 {
@@ -2814,4 +2816,65 @@ TEST(LinksPayloadValue, createLinksPayloadValue)
     OCRepPayloadDestroy(collectionPayload);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(DiagnosticPayload, CreateDestroy)
+{
+    OCDiagnosticPayload *payload;
+
+    payload = NULL;
+    OCDiagnosticPayloadDestroy(payload);
+
+    payload = OCDiagnosticPayloadCreate(NULL);
+    ASSERT_TRUE(payload == NULL);
+
+    payload = OCDiagnosticPayloadCreate("message");
+    ASSERT_TRUE(payload != NULL);
+    ASSERT_STREQ("message", payload->message);
+    OCDiagnosticPayloadDestroy(payload);
+}
+
+static OCEntityHandlerResult DiagnosticPayloadRequest(OCEntityHandlerFlag flag,
+        OCEntityHandlerRequest *request, void *ctx)
+{
+    OC_UNUSED(flag);
+    OC_UNUSED(ctx);
+    OCEntityHandlerResponse response;
+    memset(&response, 0, sizeof(response));
+    response.requestHandle = request->requestHandle;
+    response.resourceHandle = request->resource;
+    response.ehResult = OC_EH_BAD_REQ;
+    response.payload = (OCPayload*) OCDiagnosticPayloadCreate("message");
+    EXPECT_TRUE(response.payload != NULL);
+    EXPECT_EQ(OC_STACK_OK, OCDoResponse(&response));
+    return OC_EH_OK;
+}
+
+static OCStackApplicationResult DiagnosticPayloadResponse(void *ctx, OCDoHandle handle,
+        OCClientResponse *response)
+{
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
+    EXPECT_EQ(OC_STACK_INVALID_QUERY, response->result);
+    EXPECT_EQ(PAYLOAD_TYPE_DIAGNOSTIC, response->payload->type);
+    OCDiagnosticPayload *payload = (OCDiagnosticPayload*) response->payload;
+    EXPECT_STREQ("message", payload->message);
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+TEST(DiagnosticPayload, DISABLED_EndToEnd)
+{
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT_SERVER));
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+
+    OCResourceHandle handle;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle, "core.light", "oic.if.baseline", "/a/light",
+            DiagnosticPayloadRequest, NULL, OC_DISCOVERABLE));
+
+    itst::Callback diagnosticPayloadCB(&DiagnosticPayloadResponse);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_GET, "127.0.0.1:5683/a/light", NULL,
+            0, CT_DEFAULT, OC_HIGH_QOS, diagnosticPayloadCB, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, diagnosticPayloadCB.Wait(100));
+
+    OCStop();
 }

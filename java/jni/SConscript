@@ -85,6 +85,9 @@ if target_os == 'android':
 if target_os in ['darwin', 'ios']:
 	jni_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
+if env.get('SECURED') == '1':
+	jni_env.AppendUnique(CPPDEFINES=['SECURED'])
+
 if env.get('WITH_CLOUD'):
 	jni_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD'])
 

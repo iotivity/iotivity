@@ -58,7 +58,7 @@ ipcatest_env.AppendUnique(CPPPATH = [
         ])
 
 ipcatest_env.PrependUnique(LIBS = [
-        'oc_logger',
+        'oc_logger_internal',
         'octbstack',
         'ipca_static'
         ])
@@ -80,9 +80,6 @@ if use_iotivity == 1:
 
 if target_os in ['msys_nt', 'windows']:
     ipcatest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
-
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-    ipcatest_env.PrependUnique(LIBS = ['resource_directory'])
 
 if ipcatest_env.get('MULTIPLE_OWNER') == '1':
     ipcatest_env.AppendUnique(CPPDEFINES = ['MULTIPLE_OWNER'])

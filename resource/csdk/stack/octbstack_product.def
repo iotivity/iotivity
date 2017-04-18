@@ -64,9 +64,6 @@ OCNotifyListOfObservers
 OCPayloadDestroy
 OCPresencePayloadCreate
 OCProcess
-OCRDDatabaseDiscoveryPayloadCreate
-OCRDDatabaseGetStorageFilename
-OCRDDatabaseSetStorageFilename
 OCRegisterPersistentStorageHandler
 OCRepPayloadAddInterface
 OCRepPayloadAddResourceType
@@ -123,3 +120,10 @@ OCStop
 OCStopPresence
 OCStopMulticastServer
 OCUnBindResource
+
+oc_log_destroy
+oc_log_set_level
+oc_log_set_module
+oc_log_write
+oc_make_console_logger
+oc_make_ostream_logger

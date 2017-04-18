@@ -271,10 +271,6 @@ OCStackResult initDevConfResource(bool isSecured)
     OCStackResult res = OC_STACK_ERROR;
 
     OICStrcpy(g_ESDevConfResource.devName, sizeof(g_ESDevConfResource.devName), "");
-    OICStrcpy(g_ESDevConfResource.modelNumber, sizeof(g_ESDevConfResource.modelNumber), "");
-    OICStrcpy(g_ESDevConfResource.location, sizeof(g_ESDevConfResource.location), "");
-    OICStrcpy(g_ESDevConfResource.country, sizeof(g_ESDevConfResource.country), "");
-    OICStrcpy(g_ESDevConfResource.language, sizeof(g_ESDevConfResource.language), "");
 
     if (isSecured)
     {
@@ -527,40 +523,16 @@ void updateDevConfResource(OCRepPayload* input)
         OIC_LOG(DEBUG, ES_RH_TAG, "OICMalloc is failed");
         return;
     }
-    memset(devConfData->language, 0, OIC_STRING_MAX_VALUE);
-    memset(devConfData->country, 0, OIC_STRING_MAX_VALUE);
     devConfData->userdata = NULL;
-
-    char *location = NULL;
-    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_LOCATION, &location))
-    {
-        OICStrcpy(g_ESDevConfResource.location, sizeof(g_ESDevConfResource.location), location);
-        OICStrcpy(devConfData->location, sizeof(devConfData->location), location);
-        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESDevConfResource.location %s", g_ESDevConfResource.location);
-    }
-
-    char *country = NULL;
-    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_COUNTRY, &country))
-    {
-        OICStrcpy(g_ESDevConfResource.country, sizeof(g_ESDevConfResource.country), country);
-        OICStrcpy(devConfData->country, sizeof(devConfData->country), country);
-        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESDevConfResource.country %s", g_ESDevConfResource.country);
-    }
-
-    char *language = NULL;
-    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_LANGUAGE, &language))
-    {
-        OICStrcpy(g_ESDevConfResource.language, sizeof(g_ESDevConfResource.language), language);
-        OICStrcpy(devConfData->language, sizeof(devConfData->language), language);
-        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESDevConfResource.language %s", g_ESDevConfResource.language);
-    }
 
     if (gReadUserdataCb)
     {
         gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_DEVCONF, &devConfData->userdata);
     }
 
-    if (country || language)
+    // If a writable property in oic.r.devconf is added later,
+    // a condition for calling a resistered callback should be implemented also.
+    if( devConfData->userdata != NULL )
     {
         OIC_LOG(DEBUG, ES_RH_TAG, "Send DevConfRsrc Callback To ES");
 
@@ -824,10 +796,6 @@ OCRepPayload* constructResponseOfDevConf(char *interface)
     }
 
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_DEVNAME, g_ESDevConfResource.devName);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_MODELNUMBER, g_ESDevConfResource.modelNumber);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LOCATION, g_ESDevConfResource.location);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LANGUAGE, g_ESDevConfResource.language);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_COUNTRY, g_ESDevConfResource.country);
 
     if (gWriteUserdataCb)
     {
@@ -1629,10 +1597,6 @@ OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty)
 
     OICStrcpy(g_ESDevConfResource.devName, OIC_STRING_MAX_VALUE, (deviceProperty->DevConf).deviceName);
     OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "Device Name : %s", g_ESDevConfResource.devName);
-
-    OICStrcpy(g_ESDevConfResource.modelNumber, OIC_STRING_MAX_VALUE,
-                                                            (deviceProperty->DevConf).modelNumber);
-    OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "Model Number : %s", g_ESDevConfResource.modelNumber);
 
     if (OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESWiFiConfResource.handle, OC_HIGH_QOS))
     {

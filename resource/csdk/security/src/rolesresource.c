@@ -320,6 +320,22 @@ exit:
     return res;
 }
 
+static bool RoleCertChainContains(RoleCertChain_t *chain, const RoleCertChain_t* roleCert)
+{
+    RoleCertChain_t *temp = NULL;
+    
+    LL_FOREACH(chain, temp)
+    {
+        if (IsSameSecKey(&temp->certificate, &roleCert->certificate) &&
+            IsSameSecOpt(&temp->optData, &roleCert->optData))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static OCStackResult AddRoleCertificate(const RoleCertChain_t *roleCert, const uint8_t *pubKey, size_t pubKeyLength)
 {
     OCStackResult res = OC_STACK_ERROR;
@@ -372,17 +388,23 @@ static OCStackResult AddRoleCertificate(const RoleCertChain_t *roleCert, const u
         LL_PREPEND(gRoles, targetEntry);
     }
 
-    // @todo: (IOT-1949) Detect duplicates and don't add them again
-    res = DuplicateRoleCertChain(roleCert, &copy);
-    if (OC_STACK_OK != res)
+    if (!RoleCertChainContains(targetEntry->chains, roleCert))
     {
-        OIC_LOG_V(ERROR, TAG, "Could not duplicate role cert chain: %d", res);
-        goto exit;
-    }
+        res = DuplicateRoleCertChain(roleCert, &copy);
+        if (OC_STACK_OK != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Could not duplicate role cert chain: %d", __func__, res);
+            goto exit;
+        }
 
-    // Assign our own credId.
-    copy->credId = gIdCounter++;
-    LL_APPEND(targetEntry->chains, copy);
+        // Assign our own credId.
+        copy->credId = gIdCounter++;
+        LL_APPEND(targetEntry->chains, copy);
+    }
+    else
+    {
+        OIC_LOG_V(DEBUG, TAG, "%s: Role cert chain already present, not going to add it again", __func__);
+    }
 
     res = OC_STACK_OK;
 

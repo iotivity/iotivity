@@ -107,6 +107,11 @@
 #define UINT32_MAX   (0xFFFFFFFFUL)
 #endif
 
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+#include "ocsecurity.h"
+#include "srmresourcestrings.h"
+#endif
+
 //-----------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------
@@ -443,7 +448,7 @@ static void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, boo
  * @param payload Discovery payload which has Endpoint information.
  * @param ifindex index which indicate network interface.
  */
-#ifndef WITH_ARDUINO
+#if defined (IP_ADAPTER) && !defined (WITH_ARDUINO)
 static OCStackResult OCMapZoneIdToLinkLocalEndpoint(OCDiscoveryPayload *payload, uint32_t ifindex);
 #endif
 
@@ -1099,8 +1104,8 @@ OCStackResult OCEncodeAddressForRFC6874(char *outputAddress,
 
     // Restore the null terminator with an escaped '%' character, per RFC 6874
     OICStrcpy(outputAddress, scopeIdPart - addressPart, addressPart);
-    strcat(outputAddress, "%25");
-    strcat(outputAddress, scopeIdPart);
+    OICStrcat(outputAddress, outputSize, "%25");
+    OICStrcat(outputAddress, outputSize, scopeIdPart);
 
     return OC_STACK_OK;
 }
@@ -1421,7 +1426,7 @@ OCStackResult HandleBatchResponse(char *requestUri, OCRepPayload **payload)
     return OC_STACK_INVALID_PARAM;
 }
 
-#ifndef WITH_ARDUINO
+#if defined (IP_ADAPTER) && !defined (WITH_ARDUINO)
 OCStackResult OCMapZoneIdToLinkLocalEndpoint(OCDiscoveryPayload *payload, uint32_t ifindex)
 {
     if (!payload)
@@ -1694,9 +1699,18 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                         }
                         if (type == PAYLOAD_TYPE_INVALID)
                         {
-                            OIC_LOG_V(INFO, TAG, "Assuming PAYLOAD_TYPE_REPRESENTATION: %d %s",
-                                    cbNode->method, cbNode->requestUri);
-                            type = PAYLOAD_TYPE_REPRESENTATION;
+                            if (responseInfo->info.payloadFormat == CA_FORMAT_UNDEFINED)
+                            {
+                                OIC_LOG_V(INFO, TAG, "Assuming PAYLOAD_TYPE_DIAGNOSTIC: %d %s",
+                                        cbNode->method, cbNode->requestUri);
+                                type = PAYLOAD_TYPE_DIAGNOSTIC;
+                            }
+                            else
+                            {
+                                OIC_LOG_V(INFO, TAG, "Assuming PAYLOAD_TYPE_REPRESENTATION: %d %s",
+                                        cbNode->method, cbNode->requestUri);
+                                type = PAYLOAD_TYPE_REPRESENTATION;
+                            }
                         }
                     }
                     else
@@ -1714,7 +1728,8 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 }
 
                 // In case of error, still want application to receive the error message.
-                if (OCResultToSuccess(response->result) || PAYLOAD_TYPE_REPRESENTATION == type)
+                if (OCResultToSuccess(response->result) || PAYLOAD_TYPE_REPRESENTATION == type ||
+                        PAYLOAD_TYPE_DIAGNOSTIC == type)
                 {
                     if (OC_STACK_OK != OCParsePayload(&response->payload,
                             CAToOCPayloadFormat(responseInfo->info.payloadFormat),
@@ -1730,7 +1745,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 
                     // Check endpoints has link-local ipv6 address.
                     // if there is, map zone-id which parsed from ifindex
-#ifndef WITH_ARDUINO
+#if defined (IP_ADAPTER) && !defined (WITH_ARDUINO)
                     if (PAYLOAD_TYPE_DISCOVERY == response->payload->type)
                     {
                         OCDiscoveryPayload *disPayload = (OCDiscoveryPayload*)(response->payload);
@@ -3018,7 +3033,7 @@ static OCStackResult ParseRequestUri(const char *fullUri,
                 result = OC_STACK_NO_MEMORY;
                 goto error;
             }
-            strcpy(*resourceUri, slash);
+            OICStrcpy(*resourceUri, (ulen + 1), slash);
         }
         // resource type
         if (type && resourceType)
@@ -3030,7 +3045,7 @@ static OCStackResult ParseRequestUri(const char *fullUri,
                 goto error;
             }
 
-            OICStrcpy(*resourceType, (tlen+1), type);
+            OICStrcpy(*resourceType, (tlen + 1), type);
         }
     }
 
@@ -3072,6 +3087,7 @@ static OCStackResult OCPreparePresence(CAEndpoint_t *endpoint,
 
 /**
  * Discover or Perform requests on a specified resource
+ * Deprecated: use OCDoRequest instead
  */
 OCStackResult OCDoResource(OCDoHandle *handle,
                             OCMethod method,
@@ -3093,6 +3109,23 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     OCPayloadDestroy(payload);
     return ret;
 }
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+static const char* ASSERT_ROLES_CTX = "Asserting roles from OCDoRequest";
+static void assertRolesCB(void* ctx, bool hasError)
+{
+    OC_UNUSED(ctx); // Not used in release builds
+
+    if (!hasError)
+    {
+        OIC_LOG_V(DEBUG, TAG, "%s: Asserting roles SUCCEEDED - ctx: %s", __func__, (char*)ctx);
+    }
+    else
+    {
+        OIC_LOG_V(DEBUG, TAG, "%s: Asserting roles FAILED - ctx: %s", __func__, (char*)ctx);
+    }
+}
+#endif // __WITH_DTLS__ || __WITH_TLS__
 
 /**
  * Discover or Perform requests on a specified resource
@@ -3137,6 +3170,7 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
      */
     adapter = (OCTransportAdapter)(connectivityType >> CT_ADAPTER_SHIFT);
     flags = (OCTransportFlags)(connectivityType & CT_MASK_FLAGS);
+    OIC_LOG_V(DEBUG, TAG, "%s: adapter = %d, flags = %d", __func__, adapter, flags);
 
     if (requestUri)
     {
@@ -3373,6 +3407,52 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
         goto exit;
     }
 #endif
+    
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    /* Check whether we should assert role certificates before making this request. */
+    if ((endpoint.flags & CA_SECURE) && 
+        (strcmp(requestInfo.info.resourceUri, OIC_RSRC_ROLES_URI) != 0))
+    {
+        CASecureEndpoint_t sep;
+        CAResult_t caRes = CAGetSecureEndpointData(&endpoint, &sep);
+        if (caRes != CA_STATUS_OK)
+        {
+            /* 
+             * This is a secure request but we do not have a secure connection with 
+             * this peer, try to assert roles. There's no way to tell if the peer 
+             * uses certificates without asking, so just try to assert roles.  If 
+             * it fails, that's OK, roles will get asserted "automatically" when PSK
+             * credentials are used.
+             */
+            OIC_LOG_V(DEBUG, TAG, "%s: going to try to assert roles before doing request to %s ", 
+                      __func__, requestInfo.info.resourceUri);
+            OCDevAddr da;
+            CopyEndpointToDevAddr(&endpoint, &da);
+            OCStackResult assertResult = OCAssertRoles((void*)ASSERT_ROLES_CTX, &da, &assertRolesCB);
+            if (assertResult == OC_STACK_OK)
+            {
+                OIC_LOG_V(DEBUG, TAG, "%s: Call to OCAssertRoles succeeded", __func__);
+            }
+            else if (assertResult == OC_STACK_INCONSISTENT_DB)
+            {
+                OIC_LOG_V(DEBUG, TAG, "%s: No role certificates to assert", __func__);
+            }
+            else
+            {
+                OIC_LOG_V(DEBUG, TAG, "%s: Call to OCAssertRoles failed", __func__);
+            }
+            
+            /* 
+             * We don't block waiting for OCAssertRoles to complete.  Because the roles assertion
+             * request is queued before the actual request, it will happen first.  If it fails, we
+             * log the error, but don't retry; the actually request made to OCDorequest may or may
+             * not fail (with permission denied), the caller can decide whether to retry. 
+             */
+        }
+
+    }
+#endif // __WITH_DTLS__ || __WITH_TLS__
+
 
     // send request
     result = OCSendRequest(&endpoint, &requestInfo);
@@ -5915,7 +5995,9 @@ OCStackResult OCGetDeviceOwnedState(bool *isOwned)
     return ret;
 }
 
+#ifdef IP_ADAPTER
 OCStackResult OCGetLinkLocalZoneId(uint32_t ifindex, char **zoneId)
 {
     return CAResultToOCResult(CAGetLinkLocalZoneId(ifindex, zoneId));
 }
+#endif

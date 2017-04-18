@@ -19,6 +19,25 @@ Source0: http://mirrors.kernel.org/%{name}/%{version}/%{name}-%{version}.tar.gz
 %en_speedpython
 %endif
 
+%ifarch armv7l armv7hl armv7nhl armv7tnhl armv7thl
+%if 3 <= 0%{?tizen_version_major}
+BuildRequires: python-accel-armv7l-cross-arm
+%endif
+%define TARGET_ARCH "armeabi-v7a"
+%endif
+%ifarch aarch64
+%if 3 <= 0%{?tizen_version_major}
+BuildRequires: python-accel-aarch64-cross-aarch64
+%endif
+%define TARGET_ARCH "arm64"
+%endif
+%ifarch x86_64
+%define TARGET_ARCH "x86_64"
+%endif
+%ifarch %{ix86}
+%define TARGET_ARCH "x86"
+%endif
+
 # Default values to be eventually overiden BEFORE or as gbs params:
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
 %{!?LOGGING: %define LOGGING 1}
@@ -26,6 +45,7 @@ Source0: http://mirrors.kernel.org/%{name}/%{version}/%{name}-%{version}.tar.gz
 %{!?ROUTING: %define ROUTING EP}
 %{!?SECURED: %define SECURED 0}
 %{!?TARGET_OS: %define TARGET_OS tizen}
+%{!?TARGET_ARCH: %define TARGET_ARCH %{_arch}}
 %{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
 %{!?VERBOSE: %define VERBOSE 1}
 
@@ -67,6 +87,7 @@ scons %{JOB} --prefix=%{_prefix} \
     ROUTING=%{ROUTING} \
     SECURED=%{SECURED} \
     TARGET_OS=%{TARGET_OS} \
+    TARGET_ARCH=%{TARGET_ARCH} \
     TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
     VERBOSE=%{VERBOSE} \
     #eol

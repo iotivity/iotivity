@@ -59,7 +59,7 @@ srmtest_env.PrependUnique(CPPPATH = [
 
 srmtest_env.PrependUnique(LIBS = ['ocsrm',
                                     'octbstack_test',
-                                    'oc_logger',
+                                    'oc_logger_internal',
                                     'connectivity_abstraction',
                                     'coap'])
 
@@ -78,10 +78,6 @@ else:
 	# TODO: Implement feature check.
 	srmtest_env.AppendUnique(CPPDEFINES = ['HAVE_LOCALTIME_R'])
 	srmtest_env.AppendUnique(LIBS = ['octbstack'])
-
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	srmtest_env.PrependUnique(LIBS = ['resource_directory', 'oc'])
-
 
 ######################################################################
 # Source files and Targets

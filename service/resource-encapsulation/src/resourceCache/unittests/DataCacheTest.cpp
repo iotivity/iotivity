@@ -57,7 +57,8 @@ class DataCacheTest : public TestWithMock
             std::call_once(flag, [this]()
             {
                 isLast = false;
-                pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >());
+                auto deleter = [](PrimitiveResource *) { };
+                pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), deleter);
             });
         }
         virtual ~DataCacheTest() noexcept(noexcept(std::declval<Test>().~Test()))

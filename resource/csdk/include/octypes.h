@@ -1418,7 +1418,9 @@ typedef enum
     /** The payload is an OCSecurityPayload */
     PAYLOAD_TYPE_SECURITY,
     /** The payload is an OCPresencePayload */
-    PAYLOAD_TYPE_PRESENCE
+    PAYLOAD_TYPE_PRESENCE,
+    /** The payload is an OCDiagnosticPayload */
+    PAYLOAD_TYPE_DIAGNOSTIC
 } OCPayloadType;
 
 /**
@@ -1577,6 +1579,12 @@ typedef struct
     char* resourceType;
 } OCPresencePayload;
 #endif
+
+typedef struct
+{
+    OCPayload base;
+    char* message;
+} OCDiagnosticPayload;
 
 /**
  * Incoming requests handled by the server. Requests are passed in as a parameter to the

@@ -50,6 +50,7 @@ import org.iotivity.base.OcResourceResponse;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
+import org.iotivity.ca.CaInterface;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -510,6 +511,9 @@ public class MessageFragment extends Fragment implements OcResource.OnGetListene
     // ******************************************************************************
 
     private void initOcPlatform(ModeType type) {
+        // BLE Advertisement is enabled by default.
+        CaInterface.setBTConfigure(2);
+
         PlatformConfig cfg = new PlatformConfig(mActivity, mContext,
                 ServiceType.IN_PROC,
                 type,

@@ -870,6 +870,11 @@ OCStackResult AddResourceTypeNameToPayload(OCRepPayload *payload)
     {
         size_t rtDim[MAX_REP_ARRAY_DEPTH] = {numElement, 0, 0};
         char **rt = (char **)OICMalloc(sizeof(char *) * numElement);
+        if (!rt)
+        {
+            OIC_LOG(ERROR, TAG, "Could not allocate memory for rf");
+            return OC_STACK_NO_MEMORY;
+        }
         for (uint8_t i = 0; i < numElement; ++i)
         {
             const char *value = OCGetResourceTypeName(g_keepAliveHandle, i);

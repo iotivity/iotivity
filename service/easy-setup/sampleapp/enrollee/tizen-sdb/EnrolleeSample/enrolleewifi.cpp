@@ -45,7 +45,11 @@ static pthread_t gThreadHandle = 0;
  * It contains Server's Identity and the PSK credentials
  * of other devices which the server trusts
  */
+#ifdef MULTIPLE_OWNER
+static char CRED_FILE[] = "oic_svr_db_server_MOT.dat";
+#else
 static char CRED_FILE[] = "oic_svr_db_server.dat";
+#endif
 
 OCPersistentStorage ps;
 
@@ -68,6 +72,25 @@ void PrintMenu()
     cout << "E: Show Menu......." << endl;
     cout << "Q: Terminate" << endl;
     cout << "========================" << endl;
+}
+
+void ConnectRequestCbInApp(ESConnectRequest *connectRequest)
+{
+    cout << "ConnectRequestCbInApp IN" << endl;
+
+    if(connectRequest == NULL)
+    {
+        cout << "connectRequest is NULL" << endl;
+        return ;
+    }
+
+    for(int i = 0 ; i < connectRequest->numRequest ; ++i)
+    {
+        cout << "connect : " << connectRequest->connect[i] << endl;
+    }
+
+    cout << "ConnectRequestCbInApp OUT" << endl;
+    PrintMenu();
 }
 
 void WiFiConfProvCbInApp(ESWiFiConfData *eventData)
@@ -114,8 +137,6 @@ void DevConfProvCbInApp(ESDevConfData *eventData)
         return ;
     }
 
-    cout << "Language : " << eventData->language << endl;
-    cout << "Country : " << eventData->country << endl;
     cout << "DevConfProvCbInApp OUT" << endl;
     PrintMenu();
 }
@@ -131,13 +152,17 @@ void CoapCloudConfProvCbInApp(ESCoapCloudConfData *eventData)
     }
 
     cout << "AuthCode : " << eventData->authCode << endl;
+    cout << "AcessToken : " <<  eventData->accessToken << endl;
+    cout << "AcessTokenType : "<< eventData->accessTokenType << endl;
     cout << "AuthProvider : " << eventData->authProvider << endl;
     cout << "CI Server : " << eventData->ciServer << endl;
+
     cout << "CoapCloudConfProvCbInApp OUT" << endl;
     PrintMenu();
 }
 
 ESProvisioningCallbacks gCallbacks = {
+    .ConnectRequestCb = &ConnectRequestCbInApp,
     .WiFiConfProvCb = &WiFiConfProvCbInApp,
     .DevConfProvCb = &DevConfProvCbInApp,
     .CoapCloudConfProvCb = &CoapCloudConfProvCbInApp
@@ -157,7 +182,7 @@ FILE* server_fopen(const char *path, const char *mode)
 
 void EnableSecurity()
 {
-    printf("Inside EnableSecurity API..\n");
+    cout << "Inside EnableSecurity API.." << endl;
 
     gIsSecured = true;
 
@@ -225,12 +250,13 @@ void SetDeviceInfo()
         {{WIFI_11G, WIFI_11N, WIFI_11AC, WiFi_EOF}, WIFI_5G}, {"Tizen Device"}
     };
 
+    // Set user properties if needed
+
+    // Set device properties
     if(ESSetDeviceProperty(&deviceProperty) == ES_ERROR)
     {
         cout << "ESSetDeviceProperty Error" << endl;
     }
-
-    // Set user properties if needed
 
     cout << "SetDeviceInfo OUT" << endl;
 }

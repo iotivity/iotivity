@@ -59,6 +59,9 @@ void OCPayloadDestroy(OCPayload* payload)
         case PAYLOAD_TYPE_PRESENCE:
             OCPresencePayloadDestroy((OCPresencePayload*)payload);
             break;
+        case PAYLOAD_TYPE_DIAGNOSTIC:
+            OCDiagnosticPayloadDestroy((OCDiagnosticPayload*)payload);
+            break;
         case PAYLOAD_TYPE_SECURITY:
             OCSecurityPayloadDestroy((OCSecurityPayload*)payload);
             break;
@@ -2134,6 +2137,34 @@ void OCPresencePayloadDestroy(OCPresencePayload* payload)
         return;
     }
     OICFree(payload->resourceType);
+    OICFree(payload);
+}
+
+OCDiagnosticPayload* OCDiagnosticPayloadCreate(const char* message)
+{
+    if (!message)
+    {
+        return NULL;
+    }
+
+    OCDiagnosticPayload* payload = (OCDiagnosticPayload*)OICCalloc(1, sizeof(OCDiagnosticPayload));
+    if (!payload)
+    {
+        return NULL;
+    }
+
+    payload->base.type = PAYLOAD_TYPE_DIAGNOSTIC;
+    payload->message = OICStrdup(message);
+    return payload;
+}
+
+void OCDiagnosticPayloadDestroy(OCDiagnosticPayload* payload)
+{
+    if (!payload)
+    {
+        return;
+    }
+    OICFree(payload->message);
     OICFree(payload);
 }
 

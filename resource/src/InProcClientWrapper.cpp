@@ -1477,7 +1477,9 @@ namespace OC
             options[i].protocolID = OC_COAP_ID;
             options[i].optionID = it->getOptionID();
             options[i].optionLength = it->getOptionData().length() + 1;
-            strcpy((char*)options[i].optionData, (it->getOptionData().c_str()));
+            strncpy((char*)options[i].optionData, it->getOptionData().c_str(),
+                sizeof(options[i].optionLength) -1 );
+            options[i].optionData[sizeof(options[i].optionLength) - 1] = 0;
             i++;
         }
 
@@ -1617,6 +1619,7 @@ namespace OC
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCDoDirectPairing(static_cast<void*>(context), peer->getDev(),
                     pmSel, const_cast<char*>(pinNumber.c_str()), directPairingCallback);
+            delete context;
         }
         else
         {

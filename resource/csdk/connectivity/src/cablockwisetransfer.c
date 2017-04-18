@@ -1923,13 +1923,17 @@ uint8_t CACheckBlockErrorType(CABlockData_t *currData, coap_block_t *receivedBlo
             OIC_LOG(ERROR, TAG, "too large size");
 
             // set the block size to be smaller than COAP_MAX_PDU_SIZE
-            for (unsigned int size = CA_DEFAULT_BLOCK_SIZE; size >= 0; size--)
+            for (unsigned int size = CA_DEFAULT_BLOCK_SIZE; ; size--)
             {
                 if (COAP_MAX_PDU_SIZE >= (size_t)BLOCK_SIZE(size) + optionLen)
                 {
                     OIC_LOG_V(ERROR, TAG, "replace sze with %d", size);
                     currData->block2.szx = size;
                     currData->block1.szx = size;
+                    break;
+                }
+                if (0 == size)
+                {
                     break;
                 }
             }

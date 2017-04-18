@@ -48,15 +48,13 @@ if target_os not in ['msys_nt', 'windows']:
 else:
 	provisioning_sample_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk')])
 
-provisioning_sample_env.PrependUnique(LIBS = ['oc', 'oc_logger', 'octbstack', 'connectivity_abstraction', 'coap'])
+provisioning_sample_env.PrependUnique(LIBS = ['oc', 'octbstack', 'connectivity_abstraction', 'coap'])
 
 if target_os not in ['msys_nt', 'windows']:
-	# octbstack.dll is exporting ocpmapi and ocsrm APIs on Windows.
-	provisioning_sample_env.PrependUnique(LIBS = ['ocpmapi', 'ocsrm'])
+	provisioning_sample_env.PrependUnique(LIBS = ['oc_logger', 'ocpmapi', 'ocsrm'])
 
 if env.get('SECURED') == '1':
     provisioning_sample_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
-
 
 if env.get('MULTIPLE_OWNER') == '1':
 	provisioning_sample_env.AppendUnique(CPPDEFINES = ['MULTIPLE_OWNER'])

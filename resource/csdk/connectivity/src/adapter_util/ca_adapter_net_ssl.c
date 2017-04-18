@@ -2391,10 +2391,11 @@ static int pHash (const unsigned char *key, size_t keyLen,
      const unsigned char *random2, size_t random2Len,
      unsigned char *buf, size_t bufLen)
 {
-    unsigned char A[RANDOM_LEN] = {0};
-    unsigned char tmp[RANDOM_LEN] = {0};
+    unsigned char A[MBEDTLS_MD_MAX_SIZE] = {0};
+    unsigned char tmp[MBEDTLS_MD_MAX_SIZE] = {0};
     size_t dLen;   /* digest length */
     size_t len = 0;   /* result length */
+    const mbedtls_md_type_t hashAlg = MBEDTLS_MD_SHA256;
 
     VERIFY_TRUE_RET(bufLen <= INT_MAX, NET_SSL_TAG, "buffer too large", -1);
     VERIFY_NON_NULL_RET(key, NET_SSL_TAG, "key is NULL", -1);
@@ -2409,8 +2410,8 @@ static int pHash (const unsigned char *key, size_t keyLen,
     mbedtls_md_init(&hmacA);
     mbedtls_md_init(&hmacP);
 
-    CHECK_MBEDTLS_RET(mbedtls_md_setup, &hmacA, mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), 1);
-    CHECK_MBEDTLS_RET(mbedtls_md_setup, &hmacP, mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), 1);
+    CHECK_MBEDTLS_RET(mbedtls_md_setup, &hmacA, mbedtls_md_info_from_type(hashAlg), 1);
+    CHECK_MBEDTLS_RET(mbedtls_md_setup, &hmacP, mbedtls_md_info_from_type(hashAlg), 1);
 
     CHECK_MBEDTLS_RET(mbedtls_md_hmac_starts, &hmacA, key, keyLen );
     CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacA, label, labelLen);
@@ -2418,7 +2419,7 @@ static int pHash (const unsigned char *key, size_t keyLen,
     CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacA, random2, random2Len);
     CHECK_MBEDTLS_RET(mbedtls_md_hmac_finish, &hmacA, A);
 
-    dLen = RANDOM_LEN;
+    dLen = mbedtls_md_get_size(mbedtls_md_info_from_type(hashAlg));
 
     CHECK_MBEDTLS_RET(mbedtls_md_hmac_starts, &hmacP, key, keyLen);
 
@@ -2430,10 +2431,9 @@ static int pHash (const unsigned char *key, size_t keyLen,
         CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, label, labelLen);
         CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, random1, random1Len);
         CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, random2, random2Len);
-
         CHECK_MBEDTLS_RET(mbedtls_md_hmac_finish, &hmacP, tmp);
 
-        len += RANDOM_LEN;
+        len += dLen;
 
         memcpy(buf, tmp, dLen);
         buf += dLen;
@@ -2444,16 +2444,18 @@ static int pHash (const unsigned char *key, size_t keyLen,
         CHECK_MBEDTLS_RET(mbedtls_md_hmac_finish, &hmacA, A);
     }
 
-    CHECK_MBEDTLS_RET(mbedtls_md_hmac_reset, &hmacP);
-    CHECK_MBEDTLS_RET(mbedtls_md_hmac_starts, &hmacP, key, keyLen);
-    CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, A, dLen);
+    if ((bufLen % dLen) != 0)
+    {
+        CHECK_MBEDTLS_RET(mbedtls_md_hmac_reset, &hmacP);
+        CHECK_MBEDTLS_RET(mbedtls_md_hmac_starts, &hmacP, key, keyLen);
+        CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, A, dLen);
+        CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, label, labelLen);
+        CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, random1, random1Len);
+        CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, random2, random2Len);
+        CHECK_MBEDTLS_RET(mbedtls_md_hmac_finish, &hmacP, tmp);
 
-    CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, label, labelLen);
-    CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, random1, random1Len);
-    CHECK_MBEDTLS_RET(mbedtls_md_hmac_update, &hmacP, random2, random2Len);
-    CHECK_MBEDTLS_RET(mbedtls_md_hmac_finish, &hmacP, tmp);
-
-    memcpy(buf, tmp, bufLen - len);
+        memcpy(buf, tmp, bufLen - len);
+    }
 
     mbedtls_md_free(&hmacA);
     mbedtls_md_free(&hmacP);

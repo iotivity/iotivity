@@ -216,7 +216,7 @@ NSResult NSProviderSubscribeMQService(const char * serverAddress, const char * t
         return NS_FAIL;
     }
 
-    topicAddr->serverAddr = NSGetQueryAddress(serverAddress);
+    topicAddr->serverAddr = OICStrdup(serverAddress);
     topicAddr->topicName = OICStrdup(topicName);
 
     NS_LOG_V(DEBUG, "input Topic Name : %s", topicAddr->topicName);
@@ -450,7 +450,7 @@ NSResult NSProviderSetConsumerTopic(const char * consumerId, const char * topicN
                 "Configuration must set to true.");
         if (topicSubData)
         {
-            OICFreeAndSetToNull(&topicSubData);
+            OICFreeAndSetToNull((void**)&topicSubData);
         }
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
@@ -489,7 +489,7 @@ NSResult NSProviderUnsetConsumerTopic(const char * consumerId, const char * topi
                 "Configuration must set to true.");
         if (topicSubData)
         {
-            OICFreeAndSetToNull(&topicSubData);
+            OICFreeAndSetToNull((void**)&topicSubData);
         }
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;

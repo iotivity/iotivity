@@ -183,7 +183,7 @@ OCStackResult OCCMDiscoveryResource(OCClientResponse *clientResponse)
     CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
     CopyDevAddrToEndpoint(&(clientResponse->devAddr), &endpoint);
 
-    CAResult_t ret = CAUtilCMUpdateRemoteDeviceInfo(endpoint, isCloud);
+    CAResult_t ret = CAUtilCMUpdateRemoteDeviceInfo(&endpoint, isCloud);
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "CAUtilCMUpdateRemoteDeviceInfo is failed.");
@@ -196,7 +196,7 @@ OCStackResult OCCMDiscoveryResource(OCClientResponse *clientResponse)
         endpoint.adapter = CA_ADAPTER_TCP;
         endpoint.port = resource->tcpPort;
 
-        ret = CAUtilCMUpdateRemoteDeviceInfo(endpoint, isCloud);
+        ret = CAUtilCMUpdateRemoteDeviceInfo(&endpoint, isCloud);
         if (CA_STATUS_OK != ret)
         {
             OIC_LOG(ERROR, TAG, "CAUtilCMUpdateRemoteDeviceInfo is failed!");

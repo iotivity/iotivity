@@ -246,19 +246,22 @@ char* OCCreateEndpointString(const OCEndpointPayload* endpoint)
         if (endpoint->family & OC_IP_USE_V4)
         {
             // ipv4
-            sprintf(buf, "%s://%s:%d", endpoint->tps, endpoint->addr, endpoint->port);
+            snprintf(buf, MAX_ADDR_STR_SIZE, "%s://%s:%d", endpoint->tps,
+                     endpoint->addr, endpoint->port);
         }
         else
         {
             // ipv6
-            sprintf(buf, "%s://[%s]:%d", endpoint->tps, endpoint->addr, endpoint->port);
+            snprintf(buf, MAX_ADDR_STR_SIZE, "%s://[%s]:%d", endpoint->tps,
+                     endpoint->addr, endpoint->port);
         }
     }
 #ifdef EDR_ADAPTER
     else if ((strcmp(endpoint->tps, COAP_RFCOMM_STR) == 0))
     {
         // coap+rfcomm
-        sprintf(buf, "%s://%s", endpoint->tps, endpoint->addr);
+        snprintf(buf, MAX_ADDR_STR_SIZE, "%s://%s",
+                 endpoint->tps, endpoint->addr);
     }
 #endif
     else
@@ -302,18 +305,20 @@ char* OCCreateEndpointStringFromCA(const CAEndpoint_t* endpoint)
         if (endpoint->flags & CA_IPV4)
         {
             // ipv4
-            sprintf(buf, "%s://%s:%d", ConvertTpsToString(tps), endpoint->addr, endpoint->port);
+            snprintf(buf, MAX_ADDR_STR_SIZE, "%s://%s:%d", ConvertTpsToString(tps),
+                     endpoint->addr, endpoint->port);
         }
         else
         {
             // ipv6
-            sprintf(buf, "%s://[%s]:%d", ConvertTpsToString(tps), endpoint->addr, endpoint->port);
+            snprintf(buf, MAX_ADDR_STR_SIZE, "%s://[%s]:%d", ConvertTpsToString(tps),
+                     endpoint->addr, endpoint->port);
         }
         break;
 #ifdef EDR_ADAPTER
     case OC_COAP_RFCOMM:
         // coap+rfcomm
-        sprintf(buf, "%s://%s", ConvertTpsToString(tps), endpoint->addr);
+        snprintf(buf, MAX_ADDR_STR_SIZE, "%s://%s", ConvertTpsToString(tps), endpoint->addr);
         break;
 #endif
     default:
@@ -416,7 +421,7 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
     {
         // copy addr
         tokPos = tokPos + 3;
-        ret = strcpy(addr, tokPos);
+        ret = OICStrcpy(addr, OC_MAX_ADDR_STR_SIZE, tokPos);
         VERIFY_NON_NULL(ret);
         out->tps = tps;
         out->addr = addr;

@@ -51,8 +51,6 @@ stacktest_env.PrependUnique(LIBS = ['octbstack_test',
                                     'connectivity_abstraction',
                                     'coap',
                                     'mbedcrypto'])
-if target_os != 'darwin':
-    stacktest_env.PrependUnique(LIBS = ['oc_logger'])
 
 if stacktest_env.get('SECURED') == '1':
     stacktest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509'])
@@ -65,9 +63,6 @@ if target_os in ['msys_nt', 'windows']:
     stacktest_env.AppendUnique(CCFLAGS=['/W4', '/WX'])
 else:
     stacktest_env.PrependUnique(LIBS = ['m'])
-
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-    stacktest_env.PrependUnique(LIBS = ['resource_directory'])
 
 ######################################################################
 # Source files and Targets

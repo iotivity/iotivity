@@ -1598,7 +1598,7 @@ static OicSecCred_t* GetCredDefault()
     return NULL;
 }
 
-static bool IsSameSecOpt(const OicSecOpt_t* sk1, const OicSecOpt_t* sk2)
+bool IsSameSecOpt(const OicSecOpt_t* sk1, const OicSecOpt_t* sk2)
 {
     VERIFY_NOT_NULL(TAG, sk1, WARNING);
     VERIFY_NOT_NULL(TAG, sk2, WARNING);
@@ -1611,7 +1611,7 @@ exit:
     return false;
 }
 
-static bool IsSameSecKey(const OicSecKey_t* sk1, const OicSecKey_t* sk2)
+bool IsSameSecKey(const OicSecKey_t* sk1, const OicSecKey_t* sk2)
 {
     VERIFY_NOT_NULL(TAG, sk1, WARNING);
     VERIFY_NOT_NULL(TAG, sk2, WARNING);
