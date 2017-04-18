@@ -53,7 +53,7 @@ if target_os in ['windows']:
     unittests_env.AppendUnique(CPPPATH = ['#extlibs/boost/boost'])
     unittests_env.AppendUnique(LIBS = ['sqlite3'])
 elif target_os in ['linux', 'tizen']:
-    unittests_env.ParseConfig('pkg-config --cflags --libs sqlite3')
+    unittests_env.ParseConfig('pkg-config --cflags --libs sqlite3 gobject-2.0 gio-2.0 glib-2.0')
 
 unittests_env.PrependUnique(LIBS = [
         'oc',
@@ -61,7 +61,7 @@ unittests_env.PrependUnique(LIBS = [
         'ocsrm',
         'routingmanager',
         'oc_logger_internal',
-        'connectivity_abstraction',
+        'connectivity_abstraction_internal',
         'coap',
         ])
 

@@ -50,11 +50,21 @@ catest_env.PrependUnique(CPPPATH = [
                 '#/resource/oc_logger/include',
                ])
 
-catest_env.PrependUnique(LIBS = ['octbstack_internal',
-                                 'ocsrm',
-                                 'routingmanager',
-                                 'connectivity_abstraction',
-                                 'coap'])
+catest_env.PrependUnique(LIBS = ['coap'])
+
+if target_os not in ['msys_nt', 'windows']:
+    # ssladapter_test.cpp #includes ca_adapter_net_ssl.c! That results in
+    # "multiple definition" linker errors, when trying to link with
+    # connectivity_abstraction_internal here.
+    catest_env.PrependUnique(LIBS = ['connectivity_abstraction'])
+else:
+    catest_env.PrependUnique(LIBS = ['connectivity_abstraction_internal'])
+
+catest_env.PrependUnique(LIBS = [
+                'octbstack_internal',
+                'ocsrm',
+                'routingmanager',
+                ])
 
 if target_os not in ['arduino', 'darwin', 'ios', 'msys_nt', 'windows']:
     catest_env.AppendUnique(LIBS=['rt'])

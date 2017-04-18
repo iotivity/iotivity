@@ -163,18 +163,19 @@ if connectivity_env.get('SECURED') == '1':
 # c_common calls into mbedcrypto.
 connectivity_env.AppendUnique(LIBS = ['mbedcrypto'])
 
+calib_internal = connectivity_env.StaticLibrary('connectivity_abstraction_internal', connectivity_env.get('CA_SRC'))
+calib = Flatten(calib_internal)
+
 if ca_os in ['android', 'tizen', 'linux', 'yocto']:
     connectivity_env.AppendUnique(LIBS = ['coap'])
     if ca_os != 'android':
         connectivity_env.AppendUnique(LIBS = ['rt'])
     static_calib = connectivity_env.StaticLibrary('connectivity_abstraction', connectivity_env.get('CA_SRC'))
     shared_calib = connectivity_env.SharedLibrary('connectivity_abstraction', connectivity_env.get('CA_SRC'))
-    calib = Flatten([static_calib, shared_calib])
-elif ca_os in ['msys_nt', 'windows']:
-    connectivity_env.AppendUnique(LIBS = ['coap', 'mswsock', 'ws2_32', 'iphlpapi', 'logger'])
-    calib = connectivity_env.StaticLibrary('connectivity_abstraction', connectivity_env.get('CA_SRC'))
-else:
-    calib = connectivity_env.StaticLibrary('connectivity_abstraction', connectivity_env.get('CA_SRC'))
+    calib += Flatten([static_calib, shared_calib])
+elif ca_os not in ['msys_nt', 'windows']:
+    static_calib = connectivity_env.StaticLibrary('connectivity_abstraction', connectivity_env.get('CA_SRC'))
+    calib += Flatten(static_calib)
 
 connectivity_env.InstallTarget(calib, 'connectivity_abstraction')
 connectivity_env.UserInstallTargetLib(calib, 'connectivity_abstraction')

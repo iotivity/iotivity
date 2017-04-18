@@ -48,7 +48,12 @@ if target_os not in ['msys_nt', 'windows']:
 else:
 	provisioning_sample_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk')])
 
-provisioning_sample_env.PrependUnique(LIBS = ['oc', 'octbstack', 'connectivity_abstraction', 'coap'])
+provisioning_sample_env.PrependUnique(LIBS = ['coap'])
+
+if target_os not in ['msys_nt', 'windows']:
+    provisioning_sample_env.PrependUnique(LIBS = ['connectivity_abstraction'])
+
+provisioning_sample_env.PrependUnique(LIBS = ['oc', 'octbstack'])
 
 if target_os not in ['msys_nt', 'windows']:
 	provisioning_sample_env.PrependUnique(LIBS = ['oc_logger', 'ocpmapi', 'ocsrm'])

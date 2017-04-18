@@ -61,10 +61,17 @@ else:
         ])
 
 ipca_lib_env.PrependUnique(LIBS = [
-        'oc',
-        'connectivity_abstraction',
         'coap',
         'octbstack'
+        ])
+
+if target_os not in ['windows', 'msys_nt']:
+    ipca_lib_env.PrependUnique(LIBS = [
+            'connectivity_abstraction'
+            ])
+
+ipca_lib_env.PrependUnique(LIBS = [
+        'oc'
         ])
 
 if ipca_env.get('SECURED') == '1':

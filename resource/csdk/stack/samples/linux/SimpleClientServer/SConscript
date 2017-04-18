@@ -54,8 +54,12 @@ if 'g++' in compiler:
 
 samples_env.AppendUnique(RPATH=[samples_env.get('BUILD_DIR')])
 
-samples_env.PrependUnique(
-    LIBS=['octbstack', 'ocsrm', 'connectivity_abstraction', 'coap'])
+samples_env.PrependUnique(LIBS=['coap'])
+
+if target_os not in ['msys_nt', 'windows']:
+    samples_env.PrependUnique(LIBS=['connectivity_abstraction'])
+
+samples_env.PrependUnique(LIBS=['octbstack', 'ocsrm'])
 
 if target_os in ['darwin']:
     samples_env.AppendUnique(LIBS=['routingmanager'])
