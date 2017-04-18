@@ -22,6 +22,10 @@
 # SceneManager Unit Test build script
 ##
 # SConscript file for Local PKI google tests
+
+from tools.scons.RunTest import run_test
+Import('env')
+
 gtest_env = SConscript('#extlibs/gtest/SConscript')
 lib_env = gtest_env.Clone()
 
@@ -86,25 +90,21 @@ scene_list_test_src = scene_test_env.Glob('./SceneListTest.cpp')
 scene_list_test = scene_test_env.Program('scene_list_test', scene_list_test_src)
 Alias("scene_list_test", scene_list_test)
 scene_test_env.AppendTarget('scene_list_test')
-scene_test_env.InstallTarget(scene_list_test, 'scene_list_test')
 
 scene_collection_test_src = scene_test_env.Glob('./SceneCollectionTest.cpp')
 scene_collection_test = scene_test_env.Program('scene_collection_test', scene_collection_test_src)
 Alias("scene_collection_test", scene_collection_test)
 scene_test_env.AppendTarget('scene_collection_test')
-scene_test_env.InstallTarget(scene_collection_test, 'scene_collection_test')
 
 scene_test_src = scene_test_env.Glob('./SceneTest.cpp')
 scene_test = scene_test_env.Program('scene_test', scene_test_src)
 Alias("scene_test", scene_test)
 scene_test_env.AppendTarget('scene_test')
-scene_test_env.InstallTarget(scene_test, 'scene_test')
 
 scene_action_test_src = scene_test_env.Glob('./SceneActionTest.cpp')
 scene_action_test = scene_test_env.Program('scene_action_test', scene_action_test_src)
 Alias("scene_action_test", scene_action_test)
 scene_test_env.AppendTarget('scene_action_test')
-scene_test_env.InstallTarget(scene_action_test, 'scene_action_test')
 
 remote_scene_list_test_src = scene_test_env.Glob('./RemoteSceneListTest.cpp')
 remote_scene_list_test = scene_test_env.Program('remote_scene_list_test', remote_scene_list_test_src)
@@ -126,10 +126,29 @@ remote_scene_action_test = scene_test_env.Program('remote_scene_action_test', re
 Alias("remote_scene_action_test", remote_scene_action_test)
 scene_test_env.AppendTarget('remote_scene_action_test')
 
-#target_os = scene_test_env.get('TARGET_OS')
-#if target_os == 'linux':
-#        from tools.scons.RunTest import *
-#        run_test(scene_test_env,
-#                 '',
-#                 'service/scene-manager/unittest/scene_test',
-#                 remote_scene_action_test)
+if env.get('TEST') == '1':
+    if env.get('SECURED') != '1':
+        run_test(scene_test_env,
+               '',
+            'service/scene-manager/unittests/scene_list_test')
+        run_test(scene_test_env,
+               '',
+            'service/scene-manager/unittests/scene_collection_test')
+        run_test(scene_test_env,
+               '',
+            'service/scene-manager/unittests/scene_test')
+        run_test(scene_test_env,
+               '',
+            'service/scene-manager/unittests/scene_action_test')
+        run_test(scene_test_env,
+               '',
+            'service/scene-manager/unittests/remote_scene_list_test')
+        run_test(scene_test_env,
+               '',
+            'service/scene-manager/unittests/remote_scene_col_test')
+        run_test(scene_test_env,
+               '',
+            'service/scene-manager/unittests/remote_scene_test')
+        run_test(scene_test_env,
+               '',
+            'service/scene-manager/unittests/remote_scene_action_test')
