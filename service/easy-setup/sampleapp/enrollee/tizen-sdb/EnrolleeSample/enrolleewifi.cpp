@@ -137,9 +137,6 @@ void DevConfProvCbInApp(ESDevConfData *eventData)
         return ;
     }
 
-    cout << "Language : " << eventData->language << endl;
-    cout << "Country : " << eventData->country << endl;
-
     cout << "DevConfProvCbInApp OUT" << endl;
     PrintMenu();
 }
