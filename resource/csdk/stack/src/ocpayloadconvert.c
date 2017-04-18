@@ -494,24 +494,24 @@ static int64_t OCConvertDiscoveryPayloadVndOcfCbor(OCDiscoveryPayload *payload,
     ]
     */
 
+    CborEncoder rootArray;
     CborEncoder rootMap;
     CborEncoder linkArray;
     bool isBaseline = payload->name || payload->type || payload->iface;
     if (isBaseline)
     {
+        // Open the root array
+        err |= cbor_encoder_create_array(&encoder, &rootArray, 1);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating discovery root array");
+
         // Open the root map
-        err |= cbor_encoder_create_map(&encoder, &rootMap, CborIndefiniteLength);
+        err |= cbor_encoder_create_map(&rootArray, &rootMap, CborIndefiniteLength);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating discovery map");
 
         // Insert Name
         err |= ConditionalAddTextStringToMap(&rootMap, OC_RSRVD_DEVICE_NAME,
                 sizeof(OC_RSRVD_DEVICE_NAME) - 1, payload->name);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting name");
-
-        // Insert Device ID into the root map
-        err |= AddTextStringToMap(&rootMap, OC_RSRVD_DEVICE_ID, sizeof(OC_RSRVD_DEVICE_ID) - 1,
-                payload->sid);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting device id");
 
         // Insert Resource Type
         err |= OCStringLLJoin(&rootMap, OC_RSRVD_RESOURCE_TYPE, payload->type);
@@ -657,12 +657,16 @@ static int64_t OCConvertDiscoveryPayloadVndOcfCbor(OCDiscoveryPayload *payload,
 
     if (isBaseline)
     {
-        // Close the final root array.
+        // Close the link array instead the root map.
         err |= cbor_encoder_close_container(&rootMap, &linkArray);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing root array");
 
         // Close root map inside the root array.
-        err |= cbor_encoder_close_container(&encoder, &rootMap);
+        err |= cbor_encoder_close_container(&rootArray, &rootMap);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing root map");
+
+        // Close the final root array.
+        err |= cbor_encoder_close_container(&encoder, &rootArray);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing root map");
     }
     else
