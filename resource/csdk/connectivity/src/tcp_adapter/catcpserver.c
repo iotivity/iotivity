@@ -1313,9 +1313,16 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, size_t *size)
         return CA_STATUS_FAILED;
     }
 
-    size_t len = u_arraylist_length(iflist);
+#ifdef __WITH_TLS__
+    const size_t endpointsPerInterface = 2;
+#else
+    const size_t endpointsPerInterface = 1;
+#endif
 
-    CAEndpoint_t *ep = (CAEndpoint_t *)OICCalloc(len, sizeof (CAEndpoint_t));
+    size_t interfaces = u_arraylist_length(iflist);
+    size_t totalEndpoints = interfaces * endpointsPerInterface;
+
+    CAEndpoint_t *ep = (CAEndpoint_t *)OICCalloc(totalEndpoints, sizeof (CAEndpoint_t));
     if (!ep)
     {
         OIC_LOG(ERROR, TAG, "Malloc Failed");
@@ -1323,7 +1330,7 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, size_t *size)
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    for (size_t i = 0, j = 0; i < len; i++)
+    for (size_t i = 0, j = 0; i < interfaces; i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
         if (!ifitem)
@@ -1349,11 +1356,30 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, size_t *size)
             continue;
         }
         OICStrcpy(ep[j].addr, sizeof(ep[j].addr), ifitem->addr);
+
+#ifdef __WITH_TLS__
+        j++;
+
+        ep[j].adapter = CA_ADAPTER_TCP;
+        ep[j].ifindex = ifitem->index;
+
+        if (ifitem->family == AF_INET6)
+        {
+            ep[j].flags = CA_IPV6 | CA_SECURE;
+            ep[j].port = caglobals.tcp.ipv6s.port;
+        }
+        else
+        {
+            ep[j].flags = CA_IPV4 | CA_SECURE;
+            ep[j].port = caglobals.tcp.ipv4s.port;
+        }
+        OICStrcpy(ep[j].addr, sizeof(ep[j].addr), ifitem->addr);
+#endif
         j++;
     }
 
     *info = ep;
-    *size = len;
+    *size = totalEndpoints;
 
     u_arraylist_destroy(iflist);
 
