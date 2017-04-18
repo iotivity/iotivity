@@ -239,7 +239,7 @@ def __emitter( target, source, env ) :
     # the targets. On physical files we can do this with the LISTCMD, but on
     # non-physical files we hope the user knows the target files, so we inject
     # this knowledge into the return target.
-    if env.has_key("UNPACKLIST") :
+    if "UNPACKLIST" in env:
         if not SCons.Util.is_List(env["UNPACKLIST"]) and not SCons.Util.is_String(env["UNPACKLIST"]) :
             raise SCons.Errors.StopError( "manual target list of [%s] must be a string or list" % (source[0]) )
         if not env["UNPACKLIST"] :

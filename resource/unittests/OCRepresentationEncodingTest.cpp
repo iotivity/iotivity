@@ -87,8 +87,8 @@ namespace OCRepresentationEncodingTest
         uint8_t* cborData;
         size_t cborSize;
         OCPayload* parsedDevice;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)device, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedDevice, PAYLOAD_TYPE_REPRESENTATION, cborData, cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)device, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedDevice, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION, cborData, cborSize));
         OICFree(cborData);
 
         OCRepPayload *parsedRep = (OCRepPayload *)parsedDevice;
@@ -146,8 +146,8 @@ namespace OCRepresentationEncodingTest
         dt1[0] = OICStrdup("ocf.res.1.1.0");
         dt1[1] = OICStrdup("ocf.sh.1.1.0");
         OCRepPayloadSetStringArray(device, OC_RSRVD_DATA_MODEL_VERSION, (const char**)dt1, dim1);
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)device, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedDevice, PAYLOAD_TYPE_REPRESENTATION, cborData, cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)device, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedDevice, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION, cborData, cborSize));
         OICFree(cborData);
         OICFree(dt1[0]);
         OICFree(dt1[1]);
@@ -209,8 +209,8 @@ namespace OCRepresentationEncodingTest
         uint8_t* cborData;
         size_t cborSize;
         OCPayload* parsedPlatform = NULL;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)platform, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedPlatform, PAYLOAD_TYPE_REPRESENTATION, cborData, cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)platform, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedPlatform, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION, cborData, cborSize));
         OICFree(cborData);
 
         OCRepPayload *platform1 = (OCRepPayload *)parsedPlatform;
@@ -300,8 +300,8 @@ namespace OCRepresentationEncodingTest
         uint8_t* cborData;
         size_t cborSize;
         OCPayload* cparsed;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)presence, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_PRESENCE,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)presence, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_PRESENCE,
                     cborData, cborSize));
         OCPayloadDestroy((OCPayload*)presence);
         OICFree(cborData);
@@ -339,8 +339,8 @@ namespace OCRepresentationEncodingTest
         uint8_t* cborData;
         size_t cborSize;
         OCPayload* cparsed;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
         OCPayloadDestroy((OCPayload*)cstart);
         OICFree(cborData);
@@ -387,8 +387,8 @@ namespace OCRepresentationEncodingTest
         uint8_t *cborData = NULL;
         size_t cborSize = 0;
         OCPayload *cparsed = NULL;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
         OCPayloadDestroy((OCPayload*)cstart);
         OICFree(cborData);
@@ -437,9 +437,9 @@ namespace OCRepresentationEncodingTest
 
         uint8_t* cborData;
         size_t cborSize;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, OC_FORMAT_CBOR, &cborData, &cborSize));
         OCPayload* cparsed;
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
         OCPayloadDestroy((OCPayload*)cstart);
         OICFree(cborData);
@@ -512,8 +512,8 @@ namespace OCRepresentationEncodingTest
         uint8_t* cborData;
         size_t cborSize;
         OCPayload* cparsed;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)cstart, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)cstart, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                                               cborData, cborSize));
         OCPayloadDestroy((OCPayload *)cstart);
         OICFree(cborData);
@@ -608,8 +608,8 @@ namespace OCRepresentationEncodingTest
         uint8_t* cborData;
         size_t cborSize;
         OCPayload* cparsed;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)cstart, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)cstart, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                                               cborData, cborSize));
         OCPayloadDestroy((OCPayload *)cstart);
         OICFree(cborData);
@@ -706,9 +706,9 @@ namespace OCRepresentationEncodingTest
         uint8_t *cborData;
         size_t cborSize;
         OCPayload *cparsed;
-        OCStackResult result = OCConvertPayload((OCPayload *)cstart, &cborData, &cborSize);
+        OCStackResult result = OCConvertPayload((OCPayload *)cstart, OC_FORMAT_CBOR, &cborData, &cborSize);
         EXPECT_EQ(OC_STACK_OK, result);
-        result = OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        result = OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                                 cborData, cborSize);
         EXPECT_EQ(OC_STACK_OK, result);
 
@@ -869,8 +869,8 @@ namespace OCRepresentationEncodingTest
         uint8_t *cborData;
         size_t cborSize;
         OCPayload *cparsed;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)cstart, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)cstart, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                                               cborData, cborSize));
         OCPayloadDestroy((OCPayload *)cstart);
         OICFree(cborData);
@@ -1021,8 +1021,8 @@ namespace OCRepresentationEncodingTest
         uint8_t *cborData;
         size_t cborSize;
         OCPayload *cparsed;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)cstart, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)cstart, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                                               cborData, cborSize));
         OCPayloadDestroy((OCPayload *)cstart);
         OICFree(cborData);
@@ -1076,8 +1076,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_DISCOVERY,
                     cborData, cborSize));
 
         EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
@@ -1110,8 +1110,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_DISCOVERY,
                     cborData, cborSize));
 
         EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
@@ -1144,8 +1144,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_DISCOVERY,
                     cborData, cborSize));
 
         EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
@@ -1177,8 +1177,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_DISCOVERY,
                     cborData, cborSize));
 
         EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
@@ -1212,8 +1212,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_DISCOVERY,
                     cborData, cborSize));
 
         EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
@@ -1249,8 +1249,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_DISCOVERY,
                     cborData, cborSize));
 
         EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
@@ -1286,8 +1286,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_DISCOVERY,
                     cborData, cborSize));
 
         EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
@@ -1323,8 +1323,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_DISCOVERY,
                     cborData, cborSize));
 
         EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
@@ -1353,8 +1353,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
@@ -1378,8 +1378,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
@@ -1404,8 +1404,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
@@ -1430,8 +1430,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
@@ -1458,8 +1458,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
@@ -1488,8 +1488,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
@@ -1518,8 +1518,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
@@ -1548,8 +1548,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
@@ -1591,8 +1591,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize = 0;
         OCPayload *cparsed = NULL;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)repPayload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)repPayload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload *parsedPayload = (OCRepPayload *)cparsed;

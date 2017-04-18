@@ -36,7 +36,7 @@ host = platform.system().lower()
 if 'msys_nt' in host:
     host = 'msys_nt'
 
-if not host_target_map.has_key(host):
+if host not in host_target_map:
     print "\nError: Current system (%s) isn't supported\n" % host
     Exit(1)
 
@@ -130,6 +130,8 @@ help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK path', None, PathVariable
 help_vars.Add(PathVariable('ANDROID_HOME', 'Android SDK path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('ANDROID_GRADLE', 'Gradle binary file', None, PathVariable.PathIsFile))
 help_vars.Add(EnumVariable('WITH_UPSTREAM_LIBCOAP', 'Use latest stable version of LibCoAP downloaded from github', default_with_upstream_libcoap, allowed_values=('0','1')))
+help_vars.Add(BoolVariable('WITH_ENV', 'Use compiler options from environment', False))
+help_vars.Add(BoolVariable('AUTOMATIC_UPDATE', 'Makes libcoap update automatically to the required versions if needed.', False))
 
 if target_os == 'windows':
 	# For VS2013, MSVC_VERSION is '12.0'. For VS2015, MSVC_VERSION is '14.0'.
@@ -171,6 +173,30 @@ else:
             LIB_INSTALL_DIR = ARGUMENTS.get('LIB_INSTALL_DIR') #for 64bit build
             )
 Help(help_vars.GenerateHelpText(env))
+
+if env.get('WITH_ENV'):
+    env['ENV'] = os.environ
+    if 'CC' in os.environ:
+        env['CC'] = Split(os.environ['CC'])
+        print "using CC from environment: %s" % env['CC']
+    if 'CXX' in os.environ:
+        env['CXX'] = Split(os.environ['CXX'])
+        print "using CXX from environment: %s" % env['CXX']
+    if 'CFLAGS' in os.environ:
+        env['CFLAGS'] = Split(os.environ['CFLAGS'])
+        print "using CFLAGS from environment: %s" % env['CFLAGS']
+    if 'CXXFLAGS' in os.environ:
+        env['CXXFLAGS'] = Split(os.environ['CXXFLAGS'])
+        print "using CXXFLAGS from environment: %s" % env['CXXFLAGS']
+    if 'CCFLAGS' in os.environ:
+        env['CCFLAGS'] = Split(os.environ['CCFLAGS'])
+        print "using CCFLAGS from environment: %s" % env['CCFLAGS']
+    if 'CPPFLAGS' in os.environ:
+        env['CPPFLAGS'] = Split(os.environ['CPPFLAGS'])
+        print "using CPPFLAGS from environment: %s" % env['CPPFLAGS']
+    if 'LDFLAGS' in os.environ:
+        env['LINKFLAGS'] = Split(os.environ['LDFLAGS'])
+        print "using LDFLAGS/LINKFLAGS from environment: %s" % env['LINKFLAGS']
 
 tc_set_msg = '''
 ************************************ Warning **********************************
@@ -501,6 +527,9 @@ if 'SERVER' in rd_mode:
 
 if with_ra_ibb:
     env.AppendUnique(CPPDEFINES = ['RA_ADAPTER_IBB'])
+
+env.SConscript('external_builders.scons')
+
 ######################################################################
 # Link scons to Yocto cross-toolchain ONLY when target_os is yocto
 ######################################################################
@@ -597,5 +626,9 @@ conf.CheckPThreadsSupport()
 env = conf.Finish()
 ######################################################################
 
+# must call external_builders.scons second time to properly setup
+# UnpackAll builder this is due to the system path not being pulled
+# in for windows till after the windows target has run.
+env.SConscript('external_builders.scons')
 env.SConscript('external_libs.scons')
 Return('env')

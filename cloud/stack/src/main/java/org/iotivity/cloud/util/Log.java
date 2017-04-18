@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
@@ -34,22 +35,41 @@ import io.netty.channel.Channel;
 
 public class Log {
 
-    public static final int VERBOSE  = 0;
-    public static final int DEBUG    = 1;
-    public static final int INFO     = 2;
-    public static final int WARNING  = 3;
-    public static final int ERROR    = 4;
+    public static final int         VERBOSE        = 0;
+    public static final int         DEBUG          = 1;
+    public static final int         INFO           = 2;
+    public static final int         WARNING        = 3;
+    public static final int         ERROR          = 4;
 
-    private static int      logLevel = VERBOSE;
+    private static int              logLevel       = VERBOSE;
 
-    private static FileOutputStream fos = null;
-    private static PrintStream      ps  = null;
+    private static FileOutputStream fos            = null;
+    private static PrintStream      ps             = null;
 
-    private final static Logger logger = Logger.getLogger(Log.class);
+    private final static Logger     logger         = Logger
+            .getLogger(Log.class);
+    private static WebsocketLog     websocketpoint = null;
+    private static String           mServerName    = null;
 
     public static void Init() throws FileNotFoundException {
         System.setOut(Log.createLoggingProxy(System.out));
         createfile();
+    }
+
+    public static void InitWebLog(String weblogHostname, String port,
+            String serverName) {
+        mServerName = serverName;
+
+        if (weblogHostname != null) {
+            try {
+                String LogServerAddr = "ws://" + weblogHostname + ":" + port;
+                websocketpoint = new WebsocketLog(new URI(LogServerAddr));
+                websocketpoint.start();
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                websocketpoint = null;
+            }
+        }
     }
 
     public static PrintStream createLoggingProxy(
@@ -63,7 +83,7 @@ public class Log {
         };
     }
 
-    public static void createfile() throws FileNotFoundException{
+    public static void createfile() throws FileNotFoundException {
         File dir = new File("..//errLog//");
         if (!dir.isDirectory()) {
             dir.mkdirs();
@@ -80,7 +100,6 @@ public class Log {
         t.printStackTrace(ps);
         Log.v(log);
     }
-
 
     public static void setLogLevel(int level) {
         logLevel = level;
@@ -142,6 +161,10 @@ public class Log {
         format += " " + log;
 
         System.out.println(format);
+
+        if (websocketpoint != null && websocketpoint.getUserSession() != null) {
+            websocketpoint.sendMessage("[" + mServerName + "]" + format);
+        }
     }
 
     private static String getDetailInfo() {

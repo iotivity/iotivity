@@ -844,23 +844,25 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
     return ehRet;
 }
 
-static void updateWriteableProperty(const OicSecDoxm_t* src, OicSecDoxm_t* dst)
+OCStackResult DoxmUpdateWriteableProperty(const OicSecDoxm_t* src, OicSecDoxm_t* dst)
 {
+    OCStackResult result = OC_STACK_OK;
+
     if(src && dst)
-   {
-        // update oxmsel
+    {
+        // Update oxmsel
         dst->oxmSel = src->oxmSel;
 
-        //update owner
+        // Update owner
         memcpy(&(dst->owner), &(src->owner), sizeof(OicUuid_t));
 
-        //update rowner
+        // Update rowner
         memcpy(&(dst->rownerID), &(src->rownerID), sizeof(OicUuid_t));
 
-        //update deviceuuid
+        // Update deviceuuid
         memcpy(&(dst->deviceID), &(src->deviceID), sizeof(OicUuid_t));
 
-        //Update owned status
+        // Update owned status
         if(dst->owned != src->owned)
         {
             dst->owned = src->owned;
@@ -869,18 +871,25 @@ static void updateWriteableProperty(const OicSecDoxm_t* src, OicSecDoxm_t* dst)
 #ifdef MULTIPLE_OWNER
         if(src->mom)
         {
-            OIC_LOG(DEBUG, TAG, "dectected 'mom' property");
+            OIC_LOG(DEBUG, TAG, "Detected 'mom' property");
             if(NULL == dst->mom)
             {
                 dst->mom = (OicSecMom_t*)OICCalloc(1, sizeof(OicSecMom_t));
-                if(NULL != dst->mom)
+                if (NULL == dst->mom)
                 {
-                    dst->mom->mode = src->mom->mode;
+                    result = OC_STACK_NO_MEMORY;
                 }
+            }
+
+            if (NULL != dst->mom)
+            {
+                dst->mom->mode = src->mom->mode;
             }
         }
 #endif //MULTIPLE_OWNER
     }
+
+    return result;
 }
 
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
@@ -897,11 +906,12 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
 
     if(CA_STATUS_OK == errorInfo->result)
     {
-        const CASecureEndpoint_t* authenticatedSubOwnerInfo = CAGetSecureEndpointData(object);
-        if(authenticatedSubOwnerInfo)
+        CASecureEndpoint_t authenticationSubOwnerInfo;
+        CAResult_t caRes = CAGetSecureEndpointData(object, &authenticationSubOwnerInfo);
+        if (CA_STATUS_OK == caRes)
         {
-            if (0 == memcmp(authenticatedSubOwnerInfo->identity.id, gDoxm->owner.id,
-                            authenticatedSubOwnerInfo->identity.id_length))
+            if (0 == memcmp(authenticationSubOwnerInfo.identity.id, gDoxm->owner.id,
+                            authenticationSubOwnerInfo.identity.id_length))
             {
                 OIC_LOG(WARNING, TAG, "Super owner tried MOT, this request will be ignored.");
                 return;
@@ -911,8 +921,8 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
             LL_FOREACH(gDoxm->subOwners, subOwnerInst)
             {
                 if(0 == memcmp(subOwnerInst->uuid.id,
-                               authenticatedSubOwnerInfo->identity.id,
-                               authenticatedSubOwnerInfo->identity.id_length))
+                               authenticationSubOwnerInfo.identity.id,
+                               authenticationSubOwnerInfo.identity.id_length))
                 {
                     break;
                 }
@@ -924,8 +934,8 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
                 if(subOwnerInst)
                 {
                     char* strUuid = NULL;
-                    memcpy(subOwnerInst->uuid.id, authenticatedSubOwnerInfo->identity.id,
-                           authenticatedSubOwnerInfo->identity.id_length);
+                    memcpy(subOwnerInst->uuid.id, authenticationSubOwnerInfo.identity.id,
+                           authenticationSubOwnerInfo.identity.id_length);
                     if(OC_STACK_OK != ConvertUuidToStr(&subOwnerInst->uuid, &strUuid))
                     {
                         OIC_LOG(ERROR, TAG, "Failed to allocate memory.");
@@ -940,6 +950,10 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
                     }
                 }
             }
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, TAG, "Could not CAGetSecureEndpointData: %d", caRes);
         }
     }
 
@@ -1066,8 +1080,15 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                     ehRet = OC_EH_NOT_ACCEPTABLE;
                     goto exit;
                 }
-                //Update gDoxm based on newDoxm
-                updateWriteableProperty(newDoxm, gDoxm);
+
+                // Update gDoxm based on newDoxm
+                res = DoxmUpdateWriteableProperty(newDoxm, gDoxm);
+                if (OC_STACK_OK != res)
+                {
+                    OIC_LOG(ERROR, TAG, "gDoxm properties were not able to be updated so we cannot handle the request.");
+                    ehRet = OC_EH_ERROR;
+                    goto exit;
+                }
 
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 #ifdef MULTIPLE_OWNER

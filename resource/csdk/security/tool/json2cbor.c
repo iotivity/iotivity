@@ -128,7 +128,7 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
     {
         OicSecAcl_t *acl = JSONToAclBin(jsonStr);
         VERIFY_NOT_NULL(TAG, acl, FATAL);
-        ret = AclToCBORPayload(acl, &aclCbor, &aclCborSize);
+        ret = AclToCBORPayload(acl, OIC_SEC_ACL_V2, &aclCbor, &aclCborSize);
         if(OC_STACK_OK != ret)
         {
             OIC_LOG (ERROR, TAG, "Failed converting Acl to Cbor Payload");
@@ -364,6 +364,7 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                 ret = ConvertStrToUuid(jsonObj->valuestring, &ace->subjectuuid);
                 VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
             }
+            ace->subjectType = OicSecAceUuidSubject;
             // Resources -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_RESOURCES_NAME);
             VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
@@ -739,10 +740,14 @@ OicSecPstat_t* JSONToPstatBin(const char * jsonStr)
         return NULL;
     }
 
+    OIC_LOG(INFO, TAG, "Using pstat with mandatory .dos object.");
+
     OCStackResult ret = OC_STACK_ERROR;
     OicSecPstat_t *pstat = NULL;
-    cJSON *jsonPstat = NULL;
     cJSON *jsonObj = NULL;
+    cJSON *jsonPstat = NULL;
+    cJSON *jsonDos = NULL;
+    cJSON *jsonDosObj = NULL;
 
     cJSON *jsonRoot = cJSON_Parse(jsonStr);
     VERIFY_NOT_NULL(TAG, jsonRoot, INFO);
@@ -752,6 +757,35 @@ OicSecPstat_t* JSONToPstatBin(const char * jsonStr)
 
     pstat = (OicSecPstat_t*)OICCalloc(1, sizeof(OicSecPstat_t));
     VERIFY_NOT_NULL(TAG, pstat, INFO);
+
+    jsonDos = cJSON_GetObjectItem(jsonPstat, OIC_JSON_DOS_NAME);
+    if (jsonDos) // do not abort if no .dos found, but print warning
+    {
+        OIC_LOG(INFO, TAG, "pstat.dos object found in jsonPstat");
+
+        jsonDosObj = cJSON_GetObjectItem(jsonDos, OIC_JSON_S_NAME);
+        VERIFY_NOT_NULL(TAG, jsonDosObj, ERROR);
+        OIC_LOG(INFO, TAG, "pstat.dos.s object found in jsonDos");
+        pstat->dos.state = jsonDosObj->valueint;
+        OIC_LOG_V(INFO, TAG, "pstat.dos.s = %d", pstat->dos.state);
+
+        jsonDosObj = cJSON_GetObjectItem(jsonDos, OIC_JSON_P_NAME);
+        VERIFY_NOT_NULL(TAG, jsonDosObj, ERROR);
+        OIC_LOG(INFO, TAG, "pstat.dos.p object found in jsonDos");
+        VERIFY_SUCCESS(TAG, (cJSON_True == jsonDosObj->type || cJSON_False == jsonDosObj->type) , ERROR);
+        pstat->dos.pending = (bool)jsonDosObj->valueint;
+        OIC_LOG_V(INFO, TAG, "pstat.dos.p = %s", pstat->dos.pending?"true":"false");
+    }
+    else
+    {
+        pstat->dos.state = DOS_RFOTM;
+        pstat->dos.pending = false;
+        printf("\n***** Pstat.dos Property not found in JSON file. *****\
+            \n***** Pstat.dos Property is MANDATORY as of OCF 1.0 *****\
+            \n***** Using default .dos vals: s = %d, p = %s *****\n\n", pstat->dos.state, \
+            pstat->dos.pending?"true":"false");
+    }
+
     jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_ISOP_NAME);
     VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
     VERIFY_SUCCESS(TAG, (cJSON_True == jsonObj->type || cJSON_False == jsonObj->type) , ERROR);

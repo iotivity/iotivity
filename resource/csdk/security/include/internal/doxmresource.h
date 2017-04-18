@@ -191,6 +191,17 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
  */
 OCStackResult SetDoxmSelfOwnership(const OicUuid_t* newROwner);
 
+/**
+ * Internal function to update the writable properties of an /oic/sec/doxm
+ * struct with the values from another /oic/sec/doxm struct.
+ *
+ * @param src is a pointer to the source @ref OicSecDoxm_t data.
+ * @param dst is a pointer to the destination @ref OicSecDoxm_t data. 
+ *
+ * @retval ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult DoxmUpdateWriteableProperty(const OicSecDoxm_t* src, OicSecDoxm_t* dst);
+
 #ifdef __cplusplus
 }
 #endif

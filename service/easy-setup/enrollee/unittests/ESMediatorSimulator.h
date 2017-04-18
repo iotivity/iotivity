@@ -420,7 +420,6 @@ private:
             {
                 DeviceProp devProp;
                 devProp.setWiFiProp("Iotivity_SSID", "Iotivity_PWD", WPA2_PSK, TKIP_AES);
-                devProp.setDevConfProp("korean", "Korea", "Location");
 
                 m_remoteEnrollee->provisionDeviceProperties(devProp,
                     std::bind(&ESMediatorSimulator::deviceProvisioningStatusCallback,

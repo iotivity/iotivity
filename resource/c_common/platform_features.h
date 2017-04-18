@@ -108,4 +108,9 @@
 #  define UINT16_MAX 65535
 #endif
 
+/**
+ * Mark a parameter as unused. Used to prevent unused variable compiler warnings.
+ */
+#define OC_UNUSED(x) (void)(x)
+
 #endif

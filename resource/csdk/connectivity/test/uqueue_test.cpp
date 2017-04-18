@@ -157,6 +157,7 @@ TEST_F(UQueueF, Get)
     {
         u_queue_message_t *value = u_queue_get_element(queue);
         ASSERT_TRUE(value != NULL);
+        OICFree(value);
     }
 }
 

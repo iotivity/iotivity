@@ -93,7 +93,8 @@ namespace OIC
                     {
                         address_ipv4 = std::string(netInfo[i].addr) + ":"
                                             + std::to_string(netInfo[i].port);
-                    } else if(netInfo[i].flags == CATransportFlags_t::CA_IPV6)
+                    }
+                    else if(netInfo[i].flags == CATransportFlags_t::CA_IPV6)
                     {
                         char addressEncoded[CA_MAX_URI_LENGTH] = {0};
 
@@ -111,12 +112,14 @@ namespace OIC
                     }
                 }
             }
-
-            if(address_ipv4.length() > 0 && address_ipv6.length() == 0)
+            // currently ipv6 case doesn't work due to create remote resource object api fail on v6.
+            // Even if both ipv4 & ipv6 are in the netinfo, ipv4 address will be returned as below.
+            // if create remote resource object api work well on IPv6 later, below should be fixed.
+            if (!address_ipv4.empty())
             {
                 OICFree(netInfo);
                 return address_ipv4;
-            } else if(address_ipv6.length() > 0)
+            } else if (!address_ipv6.empty())
             {
                 OICFree(netInfo);
                 return address_ipv6;

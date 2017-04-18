@@ -21,14 +21,20 @@
  */
 package org.iotivity.cloud.base.protocols;
 
+import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 
 public interface IResponse {
+
     public ResponseStatus getStatus();
+
+    public ContentFormat getContentFormat();
 
     public int getPayloadSize();
 
     public byte[] getPayload();
 
     public void setLocationPath(String locationPath);
+
+    public String getUriPath();
 }

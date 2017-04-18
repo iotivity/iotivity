@@ -60,7 +60,6 @@ sptest_env.PrependUnique(CPPPATH = [
 		'../../../connectivity/common/inc',
 		'../../../connectivity/api'
 		])
-sptest_env.AppendUnique(LIBPATH = [sptest_env.get('BUILD_DIR')])
 sptest_env.PrependUnique(LIBS = [   'ocpmapi',
                                     'oc',
                                     'octbstack_test',
@@ -82,11 +81,6 @@ if target_os in ['msys_nt', 'windows']:
     sptest_env.AppendUnique(LIBS = ['octbstack_static', 'sqlite3'])
 else:
 	sptest_env.AppendUnique(LIBS = ['octbstack'])
-
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	sptest_env.PrependUnique(LIBS = ['resource_directory'])
-
-sptest_env.AppendUnique(LIBS = ['timer'])
 
 ######################################################################
 # Source files and Targets

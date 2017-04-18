@@ -75,7 +75,7 @@ CAResult_t CACMGetMessageData(CAData_t *data)
     return CAMsgArbiterGetMessageData(data);
 }
 
-CAResult_t CACMUpdateRemoteDeviceInfo(const CAEndpoint_t endpoint, bool isCloud)
+CAResult_t CACMUpdateRemoteDeviceInfo(const CAEndpoint_t *endpoint, bool isCloud)
 {
     return CAMsgArbiterUpdateDeviceInfo(endpoint, isCloud);
 }

@@ -33,10 +33,9 @@ arduino_simplecs_env.PrependUnique(CPPPATH = [
 		'../../../../../../oc_logger/include'
 		])
 
-arduino_simplecs_env.AppendUnique(LIBPATH = [arduino_simplecs_env.get('BUILD_DIR')])
 arduino_simplecs_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-arduino_simplecs_env.PrependUnique(LIBS = ['octbstack', 'ocsrm', 'connectivity_abstraction','coap', 'timer'])
+arduino_simplecs_env.PrependUnique(LIBS = ['octbstack', 'ocsrm', 'connectivity_abstraction','coap'])
 
 arduino_simplecs = arduino_simplecs_env.Program('SimpleClientServer', 'ocserver.cpp')
 arduino_simplecs_env.CreateBin('SimpleClientServer')

@@ -44,7 +44,6 @@ examples_env.AppendUnique(CPPPATH = [
         '#/resource/oc_logger/include'
         ])
 
-examples_env.AppendUnique(LIBPATH = [examples_env.get('BUILD_DIR')])
 examples_env.AppendUnique(RPATH = [examples_env.get('BUILD_DIR')])
 examples_env.PrependUnique(LIBS = ['coap'])
 examples_env.AppendUnique(LIBS = ['connectivity_abstraction'])

@@ -7,7 +7,6 @@ import subprocess
 
 Import('env')
 
-SConscript('../external_libs.scons')
 help_vars = Variables()
 if not env.get('ANDROID_NDK'):
     SConscript('../../extlibs/android/ndk/SConscript')
@@ -220,10 +219,14 @@ env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 env.AppendUnique(LIBPATH = [src_dir + '/resource/csdk/connectivity/lib/android'])
 env.AppendUnique(LIBS = ['log', 'coap'])
 
-if env.get('SECURED') == '1':
-	env.SConscript('#extlibs/mbedtls/SConscript')
-	env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
+# Build mbedtls as ocstack uses hash functions from mbedcrypto.lib.
+env.SConscript('#extlibs/mbedtls/SConscript')
 
+if env.get('SECURED') == '1':
+	env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
+else:
+	env.AppendUnique(LIBS = ['mbedcrypto'])
+    
 # From android-5 (API > 20), all application must be built with flags '-fPIE' '-pie'.
 # Due to the limitation of Scons, it's required to added it into the command line
 # directly (otherwise, it will also be added when build share library)

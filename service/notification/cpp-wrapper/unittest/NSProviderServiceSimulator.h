@@ -81,7 +81,7 @@ class NSProviderSimulator
         NSProviderSimulator()
             : m_notificationHandle(), m_messageHandle(), m_syncHandle(), m_topicHandle(),
               m_syncRep(), m_messageRep(), m_accepter(0),
-              m_notificationUri(std::string("/notificationTest")),
+              m_notificationUri(std::string("/notification")),
               m_messageUri(std::string("/message")),
               m_syncUri(std::string("/sync")),
               m_topicUri(std::string("/topic")),

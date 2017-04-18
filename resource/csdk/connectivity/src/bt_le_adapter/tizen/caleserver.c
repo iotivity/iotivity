@@ -34,9 +34,9 @@
 #define TAG "OIC_CA_LE_SERVER"
 
 /**
- * Initial buffer size for Gatt Server.
+ * Initial buffer size(attr value max size) for Gatt Server.
  */
-#define CA_LE_INITIAL_BUF_SIZE 512
+#define CA_LE_INITIAL_BUF_SIZE (512)
 
 /**
  * The handle of the OIC server.

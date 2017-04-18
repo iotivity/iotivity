@@ -44,9 +44,14 @@ public class ResourceDirectoryServer {
 
         System.out.println("-----RD SERVER-----");
 
-        if (args.length != 2) {
+        if (!(args.length != 2 || args.length != 4)) {
             Log.e("coap server port and TLS mode required\n" + "ex) 5684 0\n");
             return;
+        }
+
+        if (args.length == 4) {
+            Log.InitWebLog(args[2], args[3],
+                    ResourceDirectoryServer.class.getSimpleName().toString());
         }
 
         ServerSystem serverSystem = new ServerSystem();

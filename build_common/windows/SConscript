@@ -21,11 +21,13 @@ if env['CC'] == 'cl':
     #      structs for non-legacy compilers.
     #  - warning C4214:  bit field types other than int
     #    - Disabled due to IoTivity not being ANSI compatible
+    #  - warning C4221: nonstandard extension used: 'identifier' cannot be initialized using address of automatic variable
+    #    - Disabled due to IoTivity not being ANSI compatible
     #  - warning C4232: nonstandard extension used: 'read': address of dllimport 'fread' is not static, identity not guaranteed
     #    - fread, frwrite, etc are provided by the platform and cannot be changed.
     #  - warning C4706: assignment within conditional expression
     #    - Disabled due to the widespread usage in IoTivity and low impact.
-    env.AppendUnique(CCFLAGS=['/wd4127', '/wd4200', '/wd4201', '/wd4204', '/wd4214', '/wd4232', '/wd4706'])
+    env.AppendUnique(CCFLAGS=['/wd4127', '/wd4200', '/wd4201', '/wd4204', '/wd4214', '/wd4221', '/wd4232', '/wd4706'])
 
     env.AppendUnique(CCFLAGS=['/EHsc'])
 
@@ -36,7 +38,17 @@ if env['CC'] == 'cl':
     else:
         env.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/RTC1'])
         env.AppendUnique(LINKFLAGS = ['/debug'])
+
     env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+
+    # Work around [IOT-1986]
+    # During some Windows multi-threaded builds, SCons/Python/Pywin32 appear to try
+    # linking with oc.lib while another SCons thread started executing InstallTarget()
+    # for this static LIB, but didn't finish yet. That behavior results in linker errors.
+    # Work around this issue by linking with the source of InstallTarget(), rather
+    # than the target.
+    env.PrependUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'src')])
+
     env.AppendUnique(PATH = os.environ['PATH'])
     env['PDB'] = '${TARGET.base}.pdb'
     env.Append(LINKFLAGS=['/PDB:${TARGET.base}.pdb'])

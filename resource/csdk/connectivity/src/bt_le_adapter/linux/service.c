@@ -25,7 +25,6 @@
 #include "logger.h"
 #include "oic_malloc.h"
 
-#include <inttypes.h>
 #include <stdio.h>
 #include <assert.h>
 

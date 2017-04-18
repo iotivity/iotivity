@@ -170,7 +170,7 @@ void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
             break;
         }
 
-        NSConsumerQueue * queue = *(NSGetMsgHandleQueue());;
+        NSConsumerQueue * queue = *(NSGetMsgHandleQueue());
         if (!queue)
         {
             usleep(2000);
@@ -192,6 +192,7 @@ void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
 
         NSThreadLock(queueHandleThread);
         NS_LOG(DEBUG, "msg handler working");
+        queue = *(NSGetMsgHandleQueue());
         obj = NSPopQueue(queue);
 
         if (obj)
@@ -271,6 +272,7 @@ void NSProviderDeletedPostClean(
 
 void NSConsumerTaskProcessing(NSTask * task)
 {
+    NS_VERIFY_NOT_NULL_V(task);
     switch (task->taskType)
     {
         case TASK_EVENT_CONNECTED:

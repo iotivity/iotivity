@@ -36,4 +36,4 @@ SConscript('../oic_malloc/test/SConscript', exports = { 'test_env' : common_test
 SConscript('../oic_time/test/SConscript', exports = { 'test_env' : common_test_env})
 SConscript('../ocrandom/test/SConscript', exports = { 'test_env' : common_test_env})
 if target_os == 'windows':
-    SConscript('../windows/test/SConscript', 'test_env')
+    SConscript('../windows/test/SConscript', exports = { 'test_env' : common_test_env})

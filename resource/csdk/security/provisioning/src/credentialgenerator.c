@@ -34,7 +34,9 @@
 
 OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySize,
         const OicUuid_t *ptDeviceId, const OicUuid_t *firstDeviceId,
-        const OicUuid_t *secondDeviceId, OicSecCred_t **firstCred, OicSecCred_t **secondCred)
+        const OicUuid_t *secondDeviceId, 
+        const OicSecRole_t *firstRole, const OicSecRole_t *secondRole,
+        OicSecCred_t **firstCred, OicSecCred_t **secondCred)
 {
     if (NULL == ptDeviceId || NULL == firstDeviceId || NULL == firstCred || NULL != *firstCred || \
         NULL == secondDeviceId || NULL == secondCred || NULL != *secondCred)
@@ -60,7 +62,7 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
     memset(&privKey, 0, sizeof(privKey));
     privKey.data = privData;
     privKey.len = keySize;
-    privKey.encoding = OIC_ENCODING_UNKNOW;
+    privKey.encoding = OIC_ENCODING_RAW;
 
     if (!OCGetRandomBytes(privData, privDataKeySize))
     {
@@ -76,6 +78,18 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
     // TODO: currently owner array is 1. only provisioning tool's id.
     tempSecondCred =  GenerateCredential(firstDeviceId, type, NULL, &privKey, ptDeviceId, NULL);
     VERIFY_NOT_NULL(TAG, tempSecondCred, ERROR);
+
+    // firstRole and secondRole are the roles granted to the client when authenticating with this credential;
+    // therefore, the role to be granted has to be stored on the corresponding server. This is why secondRole
+    // is assigned to tempFirstCred and vice versa.
+    if (NULL != secondRole)
+    {
+        tempFirstCred->roleId = *secondRole;
+    }
+    if (NULL != firstRole)
+    {
+        tempSecondCred->roleId = *firstRole;
+    }
 
     *firstCred = tempFirstCred;
     *secondCred = tempSecondCred;

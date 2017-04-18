@@ -8,7 +8,6 @@ Import('env')
 
 print "Reading linux configuration script"
 
-SConscript('../external_libs.scons')
 help_vars = Variables()
 if env.get('BUILD_JAVA') == True:
     if not env.get('ANDROID_GRADLE'):
@@ -51,16 +50,17 @@ env.AppendUnique(CCFLAGS = ['-Wall', '-Wextra', '-fPIC'])
 env.AppendUnique(LIBS = ['dl', 'pthread', 'uuid'])
 
 # Set arch flags that match best TARGET_ARCH variable
-target_arch = env.get('TARGET_ARCH')
-if target_arch in ['x86']:
-	env.AppendUnique(CCFLAGS = ['-m32'])
-	env.AppendUnique(LINKFLAGS = ['-m32'])
-elif target_arch in ['x86_64']:
-	env.AppendUnique(CCFLAGS = ['-m64'])
-	env.AppendUnique(LINKFLAGS = ['-m64'])
-elif target_arch in ['arm']:
-	env.AppendUnique(CPPFLAGS = ['-march=armv5te'])
-elif target_arch in ['arm-v7a', 'armeabi-v7a']:
-	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
-elif target_arch.find('arm64') > 0:
-	env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])
+if not env.get('WITH_ENV'):
+    target_arch = env.get('TARGET_ARCH')
+    if target_arch in ['x86']:
+        env.AppendUnique(CCFLAGS = ['-m32'])
+        env.AppendUnique(LINKFLAGS = ['-m32'])
+    elif target_arch in ['x86_64']:
+        env.AppendUnique(CCFLAGS = ['-m64'])
+        env.AppendUnique(LINKFLAGS = ['-m64'])
+    elif target_arch in ['arm']:
+        env.AppendUnique(CPPFLAGS = ['-march=armv5te'])
+    elif target_arch in ['arm-v7a', 'armeabi-v7a']:
+        env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
+    elif target_arch.find('arm64') > 0:
+        env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])

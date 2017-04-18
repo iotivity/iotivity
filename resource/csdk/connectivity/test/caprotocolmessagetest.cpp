@@ -27,6 +27,7 @@
 
 #include "gtest/gtest.h"
 
+#include "oic_malloc.h"
 #include "caprotocolmessage.h"
 
 namespace {
@@ -218,6 +219,8 @@ TEST(CAProtocolMessage, CAGetTokenFromPDU)
     outData.type = CA_MSG_NONCONFIRM;
 
     EXPECT_EQ(CA_STATUS_OK, CAGetTokenFromPDU(pdu->transport_hdr, &outData, &tempRep));
+
+    OICFree(outData.token);
     coap_delete_list(options);
     coap_delete_pdu(pdu);
 }
@@ -253,6 +256,8 @@ TEST(CAProtocolMessage, CAGetInfoFromPDU)
     memset(&outData, 0, sizeof(CAInfo_t));
 
     EXPECT_EQ(CA_STATUS_OK, CAGetInfoFromPDU(pdu, &tempRep, &code, &outData));
+
+    OICFree(outData.token);
     coap_delete_list(options);
     coap_delete_pdu(pdu);
 }

@@ -117,7 +117,7 @@ if target_os in ['android']:
     container_gtest_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
     container_gtest_env.PrependUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
 
-container_gtest_env.PrependUnique(CPPPATH = [src_dir + '/extlibs/hippomocks-master'])
+container_gtest_env.PrependUnique(CPPPATH = ['#/extlibs/hippomocks/hippomocks'])
 
 if int(containerJavaSupport):
     try:

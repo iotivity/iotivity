@@ -53,6 +53,7 @@
         "rowneruuid" : ""
     },
     "pstat": {
+        "dos": {"s": 1, "p": false},
         "isop": false,
         "deviceuuid": "",
         "rowneruuid": "",

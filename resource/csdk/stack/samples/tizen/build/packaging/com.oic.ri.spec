@@ -30,6 +30,7 @@ Source0: http://mirrors.kernel.org/%{name}/%{version}/%{name}-%{version}.tar.gz
 %{!?WITH_MQ: %define WITH_MQ OFF}
 %{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?WITH_TCP: %define WITH_TCP 0}
+%{!?TARGET_ARCH: %define TARGET_ARCH arm}
 
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(ttrace)
@@ -62,6 +63,7 @@ scons %{JOB} --prefix=%{_prefix} \
     WITH_MQ=%{WITH_MQ} \
     WITH_PROXY=%{WITH_PROXY} \
     WITH_TCP=%{WITH_TCP} \
+    TARGET_ARCH=%{TARGET_ARCH} \
     #eol
 
 %install

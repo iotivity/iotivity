@@ -67,7 +67,7 @@ resourceClient_env.AppendUnique(CPPPATH = [
     'src/resourceCache/include'
 ])
 
-resourceClient_env.PrependUnique(LIBS = ['resource_directory', 'oc', 'rcs_common', 'octbstack','oc_logger'])
+resourceClient_env.PrependUnique(LIBS = ['oc', 'rcs_common', 'octbstack','oc_logger'])
 
 if target_os not in ['windows']:
     resourceClient_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])

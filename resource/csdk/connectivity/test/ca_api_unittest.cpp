@@ -100,7 +100,6 @@ static const uint16_t PORT = 4545;
 static const char NORMAL_INFO_DATA[] =
                                     "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
                                      "\"if\":[\"oc.mi.def\"],\"obs\":1}}]}";
-
 #ifdef __WITH_DTLS__
 
 // Iotivity Device Identity.
@@ -164,6 +163,74 @@ int32_t CAGetDtlsPskCredentials( CADtlsPskCredType_t type,
     printf("CAGetDtlsPskCredentials OUT\n");
     return ret;
 }
+
+const char* our_cert = "-----BEGIN CERTIFICATE-----\n"
+"MIIBhTCCASugAwIBAgIJAPZ5mB94RwYHMAoGCCqGSM49BAMCMCUxIzAhBgNVBAoM\n"
+"GklvVGl2aXR5VGVzdFNlbGZTaWduZWROYW1lMB4XDTE2MTIxNjIxMjcyMVoXDTMw\n"
+"MDgyNTIxMjcyMVowITEfMB0GA1UECgwWSW9UaXZpdHlUZXN0Q2xpZW50TmFtZTBZ\n"
+"MBMGByqGSM49AgEGCCqGSM49AwEHA0IABF8OxpJNe01ZPEFpXUUhjUV5uwJM1TF3\n"
+"ZSt0tJ71lQiRZ9cbl5z31acRpsZM+fXiR+wkR4xoP7iIyDdTHHVHtkSjSDBGMBUG\n"
+"A1UdJQQOMAwGCisGAQQBgt58AQYwDAYDVR0TAQH/BAIwADAfBgNVHSMEGDAWgBQH\n"
+"EWLwaDfA+o6U4wmQKVoK9I3B/DAKBggqhkjOPQQDAgNIADBFAiAbDHQHzSjNiDeQ\n"
+"OaJYRMLIW2dIlabiQ5pxkW/jEaRszAIhAPzuoNdrQTRbnqCy0hmS9hFt8MxDrrBh\n"
+"7jHARQm/5pko\n"
+"-----END CERTIFICATE-----\n";
+
+const char* our_key = "-----BEGIN EC PRIVATE KEY-----\n"
+"MHcCAQEEIOV0iG5CndNK6JhB8nDcqQjNjgRWe/LQWPNPua3w7nHToAoGCCqGSM49\n"
+"AwEHoUQDQgAEXw7Gkk17TVk8QWldRSGNRXm7AkzVMXdlK3S0nvWVCJFn1xuXnPfV\n"
+"pxGmxkz59eJH7CRHjGg/uIjIN1McdUe2RA==\n"
+"-----END EC PRIVATE KEY-----\n";
+
+const char* our_ca = "-----BEGIN CERTIFICATE-----\n"
+"MIIBlzCCATygAwIBAgIJALxGf3YRERn1MAoGCCqGSM49BAMCMCUxIzAhBgNVBAoM\n"
+"GklvVGl2aXR5VGVzdFNlbGZTaWduZWROYW1lMB4XDTE2MTIxNjIxMjcyMVoXDTMw\n"
+"MDgyNTIxMjcyMVowJTEjMCEGA1UECgwaSW9UaXZpdHlUZXN0U2VsZlNpZ25lZE5h\n"
+"bWUwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATo/zp8PXaA/drJQKSG3TlerO0F\n"
+"eHkpRkmXMeLFLrImqo1w9OyLfVmrpBrCDjf83BkwLYp19bkYizL2Yk9zIQ4Do1Uw\n"
+"UzAhBgNVHSUEGjAYBgorBgEEAYLefAEGBgorBgEEAYLefAEHMA8GA1UdEwEB/wQF\n"
+"MAMBAf8wHQYDVR0OBBYEFAcRYvBoN8D6jpTjCZApWgr0jcH8MAoGCCqGSM49BAMC\n"
+"A0kAMEYCIQCuZb1LMTthWy9rPgy2FQgoFHB2LXUJlgRLJeO/gTFqgQIhANRvr1Py\n"
+"5Bp6asye5FK4VUj6tARxmRNeNLvwonLrqp2w\n"
+"-----END CERTIFICATE-----\n";
+
+// Invoked by the CA stack to retrieve credentials from this module
+void provide_x509_cert_and_key(PkiInfo_t* inf)
+{
+    /* PEM data must end in newline and be null terminated for IoTivity */
+
+    inf->crt.data = (uint8_t*) our_cert;
+    inf->crt.len = strlen(our_cert) + 1;
+    inf->key.data = (uint8_t*) our_key;
+    inf->key.len = strlen(our_key) + 1;
+    inf->ca.data = (uint8_t*) our_ca;
+    inf->ca.len = strlen(our_ca) + 1;
+
+    // CRL not provided
+    inf->crl.data = NULL;
+    inf->crl.len = 0;
+
+    return;
+}
+// Empty version, for testing.
+void badPkixInfoHandler(PkiInfo_t* /*inf*/)
+{
+    return;
+}
+
+void provide_supported_credential_types(bool* list, const char* /*deviceId*/)
+{
+    list[1] = true;
+    /*
+     * Note: there is a default implementation of this in credresource.c, exposed by 
+     * pkix_interface.h, called InitManufacturerCipherSuiteList.  If the cred resource 
+     * has a credential of the required type, it updates list accordingly. 
+     *
+     * In a separate test, we could use the cred resource and APIs (credresource.h). 
+     */
+    return;
+}
+
 #endif  //__WITH_DTLS__
 
 // CAInitialize TC
@@ -293,6 +360,43 @@ TEST_F(CATests, SendRequestTestWithInvalidAddress)
     tempRep = NULL;
 }
 
+#if defined(__WITH_DTLS__)
+TEST_F(CATests, DISABLED_PkiTest)
+{
+    // @todo: this test is disabled for now, it crashes with an invalid write. Cert data
+    // provided by the provide_x509_cert_and_key is stored as const char, but ParseChain()
+    // (in ca_adapter_net_ssl.c) writes to it while reading.  We could change the test to 
+    // provide data on the heap, but the CA stack should not be changing data provided to it
+    // by callbacks. 
+
+    const char* local_addr = "127.0.0.1";
+    uint16_t local_port = 5503;
+    CAEndpoint_t* serverAddr = NULL;
+
+    CARegisterHandler(request_handler, response_handler, error_handler);
+
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
+    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, local_addr, local_port, &serverAddr);
+    ASSERT_TRUE(serverAddr != NULL);
+
+    // Register a credential types handler (tells the CA layer which creds are supported)
+    EXPECT_EQ(CA_STATUS_OK, CAregisterGetCredentialTypesHandler(provide_supported_credential_types));
+
+    // Limit ourselves to 0xC0AE : TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 since it's non-PSK
+    EXPECT_EQ(CA_STATUS_OK, CASelectCipherSuite(0xC0AE, serverAddr->adapter));
+
+    // Register an empty callback to provide the keys, expect failure when initializing the handshake.
+    EXPECT_EQ(CA_STATUS_OK, CAregisterPkixInfoHandler(badPkixInfoHandler));
+    EXPECT_EQ(CA_STATUS_FAILED, CAInitiateHandshake(serverAddr));
+
+    // Register a working callback to provide the keys, expect success.
+    EXPECT_EQ(CA_STATUS_OK, CAregisterPkixInfoHandler(provide_x509_cert_and_key));
+    EXPECT_EQ(CA_STATUS_OK, CAInitiateHandshake(serverAddr)); 
+
+    CADestroyEndpoint(serverAddr);
+}
+#endif /* defined(__WITH_DTLS__) */
+
 // CASendRequest TC
 // check return value when a NULL is passed instead of a valid CARequestInfo_t address
 TEST_F(CATests, SendRequestTestWithNullAddr)
@@ -408,19 +512,16 @@ TEST_F (CATests, GetNetworkInformationTest)
     EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
     EXPECT_EQ(CA_STATUS_OK, CAGetNetworkInformation(&tempInfo, &tempSize));
 
-// @todo: if this api is supported on windows platform, it should be changed.
-#if !defined(_WIN32)
     for (size_t index = 0; index < tempSize; index++)
     {
         EXPECT_TRUE(tempInfo[index].adapter != 0);
         EXPECT_TRUE(strlen(tempInfo[index].addr) != 0);
     }
-#endif
 
     free(tempInfo);
 }
 
-TEST_F(CATests, GetSelectecNetwork)
+TEST_F(CATests, GetSelectedNetwork)
 {
     CATransportAdapter_t SelectedNetwork = CA_DEFAULT_ADAPTER;
 
@@ -481,6 +582,8 @@ TEST_F(CATests, RegisterDTLSCredentialsHandlerTest)
 {
 #ifdef __WITH_DTLS__
     EXPECT_EQ(CA_STATUS_OK, CAregisterPskCredentialsHandler(CAGetDtlsPskCredentials));
+    EXPECT_EQ(CA_STATUS_OK, CAregisterPkixInfoHandler(provide_x509_cert_and_key));
+    EXPECT_EQ(CA_STATUS_OK, CAregisterGetCredentialTypesHandler(provide_supported_credential_types));
 #endif
 }
 

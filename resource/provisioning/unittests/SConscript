@@ -52,11 +52,10 @@ provisiontests_env.PrependUnique(CPPPATH = [
 		'../../csdk/ocrandom/include',
 		'../../csdk/logger/include',
 		'../../csdk/connectivity/lib/libcoap-4.1.1/include',
-		'../../../extlibs/hippomocks-master/HippoMocks',
-		'../../../extlibs/hippomocks-master/HippoMocksTest'
+		'../../../extlibs/hippomocks/hippomocks/',
+		'../../../extlibs/hippomocks/hippomocks/'
 		])
 
-provisiontests_env.AppendUnique(LIBPATH = [provisiontests_env.get('BUILD_DIR')])
 provisiontests_env.PrependUnique(LIBS = [
         'ocprovision',
 		'oc',

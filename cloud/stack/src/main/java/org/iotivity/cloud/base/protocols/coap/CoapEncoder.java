@@ -30,6 +30,8 @@ import io.netty.handler.codec.MessageToByteEncoder;
 
 public class CoapEncoder extends MessageToByteEncoder<CoapMessage> {
 
+    private boolean isboolWebSocket = false;
+
     @Override
     protected void encode(ChannelHandlerContext ctx, CoapMessage msg,
             ByteBuf out) throws Exception {
@@ -42,11 +44,16 @@ public class CoapEncoder extends MessageToByteEncoder<CoapMessage> {
          * encode options
          */
         encodeOptions(optBuf, coapMessage);
+
         long length = optBuf.readableBytes();
 
         if (coapMessage.getPayloadSize() > 0) {
             // + 1 means 8bits delimiter
             length += 1 + coapMessage.getPayloadSize();
+        }
+
+        if (isboolWebSocket) {
+            length = 0;
         }
 
         calcShimHeader(coapMessage, out, length);
@@ -68,6 +75,12 @@ public class CoapEncoder extends MessageToByteEncoder<CoapMessage> {
             out.writeByte(255);
             out.writeBytes(coapMessage.getPayload());
         }
+    }
+
+    public void encode(CoapMessage msg, ByteBuf out, boolean isWebsocket)
+            throws Exception {
+        isboolWebSocket = isWebsocket;
+        encode(null, msg, out);
     }
 
     private void calcShimHeader(CoapMessage coapMessage, ByteBuf byteBuf,
@@ -103,20 +116,21 @@ public class CoapEncoder extends MessageToByteEncoder<CoapMessage> {
             throws Exception {
         int preOptionNum = 0;
 
-        for (int i = 0; i < 40; i++) {
-            List<byte[]> values = coapMessage.getOption(i);
+        for (CoapOption opt : CoapOption.values()) {
+            int optionNum = opt.getvalue();
+            List<byte[]> values = coapMessage.getOption(optionNum);
             if (values != null) {
                 if (values.size() > 0) {
                     for (byte[] value : values) {
-                        writeOption(i - preOptionNum,
+                        writeOption(optionNum - preOptionNum,
                                 value != null ? value.length : 0, byteBuf,
                                 value);
-                        preOptionNum = i;
+                        preOptionNum = optionNum;
                     }
 
                 } else {
-                    writeOption(i - preOptionNum, 0, byteBuf, null);
-                    preOptionNum = i;
+                    writeOption(optionNum - preOptionNum, 0, byteBuf, null);
+                    preOptionNum = optionNum;
                 }
             }
         }

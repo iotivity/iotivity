@@ -63,7 +63,7 @@ easysetup_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
 easysetup_test_env.AppendUnique(LIBS = ['pthread'])
 
 easysetup_test_env.PrependUnique(CPPPATH = [
-    '#/extlibs/hippomocks-master',
+    '#/extlibs/hippomocks/hippomocks',
     gtest_dir + '/include',
     '#/resource/csdk/include',
     '#/resource/csdk/connectivity/api',

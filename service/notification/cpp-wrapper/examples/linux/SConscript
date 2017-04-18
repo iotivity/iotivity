@@ -46,12 +46,12 @@ notification_sample_env.AppendUnique(CPPPATH = [
     ])
 
 notification_sample_env.PrependUnique(LIBS = [
+    'resource_directory',
+    'oc',
     'liboctbstack',
     'oc_logger',
-    'oc',
     'connectivity_abstraction',
     'libcoap',
-    'resource_directory'
     ])
 
 notification_sample_env.AppendUnique(CXXFLAGS = ['-std=c++0x','-frtti'])

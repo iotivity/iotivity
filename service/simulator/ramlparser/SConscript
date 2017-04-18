@@ -24,12 +24,11 @@ lib_env = env.Clone()
 SConscript('#service/third_party_libs.scons', 'lib_env')
 raml_env = lib_env.Clone()
 
-SConscript('#/extlibs/cjson/SConscript')
 SConscript('#/extlibs/yaml/SConscript')
 ######################################################################
 # Build flags
 ######################################################################
-raml_env.AppendUnique(CPPPATH = ['#/extlibs/timer',
+raml_env.AppendUnique(CPPPATH = ['#/resource/c_common/octimer/include',
                                  '#/extlibs/cjson',
                                  '#/extlibs/yaml/yaml/src' ,
                                  '#/extlibs/yaml/yaml/include',

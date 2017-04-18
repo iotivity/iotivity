@@ -118,9 +118,6 @@ void DevConfProvCbInApp(ESDevConfData *eventData)
         return ;
     }
 
-    printf("Language : %s\n", eventData->language);
-    printf("Country : %s\n", eventData->country);
-
     printf("DevConfProvCbInApp OUT\n");
 }
 
@@ -204,14 +201,14 @@ void SetDeviceInfo()
     printf("SetDeviceInfo IN\n");
 
     ESDeviceProperty deviceProperty = {
-        {{WIFI_11G, WIFI_11N, WIFI_11AC, WiFi_EOF}, WIFI_5G}, {"Test Device", "Test Model Number"}
+        {{WIFI_11G, WIFI_11N, WIFI_11AC, WiFi_EOF}, WIFI_5G}, {"Test Device"}
     };
 
     // Set user properties if needed
     char userValue_str[] = "user_str";
     g_userProperties.userValue_int = 0;
 
-    strncpy(g_userProperties.userValue_str, userValue_str, strlen(userValue_str));
+    strncpy(g_userProperties.userValue_str, userValue_str, strlen(userValue_str) + 1);
     SetUserProperties(&g_userProperties);
 
     if(ESSetDeviceProperty(&deviceProperty) == ES_ERROR)
@@ -259,7 +256,7 @@ int main()
     printf("EasySetup Enrollee SAMPLE\n");
     printf("#########################\n");
     PrintMenu();
-    char option = "";
+    char option = 0;
 
     while(true)
     {

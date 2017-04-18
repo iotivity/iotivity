@@ -57,7 +57,6 @@ srmtest_env.PrependUnique(CPPPATH = [
 		'../include'
 		])
 
-srmtest_env.AppendUnique(LIBPATH = [srmtest_env.get('BUILD_DIR')])
 srmtest_env.PrependUnique(LIBS = ['ocsrm',
                                     'octbstack_test',
                                     'oc_logger',
@@ -79,11 +78,6 @@ else:
 	# TODO: Implement feature check.
 	srmtest_env.AppendUnique(CPPDEFINES = ['HAVE_LOCALTIME_R'])
 	srmtest_env.AppendUnique(LIBS = ['octbstack'])
-
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	srmtest_env.PrependUnique(LIBS = ['resource_directory', 'oc'])
-
-srmtest_env.AppendUnique(LIBS = ['timer'])
 
 ######################################################################
 # Source files and Targets

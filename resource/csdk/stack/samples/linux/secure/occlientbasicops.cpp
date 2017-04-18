@@ -53,7 +53,6 @@ static int WithTcp = 0;
 
 static char DISCOVERY_QUERY[] = "%s/oic/res";
 OCConnectivityType discoveryReqConnType = CT_ADAPTER_IP;
-static OCDevAddr endpoint;
 
 static std::string coapServerResource;
 static int coapSecureResource;
@@ -198,21 +197,20 @@ OCStackApplicationResult discoveryReqCB(void *, OCDoHandle,
             OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
             ocConnType = clientResponse->connType;
-            endpoint = clientResponse->devAddr;
 
             if (parseClientResponse(clientResponse) != -1)
             {
                 switch (TestCase)
                 {
                     case TEST_NON_CON_OP:
-                        InitGetRequest(OC_LOW_QOS);
-                        InitPutRequest(OC_LOW_QOS);
-                        InitPostRequest(OC_LOW_QOS);
+                        InitGetRequest(&clientResponse->devAddr, OC_LOW_QOS);
+                        InitPutRequest(&clientResponse->devAddr, OC_LOW_QOS);
+                        InitPostRequest(&clientResponse->devAddr, OC_LOW_QOS);
                         break;
                     case TEST_CON_OP:
-                        InitGetRequest(OC_HIGH_QOS);
-                        InitPutRequest(OC_HIGH_QOS);
-                        InitPostRequest(OC_HIGH_QOS);
+                        InitGetRequest(&clientResponse->devAddr, OC_HIGH_QOS);
+                        InitPutRequest(&clientResponse->devAddr, OC_HIGH_QOS);
+                        InitPostRequest(&clientResponse->devAddr, OC_HIGH_QOS);
                         break;
                 }
             }
@@ -222,21 +220,17 @@ OCStackApplicationResult discoveryReqCB(void *, OCDoHandle,
     return (UnicastDiscovery) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
 
 }
-int InitPutRequest(OCQualityOfService qos)
+int InitPutRequest(OCDevAddr *endpoint, OCQualityOfService qos)
 {
     OIC_LOG_V(INFO, TAG, "Executing %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
-    if (WithTcp)
-    {
-        endpoint.adapter = OC_ADAPTER_TCP;
-    }
-    endpoint.flags = (OCTransportFlags)(endpoint.flags | OC_SECURE);
-    return (InvokeOCDoResource(query, OC_REST_PUT, &endpoint,
+
+    return (InvokeOCDoResource(query, OC_REST_PUT, endpoint,
                                ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS), putReqCB, NULL, 0));
 }
 
-int InitPostRequest(OCQualityOfService qos)
+int InitPostRequest(OCDevAddr *endpoint, OCQualityOfService qos)
 {
     OCStackResult result;
 
@@ -244,14 +238,8 @@ int InitPostRequest(OCQualityOfService qos)
     std::ostringstream query;
     query << coapServerResource;
 
-    if (WithTcp)
-    {
-        endpoint.adapter = OC_ADAPTER_TCP;
-    }
-    endpoint.flags = (OCTransportFlags)(endpoint.flags | OC_SECURE);
-
     // First POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST, &endpoint,
+    result = InvokeOCDoResource(query, OC_REST_POST, endpoint,
                                 ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS),
                                 postReqCB, NULL, 0);
     if (OC_STACK_OK != result)
@@ -261,7 +249,7 @@ int InitPostRequest(OCQualityOfService qos)
     }
 
     // Second POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST, &endpoint,
+    result = InvokeOCDoResource(query, OC_REST_POST, endpoint,
                                 ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS),
                                 postReqCB, NULL, 0);
     if (OC_STACK_OK != result)
@@ -271,7 +259,7 @@ int InitPostRequest(OCQualityOfService qos)
 
     // This POST operation will update the original resourced /a/led (as long as
     // the server is set to max 2 /lcd resources)
-    result = InvokeOCDoResource(query, OC_REST_POST, &endpoint,
+    result = InvokeOCDoResource(query, OC_REST_POST, endpoint,
                                 ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS),
                                 postReqCB, NULL, 0);
     if (OC_STACK_OK != result)
@@ -281,18 +269,13 @@ int InitPostRequest(OCQualityOfService qos)
     return result;
 }
 
-int InitGetRequest(OCQualityOfService qos)
+int InitGetRequest(OCDevAddr *endpoint, OCQualityOfService qos)
 {
     OIC_LOG_V(INFO, TAG, "Executing %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
-    if (WithTcp)
-    {
-        endpoint.adapter = OC_ADAPTER_TCP;
-    }
-    endpoint.flags = (OCTransportFlags)(endpoint.flags | OC_SECURE);
 
-    return (InvokeOCDoResource(query, OC_REST_GET, &endpoint,
+    return (InvokeOCDoResource(query, OC_REST_GET, endpoint,
                                ((qos == OC_HIGH_QOS) ?  OC_HIGH_QOS : OC_LOW_QOS),
                                getReqCB, NULL, 0));
 }
@@ -487,19 +470,27 @@ int parseClientResponse(OCClientResponse *clientResponse)
             res = res->next;
             continue;
         }
+        OCDevAddr *endpoint = &clientResponse->devAddr;
+        if (WithTcp)
+        {
+#ifdef TCP_ADAPTER
+            endpoint->adapter = OC_ADAPTER_TCP;
+#endif
+        }
         if (res->secure)
         {
+            endpoint->flags = (OCTransportFlags)(endpoint->flags | OC_SECURE);
             if (WithTcp)
             {
 #ifdef TCP_ADAPTER
                 OIC_LOG_V(INFO, TAG, "SECUREPORT tcp: %d", res->tcpPort);
-                endpoint.port = res->tcpPort;
+                endpoint->port = res->tcpPort;
 #endif
             }
             else
             {
                 OIC_LOG_V(INFO, TAG, "SECUREPORT udp: %d", res->port);
-                endpoint.port = res->port;
+                endpoint->port = res->port;
             }
             coapSecureResource = 1;
         }

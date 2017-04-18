@@ -58,7 +58,7 @@ cache_test_env.AppendUnique(CPPPATH = [
     '#/resource/include',
     '#/resource/oc_logger/include'
 ])
-cache_test_env.PrependUnique(CPPPATH = [cache_test_env.get('SRC_DIR')+'/extlibs/hippomocks-master'])
+cache_test_env.PrependUnique(CPPPATH = ['#/extlibs/hippomocks/hippomocks'])
 cache_test_env.AppendUnique(LIBPATH = [cache_test_env.get('BUILD_DIR')])
 cache_test_env.PrependUnique(LIBS = ['rcs_client', 'rcs_common',
   'oc', 'octbstack', 'oc_logger',

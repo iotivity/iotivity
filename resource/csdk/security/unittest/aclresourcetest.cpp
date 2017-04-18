@@ -49,6 +49,7 @@ const char* DEFAULT_ACL_FILE_NAME = "oic_unittest_default_acl.dat";
 const char* ACL1_FILE_NAME = "oic_unittest_acl1.dat";
 
 #define NUM_ACE_FOR_WILDCARD_IN_ACL1_DAT (2)
+#define NUM_ACE_FOR_WILDCARD_IN_DEFAULT_ACL (3)
 
 static bool AddResourceToACE(OicSecAce_t* ace, const char* rsrcName,
                              const char* typeName, const char* interfaceName)
@@ -134,7 +135,7 @@ TEST(ACLResourceTest, CBORDefaultACLConversion)
 
     size_t defaultAclSize = 0;
     uint8_t *defaultPsStorage = NULL;
-    OCStackResult convRet = AclToCBORPayload(defaultAcl, &defaultPsStorage, &defaultAclSize);
+    OCStackResult convRet = AclToCBORPayload(defaultAcl, OIC_SEC_ACL_LATEST, &defaultPsStorage, &defaultAclSize);
     EXPECT_EQ(OC_STACK_OK, convRet);
     ASSERT_TRUE(NULL != defaultPsStorage);
     EXPECT_NE(static_cast<size_t>(0), defaultAclSize);
@@ -207,7 +208,7 @@ TEST(ACLResourceTest, CBORACLConversion)
 
     size_t size = 0;
     uint8_t *psStorage = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(secAcl, &psStorage, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(secAcl, OIC_SEC_ACL_V1, &psStorage, &size));
     ASSERT_TRUE(NULL != psStorage);
     OicSecAcl_t *acl = CBORPayloadToAcl(psStorage, size);
     ASSERT_TRUE(NULL != acl);
@@ -338,25 +339,12 @@ extern "C" {
 // GetACLResource tests
 TEST(ACLResourceTest, GetACLResourceTests)
 {
-    // Read an ACL from the file
-    static OCPersistentStorage ps = OCPersistentStorage();
-    SetPersistentHandler(&ps, true);
-
-    uint8_t *payload = NULL;
-    size_t size = 0;
-
-    ASSERT_TRUE(ReadCBORFile(ACL1_FILE_NAME, OIC_JSON_ACL_NAME, &payload, &size));
-    ASSERT_TRUE(payload != NULL);
-
-    OicSecAcl_t *defaultPsAcl = CBORPayloadToAcl(payload, size);
-    ASSERT_TRUE(defaultPsAcl != NULL);
-
     OicSecAcl_t *acl1 = NULL;
     EXPECT_EQ(OC_STACK_OK, GetDefaultACL(&acl1));
     ASSERT_TRUE(acl1 != NULL);
     EXPECT_EQ(OC_STACK_OK, SetDefaultACL(acl1));
 
-    // Verify that ACL file contains 2 ACE entries for 'WILDCARD' subject
+    // Verify that the default ACL file contains 3 ACE entries for the 'WILDCARD' subject
     const OicSecAce_t *ace = NULL;
     OicSecAce_t *savePtr = NULL;
     OicUuid_t subject = WILDCARD_SUBJECT_ID;
@@ -368,13 +356,46 @@ TEST(ACLResourceTest, GetACLResourceTests)
         count = (NULL != ace) ? count + 1 : count;
     } while (ace != NULL);
 
-    EXPECT_EQ(count, NUM_ACE_FOR_WILDCARD_IN_ACL1_DAT);
+    EXPECT_EQ(count, NUM_ACE_FOR_WILDCARD_IN_DEFAULT_ACL);
 
     /* Perform cleanup */
-    OICFree(payload);
-    DeleteACLList(defaultPsAcl);
     DeInitACLResource();
 }
+
+TEST(ACLResourceTest, DefaultAclAllowsRolesAccess)
+{
+    /* Get and install the default ACL */
+    OicSecAcl_t *acl1 = NULL;
+    EXPECT_EQ(OC_STACK_OK, GetDefaultACL(&acl1));
+    ASSERT_TRUE(acl1 != NULL);
+    EXPECT_EQ(OC_STACK_OK, SetDefaultACL(acl1));
+
+    /* Verify that the default ACL file allows access to the roles resource */
+    const OicSecAce_t *ace = NULL;
+    OicSecAce_t *savePtr = NULL;
+    OicUuid_t subject = WILDCARD_SUBJECT_ID;
+    int found = 0;
+
+    while((ace = GetACLResourceData(&subject, &savePtr)) != NULL)
+    {   
+        ASSERT_TRUE(ace->resources != NULL);
+        OicSecRsrc_t* rsrc = NULL;
+        LL_FOREACH(ace->resources, rsrc)
+        {
+            if ((strcmp(rsrc->href, OIC_RSRC_ROLES_URI) == 0) &&
+                (ace->permission == PERMISSION_FULL_CONTROL))
+            {
+                found = 1;
+                break;
+            }
+        }
+    }
+
+    EXPECT_EQ(found, 1);
+
+    DeInitACLResource();
+}
+
 
 static OCStackResult  populateAcl(OicSecAcl_t *acl,  int numRsrc)
 {
@@ -419,7 +440,7 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t  *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_LATEST, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
@@ -474,7 +495,7 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_LATEST, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
@@ -541,7 +562,7 @@ TEST(ACLResourceTest, ACLGetWithQueryTest)
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_LATEST, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload

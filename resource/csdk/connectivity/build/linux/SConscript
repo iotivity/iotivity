@@ -22,16 +22,17 @@ env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
 env.AppendUnique(LIBS = ['dl', 'pthread'])
 
 # Set arch flags
-target_arch = env.get('TARGET_ARCH')
-if target_arch in ['x86']:
-	env.AppendUnique(CCFLAGS = ['-m32'])
-	env.AppendUnique(LINKFLAGS = ['-m32'])
-elif target_arch in ['x86_64']:
-	env.AppendUnique(CCFLAGS = ['-m64'])
-	env.AppendUnique(LINKFLAGS = ['-m64'])
-elif target_arch in ['arm']:
-	env.AppendUnique(CPPFLAGS = ['-march=armv5te'])
-elif target_arch in ['arm-v7a', 'armeabi-v7a']:
-	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
-elif target_arch.find('arm64') > 0:
-	env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])
+if not env.get('WITH_ENV'):
+    target_arch = env.get('TARGET_ARCH')
+    if target_arch in ['x86']:
+        env.AppendUnique(CCFLAGS = ['-m32'])
+        env.AppendUnique(LINKFLAGS = ['-m32'])
+    elif target_arch in ['x86_64']:
+        env.AppendUnique(CCFLAGS = ['-m64'])
+        env.AppendUnique(LINKFLAGS = ['-m64'])
+    elif target_arch in ['arm']:
+        env.AppendUnique(CPPFLAGS = ['-march=armv5te'])
+    elif target_arch in ['arm-v7a', 'armeabi-v7a']:
+        env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
+    elif target_arch.find('arm64') > 0:
+        env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])

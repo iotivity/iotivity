@@ -287,14 +287,14 @@ void CAIPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
 
 static void CAInitializeIPGlobals()
 {
-    caglobals.ip.u6.fd  = -1;
-    caglobals.ip.u6s.fd = -1;
-    caglobals.ip.u4.fd  = -1;
-    caglobals.ip.u4s.fd = -1;
-    caglobals.ip.m6.fd  = -1;
-    caglobals.ip.m6s.fd = -1;
-    caglobals.ip.m4.fd  = -1;
-    caglobals.ip.m4s.fd = -1;
+    caglobals.ip.u6.fd  = OC_INVALID_SOCKET;
+    caglobals.ip.u6s.fd = OC_INVALID_SOCKET;
+    caglobals.ip.u4.fd  = OC_INVALID_SOCKET;
+    caglobals.ip.u4s.fd = OC_INVALID_SOCKET;
+    caglobals.ip.m6.fd  = OC_INVALID_SOCKET;
+    caglobals.ip.m6s.fd = OC_INVALID_SOCKET;
+    caglobals.ip.m4.fd  = OC_INVALID_SOCKET;
+    caglobals.ip.m4s.fd = OC_INVALID_SOCKET;
     caglobals.ip.u6.port  = 0;
     caglobals.ip.u6s.port = 0;
     caglobals.ip.u4.port  = 0;

@@ -82,7 +82,6 @@ bool OCRepPayloadSetUri(OCRepPayload* payload, const char* uri);
 
 bool OCRepPayloadAddResourceType(OCRepPayload* payload, const char* resourceType);
 bool OCRepPayloadAddInterface(OCRepPayload* payload, const char* iface);
-bool OCRepPayloadAddModelVersion(OCRepPayload* payload, const char* dmv);
 
 bool OCRepPayloadAddResourceTypeAsOwner(OCRepPayload* payload, char* resourceType);
 bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* iface);
@@ -292,6 +291,20 @@ char* OCCreateString(const OCStringLL* ll);
  * @return true of success false on any errors
  **/
 bool OCByteStringCopy(OCByteString *dest, const OCByteString *source);
+
+/**
+* This function creates the payloadValue for links parameter of collection resource.
+* @param[in] resourceUri Resource uri (this should be a collection resource)
+* @param[out] linksRepPayloadValue The payloadValue for links parameter of collection
+* @param[in] devAddr Structure pointing to the address. (from OCEntityHandlerRequest)
+*
+* @note: The destroy of OCRepPayloadValue is not supported. Instead, use
+*        OCRepPayloadDestroy(...) to destroy RepPayload of the collection Resource
+*
+* @return ::OC_STACK_OK if successful or else other value.
+*/
+OCStackResult OCLinksPayloadValueCreate(const char *resourceUri,
+                      OCRepPayloadValue **linksRepPayloadValue, OCDevAddr *devAddr);
 
 #ifdef __cplusplus
 }

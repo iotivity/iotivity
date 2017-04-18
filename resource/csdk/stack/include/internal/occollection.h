@@ -29,4 +29,7 @@ uint8_t GetNumOfResourcesInCollection(const OCResource *resource);
 OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                                               OCEntityHandlerRequest *entityHandlerRequest);
 
+OCStackResult BuildCollectionLinksPayloadValue(const char* resourceUri,
+                           OCRepPayloadValue** linksRepPayloadValue, OCDevAddr* devAddr);
+
 #endif //OC_COLLECTION_H

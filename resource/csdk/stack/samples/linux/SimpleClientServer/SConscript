@@ -29,20 +29,11 @@ with_ra = samples_env.get('WITH_RA')
 ######################################################################
 # Build flags
 ######################################################################
-with_upstream_libcoap = samples_env.get('WITH_UPSTREAM_LIBCOAP')
-if with_upstream_libcoap == '1':
-    # For bring up purposes only, we manually copy the forked version to where
-    # the unforked version is downloaded.
-    samples_env.AppendUnique(CPPPATH=['#extlibs/libcoap/libcoap/include'])
-else:
-    # For bring up purposes only, the forked version will live here.
-    samples_env.AppendUnique(
-        CPPPATH=['../../../../../connectivity/lib/libcoap-4.1.1/include'])
-
 samples_env.PrependUnique(CPPPATH=[
     '../../../../logger/include',
     '../../../../include',
     '../../../../stack/include',
+    '../../../../connectivity/api',
     '../../../../security/include',
     '../../../../../../extlibs/boost/boost',
     '../../../../../oc_logger/include',
@@ -53,7 +44,6 @@ if 'g++' in compiler:
     samples_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall'])
 
 samples_env.AppendUnique(RPATH=[samples_env.get('BUILD_DIR')])
-samples_env.AppendUnique(LIBPATH=[samples_env.get('BUILD_DIR')])
 
 samples_env.PrependUnique(
     LIBS=['octbstack', 'ocsrm', 'connectivity_abstraction', 'coap'])
@@ -66,8 +56,6 @@ if target_os not in ['windows']:
 
 if samples_env.get('SECURED') == '1':
     samples_env.AppendUnique(LIBS=['mbedtls'])
-
-samples_env.AppendUnique(LIBS = ['timer'])
 
 samples_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 

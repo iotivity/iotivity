@@ -573,6 +573,7 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
 
             LL_APPEND(acl->aces, ace);
 
+            ace->subjectType = OicSecAceUuidSubject;
             memcpy(&ace->subjectuuid, &gDpair->pdeviceID, sizeof(OicUuid_t));
 
             for(size_t i = 0; i < pdAcl->resourcesLen; i++)
@@ -632,7 +633,7 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
 
             size_t size = 0;
             uint8_t *payload = NULL;
-            if (OC_STACK_OK == AclToCBORPayload(acl, &payload, &size))
+            if (OC_STACK_OK == AclToCBORPayload(acl, OIC_SEC_ACL_V1, &payload, &size))
             {
                 AppendACL(payload, size);
                 OICFree(payload);

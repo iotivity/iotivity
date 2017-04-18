@@ -32,7 +32,7 @@
 #include "octhread.h"
 #include "occollection.h"
 #include "logger.h"
-#include "timer.h"
+#include "octimer.h"
 
 #define TAG "OIC_RI_GROUP"
 
@@ -736,6 +736,7 @@ exit:
     OCFREE(desc)
     OCFREE(capa)
     OCFREE(action)
+    OCFREE((*set)->actionsetName)
     OCFREE(*set)
     OCFREE(key)
     OCFREE(value)
@@ -1198,6 +1199,7 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                 stackRet = OC_STACK_ERROR;
             }
         }
+        OCRepPayloadDestroy(payload);
     }
     else if (method == OC_REST_POST)
     {
@@ -1376,6 +1378,7 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                 stackRet = OC_STACK_ERROR;
             }
         }
+        OCRepPayloadDestroy(payload);
     }
 
 exit:

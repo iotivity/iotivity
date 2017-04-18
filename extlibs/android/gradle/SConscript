@@ -4,12 +4,10 @@ Import('env')
 
 env = env.Clone()
 ndk_env = env.Clone()
-SConscript('../../../build_common/external_libs.scons')
 
 target_os = env.get('TARGET_OS')
 host_os = sys.platform
 print host_os
-SConscript('../../../build_common/external_libs.scons')
 ######################################################################
 # Build flags
 ######################################################################

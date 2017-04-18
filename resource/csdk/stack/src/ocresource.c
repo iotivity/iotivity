@@ -48,7 +48,6 @@
 #include "secureresourcemanager.h"
 #include "cacommon.h"
 #include "cainterface.h"
-#include "ocpayload.h"
 #include "oickeepalive.h"
 #include "platform_features.h"
 #include "payload_logging.h"
@@ -139,10 +138,15 @@ static OCStackResult GetSecurePortInfo(OCDevAddr *endpoint, uint16_t *port)
 
 #ifdef TCP_ADAPTER
 /* This method will retrieve the tcp port */
-static OCStackResult GetTCPPortInfo(OCDevAddr *endpoint, uint16_t *port, bool secured)
+OCStackResult GetTCPPortInfo(OCDevAddr *endpoint, uint16_t *port, bool secured)
 {
-    uint16_t p = 0;
+    if (NULL == endpoint)
+    {
+        OIC_LOG(ERROR, TAG, "GetTCPPortInfo failed!");
+        return OC_STACK_ERROR;
+    }
 
+    uint16_t p = 0;
     if (endpoint->adapter == OC_ADAPTER_IP)
     {
         if (endpoint->flags & OC_IP_USE_V4)
@@ -1321,10 +1325,10 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
     GetTCPPortInfo(devAddr, &tcpPort, (resourcePtr->resourceProperties & OC_SECURE));
 
     OCDiscoveryPayloadAddResourceWithEps(payload, resourcePtr, securePort,
-                                         isVirtual, networkInfo, infoSize, devAddr, tcpPort);
+                                         networkInfo, infoSize, devAddr, tcpPort);
 #else
     OCDiscoveryPayloadAddResourceWithEps(payload, resourcePtr, securePort,
-                                         isVirtual, networkInfo, infoSize, devAddr);
+                                         networkInfo, infoSize, devAddr);
 #endif
 
     return OC_STACK_OK;
@@ -1660,6 +1664,7 @@ static OCStackResult EHRequest(OCEntityHandlerRequest *ehRequest, OCPayloadType 
                                      (OCResourceHandle)resource,
                                      request->query,
                                      type,
+                                     request->payloadFormat,
                                      request->payload,
                                      request->payloadSize,
                                      request->numRcvdVendorSpecificHeaderOptions,

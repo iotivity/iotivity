@@ -47,12 +47,25 @@
                         }
                     ],
                     "permission": 6
+                }, 
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/sec/roles",
+                            "rel": "",
+                            "rt": ["oic.r.cred"],
+                            "if": ["oic.if.baseline"]
+                        }
+                    ],
+                    "permission": 31
                 }
             ]
         },
         "rowneruuid" : "6D766A75-7374-776F-726B-735575696430"
     },
     "pstat": {
+        "dos": {"s": 1, "p": false},
         "isop": false,
         "deviceuuid": "6D766A75-7374-776F-726B-735575696430",
         "rowneruuid": "6D766A75-7374-776F-726B-735575696430",

@@ -43,13 +43,17 @@ constexpr char SECOND_RESOURCETYPE[]{ "resource.type.second" };
 #ifdef SECURED
 const char * SVR_DB_FILE_NAME = "./oic_svr_db_re_client.dat";
 //OCPersistent Storage Handlers
-static FILE* client_open(const char * /*path*/, const char *mode)
+static FILE* client_open(const char * path, const char *mode)
 {
-    std::string file_name = SVR_DB_FILE_NAME;
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        std::string file_name = SVR_DB_FILE_NAME;
 #ifndef LOCAL_RUNNING
-    file_name = "./service/resource-encapsulation/unittests/oic_svr_db_re_client.dat";
+        file_name = "./service/resource-encapsulation/unittests/oic_svr_db_re_client.dat";
 #endif
-    return fopen(file_name.c_str(), mode);
+        return fopen(file_name.c_str(), mode);
+    }
+    return fopen(path, mode);
 }
 #endif
 
@@ -89,7 +93,7 @@ private:
 TEST(DiscoveryManagerTest, ThrowIfDiscoverWithEmptyCallback)
 {
 #ifdef SECURED
-    OCPersistentStorage gps {client_open, fread, fwrite, fclose, unlink };
+    static OCPersistentStorage gps {client_open, fread, fwrite, fclose, unlink };
     OC::PlatformConfig cfg
     { OC::ServiceType::InProc, OC::ModeType::Both, "0.0.0.0", 0,
             OC::QualityOfService::LowQos, &gps };
@@ -112,7 +116,8 @@ TEST(DiscoveryManagerTest, DiscoverInvokesFindResource)
     mocks.ExpectCallFuncOverload(static_cast<OCFindResource>(findResource)).Match(
         [](const std::string& host, const std::string& resourceURI, OCConnectivityType, FindCallback)
         {
-            return host.empty() && resourceURI == (std::string(RESOURCE_URI) + "?rt=" + RESOURCE_TYPE);
+            return host.empty() && resourceURI ==
+                    (std::string(OC_RSRVD_WELL_KNOWN_URI) + "?rt=" + RESOURCE_TYPE);
         }
     ).Return(OC_STACK_OK);
 

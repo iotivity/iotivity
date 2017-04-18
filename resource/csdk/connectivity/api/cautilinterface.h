@@ -18,6 +18,15 @@
  *
  ******************************************************************/
 
+/**
+ * @file
+ *
+ * This file contains APIs to handle adapters of connectivity abstraction layer
+ * for network operations.
+ * Application can use functions including network callback, BLE scan/advertisements,
+ * set configurations of the adapters,  set port number Etc.
+ */
+
 #ifndef CA_UTILS_INTERFACE_H_
 #define CA_UTILS_INTERFACE_H_
 
@@ -143,7 +152,7 @@ CAResult_t CAUtilCMTerminate();
  * @param[in]  isCloud    with cloud or not.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAUtilCMUpdateRemoteDeviceInfo(const CAEndpoint_t endpoint, bool isCloud);
+CAResult_t CAUtilCMUpdateRemoteDeviceInfo(const CAEndpoint_t *endpoint, bool isCloud);
 
 /**
  * Reset RemoteDevice Info. for Connection Manager

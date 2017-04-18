@@ -24,6 +24,8 @@
 #include "cainterface.h"
 #include "securevirtualresourcetypes.h"
 #include "octypes.h"
+#include "rolesresource.h"
+#include <cbor.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -123,11 +125,14 @@ OicSecCred_t * GenerateCredential(const OicUuid_t* subject, OicSecCredType_t cre
 OCStackResult AddCredential(OicSecCred_t * cred);
 
 /**
- * Function to remove the credential from SVR DB.
+ * Function to remove credentials from the SVR DB for the given subject UUID.
+ * If multiple credentials exist for the UUID, they will all be removed.
  *
  * @param subject is the Credential Subject to be deleted.
  *
- * @return ::OC_STACK_OK for success, or errorcode otherwise.
+ * @return ::OC_STACK_RESOURCE_DELETED if credentials were removed, or
+ * if there are no credentials with the given UUID.  An error is returned if
+ * removing credentials failed.
  */
 OCStackResult RemoveCredential(const OicUuid_t *subject);
 
@@ -211,19 +216,31 @@ OCStackResult GetCredRownerId(OicUuid_t *rowneruuid);
 
 #if defined(__WITH_TLS__) || defined(__WITH_DTLS__)
 /**
- * Used by mbedTLS to retrieve trusted CA certificates
+ * Used by role certificate validator to get CA certificates as PEM
  *
  * @param[out] crt certificates to be filled.
  * @param[in] usage credential usage string.
  */
-void GetDerCaCert(ByteArray_t * crt, const char * usage);
+OCStackResult GetPemCaCert(ByteArray_t * crt, const char * usage);
+
+/**
+ * Get a list of all role certificates. Used when asserting roles.
+ *
+ * @param[out] roleCerts list of role certificates
+ * @return When ::OC_STACK_OK is returned, a list of certificates (roleCerts)
+ *         that must be freed with FreeRoleCertChainList. roleCerts can still
+ *         be NULL in this case, if no role certs are installed. On error, an
+ *         error value is returned and roleCerts is NULL.
+ */
+OCStackResult GetAllRoleCerts(RoleCertChain_t** roleCerts);
+
 /**
  * Used by mbedTLS to retrieve own certificate chain
  *
  * @param[out] crt certificate chain to be filled.
  * @param[in] usage credential usage string.
  */
-void GetDerOwnCert(ByteArray_t * crt, const char * usage);
+void GetPemOwnCert(ByteArray_t * crt, const char * usage);
 /**
  * Used by mbedTLS to retrieve owm private key
  *
@@ -234,11 +251,19 @@ void GetDerKey(ByteArray_t * key, const char * usage);
 /**
  * Used by CA to retrieve credential types
  *
- * @param[out] key key to be filled.
+ * @param[out] list list of suites to be filled.
  * @param[in] usage credential usage string.
+ * @param[in] device uuid.
  */
-void InitCipherSuiteListInternal(bool *list, const char * usage);
+void InitCipherSuiteListInternal(bool *list, const char * usage, const char* deviceId);
 #endif // __WITH_TLS__
+
+// Helpers shared by cred and roles resources
+CborError SerializeEncodingToCbor(CborEncoder *rootMap, const char *tag, const OicSecKey_t *value);
+CborError SerializeSecOptToCbor(CborEncoder *rootMap, const char *tag, const OicSecOpt_t *value);
+CborError DeserializeEncodingFromCbor(CborValue *rootMap, OicSecKey_t *value);
+CborError DeserializeSecOptFromCbor(CborValue *rootMap, OicSecOpt_t *value);
+
 #ifdef __cplusplus
 }
 #endif

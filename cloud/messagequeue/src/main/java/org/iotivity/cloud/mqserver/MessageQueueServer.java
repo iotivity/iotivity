@@ -36,12 +36,18 @@ public class MessageQueueServer {
 
         System.out.println("-----MQ SERVER-----");
 
-        if (args.length != 6) {
+        if (!(args.length == 6 || args.length == 8)) {
             Log.e("coap server port, Kafka_zookeeper_Address port"
                     + " and Kafka_broker_Address Port and TLS mode required\n"
-                    + "ex) 5686 127.0.0.1 2181 127.0.0.1 9092 0\n");
+                    + " and WebSocketLog-Server <Address> <Port> (optional)\n"
+                    + "ex) 5686 127.0.0.1 2181 127.0.0.1 9092 0 127.0.0.1 8080\n");
 
             return;
+        }
+
+        if (args.length == 8) {
+            Log.InitWebLog(args[6], args[7],
+                    MessageQueueServer.class.getSimpleName().toString());
         }
 
         ServerSystem serverSystem = new ServerSystem();

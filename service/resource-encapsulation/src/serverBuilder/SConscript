@@ -73,9 +73,6 @@ if server_builder_env.get('SECURED') == '1':
 	if server_builder_env.get('WITH_TCP') == True:
 		server_builder_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	server_builder_env.AppendUnique(LIBS = ['resource_directory'])
-
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -97,7 +94,7 @@ if target_os in ['linux']:
 	server_builder_test_env = server_builder_env.Clone();
 
 	server_builder_test_env.AppendUnique(CPPPATH = [
-		server_builder_test_env.get('SRC_DIR')+'/extlibs/hippomocks-master',
+		'#/extlibs/hippomocks/hippomocks',
 		'../common/utils/include'
 		])
 
