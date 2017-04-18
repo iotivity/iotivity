@@ -98,35 +98,35 @@ static bool IsReadyToEnterRFNOP()
 
     // Verify doxm.owned == TRUE.
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDoxmIsOwned(&tempBool), ERROR);
-    VERIFY_TRUE(TAG, tempBool, WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, tempBool, WARNING);
 
     // Verify doxm.devowneruuid != nil UUID.
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDoxmDevOwnerId(&tempUuid), ERROR);
-    VERIFY_TRUE(TAG, !IsNilUuid(&tempUuid), WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, !IsNilUuid(&tempUuid), WARNING);
 
     // Verify doxm.deviceuuid != nil UUID.
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDoxmDeviceID(&tempUuid), ERROR);
-    VERIFY_TRUE(TAG, !IsNilUuid(&tempUuid), WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, !IsNilUuid(&tempUuid), WARNING);
 
     // Verify oxmsel was the actual OTM used (no-op: CTT will verify this during
     // certification testing, as it requires OBT cooperation to verify).
 
     // Verify pstat.isop == false (Server sets isop on entry)
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetPstatIsop(&tempBool), ERROR);
-    VERIFY_TRUE(TAG, !tempBool, WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, !tempBool, WARNING);
 
     // Verify implemented SVRs with rowneruuid Property have non-Nil rowneruuid
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetAclRownerId(&tempUuid), ERROR);
-    VERIFY_TRUE(TAG, !IsNilUuid(&tempUuid), WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, !IsNilUuid(&tempUuid), WARNING);
 
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetCredRownerId(&tempUuid), ERROR);
-    VERIFY_TRUE(TAG, !IsNilUuid(&tempUuid), WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, !IsNilUuid(&tempUuid), WARNING);
 
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDoxmRownerId(&tempUuid), ERROR);
-    VERIFY_TRUE(TAG, !IsNilUuid(&tempUuid), WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, !IsNilUuid(&tempUuid), WARNING);
 
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetPstatRownerId(&tempUuid), ERROR);
-    VERIFY_TRUE(TAG, !IsNilUuid(&tempUuid), WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, !IsNilUuid(&tempUuid), WARNING);
 
     // Verify each rowneruuid, devowneruuid has a corresponding /cred entry
     // TODO [IOT-2023]
@@ -151,11 +151,11 @@ static bool IsReadyToEnterRFOTM()
 
     // Verify doxm.owned == FALSE.
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDoxmIsOwned(&tempBool), ERROR);
-    VERIFY_TRUE(TAG, !tempBool, WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, !tempBool, WARNING);
 
     // Verify doxm.devowneruuid == nil UUID.
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDoxmDevOwnerId(&tempUuid), ERROR);
-    VERIFY_TRUE(TAG, !IsNilUuid(&tempUuid), WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, !IsNilUuid(&tempUuid), WARNING);
 
     // Check and log whether doxm.deviceuuid == nil UUID ("may" reqt not "shall")
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDoxmDeviceID(&tempUuid), ERROR);
@@ -185,30 +185,30 @@ static bool IsReadyToEnterRFPRO()
 
     // Verify doxm.owned == TRUE.
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDoxmIsOwned(&tempBool), ERROR);
-    VERIFY_TRUE(TAG, tempBool, WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, tempBool, WARNING);
 
     // Verify doxm.devowneruuid != nil UUID.
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDoxmDevOwnerId(&tempUuid), ERROR);
-    VERIFY_TRUE(TAG, !IsNilUuid(&tempUuid), WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, !IsNilUuid(&tempUuid), WARNING);
 
     // Verify doxm.deviceuuid != nil UUID.
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDoxmDeviceID(&tempUuid), ERROR);
-    VERIFY_TRUE(TAG, !IsNilUuid(&tempUuid), WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, !IsNilUuid(&tempUuid), WARNING);
 
     // doxm.sct and doxm.oxmsel retain previous values (checked by CTT)
 
     // Verify implemented SVRs with rowneruuid Property have non-Nil rowneruuid
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetAclRownerId(&tempUuid), ERROR);
-    VERIFY_TRUE(TAG, !IsNilUuid(&tempUuid), WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, !IsNilUuid(&tempUuid), WARNING);
 
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetCredRownerId(&tempUuid), ERROR);
-    VERIFY_TRUE(TAG, !IsNilUuid(&tempUuid), WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, !IsNilUuid(&tempUuid), WARNING);
 
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDoxmRownerId(&tempUuid), ERROR);
-    VERIFY_TRUE(TAG, !IsNilUuid(&tempUuid), WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, !IsNilUuid(&tempUuid), WARNING);
 
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetPstatRownerId(&tempUuid), ERROR);
-    VERIFY_TRUE(TAG, !IsNilUuid(&tempUuid), WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, !IsNilUuid(&tempUuid), WARNING);
 
     // Verify each rowneruuid, devowneruuid has a corresponding /cred entry
     // TODO [IOT-2023]
@@ -235,15 +235,15 @@ static bool IsReadyToEnterSRESET()
 
     // Verify doxm.owned == TRUE.
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDoxmIsOwned(&tempBool), ERROR);
-    VERIFY_TRUE(TAG, tempBool, WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, tempBool, WARNING);
 
     // Verify doxm.devowneruuid != nil UUID.
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDoxmDevOwnerId(&tempUuid), ERROR);
-    VERIFY_TRUE(TAG, !IsNilUuid(&tempUuid), WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, !IsNilUuid(&tempUuid), WARNING);
 
     // Verify doxm.deviceuuid != nil UUID.
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDoxmDeviceID(&tempUuid), ERROR);
-    VERIFY_TRUE(TAG, !IsNilUuid(&tempUuid), WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, !IsNilUuid(&tempUuid), WARNING);
 
     // doxm.sct and doxm.oxmsel retain previous values (checked by CTT)
 

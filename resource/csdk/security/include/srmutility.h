@@ -64,10 +64,10 @@ struct OicParseQueryIter
 
 /**
  * Macro to verify expression evaluates to bool true.
- * eg: VERIFY_TRUE(TAG, OC_STACK_OK == foo(), ERROR);
+ * eg: VERIFY_TRUE_OR_EXIT(TAG, OC_STACK_OK == foo(), ERROR);
  * @note Invoking function must define "exit:" label for goto functionality to work correctly.
  */
-#define VERIFY_TRUE(tag, op, logLevel) do{ if (!(op)) \
+#define VERIFY_TRUE_OR_EXIT(tag, op, logLevel) do{ if (!(op)) \
             {OIC_LOG_V((logLevel), tag, "%s:" #op "evaluates to false!",__func__); \
             goto exit; } }while(0)
 
