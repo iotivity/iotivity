@@ -75,6 +75,7 @@ namespace OIC
                 const std::string DOOR = "oic.d.door";
                 const std::string RECEIVER = "oic.d.receiver";
                 const std::string TELEVISION = "oic.d.tv";
+                const std::string CAMERA = "oic.d.camera";
             }
 
             namespace RESOURCE_TYPE
@@ -86,6 +87,7 @@ namespace OIC
                 const std::string AUDIO = "oic.r.audio";
                 const std::string MEDIA_INPUT = "oic.r.media.input";
                 const std::string MEDIA_OUTPUT = "oic.r.media.output";
+                const std::string MEDIA = "oic.r.media";
             }
 
             namespace INTERFACE

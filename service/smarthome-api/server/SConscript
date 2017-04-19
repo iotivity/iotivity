@@ -75,6 +75,7 @@ smarthome_server_src = [device_dir + 'src/SHBaseDevice.cpp',
                         device_dir + 'src/BlindDevice.cpp',
                         device_dir + 'src/ReceiverDevice.cpp',
                         device_dir + 'src/TelevisionDevice.cpp',
+                        device_dir + 'src/CameraDevice.cpp',
                         resource_dir + 'src/SHBaseResource.cpp',
                         resource_dir + 'src/SHBaseResource_Impl.cpp',
                         resource_dir + 'src/BinarySwitchResource.cpp',
@@ -86,7 +87,8 @@ smarthome_server_src = [device_dir + 'src/SHBaseDevice.cpp',
                         resource_dir + 'src/AudioResource.cpp',
                         resource_dir + 'src/MediaSourceResource.cpp',
                         resource_dir + 'src/MediaSourceInputResource.cpp',
-                        resource_dir + 'src/MediaSourceOutputResource.cpp']
+                        resource_dir + 'src/MediaSourceOutputResource.cpp',
+                        resource_dir + 'src/MediaResource.cpp']
 
 smarthomelib = smarthome_env.SharedLibrary('smarthome_server_api', smarthome_server_src)
 #env.StaticLibrary('smarthome_server_api', smarthome_server_src)

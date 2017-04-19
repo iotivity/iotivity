@@ -24,6 +24,7 @@
 #include <RemoteModeResource.h>
 #include <RemoteLockStatusResource.h>
 #include <RemoteOpenLevelResource.h>
+#include <RemoteMediaResource.h>
 #include <sstream>
 #include "logger.h"
 
@@ -151,6 +152,23 @@ namespace OIC
                         if (!isVerified)
                         {
                             shResource = new RemoteOpenLevelResource;
+                            isVerified = true;
+                        }
+                        else
+                        {
+                            if (shResource)
+                            {
+                                delete shResource;
+                                shResource = new SHBaseRemoteResource;
+                                break;
+                            }
+                        }
+                    }
+                    else if (*iter == RESOURCE_TYPE::MEDIA)
+                    {
+                        if (!isVerified)
+                        {
+                            shResource = new RemoteMediaResource;
                             isVerified = true;
                         }
                         else

@@ -26,10 +26,12 @@
 #include <RemoteDryerDevice.h>
 #include <RemoteWaterValveDevice.h>
 #include <RemoteBlindDevice.h>
+#include <RemoteCameraDevice.h>
 #include <RemoteBinarySwitchResource.h>
 #include <RemoteModeResource.h>
 #include <RemoteLockStatusResource.h>
 #include <RemoteOpenLevelResource.h>
+#include <RemoteMediaResource.h>
 #include "logger.h"
 #include <typeinfo>
 
@@ -151,6 +153,16 @@ namespace OIC
                         {
                             blind->m_remoteOpenLevel =
                                 dynamic_cast<RemoteOpenLevelResource*>(resource);
+                        }
+                    }
+                    else if (device->hasDeviceType(DEVICE_TYPE::CAMERA))
+                    {
+                        RemoteCameraDevice *camera = dynamic_cast<RemoteCameraDevice*>(device);
+
+                        if (resource->hasResourceType(RESOURCE_TYPE::MEDIA))
+                        {
+                            camera->m_remoteMedia =
+                                dynamic_cast<RemoteMediaResource*>(resource);
                         }
                     }
                     //TODO any other pre-defined device will be added here.
@@ -278,6 +290,24 @@ namespace OIC
                         if (!isVerified)
                         {
                             device = new RemoteBlindDevice;
+                            isVerified = true;
+                        }
+                        else
+                        {
+                            if (device)
+                            {
+                                delete device;
+                                device = new SHBaseRemoteDevice;
+                                break;
+                            }
+                        }
+
+                    }
+                    else if (0 == DEVICE_TYPE::CAMERA.compare(deviceType))
+                    {
+                        if (!isVerified)
+                        {
+                            device = new RemoteCameraDevice;
                             isVerified = true;
                         }
                         else
