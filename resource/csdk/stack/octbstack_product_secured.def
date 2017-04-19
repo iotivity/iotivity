@@ -75,6 +75,3 @@ SetUserConfirmCB
 UnsetUserConfirmCB
 SetVerifyOption
 VerifyOwnershipTransfer
-
-registerTimer
-unregisterTimer
