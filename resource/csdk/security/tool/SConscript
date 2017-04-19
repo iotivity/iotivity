@@ -64,8 +64,7 @@ else:
         if target_os in ['windows']:
             tools_env.AppendUnique(LIBS = ['sqlite3'])
     tools_env.AppendUnique(LIBS = ['coap', 'mbedtls', 'mbedx509', 'mbedcrypto',
-                                   'ocsrm', 'connectivity_abstraction'])
-
+                                   'ocsrm', 'routingmanager', 'connectivity_abstraction'])
 
 tools_env.PrependUnique(LIBS = ['cjson'])
 

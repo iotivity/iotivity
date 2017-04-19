@@ -58,9 +58,11 @@ srmtest_env.PrependUnique(CPPPATH = [
 srmtest_env.PrependUnique(LIBS = [
         'octbstack_internal',
         'ocsrm',
+        'routingmanager',
         'oc_logger_internal',
         'connectivity_abstraction',
-        'coap'])
+        'coap'
+        ])
 
 if srmtest_env.get('SECURED') == '1':
     srmtest_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
