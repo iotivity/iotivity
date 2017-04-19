@@ -54,7 +54,7 @@ class RERepresentationTest_btc: public ::testing::Test
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationWithData_SRC_P)
 {
 
@@ -88,7 +88,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationWithData_SRC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationWithDataResourceAttributes_SRC_P)
 {
 
@@ -120,7 +120,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationWithDataResourceAttributes_SRC
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationGetUri_SRC_P)
 {
     RCSRepresentation representation;
@@ -148,7 +148,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationGetUri_SRC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationSetUri_SRC_P)
 {
     RCSRepresentation representation;
@@ -177,7 +177,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationSetUri_SRC_P)
  * @post_condition None
  * @expected The API should throw exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationSetUri_ESV_N)
 {
     RCSRepresentation representation;
@@ -206,7 +206,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationSetUri_ESV_N)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationAddInterface_SRC_P)
 {
     RCSRepresentation representation;
@@ -235,7 +235,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationAddInterface_SRC_P)
  * @post_condition None
  * @expected The API Should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationAddInterface_ESV_N)
 {
     RCSRepresentation representation;
@@ -264,7 +264,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationAddInterface_ESV_N)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationGetInterfaces_SRC_P)
 {
     RCSRepresentation representation;
@@ -292,7 +292,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationGetInterfaces_SRC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationClearInterfaces_SRC_P)
 {
     RCSRepresentation representation;
@@ -320,7 +320,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationClearInterfaces_SRC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationGetResourceTypes_SRC_P)
 {
     RCSRepresentation representation;
@@ -348,7 +348,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationGetResourceTypes_SRC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationAddResourceTypes_SRC_P)
 {
     RCSRepresentation representation;
@@ -377,7 +377,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationAddResourceTypes_SRC_P)
  * @post_condition None
  * @expected The API Should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationAddResourceTypes_ESV_N)
 {
     RCSRepresentation representation;
@@ -406,7 +406,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationAddResourceTypes_ESV_N)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationClearResourceTypes_SRC_P)
 {
     RCSRepresentation representation;
@@ -435,7 +435,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationClearResourceTypes_SRC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationGetAttributes_SRC_P)
 {
     RCSRepresentation representation;
@@ -464,7 +464,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationGetAttributes_SRC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationSetAttributes_SRC_P)
 {
     RCSResourceAttributes resourceAttributes;
@@ -494,7 +494,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationSetAttributes_SRC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationGetChildren_SRC_P)
 {
     RCSRepresentation representation;
@@ -524,7 +524,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationGetChildren_SRC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationAddChild_SRC_P)
 {
     RCSRepresentation representation;
@@ -554,7 +554,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationAddChild_SRC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationSetChildren_SRC_P)
 {
     RCSRepresentation representation;
@@ -584,7 +584,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationSetChildren_SRC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationClearChildren_SRC_P)
 {
     RCSRepresentation representation;

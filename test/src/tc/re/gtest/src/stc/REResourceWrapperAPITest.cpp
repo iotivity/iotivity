@@ -100,7 +100,7 @@ std::mutex REResourceWrapperAPITest_stc::s_mutex;
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResource_SQV_P)
 {
     RCSAddress host = RCSAddress::multicast();
@@ -138,7 +138,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResource_SQV_P)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceWithEmptyUri_ESV_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -179,7 +179,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceWithEmptyUri_ESV_N)
  *                 3. Null Callback
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceWithNullCallback_ETC_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -217,7 +217,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceWithNullCallback_ETC_N)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceMultipleTimes_VLCC_P)
 {
     for (int i = 1; i <= 10; i++)
@@ -248,7 +248,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceMultipleTimes_VLCC_P)
  * @post_condition Cancel Discovery Task
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceMultipleTimesWithoutWaiting_STLC_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -296,7 +296,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceMultipleTimesWithoutWaiting
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverAllResources_SQV_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -337,7 +337,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverAllResources_SQV_P)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithoutUri_CCC_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -378,7 +378,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithoutUri_CCC_P)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithoutUri_CACC_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -426,7 +426,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithoutUri_CACC_P)
  * @expected The API should not crash
  **/
 
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithoutUri_EG_N)
 {
 
@@ -468,7 +468,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithoutUri_EG_N)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithoutUri_ICCC_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -508,7 +508,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithoutUri_ICCC_N)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithoutUri_ALVC_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -548,7 +548,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithoutUri_ALVC_N)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByType_CCC_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -591,7 +591,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByType_CCC_P)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByType_CACC_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -639,7 +639,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByType_CACC_P)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithInvalidResType_EG_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -683,7 +683,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithInvalidResType_E
  * @expected The API should not crash
  **/
 
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithInvalidUri_EG_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -730,7 +730,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithInvalidUri_EG_N)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByType_ICCC_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -774,7 +774,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByType_ICCC_N)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByType_ALVC_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -812,7 +812,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByType_ALVC_N)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResources_CCC_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -853,7 +853,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResources_CCC_P)
  * @post_condition None
  * @expected The API should not throw exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResources_ESV_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -890,7 +890,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResources_ESV_P)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResources_CACC_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -937,7 +937,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResources_CACC_P)
  * @expected The API should not crash
  **/
 
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesWithInvalidUri_EG_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -980,7 +980,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesWithInvalidUri_EG_N)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResources_ICCC_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1021,7 +1021,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResources_ICCC_N)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResources_ALVC_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1058,7 +1058,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResources_ALVC_N)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesWithoutResType_CCC_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1097,7 +1097,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesWithoutResType_CCC_P)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesWithoutResType_CACC_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1141,7 +1141,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesWithoutResType_CACC_P)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesWithoutResType_ICCC_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1180,7 +1180,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesWithoutResType_ICCC_N)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesWithoutResType_ALVC_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1217,7 +1217,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesWithoutResType_ALVC_N)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypes_CV_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1269,7 +1269,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypes_CV_P)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypes_NV_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1315,7 +1315,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypes_NV_N)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypesWithUri_CV_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1369,7 +1369,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypesWithUri_CV_P)
  * @post_condition None
  * @expected The API should throw InvalidParameterException
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypesWithUri_NV_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1416,7 +1416,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypesWithUri_NV_N)
  * @post_condition None
  * @expected The API should throw Exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypesWithUri_ESV_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();

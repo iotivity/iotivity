@@ -94,7 +94,7 @@ public:
  * @post_condition None
  * @expected ResourceObject shared pointer should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderAPITest_stc, BuildResourcePointer_SQV_P)
 {
     shared_ptr< RCSResourceObject > resourceObject = NULL;
@@ -124,7 +124,7 @@ TEST_F(REServerBuilderAPITest_stc, BuildResourcePointer_SQV_P)
  * @post_condition None
  * @expected The returned value should be true
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderAPITest_stc, RemoveAttribute_SQV_P)
 {
     bool isRemoved = m_resourceObject->removeAttribute(DEFAULT_POWER_KEY);
@@ -148,7 +148,7 @@ TEST_F(REServerBuilderAPITest_stc, RemoveAttribute_SQV_P)
  * @post_condition None
  * @expected The returned value should be false
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderAPITest_stc, RemoveAttribute_ESV_N)
 {
     RCSResourceAttributes resAttributes;
@@ -176,7 +176,7 @@ TEST_F(REServerBuilderAPITest_stc, RemoveAttribute_ESV_N)
  * @post_condition None
  * @expected TC should not crashed
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderAPITest_stc, RemoveAttributeAndContainsAttribute_SQV_P)
 {
     try {
@@ -210,7 +210,7 @@ TEST_F(REServerBuilderAPITest_stc, RemoveAttributeAndContainsAttribute_SQV_P)
  * @post_condition None
  * @expected No exception should occur
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderAPITest_stc, GetSetRequestHandlerPolicy_DSCC_N)
 {
     try
@@ -236,7 +236,7 @@ TEST_F(REServerBuilderAPITest_stc, GetSetRequestHandlerPolicy_DSCC_N)
  * @post_condition None
  * @expected No exception should occur
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderAPITest_stc, GetAutoNotifyPolicy_DSCC_N)
 {
     try
@@ -264,7 +264,7 @@ TEST_F(REServerBuilderAPITest_stc, GetAutoNotifyPolicy_DSCC_N)
  * @post_condition None
  * @expected Attributes for the resource should be set
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderAPITest_stc, SetAttributes_VLCC_P)
 {
 

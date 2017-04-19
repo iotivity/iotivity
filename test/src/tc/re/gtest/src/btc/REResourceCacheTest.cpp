@@ -98,7 +98,7 @@ public:
  * @post_condition None
  * @expected The API should be called successfully without generating any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, StartCaching_SRC_P)
 {
     try
@@ -123,7 +123,7 @@ TEST_F(REResourceCacheTest_btc, StartCaching_SRC_P)
  * @post_condition None
  * @expected The API should be called successfully without generating any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, StartCachingWithCallback_SRC_P)
 {
     try
@@ -151,7 +151,7 @@ TEST_F(REResourceCacheTest_btc, StartCachingWithCallback_SRC_P)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, StartCaching_NV_N)
 {
     try
@@ -180,7 +180,7 @@ TEST_F(REResourceCacheTest_btc, StartCaching_NV_N)
  * @post_condition None
  * @expected The API should be called successfully without generating any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, StopCaching_SRC_P)
 {
     try
@@ -206,7 +206,7 @@ TEST_F(REResourceCacheTest_btc, StopCaching_SRC_P)
  * @post_condition None
  * @expected The API should be called successfully without generating any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, GetCachedAttributes_SRC_P)
 {
     try
@@ -238,7 +238,7 @@ TEST_F(REResourceCacheTest_btc, GetCachedAttributes_SRC_P)
  * @post_condition None
  * @expected returned Attribute is not empty
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, GetCachedAttribute_SRC_P)
 {
     try
@@ -270,7 +270,7 @@ TEST_F(REResourceCacheTest_btc, GetCachedAttribute_SRC_P)
  * @post_condition None
  * @expected returned Attribute is empty
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, GetCachedAttribute_ECRC_N)
 {
     try
@@ -303,7 +303,7 @@ TEST_F(REResourceCacheTest_btc, GetCachedAttribute_ECRC_N)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, GetCacheState_SRC_P)
 {
     try
@@ -332,7 +332,7 @@ TEST_F(REResourceCacheTest_btc, GetCacheState_SRC_P)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, GetRemoteAttributes_SRC_P)
 {
     try
@@ -359,7 +359,7 @@ TEST_F(REResourceCacheTest_btc, GetRemoteAttributes_SRC_P)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, GetRemoteAttributes_NV_N)
 {
     try
@@ -390,7 +390,7 @@ TEST_F(REResourceCacheTest_btc, GetRemoteAttributes_NV_N)
  * @post_condition None
  * @expected Returned CacheState should not be NULL
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, SetRemoteAttributes_SRC_P)
 {
     try
@@ -419,7 +419,7 @@ TEST_F(REResourceCacheTest_btc, SetRemoteAttributes_SRC_P)
  * @post_condition None
  * @expected Returned CacheState should not be NULL
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, SetRemoteAttributes_DSCC_N)
 {
     try
@@ -446,7 +446,7 @@ TEST_F(REResourceCacheTest_btc, SetRemoteAttributes_DSCC_N)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, getCacheState_SRC_P)
 {
     try
@@ -475,7 +475,7 @@ TEST_F(REResourceCacheTest_btc, getCacheState_SRC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, getCacheState_SRCC_P)
 {
     try
@@ -505,7 +505,7 @@ TEST_F(REResourceCacheTest_btc, getCacheState_SRCC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, isCachedAvailable_SRC_P)
 {
     try
@@ -535,7 +535,7 @@ TEST_F(REResourceCacheTest_btc, isCachedAvailable_SRC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, isCachedAvailable_SRCC_P)
 {
     try
@@ -568,7 +568,7 @@ TEST_F(REResourceCacheTest_btc, isCachedAvailable_SRCC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, GetCachedAttribute_SRCC_P)
 {
     try
@@ -604,7 +604,7 @@ TEST_F(REResourceCacheTest_btc, GetCachedAttribute_SRCC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, GetCachedAttribute_FSV_P)
 {
     try
@@ -640,7 +640,7 @@ TEST_F(REResourceCacheTest_btc, GetCachedAttribute_FSV_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, GetCachedAttribute_RSV_P)
 {
     try
@@ -673,7 +673,7 @@ TEST_F(REResourceCacheTest_btc, GetCachedAttribute_RSV_P)
  * @post_condition None
  * @expected API should throw RCSInvalidKeyException.
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, GetCachedAttribute_ESV_ETC_N)
 {
     m_resource->startCaching(std::bind(&REResourceCacheTest_btc::onCacheUpdated, this, PH::_1));
@@ -694,7 +694,7 @@ TEST_F(REResourceCacheTest_btc, GetCachedAttribute_ESV_ETC_N)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, SetResourceInterface_SRC_P)
 {
     try
@@ -721,7 +721,7 @@ TEST_F(REResourceCacheTest_btc, SetResourceInterface_SRC_P)
  * @post_condition None
  * @expected The API should be called successfully with empty resourcetype
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, SetResourceInterface_ESV_P)
 {
     try
@@ -749,7 +749,7 @@ TEST_F(REResourceCacheTest_btc, SetResourceInterface_ESV_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, SetResourceType_SRC_P)
 {
     try
@@ -777,7 +777,7 @@ TEST_F(REResourceCacheTest_btc, SetResourceType_SRC_P)
  * @post_condition None
  * @expected The API should be called successfully with empty resourcetype
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, SetResourceType_ESV_P)
 {
     try
@@ -806,7 +806,7 @@ TEST_F(REResourceCacheTest_btc, SetResourceType_ESV_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, Put_SRC_P)
 {
     try
@@ -835,7 +835,7 @@ TEST_F(REResourceCacheTest_btc, Put_SRC_P)
  * @post_condition None
  * @expected The API should be called successfully with empty key and value = on
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, Put_Key_ESV_P)
 {
     try
@@ -864,7 +864,7 @@ TEST_F(REResourceCacheTest_btc, Put_Key_ESV_P)
  * @post_condition None
  * @expected The API should be called successfully with key and empty value
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, Put_Value_ESV_P)
 {
     try
@@ -893,7 +893,7 @@ TEST_F(REResourceCacheTest_btc, Put_Value_ESV_P)
  * @expected 1. The API should not generate any exception
  *           2. Return value should empty
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, GetResourceInterface_SRC_P)
 {
     try
@@ -924,7 +924,7 @@ TEST_F(REResourceCacheTest_btc, GetResourceInterface_SRC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, GetResourceType_SRC_P)
 {
     try
@@ -952,7 +952,7 @@ TEST_F(REResourceCacheTest_btc, GetResourceType_SRC_P)
  * @post_condition None
  * @expected The API should return the value which is set by put()
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, Get_SRC_P)
 {
     try
@@ -985,7 +985,7 @@ TEST_F(REResourceCacheTest_btc, Get_SRC_P)
  * @expected 1. The API should throw Exception
  *           2. Should get proper exception message
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, Get_ESV_ETC_P)
 {
     RCSQueryParams m_get;
@@ -1015,7 +1015,7 @@ TEST_F(REResourceCacheTest_btc, Get_ESV_ETC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, GetAll_SRC_P)
 {
     try
@@ -1041,7 +1041,7 @@ TEST_F(REResourceCacheTest_btc, GetAll_SRC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGet_RV_P)
 {
     try
@@ -1068,7 +1068,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGet_RV_P)
  * @post_condition None
  * @expected The API should generate RCSInvalidParameterException
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGet_NV_N)
 {
     EXPECT_THROW(m_resource->get(NULL), RCSInvalidParameterException);
@@ -1086,7 +1086,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGet_NV_N)
  * @post_condition None
  * @expected The API should generate exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGet_ETC_N)
 {
     try
@@ -1115,7 +1115,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGet_ETC_N)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGetCSQ_RV_P)
 {
     RCSQueryParams queryParams;
@@ -1144,7 +1144,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGetCSQ_RV_P)
  * @post_condition None
  * @expected The API should generate RCSInvalidParameterException
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGetCSQ_NV_N)
 {
     RCSQueryParams queryParams;
@@ -1163,7 +1163,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGetCSQ_NV_N)
  * @post_condition None
  * @expected The API should generate exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGetRCSQ_ETC_N)
 {
     RCSQueryParams queryParams;
@@ -1195,7 +1195,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGetRCSQ_ETC_N)
  * @post_condition None
  * @expected The API should generate exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, SetRemoteAttributes_NV_N)
 {
     try
@@ -1226,7 +1226,7 @@ TEST_F(REResourceCacheTest_btc, SetRemoteAttributes_NV_N)
  * @post_condition None
  * @expected The API should generate exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, SetRemoteAttributes_ETC_N)
 {
     try
@@ -1260,7 +1260,7 @@ TEST_F(REResourceCacheTest_btc, SetRemoteAttributes_ETC_N)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSet_RV_P)
 {
     try
@@ -1290,7 +1290,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSet_RV_P)
  * @post_condition None
  * @expected The API should generate exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSet_NV_N)
 {
     RCSResourceAttributes resAttributes;
@@ -1319,7 +1319,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSet_NV_N)
  * @post_condition None
  * @expected The API should not crashed
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSet_ETC_N)
 {
     try
@@ -1352,7 +1352,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSet_ETC_N)
  * @post_condition None
  * @expected The API should be called successfully without generating any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQ_RV_P)
 {
     try
@@ -1384,7 +1384,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQ_RV_P)
  * @post_condition None
  * @expected The API should not crashed
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQ_NV_N)
 {
     RCSQueryParams queryParams;
@@ -1414,7 +1414,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQ_NV_N)
  * @post_condition None
  * @expected The API should not crashed
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQ_ETC_N)
 {
     try
@@ -1448,7 +1448,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQ_ETC_N)
  * @post_condition None
  * @expected The API should be called successfully without any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQRCSREP_SRC_P)
 {
     try
@@ -1479,7 +1479,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQRCSREP_SRC_P)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQRCSREP_NV_N)
 {
     RCSQueryParams queryParams;
@@ -1501,7 +1501,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQRCSREP_NV_N)
  * @post_condition None
  * @expected Should return valid resource uri
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, ToOCResource_SRC_P)
 {
     std::shared_ptr<OC::OCResource> ocRes;
@@ -1522,7 +1522,7 @@ TEST_F(REResourceCacheTest_btc, ToOCResource_SRC_P)
  * @post_condition None
  * @expected Should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheTest_btc, ToOCResource_NV_N)
 {
     std::shared_ptr<OC::OCResource> ocRes;

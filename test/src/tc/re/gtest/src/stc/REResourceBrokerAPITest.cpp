@@ -60,7 +60,7 @@ protected:
 #ifdef __LINUX__
         CommonUtil::killApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif        
+#endif
         CommonTestUtil::runCommonTCTearDownPart();
     }
 
@@ -82,7 +82,7 @@ public:
  * @post_condition None
  * @expected No crash should occur
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerAPITest_stc, StartMonitoringTwice_VLCC_P)
 {
     try
@@ -120,7 +120,7 @@ TEST_F(REResourceBrokerAPITest_stc, StartMonitoringTwice_VLCC_P)
  * @expected 1. isMonitoring() should return True
  *           2. No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerAPITest_stc, StartMonitoringWithIsMonitoring_SQV_P)
 {
     try
@@ -153,7 +153,7 @@ TEST_F(REResourceBrokerAPITest_stc, StartMonitoringWithIsMonitoring_SQV_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerAPITest_stc, StopMonitoringAfterStartMonitoring_SQV_P)
 {
     try
@@ -185,7 +185,7 @@ TEST_F(REResourceBrokerAPITest_stc, StopMonitoringAfterStartMonitoring_SQV_P)
  * @expected 1. isMonitoring() should return false after stopMonitoring()
  *           2. No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerAPITest_stc, StopMonitoringWithIsMonitoring_GSRV_P)
 {
     try
@@ -220,7 +220,7 @@ TEST_F(REResourceBrokerAPITest_stc, StopMonitoringWithIsMonitoring_GSRV_P)
  * @post_condition None
  * @expected No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerAPITest_stc, StopMonitoringTwice_ITLC_P)
 {
     try
@@ -252,7 +252,7 @@ TEST_F(REResourceBrokerAPITest_stc, StopMonitoringTwice_ITLC_P)
  * @expected 1. No crash occurs
  *           2. Should get ResourceState = NONE
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerAPITest_stc, GetState_SQV_P)
 {
     ResourceState resourceState = m_resource->getState();
@@ -277,7 +277,7 @@ TEST_F(REResourceBrokerAPITest_stc, GetState_SQV_P)
  * @expected 1. No crash occurs
  *           2. Should get ResourceState = REQUESTED
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerAPITest_stc, GetStateAfterStartMonitoring_SQV_P)
 {
     try
@@ -306,15 +306,15 @@ TEST_F(REResourceBrokerAPITest_stc, GetStateAfterStartMonitoring_SQV_P)
  * @target ResourceState getState()
  * @test_data None
  * @pre_condition 1. Remote Resource Object should be instantialized
- *                2. Perform startMonitoring() API             
- * @procedure 1. Perform getState() API 
+ *                2. Perform startMonitoring() API
+ * @procedure 1. Perform getState() API
  *            2. wait
  *            3. Again perform getState() API
  * @post_condition Perform stopMonitoring() API
  * @expected 1. No crash occurs
  *           2. Should get ResourceState = ALIVE
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerAPITest_stc, GetState_STCC_P)
 {
     ResourceState resourceState;
@@ -365,7 +365,7 @@ TEST_F(REResourceBrokerAPITest_stc, GetState_STCC_P)
  * @expected 1. isMonitoring() should return True and false one by one
  *           2. No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerAPITest_stc, IsMonitoring_SCV_P)
 {
     bool isMtoring;
@@ -408,12 +408,12 @@ TEST_F(REResourceBrokerAPITest_stc, IsMonitoring_SCV_P)
  * @pre_condition Remote Resource Object should be instantialized
  * @procedure 1. Check the value of isMonitoring()
  *            2. Perform startMonitoring() API
- * 		      3. Check the value of isMonitoring()
+ *               3. Check the value of isMonitoring()
  *            4. Perform stopMonitoring() API
  * @post_condition None
  * @expected No crash should occur
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerAPITest_stc, IsMonitoring_USTC_N)
 {
     bool isMtoring;
@@ -459,7 +459,7 @@ TEST_F(REResourceBrokerAPITest_stc, IsMonitoring_USTC_N)
  * @expected 1. isObservable() should return True
  *           2. No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerAPITest_stc, IsObservable_SQV_P)
 {
     try
@@ -497,7 +497,7 @@ TEST_F(REResourceBrokerAPITest_stc, IsObservable_SQV_P)
  * @post_condition None
  * @expected No crash should occur
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerAPITest_stc, IsObservable_SCV_P)
 {
     bool isObable;
@@ -539,7 +539,7 @@ TEST_F(REResourceBrokerAPITest_stc, IsObservable_SCV_P)
  * @expected 1. isObservable() should return True
  *           2. No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerAPITest_stc, IsObservable_USTC_N)
 {
     bool isObable;
@@ -587,7 +587,7 @@ TEST_F(REResourceBrokerAPITest_stc, IsObservable_USTC_N)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerAPITest_stc, StopMonitoring_SLCC_P)
 {
     try
@@ -621,7 +621,7 @@ TEST_F(REResourceBrokerAPITest_stc, StopMonitoring_SLCC_P)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerAPITest_stc, StopMonitoring_USTC_N)
 {
     try
@@ -645,18 +645,18 @@ TEST_F(REResourceBrokerAPITest_stc, StopMonitoring_USTC_N)
 /**
  * @since 2016-03-02
  * @see None
- * @objective Test 'stopMonitoring' function 
+ * @objective Test 'stopMonitoring' function
  * @target void stopMonitoring()
  * @test_data None
  * @pre_condition Remote Resource Object should be instantialized
  * @procedure 1. Perform stopMonitoring()
  *            2. Perform startMonitoring() API
- * 			  3. Again Perform stopMonitoring()
- * 			  4. Repeat 1~3 multiple times
+ *            3. Again Perform stopMonitoring()
+ *            4. Repeat 1~3 multiple times
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerAPITest_stc, StopMonitoring_STLSEC_N)
 {
     try

@@ -215,6 +215,9 @@ if 'tc' in test:
     elif 'android' in target_os and 'ca' in module and 'gtest' in framework:
         SConscript(iotivity_test_root + '/extlibs/SConstruct')
 
+env.AppendUnique(PLATFORM="win")
+env.AppendUnique(PATH = os.environ['PATH'])
 Export('env')
+env.SConscript('external_libs.scons')
 
 print '---------------Finished Loading Common Config---------------'

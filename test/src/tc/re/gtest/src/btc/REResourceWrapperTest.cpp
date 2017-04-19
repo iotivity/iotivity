@@ -85,7 +85,7 @@ public:
  * @post_condition None
  * @expected Returned uri should not be empty
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, GetUri_SRC_P)
 {
     string uri = "";
@@ -113,7 +113,7 @@ TEST_F(REResourceWrapperTest_btc, GetUri_SRC_P)
  * @post_condition None
  * @expected Returned uri should not be empty
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, GetUri_SRCC_P)
 {
     string uri = "";
@@ -141,7 +141,7 @@ TEST_F(REResourceWrapperTest_btc, GetUri_SRCC_P)
  * @post_condition None
  * @expected Returned address should not be empty
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, GetAddress_SRC_P)
 {
     string address = "";
@@ -166,7 +166,7 @@ TEST_F(REResourceWrapperTest_btc, GetAddress_SRC_P)
  * @expected 1. Returned type list should not be empty
  *           2. At least one type should not be an empty string
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, GetTypes_SRC_P)
 {
     vector< string > typeList;
@@ -192,7 +192,7 @@ TEST_F(REResourceWrapperTest_btc, GetTypes_SRC_P)
  * @expected 1. Returned type list should not be empty
  *           2. At least one type should not be an empty string
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, GetTypes_SRCC_P)
 {
     vector< string > typeList;
@@ -218,7 +218,7 @@ TEST_F(REResourceWrapperTest_btc, GetTypes_SRCC_P)
  * @expected 1. Returned interface list should not be empty
  *           2. At least one interface should not be an empty string
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, GetInterfaces_SRC_P)
 {
     vector< string > addressList;
@@ -244,7 +244,7 @@ TEST_F(REResourceWrapperTest_btc, GetInterfaces_SRC_P)
  * @expected 1. Returned interface list should not be empty
  *           2. At least one interface should not be an empty string
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, GetInterfaces_SRCC_P)
 {
     vector< string > addressList;
@@ -269,7 +269,7 @@ TEST_F(REResourceWrapperTest_btc, GetInterfaces_SRCC_P)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, GetInstance_SRC_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -297,7 +297,7 @@ TEST_F(REResourceWrapperTest_btc, GetInstance_SRC_P)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResource_SRC_P)
 {
     RCSDiscoveryManager::getInstance();
@@ -333,7 +333,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResource_SRC_P)
  * @post_condition None
  * @expected The API should not crashed
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceUri_ESV_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -376,7 +376,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceUri_ESV_N)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResource_RSV_P)
 {
     RCSDiscoveryManager::getInstance();
@@ -413,7 +413,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResource_RSV_P)
  * @post_condition None
  * @expected API should not crashed
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceCB_NV_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -449,7 +449,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceCB_NV_N)
  * @post_condition None
  * @expected API should not crashed
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceCB_ECRC_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -489,7 +489,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceCB_ECRC_N)
  * @post_condition None
  * @expected API should not crashed 
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResource_USV_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -530,7 +530,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResource_USV_N)
  * @post_condition None
  * @expected API should not crashed
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceHost_URSV_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -575,7 +575,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceHost_URSV_N)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutUri_SRC_P)
 {
     RCSDiscoveryManager::getInstance();
@@ -611,7 +611,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutUri_SRC_P)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutUri_RSV_P)
 {
     RCSDiscoveryManager::getInstance();
@@ -649,7 +649,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutUri_RSV_P)
  * @post_condition None
  * @expected API should not crashed
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutUri_USV_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -687,7 +687,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutUri_USV_N)
  * @post_condition None
  * @expected the API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutUri_URSV_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -726,7 +726,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutUri_URSV_N)
  * @post_condition None
  * @expected the api should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutUri_NV_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -760,7 +760,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutUri_NV_N)
  * @post_condition None
  * @expected the api should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutUriCB_NV_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -794,7 +794,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutUriCB_NV_N)
  * @post_condition None
  * @expected the API should generate exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutUriCB_ECRC_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -833,7 +833,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutUriCB_ECRC_N)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutResType_SRC_P)
 {
     RCSDiscoveryManager::getInstance();
@@ -869,7 +869,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutResType_SRC_P)
  * @post_condition None
  * @expected API should not generate exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutResType_RSV_P)
 {
     RCSDiscoveryManager::getInstance();
@@ -908,7 +908,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutResType_RSV_P)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutResType_ESV_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -949,7 +949,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutResType_ESV_N)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutResTypeCB_NV_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -985,7 +985,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutResTypeCB_NV_N)
  * @post_condition None
  * @expected The API should generate exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutResTypeCB_ECRC_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -1025,7 +1025,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutResTypeCB_ECRC_N)
  * @post_condition None
  * @expected API should not crashed
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutResType_USV_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -1065,7 +1065,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutResType_USV_N)
  * @post_condition None
  * @expected The API should not crashed
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutResType_URSV_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -1103,7 +1103,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutResType_URSV_N)
  * @post_condition None
  * @expected The API should throw exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceHostWithoutResType_ECRC_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -1147,7 +1147,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceHostWithoutResType_ECRC_N)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutUriAndResType_SRC_P)
 {
     RCSDiscoveryManager::getInstance();
@@ -1179,7 +1179,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutUriAndResType_SRC_P)
  * @post_condition None
  * @expected API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceUnicast_FSV_P)
 {
     RCSDiscoveryManager::getInstance();
@@ -1216,7 +1216,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceUnicast_FSV_P)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceMulticastCB_NV_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -1250,7 +1250,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceMulticastCB_NV_N)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceMulticastCB_ECRC_N)
 {
     RCSDiscoveryManager::getInstance();
@@ -1290,7 +1290,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceMulticastCB_ECRC_N)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypes_SRC_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1332,7 +1332,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypes_SRC_P)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypes_ESV_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1373,7 +1373,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypes_ESV_P)
  * @post_condition None
  * @expected Should not be crashed
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypes_Cb_NV_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1416,7 +1416,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypes_Cb_NV_N)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypes_ETC_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1462,7 +1462,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypes_ETC_N)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypes_USV_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1505,7 +1505,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypes_USV_N)
  * @post_condition None
  * @expected returned discovery manager should not be null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypesWithUri_SRC_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1549,7 +1549,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypesWithUri_SRC_P)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypesWithUri_ResourceTypes_ESV_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1591,7 +1591,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypesWithUri_ResourceTypes_E
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypesWithUri_Uri_ESV_P)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1634,7 +1634,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypesWithUri_Uri_ESV_P)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypesWithUri_Cb_NV_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1679,7 +1679,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypesWithUri_Cb_NV_N)
  * @post_condition None
  * @expected The API should throw exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypesWithUri_Cb_ETC_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1727,7 +1727,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypesWithUri_Cb_ETC_N)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypesWithUri_ResourceTypes_USV_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -1771,7 +1771,7 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypesWithUri_ResourceTypes_U
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypesWithUri_Uri_USV_N)
 {
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();

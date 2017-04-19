@@ -135,7 +135,7 @@ public:
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, StartCachingWithIsCaching_SQV_P)
 {
     try
@@ -170,7 +170,7 @@ TEST_F(REResourceCacheAPITest_stc, StartCachingWithIsCaching_SQV_P)
  * @expected 1. isCachedAvailable() should return true.
  *           2. No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, StartCachingWithIsCachedAvailable_SQV_P)
 {
     try
@@ -206,7 +206,7 @@ TEST_F(REResourceCacheAPITest_stc, StartCachingWithIsCachedAvailable_SQV_P)
  * @post_condition None
  * @expected No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, StartCachingTwice_ECRC_N)
 {
     try
@@ -243,7 +243,7 @@ TEST_F(REResourceCacheAPITest_stc, StartCachingTwice_ECRC_N)
  * @post_condition None
  * @expected The API should throw exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, StartCaching_ETC_N)
 {
     try
@@ -278,7 +278,7 @@ TEST_F(REResourceCacheAPITest_stc, StartCaching_ETC_N)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, StopCaching_SQV_P)
 {
     try
@@ -317,7 +317,7 @@ TEST_F(REResourceCacheAPITest_stc, StopCaching_SQV_P)
  * @post_condition None
  * @expected No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, StopCachingWithIsCaching_SCV_P)
 {
     try
@@ -352,7 +352,7 @@ TEST_F(REResourceCacheAPITest_stc, StopCachingWithIsCaching_SCV_P)
  * @post_condition None
  * @expected Returned Resource Attributes is not null
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, GetCachedAttributes_SQV_P)
 {
     try
@@ -391,7 +391,7 @@ TEST_F(REResourceCacheAPITest_stc, GetCachedAttributes_SQV_P)
  * @post_condition None
  * @expected Should return correct exception.
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, GetCachedAttributes_DSCC_N)
 {
     try
@@ -430,7 +430,7 @@ TEST_F(REResourceCacheAPITest_stc, GetCachedAttributes_DSCC_N)
  * @post_condition None
  * @expected returned Attribute is not empty
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, GetCachedAttribute_SQV_P)
 {
     try
@@ -471,7 +471,7 @@ TEST_F(REResourceCacheAPITest_stc, GetCachedAttribute_SQV_P)
  * @post_condition None
  * @expected Should return exception.
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, GetCachedAttributeWithInvalidKey_EG_N)
 {
     try
@@ -508,7 +508,7 @@ TEST_F(REResourceCacheAPITest_stc, GetCachedAttributeWithInvalidKey_EG_N)
  * @post_condition None
  * @expected returned Attribute is empty
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, GetCachedAttribute_DSCC_N)
 {
     try
@@ -546,7 +546,7 @@ TEST_F(REResourceCacheAPITest_stc, GetCachedAttribute_DSCC_N)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, GetCacheState_SCV_P)
 {
     try
@@ -578,7 +578,7 @@ TEST_F(REResourceCacheAPITest_stc, GetCacheState_SCV_P)
  * @post_condition None
  * @expected Should return CacheState = UNREADY
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, GetCacheStateAfterStartCaching_SQV_P)
 {
     try
@@ -615,7 +615,7 @@ TEST_F(REResourceCacheAPITest_stc, GetCacheStateAfterStartCaching_SQV_P)
  * @post_condition None
  * @expected Should return CacheState = READY
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, GetCacheStateAfterStartCachingAndWait_SCV_P)
 {
     try
@@ -653,7 +653,7 @@ TEST_F(REResourceCacheAPITest_stc, GetCacheStateAfterStartCachingAndWait_SCV_P)
  * @post_condition None
  * @expected Should return CacheState = READY
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, GetCacheState_STCC_P)
 {
     CacheState cacheState;
@@ -704,7 +704,7 @@ TEST_F(REResourceCacheAPITest_stc, GetCacheState_STCC_P)
  * @post_condition None
  * @expected No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, GetCacheState_SLCC_P)
 {
     CacheState cacheState;
@@ -753,7 +753,7 @@ TEST_F(REResourceCacheAPITest_stc, GetCacheState_SLCC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, GetRemoteAttributes_SQV_P)
 {
     try
@@ -784,7 +784,7 @@ TEST_F(REResourceCacheAPITest_stc, GetRemoteAttributes_SQV_P)
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, GetRemoteAttributes_ETC_N)
 {
     try
@@ -821,7 +821,7 @@ TEST_F(REResourceCacheAPITest_stc, GetRemoteAttributes_ETC_N)
  * @post_condition None
  * @expected Returned CacheState should not be NULL
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, SetRemoteAttributes_SQV_P)
 {
     try
@@ -867,7 +867,7 @@ TEST_F(REResourceCacheAPITest_stc, SetRemoteAttributes_SQV_P)
  * @post_condition None
  * @expected Received value should same as set value
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, SetAndGetRemoteAttributes_GSRV_P)
 {
     try
@@ -919,7 +919,7 @@ TEST_F(REResourceCacheAPITest_stc, SetAndGetRemoteAttributes_GSRV_P)
  * @post_condition None
  * @expected Received value should same as set value
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, SetRemoteAttributesAndGetCashedAttribute_SQV_P)
 {
     try
@@ -968,7 +968,7 @@ TEST_F(REResourceCacheAPITest_stc, SetRemoteAttributesAndGetCashedAttribute_SQV_
  * @post_condition None
  * @expected The API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, SetRemoteAttributes_NV_N)
 {
     try
@@ -1001,7 +1001,7 @@ TEST_F(REResourceCacheAPITest_stc, SetRemoteAttributes_NV_N)
  * @post_condition None
  * @expected Should return correct exception.
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, SetRemoteAttributesWithNullCallback_N)
 {
     try
@@ -1039,7 +1039,7 @@ TEST_F(REResourceCacheAPITest_stc, SetRemoteAttributesWithNullCallback_N)
  * @expected 1. isCaching() should return True
  *           2. No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, IsCaching_SQV_P)
 {
     bool isCach;
@@ -1082,7 +1082,7 @@ TEST_F(REResourceCacheAPITest_stc, IsCaching_SQV_P)
  * @expected 1. isCaching() should return True and false one by one
  *           2. No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, IsCaching_SCV_P)
 {
     bool isCaching;
@@ -1132,7 +1132,7 @@ TEST_F(REResourceCacheAPITest_stc, IsCaching_SCV_P)
  * @expected 1. isCaching() should return True and false one by one
  *           2. No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, IsCaching_SLCC_P)
 {
     bool isCaching;
@@ -1189,7 +1189,7 @@ TEST_F(REResourceCacheAPITest_stc, IsCaching_SLCC_P)
  * @expected 1. isCaching() should return True
  *           2. No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, IsCaching_USTC_N)
 {
     bool isCaching;
@@ -1241,7 +1241,7 @@ TEST_F(REResourceCacheAPITest_stc, IsCaching_USTC_N)
  * @expected 1. isCaching() should return True
  *           2. No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, IsCaching_STLSEC_N)
 {
     bool isCaching;
@@ -1292,7 +1292,7 @@ TEST_F(REResourceCacheAPITest_stc, IsCaching_STLSEC_N)
  * @expected 1. isCachedAvailable() should return True
  *           2. No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, IsCachedAvailable_SQV_P)
 {
     bool isCach;
@@ -1335,7 +1335,7 @@ TEST_F(REResourceCacheAPITest_stc, IsCachedAvailable_SQV_P)
  * @expected 1. isCachedAvailable() should return True and false one by one
  *           2. No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, IsCachedAvailable_SCV_P)
 {
     bool isCaching;
@@ -1385,7 +1385,7 @@ TEST_F(REResourceCacheAPITest_stc, IsCachedAvailable_SCV_P)
  * @expected 1. isCachedAvailable() should return True and false one by one
  *           2. No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, IsCachedAvailable_SLCC_P)
 {
     bool isCaching;
@@ -1438,7 +1438,7 @@ TEST_F(REResourceCacheAPITest_stc, IsCachedAvailable_SLCC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, GetResourceInterface_SQV_P)
 {
     try
@@ -1472,7 +1472,7 @@ TEST_F(REResourceCacheAPITest_stc, GetResourceInterface_SQV_P)
  * @expected 1. The API should not generate throw exception
  *           2. Should get empty string for interface
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, SetGetResourceInterface_ESV_P)
 {
     try
@@ -1506,7 +1506,7 @@ TEST_F(REResourceCacheAPITest_stc, SetGetResourceInterface_ESV_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, GetResourceType_SQV_P)
 {
     try
@@ -1540,7 +1540,7 @@ TEST_F(REResourceCacheAPITest_stc, GetResourceType_SQV_P)
  * @post_condition None
  * @expected The API should throw exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, SetGetResourceType_ESV_P)
 {
     try
@@ -1574,7 +1574,7 @@ TEST_F(REResourceCacheAPITest_stc, SetGetResourceType_ESV_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, Get_SQV_P)
 {
     try
@@ -1613,7 +1613,7 @@ TEST_F(REResourceCacheAPITest_stc, Get_SQV_P)
  * @expected 1. The API should not throw exception
  *           2. Should get proper value
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, PutGet_ESV_P)
 {
     try
@@ -1649,7 +1649,7 @@ TEST_F(REResourceCacheAPITest_stc, PutGet_ESV_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, GetAll_SQV_P)
 {
     try
@@ -1689,7 +1689,7 @@ TEST_F(REResourceCacheAPITest_stc, GetAll_SQV_P)
  * @post_condition None
  * @expected The API should not throw any exception with empty key and empty value
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, PutAndGetAll_ESV_P)
 {
     try
@@ -1726,7 +1726,7 @@ TEST_F(REResourceCacheAPITest_stc, PutAndGetAll_ESV_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectGet_CV_P)
 {
     try
@@ -1758,7 +1758,7 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectGet_CV_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectGetWithQueryParams_CV_P)
 {
     RCSQueryParams queryParams;
@@ -1793,7 +1793,7 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectGetWithQueryParams_CV_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSet_CV_P)
 {
     try
@@ -1832,7 +1832,7 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSet_CV_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSet_SQV_P)
 {
     try
@@ -1878,7 +1878,7 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSet_SQV_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSetWithQueryParams_CV_P)
 {
     try
@@ -1919,7 +1919,7 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSetWithQueryParams_CV_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSetWithQueryParams_SQV_P)
 {
     try
@@ -1970,7 +1970,7 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSetWithQueryParams_SQV_P)
  * @post_condition None
  * @expected 1. set request should be sucessful with resource representation 2. should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSetRCSQRCSREP_SQV_P)
 {
     try
@@ -2018,7 +2018,7 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSetRCSQRCSREP_SQV_P)
  * @post_condition None
  * @expected onPut callback is called and response is found correctly
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, ToOCResourceAndSendPutRequest_SQV_P)
 {
     try
@@ -2059,7 +2059,7 @@ TEST_F(REResourceCacheAPITest_stc, ToOCResourceAndSendPutRequest_SQV_P)
  * @post_condition None
  * @expected onDelete callback is called and response is found correctly
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceCacheAPITest_stc, ToOCResourceAndSendDeleteRequest_SQV_P)
 {
     try

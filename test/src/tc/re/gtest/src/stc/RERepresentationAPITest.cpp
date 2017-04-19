@@ -55,7 +55,7 @@ class RERepresentationAPITest_stc: public ::testing::Test
  * @post_condition None
  * @expected returned uri should be matched
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationAPITest_stc, RCSRepresentationSetGetURI_GSRV_P)
 {
     std::string uriString = "uri";
@@ -93,7 +93,7 @@ TEST_F(RERepresentationAPITest_stc, RCSRepresentationSetGetURI_GSRV_P)
  * @post_condition None
  * @expected getInterface should return size of interfaces
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationAPITest_stc, RCSRepresentationAddInterfaceGetInterface_SQV_P)
 {
 
@@ -139,7 +139,7 @@ TEST_F(RERepresentationAPITest_stc, RCSRepresentationAddInterfaceGetInterface_SQ
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationAPITest_stc, RCSRepresentationSetGetAttributes_SQV_P)
 {
 
@@ -180,7 +180,7 @@ TEST_F(RERepresentationAPITest_stc, RCSRepresentationSetGetAttributes_SQV_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(RERepresentationAPITest_stc, RCSRepresentationAddGetResourceTypes_SQV_P)
 {
     RCSRepresentation representation;

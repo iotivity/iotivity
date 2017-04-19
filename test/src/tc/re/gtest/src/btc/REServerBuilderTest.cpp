@@ -82,7 +82,7 @@ public:
  * @post_condition None
  * @expected Should not throw exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, Builder_SRC_P)
 {
     try
@@ -113,7 +113,7 @@ TEST_F(REServerBuilderTest_btc, Builder_SRC_P)
  * @post_condition None
  * @expected The API should not throw any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, SetDiscoverableAsTrue_SRC_P)
 {
     bool discoverable = true;
@@ -140,7 +140,7 @@ TEST_F(REServerBuilderTest_btc, SetDiscoverableAsTrue_SRC_P)
  * @post_condition None
  * @expected The API should not throw any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, SetDiscoverableAsFalse_SRC_P)
 {
     bool discoverable = false;
@@ -167,7 +167,7 @@ TEST_F(REServerBuilderTest_btc, SetDiscoverableAsFalse_SRC_P)
  * @post_condition None
  * @expected The API should not throw any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, SetObservableAsTrue_SRC_P)
 {
     bool observable = true;
@@ -194,7 +194,7 @@ TEST_F(REServerBuilderTest_btc, SetObservableAsTrue_SRC_P)
  * @post_condition None
  * @expected The API should not throw any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, SetObservableAsFalse_SRC_P)
 {
     bool observable = false;
@@ -221,7 +221,7 @@ TEST_F(REServerBuilderTest_btc, SetObservableAsFalse_SRC_P)
  * @post_condition None
  * @expected The API should not throw exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, SetAttributes_SRC_P)
 {
     RCSResourceAttributes resAttributes;
@@ -250,7 +250,7 @@ TEST_F(REServerBuilderTest_btc, SetAttributes_SRC_P)
  * @post_condition None
  * @expected the API should not crash
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, SetAttributes_ECRC_N)
 {
     RCSResourceAttributes resAttributes;
@@ -279,7 +279,7 @@ TEST_F(REServerBuilderTest_btc, SetAttributes_ECRC_N)
  * @post_condition None
  * @expected The API should not generate exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, SetAttribute_SRC_P)
 {
     RCSResourceAttributes resAttributes;
@@ -308,7 +308,7 @@ TEST_F(REServerBuilderTest_btc, SetAttribute_SRC_P)
  * @post_condition None
  * @expected The API should not create exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, SetAttribute_ESV_P)
 {
     RCSResourceAttributes resAttributes;
@@ -339,7 +339,7 @@ TEST_F(REServerBuilderTest_btc, SetAttribute_ESV_P)
  * @post_condition None
  * @expected The returned value should not be empty
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, GetAttribute_SRC_P)
 {
     RCSResourceAttributes resAttributes;
@@ -366,7 +366,7 @@ TEST_F(REServerBuilderTest_btc, GetAttribute_SRC_P)
  * @post_condition None
  * @expected The returned value should be empty
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, GetAttribute_ESV_N)
 {
     RCSResourceAttributes resAttributes;
@@ -405,7 +405,7 @@ TEST_F(REServerBuilderTest_btc, GetAttribute_ESV_N)
  * @post_condition None
  * @expected The returned resource Attributes should not be empty
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, GetAttributes_SRC_P)
 {
     RCSResourceObject::LockGuard lock(*m_resourceObject);
@@ -430,7 +430,7 @@ TEST_F(REServerBuilderTest_btc, GetAttributes_SRC_P)
  * @post_condition None
  * @expected The returned value should be true
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, ContainsAttribute_SRC_P)
 {
     bool hasPowerAttribute = m_resourceObject->containsAttribute(DEFAULT_POWER_KEY);
@@ -454,7 +454,7 @@ TEST_F(REServerBuilderTest_btc, ContainsAttribute_SRC_P)
  * @post_condition None
  * @expected The returned value should be true
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, ContainsAttribute_ESV_N)
 {
     bool hasEmptyAttribute = m_resourceObject->containsAttribute(DEFAULT_EMPTY_KEY);
@@ -478,7 +478,7 @@ TEST_F(REServerBuilderTest_btc, ContainsAttribute_ESV_N)
  * @post_condition None
  * @expected The returned value should be true
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, Notify_SRC_P)
 {
     RCSResourceAttributes resAttributes;
@@ -506,7 +506,7 @@ TEST_F(REServerBuilderTest_btc, Notify_SRC_P)
  * @post_condition None
  * @expected No exception should be generated
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, SetGetAttributeRequestHandler_SRC_P)
 {
     try
@@ -533,7 +533,7 @@ TEST_F(REServerBuilderTest_btc, SetGetAttributeRequestHandler_SRC_P)
  * @post_condition None
  * @expected  No exception should be generated
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, SetGetAttributeRequestHandler_NV_N)
 {
     try
@@ -559,7 +559,7 @@ TEST_F(REServerBuilderTest_btc, SetGetAttributeRequestHandler_NV_N)
  * @post_condition None
  * @expected    No exception should be generated
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, SetSetAttributesRequestHandler_SRC_P)
 {
     try
@@ -586,7 +586,7 @@ TEST_F(REServerBuilderTest_btc, SetSetAttributesRequestHandler_SRC_P)
  * @post_condition None
  * @expected    No exception should be generated
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, SetSetAttributesRequestHandler_NV_N)
 {
     try
@@ -612,7 +612,7 @@ TEST_F(REServerBuilderTest_btc, SetSetAttributesRequestHandler_NV_N)
  * @post_condition None
  * @expected    No exception should be generated
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, SetSetRequestHandlerPolicy_SRC_P)
 {
     try
@@ -641,7 +641,7 @@ TEST_F(REServerBuilderTest_btc, SetSetRequestHandlerPolicy_SRC_P)
  * @expected API should not generate exception
  **/
 
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, RemoveAttribute_SRC_P)
 {
     RCSResourceAttributes resAttributes;
@@ -678,7 +678,7 @@ TEST_F(REServerBuilderTest_btc, RemoveAttribute_SRC_P)
  *           2. The API should not crash
  **/
 
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, RemoveAttribute_ECRC_N)
 {
     RCSResourceAttributes resAttributes;
@@ -715,7 +715,7 @@ TEST_F(REServerBuilderTest_btc, RemoveAttribute_ECRC_N)
  * @expected API should not generate exception
  **/
 
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, RemoveAttribute_ESV_P)
 {
     RCSResourceAttributes resAttributes;
@@ -744,7 +744,7 @@ TEST_F(REServerBuilderTest_btc, RemoveAttribute_ESV_P)
  * @expected API should not generate exception
  **/
 
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, ContainsAttribute_ECRC_N)
 {
     RCSResourceAttributes resAttributes;
@@ -779,7 +779,7 @@ TEST_F(REServerBuilderTest_btc, ContainsAttribute_ECRC_N)
  * @post_condition None
  * @expected API should not generate exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, IsDiscoverable_SRC_P)
 {
     try
@@ -810,7 +810,7 @@ TEST_F(REServerBuilderTest_btc, IsDiscoverable_SRC_P)
  * @post_condition None
  * @expected the resource isn't discoverable by checking
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, IsDiscoverable_SRCC_P)
 {
     bool discoverable = false;
@@ -848,7 +848,7 @@ TEST_F(REServerBuilderTest_btc, IsDiscoverable_SRCC_P)
  * @post_condition None
  * @expected the resource is observable by checking
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, IsObservable_SRC_P)
 {
     try
@@ -881,7 +881,7 @@ TEST_F(REServerBuilderTest_btc, IsObservable_SRC_P)
  * @post_condition None
  * @expected the resource isn't observable by checking
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, IsObservable_SRCC_P)
 {
     bool observable = false;
@@ -920,7 +920,7 @@ TEST_F(REServerBuilderTest_btc, IsObservable_SRCC_P)
  * @post_condition None
  * @expected    No exception should be generated
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, SetAutoNotifyPolicy_SRC_P)
 {
     try
@@ -947,7 +947,7 @@ TEST_F(REServerBuilderTest_btc, SetAutoNotifyPolicy_SRC_P)
  * @post_condition None
  * @expected    No exception should be generated
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, SetAutoNotifyPolicyNever_CLU_P)
 {
     try
@@ -974,7 +974,7 @@ TEST_F(REServerBuilderTest_btc, SetAutoNotifyPolicyNever_CLU_P)
  * @post_condition None
  * @expected    No exception should be generated
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, SetAutoNotifyPolicyUPDATED_CLU_P)
 {
     try
@@ -1002,7 +1002,7 @@ TEST_F(REServerBuilderTest_btc, SetAutoNotifyPolicyUPDATED_CLU_P)
  * @post_condition None
  * @expected    Current auto notify policy should be returned
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, GetAutoNotifyPolicy_SRC_P)
 {
     try
@@ -1034,7 +1034,7 @@ TEST_F(REServerBuilderTest_btc, GetAutoNotifyPolicy_SRC_P)
  * @post_condition None
  * @expected    Current set request handling policy should be returned
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, GetSetRequestHandlerPolicy_SRC_P)
 {
     try
@@ -1066,7 +1066,7 @@ TEST_F(REServerBuilderTest_btc, GetSetRequestHandlerPolicy_SRC_P)
  * @post_condition None
  * @expected   The API should not generate exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, setSetRequestHandlerPolicy_CLU_P)
 {
     try
@@ -1094,7 +1094,7 @@ TEST_F(REServerBuilderTest_btc, setSetRequestHandlerPolicy_CLU_P)
  * @post_condition None
  * @expected  The API should not generate exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, Build_SRC_P)
 {
     string acUri = "/device/ac-1";
@@ -1127,7 +1127,7 @@ TEST_F(REServerBuilderTest_btc, Build_SRC_P)
  * @post_condition None
  * @expected The API should not generate exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, GetAttributeValue_SRC_P)
 {
     RCSResourceAttributes resAttributes;
@@ -1162,7 +1162,7 @@ TEST_F(REServerBuilderTest_btc, GetAttributeValue_SRC_P)
  * @post_condition None
  * @expected The API should not throw any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REServerBuilderTest_btc, SetSecureFlag_SRC_P)
 {
     bool secureFlag = true;

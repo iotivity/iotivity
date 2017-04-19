@@ -80,7 +80,7 @@ public:
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerTest_btc, startMonitoring_SRC_P)
 {
     try
@@ -106,7 +106,7 @@ TEST_F(REResourceBrokerTest_btc, startMonitoring_SRC_P)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerTest_btc, startMonitoring_NV_N)
 {
     try
@@ -138,7 +138,7 @@ TEST_F(REResourceBrokerTest_btc, startMonitoring_NV_N)
  * @post_condition None
  * @expected The API should not generate any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerTest_btc, stopMonitoring_SRC_P)
 {
     try
@@ -167,7 +167,7 @@ TEST_F(REResourceBrokerTest_btc, stopMonitoring_SRC_P)
  * @post_condition None
  * @expected No crash should occur
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerTest_btc, stopMonitoring_ECRC_N)
 {
     try
@@ -192,7 +192,7 @@ TEST_F(REResourceBrokerTest_btc, stopMonitoring_ECRC_N)
  * @post_condition None
  * @expected No crash should occur
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerTest_btc, StartCaching_SRC_P)
 {
     try
@@ -217,7 +217,7 @@ TEST_F(REResourceBrokerTest_btc, StartCaching_SRC_P)
  * @post_condition None
  * @expected No crash should occur
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerTest_btc, StopCaching_SRC_P)
 {
     try
@@ -242,7 +242,7 @@ TEST_F(REResourceBrokerTest_btc, StopCaching_SRC_P)
  * @post_condition None
  * @expected No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerTest_btc, IsCaching_SRC_P)
 {
     m_resource->startCaching();
@@ -267,7 +267,7 @@ TEST_F(REResourceBrokerTest_btc, IsCaching_SRC_P)
  * @post_condition None
  * @expected No crash occurs
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerTest_btc, IsCaching_SRCC_P)
 {
 
@@ -291,7 +291,7 @@ TEST_F(REResourceBrokerTest_btc, IsCaching_SRCC_P)
  * @post_condition None
  * @expected No crash should occur
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerTest_btc, GetState_SRC_P)
 {
     ResourceState resourceState = m_resource->getState();
@@ -315,7 +315,7 @@ TEST_F(REResourceBrokerTest_btc, GetState_SRC_P)
  * @post_condition None
  * @expected No crash should occur
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerTest_btc, GetState_SRCC_P)
 {
     ResourceState resourceState = m_resource->getState();
@@ -340,7 +340,7 @@ TEST_F(REResourceBrokerTest_btc, GetState_SRCC_P)
  * @post_condition Perform stopMonitoring() API
  * @expected The API should not throw any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerTest_btc, IsMonitoring_SRC_P)
 {
     m_resource->startMonitoring(
@@ -370,7 +370,7 @@ TEST_F(REResourceBrokerTest_btc, IsMonitoring_SRC_P)
  * @post_condition Perform stopMonitoring() API
  * @expected The API should not throw any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerTest_btc, IsMonitoring_SRCC_P)
 {
 
@@ -397,7 +397,7 @@ TEST_F(REResourceBrokerTest_btc, IsMonitoring_SRCC_P)
  * @post_condition Perform stopMonitoring() API
  * @expected The API should not throw any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerTest_btc, IsObservable_SRC_P)
 {
     m_resource->startMonitoring(
@@ -427,7 +427,7 @@ TEST_F(REResourceBrokerTest_btc, IsObservable_SRC_P)
  * @post_condition Perform stopMonitoring() API
  * @expected The API should not throw any exception
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(REResourceBrokerTest_btc, IsObservable_SRCC_P)
 {
 
