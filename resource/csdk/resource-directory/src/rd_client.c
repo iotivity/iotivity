@@ -268,36 +268,28 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
             }
             if (nCaEps)
             {
-                dim[0] = 0;
-                for (uint32_t i = 0; i < nCaEps; i++)
-                {
-                    if (isSecure == (bool)(caEps[i].flags & OC_FLAG_SECURE))
-                    {
-                        ++dim[0];
-                    }
-                }
-                eps = (OCRepPayload **)OICCalloc(dim[0], sizeof(OCRepPayload *));
+                eps = (OCRepPayload **)OICCalloc(nCaEps, sizeof(OCRepPayload *));
                 if (!eps)
                 {
                     OIC_LOG(ERROR, TAG, "Memory allocation failed!");
                     goto exit;
                 }
-                OCRepPayloadSetPropObjectArrayAsOwner(links[j], OC_RSRVD_ENDPOINTS, eps, dim);
                 uint32_t k = 0;
                 for (uint32_t i = 0; i < nCaEps; i++)
                 {
                     if (isSecure == (bool)(caEps[i].flags & OC_FLAG_SECURE))
                     {
+                        char *epStr = OCCreateEndpointStringFromCA(&caEps[i]);
+                        if (!epStr)
+                        {
+                            OIC_LOG(INFO, TAG, "Create endpoint string failed!");
+                            continue;
+                        }
                         eps[k] = OCRepPayloadCreate();
                         if (!eps[k])
                         {
                             OIC_LOG(ERROR, TAG, "Memory allocation failed!");
-                            break;
-                        }
-                        char *epStr = OCCreateEndpointStringFromCA(&caEps[i]);
-                        if (!epStr)
-                        {
-                            OIC_LOG(ERROR, TAG, "Create endpoint string failed!");
+                            OICFree(epStr);
                             break;
                         }
                         OCRepPayloadSetPropStringAsOwner(eps[k], OC_RSRVD_ENDPOINT, epStr);
@@ -305,6 +297,8 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
                         ++k;
                     }
                 }
+                dim[0] = k;
+                OCRepPayloadSetPropObjectArrayAsOwner(links[j], OC_RSRVD_ENDPOINTS, eps, dim);
             }
         }
     }
