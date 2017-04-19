@@ -1,8 +1,6 @@
 ; Windows octbstack.dll exports that are required for both products and tests,
 ; but only when building with SECURED=1.
 
-ConvertUuidToStr
-
 OCAssertRoles
 OCConfigSelfOwnership
 OCConvertDerCSRToPem
