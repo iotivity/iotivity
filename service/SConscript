@@ -52,3 +52,8 @@ if target_os not in ['arduino','darwin', 'windows']:
 # Build EasySetup module
 if target_os in ['arduino', 'android', 'ios', 'linux','tizen']:
     SConscript('easy-setup/SConscript')
+
+# Build Smart Home API module
+if target_os in ['linux']:
+    SConscript('smarthome-api/SConscript')
+

@@ -1,0 +1,79 @@
+#******************************************************************
+#
+# Copyright 2017 Samsung Electronics All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+######################################################################
+# Smart Home API Server-side build script
+######################################################################
+Import('env');
+smarthome_env = env.Clone()
+target_os = smarthome_env.get('TARGET_OS')
+
+smarthome_env.AppendUnique(CPPPATH = [
+        '../../../resource/csdk/include/',
+        '../../../resource/csdk/stack/include',
+        '../../../resource/c_common/ocrandom/include',
+        '../../../resource/csdk/logger/include',
+        ])
+
+smarthome_env.AppendUnique(LIBPATH = [smarthome_env.get('BUILD_DIR')])
+smarthome_env.AppendUnique(RPATH = [smarthome_env.get('BUILD_DIR')])
+smarthome_env.PrependUnique(LIBS = ['coap'])
+smarthome_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+smarthome_env.AppendUnique(LIBS = ['oc_logger'])
+smarthome_env.AppendUnique(LIBS = ['octbstack'])
+
+if 'g++' in smarthome_env.get('CXX'):
+    smarthome_env.AppendUnique(CXXFLAGS = ['-Wall'])
+    smarthome_env.AppendUnique(CXXFLAGS = ['-fPIC'])
+
+######################################################################
+# smarthome_server_api build script
+######################################################################
+
+device_dir = './device/'
+resource_dir = './resource/'
+
+smarthome_env.AppendUnique(CPPPATH= [
+        device_dir + 'include',
+        resource_dir + 'include',
+        resource_dir + 'internal',
+        '../common',
+        '../common/internal'
+        ])
+
+######################################################################
+# Source files and Targets
+######################################################################
+
+smarthome_server_src = [device_dir +'src/SHBaseDevice.cpp',
+                        device_dir + 'src/LightDevice.cpp',
+                        device_dir + 'src/RobotCleanerDevice.cpp',
+                        device_dir + 'src/DryerDevice.cpp',
+                        device_dir + 'src/SmartLockDevice.cpp',
+                        resource_dir + 'src/SHBaseResource.cpp',
+                        resource_dir + 'src/SHBaseResource_Impl.cpp',
+                        resource_dir + 'src/BinarySwitchResource.cpp',
+                        resource_dir + 'src/ModeResource.cpp',
+                        resource_dir + 'src/LockStatusResource.cpp']
+
+smarthomelib = smarthome_env.SharedLibrary('smarthome_server_api', smarthome_server_src)
+#env.StaticLibrary('smarthome_server_api', smarthome_server_src)
+
+smarthome_env.InstallTarget(smarthomelib, 'smarthome_server_api')

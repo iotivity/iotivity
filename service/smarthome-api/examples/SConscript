@@ -1,0 +1,62 @@
+#******************************************************************
+#
+# Copyright 2017 Samsung Electronics All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+######################################################################
+# Smart Home API Example build script
+######################################################################
+Import('env');
+smarthome_example_env = env.Clone()
+target_os = smarthome_example_env.get('TARGET_OS')
+
+smarthome_example_env.AppendUnique(CPPPATH = [
+        '../../../resource/csdk/include/',
+        '../../../resource/csdk/stack/include',
+        '../../../resource/c_common/ocrandom/include',
+        '../../../resource/csdk/logger/include',
+        ])
+
+smarthome_example_env.AppendUnique(LIBPATH = [smarthome_example_env.get('BUILD_DIR')])
+smarthome_example_env.AppendUnique(RPATH = [smarthome_example_env.get('BUILD_DIR')])
+smarthome_example_env.PrependUnique(LIBS = ['coap'])
+smarthome_example_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+smarthome_example_env.AppendUnique(LIBS = ['oc_logger'])
+smarthome_example_env.AppendUnique(LIBS = ['octbstack'])
+smarthome_example_env.AppendUnique(LIBS = ['smarthome_client_api'])
+smarthome_example_env.AppendUnique(LIBS = ['smarthome_server_api'])
+
+if 'g++' in smarthome_example_env.get('CXX'):
+    smarthome_example_env.AppendUnique(CXXFLAGS = ['-Wall'])
+    smarthome_example_env.AppendUnique(CXXFLAGS = ['-fPIC'])
+
+smarthome_example_env.AppendUnique(CPPPATH= [
+        '../client/discovery/include',
+        '../client/device/include',
+        '../client/device/internal',
+        '../client/resource/include',
+        '../client/resource/internal',
+        '../server/device/include',
+        '../server/resource/include',
+        '../server/resource/internal',
+        '../common',
+        '../common/internal'])
+
+smarthome_example_env.Program('LightClientSample', 'LightClientSample.cpp')
+smarthome_example_env.Program('LightServerSample', 'LightServerSample.cpp')
+smarthome_example_env.Program('RobotCleanerClientSample', 'RobotCleanerClientSample.cpp')

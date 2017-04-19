@@ -1,0 +1,78 @@
+/* ****************************************************************
+ *
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
+
+/**
+ * @file
+ *
+ * This file contains the declaration of reserved variables.
+ */
+
+#ifndef SMARTHOME_API_COMMON_COMMONAPI_H_
+#define SMARTHOME_API_COMMON_COMMONAPI_H_
+
+#include <string>
+
+namespace OIC
+{
+    namespace Service
+    {
+        namespace SH
+        {
+            namespace RESERVED_URI
+            {
+                const std::string DEVICE = "/oic/d";
+                const std::string PLATFORM = "/oic/p";
+            }
+
+            enum ResultCode
+            {
+                SUCCESS, FAIL, KEEP
+            };
+
+            namespace DEVICE_TYPE
+            {
+                const std::string UNKNOWN = "oic.wk.d";
+                const std::string LIGHT = "oic.d.light";
+                const std::string ROBOTCLEANER = "oic.d.robotcleaner";
+                const std::string SMART_LOCK = "oic.d.smartlock";
+                const std::string DRYER = "oic.d.dryer";
+            }
+
+            namespace RESOURCE_TYPE
+            {
+                const std::string BINARYSWITCH = "oic.r.switch.binary";
+                const std::string MODE = "oic.r.mode";
+                const std::string LOCK_STATUS = "oic.r.lock.status";
+            }
+
+            namespace INTERFACE
+            {
+                const std::string BASELINE = "oic.if.baseline";
+                const std::string LINKS_LIST = "oic.if.ll";
+                const std::string BATCH = "oic.if.b";
+                const std::string READ_ONLY = "oic.if.r";
+                const std::string READ_WRITE = "oic.if.rw";
+                const std::string ACTUATOR = "oic.if.a";
+                const std::string SENSOR = "oic.if.s";
+            }
+        }
+    }
+}
+#endif /* SMARTHOME_API_COMMON_COMMONAPI_H_ */
