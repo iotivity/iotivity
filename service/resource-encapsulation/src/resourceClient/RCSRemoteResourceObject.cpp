@@ -92,12 +92,12 @@ namespace
     }
 
     OCStackResult cachingCallback(std::shared_ptr< PrimitiveResource >,
-            const RCSResourceAttributes& data,
+            const RCSResourceAttributes& data, int eCode,
             RCSRemoteResourceObject::CacheUpdatedCallback onCacheUpdated)
     {
         SCOPE_LOG_F(DEBUG, TAG);
 
-        onCacheUpdated(data);
+        onCacheUpdated(data, eCode);
         return OC_STACK_OK;
     }
 
@@ -299,7 +299,8 @@ namespace OIC
             {
                 m_cacheId = ResourceCacheManager::getInstance()->requestResourceCache(
                         m_primitiveResource,
-                        std::bind(cachingCallback, std::placeholders::_1, std::placeholders::_2,
+                        std::bind(cachingCallback, std::placeholders::_1,
+                                  std::placeholders::_2, std::placeholders::_3,
                                   std::move(cb)), CACHE_METHOD::OBSERVE_ONLY,
                                   REPORT_FREQUENCY::UPTODATE, 0);
             }
@@ -308,7 +309,8 @@ namespace OIC
             {
                 m_cacheId = ResourceCacheManager::getInstance()->requestResourceCache(
                         m_primitiveResource,
-                        std::bind(cachingCallback, std::placeholders::_1, std::placeholders::_2,
+                        std::bind(cachingCallback, std::placeholders::_1,
+                                std::placeholders::_2, std::placeholders::_3,
                                 std::move(cb)), CACHE_METHOD::ITERATED_GET,
                                 REPORT_FREQUENCY::UPTODATE, 0);
             }

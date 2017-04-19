@@ -51,7 +51,8 @@ class ResourceCacheManagerTest : public TestWithMock
                 pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), deleter);
             });
             mocks.OnCall(pResource.get(), PrimitiveResource::isObservable).Return(false);
-            cb = ([](std::shared_ptr<PrimitiveResource >, const RCSResourceAttributes &)->OCStackResult
+            cb = ([](std::shared_ptr<PrimitiveResource >,
+                    const RCSResourceAttributes &, int) -> OCStackResult
                     {
                         return OC_STACK_OK;
                     });

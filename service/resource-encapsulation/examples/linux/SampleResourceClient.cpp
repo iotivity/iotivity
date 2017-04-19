@@ -270,9 +270,9 @@ void onResourceStateChanged(ResourceState resourceState)
     }
 }
 
-void onCacheUpdated(const RCSResourceAttributes& attributes)
+void onCacheUpdated(const RCSResourceAttributes& attributes, int eCode)
 {
-    std::cout << "onCacheUpdated callback" << std::endl;
+    std::cout << "onCacheUpdated callback : " << eCode << std::endl;
 
     printAttributes(attributes);
 }

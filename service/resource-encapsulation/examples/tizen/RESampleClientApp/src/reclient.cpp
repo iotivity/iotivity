@@ -127,7 +127,7 @@ void onResourceStateChanged(const ResourceState &resourceState)
                                           &logMessage);
 }
 
-void onCacheUpdated(const RCSResourceAttributes &attributes)
+void onCacheUpdated(const RCSResourceAttributes &attributes, int)
 {
     dlog_print(DLOG_INFO, LOG_TAG, "#### onCacheUpdated callback");
 
@@ -277,7 +277,7 @@ static void setAttributeToRemoteServer(int setValue)
                                           &logMessage);
 }
 
-static void startCaching(std::function <void (const RCSResourceAttributes &)>cb)
+static void startCaching(std::function <void (const RCSResourceAttributes &, int)>cb)
 {
     string logMessage = "";
 
