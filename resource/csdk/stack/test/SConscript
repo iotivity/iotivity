@@ -46,7 +46,7 @@ stacktest_env.PrependUnique(CPPPATH = [
         '../../../oc_logger/include',
         ])
 
-stacktest_env.PrependUnique(LIBS = ['octbstack_test',
+stacktest_env.PrependUnique(LIBS = ['octbstack_internal',
                                     'ocsrm',
                                     'connectivity_abstraction',
                                     'coap',

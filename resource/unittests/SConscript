@@ -51,13 +51,13 @@ unittests_env.PrependUnique(CPPPATH = [
 if target_os in ['windows']:
 	unittests_env.AppendUnique(CPPPATH = ['#extlibs/boost/boost'])
 	unittests_env.AppendUnique(LIBS = ['sqlite3'])
-	# On Windows, octbstack_test is a static LIB, that makes calls into static LIB ocsrm.
-	# On other platforms, octbstack_test is a shared LIB, that includes static LIB ocsrm.
+	# On Windows, octbstack_internal is a static LIB, that makes calls into static LIB ocsrm.
+	# On other platforms, octbstack_internal is a shared LIB, that includes static LIB ocsrm.
 	unittests_env.AppendUnique(LIBS = ['ocsrm'])
 
 unittests_env.PrependUnique(LIBS = [
 		'oc',
-		'octbstack_test',
+		'octbstack_internal',
 		'oc_logger_internal',
 		'connectivity_abstraction',
 		'coap',

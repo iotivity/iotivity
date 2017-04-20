@@ -228,9 +228,9 @@ if target_os in ['linux']:
     # Linux uses a Shared library because SCons chooses the shared library on Linux
     # when only 'octbstack' is added to the LIBS.
     # TODO: Switch Linux to use a Static library for testing like every other OS.
-    test_liboctbstack = liboctbstack_env.SharedLibrary('octbstack_test', liboctbstack_src)
+    test_liboctbstack = liboctbstack_env.SharedLibrary('octbstack_internal', liboctbstack_src)
 else:
-    test_liboctbstack = liboctbstack_env.StaticLibrary('octbstack_test', liboctbstack_src)
+    test_liboctbstack = liboctbstack_env.StaticLibrary('octbstack_internal', liboctbstack_src)
 
 octbstack_libs = Flatten(test_liboctbstack)
 

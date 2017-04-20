@@ -58,7 +58,7 @@ srmtest_env.PrependUnique(CPPPATH = [
 		])
 
 srmtest_env.PrependUnique(LIBS = ['ocsrm',
-                                    'octbstack_test',
+                                    'octbstack_internal',
                                     'oc_logger_internal',
                                     'connectivity_abstraction',
                                     'coap'])

@@ -52,7 +52,7 @@ catest_env.PrependUnique(CPPPATH = [
                 '#/resource/oc_logger/include',
                ])
 
-catest_env.PrependUnique(LIBS = ['octbstack_test',
+catest_env.PrependUnique(LIBS = ['octbstack_internal',
                                  'connectivity_abstraction',
                                  'coap'])
 

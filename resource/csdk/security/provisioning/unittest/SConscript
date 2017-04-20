@@ -63,7 +63,7 @@ sptest_env.PrependUnique(CPPPATH = [
 
 sptest_env.PrependUnique(LIBS = [   'ocpmapi_internal',
                                     'oc',
-                                    'octbstack_test',
+                                    'octbstack_internal',
                                     'ocsrm',
                                     'oc_logger_internal',
                                     'connectivity_abstraction',
