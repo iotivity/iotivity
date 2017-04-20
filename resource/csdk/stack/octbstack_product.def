@@ -5,6 +5,7 @@ EXPORTS
 ; Windows octbstack.dll exports that are required for products.
 
 calcDimTotal
+CloneOCStringLL
 ConvertStrToUuid
 convertTriggerEnumToString
 
@@ -14,20 +15,27 @@ OCBindResourceHandler
 OCBindResourceInsToResource
 OCBindResourceInterfaceToResource
 OCBindResourceTypeToResource
+OCByteStringCopy
 OCCancel
 OCClearResourceProperties
 OCCreateOCStringLL
 OCCreateResource
+OCCreateString
 OCDecodeAddressForRFC6874
 OCCreateEndpointStringFromCA
 OCCreateResourceWithEp
 OCDeleteResource
+OCDiagnosticPayloadCreate
+OCDiagnosticPayloadDestroy
 OCDiscoverDirectPairingDevices
 OCDiscoveryEndpointDestroy
+OCDiscoveryPayloadAddResource
+OCDiscoveryPayloadAddNewResource
 OCDiscoveryPayloadCreate
 OCDiscoveryPayloadDestroy
 OCDiscoveryPayloadGetResource
 OCDiscoveryPayloadGetResourceCount
+OCDiscoveryResourceDestroy
 OCDoDirectPairing
 OCDoResource
 OCDoResponse
@@ -60,20 +68,24 @@ OCGetSupportedEndpointTpsFlags
 OCInit
 OCInit1
 OCInit2
+OCLinksPayloadValueCreate
 OCNotifyAllObservers
 OCNotifyListOfObservers
 OCPayloadDestroy
 OCPresencePayloadCreate
+OCPresencePayloadDestroy
 OCProcess
 OCRegisterPersistentStorageHandler
 OCRepPayloadAddInterface
+OCRepPayloadAddInterfaceAsOwner
 OCRepPayloadAddResourceType
+OCRepPayloadAddResourceTypeAsOwner
 OCRepPayloadAppend
+OCRepPayloadBatchClone
 OCRepPayloadClone
 OCRepPayloadCreate
 OCRepPayloadDestroy
 OCRepPayloadGetByteStringArray
-OCRepPayloadSetByteStringArrayAsOwner
 OCRepPayloadGetBoolArray
 OCRepPayloadGetDoubleArray
 OCRepPayloadGetIntArray
@@ -85,9 +97,12 @@ OCRepPayloadGetPropObject
 OCRepPayloadGetPropObjectArray
 OCRepPayloadGetPropString
 OCRepPayloadGetStringArray
+OCRepPayloadIsNull
+OCRepPayloadSetNull
 OCRepPayloadSetBoolArray
 OCRepPayloadSetBoolArrayAsOwner
 OCRepPayloadSetByteStringArray
+OCRepPayloadSetByteStringArrayAsOwner
 OCRepPayloadSetDoubleArray
 OCRepPayloadSetDoubleArrayAsOwner
 OCRepPayloadSetIntArray
@@ -98,6 +113,7 @@ OCRepPayloadSetPropByteString
 OCRepPayloadSetPropByteStringAsOwner
 OCRepPayloadSetPropDouble
 OCRepPayloadSetPropInt
+OCRepPayloadSetPropObject
 OCRepPayloadSetPropObjectArray
 OCRepPayloadSetPropObjectArrayAsOwner
 OCRepPayloadSetPropObjectAsOwner
@@ -109,6 +125,7 @@ OCRepPayloadSetUri
 OCResourcePayloadAddNewEndpoint
 OCResourcePayloadAddStringLL
 OCSecurityPayloadCreate
+OCSecurityPayloadDestroy
 OCSetDefaultDeviceEntityHandler
 OCSetDeviceId
 OCSetDeviceInfo
