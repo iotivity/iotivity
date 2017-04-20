@@ -391,22 +391,28 @@ def build_tizen(flag, extra_option_str):
         exit(exit_code)
 
     print ("*********** Build for Tizen octbstack lib and sample with security *************")
-    extra_option_str = "-f resource/csdk/stack/samples/tizen/build/SConscript " + extra_option_str
+    build_extra_options = "-f resource/csdk/stack/samples/tizen/build/SConscript " + extra_option_str
     build_options = {
                         'TARGET_OS':'tizen',
                         'TARGET_TRANSPORT':'IP',
                         'LOGGING':'true',
                         'RELEASE':flag,
                     }
-    call_scons(build_options, extra_option_str)
+    call_scons(build_options, build_extra_options)
 
     print ("*********** Build for Tizen octbstack lib and sample *************")
     build_options['SECURED'] = 0
-    call_scons(build_options, extra_option_str)
+    call_scons(build_options, build_extra_options)
 
     print ("*********** Build for Tizen octbstack lib and sample with Routing Manager*************")
     build_options['ROUTING'] = 'GW'
-    call_scons(build_options, extra_option_str)
+    call_scons(build_options, build_extra_options)
+
+    print ("*********** Build for Tizen Easy-Setup  sample *************")
+    build_options['ROUTING'] = 'EP'
+    build_options['ES_TARGET_ENROLLEE'] = 'tizen'
+    build_extra_options = "-f service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/build/tizen/SConscript " + extra_option_str
+    call_scons(build_options, build_extra_options)
 
 # Mac OS and iOS
 def build_darwin(flag, extra_option_str):
