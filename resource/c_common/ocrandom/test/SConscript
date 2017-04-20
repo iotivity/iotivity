@@ -38,13 +38,9 @@ randomtest_env.PrependUnique(CPPPATH = [
                '../../../oc_logger/include',
                ])
  
-randomtest_env.PrependUnique(LIBS = ['octbstack',
-                                      'connectivity_abstraction',
-                                      'uuid'])
+randomtest_env.PrependUnique(LIBS = ['uuid'])
 
 randomtest_env.PrependUnique(CPPPATH = ['../include'])
-
-randomtest_env.PrependUnique(LIBS = ['c_common'])
 
 if target_os in ['linux']:
     randomtest_env.AppendUnique(LIBS = ['m'])
