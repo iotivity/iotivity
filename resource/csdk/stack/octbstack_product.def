@@ -44,6 +44,7 @@ OCGetNumberOfResources
 OCGetNumberOfResourceInterfaces
 OCGetNumberOfResourceTypes
 OCGetLinkLocalZoneId
+OCGetPersistentStorageHandler
 OCGetPropertyValue
 OCGetResourceHandle
 OCGetResourceHandleAtUri
