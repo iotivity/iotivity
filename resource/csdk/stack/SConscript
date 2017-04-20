@@ -234,13 +234,9 @@ else:
 
 octbstack_libs = Flatten(test_liboctbstack)
 
-if target_os in ['windows', 'msys_nt']:
-    # Avoid a name conflict with the octbstack.lib target of the SharedLibrary.
-    static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack_static', liboctbstack_src)
-else:
+if target_os not in ['windows', 'msys_nt']:
     static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
-
-octbstack_libs += Flatten(static_liboctbstack)
+    octbstack_libs += Flatten(static_liboctbstack)
 
 if target_os not in ['arduino','darwin','ios'] :
     shared_liboctbstack = liboctbstack_env.SharedLibrary('octbstack', liboctbstack_src)

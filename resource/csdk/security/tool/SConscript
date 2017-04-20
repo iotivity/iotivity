@@ -61,8 +61,8 @@ else:
         tools_env.AppendUnique(LIBS = ['octbstack'])
     else:
         # This IoTivity-internal app calls non-Public APIs, so link with LIBS intended
-        # for IoTivity-internal tests (such as octbstack_static).
-        tools_env.AppendUnique(LIBS = ['octbstack_static'])
+        # for IoTivity-internal tests (such as octbstack_internal).
+        tools_env.AppendUnique(LIBS = ['octbstack_internal'])
         if target_os in ['windows']:
             tools_env.AppendUnique(LIBS = ['sqlite3'])
     tools_env.AppendUnique(LIBS = ['coap', 'mbedtls', 'mbedx509', 'mbedcrypto',

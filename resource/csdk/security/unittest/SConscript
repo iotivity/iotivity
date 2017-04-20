@@ -73,7 +73,7 @@ if srmtest_env.get('MULTIPLE_OWNER') == '1':
 	srmtest_env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
 
 if target_os == 'windows':
-	srmtest_env.AppendUnique(LIBS = ['octbstack_static', 'sqlite3'])
+	srmtest_env.AppendUnique(LIBS = ['octbstack_internal', 'sqlite3'])
 else:
 	# TODO: Implement feature check.
 	srmtest_env.AppendUnique(CPPDEFINES = ['HAVE_LOCALTIME_R'])
