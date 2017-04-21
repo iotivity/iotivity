@@ -142,7 +142,7 @@ else:
     else:
         # On Windows, apps don't link directly with ocpmapi.lib. ocpmapi is linked
         # inside octbstack.dll and apps import its APIs by linking with octbstack.lib.
-        liboctbstack_env.PrependUnique(LIBS = ['ocpmapi'])
+        liboctbstack_env.PrependUnique(LIBS = ['ocpmapi_internal'])
 
         liboctbstack_env.Textfile(target = 'octbstack_temp3.def', source = [File('octbstack_temp2.def'), File('octbstack_product_secured.def')])
 

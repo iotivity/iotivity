@@ -2371,8 +2371,8 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     OicSecRsrc_t* credRsrc = NULL;
     OicSecRsrc_t* rolesRsrc = NULL;
 
-    /* 
-     * Note that all Ace_t and Rsrc_t objects will be freed on error by 
+    /*
+     * Note that all Ace_t and Rsrc_t objects will be freed on error by
      * DeleteACLList(acl). We LL_APPEND these objects to the acl object as soon
      * as they are allocated.
      */
@@ -2538,7 +2538,7 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     memcpy(&fullPermAce->subjectuuid, &WILDCARD_SUBJECT_ID, sizeof(fullPermAce->subjectuuid));
 
     // Resources -- Mandatory
-    // /oic/sec/roles 
+    // /oic/sec/roles
     rolesRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
     VERIFY_NOT_NULL(TAG, rolesRsrc, ERROR);
     LL_APPEND(fullPermAce->resources, rolesRsrc);
@@ -3096,11 +3096,10 @@ exit:
 
 OCStackResult GetAclRownerId(OicUuid_t *rowneruuid)
 {
-    OCStackResult retVal = OC_STACK_ERROR;
-    if (gAcl)
+    if (gAcl && rowneruuid)
     {
-        *rowneruuid = gAcl->rownerID;
-        retVal = OC_STACK_OK;
+        memcpy(&(rowneruuid->id), &(gAcl->rownerID.id), sizeof(rowneruuid->id));
+        return OC_STACK_OK;
     }
-    return retVal;
+    return OC_STACK_ERROR;
 }

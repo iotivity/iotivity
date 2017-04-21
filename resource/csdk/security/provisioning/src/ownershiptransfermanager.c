@@ -1751,6 +1751,17 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
     CAEndpoint_t endpoint;
     CopyDevAddrToEndpoint(&deviceInfo->endpoint, &endpoint);
 
+    if (CA_ADAPTER_IP == endpoint.adapter)
+    {
+        endpoint.port = deviceInfo->securePort;
+    }
+#ifdef WITH_TCP
+    else if (CA_ADAPTER_TCP == endpoint.adapter)
+    {
+        endpoint.port = deviceInfo->tcpPort;
+    }
+#endif
+
     if (CA_STATUS_OK != CAInitiateHandshake(&endpoint))
     {
         OIC_LOG(ERROR, TAG, "Failed to pass ssl handshake");
@@ -2490,8 +2501,8 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
         return OC_STACK_INVALID_PARAM;
     }
 
-    //Set isop to true.
-    otmCtx->selectedDeviceInfo->pstat->isOp = true;
+    // TODO [IOT-1763] put RFPRO and other pstat.dos.s updates in the right places.
+    otmCtx->selectedDeviceInfo->pstat->dos.state = DOS_RFNOP;
 
     OCSecurityPayload *secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
     if (!secPayload)
@@ -2551,11 +2562,19 @@ OCStackResult ConfigSelfOwnership(void)
         OIC_LOG (ERROR, TAG, "Unable to retrieve doxm owned state");
         return OC_STACK_ERROR;
     }
-    if( (true == isDeviceOwned) ||(true == GetPstatIsop()) )
+
+    bool isop = false;
+    if (OC_STACK_OK != GetPstatIsop(&isop))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to get pstat.isop.");
+        return OC_STACK_ERROR;
+    }
+    if (isDeviceOwned || isop )
     {
         OIC_LOG(ERROR, TAG, "The state of device is not Ready for Ownership transfer.");
         return OC_STACK_ERROR;
     }
+
     OicUuid_t deviceID = {.id={0}};
     if ( OC_STACK_OK != GetDoxmDeviceID(&deviceID) )
     {

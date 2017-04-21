@@ -2355,6 +2355,16 @@ CAResult_t CAinitiateSslHandshake(const CAEndpoint_t *endpoint)
     CAResult_t res = CA_STATUS_OK;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(endpoint, NET_SSL_TAG, "Param endpoint is NULL" , CA_STATUS_INVALID_PARAM);
+
+    if (NULL != GetSslPeer(endpoint))
+    {
+        OIC_LOG(WARNING, NET_SSL_TAG, "Secure session exists and will be closed");
+        if (CA_STATUS_OK != CAcloseSslConnection(endpoint))
+        {
+            OIC_LOG(WARNING, NET_SSL_TAG, "Failed to close secure session");
+        }
+    }
+
     oc_mutex_lock(g_sslContextMutex);
     if (NULL == InitiateTlsHandshake(endpoint))
     {

@@ -148,7 +148,7 @@ public final class RcsRemoteResourceObject extends RcsObject {
          *            the updated attributes
          *
          */
-        public void onCacheUpdated(RcsResourceAttributes attributes);
+        public void onCacheUpdated(RcsResourceAttributes attributes, int eCode);
 
     }
 

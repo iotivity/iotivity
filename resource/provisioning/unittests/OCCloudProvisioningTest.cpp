@@ -45,27 +45,27 @@ namespace OCCloudProvisioningTest
     TEST(RequestCertTest, TestNullCallback)
     {
         OCCloudProvisioning cloud(IP, PORT);
-        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, cloud.requestCertificate(NULL));
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, cloud.requestCertificate(nullptr));
     }
 
     TEST(AclIdByDeviceTest, AclIdNullCallback)
     {
         OCCloudProvisioning cloud(IP, PORT);
         std::string devId("");
-        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, cloud.getAclIdByDevice(devId, NULL));
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, cloud.getAclIdByDevice(devId, nullptr));
     }
 
     TEST(AclInfoTest, AclInfoNullCallback)
     {
         OCCloudProvisioning cloud(IP, PORT);
         std::string aclId("");
-        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, cloud.getIndividualAclInfo(aclId, NULL));
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, cloud.getIndividualAclInfo(aclId, nullptr));
     }
 
     TEST(GetCRLTest, GetCrlNullCallback)
     {
         OCCloudProvisioning cloud(IP, PORT);
-        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, cloud.getCRL(NULL));
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, cloud.getCRL(nullptr));
     }
 
     TEST(PostCRLTest, PostCrlNullCallback)
@@ -77,6 +77,6 @@ namespace OCCloudProvisioningTest
         OCCloudProvisioning cloud(IP, PORT);
         EXPECT_EQ(OC_STACK_INVALID_CALLBACK, cloud.postCRL(thisUpdate,
                                                     nextUpdate,
-                                                    &crl, &serials, NULL));
+                                                    &crl, &serials, nullptr));
     }
 }

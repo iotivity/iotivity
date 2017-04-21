@@ -71,33 +71,6 @@ uint16_t GetPermissionFromCAMethod_t(const CAMethod_t method)
 }
 
 /**
- * Compares two OicUuid_t structs.
- *
- * @return true if the two OicUuid_t structs are equal, else false.
- */
-static bool UuidCmp(OicUuid_t *firstId, OicUuid_t *secondId)
-{
-    // TODO use VERIFY macros to check for null when they are merged.
-    if(NULL == firstId || NULL == secondId)
-    {
-        return false;
-    }
-    // Check empty uuid string
-    if('\0' == firstId->id[0] || '\0' == secondId->id[0])
-    {
-        return false;
-    }
-    for(int i = 0; i < UUID_LENGTH; i++)
-    {
-        if(firstId->id[i] != secondId->id[i])
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
-/**
  * Compare the request's subject to DevOwner.
  *
  * @return true if context->subjectId == GetDoxmDevOwner(), else false.
@@ -508,17 +481,18 @@ void CheckPermission(SRMRequestContext_t *context)
     // (which in IoTivity is equivalent to isOp == false && owned == false)
     // AND c) the request is for a SVR resource.
     // If all 3 conditions are met, grant request.
-    // TODO_IoTivity_1.3: use pstat.dos instead of these two checks.
+    // TODO_IoTivity_1.3 [IOT-2023] use pstat.dos instead of these two checks.
     bool isDeviceOwned = true; // default to value that will NOT grant access
-    if (OC_STACK_OK != GetDoxmIsOwned(&isDeviceOwned)) // if runtime error, don't grant
-    {
-        OIC_LOG(ERROR, TAG, "GetDoxmIsOwned() call failed.");
-        context->responseVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
-    }
-    // If we were able to get the value of doxm->isOwned, proceed with
-    // test for implicit access.
-    else if (IsRequestFromDevOwner(context) &&  // if from DevOwner
-            !GetPstatIsop() &&                  // AND if pstat->isOp == false
+    bool isop = false;
+
+    context->responseVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
+
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == GetPstatIsop(&isop), ERROR);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDoxmIsOwned(&isDeviceOwned), ERROR);
+
+    // Test for implicit access.
+    if (IsRequestFromDevOwner(context) &&       // if from DevOwner
+            !isop &&                            // AND if pstat->isOp == false
             !isDeviceOwned &&                   // AND if doxm->isOwned == false
             (NOT_A_SVR_RESOURCE != context->resourceType)) // AND if is SVR type
     {
@@ -544,7 +518,7 @@ void CheckPermission(SRMRequestContext_t *context)
         }
     }
 #endif //MULTIPLE_OWNER
-    else if (!GetPstatIsop() &&
+    else if (!isop &&
              (NOT_A_SVR_RESOURCE != context->resourceType) &&
              IsRequestFromOwnershipTransferSession(context))
     {
@@ -582,5 +556,6 @@ void CheckPermission(SRMRequestContext_t *context)
         }
     }
 
+exit:
     return;
 }

@@ -39,7 +39,7 @@ namespace OIC
         {
             public:
                 typedef std::function<OCStackResult(std::shared_ptr<PrimitiveResource>,
-                                            const RCSResourceAttributes &)> DataCacheCB;
+                            const RCSResourceAttributes &, int)> DataCacheCB;
                 typedef std::shared_ptr<ObserveCache> Ptr;
 
             public:
