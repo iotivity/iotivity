@@ -495,7 +495,8 @@ OCStackResult InitCSRResource()
         OIC_RSRC_CSR_URI,
         CredCsrEntityHandler,
         NULL,
-        OC_SECURE);
+        OC_SECURE |
+        OC_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)
     {

@@ -467,7 +467,9 @@ static OCStackResult CreateAmaclResource()
                                          OIC_RSRC_AMACL_URI,
                                          AmaclEntityHandler,
                                          NULL,
-                                         OC_OBSERVABLE);
+                                         OC_OBSERVABLE |
+                                         OC_SECURE |
+                                         OC_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)
     {

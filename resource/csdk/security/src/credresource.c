@@ -2419,7 +2419,8 @@ OCStackResult CreateCredResource()
                                          OIC_RSRC_CRED_URI,
                                          CredEntityHandler,
                                          NULL,
-                                         OC_SECURE);
+                                         OC_SECURE |
+                                         OC_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)
     {
