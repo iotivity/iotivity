@@ -423,6 +423,10 @@ OCStackResult MOTProvisionPreconfigPIN(void *ctx, const OCProvisionDev_t *target
     pinCred->credType = PIN_PASSWORD;
     memcpy(&pinCred->subject, &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t));
 
+    pinCred->credUsage = (char*)OICCalloc(1, (strlen(PRECONFIG_PIN_CRED) + 1));
+    VERIFY_NOT_NULL(TAG, pinCred->credUsage, ERROR);
+    OICStrcpy(pinCred->credUsage, (strlen(PRECONFIG_PIN_CRED) + 1), PRECONFIG_PIN_CRED);
+
     //Generate the security payload using updated doxm
     secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     VERIFY_NOT_NULL(TAG, secPayload, ERROR);
@@ -486,7 +490,8 @@ exit:
 
     if(pinCred)
     {
-        OICFree(pinCred->privateData.data);
+        OICFree(pinCred->credUsage);
+        OICFree(pinCred->privateData.data);        
         OICFree(pinCred);
     }
 
