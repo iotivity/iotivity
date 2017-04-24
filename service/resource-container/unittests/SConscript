@@ -49,9 +49,6 @@ else:
 if lib_env.get('LOGGING'):
     lib_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-# Add third party libraries
-SConscript('#service/third_party_libs.scons', 'lib_env')
-
 container_gtest_env = lib_env.Clone()
 
 if int(containerJavaSupport):
@@ -133,8 +130,6 @@ container_gtest_env.PrependUnique(LIBS = [
     'oc_logger',
     'oc_logger_core',
     'connectivity_abstraction',
-    'gtest',
-    'gtest_main',
     'boost_system'])
 
 if int(containerJavaSupport):
