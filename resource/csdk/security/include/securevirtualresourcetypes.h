@@ -565,15 +565,13 @@ struct OicSecMom{
 struct OicSecDoxm
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    OicUrn_t            *oxmType;       // 0:R:M:N:URN
+    OicUrn_t            *oxmType;       // 0:R:M:N:URN TODO [IOT-2105]
     size_t              oxmTypeLen;     // the number of elts in OxmType
     OicSecOxm_t         *oxm;           // 1:R:M:N:UINT16
     size_t              oxmLen;         // the number of elts in Oxm
     OicSecOxm_t         oxmSel;         // 2:R/W:S:Y:UINT16
     OicSecCredType_t    sct;            // 3:R:S:Y:oic.sec.credtype
     bool                owned;          // 4:R:S:Y:Boolean
-    //TODO: Need more clarification on deviceIDFormat field type.
-    //OicSecDvcIdFrmt_t   deviceIDFormat; // 5:R:S:Y:UINT8
     OicUuid_t           deviceID;       // 6:R:S:Y:oic.uuid
     bool                dpc;            // 7:R:S:Y:Boolean
     OicUuid_t           owner;          // 8:R:S:Y:oic.uuid

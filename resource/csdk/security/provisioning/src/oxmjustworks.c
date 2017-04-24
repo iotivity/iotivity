@@ -33,7 +33,8 @@
 
 #define TAG "OIC_OXM_JustWorks"
 
-OCStackResult CreateJustWorksSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **payload, size_t *size)
+OCStackResult CreateJustWorksSelectOxmPayload(OTMContext_t *otmCtx,
+    uint8_t **payload, size_t *size)
 {
     if (!otmCtx || !otmCtx->selectedDeviceInfo || !payload || *payload || !size)
     {
@@ -44,10 +45,16 @@ OCStackResult CreateJustWorksSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **pa
     *payload = NULL;
     *size = 0;
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[DOXM_OXMSEL] = true;
+
+    return DoxmToCBORPayloadPartial(otmCtx->selectedDeviceInfo->doxm, payload,
+        size, propertiesToInclude);
 }
 
-OCStackResult CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
+OCStackResult CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx,
+    uint8_t **payload, size_t *size)
 {
     if (!otmCtx || !otmCtx->selectedDeviceInfo || !payload || *payload || !size)
     {
@@ -66,7 +73,12 @@ OCStackResult CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t 
     *payload = NULL;
     *size = 0;
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[DOXM_DEVOWNERUUID] = true;
+
+    return DoxmToCBORPayloadPartial(otmCtx->selectedDeviceInfo->doxm, payload,
+        size, propertiesToInclude);
 }
 
 OCStackResult LoadSecretJustWorksCallback(OTMContext_t* UNUSED_PARAM)
@@ -147,6 +159,11 @@ OCStackResult CreateMVJustWorksSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **
     *cborPayload = NULL;
     *cborSize = 0;
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, cborPayload, cborSize, true);
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[DOXM_OXMSEL] = true;
+
+    return DoxmToCBORPayloadPartial(otmCtx->selectedDeviceInfo->doxm, cborPayload,
+        cborSize, propertiesToInclude);
 }
 

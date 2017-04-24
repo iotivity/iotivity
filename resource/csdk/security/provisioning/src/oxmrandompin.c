@@ -46,9 +46,12 @@ OCStackResult CreatePinBasedSelectOxmPayload(OTMContext_t* otmCtx, uint8_t **pay
         return OC_STACK_INVALID_PARAM;
     }
 
-    otmCtx->selectedDeviceInfo->doxm->oxmSel = OIC_RANDOM_DEVICE_PIN;
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[DOXM_OXMSEL] = true;
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
+    return DoxmToCBORPayloadPartial(otmCtx->selectedDeviceInfo->doxm, payload,
+        size, propertiesToInclude);
 }
 
 OCStackResult CreatePinBasedOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
@@ -69,7 +72,12 @@ OCStackResult CreatePinBasedOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t *
     }
     memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id , UUID_LENGTH);
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[DOXM_DEVOWNERUUID] = true;
+
+    return DoxmToCBORPayloadPartial(otmCtx->selectedDeviceInfo->doxm, payload,
+        size, propertiesToInclude);
 }
 
 OCStackResult InputPinCodeCallback(OTMContext_t *otmCtx)

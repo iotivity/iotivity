@@ -111,12 +111,12 @@ const char * OIC_JSON_DEVOWNERID_NAME = "devowneruuid";
 const char * OIC_JSON_SUBOWNERID_NAME = "x.org.iotivity.subowneruuid";
 #endif //MULTIPLE_OWNER
 const char * OIC_JSON_OWNED_NAME = "owned";
-const char * OIC_JSON_OXM_NAME = "oxm";
 const char * OIC_JSON_OXMS_NAME = "oxms";
 #ifdef MULTIPLE_OWNER
 const char * OIC_JSON_MOM_NAME = "x.org.iotivity.mom";
 #endif //MULTIPLE_OWNER
-const char * OIC_JSON_OXM_TYPE_NAME = "oxmtype";
+// TODO [IOT-2105]: resolve "oxmtype" undocumented tag/value
+const char * OIC_JSON_OXM_TYPE_NAME = "oxmtype"; // TODO [IOT-2105]
 const char * OIC_JSON_OXM_SEL_NAME = "oxmsel";
 const char * OIC_JSON_DEVICE_ID_FORMAT_NAME = "didformat";
 const char * OIC_JSON_ISOP_NAME = "isop";
