@@ -1150,16 +1150,11 @@ void CATCPStopServer()
     caglobals.tcp.terminate = true;
 
 #if !defined(WSA_WAIT_EVENT_0)
-    if (caglobals.tcp.shutdownFds[1] != -1)
+    if (caglobals.tcp.shutdownFds[1] != OC_INVALID_SOCKET)
     {
         close(caglobals.tcp.shutdownFds[1]);
         caglobals.tcp.shutdownFds[1] = OC_INVALID_SOCKET;
         // receive thread will stop immediately
-    }
-    if (caglobals.tcp.connectionFds[1] != -1)
-    {
-        close(caglobals.tcp.connectionFds[1]);
-        caglobals.tcp.connectionFds[1] = OC_INVALID_SOCKET;
     }
 #else
     // receive thread will stop immediately.
@@ -1178,8 +1173,18 @@ void CATCPStopServer()
     if (caglobals.tcp.started)
     {
         oc_cond_wait(g_condObjectList, g_mutexObjectList);
+        caglobals.tcp.started = false;
     }
-    caglobals.tcp.started = false;
+
+#if !defined(WSA_WAIT_EVENT_0)
+    close(caglobals.tcp.connectionFds[1]);
+    close(caglobals.tcp.connectionFds[0]);
+    caglobals.tcp.connectionFds[1] = OC_INVALID_SOCKET;
+    caglobals.tcp.connectionFds[0] = OC_INVALID_SOCKET;
+
+    close(caglobals.tcp.shutdownFds[0]);
+    caglobals.tcp.shutdownFds[0] = OC_INVALID_SOCKET;
+#endif
 
     // mutex unlock
     oc_mutex_unlock(g_mutexObjectList);
