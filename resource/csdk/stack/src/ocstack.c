@@ -163,8 +163,6 @@ static const char COAP_TCP_SCHEME[] = "coap+tcp:";
 static const char COAPS_TCP_SCHEME[] = "coaps+tcp:";
 static const char CORESPEC[] = "core";
 
-CAAdapterStateChangedCB g_adapterHandler = NULL;
-CAConnectionStateChangedCB g_connectionHandler = NULL;
 // Persistent Storage callback handler for open/read/write/close/unlink
 static OCPersistentStorage *g_PersistentStorageHandler = NULL;
 // Number of users of OCStack, based on the successful calls to OCInit2 prior to OCStop
@@ -6160,19 +6158,14 @@ OCStackResult OC_CALL OCGetHeaderOption(OCHeaderOption* ocHdrOpt, size_t numOpti
 void OCDefaultAdapterStateChangedHandler(CATransportAdapter_t adapter, bool enabled)
 {
     OIC_LOG(DEBUG, TAG, "OCDefaultAdapterStateChangedHandler");
-    if (g_adapterHandler)
-    {
-        g_adapterHandler(adapter, enabled);
-    }
+
+    OC_UNUSED(adapter);
+    OC_UNUSED(enabled);
 }
 
 void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, bool isConnected)
 {
     OIC_LOG(DEBUG, TAG, "OCDefaultConnectionStateChangedHandler");
-    if (g_connectionHandler)
-    {
-       g_connectionHandler(info, isConnected);
-    }
 
     /*
      * If the client observes one or more resources over a reliable connection,
