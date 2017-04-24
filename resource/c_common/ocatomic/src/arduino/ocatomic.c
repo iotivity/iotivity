@@ -36,3 +36,25 @@ int32_t oc_atomic_decrement(volatile int32_t *addend)
     (*addend)--;
     return *addend;
 }
+
+int32_t oc_atomic_add(volatile int32_t *addend, int32_t value)
+{
+    (*addend) += value;
+    return *addend;
+}
+
+bool oc_atomic_cmpxchg(volatile int32_t *destination, int32_t oldValue, int32_t newValue)
+{
+    if ((*destination) == oldValue)
+    {
+        *destination = newValue;
+        return true;
+    }
+    return false;
+}
+
+int32_t oc_atomic_or(volatile int32_t *destination, int32_t value)
+{
+    (*destination) |= value;
+    return *destination;
+}

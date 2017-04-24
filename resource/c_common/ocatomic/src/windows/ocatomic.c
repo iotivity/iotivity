@@ -34,3 +34,22 @@ int32_t oc_atomic_decrement(volatile int32_t *addend)
 {
     return InterlockedDecrement((volatile long*)addend);
 }
+
+int32_t oc_atomic_add(volatile int32_t *addend, int32_t value)
+{
+    return InterlockedAdd((volatile long*)addend, value);
+}
+
+bool oc_atomic_cmpxchg(volatile int32_t *destination, int32_t oldValue, int32_t newValue)
+{
+    if (InterlockedCompareExchange((volatile long*)destination, newValue, oldValue) == oldValue)
+    {
+        return true;
+    }
+    return false;
+}
+
+int32_t oc_atomic_or(volatile int32_t *destination, int32_t value)
+{
+    return InterlockedOr((volatile long*)destination, value);
+}
