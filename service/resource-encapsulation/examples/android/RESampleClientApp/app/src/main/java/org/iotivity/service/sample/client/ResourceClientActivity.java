@@ -112,7 +112,7 @@ public class ResourceClientActivity extends Activity
 
     private OnCacheUpdatedListener mOnCacheUpdatedListener = new OnCacheUpdatedListener() {
         @Override
-        public void onCacheUpdated(RcsResourceAttributes attrs) {
+        public void onCacheUpdated(RcsResourceAttributes attrs, int eCode) {
             Log.i(LOG_TAG, "onCacheUpdated");
 
             mHandler.obtainMessage(MSG_ID_ATTRIBUTE_RECEIVED, attrs)

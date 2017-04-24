@@ -98,7 +98,7 @@ namespace OIC
 
                 CacheID generateCacheID();
                 SubscriberInfoPair findSubscriber(CacheID id);
-                void notifyObservers(const RCSResourceAttributes Att);
+                void notifyObservers(const RCSResourceAttributes Att, int eCode);
         };
     } // namespace Service
 } // namespace OIC

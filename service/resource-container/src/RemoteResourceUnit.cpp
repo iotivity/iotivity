@@ -30,7 +30,7 @@ RemoteResourceUnit::RemoteResourceUnit()
     pStateChangedCB = std::bind(&RemoteResourceUnit::stateChangedCB, this,
                         std::placeholders::_1);
     pCacheUpdateCB = std::bind(&RemoteResourceUnit::cacheUpdateCB, this,
-                    std::placeholders::_1);
+                    std::placeholders::_1, std::placeholders::_2);
 }
 
 RemoteResourceUnit::~RemoteResourceUnit()
@@ -115,7 +115,7 @@ void RemoteResourceUnit::stateChangedCB(ResourceState changedState) const
     }
 }
 
-void RemoteResourceUnit::cacheUpdateCB(const RCSResourceAttributes & updatedAtt) const
+void RemoteResourceUnit::cacheUpdateCB(const RCSResourceAttributes & updatedAtt, int) const
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     (void)updatedAtt;

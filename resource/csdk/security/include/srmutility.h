@@ -63,6 +63,15 @@ struct OicParseQueryIter
             {OIC_LOG((logLevel), tag, #op " failed!!"); goto exit; } }while(0)
 
 /**
+ * Macro to verify expression evaluates to bool true.
+ * eg: VERIFY_TRUE_OR_EXIT(TAG, OC_STACK_OK == foo(), ERROR);
+ * @note Invoking function must define "exit:" label for goto functionality to work correctly.
+ */
+#define VERIFY_TRUE_OR_EXIT(tag, op, logLevel) do{ if (!(op)) \
+            {OIC_LOG_V((logLevel), tag, "%s:" #op "evaluates to false!",__func__); \
+            goto exit; } }while(0)
+
+/**
  * Macro to verify success of operation.
  * eg: VERIFY_SUCCESS_RETURN(TAG, OC_STACK_OK == foo(), ERROR, OC_STACK_ERROR);
  */
@@ -135,6 +144,21 @@ OCStackResult ConvertUuidToStr(const OicUuid_t* uuid, char** strUuid);
  */
 OCStackResult ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid);
 
+/**
+ * Compares two OicUuid_t structs.
+ *
+ * @return true if the two OicUuid_t structs are equal, else false.
+ */
+bool UuidCmp(const OicUuid_t *firstId, const OicUuid_t *secondId);
+
+extern const OicUuid_t THE_NIL_UUID;
+
+/**
+ * OicUuid_t to Nil UUID {.id={0000000000000000}}
+ *
+ * @return true if the OicUuid_t is the Nil UUID
+ */
+bool IsNilUuid(const OicUuid_t *uuid);
 
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 /**

@@ -770,7 +770,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
 
             cborEncoderResult = cbor_encode_text_string(&roleIdMap, OIC_JSON_ROLE_NAME, strlen(OIC_JSON_ROLE_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding role tag");
-            
+
             cborEncoderResult = cbor_encode_text_string(&roleIdMap, cred->roleId.id, strlen(cred->roleId.id));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding role value");
 
@@ -2967,13 +2967,12 @@ exit:
 
 OCStackResult GetCredRownerId(OicUuid_t *rowneruuid)
 {
-    OCStackResult retVal = OC_STACK_ERROR;
-    if (gCred)
+    if (gCred && rowneruuid)
     {
-        *rowneruuid = gCred->rownerID;
-        retVal = OC_STACK_OK;
+        memcpy(&(rowneruuid->id), &(gCred->rownerID.id), sizeof(rowneruuid->id));
+        return OC_STACK_OK;
     }
-    return retVal;
+    return OC_STACK_ERROR;
 }
 
 #if defined (__WITH_TLS__) || defined(__WITH_DTLS__)

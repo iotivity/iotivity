@@ -47,7 +47,7 @@ void getRemoteAttributesCallback(const RCSResourceAttributes&, int) {}
 void setRemoteAttributesCallback(const RCSResourceAttributes&, int) {}
 void setRemoteRepresentationCallback(const HeaderOpts&, const RCSRepresentation&, int) {}
 void resourceStateChanged(ResourceState) { }
-void cacheUpdatedCallback(const RCSResourceAttributes&) {}
+void cacheUpdatedCallback(const RCSResourceAttributes&, int) {}
 
 class RemoteResourceObjectTest: public TestWithMock
 {
@@ -294,7 +294,7 @@ TEST_F(RemoteResourceObjectTest, CacheStateIsUnreadyAfterStartCaching)
 TEST_F(RemoteResourceObjectTest, CacheStateIsReadyAfterCacheUpdated)
 {
     mocks.ExpectCallFunc(cacheUpdatedCallback).
-                Do([this](const RCSResourceAttributes&){ Proceed(); });
+                Do([this](const RCSResourceAttributes&, int){ Proceed(); });
 
     object->startCaching(cacheUpdatedCallback);
     Wait();
@@ -305,7 +305,7 @@ TEST_F(RemoteResourceObjectTest, CacheStateIsReadyAfterCacheUpdated)
 TEST_F(RemoteResourceObjectTest, IsCachedAvailableReturnsTrueWhenCacheIsReady)
 {
     mocks.ExpectCallFunc(cacheUpdatedCallback).
-                Do([this](const RCSResourceAttributes&){ Proceed(); });
+                Do([this](const RCSResourceAttributes&, int){ Proceed(); });
 
     object->startCaching(cacheUpdatedCallback);
     Wait();
@@ -316,12 +316,12 @@ TEST_F(RemoteResourceObjectTest, IsCachedAvailableReturnsTrueWhenCacheIsReady)
 TEST_F(RemoteResourceObjectTest, DISABLED_CacheUpdatedCallbackBeCalledWheneverCacheUpdated)
 {
     mocks.OnCallFunc(cacheUpdatedCallback).
-            Do([this](const RCSResourceAttributes&){ Proceed(); });
+            Do([this](const RCSResourceAttributes&, int){ Proceed(); });
     object->startCaching(cacheUpdatedCallback);
     Wait();
 
     mocks.ExpectCallFunc(cacheUpdatedCallback).
-            Do([this](const RCSResourceAttributes&){ Proceed(); });
+            Do([this](const RCSResourceAttributes&, int){ Proceed(); });
 
     server->setAttribute(ATTR_KEY, ATTR_VALUE + 1);
 
@@ -333,15 +333,15 @@ TEST_F(RemoteResourceObjectTest, DISABLED_CacheUpdatedCallbackBeCalledWithUpdate
     constexpr int newValue = ATTR_VALUE + 1;
 
     mocks.OnCallFunc(cacheUpdatedCallback).
-            Do([this](const RCSResourceAttributes&){ Proceed(); });
+            Do([this](const RCSResourceAttributes&, int){ Proceed(); });
     object->startCaching(cacheUpdatedCallback);
     Wait();
 
     mocks.ExpectCallFunc(cacheUpdatedCallback).
-            Match([this](const RCSResourceAttributes& attrs){
+            Match([this](const RCSResourceAttributes& attrs, int){
                 return attrs.at(ATTR_KEY) == newValue;
             }).
-            Do([this](const RCSResourceAttributes&){ Proceed(); });
+            Do([this](const RCSResourceAttributes&, int){ Proceed(); });
 
     server->setAttribute(ATTR_KEY, newValue);
 
@@ -356,7 +356,7 @@ TEST_F(RemoteResourceObjectTest, GetCachedAttributesThrowsIfCachingIsNotStarted)
 TEST_F(RemoteResourceObjectTest, CachedAttributesHasSameAttributesWithServer)
 {
     mocks.OnCallFunc(cacheUpdatedCallback).
-            Do([this](const RCSResourceAttributes&){ Proceed(); });
+            Do([this](const RCSResourceAttributes&, int){ Proceed(); });
     object->startCaching(cacheUpdatedCallback);
     Wait();
 
@@ -373,7 +373,7 @@ TEST_F(RemoteResourceObjectTest, GetCachedAttributeThrowsIfCachingIsNotStarted)
 TEST_F(RemoteResourceObjectTest, GetCachedAttributeThrowsIfKeyIsInvalid)
 {
     mocks.OnCallFunc(cacheUpdatedCallback).
-            Do([this](const RCSResourceAttributes&){ Proceed(); });
+            Do([this](const RCSResourceAttributes&, int){ Proceed(); });
     object->startCaching(cacheUpdatedCallback);
     Wait();
 

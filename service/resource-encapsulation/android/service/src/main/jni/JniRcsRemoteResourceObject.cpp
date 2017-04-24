@@ -135,7 +135,8 @@ namespace
         }
     }
 
-    void onCacheUpdated(const RCSResourceAttributes& attrs, const JavaGlobalRef& listener)
+    void onCacheUpdated(const RCSResourceAttributes& attrs, int eCode,
+                        const JavaGlobalRef& listener)
     {
         LOGD("onCacheUpdated");
 
@@ -186,7 +187,7 @@ void initRCSRemoteResourceObject(JNIEnvWrapper* env)
 
     auto clsOnCacheUpdatedListener = env->FindClass(CLS_NAME_ON_CACHE_UPDATED_LISTENER);
     g_method_onCacheUpdated = env->GetMethodID(clsOnCacheUpdatedListener, "onCacheUpdated",
-            "(" AS_SIG(CLS_NAME_RESOURCEATTRIBUTES) ")V");
+            "(" AS_SIG(CLS_NAME_RESOURCEATTRIBUTES) "I)V");
 
     auto clsOnRemoteAttributesReceivedListener =
             env->FindClass(CLS_NAME_ON_REMOTE_ATTRIBUTES_RECEIVED_LISTENER);
@@ -341,7 +342,8 @@ Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeStartCaching
         if (listener)
         {
             res->startCaching(std::bind(onCacheUpdated,
-                    std::placeholders::_1, JavaGlobalRef{ env, listener }));
+                    std::placeholders::_1, std::placeholders::_2,
+                    JavaGlobalRef{ env, listener }));
         }
         else
         {

@@ -74,7 +74,8 @@ class DataCacheTest : public TestWithMock
 
             mocks.OnCall(pResource.get(), PrimitiveResource::isObservable).Return(false);
             cacheHandler.reset(new DataCache());
-            cb = ([](std::shared_ptr<PrimitiveResource >, const RCSResourceAttributes &)->OCStackResult
+            cb = ([](std::shared_ptr<PrimitiveResource >,
+                    const RCSResourceAttributes &, int) -> OCStackResult
                     {
                         return OC_STACK_OK;
                     });

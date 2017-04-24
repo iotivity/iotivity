@@ -34,6 +34,7 @@
 #include "psinterface.h"
 #include "srmresourcestrings.h"
 #include "srmutility.h"
+#include "deviceonboardingstate.h"
 
 #define TAG  "OIC_SRM_PSTAT"
 
@@ -45,7 +46,7 @@ static const uint16_t CBOR_SIZE = 512;
 static const uint16_t CBOR_MAX_SIZE = 4400;
 
 // PSTAT Map size - Number of read-write items +2 for rt and if.
-// TODO [IOT-1958] isOp becomes read-only; -1 here
+// TODO [IOT-2023] isOp becomes read-only; -1 here
 static const uint8_t PSTAT_MIN_MAP_SIZE = 7; // dos, isOp, tm, om, rowneruuid, rt, if
 
 // .dos Property map size
@@ -53,7 +54,7 @@ static const uint8_t PSTAT_DOS_MAP_SIZE = 2; // s, p
 
 // Number of read-only Properties, added to map if not creating a writable-only
 // representation.
-// TODO [IOT-1958] isOp becomes read-only; +1 here
+// TODO [IOT-2023] isOp becomes read-only; +1 here
 static const uint8_t READ_ONLY_PROPERTY_SIZE = 2; // cm, sm
 
 static OicSecDpom_t gSm = SINGLE_SERVICE_CLIENT_DRIVEN;
@@ -195,7 +196,7 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed closing pstat.dos map");
 
     // isop Property
-    // TODO [IOT-1958] move isOp inside !writableOnly check
+    // TODO [IOT-2023] move isOp inside !writableOnly check
     cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_ISOP_NAME,
         strlen(OIC_JSON_ISOP_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ISOP Name Tag.");
@@ -373,10 +374,10 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
     if (CborInvalidType != pstatMap.type)
     {
         // found pstat.dos tag "dos" in pstatMap
-        OIC_LOG(INFO, TAG, "Found pstat.dos tag in pstatMap.");
+        OIC_LOG(DEBUG, TAG, "Found pstat.dos tag in pstatMap.");
         if (CborNoError == cborFindResult && cbor_value_is_container(&pstatMap))
         {
-            OIC_LOG(INFO, TAG, "Found pstat.dos cbor container; entering.");
+            OIC_LOG(DEBUG, TAG, "Found pstat.dos cbor container; entering.");
             cborFindResult = cbor_value_enter_container(&pstatMap, &dosMap);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering dos map.");
         }
@@ -391,20 +392,20 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
             {
                 if (strcmp(dosTagName, OIC_JSON_S_NAME) == 0)
                 {
-                    OIC_LOG(INFO, TAG, "Found pstat.dos.s tag; getting int value.");
+                    OIC_LOG(DEBUG, TAG, "Found pstat.dos.s tag; getting int value.");
                     int s = -1;
                     cborFindResult = cbor_value_get_int(&dosMap, &s);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed getting pstat.dos.s value.");
-                    OIC_LOG_V(INFO, TAG, "Read pstat.dos.s value = %d.", s);
+                    OIC_LOG_V(DEBUG, TAG, "Read pstat.dos.s value = %d.", s);
                     pstat->dos.state = (OicSecDeviceOnboardingState_t)s;
                 }
                 else if (strcmp(dosTagName, OIC_JSON_P_NAME) == 0)
                 {
-                    OIC_LOG(INFO, TAG, "Found pstat.dos.p tag; getting boolean value.");
+                    OIC_LOG(DEBUG, TAG, "Found pstat.dos.p tag; getting boolean value.");
                     bool p = false;
                     cborFindResult = cbor_value_get_boolean(&dosMap, &p);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed getting pstat.dos.p value.");
-                    OIC_LOG_V(INFO, TAG, "Read pstat.dos.p value = %s.", p?"true":"false");
+                    OIC_LOG_V(DEBUG, TAG, "Read pstat.dos.p value = %s.", p?"true":"false");
                     pstat->dos.pending = p;
                 }
                 else
@@ -441,7 +442,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
         cborFindResult = cbor_value_get_boolean(&pstatMap, &pstat->isOp);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding isOp Value.");
 
-        // TODO [IOT-1958] will make this Property read-only... for now, leave
+        // TODO [IOT-2023] will make this Property read-only... for now, leave
         // as writable
         // if (roParsed)
         // {
@@ -663,6 +664,8 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
         bool roParsed = false;
         OCStackResult ret = CBORPayloadToPstatBin(payload, size, &pstat, &roParsed);
         VERIFY_NOT_NULL(TAG, pstat, ERROR);
+
+        // if CBOR parsing OK
         if (OC_STACK_OK == ret)
         {
             bool validReq = false;
@@ -701,10 +704,10 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
                 ehRet = OC_EH_BAD_REQ;
                 goto exit;
             }
-            validReq = false;
+            // validReq = false;
 
             // Currently, IoTivity only supports Single Service Client Directed provisioning
-            // TODO [IOT-1763]: update this state management logic as part of CR 32.
+            // TODO [IOT-2023]: update this state management logic once prov tool is updated
             if (pstat->om == SINGLE_SERVICE_CLIENT_DRIVEN)
             {
                 if ((pstat->cm & RESET) && false == pstat->isOp)
@@ -755,12 +758,69 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
                 goto exit;
             }
 
-            // TODO [IOT-1763]: use SetState() function on dos as part of CR 32.
-            gPstat->dos.state = pstat->dos.state;
-            gPstat->dos.pending = pstat->dos.pending;
-            gPstat->isOp = pstat->isOp;
+            OCStackResult stateChangeResult = OC_STACK_ERROR;
+            // TODO [IOT-2023] temporary fix until prov tool is updated -
+            // insert change to RFPRO before changing to RFNOP.
+            if (DOS_RFNOP == pstat->dos.state)
+            {
+                stateChangeResult = SetDosState(DOS_RFPRO);
+                switch (stateChangeResult)
+                {
+                    case OC_STACK_OK:
+                    OIC_LOG_V(INFO, TAG, "%s: DOS state changed SUCCESSFULLY to %d.", \
+                        __func__, pstat->dos.state);
+                    ehRet = OC_EH_OK;
+                    break;
+
+                    case OC_STACK_FORBIDDEN_REQ:
+                    OIC_LOG_V(WARNING, TAG, "%s: DOS state change change to %d NOT ALLOWED.", \
+                        __func__, pstat->dos.state);
+                    ehRet = OC_EH_NOT_ACCEPTABLE;
+                    goto exit;
+                    break;
+
+                    case OC_STACK_INTERNAL_SERVER_ERROR:
+                    default:
+                    OIC_LOG_V(ERROR, TAG, "%s: DOS state change change to %d FAILED. \
+                        Internal error - SVRs may be in bad state.", \
+                        __func__, pstat->dos.state);
+                    ehRet = OC_EH_INTERNAL_SERVER_ERROR;
+                    goto exit;
+                    break;
+                }
+            }
+
+            if(OC_EH_OK == ehRet)
+            {
+                stateChangeResult = SetDosState(pstat->dos.state);
+                switch (stateChangeResult)
+                {
+                    case OC_STACK_OK:
+                    OIC_LOG_V(INFO, TAG, "%s: DOS state changed SUCCESSFULLY to %d.", \
+                        __func__, pstat->dos.state);
+                    ehRet = OC_EH_OK;
+                    break;
+
+                    case OC_STACK_FORBIDDEN_REQ:
+                    OIC_LOG_V(WARNING, TAG, "%s: DOS state change change to %d NOT ALLOWED.", \
+                        __func__, pstat->dos.state);
+                    ehRet = OC_EH_NOT_ACCEPTABLE;
+                    goto exit;
+                    break;
+
+                    case OC_STACK_INTERNAL_SERVER_ERROR:
+                    default:
+                    OIC_LOG_V(ERROR, TAG, "%s: DOS state change change to %d FAILED. \
+                        Internal error - SVRs may be in bad state.", \
+                        __func__, pstat->dos.state);
+                    ehRet = OC_EH_INTERNAL_SERVER_ERROR;
+                    goto exit;
+                    break;
+                }
+            }
+
+            // [IOT-2023] remove once provisioning tool updated
             gPstat->tm = pstat->tm;
-            gPstat->cm = pstat->tm; // TODO [IOT-1763]: remove once dos state is functional
             gPstat->om = pstat->om;
             memcpy(&(gPstat->rownerID), &(pstat->rownerID), sizeof(OicUuid_t));
 
@@ -791,6 +851,8 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
 
     exit:
 
+    // TODO [IOT-1796] This is another place error code returns need to be
+    // cleaned up.
     if (OC_EH_OK != ehRet)
     {
         /*
@@ -915,6 +977,9 @@ OCStackResult InitPstatResource()
     }
     VERIFY_NOT_NULL(TAG, gPstat, FATAL);
 
+    // TODO [IOT-2023]: after all SVRs are initialized, need to call SetDosState()
+    // using the just-loaded pstat.dos.s
+
     // Instantiate 'oic.sec.pstat'
     ret = CreatePstatResource();
 
@@ -962,14 +1027,24 @@ void RestorePstatToInitState()
     }
 }
 
-OCStackResult SetPstatRownerId(const OicUuid_t* newROwner)
+OCStackResult GetPstatRownerId(OicUuid_t *rowneruuid)
+{
+    if (gPstat && rowneruuid)
+    {
+        memcpy(&(rowneruuid->id), &(gPstat->rownerID.id), sizeof(rowneruuid->id));
+        return OC_STACK_OK;
+    }
+    return OC_STACK_ERROR;
+}
+
+OCStackResult SetPstatRownerId(const OicUuid_t *rowneruuid)
 {
     OCStackResult ret = OC_STACK_ERROR;
     uint8_t *cborPayload = NULL;
     size_t size = 0;
     OicUuid_t prevId = {.id={0}};
 
-    if(NULL == newROwner)
+    if(NULL == rowneruuid)
     {
         ret = OC_STACK_INVALID_PARAM;
     }
@@ -978,10 +1053,10 @@ OCStackResult SetPstatRownerId(const OicUuid_t* newROwner)
         ret = OC_STACK_NO_RESOURCE;
     }
 
-    if(newROwner && gPstat)
+    if(rowneruuid && gPstat)
     {
         memcpy(prevId.id, gPstat->rownerID.id, sizeof(prevId.id));
-        memcpy(gPstat->rownerID.id, newROwner->id, sizeof(newROwner->id));
+        memcpy(gPstat->rownerID.id, rowneruuid->id, sizeof(gPstat->rownerID.id));
 
         ret = PstatToCBORPayload(gPstat, &cborPayload, &size, false);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
@@ -996,29 +1071,108 @@ OCStackResult SetPstatRownerId(const OicUuid_t* newROwner)
 
 exit:
     OICFree(cborPayload);
-    memcpy(gPstat->rownerID.id, prevId.id, sizeof(prevId.id));
+    memcpy(gPstat->rownerID.id, prevId.id, sizeof(gPstat->rownerID.id));
     return ret;
 }
 
-/**
- * This function returns the "isop" status of the device.
- *
- * @return true iff pstat.isop == 1, else false
- */
-bool GetPstatIsop()
+OCStackResult GetPstatDosS(OicSecDeviceOnboardingState_t *s)
 {
-    return gPstat->isOp;
+    if (gPstat && s)
+    {
+        *s = gPstat->dos.state;
+        return OC_STACK_OK;
+    }
+    return OC_STACK_ERROR;
 }
 
-OCStackResult GetPstatRownerId(OicUuid_t *rowneruuid)
+OCStackResult SetPstatDosS(const OicSecDeviceOnboardingState_t s)
 {
-    OCStackResult retVal = OC_STACK_ERROR;
     if (gPstat)
     {
-        *rowneruuid = gPstat->rownerID;
-        retVal = OC_STACK_OK;
+        gPstat->dos.state = s;
+        return OC_STACK_OK;
     }
-    return retVal;
+    return OC_STACK_ERROR;
+}
+
+OCStackResult GetPstatDosP(bool *p)
+{
+    if (gPstat && p)
+    {
+        *p = gPstat->dos.pending;
+        return OC_STACK_OK;
+    }
+    return OC_STACK_ERROR;
+}
+
+OCStackResult SetPstatDosP(const bool p)
+{
+    if (gPstat)
+    {
+        gPstat->dos.pending = p;
+        return OC_STACK_OK;
+    }
+    return OC_STACK_ERROR;
+}
+
+OCStackResult GetPstatIsop(bool *isop)
+{
+    if (gPstat && isop)
+    {
+        *isop = gPstat->isOp;
+        return OC_STACK_OK;
+    }
+    return OC_STACK_ERROR;
+}
+
+OCStackResult SetPstatIsop(const bool isop)
+{
+    if (gPstat)
+    {
+        gPstat->isOp = isop;
+        return OC_STACK_OK;
+    }
+    return OC_STACK_ERROR;
+}
+
+OCStackResult GetPstatCm(OicSecDpm_t *cm)
+{
+    if (gPstat && cm)
+    {
+        *cm = gPstat->cm;
+        return OC_STACK_OK;
+    }
+    return OC_STACK_ERROR;
+}
+
+OCStackResult SetPstatCm(const OicSecDpm_t cm)
+{
+    if (gPstat)
+    {
+        gPstat->cm = cm;
+        return OC_STACK_OK;
+    }
+    return OC_STACK_ERROR;
+}
+
+OCStackResult GetPstatTm(OicSecDpm_t *tm)
+{
+    if (gPstat && tm)
+    {
+        *tm = gPstat->tm;
+        return OC_STACK_OK;
+    }
+    return OC_STACK_ERROR;
+}
+
+OCStackResult SetPstatTm(const OicSecDpm_t tm)
+{
+    if (gPstat)
+    {
+        gPstat->tm = tm;
+        return OC_STACK_OK;
+    }
+    return OC_STACK_ERROR;
 }
 
 OCStackResult SetPstatSelfOwnership(const OicUuid_t* newROwner)

@@ -423,7 +423,13 @@ static int64_t OCConvertDiscoveryPayloadCbor(OCDiscoveryPayload *payload,
         err |= cbor_encoder_create_array(&rootMap, &linkArray, CborIndefiniteLength);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting links array");
 
-        bool isSelf = !strcmp(payload->sid, OCGetServerInstanceIDString());
+        bool isSelf = false;
+        const char *deviceId = OCGetServerInstanceIDString();
+        if (NULL != deviceId)
+        {
+            isSelf = !strcmp(payload->sid, deviceId);
+        }
+
         for (size_t i = 0; i < resourceCount; ++i)
         {
             OCResourcePayload *resource = OCDiscoveryPayloadGetResource(payload, i);
