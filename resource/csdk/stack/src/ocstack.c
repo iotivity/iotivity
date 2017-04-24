@@ -3394,7 +3394,8 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     /* Check whether we should assert role certificates before making this request. */
     if ((endpoint.flags & CA_SECURE) && 
-        (strcmp(requestInfo.info.resourceUri, OIC_RSRC_ROLES_URI) != 0))
+        (strcmp(requestInfo.info.resourceUri, OIC_RSRC_ROLES_URI) != 0) &&
+        (strcmp(requestInfo.info.resourceUri, OIC_RSRC_DOXM_URI) != 0))
     {
         CASecureEndpoint_t sep;
         CAResult_t caRes = CAGetSecureEndpointData(&endpoint, &sep);
