@@ -35,8 +35,8 @@ def cleanup(iotivity_base_path, exe_path):
 # Print the environment variables (useful for debugging)
 def print_environment():
     for key in os.environ.keys():
-        print "%30s %s \n" % (key,os.environ[key])
-    print 'current PATH is %s' % sys.path
+        print("%30s %s \n" % (key,os.environ[key]))
+    print('current PATH is %s' % sys.path)
 
 
 ### main ###
@@ -91,15 +91,15 @@ test_range = range(1, NUM_TESTS + 1)    #default to running all tests
 if args.onetest:
     try:
         if int(args.onetest) > NUM_TESTS or int(args.onetest) < 1:
-            print 'Argument to --onetest out of range'
+            print('Argument to --onetest out of range')
             sys.exit(-1)
         test_range = range(int(args.onetest), int(args.onetest) + 1)
     except ValueError:
-        print 'invalid argument to --onetest'
+        print('invalid argument to --onetest')
         sys.exit(-1)
 
 for i in test_range:
-    print '\nRunning test %d...\n' % i
+    print('\nRunning test %d...\n' % i)
 
     # Clear state from previous test
     cleanup(iotivity_base_path, exe_path)
@@ -109,7 +109,7 @@ for i in test_range:
     try:
         server_process = subprocess.Popen('sampleserver_justworks')
     except:
-        print 'Failed to start sampleserver_justworks', sys.exc_info()[0]
+        print('Failed to start sampleserver_justworks: %s', sys.exc_info()[0])
         sys.exit(-1)
 
     # Run the auto provisioning client with the test number as argument, block until it returns
@@ -117,19 +117,17 @@ for i in test_range:
 
     if return_code != 0:
         num_failures += 1
-        print "Test %d failed" % i
+        print("Test %d failed" % i)
         output_text  += "Test %d failed\n" % i
     else:
-        print "Test %d passed" % i
+        print("Test %d passed" % i)
 
 
     server_process.kill()
 
 
-print "\n------------------------------------"
-print " Test Results: %d of %d tests passed" % (len(test_range) - num_failures, len(test_range))
-print "------------------------------------"
-print output_text
-print '\n'
-
-
+print("\n------------------------------------")
+print(" Test Results: %d of %d tests passed" % (len(test_range) - num_failures, len(test_range)))
+print("------------------------------------")
+print(output_text)
+print('\n')
