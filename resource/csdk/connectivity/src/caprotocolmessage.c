@@ -43,6 +43,7 @@
 #include "oic_string.h"
 #include "ocrandom.h"
 #include "cacommonutil.h"
+#include "cablockwisetransfer.h"
 
 #define TAG "OIC_CA_PRTCL_MSG"
 
@@ -1139,14 +1140,15 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token, uint8_t tokenLength)
         return CA_STATUS_INVALID_PARAM;
     }
 
-    // memory allocation
-    char *temp = (char *) OICCalloc(tokenLength, sizeof(char));
+    // memory allocation, token is stored as a Pascal-style string
+    char *temp = (char *) OICCalloc(tokenLength + 1, sizeof(char));
     if (NULL == temp)
     {
         OIC_LOG(ERROR, TAG, "Out of memory");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
+    *temp++ = tokenLength;
     if (!OCGetRandomBytes((uint8_t *)temp, tokenLength))
     {
         OIC_LOG(ERROR, TAG, "Failed to generate random token");
@@ -1164,7 +1166,14 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token, uint8_t tokenLength)
 
 void CADestroyTokenInternal(CAToken_t token)
 {
-    OICFree(token);
+    if (token)
+    {
+        char *temp = token - 1;
+#ifdef WITH_BWT
+        CARemoveBlockMulticastDataFromListWithSeed(token, *temp);
+#endif
+        OICFree(temp);
+    }
 }
 
 uint32_t CAGetOptionData(uint16_t key, const uint8_t *data, uint32_t len,
