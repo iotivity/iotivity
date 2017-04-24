@@ -33,3 +33,18 @@ int32_t oc_atomic_decrement(volatile int32_t *addend)
 {
     return __sync_sub_and_fetch(addend, 1);
 }
+
+int32_t oc_atomic_add(volatile int32_t *addend, int32_t value)
+{
+    return __sync_add_and_fetch(addend, value);
+}
+
+bool oc_atomic_cmpxchg(volatile int32_t *destination, int32_t oldValue, int32_t newValue)
+{
+    return __sync_bool_compare_and_swap(destination, oldValue, newValue);
+}
+
+int32_t oc_atomic_or(volatile int32_t *destination, int32_t value)
+{
+    return  __sync_or_and_fetch(destination, value);
+}
