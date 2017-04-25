@@ -616,6 +616,8 @@ namespace OC
         else
         {
             OCEntityHandlerResponse response;
+            memset(&response, 0, sizeof(response));
+
 //            OCRepPayload* payLoad = pResponse->getPayload();
             HeaderOptions serverHeaderOptions = pResponse->getHeaderOptions();
 
@@ -661,9 +663,17 @@ namespace OC
 
             if(OC_EH_RESOURCE_CREATED == response.ehResult)
             {
-                pResponse->getNewResourceUri().copy(response.resourceUri,
-                        sizeof (response.resourceUri) - 1);
-                response.resourceUri[pResponse->getNewResourceUri().length()] = '\0';
+                // Do not truncate if new resource uri is too long, return failure.
+                if (pResponse->getNewResourceUri().length() > (sizeof(response.resourceUri) - 1))
+                {
+                    return OC_STACK_INVALID_URI;
+                }
+                else
+                {
+                    pResponse->getNewResourceUri().copy(response.resourceUri,
+                            sizeof(response.resourceUri) - 1);
+                    response.resourceUri[pResponse->getNewResourceUri().length()] = '\0';
+                }
             }
 
             if(cLock)

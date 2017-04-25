@@ -1713,7 +1713,7 @@ typedef struct
     /** An array of the vendor specific header options the entity handler wishes to use in response.*/
     OCHeaderOption sendVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
 
-    /** URI of new resource that entity handler might create.*/
+    /** Resource path of new resource that entity handler might create.*/
     char resourceUri[MAX_URI_LENGTH];
 
     /** Server sets to true for persistent response buffer,false for non-persistent response buffer*/

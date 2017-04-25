@@ -778,7 +778,11 @@ void Callback::GetCallback(IPCAStatus status, const OCRepresentation& rep, Callb
     RemoveCallbackInfo(cbInfo->mapKey);
 }
 
-void Callback::SetCallback(IPCAStatus status, const OCRepresentation& rep, CallbackInfo::Ptr cbInfo)
+void Callback::SetCallback(
+                    IPCAStatus status,
+                    const OCRepresentation& rep,
+                    CallbackInfo::Ptr cbInfo,
+                    std::string newResourcePath)
 {
     if ((cbInfo->app != m_app) || (SetCallbackInProgress(cbInfo->mapKey) == false))
     {
@@ -790,8 +794,7 @@ void Callback::SetCallback(IPCAStatus status, const OCRepresentation& rep, Callb
         cbInfo->createResourceCallback(
                     status,
                     const_cast<void*>(cbInfo->callbackContext),
-                    NULL, /* tbd: no info on new resource URI. */
-                          /* See https://jira.iotivity.org/browse/IOT-1819 */
+                    newResourcePath.c_str(),
                     (IPCAPropertyBagHandle)&rep);
     }
     else

@@ -242,6 +242,16 @@ void IPCAElevatorClient::CreateResourceRelativePath()
     IPCAPropertyBagDestroy(propertyBagHandle);
 }
 
+void IPCAElevatorClient::CreateResourceLongRelativePath()
+{
+    IPCAPropertyBagHandle propertyBagHandle;
+    ASSERT_EQ(IPCA_OK, IPCAPropertyBagCreate(&propertyBagHandle));
+
+    CreateElevatorResource(ELEVATOR_RESOURCE_CREATE_RELATIVE_PATH_LONG, propertyBagHandle);
+
+    IPCAPropertyBagDestroy(propertyBagHandle);
+}
+
 void IPCAElevatorClient::DeleteResource()
 {
     DeleteElevatorResource();

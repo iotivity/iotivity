@@ -570,9 +570,14 @@ TEST_F(IPCAElevatorClient, SuccessfullyCreateAndDeleteResources)
         CreateResourceRelativePath();
         afterCreateCount = g_testElevator1.GetRelativePathResourceCreateCount();
         ASSERT_EQ(beforeCreateCount + 1, afterCreateCount);
-        // @todo: when IOT-1819 is resolved.
-        // EXPECT_STREQ(ELEVATOR_RESOURCE_NEW_RESOURCE_PATH, GetNewResourceURI());
+        EXPECT_STREQ(ELEVATOR_RESOURCE_NEW_RESOURCE_PATH, GetNewResourcePath());
     }
+
+    // Create new resource that results in resource with long resource path.
+    beforeCreateCount = g_testElevator1.GetRelativePathResourceCreateCount();
+    CreateResourceLongRelativePath();
+    afterCreateCount = g_testElevator1.GetRelativePathResourceCreateCount();
+    ASSERT_EQ(beforeCreateCount, afterCreateCount); // resource should not be created.
 
     // Delete resource
     size_t beforeDeleteCount, afterDeleteCount;

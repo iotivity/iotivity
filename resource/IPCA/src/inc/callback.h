@@ -174,7 +174,8 @@ class Callback
         // resource->put() callback.
         void SetCallback(IPCAStatus status,
                 const OC::OCRepresentation& rep,
-                CallbackInfo::Ptr cbInfo);
+                CallbackInfo::Ptr cbInfo,
+                std::string newResourcePath);
 
         // resource->observe() callback.
         void ObserveCallback(IPCAStatus status,

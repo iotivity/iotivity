@@ -579,6 +579,12 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         responseInfo.info.numOptions = ehResponse->numSendVendorSpecificHeaderOptions;
     }
 
+    // Path of new resource is returned in options as location-path.
+    if (ehResponse->resourceUri[0] != '\0')
+    {
+        responseInfo.info.numOptions++;
+    }
+
     if(responseInfo.info.numOptions > 0)
     {
         responseInfo.info.options = (CAHeaderOption_t *)
@@ -618,6 +624,30 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             memcpy(optionsPointer, ehResponse->sendVendorSpecificHeaderOptions,
                             sizeof(OCHeaderOption) *
                             ehResponse->numSendVendorSpecificHeaderOptions);
+
+            // Advance the optionPointer by the number of vendor options.
+            optionsPointer += ehResponse->numSendVendorSpecificHeaderOptions;
+        }
+
+        // Return new resource as location-path option.
+        // https://tools.ietf.org/html/rfc7252#section-5.8.2.
+        if (ehResponse->resourceUri[0] != '\0')
+        {
+            if ((strlen(ehResponse->resourceUri) + 1) > CA_MAX_HEADER_OPTION_DATA_LENGTH)
+            {
+                OIC_LOG(ERROR, TAG,
+                    "New resource path must be less than CA_MAX_HEADER_OPTION_DATA_LENGTH");
+                OICFree(responseInfo.info.options);
+                return OC_STACK_INVALID_URI;
+            }
+
+            optionsPointer->protocolID = CA_COAP_ID;
+            optionsPointer->optionID = CA_HEADER_OPTION_ID_LOCATION_PATH;
+            OICStrcpy(
+                optionsPointer->optionData,
+                sizeof(optionsPointer->optionData),
+                ehResponse->resourceUri);
+            optionsPointer->optionLength = (uint16_t)strlen(optionsPointer->optionData) + 1;
         }
     }
     else

@@ -21,6 +21,7 @@
 #include "OCApi.h"
 #include "testelevatorserver.h"
 #include "ipcatestdata.h"
+#include "OCException.h"
 
 using namespace OC;
 using namespace std::placeholders;
@@ -199,6 +200,7 @@ OCEntityHandlerResult ElevatorServer::ElevatorEntityHandler(
 
                     ehResult = OC_EH_OK;
                 }
+                else
                 if (resourceUri.compare(ELEVATOR_RESOURCE_CREATE_RELATIVE_PATH) == 0)
                 {
                     m_relativePathResourceCreateCount++;
@@ -213,6 +215,52 @@ OCEntityHandlerResult ElevatorServer::ElevatorEntityHandler(
                     // Send the response.
                     OCPlatform::sendResponse(pResponse);
                     ehResult = OC_EH_OK;
+                }
+                else
+                if (resourceUri.compare(ELEVATOR_RESOURCE_CREATE_RELATIVE_PATH_LONG) == 0)
+                {
+                    // long resource path.
+                    char newResourcePath[2048];
+                    memset(newResourcePath, 'x', 2047);
+                    newResourcePath[2047] = '\0';
+
+                    m_relativePathResourceCreateCount++;
+
+                    auto pResponse = std::make_shared<OC::OCResourceResponse>();
+                    pResponse->setRequestHandle(request->getRequestHandle());
+                    pResponse->setResourceHandle(request->getResourceHandle());
+                    pResponse->setNewResourceUri(newResourcePath);
+                    pResponse->setResponseResult(OC_EH_RESOURCE_CREATED);
+
+                    try
+                    {
+                        // Send the response.
+                        if (OCPlatform::sendResponse(pResponse) != OC_STACK_OK)
+                        {
+                            m_relativePathResourceCreateCount--;
+                            ehResult = OC_EH_INTERNAL_SERVER_ERROR;
+                        }
+                        else
+                        {
+                            ehResult = OC_EH_OK;
+                        }
+                    }
+                    catch(OCException& e)
+                    {
+                        // The stack returns OC_STACK_INVALID_URI when the new resource path
+                        // exceeds MAX_URI_LENGTH.
+                        if (e.code() == OC_STACK_INVALID_URI)
+                        {
+                            // The resource is not created.
+                            m_relativePathResourceCreateCount--;
+                            ehResult = OC_EH_INTERNAL_SERVER_ERROR;
+                        }
+                        else
+                        {
+                            throw e;
+                        }
+                    }
+
                 }
 
             }
@@ -445,6 +493,20 @@ bool ElevatorServer::Start(std::string& elevatorName)
             return false;
         }
 
+        std::string createRelativeResourcePathLong(ELEVATOR_RESOURCE_CREATE_RELATIVE_PATH_LONG);
+        result = OCPlatform::registerResource(
+                                    m_elevatorCreateRelativeResourceLong,
+                                    createRelativeResourcePathLong,
+                                    createRelativeResourceType,
+                                    DEFAULT_INTERFACE,
+                                    std::bind(&ElevatorServer::ElevatorEntityHandler, this, _1),
+                                    OC_DISCOVERABLE | OC_OBSERVABLE);
+
+        if (result != OC_STACK_OK)
+        {
+            return false;
+        }
+
         std::string deleteResourcePath(ELEVATOR_RESOURCE_DELETE_PATH);
         std::string deleteResourceType(ELEVATOR_RESOURCE_DELETE_TYPE);
         result = OCPlatform::registerResource(
@@ -483,6 +545,9 @@ void ElevatorServer::Stop()
 
         OCPlatform::unregisterResource(m_elevatorCreateRelativeResource);
         m_elevatorCreateRelativeResource = nullptr;
+
+        OCPlatform::unregisterResource(m_elevatorCreateRelativeResourceLong);
+        m_elevatorCreateRelativeResourceLong = nullptr;
 
         OCPlatform::unregisterResource(m_elevatorDeleteResource);
         m_elevatorDeleteResource = nullptr;
