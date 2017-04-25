@@ -41,10 +41,8 @@ with_mq = oclib_env.get('WITH_MQ')
 ######################################################################
 with_upstream_libcoap = oclib_env.get('WITH_UPSTREAM_LIBCOAP')
 if with_upstream_libcoap == '1':
-	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
 	oclib_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
 else:
-	# For bring up purposes only, the forked version will live here.
 	oclib_env.AppendUnique(CPPPATH = ['../csdk/connectivity/lib/libcoap-4.1.1/include'])
 
 oclib_env.AppendUnique(CPPPATH = [

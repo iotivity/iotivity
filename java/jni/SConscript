@@ -31,6 +31,14 @@ jni_env = lib_env.Clone()
 ######################################################################
 # Build flags
 ######################################################################
+with_upstream_libcoap = jni_env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+    jni_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+else:
+    jni_env.AppendUnique(CPPPATH = [
+            env.get('SRC_DIR') + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include'
+            ])
+
 jni_env.AppendUnique(CPPPATH = [
 		env.get('SRC_DIR') + '/resource/csdk/connectivity/api',
 		env.get('SRC_DIR') + '/resource/include',
@@ -49,8 +57,7 @@ jni_env.AppendUnique(CPPPATH = [
 		env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/cloud/',
 		env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/oxm',
 		env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
-		env.get('SRC_DIR') + '/resource/csdk/security/include',
-		env.get('SRC_DIR') + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include'
+		env.get('SRC_DIR') + '/resource/csdk/security/include'
 		])
 
 target_os = env.get('TARGET_OS')

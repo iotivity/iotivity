@@ -20,10 +20,8 @@ with_mq = env.get('WITH_MQ')
 
 with_upstream_libcoap = env.get('WITH_UPSTREAM_LIBCOAP')
 if with_upstream_libcoap == '1':
-	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
 	env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
 else:
-	# For bring up purposes only, the forked version will live here.
 	env.AppendUnique(CPPPATH = ['../../../../connectivity/lib/libcoap-4.1.1'])
 
 env.PrependUnique(CPPPATH = [

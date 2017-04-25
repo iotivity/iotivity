@@ -38,19 +38,12 @@ randomtest_env.PrependUnique(CPPPATH = [
                '../../../oc_logger/include',
                ])
  
-randomtest_env.PrependUnique(LIBS = ['octbstack',
-                                      'connectivity_abstraction',
-                                      'uuid'])
+randomtest_env.PrependUnique(LIBS = ['uuid'])
 
 randomtest_env.PrependUnique(CPPPATH = ['../include'])
 
-randomtest_env.PrependUnique(LIBS = ['c_common'])
-
 if target_os in ['linux']:
     randomtest_env.AppendUnique(LIBS = ['m'])
-
-#if randomtest_env.get('SECURED') == '1':
-#	randomtest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 if randomtest_env.get('LOGGING'):
 	randomtest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])

@@ -224,7 +224,8 @@ typedef enum OicSecDeviceOnboardingState
     DOS_RFOTM,
     DOS_RFPRO,
     DOS_RFNOP,
-    DOS_SRESET
+    DOS_SRESET,
+    DOS_STATE_COUNT
 } OicSecDeviceOnboardingState_t;
 
 typedef struct OicSecDostype

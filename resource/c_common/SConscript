@@ -212,4 +212,6 @@ common_env.UserInstallTargetHeader('iotivity_debug.h', 'c_common', 'iotivity_deb
 common_env.UserInstallTargetHeader('platform_features.h', 'c_common', 'platform_features.h')
 
 Clean(commonlib, config_h_file_path)
-env.PrependUnique(LIBS = ['c_common'])
+
+# c_common calls into logger.
+env.PrependUnique(LIBS = ['c_common', 'logger'])

@@ -26,10 +26,8 @@ connectivity_env.PrependUnique(CPPPATH = [ os.path.join(root_dir, 'api') ])
 
 with_upstream_libcoap = connectivity_env.get('WITH_UPSTREAM_LIBCOAP')
 if with_upstream_libcoap == '1':
-	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
 	connectivity_env.AppendUnique(CPPPATH = [os.path.join('#extlibs', 'libcoap', 'libcoap', 'include')])
 else:
-	# For bring up purposes only, the forked version will live here.
 	connectivity_env.AppendUnique(CPPPATH = [ os.path.join('#resource', 'csdk', 'connectivity', 'lib', 'libcoap-4.1.1', 'include')])
 
 connectivity_env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'inc'),
@@ -160,7 +158,10 @@ if ca_os == 'android':
 	connectivity_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libconnectivity_abstraction.so'])
 
 if connectivity_env.get('SECURED') == '1':
-	connectivity_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
+	connectivity_env.AppendUnique(LIBS = ['mbedtls','mbedx509'])
+
+# c_common calls into mbedcrypto.
+connectivity_env.AppendUnique(LIBS = ['mbedcrypto'])
 
 if ca_os in ['android', 'tizen', 'linux', 'yocto']:
 	connectivity_env.AppendUnique(LIBS = ['coap'])

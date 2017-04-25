@@ -17,8 +17,6 @@ else:
 if env.get('OIC_SUPPORT_TIZEN_TRACE') == 'True':
 	env.AppendUnique(CPPDEFINES = ['OIC_SUPPORT_TIZEN_TRACE'])
 
-env.PrependUnique(LIBS = ['logger'])
-
 local_env = env.Clone()
 
 ######################################################################

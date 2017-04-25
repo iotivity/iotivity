@@ -145,7 +145,7 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
     {
         OicSecPstat_t *pstat = JSONToPstatBin(jsonStr);
         VERIFY_NOT_NULL(TAG, pstat, FATAL);
-        ret = PstatToCBORPayload(pstat, &pstatCbor, &pstatCborSize, false);
+        ret = PstatToCBORPayload(pstat, &pstatCbor, &pstatCborSize);
         if(OC_STACK_OK != ret)
         {
             OIC_LOG (ERROR, TAG, "Failed converting Pstat to Cbor Payload");

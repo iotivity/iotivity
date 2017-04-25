@@ -30,10 +30,8 @@ target_os = tools_env.get('TARGET_OS')
 ######################################################################
 with_upstream_libcoap = tools_env.get('WITH_UPSTREAM_LIBCOAP')
 if with_upstream_libcoap == '1':
-    # For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
     tools_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
 else:
-    # For bring up purposes only, the forked version will live here.
     tools_env.AppendUnique(CPPPATH = ['../../connectivity/lib/libcoap-4.1.1/include'])
 
 tools_env.PrependUnique(CPPPATH = ['#/extlibs/cjson',
@@ -54,15 +52,20 @@ if target_os in ['windows', 'msys_nt']:
     # Macro needed for Windows builds to avoid __declspec(dllexport) and __declspec(dllimport) for cJSON APIs.
     tools_env.AppendUnique(CPPDEFINES = ['CJSON_HIDE_SYMBOLS'])
 
-if target_os in ['msys_nt', 'windows']:
-    # octbstack.dll doesn't export all the functions called by this app, so use static LIBs instead.
-    tools_env.AppendUnique(LIBS = ['coap', 'mbedtls', 'mbedx509', 'mbedcrypto',
-                                   'octbstack_static', 'ocsrm', 'connectivity_abstraction', 'sqlite3'])
-elif target_os in ['darwin']:
-    tools_env.AppendUnique(LIBS = ['coap', 'mbedtls', 'mbedx509', 'mbedcrypto',
-                                   'octbstack', 'ocsrm', 'connectivity_abstraction'])
-else:
+if target_os not in ['darwin', 'msys_nt', 'windows']:
     tools_env.PrependUnique(LIBS = ['octbstack', 'ocsrm', 'm'])
+else:
+    if target_os in ['darwin']:
+        tools_env.AppendUnique(LIBS = ['octbstack'])
+    else:
+        # This IoTivity-internal app calls non-Public APIs, so link with LIBS intended
+        # for IoTivity-internal tests (such as octbstack_internal).
+        tools_env.AppendUnique(LIBS = ['octbstack_internal'])
+        if target_os in ['windows']:
+            tools_env.AppendUnique(LIBS = ['sqlite3'])
+    tools_env.AppendUnique(LIBS = ['coap', 'mbedtls', 'mbedx509', 'mbedcrypto',
+                                   'ocsrm', 'connectivity_abstraction'])
+
 
 tools_env.PrependUnique(LIBS = ['cjson'])
 

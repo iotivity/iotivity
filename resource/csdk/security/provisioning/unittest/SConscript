@@ -35,10 +35,8 @@ rd_mode = sptest_env.get('RD_MODE')
 ######################################################################
 with_upstream_libcoap = sptest_env.get('WITH_UPSTREAM_LIBCOAP')
 if with_upstream_libcoap == '1':
-	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
 	sptest_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
 else:
-	# For bring up purposes only, the forked version will live here.
 	sptest_env.AppendUnique(CPPPATH = ['../../../connectivity/lib/libcoap-4.1.1/include'])
 
 sptest_env.PrependUnique(CPPPATH = [
@@ -63,7 +61,7 @@ sptest_env.PrependUnique(CPPPATH = [
 
 sptest_env.PrependUnique(LIBS = [   'ocpmapi_internal',
                                     'oc',
-                                    'octbstack_test',
+                                    'octbstack_internal',
                                     'ocsrm',
                                     'oc_logger_internal',
                                     'connectivity_abstraction',
@@ -78,10 +76,11 @@ if not sptest_env.get('RELEASE'):
 if sptest_env.get('MULTIPLE_OWNER') == '1':
 	sptest_env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
 
+sptest_env.AppendUnique(LIBS = ['octbstack_internal'])
+
 if target_os in ['msys_nt', 'windows']:
-    sptest_env.AppendUnique(LIBS = ['octbstack_static', 'sqlite3'])
+    sptest_env.AppendUnique(LIBS = ['sqlite3'])
 else:
-    sptest_env.AppendUnique(LIBS = ['octbstack'])
     if target_os in ['linux', 'tizen']:
         sptest_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 

@@ -85,7 +85,6 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH) \
 					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/security/provisioning/include/oxm \
 					$(LOCAL_PATH)/../../../../../../../../../extlibs/cjson \
 					$(LOCAL_PATH)/../../../../../../../../../extlibs/boost/boost_1_58_0 \
-					$(LOCAL_PATH)/../../../../../../../../../extlibs/timer \
 					$(LOCAL_PATH)/../../../../../../../../../java/jni \
 
 LOCAL_SRC_FILES += $(patsubst $(LOCAL_PATH)/%, %, $(wildcard $(LOCAL_PATH)/*.cpp))

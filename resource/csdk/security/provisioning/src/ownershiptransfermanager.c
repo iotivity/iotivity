@@ -414,7 +414,7 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx);
 
 /**
  * Function to update pstat as Ready for provisioning.
- * This function would update 'cm' from bx0000,0010 to bx0000,0000.
+ * This function would update 'dos.s' to DOS_RFPRO.
  *
  * @param[in] ctx   context value passed to callback from calling function.
  * @param[in] selectedDevice   selected device information to performing provisioning.
@@ -424,7 +424,7 @@ static OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx);
 
 /**
  * Function to update pstat as Ready for Normal Operation.
- * This function would update 'isop' from false to true.
+ * This function would update 'dos.s' to DOS_RFNOP.
  *
  * @param[in] ctx   context value passed to callback from calling function.
  * @param[in] selectedDevice   selected device information to performing provisioning.
@@ -1995,7 +1995,7 @@ static OCStackResult PostOwnerUuid(OTMContext_t* otmCtx)
 
 static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
 {
-    OIC_LOG(DEBUG, TAG, "IN PostOwnershipInformation");
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -2012,7 +2012,7 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_DOXM_URI))
     {
-        OIC_LOG(ERROR, TAG, "PostOwnershipInformation : Failed to generate query");
+        OIC_LOG_V(ERROR, TAG, "%s : Failed to generate query", __func__);
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -2049,14 +2049,14 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT PostOwnershipInformation");
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
 
     return res;
 }
 
 static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
 {
-    OIC_LOG(DEBUG, TAG, "IN PostUpdateOperationMode");
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -2072,7 +2072,7 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_PSTAT_URI))
     {
-        OIC_LOG(ERROR, TAG, "PostUpdateOperationMode : Failed to generate query");
+        OIC_LOG_V(ERROR, TAG, "%s Failed to generate query", __func__);
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -2084,8 +2084,13 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    OCStackResult res = PstatToCBORPayload(deviceInfo->pstat, &secPayload->securityData,
-                                           &secPayload->payloadSize, true);
+
+    bool propertiesToInclude[PSTAT_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[PSTAT_OM] = true;
+
+    OCStackResult res = PstatToCBORPayloadPartial(deviceInfo->pstat, &secPayload->securityData,
+                                           &secPayload->payloadSize, propertiesToInclude);
    if (OC_STACK_OK != res)
     {
         OCPayloadDestroy((OCPayload *)secPayload);
@@ -2104,7 +2109,7 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT PostUpdateOperationMode");
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
 
     return res;
 }
@@ -2432,7 +2437,7 @@ OCStackResult OTMSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus
 
 OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
 {
-    OIC_LOG(INFO, TAG, "IN PostProvisioningStatus");
+    OIC_LOG_V(INFO, TAG, "IN %s", __func__);
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -2440,8 +2445,14 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
         return OC_STACK_INVALID_PARAM;
     }
 
-    //Change the TAKE_OWNER bit of TM to 0.
+    // Change the TAKE_OWNER bit of TM to 0 (optional in Client Directed)
     otmCtx->selectedDeviceInfo->pstat->tm &= (~TAKE_OWNER);
+
+    // Change the dos.s value to RFPRO
+    otmCtx->selectedDeviceInfo->pstat->dos.state = DOS_RFPRO;
+
+    // TODO [IOT-2052] set the rowneruuid for /pstat directly, so the hack
+    // in pstatresource.c which sets all rowneruuids can be removed.
 
     OCSecurityPayload *secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
     if (!secPayload)
@@ -2450,8 +2461,18 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    if (OC_STACK_OK != PstatToCBORPayload(otmCtx->selectedDeviceInfo->pstat,
-            &secPayload->securityData, &secPayload->payloadSize, true))
+
+    // Note [IOT-2052] all the POST payloads in the provisioningclient app
+    // should be updated to use the Partial payload APIs for the SVRs, so they
+    // do not include read-only Properties for the Server device current
+    // state.
+    bool propertiesToInclude[PSTAT_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[PSTAT_DOS] = true;
+    propertiesToInclude[PSTAT_TM] = true;
+
+    if (OC_STACK_OK != PstatToCBORPayloadPartial(otmCtx->selectedDeviceInfo->pstat,
+            &secPayload->securityData, &secPayload->payloadSize, propertiesToInclude))
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_INVALID_JSON;
@@ -2468,7 +2489,7 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
                         otmCtx->selectedDeviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_PSTAT_URI))
     {
-        OIC_LOG(ERROR, TAG, "PostProvisioningStatus : Failed to generate query");
+        OIC_LOG_V(ERROR, TAG, "%s : Failed to generate query", __func__);
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -2486,7 +2507,7 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
-    OIC_LOG(INFO, TAG, "OUT PostProvisioningStatus");
+    OIC_LOG_V(INFO, TAG, "OUT %s", __func__);
 
     return ret;
 }
@@ -2501,7 +2522,6 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
         return OC_STACK_INVALID_PARAM;
     }
 
-    // TODO [IOT-1763] put RFPRO and other pstat.dos.s updates in the right places.
     otmCtx->selectedDeviceInfo->pstat->dos.state = DOS_RFNOP;
 
     OCSecurityPayload *secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
@@ -2511,8 +2531,13 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    if (OC_STACK_OK != PstatToCBORPayload(otmCtx->selectedDeviceInfo->pstat,
-            &secPayload->securityData, &secPayload->payloadSize, true))
+
+    bool propertiesToInclude[PSTAT_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[PSTAT_DOS] = true;
+
+    if (OC_STACK_OK != PstatToCBORPayloadPartial(otmCtx->selectedDeviceInfo->pstat,
+            &secPayload->securityData, &secPayload->payloadSize, propertiesToInclude))
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_INVALID_JSON;

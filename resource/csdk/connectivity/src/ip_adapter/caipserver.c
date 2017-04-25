@@ -619,11 +619,13 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
 
     uint32_t recvLen = 0;
     uint32_t ret = caglobals.ip.wsaRecvMsg(fd, &msg, (LPDWORD)&recvLen, 0,0);
-    OIC_LOG_V(DEBUG, TAG, "WSARecvMsg recvd %u bytes", recvLen);
     if (OC_SOCKET_ERROR == ret)
     {
         OIC_LOG_V(ERROR, TAG, "WSARecvMsg failed %i", WSAGetLastError());
+        return CA_STATUS_FAILED;
     }
+
+    OIC_LOG_V(DEBUG, TAG, "WSARecvMsg recvd %u bytes", recvLen);
 
     for (WSACMSGHDR *cmp = WSA_CMSG_FIRSTHDR(&msg); cmp != NULL;
          cmp = WSA_CMSG_NXTHDR(&msg, cmp))
@@ -678,7 +680,7 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
     {
 #ifdef __WITH_DTLS__
 #ifdef TB_LOG
-        int decryptResult = 
+        int decryptResult =
 #endif
         CAdecryptSsl(&sep, (uint8_t *)recvBuffer, recvLen);
         OIC_LOG_V(DEBUG, TAG, "CAdecryptSsl returns [%d]", decryptResult);

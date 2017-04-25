@@ -53,13 +53,20 @@ src_dir = lib_env.get('SRC_DIR')
 ######################################################################
 # Build flags
 ######################################################################
+with_upstream_libcoap = rd_test_env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+    rd_test_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+else:
+    rd_test_env.AppendUnique(CPPPATH = [
+            src_dir + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include'
+            ])
+
 rd_test_env.AppendUnique(
         CPPPATH = [
                 src_dir + '/extlibs/hippomocks/hippomocks',
                 '../include',
                 src_dir + '/resource/include',
                 src_dir + '/resource/csdk/connectivity/api',
-                src_dir + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include',
                 src_dir + '/resource/csdk/include',
                 src_dir + '/resource/csdk/stack/include',
                 src_dir + '/resource/csdk/security/include',

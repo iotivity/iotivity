@@ -59,7 +59,7 @@
 
 static bool fExit = false;
 
-static ca_thread_pool_t g_threadPoolHandle = NULL;
+static oc_thread g_requestsThread = NULL;
 static OCDevAddr endPoint;
 static char token[1024] = "";
 static char authProvider[1024] = DEFAULT_AUTH_PROVIDER;
@@ -400,12 +400,12 @@ static void wrongRequest()
     printf(">> Entered Wrong Menu Number. Please Enter Again\n\n");
 }
 
-static void userRequests(void *data)
+static void *userRequests(void *data)
 {
     if (NULL == data)
     {
         OIC_LOG(ERROR, TAG, "Received NULL data");
-        return;
+        return NULL;
     }
 
     OCMode mode = *(OCMode*)data;
@@ -609,6 +609,8 @@ static void userRequests(void *data)
             }
         }
     }
+
+    return NULL;
 }
 
 FILE* server_fopen(const char *path, const char *mode)
@@ -679,20 +681,15 @@ OCStackResult initPersistentStorage()
 
 OCStackResult startRequestsThread(OCMode *mode)
 {
-    CAResult_t res = ca_thread_pool_init(1, &g_threadPoolHandle);
-    if (CA_STATUS_OK != res)
+    OCThreadResult_t res = oc_thread_new(&g_requestsThread, userRequests, mode);
+
+    if (OC_THREAD_SUCCESS != res)
     {
-        OIC_LOG(ERROR, TAG, "thread pool initialize error.");
-        return res;
+        OIC_LOG_V(ERROR, TAG, "oc_thread_new failed - error %u", res);
+        return OC_STACK_NO_MEMORY;
     }
 
-    res = ca_thread_pool_add_task(g_threadPoolHandle, userRequests, mode);
-    if (CA_STATUS_OK != res)
-    {
-        OIC_LOG(ERROR, TAG, "thread pool add task error.");
-        ca_thread_pool_free(g_threadPoolHandle);
-    }
-    return res;
+    return OC_STACK_OK;
 }
 
 OCStackResult initProcess(OCMode mode)
@@ -719,8 +716,22 @@ void startProcess()
 
 void freeThreadResources()
 {
-    if (g_threadPoolHandle)
+    if (g_requestsThread)
     {
-        ca_thread_pool_free(g_threadPoolHandle);
+        OCThreadResult_t res = oc_thread_wait(g_requestsThread);
+
+        if (OC_THREAD_SUCCESS != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "oc_thread_wait failed - error %u", res);
+        }
+
+        res = oc_thread_free(g_requestsThread);
+
+        if (OC_THREAD_SUCCESS != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "oc_thread_free failed - error %u", res);
+        }
+
+        g_requestsThread = NULL;
     }
 }
