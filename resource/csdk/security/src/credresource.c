@@ -3456,12 +3456,18 @@ void GetDerKey(ByteArray_t * key, const char * usage)
                     return;
                 }
 
-                key->data = OICRealloc(key->data, ctx.buflen);
-                if (NULL == key->data)
+                uint8_t *tmp = OICRealloc(key->data, ctx.buflen);
+                if (NULL == tmp)
                 {
                     OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+                    memset(key->data, 0x0, key->len);
+                    OICFree(key->data);
                     mbedtls_pem_free(&ctx);
                     return;
+                }
+                else
+                {
+                    key->data = tmp;
                 }
 
                 memcpy(key->data, ctx.buf, ctx.buflen);
@@ -3471,7 +3477,18 @@ void GetDerKey(ByteArray_t * key, const char * usage)
             }
             else if(temp->privateData.encoding == OIC_ENCODING_DER)
             {
-                key->data = OICRealloc(key->data, key->len + temp->privateData.len);
+                uint8_t *tmp = OICRealloc(key->data, key->len + temp->privateData.len);
+                if (NULL == tmp)
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+                    memset(key->data, 0x0, key->len);
+                    OICFree(key->data);
+                    return;
+                }
+                else
+                {
+                    key->data = tmp;
+                }
                 memcpy(key->data + key->len, temp->privateData.data, temp->privateData.len);
                 key->len += temp->privateData.len;
                 OIC_LOG_V(DEBUG, TAG, "Key for %s found", usage);
