@@ -35,7 +35,8 @@ static oc_cond g_cond = NULL;
 
 using namespace OIC::Service::SH;
 
-UserColorResource::UserColorResource() : SHBaseResource(USER_RESOURCE_URI, USER_RESOURCE_TYPE)
+UserColorResource::UserColorResource() :
+        SHBaseResource(USER_RESOURCE_URI, USER_RESOURCE_TYPE)
 {
     std::cout << "[UserColorResource] constructor" << std::endl;
 

@@ -36,7 +36,8 @@ namespace OIC
         namespace SH
         {
             LockStatusResource::LockStatusResource() :
-                    m_delegate(NULL), SHBaseResource(URI_LOCKSTATUS, RESOURCE_TYPE::LOCK_STATUS)
+                    m_delegate(NULL), SHBaseResource(URI_LOCKSTATUS,
+                            RESOURCE_TYPE::LOCK_STATUS)
             {
                 PropertyBundle bundle;
                 bundle.setValue(KEY_LOCKSTATE, VALUE_LOCKED);

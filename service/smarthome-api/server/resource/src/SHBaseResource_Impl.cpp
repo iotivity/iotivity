@@ -27,6 +27,8 @@
 #include <PayloadConverter.h>
 #include "ocstack.h"
 #include "ocpayload.h"
+#include "octypes.h"
+#include <cstring>
 #include "oic_malloc.h"
 #include "logger.h"
 
@@ -41,15 +43,56 @@ namespace OIC
             // callback for auto response
             // this callback will called by internal delegate
             void sendAutoResponse(ResultCode resultCode,
-                                  const OCEntityHandlerRequest* entityHandlerRequest,
-                                  const SHBaseResource_Impl* ctx);
+                    const OCEntityHandlerRequest* entityHandlerRequest,
+                    const SHBaseResource_Impl* ctx);
 
             SHBaseResource_Impl::SHBaseResource_Impl(const std::string& uri,
-                                                     const std::string& type)
-             : m_resourceHandle(NULL),
-               m_resourceUri(uri),
-               m_context(NULL),
-               m_delegate(NULL)
+                    const std::string& type) :
+                    m_resourceHandle(NULL), m_resourceUri(uri), m_context(NULL), m_delegate(NULL)
+            {
+                m_resourceType.push_back(type);
+                m_resourceInterface.push_back(INTERFACE::BASELINE);
+                m_resourceProperty = RESOURCE_PROPERTY::DISCOVERABLE
+                        | RESOURCE_PROPERTY::OBSERVABLE;
+                registerResource();
+            }
+
+            SHBaseResource_Impl::SHBaseResource_Impl(const std::string& uri,
+                    const std::string& type, const std::string& interface) :
+                    m_resourceHandle(NULL), m_resourceUri(uri), m_context(NULL), m_delegate(NULL)
+            {
+                m_resourceType.push_back(type);
+                m_resourceInterface.push_back(interface);
+                m_resourceProperty = RESOURCE_PROPERTY::DISCOVERABLE
+                        | RESOURCE_PROPERTY::OBSERVABLE;
+                registerResource();
+            }
+
+            SHBaseResource_Impl::SHBaseResource_Impl(const std::string& uri,
+                    const std::list<std::string>& types) :
+                    m_resourceHandle(NULL), m_resourceType(types), m_resourceUri(uri), m_context(
+                    NULL), m_delegate(NULL)
+            {
+                m_resourceInterface.push_back(INTERFACE::BASELINE);
+                m_resourceProperty = RESOURCE_PROPERTY::DISCOVERABLE
+                        | RESOURCE_PROPERTY::OBSERVABLE;
+                registerResource();
+            }
+
+            SHBaseResource_Impl::SHBaseResource_Impl(const std::string& uri,
+                    const std::list<std::string>& types, const std::list<std::string>& interfaces) :
+                    m_resourceHandle(NULL), m_resourceUri(uri), m_resourceType(types), m_resourceInterface(
+                            interfaces), m_context(NULL), m_delegate(NULL)
+            {
+                m_resourceProperty = RESOURCE_PROPERTY::DISCOVERABLE
+                        | RESOURCE_PROPERTY::OBSERVABLE;
+                registerResource();
+            }
+
+            SHBaseResource_Impl::SHBaseResource_Impl(const std::string& uri,
+                    const std::string& type, const uint8_t properties) :
+                    m_resourceHandle(NULL), m_resourceUri(uri), m_resourceProperty(properties), m_context(
+                    NULL), m_delegate(NULL)
             {
                 m_resourceType.push_back(type);
                 m_resourceInterface.push_back(INTERFACE::BASELINE);
@@ -57,12 +100,10 @@ namespace OIC
             }
 
             SHBaseResource_Impl::SHBaseResource_Impl(const std::string& uri,
-                                                     const std::string& type,
-                                                     const std::string& interface)
-             : m_resourceHandle(NULL),
-               m_resourceUri(uri),
-               m_context(NULL),
-               m_delegate(NULL)
+                    const std::string& type, const std::string& interface,
+                    const uint8_t properties) :
+                    m_resourceHandle(NULL), m_resourceUri(uri), m_context(NULL), m_delegate(NULL), m_resourceProperty(
+                            properties)
             {
                 m_resourceType.push_back(type);
                 m_resourceInterface.push_back(interface);
@@ -70,26 +111,20 @@ namespace OIC
             }
 
             SHBaseResource_Impl::SHBaseResource_Impl(const std::string& uri,
-                                                     const std::list<std::string>& types)
-             : m_resourceHandle(NULL),
-               m_resourceType(types),
-               m_resourceUri(uri),
-               m_context(NULL),
-               m_delegate(NULL)
+                    const std::list<std::string>& types, const uint8_t properties) :
+                    m_resourceHandle(NULL), m_resourceType(types), m_resourceUri(uri), m_context(
+                            NULL), m_delegate(NULL), m_resourceProperty(properties)
             {
                 m_resourceInterface.push_back(INTERFACE::BASELINE);
                 registerResource();
             }
 
             SHBaseResource_Impl::SHBaseResource_Impl(const std::string& uri,
-                                                     const std::list<std::string>& types,
-                                                     const std::list<std::string>& interfaces)
-             : m_resourceHandle(NULL),
-               m_resourceUri(uri),
-               m_resourceType(types),
-               m_resourceInterface(interfaces),
-               m_context(NULL),
-               m_delegate(NULL)
+                    const std::list<std::string>& types, const std::list<std::string>& interfaces,
+                    const uint8_t properties) :
+                    m_resourceHandle(NULL), m_resourceUri(uri), m_resourceType(types), m_resourceInterface(
+                            interfaces), m_context(NULL), m_delegate(NULL), m_resourceProperty(
+                            properties)
             {
                 registerResource();
             }
@@ -145,6 +180,19 @@ namespace OIC
             {
                 OIC_LOG(DEBUG, TAG, "Entered setPropertyBundle");
                 m_propertyBundle = bundle;
+
+                bool changed = isChangedPropertyBundle(bundle);
+                if (changed)
+                {
+                    notifyAllObservers();
+                }
+            }
+
+            bool SHBaseResource_Impl::isChangedPropertyBundle(const PropertyBundle& bundle)
+            {
+                //TODO: compare logic between propertyBundles
+
+                return true;
             }
 
             const PropertyBundle& SHBaseResource_Impl::getPropertyBundle() const
@@ -154,14 +202,14 @@ namespace OIC
             }
 
             bool SHBaseResource_Impl::sendResponse(RequestId requestId,
-                                                   const PropertyBundle& bundle)
+                    const PropertyBundle& bundle)
             {
                 OIC_LOG(DEBUG, TAG, "Entered sendResponse");
                 return true;
             }
 
             bool SHBaseResource_Impl::sendErrorResponse(RequestId requestId,
-                                                        const PropertyBundle& bundle)
+                    const PropertyBundle& bundle)
             {
                 OIC_LOG(DEBUG, TAG, "Entered sendErrorResponse");
                 return true;
@@ -180,19 +228,14 @@ namespace OIC
                     m_context = new EntityHandlerContext(this);
                 }
 
-                // TODO: we should provide a public api to set resource property.
-                m_resourceProperty = OC_DISCOVERABLE;
-
                 // Bind the first element of resource type/interface.
                 // Only one resource type/interface can be set at a time.
                 std::list<std::string>::iterator typeIter = m_resourceType.begin();
                 std::list<std::string>::iterator ifIter = m_resourceInterface.begin();
-                OCStackResult result = OCCreateResource(&m_resourceHandle,
-                                                        typeIter->c_str(),
-                                                        ifIter->c_str(),
-                                                        m_resourceUri.c_str(),
-                                                        EntityHandlerWrapper::ResourceEntityHandler,
-                                                        m_context, m_resourceProperty);
+                OCStackResult result = OCCreateResource(&m_resourceHandle, typeIter->c_str(),
+                        ifIter->c_str(), m_resourceUri.c_str(),
+                        EntityHandlerWrapper::ResourceEntityHandler, m_context,
+                        m_resourceProperty);
                 if (result != OC_STACK_OK)
                 {
                     throw CommonException("Exception on OCCreateResource");
@@ -204,7 +247,7 @@ namespace OIC
                 for (; typeIter != m_resourceType.end(); ++typeIter)
                 {
                     result = OCBindResourceInterfaceToResource(m_resourceHandle,
-                                                               typeIter->c_str());
+                            typeIter->c_str());
                     if (result != OC_STACK_OK)
                     {
                         throw CommonException("Exception on OCBindResourceInterfaceToResource");
@@ -216,8 +259,7 @@ namespace OIC
                 ++ifIter;
                 for (; ifIter != m_resourceInterface.end(); ++ifIter)
                 {
-                    result = OCBindResourceInterfaceToResource(m_resourceHandle,
-                                                               ifIter->c_str());
+                    result = OCBindResourceInterfaceToResource(m_resourceHandle, ifIter->c_str());
                     if (result != OC_STACK_OK)
                     {
                         throw CommonException("Exception on OCBindResourceInterfaceToResource");
@@ -245,7 +287,7 @@ namespace OIC
                 for (iter = types.begin(); iter != types.end(); ++iter)
                 {
                     OCStackResult result = OCBindResourceTypeToResource(m_resourceHandle,
-                                                                        iter->c_str());
+                            iter->c_str());
                     if (result != OC_STACK_OK)
                     {
                         throw CommonException("Exception on OCBindResourceTypeToResource");
@@ -259,7 +301,7 @@ namespace OIC
                 for (iter = interfaces.begin(); iter != interfaces.end(); ++iter)
                 {
                     OCStackResult result = OCBindResourceInterfaceToResource(m_resourceHandle,
-                                                                             iter->c_str());
+                            iter->c_str());
                     if (result != OC_STACK_OK)
                     {
                         throw CommonException("Exception on OCBindResourceInterfaceToResource");
@@ -267,9 +309,9 @@ namespace OIC
                 }
             }
 
-            ResultCode SHBaseResource_Impl::
-                       handleGetRequest(const OCEntityHandlerRequest* entityHandlerRequest,
-                                        const SHBaseResource_Impl* resourceContext) const
+            ResultCode SHBaseResource_Impl::handleGetRequest(
+                    const OCEntityHandlerRequest* entityHandlerRequest,
+                    const SHBaseResource_Impl* resourceContext) const
             {
                 OIC_LOG(DEBUG, TAG, "Entered handleGetRequest");
 
@@ -314,9 +356,9 @@ namespace OIC
                 return userCbResult;
             }
 
-            ResultCode SHBaseResource_Impl::
-                       handleSetRequest(const OCEntityHandlerRequest* entityHandlerRequest,
-                                        const SHBaseResource_Impl* resourceContext) const
+            ResultCode SHBaseResource_Impl::handleSetRequest(
+                    const OCEntityHandlerRequest* entityHandlerRequest,
+                    const SHBaseResource_Impl* resourceContext) const
             {
                 OIC_LOG(DEBUG, TAG, "Entered handleSetRequest");
 
@@ -376,11 +418,21 @@ namespace OIC
                 return userCbResult;
             }
 
+            void SHBaseResource_Impl::notifyAllObservers()
+            {
+                OCStackResult result = OCNotifyAllObservers(m_resourceHandle, OC_NA_QOS);
+
+                if (result != OC_STACK_OK && result != OC_STACK_NO_OBSERVERS)
+                {
+                    throw CommonException("Exception on notifyAllObservers");
+                }
+            }
+
             // callback for auto response
             // this callback will called by internal delegate
             void sendAutoResponse(ResultCode resultCode,
-                                  const OCEntityHandlerRequest* entityHandlerRequest,
-                                  const SHBaseResource_Impl* ctx)
+                    const OCEntityHandlerRequest* entityHandlerRequest,
+                    const SHBaseResource_Impl* ctx)
             {
                 OIC_LOG(INFO, TAG, "Entered autoResponse");
 
@@ -418,22 +470,22 @@ namespace OIC
                 response.persistentBufferFlag = 0;
 
                 response.numSendVendorSpecificHeaderOptions =
-                                           entityHandlerRequest->numRcvdVendorSpecificHeaderOptions;
+                        entityHandlerRequest->numRcvdVendorSpecificHeaderOptions;
 
                 OIC_LOG_V(DEBUG, TAG, "Send response success");
 
                 for (int itr = 0; itr < response.numSendVendorSpecificHeaderOptions; itr++)
                 {
                     response.sendVendorSpecificHeaderOptions[itr].protocolID =
-                              entityHandlerRequest->rcvdVendorSpecificHeaderOptions[itr].protocolID;
+                            entityHandlerRequest->rcvdVendorSpecificHeaderOptions[itr].protocolID;
                     response.sendVendorSpecificHeaderOptions[itr].optionID =
-                                entityHandlerRequest->rcvdVendorSpecificHeaderOptions[itr].optionID;
+                            entityHandlerRequest->rcvdVendorSpecificHeaderOptions[itr].optionID;
                     response.sendVendorSpecificHeaderOptions[itr].optionLength =
                             entityHandlerRequest->rcvdVendorSpecificHeaderOptions[itr].optionLength;
 
                     memcpy(response.sendVendorSpecificHeaderOptions[itr].optionData,
-                           entityHandlerRequest->rcvdVendorSpecificHeaderOptions[itr].optionData,
-                           sizeof(response.sendVendorSpecificHeaderOptions[itr].optionData));
+                            entityHandlerRequest->rcvdVendorSpecificHeaderOptions[itr].optionData,
+                            sizeof(response.sendVendorSpecificHeaderOptions[itr].optionData));
                 }
 
                 OCStackResult result = OC_STACK_ERROR;
@@ -462,7 +514,6 @@ namespace OIC
                 }
                 else
                 {
-
                     OIC_LOG_V(ERROR, TAG, "Error at send response result code is %d", result);
                 }
                 OCPayloadDestroy(response.payload);

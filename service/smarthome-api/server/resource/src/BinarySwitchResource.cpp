@@ -33,9 +33,9 @@ namespace OIC
     {
         namespace SH
         {
-            BinarySwitchResource::BinarySwitchResource()
-            : m_delegate(NULL),
-              SHBaseResource(URI_BINARYSWITCH, RESOURCE_TYPE::BINARYSWITCH)
+            BinarySwitchResource::BinarySwitchResource() :
+                    m_delegate(NULL), SHBaseResource(URI_BINARYSWITCH, RESOURCE_TYPE::BINARYSWITCH,
+                            RESOURCE_PROPERTY::DISCOVERABLE | RESOURCE_PROPERTY::OBSERVABLE)
             {
                 OIC_LOG(DEBUG, TAG, "Entered ctor");
 
@@ -82,8 +82,7 @@ namespace OIC
             }
 
             ResultCode BinarySwitchResource::onSet(RequestId requestId,
-                                                   const PropertyBundle& bundle,
-                                                   const ResourceQuery& query)
+                    const PropertyBundle& bundle, const ResourceQuery& query)
             {
                 OIC_LOG(DEBUG, TAG, "Entered onSet");
 

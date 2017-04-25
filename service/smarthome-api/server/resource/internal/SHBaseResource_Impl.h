@@ -46,17 +46,17 @@ namespace OIC
             class ResourceQuery;
 
             /**
-            * @class SHBaseResource_Impl
-            *
-            * @brief This class contains a set of functions to implement SHBaseResoource class.
-            */
+             * @class SHBaseResource_Impl
+             *
+             * @brief This class contains a set of functions to implement SHBaseResoource class.
+             */
             class SHBaseResource_Impl
             {
-            friend class SHBaseResource;
-            friend class EntityHandlerWrapper;
-            friend void sendAutoResponse(ResultCode resultCode,
-                                         const OCEntityHandlerRequest* entityHandlerRequest,
-                                         const SHBaseResource_Impl* ctx);
+                friend class SHBaseResource;
+                friend class EntityHandlerWrapper;
+                friend void sendAutoResponse(ResultCode resultCode,
+                        const OCEntityHandlerRequest* entityHandlerRequest,
+                        const SHBaseResource_Impl* ctx);
             public:
                 virtual ~SHBaseResource_Impl();
 
@@ -80,49 +80,60 @@ namespace OIC
                 bool deletePropertyBundle();
 
                 /**
-                * API to send response to an incoming request.
-                *
-                * @param[in] requestId    Request handle assigned for each incoming request.
-                * @param[in] bundle       the properties of a resource.
-                *
-                * @return bool true if success.
-                */
+                 * API to send response to an incoming request.
+                 *
+                 * @param[in] requestId    Request handle assigned for each incoming request.
+                 * @param[in] bundle       the properties of a resource.
+                 *
+                 * @return bool true if success.
+                 */
                 bool sendResponse(RequestId requestId, const PropertyBundle& bundle);
 
                 /**
-                * API to send error response to an incoming request.
-                *
-                * @param[in] requestId    Request handle assigned for each incoming request.
-                * @param[in] bundle       the properties of a resource.
-                *
-                * @return bool true if success.
-                */
+                 * API to send error response to an incoming request.
+                 *
+                 * @param[in] requestId    Request handle assigned for each incoming request.
+                 * @param[in] bundle       the properties of a resource.
+                 *
+                 * @return bool true if success.
+                 */
                 bool sendErrorResponse(RequestId requestId, const PropertyBundle& bundle);
 
                 /**
-                * API to set delegate of this resource.
-                *
-                * @param[in] delegate    Instance that inherit SHBaseResourceDelegate class.
-                */
+                 * API to set delegate of this resource.
+                 *
+                 * @param[in] delegate    Instance that inherit SHBaseResourceDelegate class.
+                 */
                 void setDelegate(SHBaseResourceDelegate *delegate);
 
             private:
                 SHBaseResource_Impl(const std::string& uri, const std::string& type);
-                SHBaseResource_Impl(const std::string& uri, const std::string& type, 
-                                    const std::string& interface);
+                SHBaseResource_Impl(const std::string& uri, const std::string& type,
+                        const std::string& interface);
                 SHBaseResource_Impl(const std::string& uri, const std::list<std::string>& types);
                 SHBaseResource_Impl(const std::string& uri, const std::list<std::string>& types,
-                                    const std::list<std::string>& interfaces);
+                        const std::list<std::string>& interfaces);
+
+                SHBaseResource_Impl(const std::string& uri, const std::string& type,
+                        const uint8_t properties);
+                SHBaseResource_Impl(const std::string& uri, const std::string& type,
+                        const std::string& interface, const uint8_t properties);
+                SHBaseResource_Impl(const std::string& uri, const std::list<std::string>& types,
+                        uint8_t properties);
+                SHBaseResource_Impl(const std::string& uri, const std::list<std::string>& types,
+                        const std::list<std::string>& interfaces, const uint8_t properties);
 
                 ResultCode handleGetRequest(const OCEntityHandlerRequest* entityHandlerRequest,
-                                            const SHBaseResource_Impl* resourceContext) const;
+                        const SHBaseResource_Impl* resourceContext) const;
                 ResultCode handleSetRequest(const OCEntityHandlerRequest* entityHandlerRequest,
-                                            const SHBaseResource_Impl* resourceContext) const;
+                        const SHBaseResource_Impl* resourceContext) const;
 
                 void registerResource();
                 void deregisterResource();
                 void bindTypesToResource(std::list<std::string> types);
                 void bindInterfacesToResource(std::list<std::string> interfaces);
+                void notifyAllObservers();
+                bool isChangedPropertyBundle(const PropertyBundle& bundle);
 
                 OCResourceHandle m_resourceHandle;
                 std::string m_resourceUri;

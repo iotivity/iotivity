@@ -75,6 +75,28 @@ namespace OIC
                 const std::string ACTUATOR = "oic.if.a";
                 const std::string SENSOR = "oic.if.s";
             }
+
+            /**
+             * Resource Properties.
+             * The value of a policy property is defined as bitmap.
+             * The LSB represents OC_DISCOVERABLE and Second LSB bit represents OC_OBSERVABLE and
+             * so on. Not including the policy property is equivalent to zero.
+             */
+            namespace RESOURCE_PROPERTY
+            {
+                enum
+                {
+                    /** When none of the bits are set, the resource is non-discoverable &
+                     *  non-observable by the client.*/
+                    NONE = (0),
+
+                    /** When this bit is set, the resource is allowed to be discovered by clients.*/
+                    DISCOVERABLE = (1 << 0),
+
+                    /** When this bit is set, the resource is allowed to be observed by clients.*/
+                    OBSERVABLE = (1 << 1),
+                };
+            }
         }
     }
 }

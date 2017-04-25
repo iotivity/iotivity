@@ -32,23 +32,46 @@ namespace OIC
                 m_resourceImpl = new SHBaseResource_Impl(uri, type);
             }
 
-            SHBaseResource::SHBaseResource(const std::string& uri, const std::string& type, 
-                                           const std::string& interface)
+            SHBaseResource::SHBaseResource(const std::string& uri, const std::string& type,
+                    const std::string& interface)
             {
                 m_resourceImpl = new SHBaseResource_Impl(uri, type, interface);
             }
 
-            SHBaseResource::SHBaseResource(const std::string& uri, 
-                                           const std::list<std::string>& types)
+            SHBaseResource::SHBaseResource(const std::string& uri,
+                    const std::list<std::string>& types)
             {
                 m_resourceImpl = new SHBaseResource_Impl(uri, types);
             }
 
             SHBaseResource::SHBaseResource(const std::string& uri,
-                                           const std::list<std::string>& types,
-                                           const std::list<std::string>& interfaces)
+                    const std::list<std::string>& types, const std::list<std::string>& interfaces)
             {
-                m_resourceImpl = new SHBaseResource_Impl(uri, types, interfaces);
+            }
+
+            SHBaseResource::SHBaseResource(const std::string& uri, const std::string& type,
+                    uint8_t properties)
+            {
+                m_resourceImpl = new SHBaseResource_Impl(uri, type, properties);
+            }
+
+            SHBaseResource::SHBaseResource(const std::string& uri, const std::string& type,
+                    std::string& interface, uint8_t properties)
+            {
+                m_resourceImpl = new SHBaseResource_Impl(uri, type, interface, properties);
+            }
+
+            SHBaseResource::SHBaseResource(const std::string& uri,
+                    const std::list<std::string>& types, uint8_t properties)
+            {
+                m_resourceImpl = new SHBaseResource_Impl(uri, types, properties);
+            }
+
+            SHBaseResource::SHBaseResource(const std::string& uri,
+                    const std::list<std::string>& types, const std::list<std::string>& interfaces,
+                    uint8_t properties)
+            {
+                m_resourceImpl = new SHBaseResource_Impl(uri, types, interfaces, properties);
             }
 
             SHBaseResource::~SHBaseResource()
@@ -102,7 +125,7 @@ namespace OIC
             }
 
             bool SHBaseResource::sendErrorResponse(RequestId requestId,
-                                                   const PropertyBundle& bundle)
+                    const PropertyBundle& bundle)
             {
                 return m_resourceImpl->sendErrorResponse(requestId, bundle);
             }

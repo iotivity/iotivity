@@ -22,6 +22,7 @@
 
 #include <string>
 #include <list>
+#include <stdint.h>
 #include <CommonApi.h>
 
 /**
@@ -52,7 +53,9 @@ namespace OIC
                 /**
                  * Virtual destructor
                  */
-                virtual ~SHBaseResourceDelegate() {}
+                virtual ~SHBaseResourceDelegate()
+                {
+                }
 
                 /**
                  * API to handle client get requests
@@ -102,39 +105,46 @@ namespace OIC
                 void setUri(const std::string& uri);
 
                 /**
-                * API to get the list of resource types
-                *
-                * @return resource types
-                */
-                std::list<std::string> getTypes() const;
+                 * API to get the list of resource types
+                 *
+                 * @return resource types
+                 */
+                std::list< std::string > getTypes() const;
 
                 /**
-                * API to set the list of resource types
-                *
-                * @param[in] types resource types
-                */
-                void setTypes(const std::list<std::string>& types);
+                 * API to set the list of resource types
+                 *
+                 * @param[in] types resource types
+                 */
+                void setTypes(const std::list< std::string >& types);
 
                 /**
-                * API to get the list of resource interfaces
-                *
-                * @return resource interfaces
-                */
-                std::list<std::string> getInterfaces() const;
+                 * API to get the list of resource interfaces
+                 *
+                 * @return resource interfaces
+                 */
+                std::list< std::string > getInterfaces() const;
 
                 /**
-                * API to set the list of resource interfaces
-                *
-                * @param[in] interfaces resource interfaces
-                */
-                void setInterfaces(const std::list<std::string>& interfaces);
+                 * API to set the list of resource interfaces
+                 *
+                 * @param[in] interfaces resource interfaces
+                 */
+                void setInterfaces(const std::list< std::string >& interfaces);
 
                 SHBaseResource(const std::string& uri, const std::string& type);
-                SHBaseResource(const std::string& uri, const std::string& type, 
-                               const std::string& interface);
-                SHBaseResource(const std::string& uri, const std::list<std::string>& types);
-                SHBaseResource(const std::string& uri, const std::list<std::string>& types,
-                               const std::list<std::string>& interfaces);
+                SHBaseResource(const std::string& uri, const std::string& type, const std::string& interface);
+                SHBaseResource(const std::string& uri, const std::list< std::string >& types);
+                SHBaseResource(const std::string& uri, const std::list< std::string >& types,
+                        const std::list< std::string >& interfaces);
+
+                SHBaseResource(const std::string& uri, const std::string& type, uint8_t properties);
+                SHBaseResource(const std::string& uri, const std::string& type, std::string& interface,
+                        uint8_t properties);
+                SHBaseResource(const std::string& uri, const std::list< std::string >& types,
+                        uint8_t properties);
+                SHBaseResource(const std::string& uri, const std::list< std::string >& types,
+                        const std::list< std::string >& interfaces, const uint8_t properties);
                 virtual ~SHBaseResource();
 
             protected:
@@ -146,10 +156,10 @@ namespace OIC
                 void setPropertyBundle(const PropertyBundle& bundle);
 
                 /**
-                * API to get the properties of a resource
-                *
-                * @return PropertyBundle the properties of a resource
-                */
+                 * API to get the properties of a resource
+                 *
+                 * @return PropertyBundle the properties of a resource
+                 */
                 const PropertyBundle& getPropertyBundle() const;
 
                 /**
@@ -162,20 +172,20 @@ namespace OIC
                 bool sendResponse(RequestId requestId, const PropertyBundle& bundle);
 
                 /**
-                * API to send error response to an incoming request
-                *
-                * @param[in] requestId Request handle assigned for each incoming request
-                * @param[in] bundle the properties of a resource
-                *
-                * @return true if success
-                */
+                 * API to send error response to an incoming request
+                 *
+                 * @param[in] requestId Request handle assigned for each incoming request
+                 * @param[in] bundle the properties of a resource
+                 *
+                 * @return true if success
+                 */
                 bool sendErrorResponse(RequestId requestId, const PropertyBundle& bundle);
 
                 /**
-                * API to set delegate of this resource
-                *
-                * @param[in] delegate Instance that inherit SHBaseResourceDelegate class
-                */
+                 * API to set delegate of this resource
+                 *
+                 * @param[in] delegate Instance that inherit SHBaseResourceDelegate class
+                 */
                 void setDelegate(SHBaseResourceDelegate *delegate);
 
             private:
