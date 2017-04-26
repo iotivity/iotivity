@@ -34,9 +34,11 @@ typedef enum
     CallbackType_InvalidType
 } CallbackType;
 
+namespace OC {
+    class OCResource;
+}
 class App;
 class Device;
-class OC::OCResource;
 typedef std::shared_ptr<Device> DevicePtr;
 
 // Structure contains information to make callbacks to app.
