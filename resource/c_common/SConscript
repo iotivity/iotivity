@@ -31,6 +31,10 @@ src_dir = env.get('SRC_DIR')
 # Generate iotivity_config.h using presence of headers
 ######################################################################
 config_h_file_path = os.path.join(src_dir, 'resource', 'c_common', 'iotivity_config.h')
+
+if (os.path.exists(config_h_file_path)) and (env.GetOption('clean')):
+    os.remove(config_h_file_path)
+
 if (not os.path.isfile(config_h_file_path)) and (not env.GetOption('clean')):
     conf = Configure(env.Clone(LIBS = []))
 
