@@ -48,8 +48,8 @@ main_()
 {
     echo "# Checking for gtest presence:"
     if [ ! -e "${packageSourceFile}" ] ; then
-        which wget 2>/dev/null
-        which unzip 2>/dev/null
+        whereis -b wget 2>/dev/null
+        whereis -b unzip 2>/dev/null
         do_ "cd extlibs/${package} && wget -nc -O ${packageArchive} ${packageUrl} && unzip ${packageArchive}"
     fi
 }
