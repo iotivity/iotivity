@@ -69,6 +69,7 @@ liboctbstack_env.PrependUnique(CPPPATH = [
         '#resource/csdk/security/include',
         '#resource/csdk/security/include/internal',
         '#resource/csdk/security/provisioning/include',
+        '#resource/csdk/routing/include',
         ])
 
 if 'SUB' in with_mq:

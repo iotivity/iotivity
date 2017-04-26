@@ -114,7 +114,7 @@ notification_provider_wrapper_internaltest = notification_provider_wrapper_test_
 Alias("notification_provider_wrapper_internaltest", notification_provider_wrapper_internaltest)
 env.AppendTarget('notification_provider_wrapper_test')
 
-# TODO: Fix this test to support more configurations
+# TODO: Fix this test for more configs and remove this commented line
 if env.get('TEST') == '1':
     if env.get('SECURED') != '1':
         if target_os in ['linux']:

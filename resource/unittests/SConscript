@@ -59,9 +59,11 @@ unittests_env.PrependUnique(LIBS = [
         'oc',
         'octbstack_internal',
         'ocsrm',
+        'routingmanager',
         'oc_logger_internal',
         'connectivity_abstraction',
-        'coap'])
+        'coap',
+        ])
 
 if unittests_env.get('SECURED') == '1':
     unittests_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509'])

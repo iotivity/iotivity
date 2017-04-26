@@ -875,9 +875,29 @@ OCPersistentStorage *OCGetPersistentStorageHandler();
 * @param[in] ifindex     interface index.
 * @param[out] zoneId     pointer of zoneId string, caller should free
 *                        zoneId using OICFree() when it returned CA_STATUS_OK.
-* @return Returns ::OC_STACK_OK if success.
+* @return Returns ::OC_STACK_OK if successful.
 */
 OCStackResult OCGetLinkLocalZoneId(uint32_t ifindex, char **zoneId);
+
+/**
+ * Select the cipher suite for dtls handshake.
+ *
+ * @param[in] cipher      cipher suite (Note : Make sure endianness).
+ *                          TLS_RSA_WITH_AES_256_CBC_SHA256          0x3D
+ *                          TLS_RSA_WITH_AES_128_GCM_SHA256          0x009C
+ *                          TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256  0xC02B
+ *                          TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8       0xC0AE
+ *                          TLS_ECDHE_ECDSA_WITH_AES_128_CCM         0xC0AC
+ *                          TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256  0xC023
+ *                          TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384  0xC024
+ *                          TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384  0xC02C
+ *                          TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256    0xC037
+ *                          TLS_ECDH_anon_WITH_AES_128_CBC_SHA       0xC018
+ * @param[in] adapterType transport adapter (TCP/IP/BLE)
+ *
+ * @return Returns ::OC_STACK_OK if successful.
+ */
+OCStackResult OCSelectCipherSuite(uint16_t cipher, OCTransportAdapter adapterType);
 
 #ifdef __cplusplus
 }

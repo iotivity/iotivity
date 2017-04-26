@@ -3401,7 +3401,8 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     /* Check whether we should assert role certificates before making this request. */
     if ((endpoint.flags & CA_SECURE) && 
-        (strcmp(requestInfo.info.resourceUri, OIC_RSRC_ROLES_URI) != 0))
+        (strcmp(requestInfo.info.resourceUri, OIC_RSRC_ROLES_URI) != 0) &&
+        (strcmp(requestInfo.info.resourceUri, OIC_RSRC_DOXM_URI) != 0))
     {
         CASecureEndpoint_t sep;
         CAResult_t caRes = CAGetSecureEndpointData(&endpoint, &sep);
@@ -5991,3 +5992,27 @@ OCStackResult OCGetLinkLocalZoneId(uint32_t ifindex, char **zoneId)
     return CAResultToOCResult(CAGetLinkLocalZoneId(ifindex, zoneId));
 }
 #endif
+
+OCStackResult OCSelectCipherSuite(uint16_t cipher, OCTransportAdapter adapterType)
+{
+    // OCTransportAdapter and CATransportAdapter_t are using the same bits for each transport.
+    OC_STATIC_ASSERT(OC_ADAPTER_IP              == CA_ADAPTER_IP,               "OC/CA bit mismatch");
+    OC_STATIC_ASSERT(OC_ADAPTER_GATT_BTLE       == CA_ADAPTER_GATT_BTLE,        "OC/CA bit mismatch");
+    OC_STATIC_ASSERT(OC_ADAPTER_RFCOMM_BTEDR    == CA_ADAPTER_RFCOMM_BTEDR,     "OC/CA bit mismatch");
+    OC_STATIC_ASSERT(OC_ADAPTER_TCP             == CA_ADAPTER_TCP,              "OC/CA bit mismatch");
+    OC_STATIC_ASSERT(OC_ADAPTER_NFC             == CA_ADAPTER_NFC,              "OC/CA bit mismatch");
+
+#ifdef RA_ADAPTER
+    OC_STATIC_ASSERT(OC_ADAPTER_REMOTE_ACCESS   == CA_ADAPTER_REMOTE_ACCESS,    "OC/CA bit mismatch");
+
+    #define ALL_OC_ADAPTER_TYPES (OC_ADAPTER_IP | OC_ADAPTER_GATT_BTLE | OC_ADAPTER_RFCOMM_BTEDR |\
+                                  OC_ADAPTER_TCP | OC_ADAPTER_NFC | OC_ADAPTER_REMOTE_ACCESS)
+#else
+    #define ALL_OC_ADAPTER_TYPES (OC_ADAPTER_IP | OC_ADAPTER_GATT_BTLE | OC_ADAPTER_RFCOMM_BTEDR |\
+                                  OC_ADAPTER_TCP | OC_ADAPTER_NFC)
+#endif
+
+    assert((adapterType & ~ALL_OC_ADAPTER_TYPES) == 0);
+
+    return CAResultToOCResult(CASelectCipherSuite(cipher, (CATransportAdapter_t)adapterType));
+}

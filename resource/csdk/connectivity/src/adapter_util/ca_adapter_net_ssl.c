@@ -855,6 +855,7 @@ CAResult_t GetCASecureEndpointData(const CAEndpoint_t* peer, CASecureEndpoint_t*
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
 
+    oc_mutex_assert_owner(g_sslContextMutex, false);
     oc_mutex_lock(g_sslContextMutex);
     if (NULL == g_caSslContext)
     {

@@ -2,7 +2,9 @@ LIBRARY octbstack
 
 EXPORTS
 
-; Windows octbstack.dll exports that are required for products.
+; Windows octbstack.dll exports that are available regardless of the
+; SCons command line parameters used to build IoTivity.
+
 
 calcDimTotal
 CloneOCStringLL
@@ -126,6 +128,7 @@ OCResourcePayloadAddNewEndpoint
 OCResourcePayloadAddStringLL
 OCSecurityPayloadCreate
 OCSecurityPayloadDestroy
+OCSelectCipherSuite
 OCSetDefaultDeviceEntityHandler
 OCSetDeviceId
 OCSetDeviceInfo
