@@ -106,6 +106,13 @@ CAResult_t CAStartAdapter(CATransportAdapter_t transportType);
  */
 void CAStopAdapter(CATransportAdapter_t transportType);
 
+#ifndef SINGLE_THREAD
+/**
+ * Stop connectivity adapters all.
+ */
+void CAStopAdapters();
+#endif //SINGLE_THREAD
+
 #ifdef RA_ADAPTER
 /**
  * Set Remote Access information for XMPP Client.

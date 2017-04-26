@@ -561,6 +561,30 @@ void CAStopAdapter(CATransportAdapter_t transportType)
     }
 }
 
+#ifndef SINGLE_THREAD
+void CAStopAdapters()
+{
+    CATransportAdapter_t connType;
+    u_arraylist_t *list = CAGetSelectedNetworkList();
+    size_t length = u_arraylist_length(list);
+
+    for (size_t i = 0; i < length; i++)
+    {
+        void* ptrType = u_arraylist_get(list, i);
+
+        if (NULL == ptrType)
+        {
+            continue;
+        }
+
+        connType = *(CATransportAdapter_t *)ptrType;
+        CAStopAdapter(connType);
+    }
+
+    CAQueueingThreadStop(&g_networkChangeCallbackThread);
+}
+#endif //SINGLE_THREAD
+
 CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, size_t *size)
 {
     VERIFY_NON_NULL(info, TAG, "info is null");
@@ -956,7 +980,6 @@ void CATerminateAdapters()
     g_numberOfAdapters = 0;
 
 #ifndef SINGLE_THREAD
-    CAQueueingThreadStop(&g_networkChangeCallbackThread);
     CAQueueingThreadDestroy(&g_networkChangeCallbackThread);
 #endif //SINGLE_THREAD
 

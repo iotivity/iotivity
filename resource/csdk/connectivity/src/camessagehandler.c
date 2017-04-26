@@ -1174,25 +1174,8 @@ CAResult_t CAInitializeMessageHandler(CATransportAdapter_t transportType)
 void CATerminateMessageHandler()
 {
 #ifndef SINGLE_THREAD
-    CATransportAdapter_t connType;
-    u_arraylist_t *list = CAGetSelectedNetworkList();
-    size_t length = u_arraylist_length(list);
-
-    for (size_t i = 0; i < length; i++)
-    {
-        void* ptrType = u_arraylist_get(list, i);
-
-        if (NULL == ptrType)
-        {
-            continue;
-        }
-
-        connType = *(CATransportAdapter_t *)ptrType;
-        CAStopAdapter(connType);
-    }
-
-    // terminate interface adapters by controller
-    CATerminateAdapters();
+    // stop adapters
+    CAStopAdapters();
 
     // stop retransmission
     if (NULL != g_retransmissionContext.threadMutex)
@@ -1229,6 +1212,9 @@ void CATerminateMessageHandler()
     CARetransmissionDestroy(&g_retransmissionContext);
     CAQueueingThreadDestroy(&g_sendThread);
     CAQueueingThreadDestroy(&g_receiveThread);
+
+    // terminate interface adapters by controller
+    CATerminateAdapters();
 #else
     // terminate interface adapters by controller
     CATerminateAdapters();
