@@ -50,6 +50,7 @@ OCGetDeviceId
 OCGetDeviceOwnedState
 OCGetDirectPairedDevices
 OCGetHeaderOption
+OCGetIpv6AddrScope
 OCGetNumberOfResources
 OCGetNumberOfResourceInterfaces
 OCGetNumberOfResourceTypes

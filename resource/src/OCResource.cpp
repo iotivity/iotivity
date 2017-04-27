@@ -339,17 +339,17 @@ std::string OCResource::setHost(const std::string& host)
         else
         {
             // It means zone-id is missing, check ipv6Addr is link local
-            CATransportFlags_t scopeLevel;
-            CAResult_t caResult = CAGetIpv6AddrScope(ip6Addr.c_str(), &scopeLevel);
+            OCTransportFlags scopeLevel;
+            OCStackResult ocResult = OCGetIpv6AddrScope(ip6Addr.c_str(), &scopeLevel);
 
-            if (CA_STATUS_OK != caResult)
+            if (OC_STACK_OK != ocResult)
             {
                 throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
                     m_interfaces.empty(), m_clientWrapper.expired(), false, false);
             }
             else
             {
-                if (CA_SCOPE_LINK == scopeLevel)
+                if (OC_SCOPE_LINK == scopeLevel)
                 {
                     {
                         // Given ip address is link-local scope without zone-id.
