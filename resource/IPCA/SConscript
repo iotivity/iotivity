@@ -30,6 +30,9 @@ ipca_env = env.Clone()
 if ipca_env['CC'] == 'cl':
     ipca_env.AppendUnique(CCFLAGS=['/W4'])
 
+# c_common calls into mbedcrypto and ipca calls into c_common
+ipca_env.AppendUnique(LIBS = ['mbedcrypto'])
+
 # Build ipca lib
 SConscript('src/SConscript', 'ipca_env')
 

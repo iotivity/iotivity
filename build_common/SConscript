@@ -137,6 +137,7 @@ if target_os == 'windows':
 	# For VS2013, MSVC_VERSION is '12.0'. For VS2015, MSVC_VERSION is '14.0'.
 	# Default value is None, meaning that SCons has to choose automatically a VS version.
 	help_vars.Add(EnumVariable('MSVC_VERSION', 'MSVC compiler version - Windows', None, allowed_values=('12.0', '14.0')))
+	help_vars.Add(EnumVariable('UWP_APP', 'Build for a Universal Windows Platform (UWP) Application', '0', allowed_values=('0', '1')))
 
 help_vars.Add(BoolVariable('BUILD_JAVA', 'Build Java bindings', False))
 help_vars.Add(PathVariable('JAVA_HOME', 'JDK directory', os.environ.get('JAVA_HOME'), PathVariable.PathAccept))
@@ -172,6 +173,7 @@ else:
             PREFIX = GetOption('prefix'),
             LIB_INSTALL_DIR = ARGUMENTS.get('LIB_INSTALL_DIR') #for 64bit build
             )
+
 Help(help_vars.GenerateHelpText(env))
 
 if env.get('WITH_ENV'):
@@ -254,6 +256,8 @@ env.SConscriptChdir(1)
 # Set the source directory and build directory
 #   Source directory: 'dir'
 #   Build directory: 'dir'/out/<target_os>/<target_arch>/<release or debug>/
+#   On windows, the build directory will be:
+#     'dir'/out/windows/<win32 or uwp>/<target_arch>/<release or debug>/
 #
 # You can get the directory as following:
 #   env.get('SRC_DIR')
@@ -269,10 +273,21 @@ def __set_dir(env, dir):
 ''' % dir
         Exit(1)
 
+    build_dir = dir + '/out/' + target_os + '/'
+
+    if target_os == 'windows':
+        if env.get('UWP_APP') == '1':
+            build_dir = build_dir + 'uwp/'
+        else:
+            build_dir = build_dir + 'win32/'
+
+    build_dir = build_dir + target_arch
+
     if env.get('RELEASE'):
-        build_dir = dir + '/out/' + target_os + '/' + target_arch + '/release/'
+        build_dir = build_dir + '/release/'
     else:
-        build_dir = dir + '/out/' + target_os + '/' + target_arch + '/debug/'
+        build_dir = build_dir + '/debug/'
+
     env.VariantDir(build_dir, dir, duplicate=0)
 
     env.Replace(BUILD_DIR = build_dir)

@@ -27,7 +27,17 @@ Import('env')
 
 target_os = env.get('TARGET_OS')
 
-if target_os in ['linux', 'windows', 'darwin', 'msys_nt']:
+build_tests = False
+
+if target_os in ['windows']:
+    # gtest has a lot of windows native/desktop only APIs. As all unit tests depend on gtest,
+    # only enable unit tests if building for Win32.
+    if env.get('UWP_APP') != '1':
+        build_tests = True
+elif target_os in ['darwin', 'linux', 'msys_nt']:
+    build_tests = True
+
+if build_tests:
     # Verify that 'google unit test' library is installed.  If not,
     # get it and install it
     test_env = SConscript('#extlibs/gtest/SConscript')

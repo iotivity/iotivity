@@ -51,6 +51,11 @@ if "%MULTIPLE_OWNER%" == "" (
   set MULTIPLE_OWNER=1
 )
 
+if "%UWP_APP%" == "" (
+  REM Set it to build Win32 app by default
+  set UWP_APP=0
+)
+
 set THREAD_COUNT=%NUMBER_OF_PROCESSORS%
 
 set ROUTING=EP
@@ -97,6 +102,9 @@ IF NOT "%1"=="" (
   IF /I "%1"=="-automaticUpdate" (
     set AUTOMATIC_UPDATE=1
   )
+  IF /I "%1"=="-uwp" (
+    set UWP_APP=1
+  )
 
   SHIFT
   GOTO :processArgs
@@ -106,16 +114,21 @@ IF %RELEASE% == 1 (
   set BINDIR=release
 )
 
+set BUILD_VARIANT=win32
+if "%UWP_APP%" == "1" (
+  set BUILD_VARIANT=uwp
+)
+
 REM We need to append the "PATH" so the octbstack.dll can be found by executables
 IF "%BUILD_MSYS%" == "" (
-  set BUILD_DIR=out\windows\%TARGET_ARCH%\%BINDIR%
+  set BUILD_DIR=out\windows\%BUILD_VARIANT%\%TARGET_ARCH%\%BINDIR%
   set PATH=!PATH!;!IOTIVITY_DIR!!BUILD_DIR!;
 ) ELSE (
   set BUILD_DIR=out\msys_nt\x86_64\%BINDIR%
   set PATH=!PATH!;!BUILD_DIR!;C:\msys64\mingw64\bin
 )
 
-set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% RD_MODE=%RD_MODE% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER% -j %THREAD_COUNT% AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE%
+set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% UWP_APP=%UWP_APP% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% RD_MODE=%RD_MODE% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER% -j %THREAD_COUNT% AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE%
 
 REM Use MSVC_VERSION=12.0 for VS2013, or MSVC_VERSION=14.0 for VS2015.
 REM If MSVC_VERSION has not been defined here, SCons chooses automatically a VS version.
@@ -173,6 +186,8 @@ if "!RUN_ARG!"=="server" (
   echo Starting IoTivity build with these options:
   echo   TARGET_OS=%TARGET_OS%
   echo   TARGET_ARCH=%TARGET_ARCH%
+  echo   UWP_APP=%UWP_APP%
+  echo   BUILD_DIR=%BUILD_DIR%
   echo   SECURED=%SECURED%
   echo   RELEASE=%RELEASE%
   echo   TEST=%TEST%
@@ -189,21 +204,22 @@ if "!RUN_ARG!"=="server" (
   if ERRORLEVEL 1 (
     echo SCons failed - exiting run.bat with code 3
     exit /B 3
-    )
+  )
 ) else if "!RUN_ARG!"=="clean" (
+  echo Cleaning IoTivity build
   del /S *.ilk
   call scons.bat VERBOSE=1 %BUILD_OPTIONS% -c
   if ERRORLEVEL 1 (
     echo SCons failed - exiting run.bat with code 2
     exit /B 2
-    )
+  )
 ) else if "!RUN_ARG!"=="cleangtest" (
   rd /s /q extlibs\gtest\googletest-release-1.7.0
   del extlibs\gtest\release-1.7.0.zip
 ) else (
-    echo.%0 - Script requires a valid argument!
-    echo Exiting run.bat with code 1
-    exit /B 1
+  echo.%0 - Script requires a valid argument!
+  echo Exiting run.bat with code 1
+  exit /B 1
 )
 
 cd %IOTIVITY_DIR%
@@ -243,6 +259,8 @@ echo.
 echo   -noMOT                       - Remove Multiple Ownership Transfer support.
 echo.
 echo   -automaticUpdate             - Automatically update libcoap to required version.
+echo.
+echo   -uwp                         - Build for the Universal Windows Platform (UWP).
 echo.
 echo.
 echo. Usage examples:

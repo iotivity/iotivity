@@ -72,6 +72,10 @@
 #include "platform_features.h"
 #include "oic_platform.h"
 
+#ifdef UWP_APP
+#include "ocsqlite3helper.h"
+#endif // UWP_APP
+
 #if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
 #include "occonnectionmanager.h"
 #endif
@@ -2742,6 +2746,11 @@ OCStackResult OCInitializeInternal(OCMode mode, OCTransportFlags serverFlags,
 
     defaultDeviceHandler = NULL;
     defaultDeviceHandlerCallbackParameter = NULL;
+
+#ifdef UWP_APP
+    result = InitSqlite3TempDir();
+    VERIFY_SUCCESS(result, OC_STACK_OK);
+#endif // UWP_APP
 
     result = InitializeScheduleResourceList();
     VERIFY_SUCCESS(result, OC_STACK_OK);
