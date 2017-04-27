@@ -519,8 +519,15 @@ static CborError ParseResources(OCDiscoveryPayload **outPayload, CborValue *reso
                     VERIFY_CBOR_SUCCESS(TAG, err, "to find priority tag");
                     err = cbor_value_is_valid(&curVal) ? CborNoError : CborUnknownError;
                     VERIFY_CBOR_SUCCESS(TAG, err, "to find priority tag");
-                    err = cbor_value_get_int(&curVal, &pri);
-                    VERIFY_CBOR_SUCCESS(TAG, err, "to find priority value");
+                    if (cbor_value_is_valid(&curVal))
+                    {
+                        err = cbor_value_get_int(&curVal, &pri);
+                        VERIFY_CBOR_SUCCESS(TAG, err, "to find priority value");
+                    }
+                    else
+                    {
+                        pri = 1;
+                    }
                     endpoint->pri = (uint16_t)pri;
                     OCResourcePayloadAddNewEndpoint(resource, endpoint);
                     endpoint = NULL;
