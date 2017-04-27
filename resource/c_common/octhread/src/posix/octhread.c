@@ -491,8 +491,16 @@ OCWaitResult_t oc_cond_wait_for(oc_cond cond, oc_mutex mutex, uint64_t microseco
              abstime = oc_get_current_time();
             oc_add_microseconds_to_timespec(&abstime, microseconds);
 
-            //Wait for the given time
+            // Wait for the given time
+#ifndef NDEBUG
+            // The conditional variable wait API used will atomically release the mutex, but the
+            // best we can do here is to just clear the owner info before the API is called.
+            mutexInfo->owner = OC_INVALID_THREAD_ID;
+#endif
             ret = pthread_cond_timedwait(&(eventInfo->cond), &(mutexInfo->mutex), &abstime);
+#ifndef NDEBUG
+            mutexInfo->owner = oc_get_current_thread_id();
+#endif
         }
 
         switch (ret)
@@ -517,8 +525,16 @@ OCWaitResult_t oc_cond_wait_for(oc_cond cond, oc_mutex mutex, uint64_t microseco
     else
     {
         // Wait forever
+#ifndef NDEBUG
+        // The conditional variable wait API used will atomically release the mutex, but the
+        // best we can do here is to just clear the owner info before the API is called.
+        mutexInfo->owner = OC_INVALID_THREAD_ID;
+#endif
         int ret = pthread_cond_wait(&eventInfo->cond, &mutexInfo->mutex);
-        retVal = ret == 0 ? OC_WAIT_SUCCESS : OC_WAIT_INVAL;
+        retVal = (ret == 0) ? OC_WAIT_SUCCESS : OC_WAIT_INVAL;
+#ifndef NDEBUG
+        mutexInfo->owner = oc_get_current_thread_id();
+#endif
     }
     return retVal;
 }
