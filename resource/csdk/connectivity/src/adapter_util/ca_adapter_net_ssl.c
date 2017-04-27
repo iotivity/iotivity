@@ -1938,7 +1938,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
             return CA_STATUS_FAILED;
         }
         //Load allowed TLS suites from SVR DB
-        SetupCipher(config, sep->endpoint.adapter, sep->endpoint.remoteId);
+        SetupCipher(config, sep->endpoint.adapter, NULL);
 
         ret = u_arraylist_add(g_caSslContext->peerList, (void *) peer);
         if (!ret)
