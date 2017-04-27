@@ -79,6 +79,11 @@ oc_mutex oc_mutex_new(void)
     return (oc_mutex)&g_mutexInfo;
 }
 
+oc_mutex oc_mutex_new_recursive(void)
+{
+    return oc_mutex_new();
+}
+
 bool oc_mutex_free(oc_mutex mutex)
 {
     return true;

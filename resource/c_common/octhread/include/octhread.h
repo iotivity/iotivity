@@ -111,6 +111,16 @@ OCThreadResult_t oc_thread_wait(oc_thread t);
 oc_mutex oc_mutex_new(void);
 
 /**
+ * Creates new mutex that supports recursion. Use oc_mutex_free to free the created mutex.
+ *
+ * @note The use of recursive mutex in IoTivity is discouraged. Please use it sporadically.
+ *
+ * @return  Reference to newly created mutex, otherwise NULL.
+ *
+ */
+oc_mutex oc_mutex_new_recursive(void);
+
+/**
  * Lock the mutex.
  *
  * @param  mutex  The mutex to be locked.
