@@ -63,8 +63,14 @@ static OCConnectivityType ocConnType;
 //of other devices which the client trusts
 static char CRED_FILE_DEVOWNER[] = "oic_svr_db_client_devowner.dat";
 static char CRED_FILE_NONDEVOWNER[] = "oic_svr_db_client_nondevowner.dat";
-const char *OIC_RSRC_DOXM_URI =  "/oic/sec/doxm";
-const char *OIC_RSRC_PSTAT_URI = "/oic/sec/pstat";
+
+//Standard uri prefix for secure virtual resources
+const char * OIC_STD_URI_PREFIX = "/oic/";
+
+const char * COAPS_STR = "coaps";
+#ifdef __WITH_TLS__
+const char * COAPS_TCP_STR = "coaps+tcp";
+#endif
 
 int gQuitFlag = 0;
 
@@ -458,41 +464,51 @@ int parseClientResponse(OCClientResponse *clientResponse)
     {
         coapServerResource.assign(res->uri);
         OIC_LOG_V(INFO, TAG, "Uri -- %s", coapServerResource.c_str());
-        if (0 == strcmp(coapServerResource.c_str(), OIC_RSRC_DOXM_URI))
+
+        if (0 == strncmp(coapServerResource.c_str(), OIC_STD_URI_PREFIX, strlen(OIC_STD_URI_PREFIX)))
         {
-            OIC_LOG(INFO, TAG, "Skip: doxm is secure virtual resource");
+            OIC_LOG(INFO, TAG, "Skip resource");
             res = res->next;
             continue;
         }
-        if (0 == strcmp(coapServerResource.c_str(), OIC_RSRC_PSTAT_URI))
-        {
-            OIC_LOG(INFO, TAG, "Skip: pstat is secure virtual resource");
-            res = res->next;
-            continue;
-        }
+
         OCDevAddr *endpoint = &clientResponse->devAddr;
-        if (WithTcp)
+        if (res && res->eps)
         {
-#ifdef TCP_ADAPTER
-            endpoint->adapter = OC_ADAPTER_TCP;
-#endif
-        }
-        if (res->secure)
-        {
-            endpoint->flags = (OCTransportFlags)(endpoint->flags | OC_SECURE);
-            if (WithTcp)
+            endpoint->port = 0;
+            OCEndpointPayload* eps = res->eps;
+            while (NULL != eps)
             {
-#ifdef TCP_ADAPTER
-                OIC_LOG_V(INFO, TAG, "SECUREPORT tcp: %d", res->tcpPort);
-                endpoint->port = res->tcpPort;
+                if (eps->family & OC_FLAG_SECURE)
+                {
+#ifdef __WITH_TLS__
+                    if (WithTcp && 0 == strcmp(eps->tps, COAPS_TCP_STR))
+                    {
+                        strncpy(endpoint->addr, eps->addr, sizeof(endpoint->addr));
+                        endpoint->port = eps->port;
+                        endpoint->flags = (OCTransportFlags)(eps->family | OC_SECURE);
+                        endpoint->adapter = OC_ADAPTER_TCP;
+                        coapSecureResource = 1;
+                        OIC_LOG_V(INFO, TAG, "TLS port: %d", endpoint->port);
+                        break;
+                    }
 #endif
+                    if (!WithTcp && 0 == strcmp(eps->tps, COAPS_STR))
+                    {
+                        strncpy(endpoint->addr, eps->addr, sizeof(endpoint->addr));
+                        endpoint->port = eps->port;
+                        endpoint->flags = (OCTransportFlags)(eps->family | OC_SECURE);
+                        endpoint->adapter = OC_ADAPTER_IP;
+                        coapSecureResource = 1;
+                        OIC_LOG_V(INFO, TAG, "DTLS port: %d", endpoint->port);
+                    }
+                }
+                eps = eps->next;
             }
-            else
+            if (!endpoint->port)
             {
-                OIC_LOG_V(INFO, TAG, "SECUREPORT udp: %d", res->port);
-                endpoint->port = res->port;
+                OIC_LOG(INFO, TAG, "Can not find secure port information.");
             }
-            coapSecureResource = 1;
         }
 
         OIC_LOG_V(INFO, TAG, "Secure -- %s", coapSecureResource == 1 ? "YES" : "NO");
