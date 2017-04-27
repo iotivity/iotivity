@@ -42,11 +42,15 @@
 struct ClientCB *cbList = NULL;
 
 OCStackResult
-AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
-             CAToken_t token, uint8_t tokenLength,
-             OCDoHandle *handle, OCMethod method,
-             OCDevAddr *devAddr, char * requestUri,
-             char * resourceTypeName, uint32_t ttl)
+AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
+            CAMessageType_t type,
+            CAToken_t token, uint8_t tokenLength,
+            CAHeaderOption_t *options, uint8_t numOptions,
+            CAPayload_t payload, size_t payloadSize,
+            CAPayloadFormat_t payloadFormat,
+            OCDoHandle *handle, OCMethod method,
+            OCDevAddr *devAddr, char *requestUri,
+            char *resourceTypeName, uint32_t ttl)
 {
     if (!clientCB || !cbData || !handle || tokenLength > CA_MAX_TOKEN_LEN)
     {
@@ -81,6 +85,45 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
             cbNode->callBack = cbData->cb;
             cbNode->context = cbData->context;
             cbNode->deleteCallback = cbData->cd;
+            if (!options || !numOptions)
+            {
+                OIC_LOG (INFO, TAG, "No options present");
+            }
+            else
+            {
+                cbNode->options = (CAHeaderOption_t *) OICCalloc(numOptions,
+                        sizeof(CAHeaderOption_t));
+                if (!cbNode->options)
+                {
+                    OIC_LOG(ERROR, TAG, "Out of memory");
+                    return OC_STACK_NO_MEMORY;
+                }
+                memcpy(cbNode->options, options,
+                        sizeof(CAHeaderOption_t) * numOptions);
+
+                cbNode->numOptions = numOptions;
+            }
+            if (!payload || !payloadSize)
+            {
+                OIC_LOG (INFO, TAG, "No payload present");
+            }
+            else
+            {
+                cbNode->payload = (CAPayload_t) OICCalloc(1, payloadSize);
+                if (!cbNode->payload)
+                {
+                    OIC_LOG(ERROR, TAG, "Out of memory");
+                    if (cbNode->options)
+                    {
+                        OICFree(cbNode->options);
+                    }
+                    return OC_STACK_NO_MEMORY;
+                }
+                memcpy(cbNode->payload, payload, payloadSize);
+                cbNode->payloadSize = payloadSize;
+            }
+            cbNode->payloadFormat = payloadFormat;
+            cbNode->type = type;
             //Note: token memory is allocated in the caller OCDoResource
             //but freed in DeleteClientCB
             cbNode->token = token;
