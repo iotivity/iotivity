@@ -1,11 +1,7 @@
 ; Windows octbstack.dll exports that are required when building
 ; with SECURED=1 and MULTIPLE_OWNER=1.
 
-CreatePreconfigPinBasedOwnerTransferPayload
-CreatePreconfigPinBasedSelectOxmPayload
-CreateSecureSessionPreconfigPinCallback
 GeneratePin
-LoadPreconfigPinCodeCallback
 
 OCAddPreconfigPin
 OCChangeMOTMode
