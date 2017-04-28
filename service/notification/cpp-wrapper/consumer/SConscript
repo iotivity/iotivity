@@ -25,20 +25,16 @@
 import platform
 Import('env')
 
-if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS=['-Os'])
-    env.AppendUnique(CPPDEFINES=['NDEBUG'])
-else:
-    env.AppendUnique(CCFLAGS=['-g'])
-
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES=['TB_LOG'])
-
 lib_env = env.Clone()
 SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
 notification_env = lib_env.Clone()
 
 target_os = env.get('TARGET_OS')
+
+if notification_env.get('RELEASE'):
+    notification_env.AppendUnique(CCFLAGS=['-Os'])
+else:
+    notification_env.AppendUnique(CCFLAGS=['-g'])
 
 ######################################################################
 # Build flags
@@ -49,17 +45,21 @@ notification_env.AppendUnique(CPPPATH=[
     '../common',
     '../provider/inc',
     '../../src/common',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
     '#/resource/csdk/security/include',
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',
     '#/resource/include',
-    '#/resource/oc_logger/include'
+    '#/resource/oc_logger/include',
 ])
 
 notification_env.PrependUnique(LIBS=[
     'oc_logger',
     'oc',
     'notification_consumer',
+    'logger',
 ])
 
 notification_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-frtti'])
@@ -84,21 +84,9 @@ if not env.get('RELEASE') and target_os not in ['ios']:
     notification_env.PrependUnique(LIBS=['gcov'])
     notification_env.AppendUnique(CCFLAGS=['--coverage'])
 
-if env.get('WITH_CLOUD') == True:
-    notification_env.AppendUnique(CPPDEFINES=['WITH_CLOUD'])
+if target_os in ['linux', 'tizen']:
+    notification_env.AppendUnique(LIBS=['rt'])
 
-with_mq = env.get('WITH_MQ')
-if 'SUB' in with_mq:
-    notification_env.AppendUnique(CPPDEFINES=['MQ_SUBSCRIBER', 'WITH_MQ'])
-    print "MQ SUB support"
-
-if 'PUB' in with_mq:
-    notification_env.AppendUnique(CPPDEFINES=['MQ_PUBLISHER', 'WITH_MQ'])
-    print "MQ PUB support"
-
-if 'BROKER' in with_mq:
-    notification_env.AppendUnique(CPPDEFINES=['MQ_BROKER', 'WITH_MQ'])
-    print "MQ Broker support"
 ######################################################################
 # Source files and Targets for Consumer
 ######################################################################
@@ -147,7 +135,7 @@ if target_os == 'android':
         '../../../../extlibs/boost/boost_1_58_0',
         '../../../../java/jni',
         '../../android/notification-service/src/main/jni/common',
-        '../../android/notification-service/src/main/jni/consumer'
+        '../../android/notification-service/src/main/jni/consumer',
     ])
 
     notification_jni_consumer_env.PrependUnique(

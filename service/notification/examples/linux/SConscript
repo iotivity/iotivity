@@ -16,6 +16,9 @@ notification_sample_env.AppendUnique(CPPPATH=[
     '../../include',
     '../../src/common',
     '../../src/provider',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',
     '#/resource/csdk/security/include',
@@ -54,7 +57,6 @@ notification_sample_provider_src = 'notificationprovider.c'
 if env.get('WITH_CLOUD') == True:
     notification_sample_env.AppendUnique(CPPPATH=['../../src/consumer'])
     notification_sample_env.AppendUnique(CPPPATH=['../../src/provider'])
-    notification_sample_env.AppendUnique(CPPDEFINES=['WITH_CLOUD'])
 
     providerCloudConnectorObj = notification_sample_env.Object('cloud_connector.c')
     consumerCloudConnectorObj = notification_sample_env.Object('cloud_connector.c')
@@ -72,26 +74,11 @@ if env.get('WITH_CLOUD') == True:
         consumerCloudConnectorObj,
     ]
 
-if env.get('WITH_TCP') == True:
-    notification_sample_env.AppendUnique(CPPDEFINES=['WITH_TCP'])
 if env.get('SECURED') == '1':
     notification_sample_env.AppendUnique(
         LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
-with_mq = env.get('WITH_MQ')
-if 'SUB' in with_mq:
-    notification_sample_env.AppendUnique(
-        CPPDEFINES=['MQ_SUBSCRIBER', 'WITH_MQ'])
-    print "MQ SUB support"
 
-if 'PUB' in with_mq:
-    notification_sample_env.AppendUnique(
-        CPPDEFINES=['MQ_PUBLISHER', 'WITH_MQ'])
-    print "MQ PUB support"
-
-if 'BROKER' in with_mq:
-    notification_sample_env.AppendUnique(CPPDEFINES=['MQ_BROKER', 'WITH_MQ'])
-    print "MQ Broker support"
 
 ####################################################################
 # Source files and Targets
