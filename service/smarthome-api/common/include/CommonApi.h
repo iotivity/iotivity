@@ -83,6 +83,7 @@ namespace OIC
                 const std::string SMART_PLUG = "oic.d.smartplug";
                 const std::string SECURITY_PANEL = "oic.d.securitypanel";
                 const std::string AIRCONDITIONER = "oic.d.airconditioner";
+                const std::string THERMOSTAT = "oic.d.thermostat";
             }
 
             namespace RESOURCE_TYPE
