@@ -41,7 +41,6 @@ samples_env.PrependUnique(CPPPATH=[
 samples_env.AppendUnique(
     CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 samples_env.AppendUnique(RPATH=[env.get('BUILD_DIR')])
-samples_env.AppendUnique(LIBPATH=[env.get('BUILD_DIR')])
 
 if target_os in ['darwin', 'ios']:
     samples_env.PrependUnique(
@@ -60,8 +59,6 @@ elif target_os not in ['arduino']:
 
 if env.get('SECURED') == '1':
     samples_env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
-
-samples_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 ######################################################################
 # Source files and Targets

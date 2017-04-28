@@ -37,6 +37,8 @@ print "Reading Zigbee Wrapper (ZW) script"
 ######################################################################
 
 env.PrependUnique(CPPPATH=[
+    os.path.join(src_dir, 'resource'),
+    os.path.join(src_dir, 'resource', 'c_common'),
     os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
     os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
     os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
@@ -58,12 +60,8 @@ if target_os in ['darwin', 'ios']:
 
 env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 env.AppendUnique(RPATH=[env.get('BUILD_DIR')])
-env.AppendUnique(LIBPATH=[env.get('BUILD_DIR')])
 
 env.PrependUnique(LIBS=['telegesis_wrapper'])
-
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 #####################################################################
 # Source files and Target(s)
