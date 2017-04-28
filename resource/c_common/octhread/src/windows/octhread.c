@@ -165,11 +165,7 @@ bool oc_mutex_free(oc_mutex mutex)
     {
         DeleteCriticalSection(&mutexInfo->mutex);
         OICFree(mutexInfo);
-        bRet=true;
-    }
-    else
-    {
-        OIC_LOG_V(ERROR, TAG, "%s Invalid mutex !", __func__);
+        bRet = true;
     }
 
     return bRet;
