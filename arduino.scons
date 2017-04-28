@@ -57,5 +57,3 @@ env.AppendUnique(CPPDEFINES=[
     '-D__OIC_DEVICE_NAME__=' + "\'\"" + env.get('DEVICE_NAME') + "\"\'"
 ])
 
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES=['TB_LOG'])

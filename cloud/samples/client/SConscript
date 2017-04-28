@@ -44,6 +44,9 @@ cc_sample_app_env.AppendUnique(CPPPATH=[
     '#/resource/csdk/resource-directory/include',
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
     '#/resource/c_common/ocrandom/include',
     '#/resource/csdk/logger/include',
     '#/resource/oc_logger/include',
@@ -58,7 +61,6 @@ cc_sample_app_env.AppendUnique(CPPPATH=[
 
 cc_sample_app_env.AppendUnique(
     CXXFLAGS=['-O2', '-g', '-Wall', '-Wextra', '-std=c++0x', '-pthread'])
-cc_sample_app_env.AppendUnique(LIBPATH=[env.get('BUILD_DIR')])
 cc_sample_app_env.AppendUnique(RPATH=[env.get('BUILD_DIR')])
 
 cc_sample_app_env.PrependUnique(LIBS=[
