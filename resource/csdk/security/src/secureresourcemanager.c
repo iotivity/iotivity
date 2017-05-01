@@ -179,8 +179,6 @@ void CheckRequestForSecResourceOverUnsecureChannel(SRMRequestContext_t *context)
     {
         OCResource *resPtr = FindResourceByUri(context->resourceUri);
 
-        // TODO: IOT-1843:
-        // Should a NULL return value from FindResourceByUri result in CA_FORBIDDEN_REQ?
         if (NULL != resPtr)
         {
             OIC_LOG_V(DEBUG, TAG, "%s: OC_SECURE = %s",
@@ -203,6 +201,13 @@ void CheckRequestForSecResourceOverUnsecureChannel(SRMRequestContext_t *context)
             {
                 OIC_LOG_V(DEBUG, TAG, "%s: Allowing unsecured access", __func__);
             }
+        }
+        else
+        {
+            // if resource not found and request is over unsecure channel, reject
+            context->responseVal = ACCESS_DENIED_SEC_RESOURCE_OVER_UNSECURE_CHANNEL;
+            context->responseInfo.result = CA_FORBIDDEN_REQ;
+            SRMSendResponse(context);
         }
     }
 
