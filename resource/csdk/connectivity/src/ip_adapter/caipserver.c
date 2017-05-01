@@ -1536,15 +1536,16 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, size_t *size)
         return CA_STATUS_FAILED;
     }
 
-    size_t len = u_arraylist_length(iflist);
-    size_t length = len;
-
 #ifdef __WITH_DTLS__
-    //If DTLS is supported, each interface can support secure port as well
-    length = len * 2;
+    const size_t endpointsPerInterface = 2;
+#else
+    const size_t endpointsPerInterface = 1;
 #endif
 
-    CAEndpoint_t *eps = (CAEndpoint_t *)OICCalloc(length, sizeof (CAEndpoint_t));
+    size_t interfaces = u_arraylist_length(iflist);
+    size_t totalEndpoints = interfaces * endpointsPerInterface;
+
+    CAEndpoint_t *eps = (CAEndpoint_t *)OICCalloc(totalEndpoints, sizeof (CAEndpoint_t));
     if (!eps)
     {
         OIC_LOG(ERROR, TAG, "Malloc Failed");
@@ -1552,7 +1553,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, size_t *size)
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    for (size_t i = 0, j = 0; i < len; i++)
+    for (size_t i = 0, j = 0; i < interfaces; i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
         if(!ifitem)
@@ -1597,7 +1598,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, size_t *size)
     }
 
     *info = eps;
-    *size = length;
+    *size = totalEndpoints;
 
     u_arraylist_destroy(iflist);
 

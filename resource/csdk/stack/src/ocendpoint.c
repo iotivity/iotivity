@@ -282,14 +282,15 @@ char* OCCreateEndpointStringFromCA(const CAEndpoint_t* endpoint)
         return NULL;
     }
 
+    char *buf = NULL;
     OCTpsSchemeFlags tps = OC_NO_TPS;
     OCStackResult result = OCGetMatchedTpsFlags(endpoint->adapter, endpoint->flags, &tps);
     if (OC_STACK_OK != result)
     {
-        return NULL;
+        goto exit;
     }
 
-    char* buf = (char*)OICCalloc(MAX_ADDR_STR_SIZE, sizeof(char));
+    buf = (char*)OICCalloc(MAX_ADDR_STR_SIZE, sizeof(char));
     VERIFY_NON_NULL(buf);
 
     switch (tps)
@@ -301,6 +302,10 @@ char* OCCreateEndpointStringFromCA(const CAEndpoint_t* endpoint)
 #ifdef HTTP_ADAPTER
     case OC_HTTP: case OC_HTTPS:
 #endif
+        if (!endpoint->addr || !endpoint->port)
+        {
+            goto exit;
+        }
         // checking addr is ipv4 or not
         if (endpoint->flags & CA_IPV4)
         {
@@ -317,17 +322,22 @@ char* OCCreateEndpointStringFromCA(const CAEndpoint_t* endpoint)
         break;
 #ifdef EDR_ADAPTER
     case OC_COAP_RFCOMM:
+        if (!endpoint->addr)
+        {
+            goto exit;
+        }
         // coap+rfcomm
         snprintf(buf, MAX_ADDR_STR_SIZE, "%s://%s", ConvertTpsToString(tps), endpoint->addr);
         break;
 #endif
     default:
         OIC_LOG_V(ERROR, TAG, "Payload has invalid TPS!!! %d", tps);
-        return NULL;
+        goto exit;
     }
     return buf;
 
 exit:
+    OICFree(buf);
     return NULL;
 }
 

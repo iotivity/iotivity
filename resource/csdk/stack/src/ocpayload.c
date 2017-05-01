@@ -1781,6 +1781,7 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
         return NULL;
     }
 
+    bool isSecure = res->resourceProperties & OC_FLAG_SECURE;
     OCEndpointPayload *selfEp = NULL;
     if (networkInfo && infoSize && devAddr)
     {
@@ -1791,8 +1792,9 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
             {
                 CAEndpoint_t *info = networkInfo + i;
 
-                if (((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter &&
-                     info->ifindex == devAddr->ifindex) ||
+                if ((((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter) &&
+                        (info->ifindex == devAddr->ifindex) &&
+                        info->port) ||
                     info->adapter == CA_ADAPTER_RFCOMM_BTEDR)
                 {
                     OCTpsSchemeFlags matchedTps = OC_NO_TPS;
@@ -1803,7 +1805,8 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
                         return NULL;
                     }
 
-                    if ((res->endpointType) & matchedTps)
+                    if (((res->endpointType) & matchedTps) &&
+                            (isSecure == (bool)(info->flags & OC_FLAG_SECURE)))
                     {
                         // create payload
                         OCEndpointPayload* tmpNode = (OCEndpointPayload*)

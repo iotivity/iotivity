@@ -117,7 +117,6 @@ extern const char * OIC_JSON_DEVOWNERID_NAME;
 extern const char * OIC_JSON_SUBOWNERID_NAME;
 #endif //MULTIPLE_OWNER
 extern const char * OIC_JSON_OWNED_NAME;
-extern const char * OIC_JSON_OXM_NAME;
 extern const char * OIC_JSON_OXMS_NAME;
 #ifdef MULTIPLE_OWNER
 extern const char * OIC_JSON_MOM_NAME;

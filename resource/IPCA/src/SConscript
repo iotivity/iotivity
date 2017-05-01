@@ -24,7 +24,6 @@
 Import('ipca_env')
 target_os = ipca_env.get('TARGET_OS')
 ipca_lib_env = ipca_env.Clone()
-rd_mode = ipca_lib_env.get('RD_MODE')
 
 ######################################################################
 # Build flags

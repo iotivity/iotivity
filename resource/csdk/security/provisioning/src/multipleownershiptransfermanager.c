@@ -143,7 +143,17 @@ static OCStackResult MOTSendPostDoxm(void *ctx,
     VERIFY_NOT_NULL(TAG, secPayload, ERROR);
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
 
-    postMomRes = DoxmToCBORPayload(doxm, &secPayload->securityData, &secPayload->payloadSize, true);
+    // This function appears to be called for updating oxmSel, mom, and subOwners,
+    // but it previously was including ALL writeable Properties.  So we include
+    // at least those three.
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[DOXM_OXMSEL] = true;
+    propertiesToInclude[DOXM_SUBOWNER] = true;
+    propertiesToInclude[DOXM_MOM] = true;
+
+    postMomRes = DoxmToCBORPayloadPartial(doxm, &secPayload->securityData,
+        &secPayload->payloadSize, propertiesToInclude);
     VERIFY_SUCCESS(TAG, (OC_STACK_OK == postMomRes), ERROR);
 
     OIC_LOG(DEBUG, TAG, "Created doxm payload to update doxm:");
@@ -225,7 +235,7 @@ OCStackResult MOTChangeMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
     VERIFY_NOT_NULL(TAG, resultCallback, ERROR);
 
     //Dulpicate doxm resource to update the 'mom' property
-    postMomRes = DoxmToCBORPayload(targetDeviceInfo->doxm, &doxmPayload, &doxmPayloadLen, false);
+    postMomRes = DoxmToCBORPayload(targetDeviceInfo->doxm, &doxmPayload, &doxmPayloadLen);
     VERIFY_SUCCESS(TAG, (OC_STACK_OK == postMomRes), ERROR);
 
     postMomRes = CBORPayloadToDoxm(doxmPayload, doxmPayloadLen, &doxm);
@@ -348,7 +358,7 @@ OCStackResult MOTSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDevice
     VERIFY_SUCCESS(TAG, isValidOxmsel, ERROR);
 
     //Dulpicate doxm resource to update the 'oxmsel' property
-    postMomRes = DoxmToCBORPayload(targetDeviceInfo->doxm, &doxmPayload, &doxmPayloadLen, false);
+    postMomRes = DoxmToCBORPayload(targetDeviceInfo->doxm, &doxmPayload, &doxmPayloadLen);
     VERIFY_SUCCESS(TAG, (OC_STACK_OK == postMomRes), ERROR);
 
     postMomRes = CBORPayloadToDoxm(doxmPayload, doxmPayloadLen, &doxm);
@@ -934,7 +944,7 @@ static void MOTSessionEstablished(const CAEndpoint_t *endpoint, OicSecDoxm_t *ne
     {
         OIC_LOG(ERROR, TAG, "Failed to save the SubOwner PSK.");
         SetMOTResult(motCtx, res);
-    }    
+    }
 
     OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
 }
@@ -967,7 +977,7 @@ static void MOTSessionFailed(const CAEndpoint_t *endpoint, const CAErrorInfo_t *
         OIC_LOG(DEBUG, TAG, "The PIN may be incorrect.");
 
         motCtx->attemptCnt++;
-        
+
         if (WRONG_PIN_MAX_ATTEMP > motCtx->attemptCnt)
         {
             res = StartMultipleOwnershipTransfer(motCtx, motCtx->selectedDeviceInfo);
@@ -1063,7 +1073,7 @@ exit:
 }
 
 /**
- * Function to add a device to the provisioning database via the 
+ * Function to add a device to the provisioning database via the
  * Provisioning Database Manager (PDM).
  * @param  selectedDevice [IN] Device to add to the provisioning database.
  * @return OC_STACK_OK in case of success and other values otherwise.
@@ -1071,7 +1081,7 @@ exit:
 static OCStackResult SetupMOTPDM(OCProvisionDev_t* selectedDevice)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
-   
+
     OCStackResult res = OC_STACK_INVALID_PARAM;
     PdmDeviceState_t pdmState = PDM_DEVICE_UNKNOWN;
     char deviceId[UUID_STRING_SIZE];
@@ -1087,7 +1097,7 @@ static OCStackResult SetupMOTPDM(OCProvisionDev_t* selectedDevice)
         OIC_LOG_V(ERROR, TAG, "Internal error in PMIsSubownerOfDevice : %d", res);
         return res;
     }
-    
+
     res = PDMGetDeviceState(&selectedDevice->doxm->deviceID, &pdmState);
     if (OC_STACK_OK != res)
     {

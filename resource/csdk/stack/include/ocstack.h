@@ -875,7 +875,7 @@ OCPersistentStorage *OCGetPersistentStorageHandler();
 * @param[in] ifindex     interface index.
 * @param[out] zoneId     pointer of zoneId string, caller should free
 *                        zoneId using OICFree() when it returned CA_STATUS_OK.
-* @return Returns ::OC_STACK_OK if successful.
+* @return ::OC_STACK_OK if successful.
 */
 OCStackResult OCGetLinkLocalZoneId(uint32_t ifindex, char **zoneId);
 
@@ -895,9 +895,19 @@ OCStackResult OCGetLinkLocalZoneId(uint32_t ifindex, char **zoneId);
  *                          TLS_ECDH_anon_WITH_AES_128_CBC_SHA       0xC018
  * @param[in] adapterType transport adapter (TCP/IP/BLE)
  *
- * @return Returns ::OC_STACK_OK if successful.
+ * @return ::OC_STACK_OK if successful.
  */
 OCStackResult OCSelectCipherSuite(uint16_t cipher, OCTransportAdapter adapterType);
+
+/**
+ * Return the scope level of a given IP address.
+ *
+ * @param[in] addr          remote IP address.
+ * @param[out] scope        scope level of given IP address.
+ *
+ * @return ::OC_STACK_OK if successful.
+ */
+OCStackResult OCGetIpv6AddrScope(const char *addr, OCTransportFlags *scope);
 
 #ifdef __cplusplus
 }

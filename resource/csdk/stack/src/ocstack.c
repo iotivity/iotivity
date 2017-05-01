@@ -6016,3 +6016,28 @@ OCStackResult OCSelectCipherSuite(uint16_t cipher, OCTransportAdapter adapterTyp
 
     return CAResultToOCResult(CASelectCipherSuite(cipher, (CATransportAdapter_t)adapterType));
 }
+
+OCStackResult OCGetIpv6AddrScope(const char *addr, OCTransportFlags *scope)
+{
+    // OCTransportFlags and CATransportFlags_t are using the same bits for each scope.
+    OC_STATIC_ASSERT(OC_SCOPE_INTERFACE     == CA_SCOPE_INTERFACE,  "OC/CA bit mismatch");
+    OC_STATIC_ASSERT(OC_SCOPE_LINK          == CA_SCOPE_LINK,       "OC/CA bit mismatch");
+    OC_STATIC_ASSERT(OC_SCOPE_REALM         == CA_SCOPE_REALM,      "OC/CA bit mismatch");
+    OC_STATIC_ASSERT(OC_SCOPE_ADMIN         == CA_SCOPE_ADMIN,      "OC/CA bit mismatch");
+    OC_STATIC_ASSERT(OC_SCOPE_SITE          == CA_SCOPE_SITE,       "OC/CA bit mismatch");
+    OC_STATIC_ASSERT(OC_SCOPE_ORG           == CA_SCOPE_ORG,        "OC/CA bit mismatch");
+    OC_STATIC_ASSERT(OC_SCOPE_GLOBAL        == CA_SCOPE_GLOBAL,     "OC/CA bit mismatch");
+
+    #define ALL_OC_SCOPES (OC_SCOPE_INTERFACE | OC_SCOPE_LINK | OC_SCOPE_REALM | OC_SCOPE_ADMIN |\
+                           OC_SCOPE_SITE | OC_SCOPE_ORG | OC_SCOPE_GLOBAL)
+
+    CAResult_t caResult = CAGetIpv6AddrScope(addr, (CATransportFlags_t *)scope);
+
+    if (CA_STATUS_OK == caResult)
+    {
+        assert(((*scope) & ~ALL_OC_SCOPES) == 0);
+        return OC_STACK_OK;
+    }
+
+    return CAResultToOCResult(caResult);
+}

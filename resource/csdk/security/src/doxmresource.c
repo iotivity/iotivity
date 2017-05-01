@@ -38,6 +38,7 @@
 #include "resourcemanager.h"
 #include "doxmresource.h"
 #include "pstatresource.h"
+#include "deviceonboardingstate.h"
 #include "aclresource.h"
 #include "amaclresource.h"
 #include "pconfresource.h"
@@ -99,13 +100,62 @@ static OicSecDoxm_t gDefaultDoxm =
     {.id = {0}},            /* OicUuid_t rownerID */
 };
 
+#define R PERMISSION_READ
+#define W PERMISSION_WRITE
+#define RW PERMISSION_READ | PERMISSION_WRITE
+
+// NOTE that this table must match the DoxmProperty_t enum in doxmresource.h
+static const uint8_t gDoxmPropertyAccessModes[DOXM_PROPERTY_COUNT][DOS_STATE_COUNT] =
+{ // RESET RFOTM  RFPRO   RFNOP   SRESET
+    { R,    R,      R,      R,      R   }, // .oxmtype TODO [IOT-2105]
+    { R,    R,      R,      R,      R   }, // .oxms
+    { R,    RW,     R,      R,      R   }, // .oxmsel
+    { R,    R,      R,      R,      R   }, // .sct
+    { R,    RW,     R,      R,      R   }, // .owned
+#ifdef MULTIPLE_OWNER
+    { RW,   RW,    RW,      RW,     RW  }, // .subowner
+    { RW,   RW,    RW,      RW,     RW  }, // .mom
+#endif // MULTIPLE_OWNER
+    { R,    RW,     R,      R,      R   }, // .deviceuuid
+    { R,    RW,     R,      R,      R   }, // .devowneruuid
+    { R,    RW,     R,      R,      RW  }  // .rowneruuid
+};
+
+#undef R
+#undef W
+#undef RW
+
+static bool IsPropertyReadOnly(DoxmProperty_t p,
+                               OicSecDeviceOnboardingState_t s)
+{
+    bool ret = false;
+
+    if (PERMISSION_READ == gDoxmPropertyAccessModes[p][s])
+    {
+        OIC_LOG_V(DEBUG, TAG, "%s: property %d is read-only in state %d.",
+           __func__, p, s);
+        ret = true;
+    }
+
+    return ret;
+}
+
 /**
- * This method is internal method.
- * the param roParsed is optionally used to know whether cborPayload has
- * at least read only property value or not.
- */
+ * Internal method converts CBOR into DOXM data, and determines if a read-only
+ *  Property was parsed in the CBOR payload.
+ *
+ * @param[in] cborPayload The doxm data in cbor format.
+ * @param[in] size Size of the cborPayload. In case 0 is provided it assigns CBOR_SIZE (255) value.
+ * @param[out] doxm Pointer to @ref OicSecDoxm_t.
+ * @param[out] roParsed Ptr to bool marked "true" iff a read-only Property is parsed
+ * @param[in] stateForReadOnlyCheck The state to use when determining if a Property is
+ *                              read-only.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+*/
 static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t size,
-                                OicSecDoxm_t **doxm, bool *roParsed);
+                                OicSecDoxm_t **doxm, bool *roParsed,
+                                OicSecDeviceOnboardingState_t stateForReadOnlyCheck);
 
 void DeleteDoxmBinData(OicSecDoxm_t* doxm)
 {
@@ -143,8 +193,8 @@ void DeleteDoxmBinData(OicSecDoxm_t* doxm)
     }
 }
 
-OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, size_t *size,
-                                bool rwOnly)
+OCStackResult DoxmToCBORPayloadPartial(const OicSecDoxm_t *doxm,
+    uint8_t **payload, size_t *size, const bool *propertiesToInclude)
 {
     if (NULL == doxm || NULL == payload || NULL != *payload || NULL == size)
     {
@@ -174,87 +224,101 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     cborEncoderResult = cbor_encoder_create_map(&encoder, &doxmMap, CborIndefiniteLength);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Doxm Map.");
 
-    //OxmType -- Not Mandatory
-    if (doxm->oxmTypeLen > 0)
+    // oxmtype
+    // TODO [IOT-2105]: resolve "oxmtype" undocumented tag/value
+    if (propertiesToInclude[DOXM_OXMTYPE] && doxm->oxmTypeLen > 0)
     {
+        OIC_LOG_V(DEBUG, TAG, "%s: including %s.", __func__, OIC_JSON_OXM_TYPE_NAME);
         CborEncoder oxmType;
         cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OXM_TYPE_NAME,
             strlen(OIC_JSON_OXM_TYPE_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmType Tag.");
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmtype Tag.");
         cborEncoderResult = cbor_encoder_create_array(&doxmMap, &oxmType, doxm->oxmTypeLen);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmType Array.");
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmtype Array.");
 
         for (size_t i = 0; i < doxm->oxmTypeLen; i++)
         {
             cborEncoderResult = cbor_encode_text_string(&oxmType, doxm->oxmType[i],
                 strlen(doxm->oxmType[i]));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmType Value.");
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmtype Value.");
         }
         cborEncoderResult = cbor_encoder_close_container(&doxmMap, &oxmType);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing oxmType.");
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing oxmtype.");
     }
 
-    //Oxm -- Not Mandatory
-    if (doxm->oxmLen > 0 && false == rwOnly)
+    // oxms Property
+    if (propertiesToInclude[DOXM_OXMS] && doxm->oxmLen > 0)
     {
+        OIC_LOG_V(DEBUG, TAG, "%s: including %s Property.", __func__, OIC_JSON_OXMS_NAME);
         CborEncoder oxm;
         cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OXMS_NAME,
             strlen(OIC_JSON_OXMS_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmName Tag.");
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxms Tag.");
         cborEncoderResult = cbor_encoder_create_array(&doxmMap, &oxm, doxm->oxmLen);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmName Array.");
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxms Array.");
 
         for (size_t i = 0; i < doxm->oxmLen; i++)
         {
             cborEncoderResult = cbor_encode_int(&oxm, doxm->oxm[i]);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmName Value");
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxms Value");
         }
         cborEncoderResult = cbor_encoder_close_container(&doxmMap, &oxm);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing oxmName.");
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing oxms.");
     }
 
-    //OxmSel -- Mandatory
-    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OXM_SEL_NAME,
-        strlen(OIC_JSON_OXM_SEL_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Sel Tag.");
-    cborEncoderResult = cbor_encode_int(&doxmMap, doxm->oxmSel);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Sel Value.");
-
-    //sct -- Mandatory
-    if (false == rwOnly)
+    // oxmsel Property
+    if (propertiesToInclude[DOXM_OXMSEL] && doxm->oxmLen > 0)
     {
+        OIC_LOG_V(DEBUG, TAG, "%s: including %s Property.", __func__, OIC_JSON_OXM_SEL_NAME);
+        cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OXM_SEL_NAME,
+            strlen(OIC_JSON_OXM_SEL_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmsel Tag.");
+        cborEncoderResult = cbor_encode_int(&doxmMap, doxm->oxmSel);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmsel Value.");
+    }
+
+    // sct Property
+    if (propertiesToInclude[DOXM_SCT])
+    {
+        OIC_LOG_V(DEBUG, TAG, "%s: including %s Property.", __func__, OIC_JSON_SUPPORTED_CRED_TYPE_NAME);
         cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_SUPPORTED_CRED_TYPE_NAME,
             strlen(OIC_JSON_SUPPORTED_CRED_TYPE_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Type Tag");
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding sct Tag");
         cborEncoderResult = cbor_encode_int(&doxmMap, doxm->sct);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Type Value.");
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding sct Value.");
     }
 
-    //Owned -- Mandatory
-    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OWNED_NAME,
-        strlen(OIC_JSON_OWNED_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owned Tag.");
-    cborEncoderResult = cbor_encode_boolean(&doxmMap, doxm->owned);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owned Value.");
-
-    if (false == rwOnly)
+    // owned Property
+    if (propertiesToInclude[DOXM_OWNED])
     {
-        //DeviceId -- Mandatory
+        OIC_LOG_V(DEBUG, TAG, "%s: including %s Property.", __func__, OIC_JSON_OWNED_NAME);
+        cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OWNED_NAME,
+            strlen(OIC_JSON_OWNED_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding owned Tag.");
+        cborEncoderResult = cbor_encode_boolean(&doxmMap, doxm->owned);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding owned Value.");
+    }
+
+    // deviceuuid Property
+    if (propertiesToInclude[DOXM_DEVICEUUID])
+    {
+        OIC_LOG_V(DEBUG, TAG, "%s: including %s Property.", __func__, OIC_JSON_DEVICE_ID_NAME);
         cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DEVICE_ID_NAME,
             strlen(OIC_JSON_DEVICE_ID_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Tag.");
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding deviceuuid Tag.");
         ret = ConvertUuidToStr(&doxm->deviceID, &strUuid);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
         cborEncoderResult = cbor_encode_text_string(&doxmMap, strUuid, strlen(strUuid));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Value.");
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding deviceuuid Value.");
         OICFree(strUuid);
         strUuid = NULL;
     }
 
 #ifdef MULTIPLE_OWNER
     //Device SubOwnerID -- Not Mandatory
-    if(doxm->subOwners)
+    if(propertiesToInclude[DOXM_SUBOWNER] && doxm->subOwners)
     {
+        OIC_LOG_V(DEBUG, TAG, "%s: including %s Property.", __func__, OIC_JSON_SUBOWNERID_NAME);
         size_t subOwnerLen = 0;
         OicSecSubOwner_t* subOwner = NULL;
         LL_FOREACH(doxm->subOwners, subOwner)
@@ -284,8 +348,9 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     }
 
     //Multiple Owner Mode -- Not Mandatory
-    if(doxm->mom)
+    if(propertiesToInclude[DOXM_MOM] && doxm->mom)
     {
+        OIC_LOG_V(DEBUG, TAG, "%s: including %s Property.", __func__, OIC_JSON_MOM_NAME);
         cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_MOM_NAME,
             strlen(OIC_JSON_MOM_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding mom Tag");
@@ -294,27 +359,35 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     }
 #endif //MULTIPLE_OWNER
 
-    //devownerid -- Mandatory
-    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DEVOWNERID_NAME,
-        strlen(OIC_JSON_DEVOWNERID_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owner Id Tag.");
-    ret = ConvertUuidToStr(&doxm->owner, &strUuid);
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
-    cborEncoderResult = cbor_encode_text_string(&doxmMap, strUuid, strlen(strUuid));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owner Id Value.");
-    OICFree(strUuid);
-    strUuid = NULL;
+    // devowneruuid Property
+    if (propertiesToInclude[DOXM_DEVOWNERUUID])
+    {
+        OIC_LOG_V(DEBUG, TAG, "%s: including %s Property.", __func__, OIC_JSON_DEVOWNERID_NAME);
+        cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DEVOWNERID_NAME,
+            strlen(OIC_JSON_DEVOWNERID_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding devowneruuid Tag.");
+        ret = ConvertUuidToStr(&doxm->owner, &strUuid);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
+        cborEncoderResult = cbor_encode_text_string(&doxmMap, strUuid, strlen(strUuid));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding devowneruuid Value.");
+        OICFree(strUuid);
+        strUuid = NULL;
+    }
 
-    //ROwner -- Mandatory
-    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_ROWNERID_NAME,
-        strlen(OIC_JSON_ROWNERID_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROwner Id Tag.");
-    ret = ConvertUuidToStr(&doxm->rownerID, &strUuid);
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
-    cborEncoderResult = cbor_encode_text_string(&doxmMap, strUuid, strlen(strUuid));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROwner Id Value.");
-    OICFree(strUuid);
-    strUuid = NULL;
+    // rowneruuid Property
+    if (propertiesToInclude[DOXM_ROWNERUUID])
+    {
+        OIC_LOG_V(DEBUG, TAG, "%s: including %s Property.", __func__, OIC_JSON_ROWNERID_NAME);
+        cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_ROWNERID_NAME,
+            strlen(OIC_JSON_ROWNERID_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding rowneruuid Tag.");
+        ret = ConvertUuidToStr(&doxm->rownerID, &strUuid);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
+        cborEncoderResult = cbor_encode_text_string(&doxmMap, strUuid, strlen(strUuid));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding rowneruuid Value.");
+        OICFree(strUuid);
+        strUuid = NULL;
+    }
 
     //RT -- Mandatory
     CborEncoder rtArray;
@@ -333,12 +406,12 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing RT.");
 
     //IF-- Mandatory
-     CborEncoder ifArray;
-     cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_IF_NAME,
-             strlen(OIC_JSON_IF_NAME));
-     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
-     cborEncoderResult = cbor_encoder_create_array(&doxmMap, &ifArray, 1);
-     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
+    CborEncoder ifArray;
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_IF_NAME,
+       strlen(OIC_JSON_IF_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
+    cborEncoderResult = cbor_encoder_create_array(&doxmMap, &ifArray, 1);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
     for (size_t i = 0; i < 1; i++)
     {
         cborEncoderResult = cbor_encode_text_string(&ifArray, OC_RSRVD_INTERFACE_DEFAULT,
@@ -368,7 +441,7 @@ exit:
         cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         OIC_LOG_V(DEBUG, TAG, "Doxm reallocation size : %zd.", cborLen);
         cborEncoderResult = CborNoError;
-        ret = DoxmToCBORPayload(doxm, payload, &cborLen, rwOnly);
+        ret = DoxmToCBORPayloadPartial(doxm, payload, &cborLen, propertiesToInclude);
         *size = cborLen;
     }
 
@@ -384,14 +457,30 @@ exit:
     return ret;
 }
 
+OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm,
+                                 uint8_t **payload, size_t *size)
+{
+    bool allProps[DOXM_PROPERTY_COUNT];
+
+    for (int i = 0; i < DOXM_PROPERTY_COUNT; i++)
+    {
+        allProps[i] = true;
+    }
+
+    allProps[DOXM_OXMTYPE] = false; // TODO [IOT-2105]: resolve "oxmtype" undocumented tag/value
+
+    return DoxmToCBORPayloadPartial(doxm, payload, size, allProps);
+}
+
 OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
                                 OicSecDoxm_t **secDoxm)
 {
-    return CBORPayloadToDoxmBin(cborPayload, size, secDoxm, NULL);
+    return CBORPayloadToDoxmBin(cborPayload, size, secDoxm, NULL, DOS_RESET);
 }
 
 static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t size,
-                                OicSecDoxm_t **secDoxm, bool *roParsed)
+                                OicSecDoxm_t **secDoxm, bool *roParsed,
+                                OicSecDeviceOnboardingState_t stateForReadOnlyCheck)
 {
     if (NULL == cborPayload || NULL == secDoxm || NULL != *secDoxm || 0 == size)
     {
@@ -413,9 +502,12 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     VERIFY_NOT_NULL(TAG, doxm, ERROR);
 
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_OXM_TYPE_NAME, &doxmMap);
-    //OxmType -- not Mandatory
+    // OxmType
+    // TODO [IOT-2105]: resolve "oxmtype" undocumented tag/value
     if (CborNoError == cborFindResult && cbor_value_is_array(&doxmMap))
     {
+        OIC_LOG(DEBUG, TAG, "Found doxm.oxmtype tag in doxmMap.");
+
         CborValue oxmType;
 
         cborFindResult = cbor_value_get_array_length(&doxmMap, &doxm->oxmTypeLen);
@@ -432,6 +524,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
         size_t oxmTypeStrlen = 0;
         while (cbor_value_is_valid(&oxmType) && cbor_value_is_text_string(&oxmType))
         {
+            OIC_LOG_V(DEBUG, TAG, "Read doxm.oxmtype value = %s", oxmType);
             cborFindResult = cbor_value_dup_text_string(&oxmType, &doxm->oxmType[i++],
                                                         &oxmTypeStrlen, NULL);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding omxType text string.");
@@ -441,19 +534,21 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     }
 
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_OXMS_NAME, &doxmMap);
-    //Oxm -- not Mandatory
+
+    // oxms
     if (CborNoError == cborFindResult && cbor_value_is_array(&doxmMap))
     {
+        OIC_LOG(DEBUG, TAG, "Found doxm.oxms tag in doxmMap.");
         CborValue oxm;
         cborFindResult = cbor_value_get_array_length(&doxmMap, &doxm->oxmLen);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding oxmName array Length.");
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding oxms array Length.");
         VERIFY_SUCCESS(TAG, doxm->oxmLen != 0, ERROR);
 
         doxm->oxm = (OicSecOxm_t *)OICCalloc(doxm->oxmLen, sizeof(*doxm->oxm));
         VERIFY_NOT_NULL(TAG, doxm->oxm, ERROR);
 
         cborFindResult = cbor_value_enter_container(&doxmMap, &oxm);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering oxmName Array.")
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering oxms Array.")
 
         int i = 0;
         while (cbor_value_is_valid(&oxm) && cbor_value_is_integer(&oxm))
@@ -461,15 +556,19 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
             int tmp;
 
             cborFindResult = cbor_value_get_int(&oxm, &tmp);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding oxmName Value")
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding oxms Value")
+            OIC_LOG_V(DEBUG, TAG, "Read doxm.oxms value = %d", tmp);
             doxm->oxm[i++] = (OicSecOxm_t)tmp;
             cborFindResult = cbor_value_advance(&oxm);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing oxmName.")
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing oxms.")
         }
 
         if (roParsed)
         {
-            *roParsed = true;
+            if (IsPropertyReadOnly(DOXM_OXMS, stateForReadOnlyCheck))
+            {
+                *roParsed = true;
+            }
         }
     }
     else
@@ -484,14 +583,25 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
         }
     }
 
+    // oxmsel
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_OXM_SEL_NAME, &doxmMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&doxmMap))
     {
+        OIC_LOG(DEBUG, TAG, "Found doxm.oxmsel tag in doxmMap.");
+
         int oxmSel;
 
         cborFindResult = cbor_value_get_int(&doxmMap, &oxmSel);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Sel Name Value.")
+        OIC_LOG_V(DEBUG, TAG, "Read doxm.oxmsel value = %d", oxmSel);
         doxm->oxmSel = (OicSecOxm_t)oxmSel;
+        if (roParsed)
+        {
+            if (IsPropertyReadOnly(DOXM_OXMSEL, stateForReadOnlyCheck))
+            {
+                *roParsed = true;
+            }
+        }
     }
     else // PUT/POST JSON may not have oxmsel so set it to the gDoxm->oxmSel
     {
@@ -499,18 +609,24 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
         doxm->oxmSel = gDoxm->oxmSel;
     }
 
+    // sct
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_SUPPORTED_CRED_TYPE_NAME, &doxmMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&doxmMap))
     {
+        OIC_LOG(DEBUG, TAG, "Found doxm.oxmsel tag in doxmMap.");
         int sct;
 
         cborFindResult = cbor_value_get_int(&doxmMap, &sct);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Sct Name Value.")
+        OIC_LOG_V(DEBUG, TAG, "Read doxm.sct value = %d", sct);
         doxm->sct = (OicSecCredType_t)sct;
 
         if (roParsed)
         {
-            *roParsed = true;
+            if (IsPropertyReadOnly(DOXM_SCT, stateForReadOnlyCheck))
+            {
+                *roParsed = true;
+            }
         }
     }
     else // PUT/POST JSON may not have sct so set it to the gDoxm->sct
@@ -519,11 +635,22 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
         doxm->sct = gDoxm->sct;
     }
 
+    // owned
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_OWNED_NAME, &doxmMap);
     if (CborNoError == cborFindResult && cbor_value_is_boolean(&doxmMap))
     {
+        OIC_LOG(DEBUG, TAG, "Found doxm.owned tag in doxmMap.");
         cborFindResult = cbor_value_get_boolean(&doxmMap, &doxm->owned);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Owned Value.")
+        OIC_LOG_V(DEBUG, TAG, "Read doxm.owned value = %s", doxm->owned?"true":"false");
+
+        if (roParsed)
+        {
+            if (IsPropertyReadOnly(DOXM_OWNED, stateForReadOnlyCheck))
+            {
+                *roParsed = true;
+            }
+        }
     }
     else // PUT/POST JSON may not have owned so set it to the gDomx->owned
     {
@@ -531,15 +658,26 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
         doxm->owned = gDoxm->owned;
     }
 
+    // deviceuuid
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_DEVICE_ID_NAME, &doxmMap);
     if (CborNoError == cborFindResult && cbor_value_is_text_string(&doxmMap))
     {
+        OIC_LOG(DEBUG, TAG, "Found doxm.deviceuuid tag in doxmMap.");
         cborFindResult = cbor_value_dup_text_string(&doxmMap, &strUuid , &len, NULL);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Device Id Value.");
-        ret = ConvertStrToUuid(strUuid , &doxm->deviceID);
+        OIC_LOG_V(DEBUG, TAG, "Read doxm.deviceuuid value = %s", strUuid);
+        ret = ConvertStrToUuid(strUuid, &doxm->deviceID);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
         OICFree(strUuid);
         strUuid  = NULL;
+
+        if (roParsed)
+        {
+            if (IsPropertyReadOnly(DOXM_DEVICEUUID, stateForReadOnlyCheck))
+            {
+                *roParsed = true;
+            }
+        }
     }
     else
     {
@@ -547,15 +685,26 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
         memcpy(doxm->deviceID.id, &gDoxm->deviceID.id, sizeof(doxm->deviceID.id));
     }
 
+    // devowneruuid
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_DEVOWNERID_NAME, &doxmMap);
     if (CborNoError == cborFindResult && cbor_value_is_text_string(&doxmMap))
     {
+        OIC_LOG(DEBUG, TAG, "Found doxm.devowneruuid tag in doxmMap.");
         cborFindResult = cbor_value_dup_text_string(&doxmMap, &strUuid , &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Owner Value.");
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding devowneruuid Value.");
+        OIC_LOG_V(DEBUG, TAG, "Read doxm.devowneruuid value = %s", strUuid);
         ret = ConvertStrToUuid(strUuid , &doxm->owner);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
         OICFree(strUuid);
         strUuid  = NULL;
+
+        if (roParsed)
+        {
+            if (IsPropertyReadOnly(DOXM_DEVOWNERUUID, stateForReadOnlyCheck))
+            {
+                *roParsed = true;
+            }
+        }
     }
     else
     {
@@ -567,6 +716,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_MOM_NAME, &doxmMap);
     if(CborNoError == cborFindResult && cbor_value_is_integer(&doxmMap))
     {
+        OIC_LOG(DEBUG, TAG, "Found doxm.mom tag in doxmMap.");
         int mode = 0;
         cborFindResult = cbor_value_get_int(&doxmMap, &mode);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding mom Name Value.")
@@ -576,6 +726,13 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
             VERIFY_NOT_NULL(TAG, doxm->mom, ERROR);
         }
         doxm->mom->mode = (OicSecMomType_t)mode;
+        if (roParsed)
+        {
+            if (IsPropertyReadOnly(DOXM_MOM, stateForReadOnlyCheck))
+            {
+                *roParsed = true;
+            }
+        }
     }
     else if(NULL != gDoxm && NULL != gDoxm->mom)
     {
@@ -591,6 +748,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_SUBOWNERID_NAME, &doxmMap);
     if(CborNoError == cborFindResult && cbor_value_is_array(&doxmMap))
     {
+        OIC_LOG(DEBUG, TAG, "Found doxm.subowner tag in doxmMap.");
         size_t subOwnerLen = 0;
         CborValue subOwnerCbor;
         cborFindResult = cbor_value_get_array_length(&doxmMap, &subOwnerLen);
@@ -621,6 +779,13 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
             cborFindResult = cbor_value_advance(&subOwnerCbor);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing SubOwnerId.")
         }
+        if (roParsed)
+        {
+            if (IsPropertyReadOnly(DOXM_SUBOWNER, stateForReadOnlyCheck))
+            {
+                *roParsed = true;
+            }
+        }
     }
     else if(NULL != gDoxm && NULL != gDoxm->subOwners)
     {
@@ -639,15 +804,26 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     }
 #endif //MULTIPLE_OWNER
 
+    // rowneruuid
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_ROWNERID_NAME, &doxmMap);
     if (CborNoError == cborFindResult && cbor_value_is_text_string(&doxmMap))
     {
+        OIC_LOG(DEBUG, TAG, "Found doxm.rowneruuid tag in doxmMap.");
         cborFindResult = cbor_value_dup_text_string(&doxmMap, &strUuid , &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding ROwner Value.");
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding rowneruuid Value.");
+        OIC_LOG_V(DEBUG, TAG, "Read doxm.rowneruuid value = %s", strUuid);
         ret = ConvertStrToUuid(strUuid , &doxm->rownerID);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
         OICFree(strUuid);
         strUuid  = NULL;
+
+        if (roParsed)
+        {
+            if (IsPropertyReadOnly(DOXM_ROWNERUUID, stateForReadOnlyCheck))
+            {
+                *roParsed = true;
+            }
+        }
     }
     else
     {
@@ -683,7 +859,7 @@ static bool UpdatePersistentStorage(OicSecDoxm_t * doxm)
         // Convert Doxm data into CBOR for update to persistent storage
         uint8_t *payload = NULL;
         size_t size = 0;
-        OCStackResult res = DoxmToCBORPayload(doxm, &payload, &size, false);
+        OCStackResult res = DoxmToCBORPayload(doxm, &payload, &size);
         if (payload && (OC_STACK_OK == res)
             && (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_DOXM_NAME, payload, size)))
         {
@@ -720,8 +896,8 @@ static bool ValidateQuery(const char * query)
 
     bool bOwnedQry = false;         // does querystring contains 'owned' query ?
     bool bOwnedMatch = false;       // does 'owned' query value matches with doxm.owned status?
-    bool bDeviceIDQry = false;      // does querystring contains 'deviceid' query ?
-    bool bDeviceIDMatch = false;    // does 'deviceid' query matches with doxm.deviceid ?
+    bool bDeviceIDQry = false;      // does querystring contains 'deviceuuid' query ?
+    bool bDeviceIDMatch = false;    // does 'deviceuuid' query matches with doxm.deviceuuid ?
     bool bInterfaceQry = false;      // does querystring contains 'if' query ?
     bool bInterfaceMatch = false;    // does 'if' query matches with oic.if.baseline ?
 #ifdef MULTIPLE_OWNER
@@ -826,7 +1002,7 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
 
     if (ehRet == OC_EH_OK)
     {
-        if (OC_STACK_OK != DoxmToCBORPayload(gDoxm, &payload, &size, false))
+        if (OC_STACK_OK != DoxmToCBORPayload(gDoxm, &payload, &size))
         {
             OIC_LOG(WARNING, TAG, "DoxmToCBORPayload failed in HandleDoxmGetRequest");
         }
@@ -1033,7 +1209,7 @@ static void RegisterOTMSslHandshakeCallback(CAErrorCallback callback)
 static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRequest)
 {
     OIC_LOG (DEBUG, TAG, "Doxm EntityHandle  processing POST request");
-    OCEntityHandlerResult ehRet = OC_EH_ERROR;
+    OCEntityHandlerResult ehRet = OC_EH_INTERNAL_SERVER_ERROR;
     OicUuid_t emptyOwner = {.id = {0} };
     static uint16_t previousMsgId = 0;
     bool isDuplicatedMsg = false;
@@ -1049,7 +1225,10 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
         uint8_t *payload = ((OCSecurityPayload *)ehRequest->payload)->securityData;
         size_t size = ((OCSecurityPayload *)ehRequest->payload)->payloadSize;
         bool roParsed = false;
-        OCStackResult res = CBORPayloadToDoxmBin(payload, size, &newDoxm, &roParsed);
+        OicSecDostype_t onboardingState;
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&onboardingState), ERROR);
+        OCStackResult res = CBORPayloadToDoxmBin(payload, size, &newDoxm, &roParsed,
+            onboardingState.state);
         if (newDoxm && OC_STACK_OK == res)
         {
             /*
@@ -1066,7 +1245,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
             // Check request on RO property
             if (true == roParsed)
             {
-                OIC_LOG(ERROR, TAG, "Not acceptable request because of read-only propertys");
+                OIC_LOG(ERROR, TAG, "Not acceptable request because of read-only properties");
                 ehRet = OC_EH_NOT_ACCEPTABLE;
                 goto exit;
             }
@@ -1076,7 +1255,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
             {
                 if (false == ValidateOxmsel(gDoxm->oxm, gDoxm->oxmLen, &newDoxm->oxmSel))
                 {
-                    OIC_LOG(ERROR, TAG, "Not acceptable request because oxmsel does not support on Server");
+                    OIC_LOG(ERROR, TAG, "Not acceptable request because oxmsel is not supported on Server");
                     ehRet = OC_EH_NOT_ACCEPTABLE;
                     goto exit;
                 }
@@ -1422,6 +1601,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
              * Tool is attempting to change the state to 'Owned' with a
              * qualified value for the field 'Owner'
              */
+            // TODO [IOT-2107] reconcile POST handler behavior with Specification
             if ((false == gDoxm->owned) && (true == newDoxm->owned) &&
                     (memcmp(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t)) == 0))
             {
@@ -2052,7 +2232,7 @@ OCStackResult SetMOTStatus(bool enable)
 
     gDoxm->mom->mode = (enable ? OIC_MULTIPLE_OWNER_ENABLE : OIC_MULTIPLE_OWNER_DISABLE);
 
-    ret = DoxmToCBORPayload(gDoxm, &cborPayload, &size, false);
+    ret = DoxmToCBORPayload(gDoxm, &cborPayload, &size);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
     ret = UpdateSecureResourceInPS(OIC_JSON_DOXM_NAME, cborPayload, size);
@@ -2112,7 +2292,7 @@ OCStackResult SetDoxmSelfOwnership(const OicUuid_t* newROwner)
         memcpy(gDoxm->owner.id, newROwner->id, sizeof(newROwner->id));
         memcpy(gDoxm->rownerID.id, newROwner->id, sizeof(newROwner->id));
 
-        ret = DoxmToCBORPayload(gDoxm, &cborPayload, &size, false);
+        ret = DoxmToCBORPayload(gDoxm, &cborPayload, &size);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
         ret = UpdateSecureResourceInPS(OIC_JSON_DOXM_NAME, cborPayload, size);

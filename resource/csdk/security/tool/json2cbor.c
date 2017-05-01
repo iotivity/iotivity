@@ -161,7 +161,7 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
     {
         OicSecDoxm_t *doxm = JSONToDoxmBin(jsonStr);
         VERIFY_NOT_NULL(TAG, doxm, FATAL);
-        ret = DoxmToCBORPayload(doxm, &doxmCbor, &doxmCborSize, false);
+        ret = DoxmToCBORPayload(doxm, &doxmCbor, &doxmCborSize);
         if(OC_STACK_OK != ret)
         {
             OIC_LOG (ERROR, TAG, "Failed converting Doxm to Cbor Payload");

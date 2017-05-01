@@ -185,16 +185,25 @@ if "!RUN_ARG!"=="server" (
   echo   THREAD_COUNT=%THREAD_COUNT%
   echo   AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE%
   echo.scons VERBOSE=1 %BUILD_OPTIONS%
-  scons VERBOSE=1 %BUILD_OPTIONS%
+  call scons.bat VERBOSE=1 %BUILD_OPTIONS%
+  if ERRORLEVEL 1 (
+    echo SCons failed - exiting run.bat with code 3
+    exit /B 3
+    )
 ) else if "!RUN_ARG!"=="clean" (
   del /S *.ilk
-  scons VERBOSE=1 %BUILD_OPTIONS% -c
+  call scons.bat VERBOSE=1 %BUILD_OPTIONS% -c
+  if ERRORLEVEL 1 (
+    echo SCons failed - exiting run.bat with code 2
+    exit /B 2
+    )
 ) else if "!RUN_ARG!"=="cleangtest" (
   rd /s /q extlibs\gtest\googletest-release-1.7.0
   del extlibs\gtest\release-1.7.0.zip
 ) else (
     echo.%0 - Script requires a valid argument!
-    goto :EOF
+    echo Exiting run.bat with code 1
+    exit /B 1
 )
 
 cd %IOTIVITY_DIR%

@@ -30,6 +30,24 @@
 extern "C" {
 #endif
 
+// NOTE that this enum must match the gDoxmPropertyAccessModes
+// table in doxmresource.c
+typedef enum {
+    DOXM_OXMTYPE = 0, // TODO [IOT-2105]
+    DOXM_OXMS,
+    DOXM_OXMSEL,
+    DOXM_SCT,
+    DOXM_OWNED,
+#ifdef MULTIPLE_OWNER
+    DOXM_SUBOWNER,
+    DOXM_MOM,
+#endif // MULTIPLE_OWNER
+    DOXM_DEVICEUUID,
+    DOXM_DEVOWNERUUID,
+    DOXM_ROWNERUUID,
+    DOXM_PROPERTY_COUNT
+} DoxmProperty_t;
+
 /**
  * Initialize DOXM resource by loading data from persistent storage.
  *
@@ -67,20 +85,36 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
                                 OicSecDoxm_t **doxm);
 
 /**
- * This method converts DOXM data into CBOR format.
- * Caller needs to invoke 'free' when finished done using
- * return string.
+ * Converts DOXM into CBOR payload, including only the
+ * Properties marked "true" in the propertiesToInclude array.
  *
- * @param doxm Pointer to @ref OicSecDoxm_t.
- * @note Caller needs to invoke OCFree after done using the return pointer.
- * @param cborPayload is the payload of the cbor.
- * @param cborSize is the size of the cbor payload. Passed parameter should not be NULL.
- * @param rwOnly indicates whether convertingpayload has all properties or read-write properties only.
+ * @param doxm pointer to the initialized doxm structure.
+ * @param payload pointer to doxm cbor payload.
+ * @param size of the cbor payload converted. It is 0 in case of error,
+ *     else a positive value if succcessful.
+ * @param propertiesToInclude Array of bools, size "DOXM_PROPERTY_COUNT",
+ *     where "true" indicates the corresponding property should be
+ *     included in the CBOR representation that is created.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult DoxmToCBORPayload(const OicSecDoxm_t * doxm, uint8_t **cborPayload,
-                                size_t *cborSize, bool rwOnly);
+ OCStackResult DoxmToCBORPayloadPartial(const OicSecDoxm_t *doxm,
+ 	uint8_t **payload, size_t *size, const bool *propertiesToInclude);
+
+
+/**
+ * Converts DOXM into cbor payload, including all Properties for a
+ * full representation.
+ *
+ * @param doxm pointer to the initialized doxm structure.
+ * @param payload pointer to doxm cbor payload.
+ * @param size of the cbor payload converted. It is 0 in case of error,
+ *     else a positive value if succcessful.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm,
+	uint8_t **payload, size_t *size);
 
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 /**

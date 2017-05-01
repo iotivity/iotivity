@@ -1081,20 +1081,24 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
         return res;
     }
 
-    if (caglobals.server)
+    if (caglobals.tcp.ipv6tcpenabled)
     {
-        NEWSOCKET(AF_INET, ipv4);
-        NEWSOCKET(AF_INET, ipv4s);
         NEWSOCKET(AF_INET6, ipv6);
         NEWSOCKET(AF_INET6, ipv6s);
-        OIC_LOG_V(DEBUG, TAG, "IPv4 socket fd=%d, port=%d",
-                  caglobals.tcp.ipv4.fd, caglobals.tcp.ipv4.port);
-        OIC_LOG_V(DEBUG, TAG, "IPv4 secure socket fd=%d, port=%d",
-                  caglobals.tcp.ipv4s.fd, caglobals.tcp.ipv4s.port);
         OIC_LOG_V(DEBUG, TAG, "IPv6 socket fd=%d, port=%d",
                   caglobals.tcp.ipv6.fd, caglobals.tcp.ipv6.port);
         OIC_LOG_V(DEBUG, TAG, "IPv6 secure socket fd=%d, port=%d",
                   caglobals.tcp.ipv6s.fd, caglobals.tcp.ipv6s.port);
+    }
+
+    if (caglobals.tcp.ipv4tcpenabled)
+    {
+        NEWSOCKET(AF_INET, ipv4);
+        NEWSOCKET(AF_INET, ipv4s);
+        OIC_LOG_V(DEBUG, TAG, "IPv4 socket fd=%d, port=%d",
+                  caglobals.tcp.ipv4.fd, caglobals.tcp.ipv4.port);
+        OIC_LOG_V(DEBUG, TAG, "IPv4 secure socket fd=%d, port=%d",
+                  caglobals.tcp.ipv4s.fd, caglobals.tcp.ipv4s.port);
     }
 
     // create mechanism for fast shutdown

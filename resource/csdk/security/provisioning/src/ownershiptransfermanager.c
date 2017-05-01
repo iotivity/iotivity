@@ -2028,8 +2028,13 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
     otmCtx->selectedDeviceInfo->doxm->owned = true;
 
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    OCStackResult res = DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm,
-            &secPayload->securityData, &secPayload->payloadSize, true);
+
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[DOXM_OWNED] = true;
+    OCStackResult res = DoxmToCBORPayloadPartial(otmCtx->selectedDeviceInfo->doxm,
+            &secPayload->securityData, &secPayload->payloadSize,
+            propertiesToInclude);
     if (OC_STACK_OK != res && NULL == secPayload->securityData)
     {
         OCPayloadDestroy((OCPayload *)secPayload);

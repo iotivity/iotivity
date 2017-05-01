@@ -444,6 +444,12 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
             continue;
         }
 
+        if ((family == AF_INET6 && !caglobals.ip.ipv6enabled) ||
+            (family == AF_INET && !caglobals.ip.ipv4enabled))
+        {
+            continue;
+        }
+
         CAInterface_t *ifitem = (CAInterface_t *)OICCalloc(1, sizeof(CAInterface_t));
         if (!ifitem)
         {
