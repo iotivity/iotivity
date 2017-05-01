@@ -44,6 +44,16 @@ typedef enum {
 OCStackResult InitPstatResource();
 
 /**
+ * Load just the default pstat into gPstat, so that other functions
+ * such as GetDos() can function.  Intended for unit testing.  Use
+ * @see InitPstatResource() for regular initialization from persistent
+ * storage.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise ::OC_STACK_ERROR.
+ */
+OCStackResult InitPstatResourceToDefault();
+
+/**
  * Perform cleanup for Pstat resources.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.

@@ -31,6 +31,7 @@
 #include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
 #include "aclresource.h"
+#include "pstatresource.h"
 #include "srmtestcommon.h"
 #include "srmutility.h"
 #include "logger.h"
@@ -291,6 +292,11 @@ TEST(ACLResourceTest, GetDefaultACLTests)
 // 'POST' ACL tests
 TEST(ACLResourceTest, ACLPostTest)
 {
+    // Intialize /pstat global, so that the GetDos() calls in aclresource.c
+    // can succeed, or all UPDATE requests will be rejected based on DOS.
+    OCStackResult res = InitPstatResourceToDefault();
+    ASSERT_TRUE(OC_STACK_OK == res);
+
     // Read an ACL from the file
     uint8_t *payload = NULL;
     size_t size = 0;
@@ -377,7 +383,7 @@ TEST(ACLResourceTest, DefaultAclAllowsRolesAccess)
     int found = 0;
 
     while((ace = GetACLResourceData(&subject, &savePtr)) != NULL)
-    {   
+    {
         ASSERT_TRUE(ace->resources != NULL);
         OicSecRsrc_t* rsrc = NULL;
         LL_FOREACH(ace->resources, rsrc)
@@ -397,7 +403,7 @@ TEST(ACLResourceTest, DefaultAclAllowsRolesAccess)
 }
 
 
-static OCStackResult  populateAcl(OicSecAcl_t *acl,  int numRsrc)
+static OCStackResult populateAcl(OicSecAcl_t *acl,  int numRsrc)
 {
     OCStackResult ret = OC_STACK_ERROR;
     OicSecAce_t* ace = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
@@ -425,6 +431,11 @@ exit:
 //'DELETE' ACL test
 TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
 {
+    // Intialize /pstat global, so that the GetDos() calls in aclresource.c
+    // can succeed, or all UPDATE requests will be rejected based on DOS.
+    OCStackResult res = InitPstatResourceToDefault();
+    ASSERT_TRUE(OC_STACK_OK == res);
+
     static OCPersistentStorage ps = OCPersistentStorage();
     SetPersistentHandler(&ps, true);
 
@@ -480,6 +491,11 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
 
 TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
 {
+    // Intialize /pstat global, so that the GetDos() calls in aclresource.c
+    // can succeed, or all UPDATE requests will be rejected based on DOS.
+    OCStackResult res = InitPstatResourceToDefault();
+    ASSERT_TRUE(OC_STACK_OK == res);
+
     static OCPersistentStorage ps = OCPersistentStorage();
     SetPersistentHandler(&ps, true);
 
