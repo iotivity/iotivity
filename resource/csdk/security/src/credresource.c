@@ -56,6 +56,7 @@
 #include "certhelpers.h"
 #include "cacommon.h"
 #include "secureresourcemanager.h"
+#include "deviceonboardingstate.h"
 
 #ifdef __unix__
 #include <sys/types.h>
@@ -2041,16 +2042,30 @@ exit:
 
 static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehRequest)
 {
-    OCEntityHandlerResult ret = OC_EH_ERROR;
+    OCEntityHandlerResult ret = OC_EH_INTERNAL_SERVER_ERROR;
     OIC_LOG(DEBUG, TAG, "HandleCREDPostRequest IN");
 
+    OicSecDostype_t dos;
     static uint16_t previousMsgId = 0;
     //Get binary representation of cbor
     OicSecCred_t *cred  = NULL;
     uint8_t *payload = (((OCSecurityPayload*)ehRequest->payload)->securityData);
     size_t size = (((OCSecurityPayload*)ehRequest->payload)->payloadSize);
 
-    OCStackResult res = CBORPayloadToCred(payload, size, &cred);
+    OCStackResult res = OC_STACK_ERROR;
+
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
+    if ((DOS_RESET == dos.state) ||
+        (DOS_RFPRO == dos.state) ||
+        (DOS_RFNOP == dos.state))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s /cred resource is read-only in RESET, RFPRO and RFNOP.", __func__);
+        ret = OC_EH_NOT_ACCEPTABLE;
+        goto exit;
+    }
+
+    res = CBORPayloadToCred(payload, size, &cred);
+
     if (res == OC_STACK_OK)
     {
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
@@ -2284,6 +2299,7 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
 #endif//__WITH_DTLS__
     }
 
+exit:
     if (OC_EH_CHANGED != ret && cred != NULL)
     {
         if(OC_STACK_OK != RemoveCredential(&cred->subject))
