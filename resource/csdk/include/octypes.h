@@ -77,12 +77,6 @@ extern "C" {
 /** KeepAlive URI.*/
 #define OC_RSRVD_KEEPALIVE_URI                "/oic/ping"
 
-/** Introspection URI.*/
-#define OC_RSRVD_INTROSPECTION_URI            "/oic/introspection"
-
-/** Introspection payload URI.*/
-#define OC_RSRVD_INTROSPECTION_PAYLOAD_URI    "/oic/introspection/payload"
-
 /** Presence */
 
 /** Presence URI through which the OIC devices advertise their presence.*/
@@ -367,11 +361,8 @@ extern "C" {
 /** Version property value.*/
 #define OC_RSRVD_INTROSPECTION_VERSION_VALUE 1
 
-/** Introspection payload data property name.*/
-#define OC_RSRVD_INTROSPECTION_DATA_NAME  "data"
-
 /** Introspection persistent store name.*/
-#define OC_INTROSPECTION_FILE_NAME      "introspection.json"
+#define OC_INTROSPECTION_FILE_NAME      "introspection.dat"
 
 /**
  *  These provide backward compatibility - their use is deprecated.
@@ -1419,7 +1410,9 @@ typedef enum
     /** The payload is an OCPresencePayload */
     PAYLOAD_TYPE_PRESENCE,
     /** The payload is an OCDiagnosticPayload */
-    PAYLOAD_TYPE_DIAGNOSTIC
+    PAYLOAD_TYPE_DIAGNOSTIC,
+    /** The payload is an OCIntrospectionPayload */
+    PAYLOAD_TYPE_INTROSPECTION
 } OCPayloadType;
 
 /**
@@ -1584,6 +1577,12 @@ typedef struct
     OCPayload base;
     char* message;
 } OCDiagnosticPayload;
+
+typedef struct
+{
+    OCPayload base;
+    OCByteString cborPayload;
+} OCIntrospectionPayload;
 
 /**
  * Incoming requests handled by the server. Requests are passed in as a parameter to the

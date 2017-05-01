@@ -61,7 +61,6 @@ static int Introspection = 0;
 static const char *DEVICE_DISCOVERY_QUERY = "%s/oic/d";
 static const char *PLATFORM_DISCOVERY_QUERY = "%s/oic/p";
 static const char *RESOURCE_DISCOVERY_QUERY = "%s/oic/res";
-static const char *INTROSPECTION_DISCOVERY_QUERY = "%s" OC_RSRVD_INTROSPECTION_URI;
 
 //The following variable determines the interface protocol (IPv4, IPv6, etc)
 //to be used for sending unicast messages. Default set to IP dual stack.
@@ -69,7 +68,9 @@ static OCConnectivityType ConnType = CT_ADAPTER_IP;
 static OCDevAddr serverAddr;
 static char discoveryAddr[100];
 static std::string coapServerResource = "/a/light";
-static std::string coapIntrospectionResource = OC_RSRVD_INTROSPECTION_URI;
+static std::string introspectionResType = "oic.wk.introspection";
+
+int InitIntrospectionPayload(OCClientResponse * clientResponse);
 
 #ifdef WITH_PRESENCE
 // The handle for observe registration
@@ -290,6 +291,16 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle /*handle*/,
             }
         }
     }
+
+    switch (TestCase)
+    {
+    case TEST_INTROSPECTION:
+        InitIntrospectionPayload(clientResponse);
+        break;
+    default:
+        break;
+    }
+
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -609,11 +620,77 @@ int InitGetRequestToUnavailableResource(OCQualityOfService qos)
             getReqCB, NULL, 0));
 }
 
+int InitIntrospectionPayload(OCClientResponse * clientResponse)
+{
+    std::ostringstream query;
+    std::string introspectionPayloadUrl;
+    OCRepPayload *introspectionInfo = (OCRepPayload*)clientResponse->payload;
+    OCRepPayloadValue *value = introspectionInfo->values;
+
+    while (value)
+    {
+        if (strcmp(value->name, "urlInfo") == 0)
+        {
+            break;
+        }
+        value = value->next;
+    }
+
+    if (value && (value->arr.dimensions[0] > 0))
+    {
+        OCRepPayloadValue *prop = value->arr.objArray[0]->values;
+        while (prop)
+        {
+            if (strcmp(prop->name, "url") == 0)
+            {
+                introspectionPayloadUrl = prop->str;
+                break;
+            }
+            prop = prop->next;
+        }
+    }
+
+    if (introspectionPayloadUrl.length() <= 0)
+    {
+        OIC_LOG(ERROR, TAG, "\nFailed to get introspection URL from payload");
+        return OC_STACK_ERROR;
+    }
+    else
+    {
+        query << introspectionPayloadUrl;
+        OIC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
+        return (InvokeOCDoResource(query, &serverAddr, OC_REST_GET, OC_LOW_QOS,
+            getReqCB, NULL, 0));
+    }
+}
+
 int InitIntrospection(OCDiscoveryPayload* dis)
 {
-    OC_UNUSED(dis);
+    OCResourcePayload* resource = (OCResourcePayload*)dis->resources;
+    bool found = false;
+    std::string introspectionUri;
+    while (resource && !found)
+    {
+        OCStringLL* resTypes = resource->types;
+        while (resTypes && !found)
+        {
+            if (strcmp(resTypes->value, introspectionResType.c_str()) == 0)
+            {
+                introspectionUri = resource->uri;
+                found = true;
+            }
+            resTypes = resTypes->next;
+        }
+        resource = resource->next;
+    }
+
+    if (introspectionUri.length() == 0)
+    {
+        OIC_LOG(ERROR, TAG, "Could not find URI for introspection");
+    }
+
     std::ostringstream query;
-    query << coapIntrospectionResource;
+    query << introspectionUri;
     OIC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
     return (InvokeOCDoResource(query, &serverAddr, OC_REST_GET, OC_LOW_QOS,
             getReqCB, NULL, 0));
@@ -814,31 +891,6 @@ int InitDeviceDiscovery(OCQualityOfService qos)
     char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
     snprintf(szQueryUri, sizeof (szQueryUri) - 1, DEVICE_DISCOVERY_QUERY, discoveryAddr);
-
-    cbData.cb = DeviceDiscoveryReqCB;
-    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
-    cbData.cd = NULL;
-
-    ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
-                      (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
-                      &cbData, NULL, 0);
-    if (ret != OC_STACK_OK)
-    {
-        OIC_LOG(ERROR, TAG, "OCStack device error");
-    }
-
-    return ret;
-}
-
-int InitIntrospectionDiscovery(OCQualityOfService qos)
-{
-    OIC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
-
-    OCStackResult ret;
-    OCCallbackData cbData;
-    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
-
-    snprintf(szQueryUri, sizeof(szQueryUri) - 1, INTROSPECTION_DISCOVERY_QUERY, discoveryAddr);
 
     cbData.cb = DeviceDiscoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;

@@ -58,6 +58,8 @@ static int64_t OCConvertDiagnosticPayload(OCDiagnosticPayload *payload, uint8_t 
         size_t *size);
 static int64_t OCConvertSecurityPayload(OCSecurityPayload *payload, uint8_t *outPayload,
         size_t *size);
+static int64_t OCConvertIntrospectionPayload(OCIntrospectionPayload *payload, uint8_t *outPayload,
+        size_t *size);
 static int64_t OCConvertSingleRepPayloadValue(CborEncoder *parent, const OCRepPayloadValue *value);
 static int64_t OCConvertSingleRepPayload(CborEncoder *parent, const OCRepPayload *payload);
 static int64_t OCConvertArray(CborEncoder *parent, const OCRepPayloadValueArray *valArray);
@@ -95,6 +97,14 @@ OCStackResult OCConvertPayload(OCPayload* payload, OCPayloadFormat format,
             curSize = securityPayloadSize;
         }
     }
+    if (PAYLOAD_TYPE_INTROSPECTION == payload->type)
+    {
+        size_t introspectionPayloadSize = ((OCIntrospectionPayload *)payload)->cborPayload.len;
+        if (introspectionPayloadSize > 0)
+        {
+            curSize = introspectionPayloadSize;
+        }
+    }
 
     ret = OC_STACK_NO_MEMORY;
 
@@ -115,7 +125,8 @@ OCStackResult OCConvertPayload(OCPayload* payload, OCPayloadFormat format,
     if (err == CborNoError)
     {
         if ((curSize < INIT_SIZE) &&
-            (PAYLOAD_TYPE_SECURITY != payload->type))
+            (PAYLOAD_TYPE_SECURITY != payload->type) &&
+            (PAYLOAD_TYPE_INTROSPECTION != payload->type))
         {
             uint8_t *out2 = (uint8_t *)OICRealloc(out, curSize);
             VERIFY_PARAM_NON_NULL(TAG, out2, "Failed to increase payload size");
@@ -153,8 +164,11 @@ static int64_t OCConvertPayloadHelper(OCPayload* payload, OCPayloadFormat format
             return OCConvertDiagnosticPayload((OCDiagnosticPayload*)payload, outPayload, size);
         case PAYLOAD_TYPE_SECURITY:
             return OCConvertSecurityPayload((OCSecurityPayload*)payload, outPayload, size);
+        case PAYLOAD_TYPE_INTROSPECTION:
+            return OCConvertIntrospectionPayload((OCIntrospectionPayload*)payload, 
+                                                 outPayload, size);
         default:
-            OIC_LOG_V(INFO,TAG, "ConvertPayload default %d", payload->type);
+            OIC_LOG_V(INFO, TAG, "ConvertPayload default %d", payload->type);
             return CborErrorUnknownType;
     }
 }
@@ -183,6 +197,15 @@ static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* out
 {
     memcpy(outPayload, payload->securityData, payload->payloadSize);
     *size = payload->payloadSize;
+
+    return CborNoError;
+}
+
+static int64_t OCConvertIntrospectionPayload(OCIntrospectionPayload *payload, 
+        uint8_t *outPayload, size_t *size)
+{
+    memcpy(outPayload, payload->cborPayload.bytes, payload->cborPayload.len);
+    *size = payload->cborPayload.len;
 
     return CborNoError;
 }

@@ -234,6 +234,10 @@ OCDiscoveryPayload* OCDiscoveryPayloadCreate();
 OCSecurityPayload* OCSecurityPayloadCreate(const uint8_t* securityData, size_t size);
 void OCSecurityPayloadDestroy(OCSecurityPayload* payload);
 
+OCIntrospectionPayload* OCIntrospectionPayloadCreateFromCbor(const uint8_t* cborData,
+                                                             size_t size);
+void OCIntrospectionPayloadDestroy(OCIntrospectionPayload* payload);
+
 #ifndef TCP_ADAPTER
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
                                    uint16_t securePort);

@@ -81,8 +81,8 @@ sample_build_dir = samples_env.get(
     'BUILD_DIR') + '/resource/csdk/stack/samples/linux/SimpleClientServer/'
 
 
-introspectionJson = samples_env.Install(sample_build_dir,
-                                        sample_src_dir + 'introspection.json')
+introspectionDat = samples_env.Install(sample_build_dir,
+                                       sample_src_dir + 'introspection.dat')
 
 deviceProperties = samples_env.Install(sample_build_dir,
                                        sample_src_dir + 'device_properties.dat')

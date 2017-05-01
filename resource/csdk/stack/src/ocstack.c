@@ -1744,14 +1744,6 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     {
                         type = PAYLOAD_TYPE_REPRESENTATION;
                     }
-                    else if (strcmp(cbNode->requestUri, OC_RSRVD_INTROSPECTION_URI) == 0)
-                    {
-                        type = PAYLOAD_TYPE_REPRESENTATION;
-                    }
-                    else if (strcmp(cbNode->requestUri, OC_RSRVD_INTROSPECTION_PAYLOAD_URI) == 0)
-                    {
-                        type = PAYLOAD_TYPE_REPRESENTATION;
-                    }
 #ifdef ROUTING_GATEWAY
                     else if (strcmp(cbNode->requestUri, OC_RSRVD_GATEWAY_URI) == 0)
                     {
@@ -5072,7 +5064,7 @@ OCStackResult initResources()
         result = OCCreateResource(&introspectionResource,
                                   OC_RSRVD_RESOURCE_TYPE_INTROSPECTION,
                                   OC_RSRVD_INTERFACE_DEFAULT,
-                                  OC_RSRVD_INTROSPECTION_URI,
+                                  OC_RSRVD_INTROSPECTION_URI_PATH,
                                   NULL,
                                   NULL,
                                   OC_DISCOVERABLE);
@@ -5088,10 +5080,10 @@ OCStackResult initResources()
         result = OCCreateResource(&introspectionPayloadResource,
                                   OC_RSRVD_RESOURCE_TYPE_INTROSPECTION_PAYLOAD,
                                   OC_RSRVD_INTERFACE_DEFAULT,
-                                  OC_RSRVD_INTROSPECTION_PAYLOAD_URI,
+                                  OC_RSRVD_INTROSPECTION_PAYLOAD_URI_PATH,
                                   NULL,
                                   NULL,
-                                  OC_OBSERVABLE);
+                                  0);
         if (result == OC_STACK_OK)
         {
             result = BindResourceInterfaceToResource((OCResource *)introspectionPayloadResource,
