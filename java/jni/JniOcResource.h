@@ -85,6 +85,7 @@ public:
     void setHeaderOptions(const HeaderOptions &headerOptions);
     void unsetHeaderOptions();
     std::string host();
+    std::vector< std::string > getAllHosts() const;
     std::string uri();
     OCConnectivityType connectivityType() const;
     bool isObservable();
@@ -314,6 +315,14 @@ extern "C" {
     * Signature: ()Ljava/lang/String;
     */
     JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcResource_getHost
+        (JNIEnv *, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcResource
+    * Method:    getAllHosts
+    * Signature: ()Ljava/util/List;
+    */
+    JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcResource_getAllHosts
         (JNIEnv *, jobject);
 
     /*
