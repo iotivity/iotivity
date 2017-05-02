@@ -240,7 +240,6 @@ IPCAStatus OCFFramework::Start(const IPCAAppInfoInternal& appInfo, bool isUnitTe
     OCDeviceInfo deviceInfo = { deviceName, &types, deviceSoftwareVersion, nullptr };
 
     // Platform Info
-    IPCAUuid platformUUID;
     char platformManufacturerName[256] = "";
     char manufacturerUrl[256] = "";
     char modelNumber[] = "";
@@ -1820,7 +1819,7 @@ void OCFFramework::RequestAccessWorkerThread(RequestAccessContext* requestContex
 
 void OCFFramework::OnMultipleOwnershipTransferCompleteCallback(
                                     PMResultList_t* result,
-                                    bool error,
+                                    int error,
                                     std::string deviceId,
                                     CallbackInfo::Ptr callbackInfo)
 {

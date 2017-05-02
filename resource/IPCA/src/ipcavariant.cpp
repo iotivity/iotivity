@@ -406,7 +406,7 @@ IPCAStatus IPCAPropertyBagGetValuePropertyBagArray(IPCAPropertyBagHandle propert
     // rollback if any failure.
     if (i != ocrepCount)
     {
-        for (int x = 0; x < i; x++)
+        for (size_t x = 0; x < i; x++)
         {
             IPCAPropertyBagDestroy(*value[x]);
         }

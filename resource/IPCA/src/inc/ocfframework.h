@@ -209,7 +209,7 @@ class OCFFramework
 
         // Callback from OCF for MOT completion
         void OnMultipleOwnershipTransferCompleteCallback(PMResultList_t* result,
-                    bool error,
+                    int error,
                     std::string deviceId,
                     CallbackInfo::Ptr callbackInfo);
 

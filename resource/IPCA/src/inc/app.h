@@ -178,7 +178,7 @@ class App
 
         // List of resource types to discover periodically.
         // Key is cbInfo->mapKey of each IPCADiscoverDevices() request.
-        std::map<uint32_t, DiscoveryDetails::Ptr> m_discoveryList;
+        std::map<size_t, DiscoveryDetails::Ptr> m_discoveryList;
 
         // Password callback registration
         InputPinCallbackHandle m_passwordInputCallbackHandle;

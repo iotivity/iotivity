@@ -424,7 +424,7 @@ void ElevatorServer::NotifyObservers()
 
     OCRepresentation rep;
     rep["x.org.iotivity.CurrentFloor"] = GetCurrentFloor();
-    rep["x.org.iotivity.Direction"] = GetElevatorDirection();
+    rep["x.org.iotivity.Direction"] = (int)GetElevatorDirection();
     rep["x.org.iotivity.TargetFloor"] = GetTargetFloor();
 
     // Prepare the response.

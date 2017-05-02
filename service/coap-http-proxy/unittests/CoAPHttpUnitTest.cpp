@@ -91,7 +91,6 @@ TEST_F(CoApHttpTest, CHPGetOCCode)
 
 TEST_F(CoApHttpTest, CHPGetOCOption)
 {
-    int numOptions = 0;
     OCHeaderOption *ret = NULL;
     const HttpResponse_t *httpResponse = NULL;
     HttpHeaderOption_t *httpOption = NULL;
