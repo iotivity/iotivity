@@ -49,6 +49,11 @@
 
 #define TAG "OIC_CA_IP_MONITOR"
 
+/*
+ * Enable or disable log for network changed event
+ */
+#define NETWORK_INTERFACE_CHANGED_LOGGING 1
+
 /**
  * Mutex for synchronizing access to cached interface and IP address information.
  */
@@ -142,8 +147,9 @@ static void CAIPDestroyNetworkMonitorList()
 
 static bool CACmpNetworkList(uint32_t ifiindex)
 {
+#if NETWORK_INTERFACE_CHANGED_LOGGING
     OIC_LOG_V(DEBUG, TAG, "IN %s: ifiindex = %ul", __func__, ifiindex);
-
+#endif
     if (!g_netInterfaceList)
     {
         OIC_LOG(ERROR, TAG, "g_netInterfaceList is NULL");
@@ -381,7 +387,9 @@ u_arraylist_t *CAFindInterfaceChange()
 
 u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
 {
+#if NETWORK_INTERFACE_CHANGED_LOGGING
     OIC_LOG_V(DEBUG, TAG, "IN %s: desiredIndex = %d", __func__, desiredIndex);
+#endif
     if (desiredIndex < 0)
     {
         OIC_LOG_V(ERROR, TAG, "invalid index : %d", desiredIndex);
@@ -404,7 +412,9 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
     }
 
     struct ifaddrs *ifa = NULL;
+#if NETWORK_INTERFACE_CHANGED_LOGGING
     OIC_LOG(DEBUG, TAG, "Iterating over interface addresses.");
+#endif
     for (ifa = ifp; ifa; ifa = ifa->ifa_next)
     {
         if (!ifa->ifa_addr)
@@ -425,10 +435,14 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
 
         size_t length = u_arraylist_length(iflist);
         int already = false;
+#if NETWORK_INTERFACE_CHANGED_LOGGING
         OIC_LOG_V(DEBUG, TAG, "Iterating over %" PRIuPTR " interfaces.", length);
+#endif
         for (size_t i = 0; i < length; i++)
         {
+#if NETWORK_INTERFACE_CHANGED_LOGGING
             OIC_LOG_V(DEBUG, TAG, "Checking interface %" PRIuPTR ".", i);
+#endif
             CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
 
             if (ifitem
@@ -498,13 +512,17 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
         }
     }
     freeifaddrs(ifp);
+#if NETWORK_INTERFACE_CHANGED_LOGGING
     OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
+#endif
     return iflist;
 
 exit:
     freeifaddrs(ifp);
     u_arraylist_destroy(iflist);
+#if NETWORK_INTERFACE_CHANGED_LOGGING
     OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
+#endif
     return NULL;
 }
 
