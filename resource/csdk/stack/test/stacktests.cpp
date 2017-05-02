@@ -616,6 +616,137 @@ TEST(StackStart, GetDeviceInfoAPI)
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
+TEST(StackStart, SetGetDevicePropertyValues)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    EXPECT_TRUE(handle != NULL);
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "oic.wk.tv"));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle, "oic.if.tv"));
+
+    void *value = NULL;
+    OCStringLL *x, *y;
+
+    OCStringLL *rts = NULL;
+    OCResourcePayloadAddStringLL(&rts, "oic.wk.d");
+    OCResourcePayloadAddStringLL(&rts, "oic.wk.tv");
+    EXPECT_NE(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_RESOURCE_TYPE, &value));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_RESOURCE_TYPE, &value));
+    for (x = rts, y = (OCStringLL *) value; x && y; x = x->next, y = y->next)
+    {
+        EXPECT_STREQ(x->value, y->value);
+    }
+    EXPECT_TRUE(!x && !y);
+    OCFreeOCStringLL((OCStringLL *) value);
+    value = NULL;
+    OCFreeOCStringLL(rts);
+
+    OCStringLL *itfs = NULL;
+    OCResourcePayloadAddStringLL(&itfs, "oic.if.baseline");
+    OCResourcePayloadAddStringLL(&itfs, "oic.if.r");
+    OCResourcePayloadAddStringLL(&itfs, "oic.if.tv");
+    EXPECT_NE(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_INTERFACE, &value));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_INTERFACE, &value));
+    for (x = itfs, y = (OCStringLL *) value; x && y; x = x->next, y = y->next)
+    {
+        EXPECT_STREQ(x->value, y->value);
+    }
+    EXPECT_TRUE(!x && !y);
+    OCFreeOCStringLL((OCStringLL *) value);
+    value = NULL;
+    OCFreeOCStringLL(itfs);
+
+    const char *n = "name";
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, n));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, &value));
+    EXPECT_STREQ(n, (char *) value);
+    OICFree(value);
+    value = NULL;
+
+    const char *id = "instance-identifier";
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_INSTANCE_ID, id));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_INSTANCE_ID, &value));
+    EXPECT_STREQ(id, (char *) value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_NE(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_ID, &value));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_ID, &value));
+    EXPECT_STREQ(OCGetServerInstanceIDString(), (char *) value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, OC_SPEC_VERSION));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, &value));
+    EXPECT_STREQ(OC_SPEC_VERSION, (char *) value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, OC_DATA_MODEL_VERSION));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, &value));
+    char *dmv = OCCreateString((OCStringLL *) value);
+    EXPECT_STREQ(OC_DATA_MODEL_VERSION, dmv);
+    OICFree(dmv);
+    OCFreeOCStringLL((OCStringLL *) value);
+    value = NULL;
+
+    OCStringLL *ld = NULL;
+    OCResourcePayloadAddStringLL(&ld, "en");
+    OCResourcePayloadAddStringLL(&ld, "Description");
+    OCResourcePayloadAddStringLL(&ld, "de");
+    OCResourcePayloadAddStringLL(&ld, "Beschriebung");
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_DESCRIPTION, ld));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_DESCRIPTION, &value));
+    for (x = ld, y = (OCStringLL *) value; x && y; x = x->next, y = y->next)
+    {
+        EXPECT_STREQ(x->value, y->value);
+    }
+    EXPECT_TRUE(!x && !y);
+    OCFreeOCStringLL((OCStringLL *) value);
+    value = NULL;
+    OCFreeOCStringLL(ld);
+
+    const char *sv = "software-version";
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SOFTWARE_VERSION, sv));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SOFTWARE_VERSION, &value));
+    EXPECT_STREQ(sv, (char *) value);
+    OICFree(value);
+    value = NULL;
+
+    OCStringLL *dmn = NULL;
+    OCResourcePayloadAddStringLL(&dmn, "en");
+    OCResourcePayloadAddStringLL(&dmn, "Manufacturer");
+    OCResourcePayloadAddStringLL(&dmn, "de");
+    OCResourcePayloadAddStringLL(&dmn, "Hersteller");
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_MFG_NAME, dmn));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_MFG_NAME, &value));
+    for (x = dmn, y = (OCStringLL *) value; x && y; x = x->next, y = y->next)
+    {
+        EXPECT_STREQ(x->value, y->value);
+    }
+    EXPECT_TRUE(!x && !y);
+    OCFreeOCStringLL((OCStringLL *) value);
+    value = NULL;
+    OCFreeOCStringLL(dmn);
+
+    const char *dmno = "device-model-number";
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_MODEL_NUM, dmno));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_MODEL_NUM, &value));
+    EXPECT_STREQ(dmno, (char *) value);
+    OICFree(value);
+    value = NULL;
+
+    const char *piid = "protocol-independent-identifier";
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, piid));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, &value));
+    EXPECT_STREQ(piid, (char *) value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
 TEST(StackDiscovery, DISABLED_DoResourceDeviceDiscovery)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);

@@ -841,6 +841,11 @@ OCStackResult OCDecodeAddressForRFC6874(char* outputAddress,
  * Set the value of /oic/d and /oic/p properties. This function is a generic function that sets for
  * all OCF defined properties.
  *
+ * For PAYLOAD_TYPE_DEVICE and OC_RSRVD_DATA_MODEL_VERSION, value must be a const char* CSV string.
+ * For PAYLOAD_TYPE_DEVICE and OC_RSRVD_DEVICE_DESCRIPTION, or OC_RSRVD_DEVICE_MFG_NAME, value must
+ * be an OCStringLL* with pairs of language tag and value elements.  For all other
+ * PAYLOAD_TYPE_DEVICE properties, value must be a const char* string.
+ *
  * @param type the payload type for device and platform as defined in @ref OCPayloadType.
  * @param propName the pre-defined property as per OCF spec.
  * @param value the value of the property to be set.
@@ -850,8 +855,15 @@ OCStackResult OCDecodeAddressForRFC6874(char* outputAddress,
 OCStackResult OCSetPropertyValue(OCPayloadType type, const char *propName, const void *value);
 
 /**
- * Get the value of /oic/d and /oic/p properties. This function is a generic function that get value
- * for all OCF defined properties.
+ * Get the value of /oic/d and /oic/p properties. This function is a generic function that gets the
+ * value for all OCF defined properties.
+ *
+ * For PAYLOAD_TYPE_DEVICE and OC_RSRVD_RESOURCE_TYPE, OC_RSRVD_INTERFACE,
+ * OC_RSRVD_DATA_MODEL_VERSION, OC_RSRVD_DEVICE_DESCRIPTION, or OC_RSRVD_DEVICE_MFG_NAME, the value
+ * will be an OCStringLL*. For all other PAYLOAD_TYPE_DEVICE properties, value will be a char*.
+ *
+ * When the returned value is non-NULL, the memory must be OCFreeOCStringLL()'d or OICFree()'d by
+ * the caller (depending on the underlying type returned).
  *
  * @param type the payload type for device and platform as defined in @ref OCPayloadType.
  * @param propName the pre-defined as per OCF spec.

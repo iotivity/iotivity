@@ -409,6 +409,33 @@ static OCStackResult BuildDevicePlatformPayload(const OCResource *resourcePtr, O
                     OICFree(dmv);
                 }
             }
+            else if (0 == strcmp(OC_RSRVD_DEVICE_DESCRIPTION, resAttrib->attrName) ||
+                    0 == strcmp(OC_RSRVD_DEVICE_MFG_NAME, resAttrib->attrName))
+            {
+                size_t dim[MAX_REP_ARRAY_DEPTH] = { 0 };
+                for (OCStringLL *ll = (OCStringLL *)resAttrib->attrValue; ll && ll->next;
+                     ll = ll->next->next)
+                {
+                    ++dim[0];
+                }
+                OCRepPayload **items = (OCRepPayload**)OICCalloc(dim[0], sizeof(OCRepPayload*));
+                if (items)
+                {
+                    OCRepPayload **item = items;
+                    for (OCStringLL *ll = (OCStringLL *)resAttrib->attrValue; ll && ll->next;
+                         ll = ll->next->next)
+                    {
+                        *item = OCRepPayloadCreate();
+                        if (*item)
+                        {
+                            OCRepPayloadSetPropString(*item, "language", ll->value);
+                            OCRepPayloadSetPropString(*item, "value", ll->next->value);
+                            ++item;
+                        }
+                    }
+                }
+                OCRepPayloadSetPropObjectArrayAsOwner(tempPayload, resAttrib->attrName, items, dim);
+            }
             else
             {
                 OCRepPayloadSetPropString(tempPayload, resAttrib->attrName, (char *)resAttrib->attrValue);
@@ -2339,12 +2366,40 @@ OCStackResult OCGetAttribute(const OCResource *resource, const char *attribute, 
     {
         return OC_STACK_INVALID_PARAM;
     }
+    // Special attributes - these values are not in rsrcAttributes
+    if (0 == strcmp(OC_RSRVD_DEVICE_ID, attribute))
+    {
+        *value = OICStrdup(OCGetServerInstanceIDString());
+        return OC_STACK_OK;
+    }
+    if (0 == strcmp(OC_RSRVD_RESOURCE_TYPE, attribute))
+    {
+        *value = NULL;
+        for (OCResourceType *resType = resource->rsrcType; resType; resType = resType->next)
+        {
+            OCResourcePayloadAddStringLL((OCStringLL**)&value, resType->resourcetypename);
+        }
+        return OC_STACK_OK;
+    }
+    if (0 == strcmp(OC_RSRVD_INTERFACE, attribute))
+    {
+        *value = NULL;
+        for (OCResourceInterface *resInterface = resource->rsrcInterface; resInterface;
+             resInterface = resInterface->next)
+        {
+            OCResourcePayloadAddStringLL((OCStringLL**)&value, resInterface->name);
+        }
+        return OC_STACK_OK;
+    }
+    // Generic attributes
     for (OCAttribute *temp = resource->rsrcAttributes; temp; temp = temp->next)
     {
         if (0 == strcmp(attribute, temp->attrName))
         {
             // A special case as this type return OCStringLL
-            if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, attribute))
+            if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, attribute) ||
+                    0 == strcmp(OC_RSRVD_DEVICE_DESCRIPTION, attribute) ||
+                    0 == strcmp(OC_RSRVD_DEVICE_MFG_NAME, attribute))
             {
                 *value = CloneOCStringLL((OCStringLL *)temp->attrValue);
                 return OC_STACK_OK;
@@ -2395,13 +2450,23 @@ static OCStackResult SetAttributeInternal(OCResource *resource,
 {
     OCAttribute *resAttrib = NULL;
 
+    // Read-only attributes - these values are set via other APIs
+    if (0 == strcmp(attribute, OC_RSRVD_RESOURCE_TYPE) ||
+            0 == strcmp(attribute, OC_RSRVD_INTERFACE) ||
+            0 == strcmp(attribute, OC_RSRVD_DEVICE_ID))
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     // See if the attribute already exists in the list.
     for (resAttrib = resource->rsrcAttributes; resAttrib; resAttrib = resAttrib->next)
     {
         if (0 == strcmp(attribute, resAttrib->attrName))
         {
             // Found, free the old value.
-            if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, resAttrib->attrName))
+            if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, resAttrib->attrName) ||
+                    0 == strcmp(OC_RSRVD_DEVICE_DESCRIPTION, resAttrib->attrName) ||
+                    0 == strcmp(OC_RSRVD_DEVICE_MFG_NAME, resAttrib->attrName))
             {
                 OCFreeOCStringLL((OCStringLL *)resAttrib->attrValue);
             }
@@ -2428,6 +2493,11 @@ static OCStackResult SetAttributeInternal(OCResource *resource,
     if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, attribute))
     {
         resAttrib->attrValue = OCCreateOCStringLL((char *)value);
+    }
+    else if (0 == strcmp(OC_RSRVD_DEVICE_DESCRIPTION, attribute) ||
+            0 == strcmp(OC_RSRVD_DEVICE_MFG_NAME, attribute))
+    {
+        resAttrib->attrValue = CloneOCStringLL((OCStringLL *)value);
     }
     else
     {
