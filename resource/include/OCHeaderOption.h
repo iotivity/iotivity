@@ -42,7 +42,7 @@ namespace OC
         *            NOTE: HeaderOptionID  is an unsigned integer value which MUST be within
         *            range of 2048 to 3000 inclusive of lower and upper bound
         *            except for If-Match with empty(num : 1), If-None-Match(num : 5),
-        *            Location-Path(num : 8), Location-Query(num : 20) option.
+        *            Location-Path(num : 8), Location-Query(num : 20), Accept(num : 17) option.
         *            HeaderOptions instance creation fails if above condition is not satisfied.
         */
         const uint16_t MIN_HEADER_OPTIONID = 2048;
@@ -51,6 +51,7 @@ namespace OC
         const uint16_t IF_NONE_MATCH_OPTION_ID = 5;
         const uint16_t LOCATION_PATH_OPTION_ID = 8;
         const uint16_t LOCATION_QUERY_OPTION_ID = 20;
+        const uint16_t ACCEPT_OPTION_ID = 17;
 
         class OCHeaderOption
         {
@@ -70,7 +71,8 @@ namespace OC
                         && optionID != IF_MATCH_OPTION_ID
                         && optionID != IF_NONE_MATCH_OPTION_ID
                         && optionID != LOCATION_PATH_OPTION_ID
-                        && optionID != LOCATION_QUERY_OPTION_ID)
+                        && optionID != LOCATION_QUERY_OPTION_ID
+                        && optionID != ACCEPT_OPTION_ID)
                 {
                     throw OCException(OC::Exception::OPTION_ID_RANGE_INVALID);
                 }

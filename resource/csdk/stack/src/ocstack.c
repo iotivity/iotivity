@@ -372,7 +372,7 @@ static OCStackResult HandlePresenceResponse(const CAEndpoint_t *endPoint,
  * @param responseInfo CA response info.
  */
 static void HandleCAResponses(const CAEndpoint_t* endPoint,
-    const CAResponseInfo_t* responseInfo);
+        const CAResponseInfo_t* responseInfo);
 
 /**
  * This function will be called back by CA layer when a request is received.
@@ -381,7 +381,7 @@ static void HandleCAResponses(const CAEndpoint_t* endPoint,
  * @param requestInfo CA request info.
  */
 static void HandleCARequests(const CAEndpoint_t* endPoint,
-    const CARequestInfo_t* requestInfo);
+        const CARequestInfo_t* requestInfo);
 
 /**
  * Extract query from a URI.
@@ -415,6 +415,19 @@ static OCResourceType *findResourceType(OCResourceType * resourceTypeList,
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 static OCStackResult ResetPresenceTTL(ClientCB *cbNode, uint32_t maxAgeSeconds);
+
+/**
+ * Set Header Option.
+ * @param caHdrOpt            Pointer to existing options
+ * @param numOptions          Number of existing options.
+ * @param optionID            COAP option ID.
+ * @param optionData          Option data value.
+ * @param optionDataLength    Size of Option data value.
+
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+static OCStackResult SetHeaderOption(CAHeaderOption_t *caHdrOpt, size_t numOptions,
+        uint16_t optionID, void* optionData, size_t optionDataLength);
 
 /**
  * Ensure the accept header option is set appropriatly before sending the requests and routing
@@ -618,6 +631,8 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
     }
 #endif
 
+    // TODO: We might need to remove acceptFormat and acceptVersion fields in requestinfo->info
+    // at a later stage to avoid duplication.
     uint16_t acceptVersion = OC_SPEC_VERSION_VALUE;
     CAPayloadFormat_t acceptFormat = CA_FORMAT_APPLICATION_VND_OCF_CBOR;
     // Check settings of version option and content format.
@@ -1527,6 +1542,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
         {
             if (CA_RETRANSMIT_TIMEOUT == responseInfo->result)
             {
+                OIC_LOG(INFO, TAG, "Receiving A Timeout for this token");
                 OIC_LOG(INFO, TAG, "Calling into application address space");
             }
             else
@@ -3382,19 +3398,89 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
     }
     else
     {
-        requestInfo.info.numOptions = numOptions;
-        if(requestInfo.info.numOptions)
+        // Check if accept format and accept version have been set.
+        uint16_t acceptVersion = OC_SPEC_VERSION_VALUE;
+        uint16_t acceptFormat = COAP_MEDIATYPE_APPLICATION_VND_OCF_CBOR;
+        bool IsAcceptVersionSet = false;
+        bool IsAcceptFormatSet = false;
+        // Check settings of version option and content format.
+        if (numOptions > 0 && options)
         {
-            requestInfo.info.options =
-                (CAHeaderOption_t*) OICCalloc(numOptions, sizeof(CAHeaderOption_t));
-            if (NULL == requestInfo.info.options)
+            for (uint8_t i = 0; i < numOptions; i++)
             {
-                OIC_LOG(ERROR, TAG, "Calloc failed");
-                result = OC_STACK_NO_MEMORY;
-                goto exit;
+                if (COAP_OPTION_ACCEPT_VERSION == options[i].optionID)
+                {
+                    acceptVersion = *(uint16_t*) options[i].optionData;
+                    IsAcceptVersionSet = true;
+                }
+                else if (COAP_OPTION_ACCEPT == options[i].optionID)
+                {
+                    if (1 == options[i].optionLength)
+                    {
+                        acceptFormat = CAConvertFormat(*(uint8_t*)options[i].optionData);
+                        IsAcceptFormatSet = true;
+                    }
+                    else if (2 == options[i].optionLength)
+                    {
+                        acceptFormat = CAConvertFormat(*(uint16_t*)options[i].optionData);
+                        IsAcceptFormatSet = true;
+                    }
+                    else
+                    {
+                        acceptFormat = CA_FORMAT_UNSUPPORTED;
+                        IsAcceptFormatSet = true;
+                        OIC_LOG_V(DEBUG, TAG, "option has an unsupported format");
+                    }
+                }
             }
-            memcpy(requestInfo.info.options, (CAHeaderOption_t*)options,
-                   numOptions * sizeof(CAHeaderOption_t));
+        }
+
+        if (!IsAcceptVersionSet && !IsAcceptFormatSet)
+        {
+            requestInfo.info.numOptions = numOptions + 2;
+        }
+        else if ((IsAcceptFormatSet &&
+                CA_FORMAT_APPLICATION_VND_OCF_CBOR == acceptFormat &&
+                !IsAcceptVersionSet) || (IsAcceptVersionSet && !IsAcceptFormatSet))
+        {
+            requestInfo.info.numOptions = numOptions + 1;
+        }
+        else
+        {
+            requestInfo.info.numOptions = numOptions;
+        }
+
+        requestInfo.info.options = (CAHeaderOption_t*) OICCalloc(requestInfo.info.numOptions,
+                sizeof(CAHeaderOption_t));
+        if (NULL == requestInfo.info.options)
+        {
+            OIC_LOG(ERROR, TAG, "Calloc failed");
+            result = OC_STACK_NO_MEMORY;
+            goto exit;
+        }
+        memcpy(requestInfo.info.options, (CAHeaderOption_t*) options,
+               numOptions * sizeof(CAHeaderOption_t));
+
+        if (!IsAcceptVersionSet && !IsAcceptFormatSet)
+        {
+            // Append accept format and accept version to the options.
+            SetHeaderOption(requestInfo.info.options, numOptions, CA_OPTION_ACCEPT, &acceptFormat,
+                    sizeof(uint16_t));
+            SetHeaderOption(requestInfo.info.options, numOptions + 1, CA_OPTION_ACCEPT_VERSION,
+                    &acceptVersion, sizeof(uint16_t));
+        }
+        else if (IsAcceptFormatSet && CA_FORMAT_APPLICATION_VND_OCF_CBOR == acceptFormat
+                && !IsAcceptVersionSet)
+        {
+            // Append accept version to the options.
+            SetHeaderOption(requestInfo.info.options, numOptions, CA_OPTION_ACCEPT_VERSION,
+                    &acceptVersion, sizeof(uint16_t));
+        }
+        else if (IsAcceptVersionSet && OC_SPEC_VERSION_VALUE <= acceptVersion && !IsAcceptFormatSet)
+        {
+            // Append accept format to the options.
+            SetHeaderOption(requestInfo.info.options, numOptions, CA_OPTION_ACCEPT, &acceptFormat,
+                    sizeof(uint16_t));
         }
     }
 
@@ -5937,6 +6023,31 @@ OCResourceHandle OCGetResourceHandleAtUri(const char *uri)
     return NULL;
 }
 
+static OCStackResult SetHeaderOption(CAHeaderOption_t *caHdrOpt, size_t numOptions,
+        uint16_t optionID, void* optionData, size_t optionDataLength)
+{
+    if (!caHdrOpt)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if (!optionData)
+    {
+        OIC_LOG (INFO, TAG, "optionData are NULL");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    caHdrOpt[numOptions].protocolID = CA_COAP_ID;
+    caHdrOpt[numOptions].optionID = optionID;
+    caHdrOpt[numOptions].optionLength =
+            (optionDataLength < MAX_HEADER_OPTION_DATA_LENGTH) ?
+                    (uint16_t) optionDataLength : MAX_HEADER_OPTION_DATA_LENGTH;
+    memcpy(caHdrOpt[numOptions].optionData, (const void*) optionData,
+            caHdrOpt[numOptions].optionLength);
+
+    return OC_STACK_OK;
+}
+
 OCStackResult OCSetHeaderOption(OCHeaderOption* ocHdrOpt, size_t* numOptions, uint16_t optionID,
                                 void* optionData, size_t optionDataLength)
 {
@@ -6004,8 +6115,8 @@ OCStackResult OCGetHeaderOption(OCHeaderOption* ocHdrOpt, size_t numOptions,
         {
             if (optionDataLength >= ocHdrOpt->optionLength)
             {
-                memcpy(optionData, ocHdrOpt->optionData, ocHdrOpt->optionLength);
-                *receivedDataLength = ocHdrOpt->optionLength;
+                memcpy(optionData, ocHdrOpt[i].optionData, ocHdrOpt[i].optionLength);
+                *receivedDataLength = ocHdrOpt[i].optionLength;
                 return OC_STACK_OK;
             }
             else
