@@ -169,8 +169,8 @@ namespace
         OCRepPayload * payload = OCRepPayloadCreate();
         EXPECT_NE((void *)NULL, payload);
 
-        std::string msgUri = "/notifiation/message";
-        std::string syncUri = "/notifiation/sync";
+        std::string msgUri = "/notification/message";
+        std::string syncUri = "/notification/sync";
 
         bool getResult = OCRepPayloadSetPropBool(payload, NS_ATTRIBUTE_POLICY, false);
         getResult &= OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, testProviderID.c_str());
