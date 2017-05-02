@@ -2403,7 +2403,7 @@ static int pHash (const unsigned char *key, size_t keyLen,
 
     CHECK_MBEDTLS_RET(mbedtls_md_hmac_starts, &hmacP, key, keyLen);
 
-    while (len + dLen < bufLen)
+    while (len + dLen <= bufLen)
     {
         CHECK_MBEDTLS_RET(mbedtls_md_hmac_reset, &hmacP);
         CHECK_MBEDTLS_RET(mbedtls_md_hmac_starts, &hmacP, key, keyLen);
