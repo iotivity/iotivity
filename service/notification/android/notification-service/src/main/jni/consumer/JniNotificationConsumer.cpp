@@ -624,6 +624,7 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage message)
     {
         NS_LOGE ("Failed to create OcRepresentation");
         delete ocRepresentation;
+        return NULL;
     }
     else
     {
