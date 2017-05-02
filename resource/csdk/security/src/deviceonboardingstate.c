@@ -433,6 +433,8 @@ static bool EnterSRESET()
     // Set pstat.dos to SRESET
     VERIFY_SUCCESS(TAG, OC_STACK_OK == SetPstatDosS(DOS_SRESET), ERROR);
 
+    ret = true;
+
 exit:
     OIC_LOG_V(DEBUG, TAG, "%s: returning %s.", __func__, ret?"true":"false");
     return ret;
@@ -575,21 +577,21 @@ OCStackResult SetDosState(const OicSecDeviceOnboardingState_t desiredState)
             switch (stateChangeResult)
             {
                 case OC_STACK_OK:
-                OIC_LOG_V(INFO, TAG, "%s: DOS state changed SUCCESSFULLY from %d to %d.", \
+                OIC_LOG_V(INFO, TAG, "%s: DOS state changed SUCCESSFULLY from %d to %d.",
                     __func__, oldState, desiredState);
                 ret = OC_STACK_OK;
                 break;
 
                 case OC_STACK_FORBIDDEN_REQ:
-                OIC_LOG_V(WARNING, TAG, "%s: DOS state change change from %d to %d NOT ALLOWED.", \
+                OIC_LOG_V(WARNING, TAG, "%s: DOS state change change from %d to %d NOT ALLOWED.",
                     __func__, oldState, desiredState);
                 ret = OC_STACK_FORBIDDEN_REQ;
                 break;
 
                 case OC_STACK_INTERNAL_SERVER_ERROR:
                 default:
-                OIC_LOG_V(ERROR, TAG, "%s: DOS state change change from %d to %d FAILED. \
-                    Internal error - SVRs may be in bad state.", \
+                OIC_LOG_V(ERROR, TAG, "%s: DOS state change change from %d to %d FAILED."
+                    " Internal error - SVRs may be in bad state.",
                     __func__, oldState, desiredState);
                 ret = OC_STACK_INTERNAL_SERVER_ERROR;
                 break;
