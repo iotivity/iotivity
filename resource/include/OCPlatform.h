@@ -597,6 +597,7 @@ namespace OC
          *               It will be set upon successful return of this method.
          * @param host The IP address/addressable name of the server to subscribe to.
          *               This should be in the format coap://address:port
+         *               If empty, the multicast subscribe presence is performed.
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
          *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
          * @param presenceHandler callback function that will receive notifications/subscription
@@ -618,6 +619,7 @@ namespace OC
          *               It will be set upon successful return of this method.
          * @param host The IP address/addressable name of the server to subscribe to.
          *               This should be in the format coap://address:port
+         *               If empty, the multicast subscribe presence is performed.
          * @param resourceType a resource type specified as a filter for subscription callbacks.
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
          *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
