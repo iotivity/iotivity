@@ -65,6 +65,7 @@ static const uint8_t ACE_ROLE_MAP_SIZE = 1;
 static const uint16_t CBOR_SIZE = 2048*8;
 
 static OicSecAcl_t *gAcl = NULL;
+static OCResourceHandle gAclHandle = NULL;
 static OCResourceHandle gAcl2Handle = NULL;
 
 void FreeRsrc(OicSecRsrc_t *rsrc)
@@ -2316,6 +2317,21 @@ static OCStackResult CreateACLResource()
 {
     OCStackResult ret;
 
+    ret = OCCreateResource(&gAclHandle,
+                           OIC_RSRC_TYPE_SEC_ACL,
+                           OC_RSRVD_INTERFACE_DEFAULT,
+                           OIC_RSRC_ACL_URI,
+                           ACLEntityHandler,
+                           NULL,
+                           OC_SECURE |
+                           OC_DISCOVERABLE);
+
+    if (OC_STACK_OK != ret)
+    {
+        OIC_LOG(FATAL, TAG, "Unable to instantiate ACL resource");
+        DeInitACLResource();
+    }
+
     ret = OCCreateResource(&gAcl2Handle,
                            OIC_RSRC_TYPE_SEC_ACL2,
                            OC_RSRVD_INTERFACE_DEFAULT,
@@ -2614,7 +2630,9 @@ exit:
 
 OCStackResult DeInitACLResource()
 {
-    OCStackResult ret = OCDeleteResource(gAcl2Handle);
+    OCStackResult ret =  OCDeleteResource(gAclHandle);
+    gAclHandle = NULL;
+    OCStackResult ret2 = OCDeleteResource(gAcl2Handle);
     gAcl2Handle = NULL;
 
     if (gAcl)
@@ -2622,7 +2640,7 @@ OCStackResult DeInitACLResource()
         DeleteACLList(gAcl);
         gAcl = NULL;
     }
-    return ret;
+    return (OC_STACK_OK != ret) ? ret : ret2;
 }
 
 const OicSecAce_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAce_t **savePtr)
