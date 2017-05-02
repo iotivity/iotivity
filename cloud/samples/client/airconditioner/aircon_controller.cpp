@@ -188,7 +188,7 @@ void updateFirmware()
     firmwareUpdate.setValue<bool>("update", true);
 
     QueryParamsMap      query;
-    g_binaryswitchResource->post("x.samsung.firmware", DEFAULT_INTERFACE, firmwareUpdate, query,
+    g_binaryswitchResource->post("x.org.iotivity.firmware", DEFAULT_INTERFACE, firmwareUpdate, query,
                                  &onPost);
 }
 
@@ -219,13 +219,13 @@ void getCollectionResource(const HeaderOptions &,
             g_binaryswitchResource->observe(ObserveType::Observe, query, &onObserve);
         }
 
-        if (it->getResourceTypes().at(0).compare("x.samsung.firmware") == 0)
+        if (it->getResourceTypes().at(0).compare("x.org.iotivity.firmware") == 0)
         {
             cout << "Observing " << it->getUri() << endl;
             g_firmwareResource = OCPlatform::constructResourceObject(g_host,
                                  it->getUri(),
                                  static_cast<OCConnectivityType>(CT_ADAPTER_TCP | CT_IP_USE_V4), true,
-            { string("x.samsung.firmware") }, { string(DEFAULT_INTERFACE) });
+            { string("x.org.iotivity.firmware") }, { string(DEFAULT_INTERFACE) });
 
             QueryParamsMap      query;
             g_firmwareResource->observe(ObserveType::Observe, query, &onObserve);
@@ -245,9 +245,9 @@ void foundAirconditionerResource(shared_ptr<OC::OCResource> resource)
     {
         cout << "RT: " << *it << endl;
 
-        if (it->compare("x.com.samsung.da.device") == 0)
+        if (it->compare("x.org.iotivity.ac") == 0)
         {
-            cout << "Found Samsung Airconditioner" << endl;
+            cout << "Found Airconditioner" << endl;
 
             QueryParamsMap      query;
             query["if"] = string(LINK_INTERFACE);
