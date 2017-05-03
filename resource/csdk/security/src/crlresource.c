@@ -605,12 +605,12 @@ static OicSecCrl_t *GetCrlDefault()
     defaultCrl->CrlData.encoding = OIC_ENCODING_DER;
 
     bool result1 = copyByteArray((const uint8_t *)CRL_DEFAULT_CRL_DATA,
-                                 strlen(CRL_DEFAULT_CRL_DATA),
+                                 sizeof(CRL_DEFAULT_CRL_DATA),
                                  &defaultCrl->CrlData.data,
                                  &defaultCrl->CrlData.len);
 
     bool result2 = copyByteArray((const uint8_t *)CRL_DEFAULT_THIS_UPDATE,
-                                 strlen(CRL_DEFAULT_THIS_UPDATE),
+                                 sizeof(CRL_DEFAULT_THIS_UPDATE),
                                  &defaultCrl->ThisUpdate.data,
                                  &defaultCrl->ThisUpdate.len);
 
