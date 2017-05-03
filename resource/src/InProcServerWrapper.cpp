@@ -91,7 +91,7 @@ void formResourceRequest(OCEntityHandlerFlag flag,
                 std::string optionData;
                 HeaderOptions headerOptions;
 
-                for(int i = 0;
+                for(size_t i = 0;
                     i < entityHandlerRequest->numRcvdVendorSpecificHeaderOptions;
                     i++)
                 {

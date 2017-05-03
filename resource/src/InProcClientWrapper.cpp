@@ -715,7 +715,7 @@ namespace OC
             uint16_t optionID;
             std::string optionData;
 
-            for(int i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
+            for(size_t i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
             {
                 optionID = clientResponse->rcvdVendorSpecificHeaderOptions[i].optionID;
                 optionData = reinterpret_cast<const char*>
@@ -892,10 +892,11 @@ namespace OC
         OCConnectivityType connectivityType,
         GetCallback& callback, QualityOfService QoS)
     {
-        if (!callback)
+        if (!callback || (headerOptions.size() > MAX_HEADER_OPTIONS))
         {
             return OC_STACK_INVALID_PARAM;
         }
+
         OCStackResult result;
         ClientCallbackContext::GetContext* ctx =
             new ClientCallbackContext::GetContext(callback);
@@ -922,7 +923,7 @@ namespace OC
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
                                   assembleHeaderOptions(options, headerOptions),
-                                  headerOptions.size());
+                                  (uint8_t)headerOptions.size());
         }
         else
         {
@@ -1059,10 +1060,11 @@ namespace OC
         OCConnectivityType connectivityType,
         PostCallback& callback, QualityOfService QoS)
     {
-        if (!callback)
+        if (!callback || (headerOptions.size() > MAX_HEADER_OPTIONS))
         {
             return OC_STACK_INVALID_PARAM;
         }
+
         OCStackResult result;
         ClientCallbackContext::SetContext* ctx = new ClientCallbackContext::SetContext(callback);
         OCCallbackData cbdata;
@@ -1087,7 +1089,7 @@ namespace OC
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
                                   assembleHeaderOptions(options, headerOptions),
-                                  headerOptions.size());
+                                  (uint8_t)headerOptions.size());
         }
         else
         {
@@ -1105,10 +1107,11 @@ namespace OC
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         PutCallback& callback, QualityOfService QoS)
     {
-        if (!callback)
+        if (!callback || (headerOptions.size() > MAX_HEADER_OPTIONS))
         {
             return OC_STACK_INVALID_PARAM;
         }
+
         OCStackResult result;
         ClientCallbackContext::SetContext* ctx = new ClientCallbackContext::SetContext(callback);
         OCCallbackData cbdata;
@@ -1134,7 +1137,7 @@ namespace OC
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
                                   assembleHeaderOptions(options, headerOptions),
-                                  headerOptions.size());
+                                  (uint8_t)headerOptions.size());
         }
         else
         {
@@ -1169,10 +1172,11 @@ namespace OC
         DeleteCallback& callback,
         QualityOfService /*QoS*/)
     {
-        if (!callback)
+        if (!callback || (headerOptions.size() > MAX_HEADER_OPTIONS))
         {
             return OC_STACK_INVALID_PARAM;
         }
+
         OCStackResult result;
         ClientCallbackContext::DeleteContext* ctx =
             new ClientCallbackContext::DeleteContext(callback);
@@ -1197,7 +1201,7 @@ namespace OC
                                   static_cast<OCQualityOfService>(m_cfg.QoS),
                                   &cbdata,
                                   assembleHeaderOptions(options, headerOptions),
-                                  headerOptions.size());
+                                  (uint8_t)headerOptions.size());
         }
         else
         {
@@ -1247,10 +1251,11 @@ namespace OC
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         ObserveCallback& callback, QualityOfService QoS)
     {
-        if (!callback)
+        if (!callback || (headerOptions.size() > MAX_HEADER_OPTIONS))
         {
             return OC_STACK_INVALID_PARAM;
         }
+
         OCStackResult result;
 
         ClientCallbackContext::ObserveContext* ctx =
@@ -1291,7 +1296,7 @@ namespace OC
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
                                   assembleHeaderOptions(options, headerOptions),
-                                  headerOptions.size());
+                                  (uint8_t)headerOptions.size());
         }
         else
         {
