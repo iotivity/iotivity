@@ -314,6 +314,7 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
 {
     OCStackResult ret = OC_STACK_ERROR;
     OicSecAcl_t * headAcl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
+    VERIFY_NOT_NULL_RETURN(TAG, headAcl, ERROR, NULL);
     cJSON *jsonRoot = NULL;
 
     VERIFY_NOT_NULL(TAG, jsonStr, ERROR);
@@ -817,6 +818,7 @@ OicSecPstat_t* JSONToPstatBin(const char * jsonStr)
     VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
     pstat->smLen = 1;
     pstat->sm = (OicSecDpom_t*)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
+    VERIFY_NOT_NULL(TAG, pstat->sm, ERROR);
     pstat->sm[0] = (OicSecDpom_t)jsonObj->valueint;
 
     ret = OC_STACK_OK;
@@ -1034,7 +1036,7 @@ static OicSecAmacl_t* JSONToAmaclBin(const char * jsonStr)
 {
     OCStackResult ret = OC_STACK_ERROR;
     OicSecAmacl_t * headAmacl = (OicSecAmacl_t*)OICCalloc(1, sizeof(OicSecAmacl_t));
-
+    VERIFY_NOT_NULL_RETURN(TAG, headAmacl, ERROR, NULL);
     cJSON *jsonRoot = NULL;
     cJSON *jsonAmacl = NULL;
 
@@ -1059,6 +1061,7 @@ static OicSecAmacl_t* JSONToAmaclBin(const char * jsonStr)
 
     headAmacl->resourcesLen = cJSON_GetArraySize(jsonRlistArray);
     headAmacl->resources = (char**)OICCalloc(headAmacl->resourcesLen, sizeof(char*));
+    VERIFY_NOT_NULL(TAG, headAmacl->resources, ERROR);
     size_t idxx = 0;
     do
     {
