@@ -166,10 +166,10 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
     std::string resourceType;
 
     // Extracting resource type.
-    if (resourceModel.contains("rt"))
+    if (resourceModel.contains(OC_RSRVD_RESOURCE_TYPE))
     {
-        resourceType = resourceModel.get<std::string>("rt");
-        resourceModel.remove("rt");
+        resourceType = resourceModel.get<std::string>(OC_RSRVD_RESOURCE_TYPE);
+        resourceModel.remove(OC_RSRVD_RESOURCE_TYPE);
     }
     else if (resourceModel.contains("resourceType"))
     {
@@ -179,30 +179,30 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
 
     // Extracting interface type.
     std::vector<std::string> interfaceTypes;
-    if (resourceModel.contains("if"))
+    if (resourceModel.contains(OC_RSRVD_INTERFACE))
     {
-        SimulatorResourceModel::TypeInfo typeInfo = resourceModel.getType("if");
+        SimulatorResourceModel::TypeInfo typeInfo = resourceModel.getType(OC_RSRVD_INTERFACE);
         if(AttributeValueType::STRING == typeInfo.type())
         {
-            interfaceTypes.push_back(resourceModel.get<std::string>("if"));
+            interfaceTypes.push_back(resourceModel.get<std::string>(OC_RSRVD_INTERFACE));
         }
         else if(AttributeValueType::VECTOR == typeInfo.type()
             && AttributeValueType::STRING == typeInfo.baseType()
             && typeInfo.depth() == 1)
         {
-            interfaceTypes = resourceModel.get<std::vector<std::string>>("if");
+            interfaceTypes = resourceModel.get<std::vector<std::string>>(OC_RSRVD_INTERFACE);
             if (interfaceTypes.size() > 1)
                 interfaceTypes.erase(interfaceTypes.begin()+1, interfaceTypes.end());
         }
 
-        resourceModel.remove("if");
+        resourceModel.remove(OC_RSRVD_INTERFACE);
     }
 
     for (auto &requestModel : requestModels)
     {
         if (requestModel.second)
         {
-            addInterfaceFromQueryParameter((requestModel.second)->getQueryParams("if"),
+            addInterfaceFromQueryParameter((requestModel.second)->getQueryParams(OC_RSRVD_INTERFACE),
                 interfaceTypes);
         }
     }
@@ -214,7 +214,7 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
 
     // Create simple/collection resource
     std::shared_ptr<SimulatorResource> simResource;
-    if (resourceModel.contains("links"))
+    if (resourceModel.contains(OC_RSRVD_LINKS))
     {
         std::shared_ptr<SimulatorCollectionResourceImpl> collectionRes(
             new SimulatorCollectionResourceImpl());

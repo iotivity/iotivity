@@ -34,7 +34,7 @@ SimulatorCollectionResourceImpl::SimulatorCollectionResourceImpl()
 
     // Add empty vector of OIC Links
     std::vector<SimulatorResourceModel> links;
-    m_resModel.add("links", links);
+    m_resModel.add(OC_RSRVD_LINKS, links);
 
     m_resourceHandle = nullptr;
 }
@@ -411,9 +411,9 @@ OCEntityHandlerResult SimulatorCollectionResourceImpl::handleRequests(
         // Handling interface query parameter "if"
         auto interfaceType = m_interfaces[0];
         auto requestQueryParams = request->getQueryParameters();
-        if (requestQueryParams.end() != requestQueryParams.find("if"))
+        if (requestQueryParams.end() != requestQueryParams.find(OC_RSRVD_INTERFACE))
         {
-            interfaceType = requestQueryParams["if"];
+            interfaceType = requestQueryParams[OC_RSRVD_INTERFACE];
         }
 
         if (!isValidInterface(interfaceType, request->getRequestType()))
@@ -530,13 +530,13 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorCollectionResourceImpl::request
         for (auto &entry : m_childResources)
         {
             OC::OCRepresentation oicLink;
-            oicLink.setValue("href", entry.second->getURI());
-            oicLink.setValue("rt", entry.second->getResourceType());
-            oicLink.setValue("if", entry.second->getInterface()[0]);
+            oicLink.setValue(OC_RSRVD_HREF, entry.second->getURI());
+            oicLink.setValue(OC_RSRVD_RESOURCE_TYPE, entry.second->getResourceType());
+            oicLink.setValue(OC_RSRVD_INTERFACE, entry.second->getInterface()[0]);
             links.push_back(oicLink);
         }
 
-        ocRep.setValue("links", links);
+        ocRep.setValue(OC_RSRVD_LINKS, links);
 
         response = std::make_shared<OC::OCResourceResponse>();
         response->setRequestHandle(request->getRequestHandle());
@@ -576,22 +576,22 @@ void SimulatorCollectionResourceImpl::sendNotification(OC::ObservationIds &obser
 void SimulatorCollectionResourceImpl::addLink(const SimulatorResourceSP &resource)
 {
     std::lock_guard<std::mutex> lock(m_modelLock);
-    if (!m_resModel.contains("links"))
+    if (!m_resModel.contains(OC_RSRVD_LINKS))
         return;
 
     // Create new OIC Link
     SimulatorResourceModel newLink;
-    newLink.add("href", resource->getURI());
-    newLink.add("rt", resource->getResourceType());
-    newLink.add("if", resource->getInterface()[0]);
+    newLink.add(OC_RSRVD_HREF, resource->getURI());
+    newLink.add(OC_RSRVD_RESOURCE_TYPE, resource->getResourceType());
+    newLink.add(OC_RSRVD_INTERFACE, resource->getInterface()[0]);
 
     // Add OIC Link if it is not present
     bool found = false;
     std::vector<SimulatorResourceModel> links =
-        m_resModel.get<std::vector<SimulatorResourceModel>>("links");
+        m_resModel.get<std::vector<SimulatorResourceModel>>(OC_RSRVD_LINKS);
     for (auto &link : links)
     {
-        std::string linkURI = link.get<std::string>("href");
+        std::string linkURI = link.get<std::string>(OC_RSRVD_HREF);
         if (linkURI == resource->getURI())
         {
             found = true;
@@ -602,26 +602,26 @@ void SimulatorCollectionResourceImpl::addLink(const SimulatorResourceSP &resourc
     if (false ==  found)
     {
         links.push_back(newLink);
-        m_resModel.update("links", links);
+        m_resModel.update(OC_RSRVD_LINKS, links);
     }
 }
 
 void SimulatorCollectionResourceImpl::removeLink(std::string uri)
 {
     std::lock_guard<std::mutex> lock(m_modelLock);
-    if (!m_resModel.contains("links"))
+    if (!m_resModel.contains(OC_RSRVD_LINKS))
         return;
 
     // Add OIC Link if it is not present
     std::vector<SimulatorResourceModel> links =
-        m_resModel.get<std::vector<SimulatorResourceModel>>("links");
+        m_resModel.get<std::vector<SimulatorResourceModel>>(OC_RSRVD_LINKS);
     for (size_t i = 0; i < links.size(); i++)
     {
-        std::string linkURI = links[i].get<std::string>("href");
+        std::string linkURI = links[i].get<std::string>(OC_RSRVD_HREF);
         if (linkURI == uri)
         {
             links.erase(links.begin() + i);
-            m_resModel.update("links", links);
+            m_resModel.update(OC_RSRVD_LINKS, links);
             break;
         }
     }

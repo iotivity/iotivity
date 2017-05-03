@@ -645,9 +645,9 @@ void SimulatorSingleResourceImpl::notifyAll(const SimulatorResourceModel &resMod
 void SimulatorSingleResourceImpl::setCommonProperties(OC::OCRepresentation &ocResRep)
 {
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
-    ocResRep.setValue("rt", m_resourceType);
-    ocResRep.setValue("if", m_interfaces);
-    ocResRep.setValue("n", m_name);
+    ocResRep.setValue(OC_RSRVD_RESOURCE_TYPE, m_resourceType);
+    ocResRep.setValue(OC_RSRVD_INTERFACE, m_interfaces);
+    ocResRep.setValue(OC_RSRVD_DEVICE_NAME, m_name);
 }
 
 OCEntityHandlerResult SimulatorSingleResourceImpl::handleRequests(
@@ -766,9 +766,9 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handleGET(
     // Handling interface query parameter "if"
     auto interfaceType = m_interfaces[0];
     auto requestQueryParams = request->getQueryParameters();
-    if (requestQueryParams.end() != requestQueryParams.find("if"))
+    if (requestQueryParams.end() != requestQueryParams.find(OC_RSRVD_INTERFACE))
     {
-        interfaceType = requestQueryParams["if"];
+        interfaceType = requestQueryParams[OC_RSRVD_INTERFACE];
     }
 
     if (!isValidInterface(interfaceType, "GET"))
@@ -805,9 +805,9 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handlePUT(
     // Handling interface query parameter "if"
     auto interfaceType = m_interfaces[0];
     auto requestQueryParams = request->getQueryParameters();
-    if (requestQueryParams.end() != requestQueryParams.find("if"))
+    if (requestQueryParams.end() != requestQueryParams.find(OC_RSRVD_INTERFACE))
     {
-        interfaceType = requestQueryParams["if"];
+        interfaceType = requestQueryParams[OC_RSRVD_INTERFACE];
     }
 
     if (!isValidInterface(interfaceType, "PUT"))
@@ -857,9 +857,9 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handlePOST(
     // Handling interface query parameter "if"
     auto interfaceType = m_interfaces[0];
     auto requestQueryParams = request->getQueryParameters();
-    if (requestQueryParams.end() != requestQueryParams.find("if"))
+    if (requestQueryParams.end() != requestQueryParams.find(OC_RSRVD_INTERFACE))
     {
-        interfaceType = requestQueryParams["if"];
+        interfaceType = requestQueryParams[OC_RSRVD_INTERFACE];
     }
 
     if (!isValidInterface(interfaceType, "POST"))
