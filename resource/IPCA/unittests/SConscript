@@ -97,7 +97,8 @@ if use_iotivity == 0:
         'mockInProcServerWrapper.cpp',
         'mockOCPlatform_impl.cpp',
         'mockOCProvision.cpp',
-        '#/resource/src/OCRepresentation.cpp'
+        '#/resource/src/OCRepresentation.cpp',
+        '#/resource/src/OCRepresentationInternal.cpp'
         ]
 
 if target_os not in ['windows', 'msys_nt']:

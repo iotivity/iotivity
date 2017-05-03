@@ -75,6 +75,7 @@ namespace OC
                             "Error: OptionID valid only If-Match(1), If-None-Match(5),"
                             "Location-Path(8), Location-Query(20),"
                             "and from 2048 to 3000 inclusive.";
+        static const char OUT_OF_INT_RANGE[]           = "Value out of range of type 'int'.";
         static const char NO_ERROR[]                   = "No Error";
         static const char RESOURCE_CREATED[]           = "Resource Created";
         static const char RESOURCE_CHANGED[]           = "Resource Changed";

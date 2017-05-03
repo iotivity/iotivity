@@ -66,6 +66,9 @@ extern jclass g_cls_byte3DArray;
 extern jclass g_cls_Integer;
 extern jclass g_cls_int1DArray;
 extern jclass g_cls_int2DArray;
+extern jclass g_cls_Long;
+extern jclass g_cls_long1DArray;
+extern jclass g_cls_long2DArray;
 extern jclass g_cls_Double;
 extern jclass g_cls_double1DArray;
 extern jclass g_cls_double2DArray;
@@ -112,6 +115,7 @@ extern jclass g_cls_OcOicSecAcl_resr;
 extern jclass g_cls_OcOicSecAcl_validity;
 
 extern jmethodID g_mid_Integer_ctor;
+extern jmethodID g_mid_Long_ctor;
 extern jmethodID g_mid_Double_ctor;
 extern jmethodID g_mid_Boolean_ctor;
 extern jmethodID g_mid_LinkedList_ctor;

@@ -112,7 +112,8 @@ oclib_src = [
 		'InProcClientWrapper.cpp',
 		'OCResourceRequest.cpp',
 		'CAManager.cpp',
-		'OCDirectPairing.cpp'
+		'OCDirectPairing.cpp',
+		'OCRepresentationInternal.cpp'
 	]
 
 if with_cloud:
