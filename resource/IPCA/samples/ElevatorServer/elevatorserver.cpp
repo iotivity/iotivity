@@ -32,8 +32,14 @@ static char CredFile[] = "ElevatorServerSecurityDB.dat";
 
 FILE* server_fopen(const char *path, const char *mode)
 {
-    (void)path;
-    return fopen(CredFile, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CredFile, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 //
