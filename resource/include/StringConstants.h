@@ -129,6 +129,7 @@ namespace OC
         static const char USER_DENIED_REQ[]            = "Request denied by User";
         static const char NOT_ACCEPTABLE[]             = "Request not acceptable";
         static const char PUBLISH_RESOURCE_FAILED[]    = "Publish Resource failure";
+        static const char DELETE_RESOURCE_FAILED[]     = "Delete Resource failure";
         static const char FORBIDDEN_REQ[]              = "Forbidden request";
         static const char INTERNAL_SERVER_ERROR[]      = "Internal server error";
         static const char BAD_ENDPOINT[]               = "Bad Endpoint";
