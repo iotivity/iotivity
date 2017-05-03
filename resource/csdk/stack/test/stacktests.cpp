@@ -2585,8 +2585,8 @@ TEST(StackHeaderOption, getHeaderOption)
                                              optionData,
                                              optionDataSize,
                                              &actualDataSize));
-    EXPECT_EQ(optionData[0], 1);
-    EXPECT_EQ(actualDataSize, 8);
+    EXPECT_EQ(1, optionData[0]);
+    EXPECT_EQ(8, actualDataSize);
 }
 
 TEST(StackEndpoints, OCGetSupportedEndpointTpsFlags)

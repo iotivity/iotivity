@@ -1317,6 +1317,14 @@ namespace OC
         OCStackResult result;
         auto cLock = m_csdkLock.lock();
 
+        if (headerOptions.size() > MAX_HEADER_OPTIONS)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: passed number of header options"
+                " (%" PRIuPTR ") exceeds the maximum of %d.",
+                __func__, headerOptions.size(), MAX_HEADER_OPTIONS);
+            return OC_STACK_ERROR;
+        }
+
         if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
@@ -1325,7 +1333,7 @@ namespace OC
             result = OCCancel(handle,
                     static_cast<OCQualityOfService>(QoS),
                     assembleHeaderOptions(options, headerOptions),
-                    headerOptions.size());
+                    (uint8_t)headerOptions.size());
         }
         else
         {
@@ -1478,10 +1486,19 @@ namespace OC
 
         for (auto it=headerOptions.begin(); it != headerOptions.end(); ++it)
         {
+            size_t headerOptionLength = it->getOptionData().length() + 1;
+            if (headerOptionLength > MAX_HEADER_OPTION_DATA_LENGTH)
+            {
+                OIC_LOG_V(ERROR, TAG, "%s: passed header option's data length"
+                    " (%" PRIuPTR ") exceeds the maximum of %d.",
+                    __func__, headerOptionLength, MAX_HEADER_OPTION_DATA_LENGTH);
+                return nullptr;
+            }
+
             options[i] = OCHeaderOption();
             options[i].protocolID = OC_COAP_ID;
             options[i].optionID = it->getOptionID();
-            options[i].optionLength = it->getOptionData().length() + 1;
+            options[i].optionLength = (uint16_t)headerOptionLength;
             strncpy((char*)options[i].optionData, it->getOptionData().c_str(),
                 sizeof(options[i].optionLength) -1 );
             options[i].optionData[sizeof(options[i].optionLength) - 1] = 0;

@@ -372,7 +372,7 @@ static OCStackResult HandlePresenceResponse(const CAEndpoint_t *endPoint,
  * @param responseInfo CA response info.
  */
 static void HandleCAResponses(const CAEndpoint_t* endPoint,
-        const CAResponseInfo_t* responseInfo);
+    const CAResponseInfo_t* responseInfo);
 
 /**
  * This function will be called back by CA layer when a request is received.
@@ -381,7 +381,7 @@ static void HandleCAResponses(const CAEndpoint_t* endPoint,
  * @param requestInfo CA request info.
  */
 static void HandleCARequests(const CAEndpoint_t* endPoint,
-        const CARequestInfo_t* requestInfo);
+    const CARequestInfo_t* requestInfo);
 
 /**
  * Extract query from a URI.
@@ -1496,7 +1496,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
         // check obs header option
         bool obsHeaderOpt = false;
         CAHeaderOption_t *options = responseInfo->info.options;
-        for (uint8_t i = 0; i< responseInfo->info.numOptions; i++)
+        for (uint8_t i = 0; i < responseInfo->info.numOptions; i++)
         {
             if (options && (options[i].optionID == COAP_OPTION_OBSERVE))
             {
@@ -1857,7 +1857,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             response->numRcvdVendorSpecificHeaderOptions = 0;
             if((responseInfo->info.numOptions > 0) && (responseInfo->info.options != NULL))
             {
-                int start = 0;
+                uint8_t start = 0;
                 //First option always with option ID is COAP_OPTION_OBSERVE if it is available.
                 if(responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
                 {
@@ -1888,9 +1888,9 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     return;
                 }
 
-                for (int i = start; i < responseInfo->info.numOptions; i++)
+                for (uint8_t i = start; i < responseInfo->info.numOptions; i++)
                 {
-                    memcpy (&(response->rcvdVendorSpecificHeaderOptions[i-start]),
+                    memcpy (&(response->rcvdVendorSpecificHeaderOptions[i - start]),
                             &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
                 }
             }
@@ -2071,8 +2071,8 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
      * RI as this option will make no sense to either RI or application.
      */
     RMUpdateInfo((CAHeaderOption_t **) &(responseInfo->info.options),
-                 (uint8_t *) &(responseInfo->info.numOptions),
-                 (CAEndpoint_t *) endPoint);
+        (uint8_t *) &(responseInfo->info.numOptions),
+        (CAEndpoint_t *)endPoint);
 #endif
 
     OCHandleResponse(endPoint, responseInfo);
@@ -2569,8 +2569,8 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
      * proper destination and remove RM header option.
      */
     RMUpdateInfo((CAHeaderOption_t **) &(requestInfo->info.options),
-                 (uint8_t *) &(requestInfo->info.numOptions),
-                 (CAEndpoint_t *) endPoint);
+        (uint8_t *) &(requestInfo->info.numOptions),
+        (CAEndpoint_t *)endPoint);
 
 #ifdef ROUTING_GATEWAY
     if (isEmptyMsg)
@@ -5983,7 +5983,7 @@ OCStackResult OCGetHeaderOption(OCHeaderOption* ocHdrOpt, size_t numOptions,
         return OC_STACK_INVALID_PARAM;
     }
 
-    for (uint8_t i = 0; i < numOptions; i++)
+    for (size_t i = 0; i < numOptions; i++)
     {
         if (ocHdrOpt[i].optionID == optionID)
         {

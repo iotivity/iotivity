@@ -39,7 +39,10 @@
 #  endif
 #  define OC_STATIC_ASSERT(condition, msg) static_assert(condition, msg)
 #else
-#  define OC_STATIC_ASSERT(condition, msg) ((void)sizeof(char[2*!!(condition) - 1]))
+#  define OC_CAT_(a, b) a ## b
+#  define OC_CAT(a, b) OC_CAT_(a, b)
+#  define OC_STATIC_ASSERT(condition, msg) \
+        typedef int OC_CAT(StaticAssertTemp, __LINE__)[2 * !!(condition) - 1]
 #endif
 
 #ifndef INLINE_API

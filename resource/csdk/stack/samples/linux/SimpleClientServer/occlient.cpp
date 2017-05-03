@@ -18,6 +18,11 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+// Warning disabled globally but VS2013 ignores the /wd4200 option in C++ files.
+#if defined(_MSC_VER) && _MSC_VER < 1900
+#pragma warning(disable : 4200)
+#endif
+
 #include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
