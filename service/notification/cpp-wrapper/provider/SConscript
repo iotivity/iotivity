@@ -119,6 +119,8 @@ notificationCommonSharedObjs = [
 notification_provider_src = [
     env.Glob('src/*.cpp'),notificationCommonSharedObjs]
 
+if target_os == 'android':
+    notification_env.AppendUnique(LINKFLAGS = ['-Wl,-soname, libnotification_provider_wrapper.so'])
 if target_os not in ['ios']:
     providersdk = notification_env.SharedLibrary('notification_provider_wrapper', notification_provider_src)
     notification_env.InstallTarget(providersdk, 'libnotification_provider_wrapper')
