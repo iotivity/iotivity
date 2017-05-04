@@ -22,6 +22,8 @@
 # Build script for Arduino Enrollee Sample App
 ######################################################################
 
+import sys
+
 Import('env')
 
 enrollee_env = env.Clone()
@@ -55,8 +57,7 @@ Alias('enrollee', i_enrollee)
 env.AppendTarget('enrollee')
 
 if(enrollee_env['UPLOAD'] == True):
-	from sys import platform as _platform
-	if _platform == "linux" or _platform == "linux2":
+	if sys.platform.startswith("linux"):
 		enrollee_env.Upload(env.get('BUILD_DIR') + '/service/easy-setup/sampleapp/enrollee/arduino/enrollee.hex')
 	else:
-		print 'Please use appropriate install method for your developing machine. Linux is the only supported platform right now.'
+		print 'Please use appropriate install method for your development machine. Linux is the only supported platform right now.'
