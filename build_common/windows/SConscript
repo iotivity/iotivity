@@ -51,6 +51,7 @@ if env['CC'] == 'cl':
     # in linker errors. Work around this issue by linking with the source of InstallTarget(),
     # rather than the target.
     env.PrependUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'src')])
+    env.PrependUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'c_common', 'windows')])
     env.PrependUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'oc_logger')])
     env.PrependUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk', 'resource-directory')])
 
