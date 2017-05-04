@@ -19,7 +19,7 @@ path = os.path.join(src_dir, 'extlibs', 'android', 'ndk', 'android-ndk-r10e')
 # check 'ndk' library, if it doesn't exits, ask user to download it
 if not os.path.exists(path):
 	ndk_env = Environment(ENV = os.environ)
-	if host_os == 'linux2' :
+	if host_os.startswith("linux"):
 		archType = 8 * struct.calcsize("P")
 		if archType == 64:
 			env.Download('android-ndk-r10e.bin', 'http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin')

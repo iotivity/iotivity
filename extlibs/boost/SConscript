@@ -5,7 +5,7 @@ Import('env')
 
 boost_env = env.Clone()
 
-modules = ['thread','program_options', 'system', 'date_time']
+modules = ['thread', 'program_options', 'system', 'date_time']
 
 target_os = env.get('TARGET_OS')
 target_arch = env.get('TARGET_ARCH')
@@ -25,10 +25,11 @@ boost_url       = 'http://downloads.sourceforge.net/project/boost/boost/'+boost_
 boost_dir = os.path.join(src_dir,'extlibs','boost','boost')
 boost_bootstrap = os.path.join(boost_dir,'bootstrap.bat')
 
-if 'linux' == target_os :
+if 'linux' == target_os:
     # Check for Boost libraries in /usr/boost
     print 'TODO: Perform platform check for linux'
-    raise SCons.Errors.EnvironmentError('Unsupported platform')
+    msg = "Target platform (%s) is currently not supported for boost builds" % target_os
+    raise SCons.Errors.EnvironmentError(msg)
 
 elif target_os in ['windows']:
     boost_zip_file   = os.path.join(src_dir,'extlibs','boost',boost_arch_name)
@@ -52,7 +53,7 @@ elif target_os in ['windows']:
     # Sanity check, in case the above method didn't work
     if not os.path.exists(boost_bootstrap):
         print '''
-*********************************** Error: ****************************************
+*********************************** Error: ************************************
 * Please download boost from the following website:
 *
 *   ''' + boost_url + '''
@@ -61,11 +62,11 @@ elif target_os in ['windows']:
 *
 *    ''' + boost_dir + '''
 *
-* such that this build system can find:
+* such that the build system can find:
 *
 * ''' + boost_bootstrap + '''
 *
-***********************************************************************************
+*******************************************************************************
 '''
         Exit(1)
 
@@ -77,9 +78,9 @@ elif target_os in ['android']:
 
     host_os = sys.platform
 
-    if host_os == 'linux2' :
+    if host_os.startswith("linux"):
         boost_bootstrap = boost_base_name+os.sep+'bootstrap.sh'
-    else :
+    else:
         msg="Host platform (%s) is currently not supported for boost builds" % host_os
         raise SCons.Errors.EnvironmentError(msg)
 
