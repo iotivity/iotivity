@@ -342,7 +342,25 @@ OCStackResult OCPlatform::getDeviceInfo(const std::string& host,
     ocRep.setDevAddr(addr);
     ocRep.setValue(OC_RSRVD_DEVICE_NAME, g_deviceInfo.deviceName);
     ocRep.setValue(OC_RSRVD_SPEC_VERSION, g_deviceInfo.specVersion);
-    ocRep.setValue(OC_RSRVD_DATA_MODEL_VERSION, g_deviceInfo.dataModelVersions);
+    ocRep.setValue(OC_RSRVD_PROTOCOL_INDEPENDENT_ID, g_deviceInfo.platformIndependentId);
+
+    //  DMV is returned in CSV.
+    std::ostringstream outputStream;
+    bool firstEntry = true;
+    for (auto dataModelVersion : g_deviceInfo.dataModelVersions)
+    {
+        if (!firstEntry)
+        {
+            outputStream << ',' << dataModelVersion;
+        }
+        else
+        {
+            outputStream << dataModelVersion;
+            firstEntry = false;
+        }
+    }
+
+    ocRep.setValue(OC_RSRVD_DATA_MODEL_VERSION, outputStream.str());
 
     std::thread getDeviceInfoCallbackThread(deviceInfoHandler, ocRep);
     getDeviceInfoCallbackThread.detach();
