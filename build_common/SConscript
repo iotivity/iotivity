@@ -37,7 +37,7 @@ if 'msys_nt' in host:
     host = 'msys_nt'
 
 if host not in host_target_map:
-    print "\nError: Current system (%s) isn't supported\n" % host
+    print "\nError: building on '%s' is not currently supported.\n" % host
     Exit(1)
 
 ######################################################################
@@ -46,7 +46,7 @@ if host not in host_target_map:
 target_os = ARGUMENTS.get('TARGET_OS', host).lower() # target os
 
 if target_os not in host_target_map[host]:
-    print "\nError: Unknown target os: %s (Allow values: %s)\n" % (target_os, host_target_map[host])
+    print "\nError: '%s' host cannot build for '%s' target.\navailable targets: %s\n" % (host, target_os, host_target_map[host])
     Exit(1)
 
 if target_os == 'android':
