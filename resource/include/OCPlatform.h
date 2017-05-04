@@ -152,6 +152,9 @@ namespace OC
          * as BTH etc.
          * @note OCStackResult is defined in ocstack.h.
          * @see findResource(const std::string&, const std::string&, OCConnectivityType, FindCallback, QualityOfService)
+         * @note To get the tcpPort information, user must call getAllHosts() from the OCResource
+           object in FindCallback. To use a TCP endpoint that has been received by getAllHosts(),
+           user must use the setHost() function.
          */
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     OCConnectivityType connectivityType, FindCallback resourceHandler);
@@ -177,6 +180,9 @@ namespace OC
          *                                  from a particular service.
          * @param QoS QualityOfService the quality of communication
          * @see findResource(const std::string&, const std::string&, OCConnectivityType, FindCallback)
+         * @note To get the tcpPort information, user must call getAllHosts() from the OCResource
+           object in FindCallback. To use a TCP endpoint that has been received by getAllHosts(),
+           user must use the setHost() function.
          */
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     OCConnectivityType connectivityType, FindCallback resourceHandler,
