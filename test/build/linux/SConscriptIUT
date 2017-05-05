@@ -24,7 +24,7 @@
 #
 ##
 
-print '\n---------------Started Building Conformance Test App for Linux---------------\n'
+print '\n---------------Started Building IUT Simulator for Linux---------------\n'
 
 Import('env_linux')
 import os
@@ -94,6 +94,8 @@ for delete_target in install_targets:
     delete_bin.append(Command(str(i), [], Delete(delete_target)))
     i = i + 1
 
-default_targets += install_bin + delete_bin
+default_targets = install_bin + delete_bin + default_targets
 
 env_linux.Default(default_targets)
+
+print '\n---------------IUT Simulator for Linux Build Finished---------------\n'
