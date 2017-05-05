@@ -20,6 +20,7 @@
 
 extern "C"
 {
+    #include "platform_features.h"
     #include "rd_server.h"
     #include "rd_client.h"
     #include "rd_database.h"
