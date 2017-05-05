@@ -1090,7 +1090,7 @@ exit:
 OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourcePtr,
     OCRepPayload** payload, OCDevAddr *devAddr)
 {
-    size_t dimensions[3] = { 0, 0, 0 };
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
     OCRepPayload *tempPayload = NULL;
     OCRepPayload **urlInfoPayload = NULL;
     OCStackResult ret = OC_STACK_OK;
@@ -1166,7 +1166,7 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
     }
 
     // Add a urlInfo object for each endpoint supported
-    urlInfoPayload = (OCRepPayload **)OICMalloc(nCaEps * sizeof(OCRepPayload));
+    urlInfoPayload = (OCRepPayload **)OICCalloc(nCaEps, sizeof(OCRepPayload*));
     if (!urlInfoPayload)
     {
         OIC_LOG(ERROR, TAG, "Unable to allocate memory for urlInfo ");
@@ -1243,6 +1243,10 @@ exit:
         OCRepPayloadDestroy(tempPayload);
         if (urlInfoPayload)
         {
+            for (size_t i = 0; i < nCaEps; ++i)
+            {
+                OCRepPayloadDestroy(urlInfoPayload[i]);
+            }
             OICFree(urlInfoPayload);
         }
     }
