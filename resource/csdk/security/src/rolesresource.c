@@ -1040,7 +1040,8 @@ OCStackResult InitRolesResource()
         OIC_RSRC_ROLES_URI,
         RolesEntityHandler,
         NULL,
-        OC_SECURE);
+        OC_SECURE |
+        OC_DISCOVERABLE);
 
     if (OC_STACK_OK != res)
     {
