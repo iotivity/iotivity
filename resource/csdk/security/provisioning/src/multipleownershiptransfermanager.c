@@ -777,9 +777,10 @@ static OCStackApplicationResult SubOwnerCredentialHandler(void *ctx, OCDoHandle 
         if(motCtx && motCtx->selectedDeviceInfo)
         {
             //Close the temporal secure session to verify the owner credential
-            CAEndpoint_t* endpoint = (CAEndpoint_t *)&motCtx->selectedDeviceInfo->endpoint;
-            endpoint->port = motCtx->selectedDeviceInfo->securePort;
-            CAResult_t caResult = CAcloseSslSession(endpoint);
+            CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
+            CopyDevAddrToEndpoint(&motCtx->selectedDeviceInfo->endpoint, &endpoint);
+            endpoint.port = motCtx->selectedDeviceInfo->securePort;
+            CAResult_t caResult = CAcloseSslSession(&endpoint);
             if(CA_STATUS_OK != caResult)
             {
                 OIC_LOG(ERROR, TAG, "Failed to close DTLS session");
@@ -787,7 +788,7 @@ static OCStackApplicationResult SubOwnerCredentialHandler(void *ctx, OCDoHandle 
                 return OC_STACK_DELETE_TRANSACTION;
             }
 
-            caResult = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, endpoint->adapter);
+            caResult = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, endpoint.adapter);
             if(CA_STATUS_OK != caResult)
             {
                 OIC_LOG(ERROR, TAG, "Failed to select TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256");

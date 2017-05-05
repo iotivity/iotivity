@@ -36,6 +36,7 @@
 #include "aclresource.h" //Note: SRM internal header
 #include "pconfresource.h"
 #include "psinterface.h"
+#include "ocstackinternal.h"
 
 #define TAG "OIC_OCPMAPI"
 
@@ -704,9 +705,10 @@ static OCStackResult RemoveDeviceInfoFromLocal(const OCProvisionDev_t* pTargetDe
     // TODO: We need to add new mechanism to clean up the stale state of the device.
 
     // Close the DTLS session of the removed device.
-    CAEndpoint_t *endpoint = (CAEndpoint_t *)&pTargetDev->endpoint;
-    endpoint->port = pTargetDev->securePort;
-    CAResult_t caResult = CAcloseSslSession(endpoint);
+    CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
+    CopyDevAddrToEndpoint(&pTargetDev->endpoint, &endpoint);
+    endpoint.port = pTargetDev->securePort;
+    CAResult_t caResult = CAcloseSslSession(&endpoint);
     if(CA_STATUS_OK != caResult)
     {
         OIC_LOG_V(WARNING, TAG, "OCRemoveDevice : Failed to close DTLS session : %d", caResult);

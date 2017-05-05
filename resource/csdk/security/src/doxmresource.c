@@ -50,6 +50,7 @@
 #include "srmutility.h"
 #include "pinoxmcommon.h"
 #include "oxmverifycommon.h"
+#include "ocstackinternal.h"
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 #include <mbedtls/ssl_ciphersuites.h>
 #include <mbedtls/md.h>
@@ -1435,7 +1436,9 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
 
                             }
 
-                            CAResult_t pskRet = CAGenerateOwnerPSK((CAEndpoint_t *)&request->devAddr,
+                            CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
+                            CopyDevAddrToEndpoint(&request->devAddr, &endpoint);
+                            CAResult_t pskRet = CAGenerateOwnerPSK(&endpoint,
                                     (uint8_t *)label,
                                     strlen(label),
                                     gDoxm->owner.id, sizeof(gDoxm->owner.id),

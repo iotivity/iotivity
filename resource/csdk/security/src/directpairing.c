@@ -378,7 +378,9 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
             }
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-            res = SavePairingPSK((OCDevAddr*)&endpoint, &peer->deviceID, &ptDeviceID, false);
+            OCDevAddr devAddr;
+            CopyEndpointToDevAddr(&endpoint, &devAddr);
+            res = SavePairingPSK(&devAddr, &peer->deviceID, &ptDeviceID, false);
             if(OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, TAG, "Failed to PairingPSK generation");
@@ -387,7 +389,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
             }
 
             //  close temporary sesion
-            CAResult_t caResult = CAcloseSslSession((const CAEndpoint_t*)&endpoint);
+            CAResult_t caResult = CAcloseSslSession(&endpoint);
             if(CA_STATUS_OK != caResult)
             {
                 OIC_LOG(INFO, TAG, "Fail to close temporary dtls session");

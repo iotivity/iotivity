@@ -1193,14 +1193,15 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
             //OC_STACK_UNAUTHORIZED_REQ. After such a failure, OwnerAclHandler
             //will close the current session and re-establish a new session,
             //using the Owner Credential.
-            CAEndpoint_t* endpoint = (CAEndpoint_t *)&otmCtx->selectedDeviceInfo->endpoint;
+            CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
+            CopyDevAddrToEndpoint(&otmCtx->selectedDeviceInfo->endpoint, &endpoint);
 
             /**
               * If we select NULL cipher,
               * client will select appropriate cipher suite according to server's cipher-suite list.
               */
             // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 = 0xC037, /**< see RFC 5489 */
-            CAResult_t caResult = CASelectCipherSuite(0xC037, endpoint->adapter);
+            CAResult_t caResult = CASelectCipherSuite(0xC037, endpoint.adapter);
             if(CA_STATUS_OK != caResult)
             {
                 OIC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");

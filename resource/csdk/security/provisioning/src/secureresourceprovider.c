@@ -50,6 +50,7 @@
 #include "ocpayload.h"
 #include "srmutility.h"
 #include "certhelpers.h"
+#include "ocstackinternal.h"
 
 #ifdef __WITH_DTLS__
 #include "crlresource.h"
@@ -1981,8 +1982,9 @@ static OCStackApplicationResult SRPResetDeviceCB(void *ctx, OCDoHandle UNUSED,
     }
 
     //Close the DTLS session of the reset device.
-    CAEndpoint_t* endpoint = (CAEndpoint_t *)&clientResponse->devAddr;
-    CAResult_t caResult = CAcloseSslSession(endpoint);
+    CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
+    CopyDevAddrToEndpoint(&clientResponse->devAddr, &endpoint);
+    CAResult_t caResult = CAcloseSslSession(&endpoint);
     if(CA_STATUS_OK != caResult)
     {
         OIC_LOG_V(WARNING, TAG, "OCResetDevice : Failed to close DTLS session : %d", caResult);

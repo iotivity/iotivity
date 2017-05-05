@@ -41,6 +41,7 @@
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
 #include "payload_logging.h"
+#include "ocstackinternal.h"
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 #include <mbedtls/ssl_ciphersuites.h>
 #endif
@@ -106,18 +107,18 @@ void SetDpairingResourceOwner(OicUuid_t *rowner)
 /**
  * Function to save PairingPSK.
  *
- * @param[in] endpoint   current endpoint.
- * @param[in] peerDevID   peer device indentitiy.
+ * @param[in] devAddr   current endpoint.
+ * @param[in] peerDevID   peer device identitiy.
  * @param[in] isPairingServer   indicate if it generates PairingPSK for server or client.
  *
  * @return  OC_STACK_OK on success
  */
-OCStackResult SavePairingPSK(OCDevAddr *endpoint,
+OCStackResult SavePairingPSK(OCDevAddr *devAddr,
             OicUuid_t *peerDevID, OicUuid_t *owner, bool isPairingServer)
 {
     OIC_LOG(DEBUG, TAG, "IN SavePairingPSK");
 
-    if(NULL == endpoint || NULL == peerDevID || NULL == owner)
+    if (NULL == devAddr || NULL == peerDevID || NULL == owner)
     {
         OIC_LOG_V(ERROR, TAG, "Invalid Input parameters in [%s]\n", __FUNCTION__);
         return OC_STACK_INVALID_PARAM;
@@ -140,7 +141,9 @@ OCStackResult SavePairingPSK(OCDevAddr *endpoint,
     pairingKey.encoding = OIC_ENCODING_RAW;
 
     //Generating PairingPSK using OwnerPSK scheme
-    CAResult_t pskRet = CAGenerateOwnerPSK((const CAEndpoint_t *)endpoint,
+    CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
+    CopyDevAddrToEndpoint(devAddr, &endpoint);
+    CAResult_t pskRet = CAGenerateOwnerPSK(&endpoint,
             (uint8_t *)OIC_RSRC_TYPE_SEC_DPAIRING,
             strlen(OIC_RSRC_TYPE_SEC_DPAIRING),
             (isPairingServer ? ptDeviceID.id : peerDevID->id), sizeof(OicUuid_t), // server

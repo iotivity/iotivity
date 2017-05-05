@@ -56,6 +56,7 @@
 #include "certhelpers.h"
 #include "cacommon.h"
 #include "secureresourcemanager.h"
+#include "ocstackinternal.h"
 
 #ifdef __unix__
 #include <sys/types.h>
@@ -2064,7 +2065,9 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
                 case SYMMETRIC_PAIR_WISE_KEY:
                 {
                     OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
-                    if(FillPrivateDataOfOwnerPSK(cred, (CAEndpoint_t *)&request->devAddr, doxm))
+                    CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
+                    CopyDevAddrToEndpoint(&request->devAddr, &endpoint);
+                    if (FillPrivateDataOfOwnerPSK(cred, &endpoint, doxm))
                     {
                         if(OC_STACK_RESOURCE_DELETED == RemoveCredential(&cred->subject))
                         {
@@ -2194,7 +2197,9 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
                 case SYMMETRIC_PAIR_WISE_KEY:
                 {
                     OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
-                    if(FillPrivateDataOfSubOwnerPSK(cred, (CAEndpoint_t *)&request->devAddr, doxm, &cred->subject))
+                    CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
+                    CopyDevAddrToEndpoint(&request->devAddr, &endpoint);
+                    if (FillPrivateDataOfSubOwnerPSK(cred, &endpoint, doxm, &cred->subject))
                     {
                         if(OC_STACK_RESOURCE_DELETED == RemoveCredential(&cred->subject))
                         {
