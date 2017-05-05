@@ -31,14 +31,13 @@ src_dir = env.get('SRC_DIR')
 
 if target_os not in ['android', 'arduino', 'darwin', 'ios', 'tizen', 'msys_nt', 'windows']:
 
-    SConscript(os.path.join('zigbee_wrapper', 'SConscript'))
+    SConscript('zigbee_wrapper/SConscript')
 
-    SConscript(os.path.join('src', 'SConscript'))
+    SConscript('src/SConscript')
 
-    SConscript(os.path.join('unittests', 'SConscript'))
+    SConscript('unittests/SConscript')
 
     if build_sample == 'ON':
-	    if target_os in ['linux']:
-		    target_path = target_os
-		    SConscript(os.path.join('samples', target_path, 'SConscript'))
+        if target_os in ['linux']:
+            SConscript('samples/' + target_os + '/SConscript')
 

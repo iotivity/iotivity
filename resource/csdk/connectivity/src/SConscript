@@ -41,10 +41,10 @@ if ca_os not in ['darwin', 'ios', 'windows']:
     connectivity_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 
 # Getting common source files
-connectivity_env.SConscript(os.path.join(root_dir, 'common', 'SConscript'), exports = 'connectivity_env')
+connectivity_env.SConscript(root_dir + '/common/SConscript', exports='connectivity_env')
 
 # Getting util source files
-connectivity_env.SConscript(os.path.join(root_dir, 'util', 'SConscript'), exports = 'connectivity_env')
+connectivity_env.SConscript(root_dir + '/util/SConscript', exports='connectivity_env')
 
 build_dir = connectivity_env.get('BUILD_DIR')
 

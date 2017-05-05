@@ -69,7 +69,7 @@ if target_os == 'android':
 		lib_env.AppendUnique(CCFLAGS = ['-w'])
 
 elif target_os in ['windows']:
-	SConscript(os.path.join(env.get('SRC_DIR'), 'extlibs', 'boost', 'SConscript'))
+	SConscript('#extlibs/boost/SConscript')
 	boost_path = os.path.join(src_dir,'extlibs','boost','boost')
 	lib_env.AppendUnique(CPPPATH = [boost_path])
 elif target_os == 'ios':

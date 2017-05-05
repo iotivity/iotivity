@@ -232,7 +232,7 @@ target_arch = env.get('TARGET_ARCH')
 
 # Verify that the arduino, time, red bear, and nordic libraries are
 # installed.  If not, get them and install them.
-SConscript(os.path.join(env.get('SRC_DIR'), 'extlibs', 'arduino', 'SConscript'))
+SConscript('#extlibs/arduino/SConscript')
 arduino_home = env.get('ARDUINO_HOME')
 print 'ARDUINO_HOME = ' + env.get('ARDUINO_HOME')
 

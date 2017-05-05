@@ -23,7 +23,7 @@ LIB_PATH = SRC_PATH
 WJSXMPPXEP_LIBS = ['wksxmppxep', 'm', 'crypto']
 
 if with_ra_ibb:
-	env.SConscript(base_dir + '/extlibs/libstrophe/SConscript')
+	env.SConscript('#extlibs/libstrophe/SConscript')
 	if not os.path.exists(SRC_NAME):
 		raxmpp_env = Environment(ENV = os.environ)
 		c = raxmpp_env.Action(['git clone https://github.com/WorksSystems/wks_xep0047.git ' + SRC_NAME,
@@ -33,12 +33,12 @@ if with_ra_ibb:
 		print 'Downloading', SRC_NAME ,'library ...'
 		if raxmpp_env.Execute(c):
 			print '''
-	*********************************** Error: ***********************************************
-	* Please download ra_xmpp as following:
-	*     $ git clone https://github.com/WorksSystems/wksxmpp_chat.git extlibs/wksxmppxep/wksxmpp_chat
-	*     $ cd extlibs/wksxmppxep/wksxmpp_chat
-	*     $ git checkout 8e9f42d02a0f416001065d1cddc1ab07974cef14
-	******************************************************************************************
+*********************************** Error: ************************************
+* Please download ra_xmpp as following:
+*     $ git clone https://github.com/WorksSystems/wksxmpp_chat.git extlibs/wksxmppxep/wksxmpp_chat
+*     $ cd extlibs/wksxmppxep/wksxmpp_chat
+*     $ git checkout 8e9f42d02a0f416001065d1cddc1ab07974cef14
+*******************************************************************************
 	'''
 			Exit(1)
 		else:

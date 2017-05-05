@@ -43,21 +43,21 @@ def __prepare_lib(ienv, libname, lib = None, path = None, script = None):
         if path:
             dir = path
         else:
-            dir = os.path.join(env.get('SRC_DIR'), 'extlibs', libname)
+            dir = '#/extlibs/' + libname
 
         # Execute the script to download(if required) and build source code
         if script:
-            st = os.path.join(dir, script)
+            st = dir + '/' + script
         else:
-            st = os.path.join(dir, 'SConscript')
+            st = dir + 'SConscript'
 
         if os.path.exists(st):
             SConscript(st)
         else:
             if target_os in ['linux', 'darwin', 'tizen']:
-                print 'Don\'t find library(%s), please intall it, exit ...' % libname
+                print 'Library (%s) not found, please intall it, exit ...' % libname
             else:
-                print 'Don\'t find library(%s) and don\'t find the process script (%s), exit ...' % (libname, st)
+                print 'Library (%s) not found and cannot find the scons script (%s), exit ...' % (libname, st)
             Exit(1)
 
     conf.Finish()

@@ -37,7 +37,7 @@ if env.get('LOGGING'):
 lib_env = SConscript('#extlibs/gtest/SConscript')
 rd_mode = env.get('RD_MODE')
 
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 
 ######################################################################
 #unit test setting
