@@ -122,7 +122,8 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& re
 
 void onPost2(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_CHANGED)
+    if(eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_CHANGED
+        || eCode == OC_STACK_RESOURCE_CREATED)
     {
         std::cout << "POST request was successful" << std::endl;
 
@@ -161,7 +162,8 @@ void onPost2(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep
 void onPost(const HeaderOptions& /*headerOptions*/,
         const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_CHANGED)
+    if(eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_CHANGED
+        || eCode == OC_STACK_RESOURCE_CREATED)
     {
         std::cout << "POST request was successful" << std::endl;
 
