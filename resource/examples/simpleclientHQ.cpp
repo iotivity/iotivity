@@ -37,6 +37,8 @@
 #include <windows.h>
 #endif
 
+#define MAX_SEQUENCE_NUMBER              (0xFFFFFF)
+
 using namespace OC;
 
 struct dereference_compare
@@ -85,7 +87,7 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& re
         {
             std::cout << "\tObserve Registration Confirmed: "<< std::endl;
         }
-        else if (sequenceNumber == (int) ObserveAction::ObserveUnregister)
+        else if (sequenceNumber == (MAX_SEQUENCE_NUMBER + 1))
         {
             std::cout << "\tObserve Cancel Confirmed: "<< std::endl;
             sleep(10);

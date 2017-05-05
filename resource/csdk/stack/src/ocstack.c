@@ -1673,6 +1673,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             }
 
             response->devAddr.adapter = OC_DEFAULT_ADAPTER;
+            response->sequenceNumber = MAX_SEQUENCE_NUMBER + 1;
             CopyEndpointToDevAddr(endPoint, &response->devAddr);
             FixUpClientResponse(response);
             response->resourceUri = responseInfo->info.resourceUri;
