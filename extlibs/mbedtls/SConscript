@@ -120,9 +120,6 @@ else:
 
 mbedtls_env = env.Clone()
 
-if mbedtls_env['CC'] == 'cl':
-    mbedtls_env.AppendUnique(CCFLAGS = ['/W4'])
-
 mbedtls_env.AppendUnique(CPPPATH = [
     mbedtls_dir,
     os.path.join(mbedtls_dir, 'include'),

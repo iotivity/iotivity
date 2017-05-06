@@ -159,13 +159,6 @@ if target_os in ['tizen', 'linux']:
 common_env = env.Clone()
 
 ######################################################################
-# Enable treating all warnings as errors
-######################################################################
-
-if target_os in ['windows', 'msys_nt']:
-    common_env.AppendUnique(CCFLAGS=['/W4'])
-
-######################################################################
 # Add platform-specific helper library
 ######################################################################
 

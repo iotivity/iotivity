@@ -316,9 +316,6 @@ else:
     libcoap_src_root = src_dir + '/resource/csdk/connectivity/lib/libcoap-4.1.1'
     libcoap_src = glob.glob(os.path.join(libcoap_src_root, '*.c'))
 
-if libcoap_env['CC'] == 'cl':
-    libcoap_env.AppendUnique(CCFLAGS = ['/W4'])
-
 libcoap = libcoap_env.StaticLibrary('coap', libcoap_src, OBJPREFIX='libcoap_')
 
 Clean(libcoap, config_h_file_path)

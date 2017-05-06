@@ -267,8 +267,10 @@ exit:
  * will handle REST request (GET/PUT/POST/DEL) for them.
  */
 static OCEntityHandlerResult rdEntityHandler(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *ehRequest, OC_ANNOTATE_UNUSED void *callbackParameter)
+        OCEntityHandlerRequest *ehRequest, void *callbackParameter)
 {
+    OC_UNUSED(callbackParameter);
+
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     if (!ehRequest)

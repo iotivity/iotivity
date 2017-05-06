@@ -41,8 +41,8 @@ if env['CC'] == 'cl':
     #    - Disabled due to the widespread usage in IoTivity and low impact.
     env.AppendUnique(CCFLAGS=['/wd4127', '/wd4200', '/wd4201', '/wd4204', '/wd4214', '/wd4221', '/wd4232', '/wd4503', '/wd4512', '/wd4706'])
 
-    # Enabling /W3 warnings globally for Windows builds.
-    env.AppendUnique(CCFLAGS=['/W3', '/WX'])
+    # Enabling /W4 warnings globally for Windows builds.
+    env.AppendUnique(CCFLAGS=['/W4', '/WX'])
     env.AppendUnique(CCFLAGS=['/EHsc'])
 
     # Set release/debug flags

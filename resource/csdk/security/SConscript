@@ -57,8 +57,6 @@ libocsrm_env.PrependUnique(CPPPATH = [
 
 if target_os in ['windows', 'msys_nt']:
 	libocsrm_env.AppendUnique(LIBPATH = [os.path.join(libocsrm_env.get('BUILD_DIR'), 'resource', 'oc_logger')])
-	libocsrm_env.AppendUnique(CCFLAGS=['/W4'])
-
 if target_os in ['linux', 'android', 'tizen', 'msys_nt', 'windows'] and libocsrm_env.get('SECURED') == '1':
 	SConscript('provisioning/SConscript', 'libocsrm_env')
 
