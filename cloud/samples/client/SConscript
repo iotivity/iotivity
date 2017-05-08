@@ -77,7 +77,6 @@ if tlsOption is '1':
 	Command("aircon_controlee.dat", cc_cloud_src_dir + "aircon_controlee.dat", Copy("$TARGET", "$SOURCE"))
 	Command("aircon_controller.dat", cc_cloud_src_dir + "aircon_controller.dat", Copy("$TARGET", "$SOURCE"))
 	Command("group_invite.dat", cc_cloud_src_dir + "group_invite.dat", Copy("$TARGET", "$SOURCE"))
-	Command("group_light_share.dat", cc_cloud_src_dir + "group_light_share.dat", Copy("$TARGET", "$SOURCE"))
 	Command("mq_publisher.dat", cc_cloud_src_dir + "mq_publisher.dat", Copy("$TARGET", "$SOURCE"))
 	Command("mq_subscriber.dat", cc_cloud_src_dir + "mq_subscriber.dat", Copy("$TARGET", "$SOURCE"))
 	Command("thin_room_light.dat", cc_cloud_src_dir + "thin_room_light.dat", Copy("$TARGET", "$SOURCE"))
@@ -133,8 +132,3 @@ group_invite_src = [
         'group_invite/group_invite.cpp'
         ]
 cc_sample_app_env.Program('group_invite_sample', group_invite_src)
-
-group_light_share_src = [
-        'group_invite/group_light_share.cpp'
-        ]
-cc_sample_app_env.Program('group_light_share_sample', group_light_share_src)
