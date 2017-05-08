@@ -561,6 +561,13 @@ public class OcResource {
     public native boolean isObservable();
 
     /**
+     * Function to change host of this reource
+     * @return New host Address.
+     *         Not observable.
+     */
+     public native String setHost(String host);
+     
+    /**
      * Method to get the list of resource types
      *
      * @return List of resource types
