@@ -1719,10 +1719,13 @@ void OCFFramework::RequestAccessWorkerThread(RequestAccessContext* requestContex
                                         passwordInputCallbackInfo);
                         }
 
+                        // Make sure user input string is terminated
+                        passwordBuffer[OXM_PRECONFIG_PIN_MAX_SIZE] = '\0';
+
                         // Set the preconfigured pin
                         result = deviceDetails->securityInfo.device->addPreconfigPIN(
                                         passwordBuffer,
-                                        strnlen_s(passwordBuffer, passwordBufferSize));
+                                        strlen(passwordBuffer));
 
                         if (OC_STACK_OK != result)
                         {
