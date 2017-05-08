@@ -1124,14 +1124,14 @@ static int testCertUse(int dev_num)
     int ret = createCertFromCSR(g_caKeyPem, g_caCertPem, csr, NULL, NULL, &deviceCert);
     if (ret != 0)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to create identity certificate", __func__);
+        OIC_LOG_V(ERROR, TAG, "%s Failed to create identity certificate", __func__);
         goto exit;
     }
 
     ret = provisionCert(dev_num, deviceCert);
     if (ret != 0)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to provision certificate", __func__);
+        OIC_LOG_V(ERROR, TAG, "%s Failed to provision certificate", __func__);
         goto exit;
     }
 
@@ -1255,14 +1255,14 @@ static int testRoleProvisioning(int dev_num)
     int ret = createCertFromCSR(g_caKeyPem, g_caCertPem, csr, NULL, NULL, &idCert);
     if (ret != 0)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to create identity certificate", __func__);
+        OIC_LOG_V(ERROR, TAG, "%s Failed to create identity certificate", __func__);
         goto exit;
     }
 
     ret = provisionCert(dev_num, idCert);
     if (ret != 0)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to provision id certificate", __func__);
+        OIC_LOG_V(ERROR, TAG, "%s Failed to provision id certificate", __func__);
         goto exit;
     }
 
@@ -1270,14 +1270,14 @@ static int testRoleProvisioning(int dev_num)
     ret = createCertFromCSR(g_caKeyPem, g_caCertPem, csr, TEST_CERT_ROLE1, NULL, &roleCert);
     if (ret != 0)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to create role certificate", __func__);
+        OIC_LOG_V(ERROR, TAG, "%s Failed to create role certificate", __func__);
         goto exit;
     }
 
     ret = provisionCert(dev_num, roleCert);
     if (ret != 0)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to provision role certificate", __func__);
+        OIC_LOG_V(ERROR, TAG, "%s Failed to provision role certificate", __func__);
         goto exit;
     }
     OICFreeAndSetToNull(&roleCert);
@@ -1286,14 +1286,14 @@ static int testRoleProvisioning(int dev_num)
     ret = createCertFromCSR(g_caKeyPem, g_caCertPem, csr, TEST_CERT_ROLE2, TEST_CERT_AUTHORITY, &roleCert);
     if (ret != 0)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to create role certificate", __func__);
+        OIC_LOG_V(ERROR, TAG, "%s Failed to create role certificate", __func__);
         goto exit;
     }
 
     ret = provisionCert(dev_num, roleCert);
     if (ret != 0)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to provision role certificate", __func__);
+        OIC_LOG_V(ERROR, TAG, "%s Failed to provision role certificate", __func__);
         goto exit;
     }
 
@@ -1334,14 +1334,14 @@ static int testRoleAssertion(int dev_num)
     int ret = createCertFromCSR(g_caKeyPem, g_caCertPem, csr, NULL, NULL, &idCert);
     if (ret != 0)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to create identity certificate", __func__);
+        OIC_LOG_V(ERROR, TAG, "%s Failed to create identity certificate", __func__);
         goto exit;
     }
 
     ret = provisionCert(dev_num, idCert);
     if (ret != 0)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to provision id certificate", __func__);
+        OIC_LOG_V(ERROR, TAG, "%s Failed to provision id certificate", __func__);
         goto exit;
     }
 
@@ -1479,14 +1479,14 @@ static int testRoleAssertionAndUse(int dev_num)
     int ret = createCertFromCSR(g_caKeyPem, g_caCertPem, csr, NULL, NULL, &idCert);
     if (ret != 0)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to create identity certificate", __func__);
+        OIC_LOG_V(ERROR, TAG, "%s Failed to create identity certificate", __func__);
         goto exit;
     }
 
     ret = provisionCert(dev_num, idCert);
     if (ret != 0)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to provision id certificate", __func__);
+        OIC_LOG_V(ERROR, TAG, "%s Failed to provision id certificate", __func__);
         goto exit;
     }
 
