@@ -852,6 +852,7 @@ int main(int argc, char *argv[])
 
                         result = accountMgr->deletePropertyValueFromGroup(groupId, propertyValue,
                                  &onPost);
+                        break;
                     }
 
                 case 12:
