@@ -242,7 +242,7 @@ OCStackResult OCCloudAclCreateGroup(void* ctx,
  * ACL get group request function
  *
  * @param[in] ctx               user-defined context
- * @param[in] memberId          mandatory parameter member id
+ * @param[in] memberId          member id
  * @param[in] endPoint          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
