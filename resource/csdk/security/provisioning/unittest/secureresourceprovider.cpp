@@ -31,8 +31,6 @@ static OicSecOxm_t oicSecDoxmRandomPin = OIC_RANDOM_DEVICE_PIN;
 static unsigned short timeout = 60;
 static OicSecDoxm_t defaultDoxm1 =
 {
-    NULL,                   /* OicUrn_t *oxmType */
-    0,                      /* size_t oxmTypeLen */
     &oicSecDoxmJustWorks,   /* uint16_t *oxm */
     1,                      /* size_t oxmLen */
     OIC_JUST_WORKS,         /* uint16_t oxmSel */
@@ -50,8 +48,6 @@ static OicSecDoxm_t defaultDoxm1 =
 
 static OicSecDoxm_t defaultDoxm2 =
 {
-    NULL,                   /* OicUrn_t *oxmType */
-    0,                      /* size_t oxmTypeLen */
     &oicSecDoxmRandomPin,   /* uint16_t *oxm */
     1,                      /* size_t oxmLen */
     OIC_RANDOM_DEVICE_PIN,  /* uint16_t oxmSel */

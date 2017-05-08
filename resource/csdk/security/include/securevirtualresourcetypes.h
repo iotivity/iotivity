@@ -590,8 +590,6 @@ struct OicSecMom{
 struct OicSecDoxm
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    OicUrn_t            *oxmType;       // 0:R:M:N:URN TODO [IOT-2105]
-    size_t              oxmTypeLen;     // the number of elts in OxmType
     OicSecOxm_t         *oxm;           // 1:R:M:N:UINT16
     size_t              oxmLen;         // the number of elts in Oxm
     OicSecOxm_t         oxmSel;         // 2:R/W:S:Y:UINT16

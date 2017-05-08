@@ -716,8 +716,6 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
     cJSON *jsonDoxm = NULL;
     cJSON *jsonObj = NULL;
 
-    size_t jsonObjLen = 0;
-
     cJSON *jsonRoot = cJSON_Parse(jsonStr);
     VERIFY_NOT_NULL(TAG, jsonRoot, ERROR);
 
@@ -726,36 +724,6 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
 
     doxm = (OicSecDoxm_t *)OICCalloc(1, sizeof(OicSecDoxm_t));
     VERIFY_NOT_NULL(TAG, doxm, ERROR);
-
-    //OxmType -- not Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_TYPE_NAME);
-    if ((jsonObj) && (cJSON_Array == jsonObj->type))
-    {
-        doxm->oxmTypeLen = cJSON_GetArraySize(jsonObj);
-        VERIFY_SUCCESS(TAG, doxm->oxmTypeLen > 0, ERROR);
-
-        doxm->oxmType = (OicUrn_t *)OICCalloc(doxm->oxmTypeLen, sizeof(char *));
-        VERIFY_NOT_NULL(TAG, (doxm->oxmType), ERROR);
-
-        for (size_t i  = 0; i < doxm->oxmTypeLen ; i++)
-        {
-// Needs to be removed once IOT-1746 is resolved.
-#ifdef _MSC_VER
-#pragma warning(suppress : 4267)
-            cJSON *jsonOxmTy = cJSON_GetArrayItem(jsonObj, i);
-
-#else
-            cJSON *jsonOxmTy = cJSON_GetArrayItem(jsonObj, i);
-
-#endif
-            VERIFY_NOT_NULL(TAG, jsonOxmTy, ERROR);
-
-            jsonObjLen = strlen(jsonOxmTy->valuestring) + 1;
-            doxm->oxmType[i] = (char*)OICMalloc(jsonObjLen);
-            VERIFY_NOT_NULL(TAG, doxm->oxmType[i], ERROR);
-            strncpy((char *)doxm->oxmType[i], (char *)jsonOxmTy->valuestring, jsonObjLen);
-        }
-    }
 
     //Oxm -- not Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXMS_NAME);

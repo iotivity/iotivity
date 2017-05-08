@@ -225,8 +225,6 @@ OicSecDoxm_t* CloneOicSecDoxm(const OicSecDoxm_t* src)
 #endif //MULTIPLE_OWNER
 
     // We have to assign NULL for not necessary information to prevent memory corruption.
-    newDoxm->oxmType = NULL;
-    newDoxm->oxmTypeLen = 0;
     newDoxm->oxm = NULL;
     newDoxm->oxmLen = 0;
 

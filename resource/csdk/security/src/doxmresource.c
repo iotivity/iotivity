@@ -83,8 +83,6 @@ static OCResourceHandle    gDoxmHandle = NULL;
 static OicSecOxm_t gDoxmDefaultOxm = OIC_RANDOM_DEVICE_PIN;
 static OicSecDoxm_t gDefaultDoxm =
 {
-    NULL,                   /* OicUrn_t *oxmType */
-    0,                      /* size_t oxmTypeLen */
     &gDoxmDefaultOxm,       /* uint16_t *oxm */
     1,                      /* size_t oxmLen */
     OIC_RANDOM_DEVICE_PIN,  /* uint16_t oxmSel */
@@ -161,13 +159,6 @@ void DeleteDoxmBinData(OicSecDoxm_t* doxm)
 {
     if (doxm)
     {
-        //Clean oxmType
-        for (size_t i = 0; i < doxm->oxmTypeLen; i++)
-        {
-            OICFree(doxm->oxmType[i]);
-        }
-        OICFree(doxm->oxmType);
-
         //clean oxm
         OICFree(doxm->oxm);
 
@@ -223,28 +214,6 @@ OCStackResult DoxmToCBORPayloadPartial(const OicSecDoxm_t *doxm,
 
     cborEncoderResult = cbor_encoder_create_map(&encoder, &doxmMap, CborIndefiniteLength);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Doxm Map.");
-
-    // oxmtype
-    // TODO [IOT-2105]: resolve "oxmtype" undocumented tag/value
-    if (propertiesToInclude[DOXM_OXMTYPE] && doxm->oxmTypeLen > 0)
-    {
-        OIC_LOG_V(DEBUG, TAG, "%s: including %s.", __func__, OIC_JSON_OXM_TYPE_NAME);
-        CborEncoder oxmType;
-        cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OXM_TYPE_NAME,
-            strlen(OIC_JSON_OXM_TYPE_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmtype Tag.");
-        cborEncoderResult = cbor_encoder_create_array(&doxmMap, &oxmType, doxm->oxmTypeLen);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmtype Array.");
-
-        for (size_t i = 0; i < doxm->oxmTypeLen; i++)
-        {
-            cborEncoderResult = cbor_encode_text_string(&oxmType, doxm->oxmType[i],
-                strlen(doxm->oxmType[i]));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmtype Value.");
-        }
-        cborEncoderResult = cbor_encoder_close_container(&doxmMap, &oxmType);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing oxmtype.");
-    }
 
     // oxms Property
     if (propertiesToInclude[DOXM_OXMS] && doxm->oxmLen > 0)
@@ -467,8 +436,6 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm,
         allProps[i] = true;
     }
 
-    allProps[DOXM_OXMTYPE] = false; // TODO [IOT-2105]: resolve "oxmtype" undocumented tag/value
-
     return DoxmToCBORPayloadPartial(doxm, payload, size, allProps);
 }
 
@@ -500,38 +467,6 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     CborValue doxmMap;
     OicSecDoxm_t *doxm = (OicSecDoxm_t *)OICCalloc(1, sizeof(*doxm));
     VERIFY_NOT_NULL(TAG, doxm, ERROR);
-
-    cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_OXM_TYPE_NAME, &doxmMap);
-    // OxmType
-    // TODO [IOT-2105]: resolve "oxmtype" undocumented tag/value
-    if (CborNoError == cborFindResult && cbor_value_is_array(&doxmMap))
-    {
-        OIC_LOG(DEBUG, TAG, "Found doxm.oxmtype tag in doxmMap.");
-
-        CborValue oxmType;
-
-        cborFindResult = cbor_value_get_array_length(&doxmMap, &doxm->oxmTypeLen);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding oxmTypeLen.");
-        VERIFY_SUCCESS(TAG, doxm->oxmTypeLen != 0, ERROR);
-
-        doxm->oxmType = (OicUrn_t *)OICCalloc(doxm->oxmTypeLen, sizeof(*doxm->oxmType));
-        VERIFY_NOT_NULL(TAG, doxm->oxmType, ERROR);
-
-        cborFindResult = cbor_value_enter_container(&doxmMap, &oxmType);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering oxmType Array.")
-
-        int i = 0;
-        size_t oxmTypeStrlen = 0;
-        while (cbor_value_is_valid(&oxmType) && cbor_value_is_text_string(&oxmType))
-        {
-            OIC_LOG_V(DEBUG, TAG, "Read doxm.oxmtype value = %s", oxmType);
-            cborFindResult = cbor_value_dup_text_string(&oxmType, &doxm->oxmType[i++],
-                                                        &oxmTypeStrlen, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding omxType text string.");
-            cborFindResult = cbor_value_advance(&oxmType);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing oxmType.");
-        }
-    }
 
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_OXMS_NAME, &doxmMap);
 
@@ -2418,35 +2353,8 @@ bool AreDoxmBinPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* doxm2)
         return false;
     }
 
-    //Compare the contents of the oxmType array and its length oxmTypeLen.
-    size_t arrayLength = doxm1->oxmTypeLen;
-
-    if (arrayLength != doxm2->oxmTypeLen)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: oxmTypeLen mismatch: (%" PRIuPTR ", %" PRIuPTR ")",
-            __func__, arrayLength, doxm2->oxmTypeLen);
-        return false;
-    }
-
-    for (size_t i = 0; i < arrayLength; i++)
-    {
-        if (NULL == doxm1->oxmType[i] || NULL == doxm2->oxmType[i])
-        {
-            OIC_LOG_V(ERROR, TAG, "%s: unexpected NULL found in the oxmType array",
-                __func__);
-            return false;
-        }
-
-        if (0 != strcmp(doxm1->oxmType[i], doxm2->oxmType[i]))
-        {
-            OIC_LOG_V(ERROR, TAG, "%s: oxmType mismatch: (%s, %s)",
-                __func__, doxm1->oxmType[i], doxm2->oxmType[i]);
-            return false;
-        }
-    }
-
     //Compare the contents of the oxm array and its length oxmLen.
-    arrayLength = doxm1->oxmLen;
+    size_t arrayLength = doxm1->oxmLen;
 
     if (arrayLength != doxm2->oxmLen)
     {
@@ -2459,7 +2367,7 @@ bool AreDoxmBinPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* doxm2)
     {
         if (doxm1->oxm[i] != doxm2->oxm[i])
         {
-            OIC_LOG_V(ERROR, TAG, "%s: oxmType mismatch: (%u, %u)",
+            OIC_LOG_V(ERROR, TAG, "%s: oxm mismatch: (%u, %u)",
                 __func__, (uint32_t)doxm1->oxm[i], (uint32_t)doxm2->oxm[i]);
             return false;
         }

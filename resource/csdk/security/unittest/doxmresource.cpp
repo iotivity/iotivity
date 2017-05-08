@@ -39,28 +39,11 @@ OicSecDoxm_t * getBinDoxm()
     {
         return NULL;
     }
-    doxm->oxmTypeLen =  1;
-    doxm->oxmType = (OicUrn_t *)OICCalloc(doxm->oxmTypeLen, sizeof(*doxm->oxmType));
-    if (!doxm->oxmType)
-    {
-        OICFree(doxm);
-        return NULL;
-    }
-    doxm->oxmType[0] = (char *) OICMalloc(strlen(OXM_JUST_WORKS) + 1);
-    if (!doxm->oxmType[0])
-    {
-        OICFree(doxm->oxmType);
-        OICFree(doxm);
-        return NULL;
-    }
 
-    OICStrcpy(doxm->oxmType[0], strlen(OXM_JUST_WORKS) + 1, OXM_JUST_WORKS);
     doxm->oxmLen     = 1;
     doxm->oxm        = (OicSecOxm_t *)OICCalloc(doxm->oxmLen, sizeof(OicSecOxm_t));
     if(!doxm->oxm)
     {
-        OICFree(doxm->oxmType[0]);
-        OICFree(doxm->oxmType);
         OICFree(doxm);
         return NULL;
     }
@@ -194,10 +177,6 @@ TEST(DoxmResourceTest, CBORPayloadToDoxmVALID)
     OicSecDoxm_t *doxmSec = NULL;
     EXPECT_EQ(OC_STACK_OK, CBORPayloadToDoxm(payload, size, &doxmSec));
     ASSERT_TRUE(doxmSec != NULL);
-    // TODO [IOT-2105]: resolve "oxmtype" undocumented tag/value
-    // EXPECT_EQ(doxmSec->oxmTypeLen, doxm->oxmTypeLen);
-    // EXPECT_STREQ(doxmSec->oxmType[0], doxm->oxmType[0]);
-    EXPECT_EQ(doxmSec->oxmLen, doxm->oxmLen);
     EXPECT_EQ(doxmSec->oxm[0], doxm->oxm[0]);
     EXPECT_EQ(doxmSec->oxmSel, doxm->oxmSel);
     EXPECT_EQ(doxmSec->sct, doxm->sct);
@@ -240,7 +219,6 @@ typedef struct _DoxmMotParameters
 
 typedef struct _DoxmTestParameter
 {
-    std::vector<std::string>        m_oxmTypeArray;
     std::vector<OicSecOxm_t>        m_oxmArray;
     OicSecOxm_t                     m_oxmSel;
     OicSecCredType_t                m_sct;
@@ -295,27 +273,8 @@ void DoxmComparisonTests::DoxmBinFromParameter(const DoxmTestParameter &param, O
     OicSecDoxm_t *newDoxmBin = (OicSecDoxm_t *)OICCalloc(1, sizeof(OicSecDoxm_t));
     ASSERT_NE(nullptr, newDoxmBin);
 
-    // oxmType and oxmTypeLen.
-    size_t arrayLength = param.m_oxmTypeArray.size();
-    if (arrayLength == 0)
-    {
-        newDoxmBin->oxmType = nullptr;
-    }
-    else
-    {
-        newDoxmBin->oxmType = (OicUrn_t *)OICCalloc(sizeof(OicUrn_t), arrayLength);
-        ASSERT_NE(nullptr, newDoxmBin->oxmType);
-
-        for (size_t i = 0; i < arrayLength; i++)
-        {
-            newDoxmBin->oxmType[i] = OICStrdup(param.m_oxmTypeArray[i].c_str());
-            ASSERT_NE(nullptr, newDoxmBin->oxmType[i]);
-        }
-    }
-    newDoxmBin->oxmTypeLen = arrayLength;
-
     // oxm and oxmLen.
-    arrayLength = param.m_oxmArray.size();
+    size_t arrayLength = param.m_oxmArray.size();
     if (arrayLength == 0)
     {
         newDoxmBin->oxm = nullptr;
@@ -373,7 +332,6 @@ TEST_F(DoxmComparisonTests, Equal1)
 
     DoxmTestParameter param1 =
     {
-        {"oxmType1"},
         {OIC_JUST_WORKS},
         OIC_JUST_WORKS,
         SYMMETRIC_PAIR_WISE_KEY,
@@ -411,7 +369,6 @@ TEST_F(DoxmComparisonTests, Equal2)
 
     DoxmTestParameter param1 =
     {
-        {"oxmType10"},
         {OIC_RANDOM_DEVICE_PIN, OIC_JUST_WORKS},
         OIC_RANDOM_DEVICE_PIN,
         SYMMETRIC_PAIR_WISE_KEY,
@@ -443,7 +400,6 @@ TEST_F(DoxmComparisonTests, Equal3)
 
     DoxmTestParameter param1 =
     {
-        {"oxmType10", "oxmType20"},
         {OIC_RANDOM_DEVICE_PIN, OIC_JUST_WORKS},
         OIC_RANDOM_DEVICE_PIN,
         SYMMETRIC_PAIR_WISE_KEY,
@@ -470,7 +426,6 @@ TEST_F(DoxmComparisonTests, Equal4)
 {
     DoxmTestParameter param1 =
     {
-        {"oxmType100"},
         {OIC_RANDOM_DEVICE_PIN, OIC_JUST_WORKS},
         OIC_RANDOM_DEVICE_PIN,
         SYMMETRIC_PAIR_WISE_KEY,
@@ -497,7 +452,6 @@ TEST_F(DoxmComparisonTests, Equal5)
 {
     DoxmTestParameter param1 =
     {
-        {"oxmType100", "foo"},
         {OIC_RANDOM_DEVICE_PIN, OIC_JUST_WORKS},
         OIC_JUST_WORKS,
         SYMMETRIC_GROUP_KEY,
@@ -524,7 +478,6 @@ TEST_F(DoxmComparisonTests, Equal6)
 {
     DoxmTestParameter param1 =
     {
-        {"type", "bar", "Fred"},
         {OIC_MANUFACTURER_CERTIFICATE},
         OIC_JUST_WORKS,
         SYMMETRIC_GROUP_KEY,
@@ -547,69 +500,10 @@ TEST_F(DoxmComparisonTests, Equal6)
     EXPECT_TRUE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
 }
 
-TEST_F(DoxmComparisonTests, oxmTypeMismatch)
-{
-    DoxmTestParameter param1 =
-    {
-        {"type", "bar", "Fred"},
-        {OIC_MANUFACTURER_CERTIFICATE},
-        OIC_JUST_WORKS,
-        SYMMETRIC_GROUP_KEY,
-        false,
-        {0},    // m_deviceID
-        true,
-        {0},    // m_owner
-
-#ifdef MULTIPLE_OWNER
-        {},
-        OIC_MULTIPLE_OWNER_ENABLE,
-#endif
-        {0}     // m_rownerID
-    };
-    GenerateDoxmTestParameterUUIDs(&param1);
-
-    DoxmTestParameter param2 = param1;
-    param2.m_oxmTypeArray[1] = "foo";
-
-    DoxmBinFromParameters(param1, param2);
-
-    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
-}
-
-TEST_F(DoxmComparisonTests, oxmTypeLenMismatch)
-{
-    DoxmTestParameter param1 =
-    {
-        {"type1", "type2", "type3", "type4", "type5"},
-        {OIC_MANUFACTURER_CERTIFICATE},
-        OIC_JUST_WORKS,
-        SYMMETRIC_GROUP_KEY,
-        false,
-        {0},    // m_deviceID
-        true,
-        {0},    // m_owner
-
-#ifdef MULTIPLE_OWNER
-        {},
-        OIC_MULTIPLE_OWNER_ENABLE,
-#endif
-        {0}     // m_rownerID
-    };
-    GenerateDoxmTestParameterUUIDs(&param1);
-
-    DoxmTestParameter param2 = param1;
-    param2.m_oxmTypeArray.erase(param2.m_oxmTypeArray.begin());
-
-    DoxmBinFromParameters(param1, param2);
-
-    EXPECT_FALSE(AreDoxmBinPropertyValuesEqual(m_doxm1, m_doxm2));
-}
-
 TEST_F(DoxmComparisonTests, oxmMismatch)
 {
     DoxmTestParameter param1 =
     {
-        {"test oxmtype"},
         {OIC_MANUFACTURER_CERTIFICATE},
         OIC_JUST_WORKS,
         SYMMETRIC_GROUP_KEY,
@@ -638,7 +532,6 @@ TEST_F(DoxmComparisonTests, oxmLenMismatch)
 {
     DoxmTestParameter param1 =
     {
-        {"test oxmtype"},
         {OIC_MANUFACTURER_CERTIFICATE},
         OIC_JUST_WORKS,
         SYMMETRIC_GROUP_KEY,
@@ -667,7 +560,6 @@ TEST_F(DoxmComparisonTests, oxmSelMismatch)
 {
     DoxmTestParameter param1 =
     {
-        {"oxmtype1"},
         {OIC_MANUFACTURER_CERTIFICATE, OIC_JUST_WORKS, OIC_DECENTRALIZED_PUBLIC_KEY, OIC_RANDOM_DEVICE_PIN},
         OIC_RANDOM_DEVICE_PIN,
         SYMMETRIC_GROUP_KEY,
@@ -696,7 +588,6 @@ TEST_F(DoxmComparisonTests, sctMismatch)
 {
     DoxmTestParameter param1 =
     {
-        {"oxmtype10000"},
         {OIC_MANUFACTURER_CERTIFICATE, OIC_JUST_WORKS, OIC_DECENTRALIZED_PUBLIC_KEY, OIC_RANDOM_DEVICE_PIN},
         OIC_RANDOM_DEVICE_PIN,
         ASYMMETRIC_KEY,
@@ -725,7 +616,6 @@ TEST_F(DoxmComparisonTests, ownedMismatch)
 {
     DoxmTestParameter param1 =
     {
-        {"oxmtype10000"},
         {OIC_MANUFACTURER_CERTIFICATE, OIC_JUST_WORKS, OIC_DECENTRALIZED_PUBLIC_KEY, OIC_RANDOM_DEVICE_PIN},
         OIC_RANDOM_DEVICE_PIN,
         ASYMMETRIC_KEY,
@@ -754,7 +644,6 @@ TEST_F(DoxmComparisonTests, deviceIDMismatch)
 {
     DoxmTestParameter param1 =
     {
-        {"Jack", "in", "The", "Box"},
         {OIC_MANUFACTURER_CERTIFICATE, OIC_DECENTRALIZED_PUBLIC_KEY, OIC_RANDOM_DEVICE_PIN},
         OIC_MANUFACTURER_CERTIFICATE,
         PIN_PASSWORD,
@@ -783,7 +672,6 @@ TEST_F(DoxmComparisonTests, dpcMismatch)
 {
     DoxmTestParameter param1 =
     {
-        {"Jack", "in", "The", "Box"},
         {OIC_MANUFACTURER_CERTIFICATE, OIC_DECENTRALIZED_PUBLIC_KEY, OIC_RANDOM_DEVICE_PIN},
         OIC_MANUFACTURER_CERTIFICATE,
         PIN_PASSWORD,
@@ -812,7 +700,6 @@ TEST_F(DoxmComparisonTests, ownerMismatch)
 {
     DoxmTestParameter param1 =
     {
-        {"dpcMismatch test"},
         {OIC_RANDOM_DEVICE_PIN},
         OIC_RANDOM_DEVICE_PIN,
         PIN_PASSWORD,
@@ -841,7 +728,6 @@ TEST_F(DoxmComparisonTests, rownerIDMismatch)
 {
     DoxmTestParameter param1 =
     {
-        {"abc"},
         {OIC_JUST_WORKS, OIC_RANDOM_DEVICE_PIN},
         OIC_JUST_WORKS,
         ASYMMETRIC_KEY,
@@ -874,7 +760,6 @@ TEST_F(DoxmComparisonTests, subOwnersLengthMismatch1)
 
     DoxmTestParameter param1 =
     {
-        {"oxmType1"},
         {OIC_JUST_WORKS},
         OIC_JUST_WORKS,
         SYMMETRIC_PAIR_WISE_KEY,
@@ -909,7 +794,6 @@ TEST_F(DoxmComparisonTests, subOwnersLengthMismatch2)
 
     DoxmTestParameter param1 =
     {
-        {"oxmType1"},
         {OIC_JUST_WORKS},
         OIC_JUST_WORKS,
         SYMMETRIC_PAIR_WISE_KEY,
@@ -944,7 +828,6 @@ TEST_F(DoxmComparisonTests, subOwnerIDMismatch)
 
     DoxmTestParameter param1 =
     {
-        {"oxmType1"},
         {OIC_JUST_WORKS},
         OIC_JUST_WORKS,
         SYMMETRIC_PAIR_WISE_KEY,
@@ -976,7 +859,6 @@ TEST_F(DoxmComparisonTests, subOwnerStateMismatch)
 
     DoxmTestParameter param1 =
     {
-        {"oxmType1"},
         {OIC_JUST_WORKS},
         OIC_JUST_WORKS,
         SYMMETRIC_PAIR_WISE_KEY,
@@ -1010,7 +892,6 @@ TEST_F(DoxmComparisonTests, subOwnerMomMismatch)
 
     DoxmTestParameter param1 =
     {
-        {"oxmType1"},
         {OIC_JUST_WORKS},
         OIC_JUST_WORKS,
         SYMMETRIC_PAIR_WISE_KEY,
@@ -1036,8 +917,7 @@ TEST_F(DoxmComparisonTests, createMom)
 {
     DoxmTestParameter param1 =
     {
-        { "oxmType1" },
-        { OIC_JUST_WORKS },
+        {OIC_JUST_WORKS},
         OIC_JUST_WORKS,
         SYMMETRIC_PAIR_WISE_KEY,
         false,
@@ -1066,8 +946,7 @@ TEST_F(DoxmComparisonTests, updateMomEnable)
 {
     DoxmTestParameter param1 =
     {
-        { "oxmType1" },
-        { OIC_JUST_WORKS },
+        {OIC_JUST_WORKS},
         OIC_JUST_WORKS,
         SYMMETRIC_PAIR_WISE_KEY,
         false,
@@ -1098,8 +977,7 @@ TEST_F(DoxmComparisonTests, updateMomDisable)
 {
     DoxmTestParameter param1 =
     {
-        { "oxmType1" },
-        { OIC_JUST_WORKS },
+        {OIC_JUST_WORKS},
         OIC_JUST_WORKS,
         SYMMETRIC_PAIR_WISE_KEY,
         false,
@@ -1130,8 +1008,7 @@ TEST_F(DoxmComparisonTests, updateMomEnableDisable)
 {
     DoxmTestParameter param1 =
     {
-        { "oxmType1" },
-        { OIC_JUST_WORKS },
+        {OIC_JUST_WORKS},
         OIC_JUST_WORKS,
         SYMMETRIC_PAIR_WISE_KEY,
         false,
