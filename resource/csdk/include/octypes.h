@@ -350,8 +350,8 @@ extern "C" {
 /**
  *  Introspection.
  */
-/** Name.*/
-#define OC_RSRVD_INTROSPECTION_NAME     "name"
+/** Name property name(n).*/
+#define OC_RSRVD_INTROSPECTION_NAME     "n"
 
 /** Value of name.*/
 #define OC_RSRVD_INTROSPECTION_NAME_VALUE "Introspection"
