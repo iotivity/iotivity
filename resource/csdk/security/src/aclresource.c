@@ -2117,6 +2117,7 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
 
     OicSecDostype_t dos;
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
+    ehRet = OC_EH_OK;
     if ((DOS_RESET == dos.state) ||
         (DOS_RFNOP == dos.state))
     {
