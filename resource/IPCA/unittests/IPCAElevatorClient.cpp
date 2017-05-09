@@ -423,7 +423,7 @@ IPCAStatus IPCAElevatorClient::ConfirmDeviceAndPlatformInfo()
         EXPECT_STREQ(g_elevator1Name.c_str(), deviceInfo->deviceName);
 
         // See: ipcatestdata.h ELEVATOR_DATA_MODEL_VERSION_1 to 3.
-        EXPECT_EQ(3, deviceInfo->dataModelVersionCount);
+        EXPECT_EQ(static_cast<size_t>(3), deviceInfo->dataModelVersionCount);
 
         bool modelFound = false;
         std::string Model1(ELEVATOR_DATA_MODEL_VERSION_1);
@@ -546,7 +546,7 @@ IPCAStatus IPCAElevatorClient::ConfirmResourceInterfaces()
                             nullptr,
                             &resourcePathList,
                             &resourcePathCount));
-    EXPECT_EQ(1, resourcePathCount);
+    EXPECT_EQ(static_cast<size_t>(1), resourcePathCount);
     EXPECT_STREQ(ELEVATOR_CO_RESOURCE_PATH, resourcePathList[0]);
     IPCAFreeStringArray(resourcePathList, resourcePathCount);
 
@@ -1069,15 +1069,15 @@ IPCAStatus IPCAElevatorClient::TestMultipleCallsToCloseSameHandle()
 
     // First IPCACloseHandle() should be succesful.
     EXPECT_EQ(IPCA_OK, IPCACloseHandle(getHandle, &C_CloseHandleComplete, static_cast<void*>(&count)));
-    EXPECT_EQ(1, C_WaitNumber(&count, 1));
+    EXPECT_EQ(static_cast<size_t>(1), C_WaitNumber(&count, 1));
 
     // Subsequent IPCACloseHandle() on the same handle is expected to fail.
     // And the C_CloseHandleMultiple() is not called, i.e. count should not increase.
     EXPECT_EQ(IPCA_FAIL, IPCACloseHandle(getHandle, &C_CloseHandleComplete, static_cast<void*>(&count)));
-    EXPECT_EQ(1, C_WaitNumber(&count, 2));
+    EXPECT_EQ(static_cast<size_t>(1), C_WaitNumber(&count, 2));
 
     EXPECT_EQ(IPCA_FAIL, IPCACloseHandle(getHandle, &C_CloseHandleComplete, static_cast<void*>(&count)));
-    EXPECT_EQ(1, C_WaitNumber(&count, 3));
+    EXPECT_EQ(static_cast<size_t>(1), C_WaitNumber(&count, 3));
 
     return IPCA_OK;
 }

@@ -29,10 +29,10 @@ OCFFramework ocfFramework;
 
 App::App(const IPCAAppInfo* ipcaAppInfo, IPCAVersion ipcaVersion) :
     m_isStopped(false),
-    m_passwordInputCallbackHandle(nullptr),
-    m_passwordDisplayCallbackHandle(nullptr),
     m_ipcaVersion(ipcaVersion),
+    m_passwordInputCallbackHandle(nullptr),
     m_passwordInputCallbackInfo(nullptr),
+    m_passwordDisplayCallbackHandle(nullptr),
     m_passwordDisplayCallbackInfo(nullptr)
 {
     m_ipcaAppInfo.appId = ipcaAppInfo->appId;

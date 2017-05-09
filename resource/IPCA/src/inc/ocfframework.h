@@ -39,7 +39,7 @@ typedef struct DeviceDetails
     bool deviceNotRespondingIndicated;
 
     // How many IPCAOpenDevice() on this device.
-    size_t deviceOpenCount;
+    int deviceOpenCount;
 
     // Timestamp of final close.
     uint64_t lastCloseDeviceTime;

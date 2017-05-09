@@ -98,7 +98,8 @@ void Callback::Stop()
         OIC_LOG_V(
             ERROR,
             TAG,
-            "Stop() timed out: m_callbackInfoList count = [%d] m_expiredCallbacksInProgress = [%d]",
+            "Stop() timed out: m_callbackInfoList count = [%" PRIuPTR
+            "] m_expiredCallbacksInProgress = [%" PRIuPTR "]",
             m_callbackInfoList.size(),
             m_expiredCallbacksInProgress);
         throw timeoutException;
@@ -411,7 +412,7 @@ bool Callback::ClearCallbackInProgress(size_t mapKey)
         return true;
     }
 
-    OIC_LOG_V(WARNING, TAG, "ClearCallbackInProgress() mapKey [%d] is not found", mapKey);
+    OIC_LOG_V(WARNING, TAG, "ClearCallbackInProgress() mapKey [%" PRIuPTR "] is not found", mapKey);
     assert(false); // In progress callback is not expected to be removed from the list.
     return false;
 }
@@ -616,7 +617,8 @@ void Callback::DeviceDiscoveryCallback(
                     const std::vector<std::string>& deviceResourceTypeList)
 {
     // Create IPCADiscoveredDeviceInfo object for callback.
-    IPCADiscoveredDeviceInfo  deviceInfoUsedForCallback = {0};
+    IPCADiscoveredDeviceInfo  deviceInfoUsedForCallback;
+    memset(&deviceInfoUsedForCallback, 0, sizeof(IPCADiscoveredDeviceInfo));
 
     if (deviceInfo.deviceUris.size() != 0)
     {
@@ -890,6 +892,8 @@ void Callback::PasswordDisplayCallback(
                     const char* passwordBuffer,
                     CallbackInfo::Ptr cbInfo)
 {
+    OC_UNUSED(deviceId);
+
     if ((cbInfo->app != m_app) || (SetCallbackInProgress(cbInfo->mapKey) == false))
     {
         return;

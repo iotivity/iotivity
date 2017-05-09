@@ -347,7 +347,7 @@ IPCAStatus OCFFramework::Start(const IPCAAppInfoInternal& appInfo, bool isUnitTe
         }
 
 
-        if (OC_STACK_OK != SetDeviceInfo(&deviceInfo))
+        if (IPCA_OK != SetDeviceInfo(&deviceInfo))
         {
             return IPCA_FAIL;
         }
@@ -612,7 +612,7 @@ void OCFFramework::OnResourceFound(std::shared_ptr<OCResource> resource)
             m_OCFDevices[resource->sid()] = deviceDetails;
 
             OIC_LOG_V(INFO, TAG, "Added device ID: [%s]", resource->sid().c_str());
-            OIC_LOG_V(INFO, TAG, "m_OCFDevices count = [%d]", m_OCFDevices.size());
+            OIC_LOG_V(INFO, TAG, "m_OCFDevices count = [%" PRIuPTR "]", m_OCFDevices.size());
         }
 
         // Populate the details about the device.
@@ -888,7 +888,7 @@ void OCFFramework::OnPlatformInfoCallback(const OCRepresentation& rep)
 
 IPCAStatus OCFFramework::GetCommonResources(DeviceDetails::Ptr deviceDetails)
 {
-    const int MAX_REQUEST_COUNT = 3;
+    const size_t MAX_REQUEST_COUNT = 3;
 
     OCStackResult result;
 
@@ -1028,7 +1028,7 @@ void OCFFramework::OnGet(const HeaderOptions& headerOptions,
                         const int eCode,
                         CallbackInfo::Ptr callbackInfo)
 {
-    headerOptions;
+    OC_UNUSED(headerOptions);
 
     IPCAStatus status = IPCA_OK;
 
@@ -1054,6 +1054,7 @@ void OCFFramework::OnObserve(
                         const int &sequenceNumber,
                         CallbackInfo::Ptr callbackInfo)
 {
+    OC_UNUSED(headerOptions);
     OC_UNUSED(sequenceNumber);
 
     IPCAStatus status = IPCA_OK;
@@ -1166,6 +1167,12 @@ IPCAStatus OCFFramework::SendCommandToDevice(std::string& deviceId,
                                     std::bind(&OCFFramework::OnObserve, this,
                                             _1, _2, _3, _4, callbackInfo));
             break;
+        }
+
+        default:
+        {
+            assert(false);
+            result = OC_STACK_ERROR;
         }
     }
 
