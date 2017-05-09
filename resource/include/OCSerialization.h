@@ -54,24 +54,24 @@ namespace OC
                     std::ostringstream endpoint;
                     endpoint << head->tps << EP_ADDR_SPLIT;
 
-                    switch (head->family)
+                    if (OC_DEFAULT_FLAGS == head->family)
                     {
-                        case OC_DEFAULT_FLAGS:
-                            // mac
-                            endpoint << head->addr;
-                            break;
-
-                        case OC_IP_USE_V4:
-                            endpoint << head->addr << EP_PORT_SPLIT << head->port;
-                            break;
-
-                        case OC_IP_USE_V6:
-                            endpoint << EP_BRAKET_START << head->addr << EP_BRAKET_END
-                                     << EP_PORT_SPLIT << head->port;
-                            break;
-                        default:
-                            head = head->next;
-                            continue;
+                        // mac
+                        endpoint << head->addr;
+                    }
+                    else if (head->family & OC_IP_USE_V4)
+                    {
+                        endpoint << head->addr << EP_PORT_SPLIT << head->port;
+                    }
+                    else if (head->family & OC_IP_USE_V6)
+                    {
+                        endpoint << EP_BRAKET_START << head->addr << EP_BRAKET_END
+                                 << EP_PORT_SPLIT << head->port;
+                    }
+                    else
+                    {
+                        head = head->next;
+                        continue;
                     }
 
                     strs.push_back(endpoint.str());
