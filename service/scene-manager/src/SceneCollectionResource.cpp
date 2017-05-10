@@ -431,6 +431,7 @@ namespace OIC
         void SceneCollectionResource::SceneExecuteResponseHandler::
         onResponse(const RCSResourceAttributes & /*attributes*/, int errorCode)
         {
+            std::unique_lock<std::mutex> responseLock(m_responseMutex);
             m_responseMembers++;
             if (errorCode != SCENE_RESPONSE_SUCCESS && m_errorCode != errorCode)
             {
@@ -438,6 +439,13 @@ namespace OIC
             }
             if (m_responseMembers == m_numOfMembers)
             {
+               /* Explicitly unlocking the unique_lock.
+                * Reason:- As we are using the scope lock using unique_lock,
+                * it will be released once it goes out of scope,
+                * In this case, lock will be acquired till application callback
+                * returns. So, its better to release the lock explicitly.
+                */
+                responseLock.unlock();
                 m_cb(m_errorCode);
             }
         }

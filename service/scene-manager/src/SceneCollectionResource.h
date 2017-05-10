@@ -86,6 +86,7 @@ namespace OIC
                 int m_errorCode;
                 std::weak_ptr<SceneCollectionResource> m_owner;
                 SceneExecuteCallback m_cb;
+                std::mutex m_responseMutex;
 
                 static SceneExecuteResponseHandler::Ptr createExecuteHandler(
                         const SceneCollectionResource::Ptr, SceneExecuteCallback);
