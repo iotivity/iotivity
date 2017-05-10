@@ -179,10 +179,18 @@ CAResult_t CAMsgArbiterGetMessageData(CAData_t *data)
                 }
                 data->remoteEndpoint->flags = targetInfo->d2dInfo.flags;
 
-                CAURI_t resourceUri = OICStrdup(data->requestInfo->info.resourceUri
-                                                                + CA_MSG_ARBITER_DI_URI_LENGTH);
-                OICFree(data->requestInfo->info.resourceUri);
-                data->requestInfo->info.resourceUri = resourceUri;
+                if (strlen(data->requestInfo->info.resourceUri) > CA_MSG_ARBITER_DI_URI_LENGTH)
+                {
+                    CAURI_t resourceUri = OICStrdup(data->requestInfo->info.resourceUri
+                                                    + CA_MSG_ARBITER_DI_URI_LENGTH);
+                    OICFree(data->requestInfo->info.resourceUri);
+                    data->requestInfo->info.resourceUri = resourceUri;
+                }
+                else
+                {
+                    OIC_LOG_V(ERROR, TAG, "device id[%s] received resourceUri[%s] too short!", deviceId,
+                              data->requestInfo->info.resourceUri);
+                }
 
                 OIC_LOG_V(DEBUG, TAG, "device id[%s] switched to D2D connect", deviceId);
                 OIC_LOG_V(DEBUG, TAG, "local addr[%s] local port[%d] adapter[%s]",

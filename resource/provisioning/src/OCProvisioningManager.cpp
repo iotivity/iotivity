@@ -51,6 +51,7 @@ namespace OC
         }
         catch (std::bad_alloc& e)
         {
+            OC_UNUSED(e);
             oclog() <<"Bad alloc exception";
             return;
         }

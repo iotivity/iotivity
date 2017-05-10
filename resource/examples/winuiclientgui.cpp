@@ -167,7 +167,7 @@ WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
       case WM_HSCROLL:
         switch (LOWORD(wParam)) {
             case TB_ENDTRACK:
-                g_CurSliderVal = SendMessage(hwndVolumeSlider, TBM_GETPOS, 0, 0);
+                g_CurSliderVal = (int)SendMessage(hwndVolumeSlider, TBM_GETPOS, 0, 0);
                 LabelPrintf(hwndVolumeExpectedLabel,"Volume: %i", g_CurSliderVal);
 
                 myMedia = app->GetMedia();
@@ -269,7 +269,9 @@ WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     return 0;
 }
 
+#ifndef GWL_HINSTANCE
 #define GWL_HINSTANCE -6
+#endif
 HWND WINAPI CreateButton(HWND parent,
                             UINT_PTR id,
                             LPCTSTR caption    ,

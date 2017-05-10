@@ -192,7 +192,6 @@ int main()
         printf("9.  NSProviderGetConsumerTopics(); \n");
         printf("10. NSProviderGetTopics(); \n");
         printf("11. NSProviderSubscribeMQService() \n");
-        printf("0. NSStopProvider() \n");
 #ifdef WITH_CLOUD
         printf("21. NSProviderEnableRemoteService (after login) \n");
         printf("22. NSProviderDisableRemoteService (after login) \n");
@@ -200,7 +199,7 @@ int main()
         printf("32. Cloud Login \n");
         printf("33. Cloud Logout \n");
 #endif
-        printf("0. Exit() \n");
+        printf("0.  NSStopProvier & Exit() \n");
         printf("==============================================\n");
 
         printf("input : ");

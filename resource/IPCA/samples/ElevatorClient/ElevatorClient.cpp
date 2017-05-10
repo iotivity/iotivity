@@ -232,7 +232,7 @@ void IPCA_CALL DiscoverDevicesCallback(
     std::string deviceId = deviceInfo->deviceId;
     std::string deviceName = deviceInfo->deviceName;
     std::vector<std::string> deviceUris;
-    for (int i = 0; i < deviceInfo->deviceUriCount; i++)
+    for (size_t i = 0; i < deviceInfo->deviceUriCount; i++)
     {
         deviceUris.push_back(deviceInfo->deviceUris[i]);
     }

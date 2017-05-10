@@ -280,10 +280,10 @@ IPCAStatus Callback::AddCallbackInfo(CallbackInfo::Ptr cbInfo)
     uint32_t i = 0;
     while (i++ < UINT_MAX)
     {
-        uint32_t newKey = m_nextKey++;
+        size_t newKey = m_nextKey++;
         if (m_callbackInfoList.find(newKey) == m_callbackInfoList.end())
         {
-            OIC_LOG_V(INFO, TAG, "AddCallbackInfo() with key: %d", newKey);
+            OIC_LOG_V(INFO, TAG, "AddCallbackInfo() with key: %" PRIuPTR, newKey);
             cbInfo->mapKey = newKey;
             m_callbackInfoList[newKey] = cbInfo;
             return IPCA_OK;

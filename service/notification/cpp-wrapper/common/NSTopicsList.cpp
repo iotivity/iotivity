@@ -89,6 +89,7 @@ namespace OIC
                     if (it->getTopicName().compare(topicName) == 0)
                     {
                         m_topicsList.remove(it);
+                        break;
                     }
                 }
             }

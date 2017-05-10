@@ -229,7 +229,7 @@ static void stopMonitoring(void *data, Evas_Object *obj, void *event_info)
     }
     else
     {
-        logMessage = logMessage + "NO Resource to stop monitor <br>";
+        logMessage = logMessage + "No Resource to stop monitor <br>";
     }
 
     dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
@@ -340,27 +340,36 @@ static void startCachingWithCallback(void *data, Evas_Object *obj, void *event_i
 
 static void getResourceCacheState(void *data, Evas_Object *obj, void *event_info)
 {
-    string logMessage = "CACHE STATE : ";
-    switch (resource->getCacheState())
+    string logMessage = "";
+
+    if (checkResource)
     {
-        case CacheState::READY:
-            logMessage = logMessage + "READY <br>";
-            break;
+        logMessage = "CACHE STATE : ";
+        switch (resource->getCacheState())
+        {
+            case CacheState::READY:
+                logMessage = logMessage + "READY <br>";
+                break;
 
-        case CacheState::UNREADY:
-            logMessage = logMessage + "UNREADY <br>";
-            break;
+            case CacheState::UNREADY:
+                logMessage = logMessage + "UNREADY <br>";
+                break;
 
-        case CacheState::LOST_SIGNAL:
-            logMessage = logMessage + "LOST_SIGNAL <br>";
-            break;
+            case CacheState::LOST_SIGNAL:
+                logMessage = logMessage + "LOST_SIGNAL <br>";
+                break;
 
-        case CacheState::NONE:
-            logMessage = logMessage + "NONE <br>";
-            break;
+            case CacheState::NONE:
+                logMessage = logMessage + "NONE <br>";
+                break;
 
-        default:
-            break;
+            default:
+                break;
+        }
+    }
+    else
+    {
+        logMessage = logMessage + "No resource to get Cache state<br>";
     }
 
     dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
@@ -398,7 +407,7 @@ static void getCachedAttributes(void *data, Evas_Object *obj, void *event_info)
     }
     else
     {
-        logMessage = logMessage + "No Resource<br>";
+        logMessage = logMessage + "No Resource to get cached attributes<br>";
         dlog_print(DLOG_INFO, LOG_TAG, "#### No Resource to getCachedAttributes...");
     }
 
@@ -432,7 +441,7 @@ static void getCachedAttribute(void *data, Evas_Object *obj, void *event_info)
     }
     else
     {
-        logMessage = logMessage + "No resource<br>";
+        logMessage = logMessage + "No resource to get cached attribute<br>";
     }
 
     dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
@@ -458,7 +467,7 @@ static void stopCaching(void *data, Evas_Object *obj, void *event_info)
     }
     else
     {
-        logMessage = logMessage + "No resource found<br>";
+        logMessage = logMessage + "No resource to stop caching<br>";
     }
 
     dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());

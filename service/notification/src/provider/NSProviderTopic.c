@@ -143,7 +143,7 @@ NSResult NSSendTopicUpdation()
 
     OCObservationId obArray[255] =
     { 0, };
-    int obCount = 0;
+    size_t obCount = 0;
 
     NSCacheElement * it = consumerSubList->head;
 

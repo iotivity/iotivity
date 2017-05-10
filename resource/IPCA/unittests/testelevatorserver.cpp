@@ -18,6 +18,7 @@
  ******************************************************************/
 
 #include "logger.h"
+#include "OCApi.h"
 #include "testelevatorserver.h"
 #include "ipcatestdata.h"
 
@@ -29,8 +30,14 @@ using namespace std::placeholders;
 // Initialize Persistent Storage for security database
 FILE* elevatorServer_fopen(const char *path, const char *mode)
 {
-    OC_UNUSED(path);
-    return fopen("IPCAUnitTest.dat", mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen("IPCAUnitTest.dat", mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 OCPersistentStorage elevatorServerPS = {elevatorServer_fopen, fread, fwrite, fclose, unlink};

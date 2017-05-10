@@ -162,12 +162,13 @@ static OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * 
  */
 static void DeleteServerResponse (OCServerResponse * serverResponse)
 {
-    assert(serverResponse);
-
-    RB_REMOVE(ServerResponseTree, &g_serverResponseTree, serverResponse);
-    OICFree(serverResponse);
-    serverResponse = NULL;
-    OIC_LOG(INFO, TAG, "Server Response Removed");
+    if (serverResponse)
+    {
+        RB_REMOVE(ServerResponseTree, &g_serverResponseTree, serverResponse);
+        OICFree(serverResponse);
+        serverResponse = NULL;
+        OIC_LOG(INFO, TAG, "Server Response Removed!!");
+    }
 }
 
 /**

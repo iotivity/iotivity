@@ -109,7 +109,7 @@ NSResult NSSendNotification(NSMessage *msg)
 
     OCResourceHandle rHandle;
     OCObservationId obArray[255] = { 0, };
-    int obCount = 0, i;
+    size_t obCount = 0;
 
     if (NSPutMessageResource(msg, &rHandle) != NS_OK)
     {
@@ -172,10 +172,10 @@ NSResult NSSendNotification(NSMessage *msg)
         it = it->next;
     }
 
-    for (i = 0; i < obCount; ++i)
+    for (size_t i = 0; i < obCount; ++i)
     {
         NS_LOG(DEBUG, "-------------------------------------------------------message\n");
-        NS_LOG_V(DEBUG, "SubScription WhiteList[%d] = %d", i, obArray[i]);
+        NS_LOG_V(DEBUG, "SubScription WhiteList[%" PRIuPTR "] = %d", i, obArray[i]);
         NS_LOG(DEBUG, "-------------------------------------------------------message\n");
     }
 
@@ -212,8 +212,7 @@ NSResult NSSendSync(NSSyncInfo *sync)
     NS_LOG(DEBUG, "NSSendSync - IN");
 
     OCObservationId obArray[255] = { 0, };
-    int obCount = 0;
-    int i;
+    size_t obCount = 0;
 
     OCResourceHandle rHandle;
     if (NSPutSyncResource(sync, &rHandle) != NS_OK)
@@ -269,10 +268,10 @@ NSResult NSSendSync(NSSyncInfo *sync)
     }
 #endif
 
-    for (i = 0; i < obCount; ++i)
+    for (size_t i = 0; i < obCount; ++i)
     {
         NS_LOG(DEBUG, "-------------------------------------------------------message\n");
-        NS_LOG_V(DEBUG, "Sync WhiteList[%d] = %d", i, obArray[i]);
+        NS_LOG_V(DEBUG, "Sync WhiteList[%" PRIuPTR "] = %d", i, obArray[i]);
         NS_LOG(DEBUG, "-------------------------------------------------------message\n");
     }
 

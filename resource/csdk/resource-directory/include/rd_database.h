@@ -53,8 +53,8 @@ OCStackResult OCRDDatabaseStoreResources(const OCRepPayload *payload);
  *
  * @return ::OC_STACK_OK in case of success or else other value.
  */
-OCStackResult OCRDDatabaseDeleteResources(const char *deviceId, const uint8_t *instanceIds,
-                                          uint8_t nInstanceIds);
+OCStackResult OCRDDatabaseDeleteResources(const char *deviceId, const int64_t *instanceIds,
+                                          uint16_t nInstanceIds);
 
 /**
  * Close the RD publish database.

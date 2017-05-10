@@ -561,11 +561,7 @@ int getVolume()
     HRESULT hr = S_OK;
     IMMDeviceEnumerator *pEnumerator = NULL;
     IMMDevice *pDevice = NULL;
-    OSVERSIONINFO VersionInfo;
 
-    ZeroMemory(&VersionInfo, sizeof(OSVERSIONINFO));
-    VersionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-    GetVersionEx(&VersionInfo);
     CoInitialize(NULL);
 
     // Get enumerator for audio endpoint devices.
@@ -588,7 +584,6 @@ int getVolume()
     SAFE_RELEASE(g_pEndptVol)
     CoUninitialize();
     return ((int) round(100 * currentVal));
-
 }
 
 void setVolume(int vol)
@@ -597,11 +592,7 @@ void setVolume(int vol)
     HRESULT hr = S_OK;
     IMMDeviceEnumerator *pEnumerator = NULL;
     IMMDevice *pDevice = NULL;
-    OSVERSIONINFO VersionInfo;
 
-    ZeroMemory(&VersionInfo, sizeof(OSVERSIONINFO));
-    VersionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-    GetVersionEx(&VersionInfo);
     CoInitialize(NULL);
 
     // Get enumerator for audio endpoint devices.
@@ -615,7 +606,7 @@ void setVolume(int vol)
 
     hr = pDevice->Activate(__uuidof(IAudioEndpointVolume),
                            CLSCTX_ALL, NULL, (void**)&g_pEndptVol);
-    float got = (float)vol/100.0; // needs to be within 1.0 to 0.0
+    float got = (float)vol / 100.0f; // needs to be within 1.0 to 0.0
     hr = g_pEndptVol->SetMasterVolumeLevelScalar(got, NULL);
     fflush(stdout); // just in case
 

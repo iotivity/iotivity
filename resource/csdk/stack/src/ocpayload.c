@@ -65,6 +65,9 @@ void OCPayloadDestroy(OCPayload* payload)
         case PAYLOAD_TYPE_SECURITY:
             OCSecurityPayloadDestroy((OCSecurityPayload*)payload);
             break;
+        case PAYLOAD_TYPE_INTROSPECTION:
+            OCIntrospectionPayloadDestroy((OCIntrospectionPayload*)payload);
+            break;
         default:
             OIC_LOG_V(ERROR, TAG, "Unsupported payload type in destroy: %d", payload->type);
             OICFree(payload);
@@ -1685,6 +1688,40 @@ void OCSecurityPayloadDestroy(OCSecurityPayload* payload)
 
     OICClearMemory(payload->securityData, payload->payloadSize);
     OICFree(payload->securityData);
+    OICFree(payload);
+}
+
+OCIntrospectionPayload* OCIntrospectionPayloadCreateFromCbor(const uint8_t* cborData,
+    size_t size)
+{
+    OCIntrospectionPayload* payload = NULL;
+    payload = (OCIntrospectionPayload*)OICCalloc(1, sizeof(OCIntrospectionPayload));
+    if (!payload)
+    {
+        return NULL;
+    }
+
+    payload->base.type = PAYLOAD_TYPE_INTROSPECTION;
+    payload->cborPayload.bytes = (uint8_t*)OICCalloc(1, size);
+    if (!payload->cborPayload.bytes)
+    {
+        OICFree(payload);
+        return NULL;
+    }
+    memcpy(payload->cborPayload.bytes, cborData, size);
+    payload->cborPayload.len = size;
+
+    return payload;
+}
+
+void OCIntrospectionPayloadDestroy(OCIntrospectionPayload* payload)
+{
+    if (!payload)
+    {
+        return;
+    }
+
+    OICFree(payload->cborPayload.bytes);
     OICFree(payload);
 }
 

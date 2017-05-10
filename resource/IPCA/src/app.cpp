@@ -145,7 +145,7 @@ void App::AppWorkerThread(App* app)
         uint64_t currentTime = OICGetCurrentTime(TIME_IN_MS);
 
         // Do periodic discovery for active IPCADiscoverDevices() requests.
-        std::map<uint32_t, std::vector<std::string>> resourceTypesToDiscover;
+        std::map<size_t, std::vector<std::string>> resourceTypesToDiscover;
         {
             std::lock_guard<std::mutex> lock(app->m_appMutex);
             for (auto& entry : app->m_discoveryList)

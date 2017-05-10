@@ -37,7 +37,6 @@ randomtest_env.PrependUnique(CPPPATH = [
                '../../logger/include',
                '../../../oc_logger/include',
                ])
- 
 randomtest_env.PrependUnique(LIBS = ['uuid'])
 
 randomtest_env.PrependUnique(CPPPATH = ['../include'])

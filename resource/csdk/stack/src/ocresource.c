@@ -290,11 +290,11 @@ OCVirtualResources GetTypeOfVirtualURI(const char *uriInRequest)
     {
         return OC_RESOURCE_TYPES_URI;
     }
-    else if (strcmp(uriInRequest, OC_RSRVD_INTROSPECTION_URI) == 0)
+    else if (strcmp(uriInRequest, OC_RSRVD_INTROSPECTION_URI_PATH) == 0)
     {
         return OC_INTROSPECTION_URI;
     }
-    else if (strcmp(uriInRequest, OC_RSRVD_INTROSPECTION_PAYLOAD_URI) == 0)
+    else if (strcmp(uriInRequest, OC_RSRVD_INTROSPECTION_PAYLOAD_URI_PATH) == 0)
     {
         return OC_INTROSPECTION_PAYLOAD_URI;
     }
@@ -408,6 +408,33 @@ static OCStackResult BuildDevicePlatformPayload(const OCResource *resourcePtr, O
                     OCRepPayloadSetPropString(tempPayload, resAttrib->attrName, dmv);
                     OICFree(dmv);
                 }
+            }
+            else if (0 == strcmp(OC_RSRVD_DEVICE_DESCRIPTION, resAttrib->attrName) ||
+                    0 == strcmp(OC_RSRVD_DEVICE_MFG_NAME, resAttrib->attrName))
+            {
+                size_t dim[MAX_REP_ARRAY_DEPTH] = { 0 };
+                for (OCStringLL *ll = (OCStringLL *)resAttrib->attrValue; ll && ll->next;
+                     ll = ll->next->next)
+                {
+                    ++dim[0];
+                }
+                OCRepPayload **items = (OCRepPayload**)OICCalloc(dim[0], sizeof(OCRepPayload*));
+                if (items)
+                {
+                    OCRepPayload **item = items;
+                    for (OCStringLL *ll = (OCStringLL *)resAttrib->attrValue; ll && ll->next;
+                         ll = ll->next->next)
+                    {
+                        *item = OCRepPayloadCreate();
+                        if (*item)
+                        {
+                            OCRepPayloadSetPropString(*item, "language", ll->value);
+                            OCRepPayloadSetPropString(*item, "value", ll->next->value);
+                            ++item;
+                        }
+                    }
+                }
+                OCRepPayloadSetPropObjectArrayAsOwner(tempPayload, resAttrib->attrName, items, dim);
             }
             else
             {
@@ -923,7 +950,7 @@ static size_t GetIntrospectionDataSize(const OCPersistentStorage *ps)
     return size;
 }
 
-OCStackResult GetIntrospectionDataFromPS(char **data, size_t *size)
+OCStackResult GetIntrospectionDataFromPS(uint8_t **data, size_t *size)
 {
     OIC_LOG(DEBUG, TAG, "GetIntrospectionDataFromPS IN");
 
@@ -967,7 +994,7 @@ OCStackResult GetIntrospectionDataFromPS(char **data, size_t *size)
         {
             *size = fileSize;
             fsData[fileSize] = '\0';
-            *data = (char *)fsData;
+            *data = fsData;
             fsData = NULL;
             ret = OC_STACK_OK;
         }
@@ -987,45 +1014,35 @@ exit:
 }
 
 OCStackResult BuildIntrospectionPayloadResponse(const OCResource *resourcePtr,
-    OCRepPayload** payload, OCDevAddr *devAddr)
+    OCPayload **payload, OCDevAddr *devAddr)
 {
     OC_UNUSED(resourcePtr);
     OC_UNUSED(devAddr);
 
-    char *introspectionData = NULL;
+    uint8_t *introspectionData = NULL;
     size_t size = 0;
     OCStackResult ret = GetIntrospectionDataFromPS(&introspectionData, &size);
     if (OC_STACK_OK == ret)
     {
-        OCRepPayload *tempPayload = OCRepPayloadCreate();
+        OCIntrospectionPayload *tempPayload = OCIntrospectionPayloadCreateFromCbor(introspectionData, size);
         if (tempPayload)
         {
-            if (OCRepPayloadSetPropStringAsOwner(tempPayload, OC_RSRVD_INTROSPECTION_DATA_NAME, introspectionData))
-            {
-                *payload = tempPayload;
-            }
-            else
-            {
-                OCRepPayloadDestroy(tempPayload);
-                ret = OC_STACK_ERROR;
-            }
+            *payload = (OCPayload *)tempPayload;
         }
         else
         {
             ret = OC_STACK_NO_MEMORY;
+            OICFree(introspectionData);
         }
-    }
-    if (ret != OC_STACK_OK)
-    {
-        OICFree(introspectionData);
     }
 
     return ret;
 }
 
-OCRepPayload *BuildUrlInfoWithProtocol(const char *protocol)
+OCRepPayload *BuildUrlInfoWithProtocol(const char *protocol, char *ep)
 {
     OCStackResult result = OC_STACK_OK;
+    char introspectionUrl[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = { 0 };
     OCRepPayload *urlInfoPayload = OCRepPayloadCreate();
     if (!urlInfoPayload)
     {
@@ -1034,7 +1051,9 @@ OCRepPayload *BuildUrlInfoWithProtocol(const char *protocol)
         goto exit;
     }
 
-    if (!OCRepPayloadSetPropString(urlInfoPayload, OC_RSRVD_INTROSPECTION_URL, OC_RSRVD_INTROSPECTION_PAYLOAD_URI))
+    snprintf(introspectionUrl, sizeof(introspectionUrl), "%s%s", ep, OC_RSRVD_INTROSPECTION_PAYLOAD_URI_PATH);
+
+    if (!OCRepPayloadSetPropString(urlInfoPayload, OC_RSRVD_INTROSPECTION_URL, introspectionUrl))
     {
         OIC_LOG(ERROR, TAG, "Failed to add url");
         result = OC_STACK_ERROR;
@@ -1068,70 +1087,25 @@ exit:
     return urlInfoPayload;
 }
 
-OCStackResult AddProtocolToLL(OCStringLL **protoLL, const char *protocol)
-{
-    OCStringLL* cur = *protoLL;
-    // Check if protocol is already in list
-    while (cur)
-    {
-        if (strcmp(cur->value, protocol) == 0)
-        {
-            break;
-        }
-        cur = cur->next;
-    }
-    if (cur)
-    {
-        // The intent of the protocol list is to collect all unique protocols available on this
-        // endpoint. Set an error that can be used to skip processing this protocol further as
-        // it already exists in the list.
-        return OC_STACK_INVALID_PARAM;
-    }
-    else
-    {
-        cur = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-        if (!cur)
-        {
-            return OC_STACK_NO_MEMORY;
-        }
-    }
-
-    cur->value = OICStrdup(protocol);
-    if (!cur->value)
-    {
-        OICFree(cur);
-        return OC_STACK_NO_MEMORY;
-    }
-
-    cur->next = *protoLL;
-    *protoLL = cur;
-    return OC_STACK_OK;
-}
-
-void FreeProtocolLL(OCStringLL *protoLL)
-{
-    OCStringLL* cur = protoLL;
-    while (cur)
-    {
-        OCStringLL *temp = cur;
-        cur = cur->next;
-        OICFree(temp->value);
-        OICFree(temp);
-    }
-}
-
 OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourcePtr,
     OCRepPayload** payload, OCDevAddr *devAddr)
 {
-    OC_UNUSED(devAddr);
-
     size_t dimensions[3] = { 0, 0, 0 };
     OCRepPayload *tempPayload = NULL;
     OCRepPayload **urlInfoPayload = NULL;
-    OCStringLL *protoLL = NULL;
     OCStackResult ret = OC_STACK_OK;
     OCResourceType *resType = NULL;
     OCResourceInterface *resInterface = NULL;
+    CAEndpoint_t *caEps = NULL;
+    size_t nCaEps = 0;
+    CAResult_t caResult = CA_STATUS_OK;
+    OCResource *payloadResPtr = FindResourceByUri(OC_RSRVD_INTROSPECTION_PAYLOAD_URI_PATH);
+
+    if (!payloadResPtr)
+    {
+        ret = OC_STACK_ERROR;
+        goto exit;
+    }
 
     if (!resourcePtr)
     {
@@ -1183,94 +1157,75 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
         goto exit;
     }
 
-    // Figure out which protocols this endpoint supports
-    if (resourcePtr->endpointType & OC_COAP)
+    caResult = CAGetNetworkInformation(&caEps, &nCaEps);
+    if (CA_STATUS_FAILED == caResult)
     {
-        if (OC_STACK_OK == AddProtocolToLL(&protoLL, COAP_STR))
-        {
-            dimensions[0]++;
-        }
+        OIC_LOG(ERROR, TAG, "CAGetNetworkInformation failed!");
+        ret = OC_STACK_ERROR;
+        goto exit;
     }
-    if (resourcePtr->endpointType & OC_COAPS)
-    {
-        if (OC_STACK_OK == AddProtocolToLL(&protoLL, COAPS_STR))
-        {
-            dimensions[0]++;
-        }
-    }
-#ifdef TCP_ADAPTER
-    if (resourcePtr->endpointType & OC_COAP_TCP)
-    {
-        if (OC_STACK_OK == AddProtocolToLL(&protoLL, COAP_STR))
-        {
-            dimensions[0]++;
-        }
-    }
-    if (resourcePtr->endpointType & OC_COAPS_TCP)
-    {
-        if (OC_STACK_OK == AddProtocolToLL(&protoLL, COAPS_STR))
-        {
-            dimensions[0]++;
-        }
-    }
-#endif
-#ifdef HTTP_ADAPTER
-    if (resourcePtr->endpointType & OC_HTTP)
-    {
-        if (OC_STACK_OK == AddProtocolToLL(&protoLL, HTTP_STR))
-        {
-            dimensions[0]++;
-        }
-    }
-    if (resourcePtr->endpointType & OC_HTTPS)
-    {
-        if (OC_STACK_OK == AddProtocolToLL(&protoLL, HTTPS_STR))
-        {
-            dimensions[0]++;
-        }
-    }
-#endif
-#ifdef EDR_ADAPTER
-    if (resourcePtr->endpointType & OC_COAP_RFCOMM)
-    {
-        if (OC_STACK_OK == AddProtocolToLL(&protoLL, COAP_STR))
-        {
-            dimensions[0]++;
-        }
-    }
-#endif
-    // Add a urlInfo object for each protocol supported
-    urlInfoPayload = (OCRepPayload **)OICMalloc(dimensions[0] * sizeof(OCRepPayload));
-    if (urlInfoPayload)
-    {
-        OCStringLL *proto = protoLL;
-        size_t i = 0;
-        while (proto)
-        {
-            urlInfoPayload[i] = BuildUrlInfoWithProtocol(proto->value);
-            if (!urlInfoPayload[i])
-            {
-                OIC_LOG(ERROR, TAG, "Unable to build urlInfo object for protocol");
-                ret = OC_STACK_ERROR;
-                goto exit;
-            }
-            proto = proto->next;
-            i++;
-        }
-        if (!OCRepPayloadSetPropObjectArrayAsOwner(tempPayload,
-                                                   OC_RSRVD_INTROSPECTION_URL_INFO,
-                                                   urlInfoPayload,
-                                                   dimensions))
-        {
-            OIC_LOG(ERROR, TAG, "Unable to add urlInfo object to introspection payload ");
-            ret = OC_STACK_ERROR;
-            goto exit;
-        }
-    }
-    else
+
+    // Add a urlInfo object for each endpoint supported
+    urlInfoPayload = (OCRepPayload **)OICMalloc(nCaEps * sizeof(OCRepPayload));
+    if (!urlInfoPayload)
     {
         OIC_LOG(ERROR, TAG, "Unable to allocate memory for urlInfo ");
         ret = OC_STACK_NO_MEMORY;
+        goto exit;
+    }
+
+    if (caEps && nCaEps && devAddr)
+    {
+        if ((OC_ADAPTER_IP | OC_ADAPTER_TCP) & (devAddr->adapter))
+        {
+            for (size_t i = 0; i < nCaEps; i++)
+            {
+                CAEndpoint_t *info = caEps + i;
+                char *proto = NULL;
+
+                // consider IP or TCP adapter for payload that is visible to the client
+                if (((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter) && 
+                    (info->ifindex == devAddr->ifindex))
+                {
+                    OCTpsSchemeFlags matchedTps = OC_NO_TPS;
+                    if (OC_STACK_OK != OCGetMatchedTpsFlags(info->adapter,
+                                                            info->flags,
+                                                            &matchedTps))
+                    {
+                        ret = OC_STACK_ERROR;
+                        goto exit;
+                    }
+
+                    if ((payloadResPtr->endpointType) & matchedTps)
+                    {
+                        ret = OCConvertTpsToString(matchedTps, &proto);
+                        if (ret != OC_STACK_OK)
+                        {
+                            goto exit;
+                        }
+
+                        char *epStr = OCCreateEndpointStringFromCA(&caEps[i]);
+                        urlInfoPayload[dimensions[0]] = BuildUrlInfoWithProtocol(proto, epStr);
+                        dimensions[0] = dimensions[0] + 1;
+                        if (!urlInfoPayload[i])
+                        {
+                            OIC_LOG(ERROR, TAG, "Unable to build urlInfo object for protocol");
+                            ret = OC_STACK_ERROR;
+                            goto exit;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (!OCRepPayloadSetPropObjectArrayAsOwner(tempPayload,
+        OC_RSRVD_INTROSPECTION_URL_INFO,
+        urlInfoPayload,
+        dimensions))
+    {
+        OIC_LOG(ERROR, TAG, "Unable to add urlInfo object to introspection payload ");
+        ret = OC_STACK_ERROR;
         goto exit;
     }
 
@@ -1291,7 +1246,6 @@ exit:
             OICFree(urlInfoPayload);
         }
     }
-    FreeProtocolLL(protoLL);
 
     return OC_STACK_OK;
 }
@@ -1949,7 +1903,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     else if (OC_INTROSPECTION_URI == virtualUriInRequest)
     {
         // Received request for introspection
-        OCResource *resourcePtr = FindResourceByUri(OC_RSRVD_INTROSPECTION_URI);
+        OCResource *resourcePtr = FindResourceByUri(OC_RSRVD_INTROSPECTION_URI_PATH);
         VERIFY_PARAM_NON_NULL(TAG, resourcePtr, "Introspection URI not found.");
         discoveryResult = BuildIntrospectionResponseRepresentation(resourcePtr, (OCRepPayload **)&payload, &request->devAddr);
         OIC_LOG(INFO, TAG, "Request is for Introspection");
@@ -1957,9 +1911,9 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     else if (OC_INTROSPECTION_PAYLOAD_URI == virtualUriInRequest)
     {
         // Received request for introspection payload
-        OCResource *resourcePtr = FindResourceByUri(OC_RSRVD_INTROSPECTION_PAYLOAD_URI);
+        OCResource *resourcePtr = FindResourceByUri(OC_RSRVD_INTROSPECTION_PAYLOAD_URI_PATH);
         VERIFY_PARAM_NON_NULL(TAG, resourcePtr, "Introspection Payload URI not found.");
-        discoveryResult = BuildIntrospectionPayloadResponse(resourcePtr, (OCRepPayload **)&payload, &request->devAddr);
+        discoveryResult = BuildIntrospectionPayloadResponse(resourcePtr, &payload, &request->devAddr);
         OIC_LOG(INFO, TAG, "Request is for Introspection Payload");
     }
     /**
@@ -2412,12 +2366,40 @@ OCStackResult OCGetAttribute(const OCResource *resource, const char *attribute, 
     {
         return OC_STACK_INVALID_PARAM;
     }
+    // Special attributes - these values are not in rsrcAttributes
+    if (0 == strcmp(OC_RSRVD_DEVICE_ID, attribute))
+    {
+        *value = OICStrdup(OCGetServerInstanceIDString());
+        return OC_STACK_OK;
+    }
+    if (0 == strcmp(OC_RSRVD_RESOURCE_TYPE, attribute))
+    {
+        *value = NULL;
+        for (OCResourceType *resType = resource->rsrcType; resType; resType = resType->next)
+        {
+            OCResourcePayloadAddStringLL((OCStringLL**)&value, resType->resourcetypename);
+        }
+        return OC_STACK_OK;
+    }
+    if (0 == strcmp(OC_RSRVD_INTERFACE, attribute))
+    {
+        *value = NULL;
+        for (OCResourceInterface *resInterface = resource->rsrcInterface; resInterface;
+             resInterface = resInterface->next)
+        {
+            OCResourcePayloadAddStringLL((OCStringLL**)&value, resInterface->name);
+        }
+        return OC_STACK_OK;
+    }
+    // Generic attributes
     for (OCAttribute *temp = resource->rsrcAttributes; temp; temp = temp->next)
     {
         if (0 == strcmp(attribute, temp->attrName))
         {
             // A special case as this type return OCStringLL
-            if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, attribute))
+            if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, attribute) ||
+                    0 == strcmp(OC_RSRVD_DEVICE_DESCRIPTION, attribute) ||
+                    0 == strcmp(OC_RSRVD_DEVICE_MFG_NAME, attribute))
             {
                 *value = CloneOCStringLL((OCStringLL *)temp->attrValue);
                 return OC_STACK_OK;
@@ -2468,13 +2450,23 @@ static OCStackResult SetAttributeInternal(OCResource *resource,
 {
     OCAttribute *resAttrib = NULL;
 
+    // Read-only attributes - these values are set via other APIs
+    if (0 == strcmp(attribute, OC_RSRVD_RESOURCE_TYPE) ||
+            0 == strcmp(attribute, OC_RSRVD_INTERFACE) ||
+            0 == strcmp(attribute, OC_RSRVD_DEVICE_ID))
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     // See if the attribute already exists in the list.
     for (resAttrib = resource->rsrcAttributes; resAttrib; resAttrib = resAttrib->next)
     {
         if (0 == strcmp(attribute, resAttrib->attrName))
         {
             // Found, free the old value.
-            if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, resAttrib->attrName))
+            if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, resAttrib->attrName) ||
+                    0 == strcmp(OC_RSRVD_DEVICE_DESCRIPTION, resAttrib->attrName) ||
+                    0 == strcmp(OC_RSRVD_DEVICE_MFG_NAME, resAttrib->attrName))
             {
                 OCFreeOCStringLL((OCStringLL *)resAttrib->attrValue);
             }
@@ -2501,6 +2493,11 @@ static OCStackResult SetAttributeInternal(OCResource *resource,
     if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, attribute))
     {
         resAttrib->attrValue = OCCreateOCStringLL((char *)value);
+    }
+    else if (0 == strcmp(OC_RSRVD_DEVICE_DESCRIPTION, attribute) ||
+            0 == strcmp(OC_RSRVD_DEVICE_MFG_NAME, attribute))
+    {
+        resAttrib->attrValue = CloneOCStringLL((OCStringLL *)value);
     }
     else
     {

@@ -50,11 +50,19 @@ elevator_server_env.PrependUnique(CPPPATH = [
         ])
 
 elevator_server_env.AppendUnique(LIBPATH = [ipca_env.get('BUILD_DIR')])
+
 elevator_server_env.PrependUnique(LIBS = [
-        'oc',
-        'connectivity_abstraction',
         'coap',
         'octbstack'
+        ])
+
+if target_os not in ['msys_nt', 'windows']:
+    elevator_server_env.PrependUnique(LIBS = [
+            'connectivity_abstraction'
+            ])
+
+elevator_server_env.PrependUnique(LIBS = [
+        'oc'
         ])
 
 if elevator_server_env.get('SECURED') == '1':

@@ -473,10 +473,9 @@ IPCAStatus IPCAElevatorClient::ConfirmResources()
     size_t resourcePathCount;
     EXPECT_EQ(IPCA_OK, IPCAGetResources(m_deviceHandle,
                             nullptr, nullptr, &resourcePathList, &resourcePathCount));
-    EXPECT_LT(0, resourcePathCount); // At least there must be elevator resource.
-    int i = 0;
+    EXPECT_LT(0U, resourcePathCount); // At least there must be elevator resource.
     bool elevatorResourceFound = false;
-    for (i = 0; i < resourcePathCount; i++)
+    for (size_t i = 0; i < resourcePathCount; i++)
     {
         std::string resourcePath = resourcePathList[i];
         if (resourcePath.find(ELEVATOR_KEYWORD) != std::string::npos)
@@ -497,10 +496,9 @@ IPCAStatus IPCAElevatorClient::ConfirmResourceTypes()
     size_t resourceTypeCount;
     EXPECT_EQ(IPCA_OK, IPCAGetResourceTypes(m_deviceHandle,
                             nullptr, &resourceTypes, &resourceTypeCount));
-    EXPECT_LT(0, resourceTypeCount);  // At least 1 resource type.
-    int i = 0;
+    EXPECT_LT(0U, resourceTypeCount);  // At least 1 resource type.
     bool elevatorResourceTypeFound = false;
-    for (i = 0; i < resourceTypeCount; i++)
+    for (size_t i = 0; i < resourceTypeCount; i++)
     {
         std::string rt = resourceTypes[i];
         if (rt.find(ELEVATOR_KEYWORD) != std::string::npos)
@@ -515,14 +513,14 @@ IPCAStatus IPCAElevatorClient::ConfirmResourceTypes()
     // Function list for a given resource.
     EXPECT_EQ(IPCA_RESOURCE_NOT_FOUND, IPCAGetResourceTypes(m_deviceHandle,
                                                 "oic/fake", &resourceTypes, &resourceTypeCount));
-    EXPECT_EQ(0, resourceTypeCount);
+    EXPECT_EQ(0U, resourceTypeCount);
     EXPECT_EQ(nullptr, resourceTypes);
 
     EXPECT_EQ(IPCA_OK, IPCAGetResourceTypes(m_deviceHandle,
                                     ELEVATOR_RESOURCE_PATH, &resourceTypes, &resourceTypeCount));
-    EXPECT_LT(0, resourceTypeCount);  // At least 1 function.
+    EXPECT_LT(0U, resourceTypeCount);  // At least 1 function.
     elevatorResourceTypeFound = false;
-    for (i = 0; i < resourceTypeCount; i++)
+    for (size_t i = 0; i < resourceTypeCount; i++)
     {
         std::string rt = resourceTypes[i];
         if (rt.find(ELEVATOR_KEYWORD) != std::string::npos)
@@ -544,7 +542,7 @@ IPCAStatus IPCAElevatorClient::ConfirmResourceInterfaces()
     size_t resourceInterfaceCount;
     EXPECT_EQ(IPCA_OK, IPCAGetResourceInterfaces(m_deviceHandle,
                             nullptr, &resourceInterfaces, &resourceInterfaceCount));
-    EXPECT_LT(1, resourceInterfaceCount);
+    EXPECT_LT(1U, resourceInterfaceCount);
 
     // Should return only 1 resource with ELEVATOR_CO_PRIVATE_INTERFACE interface.
     char** resourcePathList;
@@ -564,7 +562,7 @@ IPCAStatus IPCAElevatorClient::ConfirmResourceInterfaces()
                             nullptr,
                             &resourcePathList,
                             &resourcePathCount));
-    EXPECT_EQ(0, resourcePathCount);
+    EXPECT_EQ(0U, resourcePathCount);
     IPCAFreeStringArray(resourcePathList, resourcePathCount);
 
     // Should be at least 4 resouces with DEFAULT_INTERFACE created in ElevatorServer::Start().
@@ -573,7 +571,7 @@ IPCAStatus IPCAElevatorClient::ConfirmResourceInterfaces()
                             nullptr,
                             &resourcePathList,
                             &resourcePathCount));
-    EXPECT_LT(3, resourcePathCount);
+    EXPECT_LT(3U, resourcePathCount);
     IPCAFreeStringArray(resourcePathList, resourcePathCount);
 
     return IPCA_OK;
@@ -590,7 +588,7 @@ void IPCAElevatorClient::DiscoverElevator1Callback(
     if (g_elevator1Name.compare(discoveredDeviceInfo->deviceName) == 0)
     {
         m_discoveredElevator1DeviceUris.clear();
-        for (int i = 0; i < discoveredDeviceInfo->deviceUriCount; i++)
+        for (size_t i = 0; i < discoveredDeviceInfo->deviceUriCount; i++)
         {
             m_discoveredElevator1DeviceUris.push_back(discoveredDeviceInfo->deviceUris[i]);
         }

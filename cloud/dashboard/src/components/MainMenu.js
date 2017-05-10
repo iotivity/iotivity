@@ -99,7 +99,7 @@ class MainMenu extends React.Component {
     };
 
     handleFirmware = () => {
-        Client.discoverResource("rt=x.samsung.firmware", this.onFirmwareResources);
+        Client.discoverResource("rt=x.org.iotivity.firmware", this.onFirmwareResources);
     };
 
     constructor(props, context) {

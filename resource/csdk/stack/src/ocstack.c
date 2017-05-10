@@ -372,7 +372,7 @@ static OCStackResult HandlePresenceResponse(const CAEndpoint_t *endPoint,
  * @param responseInfo CA response info.
  */
 static void HandleCAResponses(const CAEndpoint_t* endPoint,
-        const CAResponseInfo_t* responseInfo);
+    const CAResponseInfo_t* responseInfo);
 
 /**
  * This function will be called back by CA layer when a request is received.
@@ -381,7 +381,7 @@ static void HandleCAResponses(const CAEndpoint_t* endPoint,
  * @param requestInfo CA request info.
  */
 static void HandleCARequests(const CAEndpoint_t* endPoint,
-        const CARequestInfo_t* requestInfo);
+    const CARequestInfo_t* requestInfo);
 
 /**
  * Extract query from a URI.
@@ -650,8 +650,11 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
         }
     }
 
-    requestInfo->info.acceptFormat = acceptFormat;
-    if (CA_FORMAT_APPLICATION_CBOR == acceptFormat && acceptVersion)
+    if (CA_FORMAT_UNDEFINED == requestInfo->info.acceptFormat)
+    {
+        requestInfo->info.acceptFormat = acceptFormat;
+    }
+    if (CA_FORMAT_APPLICATION_CBOR == requestInfo->info.acceptFormat && acceptVersion)
     {
         acceptVersion = 0;
     }
@@ -1500,7 +1503,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
         // check obs header option
         bool obsHeaderOpt = false;
         CAHeaderOption_t *options = responseInfo->info.options;
-        for (uint8_t i = 0; i< responseInfo->info.numOptions; i++)
+        for (uint8_t i = 0; i < responseInfo->info.numOptions; i++)
         {
             if (options && (options[i].optionID == COAP_OPTION_OBSERVE))
             {
@@ -1521,12 +1524,16 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 //      app that at least the request was received at the server?
             }
         }
+        else if (CA_REQUEST_ENTITY_INCOMPLETE == responseInfo->result)
+        {
+            OIC_LOG(INFO, TAG, "Wait for block transfer finishing.");
+            return;
+        }
         else if (CA_RETRANSMIT_TIMEOUT == responseInfo->result
                 || CA_NOT_ACCEPTABLE == responseInfo->result)
         {
             if (CA_RETRANSMIT_TIMEOUT == responseInfo->result)
             {
-                OIC_LOG(INFO, TAG, "Receiving A Timeout for this token");
                 OIC_LOG(INFO, TAG, "Calling into application address space");
             }
             else
@@ -1535,9 +1542,111 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 OIC_LOG(INFO, TAG, "Calling into application address space");
             }
 
-            OCClientResponse *response = NULL;
+            // Check if it is the case that a OCF client connects to a OIC server.
+            // If so, reissue request using OIC format
+            if (CA_NOT_ACCEPTABLE == responseInfo->result &&
+                CA_FORMAT_UNDEFINED == responseInfo->info.payloadFormat)
+            {
+                CARequestInfo_t requestInfo = { .method = CA_GET };
 
-            response = (OCClientResponse *)OICCalloc(1, sizeof(*response));
+                switch (cbNode->method)
+                {
+                    case OC_REST_GET:
+                    case OC_REST_OBSERVE:
+                    case OC_REST_OBSERVE_ALL:
+                        requestInfo.method = CA_GET;
+                        break;
+                    case OC_REST_PUT:
+                        requestInfo.method = CA_PUT;
+                        break;
+                    case OC_REST_POST:
+                        requestInfo.method = CA_POST;
+                        break;
+                    case OC_REST_DELETE:
+                        requestInfo.method = CA_DELETE;
+                        break;
+                    case OC_REST_DISCOVER:
+#ifdef WITH_PRESENCE
+                    case OC_REST_PRESENCE:
+#endif
+                        // OC_REST_DISCOVER: CA_DISCOVER will become GET
+                        // OC_REST_PRESENCE: Since "presence" is a stack layer only implementation.
+                        //                   replacing method type with GET.
+                        requestInfo.method = CA_GET;
+                        break;
+                    default:
+                        goto proceed;
+                }
+
+                CAInfo_t requestData = {.type = cbNode->type};
+                requestData.tokenLength = cbNode->tokenLength;
+                requestData.token = (CAToken_t) OICMalloc(requestData.tokenLength);
+                if (!requestData.token)
+                {
+                    OIC_LOG(ERROR, TAG, "Out of memory");
+                    goto proceed;
+                }
+                memcpy(requestData.token, cbNode->token, requestData.tokenLength);
+
+                if (!cbNode->options || !cbNode->numOptions)
+                {
+                    OIC_LOG (INFO, TAG, "No options present in cbNode");
+                }
+                else
+                {
+                    requestData.options = (CAHeaderOption_t *) OICCalloc(cbNode->numOptions,
+                            sizeof(CAHeaderOption_t));
+                    if (!requestData.options)
+                    {
+                        OIC_LOG(ERROR, TAG, "Out of memory");
+                        OICFree(&requestData.token);
+                        goto proceed;
+                    }
+                    memcpy(requestData.options, cbNode->options,
+                            sizeof(CAHeaderOption_t) * cbNode->numOptions);
+
+                    requestData.numOptions = cbNode->numOptions;
+                }
+                if (!cbNode->payload || !cbNode->payloadSize)
+                {
+                    OIC_LOG (INFO, TAG, "No payload present in cbNode");
+                }
+                else
+                {
+                    requestData.payload = (CAPayload_t) OICCalloc(1, cbNode->payloadSize);
+                    if (!requestData.payload)
+                    {
+                        OIC_LOG(ERROR, TAG, "out of memory");
+                        OICFree(requestData.token);
+                        OICFree(requestData.options);
+                        goto proceed;
+                    }
+                    memcpy(requestData.payload, cbNode->payload, cbNode->payloadSize);
+                    requestData.payloadSize = cbNode->payloadSize;
+                }
+                requestData.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
+                requestData.acceptFormat = CA_FORMAT_APPLICATION_CBOR; //?
+                requestData.resourceUri = OICStrdup(cbNode->requestUri);
+
+                requestInfo.info = requestData;
+ 
+                // send request
+                OCStackResult result = OCSendRequest(endPoint, &requestInfo);
+                if (OC_STACK_OK == result)
+                {
+                    return;
+                }
+                else
+                {
+                    OIC_LOG(ERROR, TAG, "Re-send request failed");
+                    OICFree(requestData.token);
+                    OICFree(requestData.options);
+                    OICFree(requestData.payload);
+                }
+            }
+
+        proceed:;
+            OCClientResponse *response = (OCClientResponse *) OICCalloc(1, sizeof(*response));
             if (!response)
             {
                 OIC_LOG(ERROR, TAG, "Allocating memory for response failed");
@@ -1549,7 +1658,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             FixUpClientResponse(response);
             response->resourceUri = responseInfo->info.resourceUri;
             memcpy(response->identity.id, responseInfo->info.identity.id,
-                                                sizeof (response->identity.id));
+                    sizeof(response->identity.id));
             response->identity.id_length = responseInfo->info.identity.id_length;
 
             response->result = CAResponseToOCStackResult(responseInfo->result);
@@ -1639,14 +1748,6 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                         type = PAYLOAD_TYPE_REPRESENTATION;
                     }
                     else if (strcmp(cbNode->requestUri, OC_RSRVD_PLATFORM_URI) == 0)
-                    {
-                        type = PAYLOAD_TYPE_REPRESENTATION;
-                    }
-                    else if (strcmp(cbNode->requestUri, OC_RSRVD_INTROSPECTION_URI) == 0)
-                    {
-                        type = PAYLOAD_TYPE_REPRESENTATION;
-                    }
-                    else if (strcmp(cbNode->requestUri, OC_RSRVD_INTROSPECTION_PAYLOAD_URI) == 0)
                     {
                         type = PAYLOAD_TYPE_REPRESENTATION;
                     }
@@ -1763,7 +1864,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             response->numRcvdVendorSpecificHeaderOptions = 0;
             if((responseInfo->info.numOptions > 0) && (responseInfo->info.options != NULL))
             {
-                int start = 0;
+                uint8_t start = 0;
                 //First option always with option ID is COAP_OPTION_OBSERVE if it is available.
                 if(responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
                 {
@@ -1794,9 +1895,9 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     return;
                 }
 
-                for (int i = start; i < responseInfo->info.numOptions; i++)
+                for (uint8_t i = start; i < responseInfo->info.numOptions; i++)
                 {
-                    memcpy (&(response->rcvdVendorSpecificHeaderOptions[i-start]),
+                    memcpy (&(response->rcvdVendorSpecificHeaderOptions[i - start]),
                             &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
                 }
             }
@@ -1977,8 +2078,8 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
      * RI as this option will make no sense to either RI or application.
      */
     RMUpdateInfo((CAHeaderOption_t **) &(responseInfo->info.options),
-                 (uint8_t *) &(responseInfo->info.numOptions),
-                 (CAEndpoint_t *) endPoint);
+        (uint8_t *) &(responseInfo->info.numOptions),
+        (CAEndpoint_t *)endPoint);
 #endif
 
     OCHandleResponse(endPoint, responseInfo);
@@ -2475,8 +2576,8 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
      * proper destination and remove RM header option.
      */
     RMUpdateInfo((CAHeaderOption_t **) &(requestInfo->info.options),
-                 (uint8_t *) &(requestInfo->info.numOptions),
-                 (CAEndpoint_t *) endPoint);
+        (uint8_t *) &(requestInfo->info.numOptions),
+        (CAEndpoint_t *)endPoint);
 
 #ifdef ROUTING_GATEWAY
     if (isEmptyMsg)
@@ -3373,8 +3474,12 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
     requestInfo.info.resourceUri = resourceUri;
 
     ttl = GetTicks(MAX_CB_TIMEOUT_SECONDS * MILLISECONDS_PER_SECOND);
-    result = AddClientCB(&clientCB, cbData, token, tokenLength, &resHandle,
-                            method, devAddr, resourceUri, resourceType, ttl);
+    result = AddClientCB(&clientCB, cbData, requestInfo.info.type, token, tokenLength,
+                         requestInfo.info.options, requestInfo.info.numOptions,
+                         requestInfo.info.payload, requestInfo.info.payloadSize,
+                         requestInfo.info.payloadFormat, &resHandle, method,
+                         devAddr, resourceUri, resourceType, ttl);
+
     if (OC_STACK_OK != result)
     {
         goto exit;
@@ -4966,7 +5071,7 @@ OCStackResult initResources()
         result = OCCreateResource(&introspectionResource,
                                   OC_RSRVD_RESOURCE_TYPE_INTROSPECTION,
                                   OC_RSRVD_INTERFACE_DEFAULT,
-                                  OC_RSRVD_INTROSPECTION_URI,
+                                  OC_RSRVD_INTROSPECTION_URI_PATH,
                                   NULL,
                                   NULL,
                                   OC_DISCOVERABLE);
@@ -4982,10 +5087,10 @@ OCStackResult initResources()
         result = OCCreateResource(&introspectionPayloadResource,
                                   OC_RSRVD_RESOURCE_TYPE_INTROSPECTION_PAYLOAD,
                                   OC_RSRVD_INTERFACE_DEFAULT,
-                                  OC_RSRVD_INTROSPECTION_PAYLOAD_URI,
+                                  OC_RSRVD_INTROSPECTION_PAYLOAD_URI_PATH,
                                   NULL,
                                   NULL,
-                                  OC_OBSERVABLE);
+                                  0);
         if (result == OC_STACK_OK)
         {
             result = BindResourceInterfaceToResource((OCResource *)introspectionPayloadResource,
@@ -5885,7 +5990,7 @@ OCStackResult OCGetHeaderOption(OCHeaderOption* ocHdrOpt, size_t numOptions,
         return OC_STACK_INVALID_PARAM;
     }
 
-    for (uint8_t i = 0; i < numOptions; i++)
+    for (size_t i = 0; i < numOptions; i++)
     {
         if (ocHdrOpt[i].optionID == optionID)
         {

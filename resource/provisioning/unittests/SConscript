@@ -62,7 +62,7 @@ if target_os in ['windows']:
 
     provisiontests_env.AppendUnique(LIBS = ['sqlite3'])
 elif target_os in ['tizen', 'linux']:
-    provisiontests_env.ParseConfig('pkg-config --cflags --libs sqlite3')
+    provisiontests_env.ParseConfig('pkg-config --cflags --libs sqlite3 gobject-2.0 gio-2.0 glib-2.0')
 
 provisiontests_env.PrependUnique(LIBS = [
         'ocprovision',
@@ -71,7 +71,7 @@ provisiontests_env.PrependUnique(LIBS = [
         'octbstack_internal',
         'routingmanager',
         'oc_logger_internal',
-        'connectivity_abstraction',
+        'connectivity_abstraction_internal',
         'coap',
         'ocsrm'
         ])

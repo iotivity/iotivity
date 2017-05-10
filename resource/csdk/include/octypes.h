@@ -77,12 +77,6 @@ extern "C" {
 /** KeepAlive URI.*/
 #define OC_RSRVD_KEEPALIVE_URI                "/oic/ping"
 
-/** Introspection URI.*/
-#define OC_RSRVD_INTROSPECTION_URI            "/oic/introspection"
-
-/** Introspection payload URI.*/
-#define OC_RSRVD_INTROSPECTION_PAYLOAD_URI    "/oic/introspection/payload"
-
 /** Presence */
 
 /** Presence URI through which the OIC devices advertise their presence.*/
@@ -270,6 +264,9 @@ extern "C" {
 /** To represent priority.*/
 #define OC_RSRVD_PRIORITY               "pri"
 
+/** For resource instance ID.*/
+#define OC_RSRVD_INSTANCE_ID            "id"
+
 /**
  *  Platform.
  */
@@ -309,39 +306,52 @@ extern "C" {
 
 /** VID for the platform. */
 #define OC_RSRVD_VID                    "vid"
+
 /**
  *  Device.
  */
 
 /** Device ID.*/
-#define OC_RSRVD_DEVICE_ID              "di"
+#define OC_RSRVD_DEVICE_ID               "di"
 
 /** Device Name.*/
-#define OC_RSRVD_DEVICE_NAME            "n"
+#define OC_RSRVD_DEVICE_NAME             "n"
 
 /** Device specification version.*/
-#define OC_RSRVD_SPEC_VERSION           "icv"
+#define OC_RSRVD_SPEC_VERSION            "icv"
 
 /** Device data model.*/
-#define OC_RSRVD_DATA_MODEL_VERSION     "dmv"
+#define OC_RSRVD_DATA_MODEL_VERSION      "dmv"
 
-/** Device specification version.*/
-#define OC_SPEC_VERSION                 "ocf.1.1.0"
+/** Device description, localized */
+#define OC_RSRVD_DEVICE_DESCRIPTION      "ld"
 
-/** Integer value of spec version (OCF1.0 0b0000:1000:0000:0000).*/
-#define OC_SPEC_VERSION_VALUE           2048
+/** Device software version */
+#define OC_RSRVD_SOFTWARE_VERSION        "sv"
 
-/** Device Data Model version.*/
-#define OC_DATA_MODEL_VERSION           "ocf.res.1.1.0,ocf.sh.1.1.0"
+/** Device manufacturer name, localized */
+#define OC_RSRVD_DEVICE_MFG_NAME         "dmn"
+
+/** Device model number */
+#define OC_RSRVD_DEVICE_MODEL_NUM        "dmno"
 
 /** Protocol-Independent ID.*/
 #define OC_RSRVD_PROTOCOL_INDEPENDENT_ID "piid"
 
+/** Device specification version.*/
+#define OC_SPEC_VERSION                  "ocf.1.1.0"
+
+/** Integer value of spec version (OCF1.0 0b0000:1000:0000:0000).*/
+#define OC_SPEC_VERSION_VALUE            2048
+
+/** Device Data Model version.*/
+#define OC_DATA_MODEL_VERSION            "ocf.res.1.1.0,ocf.sh.1.1.0"
+
 /**
-*  Introspection.
-*/
-/** Name.*/
-#define OC_RSRVD_INTROSPECTION_NAME     "name"
+ *  Introspection.
+ */
+/** Name property name(n).*/
+#define OC_RSRVD_INTROSPECTION_NAME     "n"
 
 /** Value of name.*/
 #define OC_RSRVD_INTROSPECTION_NAME_VALUE "Introspection"
@@ -367,11 +377,8 @@ extern "C" {
 /** Version property value.*/
 #define OC_RSRVD_INTROSPECTION_VERSION_VALUE 1
 
-/** Introspection payload data property name.*/
-#define OC_RSRVD_INTROSPECTION_DATA_NAME  "data"
-
 /** Introspection persistent store name.*/
-#define OC_INTROSPECTION_FILE_NAME      "introspection.json"
+#define OC_INTROSPECTION_FILE_NAME      "introspection.dat"
 
 /**
  *  These provide backward compatibility - their use is deprecated.
@@ -1420,7 +1427,9 @@ typedef enum
     /** The payload is an OCPresencePayload */
     PAYLOAD_TYPE_PRESENCE,
     /** The payload is an OCDiagnosticPayload */
-    PAYLOAD_TYPE_DIAGNOSTIC
+    PAYLOAD_TYPE_DIAGNOSTIC,
+    /** The payload is an OCIntrospectionPayload */
+    PAYLOAD_TYPE_INTROSPECTION
 } OCPayloadType;
 
 /**
@@ -1585,6 +1594,12 @@ typedef struct
     OCPayload base;
     char* message;
 } OCDiagnosticPayload;
+
+typedef struct
+{
+    OCPayload base;
+    OCByteString cborPayload;
+} OCIntrospectionPayload;
 
 /**
  * Incoming requests handled by the server. Requests are passed in as a parameter to the

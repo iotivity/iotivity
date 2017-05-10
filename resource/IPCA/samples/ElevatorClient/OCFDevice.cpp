@@ -129,8 +129,7 @@ ResourceList OCFDevice::GetResourceInfo()
     }
 
     m_resourceList.clear();
-    size_t i;
-    for (i = 0 ; i < resourceListCount ; i++)
+    for (size_t i = 0 ; i < resourceListCount ; i++)
     {
         char** resourceTypes;
         size_t resourceTypeCount;
@@ -138,8 +137,7 @@ ResourceList OCFDevice::GetResourceInfo()
                     resourcePathList[i], &resourceTypes, &resourceTypeCount);
         if (IPCA_OK == status)
         {
-            int j;
-            for (j = 0 ; j < resourceTypeCount; j++)
+            for (size_t j = 0 ; j < resourceTypeCount; j++)
             {
                 m_resourceList[resourcePathList[i]].push_back(resourceTypes[j]);
             }

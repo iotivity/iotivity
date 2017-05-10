@@ -846,13 +846,13 @@ OCEntityHandlerResult MockEntityHandler(OCEntityHandlerFlag flag,
         std::lock_guard<std::recursive_mutex> lock(g_globalMutex);
         for (auto request : g_requestList)
         {
-            PendingRequest::Ptr pendingRequest = request.second;
-            if (pendingRequest->method & (OC_REST_OBSERVE | OC_REST_OBSERVE_ALL))
+            PendingRequest::Ptr localPendingRequest = request.second;
+            if (localPendingRequest->method & (OC_REST_OBSERVE | OC_REST_OBSERVE_ALL))
             {
-                if (pendingRequest->mockOCResource->m_uri.compare(uri) == 0)
+                if (localPendingRequest->mockOCResource->m_uri.compare(uri) == 0)
                 {
-                    observationIdToCancel = pendingRequest->observationId;
-                    g_requestList.erase(pendingRequest->requestNumber);
+                    observationIdToCancel = localPendingRequest->observationId;
+                    g_requestList.erase(localPendingRequest->requestNumber);
                     break;
                 }
             }

@@ -1042,6 +1042,16 @@ exit:
     return ret;
 }
 
+OCStackResult InitPstatResourceToDefault()
+{
+    gPstat = GetPstatDefault();
+    VERIFY_NOT_NULL(TAG, gPstat, FATAL);
+
+    return OC_STACK_OK;
+exit:
+    return OC_STACK_ERROR;
+}
+
 OCStackResult DeInitPstatResource()
 {
     if (gPstat != &gDefaultPstat)

@@ -42,10 +42,12 @@ if target_os not in ['windows']:
 	samples_env.Append(LINKFLAGS = ['-Wl,--no-as-needed'])
 
 if target_os in ['windows', 'msys_nt']:
-	samples_env.PrependUnique(LIBS = ['ocsrm', 'ws2_32', 'iphlpapi'])
+	samples_env.PrependUnique(LIBS = ['coap', 'ocsrm'])
 else:
-	samples_env.PrependUnique(LIBS = ['m'])
-samples_env.PrependUnique(LIBS = ['octbstack', 'connectivity_abstraction', 'coap'])
+	samples_env.PrependUnique(LIBS = ['connectivity_abstraction', 'coap', 'm'])
+
+samples_env.PrependUnique(LIBS = ['octbstack'])
+
 if samples_env.get('SECURED') == '1':
 	samples_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 

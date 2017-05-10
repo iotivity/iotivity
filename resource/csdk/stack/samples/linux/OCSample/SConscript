@@ -21,6 +21,8 @@
 Import('stacksamples_env')
 ocsample_env = stacksamples_env.Clone()
 
+target_os = stacksamples_env.get('TARGET_OS')
+
 ######################################################################
 # Build flags
 ######################################################################
@@ -29,10 +31,15 @@ ocsample_env.PrependUnique(CPPPATH = [
     '#/resource/csdk/stack/include',
 ])
 
+if target_os not in ['msys_nt', 'windows']:
+    ocsample_env.PrependUnique(LIBS = [
+        'connectivity_abstraction',
+    ])
+
 ocsample_env.PrependUnique(LIBS = [
     'octbstack',
-    'connectivity_abstraction'
 ])
+
 if ocsample_env.get('SECURED') == '1':
 	if ocsample_env.get('WITH_TCP') == True:
 		ocsample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])

@@ -103,7 +103,13 @@ if env.get('SECURED') == '1':
 liboctbstack_env.AppendUnique(LIBS = ['mbedcrypto'])
 
 if target_os in ['android', 'linux', 'tizen', 'msys_nt', 'windows']:
-    liboctbstack_env.PrependUnique(LIBS = ['connectivity_abstraction'])
+    if target_os not in ['windows', 'msys_nt']:
+        liboctbstack_env.PrependUnique(LIBS = ['connectivity_abstraction'])
+    else:
+        # On Windows, apps don't link directly with connectivity_abstraction.
+        # connectivity_abstraction is linked inside octbstack.dll and apps
+        # import its APIs by linking with octbstack.lib.
+        liboctbstack_env.PrependUnique(LIBS = ['connectivity_abstraction_internal'])
 
     if with_ra_ibb:
         liboctbstack_env.AppendUnique(LIBS = liboctbstack_env['RALIBS'], LIBPATH = liboctbstack_env['RALIBPATH'], RPATH = liboctbstack_env['RARPATH'])

@@ -181,23 +181,23 @@ public class DeviceServerSystem extends ServerSystem {
                                             .get(RouteResourcePathSize - 1));
                             targetChannel = targetDevice.getRequestChannel();
                         }
-                    }
-                    switch (coapRequest.getObserve()) {
-                        case SUBSCRIBE:
-                            coapDevice.addObserveRequest(
-                                    Bytes.bytesToLong(coapRequest.getToken()),
-                                    coapRequest);
-                            coapDevice.addObserveChannel(targetChannel);
-                            break;
-                        case UNSUBSCRIBE:
-                            coapDevice.removeObserveChannel(targetChannel);
-                            coapDevice.removeObserveRequest(
-                                    Bytes.bytesToLong(coapRequest.getToken()));
-                            break;
-                        default:
-                            break;
-                    }
 
+                        switch (coapRequest.getObserve()) {
+                            case SUBSCRIBE:
+                                coapDevice.addObserveRequest(
+                                        Bytes.bytesToLong(coapRequest.getToken()),
+                                        coapRequest);
+                                coapDevice.addObserveChannel(targetChannel);
+                                break;
+                            case UNSUBSCRIBE:
+                                coapDevice.removeObserveChannel(targetChannel);
+                                coapDevice.removeObserveRequest(
+                                        Bytes.bytesToLong(coapRequest.getToken()));
+                                break;
+                            default:
+                                break;
+                        }
+                    }
                 } catch (Throwable t) {
                     Log.f(ctx.channel(), t);
                     ResponseStatus responseStatus = t instanceof ServerException

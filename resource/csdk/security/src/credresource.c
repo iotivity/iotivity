@@ -57,6 +57,7 @@
 #include "cacommon.h"
 #include "secureresourcemanager.h"
 #include "ocstackinternal.h"
+#include "deviceonboardingstate.h"
 
 #ifdef __unix__
 #include <sys/types.h>
@@ -1731,22 +1732,40 @@ exit:
     return cmpResult;
 }
 
+#if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
+static bool IsNewPreconfigPinCredential(OicSecCred_t * oldCred, OicSecCred_t * newCred)
+{
+    if (oldCred->credUsage &&
+        newCred->credUsage &&
+        (0 == strcmp(PRECONFIG_PIN_CRED, oldCred->credUsage)) &&
+        (0 == strcmp(PRECONFIG_PIN_CRED, newCred->credUsage)))
+    {
+        return true;
+    }
+
+    return false;
+}
+#endif //(__WITH_DTLS__ or __WITH_TLS__) and MULTIPLE_OWNER
+
 OCStackResult AddCredential(OicSecCred_t * newCred)
 {
     OCStackResult ret = OC_STACK_ERROR;
     OicSecCred_t * temp = NULL;
     bool validFlag = true;
     OicUuid_t emptyOwner = { .id = {0} };
+#if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
+    uint16_t staleCredId = 0;
+#endif //(__WITH_DTLS__ or __WITH_TLS__) and MULTIPLE_OWNER  
 
     OIC_LOG(DEBUG, TAG, "IN AddCredential");
 
     VERIFY_SUCCESS(TAG, NULL != newCred, ERROR);
-    //Assigning credId to the newCred
+
+    // Assigning credId to the newCred
     newCred->credId = GetCredId();
     VERIFY_SUCCESS(TAG, true == IsValidCredential(newCred), ERROR);
 
-    //the newCred is not valid if it is empty
-
+    // The newCred is not valid if it is empty
     if (memcmp(&(newCred->subject), &emptyOwner, sizeof(OicUuid_t)) == 0)
     {
         validFlag = false;
@@ -1773,12 +1792,35 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
                 validFlag = false;
                 break;
             }
+
+#if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
+            // Devices can only have one Preconfigured Pin credential at any given time. Check
+            // to see if the new credential is an update to an existing Preconfigured Pin
+            // credential so that we can remove it later.
+            if (IsNewPreconfigPinCredential(temp, newCred))
+            {
+                staleCredId = temp->credId;
+            }
+#endif //(__WITH_DTLS__ or __WITH_TLS__) and MULTIPLE_OWNER
         }
     }
 
-    //Append the new Cred to existing list if new Cred is valid
+    // Append the new Cred to existing list if new Cred is valid
     if (validFlag)
     {
+#if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
+        // Remove the existing Preconfigured Pin credential if it exists
+        if (0 != staleCredId)
+        {
+            ret = RemoveCredentialByCredId(staleCredId);
+            if (OC_STACK_RESOURCE_DELETED == ret)
+            {
+                // Use the old Preconfigured Pin cred id so that this acts as an update
+                newCred->credId = staleCredId;
+            }
+        }
+#endif //(__WITH_DTLS__ or __WITH_TLS__) and MULTIPLE_OWNER
+
         LL_APPEND(gCred, newCred);
     }
     if (memcmp(&(newCred->rownerID), &emptyOwner, sizeof(OicUuid_t)) != 0)
@@ -2042,16 +2084,30 @@ exit:
 
 static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehRequest)
 {
-    OCEntityHandlerResult ret = OC_EH_ERROR;
+    OCEntityHandlerResult ret = OC_EH_INTERNAL_SERVER_ERROR;
     OIC_LOG(DEBUG, TAG, "HandleCREDPostRequest IN");
 
+    OicSecDostype_t dos;
     static uint16_t previousMsgId = 0;
     //Get binary representation of cbor
     OicSecCred_t *cred  = NULL;
     uint8_t *payload = (((OCSecurityPayload*)ehRequest->payload)->securityData);
     size_t size = (((OCSecurityPayload*)ehRequest->payload)->payloadSize);
 
-    OCStackResult res = CBORPayloadToCred(payload, size, &cred);
+    OCStackResult res = OC_STACK_ERROR;
+
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
+    if ((DOS_RESET == dos.state) ||
+        (DOS_RFPRO == dos.state) ||
+        (DOS_RFNOP == dos.state))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s /cred resource is read-only in RESET, RFPRO and RFNOP.", __func__);
+        ret = OC_EH_NOT_ACCEPTABLE;
+        goto exit;
+    }
+
+    res = CBORPayloadToCred(payload, size, &cred);
+
     if (res == OC_STACK_OK)
     {
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
@@ -2289,6 +2345,7 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
 #endif//__WITH_DTLS__
     }
 
+exit:
     if (OC_EH_CHANGED != ret && cred != NULL)
     {
         if(OC_STACK_OK != RemoveCredential(&cred->subject))

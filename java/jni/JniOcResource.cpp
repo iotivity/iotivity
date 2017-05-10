@@ -321,6 +321,11 @@ std::string JniOcResource::host()
     return m_sharedResource->host();
 }
 
+std::vector< std::string > JniOcResource::getAllHosts() const
+{
+    return m_sharedResource->getAllHosts();
+}
+
 std::string JniOcResource::uri()
 {
     return m_sharedResource->uri();
@@ -1556,6 +1561,26 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcResource_getHost
     }
 
     return env->NewStringUTF(resource->host().c_str());
+}
+
+/*
+* Class:     org_iotivity_base_OcResource
+* Method:    getAllHosts
+* Signature: ()Ljava/util/List;
+*/
+JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcResource_getAllHosts
+    (JNIEnv *env, jobject thiz)
+{
+    LOGD("OcResource_getAllHosts");
+    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+    if (!resource)
+    {
+        return nullptr;
+    }
+
+    std::vector<std::string> allHosts = resource->getAllHosts();
+
+    return JniUtils::convertStrVectorToJavaStrList(env, allHosts);
 }
 
 /*

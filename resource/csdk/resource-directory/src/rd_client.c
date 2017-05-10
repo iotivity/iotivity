@@ -275,7 +275,7 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
                     goto exit;
                 }
                 uint32_t k = 0;
-                for (uint32_t i = 0; i < nCaEps; i++)
+                for (size_t i = 0; i < nCaEps; i++)
                 {
                     if (isSecure == (bool)(caEps[i].flags & OC_FLAG_SECURE))
                     {
@@ -330,6 +330,23 @@ OCStackResult OCRDPublishWithDeviceId(OCDoHandle *handle, const char *host,
 
     OIC_LOG_V(DEBUG, TAG, "Publish Resource to RD with device id [%s]", id);
 
+    OCStackResult result = OC_STACK_OK;
+    OCHeaderOption options[2];
+    size_t numOptions = 0;
+    uint16_t format = COAP_MEDIATYPE_APPLICATION_VND_OCF_CBOR;
+
+    result = OCSetHeaderOption(options, &numOptions, CA_OPTION_CONTENT_FORMAT, &format, sizeof(format));
+    if (OC_STACK_OK != result)
+    {
+        return result;
+    }
+
+    result = OCSetHeaderOption(options, &numOptions, CA_OPTION_ACCEPT, &format, sizeof(format));
+    if (OC_STACK_OK != result)
+    {
+        return result;
+    }
+
     OCResourceHandle *pubResHandle = resourceHandles;
     OCResourceHandle defaultResHandles[OIC_RD_DEFAULT_RESOURCE] = { 0 };
     uint8_t nPubResHandles = nHandles;
@@ -375,13 +392,9 @@ OCStackResult OCRDPublishWithDeviceId(OCDoHandle *handle, const char *host,
     rdPublishCbData.context = rdPublishContext;
     rdPublishCbData.cb = RDPublishCallback;
     rdPublishCbData.cd = RDPublishContextDeleter;
-    OCHeaderOption options[2];
-    size_t numOptions = 0;
-    uint16_t format = COAP_MEDIATYPE_APPLICATION_VND_OCF_CBOR;
-    OCSetHeaderOption(options, &numOptions, CA_OPTION_CONTENT_FORMAT, &format, sizeof(format));
-    OCSetHeaderOption(options, &numOptions, CA_OPTION_ACCEPT, &format, sizeof(format));
+
     return OCDoResource(handle, OC_REST_POST, targetUri, NULL, (OCPayload *)rdPayload,
-                        connectivityType, qos, &rdPublishCbData, options, numOptions);
+                        connectivityType, qos, &rdPublishCbData, options, (uint8_t)numOptions);
 }
 
 OCStackResult OCRDDelete(OCDoHandle *handle, const char *host,

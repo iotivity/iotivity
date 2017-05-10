@@ -152,6 +152,9 @@ namespace OC
          * as BTH etc.
          * @note OCStackResult is defined in ocstack.h.
          * @see findResource(const std::string&, const std::string&, OCConnectivityType, FindCallback, QualityOfService)
+         * @note To get the tcpPort information, user must call getAllHosts() from the OCResource
+           object in FindCallback. To use a TCP endpoint that has been received by getAllHosts(),
+           user must use the setHost() function.
          */
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     OCConnectivityType connectivityType, FindCallback resourceHandler);
@@ -177,6 +180,9 @@ namespace OC
          *                                  from a particular service.
          * @param QoS QualityOfService the quality of communication
          * @see findResource(const std::string&, const std::string&, OCConnectivityType, FindCallback)
+         * @note To get the tcpPort information, user must call getAllHosts() from the OCResource
+           object in FindCallback. To use a TCP endpoint that has been received by getAllHosts(),
+           user must use the setHost() function.
          */
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     OCConnectivityType connectivityType, FindCallback resourceHandler,
@@ -591,6 +597,7 @@ namespace OC
          *               It will be set upon successful return of this method.
          * @param host The IP address/addressable name of the server to subscribe to.
          *               This should be in the format coap://address:port
+         *               If empty, the multicast subscribe presence is performed.
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
          *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
          * @param presenceHandler callback function that will receive notifications/subscription
@@ -612,6 +619,7 @@ namespace OC
          *               It will be set upon successful return of this method.
          * @param host The IP address/addressable name of the server to subscribe to.
          *               This should be in the format coap://address:port
+         *               If empty, the multicast subscribe presence is performed.
          * @param resourceType a resource type specified as a filter for subscription callbacks.
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
          *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.

@@ -153,17 +153,17 @@ static void CHPGetProxyURI(OCHeaderOption* options, uint8_t *numOptions, char* u
         return;
     }
 
-    for (int count = 0; count < *numOptions; count++)
+    for (uint8_t count = 0; count < *numOptions; count++)
     {
         if (options[count].protocolID == OC_COAP_ID &&
-                options[count].optionID == COAP_OPTION_PROXY_URI)
+            options[count].optionID == COAP_OPTION_PROXY_URI)
         {
             OIC_LOG(DEBUG, TAG, "Proxy URI is present");
             // Extract proxy-uri and delete it from headeroptions.
             OICStrcpy(uri, uriLength, (char *)options[count].optionData);
-            for (int fwd = count; fwd < *numOptions-1; fwd++)
+            for (uint8_t fwd = count; fwd < *numOptions - 1; fwd++)
             {
-                options[count] = options[count+1];
+                options[count] = options[count + 1];
             }
             *numOptions -= 1;
             return;
@@ -421,11 +421,11 @@ OCStackResult CHPHandleOCFRequest(const OCEntityHandlerRequest* requestInfo,
         return OC_STACK_ERROR;
     }
 
-    uint8_t vendorOptions = requestInfo->numRcvdVendorSpecificHeaderOptions;
-    if (vendorOptions)
+    uint8_t vendorOptionsCount = requestInfo->numRcvdVendorSpecificHeaderOptions;
+    if (vendorOptionsCount)
     {
         httpRequest.headerOptions = u_arraylist_create();
-        for (int option = 0; option < vendorOptions; option++)
+        for (uint8_t option = 0; option < vendorOptionsCount; option++)
         {
             HttpHeaderOption_t *httpOption = NULL;
             result = CHPGetHttpOption(requestInfo->rcvdVendorSpecificHeaderOptions + option,

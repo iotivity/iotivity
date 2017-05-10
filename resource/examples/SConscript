@@ -46,7 +46,10 @@ examples_env.AppendUnique(CPPPATH = [
 
 examples_env.AppendUnique(RPATH = [examples_env.get('BUILD_DIR')])
 examples_env.PrependUnique(LIBS = ['coap'])
-examples_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+
+if target_os not in ['msys_nt', 'windows']:
+    examples_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+
 examples_env.AppendUnique(LIBS = ['octbstack'])
 examples_env.AppendUnique(LIBS = ['oc'])
 

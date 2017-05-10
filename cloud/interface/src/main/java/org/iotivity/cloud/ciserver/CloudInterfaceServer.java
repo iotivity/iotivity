@@ -53,7 +53,7 @@ public class CloudInterfaceServer {
 
         System.out.println("-----CI SERVER-------");
 
-        if (args.length < 8 || args.length > 12) {
+        if (!(args.length == 10 || args.length == 12)) {
             Log.e("\nCoAP-server <Port> and RD-server <Address> <Port> Account-server <Address> <Port> "
                     + "MQ-broker <Address> <Port> HC-proxy <HTTP-port> Websocket-server <Port> and TLS-mode <0|1> are required.\n"
                     + "and WebSocketLog-Server <Address> <Port> (optional)\n"
@@ -74,16 +74,19 @@ public class CloudInterfaceServer {
         boolean tlsMode = Integer.parseInt(args[9]) == 1;
 
         if (args.length >= 11) {
-            Log.InitWebLog(args[10], args[11], CloudInterfaceServer.class
-                    .getSimpleName().toString());
+            Log.InitWebLog(args[10], args[11],
+                    CloudInterfaceServer.class.getSimpleName().toString());
         }
 
-        ConnectorPool.addConnection("rd", new InetSocketAddress(args[1],
-                Integer.parseInt(args[2])), tlsMode);
-        ConnectorPool.addConnection("account", new InetSocketAddress(args[3],
-                Integer.parseInt(args[4])), tlsMode);
-        ConnectorPool.addConnection("mq", new InetSocketAddress(args[5],
-                Integer.parseInt(args[6])), tlsMode);
+        ConnectorPool.addConnection("rd",
+                new InetSocketAddress(args[1], Integer.parseInt(args[2])),
+                tlsMode);
+        ConnectorPool.addConnection("account",
+                new InetSocketAddress(args[3], Integer.parseInt(args[4])),
+                tlsMode);
+        ConnectorPool.addConnection("mq",
+                new InetSocketAddress(args[5], Integer.parseInt(args[6])),
+                tlsMode);
 
         DeviceServerSystem deviceServer = new DeviceServerSystem();
 
@@ -136,13 +139,13 @@ public class CloudInterfaceServer {
 
         // Add HTTP Server for HTTP-to-CoAP Proxy
         if (hcProxyMode) {
-            deviceServer.addServer(new HttpServer(new InetSocketAddress(
-                    hcProxyPort)));
+            deviceServer.addServer(
+                    new HttpServer(new InetSocketAddress(hcProxyPort)));
         }
 
         if (websocketMode) {
-            deviceServer.addServer(new WebSocketServer(new InetSocketAddress(
-                    websocketPort)));
+            deviceServer.addServer(
+                    new WebSocketServer(new InetSocketAddress(websocketPort)));
         }
 
         deviceServer.startSystem(tlsMode);

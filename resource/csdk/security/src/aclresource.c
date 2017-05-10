@@ -46,6 +46,7 @@
 #include "psinterface.h"
 #include "ocpayloadcbor.h"
 #include "secureresourcemanager.h"
+#include "deviceonboardingstate.h"
 
 #include "security_internals.h"
 
@@ -2107,11 +2108,22 @@ exit:
 static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *ehRequest)
 {
     OIC_LOG(INFO, TAG, "HandleACLPostRequest processing the request");
-    OCEntityHandlerResult ehRet = OC_EH_OK;
+    OCEntityHandlerResult ehRet = OC_EH_INTERNAL_SERVER_ERROR;
 
     // Convert CBOR into ACL data and update to SVR buffers. This will also validate the ACL data received.
     uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData;
     size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
+
+    OicSecDostype_t dos;
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
+    if ((DOS_RESET == dos.state) ||
+        (DOS_RFNOP == dos.state))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s /acl resource is read-only in RESET and RFNOP.", __func__);
+        ehRet = OC_EH_NOT_ACCEPTABLE;
+        goto exit;
+    }
+
     if (payload)
     {
         OicSecAcl_t *newAcl = NULL;
@@ -2185,6 +2197,8 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
         OIC_LOG(ERROR, TAG, "ACL post request with no payload.");
         ehRet = OC_EH_ERROR;
     }
+
+exit:
 
     //Send response to request originator
     ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?

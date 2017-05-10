@@ -253,6 +253,8 @@ static OCStackResult OCParseDiscoveryPayloadCbor(OCPayload **outPayload,
             CborValue linkMap;
             err = cbor_value_map_find_value(&rootMap, OC_RSRVD_LINKS, &linkMap);
             VERIFY_CBOR_SUCCESS(TAG, err, "to find links tag");
+            err = cbor_value_is_valid(&linkMap) ? CborNoError : CborUnknownError;
+            VERIFY_CBOR_SUCCESS(TAG, err, "to find links tag");
 
             // Enter the links array and start iterating through the array processing
             // each resource which shows up as a map.
@@ -269,6 +271,8 @@ static OCStackResult OCParseDiscoveryPayloadCbor(OCPayload **outPayload,
 
                 // Uri
                 err = cbor_value_map_find_value(&resourceMap, OC_RSRVD_HREF, &curVal);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find href tag");
+                err = cbor_value_is_valid(&curVal) ? CborNoError : CborUnknownError;
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find href tag");
                 err = cbor_value_dup_text_string(&curVal, &(resource->uri), &len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find href value");
@@ -302,9 +306,13 @@ static OCStackResult OCParseDiscoveryPayloadCbor(OCPayload **outPayload,
                 CborValue policyMap;
                 err = cbor_value_map_find_value(&resourceMap, OC_RSRVD_POLICY, &policyMap);
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find policy tag");
+                err = cbor_value_is_valid(&policyMap) ? CborNoError : CborUnknownError;
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find policy tag");
 
                 // Bitmap
                 err = cbor_value_map_find_value(&policyMap, OC_RSRVD_BITMAP, &curVal);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find bitmap tag");
+                err = cbor_value_is_valid(&curVal) ? CborNoError : CborUnknownError;
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find bitmap tag");
                 err = cbor_value_get_int(&curVal, &bitmap);
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find bitmap value");
@@ -420,6 +428,8 @@ static CborError ParseResources(OCDiscoveryPayload **outPayload, CborValue *reso
         CborValue curVal;
         err = cbor_value_map_find_value(resourceMap, OC_RSRVD_HREF, &curVal);
         VERIFY_CBOR_SUCCESS(TAG, err, "to find href tag");
+        err = cbor_value_is_valid(&curVal) ? CborNoError : CborUnknownError;
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find href tag");
         err = cbor_value_dup_text_string(&curVal, &(resource->uri), &len, NULL);
         VERIFY_CBOR_SUCCESS(TAG, err, "to find href value");
 
@@ -460,9 +470,13 @@ static CborError ParseResources(OCDiscoveryPayload **outPayload, CborValue *reso
         CborValue policyMap;
         err = cbor_value_map_find_value(resourceMap, OC_RSRVD_POLICY, &policyMap);
         VERIFY_CBOR_SUCCESS(TAG, err, "to find policy tag");
+        err = cbor_value_is_valid(&policyMap) ? CborNoError : CborUnknownError;
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find policy tag");
 
         // Bitmap
         err = cbor_value_map_find_value(&policyMap, OC_RSRVD_BITMAP, &curVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find bitmap tag");
+        err = cbor_value_is_valid(&curVal) ? CborNoError : CborUnknownError;
         VERIFY_CBOR_SUCCESS(TAG, err, "to find bitmap tag");
         err = cbor_value_get_int(&curVal, &bitmap);
         VERIFY_CBOR_SUCCESS(TAG, err, "to find bitmap value");
@@ -490,6 +504,8 @@ static CborError ParseResources(OCDiscoveryPayload **outPayload, CborValue *reso
                 // ep
                 err = cbor_value_map_find_value(&epMap, OC_RSRVD_ENDPOINT, &curVal);
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find endpoint tag");
+                err = cbor_value_is_valid(&curVal) ? CborNoError : CborUnknownError;
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find endpoint tag");
                 err = cbor_value_dup_text_string(&curVal, &endpointStr, &len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find endpoint value");
 
@@ -501,8 +517,17 @@ static CborError ParseResources(OCDiscoveryPayload **outPayload, CborValue *reso
                     // pri
                     err = cbor_value_map_find_value(&epMap, OC_RSRVD_PRIORITY, &curVal);
                     VERIFY_CBOR_SUCCESS(TAG, err, "to find priority tag");
-                    err = cbor_value_get_int(&curVal, &pri);
-                    VERIFY_CBOR_SUCCESS(TAG, err, "to find priority value");
+                    err = cbor_value_is_valid(&curVal) ? CborNoError : CborUnknownError;
+                    VERIFY_CBOR_SUCCESS(TAG, err, "to find priority tag");
+                    if (cbor_value_is_valid(&curVal))
+                    {
+                        err = cbor_value_get_int(&curVal, &pri);
+                        VERIFY_CBOR_SUCCESS(TAG, err, "to find priority value");
+                    }
+                    else
+                    {
+                        pri = 1;
+                    }
                     endpoint->pri = (uint16_t)pri;
                     OCResourcePayloadAddNewEndpoint(resource, endpoint);
                     endpoint = NULL;
@@ -1294,12 +1319,16 @@ static OCStackResult OCParsePresencePayload(OCPayload **outPayload, CborValue *r
         // Sequence Number
         CborError err = cbor_value_map_find_value(rootValue, OC_RSRVD_NONCE, &curVal);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding nonce tag");
+        err = cbor_value_is_valid(&curVal) ? CborNoError : CborUnknownError;
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding nonce tag");
         err = cbor_value_get_uint64(&curVal, &temp);
         payload->sequenceNumber = (uint32_t)temp;
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding nonce value");
 
         // Max Age
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_TTL, &curVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding ttl tag");
+        err = cbor_value_is_valid(&curVal) ? CborNoError : CborUnknownError;
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding ttl tag");
         temp = 0;
         err = cbor_value_get_uint64(&curVal, &temp);
@@ -1308,6 +1337,8 @@ static OCStackResult OCParsePresencePayload(OCPayload **outPayload, CborValue *r
 
         // Trigger
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_TRIGGER, &curVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding trigger tag");
+        err = cbor_value_is_valid(&curVal) ? CborNoError : CborUnknownError;
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding trigger tag");
         err = cbor_value_get_simple_type(&curVal, &trigger);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding trigger value");

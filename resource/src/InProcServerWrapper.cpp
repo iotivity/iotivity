@@ -91,7 +91,7 @@ void formResourceRequest(OCEntityHandlerFlag flag,
                 std::string optionData;
                 HeaderOptions headerOptions;
 
-                for(int i = 0;
+                for(size_t i = 0;
                     i < entityHandlerRequest->numRcvdVendorSpecificHeaderOptions;
                     i++)
                 {
@@ -601,6 +601,12 @@ namespace OC
         auto cLock = m_csdkLock.lock();
         OCStackResult result = OC_STACK_ERROR;
 
+        if (pResponse->getHeaderOptions().size() > MAX_HEADER_OPTIONS)
+        {
+            oclog() << "Error passed too many server header options.\n";
+            return OC_STACK_ERROR;
+        }
+
         if(!pResponse)
         {
             result = OC_STACK_MALFORMED_RESPONSE;
@@ -620,15 +626,29 @@ namespace OC
 
             response.persistentBufferFlag = 0;
 
-            response.numSendVendorSpecificHeaderOptions = serverHeaderOptions.size();
+            OC_STATIC_ASSERT(MAX_HEADER_OPTIONS <= UINT8_MAX,
+                             "Maximum number of headers too large.");
+
+            response.numSendVendorSpecificHeaderOptions = (uint8_t)serverHeaderOptions.size();
             int i = 0;
             for (auto it=serverHeaderOptions.begin(); it != serverHeaderOptions.end(); ++it)
             {
+                size_t optionDataLength = (it->getOptionData()).length() + 1;
+
+                if (optionDataLength > MAX_HEADER_OPTION_DATA_LENGTH)
+                {
+                    oclog() << "Error header " << i << " option data length too large.\n";
+                    return OC_STACK_ERROR;
+                }
+
+                OC_STATIC_ASSERT(MAX_HEADER_OPTION_DATA_LENGTH <= UINT16_MAX,
+                                 "Max header options lenght too large.");
+
                 response.sendVendorSpecificHeaderOptions[i].protocolID = OC_COAP_ID;
                 response.sendVendorSpecificHeaderOptions[i].optionID =
                     static_cast<uint16_t>(it->getOptionID());
                 response.sendVendorSpecificHeaderOptions[i].optionLength =
-                    (it->getOptionData()).length() + 1;
+                    (uint16_t)optionDataLength;
                 std::string optionData = it->getOptionData();
                 std::copy(optionData.begin(),
                          optionData.end(),

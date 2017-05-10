@@ -216,3 +216,7 @@ char OIC_SEC_REST_QUERY_DELIMETER = '=';
 //Security Version
 const char * DEFAULT_SEC_VERSION = "0.0.0";
 
+//Preconfigured Pin credential identifier
+#ifdef MULTIPLE_OWNER
+const char * PRECONFIG_PIN_CRED = "x.org.iotivity.sec.cred.pcp";
+#endif //MULTIPLE_OWNER

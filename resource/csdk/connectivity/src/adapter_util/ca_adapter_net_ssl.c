@@ -1969,7 +1969,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
             return CA_STATUS_FAILED;
         }
         //Load allowed TLS suites from SVR DB
-        SetupCipher(config, sep->endpoint.adapter, sep->endpoint.remoteId);
+        SetupCipher(config, sep->endpoint.adapter, NULL);
 
         ret = u_arraylist_add(g_caSslContext->peerList, (void *) peer);
         if (!ret)
@@ -2434,7 +2434,7 @@ static int pHash (const unsigned char *key, size_t keyLen,
 
     CHECK_MBEDTLS_RET(mbedtls_md_hmac_starts, &hmacP, key, keyLen);
 
-    while (len + dLen < bufLen)
+    while (len + dLen <= bufLen)
     {
         CHECK_MBEDTLS_RET(mbedtls_md_hmac_reset, &hmacP);
         CHECK_MBEDTLS_RET(mbedtls_md_hmac_starts, &hmacP, key, keyLen);

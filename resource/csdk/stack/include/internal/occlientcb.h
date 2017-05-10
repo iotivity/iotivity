@@ -62,7 +62,6 @@ typedef struct resourcetype_t OCResourceType;
  * Data structure for holding client's callback context, methods and Time to Live,
  * connectivity Types, presence and resource type, request uri etc.
  */
-
 typedef struct ClientCB {
     /** callback method defined in application address space. */
     OCClientResponseHandler callBack;
@@ -73,11 +72,24 @@ typedef struct ClientCB {
     /** callback method to delete context data. */
     OCClientContextDeleter deleteCallback;
 
+    /** Qos for the request */
+    CAMessageType_t type;
+
     /**  when a response is recvd with this token, above callback will be invoked. */
     CAToken_t token;
 
     /** a response is recvd with this token length.*/
     uint8_t tokenLength;
+
+    CAHeaderOption_t *options;
+
+    uint8_t numOptions;
+
+    CAPayload_t payload;
+
+    size_t payloadSize;
+
+    CAPayloadFormat_t payloadFormat;
 
     /** Invocation handle tied to original call to OCDoResource().*/
     OCDoHandle handle;
@@ -126,8 +138,15 @@ extern struct ClientCB *cbList;
  *
  * @param[out] clientCB          The resulting node from making this call. Null if out of memory.
  * @param[in] cbData             Address to client callback function.
+ * @param[in] type               Qos type.
  * @param[in] token              Identifier for OTA CoAP comms.
  * @param[in] tokenLength        Length for OTA CoAP comms.
+ * @param[in] options            The address of an array containing the vendor specific header
+ *                               options to be sent with the request.
+ * @param[in] numOptions         Number of header options to be included.
+ * @param[in] payload            Request payload.
+ * @param[in] payloadSize        Size of payload.
+ * @param[in] payloadFormat      Format of payload.
  * @param[in] handle             masked in the public API as an 'invocation handle'
  *                               Used for callback management.
  * @param[in] method             A method via which this client callback is expected to operate
@@ -141,10 +160,14 @@ extern struct ClientCB *cbList;
  * @return OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
+                          CAMessageType_t type,
                           CAToken_t token, uint8_t tokenLength,
+                          CAHeaderOption_t *options, uint8_t numOptions,
+                          CAPayload_t payload, size_t payloadSize,
+                          CAPayloadFormat_t payloadFormat,
                           OCDoHandle *handle, OCMethod method,
-                          OCDevAddr *devAddr, char * requestUri,
-                          char * resourceTypeName, uint32_t ttl);
+                          OCDevAddr *devAddr, char *requestUri,
+                          char *resourceTypeName, uint32_t ttl);
 
 /** @ingroup ocstack
  *
