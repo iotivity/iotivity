@@ -2153,6 +2153,12 @@ static bool GetSubjectFromQueryString(const char *query, OicUuid_t *subject)
         {
             char strUuid[STRING_UUID_SIZE] = {0};
             VERIFY_SUCCESS(TAG, 0 != parseIter.valLen, ERROR);
+            if (sizeof(strUuid) < parseIter.valLen)
+            {
+                OIC_LOG(ERROR, TAG, "Uuid is too long");
+                goto exit;
+            }
+
             memcpy(strUuid, parseIter.valPos, parseIter.valLen);
             OCStackResult res = ConvertStrToUuid(strUuid, subject);
             VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);

@@ -635,6 +635,12 @@ int32_t GetDtlsPskForPreconfPinOxm( CADtlsPskCredType_t type,
                             return ret;
                         }
 
+                        if (g_PinOxmData.pinSize < pinLength)
+                        {
+                            OIC_LOG (ERROR, TAG, "PIN length too long");
+                            OICFree(pinBuffer);
+                            return ret;
+                        }
                         memcpy(g_PinOxmData.pinData, pinBuffer, pinLength);
                         OICFree(pinBuffer);
                     }
@@ -735,6 +741,12 @@ int32_t GetDtlsPskForMotPreconfPinOxm( CADtlsPskCredType_t type,
                             return ret;
                         }
 
+                        if (g_PinOxmData.pinSize < pinLength)
+                        {
+                            OIC_LOG (ERROR, TAG, "PIN length is too long");
+                            OICFree(pinBuffer);
+                            return ret;
+                        }
                         memcpy(g_PinOxmData.pinData, pinBuffer, pinLength);
                         OICFree(pinBuffer);
                     }

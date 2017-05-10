@@ -952,6 +952,11 @@ static bool ValidateQuery(const char * query)
             bDeviceIDQry = true;
             OicUuid_t subject = {.id={0}};
 
+            if (sizeof(subject.id) < parseIter.valLen)
+            {
+                OIC_LOG (ERROR, TAG, "Subject ID length is too long");
+                return false;
+            }
             memcpy(subject.id, parseIter.valPos, parseIter.valLen);
             if (0 == memcmp(&gDoxm->deviceID.id, &subject.id, sizeof(gDoxm->deviceID.id)))
             {
@@ -1110,6 +1115,11 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
                 if(subOwnerInst)
                 {
                     char* strUuid = NULL;
+                    if (sizeof(subOwnerInst->uuid.id) < authenticationSubOwnerInfo.identity.id)
+                    {
+                        OIC_LOG(ERROR, TAG, "Identity id is too long");
+                        return;
+                    }
                     memcpy(subOwnerInst->uuid.id, authenticationSubOwnerInfo.identity.id,
                            authenticationSubOwnerInfo.identity.id_length);
                     if(OC_STACK_OK != ConvertUuidToStr(&subOwnerInst->uuid, &strUuid))

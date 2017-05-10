@@ -2788,8 +2788,13 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                         {
                             if (ValueWithinBounds(cred->privateData.len, INT32_MAX))
                             {
-                                ret = (int32_t)cred->privateData.len;
-                                memcpy(result, cred->privateData.data, ret);
+                                size_t len = cred->privateData.len;
+                                if (result_length < len)
+                                {
+                                    OIC_LOG (ERROR, TAG, "Wrong value for result_length");
+                                    return ret;
+                                }
+                                memcpy(result, cred->privateData.data, len);
                             }
                         }
                         else if(OIC_ENCODING_BASE64 == cred->privateData.encoding)
@@ -2807,6 +2812,11 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                             {
                                 if (ValueWithinBounds(outKeySize, INT32_MAX))
                                 {
+                                    if (result_length < outKeySize)
+                                    {
+                                        OIC_LOG (ERROR, TAG, "Wrong value for result_length");
+                                        return ret;
+                                    }
                                     memcpy(result, outKey, outKeySize);
                                     ret = (int32_t)outKeySize;
                                 }
