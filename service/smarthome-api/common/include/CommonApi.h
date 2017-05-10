@@ -71,6 +71,7 @@ namespace OIC
                 const std::string SMART_LOCK = "oic.d.smartlock";
                 const std::string DRYER = "oic.d.dryer";
                 const std::string WATER_VALVE = "oic.d.watervalve";
+                const std::string BLIND = "oic.d.blind";
             }
 
             namespace RESOURCE_TYPE

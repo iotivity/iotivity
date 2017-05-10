@@ -25,6 +25,7 @@
 #include <RemoteSmartLockDevice.h>
 #include <RemoteDryerDevice.h>
 #include <RemoteWaterValveDevice.h>
+#include <RemoteBlindDevice.h>
 #include <RemoteBinarySwitchResource.h>
 #include <RemoteModeResource.h>
 #include <RemoteLockStatusResource.h>
@@ -142,6 +143,16 @@ namespace OIC
                                 dynamic_cast<RemoteOpenLevelResource*>(resource);
                         }
                     }
+                    else if (device->hasDeviceType(DEVICE_TYPE::BLIND))
+                    {
+                        RemoteBlindDevice *blind = dynamic_cast<RemoteBlindDevice*>(device);
+
+                        if (resource->hasResourceType(RESOURCE_TYPE::OPENLEVEL))
+                        {
+                            blind->m_remoteOpenLevel =
+                                dynamic_cast<RemoteOpenLevelResource*>(resource);
+                        }
+                    }
                     //TODO any other pre-defined device will be added here.
                 }
                 catch (const std::bad_cast& e)
@@ -249,6 +260,24 @@ namespace OIC
                         if (!isVerified)
                         {
                             device = new RemoteWaterValveDevice;
+                            isVerified = true;
+                        }
+                        else
+                        {
+                            if (device)
+                            {
+                                delete device;
+                                device = new SHBaseRemoteDevice;
+                                break;
+                            }
+                        }
+
+                    }
+                    else if (0 == DEVICE_TYPE::BLIND.compare(deviceType))
+                    {
+                        if (!isVerified)
+                        {
+                            device = new RemoteBlindDevice;
                             isVerified = true;
                         }
                         else
