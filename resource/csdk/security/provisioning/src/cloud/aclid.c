@@ -385,6 +385,7 @@ OCStackResult OCCloudAclIndividualAceUpdate(void* ctx,
 
     VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(aceId, TAG, "NULL aceId", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aces, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
     snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s?%s=%s", DEFAULT_PREFIX,
@@ -535,6 +536,7 @@ OCStackResult OCCloudAclIndividualAceDelete(void* ctx,
 
     VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(aceId, TAG, "NULL aceId", OC_STACK_INVALID_PARAM);
 
     snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s?%s=%s", DEFAULT_PREFIX,
             endPoint->addr, endPoint->port, OC_RSRVD_ACL_ID_URL, aclId,
