@@ -81,7 +81,6 @@ typedef enum {
 
     HOST          = 4,
     PORT          = 5,
-    DB_FILE       = 6,
     AUTH_PROVIDER = 7,
     USE_RSA = 8,
     SAVE_TRUST_CERT = 9,
@@ -148,7 +147,6 @@ static void printMenu(OCMode mode)
     printf("** SETTINGS \n");
     printf("** %d - Change default host\n", HOST);
     printf("** %d - Change default port\n", PORT);
-    printf("** %d - Change default database filename\n", DB_FILE);
     printf("** %d - Change default auth provider\n", AUTH_PROVIDER);
     printf("** %d - Change TLS cipher suite (ECDSA/RSA)\n", USE_RSA);
     printf("** %d - Save Trust Cert. Chain into Cred of SVR\n", SAVE_TRUST_CERT);
