@@ -112,6 +112,7 @@ void Callback::CommonInitializeCallbackInfo(CallbackInfo::Ptr cbInfo)
     cbInfo->markedToBeRemoved = false;
     cbInfo->requestSentTimestamp = 0;
     cbInfo->closeHandleCompleteCallback = nullptr;
+    cbInfo->inObserve = false;
 }
 
 CallbackInfo::Ptr Callback::CreatePasswordCallbackInfo(
@@ -459,6 +460,9 @@ void Callback::CompleteAndRemoveExpiredCallbackInfo(std::vector<CallbackInfo::Pt
 {
     const int RequestTimeoutMs = 247000;    // This is EXCHANGE_LIFETIME defined in RFC7252.
 
+    // Separate list for callbacks that are already completed.
+    std::vector<CallbackInfo::Ptr> completedCallbacks;
+
     uint64_t currentTime = OICGetCurrentTime(TIME_IN_MS);
 
     {
@@ -477,8 +481,7 @@ void Callback::CompleteAndRemoveExpiredCallbackInfo(std::vector<CallbackInfo::Pt
             if ((entry.second->markedToBeRemoved == true) &&
                 (entry.second->callbackInProgressCount == 0))
             {
-                m_expiredCallbacksInProgress++;
-                cbInfoList.push_back(entry.second);
+                completedCallbacks.push_back(entry.second);
                 continue;
             }
 
@@ -500,6 +503,11 @@ void Callback::CompleteAndRemoveExpiredCallbackInfo(std::vector<CallbackInfo::Pt
         }
 
         // Remove them from the list.
+        for (auto const& entry : completedCallbacks)
+        {
+            m_callbackInfoList.erase(entry->mapKey);
+        }
+
         for (auto const& entry : cbInfoList)
         {
             m_callbackInfoList.erase(entry->mapKey);

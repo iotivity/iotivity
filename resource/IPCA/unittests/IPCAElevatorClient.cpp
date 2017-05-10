@@ -280,6 +280,7 @@ void IPCAElevatorClient::StopObserve()
     if (m_observeHandle)
     {
         IPCACloseHandle(m_observeHandle, nullptr, 0);
+        m_observeHandle = nullptr;
     }
 }
 
@@ -360,6 +361,7 @@ void IPCAElevatorClient::SetUp()
     m_ipcaAppHandle = nullptr;
     m_deviceDiscoveryHandle = nullptr;
     m_deviceHandle = nullptr;
+    m_observeHandle = nullptr;
     m_newResourcePath = "";
 
     IPCAAppInfo ipcaAppInfo = { IPCATestAppUuid, IPCATestAppName, "1.0.0", "Microsoft" };
@@ -729,7 +731,7 @@ void IPCA_CALL C_ControlledRequestCompleteCallback(
     ContextForCloseHandleTest* testContext = reinterpret_cast<ContextForCloseHandleTest*>(context);
     testContext->isInCallback = true;
 
-    if (result != IPCA_OK)
+    if ((result != IPCA_OK) && (result != IPCA_RESOURCE_CREATED) && (result != IPCA_RESOURCE_DELETED))
     {
         std::cout << "C_ControlledRequestCompleteCallback(): unsuccessful. result = " << result;
         std::cout << std::endl;
