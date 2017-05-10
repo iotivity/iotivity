@@ -341,6 +341,11 @@ public class DeviceServerSystem extends ServerSystem {
 
                 switch (urlPath) {
 
+                    case OICConstants.ACCOUNT_FULL_URI:
+                        ctx.writeAndFlush(msg);
+                        ctx.close();
+                        return;
+
                     case OICConstants.ACCOUNT_SESSION_FULL_URI:
                         HashMap<String, Object> payloadData = mCbor
                                 .parsePayloadFromCbor(response.getPayload(),
