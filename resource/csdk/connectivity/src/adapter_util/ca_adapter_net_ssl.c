@@ -1581,11 +1581,12 @@ static int InitConfig(mbedtls_ssl_config * conf, int transport, int mode)
 /**
  * Starts DTLS retransmission.
  */
-static void StartRetransmit()
+static void StartRetransmit(void *ctx)
 {
     size_t listIndex = 0;
     size_t listLength = 0;
     SslEndPoint_t *tep = NULL;
+    OC_UNUSED(ctx);
 
     oc_mutex_lock(g_sslContextMutex);
     if (NULL == g_caSslContext)
@@ -1615,7 +1616,7 @@ static void StartRetransmit()
             if (MBEDTLS_ERR_SSL_CONN_EOF != ret)
             {
                 //start new timer
-                registerTimer(RETRANSMISSION_TIME, &g_caSslContext->timerId, StartRetransmit);
+                registerTimer(RETRANSMISSION_TIME, &g_caSslContext->timerId, StartRetransmit, NULL);
                 //unlock & return
                 if (!checkSslOperation(tep,
                                        ret,
@@ -1629,7 +1630,7 @@ static void StartRetransmit()
         }
     }
     //start new timer
-    registerTimer(RETRANSMISSION_TIME, &g_caSslContext->timerId, StartRetransmit);
+    registerTimer(RETRANSMISSION_TIME, &g_caSslContext->timerId, StartRetransmit, NULL);
     oc_mutex_unlock(g_sslContextMutex);
 }
 #endif
@@ -1774,7 +1775,7 @@ CAResult_t CAinitSslAdapter()
 
    oc_mutex_unlock(g_sslContextMutex);
 #ifdef __WITH_DTLS__
-    StartRetransmit();
+    StartRetransmit(NULL);
 #endif
 
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);

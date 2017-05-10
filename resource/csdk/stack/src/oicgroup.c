@@ -1020,8 +1020,9 @@ OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
     return result;
 }
 
-void DoScheduledGroupAction()
+void DoScheduledGroupAction(void *ctx)
 {
+    OC_UNUSED(ctx);
     OIC_LOG(INFO, TAG, "DoScheduledGroupAction Entering...");
     ScheduledResourceInfo* info = GetScheduledResource(g_scheduleResourceList);
 
@@ -1073,7 +1074,8 @@ void DoScheduledGroupAction()
 
                 schedule->time = registerTimer(info->actionset->timesteps,
                         &schedule->timer_id,
-                        &DoScheduledGroupAction);
+                        &DoScheduledGroupAction,
+                        NULL);
 
                 OIC_LOG(INFO, TAG, "Reregistration.");
                 oc_mutex_unlock(g_scheduledResourceLock);
@@ -1292,7 +1294,8 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                                 oc_mutex_lock(g_scheduledResourceLock);
                                 schedule->time = registerTimer(delay,
                                         &schedule->timer_id,
-                                        &DoScheduledGroupAction);
+                                        &DoScheduledGroupAction,
+                                        NULL);
                                 oc_mutex_unlock(g_scheduledResourceLock);
                                 AddScheduledResource(&g_scheduleResourceList,
                                         schedule);

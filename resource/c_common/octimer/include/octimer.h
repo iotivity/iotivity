@@ -52,7 +52,7 @@ extern "C"
 #define SECS_YR_2000  (946684800L)
 #endif
 
-typedef void(*TimerCallback)();
+typedef void(*TimerCallback)(void *ctx);
 
 /**
  * Calculate time difference.
@@ -82,13 +82,13 @@ time_t getSecondsFromAbsTime(struct tm *tp);
 
 int initThread();
 void *loop(void *threadid);
-time_t registerTimer(const time_t seconds, int *id, TimerCallback cb);
+time_t registerTimer(const time_t seconds, int *id, TimerCallback cb, void *ctx);
 void unregisterTimer(int id);
 
 #else
 
 time_t timeToSecondsFromNow(tmElements_t *t);
-time_t registerTimer(const time_t seconds, int *id, TimerCallback cb);
+time_t registerTimer(const time_t seconds, int *id, TimerCallback cb, void *ctx);
 void unregisterTimer(int id);
 
 
