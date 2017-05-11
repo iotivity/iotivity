@@ -405,11 +405,8 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
             logMessage("signOut");
             if(mAccountManager==null)
             {
-                mAccountManager = OcPlatform.constructAccountManagerObject(
-                        StringConstants.COAP_TCP + settingPreference.getString("IP",
-                            StringConstants.DEFAULT_COAP_DERVER_IP) + ":" +
-                        settingPreference.getString("PORT", StringConstants.DEFAULT_COAP_DERVER_PORT),
-                        EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP));
+                logMessage("Please signIn first");
+                return;
             }
 
             mAccountManager.signOut(settingPreference.getString("accesstoken", ""),onSignOut);
