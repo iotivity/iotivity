@@ -43,40 +43,7 @@ public:
     OCConnectivityType connectivityType() const;
 
     static JniOcAccountManager* getJniOcAccountManagerPtr(JNIEnv *env, jobject thiz);
-
-    OCStackResult signUp(JNIEnv* env, const std::string& authProvider, const std::string& authCode,
-                         jobject jListener);
-    OCStackResult signUp(JNIEnv* env, const std::string& authProvider, const std::string& authCode,
-                         const QueryParamsMap& options, jobject jListener);
-    OCStackResult signIn(JNIEnv* env, const std::string& userUuid, const std::string& accessToken,
-                         jobject jListener);
-    OCStackResult signOut(JNIEnv* env, const std::string& accessToken, jobject jListener);
-    OCStackResult refreshAccessToken(JNIEnv* env, const std::string& userUuid,
-                                     const std::string& refreshToken, jobject jListener);
-    OCStackResult searchUser(JNIEnv* env, const QueryParamsMap& queryMap, jobject jListener);
-    OCStackResult deleteDevice(JNIEnv* env, const std::string& accessToken,
-                               const std::string& deviceId, jobject jListener);
-    OCStackResult createGroup(JNIEnv* env, jobject jListener);
-    OCStackResult createGroup(JNIEnv* env, const QueryParamsMap& queryMap, jobject jListener);
-    OCStackResult deleteGroup(JNIEnv* env, const std::string& groupId, jobject jListener);
-    OCStackResult getGroupInfoAll(JNIEnv* env, jobject jListener);
-    OCStackResult getGroupInfo(JNIEnv* env, const std::string& groupId, jobject jListener);
-    OCStackResult addPropertyValueToGroup(JNIEnv* env, const std::string& groupId,
-                                          const OCRepresentation& propertyValue, jobject jListener);
-    OCStackResult deletePropertyValueFromGroup(JNIEnv* env, const std::string& groupId,
-                                               const OCRepresentation& propertyValue, jobject jListener);
-    OCStackResult updatePropertyValueOnGroup(JNIEnv* env, const std::string& groupId,
-                                             const OCRepresentation& propertyValue, jobject jListener);
-    OCStackResult observeGroup(JNIEnv* env, jobject jListener);
-    OCStackResult cancelObserveGroup();
-    OCStackResult observeInvitation(JNIEnv* env, jobject jListener);
-    OCStackResult cancelObserveInvitation();
-    OCStackResult sendInvitation(JNIEnv* env, const std::string& groupId,
-                                 const std::string& userUuid, jobject jListener);
-    OCStackResult cancelInvitation(JNIEnv* env, const std::string& groupId,
-                                   const std::string& userUuid, jobject jListener);
-    OCStackResult replyToInvitation(JNIEnv* env, const std::string& groupId, const bool accept,
-                                    jobject jListener);
+    std::shared_ptr<OCAccountManager> getOcAccountManagerObject() const;
 
     JniOnGetListener* addOnGetListener(JNIEnv* env, jobject jListener);
     JniOnPostListener* addOnPostListener(JNIEnv* env, jobject jListener);

@@ -28,7 +28,6 @@
     if (!(arg)) \
     { \
         ThrowOcException(exc, log_message); \
-        return; \
     } \
 
 JniOcAccountManager::JniOcAccountManager(std::shared_ptr<OCAccountManager> accountManager)
@@ -68,6 +67,12 @@ std::string JniOcAccountManager::host()
 OCConnectivityType JniOcAccountManager::connectivityType() const
 {
     return m_sharedAccountManager->connectivityType();
+}
+
+std::shared_ptr<OCAccountManager> JniOcAccountManager::getOcAccountManagerObject() const
+
+{
+    return m_sharedAccountManager;
 }
 
 JniOcAccountManager* JniOcAccountManager::getJniOcAccountManagerPtr(JNIEnv *env, jobject thiz)
@@ -122,401 +127,6 @@ void JniOcAccountManager::removeOnDeleteListener(JNIEnv* env, jobject jListener)
 void JniOcAccountManager::removeOnObserveListener(JNIEnv* env, jobject jListener)
 {
     this->m_onObserveManager.removeListener(env, jListener);
-}
-
-OCStackResult JniOcAccountManager::signUp(JNIEnv* env, const std::string& authProvider,
-                                          const std::string& authCode, jobject jListener)
-{
-    JniOnPostListener *onPostListener = addOnPostListener(env, jListener);
-    if (nullptr == onPostListener)
-    {
-        LOGE("onPostListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
-        const OCRepresentation& rep, const int eCode)
-    {
-        onPostListener->onPostCallback(opts, rep, eCode);
-    };
-
-    return m_sharedAccountManager->signUp(authProvider, authCode, postCallback);
-}
-
-OCStackResult JniOcAccountManager::signUp(JNIEnv* env, const std::string& authProvider,
-                                          const std::string& authCode,
-                                          const QueryParamsMap& options, jobject jListener)
-{
-    JniOnPostListener *onPostListener = addOnPostListener(env, jListener);
-    if (nullptr == onPostListener)
-    {
-        LOGE("onPostListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
-        const OCRepresentation& rep, const int eCode)
-    {
-        onPostListener->onPostCallback(opts, rep, eCode);
-    };
-
-    return m_sharedAccountManager->signUp(authProvider, authCode, options, postCallback);
-}
-
-OCStackResult JniOcAccountManager::signIn(JNIEnv* env, const std::string& userUuid,
-                                          const std::string& accessToken, jobject jListener)
-{
-    JniOnPostListener *onPostListener = addOnPostListener(env, jListener);
-    if (nullptr == onPostListener)
-    {
-        LOGE("onPostListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
-        const OCRepresentation& rep, const int eCode)
-    {
-        onPostListener->onPostCallback(opts, rep, eCode);
-    };
-
-    return m_sharedAccountManager->signIn(userUuid, accessToken, postCallback);
-}
-
-OCStackResult JniOcAccountManager::signOut(JNIEnv* env, const std::string& accessToken,
-                                           jobject jListener)
-{
-    JniOnPostListener *onPostListener = addOnPostListener(env, jListener);
-    if (nullptr == onPostListener)
-    {
-        LOGE("onPostListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
-        const OCRepresentation& rep, const int eCode)
-    {
-        onPostListener->onPostCallback(opts, rep, eCode);
-    };
-
-    return m_sharedAccountManager->signOut(accessToken, postCallback);
-}
-
-OCStackResult JniOcAccountManager::refreshAccessToken(JNIEnv* env, const std::string& userUuid,
-                                                      const std::string& refreshToken,
-                                                      jobject jListener)
-{
-    JniOnPostListener *onPostListener = addOnPostListener(env, jListener);
-    if (nullptr == onPostListener)
-    {
-        LOGE("onPostListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
-        const OCRepresentation& rep, const int eCode)
-    {
-        onPostListener->onPostCallback(opts, rep, eCode);
-    };
-
-    return m_sharedAccountManager->refreshAccessToken(userUuid, refreshToken, postCallback);
-}
-
-OCStackResult JniOcAccountManager::searchUser(JNIEnv* env, const QueryParamsMap& queryMap,
-                                              jobject jListener)
-{
-    JniOnGetListener *onGetListener = addOnGetListener(env, jListener);
-    if (nullptr == onGetListener)
-    {
-        LOGE("onGetListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    GetCallback getCallback = [onGetListener](const HeaderOptions& opts,
-        const OCRepresentation& rep, const int eCode)
-    {
-        onGetListener->onGetCallback(opts, rep, eCode);
-    };
-
-    return m_sharedAccountManager->searchUser(queryMap, getCallback);
-}
-
-OCStackResult JniOcAccountManager::deleteDevice(JNIEnv* env, const std::string& accessToken,
-                                                const std::string& deviceId, jobject jListener)
-{
-    JniOnDeleteListener *onDeleteListener = addOnDeleteListener(env, jListener);
-    if (nullptr == onDeleteListener)
-    {
-        LOGE("onDeleteListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    DeleteCallback deleteCallback = [onDeleteListener](const HeaderOptions& opts,
-        const int eCode)
-    {
-        onDeleteListener->onDeleteCallback(opts, eCode);
-    };
-
-    return m_sharedAccountManager->deleteDevice(accessToken, deviceId, deleteCallback);
-}
-
-OCStackResult JniOcAccountManager::createGroup(JNIEnv* env, jobject jListener)
-{
-    JniOnPostListener *onPostListener = addOnPostListener(env, jListener);
-    if (nullptr == onPostListener)
-    {
-        LOGE("onPostListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
-        const OCRepresentation& rep, const int eCode)
-    {
-        onPostListener->onPostCallback(opts, rep, eCode);
-    };
-
-    return m_sharedAccountManager->createGroup(postCallback);
-}
-
-OCStackResult JniOcAccountManager::createGroup(JNIEnv* env, const QueryParamsMap& queryMap,
-                                               jobject jListener)
-{
-    JniOnPostListener *onPostListener = addOnPostListener(env, jListener);
-    if (nullptr == onPostListener)
-    {
-        LOGE("onPostListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
-        const OCRepresentation& rep, const int eCode)
-    {
-        onPostListener->onPostCallback(opts, rep, eCode);
-    };
-
-    return m_sharedAccountManager->createGroup(queryMap, postCallback);
-}
-
-OCStackResult JniOcAccountManager::deleteGroup(JNIEnv* env, const std::string& groupId,
-                                               jobject jListener)
-{
-    JniOnDeleteListener *onDeleteListener = addOnDeleteListener(env, jListener);
-    if (nullptr == onDeleteListener)
-    {
-        LOGE("onDeleteListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    DeleteCallback deleteCallback = [onDeleteListener](const HeaderOptions& opts,
-        const int eCode)
-    {
-        onDeleteListener->onDeleteCallback(opts, eCode);
-    };
-
-    return m_sharedAccountManager->deleteGroup(groupId, deleteCallback);
-}
-
-OCStackResult JniOcAccountManager::getGroupInfoAll(JNIEnv* env, jobject jListener)
-{
-    JniOnGetListener *onGetListener = addOnGetListener(env, jListener);
-    if (nullptr == onGetListener)
-    {
-        LOGE("onGetListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    GetCallback getCallback = [onGetListener](const HeaderOptions& opts,
-        const OCRepresentation& rep, const int eCode)
-    {
-        onGetListener->onGetCallback(opts, rep, eCode);
-    };
-
-    return m_sharedAccountManager->getGroupInfoAll(getCallback);
-}
-
-OCStackResult JniOcAccountManager::getGroupInfo(JNIEnv* env, const std::string& groupId,
-                                                jobject jListener)
-{
-    JniOnGetListener *onGetListener = addOnGetListener(env, jListener);
-    if (nullptr == onGetListener)
-    {
-        LOGE("onGetListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    GetCallback getCallback = [onGetListener](const HeaderOptions& opts,
-        const OCRepresentation& rep, const int eCode)
-    {
-        onGetListener->onGetCallback(opts, rep, eCode);
-    };
-
-    return m_sharedAccountManager->getGroupInfo(groupId, getCallback);
-}
-
-OCStackResult JniOcAccountManager::addPropertyValueToGroup(JNIEnv* env, const std::string& groupId,
-                                                           const OCRepresentation& propertyValue,
-                                                           jobject jListener)
-{
-    JniOnPostListener *onPostListener = addOnPostListener(env, jListener);
-    if (nullptr == onPostListener)
-    {
-        LOGE("onPostListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
-        const OCRepresentation& rep, const int eCode)
-    {
-        onPostListener->onPostCallback(opts, rep, eCode);
-    };
-
-    return m_sharedAccountManager->addPropertyValueToGroup(groupId, propertyValue, postCallback);
-}
-
-OCStackResult JniOcAccountManager::deletePropertyValueFromGroup(JNIEnv* env,
-                                                        const std::string& groupId,
-                                                        const OCRepresentation& propertyValue,
-                                                        jobject jListener)
-{
-    JniOnPostListener *onPostListener = addOnPostListener(env, jListener);
-    if (nullptr == onPostListener)
-    {
-        LOGE("onPostListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
-        const OCRepresentation& rep, const int eCode)
-    {
-        onPostListener->onPostCallback(opts, rep, eCode);
-    };
-
-    return m_sharedAccountManager->deletePropertyValueFromGroup(groupId, propertyValue,
-                                                                postCallback);
-}
-
-OCStackResult JniOcAccountManager::updatePropertyValueOnGroup(JNIEnv* env,
-                                                        const std::string& groupId,
-                                                        const OCRepresentation& propertyValue,
-                                                        jobject jListener)
-{
-    JniOnPostListener *onPostListener = addOnPostListener(env, jListener);
-    if (nullptr == onPostListener)
-    {
-        LOGE("onPostListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
-        const OCRepresentation& rep, const int eCode)
-    {
-        onPostListener->onPostCallback(opts, rep, eCode);
-    };
-
-    return m_sharedAccountManager->updatePropertyValueOnGroup(groupId, propertyValue,
-                                                              postCallback);
-}
-
-OCStackResult JniOcAccountManager::observeGroup(JNIEnv* env, jobject jListener)
-{
-    JniOnObserveListener *onObserveListener = addOnObserveListener(env, jListener);
-    if (nullptr == onObserveListener)
-    {
-        LOGE("onObserveListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    ObserveCallback observeCallback = [onObserveListener](const HeaderOptions& opts,
-        const OCRepresentation& rep, const int& eCode, const int& sequenceNumber)
-    {
-        onObserveListener->onObserveCallback(opts, rep, eCode, sequenceNumber);
-    };
-
-    return m_sharedAccountManager->observeGroup(observeCallback);
-}
-
-OCStackResult JniOcAccountManager::cancelObserveGroup()
-{
-    return m_sharedAccountManager->cancelObserveGroup();
-}
-
-OCStackResult JniOcAccountManager::observeInvitation(JNIEnv* env, jobject jListener)
-{
-    JniOnObserveListener *onObserveListener = addOnObserveListener(env, jListener);
-    if (nullptr == onObserveListener)
-    {
-        LOGE("onObserveListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    ObserveCallback observeCallback = [onObserveListener](const HeaderOptions& opts,
-        const OCRepresentation& rep, const int& eCode, const int& sequenceNumber)
-    {
-        onObserveListener->onObserveCallback(opts, rep, eCode, sequenceNumber);
-    };
-
-    return m_sharedAccountManager->observeInvitation(observeCallback);
-}
-
-OCStackResult JniOcAccountManager::cancelObserveInvitation()
-{
-    return m_sharedAccountManager->cancelObserveInvitation();
-}
-
-OCStackResult JniOcAccountManager::sendInvitation(JNIEnv* env, const std::string& groupId,
-                                                  const std::string& userUuid, jobject jListener)
-{
-    JniOnPostListener *onPostListener = addOnPostListener(env, jListener);
-    if (nullptr == onPostListener)
-    {
-        LOGE("onPostListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
-        const OCRepresentation& rep, const int eCode)
-    {
-        onPostListener->onPostCallback(opts, rep, eCode);
-    };
-
-    return m_sharedAccountManager->sendInvitation(groupId, userUuid, postCallback);
-}
-
-OCStackResult JniOcAccountManager::cancelInvitation(JNIEnv* env, const std::string& groupId,
-                                                    const std::string& userUuid, jobject jListener)
-{
-    JniOnDeleteListener *onDeleteListener = addOnDeleteListener(env, jListener);
-    if (nullptr == onDeleteListener)
-    {
-        LOGE("onDeleteListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    DeleteCallback deleteCallback = [onDeleteListener](const HeaderOptions& opts,
-        const int eCode)
-    {
-        onDeleteListener->onDeleteCallback(opts, eCode);
-    };
-
-    return m_sharedAccountManager->cancelInvitation(groupId, userUuid, deleteCallback);
-}
-
-OCStackResult JniOcAccountManager::replyToInvitation(JNIEnv* env, const std::string& groupId,
-                                                     const bool accept, jobject jListener)
-{
-    JniOnDeleteListener *onDeleteListener = addOnDeleteListener(env, jListener);
-    if (nullptr == onDeleteListener)
-    {
-        LOGE("onDeleteListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    DeleteCallback deleteCallback = [onDeleteListener](const HeaderOptions& opts,
-        const int eCode)
-    {
-        onDeleteListener->onDeleteCallback(opts, eCode);
-    };
-
-    return m_sharedAccountManager->replyToInvitation(groupId, accept, deleteCallback);
 }
 
 /*
@@ -574,12 +184,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_signUp0
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onPostListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
 
     const char *charAuthProvider = env->GetStringUTFChars(jAuthProvider, nullptr);
     VERIFY_NON_NULL_THROW_EXCEPTION(charAuthProvider, "charAuthProvider is null", JNI_EXCEPTION);
@@ -591,12 +197,23 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_signUp0
     std::string authCode(charAuthCode);
     env->ReleaseStringUTFChars(jAuthCode, charAuthCode);
 
+    JniOnPostListener *onPostListener = jAccountManager->addOnPostListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onPostListener, "onPostListener is null", OC_STACK_ERROR);
+
+    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
+                                                 const OCRepresentation& rep, const int eCode)
+    {
+        onPostListener->onPostCallback(opts, rep, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
+
     try
     {
-        OCStackResult result = accountManager->signUp(env,
-                                                      authProvider,
+        OCStackResult result = accountManager->signUp(authProvider,
                                                       authCode,
-                                                      jListener);
+                                                      postCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_signUp");
@@ -627,12 +244,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_signUp1
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onPostListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
 
     const char *charAuthProvider = env->GetStringUTFChars(jAuthProvider, nullptr);
     VERIFY_NON_NULL_THROW_EXCEPTION(charAuthProvider, "charAuthProvider is null", JNI_EXCEPTION);
@@ -647,13 +260,24 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_signUp1
     QueryParamsMap optionsMap;
     JniUtils::convertJavaMapToQueryParamsMap(env, jOptionsMap, optionsMap);
 
+    JniOnPostListener *onPostListener = jAccountManager->addOnPostListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onPostListener, "onPostListener is null", OC_STACK_ERROR);
+
+    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
+                                                 const OCRepresentation& rep, const int eCode)
+    {
+        onPostListener->onPostCallback(opts, rep, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
+
     try
     {
-        OCStackResult result = accountManager->signUp(env,
-                                                      authProvider,
+        OCStackResult result = accountManager->signUp(authProvider,
                                                       authCode,
                                                       optionsMap,
-                                                      jListener);
+                                                      postCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_signUp");
@@ -682,12 +306,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_signIn0
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onPostListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
 
     const char *charUserUuid = env->GetStringUTFChars(jUserUuid, nullptr);
     VERIFY_NON_NULL_THROW_EXCEPTION(charUserUuid, "charUserUuid is null", JNI_EXCEPTION);
@@ -699,12 +319,23 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_signIn0
     std::string accessToken(charAccessToken);
     env->ReleaseStringUTFChars(jAccessToken, charAccessToken);
 
+    JniOnPostListener *onPostListener = jAccountManager->addOnPostListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onPostListener, "onPostListener is null", OC_STACK_ERROR);
+
+    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
+                                                 const OCRepresentation& rep, const int eCode)
+    {
+        onPostListener->onPostCallback(opts, rep, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
+
     try
     {
-        OCStackResult result = accountManager->signIn(env,
-                                                      userUuid,
+        OCStackResult result = accountManager->signIn(userUuid,
                                                       accessToken,
-                                                      jListener);
+                                                      postCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_signIn");
@@ -731,23 +362,30 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_signOut0
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onPostListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
 
     const char *charAccessToken = env->GetStringUTFChars(jAccessToken, nullptr);
     VERIFY_NON_NULL_THROW_EXCEPTION(charAccessToken, "charAccessToken is null", JNI_EXCEPTION);
     std::string accessToken(charAccessToken);
     env->ReleaseStringUTFChars(jAccessToken, charAccessToken);
 
+    JniOnPostListener *onPostListener = jAccountManager->addOnPostListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onPostListener, "onPostListener is null", OC_STACK_ERROR);
+
+    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
+                                                 const OCRepresentation& rep, const int eCode)
+    {
+        onPostListener->onPostCallback(opts, rep, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
+
     try
     {
-        OCStackResult result = accountManager->signOut(env,
-                                                       accessToken,
-                                                       jListener);
+        OCStackResult result = accountManager->signOut(accessToken,
+                                                       postCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_signOut");
@@ -776,12 +414,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_refreshAccessToke
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onPostListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
 
     const char *charUserUuid = env->GetStringUTFChars(jUserUuid, nullptr);
     VERIFY_NON_NULL_THROW_EXCEPTION(charUserUuid, "charUserUuid is null", JNI_EXCEPTION);
@@ -794,12 +428,23 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_refreshAccessToke
     std::string refreshAccessToken(charRefreshAccessToken);
     env->ReleaseStringUTFChars(jRefreshAccessToken, charRefreshAccessToken);
 
+    JniOnPostListener *onPostListener = jAccountManager->addOnPostListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onPostListener, "onPostListener is null", OC_STACK_ERROR);
+
+    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
+                                                 const OCRepresentation& rep, const int eCode)
+    {
+        onPostListener->onPostCallback(opts, rep, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
+
     try
     {
-        OCStackResult result = accountManager->refreshAccessToken(env,
-                                                                  userUuid,
+        OCStackResult result = accountManager->refreshAccessToken(userUuid,
                                                                   refreshAccessToken,
-                                                                  jListener);
+                                                                  postCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_refreshAccessToken");
@@ -825,21 +470,28 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_searchUser0
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onGetListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
 
     QueryParamsMap queryMap;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryMap, queryMap);
 
+    JniOnGetListener *onGetListener = jAccountManager->addOnGetListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onGetListener, "onGetListener is null", OC_STACK_ERROR);
+
+    GetCallback getCallback = [onGetListener](const HeaderOptions& opts,
+                                              const OCRepresentation& rep, const int eCode)
+    {
+        onGetListener->onGetCallback(opts, rep, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
+
     try
     {
-        OCStackResult result = accountManager->searchUser(env,
-                                                          queryMap,
-                                                          jListener);
+        OCStackResult result = accountManager->searchUser(queryMap,
+                                                          getCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_searchUser");
@@ -868,12 +520,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_deleteDevice0
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onDeleteListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
 
     const char *charAccessToken = env->GetStringUTFChars(jAccessToken, nullptr);
     VERIFY_NON_NULL_THROW_EXCEPTION(charAccessToken, "charAccessToken is null", JNI_EXCEPTION);
@@ -885,12 +533,22 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_deleteDevice0
     std::string deviceId(charDeviceId);
     env->ReleaseStringUTFChars(jDeviceId, charDeviceId);
 
+    JniOnDeleteListener *onDeleteListener = jAccountManager->addOnDeleteListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onDeleteListener, "onDeleteListener is null", OC_STACK_ERROR);
+
+    DeleteCallback deleteCallback = [onDeleteListener](const HeaderOptions& opts, const int eCode)
+    {
+        onDeleteListener->onDeleteCallback(opts, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
+
     try
     {
-        OCStackResult result = accountManager->deleteDevice(env,
-                                                            accessToken,
+        OCStackResult result = accountManager->deleteDevice(accessToken,
                                                             deviceId,
-                                                            jListener);
+                                                            deleteCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_deleteDevice");
@@ -915,17 +573,24 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_createGroup0
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onPostListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
+
+    JniOnPostListener *onPostListener = jAccountManager->addOnPostListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onPostListener, "onPostListener is null", OC_STACK_ERROR);
+
+    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
+                                                 const OCRepresentation& rep, const int eCode)
     {
-        return;
-    }
+        onPostListener->onPostCallback(opts, rep, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
 
     try
     {
-        OCStackResult result = accountManager->createGroup(env,
-                                                           jListener);
+        OCStackResult result = accountManager->createGroup(postCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_createGroup");
@@ -951,21 +616,28 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_createGroup1
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onPostListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
 
     QueryParamsMap queryMap;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryMap, queryMap);
 
+    JniOnPostListener *onPostListener = jAccountManager->addOnPostListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onPostListener, "onPostListener is null", OC_STACK_ERROR);
+
+    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
+                                                 const OCRepresentation& rep, const int eCode)
+    {
+        onPostListener->onPostCallback(opts, rep, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
+
     try
     {
-        OCStackResult result = accountManager->createGroup(env,
-                                                           queryMap,
-                                                           jListener);
+        OCStackResult result = accountManager->createGroup(queryMap,
+                                                           postCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_createGroup");
@@ -991,23 +663,29 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_deleteGroup0
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onDeleteListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
 
     const char *charGroupId = env->GetStringUTFChars(jGroupId, nullptr);
     VERIFY_NON_NULL_THROW_EXCEPTION(charGroupId, "charGroupId is null", JNI_EXCEPTION);
     std::string groupId(charGroupId);
     env->ReleaseStringUTFChars(jGroupId, charGroupId);
 
+    JniOnDeleteListener *onDeleteListener = jAccountManager->addOnDeleteListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onDeleteListener, "onDeleteListener is null", OC_STACK_ERROR);
+
+    DeleteCallback deleteCallback = [onDeleteListener](const HeaderOptions& opts, const int eCode)
+    {
+        onDeleteListener->onDeleteCallback(opts, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
+
     try
     {
-        OCStackResult result = accountManager->deleteGroup(env,
-                                                           groupId,
-                                                           jListener);
+        OCStackResult result = accountManager->deleteGroup(groupId,
+                                                           deleteCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_deleteGroup");
@@ -1032,17 +710,24 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_getGroupInfoAll0
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onGetListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
+
+    JniOnGetListener *onGetListener = jAccountManager->addOnGetListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onGetListener, "onGetListener is null", OC_STACK_ERROR);
+
+    GetCallback getCallback = [onGetListener](const HeaderOptions& opts,
+                                              const OCRepresentation& rep, const int eCode)
     {
-        return;
-    }
+        onGetListener->onGetCallback(opts, rep, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
 
     try
     {
-        OCStackResult result = accountManager->getGroupInfoAll(env,
-                                                               jListener);
+        OCStackResult result = accountManager->getGroupInfoAll(getCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_getGroupInfoAll");
@@ -1068,23 +753,30 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_getGroupInfo0
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onGetListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
 
     const char *charGroupId = env->GetStringUTFChars(jGroupId, nullptr);
     VERIFY_NON_NULL_THROW_EXCEPTION(charGroupId, "charGroupId is null", JNI_EXCEPTION);
     std::string groupId(charGroupId);
     env->ReleaseStringUTFChars(jGroupId, charGroupId);
 
+    JniOnGetListener *onGetListener = jAccountManager->addOnGetListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onGetListener, "onGetListener is null", OC_STACK_ERROR);
+
+    GetCallback getCallback = [onGetListener](const HeaderOptions& opts,
+                                              const OCRepresentation& rep, const int eCode)
+    {
+        onGetListener->onGetCallback(opts, rep, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
+
     try
     {
-        OCStackResult result = accountManager->getGroupInfo(env,
-                                                            groupId,
-                                                            jListener);
+        OCStackResult result = accountManager->getGroupInfo(groupId,
+                                                            getCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_getGroupInfo");
@@ -1113,32 +805,34 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_addPropertyValueT
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onPostListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
 
     OCRepresentation *propertyValue = JniOcRepresentation::getOCRepresentationPtr(env,
                                                                                   jPropertyValue);
-    if (!propertyValue)
-    {
-        return;
-    }
 
     const char *charGroupId = env->GetStringUTFChars(jGroupId, nullptr);
     VERIFY_NON_NULL_THROW_EXCEPTION(charGroupId, "charGroupId is null", JNI_EXCEPTION);
     std::string groupId(charGroupId);
     env->ReleaseStringUTFChars(jGroupId, charGroupId);
 
+    JniOnPostListener *onPostListener = jAccountManager->addOnPostListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onPostListener, "onPostListener is null", OC_STACK_ERROR);
+
+    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
+                                                 const OCRepresentation& rep, const int eCode)
+    {
+        onPostListener->onPostCallback(opts, rep, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
+
     try
     {
-        OCStackResult result = accountManager->addPropertyValueToGroup(env,
-                                                                       groupId,
+        OCStackResult result = accountManager->addPropertyValueToGroup(groupId,
                                                                        *propertyValue,
-                                                                       jListener);
-
+                                                                       postCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_addPropertyValueToGroup");
@@ -1167,32 +861,34 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_deletePropertyVal
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onPostListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
 
     OCRepresentation *propertyValue = JniOcRepresentation::getOCRepresentationPtr(env,
                                                                                   jPropertyValue);
-    if (!propertyValue)
-    {
-        return;
-    }
 
     const char *charGroupId = env->GetStringUTFChars(jGroupId, nullptr);
     VERIFY_NON_NULL_THROW_EXCEPTION(charGroupId, "charGroupId is null", JNI_EXCEPTION);
     std::string groupId(charGroupId);
     env->ReleaseStringUTFChars(jGroupId, charGroupId);
 
+    JniOnPostListener *onPostListener = jAccountManager->addOnPostListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onPostListener, "onPostListener is null", OC_STACK_ERROR);
+
+    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
+                                                 const OCRepresentation& rep, const int eCode)
+    {
+        onPostListener->onPostCallback(opts, rep, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
+
     try
     {
-        OCStackResult result = accountManager->deletePropertyValueFromGroup(env,
-                                                                            groupId,
+        OCStackResult result = accountManager->deletePropertyValueFromGroup(groupId,
                                                                             *propertyValue,
-                                                                            jListener);
-
+                                                                            postCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_deletePropertyValueFromGroup");
@@ -1221,32 +917,34 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_updatePropertyVal
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onPostListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
 
     OCRepresentation *propertyValue = JniOcRepresentation::getOCRepresentationPtr(env,
                                                                                   jPropertyValue);
-    if (!propertyValue)
-    {
-        return;
-    }
 
     const char *charGroupId = env->GetStringUTFChars(jGroupId, nullptr);
     VERIFY_NON_NULL_THROW_EXCEPTION(charGroupId, "charGroupId is null", JNI_EXCEPTION);
     std::string groupId(charGroupId);
     env->ReleaseStringUTFChars(jGroupId, charGroupId);
 
+    JniOnPostListener *onPostListener = jAccountManager->addOnPostListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onPostListener, "onPostListener is null", OC_STACK_ERROR);
+
+    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
+                                                 const OCRepresentation& rep, const int eCode)
+    {
+        onPostListener->onPostCallback(opts, rep, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
+
     try
     {
-        OCStackResult result = accountManager->updatePropertyValueOnGroup(env,
-                                                                          groupId,
+        OCStackResult result = accountManager->updatePropertyValueOnGroup(groupId,
                                                                           *propertyValue,
-                                                                          jListener);
-
+                                                                          postCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_updatePropertyValueOnGroup");
@@ -1271,17 +969,28 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_observeGroup0
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onObserveListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
+
+    JniOnObserveListener *onObserveListener = jAccountManager->addOnObserveListener(env,
+                                                                                    jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onObserveListener, "onObserveListener is null",
+                                    OC_STACK_ERROR);
+
+    ObserveCallback observeCallback = [onObserveListener](const HeaderOptions& opts,
+                                                          const OCRepresentation& rep,
+                                                          const int& eCode,
+                                                          const int& sequenceNumber)
     {
-        return;
-    }
+        onObserveListener->onObserveCallback(opts, rep, eCode, sequenceNumber);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
 
     try
     {
-        OCStackResult result = accountManager->observeGroup(env,
-                                                            jListener);
+        OCStackResult result = accountManager->observeGroup(observeCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_observeGroup");
@@ -1304,12 +1013,11 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_cancelObserveGrou
 {
     LOGD("OcAccountManager_cancelObserveGroup");
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
 
     try
     {
@@ -1338,17 +1046,28 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_observeInvitation
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onObserveListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
+
+    JniOnObserveListener *onObserveListener = jAccountManager->addOnObserveListener(env,
+                                                                                    jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onObserveListener, "onObserveListener is null",
+                                    OC_STACK_ERROR);
+
+    ObserveCallback observeCallback = [onObserveListener](const HeaderOptions& opts,
+                                                          const OCRepresentation& rep,
+                                                          const int& eCode,
+                                                          const int& sequenceNumber)
     {
-        return;
-    }
+        onObserveListener->onObserveCallback(opts, rep, eCode, sequenceNumber);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
 
     try
     {
-        OCStackResult result = accountManager->observeInvitation(env,
-                                                                 jListener);
+        OCStackResult result = accountManager->observeInvitation(observeCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_observeInvitation");
@@ -1371,12 +1090,11 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_cancelObserveInvi
 {
     LOGD("OcAccountManager_cancelObserveInvitation");
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
 
     try
     {
@@ -1408,12 +1126,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_sendInvitation0
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onPostListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
 
     const char *charGroupId = env->GetStringUTFChars(jGroupId, nullptr);
     VERIFY_NON_NULL_THROW_EXCEPTION(charGroupId, "charGroupId is null", JNI_EXCEPTION);
@@ -1425,12 +1139,23 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_sendInvitation0
     std::string userUuid(charUserUuid);
     env->ReleaseStringUTFChars(jUserUuid, charUserUuid);
 
+    JniOnPostListener *onPostListener = jAccountManager->addOnPostListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onPostListener, "onPostListener is null", OC_STACK_ERROR);
+
+    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
+                                                 const OCRepresentation& rep, const int eCode)
+    {
+        onPostListener->onPostCallback(opts, rep, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
+
     try
     {
-        OCStackResult result = accountManager->sendInvitation(env,
-                                                              groupId,
+        OCStackResult result = accountManager->sendInvitation(groupId,
                                                               userUuid,
-                                                              jListener);
+                                                              postCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_sendInvitation");
@@ -1458,12 +1183,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_cancelInvitation0
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onDeleteListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
 
     const char *charGroupId = env->GetStringUTFChars(jGroupId, nullptr);
     VERIFY_NON_NULL_THROW_EXCEPTION(charGroupId, "charGroupId is null", JNI_EXCEPTION);
@@ -1475,12 +1196,22 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_cancelInvitation0
     std::string userUuid(charUserUuid);
     env->ReleaseStringUTFChars(jUserUuid, charUserUuid);
 
+    JniOnDeleteListener *onDeleteListener = jAccountManager->addOnDeleteListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onDeleteListener, "onDeleteListener is null", OC_STACK_ERROR);
+
+    DeleteCallback deleteCallback = [onDeleteListener](const HeaderOptions& opts, const int eCode)
+    {
+        onDeleteListener->onDeleteCallback(opts, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
+
     try
     {
-        OCStackResult result = accountManager->cancelInvitation(env,
-                                                                groupId,
+        OCStackResult result = accountManager->cancelInvitation(groupId,
                                                                 userUuid,
-                                                                jListener);
+                                                                deleteCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_cancelInvitation");
@@ -1506,24 +1237,30 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_replyToInvitation
     VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onDeleteListener cannot be null",
                                     OC_STACK_INVALID_PARAM);
 
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
+    JniOcAccountManager *jAccountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
+                                                                                          thiz);
 
     const char *charGroupId = env->GetStringUTFChars(jGroupId, nullptr);
     VERIFY_NON_NULL_THROW_EXCEPTION(charGroupId, "charGroupId is null", JNI_EXCEPTION);
     std::string groupId(charGroupId);
     env->ReleaseStringUTFChars(jGroupId, charGroupId);
 
+    JniOnDeleteListener *onDeleteListener = jAccountManager->addOnDeleteListener(env, jListener);
+    VERIFY_NON_NULL_THROW_EXCEPTION(onDeleteListener, "onDeleteListener is null", OC_STACK_ERROR);
+
+    DeleteCallback deleteCallback = [onDeleteListener](const HeaderOptions& opts, const int eCode)
+    {
+        onDeleteListener->onDeleteCallback(opts, eCode);
+    };
+
+    std::shared_ptr<OCAccountManager> accountManager =
+                                            jAccountManager->getOcAccountManagerObject();
+
     try
     {
-        OCStackResult result = accountManager->replyToInvitation(env,
-                                                                 groupId,
+        OCStackResult result = accountManager->replyToInvitation(groupId,
                                                                  static_cast<bool>(jAccept),
-                                                                 jListener);
+                                                                 deleteCallback);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcAccountManager_replyToInvitation");
@@ -1535,5 +1272,3 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_replyToInvitation
         ThrowOcException(e.code(), e.reason().c_str());
     }
 }
-
-
