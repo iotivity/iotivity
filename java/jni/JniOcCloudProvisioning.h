@@ -24,6 +24,7 @@
 #include "OCCloudProvisioning.hpp"
 #include "JniOcCloudResultListener.h"
 #include "JniGetAclIdByDeviceListener.h"
+#include "JniCreateAciIdListener.h"
 #include <mutex>
 
 
@@ -40,11 +41,14 @@ class JniOcCloudProvisioning
         static JniOcCloudProvisioning* getJniOcCloudProvisioningPtr(JNIEnv *env, jobject thiz);
         JniOcCloudResultListener* AddCloudResultListener(JNIEnv* env, jobject jListener);
         JniGetAclIdByDeviceListener* AddGetAclByDeviceListener(JNIEnv* env, jobject jListener);
+        JniCreateAclIdListener* CreateAclListener(JNIEnv* env, jobject jListener);
         void  RemoveCloudResultListener(JNIEnv* env, jobject jListener);
         void RemoveGetAclByDeviceIdListener(JNIEnv*, jobject);
+        void RemoveCreateAclIdListener(JNIEnv*, jobject);
 
         OCStackResult requestCertificate(JNIEnv* env, jobject jListener);
         OCStackResult getAclIdByDevice(JNIEnv*, std::string, jobject);
+        OCStackResult createAclId(JNIEnv*, std::string, std::string, jobject);
         OCStackResult getIndividualAclInfo(JNIEnv*, jobject, std::string &);
         OCStackResult getCRL(JNIEnv* env, jobject jListener);
         OCStackResult postCRL(JNIEnv* env, const std::string& thisUpdate,
@@ -54,8 +58,10 @@ class JniOcCloudProvisioning
     private:
         std::map<jobject, std::pair<JniOcCloudResultListener*, int>> resultMap;
         std::map<jobject, std::pair<JniGetAclIdByDeviceListener*, int>> aclresultMap;
+        std::map<jobject, std::pair<JniCreateAclIdListener*, int>> createresultMap;
         std::mutex resultMapLock;
         std::mutex aclresultMapLock;
+        std::mutex createresultMapLock;
         std::shared_ptr<OCCloudProvisioning>m_sharedCloudObject;
 };
 
@@ -79,6 +85,14 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcCloudProvisioning_requestCertifi
  */
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcCloudProvisioning_getAclIdByDevice
   (JNIEnv *, jobject, jstring, jobject);
+
+/*
+ * Class:     org_iotivity_base_OcCloudProvisioning
+ * Method:    createAclId
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/iotivity/base/OcCloudProvisioning/CreateAclId;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcCloudProvisioning_createAclId
+  (JNIEnv *, jobject, jstring, jstring, jobject);
 
 /*
  * Class:     org_iotivity_base_OcCloudProvisioning

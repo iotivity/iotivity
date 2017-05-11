@@ -87,7 +87,18 @@ namespace OC
              * @param callback function called by the stack on completion of request
              * @return ::OC_STACK_OK on Success and other values otherwise
              */
-            OCStackResult getAclIdByDevice(const std::string& deviceId, AclIdResponseCallBack callback);
+            OCStackResult getAclIdByDevice(const std::string& deviceId,
+                                           AclIdResponseCallBack callback);
+
+            /**
+             * API to create ACL ID for the device
+             * @param ownerId owner ID for which the Acl ID is to be created
+             * @param deviceId device ID for which the Acl ID is requested
+             * @param endPoint cloud host and port
+             * @return ::OC_STACK_OK on Success and other values otherwise
+             */
+            OCStackResult createAclId(const std::string& ownerId, const std::string& deviceId,
+                                      AclIdResponseCallBack callback);
 
             /**
              * API to get ACL information about the given Acl ID

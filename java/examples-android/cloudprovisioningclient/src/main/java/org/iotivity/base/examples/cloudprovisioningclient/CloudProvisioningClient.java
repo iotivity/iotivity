@@ -236,6 +236,7 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
     SharedPreferences settingPreference;
     OcCloudProvisioning ocCloudProvisioning;
     String acl_Id;
+    String createacl_Id = null;
     OcCloudProvisioning.GetAclIdByDeviceListener getAclIdByDeviceListener =
         new OcCloudProvisioning.GetAclIdByDeviceListener() {
             @Override
@@ -246,6 +247,20 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
                         logMessage("Acl Id by device !!" + acl_Id);
                     } else {
                         logMessage("Error: Acl Id by device failed !!");
+                    }
+                }
+        };
+
+    OcCloudProvisioning.CreateAclIdListener createAclIdListener =
+        new OcCloudProvisioning.CreateAclIdListener() {
+            @Override
+                public void createAclIdListener(int result, String aclId) {
+                    Log.d(TAG, "Inside createAclIdListener ");
+                    if (result == 0) {
+                        createacl_Id = aclId;
+                        logMessage("Acl Id by create aclid !!" + createacl_Id);
+                    } else {
+                        logMessage("Error: Acl Id by create aclid failed !!");
                     }
                 }
         };
@@ -288,6 +303,7 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
                 editor.putString("IP", StringConstants.DEFAULT_COAP_DERVER_IP);
                 editor.putString("PORT", StringConstants.DEFAULT_COAP_DERVER_PORT);
                 editor.putString("DEVICEID", StringConstants.DEFAULT_DEVICE_ID);
+                editor.putString("OWNERID", StringConstants.DEFAULT_OWNER_ID);
                 editor.putString("SERIALNUMBER", StringConstants.DEFAULT_SERIAL_NUMBER);
                 editor.commit();
             }
@@ -418,9 +434,15 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
 
     private void getAclId() {
         try {
-            logMessage("getAclId");
-            logMessage("\tdeviceId= " + settingPreference.getString("DEVICEID", ""));
-            ocCloudProvisioning.getAclIdByDevice(settingPreference.getString("DEVICEID", ""), getAclIdByDeviceListener);
+            if(createacl_Id == null)
+            {
+                ocCloudProvisioning.createAclId(settingPreference.getString("OWNERID", ""),
+                             settingPreference.getString("DEVICEID", ""), createAclIdListener);
+            }
+            else{
+                ocCloudProvisioning.getAclIdByDevice(settingPreference.getString("DEVICEID", ""),
+                        getAclIdByDeviceListener);
+            }
         } catch (OcException e) {
             e.printStackTrace();
         }

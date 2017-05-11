@@ -134,6 +134,40 @@ JniGetAclIdByDeviceListener* JniOcCloudProvisioning::AddGetAclByDeviceListener(J
     return resultListener;
 }
 
+JniCreateAclIdListener* JniOcCloudProvisioning::CreateAclListener(JNIEnv* env,
+        jobject jListener)
+{
+    JniCreateAclIdListener *resultListener = NULL;
+    createresultMapLock.lock();
+
+    for (auto it = createresultMap.begin(); it != createresultMap.end(); ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            resultListener = refPair.first;
+            refPair.second++;
+            it->second = refPair;
+            createresultMap.insert(*it);
+            LOGD("CreateACLID Listener: ref. count incremented");
+            break;
+        }
+    }
+    if (!resultListener)
+    {
+        resultListener = new JniCreateAclIdListener(env, jListener,
+                RemoveCallback(std::bind(&JniOcCloudProvisioning::RemoveCreateAclIdListener,
+                        this, PH::_1, PH::_2)));
+        jobject jgListener = env->NewGlobalRef(jListener);
+
+        createresultMap.insert(std::pair < jobject, std::pair < JniCreateAclIdListener*,
+                int >> (jgListener, std::pair<JniCreateAclIdListener*, int>(resultListener, 1)));
+        LOGD("CreateACLID Listener: new listener");
+    }
+    createresultMapLock.unlock();
+    return resultListener;
+}
+
 void JniOcCloudProvisioning::RemoveGetAclByDeviceIdListener(JNIEnv* env, jobject jListener)
 {
     aclresultMapLock.lock();
@@ -163,6 +197,37 @@ void JniOcCloudProvisioning::RemoveGetAclByDeviceIdListener(JNIEnv* env, jobject
     }
     aclresultMapLock.unlock();
 }
+
+void JniOcCloudProvisioning::RemoveCreateAclIdListener(JNIEnv* env, jobject jListener)
+{
+    createresultMapLock.lock();
+
+    for (auto it = createresultMap.begin(); it != createresultMap.end(); ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            if (refPair.second > 1)
+            {
+                refPair.second--;
+                it->second = refPair;
+                createresultMap.insert(*it);
+                LOGI("CreateACLID Listener: ref. count decremented");
+            }
+            else
+            {
+                env->DeleteGlobalRef(it->first);
+                JniCreateAclIdListener* listener = refPair.first;
+                delete listener;
+                createresultMap.erase(it);
+                LOGI("CreateACLID Listener removed");
+            }
+            break;
+        }
+    }
+    createresultMapLock.unlock();
+}
+
 JniOcCloudProvisioning * Create_native_object(JNIEnv *env, jobject thiz)
 {
     jstring jip = (jstring)env->CallObjectMethod(thiz, g_mid_OcCloudProvisioning_getIP);
@@ -261,6 +326,20 @@ OCStackResult JniOcCloudProvisioning::getAclIdByDevice(JNIEnv* env, std::string 
 
     return m_sharedCloudObject->getAclIdByDevice(deviceId, aclIdResponseCallBack);
 }
+
+OCStackResult JniOcCloudProvisioning::createAclId(JNIEnv* env, std::string ownerId,
+              std::string deviceID, jobject jListener)
+{
+    JniCreateAclIdListener *resultListener = CreateAclListener(env, jListener);
+
+    AclIdResponseCallBack aclIdResponseCallBack = [resultListener](OCStackResult result,
+            std::string aclId)
+    {
+        resultListener->CreateAclIdListenerCB(result, aclId);
+    };
+
+    return m_sharedCloudObject->createAclId(ownerId, deviceID, aclIdResponseCallBack);
+}
 /*
  * Class:     org_iotivity_base_OcCloudProvisioning
  * Method:    requestCertificate
@@ -354,6 +433,81 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcCloudProvisioning_getAclIdByDevi
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcCloudProvisioning_getAclIdByDevice");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+    return;
+}
+
+/*
+ * Class:     org_iotivity_base_OcCloudProvisioning
+ * Method:    createAclId
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/iotivity/base/OcCloudProvisioning/CreateAclIdListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcCloudProvisioning_createAclId
+  (JNIEnv *env, jobject thiz, jstring jownerId, jstring jdeviceId, jobject jListener)
+{
+    LOGD("OcCloudProvisioning_createAclId");
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Listener cannot be null");
+        return;
+    }
+
+    if (!jownerId)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "ownerId can not be null");
+        return;
+    }
+
+    if (!jdeviceId)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "deviceID can not be null");
+        return;
+    }
+
+    JniOcCloudProvisioning *cloud = JniOcCloudProvisioning::getJniOcCloudProvisioningPtr(env, thiz);
+    if (!cloud)
+    {
+        LOGD("OcCloudProvisioning_createAclId, No native object, creating now");
+        cloud = Create_native_object(env, thiz);
+        if (!cloud)
+        {
+            ThrowOcException(OC_STACK_ERROR, "OcCloudProvisioning_createAclId,"
+                    "Can not Create Native object");
+            return;
+        }
+    }
+
+    const char *ownerstr = env->GetStringUTFChars(jownerId, NULL);
+    if (!ownerstr || env->ExceptionCheck())
+    {
+        ThrowOcException(OC_STACK_ERROR,"OcCloudProvisioning_createAclId");
+        return;
+    }
+    std::string ownerId(ownerstr);
+    env->ReleaseStringUTFChars(jownerId, ownerstr);
+
+    const char *str = env->GetStringUTFChars(jdeviceId, NULL);
+    if (!str || env->ExceptionCheck())
+    {
+        ThrowOcException(OC_STACK_ERROR,"OcCloudProvisioning_createAclId");
+        return;
+    }
+    std::string deviceId(str);
+    env->ReleaseStringUTFChars(jdeviceId, str);
+
+    try
+    {
+        OCStackResult result = cloud->createAclId(env, ownerId, deviceId, jListener);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcCloudProvisioning_createAclId");
             return;
         }
     }

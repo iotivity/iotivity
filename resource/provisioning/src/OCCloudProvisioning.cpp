@@ -148,6 +148,35 @@ namespace OC
         return result;
     }
 
+    OCStackResult OCCloudProvisioning::createAclId(const std::string& ownerId, const std::string& deviceId,
+                              AclIdResponseCallBack callback)
+    {
+        if (!callback)
+        {
+            oclog() <<"Result callback can't be null";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            AclIdContext *context = new AclIdContext(callback);
+
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCCloudAclIdCreate(static_cast<void*>(context), ownerId.c_str(),
+                                        deviceId.c_str(), &m_devAddr,
+                                        &OCCloudProvisioning::aclIdResponseWrapper);
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
     OCStackResult OCCloudProvisioning::getCRL(ResponseCallBack callback)
     {
         if (!callback)
