@@ -3389,6 +3389,14 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
     if (devAddr)
     {
         OIC_LOG_V(DEBUG, TAG, "remoteId of devAddr : %s", devAddr->remoteId);
+
+        if ((devAddr->remoteId[0] == 0)
+            && destination
+            && (destination->remoteId[0] != 0))
+        {
+            OIC_LOG_V(DEBUG, TAG, "Copying remoteId from destination parameter: %s", destination->remoteId);
+            OICStrcpy(devAddr->remoteId, sizeof(devAddr->remoteId), destination->remoteId);
+        }
     }
 
     resHandle = GenerateInvocationHandle();

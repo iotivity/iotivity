@@ -51,6 +51,7 @@
 #include "ocsecurity.h"
 #include "ocstackinternal.h"
 #include "pmutility.h"
+#include "ocrandom.h"
 
 #ifdef _MSC_VER
 #include <io.h>
@@ -568,9 +569,18 @@ static int doGetRequest(const char* uri, int dev_num)
         return -1;
     }
 
-    res = OCDoRequest(&handle, OC_REST_GET, query, NULL, NULL,
-        device->connType, OC_HIGH_QOS, &cbData, NULL, 0);
+    /* 
+     * Make sure the OCDevAddr passed to OCDoRequest contains the remote peer's UUID, 
+     * so that PSK lookup succeeds. 
+     */
+    if (!OCConvertUuidToString(device->doxm->deviceID.id, device->endpoint.remoteId))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s : Failed to copy or convert UUID", __func__);
+        return -1;
+    }
 
+    res = OCDoRequest(&handle, OC_REST_GET, query, &device->endpoint, NULL,
+        device->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG_V(ERROR, TAG, "OCDoRequest returned error %d with method", res);

@@ -1329,15 +1329,25 @@ static int InitPskIdentity(mbedtls_ssl_config * config)
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return 0;
 }
-static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapter,
+
+/**
+ * Select cipher suites for use with (D)TLS based on the credentials available.
+ *
+ * @param[in]  config     the (D)TLS configuration object
+ * @param[in]  adapter    the associated transport adapter
+ * @param[in]  deviceId   the device ID of the peer we will connect to
+ *
+ * @return  true on success or false on error
+ */
+static bool SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapter,
                         const char* deviceId)
 {
     int index = 0;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
 
-    VERIFY_NON_NULL_VOID(config, NET_SSL_TAG, "Invaild param");
-    VERIFY_NON_NULL_VOID(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL");
-    VERIFY_NON_NULL_VOID(g_getCredentialTypesCallback, NET_SSL_TAG, "Param callback is null");
+    VERIFY_NON_NULL_RET(config, NET_SSL_TAG, "Invailid param", false);
+    VERIFY_NON_NULL_RET(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL", false);
+    VERIFY_NON_NULL_RET(g_getCredentialTypesCallback, NET_SSL_TAG, "Param callback is null", false);
 
     //Resetting cipherFlag
     g_caSslContext->cipherFlag[0] = false;
@@ -1346,7 +1356,8 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
     if (NULL == g_getCredentialTypesCallback)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Param callback is null");
-        return;
+        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+        return false;
     }
 
     g_getCredentialTypesCallback(g_caSslContext->cipherFlag, deviceId);
@@ -1356,6 +1367,7 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
          true == g_caSslContext->cipherFlag[0]) && 0 != InitPskIdentity(config))
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "PSK identity initialization failed!");
+        /* Don't return error, the connection may work with another cred type */
     }
 
     // Retrieve the Cert credential from SRM
@@ -1365,6 +1377,7 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
         if (0 != ret)
         {
             OIC_LOG(ERROR, NET_SSL_TAG, "Failed to init X.509");
+            /* Don't return error, the connection may work with another cred type */
         }
     }
 
@@ -1409,7 +1422,15 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
 
     mbedtls_ssl_conf_ciphersuites(config, g_cipherSuitesList);
 
+    if (0 == index)
+    {
+        OIC_LOG_V(ERROR, NET_SSL_TAG, "No ciphersuites configured, secure connections will fail");
+        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+        return false;
+    }
+
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+    return true;
 }
 /**
  * Initiate TLS handshake with endpoint.
@@ -1438,7 +1459,12 @@ static SslEndPoint_t * InitiateTlsHandshake(const CAEndpoint_t *endpoint)
     }
 
     //Load allowed SVR suites from SVR DB
-    SetupCipher(config, endpoint->adapter, endpoint->remoteId);
+    if(!SetupCipher(config, endpoint->adapter, endpoint->remoteId))
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "Failed to set up cipher");
+        DeleteSslEndPoint(tep);
+        return NULL;
+    }
 
     oc_mutex_lock(g_sslContextMutex);
     ret = u_arraylist_add(g_caSslContext->peerList, (void *) tep);
@@ -2005,7 +2031,13 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
             return CA_STATUS_FAILED;
         }
         //Load allowed TLS suites from SVR DB
-        SetupCipher(config, sep->endpoint.adapter, NULL);
+        if(!SetupCipher(config, sep->endpoint.adapter, NULL))
+        {
+            OIC_LOG(ERROR, NET_SSL_TAG, "Failed to set up cipher");
+            DeleteSslEndPoint(peer);
+            oc_mutex_unlock(g_sslContextMutex);
+            return CA_STATUS_FAILED;
+        }
 
         ret = u_arraylist_add(g_caSslContext->peerList, (void *) peer);
         if (!ret)
