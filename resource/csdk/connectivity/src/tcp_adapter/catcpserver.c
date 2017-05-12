@@ -518,6 +518,8 @@ static void CASocketEventReturned(CASocketFd_t s, long networkEvents)
         return;
     }
 
+    assert(s != OC_INVALID_SOCKET);
+
     if (FD_ACCEPT & networkEvents)
     {
         if ((caglobals.tcp.ipv4.fd != OC_INVALID_SOCKET) && (caglobals.tcp.ipv4.fd == s))
@@ -532,7 +534,31 @@ static void CASocketEventReturned(CASocketFd_t s, long networkEvents)
 
     if (FD_READ & networkEvents)
     {
-        CAReceiveMessage(s);
+        oc_mutex_lock(g_mutexObjectList);
+        CATCPSessionInfo_t *session = NULL;
+        CATCPSessionInfo_t *tmp = NULL;
+        LL_FOREACH_SAFE(g_sessionList, session, tmp)
+        {
+            if (session && (session->fd == s))
+            {
+                CAResult_t res = CAReceiveMessage(session);
+                //disconnect session and clean-up data if any error occurs
+                if (res != CA_STATUS_OK)
+                {
+#ifdef __WITH_TLS__
+                    if (CA_STATUS_OK != CAcloseSslConnection(&session->sep.endpoint))
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to close TLS session");
+                    }
+#endif
+                    LL_DELETE(g_sessionList, session);
+                    CADisconnectTCPSession(session);
+                    oc_mutex_unlock(g_mutexObjectList);
+                    return;
+                }
+            }
+        }
+        oc_mutex_unlock(g_mutexObjectList);
     }
 }
 
