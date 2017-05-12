@@ -707,13 +707,21 @@ static OCStackResult saveCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
     VERIFY_NOT_NULL_RETURN(TAG, cert, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, cert->data, ERROR,  OC_STACK_INVALID_PARAM);
+
+    VERIFY_NOT_NULL_RETURN(TAG, credId, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, usage, ERROR, OC_STACK_INVALID_PARAM);
+
+    if (NULL == key && PRIMARY_CERT == usage)
+    {
+        OIC_LOG_V(ERROR, TAG, "Key is NULL, but it is mandatory if usage is %s", PRIMARY_CERT);
+        return OC_STACK_INVALID_PARAM;
+    }
+
     if (key != NULL)
     {
         /* Key is optional. */
         VERIFY_NOT_NULL_RETURN(TAG, key->data, ERROR, OC_STACK_INVALID_PARAM);
     }
-    VERIFY_NOT_NULL_RETURN(TAG, credId, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NOT_NULL_RETURN(TAG, usage, ERROR, OC_STACK_INVALID_PARAM);
 
     OCStackResult res = OC_STACK_ERROR;
 

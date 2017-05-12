@@ -315,8 +315,11 @@ TEST_F(SRPTest, SRPSaveOwnCertChainTest)
 
     cert.data = certData;
     cert.len = sizeof(certData);
+    cert.encoding = OIC_ENCODING_DER;
+
     key.data = keyData;
     key.len = sizeof(keyData);
+    key.encoding = OIC_ENCODING_DER;
 
     result = SRPSaveOwnCertChain(&cert, &key, &credId);
 
