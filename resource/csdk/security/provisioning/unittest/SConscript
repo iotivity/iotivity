@@ -84,6 +84,8 @@ if target_os in ['msys_nt', 'windows']:
 else:
     if target_os in ['linux', 'tizen']:
         sptest_env.ParseConfig('pkg-config --cflags --libs sqlite3 gobject-2.0 gio-2.0 glib-2.0')
+# TODO: remove this workaround needed for g++-4.7
+        sptest_env.Append(LIBS = ['m'])
 
 ######################################################################
 # Source files and Targets
