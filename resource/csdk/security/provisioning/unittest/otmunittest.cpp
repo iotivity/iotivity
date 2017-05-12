@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "ocstack.h"
 #include "utlist.h"
 #include "logger.h"

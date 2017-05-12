@@ -18,7 +18,7 @@
   *
   ******************************************************************/
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "base64.h"
 #include <stdlib.h>
 #include <stdint.h>

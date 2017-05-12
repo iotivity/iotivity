@@ -34,7 +34,7 @@
 #endif // _POSIX_C_SOURCE
 
 #include "iotivity_config.h"
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include "octhread.h"
 #include <cathreadpool.h>

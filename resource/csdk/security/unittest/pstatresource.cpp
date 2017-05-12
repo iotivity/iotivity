@@ -22,7 +22,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include "ocpayload.h"
 #include "ocstack.h"

@@ -19,7 +19,7 @@
 ******************************************************************/
 #ifdef __WITH_DTLS__
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "logger.h"
 #include "ocpayload.h"
 #include "ocstack.h"

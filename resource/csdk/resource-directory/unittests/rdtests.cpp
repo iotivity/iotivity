@@ -33,7 +33,7 @@ extern "C"
     #include "coap/pdu.h"
 }
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>

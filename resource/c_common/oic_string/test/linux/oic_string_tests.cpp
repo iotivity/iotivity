@@ -33,7 +33,7 @@
 #define _POSIX_C_SOURCE 200809L
 #endif // _POSIX_C_SOURCE
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include <oic_string.h>
 #include <oic_malloc.h>

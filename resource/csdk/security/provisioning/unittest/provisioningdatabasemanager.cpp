@@ -18,7 +18,7 @@
  *
  * *****************************************************************/
 #include "iotivity_config.h"
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "provisioningdatabasemanager.h"
 
 #ifdef _MSC_VER
