@@ -48,7 +48,7 @@ typedef void (*Runner)();
 Runner g_currentRun;
 
 int processUserInput(int min = std::numeric_limits<int>::min(),
-        int max = std::numeric_limits<int>::max())
+                     int max = std::numeric_limits<int>::max())
 {
     assert(min <= max);
 
@@ -68,12 +68,14 @@ int processUserInput(int min = std::numeric_limits<int>::min(),
     throw std::runtime_error("Invalid Input, please try again");
 }
 
-void printConfiguration(const EnrolleeConf& conf)
+void printConfiguration(const EnrolleeConf &conf)
 {
     cout << "===========================================" << endl;
+    cout << "\tProvStatus : " << conf.getProvStatus() << endl;
+    cout << "\tLastErrCode : " << conf.getLastErrCode() << endl;
     cout << "\tDevice Name : " << conf.getDeviceName() << endl;
 
-    for(auto it : conf.getWiFiModes())
+    for (auto it : conf.getWiFiModes())
     {
         cout << "\tSupported WiFi modes : " << it << endl;
     }
@@ -83,7 +85,7 @@ void printConfiguration(const EnrolleeConf& conf)
     cout << "===========================================" << endl;
 }
 
-void printStatus(const EnrolleeStatus& status)
+void printStatus(const EnrolleeStatus &status)
 {
     cout << "===========================================" << endl;
     cout << "\tProvStatus : " << status.getProvStatus() << endl;
@@ -91,16 +93,21 @@ void printStatus(const EnrolleeStatus& status)
     cout << "===========================================" << endl;
 }
 
-ESOwnershipTransferData provisionSecurityStatusCallback(std::shared_ptr<SecProvisioningStatus> secProvisioningStatus)
+ESOwnershipTransferData provisionSecurityStatusCallback(std::shared_ptr<SecProvisioningStatus>
+        secProvisioningStatus)
 {
     cout << "provisionSecurityStatusCallback IN" << endl;
     cout << "ESResult : " << secProvisioningStatus->getESResult() << std::endl;
     cout << "Device ID : " << secProvisioningStatus->getDeviceUUID() << std::endl;
 
-    if(secProvisioningStatus->getESResult() == ES_SECURE_RESOURCE_IS_DISCOVERED)
+    if (secProvisioningStatus->getESResult() == ES_SECURE_RESOURCE_IS_DISCOVERED)
     {
 #ifdef __WITH_DTLS__
         cout << "Owned Status : " << secProvisioningStatus->isOwnedDevice() << std::endl;
+        if (secProvisioningStatus->isOwnedDevice())
+        {
+            cout << "Owner ID : " << secProvisioningStatus->getOwnerID() << std::endl;
+        }
         cout << "OT Method : " << secProvisioningStatus->getSelectedOTMethod() << std::endl;
 #ifdef MULTIPLE_OWNER
         cout << "MOT Enabled : " << secProvisioningStatus->isMOTEnabled() << std::endl;
@@ -115,11 +122,11 @@ ESOwnershipTransferData provisionSecurityStatusCallback(std::shared_ptr<SecProvi
         return OTData;
 #endif
 #endif
-
     }
-    else if(secProvisioningStatus->getESResult() == ES_OK)
+    else if (secProvisioningStatus->getESResult() == ES_OK)
     {
         cout << "provisionSecurity is success." << std::endl;
+        curResource = nullptr;
     }
     else
     {
@@ -131,7 +138,7 @@ ESOwnershipTransferData provisionSecurityStatusCallback(std::shared_ptr<SecProvi
 
 void provisionSecurity()
 {
-    if(!remoteEnrollee)
+    if (!remoteEnrollee)
     {
         std::cout << "RemoteEnrollee is null, retry Discovery EnrolleeResource." << endl;
         return;
@@ -150,22 +157,22 @@ void provisionSecurity()
 
 void getStatusCallback(std::shared_ptr< GetEnrolleeStatus > getEnrolleeStatus)
 {
-    if(getEnrolleeStatus->getESResult() != ES_OK)
+    if (getEnrolleeStatus->getESResult() != ES_OK)
     {
-      cout << "getStatus is failed." << endl;
-      return;
+        cout << "getStatus is failed." << endl;
+        return;
     }
     else
     {
-      cout << "getStatus is success." << endl;
-      printStatus(getEnrolleeStatus->getEnrolleeStatus());
+        cout << "getStatus is success." << endl;
+        printStatus(getEnrolleeStatus->getEnrolleeStatus());
     }
 }
 
 
 void getStatus()
 {
-    if(!remoteEnrollee)
+    if (!remoteEnrollee)
     {
         std::cout << "RemoteEnrollee is null, retry Discovery EnrolleeResource." << endl;
         return;
@@ -184,21 +191,21 @@ void getStatus()
 
 void getConfigurationCallback(std::shared_ptr< GetConfigurationStatus > getConfigurationStatus)
 {
-    if(getConfigurationStatus->getESResult() != ES_OK)
+    if (getConfigurationStatus->getESResult() != ES_OK)
     {
-      cout << "GetConfigurationStatus is failed." << endl;
-      return;
+        cout << "GetConfigurationStatus is failed." << endl;
+        return;
     }
     else
     {
-      cout << "GetConfigurationStatus is success." << endl;
-      printConfiguration(getConfigurationStatus->getEnrolleeConf());
+        cout << "GetConfigurationStatus is success." << endl;
+        printConfiguration(getConfigurationStatus->getEnrolleeConf());
     }
 }
 
 void getConfiguration()
 {
-    if(!remoteEnrollee)
+    if (!remoteEnrollee)
     {
         std::cout << "RemoteEnrollee is null, retry Discovery EnrolleeResource." << endl;
         return;
@@ -217,20 +224,20 @@ void getConfiguration()
 
 void deviceProvisioningStatusCallback(std::shared_ptr< DevicePropProvisioningStatus > provStatus)
 {
-    if(provStatus->getESResult() != ES_OK)
+    if (provStatus->getESResult() != ES_OK)
     {
-      cout << "Device Provisioning is failed." << endl;
-      return;
+        cout << "Device Provisioning is failed." << endl;
+        return;
     }
     else
     {
-      cout << "Device Provisioning is success." << endl;
+        cout << "Device Provisioning is success." << endl;
     }
 }
 
 void provisionDeviceProperty()
 {
-    if(!remoteEnrollee)
+    if (!remoteEnrollee)
     {
         std::cout << "RemoteEnrollee is null, retry Discovery EnrolleeResource." << endl;
         return;
@@ -252,20 +259,20 @@ void provisionDeviceProperty()
 
 void connectRequestStatusCallback(std::shared_ptr< ConnectRequestStatus > requestStatus)
 {
-    if(requestStatus->getESResult() != ES_OK)
+    if (requestStatus->getESResult() != ES_OK)
     {
-      cout << "Request to connection is failed." << endl;
-      return;
+        cout << "Request to connection is failed." << endl;
+        return;
     }
     else
     {
-      cout << "Request to connection is success." << endl;
+        cout << "Request to connection is success." << endl;
     }
 }
 
 void requestToConnect()
 {
-    if(!remoteEnrollee)
+    if (!remoteEnrollee)
     {
         std::cout << "RemoteEnrollee is null, retry Discovery EnrolleeResource." << endl;
         return;
@@ -309,16 +316,15 @@ void cloudProvisioningStatusCallback(std::shared_ptr< CloudPropProvisioningStatu
 
 void provisionCloudProperty()
 {
-    if(!remoteEnrollee)
+    if (!remoteEnrollee)
     {
         std::cout << "RemoteEnrollee is null, retry Discovery EnrolleeResource." << endl;
         return;
     }
 
     CloudProp cloudProp;
-    cloudProp.setCloudProp("authCode", "authProvider", "ciServer");
-    cloudProp.setCloudID("f002ae8b-c42c-40d3-8b8d-1927c17bd1b3");
-    cloudProp.setCredID(1);
+    cloudProp.setCloudPropWithAccessToken("accessToken", OAUTH_TOKENTYPE_BEARER, "authProvider",
+                                          "ciServer");
 
     try
     {
@@ -332,18 +338,17 @@ void provisionCloudProperty()
 }
 
 // Callback to found resources
-void foundResource(std::shared_ptr<OC::OCResource> resource)
+void foundUnsecuredResource(std::shared_ptr<OC::OCResource> resource)
 {
     std::string resourceURI;
     std::string hostAddress;
     try
     {
         // Do some operations with resource object.
-        if(resource &&
-           !curResource &&
-           resource->getResourceTypes().at(0) == OC_RSRVD_ES_RES_TYPE_EASYSETUP)
+        if (resource && !curResource  &&
+            resource->getResourceTypes().at(0) == OC_RSRVD_ES_RES_TYPE_EASYSETUP)
         {
-            std::cout<<"DISCOVERED Resource:"<<std::endl;
+            std::cout << "DISCOVERED Resource:" << std::endl;
             // Get the resource URI
             resourceURI = resource->uri();
             std::cout << "\tURI of the resource: " << resourceURI << std::endl;
@@ -354,22 +359,22 @@ void foundResource(std::shared_ptr<OC::OCResource> resource)
 
             // Get the resource types
             std::cout << "\tList of resource types: " << std::endl;
-            for(auto &resourceTypes : resource->getResourceTypes())
+            for (auto &resourceTypes : resource->getResourceTypes())
             {
                 std::cout << "\t\t" << resourceTypes << std::endl;
             }
 
             // Get the resource interfaces
             std::cout << "\tList of resource interfaces: " << std::endl;
-            for(auto &resourceInterfaces : resource->getResourceInterfaces())
+            for (auto &resourceInterfaces : resource->getResourceInterfaces())
             {
                 std::cout << "\t\t" << resourceInterfaces << std::endl;
             }
 
-            if(curResource == nullptr)
+            if (curResource == nullptr)
             {
                 remoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(resource);
-                if(!remoteEnrollee)
+                if (!remoteEnrollee)
                 {
                     std::cout << "RemoteEnrollee object is failed for some reasons!" << std::endl;
                 }
@@ -382,42 +387,123 @@ void foundResource(std::shared_ptr<OC::OCResource> resource)
             }
         }
     }
-    catch(std::exception& e)
+    catch (std::exception &e)
     {
-        std::cerr << "Exception in foundResource: "<< e.what() << std::endl;
+        std::cerr << "Exception in foundResource: " << e.what() << std::endl;
     }
 }
 
-void discoveryEnrolleeResource()
+// Callback to found resources
+void foundSecuredResource(std::shared_ptr<OC::OCResource> resource)
+{
+    std::string resourceURI;
+    std::string hostAddress;
+
+    try
+    {
+        // Do some operations with resource object.
+        if (resource && !curResource  &&
+            resource->getResourceTypes().at(0) == OC_RSRVD_ES_RES_TYPE_EASYSETUP)
+        {
+            std::cout << "DISCOVERED Resource:" << std::endl;
+            // Get the resource URI
+            resourceURI = resource->uri();
+            std::cout << "\tURI of the resource: " << resourceURI << std::endl;
+
+            // Get the resource host address
+            hostAddress = resource->host();
+            std::cout << "\tHost address of the resource: " << hostAddress << std::endl;
+
+            // Get Resource Endpoint Infomation
+            std::cout << "\tList of resource endpoints: " << std::endl;
+            for (auto &resourceEndpoints : resource->getAllHosts())
+            {
+                std::cout << "\t\t" << resourceEndpoints << std::endl;
+            }
+
+            // Get the resource types
+            std::cout << "\tList of resource types: " << std::endl;
+            for (auto &resourceTypes : resource->getResourceTypes())
+            {
+                std::cout << "\t\t" << resourceTypes << std::endl;
+            }
+
+            // Get the resource interfaces
+            std::cout << "\tList of resource interfaces: " << std::endl;
+            for (auto &resourceInterfaces : resource->getResourceInterfaces())
+            {
+                std::cout << "\t\t" << resourceInterfaces << std::endl;
+            }
+
+            if (curResource == nullptr)
+            {
+                remoteEnrollee = nullptr;
+
+                for (auto &resourceEndpoints : resource->getAllHosts())
+                {
+                    if (std::string::npos != resourceEndpoints.find("coaps"))
+                    {
+                        std::string newHost = resourceEndpoints;
+                        // Change Resource host if another host exists
+                        std::cout << "\tChange host of resource endpoints" << std::endl;
+                        std::cout << "\t\t" << "Current host is "
+                                  << resource->setHost(newHost) << std::endl;
+                        remoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(resource);
+                        break;
+                    }
+                }
+
+                if (!remoteEnrollee)
+                {
+                    std::cout << "RemoteEnrollee object is failed for some reasons!" << std::endl;
+                }
+                else
+                {
+                    curResource = resource;
+                    std::cout << "RemoteEnrollee object is successfully created!" << std::endl;
+                    g_cond.notify_all();
+                }
+            }
+        }
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "Exception in foundResource: " << e.what() << std::endl;
+    }
+}
+
+void discoveryEnrolleeResource(void (*f)(std::shared_ptr<OC::OCResource> resource))
 {
     try
     {
         std::ostringstream requestURI;
         requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=" << OC_RSRVD_ES_RES_TYPE_EASYSETUP;
-        OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource);
-        std::cout<< "Finding Resource... " <<std::endl;
+        OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, f);
+        std::cout << "Finding Resource... " << std::endl;
 
         std::unique_lock<std::mutex> lck(g_discoverymtx);
         g_cond.wait_for(lck, std::chrono::seconds(5));
     }
-    catch (OCException& e)
+    catch (OCException &e)
     {
-        std::cout << "Exception in discoveryEnrolleeResource: "<<e.what();
+        std::cout << "Exception in discoveryEnrolleeResource: " << e.what();
     }
 }
 
 void DisplayMenu()
 {
-    constexpr int DISCOVERY_ENROLLEE = 1;
-    constexpr int PROVISION_SECURITY = 2;
-    constexpr int GET_STATUS = 3;
-    constexpr int GET_CONFIGURATION = 4;
-    constexpr int PROVISION_DEVICE_PROPERTY = 5;
-    constexpr int REQUEST_TO_CONNECT = 6;
-    constexpr int PROVISION_CLOUD_PROPERTY = 7;
+    constexpr int DISCOVER_UNSECURED_ENROLLEE = 1;
+    constexpr int DISCOVER_SECURED_ENROLLEE = 2;
+    constexpr int PROVISION_SECURITY = 3;
+    constexpr int GET_STATUS = 4;
+    constexpr int GET_CONFIGURATION = 5;
+    constexpr int PROVISION_DEVICE_PROPERTY = 6;
+    constexpr int REQUEST_TO_CONNECT = 7;
+    constexpr int PROVISION_CLOUD_PROPERTY = 8;
 
     std::cout << "========================================================\n";
-    std::cout << DISCOVERY_ENROLLEE << ". Discovery Enrollee Resource \n";
+    std::cout << DISCOVER_UNSECURED_ENROLLEE << ". Discover Enrollee Resource \n";
+    std::cout << DISCOVER_SECURED_ENROLLEE << ". Discover Secured Enrollee Resource \n";
     std::cout << PROVISION_SECURITY << ". Provision Security to Enrollee  \n";
     std::cout << GET_STATUS << ". Get Status from Enrollee  \n";
     std::cout << GET_CONFIGURATION << ". Get Configuration from Enrollee  \n";
@@ -426,12 +512,15 @@ void DisplayMenu()
     std::cout << PROVISION_CLOUD_PROPERTY << ". Provision Cloud Property  \n";
     std::cout << "========================================================\n";
 
-    int selection = processUserInput(DISCOVERY_ENROLLEE, PROVISION_CLOUD_PROPERTY);
+    int selection = processUserInput(DISCOVER_UNSECURED_ENROLLEE, PROVISION_CLOUD_PROPERTY);
 
     switch (selection)
     {
-        case DISCOVERY_ENROLLEE:
-            discoveryEnrolleeResource();
+        case DISCOVER_UNSECURED_ENROLLEE:
+            discoveryEnrolleeResource(&foundUnsecuredResource);
+            break;
+        case DISCOVER_SECURED_ENROLLEE:
+            discoveryEnrolleeResource(&foundSecuredResource);
             break;
         case PROVISION_SECURITY:
             provisionSecurity();
@@ -456,7 +545,7 @@ void DisplayMenu()
     };
 }
 
-static FILE* client_open(const char *path, const char *mode)
+static FILE *client_open(const char *path, const char *mode)
 {
     if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
     {
@@ -483,14 +572,15 @@ int main()
     {
 #ifdef __WITH_DTLS__
         //Initializing the provisioning client stack using the db path provided by the application.
-        OCStackResult result = OCSecure::provisionInit("PDM_sub.db");
+        OCStackResult result = OCSecure::provisionInit("");
 
         if (result != OC_STACK_OK)
         {
             return -1;
         }
 #endif
-    }catch (...)
+    }
+    catch (...)
     {
         std::cout << "Exception in main: " << std::endl;
     }

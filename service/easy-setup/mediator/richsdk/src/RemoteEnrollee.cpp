@@ -270,6 +270,17 @@ namespace OIC
                         if(!m_deviceId.empty() && m_deviceId == hostDeviceID)
                         {
                             OIC_LOG(INFO, ES_REMOTE_ENROLLEE_TAG, "Find matched resource for cloud provisioning");
+                            // Change Resource host if secure host exists
+                            for (auto &resourceEndpoints : resource->getAllHosts())
+                            {
+                                if (std::string::npos != resourceEndpoints.find("coaps://"))
+                                {
+                                    resource->setHost(resourceEndpoints);
+                                    OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_TAG,"Resource host changed");
+                                    break;
+                                }
+                            }
+
                             m_ocResource = resource;
                             m_discoveryResponse = true;
                             m_cond.notify_all();
