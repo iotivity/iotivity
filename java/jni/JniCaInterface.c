@@ -37,7 +37,7 @@ static jmethodID g_jni_mid_enum = NULL;
 
 JNIEXPORT jint JNI_OnLoad(JavaVM *jvm, void *reserved)
 {
-    LOGI("CaInterface_initialize");
+    LOGI("JNI_OnLoad");
     g_jvm = jvm;
     CANativeJNISetJavaVM(jvm);
 
@@ -209,7 +209,7 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaInterface_caManagerInitialize(JNIEnv *env, jclass clazz,
                                                      jobject context, jobject listener)
 {
-    LOGI("CaManagere_initialize");
+    LOGI("CaManager_initialize");
 
     CAUtilClientInitialize(env, g_jvm, context);
 
@@ -244,7 +244,7 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaInterface_caManagerInitialize(JNIEnv *env, jclass clazz,
                                                      jobject listener)
 {
-    LOGI("CaManagere_initialize");
+    LOGI("CaManager_initialize");
 
     g_listenerObject = (*env)->NewGlobalRef(env, listener);
 
