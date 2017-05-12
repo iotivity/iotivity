@@ -2126,6 +2126,8 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
         goto exit;
     }
 
+    ehRet = OC_EH_OK;
+
     if (payload)
     {
         OicSecAcl_t *newAcl = NULL;
