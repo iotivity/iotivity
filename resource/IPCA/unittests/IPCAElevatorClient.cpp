@@ -17,13 +17,14 @@
  *
  ******************************************************************/
 
+#include "iotivity_config.h"
+
 #include <thread>
 #include <chrono>
 #include <mutex>
 #include <condition_variable>
 
 #include "gtest/gtest.h"
-#include "iotivity_config.h"
 #include "ocrandom.h"
 #include "octypes.h"
 #include "oic_time.h"

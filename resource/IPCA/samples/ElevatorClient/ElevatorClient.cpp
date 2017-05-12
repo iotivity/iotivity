@@ -17,6 +17,8 @@
  *
  ******************************************************************/
 
+#include "iotivity_config.h"
+
 #include <mutex>
 #include <array>
 #include <string>
@@ -28,7 +30,6 @@
 #include <condition_variable>
 #include <climits>
 
-#include "iotivity_config.h"
 #include "ipca.h"
 #include "OCFDevice.h"
 

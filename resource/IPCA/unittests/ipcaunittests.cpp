@@ -17,6 +17,8 @@
  *
  ******************************************************************/
 
+#include "iotivity_config.h"
+
 #include <thread>
 #include <chrono>
 #include <mutex>
