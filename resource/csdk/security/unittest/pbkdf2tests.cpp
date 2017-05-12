@@ -18,7 +18,7 @@
   *
   ******************************************************************/
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "pbkdf2.h"
 #include <stdlib.h>
 #include <stdint.h>

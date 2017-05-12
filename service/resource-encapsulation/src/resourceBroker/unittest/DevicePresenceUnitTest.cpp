@@ -19,7 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include <unistd.h>
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "HippoMocks/hippomocks.h"
 
 #include "BrokerTypes.h"

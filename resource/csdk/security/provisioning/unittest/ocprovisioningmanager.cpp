@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  * *****************************************************************/
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "ocprovisioningmanager.h"
 
 static OicSecAcl_t acl1;

@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "oic_malloc.h"
 #include "ocstack.h"
 #include <stdlib.h>

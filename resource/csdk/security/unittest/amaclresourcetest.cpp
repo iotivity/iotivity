@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "cainterface.h"
 #include "ocstack.h"
 #include "ocpayload.h"

@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <coap/utlist.h>
 #include <sys/stat.h>
 #include "ocstack.h"

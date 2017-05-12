@@ -32,7 +32,7 @@ extern "C"
     #include "payload_logging.h"
 }
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>

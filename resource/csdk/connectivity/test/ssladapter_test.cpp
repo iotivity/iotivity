@@ -25,7 +25,7 @@
 
 #include <cinttypes>
 #include "iotivity_config.h"
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "time.h"
 #include "octypes.h"
 #ifdef HAVE_WINSOCK2_H

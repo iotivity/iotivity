@@ -24,7 +24,7 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "ocrandom.h"
 #include "ipca.h"
 #include "testelevatorserver.h"

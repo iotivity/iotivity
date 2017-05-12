@@ -25,7 +25,7 @@
 
 #include <stdio.h>
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include "oic_malloc.h"
 #include "caprotocolmessage.h"
