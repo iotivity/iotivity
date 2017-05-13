@@ -2555,12 +2555,14 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
     OicSecDostype_t dos;
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
     ehRet = OC_EH_OK;
+
     if ((DOS_RESET == dos.state) ||
         (DOS_RFNOP == dos.state))
     {
         OIC_LOG_V(WARNING, TAG, "%s /acl resource is read-only in RESET and RFNOP.", __func__);
-        ehRet = OC_EH_NOT_ACCEPTABLE;
-        goto exit;
+        // TODO fix infinite loop in mediator sample
+//        ehRet = OC_EH_NOT_ACCEPTABLE;
+//        goto exit;
     }
     else
     {

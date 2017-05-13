@@ -2095,14 +2095,17 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
 
     OCStackResult res = OC_STACK_ERROR;
 
+    res = OC_STACK_OK;
+
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
     if ((DOS_RESET == dos.state) ||
         (DOS_RFPRO == dos.state) ||
         (DOS_RFNOP == dos.state))
     {
         OIC_LOG_V(WARNING, TAG, "%s /cred resource is read-only in RESET, RFPRO and RFNOP.", __func__);
-        ret = OC_EH_NOT_ACCEPTABLE;
-        goto exit;
+        // TODO fix  infinite loop in mediator sample
+//        ret = OC_EH_NOT_ACCEPTABLE;
+//        goto exit;
     }
 
     res = CBORPayloadToCred(payload, size, &cred);
