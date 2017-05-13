@@ -1074,6 +1074,11 @@ static bool checkSslOperation(SslEndPoint_t*  peer,
         (MBEDTLS_SSL_ALERT_MSG_NO_APPLICATION_PROTOCOL != ret))
     {
         OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: -0x%x", (str), -ret);
+
+        // Make a copy of the endpoint, because the callback might
+        // free the peer object, during SSL_RES() below.
+        CAEndpoint_t removedEndpoint = (peer)->sep.endpoint;
+
         oc_mutex_lock(g_sslContextMutex);
 
         if (MBEDTLS_ERR_SSL_BAD_HS_CLIENT_HELLO != ret)
@@ -1081,7 +1086,7 @@ static bool checkSslOperation(SslEndPoint_t*  peer,
             SSL_RES((peer), CA_DTLS_AUTHENTICATION_FAILURE);
         }
 
-        RemovePeerFromList(&(peer)->sep.endpoint);
+        RemovePeerFromList(&removedEndpoint);
 
         oc_mutex_unlock(g_sslContextMutex);
         return false;
