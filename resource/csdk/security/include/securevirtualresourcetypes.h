@@ -467,6 +467,13 @@ typedef enum
     OIC_SEC_ACL_V2 = 2
 } OicSecAclVersion_t;
 
+typedef enum
+{
+    DISCOVERABLE_NOT_KNOWN = 0,
+    DISCOVERABLE_TRUE = 1,
+    DISCOVERABLE_FALSE = 2
+} OicSecDiscoverable_t;
+
 #define OIC_SEC_ACL_LATEST OIC_SEC_ACL_V2
 
 typedef enum

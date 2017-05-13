@@ -137,7 +137,7 @@ void SRMGenerateResponse(SRMRequestContext_t *context)
 }
 
 // Set the value of context->resourceUri, based on the context->requestInfo.
-void SetResourceUriAndType(SRMRequestContext_t *context)
+static void SetResourceUriAndType(SRMRequestContext_t *context)
 {
     char *uri = strstr(context->requestInfo->info.resourceUri, "?");
     size_t position = 0;
@@ -165,11 +165,41 @@ void SetResourceUriAndType(SRMRequestContext_t *context)
     return;
 }
 
-void ClearRequestContext(SRMRequestContext_t *context)
+static void SetDiscoverable(SRMRequestContext_t *context)
+{
+    OCResource *resource;
+    if (NULL == context)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: Null context.", __func__);
+        context->discoverable = DISCOVERABLE_NOT_KNOWN;
+    }
+    else if (NULL == context->resourceUri)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: Null resourceUri.", __func__);
+        context->discoverable = DISCOVERABLE_NOT_KNOWN;
+    }
+    else
+    {
+        resource = FindResourceByUri(context->resourceUri);
+        if (OC_DISCOVERABLE == (resource->resourceProperties & OC_DISCOVERABLE))
+        {
+            context->discoverable = DISCOVERABLE_TRUE;
+            OIC_LOG_V(DEBUG, TAG, "%s: resource %s is OC_DISCOVERABLE.",
+                __func__, context->resourceUri);
+        }
+        else
+        {
+            context->discoverable = DISCOVERABLE_FALSE;
+            OIC_LOG_V(DEBUG, TAG, "%s: resource %s is NOT OC_DISCOVERABLE.",
+                __func__, context->resourceUri);
+        }
+    }
+}
+
+static void ClearRequestContext(SRMRequestContext_t *context)
 {
     if (NULL == context)
     {
-
         OIC_LOG(ERROR, TAG, "Null context.");
     }
     else
@@ -185,6 +215,7 @@ void ClearRequestContext(SRMRequestContext_t *context)
         context->requestInfo = NULL;
         context->secureChannel = false;
         context->slowResponseSent = false;
+        context->discoverable = DISCOVERABLE_NOT_KNOWN;
         context->subjectIdType = SUBJECT_ID_TYPE_ERROR;
         memset(&context->subjectUuid, 0, sizeof(context->subjectUuid));
 #ifdef MULTIPLE_OWNER
@@ -279,6 +310,9 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
 
     // Set resource URI and type.
     SetResourceUriAndType(ctx);
+
+    // Set discoverable enum.
+    SetDiscoverable(ctx);
 
     // Initialize responseInfo.
     memcpy(&(ctx->responseInfo.info), &(requestInfo->info),

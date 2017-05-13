@@ -51,6 +51,7 @@ typedef struct SRMRequestContext
     const CARequestInfo_t   *requestInfo;                       // ptr to info for this request
     bool                    secureChannel;                      // Was request recv'd over secure channel?
     bool                    slowResponseSent;                   // Is a full response still needed?
+    OicSecDiscoverable_t    discoverable;                       // Is resource discoverable?
     SubjectIdentityType_t   subjectIdType;                      // The type of Subject ID in this
                                                                 // request.
     OicUuid_t               subjectUuid;                        // The UUID of the Subject (valid

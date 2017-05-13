@@ -475,7 +475,6 @@ OicSecAcl_t* JSONToAclBin(OicSecAclVersion_t *aclVersion, const char * jsonStr)
                     }
                     VERIFY_SUCCESS(TAG, ace->subjectType == OicSecAceConntypeSubject, ERROR);
                 }
-                // */  RESUME HERE
             }
             // Resources -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_RESOURCES_NAME);
@@ -503,15 +502,25 @@ OicSecAcl_t* JSONToAclBin(OicSecAclVersion_t *aclVersion, const char * jsonStr)
 
                 //href
                 cJSON *jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_HREF_NAME);
-                VERIFY_NOT_NULL(TAG, jsonRsrcObj, ERROR);
-                VERIFY_SUCCESS(TAG, cJSON_String == jsonRsrcObj->type, ERROR);
-
-                rsrc->href = OICStrdup(jsonRsrcObj->valuestring);
-                VERIFY_NOT_NULL(TAG, (rsrc->href), ERROR);
+                if (NULL != jsonRsrcObj)
+                {
+                    VERIFY_SUCCESS(TAG, cJSON_String == jsonRsrcObj->type, ERROR);
+                    rsrc->href = OICStrdup(jsonRsrcObj->valuestring);
+                    VERIFY_NOT_NULL(TAG, (rsrc->href), ERROR);
+                    rsrc->wildcard = NO_WILDCARD; // normally if href != NULL, then no wc
+                    if (0 == strcmp(WILDCARD_RESOURCE_URI, rsrc->href))
+                    {
+                        free(rsrc->href);
+                        rsrc->href = NULL;
+                        rsrc->wildcard = ALL_RESOURCES;
+                        OIC_LOG_V(DEBUG, TAG, "%s: replaced \"*\" href with wildcard = ALL_RESOURCES.",
+                            __func__);
+                    }
+                }
 
                 //rel
                 jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_REL_NAME);
-                if(jsonRsrcObj)
+                if (NULL != jsonRsrcObj)
                 {
                     rsrc->rel = OICStrdup(jsonRsrcObj->valuestring);
                     VERIFY_NOT_NULL(TAG, (rsrc->rel), ERROR);
@@ -519,7 +528,7 @@ OicSecAcl_t* JSONToAclBin(OicSecAclVersion_t *aclVersion, const char * jsonStr)
 
                 //rt
                 jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_RT_NAME);
-                if(jsonRsrcObj && cJSON_Array == jsonRsrcObj->type)
+                if ((NULL != jsonRsrcObj) && (cJSON_Array == jsonRsrcObj->type))
                 {
                     rsrc->typeLen = cJSON_GetArraySize(jsonRsrcObj);
                     VERIFY_SUCCESS(TAG, (0 < rsrc->typeLen), ERROR);
@@ -544,7 +553,7 @@ OicSecAcl_t* JSONToAclBin(OicSecAclVersion_t *aclVersion, const char * jsonStr)
 
                 //if
                 jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_IF_NAME);
-                if(jsonRsrcObj && cJSON_Array == jsonRsrcObj->type)
+                if((NULL != jsonRsrcObj) && (cJSON_Array == jsonRsrcObj->type))
                 {
                     rsrc->interfaceLen = cJSON_GetArraySize(jsonRsrcObj);
                     VERIFY_SUCCESS(TAG, (0 < rsrc->interfaceLen), ERROR);
@@ -567,6 +576,32 @@ OicSecAcl_t* JSONToAclBin(OicSecAclVersion_t *aclVersion, const char * jsonStr)
                     }
                 }
 
+                //wc
+                jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_WC_NAME);
+                if (NULL != jsonRsrcObj)
+                {
+                    char *wc = NULL;
+                    VERIFY_SUCCESS(TAG, cJSON_String == jsonRsrcObj->type, ERROR);
+                    wc = OICStrdup(jsonRsrcObj->valuestring);
+                    VERIFY_NOT_NULL(TAG, wc, ERROR);
+                    if (0 == strcmp(OIC_JSON_WC_ASTERISK_NAME, wc))
+                    {
+                        rsrc->wildcard = ALL_RESOURCES;
+                    }
+                    else if (0 == strcmp(OIC_JSON_WC_PLUS_NAME, wc))
+                    {
+                        rsrc->wildcard = ALL_DISCOVERABLE;
+                    }
+                    else if (0 == strcmp(OIC_JSON_WC_MINUS_NAME, wc))
+                    {
+                        rsrc->wildcard = ALL_NON_DISCOVERABLE;
+                    }
+                    else
+                    {
+                        rsrc->wildcard = NO_WILDCARD;
+                    }
+                    OICFree(wc);
+                }
                 LL_APPEND(ace->resources, rsrc);
             }
 

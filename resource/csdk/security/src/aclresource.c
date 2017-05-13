@@ -665,11 +665,28 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl,
             {
 
                 CborEncoder rMap;
-                size_t rsrcMapSize = ACL_RESOURCE_MAP_SIZE;
-                if(rsrc->rel)
+                size_t rsrcMapSize = 0;
+                if (NULL != rsrc->href)
                 {
                     rsrcMapSize++;
                 }
+                if (rsrc->typeLen > 0)
+                {
+                    rsrcMapSize++;
+                }
+                if (rsrc->interfaceLen > 0)
+                {
+                    rsrcMapSize++;
+                }
+                if (NULL != rsrc->rel)
+                {
+                    rsrcMapSize++;
+                }
+                if (NO_WILDCARD != rsrc->wildcard)
+                {
+                    rsrcMapSize++;
+                }
+                OIC_LOG_V(DEBUG, TAG, "%s resource map size = %d.", __func__, rsrcMapSize);
 
                 cborEncoderResult = cbor_encoder_create_map(&resources, &rMap, rsrcMapSize);
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Resource Map.");
@@ -733,7 +750,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl,
                 }
 
                 // rel
-                if(rsrc->rel)
+                if(NULL != rsrc->rel)
                 {
                     cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_REL_NAME,
                             strlen(OIC_JSON_REL_NAME));
@@ -759,10 +776,10 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl,
                             wcstring = OIC_JSON_WC_PLUS_NAME;
                             break;
                             case ALL_NON_DISCOVERABLE:
-                            wcstring = OIC_JSON_WC_PLUS_NAME;
+                            wcstring = OIC_JSON_WC_MINUS_NAME;
                             break;
                             case ALL_RESOURCES:
-                            wcstring = OIC_JSON_WC_PLUS_NAME;
+                            wcstring = OIC_JSON_WC_ASTERISK_NAME;
                             break;
                             default:
                             OIC_LOG_V(ERROR, TAG, "%s: unknown ACE2 wildcard type.", __func__);
@@ -1690,6 +1707,20 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                                 cborFindResult = cbor_value_dup_text_string(&rMap, &rsrc->href, &tempLen, NULL);
                                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Href Value.");
                                                 OIC_LOG_V(DEBUG, TAG, "%s found href = %s.", __func__, rsrc->href);
+                                                // OCF 1.0 shouldn't use "*" href even though it's supported; instead,
+                                                // use "wc" object.
+                                                if (0 == strcmp(WILDCARD_RESOURCE_URI, rsrc->href))
+                                                {
+                                                    free(rsrc->href);
+                                                    rsrc->href = NULL;
+                                                    rsrc->wildcard = ALL_RESOURCES;
+                                                    OIC_LOG_V(DEBUG, TAG, "%s: replaced \"*\" href with wildcard = ALL_RESOURCES.",
+                                                        __func__);
+                                                }
+                                                else
+                                                {
+                                                    rsrc->wildcard = NO_WILDCARD;
+                                                }
                                             }
 
                                             // "rt"
@@ -1748,6 +1779,36 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                                 OIC_LOG_V(DEBUG, TAG, "%s found rel = %s.", __func__, rsrc->rel);
                                             }
 
+                                            // "wc"
+                                            if (0 == strcmp(OIC_JSON_WC_NAME, rMapName))
+                                            {
+                                                char *wc = NULL;
+                                                cborFindResult = cbor_value_dup_text_string(&rMap, &wc, &tempLen, NULL);
+                                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding wc Value.");
+                                                OIC_LOG_V(DEBUG, TAG, "%s found wc = %s.", __func__, wc);
+                                                if (0 == strcmp(OIC_JSON_WC_ASTERISK_NAME, wc))
+                                                {
+                                                    rsrc->wildcard = ALL_RESOURCES;
+                                                    OIC_LOG_V(DEBUG, TAG, "%s set wildcard = ALL_RESOURCES.", __func__);
+                                                }
+                                                else if (0 == strcmp(OIC_JSON_WC_PLUS_NAME, wc))
+                                                {
+                                                    rsrc->wildcard = ALL_DISCOVERABLE;
+                                                    OIC_LOG_V(DEBUG, TAG, "%s set wildcard = ALL_DISCOVERABLE.", __func__);
+                                                }
+                                                else if (0 == strcmp(OIC_JSON_WC_MINUS_NAME, wc))
+                                                {
+                                                    rsrc->wildcard = ALL_NON_DISCOVERABLE;
+                                                    OIC_LOG_V(DEBUG, TAG, "%s set wildcard = ALL_NON_DISCOVERABLE.", __func__);
+                                                }
+                                                else
+                                                {
+                                                    rsrc->wildcard = NO_WILDCARD;
+                                                    OIC_LOG_V(DEBUG, TAG, "%s set wildcard = NO_WILDCARD.", __func__);
+                                                }
+                                                free(wc);
+                                            }
+
                                             if (cbor_value_is_valid(&rMap))
                                             {
                                                 cborFindResult = cbor_value_advance(&rMap);
@@ -1797,7 +1858,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                         LL_APPEND(ace->validities, validity);
 
                                         CborValue validityMap  = {.parser = NULL};
-                                                //period (string)
+                                        //period (string)
                                         cborFindResult = cbor_value_enter_container(&validitiesMap, &validityMap);
                                         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding a validity Map.");
 
@@ -1805,7 +1866,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                         cborFindResult =cbor_value_dup_text_string(&validityMap, &validity->period, &vmLen, NULL);
                                         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding a Period value.");
 
-                                                //recurrence (string array)
+                                        //recurrence (string array)
                                         CborValue recurrenceMap  = {.parser = NULL};
                                         cborFindResult = cbor_value_enter_container(&validityMap, &recurrenceMap);
                                         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding a recurrence array.");
