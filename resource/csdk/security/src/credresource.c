@@ -3571,7 +3571,7 @@ void InitCipherSuiteListInternal(bool * list, const char * usage, const char *de
             {
                 OicUuid_t uuid;
 
-                if (NULL == deviceId ||
+                if (NULL == deviceId || deviceId[0] == '\0' ||
                     OC_STACK_OK != ConvertStrToUuid(deviceId, &uuid) ||
                     0 == memcmp(uuid.id, temp->subject.id, sizeof(uuid.id)))
                 {
