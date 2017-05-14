@@ -49,6 +49,7 @@ namespace OC
     static const int AttributeValueNullIndex = 0;
     typedef boost::variant<
         NullType, // Note: this handles the null-type and must match the above static const
+        int,
         int64_t,
         double,
         bool,
