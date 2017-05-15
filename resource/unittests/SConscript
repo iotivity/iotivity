@@ -52,6 +52,11 @@ if target_os in ['windows']:
     # Non-Windows platforms find the boost headers under /usr/include or similar path.
     unittests_env.AppendUnique(CPPPATH = ['#extlibs/boost/boost'])
     unittests_env.AppendUnique(LIBS = ['sqlite3'])
+
+    if unittests_env['CC'] == 'cl':
+        # Fix for: resource\unittests\OCRepresentationEncodingTest.cpp "fatal error C1128:
+        # number of sections exceeded object file format limit: compile with /bigobj"
+        unittests_env.AppendUnique(CCFLAGS=['/bigobj'])
 elif target_os in ['linux', 'tizen']:
     unittests_env.ParseConfig('pkg-config --cflags --libs sqlite3 gobject-2.0 gio-2.0 glib-2.0')
 
