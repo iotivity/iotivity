@@ -19,6 +19,7 @@
  ******************************************************************/
 
 #include "CoapHttpHandler.h"
+#include "platform_features.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "logger.h"
