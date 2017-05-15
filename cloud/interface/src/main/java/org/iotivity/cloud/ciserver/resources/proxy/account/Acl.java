@@ -38,18 +38,15 @@ import org.iotivity.cloud.ciserver.Constants;
  */
 
 public class Acl extends Resource {
-    IRequestChannel mAuthServer = null;
 
     public Acl() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACL_URI));
-
-        mAuthServer = ConnectorPool.getConnection("account");
     }
 
     @Override
     public void onDefaultRequestReceived(Device srcDevice, IRequest request)
             throws ServerException {
         // Token exchange is done by CoapClient
-        mAuthServer.sendRequest(request, srcDevice);
+        ConnectorPool.getConnection("account").sendRequest(request, srcDevice);
     }
 }

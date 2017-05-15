@@ -27,6 +27,8 @@ import org.iotivity.cloud.base.OICConstants;
 
 public class Constants extends OICConstants {
 
+    public static final int    DEFAULT_COAP_PORT          = 5685;
+
     public static final String PROPERTIES_FILE_NAME       = "properties"
             + File.separator + "config.properties";
 

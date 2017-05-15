@@ -55,12 +55,10 @@ import org.iotivity.cloud.util.Cbor;
 public class RouteResource extends Resource {
 
     private CoapDevicePool                mDevicePool = null;
-    private IRequestChannel               mASServer   = null;
     private Cbor<HashMap<String, Object>> mCbor       = new Cbor<>();
 
     public RouteResource(CoapDevicePool devicePool) {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.REQ_DEVICE_ROUTE));
-        mASServer = ConnectorPool.getConnection("account");
         mDevicePool = devicePool;
     }
 
@@ -279,7 +277,7 @@ public class RouteResource extends Resource {
         IRequest verifyRequest = MessageBuilder.createRequest(RequestMethod.GET,
                 OICConstants.ACL_VERIFY_FULL_URI, uriQuery.toString());
 
-        mASServer.sendRequest(verifyRequest,
+        ConnectorPool.getConnection("account").sendRequest(verifyRequest,
                 new AccountReceiveHandler(srcDevice, request));
     }
 }

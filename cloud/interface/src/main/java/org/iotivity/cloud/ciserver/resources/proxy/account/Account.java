@@ -44,12 +44,9 @@ import org.iotivity.cloud.ciserver.Constants;
  */
 
 public class Account extends Resource {
-    IRequestChannel mASServer = null;
 
     public Account() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI));
-
-        mASServer = ConnectorPool.getConnection("account");
     }
 
     class RDReceiveHandler implements IResponseEventHandler {
@@ -81,12 +78,10 @@ public class Account extends Resource {
 
     class AccountReceiveHandler implements IResponseEventHandler {
 
-        IRequestChannel  mRDServer = null;
         private Device   mSrcDevice;
         private IRequest mRequest;
 
         public AccountReceiveHandler(IRequest request, Device srcDevice) {
-            mRDServer = ConnectorPool.getConnection("rd");
             mSrcDevice = srcDevice;
             mRequest = request;
         }
@@ -99,7 +94,7 @@ public class Account extends Resource {
                     StringBuffer uriPath = new StringBuffer();
                     uriPath.append(Constants.PREFIX_OIC + "/");
                     uriPath.append(Constants.RD_URI);
-                    mRDServer.sendRequest(
+                    ConnectorPool.getConnection("rd").sendRequest(
                             MessageBuilder.createRequest(RequestMethod.DELETE,
                                     uriPath.toString(), mRequest.getUriQuery()),
                             new RDReceiveHandler(mRequest, response,
@@ -140,7 +135,7 @@ public class Account extends Resource {
             default:
                 break;
         }
-        mASServer.sendRequest(request,
+        ConnectorPool.getConnection("account").sendRequest(request,
                 new AccountReceiveHandler(request, srcDevice));
     }
 }

@@ -56,14 +56,11 @@ public class Log {
         createfile();
     }
 
-    public static void InitWebLog(String weblogHostname, String port,
-            String serverName) {
+    public static void InitWebLog(String webLogHost, String serverName) {
         mServerName = serverName;
-
-        if (weblogHostname != null) {
+        if (webLogHost != null) {
             try {
-                String LogServerAddr = "ws://" + weblogHostname + ":" + port;
-                websocketpoint = new WebsocketLog(new URI(LogServerAddr));
+                websocketpoint = new WebsocketLog(new URI("ws://" + webLogHost));
                 websocketpoint.start();
             } catch (Exception e) {
                 System.out.println(e.getMessage());

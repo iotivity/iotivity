@@ -43,14 +43,11 @@ import org.iotivity.cloud.util.Cbor;
 
 public class AclGroup extends Resource {
 
-    private IRequestChannel               mAuthServer = null;
     private Cbor<HashMap<String, Object>> mCbor       = new Cbor<>();
 
     public AclGroup() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACL_URI,
                 Constants.GROUP_URI));
-
-        mAuthServer = ConnectorPool.getConnection("account");
     }
 
     @Override
@@ -79,7 +76,8 @@ public class AclGroup extends Resource {
         String uriQuery = additionalQuery.toString()
                 + (request.getUriQuery() != null ? (";" + request.getUriQuery())
                         : "");
-        mAuthServer.sendRequest(MessageBuilder.modifyRequest(request, null,
-                uriQuery, null, null), srcDevice);
+        ConnectorPool.getConnection("account").sendRequest(
+                MessageBuilder.modifyRequest(request, null,
+                    uriQuery, null, null), srcDevice);
     }
 }

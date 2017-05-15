@@ -70,12 +70,6 @@ public class DeviceServerSystem extends ServerSystem {
     private Cbor<HashMap<String, Object>>                 mCbor     = new Cbor<HashMap<String, Object>>();
     private HashMap<ChannelHandlerContext, CoapSignaling> mCsmMap   = new HashMap<>();
 
-    IRequestChannel                                       mRDServer = null;
-
-    public DeviceServerSystem() {
-        mRDServer = ConnectorPool.getConnection("rd");
-    }
-
     /**
      *
      * This class provides a set of APIs to manage device pool.
@@ -297,7 +291,7 @@ public class DeviceServerSystem extends ServerSystem {
             StringBuffer uriPath = new StringBuffer();
             uriPath.append("/" + Constants.PREFIX_OIC);
             uriPath.append("/" + Constants.DEVICE_PRESENCE_URI);
-            mRDServer.sendRequest(MessageBuilder.createRequest(
+            ConnectorPool.getConnection("rd").sendRequest(MessageBuilder.createRequest(
                     RequestMethod.POST, uriPath.toString(), null,
                     ContentFormat.APPLICATION_CBOR,
                     cbor.encodingPayloadToCbor(payload)), null);

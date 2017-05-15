@@ -24,6 +24,7 @@ package org.iotivity.cloud.mqserver;
 import org.iotivity.cloud.base.OICConstants;
 
 public class Constants extends OICConstants {
+	public static final int    DEFAULT_COAP_PORT	   = 5686;
 
     public static final String MQ_TOPICLIST            = "topiclist";
 
