@@ -277,7 +277,7 @@ exit:
 
 char* OCCreateEndpointStringFromCA(const CAEndpoint_t* endpoint)
 {
-    if (!endpoint)
+    if (!endpoint || 0 == strlen(endpoint->addr))
     {
         return NULL;
     }
@@ -302,7 +302,7 @@ char* OCCreateEndpointStringFromCA(const CAEndpoint_t* endpoint)
 #ifdef HTTP_ADAPTER
     case OC_HTTP: case OC_HTTPS:
 #endif
-        if (!endpoint->addr || !endpoint->port)
+        if (!endpoint->port)
         {
             goto exit;
         }
@@ -322,10 +322,6 @@ char* OCCreateEndpointStringFromCA(const CAEndpoint_t* endpoint)
         break;
 #ifdef EDR_ADAPTER
     case OC_COAP_RFCOMM:
-        if (!endpoint->addr)
-        {
-            goto exit;
-        }
         // coap+rfcomm
         snprintf(buf, MAX_ADDR_STR_SIZE, "%s://%s", ConvertTpsToString(tps), endpoint->addr);
         break;
