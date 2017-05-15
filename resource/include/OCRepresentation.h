@@ -43,7 +43,6 @@
 #endif
 
 #include <OCException.h>
-#include <OCRepresentationInternal.h>
 
 namespace OC
 {
