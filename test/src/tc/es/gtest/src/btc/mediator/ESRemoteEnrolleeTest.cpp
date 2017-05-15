@@ -202,7 +202,6 @@ TEST_F(ESRemoteEnrolleeTest_btc, ProvisionDeviceProperies_SRC_P)
     esMediatorHelper.findEnrolleeResource();
     ASSERT_NE(nullptr, ESMediatorHelper::s_remoteEnrollee)<<"Remote enrolle can not be null.";
     m_devProp.setWiFiProp(SSID, PASSWORD, WPA2_PSK, TKIP_AES);
-    m_devProp.setDevConfProp(LANGUAGE, COUNTRY, LOCATION);
 
     try
     {
@@ -231,7 +230,6 @@ TEST_F(ESRemoteEnrolleeTest_btc, ProvisionDeviceProperies_SRC_P)
 TEST_F(ESRemoteEnrolleeTest_btc, ProvisionDeviceProperieswithNullCallback_NV_N)
 {
     m_devProp.setWiFiProp(SSID, PASSWORD, WPA2_PSK, TKIP_AES);
-    m_devProp.setDevConfProp(LANGUAGE, COUNTRY, LOCATION);
 
     EXPECT_ANY_THROW(
             ESMediatorHelper::s_remoteEnrollee->provisionDeviceProperties(m_devProp, NULL_VALUE));
@@ -251,7 +249,6 @@ TEST_F(ESRemoteEnrolleeTest_btc, ProvisionDeviceProperieswithNullCallback_NV_N)
 TEST_F(ESRemoteEnrolleeTest_btc, ProvisionDeviceProperiesWithoutSSID_USV_N)
 {
     m_devProp.setWiFiProp(EMPTY_STRING, PASSWORD, WPA2_PSK, TKIP_AES);
-    m_devProp.setDevConfProp(LANGUAGE, COUNTRY, LOCATION);
     EXPECT_ANY_THROW(ESMediatorHelper::s_remoteEnrollee->provisionDeviceProperties(m_devProp,NULL));
 }
 

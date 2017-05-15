@@ -43,7 +43,6 @@ protected:
     {
         CommonTestUtil::runCommonTCSetUpPart();
         m_callbacks.WiFiConfProvCb = &ESEnrolleeHelper::wiFiProvCbInApp;
-        m_callbacks.DevConfProvCb = &ESEnrolleeHelper::devConfProvCbInApp;
         m_callbacks.CoapCloudConfProvCb = &ESEnrolleeHelper::cloudDataProvCbInApp;
     }
     virtual void TearDown()

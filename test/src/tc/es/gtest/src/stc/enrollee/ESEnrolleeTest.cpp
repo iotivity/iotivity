@@ -53,7 +53,6 @@ protected:
         OCStackResult r = OC_STACK_ERROR;
         CommonTestUtil::runCommonTCSetUpPart();
         m_callBacks.WiFiConfProvCb = &m_esEnrolleeHelper.wiFiProvCbInApp;
-        m_callBacks.DevConfProvCb = &m_esEnrolleeHelper.devConfProvCbInApp;
         m_callBacks.CoapCloudConfProvCb = &m_esEnrolleeHelper.cloudDataProvCbInApp;
 
     }

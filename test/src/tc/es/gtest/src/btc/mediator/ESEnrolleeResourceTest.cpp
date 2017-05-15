@@ -123,7 +123,6 @@ TEST_F(ESEnrolleeResourceTest_btc, EnrolleeResourceGetConfiguration_SRC_P)
 TEST_F(ESEnrolleeResourceTest_btc, EnrolleeResourceProvisionEnrollee_SRC_P)
 {
     m_devProp.setWiFiProp(SSID, PASSWORD, WPA2_PSK, TKIP_AES);
-    m_devProp.setDevConfProp(LANGUAGE, COUNTRY, LOCATION);
 
     try
     {
@@ -150,7 +149,6 @@ TEST_F(ESEnrolleeResourceTest_btc, EnrolleeResourceProvisionEnrollee_SRC_P)
 TEST_F(ESEnrolleeResourceTest_btc, EnrolleeResourceProvisionEnrolleewithoutPWD_NV_N)
 {
     m_devProp.setWiFiProp(SSID, EMPTY_STRING, WPA2_PSK, TKIP_AES);
-    m_devProp.setDevConfProp(LANGUAGE, COUNTRY, LOCATION);
     std::shared_ptr< OC::OCResource > resource;
     EnrolleeResource rc(resource);
     EXPECT_ANY_THROW(rc.provisionProperties(m_devProp));
@@ -169,7 +167,6 @@ TEST_F(ESEnrolleeResourceTest_btc, EnrolleeResourceProvisionEnrolleewithoutPWD_N
 TEST_F(ESEnrolleeResourceTest_btc, EnrolleeResourceProvisionEnrolleeWithoutSSID_USV_N)
 {
     m_devProp.setWiFiProp(EMPTY_STRING, PASSWORD, WPA2_PSK, TKIP_AES);
-    m_devProp.setDevConfProp(LANGUAGE, COUNTRY, LOCATION);
     std::shared_ptr< OC::OCResource > resource;
     EnrolleeResource rc(resource);
     EXPECT_ANY_THROW(rc.provisionProperties(m_devProp));

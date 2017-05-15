@@ -289,7 +289,6 @@ void ESMediatorHelper::provisionDeviceProperty()
 
     DeviceProp devProp;
     devProp.setWiFiProp("Iotivity_SSID", "Iotivity_PWD", WPA2_PSK, TKIP_AES);
-    devProp.setDevConfProp("Bangla", "Bangladesh", "Location");
 
     try
     {
