@@ -2627,9 +2627,8 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
         (DOS_RFNOP == dos.state))
     {
         OIC_LOG_V(WARNING, TAG, "%s /acl resource is read-only in RESET and RFNOP.", __func__);
-        // TODO fix infinite loop in mediator sample
-//        ehRet = OC_EH_NOT_ACCEPTABLE;
-//        goto exit;
+        ehRet = OC_EH_NOT_ACCEPTABLE;
+        goto exit;
     }
     else
     {
