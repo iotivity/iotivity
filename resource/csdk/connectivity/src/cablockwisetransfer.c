@@ -889,8 +889,9 @@ static CABlockData_t* CACheckTheExistOfBlockData(const CABlockDataID_t* blockDat
         // Responses are not required to carry the Uri-Path but requests are
         if (cadata->requestInfo && !cadata->requestInfo->info.resourceUri)
         {
+            assert(blockDataID->idLength <= UINT8_MAX);
             CABlockMulticastData_t *currData = CAGetBlockMulticastDataFromListWithSeed(
-                (CAToken_t) blockDataID->id, blockDataID->idLength);
+                (CAToken_t) blockDataID->id, (uint8_t) blockDataID->idLength);
             if (currData)
             {
                 cadata->requestInfo->info.resourceUri = OICStrdup(currData->resourceUri);
@@ -943,9 +944,10 @@ CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             (CAToken_t)pdu->transport_hdr->udp.token,
             (uint8_t)pdu->transport_hdr->udp.token_length,
             endpoint->addr, endpoint->port);
-    if (NULL == blockDataID || blockDataID->idLength < 1)
+    if ((NULL == blockDataID) || (blockDataID->idLength < 1) || 
+        (blockDataID->idLength > UINT8_MAX))
     {
-        OIC_LOG(ERROR, TAG, "blockId is null");
+        OIC_LOG(ERROR, TAG, "blockId is incorrect");
         CADestroyBlockID(blockDataID);
         return CA_STATUS_FAILED;
     }
@@ -1088,9 +1090,10 @@ CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             (CAToken_t)pdu->transport_hdr->udp.token,
             (uint8_t)pdu->transport_hdr->udp.token_length,
             endpoint->addr, endpoint->port);
-    if (NULL == blockDataID || blockDataID->idLength < 1)
+    if ((NULL == blockDataID) || (blockDataID->idLength < 1) ||
+        (blockDataID->idLength > UINT8_MAX))
     {
-        OIC_LOG(ERROR, TAG, "blockId is null");
+        OIC_LOG(ERROR, TAG, "blockId is incorrect");
         CADestroyBlockID(blockDataID);
         return CA_STATUS_FAILED;
     }
