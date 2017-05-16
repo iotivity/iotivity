@@ -6109,14 +6109,21 @@ OCStackResult OCGetLinkLocalZoneId(uint32_t ifindex, char **zoneId)
 OCStackResult OCSelectCipherSuite(uint16_t cipher, OCTransportAdapter adapterType)
 {
     // OCTransportAdapter and CATransportAdapter_t are using the same bits for each transport.
-    OC_STATIC_ASSERT(OC_ADAPTER_IP              == CA_ADAPTER_IP,               "OC/CA bit mismatch");
-    OC_STATIC_ASSERT(OC_ADAPTER_GATT_BTLE       == CA_ADAPTER_GATT_BTLE,        "OC/CA bit mismatch");
-    OC_STATIC_ASSERT(OC_ADAPTER_RFCOMM_BTEDR    == CA_ADAPTER_RFCOMM_BTEDR,     "OC/CA bit mismatch");
-    OC_STATIC_ASSERT(OC_ADAPTER_TCP             == CA_ADAPTER_TCP,              "OC/CA bit mismatch");
-    OC_STATIC_ASSERT(OC_ADAPTER_NFC             == CA_ADAPTER_NFC,              "OC/CA bit mismatch");
+    OC_STATIC_ASSERT((unsigned int)OC_ADAPTER_IP == (unsigned int)CA_ADAPTER_IP,
+        "OC/CA bit mismatch");
+    OC_STATIC_ASSERT((unsigned int)OC_ADAPTER_GATT_BTLE == (unsigned int)CA_ADAPTER_GATT_BTLE,
+        "OC/CA bit mismatch");
+    OC_STATIC_ASSERT((unsigned int)OC_ADAPTER_RFCOMM_BTEDR == (unsigned int)CA_ADAPTER_RFCOMM_BTEDR,
+        "OC/CA bit mismatch");
+    OC_STATIC_ASSERT((unsigned int)OC_ADAPTER_TCP == (unsigned int)CA_ADAPTER_TCP,
+        "OC/CA bit mismatch");
+    OC_STATIC_ASSERT((unsigned int)OC_ADAPTER_NFC == (unsigned int)CA_ADAPTER_NFC,
+        "OC/CA bit mismatch");
 
 #ifdef RA_ADAPTER
-    OC_STATIC_ASSERT(OC_ADAPTER_REMOTE_ACCESS   == CA_ADAPTER_REMOTE_ACCESS,    "OC/CA bit mismatch");
+    OC_STATIC_ASSERT(
+        (unsigned int)OC_ADAPTER_REMOTE_ACCESS 
+            == (unsigned int)CA_ADAPTER_REMOTE_ACCESS, "OC/CA bit mismatch");
 
     #define ALL_OC_ADAPTER_TYPES (OC_ADAPTER_IP | OC_ADAPTER_GATT_BTLE | OC_ADAPTER_RFCOMM_BTEDR |\
                                   OC_ADAPTER_TCP | OC_ADAPTER_NFC | OC_ADAPTER_REMOTE_ACCESS)
@@ -6133,13 +6140,20 @@ OCStackResult OCSelectCipherSuite(uint16_t cipher, OCTransportAdapter adapterTyp
 OCStackResult OCGetIpv6AddrScope(const char *addr, OCTransportFlags *scope)
 {
     // OCTransportFlags and CATransportFlags_t are using the same bits for each scope.
-    OC_STATIC_ASSERT(OC_SCOPE_INTERFACE     == CA_SCOPE_INTERFACE,  "OC/CA bit mismatch");
-    OC_STATIC_ASSERT(OC_SCOPE_LINK          == CA_SCOPE_LINK,       "OC/CA bit mismatch");
-    OC_STATIC_ASSERT(OC_SCOPE_REALM         == CA_SCOPE_REALM,      "OC/CA bit mismatch");
-    OC_STATIC_ASSERT(OC_SCOPE_ADMIN         == CA_SCOPE_ADMIN,      "OC/CA bit mismatch");
-    OC_STATIC_ASSERT(OC_SCOPE_SITE          == CA_SCOPE_SITE,       "OC/CA bit mismatch");
-    OC_STATIC_ASSERT(OC_SCOPE_ORG           == CA_SCOPE_ORG,        "OC/CA bit mismatch");
-    OC_STATIC_ASSERT(OC_SCOPE_GLOBAL        == CA_SCOPE_GLOBAL,     "OC/CA bit mismatch");
+    OC_STATIC_ASSERT((unsigned int)OC_SCOPE_INTERFACE == (unsigned int)CA_SCOPE_INTERFACE,
+        "OC/CA bit mismatch");
+    OC_STATIC_ASSERT((unsigned int)OC_SCOPE_LINK == (unsigned int)CA_SCOPE_LINK,
+        "OC/CA bit mismatch");
+    OC_STATIC_ASSERT((unsigned int)OC_SCOPE_REALM == (unsigned int)CA_SCOPE_REALM,
+        "OC/CA bit mismatch");
+    OC_STATIC_ASSERT((unsigned int)OC_SCOPE_ADMIN == (unsigned int)CA_SCOPE_ADMIN,
+        "OC/CA bit mismatch");
+    OC_STATIC_ASSERT((unsigned int)OC_SCOPE_SITE == (unsigned int)CA_SCOPE_SITE,
+        "OC/CA bit mismatch");
+    OC_STATIC_ASSERT((unsigned int)OC_SCOPE_ORG == (unsigned int)CA_SCOPE_ORG,
+        "OC/CA bit mismatch");
+    OC_STATIC_ASSERT((unsigned int)OC_SCOPE_GLOBAL == (unsigned int)CA_SCOPE_GLOBAL,
+        "OC/CA bit mismatch");
 
     #define ALL_OC_SCOPES (OC_SCOPE_INTERFACE | OC_SCOPE_LINK | OC_SCOPE_REALM | OC_SCOPE_ADMIN |\
                            OC_SCOPE_SITE | OC_SCOPE_ORG | OC_SCOPE_GLOBAL)
