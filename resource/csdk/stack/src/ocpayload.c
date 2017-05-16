@@ -1840,6 +1840,7 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
                                                             info->flags,
                                                             &matchedTps))
                     {
+                        OCDiscoveryResourceDestroy(pl);
                         return NULL;
                     }
 
@@ -1852,6 +1853,7 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
                             OICCalloc(1, sizeof(OCEndpointPayload));
                         if (!tmpNode)
                         {
+                            OCDiscoveryResourceDestroy(pl);
                             return NULL;
                         }
 
