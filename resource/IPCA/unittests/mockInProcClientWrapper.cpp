@@ -61,7 +61,8 @@ namespace OC
                                                 OCConnectivityType connectivityType,
                                                 FindCallback& callback,
                                                 QualityOfService QoS)
-    {
+    {
+
         OC_UNUSED(serviceUrl);
         OC_UNUSED(resourceType);
         OC_UNUSED(connectivityType);
@@ -330,6 +331,48 @@ namespace OC
         OC_UNUSED(di);
         OC_UNUSED(connectivityType);
         OC_UNUSED(callback);
+
+       return OC_STACK_OK;
     }
+#endif
+
+#ifdef WITH_MQ
+    OCStackResult InProcClientWrapper::ListenForMQTopic(
+                                                        const OCDevAddr& devAddr,
+                                                        const std::string& resourceUri,
+                                                        const QueryParamsMap& queryParams,
+                                                        const HeaderOptions& headerOptions,
+                                                        MQTopicCallback& callback,
+                                                        QualityOfService QoS)
+    {
+        OC_UNUSED(devAddr);
+        OC_UNUSED(resourceUri);
+        OC_UNUSED(queryParams);
+        OC_UNUSED(headerOptions);
+        OC_UNUSED(callback);
+        OC_UNUSED(QoS);
+
+        return OC_STACK_OK;
+    }
+
+    OCStackResult InProcClientWrapper::PutMQTopicRepresentation(
+                                                        const OCDevAddr& devAddr,
+                                                        const std::string& uri,
+                                                        const OCRepresentation& rep,
+                                                        const QueryParamsMap& queryParams,
+                                                        const HeaderOptions& headerOptions,
+                                                        MQTopicCallback& callback,
+                                                        QualityOfService QoS)
+   {
+        OC_UNUSED(devAddr);
+        OC_UNUSED(uri);
+        OC_UNUSED(rep);
+        OC_UNUSED(queryParams);
+        OC_UNUSED(headerOptions);
+        OC_UNUSED(callback);
+        OC_UNUSED(QoS);
+
+        return OC_STACK_OK;
+   }
 #endif
 }
