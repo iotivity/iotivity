@@ -738,11 +738,24 @@ namespace OIC
                 std::vector<OCRepresentation> children = m_EasySetupRep.getChildren();
                 for(auto child = children.begin(); child != children.end(); ++child)
                 {
-                    for(auto rt : child->getResourceTypes())
+                    OCRepresentation rep;
+                    if(child->hasAttribute(OC_RSRVD_REPRESENTATION))
                     {
-                        if(0 == rt.compare(OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF))
+                        rep = child->getValue<OCRepresentation>(OC_RSRVD_REPRESENTATION);
+                    }
+                    else
+                    {
+                        return false;
+                    }
+
+                    if(rep.hasAttribute(OC_RSRVD_RESOURCE_TYPE))
+                    {
+                        for (auto rt : rep.getValue<std::vector<std::string>>(OC_RSRVD_RESOURCE_TYPE))
                         {
-                            return true;
+                            if(0 == rt.compare(OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF))
+                            {
+                                return true;
+                            }
                         }
                     }
                 }
