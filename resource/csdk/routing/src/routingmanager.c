@@ -707,7 +707,7 @@ OCStackResult RMSendNotificationToAll(const OCRepPayload *payload)
     RM_NULL_CHECK_WITH_RET(payload, TAG, "payload");
 
     OCObservationId *obsList = NULL;
-    uint8_t obsLen = 0;
+    uint32_t obsLen = 0;
     // Get the complete observer list.
     RTMGetObserverList(&obsList, &obsLen, g_routingGatewayTable);
     OCStackResult result = OC_STACK_OK;
