@@ -1273,11 +1273,6 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
        }
     }
 
-    bool isVirtual = false;
-    if (GetTypeOfVirtualURI(resourcePtr->uri) != OC_UNKNOWN_URI)
-    {
-        isVirtual = true;
-    }
 #ifdef TCP_ADAPTER
     uint16_t tcpPort = 0;
     GetTCPPortInfo(devAddr, &tcpPort, (resourcePtr->resourceProperties & OC_SECURE));

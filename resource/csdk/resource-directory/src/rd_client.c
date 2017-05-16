@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -448,7 +449,8 @@ OCStackResult OCRDDeleteWithDeviceId(OCDoHandle *handle, const char *host,
         OCResource *handle = (OCResource *) resourceHandles[j];
         int64_t ins = 0;
         OCGetResourceIns(handle, &ins);
-        int lenBufferRequired = snprintf((queryParam + queryLength), (MAX_URI_LENGTH - queryLength), "&ins=%lld", ins);
+        int lenBufferRequired = snprintf((queryParam + queryLength),
+                                         (MAX_URI_LENGTH - queryLength), "&ins=%" PRId64, ins);
         if (lenBufferRequired >= (MAX_URI_LENGTH - queryLength) || lenBufferRequired < 0)
         {
             return OC_STACK_INVALID_URI;

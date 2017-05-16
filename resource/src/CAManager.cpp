@@ -134,7 +134,7 @@ uint16_t CAManager::getAssignedPortNumber(OCTransportAdapter adapter, OCTranspor
 OCStackResult CAManager::setBTConfigure(const CAUtilConfig& config)
 {
     OIC_LOG(INFO, TAG, "setBTConfigure");
-    CAUtilConfig_t configs = {(CATransportBTFlags_t)config.bleFlag};
+    CAUtilConfig_t configs = {(CATransportBTFlags_t)config.bleFlag, CA_USER_PREF_CLOUD};
     CAResult_t ret = CAUtilSetBTConfigure(configs);
     return convertCAResultToOCResult(ret);
 }
