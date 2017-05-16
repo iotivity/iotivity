@@ -806,14 +806,17 @@ void GetDerCrl(ByteArray_t* out)
 
     out->len = 0;
 
-    out->data = OICRealloc(out->data, crl->len);
-    if (out->data)
+    uint8_t *tmp = OICRealloc(out->data, crl->len);
+    if (tmp)
     {
+        out->data = tmp;
         memcpy(out->data, crl->data, crl->len);
         out->len = crl->len;
     }
     else
     {
+        OICFree(out->data);
+        out->data = NULL;
         OIC_LOG(ERROR, TAG, "Can't allocate memory for out->data");
     }
     DeleteCrl(crlRes);
