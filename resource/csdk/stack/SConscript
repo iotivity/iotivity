@@ -154,15 +154,10 @@ else:
 
         liboctbstack_env.Textfile(target = 'octbstack_temp3.def', source = [File('octbstack_temp2.def'), File('octbstack_product_secured.def')])
 
-        if with_tcp == True:
-            liboctbstack_env.Textfile(target = 'octbstack_temp4.def', source = [File('octbstack_temp3.def'), File('octbstack_product_with_tcp.def')])
-        else:
-            liboctbstack_env.Textfile(target = 'octbstack_temp4.def', source = [File('octbstack_temp3.def')])
-
         if env.get('MULTIPLE_OWNER') == '1':
-            liboctbstack_env.Textfile(target = 'octbstack.def', source = [File('octbstack_temp4.def'), File('octbstack_product_secured_mot.def')])
+            liboctbstack_env.Textfile(target = 'octbstack.def', source = [File('octbstack_temp3.def'), File('octbstack_product_secured_mot.def')])
         else:
-            liboctbstack_env.Textfile(target = 'octbstack.def', source = [File('octbstack_temp4.def')])
+            liboctbstack_env.Textfile(target = 'octbstack.def', source = [File('octbstack_temp3.def')])
 
 if target_os in ['tizen', 'linux']:
     liboctbstack_env.ParseConfig("pkg-config --cflags --libs uuid")
