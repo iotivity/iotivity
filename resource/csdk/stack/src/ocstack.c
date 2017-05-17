@@ -4087,7 +4087,7 @@ OCStackResult OCCreateResourceWithEp(OCResourceHandle *handle,
 #endif
     // Make sure resourceProperties bitmask has allowed properties specified
     if (resourceProperties
-            > (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE | OC_SLOW | OC_SECURE |
+            > (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE | OC_SLOW | OC_NONSECURE | OC_SECURE |
                OC_EXPLICIT_DISCOVERABLE
 #ifdef MQ_PUBLISHER
                | OC_MQ_PUBLISHER
@@ -4163,6 +4163,12 @@ OCStackResult OCCreateResourceWithEp(OCResourceHandle *handle,
     {
         result = OC_STACK_NO_MEMORY;
         goto exit;
+    }
+
+    // Set resource to nonsecure if caller did not specify
+    if ((resourceProperties & OC_MASK_RESOURCE_SECURE) == 0)
+    {
+        resourceProperties |= OC_NONSECURE;
     }
 
     // Set properties.  Set OC_ACTIVE

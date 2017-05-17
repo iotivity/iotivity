@@ -250,7 +250,8 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
             }
 
             OCResourceProperty p = OCGetResourceProperties(handle);
-            bool isSecure = (p & OC_SECURE);
+            bool includeSecure = (p & OC_SECURE);
+            bool includeNonsecure = (p & OC_NONSECURE);
             p &= (OC_DISCOVERABLE | OC_OBSERVABLE);
             OCRepPayload *policy = OCRepPayloadCreate();
             if (!policy)
@@ -278,7 +279,8 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
                 uint32_t k = 0;
                 for (size_t i = 0; i < nCaEps; i++)
                 {
-                    if (isSecure == (bool)(caEps[i].flags & OC_FLAG_SECURE))
+                    bool isSecure = (caEps[i].flags & OC_FLAG_SECURE);
+                    if ((isSecure && includeSecure) || (!isSecure && includeNonsecure))
                     {
                         char *epStr = OCCreateEndpointStringFromCA(&caEps[i]);
                         if (!epStr)

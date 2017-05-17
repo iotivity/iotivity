@@ -1818,7 +1818,8 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
         return NULL;
     }
 
-    bool isSecure = res->resourceProperties & OC_FLAG_SECURE;
+    bool includeSecure = res->resourceProperties & OC_SECURE;
+    bool includeNonsecure = res->resourceProperties & OC_NONSECURE;
     OCEndpointPayload *selfEp = NULL;
     if (networkInfo && infoSize && devAddr)
     {
@@ -1842,8 +1843,9 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
                         return NULL;
                     }
 
+                    bool isSecure = (info->flags & OC_FLAG_SECURE);
                     if (((res->endpointType) & matchedTps) &&
-                            (isSecure == (bool)(info->flags & OC_FLAG_SECURE)))
+                            ((isSecure && includeSecure) || (!isSecure && includeNonsecure)))
                     {
                         // create payload
                         OCEndpointPayload* tmpNode = (OCEndpointPayload*)

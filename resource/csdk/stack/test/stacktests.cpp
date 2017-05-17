@@ -1331,6 +1331,7 @@ TEST(StackResource, GetResourceProperties)
     OIC_LOG(INFO, TAG, "Starting GetResourceProperties test");
     InitStack(OC_SERVER);
 
+    uint8_t props = OC_DISCOVERABLE|OC_OBSERVABLE;
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
@@ -1338,13 +1339,9 @@ TEST(StackResource, GetResourceProperties)
                                             "/a/led",
                                             0,
                                             NULL,
-                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+                                            props));
 
-#ifdef MQ_PUBLISHER
-    EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE|OC_MQ_PUBLISHER, OCGetResourceProperties(handle));
-#else
-    EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE, OCGetResourceProperties(handle));
-#endif
+    EXPECT_EQ(props, OCGetResourceProperties(handle) & props);
     EXPECT_EQ(OC_STACK_OK, OCDeleteResource(handle));
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
@@ -1365,12 +1362,9 @@ TEST(StackResource, SetResourceProperties)
                                             NULL,
                                             0));
 
-    EXPECT_EQ(OC_STACK_OK, OCSetResourceProperties(handle, OC_DISCOVERABLE|OC_OBSERVABLE));
-#ifdef MQ_PUBLISHER
-    EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE|OC_MQ_PUBLISHER, OCGetResourceProperties(handle));
-#else
-    EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE, OCGetResourceProperties(handle));
-#endif
+    uint8_t props = OC_DISCOVERABLE|OC_OBSERVABLE;
+    EXPECT_EQ(OC_STACK_OK, OCSetResourceProperties(handle, props));
+    EXPECT_EQ(props, OCGetResourceProperties(handle) & props);
 
     EXPECT_EQ(OC_STACK_OK, OCDeleteResource(handle));
 
@@ -1383,6 +1377,7 @@ TEST(StackResource, ClearResourceProperties)
     OIC_LOG(INFO, TAG, "Starting ClearResourceProperties test");
     InitStack(OC_SERVER);
 
+    uint8_t props = OC_DISCOVERABLE|OC_OBSERVABLE;
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
@@ -1390,14 +1385,10 @@ TEST(StackResource, ClearResourceProperties)
                                             "/a/led",
                                             0,
                                             NULL,
-                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+                                            props));
 
-    EXPECT_EQ(OC_STACK_OK, OCClearResourceProperties(handle, OC_DISCOVERABLE|OC_OBSERVABLE));
-#ifdef MQ_PUBLISHER
-    EXPECT_EQ(OC_ACTIVE|OC_MQ_PUBLISHER, OCGetResourceProperties(handle));
-#else
-    EXPECT_EQ(OC_ACTIVE, OCGetResourceProperties(handle));
-#endif
+    EXPECT_EQ(OC_STACK_OK, OCClearResourceProperties(handle, props));
+    EXPECT_EQ(0, OCGetResourceProperties(handle) & props);
 
     EXPECT_EQ(OC_STACK_OK, OCDeleteResource(handle));
 
@@ -2815,6 +2806,111 @@ TEST_F(OCDiscoverTests, DISABLED_DiscoverResourceWithInvalidQueries)
     EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, targetUri, NULL, 0, CT_DEFAULT,
     OC_HIGH_QOS, discoverUnicastRTEmptyCB, NULL, 0));
     EXPECT_EQ(OC_STACK_OK, discoverUnicastRTEmptyCB.Wait(10));
+}
+
+class OCEndpointTests : public testing::Test
+{
+    protected:
+        virtual void SetUp()
+        {
+            OCPersistentStorage ps = { fopen, fread, fwrite, fclose, unlink };
+            EXPECT_EQ(OC_STACK_OK, OCRegisterPersistentStorageHandler(&ps));
+            EXPECT_EQ(OC_STACK_OK, OCInit(NULL, 0, OC_CLIENT_SERVER));
+        }
+
+        virtual void TearDown()
+        {
+            OCStop();
+        }
+};
+
+static OCStackApplicationResult SecureAndNonsecureEndpoints(void *ctx, OCDoHandle handle,
+    OCClientResponse *response)
+{
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
+    EXPECT_EQ(OC_STACK_OK, response->result);
+    EXPECT_TRUE(NULL != response->payload);
+    if (NULL != response->payload)
+    {
+        EXPECT_EQ(PAYLOAD_TYPE_DISCOVERY, response->payload->type);
+        OCDiscoveryPayload *payload = (OCDiscoveryPayload *)response->payload;
+        EXPECT_TRUE(NULL != payload->sid);
+        for (OCResourcePayload *resource = payload->resources; resource; resource = resource->next)
+        {
+            if (!strcmp("/a/default", resource->uri))
+            {
+                for (OCEndpointPayload *ep = resource->eps; ep; ep = ep->next)
+                {
+                    EXPECT_EQ(0, OC_FLAG_SECURE & ep->family);
+                }
+            }
+            else if (!strcmp("/a/secure", resource->uri))
+            {
+                for (OCEndpointPayload *ep = resource->eps; ep; ep = ep->next)
+                {
+#ifdef __WITH_DTLS__
+                    EXPECT_EQ(OC_FLAG_SECURE, OC_FLAG_SECURE & ep->family);
+#else
+                    EXPECT_EQ(0, OC_FLAG_SECURE & ep->family);
+#endif
+                }
+            }
+            else if (!strcmp("/a/nonsecure", resource->uri))
+            {
+                for (OCEndpointPayload *ep = resource->eps; ep; ep = ep->next)
+                {
+                    EXPECT_EQ(0, OC_FLAG_SECURE & ep->family);
+                }
+            }
+            else if (!strcmp("/a/both", resource->uri))
+            {
+                bool hasSecure = false;
+                bool hasNonsecure = false;
+                for (OCEndpointPayload *ep = resource->eps; ep; ep = ep->next)
+                {
+                    if (OC_FLAG_SECURE & ep->family)
+                    {
+                        hasSecure = true;
+                    }
+                    else
+                    {
+                        hasNonsecure = true;
+                    }
+                }
+#ifdef __WITH_DTLS__
+                EXPECT_TRUE(hasSecure);
+#else
+                EXPECT_FALSE(hasSecure);
+#endif
+                EXPECT_TRUE(hasNonsecure);
+            }
+        }
+    }
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+// Disabled until unit tests can run with SECURED=1 builds
+TEST_F(OCEndpointTests, DISABLED_SecureAndNonsecureEndpoints)
+{
+    itst::DeadmanTimer killSwitch(LONG_TEST_TIMEOUT);
+
+    OCResourceHandle handle;
+    handle = OCGetResourceHandleAtUri(OC_RSRVD_WELL_KNOWN_URI);
+    EXPECT_EQ(OC_STACK_OK, OCSetResourceProperties(handle, OC_DISCOVERABLE | OC_OBSERVABLE));
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle, "core.light", "oic.if.baseline", "/a/default",
+            entityHandler, NULL, OC_DISCOVERABLE));
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle, "core.light", "oic.if.baseline", "/a/secure",
+            entityHandler, NULL, OC_DISCOVERABLE | OC_SECURE));
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle, "core.light", "oic.if.baseline", "/a/nonsecure",
+            entityHandler, NULL, OC_DISCOVERABLE | OC_NONSECURE));
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle, "core.light", "oic.if.baseline", "/a/both",
+            entityHandler, NULL, OC_DISCOVERABLE | OC_SECURE | OC_NONSECURE));
+
+    itst::Callback secureAndNonSecureEndpointsCB(&SecureAndNonsecureEndpoints);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res", NULL,
+            0, CT_DEFAULT, OC_HIGH_QOS, secureAndNonSecureEndpointsCB, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, secureAndNonSecureEndpointsCB.Wait(100));
 }
 
 #ifdef IP_ADAPTER

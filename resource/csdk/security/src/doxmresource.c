@@ -1766,7 +1766,7 @@ OCStackResult CreateDoxmResource()
                                          OIC_RSRC_DOXM_URI,
                                          DoxmEntityHandler,
                                          NULL,
-                                         OC_SECURE |
+                                         OC_SECURE | OC_NONSECURE |
                                          OC_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)
