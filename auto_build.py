@@ -447,6 +447,8 @@ def build_tizen(flag, extra_option_str):
     build_options['ES_TARGET_ENROLLEE'] = 'tizen'
     build_extra_options = "-f service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/build/tizen/SConscript " + extra_option_str
     call_scons(build_options, build_extra_options)
+    build_options['MULTIPLE_OWNER'] = 1
+    call_scons(build_options, build_extra_options)
 
 def build_tizen_secured(flag, extra_option_str):
     build_tizen(flag, extra_option_str + " SECURED=1")
