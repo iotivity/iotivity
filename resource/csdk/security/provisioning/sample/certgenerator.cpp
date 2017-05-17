@@ -142,12 +142,12 @@ static void DoGenCertificate(CertType certType)
     }
     else
     {
-        strcpy(issKeyPairName, subjKeyPairName);
+        strncpy(issKeyPairName, subjKeyPairName, sizeof(subjKeyPairName));
     }
 
     // -- Load public key --
 
-    sprintf(filename, "%s.pub", subjKeyPairName);
+    snprintf(filename, sizeof(filename), "%s.pub", subjKeyPairName);
     f = fopen(filename, "rb");
     if (NULL == f)
     {
@@ -176,7 +176,7 @@ static void DoGenCertificate(CertType certType)
     }
 
     // -- Load private key --
-    sprintf(filename, "%s.prv", issKeyPairName);
+    snprintf(filename, sizeof(filename), "%s.prv", issKeyPairName);
     f = fopen(filename, "rb");
     if (NULL == f)
     {
@@ -209,7 +209,7 @@ static void DoGenCertificate(CertType certType)
     // -- Load issuer cert if applicable --
     if (CA_CERT != certType)
     {
-        sprintf(filename, "%s.crt", issKeyPairName);
+        snprintf(filename, sizeof(filename), "%s.crt", issKeyPairName);
         f = fopen(filename, "rb");
         if (NULL == f)
         {
@@ -420,7 +420,7 @@ static void DoGenKeyPair()
         char filename[120];
         size_t written;
 
-        sprintf(filename, "%s.pub", nameBuf);
+        snprintf(filename, sizeof(filename), "%s.pub", nameBuf);
         f = fopen(filename, "wb");
         if (NULL == f)
         {
@@ -442,7 +442,7 @@ static void DoGenKeyPair()
 
         printf("Wrote public key.\n");
 
-        sprintf(filename, "%s.prv", nameBuf);
+        snprintf(filename, sizeof(filename), "%s.prv", nameBuf);
         f = fopen(filename, "wb");
         if (NULL == f)
         {

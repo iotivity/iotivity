@@ -290,7 +290,7 @@ private:
         result->oxmLen = 1U;
         result->oxmSel = OIC_JUST_WORKS;
         result->oxmType = (OicUrn_t*)OICCalloc(1, sizeof(OicUrn_t));
-        if (NULL == result->oxm)
+        if (NULL == result->oxmType)
         {
             return NULL;
         }
