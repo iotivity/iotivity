@@ -395,7 +395,7 @@ def build_tizen(flag, extra_option_str):
         print ("Running : " + cmd_line)
         exit_code = subprocess.Popen([cmd_line], shell=True).wait()
         if exit_code != 0:
-            exit(exit_code)
+            sys.exit(exit_code)
 
     print ("*********** Build for Tizen octbstack lib and sample *************")
     build_extra_options = "-f resource/csdk/stack/samples/tizen/build/SConscript " + extra_option_str
