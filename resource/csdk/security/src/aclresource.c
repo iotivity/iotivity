@@ -661,7 +661,6 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl,
             OicSecRsrc_t* rsrc = NULL;
             LL_FOREACH(ace->resources, rsrc)
             {
-
                 CborEncoder rMap;
                 size_t rsrcMapSize = 0;
                 if (NULL != rsrc->href)
@@ -684,6 +683,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl,
                 {
                     rsrcMapSize++;
                 }
+
                 OIC_LOG_V(DEBUG, TAG, "%s resource map size = "PRIuPTR, __func__, rsrcMapSize);
 
                 cborEncoderResult = cbor_encoder_create_map(&resources, &rMap, rsrcMapSize);
@@ -2577,7 +2577,7 @@ static OCEntityHandlerResult HandleACLGetRequest(const OCEntityHandlerRequest *e
         {
             OIC_LOG_V(WARNING, TAG, "%s: gAcl is NULL", __func__);
         }
-        
+
         targetAcl.aces = NULL;
 
         // 'Subject' field is MUST for processing a querystring in REST request.
@@ -2929,15 +2929,14 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     OCStackResult ret = OC_STACK_ERROR;
     OicUuid_t ownerId = { .id = { 0 } };
     OicSecAcl_t *acl = NULL;
-    OicSecAce_t *readOnlyAce = NULL;
-    OicSecAce_t *readWriteAce = NULL;
-    OicSecAce_t *fullPermAce = NULL;
+    OicSecAce_t *readOnlyAceAnon = NULL;
+    OicSecAce_t *readOnlyAceAuth = NULL;
+    OicSecAce_t *readWriteDeleteAceAnon = NULL;
+    OicSecAce_t *readWriteDeleteAceAuth = NULL;
     OicSecRsrc_t* resRsrc = NULL;
     OicSecRsrc_t* deviceRsrc = NULL;
     OicSecRsrc_t* platformRsrc = NULL;
     OicSecRsrc_t* doxmRsrc = NULL;
-    OicSecRsrc_t* pstatRsrc = NULL;
-    OicSecRsrc_t* credRsrc = NULL;
     OicSecRsrc_t* rolesRsrc = NULL;
 
     /*
@@ -2961,168 +2960,122 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     acl = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
     VERIFY_NOT_NULL(TAG, acl, ERROR);
 
-    // Default ACE allowing read-only access, for discovery
-    readOnlyAce = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
-    VERIFY_NOT_NULL(TAG, readOnlyAce, ERROR);
-    readOnlyAce->permission = PERMISSION_READ;
-    readOnlyAce->validities = NULL;
-    LL_APPEND(acl->aces, readOnlyAce);
+    // ACE allowing read-only access to /res, /d and /p by "ANON_CLEAR" subjects
+    readOnlyAceAnon = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
+    VERIFY_NOT_NULL(TAG, readOnlyAceAnon, ERROR);
+    readOnlyAceAnon->aceid = 1;
+    readOnlyAceAnon->permission = PERMISSION_READ;
+    readOnlyAceAnon->validities = NULL;
+    LL_APPEND(acl->aces, readOnlyAceAnon);
 
-    // Subject -- Mandatory
-    readOnlyAce->subjectType = OicSecAceUuidSubject;
-    memcpy(&readOnlyAce->subjectuuid, &WILDCARD_SUBJECT_ID, sizeof(readOnlyAce->subjectuuid));
+    // Subject is conntype "ANON_CLEAR" (e.g. CoAP) wildcard
+    readOnlyAceAnon->subjectType = OicSecAceConntypeSubject;
+    readOnlyAceAnon->subjectConn = ANON_CLEAR;
 
-    // Resources -- Mandatory
+    // Resources are /res, /d and /p
     // /oic/res
     resRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
     VERIFY_NOT_NULL(TAG, resRsrc, ERROR);
-    LL_APPEND(readOnlyAce->resources, resRsrc);
+    LL_APPEND(readOnlyAceAnon->resources, resRsrc);
     resRsrc->href = OICStrdup(OC_RSRVD_WELL_KNOWN_URI);
     VERIFY_NOT_NULL(TAG, (resRsrc->href), ERROR);
-    resRsrc->typeLen = 1;
-    resRsrc->types = (char**)OICCalloc(1, sizeof(char*));
-    VERIFY_NOT_NULL(TAG, resRsrc->types, ERROR);
-    resRsrc->types[0] = OICStrdup(OC_RSRVD_RESOURCE_TYPE_RES);
-    VERIFY_NOT_NULL(TAG, resRsrc->types[0], ERROR);
-    resRsrc->interfaceLen = 2;
-    resRsrc->interfaces = (char**)OICCalloc(resRsrc->interfaceLen, sizeof(char*));
-    VERIFY_NOT_NULL(TAG, resRsrc->interfaces, ERROR);
-    resRsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-    VERIFY_NOT_NULL(TAG, resRsrc->interfaces[0], ERROR);
-    resRsrc->interfaces[1] = OICStrdup(OC_RSRVD_INTERFACE_READ);
-    VERIFY_NOT_NULL(TAG, resRsrc->interfaces[1], ERROR);
 
     // /oic/d
     deviceRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
     VERIFY_NOT_NULL(TAG, deviceRsrc, ERROR);
-    LL_APPEND(readOnlyAce->resources, deviceRsrc);
+    LL_APPEND(readOnlyAceAnon->resources, deviceRsrc);
     deviceRsrc->href = OICStrdup(OC_RSRVD_DEVICE_URI);
     VERIFY_NOT_NULL(TAG, (deviceRsrc->href), ERROR);
-    deviceRsrc->typeLen = 1;
-    deviceRsrc->types = (char**)OICCalloc(1, sizeof(char*));
-    VERIFY_NOT_NULL(TAG, deviceRsrc->types, ERROR);
-    deviceRsrc->types[0] = OICStrdup(OC_RSRVD_RESOURCE_TYPE_DEVICE);
-    VERIFY_NOT_NULL(TAG, deviceRsrc->types[0], ERROR);
-    deviceRsrc->interfaceLen = 2;
-    deviceRsrc->interfaces = (char**)OICCalloc(deviceRsrc->interfaceLen, sizeof(char*));
-    VERIFY_NOT_NULL(TAG, deviceRsrc->interfaces, ERROR);
-    deviceRsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-    VERIFY_NOT_NULL(TAG, deviceRsrc->interfaces[0], ERROR);
-    deviceRsrc->interfaces[1] = OICStrdup(OC_RSRVD_INTERFACE_READ);
-    VERIFY_NOT_NULL(TAG, deviceRsrc->interfaces[1], ERROR);
 
     // /oic/p
     platformRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
     VERIFY_NOT_NULL(TAG, platformRsrc, ERROR);
-    LL_APPEND(readOnlyAce->resources, platformRsrc);
+    LL_APPEND(readOnlyAceAnon->resources, platformRsrc);
     platformRsrc->href = OICStrdup(OC_RSRVD_PLATFORM_URI);
     VERIFY_NOT_NULL(TAG, (platformRsrc->href), ERROR);
-    platformRsrc->typeLen = 1;
-    platformRsrc->types = (char**)OICCalloc(1, sizeof(char*));
-    VERIFY_NOT_NULL(TAG, platformRsrc->types, ERROR);
-    platformRsrc->types[0] = OICStrdup(OC_RSRVD_RESOURCE_TYPE_PLATFORM);
-    VERIFY_NOT_NULL(TAG, platformRsrc->types[0], ERROR);
-    platformRsrc->interfaceLen = 2;
-    platformRsrc->interfaces = (char**)OICCalloc(platformRsrc->interfaceLen, sizeof(char*));
-    VERIFY_NOT_NULL(TAG, platformRsrc->interfaces, ERROR);
-    platformRsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-    VERIFY_NOT_NULL(TAG, platformRsrc->interfaces[0], ERROR);
-    platformRsrc->interfaces[1] = OICStrdup(OC_RSRVD_INTERFACE_READ);
-    VERIFY_NOT_NULL(TAG, platformRsrc->interfaces[1], ERROR);
 
-    // Default ACE allowing read + write access, for ownership transfer
-    readWriteAce = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
-    VERIFY_NOT_NULL(TAG, readWriteAce, ERROR);
-    readWriteAce->permission = PERMISSION_READ | PERMISSION_WRITE;
-    readWriteAce->validities = NULL;
-    LL_APPEND(acl->aces, readWriteAce);
+    // ACE allowing read-only access to /res, /d and /p by "AUTH_CRYPT" subjects
+    readOnlyAceAuth = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
+    VERIFY_NOT_NULL(TAG, readOnlyAceAuth, ERROR);
+    readOnlyAceAuth->aceid = 2;
+    readOnlyAceAuth->permission = PERMISSION_READ;
+    readOnlyAceAuth->validities = NULL;
+    LL_APPEND(acl->aces, readOnlyAceAuth);
 
-    // Subject -- Mandatory
-    readWriteAce->subjectType = OicSecAceUuidSubject;
-    memcpy(&readWriteAce->subjectuuid, &WILDCARD_SUBJECT_ID, sizeof(readWriteAce->subjectuuid));
+    // Subject is conntype "AUTH_CRYPT" (e.g. CoAPS) wildcard
+    readOnlyAceAuth->subjectType = OicSecAceConntypeSubject;
+    readOnlyAceAuth->subjectConn = AUTH_CRYPT;
 
-    // Resources -- Mandatory
+    // Resources are /res, /d and /p
+    // /oic/res
+    resRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+    VERIFY_NOT_NULL(TAG, resRsrc, ERROR);
+    LL_APPEND(readOnlyAceAuth->resources, resRsrc);
+    resRsrc->href = OICStrdup(OC_RSRVD_WELL_KNOWN_URI);
+    VERIFY_NOT_NULL(TAG, (resRsrc->href), ERROR);
+
+    // /oic/d
+    deviceRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+    VERIFY_NOT_NULL(TAG, deviceRsrc, ERROR);
+    LL_APPEND(readOnlyAceAuth->resources, deviceRsrc);
+    deviceRsrc->href = OICStrdup(OC_RSRVD_DEVICE_URI);
+    VERIFY_NOT_NULL(TAG, (deviceRsrc->href), ERROR);
+
+    // /oic/p
+    platformRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+    VERIFY_NOT_NULL(TAG, platformRsrc, ERROR);
+    LL_APPEND(readOnlyAceAuth->resources, platformRsrc);
+    platformRsrc->href = OICStrdup(OC_RSRVD_PLATFORM_URI);
+    VERIFY_NOT_NULL(TAG, (platformRsrc->href), ERROR);
+
+    // ACE allowing read, write and delete access to /doxm,
+    // to "ANON_CLEAR" (e.g. CoAP) subjects, for ownership transfer
+    readWriteDeleteAceAnon = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
+    VERIFY_NOT_NULL(TAG, readWriteDeleteAceAnon, ERROR);
+    readWriteDeleteAceAnon->aceid = 3;
+    readWriteDeleteAceAnon->permission = PERMISSION_READ | PERMISSION_WRITE | PERMISSION_DELETE;
+    readWriteDeleteAceAnon->validities = NULL;
+    LL_APPEND(acl->aces, readWriteDeleteAceAnon);
+
+    // Subject is conntype "ANON_CLEAR" (e.g. CoAP) wildcard
+    readWriteDeleteAceAnon->subjectType = OicSecAceConntypeSubject;
+    readWriteDeleteAceAnon->subjectConn = ANON_CLEAR;
+
+    // Resource is /doxm
     // /oic/sec/doxm
     doxmRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
     VERIFY_NOT_NULL(TAG, doxmRsrc, ERROR);
-    LL_APPEND(readWriteAce->resources, doxmRsrc);
+    LL_APPEND(readWriteDeleteAceAnon->resources, doxmRsrc);
     doxmRsrc->href = OICStrdup(OIC_RSRC_DOXM_URI);
     VERIFY_NOT_NULL(TAG, (doxmRsrc->href), ERROR);
-    doxmRsrc->typeLen = 1;
-    doxmRsrc->types = (char**)OICCalloc(1, sizeof(char*));
-    VERIFY_NOT_NULL(TAG, doxmRsrc->types, ERROR);
-    doxmRsrc->types[0] = OICStrdup(OIC_RSRC_TYPE_SEC_DOXM);
-    VERIFY_NOT_NULL(TAG, doxmRsrc->types[0], ERROR);
-    doxmRsrc->interfaceLen = 1;
-    doxmRsrc->interfaces = (char**)OICCalloc(doxmRsrc->interfaceLen, sizeof(char*));
-    VERIFY_NOT_NULL(TAG, doxmRsrc->interfaces, ERROR);
-    doxmRsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-    VERIFY_NOT_NULL(TAG, doxmRsrc->interfaces[0], ERROR);
 
-    // /oic/sec/pstat
-    pstatRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-    VERIFY_NOT_NULL(TAG, pstatRsrc, ERROR);
-    LL_APPEND(readWriteAce->resources, pstatRsrc);
-    pstatRsrc->href = OICStrdup(OIC_RSRC_PSTAT_URI);
-    VERIFY_NOT_NULL(TAG, (pstatRsrc->href), ERROR);
-    pstatRsrc->typeLen = 1;
-    pstatRsrc->types = (char**)OICCalloc(1, sizeof(char*));
-    VERIFY_NOT_NULL(TAG, pstatRsrc->types, ERROR);
-    pstatRsrc->types[0] = OICStrdup(OIC_RSRC_TYPE_SEC_PSTAT);
-    VERIFY_NOT_NULL(TAG, pstatRsrc->types[0], ERROR);
-    pstatRsrc->interfaceLen = 1;
-    pstatRsrc->interfaces = (char**)OICCalloc(pstatRsrc->interfaceLen, sizeof(char*));
-    VERIFY_NOT_NULL(TAG, pstatRsrc->interfaces, ERROR);
-    pstatRsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-    VERIFY_NOT_NULL(TAG, pstatRsrc->interfaces[0], ERROR);
+    // ACE allowing read, write and delete access to /doxm and /roles,
+    // to "AUTH_CRYPT" (e.g. CoAPS) subjects, for ownership transfer
+    readWriteDeleteAceAuth = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
+    VERIFY_NOT_NULL(TAG, readWriteDeleteAceAuth, ERROR);
+    readWriteDeleteAceAuth->aceid = 4;
+    readWriteDeleteAceAuth->permission = PERMISSION_READ | PERMISSION_WRITE | PERMISSION_DELETE;
+    readWriteDeleteAceAuth->validities = NULL;
+    LL_APPEND(acl->aces, readWriteDeleteAceAuth);
 
-    // /oic/sec/cred
-    credRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-    VERIFY_NOT_NULL(TAG, credRsrc, ERROR);
-    LL_APPEND(readWriteAce->resources, credRsrc);
-    credRsrc->href = OICStrdup(OIC_RSRC_CRED_URI);
-    VERIFY_NOT_NULL(TAG, (credRsrc->href), ERROR);
-    credRsrc->typeLen = 1;
-    credRsrc->types = (char**)OICCalloc(1, sizeof(char*));
-    VERIFY_NOT_NULL(TAG, credRsrc->types, ERROR);
-    credRsrc->types[0] = OICStrdup(OIC_RSRC_TYPE_SEC_CRED);
-    VERIFY_NOT_NULL(TAG, credRsrc->types[0], ERROR);
-    credRsrc->interfaceLen = 2;
-    credRsrc->interfaces = (char**)OICCalloc(credRsrc->interfaceLen, sizeof(char*));
-    VERIFY_NOT_NULL(TAG, credRsrc->interfaces, ERROR);
-    credRsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-    VERIFY_NOT_NULL(TAG, credRsrc->interfaces[0], ERROR);
-    credRsrc->interfaces[1] = OICStrdup(OC_RSRVD_INTERFACE_READ);
-    VERIFY_NOT_NULL(TAG, credRsrc->interfaces[1], ERROR);
+    // Subject is conntype "AUTH_CRYPT" (e.g. CoAPS) wildcard
+    readWriteDeleteAceAuth->subjectType = OicSecAceConntypeSubject;
+    readWriteDeleteAceAuth->subjectConn = AUTH_CRYPT;
 
-    // Default ACE allowing full permissions (create, read, write, delete)
-    fullPermAce = (OicSecAce_t *)OICCalloc(1, sizeof(OicSecAce_t));
-    VERIFY_NOT_NULL(TAG, fullPermAce, ERROR);
-    fullPermAce->permission = PERMISSION_FULL_CONTROL;
-    fullPermAce->validities = NULL;
-    LL_APPEND(acl->aces, fullPermAce);
+    // Resources are /doxm and /roles
+    // /oic/sec/doxm
+    doxmRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+    VERIFY_NOT_NULL(TAG, doxmRsrc, ERROR);
+    LL_APPEND(readWriteDeleteAceAuth->resources, doxmRsrc);
+    doxmRsrc->href = OICStrdup(OIC_RSRC_DOXM_URI);
+    VERIFY_NOT_NULL(TAG, (doxmRsrc->href), ERROR);
 
-    // Subject: set to wildcard "*"
-    fullPermAce->subjectType = OicSecAceUuidSubject;
-    memcpy(&fullPermAce->subjectuuid, &WILDCARD_SUBJECT_ID, sizeof(fullPermAce->subjectuuid));
-
-    // Resources -- Mandatory
     // /oic/sec/roles
     rolesRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
     VERIFY_NOT_NULL(TAG, rolesRsrc, ERROR);
-    LL_APPEND(fullPermAce->resources, rolesRsrc);
+    LL_APPEND(readWriteDeleteAceAuth->resources, rolesRsrc);
     rolesRsrc->href = OICStrdup(OIC_RSRC_ROLES_URI);
     VERIFY_NOT_NULL(TAG, (rolesRsrc->href), ERROR);
-    rolesRsrc->typeLen = 1;
-    rolesRsrc->types = (char**)OICCalloc(1, sizeof(char*));
-    VERIFY_NOT_NULL(TAG, rolesRsrc->types, ERROR);
-    rolesRsrc->types[0] = OICStrdup(OIC_RSRC_TYPE_SEC_CRED);
-    VERIFY_NOT_NULL(TAG, rolesRsrc->types[0], ERROR);
-    rolesRsrc->interfaceLen = 1;
-    rolesRsrc->interfaces = (char**)OICCalloc(rolesRsrc->interfaceLen, sizeof(char*));
-    VERIFY_NOT_NULL(TAG, rolesRsrc->interfaces, ERROR);
-    rolesRsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-    VERIFY_NOT_NULL(TAG, rolesRsrc->interfaces[0], ERROR);
 
     // Device ID is the owner of this default ACL
     if (GetDoxmResourceData() != NULL)

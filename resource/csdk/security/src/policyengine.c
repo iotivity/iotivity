@@ -249,6 +249,7 @@ bool IsRequestFromResourceOwner(SRMRequestContext_t *context)
     if (IsNilUuid(&context->subjectUuid))
     {
         // Nil subject is never rOwner
+        OIC_LOG_V(DEBUG, TAG, "%s: Nil UUID cannot be rowner.", __func__);
         retVal = false;
         goto exit;
     }
@@ -464,13 +465,14 @@ static void ProcessAccessRequest(SRMRequestContext_t *context)
 
         if (NULL != currentAce)
         {
-            OIC_LOG_V(DEBUG, TAG, "%s: found conntype %d match; processing for access.", __func__, conntype);
+            OIC_LOG_V(DEBUG, TAG, "%s: found conntype %s match; processing for access.",
+                __func__, (AUTH_CRYPT == conntype?"auth-crypt":"anon-clear"));
             ProcessMatchingACE(context, currentAce);
         }
         else
         {
-            OIC_LOG_V(INFO, TAG, "%s:no ACL found matching conntype %d for resource %s",
-                __func__, conntype, context->resourceUri);
+            OIC_LOG_V(INFO, TAG, "%s:no ACL found matching conntype %s for resource %s",
+                __func__, (AUTH_CRYPT == conntype?"auth-crypt":"anon-clear"), context->resourceUri);
         }
     } while ((NULL != currentAce) && !IsAccessGranted(context->responseVal));
 
