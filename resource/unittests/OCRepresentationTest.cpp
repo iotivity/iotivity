@@ -29,52 +29,6 @@ namespace OCRepresentationTest
     using std::string;
     using std::vector;
 
-    template <typename T>
-    struct ValueToStringParam
-    {
-        ValueToStringParam<T>(const char* expectedString, T expectedValue) :
-            m_expectedString(expectedString),
-            m_expectedValue(expectedValue)
-        {}
-
-        const char* m_expectedString;
-        T m_expectedValue;
-    };
-
-    template <typename T>
-    class OCRepresentationValueToStringTest : public testing::TestWithParam<ValueToStringParam<T>>
-    {
-    public:
-        OCRepresentationValueToStringTest<T>() :
-            m_attributeName("testValueName"),
-            m_expectedString(testing::TestWithParam<ValueToStringParam<T>>::GetParam().m_expectedString),
-            m_expectedValue(testing::TestWithParam<ValueToStringParam<T>>::GetParam().m_expectedValue)
-        {}
-
-        void SetUp()
-        {
-            m_rep.setValue(m_attributeName, m_expectedValue);
-        }
-
-    protected:
-        const char* m_attributeName;
-        const char* m_expectedString;
-        T m_expectedValue;
-        OCRepresentation m_rep;
-    };
-
-    class OCRepresentationInt64ValueToStringTest : public OCRepresentationValueToStringTest<int64_t>
-    {};
-
-    class OCRepresentation1VectorInt64ValueToStringTest : public OCRepresentationValueToStringTest<vector<int64_t>>
-    {};
-
-    class OCRepresentation2VectorInt64ValueToStringTest : public OCRepresentationValueToStringTest<vector<vector<int64_t>>>
-    {};
-
-    class OCRepresentation3VectorInt64ValueToStringTest : public OCRepresentationValueToStringTest<vector<vector<vector<int64_t>>>>
-    {};
-
     void parsedEqual(double expected, const std::string& actualStr)
     {
         double actual = boost::lexical_cast<double>(actualStr);
@@ -114,20 +68,6 @@ namespace OCRepresentationTest
         rep.setValue(AttrName, 54321);
         EXPECT_EQ("54321", rep.getValueToString(AttrName));
         EXPECT_EQ("54321", rep[AttrName].getValueToString());
-    }
-
-    INSTANTIATE_TEST_CASE_P(OCRepresentationInt64ValueToString,
-                            OCRepresentationInt64ValueToStringTest,
-                            ::testing::Values(
-        ValueToStringParam<int64_t>("-1", -1LL),
-        ValueToStringParam<int64_t>("0", 0LL),
-        ValueToStringParam<int64_t>("1", 1LL),
-        ValueToStringParam<int64_t>("9223372036854775807", INT64_MAX),
-        ValueToStringParam<int64_t>("-9223372036854775808", INT64_MIN)));
-    TEST_P(OCRepresentationInt64ValueToStringTest, shouldGetProperInt64String)
-    {
-        EXPECT_EQ(m_expectedString, m_rep.getValueToString(m_attributeName));
-        EXPECT_EQ(m_expectedString, m_rep[m_attributeName].getValueToString());
     }
 
     TEST(OCRepresentationValueToString, Double)
@@ -271,60 +211,6 @@ namespace OCRepresentationTest
             "[[[1 2 3 4 5 6 7 8 9 ] [-5 -3 -1 0 5 3 2 ] ] [[2 0 1 6 9 3 8 ] [9 7 8 100003 ] ] ]";
         EXPECT_EQ(Expected, rep.getValueToString(AttrName));
         EXPECT_EQ(Expected, rep[AttrName].getValueToString());
-    }
-
-    INSTANTIATE_TEST_CASE_P(OCRepresentation1VectorInt64ValueToString,
-                            OCRepresentation1VectorInt64ValueToStringTest,
-                            ::testing::Values(
-        ValueToStringParam<vector<int64_t>>("[-1 ]", {-1LL}),
-        ValueToStringParam<vector<int64_t>>("[1 ]", {1LL}),
-        ValueToStringParam<vector<int64_t>>("[0 ]", {0LL}),
-        ValueToStringParam<vector<int64_t>>("[9223372036854775807 ]", {INT64_MAX}),
-        ValueToStringParam<vector<int64_t>>("[-9223372036854775808 ]", {INT64_MIN}),
-        ValueToStringParam<vector<int64_t>>("[-1 0 9223372036854775807 ]", {-1LL, 0LL, INT64_MAX}),
-        ValueToStringParam<vector<int64_t>>("[-9223372036854775808 1 9223372036854775807 ]", {INT64_MIN, 1, INT64_MAX})));
-    TEST_P(OCRepresentation1VectorInt64ValueToStringTest, shouldGetProper1VectorInt64String)
-    {
-        EXPECT_EQ(m_expectedString, m_rep.getValueToString(m_attributeName));
-        EXPECT_EQ(m_expectedString, m_rep[m_attributeName].getValueToString());
-    }
-
-    INSTANTIATE_TEST_CASE_P(OCRepresentation2VectorInt64ValueToString,
-                            OCRepresentation2VectorInt64ValueToStringTest,
-                            ::testing::Values(
-        ValueToStringParam<vector<vector<int64_t>>>("[[-1 ] ]", {{-1LL}}),
-        ValueToStringParam<vector<vector<int64_t>>>("[[1 ] ]", {{1LL}}),
-        ValueToStringParam<vector<vector<int64_t>>>("[[0 ] ]", {{0LL}}),
-        ValueToStringParam<vector<vector<int64_t>>>("[[9223372036854775807 ] ]", {{INT64_MAX}}),
-        ValueToStringParam<vector<vector<int64_t>>>("[[-9223372036854775808 ] ]", {{INT64_MIN}}),
-        ValueToStringParam<vector<vector<int64_t>>>("[[-1 0 9223372036854775807 ] ]", {{-1LL, 0LL, INT64_MAX}}),
-        ValueToStringParam<vector<vector<int64_t>>>("[[-9223372036854775808 1 9223372036854775807 ] ]", {{INT64_MIN, 1, INT64_MAX}}),
-        ValueToStringParam<vector<vector<int64_t>>>("[[-1 ] [0 9223372036854775807 ] ]", {{-1LL}, {0LL, INT64_MAX}}),
-        ValueToStringParam<vector<vector<int64_t>>>("[[-9223372036854775808 1 ] [9223372036854775807 ] ]", {{INT64_MIN, 1}, {INT64_MAX}})));
-    TEST_P(OCRepresentation2VectorInt64ValueToStringTest, shouldGetProper1VectorInt64String)
-    {
-        EXPECT_EQ(m_expectedString, m_rep.getValueToString(m_attributeName));
-        EXPECT_EQ(m_expectedString, m_rep[m_attributeName].getValueToString());
-    }
-
-    INSTANTIATE_TEST_CASE_P(OCRepresentation3VectorInt64ValueToString,
-                            OCRepresentation3VectorInt64ValueToStringTest,
-                            ::testing::Values(
-        ValueToStringParam<vector<vector<vector<int64_t>>>>("[[[-1 ] ] ]", {{{-1LL}}}),
-        ValueToStringParam<vector<vector<vector<int64_t>>>>("[[[1 ] ] ]", {{{1LL}}}),
-        ValueToStringParam<vector<vector<vector<int64_t>>>>("[[[0 ] ] ]", {{{0LL}}}),
-        ValueToStringParam<vector<vector<vector<int64_t>>>>("[[[9223372036854775807 ] ] ]", {{{INT64_MAX}}}),
-        ValueToStringParam<vector<vector<vector<int64_t>>>>("[[[-9223372036854775808 ] ] ]", {{{INT64_MIN}}}),
-        ValueToStringParam<vector<vector<vector<int64_t>>>>("[[[-1 0 9223372036854775807 ] ] ]", {{{-1LL, 0LL, INT64_MAX}}}),
-        ValueToStringParam<vector<vector<vector<int64_t>>>>("[[[-9223372036854775808 1 9223372036854775807 ] ] ]", {{{INT64_MIN, 1, INT64_MAX}}}),
-        ValueToStringParam<vector<vector<vector<int64_t>>>>("[[[-1 ] [0 9223372036854775807 ] ] ]", {{{-1LL},{0LL, INT64_MAX}}}),
-        ValueToStringParam<vector<vector<vector<int64_t>>>>("[[[-9223372036854775808 1 ] [9223372036854775807 ] ] ]", {{{INT64_MIN, 1},{INT64_MAX}}}),
-        ValueToStringParam<vector<vector<vector<int64_t>>>>("[[[-1 ] ] [[0 ] [9223372036854775807 ] ] ]", {{{-1LL}}, {{0LL}, {INT64_MAX}}}),
-        ValueToStringParam<vector<vector<vector<int64_t>>>>("[[[-9223372036854775808 ] [1 ] ] [[9223372036854775807 ] ] ]", {{{INT64_MIN}, {1}}, {{INT64_MAX}}})));
-    TEST_P(OCRepresentation3VectorInt64ValueToStringTest, shouldGetProper1VectorInt64String)
-    {
-        EXPECT_EQ(m_expectedString, m_rep.getValueToString(m_attributeName));
-        EXPECT_EQ(m_expectedString, m_rep[m_attributeName].getValueToString());
     }
 
     TEST(OCRepresentationValueToString, DoubleVector)
@@ -1284,28 +1170,6 @@ namespace OCRepresentationTest
             }
         }
     }
-
-    TEST(OCRepresentationIterator, shouldReturnInt64ValueForAutoIterator)
-    {
-        OCRepresentation rep;
-        const char* expectedName = "int64";
-        int64_t expectedValue = 8;
-
-        ASSERT_TRUE(rep.empty());
-        rep.setValue(expectedName, expectedValue);
-        ASSERT_FALSE(rep.empty());
-        ASSERT_EQ(1, rep.size());
-
-        for (auto& cur : rep)
-        {
-            EXPECT_EQ(expectedName, cur.attrname());
-            EXPECT_EQ(AttributeType::Integer, cur.type());
-            EXPECT_EQ(AttributeType::Integer, cur.base_type());
-            EXPECT_EQ(0u, cur.depth());
-            EXPECT_EQ(expectedValue, cur.getValue<int64_t>());
-        }
-    }
-
     // Iterator usage
     TEST(OCRepresentationIterator, iterator)
     {
@@ -1581,129 +1445,6 @@ namespace OCRepresentationTest
             {
                 EXPECT_TRUE(false) << itr->attrname();
             }
-        }
-    }
-
-    TEST(OCRepresentationIterator, shouldReturnInt64Depth1VectorForAutoIterator)
-    {
-        OCRepresentation rep;
-        const char* expectedName = "int64v";
-        vector<int64_t> expectedValue = {8};
-
-        ASSERT_TRUE(rep.empty());
-        rep.setValue(expectedName, expectedValue);
-        ASSERT_EQ(1, rep.size());
-
-        for (auto& cur : rep)
-        {
-            EXPECT_EQ(expectedName, cur.attrname());
-            EXPECT_EQ(AttributeType::Vector, cur.type());
-            EXPECT_EQ(AttributeType::Integer, cur.base_type());
-            EXPECT_EQ(1u, cur.depth());
-            EXPECT_EQ(expectedValue, cur.getValue<vector<int64_t>>());
-        }
-    }
-
-    TEST(OCRepresentationIterator, shouldReturnInt64Depth2VectorForAutoIterator)
-    {
-        OCRepresentation rep;
-        const char* expectedName = "int64vv";
-        vector<vector<int64_t>> expectedValue = {{8}};
-
-        ASSERT_TRUE(rep.empty());
-        rep.setValue(expectedName, expectedValue);
-        ASSERT_EQ(1, rep.size());
-
-        for (auto& cur : rep)
-        {
-            EXPECT_EQ(expectedName, cur.attrname());
-            EXPECT_EQ(AttributeType::Vector, cur.type());
-            EXPECT_EQ(AttributeType::Integer, cur.base_type());
-            EXPECT_EQ(2u, cur.depth());
-            EXPECT_EQ(expectedValue, cur.getValue<vector<vector<int64_t>>>());
-        }
-    }
-
-    TEST(OCRepresentationIterator, shouldReturnInt64Depth3VectorForAutoIterator)
-    {
-        OCRepresentation rep;
-        const char* expectedName = "int64vvv";
-        vector<vector<vector<int64_t>>> expectedValue = {{{8}}};
-
-        ASSERT_TRUE(rep.empty());
-        rep.setValue(expectedName, expectedValue);
-        ASSERT_EQ(1, rep.size());
-
-        for (auto& cur : rep)
-        {
-            EXPECT_EQ(expectedName, cur.attrname());
-            EXPECT_EQ(AttributeType::Vector, cur.type());
-            EXPECT_EQ(AttributeType::Integer, cur.base_type());
-            EXPECT_EQ(3u, cur.depth());
-            EXPECT_EQ(expectedValue, cur.getValue<vector<vector<vector<int64_t>>>>());
-        }
-    }
-
-    TEST(OCRepresentationIterator, shouldReturnInt64Depth1VectorForIterator)
-    {
-        OCRepresentation rep;
-        const char* expectedName = "int64v";
-        vector<int64_t> expectedValue = {8};
-
-        ASSERT_TRUE(rep.empty());
-        rep.setValue(expectedName, expectedValue);
-        ASSERT_FALSE(rep.empty());
-        ASSERT_EQ(1, rep.size());
-
-        for (OCRepresentation::iterator cur = rep.begin(); cur != rep.end(); cur++)
-        {
-            EXPECT_EQ(expectedName, cur->attrname());
-            EXPECT_EQ(AttributeType::Vector, cur->type());
-            EXPECT_EQ(AttributeType::Integer, cur->base_type());
-            EXPECT_EQ(1u, cur->depth());
-            EXPECT_EQ(expectedValue, cur->getValue<vector<int64_t>>());
-        }
-    }
-
-    TEST(OCRepresentationIterator, shouldReturnInt64Depth2VectorForIterator)
-    {
-        OCRepresentation rep;
-        const char* expectedName = "int64vv";
-        vector<vector<int64_t>> expectedValue = {{8}};
-
-        ASSERT_TRUE(rep.empty());
-        rep.setValue(expectedName, expectedValue);
-        ASSERT_FALSE(rep.empty());
-        ASSERT_EQ(1, rep.size());
-
-        for (OCRepresentation::iterator cur = rep.begin(); cur != rep.end(); cur++)
-        {
-            EXPECT_EQ(expectedName, cur->attrname());
-            EXPECT_EQ(AttributeType::Vector, cur->type());
-            EXPECT_EQ(AttributeType::Integer, cur->base_type());
-            EXPECT_EQ(2u, cur->depth());
-            EXPECT_EQ(expectedValue, cur->getValue<vector<vector<int64_t>>>());
-        }
-    }
-
-    TEST(OCRepresentationIterator, shouldReturnInt64Depth3VectorForIterator)
-    {
-        OCRepresentation rep;
-        const char* expectedName = "int64vvv";
-        vector<vector<vector<int64_t>>> expectedValue = {{{8}}};
-
-        ASSERT_TRUE(rep.empty());
-        rep.setValue(expectedName, expectedValue);
-        ASSERT_FALSE(rep.empty());
-        ASSERT_EQ(1, rep.size());
-
-        for (OCRepresentation::iterator cur = rep.begin(); cur != rep.end(); cur++)
-        {
-            EXPECT_EQ(expectedName, cur->attrname());
-            EXPECT_EQ(AttributeType::Vector, cur->type());
-            EXPECT_EQ(AttributeType::Integer, cur->base_type());
-            EXPECT_EQ(3u, cur->depth());
-            EXPECT_EQ(expectedValue, cur->getValue<vector<vector<vector<int64_t>>>>());
         }
     }
 

@@ -50,7 +50,6 @@ namespace OC
     typedef boost::variant<
         NullType, // Note: this handles the null-type and must match the above static const
         int,
-        int64_t,
         double,
         bool,
         std::string,
@@ -58,7 +57,7 @@ namespace OC
         OCByteString,
 
         // Sequences:
-        std::vector<int64_t>,
+        std::vector<int>,
         std::vector<double>,
         std::vector<bool>,
         std::vector<std::string>,
@@ -66,8 +65,8 @@ namespace OC
         std::vector<OCByteString>,
 
         // Nested sequences:
-        std::vector<std::vector<int64_t>>,
-        std::vector<std::vector<std::vector<int64_t>>>,
+        std::vector<std::vector<int>>,
+        std::vector<std::vector<std::vector<int>>>,
 
         std::vector<std::vector<double>>,
         std::vector<std::vector<std::vector<double>>>,
@@ -112,12 +111,6 @@ namespace OC
 
     template<>
     struct AttributeTypeConvert<int>
-    {
-        BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::Integer;
-    };
-
-    template<>
-    struct AttributeTypeConvert<int64_t>
     {
         BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::Integer;
     };

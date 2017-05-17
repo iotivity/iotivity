@@ -52,15 +52,6 @@ struct JObjectConverter : boost::static_visitor < jobject >
             static_cast<jint>(val));
         return jobj;
     }
-
-    jobject operator()(const int64_t& val) const
-    {
-        jobject jobj = env->NewObject(
-            g_cls_Long,
-            g_mid_Long_ctor,
-            static_cast<jlong>(val));
-        return jobj;
-    }
     jobject operator()(const double& val) const
     {
         jobject jobj = env->NewObject(
@@ -109,18 +100,6 @@ struct JObjectConverter : boost::static_visitor < jobject >
         const int* ints = &val[0];
         env->SetIntArrayRegion(jIntArray, 0, len, reinterpret_cast<const jint*>(ints));
         return jIntArray;
-    }
-    jobject operator()(const std::vector<int64_t>& val) const
-    {
-        size_t len = val.size();
-        jlongArray jLongArray = env->NewLongArray(len);
-        if (!jLongArray)
-        {
-            return nullptr;
-        }
-        const int64_t* longs = &val[0];
-        env->SetLongArrayRegion(jLongArray, 0, len, reinterpret_cast<const jlong*>(longs));
-        return jLongArray;
     }
     jobject operator()(const std::vector<double>& val) const
     {
@@ -384,86 +363,6 @@ struct JObjectConverter : boost::static_visitor < jobject >
                     return nullptr;
                 }
                 env->DeleteLocalRef(jIntArray);
-            }
-            env->SetObjectArrayElement(jOuterArr, k, jMiddleArr);
-            if (env->ExceptionCheck())
-            {
-                return nullptr;
-            }
-            env->DeleteLocalRef(jMiddleArr);
-        }
-        return jOuterArr;
-    }
-
-    jobject operator()(const std::vector<std::vector<int64_t>>& val) const
-    {
-        jsize lenOuter = static_cast<jsize>(val.size());
-        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_long1DArray, nullptr);
-        if (!jOuterArr)
-        {
-            return nullptr;
-        }
-        for (jsize i = 0; i < lenOuter; ++i)
-        {
-            size_t lenInner = val[i].size();
-            jlongArray jLongArray = env->NewLongArray(lenInner);
-            if (!jLongArray)
-            {
-                return nullptr;
-            }
-            const int64_t* longs = &val[i][0];
-            env->SetLongArrayRegion(jLongArray, 0, lenInner, reinterpret_cast<const jlong*>(longs));
-            if (env->ExceptionCheck())
-            {
-                return nullptr;
-            }
-            env->SetObjectArrayElement(jOuterArr, i, static_cast<jobject>(jLongArray));
-            if (env->ExceptionCheck())
-            {
-                return nullptr;
-            }
-            env->DeleteLocalRef(jLongArray);
-        }
-        return jOuterArr;
-    }
-    jobject operator()(const std::vector<std::vector<std::vector<int64_t>>>& val) const
-    {
-        jsize lenOuter = static_cast<jsize>(val.size());
-        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_long2DArray, nullptr);
-        if (!jOuterArr)
-        {
-            return nullptr;
-        }
-
-        for (jsize k = 0; k < lenOuter; ++k)
-        {
-            jsize lenMiddle = static_cast<jsize>(val[k].size());
-            jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_long1DArray, nullptr);
-            if (!jMiddleArr)
-            {
-                return nullptr;
-            }
-
-            for (jsize i = 0; i < lenMiddle; ++i)
-            {
-                jsize lenInner = static_cast<jsize>(val[k][i].size());
-                jlongArray jLongArray = env->NewLongArray(lenInner);
-                if (!jLongArray)
-                {
-                    return nullptr;
-                }
-                const int64_t* longs = &val[k][i][0];
-                env->SetLongArrayRegion(jLongArray, 0, lenInner, reinterpret_cast<const jlong*>(longs));
-                if (env->ExceptionCheck())
-                {
-                    return nullptr;
-                }
-                env->SetObjectArrayElement(jMiddleArr, i, jLongArray);
-                if (env->ExceptionCheck())
-                {
-                    return nullptr;
-                }
-                env->DeleteLocalRef(jLongArray);
             }
             env->SetObjectArrayElement(jOuterArr, k, jMiddleArr);
             if (env->ExceptionCheck())
@@ -870,14 +769,6 @@ extern "C" {
 
     /*
     * Class:     org_iotivity_base_OcRepresentation
-    * Method:    setValueLong
-    * Signature: (Ljava/lang/String;J)V
-    */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueLong
-    (JNIEnv *, jobject, jstring, jlong);
-
-    /*
-    * Class:     org_iotivity_base_OcRepresentation
     * Method:    setValueDouble
     * Signature: (Ljava/lang/String;D)V
     */
@@ -931,30 +822,6 @@ extern "C" {
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueInteger3DArray
         (JNIEnv *, jobject, jstring, jobjectArray);
-
-    /*
-    * Class:     org_iotivity_base_OcRepresentation
-    * Method:    setValueLongArray
-    * Signature: (Ljava/lang/String;[J)V
-    */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueLongArray
-    (JNIEnv *, jobject, jstring, jlongArray);
-
-    /*
-    * Class:     org_iotivity_base_OcRepresentation
-    * Method:    setValueLong2DArray
-    * Signature: (Ljava/lang/String;[[J)V
-    */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueLong2DArray
-    (JNIEnv *, jobject, jstring, jobjectArray);
-
-    /*
-    * Class:     org_iotivity_base_OcRepresentation
-    * Method:    setValueLong3DArray
-    * Signature: (Ljava/lang/String;[[[J)V
-    */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueLong3DArray
-    (JNIEnv *, jobject, jstring, jobjectArray);
 
     /*
     * Class:     org_iotivity_base_OcRepresentation

@@ -57,9 +57,10 @@ libocsrm_env.PrependUnique(CPPPATH = [
 
 if target_os in ['windows', 'msys_nt']:
 	libocsrm_env.AppendUnique(LIBPATH = [os.path.join(libocsrm_env.get('BUILD_DIR'), 'resource', 'oc_logger')])
-
-if libocsrm_env['CC'] == 'cl':
-	libocsrm_env.AppendUnique(CCFLAGS=['/W4'])
+    #  - warning C4200: nonstandard extension used: zero-sized array in struct/union
+    #  - warning C4214: nonstandard extension used: bit field types other than int
+    #    - warnings inherited from a header included from libcoap
+	libocsrm_env.AppendUnique(CCFLAGS=['/wd4200', '/wd4214', '/W4', '/WX'])
 
 if target_os in ['linux', 'android', 'tizen', 'msys_nt', 'windows'] and libocsrm_env.get('SECURED') == '1':
 	SConscript('provisioning/SConscript', 'libocsrm_env')

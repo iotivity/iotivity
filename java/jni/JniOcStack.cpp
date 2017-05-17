@@ -45,9 +45,6 @@ jclass g_cls_byte3DArray = nullptr;
 jclass g_cls_Integer = nullptr;
 jclass g_cls_int1DArray = nullptr;
 jclass g_cls_int2DArray = nullptr;
-jclass g_cls_Long = nullptr;
-jclass g_cls_long1DArray = nullptr;
-jclass g_cls_long2DArray = nullptr;
 jclass g_cls_Double = nullptr;
 jclass g_cls_double1DArray = nullptr;
 jclass g_cls_double2DArray = nullptr;
@@ -94,7 +91,6 @@ jclass g_cls_OcCloudProvisioning = nullptr;
 #endif
 
 jmethodID g_mid_Integer_ctor = nullptr;
-jmethodID g_mid_Long_ctor = nullptr;
 jmethodID g_mid_Double_ctor = nullptr;
 jmethodID g_mid_Boolean_ctor = nullptr;
 jmethodID g_mid_LinkedList_ctor = nullptr;
@@ -245,26 +241,6 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
     clazz = env->FindClass("[[I");
     VERIFY_VARIABLE_NULL(clazz);
     g_cls_int2DArray = (jclass)env->NewGlobalRef(clazz);
-    env->DeleteLocalRef(clazz);
-
-    //Long
-    clazz = env->FindClass("java/lang/Long");
-    VERIFY_VARIABLE_NULL(clazz);
-
-    g_cls_Long = (jclass)env->NewGlobalRef(clazz);
-    env->DeleteLocalRef(clazz);
-
-    g_mid_Long_ctor = env->GetMethodID(g_cls_Long, "<init>", "(J)V");
-    VERIFY_VARIABLE_NULL(g_mid_Long_ctor);
-
-    clazz = env->FindClass("[J");
-    VERIFY_VARIABLE_NULL(clazz);
-    g_cls_long1DArray = (jclass)env->NewGlobalRef(clazz);
-    env->DeleteLocalRef(clazz);
-
-    clazz = env->FindClass("[[J");
-    VERIFY_VARIABLE_NULL(clazz);
-    g_cls_long2DArray = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     //Double
@@ -676,9 +652,6 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
         env->DeleteGlobalRef(g_cls_Integer);
         env->DeleteGlobalRef(g_cls_int1DArray);
         env->DeleteGlobalRef(g_cls_int2DArray);
-        env->DeleteGlobalRef(g_cls_Long);
-        env->DeleteGlobalRef(g_cls_long1DArray);
-        env->DeleteGlobalRef(g_cls_long2DArray);
         env->DeleteGlobalRef(g_cls_Double);
         env->DeleteGlobalRef(g_cls_double1DArray);
         env->DeleteGlobalRef(g_cls_double2DArray);
