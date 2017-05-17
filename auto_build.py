@@ -383,14 +383,14 @@ def build_arduino(flag, extra_option_str):
     # BLE support for the Arduino Due is currently unavailable.
 
 def build_tizen(flag, extra_option_str):
-    print ("*********** Build for Tizen *************")
-    cmd_line = "/bin/sh " + os.getcwd() + "/gbsbuild.sh"
+    print ("*********** Build for Tizen with options *************")
+    cmd_line = os.getcwd() + "/gbsbuild.sh" + " " + extra_option_str
     print ("Running : " + cmd_line)
     exit_code = subprocess.Popen([cmd_line], shell=True).wait()
     if exit_code != 0:
         exit(exit_code)
 
-    print ("*********** Build for Tizen octbstack lib and sample with security *************")
+    print ("*********** Build for Tizen octbstack lib and sample *************")
     build_extra_options = "-f resource/csdk/stack/samples/tizen/build/SConscript " + extra_option_str
     build_options = {
                         'TARGET_OS':'tizen',
@@ -398,10 +398,6 @@ def build_tizen(flag, extra_option_str):
                         'LOGGING':'true',
                         'RELEASE':flag,
                     }
-    call_scons(build_options, build_extra_options)
-
-    print ("*********** Build for Tizen octbstack lib and sample *************")
-    build_options['SECURED'] = 0
     call_scons(build_options, build_extra_options)
 
     print ("*********** Build for Tizen octbstack lib and sample with Routing Manager*************")
@@ -413,6 +409,12 @@ def build_tizen(flag, extra_option_str):
     build_options['ES_TARGET_ENROLLEE'] = 'tizen'
     build_extra_options = "-f service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/build/tizen/SConscript " + extra_option_str
     call_scons(build_options, build_extra_options)
+
+def build_tizen_secured(flag, extra_option_str):
+    build_tizen(flag, extra_option_str + " SECURED=1")
+
+def build_tizen_unsecured(flag, extra_option_str):
+    build_tizen(flag, extra_option_str + " SECURED=0")
 
 # Mac OS and iOS
 def build_darwin(flag, extra_option_str):
@@ -672,6 +674,14 @@ elif arg_num == 2:
     elif str(sys.argv[1]) == "tizen":
         build_tizen("true", "")
         build_tizen("false", "")
+
+    elif str(sys.argv[1]) == "tizen_unsecured":
+        build_tizen_unsecured("true", "")
+        build_tizen_unsecured("false", "")
+
+    elif str(sys.argv[1]) == "tizen_secured":
+        build_tizen_secured("true", "")
+        build_tizen_secured("false", "")
 
     elif str(sys.argv[1]) == "simulator":
         build_simulator("true", "")
