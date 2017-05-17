@@ -30,7 +30,7 @@
 
 #include <octypes.h>
 
-#include "boost/config.hpp"
+#include <boost/config.hpp>
 
 namespace OIC
 {
