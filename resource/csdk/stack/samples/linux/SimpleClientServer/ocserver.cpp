@@ -43,7 +43,6 @@
 #include "ocserver.h"
 #include "common.h"
 #include "oic_string.h"
-#include "cacommon.h"
 
 #define VERIFY_SUCCESS(op)                          \
 {                                                   \

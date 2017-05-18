@@ -45,7 +45,6 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 #include "common.h"
-#include "cacommon.h"
 
 #ifdef ROUTING_GATEWAY
 /**
