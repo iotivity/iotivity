@@ -128,7 +128,7 @@ IF "%BUILD_MSYS%" == "" (
   set PATH=!PATH!;!BUILD_DIR!;C:\msys64\mingw64\bin
 )
 
-set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% UWP_APP=%UWP_APP% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% RD_MODE=%RD_MODE% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER% -j %THREAD_COUNT% AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE%
+set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% UWP_APP=%UWP_APP% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% RD_MODE=%RD_MODE% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER% AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE%
 
 REM Use MSVC_VERSION=12.0 for VS2013, or MSVC_VERSION=14.0 for VS2015.
 REM If MSVC_VERSION has not been defined here, SCons chooses automatically a VS version.
@@ -199,16 +199,29 @@ if "!RUN_ARG!"=="server" (
   echo   MSVC_VERSION=%MSVC_VERSION%
   echo   THREAD_COUNT=%THREAD_COUNT%
   echo   AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE%
-  echo.scons VERBOSE=1 %BUILD_OPTIONS%
-  call scons.bat VERBOSE=1 %BUILD_OPTIONS%
+
+  REM First: just build, but don't run tests.
+  echo.scons.bat -j %THREAD_COUNT% VERBOSE=1 TEST=0 %BUILD_OPTIONS%
+  call scons.bat -j %THREAD_COUNT% VERBOSE=1 TEST=0 %BUILD_OPTIONS%
   if ERRORLEVEL 1 (
     echo SCons failed - exiting run.bat with code 3
     exit /B 3
   )
+
+  REM Second: run tests if needed, using a single SCons thread.
+  if "!TEST!"=="1" (
+    echo.scons.bat -j 1 VERBOSE=1 TEST=1 %BUILD_OPTIONS%
+    call scons.bat -j 1 VERBOSE=1 TEST=1 %BUILD_OPTIONS%
+    if ERRORLEVEL 1 (
+        echo SCons failed - exiting run.bat with code 4
+        exit /B 4
+    )
+  )
 ) else if "!RUN_ARG!"=="clean" (
   echo Cleaning IoTivity build
   del /S *.ilk
-  call scons.bat VERBOSE=1 %BUILD_OPTIONS% -c
+  echo.scons.bat -j 1 VERBOSE=1 TEST=%TEST% %BUILD_OPTIONS% -c
+  call scons.bat -j 1 VERBOSE=1 TEST=%TEST% %BUILD_OPTIONS% -c
   if ERRORLEVEL 1 (
     echo SCons failed - exiting run.bat with code 2
     exit /B 2
