@@ -97,8 +97,14 @@ int processUserInput(int min, int max)
 
     if (!std::cin.fail())
     {
-        if(input == max + 1) throw CloseApp();
-        if(min <= input && input <= max) return input;
+        if(input == max + 1)
+        {
+            throw CloseApp();
+        }
+        if(min <= input && input <= max)
+        {
+            return input;
+        }
     }
 
     std::cin.clear();

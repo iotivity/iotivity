@@ -255,7 +255,9 @@ namespace OIC
                     createRemoteSceneCollection(link, id, name);
 
                 if (newCollection)
+                {
                     result = SCENE_RESPONSE_SUCCESS;
+                }
             }
 
             clientCB(newCollection, result);
