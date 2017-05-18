@@ -134,6 +134,7 @@ namespace OC
         static const char INTERNAL_SERVER_ERROR[]      = "Internal server error";
         static const char BAD_ENDPOINT[]               = "Bad Endpoint";
         static const char GATEWAY_TIMEOUT[]            = "Gateway Timeout";
+        static const char SERVICE_UNAVAILABLE[]        = "Service unavailable";
     }
 
     namespace Error

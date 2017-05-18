@@ -80,7 +80,8 @@ namespace OC
                 OC_STACK_FORBIDDEN_REQ,
                 OC_STACK_INTERNAL_SERVER_ERROR,
                 OC_STACK_BAD_ENDPOINT,
-                OC_STACK_GATEWAY_TIMEOUT
+                OC_STACK_GATEWAY_TIMEOUT,
+                OC_STACK_SERVICE_UNAVAILABLE,
             };
 
             std::string resultMessages[]=
@@ -132,7 +133,8 @@ namespace OC
                 OC::Exception::FORBIDDEN_REQ,
                 OC::Exception::INTERNAL_SERVER_ERROR,
                 OC::Exception::BAD_ENDPOINT,
-                OC::Exception::GATEWAY_TIMEOUT
+                OC::Exception::GATEWAY_TIMEOUT,
+                OC::Exception::SERVICE_UNAVAILABLE
             };
             TEST(OCExceptionTest, ReasonCodeMatches)
             {
