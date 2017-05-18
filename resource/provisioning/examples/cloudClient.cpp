@@ -57,7 +57,7 @@ static bool fExit = false;
 static OCDevAddr endPoint;
 static char token[1024];
 static char authProvider[1024];
-static char *fname = DEFAULT_DB_FILE;
+static const char *fname = DEFAULT_DB_FILE;
 static uint64_t timeout;
 static uint16_t g_credId = 0;
 
