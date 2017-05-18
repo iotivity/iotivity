@@ -603,19 +603,6 @@ void OCDeletePdAclList(OicSecPdAcl_t* pPdAcl);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 /**
- * this function sends CRL information to resource.
- *
- * @param[in] ctx Application context returned in the result callback.
- * @param[in] selectedDeviceInfo Selected target device.
- * @param[in] crl CRL to provision.
- * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
-              request recieves a response from resource server.
- * @return  OC_STACK_OK in case of success and other value otherwise.
- */
-OCStackResult OCProvisionCRL(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecCrl_t *crl,
-                             OCProvisionResultCB resultCallback);
-
-/**
  * function to provision Trust certificate chain to devices.
  *
  * @param[in] ctx Application context returned in the result callback.
