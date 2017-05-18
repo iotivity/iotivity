@@ -49,8 +49,6 @@
 
 #include "srmutility.h"
 
-static const unsigned int USECS_PER_MSEC = 1000;
-
 #define TAG ("OIC_PM_UTILITY")
 
 typedef struct _DiscoveryInfo{

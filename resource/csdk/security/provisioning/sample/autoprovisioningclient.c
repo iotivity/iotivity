@@ -78,9 +78,6 @@ static const char* TEST_CERT_ROLE1 = "IoTivity-test-role1";
 static const char* TEST_CERT_ROLE2 = "IoTivity-test-role2";
 static const char* TEST_CERT_AUTHORITY = "IoTivity-test-OBT-authority-name";
 
-static OicUuid_t WILDCARD_SUBJECT_ID = { "*" };
-static size_t WILDCARD_SUBJECT_ID_LEN = 1;
-
 // |g_ctx| means provision manager application context and
 // the following, includes |un/own_list|, could be variables, which |g_ctx| has,
 // for accessing all function(s) for these, they are declared on global domain
@@ -101,7 +98,6 @@ static bool g_successCB; /* Set to true by the callback to indicate success. */
 // function declaration(s) for calling them before implementing
 static OCProvisionDev_t* getDevInst(const OCProvisionDev_t*, const int);
 static int printDevList(const OCProvisionDev_t*);
-static size_t printUuidList(const OCUuidList_t*);
 static size_t printResultList(const OCProvisionResult_t*, const size_t);
 static void printUuid(const OicUuid_t*);
 static int saveUuid(const OCProvisionResult_t* rslt_lst, const size_t rslt_cnt);
@@ -399,54 +395,6 @@ static int discoverAllDevices(void)
     return 0;
 }
 
-static int discoverUnownedDevices(void)
-{
-    // delete unowned device list before updating it
-    if(g_unown_list)
-    {
-        OCDeleteDiscoveredDevices(g_unown_list);
-        g_unown_list = NULL;
-    }
-
-    // call |OCDiscoverUnownedDevices| API
-    printf("   Discovering Only Unowned Devices on Network..\n");
-    if(OC_STACK_OK != OCDiscoverUnownedDevices(DISCOVERY_TIMEOUT, &g_unown_list))
-    {
-        OIC_LOG(ERROR, TAG, "OCDiscoverUnownedDevices API error");
-        return -1;
-    }
-
-    // display the discovered unowned list
-    printf("   > Discovered Unowned Devices\n");
-    g_unown_cnt = printDevList(g_unown_list);
-
-    return 0;
-}
-
-static int discoverOwnedDevices(void)
-{
-    // delete owned device list before updating it
-    if(g_own_list)
-    {
-        OCDeleteDiscoveredDevices(g_own_list);
-        g_own_list = NULL;
-    }
-
-    // call |OCDiscoverOwnedDevices| API
-    printf("   Discovering Only Owned Devices on Network..\n");
-    if(OC_STACK_OK != OCDiscoverOwnedDevices(DISCOVERY_TIMEOUT, &g_own_list))
-    {
-        OIC_LOG(ERROR, TAG, "OCDiscoverOwnedDevices API error");
-        return -1;
-    }
-
-    // display the discovered owned list
-    printf("   > Discovered Owned Devices\n");
-    g_own_cnt = printDevList(g_own_list);
-
-    return 0;
-}
-
 static int registerDevices(void)
 {
     // check |unown_list| for registering devices
@@ -509,7 +457,7 @@ static int provisionTrustAnchor(int dev_num)
     g_doneCB = false;
     OicSecCredType_t type = SIGNED_ASYMMETRIC_KEY;
 
-    rst = OCProvisionTrustCertChain((void*)g_ctx, type, caCredId, targetDevice, &provisionTrustChainCB);
+    rst = OCProvisionTrustCertChain((void*)g_ctx, type, caCredId, targetDevice, (OCProvisionResultCB)&provisionTrustChainCB);
     if(OC_STACK_OK != rst)
     {
         OIC_LOG_V(ERROR, TAG, "OCProvisionTrustCertChain returned error: %d", rst);
@@ -564,7 +512,7 @@ static int getCsr(int dev_num, char** csr)
     if(rst != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "Failed to validate CSR signature");
-        OICFreeAndSetToNull(&g_csr);
+        OICFreeAndSetToNull((void**)&g_csr);
         return -1;
     }
 
@@ -574,12 +522,12 @@ static int getCsr(int dev_num, char** csr)
         if (*csr == NULL)
         {
             OIC_LOG(ERROR, TAG, "OICStrdup failed");
-            OICFreeAndSetToNull(&g_csr);
+            OICFreeAndSetToNull((void**)&g_csr);
             return -1;
         }
     }
 
-    OICFreeAndSetToNull(&g_csr);
+    OICFreeAndSetToNull((void**)&g_csr);
 
     printf("   > Get CSR SUCCEEDED\n");
 
@@ -1280,7 +1228,7 @@ static int testRoleProvisioning(int dev_num)
         OIC_LOG_V(ERROR, TAG, "%s Failed to provision role certificate", __func__);
         goto exit;
     }
-    OICFreeAndSetToNull(&roleCert);
+    OICFreeAndSetToNull((void**)&roleCert);
 
     /* The second will have the authority field set */
     ret = createCertFromCSR(g_caKeyPem, g_caCertPem, csr, TEST_CERT_ROLE2, TEST_CERT_AUTHORITY, &roleCert);
@@ -1728,28 +1676,6 @@ static int printDevList(const OCProvisionDev_t* dev_lst)
     return lst_cnt;
 }
 
-static size_t printUuidList(const OCUuidList_t* uid_lst)
-{
-    if (!uid_lst)
-    {
-        printf("     Device List is Empty..\n\n");
-        return 0;
-    }
-
-    OCUuidList_t* lst = (OCUuidList_t*)uid_lst;
-    size_t lst_cnt = 0;
-    for (; lst; )
-    {
-        printf("     [%zu] ", ++lst_cnt);
-        printUuid((const OicUuid_t*)&lst->dev);
-        printf("\n");
-        lst = lst->next;
-    }
-    printf("\n");
-
-    return lst_cnt;
-}
-
 static size_t printResultList(const OCProvisionResult_t* rslt_lst, const size_t rslt_cnt)
 {
     if (!rslt_lst || (0 == rslt_cnt))
@@ -1841,8 +1767,8 @@ void shutdownProvisionClient()
     OCDeleteDiscoveredDevices(g_own_list);  // after here |g_own_list| points to nothing
     OCDeleteDiscoveredDevices(g_unown_list);  // after here |g_unown_list| points to nothing
 
-    OICFreeAndSetToNull(&g_svr_fname);
-    OICFreeAndSetToNull(&g_prvn_fname);
+    OICFreeAndSetToNull((void**)&g_svr_fname);
+    OICFreeAndSetToNull((void**)&g_prvn_fname);
 }
 
 static int initDiscoverRegisterAllDevices()

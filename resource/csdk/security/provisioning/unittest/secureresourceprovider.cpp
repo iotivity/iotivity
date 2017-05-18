@@ -41,6 +41,7 @@ static OicSecDoxm_t defaultDoxm1 =
     {{0}},            /* OicUuid_t deviceID */
     false,                  /* bool dpc */
     {{0}},            /* OicUuid_t owner */
+    {{0}}           /* rownerID */
 };
 
 static OicSecDoxm_t defaultDoxm2 =
@@ -55,6 +56,7 @@ static OicSecDoxm_t defaultDoxm2 =
     {{0}},            /* OicUuid_t deviceID */
     false,                  /* bool dpc */
     {{0}},            /* OicUuid_t owner */
+    {{0}}           /* rownerID */
 };
 
 static void provisioningCB (void* UNUSED1, size_t UNUSED2, OCProvisionResult_t *UNUSED3, bool UNUSED4)

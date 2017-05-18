@@ -1355,7 +1355,7 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
                     //coaps://0.0.0.0:5684/oic/sec/cred?subjectid=(Canonical ENCODED UUID)
     const char *srpUri = SRP_FORM_DELETE_CREDENTIAL;
 #ifdef __WITH_TLS__
-    if(CA_ADAPTER_TCP == destDev->endpoint.adapter)
+    if((int)CA_ADAPTER_TCP == (int)destDev->endpoint.adapter)
     {
         srpUri = SRP_FORM_DELETE_CREDENTIAL_TCP;
     }
@@ -2905,7 +2905,7 @@ static void registerResultForGetCSRResourceCB(GetCsrData_t *getCsrData,
      */
     OCPMGetCsrResult_t* currentEntry = &getCsrData->resArr[getCsrData->numOfResults];
     OIC_LOG_V(INFO, TAG, "Inside registerResultForGetCSRResourceCB "
-        "getCsrData->numOfResults is %d\n", getCsrData->numOfResults);
+        "getCsrData->numOfResults is %zu\n", getCsrData->numOfResults);
     memcpy(currentEntry->deviceId.id,
         getCsrData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
     currentEntry->res = stackresult;
@@ -3050,7 +3050,7 @@ static void registerResultForGetRolesResourceCB(GetRolesData_t *getRolesData,
      */
     OCPMGetRolesResult_t* currentEntry = &getRolesData->resArr[getRolesData->numOfResults];
     OIC_LOG_V(INFO, TAG, "Inside registerResultForGetCSRResourceCB "
-        "getRolesData->numOfResults is %d\n", getRolesData->numOfResults);
+        "getRolesData->numOfResults is %zu\n", getRolesData->numOfResults);
     memcpy(currentEntry->deviceId.id,
         getRolesData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
     currentEntry->res = stackresult;

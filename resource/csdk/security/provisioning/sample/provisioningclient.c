@@ -1121,7 +1121,7 @@ static int provisionCert(void)
     g_doneCB = false;
     OicSecCredType_t type = SIGNED_ASYMMETRIC_KEY;
 
-    OCStackResult rst = OCProvisionTrustCertChain((void*)g_ctx, type, g_caCredId, targetDevice, &provisionTrustChainCB);
+    OCStackResult rst = OCProvisionTrustCertChain((void*)g_ctx, type, g_caCredId, targetDevice, (OCProvisionResultCB)&provisionTrustChainCB);
     if (OC_STACK_OK != rst)
     {
         OIC_LOG_V(ERROR, TAG, "OCProvisionTrustCertChain returned error: %d", rst);
@@ -1161,14 +1161,14 @@ static int provisionCert(void)
     if (OC_STACK_OK != rst)
     {
         OIC_LOG(ERROR, TAG, "Failed to validate CSR signature");
-        OICFreeAndSetToNull(&g_csr);
+        OICFreeAndSetToNull((void**)&g_csr);
         return -1;
     }
 
     printf("   > Creating a certificate for the device..\n");
     char* deviceCert;
     int ret = createIdentityCertFromCSR(g_caKeyPem, g_caCertPem, g_csr, &deviceCert);
-    OICFreeAndSetToNull(&g_csr);
+    OICFreeAndSetToNull((void**)&g_csr);
     if (ret != 0)
     {
         OIC_LOG(ERROR, TAG, "Failed to generate certificate");
@@ -1346,7 +1346,7 @@ static int provisionDirectPairing(void)
     printf("   Atempt Direct-Pairing Provisioning (PIN : [%s])..\n", (char*)pconf.pin.val);
     OCStackResult rst = OCProvisionDirectPairing((void*) g_ctx,
                                        getDevInst((const OCProvisionDev_t*) g_own_list, dev_num),
-                                       &pconf, provisionDPCB);
+                                       &pconf, (OCProvisionResultCB)provisionDPCB);
     if(OC_STACK_OK != rst)
     {
         OIC_LOG_V(ERROR, TAG, "OCProvisionDirectPairing API error: %d", rst);
