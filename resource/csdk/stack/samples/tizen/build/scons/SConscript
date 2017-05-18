@@ -63,4 +63,4 @@ if 'BROKER' in with_mq:
 	env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
 	print "MQ Broker support"
 
-env.SConscript(['../resource/SConscript'])
+SConscript(env.get('BUILD_DIR') + 'resource/SConscript')

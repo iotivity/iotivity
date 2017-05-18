@@ -65,7 +65,7 @@ if target_os in ['windows', 'msys_nt']:
 if target_os in ['linux', 'android', 'tizen', 'msys_nt', 'windows'] and libocsrm_env.get('SECURED') == '1':
 	SConscript('provisioning/SConscript', 'libocsrm_env')
 
-if target_os in ['linux', 'windows', 'darwin'] and libocsrm_env.get('SECURED') == '1':
+if target_os in ['linux', 'tizen', 'windows', 'darwin'] and libocsrm_env.get('SECURED') == '1':
 	SConscript('tool/SConscript', 'libocsrm_env')
 
 # As in the source code, it includes arduino Time library (C++)

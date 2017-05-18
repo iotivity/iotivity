@@ -640,10 +640,24 @@ conf = Configure(env,
 # threading and mutexes.  This will set the environment variable
 # POSIX_SUPPORTED, 1 if it is supported, 0 otherwise
 conf.CheckPThreadsSupport()
-
 env = conf.Finish()
-######################################################################
 
+######################################################################
+# Generate Cbor from json files
+######################################################################
+json2cbor = env.get('BUILD_DIR') + 'resource/csdk/security/tool/json2cbor'
+
+def generate_actions(source, target, env, for_signature):
+    Depends(target, "json2cbor")
+    return " %s %s %s" % (str(json2cbor), source[0], target[0])
+
+builder = Builder(generator = generate_actions,
+                  suffix = '.dat',
+                  src_suffix = '.json')
+
+env.Append(BUILDERS = {'Cbor' : builder})
+
+######################################################################
 # must call external_builders.scons second time to properly setup
 # UnpackAll builder this is due to the system path not being pulled
 # in for windows till after the windows target has run.

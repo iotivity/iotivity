@@ -124,9 +124,3 @@ if unittests_env.get('TEST') == '1':
         'resource_unittests_unittests.memcheck',
         'resource/unittests/unittests',
         unittests)
-
-src_dir = unittests_env.get('SRC_DIR')
-svr_db_src_dir = os.path.join(src_dir, 'resource/examples/')
-svr_db_build_dir = os.path.join(unittests_env.get('BUILD_DIR'), 'resource', 'unittests') + os.sep
-unittests_env.Alias("install",
-    unittests_env.Install(svr_db_build_dir, os.path.join(svr_db_src_dir, 'oic_svr_db_client.dat')))
