@@ -1341,8 +1341,8 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
     {
         for (unsigned int i = 0; i < SSL_CIPHER_MAX - 1; i++)
         {
-            if (MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 != tlsCipher[i][0] &&
-                    i != g_caSslContext->cipher)
+            if ((MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 != tlsCipher[i][0]) &&
+                    (i != (unsigned int)g_caSslContext->cipher))
             {
                 g_cipherSuitesList[index] = tlsCipher[i][0];
                 index ++;
