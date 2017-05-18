@@ -77,6 +77,7 @@ if target_os == 'linux':
 if target_os == 'android':
     notification_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
     notification_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
+    notification_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libnotification_provider_wrapper.so'])
 
 if not env.get('RELEASE') and target_os not in ['ios']:
     notification_env.PrependUnique(LIBS = ['gcov'])

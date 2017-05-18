@@ -144,6 +144,9 @@ else:
 resource_container_env.UserInstallTargetHeader('include/RCSBundleInfo.h', 'service/resource-container', 'RCSBundleInfo.h')
 resource_container_env.UserInstallTargetHeader('include/RCSResourceContainer.h', 'service/resource-container', 'RCSResourceContainer.h')
 
+if target_os in ['android']:
+    resource_container_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,librcs_container.so'])
+
 ######################################################################
 # build discomfort index sensor sample bundle
 ######################################################################
@@ -167,6 +170,9 @@ if target_os in ['linux', 'tizen', 'android']:
         Command("THSensorApp", DI_SENSOR_BUNDLE_DIR + "src/inputSensors/THSensorApp/THSensorApp", Copy("$TARGET", "$SOURCE"))
         Command("THSensorApp1", DI_SENSOR_BUNDLE_DIR + "src/inputSensors/THSensorApp1/THSensorApp1", Copy("$TARGET", "$SOURCE"))
 
+    if target_os in ['android']:
+        resource_container_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libDISensorBundle.so'])
+
 ######################################################################
 # build BMI sensor sample bundle
 ######################################################################
@@ -189,6 +195,9 @@ if target_os in ['linux', 'tizen', 'android']:
         SConscript(BMI_SENSOR_BUNDLE_DIR + 'src/inputSensors/SConscript')
         Command("HeightSensorApp", BMI_SENSOR_BUNDLE_DIR + "src/inputSensors/HeightSensorApp/HeightSensorApp", Copy("$TARGET", "$SOURCE"))
         Command("WeightSensorApp", BMI_SENSOR_BUNDLE_DIR + "src/inputSensors/WeightSensorApp/WeightSensorApp", Copy("$TARGET", "$SOURCE"))
+
+    if target_os in ['android']:
+        resource_container_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libBMISensorBundle.so'])
 
 ######################################################################
 # build hue sample bundle
