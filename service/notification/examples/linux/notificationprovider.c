@@ -148,19 +148,21 @@ void removeTopics(NSTopicLL * topics)
 
 void input(char * buffer)
 {
-    char ch;
+    char ch = '\0';
     int i = 0;
 
     while( (ch = getchar()) != '\n' && i < 100)
+    {
         buffer[i++] = ch;
+    }
 
     buffer[i] = '\0';
 }
 
 int main()
 {
-    int num;
-    pthread_t processThread;
+    int num = 0;
+    pthread_t processThread = 0;
 
     printf("NSStartProvider()\n\n");
 
@@ -178,7 +180,7 @@ int main()
 
     while (!isExit)
     {
-        char dummy;
+        char dummy = '\0';
 
         printf("==============================================\n");
         printf("1.  NSStartProvider(Accepter: Provider) \n");

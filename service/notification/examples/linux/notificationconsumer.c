@@ -131,11 +131,13 @@ void* OCProcessThread(void * ptr)
 
 void input(char * buffer)
 {
-    char ch;
+    char ch = '\0';
     int i = 0;
 
     while( (ch = getchar()) != '\n' && i < 100)
+    {
         buffer[i++] = ch;
+    }
 
     buffer[i] = '\0';
 }

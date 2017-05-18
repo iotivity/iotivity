@@ -79,7 +79,7 @@ NSResult NSCreateResource(char *uri)
         return NS_ERROR;
     }
 
-    uint8_t resourceProperties;
+    uint8_t resourceProperties = 0;
 
     if (strcmp(uri, NS_ROOT_URI) == 0)
     {

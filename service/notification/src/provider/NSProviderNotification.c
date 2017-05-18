@@ -107,7 +107,7 @@ NSResult NSSendNotification(NSMessage *msg)
 {
     NS_LOG(DEBUG, "NSSendMessage - IN");
 
-    OCResourceHandle rHandle;
+    OCResourceHandle rHandle = NULL;
     OCObservationId obArray[255] = { 0, };
     size_t obCount = 0;
 
@@ -214,7 +214,7 @@ NSResult NSSendSync(NSSyncInfo *sync)
     OCObservationId obArray[255] = { 0, };
     size_t obCount = 0;
 
-    OCResourceHandle rHandle;
+    OCResourceHandle rHandle = NULL;
     if (NSPutSyncResource(sync, &rHandle) != NS_OK)
     {
         NS_LOG(ERROR, PCF("Fail to put sync resource"));

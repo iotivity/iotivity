@@ -19,7 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 /**
- * @file NSConsumerServiceTest2.cpp 
+ * @file NSConsumerServiceTest2.cpp
  *
  * This file contains Notification consumer service test cases that do not involve network related methods.
  * The test cases are executed during the build by enabling the option 'TEST' in scons build.
@@ -216,7 +216,7 @@ TEST_F(NotificationServiceConsumerTest, ExpectGetProviderSuccessWithInvalidProvi
 TEST_F(NotificationServiceConsumerTest, ExpectGetProviderSuccessWithValidProviderId)
 {
     ::NSProvider *provider = (::NSProvider *)malloc(sizeof(::NSProvider));
-    strcpy(provider->providerId, "098765432109876543210987654321098765");
+    strncpy(provider->providerId, "098765432109876543210987654321098765", NS_UTILS_UUID_STRING_SIZE);
     std::string provId;
     provId.assign(provider->providerId, NS_UTILS_UUID_STRING_SIZE - 1);
 
@@ -242,7 +242,7 @@ TEST_F(NotificationServiceConsumerTest, ExpectSuccessSendSyncInfo)
     std::string provId;
 
     ::NSProvider *provider = (::NSProvider *)malloc(sizeof(::NSProvider));
-    strcpy(provider->providerId, "098765432109876543210987654321098765");
+    strncpy(provider->providerId, "098765432109876543210987654321098765", NS_UTILS_UUID_STRING_SIZE);
     provId.assign(provider->providerId, NS_UTILS_UUID_STRING_SIZE - 1);
 
     std::shared_ptr<OIC::Service::NSProvider> providerTemp = std::make_shared<OIC::Service::NSProvider>
@@ -271,7 +271,7 @@ TEST_F(NotificationServiceConsumerTest, ExpectSuccessGetTopicsList)
     std::string provId;
 
     ::NSProvider *provider = (::NSProvider *)malloc(sizeof(::NSProvider));
-    strcpy(provider->providerId, "098765432109876543210987654321098765");
+    strncpy(provider->providerId, "098765432109876543210987654321098765", NS_UTILS_UUID_STRING_SIZE);
     provId.assign(provider->providerId, NS_UTILS_UUID_STRING_SIZE - 1);
 
     std::shared_ptr<OIC::Service::NSProvider> providerTemp = std::make_shared<OIC::Service::NSProvider>

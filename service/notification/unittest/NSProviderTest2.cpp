@@ -447,8 +447,7 @@ TEST(NotificationProviderTest, ExpectFailSendMessageWithNULL)
 
 TEST(NotificationProviderTest, ExpectFailAcceptSubscription)
 {
-    NSResult result;
-    result = NS_SUCCESS;
+    NSResult result = NS_SUCCESS;
     result = NSAcceptSubscription(NULL, true);
     result = NSAcceptSubscription("\0", true);
 
@@ -457,8 +456,7 @@ TEST(NotificationProviderTest, ExpectFailAcceptSubscription)
 
 TEST(NotificationProviderTest, ExpectFailRegisterTopic)
 {
-    NSResult result;
-    result = NS_SUCCESS;
+    NSResult result = NS_SUCCESS;
     result = NSProviderRegisterTopic(NULL);
     result = NSProviderRegisterTopic("\0");
 
@@ -467,8 +465,7 @@ TEST(NotificationProviderTest, ExpectFailRegisterTopic)
 
 TEST(NotificationProviderTest, ExpectFailUnregisterTopic)
 {
-    NSResult result;
-    result = NS_SUCCESS;
+    NSResult result = NS_SUCCESS;
     result = NSProviderUnregisterTopic(NULL);
     result = NSProviderUnregisterTopic("\0");
 
@@ -477,7 +474,7 @@ TEST(NotificationProviderTest, ExpectFailUnregisterTopic)
 
 TEST(NotificationProviderTest, ExpectFailGetConsumerTopics)
 {
-    NSTopicLL topic;
+    NSTopicLL topic = { NULL, NS_TOPIC_UNSUBSCRIBED, NULL };
     NSTopicLL * topicLL = &topic;
 
     topicLL = NSProviderGetConsumerTopics(NULL);
@@ -488,8 +485,7 @@ TEST(NotificationProviderTest, ExpectFailGetConsumerTopics)
 
 TEST(NotificationProviderTest, ExpectFailSetConsumerTopics)
 {
-    NSResult result;
-    result = NS_SUCCESS;
+    NSResult result = NS_SUCCESS;
     result = NSProviderSetConsumerTopic(NULL, NULL);
     result = NSProviderSetConsumerTopic(NULL, "\0");
     result = NSProviderSetConsumerTopic("\0", NULL);
@@ -504,8 +500,7 @@ TEST(NotificationProviderTest, ExpectFailSetConsumerTopics)
 
 TEST(NotificationProviderTest, ExpectFailUnsetConsumerTopics)
 {
-    NSResult result;
-    result = NS_SUCCESS;
+    NSResult result = NS_SUCCESS;
     result = NSProviderUnsetConsumerTopic(NULL, NULL);
     result = NSProviderUnsetConsumerTopic(NULL, "\0");
     result = NSProviderUnsetConsumerTopic("\0", NULL);

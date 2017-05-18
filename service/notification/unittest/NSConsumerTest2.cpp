@@ -37,6 +37,8 @@
 #include "NSConsumerCommunication.h"
 #include "NSConsumerInternalTaskController.h"
 
+#define NS_UUID_STRING_SIZE 37
+
 namespace
 {
     NSProvider * g_provider = NULL;
@@ -66,7 +68,7 @@ namespace
     const std::string testProviderID = "123456789012345678901234567890123456";
 
     static void NSNotificationReceivedCallback(NSMessage * message)
-        {
+    {
         if (0 != testProviderID.compare(message->providerId))
         {
             NSRemoveMessage(message);
@@ -302,7 +304,7 @@ namespace
         }
         provider->accessPolicy = NSSelector::NS_SELECTION_CONSUMER;
         provider->state = NS_DISCOVERED;
-        strcpy(provider->providerId, testProviderID.c_str());
+        strncpy(provider->providerId, testProviderID.c_str(), NS_UUID_STRING_SIZE);
         provider->messageUri = strdup("/notificationTest/message");
         provider->syncUri = strdup("/notificationTest/sync");
         provider->topicUri = strdup("/notificationTest/topic");
