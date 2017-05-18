@@ -1,0 +1,185 @@
+'''
+/******************************************************************
+*
+* Copyright 2017 Granite River Labs All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# Build script for Windows
+#
+##
+
+print '\n---------------Started Building IotivitySecTest for Windows---------------\n'
+
+Import('env_windows')
+import os
+
+env_windows['CC'] = 'cl'
+
+# TODO: re-enable warnings, especially: 4244, 4267, 4365
+env_windows.AppendUnique(CXXFLAGS=[
+    '/wd4244',   # C4244 conversion from one type to another type results in a possible loss of data.
+    '/wd4267',   # C4267 conversion from size_t to a smaller type.
+    '/wd4355',   # C4355 'this' used in base member initializer list.
+    '/wd4800',   # C4800 forcing value to bool 'true' or 'false'.
+    '/wd4996',   # C4996 deprecated declaration.
+    '/wd4820',   # C4820 added padding to the end of a struct.
+    '/wd4514',   # C4514 unreferenced inline function has been removed
+    '/wd4365',   # C4365 signed/unsigned mismatch
+    '/wd4503'])  # C4503 decorated name length exceeded, name was truncated
+
+env_windows.AppendUnique(CCFLAGS=['-D__WINDOWS__','/EHsc'])
+
+# Set release/debug flags
+#env_windows.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/ZI', '/RTC1', '/Gm'])
+if env_windows.get('RELEASE'):
+    env_windows.AppendUnique(CCFLAGS = ['/MD', '/O2', '/GF'])
+    env_windows.AppendUnique(CPPDEFINES = ['NDEBUG'])
+elif env_windows.get('TARGET_ARCH') in ['x86', 'x86_64'] or "14.0" in vs_version:
+	env_windows.AppendUnique(CCFLAGS = ['/Od', '/ZI', '/RTC1', '/Gm'])
+	env_windows.AppendUnique(LINKFLAGS = ['/debug'])
+else:
+    env_windows.AppendUnique(CCFLAGS = ['/Od', '/Zi', '/RTC1', '/Gm'])
+    env_windows.AppendUnique(LINKFLAGS = ['/debug'])
+    env_windows.AppendUnique(LIBPATH = [env_windows.get('BUILD_DIR')])
+    env_windows.AppendUnique(PATH = os.environ['PATH'])
+
+cppflags = Split('-D__WINDOWS__ -D_WIN -DHAVE_STRUCT_TIMESPEC -D_MSC_VER=1900 -DBOOST_ASIO_WINDOWS_RUNTIME')
+
+iotivity_root = env_windows.get('IOTIVITY_ROOT')
+iotivity_lib_path = env_windows.get('IOTIVITY_LIB_PATH')
+iotivity_test_root = env_windows.get('IOTIVITY_TEST_ROOT')
+variant_dir = env_windows.get('VARIANT_DIR')
+install_dir = env_windows.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
+test = env_windows.get('TEST')
+common_windows_cppflags = env_windows.get('COMMON_WINDOWS_CPPFLAGS')
+
+if env_windows.get('SECURED') == '1':
+    secured = True
+else:
+    secured = False
+
+install_targets = []
+default_targets = []
+
+iotivity_include_paths = [
+    iotivity_root + '/resource/include',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/c_common',
+    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/csdk/stack/include',
+    iotivity_root + '/resource/csdk/ocsocket/include',
+    iotivity_root + '/resource/c_common/ocrandom/include',
+    iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/resource/oc_logger/include',
+    iotivity_root + '/extlibs/boost/boost',
+    iotivity_root + '/resource/extlibs/cereal/include/',
+    iotivity_root + '/resource/extlibs/timer/',
+    iotivity_root + '/service/easy-setup/inc',
+    iotivity_root + '/service/easy-setup/enrollee/inc',
+    iotivity_root + '/service/easy-setup/mediator/richsdk/inc',
+    iotivity_root + '/service/easy-setup/enrollee/src',
+    iotivity_root + '/service/easy-setup/mediator/richsdk/src',
+    iotivity_root + '/resource/csdk/security/include',
+    iotivity_root + '/resource/csdk/connectivity/api',
+    iotivity_root + '/resource/csdk/security/provisioning/include',
+    iotivity_root + '/resource/csdk/security/provisioning/include/internal'
+]
+
+enrollee_tc_include_paths = [
+    iotivity_test_root + '/include',
+    test_src_root + '/tc/es/gtest/include/enrollee',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include',
+]
+
+mediator_tc_include_paths = [
+    iotivity_test_root + '/include',
+    test_src_root + '/tc/es/gtest/include/mediator',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include',
+]
+
+enrollee_tc_src = [
+    Glob(test_src_root + '/tc/es/gtest/src/helper/enrollee/*.cpp'),
+    Glob(test_src_root + '/tc/es/gtest/src/btc/enrollee/*.cpp'),
+    Glob(test_src_root + '/tc/es/gtest/src/stc/enrollee/*.cpp')
+]
+
+if secured:
+    mediator_tc_src = [
+        Glob(test_src_root + '/tc/es/gtest/src/helper/mediator/*.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESCloudResourceTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESEasySetupTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESEnrolleeResourceTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESEnrolleeSecurityTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESRemoteEnrolleeTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESRichCommonTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/stc/mediator/*.cpp')
+]
+else:
+    mediator_tc_src = [
+        Glob(test_src_root + '/tc/es/gtest/src/helper/mediator/*.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESCloudResourceTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESEasySetupTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESEnrolleeResourceTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESRemoteEnrolleeTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/btc/mediator/ESRichCommonTest.cpp'),
+        Glob(test_src_root + '/tc/es/gtest/src/stc/mediator/*.cpp')
+]
+
+libs = Split('connectivity_abstraction mbedx509 mbedtls mbedcrypto octbstack coap oc oc_logger logger c_common win_helper rcs_common rcs_client')
+env_windows.AppendUnique(LIBS = ['bcrypt', 'Ws2_32', 'advapi32', 'iphlpapi', 'crypt32', 'kernel32'])
+
+enrollee_libs =  [ 'ESEnrolleeSDK' ]
+mediator_libs = [ 'ESMediatorRich']
+
+if secured:
+    cppflags.append('-D__WITH_DTLS__')
+    mediator_libs.append('ocprovision')
+
+
+enrollee_tc = env_windows.Program(source = enrollee_tc_src, 
+                        target = 'iotivity_es_enrollee_test', 
+                        CPPPATH = iotivity_include_paths + enrollee_tc_include_paths, 
+                        #LIBS = libs + enrollee_libs, 
+			LIBS = libs + ['tc_util', 'common_util'],
+                        RPATH = iotivity_lib_path,
+                        LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/windows/', '.'], 
+                        CPPFLAGS = cppflags + common_windows_cppflags)
+install_targets += enrollee_tc
+
+mediator_tc = env_windows.Program(source = mediator_tc_src, 
+                        target = 'iotivity_es_mediator_test', 
+                        CPPPATH = iotivity_include_paths + mediator_tc_include_paths,
+                        LIBS = libs + mediator_libs, 
+                        RPATH = iotivity_lib_path,
+                        LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/windows/', '.'], 
+                        CPPFLAGS = cppflags + common_windows_cppflags)
+install_targets += mediator_tc
+
+install_bin = env_windows.Install(iotivity_test_root + '/' + install_dir, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin.append(Command(str(i), [], Delete(delete_target)))
+    i = i +1
+
+default_targets = install_bin + delete_bin
+
+env_windows.Default(default_targets)

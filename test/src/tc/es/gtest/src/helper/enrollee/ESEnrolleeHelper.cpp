@@ -21,7 +21,9 @@
 
 #include "ESEnrolleeHelper.h"
 #include <iostream>
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -124,23 +126,6 @@ void ESEnrolleeHelper::devConfProvCbInApp(ESDevConfData *eventData)
     IOTIVITYTEST_LOG(INFO,"devConfProvCbInApp IN\n");
     ESEnrolleeHelper::isCallbackInvoked = true;
 
-    if (eventData->language != NULL)
-    {
-        IOTIVITYTEST_LOG(INFO,"Language : %s\n", eventData->language);
-    }
-    else
-    {
-        IOTIVITYTEST_LOG(INFO,"ERROR! Language IS NULL\n");
-    }
-
-    if (eventData->country != NULL)
-    {
-        IOTIVITYTEST_LOG(INFO,"Country : %s\n", eventData->country);
-    }
-    else
-    {
-        IOTIVITYTEST_LOG(INFO,"ERROR! Country IS NULL\n");
-    }
     IOTIVITYTEST_LOG(INFO,"enven data User", eventData->userdata);
 
     IOTIVITYTEST_LOG(INFO,"devConfProvCbInApp OUT\n");

@@ -65,7 +65,7 @@ protected:
  * @post_condition None
  * @expected ES_OK
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESWIFIRESOURCENonSecured_SRC_P)
 {
     ESResult m_result = ES_ERROR;
@@ -97,7 +97,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESWIFIRESOURCENonSecured_SR
  * @post_condition None
  * @expected ES_OK
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESWIFIRESOURCESecured_SRC_P)
 {
     ESResult m_result = ES_ERROR;
@@ -129,7 +129,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESWIFIRESOURCESecured_SRC_P
  * @post_condition None close the apps
  * @expected ES_OK
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESCLOUDRESOURCENonSecured_SRC_P)
 {
     ESResult m_result = ES_ERROR;
@@ -161,7 +161,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESCLOUDRESOURCENonSecured_S
  * @post_condition None close the apps
  * @expected ES_OK
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESCLOUDRESOURCESecured_SRC_P)
 {
     ESResult m_result = ES_ERROR;
@@ -193,7 +193,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESCLOUDRESOURCESecured_SRC_
  * @post_condition None
  * @expected ES_OK
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCENonSecured_SRC_P)
 {
     ESResult m_result = ES_ERROR;
@@ -225,7 +225,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCENonSecured
  * @post_condition None
  * @expected ES_OK
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCESecured_SRC_P)
 {
     ESResult m_result = ES_ERROR;
@@ -257,7 +257,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCESecured_SR
  * @post_condition None
  * @expected ES_OK
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskAllNonSecured_SRC_P)
 {
     ESResult m_result = ES_ERROR;
@@ -289,7 +289,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskAllNonSecured_SRC_P)
  * @post_condition None
  * @expected ES_OK
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskAllSecured_SRC_P)
 {
     ESResult m_result = ES_ERROR;
@@ -321,7 +321,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskAllSecured_SRC_P)
  * @post_condition None
  * @expected ES_OK
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeWorkWithAllCallback_SRC_P)
 {
     ESResult m_result = ES_ERROR;
@@ -352,7 +352,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeWorkWithAllCallback_SRC_P)
  * @post_condition None
  * @expected successfully called api and no error
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrollee_WiFiProvCb_Null_NV_N)
 {
     ESResult m_result = ES_OK;
@@ -385,7 +385,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrollee_WiFiProvCb_Null_NV_N)
  * @post_condition None
  * @expected No error
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeDevConfProvCbInApp_Null_NV_N)
 {
     ESResult m_result = ES_OK;
@@ -417,7 +417,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeDevConfProvCbInApp_Null_NV_N)
  * @post_condition None
  * @expected successfully call api and no error
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeCloudDataProvCbInApp_Null_NV_N)
 {
     ESResult m_result = ES_OK;
@@ -450,7 +450,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeCloudDataProvCbInApp_Null_NV_N)
  * @post_condition None
  * @expected ES_OK
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESSetDevicePropertySetDevicePropertyNonSecured_SRC_P)
 {
     ESResult m_result = ES_ERROR;
@@ -483,7 +483,7 @@ TEST_F(ESEnrolleeTest_btc, ESSetDevicePropertySetDevicePropertyNonSecured_SRC_P)
  * @post_condition None
  * @expected ES_OK
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESSetDevicePropertySetDevicePropertySecured_SRC_P)
 {
     ESResult m_result = ES_ERROR;
@@ -516,7 +516,7 @@ TEST_F(ESEnrolleeTest_btc, ESSetDevicePropertySetDevicePropertySecured_SRC_P)
  * @post_condition None
  * @expected ES_OK
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESSetStateSetStateNonSecured_SRC_P)
 {
     ESResult m_result = ES_ERROR;
@@ -549,7 +549,7 @@ TEST_F(ESEnrolleeTest_btc, ESSetStateSetStateNonSecured_SRC_P)
  * @post_condition None
  * @expected ES_OK
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESSetStateSetStateSecured_SRC_P)
 {
     ESResult m_result = ES_ERROR;
@@ -581,7 +581,7 @@ TEST_F(ESEnrolleeTest_btc, ESSetStateSetStateSecured_SRC_P)
  * @post_condition None
  * @expected ES_OK
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESSetErrorCodeSetErrorCodeWithSuccess_SRC_P)
 {
     ESResult m_result = ES_ERROR;
@@ -614,7 +614,7 @@ TEST_F(ESEnrolleeTest_btc, ESSetErrorCodeSetErrorCodeWithSuccess_SRC_P)
  * @post_condition None
  * @expected ES_OK
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESSetErrorCodeSetErrorCodeUnknownWithSuccess_SRC_P)
 {
     ESResult m_result = ES_ERROR;
@@ -647,7 +647,7 @@ TEST_F(ESEnrolleeTest_btc, ESSetErrorCodeSetErrorCodeUnknownWithSuccess_SRC_P)
  * @post_condition None
  * @expected API called without error
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESSetErrorCodeSetErrorEmptyCode_USV_N)
 {
     ESResult m_result = ES_OK;
@@ -659,7 +659,7 @@ TEST_F(ESEnrolleeTest_btc, ESSetErrorCodeSetErrorEmptyCode_USV_N)
         return;
     }
     m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callbacks);
-    m_result = ESSetErrorCode(1213100);
+    m_result = ESSetErrorCode((ESErrorCode)1213100);
 
     if (m_result != ES_ERROR)
     {
@@ -678,7 +678,7 @@ TEST_F(ESEnrolleeTest_btc, ESSetErrorCodeSetErrorEmptyCode_USV_N)
  * @post_condition None
  * @expected ES_OK
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_btc, ESTerminateEnrolleeSuccess_SRC_P)
 {
     ESResult m_result = ES_ERROR;

@@ -30,7 +30,9 @@
 #include <escommon.h>
 #include "ESEnrolleeCommon.h"
 #include <iostream>
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include "IotivityTest_Logger.h"
 using namespace std;
 

@@ -35,7 +35,9 @@
 #include <escommon.h>
 #include "ESEnrolleeCommon.h"
 #include <iostream>
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 using namespace std;
 
 class ESEnrolleeTest_stc: public ::testing::Test
@@ -73,7 +75,7 @@ protected:
  * @post_condition None
  * @expected ES_OK is returned
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESWIFIRESOURCENonSecuredSuccessCallBack_SRC_P)
 {
 
@@ -116,7 +118,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESWIFIRESOURCENonSecuredSuc
  * @post_condition None
  * @expected ES_OK is returned
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESWIFIRESOURCESecuredSuccessCallBack_SRC_P)
 {
     ESResult m_result;
@@ -155,7 +157,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESWIFIRESOURCESecuredSucces
  * @expected ES_OK is returned
  **/
 
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESCLOUDRESOURCENonSecuredSuccessCallBack_SRC_P)
 {
     ESResult m_result;
@@ -194,7 +196,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESCLOUDRESOURCENonSecuredSu
  * @expected ES_OK is returned
  **/
 
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESCLOUDRESOURCESecuredSuccessCallBack_SRC_P)
 {
     ESResult m_result;
@@ -232,7 +234,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESCLOUDRESOURCESecuredSucce
  * @post_condition None
  * @expected ES_OK is returned
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCENonSecuredSuccessCallback_SRC_P)
 {
     ESResult m_result;
@@ -270,7 +272,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCENonSecured
  * @post_condition None
  * @expected ES_OK is returned
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCESecuredSuccessCallback_SRC_P)
 {
     ESResult m_result;
@@ -308,7 +310,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCESecuredSuc
  * @post_condition None
  * @expected ES_OK is returned
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskAllNonSecuredSuccesscallback_SRC_P)
 {
     ESResult m_result;
@@ -347,7 +349,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskAllNonSecuredSuccesscallbac
  * @expected ES_OK is returned
  **/
 
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskAllSecuredSuccessCallBack_SRC_P)
 {
     ESResult m_result;
@@ -385,7 +387,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskAllSecuredSuccessCallBack_S
  * @post_condition None
  * @expected ES_OK is returned
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_stc, ESSetDevicePropertySetDevicePropertyWithSuccessSecured_SRC_P)
 {
     ESResult m_result;
@@ -418,7 +420,7 @@ TEST_F(ESEnrolleeTest_stc, ESSetDevicePropertySetDevicePropertyWithSuccessSecure
  * @post_condition None
  * @expected ES_OK is returned
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_stc, ESSetDevicePropertySetDevicePropertyWithSuccessNonSecured_SRC_P)
 {
     ESResult m_result;
@@ -451,7 +453,7 @@ TEST_F(ESEnrolleeTest_stc, ESSetDevicePropertySetDevicePropertyWithSuccessNonSec
  * @post_condition None
  * @expected ES_OK is returned
  **/
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(ESEnrolleeTest_stc, ESTerminateEnrolleeWorkProperly_SRC_N)
 {
     ESResult m_result;
