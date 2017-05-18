@@ -64,21 +64,35 @@ if os.path.exists('.git/HEAD'):
  '''
         Exit(1)
 
-
-pattern = '#define MBEDTLS_HAVE_WINSOCK2'
-found = False
 import re
 import sys
-mbedtls_header = os.path.join('include', 'mbedtls', 'config.h')
+found = False
+
+# Check for the desired version of mbedTLS, first.
+pattern = '#define MBEDTLS_VERSION_NUMBER         0x02040200'
+mbedtls_header = os.path.join('include', 'mbedtls', 'version.h')
 with open(mbedtls_header, 'r') as stream:
     for line in stream:
         if pattern in line:
             found = True
             break
+
+# If we're on the right version, check for the patch being applied.
+if found:
+    found = False
+    pattern = '#if defined(MBEDTLS_HAVE_WINSOCK2)'
+    mbedtls_header = os.path.join('include', 'mbedtls', 'net_sockets.h')
+    with open(mbedtls_header, 'r') as stream:
+        for line in stream:
+            if pattern in line:
+                found = True
+                break
+
+# If either is not the case, reset and apply the patch.
 if not found:
     if os.path.exists('.git/HEAD'):
         # Apply ocf patch on git revision
-        cmd = 'git checkout development && git reset --hard ' + mbedtls_revision + ' && git clean -f && git apply --whitespace=fix ../ocf.patch'
+        cmd = 'git checkout -f development && git reset --hard ' + mbedtls_revision + ' && git clean -f && git apply --whitespace=fix ../ocf.patch'
         res = os.system(cmd)
     else:
         # Fallback to regular patch command
