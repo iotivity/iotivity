@@ -119,7 +119,7 @@ if target_os == 'arduino':
 
 # Build flags
 if target_os not in ['arduino', 'windows', 'winrt', 'msys_nt']:
-    libcoap_env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '_DEFAULT_SOURCE'])
+    libcoap_env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '_GNU_SOURCE'])
     libcoap_env.AppendUnique(CFLAGS = ['-std=gnu99','-fPIC'])
 
 if target_os not in ['windows', 'winrt']:
