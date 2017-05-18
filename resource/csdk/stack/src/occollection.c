@@ -80,7 +80,18 @@ static bool AddRTSBaslinePayload(OCRepPayload **linkArray, int size, OCRepPayloa
         rts[k++] = OICStrdup(rsrcType->value);
     }
 
-    return OCRepPayloadSetStringArrayAsOwner(*colPayload, OC_RSRVD_RTS, rts, dim);
+    bool b = OCRepPayloadSetStringArrayAsOwner(*colPayload, OC_RSRVD_RTS, rts, dim);
+
+    if (!b)
+    {
+        for (size_t j = 0; j < arraySize; j++)
+        {
+            OICFree(rts[j]);
+        }
+        OICFree(rts);
+    }
+
+    return b;
 }
 
 static OCStackResult SendResponse(const OCRepPayload *payload, const OCEntityHandlerRequest *ehRequest,
@@ -408,7 +419,14 @@ OCStackResult BuildCollectionLinksPayloadValue(const char* resourceUri, OCRepPay
         if (!arrayPayload[i])
         {
             OICFree(createdPayloadValue);
+
+            for (size_t j = 0; j < i; j++)
+            {
+                OCRepPayloadDestroy(arrayPayload[j]);
+            }
+
             OICFree(arrayPayload);
+
             return result;
         }
 
@@ -430,6 +448,15 @@ OCStackResult BuildCollectionLinksPayloadValue(const char* resourceUri, OCRepPay
         if (!OCRepPayloadSetPropObjectAsOwner(arrayPayload[i], OC_RSRVD_POLICY,
                              addPolicyPayload((OCResourceHandle*)iterResource, devAddr)))
         {
+            OICFree(createdPayloadValue);
+
+            for (size_t j = 0; j <= i; j++)
+            {
+                OCRepPayloadDestroy(arrayPayload[j]);
+            }
+
+            OICFree(arrayPayload);
+
             return result;
         }
 

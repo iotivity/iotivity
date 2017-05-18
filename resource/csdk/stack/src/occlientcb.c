@@ -98,6 +98,8 @@ AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
                 if (!cbNode->options)
                 {
                     OIC_LOG(ERROR, TAG, "Out of memory");
+                    OICFree(cbNode);
+
                     return OC_STACK_NO_MEMORY;
                 }
                 memcpy(cbNode->options, options,
@@ -121,6 +123,8 @@ AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
                     {
                         OICFree(cbNode->options);
                     }
+                    OICFree(cbNode);
+
                     return OC_STACK_NO_MEMORY;
                 }
                 memcpy(cbNode->payload, payload, payloadSize);

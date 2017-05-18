@@ -498,7 +498,17 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
             OIC_LOG_V(DEBUG, TAG, "value: %s", value);
             itf[i] = OICStrdup(value);
         }
-        OCRepPayloadSetStringArrayAsOwner(tempPayload, OC_RSRVD_INTERFACE, itf, ifDim);
+
+        bool b = OCRepPayloadSetStringArrayAsOwner(tempPayload, OC_RSRVD_INTERFACE, itf, ifDim);
+
+        if (!b)
+        {
+            for (uint8_t i = 0; i < numElement; i++)
+            {
+                OICFree(itf[i]);
+            }
+            OICFree(itf);
+        }
     }
 
     for (OCAttribute *resAttrib = resourcePtr->rsrcAttributes; resAttrib; resAttrib = resAttrib->next)

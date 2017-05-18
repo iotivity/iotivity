@@ -563,6 +563,8 @@ static CborError ParseResources(OCDiscoveryPayload **outPayload, CborValue *reso
         else
         {
             char *di = OICStrdup(resource->anchor + 6);
+            VERIFY_PARAM_NON_NULL(TAG, di, "Failed to duplicating di");
+
             char *slash = strchr(di, '/');
             if (slash)
             {
