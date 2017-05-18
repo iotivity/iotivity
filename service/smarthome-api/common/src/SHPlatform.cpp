@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  ******************************************************************/
-#include <SHBaseDevice.h>
+#include <SHPlatform.h>
 #include <SHPlatform_Impl.h>
 
 namespace OIC
@@ -26,24 +26,19 @@ namespace OIC
     {
         namespace SH
         {
-            SHBaseDevice::SHBaseDevice()
+            SHPlatform::SHPlatform()
             {
-                SH_Impl::start();
+
             }
 
-            SHBaseDevice::~SHBaseDevice()
+            SHPlatform::~SHPlatform()
             {
-                SH_Impl::stop();
+
             }
 
-            std::string SHBaseDevice::getType()
+            void SHPlatform::setConfig(const SHPlatformConfig &config)
             {
-                return m_deviceType;
-            }
-
-            void SHBaseDevice::setType(std::string type)
-            {
-                m_deviceType = type;
+                SH_Impl::setConfig(config);
             }
         }
     }

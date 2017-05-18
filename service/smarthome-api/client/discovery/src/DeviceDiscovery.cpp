@@ -18,6 +18,7 @@
  *
  ******************************************************************/
 #include <DeviceDiscovery.h>
+#include <SHPlatform_Impl.h>
 #include <iostream>
 
 namespace OIC
@@ -29,10 +30,12 @@ namespace OIC
             DeviceDiscovery::DeviceDiscovery() :
                     m_delegate(NULL)
             {
+                SH_Impl::start();
             }
 
             DeviceDiscovery::~DeviceDiscovery()
             {
+                SH_Impl::stop();
             }
 
             void DeviceDiscovery::setDelegate(DeviceDiscoveryDelegate *delegate)

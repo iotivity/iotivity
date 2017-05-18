@@ -39,7 +39,14 @@
 
 #ifdef __cplusplus
 #ifndef ARDUINO
+#if __cplusplus > 199711L
 #include <cinttypes>
+#else
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
+#endif
 #endif
 extern "C"
 {

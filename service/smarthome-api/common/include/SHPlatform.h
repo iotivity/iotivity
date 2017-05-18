@@ -17,8 +17,14 @@
  * limitations under the License.
  *
  ******************************************************************/
-#include <SHBaseDevice.h>
-#include <SHPlatform_Impl.h>
+
+/**
+ * This file contains the declaration of functions related to
+ * SHPlatform
+ */
+
+#ifndef SMARTHOME_API_COMMON_SHPLATFORM_H_
+#define SMARTHOME_API_COMMON_SHPLATFORM_H_
 
 namespace OIC
 {
@@ -26,25 +32,23 @@ namespace OIC
     {
         namespace SH
         {
-            SHBaseDevice::SHBaseDevice()
-            {
-                SH_Impl::start();
-            }
+            class SHPlatformConfig;
 
-            SHBaseDevice::~SHBaseDevice()
+            class SHPlatform
             {
-                SH_Impl::stop();
-            }
+            public:
+                /**
+                 * API to set configuration information using stack initialize.
+                 *
+                 * @param[in] config  configuration informations to be set.
+                 */
+                static void setConfig(const SHPlatformConfig &config);
 
-            std::string SHBaseDevice::getType()
-            {
-                return m_deviceType;
-            }
-
-            void SHBaseDevice::setType(std::string type)
-            {
-                m_deviceType = type;
-            }
+            private:
+                SHPlatform();
+                ~SHPlatform();
+            };
         }
     }
 }
+#endif /* SMARTHOME_API_COMMON_SHPLATFORM_H_ */

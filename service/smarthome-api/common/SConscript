@@ -58,7 +58,9 @@ smarthome_env.AppendUnique(CPPPATH= [
 ######################################################################
 
 smarthome_common_src = ['src/PropertyBundle.cpp',
-                        'src/PayloadConverter.cpp']
+                        'src/PayloadConverter.cpp',
+                        'src/SHPlatform.cpp',
+                        'src/SHPlatform_Impl.cpp']
 
 smarthomelib = smarthome_env.SharedLibrary('smarthome_common_api', smarthome_common_src)
 smarthome_env.InstallTarget(smarthomelib, 'smarthome_common_api')
