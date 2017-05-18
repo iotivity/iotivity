@@ -762,7 +762,7 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
                         ((OC_IP_USE_V6 == clientResponse->devAddr.flags &&
                           strchr(eps->addr, ':')) ||
                          (OC_IP_USE_V4 == clientResponse->devAddr.flags &&
-                          strchr(eps->addr, ','))))
+                          strchr(eps->addr, '.'))))
                     {
                             securePort = eps->port;
                             break;

@@ -32,10 +32,6 @@ if target_os not in ['msys_nt', 'windows']:
 
 provisioning_lib_env.PrependUnique(LIBS = ['octbstack'])
 
-if target_os not in ['msys_nt', 'windows']:
-    # octbstack.dll is exporting ocpmapi and ocsrm APIs on Windows.
-    provisioning_lib_env.PrependUnique(LIBS = ['ocsrm'])
-
 provisioning_lib_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 if target_os in ['android']:
