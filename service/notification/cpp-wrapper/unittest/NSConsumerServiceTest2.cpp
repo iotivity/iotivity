@@ -53,7 +53,7 @@ namespace
 
     std::atomic_bool g_isStartedStack(false);
 
-    std::chrono::milliseconds g_waitForResponse(1000);
+    std::chrono::milliseconds g_waitForResponse(10);
 
     std::condition_variable responseCon;
     std::mutex mutexForCondition;
@@ -182,12 +182,16 @@ TEST_F(NotificationServiceConsumerTest, StartConsumerPositive)
 
     OIC::Service::NSResult res = OIC::Service::NSConsumerService::getInstance()->start(
                                      ProviderDiscoveredCallback);
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, g_waitForResponse);
     EXPECT_EQ(OIC::Service::NSResult::OK, res);
 }
 
 TEST_F(NotificationServiceConsumerTest, StopConsumerPositive)
 {
     OIC::Service::NSResult res = OIC::Service::NSConsumerService::getInstance()->stop();
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, g_waitForResponse);
     EXPECT_EQ(OIC::Service::NSResult::OK, res);
 }
 
@@ -293,5 +297,7 @@ TEST_F(NotificationServiceConsumerTest, ExpectSuccessGetTopicsList)
     free(provider);
 
     OIC::Service::NSConsumerService::getInstance()->stop();
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, g_waitForResponse);
 }
 
