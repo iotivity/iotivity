@@ -1115,7 +1115,7 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
                 if(subOwnerInst)
                 {
                     char* strUuid = NULL;
-                    if (sizeof(subOwnerInst->uuid.id) < authenticationSubOwnerInfo.identity.id)
+                    if (sizeof(subOwnerInst->uuid.id) < authenticationSubOwnerInfo.identity.id_length)
                     {
                         OIC_LOG(ERROR, TAG, "Identity id is too long");
                         return;
