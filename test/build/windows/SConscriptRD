@@ -1,0 +1,151 @@
+'''
+/******************************************************************
+*
+* Copyright 2017 Granite River Labs All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# Build script for Windows
+#
+##
+
+print '\n---------------Started Building Resource Directory for Windows---------------\n'
+
+Import('env_windows')
+import os
+
+env_windows['CC'] = 'cl'
+
+# TODO: re-enable warnings, especially: 4244, 4267, 4365
+env_windows.AppendUnique(CXXFLAGS=[
+    '/wd4244',   # C4244 conversion from one type to another type results in a possible loss of data.
+    '/wd4267',   # C4267 conversion from size_t to a smaller type.
+    '/wd4355',   # C4355 'this' used in base member initializer list.
+    '/wd4800',   # C4800 forcing value to bool 'true' or 'false'.
+    '/wd4996',   # C4996 deprecated declaration.
+    '/wd4820',   # C4820 added padding to the end of a struct.
+    '/wd4514',   # C4514 unreferenced inline function has been removed
+    '/wd4365',   # C4365 signed/unsigned mismatch
+    '/wd4503'])  # C4503 decorated name length exceeded, name was truncated
+
+env_windows.AppendUnique(CCFLAGS=['-D__WINDOWS__','/EHsc'])
+
+# Set release/debug flags
+#env_windows.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/ZI', '/RTC1', '/Gm'])
+if env_windows.get('RELEASE'):
+    env_windows.AppendUnique(CCFLAGS = ['/MD', '/O2', '/GF'])
+    env_windows.AppendUnique(CPPDEFINES = ['NDEBUG'])
+elif env_windows.get('TARGET_ARCH') in ['x86', 'x86_64'] or "14.0" in vs_version:
+    env_windows.AppendUnique(CCFLAGS = ['/Od', '/ZI', '/RTC1', '/Gm'])
+    env_windows.AppendUnique(LINKFLAGS = ['/debug'])
+else:
+    env_windows.AppendUnique(CCFLAGS = ['/Od', '/Zi', '/RTC1', '/Gm'])
+    env_windows.AppendUnique(LINKFLAGS = ['/debug'])
+    env_windows.AppendUnique(LIBPATH = [env_windows.get('BUILD_DIR')])
+    env_windows.AppendUnique(PATH = os.environ['PATH'])
+
+cppflags = Split('-D__WINDOWS__ -DRD_SERVER -DRD_CLIENT -D_WIN -DHAVE_STRUCT_TIMESPEC \
+                  -D_MSC_VER=1900 -DBOOST_ASIO_WINDOWS_RUNTIME')
+
+iotivity_root = env_windows.get('IOTIVITY_ROOT')
+iotivity_lib_path = env_windows.get('IOTIVITY_LIB_PATH')
+iotivity_test_root = env_windows.get('IOTIVITY_TEST_ROOT')
+variant_dir = env_windows.get('VARIANT_DIR')
+install_dir = env_windows.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
+test = env_windows.get('TEST')
+common_windows_cppflags = env_windows.get('COMMON_WINDOWS_CPPFLAGS')
+
+install_targets = []
+default_targets = []
+
+iotivity_include_paths = [
+    iotivity_root + '/resource/include',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/c_common',
+    iotivity_root + '/resource/csdk/stack/include',
+    iotivity_root + '/resource/csdk/ocsocket/include',
+    iotivity_root + '/resource/csdk/ocrandom/include',
+    iotivity_root + '/resource/oc_logger/include',
+    iotivity_root + '/extlibs/cereal/include',
+    iotivity_root + '/extlibs/timer',
+    iotivity_root + '/extlibs/timer/',
+    iotivity_root + '/extlibs/boost/boost',
+    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/extlibs/tinycbor/tinycbor/src',
+    iotivity_root + '/resource/csdk/security/include',
+    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/csdk/resource-directory/include',
+    iotivity_root + '/extlibs/gtest/googletest-release-1.7.0/include/'
+]
+
+tc_include_paths = [
+    iotivity_test_root + '/include',
+    test_src_root + '/tc/rd/gtest/include',
+
+]
+
+tc_src = [
+    Glob(test_src_root + '/tc/rd/gtest/src/btc/*.cpp'),
+    Glob(test_src_root + '/tc/rd/gtest/src/stc/*.cpp'),
+    Glob(test_src_root + '/tc/rd/gtest/src/helper/*.cpp')
+]
+
+testapp_include_paths = [
+    iotivity_test_root + '/include',
+    test_src_root + '/iBtestapp/common/include',
+    test_src_root + '/iBtestapp/modules/rd/c_cpp/include'
+]
+
+testapp_src = [ test_src_root + '/iBtestapp/modules/rd/c_cpp/src/RDTestApp.cpp' ]
+
+libs = Split('connectivity_abstraction mbedx509 mbedtls mbedcrypto octbstack coap oc oc_logger logger c_common win_helper rcs_common rcs_client')
+env_windows.AppendUnique(LIBS = ['bcrypt', 'Ws2_32', 'advapi32', 'iphlpapi', 'crypt32', 'kernel32'])
+
+if 'tc' in test:
+    rd_tc = env_windows.Program(source = tc_src,
+                target = 'iotivity_rd_test',
+                CPPPATH = iotivity_include_paths + tc_include_paths,
+                LIBS = libs + ['gtest', 'tc_util','common_util', 'pthread', 'octbstack', 'connectivity_abstraction','bcrypt', 'Ws2_32', 'advapi32', 'iphlpapi', 'crypt32', 'kernel32'],
+                LIBPATH = [iotivity_lib_path, iotivity_root + '/extlibs/gtest', '.'],
+                CPPFLAGS =  cppflags + common_windows_cppflags,
+                RPATH = iotivity_lib_path)
+    install_targets += rd_tc
+
+if 'app' in test:
+    rd_testapp = env_windows.Program(source = testapp_src,
+                    target = 'rd_testapp',
+                    CPPPATH = iotivity_include_paths + testapp_include_paths,
+                    LIBS = libs + ['octbstack', 'tc_util','connectivity_abstraction','bcrypt', 'Ws2_32', 'advapi32', 'iphlpapi', 'crypt32', 'kernel32'],
+                    LIBPATH = [iotivity_lib_path, '.'],
+                    CPPFLAGS =  cppflags + common_windows_cppflags,
+                    RPATH = iotivity_lib_path)
+    install_targets += rd_testapp
+
+install_bin = env_windows.Install(iotivity_test_root + '/' + install_dir, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin.append(Command(str(i), [], Delete(delete_target)))
+    i = i +1
+
+default_targets = install_bin + delete_bin
+
+env_windows.Default(default_targets)

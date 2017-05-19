@@ -24,8 +24,12 @@
 
 #include <stdio.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include "OCPlatform.h"
 #include "OCApi.h"
 #include "rd_server.h"
