@@ -248,6 +248,7 @@ static void OCAdapterStateChangedHandler(CATransportAdapter_t adapter, bool enab
 static void OCConnectionStateChangedHandler(const CAEndpoint_t *info, bool isConnected)
 {
     OIC_LOG(DEBUG, TAG, "OCConnectionStateChangedHandler");
+    OC_UNUSED(info);
 
     CAConnectUserPref_t connPrefer = CA_USER_PREF_CLOUD;
     CAResult_t ret = CAUtilCMGetConnectionUserConfig(&connPrefer);

@@ -393,6 +393,8 @@ static CAInterface_t *CANewInterfaceItem(int index, char *name, int family,
 
 void CAIPConnectionStateChangedCb(connection_type_e type, void* userData)
 {
+    OC_UNUSED(userData);
+
     switch (type)
     {
         case CONNECTION_TYPE_DISCONNECTED:

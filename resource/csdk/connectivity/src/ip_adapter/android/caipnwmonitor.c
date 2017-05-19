@@ -195,7 +195,11 @@ u_arraylist_t *CAFindInterfaceChange()
                           .msg_iov = &iov,
                           .msg_iovlen = 1 };
 
+    // We do nothing with netlink event here.
+    // Android BroadcastReceiver will work instead.
     ssize_t len = recvmsg(caglobals.ip.netlinkFd, &msg, 0);
+    OC_UNUSED(len);
+
     return NULL;
 }
 
