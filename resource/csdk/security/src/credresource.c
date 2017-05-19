@@ -2795,6 +2795,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                                     return ret;
                                 }
                                 memcpy(result, cred->privateData.data, len);
+                                ret = (int32_t)len;
                             }
                         }
                         else if(OIC_ENCODING_BASE64 == cred->privateData.encoding)
