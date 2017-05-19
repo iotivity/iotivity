@@ -165,9 +165,9 @@ public class EnrolleeConf
                     }
 
                     if (rep.hasAttribute(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIMODE)) {
-                        long modes_long[] = rep.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIMODE);
-                        for (int i = 0 ; i < modes_long.length ; ++i) {
-                            modes.add(WIFI_MODE.fromInt((int)modes_long[i]));
+                        int modes_int[] = rep.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIMODE);
+                        for (int i = 0 ; i < modes_int.length ; ++i) {
+                            modes.add(WIFI_MODE.fromInt(modes_int[i]));
                         }
                     }
                 } catch (OcException e) {
@@ -207,10 +207,8 @@ public class EnrolleeConf
                     }
 
                     if(rep.hasAttribute(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
-                    {
-                        long freq = rep.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIFREQ);
-                        return WIFI_FREQ.fromInt((int)freq);
-                    }
+                        return WIFI_FREQ.fromInt(
+                                (int)rep.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
                 } catch (OcException e) {
                     Log.e(TAG, "getWiFiFreq is failed.");
                 }
