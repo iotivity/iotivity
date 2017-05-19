@@ -5183,7 +5183,7 @@ OCStackResult initResources()
                                   OC_RSRVD_INTROSPECTION_URI_PATH,
                                   NULL,
                                   NULL,
-                                  OC_DISCOVERABLE);
+                                  OC_DISCOVERABLE | OC_SECURE);
         if (result == OC_STACK_OK)
         {
             result = BindResourceInterfaceToResource((OCResource *)introspectionResource,
