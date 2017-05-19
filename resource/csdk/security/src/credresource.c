@@ -3236,15 +3236,15 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
                 }
 
                 uint8_t *oldData = crt->data;
-                crt->data = OICRealloc(crt->data, crt->len + temp->optionalData.len);
+                crt->data = OICRealloc(crt->data, crt->len + pemLen);
                 if (NULL == crt->data)
                 {
                     OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
                     OICFree(oldData);
                     return OC_STACK_NO_MEMORY;
                 }
-                memcpy(crt->data + crt->len, temp->optionalData.data, temp->optionalData.len);
-                crt->len += temp->optionalData.len;
+                memcpy(crt->data + crt->len, pem, pemLen);
+                crt->len += pemLen;
             }
         }
     }
@@ -3543,7 +3543,7 @@ void GetDerKey(ByteArray_t * key, const char * usage)
                 mbedtls_pem_free(&ctx);
                 break;
             }
-            else if(temp->privateData.encoding == OIC_ENCODING_DER)
+            else if(temp->privateData.encoding == OIC_ENCODING_DER || temp->privateData.encoding == OIC_ENCODING_RAW)
             {
                 uint8_t *tmp = OICRealloc(key->data, key->len + temp->privateData.len);
                 if (NULL == tmp)

@@ -100,9 +100,9 @@ static bool IsRequestFromDevOwner(SRMRequestContext_t *context)
         if (!retVal)
         {
             OIC_LOG(DEBUG, TAG, "Owner UUID  :");
-            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)&doxm->owner.id, sizeof(&doxm->owner.id));
+            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)&doxm->owner.id, sizeof(OicUuid_t));
             OIC_LOG(DEBUG, TAG, "Request UUID:");
-            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)&context->subjectUuid.id, sizeof(&context->subjectUuid.id));
+            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)&context->subjectUuid.id, sizeof(OicUuid_t));
         }
     }
 exit:

@@ -1598,7 +1598,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                         ehRet = OC_EH_ERROR;
                     }
 
-                    RegisterOTMSslHandshakeCallback(NULL);
+                    RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
                     CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
                     VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
                     OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
