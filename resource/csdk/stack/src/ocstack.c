@@ -1604,6 +1604,8 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 if (!cbNode->options || !cbNode->numOptions)
                 {
                     OIC_LOG (INFO, TAG, "No options present in cbNode");
+                    requestData.options = NULL;
+                    requestData.numOptions = 0;
                 }
                 else
                 {
@@ -1623,6 +1625,8 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 if (!cbNode->payload || !cbNode->payloadSize)
                 {
                     OIC_LOG (INFO, TAG, "No payload present in cbNode");
+                    requestData.payload = NULL;
+                    requestData.payloadSize = 0;
                 }
                 else
                 {
