@@ -1091,6 +1091,12 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
         CAResult_t caRes = CAGetSecureEndpointData(object, &authenticationSubOwnerInfo);
         if (CA_STATUS_OK == caRes)
         {
+            if (!gDoxm)
+            {
+                OIC_LOG_V(WARNING, TAG, "%s: gDoxm is NULL", __func__);
+                return;
+            }
+
             if (0 == memcmp(authenticationSubOwnerInfo.identity.id, gDoxm->owner.id,
                             authenticationSubOwnerInfo.identity.id_length))
             {
@@ -1259,6 +1265,8 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                 ehRet = OC_EH_NOT_ACCEPTABLE;
                 goto exit;
             }
+
+            VERIFY_NOT_NULL(TAG, gDoxm, ERROR);
 
             // in owned state
             if (true == gDoxm->owned)
@@ -1784,8 +1792,12 @@ OCStackResult CreateDoxmResource()
  */
 static OCStackResult CheckDeviceID()
 {
+    OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
+
     OCStackResult ret = OC_STACK_ERROR;
     bool validId = false;
+
+    VERIFY_NOT_NULL_RETURN(TAG, gDoxm, ERROR, OC_STACK_INVALID_PARAM);
 
     for (uint8_t i = 0; i < UUID_LENGTH; i++)
     {
@@ -1868,6 +1880,8 @@ static OCStackResult CheckDeviceID()
     {
         ret = OC_STACK_OK;
     }
+
+    OIC_LOG_V(DEBUG, TAG, "OUT: %s", __func__);
 
     return ret;
 }
@@ -2226,6 +2240,8 @@ OCStackResult SetMOTStatus(bool enable)
     bool isDeallocateRequired = false;
 
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    VERIFY_NOT_NULL(TAG, gDoxm, ERROR);
 
     if (NULL == gDoxm->mom && !enable)
     {
