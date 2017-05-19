@@ -57,10 +57,8 @@
 
 static const uint8_t ACL_MAP_SIZE = 4; // aclist, rowneruuid, RT and IF
 static const uint8_t ACL_ACLIST_MAP_SIZE = 1; // aces object
-static const uint8_t ACL_ACLIST2_MAP_SIZE = 1; // array
 static const uint8_t ACL_ACE_MAP_SIZE = 3; // subject, resource, permissions
 static const uint8_t ACL_ACE2_MAP_SIZE = 4; // aceid, subject, resource, permissions
-static const uint8_t ACL_RESOURCE_MAP_SIZE = 3;
 static const uint8_t ACE_DID_MAP_SIZE = 1;
 static const uint8_t ACE_ROLE_MAP_SIZE = 1;
 static const uint8_t ACE_CONN_MAP_SIZE = 1;
@@ -686,7 +684,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl,
                 {
                     rsrcMapSize++;
                 }
-                OIC_LOG_V(DEBUG, TAG, "%s resource map size = %d.", __func__, rsrcMapSize);
+                OIC_LOG_V(DEBUG, TAG, "%s resource map size = "PRIuPTR, __func__, rsrcMapSize);
 
                 cborEncoderResult = cbor_encoder_create_map(&resources, &rMap, rsrcMapSize);
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Resource Map.");
@@ -2051,6 +2049,8 @@ OCStackResult RemoveACE(const OicUuid_t *subject, const char *resource)
 {
     OIC_LOG(DEBUG, TAG, "IN RemoveACE");
 
+    VERIFY_NOT_NULL_RETURN(TAG, gAcl, ERROR, OC_STACK_INVALID_PARAM);
+
     OicSecAce_t *ace = NULL;
     OicSecAce_t *tempAce = NULL;
     bool deleteFlag = false;
@@ -2518,11 +2518,13 @@ static OCStackResult RemoveAllAce(void)
 static OCEntityHandlerResult HandleACLGetRequest(const OCEntityHandlerRequest *ehRequest, OicSecAclVersion_t aclVersion)
 {
     OIC_LOG(INFO, TAG, "HandleACLGetRequest processing the request");
+
     uint8_t* payload = NULL;
     size_t size = 0;
     OCEntityHandlerResult ehRet;
 
     OicUuid_t subject = {.id= { 0 } };
+
 
     // In case, 'subject' field is included in REST request.
     if (ehRequest->query && GetSubjectFromQueryString(ehRequest->query, &subject))
@@ -2536,7 +2538,15 @@ static OCEntityHandlerResult HandleACLGetRequest(const OCEntityHandlerRequest *e
         const OicSecAce_t *currentAce = NULL;
         OicSecAcl_t targetAcl;
 
-        memcpy(&targetAcl.rownerID, &gAcl->rownerID, sizeof(OicUuid_t));
+        if ( NULL != gAcl )
+        {
+            memcpy(&targetAcl.rownerID, &gAcl->rownerID, sizeof(OicUuid_t));
+        }
+        else
+        {
+            OIC_LOG_V(WARNING, TAG, "%s: gAcl is NULL", __func__);
+        }
+        
         targetAcl.aces = NULL;
 
         // 'Subject' field is MUST for processing a querystring in REST request.
@@ -2645,7 +2655,7 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
         OIC_LOG_BUFFER(DEBUG, TAG, payload, size);
 
         newAcl = CBORPayloadToAcl(payload, size);
-        if (newAcl)
+        if (NULL != newAcl && NULL != gAcl)
         {
             bool isNewAce = true;
             OicSecAce_t* existAce = NULL;
@@ -2704,6 +2714,10 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
                     ehRet = OC_EH_ERROR;
                 }
             }
+        }
+        else
+        {
+            OIC_LOG_V(WARNING, TAG, "%s: %s", __func__, (NULL == newAcl) ? "no new ACL" : "gAcl is NULL");
         }
     }
     else
@@ -3331,10 +3345,10 @@ OCStackResult AppendACLObject(const OicSecAcl_t* acl)
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    if (!acl)
-    {
-        return OC_STACK_INVALID_PARAM;
-    }
+    OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
+
+    VERIFY_NOT_NULL_RETURN(TAG, gAcl, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, acl, ERROR, OC_STACK_INVALID_PARAM);
 
     // Append the new ACE to existing ACE list
     // Can't use LL_APPEND because it sets ace->next to NULL
@@ -3363,6 +3377,8 @@ OCStackResult AppendACLObject(const OicSecAcl_t* acl)
         OICFree(payload);
     }
 
+    OIC_LOG_V(DEBUG, TAG, "OUT: %s", __func__);
+
     return ret;
 }
 
@@ -3376,12 +3392,12 @@ OCStackResult AppendACL(const uint8_t *cborPayload, const size_t size)
 
 OCStackResult InstallACL(const OicSecAcl_t* acl)
 {
+    OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
+
     OCStackResult ret = OC_STACK_ERROR;
 
-    if (!acl)
-    {
-        return OC_STACK_INVALID_PARAM;
-    }
+    VERIFY_NOT_NULL_RETURN(TAG, gAcl, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, acl, ERROR, OC_STACK_INVALID_PARAM);
 
     bool isNewAce = true;
     OicSecAce_t* existAce = NULL;
@@ -3442,6 +3458,8 @@ OCStackResult InstallACL(const OicSecAcl_t* acl)
         }
         OICFree(newInstallAcl);
     }
+
+    OIC_LOG_V(DEBUG, TAG, "OUT: %s", __func__);
 
     return ret;
 }
