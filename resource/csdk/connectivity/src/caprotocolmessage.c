@@ -300,12 +300,6 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
             msgLength = msgLength + info->payloadSize + PAYLOAD_MARKER;
         }
 
-        if (msgLength > UINT_MAX)
-        {
-            OIC_LOG(ERROR, TAG, "Message length too large.");
-            return NULL;
-        }
-
         *transport = coap_get_tcp_header_type_from_size((unsigned int)msgLength);
         length = msgLength + coap_get_tcp_header_length_for_transport(*transport)
                 + info->tokenLength;

@@ -3609,10 +3609,10 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
         goto exit;
     }
 #endif
-    
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     /* Check whether we should assert role certificates before making this request. */
-    if ((endpoint.flags & CA_SECURE) && 
+    if ((endpoint.flags & CA_SECURE) && (NULL != requestInfo.info.resourceUri) &&
         (strcmp(requestInfo.info.resourceUri, OIC_RSRC_ROLES_URI) != 0) &&
         (strcmp(requestInfo.info.resourceUri, OIC_RSRC_DOXM_URI) != 0))
     {
@@ -3620,18 +3620,19 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
         CAResult_t caRes = CAGetSecureEndpointData(&endpoint, &sep);
         if (caRes != CA_STATUS_OK)
         {
-            /* 
-             * This is a secure request but we do not have a secure connection with 
-             * this peer, try to assert roles. There's no way to tell if the peer 
-             * uses certificates without asking, so just try to assert roles.  If 
+            /*
+             * This is a secure request but we do not have a secure connection with
+             * this peer, try to assert roles. There's no way to tell if the peer
+             * uses certificates without asking, so just try to assert roles.  If
              * it fails, that's OK, roles will get asserted "automatically" when PSK
              * credentials are used.
              */
-            OIC_LOG_V(DEBUG, TAG, "%s: going to try to assert roles before doing request to %s ", 
+            OIC_LOG_V(DEBUG, TAG, "%s: going to try to assert roles before doing request to %s ",
                       __func__, requestInfo.info.resourceUri);
             OCDevAddr da;
             CopyEndpointToDevAddr(&endpoint, &da);
-            OCStackResult assertResult = OCAssertRoles((void*)ASSERT_ROLES_CTX, &da, &assertRolesCB);
+            OCStackResult assertResult = OCAssertRoles((void*)ASSERT_ROLES_CTX, &da,
+                                                       &assertRolesCB);
             if (assertResult == OC_STACK_OK)
             {
                 OIC_LOG_V(DEBUG, TAG, "%s: Call to OCAssertRoles succeeded", __func__);
@@ -3644,12 +3645,12 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
             {
                 OIC_LOG_V(DEBUG, TAG, "%s: Call to OCAssertRoles failed", __func__);
             }
-            
-            /* 
+
+            /*
              * We don't block waiting for OCAssertRoles to complete.  Because the roles assertion
              * request is queued before the actual request, it will happen first.  If it fails, we
              * log the error, but don't retry; the actually request made to OCDorequest may or may
-             * not fail (with permission denied), the caller can decide whether to retry. 
+             * not fail (with permission denied), the caller can decide whether to retry.
              */
         }
 
