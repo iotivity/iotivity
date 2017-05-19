@@ -388,13 +388,6 @@ exit:
 
     OICFree(serial);
     OICFree(certificate);
-    if (NULL != f)
-    {
-        if (0 != fclose(f))
-        {
-            printf("Warning: failed to fclose\n");
-        }
-    }
 }
 
 static void DoGenKeyPair()

@@ -254,7 +254,7 @@ OCStackResult OCCloudAclIndividualAclUpdate(void* ctx,
         goto no_memory;
     }
 
-    int acllist_count = 0;
+    size_t acllist_count = 0;
     //code below duplicates LL_COUNT, implemented in newer version of utlist.h
     {
         cloudAce_t *ace = (cloudAce_t*)aces;
@@ -297,7 +297,7 @@ OCStackResult OCCloudAclIndividualAclUpdate(void* ctx,
 
         OICFree(uuid);
 
-        int reslist_count = 0;
+        size_t reslist_count = 0;
         //code below duplicates LL_COUNT, implemented in newer version of utlist.h
         {
             OicSecRsrc_t *res = ace->resources;
@@ -399,7 +399,7 @@ OCStackResult OCCloudAclIndividualAceUpdate(void* ctx,
         goto no_memory;
     }
 
-    int acllist_count = 1;
+    size_t acllist_count = 1;
 
     helperPayload = OICCalloc(acllist_count, sizeof(OCRepPayload *));
     if (!helperPayload)
@@ -433,7 +433,7 @@ OCStackResult OCCloudAclIndividualAceUpdate(void* ctx,
 
         OICFree(uuid);
 
-        int reslist_count = 0;
+        size_t reslist_count = 0;
         //code below duplicates LL_COUNT, implemented in newer version of utlist.h
         {
             OicSecRsrc_t *res = ace->resources;

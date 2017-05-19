@@ -225,8 +225,8 @@ static int saveTrustCert(void)
             {
                 OIC_LOG(ERROR, TAG, "Certiface not read completely");
             }
-            fclose(fp);
         }
+        fclose(fp);
     }
     OIC_LOG_BUFFER(DEBUG, TAG, trustCertChainArray.data, trustCertChainArray.len);
 
