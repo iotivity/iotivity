@@ -58,8 +58,17 @@ static void clearData()
  */
 static void parseClientResponse(OCClientResponse * clientResponse)
 {
-    OCResourcePayload* res = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
+    OIC_LOG_V(DEBUG, TAG, "IN: %s",__func__);
 
+    if (!clientResponse || !clientResponse->payload)
+    {
+        OIC_LOG_V(WARNING, TAG, "OUT: %s: %s is NULL",__func__, 
+            !clientResponse ? "clientResponse" : "clientResponse->payload");
+        return;
+    }
+
+    OCResourcePayload* res = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
+    
     while (res)
     {
         char *uri = res->uri;
@@ -100,6 +109,7 @@ static void parseClientResponse(OCClientResponse * clientResponse)
         next:
         res = res->next;
     }
+    OIC_LOG_V(DEBUG, TAG, "OUT: %s",__func__);
 }
 
 /**
