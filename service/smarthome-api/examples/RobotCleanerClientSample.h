@@ -55,8 +55,7 @@ public:
     void onGetState(bool value, ResultCode ret);
     virtual ~RemoteBinarySwitchDelegateImpl()
     {
-    }
-    ;
+    };
 };
 
 class DeviceBrowserDelegateImpl: public DeviceDiscoveryDelegate
@@ -67,11 +66,9 @@ public:
     DeviceBrowserDelegateImpl(MyRobotCleaner *owner);
     MyRobotCleaner *getOwnerPtr();
     void onFindRemoteDevice(SHBaseRemoteDevice *remoteDevice);
-    void onFindRemoteDevice(std::list< SHBaseRemoteDevice* > remoteDevice);
     virtual ~DeviceBrowserDelegateImpl()
     {
-    }
-    ;
+    };
 };
 
 class MyRobotCleaner
@@ -80,7 +77,6 @@ public:
     RemoteModeDelegateImpl *m_modeDelegate;
     RemoteBinarySwitchDelegateImpl *m_binarySwitchDelegate;
     DeviceBrowserDelegateImpl *m_browserDelegate;
-    DeviceDiscovery deviceDiscovery;
 
     MyRobotCleaner();
     ~MyRobotCleaner();

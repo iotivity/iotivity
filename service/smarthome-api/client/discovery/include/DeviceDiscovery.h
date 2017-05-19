@@ -54,13 +54,6 @@ namespace OIC
                  * @param[in] remoteDevice information of a remote device
                  */
                 virtual void onFindRemoteDevice(SHBaseRemoteDevice *remoteDevice) = 0;
-
-                /**
-                 * API to handle the response when remote devices are found
-                 *
-                 * @param[in] remoteDevice information of remote devices
-                 */
-                virtual void onFindRemoteDevice(std::list< SHBaseRemoteDevice* > remoteDevice) = 0;
             };
 
             /**
@@ -71,8 +64,17 @@ namespace OIC
             class DeviceDiscovery
             {
             public:
-                DeviceDiscovery();
-                ~DeviceDiscovery();
+
+                /**
+                 * API to get instance of DeviceDiscovery
+                 *
+                 * @return static instance of DeviceDiscovery
+                 */
+                static DeviceDiscovery& getInstance()
+                {
+                    static DeviceDiscovery instance;
+                    return instance;
+                }
 
                 /**
                  * API to set a delegate instance
@@ -95,23 +97,10 @@ namespace OIC
                  */
                 void findRemoteDevices(const DiscoveryQuery &query);
 
-                /**
-                 * API to find remote devices.
-                 * This api returns a response only once when all remote devices is found
-                 * within a certain time
-                 */
-                void findAllRemoteDevices();
-
-                /**
-                 * API to find remote devices using query.
-                 * This api returns a response only once when all remote devices is found
-                 * within a certain time
-                 *
-                 * @param[in] query instance which includes discovery query
-                 */
-                void findAllRemoteDevices(const DiscoveryQuery &query);
-
             private:
+                DeviceDiscovery();
+                ~DeviceDiscovery();
+
                 DeviceDiscoveryDelegate *m_delegate;
             };
         }

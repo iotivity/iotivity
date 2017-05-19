@@ -137,17 +137,6 @@ namespace OIC
                     throw CommonException("OCDoRequest failed!");
                 }
             }
-
-            void DeviceDiscovery::findAllRemoteDevices()
-            {
-                OIC_LOG(DEBUG, TAG, "findRemoteDevicesAll call!");
-            }
-
-            void DeviceDiscovery::findAllRemoteDevices(const DiscoveryQuery &query)
-            {
-                OIC_LOG_V(DEBUG, TAG, "findRemoteDevicesAll call! query :%s",
-                        query.getDeviceType().c_str());
-            }
         }
     }
 }

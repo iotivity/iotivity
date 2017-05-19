@@ -41,12 +41,6 @@ namespace OIC
                     OCStackApplicationResult findRemoteDevicesWithQuery
                                              (void *context, OCDoHandle handle,
                                              OCClientResponse * clientResponse);
-                    OCStackApplicationResult findRemoteDevicesAll
-                                             (void *context, OCDoHandle handle,
-                                             OCClientResponse * clientResponse);
-                    OCStackApplicationResult findRemoteDevicesAllWithQuery
-                                             (void *context, OCDoHandle handle,
-                                             OCClientResponse * clientResponse);
                 }
 
                 namespace RemoteResourceCallback

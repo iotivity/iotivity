@@ -98,36 +98,29 @@ void DeviceBrowserDelegateImpl::onFindRemoteDevice(SHBaseRemoteDevice *remoteDev
     }
 }
 
-void DeviceBrowserDelegateImpl::onFindRemoteDevice(std::list< SHBaseRemoteDevice* > remoteDevice)
-{
-    std::cout << "2. onFindResourcDevice call!" << std::endl;
-}
-
 MyRobotCleaner::MyRobotCleaner()
 {
     m_modeDelegate = new RemoteModeDelegateImpl();
     m_binarySwitchDelegate = new RemoteBinarySwitchDelegateImpl();
-    m_browserDelegate = new DeviceBrowserDelegateImpl(this);
 }
 
 MyRobotCleaner::~MyRobotCleaner()
 {
     delete (m_modeDelegate);
     delete (m_binarySwitchDelegate);
-    delete (m_browserDelegate);
 }
 
 void MyRobotCleaner::init()
 {
-    deviceDiscovery.setDelegate(this->m_browserDelegate);
+    DeviceDiscovery::getInstance().setDelegate(this->m_browserDelegate);
 }
 void MyRobotCleaner::findRemoteDevices()
 {
-    deviceDiscovery.findRemoteDevices();
+    DeviceDiscovery::getInstance().findRemoteDevices();
 }
 void MyRobotCleaner::findRemoteDevicesWithQuery(DiscoveryQuery *query)
 {
-    deviceDiscovery.findRemoteDevices(*query);
+    DeviceDiscovery::getInstance().findRemoteDevices(*query);
 }
 
 void print()

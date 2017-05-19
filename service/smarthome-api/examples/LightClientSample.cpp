@@ -75,19 +75,19 @@ LightClientSample::~LightClientSample()
 
 void LightClientSample::start()
 {
-    deviceDiscovery.setDelegate(this);
+    DeviceDiscovery::getInstance().setDelegate(this);
 }
 
 void LightClientSample::findAnyDevice()
 {
-    deviceDiscovery.findRemoteDevices();
+    DeviceDiscovery::getInstance().findRemoteDevices();
 }
 
 void LightClientSample::findLight()
 {
     DiscoveryQuery query;
     query.setDeviceType(DEVICE_TYPE::LIGHT);
-    deviceDiscovery.findRemoteDevices(query);
+    DeviceDiscovery::getInstance().findRemoteDevices(query);
 }
 
 void LightClientSample::turnOn()
@@ -161,7 +161,7 @@ void LightClientSample::onFindRemoteDevice(SHBaseRemoteDevice *remoteDevice)
 
     if (remoteDevice->hasDeviceType(DEVICE_TYPE::LIGHT))
     {
-        m_light = dynamic_cast< RemoteLightDevice* >(remoteDevice);
+        m_light = dynamic_cast<RemoteLightDevice*>(remoteDevice);
 
         std::cout << "[App]set remote binary switch delegate" << std::endl;
         m_light->m_remoteBinarySwitch->setRemoteBinarySwitchResourceDelegate(&m_delegate);
@@ -170,12 +170,6 @@ void LightClientSample::onFindRemoteDevice(SHBaseRemoteDevice *remoteDevice)
     {
         std::cout << "[App]ignore device." << std::endl;
     }
-}
-
-void LightClientSample::onFindRemoteDevice(std::list< SHBaseRemoteDevice* > remoteDevices)
-{
-    std::cout << "[App]2. onFindResourcDevice call!" << std::endl;
-    (void) remoteDevices;
 }
 
 void print()

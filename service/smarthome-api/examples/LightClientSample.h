@@ -31,7 +31,8 @@ using namespace OIC::Service::SH;
 class MyRemoteBinarySwitchDelegate: public RemoteBinarySwitchResourceDelegate
 {
 public:
-    virtual ~MyRemoteBinarySwitchDelegate() {};
+    virtual ~MyRemoteBinarySwitchDelegate(){};
+
 private:
     void onTurnOn(ResultCode ret);
     void onTurnOff(ResultCode ret);
@@ -56,10 +57,8 @@ public:
 
 private:
     void onFindRemoteDevice(SHBaseRemoteDevice *remoteDevice);
-    void onFindRemoteDevice(std::list< SHBaseRemoteDevice* > remoteDevice);
 
 private:
-    DeviceDiscovery deviceDiscovery;
     MyRemoteBinarySwitchDelegate m_delegate;
     RemoteLightDevice *m_light;
 };
