@@ -472,7 +472,7 @@ OCStackResult OCReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
  * @param[in] ctx Application context would be returned in result callback.
  * @param[in] type Type of credentials to be provisioned to the device.
  * @param[in] pDev1 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
-   @param[in] pDev2 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
+   @param[in] pDev2 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned. [Optional]
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from first resource server.
  * @return  OC_STACK_OK in case of success and other value otherwise.
