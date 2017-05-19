@@ -968,20 +968,49 @@ OCStackResult DoxmUpdateWriteableProperty(const OicSecDoxm_t* src, OicSecDoxm_t*
     {
         // Update oxmsel
         dst->oxmSel = src->oxmSel;
+        OIC_LOG_V(DEBUG, TAG, "%s: updated doxm.oxmsel = %d", __func__,
+            (int)dst->oxmSel);
 
-        // Update owner
+        // Update devowneruuid
         memcpy(&(dst->owner), &(src->owner), sizeof(OicUuid_t));
+#ifndef NDEBUG // if debug build, log the new uuid
+        char uuidString[UUID_STRING_SIZE] = { 0 };
+        bool convertedUUID = OCConvertUuidToString(dst->owner.id, uuidString);
+        if (convertedUUID)
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: updated doxm.devowneruuid = %s", __func__,
+                uuidString);
+        }
+#endif
 
-        // Update rowner
+        // Update rowneruuid
         memcpy(&(dst->rownerID), &(src->rownerID), sizeof(OicUuid_t));
+#ifndef NDEBUG // if debug build, log the new uuid
+        convertedUUID = OCConvertUuidToString(dst->rownerID.id, uuidString);
+        if (convertedUUID)
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: updated doxm.rowneruuid = %s", __func__,
+                uuidString);
+        }
+#endif
 
         // Update deviceuuid
         memcpy(&(dst->deviceID), &(src->deviceID), sizeof(OicUuid_t));
+#ifndef NDEBUG // if debug build, log the new uuid
+        convertedUUID = OCConvertUuidToString(dst->deviceID.id, uuidString);
+        if (convertedUUID)
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: updated doxm.deviceuuid = %s", __func__,
+                uuidString);
+        }
+#endif
 
         // Update owned status
         if(dst->owned != src->owned)
         {
             dst->owned = src->owned;
+            OIC_LOG_V(DEBUG, TAG, "%s: updated owned = %s", __func__,
+                dst->owned?"true":"false");
         }
 
 #ifdef MULTIPLE_OWNER
@@ -1000,6 +1029,8 @@ OCStackResult DoxmUpdateWriteableProperty(const OicSecDoxm_t* src, OicSecDoxm_t*
             if (NULL != dst->mom)
             {
                 dst->mom->mode = src->mom->mode;
+                OIC_LOG_V(DEBUG, TAG, "%s: updated mom->mode = %d", __func__,
+                    (int)dst->mom->mode);
             }
         }
 #endif //MULTIPLE_OWNER
@@ -1302,12 +1333,31 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
             }
 
             // in unowned state
+            // TODO [IOT-2107] this logic assumes that the only POST to /doxm in
+            // unowned state is either a) changing to owned or b) setting oxmsel and
+            // therefore (in case b) should enable the proper cipher for OTM.  But it's
+            // allowable for Client to be posting other things such as /doxm.rowneruuid
+            // when owned == false, too.  Added a workaround (see 'workaround' below)
+            // but this POST handler needs to be fixed per IOT-2107.
             if ((false == gDoxm->owned) && (false == newDoxm->owned))
             {
                 if (false == ValidateOxmsel(gDoxm->oxm, gDoxm->oxmLen, &newDoxm->oxmSel))
                 {
                     OIC_LOG(ERROR, TAG, "Not acceptable request because oxmsel does not support on Server");
                     ehRet = OC_EH_NOT_ACCEPTABLE;
+                    goto exit;
+                }
+
+                // workaround
+                // We wouldn't be at this point in the
+                // code if the POST contained R-only Properties for the current /pstat.dos.s
+                // state, so we want to update writeable properties now that we've validated
+                // oxmsel is a valid oxm for this device.
+                res = DoxmUpdateWriteableProperty(newDoxm, gDoxm);
+                if (OC_STACK_OK != res)
+                {
+                    OIC_LOG(ERROR, TAG, "gDoxm properties were not able to be updated so we cannot handle the request.");
+                    ehRet = OC_EH_ERROR;
                     goto exit;
                 }
 
