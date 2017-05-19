@@ -359,14 +359,13 @@ static void DoGenCertificate(CertType certType)
         goto exit;
     }
 
-    sprintf(filename, "%s.crt", subjKeyPairName);
+    snprintf(filename, sizeof(filename), "%s.crt", subjKeyPairName);
     f = fopen(filename, "wb");
     if (NULL == f)
     {
         printf("Failed to open certificate file for writing!\n");
         goto exit;
     }
-    
     bytesProcessed = fwrite(certificate, 1, certificateLen, f);
     if (bytesProcessed < certificateLen)
     {
@@ -374,17 +373,17 @@ static void DoGenCertificate(CertType certType)
         goto exit;
     }
 
-    if (0 != fclose(f))
-    {
-        printf("Warning: failed to close certificate file\n");
-        goto exit;
-    }
-
-    f = NULL;
-
     printf("Wrote certificate file.\n");
 
 exit:
+    if (NULL != f)
+    {
+        if (0 != fclose(f))
+        {
+            printf("Warning: failed to fclose\n");
+        }
+        f = NULL;
+    }
 
     OICFree(serial);
     OICFree(certificate);
