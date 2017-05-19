@@ -369,7 +369,7 @@ OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
         if (result == OC_STACK_OK)
         {
             OIC_LOG (INFO, TAG, "\n\nDelete Resource operation succeeded.");
-            ehResult = OC_EH_OK;
+            ehResult = OC_EH_RESOURCE_DELETED;
 
             //Step 2: clear observers who wanted to observe this resource at the app level.
             for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++)
@@ -385,7 +385,7 @@ OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
         else if (result == OC_STACK_NO_RESOURCE)
         {
             OIC_LOG(INFO, TAG, "\n\nThe resource doesn't exist or it might have been deleted.");
-            ehResult = OC_EH_RESOURCE_DELETED;
+            ehResult = OC_EH_RESOURCE_NOT_FOUND;
         }
         else
         {
@@ -1129,7 +1129,7 @@ int main(int argc, char* argv[])
     OCSetRAInfo(&rainfo);
 #endif
 
-    
+
     OIC_LOG(DEBUG, TAG, "OCServer is starting...");
     OCPersistentStorage pstStr {
         server_fopen,

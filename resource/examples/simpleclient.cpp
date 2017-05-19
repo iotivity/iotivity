@@ -110,6 +110,8 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& re
                 std::cout << "No observe option header is returned in the response." << std::endl;
                 std::cout << "For a registration request, it means the registration failed"
                         << std::endl;
+                std::cout << "For a cancelation request, it means the cancelation was successful"
+                        << std::endl;
             }
             else
             {

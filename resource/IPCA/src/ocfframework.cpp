@@ -709,13 +709,14 @@ void OCFFramework::OnDeviceInfoCallback(const OCRepresentation& rep)
         }
 
         // Not reading "di" because it's already known in OnResourceFound().
-        std::array<std::string, 3> keys = { {"n", "icv", "dmv"} };
+        std::array<std::string, 4> keys = { {"n", "icv", "dmv", "piid"} };
         std::string dataModelVersion;
         std::vector<std::string*> Values =
         {
             &(deviceDetails->deviceInfo.deviceName),
             &(deviceDetails->deviceInfo.deviceSoftwareVersion),
-            &dataModelVersion
+            &dataModelVersion,
+            &(deviceDetails->deviceInfo.platformIndependentId)
         };
 
         for (size_t i = 0; i < keys.size(); i++)
@@ -734,15 +735,13 @@ void OCFFramework::OnDeviceInfoCallback(const OCRepresentation& rep)
 
         deviceDetails->deviceInfo.deviceUris = deviceDetails->deviceUris;
 
-        OCPlatform::getPropertyValue(
-                        PAYLOAD_TYPE_DEVICE,
-                        OC_RSRVD_DATA_MODEL_VERSION,
-                        deviceDetails->deviceInfo.dataModelVersions);
-
-        OCPlatform::getPropertyValue(
-                        PAYLOAD_TYPE_DEVICE,
-                        OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
-                        deviceDetails->deviceInfo.platformIndependentId);
+        // Convert data model versions returned by server in CSV to array.
+        std::istringstream stringStream(dataModelVersion.c_str());
+        std::string token;
+        while (std::getline(stringStream, token, ','))
+        {
+            deviceDetails->deviceInfo.dataModelVersions.push_back(token);
+        }
 
         deviceDetails->deviceInfoAvailable = true;
     }
@@ -1719,10 +1718,13 @@ void OCFFramework::RequestAccessWorkerThread(RequestAccessContext* requestContex
                                         passwordInputCallbackInfo);
                         }
 
+                        // Make sure user input string is terminated
+                        passwordBuffer[OXM_PRECONFIG_PIN_MAX_SIZE] = '\0';
+
                         // Set the preconfigured pin
                         result = deviceDetails->securityInfo.device->addPreconfigPIN(
                                         passwordBuffer,
-                                        strnlen_s(passwordBuffer, passwordBufferSize));
+                                        strlen(passwordBuffer));
 
                         if (OC_STACK_OK != result)
                         {

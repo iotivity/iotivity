@@ -752,6 +752,7 @@ OicSecAcl_t* CBORPayloadToCloudAcl(const uint8_t *cborPayload, const size_t size
     cbor_parser_init(cborPayload, size, 0, &parser, &aclCbor);
 
     OicSecAcl_t *acl = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
+    VERIFY_NOT_NULL_RETURN(TAG, acl, ERROR, NULL);
 
     // Enter ACL Map
     CborValue aclMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };

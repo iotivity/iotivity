@@ -229,7 +229,7 @@ namespace OC
             case ModeType::Gateway:
                 m_server = m_WrapperInstance->CreateServerWrapper(m_csdkLock, config, &result);
                 m_client = m_WrapperInstance->CreateClientWrapper(m_csdkLock, config, &result);
-                m_modeType = OC_CLIENT_SERVER;
+                m_modeType = config.mode == ModeType::Gateway ? OC_GATEWAY : OC_CLIENT_SERVER;
                 break;
         }
 

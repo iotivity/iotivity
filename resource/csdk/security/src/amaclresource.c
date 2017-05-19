@@ -222,6 +222,7 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
 
     cbor_parser_init(cborPayload, size, 0, &parser, &amaclCbor);
     OicSecAmacl_t *headAmacl = (OicSecAmacl_t *)OICCalloc(1, sizeof(OicSecAmacl_t));
+    VERIFY_NOT_NULL_RETURN(TAG, headAmacl, ERROR, OC_STACK_NO_MEMORY);
 
     CborValue amaclMap = { .parser = NULL };
     cborFindResult = cbor_value_enter_container(&amaclCbor, &amaclMap);

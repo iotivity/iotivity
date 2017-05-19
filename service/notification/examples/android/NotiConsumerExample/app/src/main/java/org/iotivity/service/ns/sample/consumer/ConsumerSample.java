@@ -78,12 +78,6 @@ public class ConsumerSample
 
         Log.i(TAG, "Configuring platform.");
         OcPlatform.Configure(platformConfig);
-        try {
-            OcPlatform.stopPresence(); // Initialize OcPlatform
-        } catch (Exception e) {
-            Log.e(TAG, "Exception: stopping presence when configuration step: "
-                    + e);
-        }
         Log.i(TAG, "Configuration done Successfully");
     }
 

@@ -328,7 +328,7 @@ typedef struct
 #endif
 } CAEndpoint_t;
 
-#define CA_SECURE_ENDPOINT_PUBLIC_KEY_MAX_LENGTH    (128)
+#define CA_SECURE_ENDPOINT_PUBLIC_KEY_MAX_LENGTH    (512)
 
 /**
  * Endpoint information for secure messages.

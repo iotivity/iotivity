@@ -1680,6 +1680,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             }
 
             response->devAddr.adapter = OC_DEFAULT_ADAPTER;
+            response->sequenceNumber = MAX_SEQUENCE_NUMBER + 1;
             CopyEndpointToDevAddr(endPoint, &response->devAddr);
             FixUpClientResponse(response);
             response->resourceUri = responseInfo->info.resourceUri;
@@ -2166,6 +2167,11 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
     {
         respInfo.info.options =
             (CAHeaderOption_t *)OICCalloc(respInfo.info.numOptions, sizeof(CAHeaderOption_t));
+        if (NULL == respInfo.info.options)
+        {
+            OIC_LOG(ERROR, TAG, "Calloc failed");
+            return OC_STACK_NO_MEMORY;
+        }
         memcpy (respInfo.info.options, options,
                 sizeof(CAHeaderOption_t) * respInfo.info.numOptions);
 
@@ -3384,10 +3390,19 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
     else
     {
         requestInfo.info.numOptions = numOptions;
-        requestInfo.info.options =
-            (CAHeaderOption_t*) OICCalloc(numOptions, sizeof(CAHeaderOption_t));
-        memcpy(requestInfo.info.options, (CAHeaderOption_t*)options,
-               numOptions * sizeof(CAHeaderOption_t));
+        if(requestInfo.info.numOptions)
+        {
+            requestInfo.info.options =
+                (CAHeaderOption_t*) OICCalloc(numOptions, sizeof(CAHeaderOption_t));
+            if (NULL == requestInfo.info.options)
+            {
+                OIC_LOG(ERROR, TAG, "Calloc failed");
+                result = OC_STACK_NO_MEMORY;
+                goto exit;
+            }
+            memcpy(requestInfo.info.options, (CAHeaderOption_t*)options,
+                   numOptions * sizeof(CAHeaderOption_t));
+        }
     }
 
     CopyDevAddrToEndpoint(devAddr, &endpoint);

@@ -430,7 +430,7 @@ TEST(NotificationProviderTest, ExpectSuccessSendMessage)
 TEST(NotificationProviderTest, ExpectCopyConsumer)
 {
     auto consumer = (NSConsumer *)malloc(sizeof(NSConsumer));
-    strcpy(consumer->consumerId, g_consumerID);
+    strncpy(consumer->consumerId, g_consumerID, (size_t)NS_UUID_STRING_SIZE);
 
     auto copied = NSDuplicateConsumer(consumer);
     EXPECT_EQ(0, strcmp(copied->consumerId, consumer->consumerId));

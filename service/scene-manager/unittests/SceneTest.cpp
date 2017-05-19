@@ -193,7 +193,7 @@ TEST_F(SceneTest, executeScene)
     pScene1->addNewSceneAction(pRemoteResource2, KEY_2, VALUE_2);
 
     pScene1->execute(executeCallback);
-    waitForCb(100);
+    waitForCb(3000);
 }
 
 TEST_F(SceneTest, executeSceneUsingEmptyCallback)

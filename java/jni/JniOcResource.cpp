@@ -326,6 +326,10 @@ std::vector< std::string > JniOcResource::getAllHosts() const
     return m_sharedResource->getAllHosts();
 }
 
+std::string JniOcResource::setHost(const std::string& host)
+{
+    return m_sharedResource->setHost(host);
+}
 std::string JniOcResource::uri()
 {
     return m_sharedResource->uri();
@@ -335,6 +339,7 @@ OCConnectivityType JniOcResource::connectivityType() const
 {
     return m_sharedResource->connectivityType();
 }
+
 
 bool JniOcResource::isObservable()
 {
@@ -1581,6 +1586,30 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcResource_getAllHosts
     std::vector<std::string> allHosts = resource->getAllHosts();
 
     return JniUtils::convertStrVectorToJavaStrList(env, allHosts);
+}
+
+/*
+ * Class:     org_iotivity_base_OcResource
+ * Method:    setHost
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcResource_setHost
+(JNIEnv *env, jobject thiz, jstring jHost)
+{
+    LOGD("OcResource_setHost");
+    std::string host;
+    if (jHost)
+    {
+        host = env->GetStringUTFChars(jHost, nullptr);
+    }
+
+    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+    if (!resource)
+    {
+        return nullptr;
+    }
+
+    return env->NewStringUTF(resource->setHost(host).c_str());
 }
 
 /*

@@ -777,7 +777,11 @@ void* RequestDeleteDeathResourceTask(void* myqos)
 
     if (OC_STACK_OK != result)
     {
-        OIC_LOG(INFO, TAG, "Second DELETE call did not succeed");
+        OIC_LOG(INFO, TAG, "Second DELETE Request also failed");
+    }
+    else
+    {
+        OIC_LOG(INFO, TAG, "Second DELETE Request sent successfully; Waiting for Callback");
     }
 
     return NULL;
@@ -798,16 +802,15 @@ int InitDeleteRequest(OCQualityOfService qos)
     if (OC_STACK_OK != result)
     {
         // Error can happen if for example, network connectivity is down
-        OIC_LOG(INFO, TAG, "First DELETE call did not succeed");
-    }
-    else
-    {
+        OIC_LOG(INFO, TAG, "DELETE Request did not succeed; Will try again.");
         //Create a thread to delete this resource again
         pthread_t threadId;
         pthread_create (&threadId, NULL, RequestDeleteDeathResourceTask, (void*)qos);
     }
-
-    OIC_LOG_V(INFO, TAG, "\n\nExit  %s", __func__);
+    else
+    {
+        OIC_LOG(INFO, TAG, "DELETE Request sent successfully; Waiting for Callback");
+    }
     return result;
 }
 
