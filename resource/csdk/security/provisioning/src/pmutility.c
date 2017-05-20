@@ -1260,6 +1260,9 @@ OCStackResult PMSingleDeviceDiscoveryInUnicast(unsigned short waittime, const Oi
 }
 
 #ifdef MULTIPLE_OWNER
+
+static const unsigned int IOTIVITY_USECS_PER_MSEC = 1000;
+
 static OCStackApplicationResult MOTDeviceDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse)
 {
@@ -1479,7 +1482,7 @@ OCStackResult PMMultipleOwnerSingleDeviceDiscovery(unsigned short timeoutSeconds
             }
 
             // Sleep for 100 ms to free up the CPU
-            usleep(100 * USECS_PER_MSEC);
+            usleep(100 * IOTIVITY_USECS_PER_MSEC);
 
             res = OCProcess();
         }
