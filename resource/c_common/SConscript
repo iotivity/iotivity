@@ -163,7 +163,7 @@ common_env = env.Clone()
 ######################################################################
 
 if target_os in ['windows', 'msys_nt']:
-    common_env.AppendUnique(CCFLAGS=['/W4', '/WX'])
+    common_env.AppendUnique(CCFLAGS=['/W4'])
 
 ######################################################################
 # Add platform-specific helper library

@@ -134,7 +134,7 @@ namespace OC
 
             bool emptyData() const;
 
-            int numberOfAttributes() const;
+            size_t numberOfAttributes() const;
 
             bool erase(const std::string& str);
 
@@ -175,7 +175,7 @@ namespace OC
                         val = boost::get<T>(x->second);
                         return true;
                     }
-                    catch (boost::bad_get& e)
+                    catch (boost::bad_get&)
                     {
                         val = T();
                         return false;
@@ -207,7 +207,7 @@ namespace OC
                     {
                         val = boost::get<T>(x->second);
                     }
-                    catch (boost::bad_get& e)
+                    catch (boost::bad_get&)
                     {
                         return val;
                     }
@@ -271,7 +271,7 @@ namespace OC
                         {
                             return boost::get<T>(m_values[m_attrName]);
                         }
-                        catch (boost::bad_get& e)
+                        catch (boost::bad_get&)
                         {
                             T val = T();
                             return val;

@@ -33,10 +33,16 @@ if env['CC'] == 'cl':
     #    - Disabled due to IoTivity not being ANSI compatible
     #  - warning C4232: nonstandard extension used: 'read': address of dllimport 'fread' is not static, identity not guaranteed
     #    - fread, frwrite, etc are provided by the platform and cannot be changed.
+    #  - warning C4503: decorated name length exceeded, name was truncated.
+    #    - Might cause issues during linking and debugging.
+    #  - warning C4512: assignment operator could not be generated.
+    #    - It's an acceptable warning displayed only by Visual Studio 2013 compiler.
     #  - warning C4706: assignment within conditional expression
     #    - Disabled due to the widespread usage in IoTivity and low impact.
-    env.AppendUnique(CCFLAGS=['/wd4127', '/wd4200', '/wd4201', '/wd4204', '/wd4214', '/wd4221', '/wd4232', '/wd4706'])
+    env.AppendUnique(CCFLAGS=['/wd4127', '/wd4200', '/wd4201', '/wd4204', '/wd4214', '/wd4221', '/wd4232', '/wd4503', '/wd4512', '/wd4706'])
 
+    # Enabling /W3 warnings globally for Windows builds.
+    env.AppendUnique(CCFLAGS=['/W3', '/WX'])
     env.AppendUnique(CCFLAGS=['/EHsc'])
 
     # Set release/debug flags
@@ -71,7 +77,7 @@ if env['CC'] == 'cl':
     # will not work on all systems supported by IoTivity. This will prevent Visual
     # Studio from displaying unwanted warnings.
     # See https://msdn.microsoft.com/en-us/library/ttcz0bys.aspx for more details.
-    env.AppendUnique(CPPDEFINES=['_CRT_SECURE_NO_WARNINGS', '_CRT_NONSTDC_NO_WARNINGS'])
+    env.AppendUnique(CPPDEFINES=['_CRT_SECURE_NO_WARNINGS', '_CRT_NONSTDC_NO_WARNINGS', '_SCL_SECURE_NO_WARNINGS'])
 
     if env.get('UWP_APP') != '1':
         # Add Desktop specific libraries
