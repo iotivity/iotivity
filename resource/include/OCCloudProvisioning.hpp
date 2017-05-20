@@ -116,6 +116,15 @@ namespace OC
             OCStackResult getCRL(ResponseCallBack callback);
 
             /**
+             * API for updation of Individual Acl
+             * @param aces is the list of Access control entities for updation.
+             * @param callback function called by the stack on completion of request
+             * @return ::OC_STACK_OK on Success and other values otherwise
+             */
+            OCStackResult updateIndividualACL(const cloudAce_t *aces, std::string &aclId,
+                    ResponseCallBack callback);
+
+            /**
              * API to post the  certificate revocation list to cloud
              * @param thisUpdate thisUpdate [mandatory param]
              * @param nextUpdate nextUpdate [mandatory param]

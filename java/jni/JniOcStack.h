@@ -105,6 +105,7 @@ extern jclass g_cls_OcAccountManager;
 #endif
 #ifdef __WITH_TLS__
 extern jclass g_cls_OcCloudProvisioning;
+extern jclass g_cls_OcOicSecCloudAcl_ace;
 #endif
 
 extern jclass g_cls_OcOicSecAcl_ace;
@@ -150,6 +151,12 @@ extern jmethodID g_mid_OcAccountManager_ctor;
 #ifdef __WITH_TLS__
 extern jmethodID g_mid_OcCloudProvisioning_getIP;
 extern jmethodID g_mid_OcCloudProvisioning_getPort;
+extern jmethodID g_mid_OcOicSecCloudAcl_ace_get_aclId;
+extern jmethodID g_mid_OcOicSecCloudAcl_ace_get_subjectID;
+extern jmethodID g_mid_OcOicSecCloudAcl_ace_get_stype;
+extern jmethodID g_mid_OcOicSecCloudAcl_ace_get_permission;
+extern jmethodID g_mid_OcOicSecCloudAcl_ace_get_resources;
+extern jmethodID g_mid_OcOicSecCloudAcl_ace_get_validities;
 #endif
 
 extern jmethodID g_mid_OcOicSecAcl_get_rownerID;

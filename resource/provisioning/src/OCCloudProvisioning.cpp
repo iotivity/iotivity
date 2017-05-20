@@ -204,6 +204,37 @@ namespace OC
         return result;
     }
 
+    OCStackResult OCCloudProvisioning::updateIndividualACL(const cloudAce_t *aces, std::string& aclId, ResponseCallBack callback)
+    {
+        if (!callback)
+        {
+            oclog() <<"Result callback can't be null";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+        if (!aces)
+        {
+            oclog() <<"Aces List can not be empty";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            CloudProvisionContext *context = new CloudProvisionContext(callback);
+
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCCloudAclIndividualAclUpdate(static_cast<void*>(context), aclId.c_str(),
+                    aces, &m_devAddr, &OCCloudProvisioning::callbackWrapper);
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
     OCStackResult OCCloudProvisioning::postCRL(const std::string& thisUpdate,
                                               const std::string& nextUpdate,
                                               const OCByteString *crl,

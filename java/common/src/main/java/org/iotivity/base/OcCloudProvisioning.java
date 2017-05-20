@@ -86,6 +86,10 @@ public class  OcCloudProvisioning {
         public void postCRLListener(int result);
     }
 
+    public interface UpdateIndividualACLListener  {
+        public void updateIndividualACLListener(int result);
+    }
+
    /**
     * Method to Request a certificate from the cloud
     * @param certificateIssueRequestListener function called by the stack on completion of request.
@@ -125,6 +129,24 @@ public class  OcCloudProvisioning {
     */
     public native void getIndividualAclInfo(String aclId,
             GetIndividualAclInfoListener cloudAclIndividualGetInfoHandler) throws OcException;
+
+	 /**
+    * Method to update Individual ACL info
+    * @param aclId ACL ID
+    * @param cloudAces List of cloud Aces for updation.
+    * @param updateIndividualACLHandler function called by the stack on completion of request.
+    * @throws OcException Indicates failure to get ACL information.
+    *                     Use OcException.GetErrorCode() for more details.
+    */
+    public void updateIndividualACL(String aclId, List<OicSecCloudAce> cloudAces,
+            UpdateIndividualACLListener updateIndividualACLHandler) throws OcException
+    {
+        this.updateIndividualACL0(aclId,
+                cloudAces.toArray(new OicSecCloudAce[cloudAces.size()]), updateIndividualACLHandler);
+    }
+
+    public native void updateIndividualACL0(String aclId, OicSecCloudAce[] aces,
+            UpdateIndividualACLListener updateIndividualACLHandler) throws OcException;
 
    /**
     * Method to get certificate revocation list

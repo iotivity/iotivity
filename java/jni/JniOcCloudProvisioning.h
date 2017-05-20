@@ -54,6 +54,8 @@ class JniOcCloudProvisioning
         OCStackResult postCRL(JNIEnv* env, const std::string& thisUpdate,
                                   const std::string& nextUpdate, const OCByteString *crl,
                                    const stringArray_t *serialNumbers, jobject jListener);
+        OCStackResult updateIndividualACL(JNIEnv* env, jobject jListener,
+                        std::string aclID, jobjectArray jcloudAces);
 
     private:
         std::map<jobject, std::pair<JniOcCloudResultListener*, int>> resultMap;
@@ -109,6 +111,14 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcCloudProvisioning_getIndividualA
  */
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcCloudProvisioning_getCRL
   (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     org_iotivity_base_OcCloudProvisioning
+ * Method:    updateIndividualACL
+ * Signature: (Ljava/lang/String;Ljava/lang/Object;Lorg/iotivity/base/OcCloudProvisioning/UpdateIndividualACLListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcCloudProvisioning_updateIndividualACL0
+  (JNIEnv *, jobject, jstring, jobjectArray, jobject);
 
 /*
  * Class:     org_iotivity_base_OcCloudProvisioning
