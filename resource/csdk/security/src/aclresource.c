@@ -2299,7 +2299,8 @@ static bool IsSameResources(OicSecRsrc_t* resources1, OicSecRsrc_t* resources2)
             rsrc2 = NULL;
             LL_FOREACH(resources2, rsrc2)
             {
-                if(rsrc1 && rsrc2)
+                if (rsrc1 && rsrc2 &&
+                    rsrc1->href && rsrc2->href)
                 {
                     if(strcmp(rsrc1->href, rsrc2->href) == 0 &&
                         IsSameStringArray(rsrc1->interfaces, rsrc1->interfaceLen,
