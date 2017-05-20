@@ -24,6 +24,8 @@
 /// demonstrate using std::bind to attach to instances of a class as well as using
 /// constructResourceObject
 
+#include "iotivity_config.h"
+
 #include <chrono>
 #include <iostream>
 #include <thread>

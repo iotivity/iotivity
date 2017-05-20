@@ -777,55 +777,46 @@ static int64_t OCConvertArray(CborEncoder *parent, const OCRepPayloadValueArray 
     CborEncoder array;
     err |= cbor_encoder_create_array(parent, &array, valArray->dimensions[0]);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep array");
-    // empty array
-    if (valArray->dimensions[0] == 0)
+    for (size_t i = 0; i < valArray->dimensions[0]; ++i)
     {
-        err |= OCConvertArrayItem(&array, valArray, 0);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array value");
-    }
-    else
-    {
-        for (size_t i = 0; i < valArray->dimensions[0]; ++i)
+        if (0 != valArray->dimensions[1])
         {
-            if (0 != valArray->dimensions[1])
+            CborEncoder array2;
+            err |= cbor_encoder_create_array(&array, &array2, valArray->dimensions[1]);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep array2");
+
+            for (size_t j = 0; j < valArray->dimensions[1]; ++j)
             {
-                CborEncoder array2;
-                err |= cbor_encoder_create_array(&array, &array2, valArray->dimensions[1]);
-                VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep array2");
-
-                for (size_t j = 0; j < valArray->dimensions[1]; ++j)
+                if (0 != valArray->dimensions[2])
                 {
-                    if (0 != valArray->dimensions[2])
-                    {
-                        CborEncoder array3;
-                        err |= cbor_encoder_create_array(&array2, &array3, valArray->dimensions[2]);
-                        VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep array3");
+                    CborEncoder array3;
+                    err |= cbor_encoder_create_array(&array2, &array3, valArray->dimensions[2]);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep array3");
 
-                        for(size_t k = 0; k < valArray->dimensions[2]; ++k)
-                        {
-                            err |= OCConvertArrayItem(&array3, valArray,
+                    for(size_t k = 0; k < valArray->dimensions[2]; ++k)
+                    {
+                        err |= OCConvertArrayItem(&array3, valArray,
                                 j * valArray->dimensions[2] +
                                 i * valArray->dimensions[2] * valArray->dimensions[1] +
                                 k);
-                            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array3 value");
-                        }
-                        err |= cbor_encoder_close_container(&array2, &array3);
-                        VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing rep array3");
+                        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array3 value");
                     }
-                    else
-                    {
-                        err |= OCConvertArrayItem(&array2, valArray, i * valArray->dimensions[1] + j);
-                        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array2 value");
-                    }
+                    err |= cbor_encoder_close_container(&array2, &array3);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing rep array3");
                 }
-                err |= cbor_encoder_close_container(&array, &array2);
-                VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing rep array2");
+                else
+                {
+                    err |= OCConvertArrayItem(&array2, valArray, i * valArray->dimensions[1] + j);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array2 value");
+                }
             }
-            else
-            {
-                err |= OCConvertArrayItem(&array, valArray, i);
-                VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array value");
-            }
+            err |= cbor_encoder_close_container(&array, &array2);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing rep array2");
+        }
+        else
+        {
+            err |= OCConvertArrayItem(&array, valArray, i);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array value");
         }
     }
     err |= cbor_encoder_close_container(parent, &array);

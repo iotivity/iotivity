@@ -116,6 +116,7 @@ namespace OC
                 std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<std::vector<OCByteString>>>::value ||
                 std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<std::vector<std::vector<OCByteString>>>>::value ||
                 std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<uint8_t>>::value ||
+                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, AttributeValue>::value ||
                 std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, NullType>::value;
         };
 

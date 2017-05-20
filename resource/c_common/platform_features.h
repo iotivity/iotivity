@@ -45,6 +45,11 @@
         typedef int OC_CAT(StaticAssertTemp, __LINE__)[2 * !!(condition) - 1]
 #endif
 
+#if !(defined _GLIBCXX_USE_NANOSLEEP) \
+  && defined(__GNUC__) && (4 == __GNUC__) && (7 >= __GNUC_MINOR__)
+#  define  _GLIBCXX_USE_NANOSLEEP 1
+#endif
+
 #ifndef INLINE_API
 #  if defined(__cplusplus)
 #    define INLINE_API inline

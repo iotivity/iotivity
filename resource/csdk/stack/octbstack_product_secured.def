@@ -20,6 +20,7 @@ OCGenerateKeyPair
 OCGenerateRandomSerialNumber
 OCGenerateRoleCertificate
 OCGetACLResource
+OCGetACL2Resource
 OCGetCredResource
 OCGetCSRResource
 OCGetDevInfoFromNetwork
