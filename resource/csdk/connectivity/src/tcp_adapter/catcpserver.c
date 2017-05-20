@@ -795,11 +795,16 @@ static CAResult_t CAReceiveMessage(CATCPSessionInfo_t *svritem)
             //[3][4] bytes in tls header are tls payload length
             tlsLength = TLS_HEADER_SIZE +
                             (size_t)((svritem->tlsdata[3] << 8) | svritem->tlsdata[4]);
-            OIC_LOG_V(DEBUG, TAG, "toal tls length = %u", tlsLength);
+            OIC_LOG_V(DEBUG, TAG, "total tls length = %u", tlsLength);
             if (tlsLength > sizeof(svritem->tlsdata))
             {
-                OIC_LOG_V(ERROR, TAG, "toal tls length is too big (buffer size : %u)",
+                OIC_LOG_V(ERROR, TAG, "total tls length is too big (buffer size : %u)",
                                     sizeof(svritem->tlsdata));
+                if (CA_STATUS_OK != CAcloseSslConnection(&svritem->sep.endpoint))
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to close TLS session");
+                }
+                CASearchAndDeleteTCPSession(&(svritem->sep.endpoint));
                 return CA_RECEIVE_FAILED;
             }
             nbRead = tlsLength - svritem->tlsLen;
