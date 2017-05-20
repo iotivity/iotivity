@@ -1279,6 +1279,7 @@ static OCStackApplicationResult OwnerAclHandler(void *ctx, OCDoHandle UNUSED,
         if(NULL != selectedDeviceInfo)
         {
             //POST /oic/sec/doxm [{ ..., "owned":"TRUE" }]
+            OIC_LOG_V(DEBUG, TAG, "%s posting /doxm.owned = true.", __func__);
             res = PostOwnershipInformation(otmCtx);
             if(OC_STACK_OK != res)
             {
@@ -1660,7 +1661,7 @@ static OicSecAcl_t* GenerateOwnerAcl(const OicUuid_t* owner)
 {
     OicSecAcl_t* ownerAcl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
     OicSecAce_t* ownerAce = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
-    OicSecRsrc_t* wildcardRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+    OicSecRsrc_t* wildcardRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t)); // TODO IOT-2192
     if(NULL == ownerAcl || NULL == ownerAce || NULL == wildcardRsrc)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
@@ -1772,7 +1773,7 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr, deviceInfo->securePort,
                         deviceInfo->connType,
-                        query, sizeof(query), OIC_RSRC_ACL_URI))
+                        query, sizeof(query), OIC_RSRC_ACL2_URI))
     {
         OIC_LOG(ERROR, TAG, "Failed to generate query");
         return OC_STACK_ERROR;
@@ -1804,7 +1805,8 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
         goto error;
     }
 
-    res = AclToCBORPayload(ownerAcl, OIC_SEC_ACL_V1, &secPayload->securityData, &secPayload->payloadSize);
+    // TODO IOT-2052 change to V2
+    res = AclToCBORPayload(ownerAcl, OIC_SEC_ACL_V2, &secPayload->securityData, &secPayload->payloadSize);
     if (OC_STACK_OK != res)
     {
         OICFree(secPayload);

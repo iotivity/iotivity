@@ -50,7 +50,8 @@
 
 static OicSecPstat_t* JSONToPstatBin(const char * jsonStr);
 static OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr);
-static OicSecAcl_t *JSONToAclBin(const char * jsonStr);
+static OicSecAcl_t *JSONToAclBin(OicSecAclVersion_t *aclVersion,
+    const char * jsonStr);
 static OicSecAmacl_t* JSONToAmaclBin(const char * jsonStr);
 static OicSecCred_t* JSONToCredBin(const char * jsonStr);
 static OCDeviceProperties* JSONToDPBin(const char *jsonStr);
@@ -122,13 +123,14 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
     jsonRoot = cJSON_Parse(jsonStr);
 
     cJSON *value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_ACL_NAME);
-    //printf("ACL json : \n%s\n", cJSON_PrintUnformatted(value));
+    printf("/acl json : \n%s\n", cJSON_PrintUnformatted(value));
     size_t aclCborSize = 0;
     if (NULL != value)
     {
-        OicSecAcl_t *acl = JSONToAclBin(jsonStr);
+        OicSecAclVersion_t version = OIC_SEC_ACL_V2; // default to V2
+        OicSecAcl_t *acl = JSONToAclBin(&version, jsonStr);
         VERIFY_NOT_NULL(TAG, acl, FATAL);
-        ret = AclToCBORPayload(acl, OIC_SEC_ACL_V2, &aclCbor, &aclCborSize);
+        ret = AclToCBORPayload(acl, version, &aclCbor, &aclCborSize);
         if(OC_STACK_OK != ret)
         {
             OIC_LOG (ERROR, TAG, "Failed converting Acl to Cbor Payload");
@@ -138,8 +140,13 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         printf("ACL Cbor Size: %" PRIuPTR "\n", aclCborSize);
         DeleteACLList(acl);
     }
+    else
+    {
+        printf("JSON contains no /acl\n");
+    }
 
     value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_PSTAT_NAME);
+    printf("/pstat json : \n%s\n", cJSON_PrintUnformatted(value));
     size_t pstatCborSize = 0;
     if (NULL != value)
     {
@@ -155,7 +162,13 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         printf("PSTAT Cbor Size: %" PRIuPTR "\n", pstatCborSize);
         DeletePstatBinData(pstat);
     }
+    else
+    {
+        printf("JSON contains no /pstat\n");
+    }
+
     value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_DOXM_NAME);
+    printf("/doxm json : \n%s\n", cJSON_PrintUnformatted(value));
     size_t doxmCborSize = 0;
     if (NULL != value)
     {
@@ -171,7 +184,13 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         printf("DOXM Cbor Size: %" PRIuPTR "\n", doxmCborSize);
         DeleteDoxmBinData(doxm);
     }
+    else
+    {
+        printf("JSON contains no /doxm\n");
+    }
+
     value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_AMACL_NAME);
+    printf("/amacl json : \n%s\n", cJSON_PrintUnformatted(value));
     size_t amaclCborSize = 0;
     if (NULL != value)
     {
@@ -187,8 +206,13 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         printf("AMACL Cbor Size: %" PRIuPTR "\n", amaclCborSize);
         DeleteAmaclList(amacl);
     }
+    else
+    {
+        printf("JSON contains no /amacl\n");
+    }
+
     value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_CRED_NAME);
-    //printf("CRED json : \n%s\n", cJSON_PrintUnformatted(value));
+    printf("/cred json : \n%s\n", cJSON_PrintUnformatted(value));
     size_t credCborSize = 0;
     int secureFlag = 0;
     if (NULL != value)
@@ -205,6 +229,11 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         printf("CRED Cbor Size: %" PRIuPTR "\n", credCborSize);
         DeleteCredList(cred);
     }
+    else
+    {
+        printf("JSON contains no /cred\n");
+    }
+
     value = cJSON_GetObjectItem(jsonRoot, OC_JSON_DEVICE_PROPS_NAME);
     size_t dpCborSize = 0;
     if (NULL != value)
@@ -218,6 +247,10 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
             goto exit;
         }
         printf("Device Properties Cbor Size: %" PRIuPTR "\n", dpCborSize);
+    }
+    else
+    {
+        printf("JSON contains no deviceProps\n");
     }
 
     CborEncoder encoder;
@@ -310,8 +343,14 @@ exit:
     return;
 }
 
-OicSecAcl_t* JSONToAclBin(const char * jsonStr)
+OicSecAcl_t* JSONToAclBin(OicSecAclVersion_t *aclVersion, const char * jsonStr)
 {
+    printf("IN %s\n", __func__);
+    if(NULL == jsonStr)
+    {
+        return NULL;
+    }
+
     OCStackResult ret = OC_STACK_ERROR;
     OicSecAcl_t * headAcl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
     VERIFY_NOT_NULL_RETURN(TAG, headAcl, ERROR, NULL);
@@ -327,14 +366,32 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
 
     cJSON *jsonAclObj = NULL;
 
-    // aclist
     jsonAclObj = cJSON_GetObjectItem(jsonAclMap, OIC_JSON_ACLIST_NAME);
+    if (jsonAclObj)
+    {
+        printf("Found 'aclist' tag... resource is oic.r.acl type.\n");
+        *aclVersion = OIC_SEC_ACL_V1;
+    }
+    else
+    {
+        jsonAclObj = cJSON_GetObjectItem(jsonAclMap, OIC_JSON_ACLIST2_NAME);
+        VERIFY_NOT_NULL(TAG, jsonAclObj, ERROR);
+        printf("Found 'aclist2' tag... resource is oic.r.acl2 type.\n");
+        *aclVersion = OIC_SEC_ACL_V2;
+    }
     VERIFY_NOT_NULL(TAG, jsonAclObj, ERROR);
 
-    // aclist-aces
     cJSON *jsonAclArray = NULL;
-    jsonAclArray = cJSON_GetObjectItem(jsonAclObj, OIC_JSON_ACES_NAME);
-    VERIFY_NOT_NULL(TAG, jsonAclArray, ERROR);
+
+    if (OIC_SEC_ACL_V1 == *aclVersion) // aclist-aces
+    {
+        jsonAclArray = cJSON_GetObjectItem(jsonAclObj, OIC_JSON_ACES_NAME);
+        VERIFY_NOT_NULL(TAG, jsonAclArray, ERROR);
+    }
+    else
+    {
+        jsonAclArray = jsonAclObj;
+    }
 
     if (cJSON_Array == jsonAclArray->type)
     {
@@ -353,19 +410,73 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
             LL_APPEND(headAcl->aces, ace);
 
             cJSON *jsonObj = NULL;
-            jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_SUBJECTID_NAME);
-            VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-            if(strcmp(jsonObj->valuestring, WILDCARD_RESOURCE_URI) == 0)
+
+            if (OIC_SEC_ACL_V2 == *aclVersion)
             {
-                ace->subjectuuid.id[0] = '*';
+                jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_ACEID_NAME);
+                VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
+                VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
+                VERIFY_SUCCESS(TAG, jsonObj->valueint <= UINT16_MAX, ERROR);
+                ace->aceid = (uint16_t)jsonObj->valueint;
             }
-            else
+
+            if (OIC_SEC_ACL_V1 == *aclVersion)
             {
-                ret = ConvertStrToUuid(jsonObj->valuestring, &ace->subjectuuid);
-                VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+                jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_SUBJECTID_NAME);
+                VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
+                VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
+
+                if(strcmp(jsonObj->valuestring, WILDCARD_RESOURCE_URI) == 0)
+                {
+                    ace->subjectuuid.id[0] = '*';
+                }
+                else
+                {
+                    ret = ConvertStrToUuid(jsonObj->valuestring, &ace->subjectuuid);
+                    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+                }
+                ace->subjectType = OicSecAceUuidSubject;
             }
-            ace->subjectType = OicSecAceUuidSubject;
+            else // v2
+            {
+                jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_SUBJECT_NAME);
+                VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
+                VERIFY_SUCCESS(TAG, cJSON_Object == jsonObj->type, ERROR);
+
+                // Enter the object and get "uuid" string...
+                cJSON *uuidJson = NULL;
+                uuidJson = cJSON_GetObjectItem(jsonObj, OIC_JSON_UUID_NAME);
+                if (uuidJson) // "uuid" type
+                {
+                    VERIFY_NOT_NULL(TAG, uuidJson, ERROR);
+                    VERIFY_SUCCESS(TAG, cJSON_String == uuidJson->type, ERROR);
+                    ret = ConvertStrToUuid(uuidJson->valuestring, &ace->subjectuuid);
+                    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+                    ace->subjectType = OicSecAceUuidSubject;
+                }
+                else // "conntype"
+                {
+                    cJSON *conntypeJson = NULL;
+                    conntypeJson = cJSON_GetObjectItem(jsonObj, OIC_JSON_CONNTYPE_NAME);
+                    VERIFY_NOT_NULL(TAG, conntypeJson, ERROR);
+                    VERIFY_SUCCESS(TAG, cJSON_String == conntypeJson->type, ERROR);
+                    char *connTypeStr = NULL;
+                    connTypeStr = OICStrdup(conntypeJson->valuestring);
+                    VERIFY_NOT_NULL(TAG, connTypeStr, ERROR);
+                    if (0 == strcmp(connTypeStr, OIC_JSON_ANONCLEAR_NAME))
+                    {
+                        ace->subjectConn = ANON_CLEAR;
+                        ace->subjectType = OicSecAceConntypeSubject;
+                    }
+                    else if (0 == strcmp(connTypeStr, OIC_JSON_AUTHCRYPT_NAME))
+                    {
+                        ace->subjectConn = AUTH_CRYPT;
+                        ace->subjectType = OicSecAceConntypeSubject;
+                    }
+                    VERIFY_SUCCESS(TAG, ace->subjectType == OicSecAceConntypeSubject, ERROR);
+                }
+                // */  RESUME HERE
+            }
             // Resources -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_RESOURCES_NAME);
             VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
@@ -553,6 +664,7 @@ exit:
         DeleteACLList(headAcl);
         headAcl = NULL;
     }
+    printf("OUT %s: %s\n", __func__, (headAcl != NULL) ? "success" : "failure");
     return headAcl;
 }
 
@@ -735,7 +847,7 @@ exit:
 
 OicSecPstat_t* JSONToPstatBin(const char * jsonStr)
 {
-    printf("IN JSONToPstatBin\n");
+    printf("IN %s\n", __func__);
     if(NULL == jsonStr)
     {
         return NULL;

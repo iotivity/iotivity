@@ -1,51 +1,117 @@
 {
     "acl": {
-        "aclist": {
-            "aces": [
-                {
-                    "subjectuuid": "*",
-                    "resources": [
-                        {
-                            "href": "/oic/res",
-                            "rel": "",
-                            "rt": ["oic.wk.res"],
-                            "if": ["oic.if.ll"]
-                        },
-                        {
-                            "href": "/oic/d",
-                            "rel": "",
-                            "rt": ["oic.wk.d"],
-                            "if": ["oic.if.baseline", "oic.if.r"]
-                        },
-                        {
-                            "href": "/oic/p",
-                            "rel": "",
-                            "rt": ["oic.wk.p"],
-                            "if": ["oic.if.baseline", "oic.if.r"]
-                        }
-                    ],
-                    "permission": 2
+        "aclist2": [
+            {
+                "aceid": 1,
+                "subject": {
+                  "conntype": "anon-clear"
                 },
-                {
-                    "subjectuuid": "*",
-                    "resources": [
+                "resources": [
+                    {
+                        "href": "/oic/res",
+                        "rel": "",
+                        "rt": ["oic.wk.res"],
+                        "if": ["oic.if.ll"]
+                    },{
+                        "href": "/oic/d",
+                        "rel": "",
+                        "rt": ["oic.wk.d"],
+                        "if": ["oic.if.baseline", "oic.if.r"]
+                    },{
+                        "href": "/oic/p",
+                        "rel": "",
+                        "rt": ["oic.wk.p"],
+                        "if": ["oic.if.baseline", "oic.if.r"]
+                    }
+                ],
+                "permission": 2
+            },
+            {
+                "aceid": 2,
+                "subject": {
+                  "conntype": "auth-crypt"
+                },
+                "resources": [
+                    {
+                        "href": "/oic/res",
+                        "rel": "",
+                        "rt": ["oic.wk.res"],
+                        "if": ["oic.if.ll"]
+                    },{
+                        "href": "/oic/d",
+                        "rel": "",
+                        "rt": ["oic.wk.d"],
+                        "if": ["oic.if.baseline", "oic.if.r"]
+                    },{
+                        "href": "/oic/p",
+                        "rel": "",
+                        "rt": ["oic.wk.p"],
+                        "if": ["oic.if.baseline", "oic.if.r"]
+                    }
+                ],
+                "permission": 2
+            },
+            {
+                "aceid": 3,
+                "subject": {
+                  "conntype": "anon-clear"
+                },
+                "resources": [
+                    {
+                        "href": "/oic/sec/doxm",
+                        "rel": "",
+                        "rt": ["oic.r.doxm"],
+                        "if": ["oic.if.baseline"]
+                    }
+                ],
+                "permission": 6
+            },
+            {
+                "aceid": 4,
+                "subject": {
+                  "conntype": "auth-crypt"
+                },
+                "resources": [
+                    {
+                        "href": "/oic/sec/doxm",
+                        "rel": "",
+                        "rt": ["oic.r.doxm"],
+                        "if": ["oic.if.baseline"]
+                    }
+                ],
+                "permission": 6
+            },
+            {
+                "aceid": 5,
+                "subject": {
+                  "conntype": "anon-clear"
+                },
+                "resources": [
                         {
-                            "href": "/oic/sec/doxm",
+                            "href": "/oic/sec/roles",
                             "rel": "",
-                            "rt": ["oic.r.doxm"],
-                            "if": ["oic.if.baseline"]
-                        },
-                        {
-                            "href": "/oic/sec/pstat",
-                            "rel": "",
-                            "rt": ["oic.r.pstat"],
+                            "rt": ["oic.r.cred"],
                             "if": ["oic.if.baseline"]
                         }
                     ],
-                    "permission": 2
-                }
-            ]
-        },
+                "permission": 31
+            },
+            {
+                "aceid": 6,
+                "subject": {
+                  "conntype": "auth-crypt"
+                },
+                "resources": [
+                        {
+                            "href": "/oic/sec/roles",
+                            "rel": "",
+                            "rt": ["oic.r.cred"],
+                            "if": ["oic.if.baseline"]
+                        }
+                    ],
+                "permission": 31
+            }
+        ],
         "rowneruuid" : "61646D69-6E44-6576-6963-655575696430"
     },
     "pstat": {

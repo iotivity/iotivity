@@ -636,6 +636,7 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
 
             size_t size = 0;
             uint8_t *payload = NULL;
+            // TODO IOT-2052 update to /acl2
             if (OC_STACK_OK == AclToCBORPayload(acl, OIC_SEC_ACL_V1, &payload, &size))
             {
                 AppendACL(payload, size);

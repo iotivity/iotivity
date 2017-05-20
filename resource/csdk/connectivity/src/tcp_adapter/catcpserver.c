@@ -129,7 +129,7 @@ static void CASelectReturned(fd_set *readFds);
 #else
 static void CASocketEventReturned(CASocketFd_t socket, long networkEvents);
 #endif
-static void CAReceiveMessage(CASocketFd_t fd);
+static CAResult_t CAReceiveMessage(CATCPSessionInfo_t *svritem);
 static void CAReceiveHandler(void *data);
 static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem);
 
@@ -317,17 +317,34 @@ static void CASelectReturned(fd_set *readFds)
     }
     else
     {
+        oc_mutex_lock(g_mutexObjectList);
         CATCPSessionInfo_t *session = NULL;
-        LL_FOREACH(g_sessionList, session)
+        CATCPSessionInfo_t *tmp = NULL;
+        LL_FOREACH_SAFE(g_sessionList, session, tmp)
         {
             if (session && session->fd != OC_INVALID_SOCKET)
             {
                 if (FD_ISSET(session->fd, readFds))
                 {
-                    CAReceiveMessage(session->fd);
+                    CAResult_t res = CAReceiveMessage(session);
+                    //disconnect session and clean-up data if any error occurs
+                    if (res != CA_STATUS_OK)
+                    {
+#ifdef __WITH_TLS__
+                        if (CA_STATUS_OK != CAcloseSslConnection(&session->sep.endpoint))
+                        {
+                            OIC_LOG(ERROR, TAG, "Failed to close TLS session");
+                        }
+#endif
+                        LL_DELETE(g_sessionList, session);
+                        CADisconnectTCPSession(session);
+                        oc_mutex_unlock(g_mutexObjectList);
+                        return;
+                    }
                 }
             }
         }
+        oc_mutex_unlock(g_mutexObjectList);
     }
 }
 
@@ -728,21 +745,13 @@ CAResult_t CAConstructCoAP(CATCPSessionInfo_t *svritem, unsigned char **data,
     return CA_STATUS_OK;
 }
 
-static void CAReceiveMessage(CASocketFd_t fd)
+static CAResult_t CAReceiveMessage(CATCPSessionInfo_t *svritem)
 {
-    CAResult_t res = CA_STATUS_OK;
-
-    //get remote device information from file descriptor.
-    CATCPSessionInfo_t *svritem = CAGetSessionInfoFromFD(fd);
-    if (!svritem)
-    {
-        OIC_LOG(ERROR, TAG, "there is no connection information in list");
-        return;
-    }
+    VERIFY_NON_NULL(svritem, TAG, "svritem is NULL");
 
     // read data
     int len = 0;
-
+    CAResult_t res = CA_STATUS_OK;
     if (svritem->sep.endpoint.flags & CA_SECURE)
     {
         svritem->protocol = TLS;
@@ -765,12 +774,12 @@ static void CAReceiveMessage(CASocketFd_t fd)
             {
                 OIC_LOG_V(ERROR, TAG, "toal tls length is too big (buffer size : %u)",
                                     sizeof(svritem->tlsdata));
-                return;
+                return CA_RECEIVE_FAILED;
             }
             nbRead = tlsLength - svritem->tlsLen;
         }
 
-        len = recv(fd, (char*)svritem->tlsdata + svritem->tlsLen, (int)nbRead, 0);
+        len = recv(svritem->fd, (char*)svritem->tlsdata + svritem->tlsLen, (int)nbRead, 0);
         if (len < 0)
         {
             OIC_LOG_V(ERROR, TAG, "recv failed %s", strerror(errno));
@@ -802,7 +811,7 @@ static void CAReceiveMessage(CASocketFd_t fd)
         svritem->protocol = COAP;
 
         // svritem->tlsdata can also be used as receiving buffer in case of raw tcp
-        len = recv(fd, (char*)svritem->tlsdata, sizeof(svritem->tlsdata), 0);
+        len = recv(svritem->fd, (char*)svritem->tlsdata, sizeof(svritem->tlsdata), 0);
         if (len < 0)
         {
             OIC_LOG_V(ERROR, TAG, "recv failed %s", strerror(errno));
@@ -824,18 +833,7 @@ static void CAReceiveMessage(CASocketFd_t fd)
         }
     }
 
-    //disconnect session and clean-up data if any error occurs
-    if (res != CA_STATUS_OK)
-    {
-#ifdef __WITH_TLS__
-        if (CA_STATUS_OK != CAcloseSslConnection(&svritem->sep.endpoint))
-        {
-            OIC_LOG(ERROR, TAG, "Failed to close TLS session");
-        }
-#endif
-        CASearchAndDeleteTCPSession(&(svritem->sep.endpoint));
-        return;
-    }
+    return res;
 }
 
 #if !defined(WSA_WAIT_EVENT_0)
@@ -1490,7 +1488,6 @@ CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint
     OIC_LOG_V(DEBUG, TAG, "Looking for [%s:%d]", endpoint->addr, endpoint->port);
 
     // get connection info from list
-    oc_mutex_lock(g_mutexObjectList);
     CATCPSessionInfo_t *session = NULL;
     LL_FOREACH(g_sessionList, session)
     {
@@ -1499,13 +1496,11 @@ CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint
                 && (session->sep.endpoint.port == endpoint->port)
                 && (session->sep.endpoint.flags & endpoint->flags))
         {
-            oc_mutex_unlock(g_mutexObjectList);
             OIC_LOG(DEBUG, TAG, "Found in session list");
             return session;
         }
     }
 
-    oc_mutex_unlock(g_mutexObjectList);
     OIC_LOG(DEBUG, TAG, "Session not found");
     return NULL;
 }
@@ -1535,24 +1530,6 @@ CASocketFd_t CAGetSocketFDFromEndpoint(const CAEndpoint_t *endpoint)
     oc_mutex_unlock(g_mutexObjectList);
     OIC_LOG(DEBUG, TAG, "Session not found");
     return OC_INVALID_SOCKET;
-}
-
-CATCPSessionInfo_t *CAGetSessionInfoFromFD(CASocketFd_t fd)
-{
-    oc_mutex_lock(g_mutexObjectList);
-
-    CATCPSessionInfo_t *session = NULL;
-    LL_FOREACH(g_sessionList, session)
-    {
-        if (session && session->fd == fd)
-        {
-            oc_mutex_unlock(g_mutexObjectList);
-            return session;
-        }
-    }
-
-    oc_mutex_unlock(g_mutexObjectList);
-    return NULL;
 }
 
 CAResult_t CASearchAndDeleteTCPSession(const CAEndpoint_t *endpoint)

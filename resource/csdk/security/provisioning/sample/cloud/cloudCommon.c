@@ -47,6 +47,10 @@
 
 #define TAG "cloudCommon"
 
+//[IOT-2147] Requests 50-83 are not confirmed to new OCF spec
+//disable them for 1.3 rel, later (1.3.1 or after) they should be rewritten and enabled again
+#define DISABLE_50_83_REQUESTS_FOR_1_3_REL 1
+
 #define DEFAULT_HOST            "10.113.68.85"//"127.0.0.1"
 #define DEFAULT_PORT            OC_MULTICAST_PORT
 #define DEFAULT_AUTH_PROVIDER   "github"
@@ -77,7 +81,6 @@ typedef enum {
 
     HOST          = 4,
     PORT          = 5,
-    DB_FILE       = 6,
     AUTH_PROVIDER = 7,
     USE_RSA = 8,
     SAVE_TRUST_CERT = 9,
@@ -104,6 +107,7 @@ typedef enum {
     ACL_INDIVIDUAL_DELETE = 43,
     ACL_INDIVIDUAL_DELETE_ACE = 44,
 
+#ifndef DISABLE_50_83_REQUESTS_FOR_1_3_REL
     ACL_GROUP_CREATE = 50,
     ACL_GROUP_FIND   = 51,
     ACL_GROUP_JOIN   = 52,
@@ -120,6 +124,7 @@ typedef enum {
     ACL_GROUP_GET_INVITE  = 81,
     ACL_GROUP_DELETE_INVITE  = 82,
     ACL_GROUP_CANCEL_INVITE  = 83,
+#endif
 
     EXIT          = 99
 }CloudRequest;
@@ -142,7 +147,6 @@ static void printMenu(OCMode mode)
     printf("** SETTINGS \n");
     printf("** %d - Change default host\n", HOST);
     printf("** %d - Change default port\n", PORT);
-    printf("** %d - Change default database filename\n", DB_FILE);
     printf("** %d - Change default auth provider\n", AUTH_PROVIDER);
     printf("** %d - Change TLS cipher suite (ECDSA/RSA)\n", USE_RSA);
     printf("** %d - Save Trust Cert. Chain into Cred of SVR\n", SAVE_TRUST_CERT);
@@ -177,6 +181,7 @@ static void printMenu(OCMode mode)
     printf("** %d - ACL individual delete Request\n", ACL_INDIVIDUAL_DELETE);
     printf("** %d - ACL individual delete ACE Request\n", ACL_INDIVIDUAL_DELETE_ACE);
 
+#ifndef DISABLE_50_83_REQUESTS_FOR_1_3_REL
     printf("** ACL GROUP MANAGER\n");
     printf("** %d - ACL Create Group Request\n", ACL_GROUP_CREATE);
     printf("** %d - ACL Find Group Request\n", ACL_GROUP_FIND);
@@ -197,6 +202,7 @@ static void printMenu(OCMode mode)
     printf("** %d - ACL Retrieve invitation Request\n", ACL_GROUP_GET_INVITE);
     printf("** %d - ACL Delete invitation Request\n", ACL_GROUP_DELETE_INVITE);
     printf("** %d - ACL Cancel invitation Request\n", ACL_GROUP_CANCEL_INVITE);
+#endif
 
     printf("** EXIT\n");
     printf("** %d - Exit cloud %s\n", EXIT, title);
@@ -260,6 +266,7 @@ static void handleAclIdCB(void* ctx, OCClientResponse *response, void* aclId)
     OICFree(aclId);
 }
 
+#ifndef DISABLE_50_83_REQUESTS_FOR_1_3_REL
 /**
  * This function prints group id and calls default callback function handleCB()
  *
@@ -287,6 +294,7 @@ static void handleAclPolicyCheckCB(void* ctx, OCClientResponse *response, void* 
     handleCB(ctx, response, gp);
     OICFree(gp);
 }
+#endif
 
 /**
  * This function prints received acl and calls default callback function handleCB()
@@ -303,6 +311,7 @@ static void handleAclIndividualGetInfoCB(void* ctx, OCClientResponse *response, 
     //TODO: changes in aclresources.c required to fix that
 }
 
+#ifndef DISABLE_50_83_REQUESTS_FOR_1_3_REL
 /**
  * This function prints received group id list and calls default callback function handleCB()
  *
@@ -316,6 +325,7 @@ static void handleAclFindMyGroupCB(void* ctx, OCClientResponse *response, void* 
     handleCB(ctx, response, gidList);
     clearStringArray((stringArray_t *)gidList);
 }
+#endif
 
 /**
  * This function prints received acl and calls default callback function handleCB()
@@ -331,6 +341,7 @@ static void handleGetCrlCB(void* ctx, OCClientResponse *response, void* crl)
     DeleteCrl((OicSecCrl_t *)crl);
 }
 
+#ifndef DISABLE_50_83_REQUESTS_FOR_1_3_REL
 /**
  * This function prints received invitation response and calls default callback function handleCB()
  *
@@ -345,6 +356,7 @@ static void handleAclGetInvitationCB(void* ctx, OCClientResponse *response, void
     clearInviteResponse((inviteResponse_t *)invite);
     OICFree(invite);
 }
+#endif
 
 static OCStackResult saveTrustCert(void)
 {
@@ -471,6 +483,7 @@ static void *userRequests(void *data)
         case CRL_POST:
             res = OCWrapperPostCRL(&endPoint, handleCB);
             break;
+#ifndef DISABLE_50_83_REQUESTS_FOR_1_3_REL
         case ACL_GROUP_CREATE:
             res = OCWrapperAclCreateGroup(&endPoint, handleAclCreateGroupCB);
             break;
@@ -510,6 +523,7 @@ static void *userRequests(void *data)
         case ACL_POLICY_CHECK_REQUEST:
             res = OCWrapperAclPolicyCheck(&endPoint, handleAclPolicyCheckCB);
             break;
+#endif
         case ACL_ID_GET_BY_DEVICE:
             res = OCWrapperAclIdGetByDevice(&endPoint, handleAclIdCB);
             break;

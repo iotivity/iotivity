@@ -165,55 +165,6 @@ void SetResourceUriAndType(SRMRequestContext_t *context)
     return;
 }
 
-// Check if this request is asking to access a "sec" = true resource
-// over an unsecure channel.  This type of request is forbidden with
-// the exception of a few SVRs (see Security Specification).
-void CheckRequestForSecResourceOverUnsecureChannel(SRMRequestContext_t *context)
-{
-    OIC_LOG_V(DEBUG, TAG, "%s: secureChannel = %u, resourceType = %d, URI = %s",
-        __func__, (uint32_t)context->secureChannel,
-        context->resourceType, context->resourceUri);
-
-    // if request is over unsecure channel, check resource type
-    if (false == context->secureChannel)
-    {
-        OCResource *resPtr = FindResourceByUri(context->resourceUri);
-
-        if (NULL != resPtr)
-        {
-            OIC_LOG_V(DEBUG, TAG, "%s: OC_SECURE = %s",
-                __func__, ((resPtr->resourceProperties) & OC_SECURE) ? "true" : "false");
-
-            // All vertical secure resources and SVR resources other than
-            // DOXM & PSTAT should reject requests over unsecure channel.
-            if ((((resPtr->resourceProperties) & OC_SECURE)
-                && (context->resourceType == NOT_A_SVR_RESOURCE))
-                || ((context->resourceType < OIC_SEC_SVR_TYPE_COUNT)
-                    && (context->resourceType != OIC_R_DOXM_TYPE)
-                    && (context->resourceType != OIC_R_PSTAT_TYPE)))
-            {
-                // Reject all the requests over coap for secure resource.
-                context->responseVal = ACCESS_DENIED_SEC_RESOURCE_OVER_UNSECURE_CHANNEL;
-                context->responseInfo.result = CA_FORBIDDEN_REQ;
-                SRMSendResponse(context);
-            }
-            else
-            {
-                OIC_LOG_V(DEBUG, TAG, "%s: Allowing unsecured access", __func__);
-            }
-        }
-        else
-        {
-            // if resource not found and request is over unsecure channel, reject
-            context->responseVal = ACCESS_DENIED_SEC_RESOURCE_OVER_UNSECURE_CHANNEL;
-            context->responseInfo.result = CA_FORBIDDEN_REQ;
-            SRMSendResponse(context);
-        }
-    }
-
-    return;
-}
-
 void ClearRequestContext(SRMRequestContext_t *context)
 {
     if (NULL == context)
@@ -292,81 +243,76 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
 
     ClearRequestContext(ctx);
 
-    if (!endPoint || !requestInfo)
+    if ((NULL == endPoint) || (NULL == requestInfo))
     {
-        OIC_LOG(ERROR, TAG, "Invalid endPoint or requestInfo; can't process.");
+        OIC_LOG_V(ERROR, TAG, "%s: Invalid endPoint or requestInfo; can't process.", __func__);
+        goto exit;
     }
-    else
-    {
-        ctx->endPoint = endPoint;
-        ctx->requestInfo = requestInfo;
-        ctx->requestedPermission = GetPermissionFromCAMethod_t(requestInfo->method);
 
-        // Copy the subjectID, truncating to 16-byte UUID (32 hex-digits).
-        // TODO IOT-1894 "Determine appropriate CA_MAX_ENDPOINT_IDENTITY_LEN"
-        ctx->subjectIdType = SUBJECT_ID_TYPE_UUID; // only supported type for now
-        memcpy(ctx->subjectUuid.id,
-            requestInfo->info.identity.id, sizeof(ctx->subjectUuid.id));
+    ctx->endPoint = endPoint;
+    ctx->requestInfo = requestInfo;
+    ctx->requestedPermission = GetPermissionFromCAMethod_t(requestInfo->method);
+
+    // Copy the subjectID, truncating to 16-byte UUID (32 hex-digits).
+    // TODO IOT-1894 "Determine appropriate CA_MAX_ENDPOINT_IDENTITY_LEN"
+    ctx->subjectIdType = SUBJECT_ID_TYPE_UUID; // only supported type for now
+    memcpy(ctx->subjectUuid.id,
+        requestInfo->info.identity.id, sizeof(ctx->subjectUuid.id));
 
 #ifndef NDEBUG // if debug build, log the ID being used for matching ACEs
-        if (SUBJECT_ID_TYPE_UUID == ctx->subjectIdType)
+    if (SUBJECT_ID_TYPE_UUID == ctx->subjectIdType)
+    {
+        char strUuid[UUID_STRING_SIZE] = "UUID_ERROR";
+        if (OCConvertUuidToString(ctx->subjectUuid.id, strUuid))
         {
-            char strUuid[UUID_STRING_SIZE] = "UUID_ERROR";
-            if (OCConvertUuidToString(ctx->subjectUuid.id, strUuid))
-            {
-                OIC_LOG_V(DEBUG, TAG, "ctx->subjectUuid for request: %s.", strUuid);
-            }
-            else
-            {
-                OIC_LOG(ERROR, TAG, "failed to convert ctx->subjectUuid to str.");
-            }
+            OIC_LOG_V(DEBUG, TAG, "ctx->subjectUuid for request: %s.", strUuid);
         }
-#endif
-
-        // Set secure channel boolean.
-        ctx->secureChannel = isRequestOverSecureChannel(ctx);
-
-        // Set resource URI and type.
-        SetResourceUriAndType(ctx);
-
-        // Initialize responseInfo.
-        memcpy(&(ctx->responseInfo.info), &(requestInfo->info),
-            sizeof(ctx->responseInfo.info));
-        ctx->responseInfo.info.payload = NULL;
-        ctx->responseInfo.result = CA_INTERNAL_SERVER_ERROR;
-        ctx->responseInfo.info.dataType = CA_RESPONSE_DATA;
-
-        // Before consulting ACL, check if this is a forbidden request type.
-        CheckRequestForSecResourceOverUnsecureChannel(ctx);
-
-        // If DENIED response wasn't sent already, then it's time to check ACL.
-        if (false == ctx->responseSent)
+        else
         {
-#ifdef MULTIPLE_OWNER // TODO Samsung: please verify that these two calls belong
-                      // here inside this conditional statement.
-            // In case of ACL and CRED, The payload required to verify the payload.
-            // Payload information will be used for subowner's permission verification.
-            ctx->payload = (uint8_t*)requestInfo->info.payload;
-            ctx->payloadSize = requestInfo->info.payloadSize;
-#endif //MULTIPLE_OWNER
-
-            OIC_LOG_V(DEBUG, TAG, "Processing request with uri, %s for method %d",
-                ctx->requestInfo->info.resourceUri, ctx->requestInfo->method);
-            CheckPermission(ctx);
-            OIC_LOG_V(DEBUG, TAG, "Request for permission %d received responseVal %d.",
-                ctx->requestedPermission, ctx->responseVal);
-
-            // Now that we have determined the correct response and set responseVal,
-            // we generate and send the response to the requester.
-            SRMGenerateResponse(ctx);
+            OIC_LOG(ERROR, TAG, "failed to convert ctx->subjectUuid to str.");
         }
     }
+#endif
+
+    // Set secure channel boolean.
+    ctx->secureChannel = isRequestOverSecureChannel(ctx);
+
+    // Set resource URI and type.
+    SetResourceUriAndType(ctx);
+
+    // Initialize responseInfo.
+    memcpy(&(ctx->responseInfo.info), &(requestInfo->info),
+        sizeof(ctx->responseInfo.info));
+    ctx->responseInfo.info.payload = NULL;
+    ctx->responseInfo.result = CA_INTERNAL_SERVER_ERROR;
+    ctx->responseInfo.info.dataType = CA_RESPONSE_DATA;
+
+
+#ifdef MULTIPLE_OWNER // TODO Samsung: please verify that these two calls belong
+                      // here inside this conditional statement.
+    // In case of ACL and CRED, The payload required to verify the payload.
+    // Payload information will be used for subowner's permission verification.
+    ctx->payload = (uint8_t*)requestInfo->info.payload;
+    ctx->payloadSize = requestInfo->info.payloadSize;
+#endif //MULTIPLE_OWNER
+
+    OIC_LOG_V(DEBUG, TAG, "Processing request with uri, %s for method %d",
+        ctx->requestInfo->info.resourceUri, ctx->requestInfo->method);
+
+    CheckPermission(ctx);
+
+    OIC_LOG_V(DEBUG, TAG, "Request for permission %d received responseVal %d.",
+        ctx->requestedPermission, ctx->responseVal);
+
+    // Now that we have determined the correct response and set responseVal,
+    // we generate and send the response to the requester.
+    SRMGenerateResponse(ctx);
 
     if (false == ctx->responseSent)
     {
         OIC_LOG(ERROR, TAG, "Exiting SRM without responding to requester!");
     }
-
+exit:
     return;
 }
 

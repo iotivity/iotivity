@@ -59,11 +59,24 @@ const OicSecAce_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAce_t **
  * @param[out] savePtr is used internally by @ref GetACLResourceDataByRoles to maintain index between
  *                     successive calls for the same roles list.
  *
- * @note On the first call to @ref GETAclResourceDataByRoles, savePtr should point to NULL.
- * 
+ * @note On the first call to @ref GetACLResourceDataByRoles, savePtr should point to NULL.
+ *
  * @return reference to @ref OicSecAce_t if ACE is found, else NULL.
  */
 const OicSecAce_t* GetACLResourceDataByRoles(const OicSecRole_t *roles, size_t roleCount, OicSecAce_t **savePtr);
+
+/**
+ * This method is used by PolicyEngine to retrieve ACLs for a given conntype.
+ *
+ * @param[in] conntype Conntype to match in ACE.
+ * @param[out] savePtr is used internally by @ref GetACLResourceDataByConntype to maintain index between
+ *                     successive calls for the same roles list.
+ *
+ * @note On the first call to @ref GetACLResourceDataByConntype, savePtr should point to NULL.
+ *
+ * @return reference to @ref OicSecAce_t if ACE is found, else NULL.
+ */
+const OicSecAce_t* GetACLResourceDataByConntype(const OicSecConntype_t conntype, OicSecAce_t **savePtr);
 
 /**
  * This function converts ACL data into CBOR format.

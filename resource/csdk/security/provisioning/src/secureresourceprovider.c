@@ -1022,6 +1022,7 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     switch (aclVersion)
     {
     case OIC_SEC_ACL_V1:
+        OIC_LOG_V(WARNING, TAG, "%s using ACL v1... this should only be used for provisioning OIC 1.1 and earlier Servers.", __func__);
         uri = OIC_RSRC_ACL_URI;
         break;
     case OIC_SEC_ACL_V2:
@@ -1422,7 +1423,7 @@ static OCStackResult SendDeleteACLRequest(void* ctx,
     int snRet = 0;
                     //coaps://0.0.0.0:5684/oic/sec/acl?subjectuuid=(Canonical ENCODED UUID)
     snRet = snprintf(reqBuf, sizeof(reqBuf), SRP_FORM_DELETE_CREDENTIAL, addressEncoded,
-                     destDev->securePort, OIC_RSRC_ACL_URI, OIC_JSON_SUBJECTID_NAME, subID);
+                     destDev->securePort, OIC_RSRC_ACL2_URI, OIC_JSON_SUBJECTID_NAME, subID);
     OICFree(subID);
     if (snRet < 0)
     {
@@ -2537,7 +2538,7 @@ OCStackResult SRPResetDevice(const OCProvisionDev_t* pTargetDev,
         return OC_STACK_NO_MEMORY;
     }
 
-    pstat->dos.state = DOS_RESET; // Note [IOT-2052] in OCF 1.0 this is the only
+    pstat->dos.state = DOS_RESET; // TODO IOT-2052 in OCF 1.0 this is the only
                                   // value that needs to be set to cause RESET
     pstat->cm = RESET;
     pstat->isOp = false;
@@ -2821,6 +2822,7 @@ OCStackResult SRPGetACLResource(void *ctx, const OCProvisionDev_t *selectedDevic
     switch (aclVersion)
     {
     case OIC_SEC_ACL_V1:
+        OIC_LOG_V(WARNING, TAG, "%s using ACL v1... this should only be used for provisioning OIC 1.1 and earlier Servers.", __func__);
         uri = OIC_RSRC_ACL_URI;
         break;
     case OIC_SEC_ACL_V2:

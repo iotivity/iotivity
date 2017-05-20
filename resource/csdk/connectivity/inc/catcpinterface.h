@@ -204,14 +204,6 @@ CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint
 size_t CAGetTotalLengthFromHeader(const unsigned char *recvBuffer);
 
 /**
- * Get session information from socket file descriptor.
- *
- * @param[in]   fd      socket file descriptor.
- * @return  TCP Server Information structure.
- */
-CATCPSessionInfo_t *CAGetSessionInfoFromFD(CASocketFd_t fd);
-
-/**
  * Get socket file descriptor from remote device information.
  *
  * @param[in]   endpoint    Remote Endpoint information (such as ipaddress,

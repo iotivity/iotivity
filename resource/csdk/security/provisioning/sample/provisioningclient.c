@@ -873,8 +873,8 @@ static int provisionCred(void)
  *   3. Saves this root as a trust anchor locally.
  *   4. Generate and store an IoTivity key and cert (issued from the CA root cert).
  *      This is an EE cert the CA/OBT will use in DTLS.
- *   
- *   The CA's key and cert are written to g_caKeyPem and g_caCertPem (resp.). 
+ *
+ *   The CA's key and cert are written to g_caKeyPem and g_caCertPem (resp.).
  */
 static int setupCA()
 {
@@ -1010,10 +1010,10 @@ exit:
 }
 
 /*
- * Create an identity certificate for a device, based on the information in its CSR. 
+ * Create an identity certificate for a device, based on the information in its CSR.
  * Assumes the csr has already been validated wtih OCVerifyCSRSignature.
  */
-static int createIdentityCertFromCSR(const char* caKeyPem, const char* caCertPem, char* csr, 
+static int createIdentityCertFromCSR(const char* caKeyPem, const char* caCertPem, char* csr,
     char** deviceCert)
 {
     char* publicKey = NULL;
@@ -1612,16 +1612,17 @@ static int getAcl(void)
         OIC_LOG(ERROR, TAG, "getDevInst: device instance empty");
         goto PVACL_ERROR;
     }
-    OCStackResult rst = OCGetACLResource((void*) g_ctx, dev, getAclCB);
+    // IOT-2219 add support for OIC 1.1 /oic/sec/acl URI
+    OCStackResult rst = OCGetACL2Resource((void*) g_ctx, dev, getAclCB);
     if(OC_STACK_OK != rst)
     {
-        OIC_LOG_V(ERROR, TAG, "OCGetACLResource API error: %d", rst);
+        OIC_LOG_V(ERROR, TAG, "OCGetACL2Resource API error: %d", rst);
 
         goto PVACL_ERROR;
     }
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCGetACLResource callback error");
+        OIC_LOG(ERROR, TAG, "OCGetACL2Resource callback error");
         goto PVACL_ERROR;
     }
 

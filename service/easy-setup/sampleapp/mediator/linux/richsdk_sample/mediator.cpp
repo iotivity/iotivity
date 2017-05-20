@@ -495,8 +495,8 @@ void discoveryEnrolleeResource(void (*f)(std::shared_ptr<OC::OCResource> resourc
 void DisplayMenu()
 {
     constexpr int DISCOVER_UNSECURED_ENROLLEE = 1;
-    constexpr int PROVISION_SECURITY = 2;
-    constexpr int DISCOVER_SECURED_ENROLLEE = 3;
+    constexpr int DISCOVER_SECURED_ENROLLEE = 2;
+    constexpr int PROVISION_SECURITY = 3;
     constexpr int GET_STATUS = 4;
     constexpr int GET_CONFIGURATION = 5;
     constexpr int PROVISION_DEVICE_PROPERTY = 6;
@@ -505,8 +505,8 @@ void DisplayMenu()
 
     std::cout << "========================================================\n";
     std::cout << DISCOVER_UNSECURED_ENROLLEE << ". Discover Enrollee Resource \n";
-    std::cout << PROVISION_SECURITY << ". Provision Security to Enrollee  \n";
     std::cout << DISCOVER_SECURED_ENROLLEE << ". Discover Secured Enrollee Resource \n";
+    std::cout << PROVISION_SECURITY << ". Provision Security to Enrollee  \n";
     std::cout << GET_STATUS << ". Get Status from Enrollee  \n";
     std::cout << GET_CONFIGURATION << ". Get Configuration from Enrollee  \n";
     std::cout << PROVISION_DEVICE_PROPERTY << ". Provision Device Property\n";
@@ -521,11 +521,11 @@ void DisplayMenu()
         case DISCOVER_UNSECURED_ENROLLEE:
             discoveryEnrolleeResource(&foundUnsecuredResource);
             break;
-        case PROVISION_SECURITY:
-            provisionSecurity();
-            break;
         case DISCOVER_SECURED_ENROLLEE:
             discoveryEnrolleeResource(&foundSecuredResource);
+            break;
+        case PROVISION_SECURITY:
+            provisionSecurity();
             break;
         case GET_STATUS:
             getStatus();

@@ -432,6 +432,14 @@ struct OicSecOpt
     bool                revstat;
 };
 
+typedef enum OicSecAceResourceWildcard
+{
+    NO_WILDCARD = 0,
+    ALL_DISCOVERABLE,       // maps to "+" in JSON/CBOR
+    ALL_NON_DISCOVERABLE,   // maps to "-" in JSON/CBOR
+    ALL_RESOURCES           // maps to "*" in JSON/CBOR
+} OicSecAceResourceWildcard_t;
+
 struct OicSecRsrc
 {
     char *href; // 0:R:S:Y:String
@@ -440,6 +448,7 @@ struct OicSecRsrc
     size_t typeLen; // the number of elts in types
     char** interfaces; // 3:R:S:N:String Array
     size_t interfaceLen; // the number of elts in interfaces
+    OicSecAceResourceWildcard_t wildcard;
     OicSecRsrc_t *next;
 };
 
@@ -463,7 +472,8 @@ typedef enum
 typedef enum
 {
     OicSecAceUuidSubject = 0, /* Default to this type. */
-    OicSecAceRoleSubject
+    OicSecAceRoleSubject,
+    OicSecAceConntypeSubject
 } OicSecAceSubjectType;
 
 /**
@@ -477,6 +487,12 @@ struct OicSecRole
     char authority[ROLEAUTHORITY_LENGTH];   // 1:R:S:N:String
 };
 
+typedef enum OicSecConntype
+{
+    AUTH_CRYPT, // any subject requesting over authenticated and encrypted channel
+    ANON_CLEAR, // any subject requesting over anonymous and unencrypted channel
+} OicSecConntype_t;
+
 struct OicSecAce
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
@@ -485,10 +501,12 @@ struct OicSecAce
     {
         OicUuid_t subjectuuid;          // Only valid for subjectType == OicSecAceUuidSubject
         OicSecRole_t subjectRole;       // Only valid for subjectType == OicSecAceRoleSubject
+        OicSecConntype_t subjectConn;   // Only valid for subjectType == OicSecAceConntypeSubject
     };
     OicSecRsrc_t *resources;            // 1:R:M:Y:Resource
     uint16_t permission;                // 2:R:S:Y:UINT16
     OicSecValidity_t *validities;       // 3:R:M:N:Time-interval
+    uint16_t aceid;                     // mandatory in ACE2
 #ifdef MULTIPLE_OWNER
     OicUuid_t* eownerID;                //4:R:S:N:oic.uuid
 #endif

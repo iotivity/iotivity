@@ -475,11 +475,10 @@ TWResultCode TWRetrieveEUI(PIPlugin_Zigbee * plugin, TWSock * twSock)
     entry = readEntry(twSock->fd);
     if(!entry)
     {
-        result = TWReleaseMutex(&twSock->mutex);
-        if(result != TW_RESULT_OK)
-        {
-            goto exit;
-        }
+        TWReleaseMutex(&twSock->mutex);
+        // in case entry is NULL, further processing will cause crash or UB
+        result = TW_RESULT_ERROR;
+        goto exit;
     }
     twSock->eui = (char *) OICMalloc(strlen(entry->lines[0].line)+1);
     if(!twSock->eui)

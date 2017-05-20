@@ -128,7 +128,7 @@ TEST(ACLResourceTest, CBORDefaultACLConversion)
     EXPECT_EQ(true, AddResourceToACE(ace, "/oic/p", "oic.wk.p", "oic.if.r"));
     EXPECT_EQ(true, AddResourceToACE(ace, "/oic/res/types/d", "oic.wk.unknow", "oic.if.r"));
     EXPECT_EQ(true, AddResourceToACE(ace, "/oic/ad", "oic.wk.ad", "oic.if.baseline"));
-    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/sec/acl", "oic.r.acl", "oic.if.baseline"));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/sec/acl2", "oic.r.acl2", "oic.if.baseline"));
     EXPECT_EQ(true, AddResourceToACE(ace, "/oic/sec/doxm", "oic.r.doxm" ,"oic.if.baseline"));
     EXPECT_EQ(true, AddResourceToACE(ace, "/oic/sec/pstat", "oic.r.pstat" ,"oic.if.baseline"));
 
@@ -136,7 +136,7 @@ TEST(ACLResourceTest, CBORDefaultACLConversion)
 
     size_t defaultAclSize = 0;
     uint8_t *defaultPsStorage = NULL;
-    OCStackResult convRet = AclToCBORPayload(defaultAcl, OIC_SEC_ACL_LATEST, &defaultPsStorage, &defaultAclSize);
+    OCStackResult convRet = AclToCBORPayload(defaultAcl, OIC_SEC_ACL_V1, &defaultPsStorage, &defaultAclSize);
     EXPECT_EQ(OC_STACK_OK, convRet);
     ASSERT_TRUE(NULL != defaultPsStorage);
     EXPECT_NE(static_cast<size_t>(0), defaultAclSize);
@@ -188,7 +188,7 @@ TEST(ACLResourceTest, CBORACLConversion)
     EXPECT_EQ(true, AddResourceToACE(ace, "/oic/p", "oic.wk.p", "oic.if.r"));
     EXPECT_EQ(true, AddResourceToACE(ace, "/oic/res/types/d", "oic.wk.unknow", "oic.if.r"));
     EXPECT_EQ(true, AddResourceToACE(ace, "/oic/ad", "oic.wk.ad", "oic.if.baseline"));
-    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/sec/acl", "oic.r.acl", "oic.if.baseline"));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/sec/acl2", "oic.r.acl2", "oic.if.baseline"));
     LL_APPEND(secAcl->aces, ace);
 
     OicSecAce_t *ace1 = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
@@ -451,7 +451,7 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t  *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_LATEST, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_V1, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
@@ -511,7 +511,7 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_LATEST, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_V1, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
@@ -578,7 +578,7 @@ TEST(ACLResourceTest, ACLGetWithQueryTest)
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_LATEST, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_V1, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
