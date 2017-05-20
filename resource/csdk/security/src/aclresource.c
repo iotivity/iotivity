@@ -1335,11 +1335,19 @@ exit:
 }
 
 // This function converts CBOR format to ACL data.
+// Callers should normally invoke "CBORPayloadToAcl()" unless wishing to check
+// version of payload only.
 // Caller needs to invoke 'OICFree' on returned value when done using
 // TODO IOT-2220 this function is a prime example of why the SVR CBOR functions need
 // to be re-factored throughout.  It's even worse with the addition of /acl2.
-// note: This function is used in unit test hence not declared static,
-OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
+// @param[in]  cborPayload The CBOR data to be decoded into OicSecAcl_t
+// @param[in]  size The size of the CBOR data
+// @param[out] versionCheck If included, this function will determine the version of
+//              ACL in the payload, assign to 'versionCheck', and return NULL
+//              without decoding the rest of the payload.  If NULL, this function will complete
+//              decoding as normal, and will not assign a value to 'versionCheck'.
+static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const size_t size,
+    OicSecAclVersion_t *versionCheck)
 {
     if (NULL == cborPayload || 0 == size)
     {
@@ -1383,12 +1391,27 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
             OIC_LOG_V(DEBUG, TAG, "%s found %s tag.", __func__, tagName);
             if (0 == strcmp(tagName, OIC_JSON_ACLIST_NAME))
             {
+                if (NULL != versionCheck)
+                {
+                    OIC_LOG_V(DEBUG, TAG, "%s Found v1 ACL; assigning 'versionCheck' and returning NULL.", __func__);
+                    *versionCheck = OIC_SEC_ACL_V1;
+                    OICFree(acl);
+                    return NULL;
+                }
                 OIC_LOG_V(DEBUG, TAG, "%s decoding v1 ACL.", __func__);
                 aclistVersion = OIC_SEC_ACL_V1;
                 aclistTagJustFound = true;
+
             }
             else if (0 == strcmp(tagName, OIC_JSON_ACLIST2_NAME))
             {
+                if (NULL != versionCheck)
+                {
+                    OIC_LOG_V(DEBUG, TAG, "%s Found v2 ACL; assigning 'versionCheck' and returning NULL.", __func__);
+                    *versionCheck = OIC_SEC_ACL_V2;
+                    OICFree(acl);
+                    return NULL;
+                }
                 OIC_LOG_V(DEBUG, TAG, "%s decoding v2 ACL.", __func__);
                 aclistVersion = OIC_SEC_ACL_V2;
                 aclistTagJustFound = true;
@@ -1990,6 +2013,14 @@ exit:
     free(tagName);
 
     return acl;
+}
+
+// This function converts CBOR format to ACL data.
+// Caller needs to invoke 'OICFree' on returned value when done using
+// note: This function is used in unit test hence not declared static.
+OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
+{
+    return CBORPayloadToAclVersionOpt(cborPayload, size, NULL);
 }
 
 #ifdef MULTIPLE_OWNER
@@ -2650,6 +2681,15 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
 
     if (payload)
     {
+        // Clients should not POST v1 ACL to OCF 1.0 Server
+        OicSecAclVersion_t payloadVersionReceived = OIC_SEC_ACL_V1;
+        CBORPayloadToAclVersionOpt(payload, size, &payloadVersionReceived);
+        if (OIC_SEC_ACL_V2 != payloadVersionReceived)
+        {
+            OIC_LOG_V(WARNING, TAG, "%s /acl Resource is v2; POST of v1 ACL not acceptable.", __func__);
+            ehRet = OC_EH_NOT_ACCEPTABLE;
+            goto exit;
+        }
         OicSecAcl_t *newAcl = NULL;
         OIC_LOG(DEBUG, TAG, "ACL payload from POST request << ");
         OIC_LOG_BUFFER(DEBUG, TAG, payload, size);
