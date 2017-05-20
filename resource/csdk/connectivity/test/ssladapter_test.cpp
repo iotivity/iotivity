@@ -3202,7 +3202,7 @@ TEST(TLSAdapter, Test_11)
 
     CAsetPskCredentialsCallback(GetDtlsPskCredentials);
 
-    EXPECT_NE(0, socketConnect());
+    EXPECT_NE(false, socketConnect());
     ASSERT_FALSE(socket_error) << "Client: cannot connect to server";
 
     // CAinitiateSslHandshake

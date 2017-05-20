@@ -1599,7 +1599,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     if (!requestData.options)
                     {
                         OIC_LOG(ERROR, TAG, "Out of memory");
-                        OICFree(&requestData.token);
+                        OICFree(requestData.token);
                         goto proceed;
                     }
                     memcpy(requestData.options, cbNode->options,

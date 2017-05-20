@@ -619,7 +619,7 @@ namespace OIC
                 result = OCSecure::discoverSingleDevice(ES_SEC_DISCOVERY_TIMEOUT,
                                                         &uuid,
                                                         m_securedResource);
-                if(result != OC_STACK_OK)
+                if(result != OC_STACK_OK || !m_securedResource)
                 {
                     return ES_SECURE_RESOURCE_DISCOVERY_FAILURE;
                 }

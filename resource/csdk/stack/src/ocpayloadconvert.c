@@ -165,7 +165,7 @@ static int64_t OCConvertPayloadHelper(OCPayload* payload, OCPayloadFormat format
         case PAYLOAD_TYPE_SECURITY:
             return OCConvertSecurityPayload((OCSecurityPayload*)payload, outPayload, size);
         case PAYLOAD_TYPE_INTROSPECTION:
-            return OCConvertIntrospectionPayload((OCIntrospectionPayload*)payload, 
+            return OCConvertIntrospectionPayload((OCIntrospectionPayload*)payload,
                                                  outPayload, size);
         default:
             OIC_LOG_V(INFO, TAG, "ConvertPayload default %d", payload->type);
@@ -201,7 +201,7 @@ static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* out
     return CborNoError;
 }
 
-static int64_t OCConvertIntrospectionPayload(OCIntrospectionPayload *payload, 
+static int64_t OCConvertIntrospectionPayload(OCIntrospectionPayload *payload,
         uint8_t *outPayload, size_t *size)
 {
     memcpy(outPayload, payload->cborPayload.bytes, payload->cborPayload.len);
@@ -262,7 +262,13 @@ static int64_t OCConvertResourcePayloadCbor(CborEncoder *linkArray, OCResourcePa
         }
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating endpoint string");
         char uri[MAX_URI_LENGTH];
-        snprintf(uri, MAX_URI_LENGTH, "%s%s", endpointStr, resource->uri);
+        int snRet = snprintf(uri, MAX_URI_LENGTH, "%s%s", endpointStr, resource->uri);
+        if(0 > snRet || snRet >= MAX_URI_LENGTH)
+        {
+            OICFree(endpointStr);
+            VERIFY_CBOR_SUCCESS(TAG, CborErrorInternalError, "Error (snprintf)");
+        }
+
         OICFree(endpointStr);
 
         err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
@@ -273,7 +279,11 @@ static int64_t OCConvertResourcePayloadCbor(CborEncoder *linkArray, OCResourcePa
              resource->anchor)
     {
         char uri[MAX_URI_LENGTH];
-        snprintf(uri, MAX_URI_LENGTH, "%s%s", resource->anchor, resource->uri);
+        int snRet = snprintf(uri, MAX_URI_LENGTH, "%s%s", resource->anchor, resource->uri);
+        if(0 > snRet || snRet >= MAX_URI_LENGTH)
+        {
+            VERIFY_CBOR_SUCCESS(TAG, CborErrorInternalError, "Error (snprintf)");
+        }
 
         err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
                                   uri);
@@ -574,7 +584,11 @@ static int64_t OCConvertDiscoveryPayloadVndOcfCbor(OCDiscoveryPayload *payload,
                 resource->rel && !strcmp(resource->rel, "self"))
             {
                 char uri[MAX_URI_LENGTH];
-                snprintf(uri, MAX_URI_LENGTH, "ocf://%s%s", payload->sid, resource->uri);
+                int snRet = snprintf(uri, MAX_URI_LENGTH, "ocf://%s%s", payload->sid, resource->uri);
+                if(0 > snRet || snRet >= MAX_URI_LENGTH)
+                {
+                    VERIFY_CBOR_SUCCESS(TAG, CborErrorInternalError, "Error (snprintf)");
+                }
 
                 err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
                                           uri);
@@ -593,7 +607,12 @@ static int64_t OCConvertDiscoveryPayloadVndOcfCbor(OCDiscoveryPayload *payload,
 
             // Anchor
             char anchor[MAX_URI_LENGTH];
-            snprintf(anchor, MAX_URI_LENGTH, "ocf://%s", payload->sid);
+            int snRet = snprintf(anchor, MAX_URI_LENGTH, "ocf://%s", payload->sid);
+            if(0 > snRet || snRet >= MAX_URI_LENGTH)
+            {
+                VERIFY_CBOR_SUCCESS(TAG, CborErrorInternalError, "Error (snprintf)");
+            }
+
             err |= AddTextStringToMap(&linkMap, OC_RSRVD_URI, sizeof(OC_RSRVD_URI) - 1, anchor);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding anchor to links map");
 
