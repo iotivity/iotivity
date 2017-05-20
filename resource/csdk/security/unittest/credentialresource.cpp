@@ -160,65 +160,47 @@ TEST(CredResourceTest, CredEntityHandlerInvalidFlag)
 //Cred DELETE request
 TEST(CredResourceTest, CredEntityHandlerDeleteTest)
 {
-    OCEntityHandlerRequest ehReq =  OCEntityHandlerRequest();
-    static OCPersistentStorage ps =  OCPersistentStorage();
-    const OicSecCred_t* subjectCred1 = NULL;
-    const OicSecCred_t* subjectCred2 = NULL;
-    OCEntityHandlerResult ehRet = OC_EH_ERROR;
-    char query[] = "subjectuuid=31313131-3131-3131-3131-313131313131"; //canonical uuid of subject1
+    const char uuidStr[] = "31313131-3131-3131-3131-313131313131"; //canonical uuid of subject1
+    const char uuidTag[] = "subjectuuid=";
+    char query[sizeof(uuidTag) + sizeof(uuidStr)] = {0};
+    snprintf(query, sizeof(query), "%s%s", uuidTag, uuidStr);
 
+    static OCPersistentStorage ps =  OCPersistentStorage();
     SetPersistentHandler(&ps, true);
 
-    OicSecCred_t *cred = getCredList();
-    ASSERT_TRUE(NULL != cred);
-    uint8_t *payload = NULL;
-    size_t size = 0;
-    int secureFlag = 0;
-    EXPECT_EQ(OC_STACK_OK, CredToCBORPayload(cred, &payload, &size, secureFlag));
-    if (!payload)
-    {
-        DeleteCredList(cred);
-    }
-    ASSERT_TRUE(NULL != payload);
+    OicUuid_t rownerId = {{0}};
+    OicUuid_t subjectId = {{0}};
 
-    // Create Entity Handler POST request payload
-    ehReq.method = OC_REST_POST;
-    ehReq.payload = (OCPayload *)OCSecurityPayloadCreate(payload, size);
-    if (!ehReq.payload)
-    {
-        OICFree(payload);
-        DeleteCredList(cred);
-    }
-    ASSERT_TRUE( NULL != ehReq.payload);
-    EXPECT_EQ(OC_EH_ERROR, CredEntityHandler(OC_REQUEST_FLAG, &ehReq, NULL));
+    ConvertStrToUuid(uuidStr, &rownerId);
+    ConvertStrToUuid(uuidStr, &subjectId);
 
-    // Verify if SRM contains Credential for the subject
-    subjectCred1 = GetCredResourceData(&cred->subject);
+    uint8_t privateKey[] = "My private Key11";
+    OicSecKey_t key = {privateKey, sizeof(privateKey), OIC_ENCODING_RAW};
+
+    OicSecCred_t* subjectCred1 = GenerateCredential(&subjectId, SYMMETRIC_PAIR_WISE_KEY, NULL,
+                                                    &key, &rownerId, NULL);
+
+    EXPECT_EQ(OC_STACK_OK, AddCredential(subjectCred1));
+    subjectCred1 = GetCredResourceData(&subjectCred1->subject);
     EXPECT_TRUE(NULL != subjectCred1);
 
     // Create Entity Handler DELETE request
+    OCEntityHandlerRequest ehReq =  OCEntityHandlerRequest();
     ehReq.method = OC_REST_DELETE;
     ehReq.query = (char *)OICCalloc(1, strlen(query)+1);
-    if (!ehReq.query)
-    {
-        OICFree(payload);
-        DeleteCredList(cred);
-    }
+
     ASSERT_TRUE(NULL != ehReq.query);
     OICStrcpy(ehReq.query, strlen(query)+1, query);
 
-    ehRet = CredEntityHandler(OC_REQUEST_FLAG, &ehReq, NULL);
+    OCEntityHandlerResult ehRet = CredEntityHandler(OC_REQUEST_FLAG, &ehReq, NULL);
     EXPECT_EQ(OC_EH_ERROR, ehRet);
 
     // Verify if SRM has deleted ACE for the subject
-    subjectCred2 = GetCredResourceData(&cred->subject);
+    const OicSecCred_t* subjectCred2 = GetCredResourceData(&subjectId);
     EXPECT_TRUE(NULL == subjectCred2);
 
     // Perform cleanup
     OICFree(ehReq.query);
-    OICFree(payload);
-    DeInitCredResource();
-    DeleteCredList(cred);
     OCPayloadDestroy((OCPayload *)ehReq.payload);
 }
 
