@@ -627,6 +627,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
 
         pstat->smLen = 1;
         pstat->sm = (OicSecDpom_t*)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
+        VERIFY_NOT_NULL(TAG, pstat->sm, ERROR);
         cborFindResult = cbor_value_get_int(&pstatMap, &sm);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SM.");
         pstat->sm[0] = (OicSecDpom_t)sm;
@@ -644,6 +645,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
         VERIFY_NOT_NULL(TAG, gPstat, ERROR);
         pstat->smLen = gPstat->smLen;
         pstat->sm = (OicSecDpom_t*)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
+        VERIFY_NOT_NULL(TAG, pstat->sm, ERROR);
         *pstat->sm = *gPstat->sm;
         cborFindResult = CborNoError;
     }
