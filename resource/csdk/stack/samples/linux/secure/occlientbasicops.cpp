@@ -465,7 +465,8 @@ int parseClientResponse(OCClientResponse *clientResponse)
         coapServerResource.assign(res->uri);
         OIC_LOG_V(INFO, TAG, "Uri -- %s", coapServerResource.c_str());
 
-        if (0 == strncmp(coapServerResource.c_str(), OIC_STD_URI_PREFIX, strlen(OIC_STD_URI_PREFIX)))
+        if (0 == strncmp(coapServerResource.c_str(), OIC_STD_URI_PREFIX, strlen(OIC_STD_URI_PREFIX)) ||
+            0 == strncmp(coapServerResource.c_str(), "/introspection", strlen("/introspection")))
         {
             OIC_LOG(INFO, TAG, "Skip resource");
             res = res->next;
