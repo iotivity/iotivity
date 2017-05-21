@@ -301,20 +301,20 @@ int InitPostRequest(OCQualityOfService qos)
     query << resource->uri;
     OIC_LOG_V(INFO, TAG,"Executing InitPostRequest, Query: %s", query.str().c_str());
 
-    // First POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST, &resource->endpoint,
+    // First PUT operation (to create an LED instance)
+    result = InvokeOCDoResource(query, OC_REST_PUT, &resource->endpoint,
             ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
-            postReqCB, NULL, 0);
+            putReqCB, NULL, 0);
     if (OC_STACK_OK != result)
     {
         // Error can happen if for example, network connectivity is down
         OIC_LOG(ERROR, TAG, "First POST call did not succeed");
     }
 
-    // Second POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST, &resource->endpoint,
+    // Second PUT operation (to create an LED instance)
+    result = InvokeOCDoResource(query, OC_REST_PUT, &resource->endpoint,
             ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
-            postReqCB, NULL, 0);
+            putReqCB, NULL, 0);
     if (OC_STACK_OK != result)
     {
         OIC_LOG(ERROR, TAG, "Second POST call did not succeed");
