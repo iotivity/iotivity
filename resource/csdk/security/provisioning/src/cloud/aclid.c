@@ -194,6 +194,13 @@ static OCStackResult handleAclGetInfoResponse(void *ctx, void **data, OCClientRe
 
     OIC_LOG_ACL(INFO, acl);
 
+    if (NULL == acl->aces)
+    {
+        OIC_LOG(WARNING, TAG, "NULL aces received. Database update is not required");
+        OIC_LOG(WARNING, TAG, "Assume that it is correct behavior");
+        goto exit;
+    }
+
     result = InstallACL(acl);
     if (result != OC_STACK_OK)
     {
