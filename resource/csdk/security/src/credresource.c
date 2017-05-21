@@ -104,7 +104,7 @@ static bool ValueWithinBounds(uint64_t value, uint64_t maxValue)
 {
     if (value > maxValue)
     {
-        OIC_LOG_V(ERROR, TAG, "The value (%ull) is greater than allowed maximum of %ull.", value, maxValue);
+        OIC_LOG_V(ERROR, TAG, "The value (%" PRId64 ") is greater than allowed maximum of %" PRId64 ".", value, maxValue);
         return false;
     }
 
@@ -620,21 +620,21 @@ static void logCredMetadata()
             OIC_LOG_V(DEBUG, TAG, "Role authority: %s", temp->roleId.authority);
         }
         OIC_LOG_V(DEBUG, TAG, "Cred Type: %d", temp->credType);
-        OIC_LOG_V(DEBUG, TAG, "privateData length: %d, encoding: %d", temp->privateData.len, temp->privateData.encoding);
+        OIC_LOG_V(DEBUG, TAG, "privateData length: %" PRIuPTR ", encoding: %d", temp->privateData.len, temp->privateData.encoding);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-        OIC_LOG_V(DEBUG, TAG, "publicData length: %d, encoding: %d", temp->publicData.len, temp->publicData.encoding);
+        OIC_LOG_V(DEBUG, TAG, "publicData length: %" PRIuPTR ", encoding: %d", temp->publicData.len, temp->publicData.encoding);
         if (temp->credUsage)
         {
             OIC_LOG_V(DEBUG, TAG, "credUsage: %s", temp->credUsage);
         }
 
-        OIC_LOG_V(DEBUG, TAG, "optionalData length: %d, encoding: %d", temp->optionalData.len, temp->optionalData.encoding);
+        OIC_LOG_V(DEBUG, TAG, "optionalData length: %" PRIuPTR", encoding: %d" PRIuPTR, temp->optionalData.len, temp->optionalData.encoding);
 #endif
 
     }
 
-    OIC_LOG_V(DEBUG, TAG, "Found %d credentials.", count);
+    OIC_LOG_V(DEBUG, TAG, "Found %" PRIuPTR " credentials.", count);
 
     OIC_LOG_V(DEBUG, TAG, "OUT %s:", __func__);
 #endif
@@ -1372,13 +1372,13 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     }
     if (cred->publicData.data)
     {
-        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : publicData len: %d", cred->publicData.len);
+        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : publicData len: %" PRIuPTR, cred->publicData.len);
         OIC_LOG_BUFFER(DEBUG, TAG, cred->publicData.data, cred->publicData.len);
 
     }
     if (cred->optionalData.data)
     {
-        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : optionalData len: %d", cred->optionalData.len);
+        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : optionalData len: %" PRIuPTR, cred->optionalData.len);
         OIC_LOG_BUFFER(DEBUG, TAG, cred->optionalData.data, cred->optionalData.len);
         OIC_LOG_V(DEBUG, TAG, "GenerateCredential : optionalData revstat: %d", cred->optionalData.revstat);
     }
@@ -3124,7 +3124,7 @@ static int ConvertDerCertToPem(const uint8_t* der, size_t derLen, uint8_t** pem)
     if (ret < 0)
     {
         OIC_LOG_V(ERROR, TAG, "Couldn't convert cert into PEM, failed writing PEM: %d", ret);
-        OICFreeAndSetToNull(pem);
+        OICFreeAndSetToNull((void **) pem);
         return ret;
     }
 
