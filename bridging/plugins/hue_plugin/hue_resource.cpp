@@ -259,12 +259,24 @@ void addAuthorizedBridgeCB(const char *macAddress, const char *ClientId)
     {
         uint32_t prefix_size = MAX_QUERY_STRING;
         char *prefix = (char *) OICMalloc(prefix_size);
+        if (NULL == prefix)
+        {
+            OIC_LOG_V(INFO, TAG, " Failed to malloc prefix");
+            return;
+        }
 
         /*get prefix for discovering lights*/
         result = hueAuthGetHttpPrefix(prefix, &prefix_size, macAddress, ClientId);
         if (result == MPM_RESULT_INSUFFICIENT_BUFFER)
         {
-            prefix = (char *) realloc(prefix, prefix_size);
+            char *tmp = (char *) OICRealloc(prefix, prefix_size);
+            if (NULL == tmp)
+            {
+                OIC_LOG_V(INFO, TAG, " Failed to realloc prefix");
+                OICFree(prefix);
+                return;
+            }
+            prefix = tmp;
             result = hueAuthGetHttpPrefix(prefix, &prefix_size, macAddress, ClientId);
         }
         if (result == MPM_RESULT_OK)
@@ -570,11 +582,23 @@ MPMResult pluginReconnect(MPMPluginCtx *, MPMPipeMessage *message)
             }
             uint32_t prefix_size = MAX_QUERY_STRING;
             char *prefix = (char *) OICMalloc(prefix_size);
+            if (NULL == prefix)
+            {
+                OIC_LOG_V(INFO, TAG, " Failed to malloc prefix");
+                return MPM_RESULT_INTERNAL_ERROR;
+            }
             result = hueAuthGetHttpPrefix(prefix, &prefix_size, plugindetails->bridgeMac,
                                           plugindetails->clientId);
             if (result == MPM_RESULT_INSUFFICIENT_BUFFER)
             {
-                prefix = (char *) realloc(prefix, prefix_size);
+                char *tmp = (char *) OICRealloc(prefix, prefix_size);
+                if (NULL == tmp)
+                {
+                    OIC_LOG(DEBUG, TAG, "Failed to realloc prefix");
+                    OICFree(prefix);
+                    return MPM_RESULT_INTERNAL_ERROR;
+                }
+                prefix = tmp;
                 result = hueAuthGetHttpPrefix(prefix, &prefix_size, plugindetails->bridgeMac,
                                               plugindetails->clientId);
             }
