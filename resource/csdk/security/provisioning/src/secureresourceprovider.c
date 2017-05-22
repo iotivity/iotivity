@@ -3480,6 +3480,7 @@ static OCStackApplicationResult SRPDeleteRoleCertificateCB(void *ctx, OCDoHandle
 {
     OC_UNUSED(UNUSED);
     GetSecData_t *getSecData = (GetSecData_t *)ctx;
+    OCProvisionResultCB resultCallback = getSecData->resultCallback;
 
     OIC_LOG(DEBUG, TAG, "SRPDeleteRoleCertificateCB IN");
 
@@ -3489,6 +3490,7 @@ static OCStackApplicationResult SRPDeleteRoleCertificateCB(void *ctx, OCDoHandle
             getSecData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
         getSecData->resArr[(getSecData->numOfResults)].res = clientResponse->result;
         ++(getSecData->numOfResults);
+        resultCallback(getSecData->ctx, getSecData->numOfResults, getSecData->resArr, false);
     }
 
     OIC_LOG(DEBUG, TAG, "SRPDeleteRoleCertificateCB OUT");
