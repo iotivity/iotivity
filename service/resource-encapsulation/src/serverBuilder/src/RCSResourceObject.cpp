@@ -34,7 +34,7 @@
 #include "logger.h"
 #include "OCPlatform.h"
 
-#define LOG_TAG "RCSResourceObject"
+#define LOG_TAG_RE "RCSResourceObject"
 
 namespace
 {
@@ -70,7 +70,7 @@ namespace
         }
         catch (const OC::OCException& e)
         {
-            OIC_LOG_V(WARNING, LOG_TAG, "Error (%s)", e.what());
+            OIC_LOG_V(WARNING, LOG_TAG_RE, "Error (%s)", e.what());
         }
 
         return OC_EH_ERROR;
@@ -296,7 +296,7 @@ namespace OIC
                 }
                 catch (...)
                 {
-                    OIC_LOG(WARNING, LOG_TAG, "Failed to unregister resource.");
+                    OIC_LOG(WARNING, LOG_TAG_RE, "Failed to unregister resource.");
                 }
             }
         }
@@ -583,7 +583,7 @@ namespace OIC
 
             if (!resource) return OC_EH_ERROR;
 
-            OIC_LOG(WARNING, LOG_TAG, "entityHandler");
+            OIC_LOG(WARNING, LOG_TAG_RE, "entityHandler");
             if (!request)
             {
                 return OC_EH_ERROR;
@@ -605,12 +605,12 @@ namespace OIC
             }
             catch (const std::exception& e)
             {
-                OIC_LOG_V(WARNING, LOG_TAG, "Failed to handle request : %s", e.what());
+                OIC_LOG_V(WARNING, LOG_TAG_RE, "Failed to handle request : %s", e.what());
                 throw;
             }
             catch (...)
             {
-                OIC_LOG(WARNING, LOG_TAG, "Failed to handle request.");
+                OIC_LOG(WARNING, LOG_TAG_RE, "Failed to handle request.");
                 throw;
             }
 
@@ -668,7 +668,7 @@ namespace OIC
             auto replaced = requestHandler->applyAcceptanceMethod(response.getAcceptanceMethod(),
                     *this, requestAttrs);
 
-            OIC_LOG_V(WARNING, LOG_TAG, "replaced num %" PRIuPTR, replaced.size());
+            OIC_LOG_V(WARNING, LOG_TAG_RE, "replaced num %" PRIuPTR, replaced.size());
             for (const auto& attrKeyValPair : replaced)
             {
                 std::shared_ptr< AttributeUpdatedListener > foundListener;
