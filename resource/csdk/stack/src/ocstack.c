@@ -1646,7 +1646,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 requestData.resourceUri = OICStrdup(cbNode->requestUri);
 
                 requestInfo.info = requestData;
- 
+
                 // send request
                 OCStackResult result = OCSendRequest(endPoint, &requestInfo);
                 if (OC_STACK_OK == result)
@@ -3614,7 +3614,9 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
     /* Check whether we should assert role certificates before making this request. */
     if ((endpoint.flags & CA_SECURE) && (NULL != requestInfo.info.resourceUri) &&
         (strcmp(requestInfo.info.resourceUri, OIC_RSRC_ROLES_URI) != 0) &&
-        (strcmp(requestInfo.info.resourceUri, OIC_RSRC_DOXM_URI) != 0))
+        (strcmp(requestInfo.info.resourceUri, OIC_RSRC_DOXM_URI) != 0) &&
+        ((CT_ADAPTER_TCP == connectivityType) &&
+                strcmp(requestInfo.info.resourceUri, OC_RSRVD_KEEPALIVE_URI) != 0))
     {
         CASecureEndpoint_t sep;
         CAResult_t caRes = CAGetSecureEndpointData(&endpoint, &sep);
@@ -6253,7 +6255,7 @@ OCStackResult OCSelectCipherSuite(uint16_t cipher, OCTransportAdapter adapterTyp
 
 #ifdef RA_ADAPTER
     OC_STATIC_ASSERT(
-        (unsigned int)OC_ADAPTER_REMOTE_ACCESS 
+        (unsigned int)OC_ADAPTER_REMOTE_ACCESS
             == (unsigned int)CA_ADAPTER_REMOTE_ACCESS, "OC/CA bit mismatch");
 
     #define ALL_OC_ADAPTER_TYPES (OC_ADAPTER_IP | OC_ADAPTER_GATT_BTLE | OC_ADAPTER_RFCOMM_BTEDR |\
