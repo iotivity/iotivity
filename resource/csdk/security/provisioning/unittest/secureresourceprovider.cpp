@@ -97,7 +97,7 @@ TEST(SRPProvisionACLTest, NullACL)
 
 TEST(SRPProvisionACLTest, InvalidVersion)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionACL(NULL, &pDev1, &acl, OIC_SEC_ACL_UNKNOWN, &provisioningCB));
+    EXPECT_EQ(OC_STACK_ERROR, SRPProvisionACL(NULL, &pDev1, &acl, OIC_SEC_ACL_UNKNOWN, &provisioningCB));
 }
 
 TEST(SRPProvisionCredentialsTest, NullDevice1)
@@ -455,7 +455,7 @@ TEST_F(SRPTest, SRPProvisionTrustCertChainNoResource)
     OCProvisionDev_t deviceInfo;
 
     result = SRPProvisionTrustCertChain(&ctx, type, credId, &deviceInfo, provisioningCB);
-    EXPECT_EQ(OC_STACK_NO_RESOURCE, result);
+    EXPECT_EQ(OC_STACK_ERROR, result);
 }
 
 TEST(SRPProvisionTrustCertChainTest, SRPGetACLResourceNoCallback)
