@@ -87,8 +87,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH) \
 					$(LOCAL_PATH)/../../../../../../../../../extlibs/boost/boost_1_58_0 \
 					$(LOCAL_PATH)/../../../../../../../../../java/jni \
 
-LOCAL_SRC_FILES += $(patsubst $(LOCAL_PATH)/%, %, $(wildcard $(LOCAL_PATH)/*.cpp))
-LOCAL_SRC_FILES += $(patsubst $(LOCAL_PATH)/%, %, $(wildcard $(LOCAL_PATH)/*.h))
+LOCAL_SRC_FILES := $(patsubst $(LOCAL_PATH)/%, %, $(wildcard $(LOCAL_PATH)/*.cpp))
 
 LOCAL_LDLIBS := -llog
 #LOCAL_SHARED_LIBRARIES += android-connectivity_abstraction
