@@ -248,7 +248,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
         OIC_LOG(ERROR, TAG, "\n<====Callback Context for DISCOVERY fail====>");
     }
 
-    if (clientResponse)
+    if (clientResponse && clientResponse->result == OC_STACK_OK)
     {
         OIC_LOG_V(INFO, TAG,
                 "Device =============> Discovered @ %s:%d",
