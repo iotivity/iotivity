@@ -117,13 +117,13 @@ static OCRepPayload *CreateRDPublishPayload(const char *deviceId,
         OCRepPayloadSetPropString(link, OC_RSRVD_URI, anchor);
         size_t rtDim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
         char **rt = (char **)OICMalloc(sizeof(char *) * 1);
-        EXPECT_NE(NULL, rt) << "Failed to OICMalloc rt!";
+        EXPECT_TRUE(NULL != rt) << "Failed to OICMalloc rt!";
         if (NULL == rt)
         {
             return NULL;
         }
         rt[0] = OICStrdup(resources[i].rt);
-        EXPECT_NE(NULL, rt[0]) << "Failed to OICStrdup rt!";
+        EXPECT_TRUE(NULL != rt[0]) << "Failed to OICStrdup rt!";
         if (NULL == rt[0])
         {
             OICFree(rt);
@@ -141,13 +141,13 @@ static OCRepPayload *CreateRDPublishPayload(const char *deviceId,
 
         size_t itfDim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
         char **itf = (char **)OICMalloc(sizeof(char *) * 1);
-        EXPECT_NE(NULL, itf) << "Failed to OICMalloc itf!";
+        EXPECT_TRUE(NULL != itf) << "Failed to OICMalloc itf!";
         if (NULL == itf)
         {
             return NULL;
         }
         itf[0] = OICStrdup(resources[i].itf);
-        EXPECT_NE(NULL, itf[0]) << "Failed to OICStrdup itf!";
+        EXPECT_TRUE(NULL != itf[0]) << "Failed to OICStrdup itf!";
         if (NULL == itf[0])
         {
             OICFree(itf);
@@ -218,7 +218,7 @@ TEST_F(RDDatabaseTests, StoreResources)
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     const char *deviceId = "7a960f46-a52e-4837-bd83-460b1a6dd56b";
     OCRepPayload *repPayload = CreateResources(deviceId);
-    ASSERT_NE(NULL, repPayload) << "CreateResources failed!";
+    ASSERT_TRUE(NULL != repPayload) << "CreateResources failed!";
 
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
 
@@ -245,7 +245,7 @@ TEST_F(RDDatabaseTests, AddResources)
     const char *deviceId = "7a960f46-a52e-4837-bd83-460b1a6dd56b";
 
     OCRepPayload *repPayload = CreateResources(deviceId);
-    ASSERT_NE(NULL, repPayload) << "CreateResources failed!";
+    ASSERT_TRUE(NULL != repPayload) << "CreateResources failed!";
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
     OCPayloadDestroy((OCPayload *)repPayload);
 
@@ -290,7 +290,7 @@ TEST_F(RDDatabaseTests, UpdateResources)
     const char *deviceId = &anchor[6];
 
     OCRepPayload *repPayload = CreateResources(deviceId);
-    ASSERT_NE(NULL, repPayload) << "CreateResources failed!";
+    ASSERT_TRUE(NULL != repPayload) << "CreateResources failed!";
 
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
     OCPayloadDestroy((OCPayload *)repPayload);
@@ -345,7 +345,7 @@ TEST_F(RDDatabaseTests, AddAndUpdateResources)
     const char *deviceId = &anchor[6];
 
     OCRepPayload *repPayload = CreateResources(deviceId);
-    ASSERT_NE(NULL, repPayload) << "CreateResources failed!";
+    ASSERT_TRUE(NULL != repPayload) << "CreateResources failed!";
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
     OCPayloadDestroy((OCPayload *)repPayload);
 
@@ -416,9 +416,9 @@ TEST_F(RDDatabaseTests, DeleteResourcesDevice)
     };
     OCRepPayload *payloads[2];
     payloads[0] = CreateResources(deviceIds[0]);
-    ASSERT_NE(NULL, payloads[0]) << "CreateResources failed!";
+    ASSERT_TRUE(NULL != payloads[0]) << "CreateResources failed!";
     payloads[1] = CreateResources(deviceIds[1]);
-    ASSERT_NE(NULL, payloads[1]) << "CreateResources failed!";
+    ASSERT_TRUE(NULL != payloads[1]) << "CreateResources failed!";
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(payloads[0]));
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(payloads[1]));
 
