@@ -1216,13 +1216,13 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
 
                         char *epStr = OCCreateEndpointStringFromCA(&caEps[i]);
                         urlInfoPayload[dimensions[0]] = BuildUrlInfoWithProtocol(proto, epStr);
-                        dimensions[0] = dimensions[0] + 1;
-                        if (!urlInfoPayload[i])
+                        if (!urlInfoPayload[dimensions[0]])
                         {
                             OIC_LOG(ERROR, TAG, "Unable to build urlInfo object for protocol");
                             ret = OC_STACK_ERROR;
                             goto exit;
                         }
+                        dimensions[0] = dimensions[0] + 1;
                     }
                 }
             }
