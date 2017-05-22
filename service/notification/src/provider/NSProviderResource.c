@@ -18,8 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "NSProviderResource.h"
+#include <inttypes.h>
 #include <string.h>
+#include "NSProviderResource.h"
 #include "rd_client.h"
 
 NSNotificationResource NotificationResource;
@@ -34,6 +35,7 @@ OCStackApplicationResult NSHandlePublishCb(void *ctx, OCDoHandle handle,
     OCClientResponse *clientResponse)
 {
     (void) handle;
+    (void) clientResponse;
     if (ctx != (void *)DEFAULT_CONTEXT_VALUE)
     {
         NS_LOG(DEBUG, "Invalid Publish callback received");
