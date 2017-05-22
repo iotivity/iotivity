@@ -58,7 +58,6 @@ if rcs_common_test_env.get('TEST') == '1':
     rcs_common_test_env.AppendUnique(CPPDEFINES=['HIPPOMOCKS_ISSUE'])
     from tools.scons.RunTest import run_test
     run_test(rcs_common_test_env,
-#            'service_resource-encapsulation_src_common_primitiveResource_unittests_rcs_common_test.memcheck',
-             '',  # TODO: fix leaks
+             'service_resource-encapsulation_src_common_primitiveResource_unittests_rcs_common_test.memcheck',
              'service/resource-encapsulation/src/common/primitiveResource/unittests/rcs_common_test',
              rcs_common_test)
