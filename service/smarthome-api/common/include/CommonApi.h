@@ -73,6 +73,7 @@ namespace OIC
                 const std::string WATER_VALVE = "oic.d.watervalve";
                 const std::string BLIND = "oic.d.blind";
                 const std::string DOOR = "oic.d.door";
+                const std::string RECEIVER = "oic.d.receiver";
             }
 
             namespace RESOURCE_TYPE
@@ -81,6 +82,9 @@ namespace OIC
                 const std::string MODE = "oic.r.mode";
                 const std::string LOCK_STATUS = "oic.r.lock.status";
                 const std::string OPENLEVEL = "oic.r.openlevel";
+                const std::string AUDIO = "oic.r.audio";
+                const std::string MEDIA_INPUT = "oic.r.media.input";
+                const std::string MEDIA_OUTPUT = "oic.r.media.output";
             }
 
             namespace INTERFACE

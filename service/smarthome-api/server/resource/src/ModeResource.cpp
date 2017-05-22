@@ -35,7 +35,8 @@ namespace OIC
         namespace SH
         {
             ModeResource::ModeResource() :
-                    m_userDelegate(NULL), SHBaseResource(URI_MODE, RESOURCE_TYPE::MODE)
+                    m_userDelegate(NULL), SHBaseResource(URI_MODE, RESOURCE_TYPE::MODE,
+                        RESOURCE_PROPERTY::DISCOVERABLE | RESOURCE_PROPERTY::OBSERVABLE)
             {
                 OIC_LOG(DEBUG, TAG, "Entered ctor");
 
