@@ -74,6 +74,7 @@ namespace OIC
                 const std::string BLIND = "oic.d.blind";
                 const std::string DOOR = "oic.d.door";
                 const std::string RECEIVER = "oic.d.receiver";
+                const std::string TELEVISION = "oic.d.tv";
             }
 
             namespace RESOURCE_TYPE
