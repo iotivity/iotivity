@@ -174,7 +174,7 @@ AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
             cbData->cd(cbData->context);
         }
 
-        OICFree(token);
+        CADestroyToken(token);
         OICFree(*handle);
         OICFree(requestUri);
         OICFree(devAddr);
