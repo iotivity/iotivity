@@ -1543,7 +1543,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, size_t *size)
 #endif
 
     size_t interfaces = u_arraylist_length(iflist);
-    for (size_t i = 0; i < interfaces; i++)
+    for (size_t i = 0; i < u_arraylist_length(iflist); i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
         if (!ifitem)
