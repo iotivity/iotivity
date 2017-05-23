@@ -167,32 +167,38 @@ static void SetResourceUriAndType(SRMRequestContext_t *context)
 
 static void SetDiscoverable(SRMRequestContext_t *context)
 {
-    OCResource *resource;
     if (NULL == context)
     {
         OIC_LOG_V(ERROR, TAG, "%s: Null context.", __func__);
         context->discoverable = DISCOVERABLE_NOT_KNOWN;
+        return;
     }
-    else if (NULL == context->resourceUri)
+    if (NULL == context->resourceUri)
     {
         OIC_LOG_V(ERROR, TAG, "%s: Null resourceUri.", __func__);
         context->discoverable = DISCOVERABLE_NOT_KNOWN;
+        return;
+    }
+
+    OCResource *resource = FindResourceByUri(context->resourceUri);
+    if (NULL == resource)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: Unkown resourceUri(%s).", __func__, context->resourceUri);
+        context->discoverable = DISCOVERABLE_NOT_KNOWN;
+        return;
+    }
+
+    if (OC_DISCOVERABLE == (resource->resourceProperties & OC_DISCOVERABLE))
+    {
+        context->discoverable = DISCOVERABLE_TRUE;
+        OIC_LOG_V(DEBUG, TAG, "%s: resource %s is OC_DISCOVERABLE.",
+                  __func__, context->resourceUri);
     }
     else
     {
-        resource = FindResourceByUri(context->resourceUri);
-        if (OC_DISCOVERABLE == (resource->resourceProperties & OC_DISCOVERABLE))
-        {
-            context->discoverable = DISCOVERABLE_TRUE;
-            OIC_LOG_V(DEBUG, TAG, "%s: resource %s is OC_DISCOVERABLE.",
-                __func__, context->resourceUri);
-        }
-        else
-        {
-            context->discoverable = DISCOVERABLE_FALSE;
-            OIC_LOG_V(DEBUG, TAG, "%s: resource %s is NOT OC_DISCOVERABLE.",
-                __func__, context->resourceUri);
-        }
+        context->discoverable = DISCOVERABLE_FALSE;
+        OIC_LOG_V(DEBUG, TAG, "%s: resource %s is NOT OC_DISCOVERABLE.",
+                  __func__, context->resourceUri);
     }
 }
 
