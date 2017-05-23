@@ -450,15 +450,17 @@ OCStackResult OCRDDeleteWithDeviceId(OCDoHandle *handle, const char *host,
     {
         OCResource *handle = (OCResource *) resourceHandles[j];
         int64_t ins = 0;
-        OCGetResourceIns(handle, &ins);
-        int lenBufferRequired = snprintf((queryParam + queryLength),
-                                         (MAX_URI_LENGTH - queryLength), "&ins=%" PRId64, ins);
-        if (lenBufferRequired >= (MAX_URI_LENGTH - queryLength) || lenBufferRequired < 0)
+        if (OC_STACK_OK == OCGetResourceIns(handle, &ins))
         {
-            return OC_STACK_INVALID_URI;
+            int lenBufferRequired = snprintf((queryParam + queryLength),
+                    (MAX_URI_LENGTH - queryLength), "&ins=%" PRId64, ins);
+            if (lenBufferRequired >= (MAX_URI_LENGTH - queryLength) || lenBufferRequired < 0)
+            {
+                return OC_STACK_INVALID_URI;
+            }
+            queryLength += lenBufferRequired;
+            OIC_LOG_V(DEBUG, TAG, "queryParam [%s]", queryParam);
         }
-        queryLength += lenBufferRequired;
-        OIC_LOG_V(DEBUG, TAG, "queryParam [%s]", queryParam);
     }
 
     if (targetUriBufferRequired + queryLength + 1 > MAX_URI_LENGTH)

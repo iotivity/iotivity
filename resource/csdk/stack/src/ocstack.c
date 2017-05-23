@@ -5997,11 +5997,17 @@ OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
                          if (resHandle)
                          {
                              int64_t resIns = 0;
-                             OCGetResourceIns(resHandle, &resIns);
-                             if (queryIns && queryIns == resIns)
+                             if (OC_STACK_OK == OCGetResourceIns(resHandle, &resIns))
                              {
-                                 OCBindResourceInsToResource(resHandle, 0);
-                                 break;
+                                 if (queryIns && queryIns == resIns)
+                                 {
+                                     OCBindResourceInsToResource(resHandle, 0);
+                                     break;
+                                 }
+                             }
+                             else
+                             {
+                                 OIC_LOG(ERROR, TAG, "Get resource instance failed!");
                              }
                          }
                      }
