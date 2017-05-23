@@ -24,7 +24,7 @@ Build and Run
 5) Run .jar file
 
 	go to "target" folder
-	$ java -jar CloudResourceDirectory-0.0.1-SNAPSHOT.jar arg1(RD CoAP Server Port) arg2(TLS mode required)
-	e.g java -jar CloudResourceDirectory-0.0.1-SNAPSHOT.jar 5684 0
+	$ java -jar CloudResourceDirectory-0.0.1-SNAPSHOT.jar arg1(RD CoAP Server Port) arg2(MongoDB IP Address) arg3(MongoDB Port) arg4(TLS mode required)
+	e.g java -jar CloudResourceDirectory-0.0.1-SNAPSHOT.jar 5684 127.0.0.1 27017 0
 
     - If you want to operate on TLS mode, "CLOUD_CERT_FILE(iotivitycloud.crt)", "CLOUD_KEY_FILE(iotivitycloud.key)" and ROOT_CERT_FILE(rootca.crt) files should be placed in the "target" folder.

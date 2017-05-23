@@ -67,14 +67,8 @@ import io.netty.channel.ChannelPromise;
 
 public class DeviceServerSystem extends ServerSystem {
 
-    private Cbor<HashMap<String, Object>>                 mCbor     = new Cbor<HashMap<String, Object>>();
-    private HashMap<ChannelHandlerContext, CoapSignaling> mCsmMap   = new HashMap<>();
-
-    IRequestChannel                                       mRDServer = null;
-
-    public DeviceServerSystem() {
-        mRDServer = ConnectorPool.getConnection("rd");
-    }
+    private Cbor<HashMap<String, Object>>                 mCbor   = new Cbor<HashMap<String, Object>>();
+    private HashMap<ChannelHandlerContext, CoapSignaling> mCsmMap = new HashMap<>();
 
     /**
      *
@@ -185,14 +179,15 @@ public class DeviceServerSystem extends ServerSystem {
                         switch (coapRequest.getObserve()) {
                             case SUBSCRIBE:
                                 coapDevice.addObserveRequest(
-                                        Bytes.bytesToLong(coapRequest.getToken()),
+                                        Bytes.bytesToLong(
+                                                coapRequest.getToken()),
                                         coapRequest);
                                 coapDevice.addObserveChannel(targetChannel);
                                 break;
                             case UNSUBSCRIBE:
                                 coapDevice.removeObserveChannel(targetChannel);
-                                coapDevice.removeObserveRequest(
-                                        Bytes.bytesToLong(coapRequest.getToken()));
+                                coapDevice.removeObserveRequest(Bytes
+                                        .bytesToLong(coapRequest.getToken()));
                                 break;
                             default:
                                 break;
@@ -297,10 +292,11 @@ public class DeviceServerSystem extends ServerSystem {
             StringBuffer uriPath = new StringBuffer();
             uriPath.append("/" + Constants.PREFIX_OIC);
             uriPath.append("/" + Constants.DEVICE_PRESENCE_URI);
-            mRDServer.sendRequest(MessageBuilder.createRequest(
-                    RequestMethod.POST, uriPath.toString(), null,
-                    ContentFormat.APPLICATION_CBOR,
-                    cbor.encodingPayloadToCbor(payload)), null);
+            ConnectorPool.getConnection("rd")
+                    .sendRequest(MessageBuilder.createRequest(
+                            RequestMethod.POST, uriPath.toString(), null,
+                            ContentFormat.APPLICATION_CBOR,
+                            cbor.encodingPayloadToCbor(payload)), null);
         }
     }
 
@@ -340,11 +336,10 @@ public class DeviceServerSystem extends ServerSystem {
                 }
 
                 switch (urlPath) {
-
-                    case OICConstants.ACCOUNT_FULL_URI:
-                        ctx.writeAndFlush(msg);
-                        ctx.close();
-                        return;
+                    /*
+                     * case OICConstants.ACCOUNT_FULL_URI:
+                     * ctx.writeAndFlush(msg); ctx.close(); return;
+                     */
 
                     case OICConstants.ACCOUNT_SESSION_FULL_URI:
                         HashMap<String, Object> payloadData = mCbor

@@ -27,6 +27,8 @@ import org.iotivity.cloud.base.OICConstants;
 
 public class Constants extends OICConstants {
 
+    public static final int    DEFAULT_COAP_PORT          = 5685;
+
     public static final String PROPERTIES_FILE_NAME       = "properties"
             + File.separator + "config.properties";
 
@@ -268,12 +270,8 @@ public class Constants extends OICConstants {
 
     public static final int    TOKEN_INFINITE             = -1;
 
-    // auth servers
+    // oauth
 
-    public static final String GITHUB                     = "Github";
-
-    public static final String SAMSUNG                    = "Samsung";
-
-    public static final String GOOGLE                     = "Google";
+    public static final String OAUTH_LIBRARIES_PATH       = "oauth/";
 
 }

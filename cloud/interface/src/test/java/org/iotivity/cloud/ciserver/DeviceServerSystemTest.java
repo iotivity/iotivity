@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 
 import org.iotivity.cloud.base.OICConstants;
+import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
@@ -58,6 +59,7 @@ import org.iotivity.cloud.util.Cbor;
 import org.iotivity.cloud.util.Log;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -70,7 +72,12 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelId;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.Attribute;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(ConnectorPool.class)
 public class DeviceServerSystemTest {
     private ChannelHandlerContext                   mCtx                  = null;
     private ChannelHandlerContext                   mCtxSignal            = null;
@@ -178,6 +185,8 @@ public class DeviceServerSystemTest {
             }
         }).when(mCtx).writeAndFlush(Mockito.any());
 
+        PowerMockito.mockStatic(ConnectorPool.class);
+        PowerMockito.when(ConnectorPool.getConnection(Mockito.anyString())).thenReturn(mRequestChannel);
     }
 
     @Test

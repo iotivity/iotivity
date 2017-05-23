@@ -74,11 +74,10 @@ ipca_lib_env.PrependUnique(LIBS = [
         'oc'
         ])
 
-if ipca_env.get('SECURED') == '1':
+if ipca_lib_env.get('SECURED') == '1':
     ipca_lib_env.PrependUnique(LIBS = [
             'mbedtls',
             'mbedx509',
-            'mbedcrypto',
             'ocprovision'
             ])
 

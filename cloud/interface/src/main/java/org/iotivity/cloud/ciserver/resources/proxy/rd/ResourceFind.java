@@ -48,15 +48,10 @@ import org.iotivity.cloud.util.Cbor;
  */
 
 public class ResourceFind extends Resource {
-    IRequestChannel                       mASServer = null;
-    IRequestChannel                       mRDServer = null;
     private Cbor<HashMap<String, Object>> mCbor     = new Cbor<>();
 
     public ResourceFind() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.WELL_KNOWN_URI));
-
-        mASServer = ConnectorPool.getConnection("account");
-        mRDServer = ConnectorPool.getConnection("rd");
     }
 
     class AccountReceiveHandler implements IResponseEventHandler {
@@ -91,7 +86,7 @@ public class ResourceFind extends Resource {
                     mRequest = MessageBuilder.modifyRequest(mRequest, null,
                             uriQuery, null, null);
 
-                    mRDServer.sendRequest(mRequest, mSrcDevice);
+                    ConnectorPool.getConnection("rd").sendRequest(mRequest, mSrcDevice);
                     break;
 
                 default:
@@ -140,7 +135,7 @@ public class ResourceFind extends Resource {
         if (request.getUriQuery() != null && request.getUriQueryMap()
                 .containsKey(Constants.REQ_DEVICE_ID)) {
 
-            mRDServer.sendRequest(request, srcDevice);
+            ConnectorPool.getConnection("rd").sendRequest(request, srcDevice);
 
         } else {
             StringBuffer additionalQuery = new StringBuffer();
@@ -162,7 +157,7 @@ public class ResourceFind extends Resource {
             IRequest requestToAS = MessageBuilder.createRequest(
                     RequestMethod.GET, uriPath.toString(), uriQuery);
 
-            mASServer.sendRequest(requestToAS,
+            ConnectorPool.getConnection("account").sendRequest(requestToAS,
                     new AccountReceiveHandler(request, srcDevice));
         }
     }

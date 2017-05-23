@@ -40,6 +40,7 @@ void ElevatorClient::OnObserveCallback(
                         const int &eCode,
                         const int &sequenceNumber)
 {
+    OC_UNUSED(headerOptions);
     OC_UNUSED(sequenceNumber);
     OC_UNUSED(eCode);
 

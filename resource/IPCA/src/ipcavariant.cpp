@@ -62,7 +62,7 @@ IPCAStatus IPCA_CALL IPCAPropertySetValue(
     catch (std::exception &e)
     {
         OC_UNUSED(e);
-        OIC_LOG_V(WARNING, TAG, e.what());
+        OIC_LOG_V(WARNING, TAG, "%s", e.what());
         return IPCA_FAIL;
     }
 }
@@ -120,7 +120,7 @@ IPCAStatus IPCA_CALL IPCAPropertyBagSetValuePropertyBag(
     catch (std::exception &e)
     {
         OC_UNUSED(e);
-        OIC_LOG_V(WARNING, TAG, e.what());
+        OIC_LOG_V(WARNING, TAG, "%s", e.what());
         return IPCA_FAIL;
     }
 }
@@ -153,7 +153,7 @@ IPCAStatus IPCA_CALL IPCAPropertyBagSetValueArray(
     catch (std::exception &e)
     {
         OC_UNUSED(e);
-        OCLog(WARNING, TAG, e.what());
+        OIC_LOG_V(WARNING, TAG, "%s", e.what());
         return IPCA_FAIL;
     }
 }
@@ -213,7 +213,7 @@ IPCAStatus IPCA_CALL IPCAPropertyBagSetValueStringArray(
     catch (std::exception &e)
     {
         OC_UNUSED(e);
-        OIC_LOG_V(WARNING, TAG, e.what());
+        OIC_LOG_V(WARNING, TAG, "%s", e.what());
         return IPCA_FAIL;
     }
 }
@@ -246,7 +246,7 @@ IPCAStatus IPCA_CALL IPCAPropertyBagSetValuePropertyBagArray(
     catch (std::exception &e)
     {
         OC_UNUSED(e);
-        OIC_LOG_V(WARNING, TAG, e.what());
+        OIC_LOG_V(WARNING, TAG, "%s", e.what());
         return IPCA_FAIL;
     }
 }

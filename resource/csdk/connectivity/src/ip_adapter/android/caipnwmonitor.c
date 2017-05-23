@@ -195,7 +195,11 @@ u_arraylist_t *CAFindInterfaceChange()
                           .msg_iov = &iov,
                           .msg_iovlen = 1 };
 
+    // We do nothing with netlink event here.
+    // Android BroadcastReceiver will work instead.
     ssize_t len = recvmsg(caglobals.ip.netlinkFd, &msg, 0);
+    OC_UNUSED(len);
+
     return NULL;
 }
 
@@ -231,12 +235,6 @@ static bool CAParsingNetorkInfo(int idx, u_arraylist_t *iflist)
 
         int family = ifa->ifa_addr->sa_family;
         if ((ifa->ifa_flags & IFF_LOOPBACK) || (AF_INET != family && AF_INET6 != family))
-        {
-            continue;
-        }
-
-        if ((family == AF_INET6 && !caglobals.ip.ipv6enabled) ||
-            (family == AF_INET && !caglobals.ip.ipv4enabled))
         {
             continue;
         }

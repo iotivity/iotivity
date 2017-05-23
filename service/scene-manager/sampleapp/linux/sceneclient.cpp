@@ -148,7 +148,9 @@ void onRemoteSceneActionCreated(RemoteSceneAction::Ptr, int eCode)
     numRecvSceneActionCreationResp++;
 
     if(numCreatedSceneAction == numRecvSceneActionCreationResp)
+    {
         g_currentRun();
+    }
 }
 
 void onRemoteSceneExecuted(const std::string &sceneName, int eCode)
@@ -181,27 +183,42 @@ void createRemoteSceneList()
 
 void createRemoteSceneCollection()
 {
-    if (!g_sceneList) return;
+    if (!g_sceneList)
+    {
+        return;
+    }
 
     g_sceneList->addNewSceneCollection(onRemoteSceneCollectionCreated);
 }
 
 void showRemoteSceneCollection()
 {
-    if (!g_sceneList) return;
+    if (!g_sceneList)
+    {
+        return;
+    }
 
-    if (g_sceneList->getRemoteSceneCollections().size() == 0) return;
+    if (g_sceneList->getRemoteSceneCollections().size() == 0)
+    {
+        return;
+    }
 
     g_sceneCollection = g_sceneList->getRemoteSceneCollections().at(0);
 
-    if( g_sceneCollection->getRemoteScenes().size() == 0) return;
+    if( g_sceneCollection->getRemoteScenes().size() == 0)
+    {
+        return;
+    }
 
     g_scene = g_sceneCollection->getRemoteScenes().begin()->second;
 }
 
 void createRemoteScene()
 {
-    if (!g_sceneCollection) return;
+    if (!g_sceneCollection)
+    {
+        return;
+    }
 
     g_sceneCollection->addNewScene(scene_name, onRemoteSceneCreated);
 }
@@ -254,8 +271,14 @@ int processUserInput(int min, int max)
 
     if (!std::cin.fail())
     {
-        if (input == max + 1)  exit(0);
-        if (min <= input && input <= max) return input;
+        if (input == max + 1)
+        {
+            exit(0);
+        }
+        if (min <= input && input <= max)
+        {
+            return input;
+        }
     }
 
     std::cin.clear();
@@ -266,11 +289,17 @@ int processUserInput(int min, int max)
 
 void displaySceneList()
 {
-    if (!g_sceneList) return;
+    if (!g_sceneList)
+    {
+        return;
+    }
 
     std::cout << "\t" << g_sceneList->getName() << "(SceneList)" << std::endl;
 
-    if (!g_sceneCollection) return;
+    if (!g_sceneCollection)
+    {
+        return;
+    }
 
     std::cout << "\t\t   |_ _ _ " << g_sceneCollection->getId() << " (SceneCollection)" << std::endl;
 
@@ -485,7 +514,8 @@ void runCreateRemoteSceneList()
                 displayClear(runRemoteSceneCollection);
                 break;
         }
-    } catch (std::exception &e)
+    }
+    catch (std::exception &e)
     {
         std::cout << e.what() << std::endl;
         g_currentRun();
@@ -506,7 +536,9 @@ void onResourceDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResource
 
     // if the found resource is a scene list resource
     if (std::find(vecRTs.begin(), vecRTs.end(), "oic.wk.sceneList") != vecRTs.end())
+    {
         g_foundListResource = foundResource;
+    }
 
     // if the found resource is a light resource
     else if (std::find(vecRTs.begin(), vecRTs.end(), "core.light") != vecRTs.end())
@@ -566,7 +598,9 @@ int main()
         return 0;
     }
 
-    while (true) { }
+    while (true)
+    {
+    }
 
     std::cout << "Stopping the scene client" << std::endl;
 

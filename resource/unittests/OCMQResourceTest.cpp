@@ -53,20 +53,50 @@ namespace OCMQResourceTest
     {
     }
 
+    class Framework
+        {
+        public:
+            Framework(ServiceType serviceType = OC::ServiceType::InProc,
+                      ModeType mode = OC::ModeType::Server,
+                      OCPersistentStorage *ps = nullptr)
+                      : m_started(false)
+            {
+                PlatformConfig cfg(serviceType, mode, ps);
+                OCPlatform::Configure(cfg);
+            }
+            ~Framework()
+            {
+                if (m_started)
+                {
+                    OC_VERIFY(OC_STACK_OK == OCPlatform::stop());
+                    m_started = false;
+                }
+            }
+            OCStackResult start()
+            {
+                OCStackResult result = OCPlatform::start();
+                if (OC_STACK_OK == result)
+                {
+                    m_started = true;
+                }
+                return result;
+            }
+
+        private:
+            bool m_started;
+        };
+
     //Helper method
     OCResource::Ptr ConstructResourceObject(std::string host, std::string uri)
     {
-        OCConnectivityType connectivityType = CT_DEFAULT;
-        std::vector<std::string> types = {"oic.ps"};
-        std::vector<std::string> ifaces = {DEFAULT_INTERFACE};
-
         auto ret = OCPlatform::constructResourceObject(host, uri,
-                connectivityType, false, types, ifaces);
+                   static_cast<OCConnectivityType>(CT_ADAPTER_TCP | CT_IP_USE_V4), false,
+                   { std::string("oic.wk.ps") }, { std::string(DEFAULT_INTERFACE) });
 
-        if (!ret)
+        if(!ret)
         {
             ADD_FAILURE() << "ConstructResourceObject result was null";
-            return nullptr;
+            throw std::runtime_error("ConstructResourceObject result was null");
         }
 
         return ret;
@@ -75,16 +105,19 @@ namespace OCMQResourceTest
     // Message Queue Test
     TEST(MessageQueueTest, DiscoveryMQTopicsValid)
     {
-        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
+        Framework framework(OC::ServiceType::InProc, OC::ModeType::Client, NULL);
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/oic/ps");
         EXPECT_TRUE(resource != NULL);
-        QueryParamsMap query = {};
-        EXPECT_EQ(OC_STACK_OK, resource->discoveryMQTopics(query, &foundResource,
-                                                           QualityOfService::LowQos));
+        QueryParamsMap query;
+        EXPECT_EQ(OC_STACK_OK, resource->discoveryMQTopics(query, &foundResource, QualityOfService::LowQos));
     }
 
     TEST(MessageQueueTest, CreateMQTopicValid)
     {
-        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
+        Framework framework(OC::ServiceType::InProc, OC::ModeType::Client, NULL);
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/oic/ps");
         EXPECT_TRUE(resource != NULL);
         OCRepresentation rep;
         QueryParamsMap query = {};
@@ -95,7 +128,9 @@ namespace OCMQResourceTest
 #ifdef MQ_PUBLISHER
     TEST(MessageQueueTest, PublishMQTopicValid)
     {
-        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
+        Framework framework(OC::ServiceType::InProc, OC::ModeType::Client, NULL);
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/oic/ps");
         EXPECT_TRUE(resource != NULL);
         OCRepresentation rep;
         QueryParamsMap query = {};
@@ -107,7 +142,9 @@ namespace OCMQResourceTest
 #ifdef MQ_SUBSCRIBER
     TEST(MessageQueueTest, SubscribeMQTopicValid)
     {
-        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
+        Framework framework(OC::ServiceType::InProc, OC::ModeType::Client, NULL);
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/oic/ps");
         EXPECT_TRUE(resource != NULL);
         QueryParamsMap query = {};
         EXPECT_EQ(OC_STACK_OK, resource->subscribeMQTopic(ObserveType::Observe, query,
@@ -116,7 +153,9 @@ namespace OCMQResourceTest
 
     TEST(MessageQueueTest, RequestMQPublishValid)
     {
-        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
+        Framework framework(OC::ServiceType::InProc, OC::ModeType::Client, NULL);
+        ASSERT_TRUE(OC_STACK_OK == framework.start());
+        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/oic/ps");
         EXPECT_TRUE(resource != NULL);
         QueryParamsMap query = {};
         EXPECT_EQ(OC_STACK_OK, resource->requestMQPublish(query, &onReqPub,

@@ -33,11 +33,7 @@
 #include "ipca.h"
 #include "OCFDevice.h"
 
-#if defined(_MSC_VER)
-#define UNREFERENCED_PARAMETER(P)          (P)
-#else
-#define UNREFERENCED_PARAMETER(P)
-#endif
+#define UNUSED_PARAMETER(P)       (void)(P)
 
 // Forward decls.
 extern bool RediscoverElevator();
@@ -95,7 +91,7 @@ void IPCA_CALL ResourceChangeNotificationCallback(
                                         void* context,
                                         IPCAPropertyBagHandle propertyBagHandle)
 {
-    UNREFERENCED_PARAMETER(context);
+    UNUSED_PARAMETER(context);
 
     int observedCurrentFloor = -1, observedDirection = -1, observedTargetFloor = -1;
 
@@ -150,7 +146,7 @@ void IPCA_CALL GetPropertiesCallback(
                             void* context,
                             IPCAPropertyBagHandle propertyBagHandle)
 {
-    UNREFERENCED_PARAMETER(context);
+    UNUSED_PARAMETER(context);
 
     int currentFloor = 0, direction = 0, targetFloor = 0;
 
@@ -202,8 +198,8 @@ void IPCA_CALL SetPropertiesCallback(
                         void* context,
                         IPCAPropertyBagHandle propertyBagHandle)
 {
-    UNREFERENCED_PARAMETER(context);
-    UNREFERENCED_PARAMETER(propertyBagHandle);
+    UNUSED_PARAMETER(context);
+    UNUSED_PARAMETER(propertyBagHandle);
 
     if (result == IPCA_OK)
     {
@@ -226,7 +222,7 @@ void IPCA_CALL DiscoverDevicesCallback(
                         IPCADeviceStatus deviceStatus,
                         const IPCADiscoveredDeviceInfo* deviceInfo)
 {
-    UNREFERENCED_PARAMETER(context);
+    UNUSED_PARAMETER(context);
 
     std::lock_guard<std::recursive_mutex> lock(g_globalMutex);
 
@@ -514,7 +510,7 @@ bool DiscoverElevator(bool freeRun, size_t timeOutMs)
 {
     std::unique_lock<std::mutex> lock { g_deviceDiscoveredCbMutex };
 
-    char* resourceTypes[] = {
+    const char* resourceTypes[] = {
             "x.org.iotivity.sample.elevator",
             "x.org.iotivity.sample.elevator2",
             "x.org.iotivity.sample.elevator3",
@@ -574,11 +570,11 @@ IPCAStatus IPCA_CALL PwdInputCallback(
                             char* passwordBuffer,
                             size_t passwordBufferSize)
 {
-    UNREFERENCED_PARAMETER(passwordBufferSize);
-    UNREFERENCED_PARAMETER(type);
-    UNREFERENCED_PARAMETER(platformInformation);
-    UNREFERENCED_PARAMETER(deviceInformation);
-    UNREFERENCED_PARAMETER(context);
+    UNUSED_PARAMETER(passwordBufferSize);
+    UNUSED_PARAMETER(type);
+    UNUSED_PARAMETER(platformInformation);
+    UNUSED_PARAMETER(deviceInformation);
+    UNUSED_PARAMETER(context);
 
     std::cout << "Received Password Input Callback" << std::endl;
 
@@ -603,10 +599,10 @@ IPCAStatus IPCA_CALL PwdDisplayCallback(
                             IPCAOwnershipTransferType type,
                             const char* password)
 {
-    UNREFERENCED_PARAMETER(context);
-    UNREFERENCED_PARAMETER(deviceInformation);
-    UNREFERENCED_PARAMETER(platformInformation);
-    UNREFERENCED_PARAMETER(type);
+    UNUSED_PARAMETER(context);
+    UNUSED_PARAMETER(deviceInformation);
+    UNUSED_PARAMETER(platformInformation);
+    UNUSED_PARAMETER(type);
 
 
     std::cout << "==========================================" << std::endl;
@@ -620,7 +616,7 @@ IPCAStatus IPCA_CALL PwdDisplayCallback(
 
 void IPCA_CALL AuthCompletionCallback(IPCAStatus completionStatus, void* context)
 {
-    UNREFERENCED_PARAMETER(context);
+    UNUSED_PARAMETER(context);
     std::cout << "AuthCompletionCallback().  Completion status is: " << completionStatus;
     std::cout << std::endl;
 }
@@ -633,8 +629,10 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    IPCAUuid appId = {0xb6, 0x12, 0x38, 0x0c, 0x8c, 0x4c, 0x11, 0xe6,
-                      0xae, 0x22, 0x56, 0xb6, 0xb6, 0x49, 0x96, 0x11};
+    IPCAUuid appId = {
+                       {0xb6, 0x12, 0x38, 0x0c, 0x8c, 0x4c, 0x11, 0xe6,
+                        0xae, 0x22, 0x56, 0xb6, 0xb6, 0x49, 0x96, 0x11}
+                     };
 
     IPCAAppInfo ipcaAppInfo = { appId, "ElevatorClient", "1.0.0", "Microsoft" };
 

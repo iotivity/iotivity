@@ -647,6 +647,12 @@ extern "C" {
 #define OC_RSRVD_CERTIFICATE              "certificate"
 
 /**
+ * TODO: Move these COAP defines to CoAP lib once approved.
+ */
+#define COAP_OPTION_ACCEPT_VERSION 2049
+#define COAP_OPTION_CONTENT_VERSION 2053
+
+/**
  * These enums (OCTransportAdapter and OCTransportFlags) must
  * be kept synchronized with OCConnectivityType (below) as well as
  * CATransportAdapter and CATransportFlags (in CACommon.h).
@@ -978,7 +984,7 @@ typedef enum
  */
 typedef enum
 {
-    /** When none of the bits are set, the resource is non-discoverable &
+    /** When none of the bits are set, the resource is non-secure, non-discoverable &
      *  non-observable by the client.*/
     OC_RES_PROP_NONE = (0),
 
@@ -997,6 +1003,9 @@ typedef enum
      * 'slow' signifies that responses from this resource can expect delays in
      *  processing its requests from clients.*/
     OC_SLOW          = (1 << 3),
+
+    /** When this bit is set, the resource supports access via non-secure endpoints. */
+    OC_NONSECURE     = (1 << 6),
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     /** When this bit is set, the resource is a secure resource.*/
@@ -1024,6 +1033,8 @@ typedef enum
     ,OC_MQ_BROKER        = (0)
 #endif
 } OCResourceProperty;
+
+#define OC_MASK_RESOURCE_SECURE    (OC_NONSECURE | OC_SECURE)
 
 /**
  * Transport Protocol IDs.

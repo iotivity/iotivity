@@ -29,10 +29,10 @@ OCFFramework ocfFramework;
 
 App::App(const IPCAAppInfo* ipcaAppInfo, IPCAVersion ipcaVersion) :
     m_isStopped(false),
-    m_passwordInputCallbackHandle(nullptr),
-    m_passwordDisplayCallbackHandle(nullptr),
     m_ipcaVersion(ipcaVersion),
+    m_passwordInputCallbackHandle(nullptr),
     m_passwordInputCallbackInfo(nullptr),
+    m_passwordDisplayCallbackHandle(nullptr),
     m_passwordDisplayCallbackInfo(nullptr)
 {
     m_ipcaAppInfo.appId = ipcaAppInfo->appId;
@@ -185,6 +185,7 @@ void App::AppWorkerThread(App* app)
         // Do callbacks for expired outstanding requests.
         std::vector<CallbackInfo::Ptr> expiredCallbacks;
         app->m_callback->CompleteAndRemoveExpiredCallbackInfo(expiredCallbacks);
+        expiredCallbacks.clear();   // no use of the expired callbacks.
 
         // Get oustanding Observe requests and ping the device every PingPeriodMS.
         std::vector<CallbackInfo::Ptr> observeCallbacks;
@@ -578,6 +579,11 @@ IPCAStatus App::ObserveResource(
 
     status = device->ObserveResource(cbInfo);
 
+    if (status == IPCA_OK)
+    {
+        cbInfo->inObserve = true;
+    }
+
     if ((status != IPCA_OK) && (cbInfo != nullptr))
     {
         if (handle != nullptr)
@@ -697,9 +703,10 @@ IPCAStatus App::CloseIPCAHandle(IPCAHandle handle,
             m_discoveryList.erase(cbInfo->mapKey);
         }
         else
-        if (cbInfo->type == CallbackType_ResourceChange)
+        if ((cbInfo->type == CallbackType_ResourceChange) && cbInfo->inObserve)
         {
             cbInfo->device->StopObserve(cbInfo);
+            cbInfo->inObserve = false;
         }
     }
 

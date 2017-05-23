@@ -144,10 +144,7 @@ extern "C"
 /**
 * TODO: Move these COAP defines to CoAP lib once approved.
 */
-#define COAP_OPTION_ACCEPT_VERSION 2049
-#define COAP_OPTION_CONTENT_VERSION 2053
 #define COAP_MEDIATYPE_APPLICATION_VND_OCF_CBOR 10000 // application/vnd.ocf+cbor
-
 #define CA_OPTION_ACCEPT_VERSION 2049
 #define CA_OPTION_CONTENT_VERSION 2053
 

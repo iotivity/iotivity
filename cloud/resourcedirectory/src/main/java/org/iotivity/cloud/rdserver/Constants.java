@@ -25,6 +25,8 @@ import org.iotivity.cloud.base.OICConstants;
 
 public class Constants extends OICConstants {
 
+    public static final int    DEFAULT_COAP_PORT       = 5684;
+
     /** Database, Table name */
     public static final String RD_DB_NAME              = "RD_DB";
     public static final String RD_TABLE                = "RD_TABLE";

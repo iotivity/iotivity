@@ -48,6 +48,7 @@ typedef struct _tagMutexInfo_t
      */
 #ifndef NDEBUG
     DWORD owner;
+    uint32_t recursionCount;
 #endif
 } oc_mutex_internal;
 
@@ -138,6 +139,7 @@ oc_mutex oc_mutex_new(void)
     {
 #ifndef NDEBUG
         mutexInfo->owner = OC_INVALID_THREAD_ID;
+        mutexInfo->recursionCount = 0;
 #endif
         InitializeCriticalSection(&mutexInfo->mutex);
         retVal = (oc_mutex)mutexInfo;
@@ -148,6 +150,11 @@ oc_mutex oc_mutex_new(void)
     }
 
     return retVal;
+}
+
+oc_mutex oc_mutex_new_recursive(void)
+{
+    return oc_mutex_new();
 }
 
 bool oc_mutex_free(oc_mutex mutex)
@@ -173,10 +180,20 @@ void oc_mutex_lock(oc_mutex mutex)
 
 #ifndef NDEBUG
         /**
-         * Updating the owner field must be performed while owning the lock,
-         * to solve race conditions with other threads using the same lock.
+         * Updating the recursionCount and owner fields must be performed
+         * while owning the lock, to solve race conditions with other
+         * threads using the same lock.
          */
-        mutexInfo->owner = oc_get_current_thread_id();
+        if (mutexInfo->recursionCount != 0)
+        {
+            oc_mutex_assert_owner(mutex, true);
+        }
+        else
+        {
+            mutexInfo->owner = oc_get_current_thread_id();
+        }
+
+        mutexInfo->recursionCount++;
 #endif
     }
     else
@@ -188,14 +205,23 @@ void oc_mutex_lock(oc_mutex mutex)
 void oc_mutex_unlock(oc_mutex mutex)
 {
     oc_mutex_internal *mutexInfo = (oc_mutex_internal*) mutex;
+
     if (mutexInfo)
     {
 #ifndef NDEBUG
+        oc_mutex_assert_owner(mutex, true);
+
         /**
-         * Updating the owner field must be performed while owning the lock,
-         * to solve race conditions with other threads using the same lock.
+         * Updating the recursionCount and owner fields must be performed
+         * while owning the lock, to solve race conditions with other
+         * threads using the same lock.
          */
-        mutexInfo->owner = OC_INVALID_THREAD_ID;
+        mutexInfo->recursionCount--;
+
+        if (mutexInfo->recursionCount == 0)
+        {
+            mutexInfo->owner = OC_INVALID_THREAD_ID;
+        }
 #endif
 
         LeaveCriticalSection(&mutexInfo->mutex);
@@ -219,6 +245,7 @@ void oc_mutex_assert_owner(const oc_mutex mutex, bool currentThreadIsOwner)
     if (currentThreadIsOwner)
     {
         assert(mutexInfo->owner == currentThreadID);
+        assert(mutexInfo->recursionCount != 0);
     }
     else
     {
@@ -318,8 +345,10 @@ OCWaitResult_t oc_cond_wait_for(oc_cond cond, oc_mutex mutex, uint64_t microseco
     }
 
 #ifndef NDEBUG
-    // The conditional variable wait API used will atomically release the mutex, but the
-    // best we can do here is to just clear the owner info before the API is called.
+    // Recursively-acquired locks are not supported for use with condition variables.
+    oc_mutex_assert_owner(mutex, true);
+    assert(mutexInfo->recursionCount == 1);
+    mutexInfo->recursionCount = 0;
     mutexInfo->owner = OC_INVALID_THREAD_ID;
 #endif
 
@@ -341,10 +370,13 @@ OCWaitResult_t oc_cond_wait_for(oc_cond cond, oc_mutex mutex, uint64_t microseco
         retVal = OC_WAIT_SUCCESS;
     }
 
+
 #ifndef NDEBUG
+    oc_mutex_assert_owner(mutex, false);
+    assert(mutexInfo->recursionCount == 0);
+    mutexInfo->recursionCount = 1;
     mutexInfo->owner = oc_get_current_thread_id();
 #endif
 
     return retVal;
 }
-

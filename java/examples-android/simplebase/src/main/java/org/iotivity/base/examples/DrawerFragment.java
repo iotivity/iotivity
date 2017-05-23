@@ -90,7 +90,6 @@ public class DrawerFragment extends Fragment {
                 android.R.id.text1, new String[] {
                         getString(R.string.title_message),
                         getString(R.string.title_bluetooth),
-                        getString(R.string.title_cloud),
                         getString(R.string.title_template), }));
         mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
 

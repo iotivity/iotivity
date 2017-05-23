@@ -19,6 +19,7 @@
  ******************************************************************/
 
 #include "CoapHttpHandler.h"
+#include "platform_features.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "logger.h"
@@ -119,6 +120,13 @@ OCStackResult CHPInitialize(bool secure)
 OCStackResult CHPTerminate()
 {
     OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
+
+    if (!g_isCHProxyInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "CH Proxy not initialized");
+        return OC_STACK_OK;
+    }
+
     OCStackResult result = CHPParserTerminate();
     if (OC_STACK_OK != result)
     {

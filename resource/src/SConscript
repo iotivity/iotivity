@@ -57,7 +57,7 @@ oclib_env.AppendUnique(CPPPATH = [
 		])
 
 oclib_env.AppendUnique(LIBS = ['oc_logger'])
-oclib_env.PrependUnique(LIBS = ['octbstack', 'connectivity_abstraction', 'ocsrm'])
+oclib_env.PrependUnique(LIBS = ['octbstack', 'connectivity_abstraction'])
 
 if 'g++' in oclib_env.get('CXX'):
 	oclib_env.AppendUnique(CXXFLAGS = ['-std=c++0x'])
@@ -112,8 +112,7 @@ oclib_src = [
 		'InProcClientWrapper.cpp',
 		'OCResourceRequest.cpp',
 		'CAManager.cpp',
-		'OCDirectPairing.cpp',
-		'OCRepresentationInternal.cpp'
+		'OCDirectPairing.cpp'
 	]
 
 if with_cloud:

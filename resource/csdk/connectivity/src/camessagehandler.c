@@ -691,10 +691,6 @@ static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, ui
     {
         return false;
     }
-    if (!caglobals.ip.dualstack)
-    {
-        return false;
-    }
 
     if (tokenLength > CA_MAX_TOKEN_LEN)
     {

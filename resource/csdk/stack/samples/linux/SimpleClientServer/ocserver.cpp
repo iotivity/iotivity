@@ -641,13 +641,29 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
                             MAX_HEADER_OPTION_DATA_LENGTH);
                     }
                 }
+                // Check on Accept Version option.
+                uint8_t vOptionData[MAX_HEADER_OPTION_DATA_LENGTH];
+                size_t vOptionDataSize = sizeof(vOptionData);
+                uint16_t actualDataSize = 0;
+                OCGetHeaderOption(entityHandlerRequest->rcvdVendorSpecificHeaderOptions,
+                        entityHandlerRequest->numRcvdVendorSpecificHeaderOptions,
+                        COAP_OPTION_ACCEPT_VERSION, vOptionData, vOptionDataSize, &actualDataSize);
+                if (actualDataSize)
+                {
+                    OIC_LOG_V(INFO, TAG, "accept version option exists");
+                    OIC_LOG_BUFFER(INFO, TAG, vOptionData, MAX_HEADER_OPTION_DATA_LENGTH);
+                }
+                uint16_t acceptVersion = vOptionData[0]*256 + vOptionData[1];
+                if (OC_SPEC_VERSION_VALUE == acceptVersion)
+                {
+                    OIC_LOG_V(INFO, TAG, "accept version equals to default OC_SPEC_VERSION_VALUE.");
+                }
 
                 OCHeaderOption* sendOptions = response.sendVendorSpecificHeaderOptions;
                 size_t numOptions = response.numSendVendorSpecificHeaderOptions;
                 // Check if the option header has already existed before adding it in.
                 uint8_t optionData[MAX_HEADER_OPTION_DATA_LENGTH];
                 size_t optionDataSize = sizeof(optionData);
-                uint16_t actualDataSize = 0;
                 OCGetHeaderOption(response.sendVendorSpecificHeaderOptions,
                                   response.numSendVendorSpecificHeaderOptions,
                                   2248,

@@ -47,46 +47,50 @@ import org.iotivity.cloud.util.Log;
 
 public class CloudInterfaceServer {
 
-    public static void main(String[] args) throws Exception {
+    private static int     coapServerPort;
+    private static boolean tlsMode;
+    private static boolean keepAlive = false;
+    private static boolean hcProxyMode;
+    private static int     hcProxyPort;
+    private static boolean websocketMode;
+    private static int     websocketPort;
+    private static String  resourceDirectoryAddress;
+    private static int     resourceDirectoryPort;
+    private static String  accountServerAddress;
+    private static int     accountServerPort;
+    private static String  messageQueueAddress;
+    private static int     messageQueuePort;
+    private static String  webLogHost;
 
+    public static void main(String[] args) throws Exception {
+        System.out.println("-----CI SERVER-------");
         Log.Init();
 
-        System.out.println("-----CI SERVER-------");
-
-        if (!(args.length == 10 || args.length == 12)) {
-            Log.e("\nCoAP-server <Port> and RD-server <Address> <Port> Account-server <Address> <Port> "
-                    + "MQ-broker <Address> <Port> HC-proxy <HTTP-port> Websocket-server <Port> and TLS-mode <0|1> are required.\n"
-                    + "and WebSocketLog-Server <Address> <Port> (optional)\n"
-                    + "ex) 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686 80 8000 0 127.0.0.1 8080\n");
+        if (!parseConfiguration(args)) {
+            Log.e("\nCoAP-server <Port> RD-server <Address> <Port> Account-server <Address> <Port> MQ-broker <Address> <Port> HC-proxy [HTTP-port] "
+                    + "Websocket-server <Port> and TLS-mode <0|1> are required. WebSocketLog-Server <Addres> <Port> "
+                    + "and KeepAlive for cloud components <0|1> are optional.\n"
+                    + "ex) " + Constants.DEFAULT_COAP_PORT
+                    + " 127.0.0.1 " + Constants.DEFAULT_RESOURCE_DIRECTORY_PORT
+                    + " 127.0.0.1 " + Constants.DEFAULT_ACCOUNT_SERVER_PORT
+                    + " 127.0.0.1 " + Constants.DEFAULT_MESSAGE_QUEUE_PORT
+                    + " " + Constants.DEFAULT_HC_PROXY_PORT
+                    + " " + Constants.DEFAULT_WEBSOCKET_PORT + " 0\n");
             return;
         }
-
-        // CoAP-TCP server port
-        int coapPort = Integer.parseInt(args[0]);
-        // HTTP-CoAP proxy server port
-        int hcProxyPort = Integer.parseInt(args[7]);
-        // CoAP-Websocket server port
-        int websocketPort = Integer.parseInt(args[8]);
-
-        boolean hcProxyMode = hcProxyPort > 0;
-        boolean websocketMode = websocketPort > 0;
-
-        boolean tlsMode = Integer.parseInt(args[9]) == 1;
-
-        if (args.length >= 11) {
-            Log.InitWebLog(args[10], args[11],
+        if (webLogHost != null)
+            Log.InitWebLog(webLogHost,
                     CloudInterfaceServer.class.getSimpleName().toString());
-        }
 
-        ConnectorPool.addConnection("rd",
-                new InetSocketAddress(args[1], Integer.parseInt(args[2])),
-                tlsMode);
-        ConnectorPool.addConnection("account",
-                new InetSocketAddress(args[3], Integer.parseInt(args[4])),
-                tlsMode);
-        ConnectorPool.addConnection("mq",
-                new InetSocketAddress(args[5], Integer.parseInt(args[6])),
-                tlsMode);
+        ConnectorPool.requestConnection("rd",
+                new InetSocketAddress(resourceDirectoryAddress, resourceDirectoryPort),
+                tlsMode, keepAlive);
+        ConnectorPool.requestConnection("account",
+                new InetSocketAddress(accountServerAddress, accountServerPort),
+                tlsMode, keepAlive);
+        ConnectorPool.requestConnection("mq",
+                new InetSocketAddress(messageQueueAddress, messageQueuePort),
+                tlsMode, keepAlive);
 
         DeviceServerSystem deviceServer = new DeviceServerSystem();
 
@@ -135,18 +139,16 @@ public class CloudInterfaceServer {
 
         deviceServer.addResource(new RouteResource(devicePool));
 
-        deviceServer.addServer(new CoapServer(new InetSocketAddress(coapPort)));
+        deviceServer.addServer(
+                new CoapServer(new InetSocketAddress(coapServerPort)));
 
-        // Add HTTP Server for HTTP-to-CoAP Proxy
-        if (hcProxyMode) {
+        if (hcProxyMode)
             deviceServer.addServer(
                     new HttpServer(new InetSocketAddress(hcProxyPort)));
-        }
 
-        if (websocketMode) {
+        if (websocketMode)
             deviceServer.addServer(
                     new WebSocketServer(new InetSocketAddress(websocketPort)));
-        }
 
         deviceServer.startSystem(tlsMode);
 
@@ -167,5 +169,50 @@ public class CloudInterfaceServer {
         deviceServer.stopSystem();
 
         System.out.println("Terminated");
+    }
+
+    private static boolean parseConfiguration(String[] args) {
+        // configuration provided by arguments
+        if (args.length == 10 || args.length == 13) {
+            coapServerPort = Integer.parseInt(args[0]);
+            resourceDirectoryAddress = args[1];
+            resourceDirectoryPort = Integer.parseInt(args[2]);
+            accountServerAddress = args[3];
+            accountServerPort = Integer.parseInt(args[4]);
+            messageQueueAddress = args[5];
+            messageQueuePort = Integer.parseInt(args[6]);
+            hcProxyPort = Integer.parseInt(args[7]);
+            hcProxyMode = hcProxyPort != 0;
+            websocketPort = Integer.parseInt(args[8]);
+            websocketMode = websocketPort != 0;
+            tlsMode = Integer.parseInt(args[9]) == 1;
+            if (args.length == 13) {
+                webLogHost = args[10] + ":" + args[11];
+                keepAlive = Integer.parseInt(args[12]) == 1;
+            }
+
+            return true;
+        }
+
+        // configuration provided by docker env
+        String tlsModeEnv = System.getenv("TLS_MODE");
+        if (tlsModeEnv != null) {
+            coapServerPort = Constants.DEFAULT_COAP_PORT;
+            resourceDirectoryAddress = System.getenv("RESOURCE_DIRECTORY_ADDRESS");
+            resourceDirectoryPort = Constants.DEFAULT_RESOURCE_DIRECTORY_PORT;
+            accountServerAddress = System.getenv("ACCOUNT_SERVER_ADDRESS");
+            accountServerPort = Constants.DEFAULT_ACCOUNT_SERVER_PORT;
+            messageQueueAddress = System.getenv("MESSAGE_QUEUE_ADDRESS");
+            messageQueuePort = Constants.DEFAULT_MESSAGE_QUEUE_PORT;
+            hcProxyMode = Integer.parseInt(System.getenv("HC_PROXY_MODE")) == 1;
+            hcProxyPort = Constants.DEFAULT_HC_PROXY_PORT;
+            websocketMode = Integer.parseInt(System.getenv("WEBSOCKET_MODE")) == 1;
+            websocketPort = Constants.DEFAULT_WEBSOCKET_PORT;
+            keepAlive = Integer.parseInt(System.getenv("KEEPALIVE_CLOUD")) == 1;
+            tlsMode = Integer.parseInt(tlsModeEnv) == 1;
+
+            return true;
+        }
+        return false;
     }
 }

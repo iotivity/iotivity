@@ -117,11 +117,7 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
     m_endpoints(endpoints),
     m_observeHandle(nullptr)
 {
-    m_devAddr = OCDevAddr{OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0,
-#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
-                          {0}
-#endif
-                        };
+    m_devAddr = OCDevAddr{OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0, {0}, {0}};
     m_isCollection = std::find(m_interfaces.begin(), m_interfaces.end(), LINK_INTERFACE)
                         != m_interfaces.end();
 

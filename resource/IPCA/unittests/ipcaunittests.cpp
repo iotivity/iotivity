@@ -39,8 +39,10 @@ using namespace std::placeholders;
 void IPCA_CALL IPCASetUnitTestMode();
 
 // IPCA test app info.
-IPCAUuid IPCATestAppUuid = {0x84, 0x71, 0x88, 0x78, 0xe6, 0x91, 0x4b, 0xf4,
-                            0xa9, 0x57, 0x04, 0xe0, 0x1b, 0x9b, 0x59, 0xd1};
+IPCAUuid IPCATestAppUuid = {
+                              {0x84, 0x71, 0x88, 0x78, 0xe6, 0x91, 0x4b, 0xf4,
+                               0xa9, 0x57, 0x04, 0xe0, 0x1b, 0x9b, 0x59, 0xd1}
+                           };
 char IPCATestAppName[] = "IPCA Unittests";
 
 // IoTivity supports 1 server per instance.
@@ -282,7 +284,7 @@ TEST_F(IPCAPropertyBagTest, PropertyBagIntArrayType)
     size_t readBackIntArraySize;
     EXPECT_EQ(IPCA_OK, IPCAPropertyBagGetValueIntArray(m_propertyBagHandle,
                             "IntArray", &readBackIntArray, &readBackIntArraySize));
-    EXPECT_EQ(10, readBackIntArraySize);
+    EXPECT_EQ(static_cast<size_t>(10), readBackIntArraySize);
     EXPECT_EQ(0, memcmp(intArray, readBackIntArray, readBackIntArraySize));
 
     IPCAPropertyBagFreeIntArray(readBackIntArray);
@@ -299,7 +301,7 @@ TEST_F(IPCAPropertyBagTest, PropertyBagDoubleArrayType)
     size_t readBackDoubleArraySize;
     EXPECT_EQ(IPCA_OK, IPCAPropertyBagGetValueDoubleArray(m_propertyBagHandle,
                             "DoubleArray", &readBackDoubleArray, &readBackDoubleArraySize));
-    EXPECT_EQ(10, readBackDoubleArraySize);
+    EXPECT_EQ(static_cast<size_t>(10), readBackDoubleArraySize);
     EXPECT_EQ(0, memcmp(doubleArray, readBackDoubleArray, readBackDoubleArraySize));
 
     IPCAPropertyBagFreeDoubleArray(readBackDoubleArray);
@@ -316,7 +318,7 @@ TEST_F(IPCAPropertyBagTest, PropertyBagBoolArrayType)
     size_t readBackBoolArraySize;
     EXPECT_EQ(IPCA_OK, IPCAPropertyBagGetValueBoolArray(m_propertyBagHandle,
                             "boolArray", &readBackBoolArray, &readBackBoolArraySize));
-    EXPECT_EQ(10, readBackBoolArraySize);
+    EXPECT_EQ(static_cast<size_t>(10), readBackBoolArraySize);
     EXPECT_EQ(0, memcmp(boolArray, readBackBoolArray, readBackBoolArraySize));
 
     IPCAPropertyBagFreeBoolArray(readBackBoolArray);
@@ -325,7 +327,7 @@ TEST_F(IPCAPropertyBagTest, PropertyBagBoolArrayType)
 TEST_F(IPCAPropertyBagTest, PropertyBagStringArrayType)
 {
     // array of string
-    char* stringArray[] = {"hello world 1", "hello world 2", "hello world 3"};
+    const char* stringArray[] = {"hello world 1", "hello world 2", "hello world 3"};
     EXPECT_EQ(IPCA_OK, IPCAPropertyBagSetValueStringArray(m_propertyBagHandle,
                             "stringArray", (const char**)stringArray, 3));
 
@@ -333,7 +335,7 @@ TEST_F(IPCAPropertyBagTest, PropertyBagStringArrayType)
     size_t readbackStringSize;
     EXPECT_EQ(IPCA_OK, IPCAPropertyBagGetValueStringArray(m_propertyBagHandle,
                             "stringArray", &readBackString, &readbackStringSize));
-    ASSERT_EQ(3, readbackStringSize);
+    ASSERT_EQ(static_cast<size_t>(3), readbackStringSize);
     EXPECT_STREQ(stringArray[0], readBackString[0]);
     EXPECT_STREQ(stringArray[1], readBackString[1]);
     EXPECT_STREQ(stringArray[2], readBackString[2]);
@@ -384,7 +386,7 @@ TEST_F(IPCAPropertyBagTest, PropertyBagPropertyBagArrayType)
     size_t arrayCount;
     EXPECT_EQ(IPCA_OK, IPCAPropertyBagGetValuePropertyBagArray(m_propertyBagHandle,
                                 "PropertyBagArray", &propertyBagReadBackArray, &arrayCount));
-    ASSERT_EQ(3, arrayCount);
+    ASSERT_EQ(static_cast<size_t>(3), arrayCount);
 
     IPCAPropertyBagHandle propertyBag1 = propertyBagReadBackArray[0], propertyBag1A;
     EXPECT_EQ(IPCA_OK, IPCAPropertyBagGetValuePropertyBag(propertyBag1, "values", &propertyBag1A));

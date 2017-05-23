@@ -353,6 +353,11 @@ void OCDeleteDiscoveredDevices(OCProvisionDev_t *pList)
 OCStackResult OCProvisionACL(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecAcl_t *acl,
                              OCProvisionResultCB resultCallback)
 {
+    if (NULL == acl)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     /*
      * Determine whether this is a version 1 or version 2 ACL. We can't just always use V2 here
      * since we may be provisioning an IoTivity 1.2 or earlier device.
@@ -468,7 +473,7 @@ OCStackResult OCReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
  * @param[in] ctx Application context would be returned in result callback.
  * @param[in] type Type of credentials to be provisioned to the device.
  * @param[in] pDev1 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
-   @param[in] pDev2 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
+   @param[in] pDev2 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned. [Optional]
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from first resource server.
  * @return  OC_STACK_OK in case of success and other value otherwise.

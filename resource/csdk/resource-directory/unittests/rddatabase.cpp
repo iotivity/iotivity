@@ -117,14 +117,52 @@ static OCRepPayload *CreateRDPublishPayload(const char *deviceId,
         OCRepPayloadSetPropString(link, OC_RSRVD_URI, anchor);
         size_t rtDim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
         char **rt = (char **)OICMalloc(sizeof(char *) * 1);
+        EXPECT_TRUE(NULL != rt) << "Failed to OICMalloc rt!";
+        if (NULL == rt)
+        {
+            return NULL;
+        }
         rt[0] = OICStrdup(resources[i].rt);
-        OCRepPayloadSetStringArray(link, OC_RSRVD_RESOURCE_TYPE, (const char **)rt,
-                                   rtDim);
+        EXPECT_TRUE(NULL != rt[0]) << "Failed to OICStrdup rt!";
+        if (NULL == rt[0])
+        {
+            OICFree(rt);
+            return NULL;
+        }
+        bool result = false;
+        result = OCRepPayloadSetStringArray(link, OC_RSRVD_RESOURCE_TYPE, (const char **)rt, rtDim);
+        OICFree(rt[0]);
+        OICFree(rt);
+        EXPECT_TRUE(result) << "Failed to set resource type!";
+        if (!result)
+        {
+            return NULL;
+        }
+
         size_t itfDim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
         char **itf = (char **)OICMalloc(sizeof(char *) * 1);
+        EXPECT_TRUE(NULL != itf) << "Failed to OICMalloc itf!";
+        if (NULL == itf)
+        {
+            return NULL;
+        }
         itf[0] = OICStrdup(resources[i].itf);
-        OCRepPayloadSetStringArray(link, OC_RSRVD_INTERFACE, (const char **)itf,
-                                   itfDim);
+        EXPECT_TRUE(NULL != itf[0]) << "Failed to OICStrdup itf!";
+        if (NULL == itf[0])
+        {
+            OICFree(itf);
+            return NULL;
+        }
+
+        result = OCRepPayloadSetStringArray(link, OC_RSRVD_INTERFACE, (const char **)itf, itfDim);
+        OICFree(itf[0]);
+        OICFree(itf);
+        EXPECT_TRUE(result) << "Failed to set interface!";
+        if (!result)
+        {
+            return NULL;
+        }
+
         OCRepPayload *policy = OCRepPayloadCreate();
         OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP, resources[i].bm);
         OCRepPayloadSetPropObjectAsOwner(link, OC_RSRVD_POLICY, policy);
@@ -180,6 +218,7 @@ TEST_F(RDDatabaseTests, StoreResources)
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     const char *deviceId = "7a960f46-a52e-4837-bd83-460b1a6dd56b";
     OCRepPayload *repPayload = CreateResources(deviceId);
+    ASSERT_TRUE(NULL != repPayload) << "CreateResources failed!";
 
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
 
@@ -206,6 +245,7 @@ TEST_F(RDDatabaseTests, AddResources)
     const char *deviceId = "7a960f46-a52e-4837-bd83-460b1a6dd56b";
 
     OCRepPayload *repPayload = CreateResources(deviceId);
+    ASSERT_TRUE(NULL != repPayload) << "CreateResources failed!";
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
     OCPayloadDestroy((OCPayload *)repPayload);
 
@@ -250,6 +290,8 @@ TEST_F(RDDatabaseTests, UpdateResources)
     const char *deviceId = &anchor[6];
 
     OCRepPayload *repPayload = CreateResources(deviceId);
+    ASSERT_TRUE(NULL != repPayload) << "CreateResources failed!";
+
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
     OCPayloadDestroy((OCPayload *)repPayload);
 
@@ -303,6 +345,7 @@ TEST_F(RDDatabaseTests, AddAndUpdateResources)
     const char *deviceId = &anchor[6];
 
     OCRepPayload *repPayload = CreateResources(deviceId);
+    ASSERT_TRUE(NULL != repPayload) << "CreateResources failed!";
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload));
     OCPayloadDestroy((OCPayload *)repPayload);
 
@@ -373,7 +416,9 @@ TEST_F(RDDatabaseTests, DeleteResourcesDevice)
     };
     OCRepPayload *payloads[2];
     payloads[0] = CreateResources(deviceIds[0]);
+    ASSERT_TRUE(NULL != payloads[0]) << "CreateResources failed!";
     payloads[1] = CreateResources(deviceIds[1]);
+    ASSERT_TRUE(NULL != payloads[1]) << "CreateResources failed!";
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(payloads[0]));
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(payloads[1]));
 

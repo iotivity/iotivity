@@ -100,9 +100,9 @@ static bool IsRequestFromDevOwner(SRMRequestContext_t *context)
         if (!retVal)
         {
             OIC_LOG(DEBUG, TAG, "Owner UUID  :");
-            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)&doxm->owner.id, sizeof(&doxm->owner.id));
+            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)&doxm->owner.id, sizeof(OicUuid_t));
             OIC_LOG(DEBUG, TAG, "Request UUID:");
-            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)&context->subjectUuid.id, sizeof(&context->subjectUuid.id));
+            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)&context->subjectUuid.id, sizeof(OicUuid_t));
         }
     }
 exit:
@@ -249,6 +249,7 @@ bool IsRequestFromResourceOwner(SRMRequestContext_t *context)
     if (IsNilUuid(&context->subjectUuid))
     {
         // Nil subject is never rOwner
+        OIC_LOG_V(DEBUG, TAG, "%s: Nil UUID cannot be rowner.", __func__);
         retVal = false;
         goto exit;
     }
@@ -358,14 +359,15 @@ static bool IsAccessWithinValidTime(const OicSecAce_t *ace)
 /**
  * Check whether 'resource' is in the passed ACE.
  *
- * @param resource is the resource being searched.
- * @param ace is the ACE to check.
+ * @param[in] context Context->resourceUri contains the Resource being checked,
+ *                    as well as the discoverability of the Resource.
+ * @param[in] ace The ACE to check.
  *
- * @return true if 'resource' found, otherwise false.
+ * @return true if match found, otherwise false.
  */
-static bool IsResourceInAce(const char *resource, const OicSecAce_t *ace)
+static bool IsResourceInAce(SRMRequestContext_t *context, const OicSecAce_t *ace)
 {
-    if (NULL== ace || NULL == resource)
+    if (NULL == context || NULL == ace)
     {
         return false;
     }
@@ -373,11 +375,29 @@ static bool IsResourceInAce(const char *resource, const OicSecAce_t *ace)
     OicSecRsrc_t* rsrc = NULL;
     LL_FOREACH(ace->resources, rsrc)
     {
-         if (0 == strcmp(resource, rsrc->href) || // TODO null terms?
-             0 == strcmp(WILDCARD_RESOURCE_URI, rsrc->href)) // TODO IOT-2192
-         {
-             return true;
-         }
+        if (NULL == rsrc->href)
+        {
+            if (NO_WILDCARD != rsrc->wildcard)
+            {
+                if ((ALL_RESOURCES == rsrc->wildcard) ||
+                    (ALL_DISCOVERABLE == rsrc->wildcard &&
+                        DISCOVERABLE_TRUE == context->discoverable) ||
+                    (ALL_NON_DISCOVERABLE == rsrc->wildcard &&
+                        DISCOVERABLE_FALSE == context->discoverable))
+                {
+                    OIC_LOG_V(DEBUG, TAG, "%s: found wc type %d matching resource.",
+                        __func__, rsrc->wildcard);
+                    return true;
+                }
+            }
+        }
+        else if (0 == strcmp(context->resourceUri, rsrc->href) ||
+                 0 == strcmp(WILDCARD_RESOURCE_URI, rsrc->href))
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: found href %s matching resource.",
+                        __func__, rsrc->href);
+            return true;
+        }
     }
     return false;
 }
@@ -390,7 +410,7 @@ static void ProcessMatchingACE(SRMRequestContext_t *context, const OicSecAce_t *
     // Subject was found, so err changes to Rsrc not found for now.
     context->responseVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
     OIC_LOG_V(DEBUG, TAG, "%s: Searching for resource...", __func__);
-    if (IsResourceInAce(context->resourceUri, currentAce))
+    if (IsResourceInAce(context, currentAce))
     {
         OIC_LOG_V(INFO, TAG, "%s: found matching resource in ACE.", __func__);
 
@@ -445,13 +465,14 @@ static void ProcessAccessRequest(SRMRequestContext_t *context)
 
         if (NULL != currentAce)
         {
-            OIC_LOG_V(DEBUG, TAG, "%s: found conntype %d match; processing for access.", __func__, conntype);
+            OIC_LOG_V(DEBUG, TAG, "%s: found conntype %s match; processing for access.",
+                __func__, (AUTH_CRYPT == conntype?"auth-crypt":"anon-clear"));
             ProcessMatchingACE(context, currentAce);
         }
         else
         {
-            OIC_LOG_V(INFO, TAG, "%s:no ACL found matching conntype %d for resource %s",
-                __func__, conntype, context->resourceUri);
+            OIC_LOG_V(INFO, TAG, "%s:no ACL found matching conntype %s for resource %s",
+                __func__, (AUTH_CRYPT == conntype?"auth-crypt":"anon-clear"), context->resourceUri);
         }
     } while ((NULL != currentAce) && !IsAccessGranted(context->responseVal));
 

@@ -62,6 +62,7 @@ if target_os not in ['darwin', 'ios', 'windows']:
 if target_os == 'android':
     rcs_common_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
     rcs_common_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
+    rcs_common_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,librcs_common.so'])
 
 rcs_common_env.AppendUnique(LIBS = ['oc'])
 

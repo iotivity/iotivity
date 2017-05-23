@@ -31,11 +31,7 @@
 
 #include "ipca.h"
 
-#if defined(_MSC_VER)
-#define UNREFERENCED_PARAMETER(P)          (P)
-#else
-#define UNREFERENCED_PARAMETER(P)
-#endif
+#define UNUSED_PARAMETER(P)       (void)(P)
 
 IPCAAppHandle g_ipcaAppHandle;
 std::recursive_mutex g_globalMutex;
@@ -90,11 +86,11 @@ private:
 };
 
 OCFDevice::OCFDevice(std::string id) :
+    m_localId(GenerateUniqueId()),
     m_deviceId (id),
     m_deviceHandle(nullptr),
     m_deviceInfo(nullptr),
-    m_platformInfo(nullptr),
-    m_localId(GenerateUniqueId())
+    m_platformInfo(nullptr)
 {
 }
 
@@ -170,8 +166,8 @@ void OCFDevice::GetPropertiesCallback(IPCAStatus result,
                     const void* context,
                     IPCAPropertyBagHandle propertyBagHandle)
 {
-    UNREFERENCED_PARAMETER(context);
-    UNREFERENCED_PARAMETER(result);
+    UNUSED_PARAMETER(context);
+    UNUSED_PARAMETER(result);
 
     std::lock_guard<std::recursive_mutex> lock(g_globalMutex);
 
@@ -518,7 +514,7 @@ void IPCA_CALL DiscoverDevicesCallback(
                             IPCADeviceStatus deviceStatus,
                             const IPCADiscoveredDeviceInfo* deviceInfo)
 {
-    UNREFERENCED_PARAMETER(context);
+    UNUSED_PARAMETER(context);
 
     std::lock_guard<std::recursive_mutex> lock(g_globalMutex);
 
@@ -570,12 +566,12 @@ IPCAStatus IPCA_CALL PasswordInputCallback(
                                     char* passwordBuffer,
                                     size_t passwordBufferSize)
 {
-    UNREFERENCED_PARAMETER(context);
-    UNREFERENCED_PARAMETER(deviceInformation);
-    UNREFERENCED_PARAMETER(platformInformation);
-    UNREFERENCED_PARAMETER(type);
-    UNREFERENCED_PARAMETER(passwordBuffer);
-    UNREFERENCED_PARAMETER(passwordBufferSize);
+    UNUSED_PARAMETER(context);
+    UNUSED_PARAMETER(deviceInformation);
+    UNUSED_PARAMETER(platformInformation);
+    UNUSED_PARAMETER(type);
+    UNUSED_PARAMETER(passwordBuffer);
+    UNUSED_PARAMETER(passwordBufferSize);
 
     // @todo: collect the password from the user
 
@@ -590,11 +586,11 @@ IPCAStatus IPCA_CALL PasswordDisplayCallback(
                                     IPCAOwnershipTransferType type,
                                     const char* password)
 {
-    UNREFERENCED_PARAMETER(context);
-    UNREFERENCED_PARAMETER(deviceInformation);
-    UNREFERENCED_PARAMETER(platformInformation);
-    UNREFERENCED_PARAMETER(type);
-    UNREFERENCED_PARAMETER(password);
+    UNUSED_PARAMETER(context);
+    UNUSED_PARAMETER(deviceInformation);
+    UNUSED_PARAMETER(platformInformation);
+    UNUSED_PARAMETER(type);
+    UNUSED_PARAMETER(password);
 
     // @todo: display the password and ask for confirmation from the user
 
@@ -616,8 +612,10 @@ int main()
     IPCAStatus status;
 
     // Initialize IPCA.
-    IPCAUuid appId = {0x37, 0x9d, 0xf2, 0xf2, 0x7e, 0xf7, 0x11, 0xe6,
-                      0xae, 0x22, 0x56, 0xb6, 0xb6, 0x49, 0x96, 0x11};
+    IPCAUuid appId = {
+                        {0x37, 0x9d, 0xf2, 0xf2, 0x7e, 0xf7, 0x11, 0xe6,
+                         0xae, 0x22, 0x56, 0xb6, 0xb6, 0x49, 0x96, 0x11}
+                     };
     IPCAAppInfo ipcaAppInfo = { appId, "IPCAAPP", "1.0.0", "Microsoft" };
 
     status = IPCAOpen(&ipcaAppInfo, IPCA_VERSION_1, &g_ipcaAppHandle);
@@ -631,7 +629,7 @@ int main()
         PasswordInputCallback, PasswordDisplayCallback, nullptr);
 
     // Start discovering devices.
-    char* resourceTypes[] = {
+    const char* resourceTypes[] = {
         "" /* any resource type */
     };
 

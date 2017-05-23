@@ -103,6 +103,11 @@ void JniOcCloudResultListener::CloudResultListenerCB(int result, void *data,
                 calledFunc = "postCRLListener";
             }
             break;
+        case ListenerFunc::UPDATE_IND_ACL:
+            {
+                calledFunc = "updateIndividualACLListener";
+            }
+            break;
         default:
             {
                 checkExAndRemoveListener(env);

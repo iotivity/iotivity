@@ -36,17 +36,15 @@
 #include <AttributeValue.h>
 #include <StringConstants.h>
 
-#include "platform_features.h"
-
 #ifdef __ANDROID__
 #include "OCAndroid.h"
 #endif
 
 #include <OCException.h>
-#include <OCRepresentationInternal.h>
 
 namespace OC
 {
+
     enum class InterfaceType
     {
         None,
@@ -83,43 +81,8 @@ namespace OC
         private:
             std::vector<OCRepresentation> m_reps;
     };
-
     class OCRepresentation
     {
-        // Verifies if a type is supported by AttributeValue in order to enable
-        // the correct template for a given type.
-        template <typename T>
-        struct IsSupportedType {
-            static const bool value =
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, int64_t>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, double>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, bool>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::string>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, OCRepresentation>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, OCByteString>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<int64_t>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<std::vector<int64_t>>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<std::vector<std::vector<int64_t>>>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<double>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<std::vector<double>>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<std::vector<std::vector<double>>>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<bool>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<std::vector<bool>>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<std::vector<std::vector<bool>>>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<std::string>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<std::vector<std::string>>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<std::vector<std::vector<std::string>>>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<OCRepresentation>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<std::vector<OCRepresentation>>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<std::vector<std::vector<OCRepresentation>>>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<OCByteString>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<std::vector<OCByteString>>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<std::vector<std::vector<OCByteString>>>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, std::vector<uint8_t>>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, AttributeValue>::value ||
-                std::is_same<typename std::remove_cv<typename std::remove_reference<T>::type>::type, NullType>::value;
-        };
-
         public:
             friend bool operator==(const OC::OCRepresentation&, const OC::OCRepresentation&);
             // Note: Implementation of all constructors and destructors
@@ -130,29 +93,6 @@ namespace OC
             // options between the gradle JNI and armeabi scons build, however
             // this fix will work in the meantime.
             OCRepresentation(): m_interfaceType(InterfaceType::None){}
-
-#if defined(_MSC_VER) && (_MSC_VER < 1900)
-            OCRepresentation(OCRepresentation&& o)
-            {
-                std::memmove(this, &o, sizeof(o));
-            }
-#else
-            OCRepresentation(OCRepresentation&&) = default;
-#endif
-
-            OCRepresentation(const OCRepresentation&) = default;
-
-            OCRepresentation& operator=(const OCRepresentation&) = default;
-
-#if defined(_MSC_VER) && (_MSC_VER < 1900)
-            OCRepresentation& operator=(OCRepresentation&& o)
-            {
-                std::memmove(this, &o, sizeof(o));
-                return *this;
-            }
-#else
-            OCRepresentation& operator=(OCRepresentation&&) = default;
-#endif
 
             virtual ~OCRepresentation(){}
 
@@ -194,37 +134,21 @@ namespace OC
 
             bool emptyData() const;
 
-            size_t numberOfAttributes() const;
+            int numberOfAttributes() const;
 
             bool erase(const std::string& str);
 
-            // Implementation is different for all int-related types, because AttributeValue
-            // uses only one (int64_t) type for integers.
-            template<typename T, typename std::enable_if<IsSupportedType<T>::value, int>::type = 0>
-            void setValue(const std::string& str, const T& rhs)
+            template <typename T>
+            void setValue(const std::string& str, const T& val)
             {
-                m_values[str] = rhs;
-            }
-
-            template<typename T, typename std::enable_if<!IsSupportedType<T>::value, int>::type = 0>
-            void setValue(const std::string& str, const T& rhs)
-            {
-                assignAttributeValueContent(rhs, m_values[str]);
+                m_values[str] = val;
             }
 
             // using R-value(or universal ref depending) to move string and vector<uint8_t>
-            // Implementation is different for all int-related types, because AttributeValue
-            // uses only one (int64_t) type for integers.
-            template<typename T, typename std::enable_if<IsSupportedType<T>::value, int>::type = 0>
-            void setValue(const std::string& str, T&& rhs)
+            template <typename T>
+            void setValue(const std::string& str, T&& val)
             {
-                m_values[str] = std::forward<T>(rhs);
-            }
-
-            template<typename T, typename std::enable_if<!IsSupportedType<T>::value, int>::type = 0>
-            void setValue(const std::string& str, T&& rhs)
-            {
-                assignAttributeValueContent(rhs, m_values[str]);
+                m_values[str] = std::forward<T>(val);
             }
 
             const std::map<std::string, AttributeValue>& getValues() const {
@@ -232,107 +156,66 @@ namespace OC
             }
 
             /**
-             *  Retrieve the attribute value associated with the supplied name.
-             *  Implementation is different for all int-related types, because AttributeValue
-             *  uses only one (int64_t) type for integers.
+             *  Retrieve the attribute value associated with the supplied name
              *
              *  @param str Name of the attribute
              *  @param val Value of the attribute
              *  @return The getValue method returns true if the attribute was
-             *        found in the representation. Otherwise it returns false.
-             *
-             *  @throws OCException if retrieving 'int' and the value is outside
-             *                      of 'int' range.
+             *        found in the representation.  Otherwise it returns false.
              */
-            template<typename T, typename std::enable_if<IsSupportedType<T>::value, int>::type = 0>
+            template <typename T>
             bool getValue(const std::string& str, T& val) const
             {
                 auto x = m_values.find(str);
 
-                if (x != m_values.end())
+                if(x!= m_values.end())
                 {
                     try
                     {
                         val = boost::get<T>(x->second);
                         return true;
                     }
-                    catch (boost::bad_get&)
+                    catch (boost::bad_get& e)
                     {
+                        val = T();
+                        return false;
                     }
                 }
-                val = T();
-                return false;
-            }
-
-            template<typename T, typename std::enable_if<!IsSupportedType<T>::value, int>::type = 0>
-            bool getValue(const std::string& str, T& val) const
-            {
-                auto item = m_values.find(str);
-
-                if (item != m_values.end())
+                else
                 {
-                    try
-                    {
-                        retrieveAttributeValueContent(item->second, val);
-                        return true;
-                    }
-                    catch (boost::bad_get&)
-                    {
-                    }
+                    val = T();
+                    return false;
                 }
-                val = T();
-                return false;
             }
 
             /**
-             *  Return the attribute value associated with the supplied name.
-             *  Implementation is different for all int-related types, because AttributeValue
-             *  uses only one (int64_t) type for integers.
+             *  Return the attribute value associated with the supplied name
              *
              *  @param str Name of the attribute
              *  @return When the representation contains the attribute, the
-             *       associated value is returned. Otherwise, getValue
+             *       the associated value is returned.  Otherwise, getValue
              *       returns the default contructed value for the type.
-             *
-             *  @throws OCException if retrieving 'int' and the value is outside
-             *                      of 'int' range.
              */
-            template<typename T, typename std::enable_if<IsSupportedType<T>::value, int>::type = 0>
-            T getValue(const std::string& str) const
-            {
-                auto x = m_values.find(str);
-                if (x != m_values.end())
-                {
-                    try
-                    {
-                        return boost::get<T>(x->second);
-                    }
-                    catch (boost::bad_get&)
-                    {
-                    }
-                }
-                return T();
-            }
-
-            template<typename T, typename std::enable_if<!IsSupportedType<T>::value, int>::type = 0>
+            template <typename T>
             T getValue(const std::string& str) const
             {
                 T val = T();
                 auto x = m_values.find(str);
-                if (x != m_values.end())
+                if(x != m_values.end())
                 {
                     try
                     {
-                        retrieveAttributeValueContent(x->second, val);
+                        val = boost::get<T>(x->second);
                     }
-                    catch (boost::bad_get&)
+                    catch (boost::bad_get& e)
                     {
+                        return val;
                     }
                 }
                 return val;
             }
 
-           /**
+	   /**
             *  Retrieve the attributevalue structure associated with the supplied name
             *
             *  @param str Name of the attribute
@@ -381,48 +264,26 @@ namespace OC
                     AttributeType type() const;
                     AttributeType base_type() const;
                     size_t depth() const;
-
-                    template<typename T, typename std::enable_if<IsSupportedType<T>::value, int>::type = 0>
+                    template<typename T>
                     T getValue() const
                     {
                         try
                         {
-                            return boost::get<T>(m_values.at(m_attrName));
+                            return boost::get<T>(m_values[m_attrName]);
                         }
-                        catch (boost::bad_get&)
+                        catch (boost::bad_get& e)
                         {
                             T val = T();
                             return val;
                         }
                     }
 
-                    template<typename T, typename std::enable_if<!IsSupportedType<T>::value, int>::type = 0>
-                    T getValue() const
-                    {
-                        T val = T();
-                        try
-                        {
-                            retrieveAttributeValueContent(m_values.at(m_attrName), val);
-                        }
-                        catch (boost::bad_get&)
-                        {
-                        }
-                        return val;
-                    }
-
                     std::string getValueToString() const;
 
-                    template<typename T, typename std::enable_if<IsSupportedType<T>::value, int>::type = 0>
+                    template<typename T>
                     AttributeItem& operator=(T&& rhs)
                     {
                         m_values[m_attrName] = std::forward<T>(rhs);
-                        return *this;
-                    }
-
-                    template<typename T, typename std::enable_if<!IsSupportedType<T>::value, int>::type = 0>
-                    AttributeItem& operator=(T&& rhs)
-                    {
-                        assignAttributeValueContent(rhs, m_values[m_attrName]);
                         return *this;
                     }
 
@@ -439,7 +300,6 @@ namespace OC
 #if (defined(_MSC_VER) ) || (defined(__GNUC__) && (__GNUC__ <= 5))
                     template<typename T, typename std::enable_if<
                      std::is_same<T, int>::value ||
-                     std::is_same<T, int64_t>::value ||
                      std::is_same<T, double>::value ||
                      std::is_same<T, bool>::value ||
                      std::is_same<T, std::string>::value ||
@@ -448,9 +308,6 @@ namespace OC
                      std::is_same<T, std::vector<int>>::value ||
                      std::is_same<T, std::vector<std::vector<int>>>::value ||
                      std::is_same<T, std::vector<std::vector<std::vector<int>>>>::value ||
-                     std::is_same<T, std::vector<int64_t>>::value ||
-                     std::is_same<T, std::vector<std::vector<int64_t>>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::vector<int64_t>>>>::value ||
                      std::is_same<T, std::vector<double>>::value ||
                      std::is_same<T, std::vector<std::vector<double>>>::value ||
                      std::is_same<T, std::vector<std::vector<std::vector<double>>>>::value ||
@@ -578,16 +435,6 @@ namespace OC
         private:
             friend class OCResourceResponse;
             friend class MessageContainer;
-
-            static void retrieveAttributeValueContent(const AttributeValue& attributeValue, int& val);
-            static void retrieveAttributeValueContent(const AttributeValue& attributeValue, std::vector<int>& val);
-            static void retrieveAttributeValueContent(const AttributeValue& attributeValue, std::vector<std::vector<int>>& val);
-            static void retrieveAttributeValueContent(const AttributeValue& attributeValue, std::vector<std::vector<std::vector<int>>>& val);
-
-            static void assignAttributeValueContent(const int& val, AttributeValue& attributeValue);
-            static void assignAttributeValueContent(const std::vector<int>&  val, AttributeValue& attributeValue);
-            static void assignAttributeValueContent(const std::vector<std::vector<int>>&  val, AttributeValue& attributeValue);
-            static void assignAttributeValueContent(const std::vector<std::vector<std::vector<int>>>&  val, AttributeValue& attributeValue);
 
             template<typename T>
             void payload_array_helper(const OCRepPayloadValue* pl, size_t depth);

@@ -624,7 +624,6 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage message)
     {
         NS_LOGE ("Failed to create OcRepresentation");
         delete ocRepresentation;
-        return NULL;
     }
     else
     {
@@ -635,7 +634,10 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage message)
     if (!fid_extraInfo)
     {
         NS_LOGE ("Failed to get mExtraInfo for Message");
-        delete ocRepresentation;
+        if (ocRepresentation)
+        {
+            delete ocRepresentation;
+        }
         return NULL;
     }
     NS_LOGD ("setting extraInfo field");

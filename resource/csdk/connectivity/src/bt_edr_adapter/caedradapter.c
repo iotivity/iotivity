@@ -512,12 +512,6 @@ void CAAdapterDataSendHandler(void *context)
     }
 
     const char *remoteAddress = message->remoteEndpoint->addr;
-    if(!remoteAddress)
-    {
-        OIC_LOG(ERROR, TAG, "EDR Send Message error");
-        //Error cannot be sent if remote address is NULL
-        return;
-    }
 
     CAResult_t result = CAEDRClientSendData(remoteAddress, message->data, message->dataLen);
     if(CA_STATUS_OK != result)

@@ -21,6 +21,7 @@
  */
 package org.iotivity.cloud.accountserver.db;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -39,24 +40,20 @@ import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorExce
  */
 public class AccountDBManager {
 
-    private static AccountDBManager            accoutDBManager = new AccountDBManager();
-
+    private static AccountDBManager            accountDBManager;
     private MongoDB                            mongoDB;
-
     private HashMap<String, ArrayList<String>> keyField        = new HashMap<String, ArrayList<String>>();
 
-    private AccountDBManager() {
-
-        createDatabase();
+    private AccountDBManager(String dbHost) {
+        createDatabase(dbHost);
         createTables();
         createIndexes();
     }
 
-    private void createDatabase() {
+    private void createDatabase(String dbHost) {
 
         try {
-
-            mongoDB = new MongoDB(Constants.DB_NAME);
+            mongoDB = new MongoDB(dbHost, Constants.DB_NAME);
         } catch (Exception e) {
             e.printStackTrace();
             throw new InternalServerErrorException(
@@ -151,8 +148,20 @@ public class AccountDBManager {
      * @return account DB manager
      */
     public static AccountDBManager getInstance() {
+        if (accountDBManager == null)
+            accountDBManager = new AccountDBManager("127.0.0.1");
+        return accountDBManager;
+    }
 
-        return accoutDBManager;
+    /**
+     * API to create DBManager instance with specific host
+     *
+     * @return created DB manager
+     */
+    public static AccountDBManager createInstance(String dbHost) {
+        if (accountDBManager == null)
+            accountDBManager = new AccountDBManager(dbHost);
+        return accountDBManager;
     }
 
     /**

@@ -28,6 +28,7 @@
 #include "cacommonutil.h"
 #include "camanagerdevice.h"
 #include "caleclient.h"
+#include "caleserver.h"
 #include "caleutils.h"
 
 #define TAG "OIC_CA_MANAGER_LE"

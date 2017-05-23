@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -249,7 +250,8 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
             }
 
             OCResourceProperty p = OCGetResourceProperties(handle);
-            bool isSecure = (p & OC_SECURE);
+            bool includeSecure = (p & OC_SECURE);
+            bool includeNonsecure = (p & OC_NONSECURE);
             p &= (OC_DISCOVERABLE | OC_OBSERVABLE);
             OCRepPayload *policy = OCRepPayloadCreate();
             if (!policy)
@@ -277,7 +279,8 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
                 uint32_t k = 0;
                 for (size_t i = 0; i < nCaEps; i++)
                 {
-                    if (isSecure == (bool)(caEps[i].flags & OC_FLAG_SECURE))
+                    bool isSecure = (caEps[i].flags & OC_FLAG_SECURE);
+                    if ((isSecure && includeSecure) || (!isSecure && includeNonsecure))
                     {
                         char *epStr = OCCreateEndpointStringFromCA(&caEps[i]);
                         if (!epStr)
@@ -448,7 +451,8 @@ OCStackResult OCRDDeleteWithDeviceId(OCDoHandle *handle, const char *host,
         OCResource *handle = (OCResource *) resourceHandles[j];
         int64_t ins = 0;
         OCGetResourceIns(handle, &ins);
-        int lenBufferRequired = snprintf((queryParam + queryLength), (MAX_URI_LENGTH - queryLength), "&ins=%lld", ins);
+        int lenBufferRequired = snprintf((queryParam + queryLength),
+                                         (MAX_URI_LENGTH - queryLength), "&ins=%" PRId64, ins);
         if (lenBufferRequired >= (MAX_URI_LENGTH - queryLength) || lenBufferRequired < 0)
         {
             return OC_STACK_INVALID_URI;

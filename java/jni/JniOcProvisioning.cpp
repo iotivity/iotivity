@@ -110,7 +110,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_ownershipTransferCB
         if (OIC_JUST_WORKS == (OicSecOxm_t)OxmType)
         {
             /*NO callback required for JUST_WORKS*/
-            result = OCSecure::setInputPinCallback(NULL);
+            return;
         }
         if (OIC_RANDOM_DEVICE_PIN == (OicSecOxm_t)OxmType)
         {

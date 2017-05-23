@@ -35,6 +35,13 @@ extern "C"
 #include "cJSON.h"
 
 /**
+ * Function to get CoAP option ID for an HTTP option name.
+ * @param[in]   httpOptionNameStr   HTTP option name.
+ * @return :: CoAP option ID.
+ */
+int CHPGetOptionID(const char *httpOptionNameStr);
+
+/**
  * Function to get CoAP code for an HTTP code.
  * @param[in]   httpCode            HTTP Code.
  * @param[in]   method              Request Method type

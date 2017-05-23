@@ -78,6 +78,7 @@ if target_os not in ['windows']:
 if target_os in ['android']:
     resourceClient_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
     resourceClient_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
+    resourceClient_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,librcs_client.so'])
 
 if target_os in ['linux']:
     if not env.get('RELEASE'):

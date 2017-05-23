@@ -44,6 +44,7 @@ public class OcHeaderOption {
     public static final int IF_NONE_MATCH_OPTION_ID = 5;
     public static final int LOCATION_PATH_OPTION_ID = 8;
     public static final int LOCATION_QUERY_OPTION_ID = 20;
+    public static final int ACCEPT_OPTION_ID = 17;
 
     private int mOptionId;
     private String mOptionData;
@@ -53,7 +54,8 @@ public class OcHeaderOption {
                 && optionId != IF_MATCH_OPTION_ID
                 && optionId != IF_NONE_MATCH_OPTION_ID
                 && optionId != LOCATION_PATH_OPTION_ID
-                && optionId != LOCATION_QUERY_OPTION_ID) {
+                && optionId != LOCATION_QUERY_OPTION_ID
+                && optionId != ACCEPT_OPTION_ID) {
             throw new InvalidParameterException("Option ID range is invalid");
         }
 

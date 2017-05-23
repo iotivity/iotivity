@@ -242,8 +242,8 @@ int main()
                     msg.setMediaContents(mediaContents);
 
                     OC::OCRepresentation rep;
-                    rep.setValue("Key1", std::string("Value1"));
-                    rep.setValue("Key2", std::string("Value2"));
+                    rep.setValue("Key1", "Value1");
+                    rep.setValue("Key2", "Value2");
                     msg.setExtraInfo(rep);
 
                     mainMessageId = msg.getMessageId();

@@ -21,6 +21,7 @@
  */
 package org.iotivity.cloud.accountserver.db;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -57,8 +58,22 @@ public class MongoDB {
      * @throws Exception
      */
     public MongoDB(String dbname) throws Exception {
+        mongoClient = new MongoClient(InetAddress.getLocalHost().getHostAddress());
+        mongoClient.dropDatabase(dbname);
+        db = mongoClient.getDatabase(dbname);
+    }
 
-        mongoClient = new MongoClient();
+    /**
+     * API creating MongoClient and initializing MongoDatabase
+     *
+     * @param host
+     *            host of MongoDatabase
+     * @param dbname
+     *            database name to create MongoDatabase
+     * @throws Exception
+     */
+    public MongoDB(String host, String dbname) throws Exception {
+        mongoClient = new MongoClient(host);
         mongoClient.dropDatabase(dbname);
         db = mongoClient.getDatabase(dbname);
     }

@@ -37,6 +37,7 @@
 #endif
 
 #include "iotivity_config.h"
+#include "iotivity_debug.h"
 #include "octhread.h"
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -95,6 +96,7 @@ typedef struct _tagMutexInfo_t
      */
 #ifndef NDEBUG
     pthread_t owner;
+    uint32_t recursionCount;
 #endif
 } oc_mutex_internal;
 
@@ -189,6 +191,7 @@ oc_mutex oc_mutex_new(void)
         {
 #ifndef NDEBUG
             mutexInfo->owner = OC_INVALID_THREAD_ID;
+            mutexInfo->recursionCount = 0;
 #endif
             retVal = (oc_mutex) mutexInfo;
         }
@@ -201,6 +204,66 @@ oc_mutex oc_mutex_new(void)
     else
     {
         OIC_LOG_V(ERROR, TAG, "%s Failed to allocate mutex!", __func__);
+    }
+
+    return retVal;
+}
+
+oc_mutex oc_mutex_new_recursive(void)
+{
+    oc_mutex retVal = NULL;
+    int ret = -1;
+
+    // Allocate new mutex.
+    oc_mutex_internal *mutexInfo = (oc_mutex_internal*) OICMalloc(sizeof(oc_mutex_internal));
+    if (NULL == mutexInfo)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s Failed to allocate mutex!", __func__);
+        goto exit;
+    }
+
+    // Set up the mutex attributes.
+    pthread_mutexattr_t ma;
+    ret = pthread_mutexattr_init(&ma);
+    if (0 != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s Failed in pthread_mutexattr_init - error %d!",
+            __func__, ret);
+        goto exit;
+    }
+
+    ret = pthread_mutexattr_settype(&ma, PTHREAD_MUTEX_RECURSIVE);
+    if (0 != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s Failed in pthread_mutexattr_settype - error %d!",
+            __func__, ret);
+        pthread_mutexattr_destroy(&ma);
+        goto exit;
+    }
+
+    // Initialize the mutex and destroy the attributes.
+    ret = pthread_mutex_init(&(mutexInfo->mutex), &ma);
+    OC_VERIFY(0 == pthread_mutexattr_destroy(&ma));
+    if (0 != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s Failed in pthread_mutex_init - error %d!",
+            __func__, ret);
+        goto exit;
+    }
+
+#ifndef NDEBUG
+    mutexInfo->owner = OC_INVALID_THREAD_ID;
+    mutexInfo->recursionCount = 0;
+#endif
+
+exit:
+    if (0 == ret)
+    {
+        retVal = (oc_mutex) mutexInfo;
+    }
+    else
+    {
+        OICFree(mutexInfo);
     }
 
     return retVal;
@@ -241,10 +304,20 @@ void oc_mutex_lock(oc_mutex mutex)
 
 #ifndef NDEBUG
         /**
-         * Updating the owner field must be performed while owning the lock,
-         * to solve race conditions with other threads using the same lock.
+         * Updating the recursionCount and owner fields must be performed
+         * while owning the lock, to solve race conditions with other
+         * threads using the same lock.
          */
-        mutexInfo->owner = oc_get_current_thread_id();
+        if (mutexInfo->recursionCount != 0)
+        {
+            oc_mutex_assert_owner(mutex, true);
+        }
+        else
+        {
+            mutexInfo->owner = oc_get_current_thread_id();
+        }
+
+        mutexInfo->recursionCount++;
 #endif
     }
     else
@@ -259,11 +332,19 @@ void oc_mutex_unlock(oc_mutex mutex)
     if (mutexInfo)
     {
 #ifndef NDEBUG
+        oc_mutex_assert_owner(mutex, true);
+
         /**
-         * Updating the owner field must be performed while owning the lock,
-         * to solve race conditions with other threads using the same lock.
+         * Updating the recursionCount and owner fields must be performed
+         * while owning the lock, to solve race conditions with other
+         * threads using the same lock.
          */
-        mutexInfo->owner = OC_INVALID_THREAD_ID;
+        mutexInfo->recursionCount--;
+
+        if (mutexInfo->recursionCount == 0)
+        {
+            mutexInfo->owner = OC_INVALID_THREAD_ID;
+        }
 #endif
 
         int ret = pthread_mutex_unlock(&mutexInfo->mutex);
@@ -293,6 +374,7 @@ void oc_mutex_assert_owner(const oc_mutex mutex, bool currentThreadIsOwner)
     if (currentThreadIsOwner)
     {
         assert(pthread_equal(mutexInfo->owner, currentThreadID));
+        assert(mutexInfo->recursionCount != 0);
     }
     else
     {
@@ -487,14 +569,21 @@ OCWaitResult_t oc_cond_wait_for(oc_cond cond, oc_mutex mutex, uint64_t microseco
              abstime = oc_get_current_time();
             oc_add_microseconds_to_timespec(&abstime, microseconds);
 
-            // Wait for the given time
 #ifndef NDEBUG
-            // The conditional variable wait API used will atomically release the mutex, but the
-            // best we can do here is to just clear the owner info before the API is called.
+            // Recursively-acquired locks are not supported for use with condition variables.
+            oc_mutex_assert_owner(mutex, true);
+            assert(mutexInfo->recursionCount == 1);
+            mutexInfo->recursionCount = 0;
             mutexInfo->owner = OC_INVALID_THREAD_ID;
 #endif
+
+            // Wait for the given time
             ret = pthread_cond_timedwait(&(eventInfo->cond), &(mutexInfo->mutex), &abstime);
+
 #ifndef NDEBUG
+            oc_mutex_assert_owner(mutex, false);
+            assert(mutexInfo->recursionCount == 0);
+            mutexInfo->recursionCount = 1;
             mutexInfo->owner = oc_get_current_thread_id();
 #endif
         }
@@ -520,6 +609,14 @@ OCWaitResult_t oc_cond_wait_for(oc_cond cond, oc_mutex mutex, uint64_t microseco
     }
     else
     {
+#ifndef NDEBUG
+        // Recursively-acquired locks are not supported for use with condition variables.
+        oc_mutex_assert_owner(mutex, true);
+        assert(mutexInfo->recursionCount == 1);
+        mutexInfo->recursionCount = 0;
+        mutexInfo->owner = OC_INVALID_THREAD_ID;
+#endif
+
         // Wait forever
 #ifndef NDEBUG
         // The conditional variable wait API used will atomically release the mutex, but the
@@ -528,7 +625,11 @@ OCWaitResult_t oc_cond_wait_for(oc_cond cond, oc_mutex mutex, uint64_t microseco
 #endif
         int ret = pthread_cond_wait(&eventInfo->cond, &mutexInfo->mutex);
         retVal = (ret == 0) ? OC_WAIT_SUCCESS : OC_WAIT_INVAL;
+
 #ifndef NDEBUG
+        oc_mutex_assert_owner(mutex, false);
+        assert(mutexInfo->recursionCount == 0);
+        mutexInfo->recursionCount = 1;
         mutexInfo->owner = oc_get_current_thread_id();
 #endif
     }

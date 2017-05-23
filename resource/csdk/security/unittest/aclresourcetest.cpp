@@ -40,6 +40,7 @@
 #include "ocpayloadcbor.h"
 #include "payload_logging.h"
 #include "security_internals.h"
+#include "acl_logging.h"
 
 using namespace std;
 
@@ -49,8 +50,7 @@ using namespace std;
 const char* DEFAULT_ACL_FILE_NAME = "oic_unittest_default_acl.dat";
 const char* ACL1_FILE_NAME = "oic_unittest_acl1.dat";
 
-#define NUM_ACE_FOR_WILDCARD_IN_ACL1_DAT (2)
-#define NUM_ACE_FOR_WILDCARD_IN_DEFAULT_ACL (3)
+#define NUM_ACE_FOR_ANON_CLEAR_IN_DEFAULT_ACL (2)
 
 static bool AddResourceToACE(OicSecAce_t* ace, const char* rsrcName,
                              const char* typeName, const char* interfaceName)
@@ -111,7 +111,8 @@ static int GetNumberOfResource(const OicSecAce_t* ace)
 
 TEST(ACLResourceTest, CBORDefaultACLConversion)
 {
-    uint8_t defaultAclSub[] = { 0x2a };
+    uint8_t defaultAclSub[] = {0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31,
+        0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31};
     uint8_t defaultAclOwnrs[] = {0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32,
         0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32};
 
@@ -136,7 +137,7 @@ TEST(ACLResourceTest, CBORDefaultACLConversion)
 
     size_t defaultAclSize = 0;
     uint8_t *defaultPsStorage = NULL;
-    OCStackResult convRet = AclToCBORPayload(defaultAcl, OIC_SEC_ACL_V1, &defaultPsStorage, &defaultAclSize);
+    OCStackResult convRet = AclToCBORPayload(defaultAcl, OIC_SEC_ACL_V2, &defaultPsStorage, &defaultAclSize);
     EXPECT_EQ(OC_STACK_OK, convRet);
     ASSERT_TRUE(NULL != defaultPsStorage);
     EXPECT_NE(static_cast<size_t>(0), defaultAclSize);
@@ -321,13 +322,27 @@ TEST(ACLResourceTest, ACLPostTest)
     ehReq.payload = (OCPayload *) securityPayload;
 
     ACLEntityHandler(OC_REQUEST_FLAG, &ehReq, NULL);
-
     OicSecAcl_t *acl = CBORPayloadToAcl(payload, size);
     ASSERT_TRUE(NULL != acl);
 
-    // Verify if SRM contains ACL for the subject
+    // Verify /acl2 Resource contains an ACE for a subject in acl local var
     OicSecAce_t *savePtr = NULL;
-    const OicSecAce_t* subjectAcl = GetACLResourceData(&(acl->aces->subjectuuid), &savePtr);
+    savePtr = acl->aces;
+    while(OicSecAceUuidSubject != savePtr->subjectType)
+    {
+        savePtr = savePtr->next;
+    }
+    OicUuid_t uuid = savePtr->subjectuuid;
+#ifndef NDEBUG
+    char uuidString[UUID_STRING_SIZE] = { 0 };
+    bool convertedUUID = OCConvertUuidToString(uuid.id, uuidString);
+    if (convertedUUID)
+    {
+        printf("asubjectuuidToFind.id = %s", uuidString);
+    }
+#endif
+    savePtr = NULL;
+    const OicSecAce_t* subjectAcl = GetACLResourceData(&uuid, &savePtr);
     ASSERT_TRUE(NULL != subjectAcl);
 
     // Perform cleanup
@@ -350,19 +365,19 @@ TEST(ACLResourceTest, GetACLResourceTests)
     ASSERT_TRUE(acl1 != NULL);
     EXPECT_EQ(OC_STACK_OK, SetDefaultACL(acl1));
 
-    // Verify that the default ACL file contains 3 ACE entries for the 'WILDCARD' subject
+    // Verify that the default ACL file contains 2 ACE entries for the 'ANON_CLEAR' conntype subject
     const OicSecAce_t *ace = NULL;
     OicSecAce_t *savePtr = NULL;
-    OicUuid_t subject = WILDCARD_SUBJECT_ID;
+    OicSecConntype_t subjectConn = ANON_CLEAR;
     int count = 0;
 
     do
     {
-        ace = GetACLResourceData(&subject, &savePtr);
+        ace = GetACLResourceDataByConntype(subjectConn, &savePtr);
         count = (NULL != ace) ? count + 1 : count;
     } while (ace != NULL);
 
-    EXPECT_EQ(count, NUM_ACE_FOR_WILDCARD_IN_DEFAULT_ACL);
+    EXPECT_EQ(count, NUM_ACE_FOR_ANON_CLEAR_IN_DEFAULT_ACL);
 
     /* Perform cleanup */
     DeInitACLResource();
@@ -376,20 +391,20 @@ TEST(ACLResourceTest, DefaultAclAllowsRolesAccess)
     ASSERT_TRUE(acl1 != NULL);
     EXPECT_EQ(OC_STACK_OK, SetDefaultACL(acl1));
 
-    /* Verify that the default ACL file allows access to the roles resource */
+    /* Verify that the default ACL file allows AUTH_CRYPT RUD access to the /roles resource */
     const OicSecAce_t *ace = NULL;
     OicSecAce_t *savePtr = NULL;
-    OicUuid_t subject = WILDCARD_SUBJECT_ID;
+    OicSecConntype_t subjectConn = AUTH_CRYPT;
     int found = 0;
 
-    while((ace = GetACLResourceData(&subject, &savePtr)) != NULL)
+    while((ace = GetACLResourceDataByConntype(subjectConn, &savePtr)) != NULL)
     {
         ASSERT_TRUE(ace->resources != NULL);
         OicSecRsrc_t* rsrc = NULL;
         LL_FOREACH(ace->resources, rsrc)
         {
             if ((strcmp(rsrc->href, OIC_RSRC_ROLES_URI) == 0) &&
-                (ace->permission == PERMISSION_FULL_CONTROL))
+                (ace->permission == (PERMISSION_READ | PERMISSION_WRITE | PERMISSION_DELETE)))
             {
                 found = 1;
                 break;
@@ -451,7 +466,7 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t  *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_V1, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_V2, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
@@ -511,7 +526,7 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_V1, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_V2, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
@@ -578,7 +593,7 @@ TEST(ACLResourceTest, ACLGetWithQueryTest)
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_V1, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_V2, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload

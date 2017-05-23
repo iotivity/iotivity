@@ -287,7 +287,7 @@ void RTMFreeGateway(RTMGatewayId_t *gateway, u_linklist_t **gatewayTable);
  * @param[in,out]    obsListLen             Length if Observation ID list.
  * @param[in]        gatewayTable           Gateway Routing Table.
  */
-void RTMGetObserverList(OCObservationId **obsList, uint8_t *obsListLen,
+void RTMGetObserverList(OCObservationId **obsList, uint32_t *obsListLen,
                         const u_linklist_t *gatewayTable);
 
 /**

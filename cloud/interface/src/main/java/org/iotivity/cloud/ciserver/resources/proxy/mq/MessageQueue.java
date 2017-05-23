@@ -39,12 +39,8 @@ import org.iotivity.cloud.ciserver.Constants;
  */
 
 public class MessageQueue extends Resource {
-    IRequestChannel mPSServer = null;
-
     public MessageQueue() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.MQ_BROKER_URI));
-
-        mPSServer = ConnectorPool.getConnection("mq");
     }
 
     @Override
@@ -52,6 +48,6 @@ public class MessageQueue extends Resource {
             throws ServerException {
 
         // Token exchange is done by CoapClient
-        mPSServer.sendRequest(request, srcDevice);
+        ConnectorPool.getConnection("mq").sendRequest(request, srcDevice);
     }
 }

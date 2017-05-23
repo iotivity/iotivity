@@ -47,6 +47,8 @@
 
 #define TAG  "OIC_SRM_CSR"
 
+static const uint8_t CSR_MAP_SIZE = 4; // csr, encoding, RT, and IF
+
 static OCResourceHandle    gCsrHandle = NULL;
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
@@ -147,7 +149,7 @@ static OCStackResult CSRToCBORPayload(const uint8_t *csr, size_t csrLen, OicEnco
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     // Create CSR Root Map (csr)
-    cborEncoderResult = cbor_encoder_create_map(&encoder, &csrRootMap, 4);
+    cborEncoderResult = cbor_encoder_create_map(&encoder, &csrRootMap, CSR_MAP_SIZE);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CSR Root Map");
 
     // Create CSR string entry
@@ -163,22 +165,6 @@ static OCStackResult CSRToCBORPayload(const uint8_t *csr, size_t csrLen, OicEnco
     assert(strEncoding != NULL);
     cborEncoderResult = cbor_encode_text_string(&csrRootMap, strEncoding, strlen(strEncoding));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding encoding value.");
-
-    // Rownerid
-    {
-        char *rowner = NULL;
-        OicUuid_t myUuid;
-        cborEncoderResult = cbor_encode_text_string(&csrRootMap, OIC_JSON_ROWNERID_NAME,
-            strlen(OIC_JSON_ROWNERID_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding rownerid Name.");
-        ret = GetDoxmDeviceID(&myUuid);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-        ret = ConvertUuidToStr(&myUuid, &rowner);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-        cborEncoderResult = cbor_encode_text_string(&csrRootMap, rowner, strlen(rowner));
-        OICFree(rowner);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding rownerid Value.");
-    }
 
     //RT -- Mandatory
     CborEncoder rtArray;

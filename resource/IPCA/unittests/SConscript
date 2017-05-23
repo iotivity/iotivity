@@ -104,8 +104,7 @@ if use_iotivity == 0:
         'mockInProcServerWrapper.cpp',
         'mockOCPlatform_impl.cpp',
         'mockOCProvision.cpp',
-        '#/resource/src/OCRepresentation.cpp',
-        '#/resource/src/OCRepresentationInternal.cpp'
+        '#/resource/src/OCRepresentation.cpp'
         ]
 
 if target_os not in ['windows', 'msys_nt']:
@@ -136,11 +135,9 @@ if target_os in ['windows']:
 
 if ipcatest_env.get('TEST') == '1':
     if target_os in ['windows']:
-        # Disabled for VS2013 due to https://jira.iotivity.org/browse/IOT-1842.
-        if '14.0' == ipcatest_env['MSVC_VERSION']:
-            from tools.scons.RunTest import *
-            run_test(ipcatest_env,
-                     'resource_ipca_unittests.memcheck',
-                     'resource/ipca/unittests/ipcatests',
-                     ipcatests)
+        from tools.scons.RunTest import *
+        run_test(ipcatest_env,
+                 'resource_ipca_unittests.memcheck',
+                 'resource/ipca/unittests/ipcatests',
+                 ipcatests)
 

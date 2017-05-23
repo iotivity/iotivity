@@ -40,8 +40,9 @@ if target_os in targets_need_sqlite:
         shutil.rmtree(sqlite_tmp_dir)
 
 if target_os in ['windows']:
-    if sqlite_env['CC'] == 'cl':
-        sqlite_env.AppendUnique(CCFLAGS = ['/W4'])
+    sqlite_env.AppendUnique(CCFLAGS = ['/W4', '/WX'])
+    if sqlite_env.get('UWP_APP') == '1':
+        sqlite_env.AppendUnique(CPPDEFINES=['SQLITE_OS_WINRT'])
     libsqlite3 = sqlite_env.StaticLibrary('sqlite3', sqlite_c)
     # In multi-threaded builds, SCons appears to proceed to using sqlite3.lib
     # before finishing InstallTarget(libsqlite3, 'sqlite3') here. So, use the

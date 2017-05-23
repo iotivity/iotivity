@@ -85,6 +85,8 @@ struct CallbackInfo
     std::shared_ptr<OC::OCResource> ocResource; // The OCResource this callback works with.
 
     uint64_t requestSentTimestamp; // when the request was sent to the server.
+
+    bool inObserve; // set to true when observe request is sent for this callback.
 };
 
 // Represent IPCAResourceChangeCallback, IPCAGetPropertiesComplete, IPCASetPropertiesComplete.

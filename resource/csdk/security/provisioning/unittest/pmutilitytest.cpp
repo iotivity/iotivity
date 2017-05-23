@@ -289,13 +289,6 @@ private:
         result->oxm[0] = OIC_JUST_WORKS;
         result->oxmLen = 1U;
         result->oxmSel = OIC_JUST_WORKS;
-        result->oxmType = (OicUrn_t*)OICCalloc(1, sizeof(OicUrn_t));
-        if (NULL == result->oxm)
-        {
-            return NULL;
-        }
-        result->oxmType[0] = NULL;
-        result->oxmTypeLen = 1U;
         memcpy(&result->rownerID, &s_sampleOwnerId, sizeof(result->rownerID));
         result->sct = NO_SECURITY_MODE;
 
@@ -332,22 +325,6 @@ TEST_F(CloneOicSecDoxmTest, shouldReturnValidPointerForValidInput)
 {
     m_clonedStruct = CloneOicSecDoxm(m_originalStruct);
     EXPECT_FALSE(NULL == m_clonedStruct);
-}
-
-TEST_F(CloneOicSecDoxmTest, copyShouldHaveNulledOxmType)
-{
-    ASSERT_FALSE(NULL == m_originalStruct->oxmType);
-
-    m_clonedStruct = CloneOicSecDoxm(m_originalStruct);
-    EXPECT_TRUE(NULL == m_clonedStruct->oxmType);
-}
-
-TEST_F(CloneOicSecDoxmTest, copyShouldHaveZeroedOxmTypeLen)
-{
-    ASSERT_NE(0U, m_originalStruct->oxmTypeLen);
-
-    m_clonedStruct = CloneOicSecDoxm(m_originalStruct);
-    EXPECT_EQ(0U, m_clonedStruct->oxmTypeLen);
 }
 
 TEST_F(CloneOicSecDoxmTest, copyShouldHaveNulledOxm)

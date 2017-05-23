@@ -107,7 +107,9 @@ private:
     std::condition_variable cond;
     std::mutex mutex;
 };
-void executeCallback(int /*code*/) {};
+void executeCallback(int /*code*/)
+{
+}
 
 TEST_F(SceneTest, createSceneInstance)
 {
@@ -184,7 +186,10 @@ TEST_F(SceneTest, getSceneActions)
 
 TEST_F(SceneTest, executeScene)
 {
-    mocks.ExpectCallFunc(executeCallback).Do([this](int){ proceed(); });
+    mocks.ExpectCallFunc(executeCallback).Do([this](int)
+    {
+        proceed();
+    });
 
     createServer("/a/testuri2_1", "/a/testuri2_2");
     createSceneCollection();

@@ -88,6 +88,8 @@ AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
             if (!options || !numOptions)
             {
                 OIC_LOG (INFO, TAG, "No options present");
+                cbNode->options = NULL;
+                cbNode->numOptions = 0;
             }
             else
             {
@@ -96,6 +98,8 @@ AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
                 if (!cbNode->options)
                 {
                     OIC_LOG(ERROR, TAG, "Out of memory");
+                    OICFree(cbNode);
+
                     return OC_STACK_NO_MEMORY;
                 }
                 memcpy(cbNode->options, options,
@@ -106,6 +110,8 @@ AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
             if (!payload || !payloadSize)
             {
                 OIC_LOG (INFO, TAG, "No payload present");
+                cbNode->payload = NULL;
+                cbNode->payloadSize = 0;
             }
             else
             {
@@ -117,6 +123,8 @@ AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
                     {
                         OICFree(cbNode->options);
                     }
+                    OICFree(cbNode);
+
                     return OC_STACK_NO_MEMORY;
                 }
                 memcpy(cbNode->payload, payload, payloadSize);
@@ -166,7 +174,7 @@ AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
             cbData->cd(cbData->context);
         }
 
-        OICFree(token);
+        CADestroyToken(token);
         OICFree(*handle);
         OICFree(requestUri);
         OICFree(devAddr);
@@ -207,6 +215,14 @@ void DeleteClientCB(ClientCB * cbNode)
         OIC_TRACE_BUFFER("OIC_RI_CLIENTCB:DeleteClientCB:token:",
                          (const uint8_t *)cbNode->token, cbNode->tokenLength);
         CADestroyToken (cbNode->token);
+        if (cbNode->options)
+        {
+            OICFree(cbNode->options);
+        }
+        if(cbNode->payload)
+        {
+            OICFree(cbNode->payload);
+        }
         OICFree(cbNode->devAddr);
         OICFree(cbNode->handle);
         if (cbNode->requestUri)

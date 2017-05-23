@@ -127,8 +127,12 @@ examples += [clientjson, serverjson, directpairingdat]
 
 if target_os in ['msys_nt', 'windows']:
     winUIClient = examples_env.Program('winUIClient', ['winuiclientgui.cpp', 'winuiclient.cpp'])
-    mediaserver = examples_env.Program('mediaserver', 'mediaserver.cpp')
-    examples += [winUIClient, mediaserver]
+    examples += [winUIClient]
+    # mediaserver uses GetVersionEx which is a windows native/desktop only API.
+    # Only build for Native/Win32
+    if env.get('UWP_APP') != '1':
+        mediaserver = examples_env.Program('mediaserver', 'mediaserver.cpp')
+        examples += [mediaserver]
 
 Alias("examples", examples)
 examples_env.AppendTarget('examples')

@@ -157,7 +157,9 @@ namespace OIC
                 = m_requestor->getSceneMemberResourceRequestor(targetHref);
 
             if (foundMemberRequestor == nullptr)
+            {
                 m_requestor->createSceneMemberResourceRequestor(href, id, target);
+            }
 
             RCSResourceAttributes attrs;
             attrs[key] = RCSResourceAttributes::Value(value);
@@ -179,7 +181,9 @@ namespace OIC
                 newAction = createRemoteSceneAction(targetLink, attrs);
 
                 if (newAction)
+                {
                     result = SCENE_RESPONSE_SUCCESS;
+                }
             }
 
             clientCB(newAction, result);

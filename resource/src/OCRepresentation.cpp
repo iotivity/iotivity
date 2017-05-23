@@ -123,11 +123,11 @@ namespace OC
             dimensions[2] = 0;
             dimTotal = calcDimTotal(dimensions);
 
-            m_array = (void*)OICMalloc(dimTotal * root_size);
+            array = (void*)OICMalloc(dimTotal * root_size);
 
             for(size_t i = 0; i < dimensions[0]; ++i)
             {
-                copy_to_array(arr[i], m_array, i);
+                copy_to_array(arr[i], array, i);
             }
 
         }
@@ -143,13 +143,13 @@ namespace OC
                 dimensions[1] = std::max(dimensions[1], arr[i].size());
             }
             dimTotal = calcDimTotal(dimensions);
-            m_array = (void*)OICCalloc(1, (dimTotal * root_size));
+            array = (void*)OICCalloc(1, dimTotal * root_size);
 
             for(size_t i = 0; i < dimensions[0]; ++i)
             {
                 for(size_t j = 0; j < dimensions[1] && j < arr[i].size(); ++j)
                 {
-                    copy_to_array(arr[i][j], m_array, i*dimensions[1] + j);
+                    copy_to_array(arr[i][j], array, i*dimensions[1] + j);
                 }
             }
         }
@@ -171,7 +171,7 @@ namespace OC
             }
 
             dimTotal = calcDimTotal(dimensions);
-            m_array = (void*)OICCalloc(1, dimTotal * root_size);
+            array = (void*)OICCalloc(1, dimTotal * root_size);
 
             for(size_t i = 0; i < dimensions[0]; ++i)
             {
@@ -179,7 +179,7 @@ namespace OC
                 {
                     for(size_t k = 0; k < dimensions[2] && k < arr[i][j].size(); ++k)
                     {
-                        copy_to_array(arr[i][j][k], m_array,
+                        copy_to_array(arr[i][j][k], array,
                                 dimensions[2] * j +
                                 dimensions[2] * dimensions[1] * i +
                                 k);
@@ -203,7 +203,7 @@ namespace OC
         size_t dimensions[MAX_REP_ARRAY_DEPTH];
         size_t root_size;
         size_t dimTotal;
-        void* m_array;
+        void* array;
     };
 
     template<>
@@ -291,31 +291,31 @@ namespace OC
         {
             case AttributeType::Integer:
                 OCRepPayloadSetIntArrayAsOwner(payload, item.attrname().c_str(),
-                        (int64_t*)vis.m_array,
+                        (int64_t*)vis.array,
                         vis.dimensions);
                 break;
             case AttributeType::Double:
                 OCRepPayloadSetDoubleArrayAsOwner(payload, item.attrname().c_str(),
-                        (double*)vis.m_array,
+                        (double*)vis.array,
                         vis.dimensions);
                 break;
             case AttributeType::Boolean:
                 OCRepPayloadSetBoolArrayAsOwner(payload, item.attrname().c_str(),
-                        (bool*)vis.m_array,
+                        (bool*)vis.array,
                         vis.dimensions);
                 break;
             case AttributeType::String:
                 OCRepPayloadSetStringArrayAsOwner(payload, item.attrname().c_str(),
-                        (char**)vis.m_array,
+                        (char**)vis.array,
                         vis.dimensions);
                 break;
             case AttributeType::OCByteString:
                 OCRepPayloadSetByteStringArrayAsOwner(payload, item.attrname().c_str(),
-                                                      (OCByteString *)vis.m_array, vis.dimensions);
+                                                      (OCByteString *)vis.array, vis.dimensions);
                 break;
             case AttributeType::OCRepresentation:
                 OCRepPayloadSetPropObjectArrayAsOwner(payload, item.attrname().c_str(),
-                        (OCRepPayload**)vis.m_array, vis.dimensions);
+                        (OCRepPayload**)vis.array, vis.dimensions);
                 break;
             default:
                 throw std::logic_error(std::string("GetPayloadArray: Not Implemented") +
@@ -351,7 +351,7 @@ namespace OC
                     OCRepPayloadSetNull(root, val.attrname().c_str());
                     break;
                 case AttributeType::Integer:
-                    OCRepPayloadSetPropInt(root, val.attrname().c_str(), val.getValue<int64_t>());
+                    OCRepPayloadSetPropInt(root, val.attrname().c_str(), static_cast<int>(val));
                     break;
                 case AttributeType::Double:
                     OCRepPayloadSetPropDouble(root, val.attrname().c_str(),
@@ -417,7 +417,7 @@ namespace OC
         throw std::logic_error("payload_array_helper_copy: unsupported type");
     }
     template<>
-    int64_t OCRepresentation::payload_array_helper_copy<int64_t>(size_t index, const OCRepPayloadValue* pl)
+    int OCRepresentation::payload_array_helper_copy<int>(size_t index, const OCRepPayloadValue* pl)
     {
         return pl->arr.iArray[index];
     }
@@ -527,7 +527,7 @@ namespace OC
         switch(pl->arr.type)
         {
             case OCREP_PROP_INT:
-                payload_array_helper<int64_t>(pl, calcArrayDepth(pl->arr.dimensions));
+                payload_array_helper<int>(pl, calcArrayDepth(pl->arr.dimensions));
                 break;
             case OCREP_PROP_DOUBLE:
                 payload_array_helper<double>(pl, calcArrayDepth(pl->arr.dimensions));
@@ -578,7 +578,7 @@ namespace OC
                     setNULL(val->name);
                     break;
                 case OCREP_PROP_INT:
-                    setValue<int64_t>(val->name, val->i);
+                    setValue<int>(val->name, val->i);
                     break;
                 case OCREP_PROP_DOUBLE:
                     setValue<double>(val->name, val->d);
@@ -774,14 +774,14 @@ namespace OC
         return true;
     }
 
-    size_t OCRepresentation::numberOfAttributes() const
+    int OCRepresentation::numberOfAttributes() const
     {
         return m_values.size();
     }
 
     bool OCRepresentation::erase(const std::string& str)
     {
-        return (m_values.erase(str) != 0);
+        return m_values.erase(str);
     }
 
     void OCRepresentation::setNULL(const std::string& str)
@@ -835,7 +835,7 @@ namespace OC
                 os << "Vector";
                 break;
             case AttributeType::Binary:
-                os << "Binary";
+                os<< "Binary";
         }
         return os;
     }
@@ -1143,62 +1143,6 @@ namespace OC
     void to_string_visitor::operator()(OCRepresentation const& /*item*/)
     {
         str = "OC::OCRepresentation";
-    }
-
-    void OCRepresentation::retrieveAttributeValueContent(const AttributeValue& attributeValue, int& val)
-    {
-        int64_t int64Value = boost::get<int64_t>(attributeValue);
-        checkValueInIntRange(int64Value);
-        copyInt64Type(int64Value, val);
-    }
-
-    void OCRepresentation::retrieveAttributeValueContent(const AttributeValue& attributeValue, std::vector<int>& val)
-    {
-        std::vector<int64_t> int64Value = boost::get<std::vector<int64_t>>(attributeValue);
-        checkValueInIntRange(int64Value);
-        copyInt64Type(int64Value, val);
-    }
-
-    void OCRepresentation::retrieveAttributeValueContent(const AttributeValue& attributeValue, std::vector<std::vector<int>>& val)
-    {
-        std::vector<std::vector<int64_t>> int64Value = boost::get<std::vector<std::vector<int64_t>>>(attributeValue);
-        checkValueInIntRange(int64Value);
-        copyInt64Type(int64Value, val);
-    }
-
-    void OCRepresentation::retrieveAttributeValueContent(const AttributeValue& attributeValue, std::vector<std::vector<std::vector<int>>>& val)
-    {
-        std::vector<std::vector<std::vector<int64_t>>> int64Value = boost::get<std::vector<std::vector<std::vector<int64_t>>>>(attributeValue);
-        checkValueInIntRange(int64Value);
-        copyInt64Type(int64Value, val);
-    }
-
-    void OCRepresentation::assignAttributeValueContent(const int& val, AttributeValue& attributeValue)
-    {
-        int64_t value;
-        copyIntType(val, value);
-        attributeValue = value;
-    }
-
-    void OCRepresentation::assignAttributeValueContent(const std::vector<int>&  val, AttributeValue& attributeValue)
-    {
-        std::vector<int64_t> value;
-        copyIntType(val, value);
-        attributeValue = std::move(value);
-    }
-
-    void OCRepresentation::assignAttributeValueContent(const std::vector<std::vector<int>>&  val, AttributeValue& attributeValue)
-    {
-        std::vector<std::vector<int64_t>> value;
-        copyIntType(val, value);
-        attributeValue = std::move(value);
-    }
-
-    void OCRepresentation::assignAttributeValueContent(const std::vector<std::vector<std::vector<int>>>&  val, AttributeValue& attributeValue)
-    {
-        std::vector<std::vector<std::vector<int64_t>>> value;
-        copyIntType(val, value);
-        attributeValue = std::move(value);
     }
 
     std::string OCRepresentation::getValueToString(const std::string& key) const

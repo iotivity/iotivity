@@ -21,7 +21,9 @@
 
 #include "iotivity_config.h"
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -193,12 +195,16 @@ do                                                                              
  * @param[in] peer remote peer
  */
 #define SSL_RES(peer, status)                                                                      \
-if (g_sslCallback)                                                                                 \
+do                                                                                                 \
 {                                                                                                  \
-    CAErrorInfo_t errorInfo;                                                                       \
-    errorInfo.result = (status);                                                                   \
-    g_sslCallback(&(peer)->sep.endpoint, &errorInfo);                                              \
-}
+    oc_mutex_assert_owner(g_sslContextMutex, true);                                                \
+    if (g_sslCallback)                                                                             \
+    {                                                                                              \
+        CAErrorInfo_t errorInfo;                                                                   \
+        errorInfo.result = (status);                                                               \
+        g_sslCallback(&(peer)->sep.endpoint, &errorInfo);                                          \
+    }                                                                                              \
+} while(false)
 
 /* OCF-defined EKU value indicating an identity certificate, that can be used for
  * TLS client and server authentication.  This is the DER encoding of the OID
@@ -419,7 +425,7 @@ static CAgetPkixInfoHandler g_getPkixInfoCallback = NULL;
 
 /**
  * @var g_dtlsContextMutex
- * @brief Mutex to synchronize access to g_caSslContext.
+ * @brief Mutex to synchronize access to g_caSslContext and g_sslCallback.
  */
 static oc_mutex g_sslContextMutex = NULL;
 
@@ -813,6 +819,9 @@ static SslEndPoint_t *GetSslPeer(const CAEndpoint_t *peer)
     size_t listIndex = 0;
     size_t listLength = 0;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
+
+    oc_mutex_assert_owner(g_sslContextMutex, true);
+
     VERIFY_NON_NULL_RET(peer, NET_SSL_TAG, "TLS peer is NULL", NULL);
     VERIFY_NON_NULL_RET(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL", NULL);
 
@@ -855,8 +864,8 @@ CAResult_t GetCASecureEndpointData(const CAEndpoint_t* peer, CASecureEndpoint_t*
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
 
-    oc_mutex_assert_owner(g_sslContextMutex, false);
     oc_mutex_lock(g_sslContextMutex);
+
     if (NULL == g_caSslContext)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Context is NULL");
@@ -865,17 +874,21 @@ CAResult_t GetCASecureEndpointData(const CAEndpoint_t* peer, CASecureEndpoint_t*
     }
 
     SslEndPoint_t* sslPeer = GetSslPeer(peer);
-    if(sslPeer)
+    if (sslPeer)
     {
-        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+        // sslPeer could be destroyed after releasing the lock, so make a copy
+        // of the endpoint information before releasing the lock.
         memcpy(sep, &sslPeer->sep, sizeof(sslPeer->sep));
         oc_mutex_unlock(g_sslContextMutex);
+
+        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
         return CA_STATUS_OK;
     }
 
-    OIC_LOG(DEBUG, NET_SSL_TAG, "Return NULL");
-    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     oc_mutex_unlock(g_sslContextMutex);
+
+    OIC_LOG(DEBUG, NET_SSL_TAG, "GetSslPeer returned NULL");
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return CA_STATUS_INVALID_PARAM;
 }
 
@@ -894,10 +907,7 @@ bool SetCASecureEndpointAttribute(const CAEndpoint_t* peer, uint32_t newAttribut
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s(peer = %s:%u, attribute = %#x)", __func__,
         peer->addr, (uint32_t)peer->port, newAttribute);
 
-    // Acquiring g_sslContextMutex recursively here is not supported, so assert
-    // that the caller already owns this mutex. IOT-1876 tracks a possible
-    // refactoring of the code that is using g_sslContextMutex, to address these
-    // API quirks.
+    // In the current implementation, the caller already owns g_sslContextMutex.
     oc_mutex_assert_owner(g_sslContextMutex, true);
 
     if (NULL == g_caSslContext)
@@ -938,6 +948,8 @@ bool GetCASecureEndpointAttributes(const CAEndpoint_t* peer, uint32_t* allAttrib
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s(peer = %s:%u)", __func__,
         peer->addr, (uint32_t)peer->port);
 
+    // In the current implementation, the caller doesn't own g_sslContextMutex.
+    oc_mutex_assert_owner(g_sslContextMutex, false);
     oc_mutex_lock(g_sslContextMutex);
 
     if (NULL == g_caSslContext)
@@ -1028,8 +1040,11 @@ static void DeleteSslEndPoint(SslEndPoint_t * tep)
  */
 static void RemovePeerFromList(CAEndpoint_t * endpoint)
 {
+    oc_mutex_assert_owner(g_sslContextMutex, true);
+
     VERIFY_NON_NULL_VOID(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL");
     VERIFY_NON_NULL_VOID(endpoint, NET_SSL_TAG, "endpoint");
+
     size_t listLength = u_arraylist_length(g_caSslContext->peerList);
     for (size_t listIndex = 0; listIndex < listLength; listIndex++)
     {
@@ -1066,6 +1081,7 @@ static bool checkSslOperation(SslEndPoint_t*  peer,
                               unsigned char msg)
 {
     OC_UNUSED(str);
+    OC_UNUSED(msg);
 
     if ((0 != ret) &&
         (MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY != ret) &&
@@ -1089,7 +1105,7 @@ static bool checkSslOperation(SslEndPoint_t*  peer,
         (MBEDTLS_SSL_ALERT_MSG_NO_APPLICATION_PROTOCOL != ret))
     {
         OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: -0x%x", (str), -ret);
-        (void)msg;
+        oc_mutex_lock(g_sslContextMutex);
 
         if (MBEDTLS_ERR_SSL_BAD_HS_CLIENT_HELLO != ret)
         {
@@ -1097,6 +1113,8 @@ static bool checkSslOperation(SslEndPoint_t*  peer,
         }
 
         RemovePeerFromList(&(peer)->sep.endpoint);
+
+        oc_mutex_unlock(g_sslContextMutex);
         return false;
     }
 
@@ -1108,6 +1126,8 @@ static bool checkSslOperation(SslEndPoint_t*  peer,
  */
 static void DeletePeerList()
 {
+    oc_mutex_assert_owner(g_sslContextMutex, true);
+
     VERIFY_NON_NULL_VOID(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL");
 
     size_t listLength = u_arraylist_length(g_caSslContext->peerList);
@@ -1370,10 +1390,10 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
     // Add all certificate ciphersuites
     if (true == g_caSslContext->cipherFlag[1])
     {
-        for (int i = 0; i < SSL_CIPHER_MAX - 1; i++)
+        for (unsigned int i = 0; i < SSL_CIPHER_MAX - 1; i++)
         {
-            if (MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 != tlsCipher[i][0] &&
-                    i != g_caSslContext->cipher)
+            if ((MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 != tlsCipher[i][0]) &&
+                    (i != (unsigned int)g_caSslContext->cipher))
             {
                 g_cipherSuitesList[index] = tlsCipher[i][0];
                 index ++;
@@ -1420,9 +1440,11 @@ static SslEndPoint_t * InitiateTlsHandshake(const CAEndpoint_t *endpoint)
     //Load allowed SVR suites from SVR DB
     SetupCipher(config, endpoint->adapter, endpoint->remoteId);
 
+    oc_mutex_lock(g_sslContextMutex);
     ret = u_arraylist_add(g_caSslContext->peerList, (void *) tep);
     if (!ret)
     {
+        oc_mutex_unlock(g_sslContextMutex);
         OIC_LOG(ERROR, NET_SSL_TAG, "u_arraylist_add failed!");
         DeleteSslEndPoint(tep);
         return NULL;
@@ -1439,6 +1461,7 @@ static SslEndPoint_t * InitiateTlsHandshake(const CAEndpoint_t *endpoint)
         {
             OIC_LOG(ERROR, NET_SSL_TAG, "Handshake failed due to socket error");
             RemovePeerFromList(&tep->sep.endpoint);
+            oc_mutex_unlock(g_sslContextMutex);
             return NULL;
         }
         if (!checkSslOperation(tep,
@@ -1446,11 +1469,14 @@ static SslEndPoint_t * InitiateTlsHandshake(const CAEndpoint_t *endpoint)
                                "Handshake error",
                                MBEDTLS_SSL_ALERT_MSG_HANDSHAKE_FAILURE))
         {
+            oc_mutex_unlock(g_sslContextMutex);
             OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
             DeleteSslEndPoint(tep);
             return NULL;
         }
     }
+
+    oc_mutex_unlock(g_sslContextMutex);
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return tep;
 }
@@ -1614,8 +1640,9 @@ CAResult_t CAinitSslAdapter()
     // Initialize mutex for tlsContext
     if (NULL == g_sslContextMutex)
     {
-        g_sslContextMutex = oc_mutex_new();
-        VERIFY_NON_NULL_RET(g_sslContextMutex, NET_SSL_TAG, "malloc failed", CA_MEMORY_ALLOC_FAILED);
+        g_sslContextMutex = oc_mutex_new_recursive();
+        VERIFY_NON_NULL_RET(g_sslContextMutex, NET_SSL_TAG, "oc_mutex_new_recursive failed",
+            CA_MEMORY_ALLOC_FAILED);
     }
     else
     {
@@ -1754,7 +1781,7 @@ CAResult_t CAinitSslAdapter()
     return CA_STATUS_OK;
 }
 
-SslCacheMessage_t *  NewCacheMessage(uint8_t * data, size_t dataLen)
+SslCacheMessage_t *NewCacheMessage(uint8_t * data, size_t dataLen)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(data, NET_SSL_TAG, "Param data is NULL" , NULL);
@@ -1789,7 +1816,7 @@ SslCacheMessage_t *  NewCacheMessage(uint8_t * data, size_t dataLen)
 /* Send data via TLS connection.
  */
 CAResult_t CAencryptSsl(const CAEndpoint_t *endpoint,
-                        void *data, size_t dataLen)
+                        const void *data, size_t dataLen)
 {
     int ret = 0;
 
@@ -1877,6 +1904,10 @@ CAResult_t CAencryptSsl(const CAEndpoint_t *endpoint,
 static void SendCacheMessages(SslEndPoint_t * tep)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
+
+    // The mutex protects the access to tep.
+    oc_mutex_assert_owner(g_sslContextMutex, true);
+
     VERIFY_NON_NULL_VOID(tep, NET_SSL_TAG, "Param tep is NULL");
 
     size_t listIndex = 0;
@@ -1933,7 +1964,11 @@ static void SendCacheMessages(SslEndPoint_t * tep)
 void CAsetSslHandshakeCallback(CAErrorCallback tlsHandshakeCallback)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s(%p)", __func__, tlsHandshakeCallback);
+
+    oc_mutex_lock(g_sslContextMutex);
     g_sslCallback = tlsHandshakeCallback;
+    oc_mutex_unlock(g_sslContextMutex);
+
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s(%p)", __func__, tlsHandshakeCallback);
 }
 
@@ -2074,7 +2109,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
                     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
                     return CA_STATUS_FAILED;
                 }
-                else if (ret > sizeof(peer->sep.publicKey))
+                else if ((size_t)ret > sizeof(peer->sep.publicKey))
                 {
                     assert(!"publicKey field of CASecureEndpoint_t is too small for the public key!");
                     OIC_LOG(ERROR, NET_SSL_TAG, "Public key of remote peer was too large");
@@ -2326,7 +2361,14 @@ static SslCipher_t GetCipherIndex(const uint32_t cipher)
 CAResult_t CAsetTlsCipherSuite(const uint32_t cipher)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
-    VERIFY_NON_NULL_RET(g_caSslContext, NET_SSL_TAG, "SSL context is not initialized." , CA_STATUS_NOT_INITIALIZED);
+    oc_mutex_lock(g_sslContextMutex);
+
+    if (NULL == g_caSslContext)
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "SSL context is not initialized.");
+        oc_mutex_unlock(g_sslContextMutex);
+        return CA_STATUS_NOT_INITIALIZED;
+    }
 
     SslCipher_t index = GetCipherIndex(cipher);
     if (SSL_CIPHER_MAX == index)
@@ -2347,6 +2389,7 @@ CAResult_t CAsetTlsCipherSuite(const uint32_t cipher)
     }
     g_caSslContext->cipher = index;
 
+    oc_mutex_unlock(g_sslContextMutex);
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return CA_STATUS_OK;
 }
@@ -2356,6 +2399,7 @@ CAResult_t CAinitiateSslHandshake(const CAEndpoint_t *endpoint)
     CAResult_t res = CA_STATUS_OK;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(endpoint, NET_SSL_TAG, "Param endpoint is NULL" , CA_STATUS_INVALID_PARAM);
+    oc_mutex_lock(g_sslContextMutex);
 
     if (NULL != GetSslPeer(endpoint))
     {
@@ -2366,12 +2410,12 @@ CAResult_t CAinitiateSslHandshake(const CAEndpoint_t *endpoint)
         }
     }
 
-    oc_mutex_lock(g_sslContextMutex);
     if (NULL == InitiateTlsHandshake(endpoint))
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "TLS handshake failed");
         res = CA_STATUS_FAILED;
     }
+
     oc_mutex_unlock(g_sslContextMutex);
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return res;

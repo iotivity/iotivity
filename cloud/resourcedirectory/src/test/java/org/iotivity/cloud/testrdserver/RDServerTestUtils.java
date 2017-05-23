@@ -49,7 +49,7 @@ public class RDServerTestUtils {
     }
 
     public static void resetRDDatabase() throws Exception {
-        MongoDB mongoDB = new MongoDB(Constants.RD_DB_NAME);
+        MongoDB mongoDB = new MongoDB("127.0.0.1", Constants.RD_DB_NAME);
         mongoDB.createTable(Constants.RD_TABLE);
         mongoDB.createTable(Constants.PRESENCE_TABLE);
     }

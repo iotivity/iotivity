@@ -107,6 +107,13 @@
  * UINT16_MAX does not appear to be defined on Arduino so we define it here.
  */
 #  define UINT16_MAX 65535
+
+/**
+ * Handle case that PRId64 is not defined in Arduino's inttypes.h
+ */
+#  if !defined(PRId64)
+#    define PRId64 "lld"
+#  endif
 #endif
 
 /**
@@ -124,6 +131,18 @@
 /**
  * Mark a parameter as unused. Used to prevent unused variable compiler warnings.
  */
-#define OC_UNUSED(x) (void)(x)
+#  define OC_UNUSED(x) (void)(x)
+
+/**
+ * Calling convention.
+ */
+#ifdef _WIN32
+/*
+ * Set to __stdcall for Windows, consistent with WIN32 APIs.
+ */
+#  define OC_CALL   __stdcall
+#else
+#  define OC_CALL
+#endif
 
 #endif

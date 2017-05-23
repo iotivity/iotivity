@@ -32,7 +32,8 @@ enum class ListenerFunc
     REQUEST_CERTIFICATE = 1,
     GET_ACLINFO,
     GET_CRL,
-    POST_CRL
+    POST_CRL,
+    UPDATE_IND_ACL
 };
 
 class JniOcCloudResultListener

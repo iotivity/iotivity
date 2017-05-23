@@ -835,8 +835,8 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
     {
         memset(options, 0, sizeof(OCHeaderOption)* MAX_HEADER_OPTIONS);
         size_t numOptions = 0;
-        uint8_t option0[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        uint16_t optionID = 2048;
+        uint8_t option0[] = { 16, 39 };
+        uint16_t optionID = COAP_OPTION_ACCEPT;
         size_t optionDataSize = sizeof(option0);
         OCSetHeaderOption(options,
                           &numOptions,
@@ -844,8 +844,8 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
                           option0,
                           optionDataSize);
 
-        uint8_t option1[] = { 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
-        optionID = 3000;
+        uint8_t option1[] = { 0, 8 };
+        optionID = COAP_OPTION_ACCEPT_VERSION;
         optionDataSize = sizeof(option1);
         OCSetHeaderOption(options,
                           &numOptions,

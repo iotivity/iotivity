@@ -33,8 +33,7 @@ extern "C" {
 // NOTE that this enum must match the gDoxmPropertyAccessModes
 // table in doxmresource.c
 typedef enum {
-    DOXM_OXMTYPE = 0, // TODO [IOT-2105]
-    DOXM_OXMS,
+    DOXM_OXMS = 1,
     DOXM_OXMSEL,
     DOXM_SCT,
     DOXM_OWNED,

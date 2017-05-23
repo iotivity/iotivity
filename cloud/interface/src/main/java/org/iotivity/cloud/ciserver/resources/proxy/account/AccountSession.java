@@ -42,14 +42,11 @@ import org.iotivity.cloud.util.Cbor;
  */
 
 public class AccountSession extends Resource {
-    IRequestChannel                       mAuthServer = null;
     private Cbor<HashMap<String, Object>> mCbor       = new Cbor<>();
 
     public AccountSession() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI,
                 Constants.SESSION_URI));
-
-        mAuthServer = ConnectorPool.getConnection("account");
     }
 
     @Override
@@ -71,6 +68,6 @@ public class AccountSession extends Resource {
                     ContentFormat.APPLICATION_CBOR,
                     mCbor.encodingPayloadToCbor(payloadData));
         }
-        mAuthServer.sendRequest(request, srcDevice);
+        ConnectorPool.getConnection("account").sendRequest(request, srcDevice);
     }
 }

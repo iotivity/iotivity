@@ -84,8 +84,6 @@ static OCResourceHandle    gDoxmHandle = NULL;
 static OicSecOxm_t gDoxmDefaultOxm = OIC_RANDOM_DEVICE_PIN;
 static OicSecDoxm_t gDefaultDoxm =
 {
-    NULL,                   /* OicUrn_t *oxmType */
-    0,                      /* size_t oxmTypeLen */
     &gDoxmDefaultOxm,       /* uint16_t *oxm */
     1,                      /* size_t oxmLen */
     OIC_RANDOM_DEVICE_PIN,  /* uint16_t oxmSel */
@@ -162,13 +160,6 @@ void DeleteDoxmBinData(OicSecDoxm_t* doxm)
 {
     if (doxm)
     {
-        //Clean oxmType
-        for (size_t i = 0; i < doxm->oxmTypeLen; i++)
-        {
-            OICFree(doxm->oxmType[i]);
-        }
-        OICFree(doxm->oxmType);
-
         //clean oxm
         OICFree(doxm->oxm);
 
@@ -224,28 +215,6 @@ OCStackResult DoxmToCBORPayloadPartial(const OicSecDoxm_t *doxm,
 
     cborEncoderResult = cbor_encoder_create_map(&encoder, &doxmMap, CborIndefiniteLength);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Doxm Map.");
-
-    // oxmtype
-    // TODO [IOT-2105]: resolve "oxmtype" undocumented tag/value
-    if (propertiesToInclude[DOXM_OXMTYPE] && doxm->oxmTypeLen > 0)
-    {
-        OIC_LOG_V(DEBUG, TAG, "%s: including %s.", __func__, OIC_JSON_OXM_TYPE_NAME);
-        CborEncoder oxmType;
-        cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OXM_TYPE_NAME,
-            strlen(OIC_JSON_OXM_TYPE_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmtype Tag.");
-        cborEncoderResult = cbor_encoder_create_array(&doxmMap, &oxmType, doxm->oxmTypeLen);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmtype Array.");
-
-        for (size_t i = 0; i < doxm->oxmTypeLen; i++)
-        {
-            cborEncoderResult = cbor_encode_text_string(&oxmType, doxm->oxmType[i],
-                strlen(doxm->oxmType[i]));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmtype Value.");
-        }
-        cborEncoderResult = cbor_encoder_close_container(&doxmMap, &oxmType);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing oxmtype.");
-    }
 
     // oxms Property
     if (propertiesToInclude[DOXM_OXMS] && doxm->oxmLen > 0)
@@ -468,8 +437,6 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm,
         allProps[i] = true;
     }
 
-    allProps[DOXM_OXMTYPE] = false; // TODO [IOT-2105]: resolve "oxmtype" undocumented tag/value
-
     return DoxmToCBORPayloadPartial(doxm, payload, size, allProps);
 }
 
@@ -501,38 +468,6 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     CborValue doxmMap;
     OicSecDoxm_t *doxm = (OicSecDoxm_t *)OICCalloc(1, sizeof(*doxm));
     VERIFY_NOT_NULL(TAG, doxm, ERROR);
-
-    cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_OXM_TYPE_NAME, &doxmMap);
-    // OxmType
-    // TODO [IOT-2105]: resolve "oxmtype" undocumented tag/value
-    if (CborNoError == cborFindResult && cbor_value_is_array(&doxmMap))
-    {
-        OIC_LOG(DEBUG, TAG, "Found doxm.oxmtype tag in doxmMap.");
-
-        CborValue oxmType;
-
-        cborFindResult = cbor_value_get_array_length(&doxmMap, &doxm->oxmTypeLen);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding oxmTypeLen.");
-        VERIFY_SUCCESS(TAG, doxm->oxmTypeLen != 0, ERROR);
-
-        doxm->oxmType = (OicUrn_t *)OICCalloc(doxm->oxmTypeLen, sizeof(*doxm->oxmType));
-        VERIFY_NOT_NULL(TAG, doxm->oxmType, ERROR);
-
-        cborFindResult = cbor_value_enter_container(&doxmMap, &oxmType);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering oxmType Array.")
-
-        int i = 0;
-        size_t oxmTypeStrlen = 0;
-        while (cbor_value_is_valid(&oxmType) && cbor_value_is_text_string(&oxmType))
-        {
-            OIC_LOG_V(DEBUG, TAG, "Read doxm.oxmtype value = %s", oxmType);
-            cborFindResult = cbor_value_dup_text_string(&oxmType, &doxm->oxmType[i++],
-                                                        &oxmTypeStrlen, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding omxType text string.");
-            cborFindResult = cbor_value_advance(&oxmType);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing oxmType.");
-        }
-    }
 
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_OXMS_NAME, &doxmMap);
 
@@ -953,6 +888,11 @@ static bool ValidateQuery(const char * query)
             bDeviceIDQry = true;
             OicUuid_t subject = {.id={0}};
 
+            if (sizeof(subject.id) < parseIter.valLen)
+            {
+                OIC_LOG (ERROR, TAG, "Subject ID length is too long");
+                return false;
+            }
             memcpy(subject.id, parseIter.valPos, parseIter.valLen);
             if (0 == memcmp(&gDoxm->deviceID.id, &subject.id, sizeof(gDoxm->deviceID.id)))
             {
@@ -1029,20 +969,49 @@ OCStackResult DoxmUpdateWriteableProperty(const OicSecDoxm_t* src, OicSecDoxm_t*
     {
         // Update oxmsel
         dst->oxmSel = src->oxmSel;
+        OIC_LOG_V(DEBUG, TAG, "%s: updated doxm.oxmsel = %d", __func__,
+            (int)dst->oxmSel);
 
-        // Update owner
+        // Update devowneruuid
         memcpy(&(dst->owner), &(src->owner), sizeof(OicUuid_t));
+#ifndef NDEBUG // if debug build, log the new uuid
+        char uuidString[UUID_STRING_SIZE] = { 0 };
+        bool convertedUUID = OCConvertUuidToString(dst->owner.id, uuidString);
+        if (convertedUUID)
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: updated doxm.devowneruuid = %s", __func__,
+                uuidString);
+        }
+#endif
 
-        // Update rowner
+        // Update rowneruuid
         memcpy(&(dst->rownerID), &(src->rownerID), sizeof(OicUuid_t));
+#ifndef NDEBUG // if debug build, log the new uuid
+        convertedUUID = OCConvertUuidToString(dst->rownerID.id, uuidString);
+        if (convertedUUID)
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: updated doxm.rowneruuid = %s", __func__,
+                uuidString);
+        }
+#endif
 
         // Update deviceuuid
         memcpy(&(dst->deviceID), &(src->deviceID), sizeof(OicUuid_t));
+#ifndef NDEBUG // if debug build, log the new uuid
+        convertedUUID = OCConvertUuidToString(dst->deviceID.id, uuidString);
+        if (convertedUUID)
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: updated doxm.deviceuuid = %s", __func__,
+                uuidString);
+        }
+#endif
 
         // Update owned status
         if(dst->owned != src->owned)
         {
             dst->owned = src->owned;
+            OIC_LOG_V(DEBUG, TAG, "%s: updated owned = %s", __func__,
+                dst->owned?"true":"false");
         }
 
 #ifdef MULTIPLE_OWNER
@@ -1061,6 +1030,8 @@ OCStackResult DoxmUpdateWriteableProperty(const OicSecDoxm_t* src, OicSecDoxm_t*
             if (NULL != dst->mom)
             {
                 dst->mom->mode = src->mom->mode;
+                OIC_LOG_V(DEBUG, TAG, "%s: updated mom->mode = %d", __func__,
+                    (int)dst->mom->mode);
             }
         }
 #endif //MULTIPLE_OWNER
@@ -1087,6 +1058,12 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
         CAResult_t caRes = CAGetSecureEndpointData(object, &authenticationSubOwnerInfo);
         if (CA_STATUS_OK == caRes)
         {
+            if (!gDoxm)
+            {
+                OIC_LOG_V(WARNING, TAG, "%s: gDoxm is NULL", __func__);
+                return;
+            }
+
             if (0 == memcmp(authenticationSubOwnerInfo.identity.id, gDoxm->owner.id,
                             authenticationSubOwnerInfo.identity.id_length))
             {
@@ -1111,6 +1088,11 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
                 if(subOwnerInst)
                 {
                     char* strUuid = NULL;
+                    if (sizeof(subOwnerInst->uuid.id) < authenticationSubOwnerInfo.identity.id_length)
+                    {
+                        OIC_LOG(ERROR, TAG, "Identity id is too long");
+                        return;
+                    }
                     memcpy(subOwnerInst->uuid.id, authenticationSubOwnerInfo.identity.id,
                            authenticationSubOwnerInfo.identity.id_length);
                     if(OC_STACK_OK != ConvertUuidToStr(&subOwnerInst->uuid, &strUuid))
@@ -1251,6 +1233,8 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                 goto exit;
             }
 
+            VERIFY_NOT_NULL(TAG, gDoxm, ERROR);
+
             // in owned state
             if (true == gDoxm->owned)
             {
@@ -1350,12 +1334,31 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
             }
 
             // in unowned state
+            // TODO [IOT-2107] this logic assumes that the only POST to /doxm in
+            // unowned state is either a) changing to owned or b) setting oxmsel and
+            // therefore (in case b) should enable the proper cipher for OTM.  But it's
+            // allowable for Client to be posting other things such as /doxm.rowneruuid
+            // when owned == false, too.  Added a workaround (see 'workaround' below)
+            // but this POST handler needs to be fixed per IOT-2107.
             if ((false == gDoxm->owned) && (false == newDoxm->owned))
             {
                 if (false == ValidateOxmsel(gDoxm->oxm, gDoxm->oxmLen, &newDoxm->oxmSel))
                 {
                     OIC_LOG(ERROR, TAG, "Not acceptable request because oxmsel does not support on Server");
                     ehRet = OC_EH_NOT_ACCEPTABLE;
+                    goto exit;
+                }
+
+                // workaround
+                // We wouldn't be at this point in the
+                // code if the POST contained R-only Properties for the current /pstat.dos.s
+                // state, so we want to update writeable properties now that we've validated
+                // oxmsel is a valid oxm for this device.
+                res = DoxmUpdateWriteableProperty(newDoxm, gDoxm);
+                if (OC_STACK_OK != res)
+                {
+                    OIC_LOG(ERROR, TAG, "gDoxm properties were not able to be updated so we cannot handle the request.");
+                    ehRet = OC_EH_ERROR;
                     goto exit;
                 }
 
@@ -1583,7 +1586,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                         ehRet = OC_EH_ERROR;
                     }
 
-                    RegisterOTMSslHandshakeCallback(NULL);
+                    RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
                     CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
                     VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
                     OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
@@ -1759,7 +1762,7 @@ OCStackResult CreateDoxmResource()
                                          OIC_RSRC_DOXM_URI,
                                          DoxmEntityHandler,
                                          NULL,
-                                         OC_SECURE |
+                                         OC_SECURE | OC_NONSECURE |
                                          OC_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)
@@ -1777,8 +1780,12 @@ OCStackResult CreateDoxmResource()
  */
 static OCStackResult CheckDeviceID()
 {
+    OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
+
     OCStackResult ret = OC_STACK_ERROR;
     bool validId = false;
+
+    VERIFY_NOT_NULL_RETURN(TAG, gDoxm, ERROR, OC_STACK_INVALID_PARAM);
 
     for (uint8_t i = 0; i < UUID_LENGTH; i++)
     {
@@ -1861,6 +1868,8 @@ static OCStackResult CheckDeviceID()
     {
         ret = OC_STACK_OK;
     }
+
+    OIC_LOG_V(DEBUG, TAG, "OUT: %s", __func__);
 
     return ret;
 }
@@ -2220,6 +2229,8 @@ OCStackResult SetMOTStatus(bool enable)
 
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
 
+    VERIFY_NOT_NULL(TAG, gDoxm, ERROR);
+
     if (NULL == gDoxm->mom && !enable)
     {
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
@@ -2395,35 +2406,8 @@ bool AreDoxmBinPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* doxm2)
         return false;
     }
 
-    //Compare the contents of the oxmType array and its length oxmTypeLen.
-    size_t arrayLength = doxm1->oxmTypeLen;
-
-    if (arrayLength != doxm2->oxmTypeLen)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: oxmTypeLen mismatch: (%" PRIuPTR ", %" PRIuPTR ")",
-            __func__, arrayLength, doxm2->oxmTypeLen);
-        return false;
-    }
-
-    for (size_t i = 0; i < arrayLength; i++)
-    {
-        if (NULL == doxm1->oxmType[i] || NULL == doxm2->oxmType[i])
-        {
-            OIC_LOG_V(ERROR, TAG, "%s: unexpected NULL found in the oxmType array",
-                __func__);
-            return false;
-        }
-
-        if (0 != strcmp(doxm1->oxmType[i], doxm2->oxmType[i]))
-        {
-            OIC_LOG_V(ERROR, TAG, "%s: oxmType mismatch: (%s, %s)",
-                __func__, doxm1->oxmType[i], doxm2->oxmType[i]);
-            return false;
-        }
-    }
-
     //Compare the contents of the oxm array and its length oxmLen.
-    arrayLength = doxm1->oxmLen;
+    size_t arrayLength = doxm1->oxmLen;
 
     if (arrayLength != doxm2->oxmLen)
     {
@@ -2436,7 +2420,7 @@ bool AreDoxmBinPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* doxm2)
     {
         if (doxm1->oxm[i] != doxm2->oxm[i])
         {
-            OIC_LOG_V(ERROR, TAG, "%s: oxmType mismatch: (%u, %u)",
+            OIC_LOG_V(ERROR, TAG, "%s: oxm mismatch: (%u, %u)",
                 __func__, (uint32_t)doxm1->oxm[i], (uint32_t)doxm2->oxm[i]);
             return false;
         }

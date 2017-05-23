@@ -39,17 +39,14 @@ import org.iotivity.cloud.ciserver.Constants;
  */
 
 public class Certificate extends Resource {
-    IRequestChannel mAuthServer = null;
-
     public Certificate() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.CREDPROV_URI,
                 Constants.CERT_URI));
-        mAuthServer = ConnectorPool.getConnection("account");
     }
 
     @Override
     public void onDefaultRequestReceived(Device srcDevice, IRequest request)
             throws ServerException {
-        mAuthServer.sendRequest(request, srcDevice);
+        ConnectorPool.getConnection("account").sendRequest(request, srcDevice);
     }
 }

@@ -66,9 +66,6 @@ extern jclass g_cls_byte3DArray;
 extern jclass g_cls_Integer;
 extern jclass g_cls_int1DArray;
 extern jclass g_cls_int2DArray;
-extern jclass g_cls_Long;
-extern jclass g_cls_long1DArray;
-extern jclass g_cls_long2DArray;
 extern jclass g_cls_Double;
 extern jclass g_cls_double1DArray;
 extern jclass g_cls_double2DArray;
@@ -108,6 +105,7 @@ extern jclass g_cls_OcAccountManager;
 #endif
 #ifdef __WITH_TLS__
 extern jclass g_cls_OcCloudProvisioning;
+extern jclass g_cls_OcOicSecCloudAcl_ace;
 #endif
 
 extern jclass g_cls_OcOicSecAcl_ace;
@@ -115,7 +113,6 @@ extern jclass g_cls_OcOicSecAcl_resr;
 extern jclass g_cls_OcOicSecAcl_validity;
 
 extern jmethodID g_mid_Integer_ctor;
-extern jmethodID g_mid_Long_ctor;
 extern jmethodID g_mid_Double_ctor;
 extern jmethodID g_mid_Boolean_ctor;
 extern jmethodID g_mid_LinkedList_ctor;
@@ -154,6 +151,12 @@ extern jmethodID g_mid_OcAccountManager_ctor;
 #ifdef __WITH_TLS__
 extern jmethodID g_mid_OcCloudProvisioning_getIP;
 extern jmethodID g_mid_OcCloudProvisioning_getPort;
+extern jmethodID g_mid_OcOicSecCloudAcl_ace_get_aclId;
+extern jmethodID g_mid_OcOicSecCloudAcl_ace_get_subjectID;
+extern jmethodID g_mid_OcOicSecCloudAcl_ace_get_stype;
+extern jmethodID g_mid_OcOicSecCloudAcl_ace_get_permission;
+extern jmethodID g_mid_OcOicSecCloudAcl_ace_get_resources;
+extern jmethodID g_mid_OcOicSecCloudAcl_ace_get_validities;
 #endif
 
 extern jmethodID g_mid_OcOicSecAcl_get_rownerID;

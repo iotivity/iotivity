@@ -115,6 +115,7 @@ CAResult_t CAEDRServerStop()
 CAResult_t CAEDRServerInitialize(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "CAEDRServerInitialize");
+    OC_UNUSED(handle);
     return CA_STATUS_OK;
 }
 

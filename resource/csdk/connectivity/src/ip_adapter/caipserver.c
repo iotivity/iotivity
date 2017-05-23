@@ -1554,8 +1554,28 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, size_t *size)
 #endif
 
     size_t interfaces = u_arraylist_length(iflist);
-    size_t totalEndpoints = interfaces * endpointsPerInterface;
+    for (size_t i = 0; i < interfaces; i++)
+    {
+        CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+        if (!ifitem)
+        {
+            continue;
+        }
 
+        if ((ifitem->family == AF_INET6 && !caglobals.ip.ipv6enabled) ||
+            (ifitem->family == AF_INET && !caglobals.ip.ipv4enabled))
+        {
+            interfaces--;
+        }
+    }
+
+    if (!interfaces)
+    {
+        OIC_LOG(DEBUG, TAG, "network interface size is zero");
+        return CA_STATUS_OK;
+    }
+
+    size_t totalEndpoints = interfaces * endpointsPerInterface;
     CAEndpoint_t *eps = (CAEndpoint_t *)OICCalloc(totalEndpoints, sizeof (CAEndpoint_t));
     if (!eps)
     {
@@ -1564,10 +1584,16 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, size_t *size)
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    for (size_t i = 0, j = 0; i < interfaces; i++)
+    for (size_t i = 0, j = 0; i < u_arraylist_length(iflist); i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
-        if(!ifitem)
+        if (!ifitem)
+        {
+            continue;
+        }
+
+        if ((ifitem->family == AF_INET6 && !caglobals.ip.ipv6enabled) ||
+            (ifitem->family == AF_INET && !caglobals.ip.ipv4enabled))
         {
             continue;
         }

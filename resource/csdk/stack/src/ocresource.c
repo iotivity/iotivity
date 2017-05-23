@@ -498,7 +498,17 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
             OIC_LOG_V(DEBUG, TAG, "value: %s", value);
             itf[i] = OICStrdup(value);
         }
-        OCRepPayloadSetStringArrayAsOwner(tempPayload, OC_RSRVD_INTERFACE, itf, ifDim);
+
+        bool b = OCRepPayloadSetStringArrayAsOwner(tempPayload, OC_RSRVD_INTERFACE, itf, ifDim);
+
+        if (!b)
+        {
+            for (uint8_t i = 0; i < numElement; i++)
+            {
+                OICFree(itf[i]);
+            }
+            OICFree(itf);
+        }
     }
 
     for (OCAttribute *resAttrib = resourcePtr->rsrcAttributes; resAttrib; resAttrib = resAttrib->next)
@@ -1206,13 +1216,13 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
 
                         char *epStr = OCCreateEndpointStringFromCA(&caEps[i]);
                         urlInfoPayload[dimensions[0]] = BuildUrlInfoWithProtocol(proto, epStr);
-                        dimensions[0] = dimensions[0] + 1;
-                        if (!urlInfoPayload[i])
+                        if (!urlInfoPayload[dimensions[0]])
                         {
                             OIC_LOG(ERROR, TAG, "Unable to build urlInfo object for protocol");
                             ret = OC_STACK_ERROR;
                             goto exit;
                         }
+                        dimensions[0] = dimensions[0] + 1;
                     }
                 }
             }
@@ -1273,11 +1283,6 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
        }
     }
 
-    bool isVirtual = false;
-    if (GetTypeOfVirtualURI(resourcePtr->uri) != OC_UNKNOWN_URI)
-    {
-        isVirtual = true;
-    }
 #ifdef TCP_ADAPTER
     uint16_t tcpPort = 0;
     GetTCPPortInfo(devAddr, &tcpPort, (resourcePtr->resourceProperties & OC_SECURE));

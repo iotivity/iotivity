@@ -609,34 +609,6 @@ static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
     }
 }
 
-#ifdef __WITH_TLS__
-static bool CAIsTlsMessage(const unsigned char* data, size_t length)
-{
-    if (NULL == data || 0 == length)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: null input param", __func__);
-        return false;
-    }
-
-    unsigned char first_byte = data[0];
-
-    //TLS Plaintext has four types: change_cipher_spec = [14], alert = [15],
-    //handshake = [16], application_data = [17] in HEX
-    const uint8_t tls_head_type[] = {0x14, 0x15, 0x16, 0x17};
-    size_t i = 0;
-
-    for (i = 0; i < sizeof(tls_head_type); i++)
-    {
-        if(tls_head_type[i] == first_byte)
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-#endif
-
 /**
  * Clean socket state data
  *
@@ -1353,8 +1325,28 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, size_t *size)
 #endif
 
     size_t interfaces = u_arraylist_length(iflist);
-    size_t totalEndpoints = interfaces * endpointsPerInterface;
+    for (size_t i = 0; i < interfaces; i++)
+    {
+        CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+        if (!ifitem)
+        {
+            continue;
+        }
 
+        if ((ifitem->family == AF_INET6 && !caglobals.ip.ipv6enabled) ||
+            (ifitem->family == AF_INET && !caglobals.ip.ipv4enabled))
+        {
+            interfaces--;
+        }
+    }
+
+    if (!interfaces)
+    {
+        OIC_LOG(DEBUG, TAG, "network interface size is zero");
+        return CA_STATUS_OK;
+    }
+
+    size_t totalEndpoints = interfaces * endpointsPerInterface;
     CAEndpoint_t *ep = (CAEndpoint_t *)OICCalloc(totalEndpoints, sizeof (CAEndpoint_t));
     if (!ep)
     {
@@ -1363,10 +1355,16 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, size_t *size)
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    for (size_t i = 0, j = 0; i < interfaces; i++)
+    for (size_t i = 0, j = 0; i < u_arraylist_length(iflist); i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
         if (!ifitem)
+        {
+            continue;
+        }
+
+        if ((ifitem->family == AF_INET6 && !caglobals.ip.ipv6enabled) ||
+            (ifitem->family == AF_INET && !caglobals.ip.ipv4enabled))
         {
             continue;
         }

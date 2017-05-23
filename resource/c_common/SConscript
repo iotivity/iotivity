@@ -162,8 +162,8 @@ common_env = env.Clone()
 # Enable treating all warnings as errors
 ######################################################################
 
-if common_env['CC'] == 'cl':
-    common_env.AppendUnique(CCFLAGS=['/W4'])
+if target_os in ['windows', 'msys_nt']:
+    common_env.AppendUnique(CCFLAGS=['/W4', '/WX'])
 
 ######################################################################
 # Add platform-specific helper library
@@ -196,6 +196,11 @@ elif target_os in ['arduino']:
     common_src.append('ocatomic/src/arduino/ocatomic.c')
 else:
     common_src.append('ocatomic/src/others/ocatomic.c')
+
+if target_os in ['windows']:
+    common_src.append('oic_platform/src/windows/oic_winplatform.cpp')
+else:
+    common_src.append('oic_platform/src/others/oic_otherplatforms.c')
 
 # C++ Arduino's <Timer.h> is included so use C++ compiler/flags
 if target_os in ['arduino']:

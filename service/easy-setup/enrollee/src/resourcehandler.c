@@ -307,7 +307,7 @@ void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* in
         }
 
         int cntRequest = 0;
-        for (int i = 0 ; i < NUM_CONNECT_TYPE ; ++i)
+        for (unsigned int i = 0 ; i < NUM_CONNECT_TYPE ; ++i)
         {
             g_ESEasySetupResource.connectRequest[i] = ES_CONNECT_NONE;
             connectRequest->connect[i] = ES_CONNECT_NONE;
@@ -597,7 +597,7 @@ OCRepPayload* constructResponseOfWiFiConf(char *interface)
 
         interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
 
-        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_INTERFACE, (char **)interfaces, interfacesDimensions);
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_INTERFACE, (const char **)interfaces, interfacesDimensions);
 
         size_t resourceTypesDimensions[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
         char **resourceTypes = (char **)OICMalloc(2 * sizeof(char*));
@@ -609,7 +609,7 @@ OCRepPayload* constructResponseOfWiFiConf(char *interface)
 
         resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_WIFICONF);
 
-        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_RES_TYPE, (char **)resourceTypes, resourceTypesDimensions);
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_RES_TYPE, (const char **)resourceTypes, resourceTypesDimensions);
     }
     else
     {
@@ -693,7 +693,7 @@ OCRepPayload* constructResponseOfCoapCloudConf(char *interface)
 
         interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
 
-        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_INTERFACE, (char **)interfaces, interfacesDimensions);
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_INTERFACE, (const char **)interfaces, interfacesDimensions);
 
         size_t resourceTypesDimensions[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
         char **resourceTypes = (char **)OICMalloc(2 * sizeof(char*));
@@ -705,7 +705,7 @@ OCRepPayload* constructResponseOfCoapCloudConf(char *interface)
 
         resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF);
 
-        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_RES_TYPE, (char **)resourceTypes, resourceTypesDimensions);
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_RES_TYPE, (const char **)resourceTypes, resourceTypesDimensions);
     }
     else
     {
@@ -775,7 +775,7 @@ OCRepPayload* constructResponseOfDevConf(char *interface)
 
         interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
 
-        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_INTERFACE, (char **)interfaces, interfacesDimensions);
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_INTERFACE, (const char **)interfaces, interfacesDimensions);
 
         size_t resourceTypesDimensions[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
         char **resourceTypes = (char **)OICMalloc(2 * sizeof(char*));
@@ -787,7 +787,7 @@ OCRepPayload* constructResponseOfDevConf(char *interface)
 
         resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_DEVCONF);
 
-        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_RES_TYPE, (char **)resourceTypes, resourceTypesDimensions);
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_RES_TYPE, (const char **)resourceTypes, resourceTypesDimensions);
     }
     else
     {
@@ -1071,7 +1071,7 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
         interfaces[1] = OICStrdup(OC_RSRVD_INTERFACE_LL);
         interfaces[2] = OICStrdup(OC_RSRVD_INTERFACE_BATCH);
 
-        OCRepPayloadSetStringArray(repPayload, OC_RSRVD_ES_INTERFACE, (char **)interfaces, interfacesDimensions);
+        OCRepPayloadSetStringArray(repPayload, OC_RSRVD_ES_INTERFACE, (const char **)interfaces, interfacesDimensions);
 
         size_t resourceTypesDimensions[MAX_REP_ARRAY_DEPTH] = {2, 0, 0};
         char **resourceTypes = (char **)OICMalloc(2 * sizeof(char*));
@@ -1084,7 +1084,7 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
         resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_EASYSETUP);
         resourceTypes[1] = OICStrdup(OC_RSRVD_ES_RES_TYPE_COL);
 
-        OCRepPayloadSetStringArray(repPayload, OC_RSRVD_ES_RES_TYPE, (char **)resourceTypes, resourceTypesDimensions);
+        OCRepPayloadSetStringArray(repPayload, OC_RSRVD_ES_RES_TYPE, (const char **)resourceTypes, resourceTypesDimensions);
 
         OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_PROVSTATUS, g_ESEasySetupResource.status);
         OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_LAST_ERRORCODE, g_ESEasySetupResource.lastErrCode);

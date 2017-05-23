@@ -1205,7 +1205,7 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
             if(CA_STATUS_OK != caResult)
             {
                 OIC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
-                SetResult(otmCtx, caResult);
+                SetResult(otmCtx, CAResultToOCResult(caResult));
                 return OC_STACK_DELETE_TRANSACTION;
             }
 

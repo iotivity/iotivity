@@ -50,13 +50,9 @@ import org.iotivity.cloud.util.Cbor;
 
 public class ResourceDirectory extends Resource {
     private Cbor<HashMap<String, Object>> mCbor     = new Cbor<>();
-    IRequestChannel                       mRDServer = null;
-    IRequestChannel                       mASServer = null;
 
     public ResourceDirectory() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.RD_URI));
-        mRDServer = ConnectorPool.getConnection("rd");
-        mASServer = ConnectorPool.getConnection("account");
     }
 
     @Override
@@ -87,12 +83,12 @@ public class ResourceDirectory extends Resource {
                         query.toString(), ContentFormat.APPLICATION_CBOR,
                         mCbor.encodingPayloadToCbor(requestPayload));
 
-                mASServer.sendRequest(requestToAS,
+                ConnectorPool.getConnection("account").sendRequest(requestToAS,
                         new AccountReceiveHandler(request, srcDevice));
                 break;
 
             case DELETE:
-                mRDServer.sendRequest(request, srcDevice);
+                ConnectorPool.getConnection("rd").sendRequest(request, srcDevice);
                 break;
 
             default:
@@ -123,7 +119,7 @@ public class ResourceDirectory extends Resource {
                             null, ContentFormat.APPLICATION_CBOR,
                             convertedPayload);
 
-                    mRDServer.sendRequest(mRequest,
+                    ConnectorPool.getConnection("rd").sendRequest(mRequest,
                             new PublishResponseHandler(mSrcDevice));
                     break;
 

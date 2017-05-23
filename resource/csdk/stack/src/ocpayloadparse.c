@@ -514,10 +514,8 @@ static CborError ParseResources(OCDiscoveryPayload **outPayload, CborValue *reso
 
                 if (OC_STACK_OK == parseResult)
                 {
-                    // pri
+                    // pri - optional
                     err = cbor_value_map_find_value(&epMap, OC_RSRVD_PRIORITY, &curVal);
-                    VERIFY_CBOR_SUCCESS(TAG, err, "to find priority tag");
-                    err = cbor_value_is_valid(&curVal) ? CborNoError : CborUnknownError;
                     VERIFY_CBOR_SUCCESS(TAG, err, "to find priority tag");
                     if (cbor_value_is_valid(&curVal))
                     {
@@ -563,6 +561,8 @@ static CborError ParseResources(OCDiscoveryPayload **outPayload, CborValue *reso
         else
         {
             char *di = OICStrdup(resource->anchor + 6);
+            VERIFY_PARAM_NON_NULL(TAG, di, "Failed to duplicating di");
+
             char *slash = strchr(di, '/');
             if (slash)
             {

@@ -167,6 +167,7 @@ if env.get('SECURED') == '1':
 if env.get('WITH_CLOUD'):
 	ocstack_files += [
 				'JniOcAccountManager.cpp',
+				'JniCreateAciIdListener.cpp',
 				'JniOcCloudResultListener.cpp',
 				'JniGetAclIdByDeviceListener.cpp'
 			]

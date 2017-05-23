@@ -306,7 +306,7 @@ namespace OCAccountManagerTest
         std::string host("coap://192.168.1.2:5000");
         std::string groupId("AnyGroupId");
         OCRepresentation propertyValue;
-        propertyValue.setValue("AnyProperty", std::string("AnyValue"));
+        propertyValue.setValue("AnyProperty", "AnyValue");
         OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
         EXPECT_TRUE(NULL != accountManager);
         EXPECT_EQ(OC_STACK_OK, accountManager->addPropertyValueToGroup(groupId, propertyValue,
@@ -318,7 +318,7 @@ namespace OCAccountManagerTest
         std::string host("coap://192.168.1.2:5000");
         std::string groupId("AnyGroupId");
         OCRepresentation propertyValue;
-        propertyValue.setValue("AnyProperty", std::string("AnyValue"));
+        propertyValue.setValue("AnyProperty", "AnyValue");
         OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
         EXPECT_TRUE(NULL != accountManager);
         EXPECT_ANY_THROW(accountManager->addPropertyValueToGroup(groupId, propertyValue,
@@ -331,7 +331,7 @@ namespace OCAccountManagerTest
         std::string host("coap://192.168.1.2:5000");
         std::string groupId("AnyGroupId");
         OCRepresentation propertyValue;
-        propertyValue.setValue("AnyProperty", std::string("AnyValue"));
+        propertyValue.setValue("AnyProperty", "AnyValue");
         OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
         EXPECT_TRUE(NULL != accountManager);
         EXPECT_EQ(OC_STACK_OK, accountManager->deletePropertyValueFromGroup(groupId, propertyValue,
@@ -343,7 +343,7 @@ namespace OCAccountManagerTest
         std::string host("coap://192.168.1.2:5000");
         std::string groupId("AnyGroupId");
         OCRepresentation propertyValue;
-        propertyValue.setValue("AnyProperty", std::string("AnyValue"));
+        propertyValue.setValue("AnyProperty", "AnyValue");
         OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
         EXPECT_TRUE(NULL != accountManager);
         EXPECT_ANY_THROW(accountManager->deletePropertyValueFromGroup(groupId, propertyValue,
@@ -356,7 +356,7 @@ namespace OCAccountManagerTest
         std::string host("coap://192.168.1.2:5000");
         std::string groupId("AnyGroupId");
         OCRepresentation propertyValue;
-        propertyValue.setValue("AnyProperty", std::string("AnyValue"));
+        propertyValue.setValue("AnyProperty", "AnyValue");
         OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
         EXPECT_TRUE(NULL != accountManager);
         EXPECT_EQ(OC_STACK_OK, accountManager->updatePropertyValueOnGroup(groupId, propertyValue,
@@ -368,7 +368,7 @@ namespace OCAccountManagerTest
         std::string host("coap://192.168.1.2:5000");
         std::string groupId("AnyGroupId");
         OCRepresentation propertyValue;
-        propertyValue.setValue("AnyProperty", std::string("AnyValue"));
+        propertyValue.setValue("AnyProperty", "AnyValue");
         OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
         EXPECT_TRUE(NULL != accountManager);
         EXPECT_ANY_THROW(accountManager->updatePropertyValueOnGroup(groupId, propertyValue,

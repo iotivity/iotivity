@@ -283,12 +283,6 @@ static bool CAIPGetAddrInfo(int idx, u_arraylist_t *iflist)
             continue;
         }
 
-        if ((family == AF_INET6 && !caglobals.ip.ipv6enabled) ||
-            (family == AF_INET && !caglobals.ip.ipv4enabled))
-        {
-            continue;
-        }
-
         int ifindex = if_nametoindex(ifa->ifa_name);
         if (idx && (ifindex != idx))
         {
@@ -393,6 +387,8 @@ static CAInterface_t *CANewInterfaceItem(int index, char *name, int family,
 
 void CAIPConnectionStateChangedCb(connection_type_e type, void* userData)
 {
+    OC_UNUSED(userData);
+
     switch (type)
     {
         case CONNECTION_TYPE_DISCONNECTED:

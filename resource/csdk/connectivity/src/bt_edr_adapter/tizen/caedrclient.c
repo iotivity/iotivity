@@ -160,6 +160,7 @@ void CAEDRSocketConnectionStateCallback(int result, bt_socket_connection_state_e
                                        bt_socket_connection_s *connection, void *userData)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OC_UNUSED(userData);
 
     EDRDevice *device = NULL;
 
@@ -250,6 +251,7 @@ void CAEDRDeviceDiscoveryCallback(int result, bt_adapter_device_discovery_state_
                                  bt_adapter_device_discovery_info_s *discoveryInfo, void *userData)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OC_UNUSED(userData);
 
     EDRDevice *device = NULL;
 
@@ -372,6 +374,8 @@ void CAEDRServiceSearchedCallback(int32_t result,
                 bt_device_sdp_info_s *sdpInfo,void *userData)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OC_UNUSED(result);
+    OC_UNUSED(userData);
 
     if (NULL == sdpInfo)
     {
@@ -935,6 +939,7 @@ CAResult_t CAEDRClientDisconnect(const int32_t clientID)
 void CAEDRDataRecvCallback(bt_socket_received_data_s *data, void *userData)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OC_UNUSED(userData);
 
     EDRDevice *device = NULL;
 

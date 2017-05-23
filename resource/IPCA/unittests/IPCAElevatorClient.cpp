@@ -289,6 +289,7 @@ void IPCAElevatorClient::StopObserve()
     if (m_observeHandle)
     {
         IPCACloseHandle(m_observeHandle, nullptr, 0);
+        m_observeHandle = nullptr;
     }
 }
 
@@ -369,6 +370,7 @@ void IPCAElevatorClient::SetUp()
     m_ipcaAppHandle = nullptr;
     m_deviceDiscoveryHandle = nullptr;
     m_deviceHandle = nullptr;
+    m_observeHandle = nullptr;
     m_newResourcePath = "";
 
     IPCAAppInfo ipcaAppInfo = { IPCATestAppUuid, IPCATestAppName, "1.0.0", "Microsoft" };
@@ -430,7 +432,7 @@ IPCAStatus IPCAElevatorClient::ConfirmDeviceAndPlatformInfo()
         EXPECT_STREQ(g_elevator1Name.c_str(), deviceInfo->deviceName);
 
         // See: ipcatestdata.h ELEVATOR_DATA_MODEL_VERSION_1 to 3.
-        EXPECT_EQ(3, deviceInfo->dataModelVersionCount);
+        EXPECT_EQ(static_cast<size_t>(3), deviceInfo->dataModelVersionCount);
 
         bool modelFound = false;
         std::string Model1(ELEVATOR_DATA_MODEL_VERSION_1);
@@ -553,7 +555,7 @@ IPCAStatus IPCAElevatorClient::ConfirmResourceInterfaces()
                             nullptr,
                             &resourcePathList,
                             &resourcePathCount));
-    EXPECT_EQ(1, resourcePathCount);
+    EXPECT_EQ(static_cast<size_t>(1), resourcePathCount);
     EXPECT_STREQ(ELEVATOR_CO_RESOURCE_PATH, resourcePathList[0]);
     IPCAFreeStringArray(resourcePathList, resourcePathCount);
 
@@ -740,7 +742,7 @@ void IPCA_CALL C_ControlledRequestCompleteCallback(
     ContextForCloseHandleTest* testContext = reinterpret_cast<ContextForCloseHandleTest*>(context);
     testContext->isInCallback = true;
 
-    if (result != IPCA_OK)
+    if ((result != IPCA_OK) && (result != IPCA_RESOURCE_CREATED) && (result != IPCA_RESOURCE_DELETED))
     {
         std::cout << "C_ControlledRequestCompleteCallback(): unsuccessful. result = " << result;
         std::cout << std::endl;
@@ -1078,15 +1080,15 @@ IPCAStatus IPCAElevatorClient::TestMultipleCallsToCloseSameHandle()
 
     // First IPCACloseHandle() should be succesful.
     EXPECT_EQ(IPCA_OK, IPCACloseHandle(getHandle, &C_CloseHandleComplete, static_cast<void*>(&count)));
-    EXPECT_EQ(1, C_WaitNumber(&count, 1));
+    EXPECT_EQ(static_cast<size_t>(1), C_WaitNumber(&count, 1));
 
     // Subsequent IPCACloseHandle() on the same handle is expected to fail.
     // And the C_CloseHandleMultiple() is not called, i.e. count should not increase.
     EXPECT_EQ(IPCA_FAIL, IPCACloseHandle(getHandle, &C_CloseHandleComplete, static_cast<void*>(&count)));
-    EXPECT_EQ(1, C_WaitNumber(&count, 2));
+    EXPECT_EQ(static_cast<size_t>(1), C_WaitNumber(&count, 2));
 
     EXPECT_EQ(IPCA_FAIL, IPCACloseHandle(getHandle, &C_CloseHandleComplete, static_cast<void*>(&count)));
-    EXPECT_EQ(1, C_WaitNumber(&count, 3));
+    EXPECT_EQ(static_cast<size_t>(1), C_WaitNumber(&count, 3));
 
     return IPCA_OK;
 }

@@ -78,8 +78,7 @@ elif target_os in ['windows']:
 		gtest_build_env = gtest_env.Clone()
 		gtest_build_env.AppendUnique(CPPPATH = [ os.path.join(gtest_dir, 'include') ])
 		gtest_build_env.AppendUnique(CXXFLAGS = ['/EHsc'])
-		if gtest_build_env['CC'] == 'cl':
-			gtest_build_env.AppendUnique(CCFLAGS = ['/W4'])
+		gtest_build_env.AppendUnique(CCFLAGS = ['/W4', '/WX'])
 		gtest = gtest_build_env.StaticLibrary(target = 'gtest', source = [ '%s/src/gtest-all.cc' % gtest_dir ])
 		gtest_main = gtest_build_env.StaticLibrary(target = 'gtest_main', source = [ '%s/src/gtest_main.cc' % gtest_dir ])
 		gtest_env.InstallTarget(gtest, 'gtest')

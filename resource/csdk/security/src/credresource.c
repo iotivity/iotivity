@@ -105,7 +105,7 @@ static bool ValueWithinBounds(uint64_t value, uint64_t maxValue)
 {
     if (value > maxValue)
     {
-        OIC_LOG_V(ERROR, TAG, "The value (%ull) is greater than allowed maximum of %ull.", value, maxValue);
+        OIC_LOG_V(ERROR, TAG, "The value (%" PRId64 ") is greater than allowed maximum of %" PRId64 ".", value, maxValue);
         return false;
     }
 
@@ -621,21 +621,21 @@ static void logCredMetadata()
             OIC_LOG_V(DEBUG, TAG, "Role authority: %s", temp->roleId.authority);
         }
         OIC_LOG_V(DEBUG, TAG, "Cred Type: %d", temp->credType);
-        OIC_LOG_V(DEBUG, TAG, "privateData length: %d, encoding: %d", temp->privateData.len, temp->privateData.encoding);
+        OIC_LOG_V(DEBUG, TAG, "privateData length: %" PRIuPTR ", encoding: %d", temp->privateData.len, temp->privateData.encoding);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-        OIC_LOG_V(DEBUG, TAG, "publicData length: %d, encoding: %d", temp->publicData.len, temp->publicData.encoding);
+        OIC_LOG_V(DEBUG, TAG, "publicData length: %" PRIuPTR ", encoding: %d", temp->publicData.len, temp->publicData.encoding);
         if (temp->credUsage)
         {
             OIC_LOG_V(DEBUG, TAG, "credUsage: %s", temp->credUsage);
         }
 
-        OIC_LOG_V(DEBUG, TAG, "optionalData length: %d, encoding: %d", temp->optionalData.len, temp->optionalData.encoding);
+        OIC_LOG_V(DEBUG, TAG, "optionalData length: %" PRIuPTR", encoding: %d" PRIuPTR, temp->optionalData.len, temp->optionalData.encoding);
 #endif
 
     }
 
-    OIC_LOG_V(DEBUG, TAG, "Found %d credentials.", count);
+    OIC_LOG_V(DEBUG, TAG, "Found %" PRIuPTR " credentials.", count);
 
     OIC_LOG_V(DEBUG, TAG, "OUT %s:", __func__);
 #endif
@@ -1373,13 +1373,13 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     }
     if (cred->publicData.data)
     {
-        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : publicData len: %d", cred->publicData.len);
+        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : publicData len: %" PRIuPTR, cred->publicData.len);
         OIC_LOG_BUFFER(DEBUG, TAG, cred->publicData.data, cred->publicData.len);
 
     }
     if (cred->optionalData.data)
     {
-        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : optionalData len: %d", cred->optionalData.len);
+        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : optionalData len: %" PRIuPTR, cred->optionalData.len);
         OIC_LOG_BUFFER(DEBUG, TAG, cred->optionalData.data, cred->optionalData.len);
         OIC_LOG_V(DEBUG, TAG, "GenerateCredential : optionalData revstat: %d", cred->optionalData.revstat);
     }
@@ -2100,13 +2100,11 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
 
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
     if ((DOS_RESET == dos.state) ||
-        (DOS_RFPRO == dos.state) ||
         (DOS_RFNOP == dos.state))
     {
-        OIC_LOG_V(WARNING, TAG, "%s /cred resource is read-only in RESET, RFPRO and RFNOP.", __func__);
-        // TODO fix  infinite loop in mediator sample
-//        ret = OC_EH_NOT_ACCEPTABLE;
-//        goto exit;
+        OIC_LOG_V(WARNING, TAG, "%s /cred resource is read-only in RESET and RFNOP.", __func__);
+        ret = OC_EH_NOT_ACCEPTABLE;
+        goto exit;
     }
 
     res = CBORPayloadToCred(payload, size, &cred);
@@ -2793,8 +2791,14 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                         {
                             if (ValueWithinBounds(cred->privateData.len, INT32_MAX))
                             {
-                                ret = (int32_t)cred->privateData.len;
-                                memcpy(result, cred->privateData.data, ret);
+                                size_t len = cred->privateData.len;
+                                if (result_length < len)
+                                {
+                                    OIC_LOG (ERROR, TAG, "Wrong value for result_length");
+                                    return ret;
+                                }
+                                memcpy(result, cred->privateData.data, len);
+                                ret = (int32_t)len;
                             }
                         }
                         else if(OIC_ENCODING_BASE64 == cred->privateData.encoding)
@@ -2812,6 +2816,11 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                             {
                                 if (ValueWithinBounds(outKeySize, INT32_MAX))
                                 {
+                                    if (result_length < outKeySize)
+                                    {
+                                        OIC_LOG (ERROR, TAG, "Wrong value for result_length");
+                                        return ret;
+                                    }
                                     memcpy(result, outKey, outKeySize);
                                     ret = (int32_t)outKeySize;
                                 }
@@ -3120,7 +3129,7 @@ static int ConvertDerCertToPem(const uint8_t* der, size_t derLen, uint8_t** pem)
     if (ret < 0)
     {
         OIC_LOG_V(ERROR, TAG, "Couldn't convert cert into PEM, failed writing PEM: %d", ret);
-        OICFreeAndSetToNull(pem);
+        OICFreeAndSetToNull((void **) pem);
         return ret;
     }
 
@@ -3230,15 +3239,15 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
                 }
 
                 uint8_t *oldData = crt->data;
-                crt->data = OICRealloc(crt->data, crt->len + temp->optionalData.len);
+                crt->data = OICRealloc(crt->data, crt->len + pemLen);
                 if (NULL == crt->data)
                 {
                     OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
                     OICFree(oldData);
                     return OC_STACK_NO_MEMORY;
                 }
-                memcpy(crt->data + crt->len, temp->optionalData.data, temp->optionalData.len);
-                crt->len += temp->optionalData.len;
+                memcpy(crt->data + crt->len, pem, pemLen);
+                crt->len += pemLen;
             }
         }
     }
@@ -3527,20 +3536,18 @@ void GetDerKey(ByteArray_t * key, const char * usage)
                     OIC_LOG(ERROR, TAG, "Failed to allocate memory");
                     memset(key->data, 0x0, key->len);
                     OICFree(key->data);
+                    key->data = NULL;
                     mbedtls_pem_free(&ctx);
                     return;
                 }
-                else
-                {
-                    key->data = tmp;
-                }
+                key->data = tmp;
 
                 memcpy(key->data, ctx.buf, ctx.buflen);
                 key->len = ctx.buflen;
                 mbedtls_pem_free(&ctx);
                 break;
             }
-            else if(temp->privateData.encoding == OIC_ENCODING_DER)
+            else if(temp->privateData.encoding == OIC_ENCODING_DER || temp->privateData.encoding == OIC_ENCODING_RAW)
             {
                 uint8_t *tmp = OICRealloc(key->data, key->len + temp->privateData.len);
                 if (NULL == tmp)
@@ -3548,12 +3555,10 @@ void GetDerKey(ByteArray_t * key, const char * usage)
                     OIC_LOG(ERROR, TAG, "Failed to allocate memory");
                     memset(key->data, 0x0, key->len);
                     OICFree(key->data);
+                    key->data = NULL;
                     return;
                 }
-                else
-                {
-                    key->data = tmp;
-                }
+                key->data = tmp;
                 memcpy(key->data + key->len, temp->privateData.data, temp->privateData.len);
                 key->len += temp->privateData.len;
                 OIC_LOG_V(DEBUG, TAG, "Key for %s found", usage);

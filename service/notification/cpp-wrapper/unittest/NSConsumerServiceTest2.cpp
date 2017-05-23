@@ -19,7 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 /**
- * @file NSConsumerServiceTest2.cpp 
+ * @file NSConsumerServiceTest2.cpp
  *
  * This file contains Notification consumer service test cases that do not involve network related methods.
  * The test cases are executed during the build by enabling the option 'TEST' in scons build.
@@ -53,7 +53,7 @@ namespace
 
     std::atomic_bool g_isStartedStack(false);
 
-    std::chrono::milliseconds g_waitForResponse(1000);
+    std::chrono::milliseconds g_waitForResponse(10);
 
     std::condition_variable responseCon;
     std::mutex mutexForCondition;
@@ -182,12 +182,16 @@ TEST_F(NotificationServiceConsumerTest, StartConsumerPositive)
 
     OIC::Service::NSResult res = OIC::Service::NSConsumerService::getInstance()->start(
                                      ProviderDiscoveredCallback);
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, g_waitForResponse);
     EXPECT_EQ(OIC::Service::NSResult::OK, res);
 }
 
 TEST_F(NotificationServiceConsumerTest, StopConsumerPositive)
 {
     OIC::Service::NSResult res = OIC::Service::NSConsumerService::getInstance()->stop();
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, g_waitForResponse);
     EXPECT_EQ(OIC::Service::NSResult::OK, res);
 }
 
@@ -216,7 +220,7 @@ TEST_F(NotificationServiceConsumerTest, ExpectGetProviderSuccessWithInvalidProvi
 TEST_F(NotificationServiceConsumerTest, ExpectGetProviderSuccessWithValidProviderId)
 {
     ::NSProvider *provider = (::NSProvider *)malloc(sizeof(::NSProvider));
-    strcpy(provider->providerId, "098765432109876543210987654321098765");
+    strncpy(provider->providerId, "098765432109876543210987654321098765", NS_UTILS_UUID_STRING_SIZE);
     std::string provId;
     provId.assign(provider->providerId, NS_UTILS_UUID_STRING_SIZE - 1);
 
@@ -242,7 +246,7 @@ TEST_F(NotificationServiceConsumerTest, ExpectSuccessSendSyncInfo)
     std::string provId;
 
     ::NSProvider *provider = (::NSProvider *)malloc(sizeof(::NSProvider));
-    strcpy(provider->providerId, "098765432109876543210987654321098765");
+    strncpy(provider->providerId, "098765432109876543210987654321098765", NS_UTILS_UUID_STRING_SIZE);
     provId.assign(provider->providerId, NS_UTILS_UUID_STRING_SIZE - 1);
 
     std::shared_ptr<OIC::Service::NSProvider> providerTemp = std::make_shared<OIC::Service::NSProvider>
@@ -271,7 +275,7 @@ TEST_F(NotificationServiceConsumerTest, ExpectSuccessGetTopicsList)
     std::string provId;
 
     ::NSProvider *provider = (::NSProvider *)malloc(sizeof(::NSProvider));
-    strcpy(provider->providerId, "098765432109876543210987654321098765");
+    strncpy(provider->providerId, "098765432109876543210987654321098765", NS_UTILS_UUID_STRING_SIZE);
     provId.assign(provider->providerId, NS_UTILS_UUID_STRING_SIZE - 1);
 
     std::shared_ptr<OIC::Service::NSProvider> providerTemp = std::make_shared<OIC::Service::NSProvider>
@@ -293,5 +297,7 @@ TEST_F(NotificationServiceConsumerTest, ExpectSuccessGetTopicsList)
     free(provider);
 
     OIC::Service::NSConsumerService::getInstance()->stop();
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, g_waitForResponse);
 }
 

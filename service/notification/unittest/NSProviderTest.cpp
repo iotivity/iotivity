@@ -248,7 +248,7 @@ TEST_F(NotificationProviderTest, ExpectCallbackWhenReceiveSubscribeRequestWithAc
 
 TEST_F(NotificationProviderTest, NeverCallNotifyOnConsumerByAcceptIsFalse)
 {
-    int msgID;
+    int msgID = 0;
 
     ASSERT_NE(nullptr, g_consumerID) << "error: discovery failure";
 
@@ -281,7 +281,7 @@ TEST_F(NotificationProviderTest, NeverCallNotifyOnConsumerByAcceptIsFalse)
 
 TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
 {
-    int msgID;
+    int msgID = 0;
 
     ASSERT_NE(nullptr, g_consumerID) << "error: discovery failure";
 
@@ -304,13 +304,13 @@ TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
 
 TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadToConsumer)
 {
-    int id;
+    int id = 0;
     int type = NS_SYNC_READ;
 
     ASSERT_NE(nullptr, g_consumerID) << "error: discovery failure";
 
     NSMessage * msg = NSCreateMessage();
-    if(msg)
+    if (msg)
     {
         id = (int)msg->messageId;
         msg->title = g_title;
@@ -330,7 +330,7 @@ TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadToConsumer)
 
 TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadFromConsumer)
 {
-    int id;
+    int id = 0;
     int type = NS_SYNC_READ;
 
     ASSERT_NE(nullptr, g_consumerID) << "error: discovery failure";
@@ -494,8 +494,7 @@ TEST_F(NotificationProviderTest, ExpectEqualUnSetConsumerTopicsAndGetConsumerTop
 
 TEST_F(NotificationProviderTest, ExpectFailAcceptSubscription)
 {
-    NSResult result;
-    result = NS_SUCCESS;
+    NSResult result = NS_SUCCESS;
     result = NSAcceptSubscription(NULL, true);
     result = NSAcceptSubscription("\0", true);
 
@@ -504,8 +503,7 @@ TEST_F(NotificationProviderTest, ExpectFailAcceptSubscription)
 
 TEST_F(NotificationProviderTest, ExpectFailSendMessage)
 {
-    NSResult result;
-    result = NS_SUCCESS;
+    NSResult result = NS_SUCCESS;
     result = NSSendMessage(NULL);
 
     EXPECT_EQ(result, NS_FAIL);
@@ -513,8 +511,7 @@ TEST_F(NotificationProviderTest, ExpectFailSendMessage)
 
 TEST_F(NotificationProviderTest, ExpectFailRegisterTopic)
 {
-    NSResult result;
-    result = NS_SUCCESS;
+    NSResult result = NS_SUCCESS;
     result = NSProviderRegisterTopic(NULL);
     result = NSProviderRegisterTopic("\0");
 
@@ -523,8 +520,7 @@ TEST_F(NotificationProviderTest, ExpectFailRegisterTopic)
 
 TEST_F(NotificationProviderTest, ExpectFailUnregisterTopic)
 {
-    NSResult result;
-    result = NS_SUCCESS;
+    NSResult result = NS_SUCCESS;
     result = NSProviderUnregisterTopic(NULL);
     result = NSProviderUnregisterTopic("\0");
 
@@ -544,8 +540,7 @@ TEST_F(NotificationProviderTest, ExpectFailGetConsumerTopics)
 
 TEST_F(NotificationProviderTest, ExpectFailSetConsumerTopics)
 {
-    NSResult result;
-    result = NS_SUCCESS;
+    NSResult result = NS_SUCCESS;
     result = NSProviderSetConsumerTopic(NULL, NULL);
     result = NSProviderSetConsumerTopic(NULL, "\0");
     result = NSProviderSetConsumerTopic("\0", NULL);
@@ -560,8 +555,7 @@ TEST_F(NotificationProviderTest, ExpectFailSetConsumerTopics)
 
 TEST_F(NotificationProviderTest, ExpectFailUnsetConsumerTopics)
 {
-    NSResult result;
-    result = NS_SUCCESS;
+    NSResult result = NS_SUCCESS;
     result = NSProviderUnsetConsumerTopic(NULL, NULL);
     result = NSProviderUnsetConsumerTopic(NULL, "\0");
     result = NSProviderUnsetConsumerTopic("\0", NULL);

@@ -110,7 +110,9 @@ uint16_t g_mockHostPort = 10000;
 std::string g_mockCompleteAddress = "coap://[fe80::1%25eth0]:10000";
 void SetMockOCDevAddr(OCDevAddr& addr)
 {
-    addr = {OC_DEFAULT_ADAPTER, OC_IP_USE_V6};
+    memset (&addr, 0, sizeof(addr));
+    addr.adapter = OC_DEFAULT_ADAPTER;
+    addr.flags= OC_IP_USE_V6;
     addr.port = g_mockHostPort;
     strcpy(addr.addr, g_mockHostAddress.c_str());
 }
@@ -500,6 +502,12 @@ OCStackResult OCPlatform::sendResponse(const std::shared_ptr<OCResourceResponse>
             deleteCallbackThread.detach();
             break;
         }
+
+        default:
+        {
+            assert(false);
+            return OC_STACK_ERROR;
+        }
     }
 
     // One time request is responded, remove the pending request.
@@ -680,7 +688,7 @@ std::string OCResource::setHost(const std::string& host)
     OC_UNUSED(host);
 
     g_mockCompleteAddress.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
-    m_devAddr.addr[g_mockCompleteAddress.length()] = NULL;
+    m_devAddr.addr[g_mockCompleteAddress.length()] = '\0';
     return host;
 }
 
@@ -892,7 +900,9 @@ OCEntityHandlerResult MockEntityHandler(OCEntityHandlerFlag flag,
 
     OCPayload* payload = reinterpret_cast<OCPayload*>(ocInfo.getPayload());
 
-    OCEntityHandlerRequest  entityHandlerRequest = {0};
+    OCEntityHandlerRequest  entityHandlerRequest;
+    memset(&entityHandlerRequest, 0, sizeof(OCEntityHandlerRequest));
+
     entityHandlerRequest.requestHandle = reinterpret_cast<void*>(pendingRequest->requestNumber);
     entityHandlerRequest.resource = nullptr;
     entityHandlerRequest.messageID = 0;

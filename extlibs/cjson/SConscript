@@ -26,7 +26,7 @@ if cjson_env.get('TARGET_OS') in ['windows', 'msys_nt']:
     # Macro needed for Windows builds to avoid __declspec(dllexport) and __declspec(dllimport) for cJSON APIs.
     cjson_env.AppendUnique(CPPDEFINES = ['CJSON_HIDE_SYMBOLS'])
     if cjson_env['CC'] == 'cl':
-        cjson_env.AppendUnique(CCFLAGS = ['/W4'])
+        cjson_env.AppendUnique(CCFLAGS = ['/W4', '/WX'])
 
 libcjson = cjson_env.StaticLibrary('cjson', ['cJSON.c'], OBJPREFIX='libcjson_')
 cjson_env.InstallTarget(libcjson, 'cjson');

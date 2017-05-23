@@ -812,7 +812,9 @@ namespace OC
             memcpy(number, verifNum, MUTUAL_VERIF_NUM_LEN);
         }
 
-        return context->callback(number);
+        OCStackResult res = context->callback(number);
+        delete context;
+        return res;
     }
 
     OCStackResult OCSecure::registerDisplayNumCallback(DisplayNumCB displayNumCB)
@@ -879,7 +881,9 @@ namespace OC
             return OC_STACK_INVALID_PARAM;
         }
 
-        return context->callback();
+        OCStackResult res = context->callback();
+        delete context;
+        return res;
     }
 
     OCStackResult OCSecure::registerUserConfirmCallback(UserConfirmNumCB userConfirmCB)

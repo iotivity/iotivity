@@ -1,99 +1,62 @@
 {
     "acl": {
-        "aclist": {
-            "aces": [
-                {
-                    "subjectuuid": "*",
-                    "resources": [
-                        {
-                            "href": "/oic/res",
-                            "rel": "",
-                            "rt": ["oic.wk.res"],
-                            "if": ["oic.if.ll"]
-                        },
-                        {
-                            "href": "/oic/d",
-                            "rel": "",
-                            "rt": ["oic.wk.d"],
-                            "if": ["oic.if.baseline", "oic.if.r"]
-                        },
-                        {
-                            "href": "/oic/p",
-                            "rel": "",
-                            "rt": ["oic.wk.p"],
-                            "if": ["oic.if.baseline", "oic.if.r"]
-                        }
-                    ],
-                    "permission": 2
-                },
-                {
-                    "subjectuuid": "*",
-                    "resources": [
-                        {
-                            "href": "/oic/sec/doxm",
-                            "rel": "",
-                            "rt": ["oic.r.doxm"],
-                            "if": ["oic.if.baseline"]
-                        },
-                        {
-                            "href": "/oic/sec/pstat",
-                            "rel": "",
-                            "rt": ["oic.r.pstat"],
-                            "if": ["oic.if.baseline"]
-                        }
-                    ],
-                    "permission": 6
-                }, 
-                {
-                    "subjectuuid": "*",
-                    "resources": [
-                        {
-                            "href": "/oic/sec/roles",
-                            "rel": "",
-                            "rt": ["oic.r.cred"],
-                            "if": ["oic.if.baseline"]
-                        }
-                    ],
-                    "permission": 31
-                }, 
-                {
-                    "subjectuuid": "31313131-3131-3131-3131-313131313131",
-                    "resources": [
-                        {
-                            "href": "/oic/light",
-                            "rel": "",
-                            "rt": ["oic.core"],
-                            "if": ["oic.if.baseline"]
-                        },
-                        {
-                            "href": "/oic/fan",
-                            "rel": "",
-                            "rt": ["oic.core"],
-                            "if": ["oic.if.baseline"]
-                        }
-                    ],
-                    "permission": 31
-                },
-                {
-                    "subjectuuid": "33333333-3333-3333-3333-333333333333",
-                    "resources": [
-                        {
-                            "href": "/oic/light",
-                            "rel": "",
-                            "rt": ["oic.core"],
-                            "if": ["oic.if.baseline"]
-                        },
-                        {
-                            "href": "/oic/garage",
-                            "rel": "",
-                            "rt": ["oic.core"],
-                            "if": ["oic.if.baseline"]
-                        }
-                    ],
-                    "permission": 31
-                }
-            ]
-        },
+        "aclist2": [
+            {
+                "aceid": 1,
+                "subject": { "conntype": "anon-clear" },
+                "resources": [
+                    { "href": "/oic/res" },
+                    { "href": "/oic/d" },
+                    { "href": "/oic/p"}
+                ],
+                "permission": 2
+            },
+            {
+                "aceid": 2,
+                "subject": { "conntype": "auth-crypt" },
+                "resources": [
+                    { "href": "/oic/res" },
+                    { "href": "/oic/d" },
+                    { "href": "/oic/p"}
+                ],
+                "permission": 2
+            },
+            {
+                "aceid": 3,
+                "subject": { "conntype": "anon-clear" },
+                "resources": [
+                    { "href": "/oic/sec/doxm" }
+                ],
+                "permission": 14
+            },
+            {
+                "aceid": 4,
+                "subject": { "conntype": "auth-crypt" },
+                "resources": [
+                    { "href": "/oic/sec/doxm" },
+                    { "href": "/oic/sec/roles" }
+                ],
+                "permission": 14
+            },
+            {
+                "aceid": 5,
+                "subject": { "uuid": "31313131-3131-3131-3131-313131313131" },
+                "resources": [
+                    { "href": "/oic/light" },
+                    { "href": "/oic/garage" }
+                ],
+                "permission": 31
+            },
+            {
+                "aceid": 6,
+                "subject": { "uuid": "33333333-3333-3333-3333-333333333333" },
+                "resources": [
+                    { "href": "/oic/light" },
+                    { "href": "/oic/garage" }
+                ],
+                "permission": 31
+            }
+        ],
         "rowneruuid" : "32323232-3232-3232-3232-323232323232"
     }
 }

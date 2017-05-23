@@ -22,23 +22,38 @@
 using namespace std;
 using namespace std::placeholders;
 
+#include <assert.h>
+#include <inttypes.h>
 #include "oic_malloc.h"
 #include "oic_time.h"
 #include "OCApi.h"
 #include "pinoxmcommon.h"
 #include "srmutility.h"
 #include "ocrandom.h"
+#include "oic_platform.h"
 
 #define TAG                "IPCA_OcfFramework"
 #define DO_DEBUG           0
 
+#define PROVISIONING_DB    "PDM.db"
+
 const unsigned short c_discoveryTimeout = 5;  // Max number of seconds to discover
                                               // security information for a device
+
+// Path for Persistent Storage (Ends with backslash (\) or forward slash (/))
+std::string  g_psPath;
 
 // Initialize Persistent Storage for security database
 FILE* server_fopen(const char *path, const char *mode)
 {
-    return fopen(path, mode);
+    // At this point, the persistent storage path should have been found, otherwise
+    // Start() should have failed.
+    std::string filePath(g_psPath);
+    // g_psPath ends with trailing backslash (\) or forward slash (/)
+    // so don't have to worry about adding it.
+    filePath.append(path);
+
+    return fopen(filePath.c_str(), mode);
 }
 
 OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
@@ -203,6 +218,47 @@ IPCAStatus OCFFramework::Start(const IPCAAppInfoInternal& appInfo, bool isUnitTe
         return IPCA_OK;
     }
 
+    char* psPath = nullptr;
+    size_t psPathLen = 0;
+    OICPlatformResult_t ret = OICGetLocalAppDataPath(nullptr, &psPathLen);
+    if (ret == OIC_PLATFORM_OK)
+    {
+        psPath = static_cast<char*>(OICCalloc(1, psPathLen));
+        if (psPath == nullptr)
+        {
+            OIC_LOG(FATAL, TAG, "Could not allocate persistent storage path buffer");
+            return IPCA_OUT_OF_MEMORY;
+        }
+
+        ret = OICGetLocalAppDataPath(psPath, &psPathLen);
+        if (ret != OIC_PLATFORM_OK)
+        {
+            OIC_LOG_V(FATAL, TAG,
+                "Failed to get persistent storage path from OICGetLocalAppDataPath, ret: %"PRIuPTR,
+                static_cast<size_t>(ret));
+            OICFree(psPath);
+            return IPCA_FAIL;
+        }
+
+        g_psPath.assign(psPath);
+
+        OICFree(psPath);
+        psPath = nullptr;
+    }
+    else
+    {
+        // Continue if not implemented returned, g_psPath by default is an empty string.
+        // Otherwise, fail
+        if (ret != OIC_PLATFORM_NOTIMPL)
+        {
+            OIC_LOG_V(FATAL, TAG,
+                "Failed to get path length from OICGetLocalAppDataPath, ret: %"PRIuPTR,
+                static_cast<size_t>(ret));
+            // An error occurred, fail
+            return IPCA_FAIL;
+        }
+    }
+
     PlatformConfig Configuration {
                         ServiceType::InProc,
                         ModeType::Both,  // Server mode is required for security provisioning.
@@ -216,8 +272,14 @@ IPCAStatus OCFFramework::Start(const IPCAAppInfoInternal& appInfo, bool isUnitTe
         return IPCA_FAIL;
     }
 
-    // Initialize the database that will be used for provisioning
-    if (OCSecure::provisionInit("") != OC_STACK_OK)
+
+    // Initialize the database that will be used for provisioning.
+    // Initialize it with the default PDM.db file name.
+    std::string pdmDbFile(g_psPath);
+    // g_psPath ends with trailing backslash (\) or forward slash (/)
+    // so don't have to worry about adding it.
+    pdmDbFile.append(PROVISIONING_DB);
+    if (OCSecure::provisionInit(pdmDbFile) != OC_STACK_OK)
     {
         OIC_LOG(FATAL, TAG, "Failed provisionInit()");
         return IPCA_FAIL;
@@ -285,7 +347,7 @@ IPCAStatus OCFFramework::Start(const IPCAAppInfoInternal& appInfo, bool isUnitTe
         }
 
 
-        if (OC_STACK_OK != SetDeviceInfo(&deviceInfo))
+        if (IPCA_OK != SetDeviceInfo(&deviceInfo))
         {
             return IPCA_FAIL;
         }
@@ -550,7 +612,7 @@ void OCFFramework::OnResourceFound(std::shared_ptr<OCResource> resource)
             m_OCFDevices[resource->sid()] = deviceDetails;
 
             OIC_LOG_V(INFO, TAG, "Added device ID: [%s]", resource->sid().c_str());
-            OIC_LOG_V(INFO, TAG, "m_OCFDevices count = [%d]", m_OCFDevices.size());
+            OIC_LOG_V(INFO, TAG, "m_OCFDevices count = [%" PRIuPTR "]", m_OCFDevices.size());
         }
 
         // Populate the details about the device.
@@ -826,7 +888,7 @@ void OCFFramework::OnPlatformInfoCallback(const OCRepresentation& rep)
 
 IPCAStatus OCFFramework::GetCommonResources(DeviceDetails::Ptr deviceDetails)
 {
-    const int MAX_REQUEST_COUNT = 3;
+    const size_t MAX_REQUEST_COUNT = 3;
 
     OCStackResult result;
 
@@ -966,7 +1028,7 @@ void OCFFramework::OnGet(const HeaderOptions& headerOptions,
                         const int eCode,
                         CallbackInfo::Ptr callbackInfo)
 {
-    headerOptions;
+    OC_UNUSED(headerOptions);
 
     IPCAStatus status = IPCA_OK;
 
@@ -992,6 +1054,7 @@ void OCFFramework::OnObserve(
                         const int &sequenceNumber,
                         CallbackInfo::Ptr callbackInfo)
 {
+    OC_UNUSED(headerOptions);
     OC_UNUSED(sequenceNumber);
 
     IPCAStatus status = IPCA_OK;
@@ -1104,6 +1167,12 @@ IPCAStatus OCFFramework::SendCommandToDevice(std::string& deviceId,
                                     std::bind(&OCFFramework::OnObserve, this,
                                             _1, _2, _3, _4, callbackInfo));
             break;
+        }
+
+        default:
+        {
+            assert(false);
+            result = OC_STACK_ERROR;
         }
     }
 

@@ -236,7 +236,7 @@ TEST_F(NotificationProviderServiceTest, ExpectFailAcceptSubscriptionInvalidPolic
 
     OIC::Service::NSProviderService::getInstance()->start(config);
     ::NSConsumer *consumer = (::NSConsumer *)malloc(sizeof(::NSConsumer));
-    strcpy(consumer->consumerId, "098765432109876543210987654321098765");
+    strncpy(consumer->consumerId, "098765432109876543210987654321098765", NS_UTILS_UUID_STRING_SIZE);
 
     std::shared_ptr<OIC::Service::NSConsumer> consumerTemp = std::make_shared<OIC::Service::NSConsumer>
             (consumer);
@@ -256,7 +256,7 @@ TEST_F(NotificationProviderServiceTest, ExpectFailSetTopicInvalidPolicy)
     std::string str1("TEST1");
     OIC::Service::NSProviderService::getInstance()->registerTopic(str1);
     ::NSConsumer *consumer = (::NSConsumer *)malloc(sizeof(::NSConsumer));
-    strcpy(consumer->consumerId, "098765432109876543210987654321098765");
+    strncpy(consumer->consumerId, "098765432109876543210987654321098765", NS_UTILS_UUID_STRING_SIZE);
 
     std::shared_ptr<OIC::Service::NSConsumer> consumerTemp = std::make_shared<OIC::Service::NSConsumer>
             (consumer);
@@ -282,7 +282,7 @@ TEST_F(NotificationProviderServiceTest, ExpectSuccessAcceptSubscription)
 
     OIC::Service::NSProviderService::getInstance()->start(config);
     ::NSConsumer *consumer = (::NSConsumer *)malloc(sizeof(::NSConsumer));
-    strcpy(consumer->consumerId, "098765432109876543210987654321098765");
+    strncpy(consumer->consumerId, "098765432109876543210987654321098765", NS_UTILS_UUID_STRING_SIZE);
 
     std::shared_ptr<OIC::Service::NSConsumer> consumerTemp = std::make_shared<OIC::Service::NSConsumer>
             (consumer);
@@ -303,7 +303,7 @@ TEST_F(NotificationProviderServiceTest, ExpectSuccessSetTopic)
 
     OIC::Service::NSProviderService::getInstance()->registerTopic(str1);
     ::NSConsumer *consumer = (::NSConsumer *)malloc(sizeof(::NSConsumer));
-    strcpy(consumer->consumerId, "098765432109876543210987654321098765");
+    strncpy(consumer->consumerId, "098765432109876543210987654321098765", NS_UTILS_UUID_STRING_SIZE);
 
     std::shared_ptr<OIC::Service::NSConsumer> consumerTemp = std::make_shared<OIC::Service::NSConsumer>
             (consumer);
@@ -321,7 +321,7 @@ TEST_F(NotificationProviderServiceTest, ExpectSuccessSetTopic)
 TEST_F(NotificationProviderServiceTest, ExpectSuccessUnSetTopic)
 {
     ::NSConsumer *consumer = (::NSConsumer *)malloc(sizeof(::NSConsumer));
-    strcpy(consumer->consumerId, "098765432109876543210987654321098765");
+    strncpy(consumer->consumerId, "098765432109876543210987654321098765", NS_UTILS_UUID_STRING_SIZE);
 
     std::shared_ptr<OIC::Service::NSConsumer> consumerTemp = std::make_shared<OIC::Service::NSConsumer>
             (consumer);
@@ -376,7 +376,7 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualSetConsumerTopicsAndGetConsum
     std::string str1("TEST1");
     std::string str2("TEST2");
     ::NSConsumer *consumer = (::NSConsumer *)malloc(sizeof(::NSConsumer));
-    strcpy(consumer->consumerId, "098765432109876543210987654321098765");
+    strncpy(consumer->consumerId, "098765432109876543210987654321098765", NS_UTILS_UUID_STRING_SIZE);
 
     std::shared_ptr<OIC::Service::NSConsumer> consumerTemp = std::make_shared<OIC::Service::NSConsumer>
             (consumer);

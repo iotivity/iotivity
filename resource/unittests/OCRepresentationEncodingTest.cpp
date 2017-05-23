@@ -67,7 +67,7 @@ namespace OCRepresentationEncodingTest
         static const char piid1[] = "e987b8f5-527a-454e-98c1-1eef2e5f1cf5";
         const char devicename1[] = "device name";
         OCRepPayload *device = OCRepPayloadCreate();
-        EXPECT_NE((decltype(device))NULL, device);
+        EXPECT_TRUE(device);
         EXPECT_TRUE(OCRepPayloadAddResourceType(device, OC_RSRVD_RESOURCE_TYPE_DEVICE));
         EXPECT_TRUE(OCRepPayloadAddResourceType(device, "oic.d.tv"));
         EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_DEVICE_ID, sid1));
@@ -78,7 +78,7 @@ namespace OCRepresentationEncodingTest
 
         size_t dim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
         char **dt = (char **)OICMalloc(sizeof(char *) * 1);
-        EXPECT_NE((decltype(dt))NULL, dt);
+        EXPECT_TRUE(dt);
         dt[0] = OICStrdup(OC_DATA_MODEL_VERSION);
         EXPECT_TRUE(OCRepPayloadSetStringArray(device, OC_RSRVD_DATA_MODEL_VERSION, (const char **)dt, dim));
         OICFree(dt[0]);
@@ -133,7 +133,7 @@ namespace OCRepresentationEncodingTest
         OCPayloadDestroy(parsedDevice);
 
         device = OCRepPayloadCreate();
-        EXPECT_NE((decltype(device))NULL, device);
+        EXPECT_TRUE(device);
         EXPECT_TRUE(OCRepPayloadAddResourceType(device, OC_RSRVD_RESOURCE_TYPE_DEVICE));
         EXPECT_TRUE(OCRepPayloadAddResourceType(device, "oic.d.tv"));
         EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_DEVICE_NAME, devicename1));
@@ -142,7 +142,7 @@ namespace OCRepresentationEncodingTest
         EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_SPEC_VERSION, OC_SPEC_VERSION));
         size_t dim1[MAX_REP_ARRAY_DEPTH] = {2, 0, 0};
         char **dt1 = (char **)OICMalloc(sizeof(char *) * 2);
-        EXPECT_NE((decltype(dt1))NULL, dt1);
+        EXPECT_TRUE(dt1);
         dt1[0] = OICStrdup("ocf.res.1.1.0");
         dt1[1] = OICStrdup("ocf.sh.1.1.0");
         OCRepPayloadSetStringArray(device, OC_RSRVD_DATA_MODEL_VERSION, (const char**)dt1, dim1);
@@ -320,7 +320,6 @@ namespace OCRepresentationEncodingTest
         OC::OCRepresentation startRep;
         startRep.setNULL("NullAttr");
         startRep.setValue("IntAttr", 77);
-        startRep.setValue("Int64Attr", 77LL);
         startRep.setValue("DoubleAttr", 3.333);
         startRep.setValue("BoolAttr", true);
         startRep.setValue("StringAttr", std::string("String attr"));
@@ -353,7 +352,6 @@ namespace OCRepresentationEncodingTest
 
         EXPECT_TRUE(r.isNULL("NullAttr"));
         EXPECT_EQ(77, r.getValue<int>("IntAttr"));
-        EXPECT_EQ(77LL, r.getValue<int64_t>("Int64Attr"));
         EXPECT_EQ(3.333, r.getValue<double>("DoubleAttr"));
         EXPECT_EQ(true, r.getValue<bool>("BoolAttr"));
         EXPECT_STREQ("String attr", r.getValue<std::string>("StringAttr").c_str());
@@ -424,7 +422,6 @@ namespace OCRepresentationEncodingTest
         OC::OCRepresentation subRep;
         subRep.setNULL("NullAttr");
         subRep.setValue("IntAttr", 77);
-        subRep.setValue("Int64Attr", 77LL);
         subRep.setValue("DoubleAttr", 3.333);
         subRep.setValue("BoolAttr", true);
         subRep.setValue("StringAttr", std::string("String attr"));
@@ -456,7 +453,6 @@ namespace OCRepresentationEncodingTest
 
         EXPECT_TRUE(newSubRep.isNULL("NullAttr"));
         EXPECT_EQ(77, newSubRep.getValue<int>("IntAttr"));
-        EXPECT_EQ(77LL, newSubRep.getValue<int64_t>("Int64Attr"));
         EXPECT_EQ(3.333, newSubRep.getValue<double>("DoubleAttr"));
         EXPECT_EQ(true, newSubRep.getValue<bool>("BoolAttr"));
         EXPECT_STREQ("String attr", newSubRep.getValue<std::string>("StringAttr").c_str());
@@ -483,7 +479,6 @@ namespace OCRepresentationEncodingTest
         subRep3.setValue("StringAttr", std::string("String attr"));
 
         std::vector<int> iarr {1,2,3,4,5,6,7,8,9};
-        std::vector<int64_t> i64arr {1LL,2LL,3LL,4LL,5LL,6LL,7LL,8LL,9LL};
         std::vector<double> darr {1.1,2.2,3.3,4.4,5.5,6.6,7.7,8.8,9.9};
         std::vector<bool> barr {false, true, false, false, true, true};
         std::vector<std::string> strarr {"item1", "item2", "item3", "item4"};
@@ -501,7 +496,6 @@ namespace OCRepresentationEncodingTest
         std::vector<OCByteString> bytestrarr {byteString1, byteString2 };
 
         startRep["iarr"] = iarr;
-        startRep["i64arr"] = i64arr;
         startRep["darr"] = darr;
         startRep["barr"] = barr;
         startRep["strarr"] = strarr;
@@ -531,7 +525,6 @@ namespace OCRepresentationEncodingTest
 
         // Test
         std::vector<int> iarr2 = r["iarr"];
-        std::vector<int64_t> i64arr2 = r["i64arr"];
         std::vector<double> darr2 = r["darr"];
         std::vector<bool> barr2 = r["barr"];
         std::vector<std::string> strarr2 = r["strarr"];
@@ -539,7 +532,6 @@ namespace OCRepresentationEncodingTest
         std::vector<OCByteString> bytestrarr2 = r["bytestrarr"];
 
         EXPECT_EQ(iarr, iarr2);
-        EXPECT_EQ(i64arr, i64arr2);
         EXPECT_EQ(darr, darr2);
         EXPECT_EQ(barr, barr2);
         EXPECT_EQ(strarr, strarr2);
@@ -568,7 +560,6 @@ namespace OCRepresentationEncodingTest
         subRep3.setValue("StringAttr", std::string("String attr"));
 
         std::vector<std::vector<int>> iarr {{1,2,3},{4,5,6},{7,8,9}};
-        std::vector<std::vector<int64_t>> i64arr {{1LL,2LL,3LL},{4LL,5LL,6LL},{7LL,8LL,9LL}};
         std::vector<std::vector<double>> darr {{1.1,2.2,3.3},{4.4,5.5,6.6},{7.7,8.8,9.9}};
         std::vector<std::vector<bool>> barr {{false, true}, {false, false}, {true, true}};
         std::vector<std::vector<std::string>> strarr {{"item1", "item2"}, {"item3", "item4"}};
@@ -601,7 +592,6 @@ namespace OCRepresentationEncodingTest
         };
 
         startRep["iarr"] = iarr;
-        startRep["i64arr"] = i64arr;
         startRep["darr"] = darr;
         startRep["barr"] = barr;
         startRep["strarr"] = strarr;
@@ -631,7 +621,6 @@ namespace OCRepresentationEncodingTest
 
         // Test
         std::vector<std::vector<int>> iarr2 = r["iarr"];
-        std::vector<std::vector<int64_t>> i64arr2 = r["i64arr"];
         std::vector<std::vector<double>> darr2 = r["darr"];
         std::vector<std::vector<bool>> barr2 = r["barr"];
         std::vector<std::vector<std::string>> strarr2 = r["strarr"];
@@ -639,7 +628,6 @@ namespace OCRepresentationEncodingTest
         std::vector<std::vector<OCByteString>> bytestrarr2 = r["bytestrarr"];
 
         EXPECT_EQ(iarr, iarr2);
-        EXPECT_EQ(i64arr, i64arr2);
         EXPECT_EQ(darr, darr2);
         EXPECT_EQ(barr, barr2);
         EXPECT_EQ(strarr, strarr2);
@@ -669,7 +657,6 @@ namespace OCRepresentationEncodingTest
         subRep3.setValue("StringAttr", std::string("String attr"));
 
         std::vector<std::vector<int>> iarr {{1,2,3},{4,6},{7,8,9}};
-        std::vector<std::vector<int64_t>> i64arr {{1LL,2LL,3LL},{4LL,6LL},{7LL,8LL,9LL}};
         std::vector<std::vector<double>> darr {{1.1,2.2,3.3},{4.4,5.5,6.6},{8.8,9.9}};
         std::vector<std::vector<bool>> barr {{false, true}, {false}, {true, true}};
         std::vector<std::vector<std::string>> strarr {{"item1"}, {"item3", "item4"}};
@@ -700,7 +687,6 @@ namespace OCRepresentationEncodingTest
         };
 
         startRep["iarr"] = iarr;
-        startRep["i64arr"] = i64arr;
         startRep["darr"] = darr;
         startRep["barr"] = barr;
         startRep["strarr"] = strarr;
@@ -736,7 +722,6 @@ namespace OCRepresentationEncodingTest
 
         // Test
         std::vector<std::vector<int>> iarr2 = r["iarr"];
-        std::vector<std::vector<int64_t>> i64arr2 = r["i64arr"];
         std::vector<std::vector<double>> darr2 = r["darr"];
         std::vector<std::vector<bool>> barr2 = r["barr"];
         std::vector<std::vector<std::string>> strarr2 = r["strarr"];
@@ -748,7 +733,6 @@ namespace OCRepresentationEncodingTest
         // Since std::vector doesn't require this, items received on the other side end up
         // being backfilled.  This section removes the backfilling
         iarr2[1].pop_back();
-        i64arr2[1].pop_back();
         darr2[2].pop_back();
         barr2[1].pop_back();
         strarr2[0].pop_back();
@@ -756,7 +740,6 @@ namespace OCRepresentationEncodingTest
         bytestrarr2[0].pop_back();
 
         EXPECT_EQ(iarr, iarr2);
-        EXPECT_EQ(i64arr, i64arr2);
         EXPECT_EQ(darr, darr2);
         EXPECT_EQ(barr, barr2);
         EXPECT_EQ(strarr, strarr2);
@@ -786,11 +769,7 @@ namespace OCRepresentationEncodingTest
         subRep3.setValue("StringAttr", std::string("String attr"));
 
         std::vector<std::vector<std::vector<int>>> iarr
-        {{{1,2,3},{4,5,6}},{{7,8,9},{10,11,12}},{{13,14,15},{16,17,18}}};
-        std::vector<std::vector<std::vector<int64_t>>> i64arr
-        {{{1LL,2LL,3LL},{4LL,5LL,6LL}},
-         {{7LL,8LL,9LL},{10LL,11LL,12LL}},{{13LL,14LL,15LL},
-          {16LL,17LL,18LL}}};
+            {{{1,2,3},{4,5,6}},{{7,8,9},{10,11,12}},{{13,14,15},{16,17,18}}};
         std::vector<std::vector<std::vector<double>>> darr
             {{{1.1,2.2,3.3},{4.4,5.5,6.6}},
                 {{7.7,8.7,9.7},{10.7,11.7,12.7}},
@@ -874,7 +853,6 @@ namespace OCRepresentationEncodingTest
         };
 
         startRep["iarr"] = iarr;
-        startRep["i64arr"] = i64arr;
         startRep["darr"] = darr;
         startRep["barr"] = barr;
         startRep["strarr"] = strarr;
@@ -904,7 +882,6 @@ namespace OCRepresentationEncodingTest
 
         // Test
         std::vector<std::vector<std::vector<int>>> iarr2 = r["iarr"];
-        std::vector<std::vector<std::vector<int64_t>>> i64arr2 = r["i64arr"];
         std::vector<std::vector<std::vector<double>>> darr2 = r["darr"];
         std::vector<std::vector<std::vector<bool>>> barr2 = r["barr"];
         std::vector<std::vector<std::vector<std::string>>> strarr2 = r["strarr"];
@@ -912,7 +889,6 @@ namespace OCRepresentationEncodingTest
         std::vector<std::vector<std::vector<OCByteString>>> bytestrarr2 = r["bytestrarr"];
 
         EXPECT_EQ(iarr, iarr2);
-        EXPECT_EQ(i64arr, i64arr2);
         EXPECT_EQ(darr, darr2);
         EXPECT_EQ(barr, barr2);
         EXPECT_EQ(strarr, strarr2);
@@ -944,12 +920,6 @@ namespace OCRepresentationEncodingTest
                 {{1,2,3},{4,5,6}},
                 {{7,8,9},{10,12}},
                 {{13,14,15},{16,17,18}}
-            };
-        std::vector<std::vector<std::vector<int64_t>>> i64arr
-            {
-                {{1LL,2LL,3LL},{4LL,5LL,6LL}},
-                {{7LL,8LL,9LL},{10LL,12LL}},
-                {{13LL,14LL,15LL},{16LL,17LL,18LL}}
             };
         std::vector<std::vector<std::vector<double>>> darr
             {
@@ -1035,7 +1005,6 @@ namespace OCRepresentationEncodingTest
         };
 
         startRep["iarr"] = iarr;
-        startRep["i64arr"] = i64arr;
         startRep["darr"] = darr;
         startRep["barr"] = barr;
         startRep["strarr"] = strarr;
@@ -1065,7 +1034,6 @@ namespace OCRepresentationEncodingTest
 
         // Test
         std::vector<std::vector<std::vector<int>>> iarr2 = r["iarr"];
-        std::vector<std::vector<std::vector<int64_t>>> i64arr2 = r["i64arr"];
         std::vector<std::vector<std::vector<double>>> darr2 = r["darr"];
         std::vector<std::vector<std::vector<bool>>> barr2 = r["barr"];
         std::vector<std::vector<std::vector<std::string>>> strarr2 = r["strarr"];
@@ -1076,7 +1044,6 @@ namespace OCRepresentationEncodingTest
         // Since std::vector doesn't require this, items received on the other side end up
         // being backfilled.  This section removes the backfilling
         iarr2[1][1].pop_back();
-        i64arr2[1][1].pop_back();
         darr2[1][1].pop_back();
         barr2[0][1].pop_back();
         strarr2[1][1].pop_back();
@@ -1085,7 +1052,6 @@ namespace OCRepresentationEncodingTest
         bytestrarr2[1][1].pop_back();
 
         EXPECT_EQ(iarr, iarr2);
-        EXPECT_EQ(i64arr, i64arr2);
         EXPECT_EQ(darr, darr2);
         EXPECT_EQ(barr, barr2);
         EXPECT_EQ(strarr, strarr2);
