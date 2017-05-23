@@ -37,8 +37,8 @@
 
 #ifdef RD_CLIENT
 
-OCStackResult OCRDDiscover(OCDoHandle *handle, OCConnectivityType connectivityType,
-                           OCCallbackData *cbBiasFactor, OCQualityOfService qos)
+OCStackResult OC_CALL OCRDDiscover(OCDoHandle *handle, OCConnectivityType connectivityType,
+                                   OCCallbackData *cbBiasFactor, OCQualityOfService qos)
 {
     if (!cbBiasFactor || !cbBiasFactor->cb)
     {
@@ -117,10 +117,10 @@ exit:
     return cbData->cb(cbData->context, handle, clientResponse);
 }
 
-OCStackResult OCRDPublish(OCDoHandle *handle, const char *host,
-                          OCConnectivityType connectivityType,
-                          OCResourceHandle *resourceHandles, uint8_t nHandles,
-                          OCCallbackData *cbData, OCQualityOfService qos)
+OCStackResult OC_CALL OCRDPublish(OCDoHandle *handle, const char *host,
+                                  OCConnectivityType connectivityType,
+                                  OCResourceHandle *resourceHandles, uint8_t nHandles,
+                                  OCCallbackData *cbData, OCQualityOfService qos)
 {
     // Validate input parameters.
     if (!host)
@@ -319,11 +319,11 @@ exit:
     return rdPayload;
 }
 
-OCStackResult OCRDPublishWithDeviceId(OCDoHandle *handle, const char *host,
-                                      const unsigned char *id,
-                                      OCConnectivityType connectivityType,
-                                      OCResourceHandle *resourceHandles, uint8_t nHandles,
-                                      OCCallbackData *cbData, OCQualityOfService qos)
+OCStackResult OC_CALL OCRDPublishWithDeviceId(OCDoHandle *handle, const char *host,
+                                              const unsigned char *id,
+                                              OCConnectivityType connectivityType,
+                                              OCResourceHandle *resourceHandles, uint8_t nHandles,
+                                              OCCallbackData *cbData, OCQualityOfService qos)
 {
     // Validate input parameters.
     if (!host || !cbData || !cbData->cb || !id)
@@ -400,10 +400,10 @@ OCStackResult OCRDPublishWithDeviceId(OCDoHandle *handle, const char *host,
                         connectivityType, qos, &rdPublishCbData, options, (uint8_t)numOptions);
 }
 
-OCStackResult OCRDDelete(OCDoHandle *handle, const char *host,
-                         OCConnectivityType connectivityType,
-                         OCResourceHandle *resourceHandles, uint8_t nHandles,
-                         OCCallbackData *cbData, OCQualityOfService qos)
+OCStackResult OC_CALL OCRDDelete(OCDoHandle *handle, const char *host,
+                                 OCConnectivityType connectivityType,
+                                 OCResourceHandle *resourceHandles, uint8_t nHandles,
+                                 OCCallbackData *cbData, OCQualityOfService qos)
 {
     // Validate input parameters
     if (!host)
@@ -422,11 +422,11 @@ OCStackResult OCRDDelete(OCDoHandle *handle, const char *host,
                                   cbData, qos);
 }
 
-OCStackResult OCRDDeleteWithDeviceId(OCDoHandle *handle, const char *host,
-                                     const unsigned char *id,
-                                     OCConnectivityType connectivityType,
-                                     OCResourceHandle *resourceHandles, uint8_t nHandles,
-                                     OCCallbackData *cbData, OCQualityOfService qos)
+OCStackResult OC_CALL OCRDDeleteWithDeviceId(OCDoHandle *handle, const char *host,
+                                             const unsigned char *id,
+                                             OCConnectivityType connectivityType,
+                                             OCResourceHandle *resourceHandles, uint8_t nHandles,
+                                             OCCallbackData *cbData, OCQualityOfService qos)
 {
     // Validate input parameters
     if (!host || !cbData || !cbData->cb || !id)

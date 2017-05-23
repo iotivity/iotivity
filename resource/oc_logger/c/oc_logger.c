@@ -24,7 +24,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-oc_log_ctx_t *oc_log_make_ctx(
+oc_log_ctx_t *OC_CALL oc_log_make_ctx(
                             void*                 world,
                             const oc_log_level    level,
                             oc_log_init_t         init,
@@ -79,7 +79,7 @@ oc_log_ctx_t *oc_log_make_ctx(
  return log_ctx;
 }
 
-void oc_log_destroy(oc_log_ctx_t *ctx)
+void OC_CALL oc_log_destroy(oc_log_ctx_t *ctx)
 {
  if(!ctx)
  {
@@ -106,7 +106,7 @@ int oc_log_init(oc_log_ctx_t *ctx, void *world)
  return ctx->init(ctx, world);
 }
 
-void oc_log_flush(oc_log_ctx_t *ctx)
+void OC_CALL oc_log_flush(oc_log_ctx_t *ctx)
 {
     if(!ctx)
     {
@@ -115,7 +115,7 @@ void oc_log_flush(oc_log_ctx_t *ctx)
     ctx->flush(ctx);
 }
 
-void oc_log_set_level(oc_log_ctx_t *ctx, const oc_log_level loglevel)
+void OC_CALL oc_log_set_level(oc_log_ctx_t *ctx, const oc_log_level loglevel)
 {
     if(!ctx)
     {
@@ -124,7 +124,7 @@ void oc_log_set_level(oc_log_ctx_t *ctx, const oc_log_level loglevel)
     ctx->set_level(ctx, loglevel);
 }
 
-size_t oc_log_write(oc_log_ctx_t *ctx, const char *msg)
+size_t OC_CALL oc_log_write(oc_log_ctx_t *ctx, const char *msg)
 {
     if(!ctx)
     {
@@ -134,7 +134,7 @@ size_t oc_log_write(oc_log_ctx_t *ctx, const char *msg)
  return oc_log_write_level(ctx, ctx->log_level, msg);
 }
 
-size_t oc_log_write_level(oc_log_ctx_t *ctx, const oc_log_level loglevel, const char *msg)
+size_t OC_CALL oc_log_write_level(oc_log_ctx_t *ctx, const oc_log_level loglevel, const char *msg)
 {
  if(!ctx)
  {
@@ -147,7 +147,7 @@ size_t oc_log_write_level(oc_log_ctx_t *ctx, const oc_log_level loglevel, const 
  return ctx->write_level(ctx, loglevel, msg);
 }
 
-int oc_log_set_module(oc_log_ctx_t *ctx, const char *module_name)
+int OC_CALL oc_log_set_module(oc_log_ctx_t *ctx, const char *module_name)
 {
  char *mn = NULL;
 

@@ -32,7 +32,7 @@ extern "C" {
  *
  * @return ::OC_STACK_OK in case of success or else other value.
  */
-OCStackResult OCRDDatabaseInit();
+OCStackResult OC_CALL OCRDDatabaseInit();
 
 /**
  * Stores in database the published resource.
@@ -41,7 +41,7 @@ OCStackResult OCRDDatabaseInit();
  *
  * @return ::OC_STACK_OK in case of success or else other value.
  */
-OCStackResult OCRDDatabaseStoreResources(const OCRepPayload *payload);
+OCStackResult OC_CALL OCRDDatabaseStoreResources(const OCRepPayload *payload);
 
 /**
  * Delete the RD resources
@@ -53,7 +53,7 @@ OCStackResult OCRDDatabaseStoreResources(const OCRepPayload *payload);
  *
  * @return ::OC_STACK_OK in case of success or else other value.
  */
-OCStackResult OCRDDatabaseDeleteResources(const char *deviceId, const int64_t *instanceIds,
+OCStackResult OC_CALL OCRDDatabaseDeleteResources(const char *deviceId, const int64_t *instanceIds,
                                           uint16_t nInstanceIds);
 
 /**
@@ -61,7 +61,7 @@ OCStackResult OCRDDatabaseDeleteResources(const char *deviceId, const int64_t *i
  *
  * @return ::OC_STACK_OK in case of success or else other value.
  */
-OCStackResult OCRDDatabaseClose();
+OCStackResult OC_CALL OCRDDatabaseClose();
 
 #endif
 

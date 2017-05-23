@@ -164,7 +164,7 @@ namespace OC
              *
              * @return OC_STACK_OK in case of success and other value otherwise.
              */
-            static OCStackResult displayNumCallbackWrapper(void* ctx,
+            static OCStackResult OC_CALL displayNumCallbackWrapper(void* ctx,
                     uint8_t verifNum[MUTUAL_VERIF_NUM_LEN]);
 
             /**
@@ -172,7 +172,7 @@ namespace OC
              *
              * @return OC_STACK_OK in case of success and other value otherwise.
              */
-            static OCStackResult confirmUserCallbackWrapper(void* ctx);
+            static OCStackResult OC_CALL confirmUserCallbackWrapper(void* ctx);
 
             /**
              * Notifier wrapper for trustCertChain change.

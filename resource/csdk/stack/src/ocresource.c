@@ -1297,7 +1297,7 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
     return OC_STACK_OK;
 }
 
-OCResource *FindResourceByUri(const char* resourceUri)
+OCResource *OC_CALL FindResourceByUri(const char* resourceUri)
 {
     if(!resourceUri)
     {
@@ -2251,7 +2251,7 @@ ProcessRequest(ResourceHandling resHandling, OCResource *resource, OCServerReque
     return ret;
 }
 
-OCStackResult OCSetPlatformInfo(OCPlatformInfo info)
+OCStackResult OC_CALL OCSetPlatformInfo(OCPlatformInfo info)
 {
     OCResource *resource = NULL;
     if (!info.platformID || !info.manufacturerName)
@@ -2314,7 +2314,7 @@ exit:
     return OC_STACK_INVALID_PARAM;
 }
 
-OCStackResult OCSetDeviceInfo(OCDeviceInfo info)
+OCStackResult OC_CALL OCSetDeviceInfo(OCDeviceInfo info)
 {
     OCResource *resource = FindResourceByUri(OC_RSRVD_DEVICE_URI);
     if (!resource)
@@ -2365,7 +2365,7 @@ exit:
     return OC_STACK_ERROR;
 }
 
-OCStackResult OCGetAttribute(const OCResource *resource, const char *attribute, void **value)
+OCStackResult OC_CALL OCGetAttribute(const OCResource *resource, const char *attribute, void **value)
 {
     if (!resource || !attribute)
     {
@@ -2423,7 +2423,7 @@ OCStackResult OCGetAttribute(const OCResource *resource, const char *attribute, 
     return OC_STACK_NO_RESOURCE;
 }
 
-OCStackResult OCGetPropertyValue(OCPayloadType type, const char *prop, void **value)
+OCStackResult OC_CALL OCGetPropertyValue(OCPayloadType type, const char *prop, void **value)
 {
     if (!prop)
     {
@@ -2588,7 +2588,7 @@ static OCStackResult IsDatabaseUpdateNeeded(const char *attribute, const void *v
     return result;
 }
 
-OCStackResult OCSetAttribute(OCResource *resource, const char *attribute, const void *value)
+OCStackResult OC_CALL OCSetAttribute(OCResource *resource, const char *attribute, const void *value)
 {
     bool updateDatabase = false;
 
@@ -2606,7 +2606,7 @@ OCStackResult OCSetAttribute(OCResource *resource, const char *attribute, const 
     return SetAttributeInternal(resource, attribute, value, updateDatabase);
 }
 
-OCStackResult OCSetPropertyValue(OCPayloadType type, const char *prop, const void *value)
+OCStackResult OC_CALL OCSetPropertyValue(OCPayloadType type, const char *prop, const void *value)
 {
     if (!prop || !value)
     {

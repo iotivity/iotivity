@@ -154,7 +154,7 @@ time_t getSecondsFromAbsTime(struct tm *tp)
     return delayed_time;
 }
 
-time_t registerTimer(const time_t seconds, int *id, TimerCallback cb)
+time_t OC_CALL registerTimer(const time_t seconds, int *id, TimerCallback cb)
 {
     time_t now, then;
     time_t next;
@@ -212,7 +212,7 @@ time_t registerTimer(const time_t seconds, int *id, TimerCallback cb)
     return timeout_list[idx].timeout_time;
 }
 
-void unregisterTimer(int idx)
+void OC_CALL unregisterTimer(int idx)
 {
     if (0 <= idx && idx < TIMEOUTS)
         timeout_list[idx].timeout_state = TIMEOUT_UNUSED;
@@ -278,7 +278,7 @@ time_t timeToSecondsFromNow(tmElements_t *t_then)
     return (time_t) (then - t);
 }
 
-time_t registerTimer(const time_t seconds, int *id, TimerCallback cb)
+time_t OC_CALL registerTimer(const time_t seconds, int *id, TimerCallback cb)
 {
     time_t t, then;
     time_t next;
@@ -333,7 +333,7 @@ time_t registerTimer(const time_t seconds, int *id, TimerCallback cb)
     return timeout_list[idx].timeout_time;
 }
 
-void unregisterTimer(int idx)
+void OC_CALL unregisterTimer(int idx)
 {
     if (0 <= idx && idx < TIMEOUTS)
         timeout_list[idx].timeout_state = TIMEOUT_UNUSED;

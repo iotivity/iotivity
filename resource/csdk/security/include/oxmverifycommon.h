@@ -47,12 +47,12 @@
 /**
  * Function pointer to display verification PIN
  */
-typedef OCStackResult (*DisplayNumCallback)(void * ctx, uint8_t verifNum[MUTUAL_VERIF_NUM_LEN]);
+typedef OCStackResult (OC_CALL *DisplayNumCallback)(void * ctx, uint8_t verifNum[MUTUAL_VERIF_NUM_LEN]);
 
 /**
  * Function pointer to get user confirmation
  */
-typedef OCStackResult (*UserConfirmCallback)(void * ctx);
+typedef OCStackResult (OC_CALL *UserConfirmCallback)(void * ctx);
 
 /**
  * Context for displaying verification PIN
@@ -75,33 +75,33 @@ typedef struct UserConfirmContext
 /**
  * Set Callback for displaying verification PIN
  */
-void SetDisplayNumCB(void * ptr, DisplayNumCallback displayNumCB);
+void OC_CALL SetDisplayNumCB(void * ptr, DisplayNumCallback displayNumCB);
 
 /**
  * Unset Callback for displaying verification PIN
  */
-void* UnsetDisplayNumCB();
+void* OC_CALL UnsetDisplayNumCB();
 
 /**
  * Set Callback for getting user confirmation
  */
-void SetUserConfirmCB(void * ptr, UserConfirmCallback userConfirmCB);
+void OC_CALL SetUserConfirmCB(void * ptr, UserConfirmCallback userConfirmCB);
 
 /**
  * Unset Callback for getting user confirmation
  */
-void* UnsetUserConfirmCB();
+void* OC_CALL UnsetUserConfirmCB();
 
 /**
  * Set verification method option.
  * The default is both display PIN and get user confirmation.
  */
-void SetVerifyOption(VerifyOptionBitmask_t verifyOption);
+void OC_CALL SetVerifyOption(VerifyOptionBitmask_t verifyOption);
 
 /**
  * Call the Callback for Verifying Ownership Transfer process.
  */
-OCStackResult VerifyOwnershipTransfer(uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN],
+OCStackResult OC_CALL VerifyOwnershipTransfer(uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN],
                                 VerifyOptionBitmask_t verifyOption);
 
 #ifdef __cplusplus

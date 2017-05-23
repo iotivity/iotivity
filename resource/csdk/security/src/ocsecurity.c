@@ -166,7 +166,7 @@ static OCStackApplicationResult OCAssertRolesCBHandler(void *ctx, OCDoHandle UNU
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackResult OCAssertRoles(void *ctx, const OCDevAddr *devAddr, OCAssertRolesCB resultCallback)
+OCStackResult OC_CALL OCAssertRoles(void *ctx, const OCDevAddr *devAddr, OCAssertRolesCB resultCallback)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
 

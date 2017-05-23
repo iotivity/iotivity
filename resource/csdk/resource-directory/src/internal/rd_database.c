@@ -646,7 +646,7 @@ exit:
     return res;
 }
 
-OCStackResult OCRDDatabaseInit()
+OCStackResult OC_CALL OCRDDatabaseInit()
 {
     if (SQLITE_OK == sqlite3_config(SQLITE_CONFIG_LOG, errorCallback))
     {
@@ -707,7 +707,7 @@ exit:
     }
 }
 
-OCStackResult OCRDDatabaseClose()
+OCStackResult OC_CALL OCRDDatabaseClose()
 {
     CHECK_DATABASE_INIT;
     int res;
@@ -717,7 +717,7 @@ exit:
     return (SQLITE_OK == res) ? OC_STACK_OK : OC_STACK_ERROR;
 }
 
-OCStackResult OCRDDatabaseStoreResources(OCRepPayload *payload)
+OCStackResult OC_CALL OCRDDatabaseStoreResources(OCRepPayload *payload)
 {
     CHECK_DATABASE_INIT;
     int res;
@@ -726,7 +726,7 @@ exit:
     return (SQLITE_OK == res) ? OC_STACK_OK : OC_STACK_ERROR;
 }
 
-OCStackResult OCRDDatabaseDeleteResources(const char *deviceId, const uint8_t *instanceIds,
+OCStackResult OC_CALL OCRDDatabaseDeleteResources(const char *deviceId, const uint8_t *instanceIds,
         uint8_t nInstanceIds)
 {
     CHECK_DATABASE_INIT;

@@ -282,7 +282,7 @@ exit:
     return NULL;
 }
 
-char* OCCreateEndpointStringFromCA(const CAEndpoint_t* endpoint)
+char* OC_CALL OCCreateEndpointStringFromCA(const CAEndpoint_t* endpoint)
 {
     if (!endpoint || 0 == strlen(endpoint->addr))
     {

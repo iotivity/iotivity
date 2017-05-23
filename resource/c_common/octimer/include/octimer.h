@@ -72,14 +72,14 @@ time_t getSecondsFromAbsTime(struct tm *tp);
 
 int initThread();
 void *loop(void *threadid);
-time_t registerTimer(const time_t seconds, int *id, TimerCallback cb);
-void unregisterTimer(int id);
+time_t OC_CALL registerTimer(const time_t seconds, int *id, TimerCallback cb);
+void OC_CALL unregisterTimer(int id);
 
 #else
 
 time_t timeToSecondsFromNow(tmElements_t *t);
-time_t registerTimer(const time_t seconds, int *id, TimerCallback cb);
-void unregisterTimer(int id);
+time_t OC_CALL registerTimer(const time_t seconds, int *id, TimerCallback cb);
+void OC_CALL unregisterTimer(int id);
 
 
 #endif
