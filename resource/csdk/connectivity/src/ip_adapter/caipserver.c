@@ -472,7 +472,6 @@ static void CAFindReadyMessage()
     if (caglobals.ip.terminate)
     {
         caglobals.ip.shutdownEvent = WSA_INVALID_EVENT;
-        WSACleanup();
     }
 }
 
@@ -920,17 +919,6 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
     {
         return res;
     }
-#if defined (_WIN32)
-    WORD wVersionRequested = MAKEWORD(2, 2);
-    WSADATA wsaData ={.wVersion = 0};
-    int err = WSAStartup(wVersionRequested, &wsaData);
-    if (err != 0)
-    {
-        OIC_LOG_V(ERROR, TAG, "WSAStartup failed: %i", err);
-        return CA_STATUS_FAILED;
-    }
-    OIC_LOG(DEBUG, TAG, "WSAStartup Succeeded");
-#endif
     if (!IPv4MulticastAddress.s_addr)
     {
         (void)inet_pton(AF_INET, IPv4_MULTICAST, &IPv4MulticastAddress);
@@ -980,7 +968,7 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
     caglobals.ip.wsaRecvMsg = NULL;
     GUID GuidWSARecvMsg = WSAID_WSARECVMSG;
     DWORD copied = 0;
-    err = WSAIoctl(caglobals.ip.u4.fd, SIO_GET_EXTENSION_FUNCTION_POINTER, &GuidWSARecvMsg, sizeof(GuidWSARecvMsg), &(caglobals.ip.wsaRecvMsg), sizeof(caglobals.ip.wsaRecvMsg), &copied, 0, 0);
+    int err = WSAIoctl(caglobals.ip.u4.fd, SIO_GET_EXTENSION_FUNCTION_POINTER, &GuidWSARecvMsg, sizeof(GuidWSARecvMsg), &(caglobals.ip.wsaRecvMsg), sizeof(caglobals.ip.wsaRecvMsg), &copied, 0, 0);
     if (0 != err)
     {
         OIC_LOG_V(ERROR, TAG, "WSAIoctl failed %i", WSAGetLastError());
