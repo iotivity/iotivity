@@ -3288,6 +3288,7 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
     OCDevAddr *devAddr = NULL;
     char *resourceUri = NULL;
     char *resourceType = NULL;
+    bool isProxyRequest = false;
 
     /*
      * Support original behavior with address on resourceUri argument.
@@ -3305,10 +3306,14 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
             goto exit;
         }
     }
-    else if (!checkProxyUri(options, numOptions))
+    else
     {
-        OIC_LOG(ERROR, TAG, "Request doesn't contain RequestURI/Proxy URI");
-        goto exit;
+        isProxyRequest = checkProxyUri(options, numOptions);
+        if (!isProxyRequest)
+        {
+            OIC_LOG(ERROR, TAG, "Request doesn't contain RequestURI/Proxy URI");
+            goto exit;
+        }
     }
 
     switch (method)
@@ -3612,11 +3617,11 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     /* Check whether we should assert role certificates before making this request. */
-    if ((endpoint.flags & CA_SECURE) && (NULL != requestInfo.info.resourceUri) &&
-        (strcmp(requestInfo.info.resourceUri, OIC_RSRC_ROLES_URI) != 0) &&
-        (strcmp(requestInfo.info.resourceUri, OIC_RSRC_DOXM_URI) != 0) &&
+    if ((endpoint.flags & CA_SECURE) && (isProxyRequest ||
+        ((strcmp(requestInfo.info.resourceUri, OIC_RSRC_ROLES_URI) != 0) &&
+        (strcmp(requestInfo.info.resourceUri, OIC_RSRC_DOXM_URI) != 0)) &&
         ((CT_ADAPTER_TCP == connectivityType) &&
-                strcmp(requestInfo.info.resourceUri, OC_RSRVD_KEEPALIVE_URI) != 0))
+                strcmp(requestInfo.info.resourceUri, OC_RSRVD_KEEPALIVE_URI) != 0)))
     {
         CASecureEndpoint_t sep;
         CAResult_t caRes = CAGetSecureEndpointData(&endpoint, &sep);
@@ -3629,8 +3634,12 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
              * it fails, that's OK, roles will get asserted "automatically" when PSK
              * credentials are used.
              */
-            OIC_LOG_V(DEBUG, TAG, "%s: going to try to assert roles before doing request to %s ",
-                      __func__, requestInfo.info.resourceUri);
+            if (!isProxyRequest)
+            {
+                OIC_LOG_V(DEBUG, TAG, "%s: going to try to assert roles before doing request to %s ",
+                          __func__, requestInfo.info.resourceUri);
+            }
+
             OCDevAddr da;
             CopyEndpointToDevAddr(&endpoint, &da);
             OCStackResult assertResult = OCAssertRoles((void*)ASSERT_ROLES_CTX, &da,
