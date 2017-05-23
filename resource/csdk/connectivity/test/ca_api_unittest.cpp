@@ -521,17 +521,15 @@ TEST_F(CATests, GetNetworkInformationTest)
     free(tempInfo);
 }
 
-// TODO: This is temporary disabled.
-TEST(CAGetNetworkInformationTest, DISABLED_EnableIPv6)
+TEST_F(CATests, GetNetworkInformationTest_EnableIPv6)
 {
-    CAInitialize(CA_DEFAULT_ADAPTER);
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
+
     caglobals.ip.ipv6enabled = true;
     caglobals.ip.ipv4enabled = false;
 
     size_t tempSize = 0;
     CAEndpoint_t *tempInfo = NULL;
-
-    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
     EXPECT_EQ(CA_STATUS_OK, CAGetNetworkInformation(&tempInfo, &tempSize));
 
     for (size_t index = 0; index < tempSize; index++)
@@ -540,19 +538,17 @@ TEST(CAGetNetworkInformationTest, DISABLED_EnableIPv6)
     }
 
     OICFree(tempInfo);
-    CATerminate();
 }
 
-TEST(CAGetNetworkInformationTest, DISABLED_EnableIPv4)
+TEST_F(CATests, GetNetworkInformationTest_EnableIPv4)
 {
-    CAInitialize(CA_DEFAULT_ADAPTER);
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
+
     caglobals.ip.ipv6enabled = false;
     caglobals.ip.ipv4enabled = true;
 
     size_t tempSize = 0;
     CAEndpoint_t *tempInfo = NULL;
-
-    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
     EXPECT_EQ(CA_STATUS_OK, CAGetNetworkInformation(&tempInfo, &tempSize));
 
     for (size_t index = 0; index < tempSize; index++)
@@ -561,19 +557,17 @@ TEST(CAGetNetworkInformationTest, DISABLED_EnableIPv4)
     }
 
     OICFree(tempInfo);
-    CATerminate();
 }
 
-TEST(CAGetNetworkInformationTest, DISABLED_EnableIPv4AndIPv6)
+TEST_F(CATests, GetNetworkInformationTest_EnableIPv4AndIPv6)
 {
-    CAInitialize(CA_DEFAULT_ADAPTER);
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
+
     caglobals.ip.ipv6enabled = true;
     caglobals.ip.ipv4enabled = true;
 
     size_t tempSize = 0;
     CAEndpoint_t *tempInfo = NULL;
-
-    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
     EXPECT_EQ(CA_STATUS_OK, CAGetNetworkInformation(&tempInfo, &tempSize));
 
     CATransportFlags_t flags = (CATransportFlags_t)(CA_IPV4|CA_IPV6);
@@ -583,7 +577,6 @@ TEST(CAGetNetworkInformationTest, DISABLED_EnableIPv4AndIPv6)
     }
 
     OICFree(tempInfo);
-    CATerminate();
 }
 
 TEST_F(CATests, GetSelectedNetwork)
