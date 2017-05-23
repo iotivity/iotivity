@@ -1744,42 +1744,17 @@ exit:
 static int testCAinitSslAdapter()
 {
     int ret = 0;
+    CAResult_t result = CA_STATUS_FAILED;
 
-    CAEndpoint_t serverAddr;
-    serverAddr.adapter = CA_ADAPTER_IP;
-    serverAddr.flags = CA_SECURE;
-    serverAddr.port = 4433;
-    char addr[] = {0x31, 0x32, 0x37, 0x2e, 0x30, 0x2e, 0x30, 0x2e, 0x31, 0x00}; // 127.0.0.1
-    memcpy(serverAddr.addr, addr, sizeof(addr));
-    serverAddr.ifindex = 0;
-
-    ret = CAinitSslAdapter();
-    if (ret != 0 ||
-        &g_caSslContext == NULL ||
-        &g_caSslContext->crt == NULL ||
-        &g_caSslContext->pkey == NULL ||
-        &g_caSslContext->clientTlsConf == NULL ||
-        &g_caSslContext->serverTlsConf == NULL ||
-        &g_caSslContext->rnd == NULL ||
-        &g_caSslContext->entropy == NULL)
+    result = CAinitSslAdapter();
+    if (result == CA_STATUS_OK)
+    {
+        CAdeinitSslAdapter();
+    }
+    else
     {
         ret = 1;
     }
-
-    // CAdeinitSslAdapter
-    oc_mutex_lock(g_sslContextMutex);
-    DeletePeerList();
-    mbedtls_x509_crt_free(&g_caSslContext->crt);
-    mbedtls_pk_free(&g_caSslContext->pkey);
-    mbedtls_ssl_config_free(&g_caSslContext->clientTlsConf);
-    mbedtls_ssl_config_free(&g_caSslContext->serverTlsConf);
-    mbedtls_ctr_drbg_free(&g_caSslContext->rnd);
-    mbedtls_entropy_free(&g_caSslContext->entropy);
-    OICFree(g_caSslContext);
-    g_caSslContext = NULL;
-    oc_mutex_unlock(g_sslContextMutex);
-    oc_mutex_free(g_sslContextMutex);
-    g_sslContextMutex = NULL;
 
     return ret;
 }
@@ -1803,41 +1778,13 @@ TEST(TLSAdapter, Test_1)
 static int testCAsetSslAdapterCallbacks()
 {
     int ret = 0xFF;
-    CAEndpoint_t serverAddr;
-    serverAddr.adapter = CA_ADAPTER_IP;
-    serverAddr.flags = CA_SECURE;
-    serverAddr.port = 4433;
-    char addr[] = {0x31, 0x32, 0x37, 0x2e, 0x30, 0x2e, 0x30, 0x2e, 0x31, 0x00}; // 127.0.0.1
-    memcpy(serverAddr.addr, addr, sizeof(addr));
-    serverAddr.ifindex = 0;
+    CAResult_t result = CA_STATUS_FAILED;
 
-    // CAinitSslAdapter
-    g_sslContextMutex = oc_mutex_new();
-    oc_mutex_lock(g_sslContextMutex);
-    g_caSslContext = (SslContext_t *)OICCalloc(1, sizeof(SslContext_t));
-    g_caSslContext->peerList = u_arraylist_create();
-    mbedtls_entropy_init(&g_caSslContext->entropy);
-    mbedtls_ctr_drbg_init(&g_caSslContext->rnd);
-    unsigned char * seed = (unsigned char*) SEED;
-    mbedtls_ctr_drbg_seed(&g_caSslContext->rnd, mbedtls_entropy_func_clutch,
-                                  &g_caSslContext->entropy, seed, sizeof(SEED));
-    mbedtls_ctr_drbg_set_prediction_resistance(&g_caSslContext->rnd, MBEDTLS_CTR_DRBG_PR_OFF);
-    mbedtls_ssl_config_init(&g_caSslContext->clientTlsConf);
-    mbedtls_ssl_config_defaults(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_IS_CLIENT,
-                                    MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT);
-    mbedtls_ssl_conf_psk_cb(&g_caSslContext->clientTlsConf, GetPskCredentialsCallback, NULL);
-    mbedtls_ssl_conf_rng( &g_caSslContext->clientTlsConf, mbedtls_ctr_drbg_random,
-                          &g_caSslContext->rnd);
-    mbedtls_ssl_conf_curves(&g_caSslContext->clientTlsConf, curve[ADAPTER_CURVE_SECP256R1]);
-    mbedtls_ssl_conf_min_version(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_MAJOR_VERSION_3,
-                                 MBEDTLS_SSL_MINOR_VERSION_3);
-    mbedtls_ssl_conf_authmode(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_VERIFY_REQUIRED);
-    CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256);
-    mbedtls_x509_crt_init(&g_caSslContext->ca);
-    mbedtls_x509_crt_init(&g_caSslContext->crt);
-    mbedtls_pk_init(&g_caSslContext->pkey);
-    mbedtls_x509_crl_init(&g_caSslContext->crl);
-    oc_mutex_unlock(g_sslContextMutex);
+    result = CAinitSslAdapter();
+    if (result != CA_STATUS_OK)
+    {
+        return 1;
+    }
 
     CAsetSslAdapterCallbacks(CATCPPacketReceivedCB, CATCPPacketSendCB, (CATransportAdapter_t)0);
     if (g_caSslContext->adapterCallbacks[0].recvCallback == NULL &&
@@ -1865,20 +1812,7 @@ static int testCAsetSslAdapterCallbacks()
         ret += 1;
     }
 
-    // CAdeinitSslAdapter
-    oc_mutex_lock(g_sslContextMutex);
-    DeletePeerList();
-    mbedtls_x509_crt_free(&g_caSslContext->crt);
-    mbedtls_pk_free(&g_caSslContext->pkey);
-    mbedtls_ssl_config_free(&g_caSslContext->clientTlsConf);
-    mbedtls_ssl_config_free(&g_caSslContext->serverTlsConf);
-    mbedtls_ctr_drbg_free(&g_caSslContext->rnd);
-    mbedtls_entropy_free(&g_caSslContext->entropy);
-    OICFree(g_caSslContext);
-    g_caSslContext = NULL;
-    oc_mutex_unlock(g_sslContextMutex);
-    oc_mutex_free(g_sslContextMutex);
-    g_sslContextMutex = NULL;
+    CAdeinitSslAdapter();
 
     return ret;
 }
@@ -1900,9 +1834,9 @@ TEST(TLSAdapter, Test_2)
  * *************************/
 
 unsigned char predictedClientHello[] = {
-    0x16, 0x03, 0x03, 0x00, 0x71, 0x01, 0x00, 0x00, 0x6d, 0x03, 0x03, 0x58, 0xc1, 0x40, 0x47, 0x04,
-    0xb1, 0x3b, 0xda, 0x55, 0xa4, 0x8e, 0xcc, 0x3f, 0xe9, 0x45, 0x5c, 0xaf, 0xcb, 0x19, 0x2e, 0x1f,
-    0x4b, 0xd5, 0x84, 0x5c, 0x4b, 0xd7, 0x7d, 0x38, 0xa2, 0xfa, 0x3d, 0x00, 0x00, 0x14, 0xc0, 0xac,
+    0x16, 0x03, 0x03, 0x00, 0x71, 0x01, 0x00, 0x00, 0x6d, 0x03, 0x03, 0x00, 0x00, 0x00, 0x00, 0x34,
+    0x1c, 0x45, 0xfa, 0xbf, 0x39, 0xe5, 0xbf, 0x52, 0x20, 0x4f, 0x8f, 0xf5, 0x6b, 0x89, 0xb0, 0xbb,
+    0x3a, 0x5e, 0x13, 0xb4, 0x94, 0x73, 0xee, 0xf4, 0x98, 0x48, 0x4a, 0x00, 0x00, 0x14, 0xc0, 0xac,
     0x00, 0x3d, 0x00, 0x9c, 0xc0, 0x2b, 0xc0, 0xae, 0xc0, 0x23, 0xc0, 0x24, 0xc0, 0x2c, 0xc0, 0x27,
     0x00, 0xff, 0x01, 0x00, 0x00, 0x30, 0x00, 0x0d, 0x00, 0x16, 0x00, 0x14, 0x06, 0x03, 0x06, 0x01,
     0x05, 0x03, 0x05, 0x01, 0x04, 0x03, 0x04, 0x01, 0x03, 0x03, 0x03, 0x01, 0x02, 0x03, 0x02, 0x01,
@@ -1938,27 +1872,28 @@ static void * test0CAinitiateSslHandshake(void * arg)
     memcpy(serverAddr.addr, addr, sizeof(addr));
     serverAddr.ifindex = 0;
 
-    // CAinitSslAdapter
-    g_sslContextMutex = oc_mutex_new();
+    g_sslContextMutex = oc_mutex_new_recursive();
     oc_mutex_lock(g_sslContextMutex);
     g_caSslContext = (SslContext_t *)OICCalloc(1, sizeof(SslContext_t));
     g_caSslContext->peerList = u_arraylist_create();
     mbedtls_entropy_init(&g_caSslContext->entropy);
     mbedtls_ctr_drbg_init(&g_caSslContext->rnd);
-    unsigned char * seed = (unsigned char*) SEED;
     mbedtls_ctr_drbg_seed(&g_caSslContext->rnd, mbedtls_entropy_func_clutch,
-                                  &g_caSslContext->entropy, seed, sizeof(SEED));
+                                  &g_caSslContext->entropy,
+                                  (const unsigned char*) PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING));
     mbedtls_ctr_drbg_set_prediction_resistance(&g_caSslContext->rnd, MBEDTLS_CTR_DRBG_PR_OFF);
-    mbedtls_ssl_config_init(&g_caSslContext->clientTlsConf);
-    mbedtls_ssl_config_defaults(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_IS_CLIENT,
-                                    MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT);
-    mbedtls_ssl_conf_psk_cb(&g_caSslContext->clientTlsConf, GetPskCredentialsCallback, NULL);
-    mbedtls_ssl_conf_rng( &g_caSslContext->clientTlsConf, mbedtls_ctr_drbg_random,
-                          &g_caSslContext->rnd);
-    mbedtls_ssl_conf_curves(&g_caSslContext->clientTlsConf, curve[ADAPTER_CURVE_SECP256R1]);
-    mbedtls_ssl_conf_min_version(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_MAJOR_VERSION_3,
-                                 MBEDTLS_SSL_MINOR_VERSION_3);
-    mbedtls_ssl_conf_authmode(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_VERIFY_REQUIRED);
+    InitConfig(&g_caSslContext->clientTlsConf,
+                        MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_IS_CLIENT);
+    InitConfig(&g_caSslContext->serverTlsConf,
+                        MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_IS_SERVER);
+    mbedtls_ssl_cookie_init(&g_caSslContext->cookieCtx);
+    mbedtls_ssl_cookie_setup(&g_caSslContext->cookieCtx, mbedtls_ctr_drbg_random,
+                                      &g_caSslContext->rnd);
+    InitConfig(&g_caSslContext->clientDtlsConf,
+                        MBEDTLS_SSL_TRANSPORT_DATAGRAM, MBEDTLS_SSL_IS_CLIENT);
+    InitConfig(&g_caSslContext->serverDtlsConf,
+                        MBEDTLS_SSL_TRANSPORT_DATAGRAM, MBEDTLS_SSL_IS_SERVER);
+    g_caSslContext->cipher = SSL_CIPHER_MAX;
     mbedtls_x509_crt_init(&g_caSslContext->ca);
     mbedtls_x509_crt_init(&g_caSslContext->crt);
     mbedtls_pk_init(&g_caSslContext->pkey);
@@ -2113,33 +2048,7 @@ static void * testCAencryptSsl(void * arg)
     memcpy(serverAddr.addr, addr, sizeof(addr));
     serverAddr.ifindex = 0;
 
-    // CAinitTlsAdapter
-    g_sslContextMutex = oc_mutex_new();
-    oc_mutex_lock(g_sslContextMutex);
-    g_caSslContext = (SslContext_t *)OICCalloc(1, sizeof(SslContext_t));
-    g_caSslContext->peerList = u_arraylist_create();
-    mbedtls_entropy_init(&g_caSslContext->entropy);
-    mbedtls_ctr_drbg_init(&g_caSslContext->rnd);
-    unsigned char * seed = (unsigned char*) SEED;
-    mbedtls_ctr_drbg_seed(&g_caSslContext->rnd, mbedtls_entropy_func_clutch,
-                                  &g_caSslContext->entropy, seed, sizeof(SEED));
-    mbedtls_ctr_drbg_set_prediction_resistance(&g_caSslContext->rnd, MBEDTLS_CTR_DRBG_PR_OFF);
-    mbedtls_ssl_config_init(&g_caSslContext->clientTlsConf);
-    mbedtls_ssl_config_defaults(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_IS_CLIENT,
-                                    MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT);
-    mbedtls_ssl_conf_psk_cb(&g_caSslContext->clientTlsConf, GetPskCredentialsCallback, NULL);
-    mbedtls_ssl_conf_rng( &g_caSslContext->clientTlsConf, mbedtls_ctr_drbg_random,
-                          &g_caSslContext->rnd);
-    mbedtls_ssl_conf_curves(&g_caSslContext->clientTlsConf, curve[ADAPTER_CURVE_SECP256R1]);
-    mbedtls_ssl_conf_min_version(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_MAJOR_VERSION_3,
-                                 MBEDTLS_SSL_MINOR_VERSION_3);
-    mbedtls_ssl_conf_authmode(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_VERIFY_REQUIRED);
-    CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256);
-    mbedtls_x509_crt_init(&g_caSslContext->ca);
-    mbedtls_x509_crt_init(&g_caSslContext->crt);
-    mbedtls_pk_init(&g_caSslContext->pkey);
-    mbedtls_x509_crl_init(&g_caSslContext->crl);
-    oc_mutex_unlock(g_sslContextMutex);
+    CAinitSslAdapter();
 
     CAsetSslAdapterCallbacks(CATCPPacketReceivedCB, CATCPPacketSendCB, CA_ADAPTER_TCP);
 
@@ -2182,9 +2091,7 @@ static void * testCAencryptSsl(void * arg)
     }
 
     // CAinitiateSslHandshake
-    oc_mutex_lock(g_sslContextMutex);
-    InitiateTlsHandshake(&serverAddr);
-    oc_mutex_unlock(g_sslContextMutex);
+    CAinitiateSslHandshake(&serverAddr);
 
     unsigned char buffer[2048] = {'\0'};
     int buflen = 0;
@@ -2216,20 +2123,7 @@ static void * testCAencryptSsl(void * arg)
 
     CAcloseSslConnection(&serverAddr);
 
-    // CAdeinitSslAdapter
-    oc_mutex_lock(g_sslContextMutex);
-    DeletePeerList();
-    mbedtls_x509_crt_free(&g_caSslContext->crt);
-    mbedtls_pk_free(&g_caSslContext->pkey);
-    mbedtls_ssl_config_free(&g_caSslContext->clientTlsConf);
-    mbedtls_ssl_config_free(&g_caSslContext->serverTlsConf);
-    mbedtls_ctr_drbg_free(&g_caSslContext->rnd);
-    mbedtls_entropy_free(&g_caSslContext->entropy);
-    OICFree(g_caSslContext);
-    g_caSslContext = NULL;
-    oc_mutex_unlock(g_sslContextMutex);
-    oc_mutex_free(g_sslContextMutex);
-    g_sslContextMutex = NULL;
+    CAdeinitSslAdapter();
 
     socketClose();
 
@@ -2568,42 +2462,13 @@ static void * testCAdecryptSsl(void * arg)
     memcpy(serverAddr.addr, addr, sizeof(addr));
     serverAddr.ifindex = 0;
 
-    // CAinitTlsAdapter
-    g_sslContextMutex = oc_mutex_new();
-    oc_mutex_lock(g_sslContextMutex);
-    g_caSslContext = (SslContext_t *)OICCalloc(1, sizeof(SslContext_t));
-    g_caSslContext->peerList = u_arraylist_create();
-    mbedtls_entropy_init(&g_caSslContext->entropy);
-    mbedtls_ctr_drbg_init(&g_caSslContext->rnd);
-    unsigned char * seed = (unsigned char*) SEED;
-    mbedtls_ctr_drbg_seed(&g_caSslContext->rnd, mbedtls_entropy_func_clutch,
-                                  &g_caSslContext->entropy, seed, sizeof(SEED));
-    mbedtls_ctr_drbg_set_prediction_resistance(&g_caSslContext->rnd, MBEDTLS_CTR_DRBG_PR_OFF);
-    mbedtls_ssl_config_init(&g_caSslContext->clientTlsConf);
-    mbedtls_ssl_config_defaults(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_IS_CLIENT,
-                                    MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT);
-    mbedtls_ssl_conf_psk_cb(&g_caSslContext->clientTlsConf, GetPskCredentialsCallback, NULL);
-    mbedtls_ssl_conf_rng( &g_caSslContext->clientTlsConf, mbedtls_ctr_drbg_random,
-                          &g_caSslContext->rnd);
-    mbedtls_ssl_conf_curves(&g_caSslContext->clientTlsConf, curve[ADAPTER_CURVE_SECP256R1]);
-    mbedtls_ssl_conf_min_version(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_MAJOR_VERSION_3,
-                                 MBEDTLS_SSL_MINOR_VERSION_3);
-    mbedtls_ssl_conf_authmode(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_VERIFY_REQUIRED);
-    CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256);
-    mbedtls_x509_crt_init(&g_caSslContext->ca);
-    mbedtls_x509_crt_init(&g_caSslContext->crt);
-    mbedtls_pk_init(&g_caSslContext->pkey);
-    mbedtls_x509_crl_init(&g_caSslContext->crl);
-    oc_mutex_unlock(g_sslContextMutex);
+    CAinitSslAdapter();
 
-    // CAsetTlsAdapterCallbacks
     CAsetSslAdapterCallbacks(CATCPPacketReceivedCB, CATCPPacketSendCB, CA_ADAPTER_TCP);
 
-    // CAsetPkixInfoCallback
     CAsetPkixInfoCallback(infoCallback_that_loads_x509);
 
-    // CAsetCredentialTypesCallback
-    g_getCredentialTypesCallback = clutch;
+    CAsetCredentialTypesCallback(clutch);
 
     CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM);
 
@@ -2616,9 +2481,7 @@ static void * testCAdecryptSsl(void * arg)
     }
 
     // CAinitiateSslHandshake
-    oc_mutex_lock(g_sslContextMutex);
-    InitiateTlsHandshake(&serverAddr);
-    oc_mutex_unlock(g_sslContextMutex);
+    CAinitiateSslHandshake(&serverAddr);
 
     CASecureEndpoint_t * sep = (CASecureEndpoint_t *) malloc (sizeof(CASecureEndpoint_t));
     sep->endpoint = serverAddr;
@@ -2648,20 +2511,7 @@ static void * testCAdecryptSsl(void * arg)
 
     CAcloseSslConnection(&serverAddr);
 
-    // CAdeinitSslAdapter
-    oc_mutex_lock(g_sslContextMutex);
-    DeletePeerList();
-    mbedtls_x509_crt_free(&g_caSslContext->crt);
-    mbedtls_pk_free(&g_caSslContext->pkey);
-    mbedtls_ssl_config_free(&g_caSslContext->clientTlsConf);
-    mbedtls_ssl_config_free(&g_caSslContext->serverTlsConf);
-    mbedtls_ctr_drbg_free(&g_caSslContext->rnd);
-    mbedtls_entropy_free(&g_caSslContext->entropy);
-    OICFree(g_caSslContext);
-    g_caSslContext = NULL;
-    oc_mutex_unlock(g_sslContextMutex);
-    oc_mutex_free(g_sslContextMutex);
-    g_sslContextMutex = NULL;
+    CAdeinitSslAdapter();
 
     socketClose();
 
@@ -2735,46 +2585,13 @@ static int testCAdeinitSslAdapter()
     memcpy(serverAddr.addr, addr, sizeof(addr));
     serverAddr.ifindex = 0;
 
-    // CAinitTlsAdapter
-    g_sslContextMutex = oc_mutex_new();
-    oc_mutex_lock(g_sslContextMutex);
-    g_caSslContext = (SslContext_t *)OICCalloc(1, sizeof(SslContext_t));
-    g_caSslContext->peerList = u_arraylist_create();
-    mbedtls_entropy_init(&g_caSslContext->entropy);
-    mbedtls_ctr_drbg_init(&g_caSslContext->rnd);
-    unsigned char * seed = (unsigned char*) SEED;
-    mbedtls_ctr_drbg_seed(&g_caSslContext->rnd, mbedtls_entropy_func,
-                                  &g_caSslContext->entropy, seed, sizeof(SEED));
-    mbedtls_ctr_drbg_set_prediction_resistance(&g_caSslContext->rnd, MBEDTLS_CTR_DRBG_PR_OFF);
-    mbedtls_ssl_config_init(&g_caSslContext->clientTlsConf);
-    mbedtls_ssl_config_defaults(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_IS_CLIENT,
-                                    MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT);
-    mbedtls_ssl_conf_psk_cb(&g_caSslContext->clientTlsConf, GetPskCredentialsCallback, NULL);
-    mbedtls_ssl_conf_rng( &g_caSslContext->clientTlsConf, mbedtls_ctr_drbg_random,
-                          &g_caSslContext->rnd);
-    mbedtls_ssl_conf_curves(&g_caSslContext->clientTlsConf, curve[ADAPTER_CURVE_SECP256R1]);
-    mbedtls_ssl_conf_min_version(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_MAJOR_VERSION_3,
-                                 MBEDTLS_SSL_MINOR_VERSION_3);
-    mbedtls_ssl_conf_authmode(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_VERIFY_REQUIRED);
-    mbedtls_x509_crt_init(&g_caSslContext->ca);
-    mbedtls_x509_crt_init(&g_caSslContext->crt);
-    mbedtls_pk_init(&g_caSslContext->pkey);
-    mbedtls_x509_crl_init(&g_caSslContext->crl);
-    oc_mutex_unlock(g_sslContextMutex);
+    CAinitSslAdapter();
 
-    // CAsetTlsAdapterCallbacks
-    g_caSslContext->adapterCallbacks[1].recvCallback = CATCPPacketReceivedCB;
-    g_caSslContext->adapterCallbacks[1].sendCallback = CATCPPacketSendCB;
+    CAsetSslAdapterCallbacks(CATCPPacketReceivedCB, CATCPPacketSendCB, CA_ADAPTER_TCP);
 
-    // CAsetPkixInfoCallback
-    g_getPkixInfoCallback = infoCallback_that_loads_x509;
+    CAsetPkixInfoCallback(infoCallback_that_loads_x509);
 
-    // CAsetTlsCipherSuite
-    mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientTlsConf,
-                                         tlsCipher[SSL_ECDHE_ECDSA_WITH_AES_128_CCM]);
-    mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverTlsConf,
-                                         tlsCipher[SSL_ECDHE_ECDSA_WITH_AES_128_CCM]);
-    g_caSslContext->cipher = SSL_ECDHE_ECDSA_WITH_AES_128_CCM;
+    CAsetTlsCipherSuite(SSL_ECDHE_ECDSA_WITH_AES_128_CCM);
 
     CAdeinitSslAdapter();
 
@@ -2823,8 +2640,7 @@ static void * testServer(void * arg)
     CAsetSslAdapterCallbacks(CATCPPacketReceivedCB_server, CATCPPacketSendCB_server, CA_ADAPTER_TCP);
     CAsetPkixInfoCallback(infoCallback_that_loads_x509);
 
-    // CAsetCredentialTypesCallback
-    g_getCredentialTypesCallback = clutch;
+    CAsetCredentialTypesCallback(clutch);
 
     CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM);
 
@@ -2852,20 +2668,7 @@ static void * testServer(void * arg)
 
     CAcloseSslConnection(&serverAddr);
 
-    // CAdeinitSslAdapter
-    oc_mutex_lock(g_sslContextMutex);
-    DeletePeerList();
-    mbedtls_x509_crt_free(&g_caSslContext->crt);
-    mbedtls_pk_free(&g_caSslContext->pkey);
-    mbedtls_ssl_config_free(&g_caSslContext->clientTlsConf);
-    mbedtls_ssl_config_free(&g_caSslContext->serverTlsConf);
-    mbedtls_ctr_drbg_free(&g_caSslContext->rnd);
-    mbedtls_entropy_free(&g_caSslContext->entropy);
-    OICFree(g_caSslContext);
-    g_caSslContext = NULL;
-    oc_mutex_unlock(g_sslContextMutex);
-    oc_mutex_free(g_sslContextMutex);
-    g_sslContextMutex = NULL;
+    CAdeinitSslAdapter();
 
     socketClose_server();
 
@@ -2915,7 +2718,7 @@ TEST(TLSAdapter, Test_7)
     sleep(5);
 
     ASSERT_FALSE(socket_error);
-    EXPECT_EQ(NULL, arg);
+    EXPECT_EQ(0, arg);
 }
 
 /* **************************
@@ -3011,8 +2814,7 @@ static int testCAsetTlsCipherSuite()
 
     CAinitSslAdapter();
 
-    // CAsetCredentialTypesCallback
-    g_getCredentialTypesCallback = clutch;
+    CAsetCredentialTypesCallback(clutch);
 
     status = CAsetTlsCipherSuite(MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA256);
     if (SSL_RSA_WITH_AES_256_CBC_SHA256 != g_caSslContext->cipher || status != CA_STATUS_OK)
@@ -3079,20 +2881,7 @@ static int testCAsetTlsCipherSuite()
         ret += 1;
     }
 
-    // CAdeinitSslAdapter
-    oc_mutex_lock(g_sslContextMutex);
-    DeletePeerList();
-    mbedtls_x509_crt_free(&g_caSslContext->crt);
-    mbedtls_pk_free(&g_caSslContext->pkey);
-    mbedtls_ssl_config_free(&g_caSslContext->clientTlsConf);
-    mbedtls_ssl_config_free(&g_caSslContext->serverTlsConf);
-    mbedtls_ctr_drbg_free(&g_caSslContext->rnd);
-    mbedtls_entropy_free(&g_caSslContext->entropy);
-    OICFree(g_caSslContext);
-    g_caSslContext = NULL;
-    oc_mutex_unlock(g_sslContextMutex);
-    oc_mutex_free(g_sslContextMutex);
-    g_sslContextMutex = NULL;
+    CAdeinitSslAdapter();
 
     return ret;
 }
@@ -3122,7 +2911,7 @@ TEST(TLSAdapter, Test_11)
         0xd2, 0x4a, 0x55, 0x9e, 0x8f, 0x88, 0x3c, 0x57, 0x10, 0xbd, 0x5a, 0x30, 0x01, 0xb4, 0x59, 0x63, 
         0x64, 0x19, 0x8d, 0xfa, 0x5c, 0x86, 0x92, 0xf7, 0x60, 0x99, 0xdb, 0xae, 0x0e, 0xad, 0x80, 0xf1, 
         0x82, 0xaf, 0x1b, 0x14
-        };
+    };
     size_t predictedPSK_len = sizeof(predictedPSK);
 
     uint8_t label[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A};
@@ -3149,42 +2938,39 @@ TEST(TLSAdapter, Test_11)
     sleep(5);
     ASSERT_FALSE(socket_error) << "Server: socket error";
 
-    // CAinitTlsAdapter
-    g_sslContextMutex = oc_mutex_new();
+    g_sslContextMutex = oc_mutex_new_recursive();
     oc_mutex_lock(g_sslContextMutex);
     g_caSslContext = (SslContext_t *)OICCalloc(1, sizeof(SslContext_t));
     g_caSslContext->peerList = u_arraylist_create();
     mbedtls_entropy_init(&g_caSslContext->entropy);
     mbedtls_ctr_drbg_init(&g_caSslContext->rnd);
-    unsigned char * seed = (unsigned char*) SEED;
     mbedtls_ctr_drbg_seed(&g_caSslContext->rnd, mbedtls_entropy_func_clutch,
-                                  &g_caSslContext->entropy, seed, sizeof(SEED));
+                                  &g_caSslContext->entropy,
+                                  (const unsigned char*) PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING));
     mbedtls_ctr_drbg_set_prediction_resistance(&g_caSslContext->rnd, MBEDTLS_CTR_DRBG_PR_OFF);
-    mbedtls_ssl_config_init(&g_caSslContext->clientTlsConf);
-    mbedtls_ssl_config_defaults(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_IS_CLIENT,
-                                    MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT);
-    mbedtls_ssl_conf_psk_cb(&g_caSslContext->clientTlsConf, GetPskCredentialsCallback, NULL);
-    mbedtls_ssl_conf_rng( &g_caSslContext->clientTlsConf, mbedtls_ctr_drbg_random,
-                          &g_caSslContext->rnd);
-    mbedtls_ssl_conf_curves(&g_caSslContext->clientTlsConf, curve[ADAPTER_CURVE_SECP256R1]);
-    mbedtls_ssl_conf_min_version(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_MAJOR_VERSION_3,
-                                 MBEDTLS_SSL_MINOR_VERSION_3);
-    mbedtls_ssl_conf_authmode(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_VERIFY_REQUIRED);
-    CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256);
+    InitConfig(&g_caSslContext->clientTlsConf,
+                        MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_IS_CLIENT);
+    InitConfig(&g_caSslContext->serverTlsConf,
+                        MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_IS_SERVER);
+    mbedtls_ssl_cookie_init(&g_caSslContext->cookieCtx);
+    mbedtls_ssl_cookie_setup(&g_caSslContext->cookieCtx, mbedtls_ctr_drbg_random,
+                                      &g_caSslContext->rnd);
+    InitConfig(&g_caSslContext->clientDtlsConf,
+                        MBEDTLS_SSL_TRANSPORT_DATAGRAM, MBEDTLS_SSL_IS_CLIENT);
+    InitConfig(&g_caSslContext->serverDtlsConf,
+                        MBEDTLS_SSL_TRANSPORT_DATAGRAM, MBEDTLS_SSL_IS_SERVER);
+    g_caSslContext->cipher = SSL_CIPHER_MAX;
     mbedtls_x509_crt_init(&g_caSslContext->ca);
     mbedtls_x509_crt_init(&g_caSslContext->crt);
     mbedtls_pk_init(&g_caSslContext->pkey);
     mbedtls_x509_crl_init(&g_caSslContext->crl);
     oc_mutex_unlock(g_sslContextMutex);
 
-    // CAsetTlsAdapterCallbacks
     CAsetSslAdapterCallbacks(CATCPPacketReceivedCB, CATCPPacketSendCB, CA_ADAPTER_TCP);
 
-    // CAsetPkixInfoCallback
     CAsetPkixInfoCallback(infoCallback_that_loads_x509);
 
-    // CAsetCredentialTypesCallback
-    g_getCredentialTypesCallback = clutch;
+    CAsetCredentialTypesCallback(clutch);
 
     CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256);
     g_caSslContext->selectedCipher = MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
@@ -3205,27 +2991,9 @@ TEST(TLSAdapter, Test_11)
           provServerDeviceId, sizeof(provServerDeviceId),
           ownerPsk, predictedPSK_len));
 
-    // CAcloseTlsConnection
-    oc_mutex_lock(g_sslContextMutex);
-    SslEndPoint_t * tep = GetSslPeer(&serverAddr);
-    mbedtls_ssl_close_notify(&tep->ssl);
-    RemovePeerFromList(&tep->sep.endpoint);
-    oc_mutex_unlock(g_sslContextMutex);
+    CAcloseSslConnection(&serverAddr);
 
-    // CAdeinitTlsAdapter
-    oc_mutex_lock(g_sslContextMutex);
-    DeletePeerList();
-    mbedtls_x509_crt_free(&g_caSslContext->crt);
-    mbedtls_pk_free(&g_caSslContext->pkey);
-    mbedtls_ssl_config_free(&g_caSslContext->clientTlsConf);
-    mbedtls_ssl_config_free(&g_caSslContext->serverTlsConf);
-    mbedtls_ctr_drbg_free(&g_caSslContext->rnd);
-    mbedtls_entropy_free(&g_caSslContext->entropy);
-    OICFree(g_caSslContext);
-    g_caSslContext = NULL;
-    oc_mutex_unlock(g_sslContextMutex);
-    oc_mutex_free(g_sslContextMutex);
-    g_sslContextMutex = NULL;
+    CAdeinitSslAdapter();
 
     socketClose();
 
