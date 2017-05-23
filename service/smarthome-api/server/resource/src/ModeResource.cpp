@@ -18,6 +18,7 @@
  *
  ******************************************************************/
 #include <ModeResource.h>
+#include <PropertyBundle.h>
 #include <ResourceQuery.h>
 #include <iostream>
 

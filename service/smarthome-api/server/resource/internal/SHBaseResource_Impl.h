@@ -20,6 +20,8 @@
 #ifndef SMARTHOME_API_SERVER_SHBASERESOURCE_IMPL_H_
 #define SMARTHOME_API_SERVER_SHBASERESOURCE_IMPL_H_
 
+#include <list>
+#include <string>
 #include <PropertyBundle.h>
 
 using namespace std;
@@ -46,15 +48,12 @@ namespace OIC
             */
             class SHBaseResource_Impl
             {
+            friend class SHBaseResource;
+
             public:
-                SHBaseResource_Impl(const std::string& uri);
-                SHBaseResource_Impl(const std::string& uri,
-                                    const std::list<std::string>& types,
-                                    const std::list<std::string>& interfaces);
                 virtual ~SHBaseResource_Impl();
 
             protected:
-
                 std::string getUri() const;
 
                 void setUri(const std::string& uri);
@@ -78,6 +77,10 @@ namespace OIC
                 void setDelegate(SHBaseResourceDelegate *delegate);
 
             private:
+                SHBaseResource_Impl(const std::string& uri);
+                SHBaseResource_Impl(const std::string& uri,
+                                    const std::list<std::string>& types,
+                                    const std::list<std::string>& interfaces);
                 std::string m_resourceUri;
                 std::list<std::string> m_resourceType;
                 std::list<std::string> m_resourceInterface;

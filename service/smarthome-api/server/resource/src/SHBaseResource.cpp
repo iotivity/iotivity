@@ -18,6 +18,7 @@
  *
  ******************************************************************/
 #include <SHBaseResource.h>
+#include <SHBaseResource_Impl.h>
 #include <ResourceQuery.h>
 #include <iostream>
 
@@ -28,74 +29,75 @@ namespace OIC
         namespace SH
         {
             SHBaseResource::SHBaseResource(const std::string& uri)
-            : SHBaseResource_Impl::SHBaseResource_Impl(uri)
             {
+                m_resourceImpl = new SHBaseResource_Impl(uri);
             }
 
             SHBaseResource::SHBaseResource(const std::string& uri,
                                            const std::list<std::string>& types,
                                            const std::list<std::string>& interfaces)
-            : SHBaseResource_Impl::SHBaseResource_Impl(uri, types, interfaces)
             {
+                m_resourceImpl = new SHBaseResource_Impl(uri, types, interfaces);
             }
 
             SHBaseResource::~SHBaseResource()
             {
+                delete m_resourceImpl;
             }
 
             std::string SHBaseResource::getUri() const
             {
-                return SHBaseResource_Impl::getUri();
+                return m_resourceImpl->getUri();
             }
 
             void SHBaseResource::setUri(const std::string& uri)
             {
-                SHBaseResource_Impl::setUri(uri);
+                m_resourceImpl->setUri(uri);
             }
 
             std::list<std::string> SHBaseResource::getTypes() const
             {
-                return SHBaseResource_Impl::getTypes();
+                return m_resourceImpl->getTypes();
             }
 
             void SHBaseResource::setTypes(const std::list<std::string>& types)
             {
-                SHBaseResource_Impl::setTypes(types);
+                m_resourceImpl->setTypes(types);
             }
 
             std::list<std::string> SHBaseResource::getInterfaces() const
             {
-                return SHBaseResource_Impl::getInterfaces();
+                return m_resourceImpl->getInterfaces();
             }
 
             void SHBaseResource::setInterfaces(const std::list<std::string>& interfaces)
             {
-                SHBaseResource_Impl::setInterfaces(interfaces);
+                m_resourceImpl->setInterfaces(interfaces);
             }
 
             void SHBaseResource::setPropertyBundle(const PropertyBundle& bundle)
             {
-                SHBaseResource_Impl::setPropertyBundle(bundle);
+                m_resourceImpl->setPropertyBundle(bundle);
             }
 
             const PropertyBundle& SHBaseResource::getPropertyBundle() const
             {
-                return SHBaseResource_Impl::getPropertyBundle();
+                return m_resourceImpl->getPropertyBundle();
             }
 
             bool SHBaseResource::sendResponse(int requestId, const PropertyBundle& bundle)
             {
-                return SHBaseResource_Impl::sendResponse(requestId, bundle);
+                return m_resourceImpl->sendResponse(requestId, bundle);
             }
 
             bool SHBaseResource::sendErrorResponse(int requestId, const PropertyBundle& bundle)
             {
-                return SHBaseResource_Impl::sendErrorResponse(requestId, bundle);
+                return m_resourceImpl->sendErrorResponse(requestId, bundle);
             }
 
             void SHBaseResource::setDelegate(SHBaseResourceDelegate *delegate)
             {
-                SHBaseResource_Impl::setDelegate(delegate);
+                m_resourceImpl->setDelegate(delegate);
             }
         }
     }

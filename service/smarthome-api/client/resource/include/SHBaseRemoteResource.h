@@ -22,7 +22,6 @@
 
 #include <list>
 #include <CommonApi.h>
-#include <SHBaseRemoteResource_Impl.h>
 
 /**
  * @file
@@ -37,6 +36,7 @@ namespace OIC
     {
         namespace SH
         {
+            class SHBaseRemoteResource_Impl;
             class PropertyBundle;
             class ResourceQuery;
 
@@ -77,7 +77,7 @@ namespace OIC
             * @brief This class contains a set of functions to get/set of resource(server-side)
             * Also, some API can support to get informations about resource.
             */
-            class SHBaseRemoteResource : public SHBaseRemoteResource_Impl
+            class SHBaseRemoteResource
             {
             public:
                 /**
@@ -146,6 +146,9 @@ namespace OIC
                  * @param[in] query  ResourceQuery to specify request
                  */
                 void setPropertyBundle(const PropertyBundle &bundle, const ResourceQuery &query);
+
+            private:
+                SHBaseRemoteResource_Impl *m_remoteResourceImpl;
             };
         }
     }

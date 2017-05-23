@@ -22,7 +22,6 @@
 
 #include <string>
 #include <list>
-#include <SHBaseRemoteDevice_Impl.h>
 
 /**
  * @file
@@ -37,6 +36,7 @@ namespace OIC
     {
         namespace SH
         {
+            class SHBaseRemoteDevice_Impl;
             class SHBaseRemoteResource;
 
             /**
@@ -46,10 +46,9 @@ namespace OIC
             * in device discovery step. SHBaseRemoteDevice provides client-side APIs to communicate
             * with devices with resources.
             */
-            class SHBaseRemoteDevice : public SHBaseRemoteDevice_Impl
+            class SHBaseRemoteDevice
             {
             public:
-
                 virtual ~SHBaseRemoteDevice();
 
                 /**
@@ -78,6 +77,9 @@ namespace OIC
 
             protected:
                 SHBaseRemoteDevice();
+
+            private:
+                SHBaseRemoteDevice_Impl *m_remoteDeviceImpl;
             };
         }
     }

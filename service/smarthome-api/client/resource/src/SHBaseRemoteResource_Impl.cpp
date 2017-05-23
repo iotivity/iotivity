@@ -17,10 +17,10 @@
  * limitations under the License.
  *
  ******************************************************************/
-#include <iostream>
 #include <SHBaseRemoteResource_Impl.h>
 #include <PropertyBundle.h>
 #include <ResourceQuery.h>
+#include <iostream>
 
 namespace OIC
 {

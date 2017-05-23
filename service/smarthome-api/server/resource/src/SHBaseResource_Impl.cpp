@@ -17,8 +17,8 @@
  * limitations under the License.
  *
  ******************************************************************/
-#include <iostream>
 #include <SHBaseResource_Impl.h>
+#include <iostream>
 
 namespace OIC
 {

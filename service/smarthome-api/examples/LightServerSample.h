@@ -24,6 +24,7 @@
 
 #include <CommonApi.h>
 #include <LightDevice.h>
+#include <PropertyBundle.h>
 #include <ResourceQuery.h>
 
 using namespace OIC::Service::SH;

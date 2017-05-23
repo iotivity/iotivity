@@ -20,8 +20,9 @@
 #ifndef SMARTHOME_API_SERVER_SHBASERESOURCE_H_
 #define SMARTHOME_API_SERVER_SHBASERESOURCE_H_
 
+#include <string>
+#include <list>
 #include <CommonApi.h>
-#include <SHBaseResource_Impl.h>
 
 /**
  * @file
@@ -35,6 +36,7 @@ namespace OIC
     {
         namespace SH
         {
+            class SHBaseResource_Impl;
             class PropertyBundle;
             class ResourceQuery;
 
@@ -82,7 +84,7 @@ namespace OIC
             * @brief This class contains a set of functions to get/set/delete the properties of
             * a resource. Also, some API can support to send response to an incoming request.
             */
-            class SHBaseResource : public SHBaseResource_Impl
+            class SHBaseResource
             {
             public:
                 /**
@@ -172,6 +174,9 @@ namespace OIC
                 * @param[in] delegate Instance that inherit SHBaseResourceDelegate class
                 */
                 void setDelegate(SHBaseResourceDelegate *delegate);
+
+            private:
+                SHBaseResource_Impl *m_resourceImpl;
             };
         }
     }

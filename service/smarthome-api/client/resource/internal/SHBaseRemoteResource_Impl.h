@@ -48,8 +48,10 @@ namespace OIC
             */
             class SHBaseRemoteResource_Impl
             {
+            friend class SHBaseRemoteResource;
+
             public:
-                virtual ~SHBaseRemoteResource_Impl();
+                ~SHBaseRemoteResource_Impl();
 
                 std::list<std::string> getResourceTypes() const;
 
@@ -58,8 +60,6 @@ namespace OIC
                 std::list<std::string> getHosts() const;
 
             protected:
-                SHBaseRemoteResource_Impl();
-
                 void setDelegate(const SHBaseRemoteResourceDelegate *delegate);
 
                 void getPropertyBundle();
@@ -71,6 +71,7 @@ namespace OIC
                 void setPropertyBundle(const PropertyBundle &bundle, const ResourceQuery &query);
 
             private:
+                SHBaseRemoteResource_Impl();
                 const SHBaseRemoteResourceDelegate *m_delegate;
                 std::string resourceType;
                 std::string resourceUri;

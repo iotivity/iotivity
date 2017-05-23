@@ -18,6 +18,7 @@
  *
  ******************************************************************/
 #include <SHBaseRemoteDevice.h>
+#include <SHBaseRemoteDevice_Impl.h>
 
 namespace OIC
 {
@@ -27,27 +28,29 @@ namespace OIC
         {
             SHBaseRemoteDevice::SHBaseRemoteDevice()
             {
+                m_remoteDeviceImpl = new SHBaseRemoteDevice_Impl;
             }
 
             SHBaseRemoteDevice::~SHBaseRemoteDevice()
             {
+                delete m_remoteDeviceImpl;
             }
 
             std::string SHBaseRemoteDevice::getType()
             {
-                return SHBaseRemoteDevice_Impl::getType();
+                return m_remoteDeviceImpl->getType();
             }
 
             std::list<SHBaseRemoteResource*> SHBaseRemoteDevice::getResourceWithResourceType(
                     const std::string &resourceType)
             {
-                return SHBaseRemoteDevice_Impl::getResourceWithResourceType(resourceType);
+                return m_remoteDeviceImpl->getResourceWithResourceType(resourceType);
             }
 
             SHBaseRemoteResource* SHBaseRemoteDevice::getResourceWithResourceUri(
                     const std::string &resourceUri)
             {
-                return SHBaseRemoteDevice_Impl::getResourceWithResourceUri(resourceUri);
+                return m_remoteDeviceImpl->getResourceWithResourceUri(resourceUri);
             }
         }
     }

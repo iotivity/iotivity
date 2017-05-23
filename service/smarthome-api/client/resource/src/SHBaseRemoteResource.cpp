@@ -18,6 +18,7 @@
  *
  ******************************************************************/
 #include <SHBaseRemoteResource.h>
+#include <SHBaseRemoteResource_Impl.h>
 #include <PropertyBundle.h>
 #include <ResourceQuery.h>
 #include <iostream>
@@ -30,51 +31,53 @@ namespace OIC
         {
             SHBaseRemoteResource::SHBaseRemoteResource()
             {
+                m_remoteResourceImpl = new SHBaseRemoteResource_Impl;
             }
 
             SHBaseRemoteResource::~SHBaseRemoteResource()
             {
+                delete m_remoteResourceImpl;
             }
 
             std::list<std::string> SHBaseRemoteResource::getResourceTypes() const
             {
-                return SHBaseRemoteResource_Impl::getResourceTypes();
+                return m_remoteResourceImpl->getResourceTypes();
             }
 
             std::string SHBaseRemoteResource::getUri() const
             {
-                return SHBaseRemoteResource_Impl::getUri();
+                return m_remoteResourceImpl->getUri();
             }
 
             std::list<std::string> SHBaseRemoteResource::getHosts() const
             {
-                return SHBaseRemoteResource_Impl::getHosts();
+                return m_remoteResourceImpl->getHosts();
             }
 
             void SHBaseRemoteResource::setDelegate(const SHBaseRemoteResourceDelegate *delegate)
             {
-                SHBaseRemoteResource_Impl::setDelegate(delegate);
+                m_remoteResourceImpl->setDelegate(delegate);
             }
 
             void SHBaseRemoteResource::getPropertyBundle()
             {
-                SHBaseRemoteResource_Impl::getPropertyBundle();
+                m_remoteResourceImpl->getPropertyBundle();
             }
 
             void SHBaseRemoteResource::getPropertyBundle(const ResourceQuery &query)
             {
-                SHBaseRemoteResource_Impl::getPropertyBundle(query);
+                m_remoteResourceImpl->getPropertyBundle(query);
             }
 
             void SHBaseRemoteResource::setPropertyBundle(const PropertyBundle &bundle)
             {
-                SHBaseRemoteResource_Impl::setPropertyBundle(bundle);
+                m_remoteResourceImpl->setPropertyBundle(bundle);
             }
 
             void SHBaseRemoteResource::setPropertyBundle(const PropertyBundle &bundle,
                                                          const ResourceQuery &query)
             {
-                SHBaseRemoteResource_Impl::setPropertyBundle(bundle, query);
+                m_remoteResourceImpl->setPropertyBundle(bundle, query);
             }
         }
     }

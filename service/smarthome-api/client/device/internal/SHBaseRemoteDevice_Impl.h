@@ -39,12 +39,17 @@ namespace OIC
             class SHBaseRemoteResource;
 
             /**
-            * @class SHBaseRemoteDevice_Impl
-            *
-            * @brief This class contains a set of base functions to control remote device.
-            */
+             * @class SHBaseRemoteDevice_Impl
+             *
+             * @brief This class contains a set of base functions to control remote device.
+             */
             class SHBaseRemoteDevice_Impl
             {
+                friend class SHBaseRemoteDevice;
+
+            public:
+                ~SHBaseRemoteDevice_Impl();
+
             protected:
                 void setType(std::string deviceType);
 
@@ -63,11 +68,8 @@ namespace OIC
                  */
                 void addResource(SHBaseRemoteResource *resource);
 
-            public:
-                SHBaseRemoteDevice_Impl();
-                virtual ~SHBaseRemoteDevice_Impl();
-
             private:
+                SHBaseRemoteDevice_Impl();
                 std::list<SHBaseRemoteResource*> m_resources;
                 std::string m_deviceType;
             };
