@@ -66,7 +66,7 @@ public class AccountResourceTest {
     private static final String            REGISTER_URI              = Constants.ACCOUNT_FULL_URI;
     private static final String            GROUP_URI                 = Constants.GROUP_FULL_URI;
     private static final String            DEVICE_ID                 = "DEVICE";
-    private String                         mAuthProvider             = "Github";
+    private String                         mAuthProvider             = "github";
     private String                         mAuthCode                 = "3af038b49edc4ebdc45c";
     private CoapDevice                     mMockDevice               = mock(
             CoapDevice.class);
