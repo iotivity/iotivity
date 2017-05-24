@@ -28,6 +28,7 @@
     if (!(arg)) \
     { \
         ThrowOcException(exc, log_message); \
+        return; \
     } \
 
 JniOcAccountManager::JniOcAccountManager(std::shared_ptr<OCAccountManager> accountManager)
@@ -70,7 +71,6 @@ OCConnectivityType JniOcAccountManager::connectivityType() const
 }
 
 std::shared_ptr<OCAccountManager> JniOcAccountManager::getOcAccountManagerObject() const
-
 {
     return m_sharedAccountManager;
 }
