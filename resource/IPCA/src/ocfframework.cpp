@@ -234,7 +234,7 @@ IPCAStatus OCFFramework::Start(const IPCAAppInfoInternal& appInfo, bool isUnitTe
         if (ret != OIC_PLATFORM_OK)
         {
             OIC_LOG_V(FATAL, TAG,
-                "Failed to get persistent storage path from OICGetLocalAppDataPath, ret: %"PRIuPTR,
+                "Failed to get persistent storage path from OICGetLocalAppDataPath, ret: %" PRIuPTR,
                 static_cast<size_t>(ret));
             OICFree(psPath);
             return IPCA_FAIL;
@@ -252,7 +252,7 @@ IPCAStatus OCFFramework::Start(const IPCAAppInfoInternal& appInfo, bool isUnitTe
         if (ret != OIC_PLATFORM_NOTIMPL)
         {
             OIC_LOG_V(FATAL, TAG,
-                "Failed to get path length from OICGetLocalAppDataPath, ret: %"PRIuPTR,
+                "Failed to get path length from OICGetLocalAppDataPath, ret: %" PRIuPTR,
                 static_cast<size_t>(ret));
             // An error occurred, fail
             return IPCA_FAIL;
