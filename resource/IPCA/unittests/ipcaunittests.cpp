@@ -109,11 +109,7 @@ TEST(IoTivityDirect, IsIoTivityWorking)
     // elevator server.
     loopCount = 0;
     const int TARGET_FLOOR = 3;
-    elevatorClient.SetTargetFloor(TARGET_FLOOR);
-    while ((loopCount++ < 20) && (g_testElevator1.GetCurrentFloor() != TARGET_FLOOR))
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+    elevatorClient.SetTargetFloor(TARGET_FLOOR);    // SetTargetFloor() is synchronous.
     EXPECT_EQ(TARGET_FLOOR, g_testElevator1.GetCurrentFloor());
 
     // Confirm able to get current floor using IoTivity client API. The current floor should be
