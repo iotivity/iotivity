@@ -28,10 +28,10 @@ std::string CSCsdkCloudHelper::s_accesstoken = "";
 std::string CSCsdkCloudHelper::s_refreshToken = "";
 std::string CSCsdkCloudHelper::s_groupId = "";
 std::string CSCsdkCloudHelper::s_aclId = "";
-std::string CSCsdkCloudHelper::s_aceid = "";
-std::string CSCsdkCloudHelper::s_subjectuuid = "";
-std::string CSCsdkCloudHelper::s_href = "";
-std::string CSCsdkCloudHelper::s_deviceId = "";
+std::string CSCsdkCloudHelper::s_aceid = "fdc36aa0-59f8-4cb7-b457-0f51becf9899";
+std::string CSCsdkCloudHelper::s_subjectuuid = "72616e64-5069-6e44-6576-557569643030";
+std::string CSCsdkCloudHelper::s_href = "/a/light/0";
+std::string CSCsdkCloudHelper::s_deviceId = "99999999-0000-0000-0000-0001200";
 std::string CSCsdkCloudHelper::s_groupPolicy = "";
 OCPersistentStorage CSCsdkCloudHelper::s_pst =
 { 0, 0, 0, 0, 0 };
@@ -148,9 +148,16 @@ void CSCsdkCloudHelper::printRepresentation(OCRepresentation rep)
     }
 }
 
-FILE* CSCsdkCloudHelper::controleeOpen(const char * /*path*/, const char *mode)
+FILE* CSCsdkCloudHelper::controleeOpen(const char *path, const char *mode)
 {
-    return fopen(s_cborFilePath.c_str(), mode);
+    if (0 == strncmp(path, OC_SECURITY_DB_DAT_FILE_NAME, strlen(OC_SECURITY_DB_DAT_FILE_NAME)))
+    {
+        return fopen(path, mode);
+    }
+    else
+    {
+        return fopen(s_cborFilePath.c_str(), mode);
+    }
 }
 
 CSCsdkCloudHelper::CSCsdkCloudHelper()
@@ -614,6 +621,8 @@ bool CSCsdkCloudHelper::cloudAclIndividualGetInfo(void* ctx, const char *aclId,
     __FUNC_IN__
     s_isCbInvoked = CALLBACK_NOT_INVOKED;
 
+    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] Acl Id returns %s", aclId);
+
     OCStackResult result = OCCloudAclIndividualGetInfo(ctx, aclId, endPoint, callback);
     IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCCloudAclIndividualGetInfo returns %s",
             CommonUtil::getOCStackResult(result));
@@ -645,9 +654,15 @@ bool CSCsdkCloudHelper::cloudAclIndividualAclUpdate(void* ctx, const char *aclId
     __FUNC_IN__
     s_isCbInvoked = CALLBACK_NOT_INVOKED;
 
+    //IoTivity
     OCStackResult result = OCCloudAclIndividualAclUpdate(ctx, aclId, aces, endPoint, callback);
     IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCCloudAclIndividualUpdateAce returns %s",
             CommonUtil::getOCStackResult(result));
+
+    //Convergence
+//    OCStackResult result = OCCloudAclIndividualUpdateAce(ctx, aclId, aces, endPoint, callback);
+//    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCCloudAclIndividualUpdateAce returns %s",
+//            CommonUtil::getOCStackResult(result));
 
     if (expectedResult != result)
     {
@@ -934,6 +949,11 @@ bool CSCsdkCloudHelper::cloudAclIndividualAceUpdate(void* ctx, const char *aclId
     IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCCloudAclIndividualAceUpdate returns %s",
             CommonUtil::getOCStackResult(result));
 
+//    OCStackResult result = OCCloudAclIndividualUpdate(ctx, aclId, aceId, aces, endPoint,
+//            callback);
+//    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCCloudAclIndividualUpdate returns %s",
+//            CommonUtil::getOCStackResult(result));
+
     if (expectedResult != result)
     {
         m_failureMessage = CSCsdkUtilityHelper::setFailureMessage(result, expectedResult);
@@ -960,10 +980,15 @@ bool CSCsdkCloudHelper::cloudAclAcesDelete(void* ctx, const char *aclId, const O
 {
     __FUNC_IN__
     s_isCbInvoked = CALLBACK_NOT_INVOKED;
-
+    // IoTivity
     OCStackResult result = OCCloudAclAcesDelete(ctx, aclId, endPoint, callback);
     IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCCloudAclAcesDelete returns %s",
             CommonUtil::getOCStackResult(result));
+
+    // Convergence
+//    OCStackResult result = OCCloudAclIndividualDelete(ctx, aclId, endPoint, callback);
+//    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCCloudAclIndividualDelete returns %s",
+//            CommonUtil::getOCStackResult(result));
 
     if (expectedResult != result)
     {
@@ -992,9 +1017,15 @@ bool CSCsdkCloudHelper::cloudAclIndividualAceDelete(void* ctx, const char *aclId
     __FUNC_IN__
     s_isCbInvoked = CALLBACK_NOT_INVOKED;
 
+    //IoTivity
     OCStackResult result = OCCloudAclIndividualAceDelete(ctx, aclId, aceId, endPoint, callback);
     IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCCloudAclIndividualAceDelete returns %s",
             CommonUtil::getOCStackResult(result));
+
+    //Convergence
+//    OCStackResult result = OCCloudAclIndividualDeleteAce(ctx, aclId, aceId, endPoint, callback);
+//    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCCloudAclIndividualDeleteAce returns %s",
+//            CommonUtil::getOCStackResult(result));
 
     if (expectedResult != result)
     {
@@ -1204,11 +1235,11 @@ void CSCsdkCloudHelper::cloudResponseCB(void* ctx, OCClientResponse* response, v
     IOTIVITYTEST_LOG(INFO, "%s: Received result = %d for ctx : %s", __func__, response->result,
             (char* )ctx);
 
-    if(response->result == OC_STACK_OK || response->result ==OC_STACK_RESOURCE_CHANGED) {
+    if(response->result == OC_STACK_OK || response->result ==OC_STACK_RESOURCE_CHANGED || response->result == 36) {
         printRepresentation(parseOCClientResponse(response));
     }
 
-    if (response->result <= OC_STACK_RESOURCE_CHANGED)
+    if (response->result <= OC_STACK_RESOURCE_CHANGED || response->result == 36)
     {
         s_isCbInvoked = true;
     }
@@ -1255,6 +1286,60 @@ void CSCsdkCloudHelper::createGroupResponseCB(void* ctx, OCClientResponse* respo
 
     __FUNC_OUT__
 }
+
+//void CSCsdkCloudHelper::cloudResponseCB(void* ctx, OCStackResult result, void* data)
+//{
+//    OC_UNUSED(ctx);
+//    OC_UNUSED(data);
+//
+//    char* dataChar = (char*) data;
+//
+//    IOTIVITYTEST_LOG(INFO, "%s: Received result = %d for ctx : %s", __func__, result, (char* )ctx);
+//    IOTIVITYTEST_LOG(INFO, "Received Data: %s", dataChar);
+//
+//    if (result <= OC_STACK_RESOURCE_CHANGED)
+//    {
+//        s_isCbInvoked = true;
+//    }
+//}
+//
+//void CSCsdkCloudHelper::aclResponseCB(void* ctx, OCStackResult result, void* data)
+//{
+//    __FUNC_IN__
+//    OC_UNUSED(ctx);
+//    OC_UNUSED(data);
+//
+//    s_aclId = string((char*) data);
+//
+//    IOTIVITYTEST_LOG(INFO, "%s: Received result = %d for ctx : %s", __func__, result, (char* )ctx);
+//    IOTIVITYTEST_LOG(INFO, "Received Data: %s", data);
+//
+//    if (result <= OC_STACK_RESOURCE_CHANGED)
+//    {
+//        s_isCbInvoked = true;
+//    }
+//
+//    __FUNC_OUT__
+//}
+//
+//void CSCsdkCloudHelper::createGroupResponseCB(void* ctx, OCStackResult result, void* data)
+//{
+//    __FUNC_IN__
+//    OC_UNUSED(ctx);
+//    OC_UNUSED(data);
+//
+//    s_groupId = string((char*) data);
+//
+//    IOTIVITYTEST_LOG(INFO, "%s: Received result = %d for ctx : %s", __func__, result, (char* )ctx);
+//    IOTIVITYTEST_LOG(INFO, "Received Data: %s", data);
+//
+//    if (result <= OC_STACK_RESOURCE_CHANGED)
+//    {
+//        s_isCbInvoked = true;
+//    }
+//
+//    __FUNC_OUT__
+//}
 
 void CSCsdkCloudHelper::handleLoginoutCB(const HeaderOptions &, const OCRepresentation &rep,
         const int ecode)

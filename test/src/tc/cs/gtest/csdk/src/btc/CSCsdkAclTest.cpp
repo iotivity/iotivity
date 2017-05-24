@@ -52,7 +52,7 @@ protected:
         }
 
         m_hostAddress = CloudCommonUtil::getDefaultHostAddess();
-        m_endPoint = CSCsdkUtilityHelper::getOCDevAddrEndPoint();
+        m_endPoint = CloudCommonUtil::getDefaultEndPoint();
         m_aces = CSCsdkUtilityHelper::createCloudAces();
 
 

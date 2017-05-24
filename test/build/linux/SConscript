@@ -93,6 +93,8 @@ install_targets += env_linux.StaticLibrary('common_util',
                         test_src_root + '/common/commonutil/c_cpp/Configuration.cpp'
                     ], 
                     CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths, 
+                    LIBS = ['boost_system', 'boost_filesystem', 'boost_thread'],
+                    LIBPATH = ['/usr/local/lib'],
                     CPPFLAGS = cppflags + common_linux_cppflags)
 
 if 'tc' in test:
@@ -103,6 +105,8 @@ if 'tc' in test:
                             test_src_root + '/common/commonutil/c_cpp/CommonTestUtil.cpp',
                         ], 
                 CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths,
+                LIBS = ['boost_system', 'boost_filesystem', 'boost_thread'],
+                LIBPATH = ['/usr/local/lib'],
                 CPPFLAGS = cppflags + common_linux_cppflags)
 
 if 'ic' in module or 'cs' in module:
@@ -111,11 +115,16 @@ if 'ic' in module or 'cs' in module:
     cloud_util = env_linux.StaticLibrary('cloud_util', 
                     source = [test_src_root + '/common/commonutil/c_cpp/CloudCommonUtil.cpp'], 
                     CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths,
-                    LIBS = ['curl', 'common_util'],
+                    LIBS = ['curl', 'boost_system', 'boost_filesystem', 'boost_thread', 'common_util' ],
+                    LIBPATH = ['.', '/usr/local/lib'],
                     CPPFLAGS = cppflags + common_linux_cppflags)
 
 if 'pm' in module:
+#if len(module) > 1 or (len(module) == 1 and 'ca' not in module):
+    print ('calling SConscriptSK')
     SConscript('SConscriptSK', exports = 'env_linux')
+else:
+    print ('no call to SConscriptSK')
 
 for temp in all_modules:
     if temp in module:
@@ -130,6 +139,12 @@ if 'tc' in test:
 install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
 
 delete_bin = []
+i = 0
+for delete_target in install_targets:
+    #delete_bin.append(Command(str(i), [], Delete(delete_target)))
+    i = i +1
+
+Depends(delete_bin, install_bin)
 
 default_targets = install_bin + delete_bin
 

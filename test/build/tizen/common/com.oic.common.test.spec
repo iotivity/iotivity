@@ -44,7 +44,7 @@ Platform Project
 %setup -q
 
 %build
-scons TEST=%{TEST} SDK=%{SDK} TARGET_TRANSPORT=%{TARGET_TRANSPORT} MODULE=%{MODULE}
+scons TEST=%{TEST} SDK=%{SDK} TARGET_TRANSPORT=%{TARGET_TRANSPORT} MODULE=%{MODULE} TLS_MODE=%{TLS_MODE} SECURED=%{SECURED}
 
 %install
 mkdir -p %{buildroot}%{_datadir}/packages

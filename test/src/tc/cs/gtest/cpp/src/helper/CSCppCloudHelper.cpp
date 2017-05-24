@@ -77,9 +77,16 @@ void printRepresentation(OCRepresentation rep)
     }
 }
 
-FILE* CSCppCloudHelper::controllerOpen(const char * /*path*/, const char *mode)
+FILE* CSCppCloudHelper::controllerOpen(const char *path, const char *mode)
 {
-    return fopen(CLOUD_ACL_CONTROLLER_DAT, mode);
+    if (0 == strncmp(path, OC_SECURITY_DB_DAT_FILE_NAME, strlen(OC_SECURITY_DB_DAT_FILE_NAME)))
+    {
+        return fopen(path, mode);
+    }
+    else
+    {
+        return fopen(CLOUD_ACL_CONTROLLER_DAT, mode);
+    }
 }
 
 CSCppCloudHelper::CSCppCloudHelper()

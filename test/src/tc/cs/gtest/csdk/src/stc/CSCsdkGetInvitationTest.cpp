@@ -18,6 +18,8 @@
  *
  *
  ******************************************************************/
+
+#ifdef TC_ENABLE
 #include "CSCsdkCloudHelper.h"
 #include "CSCsdkUtilityHelper.h"
 
@@ -58,7 +60,7 @@ protected:
         }
 
         m_hostAddress = CloudCommonUtil::getDefaultHostAddess();
-        m_endPoint = CSCsdkUtilityHelper::getOCDevAddrEndPoint();
+        m_endPoint = CloudCommonUtil::getDefaultEndPoint();
         m_aces = CSCsdkUtilityHelper::createCloudAces();
 
 #ifdef __TLS_ON__
@@ -244,4 +246,5 @@ TEST_F(CSCsdkGetInvitationTest_stc, OCCloudAclObserveGroup_SRC_P)
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
 }
+#endif
 #endif

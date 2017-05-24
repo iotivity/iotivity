@@ -91,7 +91,8 @@ parameters += ' ' + 'TEST' + '=' + '\"' + str(test) + '\"'
 parameters += ' ' + 'VARIANT_DIR' + '=' + str(variant_dir)
 parameters += ' ' + 'GBS_ROOT' + '=' + str(gbs_root)
 parameters += ' ' + 'RPMS_PATH' + '=' + str(rpms_path)
-parameters += ' ' + 'PROJECT_VERSION' + '=' + str(version)
+if version:
+    parameters += ' ' + 'PROJECT_VERSION' + '=' + str(version)
 parameters += ' ' + 'TLS_MODE' + '=' + str(tls_mode)
 parameters += ' ' + 'CLOUD_SERVICE' + '=' + str(cloud_service_build)
 if kafka_root:
@@ -119,6 +120,12 @@ else:
     gbs_script_gtest = "bash extlibs/gtest-1.7.0/gbsbuild.sh %s %s %s %s %s %s" % (iotivity_root, iotivity_test_root, target_arch, gbs_root, rpms_path, init_mode)
     default_targets += [gbs_script_gtest]
 
+if cloud_service_build:
+    if 'ic' in module or 'cs' in module:
+        cloud_build_command = 'bash ' + iotivity_test_root + '/res/cloud_resource/cloud_build.sh ' + kafka_root + ' ' + iotivity_root
+        print cloud_build_command
+        default_targets += [cloud_build_command]
+
 for temp in all_modules:
     if temp in module:
         extra_parameters = ''
@@ -126,8 +133,8 @@ for temp in all_modules:
 
         lib_rpm_names = 'iotivity,iotivity-devel,iotivity-service'
 
-        if temp == 'ca':
-            lib_rpm_names = 'com-oic-ri'
+        #if temp == 'ca':
+        #    lib_rpm_names = 'com-oic-ri'
 
         test_res_files = iotivity_test_root + '/res/common'
 
@@ -148,12 +155,6 @@ for temp in all_modules:
         gbs_script = 'bash build/tizen/common/gbsbuild.sh ' + parameters + extra_parameters
         print gbs_script
         default_targets += [gbs_script]
-
-        if temp == 'ic' or temp == 'cs':
-            if cloud_service_build:
-                build_command = 'bash ' + iotivity_test_root + '/res/cloud_resource/cloud_build.sh ' + kafka_root + ' ' + iotivity_root
-                cloud_build = env_linux.Command('cloud_build', None, build_command)
-                default_targets += [cloud_build]
 
 gbs_build = env_tizen.Command('gbs_build', None, default_targets)
 

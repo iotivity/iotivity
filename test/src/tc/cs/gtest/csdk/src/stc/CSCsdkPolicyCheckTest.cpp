@@ -50,7 +50,7 @@ protected:
         }
 
         m_hostAddress = CloudCommonUtil::getDefaultHostAddess();
-        m_endPoint = CSCsdkUtilityHelper::getOCDevAddrEndPoint();
+        m_endPoint = CloudCommonUtil::getDefaultEndPoint();
         m_aces = CSCsdkUtilityHelper::createCloudAces();
 
 #ifdef __TLS_ON__
@@ -69,7 +69,7 @@ protected:
             return;
         }
 
-        CloudCommonUtil::signUp(m_accountMgrControlee);
+        //CloudCommonUtil::signUp(m_accountMgrControlee);
 
         if (!CloudCommonUtil::signIn(m_accountMgrControlee))
         {
@@ -78,6 +78,12 @@ protected:
         }
 
         if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, &m_endPoint, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
+        {
+            SET_FAILURE(m_CloudAclHelper.getFailureMessage());
+            return;
+        }
+
+        if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
         {
             SET_FAILURE(m_CloudAclHelper.getFailureMessage());
             return;

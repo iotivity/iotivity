@@ -49,7 +49,7 @@ protected:
         }
 
         m_hostAddress = CloudCommonUtil::getDefaultHostAddess();
-        m_endPoint = CSCsdkUtilityHelper::getOCDevAddrEndPoint();
+        m_endPoint = CloudCommonUtil::getDefaultEndPoint();
         m_aces = CSCsdkUtilityHelper::createCloudAces();
 
 #ifdef __TLS_ON__
@@ -68,7 +68,7 @@ protected:
             return;
         }
 
-        CloudCommonUtil::signUp(m_accountMgrControlee);
+        //CloudCommonUtil::signUp(m_accountMgrControlee);
 
         if (!CloudCommonUtil::signIn(m_accountMgrControlee))
         {
@@ -440,6 +440,12 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIndividualAceUpdate_SRC_RV_P)
         return;
     }
 
+    if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+    {
+        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
+        return;
+    }
+
     if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), m_aces, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
@@ -455,6 +461,12 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIndividualAceUpdate_SRC_RV_P)
     if (!m_CloudAclHelper.cloudAclIndividualAceUpdate((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), CSCsdkCloudHelper::s_aceid.c_str(), m_aces, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
+    }
+
+    if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+    {
+        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
+        return;
     }
 }
 #endif
@@ -487,6 +499,12 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIndividualAceUpdate_SRC_RV_P)
 TEST_F(CSCsdkAclTest_stc, OCCloudAclIndividualAceUpdateCb_NV_P)
 {
     if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, &m_endPoint, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
+    {
+        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
+        return;
+    }
+
+    if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
         return;

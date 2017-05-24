@@ -49,7 +49,7 @@ protected:
         }
 
         m_hostAddress = CloudCommonUtil::getDefaultHostAddess();
-        m_endPoint = CSCsdkUtilityHelper::getOCDevAddrEndPoint();
+        m_endPoint = CloudCommonUtil::getDefaultEndPoint();
 
 #ifdef __TLS_ON__
         setCoapPrefix(true);

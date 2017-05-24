@@ -4,6 +4,11 @@
 kafka_root=${1}
 iotivity_root=${2}
 
+#example
+#kafka_root=/home/srbd/Downloads/kafka_2.10-0.9.0.0
+#iotivity_root=/home/srbd/git/oictest_repo/IotivityOrgSource/last/iotivity
+
+
 #Build Cloud Server
 function build_cloud_server {
     current_dir=`pwd`

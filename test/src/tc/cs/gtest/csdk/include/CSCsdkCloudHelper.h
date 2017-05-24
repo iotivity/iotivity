@@ -313,6 +313,12 @@ public:
 
     static void createGroupResponseCB(void* ctx, OCClientResponse* response, void* data);
 
+//    static void cloudResponseCB(void* ctx, OCStackResult result, void* data);
+//
+//    static void aclResponseCB(void* ctx, OCStackResult result, void* data);
+//
+//    static void createGroupResponseCB(void* ctx, OCStackResult result, void* data);
+
     static void onPublish(const OCRepresentation &, const int &eCode);
 
     static OCRepresentation parseOCClientResponse(OCClientResponse* clientResponse);

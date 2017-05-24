@@ -1,22 +1,22 @@
 /******************************************************************
-*
-* Copyright 2017 Samsung Electronics All Rights Reserved.
-*
-*
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-******************************************************************/
+ *
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 #ifndef __RESOURCE_HELPER_H__
 #define __RESOURCE_HELPER_H__
@@ -157,11 +157,18 @@ const int SUCCESS_RESPONSE = 0;
 #define SECURITY_KEY "sec"
 #define DEVICE_ID_KEY "di"
 #define LINKS_KEY "links"
+#define ANCHOR_KEY "anchor"
+#define ANCHOR_DEFAULT_VALUE "ocf://"
+#define EPS_KEY "eps"
+#define EP_KEY "ep"
+#define EP_DEFAULT_VALUE "coaps://"
+#define PRI_KEY "pri"
+#define PRI_DEFAULT_VALUE 1
 #define SWING_STATE_KEY "x.com.vendor.swing.on"
 #define SWING_STATE_VALUE false
-#define SWING_MOVEMENT_KEY "x.com.vendor.swing.blade.পরিবির্তনের.দিক"
+#define SWING_MOVEMENT_KEY "x.com.vendor.swing.blade.পরিবর্তনের.দিক"
 #define SWING_MOVEMENT_VALUE "আনুভূমিক"
-#define SWING_SUPPOTED_DIRECTION_KEY "x.com.vendor.swing.blade.পরিবির্তনের.সমর্থিত.দিক"
+#define SWING_SUPPOTED_DIRECTION_KEY "x.com.vendor.swing.blade.পরিবর্তনের.সমর্থিত.দিক"
 #define TIMER_LOCATION_KEY "x.com.vendor.timer.clock.location"
 #define VERY_BIG_VALUE "dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh_dhakaRAJSHAHI,Bangladesh"
 
@@ -179,9 +186,9 @@ const int SUCCESS_RESPONSE = 0;
 #define DEVICE_NAME "IotivitySmartRoom"
 #define DEFAULT_DEVIE_TYPE "oic.wk.d"
 
-#define CORE_SPEC_VERSION "core.1.1.0"
-#define RESOURCE_TYPE_SPEC_VERSION "res.1.1.0"
-#define SMART_HOME_SPEC_VERSION "SH.1.1.0"
+#define CORE_SPEC_VERSION "ocf.1.0.0"
+#define RESOURCE_TYPE_SPEC_VERSION "ocf.res.1.0.0"
+#define SMART_HOME_SPEC_VERSION "ocf.sh.1.0.0"
 
 #define COAP_RESPONSE_CODE_SUCCESS 205
 #define COAP_RESPONSE_CODE_CREATED 201
@@ -301,6 +308,8 @@ public:
     static void duplicateString(char ** targetString, string sourceString);
 
     bool containsElement(vector< string > list, string target);
+
+    string getOnlyTCPHost(vector<string> allHosts);
 
 };
 

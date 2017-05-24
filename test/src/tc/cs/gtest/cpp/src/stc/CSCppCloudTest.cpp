@@ -40,7 +40,7 @@ protected:
     uint16_t m_credId = 0;
     ByteArray_t m_trustCertChainArray =
     { 0, 0 };
-
+    std::string ip = "";
     virtual void SetUp()
     {
         CommonTestUtil::runCommonTCSetUpPart();
@@ -56,6 +56,7 @@ protected:
         }
 
         m_hostAddress = CloudCommonUtil::getDefaultHostAddess();
+        ip = CloudCommonUtil::getDefaultIp();
 
 #ifdef __TLS_ON__
         setCoapPrefix(true);
@@ -65,6 +66,8 @@ protected:
         CSCppCloudHelper::readFile(ROOT_CERT_FILE, (OCByteString *) &m_trustCertChainArray);
         m_accountMgrControlee = OCPlatform::constructAccountManagerObject(m_hostAddress,
                 CT_ADAPTER_TCP);
+
+        //CloudCommonUtil::signUp(m_accountMgrControlee);
     }
 
     virtual void TearDown()
@@ -128,6 +131,8 @@ TEST_F(CSCppCloudTest_stc, SaveTrustCertChain_SRC_RV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCppCloudTest_stc, RequestCertificate_SRC_RV_P)
 {
+    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
+
     if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
                     OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
     {
@@ -140,9 +145,6 @@ TEST_F(CSCppCloudTest_stc, RequestCertificate_SRC_RV_P)
         SET_FAILURE(ERROR_SIGN_IN);
         return;
     }
-
-    std::string ip(DEFAULT_HOST);
-    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
 
     if (!m_CloudAclHelper.requestCertificate(cloudProv, CSCppCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
@@ -176,6 +178,8 @@ TEST_F(CSCppCloudTest_stc, RequestCertificate_SRC_RV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCppCloudTest_stc, RequestCertificateCb_NV_N)
 {
+    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
+
     if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
                     OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
     {
@@ -188,9 +192,6 @@ TEST_F(CSCppCloudTest_stc, RequestCertificateCb_NV_N)
         SET_FAILURE(ERROR_SIGN_IN);
         return;
     }
-
-    std::string ip(DEFAULT_HOST);
-    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
 
     if (!m_CloudAclHelper.requestCertificate(cloudProv, NULL, OC_STACK_INVALID_CALLBACK))
     {
@@ -226,6 +227,8 @@ TEST_F(CSCppCloudTest_stc, RequestCertificateCb_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCppCloudTest_stc, GetCRL_SRC_RV_P)
 {
+    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
+
     if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
                     OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
     {
@@ -238,9 +241,6 @@ TEST_F(CSCppCloudTest_stc, GetCRL_SRC_RV_P)
         SET_FAILURE(ERROR_SIGN_IN);
         return;
     }
-
-    std::string ip(DEFAULT_HOST);
-    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
 
     if (!m_CloudAclHelper.requestCertificate(cloudProv, CSCppCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
@@ -283,6 +283,8 @@ TEST_F(CSCppCloudTest_stc, GetCRL_SRC_RV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCppCloudTest_stc, GetCRLCb_NV_N)
 {
+    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
+
     if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
                     OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
     {
@@ -295,9 +297,6 @@ TEST_F(CSCppCloudTest_stc, GetCRLCb_NV_N)
         SET_FAILURE(ERROR_SIGN_IN);
         return;
     }
-
-    std::string ip(DEFAULT_HOST);
-    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
 
     if (!m_CloudAclHelper.getCRL(cloudProv, NULL, OC_STACK_INVALID_CALLBACK))
     {
@@ -335,6 +334,8 @@ TEST_F(CSCppCloudTest_stc, GetCRLCb_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCppCloudTest_stc, PostCRL_SRC_RV_P)
 {
+    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
+
     if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
                     OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
     {
@@ -347,9 +348,6 @@ TEST_F(CSCppCloudTest_stc, PostCRL_SRC_RV_P)
         SET_FAILURE(ERROR_SIGN_IN);
         return;
     }
-
-    std::string ip(DEFAULT_HOST);
-    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
 
     if (!m_CloudAclHelper.requestCertificate(cloudProv, CSCppCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
@@ -419,6 +417,8 @@ TEST_F(CSCppCloudTest_stc, PostCRL_SRC_RV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCppCloudTest_stc, GetAclIdByDevice_SRC_RV_P)
 {
+    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
+
     if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
                     OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
     {
@@ -432,8 +432,6 @@ TEST_F(CSCppCloudTest_stc, GetAclIdByDevice_SRC_RV_P)
         return;
     }
 
-    std::string ip(DEFAULT_HOST);
-    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
     std::string aclID = "";
 
     if (!m_CloudAclHelper.getAclIdByDevice(cloudProv, DEFAULT_DEV_ID, CSCppCloudHelper::cloudAclResponseCB, aclID, OC_STACK_OK))
@@ -468,6 +466,8 @@ TEST_F(CSCppCloudTest_stc, GetAclIdByDevice_SRC_RV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCppCloudTest_stc, GetAclIdByDeviceCb_NV_N)
 {
+    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
+
     if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
                     OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
     {
@@ -481,8 +481,6 @@ TEST_F(CSCppCloudTest_stc, GetAclIdByDeviceCb_NV_N)
         return;
     }
 
-    std::string ip(DEFAULT_HOST);
-    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
     const std::string deviceID = DEFAULT_DEV_ID;
     std::string aclID = "";
 
@@ -520,6 +518,8 @@ TEST_F(CSCppCloudTest_stc, GetAclIdByDeviceCb_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCppCloudTest_stc, GetIndividualAclInfo_RV_SRC_P)
 {
+    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
+
     if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
                     OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
     {
@@ -532,9 +532,6 @@ TEST_F(CSCppCloudTest_stc, GetIndividualAclInfo_RV_SRC_P)
         SET_FAILURE(ERROR_SIGN_IN);
         return;
     }
-
-    std::string ip(DEFAULT_HOST);
-    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
 
     const std::string deviceID = DEFAULT_DEV_ID;
     std::string aclID = "";
@@ -578,6 +575,8 @@ TEST_F(CSCppCloudTest_stc, GetIndividualAclInfo_RV_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCppCloudTest_stc, GetIndividualAclInfoCb_NV_N)
 {
+    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
+
     if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
                     OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
     {
@@ -590,9 +589,6 @@ TEST_F(CSCppCloudTest_stc, GetIndividualAclInfoCb_NV_N)
         SET_FAILURE(ERROR_SIGN_IN);
         return;
     }
-
-    std::string ip(DEFAULT_HOST);
-    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
 
     if (!m_CloudAclHelper.requestCertificate(cloudProv, CSCppCloudHelper::cloudResponseCB, OC_STACK_OK))
     {

@@ -79,7 +79,7 @@ cloudAce_t* CSCsdkUtilityHelper::createCloudAces()
 
         ace->aceId = OICStrdup(aceid);
         ace->stype = 0;
-        ace->permission = 0;
+        ace->permission = 31;
 
         int reslist_count = 1;
 
@@ -94,19 +94,27 @@ cloudAce_t* CSCsdkUtilityHelper::createCloudAces()
             }
             LL_APPEND(ace->resources, res);
 
-            stringArray_t rt =
-            { 0, 0 };
-            readStringArray(&rt, MAX_ID_LENGTH, "resource type", RESOURCE_TYPE_EXAMPLE);
+            static int resourceNumber = 2;
+            static char* resTypeArray[2] =
+            { "core.test.light", "core.test.bulb" };
 
-            stringArray_t _if =
-            { 0, 0 };
-            readStringArray(&_if, MAX_ID_LENGTH, "interface", INTERFACE_EXAMPLE);
+            stringArray_t *rt =  (stringArray_t*) OICCalloc(resourceNumber, sizeof(stringArray_t*));
+            rt->array = resTypeArray;
+            rt->length = resourceNumber;
+
+            static int interfaceNumber = 2;
+            static char* interfaceArray[2] =
+            { "oic.if.baseline", "oic.if.a" };
+
+            stringArray_t *_if =  (stringArray_t*) OICCalloc(resourceNumber, sizeof(stringArray_t*));
+            _if->array = interfaceArray;
+            _if->length = interfaceNumber;
 
             res->href = OICStrdup(RESOURCE_URI_EXAMPLE);
-            res->types = rt.array;
-            res->typeLen = rt.length;
-            res->interfaces = _if.array;
-            res->interfaceLen = _if.length;
+            res->types = rt->array;
+            res->typeLen = rt->length;
+            res->interfaces = _if->array;
+            res->interfaceLen = _if->length;
         }
     }
 

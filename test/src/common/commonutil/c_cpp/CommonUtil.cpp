@@ -67,6 +67,12 @@ char* CommonUtil::getOCStackResult(OCStackResult ocstackresult)
         case OC_STACK_RESOURCE_DELETED:
             resultString = (char*) "OC_STACK_RESOURCE_DELETED";
             break;
+        case OC_STACK_CONTINUE:
+            resultString = (char*) "OC_STACK_CONTINUE";
+            break;
+        case OC_STACK_RESOURCE_CHANGED:
+            resultString = (char*) "OC_STACK_RESOURCE_CHANGED";
+            break;
         case OC_STACK_INVALID_URI:
             resultString = (char*) "OC_STACK_INVALID_URI";
             break;
@@ -109,8 +115,77 @@ char* CommonUtil::getOCStackResult(OCStackResult ocstackresult)
         case OC_STACK_NO_RESOURCE:
             resultString = (char*) "OC_STACK_NO_RESOURCE";
             break;
+        case OC_STACK_SLOW_RESOURCE:
+            resultString = (char*) "OC_STACK_SLOW_RESOURCE";
+            break;
+        case OC_STACK_DUPLICATE_REQUEST:
+            resultString = (char*) "OC_STACK_DUPLICATE_REQUEST";
+            break;
+        case OC_STACK_NO_OBSERVERS:
+            resultString = (char*) "OC_STACK_NO_OBSERVERS";
+            break;
+        case OC_STACK_OBSERVER_NOT_FOUND:
+            resultString = (char*) "OC_STACK_OBSERVER_NOT_FOUND";
+            break;
+        case OC_STACK_VIRTUAL_DO_NOT_HANDLE:
+            resultString = (char*) "OC_STACK_VIRTUAL_DO_NOT_HANDLE";
+            break;
+        case OC_STACK_INVALID_OPTION:
+            resultString = (char*) "OC_STACK_INVALID_OPTION";
+            break;
+        case OC_STACK_MALFORMED_RESPONSE:
+            resultString = (char*) "OC_STACK_MALFORMED_RESPONSE";
+            break;
+        case OC_STACK_PERSISTENT_BUFFER_REQUIRED:
+            resultString = (char*) "OC_STACK_PERSISTENT_BUFFER_REQUIRED";
+            break;
+        case OC_STACK_INVALID_REQUEST_HANDLE:
+            resultString = (char*) "OC_STACK_INVALID_REQUEST_HANDLE";
+            break;
+        case OC_STACK_INVALID_DEVICE_INFO:
+            resultString = (char*) "OC_STACK_INVALID_DEVICE_INFO";
+            break;
+        case OC_STACK_INVALID_JSON:
+            resultString = (char*) "OC_STACK_INVALID_JSON";
+            break;
         case OC_STACK_UNAUTHORIZED_REQ:
             resultString = (char*) "OC_STACK_UNAUTHORIZED_REQ";
+            break;
+        case OC_STACK_TOO_LARGE_REQ:
+            resultString = (char*) "OC_STACK_TOO_LARGE_REQ";
+            break;
+        case OC_STACK_PDM_IS_NOT_INITIALIZED:
+            resultString = (char*) "OC_STACK_PDM_IS_NOT_INITIALIZED";
+            break;
+        case OC_STACK_DUPLICATE_UUID:
+            resultString = (char*) "OC_STACK_DUPLICATE_UUID";
+            break;
+        case OC_STACK_INCONSISTENT_DB:
+            resultString = (char*) "OC_STACK_INCONSISTENT_DB";
+            break;
+        case OC_STACK_AUTHENTICATION_FAILURE:
+            resultString = (char*) "OC_STACK_AUTHENTICATION_FAILURE";
+            break;
+        case OC_STACK_NOT_ALLOWED_OXM:
+            resultString = (char*) "OC_STACK_NOT_ALLOWED_OXM";
+            break;
+//        case OC_STACK_BAD_ENDPOINT:
+//            resultString = (char*) "OC_STACK_BAD_ENDPOINT";
+//            break;
+        case OC_STACK_USER_DENIED_REQ:
+            resultString = (char*) "OC_STACK_USER_DENIED_REQ";
+            break;
+        case OC_STACK_NOT_ACCEPTABLE:
+            resultString = (char*) "OC_STACK_NOT_ACCEPTABLE";
+            break;
+        case OC_STACK_FORBIDDEN_REQ:
+            resultString = (char*) "OC_STACK_FORBIDDEN_REQ";
+            break;
+        case OC_STACK_INTERNAL_SERVER_ERROR:
+            resultString = (char*) "OC_STACK_INTERNAL_SERVER_ERROR";
+            break;
+        case OC_STACK_GATEWAY_TIMEOUT:
+            resultString = (char*) "OC_STACK_GATEWAY_TIMEOUT";
             break;
         case OC_STACK_ERROR:
             resultString = (char*) "OC_STACK_ERROR";

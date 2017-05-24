@@ -18,6 +18,7 @@ len=${#arg_parts[@]}
 
 parameters=''
 offline_mode=''
+project_version=''
 i=0
 while [ ${i} -lt ${len} ]; do
     arg_value=${arg_parts[i+1]}
@@ -63,6 +64,8 @@ while [ ${i} -lt ${len} ]; do
         project_version=${arg_value}
     elif [[ "${arg_parts[i]}" = "PUSH" ]]; then
         push=${arg_value}
+    elif [[ "${arg_parts[i]}" = "SECURED" ]]; then
+         parameters+=" --define 'SECURED ${arg_value}'"
     elif [[ "${arg_parts[i]}" = "lib_rpm_names" ]]; then
         temp=${arg_value}
         lib_rpm_names=(${temp//,/ })
@@ -77,16 +80,25 @@ done
 
 parameters+=' '${offline_mode}
 
-IFS='-' read -a tmp_array <<< "${project_version}"
+if [[ "${project_version}" == "" ]]; then
+    spec=`ls ${iotivity_root}/tools/tizen/*.spec`
+    version=`rpm --query --queryformat '%{version}\n' --specfile $spec`
+    release=`rpm --query --queryformat '%{release}\n' --specfile $spec`
+    name=`echo $name|cut -d" " -f 1`
+    version=`echo $version|cut -d" " -f 1`
+    release_number=`echo $release|cut -d" " -f 1`
+    project_version=${version}'-'${release_number}
+else
+    IFS='-' read -a tmp_array <<< "${project_version}"
+    len=${#arg_parts[@]}
+    if [[ ${len} -lt 2 ]]; then
+        echo 'Problem with PROJECT_VERSION value. PROJECT_VERSION format: w.x.x-z'
+        exit 127
+    fi
 
-len=${#arg_parts[@]}
-if [[ ${len} -lt 2 ]]; then
-    echo 'Problem with PROJECT_VERSION value. PROJECT_VERSION format: w.x.x-z'
-    exit 127
+    version=${tmp_array[0]}
+    release_number=${tmp_array[1]}
 fi
-
-version=${tmp_array[0]}
-release_number=${tmp_array[1]}
 
 echo 'Creating Temporary Directory '${module}
 echo 'Please wait. It will take a few seconds...'
@@ -203,9 +215,11 @@ if eval ${gbscommand}; then
                     ${tizen_sdb} -s ${device} push ${rpms_path}'/'${lib_rpm_name}'-'${project_version}'.'${target_arch}'.rpm' /tmp
                     ${tizen_sdb} -s ${device} shell rpm -Uvh 'tmp/'${lib_rpm_name}'-'${project_version}'.'${target_arch}'.rpm' --force --nodeps
                 done
-                ${tizen_sdb} -s ${device} push ${tmp_dir}/usr/lib/* /usr/bin/${module}/
-                ${tizen_sdb} -s ${device} push ${tmp_dir}/usr/lib/* /opt/usr/media/bin/
-                ${tizen_sdb} -s ${device} push ${tmp_dir}/usr/lib/* /usr/apps/com.oic.${module}.test/bin
+                if [[ "${module}" == "rc" ]]; then
+                    ${tizen_sdb} -s ${device} push ${tmp_dir}/usr/lib/* /usr/bin/${module}/
+                    ${tizen_sdb} -s ${device} push ${tmp_dir}/usr/lib/* /opt/usr/media/bin/
+                    ${tizen_sdb} -s ${device} push ${tmp_dir}/usr/lib/* /usr/apps/com.oic.${module}.test/bin
+                fi
             fi
             if [[ "${push}" == *"exe"* ]]; then
                 ${tizen_sdb} -s ${device} push ${rpms_path}'/'${test_rpm_name} /tmp

@@ -18,6 +18,8 @@
  *
  *
  ******************************************************************/
+#ifdef TC_ENABLE
+
 #include "CSCsdkCloudHelper.h"
 #include "CSCsdkUtilityHelper.h"
 
@@ -59,7 +61,7 @@ protected:
         }
 
         m_hostAddress = CloudCommonUtil::getDefaultHostAddess();
-        m_endPoint = CSCsdkUtilityHelper::getOCDevAddrEndPoint();
+        m_endPoint = CloudCommonUtil::getDefaultEndPoint();
 
 #ifdef __TLS_ON__
         setCoapPrefix(true);
@@ -509,4 +511,5 @@ TEST_F(CSCsdkGroupTest_stc, OCCloudAclDeleteDeviceFromGroup_SRC_P)
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
 }
+#endif
 #endif

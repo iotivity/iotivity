@@ -18,6 +18,7 @@
  *
  *
  ******************************************************************/
+#ifdef TC_ENABLE
 #include "CSCsdkCloudHelper.h"
 #include "CSCsdkUtilityHelper.h"
 
@@ -27,19 +28,20 @@ protected:
 
     CSCsdkCloudHelper m_CloudAclHelper;
     string m_hostAddress = COAP_HOST_ADDRESS;
-    OCDevAddr m_endPoint;
+    OCDevAddr m_endPoint = {0, 0};
     string m_authProvider = "github";
     string m_authCode = "";
     string m_groupId = "";
     string m_aclId = "";
     string m_uidControlee = "";
     string m_authTokenControlee = "";
+    uint16_t m_credId = 0;
 
     OCAccountManager::Ptr m_accountMgrControlee = nullptr;
 
     std::vector< std::string > m_deviceIdAddded;
     std::vector< std::string > m_deviceIdRemoving;
-    uint16_t m_credId = 0;
+
     ByteArray_t m_trustCertChainArray =
     { 0, 0 };
 
@@ -56,6 +58,7 @@ protected:
         }
 
         m_hostAddress = CloudCommonUtil::getDefaultHostAddess();
+        m_endPoint = CloudCommonUtil::getDefaultEndPoint();
         m_accountMgrControlee = OCPlatform::constructAccountManagerObject(m_hostAddress,
                 CT_ADAPTER_TCP);
     }
@@ -234,4 +237,5 @@ TEST_F(CSCsdkGetInvitationTest_btc, OCCloudAclObserveGroupDevAddr_NV_N)
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
 }
+#endif
 #endif

@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -30,6 +30,18 @@ Configuration g_configPropFile(CONFIG_PROP_FILE);
 static int g_isCbInvoked = CALLBACK_NOT_INVOKED;
 OCAccountManager::Ptr accountMgr = nullptr;
 
+std::string CloudCommonUtil::getDefaultIp()
+{
+    string ci_server_ip = "";
+#ifdef __LINUX__
+    ci_server_ip = g_configPropFile.getProperties(CI_SERVER_ETHERNET_IP_KEY);
+#elif __TIZEN__
+    ci_server_ip = g_configPropFile.getProperties(CI_SERVER_WIFI_IP_KEY);
+#endif
+
+    return ci_server_ip;
+}
+
 std::string CloudCommonUtil::getDefaultHostAddess()
 {
     string hostAddress = "";
@@ -53,6 +65,24 @@ std::string CloudCommonUtil::getDefaultHostAddess()
     return hostAddress;
 }
 
+OCDevAddr CloudCommonUtil::getDefaultEndPoint()
+{
+    OCDevAddr endPoint;
+
+#ifdef __LINUX__
+    string ci_server_ip = g_configPropFile.getProperties(CI_SERVER_ETHERNET_IP_KEY);
+#elif __TIZEN__
+    string ci_server_ip = g_configPropFile.getProperties(CI_SERVER_WIFI_IP_KEY);
+#endif
+
+    memset(&endPoint, 0, sizeof(endPoint));
+    strncpy(endPoint.addr, ci_server_ip.c_str(), sizeof(endPoint.addr));
+    endPoint.port = OC_MULTICAST_PORT;
+
+    return endPoint;
+}
+
+
 std::string CloudCommonUtil::readfile(std::string filename)
 {
     __FUNC_IN__
@@ -63,12 +93,12 @@ std::string CloudCommonUtil::readfile(std::string filename)
 
     if (NULL == fp)
     {
-        IOTIVITYTEST_LOG(ERROR, "[CSC Helper] ERROR Opening File");
+        IOTIVITYTEST_LOG(ERROR, "[CSC Helper] ERROR Opening File : %s", filename.c_str());
     }
 
     if (NULL == fgets(buff, 100, (FILE*) fp))
     {
-        IOTIVITYTEST_LOG(ERROR, "[CSC Helper] Unable to Get input from File");
+        IOTIVITYTEST_LOG(ERROR, "[CSC Helper] Unable to Get input from File: %s", filename.c_str());
     }
 
     fclose(fp);
@@ -397,6 +427,39 @@ bool CloudCommonUtil::signUp(OCAccountManager::Ptr accountMgr)
 }
 
 /*
+ * Sign Up in Cloud
+ */
+bool CloudCommonUtil::signUp(OCAccountManager::Ptr accountMgr, std::string authCode)
+{
+    __FUNC_IN__
+
+    OCStackResult result = accountMgr->signUp(CloudCommonUtil::g_authprovider,
+            authCode.c_str(), handleLoginoutCB);
+
+    IOTIVITYTEST_LOG(INFO, "[Cloud Common] signUp returns %s",
+            CommonUtil::getOCStackResult(result));
+
+    if (OC_STACK_OK != result)
+    {
+        IOTIVITYTEST_LOG(ERROR, "[Cloud Common] signUp returns %s",
+                CommonUtil::getOCStackResult(result));
+        return false;
+    }
+
+    if (OC_STACK_OK == result)
+    {
+        if (CALLBACK_INVOKED != waitCallbackRet())
+        {
+            IOTIVITYTEST_LOG(ERROR, "[Cloud Common] Callback Not Invoked");
+            return false;
+        }
+    }
+    g_cloudPropFile.save();
+    __FUNC_OUT__
+    return true;
+}
+
+/*
  * Sign In in Cloud
  */
 bool CloudCommonUtil::signIn(OCAccountManager::Ptr accountMgr)
@@ -411,6 +474,8 @@ bool CloudCommonUtil::signIn(OCAccountManager::Ptr accountMgr)
             CloudCommonUtil::g_accessToken, signInOutCB);
     IOTIVITYTEST_LOG(INFO, "[Cloud Common] signIn returns %s",
             CommonUtil::getOCStackResult(result));
+    IOTIVITYTEST_LOG(INFO, "[Cloud Common] UUID = %s   ACCESSTOKE = %s ", g_uid.c_str(),
+            g_accessToken.c_str());
 
     if (OC_STACK_OK != result)
     {

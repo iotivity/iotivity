@@ -1,29 +1,46 @@
 
 echo "gbs build started"
 echo ""
-echo $(pwd)
 
-cd extlibs/gtest-1.7.0
+iotivity_root=${1}
+iotivity_test_root=${2}
+target_arch=${3}
+gbs_root=${4}
+rpm_path=${5}
+init_mode=${6}
 
-mkdir -p bin/tizen
-rm -f bin/tizen/*
+mkdir -p ${iotivity_test_root}/extlibs/gtest-1.7.0/bin/tizen
+
+tmp_dir=${iotivity_test_root}/bin/tizen/tmp/gtest
+rm -rf ${tmp_dir}
+
+mkdir -p ${tmp_dir}
+cwd_dir=`pwd`
+echo ${cwd_dir}
+
+cp -rf ${iotivity_test_root}/extlibs/gtest-1.7.0/src ${tmp_dir}/src
+cp -rf ${iotivity_test_root}/extlibs/gtest-1.7.0/include ${tmp_dir}/include
+cp -rf ${iotivity_test_root}/extlibs/gtest-1.7.0/packaging ${tmp_dir}/packaging
+cp ${iotivity_test_root}/extlibs/gtest-1.7.0/Makefile ${tmp_dir}/Makefile
+cp ${iotivity_test_root}/extlibs/gtest-1.7.0/SConscript ${tmp_dir}/SConscript
+cp ${iotivity_root}/tools/tizen/.gbs.conf ${tmp_dir}
+
+cd ${tmp_dir}
 
 echo "Initializing Git repository"
 echo " "
 
 if [ ! -d .git ]; then
    git init ./
-   git config user.email "you@example.com"
-   git config user.name "Your Name"
    git add ./
    git commit -m "Initial commit"
 fi
 
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-OIC --include-all"
-echo $gbscommand
+gbscommand="gbs build -A ${target_arch} -B ${gbs_root} --repository ./ --include-all ${init_mode}"
+echo ${gbscommand}
 
-if eval $gbscommand; then
+if eval ${gbscommand}; then
    echo "GBS build is successful"
 else
    echo "GBS build failed."
@@ -33,22 +50,22 @@ else
 fi
 
 echo "Extracting RPM"
-rpmPath=$1
-rpmName="org.tizen.gtest-0.0.1-1.armv7l.rpm"
-extractCommand="rpm2cpio "$rpmPath/$rpmName" | cpio -idmv"
-echo $extractCommand
+rpm_name="org.tizen.gtest-0.0.1-1.armv7l.rpm"
+extract_command="rpm2cpio "${rpm_path}/${rpm_name}" | cpio -idmv"
+echo ${extract_command}
 
-eval "chmod 777 "$rpmPath/$rpmName
+eval "chmod 777 "${rpm_path}/${rpm_name}
 sleep 1
-eval $extractCommand
+eval ${extract_command}
 
 echo "Copying gtest lib"
-cp usr/bin/libgtest.a bin/tizen
+cp usr/bin/libgtest.a ${iotivity_test_root}/extlibs/gtest-1.7.0/bin/tizen
+cp usr/bin/libgtest.a ${iotivity_test_root}/bin/tizen
 
 echo "deleting tmp resources"
-rm -rf usr/
-rm -rf .git/
 
-eval "chmod 777 -R bin/tizen"
+cd ${cwd_dir}
 
-cd ../..
+rm -rf ${tmp_dir}
+
+eval "chmod 777 -R ${iotivity_test_root}/bin/tizen"

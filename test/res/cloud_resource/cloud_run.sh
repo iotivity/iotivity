@@ -6,10 +6,11 @@ tls=${2}
 kafka_root=${3}
 iotivity_root=${4}
 
+#example
 #command=start
 #tls=1
 #kafka_root=/home/srbd/Downloads/kafka_2.10-0.9.0.0
-#iotivity_root=/home/srbd/git/oictest_repo/IotivityOrgSource/last/iotivity
+#iotivity_root=/home/srbd/git/oictest_repo/IotivityOrgSource/rc3/iotivity
 
 #Steps:
 #1. Free All Required Port
@@ -18,10 +19,10 @@ iotivity_root=${4}
 #4. Free All Required Port
 
 function clean_up {
-    ps -ef | grep "java -jar CloudInterface-0.0.1-SNAPSHOT.jar 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686 ${tls}" | grep -v grep | awk '{ print $2 }'  | xargs kill -9
+    ps -ef | grep "java -jar CloudInterface-0.0.1-SNAPSHOT.jar 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686" | grep -v grep | awk '{ print $2 }'  | xargs kill -9
     ps -ef | grep "java -jar CloudAccount-0.0.1-SNAPSHOT.jar 5685" | grep -v grep | awk '{ print $2 }'  | xargs kill -9
-    ps -ef | grep "java -jar CloudMessageQueue-0.0.1-SNAPSHOT.jar 5686 127.0.0.1 2181 127.0.0.1 9092 ${tls}" | grep -v grep | awk '{ print $2 }'  | xargs kill -9
-    ps -ef | grep "java -jar CloudResourceDirectory-0.0.1-SNAPSHOT.jar 5684 ${tls}" | grep -v grep | awk '{ print $2 }'  | xargs kill -9
+    ps -ef | grep "java -jar CloudMessageQueue-0.0.1-SNAPSHOT.jar 5686 127.0.0.1 2181 127.0.0.1 9092" | grep -v grep | awk '{ print $2 }'  | xargs kill -9
+    ps -ef | grep "java -jar CloudResourceDirectory-0.0.1-SNAPSHOT.jar 5684 127.0.0.1 27017" | grep -v grep | awk '{ print $2 }'  | xargs kill -9
 
     fuser -k -n tcp 9092 #kafa
     fuser -k -n tcp 2181 #zookeeper
@@ -47,16 +48,16 @@ function run_cloud_server {
     current_dir=`pwd`
     cd $iotivity_root/cloud/$1/target
     gnome-terminal -x bash -c "java -jar $2"
-    sleep 5s
+    sleep 10s
     cd ${current_dir}
 }
 
 function run_all_cloud_servers {
     current_dir=`pwd`
-    run_cloud_server resourcedirectory "CloudResourceDirectory-0.0.1-SNAPSHOT.jar 5684 ${tls}"
+    run_cloud_server resourcedirectory "CloudResourceDirectory-0.0.1-SNAPSHOT.jar 5684 127.0.0.1 27017 ${tls}"
     run_cloud_server messagequeue "CloudMessageQueue-0.0.1-SNAPSHOT.jar 5686 127.0.0.1 2181 127.0.0.1 9092 ${tls}"
-    run_cloud_server account "CloudAccount-0.0.1-SNAPSHOT.jar 5685 ${tls}"
-    run_cloud_server interface "CloudInterface-0.0.1-SNAPSHOT.jar 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686 ${tls}"
+    run_cloud_server account "CloudAccount-0.0.1-SNAPSHOT.jar 5685 127.0.0.1 27017 ${tls}"
+    run_cloud_server interface "CloudInterface-0.0.1-SNAPSHOT.jar 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686 0 0 ${tls}"
 
     cd ${current_dir}
 }

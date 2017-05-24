@@ -31,9 +31,10 @@
 
 using namespace std;
 
-#define GITHUB_USER_ID ""
-#define GITHUB_USER_PASSOWRD ""
-const string REMOTE_CI_SERVER_WIFI_IP = "127.0.0.1";
+const string COMMON_CONFIG_FILE = "config.properties";
+const string TCP_SERVER_ETHERNET_IP_KEY = "ci_server_ethernet_ip";
+const string TCP_SERVER_WIFI_IP_KEY = "ci_server_wifi_ip";
+const string TCP_SERVER_PORT_KEY = "tcp_server_port";
 
 class Configuration
 {

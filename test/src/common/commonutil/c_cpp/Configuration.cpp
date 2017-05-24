@@ -92,7 +92,7 @@ string Configuration::getProperties(string key)
 
 void Configuration::printContent()
 {
-    cout << filename << " contans:" << endl;
+    cout << filename << " contains:" << endl;
     for (std::map< string, string >::iterator it = properties.begin(); it != properties.end(); ++it)
     {
         cout << "{ " <<it->first << " : " << it->second << " }"<< endl;

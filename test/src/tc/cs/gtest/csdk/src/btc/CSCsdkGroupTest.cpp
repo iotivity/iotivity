@@ -18,6 +18,8 @@
  *
  *
  ******************************************************************/
+#ifdef TC_ENABLE
+
 #include "CSCsdkCloudHelper.h"
 #include "CSCsdkUtilityHelper.h"
 
@@ -58,8 +60,7 @@ protected:
         }
 
         m_hostAddress = CloudCommonUtil::getDefaultHostAddess();
-        m_endPoint = CSCsdkUtilityHelper::getOCDevAddrEndPoint();
-
+        m_endPoint = CloudCommonUtil::getDefaultEndPoint();
         m_accountMgrControlee = OCPlatform::constructAccountManagerObject(m_hostAddress,
                 CT_ADAPTER_TCP);
 
@@ -606,4 +607,5 @@ TEST_F(CSCsdkGroupTest_btc, OCCloudAclDeleteDeviceFromGroupDeviceId_NV_N)
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
 }
+#endif
 #endif

@@ -409,13 +409,13 @@ static void doAction(Menu userInput)
             findAllResources(CloudCommonUtil::getDefaultHostAddess());
             break;
 
-        case Menu::SEND_GET_REUQUEST:
-            sendGetRequest(ResourceSelectionType.VERTICAL_RESOURCE);
-            break;
-
-        case Menu::SEND_POST_REQUEST:
-            sendPostRequest(ResourceSelectionType.VERTICAL_RESOURCE);
-            break;
+//        case Menu::SEND_GET_REUQUEST:
+//            sendGetRequest(ResourceSelectionType.VERTICAL_RESOURCE);
+//            break;
+//
+//        case Menu::SEND_POST_REQUEST:
+//            sendPostRequest(ResourceSelectionType.VERTICAL_RESOURCE);
+//            break;
 
         default:
             printf("Wrong Input, Please provide Input Again");
