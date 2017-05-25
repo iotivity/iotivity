@@ -29,6 +29,7 @@
 #ifndef OC_OBSERVE_H
 #define OC_OBSERVE_H
 
+#include "cacommon.h"
 
 /** Maximum number of observers to reach */
 
@@ -44,6 +45,16 @@
 #define MAX_OBSERVER_TTL_SECONDS     (60 * 60 * 24)
 
 #define MILLISECONDS_PER_SECOND   (1000)
+
+/**
+ * Forward declaration of resource.
+ */
+typedef struct OCResource OCResource;
+
+/**
+ * Forward declaration of resource type.
+ */
+typedef struct resourcetype_t OCResourceType;
 
 /**
  * Data structure to hold informations for each registered observer.
@@ -64,9 +75,6 @@ typedef struct ResourceObserver
 
     /** token length for the observe request.*/
     uint8_t tokenLength;
-
-    /** Resource handle.*/
-    OCResource *resource;
 
     /** Remote Endpoint. */
     OCDevAddr devAddr;
@@ -147,9 +155,11 @@ OCStackResult SendListObserverNotification (OCResource * resource,
         OCQualityOfService qos);
 
 /**
- * Delete all observers in the observe list.
+ * Delete all observers belonging to the resource.
+ *
+ * @param resource         Resource pointer that has a list of observer.
  */
-void DeleteObserverList();
+void DeleteObserverList(OCResource *resource);
 
 /**
  * Create a unique observation ID.
@@ -191,41 +201,37 @@ OCStackResult AddObserver (const char         *resUri,
  * Delete observer with specified token from list of observers.
  * Free memory that was allocated for the observer in the list.
  *
- * @param token Token to search for.
- * @param tokenLength Length of token.
+ * @param resource         Resource pointer that has a list of observer.
+ * @param token            Token to search for.
+ * @param tokenLength      Length of token.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
- OCStackResult DeleteObserverUsingToken (CAToken_t token, uint8_t tokenLength);
-
- /**
-  * Delete observer with device address from list of observers.
-  * Free memory that was allocated for the observer in the list.
-  *
-  * @param devAddr Device's address.
-  *
-  * @return ::OC_STACK_OK on success, some other value upon failure.
-  */
-OCStackResult DeleteObserverUsingDevAddr(const OCDevAddr *devAddr);
+OCStackResult DeleteObserverUsingToken (OCResource *resource,
+                                        CAToken_t token, uint8_t tokenLength);
 
 /**
  * Search the list of observers for the specified token.
  *
+ * @param resource         Resource pointer that has a list of observers.
  * @param token            Token to search for.
  * @param tokenLength      Length of token.
  *
  * @return Pointer to found observer.
  */
-ResourceObserver* GetObserverUsingToken (const CAToken_t token, uint8_t tokenLength);
+ResourceObserver* GetObserverUsingToken (OCResource *resource,
+                                         const CAToken_t token, uint8_t tokenLength);
 
 /**
  * Search the list of observers for the specified observe ID.
  *
+ * @param resource         Resource pointer that has a list of observers.
  * @param observeId        Observer ID to search for.
  *
  * @return Pointer to found observer.
  */
-ResourceObserver* GetObserverUsingId (const OCObservationId observeId);
+ResourceObserver* GetObserverUsingId (OCResource *resource,
+                                      const OCObservationId observeId);
 
 /**
  *  Add observe header option to a request.
