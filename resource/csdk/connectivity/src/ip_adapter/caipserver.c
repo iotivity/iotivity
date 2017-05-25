@@ -1170,6 +1170,12 @@ static void applyMulticastToInterface6(uint32_t ifindex)
 
 CAResult_t CAIPStartListenServer()
 {
+    if (caglobals.ip.started)
+    {
+        OIC_LOG(DEBUG, TAG, "Adapter is started already");
+        return CA_STATUS_OK;
+    }
+
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
     u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
     if (!iflist)
