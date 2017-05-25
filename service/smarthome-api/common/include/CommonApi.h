@@ -90,6 +90,7 @@ namespace OIC
                 const std::string REFRIGERATOR = "oic.d.refrigerator";
                 const std::string DISHWASHER = "oic.d.dishwasher";
                 const std::string GARAGE_DOOR = "oic.d.garagedoor";
+                const std::string WASHER = "oic.d.washer";
             }
 
             namespace RESOURCE_TYPE

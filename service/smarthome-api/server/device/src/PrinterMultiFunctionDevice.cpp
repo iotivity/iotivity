@@ -44,7 +44,7 @@ namespace OIC
                 m_automaticDocumentFeeder.addPossibleState(AdfState::INPUT_TRAY_OVERLOADED);
             }
 
-            ScannerDevice::~ScannerDevice()
+            PrinterMultiFunctionDevice::~PrinterMultiFunctionDevice()
             {
             }
         }

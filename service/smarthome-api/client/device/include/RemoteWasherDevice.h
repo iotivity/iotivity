@@ -17,7 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
-#include <RemotePrinterMultiFunctionDevice.h>
+#ifndef SMARTHOME_API_CLIENT_REMOTEWASHER_H_
+#define SMARTHOME_API_CLIENT_REMOTEWASHER_H_
+
+#include <SHBaseRemoteDevice.h>
+#include <RemoteBinarySwitchResource.h>
+#include <RemoteOperationalStateResource.h>
 
 namespace OIC
 {
@@ -25,14 +30,20 @@ namespace OIC
     {
         namespace SH
         {
-            RemotePrinterMultiFunctionDevice::RemotePrinterMultiFunctionDevice() :
-                    m_automaticDocumentFeeder(NULL)
+            class RemoteWasherDevice: public SHBaseRemoteDevice
             {
-            }
+            friend class SHBaseRemoteDeviceBuilder;
+            public:
+                virtual ~RemoteWasherDevice();
 
-            RemotePrinterMultiFunctionDevice::~RemotePrinterMultiFunctionDevice()
-            {
-            }
+                RemoteBinarySwitchResource *m_remoteBinarySwitch;
+                RemoteOperationalStateResource *m_remoteOperationalState;
+
+            protected:
+                RemoteWasherDevice();
+            };
         }
     }
 }
+
+#endif /* SMARTHOME_API_CLIENT_REMOTEWASHER_H_ */

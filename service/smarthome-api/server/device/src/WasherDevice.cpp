@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  ******************************************************************/
-#include <RemotePrinterMultiFunctionDevice.h>
+#include <WasherDevice.h>
 
 namespace OIC
 {
@@ -25,13 +25,14 @@ namespace OIC
     {
         namespace SH
         {
-            RemotePrinterMultiFunctionDevice::RemotePrinterMultiFunctionDevice() :
-                    m_automaticDocumentFeeder(NULL)
+            WasherDevice::WasherDevice()
             {
+                setType(DEVICE_TYPE::WASHER);
             }
 
-            RemotePrinterMultiFunctionDevice::~RemotePrinterMultiFunctionDevice()
+            WasherDevice::~WasherDevice()
             {
+                
             }
         }
     }

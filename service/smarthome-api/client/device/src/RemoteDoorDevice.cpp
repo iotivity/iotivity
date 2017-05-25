@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  ******************************************************************/
-#include <RemoteWaterValveDevice.h>
+#include <RemoteDoorDevice.h>
 
 namespace OIC
 {
@@ -25,12 +25,12 @@ namespace OIC
     {
         namespace SH
         {
-            RemoteWaterValveDevice::RemoteWaterValveDevice()
+            RemoteDoorDevice::RemoteDoorDevice()
             : m_remoteOpenLevel(NULL)
             {
             }
 
-            RemoteWaterValveDevice::~RemoteWaterValveDevice()
+            RemoteDoorDevice::~RemoteDoorDevice()
             {
             }
         }
