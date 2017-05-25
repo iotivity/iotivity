@@ -482,8 +482,8 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
                                       const OCProvisionDev_t *pDev2,
                                       OCProvisionResultCB resultCallback)
 {
-    return SRPProvisionCredentials(ctx, type, keySize,
-                                      pDev1, pDev2, NULL, NULL, NULL, resultCallback);
+    return SRPProvisionCredentialsDos(ctx, type, keySize,
+                                      pDev1, pDev2, resultCallback);
 }
 
 /**
@@ -1275,8 +1275,8 @@ OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_
     link->resultCallback = resultCallback;
     link->currentCountResults = 0;
     link->resArr = (OCProvisionResult_t*) OICMalloc(sizeof(OCProvisionResult_t)*noOfResults);
-    res = SRPProvisionCredentials(link, type, keySize,
-                                     pDev1, pDev2, NULL, NULL, NULL, &ProvisionCredsCB);
+    res = SRPProvisionCredentialsDos(link, type, keySize,
+                                     pDev1, pDev2, &ProvisionCredsCB);
     if (res != OC_STACK_OK)
     {
         OICFree(link->resArr);
