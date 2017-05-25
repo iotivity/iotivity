@@ -69,7 +69,7 @@ void DeviceBrowserDelegateImpl::onFindRemoteDevice(SHBaseRemoteDevice *remoteDev
 
     RemoteRobotCleanerDevice *remoteBot;
 
-    if (DEVICE_TYPE::ROBOTCLEANER == remoteDevice->getType())
+    if (remoteDevice->hasDeviceType(DEVICE_TYPE::ROBOTCLEANER))
     {
         remoteBot = dynamic_cast< RemoteRobotCleanerDevice* >(remoteDevice);
 

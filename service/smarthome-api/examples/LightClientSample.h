@@ -47,6 +47,8 @@ public:
     void turnOn();
     void turnOff();
     void getState();
+    void startObserve();
+    void stopObserve();
 
 public:
     LightClientSample();

@@ -19,7 +19,9 @@
  ******************************************************************/
 #include <RemoteBinarySwitchResource.h>
 #include <PropertyBundle.h>
-#include <iostream>
+#include <logger.h>
+
+#define TAG "OIC_SH_CLIENT_REMOTEBINARYSWITCH"
 
 const static std::string BINARY_SWITCH_VALUE_KEY = "value";
 
@@ -74,11 +76,49 @@ namespace OIC
                 }
             }
 
+            void RemoteBinarySwitchResource::onObserve(PropertyBundle bundle,
+                        const ObserveResponse obsType,
+                        ResultCode ret)
+            {
+                bool value = false;
+
+                OIC_LOG(ERROR, TAG, "[RemoteBinarySwitchResource] onObserve");
+                if (NULL == m_delegate)
+                {
+                    OIC_LOG(ERROR, TAG, "[RemoteBinarySwitchResource] delegate not set");
+                    return;
+                }
+
+                ResultCode obsResult = SUCCESS;
+                switch(obsType)
+                {
+                case REGISTER:
+                    obsResult = (ret == SUCCESS) ?
+                        OBSERVE_REGISTER_SUCCESS : OBSERVE_REGISTER_FAIL;
+                    break;
+                case UNREGISTER:
+                    obsResult = (ret == SUCCESS) ?
+                        OBSERVE_UNREGISTER_SUCCESS : OBSERVE_UNREGISTER_FAIL;
+                    break;
+                case NOTIFY:
+                    obsResult = OBSERVE_NOTIFY;
+                    bundle.getValue(BINARY_SWITCH_VALUE_KEY, value);
+                    break;
+                default:
+                    OIC_LOG(ERROR, TAG, "not supported observe type");
+                    //TODO
+                    //error handler
+                    break;
+                }
+
+                m_delegate->onGetState(value, obsResult);
+            }
+
             void RemoteBinarySwitchResource::on()
             {
                 PropertyBundle bundle;
 
-                std::cout << "[RemoteBinarySwitchResource] turnOn requested.." << std::endl;
+                OIC_LOG(DEBUG, TAG,"[RemoteBinarySwitchResource] turnOn requested..");
 
                 bool value = true;
                 bundle.setValue(BINARY_SWITCH_VALUE_KEY, value);
@@ -89,7 +129,7 @@ namespace OIC
             {
                 PropertyBundle bundle;
 
-                std::cout << "[RemoteBinarySwitchResource] turnOff requested.." << std::endl;
+                OIC_LOG(DEBUG, TAG, "[RemoteBinarySwitchResource] turnOff requested..");
 
                 bool value = false;
                 bundle.setValue(BINARY_SWITCH_VALUE_KEY, value);
@@ -98,7 +138,7 @@ namespace OIC
 
             void RemoteBinarySwitchResource::getState()
             {
-                std::cout << "[RemoteBinarySwitchResource] getState Requested.." << std::endl;
+                OIC_LOG(DEBUG, TAG, "[RemoteBinarySwitchResource] getState Requested..");
                 getPropertyBundle();
             }
         }

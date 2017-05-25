@@ -43,6 +43,7 @@ namespace OIC
             */
             class RemoteLightDevice: public SHBaseRemoteDevice
             {
+            friend class SHBaseRemoteDeviceBuilder;
             public:
                 virtual ~RemoteLightDevice();
 

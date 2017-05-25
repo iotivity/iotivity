@@ -19,7 +19,14 @@
  ******************************************************************/
 #include <DeviceDiscovery.h>
 #include <SHPlatform_Impl.h>
-#include <iostream>
+#include <SHPlatformConfig.h>
+#include <CommonException.h>
+#include <ClientCallbackContext.h>
+#include <ClientCallbackWrapper.h>
+#include <ocstack.h>
+#include "logger.h"
+
+#define TAG "OIC_SH_CLIENT_DEVICEDISCOVERY"
 
 namespace OIC
 {
@@ -45,24 +52,101 @@ namespace OIC
 
             void DeviceDiscovery::findRemoteDevices()
             {
-                std::cout << "findRemoteDevices call!" << std::endl;
+                OIC_LOG(DEBUG, TAG, "findRemoteDevices call!");
+
+                if (!m_delegate)
+                {
+                    throw CommonException("delegate is not set");
+                    return;
+                }
+
+                std::string uri = OC_RSRVD_WELL_KNOWN_URI;
+
+                ClientCallbackContext *ctx = new ClientCallbackContext(this->m_delegate);
+
+                OCCallbackData cbdata;
+                cbdata.context = static_cast<void*>(ctx);
+                cbdata.cb = ClientCallbackWrapper::DeviceDiscoveryCallback::findRemoteDevices;
+                cbdata.cd = ClientCallbackWrapper::CallbackHelper::CallbackContextDeleter;
+
+                SHPlatformConfig cfg = SH_Impl::getConfig();
+
+                //TODO
+                //csdk lock?
+                //discovery need handle?
+
+                OCStackResult result = OCDoRequest(NULL, OC_REST_DISCOVER,
+                        uri.c_str(),
+                        NULL, NULL,
+                        CT_DEFAULT/*connectivityType*/,
+                        static_cast<OCQualityOfService>(cfg.qos),
+                        &cbdata,
+                        NULL, 0);
+
+                if (OC_STACK_OK != result)
+                {
+                    throw CommonException("OCDoRequest failed!");
+                }
             }
 
             void DeviceDiscovery::findRemoteDevices(const DiscoveryQuery &query)
             {
-                std::cout << "findRemoteDevices call! query : " << query.getDeviceType()
-                        << std::endl;
+                OIC_LOG_V(DEBUG, TAG, "findRemoteDevices call! query :%s",
+                        query.getDeviceType().c_str());
+
+                if (!m_delegate)
+                {
+                    throw CommonException("delegate is not set");
+                    return;
+                }
+
+                std::string uri = OC_RSRVD_WELL_KNOWN_URI;
+                std::string deviceType = query.getDeviceType();
+
+                ClientCallbackContext *ctx = NULL;
+                if (deviceType.empty())
+                {
+                    ctx = new ClientCallbackContext(this->m_delegate);
+                }
+                else
+                {
+                    ctx = new ClientCallbackContext(this->m_delegate, deviceType);
+                }
+
+                OCCallbackData cbdata;
+                cbdata.context = static_cast<void*>(ctx);
+                cbdata.cb = ClientCallbackWrapper::DeviceDiscoveryCallback::findRemoteDevices;
+                cbdata.cd = ClientCallbackWrapper::CallbackHelper::CallbackContextDeleter;
+
+                SHPlatformConfig cfg = SH_Impl::getConfig();
+
+                //TODO
+                //csdk lock?
+                //discovery need handle?
+
+                OCStackResult result = OCDoRequest(NULL, OC_REST_DISCOVER,
+                        uri.c_str(),
+                        NULL, NULL,
+                        CT_DEFAULT/*connectivityType*/,
+                        static_cast<OCQualityOfService>(cfg.qos),
+                        &cbdata,
+                        NULL, 0);
+
+                if (OC_STACK_OK != result)
+                {
+                    throw CommonException("OCDoRequest failed!");
+                }
             }
 
             void DeviceDiscovery::findAllRemoteDevices()
             {
-                std::cout << "findAllRemoteDevices call!" << std::endl;
+                OIC_LOG(DEBUG, TAG, "findRemoteDevicesAll call!");
             }
 
             void DeviceDiscovery::findAllRemoteDevices(const DiscoveryQuery &query)
             {
-                std::cout << "findAllRemoteDevices call! query : " << query.getDeviceType()
-                        << std::endl;
+                OIC_LOG_V(DEBUG, TAG, "findRemoteDevicesAll call! query :%s",
+                        query.getDeviceType().c_str());
             }
         }
     }

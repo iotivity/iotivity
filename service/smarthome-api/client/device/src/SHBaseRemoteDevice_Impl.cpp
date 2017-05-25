@@ -17,9 +17,9 @@
  * limitations under the License.
  *
  ******************************************************************/
-#include <algorithm>
 #include <SHBaseRemoteDevice_Impl.h>
 #include <SHBaseRemoteResource.h>
+#include <algorithm>
 
 namespace OIC
 {
@@ -33,16 +33,43 @@ namespace OIC
 
             SHBaseRemoteDevice_Impl::~SHBaseRemoteDevice_Impl()
             {
+                std::list<SHBaseRemoteResource*>::iterator iter;
+                for(iter = m_resources.begin(); iter != m_resources.end(); iter++)
+                {
+                    SHBaseRemoteResource* resource = *iter;
+                    if (resource)
+                    {
+                        delete resource;
+                    }
+                }
             }
 
-            std::string SHBaseRemoteDevice_Impl::getType()
+            std::list<std::string> SHBaseRemoteDevice_Impl::getTypes() const
             {
-                return m_deviceType;
+                return m_deviceTypes;
             }
 
-            void SHBaseRemoteDevice_Impl::setType(std::string deviceType)
+            std::string SHBaseRemoteDevice_Impl::getDeviceId() const
             {
-                m_deviceType = deviceType;
+                return m_deviceId;
+            }
+
+            void SHBaseRemoteDevice_Impl::setTypes(std::list<std::string> deviceTypes)
+            {
+                m_deviceTypes = deviceTypes;
+            }
+
+            void SHBaseRemoteDevice_Impl::setDeviceId(std::string deviceId)
+            {
+                m_deviceId = deviceId;
+            }
+
+            bool SHBaseRemoteDevice_Impl::hasDeviceType(const std::string deviceType) const
+            {
+                std::list<std::string>::const_iterator iter =
+                    std::find(m_deviceTypes.begin(), m_deviceTypes.end(), deviceType);
+
+                return (iter != m_deviceTypes.end()) ? true : false;
             }
 
             std::list<SHBaseRemoteResource*> SHBaseRemoteDevice_Impl::getResourceWithResourceType(

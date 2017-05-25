@@ -46,6 +46,7 @@ namespace OIC
             class RemoteModeResource: public SHBaseRemoteResource,
                     public SHBaseRemoteResourceDelegate
             {
+            friend class SHBaseRemoteResourceBuilder;
             public:
                 virtual ~RemoteModeResource();
 
@@ -55,6 +56,8 @@ namespace OIC
 
                 virtual void onGet(PropertyBundle bundle, ResultCode ret);
                 virtual void onSet(PropertyBundle bundle, ResultCode ret);
+                virtual void onObserve(PropertyBundle bundle, const ObserveResponse obsType,
+                        ResultCode ret);
 
             protected:
                 RemoteModeResource();

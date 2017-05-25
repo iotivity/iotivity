@@ -46,9 +46,21 @@ void MyRemoteBinarySwitchDelegate::onTurnOff(ResultCode ret)
 
 void MyRemoteBinarySwitchDelegate::onGetState(bool value, ResultCode ret)
 {
-    if (ret == SUCCESS)
+    if (ret == SUCCESS || ret == OBSERVE_NOTIFY)
     {
         std::cout << "[App]swtich : " << value << std::endl;
+    }
+    else if (ret == OBSERVE_REGISTER_SUCCESS)
+    {
+        std::cout <<"[App] observe start success!" << std::endl;
+    }
+    else if (ret == OBSERVE_UNREGISTER_SUCCESS)
+    {
+        std::cout <<"[App] observe stop success!" << std::endl;
+    }
+    else
+    {
+        std::cout <<"[App] ERROR : " << ret << std::endl;
     }
 }
 
@@ -117,11 +129,37 @@ void LightClientSample::getState()
     }
 }
 
+void LightClientSample::startObserve()
+{
+    if (m_light)
+    {
+        std::cout << "[App]start observe" << std::endl;
+        m_light->m_remoteBinarySwitch->startObserve();
+    }
+    else
+    {
+        std::cout << "[App]light isn't finded yet." << std::endl;
+    }
+}
+
+void LightClientSample::stopObserve()
+{
+    if (m_light)
+    {
+        std::cout << "[App]stop observe" << std::endl;
+        m_light->m_remoteBinarySwitch->stopObserve();
+    }
+    else
+    {
+        std::cout << "[App]light isn't finded yet." << std::endl;
+    }
+}
+
 void LightClientSample::onFindRemoteDevice(SHBaseRemoteDevice *remoteDevice)
 {
     std::cout << "[App]1. onFindResourcDevice call!" << std::endl;
 
-    if (DEVICE_TYPE::LIGHT == remoteDevice->getType())
+    if (remoteDevice->hasDeviceType(DEVICE_TYPE::LIGHT))
     {
         m_light = dynamic_cast< RemoteLightDevice* >(remoteDevice);
 
@@ -149,6 +187,8 @@ void print()
     std::cout << "3. turn on light" << std::endl;
     std::cout << "4. turn off light" << std::endl;
     std::cout << "5. get state of light" << std::endl;
+    std::cout << "6. start observe of light" << std::endl;
+    std::cout << "7. stop oberve of light" << std::endl;
     std::cout << "9. Quit" << std::endl;
     std::cout << "===============================================================" << std::endl;
     std::cout << "cmd>";
@@ -189,6 +229,14 @@ int main()
         else if (5 == cmd)
         {
             sample.getState();
+        }
+        else if (6 == cmd)
+        {
+            sample.startObserve();
+        }
+        else if (7 == cmd)
+        {
+            sample.stopObserve();
         }
         else if (9 == cmd)
         {

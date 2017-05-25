@@ -105,7 +105,7 @@ namespace OIC
                     return queryString;
                 }
 
-                int size()
+                int size() const
                 {
                     return m_query.size();
                 }

@@ -37,6 +37,7 @@ namespace OIC
         {
             // Typedef for Request ID.
             typedef void* RequestId;
+            typedef void* SHRequestHandle;
 
             namespace RESERVED_URI
             {
@@ -46,7 +47,20 @@ namespace OIC
 
             enum ResultCode
             {
-                SUCCESS, FAIL, KEEP
+                SUCCESS, FAIL, KEEP,
+
+                OBSERVE_REGISTER_SUCCESS,
+                OBSERVE_REGISTER_FAIL,
+                OBSERVE_NOTIFY,
+                OBSERVE_UNREGISTER_SUCCESS,
+                OBSERVE_UNREGISTER_FAIL
+            };
+
+            enum ObserveResponse
+            {
+                REGISTER,
+                UNREGISTER,
+                NOTIFY
             };
 
             namespace DEVICE_TYPE

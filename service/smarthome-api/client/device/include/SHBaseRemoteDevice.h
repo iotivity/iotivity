@@ -48,15 +48,32 @@ namespace OIC
             */
             class SHBaseRemoteDevice
             {
+            friend class SHBaseRemoteDeviceBuilder;
             public:
                 virtual ~SHBaseRemoteDevice();
 
                 /**
                  * API to get type of device
                  *
-                 * @return type of device
+                 * @return std::list<std::string>  device types
                  */
-                std::string getType();
+                std::list<std::string> getTypes() const;
+
+                /**
+                 * API to get unique id of device.
+                 *
+                 * @return std::string  device ID.
+                 */
+                std::string getDeviceId() const;
+
+
+                /**
+                 * API to check specific device type
+                 *
+                 * @param[in] deviceType  device type to find.
+                 * @return true if device has this device type.
+                 */
+                bool hasDeviceType(const std::string deviceType) const;
 
                 /**
                  * API to get list of remote resources.

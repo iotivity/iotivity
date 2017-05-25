@@ -36,9 +36,19 @@ namespace OIC
                 delete m_remoteDeviceImpl;
             }
 
-            std::string SHBaseRemoteDevice::getType()
+            std::list<std::string> SHBaseRemoteDevice::getTypes() const
             {
-                return m_remoteDeviceImpl->getType();
+                return m_remoteDeviceImpl->getTypes();
+            }
+
+            std::string SHBaseRemoteDevice::getDeviceId() const
+            {
+                return m_remoteDeviceImpl->getDeviceId();
+            }
+
+            bool SHBaseRemoteDevice::hasDeviceType(const std::string deviceType) const
+            {
+                return m_remoteDeviceImpl->hasDeviceType(deviceType);
             }
 
             std::list<SHBaseRemoteResource*> SHBaseRemoteDevice::getResourceWithResourceType(

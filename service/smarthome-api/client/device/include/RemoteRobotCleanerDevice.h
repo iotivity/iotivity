@@ -32,6 +32,7 @@ namespace OIC
         {
             class RemoteRobotCleanerDevice: public SHBaseRemoteDevice
             {
+            friend class SHBaseRemoteDeviceBuilder;
             public:
                 virtual ~RemoteRobotCleanerDevice();
 

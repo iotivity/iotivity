@@ -32,6 +32,7 @@ namespace OIC
         {
             class RemoteDryerDevice: public SHBaseRemoteDevice
             {
+            friend class SHBaseRemoteDeviceBuilder;
             public:
                 virtual ~RemoteDryerDevice();
 

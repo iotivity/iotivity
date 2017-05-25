@@ -80,6 +80,7 @@ namespace OIC
             class RemoteBinarySwitchResource: public SHBaseRemoteResource,
                     public SHBaseRemoteResourceDelegate
             {
+            friend class SHBaseRemoteResourceBuilder;
             public:
 
                 virtual ~RemoteBinarySwitchResource();
@@ -114,6 +115,8 @@ namespace OIC
             private:
                 virtual void onGet(PropertyBundle bundle, ResultCode ret);
                 virtual void onSet(PropertyBundle bundle, ResultCode ret);
+                virtual void onObserve(PropertyBundle bundle, const ObserveResponse obsType,
+                        ResultCode ret);
 
             private:
                 RemoteBinarySwitchResourceDelegate *m_delegate;

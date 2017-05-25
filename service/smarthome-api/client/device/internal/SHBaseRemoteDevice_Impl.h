@@ -29,7 +29,6 @@
 
 #include <string>
 #include <list>
-#include <ClientCallbackWrapper.h>
 #include "octypes.h"
 
 namespace OIC
@@ -47,16 +46,47 @@ namespace OIC
              */
             class SHBaseRemoteDevice_Impl
             {
-                friend class SHBaseRemoteDevice;
-                friend class ClientCallbackWrapper::CallbackHelper;
-
+            friend class SHBaseRemoteDeviceBuilder;
+            friend class SHBaseRemoteDevice;
             public:
-                ~SHBaseRemoteDevice_Impl();
+                virtual ~SHBaseRemoteDevice_Impl();
 
             protected:
-                void setType(std::string deviceType);
+                /**
+                 * API to set types of device.
+                 *
+                 * @param[in] deviceTypes  device types to be set.
+                 */
+                void setTypes(std::list<std::string> deviceTypes);
 
-                std::string getType();
+                /**
+                 * API to set ID of device.
+                 *
+                 * @param[in] deviceId  device ID to be set.(unique value)
+                 */
+                void setDeviceId(std::string deviceId);
+
+                /**
+                 * API to get type of device.
+                 *
+                 * @return std::string  device types
+                 */
+                std::list<std::string> getTypes() const;
+
+                /**
+                 * API to get unique id of device.
+                 *
+                 * @return std::string  device ID.
+                 */
+                std::string getDeviceId() const;
+
+                /**
+                 * API to check specific device type
+                 *
+                 * @param[in] deviceType  device type to find.
+                 * @return true if device has this device type.
+                 */
+                bool hasDeviceType(const std::string deviceType) const;
 
                 std::list<SHBaseRemoteResource*> getResourceWithResourceType(
                         const std::string &resourceType);
@@ -74,10 +104,11 @@ namespace OIC
             private:
                 SHBaseRemoteDevice_Impl();
                 std::list<SHBaseRemoteResource*> m_resources;
-                std::string m_deviceType;
+                std::list<std::string> m_deviceTypes;
+                std::string m_deviceId;
 
                 /**
-                 * Function to add remote resource to remote device.
+                 * API to add remote resource to remote device.
                  *
                  * @param[in] resource Pointer of remote resource
                  */

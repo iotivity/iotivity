@@ -18,7 +18,6 @@
  *
  ******************************************************************/
 #include <RemoteRobotCleanerDevice.h>
-#include <iostream>
 
 namespace OIC
 {
@@ -29,12 +28,10 @@ namespace OIC
             RemoteRobotCleanerDevice::RemoteRobotCleanerDevice() :
                     m_remoteBinarySwitch(NULL), m_remoteMode(NULL)
             {
-                std::cout << "[RemoteRobotCleanerDevice] CTOR.." << std::endl;
             }
 
             RemoteRobotCleanerDevice::~RemoteRobotCleanerDevice()
             {
-                std::cout << "[RemoteRobotCleanerDevice] DTOR.." << std::endl;
             }
         }
     }

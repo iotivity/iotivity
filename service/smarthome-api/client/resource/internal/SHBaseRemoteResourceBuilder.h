@@ -17,11 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
-#ifndef SMARTHOME_API_CLIENT_REMOTESMARTLOCK_H_
-#define SMARTHOME_API_CLIENT_REMOTESMARTLOCK_H_
+#ifndef SMARTHOME_API_CLIENT_SHBASEREMOTERESOURCE_BUILDER_H_
+#define SMARTHOME_API_CLIENT_SHBASEREMOTERESOURCE_BUILDER_H_
 
-#include <SHBaseRemoteDevice.h>
-#include <RemoteLockStatusResource.h>
+#include <string>
+#include <list>
+#include <octypes.h>
 
 namespace OIC
 {
@@ -29,19 +30,22 @@ namespace OIC
     {
         namespace SH
         {
-            class RemoteSmartLockDevice: public SHBaseRemoteDevice
+            class SHBaseRemoteResource;
+
+            class SHBaseRemoteResourceBuilder
             {
-            friend class SHBaseRemoteDeviceBuilder;
             public:
-                virtual ~RemoteSmartLockDevice();
+                static SHBaseRemoteResource* createSHBaseRemoteResource(OCDevAddr& devAddr,
+                        OCResourcePayload *resource);
 
-                RemoteLockStatusResource *m_remoteLockStatus;
-
-            protected:
-                RemoteSmartLockDevice();
+            private:
+                static SHBaseRemoteResource* makeSHBaseRemoteResource(
+                        std::list<std::string> resourceTypes);
+                static std::list<std::string> convertStringLLToList(OCStringLL *ll);
+                static std::list<std::string> convertEpsLLToList(OCEndpointPayload *head);
             };
         }
     }
 }
 
-#endif /* SMARTHOME_API_CLIENT_REMOTESMARTLOCK_H_ */
+#endif /* SMARTHOME_API_CLIENT_SHBASEREMOTERESOURCE_BUILDER_H_ */

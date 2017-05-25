@@ -29,7 +29,7 @@ namespace OIC
         namespace SH
         {
             class SHBaseRemoteResource;
-            class SHBaseRemoteDevice_Impl;
+            class SHBaseRemoteDevice;
 
             namespace ClientCallbackWrapper
             {
@@ -55,6 +55,8 @@ namespace OIC
                                                    OCClientResponse * clientResponse);
                     OCStackApplicationResult onSet(void *context, OCDoHandle handle,
                                                    OCClientResponse * clientResponse);
+                    OCStackApplicationResult onObserve(void *context, OCDoHandle handle,
+                                                       OCClientResponse * clientResponse);
                 }
 
                 class CallbackHelper
@@ -66,13 +68,11 @@ namespace OIC
                     // TODO
                     // Add callback for obs, presence , more...
 
-                    static void destroyRemoteDevice(SHBaseRemoteDevice_Impl* remoteDevice);
+                    static void destroyRemoteDevice(SHBaseRemoteDevice* remoteDevice);
 
-                    static bool setRemoteDevice(SHBaseRemoteDevice_Impl* remoteDevice_Impl,
-                                         OCDiscoveryPayload* discoveryPayload);
-
-                    static bool setRemoteResource(SHBaseRemoteResource* remoteResource,
-                                           OCResourcePayload* resourcePayload);
+                    static bool setRemoteDevice(SHBaseRemoteDevice* remoteDevice,
+                                                OCDevAddr& devAddr,
+                                                OCDiscoveryPayload* discoveryPayload);
                 };
             }
         }

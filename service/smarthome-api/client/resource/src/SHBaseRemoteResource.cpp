@@ -21,7 +21,6 @@
 #include <SHBaseRemoteResource_Impl.h>
 #include <PropertyBundle.h>
 #include <ResourceQuery.h>
-#include <iostream>
 
 namespace OIC
 {
@@ -39,14 +38,14 @@ namespace OIC
                 delete m_remoteResourceImpl;
             }
 
-            std::list<std::string> SHBaseRemoteResource::getResourceTypes() const
-            {
-                return m_remoteResourceImpl->getResourceTypes();
-            }
-
             std::string SHBaseRemoteResource::getUri() const
             {
                 return m_remoteResourceImpl->getUri();
+            }
+
+            std::string SHBaseRemoteResource::getHost() const
+            {
+                return m_remoteResourceImpl->getHost();
             }
 
             std::list<std::string> SHBaseRemoteResource::getHosts() const
@@ -54,30 +53,65 @@ namespace OIC
                 return m_remoteResourceImpl->getHosts();
             }
 
-            void SHBaseRemoteResource::setDelegate(const SHBaseRemoteResourceDelegate *delegate)
+            std::string SHBaseRemoteResource::setHost(const std::string &host)
+            {
+                return m_remoteResourceImpl->setHost(host);
+            }
+
+            std::list<std::string> SHBaseRemoteResource::getResourceTypes() const
+            {
+                return m_remoteResourceImpl->getResourceTypes();
+            }
+
+            std::list<std::string> SHBaseRemoteResource::getInterfaces() const
+            {
+                return m_remoteResourceImpl->getInterfaces();
+            }
+
+            bool SHBaseRemoteResource::hasResourceType(const std::string resourceType) const
+            {
+                return m_remoteResourceImpl->hasResourceType(resourceType);
+            }
+
+            void SHBaseRemoteResource::setDelegate(SHBaseRemoteResourceDelegate *delegate)
             {
                 m_remoteResourceImpl->setDelegate(delegate);
             }
 
-            void SHBaseRemoteResource::getPropertyBundle()
+            SHRequestHandle SHBaseRemoteResource::getPropertyBundle()
             {
-                m_remoteResourceImpl->getPropertyBundle();
+                return m_remoteResourceImpl->getPropertyBundle();
             }
 
-            void SHBaseRemoteResource::getPropertyBundle(const ResourceQuery &query)
+            SHRequestHandle SHBaseRemoteResource::getPropertyBundle(const ResourceQuery &query)
             {
-                m_remoteResourceImpl->getPropertyBundle(query);
+                return m_remoteResourceImpl->getPropertyBundle(query);
             }
 
-            void SHBaseRemoteResource::setPropertyBundle(const PropertyBundle &bundle)
+            SHRequestHandle SHBaseRemoteResource::setPropertyBundle(const PropertyBundle &bundle)
             {
-                m_remoteResourceImpl->setPropertyBundle(bundle);
+                return m_remoteResourceImpl->setPropertyBundle(bundle);
             }
 
-            void SHBaseRemoteResource::setPropertyBundle(const PropertyBundle &bundle,
-                                                         const ResourceQuery &query)
+            SHRequestHandle SHBaseRemoteResource::setPropertyBundle(const PropertyBundle &bundle,
+                    const ResourceQuery &query)
             {
-                m_remoteResourceImpl->setPropertyBundle(bundle, query);
+                return m_remoteResourceImpl->setPropertyBundle(bundle, query);
+            }
+
+            bool SHBaseRemoteResource::startObserve()
+            {
+                return m_remoteResourceImpl->startObserve();
+            }
+
+            bool SHBaseRemoteResource::startObserve(const ResourceQuery &query)
+            {
+                return m_remoteResourceImpl->startObserve(query);
+            }
+
+            bool SHBaseRemoteResource::stopObserve()
+            {
+                return m_remoteResourceImpl->stopObserve();
             }
         }
     }

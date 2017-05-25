@@ -31,6 +31,7 @@ smarthome_env.AppendUnique(CPPPATH = [
         '../../../resource/c_common/ocrandom/include',
         '../../../resource/csdk/logger/include',
         '../../../resource/csdk/security/include',
+        '../../../resource/csdk/connectivity/api',
         ])
 
 smarthome_env.AppendUnique(LIBPATH = [smarthome_env.get('BUILD_DIR')])
@@ -61,6 +62,7 @@ smarthome_client_src = [discovery_dir+'src/DeviceDiscovery.cpp',
                     discovery_dir+'src/DiscoveryQuery.cpp',
                     resource_dir+'src/SHBaseRemoteResource.cpp',
                     resource_dir+'src/SHBaseRemoteResource_Impl.cpp',
+                    resource_dir+'src/SHBaseRemoteResourceBuilder.cpp',
                     resource_dir+'src/RemoteBinarySwitchResource.cpp',
                     resource_dir+'src/RemoteModeResource.cpp',
                     resource_dir+'src/RemoteLockStatusResource.cpp',
@@ -68,6 +70,7 @@ smarthome_client_src = [discovery_dir+'src/DeviceDiscovery.cpp',
                     resource_dir+'src/ClientCallbackWrapper.cpp',
                     device_dir+'src/SHBaseRemoteDevice.cpp',
                     device_dir+'src/SHBaseRemoteDevice_Impl.cpp',
+                    device_dir+'src/SHBaseRemoteDeviceBuilder.cpp',
                     device_dir+'src/RemoteLightDevice.cpp',
                     device_dir+'src/RemoteRobotCleanerDevice.cpp',
                     device_dir+'src/RemoteDryerDevice.cpp',

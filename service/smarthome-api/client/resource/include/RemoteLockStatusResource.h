@@ -41,6 +41,7 @@ namespace OIC
             class RemoteLockStatusResource: public SHBaseRemoteResource,
                     public SHBaseRemoteResourceDelegate
             {
+            friend class SHBaseRemoteResourceBuilder;
             public:
                 virtual ~RemoteLockStatusResource();
 
@@ -57,6 +58,8 @@ namespace OIC
             private:
                 virtual void onGet(PropertyBundle bundle, ResultCode ret);
                 virtual void onSet(PropertyBundle bundle, ResultCode ret);
+                virtual void onObserve(PropertyBundle bundle, const ObserveResponse obsType,
+                        ResultCode ret);
 
             private:
                 RemoteLockStatusResourceDelegate *m_delegate;

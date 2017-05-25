@@ -20,7 +20,9 @@
 #include <RemoteLockStatusResource.h>
 #include <CommonException.h>
 #include <PropertyBundle.h>
-#include <iostream>
+#include "logger.h"
+
+#define TAG "OIC_SH_CLIENT_REMOTELOCKSTATUS"
 
 const static std::string KEY_LOCKSTATE = "lockState";
 const static std::string VALUE_LOCKED = "Locked";
@@ -47,7 +49,7 @@ namespace OIC
                 bundle.setValue(KEY_LOCKSTATE, VALUE_LOCKED);
                 setPropertyBundle(bundle);
 
-                std::cout << "[RemoteLockStatusResource] lock requested.." << std::endl;
+                OIC_LOG(DEBUG, TAG, "[RemoteLockStatusResource] lock requested..");
             }
 
             void RemoteLockStatusResource::unlock()
@@ -56,13 +58,13 @@ namespace OIC
                 bundle.setValue(KEY_LOCKSTATE, VALUE_UNLOCKED);
                 setPropertyBundle(bundle);
 
-                std::cout << "[RemoteLockStatusResource] unlock requested.." << std::endl;
+                OIC_LOG(DEBUG, TAG, "[RemoteLockStatusResource] unlock requested..");;
             }
 
             void RemoteLockStatusResource::getStatus()
             {
                 getPropertyBundle();
-                std::cout << "[RemoteLockStatusResource] getStatus requested.." << std::endl;
+                OIC_LOG(DEBUG, TAG, "[RemoteLockStatusResource] getStatus requested..");
             }
 
             void RemoteLockStatusResource::setRemoteLockStatusResourceDelegate(
@@ -75,9 +77,9 @@ namespace OIC
 
             void RemoteLockStatusResource::onGet(PropertyBundle bundle, ResultCode ret)
             {
-                if (NULL != m_delegate)
+                if (NULL == m_delegate)
                 {
-                    std::cout << "[RemoteLockStatusResource]m_delegate is NULL" << std::endl;
+                    OIC_LOG(ERROR, TAG, "[RemoteLockStatusResource] delegate not set");
                     return;
                 }
 
@@ -95,9 +97,9 @@ namespace OIC
 
             void RemoteLockStatusResource::onSet(PropertyBundle bundle, ResultCode ret)
             {
-                if (NULL != m_delegate)
+                if (NULL == m_delegate)
                 {
-                    std::cout << "[RemoteLockStatusResource]m_delegate is NULL" << std::endl;
+                    OIC_LOG(ERROR, TAG, "[RemoteLockStatusResource] delegate not set");
                     return;
                 }
 
@@ -116,14 +118,50 @@ namespace OIC
                     }
                     else
                     {
-                        std::cout << "[RemoteLockStatusResource]Invalid Property Value"
-                                << std::endl;
+                        OIC_LOG(ERROR, TAG, "[RemoteLockStatusResource]Invalid Property Value");
                     }
                 }
                 else
                 {
                     throw CommonException("Exception on get KEY_LOCKSTATE");
                 }
+            }
+
+            void RemoteLockStatusResource::onObserve(PropertyBundle bundle,
+                        const ObserveResponse obsType,
+                        ResultCode ret)
+            {
+                std::string value = "";
+
+                if (NULL == m_delegate)
+                {
+                    OIC_LOG(ERROR, TAG, "[RemoteLockStatusResource] delegate not set");
+                    return;
+                }
+
+                ResultCode obsResult = SUCCESS;
+                switch(obsType)
+                {
+                case REGISTER:
+                    obsResult = (ret == SUCCESS) ?
+                        OBSERVE_REGISTER_SUCCESS : OBSERVE_REGISTER_FAIL;
+                    break;
+                case UNREGISTER:
+                    obsResult = (ret == SUCCESS) ?
+                        OBSERVE_UNREGISTER_SUCCESS : OBSERVE_UNREGISTER_FAIL;
+                    break;
+                case NOTIFY:
+                    obsResult = OBSERVE_NOTIFY;
+                    bundle.getValue(KEY_LOCKSTATE , value);
+                    break;
+                default:
+                    OIC_LOG(ERROR, TAG, "not supported observe type");
+                    //TODO
+                    //error handler
+                    break;
+                }
+
+                m_delegate->onGetStatus(value, obsResult);
             }
         }
     }

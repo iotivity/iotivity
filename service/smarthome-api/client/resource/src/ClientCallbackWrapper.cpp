@@ -22,8 +22,10 @@
 #include <ClientCallbackWrapper.h>
 #include <CommonApi.h>
 #include <SHBaseRemoteResource.h>
+#include <SHBaseRemoteResourceBuilder.h>
 #include <SHBaseRemoteDevice.h>
 #include <SHBaseRemoteDevice_Impl.h>
+#include <SHBaseRemoteDeviceBuilder.h>
 #include <ClientCallbackContext.h>
 #include <PropertyBundle.h>
 #include "logger.h"
@@ -41,95 +43,44 @@ namespace OIC
         {
             namespace ClientCallbackWrapper
             {
-                void CallbackHelper::destroyRemoteDevice(
-                        SHBaseRemoteDevice_Impl* remoteDevice_Impl)
+                void CallbackHelper::destroyRemoteDevice(SHBaseRemoteDevice* remoteDevice)
                 {
-                    if (!remoteDevice_Impl)
+                    if (!remoteDevice)
                     {
                         OIC_LOG(ERROR, TAG, "invaild argument");
                         return;
                     }
 
-                    std::list<SHBaseRemoteResource*> resourceList =
-                            remoteDevice_Impl->getAllResources();
-
-                    for (std::list<SHBaseRemoteResource*>::iterator resItr = resourceList.begin();
-                            resItr != resourceList.end(); resItr++)
-                    {
-                        SHBaseRemoteResource* temp = *resItr;
-                        if (temp)
-                        {
-                            OICFree(temp);
-                        }
-                    }
+                    OICFree(remoteDevice);
                 }
 
-                bool CallbackHelper::setRemoteDevice(SHBaseRemoteDevice_Impl* remoteDevice_Impl,
-                        OCDiscoveryPayload* discoveryPayload)
+                bool CallbackHelper::setRemoteDevice(SHBaseRemoteDevice* remoteDevice,
+                                                     OCDevAddr& devAddr,
+                                                     OCDiscoveryPayload* discoveryPayload)
                 {
                     OIC_LOG(DEBUG, TAG, "Entered setRemoteDevice");
 
-                    if (!remoteDevice_Impl || !discoveryPayload)
+                    if (!remoteDevice || !discoveryPayload)
                     {
                         OIC_LOG(ERROR, TAG, "invaild argument");
                         return false;
-                    }
-
-                    bool hasDefault = false, hasSmartHomeType = false;
-
-                    if (discoveryPayload->type)
-                    {
-                        for (OCStringLL* typeItr = discoveryPayload->type; typeItr != NULL;
-                                typeItr = typeItr->next)
-                        {
-                            if (0 == DEVICE_TYPE::UNKNOWN.compare(typeItr->value))
-                            {
-                                hasDefault = true;
-                            }
-                            else if (0 == DEVICE_TYPE::LIGHT.compare(typeItr->value))
-                            {
-                                remoteDevice_Impl->setType(DEVICE_TYPE::LIGHT);
-                                hasSmartHomeType = true;
-                            }
-                            else if (0 == DEVICE_TYPE::ROBOTCLEANER.compare(typeItr->value))
-                            {
-                                remoteDevice_Impl->setType(DEVICE_TYPE::ROBOTCLEANER);
-                                hasSmartHomeType = true;
-                            }
-                            else if (0 == DEVICE_TYPE::SMART_LOCK.compare(typeItr->value))
-                            {
-                                remoteDevice_Impl->setType(DEVICE_TYPE::SMART_LOCK);
-                                hasSmartHomeType = true;
-                            }
-                            else if (0 == DEVICE_TYPE::DRYER.compare(typeItr->value))
-                            {
-                                remoteDevice_Impl->setType(DEVICE_TYPE::DRYER);
-                                hasSmartHomeType = true;
-                            }
-                        }
-                    }
-
-                    if (!hasSmartHomeType)
-                    {
-                        remoteDevice_Impl->setType(DEVICE_TYPE::UNKNOWN);
                     }
 
                     bool isSuccess = true;
                     OCResourcePayload* resPayload = discoveryPayload->resources;
                     while (resPayload)
                     {
-                        // TODO: remove annotation after became firend class
-                        // SHBaseRemoteResource* remoteResource = new SHBaseRemoteResource();
-                        SHBaseRemoteResource* remoteResource;
+                        SHBaseRemoteResource* remoteResource =
+                            SHBaseRemoteResourceBuilder::createSHBaseRemoteResource(devAddr,
+                                                                                    resPayload);
 
-                        if (!CallbackHelper::setRemoteResource(remoteResource, resPayload))
+                        if (!SHBaseRemoteDeviceBuilder::mappingResource(remoteDevice,
+                                                                        remoteResource))
                         {
                             OICFree(remoteResource);
                             isSuccess = false;
                             break;
                         }
-
-                        remoteDevice_Impl->addResource(remoteResource);
 
                         resPayload = resPayload->next;
                     }
@@ -146,20 +97,13 @@ namespace OIC
                     return true;
                 }
 
-                bool CallbackHelper::setRemoteResource(SHBaseRemoteResource* remoteResource,
-                        OCResourcePayload* resourcePayload)
-                {
-                    //TODO
-                }
-
                 void CallbackHelper::CallbackContextDeleter(void* context)
                 {
 
                 }
 
-                OCStackApplicationResult ClientCallbackWrapper::DeviceDiscoveryCallback
-                ::findRemoteDevices(void *context, OCDoHandle handle,
-                        OCClientResponse * clientResponse)
+                OCStackApplicationResult DeviceDiscoveryCallback::findRemoteDevices(
+                        void *context, OCDoHandle handle, OCClientResponse * clientResponse)
                 {
                     OIC_LOG(DEBUG, TAG, "Entered findRemoteDevices");
 
@@ -199,8 +143,7 @@ namespace OIC
                         return OC_STACK_KEEP_TRANSACTION;
                     }
 
-                    OCDiscoveryPayload* disPayload =
-                            (OCDiscoveryPayload*) (clientResponse->payload);
+                    OCDiscoveryPayload* disPayload = (OCDiscoveryPayload*)(clientResponse->payload);
                     if (!disPayload)
                     {
                         OIC_LOG(ERROR, TAG, "OCDiscoveryPayload is NULL!!!");
@@ -210,25 +153,17 @@ namespace OIC
                     OCDiscoveryPayload* device = disPayload;
                     while (device)
                     {
-                        // TODO: remove annotation after became firend class
-                        // SHBaseRemoteDevice* remoteDevice = new SHBaseRemoteDevice();
-                        SHBaseRemoteDevice* remoteDevice;
+                        SHBaseRemoteDevice* remoteDevice =
+                            SHBaseRemoteDeviceBuilder::createSHBaseRemoteDevice(device);
                         if (!remoteDevice)
                         {
                             OIC_LOG(ERROR, TAG, "RemoteDevice is NULL!!!");
                             return OC_STACK_KEEP_TRANSACTION;
                         }
 
-                        SHBaseRemoteDevice_Impl* remoteDevice_Impl =
-                                dynamic_cast<SHBaseRemoteDevice_Impl*>(remoteDevice);
-                        if (!remoteDevice_Impl)
-                        {
-                            OIC_LOG(ERROR, TAG, "RemoteDevice_Impl is NULL!!!");
-                            OICFree(remoteDevice_Impl);
-                            return OC_STACK_KEEP_TRANSACTION;
-                        }
-
-                        if (!CallbackHelper::setRemoteDevice(remoteDevice_Impl, disPayload))
+                        if (!CallbackHelper::setRemoteDevice(remoteDevice,
+                                                             clientResponse->devAddr,
+                                                             disPayload))
                         {
                             // TODO
                             // Call Error Callback
@@ -242,7 +177,7 @@ namespace OIC
                         // TODO
                         // remove annotation after apply smartPtr.
                         // issue: there is no copy ctor on SHBaseRemoteDevice.
-                        // CallbackHelper::destroyRemoteDevice(remoteDevice_Impl);
+                        // CallbackHelper::destroyRemoteDevice(remoteDevice);
 
                         device = device->next;
                     }
@@ -250,16 +185,14 @@ namespace OIC
                     return OC_STACK_KEEP_TRANSACTION;
                 }
 
-                OCStackApplicationResult ClientCallbackWrapper::DeviceDiscoveryCallback
-                ::findRemoteDevicesWithQuery(void *context, OCDoHandle handle,
-                        OCClientResponse * clientResponse)
+                OCStackApplicationResult DeviceDiscoveryCallback::findRemoteDevicesWithQuery(
+                        void *context, OCDoHandle handle, OCClientResponse * clientResponse)
                 {
                     return OC_STACK_DELETE_TRANSACTION;
                 }
 
-                OCStackApplicationResult ClientCallbackWrapper::DeviceDiscoveryCallback
-                ::findRemoteDevicesAll(void *context, OCDoHandle handle,
-                        OCClientResponse * clientResponse)
+                OCStackApplicationResult DeviceDiscoveryCallback::findRemoteDevicesAll(
+                        void *context, OCDoHandle handle, OCClientResponse * clientResponse)
                 {
                     OIC_LOG(DEBUG, TAG, "Entered findRemoteDevicesAll");
 
@@ -304,8 +237,7 @@ namespace OIC
                         return OC_STACK_KEEP_TRANSACTION;
                     }
 
-                    OCDiscoveryPayload* disPayload =
-                            (OCDiscoveryPayload*) (clientResponse->payload);
+                    OCDiscoveryPayload* disPayload = (OCDiscoveryPayload*)(clientResponse->payload);
                     if (!disPayload)
                     {
                         OIC_LOG(ERROR, TAG, "OCDiscoveryPayload is NULL!!!");
@@ -317,24 +249,17 @@ namespace OIC
                     while (device)
                     {
                         // TODO: remove annotation after became firend class
-                        // SHBaseRemoteDevice* remoteDevice = new SHBaseRemoteDevice();
-                        SHBaseRemoteDevice* remoteDevice;
+                        SHBaseRemoteDevice* remoteDevice =
+                            SHBaseRemoteDeviceBuilder::createSHBaseRemoteDevice(device);
                         if (!remoteDevice)
                         {
                             OIC_LOG(ERROR, TAG, "RemoteDevice is NULL!!!");
                             return OC_STACK_KEEP_TRANSACTION;
                         }
 
-                        SHBaseRemoteDevice_Impl* remoteDevice_Impl =
-                                dynamic_cast<SHBaseRemoteDevice_Impl*>(remoteDevice);
-                        if (!remoteDevice_Impl)
-                        {
-                            OIC_LOG(ERROR, TAG, "RemoteDevice_Impl is NULL!!!");
-                            OICFree(remoteDevice_Impl);
-                            return OC_STACK_KEEP_TRANSACTION;
-                        }
-
-                        if (!CallbackHelper::setRemoteDevice(remoteDevice_Impl, disPayload))
+                        if (!CallbackHelper::setRemoteDevice(remoteDevice,
+                                                             clientResponse->devAddr,
+                                                             disPayload))
                         {
                             // TODO
                             // Call Error Callback
@@ -353,14 +278,6 @@ namespace OIC
                     for (std::list<SHBaseRemoteDevice*>::iterator itr = remoteDevices.begin();
                             itr != remoteDevices.end(); itr++)
                     {
-                        SHBaseRemoteDevice_Impl* remoteDevice_Impl =
-                                dynamic_cast<SHBaseRemoteDevice_Impl*>(*itr);
-                        if (!remoteDevice_Impl)
-                        {
-                            OIC_LOG(ERROR, TAG, "RemoteDevice_Impl is NULL!!!");
-                            return OC_STACK_KEEP_TRANSACTION;
-                        }
-
                         // TODO
                         // remove annotation after apply smartPtr.
                         // issue: there is no copy ctor on SHBaseRemoteDevice.
@@ -370,14 +287,13 @@ namespace OIC
                     return OC_STACK_KEEP_TRANSACTION;
                 }
 
-                OCStackApplicationResult ClientCallbackWrapper::DeviceDiscoveryCallback
-                ::findRemoteDevicesAllWithQuery(void *context, OCDoHandle handle,
-                        OCClientResponse * clientResponse)
+                OCStackApplicationResult DeviceDiscoveryCallback::findRemoteDevicesAllWithQuery(
+                        void *context, OCDoHandle handle, OCClientResponse * clientResponse)
                 {
                     return OC_STACK_DELETE_TRANSACTION;
                 }
 
-                OCStackApplicationResult ClientCallbackWrapper::RemoteResourceCallback::onGet(
+                OCStackApplicationResult RemoteResourceCallback::onGet(
                         void *context, OCDoHandle handle, OCClientResponse * clientResponse)
                 {
                     OIC_LOG(DEBUG, TAG, "Entered onGet");
@@ -438,7 +354,7 @@ namespace OIC
 
                     PropertyBundle bundle;
 
-                    if (Converter::convertPayloadToBundle((OCPayload*) repPayload, bundle))
+                    if (Converter::convertPayloadToBundle((OCPayload*)repPayload, bundle))
                     {
                         OIC_LOG(DEBUG, TAG, "Success at convert payload to bundle");
                     }
@@ -457,7 +373,7 @@ namespace OIC
                     return OC_STACK_DELETE_TRANSACTION;
                 }
 
-                OCStackApplicationResult ClientCallbackWrapper::RemoteResourceCallback::onSet(
+                OCStackApplicationResult RemoteResourceCallback::onSet(
                         void *context, OCDoHandle handle, OCClientResponse * clientResponse)
                 {
                     OIC_LOG(DEBUG, TAG, "Entered onSet");
@@ -545,6 +461,112 @@ namespace OIC
                                     SUCCESS : FAIL);
 
                     return OC_STACK_DELETE_TRANSACTION;
+                }
+
+                OCStackApplicationResult RemoteResourceCallback::onObserve(
+                        void *context, OCDoHandle handle, OCClientResponse * clientResponse)
+                {
+                    OIC_LOG(DEBUG, TAG, "Entered onObserve");
+
+                    if (!context || !handle || !clientResponse)
+                    {
+                        OIC_LOG(ERROR, TAG, "invaild argument");
+                        return OC_STACK_KEEP_TRANSACTION;
+                    }
+
+                    ClientCallbackContext *ctx = static_cast<ClientCallbackContext*>(context);
+                    if (!ctx)
+                    {
+                        OIC_LOG(ERROR, TAG, "ClientCallbackContext is NULL!!!");
+                        return OC_STACK_KEEP_TRANSACTION;
+                    }
+
+                    void* delegatePtr = ctx->getDelegate();
+                    if (!delegatePtr)
+                    {
+                        OIC_LOG(ERROR, TAG, "delegatePtr is NULL!!!");
+                        return OC_STACK_KEEP_TRANSACTION;
+                    }
+
+                    SHBaseRemoteResourceDelegate *delegate =
+                        static_cast<SHBaseRemoteResourceDelegate*>(delegatePtr);
+                    if (!delegate)
+                    {
+                        OIC_LOG(ERROR, TAG, "SHBaseRemoteResourceDelegate is NULL!!!");
+                        return OC_STACK_KEEP_TRANSACTION;
+                    }
+
+                    ObserveResponse obsType = REGISTER;
+                    OIC_LOG_V(DEBUG, TAG, "observe sequence number : %d",
+                            clientResponse->sequenceNumber);
+                    if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
+                    {
+                        obsType = REGISTER;
+                    }
+                    else if (clientResponse->sequenceNumber > MAX_SEQUENCE_NUMBER)
+                    {
+                        obsType = UNREGISTER;
+                        OIC_LOG(DEBUG, TAG, "this is observe cancel response");
+
+                        PropertyBundle bundle;
+                        delegate->onObserve(bundle, obsType,
+                                        (clientResponse->result == OC_STACK_OK) ? SUCCESS : FAIL);
+
+                        return OC_STACK_DELETE_TRANSACTION;
+                    }
+                    else
+                    {
+                        obsType = NOTIFY;
+                    }
+
+                    if (!clientResponse->payload ||
+                        clientResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION)
+                    {
+                        OIC_LOG(ERROR, TAG, "clientResponse payload was null or the wrong type");
+
+                        PropertyBundle bundle;
+
+                        OIC_LOG_V(DEBUG, TAG, "%s: call user onObserve Delegate callback",
+                                __func__);
+                        delegate->onObserve(bundle, obsType,
+                                        (clientResponse->result == OC_STACK_OK) ? SUCCESS : FAIL);
+
+                        return OC_STACK_KEEP_TRANSACTION;
+                    }
+
+                    OCRepPayload *repPayload = (OCRepPayload*)(clientResponse->payload);
+                    if (!repPayload)
+                    {
+                        OIC_LOG(ERROR, TAG, "OCRepPayload is NULL!!!");
+
+                        PropertyBundle bundle;
+
+                        OIC_LOG_V(DEBUG, TAG, "%s: call user onObserve Delegate callback",
+                                __func__);
+                        delegate->onObserve(bundle, obsType,
+                                        (clientResponse->result == OC_STACK_OK) ? SUCCESS : FAIL);
+
+                        return OC_STACK_KEEP_TRANSACTION;
+                    }
+
+                    PropertyBundle bundle;
+                    if (Converter::convertPayloadToBundle((OCPayload*)repPayload, bundle))
+                    {
+                        OIC_LOG(DEBUG, TAG, "Success at convert payload to bundle");
+                    }
+                    else
+                    {
+                        OIC_LOG(ERROR, TAG, "Fail at convert payload to bundle");
+                        // TODO
+                        // call error callback
+                        // return OC_STACK_KEEP_TRANSACTION;
+                    }
+
+                    OIC_LOG_V(DEBUG, TAG, "%s: call user onObserve Delegate callback", __func__);
+                    delegate->onObserve(bundle, obsType,
+                                    (clientResponse->result == OC_STACK_OK) ? SUCCESS : FAIL);
+
+                    return OC_STACK_KEEP_TRANSACTION;
                 }
             }
         }

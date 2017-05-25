@@ -63,6 +63,7 @@ namespace OIC
 
             private:
                 std::string m_deviceType;
+                std::string m_hostAddress;
             };
         }
     }

@@ -19,9 +19,12 @@
  ******************************************************************/
 #include <RemoteModeResource.h>
 #include <PropertyBundle.h>
-#include <iostream>
+#include "logger.h"
+
+#define TAG "OIC_SH_CLIENT_REMOTEMODE"
 
 const static std::string MODE_VALUE_MODES = "modes";
+const static std::string MODE_VALUE_SUPPORTED_MODES = "supportedModes";
 
 namespace OIC
 {
@@ -48,24 +51,104 @@ namespace OIC
 
             void RemoteModeResource::onGet(PropertyBundle bundle, ResultCode ret)
             {
+                OIC_LOG(DEBUG, TAG, "Entered onGet");
+
+                if (NULL != m_delegate)
+                {
+                    OIC_LOG(ERROR, TAG, "m_delegate is NULL");
+                    return;
+                }
+
+                if (bundle.contains(MODE_VALUE_MODES))
+                {
+                    std::list< std::string > supportedMode;
+                    std::list< std::string > currentMode;
+                    bundle.getValue(MODE_VALUE_MODES, currentMode);
+                    bundle.getValue(MODE_VALUE_SUPPORTED_MODES, supportedMode);
+                    m_delegate->onGetMode(supportedMode, currentMode, ret);
+                }
+                else
+                {
+                    OIC_LOG(ERROR, TAG, "Empty response");
+                }
                 return;
             }
 
             void RemoteModeResource::onSet(PropertyBundle bundle, ResultCode ret)
             {
+                OIC_LOG(DEBUG, TAG, "Entered onSet");
+
+                if (NULL != m_delegate)
+                {
+                    OIC_LOG(ERROR, TAG, "m_delegate is NULL");
+                    return;
+                }
+
+                if (bundle.contains(MODE_VALUE_MODES))
+                {
+                    std::list< std::string > supportedMode;
+                    std::list< std::string > currentMode;
+                    bundle.getValue(MODE_VALUE_MODES, currentMode);
+                    bundle.getValue(MODE_VALUE_SUPPORTED_MODES, supportedMode);
+                    m_delegate->onSetMode(supportedMode, currentMode, ret);
+                }
+                else
+                {
+                    OIC_LOG(ERROR, TAG, "Empty response");
+                }
+                return;
+            }
+
+            void RemoteModeResource::onObserve(PropertyBundle bundle,
+                        const ObserveResponse obsType,
+                        ResultCode ret)
+            {
+                std::list< std::string > supportedMode;
+                std::list< std::string > currentMode;
+
+                if (NULL == m_delegate)
+                {
+                    OIC_LOG(ERROR, TAG, "delegate not set");
+                    return;
+                }
+
+                ResultCode obsResult = SUCCESS;
+                switch(obsType)
+                {
+                case REGISTER:
+                    obsResult = (ret == SUCCESS) ?
+                        OBSERVE_REGISTER_SUCCESS : OBSERVE_REGISTER_FAIL;
+                    break;
+                case UNREGISTER:
+                    obsResult = (ret == SUCCESS) ?
+                        OBSERVE_UNREGISTER_SUCCESS : OBSERVE_UNREGISTER_FAIL;
+                    break;
+                case NOTIFY:
+                    obsResult = OBSERVE_NOTIFY;
+                    bundle.getValue(MODE_VALUE_MODES, currentMode);
+                    bundle.getValue(MODE_VALUE_SUPPORTED_MODES, supportedMode);
+                    break;
+                default:
+                    OIC_LOG(ERROR, TAG, "not supported observe type");
+                    //TODO
+                    //error handler
+                    break;
+                }
+
+                m_delegate->onSetMode(supportedMode, currentMode, ret);
                 return;
             }
 
             void RemoteModeResource::getMode()
             {
-                std::cout << "[RemoteModeResource] getMode.." << std::endl;
+                OIC_LOG(DEBUG, TAG, "Entered getMode");
                 getPropertyBundle();
                 return;
             }
 
             void RemoteModeResource::setMode(std::list< std::string > mode)
             {
-                std::cout << "[RemoteModeResource] setMode.." << std::endl;
+                OIC_LOG(DEBUG, TAG, "Entered setMode");
 
                 if (mode.empty())
                 {

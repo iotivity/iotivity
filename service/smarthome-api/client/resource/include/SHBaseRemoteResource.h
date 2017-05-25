@@ -69,6 +69,16 @@ namespace OIC
                  * @param[in] ret ResultCode about response.(SUCCESS OR FAIL)
                  */
                 virtual void onSet(PropertyBundle bundle, ResultCode ret) = 0;
+
+                /**
+                 * API to receive and handle a response for OBSERVE request
+                 *
+                 * @param[in] bundle   PropertyBundle which has property keys and values
+                 * @param[in] obsType  Type of response for observe.
+                 * @param[in] ret      ResultCode about response.(SUCCESS OR FAIL)
+                 */
+                virtual void onObserve(PropertyBundle bundle, const ObserveResponse obsType,
+                        ResultCode ret) = 0;
             };
 
            /**
@@ -79,6 +89,7 @@ namespace OIC
             */
             class SHBaseRemoteResource
             {
+            friend class SHBaseRemoteResourceBuilder;
             public:
                 /**
                  * Virtual destructor
@@ -86,25 +97,71 @@ namespace OIC
                 virtual ~SHBaseRemoteResource();
 
                 /**
-                 * API to get types of this resource
+                 * API to get URI of this resource.
                  *
-                 * @return resource types
-                 */
-                std::list<std::string> getResourceTypes() const;
-
-                /**
-                 * API to get Uri of this resource
-                 *
-                 * @return resource Uri
+                 * @return std::string  resource URI.
                  */
                 std::string getUri() const;
 
                 /**
-                 * API to get the endpoints information of this resource
+                 * API to get host address of this resource.
+                 *
+                 * @return std::string  resource host address.
+                 */
+                std::string getHost() const;
+
+                /**
+                 * API to get the endpoints information of this resource.
                  *
                  * @return endpoints information
                  */
                 std::list<std::string> getHosts() const;
+
+                /**
+                 * API to set specific host information into resource.
+                 *
+                 * @param[in] host  specific host address.
+                 * @resurn std::string  New host address.
+                 */
+                std::string setHost(const std::string &host);
+
+                /**
+                 * API to get types of this resource.
+                 *
+                 * @return std::list<std::string> resource types.
+                 */
+                std::list<std::string> getResourceTypes() const;
+
+                /**
+                 * API to get interfaces of this resource.
+                 *
+                 * @return std::list<std::string> resource interfaces.
+                 */
+                std::list<std::string> getInterfaces() const;
+
+                bool hasResourceType(const std::string resourceType) const;
+
+                /**
+                 * API to start observation on the resource.
+                 *
+                 * @return true if request success.
+                 */
+                bool startObserve();
+
+                /**
+                 * API to start observation on the resource.
+                 *
+                 * @param[in] query  ResourceQuery to specify request.
+                 * @return true if request success.
+                 */
+                bool startObserve(const ResourceQuery &query);
+
+                /**
+                 * API to stop observation on the resource.
+                 *
+                 * @return true if request success.
+                 */
+                bool stopObserve();
 
             protected:
                 SHBaseRemoteResource();
@@ -114,38 +171,44 @@ namespace OIC
                  *
                  * @param[in] delegate  Instance that inherit SHBaseRemoteResourceDelegate class
                  */
-                void setDelegate(const SHBaseRemoteResourceDelegate *delegate);
+                void setDelegate(SHBaseRemoteResourceDelegate *delegate);
 
                 /**
                  * API to get the properties of a resource(server-side)
                  * (use GET method)
+                 *
+                 * @return SHRequestHandle request handle.
                  */
-                void getPropertyBundle();
+                SHRequestHandle getPropertyBundle();
 
                 /**
                  * API to get the properties of a resource(server-side)
                  * (use GET method)
                  *
                  * @param[in] query  ResourceQuery to specify request.
+                 * @return SHRequestHandle request handle.
                  */
-                void getPropertyBundle(const ResourceQuery &query);
+                SHRequestHandle getPropertyBundle(const ResourceQuery &query);
 
                 /**
                  * API to set the properties to a resource(server-side)
                  * (use POST method)
                  *
-                 * @param[in] bundle Properties to set a resource
+                 * @param[in] bundle Properties to set a resource.
+                 * @return SHRequestHandle request handle.
                  */
-                void setPropertyBundle(const PropertyBundle &bundle);
+                SHRequestHandle setPropertyBundle(const PropertyBundle &bundle);
 
                 /**
                  * API to set the properties to a resource(server-side)
                  * (use POST method)
                  *
-                 * @param[in] bundle Properties to set a resource
-                 * @param[in] query  ResourceQuery to specify request
+                 * @param[in] bundle Properties to set a resource.
+                 * @param[in] query  ResourceQuery to specify request.
+                 * @return SHRequestHandle request handle.
                  */
-                void setPropertyBundle(const PropertyBundle &bundle, const ResourceQuery &query);
+                SHRequestHandle setPropertyBundle(const PropertyBundle &bundle,
+                        const ResourceQuery &query);
 
             private:
                 SHBaseRemoteResource_Impl *m_remoteResourceImpl;
