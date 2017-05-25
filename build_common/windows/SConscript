@@ -59,6 +59,7 @@ if env['CC'] == 'cl':
     env.PrependUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'c_common', 'windows')])
     env.PrependUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'oc_logger')])
     env.PrependUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk', 'resource-directory')])
+    env.PrependUnique(LIBPATH = ['#extlibs/mbedtls'])
 
     env.AppendUnique(PATH = os.environ['PATH'])
     env['PDB'] = '${TARGET.base}.pdb'
