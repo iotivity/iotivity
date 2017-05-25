@@ -73,35 +73,35 @@ namespace OIC
                 {
                     OIC_LOG(DEBUG, TAG, "Request message received");
 
-                    ResourceQuery query;
-                    PropertyBundle bundle;
-
-                    if (entityHandlerRequest)
-                    {
-                        // Get query from request.
-                        if (entityHandlerRequest->query)
-                        {
-                            query.setQuery(entityHandlerRequest->query);
-                        }
-                    }
-
                     if (OC_REST_GET == entityHandlerRequest->method)
                     {
-                        ret = resource->handleGetRequest(entityHandlerRequest->requestHandle,
-                                                         query);
+                        ret = resource->handleGetRequest(entityHandlerRequest, resource);
                     }
                     else if (OC_REST_POST == entityHandlerRequest->method)
                     {
                         // TODO: Set payload from request.
-                        ret = resource->handleSetRequest(entityHandlerRequest->requestHandle,
-                                                         bundle, query);
+                        ret = resource->handleSetRequest(entityHandlerRequest, resource);
                     }
                     else
                     {
                         OIC_LOG(ERROR, TAG, "Not supported request method.");
                     }
                 }
-                return (ret == SUCCESS) ? OC_EH_OK : OC_EH_ERROR;
+
+                switch (ret)
+                {
+                    case SUCCESS :
+                        return OC_EH_OK;
+
+                    case KEEP :
+                        return OC_EH_SLOW;
+
+                    case FAIL :
+                        return OC_EH_ERROR;
+
+                    default:
+                        return OC_EH_ERROR;
+                }
             }
         }
     }

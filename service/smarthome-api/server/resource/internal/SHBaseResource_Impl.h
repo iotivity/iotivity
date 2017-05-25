@@ -54,6 +54,9 @@ namespace OIC
             {
             friend class SHBaseResource;
             friend class EntityHandlerWrapper;
+            friend void sendAutoResponse(ResultCode resultCode,
+                                         const OCEntityHandlerRequest* entityHandlerRequest,
+                                         const SHBaseResource_Impl* ctx);
             public:
                 virtual ~SHBaseResource_Impl();
 
@@ -111,9 +114,11 @@ namespace OIC
                 SHBaseResource_Impl(const std::string& uri, const std::list<std::string>& types,
                                     const std::list<std::string>& interfaces);
 
-                ResultCode handleGetRequest(RequestId requestId, const ResourceQuery& query) const;
-                ResultCode handleSetRequest(RequestId requestId, const PropertyBundle& bundle,
-                                            const ResourceQuery& query) const;
+                ResultCode handleGetRequest(const OCEntityHandlerRequest* entityHandlerRequest,
+                                            const SHBaseResource_Impl* resourceContext) const;
+                ResultCode handleSetRequest(const OCEntityHandlerRequest* entityHandlerRequest,
+                                            const SHBaseResource_Impl* resourceContext) const;
+
                 void registerResource();
                 void deregisterResource();
                 void bindTypesToResource(std::list<std::string> types);

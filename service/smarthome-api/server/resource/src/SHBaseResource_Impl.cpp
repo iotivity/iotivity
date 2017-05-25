@@ -17,13 +17,17 @@
  * limitations under the License.
  *
  ******************************************************************/
+#include <cstring>
 #include <CommonApi.h>
 #include <SHBaseResource.h>
 #include <SHBaseResource_Impl.h>
 #include <EntityHandlerWrapper.h>
 #include <EntityHandlerContext.h>
 #include <ResourceQuery.h>
+#include <PayloadConverter.h>
 #include "ocstack.h"
+#include "ocpayload.h"
+#include "oic_malloc.h"
 #include "logger.h"
 
 #define TAG "SH_SERVER_BASE_RESOURCE"
@@ -34,7 +38,13 @@ namespace OIC
     {
         namespace SH
         {
-            SHBaseResource_Impl::SHBaseResource_Impl(const std::string& uri, 
+            // callback for auto response
+            // this callback will called by internal delegate
+            void sendAutoResponse(ResultCode resultCode,
+                                  const OCEntityHandlerRequest* entityHandlerRequest,
+                                  const SHBaseResource_Impl* ctx);
+
+            SHBaseResource_Impl::SHBaseResource_Impl(const std::string& uri,
                                                      const std::string& type)
              : m_resourceHandle(NULL),
                m_resourceUri(uri),
@@ -257,33 +267,205 @@ namespace OIC
                 }
             }
 
-            ResultCode SHBaseResource_Impl::handleGetRequest(RequestId requestId,
-                                                             const ResourceQuery& query) const
+            ResultCode SHBaseResource_Impl::
+                       handleGetRequest(const OCEntityHandlerRequest* entityHandlerRequest,
+                                        const SHBaseResource_Impl* resourceContext) const
             {
                 OIC_LOG(DEBUG, TAG, "Entered handleGetRequest");
 
-                if (!m_delegate)
+                if (!entityHandlerRequest)
                 {
+                    OIC_LOG(ERROR, TAG, "entityHandlerRequest is NULL");
                     return FAIL;
                 }
 
+                if (!resourceContext)
+                {
+                    OIC_LOG(ERROR, TAG, "resourceContext is NULL");
+                    return FAIL;
+                }
+
+                if (!entityHandlerRequest->requestHandle)
+                {
+                    OIC_LOG(ERROR, TAG, "requestHandle is NULL");
+                    return FAIL;
+                }
+
+                RequestId requestId = entityHandlerRequest->requestHandle;
+
+                ResourceQuery query;
+                if (entityHandlerRequest->query)
+                {
+                    query.setQuery(entityHandlerRequest->query);
+                }
+
                 // Call user onGet delegate callback.
-                return m_delegate->onGet(requestId, query);
+                ResultCode userCbResult = FAIL;
+                if (m_delegate)
+                {
+                    userCbResult = m_delegate->onGet(requestId, query);
+
+                    if (KEEP != userCbResult)
+                    {
+                        sendAutoResponse(userCbResult, entityHandlerRequest, resourceContext);
+                    }
+                }
+
+                return userCbResult;
             }
 
-            ResultCode SHBaseResource_Impl::handleSetRequest(RequestId requestId,
-                                                             const PropertyBundle& bundle,
-                                                             const ResourceQuery& query) const
+            ResultCode SHBaseResource_Impl::
+                       handleSetRequest(const OCEntityHandlerRequest* entityHandlerRequest,
+                                        const SHBaseResource_Impl* resourceContext) const
             {
                 OIC_LOG(DEBUG, TAG, "Entered handleSetRequest");
 
-                if (!m_delegate)
+                if (!entityHandlerRequest)
                 {
+                    OIC_LOG(ERROR, TAG, "entityHandlerRequest is NULL");
+                    return FAIL;
+                }
+
+                if (!resourceContext)
+                {
+                    OIC_LOG(ERROR, TAG, "resourceContext is NULL");
+                    return FAIL;
+                }
+
+                RequestId requestId;
+                if (entityHandlerRequest->requestHandle)
+                {
+                    requestId = entityHandlerRequest->requestHandle;
+                }
+                else
+                {
+                    OIC_LOG(ERROR, TAG, "requestHandle is NULL");
+                    return FAIL;
+                }
+
+                ResourceQuery query;
+                if (entityHandlerRequest->query)
+                {
+                    query.setQuery(entityHandlerRequest->query);
+                }
+
+                // TODO: Set payload from request.
+                PropertyBundle bundle;
+                if (Converter::convertPayloadToBundle(entityHandlerRequest->payload, bundle))
+                {
+                    OIC_LOG(DEBUG, TAG, "Success at convert payload to bundle");
+                }
+                else
+                {
+                    OIC_LOG(ERROR, TAG, "Fail at convert payload to bundle");
                     return FAIL;
                 }
 
                 // Call user onSet delegate callback.
-                return m_delegate->onSet(requestId, bundle, query);
+                ResultCode userCbResult = FAIL;
+                if (m_delegate)
+                {
+                    userCbResult = m_delegate->onSet(requestId, bundle, query);
+
+                    if (KEEP != userCbResult)
+                    {
+                        sendAutoResponse(userCbResult, entityHandlerRequest, resourceContext);
+                    }
+                }
+
+                return userCbResult;
+            }
+
+            // callback for auto response
+            // this callback will called by internal delegate
+            void sendAutoResponse(ResultCode resultCode,
+                                  const OCEntityHandlerRequest* entityHandlerRequest,
+                                  const SHBaseResource_Impl* ctx)
+            {
+                OIC_LOG(INFO, TAG, "Entered autoResponse");
+
+                if (!entityHandlerRequest)
+                {
+                    OIC_LOG(ERROR, TAG, "Entity handler request is NULL");
+                    return;
+                }
+
+                if (!ctx)
+                {
+                    OIC_LOG(ERROR, TAG, "ctx is NULL");
+                    return;
+                }
+
+                // TODO: memset
+                OCEntityHandlerResponse response;
+                memset(&response, 0, sizeof(OCEntityHandlerResponse));
+
+                response.requestHandle = entityHandlerRequest->requestHandle;
+                response.resourceHandle = entityHandlerRequest->resource;
+
+                const PropertyBundle& bundle = ctx->getPropertyBundle();
+
+                OCPayload* payload = Converter::convertBundleToPayload(bundle);
+
+                if (!payload)
+                {
+                    OIC_LOG(ERROR, TAG, "payload is NULL");
+                    return;
+                }
+
+                response.payload = payload;
+
+                response.persistentBufferFlag = 0;
+
+                response.numSendVendorSpecificHeaderOptions =
+                                           entityHandlerRequest->numRcvdVendorSpecificHeaderOptions;
+
+                OIC_LOG_V(DEBUG, TAG, "Send response success");
+
+                for (int itr = 0; itr < response.numSendVendorSpecificHeaderOptions; itr++)
+                {
+                    response.sendVendorSpecificHeaderOptions[itr].protocolID =
+                              entityHandlerRequest->rcvdVendorSpecificHeaderOptions[itr].protocolID;
+                    response.sendVendorSpecificHeaderOptions[itr].optionID =
+                                entityHandlerRequest->rcvdVendorSpecificHeaderOptions[itr].optionID;
+                    response.sendVendorSpecificHeaderOptions[itr].optionLength =
+                            entityHandlerRequest->rcvdVendorSpecificHeaderOptions[itr].optionLength;
+
+                    memcpy(response.sendVendorSpecificHeaderOptions[itr].optionData,
+                           entityHandlerRequest->rcvdVendorSpecificHeaderOptions[itr].optionData,
+                           sizeof(response.sendVendorSpecificHeaderOptions[itr].optionData));
+                }
+
+                OCStackResult result = OC_STACK_ERROR;
+                if (SUCCESS == resultCode)
+                {
+                    // send all data as bundle with success code
+                    response.ehResult = OC_EH_OK;
+                    result = OCDoResponse(&response);
+                }
+                else if (FAIL == resultCode)
+                {
+                    // send all data as bundle with fail code
+                    response.ehResult = OC_EH_ERROR;
+                    result = OCDoResponse(&response);
+                }
+                else
+                {
+                    OIC_LOG(ERROR, TAG, "Invalid value on resultCode");
+                    OCPayloadDestroy(response.payload);
+                    return;
+                }
+
+                if (OC_STACK_OK == result)
+                {
+                    OIC_LOG(DEBUG, TAG, "Send response success");
+                }
+                else
+                {
+
+                    OIC_LOG_V(ERROR, TAG, "Error at send response result code is %d", result);
+                }
+                OCPayloadDestroy(response.payload);
             }
         }
     }
