@@ -29,7 +29,6 @@
 #ifndef OC_OBSERVE_H
 #define OC_OBSERVE_H
 
-#include "ocserverrequest.h"
 
 /** Maximum number of observers to reach */
 
@@ -262,19 +261,6 @@ OCStackResult
 GetObserveHeaderOption (uint32_t * observationOption,
                         CAHeaderOption_t *options,
                         uint8_t * numOptions);
-
-/**
- * Handle registering/deregistering of observers of virtual resources.  Currently only the
- * well-known virtual resource (/oic/res) may be observable.
- *
- * @param request a virtual resource server request
- *
- * @return ::OC_STACK_OK on success, ::OC_STACK_DUPLICATE_REQUEST when registering a duplicate
- *         observer, some other value upon failure.
- */
-OCStackResult
-HandleVirtualObserveRequest(OCServerRequest *request);
-
 
 #endif //OC_OBSERVE_H
 
