@@ -8,6 +8,11 @@ Import('env')
 
 print "Reading linux configuration script"
 
+#Test Coverage Flags and Library (if RELEASE=0)
+if not env.get('RELEASE'):
+    env.AppendUnique(LIBS = ['gcov'])
+    env.AppendUnique(CCFLAGS = ['--coverage', '-fPIC', '-O0'])
+
 help_vars = Variables()
 if env.get('BUILD_JAVA') == True:
     if not env.get('ANDROID_GRADLE'):
