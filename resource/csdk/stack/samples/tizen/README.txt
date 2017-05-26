@@ -3,9 +3,6 @@ Prerequisites
 
 1) Clone tinycbor library using following command from the path "iotivity/extlibs/tinycbor":
    git clone https://github.com/01org/tinycbor.git extlibs/tinycbor/tinycbor
-2) To build with SECURITY=1, download sqlite3 zip file and extract it. Copy the files 
-   sqlite3.c and sqlite3.h file to iotivity/extlibs/sqlite3/ folder.
-   Download using http://www.sqlite.org/2015/sqlite-amalgamation-3081101.zip
 
 Build Procedure
 ===============
@@ -31,7 +28,7 @@ Note :- Upon successful execution of above command(s) RI library and sample appl
 
 Procedure to Execute Sample App:
 ================================
-    1) Copy the generated rpms(com-oic-ri-0.1-1.armv7l.rpm, com-oic-ri-sample-0.1-1.armv7l.rpm) to Tizen Device
+    1) Copy the generated rpms(com-oic-ri-*.armv7l.rpm, com-oic-ri-sample-*.armv7l.rpm) to Tizen Device
        (say /opt/usr/media/xxx/)
     2) sdb shell
     3) su
@@ -39,8 +36,8 @@ Procedure to Execute Sample App:
     5) change-booting-mode.sh --update
 
     6) Install the rpms using the following commands:
-		a) rpm -Uvh com-oic-ri-0.1-1.armv7l.rpm --force --nodeps
-		b) rpm -Uvh com-oic-ri-sample-0.1-1.armv7l.rpm --force --nodeps
+		a) rpm -Uvh com-oic-ri-*.armv7l.rpm --force --nodeps
+		b) rpm -Uvh com-oic-ri-sample-*.armv7l.rpm --force --nodeps
 	7) For IP transport, apply net-config smack rules using below command:
 		a) chsmack -a "net-config" /usr/apps/com.oic.ri.sample/bin/*
 		b) chsmack -e "net-config" /usr/apps/com.oic.ri.sample/bin/*
