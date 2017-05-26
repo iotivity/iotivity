@@ -603,16 +603,15 @@ namespace OC
         auto cLock = m_csdkLock.lock();
         OCStackResult result = OC_STACK_ERROR;
 
-        if (pResponse->getHeaderOptions().size() > MAX_HEADER_OPTIONS)
-        {
-            oclog() << "Error passed too many server header options.\n";
-            return OC_STACK_ERROR;
-        }
-
         if(!pResponse)
         {
             result = OC_STACK_MALFORMED_RESPONSE;
             throw OCException(OC::Exception::STR_NULL_RESPONSE, OC_STACK_MALFORMED_RESPONSE);
+        }
+        else if (pResponse->getHeaderOptions().size() > MAX_HEADER_OPTIONS)
+        {
+            oclog() << "Error passed too many server header options.\n";
+            return OC_STACK_ERROR;
         }
         else
         {

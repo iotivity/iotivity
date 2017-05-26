@@ -83,7 +83,7 @@ public class GroupAclManagerTest {
         AclResource.getInstance().deleteAcl((String) AclResource.getInstance()
                 .getAclid(mDi2).get(Constants.KEYFIELD_ACLID));
 
-        MongoDB mongoDB = new MongoDB(Constants.DB_NAME);
+        MongoDB mongoDB = new MongoDB("127.0.0.1", Constants.DB_NAME);
         mongoDB.deleteTable(Constants.GROUP_TABLE);
         mongoDB.createTable(Constants.GROUP_TABLE);
         mongoDB.deleteTable(Constants.ACL_TABLE);
