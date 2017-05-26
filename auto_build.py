@@ -387,7 +387,7 @@ def build_arduino(flag, extra_option_str):
 
 def build_tizen(flag, extra_option_str):
     print ("*********** Build for Tizen *************")
-    cmd_line = "/bin/sh " + os.getcwd() + "/gbsbuild.sh"
+    cmd_line = os.getcwd() + "/gbsbuild.sh"
     if not EXEC_MODE:
         print ("Would run : " + cmd_line)
     else:
