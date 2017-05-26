@@ -25,7 +25,7 @@
 
 OICPlatformResult_t OICGetLocalAppDataPath(char* buffer, size_t* bufferLen)
 {
-    OIC_LOG(WARNING, TAG, "Unsupported platform.");
+    OIC_LOG(INFO, TAG, "OICGetLocalAppDataPath: Unsupported platform.");
     OC_UNUSED(buffer);
     OC_UNUSED(bufferLen);
     return OIC_PLATFORM_NOTIMPL;
@@ -33,7 +33,7 @@ OICPlatformResult_t OICGetLocalAppDataPath(char* buffer, size_t* bufferLen)
 
 OICPlatformResult_t OICGetTempAppDataPath(char* buffer, size_t* bufferLen)
 {
-    OIC_LOG(WARNING, TAG, "Unsupported platform.");
+    OIC_LOG(INFO, TAG, "OICGetTempAppDataPath: Unsupported platform.");
     OC_UNUSED(buffer);
     OC_UNUSED(bufferLen);
     return OIC_PLATFORM_NOTIMPL;

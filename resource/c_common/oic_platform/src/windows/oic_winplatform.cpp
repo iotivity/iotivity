@@ -201,7 +201,7 @@ static OICPlatformResult_t GetSysLocalAppDataPath(std::string &path, size_t &sys
     sysPathLen = path.length();
 #else // UWP_APP
     // Unsupported for win32 apps
-    OIC_LOG(WARNING, TAG, "Unsupported platform.");
+    OIC_LOG(INFO, TAG, "GetSysLocalAppDataPath: Unsupported platform.");
     OC_UNUSED(path);
     OC_UNUSED(sysPathLen);
     OC_UNUSED(getTempDir);
@@ -232,8 +232,11 @@ static OICPlatformResult_t GetLocalAppDataPath(std::string &path, bool getTempDi
         // Set path to the appropriate system local or temp application data path
         if (ret != OIC_PLATFORM_OK)
         {
-            OIC_LOG_V(ERROR, TAG, "Failed to GetSysLocalAppDataPath, ret: %"PRIuPTR,
-                static_cast<size_t>(ret));
+            if (ret != OIC_PLATFORM_NOTIMPL)
+            {
+                OIC_LOG_V(ERROR, TAG, "Failed to GetSysLocalAppDataPath, ret: %" PRIuPTR,
+                    static_cast<size_t>(ret));
+            }
             // On failure, path should be cleared in GetSysLocalAppDataPath
             return ret;
         }

@@ -1177,6 +1177,12 @@ static void applyMulticastToInterface6(uint32_t ifindex)
 
 CAResult_t CAIPStartListenServer()
 {
+    if (caglobals.ip.started)
+    {
+        OIC_LOG(DEBUG, TAG, "Adapter is started already");
+        return CA_STATUS_OK;
+    }
+
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
     u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
     if (!iflist)
@@ -1554,7 +1560,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, size_t *size)
 #endif
 
     size_t interfaces = u_arraylist_length(iflist);
-    for (size_t i = 0; i < interfaces; i++)
+    for (size_t i = 0; i < u_arraylist_length(iflist); i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
         if (!ifitem)

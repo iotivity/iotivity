@@ -85,7 +85,7 @@ public class InviteResourceTest {
         mResponse = null;
 
         // reset data base
-        MongoDB mongoDB = new MongoDB(Constants.DB_NAME);
+        MongoDB mongoDB = new MongoDB("127.0.0.1", Constants.DB_NAME);
         mongoDB.deleteTable(Constants.INVITE_TABLE);
         mongoDB.createTable(Constants.INVITE_TABLE);
 

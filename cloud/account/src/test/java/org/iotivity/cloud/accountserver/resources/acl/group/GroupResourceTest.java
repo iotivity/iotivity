@@ -108,7 +108,7 @@ public class GroupResourceTest {
 
     @After
     public void resetAccountDatabase() throws Exception {
-        MongoDB mongoDB = new MongoDB(Constants.DB_NAME);
+        MongoDB mongoDB = new MongoDB("127.0.0.1", Constants.DB_NAME);
         mongoDB.deleteTable(Constants.USER_TABLE);
         mongoDB.createTable(Constants.USER_TABLE);
         mongoDB.deleteTable(Constants.TOKEN_TABLE);
@@ -824,7 +824,7 @@ public class GroupResourceTest {
     }
 
     public void resetDB() throws Exception {
-        MongoDB mongoDB = new MongoDB(Constants.DB_NAME);
+        MongoDB mongoDB = new MongoDB("127.0.0.1", Constants.DB_NAME);
         mongoDB.deleteTable(Constants.GROUP_TABLE);
         mongoDB.createTable(Constants.GROUP_TABLE);
         mongoDB.deleteTable(Constants.USER_TABLE);

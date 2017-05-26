@@ -236,6 +236,22 @@ OCStackResult SRPProvisionCredentials(void *ctx,OicSecCredType_t type, size_t ke
                                       const OicSecRole_t *role1,
                                       const OicSecRole_t *role2,
                                       OCProvisionResultCB resultCallback);
+ /**
+ * API to provision credential to devices with DOS.
+ *
+ * @param[in] ctx Application context to be returned in result callback.
+ * @param[in] type Type of credentials to be provisioned to the device.
+ * @param[in] keySize size of key
+ * @param[in] pDev1 Pointer to PMOwnedDeviceInfo_t instance, representing the resource to be provisioned.
+ * @param[in] pDev2 Pointer to PMOwnedDeviceInfo_t instance, representing the resource to be provisioned.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request recieves a response from first resource server.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPProvisionCredentialsDos(void *ctx,OicSecCredType_t type, size_t keySize,
+                                      const OCProvisionDev_t *pDev1,
+                                      const OCProvisionDev_t *pDev2,
+                                      OCProvisionResultCB resultCallback);
 
 /**
  * Function to unlink devices.

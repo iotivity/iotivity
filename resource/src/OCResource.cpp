@@ -203,6 +203,12 @@ OCResource::~OCResource()
 
 std::string OCResource::setHost(const std::string& host)
 {
+    if (!host.length())
+    {
+        throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+        m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+    }
+
     size_t prefix_len;
 
     OCDevAddr new_devAddr;
