@@ -20,9 +20,10 @@
 #ifndef SMARTHOME_API_COMMON_PROPERTYBUNDLE_H_
 #define SMARTHOME_API_COMMON_PROPERTYBUNDLE_H_
 
+#include <iostream>
 #include <map>
 #include <list>
-#include <typeinfo>
+#include <stdint.h>
 #include <CommonException.h>
 
 namespace OIC
@@ -31,6 +32,44 @@ namespace OIC
     {
         namespace SH
         {
+            namespace utils
+            {
+                /*
+                 * Template Structure.
+                 * Provides the member value equal to true. Otherwise value is false.
+                 */
+                struct true_type
+                {
+                    enum _value_ { value = true};
+                };
+
+                struct false_type
+                {
+                    enum _value_ { value = false};
+                };
+
+                template<typename T, typename U>
+                struct is_same : false_type {};
+
+                template<typename T>
+                struct is_same<T, T> : true_type {};
+            }
+
+            class PropByteString
+            {
+            public:
+                uint8_t* bytes;
+                size_t   len;
+
+                PropByteString()
+                {
+                }
+
+                PropByteString(uint8_t* bytes, size_t size)
+                : bytes(bytes), len(size)
+                {
+                }
+            };
 
             /*
              * Types of PropertyValues.
@@ -42,10 +81,14 @@ namespace OIC
                 Double,
                 Boolean,
                 String,
+                ByteString,
+                PropertyBundle_Object,
                 Integer_Array,
                 Double_Array,
                 Boolean_Array,
-                String_Array
+                String_Array,
+                PropertyValue_Array,
+                ByteString_Array
             };
 
             /*
@@ -137,48 +180,61 @@ namespace OIC
 
             private:
                 template <typename T>
-                PropertyType checkPropertyType(T& val)
+                PropertyType checkPropertyType(const T& val)
                 {
                     (void) val;
-
                     PropertyType type = Unknown;
-
-                    if (typeid(T) == typeid(int))
+                    if (utils::is_same<T, int>::value)
                     {
                         type = Integer;
                     }
-                    else if (typeid(T) == typeid(double))
+                    else if (utils::is_same<T, double>::value)
                     {
                         type = Double;
                     }
-                    else if (typeid(T) == typeid(bool))
+                    else if (utils::is_same<T, bool>::value)
                     {
                         type = Boolean;
                     }
-                    else if (typeid(T) == typeid(std::string))
+                    else if (utils::is_same<T, std::string>::value)
                     {
                         type = String;
                     }
-                    else if (typeid(T) == typeid(std::list<int>))
+                    else if (utils::is_same<T, PropByteString>::value)
+                    {
+                        type = ByteString;
+                    }
+                    else if (utils::is_same<T, PropertyBundle>::value)
+                    {
+                        type = PropertyBundle_Object;
+                    }
+                    else if (utils::is_same<T, std::list<int> >::value)
                     {
                         type = Integer_Array;
                     }
-                    else if (typeid(T) == typeid(std::list<double>))
+                    else if (utils::is_same<T, std::list<double> >::value)
                     {
                         type = Double_Array;
                     }
-                    else if (typeid(T) == typeid(std::list<bool>))
+                    else if (utils::is_same<T, std::list<bool> >::value)
                     {
                         type = Boolean_Array;
                     }
-                    else if (typeid(T) == typeid(std::list<std::string>))
+                    else if (utils::is_same<T, std::list<std::string> >::value)
                     {
                         type = String_Array;
+                    }
+                    else if (utils::is_same<T, std::list<PropertyBundle> >::value)
+                    {
+                        type = PropertyValue_Array;
+                    }
+                    else if (utils::is_same<T, std::list<PropByteString> >::value)
+                    {
+                        type = ByteString_Array;
                     }
                     return type;
                 }
 
-            private:
                 std::map<std::string, PropertyValue* > m_values;
             };
         }

@@ -176,6 +176,19 @@ namespace OIC
                         case OCREP_PROP_STRING:
                             bundle.setValue<std::string>(val->name, val->str);
                             break;
+                        case OCREP_PROP_BYTE_STRING:
+                            {
+                                PropByteString data(val->ocByteStr.bytes, val->ocByteStr.len);
+                                bundle.setValue<PropByteString>(val->name, data);
+                            }
+                            break;
+                        case OCREP_PROP_OBJECT:
+                            {
+                                PropertyBundle value;
+                                createPropertyBundle(value, val->obj);
+                                bundle.setValue<PropertyBundle>(val->name, value);
+                            }
+                            break;
                         case OCREP_PROP_ARRAY:
                             createPropertyBundleArray(bundle, val);
                             break;
@@ -238,6 +251,31 @@ namespace OIC
                 }
             }
 
+            template<>
+            PropByteString PayloadConverter::payload_array_helper_copy<PropByteString>(
+                                                        size_t index, const OCRepPayloadValue *pl)
+            {
+                PropByteString result;
+                if (pl->arr.ocByteStrArray[index].len)
+                {
+                    result.bytes = (pl->arr.ocByteStrArray[index]).bytes;
+                    result.len = (pl->arr.ocByteStrArray[index]).len;
+                }
+                return result;
+            }
+
+            template<>
+            PropertyBundle PayloadConverter::payload_array_helper_copy<PropertyBundle>(
+                                                         size_t index, const OCRepPayloadValue* pl)
+            {
+                PropertyBundle bundle;
+                if (pl->arr.objArray[index])
+                {
+                    createPropertyBundle(bundle, pl->arr.objArray[index]);
+                }
+                return bundle;
+            }
+
             template <typename T>
             void PayloadConverter::payload_array_helper(PropertyBundle& bundle,
                                                         const OCRepPayloadValue* pl,
@@ -278,8 +316,10 @@ namespace OIC
                         payload_array_helper<std::string>(bundle, pl, depth);
                         break;
                     case OCREP_PROP_BYTE_STRING:
+                        payload_array_helper<PropByteString>(bundle, pl, depth);
+                        break;
                     case OCREP_PROP_OBJECT:
-                        throw CommonException("Unsupported array type in createPropertyBundleArray");
+                        payload_array_helper<PropertyBundle>(bundle, pl, depth);
                         break;
                     default:
                         throw CommonException("Invalid array type in createPropertyBundleArray");
@@ -321,10 +361,27 @@ namespace OIC
                                                       ((PropertyValue_<std::string>*)iter->second)
                                                        ->getValue().c_str());
                             break;
+                        case ByteString:
+                            {
+                                PropByteString bytesData = ((PropertyValue_<PropByteString>*)
+                                                            iter->second)->getValue();
+                                OCByteString blob;
+                                blob.bytes = bytesData.bytes;
+                                blob.len = sizeof(bytesData.bytes);
+                                OCRepPayloadSetPropByteString(root, iter->first.c_str(), blob);
+                            }
+                            break;
+                        case PropertyBundle_Object:
+                            OCRepPayloadSetPropObjectAsOwner(root, iter->first.c_str(),
+                                                    createPayload(((PropertyValue_<PropertyBundle>*)
+                                                                  iter->second)->getValue()));
+                            break;
                         case Integer_Array:
                         case Double_Array:
                         case Boolean_Array:
                         case String_Array:
+                        case ByteString_Array:
+                        case PropertyValue_Array:
                             createPayloadArray(bundle, root, iter->first, type);
                             break;
                         case Unknown:
@@ -404,6 +461,20 @@ namespace OIC
                 ((char**)array)[pos] = OICStrdup(item.c_str());
             }
 
+            template<>
+            void get_payload_array::copy_to_array(PropByteString item, void *array, size_t pos)
+            {
+                ((OCByteString *)array)[pos].bytes = item.bytes;
+                ((OCByteString *)array)[pos].len = item.len;
+            }
+
+            template<>
+            void get_payload_array::copy_to_array(PropertyBundle item, void* array, size_t pos)
+            {
+                PayloadConverter converter;
+                converter.addPropertyBundle(item);
+                ((OCRepPayload**)array)[pos] = converter.getPayload();
+            }
 
             void PayloadConverter::createPayloadArray(const PropertyBundle& bundle,
                                                       OCRepPayload* payload,
@@ -414,7 +485,7 @@ namespace OIC
                 iter = bundle.m_values.find(key);
                 if (iter == bundle.m_values.end())
                 {
-                    throw CommonException("Invalid property key in getPayload");
+                    throw CommonException("Invalid property key in createPayloadArray");
                 }
 
                 switch (type)
@@ -446,6 +517,18 @@ namespace OIC
                         OCRepPayloadSetStringArrayAsOwner(payload, key.c_str(),
                                                           (char**)arr.array,
                                                           arr.dimensions);
+                        break;
+                    case ByteString_Array:
+                        arr.allocate_memory(((PropertyValue_<std::list<PropByteString> >*)
+                                            iter->second)->getValue());
+                        OCRepPayloadSetByteStringArrayAsOwner(payload, key.c_str(),
+                                                        (OCByteString *)arr.array, arr.dimensions);
+                        break;
+                    case PropertyValue_Array:
+                        arr.allocate_memory(((PropertyValue_<std::list<PropertyBundle> >*)
+                                            iter->second)->getValue());
+                        OCRepPayloadSetPropObjectArrayAsOwner(payload, key.c_str(),
+                                                        (OCRepPayload**)arr.array, arr.dimensions);
                         break;
                     default:
                         throw CommonException("Invalid Payload type in createPayloadArray");
