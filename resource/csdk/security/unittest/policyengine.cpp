@@ -74,8 +74,7 @@ extern OicSecDoxm_t *gDoxm;
 //     }
 //     else
 //     {
-//         printf("%s WARNING: InitDoxmResource() returned ERROR!\n", \
-//             PE_UT_TAG);
+//         printf("%s WARNING: InitDoxmResource() returned ERROR!\n", PE_UT_TAG);
 //     }
 // }
 
@@ -101,14 +100,12 @@ extern OicSecDoxm_t *gDoxm;
 //         }
 //         else
 //         {
-//             printf("%s WARNING: GetDoxmDevOwnerId() returned ERROR!\n", \
-//                 PE_UT_TAG);
+//             printf("%s WARNING: GetDoxmDevOwnerId() returned ERROR!\n", PE_UT_TAG);
 //         }
 //     }
 //     else
 //     {
-//         printf("%s WARNING: InitDoxmResource() returned ERROR!\n", \
-//                 PE_UT_TAG);
+//         printf("%s WARNING: InitDoxmResource() returned ERROR!\n", PE_UT_TAG);
 //     }
 // }
 
