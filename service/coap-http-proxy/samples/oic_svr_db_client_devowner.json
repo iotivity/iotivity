@@ -3,9 +3,7 @@
         "aclist2": [
             {
                 "aceid": 1,
-                "subject": {
-                  "conntype": "anon-clear"
-                },
+                "subject": { "conntype": "anon-clear" },
                 "resources": [
                     { "href": "/oic/res" },
                     { "href": "/oic/d" },
@@ -16,9 +14,7 @@
             },
             {
                 "aceid": 2,
-                "subject": {
-                  "conntype": "auth-crypt"
-                },
+                "subject": { "conntype": "auth-crypt" },
                 "resources": [
                     { "href": "/oic/res" },
                     { "href": "/oic/d" },
