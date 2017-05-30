@@ -228,12 +228,7 @@ static ssize_t CATCPPacketSendCB(CAEndpoint_t *endpoint, const void *data, size_
     OIC_LOG_V(DEBUG, TAG, "Address: %s, port:%d", endpoint->addr, endpoint->port);
     OIC_LOG_BUFFER(DEBUG, TAG, data, dataLength);
 
-    ssize_t ret = 0;
-#ifndef SINGLE_THREAD
-    ret = CAQueueTCPData(false, endpoint, data, dataLength, true);
-#else
-    ret = (int32_t)CATCPSendData(endpoint, data, dataLength);
-#endif
+    ssize_t ret = CATCPSendData(endpoint, data, dataLength);
 
     OIC_LOG_V(DEBUG, TAG, "Out %s : %d bytes sent", __func__, ret);
     return ret;

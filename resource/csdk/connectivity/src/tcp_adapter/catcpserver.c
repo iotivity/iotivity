@@ -172,7 +172,7 @@ static CAResult_t CATCPCreateMutex()
 {
     if (!g_mutexObjectList)
     {
-        g_mutexObjectList = oc_mutex_new();
+        g_mutexObjectList =  oc_mutex_new_recursive();
         if (!g_mutexObjectList)
         {
             OIC_LOG(ERROR, TAG, "Failed to created mutex!");
