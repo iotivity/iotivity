@@ -664,6 +664,8 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
                 // Check if the option header has already existed before adding it in.
                 uint8_t optionData[MAX_HEADER_OPTION_DATA_LENGTH];
                 size_t optionDataSize = sizeof(optionData);
+
+                actualDataSize = 0;
                 OCGetHeaderOption(response.sendVendorSpecificHeaderOptions,
                                   response.numSendVendorSpecificHeaderOptions,
                                   2248,
@@ -682,6 +684,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
                                       optionDataSize2);
                 }
 
+                actualDataSize = 0;
                 OCGetHeaderOption(response.sendVendorSpecificHeaderOptions,
                                   response.numSendVendorSpecificHeaderOptions,
                                   2600,
