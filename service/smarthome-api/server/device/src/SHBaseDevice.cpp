@@ -20,6 +20,11 @@
 #include <SHBaseDevice.h>
 #include <SHPlatform_Impl.h>
 #include <SHBaseDevice_Impl.h>
+#include <CommonException.h>
+#include "ocstack.h"
+#include "logger.h"
+
+#define TAG "SH_SERVER_BASE_DEVICE"
 
 namespace OIC
 {
@@ -57,6 +62,34 @@ namespace OIC
             void SHBaseDevice::setName(const std::string& name)
             {
                 m_deviceImpl->setName(name);
+            }
+
+            void SHBaseDevice::startPresence(const unsigned int ttl)
+            {
+                OIC_LOG(DEBUG, TAG, "Entered startPresence");
+
+                OCStackResult result = OC_STACK_ERROR;
+
+                result = OCStartPresence(ttl);
+
+                if (OC_STACK_OK != result)
+                {
+                    throw CommonException("Exception on startPresence");
+                }
+            }
+
+            void SHBaseDevice::stopPresence()
+            {
+                OIC_LOG(DEBUG, TAG, "Entered stopPresence");
+
+                OCStackResult result = OC_STACK_ERROR;
+
+                result = OCStopPresence();
+
+                if (OC_STACK_OK != result)
+                {
+                    throw CommonException("Exception on stopPresence");
+                }
             }
         }
     }

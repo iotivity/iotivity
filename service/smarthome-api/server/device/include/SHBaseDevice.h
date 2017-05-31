@@ -38,11 +38,11 @@ namespace OIC
         {
             class SHBaseDevice_Impl;
             /**
-            * @class SHBaseDevice
-            *
-            * @brief This class contains a set of functions to define device and
-            * handle client requests.
-            */
+             * @class SHBaseDevice
+             *
+             * @brief This class contains a set of functions to define device and
+             * handle client requests.
+             */
             class SHBaseDevice
             {
             public:
@@ -73,6 +73,23 @@ namespace OIC
                  * @param[in] name name of device.
                  */
                 void setName(const std::string& name);
+
+                /*
+                 * API to start presence of resources that have the device.
+                 *
+                 * @param[in] ttl time to live (seconds)
+                 * @par
+                 * If ttl is '0', then the default value will be used (60 Seconds).
+                 * If ttl is greater than OC_MAX_PRESENCE_TTL_SECONDS, then the ttl will be set to
+                 * OC_MAX_PRESENCE_TTL_SECONDS.
+                 * @par
+                 */
+                void startPresence(const unsigned int ttl);
+
+                /**
+                 * API to stop presence annonuncements.
+                 */
+                void stopPresence();
 
             public:
                 SHBaseDevice();
