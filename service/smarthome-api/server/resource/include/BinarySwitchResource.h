@@ -95,14 +95,14 @@ namespace OIC
                  * @param[in] switchDelegate Instance that inherit BinarySwitchResourceDelegate
                  * class
                  */
-                void setBinarySwitchResourceDelegate(BinarySwitchResourceDelegate *switchDelegate);
+                void setDelegate(BinarySwitchResourceDelegate *delegate);
 
             private:
-                virtual ResultCode onGet(int requestId, const ResourceQuery& query);
-                virtual ResultCode onSet(int requestId, const PropertyBundle& bundle,
+                virtual ResultCode onGet(RequestId requestId, const ResourceQuery& query);
+                virtual ResultCode onSet(RequestId requestId, const PropertyBundle& bundle,
                                          const ResourceQuery& query);
 
-                BinarySwitchResourceDelegate *m_userDelegate;
+                BinarySwitchResourceDelegate *m_delegate;
             };
         }
     }

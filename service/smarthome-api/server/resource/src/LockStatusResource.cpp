@@ -20,7 +20,9 @@
 #include <LockStatusResource.h>
 #include <PropertyBundle.h>
 #include <ResourceQuery.h>
-#include <iostream>
+#include "logger.h"
+
+#define TAG "SH_SERVER_LOCKSTATUS_RESOURCE"
 
 const static std::string URI_LOCKSTATUS = "/lockstatus";
 const static std::string KEY_LOCKSTATE = "lockState";
@@ -34,12 +36,8 @@ namespace OIC
         namespace SH
         {
             LockStatusResource::LockStatusResource() :
-                    m_delegate(NULL), SHBaseResource(URI_LOCKSTATUS)
+                    m_delegate(NULL), SHBaseResource(URI_LOCKSTATUS, RESOURCE_TYPE::LOCK_STATUS)
             {
-                std::list<std::string> types;
-                types.push_back(RESOURCE_TYPE::LOCK_STATUS);
-                setTypes(types);
-
                 PropertyBundle bundle;
                 bundle.setValue(KEY_LOCKSTATE, VALUE_LOCKED);
                 setPropertyBundle(bundle);
@@ -51,47 +49,44 @@ namespace OIC
 
             std::string LockStatusResource::getState()
             {
+                OIC_LOG(DEBUG, TAG, "Entered getState");
                 PropertyBundle storedBundle;
                 storedBundle = getPropertyBundle();
 
                 std::string state;
                 storedBundle.getValue(KEY_LOCKSTATE, state);
 
-                std::cout << "[LockStatusResource] getState" << std::endl;
-
                 return state;
             }
 
             bool LockStatusResource::setState(std::string state)
             {
+                OIC_LOG(DEBUG, TAG, "Entered setState");
                 PropertyBundle bundle;
                 bundle.setValue(KEY_LOCKSTATE, state);
                 setPropertyBundle(bundle);
-
-                std::cout << "[LockStatusResource] setState" << std::endl;
                 return true;
             }
 
             void LockStatusResource::setDelegate(LockStatusResourceDelegate* delegate)
             {
+                OIC_LOG(DEBUG, TAG, "Entered setDelegate");
                 this->m_delegate = delegate;
 
                 SHBaseResource::setDelegate(this);
-
-                std::cout << "[LockStatusResource] setDelegate" << std::endl;
             }
 
-            ResultCode LockStatusResource::onGet(int requestId, const ResourceQuery& query)
+            ResultCode LockStatusResource::onGet(RequestId requestId, const ResourceQuery& query)
             {
-                std::cout << "[LockStatusResource] onGet" << std::endl;
+                OIC_LOG(DEBUG, TAG, "Entered onGet");
 
                 return SUCCESS;
             }
 
-            ResultCode LockStatusResource::onSet(int requestId, const PropertyBundle& bundle,
+            ResultCode LockStatusResource::onSet(RequestId requestId, const PropertyBundle& bundle,
                                                  const ResourceQuery& query)
             {
-                std::cout << "[LockStatusResource] onSet" << std::endl;
+                OIC_LOG(DEBUG, TAG, "Entered onSet");
 
                 ResultCode retCode = FAIL;
                 if (NULL != this->m_delegate && bundle.contains(KEY_LOCKSTATE))
@@ -108,7 +103,7 @@ namespace OIC
                     }
                     else
                     {
-                        std::cout << "[LockStatusResource]Invaild property value" << std::endl;
+                        OIC_LOG(ERROR, TAG, "Invaild property value");
                         return FAIL;
                     }
                 }

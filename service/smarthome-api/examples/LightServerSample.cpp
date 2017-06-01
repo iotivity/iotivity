@@ -35,13 +35,9 @@ static oc_cond g_cond = NULL;
 
 using namespace OIC::Service::SH;
 
-UserColorResource::UserColorResource() : SHBaseResource(USER_RESOURCE_URI)
+UserColorResource::UserColorResource() : SHBaseResource(USER_RESOURCE_URI, USER_RESOURCE_TYPE)
 {
     std::cout << "[UserColorResource] constructor" << std::endl;
-
-    std::list<std::string> types;
-    types.push_back(USER_RESOURCE_TYPE);
-    setTypes(types);
 
     std::string color = "black";
     PropertyBundle bundle;
@@ -87,13 +83,13 @@ ResultCode MyBinarySwitchDelegate::turnOffCallback()
     return SUCCESS;
 }
 
-ResultCode MyColorDelegate::onGet(int requestId, const ResourceQuery& query)
+ResultCode MyColorDelegate::onGet(RequestId requestId, const ResourceQuery& query)
 {
     std::cout << "[LightServerSample][Color] onGet.." << endl;
     return SUCCESS;
 }
 
-ResultCode MyColorDelegate::onSet(int requestId, const PropertyBundle& bundle,
+ResultCode MyColorDelegate::onSet(RequestId requestId, const PropertyBundle& bundle,
                                   const ResourceQuery& query)
 {
     std::cout << "[LightServerSample][Color] onSet.." << endl;
@@ -157,7 +153,7 @@ int main(int argc, char* argv[])
         myLight = new LightDevice;
         std::cout << "#2. Set MyBinarySwitchDelegate" << endl;
         switchDelegate = new MyBinarySwitchDelegate;
-        myLight->m_binarySwitch.setBinarySwitchResourceDelegate(switchDelegate);
+        myLight->m_binarySwitch.setDelegate(switchDelegate);
 
         myLight->m_binarySwitch.getState();
         std::cout << "======================================================" << endl;
@@ -171,7 +167,7 @@ int main(int argc, char* argv[])
 
         std::cout << "#4. Set MyBinarySwitchDelegate" << endl;
         switchDelegate = new MyBinarySwitchDelegate;
-        userLight->m_binarySwitch.setBinarySwitchResourceDelegate(switchDelegate);
+        userLight->m_binarySwitch.setDelegate(switchDelegate);
 
         std::cout << "#5. Set MyColorDelegate" << endl;
         colorDelegate = new MyColorDelegate;

@@ -54,6 +54,7 @@ smarthome_example_env.AppendUnique(CPPPATH= [
         '../client/resource/include',
         '../client/resource/internal',
         '../server/device/include',
+        '../server/device/internal',
         '../server/resource/include',
         '../server/resource/internal',
         '../common/include',

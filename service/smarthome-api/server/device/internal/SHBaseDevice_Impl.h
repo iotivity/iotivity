@@ -17,18 +17,18 @@
  * limitations under the License.
  *
  ******************************************************************/
+#ifndef SMARTHOME_API_SERVER_SHBASEDEVICE_IMPL_H_
+#define SMARTHOME_API_SERVER_SHBASEDEVICE_IMPL_H_
 
 /**
  * @file
  *
- * This file contains the declaration of a class and its members related to SHBaseDevice.
- * SHBaseDevice provides server-side APIs to handle requests from client.
+ * This file contains the declaration of a class and its members related to
+ * SHBaseDevice_Impl.
  */
 
-#ifndef SMARTHOME_API_SERVER_SHBASEDEVICE_H_
-#define SMARTHOME_API_SERVER_SHBASEDEVICE_H_
-
 #include <string>
+#include <list>
 
 namespace OIC
 {
@@ -36,53 +36,55 @@ namespace OIC
     {
         namespace SH
         {
-            class SHBaseDevice_Impl;
+            class SHBaseResource;
+
             /**
-            * @class SHBaseDevice
+            * @class SHBaseDevice_Impl
             *
-            * @brief This class contains a set of functions to define device and
-            * handle client requests.
+            * @brief This class contains a set of base functions to control device.
             */
-            class SHBaseDevice
+            class SHBaseDevice_Impl
             {
-            public:
+            friend class SHBaseDevice;
+            protected:
                 /**
                  * API to get type of device
                  *
                  * @return type of device
                  */
-                std::string getType() const;
+                std::string getType();
 
                 /**
                  * API to set type of device.
                  *
                  * @param[in] type type of device.
                  */
-                void setType(const std::string& type);
+                void setType(std::string type);
 
                 /**
                  * API to get name of device
                  *
                  * @return name of device
                  */
-                std::string getName() const;
+                std::string getName();
 
                 /**
                  * API to set name of device.
                  *
                  * @param[in] name name of device.
                  */
-                void setName(const std::string& name);
+                void setName(std::string name);
 
             public:
-                SHBaseDevice();
-                virtual ~SHBaseDevice();
+                SHBaseDevice_Impl();
+                virtual ~SHBaseDevice_Impl();
 
             private:
                 std::string m_deviceType;
-                SHBaseDevice_Impl *m_deviceImpl;
+                std::string m_deviceName;
             };
         }
     }
 }
-#endif /* SMARTHOME_API_SERVER_SHBASEDEVICE_H_ */
+
+#endif /* SMARTHOME_API_SERVER_SHBASEDEVICE_IMPL_H_ */

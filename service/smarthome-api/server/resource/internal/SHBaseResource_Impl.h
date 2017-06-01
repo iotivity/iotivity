@@ -23,6 +23,8 @@
 #include <list>
 #include <string>
 #include <PropertyBundle.h>
+#include <CommonApi.h>
+#include "octypes.h"
 
 using namespace std;
 
@@ -39,7 +41,9 @@ namespace OIC
     {
         namespace SH
         {
+            class EntityHandlerContext;
             class SHBaseResourceDelegate;
+            class ResourceQuery;
 
             /**
             * @class SHBaseResource_Impl
@@ -49,7 +53,7 @@ namespace OIC
             class SHBaseResource_Impl
             {
             friend class SHBaseResource;
-
+            friend class EntityHandlerWrapper;
             public:
                 virtual ~SHBaseResource_Impl();
 
@@ -70,21 +74,58 @@ namespace OIC
 
                 const PropertyBundle& getPropertyBundle() const;
 
-                bool sendResponse(int requestId, const PropertyBundle& bundle);
+                bool deletePropertyBundle();
 
-                bool sendErrorResponse(int requestId, const PropertyBundle& bundle);
+                /**
+                * API to send response to an incoming request.
+                *
+                * @param[in] requestId    Request handle assigned for each incoming request.
+                * @param[in] bundle       the properties of a resource.
+                *
+                * @return bool true if success.
+                */
+                bool sendResponse(RequestId requestId, const PropertyBundle& bundle);
 
+                /**
+                * API to send error response to an incoming request.
+                *
+                * @param[in] requestId    Request handle assigned for each incoming request.
+                * @param[in] bundle       the properties of a resource.
+                *
+                * @return bool true if success.
+                */
+                bool sendErrorResponse(RequestId requestId, const PropertyBundle& bundle);
+
+                /**
+                * API to set delegate of this resource.
+                *
+                * @param[in] delegate    Instance that inherit SHBaseResourceDelegate class.
+                */
                 void setDelegate(SHBaseResourceDelegate *delegate);
 
             private:
-                SHBaseResource_Impl(const std::string& uri);
-                SHBaseResource_Impl(const std::string& uri,
-                                    const std::list<std::string>& types,
+                SHBaseResource_Impl(const std::string& uri, const std::string& type);
+                SHBaseResource_Impl(const std::string& uri, const std::string& type, 
+                                    const std::string& interface);
+                SHBaseResource_Impl(const std::string& uri, const std::list<std::string>& types);
+                SHBaseResource_Impl(const std::string& uri, const std::list<std::string>& types,
                                     const std::list<std::string>& interfaces);
+
+                ResultCode handleGetRequest(RequestId requestId, const ResourceQuery& query) const;
+                ResultCode handleSetRequest(RequestId requestId, const PropertyBundle& bundle,
+                                            const ResourceQuery& query) const;
+                void registerResource();
+                void deregisterResource();
+                void bindTypesToResource(std::list<std::string> types);
+                void bindInterfacesToResource(std::list<std::string> interfaces);
+
+                OCResourceHandle m_resourceHandle;
                 std::string m_resourceUri;
                 std::list<std::string> m_resourceType;
                 std::list<std::string> m_resourceInterface;
+                uint8_t m_resourceProperty;
 
+                EntityHandlerContext *m_context;
                 SHBaseResourceDelegate *m_delegate;
                 PropertyBundle m_propertyBundle;
             };

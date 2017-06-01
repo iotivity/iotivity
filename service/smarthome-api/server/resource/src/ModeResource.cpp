@@ -20,7 +20,9 @@
 #include <ModeResource.h>
 #include <PropertyBundle.h>
 #include <ResourceQuery.h>
-#include <iostream>
+#include "logger.h"
+
+#define TAG "SH_SERVER_MODE_RESOURCE"
 
 const static std::string URI_MODE = "/mode";
 const static std::string KEY_SUPPORTEDMODES = "supportedModes";
@@ -33,13 +35,9 @@ namespace OIC
         namespace SH
         {
             ModeResource::ModeResource() :
-                    m_userDelegate(NULL), SHBaseResource(URI_MODE)
+                    m_userDelegate(NULL), SHBaseResource(URI_MODE, RESOURCE_TYPE::MODE)
             {
-                std::cout << "[ModeResource] constructor" << std::endl;
-
-                std::list<std::string> types;
-                types.push_back(RESOURCE_TYPE::MODE);
-                setTypes(types);
+                OIC_LOG(DEBUG, TAG, "Entered ctor");
 
                 std::list< std::string > emptylist;
                 PropertyBundle bundle;
@@ -54,7 +52,7 @@ namespace OIC
 
             void ModeResource::addSupportedMode(const std::list< std::string >& supportedMode)
             {
-                std::cout << "[ModeResource] addSupportedMode" << std::endl;
+                OIC_LOG(DEBUG, TAG, "Entered addSupportedMode");
 
                 if (supportedMode.empty())
                 {
@@ -102,7 +100,7 @@ namespace OIC
 
             void ModeResource::removeSupportedMode(const std::string& removeMode)
             {
-                std::cout << "[Mode] removeSupportedMode" << std::endl;
+                OIC_LOG(DEBUG, TAG, "Entered removeSupportedMode");
 
                 if (removeMode.empty())
                 {
@@ -144,7 +142,7 @@ namespace OIC
 
             std::list< std::string > ModeResource::getSupportedMode()
             {
-                std::cout << "[Mode] getSupportedMode" << std::endl;
+                OIC_LOG(DEBUG, TAG, "Entered getSupportedMode");
 
                 std::list< std::string > supportedMode;
 
@@ -156,7 +154,7 @@ namespace OIC
 
             void ModeResource::setCurrentMode(const std::list< std::string >& currentMode)
             {
-                std::cout << "[ModeResource] setCurrentMode" << std::endl;
+                OIC_LOG(DEBUG, TAG, "Entered setCurrentMode");
 
                 PropertyBundle storedBundle = getPropertyBundle();
                 storedBundle.setValue(KEY_MODES, currentMode);
@@ -166,7 +164,7 @@ namespace OIC
 
             std::list< std::string > ModeResource::getCurrentMode()
             {
-                std::cout << "[ModeResource] getCurrentMode" << std::endl;
+                OIC_LOG(DEBUG, TAG, "Entered getCurrentMode");
 
                 std::list< std::string > currentMode;
 
@@ -177,15 +175,15 @@ namespace OIC
 
             void ModeResource::setModeResourceDelegate(ModeResourceDelegate *modeDelegate)
             {
-                std::cout << "[ModeResource] setModeResourceDelegate" << std::endl;
+                OIC_LOG(DEBUG, TAG, "Entered setModeResourceDelegate");
                 m_userDelegate = modeDelegate;
                 setDelegate(this);
                 return;
             }
 
-            ResultCode ModeResource::onGet(int requestId, const ResourceQuery& query)
+            ResultCode ModeResource::onGet(RequestId requestId, const ResourceQuery& query)
             {
-                std::cout << "[ModeResource] onGet" << std::endl;
+                OIC_LOG(DEBUG, TAG, "Entered onGet");
 
                 PropertyBundle storedBundle = getPropertyBundle();
 
@@ -203,10 +201,10 @@ namespace OIC
                 return KEEP;
             }
 
-            ResultCode ModeResource::onSet(int requestId, const PropertyBundle& bundle,
+            ResultCode ModeResource::onSet(RequestId requestId, const PropertyBundle& bundle,
                                            const ResourceQuery& query)
             {
-                std::cout << "[ModeResource] onSet" << std::endl;
+                OIC_LOG(DEBUG, TAG, "Entered onSet");
 
                 // spec says request payload and success case required "modes" property
                 // when failed case payload required "modes", "supportedModes"

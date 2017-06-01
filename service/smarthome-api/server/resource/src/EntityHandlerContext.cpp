@@ -17,9 +17,7 @@
  * limitations under the License.
  *
  ******************************************************************/
-#include <SHBaseDevice.h>
-#include <SHPlatform_Impl.h>
-#include <SHBaseDevice_Impl.h>
+#include <EntityHandlerContext.h>
 
 namespace OIC
 {
@@ -27,36 +25,19 @@ namespace OIC
     {
         namespace SH
         {
-            SHBaseDevice::SHBaseDevice()
+            EntityHandlerContext::EntityHandlerContext(const SHBaseResource_Impl* resource)
+            : m_resource(resource)
             {
-                SH_Impl::start();
-                m_deviceImpl = new SHBaseDevice_Impl;
             }
 
-            SHBaseDevice::~SHBaseDevice()
+            EntityHandlerContext::~EntityHandlerContext()
             {
-                SH_Impl::stop();
-                delete m_deviceImpl;
+
             }
 
-            std::string SHBaseDevice::getType() const
+            const SHBaseResource_Impl* EntityHandlerContext::getResource()
             {
-                return m_deviceImpl->getType();
-            }
-
-            void SHBaseDevice::setType(const std::string& type)
-            {
-                m_deviceImpl->setType(type);
-            }
-
-            std::string SHBaseDevice::getName() const
-            {
-                return m_deviceImpl->getName();
-            }
-
-            void SHBaseDevice::setName(const std::string& name)
-            {
-                m_deviceImpl->setName(name);
+                return m_resource;
             }
         }
     }

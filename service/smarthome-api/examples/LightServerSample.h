@@ -33,8 +33,8 @@ class MyColorDelegate: public SHBaseResourceDelegate
 public:
     virtual ~MyColorDelegate() {};
 public:
-    ResultCode onGet(int requestId, const ResourceQuery& query);
-    ResultCode onSet(int requestId, const PropertyBundle& bundle, const ResourceQuery& query);
+    ResultCode onGet(RequestId requestId, const ResourceQuery& query);
+    ResultCode onSet(RequestId requestId, const PropertyBundle& bundle, const ResourceQuery& query);
 };
 
 class UserColorResource: public SHBaseResource

@@ -35,6 +35,9 @@ namespace OIC
     {
         namespace SH
         {
+            // Typedef for Request ID.
+            typedef void* RequestId;
+
             namespace RESERVED_URI
             {
                 const std::string DEVICE = "/oic/d";

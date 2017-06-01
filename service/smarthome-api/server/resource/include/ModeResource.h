@@ -53,8 +53,8 @@ namespace OIC
                 void setModeResourceDelegate(ModeResourceDelegate *modeDelegate);
 
             private:
-                ResultCode onGet(int requestId, const ResourceQuery& query);
-                ResultCode onSet(int requestId, const PropertyBundle& bundle,
+                ResultCode onGet(RequestId requestId, const ResourceQuery& query);
+                ResultCode onSet(RequestId requestId, const PropertyBundle& bundle,
                                  const ResourceQuery& query);
 
                 ModeResourceDelegate *m_userDelegate;

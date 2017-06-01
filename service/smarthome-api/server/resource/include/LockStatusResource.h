@@ -48,8 +48,8 @@ namespace OIC
                 void setDelegate(LockStatusResourceDelegate* delegate);
 
             private:
-                ResultCode onGet(int requestId, const ResourceQuery& query);
-                ResultCode onSet(int requestId, const PropertyBundle& bundle,
+                ResultCode onGet(RequestId requestId, const ResourceQuery& query);
+                ResultCode onSet(RequestId requestId, const PropertyBundle& bundle,
                                  const ResourceQuery& query);
 
                 LockStatusResourceDelegate *m_delegate;

@@ -20,7 +20,9 @@
 #include <BinarySwitchResource.h>
 #include <PropertyBundle.h>
 #include <ResourceQuery.h>
-#include <iostream>
+#include "logger.h"
+
+#define TAG "SH_SERVER_BINARYSWITCH_RESOURCE"
 
 const static std::string URI_BINARYSWITCH = "/binaryswitch";
 const static std::string KEY_VALUE = "value";
@@ -31,14 +33,11 @@ namespace OIC
     {
         namespace SH
         {
-            BinarySwitchResource::BinarySwitchResource() :
-                    m_userDelegate(NULL), SHBaseResource(URI_BINARYSWITCH)
+            BinarySwitchResource::BinarySwitchResource()
+            : m_delegate(NULL),
+              SHBaseResource(URI_BINARYSWITCH, RESOURCE_TYPE::BINARYSWITCH)
             {
-                std::cout << "[BinarySwitchResource] constructor" << std::endl;
-
-                std::list< std::string > types;
-                types.push_back(RESOURCE_TYPE::BINARYSWITCH);
-                setTypes(types);
+                OIC_LOG(DEBUG, TAG, "Entered ctor");
 
                 bool state = false;
                 PropertyBundle bundle;
@@ -52,7 +51,7 @@ namespace OIC
 
             bool BinarySwitchResource::getState()
             {
-                std::cout << "[BinarySwitchResource] getState" << std::endl;
+                OIC_LOG(DEBUG, TAG, "Entered getState");
 
                 // Get "value" property value from bundle.
                 bool state = false;
@@ -62,35 +61,35 @@ namespace OIC
 
             void BinarySwitchResource::setState(bool state)
             {
-                std::cout << "[BinarySwitchResource] setState" << std::endl;
+                OIC_LOG(DEBUG, TAG, "Entered setState");
 
                 PropertyBundle bundle;
                 bundle.setValue(KEY_VALUE, state);
                 setPropertyBundle(bundle);
             }
 
-            void BinarySwitchResource::setBinarySwitchResourceDelegate(
-                    BinarySwitchResourceDelegate *switchDelegate)
+            void BinarySwitchResource::setDelegate(BinarySwitchResourceDelegate *delegate)
             {
-                std::cout << "[BinarySwitchResource] setBinarySwitchResourceDelegate" << std::endl;
-                m_userDelegate = switchDelegate;
-                setDelegate(this);
+                OIC_LOG(DEBUG, TAG, "Entered setDelegate");
+                this->m_delegate = delegate;
+                SHBaseResource::setDelegate(this);
             }
 
-            ResultCode BinarySwitchResource::onGet(int requestId, const ResourceQuery& query)
+            ResultCode BinarySwitchResource::onGet(RequestId requestId, const ResourceQuery& query)
             {
-                std::cout << "[BinarySwitchResource] onGet" << std::endl;
+                OIC_LOG(DEBUG, TAG, "Entered onGet");
                 return SUCCESS;
             }
 
-            ResultCode BinarySwitchResource::onSet(int requestId, const PropertyBundle& bundle,
+            ResultCode BinarySwitchResource::onSet(RequestId requestId,
+                                                   const PropertyBundle& bundle,
                                                    const ResourceQuery& query)
             {
-                std::cout << "[BinarySwitchResource] onSet" << std::endl;
+                OIC_LOG(DEBUG, TAG, "Entered onSet");
 
-                if (!this->m_userDelegate)
+                if (!this->m_delegate)
                 {
-                    std::cout << "[BinarySwitchResource] delegate is null" << std::endl;
+                    OIC_LOG(ERROR, TAG, "Entered delegate is null");
                     return FAIL;
                 }
 
@@ -104,11 +103,11 @@ namespace OIC
                     ResultCode retCode = FAIL;
                     if (value)
                     {
-                        retCode = this->m_userDelegate->turnOnCallback();
+                        retCode = this->m_delegate->turnOnCallback();
                     }
                     else
                     {
-                        retCode = this->m_userDelegate->turnOffCallback();
+                        retCode = this->m_delegate->turnOffCallback();
                     }
 
                     bool ret = false;

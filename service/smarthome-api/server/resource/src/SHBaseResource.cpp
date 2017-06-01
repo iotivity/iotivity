@@ -20,7 +20,6 @@
 #include <SHBaseResource.h>
 #include <SHBaseResource_Impl.h>
 #include <ResourceQuery.h>
-#include <iostream>
 
 namespace OIC
 {
@@ -28,9 +27,21 @@ namespace OIC
     {
         namespace SH
         {
-            SHBaseResource::SHBaseResource(const std::string& uri)
+            SHBaseResource::SHBaseResource(const std::string& uri, const std::string& type)
             {
-                m_resourceImpl = new SHBaseResource_Impl(uri);
+                m_resourceImpl = new SHBaseResource_Impl(uri, type);
+            }
+
+            SHBaseResource::SHBaseResource(const std::string& uri, const std::string& type, 
+                                           const std::string& interface)
+            {
+                m_resourceImpl = new SHBaseResource_Impl(uri, type, interface);
+            }
+
+            SHBaseResource::SHBaseResource(const std::string& uri, 
+                                           const std::list<std::string>& types)
+            {
+                m_resourceImpl = new SHBaseResource_Impl(uri, types);
             }
 
             SHBaseResource::SHBaseResource(const std::string& uri,
@@ -85,12 +96,13 @@ namespace OIC
                 return m_resourceImpl->getPropertyBundle();
             }
 
-            bool SHBaseResource::sendResponse(int requestId, const PropertyBundle& bundle)
+            bool SHBaseResource::sendResponse(RequestId requestId, const PropertyBundle& bundle)
             {
                 return m_resourceImpl->sendResponse(requestId, bundle);
             }
 
-            bool SHBaseResource::sendErrorResponse(int requestId, const PropertyBundle& bundle)
+            bool SHBaseResource::sendErrorResponse(RequestId requestId,
+                                                   const PropertyBundle& bundle)
             {
                 return m_resourceImpl->sendErrorResponse(requestId, bundle);
             }

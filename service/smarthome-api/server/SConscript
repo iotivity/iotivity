@@ -54,6 +54,7 @@ common_dir = '../common/'
 
 smarthome_env.AppendUnique(CPPPATH= [
         device_dir + 'include',
+        device_dir +'internal',
         resource_dir + 'include',
         resource_dir + 'internal',
         common_dir + 'include',
@@ -64,7 +65,8 @@ smarthome_env.AppendUnique(CPPPATH= [
 # Source files and Targets
 ######################################################################
 
-smarthome_server_src = [device_dir +'src/SHBaseDevice.cpp',
+smarthome_server_src = [device_dir + 'src/SHBaseDevice.cpp',
+                        device_dir + 'src/SHBaseDevice_Impl.cpp',
                         device_dir + 'src/LightDevice.cpp',
                         device_dir + 'src/RobotCleanerDevice.cpp',
                         device_dir + 'src/DryerDevice.cpp',
@@ -73,7 +75,9 @@ smarthome_server_src = [device_dir +'src/SHBaseDevice.cpp',
                         resource_dir + 'src/SHBaseResource_Impl.cpp',
                         resource_dir + 'src/BinarySwitchResource.cpp',
                         resource_dir + 'src/ModeResource.cpp',
-                        resource_dir + 'src/LockStatusResource.cpp']
+                        resource_dir + 'src/LockStatusResource.cpp',
+                        resource_dir + 'src/EntityHandlerContext.cpp',
+                        resource_dir + 'src/EntityHandlerWrapper.cpp']
 
 smarthomelib = smarthome_env.SharedLibrary('smarthome_server_api', smarthome_server_src)
 #env.StaticLibrary('smarthome_server_api', smarthome_server_src)

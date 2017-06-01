@@ -62,7 +62,7 @@ namespace OIC
 
                  * @return Returns ::SUCCESS if success
                  */
-                virtual ResultCode onGet(int requestId, const ResourceQuery& query) = 0;
+                virtual ResultCode onGet(RequestId requestId, const ResourceQuery& query) = 0;
 
                 /**
                  * API to handle client post requests
@@ -74,8 +74,8 @@ namespace OIC
 
                  * @return Returns ::SUCCESS if success
                  */
-                virtual ResultCode onSet(int requestId, const PropertyBundle& bundle,
-                                        const ResourceQuery& query) = 0;
+                virtual ResultCode onSet(RequestId requestId, const PropertyBundle& bundle,
+                                         const ResourceQuery& query) = 0;
             };
 
            /**
@@ -129,7 +129,10 @@ namespace OIC
                 */
                 void setInterfaces(const std::list<std::string>& interfaces);
 
-                SHBaseResource(const std::string& uri);
+                SHBaseResource(const std::string& uri, const std::string& type);
+                SHBaseResource(const std::string& uri, const std::string& type, 
+                               const std::string& interface);
+                SHBaseResource(const std::string& uri, const std::list<std::string>& types);
                 SHBaseResource(const std::string& uri, const std::list<std::string>& types,
                                const std::list<std::string>& interfaces);
                 virtual ~SHBaseResource();
@@ -156,7 +159,7 @@ namespace OIC
                 * @param[in] bundle the properties of a resource
                 * @return true if success.
                 */
-                bool sendResponse(int requestId, const PropertyBundle& bundle);
+                bool sendResponse(RequestId requestId, const PropertyBundle& bundle);
 
                 /**
                 * API to send error response to an incoming request
@@ -166,7 +169,7 @@ namespace OIC
                 *
                 * @return true if success
                 */
-                bool sendErrorResponse(int requestId, const PropertyBundle& bundle);
+                bool sendErrorResponse(RequestId requestId, const PropertyBundle& bundle);
 
                 /**
                 * API to set delegate of this resource

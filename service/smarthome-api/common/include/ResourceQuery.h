@@ -21,6 +21,8 @@
 #define SMARTHOME_API_COMMON_RESOURCEQUERY_H_
 
 #include <sstream>
+#include <list>
+#include <iterator>
 #include <CommonException.h>
 #include <map>
 
@@ -106,6 +108,37 @@ namespace OIC
                 int size()
                 {
                     return m_query.size();
+                }
+
+                void setQuery(const std::string& uri)
+                {
+                    std::list<std::string> queryparams;
+                    std::string delimiter = "&;";
+
+                    std::size_t current, previous = 0;
+                    current = uri.find_first_of(delimiter);
+                    while (current != std::string::npos)
+                    {
+                        queryparams.push_back(uri.substr(previous, current - previous));
+                        previous = current + 1;
+                        current = uri.find_first_of(delimiter, previous);
+                    }
+                    queryparams.push_back(uri.substr(previous, current - previous));
+
+                    std::list<std::string>::const_iterator iter = queryparams.begin();
+                    while (iter != queryparams.end())
+                    {
+                        size_t index = iter->find('=');
+                        if (index == std::string::npos)
+                        {
+                            m_query[*iter] = "";
+                        }
+                        else
+                        {
+                            m_query[iter->substr(0, index)] = iter->substr(index + 1);
+                        }
+                        ++iter;
+                    }
                 }
 
             private:
