@@ -586,10 +586,11 @@ TEST_F(IPCAElevatorClient, SuccessfullyReceiveResourceChangeNotifications)
     ASSERT_EQ(true, result);
 
     // Wait until observed current floor is set to targeted floor.
+    // Outstanding requests should time out in 247 seconds (EXCHANGE_LIFETIME) per rfc 7252.
     std::unique_lock<std::mutex> lock(m_resourceChangeCbMutex);
     m_resourceChangeCbCV.wait_for(
             lock,
-            std::chrono::seconds(10),
+            std::chrono::seconds(247),
             [this] { return GetObservedCurrentFloor() == 10; });
 
     EXPECT_EQ(10, GetObservedCurrentFloor());   // check it is at floor 10.

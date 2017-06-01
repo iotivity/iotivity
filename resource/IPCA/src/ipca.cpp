@@ -308,6 +308,7 @@ typedef struct
     std::mutex syncMutex;
     std::condition_variable condVar;
     IPCAStatus result;
+    bool callbackComplete;
 } AsyncContext;
 
 void IPCA_CALL AsyncCallback(
@@ -318,6 +319,7 @@ void IPCA_CALL AsyncCallback(
     OC_UNUSED(propertyBagHandle);
 
     AsyncContext* async = reinterpret_cast<AsyncContext*>(context);
+    async->callbackComplete = true;
     async->result = result;
     async->condVar.notify_all();
 }
@@ -327,6 +329,7 @@ IPCAStatus IPCA_CALL IPCAFactoryReset(IPCADeviceHandle deviceHandle)
     IPCAStatus status;
 
     AsyncContext factoryResetContext;
+    factoryResetContext.callbackComplete = false;
     std::unique_lock<std::mutex> lock { factoryResetContext.syncMutex };
 
     IPCAPropertyBagHandle propertyBagHandle;
@@ -356,7 +359,10 @@ IPCAStatus IPCA_CALL IPCAFactoryReset(IPCADeviceHandle deviceHandle)
 
     if (status == IPCA_OK)
     {
-        factoryResetContext.condVar.wait_for(lock, std::chrono::milliseconds{ INT_MAX });
+        factoryResetContext.condVar.wait_for(
+                                        lock,
+                                        std::chrono::milliseconds{ INT_MAX },
+                                        [&]{return factoryResetContext.callbackComplete;});
         IPCAPropertyBagDestroy(propertyBagHandle);
         return factoryResetContext.result;
     }
@@ -370,6 +376,7 @@ IPCAStatus IPCA_CALL IPCAReboot(IPCADeviceHandle deviceHandle)
     IPCAStatus status;
 
     AsyncContext rebootContext;
+    rebootContext.callbackComplete = false;
     std::unique_lock<std::mutex> lock { rebootContext.syncMutex };
 
     IPCAPropertyBagHandle propertyBagHandle;
@@ -399,7 +406,10 @@ IPCAStatus IPCA_CALL IPCAReboot(IPCADeviceHandle deviceHandle)
 
     if (status == IPCA_OK)
     {
-        rebootContext.condVar.wait_for(lock, std::chrono::milliseconds{ INT_MAX });
+        rebootContext.condVar.wait_for(
+                                lock,
+                                std::chrono::milliseconds{ INT_MAX },
+                                [&]{return rebootContext.callbackComplete;});
         IPCAPropertyBagDestroy(propertyBagHandle);
         return rebootContext.result;
     }
