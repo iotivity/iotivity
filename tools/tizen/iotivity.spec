@@ -108,8 +108,10 @@ BuildRequires:  pkgconfig(ttrace)
 %endif
 BuildRequires:  pkgconfig(capi-network-connection)
 BuildRequires:  pkgconfig(capi-network-bluetooth) >= 0.1.52
-%if 3 <= 0%{?tizen_version_major}
+%if 0%{?profile:1} && 3 <= 0%{?tizen_version_major}
 BuildRequires:  bluetooth-tools-profile_%{profile}
+%else
+BuildRequires:  bluetooth-tools
 %endif
 %else
 %if 0%{?fedora:1}
