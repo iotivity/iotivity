@@ -255,7 +255,6 @@ OCEntityHandlerResult CHPEntityHandler(OCEntityHandlerFlag flag,
                     ehResult = OC_EH_OK;
                     OCEntityHandlerResponse response =
                                 { .requestHandle = entityHandlerRequest->requestHandle,
-                                  .resourceHandle = entityHandlerRequest->resource,
                                   .ehResult = ehResult};
 
                     response.payload = (OCPayload *)CHPGetDiscoveryPayload();
@@ -295,8 +294,7 @@ void CHPHandleHttpResponse(const HttpResponse_t *httpResponse, void *context)
     }
 
     CHPRequest_t *ctxt = (CHPRequest_t *)context;
-    OCEntityHandlerResponse response = { .requestHandle = ctxt->requestHandle,
-                                         .resourceHandle = g_proxyHandle};
+    OCEntityHandlerResponse response = { .requestHandle = ctxt->requestHandle };
     response.persistentBufferFlag = 0;
 
     OCStackResult result = CHPGetOCCode(httpResponse->status, ctxt->method,
@@ -414,8 +412,7 @@ OCStackResult CHPHandleOCFRequest(const OCEntityHandlerRequest* requestInfo,
     HttpRequest_t httpRequest = { .httpMajor = 1,
                                   .httpMinor = 1};
 
-    OCEntityHandlerResponse response = { .requestHandle = requestInfo->requestHandle,
-                                         .resourceHandle = requestInfo->resource};
+    OCEntityHandlerResponse response = { .requestHandle = requestInfo->requestHandle };
     OCStackResult result = CHPGetHttpMethod(requestInfo->method, &httpRequest.method);
     if (OC_STACK_OK != result)
     {

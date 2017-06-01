@@ -44,7 +44,6 @@ static OCStackResult sendResponse(const OCEntityHandlerRequest *ehRequest, OCRep
 {
     OCEntityHandlerResponse response = { 0 };
     response.requestHandle = ehRequest->requestHandle;
-    response.resourceHandle = ehRequest->resource;
     response.ehResult = ehResult;
     response.payload = (OCPayload*)(rdPayload);
     return OCDoResponse(&response);

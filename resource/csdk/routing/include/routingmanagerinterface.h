@@ -65,12 +65,10 @@ OCStackResult RMSendDeleteRequest(const OCDevAddr *devAddr, OCRepPayload *payloa
 /**
  * Send a response for GET/OBSERVE request received for Gateway resource.
  * @param[in]   request     Request Received.
- * @param[in]   resource    Resource Handle.
  * @param[in]   payload     Payload containing Gateway Entries.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-OCStackResult RMSendResponse(const OCServerRequest *request, const OCResource *resource,
-                             const OCRepPayload *payload);
+OCStackResult RMSendResponse(const OCServerRequest *request, const OCRepPayload *payload);
 
 /**
  * Send notification for list of observers except a particular observer.

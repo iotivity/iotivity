@@ -228,7 +228,6 @@ OCLedHandler (OCEntityHandlerFlag flag,
             memset(&response, 0, sizeof(OCEntityHandlerResponse));
 
             response.requestHandle = request->requestHandle;
-            response.resourceHandle = request->resource;
             response.ehResult = result;
             response.payload = (OCPayload*)payload;
             response.numSendVendorSpecificHeaderOptions = 0;

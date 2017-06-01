@@ -101,7 +101,6 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_TOPIC, NS_COLLECTION_TOPIC_URI);
 
     response.requestHandle = entityHandlerRequest->requestHandle;
-    response.resourceHandle = entityHandlerRequest->resource;
     response.persistentBufferFlag = 0;
     response.ehResult = OC_EH_OK;
     response.payload = (OCPayload *) payload;

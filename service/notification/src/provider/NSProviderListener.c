@@ -702,7 +702,6 @@ OCStackResult NSProviderSendResponse(OCEntityHandlerRequest * entityHandlerReque
     memset(response.resourceUri, 0, sizeof response.resourceUri);
 
     response.requestHandle = entityHandlerRequest->requestHandle;
-    response.resourceHandle = entityHandlerRequest->resource;
     response.persistentBufferFlag = 0;
     response.ehResult = ehResult;
     response.payload = (OCPayload *) payload;

@@ -889,7 +889,6 @@ OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
 
         // Format the response.  Note this requires some info about the request
         response.requestHandle = info->ehRequest;
-        response.resourceHandle = info->collResource;
         response.payload = clientResponse->payload;
         response.numSendVendorSpecificHeaderOptions = 0;
         memset(response.sendVendorSpecificHeaderOptions, 0,
@@ -1184,7 +1183,6 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
 
             // Format the response.  Note this requires some info about the request
             response.requestHandle = ehRequest->requestHandle;
-            response.resourceHandle = ehRequest->resource;
             response.payload = (OCPayload*) payload;
             response.numSendVendorSpecificHeaderOptions = 0;
             memset(response.sendVendorSpecificHeaderOptions, 0,
@@ -1364,7 +1362,6 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
 
             // Format the response.  Note this requires some info about the request
             response.requestHandle = ehRequest->requestHandle;
-            response.resourceHandle = ehRequest->resource;
             response.payload = (OCPayload*) payload;
             response.numSendVendorSpecificHeaderOptions = 0;
             memset(response.sendVendorSpecificHeaderOptions, 0,

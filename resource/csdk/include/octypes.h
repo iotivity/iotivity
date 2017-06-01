@@ -1699,7 +1699,7 @@ typedef struct
     /** Request handle.*/
     OCRequestHandle requestHandle;
 
-    /** Resource handle.*/
+    /** Resource handle. (@deprecated: This parameter is not used.) */
     OCResourceHandle resourceHandle;
 
     /** Allow the entity handler to pass a result with the response.*/

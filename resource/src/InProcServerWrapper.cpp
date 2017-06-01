@@ -620,7 +620,6 @@ namespace OC
             HeaderOptions serverHeaderOptions = pResponse->getHeaderOptions();
 
             response.requestHandle = pResponse->getRequestHandle();
-            response.resourceHandle = pResponse->getResourceHandle();
             response.ehResult = pResponse->getResponseResult();
 
             response.payload = reinterpret_cast<OCPayload*>(pResponse->getPayload());

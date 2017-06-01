@@ -181,7 +181,6 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
         {
             // Format the response.  Note this requires some info about the request
             response.requestHandle = entityHandlerRequest->requestHandle;
-            response.resourceHandle = entityHandlerRequest->resource;
             response.ehResult = ehRet;
             response.payload = (OCPayload*) payload;
             response.numSendVendorSpecificHeaderOptions = 0;

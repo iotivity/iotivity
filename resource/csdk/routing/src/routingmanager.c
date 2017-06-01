@@ -96,26 +96,23 @@ static bool g_isRMInitialized = false;
 /**
  * API to handle the GET request received for a Gateway Resource.
  * @param[in]   request     Request Received.
- * @param[in]   resource    Resource handle used for sending the response.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-OCStackResult RMHandleGETRequest(const OCServerRequest *request, const OCResource *resource);
+OCStackResult RMHandleGETRequest(const OCServerRequest *request);
 
 /**
  * API to handle the OBSERVE request received for a Gateway Resource.
  * @param[in,out]   request    Request Received.
- * @param[in]       resource   Resource handle used for sending the response.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-OCStackResult RMHandleOBSERVERequest(OCServerRequest *request, const OCResource *resource);
+OCStackResult RMHandleOBSERVERequest(OCServerRequest *request);
 
 /**
  * API to handle the OBSERVE request received for a Gateway Resource.
  * @param[in,out]   request    Request Received.
- * @param[in]       resource   Resource handle used for sending the response.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-OCStackResult RMHandleDELETERequest(const OCServerRequest *request, const OCResource *resource);
+OCStackResult RMHandleDELETERequest(const OCServerRequest *request);
 
 /**
  * Adds a observer after generating observer ID whenever observe
@@ -231,7 +228,7 @@ OCStackResult RMTerminate()
     return result;
 }
 
-OCStackResult RMHandleGatewayRequest(OCServerRequest *request, const OCResource *resource)
+OCStackResult RMHandleGatewayRequest(OCServerRequest *request)
 {
     OIC_LOG(DEBUG, TAG, "RMHandleGatewayRequest IN");
 
@@ -242,7 +239,6 @@ OCStackResult RMHandleGatewayRequest(OCServerRequest *request, const OCResource 
     }
 
     RM_NULL_CHECK_WITH_RET(request, TAG, "request");
-    RM_NULL_CHECK_WITH_RET(resource, TAG, "resource");
 
     OIC_LOG_V(DEBUG, TAG, "Received request of method: %d", request->method);
 
@@ -252,7 +248,7 @@ OCStackResult RMHandleGatewayRequest(OCServerRequest *request, const OCResource 
         {
             case OC_OBSERVE_REGISTER:
                 OIC_LOG(DEBUG, TAG, "Received OBSERVE request");
-                RMHandleOBSERVERequest(request, resource);
+                RMHandleOBSERVERequest(request);
                 break;
             case OC_OBSERVE_DEREGISTER:
                 //TODO: Handle this case
@@ -260,7 +256,7 @@ OCStackResult RMHandleGatewayRequest(OCServerRequest *request, const OCResource 
                 break;
             case OC_OBSERVE_NO_OPTION:
                 OIC_LOG(DEBUG, TAG, "Received GET request");
-                RMHandleGETRequest(request, resource);
+                RMHandleGETRequest(request);
                 break;
             default:
                 OIC_LOG(DEBUG, TAG, "Not Supported by Routing Manager");
@@ -269,7 +265,7 @@ OCStackResult RMHandleGatewayRequest(OCServerRequest *request, const OCResource 
     else if (OC_REST_DELETE == request->method)
     {
         OIC_LOG(DEBUG, TAG, "Received a Delete request");
-        RMHandleDELETERequest(request, resource);
+        RMHandleDELETERequest(request);
     }
     OIC_LOG(DEBUG, TAG, "RMHandleGatewayRequest OUT");
     return OC_STACK_OK;
@@ -549,11 +545,10 @@ exit:
     return OC_STACK_OK;
 }
 
-OCStackResult RMHandleGETRequest(const OCServerRequest *request, const OCResource *resource)
+OCStackResult RMHandleGETRequest(const OCServerRequest *request)
 {
     OIC_LOG(DEBUG, TAG, "RMHandleGETRequest IN");
     RM_NULL_CHECK_WITH_RET(request, TAG, "request");
-    RM_NULL_CHECK_WITH_RET(resource, TAG, "resource");
 
     OCRepPayload *payload = NULL;
     OCStackResult result = RMPConstructGatewayPayload(g_GatewayID, &payload);
@@ -564,7 +559,7 @@ OCStackResult RMHandleGETRequest(const OCServerRequest *request, const OCResourc
     }
 
     // Send a response for GET request
-    result = RMSendResponse(request, resource, payload);
+    result = RMSendResponse(request, payload);
     if (OC_STACK_OK != result)
     {
         OIC_LOG_V(DEBUG, TAG, "Send response failed[%d]", result);
@@ -583,11 +578,10 @@ OCStackResult RMHandleGETRequest(const OCServerRequest *request, const OCResourc
     return result;
 }
 
-OCStackResult RMHandleOBSERVERequest(OCServerRequest *request, const OCResource *resource)
+OCStackResult RMHandleOBSERVERequest(OCServerRequest *request)
 {
     OIC_LOG(DEBUG, TAG, "RMHandleOBSERVERequest IN");
     RM_NULL_CHECK_WITH_RET(request, TAG, "request");
-    RM_NULL_CHECK_WITH_RET(resource, TAG, "resource");
 
     // Parse payload and add the gateway entry.
     if (0 < request->payloadSize)
@@ -616,7 +610,7 @@ OCStackResult RMHandleOBSERVERequest(OCServerRequest *request, const OCResource 
         goto exit;
     }
 
-    result = RMSendResponse(request, resource, payload);
+    result = RMSendResponse(request, payload);
     RMPFreePayload(payload);
     RM_VERIFY_SUCCESS(result, OC_STACK_OK);
 exit:
@@ -624,11 +618,10 @@ exit:
     return result;
 }
 
-OCStackResult RMHandleDELETERequest(const OCServerRequest *request, const OCResource *resource)
+OCStackResult RMHandleDELETERequest(const OCServerRequest *request)
 {
     OIC_LOG(DEBUG, TAG, "RMHandleDELETERequest IN");
     RM_NULL_CHECK_WITH_RET(request, TAG, "request");
-    RM_NULL_CHECK_WITH_RET(resource, TAG, "resource");
 
     uint32_t gatewayId = 0;
     OCStackResult result = RMPParseRequestPayload(request->payload, request->payloadSize,

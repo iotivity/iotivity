@@ -189,15 +189,13 @@ OCStackResult RMSendDeleteRequest(const OCDevAddr *devAddr, OCRepPayload *payloa
                     &deleteCb, NULL, 0);
 }
 
-OCStackResult RMSendResponse(const OCServerRequest *request, const OCResource *resource,
-                             const OCRepPayload *payload)
+OCStackResult RMSendResponse(const OCServerRequest *request, const OCRepPayload *payload)
 {
     OIC_LOG(DEBUG, TAG, "RMSendResponse IN");
     OCEntityHandlerResponse response = {.ehResult = OC_EH_OK,
                                         .payload = (OCPayload *)payload,
                                         .persistentBufferFlag = 0,
-                                        .requestHandle = (OCRequestHandle) request,
-                                        .resourceHandle = (OCResourceHandle) resource
+                                        .requestHandle = (OCRequestHandle) request
                                         };
     OIC_LOG(DEBUG, TAG, "RMSendResponse OUT");
 

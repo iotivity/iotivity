@@ -421,8 +421,7 @@ OCStackResult SendKeepAliveResponse(OCServerRequest *request,
 
     OCEntityHandlerResponse ehResponse = { .ehResult = result, 
                                            .payload = (OCPayload*) payload, 
-                                           .requestHandle = request,
-                                           .resourceHandle = g_keepAliveHandle };
+                                           .requestHandle = request };
     OICStrcpy(ehResponse.resourceUri, sizeof(ehResponse.resourceUri), KEEPALIVE_RESOURCE_URI);
 
     // Send response message.

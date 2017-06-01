@@ -3069,7 +3069,6 @@ static OCEntityHandlerResult DiagnosticPayloadRequest(OCEntityHandlerFlag flag,
     OCEntityHandlerResponse response;
     memset(&response, 0, sizeof(response));
     response.requestHandle = request->requestHandle;
-    response.resourceHandle = request->resource;
     response.ehResult = OC_EH_BAD_REQ;
     response.payload = (OCPayload*) OCDiagnosticPayloadCreate("message");
     EXPECT_TRUE(response.payload != NULL);

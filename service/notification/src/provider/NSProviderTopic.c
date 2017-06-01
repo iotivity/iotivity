@@ -335,7 +335,6 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
 
     NSOICFree(copyReq);
     response.requestHandle = entityHandlerRequest->requestHandle;
-    response.resourceHandle = entityHandlerRequest->resource;
     response.persistentBufferFlag = 0;
     response.ehResult = OC_EH_OK;
     response.payload = (OCPayload *) payload;

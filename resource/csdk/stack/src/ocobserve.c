@@ -201,7 +201,6 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                         ehResponse.payload = (OCPayload*)presenceResBuf;
                         ehResponse.persistentBufferFlag = 0;
                         ehResponse.requestHandle = (OCRequestHandle) request;
-                        ehResponse.resourceHandle = (OCResourceHandle) resPtr;
                         OICStrcpy(ehResponse.resourceUri, sizeof(ehResponse.resourceUri),
                                 resourceObserver->resUri);
                         result = OCDoResponse(&ehResponse);
@@ -287,7 +286,6 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                         memcpy(ehResponse.payload, payload, sizeof(*payload));
                         ehResponse.persistentBufferFlag = 0;
                         ehResponse.requestHandle = (OCRequestHandle) request;
-                        ehResponse.resourceHandle = (OCResourceHandle) resource;
                         result = OCDoResponse(&ehResponse);
                         if (result == OC_STACK_OK)
                         {

@@ -57,7 +57,6 @@ OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         OCSecurityPayload ocPayload = {.base = {.type = PAYLOAD_TYPE_INVALID}};
 
         response.requestHandle = ehRequest->requestHandle;
-        response.resourceHandle = ehRequest->resource;
         response.ehResult = ehRet;
         response.payload = (OCPayload *)(&ocPayload);
         response.payload->type = PAYLOAD_TYPE_SECURITY;

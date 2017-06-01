@@ -94,15 +94,14 @@ static bool AddRTSBaslinePayload(OCRepPayload **linkArray, int size, OCRepPayloa
     return b;
 }
 
-static OCStackResult SendResponse(const OCRepPayload *payload, const OCEntityHandlerRequest *ehRequest,
-    const OCResource* collResource, OCEntityHandlerResult ehResult)
+static OCStackResult SendResponse(const OCRepPayload *payload,
+                        const OCEntityHandlerRequest *ehRequest, OCEntityHandlerResult ehResult)
 {
     OCEntityHandlerResponse response = {0};
     response.ehResult = ehResult;
     response.payload = (OCPayload*)payload;
     response.persistentBufferFlag = 0;
     response.requestHandle = (OCRequestHandle) ehRequest->requestHandle;
-    response.resourceHandle = (OCResourceHandle) collResource;
     return OCDoResponse(&response);
 }
 
@@ -185,7 +184,7 @@ exit:
     {
         ehResult = (ret == OC_STACK_NO_RESOURCE) ? OC_EH_RESOURCE_NOT_FOUND : OC_EH_ERROR;
     }
-    ret = SendResponse(colPayload, ehRequest, collResource, ehResult);
+    ret = SendResponse(colPayload, ehRequest, ehResult);
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *)colPayload);
     OCRepPayloadDestroy(colPayload);
     return ret;
@@ -309,7 +308,7 @@ OCStackResult DefaultCollectionEntityHandler(OCEntityHandlerFlag flag, OCEntityH
 exit:
     if (result != OC_STACK_OK)
     {
-        result = SendResponse(NULL, ehRequest, (OCResource *)ehRequest->resource, OC_EH_BAD_REQ);
+        result = SendResponse(NULL, ehRequest, OC_EH_BAD_REQ);
     }
     OICFree(ifQueryParam);
     OICFree(rtQueryParam);

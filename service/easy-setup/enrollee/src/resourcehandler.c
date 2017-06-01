@@ -1545,7 +1545,6 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
 
         // Format the response.  Note this requires some info about the request
         response.requestHandle = entityHandlerRequest->requestHandle;
-        response.resourceHandle = entityHandlerRequest->resource;
         response.ehResult = ehRet;
         //response uses OCPaylod while all get,put methodes use OCRepPayload
         response.payload = (OCPayload*) (payload);

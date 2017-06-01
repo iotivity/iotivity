@@ -1593,7 +1593,7 @@ static bool includeThisResourceInResponse(OCResource *resource,
            resourceMatchesRTFilter(resource, resourceTypeFilter);
 }
 
-OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCResource *resource,
+static OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request,
                                 OCPayload *discoveryPayload, OCEntityHandlerResult ehResult)
 {
     OCEntityHandlerResponse *response = NULL;
@@ -1606,7 +1606,6 @@ OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCRes
     response->payload = discoveryPayload;
     response->persistentBufferFlag = 0;
     response->requestHandle = (OCRequestHandle) request;
-    response->resourceHandle = (OCResourceHandle) resource;
 
     result = OCDoResponse(response);
 
@@ -2006,7 +2005,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     {
         // Received request for a gateway
         OIC_LOG(INFO, TAG, "Request is for Gateway Virtual Request");
-        discoveryResult = RMHandleGatewayRequest(request, resource);
+        discoveryResult = RMHandleGatewayRequest(request);
     }
 #endif
     else if (OC_INTROSPECTION_URI == virtualUriInRequest)
@@ -2066,7 +2065,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         OIC_LOG_PAYLOAD(DEBUG, payload);
         if(discoveryResult == OC_STACK_OK)
         {
-            SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
+            SendNonPersistantDiscoveryResponse(request, payload, OC_EH_OK);
         }
         else // Error handling
         {
@@ -2074,7 +2073,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             {
                 OIC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d) discovery request",
                     discoveryResult, virtualUriInRequest);
-                SendNonPersistantDiscoveryResponse(request, resource, NULL,
+                SendNonPersistantDiscoveryResponse(request, NULL,
                     (discoveryResult == OC_STACK_NO_RESOURCE) ?
                         OC_EH_RESOURCE_NOT_FOUND : OC_EH_ERROR);
             }
