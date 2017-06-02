@@ -32,7 +32,8 @@ src_dir = env.get('SRC_DIR')
 # rapidjson fetch
 SConscript(os.path.join(env.get('SRC_DIR'), 'extlibs', 'rapidjson', 'SConscript'))
 
-if target_os not in ['android', 'arduino', 'darwin', 'ios', 'tizen', 'msys_nt', 'windows']:
+if target_os not in [
+    'android', 'arduino', 'darwin', 'ios', 'tizen', 'msys_nt', 'windows']:
 
     SConscript(os.path.join('common', 'SConscript'))
 
