@@ -421,6 +421,12 @@ static OCStackResult ConvertOCJSONStringToCBORFile(const char *jsonStr, const ch
     {
         OicSecCred_t *cred = JSONToCredBin(jsonStr);
         VERIFY_NOT_NULL(TAG, cred, FATAL);
+        // The source code line below is just a workaround for IOT-2407.
+        // It should be deleted when IOT-2407 gets fixed. There is no clear
+        // correlation between strlen(jsonStr) and the CBOR size, but
+        // CredToCBORPayload happens to work better when initializing
+        // credCborSize this way.
+        credCborSize = strlen(jsonStr);
         ret = CredToCBORPayload(cred, &credCbor, &credCborSize, secureFlag);
         if (OC_STACK_OK != ret)
         {
@@ -1154,7 +1160,7 @@ static OicEncodingType_t GetEncodingTypeFromStr(const char *encodingType)
     {
         return OIC_ENCODING_DER;
     }
-    OIC_LOG(WARNING, TAG, "Unknow encoding type dectected!");
+    OIC_LOG(WARNING, TAG, "Unknown encoding type dectected!");
     OIC_LOG(WARNING, TAG, "json2cbor will use \"oic.sec.encoding.raw\" as default encoding type.");
     return OIC_ENCODING_RAW;
 }
@@ -1271,6 +1277,10 @@ OicSecCred_t *JSONToCredBin(const char *jsonStr)
                 VERIFY_NOT_NULL(TAG, (cred->publicData.data), ERROR);
                 memcpy(cred->publicData.data, jsonPub->valuestring, jsonObjLen);
                 cred->publicData.len = jsonObjLen;
+
+                cJSON *jsonEncoding = cJSON_GetObjectItem(jsonObj, OIC_JSON_ENCODING_NAME);
+                VERIFY_NOT_NULL(TAG, jsonEncoding, ERROR);
+                cred->publicData.encoding = GetEncodingTypeFromStr(jsonEncoding->valuestring);
             }
 
             //Optional Data
@@ -1288,7 +1298,6 @@ OicSecCred_t *JSONToCredBin(const char *jsonStr)
                 cJSON *jsonEncoding = cJSON_GetObjectItem(jsonObj, OIC_JSON_ENCODING_NAME);
                 VERIFY_NOT_NULL(TAG, jsonEncoding, ERROR);
                 cred->optionalData.encoding = GetEncodingTypeFromStr(jsonEncoding->valuestring);
-
                 cJSON *jsonRevstat = cJSON_GetObjectItem(jsonObj, OIC_JSON_REVOCATION_STATUS_NAME);
                 VERIFY_NOT_NULL(TAG, jsonRevstat, ERROR);
                 cred->optionalData.revstat = jsonObj->valueint;
