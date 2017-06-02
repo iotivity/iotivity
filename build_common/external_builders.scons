@@ -21,6 +21,7 @@ import SCons.Errors
 
 Import('env')
 
+
 # Check whether a library exists, if not, notify user to install it or try to
 # download the source code and build it
 # @param libname - the name of the library try to prepare
@@ -30,8 +31,8 @@ Import('env')
 #            by default, it's <src_dir>/extlibs/<libname>/
 # @param script - the building script, by default, it's 'SConscript'
 #
-def __prepare_lib(ienv, libname, lib = None, path = None, script = None):
-    p_env = ienv.Clone(LIBS = [])
+def __prepare_lib(ienv, libname, lib=None, path=None, script=None):
+    p_env = ienv.Clone(LIBS=[])
     if p_env.GetOption('clean') or p_env.GetOption('help'):
         return
 
@@ -57,27 +58,30 @@ def __prepare_lib(ienv, libname, lib = None, path = None, script = None):
             if target_os in ['linux', 'darwin', 'tizen']:
                 print 'Library (%s) not found, please intall it, exit ...' % libname
             else:
-                print 'Library (%s) not found and cannot find the scons script (%s), exit ...' % (libname, st)
+                print 'Library (%s) not found and cannot find the scons script (%s), exit ...' % (
+                    libname, st)
             Exit(1)
 
     conf.Finish()
 
+
 # Run configure command (usually it's done before build a library)
-def __configure(env, cwd, cmd) :
+def __configure(env, cwd, cmd):
     print "Configuring using [%s/%s] ..." % (cwd, cmd)
     # build it now (we need the shell, because some programs need it)
     devnull = open(os.devnull, "wb")
-    handle  = subprocess.Popen(cmd, shell=True, cwd=cwd, stdout=devnull)
+    handle = subprocess.Popen(cmd, shell=True, cwd=cwd, stdout=devnull)
 
-    if handle.wait() <> 0 :
-        raise SCons.Errors.BuildError( "Run configuring script [%s]" % (cmd) )
+    if handle.wait() <> 0:
+        raise SCons.Errors.BuildError("Run configuring script [%s]" % (cmd))
+
 
 # Download from URL 'url', will save as 'target'
-def __download(ienv, target, url) :
-    if os.path.exists(target) :
+def __download(ienv, target, url):
+    if os.path.exists(target):
         return target
 
-    try :
+    try:
         print "Download %s from %s" % (target, url)
         print "Downloading ..."
         stream = urllib2.urlopen(url)
@@ -86,16 +90,25 @@ def __download(ienv, target, url) :
         file.close()
         print "Download %s from %s complete" % (target, url)
         return target
-    except Exception, e :
-        raise SCons.Errors.StopError( '%s [%s]' % (e, url) )
+    except Exception, e:
+        raise SCons.Errors.StopError('%s [%s]' % (e, url))
+
 
 # Install header file(s) to <src_dir>/deps/<target_os>/include
 def __install_head_file(ienv, file):
-        return ienv.Install(os.path.join(env.get('SRC_DIR'), 'dep', target_os, target_arch, 'usr', 'include'), file)
+    return ienv.Install(
+        os.path.join(
+            env.get('SRC_DIR'), 'dep', target_os, target_arch, 'usr',
+            'include'), file)
+
 
 # Install library binaries to <src_dir>/deps/<target_os>/lib/<arch>
 def __install_lib(ienv, lib):
-        return ienv.Install(os.path.join(env.get('SRC_DIR'), 'dep', target_os, target_arch, 'usr', 'lib'), lib)
+    return ienv.Install(
+        os.path.join(
+            env.get('SRC_DIR'), 'dep', target_os, target_arch, 'usr', 'lib'),
+        lib)
+
 
 SConscript('tools/UnpackAll.py')
 
