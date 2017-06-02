@@ -97,10 +97,24 @@ namespace OIC
                     if (value.compare(VALUE_LOCKED) == 0)
                     {
                         retCode = this->m_delegate->onLock();
+
+                        if (FAIL != retCode)
+                        {
+                            PropertyBundle storedBundle = getPropertyBundle();
+                            storedBundle.setValue(KEY_LOCKSTATE, VALUE_LOCKED);
+                            setPropertyBundle(storedBundle);
+                        }
                     }
                     else if (value.compare(VALUE_UNLOCKED) == 0)
                     {
                         retCode = this->m_delegate->onUnLock();
+
+                        if (FAIL != retCode)
+                        {
+                            PropertyBundle storedBundle = getPropertyBundle();
+                            storedBundle.setValue(KEY_LOCKSTATE, VALUE_UNLOCKED);
+                            setPropertyBundle(storedBundle);
+                        }
                     }
                     else
                     {
