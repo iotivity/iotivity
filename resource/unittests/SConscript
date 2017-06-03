@@ -20,7 +20,7 @@
 
 import os
 import os.path
-from tools.scons.RunTest import *
+from tools.scons.RunTest import run_test
 
 Import('test_env')
 
@@ -33,54 +33,55 @@ with_mq = unittests_env.get('WITH_MQ')
 ######################################################################
 # Build flags
 ######################################################################
-unittests_env.PrependUnique(CPPPATH = [
-        '../include',
-        '../oc_logger/include',
-        '../csdk/include',
-        '../csdk/stack/include',
-        '../csdk/security/include',
-        '../csdk/stack/include/internal',
-        '../csdk/connectivity/api',
-        '../csdk/connectivity/external/inc',
-        '../csdk/ocsocket/include',
-        '../c_common/ocrandom/include',
-        '../csdk/logger/include',
-        '#extlibs/hippomocks/hippomocks',
-        ])
+unittests_env.PrependUnique(CPPPATH=[
+    '../include',
+    '../oc_logger/include',
+    '../csdk/include',
+    '../csdk/stack/include',
+    '../csdk/security/include',
+    '../csdk/stack/include/internal',
+    '../csdk/connectivity/api',
+    '../csdk/connectivity/external/inc',
+    '../csdk/ocsocket/include',
+    '../c_common/ocrandom/include',
+    '../csdk/logger/include',
+    '#/extlibs/hippomocks/hippomocks',
+])
 
 if target_os in ['windows']:
     # Non-Windows platforms find the boost headers under /usr/include or similar path.
-    unittests_env.AppendUnique(CPPPATH = ['#extlibs/boost/boost'])
-    unittests_env.AppendUnique(LIBS = ['sqlite3'])
+    unittests_env.AppendUnique(CPPPATH=['#/extlibs/boost/boost'])
+    unittests_env.AppendUnique(LIBS=['sqlite3'])
 
     if unittests_env['CC'] == 'cl':
         # Fix for: resource\unittests\OCRepresentationEncodingTest.cpp "fatal error C1128:
         # number of sections exceeded object file format limit: compile with /bigobj"
         unittests_env.AppendUnique(CCFLAGS=['/bigobj'])
 elif target_os in ['linux', 'tizen']:
-    unittests_env.ParseConfig('pkg-config --cflags --libs sqlite3 gobject-2.0 gio-2.0 glib-2.0')
+    unittests_env.ParseConfig(
+        'pkg-config --cflags --libs sqlite3 gobject-2.0 gio-2.0 glib-2.0')
 
-unittests_env.PrependUnique(LIBS = [
-        'oc',
-        'octbstack_internal',
-        'ocsrm',
-        'routingmanager',
-        'oc_logger_internal',
-        'connectivity_abstraction_internal',
-        'coap',
-        ])
+unittests_env.PrependUnique(LIBS=[
+    'oc',
+    'octbstack_internal',
+    'ocsrm',
+    'routingmanager',
+    'oc_logger_internal',
+    'connectivity_abstraction_internal',
+    'coap',
+])
 
 if unittests_env.get('SECURED') == '1':
-    unittests_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509'])
+    unittests_env.AppendUnique(LIBS=['mbedtls', 'mbedx509'])
 
 # c_common calls into mbedcrypto.
-unittests_env.AppendUnique(LIBS = ['mbedcrypto'])
+unittests_env.AppendUnique(LIBS=['mbedcrypto'])
 
 if unittests_env.get('LOGGING'):
-    unittests_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    unittests_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 if unittests_env.get('WITH_CLOUD'):
-    unittests_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD'])
+    unittests_env.AppendUnique(CPPDEFINES=['WITH_CLOUD'])
 
 ######################################################################
 # Source files and Targets
@@ -95,7 +96,7 @@ unittests_src = [
     'OCExceptionTest.cpp',
     'OCResourceResponseTest.cpp',
     'OCHeaderOptionTest.cpp',
-    ]
+]
 
 # TODO: IOT-2039: Fix errors in the following Windows tests.
 if target_os in ['windows']:
@@ -120,7 +121,7 @@ if unittests_env.get('TEST') == '1':
     if target_os in ['windows']:
         unittests_env.AppendENVPath('PATH', unittests_env.get('BUILD_DIR'))
     if target_os in ['linux', 'windows']:
-        run_test(unittests_env,
-        'resource_unittests_unittests.memcheck',
-        'resource/unittests/unittests',
-        unittests)
+        run_test(unittests_env, 
+                 'resource_unittests_unittests.memcheck',
+                 'resource/unittests/unittests', 
+                 unittests)
