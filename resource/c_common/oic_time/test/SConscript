@@ -20,7 +20,7 @@
 
 import os
 import os.path
-from tools.scons.RunTest import *
+from tools.scons.RunTest import run_test
 
 Import('test_env')
 
@@ -31,14 +31,15 @@ target_os = timetest_env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-timetest_env.PrependUnique(CPPPATH = [
-        '../include'])
+timetest_env.PrependUnique(CPPPATH=['../include'])
 
-timetest_env.AppendUnique(LIBPATH = [os.path.join(timetest_env.get('BUILD_DIR'), 'resource', 'c_common')])
-timetest_env.PrependUnique(LIBS = ['c_common'])
+timetest_env.AppendUnique(LIBPATH=[
+    os.path.join(timetest_env.get('BUILD_DIR'), 'resource', 'c_common')
+])
+timetest_env.PrependUnique(LIBS=['c_common'])
 
 if timetest_env.get('LOGGING'):
-    timetest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    timetest_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 #
 ######################################################################
 # Source files and Targets
@@ -50,6 +51,5 @@ Alias("test", [timetests])
 timetest_env.AppendTarget('test')
 if timetest_env.get('TEST') == '1':
     if target_os in ['linux', 'windows']:
-                run_test(timetest_env,
-                         'resource_ccommon_time_test.memcheck',
-                         'resource/c_common/oic_time/test/timetests')
+        run_test(timetest_env, 'resource_ccommon_time_test.memcheck',
+                 'resource/c_common/oic_time/test/timetests')
