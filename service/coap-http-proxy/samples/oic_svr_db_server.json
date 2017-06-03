@@ -3,97 +3,42 @@
         "aclist2": [
             {
                 "aceid": 1,
-                "subject": {
-                  "conntype": "anon-clear"
-                },
+                "subject": { "conntype": "anon-clear" },
                 "resources": [
-                    {
-                        "href": "/oic/res",
-                        "rel": "",
-                        "rt": ["oic.wk.res"],
-                        "if": ["oic.if.ll"]
-                    },{
-                        "href": "/oic/d",
-                        "rel": "",
-                        "rt": ["oic.wk.d"],
-                        "if": ["oic.if.baseline", "oic.if.r"]
-                    },{
-                        "href": "/oic/p",
-                        "rel": "",
-                        "rt": ["oic.wk.p"],
-                        "if": ["oic.if.baseline", "oic.if.r"]
-                    }
+                    { "href": "/oic/res" },
+                    { "href": "/oic/d" },
+                    { "href": "/oic/p" },
+                    { "href": "/oic/sec/doxm" }
                 ],
                 "permission": 2
             },
             {
                 "aceid": 2,
-                "subject": {
-                  "conntype": "auth-crypt"
-                },
+                "subject": { "conntype": "auth-crypt" },
                 "resources": [
-                    {
-                        "href": "/oic/res",
-                        "rel": "",
-                        "rt": ["oic.wk.res"],
-                        "if": ["oic.if.ll"]
-                    },{
-                        "href": "/oic/d",
-                        "rel": "",
-                        "rt": ["oic.wk.d"],
-                        "if": ["oic.if.baseline", "oic.if.r"]
-                    },{
-                        "href": "/oic/p",
-                        "rel": "",
-                        "rt": ["oic.wk.p"],
-                        "if": ["oic.if.baseline", "oic.if.r"]
-                    }
+                    { "href": "/oic/res" },
+                    { "href": "/oic/d" },
+                    { "href": "/oic/p" },
+                    { "href": "/oic/sec/doxm" }
                 ],
                 "permission": 2
             },
             {
                 "aceid": 3,
-                "subject": {
-                    "uuid": "32323232-3232-3232-3232-323232323232"
-                },
-                "resources": [
-                    {
-                        "href": "*",
-                        "rel": "",
-                        "rt": ["*"],
-                        "if": ["*"]
-                    }
-                ],
-                "permission": 7
+                "subject": { "uuid": "32323232-3232-3232-3232-323232323232" },
+                "resources": [{ "wc": "*" }],
+                "permission": 15
             },
             {
                 "aceid": 4,
-                "subject": {
-                    "uuid": "31393139-3139-3139-3139-313931393139"
-                },
-                "resources": [
-                    {
-                        "href": "/a/led",
-                        "rel": "",
-                        "rt": ["oic.core"],
-                        "if": ["oic.if.baseline"]
-                    }
-                ],
+                "subject": { "uuid": "31393139-3139-3139-3139-313931393139" },
+                "resources": [{ "href": "/a/led" }],
                 "permission": 7
             },
             {
                 "aceid": 5,
-                "subject": {
-                    "uuid": "37373737-3737-3737-3737-373737373737"
-                },
-                "resources": [
-                    {
-                        "href": "/a/led",
-                        "rel": "",
-                        "rt": ["oic.core"],
-                        "if": ["oic.if.baseline"]
-                    }
-                ],
+                "subject": { "uuid": "37373737-3737-3737-3737-373737373737" },
+                "resources": [{ "href": "/a/led" }],
                 "permission": 6
             }
         ],
