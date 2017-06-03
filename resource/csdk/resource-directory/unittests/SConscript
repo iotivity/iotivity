@@ -24,24 +24,24 @@
 # SConscript file for Local PKI google tests
 from tools.scons.RunTest import run_test
 
-gtest_env = SConscript('#extlibs/gtest/SConscript')
+gtest_env = SConscript('#/extlibs/gtest/SConscript')
 lib_env = gtest_env.Clone()
 target_os = lib_env.get('TARGET_OS')
 
 if lib_env.get('RELEASE'):
-    lib_env.AppendUnique(CCFLAGS = ['-Os'])
-    lib_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+    lib_env.AppendUnique(CCFLAGS=['-Os'])
+    lib_env.AppendUnique(CPPDEFINES=['NDEBUG'])
 else:
-    lib_env.AppendUnique(CCFLAGS = ['-g'])
+    lib_env.AppendUnique(CCFLAGS=['-g'])
 
 if lib_env.get('LOGGING'):
-    lib_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    lib_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 # Add third party libraries
-SConscript('#resource/third_party_libs.scons', 'lib_env')
+SConscript('#/resource/third_party_libs.scons', 'lib_env')
 
 if target_os in ['linux']:
-    SConscript('#extlibs/hippomocks/SConscript')
+    SConscript('#/extlibs/hippomocks/SConscript')
 
 rd_test_env = lib_env.Clone()
 
@@ -55,35 +55,35 @@ src_dir = lib_env.get('SRC_DIR')
 ######################################################################
 with_upstream_libcoap = rd_test_env.get('WITH_UPSTREAM_LIBCOAP')
 if with_upstream_libcoap == '1':
-    rd_test_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+    rd_test_env.AppendUnique(CPPPATH=['#extlibs/libcoap/libcoap/include'])
 else:
-    rd_test_env.AppendUnique(CPPPATH = [
-            src_dir + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include'
-            ])
+    rd_test_env.AppendUnique(CPPPATH=[
+        src_dir + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include'
+    ])
 
-rd_test_env.AppendUnique(
-        CPPPATH = [
-                src_dir + '/extlibs/hippomocks/hippomocks',
-                '../include',
-                src_dir + '/resource/include',
-                src_dir + '/resource/csdk/connectivity/api',
-                src_dir + '/resource/csdk/include',
-                src_dir + '/resource/csdk/stack/include',
-                src_dir + '/resource/csdk/security/include',
-                src_dir + '/resource/csdk/stack/test/',
-                src_dir + '/resource/oc_logger/include',])
+rd_test_env.AppendUnique(CPPPATH=[
+    src_dir + '/extlibs/hippomocks/hippomocks',
+    '../include',
+    src_dir + '/resource/include',
+    src_dir + '/resource/csdk/connectivity/api',
+    src_dir + '/resource/csdk/include',
+    src_dir + '/resource/csdk/stack/include',
+    src_dir + '/resource/csdk/security/include',
+    src_dir + '/resource/csdk/stack/test/',
+    src_dir + '/resource/oc_logger/include',
+])
 
-rd_test_env.AppendUnique(RPATH = [lib_env.get('BUILD_DIR')])
-rd_test_env.PrependUnique(LIBS = ['octbstack'])
+rd_test_env.AppendUnique(RPATH=[lib_env.get('BUILD_DIR')])
+rd_test_env.PrependUnique(LIBS=['octbstack'])
 
 if rd_test_env.get('RD_MODE'):
     rd_mode = rd_test_env.get('RD_MODE')
-    rd_test_env.PrependUnique(LIBS = ['resource_directory'])
+    rd_test_env.PrependUnique(LIBS=['resource_directory'])
     if 'CLIENT' in rd_mode:
-        rd_test_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
-        rd_test_env.AppendUnique(LIBS = ['oc', 'oc_logger'])
+        rd_test_env.AppendUnique(CPPDEFINES=['RD_CLIENT'])
+        rd_test_env.AppendUnique(LIBS=['oc', 'oc_logger'])
     if 'SERVER' in rd_mode:
-        rd_test_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
+        rd_test_env.AppendUnique(CPPDEFINES=['RD_SERVER'])
 
 ######################################################################
 # Build Test
