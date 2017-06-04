@@ -22,15 +22,24 @@
 #define IDENTITY     ("1111111111111111")
 #define RS_CLIENT_PSK   ("AAAAAAAAAAAAAAAA")
 
+#include "casimulator.h"
 #include "cacommon.h"
 #include "cainterface.h"
+#include "cautilinterface.h"
 #include "casecurityinterface.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#ifdef __LINUX__
 #include <unistd.h>
+#endif
+
+#ifdef __WITH_DTLS__
+#include "ca_adapter_net_ssl.h"
+#include "ssl_ciphersuites.h"
+#endif
 
 #ifdef TIZEN
 #include <glib.h>
@@ -40,13 +49,12 @@ static GMainLoop *g_mainloop = NULL;
 pthread_t thread;
 #endif
 
-int32_t getDtlsPskCredentials( CADtlsPskCredType_t type, const unsigned char *desc,
-      size_t desc_len, unsigned char *result, size_t result_length);
+int g_selectedNetwork = 0;
+size_t g_identityLegth;
+size_t g_pskLength;
 
-char* getString(char a[], int length)
+void getString(char a[], char str[], int length)
 {
-    char str[MAX_BUF_LEN];
-
     int i;
 
     for(i = 0; i < length; i++)
@@ -54,13 +62,55 @@ char* getString(char a[], int length)
         str[i] = a[i];
     }
 
-    str[length] = 0;
+    printf("\n");
 
-    return str;
+    str[length] = 0;
+}
+
+#ifdef __WITH_DTLS__
+
+void dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
+{
+    if (NULL != endpoint)
+    {
+        printf("Remote device Address %s:%d:", endpoint->addr, endpoint->port);
+    }
+    else
+    {
+        printf("endpoint is null");
+    }
+
+    if (NULL != info)
+    {
+        printf("ErrorInfo: %d", info->result);
+    }
+    else
+    {
+        printf("ErrorInfo is null");
+    }
+}
+
+void initCipherSuiteList(bool * list, const char* deviceId)
+{
+    (void) deviceId;
+
+    printf("%s In\n", __func__);
+
+    if (NULL == list)
+    {
+        printf("Out %s", __func__);
+        printf("NULL list param");
+        return;
+    }
+
+    list[0] = true;
+    list[1] = true;
+
+    printf("%s Out\n", __func__);
 }
 
 int32_t getDtlsPskCredentials( CADtlsPskCredType_t type, const unsigned char *desc,
-      size_t desc_len, unsigned char *result, size_t result_length)
+        size_t desc_len, unsigned char *result, size_t result_length)
 {
     printf("getDtlsPskCredentials in\n");
 
@@ -75,37 +125,37 @@ int32_t getDtlsPskCredentials( CADtlsPskCredType_t type, const unsigned char *de
     {
         case CA_DTLS_PSK_HINT:
         case CA_DTLS_PSK_IDENTITY:
-          printf("CAGetDtlsPskCredentials CA_DTLS_PSK_IDENTITY\n");
-            if (result_length < sizeof(IDENTITY))
+        printf("CAGetDtlsPskCredentials CA_DTLS_PSK_IDENTITY\n");
+        if (result_length < g_identityLegth)
+        {
+            printf("ERROR : Wrong value for result for storing IDENTITY\n");
+            return ret;
+        }
+
+        memcpy(result, IDENTITY, g_identityLegth);
+        ret = g_identityLegth;
+        break;
+
+        case CA_DTLS_PSK_KEY:
+        printf("CAGetDtlsPskCredentials CA_DTLS_PSK_KEY\n");
+        if ((desc_len == g_identityLegth) &&
+                memcmp(desc, IDENTITY, g_identityLegth) == 0)
+        {
+            if (result_length < g_pskLength)
             {
-                printf("ERROR : Wrong value for result for storing IDENTITY\n");
+                printf("ERROR : Wrong value for result for storing RS_CLIENT_PSK\n");
                 return ret;
             }
 
-            memcpy(result, IDENTITY, sizeof(IDENTITY));
-            ret = sizeof(IDENTITY);
-            break;
-
-        case CA_DTLS_PSK_KEY:
-          printf("CAGetDtlsPskCredentials CA_DTLS_PSK_KEY\n");
-            if ((desc_len == sizeof(IDENTITY)) &&
-                memcmp(desc, IDENTITY, sizeof(IDENTITY)) == 0)
-            {
-                if (result_length < sizeof(RS_CLIENT_PSK))
-                {
-                    printf("ERROR : Wrong value for result for storing RS_CLIENT_PSK\n");
-                    return ret;
-                }
-
-                memcpy(result, RS_CLIENT_PSK, sizeof(RS_CLIENT_PSK));
-                ret = sizeof(RS_CLIENT_PSK);
-            }
-            break;
+            memcpy(result, RS_CLIENT_PSK, g_pskLength);
+            ret = g_pskLength;
+        }
+        break;
 
         default:
 
-            printf("Wrong value passed for PSK_CRED_TYPE.\n");
-            ret = -1;
+        printf("Wrong value passed for PSK_CRED_TYPE.\n");
+        ret = -1;
     }
 
     printf("getDtlsPskCredentials out\n");
@@ -113,15 +163,59 @@ int32_t getDtlsPskCredentials( CADtlsPskCredType_t type, const unsigned char *de
     return ret;
 }
 
+int setupSecurity(int selectedTransport)
+{
+    g_identityLegth = strlen(IDENTITY);
+    g_pskLength = strlen(RS_CLIENT_PSK);
+
+    int result = CAregisterPskCredentialsHandler(getDtlsPskCredentials);
+    if (result != CA_STATUS_OK)
+    {
+        printf("CAregisterPskCredentialsHandler failed. return value is %d\n", result);
+        return 0;
+    }
+
+    if(selectedTransport == CA_ADAPTER_TCP)
+    {
+        result = CAregisterSslHandshakeCallback(dtlsHandshakeCb);
+        if (result != CA_STATUS_OK)
+        {
+            printf("CAregisterSslHandshakeCallback failed. return value is %d\n", result);
+            return 0;
+        }
+    }
+
+    CAsetCredentialTypesCallback(initCipherSuiteList);
+
+    if(selectedTransport == CA_ADAPTER_IP)
+    {
+        result = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, (CATransportAdapter_t)selectedTransport);
+    }
+    else if(selectedTransport == CA_ADAPTER_TCP)
+    {
+        result = CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+    }
+
+    if (result != CA_STATUS_OK)
+    {
+        printf("CACipherSuite failed. return value is %d\n", result);
+        return 0;
+    }
+
+    return 1;
+}
+
+#endif
+
 int returnResponse(const CAEndpoint_t* endPoint, char* resourceUri, char* payload, int payloadSize,
         CAMessageType_t type, CAResponseResult_t responseCode, uint16_t messageId, CAToken_t token,
         uint8_t tokenLength, CAHeaderOption_t *options, uint8_t numOptions)
 {
     printf("[returnResponse] in\n");
 
-    CAInfo_t responseData = { 0 };
+    CAInfo_t responseData;
 
-    responseData.payload = payload;
+    responseData.payload = (CAPayload_t)payload;
 
     if(payload != NULL)
     {
@@ -139,8 +233,11 @@ int returnResponse(const CAEndpoint_t* endPoint, char* resourceUri, char* payloa
     responseData.tokenLength = tokenLength;
     responseData.options = options;
     responseData.numOptions = numOptions;
+    responseData.dataType = CA_RESPONSE_DATA;
+    responseData.payloadFormat = CA_FORMAT_UNDEFINED;
+    responseData.acceptFormat = CA_FORMAT_UNDEFINED;
 
-    CAResponseInfo_t responseInfo = { 0 };
+    CAResponseInfo_t responseInfo;
     responseInfo.result = responseCode;
     responseInfo.info = responseData;
 
@@ -208,7 +305,9 @@ void requestHandler(const CAEndpoint_t* endPoint, const CARequestInfo_t* request
 
     if(requestInfo->info.payload)
     {
-        payload = getString(requestInfo->info.payload, requestInfo->info.payloadSize);
+        char str[MAX_BUF_LEN];
+        getString((char*)requestInfo->info.payload, str, requestInfo->info.payloadSize);
+        payload = str;
         printf("Payload: %s\n", payload);
     }
     else
@@ -225,7 +324,7 @@ void requestHandler(const CAEndpoint_t* endPoint, const CARequestInfo_t* request
     printf("ResourceUri: %s\n", requestInfo->info.resourceUri);
 
     returnResponse(endPoint, requestInfo->info.resourceUri,
-        requestInfo->info.payload, requestInfo->info.payloadSize, messageType, CA_VALID,
+        (char*)requestInfo->info.payload, requestInfo->info.payloadSize, messageType, CA_VALID,
         requestInfo->info.messageId, requestInfo->info.token, requestInfo->info.tokenLength,
         requestInfo->info.options, requestInfo->info.numOptions);
 
@@ -247,8 +346,8 @@ void errorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t* errorInfo)
 int main()
 {
     CAResult_t result;
-    uint32_t tempSize = 0;
-    CAEndpoint_t *tempInfo = NULL;
+    int number;
+    char command[100];
 
 #ifdef TIZEN
     g_mainloop = g_main_loop_new(NULL, FALSE);
@@ -265,7 +364,7 @@ int main()
     }
 #endif
 
-    result = CAInitialize();
+    result = CAInitialize(CA_ADAPTER_TCP);
     if (result != CA_STATUS_OK)
     {
         printf("CAInitialize failed. return value is %d", result);
@@ -274,13 +373,15 @@ int main()
 
     CARegisterHandler(requestHandler, responseHandler, errorHandler);
 
-    result = CARegisterDTLSCredentialsHandler(getDtlsPskCredentials);
-    if (result != CA_STATUS_OK)
-    {
-        printf("CARegisterDTLSCredentialsHandler failed. return value is %d", result);
-    }
+    printf("\tSelect Network\n");
+    printf("IP     : 0\n");
+    printf("TCP    : 4\n");
+    printf("Select : ");
 
-    result = CASelectNetwork(CA_ADAPTER_IP);
+    scanf("%d", &number);
+    g_selectedNetwork = 1 << number;
+
+    result = CASelectNetwork((CATransportAdapter_t)g_selectedNetwork);
     if (result != CA_STATUS_OK)
     {
         printf("CASelectNetwork failed. return value is %d", result);
@@ -294,32 +395,46 @@ int main()
         return -1;
     }
 
-    result = CAGetNetworkInformation(&tempInfo, &tempSize);
-    if (CA_STATUS_OK != result || NULL == tempInfo || 0 >= tempSize)
+#ifdef __WITH_DTLS__
+    if(!setupSecurity(g_selectedNetwork))
     {
-        printf("Network not connected\n");
-        free(tempInfo);
-        return;
+        return -1;
+    }
+#endif
+
+    if(g_selectedNetwork == CA_ADAPTER_IP)
+    {
+        printf("Unsecured Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_IP, CA_IPV4));
+#ifdef __WITH_DTLS__
+        printf("Secured Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_IP, (CATransportFlags_t)(CA_SECURE|CA_IPV4)));
+#endif
+    }
+    else if(g_selectedNetwork == CA_ADAPTER_TCP)
+    {
+        printf("Unsecured Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_TCP, CA_IPV4));
+#ifdef __WITH_DTLS__
+        printf("Secured Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_TCP, (CATransportFlags_t)(CA_SECURE|CA_IPV4)));
+#endif
     }
 
-    int index;
-    for (index = 0; index < tempSize; index++)
+    printf("press 'h' to call CAHandleRequestResponse and 'q' to quit\n");
+
+    while(scanf("%s", command) == 1)
     {
-        printf("Type: %d\n", tempInfo[index].adapter);
-        printf("Address: %s\n", tempInfo[index].addr);
-    }
-
-
-    printf("Unsecured Port: %d;\n", caglobals.ip.u4.port);
-    printf("Secured Port: %d;\n", caglobals.ip.u4s.port);
-
-    while(1)
-    {
-        result = CAHandleRequestResponse();
-        if (result != CA_STATUS_OK)
+        printf("press 'h' to call CAHandleRequestResponse and 'q' to quit\n");
+        if(command[0] == 'q')
         {
-            printf("CAHandleRequestResponse failed. return value is %d", result);
-            return -1;
+            break;
+        }
+        if(command[0] == 'h')
+        {
+            result = CAHandleRequestResponse();
+            if (result != CA_STATUS_OK)
+            {
+                printf("CAHandleRequestResponse failed. return value is %d", result);
+                return -1;
+            }
         }
     }
 }
+

@@ -29,6 +29,7 @@ int CAHelper::s_simulatorPort;
 int CAHelper::s_simulatorSecurePort;
 int CAHelper::s_isHostAddressKnown;
 bool CAHelper::s_bufferEmpty;
+int CAHelper::s_isValidAddress;
 #ifdef __WITH_DTLS__
 size_t CAHelper::s_identityLegth;
 size_t CAHelper::s_pskLength;
@@ -121,9 +122,9 @@ bool CAHelper::initialize()
 #ifdef __IP__
     m_availableNetwork = CA_ADAPTER_IP;
 #elif __BT__
-    m_availableNetwork = CA_ADAPTER_BT;
+    m_availableNetwork = CA_ADAPTER_RFCOMM_BTEDR;
 #elif __BLE__
-    m_availableNetwork = CA_ADAPTER_BLE;
+    m_availableNetwork = CA_ADAPTER_GATT_BTLE;
 #elif __TCP__
     m_availableNetwork = CA_ADAPTER_TCP;
 #else
@@ -131,7 +132,7 @@ bool CAHelper::initialize()
 #endif
 
     m_unAvailableNetwork = CA_DEFAULT_ADAPTER;
-    
+
     setIp.clear();
 
 #ifdef __TIZEN__
@@ -150,7 +151,7 @@ bool CAHelper::initialize()
     }
 #endif
 
-    m_result = CAInitialize((CATransportAdapter_t)m_availableNetwork);
+    m_result = CAInitialize(m_availableNetwork);
 
     if (m_result != CA_STATUS_OK)
     {
@@ -211,12 +212,22 @@ bool CAHelper::unselectNetwork(int interestedNetwork, CAResult_t expectedResult)
 {
     IOTIVITYTEST_LOG(DEBUG, "[unselectNetwork] IN");
 
-    m_result = CAUnSelectNetwork((CATransportAdapter_t)interestedNetwork);
+#ifdef TCP_ADAPTER
+    if (interestedNetwork == CA_ADAPTER_TCP)
+    {
+        m_result = CAUnSelectNetwork(CA_ADAPTER_IP);
+        if (m_result != expectedResult)
+        {
+            getFailureMessage("CAUnSelectNetwork", expectedResult);
+            return false;
+        }
+    }
+#endif
 
+    m_result = CAUnSelectNetwork((CATransportAdapter_t)interestedNetwork);
     if (m_result != expectedResult)
     {
         getFailureMessage("CAUnSelectNetwork", expectedResult);
-
         return false;
     }
 
@@ -298,7 +309,14 @@ bool CAHelper::createEndpoint(bool isMulticast, bool isSecure, CAResult_t expect
 
     if(!isMulticast)
     {
-        strcpy(address, s_simulatorIp);
+        if (s_isValidAddress)
+        {
+            strcpy(address, s_simulatorIp);
+        }
+        else
+        {
+            strcpy(address, WRONG_ADDRESS);
+        }
     }
 
     return createEndpoint(transportFlags, address, port);
@@ -312,7 +330,7 @@ bool CAHelper::createEndpoint(CATransportFlags_t transportFlags, char* address, 
 
     m_endpoint = NULL;
     
-    CATransportAdapter_t transportAdapter = (CATransportAdapter_t)m_availableNetwork;
+    CATransportAdapter_t transportAdapter = m_availableNetwork;
     if (m_multicastRequest)
     {
 #ifdef TCP_ADAPTER
@@ -646,7 +664,7 @@ void CAHelper::responseHandlerSecond(const CAEndpoint_t* endpoint,
         return;
     }
 
-    compareAndIncrement(responseInfo->info.resourceUri, SIM_REQ_CONFIG, (const char*)responseInfo->info.payload,
+    compareAndIncrement(responseInfo->info.resourceUri, SIM_REQ_ACK, (const char*)responseInfo->info.payload,
             REC_SECOND_NOR);
 
     IOTIVITYTEST_LOG(DEBUG, "[responseHandlerSecond] OUT");
@@ -656,6 +674,7 @@ int CAHelper::compareAndIncrement(const char* endpointResourceUri, const char *o
         const char* payload, int index)
 {
     IOTIVITYTEST_LOG(DEBUG, "[compareAndIncrement] IN");
+    IOTIVITYTEST_LOG(DEBUG, "index %d", index);
 
     if (strstr(endpointResourceUri, otherResourceUri) != NULL)
     {
@@ -698,6 +717,10 @@ int CAHelper::compareAndIncrement(const char* endpointResourceUri, const char *o
         }
 
         return 1;
+    }
+    else
+    {
+        IOTIVITYTEST_LOG(DEBUG, "Resource URI mismatch");
     }
 
     IOTIVITYTEST_LOG(DEBUG, "[compareAndIncrement] OUT");
@@ -901,7 +924,7 @@ bool CAHelper::CheckRemoteEndpointAttributes(const CAEndpoint_t* endpoint, char*
             return false;
         }
 
-        IOTIVITYTEST_LOG(DEBUG, "uri : %s", resourceUri);
+        IOTIVITYTEST_LOG(DEBUG, "uri: %s", resourceUri);
     }
     else if (s_tcInfo.messageType == CA_MSG_CONFIRM)
     {
@@ -976,6 +999,13 @@ bool CAHelper::sendRequest(char* uri, char* hidden_payload, CAMethod_t method, C
     if (!generateToken())
     {
         return false;
+    }
+
+    s_isValidAddress = 1;
+
+    if (!strcmp(uri, SIM_REQ_ACK_WRONG_EP_URI))
+    {
+        s_isValidAddress = 0;
     }
 
     if (!createEndpoint(m_multicastRequest, isSecure))
@@ -1282,7 +1312,9 @@ bool CAHelper::attemptReceiveMessage(int totalMessages, int maxAttempts, int fla
     for (int i = 0; i < maxAttempts; i++)
     {
         IOTIVITYTEST_LOG(DEBUG, "Receive Attempt No. %d", (i + 1));
+
         usleep (waitTimes[flag % 2]);
+
         m_result = CAHandleRequestResponse();
 
         if (m_result != CA_STATUS_OK)
@@ -1291,7 +1323,7 @@ bool CAHelper::attemptReceiveMessage(int totalMessages, int maxAttempts, int fla
             return false;
         }
 
-        if (getReceiveCount(flag) >= totalMessages)
+        if (totalMessages && getReceiveCount(flag) >= totalMessages)
         {
             break;
         }
@@ -1326,7 +1358,7 @@ bool CAHelper::setDtls()
         }
     }
 
-    CAsetCredentialTypesCallback((CAgetCredentialTypesHandler)CAHelper::initCipherSuiteList);
+    CAsetCredentialTypesCallback(CAHelper::initCipherSuiteList);
 
     if(m_availableNetwork == CA_ADAPTER_IP)
     {
@@ -1346,8 +1378,10 @@ bool CAHelper::setDtls()
     return true;
 }
 
-void CAHelper::initCipherSuiteList(bool * list)
+void CAHelper::initCipherSuiteList(bool * list, const char* deviceId)
 {
+    (void) deviceId;
+
     IOTIVITYTEST_LOG(DEBUG, "In %s", __func__);
     if (NULL == list)
     {
@@ -1903,10 +1937,19 @@ void CAHelper::setAvailableNetwork(CATransportAdapter_t interestedNetwork)
 
 bool CAHelper::establishConnectionWithServer()
 {
+    return establishConnectionWithServer(false);
+}
+
+bool CAHelper::establishConnectionWithServer(bool isClientAlreadyStarted)
+{
     s_isHostAddressKnown = 0;
-    if (!initClientNetwork())
+
+    if(!isClientAlreadyStarted)
     {
-        return false;
+        if (!initClientNetwork())
+        {
+            return false;
+        }
     }
 
     m_multicastRequest = true;

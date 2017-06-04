@@ -74,7 +74,8 @@ static const int BLOCKWISE_PACKET_SIZE = 1500;
 #define MAX_BUF_LEN 2048
 #define MAX_OPT_LEN 16
 
-#define SIM_REQ_ACK_WRONG_EP_URI "107.109.214.101:5283/" SIM_REQ_ACK
+#define WRONG_ADDRESS "107.109.214.101"
+#define SIM_REQ_ACK_WRONG_EP_URI WRONG_ADDRESS ":5283/" SIM_REQ_ACK
 
 #define REC_NOR 0
 #define REC_ACK 1
@@ -190,6 +191,7 @@ public:
     static int s_simulatorPort;
     static int s_simulatorSecurePort;
     static std::set<std::string> setIp;
+    static int s_isValidAddress;
 
     CAResponseResult_t m_responseResult;
 
@@ -197,7 +199,7 @@ public:
     static size_t s_identityLegth;
     static size_t s_pskLength;
     bool setDtls();
-    static void initCipherSuiteList(bool * list);
+    static void initCipherSuiteList(bool * list, const char* deviceId);
     static void dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info);
     static int32_t getDtlsPskCredentials( CADtlsPskCredType_t type, const unsigned char *desc, size_t desc_len, unsigned char *result, size_t result_length);
 #endif
@@ -318,6 +320,7 @@ public:
     bool stopListeningServer(CAResult_t expectedResult);
     void setAvailableNetwork(CATransportAdapter_t interestedNetwork);
     bool establishConnectionWithServer();
+    bool establishConnectionWithServer(bool isClientAlreadyStarted);
     static bool parseAddress(const CAEndpoint_t* endpoint, const CAInfo_t info);
 
 #ifdef TCP_ADAPTER

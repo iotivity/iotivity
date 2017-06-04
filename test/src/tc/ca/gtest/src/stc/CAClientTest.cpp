@@ -70,7 +70,7 @@ protected:
  *                  3. [CLient] Terminate CA
  * @expected  The requested amount of response messages should be received in client side
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, SelectNetworkForIncomingMessages_P)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -132,7 +132,7 @@ TEST_F(CAClientTest_stc, SelectNetworkForIncomingMessages_P)
  *                  3. [Client] Terminate CA
  * @expected  The received amount should be zero in client side
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, SelectUnAvailableNetworkForIncomingMessages_N)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -199,7 +199,7 @@ TEST_F(CAClientTest_stc, SelectUnAvailableNetworkForIncomingMessages_N)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, SelectNetworkForOutgoingMessages_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -262,7 +262,7 @@ TEST_F(CAClientTest_stc, SelectNetworkForOutgoingMessages_P)
  * @post_condition  [CLient] Terminate CA
  * @expected  The requested amount of response messages should be received each time in client side
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, SelectNetworkSequentiallyForIncomingMessages_P)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -356,7 +356,7 @@ TEST_F(CAClientTest_stc, SelectNetworkSequentiallyForIncomingMessages_P)
  * @post_condition  [CLient] Terminate CA
  * @expected  The requested amount of response messages should be received each time in client side
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, SelectNetworkMultipleTimesForIncomingMessages_P)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -433,14 +433,14 @@ TEST_F(CAClientTest_stc, SelectNetworkMultipleTimesForIncomingMessages_P)
  * @post_condition  none
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each times
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, SendRequestMultipleTimes_P)
 {
     for(int i = 0; i < TRY_COUNT; i++)
     {
         m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-        if (!m_caHelper.initClientNetwork())
+        if (!m_caHelper.establishConnectionWithServer())
         {
             SET_FAILURE(m_caHelper.getFailureMessage());
             return;
@@ -497,7 +497,7 @@ TEST_F(CAClientTest_stc, SendRequestMultipleTimes_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages and received header options should be same NULL
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, SendRequestWithoutHeaderOption_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_HEADER, MESSAGE_UNICAST);
@@ -560,7 +560,7 @@ TEST_F(CAClientTest_stc, SendRequestWithoutHeaderOption_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages and received header option should be same as send header option
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, SendRequestWithHeaderOption_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_HEADER, MESSAGE_UNICAST);
@@ -623,7 +623,7 @@ TEST_F(CAClientTest_stc, SendRequestWithHeaderOption_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages and received header option should be same as send header options
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, SendRequestWithHeaderOptions_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_HEADER, MESSAGE_UNICAST);
@@ -687,7 +687,7 @@ TEST_F(CAClientTest_stc, SendRequestWithHeaderOptions_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, SendRequestWithEmptyPayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_URI, MESSAGE_UNICAST);
@@ -752,7 +752,7 @@ TEST_F(CAClientTest_stc, SendRequestWithEmptyPayload_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, SendRequestWithNullPayload_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_URI, MESSAGE_UNICAST);
@@ -817,7 +817,7 @@ TEST_F(CAClientTest_stc, SendRequestWithNullPayload_P)
  *                  3. [CLient] Terminate CA
  * @expected  The request message should be acknowledged
  */
-#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__IP__) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__)))
+#if (defined(__LINUX__) || defined(__WINDOWS__) || defined(__ANDROID__)) && defined(__IP__) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__BLE__)))
 TEST_F(CAClientTest_stc, SendRequestWithMessageTypeConfirm_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -878,7 +878,7 @@ TEST_F(CAClientTest_stc, SendRequestWithMessageTypeConfirm_P)
  *                  3. [CLient] Terminate CA
  * @expected  The received amount should be zero
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, SendRequestWithWrongEndpoint_N)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -943,7 +943,7 @@ TEST_F(CAClientTest_stc, SendRequestWithWrongEndpoint_N)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, SendGetRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -1005,7 +1005,7 @@ TEST_F(CAClientTest_stc, SendGetRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, SendPutRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -1067,7 +1067,7 @@ TEST_F(CAClientTest_stc, SendPutRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, SendPostRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -1129,7 +1129,7 @@ TEST_F(CAClientTest_stc, SendPostRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, SendDeleteRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -1189,7 +1189,7 @@ TEST_F(CAClientTest_stc, SendDeleteRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  No response messages should be received
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, ReceiveWithNullResponseHandler_N)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -1202,16 +1202,17 @@ TEST_F(CAClientTest_stc, ReceiveWithNullResponseHandler_N)
 
     CARegisterHandler(CAHelper::requestHandler, NULL, CAHelper::errorHandler);
 
-    if (!m_caHelper.sendConfigurationRequest(SEND_MESSAGE, MESSAGE_RESPONSE, CA_PUT))
+    if (!m_caHelper.startDiscoveryServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
         return;
     }
 
-    if (!m_caHelper.countReceiveMessage(REC_NOR, 0))
+    if (m_caHelper.establishConnectionWithServer(true))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
+        return;
     }
 
     CATerminate();
@@ -1250,7 +1251,7 @@ TEST_F(CAClientTest_stc, ReceiveWithNullResponseHandler_N)
  *                  3. [CLient] Terminate CA
  * @expected  No response messages should be received
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, ReceiveResponseWithoutCallingCARegisterHandler_N)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -1261,16 +1262,17 @@ TEST_F(CAClientTest_stc, ReceiveResponseWithoutCallingCARegisterHandler_N)
         return;
     }
 
-    if (!m_caHelper.sendConfigurationRequest(SEND_MESSAGE, MESSAGE_RESPONSE, CA_PUT))
+    if (!m_caHelper.startDiscoveryServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
         return;
     }
 
-    if (!m_caHelper.countReceiveMessage(REC_NOR, 0))
+    if (m_caHelper.establishConnectionWithServer(true))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
+        return;
     }
 
     CATerminate();
@@ -1311,7 +1313,7 @@ TEST_F(CAClientTest_stc, ReceiveResponseWithoutCallingCARegisterHandler_N)
  *                  3. [CLient] Terminate CA
  * @expected  Second handler will receive requested amount of response messages and first handler will receive no response message
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, ReceiveWithSecondResponseHandler_P)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -1333,7 +1335,13 @@ TEST_F(CAClientTest_stc, ReceiveWithSecondResponseHandler_P)
         return;
     }
 
-    if (!m_caHelper.sendConfigurationRequest(SEND_MESSAGE, MESSAGE_RESPONSE, CA_PUT))
+    if (!m_caHelper.establishConnectionWithServer(true))
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+        return;
+    }
+
+    if (!m_caHelper.sendRequest(CA_GET, CA_MSG_NONCONFIRM))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
@@ -1386,7 +1394,7 @@ TEST_F(CAClientTest_stc, ReceiveWithSecondResponseHandler_P)
  *                  3. [CLient] Terminate CA
  * @expected  No response messages should be received
  */
-#if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__BT__) || defined(__TCP__)))
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CAClientTest_stc, ReceiveAfterRegisteringWithValidFollowedByNullResponseHandler_N)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -1401,16 +1409,17 @@ TEST_F(CAClientTest_stc, ReceiveAfterRegisteringWithValidFollowedByNullResponseH
 
     CARegisterHandler(CAHelper::requestHandler, NULL, CAHelper::errorHandler);
 
-    if (!m_caHelper.sendConfigurationRequest(SEND_MESSAGE, MESSAGE_RESPONSE, CA_PUT))
+    if (!m_caHelper.startDiscoveryServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         CATerminate();
         return;
     }
 
-    if (!m_caHelper.countReceiveMessage(REC_NOR, 0))
+    if (m_caHelper.establishConnectionWithServer(true))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
+        return;
     }
 
     CATerminate();
@@ -1981,7 +1990,7 @@ TEST_F(CAClientTest_stc, SendConDeleteRequestWithLargePayload_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each time
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)) && (defined(__IP__) || defined(__TCP__))
+#if (defined(__LINUX__) || defined(__WINDOWS__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecureGetRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -2053,7 +2062,7 @@ TEST_F(CAClientTest_stc, SendSecureGetRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each time
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)) && (defined(__IP__) || defined(__TCP__))
+#if (defined(__LINUX__) || defined(__WINDOWS__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecurePostRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -2125,7 +2134,7 @@ TEST_F(CAClientTest_stc, SendSecurePostRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each time
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)) && (defined(__IP__) || defined(__TCP__))
+#if (defined(__LINUX__) || defined(__WINDOWS__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecurePutRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -2197,7 +2206,7 @@ TEST_F(CAClientTest_stc, SendSecurePutRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each time
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)) && (defined(__IP__) || defined(__TCP__))
+#if (defined(__LINUX__) || defined(__WINDOWS__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecureDeleteRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -2269,7 +2278,7 @@ TEST_F(CAClientTest_stc, SendSecureDeleteRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each time
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)) && (defined(__IP__) || defined(__TCP__))
+#if (defined(__LINUX__) || defined(__WINDOWS__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecureConfirmGetRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -2341,7 +2350,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmGetRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each time
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)) && (defined(__IP__) || defined(__TCP__))
+#if (defined(__LINUX__) || defined(__WINDOWS__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecureConfirmPostRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -2413,7 +2422,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmPostRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each time
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)) && (defined(__IP__) || defined(__TCP__))
+#if (defined(__LINUX__) || defined(__WINDOWS__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecureConfirmPutRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -2485,7 +2494,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmPutRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each time
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)) && (defined(__IP__) || defined(__TCP__))
+#if (defined(__LINUX__) || defined(__WINDOWS__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecureConfirmDeleteRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -2556,7 +2565,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmDeleteRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  No acknowledgment should be received
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)) && (defined(__IP__) || defined(__TCP__))
+#if (defined(__LINUX__) || defined(__WINDOWS__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecureRequestWithoutDtlsHandler_N)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -3201,7 +3210,7 @@ TEST_F(CAClientTest_stc, SendSecureConDeleteRequestWithLargePayload_P)
  *                  3. [CLient] Terminate CA
  * @expected  keepAliveCount should be greater than zero
  */
-#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__)) && defined(__TCP__)
+#if (defined(__LINUX__) || defined(__WINDOWS__) || defined(__ANDROID__) || defined(__TIZEN__)) && defined(__TCP__)
 TEST_F(CAClientTest_stc, CACheckKeepAliveHandler_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);

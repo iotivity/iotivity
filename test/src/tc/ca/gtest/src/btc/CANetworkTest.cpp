@@ -811,6 +811,10 @@ TEST_F(CANetworkTest_btc, CARegisterKeepAliveHandler_N)
 #if ((defined(__LINUX__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)) || (defined(__TIZEN__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkTest_btc, CAGetNonSecurePortNumber_P)
 {
+#ifdef TCP_ADAPTER
+    caglobals.server = true;
+#endif
+
     if (!m_caHelper.initNetwork())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());

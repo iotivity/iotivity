@@ -85,13 +85,13 @@ lib_paths = [
     iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux'
 ]
 
-common_cppflags = Split('-s -pthread -march=native -std=gnu++0x -Wall -fpermissive') + common_linux_cppflags
+common_cppflags = Split('-s -pthread -march=native -std=gnu++0x') + common_linux_cppflags
 
 common_cppdefines = []
 
-gtest_unspecified_network_src = [ 
-    test_src_root + '/tc/ca/gtest/src/btc/CATest.cpp', 
-    test_src_root + '/tc/ca/gtest/src/stc/CACommonTest.cpp' 
+gtest_unspecified_network_src = [
+    test_src_root + '/tc/ca/gtest/src/btc/CATest.cpp',
+    test_src_root + '/tc/ca/gtest/src/stc/CACommonTest.cpp'
 ]
 
 gtest_ip_network_src = [
@@ -145,7 +145,7 @@ if 'tc' in test:
                             target = single_object,
                             CPPPATH = iotivity_include_paths + tc_include_paths,
                             LIBS = lib_list,
-                            LIBPATH = lib_paths + ['.'],
+                            LIBPATH = lib_paths + ['.', '/usr/local/lib'],
                             CPPFLAGS = common_cppflags,
                             CPPDEFINES = cpp_defines,
                             RPATH = iotivity_lib_path)
@@ -155,7 +155,7 @@ if 'tc' in test:
                             target = transport_bin_name[i],
                             CPPPATH = iotivity_include_paths + tc_include_paths,
                             LIBS = ['common_util', 'tc_util', 'gtest', 'dl', 'pthread'] + lib_list,
-                            LIBPATH = lib_paths + ['.'],
+                            LIBPATH = lib_paths + ['.', '/usr/local/lib'],
                             CPPFLAGS = common_cppflags,
                             CPPDEFINES = cpp_defines,
                             RPATH = iotivity_lib_path)
@@ -179,6 +179,28 @@ if 'simulator' in test or 'tc' in test:
                         RPATH = iotivity_lib_path
                         )
     install_targets += ca_simulator
+
+    ca_server = env_linux.Program(source = [test_src_root + '/testapp/ca/c_cpp/src/sample_server.c'],
+                        target = 'iotivity_ca_server',
+                        CPPPATH = iotivity_include_paths + simulator_include_paths,
+                        LIBS = lib_list,
+                        LIBPATH = lib_paths,
+                        CPPFLAGS = common_cppflags,
+                        CPPDEFINES = simulator_cpp_defines,
+                        RPATH = iotivity_lib_path
+                        )
+    install_targets += ca_server
+
+    ca_client = env_linux.Program(source = [test_src_root + '/testapp/ca/c_cpp/src/sample_client.c'],
+                        target = 'iotivity_ca_client',
+                        CPPPATH = iotivity_include_paths + simulator_include_paths,
+                        LIBS = lib_list,
+                        LIBPATH = lib_paths,
+                        CPPFLAGS = common_cppflags,
+                        CPPDEFINES = simulator_cpp_defines,
+                        RPATH = iotivity_lib_path
+                        )
+    install_targets += ca_client
 
     default_targets += env_linux.Command('config_file', [], Copy(test_src_root, iotivity_test_root + '/res/ca_resource/config.ini'))
 
