@@ -29,7 +29,13 @@ lib_env = env.Clone()
 SConscript('#service/third_party_libs.scons', 'lib_env')
 notification_env = lib_env.Clone()
 
-list = [ "NSMessage.h", "NSSyncInfo.h", "NSTopicsList.h", "NSUtils.h"]
+list = [
+    "NSMessage.h",
+    "NSSyncInfo.h",
+    "NSTopicsList.h",
+    "NSUtils.h"
+]
 
 for filename in list:
-    notification_env.UserInstallTargetHeader(filename , 'service/notification', filename)
+    notification_env.UserInstallTargetHeader(
+        filename, 'service/notification', filename)

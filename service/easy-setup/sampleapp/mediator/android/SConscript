@@ -26,14 +26,16 @@ android_home = env.get('ANDROID_HOME')
 
 ANDROID_TARGET_ARCH = env.get('TARGET_ARCH')
 if env.get('RELEASE'):
-	ANDROID_RELEASE="release"
+    ANDROID_RELEASE = "release"
 else:
-	ANDROID_RELEASE="debug"
+    ANDROID_RELEASE = "debug"
 
 os.environ['ANDROID_HOME'] = env.get('ANDROID_HOME')
 os.environ['ANDROID_NDK_HOME'] = env.get('ANDROID_NDK')
 
-if not os.path.exists(android_home + '/platforms/android-21') or not os.path.exists(android_home + '/build-tools/20.0.0'):
+if not os.path.exists(android_home +
+                      '/platforms/android-21') or not os.path.exists(
+                          android_home + '/build-tools/20.0.0'):
     print '''
 ***************************************** Info ********************************
 *   Either 'Android API 21' is not installed or 'Android SDK Build Tools      *
@@ -64,16 +66,31 @@ if not os.path.exists(android_home + '/platforms/android-21') or not os.path.exi
 
 #SConscript("../../../../../../android/android_api/SConscript")
 
+
 def ensure_libs(target, source, env):
-    return target, [source, env.get('BUILD_DIR') + 'liboc.so', env.get('BUILD_DIR') + 'liboc_logger.so']                        
+    return target, [
+        source,
+        env.get('BUILD_DIR') + 'liboc.so',
+        env.get('BUILD_DIR') + 'liboc_logger.so'
+    ]
+
 
 jdk_env = Environment(ENV=os.environ)
-jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + 
-    ' build -bservice/easy-setup/sampleapp/mediator/android/EasySetup/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE),
-    emitter = ensure_libs)
+jdk_env['BUILDERS']['Gradle'] = Builder(
+    action=env.get('ANDROID_GRADLE') +
+    ' build -bservice/easy-setup/sampleapp/mediator/android/EasySetup/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s --stacktrace'
+    % (ANDROID_TARGET_ARCH, ANDROID_RELEASE),
+    emitter=ensure_libs)
 jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
-cmdBuildEasysetupApp=jdk_env.Gradle(target="EasySetup/app/apk", 
-    source="EasySetup/app/src/main/java/org/iotivity/service/easysetup/EasysetupActivity.java")
-jdk_env.Clean(cmdBuildEasysetupApp, '#/service/easy-setup/sampleapp/mediator/android/EasySetup/build')
-jdk_env.Clean(cmdBuildEasysetupApp, '#/service/easy-setup/sampleapp/mediator/android/EasySetup/app/build')
+cmdBuildEasysetupApp = jdk_env.Gradle(
+    target="EasySetup/app/apk",
+    source=
+    "EasySetup/app/src/main/java/org/iotivity/service/easysetup/EasysetupActivity.java"
+)
+jdk_env.Clean(
+    cmdBuildEasysetupApp,
+    '#/service/easy-setup/sampleapp/mediator/android/EasySetup/build')
+jdk_env.Clean(
+    cmdBuildEasysetupApp,
+    '#/service/easy-setup/sampleapp/mediator/android/EasySetup/app/build')
 Depends(cmdBuildEasysetupApp, env.get('easysetupAAR'))
