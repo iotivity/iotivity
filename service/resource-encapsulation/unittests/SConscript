@@ -22,20 +22,22 @@
 # ResourceClient Unit Test build script
 ##
 # SConscript file for Local PKI google tests
+
 import os
+from tools.scons.RunTest import run_test
 
 gtest_env = SConscript('#extlibs/gtest/SConscript')
 lib_env = gtest_env.Clone()
 target_os = lib_env.get('TARGET_OS')
 
 if lib_env.get('RELEASE'):
-    lib_env.AppendUnique(CCFLAGS = ['-Os'])
-    lib_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+    lib_env.AppendUnique(CCFLAGS=['-Os'])
+    lib_env.AppendUnique(CPPDEFINES=['NDEBUG'])
 else:
-    lib_env.AppendUnique(CCFLAGS = ['-g'])
+    lib_env.AppendUnique(CCFLAGS=['-g'])
 
 if lib_env.get('LOGGING'):
-    lib_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    lib_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 # Add third party libraries
 SConscript('#service/third_party_libs.scons', 'lib_env')
@@ -53,18 +55,19 @@ src_dir = lib_env.get('SRC_DIR')
 ######################################################################
 # Build flags
 ######################################################################
-rcs_test_env.AppendUnique(
-        CPPPATH = [
-                '#/extlibs/hippomocks/hippomocks',
-                '../include',
-                '../src/common/utils/include',
-                '#/resource/csdk/include',
-                '#/resource/csdk/stack/include',
-                '#/resource/include',
-                '#/resource/oc_logger/include'
-        ])
 
-rcs_test_env.PrependUnique(LIBS = [
+rcs_test_env.AppendUnique(CPPPATH=[
+    '#/extlibs/hippomocks/hippomocks',
+    '../include',
+    '../src/common/utils/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/resource/oc_logger/include',
+    '#/resource/csdk/connectivity/api'
+])
+
+rcs_test_env.PrependUnique(LIBS=[
     'connectivity_abstraction',
     'oc_logger',
     'oc_logger_core',
@@ -72,14 +75,15 @@ rcs_test_env.PrependUnique(LIBS = [
     'oc',
     'rcs_client',
     'rcs_server',
-    'rcs_common'])
+    'rcs_common',
+])
 
 if lib_env.get('SECURED') == '1':
-    rcs_test_env.AppendUnique(CPPDEFINES = ['SECURED'])
-    rcs_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    rcs_test_env.AppendUnique(CPPDEFINES=['SECURED'])
+    rcs_test_env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if 'g++' in rcs_test_env.get('CXX'):
-    rcs_test_env.AppendUnique(CXXFLAGS = ['-std=c++0x'])
+    rcs_test_env.AppendUnique(CXXFLAGS=['-std=c++0x'])
 
 ######################################################################
 # Build Test
@@ -93,19 +97,23 @@ rcs_test_env.AppendTarget('rcs_client_test')
 # TODO: fix this test on linux and remove commented lines
 if rcs_test_env.get('TEST') == '1':
     if target_os in ['linux']:
-        from tools.scons.RunTest import run_test
-        run_test(rcs_test_env,
-#                'service_resource-encapsulation_unittests_rcs_client_test.memcheck',
-                 '',
-                 'service/resource-encapsulation/unittests/rcs_client_test')
+        run_test(
+            rcs_test_env,
+#           'service_resource-encapsulation_unittests_rcs_client_test.memcheck',
+            '',
+            'service/resource-encapsulation/unittests/rcs_client_test')
 else:
-    rcs_test_env.AppendUnique(CPPDEFINES = ['LOCAL_RUNNING'])
+    rcs_test_env.AppendUnique(CPPDEFINES=['LOCAL_RUNNING'])
 
 if lib_env.get('SECURED') == '1':
     src_dir = rcs_test_env.get('SRC_DIR')
-    svr_db_src_dir = os.path.join(src_dir, 'service/resource-encapsulation/unittests/')
-    svr_db_build_dir = os.path.join(rcs_test_env.get('BUILD_DIR'), 'service', 'resource-encapsulation', 'unittests') + os.sep
+    svr_db_src_dir = os.path.join(src_dir,
+                                  'service/resource-encapsulation/unittests/')
+    svr_db_build_dir = os.path.join(
+        rcs_test_env.get('BUILD_DIR'), 'service', 'resource-encapsulation',
+        'unittests') + os.sep
     rcs_test_env.Alias("install",
-        rcs_test_env.Install(svr_db_build_dir,
-              os.path.join(svr_db_src_dir,
-                           'oic_svr_db_re_client.dat')))
+                       rcs_test_env.Install(svr_db_build_dir,
+                                            os.path.join(
+                                                svr_db_src_dir,
+                                                'oic_svr_db_re_client.dat')))

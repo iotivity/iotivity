@@ -22,16 +22,18 @@
 # Notification Unit Test build script
 ##
 
+from tools.scons.RunTest import run_test
+
 Import('env')
 
 if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS = ['-Os'])
-    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+    env.AppendUnique(CCFLAGS=['-Os'])
+    env.AppendUnique(CPPDEFINES=['NDEBUG'])
 else:
-    env.AppendUnique(CCFLAGS = ['-g'])
+    env.AppendUnique(CCFLAGS=['-g'])
 
 if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 gtest_env = SConscript('#extlibs/gtest/SConscript')
 lib_env = gtest_env.Clone()
@@ -48,18 +50,23 @@ target_os = env.get('TARGET_OS')
 # Build flags
 ######################################################################
 
-easysetup_test_env.AppendUnique(LIBPATH = [lib_env.get('BUILD_DIR')])
-easysetup_test_env.PrependUnique(LIBS = [
-    'connectivity_abstraction', 'oc', 'octbstack', 'oc_logger', 'coap',
+easysetup_test_env.AppendUnique(LIBPATH=[lib_env.get('BUILD_DIR')])
+easysetup_test_env.PrependUnique(LIBS=[
+    'connectivity_abstraction',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'coap',
 ])
 
 if target_os not in ['windows', 'winrt']:
-    easysetup_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+    easysetup_test_env.AppendUnique(
+        CXXFLAGS=['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
-easysetup_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
-easysetup_test_env.AppendUnique(LIBS = ['pthread'])
+easysetup_test_env.AppendUnique(CXXFLAGS=['-pthread'])
+easysetup_test_env.AppendUnique(LIBS=['pthread'])
 
-easysetup_test_env.PrependUnique(CPPPATH = [
+easysetup_test_env.PrependUnique(CPPPATH=[
     '#/extlibs/hippomocks/hippomocks',
     '#/resource/csdk/include',
     '#/resource/csdk/connectivity/api',
@@ -73,25 +80,29 @@ easysetup_test_env.PrependUnique(CPPPATH = [
 
 if env.get('SECURED') == '1':
     if env.get('WITH_TCP') == True:
-        easysetup_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+        easysetup_test_env.AppendUnique(
+            LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 ######################################################################
 # Build Test
 ######################################################################
 
 easysetup_mediator_test_env = easysetup_test_env.Clone()
-easysetup_mediator_test_env.AppendUnique(LIBS = ['ESEnrolleeSDK', 'ESMediatorRich'])
+easysetup_mediator_test_env.AppendUnique(
+    LIBS=['ESEnrolleeSDK', 'ESMediatorRich'])
 
-easysetup_mediator_test_src = env.Glob(src_dir + '/service/easy-setup/mediator/richsdk/unittests/ESMediatorTest.cpp')
-easysetup_mediator_test = easysetup_mediator_test_env.Program('easysetup_mediator_test', easysetup_mediator_test_src)
+easysetup_mediator_test_src = env.Glob(
+    src_dir +
+    '/service/easy-setup/mediator/richsdk/unittests/ESMediatorTest.cpp')
+easysetup_mediator_test = easysetup_mediator_test_env.Program(
+    'easysetup_mediator_test', easysetup_mediator_test_src)
 Alias("easysetup_mediator_test", easysetup_mediator_test)
 env.AppendTarget('easysetup_mediator_test')
 
-# TODO: fix this test on supported configurations and remove commented lines
 if env.get('TEST') == '1':
     if target_os in ['linux'] and env.get('SECURED') != '1':
-        from tools.scons.RunTest import run_test
-        run_test(easysetup_mediator_test_env,
-#                'service_easy-setup_mediator_richsdk_unittests_easysetup_mediator_test.memcheck',
-                 '',
-                 'service/easy-setup/mediator/richsdk/unittests/easysetup_mediator_test',
-                 easysetup_mediator_test)
+        run_test(
+            easysetup_mediator_test_env,
+            # 'service_easy-setup_mediator_richsdk_unittests_easysetup_mediator_test.memcheck',
+            '',  # TODO: fix this test and enable previous line
+            'service/easy-setup/mediator/richsdk/unittests/easysetup_mediator_test',
+            easysetup_mediator_test)

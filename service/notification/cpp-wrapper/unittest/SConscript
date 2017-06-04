@@ -22,16 +22,18 @@
 # Notification Unit Test build script
 ##
 
+from tools.scons.RunTest import run_test
+
 Import('env')
 
 if env.get('RELEASE'):
-	env.AppendUnique(CCFLAGS = ['-Os'])
-	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+    env.AppendUnique(CCFLAGS=['-Os'])
+    env.AppendUnique(CPPDEFINES=['NDEBUG'])
 else:
-	env.AppendUnique(CCFLAGS = ['-g'])
+    env.AppendUnique(CCFLAGS=['-g'])
 
 if env.get('LOGGING'):
-	env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 gtest_env = SConscript('#extlibs/gtest/SConscript')
 lib_env = gtest_env.Clone()
@@ -48,25 +50,33 @@ target_os = env.get('TARGET_OS')
 # Build flags
 ######################################################################
 
-notification_wrapper_test_env.AppendUnique(LIBPATH = [lib_env.get('BUILD_DIR')])
-notification_wrapper_test_env.AppendUnique(LIBS = [
-    'connectivity_abstraction', 'oc', 'octbstack', 'oc_logger', 'coap', 'resource_directory'
+notification_wrapper_test_env.AppendUnique(LIBPATH=[lib_env.get('BUILD_DIR')])
+notification_wrapper_test_env.AppendUnique(LIBS=[
+    'connectivity_abstraction',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'coap',
+    'resource_directory',
+
 ])
 
 if env.get('WITH_TCP') == True:
-	notification_wrapper_test_env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
+    notification_wrapper_test_env.AppendUnique(CPPDEFINES=['WITH_TCP'])
 if env.get('SECURED') == '1':
-	notification_wrapper_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    notification_wrapper_test_env.AppendUnique(
+        LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if target_os not in ['windows', 'winrt']:
-    notification_wrapper_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+    notification_wrapper_test_env.AppendUnique(
+        CXXFLAGS=['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
-notification_wrapper_test_env.AppendUnique(LINKFLAGS = ['-Wl,--no-as-needed'])
+notification_wrapper_test_env.AppendUnique(LINKFLAGS=['-Wl,--no-as-needed'])
 
-notification_wrapper_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
-notification_wrapper_test_env.AppendUnique(LIBS = ['pthread'])
+notification_wrapper_test_env.AppendUnique(CXXFLAGS=['-pthread'])
+notification_wrapper_test_env.AppendUnique(LIBS=['pthread'])
 
-notification_wrapper_test_env.PrependUnique(CPPPATH = [
+notification_wrapper_test_env.PrependUnique(CPPPATH=[
     '#/extlibs/hippomocks/hippomocks',
     '../provider/inc',
     '../consumer/inc',
@@ -85,41 +95,58 @@ notification_wrapper_test_env.PrependUnique(CPPPATH = [
 ######################################################################
 
 notification_consumer_wrapper_test_env = notification_wrapper_test_env.Clone()
-notification_consumer_wrapper_test_env.AppendUnique(LIBS = ['notification_consumer_wrapper','notification_consumer'])
+notification_consumer_wrapper_test_env.AppendUnique(
+    LIBS=['notification_consumer_wrapper', 'notification_consumer'])
 
 notification_provider_wrapper_test_env = notification_wrapper_test_env.Clone()
-notification_provider_wrapper_test_env.AppendUnique(LIBS = ['notification_provider_wrapper','notification_provider'])
+notification_provider_wrapper_test_env.AppendUnique(
+    LIBS=['notification_provider_wrapper', 'notification_provider'])
 
-notification_consumer_wrapper_test_src = env.Glob('./NSConsumerServiceTest2.cpp')
-notification_consumer_wrapper_test = notification_consumer_wrapper_test_env.Program('notification_consumer_wrapper_test', notification_consumer_wrapper_test_src)
+notification_consumer_wrapper_test_src = env.Glob(
+    './NSConsumerServiceTest2.cpp')
+notification_consumer_wrapper_test = notification_consumer_wrapper_test_env.Program(
+    'notification_consumer_wrapper_test',
+    notification_consumer_wrapper_test_src)
 Alias("notification_consumer_wrapper_test", notification_consumer_wrapper_test)
 env.AppendTarget('notification_consumer_wrapper_test')
 
-notification_consumer_wrapper_test_src = env.Glob('./NSConsumerServiceTest.cpp')
-notification_consumer_wrapper_internaltest = notification_consumer_wrapper_test_env.Program('notification_consumer_wrapper_internaltest', notification_consumer_wrapper_test_src)
-Alias("notification_consumer_wrapper_internaltest", notification_consumer_wrapper_internaltest)
+notification_consumer_wrapper_test_src = env.Glob(
+    './NSConsumerServiceTest.cpp')
+notification_consumer_wrapper_internaltest = notification_consumer_wrapper_test_env.Program(
+    'notification_consumer_wrapper_internaltest',
+    notification_consumer_wrapper_test_src)
+Alias("notification_consumer_wrapper_internaltest",
+      notification_consumer_wrapper_internaltest)
 env.AppendTarget('notification_consumer_wrapper_test')
 
-notification_provider_wrapper_test_src = env.Glob('./NSProviderServiceTest2.cpp')
-notification_provider_wrapper_test = notification_provider_wrapper_test_env.Program('notification_provider_wrapper_test', notification_provider_wrapper_test_src)
+notification_provider_wrapper_test_src = env.Glob(
+    './NSProviderServiceTest2.cpp')
+notification_provider_wrapper_test = notification_provider_wrapper_test_env.Program(
+    'notification_provider_wrapper_test',
+    notification_provider_wrapper_test_src)
 Alias("notification_provider_wrapper_test", notification_provider_wrapper_test)
 env.AppendTarget('notification_provider_wrapper_test')
 
-notification_provider_wrapper_test_src = env.Glob('./NSProviderServiceTest.cpp')
-notification_provider_wrapper_internaltest = notification_provider_wrapper_test_env.Program('notification_provider_wrapper_internaltest', notification_provider_wrapper_test_src)
-Alias("notification_provider_wrapper_internaltest", notification_provider_wrapper_internaltest)
+notification_provider_wrapper_test_src = env.Glob(
+    './NSProviderServiceTest.cpp')
+notification_provider_wrapper_internaltest = notification_provider_wrapper_test_env.Program(
+    'notification_provider_wrapper_internaltest',
+    notification_provider_wrapper_test_src)
+Alias("notification_provider_wrapper_internaltest",
+      notification_provider_wrapper_internaltest)
 env.AppendTarget('notification_provider_wrapper_test')
 
 # TODO: Fix this test for more configs and remove this commented line
 if env.get('TEST') == '1':
     if env.get('SECURED') != '1':
         if target_os in ['linux']:
-            from tools.scons.RunTest import *
-            run_test(notification_consumer_wrapper_test_env,
-                     'service_notification_cpp-wrapper_unittest_notification_consumer_wrapper_test.memcheck',
-                     'service/notification/cpp-wrapper/unittest/notification_consumer_wrapper_test',
-                     notification_consumer_wrapper_test)
-            run_test(notification_provider_wrapper_test_env,
-                     'service_notification_cpp-wrapper_unittest_notification_provider_wrapper_test.memcheck',
-                     'service/notification/cpp-wrapper/unittest/notification_provider_wrapper_test',
-                     notification_provider_wrapper_test)
+            run_test(
+                notification_consumer_wrapper_test_env,
+                'service_notification_cpp-wrapper_unittest_notification_consumer_wrapper_test.memcheck',
+                'service/notification/cpp-wrapper/unittest/notification_consumer_wrapper_test',
+                notification_consumer_wrapper_test)
+            run_test(
+                notification_provider_wrapper_test_env,
+                'service_notification_cpp-wrapper_unittest_notification_provider_wrapper_test.memcheck',
+                'service/notification/cpp-wrapper/unittest/notification_provider_wrapper_test',
+                notification_provider_wrapper_test)
