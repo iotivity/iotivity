@@ -10,7 +10,7 @@ Import('env')
 help_vars = Variables()
 if not env.get('ANDROID_NDK'):
     SConscript('../../extlibs/android/ndk/SConscript')
-    help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK root directory', os.path.join(env.get('SRC_DIR'), 'extlibs', 'android', 'ndk', 'android-ndk-r10d')))
+    help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK root directory', os.path.join(env.get('SRC_DIR'), 'extlibs', 'android', 'ndk', 'android-ndk-r10e')))
 
 if not env.get('ANDROID_GRADLE'):
     SConscript('../../extlibs/android/gradle/SConscript')
@@ -30,7 +30,7 @@ else:
 *      # scons ANDROID_NDK=<path to android NDK> ...                          *
 *******************************************************************************
 '''
-	android_ndk = os.path.join(env.get('SRC_DIR'), 'extlibs', 'android', 'ndk', 'android-ndk-r10d')
+	android_ndk = os.path.join(env.get('SRC_DIR'), 'extlibs', 'android', 'ndk', 'android-ndk-r10e')
 
 if env.get('ANDROID_GRADLE'):
 	android_gradle = env.get('ANDROID_GRADLE')
@@ -226,7 +226,7 @@ if env.get('SECURED') == '1':
 	env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
 else:
 	env.AppendUnique(LIBS = ['mbedcrypto'])
-    
+
 # From android-5 (API > 20), all application must be built with flags '-fPIE' '-pie'.
 # Due to the limitation of Scons, it's required to added it into the command line
 # directly (otherwise, it will also be added when build share library)
