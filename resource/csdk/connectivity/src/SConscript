@@ -182,6 +182,9 @@ if ca_os == 'android':
 if connectivity_env.get('SECURED') == '1':
     connectivity_env.AppendUnique(LIBS=['mbedtls', 'mbedx509'])
 
+if ca_os in ['tizen']:
+    connectivity_env.AppendUnique(LIBS=['pthread'])
+
 # c_common calls into mbedcrypto.
 connectivity_env.AppendUnique(LIBS=['mbedcrypto'])
 

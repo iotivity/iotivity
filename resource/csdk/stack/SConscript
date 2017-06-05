@@ -93,6 +93,9 @@ elif liboctbstack_env.get('ROUTING') == 'EP':
 if target_os not in ['windows']:
     liboctbstack_env.AppendUnique(CFLAGS=['-Wall'])
 
+if target_os in ['tizen']:
+    liboctbstack_env.AppendUnique(LIBS = ['pthread'])
+
 liboctbstack_env.PrependUnique(LIBS=['ocsrm', 'coap'])
 
 if target_os in ['linux'] and liboctbstack_env.get('SIMULATOR', False):

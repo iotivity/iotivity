@@ -1222,7 +1222,7 @@ static void CALEServerSendDataThread(void *threadData)
         return;
     }
 
-#if defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__ANDROID__)
     // get MTU size
     g_mtuSize = CALEServerGetMtuSize(bleData->remoteEndpoint->addr);
 #endif
@@ -1504,7 +1504,7 @@ static void CALEClientSendDataThread(void *threadData)
         return;
     }
 
-#if defined(__TIZEN__) || defined(__ANDROID__)
+#if defined(__ANDROID__)
     // get MTU size
     if (false == CALEClientIsConnected(bleData->remoteEndpoint->addr))
     {

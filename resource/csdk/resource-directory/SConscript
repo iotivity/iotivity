@@ -77,6 +77,9 @@ if target_os in ['linux', 'tizen']:
 else:
     rd_env.AppendUnique(CPPPATH=['../../../extlibs/sqlite3'])
 
+if target_os in ['tizen']:
+    rd_env.AppendUnique(LIBS=['pthread'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
