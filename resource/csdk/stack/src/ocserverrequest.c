@@ -128,7 +128,6 @@ static void DeleteServerResponse(OCServerResponse * serverResponse)
     if(serverResponse)
     {
         RB_REMOVE(ServerResponseTree, &serverResponseTree, serverResponse);
-        OCPayloadDestroy(serverResponse->payload);
         OICFree(serverResponse);
         serverResponse = NULL;
         OIC_LOG(INFO, TAG, "Server Response Removed!!");
@@ -658,7 +657,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                     return result;
                 }
                 // Add CONTENT_FORMAT OPT if payload exist
-                if (responseInfo.info.payloadSize > 0)
+                if (ehResponse->payload->type != PAYLOAD_TYPE_DIAGNOSTIC &&
+                        responseInfo.info.payloadSize > 0)
                 {
                     responseInfo.info.payloadFormat = OCToCAPayloadFormat(
                             serverRequest->acceptFormat);

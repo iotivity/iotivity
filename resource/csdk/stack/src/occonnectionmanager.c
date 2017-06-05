@@ -248,6 +248,7 @@ static void OCAdapterStateChangedHandler(CATransportAdapter_t adapter, bool enab
 static void OCConnectionStateChangedHandler(const CAEndpoint_t *info, bool isConnected)
 {
     OIC_LOG(DEBUG, TAG, "OCConnectionStateChangedHandler");
+    OC_UNUSED(info);
 
     CAConnectUserPref_t connPrefer = CA_USER_PREF_CLOUD;
     CAResult_t ret = CAUtilCMGetConnectionUserConfig(&connPrefer);
@@ -281,7 +282,6 @@ static OCStackResult OCCMFindResource()
 {
     OIC_LOG_V(INFO, TAG, "%s", __func__);
 
-    OCQualityOfService qos = OC_LOW_QOS;
     char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
     snprintf(szQueryUri, sizeof(szQueryUri) - 1, "%s%c", OC_RSRVD_WELL_KNOWN_URI, '\0');
 
@@ -292,8 +292,7 @@ static OCStackResult OCCMFindResource()
 
     OCStackResult ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri,
                                      NULL, 0, CT_DEFAULT | CT_IP_USE_V4,
-                                     (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
-                                     &cbData, NULL, 0);
+                                     OC_LOW_QOS, &cbData, NULL, 0);
     if (OC_STACK_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");

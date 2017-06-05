@@ -121,6 +121,8 @@ std::string OC::OCException::reason(const OCStackResult sr)
             return OC::Exception::INTERNAL_SERVER_ERROR;
         case OC_STACK_BAD_ENDPOINT:
             return OC::Exception::BAD_ENDPOINT;
+        case OC_STACK_GATEWAY_TIMEOUT:
+            return OC::Exception::GATEWAY_TIMEOUT;
     }
 
     return OC::Exception::UNKNOWN_ERROR;

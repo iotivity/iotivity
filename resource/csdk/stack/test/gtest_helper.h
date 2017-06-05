@@ -168,6 +168,7 @@ namespace iotivity
                         break;
                     }
                     OCProcess();
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
                 return m_called ? OC_STACK_OK : OC_STACK_TIMEOUT;
             }

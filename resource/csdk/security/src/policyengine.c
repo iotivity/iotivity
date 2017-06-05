@@ -37,6 +37,7 @@
 #include "amaclresource.h"
 #include "credresource.h"
 #include "rolesresource.h"
+#include "deviceonboardingstate.h"
 
 #define TAG "OIC_SRM_PE"
 
@@ -71,33 +72,6 @@ uint16_t GetPermissionFromCAMethod_t(const CAMethod_t method)
 }
 
 /**
- * Compares two OicUuid_t structs.
- *
- * @return true if the two OicUuid_t structs are equal, else false.
- */
-static bool UuidCmp(OicUuid_t *firstId, OicUuid_t *secondId)
-{
-    // TODO use VERIFY macros to check for null when they are merged.
-    if(NULL == firstId || NULL == secondId)
-    {
-        return false;
-    }
-    // Check empty uuid string
-    if('\0' == firstId->id[0] || '\0' == secondId->id[0])
-    {
-        return false;
-    }
-    for(int i = 0; i < UUID_LENGTH; i++)
-    {
-        if(firstId->id[i] != secondId->id[i])
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
-/**
  * Compare the request's subject to DevOwner.
  *
  * @return true if context->subjectId == GetDoxmDevOwner(), else false.
@@ -105,28 +79,35 @@ static bool UuidCmp(OicUuid_t *firstId, OicUuid_t *secondId)
 static bool IsRequestFromDevOwner(SRMRequestContext_t *context)
 {
     bool retVal = false;
+    OicSecDoxm_t* doxm = NULL;
 
-    if(NULL == context)
+    if (NULL == context)
     {
-        return retVal;
+        return false;
     }
 
-    OicSecDoxm_t* doxm = (OicSecDoxm_t*) GetDoxmResourceData();
+    if (IsNilUuid(&context->subjectUuid))
+    {
+        // Nil subject is never devOwner
+        retVal = false;
+        goto exit;
+    }
+
+    doxm = (OicSecDoxm_t*) GetDoxmResourceData();
     if (doxm)
     {
         retVal = UuidCmp(&doxm->owner, &context->subjectUuid);
-        OIC_LOG_V(DEBUG, TAG, "%s: request was %s received from device owner",
-            __func__, retVal ? "" : "NOT ");
-
         if (!retVal)
         {
             OIC_LOG(DEBUG, TAG, "Owner UUID  :");
-            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)&doxm->owner.id, sizeof(&doxm->owner.id));
+            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)&doxm->owner.id, sizeof(OicUuid_t));
             OIC_LOG(DEBUG, TAG, "Request UUID:");
-            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)&context->subjectUuid.id, sizeof(&context->subjectUuid.id));
+            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)&context->subjectUuid.id, sizeof(OicUuid_t));
         }
     }
-
+exit:
+    OIC_LOG_V(DEBUG, TAG, "%s: request was %sreceived from device owner",
+            __func__, retVal ? "" : "NOT ");
     return retVal;
 }
 
@@ -171,11 +152,19 @@ static bool IsRequestFromSubOwner(SRMRequestContext_t *context)
 {
     bool retVal = false;
 
+    if (IsNilUuid(&context->subjectUuid))
+    {
+        // Nil subject is never subOwner
+        retVal = false;
+        goto exit;
+    }
+
     if (NULL != context)
     {
         retVal = IsSubOwner(&context->subjectUuid);
     }
 
+exit:
     OIC_LOG_V(INFO, TAG, "%s: returning %s", __func__, retVal ? "true" : "false");
     return retVal;
 }
@@ -257,6 +246,14 @@ bool IsRequestFromResourceOwner(SRMRequestContext_t *context)
         return false;
     }
 
+    if (IsNilUuid(&context->subjectUuid))
+    {
+        // Nil subject is never rOwner
+        OIC_LOG_V(DEBUG, TAG, "%s: Nil UUID cannot be rowner.", __func__);
+        retVal = false;
+        goto exit;
+    }
+
     if((OIC_R_ACL_TYPE <= context->resourceType) && \
         (OIC_SEC_SVR_TYPE_COUNT > context->resourceType))
     {
@@ -267,7 +264,7 @@ bool IsRequestFromResourceOwner(SRMRequestContext_t *context)
             retVal = UuidCmp(&context->subjectUuid, &resourceOwner);
         }
     }
-
+exit:
     OIC_LOG_V(INFO, TAG, "%s: returning %s", __func__, retVal ? "true" : "false");
     return retVal;
 }
@@ -362,14 +359,15 @@ static bool IsAccessWithinValidTime(const OicSecAce_t *ace)
 /**
  * Check whether 'resource' is in the passed ACE.
  *
- * @param resource is the resource being searched.
- * @param ace is the ACE to check.
+ * @param[in] context Context->resourceUri contains the Resource being checked,
+ *                    as well as the discoverability of the Resource.
+ * @param[in] ace The ACE to check.
  *
- * @return true if 'resource' found, otherwise false.
+ * @return true if match found, otherwise false.
  */
-static bool IsResourceInAce(const char *resource, const OicSecAce_t *ace)
+static bool IsResourceInAce(SRMRequestContext_t *context, const OicSecAce_t *ace)
 {
-    if (NULL== ace || NULL == resource)
+    if (NULL == context || NULL == ace)
     {
         return false;
     }
@@ -377,11 +375,29 @@ static bool IsResourceInAce(const char *resource, const OicSecAce_t *ace)
     OicSecRsrc_t* rsrc = NULL;
     LL_FOREACH(ace->resources, rsrc)
     {
-         if (0 == strcmp(resource, rsrc->href) || // TODO null terms?
-             0 == strcmp(WILDCARD_RESOURCE_URI, rsrc->href))
-         {
-             return true;
-         }
+        if (NULL == rsrc->href)
+        {
+            if (NO_WILDCARD != rsrc->wildcard)
+            {
+                if ((ALL_RESOURCES == rsrc->wildcard) ||
+                    (ALL_DISCOVERABLE == rsrc->wildcard &&
+                        DISCOVERABLE_TRUE == context->discoverable) ||
+                    (ALL_NON_DISCOVERABLE == rsrc->wildcard &&
+                        DISCOVERABLE_FALSE == context->discoverable))
+                {
+                    OIC_LOG_V(DEBUG, TAG, "%s: found wc type %d matching resource.",
+                        __func__, rsrc->wildcard);
+                    return true;
+                }
+            }
+        }
+        else if (0 == strcmp(context->resourceUri, rsrc->href) ||
+                 0 == strcmp(WILDCARD_RESOURCE_URI, rsrc->href))
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: found href %s matching resource.",
+                        __func__, rsrc->href);
+            return true;
+        }
     }
     return false;
 }
@@ -389,14 +405,14 @@ static bool IsResourceInAce(const char *resource, const OicSecAce_t *ace)
 static void ProcessMatchingACE(SRMRequestContext_t *context, const OicSecAce_t *currentAce)
 {
     // Found the subject, so how about resource?
-    OIC_LOG_V(DEBUG, TAG, "%s:found ACE matching subject", __func__);
+    OIC_LOG_V(DEBUG, TAG, "%s: found ACE matching subject.", __func__);
 
     // Subject was found, so err changes to Rsrc not found for now.
     context->responseVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
-    OIC_LOG_V(DEBUG, TAG, "%s:Searching for resource...", __func__);
-    if (IsResourceInAce(context->resourceUri, currentAce))
+    OIC_LOG_V(DEBUG, TAG, "%s: Searching for resource...", __func__);
+    if (IsResourceInAce(context, currentAce))
     {
-        OIC_LOG_V(INFO, TAG, "%s:found matching resource in ACE", __func__);
+        OIC_LOG_V(INFO, TAG, "%s: found matching resource in ACE.", __func__);
 
         // Found the resource, so it's down to valid period & permission.
         context->responseVal = ACCESS_DENIED_INVALID_PERIOD;
@@ -413,13 +429,9 @@ static void ProcessMatchingACE(SRMRequestContext_t *context, const OicSecAce_t *
 }
 
 /**
- * Find ACLs containing context->subject.
- * Search each ACL for requested resource.
- * If resource found, check for context->permission and period validity.
- * If the ACL is not found locally and AMACL for the resource is found
- * then sends the request to AMS service for the ACL.
- * Set context->retVal to result from first ACL found which contains
- * correct subject AND resource.
+ * Search for an ACE that matches the Resource URI, by conntype, subjectuuid, or roles.
+ * For each matching ACE, check whether it grants permission.
+ * If any ACE grants permission, set responseVal to ACCESS_GRANTED.
  */
 static void ProcessAccessRequest(SRMRequestContext_t *context)
 {
@@ -434,65 +446,93 @@ static void ProcessAccessRequest(SRMRequestContext_t *context)
     const OicSecAce_t *currentAce = NULL;
     OicSecAce_t *aceSavePtr = NULL;
 
-    OIC_LOG_V(DEBUG, TAG, "Entering ProcessAccessRequest(%s)",
-        context->resourceUri);
-
     // Start out assuming subject not found.
     context->responseVal = ACCESS_DENIED_SUBJECT_NOT_FOUND;
 
-    // Loop through all ACLs with a matching Subject searching for the right
-    // ACL for this request.
+    // First, check for a conntype ACE that matches.
+    OicSecConntype_t conntype;
+    if (context->secureChannel)
+    {
+        conntype = AUTH_CRYPT;
+    }
+    else
+    {
+        conntype = ANON_CLEAR;
+    }
     do
     {
-        currentAce = GetACLResourceData(&context->subjectUuid, &aceSavePtr);
+        currentAce = GetACLResourceDataByConntype(conntype, &aceSavePtr);
 
         if (NULL != currentAce)
         {
+            OIC_LOG_V(DEBUG, TAG, "%s: found conntype %s match; processing for access.",
+                __func__, (AUTH_CRYPT == conntype?"auth-crypt":"anon-clear"));
             ProcessMatchingACE(context, currentAce);
         }
         else
         {
-            OIC_LOG_V(INFO, TAG, "%s:no ACL found matching subject for resource %s",
-                __func__, context->resourceUri);
+            OIC_LOG_V(INFO, TAG, "%s:no ACL found matching conntype %s for resource %s",
+                __func__, (AUTH_CRYPT == conntype?"auth-crypt":"anon-clear"), context->resourceUri);
         }
     } while ((NULL != currentAce) && !IsAccessGranted(context->responseVal));
 
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-        // If no subject ACE granted access, try role ACEs.
-        if (!IsAccessGranted(context->responseVal))
+    // If not granted via conntype, try Subject-based match.
+    if (!IsAccessGranted(context->responseVal))
+    {
+        currentAce = NULL;
+        aceSavePtr = NULL;
+        do
         {
-            currentAce = NULL;
-            aceSavePtr = NULL;
-            OicSecRole_t *roles = NULL;
-            size_t roleCount = 0;
-            OCStackResult res = GetEndpointRoles(context->endPoint, &roles, &roleCount);
-            if (OC_STACK_OK != res)
+            currentAce = GetACLResourceData(&context->subjectUuid, &aceSavePtr);
+
+            if (NULL != currentAce)
             {
-                OIC_LOG_V(ERROR, TAG, "Error getting asserted roles for endpoint: %d", res);
+                ProcessMatchingACE(context, currentAce);
             }
             else
             {
-                OIC_LOG_V(DEBUG, TAG, "Found %u asserted roles for endpoint", (unsigned int) roleCount);
-                do
-                {
-                    currentAce = GetACLResourceDataByRoles(roles, roleCount, &aceSavePtr);
-                    if (NULL != currentAce)
-                    {
-                        ProcessMatchingACE(context, currentAce);
-                    }
-                    else
-                    {
-                        OIC_LOG_V(INFO, TAG, "%s:no ACL found matching roles for resource %s",
-                            __func__, context->resourceUri);
-                    }
-                } while ((NULL != currentAce) && !IsAccessGranted(context->responseVal));
-
-                OICFree(roles);
+                OIC_LOG_V(INFO, TAG, "%s:no ACL found matching subject for resource %s",
+                    __func__, context->resourceUri);
             }
+        } while ((NULL != currentAce) && !IsAccessGranted(context->responseVal));
+    }
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    // If no subject ACE granted access, try role ACEs.
+    if (!IsAccessGranted(context->responseVal))
+    {
+        currentAce = NULL;
+        aceSavePtr = NULL;
+        OicSecRole_t *roles = NULL;
+        size_t roleCount = 0;
+        OCStackResult res = GetEndpointRoles(context->endPoint, &roles, &roleCount);
+        if (OC_STACK_OK != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "Error getting asserted roles for endpoint: %d", res);
         }
+        else
+        {
+            OIC_LOG_V(DEBUG, TAG, "Found %u asserted roles for endpoint", (unsigned int) roleCount);
+            do
+            {
+                currentAce = GetACLResourceDataByRoles(roles, roleCount, &aceSavePtr);
+                if (NULL != currentAce)
+                {
+                    ProcessMatchingACE(context, currentAce);
+                }
+                else
+                {
+                    OIC_LOG_V(INFO, TAG, "%s:no ACL found matching roles for resource %s",
+                        __func__, context->resourceUri);
+                }
+            } while ((NULL != currentAce) && !IsAccessGranted(context->responseVal));
+
+            OICFree(roles);
+        }
+    }
 #endif /* defined(__WITH_DTLS__) || defined(__WITH_TLS__) */
 
-    OIC_LOG_V(INFO, TAG, "%s:Leaving with responseVal = %s", __func__,
+    OIC_LOG_V(INFO, TAG, "%s: returning with responseVal = %s", __func__,
         IsAccessGranted(context->responseVal) ? "ACCESS_GRANTED" : "ACCESS_DENIED");
     return;
 }
@@ -503,84 +543,54 @@ void CheckPermission(SRMRequestContext_t *context)
     assert(0 != context->requestedPermission);
     assert(0 == (context->requestedPermission & ~PERMISSION_FULL_CONTROL));
 
+    context->responseVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
+
     // Before doing any ACL processing, check if request is a) coming
-    // from DevOwner AND b) the device is in Ready for OTM or Reset state
-    // (which in IoTivity is equivalent to isOp == false && owned == false)
+    // from DevOwner AND b) the device is in Ready for OTM or SRESET state
     // AND c) the request is for a SVR resource.
     // If all 3 conditions are met, grant request.
-    // TODO_IoTivity_1.3: use pstat.dos instead of these two checks.
-    bool isDeviceOwned = true; // default to value that will NOT grant access
-    if (OC_STACK_OK != GetDoxmIsOwned(&isDeviceOwned)) // if runtime error, don't grant
+    OicSecDostype_t dos;
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
+
+    // Test for implicit access.
+    if (IsRequestFromDevOwner(context) &&
+        ((DOS_RFOTM == dos.state) || (DOS_SRESET == dos.state)) &&
+        (NOT_A_SVR_RESOURCE != context->resourceType))
     {
-        OIC_LOG(ERROR, TAG, "GetDoxmIsOwned() call failed.");
-        context->responseVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
-    }
-    // If we were able to get the value of doxm->isOwned, proceed with
-    // test for implicit access.
-    else if (IsRequestFromDevOwner(context) &&  // if from DevOwner
-            !GetPstatIsop() &&                  // AND if pstat->isOp == false
-            !isDeviceOwned &&                   // AND if doxm->isOwned == false
-            (NOT_A_SVR_RESOURCE != context->resourceType)) // AND if is SVR type
-    {
-        OIC_LOG(INFO, TAG, "CheckPermission: granting access to device owner");
+        OIC_LOG_V(INFO, TAG, "%s: granting implicit access to device owner", __func__);
         context->responseVal = ACCESS_GRANTED;
     }
     // If not granted via DevOwner status and not a subowner,
-    // then check if request is for a SVR and coming from rowner
+    // then check if request is for a SVR and coming from rowner.
     else if (IsRequestFromResourceOwner(context))
     {
-        OIC_LOG(INFO, TAG, "CheckPermission: granting access to resource owner");
+        OIC_LOG_V(INFO, TAG, "%s: granting implicit access to resource owner", __func__);
         context->responseVal = ACCESS_GRANTED;
     }
-#ifdef MULTIPLE_OWNER // TODO Samsung reviewer: per above comment, should this
-                      // go above IsRequestFromResourceOwner() call, or here?
+#ifdef MULTIPLE_OWNER
     // Then check if request from SubOwner.
     else if (IsRequestFromSubOwner(context))
     {
         if (IsValidRequestFromSubOwner(context))
         {
-            OIC_LOG(INFO, TAG, "CheckPermission: granting access to device sub-owner");
+            OIC_LOG_V(INFO, TAG, "%s: granting implicit access to device sub-owner", __func__);
             context->responseVal = ACCESS_GRANTED;
         }
     }
 #endif //MULTIPLE_OWNER
-    else if (!GetPstatIsop() &&
+    else if ((DOS_RFNOP != dos.state) &&
              (NOT_A_SVR_RESOURCE != context->resourceType) &&
              IsRequestFromOwnershipTransferSession(context))
     {
-        OIC_LOG(INFO, TAG, "CheckPermission: granting access to OT session request");
+        OIC_LOG_V(INFO, TAG, "%s: granting implicit access to OT session request", __func__);
         context->responseVal = ACCESS_GRANTED;
     }
     // Else request is a "normal" request that must be tested against ACL.
     else
     {
-        OicUuid_t saveSubjectUuid = {.id={0}};
-        // bool isSubEmpty = IsRequestSubjectEmpty(context);
-
         ProcessAccessRequest(context);
-
-        // TODO_IoTivity_1.3: ensure check order results in Union permissions
-        // If access not already granted, and requested subject != wildcard,
-        // try looking for a wildcard ACE that grants access.
-        // See JIRA ticket 1795 (https://jira.iotivity.org/browse/IOT-1795)
-        if (ACCESS_GRANTED != context->responseVal &&
-            !IsWildCardSubject(&context->subjectUuid))
-        {
-            // Save subject to restore context after wildcard subject check.
-            memcpy(&saveSubjectUuid, &context->subjectUuid,
-                sizeof(context->subjectUuid));
-
-            // Set context->subjectUuid to WILDCARD_SUBJECT_ID.
-            memset(&context->subjectUuid, 0, sizeof(context->subjectUuid));
-            memcpy(&context->subjectUuid,
-                &WILDCARD_SUBJECT_ID, sizeof(context->subjectUuid));
-            ProcessAccessRequest(context);
-
-            // Restore subjectUuid.
-            memcpy(&context->subjectUuid,
-                &saveSubjectUuid, sizeof(context->subjectUuid));
-        }
     }
 
+exit:
     return;
 }

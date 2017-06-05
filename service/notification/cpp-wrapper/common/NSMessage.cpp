@@ -124,26 +124,30 @@ namespace OIC
 
         NSMessage &NSMessage::operator=(const NSMessage &msg)
         {
-            this->m_messageId = msg.getMessageId();
-            this->m_providerId = msg.getProviderId();
-
-            this->m_type = msg.getType();
-            this->m_time = msg.getTime();
-            this->m_ttl = msg.getTTL();
-            this->m_title = msg.getTitle();
-            this->m_contentText = msg.getContentText();
-            this->m_sourceName = msg.getSourceName();
-
-            if (msg.getMediaContents() != nullptr)
+            if (this != &msg)
             {
-                this->m_mediaContents = new NSMediaContents(msg.getMediaContents()->getIconImage());
+                this->m_messageId = msg.getMessageId();
+                this->m_providerId = msg.getProviderId();
+
+                this->m_type = msg.getType();
+                this->m_time = msg.getTime();
+                this->m_ttl = msg.getTTL();
+                this->m_title = msg.getTitle();
+                this->m_contentText = msg.getContentText();
+                this->m_sourceName = msg.getSourceName();
+
+                if (msg.getMediaContents() != nullptr)
+                {
+                    this->m_mediaContents = new NSMediaContents(msg.getMediaContents()->getIconImage());
+                }
+                else
+                {
+                    this->m_mediaContents = new NSMediaContents();
+                }
+                this->m_topic = msg.getTopic();
+                this->m_extraInfo = OC::OCRepresentation(msg.getExtraInfo());
             }
-            else
-            {
-                this->m_mediaContents = new NSMediaContents();
-            }
-            this->m_topic = msg.getTopic();
-            this->m_extraInfo = OC::OCRepresentation(msg.getExtraInfo());
+
             return *this;
         }
 

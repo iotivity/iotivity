@@ -527,6 +527,13 @@ public class OcResource {
     public native String getHost();
 
     /**
+     * Method to get the endpoints information of this resource
+     *
+     * @return List of endpoints information
+     */
+    public native List<String> getAllHosts();
+
+    /**
      * Method to get the URI for this resource
      *
      * @return resource URI
@@ -553,6 +560,13 @@ public class OcResource {
      */
     public native boolean isObservable();
 
+    /**
+     * Function to change host of this reource
+     * @return New host Address.
+     *         Not observable.
+     */
+     public native String setHost(String host);
+     
     /**
      * Method to get the list of resource types
      *

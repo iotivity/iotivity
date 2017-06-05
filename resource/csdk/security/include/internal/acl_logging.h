@@ -48,6 +48,8 @@ INLINE_API void printACE(LogLevel level, const OicSecAce_t *ace)
         return;
     }
 
+    OIC_LOG_V(level, ACL_TAG, "    aceid = %d", ace->aceid);
+
     OIC_LOG_V(level, ACL_TAG, "    permission = %#x", (uint32_t)ace->permission);
 
     // Log the subject
@@ -61,6 +63,23 @@ INLINE_API void printACE(LogLevel level, const OicSecAce_t *ace)
     {
         OIC_LOG_V(level, ACL_TAG, "    role id = %s", ace->subjectRole.id);
         OIC_LOG_V(level, ACL_TAG, "    authority = %s", ace->subjectRole.authority);
+    }
+    else if (ace->subjectType == OicSecAceConntypeSubject)
+    {
+        const char *conntype;
+        if (ANON_CLEAR == ace->subjectConn)
+        {
+            conntype = "ANON_CLEAR";
+        }
+        else if (AUTH_CRYPT == ace->subjectConn)
+        {
+            conntype = "AUTH_CRYPT";
+        }
+        else
+        {
+            conntype = "Unknown conntype in subjectConn";
+        }
+        OIC_LOG_V(level, ACL_TAG, "    conntype = %s", conntype);
     }
     else
     {

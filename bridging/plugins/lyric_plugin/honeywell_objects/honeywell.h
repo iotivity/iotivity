@@ -133,7 +133,7 @@ public:
     /// @param stringData - (input) String buffer to print.
     /// @param filename - (input optional) If non-null, specifies an output file to store the passed string.
     ///        File output is not truncated like OIC_LOG output is. Use this to capture JSON responses from cloud.
-    void dumpResponseString(const char *stringData, const char *fileName);
+    void dumpResponseString(const std::string &stringData, const std::string &fileName);
 
     /// Sets temperature of selected honeywell thermostat.
     ///

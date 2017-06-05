@@ -34,12 +34,15 @@
 
 #define CLOUD_CONTEXT_VALUE 0x99
 
-char CLOUD_ADDRESS[100];
-char CLOUD_TOPIC[100];
 char CLOUD_AUTH_PROVIDER[100];
 char CLOUD_AUTH_CODE[100];
 char CLOUD_UID[100];
 char CLOUD_ACCESS_TOKEN[100];
+#endif
+
+#if defined (WITH_CLOUD) || defined (WITH_MQ)
+char CLOUD_ADDRESS[100];
+char CLOUD_TOPIC[100];
 #endif
 
 
@@ -131,11 +134,13 @@ void* OCProcessThread(void * ptr)
 
 void input(char * buffer)
 {
-    char ch;
+    char ch = '\0';
     int i = 0;
 
     while( (ch = getchar()) != '\n' && i < 100)
+    {
         buffer[i++] = ch;
+    }
 
     buffer[i] = '\0';
 }

@@ -29,9 +29,11 @@ OCFFramework ocfFramework;
 
 App::App(const IPCAAppInfo* ipcaAppInfo, IPCAVersion ipcaVersion) :
     m_isStopped(false),
+    m_ipcaVersion(ipcaVersion),
     m_passwordInputCallbackHandle(nullptr),
+    m_passwordInputCallbackInfo(nullptr),
     m_passwordDisplayCallbackHandle(nullptr),
-    m_ipcaVersion(ipcaVersion)
+    m_passwordDisplayCallbackInfo(nullptr)
 {
     m_ipcaAppInfo.appId = ipcaAppInfo->appId;
     m_ipcaAppInfo.appName = ipcaAppInfo->appName;
@@ -106,6 +108,19 @@ void App::Stop()
     ocfFramework.Stop(m_passwordInputCallbackHandle, m_passwordDisplayCallbackHandle);
     m_passwordInputCallbackHandle = nullptr;
     m_passwordDisplayCallbackHandle = nullptr;
+
+    // Deregister the callback info.
+    if (m_passwordInputCallbackInfo != nullptr)
+    {
+        DeleteAndUnregisterCallbackInfo(m_passwordInputCallbackInfo->mapKey);
+        m_passwordInputCallbackInfo = nullptr;
+    }
+
+    if (m_passwordDisplayCallbackInfo != nullptr)
+    {
+        DeleteAndUnregisterCallbackInfo(m_passwordDisplayCallbackInfo->mapKey);
+        m_passwordDisplayCallbackInfo = nullptr;
+    }
 }
 
 void App::AppWorkerThread(App* app)
@@ -130,7 +145,7 @@ void App::AppWorkerThread(App* app)
         uint64_t currentTime = OICGetCurrentTime(TIME_IN_MS);
 
         // Do periodic discovery for active IPCADiscoverDevices() requests.
-        std::map<uint32_t, std::vector<std::string>> resourceTypesToDiscover;
+        std::map<size_t, std::vector<std::string>> resourceTypesToDiscover;
         {
             std::lock_guard<std::mutex> lock(app->m_appMutex);
             for (auto& entry : app->m_discoveryList)
@@ -170,6 +185,7 @@ void App::AppWorkerThread(App* app)
         // Do callbacks for expired outstanding requests.
         std::vector<CallbackInfo::Ptr> expiredCallbacks;
         app->m_callback->CompleteAndRemoveExpiredCallbackInfo(expiredCallbacks);
+        expiredCallbacks.clear();   // no use of the expired callbacks.
 
         // Get oustanding Observe requests and ping the device every PingPeriodMS.
         std::vector<CallbackInfo::Ptr> observeCallbacks;
@@ -366,6 +382,10 @@ IPCAStatus App::SetPasswordCallbacks(
     ocfFramework.SetInputPasswordCallback(inputCallbackInfo, &m_passwordInputCallbackHandle);
     ocfFramework.SetDisplayPasswordCallback(displayCallbackInfo, &m_passwordDisplayCallbackHandle);
 
+    // The CallbackInfo to be deregistered in Stop().
+    m_passwordInputCallbackInfo = inputCallbackInfo;
+    m_passwordDisplayCallbackInfo = displayCallbackInfo;
+
     return IPCA_OK;
 }
 
@@ -559,6 +579,11 @@ IPCAStatus App::ObserveResource(
 
     status = device->ObserveResource(cbInfo);
 
+    if (status == IPCA_OK)
+    {
+        cbInfo->inObserve = true;
+    }
+
     if ((status != IPCA_OK) && (cbInfo != nullptr))
     {
         if (handle != nullptr)
@@ -661,7 +686,9 @@ IPCAStatus App::DeleteResource(
     return status;
 }
 
-void App::CloseIPCAHandle(IPCAHandle handle)
+IPCAStatus App::CloseIPCAHandle(IPCAHandle handle,
+                    IPCACloseHandleComplete closeHandleComplete,
+                    const void* context)
 {
     size_t mapKey = reinterpret_cast<size_t>(handle);
 
@@ -676,13 +703,14 @@ void App::CloseIPCAHandle(IPCAHandle handle)
             m_discoveryList.erase(cbInfo->mapKey);
         }
         else
-        if (cbInfo->type == CallbackType_ResourceChange)
+        if ((cbInfo->type == CallbackType_ResourceChange) && cbInfo->inObserve)
         {
             cbInfo->device->StopObserve(cbInfo);
+            cbInfo->inObserve = false;
         }
     }
 
-    DeleteAndUnregisterCallbackInfo(mapKey);
+    return DeleteAndUnregisterCallbackInfo(mapKey, closeHandleComplete, context);
 }
 
 IPCAStatus App::CreateAndRegisterNewCallbackInfo(
@@ -734,7 +762,10 @@ IPCAStatus App::CreateAndRegisterNewCallbackInfo(
     return status;
 }
 
-void App::DeleteAndUnregisterCallbackInfo(size_t mapKey)
+IPCAStatus App::DeleteAndUnregisterCallbackInfo(
+                                size_t mapKey,
+                                IPCACloseHandleComplete closeHandleComplete,
+                                const void* context)
 {
-    m_callback->RemoveCallbackInfo(mapKey);
+    return m_callback->RemoveCallbackInfo(mapKey, closeHandleComplete, context);
 }

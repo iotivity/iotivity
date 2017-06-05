@@ -22,6 +22,7 @@
 
 #include "JniOcStack.h"
 #include "JniOcCloudProvisioning.h"
+#include "srmutility.h"
 #include "oic_malloc.h"
 
 namespace PH = std::placeholders;
@@ -134,6 +135,40 @@ JniGetAclIdByDeviceListener* JniOcCloudProvisioning::AddGetAclByDeviceListener(J
     return resultListener;
 }
 
+JniCreateAclIdListener* JniOcCloudProvisioning::CreateAclListener(JNIEnv* env,
+        jobject jListener)
+{
+    JniCreateAclIdListener *resultListener = NULL;
+    createresultMapLock.lock();
+
+    for (auto it = createresultMap.begin(); it != createresultMap.end(); ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            resultListener = refPair.first;
+            refPair.second++;
+            it->second = refPair;
+            createresultMap.insert(*it);
+            LOGD("CreateACLID Listener: ref. count incremented");
+            break;
+        }
+    }
+    if (!resultListener)
+    {
+        resultListener = new JniCreateAclIdListener(env, jListener,
+                RemoveCallback(std::bind(&JniOcCloudProvisioning::RemoveCreateAclIdListener,
+                        this, PH::_1, PH::_2)));
+        jobject jgListener = env->NewGlobalRef(jListener);
+
+        createresultMap.insert(std::pair < jobject, std::pair < JniCreateAclIdListener*,
+                int >> (jgListener, std::pair<JniCreateAclIdListener*, int>(resultListener, 1)));
+        LOGD("CreateACLID Listener: new listener");
+    }
+    createresultMapLock.unlock();
+    return resultListener;
+}
+
 void JniOcCloudProvisioning::RemoveGetAclByDeviceIdListener(JNIEnv* env, jobject jListener)
 {
     aclresultMapLock.lock();
@@ -163,6 +198,37 @@ void JniOcCloudProvisioning::RemoveGetAclByDeviceIdListener(JNIEnv* env, jobject
     }
     aclresultMapLock.unlock();
 }
+
+void JniOcCloudProvisioning::RemoveCreateAclIdListener(JNIEnv* env, jobject jListener)
+{
+    createresultMapLock.lock();
+
+    for (auto it = createresultMap.begin(); it != createresultMap.end(); ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            if (refPair.second > 1)
+            {
+                refPair.second--;
+                it->second = refPair;
+                createresultMap.insert(*it);
+                LOGI("CreateACLID Listener: ref. count decremented");
+            }
+            else
+            {
+                env->DeleteGlobalRef(it->first);
+                JniCreateAclIdListener* listener = refPair.first;
+                delete listener;
+                createresultMap.erase(it);
+                LOGI("CreateACLID Listener removed");
+            }
+            break;
+        }
+    }
+    createresultMapLock.unlock();
+}
+
 JniOcCloudProvisioning * Create_native_object(JNIEnv *env, jobject thiz)
 {
     jstring jip = (jstring)env->CallObjectMethod(thiz, g_mid_OcCloudProvisioning_getIP);
@@ -261,6 +327,269 @@ OCStackResult JniOcCloudProvisioning::getAclIdByDevice(JNIEnv* env, std::string 
 
     return m_sharedCloudObject->getAclIdByDevice(deviceId, aclIdResponseCallBack);
 }
+
+OCStackResult JniOcCloudProvisioning::createAclId(JNIEnv* env, std::string ownerId,
+              std::string deviceID, jobject jListener)
+{
+    JniCreateAclIdListener *resultListener = CreateAclListener(env, jListener);
+
+    AclIdResponseCallBack aclIdResponseCallBack = [resultListener](OCStackResult result,
+            std::string aclId)
+    {
+        resultListener->CreateAclIdListenerCB(result, aclId);
+    };
+
+    return m_sharedCloudObject->createAclId(ownerId, deviceID, aclIdResponseCallBack);
+}
+
+static OicSecValidity_t* getValiditiesList(JNIEnv *env, jobject validityObject)
+{
+    jstring jData;
+    jobjectArray  valList = (jobjectArray)env->CallObjectMethod(validityObject,
+            g_mid_OcOicSecCloudAcl_ace_get_validities);
+    if (!valList || env->ExceptionCheck())
+    {
+        return nullptr;
+    }
+    int nr_validities = env->GetArrayLength(valList);
+
+    OicSecValidity_t *valHead = NULL;
+
+    for (int i = 0 ; i < nr_validities; i++)
+    {
+        OicSecValidity_t *tmp = (OicSecValidity_t*)OICCalloc(1, sizeof(OicSecValidity_t));
+        jobject element = env->GetObjectArrayElement(valList, i);
+        if (!element || env->ExceptionCheck())
+        {
+            return nullptr;
+        }
+
+        jData = (jstring)env->CallObjectMethod(element, g_mid_OcOicSecAcl_validity_get_getPeriod);
+        if (!jData || env->ExceptionCheck())
+        {
+            return nullptr;
+        }
+        tmp->period = (char*)env->GetStringUTFChars(jData, 0);
+
+        jint jrecurrenceLen = (jint) env->CallIntMethod(element,
+                g_mid_OcOicSecAcl_validity_get_recurrenceLen);
+        tmp->recurrenceLen = (int)jrecurrenceLen;
+
+        if (jrecurrenceLen > 0)
+        {
+            jvalue argv[1];
+            tmp->recurrences = (char**)OICCalloc(jrecurrenceLen, sizeof(char*));
+
+            for (int i = 0 ; i < jrecurrenceLen; i++)
+            {
+                argv[0].i = i;
+                jData = (jstring)env->CallObjectMethodA(element,
+                        g_mid_OcOicSecAcl_validity_get_recurrences, argv);
+                if (!jData || env->ExceptionCheck())
+                {
+                    return nullptr;
+                }
+                tmp->recurrences[i] = (char*)env->GetStringUTFChars(jData, 0);
+            }
+        }
+        if (NULL == valHead)
+        {
+            valHead = tmp;
+        }
+        else
+        {
+            OicSecValidity_t *ptr = valHead;
+            while(ptr->next != NULL) ptr = ptr->next;
+            ptr->next = tmp;
+            tmp->next = NULL;
+        }
+        env->DeleteLocalRef(element);
+    }
+    return valHead;
+}
+
+static OicSecRsrc_t * getResourcesList(JNIEnv *env, jobject resourceObject)
+{
+    jstring jData;
+
+    jobjectArray rescList = (jobjectArray)env->CallObjectMethod(resourceObject,
+            g_mid_OcOicSecCloudAcl_ace_get_resources);
+    if (!rescList || env->ExceptionCheck())
+    {
+        return nullptr;
+    }
+
+    int nr_resc = env->GetArrayLength(rescList);
+    OicSecRsrc_t *rescHead = NULL;
+
+    for (int i = 0 ; i < nr_resc; i++)
+    {
+        OicSecRsrc_t *tmp = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+        jobject element = env->GetObjectArrayElement(rescList, i);
+        if (!element || env->ExceptionCheck())
+        {
+            return nullptr;
+        }
+        jData = (jstring)env->CallObjectMethod(element, g_mid_OcOicSecAcl_resr_get_href);
+        if (!jData || env->ExceptionCheck())
+        {
+            return nullptr;
+        }
+        tmp->href = (char*)env->GetStringUTFChars(jData, 0);
+
+        jData = (jstring)env->CallObjectMethod(element, g_mid_OcOicSecAcl_resr_get_rel);
+        if (!jData || env->ExceptionCheck())
+        {
+            return nullptr;
+        }
+        tmp->rel = (char*)env->GetStringUTFChars(jData, 0);
+
+        jint len = (jint) env->CallIntMethod(element, g_mid_OcOicSecAcl_resr_get_typeLen);
+        tmp->typeLen = (int)len;
+        if (len > 0)
+        {
+            jvalue argv[1];
+            tmp->types = (char**)OICCalloc(len, sizeof(char*));
+
+            for (int i = 0 ; i < len; i++)
+            {
+                argv[0].i = i;
+                jData = (jstring)env->CallObjectMethodA(element,
+                        g_mid_OcOicSecAcl_resr_get_types, argv);
+                if (!jData || env->ExceptionCheck())
+                {
+                    return nullptr;
+                }
+                tmp->types[i] = (char*)env->GetStringUTFChars(jData, 0);
+            }
+        }
+
+        len = (jint) env->CallIntMethod(element, g_mid_OcOicSecAcl_resr_get_interfaceLen);
+        tmp->interfaceLen = len;
+        if (len > 0)
+        {
+            jvalue argv[1];
+            tmp->interfaces = (char**)OICCalloc(len, sizeof(char*));
+
+            for (int i = 0 ; i < len; i++)
+            {
+                argv[0].i = i;
+                jData = (jstring)env->CallObjectMethodA(element,
+                        g_mid_OcOicSecAcl_resr_get_interfaces, argv);
+                if (!jData || env->ExceptionCheck())
+                {
+                    return nullptr;
+                }
+                tmp->interfaces[i] = (char*)env->GetStringUTFChars(jData, 0);
+            }
+        }
+
+        if (NULL == rescHead)
+        {
+            rescHead = tmp;
+        }
+        else
+        {
+            OicSecRsrc_t *ptr = rescHead;
+            while(ptr->next != NULL) ptr = ptr->next;
+            ptr->next = tmp;
+            tmp->next = NULL;
+        }
+        env->DeleteLocalRef(element);
+    }
+    return rescHead;
+}
+
+cloudAce_t * ConvertJavaCloudAcestoOCAces(JNIEnv* env, jobjectArray jcloudAces)
+{
+    char *str;
+    jstring jData;
+    cloudAce_t *acesHead = NULL;
+    const jsize arrayLen = env->GetArrayLength(jcloudAces);
+
+    for (int i = 0 ; i < arrayLen; i++)
+    {
+        cloudAce_t *aces = (cloudAce_t*)OICCalloc(1, sizeof(cloudAce_t));
+        jobject element = env->GetObjectArrayElement(jcloudAces, i);
+        if (!element || env->ExceptionCheck())
+        {
+            return nullptr;
+        }
+        //get aclID
+        jData = (jstring) env->CallObjectMethod(element, g_mid_OcOicSecCloudAcl_ace_get_aclId);
+        if (!jData || env->ExceptionCheck())
+        {
+            return nullptr;
+        }
+        str = (char*) env->GetStringUTFChars(jData, 0);
+        aces->aceId = strdup(str);
+        env->ReleaseStringUTFChars(jData, str);
+
+        //get subjectID
+        jData = (jstring) env->CallObjectMethod(element, g_mid_OcOicSecCloudAcl_ace_get_subjectID);
+        if (!jData || env->ExceptionCheck())
+        {
+            return nullptr;
+        }
+        str = (char*) env->GetStringUTFChars(jData, 0);
+        if (OC_STACK_OK == ConvertStrToUuid(str, &aces->subjectuuid))
+        {
+            env->ReleaseStringUTFChars(jData, str);
+        }
+        else
+        {
+            return nullptr;
+        }
+        //get permission
+        jint permType = (jint)env->CallIntMethod(element, g_mid_OcOicSecCloudAcl_ace_get_permission);
+        aces->permission = (uint16_t)permType;
+        //get stype
+        permType = (jint)env->CallIntMethod(element, g_mid_OcOicSecCloudAcl_ace_get_stype);
+        aces->stype = (uint16_t)permType;
+        //get resources List
+        if (nullptr == (aces->resources = getResourcesList(env, element)))
+        {
+            return nullptr;
+        }
+        aces->validities = NULL;
+        //get validities
+        if (nullptr == (aces->validities = getValiditiesList(env, element)))
+        {
+            return nullptr;
+        }
+        // create list
+        if (NULL == acesHead)
+        {
+            acesHead = aces;
+        }
+        else
+        {
+            cloudAce_t *ptr = acesHead;
+            while(ptr->next != NULL) ptr = ptr->next;
+            ptr->next = aces;
+            aces->next = NULL;
+        }
+    }
+    return acesHead;
+}
+
+OCStackResult JniOcCloudProvisioning::updateIndividualACL(JNIEnv* env, jobject jListener,
+        std::string aclID, jobjectArray jcloudAces)
+{
+    JniOcCloudResultListener *resultListener = AddCloudResultListener(env, jListener);
+
+    cloudAce_t *aces = NULL;
+    aces = ConvertJavaCloudAcestoOCAces(env, jcloudAces);
+
+    ResponseCallBack responseCallBack = [resultListener](OCStackResult result, void *data)
+    {
+        resultListener->CloudResultListenerCB(result, data, ListenerFunc::UPDATE_IND_ACL);
+
+    };
+
+    return m_sharedCloudObject->updateIndividualACL(aces, aclID, responseCallBack);
+}
+
 /*
  * Class:     org_iotivity_base_OcCloudProvisioning
  * Method:    requestCertificate
@@ -367,6 +696,81 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcCloudProvisioning_getAclIdByDevi
 
 /*
  * Class:     org_iotivity_base_OcCloudProvisioning
+ * Method:    createAclId
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/iotivity/base/OcCloudProvisioning/CreateAclIdListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcCloudProvisioning_createAclId
+  (JNIEnv *env, jobject thiz, jstring jownerId, jstring jdeviceId, jobject jListener)
+{
+    LOGD("OcCloudProvisioning_createAclId");
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Listener cannot be null");
+        return;
+    }
+
+    if (!jownerId)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "ownerId can not be null");
+        return;
+    }
+
+    if (!jdeviceId)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "deviceID can not be null");
+        return;
+    }
+
+    JniOcCloudProvisioning *cloud = JniOcCloudProvisioning::getJniOcCloudProvisioningPtr(env, thiz);
+    if (!cloud)
+    {
+        LOGD("OcCloudProvisioning_createAclId, No native object, creating now");
+        cloud = Create_native_object(env, thiz);
+        if (!cloud)
+        {
+            ThrowOcException(OC_STACK_ERROR, "OcCloudProvisioning_createAclId,"
+                    "Can not Create Native object");
+            return;
+        }
+    }
+
+    const char *ownerstr = env->GetStringUTFChars(jownerId, NULL);
+    if (!ownerstr || env->ExceptionCheck())
+    {
+        ThrowOcException(OC_STACK_ERROR,"OcCloudProvisioning_createAclId");
+        return;
+    }
+    std::string ownerId(ownerstr);
+    env->ReleaseStringUTFChars(jownerId, ownerstr);
+
+    const char *str = env->GetStringUTFChars(jdeviceId, NULL);
+    if (!str || env->ExceptionCheck())
+    {
+        ThrowOcException(OC_STACK_ERROR,"OcCloudProvisioning_createAclId");
+        return;
+    }
+    std::string deviceId(str);
+    env->ReleaseStringUTFChars(jdeviceId, str);
+
+    try
+    {
+        OCStackResult result = cloud->createAclId(env, ownerId, deviceId, jListener);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcCloudProvisioning_createAclId");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+    return;
+}
+
+/*
+ * Class:     org_iotivity_base_OcCloudProvisioning
  * Method:    getIndividualAclInfo
  * Signature: (Ljava/lang/String;Lorg/iotivity/base/OcCloudProvisioning/GetIndividualAclInfoListener;)V
  */
@@ -418,6 +822,60 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcCloudProvisioning_getIndividualA
     }
     return;
 }
+/*
+ * Class:     org_iotivity_base_OcCloudProvisioning
+ * Method:    updateIndividualACL
+ * Signature: (Ljava/lang/String;Ljava/lang/Object;Lorg/iotivity/base/OcCloudProvisioning/UpdateIndividualACLListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcCloudProvisioning_updateIndividualACL0
+  (JNIEnv *env, jobject thiz, jstring jaclID, jobjectArray jcloudAces, jobject jListener)
+{
+    LOGD("OcCloudProvisioning_updateIndividualACL");
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Listener cannot be null");
+        return;
+    }
+    if (!jaclID)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "aclID cannot be null");
+        return;
+    }
+
+    JniOcCloudProvisioning *cloud = JniOcCloudProvisioning::getJniOcCloudProvisioningPtr(env, thiz);
+    if (!cloud)
+    {
+        LOGD("OcCloudProvisioning_updateIndividualACL, No native object, creating now");
+        cloud = Create_native_object(env, thiz);
+        if (!cloud)
+        {
+            ThrowOcException(OC_STACK_ERROR, "OcCloudProvisioning_updateIndividualACL,"
+                    "Can not Create Native object");
+            return;
+        }
+    }
+
+    const char *str = env->GetStringUTFChars(jaclID, NULL);
+    std::string aclID(str);
+    env->ReleaseStringUTFChars(jaclID, str);
+
+    try
+    {
+        OCStackResult result = cloud->updateIndividualACL(env, jListener, aclID, jcloudAces);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcCloudProvisioning_updateIndividualACL");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+    return;
+}
+
 
 /*
  * Class:     org_iotivity_base_OcCloudProvisioning

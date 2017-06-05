@@ -30,12 +30,9 @@
 #include "common.h"
 
 // These APIs are used when building with SECURED=0.
-
-OCStackResult OCSecure::discoverMultipleOwnerEnabledDevices(unsigned short timeout,
-                                                            DeviceList_t &list)
+OCStackResult OCSecure::provisionInit(const std::string& dbPath)
 {
-    OC_UNUSED(timeout);
-    OC_UNUSED(list);
+    OC_UNUSED(dbPath);
     return OC_STACK_OK;
 }
 
@@ -44,12 +41,6 @@ OCStackResult OCSecure::registerInputPinCallback(InputPinCB inputPinCB,
 {
     OC_UNUSED(inputPinCB);
     OC_UNUSED(inputPinCallbackHandle);
-    return OC_STACK_OK;
-}
-
-OCStackResult OCSecure::provisionInit(const std::string& dbPath)
-{
-    OC_UNUSED(dbPath);
     return OC_STACK_OK;
 }
 
@@ -77,6 +68,15 @@ OCStackResult OCSecure::deregisterDisplayPinCallback(
 OicSecOxm_t OCSecureResource::getSelectedOwnershipTransferMethod()
 {
     return OIC_JUST_WORKS;
+}
+
+#ifdef MULTIPLE_OWNER
+OCStackResult OCSecure::discoverMultipleOwnerEnabledDevices(unsigned short timeout,
+                                                            DeviceList_t &list)
+{
+    OC_UNUSED(timeout);
+    OC_UNUSED(list);
+    return OC_STACK_OK;
 }
 
 OCStackResult OCSecure::discoverMultipleOwnerEnabledDevice(unsigned short timeout,
@@ -107,3 +107,4 @@ OCStackResult OCSecureResource::isSubownerOfDevice(bool* subowner)
     OC_UNUSED(subowner);
     return OC_STACK_OK;
 }
+#endif

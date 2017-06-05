@@ -138,7 +138,7 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
 }
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-#ifdef MULTIPLE_OWNER
+
 CAResult_t CAGetSecureEndpointData(const CAEndpoint_t *peer, CASecureEndpoint_t *sep)
 {
     OIC_LOG(DEBUG, TAG, "IN CAGetSecurePeerInfo");
@@ -152,7 +152,6 @@ CAResult_t CAGetSecureEndpointData(const CAEndpoint_t *peer, CASecureEndpoint_t 
     OIC_LOG(DEBUG, TAG, "OUT CAGetSecurePeerInfo");
     return GetCASecureEndpointData(peer, sep);
 }
-#endif //MULTIPLE_OWNER
 
 bool CASetSecureEndpointAttribute(const CAEndpoint_t* peer, uint32_t attribute)
 {

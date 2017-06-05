@@ -128,7 +128,10 @@ namespace OIC
                             = mappingInfo.at(SCENE_KEY_SCENE).get< std::string >();
 
                         auto remoteScene = m_remoteScenes.find(sceneName);
-                        if (remoteScene == m_remoteScenes.end()) continue;
+                        if (remoteScene == m_remoteScenes.end())
+                        {
+                            continue;
+                        }
 
                         RemoteScene::Ptr pRemoteScene = m_remoteScenes.at(sceneName);
 

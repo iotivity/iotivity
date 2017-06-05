@@ -59,8 +59,14 @@ void OCPayloadDestroy(OCPayload* payload)
         case PAYLOAD_TYPE_PRESENCE:
             OCPresencePayloadDestroy((OCPresencePayload*)payload);
             break;
+        case PAYLOAD_TYPE_DIAGNOSTIC:
+            OCDiagnosticPayloadDestroy((OCDiagnosticPayload*)payload);
+            break;
         case PAYLOAD_TYPE_SECURITY:
             OCSecurityPayloadDestroy((OCSecurityPayload*)payload);
+            break;
+        case PAYLOAD_TYPE_INTROSPECTION:
+            OCIntrospectionPayloadDestroy((OCIntrospectionPayload*)payload);
             break;
         default:
             OIC_LOG_V(ERROR, TAG, "Unsupported payload type in destroy: %d", payload->type);
@@ -1685,6 +1691,40 @@ void OCSecurityPayloadDestroy(OCSecurityPayload* payload)
     OICFree(payload);
 }
 
+OCIntrospectionPayload* OCIntrospectionPayloadCreateFromCbor(const uint8_t* cborData,
+    size_t size)
+{
+    OCIntrospectionPayload* payload = NULL;
+    payload = (OCIntrospectionPayload*)OICCalloc(1, sizeof(OCIntrospectionPayload));
+    if (!payload)
+    {
+        return NULL;
+    }
+
+    payload->base.type = PAYLOAD_TYPE_INTROSPECTION;
+    payload->cborPayload.bytes = (uint8_t*)OICCalloc(1, size);
+    if (!payload->cborPayload.bytes)
+    {
+        OICFree(payload);
+        return NULL;
+    }
+    memcpy(payload->cborPayload.bytes, cborData, size);
+    payload->cborPayload.len = size;
+
+    return payload;
+}
+
+void OCIntrospectionPayloadDestroy(OCIntrospectionPayload* payload)
+{
+    if (!payload)
+    {
+        return;
+    }
+
+    OICFree(payload->cborPayload.bytes);
+    OICFree(payload);
+}
+
 size_t OCDiscoveryPayloadGetResourceCount(OCDiscoveryPayload* payload)
 {
     size_t i = 0;
@@ -1778,6 +1818,8 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
         return NULL;
     }
 
+    bool includeSecure = res->resourceProperties & OC_SECURE;
+    bool includeNonsecure = res->resourceProperties & OC_NONSECURE;
     OCEndpointPayload *selfEp = NULL;
     if (networkInfo && infoSize && devAddr)
     {
@@ -1788,8 +1830,9 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
             {
                 CAEndpoint_t *info = networkInfo + i;
 
-                if (((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter &&
-                     info->ifindex == devAddr->ifindex) ||
+                if ((((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter) &&
+                        (info->ifindex == devAddr->ifindex) &&
+                        info->port) ||
                     info->adapter == CA_ADAPTER_RFCOMM_BTEDR)
                 {
                     OCTpsSchemeFlags matchedTps = OC_NO_TPS;
@@ -1797,16 +1840,20 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
                                                             info->flags,
                                                             &matchedTps))
                     {
+                        OCDiscoveryResourceDestroy(pl);
                         return NULL;
                     }
 
-                    if ((res->endpointType) & matchedTps)
+                    bool isSecure = (info->flags & OC_FLAG_SECURE);
+                    if (((res->endpointType) & matchedTps) &&
+                            ((isSecure && includeSecure) || (!isSecure && includeNonsecure)))
                     {
                         // create payload
                         OCEndpointPayload* tmpNode = (OCEndpointPayload*)
                             OICCalloc(1, sizeof(OCEndpointPayload));
                         if (!tmpNode)
                         {
+                            OCDiscoveryResourceDestroy(pl);
                             return NULL;
                         }
 
@@ -2134,6 +2181,34 @@ void OCPresencePayloadDestroy(OCPresencePayload* payload)
         return;
     }
     OICFree(payload->resourceType);
+    OICFree(payload);
+}
+
+OCDiagnosticPayload* OCDiagnosticPayloadCreate(const char* message)
+{
+    if (!message)
+    {
+        return NULL;
+    }
+
+    OCDiagnosticPayload* payload = (OCDiagnosticPayload*)OICCalloc(1, sizeof(OCDiagnosticPayload));
+    if (!payload)
+    {
+        return NULL;
+    }
+
+    payload->base.type = PAYLOAD_TYPE_DIAGNOSTIC;
+    payload->message = OICStrdup(message);
+    return payload;
+}
+
+void OCDiagnosticPayloadDestroy(OCDiagnosticPayload* payload)
+{
+    if (!payload)
+    {
+        return;
+    }
+    OICFree(payload->message);
     OICFree(payload);
 }
 

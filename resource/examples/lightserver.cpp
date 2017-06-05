@@ -391,7 +391,7 @@ FILE* server_fopen(const char* path, const char* mode)
 {
     if (0 == strcmp(path, OC_INTROSPECTION_FILE_NAME))
     {
-        return fopen("light_introspection.json", mode);
+        return fopen("light_introspection.dat", mode);
     }
     else
     {

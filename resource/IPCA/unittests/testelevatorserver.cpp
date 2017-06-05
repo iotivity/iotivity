@@ -18,7 +18,8 @@
  ******************************************************************/
 
 #include "logger.h"
-#include "TestElevatorServer.h"
+#include "OCApi.h"
+#include "testelevatorserver.h"
 #include "ipcatestdata.h"
 
 using namespace OC;
@@ -29,24 +30,30 @@ using namespace std::placeholders;
 // Initialize Persistent Storage for security database
 FILE* elevatorServer_fopen(const char *path, const char *mode)
 {
-    OC_UNUSED(path);
-    return fopen("IPCAUnitTest.dat", mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen("IPCAUnitTest.dat", mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 OCPersistentStorage elevatorServerPS = {elevatorServer_fopen, fread, fwrite, fclose, unlink};
 
-static char* ELEVATOR_MAINTENANCE_PATH = "/oic/mnt";
+#define ELEVATOR_MAINTENANCE_PATH   "/oic/mnt"
 
 //
 // Class ElevatorServer implementation.
 //
 ElevatorServer::ElevatorServer() :
-    m_engineThread(),
     m_elevatorResourceHandle(nullptr),
     m_elevatorCOResourceHandle(nullptr),
     m_elevatorMaintenanceHandle(nullptr),
     m_elevatorCreateRelativeResource(nullptr),
-    m_elevatorDeleteResource(nullptr)
+    m_elevatorDeleteResource(nullptr),
+    m_engineThread()
 {
     m_isRunning = false;
     m_targetFloor = m_currentFloor = 1;
@@ -104,7 +111,6 @@ OCEntityHandlerResult ElevatorServer::ElevatorEntityHandler(
                             std::shared_ptr<OCResourceRequest> request)
 {
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
-
     if (request->getResourceUri() == ELEVATOR_CO_RESOURCE_PATH)
     {
         return OC_EH_FORBIDDEN;
@@ -319,16 +325,16 @@ bool ElevatorServer::Start(std::string& elevatorName)
         CopyStringToBuffer(m_name, devName, 256);
         CopyStringToBuffer(resourceTypeName, resTypeName, 256);
         OCStringLL types { nullptr, resTypeName };
-        OCDeviceInfo deviceInfo = { devName, &types, "0.0.1", nullptr };
+        char specVersion[] = "0.0.1";
+        OCDeviceInfo deviceInfo = { devName, &types, specVersion, nullptr };
 
         std::vector<std::string> dataModelVersions = {
                                     ELEVATOR_DATA_MODEL_VERSION_1,
                                     ELEVATOR_DATA_MODEL_VERSION_2,
                                     ELEVATOR_DATA_MODEL_VERSION_3};
 
-
         // Platform Info
-        char* platformId = ELEVATOR_PLATFORM_ID;
+        char platformId[] = ELEVATOR_PLATFORM_ID;
         char manufacturerName[] = "Elevator Manufacturer";
         char manufacturerUrl[] = "http://www.example.com/elevator";
         char modelNumber[] = "Elevator Model Number";

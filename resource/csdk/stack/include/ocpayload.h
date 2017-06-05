@@ -234,6 +234,10 @@ OCDiscoveryPayload* OCDiscoveryPayloadCreate();
 OCSecurityPayload* OCSecurityPayloadCreate(const uint8_t* securityData, size_t size);
 void OCSecurityPayloadDestroy(OCSecurityPayload* payload);
 
+OCIntrospectionPayload* OCIntrospectionPayloadCreateFromCbor(const uint8_t* cborData,
+                                                             size_t size);
+void OCIntrospectionPayloadDestroy(OCIntrospectionPayload* payload);
+
 #ifndef TCP_ADAPTER
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
                                    uint16_t securePort);
@@ -263,6 +267,10 @@ void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload);
 OCPresencePayload* OCPresencePayloadCreate(uint32_t seqNum, uint32_t maxAge,
         OCPresenceTrigger trigger, const char* resourceType);
 void OCPresencePayloadDestroy(OCPresencePayload* payload);
+
+// Diagnostic Payload
+OCDiagnosticPayload* OCDiagnosticPayloadCreate(const char *message);
+void OCDiagnosticPayloadDestroy(OCDiagnosticPayload* payload);
 
 // Helper API
 OCStringLL* CloneOCStringLL (OCStringLL* ll);

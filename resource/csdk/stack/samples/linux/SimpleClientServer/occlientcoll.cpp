@@ -323,9 +323,7 @@ int InitPutRequest(OCClientResponse * clientResponse)
     OCCallbackData cbData;
     //* Make a PUT query*/
     std::ostringstream getQuery;
-    getQuery << "coap://" << clientResponse->devAddr.addr << ":" <<
-            clientResponse->devAddr.port <<
-            "/a/room" << queryInterface[TestType].text;
+    getQuery << "/a/room" << queryInterface[TestType].text;
     cbData.cb = putReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;

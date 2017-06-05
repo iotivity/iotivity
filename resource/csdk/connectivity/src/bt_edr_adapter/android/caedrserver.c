@@ -218,11 +218,6 @@ static void CAAcceptHandler(void *data)
 
     CAAdapterAcceptThreadContext_t *ctx = (CAAdapterAcceptThreadContext_t *) data;
 
-    // it should be initialized for restart accept thread
-    oc_mutex_lock(g_mutexAcceptServer);
-    g_stopAccept = false;
-    oc_mutex_unlock(g_mutexAcceptServer);
-
     while (true != *(ctx->stopFlag))
     {
         // when BT state is changed with Off. its thread will be stopped
@@ -273,6 +268,12 @@ CAResult_t CAEDRServerStart()
     }
     oc_mutex_unlock(g_mutexStartServerState);
 
+    // it should be initialized for restart accept thread
+    oc_mutex_lock(g_mutexAcceptServer);
+    OIC_LOG(DEBUG, TAG, "accept flag is set false");
+    g_stopAccept = false;
+    oc_mutex_unlock(g_mutexAcceptServer);
+
     CAResult_t res = CAEDRServerStartAcceptThread();
     if (CA_STATUS_OK == res)
     {
@@ -296,6 +297,7 @@ CAResult_t CAEDRServerStop()
     CAEDRStopReceiveThread();
 
     oc_mutex_lock(g_mutexAcceptServer);
+    OIC_LOG(DEBUG, TAG, "accept flag is set true");
     g_stopAccept = true;
     oc_mutex_unlock(g_mutexAcceptServer);
 
@@ -905,7 +907,7 @@ void CAEDRNativeAccept(JNIEnv *env, jobject serverSocketObject)
 {
     OIC_LOG(DEBUG, TAG, "CAEDRNativeAccept - IN");
 
-    if (NULL != serverSocketObject)
+    if (NULL != serverSocketObject && false == g_stopAccept)
     {
         jmethodID jni_mid_accept = CAGetJNIMethodID(env, CLASSPATH_BT_SERVER_SOCKET,
                                                     "accept",
@@ -982,6 +984,7 @@ void CAEDRNativeAccept(JNIEnv *env, jobject serverSocketObject)
  */
 void CAEDRNatvieCloseServerTask(JNIEnv* env)
 {
+    OIC_LOG(DEBUG, TAG, "CAEDRNatvieCloseServerTask");
     if (g_serverSocket)
     {
         OIC_LOG(DEBUG, TAG, "Accept Resource will be close");

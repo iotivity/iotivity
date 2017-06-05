@@ -94,29 +94,6 @@ namespace OC
             // this fix will work in the meantime.
             OCRepresentation(): m_interfaceType(InterfaceType::None){}
 
-#if defined(_MSC_VER) && (_MSC_VER < 1900)
-            OCRepresentation(OCRepresentation&& o)
-            {
-                std::memmove(this, &o, sizeof(o));
-            }
-#else
-            OCRepresentation(OCRepresentation&&) = default;
-#endif
-
-            OCRepresentation(const OCRepresentation&) = default;
-
-            OCRepresentation& operator=(const OCRepresentation&) = default;
-
-#if defined(_MSC_VER) && (_MSC_VER < 1900)
-            OCRepresentation& operator=(OCRepresentation&& o)
-            {
-                std::memmove(this, &o, sizeof(o));
-                return *this;
-            }
-#else
-            OCRepresentation& operator=(OCRepresentation&&) = default;
-#endif
-
             virtual ~OCRepresentation(){}
 
             void setDevAddr(const OCDevAddr&);

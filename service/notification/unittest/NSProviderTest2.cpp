@@ -130,8 +130,12 @@ namespace
         bool ret = OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, id);
         OCUUIdentity provider;
         OC::OCPlatform::getDeviceId(&provider);
+
+        char providerId[UUID_IDENTITY_SIZE] = {0,};
+        OICStrcpy(providerId, UUID_IDENTITY_SIZE, (const char *)provider.id);
+
         ret &= OCRepPayloadSetPropString(payload,
-                     NS_ATTRIBUTE_PROVIDER_ID, (const char *)provider.id);
+                     NS_ATTRIBUTE_PROVIDER_ID, (const char*)providerId);
         ret &= OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_STATE, NS_SYNC_READ);
         EXPECT_EQ(true, ret);
 
@@ -307,13 +311,17 @@ TEST(NotificationProviderTest, ExpectCallbackReceiveSync)
     int type = NS_SYNC_READ;
 
     OCEntityHandlerFlag flag = OC_REQUEST_FLAG;
-    NSEntityHandlerSyncCb(flag, getPostSyncEntityRequest(id), NULL);
+    auto request = getPostSyncEntityRequest(id);
+    NSEntityHandlerSyncCb(flag, request, NULL);
 
     std::unique_lock< std::mutex > lock{ responseProviderSyncLock };
     responseProviderSync.wait_for(lock, g_waitForResponse);
 
     EXPECT_EQ(expectedMsgId, id);
     EXPECT_EQ(expectedSyncType, type);
+
+    OCRepPayloadDestroy((OCRepPayload *)request->payload);
+    free(request);
 }
 
 TEST(NotificationProviderTest, ExpectSuccessSetTopics)
@@ -422,7 +430,7 @@ TEST(NotificationProviderTest, ExpectSuccessSendMessage)
 TEST(NotificationProviderTest, ExpectCopyConsumer)
 {
     auto consumer = (NSConsumer *)malloc(sizeof(NSConsumer));
-    strcpy(consumer->consumerId, g_consumerID);
+    strncpy(consumer->consumerId, g_consumerID, (size_t)NS_UUID_STRING_SIZE);
 
     auto copied = NSDuplicateConsumer(consumer);
     EXPECT_EQ(0, strcmp(copied->consumerId, consumer->consumerId));
@@ -439,8 +447,7 @@ TEST(NotificationProviderTest, ExpectFailSendMessageWithNULL)
 
 TEST(NotificationProviderTest, ExpectFailAcceptSubscription)
 {
-    NSResult result;
-    result = NS_SUCCESS;
+    NSResult result = NS_SUCCESS;
     result = NSAcceptSubscription(NULL, true);
     result = NSAcceptSubscription("\0", true);
 
@@ -449,8 +456,7 @@ TEST(NotificationProviderTest, ExpectFailAcceptSubscription)
 
 TEST(NotificationProviderTest, ExpectFailRegisterTopic)
 {
-    NSResult result;
-    result = NS_SUCCESS;
+    NSResult result = NS_SUCCESS;
     result = NSProviderRegisterTopic(NULL);
     result = NSProviderRegisterTopic("\0");
 
@@ -459,8 +465,7 @@ TEST(NotificationProviderTest, ExpectFailRegisterTopic)
 
 TEST(NotificationProviderTest, ExpectFailUnregisterTopic)
 {
-    NSResult result;
-    result = NS_SUCCESS;
+    NSResult result = NS_SUCCESS;
     result = NSProviderUnregisterTopic(NULL);
     result = NSProviderUnregisterTopic("\0");
 
@@ -469,7 +474,7 @@ TEST(NotificationProviderTest, ExpectFailUnregisterTopic)
 
 TEST(NotificationProviderTest, ExpectFailGetConsumerTopics)
 {
-    NSTopicLL topic;
+    NSTopicLL topic = { NULL, NS_TOPIC_UNSUBSCRIBED, NULL };
     NSTopicLL * topicLL = &topic;
 
     topicLL = NSProviderGetConsumerTopics(NULL);
@@ -480,8 +485,7 @@ TEST(NotificationProviderTest, ExpectFailGetConsumerTopics)
 
 TEST(NotificationProviderTest, ExpectFailSetConsumerTopics)
 {
-    NSResult result;
-    result = NS_SUCCESS;
+    NSResult result = NS_SUCCESS;
     result = NSProviderSetConsumerTopic(NULL, NULL);
     result = NSProviderSetConsumerTopic(NULL, "\0");
     result = NSProviderSetConsumerTopic("\0", NULL);
@@ -496,8 +500,7 @@ TEST(NotificationProviderTest, ExpectFailSetConsumerTopics)
 
 TEST(NotificationProviderTest, ExpectFailUnsetConsumerTopics)
 {
-    NSResult result;
-    result = NS_SUCCESS;
+    NSResult result = NS_SUCCESS;
     result = NSProviderUnsetConsumerTopic(NULL, NULL);
     result = NSProviderUnsetConsumerTopic(NULL, "\0");
     result = NSProviderUnsetConsumerTopic("\0", NULL);

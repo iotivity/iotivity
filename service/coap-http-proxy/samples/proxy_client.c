@@ -284,10 +284,20 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             return OC_STACK_KEEP_TRANSACTION;
         }
 
-        if (resource->secure)
+        OCEndpointPayload* eps = resource->eps;
+        while (NULL != eps)
         {
-            serverAddr.flags |= OC_SECURE;
-            serverAddr.port = resource->port;
+            if (eps->family & OC_FLAG_SECURE)
+            {
+                if (0 == strcmp(eps->tps, "coaps"))
+                {
+                    strncpy(serverAddr.addr, eps->addr, sizeof(serverAddr.addr));
+                    serverAddr.port = eps->port;
+                    serverAddr.flags = (OCTransportFlags)(eps->family | OC_SECURE);
+                    serverAddr.adapter = OC_ADAPTER_IP;
+                }
+            }
+            eps = eps->next;
         }
 
         switch (testCase)

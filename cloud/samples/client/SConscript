@@ -31,10 +31,13 @@ cc_sample_app_env = lib_env.Clone()
 ######################################################################
 # Build flags
 ######################################################################
-# For bring up purposes only, the forked version will live here.
-cc_sample_app_env.AppendUnique(CPPPATH = ['#/resource/csdk/connectivity/lib/libcoap-4.1.1/include',
-                                          '#/extlibs/mbedtls/mbedtls/include'])
-
+with_upstream_libcoap = cc_sample_app_env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+    cc_sample_app_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+else:
+    cc_sample_app_env.AppendUnique(CPPPATH = [
+            '#resource/csdk/connectivity/lib/libcoap-4.1.1/include'
+            ])
 
 cc_sample_app_env.AppendUnique(CPPPATH = [
         '#/resource/include/',
@@ -49,7 +52,8 @@ cc_sample_app_env.AppendUnique(CPPPATH = [
         '#/resource/csdk/connectivity/common/inc',
         '#/resource/csdk/security/include',
         '#/resource/csdk/security/provisioning/include',
-        '#/resource/csdk/security/provisioning/include/internal'
+        '#/resource/csdk/security/provisioning/include/internal',
+        '#/extlibs/mbedtls/mbedtls/include'
         ])
 
 cc_sample_app_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra', '-std=c++0x', '-pthread'])
@@ -73,7 +77,6 @@ if tlsOption is '1':
 	Command("aircon_controlee.dat", cc_cloud_src_dir + "aircon_controlee.dat", Copy("$TARGET", "$SOURCE"))
 	Command("aircon_controller.dat", cc_cloud_src_dir + "aircon_controller.dat", Copy("$TARGET", "$SOURCE"))
 	Command("group_invite.dat", cc_cloud_src_dir + "group_invite.dat", Copy("$TARGET", "$SOURCE"))
-	Command("group_light_share.dat", cc_cloud_src_dir + "group_light_share.dat", Copy("$TARGET", "$SOURCE"))
 	Command("mq_publisher.dat", cc_cloud_src_dir + "mq_publisher.dat", Copy("$TARGET", "$SOURCE"))
 	Command("mq_subscriber.dat", cc_cloud_src_dir + "mq_subscriber.dat", Copy("$TARGET", "$SOURCE"))
 	Command("thin_room_light.dat", cc_cloud_src_dir + "thin_room_light.dat", Copy("$TARGET", "$SOURCE"))
@@ -129,8 +132,3 @@ group_invite_src = [
         'group_invite/group_invite.cpp'
         ]
 cc_sample_app_env.Program('group_invite_sample', group_invite_src)
-
-group_light_share_src = [
-        'group_invite/group_light_share.cpp'
-        ]
-cc_sample_app_env.Program('group_light_share_sample', group_light_share_src)

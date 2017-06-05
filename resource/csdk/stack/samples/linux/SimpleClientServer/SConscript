@@ -29,6 +29,15 @@ with_ra = samples_env.get('WITH_RA')
 ######################################################################
 # Build flags
 ######################################################################
+with_upstream_libcoap = samples_env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+    # For bring up purposes only, we manually copy the forked version to where
+    # the unforked version is downloaded.
+    samples_env.AppendUnique(CPPPATH=['#extlibs/libcoap/libcoap/include'])
+else:
+    # For bring up purposes only, the forked version will live here.
+    samples_env.AppendUnique(CPPPATH=['#resource/csdk/connectivity/lib/libcoap-4.1.1/include'])
+
 samples_env.PrependUnique(CPPPATH=[
     '../../../../logger/include',
     '../../../../include',
@@ -45,8 +54,15 @@ if 'g++' in compiler:
 
 samples_env.AppendUnique(RPATH=[samples_env.get('BUILD_DIR')])
 
-samples_env.PrependUnique(
-    LIBS=['octbstack', 'ocsrm', 'connectivity_abstraction', 'coap'])
+samples_env.PrependUnique(LIBS=['coap'])
+
+if target_os not in ['msys_nt', 'windows']:
+    samples_env.PrependUnique(LIBS=['connectivity_abstraction'])
+
+samples_env.PrependUnique(LIBS=['octbstack', 'ocsrm'])
+
+if target_os in ['darwin']:
+    samples_env.AppendUnique(LIBS=['routingmanager'])
 
 if target_os not in ['arduino', 'windows', 'darwin', 'ios', 'msys_nt']:
     samples_env.AppendUnique(LIBS=['rt'])
@@ -65,8 +81,8 @@ sample_build_dir = samples_env.get(
     'BUILD_DIR') + '/resource/csdk/stack/samples/linux/SimpleClientServer/'
 
 
-introspectionJson = samples_env.Install(sample_build_dir,
-                                        sample_src_dir + 'introspection.json')
+introspectionDat = samples_env.Install(sample_build_dir,
+                                       sample_src_dir + 'introspection.dat')
 
 deviceProperties = samples_env.Install(sample_build_dir,
                                        sample_src_dir + 'device_properties.dat')

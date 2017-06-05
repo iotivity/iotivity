@@ -619,11 +619,13 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
 
     uint32_t recvLen = 0;
     uint32_t ret = caglobals.ip.wsaRecvMsg(fd, &msg, (LPDWORD)&recvLen, 0,0);
-    OIC_LOG_V(DEBUG, TAG, "WSARecvMsg recvd %u bytes", recvLen);
     if (OC_SOCKET_ERROR == ret)
     {
         OIC_LOG_V(ERROR, TAG, "WSARecvMsg failed %i", WSAGetLastError());
+        return CA_STATUS_FAILED;
     }
+
+    OIC_LOG_V(DEBUG, TAG, "WSARecvMsg recvd %u bytes", recvLen);
 
     for (WSACMSGHDR *cmp = WSA_CMSG_FIRSTHDR(&msg); cmp != NULL;
          cmp = WSA_CMSG_NXTHDR(&msg, cmp))
@@ -678,7 +680,7 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
     {
 #ifdef __WITH_DTLS__
 #ifdef TB_LOG
-        int decryptResult = 
+        int decryptResult =
 #endif
         CAdecryptSsl(&sep, (uint8_t *)recvBuffer, recvLen);
         OIC_LOG_V(DEBUG, TAG, "CAdecryptSsl returns [%d]", decryptResult);
@@ -1168,6 +1170,12 @@ static void applyMulticastToInterface6(uint32_t ifindex)
 
 CAResult_t CAIPStartListenServer()
 {
+    if (caglobals.ip.started)
+    {
+        OIC_LOG(DEBUG, TAG, "Adapter is started already");
+        return CA_STATUS_OK;
+    }
+
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
     u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
     if (!iflist)
@@ -1534,15 +1542,36 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, size_t *size)
         return CA_STATUS_FAILED;
     }
 
-    size_t len = u_arraylist_length(iflist);
-    size_t length = len;
-
 #ifdef __WITH_DTLS__
-    //If DTLS is supported, each interface can support secure port as well
-    length = len * 2;
+    const size_t endpointsPerInterface = 2;
+#else
+    const size_t endpointsPerInterface = 1;
 #endif
 
-    CAEndpoint_t *eps = (CAEndpoint_t *)OICCalloc(length, sizeof (CAEndpoint_t));
+    size_t interfaces = u_arraylist_length(iflist);
+    for (size_t i = 0; i < u_arraylist_length(iflist); i++)
+    {
+        CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+        if (!ifitem)
+        {
+            continue;
+        }
+
+        if ((ifitem->family == AF_INET6 && !caglobals.ip.ipv6enabled) ||
+            (ifitem->family == AF_INET && !caglobals.ip.ipv4enabled))
+        {
+            interfaces--;
+        }
+    }
+
+    if (!interfaces)
+    {
+        OIC_LOG(DEBUG, TAG, "network interface size is zero");
+        return CA_STATUS_OK;
+    }
+
+    size_t totalEndpoints = interfaces * endpointsPerInterface;
+    CAEndpoint_t *eps = (CAEndpoint_t *)OICCalloc(totalEndpoints, sizeof (CAEndpoint_t));
     if (!eps)
     {
         OIC_LOG(ERROR, TAG, "Malloc Failed");
@@ -1550,10 +1579,16 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, size_t *size)
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    for (size_t i = 0, j = 0; i < len; i++)
+    for (size_t i = 0, j = 0; i < u_arraylist_length(iflist); i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
-        if(!ifitem)
+        if (!ifitem)
+        {
+            continue;
+        }
+
+        if ((ifitem->family == AF_INET6 && !caglobals.ip.ipv6enabled) ||
+            (ifitem->family == AF_INET && !caglobals.ip.ipv4enabled))
         {
             continue;
         }
@@ -1595,7 +1630,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, size_t *size)
     }
 
     *info = eps;
-    *size = length;
+    *size = totalEndpoints;
 
     u_arraylist_destroy(iflist);
 

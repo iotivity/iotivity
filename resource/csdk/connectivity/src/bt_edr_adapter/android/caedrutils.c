@@ -634,7 +634,6 @@ void CAEDRNativeSocketCloseToAll(JNIEnv *env)
         OIC_LOG(ERROR, TAG, "gdeviceObjectList is null");
         return;
     }
-
     jmethodID jni_mid_close = CAGetJNIMethodID(env, CLASSPATH_BT_SOCKET,
                                                "close", "()V");
     if (!jni_mid_close)
@@ -653,8 +652,8 @@ void CAEDRNativeSocketCloseToAll(JNIEnv *env)
             return;
         }
 
-        (*env)->CallVoidMethod(env, jni_obj_socket, jni_mid_close);
-
+        CAEDRSocketInfo_t *socketInfo = (CAEDRSocketInfo_t *)jni_obj_socket;
+        (*env)->CallVoidMethod(env, socketInfo->deviceSocket, jni_mid_close);
         if ((*env)->ExceptionCheck(env))
         {
             OIC_LOG(ERROR, TAG, "close is Failed!!!");

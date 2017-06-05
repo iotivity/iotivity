@@ -57,6 +57,7 @@ typedef struct
     void *data;
     size_t dataLen;
     bool isMulticast;
+    bool encryptedData;
 } CATCPData;
 
 #define CA_TCP_LISTEN_BACKLOG  3
@@ -107,10 +108,13 @@ static void CATCPSendDataThread(void *threadData);
 
 static CATCPData *CACreateTCPData(const CAEndpoint_t *remoteEndpoint,
                                   const void *data, size_t dataLength,
-                                  bool isMulticast);
+                                  bool isMulticast, bool encryptedData);
 void CAFreeTCPData(CATCPData *ipData);
 
 static void CADataDestroyer(void *data, uint32_t size);
+
+static int32_t CAQueueTCPData(bool isMulticast, const CAEndpoint_t *endpoint,
+                             const void *data, size_t dataLength, bool encryptedData);
 
 CAResult_t CATCPInitializeQueueHandles()
 {
@@ -223,7 +227,13 @@ static ssize_t CATCPPacketSendCB(CAEndpoint_t *endpoint, const void *data, size_
     OIC_LOG_V(DEBUG, TAG, "Address: %s, port:%d", endpoint->addr, endpoint->port);
     OIC_LOG_BUFFER(DEBUG, TAG, data, dataLength);
 
-    ssize_t ret = CATCPSendData(endpoint, data, dataLength);
+    ssize_t ret = 0;
+#ifndef SINGLE_THREAD
+    ret = CAQueueTCPData(false, endpoint, data, dataLength, true);
+#else
+    ret = (int32_t)CATCPSendData(endpoint, data, dataLength);
+#endif
+
     OIC_LOG_V(DEBUG, TAG, "Out %s : %d bytes sent", __func__, ret);
     return ret;
 }
@@ -453,7 +463,7 @@ CAResult_t CAStartTCPDiscoveryServer()
 }
 
 static int32_t CAQueueTCPData(bool isMulticast, const CAEndpoint_t *endpoint,
-                             const void *data, uint32_t dataLength)
+                             const void *data, size_t dataLength, bool encryptedData)
 {
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", -1);
     VERIFY_NON_NULL_RET(data, TAG, "data", -1);
@@ -464,7 +474,7 @@ static int32_t CAQueueTCPData(bool isMulticast, const CAEndpoint_t *endpoint,
     VERIFY_NON_NULL_RET(g_sendQueueHandle, TAG, "sendQueueHandle", -1);
 
     // Create TCPData to add to queue
-    CATCPData *tcpData = CACreateTCPData(endpoint, data, dataLength, isMulticast);
+    CATCPData *tcpData = CACreateTCPData(endpoint, data, dataLength, isMulticast, encryptedData);
     if (!tcpData)
     {
         OIC_LOG(ERROR, TAG, "Failed to create ipData!");
@@ -489,7 +499,7 @@ int32_t CASendTCPUnicastData(const CAEndpoint_t *endpoint,
     }
 
 #ifndef SINGLE_THREAD
-    return CAQueueTCPData(false, endpoint, data, dataLength);
+    return CAQueueTCPData(false, endpoint, data, dataLength, false);
 #else
     return (int32_t)CATCPSendData(endpoint, data, dataLength);
 #endif
@@ -500,7 +510,7 @@ int32_t CASendTCPMulticastData(const CAEndpoint_t *endpoint,
                                CADataType_t dataType)
 {
     (void)dataType;
-    return CAQueueTCPData(true, endpoint, data, dataLength);
+    return CAQueueTCPData(true, endpoint, data, dataLength, false);
 }
 
 CAResult_t CAReadTCPData()
@@ -567,41 +577,45 @@ void CATCPSendDataThread(void *threadData)
     }
     else
     {
-        // Check payload length from CoAP over TCP format header.
-        size_t payloadLen = CACheckPayloadLengthFromHeader(tcpData->data, tcpData->dataLen);
-        if (!payloadLen)
+        if (!tcpData->encryptedData)
         {
-            // if payload length is zero, disconnect from remote device.
-            OIC_LOG(DEBUG, TAG, "payload length is zero, disconnect from remote device");
-#ifdef __WITH_TLS__
-            if (CA_STATUS_OK != CAcloseSslConnection(tcpData->remoteEndpoint))
+            // Check payload length from CoAP over TCP format header.
+            size_t payloadLen = CACheckPayloadLengthFromHeader(tcpData->data, tcpData->dataLen);
+            if (!payloadLen)
             {
-                OIC_LOG(ERROR, TAG, "Failed to close TLS session");
-            }
+                // if payload length is zero, disconnect from remote device.
+                OIC_LOG(DEBUG, TAG, "payload length is zero, disconnect from remote device");
+#ifdef __WITH_TLS__
+                if (CA_STATUS_OK != CAcloseSslConnection(tcpData->remoteEndpoint))
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to close TLS session");
+                }
 #endif
-            CASearchAndDeleteTCPSession(tcpData->remoteEndpoint);
-            return;
-        }
-
-#ifdef __WITH_TLS__
-        CAResult_t result = CA_STATUS_OK;
-        if (tcpData->remoteEndpoint && tcpData->remoteEndpoint->flags & CA_SECURE)
-        {
-            OIC_LOG(DEBUG, TAG, "CAencryptSsl called!");
-            result = CAencryptSsl(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen);
-
-            if (CA_STATUS_OK != result)
-            {
-                OIC_LOG(ERROR, TAG, "CAAdapterNetDtlsEncrypt failed!");
                 CASearchAndDeleteTCPSession(tcpData->remoteEndpoint);
-                CATCPErrorHandler(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen,
-                                  CA_SEND_FAILED);
+                return;
             }
-            OIC_LOG_V(DEBUG, TAG,
-                      "CAAdapterNetDtlsEncrypt returned with result[%d]", result);
-           return;
-        }
+
+#ifdef __WITH_TLS__
+            CAResult_t result = CA_STATUS_OK;
+            if (tcpData->remoteEndpoint && tcpData->remoteEndpoint->flags & CA_SECURE)
+            {
+                OIC_LOG(DEBUG, TAG, "CAencryptSsl called!");
+                result = CAencryptSsl(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen);
+
+                if (CA_STATUS_OK != result)
+                {
+                    OIC_LOG(ERROR, TAG, "CAAdapterNetDtlsEncrypt failed!");
+                    CASearchAndDeleteTCPSession(tcpData->remoteEndpoint);
+                    CATCPErrorHandler(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen,
+                                      CA_SEND_FAILED);
+                }
+                OIC_LOG_V(DEBUG, TAG,
+                          "CAAdapterNetDtlsEncrypt returned with result[%d]", result);
+               return;
+            }
 #endif
+        }
+
         //Processing for sending unicast
         ssize_t dlen = CATCPSendData(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen);
         if (-1 == dlen)
@@ -615,7 +629,7 @@ void CATCPSendDataThread(void *threadData)
 }
 
 CATCPData *CACreateTCPData(const CAEndpoint_t *remoteEndpoint, const void *data,
-                           size_t dataLength, bool isMulticast)
+                           size_t dataLength, bool isMulticast, bool encryptedData)
 {
     VERIFY_NON_NULL_RET(remoteEndpoint, TAG, "remoteEndpoint is NULL", NULL);
     VERIFY_NON_NULL_RET(data, TAG, "data is NULL", NULL);
@@ -640,6 +654,7 @@ CATCPData *CACreateTCPData(const CAEndpoint_t *remoteEndpoint, const void *data,
     tcpData->dataLen = dataLength;
 
     tcpData->isMulticast = isMulticast;
+    tcpData->encryptedData = encryptedData;
 
     return tcpData;
 }

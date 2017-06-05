@@ -40,9 +40,9 @@ const style = {
     }
 }
 
-const handleSignout = () => {
+const handleSignout = (di, accesstoken) => {
     console.debug("sign out clicked");
-    Client.signOut();
+    Client.signOut(di, accesstoken);
 };
 
 const handleDisconnect = () => {
@@ -59,7 +59,7 @@ const Menu = (props) => (
         anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
     >
         <MenuItem primaryText="Help" />
-        {props.signin ? <MenuItem primaryText="Sign out" onTouchTap={handleSignout} />: null}
+        {props.signin ? <MenuItem primaryText="Sign out" onTouchTap={handleSignout.bind(this, props.di, props.accesstoken)} />: null}
         <MenuItem primaryText="Server setting" onTouchTap={handleDisconnect}/>
     </IconMenu>
 );
@@ -71,7 +71,9 @@ class MainAppBar extends React.Component {
         super(props, context);
 
         this.state = {
-            signin: props.signin
+            signin: props.signin,
+            di: props.di,
+            accesstoken: props.accesstoken
         }
     };
 
@@ -85,7 +87,7 @@ class MainAppBar extends React.Component {
                         titleStyle={style.font}
                         /* TODO add icon */
                         //iconElementLeft={ }
-                        iconElementRight={ <Menu signin={this.state.signin} /> }
+                        iconElementRight={ <Menu signin={this.state.signin} di={this.state.di} accesstoken={this.state.accesstoken}/> }
                         showMenuIconButton={false}
                         style={style.basic}
                     />

@@ -20,6 +20,7 @@
 
 extern "C"
 {
+    #include "iotivity_config.h"
     #include "rd_client.h"
     #include "rd_server.h"
     #include "ocpayload.h"

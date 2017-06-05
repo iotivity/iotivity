@@ -30,10 +30,6 @@
 #define PLATFORM_FEATURES_H_
 
 
-#if (__cplusplus >=201103L) || defined(__GXX_EXPERIMENTAL_CXX0X__)
-#  define SUPPORTS_DEFAULT_CTOR
-#endif
-
 #if (__STDC_VERSION__ >= 201112L)
 #  include <assert.h>
 #  define OC_STATIC_ASSERT(condition, msg) static_assert(condition, msg)
@@ -43,7 +39,15 @@
 #  endif
 #  define OC_STATIC_ASSERT(condition, msg) static_assert(condition, msg)
 #else
-#  define OC_STATIC_ASSERT(condition, msg) ((void)sizeof(char[2*!!(condition) - 1]))
+#  define OC_CAT_(a, b) a ## b
+#  define OC_CAT(a, b) OC_CAT_(a, b)
+#  define OC_STATIC_ASSERT(condition, msg) \
+        typedef int OC_CAT(StaticAssertTemp, __LINE__)[2 * !!(condition) - 1]
+#endif
+
+#if !(defined _GLIBCXX_USE_NANOSLEEP) \
+  && defined(__GNUC__) && (4 == __GNUC__) && (7 >= __GNUC_MINOR__)
+#  define  _GLIBCXX_USE_NANOSLEEP 1
 #endif
 
 #ifndef INLINE_API
@@ -74,9 +78,6 @@
 #  define ssize_t SSIZE_T
 #  define SHUT_RDWR           SD_BOTH
 #  define sleep(SECS)         Sleep(1000*(SECS))
-#  ifdef __cplusplus
-#    define SUPPORTS_DEFAULT_CTOR
-#  endif
 #  include "windows/include/memmem.h"
 #  include "windows/include/win_sleep.h"
 #  include "windows/include/pthread_create.h"
@@ -106,11 +107,30 @@
  * UINT16_MAX does not appear to be defined on Arduino so we define it here.
  */
 #  define UINT16_MAX 65535
+
+/**
+ * Handle case that PRId64 is not defined in Arduino's inttypes.h
+ */
+#  if !defined(PRId64)
+#    define PRId64 "lld"
+#  endif
 #endif
 
 /**
  * Mark a parameter as unused. Used to prevent unused variable compiler warnings.
  */
-#define OC_UNUSED(x) (void)(x)
+#  define OC_UNUSED(x) (void)(x)
+
+/**
+ * Calling convention.
+ */
+#ifdef _WIN32
+/*
+ * Set to __stdcall for Windows, consistent with WIN32 APIs.
+ */
+#  define OC_CALL   __stdcall
+#else
+#  define OC_CALL
+#endif
 
 #endif

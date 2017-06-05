@@ -58,7 +58,8 @@ https://wiki.iotivity.org/build
 EOF
         exit 2
     elif [ -d "${packageDir}/.git" ]; then
-        cd "${packageDir}"
+        cd "${packageDir}" || exit 1
+        git clean -f -d -x
         git reset --hard "${packageRevision}"
         git apply --whitespace=fix "../ocf.patch"
         cd -

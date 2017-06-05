@@ -33,10 +33,8 @@ target_os = libocsrm_env.get('TARGET_OS')
 ######################################################################
 with_upstream_libcoap = libocsrm_env.get('WITH_UPSTREAM_LIBCOAP')
 if with_upstream_libcoap == '1':
-	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
 	libocsrm_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
 else:
-	# For bring up purposes only, the forked version will live here.
 	libocsrm_env.AppendUnique(CPPPATH = ['#/resource/csdk/connectivity/lib/libcoap-4.1.1/include'])
 
 libocsrm_env.PrependUnique(CPPPATH = [
@@ -118,7 +116,8 @@ libocsrm_src = [
 	OCSRM_SRC + 'srmutility.c',
 	OCSRM_SRC + 'iotvticalendar.c',
 	OCSRM_SRC + 'base64.c',
-	OCSRM_SRC + 'directpairing.c'
+	OCSRM_SRC + 'directpairing.c',
+	OCSRM_SRC + 'deviceonboardingstate.c'
 	]
 
 if libocsrm_env.get('SECURED') == '1':
@@ -128,6 +127,7 @@ if libocsrm_env.get('SECURED') == '1':
 	libocsrm_src = libocsrm_src + [OCSRM_SRC + 'certhelpers.c', OCSRM_SRC + 'occertutility.c']
 	libocsrm_src = libocsrm_src + [OCSRM_SRC + 'csrresource.c']
 	libocsrm_src = libocsrm_src + [OCSRM_SRC + 'rolesresource.c']
+	libocsrm_src = libocsrm_src + [OCSRM_SRC + 'ocsecurity.c']
 
 if target_os in ['windows', 'msys_nt']:
 	libocsrm_src  = libocsrm_src + [OCSRM_SRC + 'strptime.c']

@@ -17,6 +17,7 @@
  *
  ******************************************************************/
 
+#include "iotivity_config.h"
 #include "oic_malloc.h"
 #include "ipca.h"
 #include "ipcainternal.h"
@@ -31,7 +32,8 @@ std::mutex g_ipcaAppMutex;
 
 bool g_unitTestMode = false;
 
-IPCAStatus IPCA_CALL IPCAOpen(const IPCAAppInfo* ipcaAppInfo,
+IPCAStatus IPCA_CALL IPCAOpen(
+                        const IPCAAppInfo* ipcaAppInfo,
                         IPCAVersion ipcaVersion,
                         IPCAAppHandle* ipcaAppHandle)
 {
@@ -88,20 +90,22 @@ void IPCA_CALL IPCAClose(IPCAAppHandle ipcaAppHandle)
     g_app = nullptr;
 }
 
-IPCAStatus IPCA_CALL IPCADiscoverDevices(IPCAAppHandle ipcaAppHandle,
-                                         IPCADiscoverDeviceCallback callback,
-                                         void* context,
-                                         const char* const* resourceTypeList,
-                                         int resourceTypeCount,
-                                         IPCAHandle* handle)
+IPCAStatus IPCA_CALL IPCADiscoverDevices(
+                                    IPCAAppHandle ipcaAppHandle,
+                                    IPCADiscoverDeviceCallback callback,
+                                    void* context,
+                                    const char* const* resourceTypeList,
+                                    int resourceTypeCount,
+                                    IPCAHandle* handle)
 {
     App* app = reinterpret_cast<App*>(ipcaAppHandle);
     return app->DiscoverDevices(callback, context, resourceTypeList, resourceTypeCount, handle);
 }
 
-IPCAStatus IPCA_CALL IPCAOpenDevice(IPCAAppHandle ipcaAppHandle,
-                            const char* deviceId,
-                            IPCADeviceHandle* deviceHandle)
+IPCAStatus IPCA_CALL IPCAOpenDevice(
+                                    IPCAAppHandle ipcaAppHandle,
+                                    const char* deviceId,
+                                    IPCADeviceHandle* deviceHandle)
 {
     App* app = reinterpret_cast<App*>(ipcaAppHandle);
     return app->OpenDevice(deviceId, deviceHandle);
@@ -114,29 +118,31 @@ void IPCA_CALL IPCACloseDevice(IPCADeviceHandle deviceHandle)
     app->CloseDevice(deviceHandle);
 }
 
-IPCAStatus IPCAGetDeviceInfo(IPCADeviceHandle deviceHandle, IPCADeviceInfo** deviceInfo)
+IPCAStatus IPCA_CALL IPCAGetDeviceInfo(IPCADeviceHandle deviceHandle, IPCADeviceInfo** deviceInfo)
 {
     DeviceWrapper* deviceWrapper = reinterpret_cast<DeviceWrapper*>(deviceHandle);
     return deviceWrapper->device->GetDeviceInfo(deviceInfo);
 }
 
-void IPCAFreeDeviceInfo(IPCADeviceInfo* deviceInfo)
+void IPCA_CALL IPCAFreeDeviceInfo(IPCADeviceInfo* deviceInfo)
 {
     OCFFramework::FreeDeviceInfo(deviceInfo);
 }
 
-IPCAStatus IPCAGetPlatformInfo(IPCADeviceHandle deviceHandle, IPCAPlatformInfo** platformInfo)
+IPCAStatus IPCA_CALL IPCAGetPlatformInfo(IPCADeviceHandle deviceHandle,
+                                         IPCAPlatformInfo** platformInfo)
 {
     DeviceWrapper* deviceWrapper = reinterpret_cast<DeviceWrapper*>(deviceHandle);
     return deviceWrapper->device->GetPlatformInfo(platformInfo);
 }
 
-void IPCAFreePlatformInfo(IPCAPlatformInfo* platformInfo)
+void IPCA_CALL IPCAFreePlatformInfo(IPCAPlatformInfo* platformInfo)
 {
     OCFFramework::FreePlatformInfo(platformInfo);
 }
 
-IPCAStatus IPCA_CALL IPCAGetResources(IPCADeviceHandle deviceHandle,
+IPCAStatus IPCA_CALL IPCAGetResources(
+                            IPCADeviceHandle deviceHandle,
                             const char* resourceInterface,
                             const char* resourceType,
                             char*** resourcePathList,
@@ -246,14 +252,15 @@ IPCAStatus IPCA_CALL IPCAObserveResource(IPCADeviceHandle deviceHandle,
                     handle);
 }
 
-IPCAStatus IPCA_CALL IPCACreateResource(IPCADeviceHandle deviceHandle,
-                                        IPCACreateResourceComplete createResourceCb,
-                                        void* context,
-                                        const char* resourcePath,
-                                        const char* resourceInterface,
-                                        const char* resourceType,
-                                        IPCAPropertyBagHandle propertyBagHandle,
-                                        IPCAHandle* handle)
+IPCAStatus IPCA_CALL IPCACreateResource(
+                                    IPCADeviceHandle deviceHandle,
+                                    IPCACreateResourceComplete createResourceCb,
+                                    void* context,
+                                    const char* resourcePath,
+                                    const char* resourceInterface,
+                                    const char* resourceType,
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    IPCAHandle* handle)
 {
     DeviceWrapper* deviceWrapper = reinterpret_cast<DeviceWrapper*>(deviceHandle);
     return deviceWrapper->app->CreateResource(
@@ -267,11 +274,12 @@ IPCAStatus IPCA_CALL IPCACreateResource(IPCADeviceHandle deviceHandle,
                 handle);
 }
 
-IPCAStatus IPCA_CALL IPCADeleteResource(IPCADeviceHandle deviceHandle,
-                                        IPCADeleteResourceComplete deleteResourceCb,
-                                        void* context,
-                                        const char* resourcePath,
-                                        IPCAHandle* handle)
+IPCAStatus IPCA_CALL IPCADeleteResource(
+                                    IPCADeviceHandle deviceHandle,
+                                    IPCADeleteResourceComplete deleteResourceCb,
+                                    void* context,
+                                    const char* resourcePath,
+                                    IPCAHandle* handle)
 {
     DeviceWrapper* deviceWrapper = reinterpret_cast<DeviceWrapper*>(deviceHandle);
     return deviceWrapper->app->DeleteResource(
@@ -282,13 +290,17 @@ IPCAStatus IPCA_CALL IPCADeleteResource(IPCADeviceHandle deviceHandle,
                     handle);
 }
 
-void IPCA_CALL IPCACloseHandle(IPCAHandle handle)
+IPCAStatus IPCA_CALL IPCACloseHandle(IPCAHandle handle,
+                        IPCACloseHandleComplete closeHandleComplete,
+                        void* context)
 {
     std::lock_guard<std::mutex> lock(g_ipcaAppMutex);
     if (g_app != nullptr)
     {
-        g_app->CloseIPCAHandle(handle);
+        return (g_app->CloseIPCAHandle(handle, closeHandleComplete, context));
     }
+
+    return IPCA_FAIL;
 }
 
 typedef struct
@@ -298,7 +310,10 @@ typedef struct
     IPCAStatus result;
 } AsyncContext;
 
-void AsyncCallback(IPCAStatus result, void* context, IPCAPropertyBagHandle propertyBagHandle)
+void IPCA_CALL AsyncCallback(
+                    IPCAStatus result,
+                    void* context,
+                    IPCAPropertyBagHandle propertyBagHandle)
 {
     OC_UNUSED(propertyBagHandle);
 
@@ -393,20 +408,22 @@ IPCAStatus IPCA_CALL IPCAReboot(IPCADeviceHandle deviceHandle)
     return status;
 }
 
-IPCAStatus IPCA_CALL IPCASetPasswordCallbacks(IPCAAppHandle ipcaAppHandle,
-                                        IPCAProvidePasswordCallback inputCallback,
-                                        IPCADisplayPasswordCallback displayCallback,
-                                        void* context)
+IPCAStatus IPCA_CALL IPCASetPasswordCallbacks(
+                                IPCAAppHandle ipcaAppHandle,
+                                IPCAProvidePasswordCallback inputCallback,
+                                IPCADisplayPasswordCallback displayCallback,
+                                void* context)
 {
     App* app = reinterpret_cast<App*>(ipcaAppHandle);
     return app->SetPasswordCallbacks(inputCallback, displayCallback, context);
 }
 
-IPCAStatus IPCA_CALL IPCARequestAccess(IPCADeviceHandle deviceHandle,
-                                       const char* resourcePath,
-                                       IPCARequestAccessCompletionCallback completionCallback,
-                                       void* context,
-                                       IPCAHandle* handle)
+IPCAStatus IPCA_CALL IPCARequestAccess(
+                                IPCADeviceHandle deviceHandle,
+                                const char* resourcePath,
+                                IPCARequestAccessCompletionCallback completionCallback,
+                                void* context,
+                                IPCAHandle* handle)
 {
     DeviceWrapper* deviceWrapper = reinterpret_cast<DeviceWrapper*>(deviceHandle);
     return deviceWrapper->app->RequestAccess(

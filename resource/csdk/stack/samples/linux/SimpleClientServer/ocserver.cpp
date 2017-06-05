@@ -369,7 +369,7 @@ OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
         if (result == OC_STACK_OK)
         {
             OIC_LOG (INFO, TAG, "\n\nDelete Resource operation succeeded.");
-            ehResult = OC_EH_OK;
+            ehResult = OC_EH_RESOURCE_DELETED;
 
             //Step 2: clear observers who wanted to observe this resource at the app level.
             for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++)
@@ -385,7 +385,7 @@ OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
         else if (result == OC_STACK_NO_RESOURCE)
         {
             OIC_LOG(INFO, TAG, "\n\nThe resource doesn't exist or it might have been deleted.");
-            ehResult = OC_EH_RESOURCE_DELETED;
+            ehResult = OC_EH_RESOURCE_NOT_FOUND;
         }
         else
         {
@@ -641,13 +641,29 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
                             MAX_HEADER_OPTION_DATA_LENGTH);
                     }
                 }
+                // Check on Accept Version option.
+                uint8_t vOptionData[MAX_HEADER_OPTION_DATA_LENGTH];
+                size_t vOptionDataSize = sizeof(vOptionData);
+                uint16_t actualDataSize = 0;
+                OCGetHeaderOption(entityHandlerRequest->rcvdVendorSpecificHeaderOptions,
+                        entityHandlerRequest->numRcvdVendorSpecificHeaderOptions,
+                        COAP_OPTION_ACCEPT_VERSION, vOptionData, vOptionDataSize, &actualDataSize);
+                if (actualDataSize)
+                {
+                    OIC_LOG_V(INFO, TAG, "accept version option exists");
+                    OIC_LOG_BUFFER(INFO, TAG, vOptionData, MAX_HEADER_OPTION_DATA_LENGTH);
+                }
+                uint16_t acceptVersion = vOptionData[0]*256 + vOptionData[1];
+                if (OC_SPEC_VERSION_VALUE == acceptVersion)
+                {
+                    OIC_LOG_V(INFO, TAG, "accept version equals to default OC_SPEC_VERSION_VALUE.");
+                }
 
                 OCHeaderOption* sendOptions = response.sendVendorSpecificHeaderOptions;
                 size_t numOptions = response.numSendVendorSpecificHeaderOptions;
                 // Check if the option header has already existed before adding it in.
                 uint8_t optionData[MAX_HEADER_OPTION_DATA_LENGTH];
                 size_t optionDataSize = sizeof(optionData);
-                uint16_t actualDataSize = 0;
                 OCGetHeaderOption(response.sendVendorSpecificHeaderOptions,
                                   response.numSendVendorSpecificHeaderOptions,
                                   2248,
@@ -1129,7 +1145,7 @@ int main(int argc, char* argv[])
     OCSetRAInfo(&rainfo);
 #endif
 
-    
+
     OIC_LOG(DEBUG, TAG, "OCServer is starting...");
     OCPersistentStorage pstStr {
         server_fopen,

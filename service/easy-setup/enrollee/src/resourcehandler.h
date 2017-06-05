@@ -101,6 +101,7 @@ OCEntityHandlerResult CheckEhRequestPayload(OCEntityHandlerRequest *ehRequest);
 void RegisterWifiRsrcEventCallBack(ESWiFiConfCB);
 void RegisterCloudRsrcEventCallBack(ESCoapCloudConfCB);
 void RegisterDevConfRsrcEventCallBack(ESDevConfCB);
+void RegisterConnectRequestEventCallBack(ESConnectRequestCB cb);
 void UnRegisterResourceEventCallBack(void);
 ESResult SetCallbackForUserData(ESReadUserdataCb readCb, ESWriteUserdataCb writeCb);
 

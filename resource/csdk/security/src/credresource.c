@@ -56,6 +56,7 @@
 #include "certhelpers.h"
 #include "cacommon.h"
 #include "secureresourcemanager.h"
+#include "deviceonboardingstate.h"
 
 #ifdef __unix__
 #include <sys/types.h>
@@ -103,7 +104,7 @@ static bool ValueWithinBounds(uint64_t value, uint64_t maxValue)
 {
     if (value > maxValue)
     {
-        OIC_LOG_V(ERROR, TAG, "The value (%ull) is greater than allowed maximum of %ull.", value, maxValue);
+        OIC_LOG_V(ERROR, TAG, "The value (%" PRId64 ") is greater than allowed maximum of %" PRId64 ".", value, maxValue);
         return false;
     }
 
@@ -619,21 +620,21 @@ static void logCredMetadata()
             OIC_LOG_V(DEBUG, TAG, "Role authority: %s", temp->roleId.authority);
         }
         OIC_LOG_V(DEBUG, TAG, "Cred Type: %d", temp->credType);
-        OIC_LOG_V(DEBUG, TAG, "privateData length: %d, encoding: %d", temp->privateData.len, temp->privateData.encoding);
+        OIC_LOG_V(DEBUG, TAG, "privateData length: %" PRIuPTR ", encoding: %d", temp->privateData.len, temp->privateData.encoding);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-        OIC_LOG_V(DEBUG, TAG, "publicData length: %d, encoding: %d", temp->publicData.len, temp->publicData.encoding);
+        OIC_LOG_V(DEBUG, TAG, "publicData length: %" PRIuPTR ", encoding: %d", temp->publicData.len, temp->publicData.encoding);
         if (temp->credUsage)
         {
             OIC_LOG_V(DEBUG, TAG, "credUsage: %s", temp->credUsage);
         }
 
-        OIC_LOG_V(DEBUG, TAG, "optionalData length: %d, encoding: %d", temp->optionalData.len, temp->optionalData.encoding);
+        OIC_LOG_V(DEBUG, TAG, "optionalData length: %" PRIuPTR", encoding: %d" PRIuPTR, temp->optionalData.len, temp->optionalData.encoding);
 #endif
 
     }
 
-    OIC_LOG_V(DEBUG, TAG, "Found %d credentials.", count);
+    OIC_LOG_V(DEBUG, TAG, "Found %" PRIuPTR " credentials.", count);
 
     OIC_LOG_V(DEBUG, TAG, "OUT %s:", __func__);
 #endif
@@ -770,7 +771,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
 
             cborEncoderResult = cbor_encode_text_string(&roleIdMap, OIC_JSON_ROLE_NAME, strlen(OIC_JSON_ROLE_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding role tag");
-            
+
             cborEncoderResult = cbor_encode_text_string(&roleIdMap, cred->roleId.id, strlen(cred->roleId.id));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding role value");
 
@@ -1371,13 +1372,13 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     }
     if (cred->publicData.data)
     {
-        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : publicData len: %d", cred->publicData.len);
+        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : publicData len: %" PRIuPTR, cred->publicData.len);
         OIC_LOG_BUFFER(DEBUG, TAG, cred->publicData.data, cred->publicData.len);
 
     }
     if (cred->optionalData.data)
     {
-        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : optionalData len: %d", cred->optionalData.len);
+        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : optionalData len: %" PRIuPTR, cred->optionalData.len);
         OIC_LOG_BUFFER(DEBUG, TAG, cred->optionalData.data, cred->optionalData.len);
         OIC_LOG_V(DEBUG, TAG, "GenerateCredential : optionalData revstat: %d", cred->optionalData.revstat);
     }
@@ -1598,7 +1599,7 @@ static OicSecCred_t* GetCredDefault()
     return NULL;
 }
 
-static bool IsSameSecOpt(const OicSecOpt_t* sk1, const OicSecOpt_t* sk2)
+bool IsSameSecOpt(const OicSecOpt_t* sk1, const OicSecOpt_t* sk2)
 {
     VERIFY_NOT_NULL(TAG, sk1, WARNING);
     VERIFY_NOT_NULL(TAG, sk2, WARNING);
@@ -1611,7 +1612,7 @@ exit:
     return false;
 }
 
-static bool IsSameSecKey(const OicSecKey_t* sk1, const OicSecKey_t* sk2)
+bool IsSameSecKey(const OicSecKey_t* sk1, const OicSecKey_t* sk2)
 {
     VERIFY_NOT_NULL(TAG, sk1, WARNING);
     VERIFY_NOT_NULL(TAG, sk2, WARNING);
@@ -1730,22 +1731,40 @@ exit:
     return cmpResult;
 }
 
+#if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
+static bool IsNewPreconfigPinCredential(OicSecCred_t * oldCred, OicSecCred_t * newCred)
+{
+    if (oldCred->credUsage &&
+        newCred->credUsage &&
+        (0 == strcmp(PRECONFIG_PIN_CRED, oldCred->credUsage)) &&
+        (0 == strcmp(PRECONFIG_PIN_CRED, newCred->credUsage)))
+    {
+        return true;
+    }
+
+    return false;
+}
+#endif //(__WITH_DTLS__ or __WITH_TLS__) and MULTIPLE_OWNER
+
 OCStackResult AddCredential(OicSecCred_t * newCred)
 {
     OCStackResult ret = OC_STACK_ERROR;
     OicSecCred_t * temp = NULL;
     bool validFlag = true;
     OicUuid_t emptyOwner = { .id = {0} };
+#if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
+    uint16_t staleCredId = 0;
+#endif //(__WITH_DTLS__ or __WITH_TLS__) and MULTIPLE_OWNER  
 
     OIC_LOG(DEBUG, TAG, "IN AddCredential");
 
     VERIFY_SUCCESS(TAG, NULL != newCred, ERROR);
-    //Assigning credId to the newCred
+
+    // Assigning credId to the newCred
     newCred->credId = GetCredId();
     VERIFY_SUCCESS(TAG, true == IsValidCredential(newCred), ERROR);
 
-    //the newCred is not valid if it is empty
-
+    // The newCred is not valid if it is empty
     if (memcmp(&(newCred->subject), &emptyOwner, sizeof(OicUuid_t)) == 0)
     {
         validFlag = false;
@@ -1772,12 +1791,35 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
                 validFlag = false;
                 break;
             }
+
+#if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
+            // Devices can only have one Preconfigured Pin credential at any given time. Check
+            // to see if the new credential is an update to an existing Preconfigured Pin
+            // credential so that we can remove it later.
+            if (IsNewPreconfigPinCredential(temp, newCred))
+            {
+                staleCredId = temp->credId;
+            }
+#endif //(__WITH_DTLS__ or __WITH_TLS__) and MULTIPLE_OWNER
         }
     }
 
-    //Append the new Cred to existing list if new Cred is valid
+    // Append the new Cred to existing list if new Cred is valid
     if (validFlag)
     {
+#if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
+        // Remove the existing Preconfigured Pin credential if it exists
+        if (0 != staleCredId)
+        {
+            ret = RemoveCredentialByCredId(staleCredId);
+            if (OC_STACK_RESOURCE_DELETED == ret)
+            {
+                // Use the old Preconfigured Pin cred id so that this acts as an update
+                newCred->credId = staleCredId;
+            }
+        }
+#endif //(__WITH_DTLS__ or __WITH_TLS__) and MULTIPLE_OWNER
+
         LL_APPEND(gCred, newCred);
     }
     if (memcmp(&(newCred->rownerID), &emptyOwner, sizeof(OicUuid_t)) != 0)
@@ -2041,16 +2083,31 @@ exit:
 
 static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehRequest)
 {
-    OCEntityHandlerResult ret = OC_EH_ERROR;
+    OCEntityHandlerResult ret = OC_EH_INTERNAL_SERVER_ERROR;
     OIC_LOG(DEBUG, TAG, "HandleCREDPostRequest IN");
 
+    OicSecDostype_t dos;
     static uint16_t previousMsgId = 0;
     //Get binary representation of cbor
     OicSecCred_t *cred  = NULL;
     uint8_t *payload = (((OCSecurityPayload*)ehRequest->payload)->securityData);
     size_t size = (((OCSecurityPayload*)ehRequest->payload)->payloadSize);
 
-    OCStackResult res = CBORPayloadToCred(payload, size, &cred);
+    OCStackResult res = OC_STACK_ERROR;
+
+    res = OC_STACK_OK;
+
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
+    if ((DOS_RESET == dos.state) ||
+        (DOS_RFNOP == dos.state))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s /cred resource is read-only in RESET and RFNOP.", __func__);
+        ret = OC_EH_NOT_ACCEPTABLE;
+        goto exit;
+    }
+
+    res = CBORPayloadToCred(payload, size, &cred);
+
     if (res == OC_STACK_OK)
     {
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
@@ -2284,6 +2341,7 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
 #endif//__WITH_DTLS__
     }
 
+exit:
     if (OC_EH_CHANGED != ret && cred != NULL)
     {
         if(OC_STACK_OK != RemoveCredential(&cred->subject))
@@ -2419,7 +2477,8 @@ OCStackResult CreateCredResource()
                                          OIC_RSRC_CRED_URI,
                                          CredEntityHandler,
                                          NULL,
-                                         OC_SECURE);
+                                         OC_SECURE |
+                                         OC_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)
     {
@@ -2727,8 +2786,14 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                         {
                             if (ValueWithinBounds(cred->privateData.len, INT32_MAX))
                             {
-                                ret = (int32_t)cred->privateData.len;
-                                memcpy(result, cred->privateData.data, ret);
+                                size_t len = cred->privateData.len;
+                                if (result_length < len)
+                                {
+                                    OIC_LOG (ERROR, TAG, "Wrong value for result_length");
+                                    return ret;
+                                }
+                                memcpy(result, cred->privateData.data, len);
+                                ret = (int32_t)len;
                             }
                         }
                         else if(OIC_ENCODING_BASE64 == cred->privateData.encoding)
@@ -2746,6 +2811,11 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                             {
                                 if (ValueWithinBounds(outKeySize, INT32_MAX))
                                 {
+                                    if (result_length < outKeySize)
+                                    {
+                                        OIC_LOG (ERROR, TAG, "Wrong value for result_length");
+                                        return ret;
+                                    }
                                     memcpy(result, outKey, outKeySize);
                                     ret = (int32_t)outKeySize;
                                 }
@@ -2967,13 +3037,12 @@ exit:
 
 OCStackResult GetCredRownerId(OicUuid_t *rowneruuid)
 {
-    OCStackResult retVal = OC_STACK_ERROR;
-    if (gCred)
+    if (gCred && rowneruuid)
     {
-        *rowneruuid = gCred->rownerID;
-        retVal = OC_STACK_OK;
+        memcpy(&(rowneruuid->id), &(gCred->rownerID.id), sizeof(rowneruuid->id));
+        return OC_STACK_OK;
     }
-    return retVal;
+    return OC_STACK_ERROR;
 }
 
 #if defined (__WITH_TLS__) || defined(__WITH_DTLS__)
@@ -3055,7 +3124,7 @@ static int ConvertDerCertToPem(const uint8_t* der, size_t derLen, uint8_t** pem)
     if (ret < 0)
     {
         OIC_LOG_V(ERROR, TAG, "Couldn't convert cert into PEM, failed writing PEM: %d", ret);
-        OICFreeAndSetToNull(pem);
+        OICFreeAndSetToNull((void **) pem);
         return ret;
     }
 
@@ -3165,15 +3234,15 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
                 }
 
                 uint8_t *oldData = crt->data;
-                crt->data = OICRealloc(crt->data, crt->len + temp->optionalData.len);
+                crt->data = OICRealloc(crt->data, crt->len + pemLen);
                 if (NULL == crt->data)
                 {
                     OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
                     OICFree(oldData);
                     return OC_STACK_NO_MEMORY;
                 }
-                memcpy(crt->data + crt->len, temp->optionalData.data, temp->optionalData.len);
-                crt->len += temp->optionalData.len;
+                memcpy(crt->data + crt->len, pem, pemLen);
+                crt->len += pemLen;
             }
         }
     }
@@ -3456,22 +3525,33 @@ void GetDerKey(ByteArray_t * key, const char * usage)
                     return;
                 }
 
-                key->data = OICRealloc(key->data, ctx.buflen);
-                if (NULL == key->data)
+                uint8_t *tmp = OICRealloc(key->data, ctx.buflen);
+                if (NULL == tmp)
                 {
+                    OICFree(key->data);
+                    key->data = NULL;
                     OIC_LOG(ERROR, TAG, "Failed to allocate memory");
                     mbedtls_pem_free(&ctx);
                     return;
                 }
+                key->data = tmp;
 
                 memcpy(key->data, ctx.buf, ctx.buflen);
                 key->len = ctx.buflen;
                 mbedtls_pem_free(&ctx);
                 break;
             }
-            else if(temp->privateData.encoding == OIC_ENCODING_DER)
+            else if(temp->privateData.encoding == OIC_ENCODING_DER || temp->privateData.encoding == OIC_ENCODING_RAW)
             {
-                key->data = OICRealloc(key->data, key->len + temp->privateData.len);
+                uint8_t *tmp = OICRealloc(key->data, key->len + temp->privateData.len);
+                if (NULL == tmp)
+                {
+                    OICFree(key->data);
+                    key->data = NULL;
+                    OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+                    return;
+                }
+                key->data = tmp;
                 memcpy(key->data + key->len, temp->privateData.data, temp->privateData.len);
                 key->len += temp->privateData.len;
                 OIC_LOG_V(DEBUG, TAG, "Key for %s found", usage);
@@ -3514,7 +3594,7 @@ void InitCipherSuiteListInternal(bool * list, const char * usage, const char *de
             {
                 OicUuid_t uuid;
 
-                if (NULL == deviceId ||
+                if (NULL == deviceId || deviceId[0] == '\0' ||
                     OC_STACK_OK != ConvertStrToUuid(deviceId, &uuid) ||
                     0 == memcmp(uuid.id, temp->subject.id, sizeof(uuid.id)))
                 {

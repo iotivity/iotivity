@@ -433,7 +433,7 @@ class AirConditionerResource : public Resource // oic.d.airconditioner
         }
 };
 
-class FirmwareResource : public Resource // x.samsung.firmware
+class FirmwareResource : public Resource // x.org.iotivity.firmware
 {
     private:
         string  m_currentversion;
@@ -880,13 +880,13 @@ int main(int argc, char *argv[])
 
     cout << "Registering resources to platform..." << endl;
 
-    AirConditionerResource  airConditioner("/sec/aircon/0", { "x.com.samsung.da.device" }, { DEFAULT_INTERFACE, BATCH_INTERFACE, LINK_INTERFACE });
+    AirConditionerResource  airConditioner("/aircon/0", { "x.org.iotivity.ac" }, { DEFAULT_INTERFACE, BATCH_INTERFACE, LINK_INTERFACE });
 
     BinarySwitchResource    binarySwitch("/power/0", { "oic.r.switch.binary" }, { DEFAULT_INTERFACE });
 
     TemperatureResource     temperature("/temperature/0", { "oic.r.temperature" }, { DEFAULT_INTERFACE });
 
-    FirmwareResource     firmware("/firmware", { "x.samsung.firmware" }, { DEFAULT_INTERFACE });
+    FirmwareResource     firmware("/firmware", { "x.org.iotivity.firmware" }, { DEFAULT_INTERFACE });
 
     string uri = airConditioner.getResourceUri();
     string rt = airConditioner.getResourceType()[0];

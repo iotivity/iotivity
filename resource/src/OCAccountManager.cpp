@@ -23,8 +23,8 @@
 
 #include "ocstack.h"
 
-#define VERIFY_NON_EMPTY(arg, log_message, ret) \
-    if ((arg).empty()) \
+#define VERIFY_VALID_STRING(arg, log_message, ret) \
+    if (std::string::npos == (arg).find_first_not_of(" \f\n\r\t\v")) \
     { \
         oclog() << log_message << std::flush; \
         return result_guard(ret); \
@@ -41,7 +41,7 @@ OCAccountManager::OCAccountManager(std::weak_ptr<IClientWrapper> clientWrapper,
  : m_clientWrapper(clientWrapper), m_host(host), m_userUuid(""),
    m_invitationObserveHandle(nullptr), m_groupObserveHandle(nullptr), m_connType(connectivityType)
 {
-    if (m_host.empty() || m_clientWrapper.expired())
+    if (std::string::npos == m_host.find_first_not_of(" \f\n\r\t\v") || m_clientWrapper.expired())
     {
         throw OCException(OC::Exception::INVALID_PARAM);
     }
@@ -83,8 +83,8 @@ OCStackResult OCAccountManager::signUp(const std::string& authProvider,
                                        const QueryParamsMap& options,
                                        PostCallback cloudConnectHandler)
 {
-    VERIFY_NON_EMPTY(authProvider, "authProvider cannot be empty.", OC_STACK_INVALID_PARAM);
-    VERIFY_NON_EMPTY(authCode, "authCode cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(authProvider, "authProvider cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(authCode, "authCode cannot be empty.", OC_STACK_INVALID_PARAM);
 
     std::string uri = m_host + OC_RSRVD_ACCOUNT_URI;
 
@@ -110,8 +110,8 @@ OCStackResult OCAccountManager::signIn(const std::string& userUuid,
                                        const std::string& accessToken,
                                        PostCallback cloudConnectHandler)
 {
-    VERIFY_NON_EMPTY(userUuid, "userUuid cannot be empty.", OC_STACK_INVALID_PARAM);
-    VERIFY_NON_EMPTY(accessToken, "accessToken cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(userUuid, "userUuid cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(accessToken, "accessToken cannot be empty.", OC_STACK_INVALID_PARAM);
 
     OCStackResult result = result_guard(signInOut(userUuid, accessToken, true,
                                                   cloudConnectHandler));
@@ -126,8 +126,8 @@ OCStackResult OCAccountManager::signIn(const std::string& userUuid,
 OCStackResult OCAccountManager::signOut(const std::string& accessToken,
                                         PostCallback cloudConnectHandler)
 {
-    VERIFY_NON_EMPTY(m_userUuid, "Need to sign-in first.", OC_STACK_ERROR);
-    VERIFY_NON_EMPTY(accessToken, "accessToken cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(m_userUuid, "Need to sign-in first.", OC_STACK_ERROR);
+    VERIFY_VALID_STRING(accessToken, "accessToken cannot be empty.", OC_STACK_INVALID_PARAM);
 
     OCStackResult result = result_guard(signInOut(m_userUuid, accessToken, false,
                                                   cloudConnectHandler));
@@ -165,8 +165,8 @@ OCStackResult OCAccountManager::refreshAccessToken(const std::string& userUuid,
                                                    const std::string& refreshToken,
                                                    PostCallback cloudConnectHandler)
 {
-    VERIFY_NON_EMPTY(userUuid, "userUuid cannot be empty.", OC_STACK_INVALID_PARAM);
-    VERIFY_NON_EMPTY(refreshToken, "refreshToken cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(userUuid, "userUuid cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(refreshToken, "refreshToken cannot be empty.", OC_STACK_INVALID_PARAM);
 
     std::string uri = m_host + OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI;
 
@@ -184,7 +184,11 @@ OCStackResult OCAccountManager::refreshAccessToken(const std::string& userUuid,
 OCStackResult OCAccountManager::searchUser(const QueryParamsMap& queryParams,
                                            GetCallback cloudConnectHandler)
 {
-    VERIFY_NON_EMPTY(queryParams, "queryParams cannot be empty.", OC_STACK_INVALID_PARAM);
+    if (queryParams.empty())
+    {
+        oclog() << "queryParams cannot be empty." << std::flush;
+        return OC_STACK_INVALID_PARAM;
+    }
 
     std::string uri = m_host + OC_RSRVD_ACCOUNT_SEARCH_URI;
 
@@ -197,8 +201,8 @@ OCStackResult OCAccountManager::deleteDevice(const std::string& accessToken,
                                              const std::string& deviceId,
                                              DeleteCallback cloudConnectHandler)
 {
-    VERIFY_NON_EMPTY(accessToken, "accessToken cannot be empty.", OC_STACK_INVALID_PARAM);
-    VERIFY_NON_EMPTY(deviceId, "deviceId cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(accessToken, "accessToken cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(deviceId, "deviceId cannot be empty.", OC_STACK_INVALID_PARAM);
 
     std::string uri = m_host + OC_RSRVD_ACCOUNT_URI
                       + "?" + OC_RSRVD_ACCESS_TOKEN + "=" + accessToken
@@ -217,7 +221,7 @@ OCStackResult OCAccountManager::createGroup(PostCallback cloudConnectHandler)
 OCStackResult OCAccountManager::createGroup(const QueryParamsMap& queryParams,
                                             PostCallback cloudConnectHandler)
 {
-    VERIFY_NON_EMPTY(m_userUuid, "Need to sign-in first.", OC_STACK_ERROR);
+    VERIFY_VALID_STRING(m_userUuid, "Need to sign-in first.", OC_STACK_ERROR);
 
     std::string uri = m_host + OC_RSRVD_ACL_GROUP_URI;
 
@@ -243,8 +247,8 @@ OCStackResult OCAccountManager::createGroup(const QueryParamsMap& queryParams,
 OCStackResult OCAccountManager::deleteGroup(const std::string& groupId,
                                             DeleteCallback cloudConnectHandler)
 {
-    VERIFY_NON_EMPTY(m_userUuid, "Need to sign-in first.", OC_STACK_ERROR);
-    VERIFY_NON_EMPTY(groupId, "groupId cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(m_userUuid, "Need to sign-in first.", OC_STACK_ERROR);
+    VERIFY_VALID_STRING(groupId, "groupId cannot be empty.", OC_STACK_INVALID_PARAM);
 
     std::string uri = m_host + OC_RSRVD_ACL_GROUP_URI + "/" + groupId
                       + "?" + OC_RSRVD_OWNER + "=" + m_userUuid;
@@ -256,7 +260,7 @@ OCStackResult OCAccountManager::deleteGroup(const std::string& groupId,
 
 OCStackResult OCAccountManager::getGroupInfoAll(GetCallback cloudConnectHandler)
 {
-    VERIFY_NON_EMPTY(m_userUuid, "Need to sign-in first.", OC_STACK_ERROR);
+    VERIFY_VALID_STRING(m_userUuid, "Need to sign-in first.", OC_STACK_ERROR);
 
     std::string uri = m_host + OC_RSRVD_ACL_GROUP_URI;
 
@@ -271,8 +275,8 @@ OCStackResult OCAccountManager::getGroupInfoAll(GetCallback cloudConnectHandler)
 OCStackResult OCAccountManager::getGroupInfo(const std::string& groupId,
                                              GetCallback cloudConnectHandler)
 {
-    VERIFY_NON_EMPTY(m_userUuid, "Need to sign-in first.", OC_STACK_ERROR);
-    VERIFY_NON_EMPTY(groupId, "groupId cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(m_userUuid, "Need to sign-in first.", OC_STACK_ERROR);
+    VERIFY_VALID_STRING(groupId, "groupId cannot be empty.", OC_STACK_INVALID_PARAM);
 
     std::string uri = m_host + OC_RSRVD_ACL_GROUP_URI + "/" + groupId;
 
@@ -288,7 +292,7 @@ OCStackResult OCAccountManager::addPropertyValueToGroup(const std::string& group
                                                         const OCRepresentation propertyValue,
                                                         PostCallback cloudConnectHandler)
 {
-    VERIFY_NON_EMPTY(groupId, "groupId cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(groupId, "groupId cannot be empty.", OC_STACK_INVALID_PARAM);
 
     std::string uri = m_host + OC_RSRVD_ACL_GROUP_URI + "/" + groupId;
 
@@ -304,7 +308,7 @@ OCStackResult OCAccountManager::deletePropertyValueFromGroup(const std::string& 
                                                              const OCRepresentation propertyValue,
                                                              PostCallback cloudConnectHandler)
 {
-    VERIFY_NON_EMPTY(groupId, "groupId cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(groupId, "groupId cannot be empty.", OC_STACK_INVALID_PARAM);
 
     std::string uri = m_host + OC_RSRVD_ACL_GROUP_URI + "/" + groupId;
 
@@ -320,7 +324,7 @@ OCStackResult OCAccountManager::updatePropertyValueOnGroup(const std::string& gr
                                                            const OCRepresentation propertyValue,
                                                            PostCallback cloudConnectHandler)
 {
-    VERIFY_NON_EMPTY(groupId, "groupId cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(groupId, "groupId cannot be empty.", OC_STACK_INVALID_PARAM);
 
     std::string uri = m_host + OC_RSRVD_ACL_GROUP_URI + "/" + groupId;
 
@@ -331,7 +335,7 @@ OCStackResult OCAccountManager::updatePropertyValueOnGroup(const std::string& gr
 
 OCStackResult OCAccountManager::observeGroup(ObserveCallback cloudConnectHandler)
 {
-    VERIFY_NON_EMPTY(m_userUuid, "Need to sign-in first.", OC_STACK_ERROR);
+    VERIFY_VALID_STRING(m_userUuid, "Need to sign-in first.", OC_STACK_ERROR);
 
     std::string uri = m_host + OC_RSRVD_ACL_GROUP_URI;
 
@@ -345,7 +349,7 @@ OCStackResult OCAccountManager::observeGroup(ObserveCallback cloudConnectHandler
 
 OCStackResult OCAccountManager::cancelObserveGroup()
 {
-    VERIFY_NON_EMPTY(m_userUuid, "Need to sign-in first.", OC_STACK_ERROR);
+    VERIFY_VALID_STRING(m_userUuid, "Need to sign-in first.", OC_STACK_ERROR);
 
     if (nullptr == m_groupObserveHandle)
     {
@@ -403,9 +407,9 @@ OCStackResult OCAccountManager::sendInvitation(const std::string& groupId,
                                                const std::string& userUuid,
                                                PostCallback cloudConnectHandler)
 {
-    VERIFY_NON_EMPTY(m_userUuid, "Need to sign-in first.", OC_STACK_ERROR);
-    VERIFY_NON_EMPTY(groupId, "groupId cannot be empty.", OC_STACK_INVALID_PARAM);
-    VERIFY_NON_EMPTY(userUuid, "userUuid cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(m_userUuid, "Need to sign-in first.", OC_STACK_ERROR);
+    VERIFY_VALID_STRING(groupId, "groupId cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(userUuid, "userUuid cannot be empty.", OC_STACK_INVALID_PARAM);
 
     std::string uri = m_host + OC_RSRVD_ACL_INVITE_URI;
 
@@ -428,8 +432,8 @@ OCStackResult OCAccountManager::cancelInvitation(const std::string& groupId,
                                                  const std::string& userUuid,
                                                  DeleteCallback cloudConnectHandler)
 {
-    VERIFY_NON_EMPTY(groupId, "groupId cannot be empty.", OC_STACK_INVALID_PARAM);
-    VERIFY_NON_EMPTY(userUuid, "userUuid cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(groupId, "groupId cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(userUuid, "userUuid cannot be empty.", OC_STACK_INVALID_PARAM);
 
     std::string uri = m_host + OC_RSRVD_ACL_INVITE_URI + "?" + OC_RSRVD_GROUP_ID + "=" + groupId
                       + ";" + OC_RSRVD_MEMBER_ID + "=" + userUuid;
@@ -443,7 +447,7 @@ OCStackResult OCAccountManager::replyToInvitation(const std::string& groupId,
                                                   const bool accept,
                                                   DeleteCallback cloudConnectHandler)
 {
-    VERIFY_NON_EMPTY(groupId, "groupId cannot be empty.", OC_STACK_INVALID_PARAM);
+    VERIFY_VALID_STRING(groupId, "groupId cannot be empty.", OC_STACK_INVALID_PARAM);
 
     std::string isAccept = accept ? "1" : "0";
 

@@ -691,10 +691,6 @@ static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, ui
     {
         return false;
     }
-    if (!caglobals.ip.dualstack)
-    {
-        return false;
-    }
 
     if (tokenLength > CA_MAX_TOKEN_LEN)
     {
@@ -1455,6 +1451,10 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
         if (CA_FORMAT_APPLICATION_CBOR == info->payloadFormat)
         {
             OIC_LOG(DEBUG, ANALYZER_TAG, "Payload Format = [CA_FORMAT_APPLICATION_CBOR]");
+        }
+        else if (CA_FORMAT_APPLICATION_VND_OCF_CBOR == info->payloadFormat)
+        {
+            OIC_LOG(DEBUG, ANALYZER_TAG, "Payload Format = [CA_FORMAT_APPLICATION_VND_OCF_CBOR]");
         }
         else
         {

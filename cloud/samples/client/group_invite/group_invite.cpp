@@ -852,6 +852,7 @@ int main(int argc, char *argv[])
 
                         result = accountMgr->deletePropertyValueFromGroup(groupId, propertyValue,
                                  &onPost);
+                        break;
                     }
 
                 case 12:
@@ -870,41 +871,11 @@ int main(int argc, char *argv[])
                         {
                             string key, value;
 
-                            cout << "property(ex: gname/devices): ";
+                            cout << "property(ex: owner/gname): ";
                             cin >> key;
-
-                            int opt;
-                            cout << "\tvalue type?(1:string / 2:array) : ";
-                            opt = insertNumber();
-
-                            if (opt == 1)
-                            {
-                                cout << "\tvalue: ";
-                                cin >> value;
-                                propertyValue.setValue < string > (key, value);
-                            }
-                            else if (opt == 2)
-                            {
-                                vector< string > values;
-
-                                int m;
-                                cout << "\tnum of values : ";
-                                m = insertNumber();
-
-                                for (int j = 0; j < m; j++)
-                                {
-                                    cout << "\tvalue: ";
-                                    cin >> value;
-                                    values.push_back(value);
-                                }
-
-                                propertyValue.setValue < vector < string >> (key, values);
-                            }
-                            else
-                            {
-                                cout << "invalid option" << endl;
-                                break;
-                            }
+                            cout << "\tvalue: ";
+                            cin >> value;
+                            propertyValue.setValue < string > (key, value);
                         }
 
                         result = accountMgr->updatePropertyValueOnGroup(groupId, propertyValue,

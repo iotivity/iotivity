@@ -414,7 +414,7 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx);
 
 /**
  * Function to update pstat as Ready for provisioning.
- * This function would update 'cm' from bx0000,0010 to bx0000,0000.
+ * This function would update 'dos.s' to DOS_RFPRO.
  *
  * @param[in] ctx   context value passed to callback from calling function.
  * @param[in] selectedDevice   selected device information to performing provisioning.
@@ -424,7 +424,7 @@ static OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx);
 
 /**
  * Function to update pstat as Ready for Normal Operation.
- * This function would update 'isop' from false to true.
+ * This function would update 'dos.s' to DOS_RFNOP.
  *
  * @param[in] ctx   context value passed to callback from calling function.
  * @param[in] selectedDevice   selected device information to performing provisioning.
@@ -1204,7 +1204,7 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
             if(CA_STATUS_OK != caResult)
             {
                 OIC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
-                SetResult(otmCtx, caResult);
+                SetResult(otmCtx, CAResultToOCResult(caResult));
                 return OC_STACK_DELETE_TRANSACTION;
             }
 
@@ -1278,6 +1278,7 @@ static OCStackApplicationResult OwnerAclHandler(void *ctx, OCDoHandle UNUSED,
         if(NULL != selectedDeviceInfo)
         {
             //POST /oic/sec/doxm [{ ..., "owned":"TRUE" }]
+            OIC_LOG_V(DEBUG, TAG, "%s posting /doxm.owned = true.", __func__);
             res = PostOwnershipInformation(otmCtx);
             if(OC_STACK_OK != res)
             {
@@ -1659,7 +1660,7 @@ static OicSecAcl_t* GenerateOwnerAcl(const OicUuid_t* owner)
 {
     OicSecAcl_t* ownerAcl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
     OicSecAce_t* ownerAce = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
-    OicSecRsrc_t* wildcardRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+    OicSecRsrc_t* wildcardRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t)); // TODO IOT-2192
     if(NULL == ownerAcl || NULL == ownerAce || NULL == wildcardRsrc)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
@@ -1751,6 +1752,17 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
     CAEndpoint_t endpoint;
     CopyDevAddrToEndpoint(&deviceInfo->endpoint, &endpoint);
 
+    if (CA_ADAPTER_IP == endpoint.adapter)
+    {
+        endpoint.port = deviceInfo->securePort;
+    }
+#ifdef WITH_TCP
+    else if (CA_ADAPTER_TCP == endpoint.adapter)
+    {
+        endpoint.port = deviceInfo->tcpPort;
+    }
+#endif
+
     if (CA_STATUS_OK != CAInitiateHandshake(&endpoint))
     {
         OIC_LOG(ERROR, TAG, "Failed to pass ssl handshake");
@@ -1760,7 +1772,7 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr, deviceInfo->securePort,
                         deviceInfo->connType,
-                        query, sizeof(query), OIC_RSRC_ACL_URI))
+                        query, sizeof(query), OIC_RSRC_ACL2_URI))
     {
         OIC_LOG(ERROR, TAG, "Failed to generate query");
         return OC_STACK_ERROR;
@@ -1792,7 +1804,8 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
         goto error;
     }
 
-    res = AclToCBORPayload(ownerAcl, OIC_SEC_ACL_V1, &secPayload->securityData, &secPayload->payloadSize);
+    // TODO IOT-2052 change to V2
+    res = AclToCBORPayload(ownerAcl, OIC_SEC_ACL_V2, &secPayload->securityData, &secPayload->payloadSize);
     if (OC_STACK_OK != res)
     {
         OICFree(secPayload);
@@ -1984,7 +1997,7 @@ static OCStackResult PostOwnerUuid(OTMContext_t* otmCtx)
 
 static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
 {
-    OIC_LOG(DEBUG, TAG, "IN PostOwnershipInformation");
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -2001,7 +2014,7 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_DOXM_URI))
     {
-        OIC_LOG(ERROR, TAG, "PostOwnershipInformation : Failed to generate query");
+        OIC_LOG_V(ERROR, TAG, "%s : Failed to generate query", __func__);
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -2017,8 +2030,13 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
     otmCtx->selectedDeviceInfo->doxm->owned = true;
 
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    OCStackResult res = DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm,
-            &secPayload->securityData, &secPayload->payloadSize, true);
+
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[DOXM_OWNED] = true;
+    OCStackResult res = DoxmToCBORPayloadPartial(otmCtx->selectedDeviceInfo->doxm,
+            &secPayload->securityData, &secPayload->payloadSize,
+            propertiesToInclude);
     if (OC_STACK_OK != res && NULL == secPayload->securityData)
     {
         OCPayloadDestroy((OCPayload *)secPayload);
@@ -2038,14 +2056,14 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT PostOwnershipInformation");
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
 
     return res;
 }
 
 static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
 {
-    OIC_LOG(DEBUG, TAG, "IN PostUpdateOperationMode");
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -2061,7 +2079,7 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_PSTAT_URI))
     {
-        OIC_LOG(ERROR, TAG, "PostUpdateOperationMode : Failed to generate query");
+        OIC_LOG_V(ERROR, TAG, "%s Failed to generate query", __func__);
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -2073,8 +2091,13 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    OCStackResult res = PstatToCBORPayload(deviceInfo->pstat, &secPayload->securityData,
-                                           &secPayload->payloadSize, true);
+
+    bool propertiesToInclude[PSTAT_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[PSTAT_OM] = true;
+
+    OCStackResult res = PstatToCBORPayloadPartial(deviceInfo->pstat, &secPayload->securityData,
+                                           &secPayload->payloadSize, propertiesToInclude);
    if (OC_STACK_OK != res)
     {
         OCPayloadDestroy((OCPayload *)secPayload);
@@ -2093,7 +2116,7 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT PostUpdateOperationMode");
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
 
     return res;
 }
@@ -2421,7 +2444,7 @@ OCStackResult OTMSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus
 
 OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
 {
-    OIC_LOG(INFO, TAG, "IN PostProvisioningStatus");
+    OIC_LOG_V(INFO, TAG, "IN %s", __func__);
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -2429,8 +2452,14 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
         return OC_STACK_INVALID_PARAM;
     }
 
-    //Change the TAKE_OWNER bit of TM to 0.
+    // Change the TAKE_OWNER bit of TM to 0 (optional in Client Directed)
     otmCtx->selectedDeviceInfo->pstat->tm &= (~TAKE_OWNER);
+
+    // Change the dos.s value to RFPRO
+    otmCtx->selectedDeviceInfo->pstat->dos.state = DOS_RFPRO;
+
+    // TODO [IOT-2052] set the rowneruuid for /pstat directly, so the hack
+    // in pstatresource.c which sets all rowneruuids can be removed.
 
     OCSecurityPayload *secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
     if (!secPayload)
@@ -2439,8 +2468,18 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    if (OC_STACK_OK != PstatToCBORPayload(otmCtx->selectedDeviceInfo->pstat,
-            &secPayload->securityData, &secPayload->payloadSize, true))
+
+    // Note [IOT-2052] all the POST payloads in the provisioningclient app
+    // should be updated to use the Partial payload APIs for the SVRs, so they
+    // do not include read-only Properties for the Server device current
+    // state.
+    bool propertiesToInclude[PSTAT_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[PSTAT_DOS] = true;
+    propertiesToInclude[PSTAT_TM] = true;
+
+    if (OC_STACK_OK != PstatToCBORPayloadPartial(otmCtx->selectedDeviceInfo->pstat,
+            &secPayload->securityData, &secPayload->payloadSize, propertiesToInclude))
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_INVALID_JSON;
@@ -2457,12 +2496,13 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
                         otmCtx->selectedDeviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_PSTAT_URI))
     {
-        OIC_LOG(ERROR, TAG, "PostProvisioningStatus : Failed to generate query");
+        OIC_LOG_V(ERROR, TAG, "%s : Failed to generate query", __func__);
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    OCCallbackData cbData = {.context=NULL, .cb=NULL, .cd=NULL};
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(cbData));
     cbData.cb = &ProvisioningStatusHandler;
     cbData.context = (void*)otmCtx;
     cbData.cd = NULL;
@@ -2474,7 +2514,7 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
-    OIC_LOG(INFO, TAG, "OUT PostProvisioningStatus");
+    OIC_LOG_V(INFO, TAG, "OUT %s", __func__);
 
     return ret;
 }
@@ -2489,8 +2529,7 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
         return OC_STACK_INVALID_PARAM;
     }
 
-    //Set isop to true.
-    otmCtx->selectedDeviceInfo->pstat->isOp = true;
+    otmCtx->selectedDeviceInfo->pstat->dos.state = DOS_RFNOP;
 
     OCSecurityPayload *secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
     if (!secPayload)
@@ -2499,8 +2538,13 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    if (OC_STACK_OK != PstatToCBORPayload(otmCtx->selectedDeviceInfo->pstat,
-            &secPayload->securityData, &secPayload->payloadSize, true))
+
+    bool propertiesToInclude[PSTAT_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[PSTAT_DOS] = true;
+
+    if (OC_STACK_OK != PstatToCBORPayloadPartial(otmCtx->selectedDeviceInfo->pstat,
+            &secPayload->securityData, &secPayload->payloadSize, propertiesToInclude))
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_INVALID_JSON;
@@ -2522,7 +2566,8 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    OCCallbackData cbData = {.context=NULL, .cb=NULL, .cd=NULL};
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(cbData));
     cbData.cb = &ReadyForNomalStatusHandler;
     cbData.context = (void*)otmCtx;
     cbData.cd = NULL;
@@ -2549,11 +2594,19 @@ OCStackResult ConfigSelfOwnership(void)
         OIC_LOG (ERROR, TAG, "Unable to retrieve doxm owned state");
         return OC_STACK_ERROR;
     }
-    if( (true == isDeviceOwned) ||(true == GetPstatIsop()) )
+
+    bool isop = false;
+    if (OC_STACK_OK != GetPstatIsop(&isop))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to get pstat.isop.");
+        return OC_STACK_ERROR;
+    }
+    if (isDeviceOwned || isop )
     {
         OIC_LOG(ERROR, TAG, "The state of device is not Ready for Ownership transfer.");
         return OC_STACK_ERROR;
     }
+
     OicUuid_t deviceID = {.id={0}};
     if ( OC_STACK_OK != GetDoxmDeviceID(&deviceID) )
     {

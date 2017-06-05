@@ -127,10 +127,12 @@ class App
                             void* context,
                             IPCAHandle* handle);
 
-
-        // Close handle returned in DiscoverDevices(), GetProperties(), SetProperties(), or
-        // ObserveResource().
-        void CloseIPCAHandle(IPCAHandle handle);
+        // Close handle returned in DiscoverDevices(), GetProperties(), SetProperties(),
+        // ObserveResource(), CreateResource() and RequestAccess().
+        IPCAStatus CloseIPCAHandle(
+                        IPCAHandle handle,
+                        IPCACloseHandleComplete closeHandleComplete,
+                        const void* context);
 
     private:
         std::mutex m_appMutex;
@@ -166,17 +168,22 @@ class App
                                     const char* resourceType);
 
         // Delete the CallbackInfo and unregister from Callback object list.
-        void DeleteAndUnregisterCallbackInfo(size_t mapKey);
+        IPCAStatus DeleteAndUnregisterCallbackInfo(
+                                    size_t mapKey,
+                                    IPCACloseHandleComplete closeHandleComplete = nullptr,
+                                    const void* context = nullptr);
 
         // Thread performing periodic discovery.
         static void AppWorkerThread(App* app);
 
         // List of resource types to discover periodically.
         // Key is cbInfo->mapKey of each IPCADiscoverDevices() request.
-        std::map<uint32_t, DiscoveryDetails::Ptr> m_discoveryList;
+        std::map<size_t, DiscoveryDetails::Ptr> m_discoveryList;
 
         // Password callback registration
         InputPinCallbackHandle m_passwordInputCallbackHandle;
+        CallbackInfo::Ptr m_passwordInputCallbackInfo;
         DisplayPinCallbackHandle m_passwordDisplayCallbackHandle;
+        CallbackInfo::Ptr m_passwordDisplayCallbackInfo;
 };
 #endif // APP_H_

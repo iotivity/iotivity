@@ -31,6 +31,10 @@ src_dir = env.get('SRC_DIR')
 # Generate iotivity_config.h using presence of headers
 ######################################################################
 config_h_file_path = os.path.join(src_dir, 'resource', 'c_common', 'iotivity_config.h')
+
+if (os.path.exists(config_h_file_path)) and (env.GetOption('clean')):
+    os.remove(config_h_file_path)
+
 if (not os.path.isfile(config_h_file_path)) and (not env.GetOption('clean')):
     conf = Configure(env.Clone(LIBS = []))
 
@@ -193,6 +197,11 @@ elif target_os in ['arduino']:
 else:
     common_src.append('ocatomic/src/others/ocatomic.c')
 
+if target_os in ['windows']:
+    common_src.append('oic_platform/src/windows/oic_winplatform.cpp')
+else:
+    common_src.append('oic_platform/src/others/oic_otherplatforms.c')
+
 # C++ Arduino's <Timer.h> is included so use C++ compiler/flags
 if target_os in ['arduino']:
     octimer_env = common_env.Clone()
@@ -212,4 +221,6 @@ common_env.UserInstallTargetHeader('iotivity_debug.h', 'c_common', 'iotivity_deb
 common_env.UserInstallTargetHeader('platform_features.h', 'c_common', 'platform_features.h')
 
 Clean(commonlib, config_h_file_path)
-env.PrependUnique(LIBS = ['c_common'])
+
+# c_common calls into logger.
+env.PrependUnique(LIBS = ['c_common', 'logger'])

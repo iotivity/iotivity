@@ -202,8 +202,12 @@ namespace OIC
         {
             for (const auto& it : m_resourceTypes)
             {
-                discoverResource(m_address, std::string(OC_RSRVD_WELL_KNOWN_URI)
-                                 + "?rt=" + it, m_discoverCb);
+                std::string uri = std::string(OC_RSRVD_WELL_KNOWN_URI);
+                if (!it.empty())
+                {
+                    uri = std::string(OC_RSRVD_WELL_KNOWN_URI) + "?rt=" + it;
+                }
+                discoverResource(m_address, uri, m_discoverCb);
             }
         }
 

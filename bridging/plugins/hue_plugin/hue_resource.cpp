@@ -259,12 +259,24 @@ void addAuthorizedBridgeCB(const char *macAddress, const char *ClientId)
     {
         uint32_t prefix_size = MAX_QUERY_STRING;
         char *prefix = (char *) OICMalloc(prefix_size);
+        if (NULL == prefix)
+        {
+            OIC_LOG_V(INFO, TAG, " Failed to malloc prefix");
+            return;
+        }
 
         /*get prefix for discovering lights*/
         result = hueAuthGetHttpPrefix(prefix, &prefix_size, macAddress, ClientId);
         if (result == MPM_RESULT_INSUFFICIENT_BUFFER)
         {
-            prefix = (char *) realloc(prefix, prefix_size);
+            char *tmp = (char *) OICRealloc(prefix, prefix_size);
+            if (NULL == tmp)
+            {
+                OIC_LOG_V(INFO, TAG, " Failed to realloc prefix");
+                OICFree(prefix);
+                return;
+            }
+            prefix = tmp;
             result = hueAuthGetHttpPrefix(prefix, &prefix_size, macAddress, ClientId);
         }
         if (result == MPM_RESULT_OK)
@@ -550,7 +562,7 @@ MPMResult pluginReconnect(MPMPluginCtx *, MPMPipeMessage *message)
               plugindetails->clientId,
               plugindetails->lightNo, plugindetails->prefix);
 
-    if ((plugindetails->bridgeMac != NULL) && ( plugindetails->clientId != NULL))
+    if (('\0' != plugindetails->bridgeMac[0]) && ('\0' != plugindetails->clientId[0]))
     {
         if (authorizedBridges.find(plugindetails->bridgeMac) == authorizedBridges.end())
         {
@@ -570,11 +582,23 @@ MPMResult pluginReconnect(MPMPluginCtx *, MPMPipeMessage *message)
             }
             uint32_t prefix_size = MAX_QUERY_STRING;
             char *prefix = (char *) OICMalloc(prefix_size);
+            if (NULL == prefix)
+            {
+                OIC_LOG_V(INFO, TAG, " Failed to malloc prefix");
+                return MPM_RESULT_INTERNAL_ERROR;
+            }
             result = hueAuthGetHttpPrefix(prefix, &prefix_size, plugindetails->bridgeMac,
                                           plugindetails->clientId);
             if (result == MPM_RESULT_INSUFFICIENT_BUFFER)
             {
-                prefix = (char *) realloc(prefix, prefix_size);
+                char *tmp = (char *) OICRealloc(prefix, prefix_size);
+                if (NULL == tmp)
+                {
+                    OIC_LOG(DEBUG, TAG, "Failed to realloc prefix");
+                    OICFree(prefix);
+                    return MPM_RESULT_INTERNAL_ERROR;
+                }
+                prefix = tmp;
                 result = hueAuthGetHttpPrefix(prefix, &prefix_size, plugindetails->bridgeMac,
                                               plugindetails->clientId);
             }
@@ -722,7 +746,7 @@ OCEntityHandlerResult handleEntityHandlerRequests(
 
     try
     {
-        if ((entityHandlerRequest == NULL))
+        if (entityHandlerRequest == NULL)
         {
             throw "Entity handler received a null entity request context" ;
         }

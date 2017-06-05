@@ -496,7 +496,8 @@ OCStackResult FinalizeDirectPairing(void *ctx, OCDirectPairingDev_t* peer,
     dpairData->resultCallback = resultCallback;
     dpairData->userCtx = ctx;
 
-    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(cbData));
     cbData.cb = DirectPairingFinalizeHandler;
     cbData.context = (void*)dpairData;
     cbData.cd = NULL;
@@ -754,7 +755,8 @@ OCStackResult DPDirectPairing(void *ctx, OCDirectPairingDev_t* peer, OicSecPrm_t
     dpairData->resultCallback = resultCallback;
     dpairData->userCtx = ctx;
 
-    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(cbData));
     cbData.cb = DirectPairingHandler;
     cbData.context = (void*)dpairData;
     cbData.cd = NULL;

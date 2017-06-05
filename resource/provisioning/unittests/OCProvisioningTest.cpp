@@ -137,20 +137,20 @@ namespace OCProvisioningTest
     {
         OCSecureResource device;
         const OicSecOxm_t stsecOxm = OIC_PRECONFIG_PIN;
-        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.selectMOTMethod(stsecOxm, NULL));
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.selectMOTMethod(stsecOxm, nullptr));
     }
 
     TEST(changeMOTModeTest, changeMOTModeNullCallback)
     {
         OCSecureResource device;
         const OicSecMomType_t momType = OIC_MULTIPLE_OWNER_ENABLE;
-        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.changeMOTMode(momType, NULL));
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.changeMOTMode(momType, nullptr));
     }
 
     TEST(addPreconfigPINTest, addPreconfigPINNullPin)
     {
         OCSecureResource device;
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.addPreconfigPIN(NULL, 0));
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.addPreconfigPIN(nullptr, 0));
     }
 
     TEST(provisionPreconfPinTest, provisionPreconfPinNullCallback)
@@ -158,7 +158,7 @@ namespace OCProvisioningTest
         OCSecureResource device;
         const char *pin = "test";
         size_t PinLength = 4;
-        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.provisionPreconfPin(pin, PinLength, NULL));
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.provisionPreconfPin(pin, PinLength, nullptr));
     }
 
     TEST(isMOTEnabledTest, isMOTEnabledWithoutDeviceInst)
@@ -176,7 +176,7 @@ namespace OCProvisioningTest
     TEST(getMOTMethodTest, getMOTMethodNullOxM)
     {
         OCSecureResource device;
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.getMOTMethod(NULL));
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.getMOTMethod(nullptr));
     }
 #endif
 

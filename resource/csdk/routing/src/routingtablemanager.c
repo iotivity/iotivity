@@ -36,12 +36,6 @@
  */
 #define RM_TAG "OIC_RM_RAP"
 
-
-/**
- * Initial Length of observer list.
- */
-#define MAX_OBSERVER_LIST_LENGTH 10
-
 static const uint64_t USECS_PER_SEC = 1000000;
 
 OCStackResult RTMInitialize(u_linklist_t **gatewayTable, u_linklist_t **endpointTable)
@@ -935,23 +929,25 @@ CAEndpoint_t *RTMGetEndpointEntry(uint16_t endpointId, const u_linklist_t *endpo
     return NULL;
 }
 
-void RTMGetObserverList(OCObservationId **obsList, uint8_t *obsListLen,
+void RTMGetObserverList(OCObservationId **obsList, uint32_t *obsListLen,
                         const u_linklist_t *gatewayTable)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_VOID(gatewayTable, TAG, "gatewayTable");
     RM_NULL_CHECK_VOID(obsList, TAG, "obsList");
 
-    *obsList = (OCObservationId *) OICCalloc(MAX_OBSERVER_LIST_LENGTH, sizeof(OCObservationId));
+    *obsList = (OCObservationId *) OICCalloc(u_linklist_length(gatewayTable),
+                                             sizeof(OCObservationId));
     if (!(*obsList))
     {
         OIC_LOG(ERROR, TAG, "out of memory");
+        *obsListLen = 0;
         return;
     }
 
     u_linklist_iterator_t *iterTable = NULL;
     u_linklist_init_iterator(gatewayTable, &iterTable);
-    uint8_t len = 0;
+    uint32_t len = 0;
     while (NULL != iterTable)
     {
         RTMGatewayEntry_t *entry = u_linklist_get_data(iterTable);
@@ -968,11 +964,6 @@ void RTMGetObserverList(OCObservationId **obsList, uint8_t *obsListLen,
                 OIC_LOG_V(DEBUG, TAG, "Observer ID is %d", destCheck->observerId);
                 *(*obsList + len) = destCheck->observerId;
                 len++;
-            }
-            if (MAX_OBSERVER_LIST_LENGTH < len)
-            {
-                *obsList = (OCObservationId *) OICRealloc((void *)*obsList,
-                           (sizeof(OCObservationId) * (len + 1)));
             }
         }
         u_linklist_get_next(&iterTable);

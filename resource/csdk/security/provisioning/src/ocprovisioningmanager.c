@@ -352,12 +352,17 @@ void OCDeleteDiscoveredDevices(OCProvisionDev_t *pList)
 OCStackResult OCProvisionACL(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecAcl_t *acl,
                              OCProvisionResultCB resultCallback)
 {
+    if (NULL == acl)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     /*
      * Determine whether this is a version 1 or version 2 ACL. We can't just always use V2 here
-     * since we may be provisioning an IoTivity 1.2 device.
+     * since we may be provisioning an IoTivity 1.2 or earlier device.
+     * TODO IOT-2219 - reintroduce OIC 1.1 /acl (v1) support
      */
-
-    OicSecAclVersion_t aclVersion = OIC_SEC_ACL_V1; /* default to v1 */
+    OicSecAclVersion_t aclVersion = OIC_SEC_ACL_V2;
     if (acl->aces != NULL)
     {
         /* If any of the aces have the role subject, the ACL is v2 */
@@ -467,7 +472,7 @@ OCStackResult OCReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
  * @param[in] ctx Application context would be returned in result callback.
  * @param[in] type Type of credentials to be provisioned to the device.
  * @param[in] pDev1 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
-   @param[in] pDev2 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
+   @param[in] pDev2 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned. [Optional]
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from first resource server.
  * @return  OC_STACK_OK in case of success and other value otherwise.
@@ -477,8 +482,8 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
                                       const OCProvisionDev_t *pDev2,
                                       OCProvisionResultCB resultCallback)
 {
-    return SRPProvisionCredentials(ctx, type, keySize,
-                                      pDev1, pDev2, NULL, NULL, NULL, resultCallback);
+    return SRPProvisionCredentialsDos(ctx, type, keySize,
+                                      pDev1, pDev2, resultCallback);
 }
 
 /**
@@ -488,7 +493,7 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
  * @param[in] type Type of credentials to be provisioned to the device.
  * @param[in] keySize size of key
  * @param[in] pDev1 Pointer to OCProvisionDev_t instance, representing the resource to be provisioned.
- * @param[in] pDev2 Pointer to OCProvisionDev_t instance, representing the resource to be provisioned. 
+ * @param[in] pDev2 Pointer to OCProvisionDev_t instance, representing the resource to be provisioned.
  *                  Use NULL to indicate the local device.
  * @param[in] role1 The role which the device indicated by pDev1 will have when communicating with pDev2.
  *                  Use NULL to associate no role with this credential.
@@ -1100,7 +1105,7 @@ static void AclProv1CB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool 
     UpdateLinkResults(link, 1, arr[0].res);
     if (NULL != link->pDev2Acl)
     {
-        OCStackResult res =  SRPProvisionACL(ctx, link->pDev2, link->pDev2Acl, OIC_SEC_ACL_V1, &AclProv2CB);
+        OCStackResult res =  SRPProvisionACL(ctx, link->pDev2, link->pDev2Acl, OIC_SEC_ACL_V2, &AclProv2CB);
         if (OC_STACK_OK!=res)
         {
              UpdateLinkResults(link, 2, res);
@@ -1149,8 +1154,7 @@ static void ProvisionCredsCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr,
     }
     if (NULL != link->pDev1Acl)
     {
-
-        OCStackResult res =  SRPProvisionACL(ctx, link->pDev1, link->pDev1Acl, OIC_SEC_ACL_V1, &AclProv1CB);
+        OCStackResult res =  SRPProvisionACL(ctx, link->pDev1, link->pDev1Acl, OIC_SEC_ACL_V2, &AclProv1CB);
         if (OC_STACK_OK!=res)
         {
              OIC_LOG(ERROR, TAG, "Error while provisioning ACL for device 1");
@@ -1165,7 +1169,8 @@ static void ProvisionCredsCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr,
     else if (NULL!=link->pDev2Acl)
     {
         OIC_LOG(ERROR, TAG, "ACL for device 1 is NULL");
-        OCStackResult res =  SRPProvisionACL(ctx, link->pDev2, link->pDev2Acl, OIC_SEC_ACL_V1, &AclProv2CB);
+
+        OCStackResult res =  SRPProvisionACL(ctx, link->pDev2, link->pDev2Acl, OIC_SEC_ACL_V2, &AclProv2CB);
         if (OC_STACK_OK!=res)
         {
              OIC_LOG(ERROR, TAG, "Error while provisioning ACL for device 2");
@@ -1270,8 +1275,8 @@ OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_
     link->resultCallback = resultCallback;
     link->currentCountResults = 0;
     link->resArr = (OCProvisionResult_t*) OICMalloc(sizeof(OCProvisionResult_t)*noOfResults);
-    res = SRPProvisionCredentials(link, type, keySize,
-                                     pDev1, pDev2, NULL, NULL, NULL, &ProvisionCredsCB);
+    res = SRPProvisionCredentialsDos(link, type, keySize,
+                                     pDev1, pDev2, &ProvisionCredsCB);
     if (res != OC_STACK_OK)
     {
         OICFree(link->resArr);

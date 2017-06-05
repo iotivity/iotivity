@@ -18,6 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
+
 #if defined(__linux__)
 #include <unistd.h>
 #endif
@@ -735,7 +737,7 @@ TEST_F(DiscoverResourceUnitTest, onUpdateCalled)
 
 namespace
 {
-    void onCacheCB(const RCSResourceAttributes &)
+    void onCacheCB(const RCSResourceAttributes &, int)
     {
     }
 }
@@ -814,7 +816,7 @@ TEST_F(RemoteResourceUnitTest, onCacheCBCalled)
 {
     bool isCalled = false;
     mocks.ExpectCallFunc(onCacheCB).Do(
-        [this, &isCalled](const RCSResourceAttributes &)
+        [this, &isCalled](const RCSResourceAttributes &, int)
     {
         isCalled = true;
     });

@@ -31,30 +31,36 @@ static OicSecOxm_t oicSecDoxmRandomPin = OIC_RANDOM_DEVICE_PIN;
 static unsigned short timeout = 60;
 static OicSecDoxm_t defaultDoxm1 =
 {
-    NULL,                   /* OicUrn_t *oxmType */
-    0,                      /* size_t oxmTypeLen */
-    &oicSecDoxmJustWorks,  /* uint16_t *oxm */
+    &oicSecDoxmJustWorks,   /* uint16_t *oxm */
     1,                      /* size_t oxmLen */
     OIC_JUST_WORKS,         /* uint16_t oxmSel */
     SYMMETRIC_PAIR_WISE_KEY,/* OicSecCredType_t sct */
     false,                  /* bool owned */
-    {{0}},            /* OicUuid_t deviceID */
+    {{0}},                  /* OicUuid_t deviceID */
     false,                  /* bool dpc */
-    {{0}},            /* OicUuid_t owner */
+    {{0}},                  /* OicUuid_t owner */
+#ifdef MULTIPLE_OWNER
+    NULL,                   /* OicSecSubOwner_t* subOwners */
+    NULL,                   /* OicSecMom_t *mom */
+#endif //MULTIPLE_OWNER
+    {{0}}                   /* rownerID */
 };
 
 static OicSecDoxm_t defaultDoxm2 =
 {
-    NULL,                   /* OicUrn_t *oxmType */
-    0,                      /* size_t oxmTypeLen */
-    &oicSecDoxmRandomPin,  /* uint16_t *oxm */
+    &oicSecDoxmRandomPin,   /* uint16_t *oxm */
     1,                      /* size_t oxmLen */
-    OIC_RANDOM_DEVICE_PIN,         /* uint16_t oxmSel */
+    OIC_RANDOM_DEVICE_PIN,  /* uint16_t oxmSel */
     SYMMETRIC_PAIR_WISE_KEY,/* OicSecCredType_t sct */
     false,                  /* bool owned */
-    {{0}},            /* OicUuid_t deviceID */
+    {{0}},                  /* OicUuid_t deviceID */
     false,                  /* bool dpc */
-    {{0}},            /* OicUuid_t owner */
+    {{0}},                  /* OicUuid_t owner */
+#ifdef MULTIPLE_OWNER
+    NULL,                   /* OicSecSubOwner_t* subOwners */
+    NULL,                   /* OicSecMom_t *mom */
+#endif //MULTIPLE_OWNER
+    {{0}}                   /* rownerID */
 };
 
 static void provisioningCB (void* UNUSED1, size_t UNUSED2, OCProvisionResult_t *UNUSED3, bool UNUSED4)
@@ -91,7 +97,7 @@ TEST(SRPProvisionACLTest, NullACL)
 
 TEST(SRPProvisionACLTest, InvalidVersion)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionACL(NULL, &pDev1, &acl, OIC_SEC_ACL_UNKNOWN, &provisioningCB));
+    EXPECT_EQ(OC_STACK_ERROR, SRPProvisionACL(NULL, &pDev1, &acl, OIC_SEC_ACL_UNKNOWN, &provisioningCB));
 }
 
 TEST(SRPProvisionCredentialsTest, NullDevice1)
@@ -315,8 +321,11 @@ TEST_F(SRPTest, SRPSaveOwnCertChainTest)
 
     cert.data = certData;
     cert.len = sizeof(certData);
+    cert.encoding = OIC_ENCODING_DER;
+
     key.data = keyData;
     key.len = sizeof(keyData);
+    key.encoding = OIC_ENCODING_DER;
 
     result = SRPSaveOwnCertChain(&cert, &key, &credId);
 
@@ -446,7 +455,7 @@ TEST_F(SRPTest, SRPProvisionTrustCertChainNoResource)
     OCProvisionDev_t deviceInfo;
 
     result = SRPProvisionTrustCertChain(&ctx, type, credId, &deviceInfo, provisioningCB);
-    EXPECT_EQ(OC_STACK_NO_RESOURCE, result);
+    EXPECT_EQ(OC_STACK_ERROR, result);
 }
 
 TEST(SRPProvisionTrustCertChainTest, SRPGetACLResourceNoCallback)

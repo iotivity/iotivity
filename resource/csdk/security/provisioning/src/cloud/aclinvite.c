@@ -218,11 +218,17 @@ OCStackResult OCCloudAclInviteUser(void* ctx,
     OCRepPayload *payload = OCRepPayloadCreate();
     if (!payload)
     {
+        OIC_LOG(ERROR, TAG, "Memory Allocation failed!!!");
         return OC_STACK_NO_MEMORY;
     }
 
     OCRepPayload **heplerPayload = OICCalloc(groupIds->length, sizeof(OCRepPayload *));
-
+    if (NULL == heplerPayload)
+    {
+        OCRepPayloadDestroy(payload);
+        OIC_LOG(ERROR, TAG, "Memory Allocation failed!!!");
+        return OC_STACK_NO_MEMORY;
+    }
     for (i = 0; i < groupIds->length; i++)
     {
         heplerPayload[i] = OCRepPayloadCreate();

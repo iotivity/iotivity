@@ -270,9 +270,9 @@ void onResourceStateChanged(ResourceState resourceState)
     }
 }
 
-void onCacheUpdated(const RCSResourceAttributes& attributes)
+void onCacheUpdated(const RCSResourceAttributes& attributes, int eCode)
 {
-    std::cout << "onCacheUpdated callback" << std::endl;
+    std::cout << "onCacheUpdated callback : " << eCode << std::endl;
 
     printAttributes(attributes);
 }
@@ -394,12 +394,26 @@ void getResourceCacheState()
 
 void getCachedAttributes()
 {
-    printAttributes(g_selectedResource->getCachedAttributes());
+    try
+    {
+        printAttributes(g_selectedResource->getCachedAttributes());
+    }
+    catch (const RCSBadRequestException & e)
+    {
+        std::cout << e.what() << std::endl;
+    }
 }
 
 void getCachedAttribute()
 {
-    printAttribute(g_attrKey, g_selectedResource->getCachedAttribute(g_attrKey));
+    try
+    {
+        printAttribute(g_attrKey, g_selectedResource->getCachedAttribute(g_attrKey));
+    }
+    catch (const RCSBadRequestException & e)
+    {
+        std::cout << e.what() << std::endl;
+    }
 }
 
 void stopCaching()

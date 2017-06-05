@@ -28,9 +28,9 @@ Import('test_env')
 ipcatest_env = test_env.Clone()
 src_dir = ipcatest_env.get('SRC_DIR')
 target_os = ipcatest_env.get('TARGET_OS')
-rd_mode = ipcatest_env.get('RD_MODE')
 
-ipcatest_env.AppendUnique(CCFLAGS=['/W4'])
+if ipcatest_env['CC'] == 'cl':
+    ipcatest_env.AppendUnique(CCFLAGS=['/W4'])
 
 ######################################################################
 # Build flags
@@ -56,7 +56,7 @@ ipcatest_env.AppendUnique(CPPPATH = [
         ])
 
 ipcatest_env.PrependUnique(LIBS = [
-        'oc_logger',
+        'oc_logger_internal',
         'octbstack',
         'ipca_static'
         ])
@@ -84,10 +84,10 @@ if target_os in ['msys_nt', 'windows']:
 ######################################################################
 
 unittests_src = [
-        'IPCAUnitTests.cpp',
+        'ipcaunittests.cpp',
         'IPCAElevatorClient.cpp',
-        'TestElevatorServer.cpp',
-        'TestElevatorClient.cpp'
+        'testelevatorserver.cpp',
+        'testelevatorclient.cpp'
     ]
 
 if use_iotivity == 0:
@@ -96,15 +96,24 @@ if use_iotivity == 0:
         'mockInProcClientWrapper.cpp',
         'mockInProcServerWrapper.cpp',
         'mockOCPlatform_impl.cpp',
+        'mockOCProvision.cpp',
         '#/resource/src/OCRepresentation.cpp'
         ]
 
-    if ipcatest_env.get('SECURED') == '1':
-        unittests_src += ['../src/pretendocprovision.cpp']
+if target_os not in ['windows', 'msys_nt']:
+    ipcatest_env.AppendUnique(LIBS = ['dl'])
 
-ipcatest_src_dir = os.path.join(src_dir, 'resource', 'ipca', 'unittests') + os.sep
+if 'g++' in ipcatest_env.get('CXX'):
+    ipcatest_env.AppendUnique(LIBS = ['pthread'])
+
+if target_os in ['linux']:
+    if not ipcatest_env.get('RELEASE'):
+        ipcatest_env.PrependUnique(LIBS = ['gcov'])
+        ipcatest_env.AppendUnique(CXXFLAGS = ['--coverage'])
+
+ipcatest_src_dir = os.path.join(src_dir, 'resource', 'IPCA', 'unittests') + os.sep
 ipcatest_build_dir = os.path.join(
-                         ipcatest_env.get('BUILD_DIR'), 'resource', 'ipca', 'unittests') + os.sep
+                         ipcatest_env.get('BUILD_DIR'), 'resource', 'IPCA', 'unittests') + os.sep
 
 ipcatest_env.Alias("install", ipcatest_env.Install( ipcatest_build_dir,
     ipcatest_src_dir + 'IPCAUnitTest.json'))
@@ -119,11 +128,9 @@ if target_os in ['windows']:
 
 if ipcatest_env.get('TEST') == '1':
     if target_os in ['windows']:
-        # Disabled for VS2013 due to https://jira.iotivity.org/browse/IOT-1842.
-        if '14.0' == ipcatest_env['MSVC_VERSION']:
-            from tools.scons.RunTest import *
-            run_test(ipcatest_env,
-                     'resource_ipca_unittests.memcheck',
-                     'resource/ipca/unittests/ipcatests',
-                     ipcatests)
+        from tools.scons.RunTest import *
+        run_test(ipcatest_env,
+                 'resource_ipca_unittests.memcheck',
+                 'resource/ipca/unittests/ipcatests',
+                 ipcatests)
 

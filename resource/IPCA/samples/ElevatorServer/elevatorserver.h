@@ -74,7 +74,7 @@ private:
     ElevatorDirection m_direction;    // current direction of the elevator.
 
     // Thread moving the elevator.
-    std::thread engineThread;
+    std::thread m_engineThread;
     bool m_isRunning;
     static void Engine(ElevatorServer* elevator);
 

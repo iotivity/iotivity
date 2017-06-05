@@ -43,14 +43,9 @@ import org.iotivity.cloud.util.Cbor;
 
 public class AclInvite extends Resource {
 
-    IRequestChannel mAuthServer = null;
-
     public AclInvite() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACL_URI,
                 Constants.INVITE_URI));
-
-        mAuthServer = ConnectorPool.getConnection("account");
-
     }
 
     @Override
@@ -84,7 +79,7 @@ public class AclInvite extends Resource {
         request = MessageBuilder.modifyRequest(request, null, uriQuery, null,
                 null);
 
-        mAuthServer.sendRequest(request, srcDevice);
+        ConnectorPool.getConnection("account").sendRequest(request, srcDevice);
     }
 
 }

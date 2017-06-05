@@ -805,7 +805,7 @@ OCEntityHandlerResult getColourTemperatureFromString(const char* str, int64_t* o
             return OC_EH_ERROR;
         }
     }
-    OCStackResult result = getDoubleValueFromString(temp, (double *)outVal);
+    OCEntityHandlerResult result = getDoubleValueFromString(temp, (double *)outVal);
     OICFree(strstr);
     return result;
 }

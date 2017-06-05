@@ -37,6 +37,8 @@
 #include "NSConsumerCommunication.h"
 #include "NSConsumerInternalTaskController.h"
 
+#define NS_UUID_STRING_SIZE 37
+
 namespace
 {
     NSProvider * g_provider = NULL;
@@ -66,7 +68,7 @@ namespace
     const std::string testProviderID = "123456789012345678901234567890123456";
 
     static void NSNotificationReceivedCallback(NSMessage * message)
-        {
+    {
         if (0 != testProviderID.compare(message->providerId))
         {
             NSRemoveMessage(message);
@@ -169,15 +171,13 @@ namespace
         OCRepPayload * payload = OCRepPayloadCreate();
         EXPECT_NE((void *)NULL, payload);
 
-        std::string msgUri = "/notifiationTest/message";
-        std::string syncUri = "/notifiationTest/sync";
-        std::string topicUri = "/notifiationTest/topic";
+        std::string msgUri = "/notification/message";
+        std::string syncUri = "/notification/sync";
 
         bool getResult = OCRepPayloadSetPropBool(payload, NS_ATTRIBUTE_POLICY, false);
         getResult &= OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, testProviderID.c_str());
         getResult &= OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_MESSAGE, msgUri.c_str());
         getResult &= OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_SYNC, syncUri.c_str());
-        getResult &= OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_TOPIC, topicUri.c_str());
         if (getResult == false)
         {
             OCRepPayloadDestroy(payload);
@@ -304,7 +304,7 @@ namespace
         }
         provider->accessPolicy = NSSelector::NS_SELECTION_CONSUMER;
         provider->state = NS_DISCOVERED;
-        strcpy(provider->providerId, testProviderID.c_str());
+        strncpy(provider->providerId, testProviderID.c_str(), NS_UUID_STRING_SIZE);
         provider->messageUri = strdup("/notificationTest/message");
         provider->syncUri = strdup("/notificationTest/sync");
         provider->topicUri = strdup("/notificationTest/topic");
@@ -503,7 +503,7 @@ TEST(NotificationConsumerTest, ExpectSuccessSendSyncInfo)
     uint64_t id = 100;
     type = NS_SYNC_READ;
 
-    auto ret = NSConsumerSendSyncInfo(g_provider->providerId, id, NS_SYNC_DELETED);
+    auto ret = NSConsumerSendSyncInfo((g_provider->providerId)+1, id, NS_SYNC_DELETED);
 
     EXPECT_EQ(NS_OK, ret);
 }
@@ -615,6 +615,7 @@ TEST(NotificationConsumerTest, ExpectUnsubscribeWithPresenceStart)
     OCPresencePayload * payload = OCPresencePayloadCreate(1, 2, OC_PRESENCE_TRIGGER_CREATE, NULL);
     EXPECT_NE((void *)NULL, payload);
     g_testResponse->payload = (OCPayload *)payload;
+    g_testResponse->addr = NULL;
 
     auto ret = NSConsumerPresenceListener(NULL,NULL, g_testResponse);
 
@@ -631,6 +632,9 @@ TEST(NotificationConsumerTest, ExpectUnsubscribeWithPresenceStop)
     g_testResponse->payload = (OCPayload *)payload;
 
     auto ret = NSConsumerPresenceListener(NULL,NULL, g_testResponse);
+
+    std::unique_lock< std::mutex > lock{ providerChangedLock };
+    providerChanged.wait_for(lock, g_waitForResponse);
 
     EXPECT_EQ(OC_STACK_KEEP_TRANSACTION, ret);
     OCPresencePayloadDestroy(payload);

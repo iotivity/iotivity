@@ -17,6 +17,7 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#include "iotivity_config.h"
 #include "rd_server.h"
 
 #include "rd_database.h"
@@ -159,8 +160,8 @@ static OCEntityHandlerResult handleDeleteRequest(const OCEntityHandlerRequest *e
     char *restOfQuery = NULL;
     char *keyValuePair = NULL;
     char *di = NULL;
-    size_t nIns = 0;
-    uint8_t *ins = NULL;
+    uint16_t nIns = 0;
+    int64_t *ins = NULL;
 
     if (!ehRequest)
     {
@@ -184,7 +185,7 @@ static OCEntityHandlerResult handleDeleteRequest(const OCEntityHandlerRequest *e
     }
     if (nIns)
     {
-        ins = OICMalloc(nIns * sizeof(uint8_t));
+        ins = OICMalloc(nIns * sizeof(*ins));
         if (!ins)
         {
             OIC_LOG_V(ERROR, TAG, "ins is NULL");
@@ -214,13 +215,15 @@ static OCEntityHandlerResult handleDeleteRequest(const OCEntityHandlerRequest *e
         }
         else if (0 == strncasecmp(key, OC_RSRVD_INS, sizeof(OC_RSRVD_INS) - 1))
         {
-            char *endptr = NULL;
-            long int i = strtol(value, &endptr, 0);
-            if ( '\0' != *endptr || i < 0 || i > UINT8_MAX)
+            // Arduino's AVR-GCC doesn't support strtoll().
+            int64_t i;
+            int matchedItems = sscanf(value, "%lld", &i);
+            if (0 == matchedItems)
             {
                 OIC_LOG_V(ERROR, TAG, "Invalid ins query parameter: %s", value);
                 goto exit;
             }
+
             ins[nIns++] = i;
         }
 

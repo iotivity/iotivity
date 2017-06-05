@@ -51,7 +51,7 @@ public class GroupBrokerManager {
         return mGroupBrokerMgr;
     }
 
-    private class GroupSubscriber {
+    private static class GroupSubscriber {
         GroupSubscriber(Device subscriber, IRequest request) {
             mSubscriber = subscriber;
             mRequest = request;

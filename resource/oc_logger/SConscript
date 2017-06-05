@@ -50,16 +50,13 @@ if target_os not in ['darwin', 'ios', 'windows', 'msys_nt']:
 # Source files and Targets
 ######################################################################
 
-oc_logger_libs = []
+oc_logger_libs = liboc_logger_env.StaticLibrary('oc_logger_internal',
+	['c/oc_logger.c', 'c/oc_console_logger.c', 'cpp/oc_ostream_logger.cpp'])
 
-if target_os in ['windows', 'msys_nt','ios']:
-	# If oc_logger APIs have to be exported from a Windows DLL, these functions
-	# should be exported from octbstack.dll. Building a separate oc_logger.dll here
-	# would result in duplicated code and data across these two DLLs. Using just
-	# the static oc_logger.lib is good enough for Windows for now.
+if target_os in ['ios']:
 	oc_logger_libs += liboc_logger_env.StaticLibrary('oc_logger',
 		['c/oc_logger.c', 'c/oc_console_logger.c', 'cpp/oc_ostream_logger.cpp'])
-else:
+elif target_os not in ['windows', 'msys_nt']:
 	oc_logger_libs += Flatten(liboc_logger_env.SharedLibrary('oc_logger_core',
 		['c/oc_logger.c'],  OBJPREFIX='core_'))
 	oc_logger_libs += Flatten(liboc_logger_env.SharedLibrary('oc_logger',
@@ -76,4 +73,3 @@ liboc_logger_env.UserInstallTargetHeader('include/targets/oc_ostream_logger.h', 
 
 if target_os not in ['ios', 'android']:
 	SConscript('examples/SConscript')
-

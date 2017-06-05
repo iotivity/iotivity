@@ -22,8 +22,6 @@
 #include <mutex>
 
 #ifdef RD_CLIENT
-#include "RDClient.h"
-#include "rd_client.h"
 
 #include "OCApi.h"
 #include "OCRepresentation.h"
@@ -32,6 +30,9 @@
 #include "OCPlatform.h"
 #include "OCException.h"
 #include "ocpayload.h"
+
+#include "RDClient.h"
+#include "rd_client.h"
 
 using namespace OC;
 
@@ -126,8 +127,12 @@ OCStackResult RDClient::publishResourceToRD(const std::string& host,
     if (cLock)
     {
         std::lock_guard<std::recursive_mutex> lock(*cLock);
+        if (resourceHandles.size() > UINT8_MAX)
+        {
+            throw OCException(OC::Exception::PUBLISH_RESOURCE_FAILED, result);
+        }
         result = OCRDPublish(nullptr, host.c_str(), connectivityType, &resourceHandles[0],
-                             resourceHandles.size(), &cbdata, static_cast<OCQualityOfService>(qos));
+                             (uint8_t)resourceHandles.size(), &cbdata, static_cast<OCQualityOfService>(qos));
     }
 
     if (OC_STACK_OK != result)
@@ -186,8 +191,12 @@ OCStackResult RDClient::deleteResourceFromRD(const std::string& host,
     if (cLock)
     {
         std::lock_guard<std::recursive_mutex> lock(*cLock);
+        if (resourceHandles.size() > UINT8_MAX)
+        {
+            throw OCException(OC::Exception::DELETE_RESOURCE_FAILED, result);
+        }
         result = OCRDDelete(nullptr, host.c_str(), connectivityType, &resourceHandles[0],
-                            resourceHandles.size(), &cbdata, static_cast<OCQualityOfService>(qos));
+                            (uint8_t)resourceHandles.size(), &cbdata, static_cast<OCQualityOfService>(qos));
     }
 
     if (OC_STACK_OK != result)

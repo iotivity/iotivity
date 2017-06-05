@@ -47,11 +47,15 @@ static FILE* client_open(const char * path, const char *mode)
 {
     if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
     {
-        std::string file_name = SVR_DB_FILE_NAME;
 #ifndef LOCAL_RUNNING
-        file_name = "./service/resource-encapsulation/unittests/oic_svr_db_re_client.dat";
+        std::string file_name =
+            "./service/resource-encapsulation/unittests/oic_svr_db_re_client.dat";
+        if (0 == access(file_name.c_str(), F_OK))
+        {
+            return fopen(file_name.c_str(), mode);
+        }
 #endif
-        return fopen(file_name.c_str(), mode);
+        return fopen(SVR_DB_FILE_NAME, mode);
     }
     return fopen(path, mode);
 }

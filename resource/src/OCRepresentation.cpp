@@ -31,6 +31,7 @@
 #include <boost/lexical_cast.hpp>
 #include <algorithm>
 #include <iomanip>
+#include "iotivity_config.h"
 #include "ocpayload.h"
 #include "ocrandom.h"
 #include "oic_malloc.h"

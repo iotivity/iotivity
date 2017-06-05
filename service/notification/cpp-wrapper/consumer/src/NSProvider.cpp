@@ -76,21 +76,25 @@ namespace OIC
 
         NSProvider &NSProvider::operator=(const NSProvider &provider)
         {
-            this->m_providerId = provider.getProviderId();
-            this->m_topicList = std::make_shared<NSTopicsList>();
-            auto topicsList = provider.getTopicList();
-            if (topicsList != nullptr)
+            if (this != &provider)
             {
-                for (auto it : topicsList->getTopicsList())
+                this->m_providerId = provider.getProviderId();
+                this->m_topicList = std::make_shared<NSTopicsList>();
+                auto topicsList = provider.getTopicList();
+                if (topicsList != nullptr)
                 {
-                    this->m_topicList->addTopic(it.getTopicName(), it.getState());
+                    for (auto it : topicsList->getTopicsList())
+                    {
+                        this->m_topicList->addTopic(it.getTopicName(), it.getState());
+                    }
                 }
+                m_topicList->unsetModifiability();
+                this->setListener(provider.getProviderStateReceivedCb(), provider.getMessageReceivedCb(),
+                                  provider.getSyncInfoReceivedCb());
+                this->setProviderState(provider.getProviderState());
+                this->setProviderSubscribedState(provider.getProviderSubscribedState());
             }
-            m_topicList->unsetModifiability();
-            this->setListener(provider.getProviderStateReceivedCb(), provider.getMessageReceivedCb(),
-                              provider.getSyncInfoReceivedCb());
-            this->setProviderState(provider.getProviderState());
-            this->setProviderSubscribedState(provider.getProviderSubscribedState());
+
             return *this;
         }
 

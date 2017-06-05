@@ -19,6 +19,7 @@
  * *****************************************************************/
 
 #include "ocstack.h"
+#include "ocrandom.h"
 #include "srmutility.h"
 #include "base64.h"
 #include "OCProvisioningManager.hpp"
@@ -50,6 +51,7 @@ namespace OC
         }
         catch (std::bad_alloc& e)
         {
+            OC_UNUSED(e);
             oclog() <<"Bad alloc exception";
             return;
         }
@@ -810,7 +812,9 @@ namespace OC
             memcpy(number, verifNum, MUTUAL_VERIF_NUM_LEN);
         }
 
-        return context->callback(number);
+        OCStackResult res = context->callback(number);
+        delete context;
+        return res;
     }
 
     OCStackResult OCSecure::registerDisplayNumCallback(DisplayNumCB displayNumCB)
@@ -877,7 +881,9 @@ namespace OC
             return OC_STACK_INVALID_PARAM;
         }
 
-        return context->callback();
+        OCStackResult res = context->callback();
+        delete context;
+        return res;
     }
 
     OCStackResult OCSecure::registerUserConfirmCallback(UserConfirmNumCB userConfirmCB)
@@ -1489,19 +1495,19 @@ namespace OC
     std::string OCSecureResource::getDeviceID()
     {
         std::ostringstream deviceId("");
-        char *devID = nullptr;
+        char devID[UUID_STRING_SIZE];
 
         validateSecureResource();
 
-        if (OC_STACK_OK == ConvertUuidToStr(&(devPtr->doxm->deviceID), &devID))
+        if (OCConvertUuidToString(devPtr->doxm->deviceID.id, devID))
         {
             deviceId << devID;
-            free(devID);
         }
         else
         {
             oclog() <<"Can not convert uuid to struuid";
         }
+
         return deviceId.str();
     }
 

@@ -33,60 +33,57 @@
 #define LOG_TAG "HONEYWELL_HELPERS"
 #endif
 
-MPMResult LoadFileIntoString(const char *filePath, std::string &fileContents)
+MPMResult LoadFileIntoString(const std::string &filePath, std::string &fileContents)
 {
     MPMResult result = MPM_RESULT_OK;
-    if (NULL == filePath)
+    if (filePath.empty())
     {
-        OIC_LOG(ERROR, LOG_TAG, "filePath is NULL.");
-        result = MPM_RESULT_INVALID_PARAMETER;
+        OIC_LOG(ERROR, LOG_TAG, "filePath is empty.");
+        return MPM_RESULT_INVALID_PARAMETER;
     }
 
-    if (MPM_RESULT_OK == result)
+    try
     {
-        try
+        std::ostringstream buffer;
+        std::ifstream inputFile(filePath.c_str());
+        if (!inputFile)
         {
-            std::ostringstream buffer;
-            std::ifstream inputFile(filePath);
-            if (!inputFile)
-            {
-                OIC_LOG_V(ERROR, LOG_TAG, "Couldn't open file %s", filePath);
-                result = MPM_RESULT_FILE_NOT_OPEN;
-            }
-            else
-            {
-                buffer << inputFile.rdbuf();
-                fileContents = buffer.str();
-                OIC_LOG_V(INFO, LOG_TAG, "Read %lu bytes from file", (unsigned long) fileContents.size());
-            }
+            OIC_LOG_V(ERROR, LOG_TAG, "Couldn't open file %s", filePath.c_str());
+            result = MPM_RESULT_FILE_NOT_OPEN;
         }
-        catch (...)
+        else
         {
-            OIC_LOG(ERROR, LOG_TAG, "caught exception.");
-            result = MPM_RESULT_INTERNAL_ERROR;
+            buffer << inputFile.rdbuf();
+            fileContents = buffer.str();
+            OIC_LOG_V(INFO, LOG_TAG, "Read %lu bytes from file", (unsigned long) fileContents.size());
         }
+    }
+    catch (...)
+    {
+        OIC_LOG(ERROR, LOG_TAG, "caught exception.");
+        result = MPM_RESULT_INTERNAL_ERROR;
     }
 
     return result;
 }
 
-MPMResult SaveStringIntoFile(const char *stringData, const char *filePath)
+MPMResult SaveStringIntoFile(const std::string &stringData, const std::string &filePath)
 {
     MPMResult result = MPM_RESULT_OK;
 
-    if ((NULL == stringData) || (NULL == filePath))
+    if ((stringData.empty()) || (filePath.empty()))
     {
-        OIC_LOG(ERROR, LOG_TAG, "stringData or filePath are NULL");
+        OIC_LOG(ERROR, LOG_TAG, "stringData or filePath is empty");
         result = MPM_RESULT_INVALID_PARAMETER;
         goto cleanUp;
     }
 
     try
     {
-        std::ofstream outFile(filePath, std::ofstream::out);
+        std::ofstream outFile(filePath.c_str(), std::ofstream::out);
         if (!outFile)
         {
-            OIC_LOG_V(ERROR, LOG_TAG, "Failed to open file %s for output", filePath);
+            OIC_LOG_V(ERROR, LOG_TAG, "Failed to open file %s for output", filePath.c_str());
             result = MPM_RESULT_FILE_NOT_OPEN;
             goto cleanUp;
         }
@@ -104,7 +101,7 @@ MPMResult SaveStringIntoFile(const char *stringData, const char *filePath)
     return result;
 }
 
-MPMResult CopyFile(const char *sourceFilePath, const char *destFilePath, bool binaryFile)
+MPMResult CopyFile(const std::string &sourceFilePath, const std::string &destFilePath, bool binaryFile)
 {
     MPMResult result = MPM_RESULT_OK;
 
@@ -117,27 +114,27 @@ MPMResult CopyFile(const char *sourceFilePath, const char *destFilePath, bool bi
         inMode |= std::ifstream::binary;
     }
 
-    if ((NULL == sourceFilePath) || (NULL == destFilePath))
+    if ((sourceFilePath.empty()) || (destFilePath.empty()))
     {
-        OIC_LOG(ERROR, LOG_TAG, "sourceFilePath or destFilePath are NULL");
+        OIC_LOG(ERROR, LOG_TAG, "sourceFilePath or destFilePath is empty");
         result = MPM_RESULT_INVALID_PARAMETER;
         goto cleanUp;
     }
 
     try
     {
-        std::ofstream outFile(destFilePath, outMode);
+        std::ofstream outFile(destFilePath.c_str(), outMode);
         if (!outFile)
         {
-            OIC_LOG_V(ERROR, LOG_TAG, "Failed to open file %s for output", destFilePath);
+            OIC_LOG_V(ERROR, LOG_TAG, "Failed to open file %s for output", destFilePath.c_str());
             result = MPM_RESULT_FILE_NOT_OPEN;
             goto cleanUp;
         }
 
-        std::ifstream inFile(sourceFilePath, inMode);
+        std::ifstream inFile(sourceFilePath.c_str(), inMode);
         if (!inFile)
         {
-            OIC_LOG_V(ERROR, LOG_TAG, "Failed to open file %s for input", sourceFilePath);
+            OIC_LOG_V(ERROR, LOG_TAG, "Failed to open file %s for input", sourceFilePath.c_str());
             result = MPM_RESULT_FILE_NOT_OPEN;
             goto cleanUp;
         }
@@ -156,38 +153,21 @@ MPMResult CopyFile(const char *sourceFilePath, const char *destFilePath, bool bi
     return result;
 }
 
-std::string GetTokenPath(const char *fileName)
+std::string GetTokenPath(const std::string &fileName)
 {
-    char *tokenPathVar = NULL;
-    std::string tokenPath = "/";
-    size_t pathLen = 0;
+    std::string tokenPath = "./";
 
-    tokenPathVar = getenv("TOKEN_DIR");
-    if (NULL != tokenPathVar)
+    if (!fileName.empty())
     {
-        // replace default tokenPath with environment variable contents
-        tokenPath = tokenPathVar;
-    }
-
-    if (NULL != fileName)
-    {
-        pathLen = tokenPath.length();
-        if (0 != pathLen)
-        {
-            // path has at least one char; make sure it ends with a slash.
-            if (tokenPath.at(pathLen - 1) != '/')
-            {
-                tokenPath += "/";
-            }
-        }
-
         // filename should not begin with a slash
-        if (fileName[0] == '/')
+        if (fileName.at(0) == '/')
         {
-            fileName++;
+            tokenPath += fileName.substr(1);
         }
-        // append passed filename
-        tokenPath += fileName;
+        else
+        {
+            tokenPath += fileName;
+        }
     }
 
     OIC_LOG_V(INFO, LOG_TAG, "Token file path: %s", tokenPath.c_str());

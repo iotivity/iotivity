@@ -26,6 +26,7 @@
 #include "NSProviderCallbackResponse.h"
 #include "NSProviderMemoryCache.h"
 #include "NSProviderTopic.h"
+#include "NSProviderDiscovery.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "cautilinterface.h"
@@ -103,8 +104,12 @@ NSResult NSStartProvider(NSProviderConfig config)
         NSInitialize();
         NSInitScheduler();
         NSStartScheduler();
-
-        NSPushQueue(DISCOVERY_SCHEDULER, TASK_START_PRESENCE, NULL);
+        /* This call from different thread causes racing issue calling csdk stack.
+           This is monitored when Start/Stop are called sequentially.
+           Temporarily fix : call NSStartPresence() instead of call it thru NSPushQueue()
+           NSPushQueue(DISCOVERY_SCHEDULER, TASK_START_PRESENCE, NULL);
+        */
+        NSStartPresence();
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_REGISTER_RESOURCE, NULL);
     }
     else
@@ -124,12 +129,12 @@ NSResult NSStopProvider()
 
     if (initProvider)
     {
+        NSUnRegisterResource();
         CAUnregisterNetworkMonitorHandler((CAAdapterStateChangedCB)NSProviderAdapterStateListener,
                 (CAConnectionStateChangedCB)NSProviderConnectionStateListener);
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_STOP_PRESENCE, NULL);
         NSRegisterSubscribeRequestCb((NSSubscribeRequestCallback)NULL);
         NSRegisterSyncCb((NSProviderSyncInfoCallback)NULL);
-        NSUnRegisterResource();
         NSDeinitProviderInfo();
         NSStopScheduler();
         NSDeinitailize();
@@ -216,7 +221,7 @@ NSResult NSProviderSubscribeMQService(const char * serverAddress, const char * t
         return NS_FAIL;
     }
 
-    topicAddr->serverAddr = NSGetQueryAddress(serverAddress);
+    topicAddr->serverAddr = OICStrdup(serverAddress);
     topicAddr->topicName = OICStrdup(topicName);
 
     NS_LOG_V(DEBUG, "input Topic Name : %s", topicAddr->topicName);
@@ -450,7 +455,7 @@ NSResult NSProviderSetConsumerTopic(const char * consumerId, const char * topicN
                 "Configuration must set to true.");
         if (topicSubData)
         {
-            OICFreeAndSetToNull(&topicSubData);
+            OICFreeAndSetToNull((void**)&topicSubData);
         }
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
@@ -489,7 +494,7 @@ NSResult NSProviderUnsetConsumerTopic(const char * consumerId, const char * topi
                 "Configuration must set to true.");
         if (topicSubData)
         {
-            OICFreeAndSetToNull(&topicSubData);
+            OICFreeAndSetToNull((void**)&topicSubData);
         }
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;

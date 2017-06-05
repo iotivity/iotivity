@@ -123,7 +123,7 @@ void CAdeinitSslAdapter();
  *
  */
 
-CAResult_t CAencryptSsl(const CAEndpoint_t *endpoint, void *data, size_t dataLen);
+CAResult_t CAencryptSsl(const CAEndpoint_t *endpoint, const void *data, size_t dataLen);
 
 /**
  * Performs TLS decryption of the data.

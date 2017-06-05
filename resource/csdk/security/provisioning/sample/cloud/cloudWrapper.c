@@ -48,7 +48,7 @@
 #define INTERFACE_EXAMPLE "oic.if.baseline"
 
 //in case of optional parameters absence should be sent NULL
-#define OPTIONAL(str) (str[0] ? str : NULL)
+#define OPTIONAL_PARAM(str) (str[0] ? str : NULL)
 
 /**
  * Skip special characters from stdin
@@ -598,7 +598,7 @@ OCStackResult OCWrapperAclCreateGroup(const OCDevAddr *endPoint, OCCloudResponse
     readString(gtype, sizeof(gtype), "Group type value", "Public");
     readOptionalString(gmid, sizeof(gmid), "group member id value", UUID_EXAMPLE_2);
 
-    return OCCloudAclCreateGroup(NULL, gtype, OPTIONAL(gmid), endPoint, callback);
+    return OCCloudAclCreateGroup(NULL, gtype, OPTIONAL_PARAM(gmid), endPoint, callback);
 }
 
 OCStackResult OCWrapperAclFindMyGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -607,7 +607,7 @@ OCStackResult OCWrapperAclFindMyGroup(const OCDevAddr *endPoint, OCCloudResponse
 
     readOptionalString(mid, sizeof(mid), "member id value", UUID_EXAMPLE_2);
 
-    return OCCloudAclFindMyGroup(NULL, OPTIONAL(mid), endPoint, callback);
+    return OCCloudAclFindMyGroup(NULL, OPTIONAL_PARAM(mid), endPoint, callback);
 }
 
 OCStackResult OCWrapperAclDeleteGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -619,7 +619,7 @@ OCStackResult OCWrapperAclDeleteGroup(const OCDevAddr *endPoint, OCCloudResponse
 
     readOptionalString(gmid, sizeof(gmid), "group member id value", UUID_EXAMPLE_2);
 
-    return OCCloudAclDeleteGroup(NULL, gid, OPTIONAL(gmid), endPoint, callback);
+    return OCCloudAclDeleteGroup(NULL, gid, OPTIONAL_PARAM(gmid), endPoint, callback);
 }
 
 OCStackResult OCWrapperAclJoinToInvitedGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -691,7 +691,7 @@ OCStackResult OCWrapperAclGroupGetInfo(const OCDevAddr *endPoint, OCCloudRespons
 
     readOptionalString(mid, sizeof(mid), "member id value", UUID_EXAMPLE_2);
 
-    return OCCloudAclGroupGetInfo(NULL, gid, OPTIONAL(mid), endPoint, callback);
+    return OCCloudAclGroupGetInfo(NULL, gid, OPTIONAL_PARAM(mid), endPoint, callback);
 }
 
 OCStackResult OCWrapperAclInviteUser(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -707,7 +707,7 @@ OCStackResult OCWrapperAclInviteUser(const OCDevAddr *endPoint, OCCloudResponseC
 
     readStringArray(&midlist, MAX_ID_LENGTH, "member id list", UUID_EXAMPLE_2);
 
-    result = OCCloudAclInviteUser(NULL, OPTIONAL(uid), &gidlist, &midlist, endPoint, callback);
+    result = OCCloudAclInviteUser(NULL, OPTIONAL_PARAM(uid), &gidlist, &midlist, endPoint, callback);
 
     clearStringArray(&midlist);
     clearStringArray(&gidlist);
@@ -721,7 +721,7 @@ OCStackResult OCWrapperAclGetInvitation(const OCDevAddr *endPoint, OCCloudRespon
 
     readOptionalString(uid, sizeof(uid), "user uuid value", UUID_EXAMPLE_2);
 
-    return OCCloudAclGetInvitation(NULL, OPTIONAL(uid), endPoint, callback);
+    return OCCloudAclGetInvitation(NULL, OPTIONAL_PARAM(uid), endPoint, callback);
 }
 
 OCStackResult OCWrapperAclDeleteInvitation(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -732,7 +732,7 @@ OCStackResult OCWrapperAclDeleteInvitation(const OCDevAddr *endPoint, OCCloudRes
     readOptionalString(uid, sizeof(uid), "user uuid value", UUID_EXAMPLE_2);
     readString(gid, sizeof(gid), "Group id value", ID_EXAMPLE_1);
 
-    return OCCloudAclDeleteInvitation(NULL, OPTIONAL(uid), gid, endPoint, callback);
+    return OCCloudAclDeleteInvitation(NULL, OPTIONAL_PARAM(uid), gid, endPoint, callback);
 }
 
 OCStackResult OCWrapperAclCancelInvitation(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -746,7 +746,7 @@ OCStackResult OCWrapperAclCancelInvitation(const OCDevAddr *endPoint, OCCloudRes
     readString(gid, sizeof(gid), "Group id value", ID_EXAMPLE_1);
     readString(mid, sizeof(mid), "member id value", ID_EXAMPLE_1);
 
-    return OCCloudAclCancelInvitation(NULL, OPTIONAL(uid), gid, mid, endPoint, callback);
+    return OCCloudAclCancelInvitation(NULL, OPTIONAL_PARAM(uid), gid, mid, endPoint, callback);
 }
 
 OCStackResult OCWrapperAclPolicyCheck(const OCDevAddr *endPoint, OCCloudResponseCB callback)

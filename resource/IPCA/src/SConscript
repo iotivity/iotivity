@@ -24,11 +24,16 @@
 Import('ipca_env')
 target_os = ipca_env.get('TARGET_OS')
 ipca_lib_env = ipca_env.Clone()
-rd_mode = ipca_lib_env.get('RD_MODE')
 
 ######################################################################
 # Build flags
 ######################################################################
+with_upstream_libcoap = ipca_lib_env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+    ipca_lib_env.PrependUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+else:
+    ipca_lib_env.PrependUnique(CPPPATH = ['#resource/csdk/connectivity/lib/libcoap-4.1.1/include'])
+
 ipca_lib_env.PrependUnique(CPPPATH = [
         '../inc',
         'inc',
@@ -41,7 +46,6 @@ ipca_lib_env.PrependUnique(CPPPATH = [
         '#/resource/csdk/security/provisioning/include/internal',
         '#/resource/csdk/connectivity/api',
         '#/resource/csdk/connectivity/external/inc',
-        '#/resource/csdk/connectivity/lib/libcoap-4.1.1/include',
         '#/resource/csdk/ocsocket/include',
         '#/resource/csdk/logger/include',
         '#/resource/c_common/ocrandom/include',
@@ -49,23 +53,45 @@ ipca_lib_env.PrependUnique(CPPPATH = [
         '#/extlibs/cjson',
         ])
 
-ipca_lib_env.Replace(WINDOWS_INSERT_DEF = ['1'])
-
-ipca_lib_env.PrependUnique(LIBS = [
-        'oc',
-        'connectivity_abstraction',
-        'coap',
-        'octbstack',
+if target_os in ['windows', 'msys_nt']:
+    ipca_lib_env.Replace(WINDOWS_INSERT_DEF = ['1'])
+else:
+    ipca_lib_env.PrependUnique(LIBS = [
         'oc_logger'
         ])
 
-if ipca_env.get('SECURED') == '1':
+ipca_lib_env.PrependUnique(LIBS = [
+        'coap',
+        'octbstack'
+        ])
+
+if target_os not in ['windows', 'msys_nt']:
+    ipca_lib_env.PrependUnique(LIBS = [
+            'connectivity_abstraction'
+            ])
+
+ipca_lib_env.PrependUnique(LIBS = [
+        'oc'
+        ])
+
+if ipca_lib_env.get('SECURED') == '1':
     ipca_lib_env.PrependUnique(LIBS = [
             'mbedtls',
             'mbedx509',
-            'mbedcrypto',
             'ocprovision'
             ])
+
+if target_os not in ['windows', 'msys_nt']:
+    ipca_lib_env.AppendUnique(LIBS = ['dl'])
+
+if 'g++' in ipca_lib_env.get('CXX'):
+    ipca_lib_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
+
+if target_os in ['linux']:
+    ipca_lib_env.AppendUnique(LIBS = ['pthread'])
+    if not ipca_lib_env.get('RELEASE'):
+        ipca_lib_env.PrependUnique(LIBS = ['gcov'])
+        ipca_lib_env.AppendUnique(CXXFLAGS = ['--coverage'])
 
 ######################################################################
 # Source files and Targets

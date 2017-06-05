@@ -23,13 +23,13 @@ package org.iotivity.cloud.base.connector;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.iotivity.cloud.base.device.IRequestChannel;
 
 public class ConnectorPool {
 
-    static HashMap<String, IRequestChannel> mConnection = new HashMap<>();
+    static ConcurrentHashMap<String, IRequestChannel> mConnection = new ConcurrentHashMap<>();
 
     static CoapConnector                    mConnector  = new CoapConnector();
 
@@ -37,9 +37,9 @@ public class ConnectorPool {
 
     }
 
-    public static void addConnection(String name, InetSocketAddress inetAddr,
-            boolean tlsMode) throws InterruptedException {
-        mConnection.put(name, mConnector.connect(inetAddr, tlsMode));
+    public static void requestConnection(String connectionName, InetSocketAddress inetAddr,
+         boolean tlsMode, boolean keepAlive) throws InterruptedException {
+        mConnector.connect(connectionName, inetAddr, tlsMode, keepAlive);
     }
 
     public static IRequestChannel getConnection(String name) {
@@ -48,5 +48,11 @@ public class ConnectorPool {
 
     public static ArrayList<IRequestChannel> getConnectionList() {
         return new ArrayList<IRequestChannel>(mConnection.values());
+    }
+
+    public static void addConnection(String name, IRequestChannel requestChannel) {
+        if (mConnection.containsKey(name))
+            mConnection.remove(name);
+        mConnection.put(name, requestChannel);
     }
 }

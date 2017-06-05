@@ -169,19 +169,6 @@ OCStackResult SRPSaveOwnCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16_
 OCStackResult SRPSaveOwnRoleCert(OicSecKey_t * cert, uint16_t *credId);
 
 /**
- * Assert all roles to a device. This POSTs all role certificates from the
- * local cred resource to /oic/sec/roles.
- *
- * @param[in] ctx User context to be passed.
- * @param[in] device The device to assert the roles to
- * @param[in] resultCallback Callback that is called with the response from the device
- * @return OC_STACK_OK in case of success and other value otherwise.
- *
- * @note If no role certificates are installed, this will fail. See GetAllRoleCerts in credresource.h
- */
-OCStackResult SRPAssertRoles(void *ctx, const OCProvisionDev_t *device, OCProvisionResultCB resultCallback);
-
-/**
  * function to register callback, for getting notification for TrustCertChain change.
  *
  * @param[in] ctx user context to be passed.
@@ -248,6 +235,22 @@ OCStackResult SRPProvisionCredentials(void *ctx,OicSecCredType_t type, size_t ke
                                       const char* pemCert,
                                       const OicSecRole_t *role1,
                                       const OicSecRole_t *role2,
+                                      OCProvisionResultCB resultCallback);
+ /**
+ * API to provision credential to devices with DOS.
+ *
+ * @param[in] ctx Application context to be returned in result callback.
+ * @param[in] type Type of credentials to be provisioned to the device.
+ * @param[in] keySize size of key
+ * @param[in] pDev1 Pointer to PMOwnedDeviceInfo_t instance, representing the resource to be provisioned.
+ * @param[in] pDev2 Pointer to PMOwnedDeviceInfo_t instance, representing the resource to be provisioned.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request recieves a response from first resource server.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPProvisionCredentialsDos(void *ctx,OicSecCredType_t type, size_t keySize,
+                                      const OCProvisionDev_t *pDev1,
+                                      const OCProvisionDev_t *pDev2,
                                       OCProvisionResultCB resultCallback);
 
 /**

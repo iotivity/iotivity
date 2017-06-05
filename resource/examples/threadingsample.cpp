@@ -172,7 +172,7 @@ void putResourceInfo(const HeaderOptions& /*headerOptions*/,
    std::cout <<"Clientside Put response to get was: "<<std::endl;
    std::cout <<"ErrorCode: "<<eCode <<std::endl;
 
-   if(eCode == 0)
+   if(eCode == 0 || eCode == 4)
    {
         std::cout<<"Successful Put.  Attributes sent were: "<<std::endl;
 

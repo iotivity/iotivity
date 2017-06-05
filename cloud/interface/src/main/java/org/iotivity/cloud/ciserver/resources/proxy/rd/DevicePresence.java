@@ -49,24 +49,19 @@ import org.iotivity.cloud.util.Cbor;
  */
 
 public class DevicePresence extends Resource {
-    IRequestChannel                       mASServer = null;
     private Cbor<HashMap<String, Object>> mCbor     = new Cbor<>();
 
     public DevicePresence() {
         super(Arrays.asList(Constants.PREFIX_OIC,
                 Constants.DEVICE_PRESENCE_URI));
-
-        mASServer = ConnectorPool.getConnection("account");
     }
 
     class AccountReceiveHandler implements IResponseEventHandler {
 
-        IRequestChannel  mRDServer = null;
         private Device   mSrcDevice;
         private IRequest mRequest;
 
         public AccountReceiveHandler(IRequest request, Device srcDevice) {
-            mRDServer = ConnectorPool.getConnection("rd");
             mSrcDevice = srcDevice;
             mRequest = request;
         }
@@ -95,15 +90,17 @@ public class DevicePresence extends Resource {
                     } else {
                         String additionalQuery = makeAdditionalQuery(
                                 payloadData, mSrcDevice.getDeviceId());
-
-                        String uriQuery = additionalQuery.toString()
-                                + (mRequest.getUriQuery() != null
-                                        ? (";" + mRequest.getUriQuery()) : "");
-                        mRequest = MessageBuilder.modifyRequest(mRequest, null,
-                                uriQuery, null, null);
+                        if (additionalQuery != null) {
+                            String uriQuery = additionalQuery.toString()
+                                    + (mRequest.getUriQuery() != null
+                                            ? (";" + mRequest.getUriQuery())
+                                            : "");
+                            mRequest = MessageBuilder.modifyRequest(mRequest,
+                                    null, uriQuery, null, null);
+                        }
                     }
 
-                    mRDServer.sendRequest(mRequest, mSrcDevice);
+                    ConnectorPool.getConnection("rd").sendRequest(mRequest, mSrcDevice);
                     break;
 
                 default:
@@ -163,7 +160,7 @@ public class DevicePresence extends Resource {
         IRequest requestToAS = MessageBuilder.createRequest(RequestMethod.GET,
                 uriPath.toString(), uriQuery);
 
-        mASServer.sendRequest(requestToAS,
+        ConnectorPool.getConnection("account").sendRequest(requestToAS,
                 new AccountReceiveHandler(request, srcDevice));
     }
 }

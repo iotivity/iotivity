@@ -1,8 +1,7 @@
 ; Windows octbstack.dll exports that are required for both products and tests,
 ; but only when building with SECURED=1.
 
-ConvertUuidToStr
-
+OCAssertRoles
 OCConfigSelfOwnership
 OCConvertDerCSRToPem
 OCDeleteACLList
@@ -21,6 +20,7 @@ OCGenerateKeyPair
 OCGenerateRandomSerialNumber
 OCGenerateRoleCertificate
 OCGetACLResource
+OCGetACL2Resource
 OCGetCredResource
 OCGetCSRResource
 OCGetDevInfoFromNetwork
@@ -57,10 +57,6 @@ OCVerifyCSRSignature
 
 PMGenerateQuery
 
-; @todo: Remove or revise SRPAssertRoles once IOT-1952 is resolved. It should
-; not be here in the release
-SRPAssertRoles
-
 SetClosePinDisplayCB
 SetDisplayPinWithContextCB
 UnsetDisplayPinWithContextCB
@@ -78,6 +74,3 @@ SetUserConfirmCB
 UnsetUserConfirmCB
 SetVerifyOption
 VerifyOwnershipTransfer
-
-registerTimer
-unregisterTimer

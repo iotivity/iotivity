@@ -163,6 +163,40 @@ OCStackResult ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid)
     return OC_STACK_OK;
 }
 
+
+/**
+ * Compares two OicUuid_t structs.
+ *
+ * @return true if the two OicUuid_t structs are equal, else false.
+ */
+bool UuidCmp(const OicUuid_t *firstId, const OicUuid_t *secondId)
+{
+    bool ret = false;
+    VERIFY_NOT_NULL(TAG, firstId, ERROR);
+    VERIFY_NOT_NULL(TAG, secondId, ERROR);
+
+    if (0 == memcmp(firstId, secondId, sizeof(OicUuid_t)))
+    {
+        ret = true;
+    }
+
+exit:
+    OIC_LOG_V(DEBUG, TAG, "%s: returning %s.", __func__, ret?"true":"false");
+    return ret;
+}
+
+const OicUuid_t THE_NIL_UUID = {.id={0000000000000000}};
+
+/**
+ * Compares OicUuid_t to Nil UUID {.id={0000000000000000}}
+ *
+ * @return true if the OicUuid_t is the Nil UUID.
+ */
+bool IsNilUuid(const OicUuid_t *uuid)
+{
+    return UuidCmp(uuid, &THE_NIL_UUID);
+}
+
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 OCStackResult SetDeviceIdSeed(const uint8_t* seed, size_t seedSize)
 {

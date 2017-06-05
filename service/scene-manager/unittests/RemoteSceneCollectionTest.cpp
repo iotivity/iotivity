@@ -67,7 +67,8 @@ protected:
         g_sceneList->getName();
         discoverSceneListServer();
 
-        if(pSceneList == nullptr){
+        if(pSceneList == nullptr)
+        {
             RemoteSceneList::createInstance(pListResource, std::bind(
                 &RemoteSceneCollectionTest::onRemoteSceneListCreated, this,
                 placeholders::_1, placeholders::_2));

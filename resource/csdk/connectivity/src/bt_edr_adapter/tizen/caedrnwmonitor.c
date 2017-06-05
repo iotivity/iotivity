@@ -178,6 +178,8 @@ void CAEDRAdapterStateChangeCallback(int result, bt_adapter_state_e adapterState
                                      void *userData)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OC_UNUSED(result);
+    OC_UNUSED(userData);
 
     if (BT_ADAPTER_ENABLED == adapterState)
     {

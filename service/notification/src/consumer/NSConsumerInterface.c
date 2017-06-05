@@ -76,7 +76,7 @@ NSResult NSConsumerSubscribeMQService(const char * serverAddress, const char * t
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
-    char * queryAddr = NSGetQueryAddress(serverAddress);
+    char * queryAddr = OICStrdup(serverAddress);
     NS_VERIFY_NOT_NULL(queryAddr, NS_ERROR);
 
     NSMQTopicAddress * topicAddr = (NSMQTopicAddress *)OICMalloc(sizeof(NSMQTopicAddress));

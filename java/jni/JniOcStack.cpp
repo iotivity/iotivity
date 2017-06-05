@@ -87,6 +87,7 @@ jclass g_cls_OcDirectPairDevice = nullptr;
 jclass g_cls_OcAccountManager = nullptr;
 #ifdef __WITH_TLS__
 jclass g_cls_OcCloudProvisioning = nullptr;
+jclass g_cls_OcOicSecCloudAcl_ace = nullptr;
 #endif
 #endif
 
@@ -153,6 +154,13 @@ jmethodID g_mid_OcOicSecAcl_get_rownerID = nullptr;
 
 #ifdef WITH_CLOUD
 #ifdef __WITH_TLS__
+jmethodID g_mid_OcOicSecCloudAcl_ace_get_aclId = nullptr;
+jmethodID g_mid_OcOicSecCloudAcl_ace_get_subjectID = nullptr;
+jmethodID g_mid_OcOicSecCloudAcl_ace_get_stype = nullptr;
+jmethodID g_mid_OcOicSecCloudAcl_ace_get_permission = nullptr;
+jmethodID g_mid_OcOicSecCloudAcl_ace_get_resources = nullptr;
+jmethodID g_mid_OcOicSecCloudAcl_ace_get_validities = nullptr;
+
 jmethodID g_mid_OcCloudProvisioning_getIP = nullptr;
 jmethodID g_mid_OcCloudProvisioning_getPort = nullptr;
 #endif
@@ -619,16 +627,46 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
 #ifdef SECURED
 #ifdef WITH_CLOUD
 #ifdef __WITH_TLS__
+
+    //OicSecCloudAce
+    clazz = env->FindClass("org/iotivity/base/OicSecCloudAce");
+    VERIFY_VARIABLE_NULL(clazz);
+    g_cls_OcOicSecCloudAcl_ace =  (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_OcOicSecCloudAcl_ace_get_aclId = env->GetMethodID(g_cls_OcOicSecCloudAcl_ace, "getSubjectID","()Ljava/lang/String;");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecCloudAcl_ace_get_aclId);
+
+    g_mid_OcOicSecCloudAcl_ace_get_subjectID = env->GetMethodID(g_cls_OcOicSecCloudAcl_ace, "getSubjectID","()Ljava/lang/String;");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecCloudAcl_ace_get_subjectID);
+
+    g_mid_OcOicSecCloudAcl_ace_get_stype = env->GetMethodID(g_cls_OcOicSecCloudAcl_ace, "getStype","()I");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecCloudAcl_ace_get_stype);
+
+    g_mid_OcOicSecCloudAcl_ace_get_permission = env->GetMethodID(g_cls_OcOicSecCloudAcl_ace, "getPermission","()I");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecCloudAcl_ace_get_permission);
+
+    g_mid_OcOicSecCloudAcl_ace_get_resources = env->GetMethodID(g_cls_OcOicSecCloudAcl_ace,
+            "getResources","()[Lorg/iotivity/base/OicSecResr;");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecCloudAcl_ace_get_resources);
+
+    g_mid_OcOicSecCloudAcl_ace_get_validities = env->GetMethodID(g_cls_OcOicSecCloudAcl_ace,
+            "getValidities","()[Lorg/iotivity/base/OicSecValidity;");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecCloudAcl_ace_get_validities);
+
+
     //OcCloudProvisioning
     clazz = env->FindClass("org/iotivity/base/OcCloudProvisioning");
     VERIFY_VARIABLE_NULL(clazz);
     g_cls_OcCloudProvisioning =  (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
-    g_mid_OcCloudProvisioning_getIP = env->GetMethodID(g_cls_OcCloudProvisioning, "getIP", "()Ljava/lang/String;");
+    g_mid_OcCloudProvisioning_getIP = env->GetMethodID(g_cls_OcCloudProvisioning,
+            "getIP", "()Ljava/lang/String;");
     VERIFY_VARIABLE_NULL(g_mid_OcCloudProvisioning_getIP);
 
-    g_mid_OcCloudProvisioning_getPort = env->GetMethodID(g_cls_OcCloudProvisioning, "getPort", "()I");
+    g_mid_OcCloudProvisioning_getPort = env->GetMethodID(g_cls_OcCloudProvisioning,
+            "getPort", "()I");
     VERIFY_VARIABLE_NULL(g_mid_OcCloudProvisioning_getPort);
 #endif
 #endif
@@ -691,6 +729,7 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
         env->DeleteGlobalRef(g_cls_OcAccountManager);
 #ifdef __WITH_TLS__
         env->DeleteGlobalRef(g_cls_OcCloudProvisioning);
+				env->DeleteGlobalRef(g_cls_OcOicSecCloudAcl_ace);
 #endif
 #endif
         env->DeleteGlobalRef(g_cls_OcOicSecAcl);

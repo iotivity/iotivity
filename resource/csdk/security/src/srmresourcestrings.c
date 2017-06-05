@@ -35,7 +35,9 @@ const char * OIC_RSRC_TYPE_SEC_ACL = "oic.r.acl";
 const char * OIC_RSRC_ACL_URI =  "/oic/sec/acl";
 const char * OIC_JSON_ACL_NAME = "acl";
 const char * OIC_JSON_ACLIST_NAME = "aclist";
+const char * OIC_JSON_ACLIST2_NAME = "aclist2";
 const char * OIC_JSON_ACES_NAME = "aces";
+const char * OIC_JSON_ACEID_NAME = "aceid";
 
 const char * OIC_RSRC_TYPE_SEC_ACL2 = "oic.r.acl2";
 const char * OIC_RSRC_ACL2_URI = "/oic/sec/acl2";
@@ -111,12 +113,10 @@ const char * OIC_JSON_DEVOWNERID_NAME = "devowneruuid";
 const char * OIC_JSON_SUBOWNERID_NAME = "x.org.iotivity.subowneruuid";
 #endif //MULTIPLE_OWNER
 const char * OIC_JSON_OWNED_NAME = "owned";
-const char * OIC_JSON_OXM_NAME = "oxm";
 const char * OIC_JSON_OXMS_NAME = "oxms";
 #ifdef MULTIPLE_OWNER
 const char * OIC_JSON_MOM_NAME = "x.org.iotivity.mom";
 #endif //MULTIPLE_OWNER
-const char * OIC_JSON_OXM_TYPE_NAME = "oxmtype";
 const char * OIC_JSON_OXM_SEL_NAME = "oxmsel";
 const char * OIC_JSON_DEVICE_ID_FORMAT_NAME = "didformat";
 const char * OIC_JSON_ISOP_NAME = "isop";
@@ -127,6 +127,7 @@ const char * OIC_JSON_TM_NAME = "tm";
 const char * OIC_JSON_OM_NAME = "om";
 const char * OIC_JSON_SM_NAME = "sm";
 const char * OIC_JSON_CREDID_NAME = "credid";
+const char * OIC_JSON_SUBJECT_NAME = "subject";
 const char * OIC_JSON_SUBJECTID_NAME = "subjectuuid";
 const char * OIC_JSON_ROLEID_NAME = "roleid";
 const char * OIC_JSON_ROLE_NAME = "role";
@@ -170,6 +171,14 @@ const char * OIC_JSON_SEC_V_NAME = "secv";
 const char * OIC_JSON_DOS_NAME = "dos";
 const char * OIC_JSON_S_NAME = "s";
 const char * OIC_JSON_P_NAME = "p";
+const char * OIC_JSON_UUID_NAME = "uuid";
+const char * OIC_JSON_CONNTYPE_NAME = "conntype";
+const char * OIC_JSON_AUTHCRYPT_NAME = "auth-crypt";
+const char * OIC_JSON_ANONCLEAR_NAME = "anon-clear";
+const char * OIC_JSON_WC_NAME = "wc";
+const char * OIC_JSON_WC_PLUS_NAME = "+";
+const char * OIC_JSON_WC_MINUS_NAME = "-";
+const char * OIC_JSON_WC_ASTERISK_NAME = "*";
 
 const char * OIC_JSON_EMPTY_STRING = "";
 
@@ -216,3 +225,7 @@ char OIC_SEC_REST_QUERY_DELIMETER = '=';
 //Security Version
 const char * DEFAULT_SEC_VERSION = "0.0.0";
 
+//Preconfigured Pin credential identifier
+#ifdef MULTIPLE_OWNER
+const char * PRECONFIG_PIN_CRED = "x.org.iotivity.sec.cred.pcp";
+#endif //MULTIPLE_OWNER

@@ -107,10 +107,15 @@ OCStackResult InitSecureResources( )
         ret = InitRolesResource();
     }
 #endif // __WITH_DTLS__ || __WITH_TLS__
+#ifndef AMACL_RESOURCE_IMPLEMENTATION_COMPLETE
+    OIC_LOG_V(WARNING, TAG, "%s: /amacl Resource implementation incomplete; not initializing.", __func__);
+#endif // AMACL_RESOURCE_IMPLEMENTATION_COMPLETE
+#ifdef AMACL_RESOURCE_IMPLEMENTATION_COMPLETE
     if(OC_STACK_OK == ret)
     {
         ret = InitAmaclResource();
     }
+#endif // AMACL_RESOURCE_IMPLEMENTATION_COMPLETE
 //#ifdef DIRECT_PAIRING
     if(OC_STACK_OK == ret)
     {

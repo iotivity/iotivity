@@ -35,7 +35,8 @@ arduino_simplecs_env.PrependUnique(CPPPATH = [
 
 arduino_simplecs_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-arduino_simplecs_env.PrependUnique(LIBS = ['octbstack', 'ocsrm', 'connectivity_abstraction','coap'])
+arduino_simplecs_env.PrependUnique(
+    LIBS = ['octbstack', 'ocsrm', 'routingmanager', 'connectivity_abstraction','coap'])
 
 arduino_simplecs = arduino_simplecs_env.Program('SimpleClientServer', 'ocserver.cpp')
 arduino_simplecs_env.CreateBin('SimpleClientServer')

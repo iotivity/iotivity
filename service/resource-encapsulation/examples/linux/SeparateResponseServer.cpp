@@ -18,6 +18,8 @@
  *
  ******************************************************************/
 
+#include "iotivity_config.h"
+
 #include "RCSResourceObject.h"
 #include "RCSRequest.h"
 #include "RCSSeparateResponse.h"

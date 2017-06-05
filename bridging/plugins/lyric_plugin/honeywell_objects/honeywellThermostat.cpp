@@ -72,9 +72,8 @@ std::string hvacModeToString(const HVAC_MODE &hvacMode)
     return result;
 }
 
-void HoneywellThermostat::buildDeviceUri(const char *baseUri)
+void HoneywellThermostat::buildDeviceUri(const std::string &)
 {
-    (void)baseUri;
     std::string hw_tag = "/honeywell/";
     std::ostringstream uriStream;
 
@@ -219,9 +218,9 @@ THERMOSTAT::THERMOSTAT()
     cloudIndex = 0;
 }
 
-void dump_details(const THERMOSTAT &thermostat, const char *description)
+void dump_details(const THERMOSTAT &thermostat, const std::string &description)
 {
-    if (NULL == description)
+    if (description.empty())
     {
         OIC_LOG_V(INFO, LOG_TAG, "deviceId: %d, heatSetpoint: %f, coolSetpoint: %f, targetTemp: %f",
               thermostat.devInfo.deviceId, thermostat.heatSetpointF, thermostat.coolSetpointF,
@@ -230,7 +229,7 @@ void dump_details(const THERMOSTAT &thermostat, const char *description)
     else
     {
         OIC_LOG_V(INFO, LOG_TAG, "%s - deviceId: %d, heatSetpoint: %f, coolSetpoint: %f, targetTemp: %f",
-              description, thermostat.devInfo.deviceId, thermostat.heatSetpointF,
+              description.c_str(), thermostat.devInfo.deviceId, thermostat.heatSetpointF,
               thermostat.coolSetpointF, thermostat.targetTempF);
     }
     (void)thermostat;

@@ -28,6 +28,7 @@
 #include "OCApi.h"
 #include "OCPlatform_impl.h"
 #include "oxmverifycommon.h"
+#include "securevirtualresourcetypes.h"
 
 namespace OC
 {
@@ -95,11 +96,11 @@ namespace OC
      */
     class Credential
     {
-            OicSecCredType_t type;
-            size_t keySize;
+            OicSecCredType_t m_type;
+            size_t m_keySize;
         public:
             Credential() = default;
-            Credential(OicSecCredType_t type, size_t size) : type(type), keySize(size)
+            Credential(OicSecCredType_t type, size_t size) : m_type(type), m_keySize(size)
             {}
 
             /**
@@ -108,7 +109,7 @@ namespace OC
              */
             OicSecCredType_t getCredentialType() const
             {
-                return type;
+                return m_type;
             }
 
             /**
@@ -117,7 +118,7 @@ namespace OC
              */
             size_t getCredentialKeySize() const
             {
-                return keySize;
+                return m_keySize;
             }
 
             /**
@@ -132,7 +133,7 @@ namespace OC
              */
             void setCredentialType(OicSecCredType_t type)
             {
-                this->type = type;
+                this->m_type = type;
             }
 
             /**
@@ -142,7 +143,7 @@ namespace OC
              */
             void setCredentialKeySize(size_t keySize)
             {
-                this->keySize = keySize;
+                this->m_keySize = keySize;
             }
     };
 

@@ -54,7 +54,7 @@ import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
 import org.iotivity.base.examples.cloudprovisioningclient.R;
-
+import org.iotivity.base.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -68,6 +68,51 @@ import java.util.List;
 public class CloudProvisioningClient extends Activity implements OcAccountManager.OnPostListener {
 
     private static final String TAG = "Cloud Provisioning Client: ";
+    private List<OicSecCloudAce> generateAce(String aclid)
+    {
+        String type1 = "type1";
+        String type2 = "type2";
+        int typeLen = 2;
+        String interface1 = "interface1";
+        String interface2 = "interface2";
+        int interfaceLen = 2;
+
+
+        ArrayList<String> types = new ArrayList<String>();
+        types.add(type1);
+        types.add(type2);
+
+        ArrayList<String> interfaces = new ArrayList<String>();
+        interfaces.add(interface1);
+        interfaces.add(interface2);
+        OicSecResr res = new OicSecResr("/oic/a", "testrel", types, typeLen,interfaces, 2);
+        OicSecResr res1 =  new OicSecResr("/oic/b", "testrel", types, typeLen,interfaces, 2);
+        List<OicSecResr> resources = new ArrayList<OicSecResr>();
+        resources.add(res);
+        resources.add(res1);
+
+        List<String> recurrences = new ArrayList<String>();
+        recurrences.add("1");
+        recurrences.add("2");
+        OicSecValidity validity1 = new  OicSecValidity("1", recurrences,2);
+        OicSecValidity validity2 = new  OicSecValidity("2", recurrences,2);
+        List<OicSecValidity> validities = new ArrayList<OicSecValidity>();
+        validities.add(validity1);
+        validities.add(validity2);
+
+        OicSecCloudAce ace1 = new OicSecCloudAce(aclid,"72616E64-5069-6E44-6576-557569643030", 0,
+                31,resources, validities);
+        OicSecCloudAce ace2 = new OicSecCloudAce(aclid, "72616E64-5069-6E44-6576-557569643030", 0,
+                8, resources, validities);
+
+        List<OicSecCloudAce> aces = new ArrayList<OicSecCloudAce>();
+        aces.add(ace1);
+        aces.add(ace2);
+        logMessage("out--generate ace");
+        return aces;
+    }
+
+
     OcAccountManager.OnPostListener onSignUp = new OcAccountManager.OnPostListener() {
         @Override
             public synchronized void onPostCompleted(List<OcHeaderOption> list,
@@ -229,13 +274,14 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
         };
     private static final int BUFFER_SIZE = 1024;
     private final int REQUEST_LOGIN = 1;
-    Button signUp, signIn, signOut, getAclId, getAclInfo, requestCert, postCrl, getCrl;
+    Button signUp, signIn, signOut, getAclId, getAclInfo, requestCert, postCrl, getCrl, updateAce;
     TextView userid;
     LinearLayout lyt1, lyt2, signupLyt, signinLyt;
     // private TextView eventView;
     SharedPreferences settingPreference;
     OcCloudProvisioning ocCloudProvisioning;
-    String acl_Id;
+    String createacl_Id = null;
+    String acl_Id = null;
     OcCloudProvisioning.GetAclIdByDeviceListener getAclIdByDeviceListener =
         new OcCloudProvisioning.GetAclIdByDeviceListener() {
             @Override
@@ -249,10 +295,36 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
                     }
                 }
         };
+
+    OcCloudProvisioning.CreateAclIdListener createAclIdListener =
+        new OcCloudProvisioning.CreateAclIdListener() {
+            @Override
+                public void createAclIdListener(int result, String aclId) {
+                    Log.d(TAG, "Inside createAclIdListener ");
+                    if (result == 0) {
+                        createacl_Id = aclId;
+                        acl_Id = aclId;
+                        logMessage("Acl Id by create aclid !!" + createacl_Id);
+                    } else {
+                        logMessage("Error: Acl Id by create aclid failed !!");
+                    }
+                }
+        };
+    OcCloudProvisioning.UpdateIndividualACLListener updateIndividualACLListener =
+        new OcCloudProvisioning.UpdateIndividualACLListener(){
+              public void updateIndividualACLListener(int result)
+              {
+                  Log.d(TAG, "Inside UpdateIndividualACLListener ");
+                  if (result == 4) {
+                      logMessage("Success UpdateIndividualACLListener");
+                  } else {
+                      logMessage("Error:UpdateIndividualACLListener = "+result);
+                  }
+              }
+    };
     private OcAccountManager mAccountManager;
     private String filePath = "";
     private TextView mEventsTextView;
-
     @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -267,6 +339,7 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
             postCrl = (Button) findViewById(R.id.postCRL);
             getCrl = (Button) findViewById(R.id.getCRL);
 
+            updateAce = (Button) findViewById(R.id.updateAce);
             lyt1 = (LinearLayout) findViewById(R.id.lyt1);
             lyt2 = (LinearLayout) findViewById(R.id.lyt2);
             signupLyt = (LinearLayout) findViewById(R.id.signupLyt);
@@ -288,6 +361,7 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
                 editor.putString("IP", StringConstants.DEFAULT_COAP_DERVER_IP);
                 editor.putString("PORT", StringConstants.DEFAULT_COAP_DERVER_PORT);
                 editor.putString("DEVICEID", StringConstants.DEFAULT_DEVICE_ID);
+                editor.putString("OWNERID", StringConstants.DEFAULT_OWNER_ID);
                 editor.putString("SERIALNUMBER", StringConstants.DEFAULT_SERIAL_NUMBER);
                 editor.commit();
             }
@@ -359,6 +433,12 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
                     getCrl();
                     }
                     });
+            updateAce.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                    updateAces();
+                    }
+                    });
         }
 
 
@@ -405,11 +485,8 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
             logMessage("signOut");
             if(mAccountManager==null)
             {
-                mAccountManager = OcPlatform.constructAccountManagerObject(
-                        StringConstants.COAP_TCP + settingPreference.getString("IP",
-                            StringConstants.DEFAULT_COAP_DERVER_IP) + ":" +
-                        settingPreference.getString("PORT", StringConstants.DEFAULT_COAP_DERVER_PORT),
-                        EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP));
+                logMessage("Please signIn first");
+                return;
             }
 
             mAccountManager.signOut(settingPreference.getString("accesstoken", ""),onSignOut);
@@ -422,8 +499,15 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
     private void getAclId() {
         try {
             logMessage("getAclId");
-            logMessage("\tdeviceId= " + settingPreference.getString("DEVICEID", ""));
-            ocCloudProvisioning.getAclIdByDevice(settingPreference.getString("DEVICEID", ""), getAclIdByDeviceListener);
+            if(createacl_Id == null)
+            {
+                ocCloudProvisioning.createAclId(settingPreference.getString("OWNERID", ""),
+                             settingPreference.getString("DEVICEID", ""), createAclIdListener);
+            }
+            else{
+                ocCloudProvisioning.getAclIdByDevice(settingPreference.getString("DEVICEID", ""),
+                        getAclIdByDeviceListener);
+            }
         } catch (OcException e) {
             e.printStackTrace();
         }
@@ -432,7 +516,6 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
     private void getAclInfo() {
         try {
             logMessage("getAclInfo");
-            logMessage("\taclid="+acl_Id);
             ocCloudProvisioning.getIndividualAclInfo(acl_Id, getIndividualAclInfoListener);
 
         } catch (OcException e) {
@@ -458,7 +541,8 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
             ArrayList<String> arrayList = new ArrayList<>();
             arrayList.add(settingPreference.getString("SERIALNUMBER", "1234"));
 
-            ocCloudProvisioning.postCRL("20160727000000", "20161027000000", null, arrayList, postCRLListener);
+            ocCloudProvisioning.postCRL("20160727000000", "20161027000000", null,
+                    arrayList, postCRLListener);
 
         } catch (OcException e) {
             e.printStackTrace();
@@ -475,6 +559,17 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
         }
     }
 
+    private void updateAces()
+    {
+        try {
+            logMessage("updateAce");
+            ocCloudProvisioning.updateIndividualACL(acl_Id, generateAce(acl_Id),
+                    updateIndividualACLListener);
+
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+    }
     private void signUp() {
         try {
             mAccountManager = OcPlatform.constructAccountManagerObject(
@@ -616,7 +711,6 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
         intent.putExtra(StringConstants.MESSAGE, text);
         sendBroadcast(intent);
     }
-
 
     private void setDefualtSettings() {
         View setingLayout = getLayoutInflater().inflate(R.layout.setting_layout, null);

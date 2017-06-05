@@ -110,7 +110,7 @@ Honeywell::CLIENT_ID_SECRET m_clientId_secret;
 /*******************************************************************************
  * prototypes go here
  ******************************************************************************/
-MPMResult loadAccessToken(const char *filename, Honeywell::ACCESS_TOKEN &token);
+MPMResult loadAccessToken(const std::string &filename, Honeywell::ACCESS_TOKEN &token);
 
 OCEntityHandlerResult resourceEntityHandlerCb(OCEntityHandlerFlag,
                                                  OCEntityHandlerRequest *entityHandlerRequest,
@@ -118,7 +118,7 @@ OCEntityHandlerResult resourceEntityHandlerCb(OCEntityHandlerFlag,
 
 OCEntityHandlerResult processPutRequest(OCRepPayload * payload, LyricThermostatSharedPtr targetThermostat, const std::string uri);
 
-OCRepPayload *getPayload(const char *uri, const THERMOSTAT &data);
+OCRepPayload *getPayload(const std::string uri, const THERMOSTAT &data);
 
 void *accessTokenMonitorThread(void *pointer);
 
@@ -158,50 +158,43 @@ MPMResult pluginCreate(MPMPluginCtx **pluginSpecificCtx)
     ctx->resource_type = DEVICE_TYPE;
     ctx->open = honeywellFopen;
 
-    FILE *fp = fopen("./lyric.cnf", "r");
+    ifstream tokenFile ("./lyric.cnf");
 
-    if (NULL == fp)
+    if (!tokenFile.is_open())
     {
         OIC_LOG(ERROR, LOG_TAG, "error loading lyric.cnf file.");
         return MPM_RESULT_INTERNAL_ERROR;
     }
-    char code[HONEYWELL_REFRESH_TOKEN_BUFSIZE];
-    char str[1024];
-    size_t size = sizeof(str);
-    if (fgets(str, size, fp) == NULL)
+
+    std::string acode;
+
+    if (!getline (tokenFile, acode))
     {
         OIC_LOG(ERROR, LOG_TAG, "Failed to read ./lyric.cnf");
-        fclose(fp);
+        tokenFile.close();
         return MPM_RESULT_INTERNAL_ERROR;
     }
 
-    str[strlen(str) - 1] = '\0';
-    OICStrcpy(code, HONEYWELL_REFRESH_TOKEN_BUFSIZE, str);
-
-    if (fgets(str, size, fp) == NULL)
+    std::string str;
+    if (!getline (tokenFile, str))
     {
         OIC_LOG(ERROR, LOG_TAG, "Failed to read ./lyric.cnf");
-        fclose(fp);
+        tokenFile.close();
         return MPM_RESULT_INTERNAL_ERROR;
     }
+    OICStrcpy(m_clientId_secret.honeywell_clientId, HONEYWELL_CLIENT_ID_BUFFSIZE, str.c_str());
 
-    str[strlen(str) - 1] = '\0';
-    OICStrcpy(m_clientId_secret.honeywell_clientId, HONEYWELL_CLIENT_ID_BUFFSIZE, str);
-    if (fgets(str, size, fp) == NULL)
+    if (!getline (tokenFile, str))
     {
         OIC_LOG(ERROR, LOG_TAG, "Failed to read ./lyric.cnf");
-        fclose(fp);
+        tokenFile.close();
         return MPM_RESULT_INTERNAL_ERROR;
     }
-
-    str[strlen(str) - 1] = '\0';
-    OICStrcpy(m_clientId_secret.honeywell_client_secret, HONEYWELL_CLIENT_AND_SECRET_64_BUFFSIZE, str);
-    fclose(fp);
+    OICStrcpy(m_clientId_secret.honeywell_client_secret, HONEYWELL_CLIENT_AND_SECRET_64_BUFFSIZE, str.c_str());
+    tokenFile.close();
 
     g_honeywell.setClientIdAndSecret(m_clientId_secret);
 
-    std::string acode;
-    acode.assign(code);
     result = (MPMResult) g_honeywell.getAccessToken(acode, m_token);
     if (MPM_RESULT_OK != result)
     {
@@ -342,7 +335,7 @@ OCEntityHandlerResult checkIfOperationIsAllowed(std::string uri, OCMethod operat
  * @param[in] uri           Resource Uri
  * @param[in] data          Thermostat detials to be sent in response.
  */
-OCRepPayload *getPayload(const char *uri, const THERMOSTAT &data)
+OCRepPayload *getPayload(const std::string uri, const THERMOSTAT &data)
 {
     bool result = true;
     std::string modeString;
@@ -362,7 +355,7 @@ OCRepPayload *getPayload(const char *uri, const THERMOSTAT &data)
 
     if (result)
     {
-        result = OCRepPayloadSetUri(payload, uri);
+        result = OCRepPayloadSetUri(payload, uri.c_str());
         if (false == result)
         {
             OIC_LOG(ERROR, LOG_TAG, "OCRepPayloadSetUri failed");
@@ -590,11 +583,11 @@ MPMResult pluginScan(MPMPluginCtx *, MPMPipeMessage *)
     return result;
 }
 
-bool createSecureResources()
+bool isSecureEnvironmentSet()
 {
     char *non_secure_env = getenv("NONSECURE");
 
-    if (non_secure_env != NULL && strcmp(non_secure_env, "true") == 0)
+    if (non_secure_env != NULL && (strcmp(non_secure_env, "true") == 0))
     {
         OIC_LOG(INFO, LOG_TAG, "Creating NON SECURE resources");
         return false;
@@ -603,7 +596,7 @@ bool createSecureResources()
     return true;
 }
 
-void createPayloadForMetadata(MPMResourceList **list , const char *uri, const char * interface)
+void createPayloadForMetadata(MPMResourceList **list , const std::string &uri, const std::string &interface)
 {
     MPMResourceList *tempPtr;
     tempPtr = (MPMResourceList *) OICCalloc(1, sizeof(MPMResourceList));
@@ -614,8 +607,8 @@ void createPayloadForMetadata(MPMResourceList **list , const char *uri, const ch
         return;
     }
     OICStrcpy(tempPtr->rt, MPM_MAX_LENGTH_64, HONEYWELL_THERMOSTAT_RT);
-    OICStrcpy(tempPtr->href, MPM_MAX_URI_LEN, uri);
-    OICStrcpy(tempPtr->interfaces, MPM_MAX_LENGTH_64, interface);
+    OICStrcpy(tempPtr->href, MPM_MAX_URI_LEN, uri.c_str());
+    OICStrcpy(tempPtr->interfaces, MPM_MAX_LENGTH_64, interface.c_str());
     tempPtr->bitmap = BM;
     tempPtr->next = *list;
     *list  = tempPtr;
@@ -632,7 +625,11 @@ void updatePluginSpecificData(THERMOSTAT thermostat, ThermostatDetails *thermost
 MPMResult pluginAdd(MPMPluginCtx *, MPMPipeMessage * message)
 {
     uint8_t resourceProperties = (OC_OBSERVABLE | OC_DISCOVERABLE);
-    if (createSecureResources()) resourceProperties |= OC_SECURE;
+
+    if (isSecureEnvironmentSet())
+    {
+        resourceProperties |= OC_SECURE;
+    }
 
     std::string uri = reinterpret_cast<const char *>(message->payload);
     if(addedThermostats.find(uri) != addedThermostats.end())
@@ -720,7 +717,6 @@ MPMResult pluginRemove(MPMPluginCtx *, MPMPipeMessage * message)
 MPMResult pluginReconnect(MPMPluginCtx *, MPMPipeMessage * message)
 {
     MPMResourceList *list = NULL, *temp = NULL;
-    char *buff = NULL;
     THERMOSTAT thermostat;
     std::vector<LyricThermostatSharedPtr> thermostatsReconnected;
     void *details = NULL;
@@ -730,24 +726,13 @@ MPMResult pluginReconnect(MPMPluginCtx *, MPMPipeMessage * message)
     std::string thermostatMode;
     std::string uri;
 
-    if(message->payloadSize > 0 &&message->payloadSize < SIZE_MAX)
+    if(message->payloadSize <= 0 && message->payload == NULL)
     {
-        buff = (char *) OICCalloc(1, message->payloadSize);
-
-        if (buff ==NULL)
-        {
-            OIC_LOG(ERROR, LOG_TAG, "OICCalloc Failed");
-            return MPM_RESULT_INTERNAL_ERROR;
-        }
-    }
-    else
-    {
-        OIC_LOG(ERROR, LOG_TAG, "Payload size is out of bound");
+        OIC_LOG(ERROR, LOG_TAG, "No payload received, failed to reconnect");
         return MPM_RESULT_INTERNAL_ERROR;
     }
 
-    memcpy(buff, message->payload, message->payloadSize);
-    MPMParseMetaData((uint8_t*)buff, MPM_MAX_METADATA_LEN, &list, &details);
+    MPMParseMetaData(message->payload, MPM_MAX_METADATA_LEN, &list, &details);
 
     ThermostatDetails *thermostatDetails = (ThermostatDetails *)details;
     HoneywellThermostat honeywellThermostat;
@@ -826,7 +811,10 @@ MPMResult pluginReconnect(MPMPluginCtx *, MPMPipeMessage * message)
         goto CLEANUP;
     }
 
-    if (createSecureResources()) resourceProperties |= OC_SECURE;
+    if (isSecureEnvironmentSet())
+    {
+        resourceProperties |= OC_SECURE;
+    }
 
     while(list)
     {
@@ -842,10 +830,6 @@ MPMResult pluginReconnect(MPMPluginCtx *, MPMPipeMessage * message)
     result = MPM_RESULT_OK;
 
     CLEANUP:
-    if (buff != NULL)
-    {
-        OICFree(buff);
-    }
     if (thermostatDetails !=NULL)
     {
         OICFree(thermostatDetails);

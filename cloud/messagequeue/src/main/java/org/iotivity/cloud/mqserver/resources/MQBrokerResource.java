@@ -96,7 +96,8 @@ public class MQBrokerResource extends Resource {
     private IResponse handleGetRequest(Device srcDevice, IRequest request) {
 
         // DISCOVER
-        if (request.getUriPathSegments().size() == getUriPathSegments().size()) {
+        if (request.getUriPathSegments().size() == getUriPathSegments()
+                .size()) {
             return discoverTopic(request);
         }
 
@@ -118,7 +119,8 @@ public class MQBrokerResource extends Resource {
     // CREATE topic
     private IResponse handlePutRequest(IRequest request) {
 
-        if (request.getUriPathSegments().size() == getUriPathSegments().size()) {
+        if (request.getUriPathSegments().size() == getUriPathSegments()
+                .size()) {
 
             throw new BadRequestException(
                     "topic name is not included in request uri");
@@ -142,14 +144,19 @@ public class MQBrokerResource extends Resource {
     private IResponse createTopic(IRequest request) {
 
         // main topic creation request
-        if (request.getUriPathSegments().size() == getUriPathSegments().size() + 1) {
+        if (request.getUriPathSegments().size() == getUriPathSegments().size()
+                + 1) {
             return createMainTopic(request);
         }
 
         // subtopic creation request
         String uriPath = request.getUriPath();
-        uriPath = uriPath.substring(0, uriPath.lastIndexOf('/'));
 
+        if (uriPath == null) {
+            throw new BadRequestException("uriPath is not invalid");
+        }
+
+        uriPath = uriPath.substring(0, uriPath.lastIndexOf('/'));
         Topic targetTopic = mTopicManager.getTopic(uriPath);
 
         if (targetTopic == null) {
@@ -170,9 +177,13 @@ public class MQBrokerResource extends Resource {
         // subtopic removal request
         String uriPath = request.getUriPath();
 
+        if (uriPath == null) {
+            throw new BadRequestException("uriPath is not invalid");
+        }
+
         String parentName = uriPath.substring(0, uriPath.lastIndexOf('/'));
-        String targetName = request.getUriPathSegments().get(
-                request.getUriPathSegments().size() - 1);
+        String targetName = request.getUriPathSegments()
+                .get(request.getUriPathSegments().size() - 1);
 
         Topic parentTopic = mTopicManager.getTopic(parentName);
 
@@ -243,14 +254,14 @@ public class MQBrokerResource extends Resource {
         }
 
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
-                ContentFormat.APPLICATION_CBOR, MessageQueueUtils.buildPayload(
-                        Constants.MQ_TOPICLIST, topicList));
+                ContentFormat.APPLICATION_CBOR, MessageQueueUtils
+                        .buildPayload(Constants.MQ_TOPICLIST, topicList));
     }
 
     private IResponse createMainTopic(IRequest request) {
 
-        String topicName = request.getUriPathSegments().get(
-                request.getUriPathSegments().size() - 1);
+        String topicName = request.getUriPathSegments()
+                .get(request.getUriPathSegments().size() - 1);
 
         String type = new String();
 
@@ -282,7 +293,12 @@ public class MQBrokerResource extends Resource {
 
         IResponse response = MessageBuilder.createResponse(request,
                 ResponseStatus.CREATED);
-        response.setLocationPath(request.getUriPath());
+        String uriPath = request.getUriPath();
+        if (uriPath == null) {
+            throw new InternalServerErrorException(
+                    "uriPath is null in handleCreateSubtopic");
+        }
+        response.setLocationPath(uriPath);
         return response;
     }
 

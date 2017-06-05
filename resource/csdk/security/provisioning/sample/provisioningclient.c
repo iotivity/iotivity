@@ -86,8 +86,6 @@ extern "C"
 #endif //MULTIPLE_OWNER
 #define _80_SELECT_PROTOCOL_        80
 #define _81_SELECT_VERIF_METHOD_    81
-#define _91_SELECT_INTROSPECTION_METHOD_    91
-#define _92_SELECT_INTROSPECTION_PAYLOAD_METHOD_    92
 #define _99_EXIT_PRVN_CLT_          99
 
 #define ACL_RESRC_MAX_NUM   16
@@ -875,8 +873,8 @@ static int provisionCred(void)
  *   3. Saves this root as a trust anchor locally.
  *   4. Generate and store an IoTivity key and cert (issued from the CA root cert).
  *      This is an EE cert the CA/OBT will use in DTLS.
- *   
- *   The CA's key and cert are written to g_caKeyPem and g_caCertPem (resp.). 
+ *
+ *   The CA's key and cert are written to g_caKeyPem and g_caCertPem (resp.).
  */
 static int setupCA()
 {
@@ -1012,10 +1010,10 @@ exit:
 }
 
 /*
- * Create an identity certificate for a device, based on the information in its CSR. 
+ * Create an identity certificate for a device, based on the information in its CSR.
  * Assumes the csr has already been validated wtih OCVerifyCSRSignature.
  */
-static int createIdentityCertFromCSR(const char* caKeyPem, const char* caCertPem, char* csr, 
+static int createIdentityCertFromCSR(const char* caKeyPem, const char* caCertPem, char* csr,
     char** deviceCert)
 {
     char* publicKey = NULL;
@@ -1123,7 +1121,7 @@ static int provisionCert(void)
     g_doneCB = false;
     OicSecCredType_t type = SIGNED_ASYMMETRIC_KEY;
 
-    OCStackResult rst = OCProvisionTrustCertChain((void*)g_ctx, type, g_caCredId, targetDevice, &provisionTrustChainCB);
+    OCStackResult rst = OCProvisionTrustCertChain((void*)g_ctx, type, g_caCredId, targetDevice, (OCProvisionResultCB)&provisionTrustChainCB);
     if (OC_STACK_OK != rst)
     {
         OIC_LOG_V(ERROR, TAG, "OCProvisionTrustCertChain returned error: %d", rst);
@@ -1163,14 +1161,14 @@ static int provisionCert(void)
     if (OC_STACK_OK != rst)
     {
         OIC_LOG(ERROR, TAG, "Failed to validate CSR signature");
-        OICFreeAndSetToNull(&g_csr);
+        OICFreeAndSetToNull((void**)&g_csr);
         return -1;
     }
 
     printf("   > Creating a certificate for the device..\n");
     char* deviceCert;
     int ret = createIdentityCertFromCSR(g_caKeyPem, g_caCertPem, g_csr, &deviceCert);
-    OICFreeAndSetToNull(&g_csr);
+    OICFreeAndSetToNull((void**)&g_csr);
     if (ret != 0)
     {
         OIC_LOG(ERROR, TAG, "Failed to generate certificate");
@@ -1348,7 +1346,7 @@ static int provisionDirectPairing(void)
     printf("   Atempt Direct-Pairing Provisioning (PIN : [%s])..\n", (char*)pconf.pin.val);
     OCStackResult rst = OCProvisionDirectPairing((void*) g_ctx,
                                        getDevInst((const OCProvisionDev_t*) g_own_list, dev_num),
-                                       &pconf, provisionDPCB);
+                                       &pconf, (OCProvisionResultCB)provisionDPCB);
     if(OC_STACK_OK != rst)
     {
         OIC_LOG_V(ERROR, TAG, "OCProvisionDirectPairing API error: %d", rst);
@@ -1614,16 +1612,17 @@ static int getAcl(void)
         OIC_LOG(ERROR, TAG, "getDevInst: device instance empty");
         goto PVACL_ERROR;
     }
-    OCStackResult rst = OCGetACLResource((void*) g_ctx, dev, getAclCB);
+    // IOT-2219 add support for OIC 1.1 /oic/sec/acl URI
+    OCStackResult rst = OCGetACL2Resource((void*) g_ctx, dev, getAclCB);
     if(OC_STACK_OK != rst)
     {
-        OIC_LOG_V(ERROR, TAG, "OCGetACLResource API error: %d", rst);
+        OIC_LOG_V(ERROR, TAG, "OCGetACL2Resource API error: %d", rst);
 
         goto PVACL_ERROR;
     }
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCGetACLResource callback error");
+        OIC_LOG(ERROR, TAG, "OCGetACL2Resource callback error");
         goto PVACL_ERROR;
     }
 
@@ -2626,46 +2625,6 @@ const char* getResult(OCStackResult result)
     }
 }
 
-OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
-    OCClientResponse* clientResponse)
-{
-    OC_UNUSED(ctx);
-    OC_UNUSED(handle);
-
-    if (clientResponse == NULL)
-    {
-        OIC_LOG(INFO, TAG, "getReqCB received NULL clientResponse");
-        return OC_STACK_DELETE_TRANSACTION;
-    }
-
-    OIC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
-    OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-    OIC_LOG_V(INFO, TAG, "Payload Size: %d", 
-              ((OCRepPayload*)clientResponse->payload)->values->str);
-    OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-    OIC_LOG(INFO, TAG, "=============> Get Response");
-
-    if (clientResponse->numRcvdVendorSpecificHeaderOptions > 0)
-    {
-        OIC_LOG(INFO, TAG, "Received vendor specific options");
-        uint8_t i = 0;
-        OCHeaderOption* rcvdOptions = clientResponse->rcvdVendorSpecificHeaderOptions;
-        for (i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
-        {
-            if ((rcvdOptions[i]).protocolID == OC_COAP_ID)
-            {
-                OIC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
-                    (rcvdOptions[i]).optionID);
-
-                OIC_LOG_BUFFER(INFO, TAG, rcvdOptions[i].optionData,
-                    MAX_HEADER_OPTION_DATA_LENGTH);
-            }
-        }
-    }
-    g_doneCB = true; // flag done
-    return OC_STACK_DELETE_TRANSACTION;
-}
-
 int obtainUserSelectionForDeviceNumber(int numDevices)
 {
     int dev_num = -1;
@@ -2685,111 +2644,6 @@ int obtainUserSelectionForDeviceNumber(int numDevices)
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
     return dev_num;
-}
-
-void selectIntrospectionMethod()
-{
-    OCStackResult ret;
-    OCCallbackData cbData;
-    OCDoHandle handle;
-    static OCDevAddr serverAddr;
-    cbData.cb = &getReqCB;
-    int dev_num = 1;
-    OCProvisionDev_t *device = NULL;
-
-    // check |own_list| for devices that can be used for introspection
-    if (!g_own_list || (1 > g_own_cnt))
-    {
-        printf("   > Owned Device List, to do introspection, is Empty\n");
-        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
-        return;
-    }
-
-    if (g_own_cnt != 1)
-    {
-        // we have more than one option - ask user to select one
-        printf("   > Multiple devices found - select a device for Introspection\n");
-        dev_num = obtainUserSelectionForDeviceNumber(g_own_cnt);
-    }
-
-    device = getDevInst(g_own_list, dev_num); 
-    if (device)
-    {
-        serverAddr = device->endpoint;
-        cbData.context = NULL;
-        cbData.cd = NULL;
-        OIC_LOG_V(INFO, TAG, "Performing Introspection");
-        g_doneCB = false;
-
-        ret = OCDoResource(&handle, OC_REST_GET, OC_RSRVD_INTROSPECTION_URI, &serverAddr,
-            NULL,
-            CT_ADAPTER_IP, OC_LOW_QOS, &cbData, NULL, 0);
-
-        if (ret != OC_STACK_OK)
-        {
-            OIC_LOG_V(ERROR, TAG, "OCDoResource returned error %d with method", ret);
-        }
-        if (waitCallbackRet())  // input |g_doneCB| flag implicitly
-        {
-            OIC_LOG(ERROR, TAG, "selectIntrospectionMethod callback error");
-        }
-    }
-    else
-    {
-        OIC_LOG(ERROR, TAG, "Selected device does not exist");
-    }
-}
-
-void selectIntrospectionPayloadMethod()
-{
-    OCStackResult ret;
-    OCCallbackData cbData;
-    OCDoHandle handle;
-    static OCDevAddr serverAddr;
-    cbData.cb = &getReqCB;
-    int dev_num = 1;
-    OCProvisionDev_t *device = NULL;
-
-    // check |own_list| for devices that can be used for introspection payload
-    if (!g_own_list || (1 > g_own_cnt))
-    {
-        printf("   > Owned Device List, to get introspection payload, is Empty\n");
-        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
-        return;
-    }
-
-    if (g_own_cnt != 1)
-    {
-        // we have more than one option - ask user to select one
-        printf("   > Multiple devices found - select a device for Introspection payload\n");
-        dev_num = obtainUserSelectionForDeviceNumber(g_own_cnt);
-    }
-
-    device = getDevInst(g_own_list, dev_num);
-    if (device)
-    {
-        serverAddr = device->endpoint;
-        cbData.context = g_ctx;
-        cbData.cd = NULL;
-        OIC_LOG_V(INFO, TAG, "Performing Introspection Payload");
-        g_doneCB = false;
-        ret = OCDoResource(&handle, OC_REST_GET, OC_RSRVD_INTROSPECTION_PAYLOAD_URI, &serverAddr,
-            NULL,
-            CT_ADAPTER_IP, OC_LOW_QOS, &cbData, NULL, 0);
-
-        if (ret != OC_STACK_OK)
-        {
-            OIC_LOG_V(ERROR, TAG, "OCDoResource returned error %d with method", ret);
-        }
-        if (waitCallbackRet())  // input |g_doneCB| flag implicitly
-        {
-            OIC_LOG(ERROR, TAG, "selectIntrospectionPayloadMethod callback error");
-        }
-    }
-    else
-    {
-        OIC_LOG(ERROR, TAG, "Selected device does not exist");
-    }
 }
 
 static void printUuid(const OicUuid_t* uid)
@@ -3005,10 +2859,6 @@ static void printMenu(void)
     printf("** [H] SELECT VERIFICATION OPTION\n");
     printf("** 81. Select verification method\n\n");
 #endif
-
-    printf("** [I] SELECT INTROSPECTION OPTION\n");
-    printf("** 91. Select Get Introspection Resource\n");
-    printf("** 92. Select Get Introspection Payload\n\n");
 
     printf("** [J] EXIT PROVISIONING CLIENT\n");
     printf("** 99. Exit Provisionong Client\n\n");
@@ -3231,12 +3081,6 @@ int main()
 #endif
         case _81_SELECT_VERIF_METHOD_:
             selectVerifMethod();
-            break;
-        case _91_SELECT_INTROSPECTION_METHOD_:
-            selectIntrospectionMethod();
-            break;
-        case _92_SELECT_INTROSPECTION_PAYLOAD_METHOD_:
-            selectIntrospectionPayloadMethod();
             break;
         case _99_EXIT_PRVN_CLT_:
             goto PMCLT_ERROR;

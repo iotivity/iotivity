@@ -36,10 +36,8 @@ print"Reading PI script"
 ######################################################################
 with_unforked_libcoap = env.get('WITH_UNFORKED_LIBCOAP')
 if with_unforked_libcoap == '1':
-    # For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
     env.PrependUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
 else:
-    # For bring up purposes only, the forked version will live here.
     env.PrependUnique(CPPPATH = [os.path.join(src_dir, 'resource', 'csdk', 'connectivity', 'lib', 'libcoap-4.1.1', 'include')])
 
 env.PrependUnique(CPPPATH = [ os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
