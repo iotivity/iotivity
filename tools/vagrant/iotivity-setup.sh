@@ -44,9 +44,9 @@ if [ ! -d ${ANDROID_NDK} ]
 then
 	mkdir -p ${ANDROID_NDK}
 	pushd ${ANDROID_NDK}
-	wget_if_not_exists "android-ndk-r10d-linux-x86_64.bin" http://dl.google.com/android/ndk/android-ndk-r10d-linux-x86_64.bin
-	chmod a+x android-ndk-r10d-linux-x86_64.bin
-	./android-ndk-r10d-linux-x86_64.bin
+	wget_if_not_exists "android-ndk-r10e-linux-x86_64.bin" http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin
+	chmod a+x android-ndk-r10e-linux-x86_64.bin
+	./android-ndk-r10e-linux-x86_64.bin
 	popd
 fi
 
