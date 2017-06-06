@@ -145,6 +145,7 @@ env.AppendUnique(CPPPATH = [
     os.path.join(Dir('.').abspath, 'ocatomic', 'include'),
     os.path.join(Dir('.').abspath, 'ocrandom', 'include'),
     os.path.join(Dir('.').abspath, 'octhread', 'include'),
+    os.path.join(Dir('.').abspath, 'ocevent', 'include'),
     os.path.join(Dir('.').abspath, 'oic_platform', 'include'),
     os.path.join(Dir('.').abspath, 'octimer', 'include'),
    '#/extlibs/mbedtls/mbedtls/include'
@@ -198,8 +199,10 @@ else:
     common_src.append('ocatomic/src/others/ocatomic.c')
 
 if target_os in ['windows']:
+    common_src.append('ocevent/src/windows/ocevent.c')
     common_src.append('oic_platform/src/windows/oic_winplatform.cpp')
 else:
+    common_src.append('ocevent/src/others/ocevent.c')
     common_src.append('oic_platform/src/others/oic_otherplatforms.c')
 
 # C++ Arduino's <Timer.h> is included so use C++ compiler/flags
@@ -217,6 +220,7 @@ common_env.AppendUnique(CPPPATH = ['#resource/csdk/logger/include'])
 commonlib = common_env.StaticLibrary('c_common', common_src)
 common_env.InstallTarget(commonlib, 'c_common')
 common_env.UserInstallTargetLib(commonlib, 'c_common')
+common_env.UserInstallTargetHeader('iotivity_commontypes.h', 'c_common', 'iotivity_commontypes.h')
 common_env.UserInstallTargetHeader('iotivity_debug.h', 'c_common', 'iotivity_debug.h')
 common_env.UserInstallTargetHeader('platform_features.h', 'c_common', 'platform_features.h')
 
