@@ -69,10 +69,13 @@ OCStackResult DeletePluginList()
     PIPluginBase * tmp = NULL;
     LL_FOREACH_SAFE(pluginList, out, tmp)
     {
-        result = DeletePlugin(out);
-        if (result != OC_STACK_OK)
+        if(out)
         {
-            break;
+            result = DeletePlugin(out);
+            if (result != OC_STACK_OK)
+            {
+                break;
+            }            
         }
     }
     if (result == OC_STACK_OK)
@@ -93,7 +96,7 @@ OCStackResult GetResourceFromHandle(PIPluginBase * plugin, PIResource ** piResou
     PIResourceBase * tmp = NULL;
     LL_FOREACH_SAFE(plugin->resourceList, out, tmp)
     {
-        if (out->piResource.resourceHandle == resourceHandle)
+        if (out && out->piResource.resourceHandle == resourceHandle)
         {
             *piResource = (PIResource *) out;
             return OC_STACK_OK;
@@ -141,33 +144,36 @@ OCStackResult GetResourceFromZigBeeNodeId(PIPluginBase * plugin,
     size_t indexLength = 0;
     LL_FOREACH_SAFE(plugin->resourceList, out, tmp)
     {
-        indexLength = strlen(((PIResource_Zigbee *)out)->nodeId);
-        if(ZigbeeStrEquals(nodeId,
-                           ((PIResource_Zigbee *)out)->nodeId,
-                           checkNodeIdLength,
-                           indexLength) == false)
+        if(out)
         {
-            continue;
+            indexLength = strlen(((PIResource_Zigbee *)out)->nodeId);
+            if(ZigbeeStrEquals(nodeId,
+                               ((PIResource_Zigbee *)out)->nodeId,
+                               checkNodeIdLength,
+                               indexLength) == false)
+            {
+                continue;
+            }
+            indexLength = strlen(((PIResource_Zigbee *)out)->endpointId);
+            if(ZigbeeStrEquals(endpointId,
+                               ((PIResource_Zigbee *)out)->endpointId,
+                               checkEndpointIdLength,
+                               indexLength) == false)
+            {
+                continue;
+            }
+            indexLength = strlen(((PIResource_Zigbee *)out)->clusterId);
+            if(ZigbeeStrEquals(clusterId,
+                               ((PIResource_Zigbee *)out)->clusterId,
+                               checkClusterIdLength,
+                               indexLength) == false)
+            {
+                continue;
+            }
+            OIC_LOG_V(INFO, TAG, "Found a match! URI = %s", out->piResource.uri);
+            *piResource = (PIResource_Zigbee *) out;
+            return OC_STACK_OK;
         }
-        indexLength = strlen(((PIResource_Zigbee *)out)->endpointId);
-        if(ZigbeeStrEquals(endpointId,
-                           ((PIResource_Zigbee *)out)->endpointId,
-                           checkEndpointIdLength,
-                           indexLength) == false)
-        {
-            continue;
-        }
-        indexLength = strlen(((PIResource_Zigbee *)out)->clusterId);
-        if(ZigbeeStrEquals(clusterId,
-                           ((PIResource_Zigbee *)out)->clusterId,
-                           checkClusterIdLength,
-                           indexLength) == false)
-        {
-            continue;
-        }
-        OIC_LOG_V(INFO, TAG, "Found a match! URI = %s", out->piResource.uri);
-        *piResource = (PIResource_Zigbee *) out;
-        return OC_STACK_OK;
     }
     *piResource = NULL;
     return OC_STACK_NO_RESOURCE;
@@ -202,12 +208,15 @@ OCStackResult UpdateZigbeeResourceNodeId(PIPluginBase * plugin,
     size_t checkLength = strlen(eui);
     LL_FOREACH_SAFE(plugin->resourceList, out, tmp)
     {
-        size_t indexLength = strlen(((PIResource_Zigbee *)out)->eui);
-        if(ZigbeeStrEquals(eui, ((PIResource_Zigbee *)out)->eui, checkLength, indexLength) != true)
+        if(out)
         {
-            continue;
+            size_t indexLength = strlen(((PIResource_Zigbee *)out)->eui);
+            if(ZigbeeStrEquals(eui, ((PIResource_Zigbee *)out)->eui, checkLength, indexLength) != true)
+            {
+                continue;
+            }
+            OICStrcpy(((PIResource_Zigbee *)out)->nodeId, (strlen(nodeId)+1)*sizeof(char), nodeId);            
         }
-        OICStrcpy(((PIResource_Zigbee *)out)->nodeId, (strlen(nodeId)+1)*sizeof(char), nodeId);
     }
     return OC_STACK_OK;
 }
@@ -256,10 +265,13 @@ OCStackResult DeleteResourceList(PIPluginBase * plugin)
 
     LL_FOREACH_SAFE(plugin->resourceList, out, tmp)
     {
-        result = DeleteResource(plugin, out);
-        if (result != OC_STACK_OK)
+        if(out)
         {
-            break;
+            result = DeleteResource(plugin, out);
+            if (result != OC_STACK_OK)
+            {
+                break;
+            }            
         }
     }
     if (result == OC_STACK_OK)
