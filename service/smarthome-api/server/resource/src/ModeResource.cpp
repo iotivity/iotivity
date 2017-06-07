@@ -176,6 +176,7 @@ namespace OIC
             void ModeResource::setModeResourceDelegate(ModeResourceDelegate *modeDelegate)
             {
                 OIC_LOG(DEBUG, TAG, "Entered setModeResourceDelegate");
+
                 m_userDelegate = modeDelegate;
                 setDelegate(this);
                 return;
@@ -185,20 +186,9 @@ namespace OIC
             {
                 OIC_LOG(DEBUG, TAG, "Entered onGet");
 
-                PropertyBundle storedBundle = getPropertyBundle();
+                m_userDelegate->getModeCallback();
 
-                if (!storedBundle.contains(KEY_MODES))
-                {
-                    return FAIL;
-                }
-
-                if (!storedBundle.contains(KEY_SUPPORTEDMODES))
-                {
-                    return FAIL;
-                }
-
-                sendResponse(requestId, storedBundle);
-                return KEEP;
+                return SUCCESS;
             }
 
             ResultCode ModeResource::onSet(RequestId requestId, const PropertyBundle& bundle,
@@ -236,12 +226,11 @@ namespace OIC
                 {
                     case SUCCESS:
                         storedBundle.setValue(KEY_MODES, requestList);
-                        sendResponse(requestId, storedBundle);
-                        return KEEP;
+                        setPropertyBundle(storedBundle);
+                        return SUCCESS;
 
                     case FAIL:
-                        sendErrorResponse(requestId, storedBundle);
-                        return KEEP;
+                        return FAIL;
 
                     case KEEP:
                         return KEEP;
