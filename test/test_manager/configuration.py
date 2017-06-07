@@ -9,7 +9,8 @@
  * Samsung Electronics.
  ***************************************************************************************************/
 '''
-
+import os
+import platform
 try:
     import xlsxwriter
 except:
@@ -17,15 +18,16 @@ except:
     exit (0)
 
 # Path Configuration
-API_TC_SRC_DIR = "../src/tc"
-SAMPLEAPP_TC_SRC_DIR = "../IotivityTest/testsuite/IotivityTC"
-TC_BIN_DIR = "../bin/linux"
+API_TC_SRC_DIR = os.path.join("..","src","tc")
+SAMPLEAPP_TC_SRC_DIR = os.path.join ("..","IotivityTest","testsuite","IotivityTC" )
+TC_BIN_DIR = os.path.join("..","bin",platform.system().lower())
 
-TEST_REPORT_DIR = "../TestReport"
-TEST_RESULT_DIR = TEST_REPORT_DIR + "/Result"
-TEST_RESULT_RUN_DIR = TEST_RESULT_DIR + "/__run__"
-TEST_SPEC_DIR = TEST_REPORT_DIR + "/Spec"
-TEST_DEFECT_DIR = TEST_REPORT_DIR + "/Defect"
+
+TEST_REPORT_DIR = ".."+os.sep+"TestReport"
+TEST_RESULT_DIR = TEST_REPORT_DIR + ""+os.sep+"Result"
+TEST_RESULT_RUN_DIR = TEST_RESULT_DIR + ""+os.sep+"__run__"
+TEST_SPEC_DIR = TEST_REPORT_DIR + ""+os.sep+"Spec"
+TEST_DEFECT_DIR = TEST_REPORT_DIR + ""+os.sep+"Defect"
 
 # Test Spec Configuration
 SPEC_REPORT_TYPE = {
@@ -45,4 +47,4 @@ TEST_STANDALONE = False
 TEST_SPEC_XML_FOR_RESULT = "TestSpec.xml"
 
 # Jira Defect Configuration
-TEST_JIRA_DEFECT_FILE_PATH = TEST_DEFECT_DIR + "/SearchRequest.xml"
+TEST_JIRA_DEFECT_FILE_PATH = TEST_DEFECT_DIR + ""+os.sep+"SearchRequest.xml"

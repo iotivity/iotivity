@@ -14,7 +14,7 @@ import os
 import optparse
 import subprocess
 import re
-
+import platform
 from configuration import *
 from ite.exec.runner import TestRunner, TestRunnerOption
 from ite.reporter.tc_reporter import TestSpecReporter
@@ -49,7 +49,7 @@ oparser.add_option("--testsuite", action="store", dest="testsuite")
 oparser.add_option("-c", action="store", dest="testcase")
 oparser.add_option("--testcase", action="store", dest="testcase")
 
-oparser.set_defaults(file_filter='', platform='linux', target='', testlist='', testprogress='', testresult='', 
+oparser.set_defaults(file_filter='', platform=platform.system().lower(), target='', testlist='', testprogress='', testresult='', 
                      standalone=TEST_STANDALONE, runonce=False)
 
 opts, args = oparser.parse_args()
@@ -90,10 +90,13 @@ total_found_tc = 0
 runner = TestRunner()
 for fname in os.listdir(TC_BIN_DIR):
     if "." in fname:
-        continue
-    
+        if fname.endswith('.exe'):
+            fname = fname.split('.')[0]
+        else:
+            continue
     if not fname.startswith(TC_BIN_PREFIX):
         continue
+
 
     if not fname.endswith(TC_BIN_SUFFIX):
         continue
@@ -139,9 +142,13 @@ for fname in os.listdir(TC_BIN_DIR):
         given_testcases = []
 
     if option.testset == None:
-
-        command = ["./%s" % os.path.basename(filepath), '--gtest_list_tests']
-        process = subprocess.Popen(command, cwd=os.path.dirname(filepath), stdout=subprocess.PIPE)
+        if platform == 'linux':
+            command = ["./%s" % os.path.basename(filepath), '--gtest_list_tests']
+            process = subprocess.Popen(command, cwd=os.path.dirname(filepath), stdout=subprocess.PIPE)
+        if platform == 'windows':
+            filepath = filepath+'.exe'
+            command = ["%s" % os.path.basename(filepath), '--gtest_list_tests']
+            process = subprocess.Popen(command, cwd=os.path.dirname(filepath), stdout=subprocess.PIPE, shell= True)
         testset = set()
         testsuite = ''
 

@@ -17,7 +17,7 @@ import threading
 import signal
 from time import strftime
 from datetime import datetime
-
+import platform
 from ite.result.collector import TestResultCollector
 from ite.constants import *
 from ite.util import *
@@ -44,9 +44,18 @@ class TestRunner:
         return testset
 
     def terminate_process(self, name):
-        proc = subprocess.Popen(["pgrep", name], stdout=subprocess.PIPE)
-        for pid in proc.stdout:
-            os.kill(int(pid), signal.SIGTERM)
+        if platform.system().lower()== 'linux':
+            proc = subprocess.Popen(["pgrep", name], stdout=subprocess.PIPE)
+            for pid in proc.stdout:
+                os.kill(int(pid), signal.SIGTERM)
+
+        if platform.system().lower() == 'windows':
+            proc = subprocess.Popen('tasklist', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell= True)
+            teeProcess = [str(x) for x in proc.stdout if name in str(x)]
+            for teeProc in teeProcess:
+                PID = teeProc.split()[1]
+                subprocess.call('taskkill /pid %s /f' % str(PID), shell=True)
+
 
     def run_gtest(self, exe_path, is_shuffle, repeat, filter_str, output, log_path):
         shuffle_option = ''
@@ -56,9 +65,14 @@ class TestRunner:
         repeat_option = "--gtest_repeat=" + str(repeat)
         filter_option = "--gtest_filter=" + filter_str
         output_option = "--gtest_output=xml:" + output
-        command = ["./%s" % os.path.basename(exe_path), shuffle_option, repeat_option, output_option, filter_option]
 
-        proc = subprocess.Popen(command, cwd=os.path.dirname(exe_path), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if platform.system().lower() == 'linux':
+            command = ["./%s" % os.path.basename(exe_path), shuffle_option, repeat_option, output_option, filter_option]
+            proc = subprocess.Popen(command, cwd=os.path.dirname(exe_path), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        elif platform.system().lower() == 'windows':
+            command = ["%s" % os.path.basename(exe_path), shuffle_option, repeat_option, output_option, filter_option]
+            proc = subprocess.Popen(command, cwd=os.path.dirname(exe_path), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
         hangchecking = True
         isHanged = False
@@ -83,14 +97,19 @@ class TestRunner:
 
                 if elapsed_time > timeout:
                     isHanged = True
-                    self.terminate_process("tee")
+                    if platform.system().lower() == 'linux':
+                        self.terminate_process("tee")
+                    elif platform.system().lower() == 'windows':
+                        self.terminate_process("mtee.exe")
                     proc.terminate()
                     break
 
         t = threading.Thread(target=check_hang)
         t.start()
-
-        subprocess.call("tee %s" % log_path, shell=True, stdin=proc.stdout, stderr=proc.stderr)
+        if platform.system().lower() == 'linux':
+            subprocess.call("tee %s" % log_path, shell=True, stdin=proc.stdout, stderr=proc.stderr)
+        elif platform.system().lower() == 'windows':
+            subprocess.call("mtee.exe %s" % log_path, shell=True, stdin=proc.stdout, stderr=proc.stderr)
 
         hangchecking = False
         if t.is_alive():

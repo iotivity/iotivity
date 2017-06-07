@@ -1,0 +1,9 @@
+To run the test runner in 
+Windows: 
+	1. Download mtee, a win32 console application from- https://ritchielawrence.github.io/mtee/
+	2. Extract and copy the mtee.exe file to C/Windows/System32 folder and ensure that the System32 is included in System Path
+	3. While running Test_Runner.py, along with the required arguments also ensure to pass platform parameter, -p windows. 
+ 
+Linux 
+	1. While running Test_Runner.py, along with the required arguments also ensure to pass platform parameter, -p linux
+	

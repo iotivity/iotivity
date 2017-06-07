@@ -68,8 +68,8 @@ TESTFW_TYPES = namedtuple('TESTFW_TYPES',
                            ('gtest', 'junit', 'arduinounit')
 
 TEST_PLATFORM = namedtuple('TEST_PLATFORM',
-                           ['LINUX', 'TIZEN', 'ANDROID', 'ARDUINO'])\
-                           ('LINUX', 'TIZEN', 'ANDROID', 'ARDUINO')
+                           ['LINUX', 'TIZEN', 'ANDROID', 'ARDUINO', 'WINDOWS'])\
+                           ('LINUX', 'TIZEN', 'ANDROID', 'ARDUINO', 'WINDOWS')
 
 NO_TRANSPORT = 'NONE'
 NO_NETWORK = 'NONE'
@@ -97,7 +97,8 @@ ALL_TRANSPORT_VALUES = {
                         'LINUX'   : '(IP+TCP)',
                         'TIZEN'   : '(IP+BT+BLE)',
                         'ANDROID' : '(IP+TCP)',
-                        'ARDUINO' : '(IP+BLE)'
+                        'ARDUINO' : '(IP+BLE)',
+                        'WINDOWS' : '(IP+TCP)'
                       }
 
 DEFECT_STATUS = namedtuple('DEFECT_STATUS',
