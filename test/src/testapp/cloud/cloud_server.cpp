@@ -60,6 +60,7 @@
 using namespace std;
 using namespace OC;
 
+#define ROOT_CERT "rootca.crt"
 const char* CLOUD_SVR_CBOR_DAT = "cloud.dat";
 static OCPersistentStorage g_pstStr;
 static string g_authprovider = "github";
@@ -109,7 +110,7 @@ static bool readFile(const char *name, OCByteString *out)
     if (length < 0)
     {
         OIC_LOG(ERROR, TAG, "Failed to ftell");
-       // goto exit;
+        // goto exit;
     }
 
     if (fseek(file, 0, SEEK_SET))
@@ -136,7 +137,7 @@ static bool readFile(const char *name, OCByteString *out)
     }
 
     out->bytes = buffer;
-    out->len   = length;
+    out->len = length;
 
     result = true;
 
@@ -149,26 +150,27 @@ int saveTrustCert(void)
     __FUNC_IN__
     OCStackResult res = OC_STACK_ERROR;
     uint16_t g_credId = 0;
-    //OIC_LOG(INFO, TAG, "Save Trust Cert. Chain into Cred of SVR");
+    OIC_LOG(INFO, TAG, "Save Trust Cert. Chain into Cred of SVR");
 
-    ByteArray_t trustCertChainArray = {0, 0};
-    if (!readFile("rootca.crt", (OCByteString *)&trustCertChainArray))
+    ByteArray_t trustCertChainArray =
+    {   0, 0};
+    if (!readFile(ROOT_CERT, (OCByteString *)&trustCertChainArray))
     {
-        //OIC_LOG_V(ERROR, TAG, "Can't read %s file", filename);
+        OIC_LOG_V(ERROR, TAG, "Can't read %s file", ROOT_CERT);
         return OC_STACK_ERROR;
     }
 
-    //OIC_LOG_BUFFER(DEBUG, TAG, trustCertChainArray.data, trustCertChainArray.len);
+    OIC_LOG_BUFFER(DEBUG, TAG, trustCertChainArray.data, trustCertChainArray.len);
 
     res = OCSaveTrustCertChain(trustCertChainArray.data, trustCertChainArray.len, OIC_ENCODING_PEM, &g_credId);
 
     if (OC_STACK_OK != res)
     {
-        //OIC_LOG(ERROR, TAG, "OCSaveTrustCertChain API error");
+        OIC_LOG(ERROR, TAG, "OCSaveTrustCertChain API error");
     }
     else
     {
-        //OIC_LOG_V(INFO, TAG, "CredId of Saved Trust Cert. Chain into Cred of SVR : %d.\n", g_credId);
+        OIC_LOG_V(INFO, TAG, "CredId of Saved Trust Cert. Chain into Cred of SVR : %d.\n", g_credId);
     }
     OICFree(trustCertChainArray.data);
 
@@ -293,28 +295,6 @@ static void handleLoginoutCB(const HeaderOptions &, const OCRepresentation &rep,
     g_isCbInvoked = CALLBACK_INVOKED;
 }
 
-void signUp()
-{
-    __FUNC_IN__
-
-    CloudCommonUtil::signUp(accountMgr);
-    __FUNC_OUT__
-}
-
-void signIn()
-{
-    __FUNC_IN__
-    CloudCommonUtil::signIn(accountMgr);
-    __FUNC_OUT__
-}
-
-void signOut()
-{
-    __FUNC_IN__
-    CloudCommonUtil::signOut(accountMgr);
-    __FUNC_OUT__
-}
-
 #ifdef __SECURED__
 static void createAclCb(void* g_ctx, OCStackResult result, void* data)
 {
@@ -406,16 +386,17 @@ void getAclId()
 
 int main()
 {
+    bool isInitialized = true;
 #ifdef __SECURED__
-    printf("SECURED MODE : On\n");
+    IOTIVITYTEST_LOG(INFO, "SECURED MODE : On");
 #else
-    printf("SECURED MODE : Off\n");
+    IOTIVITYTEST_LOG(INFO, "SECURED MODE : Off");
 #endif
 
 #ifdef __TLS_ON__
-    printf("TLS MODE : On\n");
+    IOTIVITYTEST_LOG(INFO, "TLS MODE : On");
 #else
-    printf("TLS MODE : Off\n");
+    IOTIVITYTEST_LOG(INFO, "TLS MODE : Off");
 #endif
 
     g_hostAddress = CloudCommonUtil::getDefaultHostAddess();
@@ -427,14 +408,25 @@ int main()
     enableTlsMode();
 #endif
 #endif
-    signUp();
-    signIn();
-#ifdef __SECURED__
-    createAcl();
-    getAclId();
-#endif
-    signOut();
 
-    printf("Cloud Initialization Successful\n");
+    isInitialized = CloudCommonUtil::signUp(accountMgr);
+
+    if (isInitialized)
+    {
+
+        isInitialized = CloudCommonUtil::signIn(accountMgr);
+
+#ifdef __SECURED__
+        if (isInitialized)
+        {
+            createAcl();
+            getAclId();
+            CloudCommonUtil::signOut(accountMgr);
+        }
+#endif
+    }
+
+    IOTIVITYTEST_LOG(INFO, "Cloud Initialization %s", isInitialized ? "Successful" : "Failed");
+
     return 0;
 }

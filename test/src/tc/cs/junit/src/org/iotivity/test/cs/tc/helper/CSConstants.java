@@ -45,16 +45,14 @@ public class CSConstants {
     public static final String InputPinCBCallbackInvoked = "InputPinCBCallbackInvoked";
 
     // PM Initialization Resources
-    public static final String OIC_CLIENT_CBOR_DB_FILE = "oic_svr_db_client.dat";
+    public static final String OIC_CLIENT_CBOR_DB_FILE = "cloud.dat";
 
     public static final String OIC_CLOUD_CLIENT = "cloud.dat";
     public static final String OIC_SQL_DB_FILE = "Pdm.db";
     public static final String SERVER_SQL_DB_FILE = "ServerPdm.db";
 
-    
     //Cloud Resource
     public static final String CERT_SERIAL_ONE = "1";
-
 
     // Older Version... will be removed
     public static final String SUBJECT_O1 = "44446d69-6e44-6576-6963-655555400001";

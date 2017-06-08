@@ -18,10 +18,11 @@
  *
  *
  ******************************************************************/
+#ifdef TC_DISABLE
 
-#ifdef TC_ENABLE
 #include "CSCsdkCloudHelper.h"
 #include "CSCsdkUtilityHelper.h"
+
 
 class CSCsdkGetInvitationTest_stc: public ::testing::Test
 {

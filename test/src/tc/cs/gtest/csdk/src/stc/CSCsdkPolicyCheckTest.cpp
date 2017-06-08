@@ -83,12 +83,6 @@ protected:
             return;
         }
 
-        if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
-        {
-            SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-            return;
-        }
-
         if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), m_aces, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
         {
             SET_FAILURE(m_CloudAclHelper.getFailureMessage());

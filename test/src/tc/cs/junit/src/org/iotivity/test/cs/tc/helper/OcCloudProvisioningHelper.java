@@ -320,37 +320,38 @@ public class OcCloudProvisioningHelper
     }
 
     @Override
-    public void getCRLListener(boolean arg0) {
-        showLog(Info, "getCRLListener IN");
-        mIsCbInvoked = CSConstants.CALLBACK_INVOKED;
-    }
-
-    @Override
-    public void requestCertificateListener(boolean arg0) {
-        showLog(Info, "requestCertificateListener IN");
-        mIsCbInvoked = CSConstants.CALLBACK_INVOKED;
-
-    }
-
-    @Override
-    public void postCRLListener(boolean arg0) {
-        showLog(Info, "postCRLListener IN");
-        mIsCbInvoked = CSConstants.CALLBACK_INVOKED;
-
-    }
-
-    @Override
-    public void getIndividualAclInfoListener(boolean arg0) {
-        showLog(Info, "getIndividualAclInfoListener IN");
-        mIsCbInvoked = CSConstants.CALLBACK_INVOKED;
-
-    }
-
-    @Override
-    public void getAclIdByDeviceListener(boolean arg0, String arg1) {
+    public void getAclIdByDeviceListener(int i, String aclId) {
         showLog(Info, "getAclIdByDeviceListener IN");
+        showLog(Info, "ACL ID = " + aclId);
         mIsCbInvoked = CSConstants.CALLBACK_INVOKED;
+    }
 
+    @Override
+    public void getCRLListener(int i) {
+        showLog(Info, "getCRLListener IN");
+        showLog(Info, "getCRLListener Callback result = " + i);
+        mIsCbInvoked = CSConstants.CALLBACK_INVOKED;
+    }
+
+    @Override
+    public void getIndividualAclInfoListener(int i) {
+        showLog(Info, "getIndividualAclInfoListener IN");
+        showLog(Info, "getIndividualAclInfoListener Callback result = " + i);
+        mIsCbInvoked = CSConstants.CALLBACK_INVOKED;
+    }
+
+    @Override
+    public void postCRLListener(int i) {
+        showLog(Info, "postCRLListener IN");
+        showLog(Info, "postCRLListener Callback result = " + i);
+        mIsCbInvoked = CSConstants.CALLBACK_INVOKED;
+    }
+
+    @Override
+    public void requestCertificateListener(int i) {
+        showLog(Info, "requestCertificateListener IN");
+        showLog(Info, "requestCertificateListener Callback result = " + i);
+        mIsCbInvoked = CSConstants.CALLBACK_INVOKED;
     }
 
     private boolean waitTillCBInvoke() {

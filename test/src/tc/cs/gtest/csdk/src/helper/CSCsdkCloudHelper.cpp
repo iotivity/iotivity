@@ -621,8 +621,6 @@ bool CSCsdkCloudHelper::cloudAclIndividualGetInfo(void* ctx, const char *aclId,
     __FUNC_IN__
     s_isCbInvoked = CALLBACK_NOT_INVOKED;
 
-    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] Acl Id returns %s", aclId);
-
     OCStackResult result = OCCloudAclIndividualGetInfo(ctx, aclId, endPoint, callback);
     IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCCloudAclIndividualGetInfo returns %s",
             CommonUtil::getOCStackResult(result));
@@ -1235,11 +1233,14 @@ void CSCsdkCloudHelper::cloudResponseCB(void* ctx, OCClientResponse* response, v
     IOTIVITYTEST_LOG(INFO, "%s: Received result = %d for ctx : %s", __func__, response->result,
             (char* )ctx);
 
-    if(response->result == OC_STACK_OK || response->result ==OC_STACK_RESOURCE_CHANGED || response->result == 36) {
+    if (OC_STACK_OK == response->result || OC_STACK_RESOURCE_CHANGED == response->result
+            || OC_STACK_DUPLICATE_REQUEST == response->result)
+    {
         printRepresentation(parseOCClientResponse(response));
     }
 
-    if (response->result <= OC_STACK_RESOURCE_CHANGED || response->result == 36)
+    if (OC_STACK_RESOURCE_CHANGED == response->result
+            || OC_STACK_DUPLICATE_REQUEST == response->result)
     {
         s_isCbInvoked = true;
     }
@@ -1254,11 +1255,14 @@ void CSCsdkCloudHelper::aclResponseCB(void* ctx, OCClientResponse* response, voi
     IOTIVITYTEST_LOG(INFO, "%s: Received result = %d for ctx : %s", __func__, response->result,
             (char* )ctx);
 
-    if(response->result == OC_STACK_OK || response->result ==OC_STACK_RESOURCE_CHANGED) {
+    if (OC_STACK_OK == response->result || OC_STACK_RESOURCE_CHANGED == response->result
+            || OC_STACK_DUPLICATE_REQUEST == response->result)
+    {
         printRepresentation(parseOCClientResponse(response));
     }
 
-    if (response->result <= OC_STACK_RESOURCE_CHANGED)
+    if (OC_STACK_RESOURCE_CHANGED == response->result
+            || OC_STACK_DUPLICATE_REQUEST == response->result)
     {
         s_isCbInvoked = true;
     }
@@ -1275,7 +1279,8 @@ void CSCsdkCloudHelper::createGroupResponseCB(void* ctx, OCClientResponse* respo
     IOTIVITYTEST_LOG(INFO, "%s: Received result = %d for ctx : %s", __func__, response->result,
             (char* )ctx);
 
-    if(response->result == OC_STACK_OK || response->result ==OC_STACK_RESOURCE_CHANGED) {
+    if (response->result == OC_STACK_OK || response->result == OC_STACK_RESOURCE_CHANGED)
+    {
         printRepresentation(parseOCClientResponse(response));
     }
 
@@ -1286,60 +1291,6 @@ void CSCsdkCloudHelper::createGroupResponseCB(void* ctx, OCClientResponse* respo
 
     __FUNC_OUT__
 }
-
-//void CSCsdkCloudHelper::cloudResponseCB(void* ctx, OCStackResult result, void* data)
-//{
-//    OC_UNUSED(ctx);
-//    OC_UNUSED(data);
-//
-//    char* dataChar = (char*) data;
-//
-//    IOTIVITYTEST_LOG(INFO, "%s: Received result = %d for ctx : %s", __func__, result, (char* )ctx);
-//    IOTIVITYTEST_LOG(INFO, "Received Data: %s", dataChar);
-//
-//    if (result <= OC_STACK_RESOURCE_CHANGED)
-//    {
-//        s_isCbInvoked = true;
-//    }
-//}
-//
-//void CSCsdkCloudHelper::aclResponseCB(void* ctx, OCStackResult result, void* data)
-//{
-//    __FUNC_IN__
-//    OC_UNUSED(ctx);
-//    OC_UNUSED(data);
-//
-//    s_aclId = string((char*) data);
-//
-//    IOTIVITYTEST_LOG(INFO, "%s: Received result = %d for ctx : %s", __func__, result, (char* )ctx);
-//    IOTIVITYTEST_LOG(INFO, "Received Data: %s", data);
-//
-//    if (result <= OC_STACK_RESOURCE_CHANGED)
-//    {
-//        s_isCbInvoked = true;
-//    }
-//
-//    __FUNC_OUT__
-//}
-//
-//void CSCsdkCloudHelper::createGroupResponseCB(void* ctx, OCStackResult result, void* data)
-//{
-//    __FUNC_IN__
-//    OC_UNUSED(ctx);
-//    OC_UNUSED(data);
-//
-//    s_groupId = string((char*) data);
-//
-//    IOTIVITYTEST_LOG(INFO, "%s: Received result = %d for ctx : %s", __func__, result, (char* )ctx);
-//    IOTIVITYTEST_LOG(INFO, "Received Data: %s", data);
-//
-//    if (result <= OC_STACK_RESOURCE_CHANGED)
-//    {
-//        s_isCbInvoked = true;
-//    }
-//
-//    __FUNC_OUT__
-//}
 
 void CSCsdkCloudHelper::handleLoginoutCB(const HeaderOptions &, const OCRepresentation &rep,
         const int ecode)

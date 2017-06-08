@@ -18,7 +18,8 @@
  *
  *
  ******************************************************************/
-#ifdef TC_ENABLE
+
+#ifdef TC_DISABLE
 #include "CSCsdkCloudHelper.h"
 #include "CSCsdkUtilityHelper.h"
 

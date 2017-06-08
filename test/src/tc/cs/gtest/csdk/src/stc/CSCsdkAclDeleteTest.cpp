@@ -203,7 +203,7 @@ TEST_F(CSCsdkAclDeleteTest_stc, OCCloudAclAcesDelete_SRC_RV_P)
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
 
-    if (!m_CloudAclHelper.cloudAclIdDelete((void*) CTX_DELETE_ACL, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, NULL, OC_STACK_OK, false))
+    if (!m_CloudAclHelper.cloudAclIdDelete((void*) CTX_DELETE_ACL, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -256,7 +256,7 @@ TEST_F(CSCsdkAclDeleteTest_stc, OCCloudAclAcesDeleteCb_NV_P)
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
 
-    if (!m_CloudAclHelper.cloudAclIdDelete((void*) CTX_DELETE_ACL, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, NULL, OC_STACK_OK, false))
+    if (!m_CloudAclHelper.cloudAclIdDelete((void*) CTX_DELETE_ACL, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -309,7 +309,7 @@ TEST_F(CSCsdkAclDeleteTest_stc, OCCloudAclIndividualAceDelete_SRC_RV_P)
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
 
-    if (!m_CloudAclHelper.cloudAclIdDelete((void*) CTX_DELETE_ACL, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, NULL, OC_STACK_OK, false))
+    if (!m_CloudAclHelper.cloudAclIdDelete((void*) CTX_DELETE_ACL, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -362,7 +362,7 @@ TEST_F(CSCsdkAclDeleteTest_stc, OCCloudAclIndividualAceDeleteCb_NV_P)
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
 
-    if (!m_CloudAclHelper.cloudAclIdDelete((void*) CTX_DELETE_ACL, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, NULL, OC_STACK_OK, false))
+    if (!m_CloudAclHelper.cloudAclIdDelete((void*) CTX_DELETE_ACL, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }

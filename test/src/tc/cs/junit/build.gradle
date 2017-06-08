@@ -47,7 +47,7 @@ android {
       
         main {
               manifest.srcFile 'AndroidManifest.xml'
-              java.srcDirs = ['src', '../../../common/commonutil/java/resource']
+              java.srcDirs = ['src', '../../../common/commonutil/java/cloud', '../../../common/commonutil/java/util']
               jni.srcDirs = [] //disable automatic ndk-build
               assets.srcDirs = ['./assets'] 
         }

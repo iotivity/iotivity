@@ -27,7 +27,10 @@ import org.iotivity.base.OcPlatform;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
+import org.iotivity.ca.CaInterface;
+import org.iotivity.ca.OicCipher;
 import org.iotivity.base.OcCloudProvisioning;
+import org.iotivity.base.OcConnectivityType;
 import org.iotivity.test.cs.tc.helper.CSConstants;
 import org.iotivity.test.cs.tc.helper.OcCloudProvisioningHelper;
 
@@ -124,7 +127,7 @@ public class CSOcCloudProvisioningTest extends InstrumentationTestCase {
                 mOcCloudProvisioningHelper.getIndividualAclInfo(
                         mOcCloudProvisioning, null,
                         mOcCloudProvisioningHelper));
-        assertEquals(CSConstants.WRONG_ERROR_CODE, CSConstants.ERROR_INVALID_CALLBACK,
+        assertEquals(CSConstants.WRONG_ERROR_CODE, CSConstants.ERROR_INVALID_PARAM,
                 CSConstants.mErrorMessage);
     }
 

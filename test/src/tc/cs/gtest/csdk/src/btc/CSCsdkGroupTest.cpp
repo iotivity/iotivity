@@ -18,11 +18,9 @@
  *
  *
  ******************************************************************/
-#ifdef TC_ENABLE
-
 #include "CSCsdkCloudHelper.h"
 #include "CSCsdkUtilityHelper.h"
-
+#ifdef TC_DISABLE
 class CSCsdkGroupTest_btc: public ::testing::Test
 {
 protected:
