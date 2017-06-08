@@ -45,18 +45,6 @@ protected:
         m_pREHelper = REHelper::getInstance();
 
         callbackcheck = false;
-        bool isResourceAvailable = m_pREHelper->findPrimitiveResources(
-        RESOURCE_TYPE_LIGHT);
-        if (isResourceAvailable)
-        {
-            m_resource = m_pREHelper->getFoundResourceList().at(0);
-            IOTIVITYTEST_LOG(DEBUG, "Uri of 1st resource on list is = %s",
-                    m_pREHelper->getFoundResourceList().at(0)->getUri().c_str());
-        }
-        else
-        {
-            SET_FAILURE("Precondition Failed, No Resource Found!!");
-        }
 
         discoveryTask = nullptr;
         m_foundResourceList.clear();
@@ -66,6 +54,7 @@ protected:
     virtual void TearDown()
     {
 
+        m_foundResourceList.clear();
 #ifdef __LINUX__
         CommonUtil::killApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);

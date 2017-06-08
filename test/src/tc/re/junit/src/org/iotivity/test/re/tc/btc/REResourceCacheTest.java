@@ -538,4 +538,3 @@ public class REResourceCacheTest extends InstrumentationTestCase {
   }
 
 }
-

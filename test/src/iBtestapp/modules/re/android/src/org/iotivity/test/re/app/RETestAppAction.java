@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-package org.iotivity.service.re;
+package org.iotivity.test.re.app;
 
 import java.util.ArrayList;
 
@@ -29,10 +29,10 @@ import org.iotivity.service.client.RcsRemoteResourceObject;
 import org.iotivity.service.server.RcsResourceObject;
 import org.iotivity.service.server.RcsResourceObject.AutoNotifyPolicy;
 
-import static org.iotivity.service.re.REUtility.*;
+import static org.iotivity.test.re.app.REUtility.*;
 
-import org.iotivity.service.re.REAppHelper.LogLevel;
-import org.iotivity.service.re.REAppHelper.ResourceFounderTask;
+import org.iotivity.test.re.app.REAppHelper.LogLevel;
+import org.iotivity.test.re.app.REAppHelper.ResourceFounderTask;
 import org.iotivity.service.testapp.framework.Base;
 
 public class RETestAppAction extends Base {

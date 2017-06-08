@@ -44,7 +44,16 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion  21
     buildToolsVersion "21.1.2"
-     
+
+
+    packagingOptions {
+        pickFirst 'lib/armeabi/libca-interface.so'
+        pickFirst 'lib/armeabi-v7a/libca-interface.so'
+        pickFirst 'lib/x86/libca-interface.so'
+        pickFirst 'lib/x86_64/libca-interface.so'
+        pickFirst 'lib/arm64-v8a/libca-interface.so'
+    }
+
     sourceSets {
       
         main {

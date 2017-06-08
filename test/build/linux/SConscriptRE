@@ -27,7 +27,7 @@ import os
 env_linux['CC'] = 'g++'
 
 iotivity_root = env_linux.get('IOTIVITY_ROOT')
-iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
+iotivity_lib_path = [env_linux.get('IOTIVITY_LIB_PATH'), '.', '/usr/local/lib']
 iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
 variant_dir = env_linux.get('VARIANT_DIR')
 install_dir = env_linux.get('INSTALL_DIR')
@@ -88,7 +88,7 @@ if 'tc' in test:
                 target = 'iotivity_re_test', 
                 CPPPATH = iotivity_include_paths + tc_include_paths, 
                 LIBS = libs + ['gtest', 'tc_util', 'pthread', 'octbstack', 'connectivity_abstraction', 'dl'], 
-                LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux', '.'], 
+                LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux'], 
                 CPPFLAGS = cppflags + common_linux_cppflags, 
                 RPATH = iotivity_lib_path)
     install_targets += re_tc
@@ -97,7 +97,7 @@ if 'tc' in test:
                 target = 'iotivity_re_server', 
                 CPPPATH = iotivity_include_paths + tc_include_paths, 
                 LIBS = libs + ['tc_util', 'pthread', 'octbstack', 'connectivity_abstraction', 'dl'], 
-                LIBPATH = [iotivity_lib_path, '.'], 
+                LIBPATH = iotivity_lib_path, 
                 CPPFLAGS = cppflags + common_linux_cppflags, 
                 RPATH = iotivity_lib_path)
     install_targets += re_server
@@ -107,7 +107,7 @@ if 'app' in test:
                     target = 'iotivity_re_app', 
                     CPPPATH = iotivity_include_paths + testapp_include_paths, 
                     LIBS = libs + ['octbstack', 'connectivity_abstraction', 'dl'], 
-                    LIBPATH = [iotivity_lib_path, '.'],
+                    LIBPATH = iotivity_lib_path,
                     CPPFLAGS = cppflags + common_linux_cppflags, 
                     RPATH = iotivity_lib_path)
     install_targets += re_testapp

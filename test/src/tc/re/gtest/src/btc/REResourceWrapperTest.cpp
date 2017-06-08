@@ -43,10 +43,10 @@ protected:
         bool isResourceAvailable = m_pREHelper->findPrimitiveResources(
                 RESOURCE_TYPE_LIGHT);
         if (isResourceAvailable) {
-            IOTIVITYTEST_LOG(DEBUG, "Resource found!!");
+            IOTIVITYTEST_LOG(DEBUG, "Resource found in SetUp!!");
             m_resource = m_pREHelper->getFoundResourceList().at(0);
         } else {
-            SET_FAILURE("Precondition Failed, No Resource Found!!");
+            SET_FAILURE("Precondition Failed, No Resource Found in SetUp!!");
         }
         m_errorMsg = "";
     }
@@ -1082,11 +1082,11 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceWithoutResType_URSV_N)
                 adpass, std::bind(&REResourceWrapperTest_btc::OnResourceDiscovered, this, PH::_1));
         CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
         discoveryTask->cancel();
-        SET_FAILURE("URSV Test Fail ");
     }
     catch (exception& e)
     {
         string exceptionMsg = string(e.what());
+        SET_FAILURE("URSV Test Fail ");
     }
 }
 #endif
@@ -1792,11 +1792,10 @@ TEST_F(REResourceWrapperTest_btc, DiscoverResourceByTypesWithUri_Uri_USV_N)
         CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
         discoveryTask->cancel();
-        SET_FAILURE("Although uri is not valid. API called successfully!");
     }
     catch (exception& e)
     {
-
+    	SET_FAILURE("Although uri is not valid. API called successfully!");
     }
 }
 #endif

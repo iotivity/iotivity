@@ -45,6 +45,7 @@ public class REResourceBrokerTest extends InstrumentationTestCase {
     PlatformConfig platformConfigObj = new PlatformConfig(getInstrumentation()
         .getTargetContext(), ServiceType.IN_PROC, ModeType.CLIENT_SERVER,
         "0.0.0.0", 0, QualityOfService.LOW);
+
     OcPlatform.Configure(platformConfigObj);
     Log.i(LOG_TAG, "Configuration done Successfully");
     m_REHelper.waitInSecond(CONFIG_WAIT_FIVE);
@@ -55,6 +56,7 @@ public class REResourceBrokerTest extends InstrumentationTestCase {
     } else {
       Log.d(LOG_TAG, m_ErrorMsg.toString());
     }
+
     m_ErrorMsg.setLength(0);
   }
 
@@ -242,4 +244,3 @@ public class REResourceBrokerTest extends InstrumentationTestCase {
   }
 
 }
-

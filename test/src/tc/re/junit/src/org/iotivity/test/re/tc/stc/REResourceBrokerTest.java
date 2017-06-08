@@ -151,7 +151,7 @@ public class REResourceBrokerTest extends InstrumentationTestCase {
     if (!m_REHelper.startMonitoring(m_ErrorMsg)) {
       fail(m_ErrorMsg.toString());
     }
-    m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
+
     if (!m_REHelper.stopMonitoring(m_ErrorMsg)) {
       fail(m_ErrorMsg.toString());
     }
@@ -220,9 +220,10 @@ public class REResourceBrokerTest extends InstrumentationTestCase {
    * @objective Test 'stopMonitoring' function with terminate loop check
    * @target void stopMonitoring()
    * @test_data callback function for receiving changed state
-   * @pre_condition Remote Resource Object should be instantialized
-   * @procedure 1. Perform stopMonitoring() API
-   *            2. Perform stopMonitoring() API for twice
+   * @pre_condition 1. Remote Resource Object should be instantialized 2.
+   *                Perform startMonitoring() API 3. Perform stopMonitoring()
+   *                API
+   * @procedure Perform stopMonitoring() API
    * @post_condition None
    * @expected No crash occurs
    **/
@@ -447,4 +448,3 @@ public class REResourceBrokerTest extends InstrumentationTestCase {
   }
 
 }
-

@@ -19,7 +19,7 @@
 *
 ******************************************************************/
 '''
-print '\n---------------Started Building IotivitySecTest for Tizen---------------\n'
+print '\n---------------Started Building RE Testcases/TestApps for Tizen---------------\n'
 
 env = Environment(CC='g++')
 
@@ -31,18 +31,18 @@ iotivity_test_root = 'test'
 iotivity_include_paths = [
     iotivity_root + '/resource/include',
     iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/c_common',
     iotivity_root + '/resource/csdk/stack/include',
     iotivity_root + '/resource/csdk/ocsocket/include',
     iotivity_root + '/resource/csdk/ocrandom/include',
     iotivity_root + '/resource/oc_logger/include',
-    iotivity_root + '/resource/csdk/resource-directory/include',
     iotivity_root + '/extlibs/cereal/include',
     iotivity_root + '/extlibs/timer',
-    iotivity_root + '/resource/c_common/oic_malloc/include',
-    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/extlibs/timer/',
     iotivity_root + '/resource/csdk/logger/include',
     iotivity_root + '/extlibs/tinycbor/tinycbor/src',
-    iotivity_root + '/service/resource-encapsulation/include',
+    iotivity_root + '/resource/csdk/security/include',
+    iotivity_root + '/service/resource-encapsulation/include/',
     '/usr/include/dlog'
 ]
 

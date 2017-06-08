@@ -591,7 +591,7 @@ void getRemoteAttributes()
 }
 
 // Start Caching Callback method
-void onCacheUpdated(const RCSResourceAttributes& resourceAttributes)
+void onCacheUpdated(const RCSResourceAttributes& resourceAttributes, int arg1)
 {
     cout << "***onCacheUpdated***" << endl;
 

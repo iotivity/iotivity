@@ -73,6 +73,7 @@ bool REHelper::findPrimitiveResources(string resourceType)
     	discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
         		OC_RSRVD_WELL_KNOWN_URI, resourceType, std::bind(&REHelper::OnPrimitiveResourceDiscovered, this, PH::_1));
         isSuccess = waitForResourceFound(m_primitiveResourceList, CALLBACK_WAIT_MAX);
+        discoveryTask->cancel();
     }
     catch (exception& e)
     {

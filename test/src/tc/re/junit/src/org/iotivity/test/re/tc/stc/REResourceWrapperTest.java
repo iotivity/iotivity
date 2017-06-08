@@ -602,4 +602,3 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
   }
 
 }
-

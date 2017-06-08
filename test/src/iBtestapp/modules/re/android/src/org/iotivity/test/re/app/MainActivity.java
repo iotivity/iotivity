@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-package org.iotivity.service.re;
+package org.iotivity.test.re.app;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -39,7 +39,7 @@ import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
 
-import static org.iotivity.service.re.REUtility.*;
+import static org.iotivity.test.re.app.REUtility.*;
 
 public class MainActivity extends Base {
 

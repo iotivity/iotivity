@@ -106,15 +106,17 @@ public class REAPIHelper {
                                                                                  };
 
   public OnCacheUpdatedListener              mOnCacheUpdatedListener             = new OnCacheUpdatedListener() {
-                                                                                   @Override
-                                                                                   public void onCacheUpdated(
-                                                                                       RcsResourceAttributes attrs) {
-                                                                                     g_IsCasheUpdated = true;
-                                                                                     Log.i(
-                                                                                         LOG_TAG,
-                                                                                         "onCacheUpdated with RcsResourceAttributes: "
-                                                                                             + attrs);
-                                                                                   }
+
+                                                                                @Override
+                                                                                public void onCacheUpdated(
+                                                                                        RcsResourceAttributes attrs,
+                                                                                        int arg1) {
+                                                                                    g_IsCasheUpdated = true;
+                                                                                    Log.i( LOG_TAG,
+                                                                                        "onCacheUpdated with RcsResourceAttributes: "
+                                                                                            + attrs);
+                                                                                    
+                                                                                }
                                                                                  };
   public GetRequestHandler                   mGetRequestHandler                  = new GetRequestHandler() {
                                                                                    @Override

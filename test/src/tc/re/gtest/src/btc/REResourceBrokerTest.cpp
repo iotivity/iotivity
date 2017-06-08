@@ -119,8 +119,7 @@ TEST_F(REResourceBrokerTest_btc, startMonitoring_NV_N)
 
         if (exceptionMsg != "startMonitoring : Callback is NULL")
         {
-            SET_FAILURE(
-                    "Exception occurred while startMonitoring, exception is: " + exceptionMsg);
+            SET_FAILURE("Exception occurred while startMonitoring, exception is: " + exceptionMsg);
         }
 
     }
@@ -250,7 +249,7 @@ TEST_F(REResourceBrokerTest_btc, IsCaching_SRC_P)
 
     bool isC = m_resource->isCaching();
 
-    if(isC == false)
+    if (isC == false)
     {
         SET_FAILURE("Fail to get cache state !");
     }
@@ -274,7 +273,7 @@ TEST_F(REResourceBrokerTest_btc, IsCaching_SRCC_P)
 
     bool isC = m_resource->isCaching();
 
-    if(isC == true)
+    if (isC == true)
     {
         SET_FAILURE("Fail to get cache state!");
     }
@@ -321,7 +320,7 @@ TEST_F(REResourceBrokerTest_btc, GetState_SRCC_P)
 {
     ResourceState resourceState = m_resource->getState();
 
-    if(int(resourceState) != 0)
+    if (int(resourceState) != 0)
     {
         SET_FAILURE("Failed to get state");
     }
@@ -337,7 +336,7 @@ TEST_F(REResourceBrokerTest_btc, GetState_SRCC_P)
  * @test_data callback function for receiving changed state
  * @pre_condition Remote Resource Object should be instantialized
  * @procedure 1. Perform startMonitoring() API
- * 			  2. Perform isMonitoring() API
+ *            2. Perform isMonitoring() API
  * @post_condition Perform stopMonitoring() API
  * @expected The API should not throw any exception
  **/

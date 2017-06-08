@@ -50,7 +50,8 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
 
     PlatformConfig platformConfigObj = new PlatformConfig(getInstrumentation()
         .getTargetContext(), ServiceType.IN_PROC, ModeType.CLIENT_SERVER,
-        "0.0.0.0", 0, QualityOfService.LOW);
+        "0.0.0.0", 0, QualityOfService.HIGH);
+
     OcPlatform.Configure(platformConfigObj);
     m_REHelper.waitInSecond(CONFIG_WAIT_FIVE);
     Log.i(LOG_TAG, "Configuration done Successfully");
@@ -99,6 +100,7 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
         fail("Throws exception when getUri() API called.");
         return;
       }
+
       if (uri.compareTo("") == 0) {
         fail("Unable to get uri");
       } else {
@@ -161,6 +163,7 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
       return;
     } else {
       Log.d(LOG_TAG, m_ErrorMsg.toString());
+
       m_Resource = m_REHelper.getFoundResourceList().get(0);
     }
 
@@ -173,6 +176,7 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
         fail("Throws exception when getAddress() API called.");
         return;
       }
+
       if (address.compareTo("") == 0) {
         fail("Unable to get address");
       } else {
@@ -283,11 +287,13 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
       return;
     } else {
       Log.d(LOG_TAG, m_ErrorMsg.toString());
+
       m_Resource = m_REHelper.getFoundResourceList().get(0);
     }
 
     try {
       String[] interfaces = m_Resource.getInterfaces();
+
       if (interfaces.length > 0) {
         if (interfaces[0].compareTo("") == 0) {
           fail("Unable to get any interface");
@@ -816,9 +822,9 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
    * @pre_condition None
    * @procedure Perform discoverResourceByType() API
    * @post_condition None
-   * @expected should not throw RcsException
+   * @expected should throw RcsException
    **/
-  public void testDiscoverResourceByTypeWithURI_ESV_P() {
+  public void testDiscoverResourceByTypeWithURI_ESV_N() {
     try {
       RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
           .getInstance().discoverResourceByType(RcsAddress.multicast(),
@@ -928,4 +934,3 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
     }
   }
 }
-

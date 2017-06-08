@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-package org.iotivity.service.re;
+package org.iotivity.test.re.app;
 
 import java.util.ArrayList;
 
@@ -41,7 +41,7 @@ import org.iotivity.service.server.RcsResourceObject.GetRequestHandler;
 import org.iotivity.service.server.RcsResourceObject.OnAttributeUpdatedListener;
 import org.iotivity.service.server.RcsResourceObject.SetRequestHandler;
 
-import static org.iotivity.service.re.REUtility.*;
+import static org.iotivity.test.re.app.REUtility.*;
 
 import android.os.AsyncTask;
 import android.util.Log;
@@ -111,7 +111,7 @@ public class REAppHelper extends Base {
     public OnCacheUpdatedListener m_OnCacheUpdatedListener = new OnCacheUpdatedListener() {
         @Override
         public void onCacheUpdated(
-                RcsResourceAttributes attrs) {
+                RcsResourceAttributes attrs, int arg1) {
             showLog(LogLevel.INFO,
                     "***onCacheUpdated***",
                     false);

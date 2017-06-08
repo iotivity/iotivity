@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-package org.iotivity.service.re;
+package org.iotivity.test.re.app;
 
 public interface REUtility {
     String TAG = "RETestApp";

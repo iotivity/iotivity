@@ -498,4 +498,3 @@ public class REServerBuilderTest extends InstrumentationTestCase {
   }
 
 }
-
