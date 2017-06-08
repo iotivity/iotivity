@@ -73,6 +73,8 @@ using namespace std;
 extern vector< shared_ptr< OC::OCResource > > g_topicList;
 extern std::string g_accesstoken;
 
+bool initCloudClient();
+
 void handleLoginoutCB(const HeaderOptions &, const OCRepresentation &rep, const int ecode);
 void onRefreshTokenCB(const HeaderOptions &, const OCRepresentation &rep, const int ecode);
 void onSearchUser(const HeaderOptions &, const OCRepresentation &rep, const int ecode);
@@ -153,7 +155,7 @@ bool deletePropertyValueFromGroup(OCAccountManager::Ptr accountMgr, const std::s
         const OCRepresentation propertyValue, PostCallback cloudConnectHandler);
 bool updatePropertyValueOnGroup(OCAccountManager::Ptr accountMgr, const std::string& groupId,
         const OCRepresentation propertyValue, PostCallback cloudConnectHandler);
-bool discoveryMQTopics(OC::OCResource::Ptr &g_mqBrokerResource,
+bool discoveryMQTopics(OC::OCResource::Ptr g_mqBrokerResource,
         const QueryParamsMap& queryParametersMap, MQTopicCallback attributeHandler,
         QualityOfService qos);
 bool publishMQTopic(OC::OCResource::Ptr g_mqBrokerResource, const OCRepresentation& rep,

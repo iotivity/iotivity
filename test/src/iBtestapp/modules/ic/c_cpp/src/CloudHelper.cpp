@@ -111,6 +111,33 @@ void printRepresentation(OCRepresentation rep)
     }
 }
 
+bool initCloudClient()
+{
+    __FUNC_IN__
+
+    static OCPersistentStorage pstStr;
+    pstStr.open = controllerOpen;
+    pstStr.read = fread;
+    pstStr.write = fwrite;
+    pstStr.close = fclose;
+    pstStr.unlink = unlink;
+
+    if (OC_STACK_OK != OCRegisterPersistentStorageHandler(&pstStr))
+    {
+        IOTIVITYTEST_LOG(ERROR, "[ICHelper] OCRegisterPersistentStorageHandler error");
+        return false;
+    }
+
+    // initialize OC stack and provisioning manager
+    if (OC_STACK_OK != OCInit(NULL, 0, OC_CLIENT_SERVER))
+    {
+        IOTIVITYTEST_LOG(ERROR, "[ICHelper] OCStack init error");
+        return false;
+    }
+    __FUNC_OUT__
+    return true;
+}
+
 void handleLoginoutCB(const HeaderOptions &, const OCRepresentation &rep, const int ecode)
 {
     IOTIVITYTEST_LOG(DEBUG, "Auth response received code: %d", ecode);
@@ -855,12 +882,12 @@ bool unsubscribeMQTopic(OC::OCResource::Ptr g_mqBrokerResource, QualityOfService
     return true;
 }
 
-FILE *controllerOpen(const char * /*path*/, const char *mode)
+FILE *controllerOpen(const char * path, const char *mode)
 {
     return fopen(CONTROLLER_DAT, mode);
 }
 
-FILE *controleeOpen(const char * /*path*/, const char *mode)
+FILE *controleeOpen(const char * path, const char *mode)
 {
     return fopen(CONTROLEE_DAT, mode);
 }
