@@ -164,7 +164,7 @@ OCStackResult CreateSecureSessionMCertificateCallback(OTMContext_t* otmCtx)
 #ifdef WITH_TCP
     else if (CA_ADAPTER_TCP == endpoint.adapter)
     {
-        endpoint.port = selDevInfo->tcpPort;
+        endpoint.port = selDevInfo->tcpSecurePort;
     }
 #endif
 

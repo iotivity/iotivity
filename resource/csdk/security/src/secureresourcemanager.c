@@ -139,6 +139,16 @@ void SRMGenerateResponse(SRMRequestContext_t *context)
 // Set the value of context->resourceUri, based on the context->requestInfo.
 static void SetResourceUriAndType(SRMRequestContext_t *context)
 {
+    if (NULL == context || NULL == context->requestInfo ||
+        NULL == context->requestInfo->info.resourceUri)
+    {
+        OIC_LOG_V(INFO, TAG, "%s : %s is NULL", __func__,
+            (NULL == context) ? "context" :
+            (NULL == context->requestInfo) ? "context->requestInfo" :
+            "context->requestInfo->info.resourceUri");
+        return;
+    }
+
     char *uri = strstr(context->requestInfo->info.resourceUri, "?");
     size_t position = 0;
 
