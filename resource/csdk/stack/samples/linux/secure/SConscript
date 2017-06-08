@@ -80,55 +80,8 @@ if samples_env.get('SECURED') == '1':
     occlientdirectpairing = samples_env.Program(
         'occlientdirectpairing', 'occlientdirectpairing.cpp')
     ocsamples.append(occlientdirectpairing)
+
+ocsamples += samples_env.ScanJSON('resource/csdk/stack/samples/linux/secure')
+
 Alias("samples", ocsamples)
 samples_env.AppendTarget('samples')
-
-src_dir = samples_env.get('SRC_DIR')
-sec_samples_src_dir = src_dir + '/resource/csdk/stack/samples/linux/secure/'
-sec_samples_build_dir = samples_env.get(
-    'BUILD_DIR') + '/resource/csdk/stack/samples/linux/secure'
-
-samples_env.Alias(
-    "install",
-    samples_env.Install(sec_samples_build_dir,
-                        sec_samples_src_dir + 'oic_svr_db_server.json'))
-samples_env.Alias(
-    "install",
-    samples_env.Install(sec_samples_build_dir,
-                        sec_samples_src_dir + 'oic_svr_db_client_devowner.json'))
-samples_env.Alias(
-    "install",
-    samples_env.Install(sec_samples_build_dir,
-                        sec_samples_src_dir + 'oic_svr_db_client_nondevowner.json'))
-samples_env.Alias(
-    "install",
-    samples_env.Install(sec_samples_build_dir,
-                        sec_samples_src_dir + 'oic_amss_db.json'))
-if samples_env.get('SECURED') == '1':
-    samples_env.Alias(
-        "install",
-        samples_env.Install(
-            sec_samples_build_dir,
-            sec_samples_src_dir + 'oic_svr_db_client_directpairing.json'))
-    samples_env.Alias(
-        "install",
-        samples_env.Install(
-            sec_samples_build_dir,
-            sec_samples_src_dir + 'oic_svr_db_client_directpairing.dat'))
-
-samples_env.Alias(
-    "install",
-    samples_env.Install(sec_samples_build_dir,
-                        sec_samples_src_dir + 'oic_svr_db_server.dat'))
-samples_env.Alias(
-    "install",
-    samples_env.Install(sec_samples_build_dir,
-                        sec_samples_src_dir + 'oic_svr_db_client_devowner.dat'))
-samples_env.Alias(
-    "install",
-    samples_env.Install(sec_samples_build_dir,
-                        sec_samples_src_dir + 'oic_svr_db_client_nondevowner.dat'))
-samples_env.Alias(
-    "install",
-    samples_env.Install(sec_samples_build_dir,
-                        sec_samples_src_dir + 'oic_amss_db.dat'))
