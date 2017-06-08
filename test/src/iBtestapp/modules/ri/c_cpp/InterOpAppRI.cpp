@@ -280,7 +280,28 @@ void onResourceFound(shared_ptr< OCResource > resource)
 
     if (resource)
     {
-        g_foundResourceList.push_back(resource);
+        if(g_connectivityType == CT_ADAPTER_TCP)
+        {
+            cout << "total host count: " << resource->getAllHosts().size() << endl;
+            vector<string> allHosts = resource->getAllHosts();
+            string tcpHost = g_resourceHelper->getOnlyTCPHost(allHosts);
+            cout << "TCP host is:  " << tcpHost << endl;
+            try
+            {
+                resource->setHost(tcpHost);
+            }
+            catch(exception& e)
+            {
+                cout << "Unable to set host, reason: " << e.what() << endl;
+            }
+
+        }
+
+        if (resource->host().compare("") != 0)
+        {
+            g_foundResourceList.push_back(resource);
+        }
+
         cout << "uri of the found resource is " << resource->uri() << endl;
         g_hasCallbackArrived = true;
 
@@ -345,6 +366,7 @@ void onDeviceInfoReceived(const OCRepresentation& rep)
 // callback handler on GET request
 void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
+	s_mutex.lock();
     if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_OK)
     {
         cout << "Response: GET request was successful" << endl;
@@ -385,6 +407,7 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
         cout << "onGET Response error: " << eCode << endl;
     }
     g_hasCallbackArrived = true;
+    s_mutex.unlock();
 }
 
 // callback handler on PUT request
@@ -497,10 +520,21 @@ OCStackResult initiateServer()
     {
         OCPersistentStorage ps =
         { client_fopen, fread, fwrite, fclose, unlink };
-        PlatformConfig cfg
-        { OC::ServiceType::InProc, OC::ModeType::Both, g_connectivityType, g_connectivityType,
-                g_qos, &ps };
-        result = SampleResource::constructServer(cfg);
+        if (g_connectivityType == CT_ADAPTER_TCP)
+        {
+            PlatformConfig cfg
+            { OC::ServiceType::InProc, OC::ModeType::Both, (OCConnectivityType) (g_connectivityType | CT_ADAPTER_IP),
+                g_connectivityType | CT_ADAPTER_IP, g_qos, &ps };
+            result = SampleResource::constructServer(cfg);
+        }
+        else
+        {
+            PlatformConfig cfg
+            { OC::ServiceType::InProc, OC::ModeType::Both, g_connectivityType, g_connectivityType,
+                    g_qos, &ps };
+            result = SampleResource::constructServer(cfg);
+        }
+
     }
     else if (g_isSecuredServer)
     {

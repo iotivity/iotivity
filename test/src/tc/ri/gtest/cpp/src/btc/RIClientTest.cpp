@@ -742,7 +742,7 @@ TEST_F(RIClientTest_btc, UnsubscribePresence_SRC_P)
  * @expected Exception should occur
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(RIClientTest_btc, UnsubscribePresence_ESV_N)
+TEST_F(RIClientTest_btc, UnsubscribePresence_ESV_P)
 {
     OCPlatform::OCPresenceHandle presenceHandle = nullptr;
     OCStackResult result = OC_STACK_OK;
@@ -757,10 +757,8 @@ TEST_F(RIClientTest_btc, UnsubscribePresence_ESV_N)
         IOTIVITYTEST_LOG(INFO, e.what());
     }
 
-    CommonUtil::waitInSecond(CALLBACK_WAIT_MAX*2);
-
     EXPECT_EQ(OC_STACK_OK, result)
-    << "Empty host should invoke error response, got success response";
+    << "Empty host should successfully invoke presence on multicast, got failure";
 
     try
     {
@@ -772,7 +770,7 @@ TEST_F(RIClientTest_btc, UnsubscribePresence_ESV_N)
         IOTIVITYTEST_LOG(INFO, e.what());
     }
 
-    EXPECT_NE(OC_STACK_OK, result) << "NullPtr should invoke error response, got success response";
+    EXPECT_EQ(OC_STACK_OK, result) << "Multicast presence should get successfully cancelled, got failure response";
 }
 #endif
 

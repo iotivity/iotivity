@@ -20,6 +20,7 @@
 
 package org.iotivity.common;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -106,6 +107,18 @@ public class ResourceHelper {
             e.printStackTrace();
         }
 
+    }
+    
+    public String getTCPHost(List<String> allHosts) {
+        String tcpHost = "";
+        for (String host : allHosts) {
+            if(host.contains("tcp")) {
+                tcpHost = host;
+                break;
+            }
+        }
+
+        return tcpHost;
     }
 
 }

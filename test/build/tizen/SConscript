@@ -133,8 +133,8 @@ for temp in all_modules:
 
         lib_rpm_names = 'iotivity,iotivity-devel,iotivity-service'
 
-        #if temp == 'ca':
-        #    lib_rpm_names = 'com-oic-ri'
+        if temp == 'ca':
+            lib_rpm_names = 'com-oic-ri'
 
         test_res_files = iotivity_test_root + '/res/common'
 

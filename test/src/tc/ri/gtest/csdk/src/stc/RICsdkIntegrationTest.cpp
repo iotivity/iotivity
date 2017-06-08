@@ -39,7 +39,7 @@ public:
 
         m_pRICsdkHelper = RICsdkHelper::getInstance();
         m_result = OC_STACK_ERROR;
-        RICsdkHelper::s_isCallback == false;
+        RICsdkHelper::s_isCallback = false;
 
         m_result = m_pRICsdkHelper->initClientServer();
         ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for client-server. Actual m_result : "
@@ -2200,11 +2200,9 @@ TEST_F(RICsdkIntegrationTest_stc, CreateResourceAndSendDeleteRequestAndCheckIfRe
     }
 
     RICsdkHelper::s_isCallback = false;
-
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE, TEMPERATURE_RESOURCE_DISCOVERY_QUERY,
             OC_HIGH_QOS);
     ASSERT_NE(NULL,m_doHandle)<< m_pRICsdkHelper->getFailureMessage();
-
     CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
 
     if (RICsdkHelper::s_isCallback == false)

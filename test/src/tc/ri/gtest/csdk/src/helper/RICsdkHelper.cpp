@@ -965,7 +965,7 @@ OCStackApplicationResult RICsdkHelper::ResourceDiscoveryReqCB(void* ctx, OCDoHan
                 "Callback Context for Resource DISCOVER query received successfully");
     }
 
-    if (clientResponse && (OC_STACK_NOT_ACCEPTABLE != clientResponse->result))
+    if (clientResponse && (OC_STACK_NOT_ACCEPTABLE != clientResponse->result) && clientResponse->payload)
     {
         s_isCallback = true;
 
@@ -997,6 +997,7 @@ OCStackApplicationResult RICsdkHelper::ResourceDiscoveryReqCB(void* ctx, OCDoHan
     else
     {
         IOTIVITYTEST_LOG(INFO, "ResourceDiscoveryReqCB received Null clientResponse");
+        return OC_STACK_DELETE_TRANSACTION;
     }
 
     return (s_unicastDiscovery) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION;

@@ -97,7 +97,7 @@ TEST_F(RICsdkServerIntegrationTest_stc, CreateResourceAndGetResourceProperties_G
     OCResourceProperty receivedProperty = NULL;
     receivedProperty = OCGetResourceProperties(m_handle);
     ASSERT_NE(NULL,receivedProperty) << "Server: OCGetResourceProperties failed. Received property is null";
-    ASSERT_EQ(7,receivedProperty) << "Server: Set Resource Property is not Received";
+    ASSERT_LE(7,receivedProperty) << "Server: Set Resource Property is not Received";
 }
 #endif
 

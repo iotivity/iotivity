@@ -169,9 +169,9 @@ char* CommonUtil::getOCStackResult(OCStackResult ocstackresult)
         case OC_STACK_NOT_ALLOWED_OXM:
             resultString = (char*) "OC_STACK_NOT_ALLOWED_OXM";
             break;
-//        case OC_STACK_BAD_ENDPOINT:
-//            resultString = (char*) "OC_STACK_BAD_ENDPOINT";
-//            break;
+        case OC_STACK_BAD_ENDPOINT:
+            resultString = (char*) "OC_STACK_BAD_ENDPOINT";
+            break;
         case OC_STACK_USER_DENIED_REQ:
             resultString = (char*) "OC_STACK_USER_DENIED_REQ";
             break;
@@ -229,7 +229,7 @@ void CommonUtil::killApp(std::string app)
     {
         appName = app.substr(app.find_last_of("/\\") + 1);
     }
-    
+
     std::string cmd = "";
     cmd = "killall " + appName;
     printf("KILL Command %s\nResult: %d\n",cmd.c_str(), system(cmd.c_str()));

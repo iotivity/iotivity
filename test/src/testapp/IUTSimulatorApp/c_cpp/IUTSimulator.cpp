@@ -45,6 +45,7 @@ using namespace std;
 vector< SampleResource * > g_createdResourceList;
 vector< shared_ptr< OCResource > > g_foundResourceList;
 vector< shared_ptr< OCResource > > g_foundCollectionList;
+shared_ptr< OCResource > g_introspectionResource;
 vector< OCResourceHandle > g_handleList;
 SampleResource *g_createdLightResource;
 SampleResource *g_createdFanResource;
@@ -410,8 +411,10 @@ int main(int argc, char* argv[])
     }
     else
     {
+        OCPersistentStorage ps =
+        { server_fopen, fread, fwrite, fclose, unlink };
         PlatformConfig cfg
-        { OC::ServiceType::InProc, OC::ModeType::Both, g_ipVer, g_ipVer, g_qos };
+        { OC::ServiceType::InProc, OC::ModeType::Both, g_ipVer, g_ipVer, g_qos, &ps };
         result = SampleResource::constructServer(cfg);
     }
 
@@ -445,10 +448,13 @@ void addIntoLinksArray(vector< OCRepresentation >& childrenList, SampleResource*
 {
     OCRepresentation interimRep;
     OCRepresentation pRep;
+    OCRepresentation epRep;
+    vector< OCRepresentation > epLiist;
+    string anchor = ANCHOR_DEFAULT_VALUE + g_di;
+    string ep = EP_DEFAULT_VALUE;
 
     uint8_t bm = 2;
     pRep.setValue(BITMASK_KEY, bm);
-    pRep.setValue(SECURITY_KEY, g_isSecuredServer);
     CATransportFlags_t flag = CA_DEFAULT_FLAGS;
 
     if (g_isSecuredServer)
@@ -464,15 +470,19 @@ void addIntoLinksArray(vector< OCRepresentation >& childrenList, SampleResource*
     {
         flag = (CATransportFlags_t)(flag | CA_IPV6);
     }
-    pRep.setValue(PORT_KEY, CAGetAssignedPortNumber(CA_ADAPTER_IP, flag));
+    ep = ep + to_string(CAGetAssignedPortNumber(CA_ADAPTER_IP, flag));
 
-    vector< OCRepresentation > allChild;
+    epRep.setValue(PRI_KEY, PRI_DEFAULT_VALUE);
+    epRep.setValue(EP_KEY, ep);
+    epLiist.push_back(epRep);
+
     vector< OCRepresentation > allChildren;
     interimRep.setValue(URI_KEY, resource->getUri());
-    interimRep.setValue(DEVICE_ID_KEY, g_di);
+    interimRep.setValue(ANCHOR_KEY, anchor);
     interimRep.setValue(RESOURCE_TYPE_KEY, resource->getResourceTypes());
     interimRep.setValue(INTERFACE_KEY, resource->getResourceInterfaces());
     interimRep.setValue(POLICY_KEY, pRep);
+    interimRep.setValue(EPS_KEY, epLiist);
     childrenList.push_back(interimRep);
 }
 
@@ -506,15 +516,46 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                 cout << "Inside handleGetRequest... " << endl;
                 OCStackResult result = OC_STACK_ERROR;
                 bool shouldReturnError = false;
-                string responseInterface = DEFAULT_INTERFACE;
+                string responseInterface = LINK_INTERFACE;
                 OCRepresentation rep;
-
+                OCRepresentation completeRep;
+                OCRepresentation epRep;
+                vector< OCRepresentation > epLiist;
+                string anchor = ANCHOR_DEFAULT_VALUE + g_di;
+                string ep = EP_DEFAULT_VALUE;
+                OCRepresentation pRep;
                 vector< OCRepresentation > allChildren;
+                uint8_t bm = 2;
+                CATransportFlags_t flag = CA_DEFAULT_FLAGS;
+                if (g_isSecuredServer)
+                {
+                    flag = (CATransportFlags_t)(flag | CA_SECURE);
+                }
 
-                addIntoLinksArray(allChildren, g_acSwitchResourceHidden);
+                if (g_ipVer == CT_IP_USE_V4)
+                {
+                    flag = (CATransportFlags_t)(flag | CA_IPV4);
+                }
+                else
+                {
+                    flag = (CATransportFlags_t)(flag | CA_IPV6);
+                }
+                ep = ep + to_string(CAGetAssignedPortNumber(CA_ADAPTER_IP, flag));
+
+                epRep.setValue(PRI_KEY, PRI_DEFAULT_VALUE);
+                epRep.setValue(EP_KEY, ep);
+                epLiist.push_back(epRep);
+                pRep.setValue(BITMASK_KEY, bm);
+                rep.setValue(URI_KEY, g_acSwitchResourceHidden->getUri());
+                rep.setValue(DEVICE_ID_KEY, g_di);
+                rep.setValue(RESOURCE_TYPE_KEY, g_acSwitchResourceHidden->getResourceTypes());
+                rep.setValue(INTERFACE_KEY, g_acSwitchResourceHidden->getResourceInterfaces());
+                rep.setValue(POLICY_KEY, pRep);
+                rep.setValue(EPS_KEY, epLiist);
+
                 addIntoLinksArray(allChildren, g_acTemperatureResourceHidden);
                 addIntoLinksArray(allChildren, g_acAirFlowResourceHidden);
-                rep.setValue(LINKS_KEY, allChildren);
+                rep.setChildren(allChildren);
 
                 cout << "Current Resource Representation to send : " << endl;
 
@@ -539,11 +580,15 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                                 cout << "Found baseline query, adding rt & if into response payload"
                                         << endl;
 
-                                rep.setValue(NAME_KEY, g_collectionName);
-                                rep.setResourceInterfaces(interfaceList);
-                                rep.setResourceTypes(resourceTypeList);
+                                addIntoLinksArray(allChildren, g_acSwitchResourceHidden);
+                                completeRep.setValue(LINKS_KEY, allChildren);
+                                completeRep.setValue(NAME_KEY, g_collectionName);
+                                completeRep.setResourceInterfaces(interfaceList);
+                                completeRep.setResourceTypes(resourceTypeList);
 
-                                pResponse->setResourceRepresentation(rep, responseInterface);
+                                responseInterface = DEFAULT_INTERFACE;
+
+                                pResponse->setResourceRepresentation(completeRep, responseInterface);
 
                             }
                             else if (queryValue.compare(LINK_INTERFACE) == 0)
@@ -572,6 +617,7 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                                 tempRepList.push_back(tempRep);
 
                                 batchRep.setChildren(tempRepList);
+                                responseInterface = BATCH_INTERFACE;
 
                                 pResponse->setResourceRepresentation(batchRep, responseInterface);
                             }
@@ -589,7 +635,6 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                         else if (key.compare(RESOURCE_TYPE_KEY) == 0)
                         {
                             vector< string > resourceTypeList;
-
                             if (queryValue.compare(SWITCH_RESOURCE_TYPE) == 0)
                             {
                                 vector< OCRepresentation > requiredChild;
@@ -666,7 +711,6 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                 {
                     cerr << "Unable to send response for GET Request" << endl;
                 }
-
 
             }
             else if (requestType == "PUT")
@@ -873,7 +917,6 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                 {
                     cerr << "Unable to send response for GET Request" << endl;
                 }
-
             }
             else if (requestType == "DELETE")
             {
@@ -881,7 +924,6 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                 OCRepresentation incomingRepresentation = request->getResourceRepresentation();
                 // Check for query params (if any)
                 QueryParamsMap queryParamsMap = request->getQueryParameters();
-
             }
         }
 
@@ -912,6 +954,12 @@ void onResourceFound(shared_ptr< OCResource > resource)
         cout << resource->sid() << endl;
         cout << "unique identifier of found resource is = ";
         cout << resource->uniqueIdentifier() << endl;
+
+        string resourceType = resource->getResourceTypes().front();
+        if(resourceType.compare(OC_RSRVD_RESOURCE_TYPE_INTROSPECTION) == 0)
+        {
+            g_introspectionResource = resource;
+        }
     }
     else
     {
@@ -1017,8 +1065,27 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
         else
         {
             g_resourceRepresentation = rep;
-            cout << "THe GET Response has the following representation:" << endl;
+            cout << "The GET Response has the following representation:" << endl;
             g_resourceHelper->printRepresentation(rep);
+        }
+
+        if(rep.hasAttribute(OC_RSRVD_INTROSPECTION_URL_INFO))
+        {
+            vector<OCRepresentation> urlInfo;
+            rep.getValue(string(OC_RSRVD_INTROSPECTION_URL_INFO), urlInfo);
+            string url;
+            urlInfo.front().getValue(string(OC_RSRVD_INTROSPECTION_URL), url);
+
+            vector<string> resourceTypes;
+            resourceTypes.push_back(OC_RSRVD_RESOURCE_TYPE_INTROSPECTION_PAYLOAD);
+
+            OCResource::Ptr payloadResource = OCPlatform::constructResourceObject(g_introspectionResource->host(),
+                    url, g_introspectionResource->connectivityType(), //OC_RSRVD_RESOURCE_TYPE_INTROSPECTION_PAYLOAD
+                    true, resourceTypes, g_introspectionResource->getResourceInterfaces());
+
+            payloadResource->get(QueryParamsMap(), onGet, g_qos);
+            cout << "GET request sent to introspection payload resource!!" << endl;
+            waitForCallback();
         }
     }
     else
@@ -1117,10 +1184,13 @@ FILE* server_fopen(const char *path, const char *mode)
     {
         return fopen(INTROSPECTION_SWAGGER_FILE, mode);
     }
+#ifdef __SECURED__
     else
     {
         return fopen(CRED_FILE_SERVER, mode);
     }
+#endif
+    return fopen(path, mode);
 }
 
 FILE* client_fopen(const char *path, const char *mode)
@@ -1508,7 +1578,9 @@ void createAirConDevice(bool isSecured)
         swingRep.setValue(SWING_STATE_KEY, SWING_STATE_VALUE);
         value = SWING_MOVEMENT_VALUE;
         swingRep.setValue(SWING_MOVEMENT_KEY, value);
-        string supportedDirection[2] = { "আনুভূমিক", "উল্লম্ব" };
+        vector<string> supportedDirection;
+        supportedDirection.push_back("আনুভূমিক");
+        supportedDirection.push_back("উল্লম্ব");
         swingRep.setValue(SWING_SUPPOTED_DIRECTION_KEY, supportedDirection);
 
         g_acSwingResource->setResourceRepresentation(swingRep);
@@ -2141,9 +2213,8 @@ void discoverIntrospection(bool isMulticast){
     string host = "";
     g_hasCallbackArrived = false;
     ostringstream introspectionDiscoveryRequest;
-    string introspectionDiscoveryURI = OC_RSRVD_INTROSPECTION_URI;
     if (isMulticast){
-        introspectionDiscoveryRequest << OC_MULTICAST_PREFIX << introspectionDiscoveryURI;
+        introspectionDiscoveryRequest << "rt=" << OC_RSRVD_RESOURCE_TYPE_INTROSPECTION;
         cout << "Discovering Introspection using Multicast... " << endl;
     }
     findAllResources(host, introspectionDiscoveryRequest.str());
@@ -2272,23 +2343,13 @@ void sendGetRequest()
         shared_ptr< OCResource > targetResource = g_foundResourceList.at(selection);
         cout << "Sending Get Request to the resource with: " << targetResource->host()
                 << targetResource->uri() << endl;
-        targetResource->get(qpMap, onGet, g_qos);
-        cout << "GET request sent!!" << endl;
-        waitForCallback();
-        if(targetResource->uri().compare(OC_RSRVD_INTROSPECTION_URI) == 0)
+        if (targetResource->getResourceTypes().front().compare(OC_RSRVD_RESOURCE_TYPE_INTROSPECTION) == 0)
         {
-            OCResource::Ptr payloadResource = OCPlatform::constructResourceObject(targetResource->host(),
-                    OC_RSRVD_INTROSPECTION_PAYLOAD_URI, targetResource->connectivityType(),
-                    true, targetResource->getResourceTypes(), targetResource->getResourceInterfaces());
-            payloadResource->get(qpMap, onGet, g_qos);
-            cout << "GET request sent to introspection payload resource!!" << endl;
-            waitForCallback();
+            g_introspectionResource->setHost(targetResource->host());
         }
 
-    }
-    else
-    {
-        cout << "No resource to send GET!!" << endl;
+        targetResource->get(qpMap, onGet, g_qos);
+        cout << "GET request sent!!" << endl;
     }
 }
 
@@ -2681,6 +2742,76 @@ void sendPostRequestCreate()
         // Invoke resource's post API with rep, query map and the callback parameter
         g_foundResourceList.at(selection)->post(rep, QueryParamsMap(), &onPost, g_qos);
         cout << "POST request sent!!" << endl;
+        waitForCallback();
+
+    }
+    else
+    {
+        cout << "No resource to send POST!!" << endl;
+    }
+}
+
+void sendSpecialPost()
+{
+    int selection = selectResource();
+    if (selection != -1)
+    {
+        OCRepresentation rep1, rep2, rep3, rep4;
+        bool valueBool = false;
+
+        vector< string > rtTypes;
+        rtTypes.push_back("oic.r.switch.binary");
+        rep1.setValue("rt", rtTypes);
+        // Invoke resource's put API with rep, query map and the callback parameter
+        cout << "Sending Partial Update Message(POST)..." << endl;
+        QueryParamsMap query;
+        query["if"] = "oic.if.baseline";
+        g_foundResourceList.at(selection)->post(rep1, query, &onPost, g_qos);
+        rep3.empty();
+        waitForCallback();
+        sleep(2);
+        g_foundResourceList.at(selection)->put(rep1, query, &onPut, g_qos);
+        rep3.empty();
+        waitForCallback();
+        sleep(2);
+
+        valueBool = true;
+        rep2.setValue(ON_OFF_KEY, valueBool);
+        // Invoke resource's put API with rep, query map and the callback parameter
+        cout << "Sending Partial Update Message(POST)..." << endl;
+        g_foundResourceList.at(selection)->post(rep2, query, &onPost, g_qos);
+        waitForCallback();
+        sleep(2);
+
+        g_foundResourceList.at(selection)->put(rep2, query, &onPut, g_qos);
+        rep3.empty();
+        waitForCallback();
+        sleep(2);
+
+        valueBool = true;
+        rep3.setValue(ON_OFF_KEY, valueBool);
+        rep3.setValue("rt", rtTypes);
+        // Invoke resource's put API with rep, query map and the callback parameter
+        cout << "Sending Partial Update Message(POST)..." << endl;
+        g_foundResourceList.at(selection)->post(rep3, query, &onPost, g_qos);
+        cout << "POST request sent!!" << endl;
+        waitForCallback();
+        sleep(2);
+
+        g_foundResourceList.at(selection)->put(rep4, query, &onPut, g_qos);
+        rep3.empty();
+        waitForCallback();
+
+        selection = selectResource();
+        rtTypes.clear();
+        rtTypes.push_back("oic.d.tv");
+        rep4.setValue("rt", rtTypes);
+        cout << "Sending Partial Update Message(POST)..." << endl;
+        g_foundResourceList.at(selection)->post(rep4, query, &onPost, g_qos);
+        sleep(2);
+
+        g_foundResourceList.at(selection)->put(rep4, query, &onPut, g_qos);
+        rep3.empty();
         waitForCallback();
 
     }

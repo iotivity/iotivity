@@ -64,8 +64,13 @@ test = env_android.get('TEST')
 gradle_bin = env_android.get('ANDROID_GRADLE')
 ndk_dir = env_android.get('ANDROID_NDK')
 sdk_dir = env_android.get('ANDROID_HOME')
+
 push = env_android.get('PUSH')
+push = ",".join(push)
+
 framework = env_android.get('FRAMEWORK')
+cloud_service_build = env_android.get('CLOUD_SERVICE')
+kafka_root = env_android.get('KAFKA_ROOT')
 
 print sdk_dir
 print ndk_dir
@@ -87,6 +92,11 @@ os.environ['ANDROID_HOME'] = sdk_dir
 
 default_targets = []
 
+if cloud_service_build:
+    if 'ic' in module or 'cs' in module:
+        build_command = 'bash ' + iotivity_test_root + '/res/cloud_resource/cloud_build.sh ' + kafka_root + ' ' + iotivity_root
+        cloud_build = env_android.Command('cloud_build', None, build_command)
+        default_targets += [cloud_build]
 
 for temp in list(set(all_modules) - set(['iut', 'ca'])):
 
