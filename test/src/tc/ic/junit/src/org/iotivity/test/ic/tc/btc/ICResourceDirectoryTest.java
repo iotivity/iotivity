@@ -1114,10 +1114,9 @@ public class ICResourceDirectoryTest extends InstrumentationTestCase {
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     m_ICDesourceDirectoryAdapter);
 
-            fail(IC_INVALID_PARAM_MSG);
         } catch (OcException ex) {
             ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_URI, ex.getErrorCode());
+            fail(IC_INVALID_PARAM_MSG);
         }
     }
 
@@ -1253,7 +1252,7 @@ public class ICResourceDirectoryTest extends InstrumentationTestCase {
             fail(IC_INVALID_PARAM_MSG);
         } catch (OcException ex) {
             ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_URI, ex.getErrorCode());
+            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
         }
     }
 }

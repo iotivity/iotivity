@@ -69,6 +69,8 @@ public class OconGetGroupInfoAllAdapter implements OnGetListener {
                     String gid = group.getValue("gid");
                     String gname = group.getValue("gname");
                     String owner = group.getValue("owner");
+                    sGroupId = gid;
+                    sGname = gname;
 
                     System.out.println("\t\t-GroupID : " + gid);
                     System.out.println("\t\t Group name : " + gname);
@@ -94,8 +96,7 @@ public class OconGetGroupInfoAllAdapter implements OnGetListener {
                         System.out.println("\t\t parent group : "
                                 + group.getValue("parent"));
                     }
-                    sGroupId = gid;
-                    sGname = gname;
+                    
                 }
                 System.out.println("\tcurrent group is " + sGroupId);
             }

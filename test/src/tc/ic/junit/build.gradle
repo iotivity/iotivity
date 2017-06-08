@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -44,9 +44,10 @@ android {
     buildToolsVersion "21.1.2"
      
     sourceSets {
+      
         main {
               manifest.srcFile 'AndroidManifest.xml'
-              java.srcDirs = ['src', '../../../common/commonutil/java/resource']
+              java.srcDirs = ['src', '../../../common/commonutil/java/cloud', '../../../common/commonutil/java/util']
               jni.srcDirs = [] //disable automatic ndk-build
               assets.srcDirs = ['./assets'] 
         }
@@ -65,6 +66,7 @@ android {
 }
 
 dependencies {
+    
     compile fileTree(dir: "${androidLibFileDirFromModules}", include: ['*.jar'])
     compile(name:"${baseAARFile}", ext:'aar')
     println ("\n$commonText Library Dependency Resolved")     

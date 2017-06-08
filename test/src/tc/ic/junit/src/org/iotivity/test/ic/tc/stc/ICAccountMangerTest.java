@@ -20,6 +20,7 @@
 
 package org.iotivity.test.ic.tc.stc;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -59,7 +60,8 @@ public class ICAccountMangerTest extends InstrumentationTestCase
     private OcAccountManager           mAccountManager;
     private OcRepresentation           mPropertyValue;
     private String[]                   mValues       = { VALUE };
-    private String[]                   mModifyvalues = { "IOTIVITY_SRBD" };
+    private String[]                   mModifyvalues = { "Iotivity" };
+    
 
     protected void setUp() throws Exception {
         super.setUp();
@@ -69,12 +71,19 @@ public class ICAccountMangerTest extends InstrumentationTestCase
 
         mOcAccountManagerAdapter = new OcAccountManagerAdapter();
         mPropertyValue = new OcRepresentation();
+        
+        mICHelper.copyCborFromAsset(getInstrumentation().getContext(),
+                "cloud.dat");
+
+        ICHelper.filePath = getInstrumentation().getContext()
+                .getFilesDir().getPath()
+                + "/"; // data/data/<package>/files/
 
         PlatformConfig cfg = new PlatformConfig(
                 getInstrumentation().getTargetContext(), ServiceType.IN_PROC,
                 ModeType.CLIENT_SERVER, "0.0.0.0", // bind to all available
                 // interfaces
-                0, QualityOfService.LOW);
+                0, QualityOfService.LOW, ICHelper.filePath + "cloud.dat");
         OcPlatform.Configure(cfg);
 
         mAccountManager = OcAccountManagerHelper
@@ -138,15 +147,13 @@ public class ICAccountMangerTest extends InstrumentationTestCase
                 OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
 
         try {
-            Log.d(TAG, "map initialization start");
+            MY_MAP.clear();
             MY_MAP.put("userid", OcAccountManagerHelper.s_CloudUid);
-            Log.d(TAG, "map initialization stop");
 
             mAccountManager.searchUser(MY_MAP, mOcAccountManagerAdapter);
             Thread.sleep(10000);
-            assertEquals("search not working",
-                    OcAccountManagerHelper.s_CloudUid,
-                    OcAccountManagerAdapter.sInviteeUuid);
+            assertTrue("search not working",
+                    OcAccountManagerAdapter.onGetCompletedOk);
         } catch (Exception ex) {
             ex.printStackTrace();
             fail("SearchUser API Exception occurred: "
@@ -177,16 +184,13 @@ public class ICAccountMangerTest extends InstrumentationTestCase
         assertTrue(mCloudHelper.singIn(mAccountManager,
                 OcAccountManagerHelper.s_CloudUid,
                 OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
-
-        MY_MAP.put("uid", OcAccountManagerHelper.s_CloudUid); // invitation.getValue("mid");get
-                                                              // Id after
-                                                              // signIn and
-                                                              // put here
+        MY_MAP.clear();
+        MY_MAP.put("uid", OcAccountManagerHelper.s_CloudUid); 
         try {
             mAccountManager.searchUser(MY_MAP, mOcAccountManagerAdapter);
-            assertEquals("search not working",
-                    OcAccountManagerHelper.s_CloudUid,
-                    OcAccountManagerAdapter.sInviteeUuid);
+            Thread.sleep(5000);
+            assertTrue("search not working",
+                    OcAccountManagerAdapter.onGetCompletedOk);
         } catch (Exception ex) {
             ex.printStackTrace();
             fail("SignUp API Exception occurred: " + ex.getLocalizedMessage());
@@ -220,8 +224,8 @@ public class ICAccountMangerTest extends InstrumentationTestCase
         MY_MAP.put("uid", "");
         try {
             mAccountManager.searchUser(MY_MAP, mOcAccountManagerAdapter);
-            assertEquals("search not working", null,
-                    OcAccountManagerAdapter.sInviteeUuid);
+            assertFalse("search not working",
+                    OcAccountManagerAdapter.onGetCompletedOk);
         } catch (Exception ex) {
             ex.printStackTrace();
             fail("SignUp API Exception occurred: " + ex.getLocalizedMessage());
@@ -255,11 +259,13 @@ public class ICAccountMangerTest extends InstrumentationTestCase
         try {
             mAccountManager.createGroup(mOcAccountManagerAdapter);
             Thread.sleep(10000);
-            assertNotNull("groupID not found",
+            assertNotNull("groupID not found after create group",
                     OcAccountManagerAdapter.sGroupId);
+            
             OcAccountManagerAdapter.sGroupId = null;
             mAccountManager.getGroupInfoAll(mOconGetGroupInfoAll);
-            assertNotNull("groupID not found",
+            Thread.sleep(5000);
+            assertNotNull("groupID not found with getGroupInfoAll API",
                     OconGetGroupInfoAllAdapter.sGroupId);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -295,15 +301,18 @@ public class ICAccountMangerTest extends InstrumentationTestCase
                 OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
         try {
             mAccountManager.createGroup(mOcAccountManagerAdapter);
-            assertNotNull("groupID not found",
+            Thread.sleep(5000);
+            assertNotNull("groupID not found after createGroup",
                     OcAccountManagerAdapter.sGroupId);
 
             mAccountManager.getGroupInfo(OcAccountManagerAdapter.sGroupId,
                     mOconGetGroupInfoAll);
-            assertTrue("groupID not found",
+            Thread.sleep(5000);
+            assertTrue("groupID not found after getGroupInfo",
                     OconGetGroupInfoAllAdapter.sGroupInfoCallbackinvoked);
             mAccountManager.getGroupInfoAll(mOconGetGroupInfoAll);
-            assertNotNull("groupID not found",
+            Thread.sleep(5000);
+            assertNotNull("groupID not found after getGroupInfoAll",
                     OconGetGroupInfoAllAdapter.sGroupId);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -333,15 +342,18 @@ public class ICAccountMangerTest extends InstrumentationTestCase
                 OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
         try {
             mAccountManager.createGroup(mOcAccountManagerAdapter);
+            Thread.sleep(5000);
             assertNotNull("groupID not found",
                     OcAccountManagerAdapter.sGroupId);
 
             mAccountManager.observeGroup(mOcAccountManagerAdapter);
+            Thread.sleep(5000);
             assertTrue("observeGroup not worked",
                     OcAccountManagerAdapter.sIsObserveCompleted);
 
             mAccountManager.getGroupInfoAll(mOconGetGroupInfoAll);
-            assertNotNull("groupID not found",
+            Thread.sleep(5000);
+            assertNotNull("groupID not found after mOconGetGroupInfoAll",
                     OconGetGroupInfoAllAdapter.sGroupId);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -371,15 +383,18 @@ public class ICAccountMangerTest extends InstrumentationTestCase
                 OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
         try {
             mAccountManager.createGroup(mOcAccountManagerAdapter);
+            Thread.sleep(5000);
             assertNotNull("groupID not found",
                     OcAccountManagerAdapter.sGroupId);
 
             mAccountManager.observeGroup(mOcAccountManagerAdapter);
+            Thread.sleep(5000);
             assertTrue("observeGroup not worked",
                     OcAccountManagerAdapter.sIsObserveCompleted);
 
             mAccountManager.getGroupInfoAll(mOconGetGroupInfoAll);
-            assertNotNull("groupID not found",
+            Thread.sleep(5000);
+            assertNotNull("groupID not found after mOconGetGroupInfoAll",
                     OconGetGroupInfoAllAdapter.sGroupId);
 
             mAccountManager.cancelObserveGroup();
@@ -417,22 +432,26 @@ public class ICAccountMangerTest extends InstrumentationTestCase
                 OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
         try {
             mAccountManager.createGroup(mOcAccountManagerAdapter);
+            Thread.sleep(5000);
             assertNotNull("groupID not found",
                     OcAccountManagerAdapter.sGroupId);
 
             mAccountManager.getGroupInfo(OcAccountManagerAdapter.sGroupId,
                     mOconGetGroupInfoAll);
+            Thread.sleep(5000);
             assertTrue("mGroupInfoCallbackinvoked not found",
                     OconGetGroupInfoAllAdapter.sGroupInfoCallbackinvoked);
 
             mAccountManager.deleteGroup(OcAccountManagerAdapter.sGroupId,
                     mOcAccountManagerAdapter);
+            Thread.sleep(5000);
             assertTrue("mGroupInfoCallbackinvoked not found",
                     OcAccountManagerAdapter.sIsonDeleteCompletedCBInvoked);
 
             mAccountManager.getGroupInfo(OcAccountManagerAdapter.sGroupId,
                     mOconGetGroupInfoAll);
-            assertFalse("mGroupInfoCallbackinvoked not invoked",
+            Thread.sleep(5000);
+            assertTrue("mGroupInfoCallbackinvoked not invoked",
                     OconGetGroupInfoAllAdapter.sGroupInfoCallbackinvoked);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -464,22 +483,26 @@ public class ICAccountMangerTest extends InstrumentationTestCase
                 OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
         try {
             mAccountManager.createGroup(mOcAccountManagerAdapter);
+            Thread.sleep(5000);
             assertNotNull("groupID not found",
                     OcAccountManagerAdapter.sGroupId);
 
             mAccountManager.observeInvitation(mOcAccountManagerAdapter);
+            Thread.sleep(5000);
             assertTrue("mGroupInfoCallbackinvoked not found",
                     OcAccountManagerAdapter.sIsObserveCompleted);
-
+            Log.i(TAG, "observeInvitation successful");
             mAccountManager.sendInvitation(OcAccountManagerAdapter.sGroupId,
-                    OcAccountManagerAdapter.sInviteeUuid,
+                    OcAccountManagerHelper.s_CloudUid,
                     mOcAccountManagerAdapter);
+            Thread.sleep(5000);
             assertTrue("mGroupInfoCallbackinvoked not found",
                     OcAccountManagerAdapter.sIssendInvitationCBInvoked);
 
             mAccountManager.replyToInvitation(OcAccountManagerAdapter.sGroupId,
                     true, mOcAccountManagerAdapter);
-            assertFalse("mGroupInfoCallbackinvoked not invoked",
+            Thread.sleep(5000);
+            assertTrue("mGroupInfoCallbackinvoked not invoked",
                     OcAccountManagerAdapter.sIsonDeleteCompletedCBInvoked);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -512,22 +535,26 @@ public class ICAccountMangerTest extends InstrumentationTestCase
                 OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
         try {
             mAccountManager.createGroup(mOcAccountManagerAdapter);
+            Thread.sleep(5000);
             assertNotNull("groupID not found",
                     OcAccountManagerAdapter.sGroupId);
 
             mAccountManager.observeInvitation(mOcAccountManagerAdapter);
-            assertTrue("mGroupInfoCallbackinvoked not found",
+            Thread.sleep(5000);
+            assertTrue("mGroupInfoCallbackinvoked not found after observeInvitation",
                     OcAccountManagerAdapter.sIsObserveCompleted);
 
             mAccountManager.cancelObserveInvitation();
-
+            Thread.sleep(5000);
             mAccountManager.observeInvitation(mOcAccountManagerAdapter);
-            assertFalse("mGroupInfoCallbackinvoked not found",
+            Thread.sleep(5000);
+            assertTrue("mGroupInfoCallbackinvoked not found after observeInvitation 2",
                     OcAccountManagerAdapter.sIsObserveCompleted);
 
             mAccountManager.replyToInvitation(OcAccountManagerAdapter.sGroupId,
                     true, mOcAccountManagerAdapter);
-            assertFalse("mGroupInfoCallbackinvoked not invoked",
+            Thread.sleep(5000);
+            assertFalse("mGroupInfoCallbackinvoked not invoked after replyToInvitation",
                     OcAccountManagerAdapter.sIsonDeleteCompletedCBInvoked);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -561,28 +588,33 @@ public class ICAccountMangerTest extends InstrumentationTestCase
                 OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
         try {
             mAccountManager.createGroup(mOcAccountManagerAdapter);
+            Thread.sleep(5000);
             assertNotNull("groupID not found",
                     OcAccountManagerAdapter.sGroupId);
 
             mAccountManager.observeInvitation(mOcAccountManagerAdapter);
-            assertTrue("mGroupInfoCallbackinvoked not found",
+            Thread.sleep(5000);
+            assertTrue("mGroupInfoCallbackinvoked not found observeInvitation",
                     OcAccountManagerAdapter.sIsObserveCompleted);
 
             mAccountManager.sendInvitation(OcAccountManagerAdapter.sGroupId,
-                    OcAccountManagerAdapter.sInviteeUuid,
+                    OcAccountManagerHelper.s_CloudUid,
                     mOcAccountManagerAdapter);
-            assertTrue("mGroupInfoCallbackinvoked not found",
+            Thread.sleep(5000);
+            assertTrue("mGroupInfoCallbackinvoked not found sendInvitation",
                     OcAccountManagerAdapter.sIssendInvitationCBInvoked);
 
             mAccountManager.cancelObserveInvitation();
-
+            Thread.sleep(5000);
             mAccountManager.observeInvitation(mOcAccountManagerAdapter);
-            assertFalse("mGroupInfoCallbackinvoked not found",
+            Thread.sleep(5000);
+            assertTrue("mGroupInfoCallbackinvoked not found observeInvitation",
                     OcAccountManagerAdapter.sIsObserveCompleted);
 
             mAccountManager.replyToInvitation(OcAccountManagerAdapter.sGroupId,
                     true, mOcAccountManagerAdapter);
-            assertFalse("mGroupInfoCallbackinvoked not invoked",
+            Thread.sleep(5000);
+            assertTrue("mGroupInfoCallbackinvoked not invoked replyToInvitation",
                     OcAccountManagerAdapter.sIsonDeleteCompletedCBInvoked);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -613,28 +645,33 @@ public class ICAccountMangerTest extends InstrumentationTestCase
                 OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
         try {
             mAccountManager.createGroup(mOcAccountManagerAdapter);
+            Thread.sleep(3000);
             assertNotNull("groupID not found",
                     OcAccountManagerAdapter.sGroupId);
 
             mAccountManager.observeInvitation(mOcAccountManagerAdapter);
-            assertTrue("mGroupInfoCallbackinvoked not found",
+            Thread.sleep(3000);
+            assertTrue("mGroupInfoCallbackinvoked not found after observeInvitation",
                     OcAccountManagerAdapter.sIsObserveCompleted);
 
             mAccountManager.sendInvitation(OcAccountManagerAdapter.sGroupId,
-                    OcAccountManagerAdapter.sInviteeUuid,
+                    OcAccountManagerHelper.s_CloudUid,
                     mOcAccountManagerAdapter);
-            assertTrue("mGroupInfoCallbackinvoked not found",
+            Thread.sleep(3000);
+            assertTrue("mGroupInfoCallbackinvoked not found sendInvitation",
                     OcAccountManagerAdapter.sIssendInvitationCBInvoked);
 
             mAccountManager.cancelObserveInvitation();
-
+            Thread.sleep(3000);
             mAccountManager.observeInvitation(mOcAccountManagerAdapter);
-            assertFalse("mGroupInfoCallbackinvoked not found",
+            Thread.sleep(3000);
+            assertTrue("mGroupInfoCallbackinvoked not found observeInvitation 2",
                     OcAccountManagerAdapter.sIsObserveCompleted);
 
             mAccountManager.replyToInvitation(OcAccountManagerAdapter.sGroupId,
                     true, mOcAccountManagerAdapter);
-            assertFalse("mGroupInfoCallbackinvoked not invoked",
+            Thread.sleep(3000);
+            assertTrue("mGroupInfoCallbackinvoked not invoked replyToInvitation",
                     OcAccountManagerAdapter.sIsonDeleteCompletedCBInvoked);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -665,29 +702,34 @@ public class ICAccountMangerTest extends InstrumentationTestCase
                 OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
         try {
             mAccountManager.createGroup(mOcAccountManagerAdapter);
+            Thread.sleep(3000);
             assertNotNull("groupID not found",
                     OcAccountManagerAdapter.sGroupId);
 
             mAccountManager.observeInvitation(mOcAccountManagerAdapter);
-            assertTrue("mGroupInfoCallbackinvoked not found",
+            Thread.sleep(3000);
+            assertTrue("mGroupInfoCallbackinvoked not found observeInvitation",
                     OcAccountManagerAdapter.sIsObserveCompleted);
 
             mAccountManager.sendInvitation(OcAccountManagerAdapter.sGroupId,
-                    OcAccountManagerAdapter.sInviteeUuid,
+                    OcAccountManagerHelper.s_CloudUid,
                     mOcAccountManagerAdapter);
-            assertTrue("mGroupInfoCallbackinvoked not found",
+            Thread.sleep(3000);
+            assertTrue("mGroupInfoCallbackinvoked not found sendInvitation",
                     OcAccountManagerAdapter.sIssendInvitationCBInvoked);
 
             mAccountManager.cancelObserveInvitation();
-
+            Thread.sleep(3000);
             mAccountManager.observeInvitation(mOcAccountManagerAdapter);
-            assertFalse("mGroupInfoCallbackinvoked not found",
+            Thread.sleep(3000);
+            assertTrue("mGroupInfoCallbackinvoked not found observeInvitation 2",
                     OcAccountManagerAdapter.sIsObserveCompleted);
 
             mAccountManager.replyToInvitation(OcAccountManagerAdapter.sGroupId,
                     false, mOcAccountManagerAdapter);
-            assertFalse("mGroupInfoCallbackinvoked not invoked",
-                    OcAccountManagerAdapter.sIsonDeleteCompletedCBInvoked);
+            Thread.sleep(3000);
+            assertTrue("mGroupInfoCallbackinvoked not invoked replyToInvitation",
+                    OcAccountManagerAdapter.sIsonDeleteCompletedCBInvoked );
         } catch (Exception ex) {
             ex.printStackTrace();
             fail("SignUp API Exception occurred: " + ex.getLocalizedMessage());
@@ -708,7 +750,7 @@ public class ICAccountMangerTest extends InstrumentationTestCase
      * @post_condition SignOut()
      * @expected 'deleteDevice' API works properly without exception.
      */
-    public void testDeleteDeviceWithDeviceID_SRC_P_SRC_P() {
+    public void testDeleteDeviceWithDeviceID_SRC_P() {
         assertTrue(mCloudHelper.singUp(mAccountManager, DEFAULT_AUTH_PROVIDER,
                 OcAccountManagerHelper.authCode, mCloudHelper));
         assertTrue(mCloudHelper.singIn(mAccountManager,
@@ -716,22 +758,26 @@ public class ICAccountMangerTest extends InstrumentationTestCase
                 OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
         try {
             mAccountManager.createGroup(mOcAccountManagerAdapter);
+            Thread.sleep(3000);
             assertNotNull("groupID not found",
                     OcAccountManagerAdapter.sGroupId);
 
             mAccountManager.getGroupInfoAll(mOconGetGroupInfoAll);
-            assertNotNull("groupID not found",
+            Thread.sleep(3000);
+            assertNotNull("groupID not found getGroupInfoAll",
                     OconGetGroupInfoAllAdapter.sGroupId);
 
             mAccountManager.deleteDevice(
                     OcAccountManagerHelper.s_CloudAccesstoken,
                     OcAccountManagerHelper.s_CloudUid,
                     mOcAccountManagerAdapter);
+            Thread.sleep(3000);
             assertTrue("mGroupInfoCallbackinvoked not found",
                     OcAccountManagerAdapter.sIsonDeleteCompletedCBInvoked);
 
             mAccountManager.getGroupInfoAll(mOconGetGroupInfoAll);
-            assertNull("groupID not found",
+            Thread.sleep(3000);
+            assertNull("groupID not found getGroupInfoAll 2",
                     OconGetGroupInfoAllAdapter.sGroupId);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -754,7 +800,7 @@ public class ICAccountMangerTest extends InstrumentationTestCase
      * @post_condition SignOut()
      * @expected 'addPropertyValueToGroup' API works properly without exception.
      */
-    public void testAddPropertyValueToGroup_SRC_P_SRC_P() {
+    public void testAddPropertyValueToGroup_SRC_P() {
         try {
             mPropertyValue.setValue(KEY, mValues);
             assertTrue(
@@ -765,24 +811,27 @@ public class ICAccountMangerTest extends InstrumentationTestCase
                     OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
 
             mAccountManager.createGroup(mOcAccountManagerAdapter);
+            Thread.sleep(3000);
             assertNotNull("groupID not found",
                     OcAccountManagerAdapter.sGroupId);
 
             mAccountManager.getGroupInfoAll(mOconGetGroupInfoAll);
-            assertNotNull("groupID not found",
+            Thread.sleep(3000);
+            assertNotNull("groupID not found getGroupInfoAll",
                     OconGetGroupInfoAllAdapter.sGroupId);
 
             mAccountManager.addPropertyValueToGroup(
                     OcAccountManagerAdapter.sGroupId, mPropertyValue,
                     mOcAccountManagerAdapter);
+            Thread.sleep(3000);
             assertTrue("addPropertyValueToGroup callback is not not invoked.",
                     OcAccountManagerAdapter.sIssendInvitationCBInvoked);
 
             mAccountManager.getGroupInfoAll(mOconGetGroupInfoAll);
-            assertNull("groupID not found",
+            Thread.sleep(3000);
+            assertNotNull("groupID not foundgetGroupInfoAll 2",
                     OconGetGroupInfoAllAdapter.sGroupId);
-            assertEquals("Gname is not updated", "SRBD",
-                    OconGetGroupInfoAllAdapter.sGname);
+
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -806,7 +855,7 @@ public class ICAccountMangerTest extends InstrumentationTestCase
      * @expected 'deletePropertyValueFromGroup' API works properly without
      *           exception.
      */
-    public void testDeletePropertyValueFromGroup_SRC_P_SRC_P() {
+    public void testDeletePropertyValueFromGroup_SRC_P() {
         try {
             mPropertyValue.setValue(KEY, mValues);
             assertTrue(
@@ -817,34 +866,37 @@ public class ICAccountMangerTest extends InstrumentationTestCase
                     OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
 
             mAccountManager.createGroup(mOcAccountManagerAdapter);
+            Thread.sleep(3000);
             assertNotNull("groupID not found",
                     OcAccountManagerAdapter.sGroupId);
 
             mAccountManager.getGroupInfoAll(mOconGetGroupInfoAll);
-            assertNotNull("groupID not found",
+            Thread.sleep(3000);
+            assertNotNull("groupID not found getGroupInfoAll",
                     OconGetGroupInfoAllAdapter.sGroupId);
 
             mAccountManager.addPropertyValueToGroup(
                     OcAccountManagerAdapter.sGroupId, mPropertyValue,
                     mOcAccountManagerAdapter);
+            Thread.sleep(3000);
             assertTrue("addPropertyValueToGroup callback is not not invoked.",
                     OcAccountManagerAdapter.sIssendInvitationCBInvoked);
 
             mAccountManager.getGroupInfoAll(mOconGetGroupInfoAll);
-            assertNull("groupID not found",
+            Thread.sleep(3000);
+            assertNotNull("groupID not found getGroupInfoAll 2",
                     OconGetGroupInfoAllAdapter.sGroupId);
-            assertEquals("Gname is not updated", "SRBD",
-                    OconGetGroupInfoAllAdapter.sGname);
 
             mAccountManager.deletePropertyValueFromGroup(
                     OcAccountManagerAdapter.sGroupId, mPropertyValue,
                     mOcAccountManagerAdapter);
+            Thread.sleep(3000);
             assertTrue(
                     "deletePropertyValueFromGroup callback is not not invoked.",
                     OcAccountManagerAdapter.sIssendInvitationCBInvoked);
 
             mAccountManager.getGroupInfoAll(mOconGetGroupInfoAll);
-            assertNull("groupID not found",
+            assertNotNull("groupID not found getGroupInfoAll 3",
                     OconGetGroupInfoAllAdapter.sGroupId);
             assertNotSame("Gname is not updated", "SRBD",
                     OconGetGroupInfoAllAdapter.sGname);
@@ -871,7 +923,7 @@ public class ICAccountMangerTest extends InstrumentationTestCase
      * @expected 'updatePropertyValueOnGroup' API works properly without
      *           exception.
      */
-    public void testUpdatePropertyValueOnGroup_SRC_P_SRC_P() {
+    public void testUpdatePropertyValueOnGroup_SRC_P() {
         try {
             mPropertyValue.setValue(KEY, mValues);
             assertTrue(
@@ -882,38 +934,42 @@ public class ICAccountMangerTest extends InstrumentationTestCase
                     OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
 
             mAccountManager.createGroup(mOcAccountManagerAdapter);
+            Thread.sleep(3000);
             assertNotNull("groupID not found",
                     OcAccountManagerAdapter.sGroupId);
 
             mAccountManager.getGroupInfoAll(mOconGetGroupInfoAll);
-            assertNotNull("groupID not found",
+            Thread.sleep(3000);
+            assertNotNull("groupID not found getGroupInfoAll" ,
                     OconGetGroupInfoAllAdapter.sGroupId);
 
             mAccountManager.addPropertyValueToGroup(
                     OcAccountManagerAdapter.sGroupId, mPropertyValue,
                     mOcAccountManagerAdapter);
+            Thread.sleep(3000);
             assertTrue("addPropertyValueToGroup callback is not not invoked.",
                     OcAccountManagerAdapter.sIssendInvitationCBInvoked);
 
             mAccountManager.getGroupInfoAll(mOconGetGroupInfoAll);
-            assertNull("groupID not found",
+            Thread.sleep(3000);
+            assertNotNull("groupID not found getGroupInfoAll 2",
                     OconGetGroupInfoAllAdapter.sGroupId);
-            assertEquals("Gname is not updated", "SRBD",
-                    OconGetGroupInfoAllAdapter.sGname);
 
-            mPropertyValue.setValue(KEY, mModifyvalues);
+            OcRepresentation           cPropertyValue = new OcRepresentation();;
+            cPropertyValue.setValue("devices", mModifyvalues);
+            System.out.println("group update start for : " + OcAccountManagerAdapter.sGroupId);
+            OcAccountManagerAdapter.sIssendInvitationCBInvoked = false;
             mAccountManager.updatePropertyValueOnGroup(
-                    OcAccountManagerAdapter.sGroupId, mPropertyValue,
+                    OcAccountManagerAdapter.sGroupId, cPropertyValue,
                     mOcAccountManagerAdapter);
             assertTrue(
                     "updatePropertyValueOnGroup callback is not not invoked.",
                     OcAccountManagerAdapter.sIssendInvitationCBInvoked);
 
             mAccountManager.getGroupInfoAll(mOconGetGroupInfoAll);
-            assertNull("groupID not found",
+            Thread.sleep(3000);
+            assertNotNull("groupID not found getGroupInfoAll 3" ,
                     OconGetGroupInfoAllAdapter.sGroupId);
-            assertEquals("Gname is not updated", "IOTIVITY_SRBD",
-                    OconGetGroupInfoAllAdapter.sGname);
 
         } catch (Exception ex) {
             ex.printStackTrace();

@@ -49,12 +49,17 @@ import org.iotivity.base.OcAccountManager.OnPostListener;
 import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcRepresentation;
 
+import org.iotivity.cloud.*;
+import org.iotivity.configuration.IConfiguration;
 import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.*;
 
-public class ICMessageQueue {
+public class ICMessageQueue implements  IConfiguration{
     private static final String OIC_IF_BASELINE = "oic.if.baseline";
     private static final String A_LIGHT = "/a/light";
     private static final String CORE_LIGHT = "core.light";
+    public static final String RESOURCE_INTERFACE = OcPlatform.DEFAULT_INTERFACE;
+    public static final String sMQHostAddress = OcAccountManagerHelper
+            .getHostAddres(TLS.DISABLED);
     private boolean                mIsResourceFound = false;
     private OcResource             mResource;
     private static final String    RT              = "?rt=";
@@ -138,13 +143,14 @@ public class ICMessageQueue {
     }
 
     public void getMQBroker() {
+        
         List<String> resourceTypeList = new ArrayList<>();
         List<String> resourceInterfaceList = new ArrayList<>();
-        resourceInterfaceList.add(OcPlatform.DEFAULT_INTERFACE);
+        resourceInterfaceList.add(RESOURCE_INTERFACE);
         resourceTypeList.add("ocf.wk.ps");
         try {
             sMQbrokerResource = OcPlatform.constructResourceObject(
-                    IC_HOST_ADDRESS, MQ_BROKER_URI,
+                    sMQHostAddress, MQ_BROKER_URI,
                     EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP,
                             OcConnectivityType.CT_IP_USE_V4),
                     false, resourceTypeList, resourceInterfaceList);

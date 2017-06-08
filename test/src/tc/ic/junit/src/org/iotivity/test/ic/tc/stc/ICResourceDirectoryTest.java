@@ -60,16 +60,24 @@ public class ICResourceDirectoryTest extends InstrumentationTestCase
     private OcPresenceHandle                 m_OcPresenceHandle;
     private OcAccountManagerHelper           mCloudHelper;
     private OcAccountManager                 mAccountManager;
+    private ICHelper                   mICHelper;
 
     protected void setUp() throws Exception {
         super.setUp();
-
+        mICHelper = new ICHelper();
         m_Context = getInstrumentation().getTargetContext();
+        mICHelper.copyCborFromAsset(getInstrumentation().getContext(),
+                "cloud.dat");
+
+        ICHelper.filePath = getInstrumentation().getContext()
+                .getFilesDir().getPath()
+                + "/"; // data/data/<package>/files/
+
         PlatformConfig cfg = new PlatformConfig(
                 getInstrumentation().getTargetContext(), ServiceType.IN_PROC,
                 ModeType.CLIENT_SERVER, "0.0.0.0", // bind to all available
                 // interfaces
-                0, QualityOfService.LOW);
+                0, QualityOfService.LOW, ICHelper.filePath + "cloud.dat");
         OcPlatform.Configure(cfg);
         mAccountManager = OcAccountManagerHelper
                 .getAccountMangerInstance(TLS.DISABLED);
@@ -254,6 +262,7 @@ public class ICResourceDirectoryTest extends InstrumentationTestCase
      * @procedure 1. Perform string publishResourceToRD() API 2. Perform string
      *            deleteResourceFromRD() API with hendler 3. Check ALL APIs work
      *            properly
+     * @post_condition none
      * @expected It will delete Virtual Resource from Resource Directory
      */
     public void testDeleteResourcesToRDWithRESHandle_SRC_FSV_P() {

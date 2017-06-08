@@ -298,7 +298,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSignUpWithMap_NV_N() {
         try {
-            m_accountManager.signUp(NULL_VAL, NULL_VAL, EMPTY_MY_MAP,
+            m_accountManager.signUp(INVALID_PARAMETER, INVALID_PARAMETER, EMPTY_MY_MAP,
                     m_OcAccountManagerAdapter);
             fail("SignUp API does not throw exception occurred");
         } catch (OcException ex) {
@@ -472,9 +472,10 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
     public void testsignOut_SRC_P() {
         try {
             m_accountManager.signOut(ACCESS_TOKEN, m_OcAccountManagerAdapter);
+            fail("SignUp API should throw an Exception");
         } catch (OcException ex) {
             ex.printStackTrace();
-            fail("SignUp API Exception occurred: " + ex.getLocalizedMessage());
+            assertEquals("Wrong Exception is thrown by API", ErrorCode.ERROR, ex.getErrorCode());
         }
     }
 
@@ -498,7 +499,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
             fail("signOut does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
+            assertEquals(ErrorCode.ERROR, ex.getErrorCode());
         }
     }
 
@@ -521,7 +522,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
             fail("signOut does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
+            assertEquals(ErrorCode.ERROR, ex.getErrorCode());
         }
     }
 
@@ -903,10 +904,10 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
     public void testCreateGroup_SRC_P() {
         try {
             m_accountManager.createGroup(m_OcAccountManagerAdapter);
+            fail("deleteDevice API Exception not occurred: ");
         } catch (OcException ex) {
             ex.printStackTrace();
-            fail("deleteDevice API Exception occurred: "
-                    + ex.getLocalizedMessage());
+            assertEquals("Error code not same",ErrorCode.ERROR, ex.getErrorCode());
         }
     }
 
@@ -951,10 +952,10 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
     public void testCreateGroupWithQueryMap_SRC_P() {
         try {
             m_accountManager.createGroup(MY_MAP, m_OcAccountManagerAdapter);
+            fail("deleteDevice API Exception not occurred: ");
         } catch (OcException ex) {
             ex.printStackTrace();
-            fail("deleteDevice API Exception occurred: "
-                    + ex.getLocalizedMessage());
+            assertEquals("Error code not same",ErrorCode.ERROR, ex.getErrorCode());
         }
     }
 
@@ -1000,10 +1001,10 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
     public void testDeleteGroup_SRC_P() {
         try {
             m_accountManager.deleteGroup(GROUP_ID, m_OcAccountManagerAdapter);
+            fail("getGroupList API Exception not occurred:");
         } catch (OcException ex) {
             ex.printStackTrace();
-            fail("getGroupList API Exception occurred: "
-                    + ex.getLocalizedMessage());
+            assertEquals("Error code not same",ErrorCode.ERROR, ex.getErrorCode());
         }
     }
 
@@ -1028,7 +1029,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
             fail("deleteGroup does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
+            assertEquals(ErrorCode.ERROR, ex.getErrorCode());
         }
     }
 
@@ -1053,7 +1054,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
             fail("deleteGroup does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
+            assertEquals(ErrorCode.ERROR, ex.getErrorCode());
         }
     }
 
@@ -1121,10 +1122,11 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
     public void testGetGroupInfo_SRC_P() {
         try {
             m_accountManager.getGroupInfo(GROUP_ID, m_OcAccountManagerAdapter);
+            fail("getGroupInfo API should throw an Exception ");
         } catch (OcException ex) {
             ex.printStackTrace();
-            fail("getGroupInfo API Exception occurred: "
-                    + ex.getLocalizedMessage());
+            assertEquals("getGroupInfo API throws wrong Exception", ErrorCode.ERROR
+                    , ex.getErrorCode());
         }
     }
 
@@ -1148,7 +1150,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
             fail("getGroupInfo does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
+            assertEquals(ErrorCode.ERROR, ex.getErrorCode());
         }
     }
 
@@ -1172,7 +1174,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
             fail("getGroupInfo does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
+            assertEquals(ErrorCode.ERROR, ex.getErrorCode());
         }
     }
 
@@ -1237,10 +1239,10 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
     public void testGetGroupInfoWithListener_SRC_P() {
         try {
             m_accountManager.getGroupInfoAll(m_OcAccountManagerAdapter);
+            fail("getGroupInfo API Exception not occurred: ");
         } catch (OcException ex) {
             ex.printStackTrace();
-            fail("getGroupInfo API Exception occurred: "
-                    + ex.getLocalizedMessage());
+            assertEquals("Error code not same",ErrorCode.ERROR, ex.getErrorCode());
         }
     }
 
@@ -1306,13 +1308,10 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
     public void testObserveGroup_SRC_P() {
         try {
             m_accountManager.observeGroup(m_OcAccountManagerAdapter);
+            fail("observeGroup API Exception not occurred: ");
         } catch (OcException ex) {
             ex.printStackTrace();
-            System.out.println("####Error Message:" + ex.getMessage());
-            System.out.println("####Error Message:" + ex.getErrorCode());
-            System.out.println("####Error Message:" + ex.getLocalizedMessage());
-            fail("observeGroup API Exception occurred: "
-                    + ex.getLocalizedMessage());
+            assertEquals("Error code not same",ErrorCode.ERROR, ex.getErrorCode());           
         }
     }
 
@@ -1355,10 +1354,10 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
         try {
             m_accountManager.observeGroup(m_OcAccountManagerAdapter);
             m_accountManager.cancelObserveGroup();
+            fail("SignUp API should throw an Exception");
         } catch (OcException ex) {
             ex.printStackTrace();
-            fail("cancelObserveGroup API Exception occurred: "
-                    + ex.getLocalizedMessage());
+            assertEquals("Wrong Exception is thrown by API", ErrorCode.ERROR, ex.getErrorCode());
         }
     }
 
@@ -1473,14 +1472,10 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
         try {
             m_accountManager.sendInvitation(GROUP_ID, USER_UUID,
                     m_OcAccountManagerAdapter);
+            fail("SignUp API should throw an Exception");
         } catch (OcException ex) {
             ex.printStackTrace();
-            System.out.println("####Error Message:" + ex.getMessage());
-            System.out.println("####Error Code:" + ex.getErrorCode());
-            System.out.println(
-                    "####Error Localize Message:" + ex.getLocalizedMessage());
-            fail("sendInvitation API Exception occurred: "
-                    + ex.getLocalizedMessage());
+            assertEquals("Wrong Exception is thrown by API", ErrorCode.ERROR, ex.getErrorCode());
         }
     }
 
@@ -1509,7 +1504,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
             System.out.println("####Error Code:" + ex.getErrorCode());
             System.out.println(
                     "####Error Localize Message:" + ex.getLocalizedMessage());
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
+            assertEquals(ErrorCode.ERROR, ex.getErrorCode());
         }
     }
 
@@ -1538,7 +1533,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
             System.out.println("####Error Code:" + ex.getErrorCode());
             System.out.println(
                     "####Error Localize Message:" + ex.getLocalizedMessage());
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
+            assertEquals(ErrorCode.ERROR, ex.getErrorCode());
         }
     }
 
@@ -1718,7 +1713,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
     public void testCancelInvitationNULLCallback_NV_N() {
         try {
             m_accountManager.cancelInvitation(GROUP_ID, USER_UUID,
-                    IC_OcAccountManager_OnDeleteListener_NULL);
+                    null);
             fail("cancelInvitation does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();

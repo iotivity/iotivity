@@ -57,16 +57,17 @@ public final class ICHelperStaticUtil {
     public static final String REFRESH_TOKEN = "AnyRefreshToken";
     public static final String USER_ID = "AnyUserId";
     public static final String DEVICE_ID = "AnyDeviceId";
-    public static final String GROUP_ID = "AnyGroupId";
+    public static final String GROUP_ID = "208ee67c-a535-e4a4-68ca-3cea984964ca";
     public static final String USER_UUID = "AnyUserUuid";
     public static final String TOPIC_URI = "/ps/nweTopic";
     public static final String Resource_URI = "/a/light";
     public static final String RESOURCE_TYPE = "core.light";
-    public static final String KEY = "gname";
-    public static final String VALUE = "SRBD";
+    public static final String KEY = "members";
+    public static final String VALUE = "SRBD_IOT";
     public static final String RESOURCE_INTERFACE = OcPlatform.DEFAULT_INTERFACE;
     public static final String MQ_BROKER_URI = "/oic/ps";
-    public static final String MQ_DEFAULT_TOPIC_URI = "/oic/ps/cleanroom";
+    public static final String MQ_DEFAULT_TOPIC_URI = "/oic/ps/cleanroom13";
+    public static final String MQ_DEFAULT_TOPIC_URI2 = "/oic/ps/cleanroom14";
     public static Map<String, String> MY_MAP = new HashMap<String, String>() {
         {
             put("a", "b");

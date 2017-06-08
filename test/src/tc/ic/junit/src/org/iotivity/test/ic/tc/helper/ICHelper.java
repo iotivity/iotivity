@@ -87,6 +87,7 @@ public class ICHelper {
     public static String            sRefreshToken;
     public OcAccountManager         mAccountManagertest;
 
+    public static String filePath = "";
     private enum LogLevel {
         INFO, ERROR, DEBUG
     };
@@ -171,7 +172,7 @@ public class ICHelper {
         OutputStream outputStream = null;
         int length;
         byte[] buffer = new byte[BUFFER_SIZE];
-        String filePath = context.getFilesDir().getPath() + "/"; // data/data/<package>/files/
+        filePath = context.getFilesDir().getPath() + "/"; // data/data/<package>/files/
 
         try {
             inputStream = context.getAssets().open(oicClientCborDbFile);

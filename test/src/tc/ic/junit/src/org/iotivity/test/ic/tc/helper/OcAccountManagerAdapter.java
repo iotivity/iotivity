@@ -54,11 +54,12 @@ public class OcAccountManagerAdapter implements OnPostListener, OnGetListener,
     public static boolean sIsObserveCompleted           = false;
     public static boolean sIsonDeleteCompletedCBInvoked = false;
     public static boolean sIssendInvitationCBInvoked    = false;
+    public static boolean onGetCompletedOk              = false;
 
     @Override
     public void onPostCompleted(List<OcHeaderOption> list,
             OcRepresentation ocRepresentation) {
-        System.out.println(
+        Log.i(TAG,
                 "createGroup or sendInviation or adProertyvalue were successful");
         sIssendInvitationCBInvoked = true;
         try {
@@ -71,8 +72,9 @@ public class OcAccountManagerAdapter implements OnPostListener, OnGetListener,
 
     @Override
     public void onPostFailed(Throwable throwable) {
-        Log.e(TAG, "Failed to createGroup");
-        sIssendInvitationCBInvoked = true;
+        Log.e(TAG,
+                "Failed to createGroup/sendInovation/add/delete/updatepropertyGroup");
+        sIssendInvitationCBInvoked = false;
         if (throwable instanceof OcException) {
             OcException ocEx = (OcException) throwable;
             Log.e(TAG, ocEx.toString());
@@ -82,11 +84,14 @@ public class OcAccountManagerAdapter implements OnPostListener, OnGetListener,
 
     @Override
     public void onDeleteCompleted(List<OcHeaderOption> arg0) {
+        Log.i(TAG, "successed to delete operation");
         sIsonDeleteCompletedCBInvoked = true;
     }
 
     @Override
     public void onDeleteFailed(Throwable arg0) {
+        Log.e(TAG, "failed to delete operation");
+        sIsonDeleteCompletedCBInvoked = false;
     }
 
     @Override
@@ -134,7 +139,7 @@ public class OcAccountManagerAdapter implements OnPostListener, OnGetListener,
     @Override
     public void onObserveFailed(Throwable throwable) {
         System.out.println("Failed to observeGroup");
-        sIsObserveCompleted = true;
+        sIsObserveCompleted = false;
         if (throwable instanceof OcException) {
             OcException ocEx = (OcException) throwable;
             Log.e(TAG, ocEx.toString());
@@ -147,17 +152,19 @@ public class OcAccountManagerAdapter implements OnPostListener, OnGetListener,
     public synchronized void onGetCompleted(List<OcHeaderOption> list,
             OcRepresentation ocRepresentation) {
         System.out.println("searchUser was successful");
-        try {
-            OcRepresentation[] userList = ocRepresentation.getValue("ulist");
-            for (OcRepresentation user : userList) {
-                sInviteeUuid = user.getValue("uid");
-                OcRepresentation userInfo = user.getValue("uinfo");
-                String inviteeUserId = userInfo.getValue("userid");
-                Log.d(TAG, "inviteeUserId : " + inviteeUserId);
-            }
-        } catch (OcException e) {
-            e.printStackTrace();
-        }
+        // try {
+        // OcRepresentation[] userList = ocRepresentation.getValue("ulist");
+        // for (OcRepresentation user : userList) {
+        // sInviteeUuid = user.getValue("uid");
+        // OcRepresentation userInfo = user.getValue("uinfo");
+        // String inviteeUserId = userInfo.getValue("userid");
+        // Log.d(TAG, "inviteeUserId : " + inviteeUserId);
+        onGetCompletedOk = true;
+        Log.i(TAG, "onGetCompletedOk value is " + onGetCompletedOk);
+
+        // } catch (OcException e) {
+        // e.printStackTrace();
+        // }
     }
 
     @Override

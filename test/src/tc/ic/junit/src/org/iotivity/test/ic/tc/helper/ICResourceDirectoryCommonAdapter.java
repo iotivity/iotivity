@@ -85,6 +85,7 @@ public class ICResourceDirectoryCommonAdapter
 
     @Override
     public void onObserveFailed(Throwable arg0) {
+        System.out.println("observeGroup was failed");
     }
 
     @Override
@@ -96,7 +97,7 @@ public class ICResourceDirectoryCommonAdapter
 
     public void onDeleteResourceFailed(Throwable arg0) {
         System.out.println("onDeleteResource failed");
-        sOnDeleteResourceCompleted = true;
+        sOnDeleteResourceCompleted = false;
     }
 
     @Override
@@ -116,7 +117,7 @@ public class ICResourceDirectoryCommonAdapter
     @Override
     public void onPublishResourceFailed(Throwable throwable) {
         System.out.println("onPublishResourceFailed has failed");
-        sIsOnPublishResourceCompleted = true;
+        sIsOnPublishResourceCompleted = false;
     }
 
 }

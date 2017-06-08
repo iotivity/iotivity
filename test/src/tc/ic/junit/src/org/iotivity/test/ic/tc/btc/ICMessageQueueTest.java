@@ -144,7 +144,7 @@ public class ICMessageQueueTest extends AndroidTestCase {
      */
     public void testcreateMQTopic_ESV_ETC_N() {
         try {
-            m_ocResource.createMQTopic(m_rep, NULL_VAL, MY_MAP,
+            m_ocResource.createMQTopic(m_rep, EMPTY_VALUE, MY_MAP,
                     m_onTopicCreatedListener, m_qualityOfService);
             fail(SHOULD_THROW_EXCEPTION);
         } catch (OcException ex) {

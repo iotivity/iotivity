@@ -62,9 +62,11 @@ public class ICMessageQueueTest extends InstrumentationTestCase
     ICMessageQueue                 mMessageQueueHelper;
     private OcAccountManagerHelper mCloudHelper;
     private OcAccountManager       mAccountManager;
+    private ICHelper                   mICHelper;
 
     protected void setUp() throws Exception {
         super.setUp();
+        mICHelper = new ICHelper();
         mMessageQueueHelper = new ICMessageQueue();
         mQualityOfService = QualityOfService.LOW;
         mIcMessageAdapter = new ICMessageAdapter();
@@ -72,12 +74,18 @@ public class ICMessageQueueTest extends InstrumentationTestCase
         mContext = getInstrumentation().getContext();
         mCloudHelper = new OcAccountManagerHelper();
 
+        mICHelper.copyCborFromAsset(getInstrumentation().getContext(),
+                "cloud.dat");
+
+        ICHelper.filePath = getInstrumentation().getContext()
+                .getFilesDir().getPath()
+                + "/"; // data/data/<package>/files/
+
         PlatformConfig cfg = new PlatformConfig(
                 getInstrumentation().getTargetContext(), ServiceType.IN_PROC,
-                ModeType.CLIENT_SERVER, ALL_INTERFACE_TYPE, // bind to all
-                                                            // available
+                ModeType.CLIENT_SERVER, ALL_INTERFACE_TYPE, // bind to all available
                 // interfaces
-                0, QualityOfService.LOW);
+                0, QualityOfService.LOW, ICHelper.filePath + "cloud.dat");
         OcPlatform.Configure(cfg);
 
         mAccountManager = OcAccountManagerHelper
@@ -95,6 +103,7 @@ public class ICMessageQueueTest extends InstrumentationTestCase
                 OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
 
         mMessageQueueHelper.getMQBroker();
+        Thread.sleep(3000);
     }
 
     protected void tearDown() throws Exception {
@@ -124,11 +133,13 @@ public class ICMessageQueueTest extends InstrumentationTestCase
     public void testCreateMQTopic_SRC_P() {
         try {
             assertNotNull("MQbrokerResource is null", sMQbrokerResource);
+            Thread.sleep(5000);
             sMQbrokerResource.createMQTopic(mRep, MQ_DEFAULT_TOPIC_URI, MY_MAP,
                     mIcMessageAdapter, IC_OC_QUALITY_OF_SERVICE);
+            Thread.sleep(20000);
             assertTrue("OnTopicResourceCreated is failed",
                     ICMessageAdapter.sOnTopicResourceCreated);
-        } catch (OcException ex) {
+        } catch (Exception ex) {
             fail("Exception occurred: " + ex.getLocalizedMessage());
         }
     }
@@ -156,13 +167,15 @@ public class ICMessageQueueTest extends InstrumentationTestCase
     public void testCreateMQTopicByType_SRC_P() {
         try {
             assertNotNull("MQbrokerResource is null", sMQbrokerResource);
-            sMQbrokerResource.createMQTopic(mRep, MQ_DEFAULT_TOPIC_URI, MY_MAP,
+            Thread.sleep(5000);
+            sMQbrokerResource.createMQTopic(mRep, MQ_DEFAULT_TOPIC_URI2, MY_MAP,
                     mIcMessageAdapter, IC_OC_QUALITY_OF_SERVICE);
+            Thread.sleep(20000);
             assertTrue("OnTopicResourceCreated is failed",
                     ICMessageAdapter.sOnTopicResourceCreated);
             assertNotNull("currentTopicResource is null",
                     ICMessageAdapter.scurrentTopicResource);
-        } catch (OcException ex) {
+        } catch (Exception ex) {
             fail("Exception occurred: " + ex.getLocalizedMessage());
         }
     }
@@ -190,16 +203,16 @@ public class ICMessageQueueTest extends InstrumentationTestCase
     public void testDiscoveryMQTopics_SRC_P() {
         try {
             assertNotNull("MQbrokerResource is null", sMQbrokerResource);
+            Thread.sleep(5000);
             sMQbrokerResource.createMQTopic(mRep, MQ_DEFAULT_TOPIC_URI, MY_MAP,
                     mIcMessageAdapter, IC_OC_QUALITY_OF_SERVICE);
-            assertTrue("OnTopicResourceCreated is failed",
-                    ICMessageAdapter.sOnTopicResourceCreated);
-
+            Thread.sleep(15000);
             sMQbrokerResource.discoveryMQTopics(MY_MAP, mIcMessageAdapter,
                     IC_OC_QUALITY_OF_SERVICE);
+            Thread.sleep(10000);
             assertTrue("mOnTopicResourceCreated is failed",
                     ICMessageAdapter.sOnTopicResourceCreated);
-        } catch (OcException ex) {
+        } catch (Exception ex) {
             fail("Exception occurred: " + ex.getLocalizedMessage());
         }
     }
@@ -229,19 +242,18 @@ public class ICMessageQueueTest extends InstrumentationTestCase
     public void testdiscoveryMQTopicsByType_SRC_P() {
         try {
             assertNotNull("MQbrokerResource is null", sMQbrokerResource);
+            Thread.sleep(5000);
             sMQbrokerResource.createMQTopic(mRep, MQ_DEFAULT_TOPIC_URI, MY_MAP,
                     mIcMessageAdapter, IC_OC_QUALITY_OF_SERVICE);
-            assertTrue("OnTopicResourceCreated is failed",
-                    ICMessageAdapter.sOnTopicResourceCreated);
-            assertNotNull("currentTopicResource is null",
-                    ICMessageAdapter.scurrentTopicResource);
+            Thread.sleep(10000);
 
             sMQbrokerResource.discoveryMQTopics(MY_MAP, mIcMessageAdapter,
                     IC_OC_QUALITY_OF_SERVICE);
+            Thread.sleep(10000);
             assertTrue("mOnTopicResourceCreated is failed",
                     ICMessageAdapter.sOnTopicResourceCreated);
             assertNotNull("resourceUri is null", ICMessageAdapter.sResourceUri);
-        } catch (OcException ex) {
+        } catch (Exception ex) {
             fail("Exception occurred: " + ex.getLocalizedMessage());
         }
     }
@@ -273,13 +285,11 @@ public class ICMessageQueueTest extends InstrumentationTestCase
             assertNotNull("MQbrokerResource is null", sMQbrokerResource);
             sMQbrokerResource.createMQTopic(mRep, MQ_DEFAULT_TOPIC_URI, MY_MAP,
                     mIcMessageAdapter, IC_OC_QUALITY_OF_SERVICE);
-            assertTrue("OnTopicResourceCreated is failed",
-                    ICMessageAdapter.sOnTopicResourceCreated);
-            assertNotNull("currentTopicResource is null",
-                    ICMessageAdapter.scurrentTopicResource);
+            Thread.sleep(10000);
 
             sMQbrokerResource.discoveryMQTopics(MY_MAP, mIcMessageAdapter,
                     IC_OC_QUALITY_OF_SERVICE);
+            Thread.sleep(10000);
             assertTrue("mOnTopicResourceCreated is failed",
                     ICMessageAdapter.sOnTopicResourceCreated);
             assertNotNull("resourceUri is null", ICMessageAdapter.sResourceUri);
@@ -289,9 +299,10 @@ public class ICMessageQueueTest extends InstrumentationTestCase
 
             sMQbrokerResource.publishMQTopic(mRep, MY_MAP, mIcMessageAdapter,
                     IC_OC_QUALITY_OF_SERVICE);
+            Thread.sleep(10000);
             assertTrue("mOnPostCompleted is failed",
                     ICMessageAdapter.sOnPostCompleted);
-        } catch (OcException ex) {
+        } catch (Exception ex) {
             fail("Exception occurred: " + ex.getLocalizedMessage());
         }
     }
@@ -323,13 +334,11 @@ public class ICMessageQueueTest extends InstrumentationTestCase
             assertNotNull("MQbrokerResource is null", sMQbrokerResource);
             sMQbrokerResource.createMQTopic(mRep, MQ_DEFAULT_TOPIC_URI, MY_MAP,
                     mIcMessageAdapter, IC_OC_QUALITY_OF_SERVICE);
-            assertTrue("OnTopicResourceCreated is failed",
-                    ICMessageAdapter.sOnTopicResourceCreated);
-            assertNotNull("currentTopicResource is null",
-                    ICMessageAdapter.scurrentTopicResource);
+            Thread.sleep(10000);
 
             sMQbrokerResource.discoveryMQTopics(MY_MAP, mIcMessageAdapter,
                     IC_OC_QUALITY_OF_SERVICE);
+            Thread.sleep(10000);
             assertTrue("mOnTopicResourceCreated is failed",
                     ICMessageAdapter.sOnTopicResourceCreated);
             assertNotNull("resourceUri is null", ICMessageAdapter.sResourceUri);
@@ -339,9 +348,10 @@ public class ICMessageQueueTest extends InstrumentationTestCase
 
             sMQbrokerResource.requestMQPublish(MY_MAP, mIcMessageAdapter,
                     IC_OC_QUALITY_OF_SERVICE);
+            Thread.sleep(10000);
             assertTrue("mOnPostCompleted is failed",
                     ICMessageAdapter.sOnPostCompleted);
-        } catch (OcException ex) {
+        } catch (Exception ex) {
             fail("Exception occurred: " + ex.getLocalizedMessage());
         }
     }
@@ -373,13 +383,11 @@ public class ICMessageQueueTest extends InstrumentationTestCase
             assertNotNull("MQbrokerResource is null", sMQbrokerResource);
             sMQbrokerResource.createMQTopic(mRep, MQ_DEFAULT_TOPIC_URI, MY_MAP,
                     mIcMessageAdapter, IC_OC_QUALITY_OF_SERVICE);
-            assertTrue("OnTopicResourceCreated is failed",
-                    ICMessageAdapter.sOnTopicResourceCreated);
-            assertNotNull("currentTopicResource is null",
-                    ICMessageAdapter.scurrentTopicResource);
+            Thread.sleep(10000);
 
             sMQbrokerResource.discoveryMQTopics(MY_MAP, mIcMessageAdapter,
                     IC_OC_QUALITY_OF_SERVICE);
+            Thread.sleep(10000);
             assertTrue("mOnTopicResourceCreated is failed",
                     ICMessageAdapter.sOnTopicResourceCreated);
             assertNotNull("resourceUri is null", ICMessageAdapter.sResourceUri);
@@ -389,11 +397,12 @@ public class ICMessageQueueTest extends InstrumentationTestCase
 
             ICMessageAdapter.scurrentTopicResource.subscribeMQTopic(MY_MAP,
                     mIcMessageAdapter, IC_OC_QUALITY_OF_SERVICE);
+            Thread.sleep(10000);
             assertTrue("mOnPostCompleted is failed",
                     ICMessageAdapter.sOnObserveCompleted);
             assertNotNull("resourceUri is null",
                     ICMessageAdapter.sCurrentResourceRep);
-        } catch (OcException ex) {
+        } catch (Exception ex) {
             fail("Exception occurred: " + ex.getLocalizedMessage());
         }
     }
@@ -423,19 +432,18 @@ public class ICMessageQueueTest extends InstrumentationTestCase
             assertNotNull("MQbrokerResource is null", sMQbrokerResource);
             sMQbrokerResource.createMQTopic(mRep, MQ_DEFAULT_TOPIC_URI, MY_MAP,
                     mIcMessageAdapter, IC_OC_QUALITY_OF_SERVICE);
-            assertTrue("OnTopicResourceCreated is failed",
-                    ICMessageAdapter.sOnTopicResourceCreated);
-            assertNotNull("currentTopicResource is null",
-                    ICMessageAdapter.scurrentTopicResource);
+            Thread.sleep(10000);
 
             sMQbrokerResource.discoveryMQTopics(MY_MAP, mIcMessageAdapter,
                     IC_OC_QUALITY_OF_SERVICE);
+            Thread.sleep(5000);
             assertTrue("mOnTopicResourceCreated is failed",
                     ICMessageAdapter.sOnTopicResourceCreated);
             assertNotNull("resourceUri is null", ICMessageAdapter.sResourceUri);
 
             ICMessageAdapter.scurrentTopicResource.subscribeMQTopic(MY_MAP,
                     mIcMessageAdapter, IC_OC_QUALITY_OF_SERVICE);
+            Thread.sleep(10000);
             assertTrue("mOnPostCompleted is failed",
                     ICMessageAdapter.sOnObserveCompleted);
             assertNotNull("resourceUri is null",
@@ -443,7 +451,7 @@ public class ICMessageQueueTest extends InstrumentationTestCase
 
             ICMessageAdapter.scurrentTopicResource
                     .unsubscribeMQTopic(IC_OC_QUALITY_OF_SERVICE);
-        } catch (OcException ex) {
+        } catch (Exception ex) {
             fail("Exception occurred: " + ex.getLocalizedMessage());
         }
     }

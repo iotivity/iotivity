@@ -73,7 +73,8 @@ public class ICMessageAdapter implements OnMQTopicCreatedListener,
 
     @Override
     public void onTopicDiscoveried(OcResource m_myResource) {
-        sOnTopicResourceCreated = false;
+        System.out.println(" onTopicDiscoveried discover success");
+        sOnTopicResourceCreated = true;
         sResourceUri = m_myResource.getUri();
     }
 
