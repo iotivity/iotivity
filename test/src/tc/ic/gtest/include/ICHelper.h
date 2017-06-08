@@ -51,7 +51,10 @@
 #include "OCApi.h"
 #include "OCPlatform.h"
 #include "OCRepresentation.h"
+
+#if defined(__LINUX__)
 #include "cbor.h"
+#endif
 
 #include <InitializeException.h>
 #include "OCException.h"
@@ -86,8 +89,7 @@
 #define IC_SLEEPTIME_MIN                         2
 
 #define IC_ACCOUNT_MANAGER_HOST_ADDRESS         "192.168.43.158:5683"
-//#define IC_CLOUD_INTERFACE_HOST_ADDRESS         "127.0.0.1:5683" // use for ethernet communication
-#define IC_CLOUD_INTERFACE_HOST_ADDRESS         "192.168.43.158:5683" //use for wifi communicatin
+#define IC_CLOUD_INTERFACE_HOST_ADDRESS         "127.0.0.1:5683" // use for ethernet communication
 #define IC_CLOUD_RD_PORT                        "5684"
 #define IC_CLOUD_ACCOUNT_PORT                   "5685"
 #define IC_CLOUD_MSG_PORT                       "5686"
@@ -117,7 +119,6 @@ const string IC_HOST_ADDRESS = "coap+tcp://127.0.0.1:5683";
 #define INVALID "invalid#mail.b"
 #define maxSequenceNumber 0xFFFFFF
 #define URI "/resource"
-#define TOPIC_URI "/ps/nweTopic"
 
 #define HOST            "coap://192.168.1.2:5000"
 #define ACCESS_TOKEN    "AnyAccessToken"
@@ -129,7 +130,7 @@ const string IC_HOST_ADDRESS = "coap+tcp://127.0.0.1:5683";
 #define VALUE           "AnyValue"
 
 #define DEFAULT_MQ_BROKER_URI "/oic/ps"
-#define TOPIC_URI "/oic/ps/light21212"
+#define TOPIC_URI "/oic/ps/light213"
 #define LIGHT "light"
 #define MESSAGE "Published from SRBD"
 #define MQPUBLISHER "./mq_publisher.dat"
@@ -163,6 +164,7 @@ public:
     static string s_GroupID;
     static string s_GroupType;
     static string s_GName;
+    static string ICHelper::s_Member;
     static string s_GroupUUID;
     static std::vector< std::string > s_DeviceID;
 
@@ -177,6 +179,8 @@ public:
     static bool s_IsObserveSuccessful;
     static bool s_IsDeleteSuccessful;
     static bool s_IsPublishSuccessful;
+    static bool s_Pub;
+    static bool s_Sub;
     static string s_SearchQuery;
 
     /**

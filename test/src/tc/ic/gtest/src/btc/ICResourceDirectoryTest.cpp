@@ -333,7 +333,7 @@ TEST_F(ICResourceDirectoryTest_btc, ConstructAccountManagerObjectWithEmptyHost_E
     }
     catch(OCException ex)
     {
-        ASSERT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
+        ASSERT_EQ( OC_STACK_ERROR, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
     }
     SUCCEED();
 }
@@ -364,7 +364,7 @@ TEST_F(ICResourceDirectoryTest_btc, ConstructAccountManagerObjectWithInvalidHost
     }
     catch(OCException ex)
     {
-        ASSERT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
+        ASSERT_EQ(OC_STACK_ERROR, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
     }
     SUCCEED();
 }

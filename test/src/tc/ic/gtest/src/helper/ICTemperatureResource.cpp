@@ -48,8 +48,8 @@ void ICTemperatureResource::setTemperatureRepresentation(OCRepresentation &rep)
         m_representation.setValue("range", m_range);
         m_representation.setValue("units", m_units);
         IOTIVITYTEST_LOG(INFO, "\t\t\t\t temperature: %d", m_temperature);
-        IOTIVITYTEST_LOG(INFO, "\t\t\t\t range: %s", m_range);
-        IOTIVITYTEST_LOG(INFO, "\t\t\t\t units: %s", m_units);
+        IOTIVITYTEST_LOG(INFO, "\t\t\t\t range: %s", m_range.c_str());
+        IOTIVITYTEST_LOG(INFO, "\t\t\t\t units: %s", m_units.c_str());
         propagate();
     }
 }

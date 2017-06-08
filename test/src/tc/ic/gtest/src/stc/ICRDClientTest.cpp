@@ -47,7 +47,7 @@ protected:
     virtual void SetUp()
     {
         CommonTestUtil::runCommonTCSetUpPart();
-
+        m_hostAddress= CloudCommonUtil::getDefaultHostAddess();
         m_ICHelper = ICHelper::getInstance();
         m_rdClient = RDClient::Instance();
         m_ICHelperForCloud.initCloudClient();
@@ -108,7 +108,7 @@ TEST_F(ICRDClientTest_stc, PublishResourcesToRDWithResourceHandelerAndQOS_SRC_FS
 }
 #endif
 
-/*
+/**
  * @since           2017-01-24
  * @see             none
  * @objective       Test 'publishResourceToRD' positively to Publish Virtual Resource to RD
@@ -141,7 +141,7 @@ TEST_F(ICRDClientTest_stc, PublishResourcesToRDWithQOS_SRC_FSV_P)
 }
 #endif
 
-/*
+/**
  * @since           2017-01-24
  * @see             none
  * @objective       Test 'publishResourceToRD' positively to Publish Virtual Resource to RD
@@ -176,7 +176,7 @@ TEST_F(ICRDClientTest_stc, PublishResourcesToRDWithRESHandle_SRC_FSV_P)
 }
 #endif
 
-/*
+/**
  * @since           2016-08-24
  * @see             none
  * @objective       Test 'deleteResourceFromRD' positively to Publish Virtual Resource to RD
@@ -218,7 +218,7 @@ TEST_F(ICRDClientTest_stc, DeleteResourcesToRDWithRESHandleAndQOS_SRC_FSV_P)
 }
 #endif
 
-/*
+/**
  * @since           2017-01-24
  * @see             none
  * @objective       Test 'deleteResourceFromRD' positively
@@ -261,7 +261,7 @@ TEST_F(ICRDClientTest_stc, DeleteResourcesToRDWithQOS_SRC_FSV_P)
 }
 #endif
 
-/*
+/**
  * @since           2017-01-24
  * @see             none
  * @objective       Test 'publishResourceToRD' positively to Publish Virtual Resource to RD

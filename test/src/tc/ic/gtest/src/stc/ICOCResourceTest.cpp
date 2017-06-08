@@ -37,6 +37,7 @@ protected:
     string m_hostAddress = COAP_HOST_ADDRESS;
     QueryParamsMap m_queryParams;
     ICResourceHelper m_ICResourceHelper;
+    string m_Topic_uri1 = "/oic/ps/light55";
 
     static FILE *client_open(const char * /*path*/, const char *mode)
     {
@@ -51,6 +52,7 @@ protected:
         ICResourceHelper::s_isrequestTopicPublishSuccess = false;
         ICResourceHelper::s_isSubscribeSuccess = false;
         CommonTestUtil::runCommonTCSetUpPart();
+        m_hostAddress= CloudCommonUtil::getDefaultHostAddess();
         m_ICHelper.initCloudClient();
         OCPersistentStorage ps
         { client_open, fread, fwrite, fclose, unlink };
@@ -63,9 +65,10 @@ protected:
         g_accountMgrControlee = OCPlatform::constructAccountManagerObject(m_hostAddress,
                 CT_ADAPTER_TCP);
         // MQ broker resource
+        cout<<"m_hostAddress"<<m_hostAddress<<endl;
         string host = "coap+tcp://";
         host += IC_CLOUD_INTERFACE_HOST_ADDRESS;
-        m_mqBrokerResource = OCPlatform::constructResourceObject(host, DEFAULT_MQ_BROKER_URI,
+        m_mqBrokerResource = OCPlatform::constructResourceObject(m_hostAddress, DEFAULT_MQ_BROKER_URI,
                 static_cast< OCConnectivityType >(CT_ADAPTER_TCP | CT_IP_USE_V4), false,
                 { string("oic.wk.ps") },
                 { string(DEFAULT_INTERFACE) });
@@ -131,11 +134,12 @@ TEST_F(ICOCResourceTest_stc, CreateMQTopic_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICOCResourceTest_stc, CreateMQTopicByType_SRC_P)
 {
-    m_queryParams["rt"] = LIGHT;
+    QueryParamsMap queryParams;
+    queryParams["rt"] = LIGHT;
 
     EXPECT_EQ(true, CloudCommonUtil::signIn(g_accountMgrControlee));
-    ASSERT_EQ(OC_STACK_OK, m_mqBrokerResource->createMQTopic(m_rep, TOPIC_URI,
-                    m_queryParams, ICResourceHelper::createTopicCB, QualityOfService::LowQos))<<"Create MQ does not work.";
+    ASSERT_EQ(OC_STACK_OK, m_mqBrokerResource->createMQTopic(m_rep, m_Topic_uri1,
+                    queryParams, ICResourceHelper::createTopicCB, QualityOfService::LowQos))<<"Create MQ does not work.";
     ICHelper::waitForServerResponse();
     ASSERT_EQ(true, ICResourceHelper::s_isCreateTopicSuccess)<<"Topic is not created.";
     EXPECT_EQ(true, CloudCommonUtil::signOut(g_accountMgrControlee));
@@ -202,7 +206,7 @@ TEST_F(ICOCResourceTest_stc, DiscoveryMQTopicsByType_SRC_P)
     m_queryParams["rt"] = LIGHT;
 
     EXPECT_EQ(true, CloudCommonUtil::signIn(g_accountMgrControlee));
-    ASSERT_EQ(OC_STACK_OK, m_mqBrokerResource->createMQTopic(m_rep, TOPIC_URI,
+    ASSERT_EQ(OC_STACK_OK, m_mqBrokerResource->createMQTopic(m_rep, m_Topic_uri1,
                     m_queryParams, ICResourceHelper::createTopicCB, QualityOfService::LowQos))<<"Create MQ does not work.";
     ICHelper::waitForServerResponse();
     ICResourceHelper::s_TopicList.clear();

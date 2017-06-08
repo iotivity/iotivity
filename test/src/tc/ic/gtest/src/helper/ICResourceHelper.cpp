@@ -94,12 +94,12 @@ void ICResourceHelper::createTopicCB(const int ecode, const string &originUri,
     if (ecode == OCStackResult::OC_STACK_RESOURCE_CREATED)
     {
         ICResourceHelper::s_isCreateTopicSuccess = true;
-        IOTIVITYTEST_LOG(INFO, "Created topic : %s" , topic->uri());
+        IOTIVITYTEST_LOG(INFO, "Created topic : %s" , topic->uri().c_str());
     }
     else
     {
         ICResourceHelper::s_isCreateTopicSuccess=false;
-        IOTIVITYTEST_LOG(INFO, "Topic creation failed : %s" , originUri);
+        IOTIVITYTEST_LOG(INFO, "Topic creation failed : %s" , originUri.c_str());
     }
 }
 
@@ -109,7 +109,7 @@ void ICResourceHelper::discoverTopicCB(const int ecode, const string &brokerUri,
     ICResourceHelper::s_isDiscoverTopicSuccess= true;
     IOTIVITYTEST_LOG(INFO, "Topic discovered code: %d" , ecode);
     ICResourceHelper::s_TopicList.push_back(topic);
-    IOTIVITYTEST_LOG(INFO, "Topic [ %d ] %s discovered" , s_TopicList.size() - 1 , topic->uri());
+    IOTIVITYTEST_LOG(INFO, "Topic [ %d ] %s discovered" , s_TopicList.size() - 1 , topic->uri().c_str());
 }
 
 void ICResourceHelper::publishMessageCB(const HeaderOptions &, const OCRepresentation &, const int eCode)

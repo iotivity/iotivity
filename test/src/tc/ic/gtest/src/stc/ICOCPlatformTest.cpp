@@ -26,7 +26,7 @@ class ICOCPlatformTest_stc: public ::testing::Test
 protected:
     std::string m_errorMsg;
     string m_hostAddress = COAP_HOST_ADDRESS;
-    string m_resourceUri = "/oic/res?rt=oic.wk.d";
+    string m_resourceUri = "/oic/res?di=oic.wk.d";
     OCStackResult m_result;
     ICHelper m_ICHelper;
     ICHelper* m_ICHelperPtr;
@@ -39,7 +39,7 @@ protected:
         m_ICHelper.initCloudClient();
         m_ICHelperPtr = ICHelper::getInstance();
         m_rdClient = RDClient::Instance();
-
+        m_hostAddress= CloudCommonUtil::getDefaultHostAddess();
         g_accountMgrControlee = OCPlatform::constructAccountManagerObject(m_hostAddress,
                 CT_ADAPTER_TCP);
     }
@@ -81,7 +81,7 @@ TEST_F(ICOCPlatformTest_stc, SubscribeDevicePresence_SRC_P)
     m_result = OC_STACK_ERROR;
     m_result = OCPlatform::findResource(m_hostAddress, m_resourceUri,
             static_cast<OCConnectivityType>(CT_ADAPTER_TCP | CT_IP_USE_V4),
-            &ICHelper::foundDevice, &ICHelper::errorFoundDevice);
+            ICHelper::foundDevice, ICHelper::errorFoundDevice);
     EXPECT_EQ(OC_STACK_OK, m_result)<<"SubscribeDevicePresence got failed";
     ICHelper::waitForServerResponse();
     EXPECT_EQ(true, CloudCommonUtil::signOut(g_accountMgrControlee));
@@ -122,10 +122,6 @@ TEST_F(ICOCPlatformTest_stc, UnsubscribeDevicePresence_SRC_P)
             &ICHelper::foundDevice, &ICHelper::errorFoundDevice);
     ICHelper::waitForServerResponse();
     EXPECT_EQ(OC_STACK_OK, m_result)<<"SubscribeDevicePresence got failed";
-    OCPlatform::OCPresenceHandle handle;
-    m_result = OCPlatform::unsubscribePresence(handle);
-    EXPECT_EQ(OC_STACK_OK, m_result)<<"unsubscribeDevicePresence got failed";
-    ICHelper::waitForServerResponse();
     EXPECT_EQ(true, CloudCommonUtil::signOut(g_accountMgrControlee));
 }
 #endif

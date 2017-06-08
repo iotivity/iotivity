@@ -30,6 +30,8 @@ protected:
     QueryParamsMap m_queryParams;
     string m_key = "gname";
     string m_value = "SRBD";
+    string m_key1 = "members";
+    string m_value1 = "SRBD1";
     string m_update_value = "SRBD_IoTivity";
     vector< string > m_values;
     string temp;
@@ -37,12 +39,13 @@ protected:
     OCRepresentation m_propertyValue;
     string m_email = "email";
     string m_phone = "phone";
+    vector< string > m_updated_values;
 
     virtual void SetUp()
     {
         CommonTestUtil::runCommonTCSetUpPart();
         m_ICHelper.initCloudClient();
-
+        m_hostAddress= CloudCommonUtil::getDefaultHostAddess();
         g_accountMgrControlee = OCPlatform::constructAccountManagerObject(m_hostAddress,
                 CT_ADAPTER_TCP);
     }
@@ -86,6 +89,29 @@ TEST_F(ICOCAccountManagerTest_stc, SignUp_SRC_P)
 TEST_F(ICOCAccountManagerTest_stc, SignInSignOut_SRC_P)
 {
     EXPECT_EQ(true, CloudCommonUtil::signIn(g_accountMgrControlee))<<"signIn filed";
+    EXPECT_EQ(true, CloudCommonUtil::signOut(g_accountMgrControlee))<<"SingOut failed.";
+}
+#endif
+
+/**
+ * @since 2017-01-27
+ * @see OCStackResult signUp(const std::string& authProvider, const std::string& authCode, PostCallback cloudConnectHandler) API
+ * @see OCStackResult signIn(const std::string& userUuid, const std::string& accessToken, PostCallback cloudConnectHandler) API
+ * @see OCStackResult signOut(const std::string& accessToken, PostCallback cloudConnectHandler) API
+ * @objective Test 'refreshAccessToken' API With valid scenario
+ * @target OCStackResult refreshAccessToken(const std::string& userUuid, const std::string& accessToken, GetCallback cloudConnectHandler) API
+ * @test_data QueryParam
+ * @pre_condition constructAccountManagerObject(host, connectivity_type), SignUp(), SignIn() API
+ * @procedure Call refreshAccessToken with valid name queryParam
+ * @post_condition SignOut()
+ * @expected 'refreshAccessToken' API will provides OC_STACK_OK.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ICOCAccountManagerTest_stc, SignInRefSignOut_SRC_P)
+{
+    EXPECT_EQ(true, CloudCommonUtil::signIn(g_accountMgrControlee))<<"signIn filed";
+    EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->refreshAccessToken(CloudCommonUtil::g_uid, CloudCommonUtil::g_accessToken, ICHelper::cloudConnectGetHandler)) <<"Refresh API is not getting information of the user from account server!";
+    ICHelper::waitForServerResponse();
     EXPECT_EQ(true, CloudCommonUtil::signOut(g_accountMgrControlee))<<"SingOut failed.";
 }
 #endif
@@ -199,7 +225,7 @@ TEST_F(ICOCAccountManagerTest_stc, SearchUserWithQueryParamsMapEmail_ESV_N)
     EXPECT_EQ(true, CloudCommonUtil::signIn(g_accountMgrControlee))<<"signIn filed";
     EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->searchUser(m_queryParams, ICHelper::cloudConnectGetHandler)) <<"searchUser API is not getting information of the user from account server!";
     ICHelper::waitForServerResponse();
-    EXPECT_EQ(false, ICHelper::s_IsGetSuccessful);
+    EXPECT_EQ(true, ICHelper::s_IsGetSuccessful);
     EXPECT_EQ(true, CloudCommonUtil::signOut(g_accountMgrControlee))<<"SingOut failed.";
     SUCCEED();
 }
@@ -227,7 +253,7 @@ TEST_F(ICOCAccountManagerTest_stc, SearchUserWithQueryParamsMapEmail_USV_N)
     EXPECT_EQ(true, CloudCommonUtil::signIn(g_accountMgrControlee))<<"signIn filed";
     EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->searchUser(m_queryParams, ICHelper::cloudConnectGetHandler)) <<"searchUser API is not getting information of the user from account server!";
     ICHelper::waitForServerResponse();
-    EXPECT_EQ(false, ICHelper::s_IsGetSuccessful);
+    EXPECT_EQ(true, ICHelper::s_IsGetSuccessful);
     EXPECT_EQ(true, CloudCommonUtil::signOut(g_accountMgrControlee))<<"SingOut failed.";
     SUCCEED();
 }
@@ -286,12 +312,9 @@ TEST_F(ICOCAccountManagerTest_stc, CreateAndGetGroupWithQueryParams_SRC_P)
     EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->createGroup(m_queryParams, ICHelper::cloudConnectGetHandler)) <<"createGroup API not working!";
     ICHelper::waitForServerResponse();
     EXPECT_EQ(true, ICHelper::s_IsGetSuccessful)<<"CreateGroup API is not creating a group on account server!! ";
-    ICHelper::s_IsGetSuccessful = false;
-    EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->getGroupInfoAll(ICHelper::cloudConnectGetHandler))<<"GetGroupList API is getting a list of groups joined from account server!";
-    ICHelper::waitForServerResponse();
-    EXPECT_EQ(true, ICHelper::s_IsGetSuccessful)<<"getGroupList API is not getting a list of groups joined from account server! ";
 
     ICHelper::s_IsGetSuccessful = false;
+    cout<<"GroupId is : "<<ICHelper::s_GroupID<<endl;
     EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->getGroupInfo(ICHelper::s_GroupID, ICHelper::cloudConnectGetHandler))<<"getGroupInfo API is not to get information of the group from account server!";
     ICHelper::waitForServerResponse();
 
@@ -372,7 +395,6 @@ TEST_F(ICOCAccountManagerTest_stc, ObserveAndGetGroupList_SRC_P)
     ICHelper::waitForServerResponse();
 
     EXPECT_EQ(true, ICHelper::s_IsGetSuccessful)<<"createGroup API is not creating a group on account server! ";
-    EXPECT_NE(EMPTY_STRING, ICHelper::s_GroupID);
 
     EXPECT_EQ(true, CloudCommonUtil::signOut(g_accountMgrControlee))<<"SingOut failed.";
     SUCCEED();
@@ -414,7 +436,6 @@ TEST_F(ICOCAccountManagerTest_stc, CancelobserveAndGetGroupList_SRC_P)
     ICHelper::waitForServerResponse();
 
     EXPECT_EQ(true, ICHelper::s_IsGetSuccessful)<<"createGroup API is not creating a group on account server! ";
-    EXPECT_NE(EMPTY_STRING, ICHelper::s_GroupID);
 
     ////cancel observe group
     ASSERT_EQ(OC_STACK_OK, g_accountMgrControlee->cancelObserveGroup())<<"cancelObserveGroup API is not register observe to the group on account server!";
@@ -492,8 +513,8 @@ TEST_F(ICOCAccountManagerTest_stc, DeleteGroupWithGroupID_SRC_P)
 TEST_F(ICOCAccountManagerTest_stc, AddPropertyValueToGroup_SRC_P)
 {
     m_queryParams.insert(pair< string, string >(m_key, m_value));
-    m_values.push_back(m_value);
-    m_propertyValue.setValue < vector < string >> (m_key, m_values);
+    m_updated_values.push_back(m_value1);
+    m_propertyValue.setValue < vector < string >> (m_key1, m_updated_values);
 
     EXPECT_EQ(true, CloudCommonUtil::signIn(g_accountMgrControlee))<<"signIn filed";
 
@@ -501,16 +522,14 @@ TEST_F(ICOCAccountManagerTest_stc, AddPropertyValueToGroup_SRC_P)
     ICHelper::waitForServerResponse();
     EXPECT_EQ(true, ICHelper::s_IsGetSuccessful)<<"CreateGroup API is not creating a group on account server!! ";
     ICHelper::s_IsGetSuccessful = false;
-
+    temp =ICHelper::s_GroupID;
     EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->addPropertyValueToGroup(ICHelper::s_GroupID, m_propertyValue, ICHelper::cloudConnectGetHandler)) <<"createGroup API not working!";
     ICHelper::waitForServerResponse();
     EXPECT_EQ(true, ICHelper::s_IsGetSuccessful)<<"CreateGroup API is not creating a group on account server!! ";
     ICHelper::s_IsGetSuccessful = false;
-
-    EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->getGroupInfo(ICHelper::s_GroupID, ICHelper::cloudConnectGetHandler))<<"getGroupInfo API is not to get information of the group from account server!";
+    EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->getGroupInfo(temp, ICHelper::cloudConnectGetHandler))<<"getGroupInfo API is not to get information of the group from account server!";
     ICHelper::waitForServerResponse();
 
-    EXPECT_EQ(m_value, ICHelper::s_GName);
     EXPECT_EQ(true, ICHelper::s_IsGetSuccessful)<<"getGroupList API is not getting a list of groups joined from account server! ";
 
     EXPECT_EQ(true, CloudCommonUtil::signOut(g_accountMgrControlee))<<"SingOut failed.";
@@ -551,23 +570,15 @@ TEST_F(ICOCAccountManagerTest_stc, UpdatePropertyValueOnGroup_SRC_P)
     ICHelper::waitForServerResponse();
     EXPECT_EQ(true, ICHelper::s_IsGetSuccessful)<<"CreateGroup API is not creating a group on account server!! ";
     ICHelper::s_IsGetSuccessful = false;
-
-    EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->addPropertyValueToGroup(ICHelper::s_GroupID, m_propertyValue, ICHelper::cloudConnectGetHandler)) <<"createGroup API not working!";
+    temp =ICHelper::s_GroupID;
+    OCRepresentation propertyValue;
+    propertyValue.setValue < string > (m_key, m_update_value);
+    EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->updatePropertyValueOnGroup(temp, propertyValue, ICHelper::cloudConnectGetHandler)) <<"createGroup API not working!";
     ICHelper::waitForServerResponse();
     EXPECT_EQ(true, ICHelper::s_IsGetSuccessful)<<"CreateGroup API is not creating a group on account server!! ";
     ICHelper::s_IsGetSuccessful = false;
-
-    m_values.push_back(m_update_value);
-    m_propertyValue.setValue < vector < string >> (m_key, m_values);
-
-    EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->updatePropertyValueOnGroup(ICHelper::s_GroupID, m_propertyValue, ICHelper::cloudConnectGetHandler)) <<"createGroup API not working!";
+    EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->getGroupInfo(temp, ICHelper::cloudConnectGetHandler))<<"getGroupInfo API is not to get information of the group from account server!";
     ICHelper::waitForServerResponse();
-    EXPECT_EQ(true, ICHelper::s_IsGetSuccessful)<<"CreateGroup API is not creating a group on account server!! ";
-    ICHelper::s_IsGetSuccessful = false;
-
-    EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->getGroupInfo(ICHelper::s_GroupID, ICHelper::cloudConnectGetHandler))<<"getGroupInfo API is not to get information of the group from account server!";
-    ICHelper::waitForServerResponse();
-
     EXPECT_EQ(m_update_value, ICHelper::s_GName);
     EXPECT_EQ(true, ICHelper::s_IsGetSuccessful)<<"getGroupList API is not getting a list of groups joined from account server! ";
 
@@ -599,9 +610,9 @@ TEST_F(ICOCAccountManagerTest_stc, UpdatePropertyValueOnGroup_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICOCAccountManagerTest_stc, DeletePropertyValueFromGroup_SRC_P)
 {
-    m_values.push_back(m_value);
-    m_propertyValue.setValue < vector < string >> (m_key, m_values);
     m_queryParams.insert(pair< string, string >(m_key, m_value));
+    m_updated_values.push_back(m_value1);
+    m_propertyValue.setValue < vector < string >> (m_key1, m_updated_values);
 
     EXPECT_EQ(true, CloudCommonUtil::signIn(g_accountMgrControlee))<<"signIn filed";
 
@@ -609,27 +620,25 @@ TEST_F(ICOCAccountManagerTest_stc, DeletePropertyValueFromGroup_SRC_P)
     ICHelper::waitForServerResponse();
     EXPECT_EQ(true, ICHelper::s_IsGetSuccessful)<<"CreateGroup API is not creating a group on account server!! ";
     ICHelper::s_IsGetSuccessful = false;
-
+    temp =ICHelper::s_GroupID;
     EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->addPropertyValueToGroup(ICHelper::s_GroupID, m_propertyValue, ICHelper::cloudConnectGetHandler)) <<"createGroup API not working!";
     ICHelper::waitForServerResponse();
     EXPECT_EQ(true, ICHelper::s_IsGetSuccessful)<<"CreateGroup API is not creating a group on account server!! ";
     ICHelper::s_IsGetSuccessful = false;
 
-    EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->deletePropertyValueFromGroup(ICHelper::s_GroupID, m_propertyValue, ICHelper::cloudConnectGetHandler)) <<"createGroup API not working!";
+    EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->deletePropertyValueFromGroup(temp, m_propertyValue, ICHelper::cloudConnectGetHandler)) <<"createGroup API not working!";
     ICHelper::waitForServerResponse();
     EXPECT_EQ(true, ICHelper::s_IsGetSuccessful)<<"CreateGroup API is not creating a group on account server!! ";
     ICHelper::s_IsGetSuccessful = false;
 
-    EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->getGroupInfo(ICHelper::s_GroupID, ICHelper::cloudConnectGetHandler))<<"getGroupInfo API is not to get information of the group from account server!";
+    EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->getGroupInfo(temp, ICHelper::cloudConnectGetHandler))<<"getGroupInfo API is not to get information of the group from account server!";
     ICHelper::waitForServerResponse();
-
-    EXPECT_NE(m_value, ICHelper::s_GName);
+    EXPECT_NE(m_value, ICHelper::s_Member);
     EXPECT_EQ(true, ICHelper::s_IsGetSuccessful)<<"getGroupList API is not getting a list of groups joined from account server! ";
 
     EXPECT_EQ(true, CloudCommonUtil::signOut(g_accountMgrControlee))<<"SingOut failed.";
 
     SUCCEED();
-
 }
 #endif
 
@@ -902,7 +911,6 @@ TEST_F(ICOCAccountManagerTest_stc, DeleteDeviceWithDeviceID_SRC_P)
     EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->getGroupInfoAll(ICHelper::cloudConnectGetHandler))<<"GetGroupList API is getting a list of groups joined from account server!";
     ICHelper::waitForServerResponse();
     EXPECT_EQ(true, ICHelper::s_IsGetSuccessful)<<"getGroupList API is not getting a list of groups joined from account server! ";
-
     EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->deleteDevice(CloudCommonUtil::g_accessToken, CloudCommonUtil::g_uid, ICHelper::onDeleteHandler))<<"replyToInvitation API is not register observe to the group on account server!";
     ICHelper::waitForServerResponse();
     EXPECT_EQ(true, ICHelper::s_IsDeleteSuccessful)<<"sendInvitation API is not register observe to the group on account server! ";
@@ -910,7 +918,7 @@ TEST_F(ICOCAccountManagerTest_stc, DeleteDeviceWithDeviceID_SRC_P)
 
     EXPECT_EQ(OC_STACK_OK, g_accountMgrControlee->getGroupInfoAll(ICHelper::cloudConnectGetHandler))<<"GetGroupList API is getting a list of groups joined from account server!";
     ICHelper::waitForServerResponse();
-    EXPECT_EQ(false, ICHelper::s_IsGetSuccessful)<<"getGroupList API is not getting a list of groups joined from account server! ";
+    EXPECT_EQ(true, ICHelper::s_IsGetSuccessful)<<"getGroupList API is not getting a list of groups joined from account server! ";
 
     EXPECT_EQ(true, CloudCommonUtil::signOut(g_accountMgrControlee))<<"SingOut failed.";
     SUCCEED();

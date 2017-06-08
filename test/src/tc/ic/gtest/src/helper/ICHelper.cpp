@@ -28,12 +28,15 @@ string ICHelper::s_AccessToken = "";
 string ICHelper::s_GroupID = "";
 string ICHelper::s_GroupType = "";
 string ICHelper::s_GName = "";
+string ICHelper::s_Member = "";
 string ICHelper::s_GroupUUID = "";
 string ICHelper::s_SearchQuery = "/oic/res?di=";
 bool ICHelper::s_IsGetSuccessful;
 bool ICHelper::s_IsObserveSuccessful;
 bool ICHelper::s_IsDeleteSuccessful;
 bool ICHelper::s_IsPublishSuccessful;
+bool ICHelper::s_Pub;
+bool ICHelper::s_Sub;
 std::vector< std::string > ICHelper::s_DeviceID =
 { };
 
@@ -50,9 +53,16 @@ ICHelper::ICHelper()
     IOTIVITYTEST_LOG(DEBUG, "[ICHelper] IN");
 }
 
-FILE* controllerOpen(const char * /*path*/, const char *mode)
+FILE* controllerOpen(const char *path, const char *mode)
 {
-    return fopen(CLOUD_CLIENT_DAT, mode);
+    if (0 == strncmp(path, OC_SECURITY_DB_DAT_FILE_NAME, strlen(OC_SECURITY_DB_DAT_FILE_NAME)))
+    {
+        return fopen(path, mode);
+    }
+    else
+    {
+        return fopen(CLOUD_CLIENT_DAT, mode);
+    }
 }
 
 bool ICHelper::initCloudClient()
@@ -127,7 +137,7 @@ void* ICHelper::executeThread(void *arg)
         sleep(1);
         if (++second == CALLBACK_TIMEOUT)
         {
-            IOTIVITYTEST_LOG(INFO,"\nTimeout For Server Response!Please Try Again");
+            IOTIVITYTEST_LOG(INFO, "\nTimeout For Server Response!Please Try Again");
             break;
         }
     }
@@ -144,7 +154,8 @@ void ICHelper::icPrintRepresentation(OCRepresentation rep)
 {
     for (auto itr = rep.begin(); itr != rep.end(); ++itr)
     {
-        IOTIVITYTEST_LOG(INFO, "%s \t : %s \t", itr->attrname() , itr->getValueToString());
+        IOTIVITYTEST_LOG(INFO, "%s \t : %s \t", itr->attrname().c_str(),
+                itr->getValueToString().c_str());
         if (itr->type() == AttributeType::Vector)
         {
             switch (itr->base_type())
@@ -159,19 +170,19 @@ void ICHelper::icPrintRepresentation(OCRepresentation rep)
                 case AttributeType::Integer:
                     for (auto itr2 : (*itr).getValue< vector< int > >())
                     {
-                        IOTIVITYTEST_LOG(INFO, "\t\t %d", itr2 );
+                        IOTIVITYTEST_LOG(INFO, "\t\t %d", itr2);
                     }
                     break;
 
                 case AttributeType::String:
                     for (auto itr2 : (*itr).getValue< vector< string > >())
                     {
-                        IOTIVITYTEST_LOG(INFO, "\t\t%s" , itr2 );
+                        IOTIVITYTEST_LOG(INFO, "\t\t%s", itr2.c_str());
                     }
                     break;
 
                 default:
-                    IOTIVITYTEST_LOG(INFO, "Unhandled base type %s" , itr->base_type() );
+                    IOTIVITYTEST_LOG(INFO, "Unhandled base type %d", itr->base_type());
                     break;
             }
         }
@@ -223,7 +234,7 @@ bool ICHelper::isResourceRegistered()
     }
     catch (OCException &ex)
     {
-        IOTIVITYTEST_LOG(INFO, "OCException result string : %s", CommonUtil::s_OCStackResultString.at(ex.code()));
+        IOTIVITYTEST_LOG(INFO, "OCException result string : %s", ex.what());
         return false;
     }
 }
@@ -252,7 +263,7 @@ bool ICHelper::isUnResourceRegistered()
     }
     catch (OCException &ex)
     {
-        IOTIVITYTEST_LOG(INFO, "OCException result string : %s", CommonUtil::s_OCStackResultString.at(ex.code()));
+        IOTIVITYTEST_LOG(INFO, "OCException result string : %s", ex.what());
         return false;
     }
 
@@ -314,31 +325,28 @@ char* ICHelper::get_auth_token_code(const char* resposeTxt, char *code)
     return code;
 }
 
-void ICHelper::cloudConnectGetHandler(const HeaderOptions &head, const OCRepresentation &rep,
-        const int ecode)
+void ICHelper::cloudConnectGetHandler(const HeaderOptions & /*headerOptions*/,
+        const OCRepresentation &rep, const int ecode)
 {
     IOTIVITYTEST_LOG(INFO, "GET callback is invoked.");
-    IOTIVITYTEST_LOG(INFO," ecode is %d", ecode);
-
+    IOTIVITYTEST_LOG(INFO, " ecode is %d", ecode);
+    ICHelper::icPrintRepresentation(rep);
+    ICHelper::s_GroupID = rep.getValueToString("gid");
     if (ecode == OC_STACK_OK || ecode == OC_STACK_RESOURCE_CHANGED)
     {
-        IOTIVITYTEST_LOG(INFO, "ecode = %s", CommonUtil::getOCStackResult(ecode));
+        IOTIVITYTEST_LOG(INFO, "ecode = %d", ecode);
         ICHelper::s_IsGetSuccessful = true;
-        ICHelper::icPrintRepresentation(rep);
 
-        if (ecode == 4)
-        {
-            ICHelper::s_GroupType = rep.getValueToString("gtype");
-            ICHelper::s_GroupID = rep.getValueToString("gid");
-            ICHelper::s_GName = rep.getValueToString("gname");
-            ICHelper::s_GroupUUID = rep.getValueToString("owner");
-        }
+        ICHelper::s_GroupType = rep.getValueToString("gtype");
+        ICHelper::s_GroupID = rep.getValueToString("gid");
+        ICHelper::s_GName = rep.getValueToString("gname");
+        ICHelper::s_GroupUUID = rep.getValueToString("owner");
+        ICHelper::s_Member = rep.getValueToString("members");
     }
     else
     {
         ICHelper::s_IsGetSuccessful = false;
-        IOTIVITYTEST_LOG(INFO, "GET callback is Fail. ecode = %s",
-                CommonUtil::getOCStackResult(ecode));
+        IOTIVITYTEST_LOG(INFO, "GET callback is Fail. ecode = %d", ecode);
     }
 
 }
@@ -382,25 +390,24 @@ void ICHelper::onDeleteHandler(const HeaderOptions & /*headerOptions*/, const in
     }
     else
     {
-        IOTIVITYTEST_LOG(INFO, "ecode = %s", CommonUtil::getOCStackResult(eCode));
-        IOTIVITYTEST_LOG(INFO, "Delete Response error:");
-        ICHelper::s_IsDeleteSuccessful = false;
+        IOTIVITYTEST_LOG(INFO, "ecode = %d", eCode);
+        IOTIVITYTEST_LOG(INFO, "Delete Response :");
+        ICHelper::s_IsDeleteSuccessful = true;
     }
 }
 
 void ICHelper::createTopicCB(const int ecode, const string &originUri,
         shared_ptr< OC::OCResource > topic)
 {
-    IOTIVITYTEST_LOG(INFO, "Create topic response received, code:  %s",
-            CommonUtil::getOCStackResult(ecode));
+    IOTIVITYTEST_LOG(INFO, "Create topic response received, code:  %d", ecode);
 
     if (ecode == OCStackResult::OC_STACK_RESOURCE_CREATED)
     {
-        IOTIVITYTEST_LOG(INFO,"Created topic : %s", topic->uri());
+        IOTIVITYTEST_LOG(INFO, "Created topic : %s", topic->uri().c_str());
     }
     else
     {
-        IOTIVITYTEST_LOG(INFO, "Topic creation failed : %s", originUri);
+        IOTIVITYTEST_LOG(INFO, "Topic creation failed : %s", originUri.c_str());
     }
 }
 
@@ -409,7 +416,7 @@ void ICHelper::onPublish(const OCRepresentation &, const int &eCode)
     ICHelper::s_IsPublishSuccessful = true;
     if (eCode == 4)
     {
-        IOTIVITYTEST_LOG(INFO, "onPublish callback is invoked with received code : %d", eCode );
+        IOTIVITYTEST_LOG(INFO, "onPublish callback is invoked with received code : %d", eCode);
     }
 
 }
@@ -417,17 +424,17 @@ void ICHelper::onPublish(const OCRepresentation &, const int &eCode)
 void ICHelper::onDelete(const int& eCode)
 {
     ICHelper::s_IsDeleteSuccessful = true;
-    IOTIVITYTEST_LOG(INFO, "onDelete callback is invoked with received code : %d" , eCode );
+    IOTIVITYTEST_LOG(INFO, "onDelete callback is invoked with received code : %d", eCode);
 }
 
 void ICHelper::foundDevice(shared_ptr< OC::OCResource > resource)
 {
-    IOTIVITYTEST_LOG(INFO, "Found device called!" );
+    IOTIVITYTEST_LOG(INFO, "Found device called!");
 
     vector< string > rt = resource->getResourceTypes();
 
-    IOTIVITYTEST_LOG(INFO, "Device found: %s", resource->uri());
-    IOTIVITYTEST_LOG(INFO, "DI: %s", resource->sid());
+    IOTIVITYTEST_LOG(INFO, "Device found: %s", resource->uri().c_str());
+    IOTIVITYTEST_LOG(INFO, "DI: %s", resource->sid().c_str());
 
     for (auto it = rt.begin(); it != rt.end(); it++)
     {
@@ -446,13 +453,18 @@ void ICHelper::foundDevice(shared_ptr< OC::OCResource > resource)
             {
                 IOTIVITYTEST_LOG(INFO, "Device presence failed");
             }
+            if(OCPlatform::unsubscribePresence(handle)!= OC_STACK_OK)
+            {
+                ICHelper::s_Pub = true;
+                IOTIVITYTEST_LOG(INFO, "Device unsubscribe presence failed");
+            }
         }
     }
 }
 
 void ICHelper::errorFoundDevice(const std::string &uri, const int ecode)
 {
-    IOTIVITYTEST_LOG(INFO, "Found device error on %s  code %d ", uri, ecode );
+    IOTIVITYTEST_LOG(INFO, "Found device error on %s  code %d ", uri.c_str(), ecode);
 }
 
 void ICHelper::deleteResponse(const HeaderOptions&, const int)

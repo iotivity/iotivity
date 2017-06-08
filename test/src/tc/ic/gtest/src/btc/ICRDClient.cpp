@@ -177,14 +177,13 @@ TEST_F(ICRDClientTest_btc, PublishResourceToRDWithQOSWithNullCallback_NV_N)
 {
     try
     {
-        m_actualResult = m_rdClient.publishResourceToRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,IC_CALLBACK_HANDLER_NULL, IC_OC_QUALITY_OF_SERVICE);
+        m_actualResult = m_rdClient.publishResourceToRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE, IC_CALLBACK_HANDLER_NULL, IC_OC_QUALITY_OF_SERVICE);
         ASSERT_EQ(OC_STACK_OK,m_actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
     }
     catch(OCException ex)
     {
         FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
     }
-    ICHelper::waitForServerResponse();
     SUCCEED();
 }
 #endif
@@ -318,7 +317,6 @@ TEST_F(ICRDClientTest_btc, PublishResourceToRDWithResourceHandleWithNullCallback
     {
         FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
     }
-    ICHelper::waitForServerResponse();
     SUCCEED();
 }
 #endif
@@ -452,7 +450,6 @@ TEST_F(ICRDClientTest_btc, PublishResourceToRDWithResourceHandleAndWithQOSWithNu
     {
         FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
     }
-    ICHelper::waitForServerResponse();
     SUCCEED();
 }
 #endif
