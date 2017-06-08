@@ -220,6 +220,8 @@ if "!RUN_ARG!"=="server" (
 
   REM Second: run tests if needed, using a single SCons thread.
   if "!TEST!"=="1" (
+    echo.
+    echo Running Tests
     echo.scons.bat -j 1 VERBOSE=1 TEST=1 %BUILD_OPTIONS%
     call scons.bat -j 1 VERBOSE=1 TEST=1 %BUILD_OPTIONS%
     if ERRORLEVEL 1 (

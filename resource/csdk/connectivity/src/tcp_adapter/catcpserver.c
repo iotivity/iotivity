@@ -502,7 +502,6 @@ static void CAFindReadyMessage()
     if (caglobals.tcp.terminate)
     {
         caglobals.tcp.updateEvent = WSA_INVALID_EVENT;
-        WSACleanup();
     }
 }
 

@@ -109,11 +109,7 @@ TEST(IoTivityDirect, IsIoTivityWorking)
     // elevator server.
     loopCount = 0;
     const int TARGET_FLOOR = 3;
-    elevatorClient.SetTargetFloor(TARGET_FLOOR);
-    while ((loopCount++ < 20) && (g_testElevator1.GetCurrentFloor() != TARGET_FLOOR))
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+    elevatorClient.SetTargetFloor(TARGET_FLOOR);    // SetTargetFloor() is synchronous.
     EXPECT_EQ(TARGET_FLOOR, g_testElevator1.GetCurrentFloor());
 
     // Confirm able to get current floor using IoTivity client API. The current floor should be
@@ -590,10 +586,11 @@ TEST_F(IPCAElevatorClient, SuccessfullyReceiveResourceChangeNotifications)
     ASSERT_EQ(true, result);
 
     // Wait until observed current floor is set to targeted floor.
+    // Outstanding requests should time out in 247 seconds (EXCHANGE_LIFETIME) per rfc 7252.
     std::unique_lock<std::mutex> lock(m_resourceChangeCbMutex);
     m_resourceChangeCbCV.wait_for(
             lock,
-            std::chrono::seconds(10),
+            std::chrono::seconds(247),
             [this] { return GetObservedCurrentFloor() == 10; });
 
     EXPECT_EQ(10, GetObservedCurrentFloor());   // check it is at floor 10.

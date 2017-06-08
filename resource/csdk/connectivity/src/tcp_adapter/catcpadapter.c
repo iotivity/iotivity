@@ -42,6 +42,7 @@
 #ifdef __WITH_TLS__
 #include "ca_adapter_net_ssl.h"
 #endif
+#include "iotivity_debug.h"
 
 /**
  * Logging tag for module name.
@@ -344,6 +345,19 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
     VERIFY_NON_NULL(handle, TAG, "thread pool handle");
 #endif
 
+#ifdef WSA_WAIT_EVENT_0
+    // Windows-specific initialization.
+    WORD wVersionRequested = MAKEWORD(2, 2);
+    WSADATA wsaData = {.wVersion = 0};
+    int err = WSAStartup(wVersionRequested, &wsaData);
+    if (0 != err)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: WSAStartup failed: %i", __func__, err);
+        return CA_STATUS_FAILED;
+    }
+    OIC_LOG(DEBUG, TAG, "WSAStartup Succeeded");
+#endif
+
     g_networkChangeCallback = netCallback;
     g_connectionChangeCallback = connCallback;
     g_networkPacketCallback = networkPacketCallback;
@@ -550,6 +564,11 @@ void CATerminateTCP()
 {
     CAStopTCP();
     CATCPSetPacketReceiveCallback(NULL);
+
+#ifdef WSA_WAIT_EVENT_0
+    // Windows-specific clean-up.
+    OC_VERIFY(0 == WSACleanup());
+#endif
 }
 
 void CATCPSendDataThread(void *threadData)
