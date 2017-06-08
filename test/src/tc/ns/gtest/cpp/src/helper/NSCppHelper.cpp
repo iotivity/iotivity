@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -111,16 +111,17 @@ NSCppHelper::NSCppHelper()
 {
     OC::PlatformConfig cfg
     { OC::ServiceType::InProc, OC::ModeType::Both, CT_DEFAULT, CT_DEFAULT,
-            OC::QualityOfService::LowQos };
+            OC::QualityOfService::HighQos };
     OC::OCPlatform::Configure(cfg);
     IOTIVITYTEST_LOG(INFO, "Platform Configuration Done!!");
 
     try
     {
+        IOTIVITYTEST_LOG(INFO, "%s 2" , __func__);
         OC::OCPlatform::stopPresence();
         IOTIVITYTEST_LOG(INFO, "Successfully stopPresense() called !!");
     }
-    catch (...)
+    catch (exception &e)
     {
         IOTIVITYTEST_LOG(WARNING, "Can't stop presense..!!!");
     }
@@ -245,7 +246,7 @@ shared_ptr< OIC::Service::NSProvider > NSCppHelper::getLocalProvider(bool subCon
         }
 
         m_pProviderService->start(providerConfig);
-        m_pProviderService->registerTopic(TOPIC_NAME_1);
+        m_pProviderService->registerTopic(TEST_TOPIC_1);
         m_isProviderStarted = true;
         CommonUtil::waitInSecond(WAIT_TIME_MIN);
 
@@ -278,7 +279,7 @@ bool NSCppHelper::waitForService(int timeOut, bool isProvider)
         {
             if (s_provider->getProviderId() != "")
             {
-                IOTIVITYTEST_LOG(INFO, "Provider found with ID: %s", s_provider->getProviderId());
+                IOTIVITYTEST_LOG(INFO, "Provider found with ID: %s", s_provider->getProviderId().c_str());
                 return true;
             }
         }
@@ -286,7 +287,7 @@ bool NSCppHelper::waitForService(int timeOut, bool isProvider)
         {
             if (s_consumer->getConsumerId() != "")
             {
-                IOTIVITYTEST_LOG(INFO, "Consumer found with ID: %s", s_consumer->getConsumerId());
+                IOTIVITYTEST_LOG(INFO, "Consumer found with ID: %s", s_consumer->getConsumerId().c_str());
                 return true;
             }
         }
@@ -311,36 +312,24 @@ shared_ptr< OIC::Service::NSConsumer > NSCppHelper::getLocalConsumer(bool subCon
         OIC::Service::NSProviderService::ProviderConfig providerConfig;
         providerConfig.m_subscribeRequestCb = subscribeRequestCallback;
         providerConfig.m_syncInfoCb = syncCallback;
-
-        if (subControllability == true)
-        {
-            providerConfig.subControllability = true;
-        }
-        else
-        {
-            providerConfig.subControllability = false;
-        }
+        providerConfig.subControllability = subControllability;
 
         m_pProviderService->start(providerConfig);
-        m_pProviderService->registerTopic(TOPIC_NAME_1);
+        m_pProviderService->registerTopic(TEST_TOPIC_1);
         m_isProviderStarted = true;
-        CommonUtil::waitInSecond(WAIT_TIME_MIN);
-
-        m_pConsumerService->start(onProviderDiscovered);
-        m_isProviderStarted = true;
-        IOTIVITYTEST_LOG(INFO, "provider service started");
-
-        if (isTopicRegister)
-            m_pProviderService->registerTopic(TOPIC_NAME_1);
-        IOTIVITYTEST_LOG(INFO, "topic registered");
-
         CommonUtil::waitInSecond(WAIT_TIME_MIN);
 
         m_pConsumerService->start(onProviderDiscovered);
         m_isConsumerStarted = true;
-        IOTIVITYTEST_LOG(INFO, "consumer service started");
+        IOTIVITYTEST_LOG(INFO, "provider service started");
 
-        CommonUtil::waitInSecond(WAIT_TIME_MIN);
+        if (isTopicRegister)
+        {
+            m_pProviderService->registerTopic(TEST_TOPIC_1);
+        }
+        IOTIVITYTEST_LOG(INFO, "topic registered");
+
+        CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
         m_pConsumerService->rescanProvider();
         CommonUtil::waitInSecond(WAIT_TIME_MIN + WAIT_TIME_MIN);
@@ -406,8 +395,8 @@ bool NSCppHelper::sendNotification()
 
     try
     {
-        m_pProviderService->registerTopic(TOPIC_NAME_1);
-        s_consumer->setTopic(TOPIC_NAME_1);
+        m_pProviderService->registerTopic(TEST_TOPIC_1);
+        s_consumer->setTopic(TEST_TOPIC_1);
     }
     catch (NSException &e)
     {
@@ -424,7 +413,7 @@ bool NSCppHelper::sendNotification()
         msg.setTitle(TITLE_TO_SET);
         msg.setContentText(CONTENTTEXT_TO_SET);
         msg.setSourceName(SOURCE_NAME);
-        msg.setTopic(TOPIC_NAME_1);
+        msg.setTopic(TEST_TOPIC_1);
 
         OIC::Service::NSMediaContents* mediaContents = new OIC::Service::NSMediaContents(
                 ICONIMAGE_TO_SET);

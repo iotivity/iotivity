@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,10 +25,10 @@ NSConsumerHelper* NSConsumerHelper::s_nsHelperInstance = NULL;
 std::mutex NSConsumerHelper::s_mutex;
 NSProvider* NSConsumerHelper::s_pProvider = nullptr;
 NSMessage* NSConsumerHelper::s_pNotification = nullptr;
-bool NSConsumerHelper::s_isDiscovered;
-bool NSConsumerHelper::s_isTopicChanged;
-bool NSConsumerHelper::s_isConsumerAllowed;
-bool NSConsumerHelper::s_isNotificationPosted;
+bool NSConsumerHelper::s_isDiscovered = false;
+bool NSConsumerHelper::s_isTopicChanged = false;
+bool NSConsumerHelper::s_isConsumerAllowed = false;
+bool NSConsumerHelper::s_isNotificationPosted = false;
 
 NSConsumerHelper::NSConsumerHelper()
 {
@@ -71,7 +71,7 @@ void NSConsumerHelper::onProviderChanged(NSProvider * provider, NSProviderState 
 {
     IOTIVITYTEST_LOG(INFO, "onProviderChanged() called !!");
 
-    NSConsumerHelper::s_pProvider = provider;
+    s_pProvider = provider;
 
     IOTIVITYTEST_LOG(INFO, "Provider changed: %d", response);
     IOTIVITYTEST_LOG(INFO, "Subscribed provider Id : %s", provider->providerId);

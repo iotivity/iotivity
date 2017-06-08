@@ -1,22 +1,23 @@
-//******************************************************************
-//
-// Copyright 2017 Samsung Electronics All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/******************************************************************
+ *
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ ******************************************************************/
 
 #include "NSCppAppUtility.h"
 using namespace OIC::Service;
@@ -25,17 +26,18 @@ using namespace std;
 typedef OIC::Service::NSResult Result;
 
 OIC::Service::NSConsumerService* g_consumerService = nullptr;
-shared_ptr<OIC::Service::NSProvider> g_provider;
+shared_ptr< OIC::Service::NSProvider > g_provider;
+list< shared_ptr< OIC::Service::NSProvider > > g_providerList;
 OIC::Service::NSMessage* g_message = nullptr;
 bool g_isConsumerStarted = false, g_isExit = false;
 string g_remoteAddress;
 
 void printNotification(OIC::Service::NSMessage notification)
 {
-    cout << "ProviderID: " << notification.getProviderId() << " Message ID: " << notification.getMessageId()
-            << " Title: " << notification.getTitle() << " Body: " << notification.getContentText() << endl;
+    cout << "ProviderID: " << notification.getProviderId() << " Message ID: "
+            << notification.getMessageId() << " Title: " << notification.getTitle() << " Body: "
+            << notification.getContentText() << endl;
 }
-
 
 void onProviderStateChanged(OIC::Service::NSProviderState state)
 {
@@ -51,10 +53,11 @@ void onProviderStateChanged(OIC::Service::NSProviderState state)
     }
     else if (state == OIC::Service::NSProviderState::TOPIC)
     {
-        shared_ptr<OIC::Service::NSProvider> provider =g_consumerService->getProvider(g_provider->getProviderId());
+        shared_ptr< OIC::Service::NSProvider > provider = g_consumerService->getProvider(
+                g_provider->getProviderId());
         if (provider)
         {
-            shared_ptr<NSTopicsList> topicList = provider->getTopicList();
+            shared_ptr< NSTopicsList > topicList = provider->getTopicList();
             if (topicList)
             {
                 for (auto topic : topicList->getTopicsList())
@@ -100,14 +103,17 @@ void onNotificationSync(OIC::Service::NSSyncInfo sync)
     }
 }
 
-void onDiscoverNotificationProvider(shared_ptr<OIC::Service::NSProvider> provider)
+void onDiscoverNotificationProvider(shared_ptr< OIC::Service::NSProvider > provider)
 {
-    if (provider){
+    if (provider)
+    {
         g_provider = provider;
+        g_providerList.push_back(provider);
 
         cout << "Provider Discovered." << endl;
-        cout << "Provider ID: " << g_provider->getProviderId() << endl;
-        g_provider->setListener(onProviderStateChanged, onNotificationPosted, onNotificationSync);
+        cout << "Provider ID: " << g_providerList.back()->getProviderId() << endl;
+        g_providerList.back()->setListener(onProviderStateChanged, onNotificationPosted,
+                onNotificationSync);
     }
 }
 
@@ -171,9 +177,9 @@ void subscribeConsumer()
 {
     if (g_isConsumerStarted)
     {
-        if (g_provider)
+        for (shared_ptr< OIC::Service::NSProvider > provider : g_providerList)
         {
-            Result result = g_provider->subscribe();
+            Result result = provider->subscribe();
 
             if (result == Result::OK)
             {
@@ -184,7 +190,8 @@ void subscribeConsumer()
                 cout << "Subscription is fail" << endl;
             }
         }
-        else
+
+        if (g_providerList.size() == 0)
         {
             cout << "Please rescan for provider" << endl;
         }
@@ -199,9 +206,9 @@ void unsubscribeConsumer()
 {
     if (g_isConsumerStarted)
     {
-        if (g_provider)
+        for (shared_ptr< OIC::Service::NSProvider > provider : g_providerList)
         {
-            Result result =g_provider->unsubscribe();
+            Result result = g_provider->unsubscribe();
 
             if (result == Result::OK)
             {
@@ -212,7 +219,8 @@ void unsubscribeConsumer()
                 cout << "Unsubscription is fail" << endl;
             }
         }
-        else
+
+        if (g_providerList.size() == 0)
         {
             cout << "Please try again later" << endl;
         }
@@ -225,18 +233,25 @@ void unsubscribeConsumer()
 
 void sendSyncInfo()
 {
+    Result result;
     if (g_message)
     {
-        Result result = g_provider->sendSyncInfo(g_message->getMessageId(), OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
+        for (shared_ptr< OIC::Service::NSProvider > provider : g_providerList)
+        {
+            result = provider->sendSyncInfo(g_message->getMessageId(),
+                    OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
+            if (result == Result::OK)
+            {
+                cout << "Consumer Send SyncInfo is successful for provide with ID: "
+                        << provider->getProviderId() << endl;
+            }
+            else
+            {
+                cout << "Consumer Send SyncInfo is fail for provide with ID: "
+                        << provider->getProviderId() << endl;
+            }
+        }
 
-        if (result == Result::OK)
-        {
-            cout << "Consumer Send SyncInfo is successful" << endl;
-        }
-        else
-        {
-            cout << "Consumer Send SyncInfo is fail" << endl;
-        }
     }
     else
     {
@@ -244,11 +259,12 @@ void sendSyncInfo()
     }
 }
 
-void getTopics(){
-    cout <<  "Getting Topic List" << std::endl;
-    if (g_provider)
+void getTopics()
+{
+    cout << "Getting Topic List" << std::endl;
+    for (shared_ptr< OIC::Service::NSProvider > provider : g_providerList)
     {
-        shared_ptr<NSTopicsList> topicList = g_provider->getTopicList();
+        shared_ptr< NSTopicsList > topicList = provider->getTopicList();
         if (topicList)
         {
             for (auto topic : topicList->getTopicsList())
@@ -260,17 +276,18 @@ void getTopics(){
     }
 }
 
-void updateTopics(){
-    cout <<  "Updating Topic List" << std::endl;
-    if (g_provider)
+void updateTopics()
+{
+    cout << "Updating Topic List" << std::endl;
+    for (shared_ptr< OIC::Service::NSProvider > provider : g_providerList)
     {
-        shared_ptr<NSTopicsList> topicList;
+        shared_ptr< NSTopicsList > topicList;
         topicList->addTopic(TOPIC_1, NSTopic::NSTopicState::SUBSCRIBED);
         topicList->addTopic(TOPIC_2, NSTopic::NSTopicState::SUBSCRIBED);
         topicList->addTopic(TOPIC_3, NSTopic::NSTopicState::UNSUBSCRIBED);
         topicList->addTopic(TOPIC_4, NSTopic::NSTopicState::SUBSCRIBED);
 
-        g_provider->updateTopicList(topicList);
+        provider->updateTopicList(topicList);
     }
 }
 
@@ -311,7 +328,6 @@ void menuSelection(ConsumerCppAppMenu menu)
             updateTopics();
             break;
 
-
         case CONSUMER_ENABLE_REMOTE_SERVICE:
         {
             cout << "Remote Server Address: ";
@@ -323,7 +339,8 @@ void menuSelection(ConsumerCppAppMenu menu)
 
         case ConsumerCppAppMenu::CONSUMER_EXIT:
         {
-            if (g_isConsumerStarted) {
+            if (g_isConsumerStarted)
+            {
                 stopConsumer();
             }
 
@@ -365,6 +382,15 @@ int main(void)
     }
 
     pthread_create(&processThread, NULL, OCProcessThread, NULL);
+
+    try
+    {
+        OC::OCPlatform::stopPresence();
+    }
+    catch (...)
+    {
+        cout << "Can't stop presence..." << endl;
+    }
 
     g_consumerService = OIC::Service::NSConsumerService::getInstance();
     while (!g_isExit)

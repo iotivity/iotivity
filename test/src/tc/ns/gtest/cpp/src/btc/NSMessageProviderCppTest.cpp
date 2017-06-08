@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -82,7 +82,7 @@ TEST_F(NSMessageProviderCppTest_btc, GetMessageID_SRC_P)
 {
     uint64_t id = 0;
     id = m_pNSMessage->getMessageId();
-    ASSERT_NE((uint64_t) 0, id)<< "getMessageId did not return ID";
+    ASSERT_EQ((uint64_t) 0, id)<< "getMessageId did not return ID";
 }
 #endif
 

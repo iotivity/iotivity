@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -49,13 +49,26 @@ void NSCppUtility::printSyncInfo(OIC::Service::NSSyncInfo info)
 
 void NSCppUtility::printMessage(OIC::Service::NSMessage message)
 {
-    string log = "\n\tMessageID: " + message.getMessageId();
+    string log = "\n\tMessageID: " + to_string(message.getMessageId());
     log += "\n\tTitle = " + message.getTitle();
     log += "\n\tBody = " + message.getContentText();
     log += "\n\tTopic = " + message.getTopic();
     log += "\n\tProviderID = " + message.getProviderId();
-
     IOTIVITYTEST_LOG(INFO, "The Detailed Message is: %s", log.c_str());
+}
+
+OIC::Service::NSTopic NSCppUtility::getDesiredTopic(shared_ptr<OIC::Service::NSTopicsList> topicList, string topicID)
+{
+    OIC::Service::NSTopic desiredTopic;
+    for (OIC::Service::NSTopic topic : topicList->getTopicsList() )
+    {
+        if (topic.getTopicName().compare(topicID) == 0)
+        {
+            desiredTopic = topic;
+            break;
+        }
+    }
+    return desiredTopic;
 }
 
 string NSCppUtility::getResultString(OIC::Service::NSResult result)

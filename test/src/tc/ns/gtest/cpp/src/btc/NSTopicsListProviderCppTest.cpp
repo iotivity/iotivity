@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -109,9 +109,10 @@ TEST_F(NSTopicsListProviderCppTest_btc, AddTopic_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSTopicsListProviderCppTest_btc, RemoveTopic_SRC_P)
 {
+    string topicName = TOPIC_NAME_1;
     try
     {
-        m_pNSTopicsList->addTopic(TOPIC_NAME_1, OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED);
+        m_pNSTopicsList->addTopic(topicName, OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED);
     }
     catch (exception &e)
     {
@@ -121,7 +122,7 @@ TEST_F(NSTopicsListProviderCppTest_btc, RemoveTopic_SRC_P)
     IOTIVITYTEST_LOG(DEBUG, "Topic Added");
     try
     {
-        m_pNSTopicsList->removeTopic(TOPIC_NAME_1);
+        m_pNSTopicsList->removeTopic(topicName);
     }
     catch (exception &e)
     {

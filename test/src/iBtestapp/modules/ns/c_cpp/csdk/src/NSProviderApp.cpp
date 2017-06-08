@@ -1,22 +1,23 @@
-//******************************************************************
-//
-// Copyright 2016 Samsung Electronics All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/******************************************************************
+ *
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ ******************************************************************/
 
 #include "NSUtility.h"
 
@@ -63,6 +64,7 @@ void onSubscribeRequest(NSConsumer* consumer)
 
     g_ConsumerIDList.push_back(consumer->consumerId);
     shareLog("Subscribe request from Consumer ID: " + string(consumer->consumerId));
+    shareLog("Total Consumers: " + to_string(g_ConsumerIDList.size()));
 }
 
 void startProvider(bool policy)
@@ -132,26 +134,22 @@ void acceptSubscription(bool isAccept)
     }
 }
 
-char * getNewTopic()
+string getNewTopic()
 {
-    string topic = g_TopicName + to_string(g_TopicID);
+    string topic = g_TopicName + "_" + to_string(g_TopicID);
 
-    return topic.c_str();
+    return topic;
 }
 
 void sendNotification()
 {
     NSMessage *msg = NSCreateMessage();
-
     string title = "TESTAPP_Title_" + to_string(++g_ID);
-    strcpy(msg->title, title.c_str());
-
+    msg->title = OICStrdup(title.c_str());
     string body = "TESTAPP_Body_" + to_string(g_ID);
-    strcpy(msg->contentText, body.c_str());
-
+    msg->contentText = OICStrdup(body.c_str());
     msg->sourceName = OICStrdup("TEST");
-
-    msg->topic = getNewTopic();
+    msg->topic = OICStrdup(getNewTopic().c_str());
 
     NSResult result = NSSendMessage(msg);
 
@@ -165,20 +163,21 @@ void sendNotification()
     }
 }
 
-char* getConsumerId()
+string getConsumerId()
 {
     string consumerId;
 
     if (g_ConsumerIDList.size() != 0)
     {
-        consumerId = g_ConsumerIDList.back();
+        consumerId = g_ConsumerIDList.front();
+        shareLog("Selecting Consumer: " + consumerId);
     }
     else
     {
         shareLog("Subscribed consumer is empty.");
     }
 
-    return consumerId.c_str();
+    return consumerId;
 }
 
 void printTopics(NSTopicLL * topics)
@@ -262,9 +261,9 @@ void menuSelection(ProviderAppMenu menu)
         case ADD_TOPIC:
         {
             g_TopicID++;
-            char * topicName = getNewTopic();
+            string topicName = getNewTopic();
             cout << "Topic to add: " << topicName << endl;
-            NSResult result = NSProviderRegisterTopic(topicName);
+            NSResult result = NSProviderRegisterTopic(topicName.c_str());
 
             if (result == NS_OK)
             {
@@ -279,9 +278,9 @@ void menuSelection(ProviderAppMenu menu)
 
         case DELETE_TOPIC:
         {
-            char * topicName = getNewTopic();
+            string topicName = getNewTopic();
             cout << "Topic to delete: " << topicName << endl;
-            NSResult result = NSProviderUnregisterTopic(topicName);
+            NSResult result = NSProviderUnregisterTopic(topicName.c_str());
             if (result == NS_OK)
             {
                 shareLog("Unregistered topic Successfully");
@@ -296,11 +295,14 @@ void menuSelection(ProviderAppMenu menu)
 
         case SELECT_TOPIC:
         {
-            char* conId = getConsumerId();
+            string conId = getConsumerId();
+            string topicToSelect = getNewTopic();
+            shareLog("Topic to select = " + topicToSelect);
+            shareLog("Consumer to select = " + conId);
 
-            if (conId != nullptr)
+            if (conId.compare("") !=  0)
             {
-                if (NSProviderSetConsumerTopic(conId, getNewTopic()) == NS_OK)
+                if (NSProviderSetConsumerTopic(conId.c_str(), topicToSelect.c_str()) == NS_OK)
                 {
                     shareLog("Set Consumer Topic Successfully");
                 }
@@ -318,11 +320,11 @@ void menuSelection(ProviderAppMenu menu)
 
         case UNSELECT_TOPIC:
         {
-            char* conId = getConsumerId();
+            string conId = getConsumerId();
 
-            if (conId != nullptr)
+            if (conId.compare("") !=  0)
             {
-                if (NSProviderUnsetConsumerTopic(conId, getNewTopic()) == NS_OK)
+                if (NSProviderUnsetConsumerTopic(conId.c_str(), getNewTopic().c_str()) == NS_OK)
                 {
                     shareLog("Unset Consumer Topic Successfully");
                 }
@@ -340,11 +342,11 @@ void menuSelection(ProviderAppMenu menu)
 
         case CONSUMER_TOPICS:
         {
-            char* conId = getConsumerId();
+            string conId = getConsumerId();
 
-            if (conId != nullptr)
+            if (conId.compare("") !=  0)
             {
-                NSTopicLL *topics = NSProviderGetConsumerTopics(conId);
+                NSTopicLL *topics = NSProviderGetConsumerTopics(conId.c_str());
                 cout << "Printing consumer topics: " << endl;
                 printTopics(topics);
             }

@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,10 +27,10 @@
 #include "NSConsumerInterface.h"
 #include "NSCommon.h"
 
-#define PROVIDER_SIMULATOR "./ns_provider_simulator"
-#define PROVIDER_SIMULATOR_ALLOW "./ns_provider_simulator 0"
+#define PROVIDER_SIMULATOR "./ns_provider_csdk_simulator"
+#define PROVIDER_SIMULATOR_ALLOW "./ns_provider_csdk_simulator 0"
 
-#define TOPIC_NAME_2 "TESTAPP_Topic2"
+#define TOPIC_NAME_2 "TESTAPP_Topic_2"
 
 #define PROVIDER_APP_MENU_1 "1"
 #define PROVIDER_APP_MENU_2 "2"

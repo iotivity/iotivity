@@ -1,37 +1,87 @@
-//******************************************************************
-//
-// Copyright 2017 Samsung Electronics All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/******************************************************************
+ *
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ ******************************************************************/
 
 #include "NSCppAppUtility.h"
+#ifdef __LINUX__
+#include <execinfo.h>
+#endif
+#include <signal.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <iomanip>
 using namespace OIC::Service;
 using namespace std;
 
 typedef OIC::Service::NSResult Result;
 
 OIC::Service::NSProviderService* g_providerService = nullptr;
-list< shared_ptr<OIC::Service::NSConsumer> > m_ConsumerList;
+list< string > m_ConsumerList;
 bool g_isAutoAccept = false;
 bool g_isRemoteEnable = false;
 bool g_isExit = false;
 bool g_isProviderStarted = false;
 string REMOTE_SERVER_ADDRESS;
 int id = 0;
+
+void handler(int sig)
+{
+    void *array[1000];
+    size_t size;
+
+#ifdef __LINUX__
+    // get void*'s for all entries on the stack
+    size = backtrace(array, 1000);
+#endif
+
+    // print out all the frames to stderr
+    fprintf(stderr, "Error: signal %d:\n", sig);
+
+#ifdef __LINUX__
+    backtrace_symbols_fd(array, size, STDERR_FILENO);
+#endif
+
+    exit(1);
+}
+
+char* exe = 0;
+
+int initialiseExecutableName()
+{
+    char link[1024];
+    exe = new char[1024];
+    snprintf(link,sizeof link,"/proc/%d/exe",getpid());
+    if(readlink(link,exe,sizeof link)==-1) {
+        fprintf(stderr,"ERRORRRRR\n");
+        exit(1);
+    }
+    printf("Executable name initialised: %s\n",exe);
+}
+
+const char* getExecutableName()
+{
+    if (exe == 0)
+        initialiseExecutableName();
+    return exe;
+}
 
 void onProviderSyncInfo(OIC::Service::NSSyncInfo syncInfo)
 {
@@ -59,11 +109,28 @@ void onProviderSyncInfo(OIC::Service::NSSyncInfo syncInfo)
     }
 }
 
-void onSubscribeRequest(shared_ptr<OIC::Service::NSConsumer> consumer)
+void onSubscribeRequest(shared_ptr< OIC::Service::NSConsumer > consumer)
 {
-    if (consumer){
-        cout << "Subscription request received from Consumer with ID: " << consumer->getConsumerId();
-        m_ConsumerList.push_back(consumer);
+    if (consumer)
+    {
+
+        cout << "Subscription request received from Consumer with ID: "
+                << consumer->getConsumerId();
+        bool exist = false;
+        for (string id : m_ConsumerList)
+        {
+            if (consumer->getConsumerId().compare(id) == 0)
+            {
+                exist = true;
+                break;
+            }
+        }
+        if(!exist)
+        {
+            m_ConsumerList.push_back(consumer->getConsumerId());
+        }
+
+
     }
 }
 
@@ -73,7 +140,8 @@ void showMainMenu()
     cout << endl;
     cout << "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << endl << endl;
 
-    cout << "  " << setw(2) << START_PROVIDER << ".  Start the Notification Provider(Accepter: Provider)" << endl;
+    cout << "  " << setw(2) << START_PROVIDER
+            << ".  Start the Notification Provider(Accepter: Provider)" << endl;
     cout << "  " << setw(2) << START_PROVIDER_AUTO_ACCEPT
             << ".  Start the Notification Provider(Accepter: Consumer)" << endl;
     cout << "  " << setw(2) << STOP_PROVIDER << ".  Stop Provider" << endl;
@@ -140,16 +208,20 @@ void stopProvider()
 
 void acceptSubscription()
 {
-    if (m_ConsumerList.size() > 0 ){
+    if (m_ConsumerList.size() > 0)
+    {
         cout << "Accepting Subscription: " << endl;
-        for (auto consumer : m_ConsumerList){
-            if (consumer != nullptr)
-            {
-                consumer->acceptSubscription(true);
-                cout << "Accepted subscription for consumer with ID: " << consumer->getConsumerId() <<endl;
-            }
+        for (string consumerId : m_ConsumerList)
+        {
+
+            g_providerService->getConsumer(consumerId)->acceptSubscription(true);
+            cout << "Accepted subscription for consumer with ID: " << consumerId
+                    << endl;
+
         }
-    }else{
+    }
+    else
+    {
         cout << "No Consumer Subscription request found!!" << endl;
     }
 }
@@ -157,11 +229,11 @@ void acceptSubscription()
 void rejectSubscription()
 {
     cout << "Rejecting Subscription" << endl;
-    for (auto consumer : m_ConsumerList){
-        if (consumer != nullptr)
-        {
-            consumer->acceptSubscription(false);
-        }
+    for (string consumerId : m_ConsumerList)
+    {
+
+        g_providerService->getConsumer(consumerId)->acceptSubscription(false);
+
     }
 }
 
@@ -190,7 +262,7 @@ string getConsumerId()
 
     if (m_ConsumerList.size() != 0)
     {
-        consumerId = string(m_ConsumerList.back()->getConsumerId());
+        consumerId = m_ConsumerList.back();
     }
     else
     {
@@ -203,7 +275,8 @@ string getConsumerId()
 void printConsumerList(NSAcceptedConsumers* aConsumerList)
 {
     cout << "Consumer List: " << endl;
-    for (auto consumer : aConsumerList->getConsumers()) {
+    for (auto consumer : aConsumerList->getConsumers())
+    {
         cout << "id: " << consumer.second->getConsumerId() << endl;
     }
 }
@@ -211,17 +284,19 @@ void printConsumerList(NSAcceptedConsumers* aConsumerList)
 // This function is for menu selection
 void menuSelection(ProviderCppAppMenu menu)
 {
+    OIC::Service::NSResult result;
     switch (menu)
     {
         case START_PROVIDER:
-            startProvider(false);
-            break;
-
-        case START_PROVIDER_AUTO_ACCEPT:
             startProvider(true);
             break;
 
+        case START_PROVIDER_AUTO_ACCEPT:
+            startProvider(false);
+            break;
+
         case STOP_PROVIDER:
+            signal(SIGSEGV, handler);
             stopProvider();
             break;
 
@@ -230,7 +305,7 @@ void menuSelection(ProviderCppAppMenu menu)
             break;
 
         case REJECT_SUBSCRIPTION:
-            acceptSubscription();
+            rejectSubscription();
             break;
 
         case SEND_NOTIFICATION:
@@ -239,73 +314,111 @@ void menuSelection(ProviderCppAppMenu menu)
 
         case PROVIDER_SEND_SYNC_INFO:
         {
-            g_providerService->sendSyncInfo(1,
-                    OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
+            g_providerService->sendSyncInfo(1, OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
         }
             break;
 
         case ADD_TOPIC:
         {
-            g_providerService->registerTopic(TOPIC_1);
-            g_providerService->registerTopic(TOPIC_2);
-            g_providerService->registerTopic(TOPIC_3);
-            g_providerService->registerTopic(TOPIC_4);
+            result = g_providerService->registerTopic(TOPIC_1);
+            result = g_providerService->registerTopic(TOPIC_2);
+            result = g_providerService->registerTopic(TOPIC_3);
+            result = g_providerService->registerTopic(TOPIC_4);
+
+            if (OIC::Service::NSResult::OK == result)
+            {
+                std::cout << "registerTopic completed" << std::endl;
+            }
+            else
+            {
+                std::cout << "registerTopic failed" << std::endl;
+            }
         }
             break;
 
         case DELETE_TOPIC:
-            g_providerService->unregisterTopic("OCF_TOPIC2");
+            g_providerService->unregisterTopic(TOPIC_2);
             break;
 
         case SELECT_TOPIC:
         {
-            shared_ptr<OIC::Service::NSConsumer> consumer = g_providerService->getConsumer(getConsumerId());
-            if (consumer != nullptr)
+            for (string consumerId : m_ConsumerList)
             {
-                consumer->setTopic(TOPIC_1);
-                consumer->setTopic(TOPIC_2);
-                consumer->setTopic(TOPIC_3);
-                consumer->setTopic(TOPIC_4);
-                std::cout <<  "SelectTopic completed" << std::endl;
+                auto consumer = g_providerService->getConsumer(consumerId);
+                if (consumer != nullptr)
+                {
+                    result = consumer->setTopic(TOPIC_1);
+                    result = consumer->setTopic(TOPIC_2);
+                    result = consumer->setTopic(TOPIC_3);
+                    result = consumer->setTopic(TOPIC_4);
+
+                    if (OIC::Service::NSResult::OK == result)
+                    {
+                        std::cout << "SelectTopic completed for consumer with ID: "
+                                << consumerId << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << "SelectTopic failed for consumer with ID: "
+                                << consumerId << std::endl;
+                    }
+
+                }
             }
         }
             break;
 
         case UNSELECT_TOPIC:
         {
-            shared_ptr<OIC::Service::NSConsumer> consumer = g_providerService->getConsumer(getConsumerId());
-            if (consumer != nullptr)
+            for (string consumerId : m_ConsumerList)
             {
-                consumer->unsetTopic("OCF_TOPIC1");
-                std::cout <<  "UnSelectTopic completed" << std::endl;
+                auto consumer = g_providerService->getConsumer(consumerId);
+                if (consumer != nullptr)
+                {
+                    result = consumer->unsetTopic(TOPIC_1);
+
+                    if (OIC::Service::NSResult::OK == result)
+                    {
+                        std::cout << "UnSelectTopic completed for consumer with ID: "
+                                << consumer->getConsumerId() << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << "UnSelectTopic failed for consumer with ID: "
+                                << consumer->getConsumerId() << std::endl;
+                    }
+
+                }
             }
         }
             break;
 
         case CONSUMER_TOPICS:
         {
-            shared_ptr<OIC::Service::NSConsumer> consumer = g_providerService->getConsumer(
-                    getConsumerId());
-            if (consumer != nullptr)
+            for (string consumerId : m_ConsumerList)
             {
-                shared_ptr<NSTopicsList> nsTopics = consumer->getConsumerTopicList();
-                if (nsTopics != nullptr)
+                auto consumer = g_providerService->getConsumer(consumerId);
+                if (consumer != nullptr)
                 {
-                    for (auto it : nsTopics->getTopicsList())
+                    std::shared_ptr< NSTopicsList > nsTopics = consumer->getConsumerTopicList();
+                    if (nsTopics != nullptr)
                     {
+                        for (auto it : nsTopics->getTopicsList())
+                        {
 
-                        std::cout << it.getTopicName() << std::endl;
-                        std::cout << (int) it.getState() << std::endl;
+                            std::cout << it.getTopicName() << std::endl;
+                            std::cout << (int) it.getState() << std::endl;
+                        }
                     }
+                    std::cout << "GetConsumerTopics completed" << std::endl;
                 }
-                std::cout << "GetConsumerTopics completed" << std::endl;
             }
         }
             break;
 
         case PROVIDER_TOPICS:
         {
-            shared_ptr<NSTopicsList> nsTopics = g_providerService->getRegisteredTopicList();
+            shared_ptr< NSTopicsList > nsTopics = g_providerService->getRegisteredTopicList();
             for (auto it : nsTopics->getTopicsList())
             {
 
@@ -374,7 +487,17 @@ void *OCProcessThread(void *ptr)
 // This is the main function the RE Test Application
 int main(void)
 {
+    signal(SIGSEGV, handler);
     pthread_t processThread;
+    /* Install our signal handler */
+    struct sigaction sa;
+
+    sa.sa_sigaction = (void *) handler;
+    sigemptyset (&sa.sa_mask);
+    sa.sa_flags = SA_RESTART | SA_SIGINFO;
+
+    sigaction(SIGSEGV, &sa, NULL);
+    sigaction(SIGUSR1, &sa, NULL);
 
     if (OCInit(NULL, 0, OC_CLIENT_SERVER) != OC_STACK_OK)
     {
@@ -382,7 +505,14 @@ int main(void)
         return 0;
     }
 
-    pthread_create(&processThread, NULL, OCProcessThread, NULL);
+    try
+    {
+        OC::OCPlatform::stopPresence();
+    }
+    catch (...)
+    {
+        cout << "Can't stop presence..." << endl;
+    }
 
     g_providerService = OIC::Service::NSProviderService::getInstance();
     while (!g_isExit)

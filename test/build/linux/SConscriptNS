@@ -32,7 +32,7 @@ import os
 env_linux['CC'] = 'g++'
 
 iotivity_root = env_linux.get('IOTIVITY_ROOT')
-iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
+iotivity_lib_path = [env_linux.get('IOTIVITY_LIB_PATH'), '/usr/local/lib']
 iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
 variant_dir = env_linux.get('VARIANT_DIR')
 install_dir = env_linux.get('INSTALL_DIR')
@@ -128,7 +128,7 @@ cpp_common_helper_src = [
 
 common_defines = Split('LINUX __LINUX__ WITH_TCP IP_ADAPTER NO_EDR_ADAPTER LE_ADAPTER ROUTING_EP WITH_BWT')
 
-common_flags = Split('-s -pthread -march=native -std=gnu++0x -Wall -fpermissive')
+common_flags = Split('-s -pthread -march=native -std=gnu++0x -Wall -fpermissive -fno-stack-protector ')
 
 csdk_shared_libs = Split('connectivity_abstraction octbstack coap boost_system boost_filesystem boost_thread dl expat resource_directory oc oc_logger oc_logger_core pthread glib-2.0 uuid gcov')
 
@@ -149,7 +149,7 @@ ns_csdk_consumer_simulator_bin = 'ns_consumer_csdk_simulator'
 
 if 'tc' in test:
 
-    tc_lib_paths = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux', '.']
+    tc_lib_paths = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux']
     csdk_libs = csdk_shared_libs + ['gtest', 'common_util', 'tc_util', 'dl']
     cpp_libs = cpp_shared_libs + ['gtest', 'common_util', 'tc_util', 'dl']
 
@@ -299,7 +299,7 @@ if 'tc' in test or 'app' in test:
                             source = test_src_root + '/iBtestapp/modules/ns/c_cpp/cpp/src/NSProviderCppApp.cpp',
                             target = 'iotivity_ns_cpp_provider_app',
                             CPPPATH = iotivity_include_paths + cpp_testapp_include_paths,
-                            LIBS = testapp_shared_libs + ns_cpp_shared_libs,
+                            LIBS = testapp_shared_libs + ['notification_provider_wrapper'],
                             LIBPATH = iotivity_lib_path,
                             RPATH = iotivity_lib_path,
                             CPPFLAGS = common_flags + common_linux_cppflags,
@@ -310,7 +310,7 @@ if 'tc' in test or 'app' in test:
                             source = test_src_root + '/iBtestapp/modules/ns/c_cpp/cpp/src/NSConsumerCppApp.cpp',
                             target = 'iotivity_ns_cpp_consumer_app',
                             CPPPATH = iotivity_include_paths + cpp_testapp_include_paths,
-                            LIBS = testapp_shared_libs + ns_cpp_shared_libs,
+                            LIBS = testapp_shared_libs + ['notification_consumer_wrapper'],
                             LIBPATH = iotivity_lib_path,
                             RPATH = iotivity_lib_path,
                             CPPFLAGS = common_flags + common_linux_cppflags,

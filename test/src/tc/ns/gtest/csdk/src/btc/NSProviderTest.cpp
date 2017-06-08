@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -214,12 +214,12 @@ TEST_F(NSProviderTest_btc, SendMessage_NV_N)
 #if defined(__LINUX__)
 TEST_F(NSProviderTest_btc, AcceptSubscriptionAllow_SRC_P)
 {
-    NSStartProvider(m_pNSHelper->getProviderConfig(true));
+    bool isAccept = true;
+    NSStartProvider(m_pNSHelper->getProviderConfig(isAccept));
 
-    CommonUtil::launchApp(CONSUMER_SIMULATOR_OPTION);
+    CommonUtil::launchApp(CONSUMER_SIMULATOR);
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
-    bool isAccept = true;
     string consumerID = m_pNSHelper->getConsumerID();
 
     CommonUtil::killApp(CONSUMER_SIMULATOR);
