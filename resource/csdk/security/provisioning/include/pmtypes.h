@@ -71,7 +71,7 @@ typedef struct OCProvisionDev
     uint16_t        tcpPort;         /**< tcp port **/
     uint16_t        tcpSecurePort;   /**< secure tcp port **/
 #endif
-    char            secVer[OIC_SEC_MAX_VER_LEN];         /**< security version **/
+    char            specVer[SPEC_MAX_VER_LEN];         /**< spec version **/
     DeviceStatus    devStatus;       /**< status of device **/
     OCDoHandle      handle;
     bool            ownerAclUnauthorizedRequest;        /**< true if the provisioning client has already re-tried posting the Owner ACE **/

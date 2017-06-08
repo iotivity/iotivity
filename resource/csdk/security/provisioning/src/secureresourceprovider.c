@@ -820,6 +820,13 @@ static OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t do
             return OC_STACK_INVALID_PARAM;
         }
     }
+    // Skip posting new DOS state in case of OIC server
+    if (IS_OIC(pTargetDev->specVer))
+    {
+        OCClientResponse clientResponse = {.result = OC_STACK_RESOURCE_CHANGED};
+        resultCallback((void*) data, NULL, &clientResponse);
+        return OC_STACK_OK;
+    }
 
     OCStackResult res = OC_STACK_ERROR;
     OicSecPstat_t *pstat = (OicSecPstat_t *) OICCalloc(1, sizeof(OicSecPstat_t));

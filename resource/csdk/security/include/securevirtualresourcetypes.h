@@ -709,22 +709,19 @@ struct OicSecDpairing
     OicUuid_t           rownerID;          // 2:R:S:Y:oic.uuid
 };
 
-#define OIC_SEC_MAX_VER_LEN 16 // Security Version length. i.e., 00.00.000 + reserved space
-
+#define SPEC_MAX_VER_LEN (sizeof("core.x.x.x") + 1) // Spec Version length.
 /**
- * @brief   security version data type
+ * @def GET_ACL_VER(specVer)
+ * Gets ACL version depending on spec. version.
+ * Version value has "ocf.x.x.x" for ocf device and "core.x.x.x" for oic device.
+ *
+ * @param specVer spec. version string
+ * @return ACL version
  */
-typedef struct OicSecVer OicSecVer_t;
 
-/**
- * @brief   /oic/sec/ver (Security Version) data type
- */
-struct OicSecVer
-{
-    // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    char              secv[OIC_SEC_MAX_VER_LEN];          // 0:R:S:Y:String
-    OicUuid_t       deviceID;     // 1:R:S:Y:oic.uuid
-};
+#define GET_ACL_VER(specVer) ((specVer)[0] == 'o' && (specVer)[1] == 'c' && (specVer)[2] == 'f' ?      \
+                             OIC_SEC_ACL_V2 : OIC_SEC_ACL_V1)
+#define IS_OIC(specVer) ((specVer)[0] == 'c' && (specVer)[1] == 'o' && (specVer)[2] == 'r' && (specVer)[3] == 'e')
 
 #ifdef __cplusplus
 }

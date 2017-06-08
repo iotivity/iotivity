@@ -229,7 +229,7 @@ extern const char * OIC_SEC_REST_QUERY_SEPARATOR;
 extern char OIC_SEC_REST_QUERY_DELIMETER;
 
 //Security Version
-extern const char * DEFAULT_SEC_VERSION;
+extern const char * DEFAULT_SPEC_VERSION;
 
 // Preconfigured Pin credential usage
 #ifdef MULTIPLE_OWNER

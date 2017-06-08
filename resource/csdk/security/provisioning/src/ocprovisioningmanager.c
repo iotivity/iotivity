@@ -362,7 +362,7 @@ OCStackResult OC_CALL OCProvisionACL(void* ctx, const OCProvisionDev_t *selected
      * since we may be provisioning an IoTivity 1.2 or earlier device.
      * TODO IOT-2219 - reintroduce OIC 1.1 /acl (v1) support
      */
-    OicSecAclVersion_t aclVersion = OIC_SEC_ACL_V2;
+    OicSecAclVersion_t aclVersion = GET_ACL_VER(selectedDeviceInfo->specVer);
     if (acl->aces != NULL)
     {
         /* If any of the aces have the role subject, the ACL is v2 */
@@ -1105,7 +1105,7 @@ static void AclProv1CB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool 
     UpdateLinkResults(link, 1, arr[0].res);
     if (NULL != link->pDev2Acl)
     {
-        OCStackResult res =  SRPProvisionACL(ctx, link->pDev2, link->pDev2Acl, OIC_SEC_ACL_V2, &AclProv2CB);
+        OCStackResult res =  SRPProvisionACL(ctx, link->pDev2, link->pDev2Acl, GET_ACL_VER(link->pDev2->specVer), &AclProv2CB);
         if (OC_STACK_OK!=res)
         {
              UpdateLinkResults(link, 2, res);
@@ -1154,7 +1154,7 @@ static void ProvisionCredsCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr,
     }
     if (NULL != link->pDev1Acl)
     {
-        OCStackResult res =  SRPProvisionACL(ctx, link->pDev1, link->pDev1Acl, OIC_SEC_ACL_V2, &AclProv1CB);
+        OCStackResult res =  SRPProvisionACL(ctx, link->pDev1, link->pDev1Acl, GET_ACL_VER(link->pDev1->specVer), &AclProv1CB);
         if (OC_STACK_OK!=res)
         {
              OIC_LOG(ERROR, TAG, "Error while provisioning ACL for device 1");
@@ -1170,7 +1170,7 @@ static void ProvisionCredsCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr,
     {
         OIC_LOG(ERROR, TAG, "ACL for device 1 is NULL");
 
-        OCStackResult res =  SRPProvisionACL(ctx, link->pDev2, link->pDev2Acl, OIC_SEC_ACL_V2, &AclProv2CB);
+        OCStackResult res =  SRPProvisionACL(ctx, link->pDev2, link->pDev2Acl, GET_ACL_VER(link->pDev2->specVer), &AclProv2CB);
         if (OC_STACK_OK!=res)
         {
              OIC_LOG(ERROR, TAG, "Error while provisioning ACL for device 2");

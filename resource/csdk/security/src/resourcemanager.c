@@ -35,7 +35,6 @@
 #include "pconfresource.h"
 #include "dpairingresource.h"
 //#endif // DIRECT_PAIRING
-#include "verresource.h"
 
 #define TAG "OIC_SRM_RM"
 
@@ -126,10 +125,6 @@ OCStackResult InitSecureResources( )
         ret = InitDpairingResource();
     }
 //#endif // DIRECT_PAIRING
-    if(OC_STACK_OK == ret)
-    {
-        ret = InitVerResource();
-    }
     if(OC_STACK_OK != ret)
     {
         //TODO: Update the default behavior if one of the SVR fails
@@ -154,7 +149,6 @@ OCStackResult DestroySecureResources( )
     DeInitPconfResource();
     DeInitDpairingResource();
 //#endif // DIRECT_PAIRING
-    DeInitVerResource();
 
     return OC_STACK_OK;
 }
