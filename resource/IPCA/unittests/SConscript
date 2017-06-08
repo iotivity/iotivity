@@ -116,20 +116,8 @@ if target_os in ['linux']:
         ipcatest_env.PrependUnique(LIBS=['gcov'])
         ipcatest_env.AppendUnique(CXXFLAGS=['--coverage'])
 
-ipcatest_src_dir = os.path.join(src_dir, 'resource', 'IPCA',
-                                'unittests') + os.sep
-ipcatest_build_dir = os.path.join(
-    ipcatest_env.get('BUILD_DIR'), 'resource', 'IPCA', 'unittests') + os.sep
-
-ipcatest_env.Alias(
-    "install",
-    ipcatest_env.Install(ipcatest_build_dir,
-                         ipcatest_src_dir + 'IPCAUnitTest.json'))
-ipcatest_env.Alias("install",
-                   ipcatest_env.Install(ipcatest_build_dir,
-                                        ipcatest_src_dir + 'IPCAUnitTest.dat'))
-
 ipcatests = ipcatest_env.Program('ipcatests', unittests_src)
+ipcatest_env.ScanJSON('resource/IPCA/unittests')
 
 if target_os in ['windows']:
     #path to ipca.dll
