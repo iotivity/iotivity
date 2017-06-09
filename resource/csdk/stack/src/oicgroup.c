@@ -31,7 +31,7 @@
 #include "oic_string.h"
 #include "octhread.h"
 #include "occollection.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "octimer.h"
 
 #define TAG "OIC_RI_GROUP"

@@ -25,7 +25,7 @@
 #include "oic_string.h"
 #include "oic_malloc.h"
 #include "cautilinterface.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 
 // TODO: Remove this flag and enable the code it guards.
 // This is a temporary workaround to ignore the failure of OCLinksPayloadArrayCreate

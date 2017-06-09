@@ -26,7 +26,7 @@
 
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 
 #include "NSStructs.h"
 #include "NSConstants.h"

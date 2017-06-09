@@ -21,7 +21,7 @@
 #include "simulator_resource_model.h"
 #include "simulator_resource_model_schema.h"
 #include "simulator_exceptions.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #include <boost/lexical_cast.hpp>
 #include <cfloat>

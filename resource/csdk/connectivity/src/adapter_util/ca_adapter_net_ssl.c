@@ -33,7 +33,7 @@
 #include "cacommon.h"
 #include "caipinterface.h"
 #include "oic_malloc.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "experimental/byte_array.h"
 #include "octhread.h"
 #include "octimer.h"

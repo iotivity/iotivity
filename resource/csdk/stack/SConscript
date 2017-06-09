@@ -277,3 +277,5 @@ liboctbstack_env.UserInstallTargetLib(octbstack_libs, 'octbstack')
 
 liboctbstack_env.UserInstallTargetHeader('include/ocstackconfig.h', 'resource/stack', 'ocstackconfig.h')
 liboctbstack_env.UserInstallTargetHeader('include/ocpayload.h', 'resource/stack', 'ocpayload.h')
+liboctbstack_env.UserInstallTargetHeader('include/experimental/payload_logging.h',
+                                         'resource/stack/experimental', 'payload_logging.h')

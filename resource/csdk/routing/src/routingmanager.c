@@ -27,11 +27,11 @@
 #include "routingmessageparser.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "ulinklist.h"
 #include "uarraylist.h"
 #include "ocstackinternal.h"
-#include "include/logger.h"
+#include "experimental/logger.h"
 
 /**
  * Logging tag for module name.

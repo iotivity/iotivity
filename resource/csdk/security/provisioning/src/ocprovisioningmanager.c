@@ -28,7 +28,7 @@
 #include "multipleownershiptransfermanager.h"
 #endif //MULTIPLE_OWNER
 #include "oic_malloc.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "secureresourceprovider.h"
 #include "provisioningdatabasemanager.h"
 #include "credresource.h"

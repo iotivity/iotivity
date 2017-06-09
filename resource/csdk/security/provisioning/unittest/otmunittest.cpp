@@ -22,7 +22,7 @@
 #include "gtest/gtest.h"
 #include "ocstack.h"
 #include "utlist.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocprovisioningmanager.h"
@@ -37,7 +37,7 @@
 #include "doxmresource.h"
 #include "pmtypes.h"
 #include "pmutility.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 
 #define OTM_TIMEOUT 60
 #define DISCOVERY_TIMEOUT 10

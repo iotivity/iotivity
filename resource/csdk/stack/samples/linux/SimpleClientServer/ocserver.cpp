@@ -40,10 +40,10 @@
 #include <array>
 #include "oic_malloc.h"
 #include <getopt.h>
-#include "logger.h"
 #include "ocserver.h"
 #include "common.h"
 #include "oic_string.h"
+#include "experimental/logger.h"
 
 #define VERIFY_SUCCESS(op)                          \
 do                                                  \

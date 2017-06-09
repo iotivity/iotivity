@@ -34,12 +34,12 @@
 #ifdef __WITH_DTLS__
 #include "experimental/securevirtualresourcetypes.h"
 #include "OCProvisioningManager.hpp"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #endif
 
 #include "escommon.h"
 
-#include "logger.h"
+#include "experimental/logger.h"
 
 using namespace OC;
 using namespace std;

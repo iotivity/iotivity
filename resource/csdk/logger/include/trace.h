@@ -24,7 +24,7 @@
 #include <stddef.h>
 
 #ifdef __ANDROID__
-#include "logger.h"
+#include "experimental/logger.h"
 #elif defined(__TIZEN__)
 #ifdef OIC_SUPPORT_TIZEN_TRACE
 #include <ttrace.h>

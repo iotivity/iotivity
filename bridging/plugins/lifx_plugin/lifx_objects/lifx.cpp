@@ -32,7 +32,7 @@
 #include <stdexcept>
 #include <iostream>
 #include "lifx.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "LIFX"
 using namespace OC::Bridging;

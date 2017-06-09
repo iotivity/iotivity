@@ -23,7 +23,7 @@
 #include "CloudResource.h"
 #include "OCPlatform.h"
 #include "ESException.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "OCResource.h"
 #ifdef __WITH_DTLS__
 #include "EnrolleeSecurity.h"

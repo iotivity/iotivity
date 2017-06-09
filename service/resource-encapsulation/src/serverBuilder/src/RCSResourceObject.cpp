@@ -31,7 +31,7 @@
 #include "RCSRepresentation.h"
 #include "InterfaceHandler.h"
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include "OCPlatform.h"
 
 #define LOG_TAG_RE "RCSResourceObject"

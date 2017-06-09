@@ -22,7 +22,7 @@
 #define _NS_PROVIDER_RESOURCE_H_
 
 #include <ocstack.h>
-#include "logger.h"
+#include "experimental/logger.h"
 #include "NSCommon.h"
 #include "NSProviderListener.h"
 #include "NSProviderSystem.h"

@@ -28,7 +28,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "uarraylist.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #include <string.h>
 #include <curl/curl.h>

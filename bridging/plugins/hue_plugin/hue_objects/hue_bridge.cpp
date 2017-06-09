@@ -21,7 +21,7 @@
 
 #include "hue_bridge.h"
 #include "curlClient.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

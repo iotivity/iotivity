@@ -27,7 +27,7 @@
 #include "oic_string.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
 #include "routingutility.h"

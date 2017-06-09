@@ -20,7 +20,7 @@
 
 #include "request_model_builder.h"
 #include "resource_model_schema_builder.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "Raml.h"
 #include <assert.h>
 

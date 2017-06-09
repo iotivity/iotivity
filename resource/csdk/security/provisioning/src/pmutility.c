@@ -38,7 +38,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "oic_time.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "utlist.h"
 #include "ocpayload.h"
 

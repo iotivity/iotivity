@@ -21,7 +21,7 @@
 #ifndef _NS_UTIL__H_
 #define _NS_UTIL__H_
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include <octypes.h>
 #include <stdbool.h>
 #include "ocstack.h"
@@ -31,7 +31,7 @@
 #include "NSConstants.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "oic_time.h"
 #include "NSProviderSystem.h"
 

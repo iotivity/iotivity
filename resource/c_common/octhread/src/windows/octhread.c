@@ -31,7 +31,7 @@
 #include <errno.h>
 #include <oic_malloc.h>
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include "iotivity_debug.h"
 
 #define TAG "OIC_UMUTEX"

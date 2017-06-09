@@ -34,7 +34,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "lifx.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ConcurrentIotivityUtils.h"
 
 using namespace std;

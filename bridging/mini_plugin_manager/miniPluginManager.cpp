@@ -40,7 +40,7 @@
 #include "pluginIf.h"
 #include "miniPluginManager.h"
 #include "messageHandler.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 pthread_t readResponsethreadhandle;
 

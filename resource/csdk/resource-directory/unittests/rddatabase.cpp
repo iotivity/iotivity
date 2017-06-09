@@ -25,11 +25,11 @@ extern "C"
     #include "rd_client.h"
     #include "rd_database.h"
     #include "ocstack.h"
-    #include "logger.h"
+    #include "experimental/logger.h"
     #include "oic_malloc.h"
     #include "oic_string.h"
     #include "ocpayload.h"
-    #include "payload_logging.h"
+    #include "experimental/payload_logging.h"
 }
 
 #include <gtest/gtest.h>

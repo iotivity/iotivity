@@ -28,9 +28,9 @@
 
 #include "ocstack.h"
 #include "oic_malloc.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "utlist.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
 #include "cainterface.h"

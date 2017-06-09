@@ -28,7 +28,7 @@
 
 #include "caedrinterface.h"
 #include "caadapterutils.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "caqueueingthread.h"
 #include "oic_malloc.h"
 #include "caremotehandler.h"

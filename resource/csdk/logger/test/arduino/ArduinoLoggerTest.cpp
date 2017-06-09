@@ -21,7 +21,7 @@
 
 // Do not remove the include below
 #include "ArduinoLoggerTest.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define tag "Arduino"
 #define msg "Arduino Logger Test"

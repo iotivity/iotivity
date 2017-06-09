@@ -38,7 +38,7 @@
 #include "oic_malloc.h"
 #include "pluginIf.h"
 #include "ocpayload.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "WorkQueue.h"
 #include "ConcurrentIotivityUtils.h"
 #include <iostream>

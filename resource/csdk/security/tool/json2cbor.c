@@ -30,7 +30,7 @@
 #include "oic_string.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "secureresourcemanager.h"
 #include "srmresourcestrings.h"
 #include "srmutility.h"

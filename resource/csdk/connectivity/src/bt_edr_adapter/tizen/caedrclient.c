@@ -34,7 +34,7 @@
 #include "caedrendpoint.h"
 #include "caadapterutils.h"
 #include "caedrutils.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "cacommon.h"
 #include "caedrdevicelist.h"
 

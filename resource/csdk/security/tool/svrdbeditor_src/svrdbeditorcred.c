@@ -35,7 +35,7 @@
 #include "octypes.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #include "srmresourcestrings.h"
 #include "pinoxmcommon.h"

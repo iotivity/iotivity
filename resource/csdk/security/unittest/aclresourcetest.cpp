@@ -33,11 +33,11 @@
 #include "pstatresource.h"
 #include "srmtestcommon.h"
 #include "srmutility.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "doxmresource.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "security_internals.h"
 #include "acl_logging.h"
 

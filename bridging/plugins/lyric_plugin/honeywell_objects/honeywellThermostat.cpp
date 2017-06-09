@@ -31,7 +31,7 @@
 #include "writer.h"
 #include "stringbuffer.h"
 #include "curlClient.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "../honeywellHelpers.h"
 
 #define LOG_TAG "HONEYWELL_THERMOSTAT"

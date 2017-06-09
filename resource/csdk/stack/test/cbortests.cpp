@@ -25,7 +25,7 @@ extern "C"
     #include "ocstack.h"
     #include "ocpayload.h"
     #include "ocpayloadcbor.h"
-    #include "logger.h"
+    #include "experimental/logger.h"
     #include "oic_malloc.h"
 }
 

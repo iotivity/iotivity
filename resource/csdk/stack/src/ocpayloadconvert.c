@@ -27,9 +27,9 @@
 #include <stdlib.h>
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocpayload.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "ocresourcehandler.h"
 #include "cbor.h"
 #include "ocendpoint.h"

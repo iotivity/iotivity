@@ -286,7 +286,8 @@ cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat 
 cp resource/c_common/*.h %{buildroot}%{_includedir}
 cp resource/csdk/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
-cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
+install -d %{buildroot}%{_includedir}/experimental/
+cp resource/csdk/logger/include/experimental/*.h %{buildroot}%{_includedir}/experimental/
 
 find "%{buildroot}" -type f -perm /u+x -exec chrpath -d "{}" \;
 find "%{buildroot}" -type f -iname "lib*.so" -exec chrpath -d "{}" \;

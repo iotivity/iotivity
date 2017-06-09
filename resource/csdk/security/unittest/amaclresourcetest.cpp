@@ -24,7 +24,7 @@
 #include "ocpayload.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "psinterface.h"
 #include "secureresourcemanager.h"
 #include "srmresourcestrings.h"

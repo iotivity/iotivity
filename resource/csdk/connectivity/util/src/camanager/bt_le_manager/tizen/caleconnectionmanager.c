@@ -27,7 +27,7 @@
 #include "camessagehandler.h"
 #include "caleserver.h"
 #include "cagattservice.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "OIC_CA_MANAGER_TZ_LE"
 

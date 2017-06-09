@@ -25,13 +25,13 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "oic_time.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "uarraylist.h"
 #include "ocstackinternal.h"
 #include "ocpayloadcbor.h"
 #include "ocpayload.h"
 #include "ocresourcehandler.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 /**
  * Logging tag for module name.

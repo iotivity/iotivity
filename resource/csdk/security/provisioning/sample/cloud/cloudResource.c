@@ -20,7 +20,7 @@
 #include <string.h>
 #include "cloudCommon.h"
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocpayload.h"
 
 #include "cloudResource.h"

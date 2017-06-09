@@ -30,7 +30,7 @@
 #include "caedrinterface.h"
 #include "caadapterutils.h"
 #include "caedrutils.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "octhread.h"
 #include "cacommon.h"
 #include "caedrdevicelist.h"

@@ -2,7 +2,7 @@
 #include <SPI.h>
 #include <Ethernet.h>
 #include <ocstack.h>
-#include <logger.h>
+#include "experimental/logger.h"
 
 static uint8_t ETHERNET_MAC[] = {0x90, 0xA2, 0xDA, 0x0F, 0x2B, 0x72 };
 

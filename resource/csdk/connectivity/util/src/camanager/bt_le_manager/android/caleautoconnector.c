@@ -25,7 +25,7 @@
 #include "camanagerdevice.h"
 #include "caleautoconnector.h"
 #include "cacommonutil.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "octhread.h"
 
 #define TAG "OIC_CA_LE_AUTO_CONN"

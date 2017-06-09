@@ -33,11 +33,11 @@
 #include <sstream>
 #include <getopt.h>
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "occlientslow.h"
 #include "oic_string.h"
 #include "ocpayload.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "common.h"
 
 // Tracking user input

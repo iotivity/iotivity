@@ -20,7 +20,7 @@
 
 #include "Arduino.h"
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include <string.h>
 
 #ifdef ARDUINOWIFI

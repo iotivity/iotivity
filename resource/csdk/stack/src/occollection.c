@@ -33,7 +33,7 @@
 #include "ocstackinternal.h"
 #include "oicgroup.h"
 #include "oic_string.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "cainterface.h"
 #define TAG "OIC_RI_COLLECTION"
 
