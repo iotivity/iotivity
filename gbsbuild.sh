@@ -53,7 +53,9 @@ cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp
 cd $sourcedir/tmp
 
 secured=1
-gbscommand="gbs build -A armv7l "
+gbsarch=${gbsarch:=armv7l}
+gbsprofile=${gbsprofile:=profile.tizen}
+gbscommand="gbs build -A ${gbsarch} -P ${gbsprofile}"
 nproc=$(expr 1 + $(expr `nproc --ignore=1` / 2 ) )
 gbscommand=$gbscommand" --define '_smp_mflags -j$nproc'"
 
