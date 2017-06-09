@@ -28,7 +28,8 @@ SMHelper::SMHelper() {
     PlatformConfig config { OC::ServiceType::InProc, ModeType::Both, "0.0.0.0",
             0, OC::QualityOfService::LowQos };
     OCPlatform::Configure(config);
-    m_resourceTypes = {RESOURCE_TYPE_LIGHT, RESOURCE_TYPE_FAN};
+    m_resourceTypes.push_back(RESOURCE_TYPE_LIGHT);
+    m_resourceTypes.push_back(RESOURCE_TYPE_FAN);
     m_relativetUri = OC_RSRVD_WELL_KNOWN_URI;
 }
 

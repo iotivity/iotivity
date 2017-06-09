@@ -50,12 +50,12 @@ public:
         CommonTestUtil::runCommonTCSetUpPart();
 
         CommonUtil::launchApp(FAN_SERVER);
-        CommonUtil::waitInSecond(MAX_SLEEP_TIME);
         CommonUtil::launchApp(LIGHT_SERVER);
         CommonUtil::waitInSecond(MAX_SLEEP_TIME);
 
         m_pSMHelper = new SMHelper();
         m_pSMHelper->discoverResource();
+        CommonUtil::waitInSecond(MAX_SLEEP_TIME);
         m_pSMHelper->stopDiscovery();
 
         m_pSceneList = m_pSMHelper->getSceneListInstance();
