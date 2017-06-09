@@ -19,8 +19,8 @@
  * *****************************************************************/
 
 #include "octypes.h"
-#include "logger.h"
-#include "payload_logging.h"
+#include "experimental/logger.h"
+#include "experimental/payload_logging.h"
 #include "ocstack.h"
 #include "ocpayload.h"
 #include "psinterface.h"
@@ -30,7 +30,7 @@
 #include "oic_string.h"
 #include "pmutility.h"
 #include "credresource.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "cacommonutil.h"
 
 #include "utils.h"

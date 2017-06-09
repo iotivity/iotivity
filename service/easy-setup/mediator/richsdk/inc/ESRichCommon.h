@@ -34,7 +34,7 @@
 #ifdef __WITH_DTLS__
 #include "experimental/securevirtualresourcetypes.h"
 #include "OCProvisioningManager.hpp"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #endif
 
 #include "escommon.h"

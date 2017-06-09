@@ -21,7 +21,7 @@
 #include "service.h"
 #include "peripheral.h"
 
-#include "logger.h"
+#include "experimental/logger.h"
 
 #include <assert.h>
 

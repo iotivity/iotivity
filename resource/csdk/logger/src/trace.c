@@ -58,7 +58,7 @@ void oic_trace_buffer(const char *name, const uint8_t * buffer, size_t bufferSiz
 
 #ifndef __TIZEN__
 
-#include "logger.h"
+#include "experimental/logger.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>

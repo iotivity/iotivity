@@ -23,7 +23,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "caremotehandler.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "OIC_CA_REMOTE_HANDLER"
 

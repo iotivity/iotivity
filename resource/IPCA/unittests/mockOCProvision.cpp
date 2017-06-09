@@ -20,7 +20,7 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 #include "OCProvisioningManager.hpp"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #include "oic_malloc.h"
 

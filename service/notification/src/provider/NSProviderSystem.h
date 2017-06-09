@@ -22,7 +22,7 @@
 #define _NS_PROVIDER_SYSTEM__H_
 
 #include <string.h>
-#include "logger.h"
+#include "experimental/logger.h"
 #include "NSCommon.h"
 #include "NSConstants.h"
 #include "oic_malloc.h"

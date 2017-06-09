@@ -44,7 +44,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "cacommon.h"
@@ -70,7 +70,7 @@
 #include "srmutility.h"
 #include "provisioningdatabasemanager.h"
 #include "ocpayload.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "pkix_interface.h"
 #include "oxmverifycommon.h"
 #include "psinterface.h"

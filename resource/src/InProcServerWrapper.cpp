@@ -41,7 +41,7 @@
 #include <oic_string.h>
 #include <OCPlatform.h>
 #include <OCUtilities.h>
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "OIC_SERVER_WRAPPER"
 

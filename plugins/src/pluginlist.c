@@ -28,7 +28,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "pluginlist"
 

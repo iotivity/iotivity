@@ -25,9 +25,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "utlist.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocprovisioningmanager.h"

@@ -21,7 +21,7 @@
 #include "iotivity_config.h"
 #include "occlientcb.h"
 #include <coap/coap.h>
-#include "logger.h"
+#include "experimental/logger.h"
 #include "trace.h"
 #include "oic_malloc.h"
 #include <string.h>

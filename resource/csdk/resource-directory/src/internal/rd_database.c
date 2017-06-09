@@ -23,7 +23,7 @@
 #include <string.h>
 
 #include "sqlite3.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocpayload.h"
 #include "octypes.h"
 #include "oic_malloc.h"

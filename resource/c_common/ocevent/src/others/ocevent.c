@@ -26,7 +26,7 @@
 #include "oic_malloc.h"
 #include "oic_time.h"
 #include "octhread.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "iotivity_debug.h"
 
 #include <assert.h>

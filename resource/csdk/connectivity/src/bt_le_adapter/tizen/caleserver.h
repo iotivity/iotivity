@@ -36,7 +36,7 @@
 #include <bluetooth_internal.h>
 
 #include "caadapterinterface.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "cathreadpool.h"
 #include "caleinterface.h"
 

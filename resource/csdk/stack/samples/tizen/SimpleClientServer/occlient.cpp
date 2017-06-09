@@ -29,10 +29,10 @@
 #include <iostream>
 #include <sstream>
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "occlient.h"
 #include "ocpayload.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 
 using namespace std;
 

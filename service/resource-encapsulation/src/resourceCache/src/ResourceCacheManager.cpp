@@ -20,7 +20,7 @@
 
 #include "ResourceCacheManager.h"
 #include "RCSException.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 
 namespace OIC
 {

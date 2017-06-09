@@ -22,7 +22,7 @@
 #include "platform_features.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include <coap/pdu.h>
 #include "ocpayload.h"
 #include "internal/ocpayloadcbor.h"

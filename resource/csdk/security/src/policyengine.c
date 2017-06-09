@@ -22,11 +22,11 @@
 
 #include "utlist.h"
 #include "oic_malloc.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "policyengine.h"
 #include "resourcemanager.h"
 #include "srmresourcestrings.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "aclresource.h"
 #include "srmutility.h"
 #include "doxmresource.h"

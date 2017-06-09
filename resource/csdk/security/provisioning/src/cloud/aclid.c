@@ -20,7 +20,7 @@
 #include "utils.h"
 
 #include "oic_malloc.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocstack.h"
 #include "ocpayload.h"
 #include "pmutility.h"
@@ -29,7 +29,7 @@
 #include "aclresource.h"
 #include "ocpayloadcbor.h"
 #include "acl_logging.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "utlist.h"
 
 #define TAG "OIC_CLOUD_ACL_ID"

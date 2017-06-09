@@ -24,7 +24,7 @@
 #include "cautilinterface.h"
 #include "cainterfacecontroller.h"
 #include "cacommon.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
 #include "caconnectionmanager.h"

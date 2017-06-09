@@ -31,7 +31,7 @@
 #include "NSTopicsList.h"
 
 // base
-#include "logger.h"
+#include "experimental/logger.h"
 #include "octypes.h"
 #include "oic_string.h"
 #include "oic_malloc.h"

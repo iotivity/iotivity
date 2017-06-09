@@ -22,7 +22,7 @@
 #include "octhread.h"
 #include "uarraylist.h"
 #include "caremotehandler.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 

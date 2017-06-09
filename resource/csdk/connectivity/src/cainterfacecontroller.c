@@ -24,7 +24,7 @@
 #include <inttypes.h>
 
 #include "platform_features.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "caadapterutils.h"
 #include "canetworkconfigurator.h"

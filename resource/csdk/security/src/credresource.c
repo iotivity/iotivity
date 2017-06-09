@@ -33,9 +33,9 @@
 #include <inttypes.h>
 
 #include "cainterface.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "ocstack.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "base64.h"
 #include "ocserverrequest.h"
 #include "oic_malloc.h"

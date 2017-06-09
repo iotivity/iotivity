@@ -21,7 +21,7 @@
 #ifndef COMMON_UTILS_SCOPELOGGER_H
 #define COMMON_UTILS_SCOPELOGGER_H
 
-#include "logger.h"
+#include "experimental/logger.h"
 
 #ifdef TB_LOG
 #include <exception>

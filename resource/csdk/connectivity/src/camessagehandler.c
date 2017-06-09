@@ -27,7 +27,7 @@
 #include "camessagehandler.h"
 #include "caremotehandler.h"
 #include "caprotocolmessage.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "trace.h"
 #ifndef WITH_UPSTREAM_LIBCOAP
 #include "coap/config.h"

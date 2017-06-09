@@ -18,7 +18,7 @@
 ******************************************************************/
 #include "iotivity_config.h"
 #include "iotivity_debug.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_platform.h"
 
 #define TAG "OIC_PLATFORM"

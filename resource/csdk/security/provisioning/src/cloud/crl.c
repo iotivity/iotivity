@@ -23,14 +23,14 @@
 
 #include "utils.h"
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocstack.h"
 #include "ocpayload.h"
 #include "pmutility.h"
 #include "oic_malloc.h"
 #include "crlresource.h"
 #include "ocpayloadcbor.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "cacommonutil.h"
 
 #define TAG "OIC_CLOUD_CRL"

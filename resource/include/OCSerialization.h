@@ -22,7 +22,7 @@
 #include <sstream>
 #include <cstring>
 #include "ocpayload.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "oic_string.h"
 
 namespace OC

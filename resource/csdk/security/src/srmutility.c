@@ -22,10 +22,10 @@
 
 #include "srmutility.h"
 #include "srmresourcestrings.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "base64.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "doxmresource.h"
 
 #define TAG  "OIC_SRM_UTILITY"

@@ -20,7 +20,7 @@
 
 #include <string.h>
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "cainterface.h"
 #include "resourcemanager.h"
 #include "credresource.h"
@@ -31,7 +31,7 @@
 #include "secureresourcemanager.h"
 #include "srmresourcestrings.h"
 #include "ocresourcehandler.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 
 #if defined( __WITH_TLS__) || defined(__WITH_DTLS__)
 #include "pkix_interface.h"

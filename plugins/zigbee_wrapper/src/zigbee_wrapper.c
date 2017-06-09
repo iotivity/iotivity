@@ -52,7 +52,7 @@
 #include "ocpayload.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define HexPrepend "0x"
 

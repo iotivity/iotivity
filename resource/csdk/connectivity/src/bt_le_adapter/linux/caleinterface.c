@@ -27,7 +27,7 @@
 #include "cagattservice.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #include <string.h>
 #include <strings.h>  // For strcasecmp().

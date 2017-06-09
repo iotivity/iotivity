@@ -38,7 +38,7 @@
 #include "octhread.h"
 #include "uarraylist.h"
 #include "caremotehandler.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #ifdef __WITH_TLS__
 #include "ca_adapter_net_ssl.h"

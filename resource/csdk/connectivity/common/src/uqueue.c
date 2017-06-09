@@ -22,7 +22,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 
 /**

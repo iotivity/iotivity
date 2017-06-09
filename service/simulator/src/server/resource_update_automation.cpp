@@ -23,7 +23,7 @@
 #include "attribute_generator.h"
 #include "simulator_exceptions.h"
 #include "simulator_logger.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define ATAG "ATTRIBUTE_AUTOMATION"
 #define RTAG "RESOURCE_AUTOMATION"

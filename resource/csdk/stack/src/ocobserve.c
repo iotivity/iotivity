@@ -24,12 +24,12 @@
 #include "ocstackinternal.h"
 #include "ocobserve.h"
 #include "ocresourcehandler.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocpayload.h"
 #include "ocserverrequest.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #include <coap/utlist.h>
 #include <coap/pdu.h>

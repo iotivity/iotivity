@@ -27,12 +27,12 @@
 #include <time.h>
 
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocpayload.h"
 #include "oic_string.h"
 #include "srmutility.h"
 #include "doxmresource.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>

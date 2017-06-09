@@ -21,7 +21,7 @@
 #ifndef CRL_LOGGING_H_
 #define CRL_LOGGING_H_
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include "experimental/securevirtualresourcetypes.h"
 
 #ifdef __cplusplus

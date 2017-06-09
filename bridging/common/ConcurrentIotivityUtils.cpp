@@ -23,7 +23,7 @@
 #include "octypes.h"
 #include "ConcurrentIotivityUtils.h"
 #include "ocpayload.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "CONCURRENT_IOTIVITY_UTILS"
 

@@ -22,7 +22,7 @@
 #define _NS_PROVIDER_NOTIFICATION_H_
 
 #include <ocstack.h>
-#include "logger.h"
+#include "experimental/logger.h"
 #include "NSProviderScheduler.h"
 #include "NSProviderListener.h"
 #include "NSProviderResource.h"

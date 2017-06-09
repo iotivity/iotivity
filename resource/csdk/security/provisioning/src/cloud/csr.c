@@ -20,7 +20,7 @@
 #include "iotivity_config.h"
 #include "utils.h"
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include <stddef.h>
 #include <string.h>
 #include "oic_malloc.h"
@@ -28,7 +28,7 @@
 #include "cacommonutil.h"
 
 #include "ocpayload.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "doxmresource.h"
 #include "pmutility.h"
 #include "secureresourceprovider.h"

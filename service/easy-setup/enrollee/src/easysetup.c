@@ -25,7 +25,7 @@
  */
 
 #include "easysetup.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "resourcehandler.h"
 #include "oic_string.h"
 

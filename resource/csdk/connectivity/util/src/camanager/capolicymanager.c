@@ -23,7 +23,7 @@
 #include <string.h>
 
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #include "caconnectionmanager.h"
 

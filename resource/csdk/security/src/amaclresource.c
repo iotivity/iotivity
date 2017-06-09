@@ -24,7 +24,7 @@
 #include "oic_malloc.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "psinterface.h"
 #include "resourcemanager.h"
 #include "utlist.h"

@@ -29,7 +29,7 @@
 #include "srmutility.h"
 #include "psinterface.h"
 #include "security_internals.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "SRM-CRED-UT"
 

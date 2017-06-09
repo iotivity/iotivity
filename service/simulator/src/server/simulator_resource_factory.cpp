@@ -22,7 +22,7 @@
 #include "simulator_single_resource_impl.h"
 #include "simulator_collection_resource_impl.h"
 #include "simulator_logger.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "request_model_builder.h"
 
 #define TAG "SIM_RESOURCE_FACTORY"

@@ -26,7 +26,7 @@
 
 #include "ocstack.h"
 #include "oic_malloc.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "occertutility.h"
 
 #ifdef HAVE_WINDOWS_H

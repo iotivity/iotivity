@@ -30,7 +30,7 @@
 #include "ocstack.h"
 #include "ocpayload.h"
 #include "ocendpoint.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "cainterface.h"
 
 #define TAG "OIC_RD_CLIENT"

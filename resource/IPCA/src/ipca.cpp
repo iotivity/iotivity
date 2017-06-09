@@ -20,7 +20,7 @@
 #include "iotivity_config.h"
 #include "oic_malloc.h"
 #include "ipca.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "ipcainternal.h"
 
 #define OCFFactoryReset     "fr"

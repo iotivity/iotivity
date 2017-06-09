@@ -32,7 +32,7 @@
 #include <stdbool.h>
 #include "octhread.h"
 #include "caadapterutils.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "caipnwmonitor.h"
