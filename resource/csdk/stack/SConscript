@@ -234,8 +234,8 @@ octbstack_libs = Flatten(internal_liboctbstack)
 if target_os not in ['arduino', 'darwin', 'ios'] :
     shared_liboctbstack = liboctbstack_env.SharedLibrary('octbstack', liboctbstack_src)
     octbstack_libs += Flatten(shared_liboctbstack)
-    liboctbstack_env.UserInstallTargetHeader('include/ocstack.h', 'resource', 'ocstack.h')
-    liboctbstack_env.UserInstallTargetHeader('include/ocpresence.h', 'resource', 'ocpresence.h')
+    liboctbstack_env.UserInstallTargetHeader('include/ocstack.h', 'resource/stack', 'ocstack.h')
+    liboctbstack_env.UserInstallTargetHeader('include/ocpresence.h', 'resource/stack', 'ocpresence.h')
 
 if target_os not in ['windows', 'msys_nt']:
     static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
@@ -244,5 +244,5 @@ if target_os not in ['windows', 'msys_nt']:
 liboctbstack_env.InstallTarget(octbstack_libs, 'octbstack')
 liboctbstack_env.UserInstallTargetLib(octbstack_libs, 'octbstack')
 
-liboctbstack_env.UserInstallTargetHeader('include/ocstackconfig.h', 'resource', 'ocstackconfig.h')
-liboctbstack_env.UserInstallTargetHeader('include/ocpayload.h', 'resource', 'ocpayload.h')
+liboctbstack_env.UserInstallTargetHeader('include/ocstackconfig.h', 'resource/stack', 'ocstackconfig.h')
+liboctbstack_env.UserInstallTargetHeader('include/ocpayload.h', 'resource/stack', 'ocpayload.h')
