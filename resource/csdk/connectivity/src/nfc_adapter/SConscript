@@ -11,7 +11,7 @@ target_os = connectivity_env.get('TARGET_OS')
 src_dir = os.path.abspath(os.curdir)
 
 # Source files to build common for all platforms
-connectivity_env.AppendUnique(CA_SRC = [ os.path.join(src_dir, 'canfcadapter.c') ])
+connectivity_env.AppendUnique(CA_SRC=[os.path.join(src_dir, 'canfcadapter.c')])
 
 # Check for the existence of the platform-specific SConscript file
 # relative to the top-level source directory, not the build (variant)
@@ -19,4 +19,4 @@ connectivity_env.AppendUnique(CA_SRC = [ os.path.join(src_dir, 'canfcadapter.c')
 # file warning platforms that don't provide one.
 target_sconscript = target_os + '/SConscript'
 if os.path.exists(target_sconscript):
-    target_files = SConscript(target_sconscript, exports = 'connectivity_env')
+    target_files = SConscript(target_sconscript, exports='connectivity_env')

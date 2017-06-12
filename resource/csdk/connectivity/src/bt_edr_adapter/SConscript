@@ -1,5 +1,5 @@
 #######################################################
-#	Build BT EDR adapter
+# Build BT EDR adapter
 #######################################################
 
 Import('connectivity_env')
@@ -12,7 +12,8 @@ src_dir = os.path.abspath(os.curdir)
 
 # Source files to build common for all platforms
 if target_os != 'arduino':
-    connectivity_env.AppendUnique(CA_SRC = [os.path.join(src_dir, 'caedradapter.c')])
+    connectivity_env.AppendUnique(
+        CA_SRC=[os.path.join(src_dir, 'caedradapter.c')])
 
 # Check for the existence of the platform-specific SConscript file
 # relative to the top-level source directory, not the build (variant)

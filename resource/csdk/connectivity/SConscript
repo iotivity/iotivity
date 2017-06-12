@@ -25,7 +25,8 @@ targets_disallow_multitransport = ['arduino']
 if target_os in targets_disallow_multitransport:
     if ('ALL' in transport) or (len(transport) != 1):
         print "*** Error invalid option values: TARGET_TRANSPORT"
-        print "%s disallowed until testing can validate use of multiple transports on %s %d" % (transport, target_os, len(transport))
+        print "%s disallowed until testing can validate use of multiple transports on %s %d" % (
+            transport, target_os, len(transport))
         Exit(1)
 
-SConscript('src/SConscript', exports = 'connectivity_env')
+SConscript('src/SConscript', exports='connectivity_env')
