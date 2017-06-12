@@ -438,13 +438,12 @@ public class REResourceBrokerTest extends InstrumentationTestCase {
     m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
     try {
       isObservable= m_Resource.isObservable();
+     if (!isObservable) {
+      fail("isObservable() is false after startMonitoring.");
+    }
+     m_Resource.stopMonitoring();
     } catch (RcsException e) {
       fail("Should not throw exception when calling isObservable API.");
     }
-    if (!isObservable) {
-      fail("isObservable() is false after startMonitoring.");
-    }
-    m_Resource.stopMonitoring();
   }
-
 }
