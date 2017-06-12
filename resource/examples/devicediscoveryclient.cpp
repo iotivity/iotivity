@@ -179,14 +179,9 @@ int main(int argc, char* argv[]) {
             std::cout << "failed." << std::endl;
         }
 
-        // A condition variable will free the mutex it is given, then do a non-
-        // intensive block until 'notify' is called on it.  In this case, since we
-        // don't ever call cv.notify, this should be a non-processor intensive version
-        // of while(true);
-        std::mutex blocker;
-        std::condition_variable cv;
-        std::unique_lock<std::mutex> lock(blocker);
-        cv.wait(lock, []{return false;});
+        std::cout << "Waiting. Press \"Enter\" to quit." << std::endl;
+        // Ignoring all input except for EOL.
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
         OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
 
