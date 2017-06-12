@@ -356,6 +356,7 @@ def build_arduino(flag, extra_option_str):
                         'TARGET_OS':'arduino',
                         'UPLOAD':'false',
                         'BOARD':'mega',
+                        'MULTIPLE_OWNER':0,
                         'TARGET_ARCH':'avr',
                         'TARGET_TRANSPORT':'IP',
                         'SHIELD':'ETH',
