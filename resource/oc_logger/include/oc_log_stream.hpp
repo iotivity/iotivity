@@ -27,7 +27,20 @@
 #include <iostream>
 
 #include <boost/config.hpp>
+
+// Warning disabled due to a known "unreachable code" issue in boost iostreams.
+// For more information see: https://svn.boost.org/trac/boost/ticket/5904
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4702)
+#endif
+
 #include <boost/iostreams/stream.hpp>
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
 #include <boost/iostreams/categories.hpp>
 #include <boost/iostreams/detail/ios.hpp>
 
