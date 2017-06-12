@@ -34,7 +34,8 @@ elif target_os == 'darwin':
     # Build linux samples for now
     SConscript('linux/SimpleClientServer/SConscript', 'stacksamples_env')
 elif target_os == 'arduino':
-    SConscript('arduino/SimpleClientServer/ocserver/SConscript', 'stacksamples_env')
+    SConscript('arduino/SimpleClientServer/ocserver/SConscript',
+               'stacksamples_env')
 elif target_os == 'msys_nt':
     # Build secure samples. Using linux samples for now.
     SConscript('linux/secure/SConscript', 'stacksamples_env')
