@@ -117,7 +117,7 @@ if target_os in targets_without_dtls_support:
     help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))
 else:
     help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '1', allowed_values=('0', '1')))
-help_vars.Add(EnumVariable('MULTIPLE_OWNER', 'Enable multiple owner', '0', allowed_values=('0', '1')))
+help_vars.Add(EnumVariable('MULTIPLE_OWNER', 'Enable multiple owner', '1', allowed_values=('0', '1')))
 help_vars.Add(EnumVariable('EXC_PROV_SUPPORT', 'Except OCPMAPI library(libocpmapi.so)', '0', allowed_values=('0', '1')))
 help_vars.Add(EnumVariable('TEST', 'Run unit tests', '0', allowed_values=('0', '1')))
 help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', logging_default))
