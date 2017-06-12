@@ -290,7 +290,7 @@ int main(void)
                     }
                 case 2:
                     {
-                        unsigned int pMethodIDx = -1;
+                        unsigned int pMethodIDx = 0;
                         std::string pin("");
 
                         std::cout << "- Negotiate DP method & Start Direct-Pairing - ";
@@ -316,7 +316,7 @@ int main(void)
                         printPrompt();
                         std::cin >> pMethodIDx;
                         auto prms = discoveredDeviceList[choice]->getPairingMethods();
-                        if (0 >= pMethodIDx || prms.size() < pMethodIDx)
+                        if (0 == pMethodIDx || prms.size() < pMethodIDx)
                         {
                             std::cout <<"Invalid mode selection" << std::endl;
                             break;
