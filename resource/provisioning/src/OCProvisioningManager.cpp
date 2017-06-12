@@ -445,7 +445,7 @@ namespace OC
         return result;
     }
 
-    static void inputPinCallbackWrapper(OicUuid_t deviceId, char* pinBuffer, size_t pinBufferSize, void* context)
+    static void OC_CALL inputPinCallbackWrapper(OicUuid_t deviceId, char* pinBuffer, size_t pinBufferSize, void* context)
     {
         (static_cast<InputPinContext*>(context))->callback(deviceId, pinBuffer, pinBufferSize);
     }
@@ -647,7 +647,7 @@ namespace OC
         return result;
     }
 
-    static void displayPinCallbackWrapper(char* pinData, size_t pinDataSize, void* context)
+    static void OC_CALL displayPinCallbackWrapper(char* pinData, size_t pinDataSize, void* context)
     {
         (static_cast<DisplayPinContext*>(context))->callback(pinData, pinDataSize);
     }
@@ -795,7 +795,7 @@ namespace OC
         return result;
     }
 
-    OCStackResult OCSecure::displayNumCallbackWrapper(void* ctx,
+    OCStackResult OC_CALL OCSecure::displayNumCallbackWrapper(void* ctx,
             uint8_t verifNum[MUTUAL_VERIF_NUM_LEN])
     {
         uint8_t *number = NULL;
@@ -872,7 +872,7 @@ namespace OC
         return result;
     }
 
-    OCStackResult OCSecure::confirmUserCallbackWrapper(void* ctx)
+    OCStackResult OC_CALL OCSecure::confirmUserCallbackWrapper(void* ctx)
     {
         UserConfirmNumContext* context = static_cast<UserConfirmNumContext*>(ctx);
         if (!context)

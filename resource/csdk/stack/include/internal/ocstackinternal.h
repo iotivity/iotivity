@@ -283,9 +283,9 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
         OCResourceProperty resourceProperties, uint8_t enable);
 #endif
 
-const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
+const char *OC_CALL convertTriggerEnumToString(OCPresenceTrigger trigger);
 
-OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
+OCPresenceTrigger OC_CALL convertTriggerStringToEnum(const char * triggerStr);
 
 void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out);
 

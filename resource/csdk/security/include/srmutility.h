@@ -142,7 +142,7 @@ OCStackResult ConvertUuidToStr(const OicUuid_t* uuid, char** strUuid);
  * @return OC_STACK_OK for success.
  *
  */
-OCStackResult ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid);
+OCStackResult OC_CALL ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid);
 
 /**
  * Compares two OicUuid_t structs.
@@ -170,7 +170,7 @@ bool IsNilUuid(const OicUuid_t *uuid);
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult SetDeviceIdSeed(const uint8_t* seed, size_t seedSize);
+OCStackResult OC_CALL SetDeviceIdSeed(const uint8_t* seed, size_t seedSize);
 #endif
 
 #ifdef __cplusplus

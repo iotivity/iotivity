@@ -123,11 +123,11 @@ namespace OC
             dimensions[2] = 0;
             dimTotal = calcDimTotal(dimensions);
 
-            array = (void*)OICMalloc(dimTotal * root_size);
+            m_array = (void*)OICMalloc(dimTotal * root_size);
 
             for(size_t i = 0; i < dimensions[0]; ++i)
             {
-                copy_to_array(arr[i], array, i);
+                copy_to_array(arr[i], m_array, i);
             }
 
         }
@@ -143,13 +143,13 @@ namespace OC
                 dimensions[1] = std::max(dimensions[1], arr[i].size());
             }
             dimTotal = calcDimTotal(dimensions);
-            array = (void*)OICCalloc(1, dimTotal * root_size);
+            m_array = (void*)OICCalloc(1, dimTotal * root_size);
 
             for(size_t i = 0; i < dimensions[0]; ++i)
             {
                 for(size_t j = 0; j < dimensions[1] && j < arr[i].size(); ++j)
                 {
-                    copy_to_array(arr[i][j], array, i*dimensions[1] + j);
+                    copy_to_array(arr[i][j], m_array, i*dimensions[1] + j);
                 }
             }
         }
@@ -171,7 +171,7 @@ namespace OC
             }
 
             dimTotal = calcDimTotal(dimensions);
-            array = (void*)OICCalloc(1, dimTotal * root_size);
+            m_array = (void*)OICCalloc(1, dimTotal * root_size);
 
             for(size_t i = 0; i < dimensions[0]; ++i)
             {
@@ -179,7 +179,7 @@ namespace OC
                 {
                     for(size_t k = 0; k < dimensions[2] && k < arr[i][j].size(); ++k)
                     {
-                        copy_to_array(arr[i][j][k], array,
+                        copy_to_array(arr[i][j][k], m_array,
                                 dimensions[2] * j +
                                 dimensions[2] * dimensions[1] * i +
                                 k);
@@ -203,7 +203,7 @@ namespace OC
         size_t dimensions[MAX_REP_ARRAY_DEPTH];
         size_t root_size;
         size_t dimTotal;
-        void* array;
+        void* m_array;
     };
 
     template<>
@@ -291,31 +291,31 @@ namespace OC
         {
             case AttributeType::Integer:
                 OCRepPayloadSetIntArrayAsOwner(payload, item.attrname().c_str(),
-                        (int64_t*)vis.array,
+                        (int64_t*)vis.m_array,
                         vis.dimensions);
                 break;
             case AttributeType::Double:
                 OCRepPayloadSetDoubleArrayAsOwner(payload, item.attrname().c_str(),
-                        (double*)vis.array,
+                        (double*)vis.m_array,
                         vis.dimensions);
                 break;
             case AttributeType::Boolean:
                 OCRepPayloadSetBoolArrayAsOwner(payload, item.attrname().c_str(),
-                        (bool*)vis.array,
+                        (bool*)vis.m_array,
                         vis.dimensions);
                 break;
             case AttributeType::String:
                 OCRepPayloadSetStringArrayAsOwner(payload, item.attrname().c_str(),
-                        (char**)vis.array,
+                        (char**)vis.m_array,
                         vis.dimensions);
                 break;
             case AttributeType::OCByteString:
                 OCRepPayloadSetByteStringArrayAsOwner(payload, item.attrname().c_str(),
-                                                      (OCByteString *)vis.array, vis.dimensions);
+                                                      (OCByteString *)vis.m_array, vis.dimensions);
                 break;
             case AttributeType::OCRepresentation:
                 OCRepPayloadSetPropObjectArrayAsOwner(payload, item.attrname().c_str(),
-                        (OCRepPayload**)vis.array, vis.dimensions);
+                        (OCRepPayload**)vis.m_array, vis.dimensions);
                 break;
             default:
                 throw std::logic_error(std::string("GetPayloadArray: Not Implemented") +
@@ -419,7 +419,13 @@ namespace OC
     template<>
     int OCRepresentation::payload_array_helper_copy<int>(size_t index, const OCRepPayloadValue* pl)
     {
+// Needs to be removed as part of IOT-1726 fix.
+#ifdef _MSC_VER
+#pragma warning(suppress : 4244)
         return pl->arr.iArray[index];
+#else
+        return pl->arr.iArray[index];
+#endif
     }
     template<>
     double OCRepresentation::payload_array_helper_copy<double>(size_t index, const OCRepPayloadValue* pl)
@@ -578,7 +584,13 @@ namespace OC
                     setNULL(val->name);
                     break;
                 case OCREP_PROP_INT:
+                    // Needs to be removed as part of IOT-1726 fix.
+#ifdef _MSC_VER
+#pragma warning(suppress : 4244)
                     setValue<int>(val->name, val->i);
+#else
+                    setValue<int>(val->name, val->i);
+#endif
                     break;
                 case OCREP_PROP_DOUBLE:
                     setValue<double>(val->name, val->d);
@@ -774,14 +786,14 @@ namespace OC
         return true;
     }
 
-    int OCRepresentation::numberOfAttributes() const
+    size_t OCRepresentation::numberOfAttributes() const
     {
         return m_values.size();
     }
 
     bool OCRepresentation::erase(const std::string& str)
     {
-        return m_values.erase(str);
+        return (m_values.erase(str) > 0);
     }
 
     void OCRepresentation::setNULL(const std::string& str)

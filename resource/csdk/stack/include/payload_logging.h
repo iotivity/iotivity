@@ -49,8 +49,8 @@ extern "C"
     #define OIC_LOG_PAYLOAD(level, payload) OCPayloadLog((level),(payload))
     #define UUID_SIZE (16)
 
-const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
-OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
+const char *OC_CALL convertTriggerEnumToString(OCPresenceTrigger trigger);
+OCPresenceTrigger OC_CALL convertTriggerStringToEnum(const char * triggerStr);
 
 INLINE_API void OCPayloadLogRep(LogLevel level, OCRepPayload* payload);
 

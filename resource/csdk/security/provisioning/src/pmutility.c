@@ -547,10 +547,10 @@ OCStackResult PMTimeout(unsigned short waittime, bool waitForStackResponse)
     return res;
 }
 
-bool PMGenerateQuery(bool isSecure,
-                     const char* address, uint16_t port,
-                     OCConnectivityType connType,
-                     char* buffer, size_t bufferSize, const char* uri)
+bool OC_CALL PMGenerateQuery(bool isSecure,
+                             const char* address, uint16_t port,
+                             OCConnectivityType connType,
+                             char* buffer, size_t bufferSize, const char* uri)
 {
     if(!address || !buffer || !uri)
     {
