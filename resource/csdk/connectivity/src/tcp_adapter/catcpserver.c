@@ -1156,10 +1156,15 @@ void CATCPStopServer()
         // receive thread will stop immediately
     }
 #else
-    // receive thread will stop immediately.
-    if (!WSASetEvent(caglobals.tcp.updateEvent))
+    // Unit tests are calling CATCPStopServer even without CATCPStartServer being called.
+    if (caglobals.tcp.started)
     {
-        OIC_LOG_V(DEBUG, TAG, "set shutdown event failed: %u", GetLastError());
+        // Ask the receive thread to shut down.
+        OC_STATIC_ASSERT((WSA_INVALID_EVENT == ((WSAEVENT)NULL)), 
+            "The assert() below relies on the default value of "
+            "caglobals.tcp.updateEvent being WSA_INVALID_EVENT");
+        assert(caglobals.tcp.updateEvent != WSA_INVALID_EVENT);
+        OC_VERIFY(WSASetEvent(caglobals.tcp.updateEvent));
     }
 #endif
 
