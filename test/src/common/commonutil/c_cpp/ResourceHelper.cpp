@@ -365,6 +365,7 @@ string ResourceHelper::getOnlyTCPHost(vector<string> allHosts)
     string tcpHost = "";
     for (string host : allHosts)
     {
+        cout << "Found a host: " << host << endl;
         if(host.find("tcp") != string::npos)
         {
             tcpHost = host;
