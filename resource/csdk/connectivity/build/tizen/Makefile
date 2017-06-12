@@ -21,7 +21,7 @@ LIBCOAP_OBJ_DIR=./lib/libcoap-4.1.1/obj
 # TODO : Currently Hardcoded WIFI_ADAPTER. Change it to generic
 CFLAGS.debug = -DWITH_POSIX -D__TIZEN__ -Wall -std=c99 -DSLP_SDK_LOG -g -D_GNU_SOURCE -DTIZEN_DEBUG_ENABLE -DTB_LOG $(ADAPTER_MACRO)
 CFLAGS.release = -DWITH_POSIX -D__TIZEN__ -Wall -std=c99 -DSLP_SDK_LOG -D_GNU_SOURCE -DTIZEN_DEBUG_ENABLE -DTB_LOG $(ADAPTER_MACRO)
-COMPILEFLAG = `pkg-config --cflags --libs capi-network-wifi dlog ttrace capi-network-bluetooth glib-2.0`
+COMPILEFLAG = `pkg-config --cflags --libs dlog ttrace capi-network-bluetooth glib-2.0`
 
 # Include files will be copied into a single folder on gbsbuild.
 # NO NEED to mention the path explicitly.
