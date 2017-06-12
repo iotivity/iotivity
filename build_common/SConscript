@@ -129,7 +129,7 @@ help_vars.Add(
 help_vars.Add(
     BoolVariable('WITH_PROXY',
                  'Build with CoAP-HTTP Proxy',
-                 False))
+                 True))
 help_vars.Add(
     ListVariable('WITH_MQ',
                  'Build with MQ publisher/broker',
