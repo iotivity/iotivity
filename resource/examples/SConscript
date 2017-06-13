@@ -136,11 +136,7 @@ examples = map(make_single_file_cpp_program, example_names)
 # Other examples
 ######################################################################
 
-if examples_env.get('SECURED') == '1':
-    svr_db_build_dir = examples_env.get('BUILD_DIR') +'/resource/examples/'
-    for json_file in Glob('*.json'):
-        examples += examples_env.Install(svr_db_build_dir, str(json_file))
-        examples += examples_env.Cbor(json_file)
+examples += examples_env.ScanJSON('resource/examples')
 
 if target_os in ['msys_nt', 'windows']:
     winUIClient = examples_env.Program(

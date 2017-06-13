@@ -5,6 +5,7 @@
 ##
 import os
 import platform
+import re
 
 project_version = '1.3.0'
 
@@ -837,17 +838,40 @@ env = conf.Finish()
 ######################################################################
 # Generate Cbor from json files
 ######################################################################
-json2cbor = env.get('BUILD_DIR') + 'resource/csdk/security/tool/json2cbor'
+json2cbor = env.get('BUILD_DIR') + 'resource/csdk/security/tool/json2cbor' + env.get('PROGSUFFIX')
 
 def generate_actions(source, target, env, for_signature):
-    Depends(target, "json2cbor")
-    return " %s %s %s" % (str(json2cbor), source[0], target[0])
+    Depends(target, json2cbor)
+    return " %s %s %s" % (json2cbor, source[0], target[0])
 
 builder = Builder(generator = generate_actions,
                   suffix = '.dat',
                   src_suffix = '.json')
 
 env.Append(BUILDERS = {'Cbor' : builder})
+
+
+def ScanJSON(env, directory):
+    actions = []
+    if env.get('SECURED') != '1':
+        return actions
+    dst_dir = env.get('BUILD_DIR') + '/' + directory + '/'
+    src_dir = env.get('SRC_DIR') + '/' + directory + '/'
+    for json_file in Glob('*.json'):
+        actions += env.Install(dst_dir, str(json_file))
+        if env.get('CROSS_COMPILE') != None:
+            cbor_file = src_dir + re.sub('\.json$', '.dat', str(json_file))
+            Install(dst_dir, cbor_file)
+        else:
+            cbor_file = env.Cbor(json_file)
+            cbor_file = Flatten(cbor_file)[0].name
+            src = dst_dir + cbor_file
+            dst = src_dir + cbor_file
+            Copy(dst, src)
+        actions += cbor_file
+    return actions
+
+AddMethod(env, ScanJSON)
 
 ######################################################################
 env.SConscript('external_libs.scons')
