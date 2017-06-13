@@ -25,12 +25,10 @@
 #ifndef _Included_org_iotivity_base_OcRepresentation
 #define _Included_org_iotivity_base_OcRepresentation
 
-using namespace OC;
-
 class JniOcRepresentation
 {
 public:
-    static OCRepresentation* getOCRepresentationPtr(JNIEnv *env, jobject thiz);
+    static OC::OCRepresentation* getOCRepresentationPtr(JNIEnv *env, jobject thiz);
 };
 
 struct JObjectConverter : boost::static_visitor < jobject >
@@ -39,7 +37,7 @@ struct JObjectConverter : boost::static_visitor < jobject >
     {
     }
 
-    jobject operator()(const NullType&) const
+    jobject operator()(const OC::NullType&) const
     {
         return nullptr;
     }
@@ -75,7 +73,7 @@ struct JObjectConverter : boost::static_visitor < jobject >
     }
     jobject operator()(const OC::OCRepresentation& val) const
     {
-        OCRepresentation * rep = new OCRepresentation(val);
+        OC::OCRepresentation * rep = new OC::OCRepresentation(val);
         jlong handle = reinterpret_cast<jlong>(rep);
         jobject jRepresentation = env->NewObject(
             g_cls_OcRepresentation,
@@ -261,7 +259,7 @@ struct JObjectConverter : boost::static_visitor < jobject >
         }
         for (jsize i = 0; i < len; ++i)
         {
-            OCRepresentation* rep = new OCRepresentation(val[i]);
+            OC::OCRepresentation* rep = new OC::OCRepresentation(val[i]);
             jlong handle = reinterpret_cast<jlong>(rep);
             jobject jRepresentation = env->NewObject(g_cls_OcRepresentation, g_mid_OcRepresentation_N_ctor_bool,
                 handle, true);
@@ -651,7 +649,7 @@ struct JObjectConverter : boost::static_visitor < jobject >
             }
             for (jsize j = 0; j < lenInner; ++j)
             {
-                OCRepresentation* rep = new OCRepresentation(val[i][j]);
+                OC::OCRepresentation* rep = new OC::OCRepresentation(val[i][j]);
                 jlong handle = reinterpret_cast<jlong>(rep);
                 jobject jRepresentation = env->NewObject(g_cls_OcRepresentation, g_mid_OcRepresentation_N_ctor_bool,
                     handle, true);
@@ -702,7 +700,7 @@ struct JObjectConverter : boost::static_visitor < jobject >
                 }
                 for (jsize j = 0; j < lenInner; ++j)
                 {
-                    OCRepresentation* rep = new OCRepresentation(val[k][i][j]);
+                    OC::OCRepresentation* rep = new OC::OCRepresentation(val[k][i][j]);
                     jlong handle = reinterpret_cast<jlong>(rep);
                     jobject jRepresentation = env->NewObject(g_cls_OcRepresentation, g_mid_OcRepresentation_N_ctor_bool,
                         handle, true);

@@ -35,6 +35,7 @@
 #endif
 
 using namespace OC;
+using namespace OC::OCPlatform;
 
 JniOnResourceFoundListener* AddOnResourceFoundListener(JNIEnv* env, jobject jListener)
 {
@@ -960,7 +961,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource0(
 
     JniOnResourceFoundListener *onResFoundListener = AddOnResourceFoundListener(env, jListener);
 
-    FindCallback findCallback = [onResFoundListener](std::shared_ptr<OCResource> resource)
+    FindCallback findCallback = [onResFoundListener](std::shared_ptr<OC::OCResource> resource)
     {
         onResFoundListener->foundResourceCallback(resource);
     };
@@ -1024,7 +1025,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource1(
     }
     JniOnResourceFoundListener *onResFoundListener = AddOnResourceFoundListener(env, jListener);
 
-    FindCallback findCallback = [onResFoundListener](std::shared_ptr<OCResource> resource)
+    FindCallback findCallback = [onResFoundListener](std::shared_ptr<OC::OCResource> resource)
     {
         onResFoundListener->foundResourceCallback(resource);
     };
@@ -2794,7 +2795,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructResourceObj
     std::vector<std::string> interfaces;
     JniUtils::convertJavaStrArrToStrVector(env, jInterfaceArray, interfaces);
 
-    std::shared_ptr<OCResource> resource = OCPlatform::constructResourceObject(
+    std::shared_ptr<OC::OCResource> resource = OCPlatform::constructResourceObject(
         host,
         uri,
         static_cast<OCConnectivityType>(jConnectivityType),

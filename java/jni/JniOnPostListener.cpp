@@ -27,6 +27,8 @@
 #include "JniOcAccountManager.h"
 #endif
 
+using namespace OC;
+
 JniOnPostListener::JniOnPostListener(JNIEnv *env, jobject jListener, JniOcResource* owner)
     : m_ownerResource(owner)
 {

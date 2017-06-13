@@ -23,6 +23,8 @@
 #include "JniOcResourceResponse.h"
 #include "JniUtils.h"
 
+using namespace OC;
+
 JniEntityHandler::JniEntityHandler(JNIEnv *env, jobject entityHandler)
 {
     m_jListener = env->NewGlobalRef(entityHandler);

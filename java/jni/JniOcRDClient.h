@@ -27,8 +27,6 @@
 #ifndef _Included_org_iotivity_base_RDClient
 #define _Included_org_iotivity_base_RDClient
 
-using namespace OC;
-
 void RemoveOnPublishResourceListener(JNIEnv* env, jobject jListener);
 JniOnPublishResourceListener* AddOnPublishResourceListener(JNIEnv* env, jobject jListener);
 

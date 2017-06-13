@@ -24,8 +24,6 @@
 #ifndef _Included_org_iotivity_base_OcResource_OnPostListener
 #define _Included_org_iotivity_base_OcResource_OnPostListener
 
-using namespace OC;
-
 class JniOcResource;
 #ifdef WITH_CLOUD
 class JniOcAccountManager;
@@ -40,7 +38,7 @@ public:
 #endif
     ~JniOnPostListener();
 
-    void onPostCallback(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode);
+    void onPostCallback(const OC::HeaderOptions& headerOptions, const OC::OCRepresentation& rep, const int eCode);
 
 private:
     jweak m_jwListener;

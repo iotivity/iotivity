@@ -27,6 +27,8 @@
 #include "JniOcAccountManager.h"
 #endif
 
+using namespace OC;
+
 #define CA_OBSERVE_MAX_SEQUENCE_NUMBER 0xFFFFFF
 
 JniOnObserveListener::JniOnObserveListener(JNIEnv *env, jobject jListener, JniOcResource* owner)

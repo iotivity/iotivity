@@ -31,8 +31,6 @@
 #include "JniOnDeleteListener.h"
 #include "JniOnObserveListener.h"
 
-using namespace OC;
-
 class JniOcAccountManager
 {
 public:
