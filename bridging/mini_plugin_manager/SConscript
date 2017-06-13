@@ -65,8 +65,6 @@ minipluginmanager_src = [
 
 env.AppendUnique(MINIPLUGINMANAGER_SRC=minipluginmanager_src)
 
-print "Include path is %s" % env.get('CPPPATH')
-print "Files path is %s" % env.get('MINIPLUGINMANAGER_SRC')
 if target_os in ['android', 'tizen']:
     mpmlib = env.SharedLibrary('minipluginmanager',
                                env.get('MINIPLUGINMANAGER_SRC'))
