@@ -4,6 +4,28 @@
 Import('env')
 import os.path
 
+help_vars = Variables()
+if env.get('BUILD_JAVA') == True:
+    if not env.get('ANDROID_GRADLE'):
+        SConscript('../../extlibs/android/gradle/SConscript')
+        help_vars.Add(PathVariable('ANDROID_GRADLE', 'Android Gradle directory', os.path.join(env.get('SRC_DIR'), 'extlibs', 'android', 'gradle', 'gradle-2.2.1/bin/gradle')))
+
+    if env.get('ANDROID_GRADLE'):
+        android_gradle = env.get('ANDROID_GRADLE')
+    else:
+        print(
+'''
+*************************************** Info **********************************
+*    Android Gradle path isn't set, the default will be used. You can set     *
+* environment variable ANDROID_GRADLE or add it in command line as:           *
+*      # scons ANDROID_GRADLE=<path to android GRADLE> ...                    *
+*******************************************************************************
+''')
+        android_gradle = os.path.join(env.get('SRC_DIR'), 'extlibs', 'android', 'gradle', 'gradle-2.2.1', 'bin', 'gradle')
+
+help_vars.Update(env)
+Help(help_vars.GenerateHelpText(env))
+
 # Set common flags
 if env['CC'] == 'cl':
     if env.get('UWP_APP') == '1':

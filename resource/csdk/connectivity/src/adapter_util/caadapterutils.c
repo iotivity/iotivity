@@ -244,6 +244,7 @@ JavaVM *CANativeJNIGetJavaVM()
 
 void CADeleteGlobalReferences(JNIEnv *env)
 {
+    OC_UNUSED(env);
 #ifdef __ANDROID__
     if (g_Context)
     {

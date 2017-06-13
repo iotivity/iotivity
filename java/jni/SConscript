@@ -27,6 +27,7 @@ lib_env = env.Clone()
 SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
 
 jni_env = lib_env.Clone()
+rd_mode = jni_env.get('RD_MODE')
 
 ######################################################################
 # Build flags
@@ -47,6 +48,8 @@ jni_env.AppendUnique(CPPPATH=[
     env.get('SRC_DIR') + '/resource/c_common/oic_string/include',
     env.get('SRC_DIR') + '/resource/c_common/oic_malloc/include',
     env.get('SRC_DIR') + '/resource/csdk/include',
+    env.get('SRC_DIR') + '/resource/csdk/connectivity/inc',
+    env.get('SRC_DIR') + '/resource/csdk/connectivity/common/inc',
     env.get('SRC_DIR') + '/resource/csdk/stack/include',
     env.get('SRC_DIR') + '/resource/csdk/ocsocket/include',
     env.get('SRC_DIR') + '/resource/csdk/resource-directory/include',
@@ -62,29 +65,60 @@ jni_env.AppendUnique(CPPPATH=[
 ])
 
 target_os = env.get('TARGET_OS')
-jni_env.AppendUnique(CCFLAGS=[
-    '-Wno-error', '-Wno-comment', '-Wno-unused-function',
-    '-Wno-unused-parameter'
-])
 if target_os not in ['windows', 'winrt']:
+    jni_env.AppendUnique(CCFLAGS=[
+        '-Wno-error', '-Wno-comment', '-Wno-unused-function',
+        '-Wno-unused-parameter'
+    ])
     jni_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-pthread'])
-
     # Note: 'pthread' is in libc for android. On other platform, if use
     # new gcc(>4.9?) it isn't required, otherwise, it's required
     if target_os != 'android':
         jni_env.AppendUnique(LIBS=['-lpthread'])
-
-jni_env.AppendUnique(LIBPATH=[env.get('BUILD_DIR')])
+else:
+    # Disable the following warnings:
+    #  - warning C4047: different levels of indirection
+    #    - Disabled due un-avoidable error when using AttachCurrentThread
+    #  - warning C4022: pointer missmatch for actual parameter
+    #    - Disabled due un-avoidable error when using AttachCurrentThread
+    #  - waring C4505: unreferenced local function has been removed
+    #    - Disabled due to compiler incorrectly specifying JNI functions as
+    #      unreferenced
+    jni_env.AppendUnique(CCFLAGS=['/wd4047', '/wd4022', '/wd4505',])
+jni_env.AppendUnique(LIBPATH=[env.get('BUILD_DIR'), '#/exlibs/sqlite3'])
 jni_env.AppendUnique(RPATH=[env.get('BUILD_DIR')])
+# make sure we link with the static oc library. This is important since Windows does not build a shared library for the oc library
+# The oc library can not be imported into the Java on all of the platfroms so must be statically linked to make Java code work on
+# all platforms.
 jni_env.PrependUnique(LIBS=[
-    'resource_directory', 'oc', 'octbstack', 'oc_logger',
-    'connectivity_abstraction'
+    'resource_directory',
+    'oc_logger_internal',
+    'coap',
+    'octbstack_internal',
+    'connectivity_abstraction_internal',
+    'ocsrm',
+    'routingmanager'
 ])
+
+if target_os not in ['windows', 'winrt']:
+    jni_env.PrependUnique(LIBS=['oc_internal'])
+else:
+    jni_env.PrependUnique(LIBS=[
+        'oc',
+        'mbedcrypto',
+        'resource_directory_internal',
+        'sqlite3'
+    ])
+
 if env.get('SECURED') == '1':
     jni_env.AppendUnique(CPPDEFINES=['__WITH_TLS__'])
-    jni_env.PrependUnique(LIBS=['mbedtls', 'ocprovision', 'ocpmapi'])
-    jni_env.AppendUnique(
-        CPPPATH=['#resource/csdk/security/include/internal', '#extlibs/cjson'])
+    jni_env.PrependUnique(LIBS=['mbedtls', 'mbedx509', 'ocprovision'])
+    if target_os not in ['windows', 'winrt']:
+        jni_env.PrependUnique(LIBS=['ocpmapi'])
+    else:
+        jni_env.PrependUnique(LIBS=['ocpmapi_internal',])
+    jni_env.AppendUnique(CPPPATH=['#resource/csdk/security/include/internal',
+                                  '#extlibs/cjson'])
     if env.get('WITH_CLOUD') == '1':
         jni_env.AppendUnique(
             CPPPATH=['#resource/csdk/security/provisioning/include/cloud'])

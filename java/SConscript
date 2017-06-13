@@ -63,7 +63,8 @@ if target_os == "android":
     os.environ['ANDROID_NDK_HOME'] = env.get('ANDROID_NDK')
     if not os.path.exists(android_home + '/platforms/android-21') or \
        not os.path.exists(android_home + '/build-tools/20.0.0'):
-        print '''
+        print(
+'''
 ***************************************** Info ********************************
 *   Either 'Android API 21' is not installed or 'Android SDK Build Tools      *
 *   20.0.0' is not installed. The Android SDK Manager will now open. Please   *
@@ -88,27 +89,30 @@ if target_os == "android":
 *******************************************************************************
 
 ...Opening Android SDK Manager now. Once you are finished, the build will continue.
-'''
+''')
         os.system(android_home + '/tools/android')
 
 
 def ensure_libs(target, source, env):
-    return target, [
-        source,
-        env.get('BUILD_DIR') + 'libca-interface.so',
-        env.get('BUILD_DIR') + 'liboc.so',
-        env.get('BUILD_DIR') + 'liboc_logger.so',
-        env.get('BUILD_DIR') + 'libocstack-jni.so'
-    ]
+    if platform.system() == 'Windows':
+        return target, [source, env.get('BUILD_DIR') + 'ca-interface.dll', 
+                                env.get('BUILD_DIR') + 'ocstack-jni.dll']
+    else:
+        return target, [source, env.get('BUILD_DIR') + 'libca-interface.so',
+                                env.get('BUILD_DIR') + 'libocstack-jni.so']
 
 
 jniOut = SConscript('jni/SConscript')
+
+target_variant = "java"
+if target_os == 'android':
+    target_variant = "android"
 
 jdk_env = Environment(ENV=os.environ)
 jdk_env['BUILDERS']['Gradle'] = Builder(
     action=env.get('ANDROID_GRADLE') + ' build -b ' + env.get('SRC_DIR') +
     '/java/iotivity-%s/build.gradle -PPROJECT_VERSION=%s -PWITH_TRANSPORT_EDR=%s -PWITH_TRANSPORT_BLE=%s -PWITH_TRANSPORT_NFC=%s -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_CLOUD=%s -PRD_MODE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s -PWITH_TCP=%s -PMULTIPLE_OWNER=%s -PBUILD_DIR=%s --stacktrace'
-    % (target_os, PROJECT_VERSION, TRANSPORT_EDR, TRANSPORT_BLE, TRANSPORT_NFC,
+    % (target_variant, PROJECT_VERSION, TRANSPORT_EDR, TRANSPORT_BLE, TRANSPORT_NFC,
        TARGET_ARCH, RELEASE, SECURED, SECURED, CLOUD, RD_MODE, MQ_PUB, MQ_SUB,
        MQ_BROKER, TCP, ANDROID_MULTIPLE_OWNER, env.get('BUILD_DIR')),
     emitter=ensure_libs)
@@ -117,22 +121,19 @@ cmdBuildApi = jdk_env.Gradle(
     target="base/objs",
     source="common/src/main/java/org/iotivity/base/OcResource.java")
 
-examples_target = "java"
-if target_os == 'android':
-    examples_target = "android"
 jdk_env['BUILDERS']['Gradle'] = Builder(
     action=env.get('ANDROID_GRADLE') + ' build -b ' +
     'java/examples-%s/build.gradle -PPROJECT_VERSION=%s -DWITH_TRANSPORT_EDR=%s -DWITH_TRANSPORT_BLE=%s -DWITH_TRANSPORT_NFC=%s -PTARGET_OS=%s -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_CLOUD=%s -PRD_MODE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s -PWITH_TCP=%s -PMULTIPLE_OWNER=%s -PBUILD_DIR=%s --stacktrace'
-    % (examples_target, PROJECT_VERSION, TRANSPORT_EDR, TRANSPORT_BLE,
+    % (target_variant, PROJECT_VERSION, TRANSPORT_EDR, TRANSPORT_BLE,
        TRANSPORT_NFC, target_os, TARGET_ARCH, RELEASE, SECURED, SECURED, CLOUD,
        RD_MODE, MQ_PUB, MQ_SUB, MQ_BROKER, TCP, ANDROID_MULTIPLE_OWNER,
        env.get('BUILD_DIR')))
-#cmdBuildExamples=jdk_env.Gradle(target="../examples-%s/devicediscoveryclient/apk" % (examples_target, ), source="examples-%s/devicediscoveryclient/src/main/java/org/iotivity/base/examples/DeviceDiscoveryClient.java" % (examples_target, ))
+#cmdBuildExamples=jdk_env.Gradle(target="../examples-%s/devicediscoveryclient/apk" % (target_variant, ), source="examples-%s/devicediscoveryclient/src/main/java/org/iotivity/base/examples/DeviceDiscoveryClient.java" % (target_variant, ))
 cmdBuildExamples = jdk_env.Gradle(
-    target="examples-%s/simpleclient/jar" % (examples_target, ),
+    target="examples-%s/simpleclient/jar" % (target_variant, ),
     source=
     "examples-%s/simpleclient/src/main/java/org/iotivity/base/examples/SimpleClient.java"
-    % (examples_target, ))
+    % (target_variant, ))
 
 if target_os != 'android':
     exampleAclFiles = jdk_env.Install(
