@@ -82,24 +82,23 @@ static bool observeThreadStarted = false;
 #endif
 
 char *gResourceUri = (char *)"/a/light";
-const char *dateOfManufacture = "2016-01-15";
-const char *deviceName = "myDeviceName";
-const char *deviceUUID = "51b55ddc-ccbb-4cb3-a57f-494eeca13a21";
-const char *firmwareVersion = "myFirmwareVersion";
-const char *manufacturerName = "myName";
-const char *operatingSystemVersion = "myOS";
-const char *hardwareVersion = "myHardwareVersion";
-const char *platformID = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
-const char *protocolIndependentID = "6ef9211d-2d5c-401e-8e5d-4b3af48a054f";
-const char *manufacturerLink = "https://www.iotivity.org";
-const char *modelNumber = "myModelNumber";
-const char *platformVersion = "myPlatformVersion";
-const char *supportLink = "https://www.iotivity.org";
-const char *version = "myVersion";
-const char *systemTime = "2015-05-15T11.04";
-const char *specVersion = "ocf.1.1.0";
-const char *dataModelVersions = "ocf.res.1.1.0,ocf.sh.1.1.0";
-const char *deviceType = "oic.d.tv";
+const char *gDateOfManufacture = "2016-01-15";
+const char *gDeviceName = "myDeviceName";
+const char *gDeviceUUID = "51b55ddc-ccbb-4cb3-a57f-494eeca13a21";
+const char *gFirmwareVersion = "myFirmwareVersion";
+const char *gManufacturerName = "myName";
+const char *gOperatingSystemVersion = "myOS";
+const char *gHardwareVersion = "myHardwareVersion";
+const char *gPlatformID = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+const char *gProtocolIndependentID = "6ef9211d-2d5c-401e-8e5d-4b3af48a054f";
+const char *gManufacturerLink = "https://www.iotivity.org";
+const char *gModelNumber = "myModelNumber";
+const char *gPlatformVersion = "myPlatformVersion";
+const char *gSupportLink = "https://www.iotivity.org";
+const char *gSystemTime = "2015-05-15T11.04";
+const char *gSpecVersion = "ocf.1.1.0";
+const char *gDataModelVersions = "ocf.res.1.1.0,ocf.sh.1.1.0";
+const char *gDeviceType = "oic.d.tv";
 
 OCPlatformInfo platformInfo;
 
@@ -1034,13 +1033,13 @@ OCStackResult SetDeviceInfo()
         goto exit;
     }
 
-    VERIFY_SUCCESS(OCBindResourceTypeToResource(resourceHandle, deviceType));
-    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, deviceName));
-    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion));
+    VERIFY_SUCCESS(OCBindResourceTypeToResource(resourceHandle, gDeviceType));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, gDeviceName));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, gSpecVersion));
     VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
-                                      dataModelVersions));
+                                      gDataModelVersions));
     VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
-                                      protocolIndependentID));
+                                      gProtocolIndependentID));
 
     OIC_LOG(INFO, TAG, "Device information initialized successfully.");
     return OC_STACK_OK;
@@ -1212,9 +1211,9 @@ int main(int argc, char* argv[])
     OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandlerCb, NULL);
 
     OCStackResult registrationResult =
-        SetPlatformInfo(platformID, manufacturerName, manufacturerLink, modelNumber,
-                        dateOfManufacture, platformVersion,  operatingSystemVersion,
-                        hardwareVersion, firmwareVersion, supportLink, systemTime);
+        SetPlatformInfo(gPlatformID, gManufacturerName, gManufacturerLink, gModelNumber,
+                        gDateOfManufacture, gPlatformVersion, gOperatingSystemVersion,
+                        gHardwareVersion, gFirmwareVersion, gSupportLink, gSystemTime);
 
     if (registrationResult != OC_STACK_OK)
     {
