@@ -81,8 +81,6 @@ pi_src = [
 
 env.AppendUnique(PI_SRC = pi_src)
 
-print "Include path is %s" % env.get('CPPPATH')
-print "Files path is %s" % env.get('PI_SRC')
 if target_os in ['android', 'tizen']:
 	calib = env.SharedLibrary('plugin_interface', env.get('PI_SRC'))
 else:
