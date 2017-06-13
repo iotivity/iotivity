@@ -118,6 +118,9 @@ notification_provider_internaltest = notification_provider_test_env.Program(
     'notification_provider_internaltest', notification_provider_test_src)
 Alias("notification_provider_internaltest", notification_provider_internaltest)
 
+actions = notification_provider_test_env.ScanJSON('service/notification/unittest')
+notification_consumer_test_env.Alias("install", actions)
+
 if env.get('TEST') == '1':
     if target_os in ['linux'] and env.get('SECURED') != '1':
         run_test(
@@ -133,12 +136,3 @@ if env.get('TEST') == '1':
 else:
     notification_consumer_test_env.AppendUnique(CPPDEFINES=['LOCAL_RUNNING'])
     notification_provider_test_env.AppendUnique(CPPDEFINES=['LOCAL_RUNNING'])
-    src_dir = notification_consumer_test_env.get('SRC_DIR')
-    svr_db_src_dir = os.path.join(src_dir, 'service/notification/unittest/')
-    svr_db_build_dir = os.path.join(
-        notification_consumer_test_env.get('BUILD_DIR'), 'service',
-        'notification', 'unittest') + os.sep
-    notification_consumer_test_env.Alias(
-        "install",
-        notification_consumer_test_env.Install(
-            svr_db_build_dir, os.path.join(svr_db_src_dir, 'oic_svr_db_ns.dat')))
