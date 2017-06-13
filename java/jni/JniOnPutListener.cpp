@@ -24,6 +24,8 @@
 #include "JniOcRepresentation.h"
 #include "JniUtils.h"
 
+using namespace OC;
+
 JniOnPutListener::JniOnPutListener(JNIEnv *env, jobject jListener, JniOcResource* owner)
     : m_ownerResource(owner)
 {

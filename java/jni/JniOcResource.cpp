@@ -24,6 +24,8 @@
 #include "JniOcRepresentation.h"
 #include "JniUtils.h"
 
+using namespace OC;
+
 JniOcResource::JniOcResource(std::shared_ptr<OCResource> resource)
     : m_sharedResource(resource)
 {

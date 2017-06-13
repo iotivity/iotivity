@@ -19,6 +19,8 @@
  ******************************************************************/
 #include "JniOnPublishResourceListener.h"
 
+using namespace OC;
+
 JniOnPublishResourceListener::JniOnPublishResourceListener(JNIEnv *env, jobject jListener,
     RemoveListenerCallback removeListenerCallback)
 {

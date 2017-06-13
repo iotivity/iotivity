@@ -22,8 +22,6 @@
 #ifndef _Included_org_iotivity_base_OcResource_JniOnMQTopicFoundListener
 #define _Included_org_iotivity_base_OcResource_JniOnMQTopicFoundListener
 
-using namespace OC;
-
 class JniOcResource;
 
 class JniOnMQTopicFoundListener

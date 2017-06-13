@@ -27,9 +27,6 @@
 #include "JniCreateAciIdListener.h"
 #include <mutex>
 
-
-using namespace OC;
-
 #ifndef _Included_org_iotivity_base_OcCloudProvisioning
 #define _Included_org_iotivity_base_OcCloudProvisioning
 class JniOcCloudProvisioning

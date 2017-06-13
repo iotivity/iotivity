@@ -24,8 +24,6 @@
 #ifndef _Included_org_iotivity_base_OcResource_OnGetListener
 #define _Included_org_iotivity_base_OcResource_OnGetListener
 
-using namespace OC;
-
 class JniOcResource;
 #ifdef WITH_CLOUD
 class JniOcAccountManager;
@@ -39,7 +37,7 @@ public:
     JniOnGetListener(JNIEnv *env, jobject listener, JniOcAccountManager* resource);
 #endif
     ~JniOnGetListener();
-    void onGetCallback(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode);
+    void onGetCallback(const OC::HeaderOptions& headerOptions, const OC::OCRepresentation& rep, const int eCode);
 
 private:
     jweak m_jwListener;

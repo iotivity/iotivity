@@ -34,8 +34,6 @@
 #ifndef _Included_org_iotivity_base_OcPlatform
 #define _Included_org_iotivity_base_OcPlatform
 
-using namespace OC;
-
 JniOnResourceFoundListener* AddOnResourceFoundListener(JNIEnv* env, jobject jListener);
 void RemoveOnResourceFoundListener(JNIEnv* env, jobject jListener);
 
