@@ -75,11 +75,10 @@ do
 done
 
 gbscommand="${gbscommand} -B ~/GBS-ROOT-OIC --include-all --repository ./"
-if [ $secured -eq 1 ];then
-  echo `pwd`
-  # Prepare mbedTLS dependency
-  $SHELL ./extlibs/mbedtls/prep.sh
-fi
+pwd
+
+# Prepare mbedTLS dependency (also for unsecured as used by connectivity)
+$SHELL ./extlibs/mbedtls/prep.sh
 
 # Prepare TinyCBOR dependency
 $SHELL ./extlibs/tinycbor/prep.sh
