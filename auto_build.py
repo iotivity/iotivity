@@ -20,7 +20,7 @@ Usage:
         python %s -c
     '''
     print (helpstr % (script, script))
-    sys.exit()
+    sys.exit(1)
 
 def call_scons(build_options, extra_option_str):
     """
@@ -42,7 +42,7 @@ def call_scons(build_options, extra_option_str):
         sys.stdout.flush()
         exit_code = subprocess.Popen(cmd_line, shell=True).wait()
         if exit_code != 0:
-            exit(exit_code)
+            sys.exit(exit_code)
 
 def build_all(flag, extra_option_str):
     if platform.system() == "Linux":
