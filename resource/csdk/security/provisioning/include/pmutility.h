@@ -165,10 +165,10 @@ OCProvisionDev_t* PMCloneOCProvisionDev(const OCProvisionDev_t* src);
  *
  * @return true on success
  */
-bool PMGenerateQuery(bool isSecure,
-                     const char* address, uint16_t port,
-                     OCConnectivityType connType,
-                     char* buffer, size_t bufferSize, const char* uri);
+bool OC_CALL PMGenerateQuery(bool isSecure,
+                             const char* address, uint16_t port,
+                             OCConnectivityType connType,
+                             char* buffer, size_t bufferSize, const char* uri);
 
 /**
  * Function to print OCProvisionDev_t for debug purpose.

@@ -57,7 +57,7 @@ extern "C" {
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCRDDiscover(OCDoHandle *handle, OCConnectivityType connectivityType,
+OCStackResult OC_CALL OCRDDiscover(OCDoHandle *handle, OCConnectivityType connectivityType,
                            OCCallbackData *cbBiasFactor, OCQualityOfService qos);
 
 /**
@@ -80,7 +80,7 @@ OCStackResult OCRDDiscover(OCDoHandle *handle, OCConnectivityType connectivityTy
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCRDPublish(OCDoHandle *handle, const char *host,
+OCStackResult OC_CALL OCRDPublish(OCDoHandle *handle, const char *host,
                           OCConnectivityType connectivityType,
                           OCResourceHandle *resourceHandles, uint8_t nHandles,
                           OCCallbackData *cbData, OCQualityOfService qos);
@@ -106,7 +106,7 @@ OCStackResult OCRDPublish(OCDoHandle *handle, const char *host,
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCRDPublishWithDeviceId(OCDoHandle *handle, const char *host,
+OCStackResult OC_CALL OCRDPublishWithDeviceId(OCDoHandle *handle, const char *host,
                                       const unsigned char *id,
                                       OCConnectivityType connectivityType,
                                       OCResourceHandle *resourceHandles, uint8_t nHandles,
@@ -132,7 +132,7 @@ OCStackResult OCRDPublishWithDeviceId(OCDoHandle *handle, const char *host,
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCRDDelete(OCDoHandle *handle, const char *host,
+OCStackResult OC_CALL OCRDDelete(OCDoHandle *handle, const char *host,
                          OCConnectivityType connectivityType,
                          OCResourceHandle *resourceHandles, uint8_t nHandles,
                          OCCallbackData *cbData, OCQualityOfService qos);
@@ -162,7 +162,7 @@ OCStackResult OCRDDelete(OCDoHandle *handle, const char *host,
  *   - ::OC_STACK_INVALID_URI generated URI exceeds MAX_URI_LENGTH try fewer resourceHandles
  *   - some other value upon failure.
  */
-OCStackResult OCRDDeleteWithDeviceId(OCDoHandle *handle, const char *host,
+OCStackResult OC_CALL OCRDDeleteWithDeviceId(OCDoHandle *handle, const char *host,
                                      const unsigned char *id,
                                      OCConnectivityType connectivityType,
                                      OCResourceHandle *resourceHandles, uint8_t nHandles,

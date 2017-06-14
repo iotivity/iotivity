@@ -150,7 +150,7 @@ OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
  * URI.
  * @return pointer to found resource
  */
-OCResource *FindResourceByUri(const char* resourceUri);
+OCResource * OC_CALL FindResourceByUri(const char* resourceUri);
 
 /**
  * This function checks whether the specified resource URI aligns with a pre-existing

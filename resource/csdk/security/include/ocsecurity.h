@@ -51,7 +51,7 @@ typedef void(*OCAssertRolesCB)(void* ctx, bool hasError);
  * @note The port field of the devAddr parameter MUST contain the secure port of the peer. 
  *
  */
-OCStackResult OCAssertRoles(void *ctx, const OCDevAddr *devAddr, OCAssertRolesCB resultCallback);
+OCStackResult OC_CALL OCAssertRoles(void *ctx, const OCDevAddr *devAddr, OCAssertRolesCB resultCallback);
 
 #ifdef __cplusplus
 }

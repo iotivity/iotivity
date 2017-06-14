@@ -137,7 +137,7 @@ exit:
     return 0;
 }
 
-OCStackResult OCGenerateRandomSerialNumber(char **serial, size_t *serialLen)
+OCStackResult OC_CALL OCGenerateRandomSerialNumber(char **serial, size_t *serialLen)
 {
     int ret = 0;
     OCStackResult res = OC_STACK_ERROR;
@@ -187,8 +187,8 @@ exit:
     return res;
 }
 
-OCStackResult OCGenerateKeyPair(char **publicKey, size_t *publicKeyLen,
-                                char **privateKey, size_t *privateKeyLen)
+OCStackResult OC_CALL OCGenerateKeyPair(char **publicKey, size_t *publicKeyLen,
+                                        char **privateKey, size_t *privateKeyLen)
 {
     int ret = 0;
     mbedtls_pk_context keyPair;
@@ -464,7 +464,7 @@ exit:
     return res;
 }
 
-OCStackResult OCGenerateCACertificate(
+OCStackResult OC_CALL OCGenerateCACertificate(
     const char *subject,
     const char *subjectPublicKey,
     const char *issuerCert,
@@ -500,7 +500,7 @@ OCStackResult OCGenerateCACertificate(
     return res;
 }
 
-OCStackResult OCGenerateIdentityCertificate(
+OCStackResult OC_CALL OCGenerateIdentityCertificate(
     const OicUuid_t *subjectUuid,
     const char *subjectPublicKey,
     const char *issuerCert,
@@ -555,7 +555,7 @@ OCStackResult OCGenerateIdentityCertificate(
     return res;
 }
 
-OCStackResult OCGenerateRoleCertificate(
+OCStackResult OC_CALL OCGenerateRoleCertificate(
     const OicUuid_t *subjectUuid,
     const char *subjectPublicKey,
     const char *issuerCert,
@@ -686,7 +686,7 @@ static int VerifyCSRSignature(mbedtls_x509_csr* csr)
     return ret;
 }
 
-OCStackResult OCVerifyCSRSignature(const char* csr)
+OCStackResult OC_CALL OCVerifyCSRSignature(const char* csr)
 {
     mbedtls_x509_csr csrObj;
 
@@ -711,7 +711,7 @@ OCStackResult OCVerifyCSRSignature(const char* csr)
     return OC_STACK_OK;
 }
 
-OCStackResult OCGetUuidFromCSR(const char* csr, OicUuid_t* uuid)
+OCStackResult OC_CALL OCGetUuidFromCSR(const char* csr, OicUuid_t* uuid)
 {
     mbedtls_x509_csr csrObj;
 
@@ -751,7 +751,7 @@ OCStackResult OCGetUuidFromCSR(const char* csr, OicUuid_t* uuid)
     return OC_STACK_OK;
 }
 
-OCStackResult OCGetPublicKeyFromCSR(const char* csr, char** publicKey)
+OCStackResult OC_CALL OCGetPublicKeyFromCSR(const char* csr, char** publicKey)
 {
     mbedtls_x509_csr csrObj;
 
@@ -788,7 +788,7 @@ OCStackResult OCGetPublicKeyFromCSR(const char* csr, char** publicKey)
     return OC_STACK_OK;
 }
 
-OCStackResult OCConvertDerCSRToPem(const char* derCSR, size_t derCSRLen, char** pemCSR)
+OCStackResult OC_CALL OCConvertDerCSRToPem(const char* derCSR, size_t derCSRLen, char** pemCSR)
 {
     const char* pemHeader = "-----BEGIN CERTIFICATE REQUEST-----\n";
     const char* pemFooter = "-----END CERTIFICATE REQUEST-----\n";

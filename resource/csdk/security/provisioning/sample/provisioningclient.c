@@ -459,7 +459,7 @@ static void updateDoxmForMOTCB(void* ctx, size_t nOfRes, OCProvisionResult_t* ar
 }
 #endif //MULTIPLE_OWNER
 
-static void inputPinCB(OicUuid_t deviceId, char *pin, size_t len, void *context)
+static void OC_CALL inputPinCB(OicUuid_t deviceId, char *pin, size_t len, void *context)
 {
     OC_UNUSED(deviceId);
     OC_UNUSED(context);
@@ -1834,7 +1834,7 @@ static int removeDeviceWithUuid(void)
     return 0;
 }
 
-OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
+OCStackResult OC_CALL displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
 {
     OC_UNUSED(ctx);
 
@@ -1853,7 +1853,7 @@ OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_L
     return OC_STACK_OK;
 }
 
-OCStackResult confirmNumCB(void * ctx)
+OCStackResult OC_CALL confirmNumCB(void * ctx)
 {
     OC_UNUSED(ctx);
 

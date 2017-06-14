@@ -139,7 +139,7 @@ exit:
     return OC_STACK_NO_MEMORY;
 }
 
-OCStackResult ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid)
+OCStackResult OC_CALL ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid)
 {
     bool result = true;
     size_t strUuidLen = strlen(strUuid);
@@ -198,7 +198,7 @@ bool IsNilUuid(const OicUuid_t *uuid)
 }
 
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
-OCStackResult SetDeviceIdSeed(const uint8_t* seed, size_t seedSize)
+OCStackResult OC_CALL SetDeviceIdSeed(const uint8_t* seed, size_t seedSize)
 {
     return SetDoxmDeviceIDSeed(seed, seedSize);
 }

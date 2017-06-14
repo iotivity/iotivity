@@ -114,7 +114,7 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
     if (payload)
     {
         OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) payload);
-        if (OC_STACK_OK == OCRDDatabaseInit(NULL))
+        if (OC_STACK_OK == OCRDDatabaseInit())
         {
             if (OC_STACK_OK == OCRDDatabaseStoreResources(payload))
             {
@@ -170,7 +170,7 @@ static OCEntityHandlerResult handleDeleteRequest(const OCEntityHandlerRequest *e
 
     OIC_LOG_V(DEBUG, TAG, "Received OC_REST_DELETE from client with query: %s.", ehRequest->query);
 
-    if (OC_STACK_OK != OCRDDatabaseInit(NULL))
+    if (OC_STACK_OK != OCRDDatabaseInit())
     {
         goto exit;
     }
@@ -305,7 +305,7 @@ static OCEntityHandlerResult rdEntityHandler(OCEntityHandlerFlag flag,
 /**
  * Registers RD resource
  */
-OCStackResult OCRDStart()
+OCStackResult OC_CALL OCRDStart()
 {
     OCStackResult result = OCCreateResource(&rdHandle,
                                 OC_RSRVD_RESOURCE_TYPE_RD,
@@ -341,7 +341,7 @@ OCStackResult OCRDStart()
 /**
  * Stops resource directory server
  */
-OCStackResult OCRDStop()
+OCStackResult OC_CALL OCRDStop()
 {
     if (!rdHandle)
     {

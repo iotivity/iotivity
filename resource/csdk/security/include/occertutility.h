@@ -41,7 +41,7 @@ extern "C" {
  *
  * @return OC_STACK_OK if generated successfully; error otherwise.
  */
-OCStackResult OCGenerateRandomSerialNumber(char **serial, size_t *serialLen);
+OCStackResult OC_CALL OCGenerateRandomSerialNumber(char **serial, size_t *serialLen);
 
 /**
  * Generate a new NIST P-256 elliptic curve key pair and return the public and private
@@ -56,8 +56,8 @@ OCStackResult OCGenerateRandomSerialNumber(char **serial, size_t *serialLen);
  *                           this key remains protected and secret!
  * @param[OUT] privateKeyLen Variable to receive length of privateKey, which will include terminating NULL.
  */
-OCStackResult OCGenerateKeyPair(char **publicKey, size_t *publicKeyLen,
-                                char **privateKey, size_t *privateKeyLen);
+OCStackResult OC_CALL OCGenerateKeyPair(char **publicKey, size_t *publicKeyLen,
+                                        char **privateKey, size_t *privateKeyLen);
 
 /**
  * Generate a certificate to act as a Certificate Authority (CA).
@@ -86,7 +86,7 @@ OCStackResult OCGenerateKeyPair(char **publicKey, size_t *publicKeyLen,
  *
  * @return OC_STACK_OK if successful, error code otherwise
  */
-OCStackResult OCGenerateCACertificate(
+OCStackResult OC_CALL OCGenerateCACertificate(
     const char *subject,
     const char *subjectPublicKey,
     const char *issuerCert,
@@ -120,7 +120,7 @@ OCStackResult OCGenerateCACertificate(
  *
  * @return OC_STACK_OK if successful, error code otherwise
  */
-OCStackResult OCGenerateIdentityCertificate(
+OCStackResult OC_CALL OCGenerateIdentityCertificate(
     const OicUuid_t *subjectUuid,
     const char *subjectPublicKey,
     const char *issuerCert,
@@ -157,7 +157,7 @@ OCStackResult OCGenerateIdentityCertificate(
  *
  * @return OC_STACK_OK if successful, error code otherwise
  */
-OCStackResult OCGenerateRoleCertificate(
+OCStackResult OC_CALL OCGenerateRoleCertificate(
     const OicUuid_t *subjectUuid,
     const char *subjectPublicKey,
     const char *issuerCert,
@@ -178,7 +178,7 @@ OCStackResult OCGenerateRoleCertificate(
  *
  * @return OC_STACK_OK if successful, error code otherwise
  */
-OCStackResult OCGetUuidFromCSR(const char* csr, OicUuid_t* uuid);
+OCStackResult OC_CALL OCGetUuidFromCSR(const char* csr, OicUuid_t* uuid);
 
 /**
  * Extract a public key from a CSR.
@@ -189,7 +189,7 @@ OCStackResult OCGetUuidFromCSR(const char* csr, OicUuid_t* uuid);
  *
  * @return OC_STACK_OK if successful, error code otherwise
  */
-OCStackResult OCGetPublicKeyFromCSR(const char* csr, char** publicKey);
+OCStackResult OC_CALL OCGetPublicKeyFromCSR(const char* csr, char** publicKey);
 
 /**
  * Verify the signature in a CSR is valid.
@@ -200,7 +200,7 @@ OCStackResult OCGetPublicKeyFromCSR(const char* csr, char** publicKey);
  *
  * @remark Requires that ECDSA with SHA-256 be used for the signature.
  */
-OCStackResult OCVerifyCSRSignature(const char* csr);
+OCStackResult OC_CALL OCVerifyCSRSignature(const char* csr);
 
 /**
  * Convert a CSR from DER encoding to PEM encoding.
@@ -212,7 +212,7 @@ OCStackResult OCVerifyCSRSignature(const char* csr);
  *
  * @return OC_STACK_OK if successful, error code otherwise
  */
-OCStackResult OCConvertDerCSRToPem(const char* derCSR, size_t derCSRLen, char** pemCSR);
+OCStackResult OC_CALL OCConvertDerCSRToPem(const char* derCSR, size_t derCSRLen, char** pemCSR);
 
 #ifdef __cplusplus
 }
