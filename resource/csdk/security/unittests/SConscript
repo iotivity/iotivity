@@ -1,4 +1,4 @@
-#******************************************************************
+# *****************************************************************
 #
 # Copyright 2016 Microsoft
 #
@@ -29,5 +29,7 @@ security_test_env = test_env.Clone()
 if security_test_env.get('TARGET_OS') in ['windows', 'msys_nt']:
     security_test_env.AppendUnique(CCFLAGS=['/W4'])
 
-SConscript('../unittest/SConscript', exports = { 'test_env' : security_test_env })
-SConscript('../provisioning/unittest/SConscript', exports = { 'test_env' : security_test_env })
+SConscript('../unittest/SConscript',
+           exports={'test_env': security_test_env})
+SConscript('../provisioning/unittest/SConscript',
+           exports={'test_env': security_test_env})
