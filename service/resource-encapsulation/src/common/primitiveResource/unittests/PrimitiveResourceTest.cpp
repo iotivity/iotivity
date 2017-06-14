@@ -185,8 +185,10 @@ public:
     typedef OCStackResult (*FindResource)(const std::string&, const std::string&,
             OCConnectivityType, OC::FindCallback);
 
-public:
-    static void discovered(std::shared_ptr< PrimitiveResource >) {}
+    static void discovered(std::shared_ptr< PrimitiveResource >)
+    {
+        std::cout << __func__ << std::endl;
+    }
 };
 
 TEST_F(DiscoverResourceTest, CallbackIsInvokedWhenResourceIsDiscovered)
