@@ -1754,7 +1754,7 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
     OicUuid_t emptyOwner = { .id = {0} };
 #if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
     uint16_t staleCredId = 0;
-#endif //(__WITH_DTLS__ or __WITH_TLS__) and MULTIPLE_OWNER  
+#endif //(__WITH_DTLS__ or __WITH_TLS__) and MULTIPLE_OWNER
 
     OIC_LOG(DEBUG, TAG, "IN AddCredential");
 
@@ -2113,7 +2113,7 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         OicUuid_t emptyUuid = {.id={0}};
         const OicSecDoxm_t* doxm = GetDoxmResourceData();
-        if(doxm && false == doxm->owned && memcmp(&(doxm->owner), &emptyUuid, sizeof(OicUuid_t)) != 0)
+        if(NO_SECURITY_MODE != cred->credType && doxm && false == doxm->owned && memcmp(&(doxm->owner), &emptyUuid, sizeof(OicUuid_t)) != 0)
         {
             //in case of owner PSK
             switch(cred->credType)
