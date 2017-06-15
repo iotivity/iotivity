@@ -45,13 +45,14 @@ mpmclient_env.PrependUnique(CPPPATH=[
 # Otherwise you will need to prepend LD_LIBRARY_PATH to your execution command.
 mpmclient_env.PrependUnique(LIBS=['minipluginmanager'])
 mpmclient_env.AppendUnique(LIBS=['pthread'])
-mpmclient_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 mpmclient_env.AppendUnique(LIBS=[
-    'm', 'octbstack', 'ocsrm', 'connectivity_abstraction', 'coap', 'curl'
+    'm', 'octbstack', 'ocsrm', 'mpmcommon', 'connectivity_abstraction', 'coap', 'curl'
 ])
-
 mpmclient_env.AppendUnique(
     RPATH=[os.path.join(env.get('BUILD_DIR'), 'bridging', 'plugins')])
+
+if target_os in ['linux', 'tizen', 'yocto']:
+    mpmclient_env.AppendUnique(LIBS = ['rt'])
 
 if target_os in ['linux', 'tizen']:
     mpmclient_env.ParseConfig('pkg-config --cflags --libs sqlite3')
