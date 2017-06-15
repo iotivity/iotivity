@@ -624,6 +624,7 @@ if (target_os in ['darwin', 'ios']):
     env.AppendUnique(CPPDEFINES=['_DARWIN_C_SOURCE'])
 
 if (env.get('SECURED') == '1'):
+    env.AppendUnique(CPPDEFINES=['SECURED'])
     env.AppendUnique(CPPDEFINES=['__WITH_DTLS__'])
 
 if ((env.get('SECURED') == '1') and with_tcp):
@@ -735,8 +736,10 @@ if 'SERVER' in rd_mode:
 if with_ra_ibb:
     env.AppendUnique(CPPDEFINES=['RA_ADAPTER_IBB'])
 
-env.SConscript('external_builders.scons')
+if env.get('RELEASE'):
+    env.AppendUnique(CPPDEFINES=['NDEBUG'])
 
+env.SConscript('external_builders.scons')
 ######################################################################
 # Link scons to Yocto cross-toolchain ONLY when target_os is yocto
 ######################################################################
@@ -790,13 +793,10 @@ if target_os == "yocto":
     '''
     Additional flags to pass to the Yocto toolchain.
     '''
-    if env.get('RELEASE'):
-        env.AppendUnique(CPPDEFINES=['NDEBUG'])
     env.AppendUnique(CPPDEFINES=['__linux__', '_GNU_SOURCE'])
     env.AppendUnique(CFLAGS=['-std=gnu99'])
     env.AppendUnique(CCFLAGS=['-Wall', '-Wextra', '-fPIC'])
     env.AppendUnique(LIBS=['dl', 'pthread', 'uuid'])
-    Export('env')
 else:
     '''
     If target_os is not Yocto, continue with the regular build process
@@ -837,4 +837,5 @@ env = conf.Finish()
 # in for windows till after the windows target has run.
 env.SConscript('external_builders.scons')
 env.SConscript('external_libs.scons')
+
 Return('env')

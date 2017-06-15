@@ -56,13 +56,9 @@ env['SYS_VERSION'] = sys_version
 # Set release/debug flags
 if env.get('RELEASE'):
     env.AppendUnique(CCFLAGS=['-Os'])
-    env.AppendUnique(CPPDEFINES=['NDEBUG'])
 else:
     env.AppendUnique(CCFLAGS=['-g'])
     env.AppendUnique(LINKFLAGS=['-g'])
-
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 if env.get('SECURED') == '1':
     env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])

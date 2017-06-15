@@ -72,12 +72,10 @@ if env['CC'] == 'cl':
     # Set release/debug flags
     if env.get('RELEASE'):
         env.AppendUnique(CCFLAGS=['/MD', '/O2', '/GF'])
-        env.AppendUnique(CPPDEFINES=['NDEBUG'])
     else:
         env.AppendUnique(CCFLAGS=['/MDd', '/Od', '/RTC1'])
         env.AppendUnique(LINKFLAGS=['/debug'])
 
-    env.AppendUnique(LIBPATH=[env.get('BUILD_DIR')])
 
     # Work around [IOT-1986]
     # During some Windows multi-threaded builds, SCons/Python/Pywin32 appear to try

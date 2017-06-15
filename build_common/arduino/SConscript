@@ -283,7 +283,6 @@ elif platform.system().lower() == 'darwin':
 # Debug/release relative flags
 if env.get('RELEASE'):
     env.AppendUnique(CCFLAGS=['-Os'])
-    env.AppendUnique(CPPDEFINES=['NDEBUG'])
 else:
     env.AppendUnique(CCFLAGS=['-g'])
 
