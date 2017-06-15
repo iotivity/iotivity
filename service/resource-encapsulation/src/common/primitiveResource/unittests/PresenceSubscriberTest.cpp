@@ -157,7 +157,7 @@ TEST_F(PresenceSubscriberTest, IsSubscribingOfMovedSubscriberWithAssignmentRetur
     ASSERT_FALSE(subscriber.isSubscribing());
 }
 
-TEST_F(PresenceSubscriberTest, UnsubscribeWillBeCalledWhenSubscriberIsDestoryed)
+TEST_F(PresenceSubscriberTest, UnsubscribeWillBeCalledWhenSubscriberIsDestroyed)
 {
     mocks.ExpectCallFunc(OC::OCPlatform::unsubscribePresence).Return(OC_STACK_OK);
 
