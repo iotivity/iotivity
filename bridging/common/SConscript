@@ -45,26 +45,20 @@ def maskFlags(flags):
 ######################################################################
 
 mpmcommon_env.PrependUnique(CPPPATH=[
-    os.path.join(src_dir, 'resource', 'include'),
-])
-mpmcommon_env.AppendUnique(CPPPATH=[
-    os.path.join(bridging_path, 'include'),
+                            os.path.join(src_dir, 'resource', 'include'),
+                            os.path.join(bridging_path, 'include'),
+                            os.path.join(src_dir, 'resource', 'c_common'),
+                            os.path.join(src_dir, 'resource', 'c_common', 'ocrandom', 'include'),
+                            os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
+                            os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include')
 ])
 
 if target_os not in ['arduino', 'windows']:
-    mpmcommon_env.AppendUnique(CPPDEFINES=['WITH_POSIX'])
     mpmcommon_env.AppendUnique(
         CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror', '-fpic'])
 
-if target_os in ['darwin', 'ios']:
-    mpmcommon_env.AppendUnique(CPPDEFINES=['_DARWIN_C_SOURCE'])
-
 mpmcommon_env.AppendUnique(RPATH=[mpmcommon_env.get('BUILD_DIR')])
-mpmcommon_env.AppendUnique(LIBPATH=[mpmcommon_env.get('BUILD_DIR')])
-mpmcommon_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])
-
-if mpmcommon_env.get('LOGGING'):
-    mpmcommon_env.AppendUnique(CPPDEFINES=['TB_LOG'])
+mpmcommon_env['LINKFLAGS'] = maskFlags(mpmcommon_env['LINKFLAGS'])
 
 mpmcommon_env.PrependUnique(LIBS=[
     'm',

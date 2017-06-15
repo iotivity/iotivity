@@ -61,21 +61,11 @@ lifx_env.AppendUnique(CPPPATH=[
     os.path.join(bridging_path, 'plugins', 'lifx_plugin', 'lifx_objects')
 ])
 
-if target_os not in ['arduino', 'windows']:
-    lifx_env.AppendUnique(CPPDEFINES=['WITH_POSIX'])
-
-if target_os in ['darwin', 'ios']:
-    lifx_env.AppendUnique(CPPDEFINES=['_DARWIN_C_SOURCE'])
-
 if 'g++' in lifx_env.get('CXX'):
     lifx_env.AppendUnique(
         CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 
 lifx_env.AppendUnique(RPATH=[lifx_env.get('BUILD_DIR')])
-lifx_env.AppendUnique(LIBPATH=[lifx_env.get('BUILD_DIR')])
-
-if lifx_env.get('LOGGING'):
-    lifx_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 lifx_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])
 lifx_env.AppendUnique(LINKFLAGS=['-Wl,--allow-shlib-undefined'])
