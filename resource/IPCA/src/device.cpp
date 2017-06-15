@@ -21,7 +21,7 @@
 #include "ipcainternal.h"
 #include "oic_malloc.h"
 
-Device::Device(const char* deviceId, OCFFramework* ocf, App* app) :
+Device::Device(const char* deviceId, OCFFramework* ocf, App::Ptr app) :
     m_deviceId(deviceId),
     m_app(app),
     m_ocfFramework(ocf),

@@ -1008,7 +1008,19 @@ void OCFFramework::OnPostPut(const HeaderOptions& headerOptions,
                         const int eCode,
                         CallbackInfo::Ptr callbackInfo)
 {
-    OC_UNUSED(headerOptions);
+    std::string newResourcePath;
+    if (headerOptions.size())
+    {
+        // Pass LOCATION_PATH_OPTION_ID to the app.
+        for (auto header : headerOptions)
+        {
+            if (header.getOptionID() == HeaderOption::LOCATION_PATH_OPTION_ID)
+            {
+                newResourcePath = header.getOptionData();
+                break;
+            }
+        }
+    }
 
     IPCAStatus status = MapOCStackResultToIPCAStatus((OCStackResult)eCode);
 
@@ -1018,7 +1030,7 @@ void OCFFramework::OnPostPut(const HeaderOptions& headerOptions,
 
     for (const auto& callback : callbackSnapshot)
     {
-        callback->SetCallback(status, rep, callbackInfo);
+        callback->SetCallback(status, rep, callbackInfo, newResourcePath);
     }
 }
 

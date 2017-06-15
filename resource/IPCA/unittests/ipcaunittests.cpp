@@ -424,9 +424,22 @@ class IPCAMiscTest : public testing::Test
         IPCAAppHandle m_anotherIPCAAppHandle;
         IPCAAppInfo m_ipcaAppInfo;
 
-        IPCAStatus DoAnotherIPCAOpen()
+        IPCAStatus DoAnotherIPCAOpenWithSameAppId()
         {
             return IPCAOpen(&m_ipcaAppInfo, IPCA_VERSION_1, &m_anotherIPCAAppHandle);
+        }
+
+        IPCAStatus DoAnotherIPCAOpenWithDifferentAppId()
+        {
+            IPCAAppInfo ipcaAppInfoExtra;
+            IPCAAppHandle ipcaAppHandleExtra;
+            IPCAUuid extraTestAppUuid = {
+                                            {0x63, 0x72, 0xc0, 0xea, 0x1f, 0x12, 0x11, 0xe7,
+                                             0x93, 0xae, 0x92, 0x36, 0x1f, 0x00, 0x26, 0x71}
+                                        };
+
+            ipcaAppInfoExtra = { extraTestAppUuid, IPCATestAppName, "1.0.0", "Microsoft" };
+            return IPCAOpen(&ipcaAppInfoExtra, IPCA_VERSION_1, &ipcaAppHandleExtra);
         }
 
     protected:
@@ -452,9 +465,10 @@ class IPCAMiscTest : public testing::Test
         }
 };
 
-TEST_F(IPCAMiscTest, ShouldNotAllowMultipleCallsToIPCOpen)
+TEST_F(IPCAMiscTest, MultipleIPCAOpen)
 {
-    EXPECT_EQ(IPCA_ALREADY_OPENED, DoAnotherIPCAOpen());
+    EXPECT_EQ(IPCA_OK, DoAnotherIPCAOpenWithSameAppId());
+    EXPECT_EQ(IPCA_ALREADY_OPENED, DoAnotherIPCAOpenWithDifferentAppId());
 }
 
 TEST_F(IPCAMiscTest, IPCAOpenShouldBeAllowedAfterIPCAClose)
@@ -462,7 +476,7 @@ TEST_F(IPCAMiscTest, IPCAOpenShouldBeAllowedAfterIPCAClose)
     IPCAClose(m_ipcaAppHandle);
     m_ipcaAppHandle = NULL;
 
-    ASSERT_EQ(IPCA_OK, DoAnotherIPCAOpen());
+    ASSERT_EQ(IPCA_OK, DoAnotherIPCAOpenWithSameAppId());
 }
 
 /*
@@ -556,9 +570,14 @@ TEST_F(IPCAElevatorClient, SuccessfullyCreateAndDeleteResources)
         CreateResourceRelativePath();
         afterCreateCount = g_testElevator1.GetRelativePathResourceCreateCount();
         ASSERT_EQ(beforeCreateCount + 1, afterCreateCount);
-        // @todo: when IOT-1819 is resolved.
-        // EXPECT_STREQ(ELEVATOR_RESOURCE_NEW_RESOURCE_PATH, GetNewResourceURI());
+        EXPECT_STREQ(ELEVATOR_RESOURCE_NEW_RESOURCE_PATH, GetNewResourcePath());
     }
+
+    // Create new resource that results in resource with long resource path.
+    beforeCreateCount = g_testElevator1.GetRelativePathResourceCreateCount();
+    CreateResourceLongRelativePath();
+    afterCreateCount = g_testElevator1.GetRelativePathResourceCreateCount();
+    ASSERT_EQ(beforeCreateCount, afterCreateCount); // resource should not be created.
 
     // Delete resource
     size_t beforeDeleteCount, afterDeleteCount;

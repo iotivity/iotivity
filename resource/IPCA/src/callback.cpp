@@ -25,10 +25,12 @@
 
 #define TAG "IPCA_Callback"
 
+// Next key for the m_callbackInfoList map. Key is unique across all IPCA apps.
+static std::atomic<size_t> g_nextKey(1);
+
 extern OCFFramework ocfFramework;
 
-Callback::Callback(App* app) :
-    m_nextKey(0),
+Callback::Callback(AppPtr app) :
     m_app(app),
     m_stopCalled(false),
     m_expiredCallbacksInProgress(0)
@@ -282,7 +284,13 @@ IPCAStatus Callback::AddCallbackInfo(CallbackInfo::Ptr cbInfo)
     uint32_t i = 0;
     while (i++ < UINT_MAX)
     {
-        size_t newKey = m_nextKey++;
+        size_t newKey = g_nextKey++;
+        if (newKey == 0)
+        {
+            // Avoid misinterpreted as NULL handle.
+            continue;
+        }
+
         if (m_callbackInfoList.find(newKey) == m_callbackInfoList.end())
         {
             OIC_LOG_V(INFO, TAG, "AddCallbackInfo() with key: %" PRIuPTR, newKey);
@@ -770,7 +778,11 @@ void Callback::GetCallback(IPCAStatus status, const OCRepresentation& rep, Callb
     RemoveCallbackInfo(cbInfo->mapKey);
 }
 
-void Callback::SetCallback(IPCAStatus status, const OCRepresentation& rep, CallbackInfo::Ptr cbInfo)
+void Callback::SetCallback(
+                    IPCAStatus status,
+                    const OCRepresentation& rep,
+                    CallbackInfo::Ptr cbInfo,
+                    std::string newResourcePath)
 {
     if ((cbInfo->app != m_app) || (SetCallbackInProgress(cbInfo->mapKey) == false))
     {
@@ -782,8 +794,7 @@ void Callback::SetCallback(IPCAStatus status, const OCRepresentation& rep, Callb
         cbInfo->createResourceCallback(
                     status,
                     const_cast<void*>(cbInfo->callbackContext),
-                    NULL, /* tbd: no info on new resource URI. */
-                          /* See https://jira.iotivity.org/browse/IOT-1819 */
+                    newResourcePath.c_str(),
                     (IPCAPropertyBagHandle)&rep);
     }
     else
