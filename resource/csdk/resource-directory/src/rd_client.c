@@ -181,7 +181,7 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
     ifs[1] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
     OCRepPayloadSetStringArrayAsOwner(rdPayload, OC_RSRVD_INTERFACE, ifs, dim);
 
-    char *n;
+    char *n = NULL;
     OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, (void **) &n);
     if (n)
     {
