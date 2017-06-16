@@ -533,7 +533,7 @@ static bool OC_CALL OCRepPayloadSetProp(OCRepPayload* payload, const char* name,
                return val->str != NULL;
         case OCREP_PROP_BYTE_STRING:
                val->ocByteStr = *(OCByteString*)value;
-               return val->ocByteStr.bytes != NULL;
+               break;
         case OCREP_PROP_NULL:
                return val != NULL;
         case OCREP_PROP_ARRAY:
@@ -633,11 +633,6 @@ bool OC_CALL OCRepPayloadGetPropString(const OCRepPayload* payload, const char* 
 
 bool OC_CALL OCRepPayloadSetPropByteString(OCRepPayload* payload, const char* name, OCByteString value)
 {
-    if (!value.bytes || !value.len)
-    {
-        return false;
-    }
-
     OCByteString ocByteStr = {NULL, 0};
     bool b = OCByteStringCopy(&ocByteStr, &value);
 
@@ -671,10 +666,17 @@ bool OC_CALL OCRepPayloadGetPropByteString(const OCRepPayload* payload, const ch
         return false;
     }
 
-    value->bytes = (uint8_t*)OICMalloc(val->ocByteStr.len * sizeof(uint8_t));
-    if (!value->bytes)
+    if (val->ocByteStr.len)
     {
-        return false;
+        value->bytes = (uint8_t*)OICMalloc(val->ocByteStr.len * sizeof(uint8_t));
+        if (!value->bytes)
+        {
+            return false;
+        }
+    }
+    else
+    {
+        value->bytes = NULL;
     }
     value->len = val->ocByteStr.len;
     memcpy(value->bytes, val->ocByteStr.bytes, value->len);
@@ -934,16 +936,19 @@ bool OC_CALL OCRepPayloadSetByteStringArray(OCRepPayload* payload, const char* n
 
     for (size_t i = 0; i < dimTotal; ++i)
     {
-        newArray[i].bytes = (uint8_t*)OICMalloc(array[i].len * sizeof(uint8_t));
-        if (NULL == newArray[i].bytes)
+        if (array[i].len)
         {
-            for (size_t j = 0; j < i; ++j)
+            newArray[i].bytes = (uint8_t*)OICMalloc(array[i].len * sizeof(uint8_t));
+            if (NULL == newArray[i].bytes)
             {
-                OICFree(newArray[j].bytes);
-            }
+                for (size_t j = 0; j < i; ++j)
+                {
+                    OICFree(newArray[j].bytes);
+                }
 
-            OICFree(newArray);
-            return false;
+                OICFree(newArray);
+                return false;
+            }
         }
         newArray[i].len = array[i].len;
         memcpy(newArray[i].bytes, array[i].bytes, newArray[i].len);
@@ -988,18 +993,21 @@ bool OC_CALL OCRepPayloadGetByteStringArray(const OCRepPayload* payload, const c
     for (size_t i = 0; i < dimTotal; ++i)
     {
         OCByteString* tmp = &(*array)[i];
-        tmp->bytes = (uint8_t*)OICMalloc(val->arr.ocByteStrArray[i].len * sizeof(uint8_t));
-        if (NULL == tmp->bytes)
+        if (val->arr.ocByteStrArray[i].len)
         {
-            for (size_t j = 0; j < i; ++j)
+            tmp->bytes = (uint8_t*)OICMalloc(val->arr.ocByteStrArray[i].len * sizeof(uint8_t));
+            if (NULL == tmp->bytes)
             {
-                OCByteString* temp = &(*array)[j];
-                OICFree(temp->bytes);
-            }
-            OICFree(*array);
-            *array = NULL;
+                for (size_t j = 0; j < i; ++j)
+                {
+                    OCByteString* temp = &(*array)[j];
+                    OICFree(temp->bytes);
+                }
+                OICFree(*array);
+                *array = NULL;
 
-            return false;
+                return false;
+            }
         }
         tmp->len = val->arr.ocByteStrArray[i].len;
         memcpy(tmp->bytes, val->arr.ocByteStrArray[i].bytes, tmp->len);
@@ -1561,9 +1569,12 @@ bool OC_CALL OCByteStringCopy(OCByteString* dest, const OCByteString* source)
     {
         OICFree(dest->bytes);
     }
-    dest->bytes = (uint8_t*)OICMalloc(source->len * sizeof(uint8_t));
-    VERIFY_PARAM_NON_NULL(TAG, dest->bytes, "Failed allocating memory");
-    memcpy(dest->bytes, source->bytes, source->len * sizeof(uint8_t));
+    if (source->len)
+    {
+        dest->bytes = (uint8_t*)OICMalloc(source->len * sizeof(uint8_t));
+        VERIFY_PARAM_NON_NULL(TAG, dest->bytes, "Failed allocating memory");
+        memcpy(dest->bytes, source->bytes, source->len * sizeof(uint8_t));
+    }
     dest->len = source->len;
     return true;
 
