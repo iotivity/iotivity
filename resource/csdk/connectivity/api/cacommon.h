@@ -128,7 +128,7 @@ extern "C"
 #define CA_OPTION_URI_QUERY 15
 #define CA_OPTION_ACCEPT 17
 #define CA_OPTION_LOCATION_QUERY 20
-        
+
 /**
  * @def UUID_PREFIX
  * @brief uuid prefix in certificate subject field
@@ -451,6 +451,15 @@ typedef enum
     CA_FORMAT_APPLICATION_VND_OCF_CBOR,
     CA_FORMAT_UNSUPPORTED
 } CAPayloadFormat_t;
+
+/**
+ * Option ID of header option. The values match CoAP option types in pdu.h.
+ */
+typedef enum
+{
+    CA_HEADER_OPTION_ID_LOCATION_PATH = 8,
+    CA_HEADER_OPTION_ID_LOCATION_QUERY = 20
+} CAHeaderOptionId_t;
 
 /**
  * Header options structure to be filled.

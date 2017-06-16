@@ -470,6 +470,24 @@ OCStackResult OCPlatform::sendResponse(const std::shared_ptr<OCResourceResponse>
             {
                 ocResult = OC_STACK_OK;
             }
+
+            // Add path of new resource in the header option.
+            std::string newResourcePath = pResponse->getNewResourceUri();
+            if (!newResourcePath.empty())
+            {
+                // MAX_URI_LENGTH is the URI limit of OCEntityHandlerResponse.resourceUri in
+                // inProcServerWrapper.cpp.
+                if (newResourcePath.length() > MAX_URI_LENGTH)
+                {
+                    return OC_STACK_ERROR;
+                }
+
+                HeaderOption::OCHeaderOption headerOption(
+                                                HeaderOption::LOCATION_PATH_OPTION_ID,
+                                                newResourcePath);
+                serverHeaderOptions.push_back(headerOption);
+            }
+
             std::thread postCallbackThread(pendingRequest->postCallback,
                             serverHeaderOptions,
                             ocRep,

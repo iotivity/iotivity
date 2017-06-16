@@ -20,33 +20,44 @@
 #include "iotivity_config.h"
 #include "oic_malloc.h"
 #include "ipca.h"
+#include "ocrandom.h"
 #include "ipcainternal.h"
 
 #define OCFFactoryReset     "fr"
 #define OCFReboot           "rb"
 
-// As in proc there's no reason for multiple IPCAOpen().
-// There's no ref count for g_app.  Therefore must hold g_ipcaAppMutex when using g_app.
-App* g_app = nullptr;
-std::mutex g_ipcaAppMutex;
-
+// List of applications. Since IPCA runs inproc and also IoTivity does not yet support multiple
+// apps (i.e. servers) in same process, the max count of g_AppList is currently 1.
+static std::map<size_t, App::Ptr> g_AppList;    // Map's key is generated from g_nextAppKey.
+static std::map<size_t, uint32_t> g_AppListRefCount;     // Ref count of App objects.
+size_t g_nextAppKey = 1;
+std::recursive_mutex g_ipcaAppMutex;
 bool g_unitTestMode = false;
+
+// Return App with matching appId.
+App::Ptr FindApp(size_t appId)
+{
+    std::lock_guard<std::recursive_mutex> lock(g_ipcaAppMutex);
+    if (g_AppList.find(appId) == g_AppList.end())
+    {
+        return nullptr;
+    }
+
+    return g_AppList[appId];
+}
 
 IPCAStatus IPCA_CALL IPCAOpen(
                         const IPCAAppInfo* ipcaAppInfo,
                         IPCAVersion ipcaVersion,
                         IPCAAppHandle* ipcaAppHandle)
 {
-    std::lock_guard<std::mutex> lock(g_ipcaAppMutex);
+    App::Ptr app = nullptr;
+
+    std::lock_guard<std::recursive_mutex> lock(g_ipcaAppMutex);
 
     if (ipcaVersion != IPCA_VERSION_1)
     {
         return IPCA_INVALID_ARGUMENT;
-    }
-
-    if (g_app != nullptr)
-    {
-        return IPCA_ALREADY_OPENED;
     }
 
     if (ipcaAppInfo == nullptr ||
@@ -57,37 +68,87 @@ IPCAStatus IPCA_CALL IPCAOpen(
         return IPCA_INVALID_ARGUMENT;
     }
 
-    g_app= new App(ipcaAppInfo, ipcaVersion);
+    char appId[UUID_STRING_SIZE];
+    if (!OCConvertUuidToString(ipcaAppInfo->appId.uuid, appId))
+    {
+        return IPCA_FAIL;
+    }
 
-    if (g_app == nullptr)
+    // Since IPCA runs in proc, support one IPCAOpen() per process.
+    // An exception is made for app calling IPCAOpen() with same app ID to conveniently retrieve the
+    // IPCAAppHandle.
+    for (auto registeredApp : g_AppList)
+    {
+        if (registeredApp.second->GetAppId().compare(appId) == 0)
+        {
+            *ipcaAppHandle = reinterpret_cast<IPCAAppHandle>(registeredApp.first);
+            g_AppListRefCount[registeredApp.first]++;
+            return IPCA_OK;
+        }
+    }
+
+    // One App object per process. In future, may support multiple App objects per process when
+    // https://jira.iotivity.org/browse/IOT-1379 is resolved.
+    if (g_AppList.size() != 0)
+    {
+        return IPCA_ALREADY_OPENED;
+    }
+
+    app = std::make_shared<App>(ipcaAppInfo, ipcaVersion);
+    if (app == nullptr)
     {
         return IPCA_OUT_OF_MEMORY;
     }
 
-    IPCAStatus status = g_app->Start(g_unitTestMode);
+    IPCAStatus status = app->Start(g_unitTestMode, app);
     if (status != IPCA_OK)
     {
-        delete g_app;
-        g_app = nullptr;
         return status;
     }
 
-    *ipcaAppHandle = reinterpret_cast<IPCAAppHandle>(g_app);
-    return IPCA_OK;
+    uint32_t i = 0;
+    while (i++ < UINT_MAX)
+    {
+        size_t newAppKey = g_nextAppKey++;
+
+        if (newAppKey == 0)
+        {
+            // Skip returning handle with value 0.
+            continue;
+        }
+
+        if (g_AppList.find(newAppKey) == g_AppList.end())
+        {
+            g_AppList[newAppKey] = app;
+            g_AppListRefCount[newAppKey] = 1;
+            *ipcaAppHandle = reinterpret_cast<IPCAAppHandle>(newAppKey);
+            return IPCA_OK;
+        }
+    }
+
+    // Too many apps.
+    app->Stop();
+    return IPCA_FAIL;
 }
 
 void IPCA_CALL IPCAClose(IPCAAppHandle ipcaAppHandle)
 {
-    App* app = reinterpret_cast<App*>(ipcaAppHandle);
-    std::lock_guard<std::mutex> lock(g_ipcaAppMutex);
-    if (g_app == nullptr)
+    std::lock_guard<std::recursive_mutex> lock(g_ipcaAppMutex);
+    App::Ptr app = FindApp(reinterpret_cast<size_t>(ipcaAppHandle));
+    if (app == nullptr)
     {
         return;
     }
 
-    app->Stop();
-    delete app;
-    g_app = nullptr;
+    if ((--g_AppListRefCount[reinterpret_cast<size_t>(ipcaAppHandle)]) == 0)
+    {
+        // stop the app.
+        app->Stop();
+
+        // remove app from list.
+        g_AppList.erase(reinterpret_cast<size_t>(ipcaAppHandle));
+        g_AppListRefCount.erase(reinterpret_cast<size_t>(ipcaAppHandle));
+    }
 }
 
 IPCAStatus IPCA_CALL IPCADiscoverDevices(
@@ -98,7 +159,12 @@ IPCAStatus IPCA_CALL IPCADiscoverDevices(
                                     int resourceTypeCount,
                                     IPCAHandle* handle)
 {
-    App* app = reinterpret_cast<App*>(ipcaAppHandle);
+    App::Ptr app = FindApp(reinterpret_cast<size_t>(ipcaAppHandle));
+    if (app == nullptr)
+    {
+        return IPCA_INVALID_ARGUMENT;
+    }
+
     return app->DiscoverDevices(callback, context, resourceTypeList, resourceTypeCount, handle);
 }
 
@@ -107,14 +173,19 @@ IPCAStatus IPCA_CALL IPCAOpenDevice(
                                     const char* deviceId,
                                     IPCADeviceHandle* deviceHandle)
 {
-    App* app = reinterpret_cast<App*>(ipcaAppHandle);
-    return app->OpenDevice(deviceId, deviceHandle);
+    App::Ptr app = FindApp(reinterpret_cast<size_t>(ipcaAppHandle));
+    if (app == nullptr)
+    {
+        return IPCA_INVALID_ARGUMENT;
+    }
+
+    return app->OpenDevice(app, deviceId, deviceHandle);
 }
 
 void IPCA_CALL IPCACloseDevice(IPCADeviceHandle deviceHandle)
 {
     DeviceWrapper* deviceWrapper = reinterpret_cast<DeviceWrapper*>(deviceHandle);
-    App* app = deviceWrapper->device->GetApp();
+    App::Ptr app = deviceWrapper->device->GetApp();
     app->CloseDevice(deviceHandle);
 }
 
@@ -294,10 +365,17 @@ IPCAStatus IPCA_CALL IPCACloseHandle(IPCAHandle handle,
                         IPCACloseHandleComplete closeHandleComplete,
                         void* context)
 {
-    std::lock_guard<std::mutex> lock(g_ipcaAppMutex);
-    if (g_app != nullptr)
+    std::lock_guard<std::recursive_mutex> lock(g_ipcaAppMutex);
+
+    // There's no direct mapping from handle to App. When number of App objects is large, may need
+    // to create a mapping table for efficiency.
+    for (auto app : g_AppList)
     {
-        return (g_app->CloseIPCAHandle(handle, closeHandleComplete, context));
+        if (app.second->CloseIPCAHandle(handle, closeHandleComplete, context) == IPCA_OK)
+        {
+            // handle is unique across all apps.
+            return IPCA_OK;
+        }
     }
 
     return IPCA_FAIL;
@@ -424,7 +502,12 @@ IPCAStatus IPCA_CALL IPCASetPasswordCallbacks(
                                 IPCADisplayPasswordCallback displayCallback,
                                 void* context)
 {
-    App* app = reinterpret_cast<App*>(ipcaAppHandle);
+    App::Ptr app = FindApp(reinterpret_cast<size_t>(ipcaAppHandle));
+    if (app == nullptr)
+    {
+        return IPCA_INVALID_ARGUMENT;
+    }
+
     return app->SetPasswordCallbacks(inputCallback, displayCallback, context);
 }
 

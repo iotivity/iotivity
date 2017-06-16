@@ -39,6 +39,7 @@
 #define ELEVATOR_CO_PRIVATE_INTERFACE   "my.private.if"
 
 #define ELEVATOR_RESOURCE_CREATE_RELATIVE_PATH       "/ipca/new/resource/relative"
+#define ELEVATOR_RESOURCE_CREATE_RELATIVE_PATH_LONG  "/ipca/new/resource/relative/long"
 #define ELEVATOR_RESOURCE_CREATE_RELATIVE_PATH_TYPE  "x.ipca.test.elevator.create.resource.relative"
 #define ELEVATOR_RESOURCE_NEW_RESOURCE_PATH          "/ipca/new/resource/relative/1"
 
