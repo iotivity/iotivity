@@ -200,7 +200,22 @@ if "!RUN_ARG!"=="server" (
   echo   THREAD_COUNT=%THREAD_COUNT%
   echo   AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE%
 
-  REM First: just build, but don't run tests.
+  REM First step:
+  REM   - Generate coap.h, to avoid race conditions during second step below (see IOT-2376).
+  REM   - Other SCons Config headers get generated during this step too, as a side effect.
+  echo.==============================================================
+  echo.run.bat : Generating Config header files...
+  echo.scons.bat -j 1 VERBOSE=1 TEST=0 %BUILD_OPTIONS% extlibs\libcoap\libcoap\include\coap\coap.h
+  call scons.bat -j 1 VERBOSE=1 TEST=0 %BUILD_OPTIONS% extlibs\libcoap\libcoap\include\coap\coap.h
+  if ERRORLEVEL 1 (
+    echo SCons failed - exiting run.bat with code 5
+    exit /B 5
+  )
+
+  REM Second step:
+  REM   - Compile everything, but don't run tests yet.
+  echo.==============================================================
+  echo.run.bat : Compiling...
   echo.scons.bat -j %THREAD_COUNT% VERBOSE=1 TEST=0 %BUILD_OPTIONS%
   call scons.bat -j %THREAD_COUNT% VERBOSE=1 TEST=0 %BUILD_OPTIONS%
   if ERRORLEVEL 1 (
@@ -208,10 +223,11 @@ if "!RUN_ARG!"=="server" (
     exit /B 3
   )
 
-  REM Second: run tests if needed, using a single SCons thread.
+  REM Third step:
+  REM   - Run tests if needed, using a single SCons thread.
   if "!TEST!"=="1" (
-    echo.
-    echo Running Tests
+    echo.==============================================================
+    echo.run.bat : Running tests...
     echo.scons.bat -j 1 VERBOSE=1 TEST=1 %BUILD_OPTIONS%
     call scons.bat -j 1 VERBOSE=1 TEST=1 %BUILD_OPTIONS%
     if ERRORLEVEL 1 (
