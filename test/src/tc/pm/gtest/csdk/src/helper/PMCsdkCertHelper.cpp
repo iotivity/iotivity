@@ -29,7 +29,7 @@ OCPersistentStorage PMCsdkCertHelper::pstStr = {0, 0, 0, 0, 0};
 ByteArray s_trustCertChainArray =
 { 0, 0 };
 
-FILE* PMCsdkCertHelper::fopenProvManager(const char* path, const char* mode)
+FILE *PMCsdkCertHelper::fopenProvManager(const char *path, const char *mode)
 {
     OC_UNUSED(path);
     return fopen(SVR_DB_FILE_NAME, mode);
@@ -61,18 +61,18 @@ int PMCsdkCertHelper::waitCallbackRet(void)
     return CALLBACK_NOT_INVOKED;
 }
 
-void PMCsdkCertHelper::provisionCertCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr,
-bool hasError)
+void PMCsdkCertHelper::provisionCertCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr,
+                                       bool hasError)
 {
     if (!hasError)
     {
-        IOTIVITYTEST_LOG(INFO, "Provision Cert SUCCEEDED - ctx: %s", (char* ) ctx);
+        IOTIVITYTEST_LOG(INFO, "Provision Cert SUCCEEDED - ctx: %s", (char *) ctx);
         PMCsdkCertHelper::g_CBInvoked = true;
     }
     else
     {
-        IOTIVITYTEST_LOG(ERROR, "Ownership Transfer FAILED - ctx: %s", (char* ) ctx);
-        PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t*) arr, nOfRes);
+        IOTIVITYTEST_LOG(ERROR, "Ownership Transfer FAILED - ctx: %s", (char *) ctx);
+        PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t *) arr, nOfRes);
     }
 }
 
@@ -81,7 +81,7 @@ void PMCsdkCertHelper::trustCertChainChangeCB(void *ctx, uint16_t credId, uint8_
 {
     __FUNC_IN__
 
-    IOTIVITYTEST_LOG(INFO, "Provision Cert SUCCEEDED - ctx: %s", (char* ) ctx);
+    IOTIVITYTEST_LOG(INFO, "Provision Cert SUCCEEDED - ctx: %s", (char *) ctx);
 
     IOTIVITYTEST_LOG(INFO, "CRED ID : %d", credId);
 
@@ -99,7 +99,7 @@ PMCsdkCertHelper::PMCsdkCertHelper()
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] Constructor");
 }
 
-bool PMCsdkCertHelper::initProvisionClient(int clientOTMType, char* chDBPath)
+bool PMCsdkCertHelper::initProvisionClient(int clientOTMType, char *chDBPath)
 {
     __FUNC_IN__
 
@@ -143,8 +143,8 @@ bool PMCsdkCertHelper::initProvisionClient(int clientOTMType, char* chDBPath)
     return true;
 }
 
-bool PMCsdkCertHelper::provisionCRL(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
-        OicSecCrl_t *crl, OCProvisionResultCB resultCallback, OCStackResult expectedResult)
+bool PMCsdkCertHelper::provisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                                    OicSecCrl_t *crl, OCProvisionResultCB resultCallback, OCStackResult expectedResult)
 {
     __FUNC_IN__
 
@@ -153,7 +153,7 @@ bool PMCsdkCertHelper::provisionCRL(void* ctx, const OCProvisionDev_t *selectedD
     //OCProvisionCRL(ctx, selectedDeviceInfo, crl, resultCallback);
 
     IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCProvisionCRL returns %s",
-            CommonUtil::getOCStackResult(result));
+                     CommonUtil::getOCStackResult(result));
 
     if (expectedResult != result)
     {
@@ -182,9 +182,9 @@ bool PMCsdkCertHelper::provisionTrustCertChain(void *ctx, OicSecCredType_t type,
 
     PMCsdkCertHelper::g_CBInvoked = CALLBACK_NOT_INVOKED;
     OCStackResult result = OCProvisionTrustCertChain(ctx, type, credId, selectedDeviceInfo,
-            resultCallback);
+                           resultCallback);
     IOTIVITYTEST_LOG(INFO, "[Cloud Acl] provisionTrustCertChain returns %s",
-            CommonUtil::getOCStackResult(result));
+                     CommonUtil::getOCStackResult(result));
 
     if (expectedResult != result)
     {
@@ -214,7 +214,7 @@ bool PMCsdkCertHelper::saveTrustCertChain(uint8_t *trustCertChain, size_t chainS
 
     OCStackResult result = OCSaveTrustCertChain(trustCertChain, chainSize, encodingType, credId);
     IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCSaveTrustCertChain returns %s",
-            CommonUtil::getOCStackResult(result));
+                     CommonUtil::getOCStackResult(result));
 
     IOTIVITYTEST_LOG(INFO, "CredId of Saved Trust Cert. Chain into Cred of SVR : %d", *credId);
 
@@ -237,7 +237,7 @@ bool PMCsdkCertHelper::registerTrustCertChainNotifier(void *cb, TrustCertChainCh
 
     OCStackResult result = OCRegisterTrustCertChainNotifier(cb, CB);
     IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCRegisterTrustCertChainNotifier returns %s",
-            CommonUtil::getOCStackResult(result));
+                     CommonUtil::getOCStackResult(result));
 
     if (expectedResult != result)
     {
@@ -269,7 +269,7 @@ bool PMCsdkCertHelper::readTrustCertChain(uint16_t credId, uint8_t **trustCertCh
     OCStackResult result = OCReadTrustCertChain(credId, trustCertChain, chainSize);
 
     IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCReadTrustCertChain returns %s",
-            CommonUtil::getOCStackResult(result));
+                     CommonUtil::getOCStackResult(result));
 
     if (expectedResult != result)
     {
@@ -277,7 +277,8 @@ bool PMCsdkCertHelper::readTrustCertChain(uint16_t credId, uint8_t **trustCertCh
         return false;
     }
 
-    if( OC_STACK_OK == result && OC_STACK_OK == expectedResult) {
+    if ( OC_STACK_OK == result && OC_STACK_OK == expectedResult)
+    {
         OIC_LOG_BUFFER(DEBUG, TAG, *trustCertChain, *chainSize);
     }
 
@@ -341,7 +342,7 @@ bool PMCsdkCertHelper::readFile(const char *name, OCByteString *out)
     out->len = length;
 
     result = true;
-    exit: fclose(file);
+exit: fclose(file);
     return result;
 }
 
@@ -357,7 +358,11 @@ ByteArray_t PMCsdkCertHelper::getTrustCertChainArray()
     if (fp)
     {
         size_t fsize;
+#ifdef __WINDOWS__
+        if (_fseeki64(fp, 0, SEEK_END) == 0 && (fsize = _ftelli64(fp)) > 0)
+#else
         if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)) > 0)
+#endif
         {
             trustCertChainArray.data = (uint8_t *) malloc(fsize);
             trustCertChainArray.len = fsize;

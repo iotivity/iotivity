@@ -26,41 +26,42 @@
 
 class PMCppCertHelper
 {
-private:
-    std::string m_failureMessage;
+    private:
+        std::string m_failureMessage;
 
-public:
-    static OCPersistentStorage s_ps;
-    static int s_cbInvoked;
+    public:
+        static OCPersistentStorage s_ps;
+        static int s_cbInvoked;
 
-    static ByteArray_t s_trustCertChainArray;
-    static uint16_t s_credId;
+        static ByteArray_t s_trustCertChainArray;
+        static uint16_t s_credId;
 
-    PMCppCertHelper();
+        PMCppCertHelper();
 
-    static FILE* clientOpen(const char *UNUSED_PARAM, const char *mode);
+        static FILE *clientOpen(const char *UNUSED_PARAM, const char *mode);
 
-    bool provisionInit(const std::string& dbPath = CLIENT_DATABASE);
+        bool provisionInit(const std::string &dbPath = CLIENT_DATABASE);
 
-    bool saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
-            OicEncodingType_t encodingType, uint16_t *credId, OCStackResult expectedResult);
+        bool saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
+                                OicEncodingType_t encodingType, uint16_t *credId, OCStackResult expectedResult);
 
-    bool readTrustCertChain(uint16_t credId, uint8_t **trustCertChain, size_t *chainSize, OCStackResult expectedResult);
+        bool readTrustCertChain(uint16_t credId, uint8_t **trustCertChain, size_t *chainSize,
+                                OCStackResult expectedResult);
 
-    bool registerTrustCertChangeNotifier(CertChainCallBack Callback, OCStackResult expectedResult);
+        bool registerTrustCertChangeNotifier(CertChainCallBack Callback, OCStackResult expectedResult);
 
-    bool removeTrustCertChangeNotifier();
+        bool removeTrustCertChangeNotifier();
 
-    bool provisionTrustCertChain(DeviceList_t& deviceList, OicSecCredType_t type, uint16_t credId,
-            ResultCallBack resultCallback, OCStackResult expectedResult);
+        bool provisionTrustCertChain(DeviceList_t &deviceList, OicSecCredType_t type, uint16_t credId,
+                                     ResultCallBack resultCallback, OCStackResult expectedResult);
 
-    static void provisionCB(PMResultList_t *result, int hasError);
+        static void provisionCB(PMResultList_t *result, int hasError);
 
-    static void certChainCB(uint16_t credId, uint8_t *trustCertChain, size_t chainSize);
+        static void certChainCB(uint16_t credId, uint8_t *trustCertChain, size_t chainSize);
 
-    std::string getFailureMessage();
+        std::string getFailureMessage();
 
-    int waitCallbackRet();
+        int waitCallbackRet();
 
 };
 

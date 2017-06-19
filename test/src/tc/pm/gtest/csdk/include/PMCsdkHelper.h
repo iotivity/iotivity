@@ -53,14 +53,14 @@
 #define CRED_TYPE_LOBV -3
 
 // function declaration(s) for calling them before implementing
-FILE* fopenProvManager(const char*, const char*);
+FILE *fopenProvManager(const char *, const char *);
 
-OicSecAcl_t* createAcl(const int dev_num, int permission, OCProvisionDev_t** m_own_list,
-bool multiple_dev = true);
+OicSecAcl_t *createAcl(const int dev_num, int permission, OCProvisionDev_t **m_own_list,
+                       bool multiple_dev = true);
 
-OicSecAcl_t* createAclForLEDAccess(const OicUuid_t* subject);
+OicSecAcl_t *createAclForLEDAccess(const OicUuid_t *subject);
 
-OicSecPdAcl_t* createPdAcl(int nPermission);
+OicSecPdAcl_t *createPdAcl(int nPermission);
 
 OTMCallbackData_t otmCbRegister(int otmType);
 
@@ -71,130 +71,131 @@ int waitCallbackRet(void);
  */
 class PMCsdkHelper
 {
-private:
-    std::string m_failureMessage;
+    private:
+        std::string m_failureMessage;
 
-public:
+    public:
 
-    PMCsdkHelper();
+        PMCsdkHelper();
 
-    bool initProvisionClient(int clientOTMType = OTM_JUSTWORK, char* chDBPath =
-            (char*) PRVN_DB_FILE_NAME);
+        bool initProvisionClient(int clientOTMType = OTM_JUSTWORK, char *chDBPath =
+                                     (char *) PRVN_DB_FILE_NAME);
 
-    bool setOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus,
-            OCStackResult expectedResult);
+        bool setOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus,
+                               OCStackResult expectedResult);
 
-    bool discoverAllDevices(int nTime, OCProvisionDev_t** own_list, OCProvisionDev_t** unown_list,
-            OCStackResult expectedResult);
+        bool discoverAllDevices(int nTime, OCProvisionDev_t **own_list, OCProvisionDev_t **unown_list,
+                                OCStackResult expectedResult);
 
-    bool discoverSingleDevice(unsigned short nTime, const OicUuid_t* deviceID,
-            OCProvisionDev_t **ppFoundDevice, OCStackResult expectedResult);
+        bool discoverSingleDevice(unsigned short nTime, const OicUuid_t *deviceID,
+                                  OCProvisionDev_t **ppFoundDevice, OCStackResult expectedResult);
 
-    bool discoverSingleDeviceInUnicast(unsigned short timeout, const OicUuid_t* deviceID,
-            const char* hostAddress, OCConnectivityType connType, OCProvisionDev_t **ppFoundDevice,
-            OCStackResult expectedResult);
+        bool discoverSingleDeviceInUnicast(unsigned short timeout, const OicUuid_t *deviceID,
+                                           const char *hostAddress, OCConnectivityType connType, OCProvisionDev_t **ppFoundDevice,
+                                           OCStackResult expectedResult);
 
-    bool discoverUnownedDevices(int nTime, OCProvisionDev_t** unown_list,
-            OCStackResult expectedResult);
+        bool discoverUnownedDevices(int nTime, OCProvisionDev_t **unown_list,
+                                    OCStackResult expectedResult);
 
-    bool discoverOwnedDevices(int nTime, OCProvisionDev_t** own_list, OCStackResult expectedResult);
+        bool discoverOwnedDevices(int nTime, OCProvisionDev_t **own_list, OCStackResult expectedResult);
 
-    bool doOwnerShipTransfer(void *ctx, OCProvisionDev_t** unown_list,
-            OCProvisionResultCB resultCallback, OCStackResult expectedResult, bool checkCallback =
-            true);
+        bool doOwnerShipTransfer(void *ctx, OCProvisionDev_t **unown_list,
+                                 OCProvisionResultCB resultCallback, OCStackResult expectedResult, bool checkCallback =
+                                     true);
 
-    bool provisionACL(void* ctx, const OCProvisionDev_t* selectedDeviceInfo, OicSecAcl_t *acl,
-            OCProvisionResultCB resultCallback, OCStackResult expectedResult);
+        bool provisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecAcl_t *acl,
+                          OCProvisionResultCB resultCallback, OCStackResult expectedResult);
 
-    bool saveACL(const OicSecAcl_t* acl, OCStackResult expectedResult);
+        bool saveACL(const OicSecAcl_t *acl, OCStackResult expectedResult);
 
-    bool provisionCredentials(void *ctx, OicSecCredType_t type, size_t keySize,
-            const OCProvisionDev_t *pDev1, const OCProvisionDev_t *pDev2,
-            OCProvisionResultCB resultCallback, OCStackResult expectedResult);
+        bool provisionCredentials(void *ctx, OicSecCredType_t type, size_t keySize,
+                                  const OCProvisionDev_t *pDev1, const OCProvisionDev_t *pDev2,
+                                  OCProvisionResultCB resultCallback, OCStackResult expectedResult);
 
-    bool provisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_t keySize,
-            const OCProvisionDev_t *pDev1, OicSecAcl_t *pDev1Acl, const OCProvisionDev_t *pDev2,
-            OicSecAcl_t *pDev2Acl, OCProvisionResultCB resultCallback,
-            OCStackResult expectedResult);
+        bool provisionPairwiseDevices(void *ctx, OicSecCredType_t type, size_t keySize,
+                                      const OCProvisionDev_t *pDev1, OicSecAcl_t *pDev1Acl, const OCProvisionDev_t *pDev2,
+                                      OicSecAcl_t *pDev2Acl, OCProvisionResultCB resultCallback,
+                                      OCStackResult expectedResult);
 
-    bool getCredResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
-            OCProvisionResultCB resultCallback, OCStackResult expectedResult);
+        bool getCredResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                             OCProvisionResultCB resultCallback, OCStackResult expectedResult);
 
-    bool getACLResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
-            OCProvisionResultCB resultCallback, OCStackResult expectedResult);
+        bool getACLResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                            OCProvisionResultCB resultCallback, OCStackResult expectedResult);
 
-    bool unlinkDevices(void* ctx, const OCProvisionDev_t* pTargetDev1,
-            const OCProvisionDev_t* pTargetDev2, OCProvisionResultCB resultCallback,
-            OCStackResult expectedResult);
+        bool unlinkDevices(void *ctx, const OCProvisionDev_t *pTargetDev1,
+                           const OCProvisionDev_t *pTargetDev2, OCProvisionResultCB resultCallback,
+                           OCStackResult expectedResult);
 
-    bool removeDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
-            const OCProvisionDev_t* pTargetDev, OCProvisionResultCB resultCallback,
-            OCStackResult expectedResult);
+        bool removeDevice(void *ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
+                          const OCProvisionDev_t *pTargetDev, OCProvisionResultCB resultCallback,
+                          OCStackResult expectedResult);
 
-    bool removeDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
-            const OicUuid_t* pTargetUuid, OCProvisionResultCB resultCallback,
-            OCStackResult expectedResult);
+        bool removeDeviceWithUuid(void *ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
+                                  const OicUuid_t *pTargetUuid, OCProvisionResultCB resultCallback,
+                                  OCStackResult expectedResult);
 
-    bool resetDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
-            const OCProvisionDev_t* pTargetDev, OCProvisionResultCB resultCallback,
-            OCStackResult expectedResult);
+        bool resetDevice(void *ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
+                         const OCProvisionDev_t *pTargetDev, OCProvisionResultCB resultCallback,
+                         OCStackResult expectedResult);
 
-    bool resetSVRDB(OCStackResult expectedResult);
+        bool resetSVRDB(OCStackResult expectedResult);
 
-    bool deleteDiscoveredDevices(OCProvisionDev_t *pList);
+        bool deleteDiscoveredDevices(OCProvisionDev_t *pList);
 
-    bool deleteUuidList(OCUuidList_t* pList);
+        bool deleteUuidList(OCUuidList_t *pList);
 
-    bool deleteACLList(OicSecAcl_t* pList);
+        bool deleteACLList(OicSecAcl_t *pList);
 
-    bool getLinkedStatus(const OicUuid_t* uuidOfDevice, OCUuidList_t** uuidList,
-            size_t* numOfDevices, OCStackResult expectedResult);
+        bool getLinkedStatus(const OicUuid_t *uuidOfDevice, OCUuidList_t **uuidList,
+                             size_t *numOfDevices, OCStackResult expectedResult);
 
-    bool selectOwnershipTransferMethod(const OicSecOxm_t *supportedMethods, size_t numberOfMethods,
-            OicSecOxm_t *selectedMethod, OwnerType_t ownerType, OCStackResult expectedResult,
-            OicSecOxm_t expectedOxm);
+        bool selectOwnershipTransferMethod(const OicSecOxm_t *supportedMethods, size_t numberOfMethods,
+                                           OicSecOxm_t *selectedMethod, OwnerType_t ownerType, OCStackResult expectedResult,
+                                           OicSecOxm_t expectedOxm);
 
-    /**
-     * All Callback Methods for Provision Manager
-     */
-    static void ownershipTransferCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr,
-    bool hasError);
+        /**
+         * All Callback Methods for Provision Manager
+         */
+        static void ownershipTransferCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr,
+                                        bool hasError);
 
-    static void provisionPairwiseCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr,
-    bool hasError);
+        static void provisionPairwiseCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr,
+                                        bool hasError);
 
-    static void provisionCredCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
+        static void provisionCredCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError);
 
-    static void provisionAclCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
+        static void provisionAclCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError);
 
-    static void getAclCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
+        static void getAclCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError);
 
-    static void getCredCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
+        static void getCredCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError);
 
-    static void unlinkDevicesCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
+        static void unlinkDevicesCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError);
 
-    static void removeDeviceCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
+        static void removeDeviceCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError);
 
-    static void syncDeviceCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
+        static void syncDeviceCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError);
 
-    static OCStackResult displayMutualVerifNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN]);
+        static OCStackResult displayMutualVerifNumCB(void *ctx,
+                uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN]);
 
-    static OCStackResult confirmMutualVerifNumCB(void * ctx);
+        static OCStackResult confirmMutualVerifNumCB(void *ctx);
 
-    static ByteArray getTrustCertChainArray();
+        static ByteArray getTrustCertChainArray();
 
-    bool provisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId,
+        bool provisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId,
 
-    const OCProvisionDev_t *selectedDeviceInfo, OCProvisionResultCB resultCallback,
-            OCStackResult expectedResult);
+                                     const OCProvisionDev_t *selectedDeviceInfo, OCProvisionResultCB resultCallback,
+                                     OCStackResult expectedResult);
 
-    bool saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
-            OicEncodingType_t encodingType, uint16_t *credId, OCStackResult expectedResult);
-    /**
-     * All Utility Methods for Provision Manager
-     */
-    std::string getFailureMessage();
+        bool saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
+                                OicEncodingType_t encodingType, uint16_t *credId, OCStackResult expectedResult);
+        /**
+         * All Utility Methods for Provision Manager
+         */
+        std::string getFailureMessage();
 
-    bool convertStrToUuid(std::string uuid, OicUuid_t* deviceID, OCStackResult expectedResult);
+        bool convertStrToUuid(std::string uuid, OicUuid_t *deviceID, OCStackResult expectedResult);
 };
 #endif

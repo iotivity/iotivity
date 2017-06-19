@@ -22,7 +22,7 @@
 #include "PMCsdkHelper.h"
 #include "PMCsdkUtilityHelper.h"
 
-OCProvisionDev_t* PMCsdkUtilityHelper::getDevInst(OCProvisionDev_t* dev_lst, const int dev_num)
+OCProvisionDev_t *PMCsdkUtilityHelper::getDevInst(OCProvisionDev_t *dev_lst, const int dev_num)
 {
     __FUNC_IN__
 
@@ -32,7 +32,7 @@ OCProvisionDev_t* PMCsdkUtilityHelper::getDevInst(OCProvisionDev_t* dev_lst, con
         return NULL;
     }
 
-    OCProvisionDev_t* lst = (OCProvisionDev_t*) dev_lst;
+    OCProvisionDev_t *lst = (OCProvisionDev_t *) dev_lst;
 
     for (int i = 0; lst;)
     {
@@ -49,7 +49,7 @@ OCProvisionDev_t* PMCsdkUtilityHelper::getDevInst(OCProvisionDev_t* dev_lst, con
     return NULL; // in here |lst| is always |NULL|
 }
 
-int PMCsdkUtilityHelper::printDevList(OCProvisionDev_t* dev_lst)
+int PMCsdkUtilityHelper::printDevList(OCProvisionDev_t *dev_lst)
 {
     __FUNC_IN__
 
@@ -59,13 +59,13 @@ int PMCsdkUtilityHelper::printDevList(OCProvisionDev_t* dev_lst)
         return 0;
     }
 
-    OCProvisionDev_t* lst = (OCProvisionDev_t*) dev_lst;
+    OCProvisionDev_t *lst = (OCProvisionDev_t *) dev_lst;
     int lst_cnt = 0;
 
     for (; lst;)
     {
         printf("     [%d] ", ++lst_cnt);
-        printUuid((const OicUuid_t*) &lst->doxm->deviceID);
+        printUuid((const OicUuid_t *) &lst->doxm->deviceID);
         printf("\n");
         lst = lst->next;
     }
@@ -75,7 +75,7 @@ int PMCsdkUtilityHelper::printDevList(OCProvisionDev_t* dev_lst)
     return lst_cnt;
 }
 
-size_t PMCsdkUtilityHelper::printUuidList(const OCUuidList_t* uid_lst)
+size_t PMCsdkUtilityHelper::printUuidList(const OCUuidList_t *uid_lst)
 {
     __FUNC_IN__
 
@@ -85,13 +85,13 @@ size_t PMCsdkUtilityHelper::printUuidList(const OCUuidList_t* uid_lst)
         return 0;
     }
 
-    OCUuidList_t* lst = (OCUuidList_t*) uid_lst;
+    OCUuidList_t *lst = (OCUuidList_t *) uid_lst;
     size_t lst_cnt = 0;
 
     for (; lst;)
     {
         printf("     [%zu] ", ++lst_cnt);
-        printUuid((const OicUuid_t*) &lst->dev);
+        printUuid((const OicUuid_t *) &lst->dev);
         printf("\n");
         lst = lst->next;
     }
@@ -101,7 +101,7 @@ size_t PMCsdkUtilityHelper::printUuidList(const OCUuidList_t* uid_lst)
     return lst_cnt;
 }
 
-int PMCsdkUtilityHelper::printResultList(const OCProvisionResult_t* rslt_lst, const size_t rslt_cnt)
+int PMCsdkUtilityHelper::printResultList(const OCProvisionResult_t *rslt_lst, const size_t rslt_cnt)
 {
     __FUNC_IN__
 
@@ -115,7 +115,7 @@ int PMCsdkUtilityHelper::printResultList(const OCProvisionResult_t* rslt_lst, co
     for (; rslt_cnt > lst_cnt; ++lst_cnt)
     {
         printf("     [%d] ", lst_cnt + 1);
-        printUuid((const OicUuid_t*) &rslt_lst[lst_cnt].deviceId);
+        printUuid((const OicUuid_t *) &rslt_lst[lst_cnt].deviceId);
         printf(" - result: %s\n", CommonUtil::getOCStackResult(rslt_lst[lst_cnt].res));
     }
     printf("\n");
@@ -124,7 +124,7 @@ int PMCsdkUtilityHelper::printResultList(const OCProvisionResult_t* rslt_lst, co
     return lst_cnt;
 }
 
-void PMCsdkUtilityHelper::printUuid(const OicUuid_t* uid)
+void PMCsdkUtilityHelper::printUuid(const OicUuid_t *uid)
 {
     __FUNC_IN__
 
@@ -141,39 +141,39 @@ void PMCsdkUtilityHelper::printUuid(const OicUuid_t* uid)
     __FUNC_OUT__
 }
 
-char* PMCsdkUtilityHelper::getOxmType(OicSecOxm_t oxmType)
+char *PMCsdkUtilityHelper::getOxmType(OicSecOxm_t oxmType)
 {
 
-    char* resultString = NULL;
+    char *resultString = NULL;
 
     switch (oxmType)
     {
         case OIC_JUST_WORKS:
-            resultString = (char*) "OIC_JUST_WORKS";
+            resultString = (char *) "OIC_JUST_WORKS";
             break;
         case OIC_RANDOM_DEVICE_PIN:
-            resultString = (char*) "OIC_RANDOM_DEVICE_PIN";
+            resultString = (char *) "OIC_RANDOM_DEVICE_PIN";
             break;
         case OIC_MANUFACTURER_CERTIFICATE:
-            resultString = (char*) "OIC_MANUFACTURER_CERTIFICATE";
+            resultString = (char *) "OIC_MANUFACTURER_CERTIFICATE";
             break;
         case OIC_DECENTRALIZED_PUBLIC_KEY:
-            resultString = (char*) "OIC_DECENTRALIZED_PUBLIC_KEY";
+            resultString = (char *) "OIC_DECENTRALIZED_PUBLIC_KEY";
             break;
         case OIC_OXM_COUNT:
-            resultString = (char*) "OIC_OXM_COUNT";
+            resultString = (char *) "OIC_OXM_COUNT";
             break;
         case OIC_PRECONFIG_PIN:
-            resultString = (char*) "OIC_PRECONFIG_PIN";
+            resultString = (char *) "OIC_PRECONFIG_PIN";
             break;
         case OIC_MV_JUST_WORKS:
-            resultString = (char*) "OC_STACK_RESOURCE_CREATED";
+            resultString = (char *) "OC_STACK_RESOURCE_CREATED";
             break;
         case OIC_CON_MFG_CERT:
-            resultString = (char*) "OIC_CON_MFG_CERT";
+            resultString = (char *) "OIC_CON_MFG_CERT";
             break;
         default:
-            resultString = (char*) "UNKNOWN_OXM_TYPE";
+            resultString = (char *) "UNKNOWN_OXM_TYPE";
     }
 
     return resultString;

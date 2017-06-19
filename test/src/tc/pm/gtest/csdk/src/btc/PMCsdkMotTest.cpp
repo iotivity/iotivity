@@ -26,36 +26,36 @@
 
 class PMCsdkMotTest_btc: public ::testing::Test
 {
-protected:
-    OCProvisionDev_t *m_UnownList, *m_OwnList, *m_motEnabledDevList, *m_motOwnedDevList;
-    OicSecAcl_t *m_Acl, *m_Acl1, *m_Acl2;
-    PMCsdkHelper m_PMHelper;
-    PMCsdkMotHelper m_PMMotHelper;
+    protected:
+        OCProvisionDev_t *m_UnownList, *m_OwnList, *m_motEnabledDevList, *m_motOwnedDevList;
+        OicSecAcl_t *m_Acl, *m_Acl1, *m_Acl2;
+        PMCsdkHelper m_PMHelper;
+        PMCsdkMotHelper m_PMMotHelper;
 
-    virtual void SetUp()
-    {
-        CommonUtil::killApp(KILL_SERVERS);
-        CommonUtil::waitInSecond(DELAY_MEDIUM);
-        PMCsdkUtilityHelper::removeAllResFile();
-        CommonUtil::waitInSecond(DELAY_MEDIUM);
-        CommonUtil::copyFile(PRECONFIG_SERVER1_CBOR_BACKUP, PRECONFIG_SERVER1_CBOR);
-        CommonUtil::copyFile(PRECONFIG_SERVER2_CBOR_BACKUP, PRECONFIG_SERVER2_CBOR);
-        CommonUtil::copyFile(RANDOMPIN_SERVER_CBOR_BACKUP, RANDOMPIN_SERVER_CBOR);
-        CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
-        CommonUtil::copyFile(JUSTWORKS_SERVER7_CBOR_BACKUP, JUSTWORKS_SERVER7_CBOR);
-        CommonUtil::copyFile(PRECONFIG_SERVER2_CBOR_BACKUP, PRECONFIG_SERVER2_CBOR);
-        CommonUtil::copyFile(MOT_CLIENT_CBOR_BACKUP, MOT_CLIENT_CBOR);
-        m_motEnabledDevList = NULL;
-        m_motOwnedDevList = NULL;
-        m_UnownList = NULL;
-        m_OwnList = NULL;
-    }
+        virtual void SetUp()
+        {
+            CommonUtil::killApp(KILL_SERVERS);
+            CommonUtil::waitInSecond(DELAY_MEDIUM);
+            PMCsdkUtilityHelper::removeAllResFile();
+            CommonUtil::waitInSecond(DELAY_MEDIUM);
+            CommonUtil::copyFile(PRECONFIG_SERVER1_CBOR_BACKUP, PRECONFIG_SERVER1_CBOR);
+            CommonUtil::copyFile(PRECONFIG_SERVER2_CBOR_BACKUP, PRECONFIG_SERVER2_CBOR);
+            CommonUtil::copyFile(RANDOMPIN_SERVER_CBOR_BACKUP, RANDOMPIN_SERVER_CBOR);
+            CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
+            CommonUtil::copyFile(JUSTWORKS_SERVER7_CBOR_BACKUP, JUSTWORKS_SERVER7_CBOR);
+            CommonUtil::copyFile(PRECONFIG_SERVER2_CBOR_BACKUP, PRECONFIG_SERVER2_CBOR);
+            CommonUtil::copyFile(MOT_CLIENT_CBOR_BACKUP, MOT_CLIENT_CBOR);
+            m_motEnabledDevList = NULL;
+            m_motOwnedDevList = NULL;
+            m_UnownList = NULL;
+            m_OwnList = NULL;
+        }
 
-    virtual void TearDown()
-    {
-        CommonTestUtil::runCommonTCTearDownPart();
-        CommonUtil::killApp(KILL_SERVERS);
-    }
+        virtual void TearDown()
+        {
+            CommonTestUtil::runCommonTCTearDownPart();
+            CommonUtil::killApp(KILL_SERVERS);
+        }
 };
 
 /**
@@ -74,7 +74,7 @@ protected:
  * @post_condition  none
  * @expected        OCDiscoverMultipleOwnerEnabledDevices will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledDevices_RV_SRC_P)
 {
     CommonUtil::launchApp(JUSTWORKS_SERVER7);
@@ -86,7 +86,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledDevices_RV_SRC_P)
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -109,7 +109,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledDevices_RV_SRC_P)
  * @post_condition  none
  * @expected        OCDiscoverMultipleOwnerEnabledDevices will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledDevices_LBV_P)
 {
     CommonUtil::launchApp(JUSTWORKS_SERVER7);
@@ -121,7 +121,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledDevices_LBV_P)
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT_ONE,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -144,7 +144,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledDevices_LBV_P)
  * @post_condition  none
  * @expected        OCDiscoverMultipleOwnerEnabledDevices will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledDevices_LOBV_N)
 {
     CommonUtil::launchApp(JUSTWORKS_SERVER7);
@@ -156,7 +156,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledDevices_LOBV_N)
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT_ZERO,
-                    &m_motEnabledDevList, OC_STACK_INVALID_PARAM))
+            &m_motEnabledDevList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -179,7 +179,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledDevices_LOBV_N)
  * @post_condition  none
  * @expected        OCDiscoverMultipleOwnerEnabledDevices will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledDevicesDevlist_NV_N)
 {
     CommonUtil::launchApp(JUSTWORKS_SERVER7);
@@ -191,7 +191,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledDevicesDevlist_NV_N)
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT_ONE,
-                    NULL, OC_STACK_INVALID_PARAM))
+            NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -221,7 +221,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledDevicesDevlist_NV_N)
  * @post_condition  none
  * @expected        OCDiscoverMultipleOwnerEnabledSingleDevice will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDevice_RV_SRC_P)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -234,28 +234,30 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDevice_RV_SRC_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *) m_OwnList,
+                                       DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, targetOwnedDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, targetOwnedDev,
+                                     OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
@@ -263,8 +265,8 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDevice_RV_SRC_P)
 
     OicUuid_t deviceUuid = targetOwnedDev->doxm->deviceID;
 
-    if (!m_PMMotHelper.discoverMultipleOwnerEnabledSingleDevice(DISCOVERY_TIMEOUT,&deviceUuid,
-                    &m_motEnabledDevList, OC_STACK_OK))
+    if (!m_PMMotHelper.discoverMultipleOwnerEnabledSingleDevice(DISCOVERY_TIMEOUT, &deviceUuid,
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -294,7 +296,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDevice_RV_SRC_P)
  * @post_condition  none
  * @expected        OCDiscoverMultipleOwnerEnabledSingleDevice will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDevice_LBV_P)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -307,28 +309,30 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDevice_LBV_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *) m_OwnList,
+                                       DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, targetOwnedDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, targetOwnedDev,
+                                     OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
@@ -337,7 +341,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDevice_LBV_P)
     OicUuid_t deviceUuid = targetOwnedDev->doxm->deviceID;
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledSingleDevice(DISCOVERY_TIMEOUT_ONE, &deviceUuid,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -367,7 +371,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDevice_LBV_P)
  * @post_condition  none
  * @expected        OCDiscoverMultipleOwnerEnabledSingleDevice will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDevice_LOBV_N)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -380,28 +384,30 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDevice_LOBV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *) m_OwnList,
+                                       DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, targetOwnedDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, targetOwnedDev,
+                                     OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
@@ -410,7 +416,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDevice_LOBV_N)
     OicUuid_t deviceUuid = targetOwnedDev->doxm->deviceID;
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledSingleDevice(DISCOVERY_TIMEOUT_ZERO, &deviceUuid,
-                    &m_motEnabledDevList, OC_STACK_INVALID_PARAM))
+            &m_motEnabledDevList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -440,7 +446,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDevice_LOBV_N)
  * @post_condition  none
  * @expected        OCDiscoverMultipleOwnerEnabledSingleDevice will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDeviceDeviceID_NV_N)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -453,35 +459,37 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDeviceDeviceID_NV_
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *) m_OwnList,
+                                       DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, targetOwnedDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, targetOwnedDev,
+                                     OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledSingleDevice(DISCOVERY_TIMEOUT, NULL,
-                    &m_motEnabledDevList, OC_STACK_INVALID_PARAM))
+            &m_motEnabledDevList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -511,7 +519,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDeviceDeviceID_NV_
  * @post_condition  none
  * @expected        OCDiscoverMultipleOwnerEnabledSingleDevice will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDevicePpFoundDevice_NV_N)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -524,28 +532,30 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDevicePpFoundDevic
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *) m_OwnList,
+                                       DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, targetOwnedDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, targetOwnedDev,
+                                     OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
@@ -554,7 +564,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDevicePpFoundDevic
     OicUuid_t deviceUuid = targetOwnedDev->doxm->deviceID;
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledSingleDevice(DISCOVERY_TIMEOUT, &deviceUuid,
-                    NULL, OC_STACK_INVALID_PARAM))
+            NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -577,7 +587,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnerEnabledSingleDevicePpFoundDevic
  * @post_condition  none
  * @expected        OCDiscoverMultipleOwnedDevices will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnedDevices_RV_SRC_P)
 {
     CommonUtil::launchApp(JUSTWORKS_SERVER7);
@@ -589,7 +599,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnedDevices_RV_SRC_P)
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -612,7 +622,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnedDevices_RV_SRC_P)
  * @post_condition  none
  * @expected        OCDiscoverMultipleOwnedDevices will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnedDevices_LBV_P)
 {
     CommonUtil::launchApp(JUSTWORKS_SERVER7);
@@ -624,7 +634,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnedDevices_LBV_P)
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT_ONE,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -647,7 +657,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnedDevices_LBV_P)
  * @post_condition  none
  * @expected        OCDiscoverMultipleOwnedDevices will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnedDevices_LOBV_N)
 {
     CommonUtil::launchApp(JUSTWORKS_SERVER7);
@@ -659,7 +669,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnedDevices_LOBV_N)
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT_ZERO,
-                    &m_motEnabledDevList, OC_STACK_INVALID_PARAM))
+            &m_motEnabledDevList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -682,7 +692,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnedDevices_LOBV_N)
  * @post_condition  none
  * @expected        OCDiscoverMultipleOwnedDevices will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnedDevicesDevlist_NV_N)
 {
     CommonUtil::launchApp(JUSTWORKS_SERVER7);
@@ -694,7 +704,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnedDevicesDevlist_NV_N)
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT_ONE,
-                    NULL, OC_STACK_INVALID_PARAM))
+            NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -719,7 +729,7 @@ TEST_F(PMCsdkMotTest_btc, OCDiscoverMultipleOwnedDevicesDevlist_NV_N)
  * @post_condition  none
  * @expected        OCAddPreconfigPin will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCAddPreconfigPin_RV_SRC_P)
 {
     CommonUtil::launchApp(JUSTWORKS_SERVER7);
@@ -731,15 +741,17 @@ TEST_F(PMCsdkMotTest_btc, OCAddPreconfigPin_RV_SRC_P)
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_motEnabledDevList, 1);
+    OCProvisionDev_t *targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *)
+                                  m_motEnabledDevList, 1);
 
-    if (!m_PMMotHelper.addPreconfigPIN(targetDev, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
+    if (!m_PMMotHelper.addPreconfigPIN(targetDev, MOT_DEFAULT_PRE_CONFIG_PIN,
+                                       OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -764,7 +776,7 @@ TEST_F(PMCsdkMotTest_btc, OCAddPreconfigPin_RV_SRC_P)
  * @post_condition  none
  * @expected        OCAddPreconfigPin will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCAddPreconfigPinTargetDeviceInfo_NV_N)
 {
     CommonUtil::launchApp(JUSTWORKS_SERVER7);
@@ -776,13 +788,14 @@ TEST_F(PMCsdkMotTest_btc, OCAddPreconfigPinTargetDeviceInfo_NV_N)
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMMotHelper.addPreconfigPIN(NULL, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_INVALID_PARAM))
+    if (!m_PMMotHelper.addPreconfigPIN(NULL, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE,
+                                       OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -807,7 +820,7 @@ TEST_F(PMCsdkMotTest_btc, OCAddPreconfigPinTargetDeviceInfo_NV_N)
  * @post_condition  none
  * @expected        OCAddPreconfigPin will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCAddPreconfigPinPreconfPIN_NV_N)
 {
     CommonUtil::launchApp(JUSTWORKS_SERVER7);
@@ -819,15 +832,17 @@ TEST_F(PMCsdkMotTest_btc, OCAddPreconfigPinPreconfPIN_NV_N)
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_motEnabledDevList, 1);
+    OCProvisionDev_t *targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *)
+                                  m_motEnabledDevList, 1);
 
-    if (!m_PMMotHelper.addPreconfigPIN(targetDev, NULL, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_INVALID_PARAM))
+    if (!m_PMMotHelper.addPreconfigPIN(targetDev, NULL, OXM_PRECONFIG_PIN_MAX_SIZE,
+                                       OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -852,7 +867,7 @@ TEST_F(PMCsdkMotTest_btc, OCAddPreconfigPinPreconfPIN_NV_N)
  * @post_condition  none
  * @expected        OCAddPreconfigPin will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCAddPreconfigPinPreconfPINLen_LOBV_N)
 {
     CommonUtil::launchApp(JUSTWORKS_SERVER7);
@@ -864,15 +879,17 @@ TEST_F(PMCsdkMotTest_btc, OCAddPreconfigPinPreconfPINLen_LOBV_N)
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_motEnabledDevList, 1);
+    OCProvisionDev_t *targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *)
+                                  m_motEnabledDevList, 1);
 
-    if (!m_PMMotHelper.addPreconfigPIN(targetDev, MOT_DEFAULT_PRE_CONFIG_PIN, MOT_PRECONFIG_PIN_ZERO_SIZE, OC_STACK_INVALID_PARAM))
+    if (!m_PMMotHelper.addPreconfigPIN(targetDev, MOT_DEFAULT_PRE_CONFIG_PIN,
+                                       MOT_PRECONFIG_PIN_ZERO_SIZE, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -899,7 +916,7 @@ TEST_F(PMCsdkMotTest_btc, OCAddPreconfigPinPreconfPINLen_LOBV_N)
  * @post_condition  none
  * @expected        OCDoMultipleOwnershipTransfer will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, DoMultipleOwnershipTransfer_RV_SRC_P)
 {
     CommonUtil::launchApp(JUSTWORKS_SERVER7);
@@ -911,22 +928,24 @@ TEST_F(PMCsdkMotTest_btc, DoMultipleOwnershipTransfer_RV_SRC_P)
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_motEnabledDevList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *)
+                                  m_motEnabledDevList, DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.addPreconfigPIN(targetDev, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
+    if (!m_PMMotHelper.addPreconfigPIN(targetDev, MOT_DEFAULT_PRE_CONFIG_PIN,
+                                       OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMMotHelper.doMultipleOwnershipTransfer((void*)MOT_CTX, m_motEnabledDevList,
-                    PMCsdkMotHelper::multipleOwnershipTransferCB, OC_STACK_OK))
+    if (!m_PMMotHelper.doMultipleOwnershipTransfer((void *)MOT_CTX, m_motEnabledDevList,
+            PMCsdkMotHelper::multipleOwnershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -953,7 +972,7 @@ TEST_F(PMCsdkMotTest_btc, DoMultipleOwnershipTransfer_RV_SRC_P)
  * @post_condition  none
  * @expected        OCDoMultipleOwnershipTransfer will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCDoMultipleOwnershipTransferCB_NV_N)
 {
     CommonUtil::launchApp(JUSTWORKS_SERVER7);
@@ -965,22 +984,24 @@ TEST_F(PMCsdkMotTest_btc, OCDoMultipleOwnershipTransferCB_NV_N)
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_motEnabledDevList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *)
+                                  m_motEnabledDevList, DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.addPreconfigPIN(targetDev, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
+    if (!m_PMMotHelper.addPreconfigPIN(targetDev, MOT_DEFAULT_PRE_CONFIG_PIN,
+                                       OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMMotHelper.doMultipleOwnershipTransfer((void*)MOT_CTX, m_motEnabledDevList,
-                    NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMMotHelper.doMultipleOwnershipTransfer((void *)MOT_CTX, m_motEnabledDevList,
+            NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -1007,7 +1028,7 @@ TEST_F(PMCsdkMotTest_btc, OCDoMultipleOwnershipTransferCB_NV_N)
  * @post_condition  none
  * @expected        OCDoMultipleOwnershipTransfer will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCDoMultipleOwnershipTransfer_NV_N)
 {
     CommonUtil::launchApp(JUSTWORKS_SERVER7);
@@ -1019,22 +1040,24 @@ TEST_F(PMCsdkMotTest_btc, OCDoMultipleOwnershipTransfer_NV_N)
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_motEnabledDevList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *)
+                                  m_motEnabledDevList, DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.addPreconfigPIN(targetDev, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
+    if (!m_PMMotHelper.addPreconfigPIN(targetDev, MOT_DEFAULT_PRE_CONFIG_PIN,
+                                       OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMMotHelper.doMultipleOwnershipTransfer((void*)MOT_CTX, NULL,
-                    PMCsdkMotHelper::multipleOwnershipTransferCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMMotHelper.doMultipleOwnershipTransfer((void *)MOT_CTX, NULL,
+            PMCsdkMotHelper::multipleOwnershipTransferCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -1062,7 +1085,7 @@ TEST_F(PMCsdkMotTest_btc, OCDoMultipleOwnershipTransfer_NV_N)
  * @post_condition  None
  * @expected        OCChangeMOTMode will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCChangeMOTMode_RV_SRC_P)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -1076,28 +1099,30 @@ TEST_F(PMCsdkMotTest_btc, OCChangeMOTMode_RV_SRC_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *) m_OwnList,
+                                  DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, targetDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, targetDev, OIC_MULTIPLE_OWNER_ENABLE,
+                                     PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -1125,7 +1150,7 @@ TEST_F(PMCsdkMotTest_btc, OCChangeMOTMode_RV_SRC_P)
  * @post_condition  None
  * @expected        OCChangeMOTMode will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCChangeMOTMode_CLU_P)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -1138,28 +1163,30 @@ TEST_F(PMCsdkMotTest_btc, OCChangeMOTMode_CLU_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *) m_OwnList,
+                                  DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, targetDev, OIC_MULTIPLE_OWNER_DISABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, targetDev, OIC_MULTIPLE_OWNER_DISABLE,
+                                     PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -1187,7 +1214,7 @@ TEST_F(PMCsdkMotTest_btc, OCChangeMOTMode_CLU_P)
  * @post_condition  None
  * @expected        OCChangeMOTMode will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCChangeMOTMode_CLU_UOBV_N)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -1200,28 +1227,31 @@ TEST_F(PMCsdkMotTest_btc, OCChangeMOTMode_CLU_UOBV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *) m_OwnList,
+                                  DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, targetDev, (const OicSecMomType_t) OIC_MULTIPLE_OWNER_UOBV, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, targetDev,
+                                     (const OicSecMomType_t) OIC_MULTIPLE_OWNER_UOBV, PMCsdkMotHelper::changeMOTModeCB,
+                                     OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -1249,7 +1279,7 @@ TEST_F(PMCsdkMotTest_btc, OCChangeMOTMode_CLU_UOBV_N)
  * @post_condition  None
  * @expected        OCChangeMOTMode will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCChangeMOTModeCb_NV_N)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -1262,28 +1292,30 @@ TEST_F(PMCsdkMotTest_btc, OCChangeMOTModeCb_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *) m_OwnList,
+                                  DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, targetDev, OIC_MULTIPLE_OWNER_ENABLE, NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, targetDev, OIC_MULTIPLE_OWNER_ENABLE,
+                                     NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -1311,7 +1343,7 @@ TEST_F(PMCsdkMotTest_btc, OCChangeMOTModeCb_NV_N)
  * @post_condition  None
  * @expected        OCChangeMOTMode will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCChangeMOTModeDev_NV_N)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -1324,26 +1356,27 @@ TEST_F(PMCsdkMotTest_btc, OCChangeMOTModeDev_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, NULL, OIC_MULTIPLE_OWNER_DISABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, NULL, OIC_MULTIPLE_OWNER_DISABLE,
+                                     PMCsdkMotHelper::changeMOTModeCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -1375,7 +1408,7 @@ TEST_F(PMCsdkMotTest_btc, OCChangeMOTModeDev_NV_N)
  * @post_condition  None
  * @expected        OCProvisionPreconfPin will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCProvisionPreconfPin_RV_SRC_P)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -1388,43 +1421,48 @@ TEST_F(PMCsdkMotTest_btc, OCProvisionPreconfPin_RV_SRC_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *) m_OwnList,
+                                       DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, targetOwnedDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, targetOwnedDev,
+                                     OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetMotDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_motEnabledDevList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetMotDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *)
+                                     m_motEnabledDevList, DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.provisionPreconfPin((void*)ctxProvisionPreconfPin, targetMotDev, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, PMCsdkMotHelper::provisionPreconfPinCB, OC_STACK_OK))
+    if (!m_PMMotHelper.provisionPreconfPin((void *)ctxProvisionPreconfPin, targetMotDev,
+                                           MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, PMCsdkMotHelper::provisionPreconfPinCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -1456,7 +1494,7 @@ TEST_F(PMCsdkMotTest_btc, OCProvisionPreconfPin_RV_SRC_P)
  * @post_condition  None
  * @expected        OCProvisionPreconfPin will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCProvisionPreconfPinTargetDeviceInfo_NV_N)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -1469,41 +1507,45 @@ TEST_F(PMCsdkMotTest_btc, OCProvisionPreconfPinTargetDeviceInfo_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *) m_OwnList,
+                                       DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, targetOwnedDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, targetOwnedDev,
+                                     OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMMotHelper.provisionPreconfPin((void*)ctxProvisionPreconfPin, NULL, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, PMCsdkMotHelper::provisionPreconfPinCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMMotHelper.provisionPreconfPin((void *)ctxProvisionPreconfPin, NULL,
+                                           MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, PMCsdkMotHelper::provisionPreconfPinCB,
+                                           OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -1535,7 +1577,7 @@ TEST_F(PMCsdkMotTest_btc, OCProvisionPreconfPinTargetDeviceInfo_NV_N)
  * @post_condition  None
  * @expected        OCProvisionPreconfPin will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCProvisionPreconfPinPreconfPin_NV_N)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -1548,43 +1590,47 @@ TEST_F(PMCsdkMotTest_btc, OCProvisionPreconfPinPreconfPin_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *) m_OwnList,
+                                       DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, targetOwnedDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, targetOwnedDev,
+                                     OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetMotDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_motEnabledDevList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetMotDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *)
+                                     m_motEnabledDevList, DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.provisionPreconfPin((void*)ctxProvisionPreconfPin, targetMotDev, NULL, OXM_PRECONFIG_PIN_MAX_SIZE, PMCsdkMotHelper::provisionPreconfPinCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMMotHelper.provisionPreconfPin((void *)ctxProvisionPreconfPin, targetMotDev, NULL,
+                                           OXM_PRECONFIG_PIN_MAX_SIZE, PMCsdkMotHelper::provisionPreconfPinCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -1616,7 +1662,7 @@ TEST_F(PMCsdkMotTest_btc, OCProvisionPreconfPinPreconfPin_NV_N)
  * @post_condition  None
  * @expected        OCProvisionPreconfPin will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCProvisionPreconfPinPreconfPinLen_LOBV_N)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -1629,43 +1675,48 @@ TEST_F(PMCsdkMotTest_btc, OCProvisionPreconfPinPreconfPinLen_LOBV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *) m_OwnList,
+                                       DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, targetOwnedDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, targetOwnedDev,
+                                     OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetMotDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_motEnabledDevList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetMotDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *)
+                                     m_motEnabledDevList, DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.provisionPreconfPin((void*)ctxProvisionPreconfPin, targetMotDev, MOT_DEFAULT_PRE_CONFIG_PIN, MOT_PRECONFIG_PIN_ZERO_SIZE, PMCsdkMotHelper::provisionPreconfPinCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMMotHelper.provisionPreconfPin((void *)ctxProvisionPreconfPin, targetMotDev,
+                                           MOT_DEFAULT_PRE_CONFIG_PIN, MOT_PRECONFIG_PIN_ZERO_SIZE, PMCsdkMotHelper::provisionPreconfPinCB,
+                                           OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -1697,7 +1748,7 @@ TEST_F(PMCsdkMotTest_btc, OCProvisionPreconfPinPreconfPinLen_LOBV_N)
  * @post_condition  None
  * @expected        OCProvisionPreconfPin will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCProvisionPreconfPinResultCallback_NV_N)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -1710,43 +1761,47 @@ TEST_F(PMCsdkMotTest_btc, OCProvisionPreconfPinResultCallback_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *) m_OwnList,
+                                       DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, targetOwnedDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, targetOwnedDev,
+                                     OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetMotDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_motEnabledDevList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetMotDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *)
+                                     m_motEnabledDevList, DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.provisionPreconfPin((void*)ctxProvisionPreconfPin, targetMotDev, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMMotHelper.provisionPreconfPin((void *)ctxProvisionPreconfPin, targetMotDev,
+                                           MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -1780,7 +1835,7 @@ TEST_F(PMCsdkMotTest_btc, OCProvisionPreconfPinResultCallback_NV_N)
  * @post_condition  None
  * @expected        OCSelectMOTMethod will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCSelectMOTMethod_RV_SRC_P)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -1794,49 +1849,55 @@ TEST_F(PMCsdkMotTest_btc, OCSelectMOTMethod_RV_SRC_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *) m_OwnList,
+                                       DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, targetOwnedDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, targetOwnedDev,
+                                     OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetMotDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_motEnabledDevList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetMotDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *)
+                                     m_motEnabledDevList, DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.provisionPreconfPin((void*)ctxProvisionPreconfPin, targetMotDev, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, PMCsdkMotHelper::provisionPreconfPinCB, OC_STACK_OK))
+    if (!m_PMMotHelper.provisionPreconfPin((void *)ctxProvisionPreconfPin, targetMotDev,
+                                           MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, PMCsdkMotHelper::provisionPreconfPinCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMMotHelper.selectMOTMethod((void*)ctxSelectMOTMethod, targetMotDev, OIC_PRECONFIG_PIN, PMCsdkMotHelper::selectMOTMethodCB, OC_STACK_OK))
+    if (!m_PMMotHelper.selectMOTMethod((void *)ctxSelectMOTMethod, targetMotDev, OIC_PRECONFIG_PIN,
+                                       PMCsdkMotHelper::selectMOTMethodCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -1870,7 +1931,7 @@ TEST_F(PMCsdkMotTest_btc, OCSelectMOTMethod_RV_SRC_P)
  * @post_condition  None
  * @expected        OCSelectMOTMethod will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCSelectMOTMethodDev_NV_N)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -1883,49 +1944,55 @@ TEST_F(PMCsdkMotTest_btc, OCSelectMOTMethodDev_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *) m_OwnList,
+                                       DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, targetOwnedDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, targetOwnedDev,
+                                     OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetMotDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_motEnabledDevList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetMotDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *)
+                                     m_motEnabledDevList, DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.provisionPreconfPin((void*)ctxProvisionPreconfPin, targetMotDev, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, PMCsdkMotHelper::provisionPreconfPinCB, OC_STACK_OK))
+    if (!m_PMMotHelper.provisionPreconfPin((void *)ctxProvisionPreconfPin, targetMotDev,
+                                           MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, PMCsdkMotHelper::provisionPreconfPinCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMMotHelper.selectMOTMethod((void*)ctxSelectMOTMethod, NULL, OIC_PRECONFIG_PIN, PMCsdkMotHelper::selectMOTMethodCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMMotHelper.selectMOTMethod((void *)ctxSelectMOTMethod, NULL, OIC_PRECONFIG_PIN,
+                                       PMCsdkMotHelper::selectMOTMethodCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -1959,7 +2026,7 @@ TEST_F(PMCsdkMotTest_btc, OCSelectMOTMethodDev_NV_N)
  * @post_condition  None
  * @expected        OCSelectMOTMethod will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, OCSelectMOTMethodCb_NV_N)
 {
     CommonUtil::launchApp(PRECONFIG_SERVER1);
@@ -1972,49 +2039,55 @@ TEST_F(PMCsdkMotTest_btc, OCSelectMOTMethodCb_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetOwnedDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *) m_OwnList,
+                                       DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.changeMOTMode((void*)ctxChangeMOTMode, targetOwnedDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMMotHelper.changeMOTMode((void *)ctxChangeMOTMode, targetOwnedDev,
+                                     OIC_MULTIPLE_OWNER_ENABLE, PMCsdkMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetMotDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_motEnabledDevList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetMotDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *)
+                                     m_motEnabledDevList, DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.provisionPreconfPin((void*)ctxProvisionPreconfPin, targetMotDev, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, PMCsdkMotHelper::provisionPreconfPinCB, OC_STACK_OK))
+    if (!m_PMMotHelper.provisionPreconfPin((void *)ctxProvisionPreconfPin, targetMotDev,
+                                           MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, PMCsdkMotHelper::provisionPreconfPinCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMMotHelper.selectMOTMethod((void*)ctxSelectMOTMethod, targetMotDev, OIC_PRECONFIG_PIN, NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMMotHelper.selectMOTMethod((void *)ctxSelectMOTMethod, targetMotDev, OIC_PRECONFIG_PIN,
+                                       NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
@@ -2043,7 +2116,7 @@ TEST_F(PMCsdkMotTest_btc, OCSelectMOTMethodCb_NV_N)
  * @post_condition  none
  * @expected        OCProvisionACL will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkMotTest_btc, ProvisionACLForMultipleOwnedDevices_RV_SRC_P)
 {
     CommonUtil::launchApp(JUSTWORKS_SERVER7);
@@ -2056,39 +2129,42 @@ TEST_F(PMCsdkMotTest_btc, ProvisionACLForMultipleOwnedDevices_RV_SRC_P)
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
+            &m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    OCProvisionDev_t* targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_motEnabledDevList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *)
+                                  m_motEnabledDevList, DEVICE_INDEX_ONE);
 
-    if (!m_PMMotHelper.addPreconfigPIN(targetDev, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
+    if (!m_PMMotHelper.addPreconfigPIN(targetDev, MOT_DEFAULT_PRE_CONFIG_PIN,
+                                       OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMMotHelper.doMultipleOwnershipTransfer((void*)MOT_CTX, m_motEnabledDevList,
-                    PMCsdkMotHelper::multipleOwnershipTransferCB, OC_STACK_OK))
+    if (!m_PMMotHelper.doMultipleOwnershipTransfer((void *)MOT_CTX, m_motEnabledDevList,
+            PMCsdkMotHelper::multipleOwnershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
 
     if (!m_PMMotHelper.discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT,
-                    &m_motOwnedDevList, OC_STACK_OK))
+            &m_motOwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMMotHelper.getFailureMessage());
     }
 
-    OCProvisionDev_t* targetMOTDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) m_motOwnedDevList, DEVICE_INDEX_ONE);
+    OCProvisionDev_t *targetMOTDev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t *)
+                                     m_motOwnedDevList, DEVICE_INDEX_ONE);
     OicUuid_t deviceUuid = targetMOTDev->doxm->subOwners->uuid;
 
     m_Acl = createAclForLEDAccess(&deviceUuid);
 
-    if (!m_PMHelper.provisionACL((void*)g_ctx, m_motOwnedDevList, m_Acl,
-                    m_PMHelper.provisionAclCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionACL((void *)g_ctx, m_motOwnedDevList, m_Acl,
+                                 m_PMHelper.provisionAclCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }

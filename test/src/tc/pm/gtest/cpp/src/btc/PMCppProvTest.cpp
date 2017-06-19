@@ -24,40 +24,40 @@
 
 class PMCppProvTest_btc: public ::testing::Test
 {
-protected:
-    PMCppHelper m_PMCppHelper;
-    DeviceList_t m_UnownedDevList, m_OwnedDevList;
-    OicSecAcl_t *m_acl1, *m_acl2;
+    protected:
+        PMCppHelper m_PMCppHelper;
+        DeviceList_t m_UnownedDevList, m_OwnedDevList;
+        OicSecAcl_t *m_acl1, *m_acl2;
 
-    virtual void SetUp()
-    {
-        CommonTestUtil::runCommonTCSetUpPart();
-        CommonUtil::killApp(KILL_SERVERS);
-        CommonUtil::waitInSecond(DELAY_MEDIUM);
-        PMCppUtilityHelper::removeAllResFile();
-        CommonUtil::waitInSecond(DELAY_MEDIUM);
-        CommonUtil::rmFile(DATABASE_PDM);
-        CommonUtil::rmFile(JUSTWORKS_SERVER1_CBOR);
-        CommonUtil::rmFile(JUSTWORKS_SERVER2_CBOR);
-        CommonUtil::rmFile(CLIENT_CBOR);
-        CommonUtil::waitInSecond(DELAY_MEDIUM);
-        CommonUtil::copyFile(JUSTWORKS_SERVER1_CBOR_BACKUP, JUSTWORKS_SERVER1_CBOR);
-        CommonUtil::copyFile(JUSTWORKS_SERVER2_CBOR_BACKUP, JUSTWORKS_SERVER2_CBOR);
-        CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
-        CommonUtil::launchApp(JUSTWORKS_SERVER1);
-        CommonUtil::launchApp(JUSTWORKS_SERVER2);
-        CommonUtil::waitInSecond(DELAY_MEDIUM);
-        m_UnownedDevList.clear();
-        m_OwnedDevList.clear();
-        m_acl1 = NULL;
-        m_acl2 = NULL;
-    }
+        virtual void SetUp()
+        {
+            CommonTestUtil::runCommonTCSetUpPart();
+            CommonUtil::killApp(KILL_SERVERS);
+            CommonUtil::waitInSecond(DELAY_MEDIUM);
+            PMCppUtilityHelper::removeAllResFile();
+            CommonUtil::waitInSecond(DELAY_MEDIUM);
+            CommonUtil::rmFile(DATABASE_PDM);
+            CommonUtil::rmFile(JUSTWORKS_SERVER1_CBOR);
+            CommonUtil::rmFile(JUSTWORKS_SERVER2_CBOR);
+            CommonUtil::rmFile(CLIENT_CBOR);
+            CommonUtil::waitInSecond(DELAY_MEDIUM);
+            CommonUtil::copyFile(JUSTWORKS_SERVER1_CBOR_BACKUP, JUSTWORKS_SERVER1_CBOR);
+            CommonUtil::copyFile(JUSTWORKS_SERVER2_CBOR_BACKUP, JUSTWORKS_SERVER2_CBOR);
+            CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
+            CommonUtil::launchApp(JUSTWORKS_SERVER1);
+            CommonUtil::launchApp(JUSTWORKS_SERVER2);
+            CommonUtil::waitInSecond(DELAY_MEDIUM);
+            m_UnownedDevList.clear();
+            m_OwnedDevList.clear();
+            m_acl1 = NULL;
+            m_acl2 = NULL;
+        }
 
-    virtual void TearDown()
-    {
-        CommonTestUtil::runCommonTCTearDownPart();
-        CommonUtil::killApp(KILL_SERVERS);
-    }
+        virtual void TearDown()
+        {
+            CommonTestUtil::runCommonTCTearDownPart();
+            CommonUtil::killApp(KILL_SERVERS);
+        }
 };
 
 /**
@@ -79,37 +79,38 @@ protected:
  * @post_condition  None
  * @expected        provisionACL will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, ProvisionAcl_RV_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    if(!m_PMCppHelper.provisionACL(m_OwnedDevList, m_acl1, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionACL(m_OwnedDevList, m_acl1, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -136,34 +137,36 @@ TEST_F(PMCppProvTest_btc, ProvisionAcl_RV_P)
  * @post_condition  None
  * @expected        provisionACL will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, ProvisionAcl_NV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.provisionACL(m_OwnedDevList, NULL, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppHelper.provisionACL(m_OwnedDevList, NULL, PMCppHelper::provisionCB,
+                                    OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -190,43 +193,44 @@ TEST_F(PMCppProvTest_btc, ProvisionAcl_NV_N)
  * @post_condition  None
  * @expected        provisionACL will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, ProvisionAclCB_NV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    if(!m_PMCppHelper.provisionACL(m_OwnedDevList, m_acl1, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionACL(m_OwnedDevList, m_acl1, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.provisionACL(m_OwnedDevList, m_acl1, NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMCppHelper.provisionACL(m_OwnedDevList, m_acl1, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -256,34 +260,35 @@ TEST_F(PMCppProvTest_btc, ProvisionAclCB_NV_N)
  * @post_condition  None
  * @expected        saveACL will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, saveACL_SRC_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
 //    if(!m_PMCppHelper.provisionACL(m_OwnedDevList, m_acl1, PMCppHelper::provisionCB, OC_STACK_OK))
@@ -291,7 +296,7 @@ TEST_F(PMCppProvTest_btc, saveACL_SRC_P)
 //        SET_FAILURE(m_PMCppHelper.getFailureMessage());
 //    }
 
-    if(!m_PMCppHelper.saveACL(m_acl1, OC_STACK_OK))
+    if (!m_PMCppHelper.saveACL(m_acl1, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -321,42 +326,43 @@ TEST_F(PMCppProvTest_btc, saveACL_SRC_P)
  * @post_condition  None
  * @expected        saveACL will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, saveACL_NV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    if(!m_PMCppHelper.provisionACL(m_OwnedDevList, m_acl1, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionACL(m_OwnedDevList, m_acl1, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
 
-    if(!m_PMCppHelper.saveACL(NULL, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppHelper.saveACL(NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -385,42 +391,44 @@ TEST_F(PMCppProvTest_btc, saveACL_NV_N)
  * @post_condition  None
  * @expected        provisionPairwiseDevices will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, ProvisionPairwiseDevicesKeySize_LBV_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     Credential cred(SYMMETRIC_PAIR_WISE_KEY , OWNER_PSK_LENGTH_128);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -450,42 +458,44 @@ TEST_F(PMCppProvTest_btc, ProvisionPairwiseDevicesKeySize_LBV_P)
  * @post_condition  None
  * @expected        provisionPairwiseDevices will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, ProvisionPairwiseDevicesKeySize_FSV_UBV_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     Credential cred(SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_256);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -515,44 +525,46 @@ TEST_F(PMCppProvTest_btc, ProvisionPairwiseDevicesKeySize_FSV_UBV_P)
  * @post_condition  None
  * @expected        provisionPairwiseDevices will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, ProvisionPairwiseDevicesKeySize_LOBV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128-1;
+    size_t keySize = OWNER_PSK_LENGTH_128 - 1;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), m_acl2, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            m_acl2, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -582,44 +594,46 @@ TEST_F(PMCppProvTest_btc, ProvisionPairwiseDevicesKeySize_LOBV_N)
  * @post_condition  None
  * @expected        provisionPairwiseDevices will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, ProvisionPairwiseDevicesKeySize_UOBV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_256+1;
+    size_t keySize = OWNER_PSK_LENGTH_256 + 1;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), m_acl2, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            m_acl2, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -649,44 +663,46 @@ TEST_F(PMCppProvTest_btc, ProvisionPairwiseDevicesKeySize_UOBV_N)
  * @post_condition  None
  * @expected        provisionPairwiseDevices will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, ProvisionPairwiseDevicesCB_NV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_256;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), m_acl2, NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            m_acl2, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -715,41 +731,43 @@ TEST_F(PMCppProvTest_btc, ProvisionPairwiseDevicesCB_NV_N)
  * @post_condition  None
  * @expected        provisionPairwiseDevices will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, ProvisionPairwiseDevicesm_acl1_NV_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_256;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, NULL, *m_OwnedDevList[1].get(), m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, NULL, *m_OwnedDevList[1].get(),
+            m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -777,41 +795,43 @@ TEST_F(PMCppProvTest_btc, ProvisionPairwiseDevicesm_acl1_NV_P)
  * @post_condition  None
  * @expected        provisionPairwiseDevices will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, ProvisionPairwiseDevicesm_acl2_NV_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_256;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), NULL, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            NULL, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -842,44 +862,46 @@ TEST_F(PMCppProvTest_btc, ProvisionPairwiseDevicesm_acl2_NV_P)
  * @post_condition  None
  * @expected        getLinkedDevices will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, GetLinkedDevices_FSV_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -887,7 +909,7 @@ TEST_F(PMCppProvTest_btc, GetLinkedDevices_FSV_P)
 
     UuidList_t uuidList1;
 
-    if(!m_PMCppHelper.getLinkedDevices(m_OwnedDevList, uuidList1, OC_STACK_OK))
+    if (!m_PMCppHelper.getLinkedDevices(m_OwnedDevList, uuidList1, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -920,50 +942,53 @@ TEST_F(PMCppProvTest_btc, GetLinkedDevices_FSV_P)
  * @post_condition  None
  * @expected        unlinkDevices will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, UnlinkDevices_RV_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.unlinkDevices(m_OwnedDevList, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.unlinkDevices(m_OwnedDevList, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB,
+                                     OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -995,50 +1020,53 @@ TEST_F(PMCppProvTest_btc, UnlinkDevices_RV_P)
  * @post_condition  None
  * @expected        unlinkDevices will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, UnlinkDevicesCB_NV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.unlinkDevices(m_OwnedDevList, *m_OwnedDevList[1].get(), NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMCppHelper.unlinkDevices(m_OwnedDevList, *m_OwnedDevList[1].get(), NULL,
+                                     OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -1070,50 +1098,53 @@ TEST_F(PMCppProvTest_btc, UnlinkDevicesCB_NV_N)
  * @post_condition  None
  * @expected        removeDevice will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, RemoveDeviceTime_RV_SRC_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.removeDevice(m_OwnedDevList, DISCOVERY_TIMEOUT, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.removeDevice(m_OwnedDevList, DISCOVERY_TIMEOUT, PMCppHelper::provisionCB,
+                                    OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -1145,50 +1176,53 @@ TEST_F(PMCppProvTest_btc, RemoveDeviceTime_RV_SRC_P)
  * @post_condition  None
  * @expected        removeDevice will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, RemoveDeviceTime_LBV_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.removeDevice(m_OwnedDevList, DISCOVERY_TIMEOUT_ONE, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.removeDevice(m_OwnedDevList, DISCOVERY_TIMEOUT_ONE, PMCppHelper::provisionCB,
+                                    OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -1220,50 +1254,53 @@ TEST_F(PMCppProvTest_btc, RemoveDeviceTime_LBV_P)
  * @post_condition  None
  * @expected        removeDevice will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, RemoveDeviceTime_LOBV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.removeDevice(m_OwnedDevList, DISCOVERY_TIMEOUT_ZERO, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppHelper.removeDevice(m_OwnedDevList, DISCOVERY_TIMEOUT_ZERO, PMCppHelper::provisionCB,
+                                    OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -1295,50 +1332,52 @@ TEST_F(PMCppProvTest_btc, RemoveDeviceTime_LOBV_N)
  * @post_condition  None
  * @expected        removeDevice will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, RemoveDeviceCB_NV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.removeDevice(m_OwnedDevList, DISCOVERY_TIMEOUT, NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMCppHelper.removeDevice(m_OwnedDevList, DISCOVERY_TIMEOUT, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -1370,50 +1409,53 @@ TEST_F(PMCppProvTest_btc, RemoveDeviceCB_NV_N)
  * @post_condition  None
  * @expected        removeDeviceWithUuid will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, RemoveDeviceTimeWithUuid_RV_SRC_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.removeDeviceWithUuid(DISCOVERY_TIMEOUT, m_OwnedDevList[0]->getDeviceID(),PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.removeDeviceWithUuid(DISCOVERY_TIMEOUT, m_OwnedDevList[0]->getDeviceID(),
+                                            PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -1445,50 +1487,53 @@ TEST_F(PMCppProvTest_btc, RemoveDeviceTimeWithUuid_RV_SRC_P)
  * @post_condition  None
  * @expected        removeDeviceWithUuid will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, RemoveDeviceTimeWithUuid_LBV_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.removeDeviceWithUuid(DISCOVERY_TIMEOUT_ONE, m_OwnedDevList[0]->getDeviceID(),PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.removeDeviceWithUuid(DISCOVERY_TIMEOUT_ONE, m_OwnedDevList[0]->getDeviceID(),
+                                            PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -1520,50 +1565,53 @@ TEST_F(PMCppProvTest_btc, RemoveDeviceTimeWithUuid_LBV_P)
  * @post_condition  None
  * @expected        removeDeviceWithUuid will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, RemoveDeviceTimeWithUuid_LOBV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.removeDeviceWithUuid(DISCOVERY_TIMEOUT_ZERO, m_OwnedDevList[0]->getDeviceID(),PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppHelper.removeDeviceWithUuid(DISCOVERY_TIMEOUT_ZERO, m_OwnedDevList[0]->getDeviceID(),
+                                            PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -1595,50 +1643,53 @@ TEST_F(PMCppProvTest_btc, RemoveDeviceTimeWithUuid_LOBV_N)
  * @post_condition  None
  * @expected        removeDeviceWithUuid will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, RemoveDeviceTimeWithUuid_NV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.removeDeviceWithUuid(DISCOVERY_TIMEOUT,EMPTY_STRING,PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppHelper.removeDeviceWithUuid(DISCOVERY_TIMEOUT, EMPTY_STRING, PMCppHelper::provisionCB,
+                                            OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -1670,50 +1721,53 @@ TEST_F(PMCppProvTest_btc, RemoveDeviceTimeWithUuid_NV_N)
  * @post_condition  None
  * @expected        removeDeviceWithUuid will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppProvTest_btc, RemoveDeviceTimeWithUuidCB_NV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    m_acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl2 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl2, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(), m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, m_acl1, *m_OwnedDevList[1].get(),
+            m_acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.removeDeviceWithUuid(DISCOVERY_TIMEOUT, m_OwnedDevList[0]->getDeviceID(),NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMCppHelper.removeDeviceWithUuid(DISCOVERY_TIMEOUT, m_OwnedDevList[0]->getDeviceID(), NULL,
+                                            OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }

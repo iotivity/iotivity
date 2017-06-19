@@ -24,34 +24,34 @@
 
 class PMCsdkCertTest_btc: public ::testing::Test
 {
-protected:
+    protected:
 
-    OCProvisionDev_t *m_OwnList, *m_UnownList;
-    OicSecAcl_t *m_Acl, *m_Acl1, *m_Acl2;
-    PMCsdkHelper m_PMHelper;
-    PMCsdkCertHelper m_PMCertHelper;
+        OCProvisionDev_t *m_OwnList, *m_UnownList;
+        OicSecAcl_t *m_Acl, *m_Acl1, *m_Acl2;
+        PMCsdkHelper m_PMHelper;
+        PMCsdkCertHelper m_PMCertHelper;
 
-    virtual void SetUp()
-    {
-        CommonTestUtil::runCommonTCSetUpPart();
-        CommonUtil::killApp(KILL_SERVERS);
-        CommonUtil::waitInSecond(DELAY_MEDIUM);
-        PMCsdkUtilityHelper::removeAllResFile();
-        CommonUtil::waitInSecond(DELAY_LONG);
-        CommonUtil::copyFile(ROOT_CERT_FILE_BACKUP, ROOT_CERT_FILE);
-        CommonUtil::copyFile(JUSTWORKS_SERVER1_CBOR_BACKUP, JUSTWORKS_SERVER1_CBOR);
-        CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
-        CommonUtil::launchApp(JUSTWORKS_SERVER1);
-        CommonUtil::waitInSecond(DELAY_LONG);
-        m_UnownList = NULL;
-        m_OwnList = NULL;
-    }
+        virtual void SetUp()
+        {
+            CommonTestUtil::runCommonTCSetUpPart();
+            CommonUtil::killApp(KILL_SERVERS);
+            CommonUtil::waitInSecond(DELAY_MEDIUM);
+            PMCsdkUtilityHelper::removeAllResFile();
+            CommonUtil::waitInSecond(DELAY_LONG);
+            CommonUtil::copyFile(ROOT_CERT_FILE_BACKUP, ROOT_CERT_FILE);
+            CommonUtil::copyFile(JUSTWORKS_SERVER1_CBOR_BACKUP, JUSTWORKS_SERVER1_CBOR);
+            CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
+            CommonUtil::launchApp(JUSTWORKS_SERVER1);
+            CommonUtil::waitInSecond(DELAY_LONG);
+            m_UnownList = NULL;
+            m_OwnList = NULL;
+        }
 
-    virtual void TearDown()
-    {
-        CommonTestUtil::runCommonTCTearDownPart();
-        CommonUtil::killApp(KILL_SERVERS);
-    }
+        virtual void TearDown()
+        {
+            CommonTestUtil::runCommonTCTearDownPart();
+            CommonUtil::killApp(KILL_SERVERS);
+        }
 };
 
 /**
@@ -70,7 +70,7 @@ protected:
  * @post_condition  None
  * @expected        OCRegisterTrustCertChainNotifier will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, RegisterTrustCertChainNotifier_SRC_RV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -79,7 +79,8 @@ TEST_F(PMCsdkCertTest_btc, RegisterTrustCertChainNotifier_SRC_RV_P)
         return;
     }
 
-    if (!m_PMCertHelper.registerTrustCertChainNotifier((void*)CTX_PROV_TRUST_CERT, PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
+    if (!m_PMCertHelper.registerTrustCertChainNotifier((void *)CTX_PROV_TRUST_CERT,
+            PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -102,7 +103,7 @@ TEST_F(PMCsdkCertTest_btc, RegisterTrustCertChainNotifier_SRC_RV_P)
  * @post_condition  None
  * @expected        OCRegisterTrustCertChainNotifier will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, RegisterTrustCertChainNotifierCb_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -111,7 +112,8 @@ TEST_F(PMCsdkCertTest_btc, RegisterTrustCertChainNotifierCb_NV_N)
         return;
     }
 
-    if (!m_PMCertHelper.registerTrustCertChainNotifier((void*)CTX_PROV_TRUST_CERT, NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMCertHelper.registerTrustCertChainNotifier((void *)CTX_PROV_TRUST_CERT, NULL,
+            OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -136,7 +138,7 @@ TEST_F(PMCsdkCertTest_btc, RegisterTrustCertChainNotifierCb_NV_N)
  * @post_condition  None
  * @expected        OCRemoveTrustCertChainNotifier will throw no exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, RemoveTrustCertChainNotifier_SRC_RV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -145,7 +147,8 @@ TEST_F(PMCsdkCertTest_btc, RemoveTrustCertChainNotifier_SRC_RV_P)
         return;
     }
 
-    if (!m_PMCertHelper.registerTrustCertChainNotifier((void*)CTX_PROV_TRUST_CERT, PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
+    if (!m_PMCertHelper.registerTrustCertChainNotifier((void *)CTX_PROV_TRUST_CERT,
+            PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -175,7 +178,7 @@ TEST_F(PMCsdkCertTest_btc, RemoveTrustCertChainNotifier_SRC_RV_P)
  * @post_condition  None
  * @expected        OCSaveTrustCertChain will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, SaveTrustCertChain_SRC_RV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -184,7 +187,8 @@ TEST_F(PMCsdkCertTest_btc, SaveTrustCertChain_SRC_RV_P)
         return;
     }
 
-    if (!m_PMCertHelper.registerTrustCertChainNotifier((void*)CTX_PROV_TRUST_CERT, PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
+    if (!m_PMCertHelper.registerTrustCertChainNotifier((void *)CTX_PROV_TRUST_CERT,
+            PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -196,7 +200,7 @@ TEST_F(PMCsdkCertTest_btc, SaveTrustCertChain_SRC_RV_P)
 
     uint16_t g_credId = 0;
     if (!m_PMCertHelper.saveTrustCertChain(g_trustCertChainArray.data, g_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
+                                           OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -221,7 +225,7 @@ TEST_F(PMCsdkCertTest_btc, SaveTrustCertChain_SRC_RV_P)
  * @post_condition  None
  * @expected        OCSaveTrustCertChain will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, SaveTrustCertChainCrtChain_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -230,7 +234,8 @@ TEST_F(PMCsdkCertTest_btc, SaveTrustCertChainCrtChain_NV_N)
         return;
     }
 
-    if (!m_PMCertHelper.registerTrustCertChainNotifier((void*)CTX_PROV_TRUST_CERT, PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
+    if (!m_PMCertHelper.registerTrustCertChainNotifier((void *)CTX_PROV_TRUST_CERT,
+            PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -242,7 +247,7 @@ TEST_F(PMCsdkCertTest_btc, SaveTrustCertChainCrtChain_NV_N)
 
     uint16_t g_credId = 0;
     if (!m_PMCertHelper.saveTrustCertChain(NULL, g_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &g_credId, OC_STACK_INVALID_PARAM))
+                                           OIC_ENCODING_PEM, &g_credId, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -267,7 +272,7 @@ TEST_F(PMCsdkCertTest_btc, SaveTrustCertChainCrtChain_NV_N)
  * @post_condition  None
  * @expected        OCSaveTrustCertChain will return OC_STACK_NO_MEMORY
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, SaveTrustCertChainCrtChainLen_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -276,7 +281,8 @@ TEST_F(PMCsdkCertTest_btc, SaveTrustCertChainCrtChainLen_NV_N)
         return;
     }
 
-    if (!m_PMCertHelper.registerTrustCertChainNotifier((void*)CTX_PROV_TRUST_CERT, PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
+    if (!m_PMCertHelper.registerTrustCertChainNotifier((void *)CTX_PROV_TRUST_CERT,
+            PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -288,7 +294,7 @@ TEST_F(PMCsdkCertTest_btc, SaveTrustCertChainCrtChainLen_NV_N)
 
     uint16_t g_credId = 0;
     if (!m_PMCertHelper.saveTrustCertChain(g_trustCertChainArray.data, -1,
-                    OIC_ENCODING_PEM, &g_credId, OC_STACK_NO_MEMORY))
+                                           OIC_ENCODING_PEM, &g_credId, OC_STACK_NO_MEMORY))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -315,7 +321,7 @@ TEST_F(PMCsdkCertTest_btc, SaveTrustCertChainCrtChainLen_NV_N)
  * @post_condition  None
  * @expected        OCReadTrustCertChain will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, ReadTrustCertChain_SRC_RV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -324,7 +330,8 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChain_SRC_RV_P)
         return;
     }
 
-    if (!m_PMCertHelper.registerTrustCertChainNotifier((void*)CTX_PROV_TRUST_CERT, PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
+    if (!m_PMCertHelper.registerTrustCertChainNotifier((void *)CTX_PROV_TRUST_CERT,
+            PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -336,7 +343,7 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChain_SRC_RV_P)
 
     uint16_t g_credId = 0;
     if (!m_PMCertHelper.saveTrustCertChain(g_trustCertChainArray.data, g_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
+                                           OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -344,7 +351,8 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChain_SRC_RV_P)
     ByteArray_t g_trustCertChainArray1 =
     {   0, 0};
 
-    if (!m_PMCertHelper.readTrustCertChain(g_credId, &g_trustCertChainArray1.data, &g_trustCertChainArray1.len, OC_STACK_OK))
+    if (!m_PMCertHelper.readTrustCertChain(g_credId, &g_trustCertChainArray1.data,
+                                           &g_trustCertChainArray1.len, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -371,7 +379,7 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChain_SRC_RV_P)
  * @post_condition  None
  * @expected        OCReadTrustCertChain will return OC_STACK_ERROR
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, ReadTrustCertChainCredId_LOBV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -380,7 +388,8 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChainCredId_LOBV_N)
         return;
     }
 
-    if (!m_PMCertHelper.registerTrustCertChainNotifier((void*)CTX_PROV_TRUST_CERT, PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
+    if (!m_PMCertHelper.registerTrustCertChainNotifier((void *)CTX_PROV_TRUST_CERT,
+            PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -392,7 +401,7 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChainCredId_LOBV_N)
 
     uint16_t g_credId = 0;
     if (!m_PMCertHelper.saveTrustCertChain(g_trustCertChainArray.data, g_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
+                                           OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -400,7 +409,8 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChainCredId_LOBV_N)
     ByteArray_t g_trustCertChainArray1 =
     {   0, 0};
 
-    if (!m_PMCertHelper.readTrustCertChain(-1, &g_trustCertChainArray1.data, &g_trustCertChainArray1.len, OC_STACK_ERROR))
+    if (!m_PMCertHelper.readTrustCertChain(-1, &g_trustCertChainArray1.data,
+                                           &g_trustCertChainArray1.len, OC_STACK_ERROR))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -427,7 +437,7 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChainCredId_LOBV_N)
  * @post_condition  None
  * @expected        OCReadTrustCertChain will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, ReadTrustCertChainCertChain_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -436,7 +446,8 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChainCertChain_NV_N)
         return;
     }
 
-    if (!m_PMCertHelper.registerTrustCertChainNotifier((void*)CTX_PROV_TRUST_CERT, PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
+    if (!m_PMCertHelper.registerTrustCertChainNotifier((void *)CTX_PROV_TRUST_CERT,
+            PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -448,7 +459,7 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChainCertChain_NV_N)
 
     uint16_t g_credId = 0;
     if (!m_PMCertHelper.saveTrustCertChain(g_trustCertChainArray.data, g_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
+                                           OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -456,7 +467,8 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChainCertChain_NV_N)
     ByteArray_t g_trustCertChainArray1 =
     {   0, 0};
 
-    if (!m_PMCertHelper.readTrustCertChain(g_credId, NULL, &g_trustCertChainArray1.len, OC_STACK_INVALID_PARAM))
+    if (!m_PMCertHelper.readTrustCertChain(g_credId, NULL, &g_trustCertChainArray1.len,
+                                           OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -483,7 +495,7 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChainCertChain_NV_N)
  * @post_condition  None
  * @expected        OCReadTrustCertChain will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, ReadTrustCertChainCertChainSize_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -492,7 +504,8 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChainCertChainSize_NV_N)
         return;
     }
 
-    if (!m_PMCertHelper.registerTrustCertChainNotifier((void*)CTX_PROV_TRUST_CERT, PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
+    if (!m_PMCertHelper.registerTrustCertChainNotifier((void *)CTX_PROV_TRUST_CERT,
+            PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -504,7 +517,7 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChainCertChainSize_NV_N)
 
     uint16_t g_credId = 0;
     if (!m_PMCertHelper.saveTrustCertChain(g_trustCertChainArray.data, g_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
+                                           OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -512,7 +525,8 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChainCertChainSize_NV_N)
     ByteArray_t g_trustCertChainArray1 =
     {   0, 0};
 
-    if (!m_PMCertHelper.readTrustCertChain(g_credId, &g_trustCertChainArray1.data, NULL, OC_STACK_INVALID_PARAM))
+    if (!m_PMCertHelper.readTrustCertChain(g_credId, &g_trustCertChainArray1.data, NULL,
+                                           OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -540,7 +554,7 @@ TEST_F(PMCsdkCertTest_btc, ReadTrustCertChainCertChainSize_NV_N)
  * @post_condition  None
  * @expected        OCProvisionTrustCertChain will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, ProvisionTrustCertChain_SRC_RV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -550,26 +564,27 @@ TEST_F(PMCsdkCertTest_btc, ProvisionTrustCertChain_SRC_RV_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCertHelper.registerTrustCertChainNotifier((void*)CTX_PROV_TRUST_CERT, PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
+    if (!m_PMCertHelper.registerTrustCertChainNotifier((void *)CTX_PROV_TRUST_CERT,
+            PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -581,14 +596,15 @@ TEST_F(PMCsdkCertTest_btc, ProvisionTrustCertChain_SRC_RV_P)
 
     uint16_t g_credId = 0;
     if (!m_PMCertHelper.saveTrustCertChain(g_trustCertChainArray.data, g_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
+                                           OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
 
     OCProvisionDev_t *device1 = m_OwnList;
 
-    if (!m_PMCertHelper.provisionTrustCertChain((void*)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY, g_credId, device1, PMCsdkCertHelper::provisionCertCB, OC_STACK_OK))
+    if (!m_PMCertHelper.provisionTrustCertChain((void *)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY,
+            g_credId, device1, PMCsdkCertHelper::provisionCertCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -616,7 +632,7 @@ TEST_F(PMCsdkCertTest_btc, ProvisionTrustCertChain_SRC_RV_P)
  * @post_condition  None
  * @expected        OCProvisionTrustCertChain will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, ProvisionTrustCertChainDev_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -626,26 +642,27 @@ TEST_F(PMCsdkCertTest_btc, ProvisionTrustCertChainDev_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCertHelper.provisionTrustCertChain((void*)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY, 1, NULL, PMCsdkCertHelper::provisionCertCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCertHelper.provisionTrustCertChain((void *)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY, 1,
+            NULL, PMCsdkCertHelper::provisionCertCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -673,7 +690,7 @@ TEST_F(PMCsdkCertTest_btc, ProvisionTrustCertChainDev_NV_N)
  * @post_condition  None
  * @expected        OCProvisionTrustCertChain will return OC_STACK_NO_RESOURCE
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, ProvisionTrustCertChainCredId_LOBV_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -683,20 +700,20 @@ TEST_F(PMCsdkCertTest_btc, ProvisionTrustCertChainCredId_LOBV_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -704,7 +721,8 @@ TEST_F(PMCsdkCertTest_btc, ProvisionTrustCertChainCredId_LOBV_NV_N)
 
     OCProvisionDev_t *device1 = m_OwnList;
 
-    if (!m_PMCertHelper.provisionTrustCertChain((void*)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY, CRED_ID_NEGATIVE, device1, PMCsdkCertHelper::provisionCertCB, OC_STACK_NO_RESOURCE))
+    if (!m_PMCertHelper.provisionTrustCertChain((void *)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY,
+            CRED_ID_NEGATIVE, device1, PMCsdkCertHelper::provisionCertCB, OC_STACK_NO_RESOURCE))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -732,7 +750,7 @@ TEST_F(PMCsdkCertTest_btc, ProvisionTrustCertChainCredId_LOBV_NV_N)
  * @post_condition  None
  * @expected        OCProvisionTrustCertChain will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, ProvisionTrustCertChainCb_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -742,20 +760,20 @@ TEST_F(PMCsdkCertTest_btc, ProvisionTrustCertChainCb_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -763,7 +781,8 @@ TEST_F(PMCsdkCertTest_btc, ProvisionTrustCertChainCb_NV_N)
 
     OCProvisionDev_t *device1 = m_OwnList;
 
-    if (!m_PMCertHelper.provisionTrustCertChain((void*)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY, 1, device1, NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMCertHelper.provisionTrustCertChain((void *)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY, 1,
+            device1, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -799,7 +818,7 @@ TEST_F(PMCsdkCertTest_btc, ProvisionTrustCertChainCb_NV_N)
  * @post_condition  None
  * @expected        OCProvisionCRL will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, ProvisionCRL_SRC_RV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -809,26 +828,27 @@ TEST_F(PMCsdkCertTest_btc, ProvisionCRL_SRC_RV_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCertHelper.registerTrustCertChainNotifier((void*)CTX_PROV_TRUST_CERT, PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
+    if (!m_PMCertHelper.registerTrustCertChainNotifier((void *)CTX_PROV_TRUST_CERT,
+            PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -840,14 +860,15 @@ TEST_F(PMCsdkCertTest_btc, ProvisionCRL_SRC_RV_P)
 
     uint16_t g_credId = 0;
     if (!m_PMCertHelper.saveTrustCertChain(g_trustCertChainArray.data, g_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
+                                           OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
 
     OCProvisionDev_t *device1 = m_OwnList;
 
-    if (!m_PMCertHelper.provisionTrustCertChain((void*)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY, g_credId, device1, PMCsdkCertHelper::provisionCertCB, OC_STACK_OK))
+    if (!m_PMCertHelper.provisionTrustCertChain((void *)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY,
+            g_credId, device1, PMCsdkCertHelper::provisionCertCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -855,15 +876,16 @@ TEST_F(PMCsdkCertTest_btc, ProvisionCRL_SRC_RV_P)
     ByteArray_t g_trustCertChainArray1 =
     {   0, 0};
 
-    if (!m_PMCertHelper.readTrustCertChain(g_credId, &g_trustCertChainArray1.data, &g_trustCertChainArray1.len, OC_STACK_OK))
+    if (!m_PMCertHelper.readTrustCertChain(g_credId, &g_trustCertChainArray1.data,
+                                           &g_trustCertChainArray1.len, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
 
     OicSecCrl_t *crl = GetCRLResource();
 
-    if (!m_PMCertHelper.provisionCRL((void*)CTX_PROV_TRUST_CERT, device1,
-                    crl, PMCsdkCertHelper::provisionCertCB, OC_STACK_OK))
+    if (!m_PMCertHelper.provisionCRL((void *)CTX_PROV_TRUST_CERT, device1,
+                                     crl, PMCsdkCertHelper::provisionCertCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -899,7 +921,7 @@ TEST_F(PMCsdkCertTest_btc, ProvisionCRL_SRC_RV_P)
  * @post_condition  None
  * @expected        OCProvisionCRL will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, ProvisionCRLCb_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -909,26 +931,27 @@ TEST_F(PMCsdkCertTest_btc, ProvisionCRLCb_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCertHelper.registerTrustCertChainNotifier((void*)CTX_PROV_TRUST_CERT, PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
+    if (!m_PMCertHelper.registerTrustCertChainNotifier((void *)CTX_PROV_TRUST_CERT,
+            PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -940,14 +963,15 @@ TEST_F(PMCsdkCertTest_btc, ProvisionCRLCb_NV_N)
 
     uint16_t g_credId = 0;
     if (!m_PMCertHelper.saveTrustCertChain(g_trustCertChainArray.data, g_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
+                                           OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
 
     OCProvisionDev_t *device1 = m_OwnList;
 
-    if (!m_PMCertHelper.provisionTrustCertChain((void*)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY, g_credId, device1, PMCsdkCertHelper::provisionCertCB, OC_STACK_OK))
+    if (!m_PMCertHelper.provisionTrustCertChain((void *)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY,
+            g_credId, device1, PMCsdkCertHelper::provisionCertCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -955,15 +979,16 @@ TEST_F(PMCsdkCertTest_btc, ProvisionCRLCb_NV_N)
     ByteArray_t g_trustCertChainArray1 =
     {   0, 0};
 
-    if (!m_PMCertHelper.readTrustCertChain(g_credId, &g_trustCertChainArray1.data, &g_trustCertChainArray1.len, OC_STACK_OK))
+    if (!m_PMCertHelper.readTrustCertChain(g_credId, &g_trustCertChainArray1.data,
+                                           &g_trustCertChainArray1.len, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
 
     OicSecCrl_t *crl = GetCRLResource();
 
-    if (!m_PMCertHelper.provisionCRL((void*)CTX_PROV_TRUST_CERT, device1,
-                    crl, NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMCertHelper.provisionCRL((void *)CTX_PROV_TRUST_CERT, device1,
+                                     crl, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -999,7 +1024,7 @@ TEST_F(PMCsdkCertTest_btc, ProvisionCRLCb_NV_N)
  * @post_condition  None
  * @expected        OCProvisionCRL will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, ProvisionCRLDev_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -1009,26 +1034,27 @@ TEST_F(PMCsdkCertTest_btc, ProvisionCRLDev_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCertHelper.registerTrustCertChainNotifier((void*)CTX_PROV_TRUST_CERT, PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
+    if (!m_PMCertHelper.registerTrustCertChainNotifier((void *)CTX_PROV_TRUST_CERT,
+            PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -1040,14 +1066,15 @@ TEST_F(PMCsdkCertTest_btc, ProvisionCRLDev_NV_N)
 
     uint16_t g_credId = 0;
     if (!m_PMCertHelper.saveTrustCertChain(g_trustCertChainArray.data, g_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
+                                           OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
 
     OCProvisionDev_t *device1 = m_OwnList;
 
-    if (!m_PMCertHelper.provisionTrustCertChain((void*)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY, g_credId, device1, PMCsdkCertHelper::provisionCertCB, OC_STACK_OK))
+    if (!m_PMCertHelper.provisionTrustCertChain((void *)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY,
+            g_credId, device1, PMCsdkCertHelper::provisionCertCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -1055,15 +1082,16 @@ TEST_F(PMCsdkCertTest_btc, ProvisionCRLDev_NV_N)
     ByteArray_t g_trustCertChainArray1 =
     {   0, 0};
 
-    if (!m_PMCertHelper.readTrustCertChain(g_credId, &g_trustCertChainArray1.data, &g_trustCertChainArray1.len, OC_STACK_OK))
+    if (!m_PMCertHelper.readTrustCertChain(g_credId, &g_trustCertChainArray1.data,
+                                           &g_trustCertChainArray1.len, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
 
     OicSecCrl_t *crl = GetCRLResource();
 
-    if (!m_PMCertHelper.provisionCRL((void*)CTX_PROV_TRUST_CERT, NULL,
-                    crl, PMCsdkCertHelper::provisionCertCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCertHelper.provisionCRL((void *)CTX_PROV_TRUST_CERT, NULL,
+                                     crl, PMCsdkCertHelper::provisionCertCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -1099,7 +1127,7 @@ TEST_F(PMCsdkCertTest_btc, ProvisionCRLDev_NV_N)
  * @post_condition  None
  * @expected        OCProvisionCRL will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkCertTest_btc, ProvisionCRLCrl_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -1109,26 +1137,27 @@ TEST_F(PMCsdkCertTest_btc, ProvisionCRLCrl_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCertHelper.registerTrustCertChainNotifier((void*)CTX_PROV_TRUST_CERT, PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
+    if (!m_PMCertHelper.registerTrustCertChainNotifier((void *)CTX_PROV_TRUST_CERT,
+            PMCsdkCertHelper::trustCertChainChangeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -1140,14 +1169,15 @@ TEST_F(PMCsdkCertTest_btc, ProvisionCRLCrl_NV_N)
 
     uint16_t g_credId = 0;
     if (!m_PMCertHelper.saveTrustCertChain(g_trustCertChainArray.data, g_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
+                                           OIC_ENCODING_PEM, &g_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
 
     OCProvisionDev_t *device1 = m_OwnList;
 
-    if (!m_PMCertHelper.provisionTrustCertChain((void*)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY, g_credId, device1, PMCsdkCertHelper::provisionCertCB, OC_STACK_OK))
+    if (!m_PMCertHelper.provisionTrustCertChain((void *)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY,
+            g_credId, device1, PMCsdkCertHelper::provisionCertCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
@@ -1155,13 +1185,14 @@ TEST_F(PMCsdkCertTest_btc, ProvisionCRLCrl_NV_N)
     ByteArray_t trustCertChainArray =
     {   0, 0};
 
-    if (!m_PMCertHelper.readTrustCertChain(g_credId, &trustCertChainArray.data, &trustCertChainArray.len, OC_STACK_OK))
+    if (!m_PMCertHelper.readTrustCertChain(g_credId, &trustCertChainArray.data,
+                                           &trustCertChainArray.len, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }
 
-    if (!m_PMCertHelper.provisionCRL((void*)CTX_PROV_TRUST_CERT, device1,
-                    NULL, PMCsdkCertHelper::provisionCertCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCertHelper.provisionCRL((void *)CTX_PROV_TRUST_CERT, device1,
+                                     NULL, PMCsdkCertHelper::provisionCertCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCertHelper.getFailureMessage());
     }

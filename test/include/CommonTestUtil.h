@@ -21,10 +21,12 @@
 #ifndef __COMMON_TEST_UTIL_H__
 #define __COMMON_TEST_UTIL_H__
 #include <malloc.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <string>
 #include <fstream>
-#ifndef __ANDROID__
+#ifdef _GNUC_
 #include <ifaddrs.h>
 #include <arpa/inet.h>
 #endif

@@ -24,10 +24,10 @@
 #include "PMCppUtilityHelper.h"
 
 OCPersistentStorage PMCppMotHelper::s_pstMot =
-{   0,0,0,0,0};
+{   0, 0, 0, 0, 0};
 static int g_cbInvoked = CALLBACK_NOT_INVOKED;
 
-FILE* PMCppMotHelper::fopenMotClient(const char *UNUSED_PARAM, const char *mode)
+FILE *PMCppMotHelper::fopenMotClient(const char *UNUSED_PARAM, const char *mode)
 {
     //(void) UNUSED_PARAM;
     if (0 == strcmp(UNUSED_PARAM, OC_SECURITY_DB_DAT_FILE_NAME))
@@ -56,8 +56,10 @@ bool PMCppMotHelper::initMotClient()
     PMCppMotHelper::s_pstMot.unlink = unlink;
 
     PlatformConfig cfg
-    {   OC::ServiceType::InProc, OC::ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos,
-        &s_pstMot};
+    {
+        OC::ServiceType::InProc, OC::ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos,
+        &s_pstMot
+    };
 
     OCPlatform::Configure(cfg);
 
@@ -78,7 +80,7 @@ bool PMCppMotHelper::discoverMultipleOwnerEnabledDevices(unsigned short timeout,
 
     OCStackResult res = OCSecure::discoverMultipleOwnerEnabledDevices(timeout, list);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] discoverMultipleOwnerEnabledDevices returns : %s",
-            CommonUtil::getOCStackResult(res));
+                     CommonUtil::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -89,7 +91,7 @@ bool PMCppMotHelper::discoverMultipleOwnerEnabledDevices(unsigned short timeout,
     if (list.size())
     {
         IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] Found secure devices, count = %d",
-                list.size());
+                         list.size());
         PMCppUtilityHelper::printDevices(list);
     }
 
@@ -103,7 +105,7 @@ bool PMCppMotHelper::discoverMultipleOwnedDevices(unsigned short timeout, Device
 
     OCStackResult res = OCSecure::discoverMultipleOwnedDevices(timeout, list);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] discoverMultipleOwnedDevices returns : %s",
-            CommonUtil::getOCStackResult(res));
+                     CommonUtil::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -114,7 +116,7 @@ bool PMCppMotHelper::discoverMultipleOwnedDevices(unsigned short timeout, Device
     if (list.size())
     {
         IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] Found secure devices, count = %d",
-                list.size());
+                         list.size());
         PMCppUtilityHelper::printDevices(list);
 
     }
@@ -123,15 +125,15 @@ bool PMCppMotHelper::discoverMultipleOwnedDevices(unsigned short timeout, Device
     return true;
 }
 bool PMCppMotHelper::discoverMultipleOwnerEnabledDevice(unsigned short timeout,
-        const OicUuid_t* deviceID, std::shared_ptr< OCSecureResource > &foundDevice,
+        const OicUuid_t *deviceID, std::shared_ptr< OCSecureResource > &foundDevice,
         OCStackResult expectedResult)
 {
     __FUNC_IN__
 
     OCStackResult res = OCSecure::discoverMultipleOwnerEnabledDevice(timeout, deviceID,
-            foundDevice);
+                        foundDevice);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] discoverMultipleOwnerEnabledDevice returns : %s",
-            CommonUtil::getOCStackResult(res));
+                     CommonUtil::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -139,7 +141,7 @@ bool PMCppMotHelper::discoverMultipleOwnerEnabledDevice(unsigned short timeout,
         return false;
     }
 
-    if (foundDevice!=NULL)
+    if (foundDevice != NULL)
     {
         std::cout << "[PMCppMotHelper] Found secure devices: " << foundDevice->getDeviceID() << endl;
     }
@@ -147,14 +149,14 @@ bool PMCppMotHelper::discoverMultipleOwnerEnabledDevice(unsigned short timeout,
     __FUNC_OUT__
     return true;
 }
-bool PMCppMotHelper::addPreconfigPIN(DeviceList_t &data, const char* preconfPIN,
-        size_t preconfPINLength, OCStackResult expectedResult)
+bool PMCppMotHelper::addPreconfigPIN(DeviceList_t &data, const char *preconfPIN,
+                                     size_t preconfPINLength, OCStackResult expectedResult)
 {
     __FUNC_IN__
 
     OCStackResult res = data[0]->addPreconfigPIN(preconfPIN, preconfPINLength);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] addPreconfigPIN returns : %s",
-            CommonUtil::getOCStackResult(res));
+                     CommonUtil::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -175,7 +177,7 @@ bool PMCppMotHelper::doMultipleOwnershipTransfer(DeviceList_t &data, ResultCallB
 
     OCStackResult res = data[0]->doMultipleOwnershipTransfer(resultCallback);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] doMultipleOwnershipTransfer returns : %s",
-            CommonUtil::getOCStackResult(res));
+                     CommonUtil::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -205,7 +207,7 @@ bool PMCppMotHelper::provisionPreconfPin(DeviceList_t &data, const char *preconf
 
     OCStackResult res = data[0]->provisionPreconfPin(preconfPin, preconfPinLength, resultCallback);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] provisionPreconfPin returns : %s",
-            CommonUtil::getOCStackResult(res));
+                     CommonUtil::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -226,7 +228,7 @@ bool PMCppMotHelper::provisionPreconfPin(DeviceList_t &data, const char *preconf
     return true;
 }
 bool PMCppMotHelper::changeMOTMode(DeviceList_t &data, const OicSecMomType_t momType,
-        ResultCallBack resultCallback, OCStackResult expectedResult)
+                                   ResultCallBack resultCallback, OCStackResult expectedResult)
 {
     __FUNC_IN__
 
@@ -234,7 +236,7 @@ bool PMCppMotHelper::changeMOTMode(DeviceList_t &data, const OicSecMomType_t mom
 
     OCStackResult res = data[0]->changeMOTMode(momType, resultCallback);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] changeMOTMode returns : %s",
-            CommonUtil::getOCStackResult(res));
+                     CommonUtil::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -256,7 +258,7 @@ bool PMCppMotHelper::changeMOTMode(DeviceList_t &data, const OicSecMomType_t mom
 }
 
 bool PMCppMotHelper::selectMOTMethod(DeviceList_t &data, const OicSecOxm_t oxmSelVal,
-        ResultCallBack resultCallback, OCStackResult expectedResult)
+                                     ResultCallBack resultCallback, OCStackResult expectedResult)
 {
     __FUNC_IN__
 
@@ -264,7 +266,7 @@ bool PMCppMotHelper::selectMOTMethod(DeviceList_t &data, const OicSecOxm_t oxmSe
 
     OCStackResult res = data[0]->selectMOTMethod(oxmSelVal, resultCallback);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] selectMOTMethod returns : %s",
-            CommonUtil::getOCStackResult(res));
+                     CommonUtil::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -285,8 +287,8 @@ bool PMCppMotHelper::selectMOTMethod(DeviceList_t &data, const OicSecOxm_t oxmSe
     return true;
 }
 
-bool PMCppMotHelper::isSubownerOfDevice(DeviceList_t &data, bool* subowner,
-        OCStackResult expectedResult, bool expectedVal)
+bool PMCppMotHelper::isSubownerOfDevice(DeviceList_t &data, bool *subowner,
+                                        OCStackResult expectedResult, bool expectedVal)
 {
     __FUNC_IN__
 
@@ -294,11 +296,11 @@ bool PMCppMotHelper::isSubownerOfDevice(DeviceList_t &data, bool* subowner,
 
     OCStackResult res = data[0]->isSubownerOfDevice(subowner);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] isSubownerOfDevice returns : %s",
-            CommonUtil::getOCStackResult(res));
+                     CommonUtil::getOCStackResult(res));
 
-    if(res == OC_STACK_OK)
+    if (res == OC_STACK_OK)
     {
-        IOTIVITYTEST_LOG(INFO, "If the Caller is Subowner : %s", (*subowner)? "true" : "false");
+        IOTIVITYTEST_LOG(INFO, "If the Caller is Subowner : %s", (*subowner) ? "true" : "false");
     }
 
     if (res != expectedResult || expectedVal != *subowner)
@@ -311,8 +313,8 @@ bool PMCppMotHelper::isSubownerOfDevice(DeviceList_t &data, bool* subowner,
     return true;
 
 }
-bool PMCppMotHelper::getMOTMethod(DeviceList_t &data, OicSecOxm_t* oxm,
-        OCStackResult expectedResult)
+bool PMCppMotHelper::getMOTMethod(DeviceList_t &data, OicSecOxm_t *oxm,
+                                  OCStackResult expectedResult)
 {
     __FUNC_IN__
 
@@ -320,16 +322,17 @@ bool PMCppMotHelper::getMOTMethod(DeviceList_t &data, OicSecOxm_t* oxm,
 
     OCStackResult res = data[0]->getMOTMethod(oxm);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] getMOTMethod returns : %s",
-            CommonUtil::getOCStackResult(res));
+                     CommonUtil::getOCStackResult(res));
 
     if (res != expectedResult)
     {
         m_failureMessage = "Failed selectMOTMethod.";
         return false;
     }
-    else if(res == OC_STACK_OK)
+    else if (res == OC_STACK_OK)
     {
-        IOTIVITYTEST_LOG(INFO, "[API Return Code] Returned OXM Method : %s", PMCppUtilityHelper::getOxmType(*oxm));
+        IOTIVITYTEST_LOG(INFO, "[API Return Code] Returned OXM Method : %s",
+                         PMCppUtilityHelper::getOxmType(*oxm));
     }
 
     __FUNC_OUT__
@@ -381,7 +384,8 @@ void PMCppMotHelper::multipleOwnershipTransferCB(PMResultList_t *result, int has
 
     if (hasError)
     {
-        IOTIVITYTEST_LOG(ERROR, "[PMCppMotHelper] Provisioning ERROR %d %d!!!", hasError,result->at(0).res);
+        IOTIVITYTEST_LOG(ERROR, "[PMCppMotHelper] Provisioning ERROR %d %d!!!", hasError,
+                         result->at(0).res);
     }
     else
     {

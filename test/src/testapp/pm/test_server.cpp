@@ -22,10 +22,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#include <signal.h>
 #include <pthread.h>
-
+#endif
+#include <signal.h>
 #include "ocstack.h"
 #include "logger.h"
 #include "ocpayload.h"
@@ -38,6 +39,10 @@
 
 #define TAG "SAMPLE_JUSTWORKS"
 #define SAMPLE_MAX_NUM_POST_INSTANCE  2
+
+#ifdef __WINDOWS__
+std::string g_appName;
+#endif
 
 /* Structure to represent a LED resource */
 typedef struct LEDRESOURCE

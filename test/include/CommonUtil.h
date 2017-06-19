@@ -21,12 +21,26 @@
 #ifndef __COMMON_UTIL_H__
 #define __COMMON_UTIL_H__
 #include <malloc.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <string>
 #include <fstream>
-#ifndef __ANDROID__
+#ifdef _GNUC_
 #include <ifaddrs.h>
 #include <arpa/inet.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#include <direct.h>
+#include <process.h>
+#include <io.h>
+#define F_OK    0
+#define popen    _popen
+#define pclose    _pclose
+#define getpid    _getpid
+#define fseeko    _fseeki64
+#define ftello    _ftelli64
 #endif
 #include <ctime>
 #include <iostream>

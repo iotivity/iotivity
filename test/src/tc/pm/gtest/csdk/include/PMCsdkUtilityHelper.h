@@ -123,27 +123,27 @@ using namespace OC;
 class PMCsdkUtilityHelper
 {
 
-public:
+    public:
 
-    static OCProvisionDev_t* getDevInst(OCProvisionDev_t* dev_lst, const int dev_num);
+        static OCProvisionDev_t *getDevInst(OCProvisionDev_t *dev_lst, const int dev_num);
 
-    static int printDevList(OCProvisionDev_t*);
+        static int printDevList(OCProvisionDev_t *);
 
-    static int printResultList(const OCProvisionResult_t*, const size_t);
+        static int printResultList(const OCProvisionResult_t *, const size_t);
 
-    static size_t printUuidList(const OCUuidList_t*);
+        static size_t printUuidList(const OCUuidList_t *);
 
-    static void printUuid(const OicUuid_t*);
+        static void printUuid(const OicUuid_t *);
 
-    static char* getOxmType(OicSecOxm_t oxmType);
+        static char *getOxmType(OicSecOxm_t oxmType);
 
-    static void removeAllResFile();
+        static void removeAllResFile();
 
-    static std::string setFailureMessage(OCStackResult actualResult, OCStackResult expectedResult);
+        static std::string setFailureMessage(OCStackResult actualResult, OCStackResult expectedResult);
 
-    static std::string setFailureMessage(OicSecOxm_t actualResult, OicSecOxm_t expectedResult);
+        static std::string setFailureMessage(OicSecOxm_t actualResult, OicSecOxm_t expectedResult);
 
-    static std::string setFailureMessage(std::string errorMessage);
+        static std::string setFailureMessage(std::string errorMessage);
 };
 
 #endif /* PMCsdkUtilityHelper_H_ */

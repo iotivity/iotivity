@@ -24,40 +24,40 @@
 
 class PMCppCredTest_btc: public ::testing::Test
 {
-protected:
-    PMCppHelper m_PMCppHelper;
-    DeviceList_t m_UnownedDevList, m_OwnedDevList;
-    OicSecAcl_t *m_acl1, *m_acl2;
+    protected:
+        PMCppHelper m_PMCppHelper;
+        DeviceList_t m_UnownedDevList, m_OwnedDevList;
+        OicSecAcl_t *m_acl1, *m_acl2;
 
-    virtual void SetUp()
-    {
-        CommonTestUtil::runCommonTCSetUpPart();
-        CommonUtil::killApp(KILL_SERVERS);
-        CommonUtil::waitInSecond(DELAY_MEDIUM);
-        PMCppUtilityHelper::removeAllResFile();
-        CommonUtil::waitInSecond(DELAY_MEDIUM);
-        CommonUtil::rmFile(DATABASE_PDM);
-        CommonUtil::rmFile(JUSTWORKS_SERVER1_CBOR);
-        CommonUtil::rmFile(JUSTWORKS_SERVER2_CBOR);
-        CommonUtil::rmFile(CLIENT_CBOR);
-        CommonUtil::waitInSecond(DELAY_MEDIUM);
-        CommonUtil::copyFile(JUSTWORKS_SERVER1_CBOR_BACKUP, JUSTWORKS_SERVER1_CBOR);
-        CommonUtil::copyFile(JUSTWORKS_SERVER2_CBOR_BACKUP, JUSTWORKS_SERVER2_CBOR);
-        CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
-        CommonUtil::launchApp(JUSTWORKS_SERVER1);
-        CommonUtil::launchApp(JUSTWORKS_SERVER2);
-        CommonUtil::waitInSecond(DELAY_MEDIUM);
-        m_UnownedDevList.clear();
-        m_OwnedDevList.clear();
-        m_acl1 = NULL;
-        m_acl2 = NULL;
-    }
+        virtual void SetUp()
+        {
+            CommonTestUtil::runCommonTCSetUpPart();
+            CommonUtil::killApp(KILL_SERVERS);
+            CommonUtil::waitInSecond(DELAY_MEDIUM);
+            PMCppUtilityHelper::removeAllResFile();
+            CommonUtil::waitInSecond(DELAY_MEDIUM);
+            CommonUtil::rmFile(DATABASE_PDM);
+            CommonUtil::rmFile(JUSTWORKS_SERVER1_CBOR);
+            CommonUtil::rmFile(JUSTWORKS_SERVER2_CBOR);
+            CommonUtil::rmFile(CLIENT_CBOR);
+            CommonUtil::waitInSecond(DELAY_MEDIUM);
+            CommonUtil::copyFile(JUSTWORKS_SERVER1_CBOR_BACKUP, JUSTWORKS_SERVER1_CBOR);
+            CommonUtil::copyFile(JUSTWORKS_SERVER2_CBOR_BACKUP, JUSTWORKS_SERVER2_CBOR);
+            CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
+            CommonUtil::launchApp(JUSTWORKS_SERVER1);
+            CommonUtil::launchApp(JUSTWORKS_SERVER2);
+            CommonUtil::waitInSecond(DELAY_MEDIUM);
+            m_UnownedDevList.clear();
+            m_OwnedDevList.clear();
+            m_acl1 = NULL;
+            m_acl2 = NULL;
+        }
 
-    virtual void TearDown()
-    {
-        CommonTestUtil::runCommonTCTearDownPart();
-        CommonUtil::killApp(KILL_SERVERS);
-    }
+        virtual void TearDown()
+        {
+            CommonTestUtil::runCommonTCTearDownPart();
+            CommonUtil::killApp(KILL_SERVERS);
+        }
 };
 
 /**
@@ -70,10 +70,10 @@ protected:
  * @post_condition None
  * @expected getCredentialType will return SYMMETRIC_PAIR_WISE_KEY
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCredTest_btc, GetCredentialType_SRC_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -101,10 +101,10 @@ TEST_F(PMCppCredTest_btc, GetCredentialType_SRC_P)
  * @post_condition None
  * @expected getCredentialKeySize will return OWNER_PSK_LENGTH_128
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCredTest_btc, GetCredentialKeySize_SRC_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -130,10 +130,10 @@ TEST_F(PMCppCredTest_btc, GetCredentialKeySize_SRC_P)
  * @post_condition None
  * @expected setCredentialType will set SYMMETRIC_GROUP_KEY
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCredTest_btc, SetCredentialType_SRC_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -161,10 +161,10 @@ TEST_F(PMCppCredTest_btc, SetCredentialType_SRC_P)
  * @post_condition None
  * @expected setCredentialKeySize will set OWNER_PSK_LENGTH_256
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCredTest_btc, SetCredentialKeySize_SRC_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -198,28 +198,29 @@ TEST_F(PMCppCredTest_btc, SetCredentialKeySize_SRC_P)
  * @post_condition  None
  * @expected        provisionCredentials will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCredTest_btc, ProvisionCredentialsKeysize_FSV_LBV_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -229,7 +230,8 @@ TEST_F(PMCppCredTest_btc, ProvisionCredentialsKeysize_FSV_LBV_P)
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(),
+                                            PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -254,28 +256,29 @@ TEST_F(PMCppCredTest_btc, ProvisionCredentialsKeysize_FSV_LBV_P)
  * @post_condition  None
  * @expected        provisionCredentials will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCredTest_btc, ProvisionCredentialsKeysize_UBV_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -285,7 +288,8 @@ TEST_F(PMCppCredTest_btc, ProvisionCredentialsKeysize_UBV_P)
     size_t keySize = OWNER_PSK_LENGTH_256;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(),
+                                            PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -313,37 +317,38 @@ TEST_F(PMCppCredTest_btc, ProvisionCredentialsKeysize_UBV_P)
  * @post_condition  None
  * @expected        provisionCredentials will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCredTest_btc, ProvisionCredentialsCB_NV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
     PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
-    if(!m_PMCppHelper.provisionACL(m_OwnedDevList, m_acl1, PMCppHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppHelper.provisionACL(m_OwnedDevList, m_acl1, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -353,7 +358,8 @@ TEST_F(PMCppCredTest_btc, ProvisionCredentialsCB_NV_N)
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(), NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(), NULL,
+                                            OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -380,38 +386,40 @@ TEST_F(PMCppCredTest_btc, ProvisionCredentialsCB_NV_N)
  * @post_condition  None
  * @expected        provisionCredentials will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCredTest_btc, ProvisionCredentialsKeysize_LOBV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128-1;
+    size_t keySize = OWNER_PSK_LENGTH_128 - 1;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(),
+                                            PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -436,28 +444,29 @@ TEST_F(PMCppCredTest_btc, ProvisionCredentialsKeysize_LOBV_N)
  * @post_condition  None
  * @expected        provisionCredentials will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCredTest_btc, ProvisionCredentialsKeysize_UOBV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -467,7 +476,8 @@ TEST_F(PMCppCredTest_btc, ProvisionCredentialsKeysize_UOBV_N)
     size_t keySize = OWNER_PSK_LENGTH_256 + 1;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(),
+                                            PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -494,28 +504,29 @@ TEST_F(PMCppCredTest_btc, ProvisionCredentialsKeysize_UOBV_N)
  * @post_condition  None
  * @expected        provisionCredentials will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCredTest_btc, ProvisionCredentialsCredType_LOBV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -525,7 +536,8 @@ TEST_F(PMCppCredTest_btc, ProvisionCredentialsCredType_LOBV_N)
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(),
+                                            PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -550,28 +562,29 @@ TEST_F(PMCppCredTest_btc, ProvisionCredentialsCredType_LOBV_N)
  * @post_condition  None
  * @expected        provisionCredentials will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCredTest_btc, ProvisionCredentialsCredType_UOBV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -581,7 +594,8 @@ TEST_F(PMCppCredTest_btc, ProvisionCredentialsCredType_UOBV_N)
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(),
+                                            PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -606,28 +620,29 @@ TEST_F(PMCppCredTest_btc, ProvisionCredentialsCredType_UOBV_N)
  * @post_condition  None
  * @expected        provisionCredentials will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCredTest_btc, ProvisionCredentialsSameDev_EG_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -637,7 +652,8 @@ TEST_F(PMCppCredTest_btc, ProvisionCredentialsSameDev_EG_N)
     size_t keySize = OWNER_PSK_LENGTH_256;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[0].get(), PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[0].get(),
+                                            PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }

@@ -29,7 +29,9 @@
 
 #include <signal.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include "OCPlatform.h"
 #include "OCApi.h"
 #include "ResourceHelper.h"
@@ -70,7 +72,7 @@ void handler(int sig)
 
     fprintf(stderr, "Error: signal %d:\n", sig);
 
-#ifdef __LINUX__    
+#ifdef __LINUX__
     backtrace_symbols_fd(array, size, STDERR_FILENO);
 #endif
 

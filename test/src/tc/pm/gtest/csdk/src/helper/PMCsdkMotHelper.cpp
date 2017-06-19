@@ -32,7 +32,7 @@ PMCsdkMotHelper::PMCsdkMotHelper()
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] Constructor");
 }
 
-FILE* PMCsdkMotHelper::fopenMotClient(const char* path, const char* mode)
+FILE *PMCsdkMotHelper::fopenMotClient(const char *path, const char *mode)
 {
     //OC_UNUSED(path);
     if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
@@ -95,15 +95,16 @@ bool PMCsdkMotHelper::initMotClient()
 }
 
 bool PMCsdkMotHelper::changeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
-        const OicSecMomType_t momType, OCProvisionResultCB resultCallback,
-        OCStackResult expectedResult)
+                                    const OicSecMomType_t momType, OCProvisionResultCB resultCallback,
+                                    OCStackResult expectedResult)
 {
     __FUNC_IN__
 
     g_motCbInvoked = false;
 
     OCStackResult res = OCChangeMOTMode(ctx, targetDeviceInfo, momType, resultCallback);
-    IOTIVITYTEST_LOG(INFO, "[PMHelper]  OCChangeMOTMode API returns: %s", CommonUtil::getOCStackResult(res));
+    IOTIVITYTEST_LOG(INFO, "[PMHelper]  OCChangeMOTMode API returns: %s",
+                     CommonUtil::getOCStackResult(res));
 
     if (expectedResult != res)
     {
@@ -125,15 +126,16 @@ bool PMCsdkMotHelper::changeMOTMode(void *ctx, const OCProvisionDev_t *targetDev
 }
 
 bool PMCsdkMotHelper::selectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
-        const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback,
-        OCStackResult expectedResult)
+                                      const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback,
+                                      OCStackResult expectedResult)
 {
     __FUNC_IN__
 
     g_motCbInvoked = false;
 
     OCStackResult res = OCSelectMOTMethod(ctx, targetDeviceInfo, oxmSelValue, resultCallback);
-    IOTIVITYTEST_LOG(INFO, "[PMHelper] OCSelectMOTMethod API returns: %s", CommonUtil::getOCStackResult(res));
+    IOTIVITYTEST_LOG(INFO, "[PMHelper] OCSelectMOTMethod API returns: %s",
+                     CommonUtil::getOCStackResult(res));
 
     if (expectedResult != res)
     {
@@ -154,56 +156,59 @@ bool PMCsdkMotHelper::selectMOTMethod(void *ctx, const OCProvisionDev_t *targetD
     return true;
 }
 
-void PMCsdkMotHelper::provisionPreconfPinCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
+void PMCsdkMotHelper::provisionPreconfPinCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr,
+        bool hasError)
 {
     if (!hasError)
     {
-        IOTIVITYTEST_LOG(INFO, "provisionPreconfPinCB SUCCEEDED - ctx: %s", (char* ) ctx);
+        IOTIVITYTEST_LOG(INFO, "provisionPreconfPinCB SUCCEEDED - ctx: %s", (char *) ctx);
         g_motCbInvoked = true;
     }
     else
     {
-        IOTIVITYTEST_LOG(ERROR, "provisionPreconfPinCB - ctx: %s", (char* ) ctx);
-        PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t*) arr, nOfRes);
+        IOTIVITYTEST_LOG(ERROR, "provisionPreconfPinCB - ctx: %s", (char *) ctx);
+        PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t *) arr, nOfRes);
     }
 }
 
-void PMCsdkMotHelper::changeMOTModeCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
+void PMCsdkMotHelper::changeMOTModeCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr,
+                                      bool hasError)
 {
     if (!hasError)
     {
-        IOTIVITYTEST_LOG(INFO, "changeMOTModeCB SUCCEEDED - ctx: %s", (char* ) ctx);
+        IOTIVITYTEST_LOG(INFO, "changeMOTModeCB SUCCEEDED - ctx: %s", (char *) ctx);
         g_motCbInvoked = true;
     }
     else
     {
-        IOTIVITYTEST_LOG(ERROR, "changeMOTModeCB FAILED - ctx: %s", (char* ) ctx);
-        PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t*) arr, nOfRes);
+        IOTIVITYTEST_LOG(ERROR, "changeMOTModeCB FAILED - ctx: %s", (char *) ctx);
+        PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t *) arr, nOfRes);
     }
 }
 
-void PMCsdkMotHelper::selectMOTMethodCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
+void PMCsdkMotHelper::selectMOTMethodCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr,
+                                        bool hasError)
 {
     if (!hasError)
     {
-        IOTIVITYTEST_LOG(INFO, "selectMOTMethodCB SUCCEEDED - ctx: %s", (char* ) ctx);
+        IOTIVITYTEST_LOG(INFO, "selectMOTMethodCB SUCCEEDED - ctx: %s", (char *) ctx);
         g_motCbInvoked = true;
     }
     else
     {
-        IOTIVITYTEST_LOG(ERROR, "selectMOTMethodCB FAILED - ctx: %s", (char* ) ctx);
-        PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t*) arr, nOfRes);
+        IOTIVITYTEST_LOG(ERROR, "selectMOTMethodCB FAILED - ctx: %s", (char *) ctx);
+        PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t *) arr, nOfRes);
     }
 }
 
-bool PMCsdkMotHelper::discoverMultipleOwnerEnabledDevices(int nTime, OCProvisionDev_t** motdev_list,
+bool PMCsdkMotHelper::discoverMultipleOwnerEnabledDevices(int nTime, OCProvisionDev_t **motdev_list,
         OCStackResult expectedResult)
 {
     __FUNC_IN__
 
     OCStackResult res = OCDiscoverMultipleOwnerEnabledDevices(nTime, motdev_list);
     IOTIVITYTEST_LOG(INFO, "[PMHelper] OCDiscoverMultipleOwnerEnabledDevices API returns: %s",
-            CommonUtil::getOCStackResult(res));
+                     CommonUtil::getOCStackResult(res));
 
     if (expectedResult != res)
     {
@@ -227,9 +232,10 @@ bool PMCsdkMotHelper::discoverMultipleOwnerEnabledSingleDevice(unsigned short ti
 {
     __FUNC_IN__
 
-    OCStackResult res = OCDiscoverMultipleOwnerEnabledSingleDevice(timeoutSeconds, deviceID, motdev_list);
+    OCStackResult res = OCDiscoverMultipleOwnerEnabledSingleDevice(timeoutSeconds, deviceID,
+                        motdev_list);
     IOTIVITYTEST_LOG(INFO, "[PMHelper] OCDiscoverMultipleOwnerEnabledSingleDevice API returns: %s",
-            CommonUtil::getOCStackResult(res));
+                     CommonUtil::getOCStackResult(res));
 
     if (expectedResult != res)
     {
@@ -248,14 +254,14 @@ bool PMCsdkMotHelper::discoverMultipleOwnerEnabledSingleDevice(unsigned short ti
     return true;
 }
 
-bool PMCsdkMotHelper::discoverMultipleOwnedDevices(int nTime, OCProvisionDev_t** motOnwedDev_list,
+bool PMCsdkMotHelper::discoverMultipleOwnedDevices(int nTime, OCProvisionDev_t **motOnwedDev_list,
         OCStackResult expectedResult)
 {
     __FUNC_IN__
 
     OCStackResult res = OCDiscoverMultipleOwnedDevices(nTime, motOnwedDev_list);
     IOTIVITYTEST_LOG(INFO, "[PMHelper] OCDiscoverMultipleOwnerEnabledDevices API returns: %s",
-            CommonUtil::getOCStackResult(res));
+                     CommonUtil::getOCStackResult(res));
 
     if (expectedResult != res)
     {
@@ -275,13 +281,13 @@ bool PMCsdkMotHelper::discoverMultipleOwnedDevices(int nTime, OCProvisionDev_t**
 }
 
 bool PMCsdkMotHelper::addPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
-        const char* preconfPIN, size_t preconfPINLen, OCStackResult expectedResult)
+                                      const char *preconfPIN, size_t preconfPINLen, OCStackResult expectedResult)
 {
     __FUNC_IN__
 
     OCStackResult res = OCAddPreconfigPin(targetDeviceInfo, preconfPIN, preconfPINLen);
     IOTIVITYTEST_LOG(INFO, "[PMHelper] OCAddPreconfigPin API returns: %s",
-            CommonUtil::getOCStackResult(res));
+                     CommonUtil::getOCStackResult(res));
 
     if (expectedResult != res)
     {
@@ -292,7 +298,7 @@ bool PMCsdkMotHelper::addPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
     return true;
 }
 
-bool PMCsdkMotHelper::provisionPreconfPin(void* ctx, OCProvisionDev_t *targetDeviceInfo,
+bool PMCsdkMotHelper::provisionPreconfPin(void *ctx, OCProvisionDev_t *targetDeviceInfo,
         const char *preconfPin, size_t preconfPinLen, OCProvisionResultCB resultCallback,
         OCStackResult expectedResult)
 {
@@ -301,9 +307,9 @@ bool PMCsdkMotHelper::provisionPreconfPin(void* ctx, OCProvisionDev_t *targetDev
     g_motCbInvoked = false;
 
     OCStackResult res = OCProvisionPreconfigPin(ctx, targetDeviceInfo, preconfPin, preconfPinLen,
-            resultCallback);
+                        resultCallback);
     IOTIVITYTEST_LOG(INFO, "[PMHelper] OCProvisionPreconfPin API returns: %s",
-            CommonUtil::getOCStackResult(res));
+                     CommonUtil::getOCStackResult(res));
 
     if (expectedResult != res)
     {
@@ -324,7 +330,7 @@ bool PMCsdkMotHelper::provisionPreconfPin(void* ctx, OCProvisionDev_t *targetDev
     return true;
 }
 
-bool PMCsdkMotHelper::doMultipleOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices,
+bool PMCsdkMotHelper::doMultipleOwnershipTransfer(void *ctx, OCProvisionDev_t *targetDevices,
         OCProvisionResultCB resultCallback, OCStackResult expectedResult)
 {
     __FUNC_IN__
@@ -336,7 +342,7 @@ bool PMCsdkMotHelper::doMultipleOwnershipTransfer(void* ctx, OCProvisionDev_t *t
 
     OCStackResult res = OCDoMultipleOwnershipTransfer(ctx, targetDevices, resultCallback);
     IOTIVITYTEST_LOG(INFO, "[PMHelper] OCDoMultipleOwnershipTransfer API returns: %s",
-            CommonUtil::getOCStackResult(res));
+                     CommonUtil::getOCStackResult(res));
 
     if (expectedResult != res)
     {
@@ -362,17 +368,18 @@ std::string PMCsdkMotHelper::getFailureMessage()
     return m_failureMessage;
 }
 
-void PMCsdkMotHelper::multipleOwnershipTransferCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
+void PMCsdkMotHelper::multipleOwnershipTransferCB(void *ctx, size_t nOfRes,
+        OCProvisionResult_t *arr, bool hasError)
 {
     if (!hasError)
     {
-        IOTIVITYTEST_LOG(INFO, "Multiple Ownership Transfer SUCCEEDED - ctx: %s", (char* ) ctx);
+        IOTIVITYTEST_LOG(INFO, "Multiple Ownership Transfer SUCCEEDED - ctx: %s", (char *) ctx);
         g_motCbInvoked = CALLBACK_INVOKED;
     }
     else
     {
-        IOTIVITYTEST_LOG(ERROR, "Ownership Transfer FAILED - ctx: %s", (char* ) ctx);
-        PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t*) arr, nOfRes);
+        IOTIVITYTEST_LOG(ERROR, "Ownership Transfer FAILED - ctx: %s", (char *) ctx);
+        PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t *) arr, nOfRes);
     }
 }
 

@@ -23,37 +23,37 @@
 
 class PMCsdkProvTest_btc: public ::testing::Test
 {
-protected:
+    protected:
 
-    OCProvisionDev_t *m_OwnList, *m_UnownList, *m_motEnabledDevList, *m_targetDevice;
-    OicSecAcl_t *m_Acl, *m_Acl1, *m_Acl2;
-    PMCsdkHelper m_PMHelper;
+        OCProvisionDev_t *m_OwnList, *m_UnownList, *m_motEnabledDevList, *m_targetDevice;
+        OicSecAcl_t *m_Acl, *m_Acl1, *m_Acl2;
+        PMCsdkHelper m_PMHelper;
 
-    virtual void SetUp()
-    {
-        CommonTestUtil::runCommonTCSetUpPart();
-        CommonUtil::killApp(KILL_SERVERS);
-        CommonUtil::waitInSecond(DELAY_MEDIUM);
-        PMCsdkUtilityHelper::removeAllResFile();
-        CommonUtil::waitInSecond(DELAY_LONG);
-        CommonUtil::copyFile(JUSTWORKS_SERVER1_CBOR_BACKUP, JUSTWORKS_SERVER1_CBOR);
-        CommonUtil::copyFile(JUSTWORKS_SERVER2_CBOR_BACKUP, JUSTWORKS_SERVER2_CBOR);
-        CommonUtil::copyFile(RANDOMPIN_SERVER_CBOR_BACKUP, RANDOMPIN_SERVER_CBOR);
-        CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
-        CommonUtil::launchApp(JUSTWORKS_SERVER1);
-        CommonUtil::launchApp(JUSTWORKS_SERVER2);
-        CommonUtil::waitInSecond(DELAY_LONG);
-        m_UnownList = NULL;
-        m_OwnList = NULL;
-        m_motEnabledDevList = NULL;
-        m_targetDevice = NULL;
-    }
+        virtual void SetUp()
+        {
+            CommonTestUtil::runCommonTCSetUpPart();
+            CommonUtil::killApp(KILL_SERVERS);
+            CommonUtil::waitInSecond(DELAY_MEDIUM);
+            PMCsdkUtilityHelper::removeAllResFile();
+            CommonUtil::waitInSecond(DELAY_LONG);
+            CommonUtil::copyFile(JUSTWORKS_SERVER1_CBOR_BACKUP, JUSTWORKS_SERVER1_CBOR);
+            CommonUtil::copyFile(JUSTWORKS_SERVER2_CBOR_BACKUP, JUSTWORKS_SERVER2_CBOR);
+            CommonUtil::copyFile(RANDOMPIN_SERVER_CBOR_BACKUP, RANDOMPIN_SERVER_CBOR);
+            CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
+            CommonUtil::launchApp(JUSTWORKS_SERVER1);
+            CommonUtil::launchApp(JUSTWORKS_SERVER2);
+            CommonUtil::waitInSecond(DELAY_LONG);
+            m_UnownList = NULL;
+            m_OwnList = NULL;
+            m_motEnabledDevList = NULL;
+            m_targetDevice = NULL;
+        }
 
-    virtual void TearDown()
-    {
-        CommonTestUtil::runCommonTCTearDownPart();
-        CommonUtil::killApp(KILL_SERVERS);
-    }
+        virtual void TearDown()
+        {
+            CommonTestUtil::runCommonTCTearDownPart();
+            CommonUtil::killApp(KILL_SERVERS);
+        }
 };
 
 /**
@@ -77,7 +77,7 @@ protected:
  * @post_condition  None
  * @expected        OCProvisionCredentials will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ProvisionCredential_SRC_RV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -87,20 +87,20 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredential_SRC_RV_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -111,8 +111,8 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredential_SRC_RV_P)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionCredentials((void*)ctxProvCreadential, type, keySize, device1,
-                    device2, PMCsdkHelper::provisionCredCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionCredentials((void *)ctxProvCreadential, type, keySize, device1,
+                                         device2, PMCsdkHelper::provisionCredCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -140,7 +140,7 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredential_SRC_RV_P)
  * @post_condition  None
  * @expected        OCProvisionCredentials will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ProvisionCredentialCredType_REV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -150,20 +150,20 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialCredType_REV_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -174,8 +174,8 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialCredType_REV_P)
     OicSecCredType_t type = (OicSecCredType_t)SYM_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionCredentials((void*)ctxProvCreadential, type, keySize, device1,
-                    device2, PMCsdkHelper::provisionCredCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionCredentials((void *)ctxProvCreadential, type, keySize, device1,
+                                         device2, PMCsdkHelper::provisionCredCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -203,7 +203,7 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialCredType_REV_P)
  * @post_condition  None
  * @expected        OCProvisionCredentials will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ProvisionCredentialKeySize_UBV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -213,20 +213,20 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialKeySize_UBV_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -237,8 +237,8 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialKeySize_UBV_P)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_256;
 
-    if (!m_PMHelper.provisionCredentials((void*)ctxProvCreadential, type, keySize, device1,
-                    device2, PMCsdkHelper::provisionCredCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionCredentials((void *)ctxProvCreadential, type, keySize, device1,
+                                         device2, PMCsdkHelper::provisionCredCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -266,7 +266,7 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialKeySize_UBV_P)
  * @post_condition  None
  * @expected        OCProvisionCredentials will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ProvisionCredentialCB_ECRC_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -276,20 +276,20 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialCB_ECRC_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -300,8 +300,8 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialCB_ECRC_NV_N)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionCredentials((void*)ctxProvCreadential, type, keySize, device1,
-                    device2, NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMHelper.provisionCredentials((void *)ctxProvCreadential, type, keySize, device1,
+                                         device2, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -329,7 +329,7 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialCB_ECRC_NV_N)
  * @post_condition  None
  * @expected        OCProvisionCredentials will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ProvisionCredentialDev1_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -339,20 +339,20 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialDev1_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -362,8 +362,8 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialDev1_NV_N)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionCredentials((void*)ctxProvCreadential, type, keySize, NULL,
-                    device2, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.provisionCredentials((void *)ctxProvCreadential, type, keySize, NULL,
+                                         device2, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -391,7 +391,7 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialDev1_NV_N)
  * @post_condition  None
  * @expected        OCProvisionCredentials will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ProvisionCredentialDev2_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -401,20 +401,20 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialDev2_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -424,8 +424,8 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialDev2_NV_N)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionCredentials((void*)ctxProvCreadential, type, keySize, device1,
-                    NULL, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.provisionCredentials((void *)ctxProvCreadential, type, keySize, device1,
+                                         NULL, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -453,7 +453,7 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialDev2_NV_N)
  * @post_condition  None
  * @expected        OCProvisionCredentials will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ProvisionCredentialKeysize_LOBV_N)
 {
 
@@ -464,20 +464,20 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialKeysize_LOBV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -488,8 +488,8 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialKeysize_LOBV_N)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128 - 1;
 
-    if (!m_PMHelper.provisionCredentials((void*)ctxProvCreadential, type, keySize, device1,
-                    device2, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.provisionCredentials((void *)ctxProvCreadential, type, keySize, device1,
+                                         device2, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -517,7 +517,7 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialKeysize_LOBV_N)
  * @post_condition  None
  * @expected        OCProvisionCredentials will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ProvisionCredentialKeysize_UOBV_N)
 {
 
@@ -528,20 +528,20 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialKeysize_UOBV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -552,8 +552,8 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialKeysize_UOBV_N)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_256 + 1;
 
-    if (!m_PMHelper.provisionCredentials((void*)ctxProvCreadential, type, keySize, device1,
-                    device2, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.provisionCredentials((void *)ctxProvCreadential, type, keySize, device1,
+                                         device2, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -581,7 +581,7 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialKeysize_UOBV_N)
  * @post_condition  None
  * @expected        OCProvisionCredentials will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ProvisionCredentialCredType_LOBV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -591,20 +591,20 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialCredType_LOBV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -615,8 +615,8 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialCredType_LOBV_N)
     OicSecCredType_t type = (OicSecCredType_t)CRED_TYPE_LOBV;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionCredentials((void*)ctxProvCreadential, type, keySize, device1,
-                    device2, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.provisionCredentials((void *)ctxProvCreadential, type, keySize, device1,
+                                         device2, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -644,7 +644,7 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialCredType_LOBV_N)
  * @post_condition  None
  * @expected        OCProvisionCredentials will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ProvisionCredentialCredType_UOBV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -654,20 +654,20 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialCredType_UOBV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -678,8 +678,8 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialCredType_UOBV_N)
     OicSecCredType_t type = (OicSecCredType_t)CRED_TYPE_UOBV;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionCredentials((void*)ctxProvCreadential, type, keySize, device1,
-                    device2, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.provisionCredentials((void *)ctxProvCreadential, type, keySize, device1,
+                                         device2, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -708,7 +708,7 @@ TEST_F(PMCsdkProvTest_btc, ProvisionCredentialCredType_UOBV_N)
  * @post_condition  None
  * @expected        OCProvisionACL will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ProvisionAcl_SRC_RV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -718,20 +718,20 @@ TEST_F(PMCsdkProvTest_btc, ProvisionAcl_SRC_RV_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -739,8 +739,8 @@ TEST_F(PMCsdkProvTest_btc, ProvisionAcl_SRC_RV_P)
 
     m_Acl = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
 
-    if (!m_PMHelper.provisionACL((void*)g_ctx, m_OwnList, m_Acl,
-                    m_PMHelper.provisionAclCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionACL((void *)g_ctx, m_OwnList, m_Acl,
+                                 m_PMHelper.provisionAclCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -774,7 +774,7 @@ TEST_F(PMCsdkProvTest_btc, ProvisionAcl_SRC_RV_P)
  * @post_condition  None
  * @expected        OCProvisionACL will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ProvisionAclDeviceList_ECRC_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -784,20 +784,20 @@ TEST_F(PMCsdkProvTest_btc, ProvisionAclDeviceList_ECRC_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -805,8 +805,8 @@ TEST_F(PMCsdkProvTest_btc, ProvisionAclDeviceList_ECRC_NV_N)
 
     m_Acl = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
 
-    if (!m_PMHelper.provisionACL((void*)g_ctx, NULL, m_Acl,
-                    m_PMHelper.provisionAclCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.provisionACL((void *)g_ctx, NULL, m_Acl,
+                                 m_PMHelper.provisionAclCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -839,7 +839,7 @@ TEST_F(PMCsdkProvTest_btc, ProvisionAclDeviceList_ECRC_NV_N)
  * @post_condition  None
  * @expected        OCProvisionACL will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ProvisionAclAcl_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -849,27 +849,27 @@ TEST_F(PMCsdkProvTest_btc, ProvisionAclAcl_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.provisionACL((void*)g_ctx, m_OwnList, NULL,
-                    m_PMHelper.provisionAclCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.provisionACL((void *)g_ctx, m_OwnList, NULL,
+                                 m_PMHelper.provisionAclCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -898,7 +898,7 @@ TEST_F(PMCsdkProvTest_btc, ProvisionAclAcl_NV_N)
  * @post_condition  None
  * @expected        OCProvisionACL will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ProvisionAclCB_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -908,20 +908,20 @@ TEST_F(PMCsdkProvTest_btc, ProvisionAclCB_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -929,8 +929,8 @@ TEST_F(PMCsdkProvTest_btc, ProvisionAclCB_NV_N)
 
     m_Acl = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
 
-    if (!m_PMHelper.provisionACL((void*)g_ctx, m_OwnList, m_Acl,
-                    NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMHelper.provisionACL((void *)g_ctx, m_OwnList, m_Acl,
+                                 NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -965,7 +965,7 @@ TEST_F(PMCsdkProvTest_btc, ProvisionAclCB_NV_N)
  * @post_condition  None
  * @expected        OCProvisionACL will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ProvisionAclMultipleTime_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -975,20 +975,20 @@ TEST_F(PMCsdkProvTest_btc, ProvisionAclMultipleTime_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -996,15 +996,15 @@ TEST_F(PMCsdkProvTest_btc, ProvisionAclMultipleTime_P)
 
     m_Acl = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
 
-    if (!m_PMHelper.provisionACL((void*)g_ctx, m_OwnList, m_Acl,
-                    m_PMHelper.provisionAclCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionACL((void *)g_ctx, m_OwnList, m_Acl,
+                                 m_PMHelper.provisionAclCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.provisionACL((void*)g_ctx, m_OwnList, m_Acl,
-                    m_PMHelper.provisionAclCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionACL((void *)g_ctx, m_OwnList, m_Acl,
+                                 m_PMHelper.provisionAclCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -1041,7 +1041,7 @@ TEST_F(PMCsdkProvTest_btc, ProvisionAclMultipleTime_P)
  * @post_condition  None
  * @expected        OCUnlinkDevices will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, UnlinkDevices_RSV_SRC_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -1051,20 +1051,20 @@ TEST_F(PMCsdkProvTest_btc, UnlinkDevices_RSV_SRC_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -1077,15 +1077,15 @@ TEST_F(PMCsdkProvTest_btc, UnlinkDevices_RSV_SRC_P)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.unlinkDevices((void*)ctxUnlinkDevice, device1, device2,
-                    PMCsdkHelper::unlinkDevicesCB, OC_STACK_OK))
+    if (!m_PMHelper.unlinkDevices((void *)ctxUnlinkDevice, device1, device2,
+                                  PMCsdkHelper::unlinkDevicesCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -1127,7 +1127,7 @@ TEST_F(PMCsdkProvTest_btc, UnlinkDevices_RSV_SRC_P)
  * @post_condition  None
  * @expected        OCUnlinkDevices will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, UnlinkDevicesDev1_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -1137,20 +1137,20 @@ TEST_F(PMCsdkProvTest_btc, UnlinkDevicesDev1_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -1163,15 +1163,15 @@ TEST_F(PMCsdkProvTest_btc, UnlinkDevicesDev1_NV_N)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.unlinkDevices((void*)ctxUnlinkDevice, NULL, device2,
-                    PMCsdkHelper::unlinkDevicesCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.unlinkDevices((void *)ctxUnlinkDevice, NULL, device2,
+                                  PMCsdkHelper::unlinkDevicesCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -1213,7 +1213,7 @@ TEST_F(PMCsdkProvTest_btc, UnlinkDevicesDev1_NV_N)
  * @post_condition  None
  * @expected        OCUnlinkDevices will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, UnlinkDevicesDev2_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -1223,20 +1223,20 @@ TEST_F(PMCsdkProvTest_btc, UnlinkDevicesDev2_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -1249,15 +1249,15 @@ TEST_F(PMCsdkProvTest_btc, UnlinkDevicesDev2_NV_N)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.unlinkDevices((void*)ctxUnlinkDevice, device1, NULL,
-                    PMCsdkHelper::unlinkDevicesCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.unlinkDevices((void *)ctxUnlinkDevice, device1, NULL,
+                                  PMCsdkHelper::unlinkDevicesCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -1299,7 +1299,7 @@ TEST_F(PMCsdkProvTest_btc, UnlinkDevicesDev2_NV_N)
  * @post_condition  None
  * @expected        OCUnlinkDevices will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, UnlinkDevicesCB_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -1309,20 +1309,20 @@ TEST_F(PMCsdkProvTest_btc, UnlinkDevicesCB_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -1335,15 +1335,15 @@ TEST_F(PMCsdkProvTest_btc, UnlinkDevicesCB_NV_N)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.unlinkDevices((void*)ctxUnlinkDevice, device1, device2,
-                    NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMHelper.unlinkDevices((void *)ctxUnlinkDevice, device1, device2,
+                                  NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -1385,7 +1385,7 @@ TEST_F(PMCsdkProvTest_btc, UnlinkDevicesCB_NV_N)
  * @post_condition  None
  * @expected        OCRemoveDevice will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, RemoveDevice_SRC_RV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -1395,20 +1395,20 @@ TEST_F(PMCsdkProvTest_btc, RemoveDevice_SRC_RV_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -1421,15 +1421,15 @@ TEST_F(PMCsdkProvTest_btc, RemoveDevice_SRC_RV_P)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.removeDevice((void*)ctxRemoveDevice, DISCOVERY_TIMEOUT, device1,
-                    PMCsdkHelper::removeDeviceCB, OC_STACK_OK))
+    if (!m_PMHelper.removeDevice((void *)ctxRemoveDevice, DISCOVERY_TIMEOUT, device1,
+                                 PMCsdkHelper::removeDeviceCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -1471,7 +1471,7 @@ TEST_F(PMCsdkProvTest_btc, RemoveDevice_SRC_RV_P)
  * @post_condition  None
  * @expected        OCRemoveDevice will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, RemoveDeviceTime_LBV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -1481,20 +1481,20 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceTime_LBV_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -1507,15 +1507,15 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceTime_LBV_P)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.removeDevice((void*)ctxRemoveDevice, DISCOVERY_TIMEOUT_ONE, device1,
-                    PMCsdkHelper::removeDeviceCB, OC_STACK_OK))
+    if (!m_PMHelper.removeDevice((void *)ctxRemoveDevice, DISCOVERY_TIMEOUT_ONE, device1,
+                                 PMCsdkHelper::removeDeviceCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -1557,7 +1557,7 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceTime_LBV_P)
  * @post_condition  None
  * @expected        OCRemoveDevice will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, RemoveDevice_LOBV_N)
 {
 
@@ -1568,20 +1568,20 @@ TEST_F(PMCsdkProvTest_btc, RemoveDevice_LOBV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -1594,15 +1594,15 @@ TEST_F(PMCsdkProvTest_btc, RemoveDevice_LOBV_N)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.removeDevice((void*)ctxRemoveDevice, DISCOVERY_TIMEOUT_ZERO, device1,
-                    PMCsdkHelper::removeDeviceCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.removeDevice((void *)ctxRemoveDevice, DISCOVERY_TIMEOUT_ZERO, device1,
+                                 PMCsdkHelper::removeDeviceCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -1644,7 +1644,7 @@ TEST_F(PMCsdkProvTest_btc, RemoveDevice_LOBV_N)
  * @post_condition  None
  * @expected        OCRemoveDevice will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, RemoveDeviceTargetDev_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -1654,20 +1654,20 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceTargetDev_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -1678,15 +1678,16 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceTargetDev_NV_N)
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY,
+            OWNER_PSK_LENGTH_128,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.removeDevice((void*)ctxRemoveDevice, DISCOVERY_TIMEOUT, NULL,
-                    PMCsdkHelper::removeDeviceCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.removeDevice((void *)ctxRemoveDevice, DISCOVERY_TIMEOUT, NULL,
+                                 PMCsdkHelper::removeDeviceCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -1728,7 +1729,7 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceTargetDev_NV_N)
  * @post_condition  None
  * @expected        OCRemoveDevice will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, RemoveDeviceCB_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -1738,20 +1739,20 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceCB_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -1762,15 +1763,16 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceCB_NV_N)
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY,
+            OWNER_PSK_LENGTH_128,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.removeDevice((void*)ctxRemoveDevice, DISCOVERY_TIMEOUT, device1,
-                    NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMHelper.removeDevice((void *)ctxRemoveDevice, DISCOVERY_TIMEOUT, device1,
+                                 NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -1812,7 +1814,7 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceCB_NV_N)
  * @post_condition  None
  * @expected        OCRemoveDeviceWithUuid will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuid_SRC_RV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -1822,20 +1824,20 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuid_SRC_RV_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -1848,8 +1850,8 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuid_SRC_RV_P)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -1857,7 +1859,8 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuid_SRC_RV_P)
 
     OicUuid_t deviceUuid = device1->doxm->deviceID;
 
-    if (!m_PMHelper.removeDeviceWithUuid((void*)ctxRemoveDeviceWithUuid, DISCOVERY_TIMEOUT, &deviceUuid, PMCsdkHelper::removeDeviceCB, OC_STACK_OK))
+    if (!m_PMHelper.removeDeviceWithUuid((void *)ctxRemoveDeviceWithUuid, DISCOVERY_TIMEOUT,
+                                         &deviceUuid, PMCsdkHelper::removeDeviceCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -1899,7 +1902,7 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuid_SRC_RV_P)
  * @post_condition  None
  * @expected        OCRemoveDeviceWithUuid will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithWrongUuid_RV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -1909,20 +1912,20 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithWrongUuid_RV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -1935,8 +1938,8 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithWrongUuid_RV_N)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -1944,13 +1947,14 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithWrongUuid_RV_N)
 
     OicUuid_t deviceUuid;
 
-    if(!m_PMHelper.convertStrToUuid(DEFAULT_OWNER_ID, &deviceUuid,OC_STACK_OK))
+    if (!m_PMHelper.convertStrToUuid(DEFAULT_OWNER_ID, &deviceUuid, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.removeDeviceWithUuid((void*)ctxRemoveDeviceWithUuid, DISCOVERY_TIMEOUT, &deviceUuid, PMCsdkHelper::removeDeviceCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.removeDeviceWithUuid((void *)ctxRemoveDeviceWithUuid, DISCOVERY_TIMEOUT,
+                                         &deviceUuid, PMCsdkHelper::removeDeviceCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -1992,7 +1996,7 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithWrongUuid_RV_N)
  * @post_condition  None
  * @expected        OCRemoveDeviceWithUuid will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuidUuid_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -2002,20 +2006,20 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuidUuid_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -2028,14 +2032,15 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuidUuid_NV_N)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.removeDeviceWithUuid((void*)ctxRemoveDeviceWithUuid, DISCOVERY_TIMEOUT, NULL, PMCsdkHelper::removeDeviceCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.removeDeviceWithUuid((void *)ctxRemoveDeviceWithUuid, DISCOVERY_TIMEOUT, NULL,
+                                         PMCsdkHelper::removeDeviceCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -2077,7 +2082,7 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuidUuid_NV_N)
  * @post_condition  None
  * @expected        OCRemoveDeviceWithUuid will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuid_LOBV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -2087,20 +2092,20 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuid_LOBV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -2113,8 +2118,8 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuid_LOBV_N)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -2122,7 +2127,8 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuid_LOBV_N)
 
     OicUuid_t deviceUuid = device1->doxm->deviceID;
 
-    if (!m_PMHelper.removeDeviceWithUuid((void*)ctxRemoveDeviceWithUuid, DISCOVERY_TIMEOUT_ZERO, &deviceUuid, PMCsdkHelper::removeDeviceCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.removeDeviceWithUuid((void *)ctxRemoveDeviceWithUuid, DISCOVERY_TIMEOUT_ZERO,
+                                         &deviceUuid, PMCsdkHelper::removeDeviceCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -2164,7 +2170,7 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuid_LOBV_N)
  * @post_condition  None
  * @expected        OCRemoveDeviceWithUuid will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuid_LBV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -2174,20 +2180,20 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuid_LBV_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -2200,8 +2206,8 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuid_LBV_P)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -2209,7 +2215,8 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuid_LBV_P)
 
     OicUuid_t deviceUuid = device1->doxm->deviceID;
 
-    if (!m_PMHelper.removeDeviceWithUuid((void*)ctxRemoveDeviceWithUuid, DISCOVERY_TIMEOUT_ONE, &deviceUuid, PMCsdkHelper::removeDeviceCB, OC_STACK_OK))
+    if (!m_PMHelper.removeDeviceWithUuid((void *)ctxRemoveDeviceWithUuid, DISCOVERY_TIMEOUT_ONE,
+                                         &deviceUuid, PMCsdkHelper::removeDeviceCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -2251,7 +2258,7 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuid_LBV_P)
  * @post_condition  None
  * @expected        OCRemoveDeviceWithUuid will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuidCB_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -2261,20 +2268,20 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuidCB_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -2287,8 +2294,8 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuidCB_NV_N)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -2296,7 +2303,8 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuidCB_NV_N)
 
     OicUuid_t deviceUuid = device1->doxm->deviceID;
 
-    if (!m_PMHelper.removeDeviceWithUuid((void*)ctxRemoveDeviceWithUuid, DISCOVERY_TIMEOUT, &deviceUuid, NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMHelper.removeDeviceWithUuid((void *)ctxRemoveDeviceWithUuid, DISCOVERY_TIMEOUT,
+                                         &deviceUuid, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -2338,7 +2346,7 @@ TEST_F(PMCsdkProvTest_btc, RemoveDeviceWithUuidCB_NV_N)
  * @post_condition  None
  * @expected        OCResetDevice will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ResetDevice_SRC_RV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -2348,20 +2356,20 @@ TEST_F(PMCsdkProvTest_btc, ResetDevice_SRC_RV_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -2374,15 +2382,15 @@ TEST_F(PMCsdkProvTest_btc, ResetDevice_SRC_RV_P)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.resetDevice((void*)ctxResetDevice, DISCOVERY_TIMEOUT, device1,
-                    PMCsdkHelper::syncDeviceCB, OC_STACK_OK))
+    if (!m_PMHelper.resetDevice((void *)ctxResetDevice, DISCOVERY_TIMEOUT, device1,
+                                PMCsdkHelper::syncDeviceCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -2424,7 +2432,7 @@ TEST_F(PMCsdkProvTest_btc, ResetDevice_SRC_RV_P)
  * @post_condition  None
  * @expected        OCResetDevice will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ResetDevice_LBV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -2434,20 +2442,20 @@ TEST_F(PMCsdkProvTest_btc, ResetDevice_LBV_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -2460,15 +2468,15 @@ TEST_F(PMCsdkProvTest_btc, ResetDevice_LBV_P)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.resetDevice((void*)ctxResetDevice, DISCOVERY_TIMEOUT_ONE, device1,
-                    PMCsdkHelper::syncDeviceCB, OC_STACK_OK))
+    if (!m_PMHelper.resetDevice((void *)ctxResetDevice, DISCOVERY_TIMEOUT_ONE, device1,
+                                PMCsdkHelper::syncDeviceCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -2510,7 +2518,7 @@ TEST_F(PMCsdkProvTest_btc, ResetDevice_LBV_P)
  * @post_condition  None
  * @expected        OCResetDevice will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ResetDevice_LOBV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -2520,20 +2528,20 @@ TEST_F(PMCsdkProvTest_btc, ResetDevice_LOBV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -2546,15 +2554,15 @@ TEST_F(PMCsdkProvTest_btc, ResetDevice_LOBV_N)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.resetDevice((void*)ctxResetDevice, DISCOVERY_TIMEOUT_ZERO, device1,
-                    PMCsdkHelper::syncDeviceCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.resetDevice((void *)ctxResetDevice, DISCOVERY_TIMEOUT_ZERO, device1,
+                                PMCsdkHelper::syncDeviceCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -2597,7 +2605,7 @@ TEST_F(PMCsdkProvTest_btc, ResetDevice_LOBV_N)
  * @post_condition  None
  * @expected        OCResetDevice will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ResetDeviceTargetDevice_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -2607,20 +2615,20 @@ TEST_F(PMCsdkProvTest_btc, ResetDeviceTargetDevice_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -2633,15 +2641,15 @@ TEST_F(PMCsdkProvTest_btc, ResetDeviceTargetDevice_NV_N)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.resetDevice((void*)ctxResetDevice, DISCOVERY_TIMEOUT, NULL,
-                    PMCsdkHelper::syncDeviceCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.resetDevice((void *)ctxResetDevice, DISCOVERY_TIMEOUT, NULL,
+                                PMCsdkHelper::syncDeviceCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -2683,7 +2691,7 @@ TEST_F(PMCsdkProvTest_btc, ResetDeviceTargetDevice_NV_N)
  * @post_condition  None
  * @expected        OCResetDevice will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ResetDeviceTargetDevice2_SRC_RV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -2693,20 +2701,20 @@ TEST_F(PMCsdkProvTest_btc, ResetDeviceTargetDevice2_SRC_RV_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -2719,15 +2727,15 @@ TEST_F(PMCsdkProvTest_btc, ResetDeviceTargetDevice2_SRC_RV_P)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.resetDevice((void*)ctxResetDevice, DISCOVERY_TIMEOUT, device2,
-                    PMCsdkHelper::syncDeviceCB, OC_STACK_OK))
+    if (!m_PMHelper.resetDevice((void *)ctxResetDevice, DISCOVERY_TIMEOUT, device2,
+                                PMCsdkHelper::syncDeviceCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -2769,7 +2777,7 @@ TEST_F(PMCsdkProvTest_btc, ResetDeviceTargetDevice2_SRC_RV_P)
  * @post_condition  None
  * @expected        OCResetDevice will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ResetDeviceCB_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -2779,20 +2787,20 @@ TEST_F(PMCsdkProvTest_btc, ResetDeviceCB_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -2805,15 +2813,15 @@ TEST_F(PMCsdkProvTest_btc, ResetDeviceCB_NV_N)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.resetDevice((void*)ctxResetDevice, DISCOVERY_TIMEOUT, device2,
-                    NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMHelper.resetDevice((void *)ctxResetDevice, DISCOVERY_TIMEOUT, device2,
+                                NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -2855,7 +2863,7 @@ TEST_F(PMCsdkProvTest_btc, ResetDeviceCB_NV_N)
  * @post_condition  None
  * @expected        OCResetSVRDB will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, ResetSVRDB_SRC_RV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -2865,20 +2873,20 @@ TEST_F(PMCsdkProvTest_btc, ResetSVRDB_SRC_RV_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -2891,8 +2899,8 @@ TEST_F(PMCsdkProvTest_btc, ResetSVRDB_SRC_RV_P)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -2940,7 +2948,7 @@ TEST_F(PMCsdkProvTest_btc, ResetSVRDB_SRC_RV_P)
  * @post_condition  None
  * @expected        OCGetLinkedStatus will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, OCGetLinkedStatus_RSV_SRC_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -2950,20 +2958,20 @@ TEST_F(PMCsdkProvTest_btc, OCGetLinkedStatus_RSV_SRC_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -2974,14 +2982,15 @@ TEST_F(PMCsdkProvTest_btc, OCGetLinkedStatus_RSV_SRC_P)
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY,
+            OWNER_PSK_LENGTH_128,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCUuidList_t* uuidList = NULL;
+    OCUuidList_t *uuidList = NULL;
     size_t numOfDevices = 0;
 
     if (!m_PMHelper.getLinkedStatus(&device1->doxm->deviceID, &uuidList, &numOfDevices, OC_STACK_OK))
@@ -3026,7 +3035,7 @@ TEST_F(PMCsdkProvTest_btc, OCGetLinkedStatus_RSV_SRC_P)
  * @post_condition  None
  * @expected        OCGetLinkedStatus will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, OCGetLinkedStatusDeviceID_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -3036,20 +3045,20 @@ TEST_F(PMCsdkProvTest_btc, OCGetLinkedStatusDeviceID_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3062,14 +3071,14 @@ TEST_F(PMCsdkProvTest_btc, OCGetLinkedStatusDeviceID_NV_N)
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, type, keySize,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCUuidList_t* uuidList = NULL;
+    OCUuidList_t *uuidList = NULL;
     size_t numOfDevices = 0;
 
     if (!m_PMHelper.getLinkedStatus(NULL, &uuidList, &numOfDevices, OC_STACK_INVALID_PARAM))
@@ -3114,7 +3123,7 @@ TEST_F(PMCsdkProvTest_btc, OCGetLinkedStatusDeviceID_NV_N)
  * @post_condition  None
  * @expected        OCGetLinkedStatus will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, OCGetLinkedStatusUuidListNV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -3124,20 +3133,20 @@ TEST_F(PMCsdkProvTest_btc, OCGetLinkedStatusUuidListNV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3148,8 +3157,9 @@ TEST_F(PMCsdkProvTest_btc, OCGetLinkedStatusUuidListNV_N)
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY,
+            OWNER_PSK_LENGTH_128,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3157,7 +3167,8 @@ TEST_F(PMCsdkProvTest_btc, OCGetLinkedStatusUuidListNV_N)
 
     size_t numOfDevices;
 
-    if (!m_PMHelper.getLinkedStatus(&device1->doxm->deviceID, NULL, &numOfDevices, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.getLinkedStatus(&device1->doxm->deviceID, NULL, &numOfDevices,
+                                    OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -3199,7 +3210,7 @@ TEST_F(PMCsdkProvTest_btc, OCGetLinkedStatusUuidListNV_N)
  * @post_condition  None
  * @expected        OCGetLinkedStatus will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, OCGetLinkedStatusNumDev_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -3209,20 +3220,20 @@ TEST_F(PMCsdkProvTest_btc, OCGetLinkedStatusNumDev_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3233,16 +3244,17 @@ TEST_F(PMCsdkProvTest_btc, OCGetLinkedStatusNumDev_NV_N)
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY,
+            OWNER_PSK_LENGTH_128,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCUuidList_t* uuidList = NULL;
+    OCUuidList_t *uuidList = NULL;
 
-    if (!m_PMHelper.getLinkedStatus(&device1->doxm->deviceID, &uuidList, NULL ,OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.getLinkedStatus(&device1->doxm->deviceID, &uuidList, NULL , OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -3284,7 +3296,7 @@ TEST_F(PMCsdkProvTest_btc, OCGetLinkedStatusNumDev_NV_N)
  * @post_condition  None
  * @expected        OCGetCredResource will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, OCGetCredResource_RV_SRC_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -3294,20 +3306,20 @@ TEST_F(PMCsdkProvTest_btc, OCGetCredResource_RV_SRC_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3318,8 +3330,9 @@ TEST_F(PMCsdkProvTest_btc, OCGetCredResource_RV_SRC_P)
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY,
+            OWNER_PSK_LENGTH_128,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3367,7 +3380,7 @@ TEST_F(PMCsdkProvTest_btc, OCGetCredResource_RV_SRC_P)
  * @post_condition  None
  * @expected        OCGetCredResource will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, OCGetCredResourceDev_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -3377,20 +3390,20 @@ TEST_F(PMCsdkProvTest_btc, OCGetCredResourceDev_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3401,8 +3414,9 @@ TEST_F(PMCsdkProvTest_btc, OCGetCredResourceDev_NV_N)
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY,
+            OWNER_PSK_LENGTH_128,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3450,7 +3464,7 @@ TEST_F(PMCsdkProvTest_btc, OCGetCredResourceDev_NV_N)
  * @post_condition  None
  * @expected        OCGetCredResource will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, OCGetCredResourceCb_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -3460,20 +3474,20 @@ TEST_F(PMCsdkProvTest_btc, OCGetCredResourceCb_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3484,8 +3498,9 @@ TEST_F(PMCsdkProvTest_btc, OCGetCredResourceCb_NV_N)
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY,
+            OWNER_PSK_LENGTH_128,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3533,7 +3548,7 @@ TEST_F(PMCsdkProvTest_btc, OCGetCredResourceCb_NV_N)
  * @post_condition  None
  * @expected        OCGetACLResource will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, OCGetACLResource_RV_SRC_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -3543,20 +3558,20 @@ TEST_F(PMCsdkProvTest_btc, OCGetACLResource_RV_SRC_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3567,8 +3582,9 @@ TEST_F(PMCsdkProvTest_btc, OCGetACLResource_RV_SRC_P)
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY,
+            OWNER_PSK_LENGTH_128,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3616,7 +3632,7 @@ TEST_F(PMCsdkProvTest_btc, OCGetACLResource_RV_SRC_P)
  * @post_condition  None
  * @expected        OCGetACLResource will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, OCGetACLResource_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -3626,20 +3642,20 @@ TEST_F(PMCsdkProvTest_btc, OCGetACLResource_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3650,8 +3666,9 @@ TEST_F(PMCsdkProvTest_btc, OCGetACLResource_NV_N)
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY,
+            OWNER_PSK_LENGTH_128,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3699,7 +3716,7 @@ TEST_F(PMCsdkProvTest_btc, OCGetACLResource_NV_N)
  * @post_condition  None
  * @expected        OCGetACLResource will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, OCGetACLResourceCb_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -3709,20 +3726,20 @@ TEST_F(PMCsdkProvTest_btc, OCGetACLResourceCb_NV_N)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3733,8 +3750,9 @@ TEST_F(PMCsdkProvTest_btc, OCGetACLResourceCb_NV_N)
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY,
+            OWNER_PSK_LENGTH_128,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3773,7 +3791,7 @@ TEST_F(PMCsdkProvTest_btc, OCGetACLResourceCb_NV_N)
  * @post_condition  none
  * @expected        OCSelectOwnershipTransferMethod will return OC_STACK_OK and selectedMethod will return OIC_JUST_WORKS
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, selectOwnershipTransferMethod_SRC_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -3786,7 +3804,8 @@ TEST_F(PMCsdkProvTest_btc, selectOwnershipTransferMethod_SRC_P)
     {   OIC_JUST_WORKS, OIC_RANDOM_DEVICE_PIN};
     OicSecOxm_t selectedMethod = NULL;
 
-    if(!m_PMHelper.selectOwnershipTransferMethod(supportedMethods, 2, &selectedMethod, SUPER_OWNER, OC_STACK_OK, OIC_RANDOM_DEVICE_PIN))
+    if (!m_PMHelper.selectOwnershipTransferMethod(supportedMethods, 2, &selectedMethod, SUPER_OWNER,
+            OC_STACK_OK, OIC_RANDOM_DEVICE_PIN))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -3809,7 +3828,7 @@ TEST_F(PMCsdkProvTest_btc, selectOwnershipTransferMethod_SRC_P)
  * @post_condition  none
  * @expected        OCSelectOwnershipTransferMethod will return OC_STACK_OK and selectedMethod will return OIC_JUST_WORKS
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, selectOwnershipTransferMethod_NV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -3822,7 +3841,8 @@ TEST_F(PMCsdkProvTest_btc, selectOwnershipTransferMethod_NV_P)
     {   OIC_RANDOM_DEVICE_PIN, OIC_JUST_WORKS};
     OicSecOxm_t selectedMethod = NULL;
 
-    if(!m_PMHelper.selectOwnershipTransferMethod(supportedMethods, 2, &selectedMethod, SUPER_OWNER, OC_STACK_OK, OIC_RANDOM_DEVICE_PIN))
+    if (!m_PMHelper.selectOwnershipTransferMethod(supportedMethods, 2, &selectedMethod, SUPER_OWNER,
+            OC_STACK_OK, OIC_RANDOM_DEVICE_PIN))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -3845,7 +3865,7 @@ TEST_F(PMCsdkProvTest_btc, selectOwnershipTransferMethod_NV_P)
  * @post_condition  none
  * @expected        OCSetOxmAllowStatus will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, setOxmAllowStatusJustWork_SRC_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -3877,7 +3897,7 @@ TEST_F(PMCsdkProvTest_btc, setOxmAllowStatusJustWork_SRC_P)
  * @post_condition  none
  * @expected        OCSetOxmAllowStatus will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, setOxmAllowStatusJustWorkFalse_SRC_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -3909,7 +3929,7 @@ TEST_F(PMCsdkProvTest_btc, setOxmAllowStatusJustWorkFalse_SRC_P)
  * @post_condition  none
  * @expected        OCSetOxmAllowStatus will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, setOxmAllowStatusRandPin_SRC_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -3941,7 +3961,7 @@ TEST_F(PMCsdkProvTest_btc, setOxmAllowStatusRandPin_SRC_P)
  * @post_condition  none
  * @expected        OCSetOxmAllowStatus will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, setOxmAllowStatusManufacurer_SRC_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -3973,7 +3993,7 @@ TEST_F(PMCsdkProvTest_btc, setOxmAllowStatusManufacurer_SRC_P)
  * @post_condition  none
  * @expected        OCSetOxmAllowStatus will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, setOxmAllowStatusDecentralized_SRC_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -4005,7 +4025,7 @@ TEST_F(PMCsdkProvTest_btc, setOxmAllowStatusDecentralized_SRC_P)
  * @post_condition  none
  * @expected        OCSetOxmAllowStatus will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, setOxmAllowStatus_LOBV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -4043,7 +4063,7 @@ TEST_F(PMCsdkProvTest_btc, setOxmAllowStatus_LOBV_N)
  * @post_condition  None
  * @expected        OCSaveACL will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, saveACL_SRC_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -4053,27 +4073,27 @@ TEST_F(PMCsdkProvTest_btc, saveACL_SRC_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
     m_Acl = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList, false);
 
-    if(!m_PMHelper.saveACL(m_Acl, OC_STACK_OK))
+    if (!m_PMHelper.saveACL(m_Acl, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -4104,7 +4124,7 @@ TEST_F(PMCsdkProvTest_btc, saveACL_SRC_P)
  * @post_condition  None
  * @expected        OCSaveACL will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, saveACLAcl_NV_N)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -4113,7 +4133,7 @@ TEST_F(PMCsdkProvTest_btc, saveACLAcl_NV_N)
         return;
     }
 
-    if(!m_PMHelper.saveACL(NULL, OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.saveACL(NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -4142,7 +4162,7 @@ TEST_F(PMCsdkProvTest_btc, saveACLAcl_NV_N)
  * @post_condition  None
  * @expected        OCDeleteDiscoveredDevices will not throw Exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, deleteDiscoveredDevices_SRC_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -4152,26 +4172,26 @@ TEST_F(PMCsdkProvTest_btc, deleteDiscoveredDevices_SRC_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.deleteDiscoveredDevices(m_OwnList))
+    if (!m_PMHelper.deleteDiscoveredDevices(m_OwnList))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -4196,7 +4216,7 @@ TEST_F(PMCsdkProvTest_btc, deleteDiscoveredDevices_SRC_P)
  * @post_condition  None
  * @expected        OCDeleteDiscoveredDevices will not throw Exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, deleteDiscoveredDevicesUnowned_SRC_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -4206,13 +4226,13 @@ TEST_F(PMCsdkProvTest_btc, deleteDiscoveredDevicesUnowned_SRC_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.deleteDiscoveredDevices(m_UnownList))
+    if (!m_PMHelper.deleteDiscoveredDevices(m_UnownList))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -4236,7 +4256,7 @@ TEST_F(PMCsdkProvTest_btc, deleteDiscoveredDevicesUnowned_SRC_P)
  * @post_condition  None
  * @expected        OCDeleteDiscoveredDevices will not throw Exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, deleteDiscoveredDevicesPList_NV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -4245,7 +4265,7 @@ TEST_F(PMCsdkProvTest_btc, deleteDiscoveredDevicesPList_NV_P)
         return;
     }
 
-    if(!m_PMHelper.deleteDiscoveredDevices(NULL))
+    if (!m_PMHelper.deleteDiscoveredDevices(NULL))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -4280,7 +4300,7 @@ TEST_F(PMCsdkProvTest_btc, deleteDiscoveredDevicesPList_NV_P)
  * @post_condition  None
  * @expected        OCDeleteUuidList will not throw Exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, deleteUuidList_RSV_SRC_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -4290,20 +4310,20 @@ TEST_F(PMCsdkProvTest_btc, deleteUuidList_RSV_SRC_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -4314,14 +4334,15 @@ TEST_F(PMCsdkProvTest_btc, deleteUuidList_RSV_SRC_P)
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
-                    device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
+    if (!m_PMHelper.provisionPairwiseDevices((void *)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY,
+            OWNER_PSK_LENGTH_128,
+            device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    OCUuidList_t* uuidList = NULL;
+    OCUuidList_t *uuidList = NULL;
     size_t numOfDevices = 0;
 
     if (!m_PMHelper.getLinkedStatus(&device1->doxm->deviceID, &uuidList, &numOfDevices, OC_STACK_OK))
@@ -4365,7 +4386,7 @@ TEST_F(PMCsdkProvTest_btc, deleteUuidList_RSV_SRC_P)
  * @post_condition  None
  * @expected        OCDeleteUuidList will not throw Exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, deleteUuidListPList_NV_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -4402,7 +4423,7 @@ TEST_F(PMCsdkProvTest_btc, deleteUuidListPList_NV_P)
  * @post_condition  None
  * @expected        OCDeleteACLList will not throw Exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, deleteACLList_SRC_P)
 {
     if (!m_PMHelper.initProvisionClient())
@@ -4412,20 +4433,20 @@ TEST_F(PMCsdkProvTest_btc, deleteACLList_SRC_P)
     }
 
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
+                                           &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMHelper.doOwnerShipTransfer((void *)g_ctx, &m_UnownList,
+                                        PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
+    if (!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -4459,7 +4480,7 @@ TEST_F(PMCsdkProvTest_btc, deleteACLList_SRC_P)
  * @post_condition  None
  * @expected        OCDeleteACLList will not throw Exception
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkProvTest_btc, deleteACLListPAcl_NV_P)
 {
     if (!m_PMHelper.initProvisionClient())

@@ -17,9 +17,16 @@
  * limitations under the License.
  *
  ******************************************************************/
+#ifdef _GNUC_
 #pragma GCC diagnostic ignored "-Wformat"
+#endif
 #ifndef INCLUDE_IOTIVITYTEST_LOGGER_H_
 #define INCLUDE_IOTIVITYTEST_LOGGER_H_
+
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#include <direct.h>
+#endif
 
 #include <stdint.h>
 #include <stdio.h>

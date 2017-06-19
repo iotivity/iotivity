@@ -29,35 +29,35 @@ uint16_t PMCppCertHelper::s_credId = 0;
 
 class PMCppCertTest_btc: public ::testing::Test
 {
-protected:
-    PMCppHelper m_PMCppHelper;
-    PMCppCertHelper m_PMCppCertHelper;
-    DeviceList_t m_UnownedDevList, m_OwnedDevList;
-    OicSecAcl_t *m_acl1, *m_acl2;
+    protected:
+        PMCppHelper m_PMCppHelper;
+        PMCppCertHelper m_PMCppCertHelper;
+        DeviceList_t m_UnownedDevList, m_OwnedDevList;
+        OicSecAcl_t *m_acl1, *m_acl2;
 
-    virtual void SetUp()
-    {
-        CommonTestUtil::runCommonTCSetUpPart();
-        CommonUtil::killApp(KILL_SERVERS);
-        CommonUtil::waitInSecond(DELAY_MEDIUM);
-        PMCppUtilityHelper::removeAllResFile();
-        CommonUtil::waitInSecond(DELAY_LONG);
-        CommonUtil::copyFile(ROOT_CERT_FILE_BACKUP, ROOT_CERT_FILE);
-        CommonUtil::copyFile(JUSTWORKS_SERVER1_CBOR_BACKUP, JUSTWORKS_SERVER1_CBOR);
-        CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
-        CommonUtil::launchApp(JUSTWORKS_SERVER1);
-        CommonUtil::waitInSecond(DELAY_LONG);
-        m_UnownedDevList.clear();
-        m_OwnedDevList.clear();
-        m_acl1 = NULL;
-        m_acl2 = NULL;
-    }
+        virtual void SetUp()
+        {
+            CommonTestUtil::runCommonTCSetUpPart();
+            CommonUtil::killApp(KILL_SERVERS);
+            CommonUtil::waitInSecond(DELAY_MEDIUM);
+            PMCppUtilityHelper::removeAllResFile();
+            CommonUtil::waitInSecond(DELAY_LONG);
+            CommonUtil::copyFile(ROOT_CERT_FILE_BACKUP, ROOT_CERT_FILE);
+            CommonUtil::copyFile(JUSTWORKS_SERVER1_CBOR_BACKUP, JUSTWORKS_SERVER1_CBOR);
+            CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
+            CommonUtil::launchApp(JUSTWORKS_SERVER1);
+            CommonUtil::waitInSecond(DELAY_LONG);
+            m_UnownedDevList.clear();
+            m_OwnedDevList.clear();
+            m_acl1 = NULL;
+            m_acl2 = NULL;
+        }
 
-    virtual void TearDown()
-    {
-        CommonTestUtil::runCommonTCTearDownPart();
-        CommonUtil::killApp(KILL_SERVERS);
-    }
+        virtual void TearDown()
+        {
+            CommonTestUtil::runCommonTCTearDownPart();
+            CommonUtil::killApp(KILL_SERVERS);
+        }
 };
 
 /**
@@ -74,10 +74,10 @@ protected:
  * @post_condition  None
  * @expected        saveTrustCertChain will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCertTest_btc, SaveTrustCertChain_SRC_RV_P)
 {
-    if(!m_PMCppCertHelper.provisionInit())
+    if (!m_PMCppCertHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -88,10 +88,12 @@ TEST_F(PMCppCertTest_btc, SaveTrustCertChain_SRC_RV_P)
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
 
-    PMCppUtilityHelper::readFile(ROOT_CERT_FILE, (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
+    PMCppUtilityHelper::readFile(ROOT_CERT_FILE,
+                                 (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
 
-    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data, PMCppCertHelper::s_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
+    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data,
+            PMCppCertHelper::s_trustCertChainArray.len,
+            OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -110,19 +112,21 @@ TEST_F(PMCppCertTest_btc, SaveTrustCertChain_SRC_RV_P)
  * @post_condition  None
  * @expected        saveTrustCertChain will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCertTest_btc, SaveTrustCertChainCredId_NV_N)
 {
-    if(!m_PMCppCertHelper.provisionInit())
+    if (!m_PMCppCertHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    PMCppUtilityHelper::readFile(ROOT_CERT_FILE, (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
+    PMCppUtilityHelper::readFile(ROOT_CERT_FILE,
+                                 (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
 
-    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data, PMCppCertHelper::s_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, NULL, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data,
+            PMCppCertHelper::s_trustCertChainArray.len,
+            OIC_ENCODING_PEM, NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -141,19 +145,20 @@ TEST_F(PMCppCertTest_btc, SaveTrustCertChainCredId_NV_N)
  * @post_condition  None
  * @expected        saveTrustCertChain will return OC_STACK_NO_MEMORY
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCertTest_btc, SaveTrustCertChainCertChainLen_LOBV_N)
 {
-    if(!m_PMCppCertHelper.provisionInit())
+    if (!m_PMCppCertHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    PMCppUtilityHelper::readFile(ROOT_CERT_FILE, (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
+    PMCppUtilityHelper::readFile(ROOT_CERT_FILE,
+                                 (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
 
     if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data, -1,
-                    OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_NO_MEMORY))
+            OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_NO_MEMORY))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -172,19 +177,20 @@ TEST_F(PMCppCertTest_btc, SaveTrustCertChainCertChainLen_LOBV_N)
  * @post_condition  None
  * @expected        saveTrustCertChain will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCertTest_btc, SaveTrustCertChainCertChain_NV_N)
 {
-    if(!m_PMCppCertHelper.provisionInit())
+    if (!m_PMCppCertHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    PMCppUtilityHelper::readFile(ROOT_CERT_FILE, (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
+    PMCppUtilityHelper::readFile(ROOT_CERT_FILE,
+                                 (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
 
     if (!m_PMCppCertHelper.saveTrustCertChain(NULL, PMCppCertHelper::s_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_INVALID_PARAM))
+            OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -205,19 +211,21 @@ TEST_F(PMCppCertTest_btc, SaveTrustCertChainCertChain_NV_N)
  * @post_condition  None
  * @expected        readTrustCertChain will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCertTest_btc, ReadTrustCertChain_SRC_RV_P)
 {
-    if(!m_PMCppCertHelper.provisionInit())
+    if (!m_PMCppCertHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    PMCppUtilityHelper::readFile(ROOT_CERT_FILE, (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
+    PMCppUtilityHelper::readFile(ROOT_CERT_FILE,
+                                 (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
 
-    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data, PMCppCertHelper::s_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
+    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data,
+            PMCppCertHelper::s_trustCertChainArray.len,
+            OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -226,7 +234,7 @@ TEST_F(PMCppCertTest_btc, ReadTrustCertChain_SRC_RV_P)
     {   0, 0};
 
     if (!m_PMCppCertHelper.readTrustCertChain(PMCppCertHelper::s_credId, &trustCertChainArray.data,
-                    &trustCertChainArray.len, OC_STACK_OK))
+            &trustCertChainArray.len, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -247,19 +255,21 @@ TEST_F(PMCppCertTest_btc, ReadTrustCertChain_SRC_RV_P)
  * @post_condition  None
  * @expected        readTrustCertChain will return OC_STACK_ERROR
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCertTest_btc, ReadTrustCertChainCredId_LOBV_N)
 {
-    if(!m_PMCppCertHelper.provisionInit())
+    if (!m_PMCppCertHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    PMCppUtilityHelper::readFile(ROOT_CERT_FILE, (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
+    PMCppUtilityHelper::readFile(ROOT_CERT_FILE,
+                                 (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
 
-    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data, PMCppCertHelper::s_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
+    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data,
+            PMCppCertHelper::s_trustCertChainArray.len,
+            OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -268,7 +278,7 @@ TEST_F(PMCppCertTest_btc, ReadTrustCertChainCredId_LOBV_N)
     {   0, 0};
 
     if (!m_PMCppCertHelper.readTrustCertChain(-1, &trustCertChainArray.data,
-                    &trustCertChainArray.len, OC_STACK_ERROR))
+            &trustCertChainArray.len, OC_STACK_ERROR))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -289,19 +299,21 @@ TEST_F(PMCppCertTest_btc, ReadTrustCertChainCredId_LOBV_N)
  * @post_condition  None
  * @expected        readTrustCertChain will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCertTest_btc, ReadTrustCertChainChainArray_NV_N)
 {
-    if(!m_PMCppCertHelper.provisionInit())
+    if (!m_PMCppCertHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    PMCppUtilityHelper::readFile(ROOT_CERT_FILE, (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
+    PMCppUtilityHelper::readFile(ROOT_CERT_FILE,
+                                 (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
 
-    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data, PMCppCertHelper::s_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
+    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data,
+            PMCppCertHelper::s_trustCertChainArray.len,
+            OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -310,7 +322,7 @@ TEST_F(PMCppCertTest_btc, ReadTrustCertChainChainArray_NV_N)
     {   0, 0};
 
     if (!m_PMCppCertHelper.readTrustCertChain(PMCppCertHelper::s_credId, NULL,
-                    &trustCertChainArray.len, OC_STACK_INVALID_PARAM))
+            &trustCertChainArray.len, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -331,19 +343,21 @@ TEST_F(PMCppCertTest_btc, ReadTrustCertChainChainArray_NV_N)
  * @post_condition  None
  * @expected        readTrustCertChain will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCertTest_btc, ReadTrustCertChainChainLen_NV_N)
 {
-    if(!m_PMCppCertHelper.provisionInit())
+    if (!m_PMCppCertHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    PMCppUtilityHelper::readFile(ROOT_CERT_FILE, (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
+    PMCppUtilityHelper::readFile(ROOT_CERT_FILE,
+                                 (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
 
-    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data, PMCppCertHelper::s_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
+    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data,
+            PMCppCertHelper::s_trustCertChainArray.len,
+            OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -352,7 +366,7 @@ TEST_F(PMCppCertTest_btc, ReadTrustCertChainChainLen_NV_N)
     {   0, 0};
 
     if (!m_PMCppCertHelper.readTrustCertChain(PMCppCertHelper::s_credId, &trustCertChainArray.data,
-                    NULL, OC_STACK_INVALID_PARAM))
+            NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -371,10 +385,10 @@ TEST_F(PMCppCertTest_btc, ReadTrustCertChainChainLen_NV_N)
  * @post_condition  None
  * @expected        registerTrustCertChangeNotifier will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCertTest_btc, RegisterTrustCertChangeNotifier_SRC_RV_P)
 {
-    if(!m_PMCppCertHelper.provisionInit())
+    if (!m_PMCppCertHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -385,10 +399,12 @@ TEST_F(PMCppCertTest_btc, RegisterTrustCertChangeNotifier_SRC_RV_P)
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
 
-    PMCppUtilityHelper::readFile(ROOT_CERT_FILE, (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
+    PMCppUtilityHelper::readFile(ROOT_CERT_FILE,
+                                 (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
 
-    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data, PMCppCertHelper::s_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
+    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data,
+            PMCppCertHelper::s_trustCertChainArray.len,
+            OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -408,10 +424,10 @@ TEST_F(PMCppCertTest_btc, RegisterTrustCertChangeNotifier_SRC_RV_P)
  * @post_condition  None
  * @expected        registerTrustCertChangeNotifier will return OC_STACK_ERROR
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCertTest_btc, RegisterTrustCertChangeNotifierMultipleTime_EG_N)
 {
-    if(!m_PMCppCertHelper.provisionInit())
+    if (!m_PMCppCertHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -422,7 +438,8 @@ TEST_F(PMCppCertTest_btc, RegisterTrustCertChangeNotifierMultipleTime_EG_N)
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
 
-    if (!m_PMCppCertHelper.registerTrustCertChangeNotifier(PMCppCertHelper::certChainCB, OC_STACK_ERROR))
+    if (!m_PMCppCertHelper.registerTrustCertChangeNotifier(PMCppCertHelper::certChainCB,
+            OC_STACK_ERROR))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -441,10 +458,10 @@ TEST_F(PMCppCertTest_btc, RegisterTrustCertChangeNotifierMultipleTime_EG_N)
  * @post_condition  None
  * @expected        registerTrustCertChangeNotifier will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCertTest_btc, RegisterTrustCertChangeNotifierCb_NV_N)
 {
-    if(!m_PMCppCertHelper.provisionInit())
+    if (!m_PMCppCertHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -471,10 +488,10 @@ TEST_F(PMCppCertTest_btc, RegisterTrustCertChangeNotifierCb_NV_N)
  * @post_condition  None
  * @expected        removeTrustCertChangeNotifier will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCertTest_btc, RemoveTrustCertChangeNotifier_SRC_P)
 {
-    if(!m_PMCppCertHelper.provisionInit())
+    if (!m_PMCppCertHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -506,10 +523,10 @@ TEST_F(PMCppCertTest_btc, RemoveTrustCertChangeNotifier_SRC_P)
  * @post_condition  None
  * @expected        removeTrustCertChangeNotifier will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCertTest_btc, RemoveTrustCertChangeNotifier_RV_P)
 {
-    if(!m_PMCppCertHelper.provisionInit())
+    if (!m_PMCppCertHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -544,28 +561,29 @@ TEST_F(PMCppCertTest_btc, RemoveTrustCertChangeNotifier_RV_P)
  * @post_condition  None
  * @expected        provisionTrustCertChain will return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCertTest_btc, ProvisionTrustCertChain_RV_SRC_P)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -576,15 +594,18 @@ TEST_F(PMCppCertTest_btc, ProvisionTrustCertChain_RV_SRC_P)
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
 
-    PMCppUtilityHelper::readFile(ROOT_CERT_FILE, (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
+    PMCppUtilityHelper::readFile(ROOT_CERT_FILE,
+                                 (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
 
-    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data, PMCppCertHelper::s_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
+    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data,
+            PMCppCertHelper::s_trustCertChainArray.len,
+            OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
 
-    if(!m_PMCppCertHelper.provisionTrustCertChain(m_OwnedDevList, SIGNED_ASYMMETRIC_KEY, PMCppCertHelper::s_credId, PMCppCertHelper::provisionCB, OC_STACK_OK))
+    if (!m_PMCppCertHelper.provisionTrustCertChain(m_OwnedDevList, SIGNED_ASYMMETRIC_KEY,
+            PMCppCertHelper::s_credId, PMCppCertHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -613,28 +634,29 @@ TEST_F(PMCppCertTest_btc, ProvisionTrustCertChain_RV_SRC_P)
  * @post_condition  None
  * @expected        provisionTrustCertChain will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCertTest_btc, ProvisionTrustCertChainCredType_EG_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -645,15 +667,18 @@ TEST_F(PMCppCertTest_btc, ProvisionTrustCertChainCredType_EG_N)
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
 
-    PMCppUtilityHelper::readFile(ROOT_CERT_FILE, (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
+    PMCppUtilityHelper::readFile(ROOT_CERT_FILE,
+                                 (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
 
-    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data, PMCppCertHelper::s_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
+    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data,
+            PMCppCertHelper::s_trustCertChainArray.len,
+            OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
 
-    if(!m_PMCppCertHelper.provisionTrustCertChain(m_OwnedDevList, SYMMETRIC_PAIR_WISE_KEY, PMCppCertHelper::s_credId, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppCertHelper.provisionTrustCertChain(m_OwnedDevList, SYMMETRIC_PAIR_WISE_KEY,
+            PMCppCertHelper::s_credId, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -682,28 +707,29 @@ TEST_F(PMCppCertTest_btc, ProvisionTrustCertChainCredType_EG_N)
  * @post_condition  None
  * @expected        provisionTrustCertChain will return OC_STACK_INVALID_CALLBACK
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCertTest_btc, ProvisionTrustCertChainCb_NV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -714,15 +740,18 @@ TEST_F(PMCppCertTest_btc, ProvisionTrustCertChainCb_NV_N)
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
 
-    PMCppUtilityHelper::readFile(ROOT_CERT_FILE, (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
+    PMCppUtilityHelper::readFile(ROOT_CERT_FILE,
+                                 (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
 
-    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data, PMCppCertHelper::s_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
+    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data,
+            PMCppCertHelper::s_trustCertChainArray.len,
+            OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
 
-    if(!m_PMCppCertHelper.provisionTrustCertChain(m_OwnedDevList, SIGNED_ASYMMETRIC_KEY, PMCppCertHelper::s_credId, NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMCppCertHelper.provisionTrustCertChain(m_OwnedDevList, SIGNED_ASYMMETRIC_KEY,
+            PMCppCertHelper::s_credId, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
@@ -751,28 +780,29 @@ TEST_F(PMCppCertTest_btc, ProvisionTrustCertChainCb_NV_N)
  * @post_condition  None
  * @expected        provisionTrustCertChain will return OC_STACK_INVALID_PARAM
  */
-#if defined(__LINUX__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppCertTest_btc, ProvisionTrustCertChainCredId_LOBV_N)
 {
-    if(!m_PMCppHelper.provisionInit())
+    if (!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
+                                           OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -783,15 +813,18 @@ TEST_F(PMCppCertTest_btc, ProvisionTrustCertChainCredId_LOBV_N)
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
 
-    PMCppUtilityHelper::readFile(ROOT_CERT_FILE, (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
+    PMCppUtilityHelper::readFile(ROOT_CERT_FILE,
+                                 (OCByteString *) &PMCppCertHelper::s_trustCertChainArray);
 
-    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data, PMCppCertHelper::s_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
+    if (!m_PMCppCertHelper.saveTrustCertChain(PMCppCertHelper::s_trustCertChainArray.data,
+            PMCppCertHelper::s_trustCertChainArray.len,
+            OIC_ENCODING_PEM, &PMCppCertHelper::s_credId, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
 
-    if(!m_PMCppCertHelper.provisionTrustCertChain(m_OwnedDevList, SIGNED_ASYMMETRIC_KEY, -1, PMCppCertHelper::provisionCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppCertHelper.provisionTrustCertChain(m_OwnedDevList, SIGNED_ASYMMETRIC_KEY, -1,
+            PMCppCertHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppCertHelper.getFailureMessage());
     }
