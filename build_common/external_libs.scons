@@ -35,8 +35,8 @@ if env.get('BUILD_JAVA') == True and target_os != 'android':
             env.get('JAVA_HOME') + '/include/' + target_os
         ])
     else:
-        raise SCons.Errors.StopError(
-            'BUILD_JAVA is specified, but JAVA_HOME is not set.')
+        msg = "Error: BUILD_JAVA requires JAVA_HOME to be set for target '%s'" % target_os
+        Exit(msg)
 
 # External library include files are in <src_dir>/deps/<target_os>/include
 # the library binaries are in <src_dir>/deps/<target_os>/lib/<arch>
