@@ -393,7 +393,7 @@ generate_report_RE()
     LD_LIBRARY_PATH="${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug"
     "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/resource-encapsulation/src/serverBuilder/rcs_server_test"
     "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/resource-encapsulation/unittests/rcs_client_test"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/resource-encapsulation/src/common/rcs_common_test"
+    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/resource-encapsulation/src/common/primitiveResource/unittests/rcs_common_test"
     "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/resource-encapsulation/src/resourceCache/unittests/cache_test"
     "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/resource-encapsulation/src/resourceBroker/unittest/broker_test"
 
