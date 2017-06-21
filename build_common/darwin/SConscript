@@ -39,7 +39,8 @@ if len(sdks) > 0:
 
 # SYS_VERSION build option
 help_vars = Variables()
-help_vars.Add('SYS_VERSION', 'MAC OS X SDK version / IOS SDK version',
+help_vars.Add('SYS_VERSION',
+              'MAC OS X SDK version / IOS SDK version',
               os.environ.get('SYS_VERSION'))
 help_vars.Update(env)
 Help(help_vars.GenerateHelpText(env))

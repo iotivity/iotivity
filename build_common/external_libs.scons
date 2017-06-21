@@ -21,27 +21,33 @@ rd_mode = env.get('RD_MODE')
 if target_os == 'android':
     if target_arch == 'armeabi-v7a-hard':
         target_arch = 'armeabi-v7a'
-    env.AppendUnique(CCFLAGS = ['-D__JAVA__'])
+    env.AppendUnique(CCFLAGS=['-D__JAVA__'])
 
 if target_os == 'darwin':
-    env.AppendUnique(CPPPATH = ['/usr/local/include'])
-    env.AppendUnique(LIBPATH = ['/usr/local/lib'])
+    env.AppendUnique(CPPPATH=['/usr/local/include'])
+    env.AppendUnique(LIBPATH=['/usr/local/lib'])
 
 if env.get('BUILD_JAVA') == True and target_os != 'android':
     if env.get('JAVA_HOME') != None:
-            env.AppendUnique(CCFLAGS = ['-D__JAVA__'])
-            env.AppendUnique(CPPPATH = [
+        env.AppendUnique(CCFLAGS=['-D__JAVA__'])
+        env.AppendUnique(CPPPATH=[
             env.get('JAVA_HOME') + '/include',
             env.get('JAVA_HOME') + '/include/' + target_os
         ])
     else:
-        raise SCons.Errors.StopError( 'BUILD_JAVA is specified, but JAVA_HOME is not set.')
+        raise SCons.Errors.StopError(
+            'BUILD_JAVA is specified, but JAVA_HOME is not set.')
 
 # External library include files are in <src_dir>/deps/<target_os>/include
 # the library binaries are in <src_dir>/deps/<target_os>/lib/<arch>
 if target_os not in ['windows']:
-    env.AppendUnique(CPPPATH = [os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'include')])
-    env.AppendUnique(LIBPATH = [os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'lib', target_arch)])
+    env.AppendUnique(CPPPATH=[
+        os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'include')
+    ])
+    env.AppendUnique(LIBPATH=[
+        os.path.join(
+            env.get('SRC_DIR'), 'deps', target_os, 'lib', target_arch)
+    ])
 
 # tinycbor build/fetch
 SConscript(os.path.join(env.get('SRC_DIR'), 'extlibs', 'tinycbor', 'SConscript'))

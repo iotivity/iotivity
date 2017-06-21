@@ -39,7 +39,9 @@ if env['CC'] == 'cl':
     #    - It's an acceptable warning displayed only by Visual Studio 2013 compiler.
     #  - warning C4706: assignment within conditional expression
     #    - Disabled due to the widespread usage in IoTivity and low impact.
-    env.AppendUnique(CCFLAGS=['/wd4127', '/wd4200', '/wd4201', '/wd4204', '/wd4214', '/wd4221', '/wd4232', '/wd4503', '/wd4512', '/wd4706'])
+    env.AppendUnique(CCFLAGS=[
+        '/wd4127', '/wd4200', '/wd4201', '/wd4204', '/wd4214', '/wd4221',
+        '/wd4232', '/wd4503', '/wd4512', '/wd4706'])
 
     # Enabling /W4 warnings globally for Windows builds.
     env.AppendUnique(CCFLAGS=['/W4', '/WX'])
@@ -47,13 +49,13 @@ if env['CC'] == 'cl':
 
     # Set release/debug flags
     if env.get('RELEASE'):
-        env.AppendUnique(CCFLAGS = ['/MD', '/O2', '/GF'])
-        env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+        env.AppendUnique(CCFLAGS=['/MD', '/O2', '/GF'])
+        env.AppendUnique(CPPDEFINES=['NDEBUG'])
     else:
-        env.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/RTC1'])
-        env.AppendUnique(LINKFLAGS = ['/debug'])
+        env.AppendUnique(CCFLAGS=['/MDd', '/Od', '/RTC1'])
+        env.AppendUnique(LINKFLAGS=['/debug'])
 
-    env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+    env.AppendUnique(LIBPATH=[env.get('BUILD_DIR')])
 
     # Work around [IOT-1986]
     # During some Windows multi-threaded builds, SCons/Python/Pywin32 appear to try
@@ -61,13 +63,13 @@ if env['CC'] == 'cl':
     # InstallTarget() for this static LIB, but didn't finish yet. That behavior results
     # in linker errors. Work around this issue by linking with the source of InstallTarget(),
     # rather than the target.
-    env.PrependUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'src')])
-    env.PrependUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'c_common', 'windows')])
-    env.PrependUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'oc_logger')])
-    env.PrependUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk', 'resource-directory')])
-    env.PrependUnique(LIBPATH = ['#extlibs/mbedtls'])
+    env.PrependUnique(LIBPATH=[os.path.join(env.get('BUILD_DIR'), 'resource', 'src')])
+    env.PrependUnique(LIBPATH=[os.path.join(env.get('BUILD_DIR'), 'resource', 'c_common', 'windows')])
+    env.PrependUnique(LIBPATH=[os.path.join(env.get('BUILD_DIR'), 'resource', 'oc_logger')])
+    env.PrependUnique(LIBPATH=[os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk', 'resource-directory')])
+    env.PrependUnique(LIBPATH=['#extlibs/mbedtls'])
 
-    env.AppendUnique(PATH = os.environ['PATH'])
+    env.AppendUnique(PATH=os.environ['PATH'])
     env['PDB'] = '${TARGET.base}.pdb'
     env.Append(LINKFLAGS=['/PDB:${TARGET.base}.pdb'])
 
@@ -81,16 +83,22 @@ if env['CC'] == 'cl':
 
     if env.get('UWP_APP') != '1':
         # Add Desktop specific libraries
-        env.AppendUnique(LIBS = ['bcrypt', 'ws2_32', 'advapi32', 'iphlpapi', 'crypt32', 'kernel32'])
+        env.AppendUnique(LIBS=[
+            'bcrypt',
+            'ws2_32',
+            'advapi32',
+            'iphlpapi',
+            'crypt32',
+            'kernel32',
+        ])
     else:
         # Add Windows Universal Platform specific libraries and flags
         # Note: We technically should set WINAPI_FAMILY=WINAPI_FAMILY_APP, but cannot
         #       due to [IOT-2312]. All APIs used are store/UWP compatible at this time.
         env.AppendUnique(CPPDEFINES=['UWP_APP', '__WRL_NO_DEFAULT_LIB__'])
         env.AppendUnique(LINKFLAGS=['/MANIFEST:NO', '/WINMD:NO', '/APPCONTAINER'])
-        env.AppendUnique(LIBS = ['WindowsApp', 'bcrypt', 'ws2_32', 'iphlpapi', 'crypt32'])
+        env.AppendUnique(LIBS=['WindowsApp', 'bcrypt', 'ws2_32', 'iphlpapi', 'crypt32'])
 
 elif env['CC'] == 'gcc':
     print "\nError: gcc not supported on Windows.  Use Visual Studio!\n"
-    Exit(1);
-
+    Exit(1)
