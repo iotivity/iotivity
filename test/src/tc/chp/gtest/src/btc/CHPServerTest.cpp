@@ -82,20 +82,20 @@ TEST_F(CHPServerTest_btc, CHPInitializeSecurewithoutOCInit_ECRC_N)
 #endif
 
 /**
- * @since           2017-03-27
- * @see             OCStackResult CHPTerminate()
+ * @since           2016-03-27
+ * @see             OCStackResult CHPTerminate();
  * @objective       Test CHPTerminate function without CHPInitialize
- * @target          OCStackResult CHPTerminate()
+ * @target          OCStackResult CHPTerminate();
  * @test_data       none
  * @pre_condition   none
  * @procedure       Call CHPTerminate
  * @post_condition  none
- * @expected        CHPTerminate not crash and will return OC_STACK_INVALID_PARAM
+ * @expected        CHPTerminate not crash and will return OC_STACK_OK
  */
 #if defined(__LINUX__)
 TEST_F(CHPServerTest_btc, CHPTerminate_ECRC_N)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, m_pchpHelper->terminateCHP());
+    EXPECT_EQ(OC_STACK_OK,(m_pchpHelper->terminateCHP()));
 }
 #endif
 

@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "CHPHelper.h"
 
+using namespace OC;
 
 CHPHelper *CHPHelper::s_pchpHelper = NULL;
 
