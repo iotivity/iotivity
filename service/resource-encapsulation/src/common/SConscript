@@ -35,6 +35,9 @@ src_dir = rcs_common_env.get('SRC_DIR')
 ######################################################################
 rcs_common_env.AppendUnique(CPPPATH=[
     '#/extlibs',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
     '#/resource/include',
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',
@@ -44,8 +47,6 @@ rcs_common_env.AppendUnique(CPPPATH=[
 ])
 
 rcs_common_env.AppendUnique(CPPPATH=['expiryTimer/include', 'expiryTimer/src'])
-
-rcs_common_env.AppendUnique(LIBPATH=[rcs_common_env.get('BUILD_DIR')])
 
 if target_os not in ['windows']:
     rcs_common_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall'])
@@ -94,6 +95,8 @@ if target_os not in ['ios']:
 else:
     rcs_common_env.InstallTarget([rcs_common_static], 'rcs_common')
     rcs_common_env.UserInstallTargetLib([rcs_common_static], 'rcs_common')
+
+rcs_common_env.AddPthreadIfNeeded()
 
 ######################################################################
 # Build Test Expiry Timer and primitive Resource

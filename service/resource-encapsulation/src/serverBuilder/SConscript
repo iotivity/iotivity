@@ -42,6 +42,9 @@ server_builder_env.AppendUnique(CPPPATH=[
     '../common/primitiveResource/include',
     '../common/utils/include',
     '../../include',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
     '#/resource/include',
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',
@@ -50,11 +53,7 @@ server_builder_env.AppendUnique(CPPPATH=[
 
 server_builder_env.AppendUnique(
     CPPPATH=[server_builder_env.get('SRC_DIR') + '/extlibs', 'include'])
-server_builder_env.AppendUnique(LIBPATH=[server_builder_env.get('BUILD_DIR')])
-server_builder_env.AppendUnique(LIBS=['oc', 'rcs_common'])
-
-if server_builder_env.get('LOGGING'):
-    server_builder_env.AppendUnique(LIBS=['octbstack'])
+server_builder_env.AppendUnique(LIBS=['oc', 'rcs_common', 'logger'])
 
 if not release:
     server_builder_env.AppendUnique(CXXFLAGS=['--coverage'])
@@ -75,6 +74,8 @@ if server_builder_env.get('SECURED') == '1':
         server_builder_env.AppendUnique(
             LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
+if target_os in ['linux', 'tizen']:
+    server_builder_env.AppendUnique(LIBS=['rt'])
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -101,9 +102,9 @@ if target_os in ['linux']:
     server_builder_test_env = server_builder_env.Clone()
 
     server_builder_test_env.AppendUnique(CPPPATH=[
-        '#/extlibs/hippomocks/hippomocks',
-        '../common/utils/include'
-])
+            '#/extlibs/hippomocks/hippomocks',
+            '../common/utils/include',
+        ])
 
     if server_builder_test_env.get('SECURED') == '1':
         server_builder_test_env.AppendUnique(
@@ -124,6 +125,8 @@ if target_os in ['linux']:
         server_builder_test_env.Glob('unittests/*.cpp'),
         unitTestHelperWithFakeOCPlatform_obj
     ]
+
+    server_builder_test_env.AddPthreadIfNeeded()
 
     server_builder_test = server_builder_test_env.Program(
         'rcs_server_test', server_builder_test_src)
