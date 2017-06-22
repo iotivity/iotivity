@@ -24,20 +24,16 @@
 
 Import('env')
 
-if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS=['-Os'])
-    env.AppendUnique(CPPDEFINES=['NDEBUG'])
-else:
-    env.AppendUnique(CCFLAGS=['-g'])
-
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES=['TB_LOG'])
-
 lib_env = env.Clone()
 SConscript('#service/third_party_libs.scons', 'lib_env')
 scenemanager_env = lib_env.Clone()
 
 target_os = env.get('TARGET_OS')
+
+if scenemanager_env.get('RELEASE'):
+    scenemanager_env.AppendUnique(CCFLAGS=['-Os'])
+else:
+    scenemanager_env.AppendUnique(CCFLAGS=['-g'])
 ######################################################################
 # Build flags
 ######################################################################
@@ -48,6 +44,9 @@ scenemanager_env.AppendUnique(CPPPATH=[
     '../resource-encapsulation/include',
     '../resource-encapsulation/src/common/primitiveResource/include',
     '../resource-encapsulation/src/common/expiryTimer/include',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',
     '#/resource/include',
