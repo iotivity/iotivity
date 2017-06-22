@@ -27,8 +27,8 @@
 #include <stdint.h>
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "nest_defs.h"
-#include "nest_thermostat.h"
+#include "nestDefs.h"
+#include "nestThermostat.h"
 #include <string.h>
 
 using namespace std;
@@ -68,9 +68,9 @@ class Nest
                 grantTime = 0;
             }
 
-            _ACCESS_TOKEN(const char *a_token)
+            _ACCESS_TOKEN(const std::string &a_token)
             {
-                OICStrcpy(accessToken, NEST_ACCESS_TOKEN_LEN - 1, a_token);
+                OICStrcpy(accessToken, NEST_ACCESS_TOKEN_LEN - 1, a_token.c_str());
                 memset(expires, 0, NEST_ACCESS_TOKEN_EXPIRY);
                 acquiredTime = 0;
                 grantTime = 0;
@@ -166,7 +166,7 @@ class Nest
 
         MPMResult parseStructureJsonResponse(std::string &json, META_INFO &meta);
 
-        AWAY_MODE getAwayMode(const char *value) const;
+        AWAY_MODE getAwayMode(const std::string &value) const;
 
         ACCESS_TOKEN m_accessToken;
         META_INFO m_metaInfo;

@@ -22,17 +22,20 @@
 # ResourceCache Unit Test build script
 ##
 # SConscript file for Local PKI google tests
+
+from tools.scons.RunTest import run_test
+
 gtest_env = SConscript('#extlibs/gtest/SConscript')
 lib_env = gtest_env.Clone()
 
 if lib_env.get('RELEASE'):
-    lib_env.AppendUnique(CCFLAGS = ['-Os'])
-    lib_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+    lib_env.AppendUnique(CCFLAGS=['-Os'])
+    lib_env.AppendUnique(CPPDEFINES=['NDEBUG'])
 else:
-    lib_env.AppendUnique(CCFLAGS = ['-g'])
+    lib_env.AppendUnique(CCFLAGS=['-g'])
 
 if lib_env.get('LOGGING'):
-    lib_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    lib_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 SConscript('#service/third_party_libs.scons', 'lib_env')
 
@@ -46,7 +49,7 @@ target_os = cache_test_env.get('TARGET_OS')
 # Build flags
 ######################################################################
 
-cache_test_env.AppendUnique(CPPPATH = [
+cache_test_env.AppendUnique(CPPPATH=[
     '../include',
     '../../../include',
     '../../common/primitiveResource/include',
@@ -58,18 +61,25 @@ cache_test_env.AppendUnique(CPPPATH = [
     '#/resource/include',
     '#/resource/oc_logger/include'
 ])
-cache_test_env.PrependUnique(CPPPATH = [cache_test_env.get('SRC_DIR')+'/extlibs/hippomocks-master'])
-cache_test_env.AppendUnique(LIBPATH = [cache_test_env.get('BUILD_DIR')])
-cache_test_env.PrependUnique(LIBS = ['rcs_client', 'rcs_common',
-  'oc', 'octbstack', 'oc_logger',
-  'connectivity_abstraction', 'coap'])
+cache_test_env.PrependUnique(CPPPATH=['#/extlibs/hippomocks/hippomocks'])
+cache_test_env.AppendUnique(LIBPATH=[cache_test_env.get('BUILD_DIR')])
+cache_test_env.PrependUnique(LIBS=[
+    'rcs_client',
+    'rcs_common',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'connectivity_abstraction',
+    'coap',
+])
 
 compiler = cache_test_env.get('CXX')
 if 'g++' in compiler:
-    cache_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+    cache_test_env.AppendUnique(
+        CXXFLAGS=['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 if cache_test_env.get('SECURED') == '1':
-    cache_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    cache_test_env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # Build Test
@@ -81,8 +91,8 @@ cache_test_env.AppendTarget('cache_test')
 
 if cache_test_env.get('TEST') == '1':
     if target_os in ['linux']:
-        from tools.scons.RunTest import run_test
-        run_test(cache_test_env,
-                 'service_resource-encapsulation_src_resourceCache_unittests_cache_test.memtest',
-                 'service/resource-encapsulation/src/resourceCache/unittests/cache_test',
-                 cache_test)
+        run_test(
+            cache_test_env,
+            'service_resource-encapsulation_src_resourceCache_unittests_cache_test.memtest',
+            'service/resource-encapsulation/src/resourceCache/unittests/cache_test',
+            cache_test)

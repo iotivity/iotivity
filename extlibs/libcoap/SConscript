@@ -49,10 +49,10 @@ libcoap_repo_url    = 'https://github.com/dthaler/libcoap'
 # Right now this script assumes the revision is a tag, and not a branch or an arbitrary
 # commit. If this changes, update the check below, or else the script will always conclude
 # the repo is not up to date because a tag with that name doesn't exist.
-libcoap_version          = 'IoTivity-1.2.1c'
+libcoap_version          = 'IoTivity-1.2.1d'
 libcoap_dir              = os.path.join(src_dir, 'extlibs', 'libcoap', 'libcoap')
 libcoap_checkout_command = 'git clone ' + libcoap_repo_url + '.git extlibs/libcoap/libcoap -b ' + libcoap_version
-libcoap_update_command = 'git fetch && git checkout -f ' + libcoap_version
+libcoap_update_command = 'git fetch --tags && git checkout -f ' + libcoap_version
 libcoap_change_dir_command = 'cd ' + libcoap_dir
 
 if with_upstream_libcoap == '1':
@@ -72,12 +72,24 @@ if with_upstream_libcoap == '1':
         print '''
 *********************************** Info: *****************************************
 * Your libCoAP repo is not up to date with the latest version we require (%s).
+***********************************************************************************
+ ''' %(libcoap_version)
+        if libcoap_env.get('AUTOMATIC_UPDATE'):
+            print '''
+*********************************** Info: *****************************************
+* Automatically updating libcoap to version %s.
+***********************************************************************************
+ ''' %(libcoap_version)
+            subprocess.check_output(libcoap_update_command, shell = True)
+        else:
+            print '''
+*********************************** Info: *****************************************
 * Please update using the following commands:
 *   %s
 *   %s
 ***********************************************************************************
- ''' %(libcoap_version, libcoap_change_dir_command, libcoap_update_command)
-        Exit(1)
+ ''' %(libcoap_change_dir_command, libcoap_update_command)
+            Exit(1)
 
 else:
     print '''
@@ -107,7 +119,7 @@ if target_os == 'arduino':
 
 # Build flags
 if target_os not in ['arduino', 'windows', 'winrt', 'msys_nt']:
-    libcoap_env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '_DEFAULT_SOURCE'])
+    libcoap_env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '_GNU_SOURCE'])
     libcoap_env.AppendUnique(CFLAGS = ['-std=gnu99','-fPIC'])
 
 if target_os not in ['windows', 'winrt']:
@@ -170,8 +182,6 @@ if with_upstream_libcoap == '1':
 
 ''' % (str(target_os), str(target_arch))
 
-        config_h_body = ''
-
         config_h_footer = '''
 
 /* Define to the full name of this package. */
@@ -196,54 +206,87 @@ if with_upstream_libcoap == '1':
 
     ''' % (str(lib_prefix + 'coap'), str(lib_prefix + 'coap ' + libcoap_version))
 
-        cxx_headers = ['arpa/inet.h',
-                       'assert.h',
-                       'limits.h',
-                       'netinet/in.h',
-                       'stdio.h',
-                       'strings.h',
-                       'sys/select.h',
-                       'sys/socket.h',
-                       'sys/time.h',
-                       'sys/types.h',
-                       'sys/uio.h',
-                       'sys/unistd.h',
-                       'syslog.h',
-                       'time.h',
-                       'unistd.h',
-                       'winsock2.h',
-                       'ws2tcpip.h']
+        config_h_body = ''
 
-        cxx_functions = ['malloc',
-                         'snprintf',
-                         'strnlen',
-                         'vprintf']
+        if ((target_os == 'windows') and (libcoap_env.get('UWP_APP') == '1')):
+            # Workaround for libcoap config [Investigation in IOT-2234]:
+            # libcoap builds its config file by trying to create a small program to see if an API is
+            # available. However, when building with store libraries on windows, it doesn't seem
+            # to find malloc or strnlen APIs. On Windows, those APIs are guaranteed to be there,
+            # therefore, create the libcoap config_h_body with what is needed and expected to be
+            # there.
+            config_h_body = '''
+#define HAVE_ASSERT_H 1
 
-        if target_os == 'arduino':
-            # Detection of headers on the Arduino platform is currently broken.
-            cxx_headers = []
+#define HAVE_LIMITS_H 1
 
-        def get_define_from_string(string):
-            string_converted = string.replace("/","_").replace(".","_").upper()
-            return "HAVE_" + string_converted
+#define HAVE_STDIO_H 1
 
-        for header_file_name in cxx_headers:
-            if conf.CheckCXXHeader(header_file_name):
-                config_h_body += "#define %s 1\n\n" % get_define_from_string(header_file_name)
+#define HAVE_SYS_TYPES_H 1
 
-        for function_name in cxx_functions:
-            if conf.CheckFunc(function_name):
-                config_h_body += "#define %s 1\n\n" % get_define_from_string(function_name)
+#define HAVE_TIME_H 1
 
-        if conf.CheckCXXHeader('windows.h'):
-            config_h_body += "#define ssize_t SSIZE_T\n\n"
-            config_h_body += "#define in_port_t uint16_t\n\n"
+#define HAVE_WINSOCK2_H 1
 
-        conf.Finish()
+#define HAVE_WS2TCPIP_H 1
 
-        # Autoconf feature doesn't work with Jenkins' arduino toolchain, so hardcode it here.
-        if target_os == 'arduino':
-            config_h_body += "#define HAVE_ARDUINO_TIME_H\n\n"
+#define HAVE_MALLOC 1
+
+#define HAVE_STRNLEN 1
+
+#define ssize_t SSIZE_T
+
+#define in_port_t uint16_t
+'''
+        else:
+            cxx_headers = ['arpa/inet.h',
+                           'assert.h',
+                           'limits.h',
+                           'netinet/in.h',
+                           'stdio.h',
+                           'strings.h',
+                           'sys/select.h',
+                           'sys/socket.h',
+                           'sys/time.h',
+                           'sys/types.h',
+                           'sys/uio.h',
+                           'sys/unistd.h',
+                           'syslog.h',
+                           'time.h',
+                           'unistd.h',
+                           'winsock2.h',
+                           'ws2tcpip.h']
+
+            cxx_functions = ['malloc',
+                             'snprintf',
+                             'strnlen',
+                             'vprintf']
+
+            if target_os == 'arduino':
+                # Detection of headers on the Arduino platform is currently broken.
+                cxx_headers = []
+
+            def get_define_from_string(string):
+                string_converted = string.replace("/","_").replace(".","_").upper()
+                return "HAVE_" + string_converted
+
+            for header_file_name in cxx_headers:
+                if conf.CheckCXXHeader(header_file_name):
+                    config_h_body += "#define %s 1\n\n" % get_define_from_string(header_file_name)
+
+            for function_name in cxx_functions:
+                if conf.CheckFunc(function_name):
+                    config_h_body += "#define %s 1\n\n" % get_define_from_string(function_name)
+
+            if conf.CheckCXXHeader('windows.h'):
+                config_h_body += "#define ssize_t SSIZE_T\n\n"
+                config_h_body += "#define in_port_t uint16_t\n\n"
+
+            conf.Finish()
+
+            # Autoconf feature doesn't work with Jenkins' arduino toolchain, so hardcode it here.
+            if target_os == 'arduino':
+                config_h_body += "#define HAVE_ARDUINO_TIME_H\n\n"
 
         # Generate the file
         if os.path.exists(config_h_file_path):
@@ -272,6 +315,9 @@ else:
     # For bring up purposes only, the forked version will live here.
     libcoap_src_root = src_dir + '/resource/csdk/connectivity/lib/libcoap-4.1.1'
     libcoap_src = glob.glob(os.path.join(libcoap_src_root, '*.c'))
+
+if libcoap_env['CC'] == 'cl':
+    libcoap_env.AppendUnique(CCFLAGS = ['/W4'])
 
 libcoap = libcoap_env.StaticLibrary('coap', libcoap_src, OBJPREFIX='libcoap_')
 

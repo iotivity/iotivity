@@ -118,9 +118,6 @@ void DevConfProvCbInApp(ESDevConfData *eventData)
         return ;
     }
 
-    printf("Language : %s\n", eventData->language);
-    printf("Country : %s\n", eventData->country);
-
     printf("DevConfProvCbInApp OUT\n");
 }
 
@@ -204,7 +201,7 @@ void SetDeviceInfo()
     printf("SetDeviceInfo IN\n");
 
     ESDeviceProperty deviceProperty = {
-        {{WIFI_11G, WIFI_11N, WIFI_11AC, WiFi_EOF}, WIFI_5G}, {"Test Device", "Test Model Number"}
+        {{WIFI_11G, WIFI_11N, WIFI_11AC, WiFi_EOF}, WIFI_5G}, {"Test Device"}
     };
 
     // Set user properties if needed

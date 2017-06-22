@@ -217,7 +217,7 @@ MPMResult MPMLoad(MPMPluginHandle *pluginHandle, const char *pluginName, MPMCall
     MPMResult result = MPM_RESULT_INTERNAL_ERROR;
     MPMPluginRunTime *functionSymbolTable;
 
-    if ((pluginName == NULL))
+    if (pluginName == NULL)
     {
         OIC_LOG(ERROR, TAG, "PluginName is NULL");
         return result;

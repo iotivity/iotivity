@@ -23,7 +23,7 @@ set -e
 # Right now this script assumes packageRevision is a tag; 
 # comment out the second clause if packageRevision becomes a branch or a specific commit.
 package="mbedtls"
-packageRevision='mbedtls-2.4.0'
+packageRevision='mbedtls-2.4.2'
 packageUrl="https://github.com/ARMmbed/mbedtls"
 packageDir="extlibs/${package}/${package}"
 
@@ -58,7 +58,8 @@ https://wiki.iotivity.org/build
 EOF
         exit 2
     elif [ -d "${packageDir}/.git" ]; then
-        cd "${packageDir}"
+        cd "${packageDir}" || exit 1
+        git clean -f -d -x
         git reset --hard "${packageRevision}"
         git apply --whitespace=fix "../ocf.patch"
         cd -

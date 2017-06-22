@@ -384,6 +384,7 @@ TEST(ResourceAttributesConverterTest, ResourceAttributesCanBeConvertedIntoOCRepr
     {
         ASSERT_EQ(ocValue.bytes[i], rcsValue[i]);
     }
+    delete[] ocValue.bytes;
 }
 
 TEST(ResourceAttributesConverterTest, NestedOCRepresentationCanBeConvertedIntoResourceAttributes)

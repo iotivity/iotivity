@@ -20,6 +20,7 @@
 
 /// This sample provides the way to create cloud sample
 
+#include <string.h>
 #include "ocstack.h"
 #include "ocpayload.h"
 #include "rd_client.h"
@@ -137,7 +138,7 @@ void printRepresentation(OCRepPayloadValue *value)
                         printf("Value: None\n");
                         break;
                 case OCREP_PROP_INT:
-                        printf("Value: %d\n", value->i);
+                        printf("Value: %ld\n", value->i);
                         break;
                 case OCREP_PROP_DOUBLE:
                         printf("Value: %f\n", value->d);
@@ -168,6 +169,7 @@ void printRepresentation(OCRepPayloadValue *value)
 OCStackApplicationResult CloudSignupCallback(void *ctx,
         OCDoHandle handle, OCClientResponse *clientResponse)
 {
+    (void) handle;
     if (ctx != (void *)DEFAULT_CONTEXT_VALUE)
     {
         printf("Invalid Cloud Login/out callback received\n");
@@ -192,6 +194,7 @@ OCStackApplicationResult CloudSignupCallback(void *ctx,
 OCStackApplicationResult CloudLoginoutCallback(void *ctx,
         OCDoHandle handle, OCClientResponse *clientResponse)
 {
+    (void) handle;
     if (ctx != (void *)DEFAULT_CONTEXT_VALUE)
     {
         printf("Invalid Cloud Login/out callback received\n");

@@ -52,10 +52,9 @@ OCStackResult RMTerminate();
  * This API will be called from RI layer whenever there is a request for the GATEWAY
  * Virtual Resource.
  * @param[in,out]   request    Request Received.
- * @param[in]       resource   Resource handle used for sending the response.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-OCStackResult RMHandleGatewayRequest(OCServerRequest *request, const OCResource *resource);
+OCStackResult RMHandleGatewayRequest(OCServerRequest *request);
 
 /**
  * API to handle the Response payload.  The Gateway entries are parsed from

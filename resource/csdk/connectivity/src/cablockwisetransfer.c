@@ -57,7 +57,8 @@
 // context for block-wise transfer
 static CABlockWiseContext_t g_context = { .sendThreadFunc = NULL,
                                           .receivedThreadFunc = NULL,
-                                          .dataList = NULL };
+                                          .dataList = NULL,
+                                          .multicastDataList = NULL };
 
 static bool CACheckPayloadLength(const CAData_t *sendData)
 {
@@ -97,11 +98,18 @@ CAResult_t CAInitializeBlockWiseTransfer(CASendThreadFunc sendThreadFunc,
         g_context.dataList = u_arraylist_create();
     }
 
+    if (!g_context.multicastDataList)
+    {
+        g_context.multicastDataList = u_arraylist_create();
+    }
+
     CAResult_t res = CAInitBlockWiseMutexVariables();
     if (CA_STATUS_OK != res)
     {
         u_arraylist_free(&g_context.dataList);
         g_context.dataList = NULL;
+        u_arraylist_free(&g_context.multicastDataList);
+        g_context.multicastDataList = NULL;
         OIC_LOG(ERROR, TAG, "init has failed");
     }
 
@@ -116,6 +124,12 @@ CAResult_t CATerminateBlockWiseTransfer()
     {
         CARemoveAllBlockDataFromList();
         u_arraylist_free(&g_context.dataList);
+    }
+
+    if (g_context.multicastDataList)
+    {
+        CARemoveAllBlockMulticastDataFromList();
+        u_arraylist_free(&g_context.multicastDataList);
     }
 
     CATerminateBlockWiseMutexVariables();
@@ -146,6 +160,16 @@ CAResult_t CAInitBlockWiseMutexVariables()
         }
     }
 
+    if (!g_context.multicastDataListMutex)
+    {
+        g_context.multicastDataListMutex = oc_mutex_new();
+        if (!g_context.multicastDataListMutex)
+        {
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
+            return CA_STATUS_FAILED;
+        }
+    }
+
     return CA_STATUS_OK;
 }
 
@@ -161,6 +185,12 @@ void CATerminateBlockWiseMutexVariables()
     {
         oc_mutex_free(g_context.blockDataSenderMutex);
         g_context.blockDataSenderMutex = NULL;
+    }
+
+    if (g_context.multicastDataListMutex)
+    {
+        oc_mutex_free(g_context.multicastDataListMutex);
+        g_context.multicastDataListMutex = NULL;
     }
 }
 
@@ -183,6 +213,18 @@ CAResult_t CASendBlockWiseData(const CAData_t *sendData)
          */
         if (sendData->requestInfo->isMulticast)
         {
+            CABlockMulticastData_t *currData = CAGetBlockMulticastDataFromListWithSeed(
+                sendData->requestInfo->info.token, sendData->requestInfo->info.tokenLength);
+            if (!currData)
+            {
+                currData = CACreateNewBlockMulticastData(sendData);
+                if (!currData)
+                {
+                    OIC_LOG(ERROR, TAG, "memory alloc has failed");
+                    return CA_MEMORY_ALLOC_FAILED;
+                }
+            }
+
             OIC_LOG(DEBUG, TAG, "multicast message can't be sent to the block");
             return CA_NOT_SUPPORTED;
         }
@@ -416,10 +458,10 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                 return CA_STATUS_FAILED;
             }
 
-            coap_block_t *block = CAGetBlockOption(blockDataID, data->type);
-            if (!block)
+            coap_block_t *tempBlock = CAGetBlockOption(blockDataID, data->type);
+            if (!tempBlock)
             {
-                OIC_LOG(ERROR, TAG, "block is null");
+                OIC_LOG(ERROR, TAG, "tempBlock is null");
                 CADestroyBlockID(blockDataID);
                 return CA_STATUS_FAILED;
             }
@@ -427,7 +469,7 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             CAResult_t res = CA_STATUS_OK;
             if (COAP_OPTION_BLOCK2 == data->type)
             {
-                res = CASetNextBlockOption2(pdu, endpoint, receivedData, *block, dataLen);
+                res = CASetNextBlockOption2(pdu, endpoint, receivedData, *tempBlock, dataLen);
                 if (CA_STATUS_OK != res)
                 {
                     OIC_LOG(ERROR, TAG, "setting has failed");
@@ -437,7 +479,7 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             }
             else if (COAP_OPTION_BLOCK1 == data->type)
             {
-                res = CASetNextBlockOption1(pdu, endpoint, receivedData, *block, dataLen);
+                res = CASetNextBlockOption1(pdu, endpoint, receivedData, *tempBlock, dataLen);
                 if (CA_STATUS_OK != res)
                 {
                     OIC_LOG(ERROR, TAG, "setting has failed");
@@ -844,6 +886,24 @@ static CABlockData_t* CACheckTheExistOfBlockData(const CABlockDataID_t* blockDat
             return NULL;
         }
 
+        // Responses are not required to carry the Uri-Path but requests are
+        if (cadata->requestInfo && !cadata->requestInfo->info.resourceUri)
+        {
+            assert(blockDataID->idLength <= UINT8_MAX);
+            CABlockMulticastData_t *currData = CAGetBlockMulticastDataFromListWithSeed(
+                (CAToken_t) blockDataID->id, (uint8_t) blockDataID->idLength);
+            if (currData)
+            {
+                cadata->requestInfo->info.resourceUri = OICStrdup(currData->resourceUri);
+                if (!cadata->requestInfo->info.resourceUri)
+                {
+                    OIC_LOG(ERROR, TAG, "failed to allocate resource URI");
+                    CADestroyDataSet(cadata);
+                    return NULL;
+                }
+            }
+        }
+
         data = CACreateNewBlockData(cadata);
         if (!data)
         {
@@ -884,9 +944,10 @@ CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             (CAToken_t)pdu->transport_hdr->udp.token,
             (uint8_t)pdu->transport_hdr->udp.token_length,
             endpoint->addr, endpoint->port);
-    if (NULL == blockDataID || blockDataID->idLength < 1)
+    if ((NULL == blockDataID) || (blockDataID->idLength < 1) || 
+        (blockDataID->idLength > UINT8_MAX))
     {
-        OIC_LOG(ERROR, TAG, "blockId is null");
+        OIC_LOG(ERROR, TAG, "blockId is incorrect");
         CADestroyBlockID(blockDataID);
         return CA_STATUS_FAILED;
     }
@@ -955,9 +1016,9 @@ CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     else
     {
         // received message type is response
-        uint32_t code = CA_RESPONSE_CODE(pdu->transport_hdr->udp.code);
-        if (0 == block.m && (CA_REQUEST_ENTITY_INCOMPLETE != code
-                && CA_REQUEST_ENTITY_TOO_LARGE != code))
+        uint32_t responseCode = CA_RESPONSE_CODE(pdu->transport_hdr->udp.code);
+        if (0 == block.m && (CA_REQUEST_ENTITY_INCOMPLETE != responseCode
+                && CA_REQUEST_ENTITY_TOO_LARGE != responseCode))
         {
             int isBlock2 = coap_get_block(pdu, COAP_OPTION_BLOCK2, &block);
             if (isBlock2)
@@ -1029,9 +1090,10 @@ CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             (CAToken_t)pdu->transport_hdr->udp.token,
             (uint8_t)pdu->transport_hdr->udp.token_length,
             endpoint->addr, endpoint->port);
-    if (NULL == blockDataID || blockDataID->idLength < 1)
+    if ((NULL == blockDataID) || (blockDataID->idLength < 1) ||
+        (blockDataID->idLength > UINT8_MAX))
     {
-        OIC_LOG(ERROR, TAG, "blockId is null");
+        OIC_LOG(ERROR, TAG, "blockId is incorrect");
         CADestroyBlockID(blockDataID);
         return CA_STATUS_FAILED;
     }
@@ -1101,8 +1163,8 @@ CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                                                           COAP_OPTION_SIZE2,
                                                                           &(data->payloadLength));
 
-            uint32_t code = CA_RESPONSE_CODE(pdu->transport_hdr->udp.code);
-            if (CA_REQUEST_ENTITY_INCOMPLETE != code && CA_REQUEST_ENTITY_TOO_LARGE != code)
+            uint32_t responseCode = CA_RESPONSE_CODE(pdu->transport_hdr->udp.code);
+            if (CA_REQUEST_ENTITY_INCOMPLETE != responseCode && CA_REQUEST_ENTITY_TOO_LARGE != responseCode)
             {
                 // check if received payload is exact
                 blockWiseStatus = CACheckBlockErrorType(data, &block, receivedData,
@@ -1175,6 +1237,7 @@ CAResult_t CAUpdateBlockOptionItems(CABlockData_t *currData, const coap_pdu_t *p
 {
     VERIFY_NON_NULL(currData, TAG, "currData");
     VERIFY_NON_NULL(pdu, TAG, "pdu");
+    VERIFY_NON_NULL(pdu->transport_hdr, TAG, "pdu->transport_hdr");
     VERIFY_NON_NULL(block, TAG, "block");
 
     // update block data
@@ -1579,9 +1642,10 @@ CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
             goto exit;
         }
 
+        assert(block2->szx <= UINT8_MAX);
         if (!coap_add_block(*pdu, (unsigned int)dataLength,
                             (const unsigned char *) info->payload,
-                            block2->num, block2->szx))
+                            block2->num, (unsigned char)block2->szx))
         {
             OIC_LOG(ERROR, TAG, "Data length is smaller than the start index");
             return CA_STATUS_FAILED;
@@ -1676,9 +1740,10 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
         }
 
         // add the payload data as the block size.
+        assert(block1->szx <= UINT8_MAX);
         if (!coap_add_block(*pdu, (unsigned int)dataLength,
                             (const unsigned char *) info->payload, block1->num,
-                            block1->szx))
+                            (unsigned char)block1->szx))
         {
             OIC_LOG(ERROR, TAG, "Data length is smaller than the start index");
             return CA_STATUS_FAILED;
@@ -1921,13 +1986,17 @@ uint8_t CACheckBlockErrorType(CABlockData_t *currData, coap_block_t *receivedBlo
             OIC_LOG(ERROR, TAG, "too large size");
 
             // set the block size to be smaller than COAP_MAX_PDU_SIZE
-            for (unsigned int size = CA_DEFAULT_BLOCK_SIZE; size >= 0; size--)
+            for (unsigned int size = CA_DEFAULT_BLOCK_SIZE; ; size--)
             {
                 if (COAP_MAX_PDU_SIZE >= (size_t)BLOCK_SIZE(size) + optionLen)
                 {
                     OIC_LOG_V(ERROR, TAG, "replace sze with %d", size);
                     currData->block2.szx = size;
                     currData->block1.szx = size;
+                    break;
+                }
+                if (0 == size)
+                {
                     break;
                 }
             }
@@ -2791,4 +2860,146 @@ CAResult_t CARemoveBlockDataFromListWithSeed(const CAToken_t token, uint8_t toke
 
     CADestroyBlockID(blockDataID);
     return res;
+}
+
+CABlockMulticastData_t *CACreateNewBlockMulticastData(const CAData_t *sendData)
+{
+    OIC_LOG(DEBUG, TAG, "IN-CACreateNewBlockMulticastData");
+    VERIFY_NON_NULL_RET(sendData, TAG, "sendData", NULL);
+
+    if (!sendData->requestInfo || !sendData->requestInfo->isMulticast)
+    {
+        return NULL;
+    }
+
+    CABlockMulticastData_t *data =
+            (CABlockMulticastData_t *) OICCalloc(1, sizeof(CABlockMulticastData_t));
+    if (!data)
+    {
+        OIC_LOG(ERROR, TAG, "memory alloc has failed");
+        return NULL;
+    }
+
+    uint8_t tokenLength = sendData->requestInfo->info.tokenLength;
+    CAToken_t token = (char *) OICMalloc(tokenLength * sizeof(char));
+    if (!token)
+    {
+        OIC_LOG(ERROR, TAG, "memory alloc has failed");
+        OICFree(data);
+        return NULL;
+    }
+    memcpy(token, sendData->requestInfo->info.token, tokenLength);
+    data->token = token;
+    data->tokenLength = tokenLength;
+    if (sendData->requestInfo->info.resourceUri)
+    {
+        char *resourceUri = OICStrdup(sendData->requestInfo->info.resourceUri);
+        if (!resourceUri)
+        {
+            OIC_LOG(ERROR, TAG, "memory alloc has failed");
+            OICFree(data->token);
+            OICFree(data);
+            return NULL;
+        }
+        data->resourceUri = resourceUri;
+    }
+
+    oc_mutex_lock(g_context.multicastDataListMutex);
+
+    bool res = u_arraylist_add(g_context.multicastDataList, (void *) data);
+    if (!res)
+    {
+        OIC_LOG(ERROR, TAG, "add has failed");
+        OICFree(data->resourceUri);
+        OICFree(data->token);
+        OICFree(data);
+        oc_mutex_unlock(g_context.multicastDataListMutex);
+        return NULL;
+    }
+    oc_mutex_unlock(g_context.multicastDataListMutex);
+
+    OIC_LOG(DEBUG, TAG, "OUT-CACreateNewBlockMulticastData");
+    return data;
+}
+
+CABlockMulticastData_t *CAGetBlockMulticastDataFromListWithSeed(const CAToken_t token,
+        uint8_t tokenLength)
+{
+    VERIFY_NON_NULL_RET(token, TAG, "token", NULL);
+
+    oc_mutex_lock(g_context.multicastDataListMutex);
+
+    size_t len = u_arraylist_length(g_context.multicastDataList);
+    for (size_t i = 0; i < len; i++)
+    {
+        CABlockMulticastData_t *currData =
+                (CABlockMulticastData_t *) u_arraylist_get(g_context.multicastDataList, i);
+        if ((tokenLength >= currData->tokenLength)
+                && !memcmp(token, currData->token, currData->tokenLength))
+        {
+            oc_mutex_unlock(g_context.multicastDataListMutex);
+            return currData;
+        }
+    }
+    oc_mutex_unlock(g_context.multicastDataListMutex);
+
+    return NULL;
+}
+
+CAResult_t CARemoveAllBlockMulticastDataFromList()
+{
+    OIC_LOG(DEBUG, TAG, "CARemoveAllBlockMulticastDataFromList");
+
+    oc_mutex_lock(g_context.multicastDataListMutex);
+
+    size_t len = u_arraylist_length(g_context.multicastDataList);
+    for (size_t i = len; i > 0; i--)
+    {
+        CABlockMulticastData_t *removedData =
+                u_arraylist_remove(g_context.multicastDataList, i - 1);
+        if (removedData)
+        {
+            // destroy memory
+            OICFree(removedData->resourceUri);
+            OICFree(removedData->token);
+            OICFree(removedData);
+        }
+    }
+    oc_mutex_unlock(g_context.multicastDataListMutex);
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CARemoveBlockMulticastDataFromListWithSeed(const CAToken_t token, uint8_t tokenLength)
+{
+    oc_mutex_lock(g_context.multicastDataListMutex);
+
+    size_t len = u_arraylist_length(g_context.multicastDataList);
+    for (size_t i = 0; i < len; i++)
+    {
+        CABlockMulticastData_t *currData =
+                (CABlockMulticastData_t *) u_arraylist_get(g_context.multicastDataList, i);
+        if ((tokenLength >= currData->tokenLength)
+                && !memcmp(token, currData->token, currData->tokenLength))
+        {
+            CABlockMulticastData_t *removedData =
+                    u_arraylist_remove(g_context.multicastDataList, i);
+            if (!removedData)
+            {
+                OIC_LOG(ERROR, TAG, "data is NULL");
+                oc_mutex_unlock(g_context.multicastDataListMutex);
+                return CA_STATUS_FAILED;
+            }
+
+            // destroy memory
+            OICFree(removedData->resourceUri);
+            OICFree(removedData->token);
+            OICFree(removedData);
+            oc_mutex_unlock(g_context.multicastDataListMutex);
+            return CA_STATUS_OK;
+        }
+    }
+    oc_mutex_unlock(g_context.multicastDataListMutex);
+
+    return CA_STATUS_OK;
 }

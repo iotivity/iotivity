@@ -67,7 +67,7 @@ namespace OCRepresentationEncodingTest
         static const char piid1[] = "e987b8f5-527a-454e-98c1-1eef2e5f1cf5";
         const char devicename1[] = "device name";
         OCRepPayload *device = OCRepPayloadCreate();
-        EXPECT_TRUE(device);
+        EXPECT_NE((decltype(device))NULL, device);
         EXPECT_TRUE(OCRepPayloadAddResourceType(device, OC_RSRVD_RESOURCE_TYPE_DEVICE));
         EXPECT_TRUE(OCRepPayloadAddResourceType(device, "oic.d.tv"));
         EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_DEVICE_ID, sid1));
@@ -78,7 +78,7 @@ namespace OCRepresentationEncodingTest
 
         size_t dim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
         char **dt = (char **)OICMalloc(sizeof(char *) * 1);
-        EXPECT_TRUE(dt);
+        EXPECT_NE((decltype(dt))NULL, dt);
         dt[0] = OICStrdup(OC_DATA_MODEL_VERSION);
         EXPECT_TRUE(OCRepPayloadSetStringArray(device, OC_RSRVD_DATA_MODEL_VERSION, (const char **)dt, dim));
         OICFree(dt[0]);
@@ -133,7 +133,7 @@ namespace OCRepresentationEncodingTest
         OCPayloadDestroy(parsedDevice);
 
         device = OCRepPayloadCreate();
-        EXPECT_TRUE(device);
+        EXPECT_NE((decltype(device))NULL, device);
         EXPECT_TRUE(OCRepPayloadAddResourceType(device, OC_RSRVD_RESOURCE_TYPE_DEVICE));
         EXPECT_TRUE(OCRepPayloadAddResourceType(device, "oic.d.tv"));
         EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_DEVICE_NAME, devicename1));
@@ -142,7 +142,7 @@ namespace OCRepresentationEncodingTest
         EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_SPEC_VERSION, OC_SPEC_VERSION));
         size_t dim1[MAX_REP_ARRAY_DEPTH] = {2, 0, 0};
         char **dt1 = (char **)OICMalloc(sizeof(char *) * 2);
-        EXPECT_TRUE(dt1);
+        EXPECT_NE((decltype(dt1))NULL, dt1);
         dt1[0] = OICStrdup("ocf.res.1.1.0");
         dt1[1] = OICStrdup("ocf.sh.1.1.0");
         OCRepPayloadSetStringArray(device, OC_RSRVD_DATA_MODEL_VERSION, (const char**)dt1, dim1);

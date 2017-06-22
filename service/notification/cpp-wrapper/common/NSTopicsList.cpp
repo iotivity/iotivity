@@ -51,11 +51,14 @@ namespace OIC
 
         NSTopicsList &NSTopicsList::operator=(const NSTopicsList &topicsList)
         {
-            for (auto it : topicsList.getTopicsList())
+            if (this != &topicsList)
             {
-                this->m_topicsList.push_back(new NSTopic(it.getTopicName(), it.getState()));
+                for (auto it : topicsList.getTopicsList())
+                {
+                    this->m_topicsList.push_back(new NSTopic(it.getTopicName(), it.getState()));
+                }
+                m_modifiable = false;
             }
-            m_modifiable = false;
             return *this;
         }
 
@@ -89,6 +92,7 @@ namespace OIC
                     if (it->getTopicName().compare(topicName) == 0)
                     {
                         m_topicsList.remove(it);
+                        break;
                     }
                 }
             }

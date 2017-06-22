@@ -114,8 +114,9 @@ public class KeepAliveResource extends Resource {
 
         checkPayloadException(Constants.REQ_PING, payloadData);
 
-        Long pingTime = Integer.valueOf(
-                payloadData.get(Constants.REQ_PING).toString()) * (long) 60000;
+        Long pingTime = (long) (Integer
+                .valueOf(payloadData.get(Constants.REQ_PING).toString())
+                * (long) 60000 * 1.1);
         Long connectionTime = System.currentTimeMillis() + pingTime;
         mConnectionPool.put(srcDevice, connectionTime);
 

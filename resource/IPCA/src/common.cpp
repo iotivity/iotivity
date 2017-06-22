@@ -145,7 +145,7 @@ void FreeArrayOfCharPointers(char** array, size_t count)
         return;
     }
 
-    for (int i = 0; i < count; i++)
+    for (size_t i = 0; i < count; i++)
     {
         OICFree((void*)(array[i]));
     }

@@ -88,7 +88,7 @@ static bool IsValidPinType(OicSecPinType_t pinType)
             (UPPERCASE_CHAR_PIN & pinType));
 }
 
-OCStackResult SetRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType)
+OCStackResult OC_CALL SetRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType)
 {
     if(OXM_RANDOM_PIN_MIN_SIZE > pinSize)
     {
@@ -112,7 +112,7 @@ OCStackResult SetRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType)
     return OC_STACK_OK;
 }
 
-void SetInputPinCB(InputPinCallback pinCB)
+void OC_CALL SetInputPinCB(InputPinCallback pinCB)
 {
     if(NULL == pinCB)
     {
@@ -129,7 +129,7 @@ void SetInputPinCB(InputPinCallback pinCB)
     g_inputPinCallbacks.callback = pinCB;
 }
 
-OCStackResult SetInputPinWithContextCB(InputPinCallbackWithContext inputPinCB, void* context)
+OCStackResult OC_CALL SetInputPinWithContextCB(InputPinCallbackWithContext inputPinCB, void* context)
 {
     if (NULL == inputPinCB)
     {
@@ -149,7 +149,7 @@ OCStackResult SetInputPinWithContextCB(InputPinCallbackWithContext inputPinCB, v
     return OC_STACK_OK;
 }
 
-void SetGeneratePinCB(GeneratePinCallback pinCB)
+void OC_CALL SetGeneratePinCB(GeneratePinCallback pinCB)
 {
     if(NULL == pinCB)
     {
@@ -166,7 +166,7 @@ void SetGeneratePinCB(GeneratePinCallback pinCB)
     g_displayPinCallbacks.callback = pinCB;
 }
 
-OCStackResult SetDisplayPinWithContextCB(DisplayPinCallbackWithContext displayPinCB, void* context)
+OCStackResult OC_CALL SetDisplayPinWithContextCB(DisplayPinCallbackWithContext displayPinCB, void* context)
 {
     if (NULL == displayPinCB)
     {
@@ -186,7 +186,7 @@ OCStackResult SetDisplayPinWithContextCB(DisplayPinCallbackWithContext displayPi
     return OC_STACK_OK;
 }
 
-void SetClosePinDisplayCB(ClosePinDisplayCallback closeCB)
+void OC_CALL SetClosePinDisplayCB(ClosePinDisplayCallback closeCB)
 {
     if (NULL == closeCB)
     {
@@ -203,31 +203,31 @@ void SetClosePinDisplayCB(ClosePinDisplayCallback closeCB)
     g_displayPinCallbacks.closePinDisplayCallback = closeCB;
 }
 
-void UnsetInputPinCB()
+void OC_CALL UnsetInputPinCB()
 {
     UnsetInputPinWithContextCB();
 }
 
-void UnsetInputPinWithContextCB()
+void OC_CALL UnsetInputPinWithContextCB()
 {
     g_inputPinCallbacks.callback = NULL;
     g_inputPinCallbacks.contextCallback = NULL;
     g_inputPinCallbacks.context = NULL;
 }
 
-void UnsetGeneratePinCB()
+void OC_CALL UnsetGeneratePinCB()
 {
     UnsetDisplayPinWithContextCB();
 }
 
-void UnsetDisplayPinWithContextCB()
+void OC_CALL UnsetDisplayPinWithContextCB()
 {
     g_displayPinCallbacks.callback = NULL;
     g_displayPinCallbacks.contextCallback = NULL;
     g_displayPinCallbacks.context = NULL;
 }
 
-void UnsetClosePinDisplayCB()
+void OC_CALL UnsetClosePinDisplayCB()
 {
     g_displayPinCallbacks.closePinDisplayCallback = NULL;
 }
@@ -285,7 +285,7 @@ static char GenerateRandomPinElement(OicSecPinType_t pinType)
     return allowedCharacters[OCGetRandomRange(0, curIndex)];
 }
 
-OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize)
+OCStackResult OC_CALL GeneratePin(char* pinBuffer, size_t bufferSize)
 {
     if(!pinBuffer)
     {
@@ -389,7 +389,7 @@ OCStackResult InputPin(OicUuid_t deviceId, char* pinBuffer, size_t bufferSize)
 }
 
 #ifdef MULTIPLE_OWNER
-OCStackResult SetPreconfigPin(const char *pinBuffer, size_t pinLength)
+OCStackResult OC_CALL SetPreconfigPin(const char *pinBuffer, size_t pinLength)
 {
     if(NULL == pinBuffer || OXM_PRECONFIG_PIN_MAX_SIZE < pinLength)
     {
@@ -635,6 +635,12 @@ int32_t GetDtlsPskForPreconfPinOxm( CADtlsPskCredType_t type,
                             return ret;
                         }
 
+                        if (g_PinOxmData.pinSize < pinLength)
+                        {
+                            OIC_LOG (ERROR, TAG, "PIN length too long");
+                            OICFree(pinBuffer);
+                            return ret;
+                        }
                         memcpy(g_PinOxmData.pinData, pinBuffer, pinLength);
                         OICFree(pinBuffer);
                     }
@@ -735,6 +741,12 @@ int32_t GetDtlsPskForMotPreconfPinOxm( CADtlsPskCredType_t type,
                             return ret;
                         }
 
+                        if (g_PinOxmData.pinSize < pinLength)
+                        {
+                            OIC_LOG (ERROR, TAG, "PIN length is too long");
+                            OICFree(pinBuffer);
+                            return ret;
+                        }
                         memcpy(g_PinOxmData.pinData, pinBuffer, pinLength);
                         OICFree(pinBuffer);
                     }

@@ -58,7 +58,7 @@ namespace
     jobject g_obj_ResourceState_Requested;
     jobject g_obj_ResourceState_Alive;
     jobject g_obj_ResourceState_LostSignal;
-    jobject g_obj_ResourceState_Destoryed;
+    jobject g_obj_ResourceState_Destroyed;
 
     jobject g_obj_CacheState_None;
     jobject g_obj_CacheState_Unready;
@@ -92,7 +92,7 @@ namespace
             case ResourceState::REQUESTED: return g_obj_ResourceState_Requested;
             case ResourceState::ALIVE: return g_obj_ResourceState_Alive;
             case ResourceState::LOST_SIGNAL: return g_obj_ResourceState_LostSignal;
-            case ResourceState::DESTROYED: return g_obj_ResourceState_Destoryed;
+            case ResourceState::DESTROYED: return g_obj_ResourceState_Destroyed;
         }
 
         throwRCSException(env, "Failed to convert ResourceState");
@@ -135,7 +135,8 @@ namespace
         }
     }
 
-    void onCacheUpdated(const RCSResourceAttributes& attrs, const JavaGlobalRef& listener)
+    void onCacheUpdated(const RCSResourceAttributes& attrs, int eCode,
+                        const JavaGlobalRef& listener)
     {
         LOGD("onCacheUpdated");
 
@@ -186,7 +187,7 @@ void initRCSRemoteResourceObject(JNIEnvWrapper* env)
 
     auto clsOnCacheUpdatedListener = env->FindClass(CLS_NAME_ON_CACHE_UPDATED_LISTENER);
     g_method_onCacheUpdated = env->GetMethodID(clsOnCacheUpdatedListener, "onCacheUpdated",
-            "(" AS_SIG(CLS_NAME_RESOURCEATTRIBUTES) ")V");
+            "(" AS_SIG(CLS_NAME_RESOURCEATTRIBUTES) "I)V");
 
     auto clsOnRemoteAttributesReceivedListener =
             env->FindClass(CLS_NAME_ON_REMOTE_ATTRIBUTES_RECEIVED_LISTENER);
@@ -207,7 +208,7 @@ void initRCSRemoteResourceObject(JNIEnvWrapper* env)
     g_obj_ResourceState_LostSignal = env->NewGlobalRef(env->GetStaticObjectField(clsResourceState,
             "LOST_SIGNAL", AS_SIG(CLS_NAME_RESOURCE_STATE)));
 
-    g_obj_ResourceState_Destoryed = env->NewGlobalRef(env->GetStaticObjectField(clsResourceState,
+    g_obj_ResourceState_Destroyed = env->NewGlobalRef(env->GetStaticObjectField(clsResourceState,
             "DESTROYED", AS_SIG(CLS_NAME_RESOURCE_STATE)));
 
     auto clsCacheState = env->FindClass(CLS_NAME_CACHE_STATE);
@@ -236,7 +237,7 @@ void clearRCSRemoteResourceObject(JNIEnvWrapper* env)
     env->DeleteGlobalRef(g_obj_ResourceState_Requested);
     env->DeleteGlobalRef(g_obj_ResourceState_Alive);
     env->DeleteGlobalRef(g_obj_ResourceState_LostSignal);
-    env->DeleteGlobalRef(g_obj_ResourceState_Destoryed);
+    env->DeleteGlobalRef(g_obj_ResourceState_Destroyed);
 
     env->DeleteGlobalRef(g_obj_CacheState_None);
     env->DeleteGlobalRef(g_obj_CacheState_Unready);
@@ -341,7 +342,8 @@ Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeStartCaching
         if (listener)
         {
             res->startCaching(std::bind(onCacheUpdated,
-                    std::placeholders::_1, JavaGlobalRef{ env, listener }));
+                    std::placeholders::_1, std::placeholders::_2,
+                    JavaGlobalRef{ env, listener }));
         }
         else
         {

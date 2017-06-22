@@ -348,27 +348,7 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
 
 
     private void doDPProvisioning() {
-        try {
-            logMessage(TAG + "Provision direct pairing for " + ownedDeviceList.get(0).getDeviceID());
-            newSecureResource = ownedDeviceList.get(0);
-            String pin = "00000000";
-            List<OcPrmType> prmTypes = new ArrayList<OcPrmType>();
-            prmTypes.add(OcPrmType.DP_PRE_CONFIGURED);
-            boolean edp = true;
-            List<String> resources = new ArrayList<String>();
-            List<String> periods = new ArrayList<String>();
-            List<String> recurrences = new ArrayList<String>();
-            resources.add(StringConstants.DEFAULT_RESOURCES);
-            OicSecPdAcl pdAcl = new OicSecPdAcl(recurrences, periods,
-                    StringConstants.DEFAULT_PERMISSION, resources);
-            OicSecPdAcl[] oicSecPdAcls = new OicSecPdAcl[1];
-            oicSecPdAcls[0] = pdAcl;
-            newSecureResource.doProvisionDirectPairing(pin, oicSecPdAcls, prmTypes, edp,
-                    provisionDPListener);
-        } catch (Exception e) {
-            logMessage(TAG + "Direct Pairing Provisioning error: " + e.getMessage());
-            Log.e(TAG, e.getMessage());
-        }
+        new GetLinkedDevicesAsyncTask().execute();
     }
 
 
@@ -873,11 +853,6 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
 
         @Override
             protected void onPostExecute(String s) {
-
-
-                if (ownedDeviceList.size() == 1 && "success".equals(s)) {
-                    doDPProvisioning();
-                }
                 if (ownedDeviceList.size() > 1 && "success".equals(s)) {
                     doPairwiseProvisioning();
                 }

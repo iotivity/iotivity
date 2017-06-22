@@ -159,7 +159,7 @@ TEST_F(PrimitiveResourceTest, ResponseStatementHasSameValuesWithOCRepresentation
     constexpr int value{ 1999 };
 
     mocks.OnCall(fakeResource, FakeOCResource::get).Do(
-            [](const std::string&, const std::string&, const OC::QueryParamsMap&, OC::GetCallback cb)
+            [&](const std::string&, const std::string&, const OC::QueryParamsMap&, OC::GetCallback cb)
             {
                 OC::OCRepresentation ocRep;
                 ocRep[KEY] = value;
@@ -204,8 +204,11 @@ TEST_F(DiscoverResourceTest, CallbackIsInvokedWhenResourceIsDiscovered)
 
     discoverResource("", "", OCConnectivityType{ }, discovered);
 }
-
+#ifdef HIPPOMOCKS_ISSUE
+TEST_F(DiscoverResourceTest, DISABLED_ThrowsdWhenOCPlatformFindResourceReturnsNotOK)
+#else
 TEST_F(DiscoverResourceTest, ThrowsdWhenOCPlatformFindResourceReturnsNotOK)
+#endif
 {
     mocks.ExpectCallFuncOverload(static_cast<FindResource>(OC::OCPlatform::findResource)).
             Return(OC_STACK_ERROR);

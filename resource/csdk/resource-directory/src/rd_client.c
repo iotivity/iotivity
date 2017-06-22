@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -36,8 +37,8 @@
 
 #ifdef RD_CLIENT
 
-OCStackResult OCRDDiscover(OCDoHandle *handle, OCConnectivityType connectivityType,
-                           OCCallbackData *cbBiasFactor, OCQualityOfService qos)
+OCStackResult OC_CALL OCRDDiscover(OCDoHandle *handle, OCConnectivityType connectivityType,
+                                   OCCallbackData *cbBiasFactor, OCQualityOfService qos)
 {
     if (!cbBiasFactor || !cbBiasFactor->cb)
     {
@@ -116,10 +117,10 @@ exit:
     return cbData->cb(cbData->context, handle, clientResponse);
 }
 
-OCStackResult OCRDPublish(OCDoHandle *handle, const char *host,
-                          OCConnectivityType connectivityType,
-                          OCResourceHandle *resourceHandles, uint8_t nHandles,
-                          OCCallbackData *cbData, OCQualityOfService qos)
+OCStackResult OC_CALL OCRDPublish(OCDoHandle *handle, const char *host,
+                                  OCConnectivityType connectivityType,
+                                  OCResourceHandle *resourceHandles, uint8_t nHandles,
+                                  OCCallbackData *cbData, OCQualityOfService qos)
 {
     // Validate input parameters.
     if (!host)
@@ -180,7 +181,7 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
     ifs[1] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
     OCRepPayloadSetStringArrayAsOwner(rdPayload, OC_RSRVD_INTERFACE, ifs, dim);
 
-    char *n;
+    char *n = NULL;
     OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, (void **) &n);
     if (n)
     {
@@ -249,7 +250,8 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
             }
 
             OCResourceProperty p = OCGetResourceProperties(handle);
-            bool isSecure = (p & OC_SECURE);
+            bool includeSecure = (p & OC_SECURE);
+            bool includeNonsecure = (p & OC_NONSECURE);
             p &= (OC_DISCOVERABLE | OC_OBSERVABLE);
             OCRepPayload *policy = OCRepPayloadCreate();
             if (!policy)
@@ -268,36 +270,29 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
             }
             if (nCaEps)
             {
-                dim[0] = 0;
-                for (uint32_t i = 0; i < nCaEps; i++)
-                {
-                    if (isSecure == (bool)(caEps[i].flags & OC_FLAG_SECURE))
-                    {
-                        ++dim[0];
-                    }
-                }
-                eps = (OCRepPayload **)OICCalloc(dim[0], sizeof(OCRepPayload *));
+                eps = (OCRepPayload **)OICCalloc(nCaEps, sizeof(OCRepPayload *));
                 if (!eps)
                 {
                     OIC_LOG(ERROR, TAG, "Memory allocation failed!");
                     goto exit;
                 }
-                OCRepPayloadSetPropObjectArrayAsOwner(links[j], OC_RSRVD_ENDPOINTS, eps, dim);
                 uint32_t k = 0;
-                for (uint32_t i = 0; i < nCaEps; i++)
+                for (size_t i = 0; i < nCaEps; i++)
                 {
-                    if (isSecure == (bool)(caEps[i].flags & OC_FLAG_SECURE))
+                    bool isSecure = (caEps[i].flags & OC_FLAG_SECURE);
+                    if ((isSecure && includeSecure) || (!isSecure && includeNonsecure))
                     {
+                        char *epStr = OCCreateEndpointStringFromCA(&caEps[i]);
+                        if (!epStr)
+                        {
+                            OIC_LOG(INFO, TAG, "Create endpoint string failed!");
+                            continue;
+                        }
                         eps[k] = OCRepPayloadCreate();
                         if (!eps[k])
                         {
                             OIC_LOG(ERROR, TAG, "Memory allocation failed!");
-                            break;
-                        }
-                        char *epStr = OCCreateEndpointStringFromCA(&caEps[i]);
-                        if (!epStr)
-                        {
-                            OIC_LOG(ERROR, TAG, "Create endpoint string failed!");
+                            OICFree(epStr);
                             break;
                         }
                         OCRepPayloadSetPropStringAsOwner(eps[k], OC_RSRVD_ENDPOINT, epStr);
@@ -305,6 +300,8 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
                         ++k;
                     }
                 }
+                dim[0] = k;
+                OCRepPayloadSetPropObjectArrayAsOwner(links[j], OC_RSRVD_ENDPOINTS, eps, dim);
             }
         }
     }
@@ -322,11 +319,11 @@ exit:
     return rdPayload;
 }
 
-OCStackResult OCRDPublishWithDeviceId(OCDoHandle *handle, const char *host,
-                                      const unsigned char *id,
-                                      OCConnectivityType connectivityType,
-                                      OCResourceHandle *resourceHandles, uint8_t nHandles,
-                                      OCCallbackData *cbData, OCQualityOfService qos)
+OCStackResult OC_CALL OCRDPublishWithDeviceId(OCDoHandle *handle, const char *host,
+                                              const unsigned char *id,
+                                              OCConnectivityType connectivityType,
+                                              OCResourceHandle *resourceHandles, uint8_t nHandles,
+                                              OCCallbackData *cbData, OCQualityOfService qos)
 {
     // Validate input parameters.
     if (!host || !cbData || !cbData->cb || !id)
@@ -335,6 +332,23 @@ OCStackResult OCRDPublishWithDeviceId(OCDoHandle *handle, const char *host,
     }
 
     OIC_LOG_V(DEBUG, TAG, "Publish Resource to RD with device id [%s]", id);
+
+    OCStackResult result = OC_STACK_OK;
+    OCHeaderOption options[2];
+    size_t numOptions = 0;
+    uint16_t format = COAP_MEDIATYPE_APPLICATION_VND_OCF_CBOR;
+
+    result = OCSetHeaderOption(options, &numOptions, CA_OPTION_CONTENT_FORMAT, &format, sizeof(format));
+    if (OC_STACK_OK != result)
+    {
+        return result;
+    }
+
+    result = OCSetHeaderOption(options, &numOptions, CA_OPTION_ACCEPT, &format, sizeof(format));
+    if (OC_STACK_OK != result)
+    {
+        return result;
+    }
 
     OCResourceHandle *pubResHandle = resourceHandles;
     OCResourceHandle defaultResHandles[OIC_RD_DEFAULT_RESOURCE] = { 0 };
@@ -381,19 +395,15 @@ OCStackResult OCRDPublishWithDeviceId(OCDoHandle *handle, const char *host,
     rdPublishCbData.context = rdPublishContext;
     rdPublishCbData.cb = RDPublishCallback;
     rdPublishCbData.cd = RDPublishContextDeleter;
-    OCHeaderOption options[2];
-    size_t numOptions = 0;
-    uint16_t format = COAP_MEDIATYPE_APPLICATION_VND_OCF_CBOR;
-    OCSetHeaderOption(options, &numOptions, CA_OPTION_CONTENT_FORMAT, &format, sizeof(format));
-    OCSetHeaderOption(options, &numOptions, CA_OPTION_ACCEPT, &format, sizeof(format));
+
     return OCDoResource(handle, OC_REST_POST, targetUri, NULL, (OCPayload *)rdPayload,
-                        connectivityType, qos, &rdPublishCbData, options, numOptions);
+                        connectivityType, qos, &rdPublishCbData, options, (uint8_t)numOptions);
 }
 
-OCStackResult OCRDDelete(OCDoHandle *handle, const char *host,
-                         OCConnectivityType connectivityType,
-                         OCResourceHandle *resourceHandles, uint8_t nHandles,
-                         OCCallbackData *cbData, OCQualityOfService qos)
+OCStackResult OC_CALL OCRDDelete(OCDoHandle *handle, const char *host,
+                                 OCConnectivityType connectivityType,
+                                 OCResourceHandle *resourceHandles, uint8_t nHandles,
+                                 OCCallbackData *cbData, OCQualityOfService qos)
 {
     // Validate input parameters
     if (!host)
@@ -412,11 +422,11 @@ OCStackResult OCRDDelete(OCDoHandle *handle, const char *host,
                                   cbData, qos);
 }
 
-OCStackResult OCRDDeleteWithDeviceId(OCDoHandle *handle, const char *host,
-                                     const unsigned char *id,
-                                     OCConnectivityType connectivityType,
-                                     OCResourceHandle *resourceHandles, uint8_t nHandles,
-                                     OCCallbackData *cbData, OCQualityOfService qos)
+OCStackResult OC_CALL OCRDDeleteWithDeviceId(OCDoHandle *handle, const char *host,
+                                             const unsigned char *id,
+                                             OCConnectivityType connectivityType,
+                                             OCResourceHandle *resourceHandles, uint8_t nHandles,
+                                             OCCallbackData *cbData, OCQualityOfService qos)
 {
     // Validate input parameters
     if (!host || !cbData || !cbData->cb || !id)
@@ -440,14 +450,17 @@ OCStackResult OCRDDeleteWithDeviceId(OCDoHandle *handle, const char *host,
     {
         OCResource *handle = (OCResource *) resourceHandles[j];
         int64_t ins = 0;
-        OCGetResourceIns(handle, &ins);
-        int lenBufferRequired = snprintf((queryParam + queryLength), (MAX_URI_LENGTH - queryLength), "&ins=%lld", ins);
-        if (lenBufferRequired >= (MAX_URI_LENGTH - queryLength) || lenBufferRequired < 0)
+        if (OC_STACK_OK == OCGetResourceIns(handle, &ins))
         {
-            return OC_STACK_INVALID_URI;
+            int lenBufferRequired = snprintf((queryParam + queryLength),
+                    (MAX_URI_LENGTH - queryLength), "&ins=%" PRId64, ins);
+            if (lenBufferRequired >= (MAX_URI_LENGTH - queryLength) || lenBufferRequired < 0)
+            {
+                return OC_STACK_INVALID_URI;
+            }
+            queryLength += lenBufferRequired;
+            OIC_LOG_V(DEBUG, TAG, "queryParam [%s]", queryParam);
         }
-        queryLength += lenBufferRequired;
-        OIC_LOG_V(DEBUG, TAG, "queryParam [%s]", queryParam);
     }
 
     if (targetUriBufferRequired + queryLength + 1 > MAX_URI_LENGTH)

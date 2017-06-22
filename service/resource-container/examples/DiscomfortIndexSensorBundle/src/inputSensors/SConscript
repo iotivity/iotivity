@@ -24,13 +24,13 @@ target_os = env.get('TARGET_OS')
 
 linux_sample_env = env.Clone()
 
-linux_sample_env.AppendUnique(CPPPATH = [
+linux_sample_env.AppendUnique(CPPPATH=[
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',
     '#/resource/include',
     '#/resource/oc_logger/include'
 ])
 
-if target_os in ['linux'] :
+if target_os in ['linux']:
     SConscript('THSensorApp/SConscript', 'linux_sample_env')
     SConscript('THSensorApp1/SConscript', 'linux_sample_env')

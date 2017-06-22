@@ -179,10 +179,18 @@ CAResult_t CAMsgArbiterGetMessageData(CAData_t *data)
                 }
                 data->remoteEndpoint->flags = targetInfo->d2dInfo.flags;
 
-                CAURI_t resourceUri = OICStrdup(data->requestInfo->info.resourceUri
-                                                                + CA_MSG_ARBITER_DI_URI_LENGTH);
-                OICFree(data->requestInfo->info.resourceUri);
-                data->requestInfo->info.resourceUri = resourceUri;
+                if (strlen(data->requestInfo->info.resourceUri) > CA_MSG_ARBITER_DI_URI_LENGTH)
+                {
+                    CAURI_t resourceUri = OICStrdup(data->requestInfo->info.resourceUri
+                                                    + CA_MSG_ARBITER_DI_URI_LENGTH);
+                    OICFree(data->requestInfo->info.resourceUri);
+                    data->requestInfo->info.resourceUri = resourceUri;
+                }
+                else
+                {
+                    OIC_LOG_V(ERROR, TAG, "device id[%s] received resourceUri[%s] too short!", deviceId,
+                              data->requestInfo->info.resourceUri);
+                }
 
                 OIC_LOG_V(DEBUG, TAG, "device id[%s] switched to D2D connect", deviceId);
                 OIC_LOG_V(DEBUG, TAG, "local addr[%s] local port[%d] adapter[%s]",
@@ -207,14 +215,14 @@ CAResult_t CAMsgArbiterGetMessageData(CAData_t *data)
     return ret;
 }
 
-CAResult_t CAMsgArbiterUpdateDeviceInfo(const CAEndpoint_t endpoint, bool isCloud)
+CAResult_t CAMsgArbiterUpdateDeviceInfo(const CAEndpoint_t *endpoint, bool isCloud)
 {
     OIC_LOG(DEBUG, TAG, "IN - CAMsgArbiterUpdateDeviceInfo");
 
-    VERIFY_NON_NULL(endpoint.remoteId, TAG, "remoteId");
+    VERIFY_NON_NULL(endpoint, TAG, "endpoint");
+    VERIFY_NON_NULL(endpoint->remoteId, TAG, "remoteId");
 
     CAResult_t ret = CA_STATUS_FAILED;
-    const char *deviceId = endpoint.remoteId;
 
     if (isCloud)
     {
@@ -228,7 +236,8 @@ CAResult_t CAMsgArbiterUpdateDeviceInfo(const CAEndpoint_t endpoint, bool isClou
             return ret;
         }
 
-        OIC_LOG_V(DEBUG, TAG, "device id[%s] is successfully added into list!", deviceId);
+        OIC_LOG_V(DEBUG, TAG, "device id[%s] is successfully added into list!",
+                  endpoint->remoteId);
     }
     else
     {
@@ -238,11 +247,12 @@ CAResult_t CAMsgArbiterUpdateDeviceInfo(const CAEndpoint_t endpoint, bool isClou
 
         if (CA_STATUS_OK != ret)
         {
-            OIC_LOG_V(ERROR, TAG, "device id[%s] is not included in list", deviceId);
+            OIC_LOG_V(ERROR, TAG, "device id[%s] is not included in list", endpoint->remoteId);
             return ret;
         }
 
-        OIC_LOG_V(DEBUG, TAG, "device id[%s] is successfully updated into list!", deviceId);
+        OIC_LOG_V(DEBUG, TAG, "device id[%s] is successfully updated into list!",
+                  endpoint->remoteId);
     }
 
     OIC_LOG(DEBUG, TAG, "OUT - CAMsgArbiterUpdateDeviceInfo");

@@ -94,29 +94,6 @@ namespace OC
             // this fix will work in the meantime.
             OCRepresentation(): m_interfaceType(InterfaceType::None){}
 
-#if defined(_MSC_VER) && (_MSC_VER < 1900)
-            OCRepresentation(OCRepresentation&& o)
-            {
-                std::memmove(this, &o, sizeof(o));
-            }
-#else
-            OCRepresentation(OCRepresentation&&) = default;
-#endif
-
-            OCRepresentation(const OCRepresentation&) = default;
-
-            OCRepresentation& operator=(const OCRepresentation&) = default;
-
-#if defined(_MSC_VER) && (_MSC_VER < 1900)
-            OCRepresentation& operator=(OCRepresentation&& o)
-            {
-                std::memmove(this, &o, sizeof(o));
-                return *this;
-            }
-#else
-            OCRepresentation& operator=(OCRepresentation&&) = default;
-#endif
-
             virtual ~OCRepresentation(){}
 
             void setDevAddr(const OCDevAddr&);
@@ -157,7 +134,7 @@ namespace OC
 
             bool emptyData() const;
 
-            int numberOfAttributes() const;
+            size_t numberOfAttributes() const;
 
             bool erase(const std::string& str);
 
@@ -198,7 +175,7 @@ namespace OC
                         val = boost::get<T>(x->second);
                         return true;
                     }
-                    catch (boost::bad_get& e)
+                    catch (boost::bad_get&)
                     {
                         val = T();
                         return false;
@@ -230,7 +207,7 @@ namespace OC
                     {
                         val = boost::get<T>(x->second);
                     }
-                    catch (boost::bad_get& e)
+                    catch (boost::bad_get&)
                     {
                         return val;
                     }
@@ -294,7 +271,7 @@ namespace OC
                         {
                             return boost::get<T>(m_values[m_attrName]);
                         }
-                        catch (boost::bad_get& e)
+                        catch (boost::bad_get&)
                         {
                             T val = T();
                             return val;

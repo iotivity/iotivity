@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-
-#include <ocstack.h>
+#include "iotivity_config.h"
+#include "ocstack.h"
 
 #include <stdio.h>
 #include <stdlib.h>

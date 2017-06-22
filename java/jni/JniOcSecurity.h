@@ -26,7 +26,9 @@
 #include <stdio.h>
 #include <string>
 #include "octypes.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 namespace OC
 {

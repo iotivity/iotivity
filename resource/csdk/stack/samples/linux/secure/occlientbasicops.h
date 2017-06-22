@@ -68,9 +68,9 @@ std::string getQueryStrForGetPut(OCClientResponse * clientResponse);
 /* Following are initialization functions for GET, PUT
  * POST & Discovery operations
  */
-int InitPutRequest(OCQualityOfService qos);
-int InitGetRequest(OCQualityOfService qos);
-int InitPostRequest(OCQualityOfService qos);
+int InitPutRequest(OCDevAddr *endpoint, OCQualityOfService qos);
+int InitGetRequest(OCDevAddr *endpoint, OCQualityOfService qos);
+int InitPostRequest(OCDevAddr *endpoint, OCQualityOfService qos);
 int InitDiscovery();
 
 /* Function to retrieve ip address, port no. of the server

@@ -49,8 +49,6 @@
 
 #include "srmutility.h"
 
-static const unsigned int USECS_PER_MSEC = 1000;
-
 #define TAG ("OIC_PM_UTILITY")
 
 typedef struct _DiscoveryInfo{
@@ -227,8 +225,6 @@ OicSecDoxm_t* CloneOicSecDoxm(const OicSecDoxm_t* src)
 #endif //MULTIPLE_OWNER
 
     // We have to assign NULL for not necessary information to prevent memory corruption.
-    newDoxm->oxmType = NULL;
-    newDoxm->oxmTypeLen = 0;
     newDoxm->oxm = NULL;
     newDoxm->oxmLen = 0;
 
@@ -551,10 +547,10 @@ OCStackResult PMTimeout(unsigned short waittime, bool waitForStackResponse)
     return res;
 }
 
-bool PMGenerateQuery(bool isSecure,
-                     const char* address, uint16_t port,
-                     OCConnectivityType connType,
-                     char* buffer, size_t bufferSize, const char* uri)
+bool OC_CALL PMGenerateQuery(bool isSecure,
+                             const char* address, uint16_t port,
+                             OCConnectivityType connType,
+                             char* buffer, size_t bufferSize, const char* uri)
 {
     if(!address || !buffer || !uri)
     {
@@ -753,6 +749,28 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
             {
                 securePort = resPayload->port;
             }
+            else if (resPayload && resPayload->eps)
+            {
+                OCEndpointPayload* eps = resPayload->eps;
+                while (eps != NULL)
+                {
+                    if ((eps->family & OC_FLAG_SECURE) &&
+                        ((OC_IP_USE_V6 == clientResponse->devAddr.flags &&
+                          strchr(eps->addr, ':')) ||
+                         (OC_IP_USE_V4 == clientResponse->devAddr.flags &&
+                          strchr(eps->addr, '.'))))
+                    {
+                            securePort = eps->port;
+                            break;
+                    }
+                    eps = eps->next;
+                }
+                if (!securePort)
+                {
+                    OIC_LOG(INFO, TAG, "Can not find secure port information.");
+                    return OC_STACK_DELETE_TRANSACTION;
+                }
+            }
             else
             {
                 OIC_LOG(INFO, TAG, "Can not find secure port information.");
@@ -763,8 +781,8 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
 #endif
             DiscoveryInfo* pDInfo = (DiscoveryInfo*)ctx;
             OCProvisionDev_t *ptr = GetDevice(&pDInfo->pCandidateList,
-                                                         clientResponse->devAddr.addr,
-                                                         clientResponse->devAddr.port);
+                                              clientResponse->devAddr.addr,
+                                              clientResponse->devAddr.port);
             if(!ptr)
             {
                 OIC_LOG(ERROR, TAG, "Can not find device information in the discovery candidate device list");
@@ -1240,6 +1258,9 @@ OCStackResult PMSingleDeviceDiscoveryInUnicast(unsigned short waittime, const Oi
 }
 
 #ifdef MULTIPLE_OWNER
+
+static const unsigned int IOTIVITY_USECS_PER_MSEC = 1000;
+
 static OCStackApplicationResult MOTDeviceDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse)
 {
@@ -1459,7 +1480,7 @@ OCStackResult PMMultipleOwnerSingleDeviceDiscovery(unsigned short timeoutSeconds
             }
 
             // Sleep for 100 ms to free up the CPU
-            usleep(100 * USECS_PER_MSEC);
+            usleep(100 * IOTIVITY_USECS_PER_MSEC);
 
             res = OCProcess();
         }

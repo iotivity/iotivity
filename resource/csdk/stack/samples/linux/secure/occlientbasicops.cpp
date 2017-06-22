@@ -53,7 +53,6 @@ static int WithTcp = 0;
 
 static char DISCOVERY_QUERY[] = "%s/oic/res";
 OCConnectivityType discoveryReqConnType = CT_ADAPTER_IP;
-static OCDevAddr endpoint;
 
 static std::string coapServerResource;
 static int coapSecureResource;
@@ -64,8 +63,14 @@ static OCConnectivityType ocConnType;
 //of other devices which the client trusts
 static char CRED_FILE_DEVOWNER[] = "oic_svr_db_client_devowner.dat";
 static char CRED_FILE_NONDEVOWNER[] = "oic_svr_db_client_nondevowner.dat";
-const char *OIC_RSRC_DOXM_URI =  "/oic/sec/doxm";
-const char *OIC_RSRC_PSTAT_URI = "/oic/sec/pstat";
+
+//Standard uri prefix for secure virtual resources
+const char * OIC_STD_URI_PREFIX = "/oic/";
+
+const char * COAPS_STR = "coaps";
+#ifdef __WITH_TLS__
+const char * COAPS_TCP_STR = "coaps+tcp";
+#endif
 
 int gQuitFlag = 0;
 
@@ -198,21 +203,20 @@ OCStackApplicationResult discoveryReqCB(void *, OCDoHandle,
             OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
             ocConnType = clientResponse->connType;
-            endpoint = clientResponse->devAddr;
 
             if (parseClientResponse(clientResponse) != -1)
             {
                 switch (TestCase)
                 {
                     case TEST_NON_CON_OP:
-                        InitGetRequest(OC_LOW_QOS);
-                        InitPutRequest(OC_LOW_QOS);
-                        InitPostRequest(OC_LOW_QOS);
+                        InitGetRequest(&clientResponse->devAddr, OC_LOW_QOS);
+                        InitPutRequest(&clientResponse->devAddr, OC_LOW_QOS);
+                        InitPostRequest(&clientResponse->devAddr, OC_LOW_QOS);
                         break;
                     case TEST_CON_OP:
-                        InitGetRequest(OC_HIGH_QOS);
-                        InitPutRequest(OC_HIGH_QOS);
-                        InitPostRequest(OC_HIGH_QOS);
+                        InitGetRequest(&clientResponse->devAddr, OC_HIGH_QOS);
+                        InitPutRequest(&clientResponse->devAddr, OC_HIGH_QOS);
+                        InitPostRequest(&clientResponse->devAddr, OC_HIGH_QOS);
                         break;
                 }
             }
@@ -222,21 +226,17 @@ OCStackApplicationResult discoveryReqCB(void *, OCDoHandle,
     return (UnicastDiscovery) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
 
 }
-int InitPutRequest(OCQualityOfService qos)
+int InitPutRequest(OCDevAddr *endpoint, OCQualityOfService qos)
 {
     OIC_LOG_V(INFO, TAG, "Executing %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
-    if (WithTcp)
-    {
-        endpoint.adapter = OC_ADAPTER_TCP;
-    }
-    endpoint.flags = (OCTransportFlags)(endpoint.flags | OC_SECURE);
-    return (InvokeOCDoResource(query, OC_REST_PUT, &endpoint,
+
+    return (InvokeOCDoResource(query, OC_REST_PUT, endpoint,
                                ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS), putReqCB, NULL, 0));
 }
 
-int InitPostRequest(OCQualityOfService qos)
+int InitPostRequest(OCDevAddr *endpoint, OCQualityOfService qos)
 {
     OCStackResult result;
 
@@ -244,14 +244,8 @@ int InitPostRequest(OCQualityOfService qos)
     std::ostringstream query;
     query << coapServerResource;
 
-    if (WithTcp)
-    {
-        endpoint.adapter = OC_ADAPTER_TCP;
-    }
-    endpoint.flags = (OCTransportFlags)(endpoint.flags | OC_SECURE);
-
     // First POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST, &endpoint,
+    result = InvokeOCDoResource(query, OC_REST_POST, endpoint,
                                 ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS),
                                 postReqCB, NULL, 0);
     if (OC_STACK_OK != result)
@@ -261,7 +255,7 @@ int InitPostRequest(OCQualityOfService qos)
     }
 
     // Second POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST, &endpoint,
+    result = InvokeOCDoResource(query, OC_REST_POST, endpoint,
                                 ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS),
                                 postReqCB, NULL, 0);
     if (OC_STACK_OK != result)
@@ -271,7 +265,7 @@ int InitPostRequest(OCQualityOfService qos)
 
     // This POST operation will update the original resourced /a/led (as long as
     // the server is set to max 2 /lcd resources)
-    result = InvokeOCDoResource(query, OC_REST_POST, &endpoint,
+    result = InvokeOCDoResource(query, OC_REST_POST, endpoint,
                                 ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS),
                                 postReqCB, NULL, 0);
     if (OC_STACK_OK != result)
@@ -281,18 +275,13 @@ int InitPostRequest(OCQualityOfService qos)
     return result;
 }
 
-int InitGetRequest(OCQualityOfService qos)
+int InitGetRequest(OCDevAddr *endpoint, OCQualityOfService qos)
 {
     OIC_LOG_V(INFO, TAG, "Executing %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
-    if (WithTcp)
-    {
-        endpoint.adapter = OC_ADAPTER_TCP;
-    }
-    endpoint.flags = (OCTransportFlags)(endpoint.flags | OC_SECURE);
 
-    return (InvokeOCDoResource(query, OC_REST_GET, &endpoint,
+    return (InvokeOCDoResource(query, OC_REST_GET, endpoint,
                                ((qos == OC_HIGH_QOS) ?  OC_HIGH_QOS : OC_LOW_QOS),
                                getReqCB, NULL, 0));
 }
@@ -475,33 +464,52 @@ int parseClientResponse(OCClientResponse *clientResponse)
     {
         coapServerResource.assign(res->uri);
         OIC_LOG_V(INFO, TAG, "Uri -- %s", coapServerResource.c_str());
-        if (0 == strcmp(coapServerResource.c_str(), OIC_RSRC_DOXM_URI))
+
+        if (0 == strncmp(coapServerResource.c_str(), OIC_STD_URI_PREFIX, strlen(OIC_STD_URI_PREFIX)) ||
+            0 == strncmp(coapServerResource.c_str(), "/introspection", strlen("/introspection")))
         {
-            OIC_LOG(INFO, TAG, "Skip: doxm is secure virtual resource");
+            OIC_LOG(INFO, TAG, "Skip resource");
             res = res->next;
             continue;
         }
-        if (0 == strcmp(coapServerResource.c_str(), OIC_RSRC_PSTAT_URI))
+
+        OCDevAddr *endpoint = &clientResponse->devAddr;
+        if (res && res->eps)
         {
-            OIC_LOG(INFO, TAG, "Skip: pstat is secure virtual resource");
-            res = res->next;
-            continue;
-        }
-        if (res->secure)
-        {
-            if (WithTcp)
+            endpoint->port = 0;
+            OCEndpointPayload* eps = res->eps;
+            while (NULL != eps)
             {
-#ifdef TCP_ADAPTER
-                OIC_LOG_V(INFO, TAG, "SECUREPORT tcp: %d", res->tcpPort);
-                endpoint.port = res->tcpPort;
+                if (eps->family & OC_FLAG_SECURE)
+                {
+#ifdef __WITH_TLS__
+                    if (WithTcp && 0 == strcmp(eps->tps, COAPS_TCP_STR))
+                    {
+                        strncpy(endpoint->addr, eps->addr, sizeof(endpoint->addr));
+                        endpoint->port = eps->port;
+                        endpoint->flags = (OCTransportFlags)(eps->family | OC_SECURE);
+                        endpoint->adapter = OC_ADAPTER_TCP;
+                        coapSecureResource = 1;
+                        OIC_LOG_V(INFO, TAG, "TLS port: %d", endpoint->port);
+                        break;
+                    }
 #endif
+                    if (!WithTcp && 0 == strcmp(eps->tps, COAPS_STR))
+                    {
+                        strncpy(endpoint->addr, eps->addr, sizeof(endpoint->addr));
+                        endpoint->port = eps->port;
+                        endpoint->flags = (OCTransportFlags)(eps->family | OC_SECURE);
+                        endpoint->adapter = OC_ADAPTER_IP;
+                        coapSecureResource = 1;
+                        OIC_LOG_V(INFO, TAG, "DTLS port: %d", endpoint->port);
+                    }
+                }
+                eps = eps->next;
             }
-            else
+            if (!endpoint->port)
             {
-                OIC_LOG_V(INFO, TAG, "SECUREPORT udp: %d", res->port);
-                endpoint.port = res->port;
+                OIC_LOG(INFO, TAG, "Can not find secure port information.");
             }
-            coapSecureResource = 1;
         }
 
         OIC_LOG_V(INFO, TAG, "Secure -- %s", coapSecureResource == 1 ? "YES" : "NO");

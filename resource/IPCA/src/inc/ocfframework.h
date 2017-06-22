@@ -39,7 +39,7 @@ typedef struct DeviceDetails
     bool deviceNotRespondingIndicated;
 
     // How many IPCAOpenDevice() on this device.
-    size_t deviceOpenCount;
+    int deviceOpenCount;
 
     // Timestamp of final close.
     uint64_t lastCloseDeviceTime;
@@ -138,7 +138,7 @@ class OCFFramework
                         std::vector<std::string>& resourceInfo);
 
         // Get/Set/Observe requests.
-        IPCAStatus OCFFramework::SendCommandToDevice(
+        IPCAStatus SendCommandToDevice(
                         std::string& deviceId,
                         CallbackInfo::Ptr callbackInfo,
                         OCRepresentation* rep);
@@ -209,7 +209,7 @@ class OCFFramework
 
         // Callback from OCF for MOT completion
         void OnMultipleOwnershipTransferCompleteCallback(PMResultList_t* result,
-                    bool error,
+                    int error,
                     std::string deviceId,
                     CallbackInfo::Ptr callbackInfo);
 

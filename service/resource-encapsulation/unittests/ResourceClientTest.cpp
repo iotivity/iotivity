@@ -27,6 +27,7 @@
 #include "RCSResourceObject.h"
 #include "RCSAddress.h"
 #include "RCSRequest.h"
+#include "cainterface.h"
 
 #include <condition_variable>
 #include <mutex>
@@ -47,7 +48,7 @@ void getRemoteAttributesCallback(const RCSResourceAttributes&, int) {}
 void setRemoteAttributesCallback(const RCSResourceAttributes&, int) {}
 void setRemoteRepresentationCallback(const HeaderOpts&, const RCSRepresentation&, int) {}
 void resourceStateChanged(ResourceState) { }
-void cacheUpdatedCallback(const RCSResourceAttributes&) {}
+void cacheUpdatedCallback(const RCSResourceAttributes&, int) {}
 
 class RemoteResourceObjectTest: public TestWithMock
 {
@@ -90,7 +91,8 @@ protected:
 private:
     void CreateResource()
     {
-        server = RCSResourceObject::Builder(RESOURCEURI, RESOURCETYPE, RESOURCEINTERFACE).build();
+        server = RCSResourceObject::Builder(RESOURCEURI, RESOURCETYPE, RESOURCEINTERFACE)
+        .setDefaultInterface(RESOURCEINTERFACE).build();
         server->setAttribute(ATTR_KEY, ATTR_VALUE);
     }
 
@@ -121,7 +123,6 @@ private:
 
         Proceed();
     }
-
 private:
     std::condition_variable cond;
     std::mutex mutex;
@@ -132,17 +133,28 @@ TEST_F(RemoteResourceObjectTest, GetRemoteAttributesDoesNotAllowEmptyFunction)
     ASSERT_THROW(object->getRemoteAttributes({ }), RCSInvalidParameterException);
 }
 
+class TestRemoteAttributesCallback
+{
+public:
+    virtual void getRemoteAttributesCallback(const RCSResourceAttributes&, int) = 0;
+    virtual void setRemoteAttributesCallback(const RCSResourceAttributes&, int) = 0;
+    virtual ~TestRemoteAttributesCallback() { }
+};
+
 TEST_F(RemoteResourceObjectTest, GetRemoteAttributesGetsAttributesOfServer)
 {
-    mocks.ExpectCallFunc(getRemoteAttributesCallback).Match(
-            [this](const RCSResourceAttributes& attrs, int)
+    auto mockCallback = mocks.Mock< TestRemoteAttributesCallback >();
+    mocks.ExpectCall(mockCallback, TestRemoteAttributesCallback::getRemoteAttributesCallback).
+            Match([this](const RCSResourceAttributes& attrs, int)
             {
                 RCSResourceObject::LockGuard lock{ server };
                 return attrs == server->getAttributes();
             }
     ).Do([this](const RCSResourceAttributes&, int){ Proceed(); });
 
-    object->getRemoteAttributes(getRemoteAttributesCallback);
+    object->getRemoteAttributes(std::bind(
+            &TestRemoteAttributesCallback::getRemoteAttributesCallback, mockCallback,
+            std::placeholders::_1, std::placeholders::_2));
 
     Wait();
 }
@@ -158,10 +170,13 @@ TEST_F(RemoteResourceObjectTest, SetRemoteAttributesSetsAttributesOfServer)
     RCSResourceAttributes newAttrs;
     newAttrs[ATTR_KEY] = newValue;
 
-    mocks.ExpectCallFunc(setRemoteAttributesCallback).
+    auto mockCallback = mocks.Mock< TestRemoteAttributesCallback >();
+    mocks.ExpectCall(mockCallback, TestRemoteAttributesCallback::setRemoteAttributesCallback).
             Do([this](const RCSResourceAttributes&, int){ Proceed(); });
 
-    object->setRemoteAttributes(newAttrs, setRemoteAttributesCallback);
+    object->setRemoteAttributes(newAttrs, std::bind(
+            &TestRemoteAttributesCallback::setRemoteAttributesCallback, mockCallback,
+            std::placeholders::_1, std::placeholders::_2));
     Wait();
 
     ASSERT_EQ(newValue, server->getAttributeValue(ATTR_KEY).get<int>());
@@ -176,6 +191,13 @@ TEST_F(RemoteResourceObjectTest, SetRemoteRepresentationDoesNotAllowEmptyFunctio
 
 TEST_F(RemoteResourceObjectTest, SetRemoteRepresentationSetsRepresentationOfServer)
 {
+    class TestSetRemoteRepresentationCallback
+    {
+    public:
+        virtual void
+        setRemoteRepresentationCallback(const HeaderOpts&, const RCSRepresentation&, int) = 0;
+        virtual ~TestSetRemoteRepresentationCallback() { }
+    };
     RCSRepresentation rcsRep;
     RCSQueryParams queryParams;
     constexpr int newValue = ATTR_VALUE + 1;
@@ -184,10 +206,14 @@ TEST_F(RemoteResourceObjectTest, SetRemoteRepresentationSetsRepresentationOfServ
 
     rcsRep.setAttributes(newAttrs);
 
-    mocks.ExpectCallFunc(setRemoteRepresentationCallback).
+    auto mockCallback = mocks.Mock< TestSetRemoteRepresentationCallback >();
+    mocks.ExpectCall(mockCallback,
+                     TestSetRemoteRepresentationCallback::setRemoteRepresentationCallback).
             Do([this](const HeaderOpts&, const RCSRepresentation&, int){ Proceed(); });
 
-    object->set(queryParams, rcsRep, setRemoteRepresentationCallback);
+    object->set(queryParams, rcsRep, std::bind(
+            &TestSetRemoteRepresentationCallback::setRemoteRepresentationCallback,
+            mockCallback, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     Wait();
 
     ASSERT_EQ(newValue, server->getAttributeValue(ATTR_KEY).get<int>());
@@ -204,10 +230,6 @@ TEST_F(RemoteResourceObjectTest, QueryParamsForGetWillBePassedToBase)
 
     constexpr char PARAM_KEY[] { "aKey" };
     constexpr char VALUE[] { "value" };
-
-    object->get(RCSQueryParams().setResourceInterface(RESOURCEINTERFACE).setResourceType(RESOURCETYPE).
-            put(PARAM_KEY, VALUE),
-            [](const HeaderOpts&, const RCSRepresentation&, int){});
 
     auto mockHandler = mocks.Mock< CustomHandler >();
 
@@ -227,6 +249,10 @@ TEST_F(RemoteResourceObjectTest, QueryParamsForGetWillBePassedToBase)
 
     server->setGetRequestHandler(std::bind(&CustomHandler::handle, mockHandler,
             std::placeholders::_1, std::placeholders::_2));
+
+    object->get(RCSQueryParams().setResourceInterface(RESOURCEINTERFACE).setResourceType(RESOURCETYPE).
+            put(PARAM_KEY, VALUE),
+            [](const HeaderOpts&, const RCSRepresentation&, int){});
 
     Wait();
 }
@@ -291,12 +317,21 @@ TEST_F(RemoteResourceObjectTest, CacheStateIsUnreadyAfterStartCaching)
     ASSERT_EQ(CacheState::UNREADY, object->getCacheState());
 }
 
+class TestCacheUpdatedCallback
+{
+public:
+    virtual void cacheUpdatedCallback(const RCSResourceAttributes&, int) = 0;
+    virtual ~TestCacheUpdatedCallback() { }
+};
+
 TEST_F(RemoteResourceObjectTest, CacheStateIsReadyAfterCacheUpdated)
 {
-    mocks.ExpectCallFunc(cacheUpdatedCallback).
-                Do([this](const RCSResourceAttributes&){ Proceed(); });
+    auto mockCallback = mocks.Mock< TestCacheUpdatedCallback >();
+    mocks.ExpectCall(mockCallback, TestCacheUpdatedCallback::cacheUpdatedCallback).
+            Do([this](const RCSResourceAttributes&, int){ Proceed(); });
 
-    object->startCaching(cacheUpdatedCallback);
+    object->startCaching(std::bind(&TestCacheUpdatedCallback::cacheUpdatedCallback,
+                           mockCallback, std::placeholders::_1, std::placeholders::_2));
     Wait();
 
     ASSERT_EQ(CacheState::READY, object->getCacheState());
@@ -304,10 +339,12 @@ TEST_F(RemoteResourceObjectTest, CacheStateIsReadyAfterCacheUpdated)
 
 TEST_F(RemoteResourceObjectTest, IsCachedAvailableReturnsTrueWhenCacheIsReady)
 {
-    mocks.ExpectCallFunc(cacheUpdatedCallback).
-                Do([this](const RCSResourceAttributes&){ Proceed(); });
+    auto mockCallback = mocks.Mock< TestCacheUpdatedCallback >();
+    mocks.ExpectCall(mockCallback, TestCacheUpdatedCallback::cacheUpdatedCallback).
+                Do([this](const RCSResourceAttributes&, int){ Proceed(); });
 
-    object->startCaching(cacheUpdatedCallback);
+    object->startCaching(std::bind(&TestCacheUpdatedCallback::cacheUpdatedCallback,
+                                   mockCallback, std::placeholders::_1, std::placeholders::_2));
     Wait();
 
     ASSERT_TRUE(object->isCachedAvailable());
@@ -315,13 +352,16 @@ TEST_F(RemoteResourceObjectTest, IsCachedAvailableReturnsTrueWhenCacheIsReady)
 
 TEST_F(RemoteResourceObjectTest, DISABLED_CacheUpdatedCallbackBeCalledWheneverCacheUpdated)
 {
-    mocks.OnCallFunc(cacheUpdatedCallback).
-            Do([this](const RCSResourceAttributes&){ Proceed(); });
-    object->startCaching(cacheUpdatedCallback);
+    auto mockCallback = mocks.Mock< TestCacheUpdatedCallback >();
+
+    mocks.OnCall(mockCallback, TestCacheUpdatedCallback::cacheUpdatedCallback).
+                Do([this](const RCSResourceAttributes&, int){ Proceed(); });
+    object->startCaching(std::bind(&TestCacheUpdatedCallback::cacheUpdatedCallback,
+                                   mockCallback, std::placeholders::_1, std::placeholders::_2));
     Wait();
 
-    mocks.ExpectCallFunc(cacheUpdatedCallback).
-            Do([this](const RCSResourceAttributes&){ Proceed(); });
+    mocks.ExpectCall(mockCallback, TestCacheUpdatedCallback::cacheUpdatedCallback).
+            Do([this](const RCSResourceAttributes&, int){ Proceed(); });
 
     server->setAttribute(ATTR_KEY, ATTR_VALUE + 1);
 
@@ -332,16 +372,17 @@ TEST_F(RemoteResourceObjectTest, DISABLED_CacheUpdatedCallbackBeCalledWithUpdate
 {
     constexpr int newValue = ATTR_VALUE + 1;
 
-    mocks.OnCallFunc(cacheUpdatedCallback).
-            Do([this](const RCSResourceAttributes&){ Proceed(); });
-    object->startCaching(cacheUpdatedCallback);
+    auto mockCallback = mocks.Mock< TestCacheUpdatedCallback >();
+    mocks.OnCall(mockCallback, TestCacheUpdatedCallback::cacheUpdatedCallback).
+            Do([this](const RCSResourceAttributes&, int){ Proceed(); });
+    object->startCaching(std::bind(&TestCacheUpdatedCallback::cacheUpdatedCallback,
+                   mockCallback, std::placeholders::_1, std::placeholders::_2));
     Wait();
-
-    mocks.ExpectCallFunc(cacheUpdatedCallback).
-            Match([this](const RCSResourceAttributes& attrs){
+    mocks.ExpectCall(mockCallback, TestCacheUpdatedCallback::cacheUpdatedCallback).
+            Match([this](const RCSResourceAttributes& attrs, int){
                 return attrs.at(ATTR_KEY) == newValue;
             }).
-            Do([this](const RCSResourceAttributes&){ Proceed(); });
+            Do([this](const RCSResourceAttributes&, int){ Proceed(); });
 
     server->setAttribute(ATTR_KEY, newValue);
 
@@ -355,9 +396,11 @@ TEST_F(RemoteResourceObjectTest, GetCachedAttributesThrowsIfCachingIsNotStarted)
 
 TEST_F(RemoteResourceObjectTest, CachedAttributesHasSameAttributesWithServer)
 {
-    mocks.OnCallFunc(cacheUpdatedCallback).
-            Do([this](const RCSResourceAttributes&){ Proceed(); });
-    object->startCaching(cacheUpdatedCallback);
+    auto mockCallback = mocks.Mock< TestCacheUpdatedCallback >();
+    mocks.OnCall(mockCallback, TestCacheUpdatedCallback::cacheUpdatedCallback).
+            Do([this](const RCSResourceAttributes&, int){ Proceed(); });
+    object->startCaching(std::bind(&TestCacheUpdatedCallback::cacheUpdatedCallback,
+               mockCallback, std::placeholders::_1, std::placeholders::_2));
     Wait();
 
     RCSResourceObject::LockGuard lock{ server };
@@ -372,9 +415,11 @@ TEST_F(RemoteResourceObjectTest, GetCachedAttributeThrowsIfCachingIsNotStarted)
 
 TEST_F(RemoteResourceObjectTest, GetCachedAttributeThrowsIfKeyIsInvalid)
 {
-    mocks.OnCallFunc(cacheUpdatedCallback).
-            Do([this](const RCSResourceAttributes&){ Proceed(); });
-    object->startCaching(cacheUpdatedCallback);
+    auto mockCallback = mocks.Mock< TestCacheUpdatedCallback >();
+    mocks.OnCall(mockCallback, TestCacheUpdatedCallback::cacheUpdatedCallback).
+            Do([this](const RCSResourceAttributes&, int){ Proceed(); });
+    object->startCaching(std::bind(&TestCacheUpdatedCallback::cacheUpdatedCallback,
+                   mockCallback, std::placeholders::_1, std::placeholders::_2));
     Wait();
 
     ASSERT_THROW(object->getCachedAttribute(""), RCSInvalidKeyException);

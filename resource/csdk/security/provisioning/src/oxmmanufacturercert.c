@@ -37,6 +37,7 @@
 #include "srmresourcestrings.h"
 #include "pkix_interface.h"
 #include "mbedtls/ssl_ciphersuites.h"
+#include "ocstackinternal.h"
 
 #define TAG "OXM_MCertificate"
 
@@ -49,7 +50,12 @@ OCStackResult CreateMCertificateBasedSelectOxmPayload(OTMContext_t* otmCtx, uint
 
     otmCtx->selectedDeviceInfo->doxm->oxmSel = OIC_MANUFACTURER_CERTIFICATE;
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[DOXM_OXMSEL] = true;
+
+    return DoxmToCBORPayloadPartial(otmCtx->selectedDeviceInfo->doxm, payload,
+        size, propertiesToInclude);
 }
 
 OCStackResult CreateConMCertificateBasedSelectOxmPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
@@ -61,7 +67,12 @@ OCStackResult CreateConMCertificateBasedSelectOxmPayload(OTMContext_t* otmCtx, u
 
     otmCtx->selectedDeviceInfo->doxm->oxmSel = OIC_CON_MFG_CERT;
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[DOXM_OXMSEL] = true;
+
+    return DoxmToCBORPayloadPartial(otmCtx->selectedDeviceInfo->doxm, payload,
+        size, propertiesToInclude);
 }
 
 OCStackResult CreateMCertificateBasedOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
@@ -82,7 +93,12 @@ OCStackResult CreateMCertificateBasedOwnerTransferPayload(OTMContext_t* otmCtx, 
     }
     memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id , UUID_LENGTH);
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[DOXM_DEVOWNERUUID] = true;
+
+    return DoxmToCBORPayloadPartial(otmCtx->selectedDeviceInfo->doxm, payload,
+        size, propertiesToInclude);
 }
 
 OCStackResult PrepareMCertificateCallback(OTMContext_t *otmCtx)
@@ -137,16 +153,22 @@ OCStackResult CreateSecureSessionMCertificateCallback(OTMContext_t* otmCtx)
     }
     OIC_LOG(INFO, TAG, "MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 cipher suite selected.");
 
+    CAEndpoint_t endpoint;
     OCProvisionDev_t* selDevInfo = otmCtx->selectedDeviceInfo;
-    CAEndpoint_t *endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
-    if (NULL == endpoint)
+    CopyDevAddrToEndpoint(&selDevInfo->endpoint, &endpoint);
+
+    if (CA_ADAPTER_IP == endpoint.adapter)
     {
-        return OC_STACK_NO_MEMORY;
+        endpoint.port = selDevInfo->securePort;
     }
-    memcpy(endpoint,&selDevInfo->endpoint,sizeof(CAEndpoint_t));
-    endpoint->port = selDevInfo->securePort;
-    caresult = CAInitiateHandshake(endpoint);
-    OICFree(endpoint);
+#ifdef WITH_TCP
+    else if (CA_ADAPTER_TCP == endpoint.adapter)
+    {
+        endpoint.port = selDevInfo->tcpPort;
+    }
+#endif
+
+    caresult = CAInitiateHandshake(&endpoint);
     if (CA_STATUS_OK != caresult)
     {
         OIC_LOG_V(ERROR, TAG, "DTLS handshake failure.");

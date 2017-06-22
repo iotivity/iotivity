@@ -187,7 +187,8 @@ namespace OIC
              *
              * @param attrs the updated attributes
              */
-            typedef std::function< void(const RCSResourceAttributes& attrs) > CacheUpdatedCallback;
+            typedef std::function< void(const RCSResourceAttributes& attrs, int eCode) >
+                CacheUpdatedCallback;
 
             /**
              * Callback definition to be invoked when the response of getRemoteAttributes is

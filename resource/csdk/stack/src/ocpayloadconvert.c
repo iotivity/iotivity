@@ -54,7 +54,11 @@ static int64_t OCConvertRepPayload(OCRepPayload *payload, uint8_t *outPayload, s
 static int64_t OCConvertRepMap(CborEncoder *map, const OCRepPayload *payload);
 static int64_t OCConvertPresencePayload(OCPresencePayload *payload, uint8_t *outPayload,
         size_t *size);
+static int64_t OCConvertDiagnosticPayload(OCDiagnosticPayload *payload, uint8_t *outPayload,
+        size_t *size);
 static int64_t OCConvertSecurityPayload(OCSecurityPayload *payload, uint8_t *outPayload,
+        size_t *size);
+static int64_t OCConvertIntrospectionPayload(OCIntrospectionPayload *payload, uint8_t *outPayload,
         size_t *size);
 static int64_t OCConvertSingleRepPayloadValue(CborEncoder *parent, const OCRepPayloadValue *value);
 static int64_t OCConvertSingleRepPayload(CborEncoder *parent, const OCRepPayload *payload);
@@ -93,6 +97,14 @@ OCStackResult OCConvertPayload(OCPayload* payload, OCPayloadFormat format,
             curSize = securityPayloadSize;
         }
     }
+    if (PAYLOAD_TYPE_INTROSPECTION == payload->type)
+    {
+        size_t introspectionPayloadSize = ((OCIntrospectionPayload *)payload)->cborPayload.len;
+        if (introspectionPayloadSize > 0)
+        {
+            curSize = introspectionPayloadSize;
+        }
+    }
 
     ret = OC_STACK_NO_MEMORY;
 
@@ -113,7 +125,8 @@ OCStackResult OCConvertPayload(OCPayload* payload, OCPayloadFormat format,
     if (err == CborNoError)
     {
         if ((curSize < INIT_SIZE) &&
-            (PAYLOAD_TYPE_SECURITY != payload->type))
+            (PAYLOAD_TYPE_SECURITY != payload->type) &&
+            (PAYLOAD_TYPE_INTROSPECTION != payload->type))
         {
             uint8_t *out2 = (uint8_t *)OICRealloc(out, curSize);
             VERIFY_PARAM_NON_NULL(TAG, out2, "Failed to increase payload size");
@@ -147,10 +160,15 @@ static int64_t OCConvertPayloadHelper(OCPayload* payload, OCPayloadFormat format
             return OCConvertRepPayload((OCRepPayload*)payload, outPayload, size);
         case PAYLOAD_TYPE_PRESENCE:
             return OCConvertPresencePayload((OCPresencePayload*)payload, outPayload, size);
+        case PAYLOAD_TYPE_DIAGNOSTIC:
+            return OCConvertDiagnosticPayload((OCDiagnosticPayload*)payload, outPayload, size);
         case PAYLOAD_TYPE_SECURITY:
             return OCConvertSecurityPayload((OCSecurityPayload*)payload, outPayload, size);
+        case PAYLOAD_TYPE_INTROSPECTION:
+            return OCConvertIntrospectionPayload((OCIntrospectionPayload*)payload,
+                                                 outPayload, size);
         default:
-            OIC_LOG_V(INFO,TAG, "ConvertPayload default %d", payload->type);
+            OIC_LOG_V(INFO, TAG, "ConvertPayload default %d", payload->type);
             return CborErrorUnknownType;
     }
 }
@@ -179,6 +197,15 @@ static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* out
 {
     memcpy(outPayload, payload->securityData, payload->payloadSize);
     *size = payload->payloadSize;
+
+    return CborNoError;
+}
+
+static int64_t OCConvertIntrospectionPayload(OCIntrospectionPayload *payload,
+        uint8_t *outPayload, size_t *size)
+{
+    memcpy(outPayload, payload->cborPayload.bytes, payload->cborPayload.len);
+    *size = payload->cborPayload.len;
 
     return CborNoError;
 }
@@ -235,7 +262,13 @@ static int64_t OCConvertResourcePayloadCbor(CborEncoder *linkArray, OCResourcePa
         }
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating endpoint string");
         char uri[MAX_URI_LENGTH];
-        snprintf(uri, MAX_URI_LENGTH, "%s%s", endpointStr, resource->uri);
+        int snRet = snprintf(uri, MAX_URI_LENGTH, "%s%s", endpointStr, resource->uri);
+        if(0 > snRet || snRet >= MAX_URI_LENGTH)
+        {
+            OICFree(endpointStr);
+            VERIFY_CBOR_SUCCESS(TAG, CborErrorInternalError, "Error (snprintf)");
+        }
+
         OICFree(endpointStr);
 
         err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
@@ -246,7 +279,11 @@ static int64_t OCConvertResourcePayloadCbor(CborEncoder *linkArray, OCResourcePa
              resource->anchor)
     {
         char uri[MAX_URI_LENGTH];
-        snprintf(uri, MAX_URI_LENGTH, "%s%s", resource->anchor, resource->uri);
+        int snRet = snprintf(uri, MAX_URI_LENGTH, "%s%s", resource->anchor, resource->uri);
+        if(0 > snRet || snRet >= MAX_URI_LENGTH)
+        {
+            VERIFY_CBOR_SUCCESS(TAG, CborErrorInternalError, "Error (snprintf)");
+        }
 
         err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
                                   uri);
@@ -419,7 +456,13 @@ static int64_t OCConvertDiscoveryPayloadCbor(OCDiscoveryPayload *payload,
         err |= cbor_encoder_create_array(&rootMap, &linkArray, CborIndefiniteLength);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting links array");
 
-        bool isSelf = !strcmp(payload->sid, OCGetServerInstanceIDString());
+        bool isSelf = false;
+        const char *deviceId = OCGetServerInstanceIDString();
+        if (NULL != deviceId)
+        {
+            isSelf = !strcmp(payload->sid, deviceId);
+        }
+
         for (size_t i = 0; i < resourceCount; ++i)
         {
             OCResourcePayload *resource = OCDiscoveryPayloadGetResource(payload, i);
@@ -484,24 +527,24 @@ static int64_t OCConvertDiscoveryPayloadVndOcfCbor(OCDiscoveryPayload *payload,
     ]
     */
 
+    CborEncoder rootArray;
     CborEncoder rootMap;
     CborEncoder linkArray;
     bool isBaseline = payload->name || payload->type || payload->iface;
     if (isBaseline)
     {
+        // Open the root array
+        err |= cbor_encoder_create_array(&encoder, &rootArray, 1);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating discovery root array");
+
         // Open the root map
-        err |= cbor_encoder_create_map(&encoder, &rootMap, CborIndefiniteLength);
+        err |= cbor_encoder_create_map(&rootArray, &rootMap, CborIndefiniteLength);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating discovery map");
 
         // Insert Name
         err |= ConditionalAddTextStringToMap(&rootMap, OC_RSRVD_DEVICE_NAME,
                 sizeof(OC_RSRVD_DEVICE_NAME) - 1, payload->name);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting name");
-
-        // Insert Device ID into the root map
-        err |= AddTextStringToMap(&rootMap, OC_RSRVD_DEVICE_ID, sizeof(OC_RSRVD_DEVICE_ID) - 1,
-                payload->sid);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting device id");
 
         // Insert Resource Type
         err |= OCStringLLJoin(&rootMap, OC_RSRVD_RESOURCE_TYPE, payload->type);
@@ -541,7 +584,11 @@ static int64_t OCConvertDiscoveryPayloadVndOcfCbor(OCDiscoveryPayload *payload,
                 resource->rel && !strcmp(resource->rel, "self"))
             {
                 char uri[MAX_URI_LENGTH];
-                snprintf(uri, MAX_URI_LENGTH, "ocf://%s%s", payload->sid, resource->uri);
+                int snRet = snprintf(uri, MAX_URI_LENGTH, "ocf://%s%s", payload->sid, resource->uri);
+                if(0 > snRet || snRet >= MAX_URI_LENGTH)
+                {
+                    VERIFY_CBOR_SUCCESS(TAG, CborErrorInternalError, "Error (snprintf)");
+                }
 
                 err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
                                           uri);
@@ -560,7 +607,12 @@ static int64_t OCConvertDiscoveryPayloadVndOcfCbor(OCDiscoveryPayload *payload,
 
             // Anchor
             char anchor[MAX_URI_LENGTH];
-            snprintf(anchor, MAX_URI_LENGTH, "ocf://%s", payload->sid);
+            int snRet = snprintf(anchor, MAX_URI_LENGTH, "ocf://%s", payload->sid);
+            if(0 > snRet || snRet >= MAX_URI_LENGTH)
+            {
+                VERIFY_CBOR_SUCCESS(TAG, CborErrorInternalError, "Error (snprintf)");
+            }
+
             err |= AddTextStringToMap(&linkMap, OC_RSRVD_URI, sizeof(OC_RSRVD_URI) - 1, anchor);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding anchor to links map");
 
@@ -647,12 +699,16 @@ static int64_t OCConvertDiscoveryPayloadVndOcfCbor(OCDiscoveryPayload *payload,
 
     if (isBaseline)
     {
-        // Close the final root array.
+        // Close the link array instead the root map.
         err |= cbor_encoder_close_container(&rootMap, &linkArray);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing root array");
 
         // Close root map inside the root array.
-        err |= cbor_encoder_close_container(&encoder, &rootMap);
+        err |= cbor_encoder_close_container(&rootArray, &rootMap);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing root map");
+
+        // Close the final root array.
+        err |= cbor_encoder_close_container(&encoder, &rootArray);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing root map");
     }
     else
@@ -740,55 +796,46 @@ static int64_t OCConvertArray(CborEncoder *parent, const OCRepPayloadValueArray 
     CborEncoder array;
     err |= cbor_encoder_create_array(parent, &array, valArray->dimensions[0]);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep array");
-    // empty array
-    if (valArray->dimensions[0] == 0)
+    for (size_t i = 0; i < valArray->dimensions[0]; ++i)
     {
-        err |= OCConvertArrayItem(&array, valArray, 0);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array value");
-    }
-    else
-    {
-        for (size_t i = 0; i < valArray->dimensions[0]; ++i)
+        if (0 != valArray->dimensions[1])
         {
-            if (0 != valArray->dimensions[1])
+            CborEncoder array2;
+            err |= cbor_encoder_create_array(&array, &array2, valArray->dimensions[1]);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep array2");
+
+            for (size_t j = 0; j < valArray->dimensions[1]; ++j)
             {
-                CborEncoder array2;
-                err |= cbor_encoder_create_array(&array, &array2, valArray->dimensions[1]);
-                VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep array2");
-
-                for (size_t j = 0; j < valArray->dimensions[1]; ++j)
+                if (0 != valArray->dimensions[2])
                 {
-                    if (0 != valArray->dimensions[2])
-                    {
-                        CborEncoder array3;
-                        err |= cbor_encoder_create_array(&array2, &array3, valArray->dimensions[2]);
-                        VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep array3");
+                    CborEncoder array3;
+                    err |= cbor_encoder_create_array(&array2, &array3, valArray->dimensions[2]);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep array3");
 
-                        for(size_t k = 0; k < valArray->dimensions[2]; ++k)
-                        {
-                            err |= OCConvertArrayItem(&array3, valArray,
+                    for(size_t k = 0; k < valArray->dimensions[2]; ++k)
+                    {
+                        err |= OCConvertArrayItem(&array3, valArray,
                                 j * valArray->dimensions[2] +
                                 i * valArray->dimensions[2] * valArray->dimensions[1] +
                                 k);
-                            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array3 value");
-                        }
-                        err |= cbor_encoder_close_container(&array2, &array3);
-                        VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing rep array3");
+                        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array3 value");
                     }
-                    else
-                    {
-                        err |= OCConvertArrayItem(&array2, valArray, i * valArray->dimensions[1] + j);
-                        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array2 value");
-                    }
+                    err |= cbor_encoder_close_container(&array2, &array3);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing rep array3");
                 }
-                err |= cbor_encoder_close_container(&array, &array2);
-                VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing rep array2");
+                else
+                {
+                    err |= OCConvertArrayItem(&array2, valArray, i * valArray->dimensions[1] + j);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array2 value");
+                }
             }
-            else
-            {
-                err |= OCConvertArrayItem(&array, valArray, i);
-                VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array value");
-            }
+            err |= cbor_encoder_close_container(&array, &array2);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing rep array2");
+        }
+        else
+        {
+            err |= OCConvertArrayItem(&array, valArray, i);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array value");
         }
     }
     err |= cbor_encoder_close_container(parent, &array);
@@ -1006,6 +1053,22 @@ static int64_t OCConvertPresencePayload(OCPresencePayload *payload, uint8_t *out
     // Close Map
     err |= cbor_encoder_close_container(&encoder, &map);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing presence map");
+
+exit:
+    return checkError(err, &encoder, outPayload, size);
+}
+
+static int64_t OCConvertDiagnosticPayload(OCDiagnosticPayload *payload, uint8_t *outPayload,
+        size_t *size)
+{
+    int64_t err = CborNoError;
+    CborEncoder encoder;
+
+    cbor_encoder_init(&encoder, outPayload, *size, 0);
+
+    // Message
+    err |= cbor_encode_text_string(&encoder, payload->message, strlen(payload->message));
+    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding message");
 
 exit:
     return checkError(err, &encoder, outPayload, size);

@@ -57,7 +57,8 @@ class DataCacheTest : public TestWithMock
             std::call_once(flag, [this]()
             {
                 isLast = false;
-                pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >());
+                auto deleter = [](PrimitiveResource *) { };
+                pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), deleter);
             });
         }
         virtual ~DataCacheTest() noexcept(noexcept(std::declval<Test>().~Test()))
@@ -73,7 +74,8 @@ class DataCacheTest : public TestWithMock
 
             mocks.OnCall(pResource.get(), PrimitiveResource::isObservable).Return(false);
             cacheHandler.reset(new DataCache());
-            cb = ([](std::shared_ptr<PrimitiveResource >, const RCSResourceAttributes &)->OCStackResult
+            cb = ([](std::shared_ptr<PrimitiveResource >,
+                    const RCSResourceAttributes &, int) -> OCStackResult
                     {
                         return OC_STACK_OK;
                     });

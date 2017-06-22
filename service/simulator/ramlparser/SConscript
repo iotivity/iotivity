@@ -24,29 +24,37 @@ lib_env = env.Clone()
 SConscript('#service/third_party_libs.scons', 'lib_env')
 raml_env = lib_env.Clone()
 
-SConscript('#/extlibs/cjson/SConscript')
 SConscript('#/extlibs/yaml/SConscript')
 ######################################################################
 # Build flags
 ######################################################################
-raml_env.AppendUnique(CPPPATH = ['#/extlibs/timer',
-                                 '#/extlibs/cjson',
-                                 '#/extlibs/yaml/yaml/src' ,
-                                 '#/extlibs/yaml/yaml/include',
-                                 'raml/model',
-                                 'raml/jsonSchemaParser',
-                                 'raml'])
-raml_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread', '-O2', '-g', '-Wall', '-fmessage-length=0'])
-raml_env.AppendUnique(CPPDEFINES = ['LINUX'])
-raml_env.Append( RPATH = env.Literal('\\$$ORIGIN'))
+raml_env.AppendUnique(CPPPATH=[
+    '#/resource/c_common/octimer/include',
+    '#/extlibs/cjson',
+    '#/extlibs/yaml/yaml/src',
+    '#/extlibs/yaml/yaml/include',
+    'raml/model',
+    'raml/jsonSchemaParser',
+    'raml'
+])
+raml_env.AppendUnique(CXXFLAGS=[
+    '-std=c++0x', '-Wall', '-pthread', '-O2', '-g', '-Wall',
+    '-fmessage-length=0'
+])
+raml_env.AppendUnique(CPPDEFINES=['LINUX'])
+raml_env.Append(RPATH=env.Literal('\\$$ORIGIN'))
 
-raml_env.PrependUnique(LIBS = ['octbstack', 'YamlParser'])
-raml_env.AppendUnique(LIBS = ['pthread', 'm', 'cjson'])
+raml_env.PrependUnique(LIBS=['octbstack', 'YamlParser'])
+raml_env.AppendUnique(LIBS=['pthread', 'm', 'cjson'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-raml_src = [env.Glob('raml/model/*.cpp'), env.Glob('raml/jsonSchemaParser/*.cpp'), env.Glob('raml/*.cpp')]
+raml_src = [
+    env.Glob('raml/model/*.cpp'),
+    env.Glob('raml/jsonSchemaParser/*.cpp'),
+    env.Glob('raml/*.cpp')
+]
 
 ramlsdk = raml_env.SharedLibrary('RamlParser', raml_src)
 

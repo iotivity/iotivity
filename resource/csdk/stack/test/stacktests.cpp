@@ -31,7 +31,7 @@ extern "C"
     #include "ocresourcehandler.h"
 }
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -612,6 +612,137 @@ TEST(StackStart, GetDeviceInfoAPI)
 
     EXPECT_STREQ("oic.wk.d", OCGetResourceTypeName(handle, 0));
     EXPECT_STREQ("oic.wk.tv", OCGetResourceTypeName(handle, 1));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, SetGetDevicePropertyValues)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    EXPECT_TRUE(handle != NULL);
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "oic.wk.tv"));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle, "oic.if.tv"));
+
+    void *value = NULL;
+    OCStringLL *x, *y;
+
+    OCStringLL *rts = NULL;
+    OCResourcePayloadAddStringLL(&rts, "oic.wk.d");
+    OCResourcePayloadAddStringLL(&rts, "oic.wk.tv");
+    EXPECT_NE(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_RESOURCE_TYPE, &value));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_RESOURCE_TYPE, &value));
+    for (x = rts, y = (OCStringLL *) value; x && y; x = x->next, y = y->next)
+    {
+        EXPECT_STREQ(x->value, y->value);
+    }
+    EXPECT_TRUE(!x && !y);
+    OCFreeOCStringLL((OCStringLL *) value);
+    value = NULL;
+    OCFreeOCStringLL(rts);
+
+    OCStringLL *itfs = NULL;
+    OCResourcePayloadAddStringLL(&itfs, "oic.if.baseline");
+    OCResourcePayloadAddStringLL(&itfs, "oic.if.r");
+    OCResourcePayloadAddStringLL(&itfs, "oic.if.tv");
+    EXPECT_NE(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_INTERFACE, &value));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_INTERFACE, &value));
+    for (x = itfs, y = (OCStringLL *) value; x && y; x = x->next, y = y->next)
+    {
+        EXPECT_STREQ(x->value, y->value);
+    }
+    EXPECT_TRUE(!x && !y);
+    OCFreeOCStringLL((OCStringLL *) value);
+    value = NULL;
+    OCFreeOCStringLL(itfs);
+
+    const char *n = "name";
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, n));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, &value));
+    EXPECT_STREQ(n, (char *) value);
+    OICFree(value);
+    value = NULL;
+
+    const char *id = "instance-identifier";
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_INSTANCE_ID, id));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_INSTANCE_ID, &value));
+    EXPECT_STREQ(id, (char *) value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_NE(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_ID, &value));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_ID, &value));
+    EXPECT_STREQ(OCGetServerInstanceIDString(), (char *) value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, OC_SPEC_VERSION));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, &value));
+    EXPECT_STREQ(OC_SPEC_VERSION, (char *) value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, OC_DATA_MODEL_VERSION));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, &value));
+    char *dmv = OCCreateString((OCStringLL *) value);
+    EXPECT_STREQ(OC_DATA_MODEL_VERSION, dmv);
+    OICFree(dmv);
+    OCFreeOCStringLL((OCStringLL *) value);
+    value = NULL;
+
+    OCStringLL *ld = NULL;
+    OCResourcePayloadAddStringLL(&ld, "en");
+    OCResourcePayloadAddStringLL(&ld, "Description");
+    OCResourcePayloadAddStringLL(&ld, "de");
+    OCResourcePayloadAddStringLL(&ld, "Beschriebung");
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_DESCRIPTION, ld));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_DESCRIPTION, &value));
+    for (x = ld, y = (OCStringLL *) value; x && y; x = x->next, y = y->next)
+    {
+        EXPECT_STREQ(x->value, y->value);
+    }
+    EXPECT_TRUE(!x && !y);
+    OCFreeOCStringLL((OCStringLL *) value);
+    value = NULL;
+    OCFreeOCStringLL(ld);
+
+    const char *sv = "software-version";
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SOFTWARE_VERSION, sv));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SOFTWARE_VERSION, &value));
+    EXPECT_STREQ(sv, (char *) value);
+    OICFree(value);
+    value = NULL;
+
+    OCStringLL *dmn = NULL;
+    OCResourcePayloadAddStringLL(&dmn, "en");
+    OCResourcePayloadAddStringLL(&dmn, "Manufacturer");
+    OCResourcePayloadAddStringLL(&dmn, "de");
+    OCResourcePayloadAddStringLL(&dmn, "Hersteller");
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_MFG_NAME, dmn));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_MFG_NAME, &value));
+    for (x = dmn, y = (OCStringLL *) value; x && y; x = x->next, y = y->next)
+    {
+        EXPECT_STREQ(x->value, y->value);
+    }
+    EXPECT_TRUE(!x && !y);
+    OCFreeOCStringLL((OCStringLL *) value);
+    value = NULL;
+    OCFreeOCStringLL(dmn);
+
+    const char *dmno = "device-model-number";
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_MODEL_NUM, dmno));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_MODEL_NUM, &value));
+    EXPECT_STREQ(dmno, (char *) value);
+    OICFree(value);
+    value = NULL;
+
+    const char *piid = "protocol-independent-identifier";
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, piid));
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, &value));
+    EXPECT_STREQ(piid, (char *) value);
+    OICFree(value);
+    value = NULL;
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -1200,6 +1331,7 @@ TEST(StackResource, GetResourceProperties)
     OIC_LOG(INFO, TAG, "Starting GetResourceProperties test");
     InitStack(OC_SERVER);
 
+    uint8_t props = OC_DISCOVERABLE|OC_OBSERVABLE;
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
@@ -1207,13 +1339,9 @@ TEST(StackResource, GetResourceProperties)
                                             "/a/led",
                                             0,
                                             NULL,
-                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+                                            props));
 
-#ifdef MQ_PUBLISHER
-    EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE|OC_MQ_PUBLISHER, OCGetResourceProperties(handle));
-#else
-    EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE, OCGetResourceProperties(handle));
-#endif
+    EXPECT_EQ(props, OCGetResourceProperties(handle) & props);
     EXPECT_EQ(OC_STACK_OK, OCDeleteResource(handle));
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
@@ -1234,12 +1362,9 @@ TEST(StackResource, SetResourceProperties)
                                             NULL,
                                             0));
 
-    EXPECT_EQ(OC_STACK_OK, OCSetResourceProperties(handle, OC_DISCOVERABLE|OC_OBSERVABLE));
-#ifdef MQ_PUBLISHER
-    EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE|OC_MQ_PUBLISHER, OCGetResourceProperties(handle));
-#else
-    EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE, OCGetResourceProperties(handle));
-#endif
+    uint8_t props = OC_DISCOVERABLE|OC_OBSERVABLE;
+    EXPECT_EQ(OC_STACK_OK, OCSetResourceProperties(handle, props));
+    EXPECT_EQ(props, OCGetResourceProperties(handle) & props);
 
     EXPECT_EQ(OC_STACK_OK, OCDeleteResource(handle));
 
@@ -1252,6 +1377,7 @@ TEST(StackResource, ClearResourceProperties)
     OIC_LOG(INFO, TAG, "Starting ClearResourceProperties test");
     InitStack(OC_SERVER);
 
+    uint8_t props = OC_DISCOVERABLE|OC_OBSERVABLE;
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
@@ -1259,14 +1385,10 @@ TEST(StackResource, ClearResourceProperties)
                                             "/a/led",
                                             0,
                                             NULL,
-                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+                                            props));
 
-    EXPECT_EQ(OC_STACK_OK, OCClearResourceProperties(handle, OC_DISCOVERABLE|OC_OBSERVABLE));
-#ifdef MQ_PUBLISHER
-    EXPECT_EQ(OC_ACTIVE|OC_MQ_PUBLISHER, OCGetResourceProperties(handle));
-#else
-    EXPECT_EQ(OC_ACTIVE, OCGetResourceProperties(handle));
-#endif
+    EXPECT_EQ(OC_STACK_OK, OCClearResourceProperties(handle, props));
+    EXPECT_EQ(0, OCGetResourceProperties(handle) & props);
 
     EXPECT_EQ(OC_STACK_OK, OCDeleteResource(handle));
 
@@ -2454,8 +2576,8 @@ TEST(StackHeaderOption, getHeaderOption)
                                              optionData,
                                              optionDataSize,
                                              &actualDataSize));
-    EXPECT_EQ(optionData[0], 1);
-    EXPECT_EQ(actualDataSize, 8);
+    EXPECT_EQ(1, optionData[0]);
+    EXPECT_EQ(8, actualDataSize);
 }
 
 TEST(StackEndpoints, OCGetSupportedEndpointTpsFlags)
@@ -2686,6 +2808,112 @@ TEST_F(OCDiscoverTests, DISABLED_DiscoverResourceWithInvalidQueries)
     EXPECT_EQ(OC_STACK_OK, discoverUnicastRTEmptyCB.Wait(10));
 }
 
+class OCEndpointTests : public testing::Test
+{
+    protected:
+        virtual void SetUp()
+        {
+            OCPersistentStorage ps = { fopen, fread, fwrite, fclose, unlink };
+            EXPECT_EQ(OC_STACK_OK, OCRegisterPersistentStorageHandler(&ps));
+            EXPECT_EQ(OC_STACK_OK, OCInit(NULL, 0, OC_CLIENT_SERVER));
+        }
+
+        virtual void TearDown()
+        {
+            OCStop();
+        }
+};
+
+static OCStackApplicationResult SecureAndNonsecureEndpoints(void *ctx, OCDoHandle handle,
+    OCClientResponse *response)
+{
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
+    EXPECT_EQ(OC_STACK_OK, response->result);
+    EXPECT_TRUE(NULL != response->payload);
+    if (NULL != response->payload)
+    {
+        EXPECT_EQ(PAYLOAD_TYPE_DISCOVERY, response->payload->type);
+        OCDiscoveryPayload *payload = (OCDiscoveryPayload *)response->payload;
+        EXPECT_TRUE(NULL != payload->sid);
+        for (OCResourcePayload *resource = payload->resources; resource; resource = resource->next)
+        {
+            if (!strcmp("/a/default", resource->uri))
+            {
+                for (OCEndpointPayload *ep = resource->eps; ep; ep = ep->next)
+                {
+                    EXPECT_EQ(0, OC_FLAG_SECURE & ep->family);
+                }
+            }
+            else if (!strcmp("/a/secure", resource->uri))
+            {
+                for (OCEndpointPayload *ep = resource->eps; ep; ep = ep->next)
+                {
+#ifdef __WITH_DTLS__
+                    EXPECT_EQ(OC_FLAG_SECURE, OC_FLAG_SECURE & ep->family);
+#else
+                    EXPECT_EQ(0, OC_FLAG_SECURE & ep->family);
+#endif
+                }
+            }
+            else if (!strcmp("/a/nonsecure", resource->uri))
+            {
+                for (OCEndpointPayload *ep = resource->eps; ep; ep = ep->next)
+                {
+                    EXPECT_EQ(0, OC_FLAG_SECURE & ep->family);
+                }
+            }
+            else if (!strcmp("/a/both", resource->uri))
+            {
+                bool hasSecure = false;
+                bool hasNonsecure = false;
+                for (OCEndpointPayload *ep = resource->eps; ep; ep = ep->next)
+                {
+                    if (OC_FLAG_SECURE & ep->family)
+                    {
+                        hasSecure = true;
+                    }
+                    else
+                    {
+                        hasNonsecure = true;
+                    }
+                }
+#ifdef __WITH_DTLS__
+                EXPECT_TRUE(hasSecure);
+#else
+                EXPECT_FALSE(hasSecure);
+#endif
+                EXPECT_TRUE(hasNonsecure);
+            }
+        }
+    }
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+// Disabled until unit tests can run with SECURED=1 builds
+TEST_F(OCEndpointTests, DISABLED_SecureAndNonsecureEndpoints)
+{
+    itst::DeadmanTimer killSwitch(LONG_TEST_TIMEOUT);
+
+    OCResourceHandle handle;
+    handle = OCGetResourceHandleAtUri(OC_RSRVD_WELL_KNOWN_URI);
+    EXPECT_EQ(OC_STACK_OK, OCSetResourceProperties(handle, OC_DISCOVERABLE | OC_OBSERVABLE));
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle, "core.light", "oic.if.baseline", "/a/default",
+            entityHandler, NULL, OC_DISCOVERABLE));
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle, "core.light", "oic.if.baseline", "/a/secure",
+            entityHandler, NULL, OC_DISCOVERABLE | OC_SECURE));
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle, "core.light", "oic.if.baseline", "/a/nonsecure",
+            entityHandler, NULL, OC_DISCOVERABLE | OC_NONSECURE));
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle, "core.light", "oic.if.baseline", "/a/both",
+            entityHandler, NULL, OC_DISCOVERABLE | OC_SECURE | OC_NONSECURE));
+
+    itst::Callback secureAndNonSecureEndpointsCB(&SecureAndNonsecureEndpoints);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res", NULL,
+            0, CT_DEFAULT, OC_HIGH_QOS, secureAndNonSecureEndpointsCB, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, secureAndNonSecureEndpointsCB.Wait(100));
+}
+
+#ifdef IP_ADAPTER
 TEST(StackZoneId, getZoneId)
 {
     size_t tempSize = 0;
@@ -2709,4 +2937,364 @@ TEST(StackZoneId, getZoneIdWithInvalidParams)
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCGetLinkLocalZoneId(0, NULL));
     EXPECT_EQ(OC_STACK_ERROR, OCGetLinkLocalZoneId(9999, &zoneId));
     EXPECT_EQ(OC_STACK_ERROR, OCGetLinkLocalZoneId(UINT32_MAX, &zoneId));
+}
+#endif
+
+TEST(LinksPayloadValue, createLinksPayloadValue)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    OIC_LOG(INFO, TAG, "Starting createLinksPayloadValue test");
+    InitStack(OC_SERVER);
+
+    size_t numResources = 0;
+    uint8_t inBitmap[3] = { OC_DISCOVERABLE | OC_OBSERVABLE,
+                            OC_DISCOVERABLE | OC_OBSERVABLE,
+                            OC_DISCOVERABLE };
+    int64_t outBitmap[3] = {0};
+
+    OCResourceHandle containerHandle;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&containerHandle,
+        "core.led",
+        "core.col",
+        "/a/kitchen",
+        0,
+        NULL,
+        inBitmap[0]));
+    ++numResources;
+
+    OCResourceHandle handle0;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle0,
+        "core.led",
+        "core.rw",
+        "/a/led0",
+        0,
+        NULL,
+        inBitmap[1]));
+    ++numResources;
+
+    OCResourceHandle handle1;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle1,
+        "core.led",
+        "core.r",
+        "/a/led1",
+        0,
+        NULL,
+        inBitmap[2]));
+    ++numResources;
+
+    EXPECT_EQ(OC_STACK_OK, OCBindResource(containerHandle, handle0));
+    EXPECT_EQ(OC_STACK_OK, OCBindResource(containerHandle, handle1));
+
+    EXPECT_EQ(handle0, OCGetResourceHandleFromCollection(containerHandle, 0));
+    EXPECT_EQ(handle1, OCGetResourceHandleFromCollection(containerHandle, 1));
+
+    OCRepPayloadValue* linksRepPayloadValue;
+    OCDevAddr* devAddr = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCLinksPayloadValueCreate("/a/kitchen", &linksRepPayloadValue, devAddr));
+    ASSERT_TRUE(NULL != linksRepPayloadValue);
+
+    OCRepPayload *collectionPayload = OCRepPayloadCreate();
+    ASSERT_TRUE(NULL != collectionPayload);
+
+    size_t dim[MAX_REP_ARRAY_DEPTH] = { numResources, 0, 0 };
+
+    ASSERT_TRUE(OCRepPayloadSetPropObjectArrayAsOwner(collectionPayload, OC_RSRVD_LINKS,
+                                              linksRepPayloadValue->arr.objArray, dim));
+
+    OCRepPayload *policyMap = NULL;
+    OCRepPayload **linksMap = NULL;
+    ASSERT_TRUE(OCRepPayloadGetPropObjectArray(collectionPayload, OC_RSRVD_LINKS, &linksMap, dim));
+
+    for (size_t i = 0; i < numResources; i++)
+    {
+        ASSERT_TRUE(OCRepPayloadGetPropObject(linksMap[i], OC_RSRVD_POLICY, &policyMap));
+        ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_BITMAP, &outBitmap[i]));
+        EXPECT_EQ(inBitmap[i], outBitmap[i]);
+
+        if (devAddr)
+        {
+#ifdef TCP_ADAPTER
+#ifdef __WITH_TLS__
+            // tls
+            int64_t outTlsPort = 0;
+            ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_TLS_PORT, &outTlsPort));
+
+            uint16_t tlsPort = 0;
+            GetTCPPortInfo(devAddr, &tlsPort, true);
+
+            EXPECT_EQ(tlsPort, outTlsPort);
+#else
+            // tcp
+            int64_t outTcpPort = 0;
+            ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_TCP_PORT, &outTcpPort));
+
+            uint16_t tcpPort = 0;
+            GetTCPPortInfo(devAddr, &tcpPort, false);
+
+            EXPECT_EQ(tcpPort, outTcpPort);
+#endif
+#endif
+        }
+        OCRepPayloadDestroy(linksMap[i]);
+    }
+
+    OICFree(linksMap);
+    OCRepPayloadDestroy(policyMap);
+    OCRepPayloadDestroy(collectionPayload);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(DiagnosticPayload, CreateDestroy)
+{
+    OCDiagnosticPayload *payload;
+
+    payload = NULL;
+    OCDiagnosticPayloadDestroy(payload);
+
+    payload = OCDiagnosticPayloadCreate(NULL);
+    ASSERT_TRUE(payload == NULL);
+
+    payload = OCDiagnosticPayloadCreate("message");
+    ASSERT_TRUE(payload != NULL);
+    ASSERT_STREQ("message", payload->message);
+    OCDiagnosticPayloadDestroy(payload);
+}
+
+static OCEntityHandlerResult DiagnosticPayloadRequest(OCEntityHandlerFlag flag,
+        OCEntityHandlerRequest *request, void *ctx)
+{
+    OC_UNUSED(flag);
+    OC_UNUSED(ctx);
+    OCEntityHandlerResponse response;
+    memset(&response, 0, sizeof(response));
+    response.requestHandle = request->requestHandle;
+    response.ehResult = OC_EH_BAD_REQ;
+    response.payload = (OCPayload*) OCDiagnosticPayloadCreate("message");
+    EXPECT_TRUE(response.payload != NULL);
+    EXPECT_EQ(OC_STACK_OK, OCDoResponse(&response));
+    return OC_EH_OK;
+}
+
+static OCStackApplicationResult DiagnosticPayloadResponse(void *ctx, OCDoHandle handle,
+        OCClientResponse *response)
+{
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
+    EXPECT_EQ(OC_STACK_INVALID_QUERY, response->result);
+    EXPECT_EQ(PAYLOAD_TYPE_DIAGNOSTIC, response->payload->type);
+    OCDiagnosticPayload *payload = (OCDiagnosticPayload*) response->payload;
+    EXPECT_STREQ("message", payload->message);
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+TEST(DiagnosticPayload, DISABLED_EndToEnd)
+{
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT_SERVER));
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+
+    OCResourceHandle handle;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle, "core.light", "oic.if.baseline", "/a/light",
+            DiagnosticPayloadRequest, NULL, OC_DISCOVERABLE));
+
+    itst::Callback diagnosticPayloadCB(&DiagnosticPayloadResponse);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_GET, "127.0.0.1:5683/a/light", NULL,
+            0, CT_DEFAULT, OC_HIGH_QOS, diagnosticPayloadCB, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, diagnosticPayloadCB.Wait(100));
+
+    OCStop();
+}
+
+// Mostly copy-paste from ca_api_unittest.cpp
+TEST(OCIpv6ScopeLevel, getMulticastScope)
+{
+    const char interfaceLocalStart[] = "ff01::";
+    const char linkLocalStart[]      = "ff02::";
+    const char realmLocalStart[]     = "ff03::";
+    const char adminLocalStart[]     = "ff04::";
+    const char siteLocalStart[]      = "ff05::";
+    const char orgLocalStart[]       = "ff08::";
+    const char globalStart[]         = "ff0e::";
+
+    const char interfaceLocalMid[] = "ff81:0000:0000:f000:0000:0000:0000:0000";
+    const char linkLocalMid[]      = "ff82:0000:0000:f000:0000:0000:0000:0000";
+    const char realmLocalMid[]     = "ff83:0000:0000:f000:0000:0000:0000:0000";
+    const char adminLocalMid[]     = "ff84:0000:0000:f000:0000:0000:0000:0000";
+    const char siteLocalMid[]      = "ff85:0000:0000:f000:0000:0000:0000:0000";
+    const char orgLocalMid[]       = "ff88:0000:0000:f000:0000:0000:0000:0000";
+    const char globalMid[]         = "ff8e:0000:0000:f000:0000:0000:0000:0000";
+
+    const char interfaceLocalEnd[] = "fff1:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char linkLocalEnd[]      = "fff2:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char realmLocalEnd[]     = "fff3:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char adminLocalEnd[]     = "fff4:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char siteLocalEnd[]      = "fff5:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char orgLocalEnd[]       = "fff8:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char globalEnd[]         = "fffe:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+
+    // range start
+    OCTransportFlags scopeLevel = OC_DEFAULT_FLAGS;
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(interfaceLocalStart, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_INTERFACE, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(linkLocalStart, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_LINK, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(realmLocalStart, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_REALM, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(adminLocalStart, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_ADMIN, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(siteLocalStart, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_SITE, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(orgLocalStart, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_ORG, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(globalStart, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    // range mid
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(interfaceLocalMid, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_INTERFACE, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(linkLocalMid, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_LINK, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(realmLocalMid, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_REALM, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(adminLocalMid, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_ADMIN, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(siteLocalMid, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_SITE, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(orgLocalMid, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_ORG, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(globalMid, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    // range end
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(interfaceLocalEnd, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_INTERFACE, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(linkLocalEnd, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_LINK, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(realmLocalEnd, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_REALM, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(adminLocalEnd, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_ADMIN, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(siteLocalEnd, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_SITE, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(orgLocalEnd, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_ORG, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(globalEnd, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+}
+
+// Mostly copy-paste from ca_api_unittest.cpp
+TEST(OCIpv6ScopeLevel, getUnicastScope)
+{
+    const char linkLocalLoopBack[]  = "::1";
+
+    const char linkLocalStart[]     = "fe80::";
+    const char linkLocalMid[]       = "fe80:0000:0000:0000:0f00:0000:0000:0000";
+    const char linkLocalEnd[]       = "febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+
+    const char siteLocalStart[]     = "fec0::";
+    const char siteLocalMid[]       = "fec0:0000:0000:0000:0f00:0000:0000:0000";
+    const char siteLocalEnd[]       = "feff:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+
+    const char globalStart[]   = "2000:0000:0000:0000:0000:0000:0000:0000";
+    const char globalMid[]     = "2000:0000:0000:0f00:0000:0000:0000:0000";
+    const char globalEnd[]     = "3fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+
+    // loopback
+    OCTransportFlags scopeLevel = OC_DEFAULT_FLAGS;
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(linkLocalLoopBack, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_LINK, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    // linklocal
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(linkLocalStart, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_LINK, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(linkLocalMid, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_LINK, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(linkLocalEnd, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_LINK, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    // sitelocal
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(siteLocalStart, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_SITE, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(siteLocalMid, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_SITE, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(siteLocalEnd, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_SITE, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    // global
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(globalStart, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(globalMid, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetIpv6AddrScope(globalEnd, &scopeLevel));
+    EXPECT_EQ(OC_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = OC_DEFAULT_FLAGS;
+}
+
+// Mostly copy-paste from ca_api_unittest.cpp
+TEST(OCIpv6ScopeLevel, invalidAddressTest)
+{
+    const char invalidAddr1[]    = "qqqq";
+    const char invalidAddr2[]    = "ffx7:ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char invalidAddr3[]    = "ffx7::::::::::dsds";
+    const char invalidAddr4[]    = "ffx7:ffff:ffff:ff@f:ffff:ffff:ffff:ffff";
+
+    OCTransportFlags scopeLevel = OC_DEFAULT_FLAGS;
+    EXPECT_EQ(OC_STACK_ERROR, OCGetIpv6AddrScope(invalidAddr1, &scopeLevel));
+    EXPECT_EQ(OC_STACK_ERROR, OCGetIpv6AddrScope(invalidAddr2, &scopeLevel));
+    EXPECT_EQ(OC_STACK_ERROR, OCGetIpv6AddrScope(invalidAddr3, &scopeLevel));
+    EXPECT_EQ(OC_STACK_ERROR, OCGetIpv6AddrScope(invalidAddr4, &scopeLevel));
 }

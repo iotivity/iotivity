@@ -24,7 +24,7 @@ extern "C" {
     #include "ocrandom.h"
 }
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "math.h"
 
 #define ARR_SIZE (20)

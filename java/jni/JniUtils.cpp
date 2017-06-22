@@ -24,6 +24,8 @@
 #include "JniOcRepresentation.h"
 #include "JniOcResource.h"
 
+using namespace OC;
+
 jobject JniUtils::convertStrVectorToJavaStrList(JNIEnv *env, std::vector<std::string> &vector)
 {
     jobject jList = env->NewObject(g_cls_LinkedList, g_mid_LinkedList_ctor);

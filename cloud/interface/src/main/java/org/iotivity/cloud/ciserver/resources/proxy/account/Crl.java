@@ -12,19 +12,15 @@ import org.iotivity.cloud.ciserver.Constants;
 
 public class Crl extends Resource {
 
-    private IRequestChannel mAuthServer = null;
-
     public Crl() {
         super(Arrays.asList(Constants.PREFIX_OIC,
                 Constants.CREDPROV_URI, Constants.REQ_CRL));
-
-        mAuthServer = ConnectorPool.getConnection("account");
     }
 
     @Override
     public void onDefaultRequestReceived(Device srcDevice, IRequest request)
             throws ServerException {
         // Token exchange is done by CoapClient
-        mAuthServer.sendRequest(request, srcDevice);
+        ConnectorPool.getConnection("account").sendRequest(request, srcDevice);
     }
 }

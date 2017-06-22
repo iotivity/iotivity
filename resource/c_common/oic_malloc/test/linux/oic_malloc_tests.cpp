@@ -24,7 +24,7 @@ extern "C" {
     #include "oic_malloc.h"
 }
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -63,6 +63,7 @@ class OICAllocTestsBase : public testing::Test
 {
 public:
     OICAllocTestsBase() :
+        m_allocatedSize(0),
         m_pBuffer(NULL)
     {}
 

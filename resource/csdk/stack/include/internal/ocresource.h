@@ -54,6 +54,12 @@ typedef struct PRESENCERESOURCE{
 } PresenceResource;
 #endif
 
+/** Introspection URI.*/
+#define OC_RSRVD_INTROSPECTION_URI_PATH            "/introspection"
+
+/** Introspection payload URI.*/
+#define OC_RSRVD_INTROSPECTION_PAYLOAD_URI_PATH    "/introspection/payload"
+
 /**
  * Forward declarations
  */

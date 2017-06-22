@@ -47,7 +47,7 @@ struct oc_ostream_logger_ctx
 } // namespace
 
 /* Courtesy-function: */
-oc_log_ctx_t *oc_make_ostream_logger()
+oc_log_ctx_t *OC_CALL oc_make_ostream_logger()
 {
  return oc_log_make_ctx(
             nullptr,

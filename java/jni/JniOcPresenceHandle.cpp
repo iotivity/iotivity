@@ -22,6 +22,8 @@
 #include "JniOcPresenceHandle.h"
 #include "OCPlatform.h"
 
+using namespace OC::OCPlatform;
+
 JniOcPresenceHandle::JniOcPresenceHandle(JniOnPresenceListener* jniListener, OCPresenceHandle presenceHandle)
     : m_jniListener(jniListener), m_presenceHandle(presenceHandle), m_jniObserveListener(nullptr)
 {

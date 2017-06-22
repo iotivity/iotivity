@@ -25,7 +25,7 @@
 Import('env')
 
 lib_env = env.Clone()
-SConscript('#resource/third_party_libs.scons', 'lib_env')
+SConscript('#/resource/third_party_libs.scons', 'lib_env')
 
 rd_sample_app_env = lib_env.Clone()
 
@@ -34,43 +34,48 @@ src_dir = env.get('SRC_DIR')
 ######################################################################
 # Build flags
 ######################################################################
-rd_sample_app_env.AppendUnique(CPPPATH = ['../include',
-                                          '../src/internal',
-                                          src_dir + '/resource/csdk/include',
-                                          src_dir + '/resource/csdk/stack/include',
-                                          src_dir + '/resource/csdk/security/include',
-                                          src_dir + '/resource/include',
-                                          src_dir + '/resource/oc_logger/include',])
+rd_sample_app_env.AppendUnique(CPPPATH=[
+    '../include',
+    '../src/internal',
+    src_dir + '/resource/csdk/include',
+    src_dir + '/resource/csdk/stack/include',
+    src_dir + '/resource/csdk/security/include',
+    src_dir + '/resource/include',
+    src_dir + '/resource/oc_logger/include',
+])
 
 if target_os not in ['windows']:
-    rd_sample_app_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra', '-std=c++0x'])
-rd_sample_app_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-rd_sample_app_env.PrependUnique(LIBS = ['resource_directory', 'octbstack'])
+    rd_sample_app_env.AppendUnique(
+        CXXFLAGS=['-O2', '-g', '-Wall', '-Wextra', '-std=c++0x'])
+rd_sample_app_env.AppendUnique(RPATH=[env.get('BUILD_DIR')])
+rd_sample_app_env.PrependUnique(LIBS=['resource_directory', 'octbstack'])
 
 if env.get('SECURED') == '1':
-    rd_sample_app_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    rd_sample_app_env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if env.get('LOGGING'):
-    rd_sample_app_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    rd_sample_app_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 if rd_sample_app_env.get('RD_MODE'):
     rd_mode = rd_sample_app_env.get('RD_MODE')
     if 'CLIENT' in rd_mode:
-        rd_sample_app_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+        rd_sample_app_env.AppendUnique(CPPDEFINES=['RD_CLIENT'])
     if 'SERVER' in rd_mode:
-        rd_sample_app_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
+        rd_sample_app_env.AppendUnique(CPPDEFINES=['RD_SERVER'])
 
 ####################################################################
 # Source files and Targets
 ######################################################################
-rd_queryClient = rd_sample_app_env.Program('rd_queryClient', 'rd_queryClient.cpp')
+rd_queryClient = rd_sample_app_env.Program('rd_queryClient',
+                                           'rd_queryClient.cpp')
 
 if 'SERVER' in rd_sample_app_env.get('RD_MODE'):
     rd_server = rd_sample_app_env.Program('rd_server', 'rd_main.c')
     Alias("resource_directory", [rd_server, rd_queryClient])
 
 if 'CLIENT' in rd_sample_app_env.get('RD_MODE'):
-    rd_publishingClient = rd_sample_app_env.Program('rd_publishingClient', 'rd_publishingClient.cpp')
+    rd_publishingClient = rd_sample_app_env.Program('rd_publishingClient',
+                                                    'rd_publishingClient.cpp')
     Alias("resource_directory", [rd_publishingClient, rd_queryClient])
 
 env.AppendTarget('resource_directory')

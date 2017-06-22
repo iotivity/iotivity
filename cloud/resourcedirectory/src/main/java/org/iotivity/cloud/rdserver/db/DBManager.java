@@ -39,12 +39,12 @@ import org.iotivity.cloud.rdserver.Constants;
  */
 public class DBManager {
 
-    private static DBManager                   mDBManager = new DBManager();
+    private static DBManager                   mDBManager;
     private MongoDB                            mMongoDB   = null;
     private HashMap<String, ArrayList<String>> mKeyField  = new HashMap<>();
 
-    private DBManager() {
-        createDatabase();
+    private DBManager(String dbHost) {
+        createDatabase(dbHost);
         createTables();
         createIndexes();
     }
@@ -55,14 +55,25 @@ public class DBManager {
      * @return DBManager DBManager object
      */
     public static DBManager getInstance() {
+        if (mDBManager == null)
+            mDBManager = new DBManager("127.0.0.1");
         return mDBManager;
     }
 
-    private void createDatabase() {
+    /**
+     * API to create DBManager instance with specific host
+     *
+     * @return created DB manager
+     */
+    public static DBManager createInstance(String dbHost) {
+        if (mDBManager == null)
+            mDBManager = new DBManager(dbHost);
+        return mDBManager;
+    }
 
+    private void createDatabase(String dbHost) {
         try {
-
-            mMongoDB = new MongoDB(Constants.RD_DB_NAME);
+            mMongoDB = new MongoDB(dbHost, Constants.RD_DB_NAME);
         } catch (Exception e) {
             e.printStackTrace();
             throw new InternalServerErrorException("Database create failed!");

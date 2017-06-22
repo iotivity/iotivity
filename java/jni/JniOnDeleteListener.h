@@ -24,8 +24,6 @@
 #ifndef _Included_org_iotivity_base_OcResource_OnDeleteListener
 #define _Included_org_iotivity_base_OcResource_OnDeleteListener
 
-using namespace OC;
-
 class JniOcResource;
 #ifdef WITH_CLOUD
 class JniOcAccountManager;
@@ -40,7 +38,7 @@ public:
 #endif
     ~JniOnDeleteListener();
 
-    void onDeleteCallback(const HeaderOptions&, const int eCode);
+    void onDeleteCallback(const OC::HeaderOptions&, const int eCode);
 
 private:
     jweak m_jwListener;

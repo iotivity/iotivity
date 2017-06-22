@@ -98,7 +98,6 @@
 								</option>
 								<option id="gnu.cpp.compiler.option.include.paths.1501991974" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;C:\boost_1_56_0&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;..\..\..\..\src\resourceBroker\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;..\..\..\..\src\resourceCache\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;..\..\..\..\src\common\utils\include&quot;"/>
@@ -107,6 +106,7 @@
 									<listOptionValue builtIn="false" value="&quot;..\..\..\..\src\common\primitiveResource\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;..\..\..\..\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\c_common&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\stack\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\logger\include&quot;"/>
@@ -242,7 +242,6 @@
 									<listOptionValue builtIn="false" value="boost_thread"/>
 									<listOptionValue builtIn="false" value="rcs_client"/>
 									<listOptionValue builtIn="false" value="rcs_common"/>
-									<listOptionValue builtIn="false" value="rcs_container"/>
 									<listOptionValue builtIn="false" value="rcs_server"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.618645708" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">

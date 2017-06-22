@@ -104,13 +104,27 @@ CAResult_t CASetPortNumberToAssign(CATransportAdapter_t adapter,
 #ifdef TCP_ADAPTER
     if (CA_ADAPTER_TCP & adapter)
     {
-        if (CA_IPV6 & flag)
+        if (CA_SECURE & flag)
         {
-            targetPort = &caglobals.ports.tcp.u6;
+            if (CA_IPV6 & flag)
+            {
+                targetPort = &caglobals.ports.tcp.u6s;
+            }
+            else if (CA_IPV4 & flag)
+            {
+                targetPort = &caglobals.ports.tcp.u4s;
+            }
         }
-        else if (CA_IPV4 & flag)
+        else
         {
-            targetPort = &caglobals.ports.tcp.u4;
+            if (CA_IPV6 & flag)
+            {
+                targetPort = &caglobals.ports.tcp.u6;
+            }
+            else if (CA_IPV4 & flag)
+            {
+                targetPort = &caglobals.ports.tcp.u4;
+            }
         }
     }
 #endif
@@ -156,13 +170,27 @@ uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_
 #ifdef TCP_ADAPTER
     if (CA_ADAPTER_TCP & adapter)
     {
-        if (CA_IPV6 & flag)
+        if (CA_SECURE & flag)
         {
-            return caglobals.tcp.ipv6.port;
+            if (CA_IPV6 & flag)
+            {
+                return caglobals.tcp.ipv6s.port;
+            }
+            else if (CA_IPV4 & flag)
+            {
+                return caglobals.tcp.ipv4s.port;
+            }
         }
-        else if (CA_IPV4 & flag)
+        else
         {
-            return caglobals.tcp.ipv4.port;
+            if (CA_IPV6 & flag)
+            {
+                return caglobals.tcp.ipv6.port;
+            }
+            else if (CA_IPV4 & flag)
+            {
+                return caglobals.tcp.ipv4.port;
+            }
         }
     }
 #endif
@@ -180,7 +208,7 @@ CAResult_t CAUtilCMTerminate()
     return CACMTerminate();
 }
 
-CAResult_t CAUtilCMUpdateRemoteDeviceInfo(const CAEndpoint_t endpoint, bool isCloud)
+CAResult_t CAUtilCMUpdateRemoteDeviceInfo(const CAEndpoint_t *endpoint, bool isCloud)
 {
     return CACMUpdateRemoteDeviceInfo(endpoint, isCloud);
 }

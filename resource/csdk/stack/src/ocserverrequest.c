@@ -1,22 +1,23 @@
-//******************************************************************
-//
-// Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/* ****************************************************************
+ *
+ * Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
+
 #include <string.h>
 
 #include "ocstack.h"
@@ -38,12 +39,17 @@
 
 #include <coap/pdu.h>
 
-// Module Name
+//-------------------------------------------------------------------------------------------------
+// Macros
+//-------------------------------------------------------------------------------------------------
 #define VERIFY_NON_NULL(arg) { if (!arg) {OIC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
 
-#define TAG  "OIC_RI_SERVERREQUEST"
+// Module Name
+#define TAG "OIC_RI_SERVERREQUEST"
 
-// for RB tree
+//-------------------------------------------------------------------------------------------------
+// Local functions for RB tree
+//-------------------------------------------------------------------------------------------------
 static int RBRequestTokenCmp(OCServerRequest *target, OCServerRequest *treeNode)
 {
     return memcmp(target->requestToken, treeNode->requestToken, target->tokenLength);
@@ -56,31 +62,48 @@ static int RBResponseTokenCmp(OCServerResponse *target, OCServerResponse *treeNo
                   ((OCServerRequest*)target->requestHandle)->tokenLength);
 }
 
-RB_HEAD(ServerRequestTree, OCServerRequest) serverRequestTree = RB_INITIALIZER(&serverRequestTree);
+//-------------------------------------------------------------------------------------------------
+// Private variables
+//-------------------------------------------------------------------------------------------------
+RB_HEAD(ServerRequestTree, OCServerRequest) g_serverRequestTree =
+                                                            RB_INITIALIZER(&g_serverRequestTree);
 RB_GENERATE(ServerRequestTree, OCServerRequest, entry, RBRequestTokenCmp)
-RB_HEAD(ServerResponseTree, OCServerResponse) serverResponseTree =
-                                                            RB_INITIALIZER(&serverResponseTree);
+
+RB_HEAD(ServerResponseTree, OCServerResponse) g_serverResponseTree =
+                                                            RB_INITIALIZER(&g_serverResponseTree);
 RB_GENERATE(ServerResponseTree, OCServerResponse, entry, RBResponseTokenCmp)
 
 //-------------------------------------------------------------------------------------------------
 // Local functions
 //-------------------------------------------------------------------------------------------------
+/**
+ * Delete a server request from the server request list
+ *
+ * @param[in] serverRequest     server request to delete
+ */
+static void DeleteServerRequestInternal (OCServerRequest * serverRequest)
+{
+    assert(serverRequest);
+
+    RB_REMOVE(ServerRequestTree, &g_serverRequestTree, serverRequest);
+    OICFree(serverRequest->requestToken);
+    OICFree(serverRequest);
+    serverRequest = NULL;
+    OIC_LOG(INFO, TAG, "Server Request Removed");
+}
 
 /**
  * Add a server response to the server response list
  *
- * @param response initialized server response that is created by this function
- * @param requestHandle - handle of the response
+ * @param[in]  response         initialized server response that is created by this function
+ * @param[in]  requestHandle    handle of the response
  *
  * @return
  *     OCStackResult
  */
 static OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestHandle requestHandle)
 {
-    if (!response)
-    {
-        return OC_STACK_INVALID_PARAM;
-    }
+    assert(response);
 
     OCServerResponse * serverResponse = NULL;
 
@@ -92,8 +115,8 @@ static OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestH
 
     *response = serverResponse;
 
-    RB_INSERT(ServerResponseTree, &serverResponseTree, serverResponse);
-    OIC_LOG(INFO, TAG, "Server Response Added!!");
+    RB_INSERT(ServerResponseTree, &g_serverResponseTree, serverResponse);
+    OIC_LOG(INFO, TAG, "Server Response Added");
     return OC_STACK_OK;
 
 exit:
@@ -102,33 +125,46 @@ exit:
 }
 
 /**
- * Delete a server request from the server request list
+ * Get a server response from the server response list using the specified handle
  *
- * @param serverRequest - server request to delete
+ * @param[in]  handle           handle of server response.
+ *
+ * @return
+ *     OCServerResponse*
  */
-static void DeleteServerRequest(OCServerRequest * serverRequest)
+static OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle)
 {
-    if(serverRequest)
+    if (!handle)
     {
-        RB_REMOVE(ServerRequestTree, &serverRequestTree, serverRequest);
-        OICFree(serverRequest->requestToken);
-        OICFree(serverRequest);
-        serverRequest = NULL;
-        OIC_LOG(INFO, TAG, "Server Request Removed!!");
+        OIC_LOG(ERROR, TAG, "Invalid Parameter handle");
+        return NULL;
     }
+
+    OCServerResponse tmpFind, *out = NULL;
+
+    tmpFind.requestHandle = (OCRequestHandle)handle;
+    out = RB_FIND(ServerResponseTree, &g_serverResponseTree, &tmpFind);
+
+    if (!out)
+    {
+        OIC_LOG(INFO, TAG, "Server Response not found!!");
+        return NULL;
+    }
+
+    OIC_LOG(INFO, TAG, "Found in server response list");
+    return out;
 }
 
 /**
  * Delete a server response from the server response list
  *
- * @param serverResponse - server response to delete
+ * @param[in] serverResponse    server response to delete
  */
-static void DeleteServerResponse(OCServerResponse * serverResponse)
+static void DeleteServerResponse (OCServerResponse * serverResponse)
 {
-    if(serverResponse)
+    if (serverResponse)
     {
-        RB_REMOVE(ServerResponseTree, &serverResponseTree, serverResponse);
-        OCPayloadDestroy(serverResponse->payload);
+        RB_REMOVE(ServerResponseTree, &g_serverResponseTree, serverResponse);
         OICFree(serverResponse);
         serverResponse = NULL;
         OIC_LOG(INFO, TAG, "Server Response Removed!!");
@@ -139,12 +175,12 @@ static void DeleteServerResponse(OCServerResponse * serverResponse)
  * Ensure no accept header option is included when sending responses and add routing info to
  * outgoing response.
  *
- * @param object CA remote endpoint.
- * @param responseInfo CA response info.
+ * @param[in]  object           CA remote endpoint.
+ * @param[in]  responseInfo     CA response info.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-static OCStackResult OCSendResponse(const CAEndpoint_t *object, CAResponseInfo_t *responseInfo)
+static OCStackResult OCSendResponse (const CAEndpoint_t *object, CAResponseInfo_t *responseInfo)
 {
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     // Add route info in RM option.
@@ -167,7 +203,7 @@ static OCStackResult OCSendResponse(const CAEndpoint_t *object, CAResponseInfo_t
     return OC_STACK_OK;
 }
 
-static CAPayloadFormat_t OCToCAPayloadFormat(OCPayloadFormat ocFormat)
+static CAPayloadFormat_t OCToCAPayloadFormat (OCPayloadFormat ocFormat)
 {
     switch (ocFormat)
     {
@@ -181,259 +217,8 @@ static CAPayloadFormat_t OCToCAPayloadFormat(OCPayloadFormat ocFormat)
         return CA_FORMAT_UNSUPPORTED;
     }
 }
-//-------------------------------------------------------------------------------------------------
-// Internal APIs
-//-------------------------------------------------------------------------------------------------
 
-/**
- * Get a server request from the server request list using the specified token.
- *
- * @param token - token of server request
- * @param tokenLength - length of token
- *
- * @return
- *     OCServerRequest*
- */
-OCServerRequest * GetServerRequestUsingToken (const CAToken_t token, uint8_t tokenLength)
-{
-    if(!token)
-    {
-        OIC_LOG(ERROR, TAG, "Invalid Parameter Token");
-        return NULL;
-    }
-
-    OIC_LOG(INFO, TAG,"Get server request with token");
-    OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
-
-    OCServerRequest tmpFind, *out = NULL;
-
-    tmpFind.requestToken = token;
-    tmpFind.tokenLength = tokenLength;
-    out = RB_FIND(ServerRequestTree, &serverRequestTree, &tmpFind);
-
-    if (!out)
-    {
-        OIC_LOG(INFO, TAG, "Server Request not found!!");
-        return NULL;
-    }
-
-    OIC_LOG(INFO, TAG, "Found in server request list");
-    return out;
-}
-
-/**
- * Get a server request from the server request list using the specified handle
- *
- * @param handle - handle of server request
- * @return
- *     OCServerRequest*
- */
-OCServerRequest * GetServerRequestUsingHandle (const OCServerRequest * handle)
-{
-    if (!handle)
-    {
-        OIC_LOG(ERROR, TAG, "Invalid Parameter handle");
-        return NULL;
-    }
-
-    return GetServerRequestUsingToken(handle->requestToken, handle->tokenLength);
-}
-
-/**
- * Get a server response from the server response list using the specified handle
- *
- * @param handle - handle of server response
- *
- * @return
- *     OCServerResponse*
- */
-OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle)
-{
-    if (!handle)
-    {
-        OIC_LOG(ERROR, TAG, "Invalid Parameter handle");
-        return NULL;
-    }
-
-    OCServerResponse tmpFind, *out = NULL;
-
-    tmpFind.requestHandle = (OCRequestHandle)handle;
-    out = RB_FIND(ServerResponseTree, &serverResponseTree, &tmpFind);
-
-    if (!out)
-    {
-        OIC_LOG(INFO, TAG, "Server Response not found!!");
-        return NULL;
-    }
-
-    OIC_LOG(INFO, TAG, "Found in server response list");
-    return out;
-}
-
-OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
-        uint8_t delayedResNeeded, uint8_t notificationFlag, OCMethod method,
-        uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
-        OCQualityOfService qos, char * query,
-        OCHeaderOption * rcvdVendorSpecificHeaderOptions,
-        OCPayloadFormat payloadFormat, uint8_t * payload, CAToken_t requestToken,
-        uint8_t tokenLength, char * resourceUrl, size_t reqTotalSize, OCPayloadFormat acceptFormat,
-        uint16_t acceptVersion, const OCDevAddr *devAddr)
-{
-    if (!request)
-    {
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    OCServerRequest * serverRequest = NULL;
-
-    OIC_LOG_V(INFO, TAG, "addserverrequest entry!! [%s:%u]", devAddr->addr, devAddr->port);
-
-    serverRequest = (OCServerRequest *) OICCalloc(1, sizeof(OCServerRequest) +
-        (reqTotalSize ? reqTotalSize : 1) - 1);
-    VERIFY_NON_NULL(devAddr);
-    VERIFY_NON_NULL(serverRequest);
-
-    serverRequest->coapID = coapID;
-    serverRequest->delayedResNeeded = delayedResNeeded;
-    serverRequest->notificationFlag = notificationFlag;
-
-    serverRequest->method = method;
-    serverRequest->numRcvdVendorSpecificHeaderOptions = numRcvdVendorSpecificHeaderOptions;
-    serverRequest->observationOption = observationOption;
-    serverRequest->observeResult = OC_STACK_ERROR;
-    serverRequest->qos = qos;
-    serverRequest->acceptFormat = acceptFormat;
-    serverRequest->acceptVersion = acceptVersion;
-    serverRequest->ehResponseHandler = HandleSingleResponse;
-    serverRequest->numResponses = 1;
-
-    if(query)
-    {
-        OICStrcpy(serverRequest->query, sizeof(serverRequest->query), query);
-    }
-
-    if(rcvdVendorSpecificHeaderOptions)
-    {
-        memcpy(serverRequest->rcvdVendorSpecificHeaderOptions, rcvdVendorSpecificHeaderOptions,
-            MAX_HEADER_OPTIONS * sizeof(OCHeaderOption));
-    }
-    if(payload && reqTotalSize)
-    {
-       // destination is at least 1 greater than the source, so a NULL always exists in the
-        // last character
-        memcpy(serverRequest->payload, payload, reqTotalSize);
-        serverRequest->payloadSize = reqTotalSize;
-        serverRequest->payloadFormat = payloadFormat;
-    }
-
-    serverRequest->requestComplete = 0;
-    if(requestToken)
-    {
-        // If tokenLength is zero, the return value depends on the
-        // particular library implementation (it may or may not be a null pointer).
-        if (tokenLength)
-        {
-            serverRequest->requestToken = (CAToken_t) OICMalloc(tokenLength);
-            VERIFY_NON_NULL(serverRequest->requestToken);
-            memcpy(serverRequest->requestToken, requestToken, tokenLength);
-        }
-    }
-    serverRequest->tokenLength = tokenLength;
-
-    if(resourceUrl)
-    {
-        OICStrcpy(serverRequest->resourceUrl, sizeof(serverRequest->resourceUrl),
-            resourceUrl);
-    }
-
-    serverRequest->devAddr = *devAddr;
-
-    *request = serverRequest;
-
-    RB_INSERT(ServerRequestTree, &serverRequestTree, serverRequest);
-    OIC_LOG(INFO, TAG, "Server Request Added!!");
-    return OC_STACK_OK;
-
-exit:
-    if (serverRequest)
-    {
-        OICFree(serverRequest);
-        serverRequest = NULL;
-    }
-    *request = NULL;
-    return OC_STACK_NO_MEMORY;
-}
-
-OCStackResult FormOCEntityHandlerRequest(
-        OCEntityHandlerRequest * entityHandlerRequest,
-        OCRequestHandle request,
-        OCMethod method,
-        OCDevAddr *endpoint,
-        OCResourceHandle resource,
-        char * queryBuf,
-        OCPayloadType payloadType,
-        OCPayloadFormat payloadFormat,
-        uint8_t * payload,
-        size_t payloadSize,
-        uint8_t numVendorOptions,
-        OCHeaderOption * vendorOptions,
-        OCObserveAction observeAction,
-        OCObservationId observeID,
-        uint16_t messageID)
-{
-    if (entityHandlerRequest)
-    {
-        entityHandlerRequest->resource = (OCResourceHandle) resource;
-        entityHandlerRequest->requestHandle = request;
-        entityHandlerRequest->method = method;
-        entityHandlerRequest->devAddr = *endpoint;
-        entityHandlerRequest->query = queryBuf;
-        entityHandlerRequest->obsInfo.action = observeAction;
-        entityHandlerRequest->obsInfo.obsId = observeID;
-        entityHandlerRequest->messageID = messageID;
-
-        if(payload && payloadSize)
-        {
-            if(OCParsePayload(&entityHandlerRequest->payload, payloadFormat, payloadType,
-                        payload, payloadSize) != OC_STACK_OK)
-            {
-                return OC_STACK_ERROR;
-            }
-        }
-        else
-        {
-            entityHandlerRequest->payload = NULL;
-        }
-
-        entityHandlerRequest->numRcvdVendorSpecificHeaderOptions = numVendorOptions;
-        entityHandlerRequest->rcvdVendorSpecificHeaderOptions = vendorOptions;
-
-        return OC_STACK_OK;
-    }
-
-    return OC_STACK_INVALID_PARAM;
-}
-
-/**
- * Find a server request in the server request list and delete
- *
- * @param serverRequest - server request to find and delete
- */
-void FindAndDeleteServerRequest(OCServerRequest * serverRequest)
-{
-    if(serverRequest)
-    {
-        OCServerRequest* out = NULL;
-        out = RB_FIND(ServerRequestTree, &serverRequestTree, serverRequest);
-
-        if (out)
-        {
-            DeleteServerRequest(out);
-        }
-    }
-}
-
-CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMethod method)
+static CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMethod method)
 {
     CAResponseResult_t caResult = CA_BAD_REQ;
 
@@ -492,6 +277,9 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMe
         case OC_EH_INTERNAL_SERVER_ERROR: // 5.00
             caResult = CA_INTERNAL_SERVER_ERROR;
             break;
+        case OC_EH_SERVICE_UNAVAILABLE: // 5.03
+            caResult = CA_SERVICE_UNAVAILABLE;
+            break;
         case OC_EH_RETRANSMIT_TIMEOUT: // 5.04
             caResult = CA_RETRANSMIT_TIMEOUT;
             break;
@@ -502,15 +290,210 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMe
     return caResult;
 }
 
+//-------------------------------------------------------------------------------------------------
+// Internal APIs
+//-------------------------------------------------------------------------------------------------
+OCStackResult AddServerRequest (OCServerRequest ** request,
+                                uint16_t coapMessageID,
+                                uint8_t delayedResNeeded,
+                                uint8_t notificationFlag,
+                                OCMethod method,
+                                uint8_t numRcvdVendorSpecificHeaderOptions,
+                                uint32_t observationOption,
+                                OCQualityOfService qos,
+                                char * query,
+                                OCHeaderOption * rcvdVendorSpecificHeaderOptions,
+                                OCPayloadFormat payloadFormat,
+                                uint8_t * payload,
+                                CAToken_t requestToken,
+                                uint8_t tokenLength,
+                                char * resourceUrl,
+                                size_t payloadSize,
+                                OCPayloadFormat acceptFormat,
+                                uint16_t acceptVersion,
+                                const OCDevAddr *devAddr)
+{
+    if (!request || !devAddr)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
 
-/**
- * Handler function for sending a response from a single resource
- *
- * @param ehResponse - pointer to the response from the resource
- *
- * @return
- *     OCStackResult
- */
+    OIC_LOG_V(INFO, TAG, "AddServerRequest entry [%s:%u]", devAddr->addr, devAddr->port);
+
+    OCServerRequest * serverRequest = (OCServerRequest *) OICCalloc(1, sizeof(OCServerRequest) +
+                                                            (payloadSize ? payloadSize : 1) - 1);
+    VERIFY_NON_NULL(serverRequest);
+
+    serverRequest->coapID = coapMessageID;
+    serverRequest->delayedResNeeded = delayedResNeeded;
+    serverRequest->notificationFlag = notificationFlag;
+    serverRequest->method = method;
+    serverRequest->numRcvdVendorSpecificHeaderOptions = numRcvdVendorSpecificHeaderOptions;
+    serverRequest->observationOption = observationOption;
+    serverRequest->observeResult = OC_STACK_ERROR;
+    serverRequest->qos = qos;
+    serverRequest->acceptFormat = acceptFormat;
+    serverRequest->acceptVersion = acceptVersion;
+    serverRequest->ehResponseHandler = HandleSingleResponse;
+    serverRequest->numResponses = 1;
+
+    if (query)
+    {
+        OICStrcpy(serverRequest->query, sizeof(serverRequest->query), query);
+    }
+    if (rcvdVendorSpecificHeaderOptions)
+    {
+        memcpy(serverRequest->rcvdVendorSpecificHeaderOptions, rcvdVendorSpecificHeaderOptions,
+            MAX_HEADER_OPTIONS * sizeof(OCHeaderOption));
+    }
+    if (payload && payloadSize)
+    {
+        // destination is at least 1 greater than the source, so a NULL always exists in the
+        // last character
+        memcpy(serverRequest->payload, payload, payloadSize);
+        serverRequest->payloadSize = payloadSize;
+        serverRequest->payloadFormat = payloadFormat;
+    }
+
+    serverRequest->requestComplete = 0;
+
+    if (requestToken)
+    {
+        // If tokenLength is zero, the return value depends on the
+        // particular library implementation (it may or may not be a null pointer).
+        if (tokenLength)
+        {
+            serverRequest->requestToken = (CAToken_t) OICMalloc(tokenLength);
+            VERIFY_NON_NULL(serverRequest->requestToken);
+            memcpy(serverRequest->requestToken, requestToken, tokenLength);
+        }
+    }
+    serverRequest->tokenLength = tokenLength;
+
+    if (resourceUrl)
+    {
+        OICStrcpy(serverRequest->resourceUrl, sizeof(serverRequest->resourceUrl), resourceUrl);
+    }
+
+    serverRequest->devAddr = *devAddr;
+
+    *request = serverRequest;
+
+    RB_INSERT(ServerRequestTree, &g_serverRequestTree, serverRequest);
+    OIC_LOG(INFO, TAG, "Server Request Added");
+    return OC_STACK_OK;
+
+exit:
+    if (serverRequest)
+    {
+        OICFree(serverRequest);
+        serverRequest = NULL;
+    }
+    *request = NULL;
+    return OC_STACK_NO_MEMORY;
+}
+
+OCServerRequest * GetServerRequestUsingToken (const CAToken_t token, uint8_t tokenLength)
+{
+    if (!token)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid Parameter Token");
+        return NULL;
+    }
+
+    OIC_LOG(INFO, TAG,"Get server request with token");
+    OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
+
+    OCServerRequest tmpFind, *out = NULL;
+
+    tmpFind.requestToken = token;
+    tmpFind.tokenLength = tokenLength;
+    out = RB_FIND(ServerRequestTree, &g_serverRequestTree, &tmpFind);
+
+    if (!out)
+    {
+        OIC_LOG(INFO, TAG, "Server Request not found!!");
+        return NULL;
+    }
+
+    OIC_LOG(INFO, TAG, "Found in server request list");
+    return out;
+}
+
+OCServerRequest * GetServerRequestUsingHandle (const OCServerRequest * handle)
+{
+    if (!handle)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid Parameter handle");
+        return NULL;
+    }
+
+    return GetServerRequestUsingToken(handle->requestToken, handle->tokenLength);
+}
+
+void DeleteServerRequest(OCServerRequest * serverRequest)
+{
+    if (serverRequest)
+    {
+        OCServerRequest* out = NULL;
+        out = RB_FIND(ServerRequestTree, &g_serverRequestTree, serverRequest);
+
+        if (out)
+        {
+            DeleteServerRequestInternal(out);
+        }
+    }
+}
+
+OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerRequest,
+                                         OCRequestHandle request,
+                                         OCMethod method,
+                                         OCDevAddr *endpoint,
+                                         OCResourceHandle resource,
+                                         char * queryBuf,
+                                         OCPayloadType payloadType,
+                                         OCPayloadFormat payloadFormat,
+                                         uint8_t * payload,
+                                         size_t payloadSize,
+                                         uint8_t numVendorOptions,
+                                         OCHeaderOption * vendorOptions,
+                                         OCObserveAction observeAction,
+                                         OCObservationId observeID,
+                                         uint16_t messageID)
+{
+    if (entityHandlerRequest)
+    {
+        entityHandlerRequest->resource = (OCResourceHandle) resource;
+        entityHandlerRequest->requestHandle = request;
+        entityHandlerRequest->method = method;
+        entityHandlerRequest->devAddr = *endpoint;
+        entityHandlerRequest->query = queryBuf;
+        entityHandlerRequest->obsInfo.action = observeAction;
+        entityHandlerRequest->obsInfo.obsId = observeID;
+        entityHandlerRequest->messageID = messageID;
+
+        if(payload && payloadSize)
+        {
+            if(OCParsePayload(&entityHandlerRequest->payload, payloadFormat, payloadType,
+                        payload, payloadSize) != OC_STACK_OK)
+            {
+                return OC_STACK_ERROR;
+            }
+        }
+        else
+        {
+            entityHandlerRequest->payload = NULL;
+        }
+
+        entityHandlerRequest->numRcvdVendorSpecificHeaderOptions = numVendorOptions;
+        entityHandlerRequest->rcvdVendorSpecificHeaderOptions = vendorOptions;
+
+        return OC_STACK_OK;
+    }
+
+    return OC_STACK_INVALID_PARAM;
+}
+
 OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 {
     OCStackResult result = OC_STACK_ERROR;
@@ -580,6 +563,12 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         responseInfo.info.numOptions = ehResponse->numSendVendorSpecificHeaderOptions;
     }
 
+    // Path of new resource is returned in options as location-path.
+    if (ehResponse->resourceUri[0] != '\0')
+    {
+        responseInfo.info.numOptions++;
+    }
+
     if(responseInfo.info.numOptions > 0)
     {
         responseInfo.info.options = (CAHeaderOption_t *)
@@ -619,6 +608,30 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             memcpy(optionsPointer, ehResponse->sendVendorSpecificHeaderOptions,
                             sizeof(OCHeaderOption) *
                             ehResponse->numSendVendorSpecificHeaderOptions);
+
+            // Advance the optionPointer by the number of vendor options.
+            optionsPointer += ehResponse->numSendVendorSpecificHeaderOptions;
+        }
+
+        // Return new resource as location-path option.
+        // https://tools.ietf.org/html/rfc7252#section-5.8.2.
+        if (ehResponse->resourceUri[0] != '\0')
+        {
+            if ((strlen(ehResponse->resourceUri) + 1) > CA_MAX_HEADER_OPTION_DATA_LENGTH)
+            {
+                OIC_LOG(ERROR, TAG,
+                    "New resource path must be less than CA_MAX_HEADER_OPTION_DATA_LENGTH");
+                OICFree(responseInfo.info.options);
+                return OC_STACK_INVALID_URI;
+            }
+
+            optionsPointer->protocolID = CA_COAP_ID;
+            optionsPointer->optionID = CA_HEADER_OPTION_ID_LOCATION_PATH;
+            OICStrcpy(
+                optionsPointer->optionData,
+                sizeof(optionsPointer->optionData),
+                ehResponse->resourceUri);
+            optionsPointer->optionLength = (uint16_t)strlen(optionsPointer->optionData) + 1;
         }
     }
     else
@@ -658,7 +671,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                     return result;
                 }
                 // Add CONTENT_FORMAT OPT if payload exist
-                if (responseInfo.info.payloadSize > 0)
+                if (ehResponse->payload->type != PAYLOAD_TYPE_DIAGNOSTIC &&
+                        responseInfo.info.payloadSize > 0)
                 {
                     responseInfo.info.payloadFormat = OCToCAPayloadFormat(
                             serverRequest->acceptFormat);
@@ -745,22 +759,10 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     OICFree(responseInfo.info.payload);
     OICFree(responseInfo.info.options);
     //Delete the request
-    FindAndDeleteServerRequest(serverRequest);
+    DeleteServerRequest(serverRequest);
     return result;
 }
 
-/**
- * Handler function for sending a response from multiple resources, such as a collection.
- * Aggregates responses from multiple resource until all responses are received then sends the
- * concatenated response
- *
- * TODO: Need to add a timeout in case a (remote?) resource does not respond
- *
- * @param ehResponse - pointer to the response from the resource
- *
- * @return
- *     OCStackResult
- */
 OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
 {
     if(!ehResponse || !ehResponse->payload)
@@ -819,7 +821,7 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
             ehResponse->ehResult = OC_EH_OK;
             stackRet = HandleSingleResponse(ehResponse);
             //Delete the request and response
-            FindAndDeleteServerRequest(serverRequest);
+            DeleteServerRequest(serverRequest);
             DeleteServerResponse(serverResponse);
         }
         else

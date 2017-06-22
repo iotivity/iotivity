@@ -31,6 +31,10 @@ src_dir = env.get('SRC_DIR')
 # Generate iotivity_config.h using presence of headers
 ######################################################################
 config_h_file_path = os.path.join(src_dir, 'resource', 'c_common', 'iotivity_config.h')
+
+if (os.path.exists(config_h_file_path)) and (env.GetOption('clean')):
+    os.remove(config_h_file_path)
+
 if (not os.path.isfile(config_h_file_path)) and (not env.GetOption('clean')):
     conf = Configure(env.Clone(LIBS = []))
 
@@ -135,15 +139,17 @@ env.AppendUnique(CPPPATH = [os.path.join(src_dir, 'resource', 'c_common')])
 ######################################################################
 
 env.AppendUnique(CPPPATH = [
-            os.path.join(Dir('.').abspath, 'oic_malloc', 'include'),
-            os.path.join(Dir('.').abspath, 'oic_string', 'include'),
-            os.path.join(Dir('.').abspath, 'oic_time', 'include'),
-            os.path.join(Dir('.').abspath, 'ocatomic', 'include'),
-            os.path.join(Dir('.').abspath, 'ocrandom', 'include'),
-            os.path.join(Dir('.').abspath, 'octhread', 'include'),
-            os.path.join(Dir('.').abspath, 'oic_platform', 'include'),
-            '#/extlibs/mbedtls/mbedtls/include'
-        ])
+    os.path.join(Dir('.').abspath, 'oic_malloc', 'include'),
+    os.path.join(Dir('.').abspath, 'oic_string', 'include'),
+    os.path.join(Dir('.').abspath, 'oic_time', 'include'),
+    os.path.join(Dir('.').abspath, 'ocatomic', 'include'),
+    os.path.join(Dir('.').abspath, 'ocrandom', 'include'),
+    os.path.join(Dir('.').abspath, 'octhread', 'include'),
+    os.path.join(Dir('.').abspath, 'ocevent', 'include'),
+    os.path.join(Dir('.').abspath, 'oic_platform', 'include'),
+    os.path.join(Dir('.').abspath, 'octimer', 'include'),
+   '#/extlibs/mbedtls/mbedtls/include'
+])
 
 if target_os not in ['tizen']:
     env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'c_common')])
@@ -158,7 +164,7 @@ common_env = env.Clone()
 ######################################################################
 
 if target_os in ['windows', 'msys_nt']:
-    common_env.AppendUnique(CCFLAGS=['/W4', '/WX'])
+    common_env.AppendUnique(CCFLAGS=['/W4'])
 
 ######################################################################
 # Add platform-specific helper library
@@ -176,7 +182,7 @@ common_src = [
     'oic_time/src/oic_time.c',
     'ocrandom/src/ocrandom.c',
     'oic_platform/src/oic_platform.c'
-    ]
+]
 
 if env['POSIX_SUPPORTED']:
     common_src.append('octhread/src/posix/octhread.c')
@@ -186,19 +192,39 @@ else:
     common_src.append('octhread/src/noop/octhread.c')
 
 if target_os in ['windows', 'msys_nt']:
-	common_src.append('ocatomic/src/windows/ocatomic.c')
+    common_src.append('ocatomic/src/windows/ocatomic.c')
 elif target_os in ['arduino']:
-	common_src.append('ocatomic/src/arduino/ocatomic.c')
+    common_src.append('ocatomic/src/arduino/ocatomic.c')
 else:
-	common_src.append('ocatomic/src/others/ocatomic.c')
+    common_src.append('ocatomic/src/others/ocatomic.c')
+
+if target_os in ['windows']:
+    common_src.append('ocevent/src/windows/ocevent.c')
+    common_src.append('oic_platform/src/windows/oic_winplatform.cpp')
+else:
+    common_src.append('ocevent/src/others/ocevent.c')
+    common_src.append('oic_platform/src/others/oic_otherplatforms.c')
+
+# C++ Arduino's <Timer.h> is included so use C++ compiler/flags
+if target_os in ['arduino']:
+    octimer_env = common_env.Clone()
+    octimer_env.Replace(CC = env.get('CXX'))
+    octimer_env.Replace(CFLAGS = env.get('CXXFLAGS'))
+    octimer = octimer_env.Object('octimer/src/octimer.c')
+    common_src.append(octimer)
+else:
+    common_src.append('octimer/src/octimer.c')
 
 common_env.AppendUnique(LIBS = ['logger'])
 common_env.AppendUnique(CPPPATH = ['#resource/csdk/logger/include'])
 commonlib = common_env.StaticLibrary('c_common', common_src)
 common_env.InstallTarget(commonlib, 'c_common')
 common_env.UserInstallTargetLib(commonlib, 'c_common')
+common_env.UserInstallTargetHeader('iotivity_commontypes.h', 'c_common', 'iotivity_commontypes.h')
 common_env.UserInstallTargetHeader('iotivity_debug.h', 'c_common', 'iotivity_debug.h')
 common_env.UserInstallTargetHeader('platform_features.h', 'c_common', 'platform_features.h')
 
 Clean(commonlib, config_h_file_path)
-env.PrependUnique(LIBS = ['c_common'])
+
+# c_common calls into logger.
+env.PrependUnique(LIBS = ['c_common', 'logger'])

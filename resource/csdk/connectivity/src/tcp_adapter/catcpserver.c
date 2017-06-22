@@ -129,7 +129,7 @@ static void CASelectReturned(fd_set *readFds);
 #else
 static void CASocketEventReturned(CASocketFd_t socket, long networkEvents);
 #endif
-static void CAReceiveMessage(CASocketFd_t fd);
+static CAResult_t CAReceiveMessage(CATCPSessionInfo_t *svritem);
 static void CAReceiveHandler(void *data);
 static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem);
 
@@ -317,17 +317,34 @@ static void CASelectReturned(fd_set *readFds)
     }
     else
     {
+        oc_mutex_lock(g_mutexObjectList);
         CATCPSessionInfo_t *session = NULL;
-        LL_FOREACH(g_sessionList, session)
+        CATCPSessionInfo_t *tmp = NULL;
+        LL_FOREACH_SAFE(g_sessionList, session, tmp)
         {
             if (session && session->fd != OC_INVALID_SOCKET)
             {
                 if (FD_ISSET(session->fd, readFds))
                 {
-                    CAReceiveMessage(session->fd);
+                    CAResult_t res = CAReceiveMessage(session);
+                    //disconnect session and clean-up data if any error occurs
+                    if (res != CA_STATUS_OK)
+                    {
+#ifdef __WITH_TLS__
+                        if (CA_STATUS_OK != CAcloseSslConnection(&session->sep.endpoint))
+                        {
+                            OIC_LOG(ERROR, TAG, "Failed to close TLS session");
+                        }
+#endif
+                        LL_DELETE(g_sessionList, session);
+                        CADisconnectTCPSession(session);
+                        oc_mutex_unlock(g_mutexObjectList);
+                        return;
+                    }
                 }
             }
         }
+        oc_mutex_unlock(g_mutexObjectList);
     }
 }
 
@@ -425,13 +442,13 @@ static void CAFindReadyMessage()
         CAPushEvent(OC_INVALID_SOCKET, socketArray,
                     caglobals.tcp.updateEvent, eventArray, &arraySize, _countof(socketArray));
     }
-    
+
     int svrlistBeginIndex = arraySize;
 
     while (!caglobals.tcp.terminate)
     {
         CATCPSessionInfo_t *session = NULL;
-        LL_FOREACH(g_sessionList, session);
+        LL_FOREACH(g_sessionList, session)
         {
             if (session && OC_INVALID_SOCKET != session->fd && (arraySize < EVENT_ARRAY_SIZE))
             {
@@ -485,7 +502,6 @@ static void CAFindReadyMessage()
     if (caglobals.tcp.terminate)
     {
         caglobals.tcp.updateEvent = WSA_INVALID_EVENT;
-        WSACleanup();
     }
 }
 
@@ -501,6 +517,8 @@ static void CASocketEventReturned(CASocketFd_t s, long networkEvents)
         return;
     }
 
+    assert(s != OC_INVALID_SOCKET);
+
     if (FD_ACCEPT & networkEvents)
     {
         if ((caglobals.tcp.ipv4.fd != OC_INVALID_SOCKET) && (caglobals.tcp.ipv4.fd == s))
@@ -515,7 +533,31 @@ static void CASocketEventReturned(CASocketFd_t s, long networkEvents)
 
     if (FD_READ & networkEvents)
     {
-        CAReceiveMessage(s);
+        oc_mutex_lock(g_mutexObjectList);
+        CATCPSessionInfo_t *session = NULL;
+        CATCPSessionInfo_t *tmp = NULL;
+        LL_FOREACH_SAFE(g_sessionList, session, tmp)
+        {
+            if (session && (session->fd == s))
+            {
+                CAResult_t res = CAReceiveMessage(session);
+                //disconnect session and clean-up data if any error occurs
+                if (res != CA_STATUS_OK)
+                {
+#ifdef __WITH_TLS__
+                    if (CA_STATUS_OK != CAcloseSslConnection(&session->sep.endpoint))
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to close TLS session");
+                    }
+#endif
+                    LL_DELETE(g_sessionList, session);
+                    CADisconnectTCPSession(session);
+                    oc_mutex_unlock(g_mutexObjectList);
+                    return;
+                }
+            }
+        }
+        oc_mutex_unlock(g_mutexObjectList);
     }
 }
 
@@ -565,34 +607,6 @@ static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
         }
     }
 }
-
-#ifdef __WITH_TLS__
-static bool CAIsTlsMessage(const unsigned char* data, size_t length)
-{
-    if (NULL == data || 0 == length)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: null input param", __func__);
-        return false;
-    }
-
-    unsigned char first_byte = data[0];
-
-    //TLS Plaintext has four types: change_cipher_spec = [14], alert = [15],
-    //handshake = [16], application_data = [17] in HEX
-    const uint8_t tls_head_type[] = {0x14, 0x15, 0x16, 0x17};
-    size_t i = 0;
-
-    for (i = 0; i < sizeof(tls_head_type); i++)
-    {
-        if(tls_head_type[i] == first_byte)
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-#endif
 
 /**
  * Clean socket state data
@@ -728,21 +742,13 @@ CAResult_t CAConstructCoAP(CATCPSessionInfo_t *svritem, unsigned char **data,
     return CA_STATUS_OK;
 }
 
-static void CAReceiveMessage(CASocketFd_t fd)
+static CAResult_t CAReceiveMessage(CATCPSessionInfo_t *svritem)
 {
-    CAResult_t res = CA_STATUS_OK;
-
-    //get remote device information from file descriptor.
-    CATCPSessionInfo_t *svritem = CAGetSessionInfoFromFD(fd);
-    if (!svritem)
-    {
-        OIC_LOG(ERROR, TAG, "there is no connection information in list");
-        return;
-    }
+    VERIFY_NON_NULL(svritem, TAG, "svritem is NULL");
 
     // read data
     int len = 0;
-
+    CAResult_t res = CA_STATUS_OK;
     if (svritem->sep.endpoint.flags & CA_SECURE)
     {
         svritem->protocol = TLS;
@@ -760,17 +766,22 @@ static void CAReceiveMessage(CASocketFd_t fd)
             //[3][4] bytes in tls header are tls payload length
             tlsLength = TLS_HEADER_SIZE +
                             (size_t)((svritem->tlsdata[3] << 8) | svritem->tlsdata[4]);
-            OIC_LOG_V(DEBUG, TAG, "toal tls length = %u", tlsLength);
+            OIC_LOG_V(DEBUG, TAG, "total tls length = %u", tlsLength);
             if (tlsLength > sizeof(svritem->tlsdata))
             {
-                OIC_LOG_V(ERROR, TAG, "toal tls length is too big (buffer size : %u)",
+                OIC_LOG_V(ERROR, TAG, "total tls length is too big (buffer size : %u)",
                                     sizeof(svritem->tlsdata));
-                return;
+                if (CA_STATUS_OK != CAcloseSslConnection(&svritem->sep.endpoint))
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to close TLS session");
+                }
+                CASearchAndDeleteTCPSession(&(svritem->sep.endpoint));
+                return CA_RECEIVE_FAILED;
             }
             nbRead = tlsLength - svritem->tlsLen;
         }
 
-        len = recv(fd, svritem->tlsdata + svritem->tlsLen, (int)nbRead, 0);
+        len = recv(svritem->fd, (char*)svritem->tlsdata + svritem->tlsLen, (int)nbRead, 0);
         if (len < 0)
         {
             OIC_LOG_V(ERROR, TAG, "recv failed %s", strerror(errno));
@@ -802,7 +813,7 @@ static void CAReceiveMessage(CASocketFd_t fd)
         svritem->protocol = COAP;
 
         // svritem->tlsdata can also be used as receiving buffer in case of raw tcp
-        len = recv(fd, svritem->tlsdata, sizeof(svritem->tlsdata), 0);
+        len = recv(svritem->fd, (char*)svritem->tlsdata, sizeof(svritem->tlsdata), 0);
         if (len < 0)
         {
             OIC_LOG_V(ERROR, TAG, "recv failed %s", strerror(errno));
@@ -824,18 +835,7 @@ static void CAReceiveMessage(CASocketFd_t fd)
         }
     }
 
-    //disconnect session and clean-up data if any error occurs
-    if (res != CA_STATUS_OK)
-    {
-#ifdef __WITH_TLS__
-        if (CA_STATUS_OK != CAcloseSslConnection(&svritem->sep.endpoint))
-        {
-            OIC_LOG(ERROR, TAG, "Failed to close TLS session");
-        }
-#endif
-        CASearchAndDeleteTCPSession(&(svritem->sep.endpoint));
-        return;
-    }
+    return res;
 }
 
 #if !defined(WSA_WAIT_EVENT_0)
@@ -887,7 +887,7 @@ static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
     svritem->fd = fd;
 
     // #2. convert address from string to binary.
-    struct sockaddr_storage sa = { .ss_family = family };
+    struct sockaddr_storage sa = { .ss_family = (short)family };
     CAResult_t res = CAConvertNameToAddr(svritem->sep.endpoint.addr,
                                          svritem->sep.endpoint.port, &sa);
     if (CA_STATUS_OK != res)
@@ -943,7 +943,7 @@ static CASocketFd_t CACreateAcceptSocket(int family, CASocket_t *sock)
     }
 
     socklen_t socklen = 0;
-    struct sockaddr_storage server = { .ss_family = family };
+    struct sockaddr_storage server = { .ss_family = (short)family };
 
     CASocketFd_t fd = socket(family, SOCK_STREAM, IPPROTO_TCP);
     if (OC_INVALID_SOCKET == fd)
@@ -1081,20 +1081,24 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
         return res;
     }
 
-    if (caglobals.server)
+    if (caglobals.tcp.ipv6tcpenabled)
     {
-        NEWSOCKET(AF_INET, ipv4);
-        NEWSOCKET(AF_INET, ipv4s);
         NEWSOCKET(AF_INET6, ipv6);
         NEWSOCKET(AF_INET6, ipv6s);
-        OIC_LOG_V(DEBUG, TAG, "IPv4 socket fd=%d, port=%d",
-                  caglobals.tcp.ipv4.fd, caglobals.tcp.ipv4.port);
-        OIC_LOG_V(DEBUG, TAG, "IPv4 secure socket fd=%d, port=%d",
-                  caglobals.tcp.ipv4s.fd, caglobals.tcp.ipv4s.port);
         OIC_LOG_V(DEBUG, TAG, "IPv6 socket fd=%d, port=%d",
                   caglobals.tcp.ipv6.fd, caglobals.tcp.ipv6.port);
         OIC_LOG_V(DEBUG, TAG, "IPv6 secure socket fd=%d, port=%d",
                   caglobals.tcp.ipv6s.fd, caglobals.tcp.ipv6s.port);
+    }
+
+    if (caglobals.tcp.ipv4tcpenabled)
+    {
+        NEWSOCKET(AF_INET, ipv4);
+        NEWSOCKET(AF_INET, ipv4s);
+        OIC_LOG_V(DEBUG, TAG, "IPv4 socket fd=%d, port=%d",
+                  caglobals.tcp.ipv4.fd, caglobals.tcp.ipv4.port);
+        OIC_LOG_V(DEBUG, TAG, "IPv4 secure socket fd=%d, port=%d",
+                  caglobals.tcp.ipv4s.fd, caglobals.tcp.ipv4s.port);
     }
 
     // create mechanism for fast shutdown
@@ -1145,22 +1149,22 @@ void CATCPStopServer()
     caglobals.tcp.terminate = true;
 
 #if !defined(WSA_WAIT_EVENT_0)
-    if (caglobals.tcp.shutdownFds[1] != -1)
+    if (caglobals.tcp.shutdownFds[1] != OC_INVALID_SOCKET)
     {
         close(caglobals.tcp.shutdownFds[1]);
         caglobals.tcp.shutdownFds[1] = OC_INVALID_SOCKET;
         // receive thread will stop immediately
     }
-    if (caglobals.tcp.connectionFds[1] != -1)
-    {
-        close(caglobals.tcp.connectionFds[1]);
-        caglobals.tcp.connectionFds[1] = OC_INVALID_SOCKET;
-    }
 #else
-    // receive thread will stop immediately.
-    if (!WSASetEvent(caglobals.tcp.updateEvent))
+    // Unit tests are calling CATCPStopServer even without CATCPStartServer being called.
+    if (caglobals.tcp.started)
     {
-        OIC_LOG_V(DEBUG, TAG, "set shutdown event failed: %u", GetLastError());
+        // Ask the receive thread to shut down.
+        OC_STATIC_ASSERT((WSA_INVALID_EVENT == ((WSAEVENT)NULL)), 
+            "The assert() below relies on the default value of "
+            "caglobals.tcp.updateEvent being WSA_INVALID_EVENT");
+        assert(caglobals.tcp.updateEvent != WSA_INVALID_EVENT);
+        OC_VERIFY(WSASetEvent(caglobals.tcp.updateEvent));
     }
 #endif
 
@@ -1173,8 +1177,18 @@ void CATCPStopServer()
     if (caglobals.tcp.started)
     {
         oc_cond_wait(g_condObjectList, g_mutexObjectList);
+        caglobals.tcp.started = false;
     }
-    caglobals.tcp.started = false;
+
+#if !defined(WSA_WAIT_EVENT_0)
+    close(caglobals.tcp.connectionFds[1]);
+    close(caglobals.tcp.connectionFds[0]);
+    caglobals.tcp.connectionFds[1] = OC_INVALID_SOCKET;
+    caglobals.tcp.connectionFds[0] = OC_INVALID_SOCKET;
+
+    close(caglobals.tcp.shutdownFds[0]);
+    caglobals.tcp.shutdownFds[0] = OC_INVALID_SOCKET;
+#endif
 
     // mutex unlock
     oc_mutex_unlock(g_mutexObjectList);
@@ -1198,13 +1212,13 @@ void CATCPSetConnectionChangedCallback(CATCPConnectionHandleCallback connHandler
 
 size_t CACheckPayloadLengthFromHeader(const void *data, size_t dlen)
 {
-    VERIFY_NON_NULL_RET(data, TAG, "data", -1);
+    VERIFY_NON_NULL_RET(data, TAG, "data", 0);
 
     coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(
             ((unsigned char *)data)[0] >> 4);
 
     coap_pdu_t *pdu = coap_pdu_init2(0, 0,
-                                     ntohs(COAP_INVALID_TID),
+                                     ntohs((unsigned short)COAP_INVALID_TID),
                                      dlen, transport);
     if (!pdu)
     {
@@ -1313,9 +1327,36 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, size_t *size)
         return CA_STATUS_FAILED;
     }
 
-    size_t len = u_arraylist_length(iflist);
+#ifdef __WITH_TLS__
+    const size_t endpointsPerInterface = 2;
+#else
+    const size_t endpointsPerInterface = 1;
+#endif
 
-    CAEndpoint_t *ep = (CAEndpoint_t *)OICCalloc(len, sizeof (CAEndpoint_t));
+    size_t interfaces = u_arraylist_length(iflist);
+    for (size_t i = 0; i < u_arraylist_length(iflist); i++)
+    {
+        CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+        if (!ifitem)
+        {
+            continue;
+        }
+
+        if ((ifitem->family == AF_INET6 && !caglobals.ip.ipv6enabled) ||
+            (ifitem->family == AF_INET && !caglobals.ip.ipv4enabled))
+        {
+            interfaces--;
+        }
+    }
+
+    if (!interfaces)
+    {
+        OIC_LOG(DEBUG, TAG, "network interface size is zero");
+        return CA_STATUS_OK;
+    }
+
+    size_t totalEndpoints = interfaces * endpointsPerInterface;
+    CAEndpoint_t *ep = (CAEndpoint_t *)OICCalloc(totalEndpoints, sizeof (CAEndpoint_t));
     if (!ep)
     {
         OIC_LOG(ERROR, TAG, "Malloc Failed");
@@ -1323,10 +1364,16 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, size_t *size)
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    for (size_t i = 0, j = 0; i < len; i++)
+    for (size_t i = 0, j = 0; i < u_arraylist_length(iflist); i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
         if (!ifitem)
+        {
+            continue;
+        }
+
+        if ((ifitem->family == AF_INET6 && !caglobals.ip.ipv6enabled) ||
+            (ifitem->family == AF_INET && !caglobals.ip.ipv4enabled))
         {
             continue;
         }
@@ -1349,11 +1396,30 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, size_t *size)
             continue;
         }
         OICStrcpy(ep[j].addr, sizeof(ep[j].addr), ifitem->addr);
+
+#ifdef __WITH_TLS__
+        j++;
+
+        ep[j].adapter = CA_ADAPTER_TCP;
+        ep[j].ifindex = ifitem->index;
+
+        if (ifitem->family == AF_INET6)
+        {
+            ep[j].flags = CA_IPV6 | CA_SECURE;
+            ep[j].port = caglobals.tcp.ipv6s.port;
+        }
+        else
+        {
+            ep[j].flags = CA_IPV4 | CA_SECURE;
+            ep[j].port = caglobals.tcp.ipv4s.port;
+        }
+        OICStrcpy(ep[j].addr, sizeof(ep[j].addr), ifitem->addr);
+#endif
         j++;
     }
 
     *info = ep;
-    *size = len;
+    *size = totalEndpoints;
 
     u_arraylist_destroy(iflist);
 
@@ -1372,11 +1438,7 @@ CASocketFd_t CAConnectTCPSession(const CAEndpoint_t *endpoint)
         OIC_LOG(ERROR, TAG, "Out of memory");
         return OC_INVALID_SOCKET;
     }
-    memcpy(svritem->sep.endpoint.addr, endpoint->addr, sizeof(svritem->sep.endpoint.addr));
-    svritem->sep.endpoint.adapter = endpoint->adapter;
-    svritem->sep.endpoint.port = endpoint->port;
-    svritem->sep.endpoint.flags = endpoint->flags;
-    svritem->sep.endpoint.ifindex = endpoint->ifindex;
+    svritem->sep.endpoint = *endpoint;
     svritem->state = CONNECTING;
     svritem->isClient = true;
 
@@ -1438,7 +1500,7 @@ void CATCPDisconnectAll()
     oc_mutex_lock(g_mutexObjectList);
     CATCPSessionInfo_t *session = NULL;
     CATCPSessionInfo_t *tmp = NULL;
-    LL_FOREACH_SAFE(g_sessionList, session, tmp);
+    LL_FOREACH_SAFE(g_sessionList, session, tmp)
     {
         if (session)
         {
@@ -1464,7 +1526,6 @@ CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint
     OIC_LOG_V(DEBUG, TAG, "Looking for [%s:%d]", endpoint->addr, endpoint->port);
 
     // get connection info from list
-    oc_mutex_lock(g_mutexObjectList);
     CATCPSessionInfo_t *session = NULL;
     LL_FOREACH(g_sessionList, session)
     {
@@ -1473,13 +1534,11 @@ CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint
                 && (session->sep.endpoint.port == endpoint->port)
                 && (session->sep.endpoint.flags & endpoint->flags))
         {
-            oc_mutex_unlock(g_mutexObjectList);
             OIC_LOG(DEBUG, TAG, "Found in session list");
             return session;
         }
     }
 
-    oc_mutex_unlock(g_mutexObjectList);
     OIC_LOG(DEBUG, TAG, "Session not found");
     return NULL;
 }
@@ -1509,24 +1568,6 @@ CASocketFd_t CAGetSocketFDFromEndpoint(const CAEndpoint_t *endpoint)
     oc_mutex_unlock(g_mutexObjectList);
     OIC_LOG(DEBUG, TAG, "Session not found");
     return OC_INVALID_SOCKET;
-}
-
-CATCPSessionInfo_t *CAGetSessionInfoFromFD(CASocketFd_t fd)
-{
-    oc_mutex_lock(g_mutexObjectList);
-
-    CATCPSessionInfo_t *session = NULL;
-    LL_FOREACH(g_sessionList, session)
-    {
-        if (session && session->fd == fd)
-        {
-            oc_mutex_unlock(g_mutexObjectList);
-            return session;
-        }
-    }
-
-    oc_mutex_unlock(g_mutexObjectList);
-    return NULL;
 }
 
 CAResult_t CASearchAndDeleteTCPSession(const CAEndpoint_t *endpoint)

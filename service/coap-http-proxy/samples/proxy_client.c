@@ -57,6 +57,8 @@ OCConnectivityType connType;
 // Will be taken as user input
 static char httpResource[MAX_HTTP_URI_LENGTH];
 
+static char CRED_FILE_DEVOWNER[] = "oic_svr_db_client_devowner.dat";
+
 int gQuitFlag = 0;
 /* SIGINT handler: set gQuitFlag to 1 for graceful termination */
 void handleSigInt(int signum)
@@ -282,6 +284,22 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             return OC_STACK_KEEP_TRANSACTION;
         }
 
+        OCEndpointPayload* eps = resource->eps;
+        while (NULL != eps)
+        {
+            if (eps->family & OC_FLAG_SECURE)
+            {
+                if (0 == strcmp(eps->tps, "coaps"))
+                {
+                    strncpy(serverAddr.addr, eps->addr, sizeof(serverAddr.addr));
+                    serverAddr.port = eps->port;
+                    serverAddr.flags = (OCTransportFlags)(eps->family | OC_SECURE);
+                    serverAddr.adapter = OC_ADAPTER_IP;
+                }
+            }
+            eps = eps->next;
+        }
+
         switch (testCase)
         {
             case TEST_DISCOVER_REQ:
@@ -321,8 +339,23 @@ int InitDiscovery()
     return ret;
 }
 
+FILE *client_fopen_devowner(const char *path, const char *mode)
+{
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CRED_FILE_DEVOWNER, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
+}
+
 int main(int argc, char* argv[])
 {
+    OCPersistentStorage ps = { client_fopen_devowner, fread, fwrite, fclose, unlink };
+    OCRegisterPersistentStorageHandler(&ps);
+
     int opt;
     while ((opt = getopt(argc, argv, "t:p:")) != -1)
     {
@@ -352,7 +385,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    if (OCInit1(OC_CLIENT, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS) != OC_STACK_OK)
+    if (OCInit1(OC_CLIENT_SERVER, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS) != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack initialization error");
         return -1;

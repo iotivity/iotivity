@@ -29,17 +29,12 @@ SConscript('#service/third_party_libs.scons', 'lib_env')
 
 sample_env = lib_env.Clone()
 
-sample_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
-sample_env.AppendUnique(LIBS = [
-    'coap',
-    'connectivity_abstraction',
-    'oc_logger',
-    'octbstack',
-    'oc',
-    'rcs_common',
-    'pthread'
-    ])
-sample_env.AppendUnique(CPPPATH = [
+sample_env.AppendUnique(CXXFLAGS=['-Wall', '-std=c++0x'])
+sample_env.AppendUnique(LIBS=[
+    'coap', 'connectivity_abstraction', 'oc_logger', 'octbstack', 'oc',
+    'rcs_common', 'pthread'
+])
+sample_env.AppendUnique(CPPPATH=[
     '../../include',
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',
@@ -48,32 +43,31 @@ sample_env.AppendUnique(CPPPATH = [
 ])
 
 if env.get('SECURED') == '1':
-    sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    sample_env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if 'rt' in sample_env.get('LIBS'):
-    sample_env.Append(LIBS = ['rt'])
+    sample_env.Append(LIBS=['rt'])
 
 ######################################################################
 # ##### Client #####
 ######################################################################
 client_env = sample_env.Clone()
-client_env.AppendUnique(LIBS = 'rcs_client')
+client_env.AppendUnique(LIBS='rcs_client')
 
-sampleResourceClient = client_env.Program('sampleResourceClient', 'SampleResourceClient.cpp')
-nestedAttributesClient = client_env.Program('nestedAttributesClient', 'NestedAttributesClient.cpp')
+sampleResourceClient = client_env.Program('sampleResourceClient',
+                                          'SampleResourceClient.cpp')
+nestedAttributesClient = client_env.Program('nestedAttributesClient',
+                                            'NestedAttributesClient.cpp')
 
 ######################################################################
 # ##### Server #####
 ######################################################################
 server_env = sample_env.Clone()
-server_env.AppendUnique(LIBS = 'rcs_server')
+server_env.AppendUnique(LIBS='rcs_server')
 
-sampleResourceServer = server_env.Program('sampleResourceServer', 'SampleResourceServer.cpp')
-separateResponseServer = server_env.Program('separateResponseServer', 'SeparateResponseServer.cpp')
-nestedAttributesServer = server_env.Program('nestedAttributesServer', 'NestedAttributesServer.cpp')
-
-######################################################################
-# ##### Build the RE Secure Resource Example #####
-######################################################################
-if env.get('SECURED') == '1':
-    SConscript('secureResourceExample/SConscript')
+sampleResourceServer = server_env.Program('sampleResourceServer',
+                                          'SampleResourceServer.cpp')
+separateResponseServer = server_env.Program('separateResponseServer',
+                                            'SeparateResponseServer.cpp')
+nestedAttributesServer = server_env.Program('nestedAttributesServer',
+                                            'NestedAttributesServer.cpp')

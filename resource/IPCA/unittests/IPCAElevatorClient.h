@@ -38,7 +38,8 @@ public:
     void GetTargetFloor(int* targetFloor, bool* result);
     void SetTargetFloor(int targetFloor, bool* result);
     void CreateResourceRelativePath();
-    const char* GetNewResourceURI() { return m_newResourcePath.c_str(); }
+    void CreateResourceLongRelativePath();
+    const char* GetNewResourcePath() { return m_newResourcePath.c_str(); }
     void CreateResouceExplicitPath();
     void DeleteResource();
 
@@ -84,6 +85,15 @@ public:
     void ResourceChangeNotificationCallback(
         IPCAStatus result,
         IPCAPropertyBagHandle propertyBagHandle);
+
+    // IPCACloseHandle() tests.
+    IPCAStatus TestCloseHandleForGet();
+    IPCAStatus TestCloseHandleForSet();
+    IPCAStatus TestCloseHandleForObserve();
+    IPCAStatus TestCloseHandleForCreate();
+    IPCAStatus TestCloseHandleForDelete();
+    IPCAStatus TestCloseHandleForDiscover();
+    IPCAStatus TestMultipleCallsToCloseSameHandle();
 
     // Failure cases.
     IPCAStatus GetUnknownResource();
@@ -139,6 +149,9 @@ private:
     bool CreateElevatorResource(
             std::string resourcePath, IPCAPropertyBagHandle propertyBagHandle);
     bool DeleteElevatorResource();
+
+    // Test timing of IPCACloseHandle() for the ipcaHandle.
+    void RunCloseHandleTest(IPCAHandle ipcaHandle, void* testContext);
 
 protected:
     virtual void SetUp();

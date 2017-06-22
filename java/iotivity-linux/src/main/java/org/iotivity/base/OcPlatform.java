@@ -270,7 +270,12 @@ public final class OcPlatform {
      * <p>
      * Note: This API is for client side only.
      * </p>
-     *
+     * <p>
+     * Note: To get the tcpPort information, user must call getAllHosts() from the OCResource
+     * object in the onResourceFound callback. To use a TCP endpoint that has been received
+     * by getAllHosts(), user must use the setHost() method.
+     * </p>
+     * 
      * @param host                    Host Address of a service to direct resource discovery query.
      *                                If empty, performs multicast resource discovery query
      * @param resourceUri             name of the resource. If null or empty, performs search for all

@@ -27,57 +27,50 @@ mpmclient_env = env.Clone()
 src_dir = env.get('SRC_DIR')
 bridging_dir = os.path.join(src_dir, 'bridging')
 
+
+def maskFlags(flags):
+    flags = [flags.replace('-Wl,--no-undefined', '') for flags in flags]
+    return flags
+
 ######################################################################
 # Build flags
 ######################################################################
+mpmclient_env.PrependUnique(CPPPATH=[
+    os.path.join(bridging_dir, 'include'),
+    os.path.join(bridging_dir, 'mini_plugin_manager'),
+    os.path.join(bridging_dir, 'mpm_client')
+])
 
-def maskFlags(flags):
-    flags = [flags.replace('-Wl,--no-undefined', '' ) for flags in flags]
-    return flags
-mpmclient_env.PrependUnique(CPPPATH = [
-        os.path.join(bridging_dir, 'include'),
-        os.path.join(bridging_dir, 'mini_plugin_manager'),
-        os.path.join(bridging_dir, 'mpm_client')
-                ])
+# Note: Each of the plugin names need to be listed here after 'minipluginmanager'.
+# Otherwise you will need to prepend LD_LIBRARY_PATH to your execution command.
+mpmclient_env.PrependUnique(LIBS=['minipluginmanager'])
+mpmclient_env.AppendUnique(LIBS=['pthread'])
+mpmclient_env.AppendUnique(CPPDEFINES=['TB_LOG'])
+mpmclient_env.AppendUnique(LIBS=[
+    'm', 'octbstack', 'ocsrm', 'connectivity_abstraction', 'coap', 'curl'
+])
 
-#  Note: Each of the plugin names need to be listed here after 'minipluginmanager'.
-#  Otherwise you will need to prepend LD_LIBRARY_PATH to your execution command.
-mpmclient_env.PrependUnique(LIBS = ['minipluginmanager'])
-
-if target_arch in ['x86_64', 'arm64']:
-    mpmclient_env.AppendUnique(CPPFLAGS = ['-Llib64'])
-else:
-    mpmclient_env.AppendUnique(CPPFLAGS = ['-Llib'])
-mpmclient_env.AppendUnique(LIBS = ['pthread'])
-
-mpmclient_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-
-mpmclient_env.AppendUnique(LIBS = ['m',
-                               'octbstack',
-                               'ocsrm',
-                               'connectivity_abstraction',
-                               'coap',
-                               'curl' ])
-
-mpmclient_env.AppendUnique(RPATH = [os.path.join(env.get('BUILD_DIR'), 'bridging', 'plugins')])
+mpmclient_env.AppendUnique(
+    RPATH=[os.path.join(env.get('BUILD_DIR'), 'bridging', 'plugins')])
 
 if target_os in ['linux', 'tizen']:
     mpmclient_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 else:
-    mpmclient_env.AppendUnique(CPPPATH = ['#/extlibs/sqlite3'])
+    mpmclient_env.AppendUnique(CPPPATH=['#/extlibs/sqlite3'])
 
 mpmclient_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])
-mpmclient_env.AppendUnique(LINKFLAGS = ['-Wl,--allow-shlib-undefined'])
+mpmclient_env.AppendUnique(LINKFLAGS=['-Wl,--allow-shlib-undefined'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
+
 mpm_sample_client = mpmclient_env.Program('mpm_sample_client',
-        ['MPMSampleClient.cpp'])
+                                          ['MPMSampleClient.cpp'])
 
 list_of_samples = [mpm_sample_client]
 
 Alias("samples", list_of_samples)
 
 env.AppendTarget('samples')
-
 

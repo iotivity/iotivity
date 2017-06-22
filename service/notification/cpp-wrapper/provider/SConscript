@@ -26,16 +26,16 @@ import platform
 Import('env')
 
 if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS = ['-Os'])
-    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+    env.AppendUnique(CCFLAGS=['-Os'])
+    env.AppendUnique(CPPDEFINES=['NDEBUG'])
 else:
-    env.AppendUnique(CCFLAGS = ['-g'])
+    env.AppendUnique(CCFLAGS=['-g'])
 
 if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 notification_env = lib_env.Clone()
 
 target_os = env.get('TARGET_OS')
@@ -43,7 +43,7 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-notification_env.AppendUnique(CPPPATH = [
+notification_env.AppendUnique(CPPPATH=[
     '../../include',
     'inc',
     '../common',
@@ -56,46 +56,49 @@ notification_env.AppendUnique(CPPPATH = [
     '#/resource/oc_logger/include'
 ])
 
-notification_env.PrependUnique(LIBS = [
+notification_env.PrependUnique(LIBS=[
     'oc_logger',
     'oc',
     'octbstack',
     'notification_provider',
     'resource_directory'
-    ])
-notification_env.AppendUnique(CXXFLAGS = ['-std=c++0x','-frtti'])
+])
+notification_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-frtti'])
 
 if target_os not in ['windows', 'winrt']:
-    notification_env.AppendUnique(CCFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0'])
+    notification_env.AppendUnique(
+        CCFLAGS=['-O2', '-g', '-Wall', '-fmessage-length=0'])
 
 if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
-    notification_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+    notification_env.AppendUnique(LINKFLAGS=['-Wl,--no-undefined'])
 
 if target_os == 'linux':
-    notification_env.AppendUnique(LIBS = ['pthread'])
-    
+    notification_env.AppendUnique(LIBS=['pthread'])
+
 if target_os == 'android':
-    notification_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-    notification_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
+    notification_env.AppendUnique(CXXFLAGS=['-frtti', '-fexceptions'])
+    notification_env.PrependUnique(LIBS=['gnustl_shared', 'log'])
+    notification_env.AppendUnique(
+        LINKFLAGS=['-Wl,-soname,libnotification_provider_wrapper.so'])
 
 if not env.get('RELEASE') and target_os not in ['ios']:
-    notification_env.PrependUnique(LIBS = ['gcov'])
-    notification_env.AppendUnique(CCFLAGS = ['--coverage'])
+    notification_env.PrependUnique(LIBS=['gcov'])
+    notification_env.AppendUnique(CCFLAGS=['--coverage'])
 
 if env.get('WITH_CLOUD') == True:
-    notification_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD'])
+    notification_env.AppendUnique(CPPDEFINES=['WITH_CLOUD'])
 
 with_mq = env.get('WITH_MQ')
 if 'SUB' in with_mq:
-    notification_env.AppendUnique(CPPDEFINES = ['MQ_SUBSCRIBER', 'WITH_MQ'])
+    notification_env.AppendUnique(CPPDEFINES=['MQ_SUBSCRIBER', 'WITH_MQ'])
     print "MQ SUB support"
 
 if 'PUB' in with_mq:
-    notification_env.AppendUnique(CPPDEFINES = ['MQ_PUBLISHER', 'WITH_MQ'])
+    notification_env.AppendUnique(CPPDEFINES=['MQ_PUBLISHER', 'WITH_MQ'])
     print "MQ PUB support"
 
 if 'BROKER' in with_mq:
-    notification_env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
+    notification_env.AppendUnique(CPPDEFINES=['MQ_BROKER', 'WITH_MQ'])
     print "MQ Broker support"
 ######################################################################
 # Source files and Targets for Provider
@@ -107,31 +110,45 @@ notificationCommonStaticObjs = [
     notification_env.Object('../common/NSMessage.cpp'),
     notification_env.Object('../common/NSSyncInfo.cpp'),
     notification_env.Object('../common/NSTopic.cpp'),
-    notification_env.Object('../common/NSTopicsList.cpp')]
+    notification_env.Object('../common/NSTopicsList.cpp')
+]
 
 notificationCommonSharedObjs = [
     notification_env.SharedObject('../common/NSMediaContents.cpp'),
     notification_env.SharedObject('../common/NSMessage.cpp'),
     notification_env.SharedObject('../common/NSSyncInfo.cpp'),
     notification_env.SharedObject('../common/NSTopic.cpp'),
-    notification_env.SharedObject('../common/NSTopicsList.cpp')]
+    notification_env.SharedObject('../common/NSTopicsList.cpp')
+]
 
 notification_provider_src = [
-    env.Glob('src/*.cpp'),notificationCommonSharedObjs]
+    env.Glob('src/*.cpp'), notificationCommonSharedObjs
+]
 
+if target_os in ['android']:
+    notification_env.AppendUnique(
+        LINKFLAGS=['-Wl,-soname,libnotification_provider_wrapper.so'])
 if target_os not in ['ios']:
-    providersdk = notification_env.SharedLibrary('notification_provider_wrapper', notification_provider_src)
-    notification_env.InstallTarget(providersdk, 'libnotification_provider_wrapper')
-    notification_env.UserInstallTargetLib(providersdk, 'libnotification_provider_wrapper')
+    providersdk = notification_env.SharedLibrary(
+        'notification_provider_wrapper', notification_provider_src)
+    notification_env.InstallTarget(providersdk,
+                                   'libnotification_provider_wrapper')
+    notification_env.UserInstallTargetLib(providersdk,
+                                          'libnotification_provider_wrapper')
 
 notification_provider_src = [
-    env.Glob('src/*.cpp'),notificationCommonStaticObjs]
+    env.Glob('src/*.cpp'), notificationCommonStaticObjs
+]
 
-providersdk = notification_env.StaticLibrary('notification_provider_wrapper', notification_provider_src)
+providersdk = notification_env.StaticLibrary('notification_provider_wrapper',
+                                             notification_provider_src)
 notification_env.InstallTarget(providersdk, 'libnotification_provider_wrapper')
-notification_env.UserInstallTargetLib(providersdk, 'libnotification_provider_wrapper')
-notification_env.UserInstallTargetHeader('inc/NSConsumer.h', 'service/notification', 'NSConsumer.h')
-notification_env.UserInstallTargetHeader('inc/NSProviderService.h', 'service/notification', 'NSProviderService.h')
+notification_env.UserInstallTargetLib(providersdk,
+                                      'libnotification_provider_wrapper')
+notification_env.UserInstallTargetHeader(
+    'inc/NSConsumer.h', 'service/notification', 'NSConsumer.h')
+notification_env.UserInstallTargetHeader(
+    'inc/NSProviderService.h', 'service/notification', 'NSProviderService.h')
 
 Export('notificationCommonStaticObjs')
 Export('notificationCommonSharedObjs')
@@ -140,24 +157,33 @@ Export('notificationCommonSharedObjs')
 # Source files and Targets for Provider Jni
 ######################################################################
 if target_os == 'android':
-    notification_jni_provider_env.AppendUnique(CPPPATH = ['../../../../extlibs/boost/boost_1_58_0'])
-    notification_jni_provider_env.AppendUnique(CPPPATH = ['../../../../java/jni'])
-    notification_jni_provider_env.AppendUnique(CPPPATH = ['../../android/notification-service/src/main/jni/common'])
-    notification_jni_provider_env.AppendUnique(CPPPATH = ['../../android/notification-service/src/main/jni/provider'])
+    notification_jni_provider_env.AppendUnique(CPPPATH=[
+        '../../../../extlibs/boost/boost_1_58_0',
+        '../../../../java/jni',
+        '../../android/notification-service/src/main/jni/common',
+        '../../android/notification-service/src/main/jni/provider',
+    ])
 
-    notification_jni_provider_env.PrependUnique(LIBS = [
-        'notification_provider_wrapper'
-        ])
+    notification_jni_provider_env.PrependUnique(
+        LIBS=['notification_provider_wrapper'])
 
     notificationJniCommonSharedObjs = [
-        notification_jni_provider_env.SharedObject('../../android/notification-service/src/main/jni/common/JniNotificationCommon.cpp')]
+        notification_jni_provider_env.SharedObject(
+            '../../android/notification-service/src/main/jni/common/JniNotificationCommon.cpp'
+        )
+    ]
 
     notification_provider_jni_src = [
-        env.Glob('../../android/notification-service/src/main/jni/provider/*.cpp'),
-        notificationJniCommonSharedObjs]
+        env.Glob(
+            '../../android/notification-service/src/main/jni/provider/*.cpp'),
+        notificationJniCommonSharedObjs
+    ]
 
-    providerJni = notification_jni_provider_env.SharedLibrary('notification_provider_jni', notification_provider_jni_src)
-    notification_jni_provider_env.InstallTarget(providerJni, 'libnotification_provider_jni')
-    notification_jni_provider_env.UserInstallTargetLib(providerJni, 'libnotification_provider_jni')
+    providerJni = notification_jni_provider_env.SharedLibrary(
+        'notification_provider_jni', notification_provider_jni_src)
+    notification_jni_provider_env.InstallTarget(
+        providerJni, 'libnotification_provider_jni')
+    notification_jni_provider_env.UserInstallTargetLib(
+        providerJni, 'libnotification_provider_jni')
 
     Export('notificationJniCommonSharedObjs')

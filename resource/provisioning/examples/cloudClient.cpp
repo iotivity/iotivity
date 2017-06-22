@@ -57,7 +57,7 @@ static bool fExit = false;
 static OCDevAddr endPoint;
 static char token[1024];
 static char authProvider[1024];
-static char *fname = DEFAULT_DB_FILE;
+static const char *fname = DEFAULT_DB_FILE;
 static uint64_t timeout;
 static uint16_t g_credId = 0;
 
@@ -125,7 +125,6 @@ void printMenu()
     printf("** SETTINGS \n");
     printf("** %d - Change default host\n", HOST);
     printf("** %d - Change default port\n", PORT);
-    printf("** %d - Change default database filename\n", DB_FILE);
     printf("** %d - Change default auth provider\n", AUTH_PROVIDER);
     printf("** %d - Change TLS cipher suite to RSA\n", USE_RSA);
     printf("** %d - Save Trust Cert. Chain into Cred of SVR\n", SAVE_TRUST_CERT);
@@ -148,26 +147,10 @@ void printMenu()
     printf("** %d - ACL individual update ACE Request\n", ACL_INDIVIDUAL_UPDATE_ACE);
     printf("** %d - ACL individual delete Request\n", ACL_INDIVIDUAL_DELETE);
 
-    printf("** ACL GROUP MANAGER\n");
-    printf("** %d - ACL Create Group Request\n", ACL_GROUP_CREATE);
-    printf("** %d - ACL Find Group Request\n", ACL_GROUP_FIND);
-    printf("** %d - ACL Join to invited Group Request\n", ACL_GROUP_JOIN);
-    printf("** %d - ACL Observe Group Request\n", ACL_GROUP_OBSERVE);
-    printf("** %d - ACL Delete Group Request\n", ACL_GROUP_DELETE);
-
-    printf("** ACL INDIVIDUAL GROUP\n");
-    printf("** %d - ACL Share device into Group Request\n", ACL_GROUP_SHARE_DEVICE);
-    printf("** %d - ACL Delete device from Group Request\n", ACL_GROUP_DELETE_DEVICE);
-    printf("** %d - ACL Get Group Info Request\n", ACL_GROUP_GET_INFO);
 
     printf("** ACL POLICY ENFORCEMENT\n");
     printf("** %d - ACL Check Permissions Request\n", ACL_POLICY_CHECK_REQUEST);
 
-    printf("** ACL MEMBER INVITATION\n");
-    printf("** %d - ACL Invite user to group Request\n", ACL_GROUP_INVITE_USER);
-    printf("** %d - ACL Retrieve invitation Request\n", ACL_GROUP_GET_INVITE);
-    printf("** %d - ACL Delete invitation Request\n", ACL_GROUP_DELETE_INVITE);
-    printf("** %d - ACL Cancel invitation Request\n", ACL_GROUP_CANCEL_INVITE);
 
     printf("** EXIT\n");
     printf("** %d - Exit cloud client\n\n", EXIT);
@@ -242,8 +225,8 @@ static int saveTrustCert(void)
             {
                 OIC_LOG(ERROR, TAG, "Certiface not read completely");
             }
-            fclose(fp);
         }
+        fclose(fp);
     }
     OIC_LOG_BUFFER(DEBUG, TAG, trustCertChainArray.data, trustCertChainArray.len);
 

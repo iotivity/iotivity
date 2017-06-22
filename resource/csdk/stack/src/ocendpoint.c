@@ -29,6 +29,9 @@
 #define VERIFY_GT_ZERO(arg) { if (arg < 1) {OIC_LOG(FATAL, TAG, #arg " < 1"); goto exit;} }
 #define VERIFY_GT(arg1, arg2) { if (arg1 <= arg2) {OIC_LOG(FATAL, TAG, #arg1 " <= " #arg2); goto exit;} }
 #define VERIFY_LT_OR_EQ(arg1, arg2) { if (arg1 > arg2) {OIC_LOG(FATAL, TAG, #arg1 " > " #arg2); goto exit;} }
+#define VERIFY_SNPRINTF_RET(arg1, arg2) \
+    { if (0 > arg1 || arg1 >= arg2) {OIC_LOG(FATAL, TAG, "Error (snprintf)"); goto exit;} } \
+
 #define TAG  "OIC_RI_ENDPOINT"
 
 OCStackResult OCGetSupportedEndpointFlags(const OCTpsSchemeFlags givenFlags, OCTpsSchemeFlags* out)
@@ -246,47 +249,56 @@ char* OCCreateEndpointString(const OCEndpointPayload* endpoint)
         if (endpoint->family & OC_IP_USE_V4)
         {
             // ipv4
-            sprintf(buf, "%s://%s:%d", endpoint->tps, endpoint->addr, endpoint->port);
+            int snRet = snprintf(buf, MAX_ADDR_STR_SIZE, "%s://%s:%d", endpoint->tps,
+                                  endpoint->addr, endpoint->port);
+            VERIFY_SNPRINTF_RET(snRet, MAX_ADDR_STR_SIZE);
         }
         else
         {
             // ipv6
-            sprintf(buf, "%s://[%s]:%d", endpoint->tps, endpoint->addr, endpoint->port);
+            int snRet = snprintf(buf, MAX_ADDR_STR_SIZE, "%s://[%s]:%d", endpoint->tps,
+                                  endpoint->addr, endpoint->port);
+            VERIFY_SNPRINTF_RET(snRet, MAX_ADDR_STR_SIZE);
         }
     }
 #ifdef EDR_ADAPTER
     else if ((strcmp(endpoint->tps, COAP_RFCOMM_STR) == 0))
     {
         // coap+rfcomm
-        sprintf(buf, "%s://%s", endpoint->tps, endpoint->addr);
+        int snRet = snprintf(buf, MAX_ADDR_STR_SIZE, "%s://%s",
+                              endpoint->tps, endpoint->addr);
+        VERIFY_SNPRINTF_RET(snRet, MAX_ADDR_STR_SIZE);
     }
 #endif
     else
     {
         OIC_LOG_V(ERROR, TAG, "Payload has invalid TPS!!! %s", endpoint->tps);
-        return NULL;
+        goto exit;
     }
     return buf;
 
 exit:
+    OICFree(buf);
     return NULL;
 }
 
-char* OCCreateEndpointStringFromCA(const CAEndpoint_t* endpoint)
+char* OC_CALL OCCreateEndpointStringFromCA(const CAEndpoint_t* endpoint)
 {
-    if (!endpoint)
+    if (!endpoint || 0 == strlen(endpoint->addr))
     {
         return NULL;
     }
 
+    int snRet = -1;
+    char *buf = NULL;
     OCTpsSchemeFlags tps = OC_NO_TPS;
     OCStackResult result = OCGetMatchedTpsFlags(endpoint->adapter, endpoint->flags, &tps);
     if (OC_STACK_OK != result)
     {
-        return NULL;
+        goto exit;
     }
 
-    char* buf = (char*)OICCalloc(MAX_ADDR_STR_SIZE, sizeof(char));
+    buf = (char*)OICCalloc(MAX_ADDR_STR_SIZE, sizeof(char));
     VERIFY_NON_NULL(buf);
 
     switch (tps)
@@ -298,31 +310,41 @@ char* OCCreateEndpointStringFromCA(const CAEndpoint_t* endpoint)
 #ifdef HTTP_ADAPTER
     case OC_HTTP: case OC_HTTPS:
 #endif
+        if (!endpoint->port)
+        {
+            goto exit;
+        }
         // checking addr is ipv4 or not
         if (endpoint->flags & CA_IPV4)
         {
             // ipv4
-            sprintf(buf, "%s://%s:%d", ConvertTpsToString(tps), endpoint->addr, endpoint->port);
+            snRet = snprintf(buf, MAX_ADDR_STR_SIZE, "%s://%s:%d", ConvertTpsToString(tps),
+                                  endpoint->addr, endpoint->port);
+            VERIFY_SNPRINTF_RET(snRet, MAX_ADDR_STR_SIZE);
         }
         else
         {
             // ipv6
-            sprintf(buf, "%s://[%s]:%d", ConvertTpsToString(tps), endpoint->addr, endpoint->port);
+            snRet = snprintf(buf, MAX_ADDR_STR_SIZE, "%s://[%s]:%d", ConvertTpsToString(tps),
+                                  endpoint->addr, endpoint->port);
+            VERIFY_SNPRINTF_RET(snRet, MAX_ADDR_STR_SIZE);
         }
         break;
 #ifdef EDR_ADAPTER
     case OC_COAP_RFCOMM:
         // coap+rfcomm
-        sprintf(buf, "%s://%s", ConvertTpsToString(tps), endpoint->addr);
+        snRet = snprintf(buf, MAX_ADDR_STR_SIZE, "%s://%s", ConvertTpsToString(tps), endpoint->addr);
+        VERIFY_SNPRINTF_RET(snRet, MAX_ADDR_STR_SIZE);
         break;
 #endif
     default:
         OIC_LOG_V(ERROR, TAG, "Payload has invalid TPS!!! %d", tps);
-        return NULL;
+        goto exit;
     }
     return buf;
 
 exit:
+    OICFree(buf);
     return NULL;
 }
 
@@ -416,7 +438,7 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
     {
         // copy addr
         tokPos = tokPos + 3;
-        ret = strcpy(addr, tokPos);
+        ret = OICStrcpy(addr, OC_MAX_ADDR_STR_SIZE, tokPos);
         VERIFY_NON_NULL(ret);
         out->tps = tps;
         out->addr = addr;

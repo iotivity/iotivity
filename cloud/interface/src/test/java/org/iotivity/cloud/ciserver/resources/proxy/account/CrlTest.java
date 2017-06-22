@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import java.util.concurrent.CountDownLatch;
 
 import org.iotivity.cloud.base.OICConstants;
+import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.protocols.IRequest;
@@ -18,13 +19,19 @@ import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(ConnectorPool.class)
 public class CrlTest {
 
     private static final String TEST_RESOURCE_CRL_URI = "/"
@@ -65,6 +72,9 @@ public class CrlTest {
             }
         }).when(mRequestChannel).sendRequest(Mockito.any(IRequest.class),
                 Mockito.any(CoapDevice.class));
+
+        PowerMockito.mockStatic(ConnectorPool.class);
+        PowerMockito.when(ConnectorPool.getConnection(Mockito.anyString())).thenReturn(mRequestChannel);
     }
 
     @Test

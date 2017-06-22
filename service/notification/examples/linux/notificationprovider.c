@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "NSProviderInterface.h"
 #include "NSCommon.h"
@@ -148,19 +149,21 @@ void removeTopics(NSTopicLL * topics)
 
 void input(char * buffer)
 {
-    char ch;
+    char ch = '\0';
     int i = 0;
 
     while( (ch = getchar()) != '\n' && i < 100)
+    {
         buffer[i++] = ch;
+    }
 
     buffer[i] = '\0';
 }
 
 int main()
 {
-    int num;
-    pthread_t processThread;
+    int num = 0;
+    pthread_t processThread = 0;
 
     printf("NSStartProvider()\n\n");
 
@@ -178,7 +181,7 @@ int main()
 
     while (!isExit)
     {
-        char dummy;
+        char dummy = '\0';
 
         printf("==============================================\n");
         printf("1.  NSStartProvider(Accepter: Provider) \n");
@@ -192,7 +195,6 @@ int main()
         printf("9.  NSProviderGetConsumerTopics(); \n");
         printf("10. NSProviderGetTopics(); \n");
         printf("11. NSProviderSubscribeMQService() \n");
-        printf("0. NSStopProvider() \n");
 #ifdef WITH_CLOUD
         printf("21. NSProviderEnableRemoteService (after login) \n");
         printf("22. NSProviderDisableRemoteService (after login) \n");
@@ -200,7 +202,7 @@ int main()
         printf("32. Cloud Login \n");
         printf("33. Cloud Logout \n");
 #endif
-        printf("0. Exit() \n");
+        printf("0.  NSStopProvier & Exit() \n");
         printf("==============================================\n");
 
         printf("input : ");
@@ -209,7 +211,6 @@ int main()
         {
             if(scanf("%c", &dummy) > 0)
             {
-                fflush(stdin);
                 printf("\n");
             }
         }

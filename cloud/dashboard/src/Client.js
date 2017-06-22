@@ -117,8 +117,7 @@ var Client = new function() {
     // send sign-in request.
     this.onSignIn = function(packet) {
         if(packet.getCode === 68) {
-          Client.event.emit(SIGNIN, packet.getPayloadObject.uid,
-            packet.getPayloadObject.accesstoken);
+          Client.event.emit(SIGNIN);
         } else {
           Client.event.emit(ERROR, "SignIn Failed" + packet.getCode);
         }

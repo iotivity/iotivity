@@ -37,6 +37,8 @@
 #include <windows.h>
 #endif
 
+#define MAX_SEQUENCE_NUMBER              (0xFFFFFF)
+
 using namespace OC;
 
 struct dereference_compare
@@ -85,7 +87,7 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& re
         {
             std::cout << "\tObserve Registration Confirmed: "<< std::endl;
         }
-        else if (sequenceNumber == (int) ObserveAction::ObserveUnregister)
+        else if (sequenceNumber == (MAX_SEQUENCE_NUMBER + 1))
         {
             std::cout << "\tObserve Cancel Confirmed: "<< std::endl;
             sleep(10);
@@ -122,7 +124,8 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& re
 
 void onPost2(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_CHANGED)
+    if(eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_CHANGED
+        || eCode == OC_STACK_RESOURCE_CREATED)
     {
         std::cout << "POST request was successful" << std::endl;
 
@@ -161,7 +164,8 @@ void onPost2(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep
 void onPost(const HeaderOptions& /*headerOptions*/,
         const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_CHANGED)
+    if(eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_CHANGED
+        || eCode == OC_STACK_RESOURCE_CREATED)
     {
         std::cout << "POST request was successful" << std::endl;
 

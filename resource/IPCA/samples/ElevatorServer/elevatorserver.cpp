@@ -18,7 +18,7 @@
  ******************************************************************/
 
 #include "logger.h"
-#include "ElevatorServer.h"
+#include "elevatorserver.h"
 
 using namespace OC;
 using namespace std::placeholders;
@@ -32,22 +32,28 @@ static char CredFile[] = "ElevatorServerSecurityDB.dat";
 
 FILE* server_fopen(const char *path, const char *mode)
 {
-    (void)path;
-    return fopen(CredFile, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CredFile, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 //
 // class ElevatorServer implementation.
 //
 ElevatorServer::ElevatorServer() :
-    engineThread(),
     m_elevatorResourceHandle(nullptr),
     m_elevatorResourceHandle2(nullptr),
     m_elevatorResourceHandle3(nullptr),
     m_elevatorResourceHandle4(nullptr),
     m_targetFloor(1),
     m_currentFloor(1),
-    m_direction(ElevatorDirection::Stopped)
+    m_direction(ElevatorDirection::Stopped),
+    m_engineThread()
 {
 #ifdef SECURED
     m_displayPasswordCallbackHandle = nullptr;
@@ -211,7 +217,7 @@ bool ElevatorServer::Start(const std::string& elevatorName)
 
         // Start the engine thread.
         m_isRunning = true;
-        engineThread = std::thread(&ElevatorServer::Engine, this);
+        m_engineThread = std::thread(&ElevatorServer::Engine, this);
 
         // Device Info.
         char devName[256];
@@ -219,7 +225,8 @@ bool ElevatorServer::Start(const std::string& elevatorName)
         CopyStringToBuffer(m_name, devName, 256);
         CopyStringToBuffer(defaultResourceTypeName, resTypeName, 256);
         OCStringLL types { nullptr, resTypeName };
-        OCDeviceInfo deviceInfo = { devName, &types, "0.0.1", nullptr };
+        char specVersion[] = "0.0.1";
+        OCDeviceInfo deviceInfo = { devName, &types, specVersion, nullptr };
 
         // Platform Info
         char platformId[] = "6cb6c994-8c4b-11e6-ae22-56b6b6499611";
@@ -321,6 +328,21 @@ bool ElevatorServer::Start(const std::string& elevatorName)
                                     std::bind(&ElevatorServer::ElevatorEntityHandler, this, _1),
                                     OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
 
+
+        if (result == OC_STACK_OK)
+        {
+            const char* deviceID = OCGetServerInstanceIDString();
+            std::cout << "Elevator server's device ID: ";
+            if (deviceID != nullptr)
+            {
+                 std::cout << deviceID << std::endl;
+            }
+            else
+            {
+                std::cout << "Unknown" << std::endl;
+            }
+        }
+
         return (result == OC_STACK_OK);
     }
 
@@ -344,11 +366,11 @@ void ElevatorServer::Stop()
         m_elevatorResourceHandle3 = nullptr;
         m_elevatorResourceHandle4 = nullptr;
 
-        // Signal the engineThread to stop and wait for it to exit.
+        // Signal the m_engineThread to stop and wait for it to exit.
         m_isRunning = false;
-        if (engineThread.joinable())
+        if (m_engineThread.joinable())
         {
-            engineThread.join();
+            m_engineThread.join();
         }
 
 #ifdef SECURED
@@ -409,7 +431,7 @@ void ElevatorServer::NotifyObservers()
 
     OCRepresentation rep;
     rep["x.org.iotivity.CurrentFloor"] = GetCurrentFloor();
-    rep["x.org.iotivity.Direction"] = GetElevatorDirection();
+    rep["x.org.iotivity.Direction"] = (int)GetElevatorDirection();
     rep["x.org.iotivity.TargetFloor"] = GetTargetFloor();
 
     // Prepare the response.

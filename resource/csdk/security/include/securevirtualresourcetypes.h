@@ -224,7 +224,8 @@ typedef enum OicSecDeviceOnboardingState
     DOS_RFOTM,
     DOS_RFPRO,
     DOS_RFNOP,
-    DOS_SRESET
+    DOS_SRESET,
+    DOS_STATE_COUNT
 } OicSecDeviceOnboardingState_t;
 
 typedef struct OicSecDostype
@@ -299,6 +300,9 @@ enum
     OIC_R_PSTAT_TYPE,
     OIC_R_SACL_TYPE,
     OIC_R_SVC_TYPE,
+    OIC_R_CSR_TYPE,
+    OIC_R_ACL2_TYPE,
+    OIC_R_ROLES_TYPE,
     OIC_SEC_SVR_TYPE_COUNT, //define the value to number of SVR
     NOT_A_SVR_RESOURCE = 99
 };
@@ -368,8 +372,6 @@ typedef struct OicSecPstat OicSecPstat_t;
 
 typedef struct OicSecRole OicSecRole_t;
 
-typedef struct OicSecSacl OicSecSacl_t;
-
 typedef struct OicSecSvc OicSecSvc_t;
 
 typedef char *OicUrn_t; //TODO is URN type defined elsewhere?
@@ -394,7 +396,8 @@ typedef void OicSecCert_t;
  */
 #define UUID_LENGTH 128/8 // 128-bit GUID length
 //TODO: Confirm the length and type of ROLEID.
-#define ROLEID_LENGTH 128/8 // 128-bit ROLEID length
+#define ROLEID_LENGTH 64 // 64-byte authority max length
+#define ROLEAUTHORITY_LENGTH 64 // 64-byte authority max length
 #define OWNER_PSK_LENGTH_128 128/8 //byte size of 128-bit key size
 #define OWNER_PSK_LENGTH_256 256/8 //byte size of 256-bit key size
 
@@ -429,6 +432,14 @@ struct OicSecOpt
     bool                revstat;
 };
 
+typedef enum OicSecAceResourceWildcard
+{
+    NO_WILDCARD = 0,
+    ALL_DISCOVERABLE,       // maps to "+" in JSON/CBOR
+    ALL_NON_DISCOVERABLE,   // maps to "-" in JSON/CBOR
+    ALL_RESOURCES           // maps to "*" in JSON/CBOR
+} OicSecAceResourceWildcard_t;
+
 struct OicSecRsrc
 {
     char *href; // 0:R:S:Y:String
@@ -437,6 +448,7 @@ struct OicSecRsrc
     size_t typeLen; // the number of elts in types
     char** interfaces; // 3:R:S:N:String Array
     size_t interfaceLen; // the number of elts in interfaces
+    OicSecAceResourceWildcard_t wildcard;
     OicSecRsrc_t *next;
 };
 
@@ -448,13 +460,60 @@ struct OicSecValidity
     OicSecValidity_t *next;
 };
 
+typedef enum
+{
+    OIC_SEC_ACL_UNKNOWN = 0,
+    OIC_SEC_ACL_V1 = 1,
+    OIC_SEC_ACL_V2 = 2
+} OicSecAclVersion_t;
+
+typedef enum
+{
+    DISCOVERABLE_NOT_KNOWN = 0,
+    DISCOVERABLE_TRUE = 1,
+    DISCOVERABLE_FALSE = 2
+} OicSecDiscoverable_t;
+
+#define OIC_SEC_ACL_LATEST OIC_SEC_ACL_V2
+
+typedef enum
+{
+    OicSecAceUuidSubject = 0, /* Default to this type. */
+    OicSecAceRoleSubject,
+    OicSecAceConntypeSubject
+} OicSecAceSubjectType;
+
+/**
+ * /oic/sec/role (Role) data type.
+ * Derived from OIC Security Spec; see Spec for details.
+ */
+struct OicSecRole
+{
+    // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
+    char id[ROLEID_LENGTH];                 // 0:R:S:Y:String
+    char authority[ROLEAUTHORITY_LENGTH];   // 1:R:S:N:String
+};
+
+typedef enum OicSecConntype
+{
+    AUTH_CRYPT, // any subject requesting over authenticated and encrypted channel
+    ANON_CLEAR, // any subject requesting over anonymous and unencrypted channel
+} OicSecConntype_t;
+
 struct OicSecAce
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    OicUuid_t subjectuuid;              // 0:R:S:Y:uuid
+    OicSecAceSubjectType subjectType;
+    union                               // 0:R:S:Y:{roletype|didtype|"*"}
+    {
+        OicUuid_t subjectuuid;          // Only valid for subjectType == OicSecAceUuidSubject
+        OicSecRole_t subjectRole;       // Only valid for subjectType == OicSecAceRoleSubject
+        OicSecConntype_t subjectConn;   // Only valid for subjectType == OicSecAceConntypeSubject
+    };
     OicSecRsrc_t *resources;            // 1:R:M:Y:Resource
     uint16_t permission;                // 2:R:S:Y:UINT16
     OicSecValidity_t *validities;       // 3:R:M:N:Time-interval
+    uint16_t aceid;                     // mandatory in ACE2
 #ifdef MULTIPLE_OWNER
     OicUuid_t* eownerID;                //4:R:S:N:oic.uuid
 #endif
@@ -493,10 +552,8 @@ struct OicSecCred
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
     uint16_t            credId;         // 0:R:S:Y:UINT16
     OicUuid_t           subject;        // 1:R:S:Y:oic.uuid
-    //Note: Need further clarification on roleID data type
-    //NOTE: Need further clarification on roleId datatype.
-    //size_t              roleIdsLen;     // the number of elts in RoleIds
-    //OicSecRole_t        *roleIds;       // 2:R:M:N:oic.sec.role
+    // If roleId.id is all zeroes, this property is not set.
+    OicSecRole_t        roleId;         // 2:R:M:N:oic.sec.roletype
     OicSecCredType_t    credType;       // 3:R:S:Y:oic.sec.credtype
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     OicSecKey_t         publicData;     // own cerificate chain
@@ -533,15 +590,11 @@ struct OicSecMom{
 struct OicSecDoxm
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    OicUrn_t            *oxmType;       // 0:R:M:N:URN
-    size_t              oxmTypeLen;     // the number of elts in OxmType
     OicSecOxm_t         *oxm;           // 1:R:M:N:UINT16
     size_t              oxmLen;         // the number of elts in Oxm
     OicSecOxm_t         oxmSel;         // 2:R/W:S:Y:UINT16
     OicSecCredType_t    sct;            // 3:R:S:Y:oic.sec.credtype
     bool                owned;          // 4:R:S:Y:Boolean
-    //TODO: Need more clarification on deviceIDFormat field type.
-    //OicSecDvcIdFrmt_t   deviceIDFormat; // 5:R:S:Y:UINT8
     OicUuid_t           deviceID;       // 6:R:S:Y:oic.uuid
     bool                dpc;            // 7:R:S:Y:Boolean
     OicUuid_t           owner;          // 8:R:S:Y:oic.uuid
@@ -569,29 +622,6 @@ struct OicSecPstat
     OicUuid_t           rownerID;       // 7:R:S:Y:oic.uuid
 };
 
-/**
- * /oic/sec/role (Role) data type.
- * Derived from OIC Security Spec; see Spec for details.
- */
-struct OicSecRole
-{
-    // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    //TODO fill in with Role definition
-    uint8_t             id[ROLEID_LENGTH];
-};
-
-/**
- * /oic/sec/sacl (Signed Access Control List) data type.
- * Derived from OIC Security Spec; see Spec for details.
- */
-struct OicSecSacl
-{
-    // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    //TODO fill in from OIC Security Spec
-#if defined(_MSC_VER)
-    uint8_t unused; // VS doesn't like empty structs
-#endif
-};
 
 #if defined(__WITH_DTLS__) ||  defined(__WITH_TLS__)
 struct OicSecCrl

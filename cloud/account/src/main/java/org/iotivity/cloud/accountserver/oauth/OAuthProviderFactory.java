@@ -26,11 +26,17 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Set;
 
+import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.TokenTable;
 import org.iotivity.cloud.accountserver.db.UserTable;
 import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
 import org.iotivity.cloud.util.Log;
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 
 /**
  *
@@ -128,27 +134,31 @@ public class OAuthProviderFactory {
 
     /**
      * API for creating OAuth server object
-     * 
-     * @param authServer
-     *            authorization server
+     *
+     * @param authProviderName
+     *            Valid name of auth server.
      * @return OAuthServer - object to handle authorization
      * @throws Exception
      */
-    public boolean load(String authProvider) {
+    public boolean load(String authProviderName) {
 
-        String fileName = authProvider + ".jar";
-        File jarFile = new File(fileName);
+        File jarFile = new File(Constants.OAUTH_LIBRARIES_PATH + authProviderName + ".jar");
         URLClassLoader classLoader = null;
 
         try {
-            URL urls = new URL("jar:" + jarFile.toURI() + "!/");
+            URL jarUrl = new URL("jar:" + jarFile.toURI() + "!/");
+            URL[] urls = new URL[] { jarUrl, ClasspathHelper.forClass(this.getClass()) };
+            classLoader = new URLClassLoader(urls);
 
-            Log.d("urls: " + urls.toString());
+            String authProvider = this.getClass().getPackage().getName() + "." + authProviderName;
+            Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(urls)
+                    .setScanners(new SubTypesScanner(false)));
+            for (String type : reflections.getAllTypes())
+                if (type.equalsIgnoreCase(authProvider))
+                    authProvider = type;
 
-            classLoader = new URLClassLoader(new URL[] { urls });
             Class<?> authProviderClass = classLoader
-                    .loadClass(this.getClass().getPackage().getName() + "."
-                            + authProvider);
+                    .loadClass(authProvider);
 
             this.authProviderClass = authProviderClass;
             Object object = authProviderClass.newInstance();

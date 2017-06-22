@@ -408,7 +408,6 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
             {
                 // Format the response.  Note this requires some info about the request
                 response.requestHandle = entityHandlerRequest->requestHandle;
-                response.resourceHandle = entityHandlerRequest->resource;
                 response.ehResult = ehResult;
                 response.payload = (OCPayload*)(payload);
                 response.numSendVendorSpecificHeaderOptions = 0;
@@ -454,7 +453,7 @@ FILE* server_fopen(const char *path, const char *mode)
     }
 }
 
-void DisplayPinCB(char *pin, size_t pinSize, void *context)
+void OC_CALL DisplayPinCB(char *pin, size_t pinSize, void *context)
 {
     OC_UNUSED(context);
 
@@ -469,7 +468,7 @@ void DisplayPinCB(char *pin, size_t pinSize, void *context)
     OIC_LOG(INFO, TAG, "============================");
 }
 
-void ClosePinDisplayCB(void)
+void OC_CALL ClosePinDisplayCB(void)
 {
     OIC_LOG(INFO, TAG, "============================");
     OIC_LOG(INFO, TAG, "    PIN DISPLAY CLOSED.");

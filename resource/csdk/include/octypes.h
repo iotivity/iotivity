@@ -22,13 +22,12 @@
 /**
  * @file
  *
- * This file contains the definition, types and APIs for resource(s) be implemented.
+ * This file contains the definitions, types and APIs for resources to be implemented.
  */
 
 #ifndef OCTYPES_H_
 #define OCTYPES_H_
 
-#include "iotivity_config.h"
 #include "ocstackconfig.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -77,12 +76,6 @@ extern "C" {
 
 /** KeepAlive URI.*/
 #define OC_RSRVD_KEEPALIVE_URI                "/oic/ping"
-
-/** Introspection URI.*/
-#define OC_RSRVD_INTROSPECTION_URI            "/oic/introspection"
-
-/** Introspection payload URI.*/
-#define OC_RSRVD_INTROSPECTION_PAYLOAD_URI    "/oic/introspection/payload"
 
 /** Presence */
 
@@ -271,6 +264,9 @@ extern "C" {
 /** To represent priority.*/
 #define OC_RSRVD_PRIORITY               "pri"
 
+/** For resource instance ID.*/
+#define OC_RSRVD_INSTANCE_ID            "id"
+
 /**
  *  Platform.
  */
@@ -310,39 +306,52 @@ extern "C" {
 
 /** VID for the platform. */
 #define OC_RSRVD_VID                    "vid"
+
 /**
  *  Device.
  */
 
 /** Device ID.*/
-#define OC_RSRVD_DEVICE_ID              "di"
+#define OC_RSRVD_DEVICE_ID               "di"
 
 /** Device Name.*/
-#define OC_RSRVD_DEVICE_NAME            "n"
+#define OC_RSRVD_DEVICE_NAME             "n"
 
 /** Device specification version.*/
-#define OC_RSRVD_SPEC_VERSION           "icv"
+#define OC_RSRVD_SPEC_VERSION            "icv"
 
 /** Device data model.*/
-#define OC_RSRVD_DATA_MODEL_VERSION     "dmv"
+#define OC_RSRVD_DATA_MODEL_VERSION      "dmv"
 
-/** Device specification version.*/
-#define OC_SPEC_VERSION                 "ocf.1.1.0"
+/** Device description, localized */
+#define OC_RSRVD_DEVICE_DESCRIPTION      "ld"
 
-/** Integer value of spec version (OCF1.0 0b0000:1000:0000:0000).*/
-#define OC_SPEC_VERSION_VALUE           2048
+/** Device software version */
+#define OC_RSRVD_SOFTWARE_VERSION        "sv"
 
-/** Device Data Model version.*/
-#define OC_DATA_MODEL_VERSION           "ocf.res.1.1.0,ocf.sh.1.1.0"
+/** Device manufacturer name, localized */
+#define OC_RSRVD_DEVICE_MFG_NAME         "dmn"
+
+/** Device model number */
+#define OC_RSRVD_DEVICE_MODEL_NUM        "dmno"
 
 /** Protocol-Independent ID.*/
 #define OC_RSRVD_PROTOCOL_INDEPENDENT_ID "piid"
 
+/** Device specification version.*/
+#define OC_SPEC_VERSION                  "ocf.1.1.0"
+
+/** Integer value of spec version (OCF1.0 0b0000:1000:0000:0000).*/
+#define OC_SPEC_VERSION_VALUE            2048
+
+/** Device Data Model version.*/
+#define OC_DATA_MODEL_VERSION            "ocf.res.1.1.0,ocf.sh.1.1.0"
+
 /**
-*  Introspection.
-*/
-/** Name.*/
-#define OC_RSRVD_INTROSPECTION_NAME     "name"
+ *  Introspection.
+ */
+/** Name property name(n).*/
+#define OC_RSRVD_INTROSPECTION_NAME     "n"
 
 /** Value of name.*/
 #define OC_RSRVD_INTROSPECTION_NAME_VALUE "Introspection"
@@ -368,11 +377,8 @@ extern "C" {
 /** Version property value.*/
 #define OC_RSRVD_INTROSPECTION_VERSION_VALUE 1
 
-/** Introspection payload data property name.*/
-#define OC_RSRVD_INTROSPECTION_DATA_NAME  "data"
-
 /** Introspection persistent store name.*/
-#define OC_INTROSPECTION_FILE_NAME      "introspection.json"
+#define OC_INTROSPECTION_FILE_NAME      "introspection.dat"
 
 /**
  *  These provide backward compatibility - their use is deprecated.
@@ -639,17 +645,12 @@ extern "C" {
 #define OC_RSRVD_REDIRECT_URI             "redirecturi"
 
 #define OC_RSRVD_CERTIFICATE              "certificate"
+
 /**
- * Mark a parameter as unused. Used to prevent unused variable compiler warnings.
- * Used in three cases:
- * 1. in callbacks when one of the parameters are unused
- * 2. when due to code changes a functions parameter is no longer
- *    used but must be left in place for backward compatibility
- *    reasons.
- * 3. a variable is only used in the debug build variant and would
- *    give a build warning in release mode.
+ * TODO: Move these COAP defines to CoAP lib once approved.
  */
-#define OC_UNUSED(x) (void)(x)
+#define COAP_OPTION_ACCEPT_VERSION 2049
+#define COAP_OPTION_CONTENT_VERSION 2053
 
 /**
  * These enums (OCTransportAdapter and OCTransportFlags) must
@@ -983,7 +984,7 @@ typedef enum
  */
 typedef enum
 {
-    /** When none of the bits are set, the resource is non-discoverable &
+    /** When none of the bits are set, the resource is non-secure, non-discoverable &
      *  non-observable by the client.*/
     OC_RES_PROP_NONE = (0),
 
@@ -1002,6 +1003,9 @@ typedef enum
      * 'slow' signifies that responses from this resource can expect delays in
      *  processing its requests from clients.*/
     OC_SLOW          = (1 << 3),
+
+    /** When this bit is set, the resource supports access via non-secure endpoints. */
+    OC_NONSECURE     = (1 << 6),
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     /** When this bit is set, the resource is a secure resource.*/
@@ -1029,6 +1033,8 @@ typedef enum
     ,OC_MQ_BROKER        = (0)
 #endif
 } OCResourceProperty;
+
+#define OC_MASK_RESOURCE_SECURE    (OC_NONSECURE | OC_SECURE)
 
 /**
  * Transport Protocol IDs.
@@ -1127,6 +1133,7 @@ typedef enum
     OC_STACK_FORBIDDEN_REQ,          /** 403*/
     OC_STACK_INTERNAL_SERVER_ERROR,  /** 500*/
     OC_STACK_GATEWAY_TIMEOUT,        /** 504*/
+    OC_STACK_SERVICE_UNAVAILABLE,    /** 503*/
 
     /** ERROR in stack.*/
     OC_STACK_ERROR = 255
@@ -1261,7 +1268,7 @@ typedef struct OCHeaderOption
     /** pointer to its data.*/
     uint8_t optionData[MAX_HEADER_OPTION_DATA_LENGTH];
 
-#ifdef SUPPORTS_DEFAULT_CTOR
+#ifdef __cplusplus
     OCHeaderOption() = default;
     OCHeaderOption(OCTransportProtocolID pid,
                    uint16_t optId,
@@ -1278,7 +1285,7 @@ typedef struct OCHeaderOption
         memcpy(optionData, optData, optionLength);
         optionData[optionLength - 1] = '\0';
     }
-#endif
+#endif // __cplusplus
 } OCHeaderOption;
 
 /**
@@ -1429,7 +1436,11 @@ typedef enum
     /** The payload is an OCSecurityPayload */
     PAYLOAD_TYPE_SECURITY,
     /** The payload is an OCPresencePayload */
-    PAYLOAD_TYPE_PRESENCE
+    PAYLOAD_TYPE_PRESENCE,
+    /** The payload is an OCDiagnosticPayload */
+    PAYLOAD_TYPE_DIAGNOSTIC,
+    /** The payload is an OCIntrospectionPayload */
+    PAYLOAD_TYPE_INTROSPECTION
 } OCPayloadType;
 
 /**
@@ -1589,6 +1600,18 @@ typedef struct
 } OCPresencePayload;
 #endif
 
+typedef struct
+{
+    OCPayload base;
+    char* message;
+} OCDiagnosticPayload;
+
+typedef struct
+{
+    OCPayload base;
+    OCByteString cborPayload;
+} OCIntrospectionPayload;
+
 /**
  * Incoming requests handled by the server. Requests are passed in as a parameter to the
  * OCEntityHandler callback API.
@@ -1676,7 +1699,7 @@ typedef struct
     /** Request handle.*/
     OCRequestHandle requestHandle;
 
-    /** Resource handle.*/
+    /** Resource handle. (@deprecated: This parameter is not used.) */
     OCResourceHandle resourceHandle;
 
     /** Allow the entity handler to pass a result with the response.*/
@@ -1691,7 +1714,7 @@ typedef struct
     /** An array of the vendor specific header options the entity handler wishes to use in response.*/
     OCHeaderOption sendVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
 
-    /** URI of new resource that entity handler might create.*/
+    /** Resource path of new resource that entity handler might create.*/
     char resourceUri[MAX_URI_LENGTH];
 
     /** Server sets to true for persistent response buffer,false for non-persistent response buffer*/
@@ -1787,11 +1810,11 @@ typedef struct OCCallbackData
     /** A pointer to a function to delete the context when this callback is removed.*/
     OCClientContextDeleter cd;
 
-#ifdef SUPPORTS_DEFAULT_CTOR
+#ifdef __cplusplus
     OCCallbackData() = default;
     OCCallbackData(void* ctx, OCClientResponseHandler callback, OCClientContextDeleter deleter)
         :context(ctx), cb(callback), cd(deleter){}
-#endif
+#endif // __cplusplus
 } OCCallbackData;
 
 /**

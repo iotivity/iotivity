@@ -18,6 +18,14 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file NSConsumerServiceTest.cpp
+ *
+ * This file contains Notification consumer service test cases that involves network related methods.
+ * The test cases are excluded from the build. 
+ * They can be executed seperately (local running) from the path <iotivity>/out/linux/<target_os>/<target_arch>/service/notification/cpp-wrapper/unittest
+ */
+
 #include <gtest/gtest.h>
 #include <atomic>
 #include <functional>

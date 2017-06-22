@@ -27,6 +27,7 @@
 #ifndef OC_THREAD_H_
 #define OC_THREAD_H_
 
+#include "iotivity_commontypes.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -45,16 +46,6 @@ extern "C"
 typedef struct oc_mutex_internal *oc_mutex;
 typedef struct oc_cond_internal *oc_cond;
 typedef struct oc_thread_internal *oc_thread;
-
-/**
- * Enums for oc_cond_wait_for return values.
- */
-typedef enum
-{
-   OC_WAIT_SUCCESS = 0,    /**< Condition Signal. */
-   OC_WAIT_INVAL = -1,     /**< Invalid Condition. */
-   OC_WAIT_TIMEDOUT = -2   /**< Condition Timed Out. */
-} OCWaitResult_t;
 
 typedef enum
 {
@@ -109,6 +100,16 @@ OCThreadResult_t oc_thread_wait(oc_thread t);
  *
  */
 oc_mutex oc_mutex_new(void);
+
+/**
+ * Creates new mutex that supports recursion. Use oc_mutex_free to free the created mutex.
+ *
+ * @note The use of recursive mutex in IoTivity is discouraged. Please use it sporadically.
+ *
+ * @return  Reference to newly created mutex, otherwise NULL.
+ *
+ */
+oc_mutex oc_mutex_new_recursive(void);
 
 /**
  * Lock the mutex.

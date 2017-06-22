@@ -271,10 +271,6 @@ OCStackResult initDevConfResource(bool isSecured)
     OCStackResult res = OC_STACK_ERROR;
 
     OICStrcpy(g_ESDevConfResource.devName, sizeof(g_ESDevConfResource.devName), "");
-    OICStrcpy(g_ESDevConfResource.modelNumber, sizeof(g_ESDevConfResource.modelNumber), "");
-    OICStrcpy(g_ESDevConfResource.location, sizeof(g_ESDevConfResource.location), "");
-    OICStrcpy(g_ESDevConfResource.country, sizeof(g_ESDevConfResource.country), "");
-    OICStrcpy(g_ESDevConfResource.language, sizeof(g_ESDevConfResource.language), "");
 
     if (isSecured)
     {
@@ -311,7 +307,7 @@ void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* in
         }
 
         int cntRequest = 0;
-        for (int i = 0 ; i < NUM_CONNECT_TYPE ; ++i)
+        for (unsigned int i = 0 ; i < NUM_CONNECT_TYPE ; ++i)
         {
             g_ESEasySetupResource.connectRequest[i] = ES_CONNECT_NONE;
             connectRequest->connect[i] = ES_CONNECT_NONE;
@@ -527,40 +523,16 @@ void updateDevConfResource(OCRepPayload* input)
         OIC_LOG(DEBUG, ES_RH_TAG, "OICMalloc is failed");
         return;
     }
-    memset(devConfData->language, 0, OIC_STRING_MAX_VALUE);
-    memset(devConfData->country, 0, OIC_STRING_MAX_VALUE);
     devConfData->userdata = NULL;
-
-    char *location = NULL;
-    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_LOCATION, &location))
-    {
-        OICStrcpy(g_ESDevConfResource.location, sizeof(g_ESDevConfResource.location), location);
-        OICStrcpy(devConfData->location, sizeof(devConfData->location), location);
-        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESDevConfResource.location %s", g_ESDevConfResource.location);
-    }
-
-    char *country = NULL;
-    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_COUNTRY, &country))
-    {
-        OICStrcpy(g_ESDevConfResource.country, sizeof(g_ESDevConfResource.country), country);
-        OICStrcpy(devConfData->country, sizeof(devConfData->country), country);
-        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESDevConfResource.country %s", g_ESDevConfResource.country);
-    }
-
-    char *language = NULL;
-    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_LANGUAGE, &language))
-    {
-        OICStrcpy(g_ESDevConfResource.language, sizeof(g_ESDevConfResource.language), language);
-        OICStrcpy(devConfData->language, sizeof(devConfData->language), language);
-        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESDevConfResource.language %s", g_ESDevConfResource.language);
-    }
 
     if (gReadUserdataCb)
     {
         gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_DEVCONF, &devConfData->userdata);
     }
 
-    if (country || language)
+    // If a writable property in oic.r.devconf is added later,
+    // a condition for calling a resistered callback should be implemented also.
+    if( devConfData->userdata != NULL )
     {
         OIC_LOG(DEBUG, ES_RH_TAG, "Send DevConfRsrc Callback To ES");
 
@@ -625,7 +597,7 @@ OCRepPayload* constructResponseOfWiFiConf(char *interface)
 
         interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
 
-        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_INTERFACE, (char **)interfaces, interfacesDimensions);
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_INTERFACE, (const char **)interfaces, interfacesDimensions);
 
         size_t resourceTypesDimensions[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
         char **resourceTypes = (char **)OICMalloc(2 * sizeof(char*));
@@ -637,7 +609,7 @@ OCRepPayload* constructResponseOfWiFiConf(char *interface)
 
         resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_WIFICONF);
 
-        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_RES_TYPE, (char **)resourceTypes, resourceTypesDimensions);
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_RES_TYPE, (const char **)resourceTypes, resourceTypesDimensions);
     }
     else
     {
@@ -721,7 +693,7 @@ OCRepPayload* constructResponseOfCoapCloudConf(char *interface)
 
         interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
 
-        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_INTERFACE, (char **)interfaces, interfacesDimensions);
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_INTERFACE, (const char **)interfaces, interfacesDimensions);
 
         size_t resourceTypesDimensions[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
         char **resourceTypes = (char **)OICMalloc(2 * sizeof(char*));
@@ -733,7 +705,7 @@ OCRepPayload* constructResponseOfCoapCloudConf(char *interface)
 
         resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF);
 
-        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_RES_TYPE, (char **)resourceTypes, resourceTypesDimensions);
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_RES_TYPE, (const char **)resourceTypes, resourceTypesDimensions);
     }
     else
     {
@@ -803,7 +775,7 @@ OCRepPayload* constructResponseOfDevConf(char *interface)
 
         interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
 
-        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_INTERFACE, (char **)interfaces, interfacesDimensions);
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_INTERFACE, (const char **)interfaces, interfacesDimensions);
 
         size_t resourceTypesDimensions[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
         char **resourceTypes = (char **)OICMalloc(2 * sizeof(char*));
@@ -815,7 +787,7 @@ OCRepPayload* constructResponseOfDevConf(char *interface)
 
         resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_DEVCONF);
 
-        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_RES_TYPE, (char **)resourceTypes, resourceTypesDimensions);
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_RES_TYPE, (const char **)resourceTypes, resourceTypesDimensions);
     }
     else
     {
@@ -824,10 +796,6 @@ OCRepPayload* constructResponseOfDevConf(char *interface)
     }
 
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_DEVNAME, g_ESDevConfResource.devName);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_MODELNUMBER, g_ESDevConfResource.modelNumber);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LOCATION, g_ESDevConfResource.location);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LANGUAGE, g_ESDevConfResource.language);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_COUNTRY, g_ESDevConfResource.country);
 
     if (gWriteUserdataCb)
     {
@@ -1103,7 +1071,7 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
         interfaces[1] = OICStrdup(OC_RSRVD_INTERFACE_LL);
         interfaces[2] = OICStrdup(OC_RSRVD_INTERFACE_BATCH);
 
-        OCRepPayloadSetStringArray(repPayload, OC_RSRVD_ES_INTERFACE, (char **)interfaces, interfacesDimensions);
+        OCRepPayloadSetStringArray(repPayload, OC_RSRVD_ES_INTERFACE, (const char **)interfaces, interfacesDimensions);
 
         size_t resourceTypesDimensions[MAX_REP_ARRAY_DEPTH] = {2, 0, 0};
         char **resourceTypes = (char **)OICMalloc(2 * sizeof(char*));
@@ -1116,7 +1084,7 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
         resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_EASYSETUP);
         resourceTypes[1] = OICStrdup(OC_RSRVD_ES_RES_TYPE_COL);
 
-        OCRepPayloadSetStringArray(repPayload, OC_RSRVD_ES_RES_TYPE, (char **)resourceTypes, resourceTypesDimensions);
+        OCRepPayloadSetStringArray(repPayload, OC_RSRVD_ES_RES_TYPE, (const char **)resourceTypes, resourceTypesDimensions);
 
         OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_PROVSTATUS, g_ESEasySetupResource.status);
         OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_LAST_ERRORCODE, g_ESEasySetupResource.lastErrCode);
@@ -1577,7 +1545,6 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
 
         // Format the response.  Note this requires some info about the request
         response.requestHandle = entityHandlerRequest->requestHandle;
-        response.resourceHandle = entityHandlerRequest->resource;
         response.ehResult = ehRet;
         //response uses OCPaylod while all get,put methodes use OCRepPayload
         response.payload = (OCPayload*) (payload);
@@ -1629,10 +1596,6 @@ OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty)
 
     OICStrcpy(g_ESDevConfResource.devName, OIC_STRING_MAX_VALUE, (deviceProperty->DevConf).deviceName);
     OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "Device Name : %s", g_ESDevConfResource.devName);
-
-    OICStrcpy(g_ESDevConfResource.modelNumber, OIC_STRING_MAX_VALUE,
-                                                            (deviceProperty->DevConf).modelNumber);
-    OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "Model Number : %s", g_ESDevConfResource.modelNumber);
 
     if (OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESWiFiConfResource.handle, OC_HIGH_QOS))
     {

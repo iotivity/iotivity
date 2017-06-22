@@ -31,20 +31,15 @@ with_ra = samples_env.get('WITH_RA')
 ######################################################################
 with_upstream_libcoap = samples_env.get('WITH_UPSTREAM_LIBCOAP')
 if with_upstream_libcoap == '1':
-    # For bring up purposes only, we manually copy the forked version to where
-    # the unforked version is downloaded.
-    samples_env.AppendUnique(CPPPATH=['#extlibs/libcoap/libcoap/include'])
+    samples_env.AppendUnique(CPPPATH=['#/extlibs/libcoap/libcoap/include'])
 else:
-    # For bring up purposes only, the forked version will live here.
-    samples_env.AppendUnique(
-        CPPPATH=['../../../../../connectivity/lib/libcoap-4.1.1/include'])
+    samples_env.AppendUnique(CPPPATH=['#/resource/csdk/connectivity/lib/libcoap-4.1.1/include'])
 
 samples_env.PrependUnique(CPPPATH=[
     '../../../../logger/include',
     '../../../../include',
     '../../../../stack/include',
     '../../../../connectivity/api',
-    '../../../../connectivity/lib/libcoap-4.1.1/include/coap',
     '../../../../security/include',
     '../../../../../../extlibs/boost/boost',
     '../../../../../oc_logger/include',
@@ -56,8 +51,15 @@ if 'g++' in compiler:
 
 samples_env.AppendUnique(RPATH=[samples_env.get('BUILD_DIR')])
 
-samples_env.PrependUnique(
-    LIBS=['octbstack', 'ocsrm', 'connectivity_abstraction', 'coap'])
+samples_env.PrependUnique(LIBS=['coap'])
+
+if target_os not in ['msys_nt', 'windows']:
+    samples_env.PrependUnique(LIBS=['connectivity_abstraction'])
+
+samples_env.PrependUnique(LIBS=['octbstack', 'ocsrm'])
+
+if target_os in ['darwin']:
+    samples_env.AppendUnique(LIBS=['routingmanager'])
 
 if target_os not in ['arduino', 'windows', 'darwin', 'ios', 'msys_nt']:
     samples_env.AppendUnique(LIBS=['rt'])
@@ -68,8 +70,6 @@ if target_os not in ['windows']:
 if samples_env.get('SECURED') == '1':
     samples_env.AppendUnique(LIBS=['mbedtls'])
 
-samples_env.AppendUnique(LIBS = ['timer'])
-
 samples_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 src_dir = samples_env.get('SRC_DIR')
@@ -77,13 +77,11 @@ sample_src_dir = src_dir + '/resource/csdk/stack/samples/linux/SimpleClientServe
 sample_build_dir = samples_env.get(
     'BUILD_DIR') + '/resource/csdk/stack/samples/linux/SimpleClientServer/'
 
+introspectionDat = samples_env.Install(
+    sample_build_dir, sample_src_dir + 'introspection.dat')
 
-introspectionJson = samples_env.Install(sample_build_dir,
-                                        sample_src_dir + 'introspection.json')
-
-deviceProperties = samples_env.Install(sample_build_dir,
-                                       sample_src_dir + 'device_properties.dat')
-
+deviceProperties = samples_env.Install(
+    sample_build_dir, sample_src_dir + 'device_properties.dat')
 
 ######################################################################
 # Source files and Targets
@@ -106,14 +104,19 @@ ocserverbasicops = samples_env.Program(
 occlientbasicops = samples_env.Program(
     'occlientbasicops', ['occlientbasicops.cpp', 'common.cpp'])
 if with_ra:
-    ocremoteaccessclient = samples_env.Program('ocremoteaccessclient',
-                                               ['ocremoteaccessclient.cpp', 'common.cpp'])
+    ocremoteaccessclient = samples_env.Program(
+        'ocremoteaccessclient', ['ocremoteaccessclient.cpp', 'common.cpp'])
 
-list_of_samples = [ocserver, occlient,
-                   ocservercoll, occlientcoll,
-                   ocserverbasicops, occlientbasicops,
-                   ocserverslow, occlientslow
-                   ]
+list_of_samples = [
+    ocserver,
+    occlient,
+    ocservercoll,
+    occlientcoll,
+    ocserverbasicops,
+    occlientbasicops,
+    ocserverslow,
+    occlientslow
+]
 if with_ra:
     list_of_samples.append(ocremoteaccessclient)
 Alias("samples", list_of_samples)

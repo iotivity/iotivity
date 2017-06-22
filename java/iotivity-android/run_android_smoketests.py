@@ -68,7 +68,7 @@ def start_avd(avd_name, console_port):
     Keyword arguments:
     avd_name -- the name of the created android virtual device
     console_port -- the port number that will attempt to be used
-                    by the when starting the avd 
+                    by the when starting the avd
     '''
     command = 'emulator -avd ' + avd_name + ' -port ' + console_port + ' -wipe-data -no-boot-anim -no-window'
     subprocess.Popen([command], shell=True)
@@ -121,7 +121,7 @@ def build_smoketests():
     '''
     Use gradlew to build the android smoke tests
     '''
-    os.environ['ANDROID_NDK_HOME'] = os.path.abspath(os.getcwd() + '/../../extlibs/android/ndk/android-ndk-r10d')
+    os.environ['ANDROID_NDK_HOME'] = os.path.abspath(os.getcwd() + '/../../extlibs/android/ndk/android-ndk-r10e')
     command = './gradlew assembleAndroidTest'
     subprocess.Popen([command], shell=True).wait()
 
@@ -158,7 +158,7 @@ def kill_avd(console_port):
 
 def create_avd(avd_name, target, abi):
     '''
-    Create a new android virtual device 
+    Create a new android virtual device
 
     Keyword arguments:
     avd_name -- the name of the created avd
@@ -200,16 +200,16 @@ def start_android_and_run_tests(target, abi):
     '''
     avalible_port = find_avalible_console_port()
     avd_name = 'smoke_test_avd_' + avalible_port
-    
+
     create_avd(avd_name, target, abi)
-    
+
     start_avd(avd_name, avalible_port)
     wait_for_avd_boot(avalible_port)
-    
+
     build_smoketests();
     install_smoketests(avalible_port)
     run_smoketests(avalible_port)
-    
+
     kill_avd(avalible_port)
     delete_avd(avd_name)
 
@@ -239,5 +239,3 @@ def main(argv):
 
 if __name__ == "__main__":
    main(sys.argv[1:])
-
-

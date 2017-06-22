@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "iotivity_config.h"
 #include "CoapHttpParser.h"
 #include "oic_malloc.h"
 #include "oic_string.h"

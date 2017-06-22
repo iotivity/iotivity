@@ -28,11 +28,13 @@
 #include "logger.h"
 #include "pmtypes.h"
 #include "ownershiptransfermanager.h"
+#include "ocstackinternal.h"
 #include "mbedtls/ssl_ciphersuites.h"
 
 #define TAG "OIC_OXM_JustWorks"
 
-OCStackResult CreateJustWorksSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **payload, size_t *size)
+OCStackResult CreateJustWorksSelectOxmPayload(OTMContext_t *otmCtx,
+    uint8_t **payload, size_t *size)
 {
     if (!otmCtx || !otmCtx->selectedDeviceInfo || !payload || *payload || !size)
     {
@@ -43,10 +45,16 @@ OCStackResult CreateJustWorksSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **pa
     *payload = NULL;
     *size = 0;
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[DOXM_OXMSEL] = true;
+
+    return DoxmToCBORPayloadPartial(otmCtx->selectedDeviceInfo->doxm, payload,
+        size, propertiesToInclude);
 }
 
-OCStackResult CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
+OCStackResult CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx,
+    uint8_t **payload, size_t *size)
 {
     if (!otmCtx || !otmCtx->selectedDeviceInfo || !payload || *payload || !size)
     {
@@ -65,7 +73,12 @@ OCStackResult CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t 
     *payload = NULL;
     *size = 0;
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[DOXM_DEVOWNERUUID] = true;
+
+    return DoxmToCBORPayloadPartial(otmCtx->selectedDeviceInfo->doxm, payload,
+        size, propertiesToInclude);
 }
 
 OCStackResult LoadSecretJustWorksCallback(OTMContext_t* UNUSED_PARAM)
@@ -108,26 +121,22 @@ OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
     }
     OIC_LOG(INFO, TAG, "TLS_ECDH_anon_WITH_AES_128_CBC_SHA256 cipher suite selected.");
 
-    OCProvisionDev_t *selDevInfo = otmCtx->selectedDeviceInfo;
     CAEndpoint_t endpoint;
-    memcpy(&endpoint, &selDevInfo->endpoint, sizeof(CAEndpoint_t));
+    OCProvisionDev_t *selDevInfo = otmCtx->selectedDeviceInfo;
+    CopyDevAddrToEndpoint(&selDevInfo->endpoint, &endpoint);
 
-    if(CA_ADAPTER_IP == endpoint.adapter)
+    if (CA_ADAPTER_IP == endpoint.adapter)
     {
         endpoint.port = selDevInfo->securePort;
-        caresult = CAInitiateHandshake(&endpoint);
     }
-    else if (CA_ADAPTER_GATT_BTLE == endpoint.adapter)
-    {
-        caresult = CAInitiateHandshake(&endpoint);
-    }
-#ifdef __WITH_TLS__
-    else
+#ifdef WITH_TCP
+    else if (CA_ADAPTER_TCP == endpoint.adapter)
     {
         endpoint.port = selDevInfo->tcpPort;
-        caresult = CAinitiateSslHandshake(&endpoint);
     }
 #endif
+
+    caresult = CAInitiateHandshake(&endpoint);
     if (CA_STATUS_OK != caresult)
     {
         OIC_LOG_V(ERROR, TAG, "DTLS/TLS handshake failure.");
@@ -150,6 +159,11 @@ OCStackResult CreateMVJustWorksSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **
     *cborPayload = NULL;
     *cborSize = 0;
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, cborPayload, cborSize, true);
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[DOXM_OXMSEL] = true;
+
+    return DoxmToCBORPayloadPartial(otmCtx->selectedDeviceInfo->doxm, cborPayload,
+        cborSize, propertiesToInclude);
 }
 

@@ -51,6 +51,7 @@ typedef struct SRMRequestContext
     const CARequestInfo_t   *requestInfo;                       // ptr to info for this request
     bool                    secureChannel;                      // Was request recv'd over secure channel?
     bool                    slowResponseSent;                   // Is a full response still needed?
+    OicSecDiscoverable_t    discoverable;                       // Is resource discoverable?
     SubjectIdentityType_t   subjectIdType;                      // The type of Subject ID in this
                                                                 // request.
     OicUuid_t               subjectUuid;                        // The UUID of the Subject (valid
@@ -134,6 +135,17 @@ bool SRMIsSecurityResourceURI(const char* uri);
  * @return  SVR type (note that "NOT_A_SVR_RESOURCE" is returned if not a SVR)
  */
 OicSecSvrType_t GetSvrTypeFromUri(const char* uri);
+
+extern const OicSecRole_t EMPTY_ROLE;
+
+/**
+ * Determine if a role is non-empty.
+ *
+ * @param[in]  role     Role to check
+ *
+ * @return true if role is non-empty, false if role is empty
+ */
+bool IsNonEmptyRole(const OicSecRole_t *role);
 
 #ifdef __cplusplus
 }

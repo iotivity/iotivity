@@ -634,7 +634,10 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage message)
     if (!fid_extraInfo)
     {
         NS_LOGE ("Failed to get mExtraInfo for Message");
-        delete ocRepresentation;
+        if (ocRepresentation)
+        {
+            delete ocRepresentation;
+        }
         return NULL;
     }
     NS_LOGD ("setting extraInfo field");

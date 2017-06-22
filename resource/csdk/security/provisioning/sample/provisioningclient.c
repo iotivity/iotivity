@@ -37,6 +37,10 @@
 #include "srmutility.h"
 #include "pmtypes.h"
 #include "oxmverifycommon.h"
+#include "mbedtls/config.h"
+#include "mbedtls/pem.h"
+#include "mbedtls/x509_csr.h"
+#include "occertutility.h"
 
 #ifdef _MSC_VER
 #include <io.h>
@@ -66,6 +70,7 @@ extern "C"
 #define _33_PROVIS_DP_              33
 #define _34_CHECK_LINK_STATUS_      34
 #define _35_SAVE_ACL_               35
+#define _36_PROVIS_CERT_            36
 #define _40_UNLINK_PAIR_DEVS_       40
 #define _50_REMOVE_SELEC_DEV_       50
 #define _51_REMOVE_DEV_WITH_UUID_   51
@@ -73,6 +78,7 @@ extern "C"
 #define _53_RESET_SVR_DB_           53
 #define _60_GET_CRED_               60
 #define _61_GET_ACL_                61
+#define _62_GET_CSR_                62
 #ifdef MULTIPLE_OWNER
 #define _70_MOT_CHANGE_MOM_         70
 #define _71_MOT_PROV_PRECONF_PIN_   71
@@ -80,8 +86,6 @@ extern "C"
 #endif //MULTIPLE_OWNER
 #define _80_SELECT_PROTOCOL_        80
 #define _81_SELECT_VERIF_METHOD_    81
-#define _91_SELECT_INTROSPECTION_METHOD_    91
-#define _92_SELECT_INTROSPECTION_PAYLOAD_METHOD_    92
 #define _99_EXIT_PRVN_CLT_          99
 
 #define ACL_RESRC_MAX_NUM   16
@@ -101,6 +105,9 @@ static const OicSecPrm_t  SUPPORTED_PRMS[1] =
     PRM_PRE_CONFIGURED,
 };
 
+static char* TEST_CERT_NOT_BEFORE = "20170101000000"; // Not before field for certificates, in format YYYYMMDDhhmmss
+static char* TEST_CERT_NOT_AFTER = "20270101000000";  // + ten years
+
 // |g_ctx| means provision manager application context and
 // the following, includes |un/own_list|, could be variables, which |g_ctx| has,
 // for accessing all function(s) for these, they are declared on global domain
@@ -115,8 +122,13 @@ static int g_unown_cnt;
 static OCProvisionDev_t* g_mot_enable_list;
 static int g_mot_enable_cnt;
 #endif //MULTIPLE_OWNER
+char* g_caKeyPem;   /* Test CA private key */
+char* g_caCertPem;  /* Test CA certificate */
+uint16_t g_caCredId = 0;   /* ID of CA's OCF identity cert */
+char* g_csr;    /* Certificate signing request from device */
 
-static bool g_doneCB;
+static bool g_doneCB;    /* Set to true by the callback to indicate it completed. */
+static bool g_successCB; /* Set to true by the callback to indicate success. */
 #ifdef __WITH_TLS__
 static int secure_protocol = 1;
 static void setDevProtocol(OCProvisionDev_t* dev_lst);
@@ -133,6 +145,11 @@ static void printUuid(const OicUuid_t*);
 static FILE* fopen_prvnMng(const char*, const char*);
 static int waitCallbackRet(void);
 static int selectTwoDiffNum(int*, int*, const int, const char*);
+
+/* At a few places in this file, warning 4028 is incorrectly produced, disable it for the whole file. */
+#ifdef _MSC_VER
+#pragma warning( disable : 4028)
+#endif
 
 // callback function(s) for provisioning client using C-level provisioning API
 static void ownershipTransferCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
@@ -168,11 +185,30 @@ static void provisionCredCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, 
     if(!hasError)
     {
         OIC_LOG_V(INFO, TAG, "Provision Credential SUCCEEDED - ctx: %s", (char*) ctx);
+        g_successCB = true;
     }
     else
     {
         OIC_LOG_V(ERROR, TAG, "Provision Credential FAILED - ctx: %s", (char*) ctx);
         printResultList((const OCProvisionResult_t*) arr, nOfRes);
+        g_successCB = false;
+    }
+    g_doneCB = true;
+}
+
+/* Function of type OCProvisionResultCB from \resource\csdk\security\provisioning\include\pmtypes.h */
+void provisionTrustChainCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+{
+    if (!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "Provision Credential SUCCEEDED - ctx: %s", (char*)ctx);
+        g_successCB = true;
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "Provision Credential FAILED - ctx: %s", (char*)ctx);
+        printResultList((const OCProvisionResult_t*)arr, nOfRes);
+        g_successCB = false;
     }
     g_doneCB = true;
 }
@@ -219,7 +255,139 @@ static void getAclCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool ha
     g_doneCB = true;
 }
 
-static void provisionDPCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void getCsrCB(void* ctx, size_t nOfRes, OCPMGetCsrResult_t* arr, bool hasError)
+{
+    if (!hasError)
+    {
+        size_t i;
+        mbedtls_x509_csr csr;
+        OIC_LOG_V(INFO, TAG, "getCsrCB SUCCEEDED - ctx: %s", (char*)ctx);
+        for (i = 0; i < nOfRes; i++)
+        {
+            char pemBuffer[2048] = { 0 };
+            char infoBuffer[2048] = { 0 };
+            size_t olen;
+            int ret;
+
+            if (arr[i].encoding == OIC_ENCODING_DER)
+            {
+                ret = mbedtls_pem_write_buffer("-----BEGIN CERTIFICATE REQUEST-----",
+                    "-----END CERTIFICATE REQUEST-----",
+                    arr[i].csr,
+                    arr[i].csrLen,
+                    (unsigned char *)pemBuffer,
+                    sizeof(pemBuffer),
+                    &olen);
+                if (ret < 0)
+                {
+                    OIC_LOG_V(ERROR, TAG, "Couldn't convert CSR into PEM: %d", ret);
+                    pemBuffer[0] = '\0';
+                }
+            }
+            else
+            {
+                OICStrcpyPartial(pemBuffer, sizeof(pemBuffer), (const char *)arr[i].csr, arr[i].csrLen);
+            }
+
+            mbedtls_x509_csr_init(&csr);
+            ret = mbedtls_x509_csr_parse_der(&csr, arr[i].csr, arr[i].csrLen);
+            if (ret < 0)
+            {
+                OIC_LOG_V(ERROR, TAG, "Couldn't parse CSR: %d", ret);
+                infoBuffer[0] = '\0';
+            }
+            else
+            {
+                ret = mbedtls_x509_csr_info(infoBuffer, sizeof(infoBuffer), "", &csr);
+                if (ret < 0)
+                {
+                    OIC_LOG_V(ERROR, TAG, "Couldn't get CSR info buffer: %d", ret);
+                    infoBuffer[0] = '\0';
+                }
+            }
+            mbedtls_x509_csr_free(&csr);
+
+            OIC_LOG(INFO, TAG, "getCsrCB success");
+            // OIC_LOG_V truncates strings, and the entirety of the CSR PEM gets cut off if we use it
+            printf("getCsrCB: csr[%" PRIuPTR "]:\n%s\n", i, pemBuffer);
+            printf("getCsrCB: csr info[%" PRIuPTR "]:\n%s\n", i, infoBuffer);
+        }
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "getCsrCB FAILED - ctx: %s", (char*)ctx);
+
+        if (!arr || (0 == nOfRes))
+        {
+            printf("     Device List is Empty..\n\n");
+        }
+        else
+        {
+            size_t lst_cnt;
+            for (lst_cnt = 0; nOfRes > lst_cnt; ++lst_cnt)
+            {
+                printf("     [%" PRIuPTR "] ", lst_cnt + 1);
+                printUuid((const OicUuid_t*)&arr[lst_cnt].deviceId);
+                printf(" - result: %d\n", arr[lst_cnt].res);
+            }
+            printf("\n");
+        }
+    }
+    g_doneCB = true;
+}
+
+static void getCsrForCertProvCB(void* ctx, size_t nOfRes, OCPMGetCsrResult_t* arr, bool hasError)
+{
+    g_successCB = false;
+
+    if (!hasError)
+    {
+        if (nOfRes != 1)
+        {
+            OIC_LOG_V(ERROR, TAG, "getCsrForCertProvCB FAILED - ctx: %s", (char*)ctx);
+            goto exit;
+        }
+
+        if (arr[0].encoding == OIC_ENCODING_DER)
+        {
+            OCStackResult res = OCConvertDerCSRToPem((char*)arr[0].csr, arr[0].csrLen, &g_csr);
+            if (res != OC_STACK_OK)
+            {
+                OIC_LOG_V(ERROR, TAG, "getCsrForCertProvCB FAILED (CSR re-encoding failed) - error: %d, ctx: %s", res, (char*)ctx);
+                goto exit;
+            }
+            g_successCB = true;
+        }
+        else if(arr[0].encoding == OIC_ENCODING_PEM)
+        {
+            g_csr = (char*)OICCalloc(1, arr[0].csrLen);
+            if (g_csr == NULL)
+            {
+                OIC_LOG_V(ERROR, TAG, "getCsrForCertProvCB FAILED (memory allocation) - ctx: %s", (char*)ctx);
+                goto exit;
+            }
+
+            memcpy(g_csr, arr[0].csr, arr[0].csrLen);
+
+            OIC_LOG(INFO, TAG, "getCsrForCertProvCB success");
+            g_successCB = true;
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, TAG, "getCsrForCertProvCB FAILED (unknown encoding) - ctx: %s", (char*)ctx);
+            goto exit;
+        }
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "getCsrForCertProvCB FAILED - ctx: %s", (char*)ctx);
+    }
+
+exit:
+    g_doneCB = true;
+}
+
+static void provisionDPCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -291,7 +459,7 @@ static void updateDoxmForMOTCB(void* ctx, size_t nOfRes, OCProvisionResult_t* ar
 }
 #endif //MULTIPLE_OWNER
 
-static void inputPinCB(OicUuid_t deviceId, char *pin, size_t len, void *context)
+static void OC_CALL inputPinCB(OicUuid_t deviceId, char *pin, size_t len, void *context)
 {
     OC_UNUSED(deviceId);
     OC_UNUSED(context);
@@ -336,7 +504,7 @@ static int initProvisionClient(void)
         return -1;
     }
 
-    if (access(PRVN_DB_FILE_NAME, F_OK) != -1)
+    if (access(PRVN_DB_FILE_NAME, F_OK) == 0)
     {
         printf("************************************************************\n");
         printf("************Provisioning DB file already exists.************\n");
@@ -697,6 +865,345 @@ static int provisionCred(void)
     return 0;
 }
 
+/*
+ *   Initialize the provisioning client for certificate provisioning.
+ *   This function:
+ *   1. Generates a root key pair for a CA.
+ *   2. Generates a self-signed root certificate for the CA public key.
+ *   3. Saves this root as a trust anchor locally.
+ *   4. Generate and store an IoTivity key and cert (issued from the CA root cert).
+ *      This is an EE cert the CA/OBT will use in DTLS.
+ *
+ *   The CA's key and cert are written to g_caKeyPem and g_caCertPem (resp.).
+ */
+static int setupCA()
+{
+    char* publicKey = NULL;
+    size_t publicKeyLen = 0;
+    size_t caKeyLen = 0;
+    char* serial = NULL;
+    size_t serialLen = 0;
+    size_t caCertLen = 0;
+    char* idPublicKey = NULL;
+    char* idKey = NULL;
+    char* idCert = NULL;
+    size_t idCertLen = 0;
+    size_t idKeyLen = 0;
+
+    if (g_caCredId == 0)
+    {
+        printf("Setting up CA for certificate provisioning\n");
+    }
+    else
+    {
+        printf("Skipping CA setup, already done\n");
+        return 0;
+    }
+
+    /* Create CA keypair, serial number */
+    OCStackResult res = OCGenerateKeyPair(&publicKey, &publicKeyLen, &g_caKeyPem, &caKeyLen);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCGenerateKeyPair failed, error: %d", res);
+        goto exit;
+    }
+
+    res = OCGenerateRandomSerialNumber(&serial, &serialLen);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCGenerateRandomSerialNumber failed, error: %d", res);
+        goto exit;
+    }
+
+    /* Create a CA certificate */
+    res = OCGenerateCACertificate(
+        "C=US, O=Open Connectivity Foundation, CN=IoTivity test code CA",  // subject
+        publicKey,
+        NULL,               // Issuer private key is null
+        g_caKeyPem,         // use CA's own key to create self-signed cert
+        serial,
+        TEST_CERT_NOT_BEFORE,
+        TEST_CERT_NOT_AFTER,
+        &g_caCertPem,
+        &caCertLen);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCGenerateCACertificate failed, error: %d", res);
+        goto exit;
+    }
+
+    /* Set our own trust anchor so that we trust certs we've issued. */
+    res = OCSaveTrustCertChain((uint8_t*) g_caCertPem, caCertLen, OIC_ENCODING_PEM, &g_caCredId);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCSaveTrustCertChain error: %d", res);
+        goto exit;
+    }
+
+    /* Create identity certificate for use by the CA. */
+    res = OCGenerateKeyPair(&idPublicKey, &publicKeyLen, &idKey, &idKeyLen);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCGenerateKeyPair failed, error: %d", res);
+        goto exit;
+    }
+
+    res = OCGenerateRandomSerialNumber(&serial, &serialLen);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCGenerateRandomSerialNumber failed, error: %d", res);
+        goto exit;
+    }
+
+    OCUUIdentity deviceId = { 0 };
+    res = OCGetDeviceId(&deviceId);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to get own UUID, error: %d", res);
+        goto exit;
+    }
+
+    OicUuid_t uuid = { 0 };
+    memcpy(uuid.id, deviceId.id, sizeof(uuid.id));
+
+    res = OCGenerateIdentityCertificate(
+        &uuid,
+        idPublicKey,
+        g_caCertPem,
+        g_caKeyPem,
+        serial,
+        TEST_CERT_NOT_BEFORE,
+        TEST_CERT_NOT_AFTER,
+        &idCert,
+        &idCertLen);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to create identity cert for CA, error: %d", res);
+        goto exit;
+    }
+
+    uint16_t idCertCredId = 0;
+    res = OCSaveOwnCertChain(idCert, idKey, &idCertCredId);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to save CA's identity cert & key, error: %d", res);
+        goto exit;
+    }
+
+exit:
+    OICFree(publicKey);
+    OICFree(serial);
+    OICFree(idPublicKey);
+    if (idKey != NULL)
+    {
+        OICClearMemory(idKey, idKeyLen);
+        OICFree(idKey);
+    }
+    OICFree(idCert);
+
+    if (res != OC_STACK_OK)
+    {
+        return -1;
+    }
+
+    return 0;
+}
+
+/*
+ * Create an identity certificate for a device, based on the information in its CSR.
+ * Assumes the csr has already been validated wtih OCVerifyCSRSignature.
+ */
+static int createIdentityCertFromCSR(const char* caKeyPem, const char* caCertPem, char* csr,
+    char** deviceCert)
+{
+    char* publicKey = NULL;
+    char* serial = NULL;
+    size_t serialLen;
+    OicUuid_t uuid = { 0 };
+    OCStackResult res = OC_STACK_ERROR;
+
+    res = OCGetUuidFromCSR(csr, &uuid);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to get UUID from CSR, error: %d", res);
+        goto exit;
+    }
+    /* Note: a real OBT must make sure the UUID isn't already in use on the network. */
+
+    res = OCGetPublicKeyFromCSR(csr, &publicKey);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to get public key from CSR, error: %d", res);
+        goto exit;
+    }
+
+    res = OCGenerateRandomSerialNumber(&serial, &serialLen);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCGenerateRandomSerialNumber failed, error: %d", res);
+        goto exit;
+    }
+
+    size_t deviceCertLen;
+    res = OCGenerateIdentityCertificate(
+            &uuid,
+            publicKey,
+            caCertPem,
+            caKeyPem,
+            serial,
+            TEST_CERT_NOT_BEFORE,
+            TEST_CERT_NOT_AFTER,
+            deviceCert,
+            &deviceCertLen);
+
+    if(res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCGenerateIdentityCertificate failed, error: %d", res);
+        goto exit;
+    }
+
+exit:
+    OICFree(publicKey);
+    OICFree(serial);
+
+    if (res != OC_STACK_OK)
+    {
+        return -1;
+    }
+
+    return 0;
+}
+
+static int provisionCert(void)
+{
+    // make sure we own at least one device to provision
+    if (!g_own_list || g_own_cnt == 0)
+    {
+        printf("   > Owned Device List, to Provision Credentials, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for provisioning certificate
+    int dev_num = 0;
+    for (; ; )
+    {
+        printf("   > Enter Device Number, for certificate provisioning: ");
+        for (int ret = 0; 1 != ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for (; 0x20 <= getchar(); );  // for removing overflow garbages
+                                          // '0x20<=code' is character region
+        }
+        if (0<dev_num && g_own_cnt >= dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    OCProvisionDev_t* targetDevice = getDevInst((const OCProvisionDev_t*)g_own_list, dev_num);
+    if (targetDevice == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Error, invalid device %d");
+        return -1;
+    }
+
+    // Install the CA trust anchor
+    if (setupCA() != 0)
+    {
+        printf("     Failed to setup CA\n");
+        return -1;
+    }
+
+    // Provision the CA root cert to the target device
+    printf("   > Saving root certificate (trust anchor) to selected device..\n");
+    g_doneCB = false;
+    OicSecCredType_t type = SIGNED_ASYMMETRIC_KEY;
+
+    OCStackResult rst = OCProvisionTrustCertChain((void*)g_ctx, type, g_caCredId, targetDevice, (OCProvisionResultCB)&provisionTrustChainCB);
+    if (OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCProvisionTrustCertChain returned error: %d", rst);
+        return -1;
+    }
+
+    if (waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCProvisionTrustCertChain callback error");
+        return -1;
+    }
+    if (!g_successCB)
+    {
+        return -1;
+    }
+
+    // Request a CSR from the device, check the CSR signature
+    printf("   > Getting CSR from device..\n");
+    g_doneCB = false;
+    rst = OCGetCSRResource((void*)g_ctx, targetDevice, getCsrForCertProvCB);
+    if (OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCGetCSRResource API error: %d", rst);
+        return -1;
+    }
+    if (waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCGetCSRResource callback error");
+        return -1;
+    }
+    if (!g_successCB)
+    {
+        return -1;
+    }
+
+    rst = OCVerifyCSRSignature(g_csr);
+    if (OC_STACK_OK != rst)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to validate CSR signature");
+        OICFreeAndSetToNull((void**)&g_csr);
+        return -1;
+    }
+
+    printf("   > Creating a certificate for the device..\n");
+    char* deviceCert;
+    int ret = createIdentityCertFromCSR(g_caKeyPem, g_caCertPem, g_csr, &deviceCert);
+    OICFreeAndSetToNull((void**)&g_csr);
+    if (ret != 0)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to generate certificate");
+        OICFree(deviceCert);
+        return -1;
+    }
+
+    //Provision the new cert
+    printf("   > Provisioning certificate credential to selected device..\n");
+    g_doneCB = false;
+    rst = OCProvisionCertificate((void *)g_ctx, targetDevice, deviceCert, provisionCredCB);
+    if (OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCProvisionCertificate returned error: %d", rst);
+        OICFree(deviceCert);
+        return -1;
+    }
+    if (waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCProvisionCertificate callback error");
+        OICFree(deviceCert);
+        return -1;
+    }
+    if (!g_successCB)
+    {
+        OICFree(deviceCert);
+        return -1;
+    }
+
+    printf("   > Provisioned certificate crendentials\n");
+    OICFree(deviceCert);
+
+    return 0;
+}
+
 static int provisionAcl(void)
 {
     // check |own_list| for provisioning access control list
@@ -839,7 +1346,7 @@ static int provisionDirectPairing(void)
     printf("   Atempt Direct-Pairing Provisioning (PIN : [%s])..\n", (char*)pconf.pin.val);
     OCStackResult rst = OCProvisionDirectPairing((void*) g_ctx,
                                        getDevInst((const OCProvisionDev_t*) g_own_list, dev_num),
-                                       &pconf, provisionDPCB);
+                                       &pconf, (OCProvisionResultCB)provisionDPCB);
     if(OC_STACK_OK != rst)
     {
         OIC_LOG_V(ERROR, TAG, "OCProvisionDirectPairing API error: %d", rst);
@@ -1105,16 +1612,17 @@ static int getAcl(void)
         OIC_LOG(ERROR, TAG, "getDevInst: device instance empty");
         goto PVACL_ERROR;
     }
-    OCStackResult rst = OCGetACLResource((void*) g_ctx, dev, getAclCB);
+    // IOT-2219 add support for OIC 1.1 /oic/sec/acl URI
+    OCStackResult rst = OCGetACL2Resource((void*) g_ctx, dev, getAclCB);
     if(OC_STACK_OK != rst)
     {
-        OIC_LOG_V(ERROR, TAG, "OCGetACLResource API error: %d", rst);
+        OIC_LOG_V(ERROR, TAG, "OCGetACL2Resource API error: %d", rst);
 
         goto PVACL_ERROR;
     }
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCGetACLResource callback error");
+        OIC_LOG(ERROR, TAG, "OCGetACL2Resource callback error");
         goto PVACL_ERROR;
     }
 
@@ -1124,6 +1632,66 @@ static int getAcl(void)
     return 0;
 
 PVACL_ERROR:
+    return -1;
+}
+
+static int getCsr(void)
+{
+    // check |own_list| for retrieving CSR
+    if(!g_own_list || 1>g_own_cnt)
+    {
+        printf("   > Owned Device List, to retrieve CSR, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for retrieving CSR
+    int dev_num = 0;
+    for( ; ; )
+    {
+        printf("   > Enter Device Number, for retrieving CSR: ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(0<dev_num && g_own_cnt>=dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    // call |getDevInst| API
+    // calling this API with callback actually acts like blocking
+    // for error checking, the return value saved and printed
+    g_doneCB = false;
+    OCProvisionDev_t* dev = getDevInst((const OCProvisionDev_t*) g_own_list, dev_num);
+    if(!dev)
+    {
+        OIC_LOG(ERROR, TAG, "getDevInst: device instance empty");
+        goto GETCSR_ERROR;
+    }
+    OCStackResult rst = OCGetCSRResource((void*) g_ctx, dev, getCsrCB);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCGetCSRResource API error: %d", rst);
+
+        goto GETCSR_ERROR;
+    }
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCGetCSRResource callback error");
+        goto GETCSR_ERROR;
+    }
+
+    // display the result of get credential
+    printf("   > Get CSR SUCCEEDED\n");
+
+    return 0;
+
+GETCSR_ERROR:
     return -1;
 }
 
@@ -1266,7 +1834,7 @@ static int removeDeviceWithUuid(void)
     return 0;
 }
 
-OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
+OCStackResult OC_CALL displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
 {
     OC_UNUSED(ctx);
 
@@ -1285,7 +1853,7 @@ OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_L
     return OC_STACK_OK;
 }
 
-OCStackResult confirmNumCB(void * ctx)
+OCStackResult OC_CALL confirmNumCB(void * ctx)
 {
     OC_UNUSED(ctx);
 
@@ -1624,6 +2192,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
         OIC_LOG(ERROR, TAG, "createAcl: device instance empty");
         goto CRACL_ERROR;
     }
+    ace->subjectType = OicSecAceUuidSubject;
     memcpy(&ace->subjectuuid, &dev->doxm->deviceID, UUID_LENGTH);
 
     // enter number of |resources| in 'accessed' device
@@ -2056,46 +2625,6 @@ const char* getResult(OCStackResult result)
     }
 }
 
-OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
-    OCClientResponse* clientResponse)
-{
-    OC_UNUSED(ctx);
-    OC_UNUSED(handle);
-
-    if (clientResponse == NULL)
-    {
-        OIC_LOG(INFO, TAG, "getReqCB received NULL clientResponse");
-        return OC_STACK_DELETE_TRANSACTION;
-    }
-
-    OIC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
-    OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-    OIC_LOG_V(INFO, TAG, "Payload Size: %d", 
-              ((OCRepPayload*)clientResponse->payload)->values->str);
-    OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-    OIC_LOG(INFO, TAG, "=============> Get Response");
-
-    if (clientResponse->numRcvdVendorSpecificHeaderOptions > 0)
-    {
-        OIC_LOG(INFO, TAG, "Received vendor specific options");
-        uint8_t i = 0;
-        OCHeaderOption* rcvdOptions = clientResponse->rcvdVendorSpecificHeaderOptions;
-        for (i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
-        {
-            if ((rcvdOptions[i]).protocolID == OC_COAP_ID)
-            {
-                OIC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
-                    (rcvdOptions[i]).optionID);
-
-                OIC_LOG_BUFFER(INFO, TAG, rcvdOptions[i].optionData,
-                    MAX_HEADER_OPTION_DATA_LENGTH);
-            }
-        }
-    }
-    g_doneCB = true; // flag done
-    return OC_STACK_DELETE_TRANSACTION;
-}
-
 int obtainUserSelectionForDeviceNumber(int numDevices)
 {
     int dev_num = -1;
@@ -2115,111 +2644,6 @@ int obtainUserSelectionForDeviceNumber(int numDevices)
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
     return dev_num;
-}
-
-void selectIntrospectionMethod()
-{
-    OCStackResult ret;
-    OCCallbackData cbData;
-    OCDoHandle handle;
-    static OCDevAddr serverAddr;
-    cbData.cb = &getReqCB;
-    int dev_num = 1;
-    OCProvisionDev_t *device = NULL;
-
-    // check |own_list| for devices that can be used for introspection
-    if (!g_own_list || (1 > g_own_cnt))
-    {
-        printf("   > Owned Device List, to do introspection, is Empty\n");
-        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
-        return;
-    }
-
-    if (g_own_cnt != 1)
-    {
-        // we have more than one option - ask user to select one
-        printf("   > Multiple devices found - select a device for Introspection\n");
-        dev_num = obtainUserSelectionForDeviceNumber(g_own_cnt);
-    }
-
-    device = getDevInst(g_own_list, dev_num); 
-    if (device)
-    {
-        serverAddr = device->endpoint;
-        cbData.context = NULL;
-        cbData.cd = NULL;
-        OIC_LOG_V(INFO, TAG, "Performing Introspection");
-        g_doneCB = false;
-
-        ret = OCDoResource(&handle, OC_REST_GET, OC_RSRVD_INTROSPECTION_URI, &serverAddr,
-            NULL,
-            CT_ADAPTER_IP, OC_LOW_QOS, &cbData, NULL, 0);
-
-        if (ret != OC_STACK_OK)
-        {
-            OIC_LOG_V(ERROR, TAG, "OCDoResource returned error %d with method", ret);
-        }
-        if (waitCallbackRet())  // input |g_doneCB| flag implicitly
-        {
-            OIC_LOG(ERROR, TAG, "selectIntrospectionMethod callback error");
-        }
-    }
-    else
-    {
-        OIC_LOG(ERROR, TAG, "Selected device does not exist");
-    }
-}
-
-void selectIntrospectionPayloadMethod()
-{
-    OCStackResult ret;
-    OCCallbackData cbData;
-    OCDoHandle handle;
-    static OCDevAddr serverAddr;
-    cbData.cb = &getReqCB;
-    int dev_num = 1;
-    OCProvisionDev_t *device = NULL;
-
-    // check |own_list| for devices that can be used for introspection payload
-    if (!g_own_list || (1 > g_own_cnt))
-    {
-        printf("   > Owned Device List, to get introspection payload, is Empty\n");
-        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
-        return;
-    }
-
-    if (g_own_cnt != 1)
-    {
-        // we have more than one option - ask user to select one
-        printf("   > Multiple devices found - select a device for Introspection payload\n");
-        dev_num = obtainUserSelectionForDeviceNumber(g_own_cnt);
-    }
-
-    device = getDevInst(g_own_list, dev_num);
-    if (device)
-    {
-        serverAddr = device->endpoint;
-        cbData.context = g_ctx;
-        cbData.cd = NULL;
-        OIC_LOG_V(INFO, TAG, "Performing Introspection Payload");
-        g_doneCB = false;
-        ret = OCDoResource(&handle, OC_REST_GET, OC_RSRVD_INTROSPECTION_PAYLOAD_URI, &serverAddr,
-            NULL,
-            CT_ADAPTER_IP, OC_LOW_QOS, &cbData, NULL, 0);
-
-        if (ret != OC_STACK_OK)
-        {
-            OIC_LOG_V(ERROR, TAG, "OCDoResource returned error %d with method", ret);
-        }
-        if (waitCallbackRet())  // input |g_doneCB| flag implicitly
-        {
-            OIC_LOG(ERROR, TAG, "selectIntrospectionPayloadMethod callback error");
-        }
-    }
-    else
-    {
-        OIC_LOG(ERROR, TAG, "Selected device does not exist");
-    }
 }
 
 static void printUuid(const OicUuid_t* uid)
@@ -2402,7 +2826,9 @@ static void printMenu(void)
     printf("** 32. Provision the Selected Access Control List(ACL)\n");
     printf("** 33. Provision Direct-Pairing Configuration\n");
     printf("** 34. Check Linked Status of the Selected Device on PRVN DB\n");
-    printf("** 35. Save the Selected Access Control List(ACL) into local SVR DB\n\n");
+    printf("** 35. Save the Selected Access Control List(ACL) into local SVR DB\n");
+    printf("** 36. Provision certificate credential\n\n");
+
 
     printf("** [D] UNLINK PAIRWISE THINGS\n");
     printf("** 40. Unlink Pairwise Things\n\n");
@@ -2415,7 +2841,8 @@ static void printMenu(void)
 
     printf("** [F] GET SECURITY RESOURCE FOR DEBUGGING ONLY\n");
     printf("** 60. Get the Credential resources of the Selected Device\n");
-    printf("** 61. Get the ACL resources of the Selected Device\n\n");
+    printf("** 61. Get the ACL resources of the Selected Device\n");
+    printf("** 62. Get the CSR of the Selected Device\n\n");
 
 #ifdef MULTIPLE_OWNER
     printf("** [G] UPDATE THE MULTIPLE OWNERSHIP TRANSFER RELATED VALUE\n");
@@ -2432,10 +2859,6 @@ static void printMenu(void)
     printf("** [H] SELECT VERIFICATION OPTION\n");
     printf("** 81. Select verification method\n\n");
 #endif
-
-    printf("** [I] SELECT INTROSPECTION OPTION\n");
-    printf("** 91. Select Get Introspection Resource\n");
-    printf("** 92. Select Get Introspection Payload\n\n");
 
     printf("** [J] EXIT PROVISIONING CLIENT\n");
     printf("** 99. Exit Provisionong Client\n\n");
@@ -2577,6 +3000,12 @@ int main()
                 OIC_LOG(ERROR, TAG, "_35_SAVE_ACL_: error");
             }
             break;
+        case _36_PROVIS_CERT_:
+            if (provisionCert())
+            {
+                OIC_LOG(ERROR, TAG, "_36_PROVIS_CERT_: error");
+            }
+            break;
         case _40_UNLINK_PAIR_DEVS_:
             if(unlinkPairwise())
             {
@@ -2619,6 +3048,12 @@ int main()
                 OIC_LOG(ERROR, TAG, "_61_GET_ACL_: error");
             }
             break;
+        case _62_GET_CSR_:
+            if(getCsr())
+            {
+                OIC_LOG(ERROR, TAG, "_62_GET_CSR_: error");
+            }
+            break;
 #ifdef MULTIPLE_OWNER
         case _70_MOT_CHANGE_MOM_:
             if(changeMultipleOwnershipTrnasferMode())
@@ -2646,12 +3081,6 @@ int main()
 #endif
         case _81_SELECT_VERIF_METHOD_:
             selectVerifMethod();
-            break;
-        case _91_SELECT_INTROSPECTION_METHOD_:
-            selectIntrospectionMethod();
-            break;
-        case _92_SELECT_INTROSPECTION_PAYLOAD_METHOD_:
-            selectIntrospectionPayloadMethod();
             break;
         case _99_EXIT_PRVN_CLT_:
             goto PMCLT_ERROR;

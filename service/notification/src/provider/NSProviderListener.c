@@ -56,11 +56,11 @@ OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
                     && strcmp(reqInterface, NS_INTERFACE_READ) != 0)
             {
                 NS_LOG(ERROR, "Invalid interface");
-                OICFree(copyQuery);
+                NSOICFree(copyQuery);
                 return ehResult;
             }
 
-            OICFree(copyQuery);
+            NSOICFree(copyQuery);
             NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_POLICY,
                     NSCopyOCEntityHandlerRequest(entityHandlerRequest));
 
@@ -104,12 +104,13 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
 
             char * copyQuery = OICStrdup(entityHandlerRequest->query);
             reqInterface = OICStrdup(NSGetValueFromQuery(copyQuery, NS_QUERY_INTERFACE));
-            OICFree(copyQuery);
+            NSOICFree(copyQuery);
 
             if (reqInterface && strcmp(reqInterface, NS_INTERFACE_BASELINE) != 0
                     && strcmp(reqInterface, NS_INTERFACE_READ) != 0)
             {
                 NS_LOG(ERROR, "Invalid interface");
+                NSOICFree(reqInterface);
                 return ehResult;
             }
             ehResult = OC_EH_OK;
@@ -149,7 +150,7 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
 
     ehResult = NSProviderSendResponse(entityHandlerRequest, payload, reqInterface, ehResult,
             NS_INTERFACE_TYPE_READ, NS_RESOURCE_MESSAGE);
-    OICFree(reqInterface);
+    NSOICFree(reqInterface);
     NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OUT");
     return ehResult;
 }
@@ -179,12 +180,13 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
 
             char * copyQuery = OICStrdup(entityHandlerRequest->query);
             reqInterface = OICStrdup(NSGetValueFromQuery(copyQuery, NS_QUERY_INTERFACE));
-            OICFree(copyQuery);
+            NSOICFree(copyQuery);
 
             if (reqInterface && strcmp(reqInterface, NS_INTERFACE_BASELINE) != 0
                     && strcmp(reqInterface, NS_INTERFACE_READWRITE) != 0)
             {
                 NS_LOG(ERROR, "Invalid interface");
+                NSOICFree(reqInterface);
                 return ehResult;
             }
 
@@ -242,7 +244,7 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
 
     ehResult = NSProviderSendResponse(entityHandlerRequest, payload, reqInterface, ehResult,
             NS_INTERFACE_TYPE_READ, NS_RESOURCE_MESSAGE);
-    OICFree(reqInterface);
+    NSOICFree(reqInterface);
 
     return ehResult;
 }
@@ -273,12 +275,13 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
 
             char * copyReq = OICStrdup(entityHandlerRequest->query);
             reqInterface = OICStrdup(NSGetValueFromQuery(copyReq, NS_QUERY_INTERFACE));
-            OICFree(copyReq);
+            NSOICFree(copyReq);
 
             if (reqInterface && strcmp(reqInterface, NS_INTERFACE_BASELINE) != 0
                     && strcmp(reqInterface, NS_INTERFACE_READWRITE) != 0)
             {
                 NS_LOG(ERROR, "Invalid interface");
+                NSOICFree(reqInterface);
                 return ehResult;
             }
             // send consumer's interesting topic list if consumer id exists
@@ -297,8 +300,7 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
             // Accepter is provider. our service is not support sendtopiclist from OC_REST_POST
             // Accepter is consumer. our service is support sendtopiclist from OC_REST_POST
             if (NSGetPolicy() == false &&
-                    NSProviderIsTopicAttributes(OCRepPayloadClone((OCRepPayload *)
-                            entityHandlerRequest->payload)))
+                    NSProviderIsTopicAttributes((OCRepPayload *)entityHandlerRequest->payload))
             {
                 NSPushQueue(TOPIC_SCHEDULER, TASK_POST_TOPIC,
                         NSCopyOCEntityHandlerRequest(entityHandlerRequest));
@@ -316,7 +318,7 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
     NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OUT");
     ehResult = NSProviderSendResponse(entityHandlerRequest, payload, reqInterface, ehResult,
             NS_INTERFACE_TYPE_READWRITE, NS_RESOURCE_TOPIC);
-    OICFree(reqInterface);
+    NSOICFree(reqInterface);
     return ehResult;
 }
 
@@ -369,7 +371,7 @@ OCStackApplicationResult NSProviderMQListener(void * ctx, OCDoHandle handle,
             NSSyncInfo * syncInfo = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
             syncInfo->state = (type == NS_MESSAGE_READ) ? NS_SYNC_READ : NS_SYNC_DELETED;
             OICStrcpy(syncInfo->providerId, NS_UUID_STRING_SIZE, pId);
-            OICFree(pId);
+            NSOICFree(pId);
             NSPushQueue(NOTIFICATION_SCHEDULER, TASK_RECV_READ, (void*) syncInfo);
         }
     }
@@ -630,21 +632,21 @@ bool NSProviderIsTopicAttributes(OCRepPayload * payload)
                     {
                         for(int j = i; j < (int) dimensionSize; ++j)
                         {
-                            OCRepPayloadDestroy(topicListPayload[i]);
+                            OCRepPayloadDestroy(topicListPayload[j]);
                         }
 
-                        OCRepPayloadDestroy(payload);
+                        NSOICFree(topicListPayload);
                         return false;
                     }
                     subCurr = subCurr->next;
                 }
                 OCRepPayloadDestroy(topicListPayload[i]);
             }
+            NSOICFree(topicListPayload);
         }
         curr = curr->next;
     }
 
-    OCRepPayloadDestroy(payload);
     return true;
 }
 
@@ -700,7 +702,6 @@ OCStackResult NSProviderSendResponse(OCEntityHandlerRequest * entityHandlerReque
     memset(response.resourceUri, 0, sizeof response.resourceUri);
 
     response.requestHandle = entityHandlerRequest->requestHandle;
-    response.resourceHandle = entityHandlerRequest->resource;
     response.persistentBufferFlag = 0;
     response.ehResult = ehResult;
     response.payload = (OCPayload *) payload;

@@ -117,11 +117,7 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
     m_endpoints(endpoints),
     m_observeHandle(nullptr)
 {
-    m_devAddr = OCDevAddr{OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0,
-#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
-                          {0}
-#endif
-                        };
+    m_devAddr = OCDevAddr{OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0, {0}, {0}};
     m_isCollection = std::find(m_interfaces.begin(), m_interfaces.end(), LINK_INTERFACE)
                         != m_interfaces.end();
 
@@ -207,6 +203,12 @@ OCResource::~OCResource()
 
 std::string OCResource::setHost(const std::string& host)
 {
+    if (!host.length())
+    {
+        throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+        m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+    }
+
     size_t prefix_len;
 
     OCDevAddr new_devAddr;
@@ -339,17 +341,17 @@ std::string OCResource::setHost(const std::string& host)
         else
         {
             // It means zone-id is missing, check ipv6Addr is link local
-            CATransportFlags_t scopeLevel;
-            CAResult_t caResult = CAGetIpv6AddrScope(ip6Addr.c_str(), &scopeLevel);
+            OCTransportFlags scopeLevel;
+            OCStackResult ocResult = OCGetIpv6AddrScope(ip6Addr.c_str(), &scopeLevel);
 
-            if (CA_STATUS_OK != caResult)
+            if (OC_STACK_OK != ocResult)
             {
                 throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
                     m_interfaces.empty(), m_clientWrapper.expired(), false, false);
             }
             else
             {
-                if (CA_SCOPE_LINK == scopeLevel)
+                if (OC_SCOPE_LINK == scopeLevel)
                 {
                     {
                         // Given ip address is link-local scope without zone-id.

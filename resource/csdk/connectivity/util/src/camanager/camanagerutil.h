@@ -76,7 +76,7 @@ typedef struct CMDeviceInfoList
  * @retval :: CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAMgrUtilAddDevInfoToList(CMDeviceInfoList_t **devInfoList,
-                                     const CAEndpoint_t endpoint);
+                                     const CAEndpoint_t *endpoint);
 
 /**
  * This function is used to get the DeviceInfo which have specific device id
@@ -107,7 +107,7 @@ CAResult_t CAMgrUtilGetDevInfo(CMDeviceInfoList_t *devInfoList, const char *devi
  * @retval :: CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAMgrUtilUpdateDevInfo(CMDeviceInfoList_t *devInfoList,
-                                  const CAEndpoint_t endpoint);
+                                  const CAEndpoint_t *endpoint);
 
 /**
  * This function is used to reset all D2D informations.

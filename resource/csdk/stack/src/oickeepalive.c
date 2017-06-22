@@ -421,8 +421,7 @@ OCStackResult SendKeepAliveResponse(OCServerRequest *request,
 
     OCEntityHandlerResponse ehResponse = { .ehResult = result, 
                                            .payload = (OCPayload*) payload, 
-                                           .requestHandle = request,
-                                           .resourceHandle = g_keepAliveHandle };
+                                           .requestHandle = request };
     OICStrcpy(ehResponse.resourceUri, sizeof(ehResponse.resourceUri), KEEPALIVE_RESOURCE_URI);
 
     // Send response message.
@@ -754,12 +753,7 @@ KeepAliveEntry_t *AddKeepAliveEntry(const CAEndpoint_t *endpoint, OCMode mode,
 
     entry->mode = mode;
     entry->timeStamp = OICGetCurrentTime(TIME_IN_US);
-    entry->remoteAddr.adapter = endpoint->adapter;
-    entry->remoteAddr.flags = endpoint->flags;
-    entry->remoteAddr.ifindex = endpoint->ifindex;
-    entry->remoteAddr.port = endpoint->port;
-    strncpy(entry->remoteAddr.addr, endpoint->addr, sizeof(entry->remoteAddr.addr));
-
+    entry->remoteAddr = *endpoint;
     entry->intervalSize = DEFAULT_INTERVAL_COUNT;
     entry->intervalInfo = intervalInfo;
     if (!entry->intervalInfo)
@@ -875,6 +869,11 @@ OCStackResult AddResourceTypeNameToPayload(OCRepPayload *payload)
     {
         size_t rtDim[MAX_REP_ARRAY_DEPTH] = {numElement, 0, 0};
         char **rt = (char **)OICMalloc(sizeof(char *) * numElement);
+        if (!rt)
+        {
+            OIC_LOG(ERROR, TAG, "Could not allocate memory for rf");
+            return OC_STACK_NO_MEMORY;
+        }
         for (uint8_t i = 0; i < numElement; ++i)
         {
             const char *value = OCGetResourceTypeName(g_keepAliveHandle, i);

@@ -27,28 +27,26 @@
 #ifndef _Included_org_iotivity_base_OcPresenceHandle
 #define _Included_org_iotivity_base_OcPresenceHandle
 
-using namespace OC::OCPlatform;
-
 class JniOcPresenceHandle
 {
 public:
 
-    JniOcPresenceHandle(JniOnPresenceListener* jniListener, OCPresenceHandle presenceHandle);
-    JniOcPresenceHandle(JniOnObserveListener* jniListener, OCPresenceHandle presenceHandle);
+    JniOcPresenceHandle(JniOnPresenceListener* jniListener, OC::OCPlatform::OCPresenceHandle presenceHandle);
+    JniOcPresenceHandle(JniOnObserveListener* jniListener, OC::OCPlatform::OCPresenceHandle presenceHandle);
     ~JniOcPresenceHandle();
     JniOcPresenceHandle(const JniOcPresenceHandle &) = delete;
     void operator=(const JniOcPresenceHandle &) = delete;
 
     static JniOcPresenceHandle* getJniOcPresenceHandlePtr(JNIEnv *env, jobject thiz);
 
-    OCPresenceHandle getOCPresenceHandle();
+    OC::OCPlatform::OCPresenceHandle getOCPresenceHandle();
     JniOnPresenceListener* getJniOnPresenceListener();
     JniOnObserveListener* getJniOnObserveListener();
 
 private:
     JniOnPresenceListener* m_jniListener;
     JniOnObserveListener* m_jniObserveListener;
-    OCPresenceHandle m_presenceHandle;
+    OC::OCPlatform::OCPresenceHandle m_presenceHandle;
 };
 
 #ifdef __cplusplus

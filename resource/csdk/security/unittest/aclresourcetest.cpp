@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <coap/utlist.h>
 #include <sys/stat.h>
 #include "ocstack.h"
@@ -31,6 +31,7 @@
 #include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
 #include "aclresource.h"
+#include "pstatresource.h"
 #include "srmtestcommon.h"
 #include "srmutility.h"
 #include "logger.h"
@@ -39,6 +40,7 @@
 #include "ocpayloadcbor.h"
 #include "payload_logging.h"
 #include "security_internals.h"
+#include "acl_logging.h"
 
 using namespace std;
 
@@ -48,7 +50,7 @@ using namespace std;
 const char* DEFAULT_ACL_FILE_NAME = "oic_unittest_default_acl.dat";
 const char* ACL1_FILE_NAME = "oic_unittest_acl1.dat";
 
-#define NUM_ACE_FOR_WILDCARD_IN_ACL1_DAT (2)
+#define NUM_ACE_FOR_ANON_CLEAR_IN_DEFAULT_ACL (2)
 
 static bool AddResourceToACE(OicSecAce_t* ace, const char* rsrcName,
                              const char* typeName, const char* interfaceName)
@@ -109,7 +111,8 @@ static int GetNumberOfResource(const OicSecAce_t* ace)
 
 TEST(ACLResourceTest, CBORDefaultACLConversion)
 {
-    uint8_t defaultAclSub[] = { 0x2a };
+    uint8_t defaultAclSub[] = {0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31,
+        0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31};
     uint8_t defaultAclOwnrs[] = {0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32,
         0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32};
 
@@ -126,7 +129,7 @@ TEST(ACLResourceTest, CBORDefaultACLConversion)
     EXPECT_EQ(true, AddResourceToACE(ace, "/oic/p", "oic.wk.p", "oic.if.r"));
     EXPECT_EQ(true, AddResourceToACE(ace, "/oic/res/types/d", "oic.wk.unknow", "oic.if.r"));
     EXPECT_EQ(true, AddResourceToACE(ace, "/oic/ad", "oic.wk.ad", "oic.if.baseline"));
-    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/sec/acl", "oic.r.acl", "oic.if.baseline"));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/sec/acl2", "oic.r.acl2", "oic.if.baseline"));
     EXPECT_EQ(true, AddResourceToACE(ace, "/oic/sec/doxm", "oic.r.doxm" ,"oic.if.baseline"));
     EXPECT_EQ(true, AddResourceToACE(ace, "/oic/sec/pstat", "oic.r.pstat" ,"oic.if.baseline"));
 
@@ -134,7 +137,7 @@ TEST(ACLResourceTest, CBORDefaultACLConversion)
 
     size_t defaultAclSize = 0;
     uint8_t *defaultPsStorage = NULL;
-    OCStackResult convRet = AclToCBORPayload(defaultAcl, &defaultPsStorage, &defaultAclSize);
+    OCStackResult convRet = AclToCBORPayload(defaultAcl, OIC_SEC_ACL_V2, &defaultPsStorage, &defaultAclSize);
     EXPECT_EQ(OC_STACK_OK, convRet);
     ASSERT_TRUE(NULL != defaultPsStorage);
     EXPECT_NE(static_cast<size_t>(0), defaultAclSize);
@@ -186,7 +189,7 @@ TEST(ACLResourceTest, CBORACLConversion)
     EXPECT_EQ(true, AddResourceToACE(ace, "/oic/p", "oic.wk.p", "oic.if.r"));
     EXPECT_EQ(true, AddResourceToACE(ace, "/oic/res/types/d", "oic.wk.unknow", "oic.if.r"));
     EXPECT_EQ(true, AddResourceToACE(ace, "/oic/ad", "oic.wk.ad", "oic.if.baseline"));
-    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/sec/acl", "oic.r.acl", "oic.if.baseline"));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/sec/acl2", "oic.r.acl2", "oic.if.baseline"));
     LL_APPEND(secAcl->aces, ace);
 
     OicSecAce_t *ace1 = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
@@ -207,7 +210,7 @@ TEST(ACLResourceTest, CBORACLConversion)
 
     size_t size = 0;
     uint8_t *psStorage = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(secAcl, &psStorage, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(secAcl, OIC_SEC_ACL_V1, &psStorage, &size));
     ASSERT_TRUE(NULL != psStorage);
     OicSecAcl_t *acl = CBORPayloadToAcl(psStorage, size);
     ASSERT_TRUE(NULL != acl);
@@ -290,6 +293,11 @@ TEST(ACLResourceTest, GetDefaultACLTests)
 // 'POST' ACL tests
 TEST(ACLResourceTest, ACLPostTest)
 {
+    // Intialize /pstat global, so that the GetDos() calls in aclresource.c
+    // can succeed, or all UPDATE requests will be rejected based on DOS.
+    OCStackResult res = InitPstatResourceToDefault();
+    ASSERT_TRUE(OC_STACK_OK == res);
+
     // Read an ACL from the file
     uint8_t *payload = NULL;
     size_t size = 0;
@@ -314,13 +322,27 @@ TEST(ACLResourceTest, ACLPostTest)
     ehReq.payload = (OCPayload *) securityPayload;
 
     ACLEntityHandler(OC_REQUEST_FLAG, &ehReq, NULL);
-
     OicSecAcl_t *acl = CBORPayloadToAcl(payload, size);
     ASSERT_TRUE(NULL != acl);
 
-    // Verify if SRM contains ACL for the subject
+    // Verify /acl2 Resource contains an ACE for a subject in acl local var
     OicSecAce_t *savePtr = NULL;
-    const OicSecAce_t* subjectAcl = GetACLResourceData(&(acl->aces->subjectuuid), &savePtr);
+    savePtr = acl->aces;
+    while(OicSecAceUuidSubject != savePtr->subjectType)
+    {
+        savePtr = savePtr->next;
+    }
+    OicUuid_t uuid = savePtr->subjectuuid;
+#ifndef NDEBUG
+    char uuidString[UUID_STRING_SIZE] = { 0 };
+    bool convertedUUID = OCConvertUuidToString(uuid.id, uuidString);
+    if (convertedUUID)
+    {
+        printf("asubjectuuidToFind.id = %s", uuidString);
+    }
+#endif
+    savePtr = NULL;
+    const OicSecAce_t* subjectAcl = GetACLResourceData(&uuid, &savePtr);
     ASSERT_TRUE(NULL != subjectAcl);
 
     // Perform cleanup
@@ -338,45 +360,65 @@ extern "C" {
 // GetACLResource tests
 TEST(ACLResourceTest, GetACLResourceTests)
 {
-    // Read an ACL from the file
-    static OCPersistentStorage ps = OCPersistentStorage();
-    SetPersistentHandler(&ps, true);
-
-    uint8_t *payload = NULL;
-    size_t size = 0;
-
-    ASSERT_TRUE(ReadCBORFile(ACL1_FILE_NAME, OIC_JSON_ACL_NAME, &payload, &size));
-    ASSERT_TRUE(payload != NULL);
-
-    OicSecAcl_t *defaultPsAcl = CBORPayloadToAcl(payload, size);
-    ASSERT_TRUE(defaultPsAcl != NULL);
-
     OicSecAcl_t *acl1 = NULL;
     EXPECT_EQ(OC_STACK_OK, GetDefaultACL(&acl1));
     ASSERT_TRUE(acl1 != NULL);
     EXPECT_EQ(OC_STACK_OK, SetDefaultACL(acl1));
 
-    // Verify that ACL file contains 2 ACE entries for 'WILDCARD' subject
+    // Verify that the default ACL file contains 2 ACE entries for the 'ANON_CLEAR' conntype subject
     const OicSecAce_t *ace = NULL;
     OicSecAce_t *savePtr = NULL;
-    OicUuid_t subject = WILDCARD_SUBJECT_ID;
+    OicSecConntype_t subjectConn = ANON_CLEAR;
     int count = 0;
 
     do
     {
-        ace = GetACLResourceData(&subject, &savePtr);
+        ace = GetACLResourceDataByConntype(subjectConn, &savePtr);
         count = (NULL != ace) ? count + 1 : count;
     } while (ace != NULL);
 
-    EXPECT_EQ(count, NUM_ACE_FOR_WILDCARD_IN_ACL1_DAT);
+    EXPECT_EQ(count, NUM_ACE_FOR_ANON_CLEAR_IN_DEFAULT_ACL);
 
     /* Perform cleanup */
-    OICFree(payload);
-    DeleteACLList(defaultPsAcl);
     DeInitACLResource();
 }
 
-static OCStackResult  populateAcl(OicSecAcl_t *acl,  int numRsrc)
+TEST(ACLResourceTest, DefaultAclAllowsRolesAccess)
+{
+    /* Get and install the default ACL */
+    OicSecAcl_t *acl1 = NULL;
+    EXPECT_EQ(OC_STACK_OK, GetDefaultACL(&acl1));
+    ASSERT_TRUE(acl1 != NULL);
+    EXPECT_EQ(OC_STACK_OK, SetDefaultACL(acl1));
+
+    /* Verify that the default ACL file allows AUTH_CRYPT RUD access to the /roles resource */
+    const OicSecAce_t *ace = NULL;
+    OicSecAce_t *savePtr = NULL;
+    OicSecConntype_t subjectConn = AUTH_CRYPT;
+    int found = 0;
+
+    while((ace = GetACLResourceDataByConntype(subjectConn, &savePtr)) != NULL)
+    {
+        ASSERT_TRUE(ace->resources != NULL);
+        OicSecRsrc_t* rsrc = NULL;
+        LL_FOREACH(ace->resources, rsrc)
+        {
+            if ((strcmp(rsrc->href, OIC_RSRC_ROLES_URI) == 0) &&
+                (ace->permission == (PERMISSION_READ | PERMISSION_WRITE | PERMISSION_DELETE)))
+            {
+                found = 1;
+                break;
+            }
+        }
+    }
+
+    EXPECT_EQ(found, 1);
+
+    DeInitACLResource();
+}
+
+
+static OCStackResult populateAcl(OicSecAcl_t *acl,  int numRsrc)
 {
     OCStackResult ret = OC_STACK_ERROR;
     OicSecAce_t* ace = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
@@ -404,6 +446,11 @@ exit:
 //'DELETE' ACL test
 TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
 {
+    // Intialize /pstat global, so that the GetDos() calls in aclresource.c
+    // can succeed, or all UPDATE requests will be rejected based on DOS.
+    OCStackResult res = InitPstatResourceToDefault();
+    ASSERT_TRUE(OC_STACK_OK == res);
+
     static OCPersistentStorage ps = OCPersistentStorage();
     SetPersistentHandler(&ps, true);
 
@@ -419,7 +466,7 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t  *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_V2, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
@@ -459,6 +506,11 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
 
 TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
 {
+    // Intialize /pstat global, so that the GetDos() calls in aclresource.c
+    // can succeed, or all UPDATE requests will be rejected based on DOS.
+    OCStackResult res = InitPstatResourceToDefault();
+    ASSERT_TRUE(OC_STACK_OK == res);
+
     static OCPersistentStorage ps = OCPersistentStorage();
     SetPersistentHandler(&ps, true);
 
@@ -474,7 +526,7 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_V2, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
@@ -541,7 +593,7 @@ TEST(ACLResourceTest, ACLGetWithQueryTest)
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_V2, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload

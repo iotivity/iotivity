@@ -32,6 +32,8 @@
 #include <stdint.h>
 #include "octypes.h"
 
+#include "platform_features.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -52,7 +54,7 @@ extern "C" {
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlags clientFlags);
+OCStackResult OC_CALL OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlags clientFlags);
 
 /**
  * This function Initializes the OC Stack.  Must be called prior to starting the stack.
@@ -64,7 +66,7 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags, OCTransportFlags clientFlags,
+OCStackResult OC_CALL OCInit2(OCMode mode, OCTransportFlags serverFlags, OCTransportFlags clientFlags,
                       OCTransportAdapter transportType);
 
 /**
@@ -76,7 +78,7 @@ OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode);
+OCStackResult OC_CALL OCInit(const char *ipAddr, uint16_t port, OCMode mode);
 
 #ifdef RA_ADAPTER
 /**
@@ -85,7 +87,7 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode);
  *
  * @return  ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCSetRAInfo(const OCRAInfo_t *raInfo);
+OCStackResult OC_CALL OCSetRAInfo(const OCRAInfo_t *raInfo);
 #endif
 
 /**
@@ -98,7 +100,7 @@ OCStackResult OCSetRAInfo(const OCRAInfo_t *raInfo);
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCStop();
+OCStackResult OC_CALL OCStop();
 
 /**
  * This function starts responding to multicast /oic/res requests.  This can be
@@ -107,7 +109,7 @@ OCStackResult OCStop();
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCStartMulticastServer();
+OCStackResult OC_CALL OCStartMulticastServer();
 
 /**
  * This function stops responding to multicast /oic/res requests.  This is to be
@@ -118,7 +120,7 @@ OCStackResult OCStartMulticastServer();
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCStopMulticastServer();
+OCStackResult OC_CALL OCStopMulticastServer();
 
 /**
  * This function is Called in main loop of OC client or server.
@@ -126,7 +128,7 @@ OCStackResult OCStopMulticastServer();
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCProcess();
+OCStackResult OC_CALL OCProcess();
 
 /**
  * This function discovers or Perform requests on a specified resource
@@ -164,7 +166,7 @@ OCStackResult OCProcess();
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCDoResource(OCDoHandle *handle,
+OCStackResult OC_CALL OCDoResource(OCDoHandle *handle,
                            OCMethod method,
                            const char *requestUri,
                            const OCDevAddr *destination,
@@ -209,7 +211,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCDoRequest(OCDoHandle *handle,
+OCStackResult OC_CALL OCDoRequest(OCDoHandle *handle,
                           OCMethod method,
                           const char *requestUri,
                           const OCDevAddr *destination,
@@ -231,7 +233,7 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCCancel(OCDoHandle handle,
+OCStackResult OC_CALL OCCancel(OCDoHandle handle,
                        OCQualityOfService qos,
                        OCHeaderOption * options,
                        uint8_t numOptions);
@@ -244,7 +246,7 @@ OCStackResult OCCancel(OCDoHandle handle,
  *     OC_STACK_OK                    No errors; Success.
  *     OC_STACK_INVALID_PARAM         Invalid parameter.
  */
-OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler);
+OCStackResult OC_CALL OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler);
 
 #ifdef WITH_PRESENCE
 /**
@@ -263,7 +265,7 @@ OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistent
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCStartPresence(const uint32_t ttl);
+OCStackResult OC_CALL OCStartPresence(const uint32_t ttl);
 
 /**
  * When operating in OCServer or OCClientServer mode, this API will stop sending
@@ -277,7 +279,7 @@ OCStackResult OCStartPresence(const uint32_t ttl);
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 
-OCStackResult OCStopPresence();
+OCStackResult OC_CALL OCStopPresence();
 #endif
 
 
@@ -291,7 +293,7 @@ OCStackResult OCStopPresence();
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandler,
+OCStackResult OC_CALL OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandler,
                                               void* callbackParameter);
 
 /**
@@ -312,7 +314,7 @@ OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandle
  *     ::OC_STACK_INVALID_PARAM    invalid parameter.
  *     ::OC_STACK_ERROR            stack process error.
  */
-OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo);
+OCStackResult OC_CALL OCSetDeviceInfo(OCDeviceInfo deviceInfo);
 
 /**
  * This function sets platform information.
@@ -326,7 +328,7 @@ OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo);
  *     ::OC_STACK_INVALID_PARAM    invalid parameter.
  *     ::OC_STACK_ERROR            stack process error.
  */
-OCStackResult OCSetPlatformInfo(OCPlatformInfo platformInfo);
+OCStackResult OC_CALL OCSetPlatformInfo(OCPlatformInfo platformInfo);
 
 /**
  * This function creates a resource.
@@ -345,7 +347,7 @@ OCStackResult OCSetPlatformInfo(OCPlatformInfo platformInfo);
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCCreateResource(OCResourceHandle *handle,
+OCStackResult OC_CALL OCCreateResource(OCResourceHandle *handle,
                                const char *resourceTypeName,
                                const char *resourceInterfaceName,
                                const char *uri,
@@ -379,7 +381,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCCreateResourceWithEp(OCResourceHandle *handle,
+OCStackResult OC_CALL OCCreateResourceWithEp(OCResourceHandle *handle,
                                      const char *resourceTypeName,
                                      const char *resourceInterfaceName,
                                      const char *uri,
@@ -392,7 +394,7 @@ OCStackResult OCCreateResourceWithEp(OCResourceHandle *handle,
  *
  * @return Bit combinations of supported OCTpsSchemeFlags.
  */
-OCTpsSchemeFlags OCGetSupportedEndpointTpsFlags();
+OCTpsSchemeFlags OC_CALL OCGetSupportedEndpointTpsFlags();
 
 /**
  * This function adds a resource to a collection resource.
@@ -402,7 +404,7 @@ OCTpsSchemeFlags OCGetSupportedEndpointTpsFlags();
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCBindResource(OCResourceHandle collectionHandle, OCResourceHandle resourceHandle);
+OCStackResult OC_CALL OCBindResource(OCResourceHandle collectionHandle, OCResourceHandle resourceHandle);
 
 /**
  * This function removes a resource from a collection resource.
@@ -412,7 +414,7 @@ OCStackResult OCBindResource(OCResourceHandle collectionHandle, OCResourceHandle
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCUnBindResource(OCResourceHandle collectionHandle, OCResourceHandle resourceHandle);
+OCStackResult OC_CALL OCUnBindResource(OCResourceHandle collectionHandle, OCResourceHandle resourceHandle);
 
 /**
  * This function binds a resource type to a resource.
@@ -422,7 +424,7 @@ OCStackResult OCUnBindResource(OCResourceHandle collectionHandle, OCResourceHand
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
+OCStackResult OC_CALL OCBindResourceTypeToResource(OCResourceHandle handle,
                                            const char *resourceTypeName);
 /**
  * This function binds a resource interface to a resource.
@@ -432,7 +434,7 @@ OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
+OCStackResult OC_CALL OCBindResourceInterfaceToResource(OCResourceHandle handle,
                                                 const char *resourceInterfaceName);
 
 /**
@@ -444,7 +446,7 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCBindResourceHandler(OCResourceHandle handle,
+OCStackResult OC_CALL OCBindResourceHandler(OCResourceHandle handle,
                                     OCEntityHandler entityHandler,
                                     void *callbackParameter);
 
@@ -455,7 +457,7 @@ OCStackResult OCBindResourceHandler(OCResourceHandle handle,
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCGetNumberOfResources(uint8_t *numResources);
+OCStackResult OC_CALL OCGetNumberOfResources(uint8_t *numResources);
 
 /**
  * This function gets a resource handle by index.
@@ -464,7 +466,7 @@ OCStackResult OCGetNumberOfResources(uint8_t *numResources);
  *
  * @return Found  resource handle or NULL if not found.
  */
-OCResourceHandle OCGetResourceHandle(uint8_t index);
+OCResourceHandle OC_CALL OCGetResourceHandle(uint8_t index);
 
 /**
  * This function deletes resource specified by handle.  Deletes resource and all
@@ -477,7 +479,7 @@ OCResourceHandle OCGetResourceHandle(uint8_t index);
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCDeleteResource(OCResourceHandle handle);
+OCStackResult OC_CALL OCDeleteResource(OCResourceHandle handle);
 
 /**
  * Get a string representation the server instance ID.
@@ -489,7 +491,7 @@ OCStackResult OCDeleteResource(OCResourceHandle handle);
  *
  * @return A string representation  the server instance ID.
  */
-const char* OCGetServerInstanceIDString(void);
+const char* OC_CALL OCGetServerInstanceIDString(void);
 
 /**
  * This function gets the URI of the resource specified by handle.
@@ -498,7 +500,7 @@ const char* OCGetServerInstanceIDString(void);
  *
  * @return URI string if resource found or NULL if not found.
  */
-const char *OCGetResourceUri(OCResourceHandle handle);
+const char *OC_CALL OCGetResourceUri(OCResourceHandle handle);
 
 /**
  * This function gets the properties of the resource specified by handle.
@@ -510,7 +512,7 @@ const char *OCGetResourceUri(OCResourceHandle handle);
  * @note that after a resource is created, the OC_ACTIVE property is set for the resource by the
  * stack.
  */
-OCResourceProperty OCGetResourceProperties(OCResourceHandle handle);
+OCResourceProperty OC_CALL OCGetResourceProperties(OCResourceHandle handle);
 
 /**
  * This function sets the properties of the resource specified by handle.
@@ -521,7 +523,7 @@ OCResourceProperty OCGetResourceProperties(OCResourceHandle handle);
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCSetResourceProperties(OCResourceHandle handle, uint8_t resourceProperties);
+OCStackResult OC_CALL OCSetResourceProperties(OCResourceHandle handle, uint8_t resourceProperties);
 
 /**
  * This function removes the properties of the resource specified by handle.
@@ -532,7 +534,7 @@ OCStackResult OCSetResourceProperties(OCResourceHandle handle, uint8_t resourceP
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCClearResourceProperties(OCResourceHandle handle, uint8_t resourceProperties);
+OCStackResult OC_CALL OCClearResourceProperties(OCResourceHandle handle, uint8_t resourceProperties);
 
 /**
  * This function gets the number of resource types of the resource.
@@ -542,7 +544,7 @@ OCStackResult OCClearResourceProperties(OCResourceHandle handle, uint8_t resourc
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCGetNumberOfResourceTypes(OCResourceHandle handle, uint8_t *numResourceTypes);
+OCStackResult OC_CALL OCGetNumberOfResourceTypes(OCResourceHandle handle, uint8_t *numResourceTypes);
 
 /**
  * This function gets name of resource type of the resource.
@@ -552,7 +554,7 @@ OCStackResult OCGetNumberOfResourceTypes(OCResourceHandle handle, uint8_t *numRe
  *
  * @return Resource type name if resource found or NULL if resource not found.
  */
-const char *OCGetResourceTypeName(OCResourceHandle handle, uint8_t index);
+const char *OC_CALL OCGetResourceTypeName(OCResourceHandle handle, uint8_t index);
 
 /**
  * This function gets the number of resource interfaces of the resource.
@@ -562,7 +564,7 @@ const char *OCGetResourceTypeName(OCResourceHandle handle, uint8_t index);
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCGetNumberOfResourceInterfaces(OCResourceHandle handle,
+OCStackResult OC_CALL OCGetNumberOfResourceInterfaces(OCResourceHandle handle,
         uint8_t *numResourceInterfaces);
 
 /**
@@ -573,7 +575,7 @@ OCStackResult OCGetNumberOfResourceInterfaces(OCResourceHandle handle,
  *
  * @return Resource interface name if resource found or NULL if resource not found.
  */
-const char *OCGetResourceInterfaceName(OCResourceHandle handle, uint8_t index);
+const char *OC_CALL OCGetResourceInterfaceName(OCResourceHandle handle, uint8_t index);
 
 /**
  * This function gets resource handle from the collection resource by index.
@@ -583,7 +585,7 @@ const char *OCGetResourceInterfaceName(OCResourceHandle handle, uint8_t index);
  *
  * @return Handle to contained resource if resource found or NULL if resource not found.
  */
-OCResourceHandle OCGetResourceHandleFromCollection(OCResourceHandle collectionHandle,
+OCResourceHandle OC_CALL OCGetResourceHandleFromCollection(OCResourceHandle collectionHandle,
         uint8_t index);
 
 /**
@@ -593,7 +595,7 @@ OCResourceHandle OCGetResourceHandleFromCollection(OCResourceHandle collectionHa
  *
  * @return Entity handler if resource found or NULL resource not found.
  */
-OCEntityHandler OCGetResourceHandler(OCResourceHandle handle);
+OCEntityHandler OC_CALL OCGetResourceHandler(OCResourceHandle handle);
 
 /**
  * This function notify all registered observers that the resource representation has
@@ -605,7 +607,7 @@ OCEntityHandler OCGetResourceHandler(OCResourceHandle handle);
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService qos);
+OCStackResult OC_CALL OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService qos);
 
 /**
  * Notify specific observers with updated value of representation.
@@ -624,7 +626,7 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCNotifyListOfObservers (OCResourceHandle handle,
+OCStackResult OC_CALL OCNotifyListOfObservers (OCResourceHandle handle,
                                        OCObservationId  *obsIdList,
                                        uint8_t          numberOfIds,
                                        const OCRepPayload *payload,
@@ -639,7 +641,7 @@ OCStackResult OCNotifyListOfObservers (OCResourceHandle handle,
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCDoResponse(OCEntityHandlerResponse *response);
+OCStackResult OC_CALL OCDoResponse(OCEntityHandlerResponse *response);
 
 //#ifdef DIRECT_PAIRING
 /**
@@ -651,7 +653,7 @@ OCStackResult OCDoResponse(OCEntityHandlerResponse *response);
  *                     client before returning the list of devices.
  * @return OCDirectPairingDev_t pointer in case of success and NULL otherwise.
  */
-const OCDPDev_t* OCDiscoverDirectPairingDevices(unsigned short waittime);
+const OCDPDev_t* OC_CALL OCDiscoverDirectPairingDevices(unsigned short waittime);
 
 /**
  * The function is responsible for return of paired device list via direct-pairing. It will list
@@ -660,7 +662,7 @@ const OCDPDev_t* OCDiscoverDirectPairingDevices(unsigned short waittime);
  *
  * @return OCDirectPairingDev_t pointer in case of success and NULL otherwise.
  */
-const OCDPDev_t* OCGetDirectPairedDevices();
+const OCDPDev_t* OC_CALL OCGetDirectPairedDevices();
 
 /**
  * The function is responsible for establishment of direct-pairing. It will proceed mode negotiation
@@ -673,7 +675,7 @@ const OCDPDev_t* OCGetDirectPairedDevices();
  * @param[in] resultCallback Callback fucntion to event status of process.
  * @return OTM_SUCCESS in case of success and other value otherwise.
  */
-OCStackResult OCDoDirectPairing(void *ctx, OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
+OCStackResult OC_CALL OCDoDirectPairing(void *ctx, OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
                                 OCDirectPairingCB resultCallback);
 //#endif // DIRECT_PAIRING
 
@@ -682,7 +684,7 @@ OCStackResult OCDoDirectPairing(void *ctx, OCDPDev_t* peer, OCPrm_t pmSel, char 
  *
  * @param uri            NULL terminated resource uri for CoAP-HTTP Proxy.
  */
-OCStackResult OCSetProxyURI(const char *uri);
+OCStackResult OC_CALL OCSetProxyURI(const char *uri);
 
 #if defined(RD_CLIENT) || defined(RD_SERVER)
 /**
@@ -693,7 +695,7 @@ OCStackResult OCSetProxyURI(const char *uri);
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, int64_t ins);
+OCStackResult OC_CALL OCBindResourceInsToResource(OCResourceHandle handle, int64_t ins);
 
 /**
  * This function gets the resource unique id for a resource.
@@ -703,7 +705,7 @@ OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, int64_t ins);
  *
  * @return Ins if resource found or 0 resource not found.
  */
-OCStackResult OCGetResourceIns(OCResourceHandle handle, int64_t *ins);
+OCStackResult OC_CALL OCGetResourceIns(OCResourceHandle handle, int64_t *ins);
 
 #ifdef RD_SERVER
 /**
@@ -712,14 +714,14 @@ OCStackResult OCGetResourceIns(OCResourceHandle handle, int64_t *ins);
  *
  * @return  ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCRDDatabaseSetStorageFilename(const char *filename);
+OCStackResult OC_CALL OCRDDatabaseSetStorageFilename(const char *filename);
 
 /**
  * Returns the filename to be used for database persistent storage.
  *
  * @return the filename
  */
-const char *OCRDDatabaseGetStorageFilename();
+const char *OC_CALL OCRDDatabaseGetStorageFilename();
 
 /**
 * Search the RD database for queries.
@@ -731,7 +733,7 @@ const char *OCRDDatabaseGetStorageFilename();
 *
 * @return ::OC_STACK_OK in case of success or else other value.
 */
-OCStackResult OCRDDatabaseDiscoveryPayloadCreate(const char *interfaceType,
+OCStackResult OC_CALL OCRDDatabaseDiscoveryPayloadCreate(const char *interfaceType,
                                                  const char *resourceType,
                                                  OCDiscoveryPayload **discPayload);
 #endif // RD_SERVER
@@ -744,7 +746,7 @@ OCStackResult OCRDDatabaseDiscoveryPayloadCreate(const char *interfaceType,
 *
 * @return Found  resource handle or NULL if not found.
 */
-OCResourceHandle OCGetResourceHandleAtUri(const char *uri);
+OCResourceHandle OC_CALL OCGetResourceHandleAtUri(const char *uri);
 
 /**
  *  Add a header option to the given header option array.
@@ -757,7 +759,7 @@ OCResourceHandle OCGetResourceHandleAtUri(const char *uri);
  *
  * @return ::OC_STACK_OK on success and other value otherwise.
  */
-OCStackResult OCSetHeaderOption(OCHeaderOption* ocHdrOpt,
+OCStackResult OC_CALL OCSetHeaderOption(OCHeaderOption* ocHdrOpt,
                                 size_t* numOptions,
                                 uint16_t optionID,
                                 void* optionData,
@@ -775,7 +777,7 @@ OCStackResult OCSetHeaderOption(OCHeaderOption* ocHdrOpt,
  *
  * @return ::OC_STACK_OK on success and other value otherwise.
  */
-OCStackResult OCGetHeaderOption(OCHeaderOption* ocHdrOpt,
+OCStackResult OC_CALL OCGetHeaderOption(OCHeaderOption* ocHdrOpt,
                                 size_t numOptions,
                                 uint16_t optionID,
                                 void* optionData,
@@ -788,7 +790,7 @@ OCStackResult OCGetHeaderOption(OCHeaderOption* ocHdrOpt,
  * @param deviceId pointer.
  * @return Returns ::OC_STACK_OK if success.
  */
-OCStackResult OCGetDeviceId(OCUUIdentity *deviceId);
+OCStackResult OC_CALL OCGetDeviceId(OCUUIdentity *deviceId);
 
 /**
  * sets the deviceId of the client
@@ -796,7 +798,7 @@ OCStackResult OCGetDeviceId(OCUUIdentity *deviceId);
  * @param deviceId pointer.
  * @return Returns ::OC_STACK_OK if success.
  */
-OCStackResult OCSetDeviceId(const OCUUIdentity *deviceId);
+OCStackResult OC_CALL OCSetDeviceId(const OCUUIdentity *deviceId);
 
  /**
  * Gets the bool state of "isOwned" property on the doxm resource.
@@ -804,7 +806,7 @@ OCStackResult OCSetDeviceId(const OCUUIdentity *deviceId);
  * @param isOwned a pointer to be assigned to isOwned property
  * @return Returns ::OC_STACK_OK if success.
  */
-OCStackResult OCGetDeviceOwnedState(bool *isOwned);
+OCStackResult OC_CALL OCGetDeviceOwnedState(bool *isOwned);
 
 /**
  * Encode an address string to match RFC 6874.
@@ -816,7 +818,7 @@ OCStackResult OCGetDeviceOwnedState(bool *isOwned);
  *
  * @return ::OC_STACK_OK on success and other value otherwise.
  */
-OCStackResult OCEncodeAddressForRFC6874(char* outputAddress,
+OCStackResult OC_CALL OCEncodeAddressForRFC6874(char* outputAddress,
                                         size_t outputSize,
                                         const char* inputAddress);
 
@@ -832,7 +834,7 @@ OCStackResult OCEncodeAddressForRFC6874(char* outputAddress,
  *
  * @return ::OC_STACK_OK on success and other value otherwise.
  */
-OCStackResult OCDecodeAddressForRFC6874(char* outputAddress,
+OCStackResult OC_CALL OCDecodeAddressForRFC6874(char* outputAddress,
                                         size_t outputSize,
                                         const char* inputAddress,
                                         const char* end);
@@ -841,17 +843,29 @@ OCStackResult OCDecodeAddressForRFC6874(char* outputAddress,
  * Set the value of /oic/d and /oic/p properties. This function is a generic function that sets for
  * all OCF defined properties.
  *
+ * For PAYLOAD_TYPE_DEVICE and OC_RSRVD_DATA_MODEL_VERSION, value must be a const char* CSV string.
+ * For PAYLOAD_TYPE_DEVICE and OC_RSRVD_DEVICE_DESCRIPTION, or OC_RSRVD_DEVICE_MFG_NAME, value must
+ * be an OCStringLL* with pairs of language tag and value elements.  For all other
+ * PAYLOAD_TYPE_DEVICE properties, value must be a const char* string.
+ *
  * @param type the payload type for device and platform as defined in @ref OCPayloadType.
  * @param propName the pre-defined property as per OCF spec.
  * @param value the value of the property to be set.
  *
  * @return ::OC_STACK_OK on success and other value otherwise.
  */
-OCStackResult OCSetPropertyValue(OCPayloadType type, const char *propName, const void *value);
+OCStackResult OC_CALL OCSetPropertyValue(OCPayloadType type, const char *propName, const void *value);
 
 /**
- * Get the value of /oic/d and /oic/p properties. This function is a generic function that get value
- * for all OCF defined properties.
+ * Get the value of /oic/d and /oic/p properties. This function is a generic function that gets the
+ * value for all OCF defined properties.
+ *
+ * For PAYLOAD_TYPE_DEVICE and OC_RSRVD_RESOURCE_TYPE, OC_RSRVD_INTERFACE,
+ * OC_RSRVD_DATA_MODEL_VERSION, OC_RSRVD_DEVICE_DESCRIPTION, or OC_RSRVD_DEVICE_MFG_NAME, the value
+ * will be an OCStringLL*. For all other PAYLOAD_TYPE_DEVICE properties, value will be a char*.
+ *
+ * When the returned value is non-NULL, the memory must be OCFreeOCStringLL()'d or OICFree()'d by
+ * the caller (depending on the underlying type returned).
  *
  * @param type the payload type for device and platform as defined in @ref OCPayloadType.
  * @param propName the pre-defined as per OCF spec.
@@ -859,7 +873,7 @@ OCStackResult OCSetPropertyValue(OCPayloadType type, const char *propName, const
  *
  * @return ::OC_STACK_OK on success and other value otherwise.
  */
-OCStackResult OCGetPropertyValue(OCPayloadType type, const char *propName, void **value);
+OCStackResult OC_CALL OCGetPropertyValue(OCPayloadType type, const char *propName, void **value);
 
 /**
 * Get the registered persistent storage handler. All modules must use this to obtain access to
@@ -867,7 +881,7 @@ OCStackResult OCGetPropertyValue(OCPayloadType type, const char *propName, void 
 *
 * @return pointer to OCPersistentStorage structure on success and NULL otherwise.
 */
-OCPersistentStorage *OCGetPersistentStorageHandler();
+OCPersistentStorage *OC_CALL OCGetPersistentStorageHandler();
 
 /**
 * This function return link local zone id related from ifindex.
@@ -875,9 +889,39 @@ OCPersistentStorage *OCGetPersistentStorageHandler();
 * @param[in] ifindex     interface index.
 * @param[out] zoneId     pointer of zoneId string, caller should free
 *                        zoneId using OICFree() when it returned CA_STATUS_OK.
-* @return Returns ::OC_STACK_OK if success.
+* @return ::OC_STACK_OK if successful.
 */
-OCStackResult OCGetLinkLocalZoneId(uint32_t ifindex, char **zoneId);
+OCStackResult OC_CALL OCGetLinkLocalZoneId(uint32_t ifindex, char **zoneId);
+
+/**
+ * Select the cipher suite for dtls handshake.
+ *
+ * @param[in] cipher      cipher suite (Note : Make sure endianness).
+ *                          TLS_RSA_WITH_AES_256_CBC_SHA256          0x3D
+ *                          TLS_RSA_WITH_AES_128_GCM_SHA256          0x009C
+ *                          TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256  0xC02B
+ *                          TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8       0xC0AE
+ *                          TLS_ECDHE_ECDSA_WITH_AES_128_CCM         0xC0AC
+ *                          TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256  0xC023
+ *                          TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384  0xC024
+ *                          TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384  0xC02C
+ *                          TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256    0xC037
+ *                          TLS_ECDH_anon_WITH_AES_128_CBC_SHA       0xC018
+ * @param[in] adapterType transport adapter (TCP/IP/BLE)
+ *
+ * @return ::OC_STACK_OK if successful.
+ */
+OCStackResult OC_CALL OCSelectCipherSuite(uint16_t cipher, OCTransportAdapter adapterType);
+
+/**
+ * Return the scope level of a given IP address.
+ *
+ * @param[in] addr          remote IP address.
+ * @param[out] scope        scope level of given IP address.
+ *
+ * @return ::OC_STACK_OK if successful.
+ */
+OCStackResult OC_CALL OCGetIpv6AddrScope(const char *addr, OCTransportFlags *scope);
 
 #ifdef __cplusplus
 }

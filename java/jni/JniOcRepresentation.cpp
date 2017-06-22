@@ -196,7 +196,9 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueStringN
     }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
-    std::string value = env->GetStringUTFChars(jValue, nullptr);
+    std::string value;
+    if(jValue)
+        value = env->GetStringUTFChars(jValue, nullptr);
 
     rep->setValue(key, value);
 }

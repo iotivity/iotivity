@@ -159,7 +159,7 @@ public:
     ESResult setDeviceProperty()
     {
         ESDeviceProperty deviceProperty = {
-            {{WIFI_11G, WiFi_EOF}, WIFI_5G}, {"Test Device", "Test Model Number"}
+            {{WIFI_11G, WiFi_EOF}, WIFI_5G}, {"Test Device"}
         };
 
         return ESSetDeviceProperty(&deviceProperty);
@@ -393,15 +393,6 @@ TEST_F(EasysetupEnrolleeTest, WiFiAndDevConfProperiesProvisionedWithSuccess)
                 cntForReceivedCallbackWithSuccess++;
             }
         });
-    mocks.OnCallFunc(DevConfProvCbInApp).Do(
-        [& cntForReceivedCallbackWithSuccess](ESDevConfData *data)
-        {
-            if(!strcmp(data->language, "korean") &&
-                !strcmp(data->country, "Korea"))
-            {
-                cntForReceivedCallbackWithSuccess++;
-            }
-        });
 
     startEnrollee();
 
@@ -410,7 +401,7 @@ TEST_F(EasysetupEnrolleeTest, WiFiAndDevConfProperiesProvisionedWithSuccess)
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_EQ(cntForReceivedCallbackWithSuccess, 3);
+    EXPECT_EQ(cntForReceivedCallbackWithSuccess, 2);
 
     ESTerminateEnrollee();
 }

@@ -30,10 +30,10 @@ main_()
 #
 EOF
 
-    which bash > /dev/null
-    which git > /dev/null
-    which unzip > /dev/null
-    which wget > /dev/null
+    whereis bash > /dev/null || echo "error: please install: bash"
+    whereis git > /dev/null || echo "error: please install: git"
+    whereis unzip > /dev/null || echo "error: please install: unzip"
+    whereis wget > /dev/null || echo "error: please install: wget"
 
     find ./extlibs/ -maxdepth 2 -a -iname "prep.sh" | xargs -n1 bash
 }

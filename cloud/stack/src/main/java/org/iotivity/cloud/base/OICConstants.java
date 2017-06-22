@@ -85,13 +85,15 @@ public class OICConstants {
 
     /* resource uri for message queue */
     public static final String MQ_BROKER_URI                 = "ps";
-
+    
     /* file path for tls communication - Modify filePath to yours */
-    public static final String ROOT_CERT_FILE                = "../certificate/rootca.crt";
+    public static final String CERTS_PATH                    = "../certificate";
 
-    public static final String CLOUD_CERT_FILE               = "../certificate/iotivitycloud.crt";
+    public static final String ROOT_CERT_FILE                = CERTS_PATH + "/rootca.crt";
 
-    public static final String CLOUD_KEY_FILE                = "../certificate/iotivitycloud.key";
+    public static final String CLOUD_CERT_FILE               = CERTS_PATH + "/iotivitycloud.crt";
+
+    public static final String CLOUD_KEY_FILE                = CERTS_PATH + "/iotivitycloud.key";
 
     /* cloud uuid */
     public static final String CLOUD_UUID                    = "2a6085d1-815d-4277-baba-4e4e4df91308";

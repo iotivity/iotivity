@@ -27,6 +27,8 @@
 #include "srmutility.h"
 #include "base64.h"
 
+using namespace OC;
+
 jobject JniSecureUtils::convertProvisionresultVectorToJavaList(JNIEnv *env, const OC::PMResultList_t *result)
 {
     jobject jResultList = env->NewObject(g_cls_LinkedList, g_mid_LinkedList_ctor);

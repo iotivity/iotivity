@@ -17,7 +17,7 @@
  *
  ******************************************************************/
 
-#include "TestElevatorClient.h"
+#include "testelevatorclient.h"
 #include "ipcatestdata.h"
 
 #define VERBOSE_INFO  0   // set to 1 for extra output.
@@ -40,6 +40,7 @@ void ElevatorClient::OnObserveCallback(
                         const int &eCode,
                         const int &sequenceNumber)
 {
+    OC_UNUSED(headerOptions);
     OC_UNUSED(sequenceNumber);
     OC_UNUSED(eCode);
 
@@ -82,12 +83,13 @@ bool ElevatorClient::StopObservation()
     return result == OC_STACK_OK ? true : false;
 }
 
-const int DEFAULT_WAITTIME = 2000;
-bool ElevatorClient::WaitForCallback(int waitingTime = DEFAULT_WAITTIME)
+// Outstanding requests should time out in 247 seconds (EXCHANGE_LIFETIME) per rfc 7252.
+const int DEFAULT_WAITTIME_MS = 247000;
+bool ElevatorClient::WaitForCallback(int waitTimeMs = DEFAULT_WAITTIME_MS)
 {
     std::unique_lock<std::mutex> lock { syncMutex };
 
-    if (syncCV.wait_for(lock, std::chrono::milliseconds{ waitingTime }) != std::cv_status::timeout)
+    if (syncCV.wait_for(lock, std::chrono::milliseconds{ waitTimeMs }) != std::cv_status::timeout)
     {
         return true;
     }

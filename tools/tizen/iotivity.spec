@@ -16,7 +16,7 @@ Source1002: %{name}-test.manifest
 %endif
 
 %if "%{tizen}" == "2.3"
-%define TARGET_TRANSPORT IP
+%define TARGET_TRANSPORT IP,BT
 %endif
 
 %if "%{tizen}" == "3.0"
@@ -86,6 +86,7 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?WITH_MQ: %define WITH_MQ OFF}
 %{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?WITH_TCP: %define WITH_TCP 0}
+%{!?MULTIPLE_OWNER: %define MULTIPLE_OWNER 0}
 %{!?OIC_SUPPORT_TIZEN_TRACE: %define OIC_SUPPORT_TIZEN_TRACE False}
 
 BuildRequires:  expat-devel
@@ -107,8 +108,10 @@ BuildRequires:  pkgconfig(ttrace)
 %endif
 BuildRequires:  pkgconfig(capi-network-connection)
 BuildRequires:  pkgconfig(capi-network-bluetooth) >= 0.1.52
-%if 3 <= 0%{?tizen_version_major}
+%if 0%{?profile:1} && 3 <= 0%{?tizen_version_major}
 BuildRequires:  bluetooth-tools-profile_%{profile}
+%else
+BuildRequires:  bluetooth-tools
 %endif
 %else
 %if 0%{?fedora:1}
@@ -199,6 +202,7 @@ scons %{?_smp_mflags} --prefix=%{_prefix} \
     WITH_MQ=%{WITH_MQ} \
     WITH_PROXY=%{WITH_PROXY} \
     WITH_TCP=%{WITH_TCP} \
+    MULTIPLE_OWNER=%{MULTIPLE_OWNER} \
     OIC_SUPPORT_TIZEN_TRACE=%{OIC_SUPPORT_TIZEN_TRACE} \
     #eol
 
@@ -223,6 +227,7 @@ scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
     WITH_MQ=%{WITH_MQ} \
     WITH_PROXY=%{WITH_PROXY} \
     WITH_TCP=%{WITH_TCP} \
+    MULTIPLE_OWNER=%{MULTIPLE_OWNER} \
     OIC_SUPPORT_TIZEN_TRACE=%{OIC_SUPPORT_TIZEN_TRACE} \
     #eol
 
@@ -247,8 +252,6 @@ cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleclients
 cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleserver %{ex_install_dir}
 cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleserverHQ %{ex_install_dir}
 cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/threadingsample %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/oic_svr_db_server.dat %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/oic_svr_db_client.dat %{ex_install_dir}
 cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/lib*.a %{buildroot}%{_libdir}
 
 %if 0%{?WITH_PROXY} == 1
@@ -271,6 +274,8 @@ cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/csdk/security/provisio
 cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{ex_install_dir}/provision-sample/
 cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_randompin %{ex_install_dir}/provision-sample/
 cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat %{ex_install_dir}/provision-sample/
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/oic_svr_db_server.dat %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/oic_svr_db_client.dat %{ex_install_dir}
 
 %endif
 

@@ -12,7 +12,7 @@ def helpmsg(script):
 Usage:
     build:
         python %s <targetbuild>
-        Allowed values for <target_build>: all, linux_unsecured, linux_secured, linux_unsecured_with_ra, linux_secured_with_ra, linux_unsecured_with_rd, linux_secured_with_rd, android, arduino, tizen, simulator, darwin, windows, msys
+        Allowed values for <target_build>: all, linux_unsecured, linux_secured, linux_unsecured_with_ra, linux_secured_with_ra, linux_unsecured_with_rd, linux_secured_with_rd, android, arduino, tizen, tizen_unsecured, tizen_secured, simulator, darwin, windows, msys
         Note: \"linux\" will build \"linux_unsecured\", \"linux_secured\", \"linux_unsecured_with_ra\", \"linux_secured_with_ra\", \"linux_secured_with_rd\", \"linux_unsecured_with_mq\", \"linux_secured_with_tcp\" & \"linux_unsecured_with_tcp\" & \"linux_unsecured_with_rd\".
         Any selection will build both debug and release versions of all available targets in the scope you've selected.
         To choose any specific command, please use the SCons commandline directly. Please refer to [IOTIVITY_REPO]/Readme.scons.txt.
@@ -20,7 +20,7 @@ Usage:
         python %s -c
     '''
     print (helpstr % (script, script))
-    sys.exit()
+    sys.exit(1)
 
 def call_scons(build_options, extra_option_str):
     """
@@ -35,11 +35,14 @@ def call_scons(build_options, extra_option_str):
 
     cmd_line += " " + str(extra_option_str)
 
-    print ("Running : " + cmd_line)
-    sys.stdout.flush()
-    exit_code = subprocess.Popen(cmd_line, shell=True).wait()
-    if exit_code != 0:
-        exit(exit_code)
+    if not EXEC_MODE:
+        print ("Would run : " + cmd_line)
+    else:
+        print ("Running : " + cmd_line)
+        sys.stdout.flush()
+        exit_code = subprocess.Popen(cmd_line, shell=True).wait()
+        if exit_code != 0:
+            sys.exit(exit_code)
 
 def build_all(flag, extra_option_str):
     if platform.system() == "Linux":
@@ -356,6 +359,7 @@ def build_arduino(flag, extra_option_str):
                         'TARGET_OS':'arduino',
                         'UPLOAD':'false',
                         'BOARD':'mega',
+                        'MULTIPLE_OWNER':0,
                         'TARGET_ARCH':'avr',
                         'TARGET_TRANSPORT':'IP',
                         'SHIELD':'ETH',
@@ -383,30 +387,41 @@ def build_arduino(flag, extra_option_str):
     # BLE support for the Arduino Due is currently unavailable.
 
 def build_tizen(flag, extra_option_str):
-    print ("*********** Build for Tizen *************")
-    cmd_line = "/bin/sh " + os.getcwd() + "/gbsbuild.sh"
-    print ("Running : " + cmd_line)
-    exit_code = subprocess.Popen([cmd_line], shell=True).wait()
-    if exit_code != 0:
-        exit(exit_code)
+    print ("*********** Build for Tizen with options *************")
+    cmd_line = os.getcwd() + "/gbsbuild.sh"  + " " + extra_option_str
+    if not EXEC_MODE:
+        print ("Would run : " + cmd_line)
+    else:
+        print ("Running : " + cmd_line)
+        exit_code = subprocess.Popen([cmd_line], shell=True).wait()
+        if exit_code != 0:
+            sys.exit(exit_code)
 
-    print ("*********** Build for Tizen octbstack lib and sample with security *************")
-    extra_option_str = "-f resource/csdk/stack/samples/tizen/build/SConscript " + extra_option_str
+    print ("*********** Build for Tizen octbstack lib and sample *************")
+    build_extra_options = "-f resource/csdk/stack/samples/tizen/build/SConscript " + extra_option_str
     build_options = {
                         'TARGET_OS':'tizen',
                         'TARGET_TRANSPORT':'IP',
                         'LOGGING':'true',
                         'RELEASE':flag,
                     }
-    call_scons(build_options, extra_option_str)
-
-    print ("*********** Build for Tizen octbstack lib and sample *************")
-    build_options['SECURED'] = 0
-    call_scons(build_options, extra_option_str)
+    call_scons(build_options, build_extra_options)
 
     print ("*********** Build for Tizen octbstack lib and sample with Routing Manager*************")
     build_options['ROUTING'] = 'GW'
-    call_scons(build_options, extra_option_str)
+    call_scons(build_options, build_extra_options)
+
+    print ("*********** Build for Tizen Easy-Setup  sample *************")
+    build_options['ROUTING'] = 'EP'
+    build_options['ES_TARGET_ENROLLEE'] = 'tizen'
+    build_extra_options = "-f service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/build/tizen/SConscript " + extra_option_str
+    call_scons(build_options, build_extra_options)
+
+def build_tizen_secured(flag, extra_option_str):
+    build_tizen(flag, extra_option_str + " SECURED=1")
+
+def build_tizen_unsecured(flag, extra_option_str):
+    build_tizen(flag, extra_option_str + " SECURED=0")
 
 # Mac OS and iOS
 def build_darwin(flag, extra_option_str):
@@ -484,6 +499,8 @@ def build_simulator(flag, extra_option_str):
     build_options = {
                         'SIMULATOR':1,
                         'RELEASE':flag,
+                        'SECURED':0,
+                        'TARGET_TRANSPORT':'IP',
                     }
     call_scons(build_options, extra_option_str)
 
@@ -521,6 +538,9 @@ script_name = sys.argv[0]
 
 # May be overridden in user's shell
 VERBOSE = os.getenv("VERBOSE", "1")
+EXEC_MODE = os.getenv("EXEC_MODE", True)
+if EXEC_MODE in ['false', 'False', '0']:
+    EXEC_MODE = False
 
 if arg_num == 1:
     build_all("true", "")
@@ -666,6 +686,14 @@ elif arg_num == 2:
     elif str(sys.argv[1]) == "tizen":
         build_tizen("true", "")
         build_tizen("false", "")
+
+    elif str(sys.argv[1]) == "tizen_unsecured":
+        build_tizen_unsecured("true", "")
+        build_tizen_unsecured("false", "")
+
+    elif str(sys.argv[1]) == "tizen_secured":
+        build_tizen_secured("true", "")
+        build_tizen_secured("false", "")
 
     elif str(sys.argv[1]) == "simulator":
         build_simulator("true", "")

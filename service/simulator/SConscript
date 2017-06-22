@@ -26,8 +26,7 @@ import os, sys
 Import('env')
 
 lib_env = env.Clone()
-src_dir = env.get('SRC_DIR')
-SConscript(src_dir + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 simulator_env = lib_env.Clone()
 
 #Raml Parser
@@ -37,53 +36,58 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-simulator_env.AppendUnique(CPPPATH = ['inc', 'src/client', 'src/server', 'src/common'])
-simulator_env.AppendUnique(CPPPATH = [
-		'../../resource/include/',
-		'../../resource/csdk/include',
-		'../../resource/csdk/stack/include',
-		'../../resource/c_common/ocrandom/include',
-		'../../resource/csdk/logger/include',
-		'../../resource/oc_logger/include',
-		'./ramlparser/raml',
-		'./ramlparser/raml/model',		
-		'./ramlparser/raml/jsonSchemaParser',	
-		'../../extlibs/yaml/yaml/include'
-		])
+simulator_env.AppendUnique(CPPPATH=[
+    'inc',
+    'src/client',
+    'src/server',
+    'src/common',
+    '../../resource/include/',
+    '../../resource/csdk/include',
+    '../../resource/csdk/stack/include',
+    '../../resource/c_common/ocrandom/include',
+    '../../resource/csdk/logger/include',
+    '../../resource/oc_logger/include',
+    './ramlparser/raml',
+    './ramlparser/raml/model',
+    './ramlparser/raml/jsonSchemaParser',
+    '../../extlibs/yaml/yaml/include',
+])
 
 # Including Java path for building JNI files
 try:
-	os.environ['JAVA_HOME']
+    os.environ['JAVA_HOME']
 except KeyError:
-	print '''
+    print '''
 *************************************** Error *********************************
 * JAVA_HOME environment variable not set                                      
 * Simulator has dependency on java, Please set environment variable JAVA_HOME
 *******************************************************************************
 	'''
-	sys.exit(1)
-	
+    sys.exit(1)
+
 java_headers = [os.path.join(os.environ['JAVA_HOME'], 'include')]
 java_headers.append(os.path.join(java_headers[0], 'win32'))
 java_headers.append(os.path.join(java_headers[0], 'linux'))
 java_headers.append(os.path.join(java_headers[0], 'solaris'))
-simulator_env.AppendUnique(CPPPATH = java_headers)
+simulator_env.AppendUnique(CPPPATH=java_headers)
 
-simulator_env.Append( RPATH = env.Literal('\\$$ORIGIN'))
+simulator_env.Append(RPATH=env.Literal('\\$$ORIGIN'))
 
-simulator_env.AppendUnique(CPPPATH = ['../../extlibs/cjson'])
-simulator_env.PrependUnique(LIBS = ['oc', 'octbstack', 'RamlParser'])
-simulator_env.AppendUnique(LIBS = ['pthread'])
+simulator_env.AppendUnique(CPPPATH=['../../extlibs/cjson'])
+simulator_env.PrependUnique(LIBS=['oc', 'octbstack', 'RamlParser'])
+simulator_env.AppendUnique(LIBS=['pthread'])
 
-simulator_env.AppendUnique(CXXFLAGS = ['-O2', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+simulator_env.AppendUnique(
+    CXXFLAGS=['-O2', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-simulator_src = [env.Glob('src/*.cpp')
-                 ,env.Glob('src/*/*.cpp')
-                 ,env.Glob('java/jni/*.cpp')
-                ]
+simulator_src = [
+    env.Glob('src/*.cpp'),
+    env.Glob('src/*/*.cpp'),
+    env.Glob('java/jni/*.cpp')
+]
 simulatorsdk = simulator_env.SharedLibrary('SimulatorManager', simulator_src)
 
 simulator_env.InstallTarget(simulatorsdk, 'libSimulatorManager')

@@ -30,8 +30,8 @@
 #include <condition_variable>
 
 #include <stdbool.h>
-#include <inttypes.h>
 #include <assert.h>
+#include <stdint.h>
 
 #include "OCPlatform.h"
 #include "OCApi.h"

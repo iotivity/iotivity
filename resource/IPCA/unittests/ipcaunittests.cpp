@@ -17,28 +17,32 @@
  *
  ******************************************************************/
 
+#include "iotivity_config.h"
+
 #include <thread>
 #include <chrono>
 #include <mutex>
 #include <condition_variable>
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "ocrandom.h"
 #include "ipca.h"
 #include "testelevatorserver.h"
 #include "testelevatorclient.h"
 #include "ipcatestdata.h"
-#include "ipcaelevatorclient.h"
+#include "IPCAElevatorClient.h"
 
 using namespace std;
 using namespace std::placeholders;
 
 // Implemented in ipca.dll.
-void IPCASetUnitTestMode();
+void IPCA_CALL IPCASetUnitTestMode();
 
 // IPCA test app info.
-IPCAUuid IPCATestAppUuid = {0x84, 0x71, 0x88, 0x78, 0xe6, 0x91, 0x4b, 0xf4,
-                            0xa9, 0x57, 0x04, 0xe0, 0x1b, 0x9b, 0x59, 0xd1};
+IPCAUuid IPCATestAppUuid = {
+                              {0x84, 0x71, 0x88, 0x78, 0xe6, 0x91, 0x4b, 0xf4,
+                               0xa9, 0x57, 0x04, 0xe0, 0x1b, 0x9b, 0x59, 0xd1}
+                           };
 char IPCATestAppName[] = "IPCA Unittests";
 
 // IoTivity supports 1 server per instance.
@@ -105,11 +109,7 @@ TEST(IoTivityDirect, IsIoTivityWorking)
     // elevator server.
     loopCount = 0;
     const int TARGET_FLOOR = 3;
-    elevatorClient.SetTargetFloor(TARGET_FLOOR);
-    while ((loopCount++ < 20) && (g_testElevator1.GetCurrentFloor() != TARGET_FLOOR))
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+    elevatorClient.SetTargetFloor(TARGET_FLOOR);    // SetTargetFloor() is synchronous.
     EXPECT_EQ(TARGET_FLOOR, g_testElevator1.GetCurrentFloor());
 
     // Confirm able to get current floor using IoTivity client API. The current floor should be
@@ -280,7 +280,7 @@ TEST_F(IPCAPropertyBagTest, PropertyBagIntArrayType)
     size_t readBackIntArraySize;
     EXPECT_EQ(IPCA_OK, IPCAPropertyBagGetValueIntArray(m_propertyBagHandle,
                             "IntArray", &readBackIntArray, &readBackIntArraySize));
-    EXPECT_EQ(10, readBackIntArraySize);
+    EXPECT_EQ(static_cast<size_t>(10), readBackIntArraySize);
     EXPECT_EQ(0, memcmp(intArray, readBackIntArray, readBackIntArraySize));
 
     IPCAPropertyBagFreeIntArray(readBackIntArray);
@@ -297,7 +297,7 @@ TEST_F(IPCAPropertyBagTest, PropertyBagDoubleArrayType)
     size_t readBackDoubleArraySize;
     EXPECT_EQ(IPCA_OK, IPCAPropertyBagGetValueDoubleArray(m_propertyBagHandle,
                             "DoubleArray", &readBackDoubleArray, &readBackDoubleArraySize));
-    EXPECT_EQ(10, readBackDoubleArraySize);
+    EXPECT_EQ(static_cast<size_t>(10), readBackDoubleArraySize);
     EXPECT_EQ(0, memcmp(doubleArray, readBackDoubleArray, readBackDoubleArraySize));
 
     IPCAPropertyBagFreeDoubleArray(readBackDoubleArray);
@@ -314,7 +314,7 @@ TEST_F(IPCAPropertyBagTest, PropertyBagBoolArrayType)
     size_t readBackBoolArraySize;
     EXPECT_EQ(IPCA_OK, IPCAPropertyBagGetValueBoolArray(m_propertyBagHandle,
                             "boolArray", &readBackBoolArray, &readBackBoolArraySize));
-    EXPECT_EQ(10, readBackBoolArraySize);
+    EXPECT_EQ(static_cast<size_t>(10), readBackBoolArraySize);
     EXPECT_EQ(0, memcmp(boolArray, readBackBoolArray, readBackBoolArraySize));
 
     IPCAPropertyBagFreeBoolArray(readBackBoolArray);
@@ -323,7 +323,7 @@ TEST_F(IPCAPropertyBagTest, PropertyBagBoolArrayType)
 TEST_F(IPCAPropertyBagTest, PropertyBagStringArrayType)
 {
     // array of string
-    char* stringArray[] = {"hello world 1", "hello world 2", "hello world 3"};
+    const char* stringArray[] = {"hello world 1", "hello world 2", "hello world 3"};
     EXPECT_EQ(IPCA_OK, IPCAPropertyBagSetValueStringArray(m_propertyBagHandle,
                             "stringArray", (const char**)stringArray, 3));
 
@@ -331,7 +331,7 @@ TEST_F(IPCAPropertyBagTest, PropertyBagStringArrayType)
     size_t readbackStringSize;
     EXPECT_EQ(IPCA_OK, IPCAPropertyBagGetValueStringArray(m_propertyBagHandle,
                             "stringArray", &readBackString, &readbackStringSize));
-    ASSERT_EQ(3, readbackStringSize);
+    ASSERT_EQ(static_cast<size_t>(3), readbackStringSize);
     EXPECT_STREQ(stringArray[0], readBackString[0]);
     EXPECT_STREQ(stringArray[1], readBackString[1]);
     EXPECT_STREQ(stringArray[2], readBackString[2]);
@@ -382,7 +382,7 @@ TEST_F(IPCAPropertyBagTest, PropertyBagPropertyBagArrayType)
     size_t arrayCount;
     EXPECT_EQ(IPCA_OK, IPCAPropertyBagGetValuePropertyBagArray(m_propertyBagHandle,
                                 "PropertyBagArray", &propertyBagReadBackArray, &arrayCount));
-    ASSERT_EQ(3, arrayCount);
+    ASSERT_EQ(static_cast<size_t>(3), arrayCount);
 
     IPCAPropertyBagHandle propertyBag1 = propertyBagReadBackArray[0], propertyBag1A;
     EXPECT_EQ(IPCA_OK, IPCAPropertyBagGetValuePropertyBag(propertyBag1, "values", &propertyBag1A));
@@ -424,9 +424,22 @@ class IPCAMiscTest : public testing::Test
         IPCAAppHandle m_anotherIPCAAppHandle;
         IPCAAppInfo m_ipcaAppInfo;
 
-        IPCAStatus DoAnotherIPCAOpen()
+        IPCAStatus DoAnotherIPCAOpenWithSameAppId()
         {
             return IPCAOpen(&m_ipcaAppInfo, IPCA_VERSION_1, &m_anotherIPCAAppHandle);
+        }
+
+        IPCAStatus DoAnotherIPCAOpenWithDifferentAppId()
+        {
+            IPCAAppInfo ipcaAppInfoExtra;
+            IPCAAppHandle ipcaAppHandleExtra;
+            IPCAUuid extraTestAppUuid = {
+                                            {0x63, 0x72, 0xc0, 0xea, 0x1f, 0x12, 0x11, 0xe7,
+                                             0x93, 0xae, 0x92, 0x36, 0x1f, 0x00, 0x26, 0x71}
+                                        };
+
+            ipcaAppInfoExtra = { extraTestAppUuid, IPCATestAppName, "1.0.0", "Microsoft" };
+            return IPCAOpen(&ipcaAppInfoExtra, IPCA_VERSION_1, &ipcaAppHandleExtra);
         }
 
     protected:
@@ -452,9 +465,10 @@ class IPCAMiscTest : public testing::Test
         }
 };
 
-TEST_F(IPCAMiscTest, ShouldNotAllowMultipleCallsToIPCOpen)
+TEST_F(IPCAMiscTest, MultipleIPCAOpen)
 {
-    EXPECT_EQ(IPCA_ALREADY_OPENED, DoAnotherIPCAOpen());
+    EXPECT_EQ(IPCA_OK, DoAnotherIPCAOpenWithSameAppId());
+    EXPECT_EQ(IPCA_ALREADY_OPENED, DoAnotherIPCAOpenWithDifferentAppId());
 }
 
 TEST_F(IPCAMiscTest, IPCAOpenShouldBeAllowedAfterIPCAClose)
@@ -462,7 +476,7 @@ TEST_F(IPCAMiscTest, IPCAOpenShouldBeAllowedAfterIPCAClose)
     IPCAClose(m_ipcaAppHandle);
     m_ipcaAppHandle = NULL;
 
-    ASSERT_EQ(IPCA_OK, DoAnotherIPCAOpen());
+    ASSERT_EQ(IPCA_OK, DoAnotherIPCAOpenWithSameAppId());
 }
 
 /*
@@ -556,9 +570,14 @@ TEST_F(IPCAElevatorClient, SuccessfullyCreateAndDeleteResources)
         CreateResourceRelativePath();
         afterCreateCount = g_testElevator1.GetRelativePathResourceCreateCount();
         ASSERT_EQ(beforeCreateCount + 1, afterCreateCount);
-        // @todo: when IOT-1819 is resolved.
-        // EXPECT_STREQ(ELEVATOR_RESOURCE_NEW_RESOURCE_PATH, GetNewResourceURI());
+        EXPECT_STREQ(ELEVATOR_RESOURCE_NEW_RESOURCE_PATH, GetNewResourcePath());
     }
+
+    // Create new resource that results in resource with long resource path.
+    beforeCreateCount = g_testElevator1.GetRelativePathResourceCreateCount();
+    CreateResourceLongRelativePath();
+    afterCreateCount = g_testElevator1.GetRelativePathResourceCreateCount();
+    ASSERT_EQ(beforeCreateCount, afterCreateCount); // resource should not be created.
 
     // Delete resource
     size_t beforeDeleteCount, afterDeleteCount;
@@ -586,10 +605,11 @@ TEST_F(IPCAElevatorClient, SuccessfullyReceiveResourceChangeNotifications)
     ASSERT_EQ(true, result);
 
     // Wait until observed current floor is set to targeted floor.
+    // Outstanding requests should time out in 247 seconds (EXCHANGE_LIFETIME) per rfc 7252.
     std::unique_lock<std::mutex> lock(m_resourceChangeCbMutex);
     m_resourceChangeCbCV.wait_for(
             lock,
-            std::chrono::seconds(10),
+            std::chrono::seconds(247),
             [this] { return GetObservedCurrentFloor() == 10; });
 
     EXPECT_EQ(10, GetObservedCurrentFloor());   // check it is at floor 10.
@@ -607,6 +627,40 @@ TEST_F(IPCAElevatorClient, SuccessfulReboot)
     EXPECT_EQ(IPCA_OK, RebootElevator());
 }
 
+TEST_F(IPCAElevatorClient, TestCloseHandleTimingForGet)
+{
+    EXPECT_EQ(IPCA_OK, TestCloseHandleForGet());
+}
+
+TEST_F(IPCAElevatorClient, TestCloseHandleTimingForSet)
+{
+    EXPECT_EQ(IPCA_OK, TestCloseHandleForSet());
+}
+
+TEST_F(IPCAElevatorClient, TestCloseHandleTimingForCreate)
+{
+    EXPECT_EQ(IPCA_OK, TestCloseHandleForCreate());
+}
+
+TEST_F(IPCAElevatorClient, TestCloseHandleTimingForDelete)
+{
+    EXPECT_EQ(IPCA_OK, TestCloseHandleForDelete());
+}
+
+TEST_F(IPCAElevatorClient, TestCloseHandleTimingForObserve)
+{
+    EXPECT_EQ(IPCA_OK, TestCloseHandleForObserve());
+}
+
+TEST_F(IPCAElevatorClient, TestCloseHandleTimingForDiscover)
+{
+    EXPECT_EQ(IPCA_OK, TestCloseHandleForDiscover());
+}
+
+TEST_F(IPCAElevatorClient, TestMultipleCallsToCloseHandle)
+{
+    EXPECT_EQ(IPCA_OK, TestMultipleCallsToCloseSameHandle());
+}
 
 TEST(ElevatorServerStop, Stop)
 {

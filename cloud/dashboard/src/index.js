@@ -52,7 +52,7 @@ Client.event.on(ERROR, function(message) {
 
 // #2 websocket connected: default page
 Client.event.on(CONNECTED, function() {
-    renderDefaultPage(false);
+    renderDefaultPage(false, '', '');
 
     ReactDOM.render(
         <SigninPage di={getDeviceId()} uid={getUid()} accesstoken={getAccesstoken()} autosignin={getAutosignin()} />,
@@ -76,7 +76,7 @@ Client.event.on(DISCONNECTED, function() {
 Client.event.on(SIGNIN, function() {
     unmountDefaultPage();
 
-    renderDefaultPage(true);
+    renderDefaultPage(true, getDeviceId(), getAccesstoken());
 
     ReactDOM.unmountComponentAtNode(document.getElementById('body'));
 });
@@ -86,7 +86,7 @@ Client.event.on(SIGNOUT, function() {
     Client.removeClientData(['accesstoken']);
 
     unmountDefaultPage();
-    renderDefaultPage(false);
+    renderDefaultPage(false, '', '');
 
     ReactDOM.render(
         <SigninPage di={getDeviceId()} uid={getUid()} accesstoken={getAccesstoken()} autosignin={getAutosignin()} />,
@@ -99,9 +99,9 @@ ReactDOM.render(
     document.getElementById('body')
 );
 
-function renderDefaultPage(signinStatue) {
+function renderDefaultPage(signinStatue, di, accesstoken) {
     ReactDOM.render(
-        <MainAppBar signin={signinStatue}/>,
+        <MainAppBar signin={signinStatue} di={di} accesstoken={accesstoken}/>,
         document.getElementById('appbar')
     );
     ReactDOM.render(

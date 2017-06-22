@@ -24,8 +24,6 @@
 #ifndef _Included_org_iotivity_base_OcResource_OnObserveListener
 #define _Included_org_iotivity_base_OcResource_OnObserveListener
 
-using namespace OC;
-
 class JniOcResource;
 #ifdef WITH_CLOUD
 class JniOcAccountManager;
@@ -39,7 +37,7 @@ public:
     JniOnObserveListener(JNIEnv *env, jobject jListener, JniOcAccountManager* owner);
 #endif
     ~JniOnObserveListener();
-    void onObserveCallback(const HeaderOptions headerOptions, const OCRepresentation& rep,
+    void onObserveCallback(const OC::HeaderOptions headerOptions, const OC::OCRepresentation& rep,
         const int& eCode, const int& sequenceNumber);
     jweak getJWListener();
 private:

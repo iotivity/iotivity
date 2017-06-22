@@ -21,18 +21,16 @@
 Import('env')
 target_os = env.get('TARGET_OS')
 
-SConscript('common/SConscript')
-
-# build producer notification wrapper
-SConscript('provider/SConscript')
-
-# build producer notification wrapper
-SConscript('consumer/SConscript')
+SConscript(dirs=[
+    'common',
+    'provider',  # build producer notification wrapper
+    'consumer',  # build producer notification wrapper
+])
 
 # Go to build sample apps using wrapper
 if target_os == 'linux':
     SConscript('examples/linux/SConscript')
 
 # Go to build c++ wrapper unittest
-#if target_os == 'linux':
-#    SConscript('unittest/SConscript')
+if target_os == 'linux':
+    SConscript('unittest/SConscript')

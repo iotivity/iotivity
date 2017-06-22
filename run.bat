@@ -17,6 +17,12 @@ IF /I "%1" == "msys" (
 REM *** Default BUILD OPTIONS ***
 set TARGET_OS=windows
 
+if "%JENKINS_HOME%" == "" (
+  set AUTOMATIC_UPDATE=0
+) else (
+  set AUTOMATIC_UPDATE=1
+)
+
 if "%TARGET_ARCH%" == "" (
   set TARGET_ARCH=amd64
 )
@@ -27,6 +33,10 @@ if "%TEST%" == "" (
 
 if "%LOGGING%" == "" (
   set LOGGING=0
+)
+
+if "%LOG_LEVEL%" == "" (
+  set LOG_LEVEL=DEBUG
 )
 
 if "%RELEASE%" == "" (
@@ -43,6 +53,11 @@ if "%SECURED%" == "" (
 
 if "%MULTIPLE_OWNER%" == "" (
   set MULTIPLE_OWNER=1
+)
+
+if "%UWP_APP%" == "" (
+  REM Set it to build Win32 app by default
+  set UWP_APP=0
 )
 
 set THREAD_COUNT=%NUMBER_OF_PROCESSORS%
@@ -73,6 +88,10 @@ IF NOT "%1"=="" (
   IF /I "%1"=="-logging" (
     SET LOGGING=1
   )
+  IF /I "%1"=="-logLevel" (
+    SET LOG_LEVEL=%2
+    SHIFT
+  )
   IF /I "%1"=="-debugger" (
     set DEBUG="%ProgramFiles(x86)%\Windows Kits\10\Debuggers\x64\cdb.exe" -2 -c "g"
   )
@@ -88,6 +107,12 @@ IF NOT "%1"=="" (
   IF /I "%1"=="-noMOT" (
     set MULTIPLE_OWNER=0
   )
+  IF /I "%1"=="-automaticUpdate" (
+    set AUTOMATIC_UPDATE=1
+  )
+  IF /I "%1"=="-uwp" (
+    set UWP_APP=1
+  )
 
   SHIFT
   GOTO :processArgs
@@ -97,16 +122,22 @@ IF %RELEASE% == 1 (
   set BINDIR=release
 )
 
+set BUILD_VARIANT=win32
+if "%UWP_APP%" == "1" (
+  set BUILD_VARIANT=uwp
+)
+
 REM We need to append the "PATH" so the octbstack.dll can be found by executables
 IF "%BUILD_MSYS%" == "" (
-  set BUILD_DIR=out\windows\%TARGET_ARCH%\%BINDIR%
+  set BUILD_DIR=out\windows\%BUILD_VARIANT%\%TARGET_ARCH%\%BINDIR%
   set PATH=!PATH!;!IOTIVITY_DIR!!BUILD_DIR!;
 ) ELSE (
   set BUILD_DIR=out\msys_nt\x86_64\%BINDIR%
   set PATH=!PATH!;!BUILD_DIR!;C:\msys64\mingw64\bin
 )
 
-set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% RD_MODE=%RD_MODE% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER% -j %THREAD_COUNT%
+set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% UWP_APP=%UWP_APP% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% LOG_LEVEL=%LOG_LEVEL% RD_MODE=%RD_MODE% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER% AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE%
+
 
 REM Use MSVC_VERSION=12.0 for VS2013, or MSVC_VERSION=14.0 for VS2015.
 REM If MSVC_VERSION has not been defined here, SCons chooses automatically a VS version.
@@ -164,27 +195,56 @@ if "!RUN_ARG!"=="server" (
   echo Starting IoTivity build with these options:
   echo   TARGET_OS=%TARGET_OS%
   echo   TARGET_ARCH=%TARGET_ARCH%
+  echo   UWP_APP=%UWP_APP%
+  echo   BUILD_DIR=%BUILD_DIR%
   echo   SECURED=%SECURED%
   echo   RELEASE=%RELEASE%
   echo   TEST=%TEST%
   echo   LOGGING=%LOGGING%
+  echo   LOG_LEVEL=%LOG_LEVEL%
   echo   ROUTING=%ROUTING%
   echo   WITH_TCP=%WITH_TCP%
   echo   WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP%
   echo   MULTIPLE_OWNER=%MULTIPLE_OWNER%
   echo   MSVC_VERSION=%MSVC_VERSION%
   echo   THREAD_COUNT=%THREAD_COUNT%
-  echo.scons VERBOSE=1 %BUILD_OPTIONS%
-  scons VERBOSE=1 %BUILD_OPTIONS%
+  echo   AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE%
+
+  REM First: just build, but don't run tests.
+  echo.scons.bat -j %THREAD_COUNT% VERBOSE=1 TEST=0 %BUILD_OPTIONS%
+  call scons.bat -j %THREAD_COUNT% VERBOSE=1 TEST=0 %BUILD_OPTIONS%
+  if ERRORLEVEL 1 (
+    echo SCons failed - exiting run.bat with code 3
+    exit /B 3
+  )
+
+  REM Second: run tests if needed, using a single SCons thread.
+  if "!TEST!"=="1" (
+    echo.
+    echo Running Tests
+    echo.scons.bat -j 1 VERBOSE=1 TEST=1 %BUILD_OPTIONS%
+    call scons.bat -j 1 VERBOSE=1 TEST=1 %BUILD_OPTIONS%
+    if ERRORLEVEL 1 (
+        echo SCons failed - exiting run.bat with code 4
+        exit /B 4
+    )
+  )
 ) else if "!RUN_ARG!"=="clean" (
+  echo Cleaning IoTivity build
   del /S *.ilk
-  scons VERBOSE=1 %BUILD_OPTIONS% -c
+  echo.scons.bat -j 1 VERBOSE=1 TEST=%TEST% %BUILD_OPTIONS% -c
+  call scons.bat -j 1 VERBOSE=1 TEST=%TEST% %BUILD_OPTIONS% -c
+  if ERRORLEVEL 1 (
+    echo SCons failed - exiting run.bat with code 2
+    exit /B 2
+  )
 ) else if "!RUN_ARG!"=="cleangtest" (
   rd /s /q extlibs\gtest\googletest-release-1.7.0
   del extlibs\gtest\release-1.7.0.zip
 ) else (
-    echo.%0 - Script requires a valid argument!
-    goto :EOF
+  echo.%0 - Script requires a valid argument!
+  echo Exiting run.bat with code 1
+  exit /B 1
 )
 
 cd %IOTIVITY_DIR%
@@ -211,6 +271,9 @@ echo   -noTest                      - Don't run the unittests after building the
 echo.
 echo   -logging                     - Enable logging while building the binaries
 echo.
+echo   -logLevel LEVEL              - Enable logging while building the binaries, and ignore log entries less severe than LEVEL.
+echo                                  Valid levels are: DEBUG, INFO, WARNING, ERROR, and FATAL. Default level is DEBUG.
+echo.
 echo   -debugger                    - Debug the requested application
 echo.
 echo   -release                     - Build release binaries
@@ -222,6 +285,11 @@ echo.
 echo   -noSecurity                  - Remove security support (results in code that cannot be certified by OCF)
 echo.
 echo   -noMOT                       - Remove Multiple Ownership Transfer support.
+echo.
+echo   -automaticUpdate             - Automatically update libcoap to required version.
+echo.
+echo   -uwp                         - Build for the Universal Windows Platform (UWP).
+echo.
 echo.
 echo. Usage examples:
 echo.
@@ -245,6 +313,9 @@ echo      %0 build -arch x86
 echo.
 echo   Build amd64 release binaries with logging enabled:
 echo      %0 build -arch amd64 -release -logging
+echo.
+echo   Build debug binaries with logging enabled, and ignore log entries less severe than WARNING:
+echo      %0 build -logging -logLevel WARNING
 echo.
 echo   Build using only one thread:
 echo      %0 build -threads 1

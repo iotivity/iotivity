@@ -72,6 +72,12 @@ typedef struct
 
     /** sender mutex for synchronization. **/
     oc_mutex blockDataSenderMutex;
+
+    /** array list tracking multicast requests. **/
+    u_arraylist_t *multicastDataList;
+
+    /** mulitcast data list mutex for synchronization. **/
+    oc_mutex multicastDataListMutex;
 } CABlockWiseContext_t;
 
 /**
@@ -115,6 +121,16 @@ typedef enum
     CA_BLOCK_TOO_LARGE,
     CA_BLOCK_RECEIVED_ALREADY
 } CABlockState_t;
+
+/**
+ * Multicast request.
+ */
+typedef struct
+{
+    CAToken_t token;            /**< Token for CA */
+    uint8_t tokenLength;        /**< token length */
+    CAURI_t resourceUri;        /**< Resource URI information **/
+} CABlockMulticastData_t;
 
 /**
  * Initializes the block-wise transfer context.
@@ -576,6 +592,37 @@ CAResult_t CARemoveAllBlockDataFromList();
  */
 CAResult_t CARemoveBlockDataFromListWithSeed(const CAToken_t token, uint8_t tokenLength,
                                              const char* addr, uint16_t portNumber);
+
+/**
+ * Create the mulitcast data from given data and add the data in multicast list.
+ * @param[in]   sendData    data to be added to a list.
+ * @return created CABlockMulticastData_t structure,
+ *         or NULL pointer will be returned if there is error case.
+ */
+CABlockMulticastData_t *CACreateNewBlockMulticastData(const CAData_t *sendData);
+
+/**
+ * Get the block multicast data from list.
+ * @param[in]   token         token of the message.
+ * @param[in]   tokenLength   token length of the message.
+ * @return CABlockMulticastData_t structure.
+ */
+CABlockMulticastData_t *CAGetBlockMulticastDataFromListWithSeed(const CAToken_t token,
+        uint8_t tokenLength);
+
+/**
+ * Remove all block multicast data in list.
+ * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CARemoveAllBlockMulticastDataFromList();
+
+/**
+ * Find the block data with seed info and remove it.
+ * @param[in]   token         token of the message.
+ * @param[in]   tokenLength   token length of the message.
+ * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CARemoveBlockMulticastDataFromListWithSeed(const CAToken_t token, uint8_t tokenLength);
 
 #ifdef __cplusplus
 } /* extern "C" */

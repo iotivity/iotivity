@@ -449,8 +449,8 @@ void addInterface()
         return;
 
     SimulatorSingleResourceSP resource = g_singleResources[index - 1];
-    resource->addInterface("oic.if.s");
-    resource->addInterface("oic.if.a");
+    resource->addInterface(OC_RSRVD_INTERFACE_SENSOR);
+    resource->addInterface(OC_RSRVD_INTERFACE_ACTUATOR);
 }
 
 int main(int argc, char *argv[])

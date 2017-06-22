@@ -373,7 +373,6 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
             {
                 // Format the response.  Note this requires some info about the request
                 response.requestHandle = entityHandlerRequest->requestHandle;
-                response.resourceHandle = entityHandlerRequest->resource;
                 response.ehResult = ehResult;
                 response.payload = (OCPayload*)(payload);
                 response.numSendVendorSpecificHeaderOptions = 0;
@@ -397,7 +396,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     return ehResult;
 }
 
-OCStackResult displayNumCB(void *ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
+OCStackResult OC_CALL displayNumCB(void *ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
 {
     OC_UNUSED(ctx);
 
@@ -409,7 +408,7 @@ OCStackResult displayNumCB(void *ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LE
     return OC_STACK_OK;
 }
 
-OCStackResult confirmNumCB(void *ctx)
+OCStackResult OC_CALL confirmNumCB(void *ctx)
 {
     OC_UNUSED(ctx);
 

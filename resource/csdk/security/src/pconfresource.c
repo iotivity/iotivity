@@ -520,6 +520,11 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                 uint8_t *pin = NULL;
                 cborFindResult = cbor_value_dup_byte_string(&pconfMap, &pin, &len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get value");
+                if (sizeof(pconf->pin.val) < len)
+                {
+                    OIC_LOG (ERROR, TAG, "PIN length is too long");
+                    goto exit;
+                }
                 memcpy(pconf->pin.val, pin, len);
                 OICFree(pin);
             }

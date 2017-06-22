@@ -210,7 +210,7 @@ static OCStackApplicationResult LedCB(void *ctx, OCDoHandle UNUSED, OCClientResp
     return OC_STACK_OK;
 }
 
-static void inputPinCB(char* pin, size_t len)
+static void OC_CALL inputPinCB(char* pin, size_t len)
 {
     if(!pin || OXM_RANDOM_PIN_MAX_SIZE>=len)
     {
@@ -515,6 +515,7 @@ static OicSecAcl_t* createAclForLEDAccess(const OicUuid_t* subject)
         return NULL;  // not need to 'goto' |ERROR| before allocating |acl|
     }
     LL_APPEND(acl->aces, ace);
+    ace->subjectType = OicSecAceUuidSubject;
     memcpy(ace->subjectuuid.id, subject->id, sizeof(subject->id));
 
     // fill the href

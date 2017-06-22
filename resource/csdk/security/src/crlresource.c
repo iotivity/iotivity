@@ -577,7 +577,9 @@ static OCStackResult CreateCRLResource()
                                          OIC_RSRC_CRL_URI,
                                          CRLEntityHandler,
                                          NULL,
-                                         OC_OBSERVABLE);
+                                         OC_OBSERVABLE |
+                                         OC_SECURE |
+                                         OC_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)
     {
@@ -603,12 +605,12 @@ static OicSecCrl_t *GetCrlDefault()
     defaultCrl->CrlData.encoding = OIC_ENCODING_DER;
 
     bool result1 = copyByteArray((const uint8_t *)CRL_DEFAULT_CRL_DATA,
-                                 strlen(CRL_DEFAULT_CRL_DATA),
+                                 sizeof(CRL_DEFAULT_CRL_DATA),
                                  &defaultCrl->CrlData.data,
                                  &defaultCrl->CrlData.len);
 
     bool result2 = copyByteArray((const uint8_t *)CRL_DEFAULT_THIS_UPDATE,
-                                 strlen(CRL_DEFAULT_THIS_UPDATE),
+                                 sizeof(CRL_DEFAULT_THIS_UPDATE),
                                  &defaultCrl->ThisUpdate.data,
                                  &defaultCrl->ThisUpdate.len);
 
@@ -804,14 +806,17 @@ void GetDerCrl(ByteArray_t* out)
 
     out->len = 0;
 
-    out->data = OICRealloc(out->data, crl->len);
-    if (out->data)
+    uint8_t *tmp = OICRealloc(out->data, crl->len);
+    if (tmp)
     {
+        out->data = tmp;
         memcpy(out->data, crl->data, crl->len);
         out->len = crl->len;
     }
     else
     {
+        OICFree(out->data);
+        out->data = NULL;
         OIC_LOG(ERROR, TAG, "Can't allocate memory for out->data");
     }
     DeleteCrl(crlRes);

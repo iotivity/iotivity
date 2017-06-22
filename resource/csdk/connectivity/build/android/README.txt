@@ -2,7 +2,7 @@ Compiling Interface APIs FOR Android:
 ===================================
 •Preconditons :
 •Supported version : 5.0 ( Lollipop )
-•Required NDK version : android-ndk-r10d ( https://developer.android.com/tools/sdk/ndk/index.html )
+•Required NDK version : android-ndk-r10e ( https://developer.android.com/tools/sdk/ndk/index.html )
 
 Building CA Library for android :
 

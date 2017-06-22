@@ -19,6 +19,7 @@
 
 #include "oic_time.h"
 #include "ipcainternal.h"
+#include "ocrandom.h"
 
 // Object that implements interface to IoTivity.
 // @future: Consider having an instance of this per app when there's mechanism to unregister
@@ -29,9 +30,11 @@ OCFFramework ocfFramework;
 
 App::App(const IPCAAppInfo* ipcaAppInfo, IPCAVersion ipcaVersion) :
     m_isStopped(false),
+    m_ipcaVersion(ipcaVersion),
     m_passwordInputCallbackHandle(nullptr),
+    m_passwordInputCallbackInfo(nullptr),
     m_passwordDisplayCallbackHandle(nullptr),
-    m_ipcaVersion(ipcaVersion)
+    m_passwordDisplayCallbackInfo(nullptr)
 {
     m_ipcaAppInfo.appId = ipcaAppInfo->appId;
     m_ipcaAppInfo.appName = ipcaAppInfo->appName;
@@ -43,9 +46,18 @@ App::~App()
 {
 }
 
-IPCAStatus App::Start(bool unitTestMode)
+IPCAStatus App::Start(bool unitTestMode, App::Ptr thisSharedPtr)
 {
-    m_callback = std::shared_ptr<Callback>(new Callback(this));
+    char appId[UUID_STRING_SIZE];
+    if (!OCConvertUuidToString(m_ipcaAppInfo.appId.uuid, appId))
+    {
+        return IPCA_FAIL;
+    }
+
+    m_appId = appId;
+    m_thisSharedPtr = thisSharedPtr;
+
+    m_callback = std::make_shared<Callback>(m_thisSharedPtr);
     if (m_callback == nullptr)
     {
         return IPCA_OUT_OF_MEMORY;
@@ -68,7 +80,7 @@ IPCAStatus App::Start(bool unitTestMode)
     }
 
     // Start periodic discovery thread.
-    m_appWorkerThread = std::thread(&App::AppWorkerThread, this);
+    m_appWorkerThread = std::thread(&App::AppWorkerThread, m_thisSharedPtr);
     return IPCA_OK;
 }
 
@@ -106,9 +118,29 @@ void App::Stop()
     ocfFramework.Stop(m_passwordInputCallbackHandle, m_passwordDisplayCallbackHandle);
     m_passwordInputCallbackHandle = nullptr;
     m_passwordDisplayCallbackHandle = nullptr;
+
+    // Deregister the callback info.
+    if (m_passwordInputCallbackInfo != nullptr)
+    {
+        DeleteAndUnregisterCallbackInfo(m_passwordInputCallbackInfo->mapKey);
+        m_passwordInputCallbackInfo = nullptr;
+    }
+
+    if (m_passwordDisplayCallbackInfo != nullptr)
+    {
+        DeleteAndUnregisterCallbackInfo(m_passwordDisplayCallbackInfo->mapKey);
+        m_passwordDisplayCallbackInfo = nullptr;
+    }
+
+    m_thisSharedPtr = nullptr;  // Release reference to self.
 }
 
-void App::AppWorkerThread(App* app)
+std::string App::GetAppId()
+{
+    return m_appId;
+}
+
+void App::AppWorkerThread(App::Ptr app)
 {
     const uint64_t FastDiscoveryCount = 4;  // First 4 periodic discovery requests use fast period.
     const uint64_t SlowDiscoveryPeriodMs = 30000;
@@ -116,7 +148,7 @@ void App::AppWorkerThread(App* app)
 
     const uint64_t PingPeriodMS = 30000;  // Do device ping for Observed devices every 30 seconds.
 
-    // Outstanding requests should time out in 2 seconds per rfc 7252.
+    // Outstanding requests should time out in 247 seconds (EXCHANGE_LIFETIME) per rfc 7252.
     // Wake up every second to check.
     const size_t AppThreadSleepTimeSeconds = 1;
     std::chrono::seconds appThreadSleepTime(AppThreadSleepTimeSeconds);
@@ -130,7 +162,7 @@ void App::AppWorkerThread(App* app)
         uint64_t currentTime = OICGetCurrentTime(TIME_IN_MS);
 
         // Do periodic discovery for active IPCADiscoverDevices() requests.
-        std::map<uint32_t, std::vector<std::string>> resourceTypesToDiscover;
+        std::map<size_t, std::vector<std::string>> resourceTypesToDiscover;
         {
             std::lock_guard<std::mutex> lock(app->m_appMutex);
             for (auto& entry : app->m_discoveryList)
@@ -170,6 +202,7 @@ void App::AppWorkerThread(App* app)
         // Do callbacks for expired outstanding requests.
         std::vector<CallbackInfo::Ptr> expiredCallbacks;
         app->m_callback->CompleteAndRemoveExpiredCallbackInfo(expiredCallbacks);
+        expiredCallbacks.clear();   // no use of the expired callbacks.
 
         // Get oustanding Observe requests and ping the device every PingPeriodMS.
         std::vector<CallbackInfo::Ptr> observeCallbacks;
@@ -195,7 +228,7 @@ void App::AppWorkerThread(App* app)
     OIC_LOG_V(INFO, TAG, "-AppWorkerThread exit.");
 }
 
-IPCAStatus App::OpenDevice(const char* deviceId, IPCADeviceHandle* deviceHandle)
+IPCAStatus App::OpenDevice(App::Ptr thisApp, const char* deviceId, IPCADeviceHandle* deviceHandle)
 {
     *deviceHandle = nullptr;
 
@@ -205,7 +238,7 @@ IPCAStatus App::OpenDevice(const char* deviceId, IPCADeviceHandle* deviceHandle)
         return IPCA_OUT_OF_MEMORY;
     }
 
-    Device::Ptr device = std::shared_ptr<Device>(new Device(deviceId, &ocfFramework, this));
+    Device::Ptr device = std::shared_ptr<Device>(new Device(deviceId, &ocfFramework, thisApp));
     if (device == nullptr)
     {
         return IPCA_OUT_OF_MEMORY;
@@ -217,10 +250,10 @@ IPCAStatus App::OpenDevice(const char* deviceId, IPCADeviceHandle* deviceHandle)
         return status;
     }
 
-    deviceWrapper->app = this;
-    deviceWrapper->device = device;
+    deviceWrapper->app = thisApp;
+    deviceWrapper->device = device;  // Take a device reference.
     *deviceHandle =  reinterpret_cast<IPCADeviceHandle>(deviceWrapper.get());
-    m_openedDevices[deviceWrapper.get()] = deviceWrapper.get();  // Take a device reference.
+    m_openedDevices[deviceWrapper.get()] = deviceWrapper.get();
     deviceWrapper.release();
     return IPCA_OK;
 }
@@ -365,6 +398,10 @@ IPCAStatus App::SetPasswordCallbacks(
 
     ocfFramework.SetInputPasswordCallback(inputCallbackInfo, &m_passwordInputCallbackHandle);
     ocfFramework.SetDisplayPasswordCallback(displayCallbackInfo, &m_passwordDisplayCallbackHandle);
+
+    // The CallbackInfo to be deregistered in Stop().
+    m_passwordInputCallbackInfo = inputCallbackInfo;
+    m_passwordDisplayCallbackInfo = displayCallbackInfo;
 
     return IPCA_OK;
 }
@@ -559,6 +596,11 @@ IPCAStatus App::ObserveResource(
 
     status = device->ObserveResource(cbInfo);
 
+    if (status == IPCA_OK)
+    {
+        cbInfo->inObserve = true;
+    }
+
     if ((status != IPCA_OK) && (cbInfo != nullptr))
     {
         if (handle != nullptr)
@@ -661,7 +703,9 @@ IPCAStatus App::DeleteResource(
     return status;
 }
 
-void App::CloseIPCAHandle(IPCAHandle handle)
+IPCAStatus App::CloseIPCAHandle(IPCAHandle handle,
+                    IPCACloseHandleComplete closeHandleComplete,
+                    const void* context)
 {
     size_t mapKey = reinterpret_cast<size_t>(handle);
 
@@ -676,13 +720,14 @@ void App::CloseIPCAHandle(IPCAHandle handle)
             m_discoveryList.erase(cbInfo->mapKey);
         }
         else
-        if (cbInfo->type == CallbackType_ResourceChange)
+        if ((cbInfo->type == CallbackType_ResourceChange) && cbInfo->inObserve)
         {
             cbInfo->device->StopObserve(cbInfo);
+            cbInfo->inObserve = false;
         }
     }
 
-    DeleteAndUnregisterCallbackInfo(mapKey);
+    return DeleteAndUnregisterCallbackInfo(mapKey, closeHandleComplete, context);
 }
 
 IPCAStatus App::CreateAndRegisterNewCallbackInfo(
@@ -734,7 +779,10 @@ IPCAStatus App::CreateAndRegisterNewCallbackInfo(
     return status;
 }
 
-void App::DeleteAndUnregisterCallbackInfo(size_t mapKey)
+IPCAStatus App::DeleteAndUnregisterCallbackInfo(
+                                size_t mapKey,
+                                IPCACloseHandleComplete closeHandleComplete,
+                                const void* context)
 {
-    m_callback->RemoveCallbackInfo(mapKey);
+    return m_callback->RemoveCallbackInfo(mapKey, closeHandleComplete, context);
 }

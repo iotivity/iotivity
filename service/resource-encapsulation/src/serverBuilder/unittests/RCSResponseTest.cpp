@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "UnitTestHelper.h"
+#include <gtest/gtest.h>
 
 #include "RCSResponse.h"
 #include "RCSSeparateResponse.h"

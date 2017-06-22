@@ -22,6 +22,8 @@
 #include "JniOnDeviceInfoListener.h"
 #include "JniOcRepresentation.h"
 
+using namespace OC;
+
 JniOnDeviceInfoListener::JniOnDeviceInfoListener(JNIEnv *env, jobject jListener,
     RemoveListenerCallback removeListenerCallback)
 {

@@ -30,14 +30,13 @@ target_os = env.get('TARGET_OS')
 # Build C Common dependencies
 SConscript('c_common/SConscript')
 
-if target_os not in ['arduino', 'darwin', 'ios', 'android', 'msys_nt', 'windows']:
+if target_os not in [
+        'arduino', 'darwin', 'ios', 'android', 'msys_nt', 'windows'
+]:
     env.AppendUnique(LIBS=['rt'])
 
 # Download (if not already present) & build libcoap
 SConscript('#extlibs/libcoap/SConscript')
-
-# Build timer library
-SConscript('#/extlibs/timer/SConscript')
 
 # Build csdk
 SConscript('csdk/SConscript')
@@ -49,17 +48,18 @@ if target_os not in ['arduino', 'darwin', 'ios']:
     # Build liboc
     SConscript('src/SConscript')
 
-if target_os in ['windows']:
+if target_os in ['windows', 'linux']:
     # Build IoTivity Procedural Client API
     SConscript('IPCA/SConscript')
 
-if target_os not in ['arduino','darwin','ios','android']:
+if target_os not in ['arduino', 'darwin', 'ios', 'android']:
     # Build examples
     SConscript('examples/SConscript')
 
 if target_os in ['linux', 'windows', 'darwin', 'msys_nt']:
     if target_os == 'darwin':
-        env.Command('#/out/darwin/iotivity-csdk.framework', None, '#/tools/darwin/mkfwk_osx.sh')
+        env.Command('#/out/darwin/iotivity-csdk.framework', None,
+                    '#/tools/darwin/mkfwk_osx.sh')
 
     # Build C/C++ unit tests
     SConscript('unit_tests.scons')

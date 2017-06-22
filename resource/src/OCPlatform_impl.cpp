@@ -229,7 +229,7 @@ namespace OC
             case ModeType::Gateway:
                 m_server = m_WrapperInstance->CreateServerWrapper(m_csdkLock, config, &result);
                 m_client = m_WrapperInstance->CreateClientWrapper(m_csdkLock, config, &result);
-                m_modeType = OC_CLIENT_SERVER;
+                m_modeType = config.mode == ModeType::Gateway ? OC_GATEWAY : OC_CLIENT_SERVER;
                 break;
         }
 
@@ -291,7 +291,7 @@ namespace OC
                                        const std::shared_ptr<OCResourceResponse> pResponse,
                                        QualityOfService QoS)
     {
-        if(!pResponse)
+        if(!pResponse || (observationIds.size() > UINT8_MAX))
         {
          return result_guard(OC_STACK_ERROR);
         }
@@ -299,7 +299,7 @@ namespace OC
         OCRepPayload* pl = pResponse->getResourceRepresentation().getPayload();
         OCStackResult result =
                    OCNotifyListOfObservers(resourceHandle,
-                            &observationIds[0], observationIds.size(),
+                            &observationIds[0], (uint8_t)observationIds.size(),
                             pl,
                             static_cast<OCQualityOfService>(QoS));
         OCRepPayloadDestroy(pl);

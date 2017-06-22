@@ -22,23 +22,38 @@
 using namespace std;
 using namespace std::placeholders;
 
+#include <assert.h>
+#include <inttypes.h>
 #include "oic_malloc.h"
 #include "oic_time.h"
-#include "ocapi.h"
+#include "OCApi.h"
 #include "pinoxmcommon.h"
 #include "srmutility.h"
 #include "ocrandom.h"
+#include "oic_platform.h"
 
 #define TAG                "IPCA_OcfFramework"
 #define DO_DEBUG           0
 
+#define PROVISIONING_DB    "PDM.db"
+
 const unsigned short c_discoveryTimeout = 5;  // Max number of seconds to discover
                                               // security information for a device
+
+// Path for Persistent Storage (Ends with backslash (\) or forward slash (/))
+std::string  g_psPath;
 
 // Initialize Persistent Storage for security database
 FILE* server_fopen(const char *path, const char *mode)
 {
-    return fopen(path, mode);
+    // At this point, the persistent storage path should have been found, otherwise
+    // Start() should have failed.
+    std::string filePath(g_psPath);
+    // g_psPath ends with trailing backslash (\) or forward slash (/)
+    // so don't have to worry about adding it.
+    filePath.append(path);
+
+    return fopen(filePath.c_str(), mode);
 }
 
 OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
@@ -203,20 +218,70 @@ IPCAStatus OCFFramework::Start(const IPCAAppInfoInternal& appInfo, bool isUnitTe
         return IPCA_OK;
     }
 
+    char* psPath = nullptr;
+    size_t psPathLen = 0;
+    OICPlatformResult_t ret = OICGetLocalAppDataPath(nullptr, &psPathLen);
+    if (ret == OIC_PLATFORM_OK)
+    {
+        psPath = static_cast<char*>(OICCalloc(1, psPathLen));
+        if (psPath == nullptr)
+        {
+            OIC_LOG(FATAL, TAG, "Could not allocate persistent storage path buffer");
+            return IPCA_OUT_OF_MEMORY;
+        }
+
+        ret = OICGetLocalAppDataPath(psPath, &psPathLen);
+        if (ret != OIC_PLATFORM_OK)
+        {
+            OIC_LOG_V(FATAL, TAG,
+                "Failed to get persistent storage path from OICGetLocalAppDataPath, ret: %" PRIuPTR,
+                static_cast<size_t>(ret));
+            OICFree(psPath);
+            return IPCA_FAIL;
+        }
+
+        g_psPath.assign(psPath);
+
+        OICFree(psPath);
+        psPath = nullptr;
+    }
+    else
+    {
+        // Continue if not implemented returned, g_psPath by default is an empty string.
+        // Otherwise, fail
+        if (ret != OIC_PLATFORM_NOTIMPL)
+        {
+            OIC_LOG_V(FATAL, TAG,
+                "Failed to get path length from OICGetLocalAppDataPath, ret: %" PRIuPTR,
+                static_cast<size_t>(ret));
+            // An error occurred, fail
+            return IPCA_FAIL;
+        }
+    }
+
     PlatformConfig Configuration {
                         ServiceType::InProc,
                         ModeType::Both,  // Server mode is required for security provisioning.
-                        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-                        0,         // Uses randomly available port
-                        QualityOfService::NaQos,
                         &ps};
 
     OCPlatform::Configure(Configuration);
 
-    // Initialize the database that will be used for provisioning
-    if (OCSecure::provisionInit("") != OC_STACK_OK)
+    if (OCPlatform::start() != OC_STACK_OK)
     {
-        OIC_LOG_V(FATAL, TAG, "Failed provisionInit()");
+        OIC_LOG(FATAL, TAG, "Failed OCPlatform::start()");
+        return IPCA_FAIL;
+    }
+
+
+    // Initialize the database that will be used for provisioning.
+    // Initialize it with the default PDM.db file name.
+    std::string pdmDbFile(g_psPath);
+    // g_psPath ends with trailing backslash (\) or forward slash (/)
+    // so don't have to worry about adding it.
+    pdmDbFile.append(PROVISIONING_DB);
+    if (OCSecure::provisionInit(pdmDbFile) != OC_STACK_OK)
+    {
+        OIC_LOG(FATAL, TAG, "Failed provisionInit()");
         return IPCA_FAIL;
     }
 
@@ -237,7 +302,6 @@ IPCAStatus OCFFramework::Start(const IPCAAppInfoInternal& appInfo, bool isUnitTe
     OCDeviceInfo deviceInfo = { deviceName, &types, deviceSoftwareVersion, nullptr };
 
     // Platform Info
-    IPCAUuid platformUUID;
     char platformManufacturerName[256] = "";
     char manufacturerUrl[256] = "";
     char modelNumber[] = "";
@@ -283,7 +347,7 @@ IPCAStatus OCFFramework::Start(const IPCAAppInfoInternal& appInfo, bool isUnitTe
         }
 
 
-        if (OC_STACK_OK != SetDeviceInfo(&deviceInfo))
+        if (IPCA_OK != SetDeviceInfo(&deviceInfo))
         {
             return IPCA_FAIL;
         }
@@ -298,19 +362,20 @@ IPCAStatus OCFFramework::Start(const IPCAAppInfoInternal& appInfo, bool isUnitTe
 IPCAStatus OCFFramework::Stop(InputPinCallbackHandle passwordInputCallbackHandle,
                               DisplayPinCallbackHandle passwordDisplayCallbackHandle)
 {
+    IPCAStatus status = IPCA_OK;
+
     std::lock_guard<std::mutex> lock(m_startStopMutex);
 
     if (m_isStarted == false)
     {
         // not started yet.
-        return IPCA_OK;
+        return status;
     }
 
     CleanupRequestAccessDevices();
 
     OCSecure::deregisterInputPinCallback(passwordInputCallbackHandle);
     OCSecure::deregisterDisplayPinCallback(passwordDisplayCallbackHandle);
-
 
     m_isStopping = true;
 
@@ -320,17 +385,21 @@ IPCAStatus OCFFramework::Stop(InputPinCallbackHandle passwordInputCallbackHandle
         m_workerThread.join();
     }
 
-// @future: OCFFramework can't shut down because there's no cancellation for all underlying apis
-// like OCPlatform::findResource, etc.
-#if 0
+    if (OCPlatform::stop() != OC_STACK_OK)
+    {
+        assert(false);
+        status = IPCA_FAIL;
+        OIC_LOG(ERROR, TAG, "Failed OCPlatform::stop()");
+    }
+
+    std::lock_guard<std::recursive_mutex> ocfFrameworkLock(m_OCFFrameworkMutex);
     m_OCFDevices.clear();
     m_OCFDevicesIndexedByDeviceURI.clear();
-#endif
 
     m_isStopping = false;
     m_isStarted = false;
 
-    return IPCA_OK;
+    return status;
 }
 
 void OCFFramework::WorkerThread(OCFFramework* ocfFramework)
@@ -543,7 +612,7 @@ void OCFFramework::OnResourceFound(std::shared_ptr<OCResource> resource)
             m_OCFDevices[resource->sid()] = deviceDetails;
 
             OIC_LOG_V(INFO, TAG, "Added device ID: [%s]", resource->sid().c_str());
-            OIC_LOG_V(INFO, TAG, "m_OCFDevices count = [%d]", m_OCFDevices.size());
+            OIC_LOG_V(INFO, TAG, "m_OCFDevices count = [%" PRIuPTR "]", m_OCFDevices.size());
         }
 
         // Populate the details about the device.
@@ -702,13 +771,14 @@ void OCFFramework::OnDeviceInfoCallback(const OCRepresentation& rep)
         }
 
         // Not reading "di" because it's already known in OnResourceFound().
-        std::array<std::string, 3> keys = { {"n", "icv", "dmv"} };
+        std::array<std::string, 4> keys = { {"n", "icv", "dmv", "piid"} };
         std::string dataModelVersion;
         std::vector<std::string*> Values =
         {
             &(deviceDetails->deviceInfo.deviceName),
             &(deviceDetails->deviceInfo.deviceSoftwareVersion),
-            &dataModelVersion
+            &dataModelVersion,
+            &(deviceDetails->deviceInfo.platformIndependentId)
         };
 
         for (size_t i = 0; i < keys.size(); i++)
@@ -727,15 +797,13 @@ void OCFFramework::OnDeviceInfoCallback(const OCRepresentation& rep)
 
         deviceDetails->deviceInfo.deviceUris = deviceDetails->deviceUris;
 
-        OCPlatform::getPropertyValue(
-                        PAYLOAD_TYPE_DEVICE,
-                        OC_RSRVD_DATA_MODEL_VERSION,
-                        deviceDetails->deviceInfo.dataModelVersions);
-
-        OCPlatform::getPropertyValue(
-                        PAYLOAD_TYPE_DEVICE,
-                        OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
-                        deviceDetails->deviceInfo.platformIndependentId);
+        // Convert data model versions returned by server in CSV to array.
+        std::istringstream stringStream(dataModelVersion.c_str());
+        std::string token;
+        while (std::getline(stringStream, token, ','))
+        {
+            deviceDetails->deviceInfo.dataModelVersions.push_back(token);
+        }
 
         deviceDetails->deviceInfoAvailable = true;
     }
@@ -820,7 +888,7 @@ void OCFFramework::OnPlatformInfoCallback(const OCRepresentation& rep)
 
 IPCAStatus OCFFramework::GetCommonResources(DeviceDetails::Ptr deviceDetails)
 {
-    const int MAX_REQUEST_COUNT = 3;
+    const size_t MAX_REQUEST_COUNT = 3;
 
     OCStackResult result;
 
@@ -843,7 +911,7 @@ IPCAStatus OCFFramework::GetCommonResources(DeviceDetails::Ptr deviceDetails)
         if (result != OC_STACK_OK)
         {
             OIC_LOG_V(WARNING, TAG, "Failed getPlatformInfo() for: [%s] OC result: [%d]",
-                deviceDetails->deviceUris[0], result);
+                deviceDetails->deviceUris[0].c_str(), result);
         }
 
         deviceDetails->platformInfoRequestCount++;
@@ -870,7 +938,7 @@ IPCAStatus OCFFramework::GetCommonResources(DeviceDetails::Ptr deviceDetails)
         if (result != OC_STACK_OK)
         {
             OIC_LOG_V(WARNING, TAG, "Failed getDeviceInfo() for [%s] OC result: [%d]",
-                deviceDetails->deviceUris[0], result);
+                deviceDetails->deviceUris[0].c_str(), result);
         }
 
         deviceDetails->deviceInfoRequestCount++;
@@ -940,7 +1008,19 @@ void OCFFramework::OnPostPut(const HeaderOptions& headerOptions,
                         const int eCode,
                         CallbackInfo::Ptr callbackInfo)
 {
-    OC_UNUSED(headerOptions);
+    std::string newResourcePath;
+    if (headerOptions.size())
+    {
+        // Pass LOCATION_PATH_OPTION_ID to the app.
+        for (auto header : headerOptions)
+        {
+            if (header.getOptionID() == HeaderOption::LOCATION_PATH_OPTION_ID)
+            {
+                newResourcePath = header.getOptionData();
+                break;
+            }
+        }
+    }
 
     IPCAStatus status = MapOCStackResultToIPCAStatus((OCStackResult)eCode);
 
@@ -950,7 +1030,7 @@ void OCFFramework::OnPostPut(const HeaderOptions& headerOptions,
 
     for (const auto& callback : callbackSnapshot)
     {
-        callback->SetCallback(status, rep, callbackInfo);
+        callback->SetCallback(status, rep, callbackInfo, newResourcePath);
     }
 }
 
@@ -960,7 +1040,7 @@ void OCFFramework::OnGet(const HeaderOptions& headerOptions,
                         const int eCode,
                         CallbackInfo::Ptr callbackInfo)
 {
-    headerOptions;
+    OC_UNUSED(headerOptions);
 
     IPCAStatus status = IPCA_OK;
 
@@ -986,6 +1066,7 @@ void OCFFramework::OnObserve(
                         const int &sequenceNumber,
                         CallbackInfo::Ptr callbackInfo)
 {
+    OC_UNUSED(headerOptions);
     OC_UNUSED(sequenceNumber);
 
     IPCAStatus status = IPCA_OK;
@@ -1098,6 +1179,12 @@ IPCAStatus OCFFramework::SendCommandToDevice(std::string& deviceId,
                                     std::bind(&OCFFramework::OnObserve, this,
                                             _1, _2, _3, _4, callbackInfo));
             break;
+        }
+
+        default:
+        {
+            assert(false);
+            result = OC_STACK_ERROR;
         }
     }
 
@@ -1618,6 +1705,10 @@ IPCAStatus OCFFramework::RequestAccess(std::string& deviceId,
 
 void OCFFramework::RequestAccessWorkerThread(RequestAccessContext* requestContext)
 {
+#ifndef MULTIPLE_OWNER
+    OC_UNUSED(requestContext);
+    return;
+#else
     IPCAStatus status = IPCA_OK;
     IPCAStatus callbackStatus = IPCA_SECURITY_UPDATE_REQUEST_FAILED;
     OCStackResult result = OC_STACK_OK;
@@ -1708,10 +1799,13 @@ void OCFFramework::RequestAccessWorkerThread(RequestAccessContext* requestContex
                                         passwordInputCallbackInfo);
                         }
 
+                        // Make sure user input string is terminated
+                        passwordBuffer[OXM_PRECONFIG_PIN_MAX_SIZE] = '\0';
+
                         // Set the preconfigured pin
                         result = deviceDetails->securityInfo.device->addPreconfigPIN(
                                         passwordBuffer,
-                                        strnlen_s(passwordBuffer, passwordBufferSize));
+                                        strlen(passwordBuffer));
 
                         if (OC_STACK_OK != result)
                         {
@@ -1803,11 +1897,12 @@ void OCFFramework::RequestAccessWorkerThread(RequestAccessContext* requestContex
             callback->RequestAccessCompletionCallback(callbackStatus, callbackInfo);
         }
     }
+#endif
 }
 
 void OCFFramework::OnMultipleOwnershipTransferCompleteCallback(
                                     PMResultList_t* result,
-                                    bool error,
+                                    int error,
                                     std::string deviceId,
                                     CallbackInfo::Ptr callbackInfo)
 {

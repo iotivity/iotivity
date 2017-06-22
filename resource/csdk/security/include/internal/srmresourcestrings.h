@@ -40,7 +40,13 @@ extern const char * OIC_RSRC_TYPE_SEC_ACL;
 extern const char * OIC_RSRC_ACL_URI;
 extern const char * OIC_JSON_ACL_NAME;
 extern const char * OIC_JSON_ACLIST_NAME;
+extern const char * OIC_JSON_ACLIST2_NAME;
 extern const char * OIC_JSON_ACES_NAME;
+extern const char * OIC_JSON_ACEID_NAME;
+
+extern const char * OIC_RSRC_TYPE_SEC_ACL2;
+extern const char * OIC_RSRC_ACL2_URI;
+extern const char * OIC_JSON_ACL2_NAME;
 
 //PSTAT
 extern const char * OIC_RSRC_TYPE_SEC_PSTAT;
@@ -58,6 +64,16 @@ extern const char * OIC_RSRC_TYPE_SEC_CRED;
 extern const char * OIC_RSRC_CRED_URI;
 extern const char * OIC_JSON_CRED_NAME;
 extern const char * OIC_JSON_CREDS_NAME;
+
+//csr
+extern const char * OIC_RSRC_TYPE_SEC_CSR;
+extern const char * OIC_RSRC_CSR_URI;
+extern const char * OIC_JSON_CSR_NAME;
+
+//roles
+extern const char * OIC_RSRC_TYPE_SEC_ROLES;
+extern const char * OIC_RSRC_ROLES_URI;
+extern const char * OIC_JSON_ROLES_NAME;
 
 //CRL
 extern const char * OIC_RSRC_TYPE_SEC_CRL;
@@ -91,8 +107,8 @@ extern const char * OIC_JSON_VER_NAME;
 
 //reset profile
 extern const char * OIC_JSON_RESET_PF_NAME;
-
 extern const char * OIC_JSON_SUBJECTID_NAME;
+extern const char * OIC_JSON_SUBJECT_NAME;
 extern const char * OIC_JSON_RESOURCES_NAME;
 extern const char * OIC_JSON_AMSS_NAME;
 extern const char * OIC_JSON_AMS_NAME;
@@ -104,7 +120,6 @@ extern const char * OIC_JSON_DEVOWNERID_NAME;
 extern const char * OIC_JSON_SUBOWNERID_NAME;
 #endif //MULTIPLE_OWNER
 extern const char * OIC_JSON_OWNED_NAME;
-extern const char * OIC_JSON_OXM_NAME;
 extern const char * OIC_JSON_OXMS_NAME;
 #ifdef MULTIPLE_OWNER
 extern const char * OIC_JSON_MOM_NAME;
@@ -113,7 +128,9 @@ extern const char * OIC_JSON_OXM_TYPE_NAME;
 extern const char * OIC_JSON_OXM_SEL_NAME;
 extern const char * OIC_JSON_DEVICE_ID_FORMAT_NAME;
 extern const char * OIC_JSON_CREDID_NAME;
-extern const char * OIC_JSON_ROLEIDS_NAME;
+extern const char * OIC_JSON_ROLEID_NAME;
+extern const char * OIC_JSON_ROLE_NAME;
+extern const char * OIC_JSON_AUTHORITY_NAME;
 extern const char * OIC_JSON_CREDTYPE_NAME;
 extern const char * OIC_JSON_PUBLICDATA_NAME;
 extern const char * OIC_JSON_PRIVATEDATA_NAME;
@@ -160,12 +177,22 @@ extern const char * OIC_JSON_SEC_V_NAME;
 extern const char * OIC_JSON_DOS_NAME;
 extern const char * OIC_JSON_S_NAME;
 extern const char * OIC_JSON_P_NAME;
+extern const char * OIC_JSON_UUID_NAME;
+extern const char * OIC_JSON_CONNTYPE_NAME;
+extern const char * OIC_JSON_AUTHCRYPT_NAME;
+extern const char * OIC_JSON_ANONCLEAR_NAME;
+extern const char * OIC_JSON_WC_NAME;
+extern const char * OIC_JSON_WC_PLUS_NAME;
+extern const char * OIC_JSON_WC_MINUS_NAME;
+extern const char * OIC_JSON_WC_ASTERISK_NAME;
 
 extern const char * OIC_JSON_EMPTY_STRING;
 
-// Certificates provided by Cloud
+// Certificates provided by Cloud or OBT/CMS
 extern const char * TRUST_CA;
 extern const char * PRIMARY_CERT;
+extern const char * PRIMARY_KEY;
+extern const char * ROLE_CERT;
 
 // Certificates provided by manufacturer
 extern const char * MF_TRUST_CA;
@@ -202,6 +229,11 @@ extern char OIC_SEC_REST_QUERY_DELIMETER;
 
 //Security Version
 extern const char * DEFAULT_SEC_VERSION;
+
+// Preconfigured Pin credential usage
+#ifdef MULTIPLE_OWNER
+extern const char * PRECONFIG_PIN_CRED;
+#endif //MULTIPLE_OWNER
 
 #ifdef __cplusplus
 }

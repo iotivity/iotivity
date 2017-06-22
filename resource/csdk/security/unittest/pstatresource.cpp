@@ -22,7 +22,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include "ocpayload.h"
 #include "ocstack.h"
@@ -75,7 +75,16 @@ TEST(PstatResourceTest, PstatEntityHandlerWithPostRequest)
     defaultPstat->sm[0] = 3;
     size_t size = 0;
     uint8_t *cbor = NULL;
-    EXPECT_EQ(OC_STACK_OK, PstatToCBORPayload(defaultPstat, &cbor, &size, true));
+    bool propertiesToInclude[PSTAT_PROPERTY_COUNT] = {
+                                                      true,     // dos
+                                                      false,    // isop
+                                                      false,    // cm
+                                                      true,     // tm
+                                                      false,    // om
+                                                      true,    // sm
+                                                      true      // rowneruuid
+                                                    };
+    EXPECT_EQ(OC_STACK_OK, PstatToCBORPayloadPartial(defaultPstat, &cbor, &size, propertiesToInclude));
     DeletePstatBinData(defaultPstat);
     ASSERT_TRUE(cbor != NULL);
 
@@ -94,20 +103,20 @@ TEST(PstatResourceTest, PstatEntityHandlerInvalidRequest)
 
 TEST(PstatResourceTest, PstatToCBORPayloadNULL)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(NULL, NULL, 0, false));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(NULL, NULL, 0));
     // Case when cbor payload is NULL
     OicSecPstat_t pstat;
     size_t size = 10;
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(&pstat, NULL, &size, false));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(&pstat, NULL, &size));
     uint8_t *cborPayload = (uint8_t *) OICCalloc(1, size);
     ASSERT_TRUE(NULL != cborPayload);
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(&pstat, &cborPayload, &size, false));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(&pstat, &cborPayload, &size));
     OICFree(cborPayload);
     cborPayload = NULL;
     // Case when pstat is zero.
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(NULL, &cborPayload, &size, false));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(NULL, &cborPayload, &size));
     // Case when size is 0.
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(&pstat, &cborPayload, 0, false));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(&pstat, &cborPayload, 0));
     OICFree(cborPayload);
 }
 
@@ -133,7 +142,7 @@ TEST(PstatResourceTest, PstatToCBORPayloadAndCBORPayloadToPstat)
 
     size_t size = 0;
     uint8_t *cbor = NULL;
-    EXPECT_EQ(OC_STACK_OK, PstatToCBORPayload(&pstat, &cbor, &size, false));
+    EXPECT_EQ(OC_STACK_OK, PstatToCBORPayload(&pstat, &cbor, &size));
     if (!cbor)
     {
         OICFree(pstat.sm);

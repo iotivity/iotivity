@@ -20,6 +20,7 @@
 
 extern "C"
 {
+    #include "iotivity_config.h"
     #include "rd_client.h"
     #include "rd_server.h"
     #include "ocpayload.h"
@@ -32,7 +33,7 @@ extern "C"
     #include "coap/pdu.h"
 }
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>

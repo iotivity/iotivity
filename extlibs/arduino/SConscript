@@ -4,6 +4,7 @@
 ##
 
 import os, subprocess, struct
+from sys import platform as _platform
 import urllib2, urlparse
 import SCons.Errors
 import shutil
@@ -13,8 +14,7 @@ Import('env')
 target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 
-SConscript(src_dir + '/build_common/tools/UnpackAll.py')
-SConscript(src_dir + '/build_common/external_libs.scons')
+SConscript('#build_common/tools/UnpackAll.py')
 
 # Download
 if target_os == 'arduino':
@@ -22,19 +22,18 @@ if target_os == 'arduino':
 	if not arduino_home:
 		print 'Creating ARDUINO_HOME for Arduino lib'
 		print '''
-        *******************************************************************************
-        *   Arduino root directory isn't set, you can set enviornment variable        *
-        *   ARDUINO_HOME or add it in command line as follows (Only set if your       *
-        *   version has fixes applied as depicted below. Press ctrl+c now if you      *
-        *   wish to manually set ARDUINO_HOME.):                                      *
-        *      # scons ARDUINO_HOME=<path to arduino root directory> ...              *
-        *******************************************************************************
+*******************************************************************************
+*   Arduino root directory is not set, you can set enviornment variable       *
+*   ARDUINO_HOME or add it in command line as follows (Only set if your       *
+*   version has fixes applied as depicted below. Press ctrl+c now if you      *
+*   wish to manually set ARDUINO_HOME.):                                      *
+*      # scons ARDUINO_HOME=<path to arduino root directory> ...              *
+*******************************************************************************
         '''
 		arduinolib_dir      = src_dir + '/extlibs/arduino/arduino-1.5.8'
 
 		if not os.path.exists(arduinolib_dir):
-			from sys import platform as _platform
-			if _platform == "linux" or _platform == "linux2":
+			if _platform.startswith("linux"):
 				archType = 8 * struct.calcsize("P")
 				print 'On %s-bit machine.' % (archType)
 				if archType == 32:

@@ -72,7 +72,6 @@ OCStackResult ConcurrentIotivityUtils::respondToRequest(OCEntityHandlerRequest *
     std::unique_ptr<OCEntityHandlerResponse> response = make_unique<OCEntityHandlerResponse>();
 
     response->requestHandle = request->requestHandle;
-    response->resourceHandle = request->resource;
     response->ehResult = responseCode;
 
     // Clone a copy since this allocation is going across thread boundaries.

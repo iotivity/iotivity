@@ -77,7 +77,7 @@ if (SQLITE_OK != (arg)) \
     goto exit; \
 }
 
-OCStackResult OCRDDatabaseSetStorageFilename(const char *filename)
+OCStackResult OC_CALL OCRDDatabaseSetStorageFilename(const char *filename)
 {
     if (!filename)
     {
@@ -88,7 +88,7 @@ OCStackResult OCRDDatabaseSetStorageFilename(const char *filename)
     return OC_STACK_OK;
 }
 
-const char *OCRDDatabaseGetStorageFilename()
+const char *OC_CALL OCRDDatabaseGetStorageFilename()
 {
     return gRDPath;
 }
@@ -364,7 +364,7 @@ exit:
     return result;
 }
 
-OCStackResult OCRDDatabaseDiscoveryPayloadCreate(const char *interfaceType,
+OCStackResult OC_CALL OCRDDatabaseDiscoveryPayloadCreate(const char *interfaceType,
         const char *resourceType,
         OCDiscoveryPayload **payload)
 {

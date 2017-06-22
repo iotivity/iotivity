@@ -102,22 +102,18 @@ namespace OIC
         void ObserveCache::onObserve(const HeaderOptions &,
                        const ResponseStatement & rep, int _result, unsigned int)
         {
-            if (!convertOCResultToSuccess((OCStackResult)_result))
-            {
-                return;
-            }
-
             m_state = CACHE_STATE::READY;
 
-            if (m_attributes == rep.getAttributes())
+            if (m_attributes == rep.getAttributes() &&
+                    convertOCResultToSuccess((OCStackResult)_result))
             {
                 return ;
             }
 
-            m_attributes = rep.getAttributes();
             if (m_reportCB)
             {
-                m_reportCB(m_wpResource.lock(), m_attributes);
+                m_attributes = rep.getAttributes();
+                m_reportCB(m_wpResource.lock(), m_attributes, _result);
             }
         }
 

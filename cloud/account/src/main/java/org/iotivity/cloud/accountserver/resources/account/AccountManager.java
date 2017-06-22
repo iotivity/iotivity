@@ -21,6 +21,7 @@
  */
 package org.iotivity.cloud.accountserver.resources.account;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,7 +73,7 @@ public class AccountManager {
      * @param authCode
      *            Unique identifier of the resource which is obtained from an
      *            auth provider or a single sign-on (SSO) client
-     * @param authProvider
+     * @param authProviderName
      *            Provider name user for authentication (e.g., "Github")
      * @param options
      *            Optional field (e.g., region authserver url, apiserver url)
@@ -81,22 +82,20 @@ public class AccountManager {
      */
 
     public HashMap<String, Object> signUp(String did, String authCode,
-            String authProvider, Object options) {
-        boolean res = false;
+            String authProviderName, Object options) {
 
-        // check auth provider name not to be case-sensitive
-        authProvider = checkAuthProviderName(authProvider);
-        res = loadAuthProviderLibrary(authProvider);
+        authProviderName = checkAuthProviderName(authProviderName);
+        boolean res = loadAuthProviderLibrary(authProviderName);
 
         if (!res) {
             throw new InternalServerErrorException(
-                    authProvider + " library is not loaded");
+                    authProviderName + " library is not loaded");
         }
         String userUuid = null;
         // set token data
         TokenTable tokenInfo = requestAccessToken(authCode, options);
         tokenInfo.setDid(did);
-        tokenInfo.setProvider(authProvider);
+        tokenInfo.setProvider(authProviderName);
         Date currentTime = new Date();
         DateFormat transFormat = new SimpleDateFormat("yyyyMMddkkmm");
         tokenInfo.setIssuedtime(transFormat.format(currentTime));
@@ -104,10 +103,10 @@ public class AccountManager {
         // set user data
         UserTable userInfo = requestUserInfo(tokenInfo.getAccesstoken(),
                 options);
-        userInfo.setProvider(authProvider);
+        userInfo.setProvider(authProviderName);
 
         // check uuid
-        userUuid = findUuid(userInfo.getUserid(), authProvider);
+        userUuid = findUuid(userInfo.getUserid(), authProviderName);
 
         // store token information and user information to the DB
         // private group creation and store group information to the DB
@@ -239,21 +238,27 @@ public class AccountManager {
         return userUuid;
     }
 
-    private String checkAuthProviderName(String authProvider) {
-
-        String authProviderName = null;
-
-        if (authProvider.equalsIgnoreCase(Constants.GITHUB)) {
-            authProviderName = Constants.GITHUB;
-        } else if (authProvider.equalsIgnoreCase(Constants.SAMSUNG)) {
-            authProviderName = Constants.SAMSUNG;
-        } else if (authProvider.equalsIgnoreCase(Constants.GOOGLE))
-            authProviderName = Constants.GOOGLE;
-        else {
-            Log.w("Unsupported oauth provider : " + authProvider);
+    private String checkAuthProviderName(String authProviderName) {
+        String libraryFileName = getValidFileName(Constants.OAUTH_LIBRARIES_PATH, authProviderName + ".jar");
+        if (libraryFileName == null) {
+            Log.w("OAuth 3rd party library " + authProviderName + " does not exist.");
+            return authProviderName;
         }
+        return libraryFileName.substring(0, libraryFileName.length() - 4);
+    }
 
-        return authProviderName;
+    private String getValidFileName(String path, String filename) {
+        File file = new File(path + filename);
+        if(file.exists())
+            return filename;
+
+        File parentFile = file.getAbsoluteFile().getParentFile();
+        if (parentFile.exists())
+            for (String directoryFile : parentFile.list())
+                if (directoryFile.equalsIgnoreCase(file.getName()))
+                    return directoryFile;
+
+        return null;
     }
 
     private String findUuid(String userId, String authProvider) {
@@ -335,10 +340,10 @@ public class AccountManager {
         return byteRootCert;
     }
 
-    private Boolean loadAuthProviderLibrary(String authProvider) {
+    private Boolean loadAuthProviderLibrary(String authProviderName) {
         mFactory = new OAuthProviderFactory();
 
-        return mFactory.load(authProvider);
+        return mFactory.load(authProviderName);
     }
 
     private TokenTable requestAccessToken(String authCode, Object options) {
@@ -475,17 +480,15 @@ public class AccountManager {
     }
 
     private TokenTable requestRefreshToken(String refreshToken,
-            String provider) {
+            String authProviderName) {
 
         if (mFactory == null) {
-
-            boolean res = false;
-            String authProvider = checkAuthProviderName(provider);
-            res = loadAuthProviderLibrary(authProvider);
+            authProviderName = checkAuthProviderName(authProviderName);
+            boolean res = loadAuthProviderLibrary(authProviderName);
 
             if (!res) {
                 throw new InternalServerErrorException(
-                        authProvider + " library is not loaded");
+                        authProviderName + " library is not loaded");
             }
         }
 

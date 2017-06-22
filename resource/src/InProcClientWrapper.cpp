@@ -18,6 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
+
 #include "InProcClientWrapper.h"
 #include "ocstack.h"
 
@@ -715,7 +717,7 @@ namespace OC
             uint16_t optionID;
             std::string optionData;
 
-            for(int i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
+            for(size_t i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
             {
                 optionID = clientResponse->rcvdVendorSpecificHeaderOptions[i].optionID;
                 optionData = reinterpret_cast<const char*>
@@ -892,10 +894,11 @@ namespace OC
         OCConnectivityType connectivityType,
         GetCallback& callback, QualityOfService QoS)
     {
-        if (!callback)
+        if (!callback || (headerOptions.size() > MAX_HEADER_OPTIONS))
         {
             return OC_STACK_INVALID_PARAM;
         }
+
         OCStackResult result;
         ClientCallbackContext::GetContext* ctx =
             new ClientCallbackContext::GetContext(callback);
@@ -922,7 +925,7 @@ namespace OC
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
                                   assembleHeaderOptions(options, headerOptions),
-                                  headerOptions.size());
+                                  (uint8_t)headerOptions.size());
         }
         else
         {
@@ -1059,10 +1062,11 @@ namespace OC
         OCConnectivityType connectivityType,
         PostCallback& callback, QualityOfService QoS)
     {
-        if (!callback)
+        if (!callback || (headerOptions.size() > MAX_HEADER_OPTIONS))
         {
             return OC_STACK_INVALID_PARAM;
         }
+
         OCStackResult result;
         ClientCallbackContext::SetContext* ctx = new ClientCallbackContext::SetContext(callback);
         OCCallbackData cbdata;
@@ -1087,7 +1091,7 @@ namespace OC
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
                                   assembleHeaderOptions(options, headerOptions),
-                                  headerOptions.size());
+                                  (uint8_t)headerOptions.size());
         }
         else
         {
@@ -1105,10 +1109,11 @@ namespace OC
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         PutCallback& callback, QualityOfService QoS)
     {
-        if (!callback)
+        if (!callback || (headerOptions.size() > MAX_HEADER_OPTIONS))
         {
             return OC_STACK_INVALID_PARAM;
         }
+
         OCStackResult result;
         ClientCallbackContext::SetContext* ctx = new ClientCallbackContext::SetContext(callback);
         OCCallbackData cbdata;
@@ -1134,7 +1139,7 @@ namespace OC
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
                                   assembleHeaderOptions(options, headerOptions),
-                                  headerOptions.size());
+                                  (uint8_t)headerOptions.size());
         }
         else
         {
@@ -1169,10 +1174,11 @@ namespace OC
         DeleteCallback& callback,
         QualityOfService /*QoS*/)
     {
-        if (!callback)
+        if (!callback || (headerOptions.size() > MAX_HEADER_OPTIONS))
         {
             return OC_STACK_INVALID_PARAM;
         }
+
         OCStackResult result;
         ClientCallbackContext::DeleteContext* ctx =
             new ClientCallbackContext::DeleteContext(callback);
@@ -1197,7 +1203,7 @@ namespace OC
                                   static_cast<OCQualityOfService>(m_cfg.QoS),
                                   &cbdata,
                                   assembleHeaderOptions(options, headerOptions),
-                                  headerOptions.size());
+                                  (uint8_t)headerOptions.size());
         }
         else
         {
@@ -1247,10 +1253,11 @@ namespace OC
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         ObserveCallback& callback, QualityOfService QoS)
     {
-        if (!callback)
+        if (!callback || (headerOptions.size() > MAX_HEADER_OPTIONS))
         {
             return OC_STACK_INVALID_PARAM;
         }
+
         OCStackResult result;
 
         ClientCallbackContext::ObserveContext* ctx =
@@ -1291,7 +1298,7 @@ namespace OC
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
                                   assembleHeaderOptions(options, headerOptions),
-                                  headerOptions.size());
+                                  (uint8_t)headerOptions.size());
         }
         else
         {
@@ -1312,6 +1319,14 @@ namespace OC
         OCStackResult result;
         auto cLock = m_csdkLock.lock();
 
+        if (headerOptions.size() > MAX_HEADER_OPTIONS)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: passed number of header options"
+                " (%" PRIuPTR ") exceeds the maximum of %d.",
+                __func__, headerOptions.size(), MAX_HEADER_OPTIONS);
+            return OC_STACK_ERROR;
+        }
+
         if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
@@ -1320,7 +1335,7 @@ namespace OC
             result = OCCancel(handle,
                     static_cast<OCQualityOfService>(QoS),
                     assembleHeaderOptions(options, headerOptions),
-                    headerOptions.size());
+                    (uint8_t)headerOptions.size());
         }
         else
         {
@@ -1473,11 +1488,22 @@ namespace OC
 
         for (auto it=headerOptions.begin(); it != headerOptions.end(); ++it)
         {
+            size_t headerOptionLength = it->getOptionData().length() + 1;
+            if (headerOptionLength > MAX_HEADER_OPTION_DATA_LENGTH)
+            {
+                OIC_LOG_V(ERROR, TAG, "%s: passed header option's data length"
+                    " (%" PRIuPTR ") exceeds the maximum of %d.",
+                    __func__, headerOptionLength, MAX_HEADER_OPTION_DATA_LENGTH);
+                return nullptr;
+            }
+
             options[i] = OCHeaderOption();
             options[i].protocolID = OC_COAP_ID;
             options[i].optionID = it->getOptionID();
-            options[i].optionLength = it->getOptionData().length() + 1;
-            strcpy((char*)options[i].optionData, (it->getOptionData().c_str()));
+            options[i].optionLength = (uint16_t)headerOptionLength;
+            strncpy((char*)options[i].optionData, it->getOptionData().c_str(),
+                sizeof(options[i].optionLength) -1 );
+            options[i].optionData[sizeof(options[i].optionLength) - 1] = 0;
             i++;
         }
 
@@ -1617,6 +1643,7 @@ namespace OC
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCDoDirectPairing(static_cast<void*>(context), peer->getDev(),
                     pmSel, const_cast<char*>(pinNumber.c_str()), directPairingCallback);
+            delete context;
         }
         else
         {

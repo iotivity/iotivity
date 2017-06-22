@@ -12,8 +12,7 @@ Import('env')
 target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 
-SConscript(src_dir + '/build_common/tools/UnpackAll.py')
-SConscript(src_dir + '/build_common/external_libs.scons')
+SConscript('#build_common/tools/UnpackAll.py')
 
 # Download
 if target_os == 'android':

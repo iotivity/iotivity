@@ -23,8 +23,6 @@
 #ifndef _Included_org_iotivity_base_OcResource_OnMQSubscribeListener
 #define _Included_org_iotivity_base_OcResource_OnMQSubscribeListener
 
-using namespace OC;
-
 class JniOcResource;
 
 class JniOnMQSubscribeListener

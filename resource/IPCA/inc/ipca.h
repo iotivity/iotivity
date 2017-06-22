@@ -20,6 +20,7 @@
 #ifndef IPCA_H_  // IoTivity Procedural Client API
 #define IPCA_H_
 
+#include <stdio.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -97,6 +98,19 @@ extern "C" {
  *             + Property ("x.oem.DisplayBackground",  type: string,   access: read-write)
  */
 
+#ifdef OC_CALL
+#   define IPCA_CALL    OC_CALL
+#else
+#   ifdef _WIN32
+        /*
+         * Set to __stdcall for Windows, consistent with WIN32 APIs.
+         */
+#       define IPCA_CALL    __stdcall
+#   else
+#       define IPCA_CALL
+#   endif
+#endif
+
 /**
  * Handle types returned by IPCA.
  */
@@ -110,13 +124,6 @@ struct IPCAUuid
 {
     uint8_t uuid[16];
 };
-
-// @todo: determine if this needs to map to __stdcall.
-// On x86 this causes the following run time failure.
-// "Run-Time Check Failure #0 - The value of ESP was not properly saved across a function call.
-// This is usually a result of calling a function declared with one calling convention with a
-// function pointer declared with a different calling convention."
-#define IPCA_CALL
 
 /**
  * Some information about the device from device discovery.
@@ -301,9 +308,10 @@ typedef enum
  *                                Use IPCAPropertyBag APIs to retrieve the values indexed by keys.
  *                                propertyBagHandle is only valid during this callback.
  */
-typedef void (IPCA_CALL *IPCAResourceChangeCallback)(IPCAStatus result,
-                                                     void* context,
-                                                     IPCAPropertyBagHandle propertyBagHandle);
+typedef void (IPCA_CALL *IPCAResourceChangeCallback)(
+                                IPCAStatus result,
+                                void* context,
+                                IPCAPropertyBagHandle propertyBagHandle);
 
 /**
  * Callback from IPCA to application when device responds to IPCAGetProperties().
@@ -314,9 +322,10 @@ typedef void (IPCA_CALL *IPCAResourceChangeCallback)(IPCAStatus result,
  *                                Use IPCAPropertyBag APIs to retrieve the values indexed by keys.
  *                                propertyBagHandle is only valid during this callback.
  */
-typedef void (IPCA_CALL *IPCAGetPropertiesComplete)(IPCAStatus result,
-                                                    void* context,
-                                                    IPCAPropertyBagHandle propertyBagHandle);
+typedef void (IPCA_CALL *IPCAGetPropertiesComplete)(
+                                IPCAStatus result,
+                                void* context,
+                                IPCAPropertyBagHandle propertyBagHandle);
 /**
  * Callback from IPCA to application when device responds to IPCASetProperties().
  *
@@ -326,9 +335,10 @@ typedef void (IPCA_CALL *IPCAGetPropertiesComplete)(IPCAStatus result,
  *                                Use IPCAPropertyBag APIs to retrieve the values indexed by keys.
  *                                propertyBagHandle is only valid during this callback.
  */
-typedef void (IPCA_CALL *IPCASetPropertiesComplete)(IPCAStatus result,
-                                                    void* context,
-                                                    IPCAPropertyBagHandle propertyBagHandle);
+typedef void (IPCA_CALL *IPCASetPropertiesComplete)(
+                                IPCAStatus result,
+                                void* context,
+                                IPCAPropertyBagHandle propertyBagHandle);
 
 /**
  * Callback from IPCA to application when device responds to IPCACreateResource().
@@ -341,10 +351,11 @@ typedef void (IPCA_CALL *IPCASetPropertiesComplete)(IPCAStatus result,
  *                                propertyBagHandle is only valid during this callback.
  *
  */
-typedef void (IPCA_CALL *IPCACreateResourceComplete)(IPCAStatus result,
-                                                     void* context,
-                                                     const char* newResourcePath,
-                                                     IPCAPropertyBagHandle propertyBagHandle);
+typedef void (IPCA_CALL *IPCACreateResourceComplete)(
+                                IPCAStatus result,
+                                void* context,
+                                const char* newResourcePath,
+                                IPCAPropertyBagHandle propertyBagHandle);
 
 /**
  * Callback from IPCA to application when device responds to IPCADeleteResource().
@@ -354,6 +365,15 @@ typedef void (IPCA_CALL *IPCACreateResourceComplete)(IPCAStatus result,
  *
  */
 typedef void (IPCA_CALL *IPCADeleteResourceComplete)(IPCAStatus result, void* context);
+
+/**
+ * Callback from IPCA when a handle is completely closed.
+ *
+ * @param[in] context   Caller's context set in IPCACloseHandle().
+ *
+ */
+typedef void (IPCA_CALL *IPCACloseHandleComplete)(void* context);
+
 
 /**
  * Discovery status in IPCADiscoverDeviceCallback.
@@ -376,9 +396,9 @@ typedef enum
  */
 
 typedef void (IPCA_CALL *IPCADiscoverDeviceCallback)(
-                                        void* context,
-                                        IPCADeviceStatus deviceStatus,
-                                        const IPCADiscoveredDeviceInfo* discoveredDeviceInfo);
+                                void* context,
+                                IPCADeviceStatus deviceStatus,
+                                const IPCADiscoveredDeviceInfo* discoveredDeviceInfo);
 
 /**
  * An application calls this method one time to register with IPCA.
@@ -389,9 +409,10 @@ typedef void (IPCA_CALL *IPCADiscoverDeviceCallback)(
  *
  * @return IPCA_OK if successful.
  */
-IPCAStatus IPCA_CALL IPCAOpen(const IPCAAppInfo* ipcaAppInfo,
-                              IPCAVersion ipcaVersion,
-                              IPCAAppHandle* ipcaAppHandle);
+IPCAStatus IPCA_CALL IPCAOpen(
+                        const IPCAAppInfo* ipcaAppInfo,
+                        IPCAVersion ipcaVersion,
+                        IPCAAppHandle* ipcaAppHandle);
 
 /**
  * Close the handle returned in IPCAOpen().
@@ -422,12 +443,13 @@ void IPCA_CALL IPCAClose(IPCAAppHandle ipcaAppHandle);
  *
  * @return IPCA_OK if successful.
  */
-IPCAStatus IPCA_CALL IPCADiscoverDevices(IPCAAppHandle ipcaAppHandle,
-                                         IPCADiscoverDeviceCallback discoverDeviceCallback,
-                                         void* context,
-                                         const char* const* resourceTypeList,
-                                         int resourceTypeCount,
-                                         IPCAHandle* handle);
+IPCAStatus IPCA_CALL IPCADiscoverDevices(
+                            IPCAAppHandle ipcaAppHandle,
+                            IPCADiscoverDeviceCallback discoverDeviceCallback,
+                            void* context,
+                            const char* const* resourceTypeList,
+                            int resourceTypeCount,
+                            IPCAHandle* handle);
 
 /**
  * Application indicates to IPCA the intention to start working with a device whose ID matches
@@ -440,9 +462,10 @@ IPCAStatus IPCA_CALL IPCADiscoverDevices(IPCAAppHandle ipcaAppHandle,
  * @return IPCA_OK if successful. IPCA_DEVICE_NOT_DISCOVERED if device is not yet discovered, call
  *         IPCADiscoverDevices().
  */
-IPCAStatus IPCA_CALL IPCAOpenDevice(IPCAAppHandle ipcaAppHandle,
-                                    const char* deviceId,
-                                    IPCADeviceHandle* deviceHandle);
+IPCAStatus IPCA_CALL IPCAOpenDevice(
+                            IPCAAppHandle ipcaAppHandle,
+                            const char* deviceId,
+                            IPCADeviceHandle* deviceHandle);
 
 /**
  * Closes device handle. The application will stop receiving notifications and callbacks from the
@@ -464,14 +487,14 @@ void IPCA_CALL IPCACloseDevice(IPCADeviceHandle deviceHandle);
  *   IPCA_INFORMATION_NOT_AVAILABLE if server has not returned the device info query.
  *   IPCA_INFO_VERSION_NOT_SUPPORTED when requested info version is not supported.
  */
-IPCAStatus IPCAGetDeviceInfo(IPCADeviceHandle deviceHandle, IPCADeviceInfo** deviceInfo);
+IPCAStatus IPCA_CALL IPCAGetDeviceInfo(IPCADeviceHandle deviceHandle, IPCADeviceInfo** deviceInfo);
 
 /**
  * Free the memory allocated in IPCAGetDeviceInfo().
  *
  * @param[in] deviceInfo   a Pointer to IPCADeviceInfo structure returned in IPCAGetDeviceInfo().
  */
-void IPCAFreeDeviceInfo(IPCADeviceInfo* deviceInfo);
+void IPCA_CALL IPCAFreeDeviceInfo(IPCADeviceInfo* deviceInfo);
 
 /**
  * This method returns a pointer to IPCAPlatformInfo structure.
@@ -485,7 +508,9 @@ void IPCAFreeDeviceInfo(IPCADeviceInfo* deviceInfo);
  *   IPCA_INFORMATION_NOT_AVAILABLE if server has not returned the platform info query.
  *   IPCA_INFO_VERSION_NOT_SUPPORTED when requested info version is not supported.
  */
-IPCAStatus IPCAGetPlatformInfo(IPCADeviceHandle deviceHandle, IPCAPlatformInfo** platformInfo);
+IPCAStatus IPCA_CALL IPCAGetPlatformInfo(
+                            IPCADeviceHandle deviceHandle,
+                            IPCAPlatformInfo** platformInfo);
 
 /**
  * Free the memory allocated in IPCAGetPlatformInfo().
@@ -493,7 +518,7 @@ IPCAStatus IPCAGetPlatformInfo(IPCADeviceHandle deviceHandle, IPCAPlatformInfo**
  * @param[in] platformInfo   A pointer to IPCAPlatformInfo structure returned
  *                           in IPCAGetPlatformInfo().
  */
-void IPCAFreePlatformInfo(IPCAPlatformInfo* platformInfo);
+void IPCA_CALL IPCAFreePlatformInfo(IPCAPlatformInfo* platformInfo);
 
 /**
  * Get the resources that implement resource types in IPCADiscoverDevices().
@@ -510,11 +535,12 @@ void IPCAFreePlatformInfo(IPCAPlatformInfo* platformInfo);
  *
  * @return IPCA_OK if successful.
  */
-IPCAStatus IPCA_CALL IPCAGetResources(IPCADeviceHandle deviceHandle,
-                                      const char* resourceInterface,
-                                      const char* resourceType,
-                                      char*** resourcePathList,
-                                      size_t* resourcePathCount);
+IPCAStatus IPCA_CALL IPCAGetResources(
+                            IPCADeviceHandle deviceHandle,
+                            const char* resourceInterface,
+                            const char* resourceType,
+                            char*** resourcePathList,
+                            size_t* resourcePathCount);
 
 /**
  * Get the list of resource types implemented by a resource.
@@ -529,10 +555,11 @@ IPCAStatus IPCA_CALL IPCAGetResources(IPCADeviceHandle deviceHandle,
  *
  * @return IPCA_OK if successful.
  */
-IPCAStatus IPCA_CALL IPCAGetResourceTypes(IPCADeviceHandle deviceHandle,
-                                          const char* resourcePath,
-                                          char*** resourceTypeList,
-                                          size_t* resourceTypeCount);
+IPCAStatus IPCA_CALL IPCAGetResourceTypes(
+                            IPCADeviceHandle deviceHandle,
+                            const char* resourcePath,
+                            char*** resourceTypeList,
+                            size_t* resourceTypeCount);
 
 /**
  * Get the list of resource interfaces implemented by a resource.
@@ -548,10 +575,11 @@ IPCAStatus IPCA_CALL IPCAGetResourceTypes(IPCADeviceHandle deviceHandle,
  *
  * @return IPCA_OK if successful.
  */
-IPCAStatus IPCA_CALL IPCAGetResourceInterfaces(IPCADeviceHandle deviceHandle,
-                                               const char* resourcePath,
-                                               char*** resourceInterfaceList,
-                                               size_t* resourceInterfaceCount);
+IPCAStatus IPCA_CALL IPCAGetResourceInterfaces(
+                            IPCADeviceHandle deviceHandle,
+                            const char* resourcePath,
+                            char*** resourceInterfaceList,
+                            size_t* resourceInterfaceCount);
 
 /**
  * Free string array returned in IPCAGetResources(), IPCAGetResourceTypes(),
@@ -584,13 +612,14 @@ void IPCA_CALL IPCAFreeStringArray(char** stringArray, size_t stringCount);
  *
  * @return IPCA_OK if successful. IPCA calls getPropertiesComplete() when device responds.
  */
-IPCAStatus IPCA_CALL IPCAGetProperties(IPCADeviceHandle deviceHandle,
-                                       IPCAGetPropertiesComplete getPropertiesComplete,
-                                       void* context,
-                                       const char* resourcePath,
-                                       const char* resourceInterface,
-                                       const char* resourceType,
-                                       IPCAHandle* handle);
+IPCAStatus IPCA_CALL IPCAGetProperties(
+                            IPCADeviceHandle deviceHandle,
+                            IPCAGetPropertiesComplete getPropertiesComplete,
+                            void* context,
+                            const char* resourcePath,
+                            const char* resourceInterface,
+                            const char* resourceType,
+                            IPCAHandle* handle);
 
 /**
  * Set property values of a resource.
@@ -615,14 +644,15 @@ IPCAStatus IPCA_CALL IPCAGetProperties(IPCADeviceHandle deviceHandle,
  *
  * @return IPCA_OK if successful. IPCA calls setPropertiesComplete() when device reponds.
  */
-IPCAStatus IPCA_CALL IPCASetProperties(IPCADeviceHandle deviceHandle,
-                                       IPCASetPropertiesComplete setPropertiesComplete,
-                                       void* context,
-                                       const char* resourcePath,
-                                       const char* resourceInterface,
-                                       const char* resourceType,
-                                       IPCAPropertyBagHandle propertyBagHandle,
-                                       IPCAHandle* handle);
+IPCAStatus IPCA_CALL IPCASetProperties(
+                            IPCADeviceHandle deviceHandle,
+                            IPCASetPropertiesComplete setPropertiesComplete,
+                            void* context,
+                            const char* resourcePath,
+                            const char* resourceInterface,
+                            const char* resourceType,
+                            IPCAPropertyBagHandle propertyBagHandle,
+                            IPCAHandle* handle);
 
 /**
  * Request device to create a new resource.
@@ -646,14 +676,15 @@ IPCAStatus IPCA_CALL IPCASetProperties(IPCADeviceHandle deviceHandle,
  *
  * @return IPCA_OK if successful. IPCA calls createResourceComplete() when device reponds.
  */
-IPCAStatus IPCA_CALL IPCACreateResource(IPCADeviceHandle deviceHandle,
-                                        IPCACreateResourceComplete createResourceComplete,
-                                        void* context,
-                                        const char* resourceCollectionPath,
-                                        const char* resourceInterface,
-                                        const char* resourceType,
-                                        IPCAPropertyBagHandle propertyBagHandle,
-                                        IPCAHandle* handle);
+IPCAStatus IPCA_CALL IPCACreateResource(
+                            IPCADeviceHandle deviceHandle,
+                            IPCACreateResourceComplete createResourceComplete,
+                            void* context,
+                            const char* resourceCollectionPath,
+                            const char* resourceInterface,
+                            const char* resourceType,
+                            IPCAPropertyBagHandle propertyBagHandle,
+                            IPCAHandle* handle);
 
 /**
  * Request device to delete a resource.
@@ -674,11 +705,12 @@ IPCAStatus IPCA_CALL IPCACreateResource(IPCADeviceHandle deviceHandle,
  * @return IPCA_OK if successful. IPCA calls deleteResourceComplete() when device reponds.
  */
 
-IPCAStatus IPCA_CALL IPCADeleteResource(IPCADeviceHandle deviceHandle,
-                                        IPCADeleteResourceComplete deleteResourceComplete,
-                                        void* context,
-                                        const char* resourcePath,
-                                        IPCAHandle* handle);
+IPCAStatus IPCA_CALL IPCADeleteResource(
+                            IPCADeviceHandle deviceHandle,
+                            IPCADeleteResourceComplete deleteResourceComplete,
+                            void* context,
+                            const char* resourcePath,
+                            IPCAHandle* handle);
 
 /**
  * Function returns whether a resource is observable.
@@ -689,9 +721,10 @@ IPCAStatus IPCA_CALL IPCADeleteResource(IPCADeviceHandle deviceHandle,
  *
  * @return IPCA_OK if successful.
  */
-void IPCA_CALL IPCAIsResourceObservable(IPCADeviceHandle deviceHandle,
-                                        const char* resourcePath,
-                                        bool* isObservable);
+void IPCA_CALL IPCAIsResourceObservable(
+                            IPCADeviceHandle deviceHandle,
+                            const char* resourcePath,
+                            bool* isObservable);
 
 /**
  * Function to start observing a resource. Use IPCACloseHandle() to stop receiving resource change
@@ -712,26 +745,35 @@ void IPCA_CALL IPCAIsResourceObservable(IPCADeviceHandle deviceHandle,
  * @return IPCA_OK if successful. IPCA calls resourceChangeCallback() when device sends
  *         notifications.
  */
-IPCAStatus IPCA_CALL IPCAObserveResource(IPCADeviceHandle deviceHandle,
-                                         IPCAResourceChangeCallback resourceChangeCallback,
-                                         void* context,
-                                         const char* resourcePath,
-                                         const char* resourceType,
-                                         IPCAHandle* handle);
+IPCAStatus IPCA_CALL IPCAObserveResource(
+                            IPCADeviceHandle deviceHandle,
+                            IPCAResourceChangeCallback resourceChangeCallback,
+                            void* context,
+                            const char* resourcePath,
+                            const char* resourceType,
+                            IPCAHandle* handle);
 
 /**
  * Stop receiving callbacks for the handle.
  * For handle returned by IPCAObserveResource(), IPCACloseHandle unsubscribes server's resource
  * change notification.
  *
- * @param[in] handle  Handle returned in the following methods:
- *                    IPCAGetProperties()
- *                    IPCASetProperties()
- *                    IPCAObserveResource()
- *                    IPCADiscoverDevices()
+ * @param[in] handle                Handle returned in the following methods:
+ *                                  IPCAGetProperties(), IPCASetProperties(), IPCAObserveResource()
+ *                                  IPCADiscoverDevices(), IPCACreateResource() and
+ *                                  IPCARequestAccess().
+ * @param[in] closeHandleComplete   Optional callback when handle is completely closed.
+ *                                  Upon receiving this callback, an application can safely perform
+ *                                  any needed cleanup for resources related to the handle closed.
+ * @param[in] context               Application's context that is passed back as argument in the
+ *                                  closeHandleComplete callback.
  *
+ * @return IPCA_OK if successful.
+ *         IPCA_FAIL if handle is already closed, closeHandleComplete will not be called.
  */
-void IPCA_CALL IPCACloseHandle(IPCAHandle handle);
+IPCAStatus IPCA_CALL IPCACloseHandle(IPCAHandle handle,
+                                     IPCACloseHandleComplete closeHandleComplete,
+                                     void* context);
 
 /**
  * Perform factory reset.
@@ -760,7 +802,7 @@ IPCAStatus IPCA_CALL IPCAReboot(IPCADeviceHandle deviceHandle);
  *
  * @return IPCA_OK if successful.
  */
-IPCAStatus IPCAPropertyBagCreate(IPCAPropertyBagHandle* propertyBagHandle);
+IPCAStatus IPCA_CALL IPCAPropertyBagCreate(IPCAPropertyBagHandle* propertyBagHandle);
 
 /**
  * Delete an IPCPropertyBag object.
@@ -768,7 +810,7 @@ IPCAStatus IPCAPropertyBagCreate(IPCAPropertyBagHandle* propertyBagHandle);
  * @param[in] propertyBagHandle  Handle returned in IPCAPropertyBagCreate().
  */
 
-void IPCAPropertyBagDestroy(IPCAPropertyBagHandle propertyBagHandle);
+void IPCA_CALL IPCAPropertyBagDestroy(IPCAPropertyBagHandle propertyBagHandle);
 
 /**
  * Get the resource path of the property bag.
@@ -780,8 +822,9 @@ void IPCAPropertyBagDestroy(IPCAPropertyBagHandle propertyBagHandle);
  *
  * @return IPCA_OK if successful.
  */
-IPCAStatus IPCAPropertyBagGetResourcePath(IPCAPropertyBagHandle propertyBagHandle,
-                                          char** resourcePath);
+IPCAStatus IPCA_CALL IPCAPropertyBagGetResourcePath(
+                                IPCAPropertyBagHandle propertyBagHandle,
+                                char** resourcePath);
 
 /**
  * Value type of a property in a property bag.
@@ -814,10 +857,11 @@ typedef enum
  *
  * @return IPCA_OK if successful.
  */
-IPCAStatus IPCAPropertyBagGetAllKeyValuePairs(IPCAPropertyBagHandle propertyBagHandle,
-                                              char*** keys,
-                                              IPCAValueType** valueTypes,
-                                              size_t* count);
+IPCAStatus IPCA_CALL IPCAPropertyBagGetAllKeyValuePairs(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    char*** keys,
+                                    IPCAValueType** valueTypes,
+                                    size_t* count);
 
 /**
  * Free memory allocated for IPCAValueType in IPCAPropertyBagGetAllKeyValuePairs().
@@ -825,7 +869,7 @@ IPCAStatus IPCAPropertyBagGetAllKeyValuePairs(IPCAPropertyBagHandle propertyBagH
  * @param[in] valueArray    Array of IPCAValueType values returned in
  *                          IPCAPropertyBagGetAllKeyValuePairs().
  */
-void IPCAPropertyBagFreeIPCAValueTypeArray(IPCAValueType* valueArray);
+void IPCA_CALL IPCAPropertyBagFreeIPCAValueTypeArray(IPCAValueType* valueArray);
 
 /**
  * Set property value.
@@ -837,26 +881,31 @@ void IPCAPropertyBagFreeIPCAValueTypeArray(IPCAValueType* valueArray);
  *
  * @return IPCA_OK if successful.
  */
-IPCAStatus IPCAPropertyBagSetValueInt(IPCAPropertyBagHandle propertyBagHandle,
-                                      const char* key,
-                                      int value);
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValueInt(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    int value);
 
-IPCAStatus IPCAPropertyBagSetValueDouble(IPCAPropertyBagHandle propertyBagHandle,
-                                         const char* key,
-                                         double value);
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValueDouble(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    double value);
 
-IPCAStatus IPCAPropertyBagSetValueBool(IPCAPropertyBagHandle
-                                       propertyBagHandle,
-                                       const char* key,
-                                       bool value);
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValueBool(
+                                    IPCAPropertyBagHandle
+                                    propertyBagHandle,
+                                    const char* key,
+                                    bool value);
 
-IPCAStatus IPCAPropertyBagSetValueString(IPCAPropertyBagHandle propertyBagHandle,
-                                         const char* key,
-                                         const char* value);
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValueString(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    const char* value);
 
-IPCAStatus IPCAPropertyBagSetValuePropertyBag(IPCAPropertyBagHandle propertyBagHandle,
-                                              const char* key,
-                                              const IPCAPropertyBagHandle value);
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValuePropertyBag(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    const IPCAPropertyBagHandle value);
 
 /**
  * Set array value.
@@ -870,30 +919,35 @@ IPCAStatus IPCAPropertyBagSetValuePropertyBag(IPCAPropertyBagHandle propertyBagH
  *
  * @return IPCA_OK if successful.
  */
-IPCAStatus IPCAPropertyBagSetValueIntArray(IPCAPropertyBagHandle propertyBagHandle,
-                                           const char* key,
-                                           const int* valueArray,
-                                           size_t valueCount);
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValueIntArray(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    const int* valueArray,
+                                    size_t valueCount);
 
-IPCAStatus IPCAPropertyBagSetValueDoubleArray(IPCAPropertyBagHandle propertyBagHandle,
-                                              const char* key,
-                                              const double* valueArray,
-                                              size_t valueCount);
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValueDoubleArray(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    const double* valueArray,
+                                    size_t valueCount);
 
-IPCAStatus IPCAPropertyBagSetValueBoolArray(IPCAPropertyBagHandle propertyBagHandle,
-                                            const char* key,
-                                            const bool* valueArray,
-                                            size_t valueCount);
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValueBoolArray(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    const bool* valueArray,
+                                    size_t valueCount);
 
-IPCAStatus IPCAPropertyBagSetValueStringArray(IPCAPropertyBagHandle propertyBagHandle,
-                                              const char* key,
-                                              const char** valueArray,
-                                              size_t valueCount);
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValueStringArray(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    const char** valueArray,
+                                    size_t valueCount);
 
-IPCAStatus IPCAPropertyBagSetValuePropertyBagArray(IPCAPropertyBagHandle propertyBagHandle,
-                                                   const char* key,
-                                                   const IPCAPropertyBagHandle* valueArray,
-                                                   size_t valueCount);
+IPCAStatus IPCA_CALL IPCAPropertyBagSetValuePropertyBagArray(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    const IPCAPropertyBagHandle* valueArray,
+                                    size_t valueCount);
 
 /**
  * Get property value.
@@ -913,25 +967,30 @@ IPCAStatus IPCAPropertyBagSetValuePropertyBagArray(IPCAPropertyBagHandle propert
  *
  * @return IPCA_OK if successful.
  */
-IPCAStatus IPCAPropertyBagGetValueInt(IPCAPropertyBagHandle propertyBagHandle,
-                                      const char* key,
-                                      int* value);
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValueInt(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    int* value);
 
-IPCAStatus IPCAPropertyBagGetValueDouble(IPCAPropertyBagHandle propertyBagHandle,
-                                         const char* key,
-                                         double* value);
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValueDouble(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    double* value);
 
-IPCAStatus IPCAPropertyBagGetValueBool(IPCAPropertyBagHandle propertyBagHandle,
-                                       const char* key,
-                                       bool* value);
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValueBool(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    bool* value);
 
-IPCAStatus IPCAPropertyBagGetValueString(IPCAPropertyBagHandle propertyBagHandle,
-                                         const char* key,
-                                         char** value);
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValueString(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    char** value);
 
-IPCAStatus IPCAPropertyBagGetValuePropertyBag(IPCAPropertyBagHandle propertyBagHandle,
-                                              const char* key,
-                                              IPCAPropertyBagHandle* value);
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValuePropertyBag(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    IPCAPropertyBagHandle* value);
 
 /**
  * Get array value.
@@ -950,46 +1009,53 @@ IPCAStatus IPCAPropertyBagGetValuePropertyBag(IPCAPropertyBagHandle propertyBagH
  *
  * @return IPCA_OK if successful.
  */
-IPCAStatus IPCAPropertyBagGetValueIntArray(IPCAPropertyBagHandle propertyBagHandle,
-                                           const char* key,
-                                           int** value,
-                                           size_t* valueCount);
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValueIntArray(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    int** value,
+                                    size_t* valueCount);
 
-IPCAStatus IPCAPropertyBagGetValueDoubleArray(IPCAPropertyBagHandle propertyBagHandle,
-                                              const char* key,
-                                              double** value,
-                                              size_t* valueCount);
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValueDoubleArray(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    double** value,
+                                    size_t* valueCount);
 
-IPCAStatus IPCAPropertyBagGetValueBoolArray(IPCAPropertyBagHandle propertyBagHandle,
-                                            const char* key,
-                                            bool** value,
-                                            size_t* valueCount);
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValueBoolArray(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    bool** value,
+                                    size_t* valueCount);
 
-IPCAStatus IPCAPropertyBagGetValueStringArray(IPCAPropertyBagHandle propertyBagHandle,
-                                              const char* key,
-                                              char*** value,
-                                              size_t* valueCount);
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValueStringArray(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    char*** value,
+                                    size_t* valueCount);
 
-IPCAStatus IPCAPropertyBagGetValuePropertyBagArray(IPCAPropertyBagHandle propertyBagHandle,
-                                                   const char* key,
-                                                   IPCAPropertyBagHandle** value,
-                                                   size_t* valueCount);
+IPCAStatus IPCA_CALL IPCAPropertyBagGetValuePropertyBagArray(
+                                    IPCAPropertyBagHandle propertyBagHandle,
+                                    const char* key,
+                                    IPCAPropertyBagHandle** value,
+                                    size_t* valueCount);
 
 /**
  * Free array types.
  */
-void IPCAPropertyBagFreeIntArray(int* valueArray);
-void IPCAPropertyBagFreeDoubleArray(double* valueArray);
-void IPCAPropertyBagFreeBoolArray(bool* valueArray);
-void IPCAPropertyBagFreeStringArray(char** valueArray, size_t valueCount);
-void IPCAPropertyBagFreePropertyBagArray(IPCAPropertyBagHandle* valueArray, size_t valueCount);
+void IPCA_CALL IPCAPropertyBagFreeIntArray(int* valueArray);
+void IPCA_CALL IPCAPropertyBagFreeDoubleArray(double* valueArray);
+void IPCA_CALL IPCAPropertyBagFreeBoolArray(bool* valueArray);
+void IPCA_CALL IPCAPropertyBagFreeStringArray(char** valueArray, size_t valueCount);
+void IPCA_CALL IPCAPropertyBagFreePropertyBagArray(
+                                    IPCAPropertyBagHandle* valueArray,
+                                    size_t valueCount);
 
 /**
  * Free stringBuffer allocated in IPCAPropertyBagGetValueString().
  *
  * @param[in] stringBuffer   String buffer returned in IPCAPropertyBagGetValueString().
  */
-void IPCAPropertyBagFreeString(char* stringBuffer);
+void IPCA_CALL IPCAPropertyBagFreeString(char* stringBuffer);
 
 /**
  * Security authentication type used during Ownership Transfer communication.
@@ -1101,10 +1167,11 @@ typedef IPCAStatus (IPCA_CALL *IPCADisplayPasswordCallback)(
  *                                      argument in the password callbacks.
  *
  */
-IPCAStatus IPCA_CALL IPCASetPasswordCallbacks(IPCAAppHandle ipcaAppHandle,
-                                              IPCAProvidePasswordCallback providePasswordCallback,
-                                              IPCADisplayPasswordCallback displayPasswordCallback,
-                                              void* context);
+IPCAStatus IPCA_CALL IPCASetPasswordCallbacks(
+                                IPCAAppHandle ipcaAppHandle,
+                                IPCAProvidePasswordCallback providePasswordCallback,
+                                IPCADisplayPasswordCallback displayPasswordCallback,
+                                void* context);
 
 /**
  * Callback from IPCA when a request initiated by the application using IPCARequestAccess has been
@@ -1116,8 +1183,9 @@ IPCAStatus IPCA_CALL IPCASetPasswordCallbacks(IPCAAppHandle ipcaAppHandle,
  *                                  IPCA_SECURITY_UPDATE_REQUEST_FAILED.
  * @param[in] context               Applications's context set in IPCARequestAccess().
  */
-typedef void (IPCA_CALL *IPCARequestAccessCompletionCallback)(IPCAStatus completionStatus,
-                                                              void* context);
+typedef void (IPCA_CALL *IPCARequestAccessCompletionCallback)(
+                                IPCAStatus completionStatus,
+                                void* context);
 
 /**
  * Initiate a request to access a device. Called by the application after IPCAGetProperties or
@@ -1139,11 +1207,12 @@ typedef void (IPCA_CALL *IPCARequestAccessCompletionCallback)(IPCAStatus complet
  * @return
  *   IPCA_OK if the request has been successfully initiated.
  */
-IPCAStatus IPCA_CALL IPCARequestAccess(IPCADeviceHandle deviceHandle,
-                                       const char* resourcePath,
-                                       IPCARequestAccessCompletionCallback completionCallback,
-                                       void* context,
-                                       IPCAHandle* handle);
+IPCAStatus IPCA_CALL IPCARequestAccess(
+                                IPCADeviceHandle deviceHandle,
+                                const char* resourcePath,
+                                IPCARequestAccessCompletionCallback completionCallback,
+                                void* context,
+                                IPCAHandle* handle);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

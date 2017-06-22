@@ -41,6 +41,8 @@
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 #include "crlresource.h"
+#include "csrresource.h"
+#include "rolesresource.h"
 #endif // __WITH_DTLS__ || __WITH_TLS__
 
 OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
@@ -55,7 +57,6 @@ OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         OCSecurityPayload ocPayload = {.base = {.type = PAYLOAD_TYPE_INVALID}};
 
         response.requestHandle = ehRequest->requestHandle;
-        response.resourceHandle = ehRequest->resource;
         response.ehResult = ehRet;
         response.payload = (OCPayload *)(&ocPayload);
         response.payload->type = PAYLOAD_TYPE_SECURITY;
@@ -96,11 +97,24 @@ OCStackResult InitSecureResources( )
     {
         ret = InitCRLResource();
     }
+    if(OC_STACK_OK == ret)
+    {
+        ret = InitCSRResource();
+    }
+    if(OC_STACK_OK == ret)
+    {
+        ret = InitRolesResource();
+    }
 #endif // __WITH_DTLS__ || __WITH_TLS__
+#ifndef AMACL_RESOURCE_IMPLEMENTATION_COMPLETE
+    OIC_LOG_V(WARNING, TAG, "%s: /amacl Resource implementation incomplete; not initializing.", __func__);
+#endif // AMACL_RESOURCE_IMPLEMENTATION_COMPLETE
+#ifdef AMACL_RESOURCE_IMPLEMENTATION_COMPLETE
     if(OC_STACK_OK == ret)
     {
         ret = InitAmaclResource();
     }
+#endif // AMACL_RESOURCE_IMPLEMENTATION_COMPLETE
 //#ifdef DIRECT_PAIRING
     if(OC_STACK_OK == ret)
     {
@@ -131,6 +145,8 @@ OCStackResult DestroySecureResources( )
     DeInitPstatResource();
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     DeInitCRLResource();
+    DeInitCSRResource();
+    DeInitRolesResource();
 #endif // __WITH_DTLS__ || __WITH_TLS__
     DeInitAmaclResource();
 //#ifdef DIRECT_PAIRING

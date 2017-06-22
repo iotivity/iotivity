@@ -25,7 +25,9 @@
 #include "aclresource.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+
 namespace PH = std::placeholders;
+using namespace OC;
 
 JniOcSecureResource::JniOcSecureResource(std::shared_ptr<OCSecureResource> device)
     : m_sharedSecureResource(device)

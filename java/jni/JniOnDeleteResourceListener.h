@@ -22,8 +22,6 @@
 #ifndef _Included_org_iotivity_base_OcPlatform_OnDeleteResourceListener
 #define _Included_org_iotivity_base_OcPlatform_OnDeleteResourceListener
 
-using namespace OC;
-
 class JniOnDeleteResourceListener
 {
 public:

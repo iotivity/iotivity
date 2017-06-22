@@ -190,6 +190,13 @@ OCStackResult CBORPayloadToVer(const uint8_t *cborPayload, size_t size,
         char *version = NULL;
         cborFindResult = cbor_value_dup_text_string(&verMap, &version, &len, NULL);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Security Version Value.");
+        if (sizeof(ver->secv) < len)
+        {
+            OIC_LOG (ERROR, TAG, "Version length is too long");
+            OICFree(version);
+            OICFree(ver);
+            goto exit;
+        }
         memcpy(ver->secv, version, len);
         OICFree(version);
     }

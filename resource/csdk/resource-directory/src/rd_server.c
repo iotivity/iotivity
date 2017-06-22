@@ -17,6 +17,7 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#include "iotivity_config.h"
 #include "rd_server.h"
 
 #include "rd_database.h"
@@ -43,7 +44,6 @@ static OCStackResult sendResponse(const OCEntityHandlerRequest *ehRequest, OCRep
 {
     OCEntityHandlerResponse response = { 0 };
     response.requestHandle = ehRequest->requestHandle;
-    response.resourceHandle = ehRequest->resource;
     response.ehResult = ehResult;
     response.payload = (OCPayload*)(rdPayload);
     return OCDoResponse(&response);
@@ -114,7 +114,7 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
     if (payload)
     {
         OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) payload);
-        if (OC_STACK_OK == OCRDDatabaseInit(NULL))
+        if (OC_STACK_OK == OCRDDatabaseInit())
         {
             if (OC_STACK_OK == OCRDDatabaseStoreResources(payload))
             {
@@ -159,8 +159,8 @@ static OCEntityHandlerResult handleDeleteRequest(const OCEntityHandlerRequest *e
     char *restOfQuery = NULL;
     char *keyValuePair = NULL;
     char *di = NULL;
-    size_t nIns = 0;
-    uint8_t *ins = NULL;
+    uint16_t nIns = 0;
+    int64_t *ins = NULL;
 
     if (!ehRequest)
     {
@@ -170,7 +170,7 @@ static OCEntityHandlerResult handleDeleteRequest(const OCEntityHandlerRequest *e
 
     OIC_LOG_V(DEBUG, TAG, "Received OC_REST_DELETE from client with query: %s.", ehRequest->query);
 
-    if (OC_STACK_OK != OCRDDatabaseInit(NULL))
+    if (OC_STACK_OK != OCRDDatabaseInit())
     {
         goto exit;
     }
@@ -184,7 +184,7 @@ static OCEntityHandlerResult handleDeleteRequest(const OCEntityHandlerRequest *e
     }
     if (nIns)
     {
-        ins = OICMalloc(nIns * sizeof(uint8_t));
+        ins = OICMalloc(nIns * sizeof(*ins));
         if (!ins)
         {
             OIC_LOG_V(ERROR, TAG, "ins is NULL");
@@ -214,13 +214,15 @@ static OCEntityHandlerResult handleDeleteRequest(const OCEntityHandlerRequest *e
         }
         else if (0 == strncasecmp(key, OC_RSRVD_INS, sizeof(OC_RSRVD_INS) - 1))
         {
-            char *endptr = NULL;
-            long int i = strtol(value, &endptr, 0);
-            if ( '\0' != *endptr || i < 0 || i > UINT8_MAX)
+            // Arduino's AVR-GCC doesn't support strtoll().
+            int64_t i;
+            int matchedItems = sscanf(value, "%lld", &i);
+            if (0 == matchedItems)
             {
                 OIC_LOG_V(ERROR, TAG, "Invalid ins query parameter: %s", value);
                 goto exit;
             }
+
             ins[nIns++] = i;
         }
 
@@ -303,7 +305,7 @@ static OCEntityHandlerResult rdEntityHandler(OCEntityHandlerFlag flag,
 /**
  * Registers RD resource
  */
-OCStackResult OCRDStart()
+OCStackResult OC_CALL OCRDStart()
 {
     OCStackResult result = OCCreateResource(&rdHandle,
                                 OC_RSRVD_RESOURCE_TYPE_RD,
@@ -339,7 +341,7 @@ OCStackResult OCRDStart()
 /**
  * Stops resource directory server
  */
-OCStackResult OCRDStop()
+OCStackResult OC_CALL OCRDStop()
 {
     if (!rdHandle)
     {

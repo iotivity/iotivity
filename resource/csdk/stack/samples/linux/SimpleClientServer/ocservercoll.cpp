@@ -143,7 +143,6 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
     {
         // Format the response.  Note this requires some info about the request
         response.requestHandle = entityHandlerRequest->requestHandle;
-        response.resourceHandle = entityHandlerRequest->resource;
         response.ehResult = ehResult;
         response.payload = nullptr;
         response.numSendVendorSpecificHeaderOptions = 0;
@@ -225,7 +224,6 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
             {
                 // Format the response.  Note this requires some info about the request
                 response.requestHandle = ehRequest->requestHandle;
-                response.resourceHandle = ehRequest->resource;
                 response.ehResult = ret;
                 response.payload = reinterpret_cast<OCPayload*>(payload);
                 response.numSendVendorSpecificHeaderOptions = 0;
@@ -298,7 +296,6 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
             {
                 // Format the response.  Note this requires some info about the request
                 response.requestHandle = ehRequest->requestHandle;
-                response.resourceHandle = ehRequest->resource;
                 response.ehResult = ret;
                 response.payload = reinterpret_cast<OCPayload*>(payload);
                 response.numSendVendorSpecificHeaderOptions = 0;
@@ -365,7 +362,6 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
         {
             // Format the response.  Note this requires some info about the request
             response.requestHandle = ehRequest->requestHandle;
-            response.resourceHandle = ehRequest->resource;
             response.ehResult = ret;
             response.payload = reinterpret_cast<OCPayload*>(payload);
             response.numSendVendorSpecificHeaderOptions = 0;
@@ -428,7 +424,6 @@ OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag,
         {
             // Format the response.  Note this requires some info about the request
             response.requestHandle = ehRequest->requestHandle;
-            response.resourceHandle = ehRequest->resource;
             response.ehResult = ret;
             response.payload = reinterpret_cast<OCPayload*>(payload);
             response.numSendVendorSpecificHeaderOptions = 0;

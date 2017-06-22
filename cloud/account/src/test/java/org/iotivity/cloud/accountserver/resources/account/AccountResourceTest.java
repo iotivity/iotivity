@@ -66,7 +66,7 @@ public class AccountResourceTest {
     private static final String            REGISTER_URI              = Constants.ACCOUNT_FULL_URI;
     private static final String            GROUP_URI                 = Constants.GROUP_FULL_URI;
     private static final String            DEVICE_ID                 = "DEVICE";
-    private String                         mAuthProvider             = "Github";
+    private String                         mAuthProvider             = "github";
     private String                         mAuthCode                 = "3af038b49edc4ebdc45c";
     private CoapDevice                     mMockDevice               = mock(
             CoapDevice.class);
@@ -112,7 +112,7 @@ public class AccountResourceTest {
 
     @After
     public void resetAccountDatabase() throws Exception {
-        MongoDB mongoDB = new MongoDB(Constants.DB_NAME);
+        MongoDB mongoDB = new MongoDB("127.0.0.1", Constants.DB_NAME);
         mongoDB.createTable(Constants.USER_TABLE);
         mongoDB.createTable(Constants.TOKEN_TABLE);
         mongoDB.createTable(Constants.GROUP_TABLE);

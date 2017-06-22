@@ -51,6 +51,7 @@
 #include "pmtypes.h"
 #include "pmutility.h"
 #include "srmutility.h"
+#include "ocstackinternal.h"
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 #include <mbedtls/ssl_ciphersuites.h>
 #endif
@@ -377,7 +378,9 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
             }
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-            res = SavePairingPSK((OCDevAddr*)&endpoint, &peer->deviceID, &ptDeviceID, false);
+            OCDevAddr devAddr;
+            CopyEndpointToDevAddr(&endpoint, &devAddr);
+            res = SavePairingPSK(&devAddr, &peer->deviceID, &ptDeviceID, false);
             if(OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, TAG, "Failed to PairingPSK generation");
@@ -386,7 +389,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
             }
 
             //  close temporary sesion
-            CAResult_t caResult = CAcloseSslSession((const CAEndpoint_t*)&endpoint);
+            CAResult_t caResult = CAcloseSslSession(&endpoint);
             if(CA_STATUS_OK != caResult)
             {
                 OIC_LOG(INFO, TAG, "Fail to close temporary dtls session");
@@ -495,7 +498,8 @@ OCStackResult FinalizeDirectPairing(void *ctx, OCDirectPairingDev_t* peer,
     dpairData->resultCallback = resultCallback;
     dpairData->userCtx = ctx;
 
-    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(cbData));
     cbData.cb = DirectPairingFinalizeHandler;
     cbData.context = (void*)dpairData;
     cbData.cd = NULL;
@@ -635,15 +639,12 @@ static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSE
             VERIFY_SUCCESS(TAG, CA_STATUS_OK == caresult, ERROR);
 
             // initiate dtls
-            CAEndpoint_t *endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
-            VERIFY_NOT_NULL(TAG, endpoint, FATAL);
-            memcpy(endpoint,&dpairData->peer->endpoint,sizeof(CAEndpoint_t));
-            endpoint->port = dpairData->peer->securePort;
-            OIC_LOG_V(INFO, TAG, "Initiate DTLS handshake to %s(%d)", endpoint->addr,
-                    endpoint->port);
-
-            caresult = CAInitiateHandshake(endpoint);
-            OICFree(endpoint);
+            CAEndpoint_t endpoint;
+            CopyDevAddrToEndpoint(&dpairData->peer->endpoint, &endpoint);
+            endpoint.port = dpairData->peer->securePort;
+            OIC_LOG_V(INFO, TAG, "Initiate DTLS handshake to %s(%d)", endpoint.addr,
+                    endpoint.port);
+            caresult = CAInitiateHandshake(&endpoint);
             VERIFY_SUCCESS(TAG, CA_STATUS_OK == caresult, ERROR);
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
@@ -756,7 +757,8 @@ OCStackResult DPDirectPairing(void *ctx, OCDirectPairingDev_t* peer, OicSecPrm_t
     dpairData->resultCallback = resultCallback;
     dpairData->userCtx = ctx;
 
-    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(cbData));
     cbData.cb = DirectPairingHandler;
     cbData.context = (void*)dpairData;
     cbData.cd = NULL;

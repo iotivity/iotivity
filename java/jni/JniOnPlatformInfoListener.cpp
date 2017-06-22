@@ -22,6 +22,8 @@
 #include "JniOnPlatformInfoListener.h"
 #include "JniOcRepresentation.h"
 
+using namespace OC;
+
 JniOnPlatformInfoListener::JniOnPlatformInfoListener(JNIEnv *env, jobject jListener,
     RemoveListenerCallback removeListenerCallback)
 {

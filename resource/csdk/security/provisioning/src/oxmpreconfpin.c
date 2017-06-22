@@ -36,6 +36,7 @@
 #include "ownershiptransfermanager.h"
 #include "pinoxmcommon.h"
 #include "srmresourcestrings.h"
+#include "ocstackinternal.h"
 #include "mbedtls/ssl_ciphersuites.h"
 
 #define TAG "OIC_OXM_PreconfigPIN"
@@ -49,7 +50,11 @@ OCStackResult CreatePreconfigPinBasedSelectOxmPayload(OTMContext_t *otmCtx, uint
 
     otmCtx->selectedDeviceInfo->doxm->oxmSel = OIC_PRECONFIG_PIN;
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[DOXM_OXMSEL] = true;
+
+    return DoxmToCBORPayloadPartial(otmCtx->selectedDeviceInfo->doxm, payload, size, propertiesToInclude);
 }
 
 OCStackResult CreatePreconfigPinBasedOwnerTransferPayload(OTMContext_t *otmCtx, uint8_t **payload, size_t *size)
@@ -70,7 +75,11 @@ OCStackResult CreatePreconfigPinBasedOwnerTransferPayload(OTMContext_t *otmCtx, 
     }
     memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id , UUID_LENGTH);
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[DOXM_DEVOWNERUUID] = true;
+
+    return DoxmToCBORPayloadPartial(otmCtx->selectedDeviceInfo->doxm, payload, size, propertiesToInclude);
 }
 
 OCStackResult LoadPreconfigPinCodeCallback(OTMContext_t *otmCtx)
@@ -194,16 +203,22 @@ OCStackResult CreateSecureSessionPreconfigPinCallback(OTMContext_t* otmCtx)
     }
     OIC_LOG(INFO, TAG, "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 cipher suite selected.");
 
+    CAEndpoint_t endpoint;
     OCProvisionDev_t* selDevInfo = otmCtx->selectedDeviceInfo;
-    CAEndpoint_t *endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
-    if (NULL == endpoint)
+    CopyDevAddrToEndpoint(&selDevInfo->endpoint, &endpoint);
+
+    if (CA_ADAPTER_IP == endpoint.adapter)
     {
-        return OC_STACK_NO_MEMORY;
+        endpoint.port = selDevInfo->securePort;
     }
-    memcpy(endpoint,&selDevInfo->endpoint,sizeof(CAEndpoint_t));
-    endpoint->port = selDevInfo->securePort;
-    caresult = CAInitiateHandshake(endpoint);
-    OICFree(endpoint);
+#ifdef WITH_TCP
+    else if (CA_ADAPTER_TCP == endpoint.adapter)
+    {
+        endpoint.port = selDevInfo->tcpPort;
+    }
+#endif
+
+    caresult = CAInitiateHandshake(&endpoint);
     if (CA_STATUS_OK != caresult)
     {
         OIC_LOG_V(ERROR, TAG, "DTLS handshake failure.");

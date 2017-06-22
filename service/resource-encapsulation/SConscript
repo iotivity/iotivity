@@ -32,18 +32,18 @@ SConscript('src/serverBuilder/SConscript')
 ######################################################################
 
 if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS = ['-Os'])
-    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+    env.AppendUnique(CCFLAGS=['-Os'])
+    env.AppendUnique(CPPDEFINES=['NDEBUG'])
 else:
-    env.AppendUnique(CCFLAGS = ['-g'])
+    env.AppendUnique(CCFLAGS=['-g'])
 
 if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 target_os = env.get('TARGET_OS')
 
 if target_os in ['ios']:
-    env.AppendUnique(CPPDEFINES = ['TARGET_OS_IPHONE'])
+    env.AppendUnique(CPPDEFINES=['TARGET_OS_IPHONE'])
 
 # Add third party libraries
 lib_env = env.Clone()
@@ -54,7 +54,7 @@ resourceClient_env = lib_env.Clone()
 ######################################################################
 # Build flags
 ######################################################################
-resourceClient_env.AppendUnique(CPPPATH = [
+resourceClient_env.AppendUnique(CPPPATH=[
     'include',
     '#/resource/include',
     '#/resource/csdk/include',
@@ -67,22 +67,24 @@ resourceClient_env.AppendUnique(CPPPATH = [
     'src/resourceCache/include'
 ])
 
-resourceClient_env.PrependUnique(LIBS = ['resource_directory', 'oc', 'rcs_common', 'octbstack','oc_logger'])
+resourceClient_env.PrependUnique(
+    LIBS=['oc', 'rcs_common', 'octbstack', 'oc_logger'])
 
 if target_os not in ['windows']:
-    resourceClient_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
-    resourceClient_env.AppendUnique(LIBS = ['dl'])
+    resourceClient_env.AppendUnique(CXXFLAGS=['-Wall', '-std=c++0x'])
+    resourceClient_env.AppendUnique(LIBS=['dl'])
     if target_os in ['linux']:
-        resourceClient_env.AppendUnique(LIBS = ['pthread'])
+        resourceClient_env.AppendUnique(LIBS=['pthread'])
 
 if target_os in ['android']:
-    resourceClient_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-    resourceClient_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
+    resourceClient_env.AppendUnique(CXXFLAGS=['-frtti', '-fexceptions'])
+    resourceClient_env.PrependUnique(LIBS=['gnustl_shared', 'log'])
+    resourceClient_env.AppendUnique(LINKFLAGS=['-Wl,-soname,librcs_client.so'])
 
 if target_os in ['linux']:
     if not env.get('RELEASE'):
-        resourceClient_env.PrependUnique(LIBS = ['gcov'])
-        resourceClient_env.AppendUnique(CXXFLAGS = ['--coverage'])
+        resourceClient_env.PrependUnique(LIBS=['gcov'])
+        resourceClient_env.AppendUnique(CXXFLAGS=['--coverage'])
 
 ######################################################################
 # Source files and Targets
@@ -92,35 +94,56 @@ CACHE_SRC_DIR = 'src/resourceCache/src/'
 RESOURCECLIENT_DIR = 'src/resourceClient/'
 
 client_src = [
-        BROKER_SRC_DIR + 'DeviceAssociation.cpp',
-        BROKER_SRC_DIR + 'DevicePresence.cpp',
-        BROKER_SRC_DIR + 'ResourcePresence.cpp',
-        BROKER_SRC_DIR + 'ResourceBroker.cpp',
-        CACHE_SRC_DIR + 'DataCache.cpp',
-        CACHE_SRC_DIR + 'ResourceCacheManager.cpp',
-        CACHE_SRC_DIR + 'ObserveCache.cpp',
-        RESOURCECLIENT_DIR + 'RCSDiscoveryManager.cpp',
-        RESOURCECLIENT_DIR + 'RCSDiscoveryManagerImpl.cpp',
-        RESOURCECLIENT_DIR + 'RCSRemoteResourceObject.cpp'
-        ]
-ResourceClientsdk_static = resourceClient_env.StaticLibrary('rcs_client', client_src)
+    BROKER_SRC_DIR + 'DeviceAssociation.cpp',
+    BROKER_SRC_DIR + 'DevicePresence.cpp',
+    BROKER_SRC_DIR + 'ResourcePresence.cpp',
+    BROKER_SRC_DIR + 'ResourceBroker.cpp', CACHE_SRC_DIR + 'DataCache.cpp',
+    CACHE_SRC_DIR + 'ResourceCacheManager.cpp',
+    CACHE_SRC_DIR + 'ObserveCache.cpp',
+    RESOURCECLIENT_DIR + 'RCSDiscoveryManager.cpp',
+    RESOURCECLIENT_DIR + 'RCSDiscoveryManagerImpl.cpp',
+    RESOURCECLIENT_DIR + 'RCSRemoteResourceObject.cpp'
+]
+ResourceClientsdk_static = resourceClient_env.StaticLibrary(
+    'rcs_client', client_src)
 if target_os not in ['ios']:
-    ResourceClientsdk_shared = resourceClient_env.SharedLibrary('rcs_client', client_src)
-    resourceClient_env.InstallTarget([ResourceClientsdk_static,ResourceClientsdk_shared], 'rcs_client')
-    resourceClient_env.UserInstallTargetLib([ResourceClientsdk_static,ResourceClientsdk_shared], 'rcs_client')
+    ResourceClientsdk_shared = resourceClient_env.SharedLibrary(
+        'rcs_client', client_src)
+    resourceClient_env.InstallTarget(
+        [ResourceClientsdk_static, ResourceClientsdk_shared], 'rcs_client')
+    resourceClient_env.UserInstallTargetLib(
+        [ResourceClientsdk_static, ResourceClientsdk_shared], 'rcs_client')
 else:
     resourceClient_env.InstallTarget([ResourceClientsdk_static], 'rcs_client')
-    resourceClient_env.UserInstallTargetLib([ResourceClientsdk_static], 'rcs_client')
-resourceClient_env.UserInstallTargetHeader('include/RCSAddress.h', 'service/resource-encapsulation', 'RCSAddress.h')
-resourceClient_env.UserInstallTargetHeader('include/RCSDiscoveryManager.h', 'service/resource-encapsulation', 'RCSDiscoveryManager.h')
-resourceClient_env.UserInstallTargetHeader('include/RCSRemoteResourceObject.h', 'service/resource-encapsulation', 'RCSRemoteResourceObject.h')
-resourceClient_env.UserInstallTargetHeader('include/RCSResourceAttributes.h', 'service/resource-encapsulation', 'RCSResourceAttributes.h')
-resourceClient_env.UserInstallTargetHeader('include/RCSResourceObject.h', 'service/resource-encapsulation', 'RCSResourceObject.h')
-resourceClient_env.UserInstallTargetHeader('include/RCSException.h', 'service/resource-encapsulation', 'RCSException.h')
-resourceClient_env.UserInstallTargetHeader('include/RCSRequest.h', 'service/resource-encapsulation', 'RCSRequest.h')
-resourceClient_env.UserInstallTargetHeader('include/RCSResponse.h', 'service/resource-encapsulation', 'RCSResponse.h')
-resourceClient_env.UserInstallTargetHeader('include/RCSRepresentation.h', 'service/resource-encapsulation', 'RCSRepresentation.h')
-resourceClient_env.UserInstallTargetHeader('include/RCSSeparateResponse.h', 'service/resource-encapsulation', 'RCSSeparateResponse.h')
+    resourceClient_env.UserInstallTargetLib([ResourceClientsdk_static],
+                                            'rcs_client')
+resourceClient_env.UserInstallTargetHeader(
+    'include/RCSAddress.h', 'service/resource-encapsulation', 'RCSAddress.h')
+resourceClient_env.UserInstallTargetHeader('include/RCSDiscoveryManager.h',
+                                           'service/resource-encapsulation',
+                                           'RCSDiscoveryManager.h')
+resourceClient_env.UserInstallTargetHeader('include/RCSRemoteResourceObject.h',
+                                           'service/resource-encapsulation',
+                                           'RCSRemoteResourceObject.h')
+resourceClient_env.UserInstallTargetHeader('include/RCSResourceAttributes.h',
+                                           'service/resource-encapsulation',
+                                           'RCSResourceAttributes.h')
+resourceClient_env.UserInstallTargetHeader('include/RCSResourceObject.h',
+                                           'service/resource-encapsulation',
+                                           'RCSResourceObject.h')
+resourceClient_env.UserInstallTargetHeader('include/RCSException.h',
+                                           'service/resource-encapsulation',
+                                           'RCSException.h')
+resourceClient_env.UserInstallTargetHeader(
+    'include/RCSRequest.h', 'service/resource-encapsulation', 'RCSRequest.h')
+resourceClient_env.UserInstallTargetHeader(
+    'include/RCSResponse.h', 'service/resource-encapsulation', 'RCSResponse.h')
+resourceClient_env.UserInstallTargetHeader('include/RCSRepresentation.h',
+                                           'service/resource-encapsulation',
+                                           'RCSRepresentation.h')
+resourceClient_env.UserInstallTargetHeader('include/RCSSeparateResponse.h',
+                                           'service/resource-encapsulation',
+                                           'RCSSeparateResponse.h')
 
 ######################################################################
 # Build Sample App: SampleResourceClient & SampleResourceServer
@@ -128,7 +151,7 @@ resourceClient_env.UserInstallTargetHeader('include/RCSSeparateResponse.h', 'ser
 SConscript('examples/SConscript')
 
 ######################################################################
-# Build UnitTests Resource Client , resourceCache and resourceBroker and 
+# Build UnitTests Resource Client , resourceCache and resourceBroker and
 # DiscoveryManager
 ################################################ ######################
 if target_os in ['linux']:

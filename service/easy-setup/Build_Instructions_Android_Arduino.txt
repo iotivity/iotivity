@@ -52,7 +52,7 @@ Steps to build and deploy Easysetup Mediator in Android platform
         <iotivity-root>/service/easy-setup/mediator/richsdk/android
 
     d) Execute NDK-Build with the following command to cross compiled Easysetup JNI .so files
-	<iotivity>/extlibs/android/ndk/android-ndk-r10d/ndk-build
+	<iotivity>/extlibs/android/ndk/android-ndk-r10e/ndk-build
 
     e) Step (d) will generate cross compiled Easysetup JNI .so files in the following folder
 	<iotivity>/service/easy-setup/mediator/richsdk/android/libs/armeabi

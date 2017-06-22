@@ -21,7 +21,7 @@ set -e
 
 package="gtest"
 packageRevision='1.7.0'
-packageUrl='http://pkgs.fedoraproject.org/repo/pkgs/gtest/gtest-1.7.0.zip/2d6ec8ccdf5c46b05ba54a9fd1d130d7/gtest-1.7.0.zip'
+packageUrl='https://github.com/google/googletest/archive/release-1.7.0.zip'
 packageArchive=$(basename -- "${packageUrl}")
 packageDir="extlibs/${package}/${package}-${packageRevision}"
 packageSourceFile="${packageDir}/CMakeLists.txt"
@@ -48,8 +48,8 @@ main_()
 {
     echo "# Checking for gtest presence:"
     if [ ! -e "${packageSourceFile}" ] ; then
-        which wget 2>/dev/null
-        which unzip 2>/dev/null
+        whereis -b wget 2>/dev/null
+        whereis -b unzip 2>/dev/null
         do_ "cd extlibs/${package} && wget -nc -O ${packageArchive} ${packageUrl} && unzip ${packageArchive}"
     fi
 }

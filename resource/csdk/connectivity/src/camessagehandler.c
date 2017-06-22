@@ -178,6 +178,10 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
         {
             info->identity = *identity;
         }
+        else
+        {
+            OIC_LOG_V(INFO, TAG, "%s: No identity information provided", __func__);
+        }
         OIC_LOG(DEBUG, TAG, "Response Info :");
         CALogPayloadInfo(info);
     }
@@ -563,9 +567,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                 // Blockwise transfer
                 if (NULL != info)
                 {
-                    CAResult_t res = CAAddBlockOption(&pdu, info,
-                                                      data->remoteEndpoint,
-                                                      &options);
+                    res = CAAddBlockOption(&pdu, info, data->remoteEndpoint, &options);
                     if (CA_STATUS_OK != res)
                     {
                         OIC_LOG(INFO, TAG, "to write block option has failed");
@@ -686,10 +688,6 @@ static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, ui
         return true;
     }
     if (ep->adapter != CA_ADAPTER_IP)
-    {
-        return false;
-    }
-    if (!caglobals.ip.dualstack)
     {
         return false;
     }
@@ -1147,7 +1145,12 @@ CAResult_t CAInitializeMessageHandler(CATransportAdapter_t transportType)
     }
 
     // initialize interface adapters by controller
-    CAInitializeAdapters(g_threadPoolHandle, transportType);
+    res = CAInitializeAdapters(g_threadPoolHandle, transportType);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to Initialize Adapters.");
+        return res;
+    }
 #else
     // retransmission initialize
     CAResult_t res = CARetransmissionInitialize(&g_retransmissionContext, NULL, CASendUnicastData,
@@ -1167,22 +1170,8 @@ CAResult_t CAInitializeMessageHandler(CATransportAdapter_t transportType)
 void CATerminateMessageHandler()
 {
 #ifndef SINGLE_THREAD
-    CATransportAdapter_t connType;
-    u_arraylist_t *list = CAGetSelectedNetworkList();
-    size_t length = u_arraylist_length(list);
-
-    for (size_t i = 0; i < length; i++)
-    {
-        void* ptrType = u_arraylist_get(list, i);
-
-        if (NULL == ptrType)
-        {
-            continue;
-        }
-
-        connType = *(CATransportAdapter_t *)ptrType;
-        CAStopAdapter(connType);
-    }
+    // stop adapters
+    CAStopAdapters();
 
     // stop retransmission
     if (NULL != g_retransmissionContext.threadMutex)
@@ -1464,7 +1453,9 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
         }
     }
 
-    size_t payloadLen = (pdu->data) ? (unsigned char *) pdu->hdr + pdu->length - pdu->data : 0;
+#ifdef TB_LOG
+    size_t payloadLen = (pdu->data) ? (unsigned char *)pdu->hdr + pdu->length - pdu->data : 0;
+#endif
     OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Message Full Size = [%lu]", pdu->length);
     OIC_LOG(DEBUG, ANALYZER_TAG, "CoAP Header (+ 0xFF)");
     OIC_LOG_BUFFER(DEBUG, ANALYZER_TAG,  (const uint8_t *) pdu->transport_hdr,
@@ -1472,7 +1463,7 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
     OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Header size = [%lu]", pdu->length - payloadLen);
 
     OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Payload");
-//    OIC_LOG_BUFFER(DEBUG, ANALYZER_TAG, pdu->data, payloadLen);
+    //OIC_LOG_BUFFER(DEBUG, ANALYZER_TAG, pdu->data, payloadLen);
     OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Payload Size = [%lu]", payloadLen);
     OIC_LOG(DEBUG, ANALYZER_TAG, "=================================================");
     OIC_TRACE_END();

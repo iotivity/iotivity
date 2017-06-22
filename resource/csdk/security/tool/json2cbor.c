@@ -47,42 +47,258 @@
 //SVR database buffer block size
 
 #define DB_FILE_SIZE_BLOCK 1023
+#define DELTA_ERROR 0.0000001
 
-static OicSecPstat_t* JSONToPstatBin(const char * jsonStr);
-static OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr);
-static OicSecAcl_t *JSONToAclBin(const char * jsonStr);
-static OicSecAmacl_t* JSONToAmaclBin(const char * jsonStr);
-static OicSecCred_t* JSONToCredBin(const char * jsonStr);
-static OCDeviceProperties* JSONToDPBin(const char *jsonStr);
+static OicSecPstat_t *JSONToPstatBin(const char *jsonStr);
+static OicSecDoxm_t *JSONToDoxmBin(const char *jsonStr);
+static OicSecAcl_t *JSONToAclBin(OicSecAclVersion_t *aclVersion,
+                                 const char *jsonStr);
+static OicSecAmacl_t *JSONToAmaclBin(const char *jsonStr);
+static OicSecCred_t *JSONToCredBin(const char *jsonStr);
+static OCDeviceProperties *JSONToDPBin(const char *jsonStr);
 
 static size_t GetJSONFileSize(const char *jsonFileName)
 {
     size_t size = 0;
     size_t bytesRead  = 0;
     char buffer[DB_FILE_SIZE_BLOCK];
-    FILE* fp = fopen(jsonFileName, "r");
+    FILE *fp = fopen(jsonFileName, "r");
     if (fp)
     {
         do
         {
             bytesRead = fread(buffer, 1, DB_FILE_SIZE_BLOCK, fp);
-            if (bytesRead >=(MAX_RANGE - size))
+            if (bytesRead >= (MAX_RANGE - size))
             {
                 fclose(fp);
                 return 0;
             }
             size += bytesRead;
-        } while (bytesRead > 0);
+        }
+        while (bytesRead > 0);
         fclose(fp);
     }
     return size;
 }
 
+static void ReadBufferFromFile(const char *fileName, uint8_t **buffer, size_t *bufferSize)
+{
+    FILE *fp = NULL;
+    size_t size = 0;
+    VERIFY_NOT_NULL(TAG, buffer, FATAL);
+    VERIFY_NOT_NULL(TAG, bufferSize, FATAL);
+
+    size = GetJSONFileSize(fileName);
+    if (0 == size)
+    {
+        OIC_LOG(ERROR, TAG, "Unable to get file size");
+        return;
+    }
+
+    *buffer = (uint8_t *)OICMalloc(size + 1);
+    VERIFY_NOT_NULL(TAG, *buffer, FATAL);
+
+    fp = fopen(fileName, "r");
+    if (fp)
+    {
+        size_t bytesRead = fread(*buffer, 1, size, fp);
+        (*buffer)[bytesRead] = '\0';
+
+        OIC_LOG_V(DEBUG, TAG, "Read %" PRIuPTR " bytes", bytesRead);
+        fclose(fp);
+        fp = NULL;
+        *bufferSize = bytesRead + 1;
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Unable to open JSON file!!");
+        OICFree(*buffer);
+        *buffer = NULL;
+        *bufferSize = 0;
+    }
+exit:
+    return;
+}
+
+static void WriteBufferToFile(const char *fileName, uint8_t *buffer, size_t size)
+{
+    if ((fileName == NULL) || (buffer == NULL) || (size == 0))
+    {
+        OIC_LOG(ERROR, TAG, "Invalid Parameters to WriteBufferToFile");
+        return;
+    }
+    FILE *fp = fopen(fileName, "wb");
+    if (fp)
+    {
+        size_t bytesWritten = fwrite(buffer, 1, size, fp);
+        if (bytesWritten == size)
+        {
+            OIC_LOG_V(DEBUG, TAG, "Written %" PRIuPTR " bytes", bytesWritten);
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed writing %" PRIuPTR " bytes - Error: %" PRIi64,
+                      size, ferror(fp));
+        }
+        fclose(fp);
+        fp = NULL;
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "Error opening file [%s] for Write", fileName);
+    }
+}
+
+CborError EncodeJson(CborEncoder *encoder, cJSON *jsonObj)
+{
+    CborError err = CborNoError;
+    switch (jsonObj->type)
+    {
+        case cJSON_Object:
+            {
+                CborEncoder rootMap;
+                err = cbor_encoder_create_map(encoder, &rootMap, CborIndefiniteLength);
+                if (CborNoError == err)
+                {
+                    cJSON *child = jsonObj->child;
+                    while (child)
+                    {
+                        err = cbor_encode_text_string(&rootMap, child->string, strlen(child->string));
+                        if (CborNoError != err)
+                        {
+                            break;
+                        }
+                        err = EncodeJson(&rootMap, child);
+                        if (CborNoError != err)
+                        {
+                            break;
+                        }
+                        child = child->next;
+                    }
+                }
+                if (CborNoError == err)
+                {
+                    err = cbor_encoder_close_container(encoder, &rootMap);
+                }
+            }
+            break;
+        case cJSON_Array:
+            {
+                CborEncoder cborArray;
+                err = cbor_encoder_create_array(encoder, &cborArray, CborIndefiniteLength);
+                if (CborNoError == err)
+                {
+                    cJSON *child = jsonObj->child;
+                    while (child)
+                    {
+                        err = EncodeJson(&cborArray, child);
+                        if (CborNoError != err)
+                        {
+                            break;
+                        }
+                        child = child->next;
+                    }
+                }
+                if (CborNoError == err)
+                {
+                    err = cbor_encoder_close_container(encoder, &cborArray);
+                }
+            }
+            break;
+        case cJSON_String:
+            err = cbor_encode_text_string(encoder, jsonObj->valuestring,
+                                          strlen(jsonObj->valuestring));
+            break;
+        case cJSON_Number:
+            if ((jsonObj->valuedouble - jsonObj->valueint) > DELTA_ERROR)
+            {
+                err = cbor_encode_double(encoder, jsonObj->valuedouble);
+            }
+            else
+            {
+                err = cbor_encode_int(encoder, jsonObj->valueint);
+            }
+            break;
+        case cJSON_NULL:
+            err = cbor_encode_null(encoder);
+            break;
+        case cJSON_True:
+            err = cbor_encode_boolean(encoder, true);
+            break;
+        case cJSON_False:
+            err = cbor_encode_boolean(encoder, false);
+            break;
+        default:
+            OIC_LOG(ERROR, TAG, "Unknown cjson type");
+            break;
+    }
+    return err;
+}
+
+void GenericConvertToCbor(char *jsonFileName, char *cborFileName)
+{
+    CborEncoder encoder;
+    CborError err;
+    cJSON *jsonObj = NULL;
+    uint8_t *buffer = NULL;
+
+    size_t size = 0;
+    char *jsonString = NULL;
+
+    ReadBufferFromFile(jsonFileName, (uint8_t **)&jsonString, &size);
+
+    if ((size == 0) || !jsonString)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to read from file");
+        goto exit;
+    }
+
+    jsonObj = cJSON_Parse(jsonString);
+    if (jsonObj == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Unable to parse JSON string");
+        goto exit;
+    }
+    size = strlen(jsonString);
+    size_t bufferSize = 0;
+    buffer = (uint8_t *)OICMalloc(size);
+    if (!buffer)
+    {
+        OIC_LOG(ERROR, TAG, "Unable to allocate enough memory");
+        goto exit;
+    }
+
+    cbor_encoder_init(&encoder, buffer, size, 0);
+
+    err = EncodeJson(&encoder, jsonObj);
+    if (CborNoError != err)
+    {
+        OIC_LOG(ERROR, TAG, "Error encoding json");
+        goto exit;
+    }
+    else
+    {
+        bufferSize = cbor_encoder_get_buffer_size(&encoder, buffer);
+    }
+    WriteBufferToFile(cborFileName, buffer, bufferSize);
+exit:
+    if (jsonObj)
+    {
+        cJSON_Delete(jsonObj);
+    }
+    if (jsonString)
+    {
+        OICFree(jsonString);
+    }
+    if (buffer)
+    {
+        OICFree(buffer);
+    }
+}
+
 static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName)
 {
     char *jsonStr = NULL;
-    FILE *fp = NULL;
-    FILE *fp1 = NULL;
     uint8_t *aclCbor = NULL;
     uint8_t *pstatCbor = NULL;
     uint8_t *doxmCbor = NULL;
@@ -92,44 +308,27 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
     cJSON *jsonRoot = NULL;
     OCStackResult ret = OC_STACK_ERROR;
     OCDeviceProperties *deviceProps = NULL;
+    size_t size = 0;
 
-    size_t size = GetJSONFileSize(jsonFileName);
-    if (0 == size)
+    ReadBufferFromFile(jsonFileName, (uint8_t **)&jsonStr, &size);
+    if ((size == 0) || !jsonStr)
     {
-        OIC_LOG (ERROR, TAG, "Failed converting to JSON");
-        return;
-    }
-
-    jsonStr = (char *)OICMalloc(size + 1);
-    VERIFY_NOT_NULL(TAG, jsonStr, FATAL);
-
-    fp = fopen(jsonFileName, "r");
-    if (fp)
-    {
-        size_t bytesRead = fread(jsonStr, 1, size, fp);
-        jsonStr[bytesRead] = '\0';
-
-        OIC_LOG_V(DEBUG, TAG, "Read %" PRIuPTR " bytes", bytesRead);
-        fclose(fp);
-        fp = NULL;
-    }
-    else
-    {
-        OIC_LOG (ERROR, TAG, "Unable to open JSON file!!");
+        OIC_LOG(ERROR, TAG, "Failed to read from file");
         goto exit;
     }
 
     jsonRoot = cJSON_Parse(jsonStr);
 
     cJSON *value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_ACL_NAME);
-    //printf("ACL json : \n%s\n", cJSON_PrintUnformatted(value));
+    printf("/acl json : \n%s\n", cJSON_PrintUnformatted(value));
     size_t aclCborSize = 0;
     if (NULL != value)
     {
-        OicSecAcl_t *acl = JSONToAclBin(jsonStr);
+        OicSecAclVersion_t version = OIC_SEC_ACL_V2; // default to V2
+        OicSecAcl_t *acl = JSONToAclBin(&version, jsonStr);
         VERIFY_NOT_NULL(TAG, acl, FATAL);
-        ret = AclToCBORPayload(acl, &aclCbor, &aclCborSize);
-        if(OC_STACK_OK != ret)
+        ret = AclToCBORPayload(acl, version, &aclCbor, &aclCborSize);
+        if (OC_STACK_OK != ret)
         {
             OIC_LOG (ERROR, TAG, "Failed converting Acl to Cbor Payload");
             DeleteACLList(acl);
@@ -138,15 +337,20 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         printf("ACL Cbor Size: %" PRIuPTR "\n", aclCborSize);
         DeleteACLList(acl);
     }
+    else
+    {
+        printf("JSON contains no /acl\n");
+    }
 
     value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_PSTAT_NAME);
+    printf("/pstat json : \n%s\n", cJSON_PrintUnformatted(value));
     size_t pstatCborSize = 0;
     if (NULL != value)
     {
         OicSecPstat_t *pstat = JSONToPstatBin(jsonStr);
         VERIFY_NOT_NULL(TAG, pstat, FATAL);
-        ret = PstatToCBORPayload(pstat, &pstatCbor, &pstatCborSize, false);
-        if(OC_STACK_OK != ret)
+        ret = PstatToCBORPayload(pstat, &pstatCbor, &pstatCborSize);
+        if (OC_STACK_OK != ret)
         {
             OIC_LOG (ERROR, TAG, "Failed converting Pstat to Cbor Payload");
             DeletePstatBinData(pstat);
@@ -155,14 +359,20 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         printf("PSTAT Cbor Size: %" PRIuPTR "\n", pstatCborSize);
         DeletePstatBinData(pstat);
     }
+    else
+    {
+        printf("JSON contains no /pstat\n");
+    }
+
     value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_DOXM_NAME);
+    printf("/doxm json : \n%s\n", cJSON_PrintUnformatted(value));
     size_t doxmCborSize = 0;
     if (NULL != value)
     {
         OicSecDoxm_t *doxm = JSONToDoxmBin(jsonStr);
         VERIFY_NOT_NULL(TAG, doxm, FATAL);
-        ret = DoxmToCBORPayload(doxm, &doxmCbor, &doxmCborSize, false);
-        if(OC_STACK_OK != ret)
+        ret = DoxmToCBORPayload(doxm, &doxmCbor, &doxmCborSize);
+        if (OC_STACK_OK != ret)
         {
             OIC_LOG (ERROR, TAG, "Failed converting Doxm to Cbor Payload");
             DeleteDoxmBinData(doxm);
@@ -171,14 +381,20 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         printf("DOXM Cbor Size: %" PRIuPTR "\n", doxmCborSize);
         DeleteDoxmBinData(doxm);
     }
+    else
+    {
+        printf("JSON contains no /doxm\n");
+    }
+
     value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_AMACL_NAME);
+    printf("/amacl json : \n%s\n", cJSON_PrintUnformatted(value));
     size_t amaclCborSize = 0;
     if (NULL != value)
     {
         OicSecAmacl_t *amacl = JSONToAmaclBin(jsonStr);
         VERIFY_NOT_NULL(TAG, amacl, FATAL);
         ret = AmaclToCBORPayload(amacl, &amaclCbor, &amaclCborSize);
-        if(OC_STACK_OK != ret)
+        if (OC_STACK_OK != ret)
         {
             OIC_LOG (ERROR, TAG, "Failed converting Amacl to Cbor Payload");
             DeleteAmaclList(amacl);
@@ -187,8 +403,13 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         printf("AMACL Cbor Size: %" PRIuPTR "\n", amaclCborSize);
         DeleteAmaclList(amacl);
     }
+    else
+    {
+        printf("JSON contains no /amacl\n");
+    }
+
     value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_CRED_NAME);
-    //printf("CRED json : \n%s\n", cJSON_PrintUnformatted(value));
+    printf("/cred json : \n%s\n", cJSON_PrintUnformatted(value));
     size_t credCborSize = 0;
     int secureFlag = 0;
     if (NULL != value)
@@ -196,7 +417,7 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         OicSecCred_t *cred = JSONToCredBin(jsonStr);
         VERIFY_NOT_NULL(TAG, cred, FATAL);
         ret = CredToCBORPayload(cred, &credCbor, &credCborSize, secureFlag);
-        if(OC_STACK_OK != ret)
+        if (OC_STACK_OK != ret)
         {
             OIC_LOG (ERROR, TAG, "Failed converting Cred to Cbor Payload");
             DeleteCredList(cred);
@@ -205,6 +426,11 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         printf("CRED Cbor Size: %" PRIuPTR "\n", credCborSize);
         DeleteCredList(cred);
     }
+    else
+    {
+        printf("JSON contains no /cred\n");
+    }
+
     value = cJSON_GetObjectItem(jsonRoot, OC_JSON_DEVICE_PROPS_NAME);
     size_t dpCborSize = 0;
     if (NULL != value)
@@ -219,9 +445,14 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         }
         printf("Device Properties Cbor Size: %" PRIuPTR "\n", dpCborSize);
     }
+    else
+    {
+        printf("JSON contains no deviceProps\n");
+    }
 
     CborEncoder encoder;
-    size_t cborSize = aclCborSize + pstatCborSize + doxmCborSize + credCborSize + amaclCborSize + dpCborSize;
+    size_t cborSize = aclCborSize + pstatCborSize + doxmCborSize + credCborSize + amaclCborSize +
+                      dpCborSize;
 
     printf("Total Cbor Size : %" PRIuPTR "\n", cborSize);
     cborSize += 255; // buffer margin for adding map and byte string
@@ -269,7 +500,8 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
     }
     if (dpCborSize > 0)
     {
-        cborEncoderResult = cbor_encode_text_string(&map, OC_JSON_DEVICE_PROPS_NAME, strlen(OC_JSON_DEVICE_PROPS_NAME));
+        cborEncoderResult = cbor_encode_text_string(&map, OC_JSON_DEVICE_PROPS_NAME,
+                            strlen(OC_JSON_DEVICE_PROPS_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Properties Name.");
         cborEncoderResult = cbor_encode_byte_string(&map, dpCbor, dpCborSize);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Properties Value.");
@@ -280,22 +512,7 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
 
     size_t s = cbor_encoder_get_buffer_size(&encoder, outPayload);
     OIC_LOG_V(DEBUG, TAG, "Payload size %" PRIuPTR, s);
-
-    fp1 = fopen(cborFileName, "w");
-    if (fp1)
-    {
-        size_t bytesWritten = fwrite(outPayload, 1, s, fp1);
-        if (bytesWritten == s)
-        {
-            OIC_LOG_V(DEBUG, TAG, "Written %" PRIuPTR " bytes", bytesWritten);
-        }
-        else
-        {
-            OIC_LOG_V(ERROR, TAG, "Failed writing %" PRIuPTR " bytes", s);
-        }
-        fclose(fp1);
-        fp1 = NULL;
-    }
+    WriteBufferToFile(cborFileName, outPayload, s);
 exit:
 
     cJSON_Delete(jsonRoot);
@@ -310,10 +527,17 @@ exit:
     return;
 }
 
-OicSecAcl_t* JSONToAclBin(const char * jsonStr)
+OicSecAcl_t *JSONToAclBin(OicSecAclVersion_t *aclVersion, const char *jsonStr)
 {
+    printf("IN %s\n", __func__);
+    if (NULL == jsonStr)
+    {
+        return NULL;
+    }
+
     OCStackResult ret = OC_STACK_ERROR;
-    OicSecAcl_t * headAcl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
+    OicSecAcl_t *headAcl = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
+    VERIFY_NOT_NULL_RETURN(TAG, headAcl, ERROR, NULL);
     cJSON *jsonRoot = NULL;
 
     VERIFY_NOT_NULL(TAG, jsonStr, ERROR);
@@ -326,14 +550,32 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
 
     cJSON *jsonAclObj = NULL;
 
-    // aclist
     jsonAclObj = cJSON_GetObjectItem(jsonAclMap, OIC_JSON_ACLIST_NAME);
+    if (jsonAclObj)
+    {
+        printf("Found 'aclist' tag... resource is oic.r.acl type.\n");
+        *aclVersion = OIC_SEC_ACL_V1;
+    }
+    else
+    {
+        jsonAclObj = cJSON_GetObjectItem(jsonAclMap, OIC_JSON_ACLIST2_NAME);
+        VERIFY_NOT_NULL(TAG, jsonAclObj, ERROR);
+        printf("Found 'aclist2' tag... resource is oic.r.acl2 type.\n");
+        *aclVersion = OIC_SEC_ACL_V2;
+    }
     VERIFY_NOT_NULL(TAG, jsonAclObj, ERROR);
 
-    // aclist-aces
     cJSON *jsonAclArray = NULL;
-    jsonAclArray = cJSON_GetObjectItem(jsonAclObj, OIC_JSON_ACES_NAME);
-    VERIFY_NOT_NULL(TAG, jsonAclArray, ERROR);
+
+    if (OIC_SEC_ACL_V1 == *aclVersion) // aclist-aces
+    {
+        jsonAclArray = cJSON_GetObjectItem(jsonAclObj, OIC_JSON_ACES_NAME);
+        VERIFY_NOT_NULL(TAG, jsonAclArray, ERROR);
+    }
+    else
+    {
+        jsonAclArray = jsonAclObj;
+    }
 
     if (cJSON_Array == jsonAclArray->type)
     {
@@ -347,22 +589,76 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
             cJSON *jsonAcl = cJSON_GetArrayItem(jsonAclArray, idx);
             VERIFY_NOT_NULL(TAG, jsonAcl, ERROR);
 
-            OicSecAce_t *ace = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
+            OicSecAce_t *ace = (OicSecAce_t *)OICCalloc(1, sizeof(OicSecAce_t));
             VERIFY_NOT_NULL(TAG, ace, ERROR);
             LL_APPEND(headAcl->aces, ace);
 
             cJSON *jsonObj = NULL;
-            jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_SUBJECTID_NAME);
-            VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-            if(strcmp(jsonObj->valuestring, WILDCARD_RESOURCE_URI) == 0)
+
+            if (OIC_SEC_ACL_V2 == *aclVersion)
             {
-                ace->subjectuuid.id[0] = '*';
+                jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_ACEID_NAME);
+                VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
+                VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
+                VERIFY_SUCCESS(TAG, jsonObj->valueint <= UINT16_MAX, ERROR);
+                ace->aceid = (uint16_t)jsonObj->valueint;
             }
-            else
+
+            if (OIC_SEC_ACL_V1 == *aclVersion)
             {
-                ret = ConvertStrToUuid(jsonObj->valuestring, &ace->subjectuuid);
-                VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+                jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_SUBJECTID_NAME);
+                VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
+                VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
+
+                if (strcmp(jsonObj->valuestring, WILDCARD_RESOURCE_URI) == 0)
+                {
+                    ace->subjectuuid.id[0] = '*';
+                }
+                else
+                {
+                    ret = ConvertStrToUuid(jsonObj->valuestring, &ace->subjectuuid);
+                    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+                }
+                ace->subjectType = OicSecAceUuidSubject;
+            }
+            else // v2
+            {
+                jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_SUBJECT_NAME);
+                VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
+                VERIFY_SUCCESS(TAG, cJSON_Object == jsonObj->type, ERROR);
+
+                // Enter the object and get "uuid" string...
+                cJSON *uuidJson = NULL;
+                uuidJson = cJSON_GetObjectItem(jsonObj, OIC_JSON_UUID_NAME);
+                if (uuidJson) // "uuid" type
+                {
+                    VERIFY_NOT_NULL(TAG, uuidJson, ERROR);
+                    VERIFY_SUCCESS(TAG, cJSON_String == uuidJson->type, ERROR);
+                    ret = ConvertStrToUuid(uuidJson->valuestring, &ace->subjectuuid);
+                    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+                    ace->subjectType = OicSecAceUuidSubject;
+                }
+                else // "conntype"
+                {
+                    cJSON *conntypeJson = NULL;
+                    conntypeJson = cJSON_GetObjectItem(jsonObj, OIC_JSON_CONNTYPE_NAME);
+                    VERIFY_NOT_NULL(TAG, conntypeJson, ERROR);
+                    VERIFY_SUCCESS(TAG, cJSON_String == conntypeJson->type, ERROR);
+                    char *connTypeStr = NULL;
+                    connTypeStr = OICStrdup(conntypeJson->valuestring);
+                    VERIFY_NOT_NULL(TAG, connTypeStr, ERROR);
+                    if (0 == strcmp(connTypeStr, OIC_JSON_ANONCLEAR_NAME))
+                    {
+                        ace->subjectConn = ANON_CLEAR;
+                        ace->subjectType = OicSecAceConntypeSubject;
+                    }
+                    else if (0 == strcmp(connTypeStr, OIC_JSON_AUTHCRYPT_NAME))
+                    {
+                        ace->subjectConn = AUTH_CRYPT;
+                        ace->subjectType = OicSecAceConntypeSubject;
+                    }
+                    VERIFY_SUCCESS(TAG, ace->subjectType == OicSecAceConntypeSubject, ERROR);
+                }
             }
             // Resources -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_RESOURCES_NAME);
@@ -372,9 +668,9 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
             size_t resourcesLen = cJSON_GetArraySize(jsonObj);
             VERIFY_SUCCESS(TAG, resourcesLen > 0, ERROR);
 
-            for(size_t idxx = 0; idxx < resourcesLen; idxx++)
+            for (size_t idxx = 0; idxx < resourcesLen; idxx++)
             {
-                OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+                OicSecRsrc_t *rsrc = (OicSecRsrc_t *)OICCalloc(1, sizeof(OicSecRsrc_t));
                 VERIFY_NOT_NULL(TAG, rsrc, ERROR);
 
 // Needs to be removed once IOT-1746 is resolved.
@@ -390,15 +686,25 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
 
                 //href
                 cJSON *jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_HREF_NAME);
-                VERIFY_NOT_NULL(TAG, jsonRsrcObj, ERROR);
-                VERIFY_SUCCESS(TAG, cJSON_String == jsonRsrcObj->type, ERROR);
-
-                rsrc->href = OICStrdup(jsonRsrcObj->valuestring);
-                VERIFY_NOT_NULL(TAG, (rsrc->href), ERROR);
+                if (NULL != jsonRsrcObj)
+                {
+                    VERIFY_SUCCESS(TAG, cJSON_String == jsonRsrcObj->type, ERROR);
+                    rsrc->href = OICStrdup(jsonRsrcObj->valuestring);
+                    VERIFY_NOT_NULL(TAG, (rsrc->href), ERROR);
+                    rsrc->wildcard = NO_WILDCARD; // normally if href != NULL, then no wc
+                    if (0 == strcmp(WILDCARD_RESOURCE_URI, rsrc->href))
+                    {
+                        free(rsrc->href);
+                        rsrc->href = NULL;
+                        rsrc->wildcard = ALL_RESOURCES;
+                        OIC_LOG_V(DEBUG, TAG, "%s: replaced \"*\" href with wildcard = ALL_RESOURCES.",
+                                  __func__);
+                    }
+                }
 
                 //rel
                 jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_REL_NAME);
-                if(jsonRsrcObj)
+                if (NULL != jsonRsrcObj)
                 {
                     rsrc->rel = OICStrdup(jsonRsrcObj->valuestring);
                     VERIFY_NOT_NULL(TAG, (rsrc->rel), ERROR);
@@ -406,13 +712,13 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
 
                 //rt
                 jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_RT_NAME);
-                if(jsonRsrcObj && cJSON_Array == jsonRsrcObj->type)
+                if ((NULL != jsonRsrcObj) && (cJSON_Array == jsonRsrcObj->type))
                 {
                     rsrc->typeLen = cJSON_GetArraySize(jsonRsrcObj);
                     VERIFY_SUCCESS(TAG, (0 < rsrc->typeLen), ERROR);
-                    rsrc->types = (char**)OICCalloc(rsrc->typeLen, sizeof(char*));
+                    rsrc->types = (char **)OICCalloc(rsrc->typeLen, sizeof(char *));
                     VERIFY_NOT_NULL(TAG, (rsrc->types), ERROR);
-                    for(size_t i = 0; i < rsrc->typeLen; i++)
+                    for (size_t i = 0; i < rsrc->typeLen; i++)
                     {
 // Needs to be removed once IOT-1746 is resolved.
 #ifdef _MSC_VER
@@ -431,13 +737,13 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
 
                 //if
                 jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_IF_NAME);
-                if(jsonRsrcObj && cJSON_Array == jsonRsrcObj->type)
+                if ((NULL != jsonRsrcObj) && (cJSON_Array == jsonRsrcObj->type))
                 {
                     rsrc->interfaceLen = cJSON_GetArraySize(jsonRsrcObj);
                     VERIFY_SUCCESS(TAG, (0 < rsrc->interfaceLen), ERROR);
-                    rsrc->interfaces = (char**)OICCalloc(rsrc->interfaceLen, sizeof(char*));
+                    rsrc->interfaces = (char **)OICCalloc(rsrc->interfaceLen, sizeof(char *));
                     VERIFY_NOT_NULL(TAG, (rsrc->interfaces), ERROR);
-                    for(size_t i = 0; i < rsrc->interfaceLen; i++)
+                    for (size_t i = 0; i < rsrc->interfaceLen; i++)
                     {
 // Needs to be removed once IOT-1746 is resolved.
 #ifdef _MSC_VER
@@ -454,6 +760,32 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                     }
                 }
 
+                //wc
+                jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_WC_NAME);
+                if (NULL != jsonRsrcObj)
+                {
+                    char *wc = NULL;
+                    VERIFY_SUCCESS(TAG, cJSON_String == jsonRsrcObj->type, ERROR);
+                    wc = OICStrdup(jsonRsrcObj->valuestring);
+                    VERIFY_NOT_NULL(TAG, wc, ERROR);
+                    if (0 == strcmp(OIC_JSON_WC_ASTERISK_NAME, wc))
+                    {
+                        rsrc->wildcard = ALL_RESOURCES;
+                    }
+                    else if (0 == strcmp(OIC_JSON_WC_PLUS_NAME, wc))
+                    {
+                        rsrc->wildcard = ALL_DISCOVERABLE;
+                    }
+                    else if (0 == strcmp(OIC_JSON_WC_MINUS_NAME, wc))
+                    {
+                        rsrc->wildcard = ALL_NON_DISCOVERABLE;
+                    }
+                    else
+                    {
+                        rsrc->wildcard = NO_WILDCARD;
+                    }
+                    OICFree(wc);
+                }
                 LL_APPEND(ace->resources, rsrc);
             }
 
@@ -466,14 +798,14 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
 
             //Validity -- Not Mandatory
             cJSON *jsonValidityObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_VALIDITY_NAME);
-            if(jsonValidityObj)
+            if (jsonValidityObj)
             {
                 VERIFY_SUCCESS(TAG, cJSON_Array == jsonValidityObj->type, ERROR);
                 size_t validityLen = cJSON_GetArraySize(jsonValidityObj);
                 VERIFY_SUCCESS(TAG, (0 < validityLen), ERROR);
 
                 cJSON *jsonValidity = NULL;
-                for(size_t i = 0; i < validityLen; i++)
+                for (size_t i = 0; i < validityLen; i++)
                 {
 // Needs to be removed once IOT-1746 is resolved.
 #ifdef _MSC_VER
@@ -487,13 +819,13 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                     VERIFY_NOT_NULL(TAG, jsonValidity, ERROR);
                     VERIFY_SUCCESS(TAG, (jsonValidity->type == cJSON_Array), ERROR);
 
-                    OicSecValidity_t* validity = (OicSecValidity_t*)OICCalloc(1, sizeof(OicSecValidity_t));
+                    OicSecValidity_t *validity = (OicSecValidity_t *)OICCalloc(1, sizeof(OicSecValidity_t));
                     VERIFY_NOT_NULL(TAG, validity, ERROR);
                     LL_APPEND(ace->validities, validity);
 
                     //Period
-                    cJSON* jsonPeriod = cJSON_GetArrayItem(jsonValidity, 0);
-                    if(jsonPeriod)
+                    cJSON *jsonPeriod = cJSON_GetArrayItem(jsonValidity, 0);
+                    if (jsonPeriod)
                     {
                         VERIFY_SUCCESS(TAG, (cJSON_String == jsonPeriod->type), ERROR);
 
@@ -502,18 +834,18 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                     }
 
                     //Recurrence
-                    cJSON* jsonRecurObj = cJSON_GetArrayItem(jsonValidity, 1);
-                    if(jsonRecurObj)
+                    cJSON *jsonRecurObj = cJSON_GetArrayItem(jsonValidity, 1);
+                    if (jsonRecurObj)
                     {
                         VERIFY_SUCCESS(TAG, (cJSON_Array == jsonRecurObj->type), ERROR);
                         validity->recurrenceLen = cJSON_GetArraySize(jsonRecurObj);
                         VERIFY_SUCCESS(TAG, (0 < validity->recurrenceLen), ERROR);
 
-                        validity->recurrences = (char**)OICCalloc(validity->recurrenceLen, sizeof(char*));
+                        validity->recurrences = (char **)OICCalloc(validity->recurrenceLen, sizeof(char *));
                         VERIFY_NOT_NULL(TAG, validity->recurrences, ERROR);
 
                         cJSON *jsonRecur = NULL;
-                        for(size_t j = 0; j < validity->recurrenceLen; j++)
+                        for (size_t j = 0; j < validity->recurrenceLen; j++)
                         {
 // Needs to be removed once IOT-1746 is resolved.
 #ifdef _MSC_VER
@@ -531,7 +863,8 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                     }
                 }
             }
-        } while( ++idx < numAcl);
+        }
+        while ( ++idx < numAcl);
     }
 
 
@@ -551,10 +884,11 @@ exit:
         DeleteACLList(headAcl);
         headAcl = NULL;
     }
+    printf("OUT %s: %s\n", __func__, (headAcl != NULL) ? "success" : "failure");
     return headAcl;
 }
 
-OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
+OicSecDoxm_t *JSONToDoxmBin(const char *jsonStr)
 {
     printf("IN JSONToDoxmBin\n");
     if (NULL == jsonStr)
@@ -567,8 +901,6 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
     cJSON *jsonDoxm = NULL;
     cJSON *jsonObj = NULL;
 
-    size_t jsonObjLen = 0;
-
     cJSON *jsonRoot = cJSON_Parse(jsonStr);
     VERIFY_NOT_NULL(TAG, jsonRoot, ERROR);
 
@@ -578,36 +910,6 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
     doxm = (OicSecDoxm_t *)OICCalloc(1, sizeof(OicSecDoxm_t));
     VERIFY_NOT_NULL(TAG, doxm, ERROR);
 
-    //OxmType -- not Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_TYPE_NAME);
-    if ((jsonObj) && (cJSON_Array == jsonObj->type))
-    {
-        doxm->oxmTypeLen = cJSON_GetArraySize(jsonObj);
-        VERIFY_SUCCESS(TAG, doxm->oxmTypeLen > 0, ERROR);
-
-        doxm->oxmType = (OicUrn_t *)OICCalloc(doxm->oxmTypeLen, sizeof(char *));
-        VERIFY_NOT_NULL(TAG, (doxm->oxmType), ERROR);
-
-        for (size_t i  = 0; i < doxm->oxmTypeLen ; i++)
-        {
-// Needs to be removed once IOT-1746 is resolved.
-#ifdef _MSC_VER
-#pragma warning(suppress : 4267)
-            cJSON *jsonOxmTy = cJSON_GetArrayItem(jsonObj, i);
-
-#else
-            cJSON *jsonOxmTy = cJSON_GetArrayItem(jsonObj, i);
-
-#endif
-            VERIFY_NOT_NULL(TAG, jsonOxmTy, ERROR);
-
-            jsonObjLen = strlen(jsonOxmTy->valuestring) + 1;
-            doxm->oxmType[i] = (char*)OICMalloc(jsonObjLen);
-            VERIFY_NOT_NULL(TAG, doxm->oxmType[i], ERROR);
-            strncpy((char *)doxm->oxmType[i], (char *)jsonOxmTy->valuestring, jsonObjLen);
-        }
-    }
-
     //Oxm -- not Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXMS_NAME);
     if (jsonObj && cJSON_Array == jsonObj->type)
@@ -615,7 +917,7 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
         doxm->oxmLen = cJSON_GetArraySize(jsonObj);
         VERIFY_SUCCESS(TAG, doxm->oxmLen > 0, ERROR);
 
-        doxm->oxm = (OicSecOxm_t*)OICCalloc(doxm->oxmLen, sizeof(OicSecOxm_t));
+        doxm->oxm = (OicSecOxm_t *)OICCalloc(doxm->oxmLen, sizeof(OicSecOxm_t));
         VERIFY_NOT_NULL(TAG, doxm->oxm, ERROR);
 
         for (size_t i  = 0; i < doxm->oxmLen ; i++)
@@ -672,7 +974,7 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
     if (jsonObj)
     {
         VERIFY_SUCCESS(TAG, (cJSON_Number == jsonObj->type), ERROR);
-        doxm->mom = (OicSecMom_t*)OICCalloc(1, sizeof(OicSecMom_t));
+        doxm->mom = (OicSecMom_t *)OICCalloc(1, sizeof(OicSecMom_t));
         VERIFY_NOT_NULL(TAG, doxm->mom, ERROR);
         doxm->mom->mode = (OicSecMomType_t)jsonObj->valueint;
     }
@@ -715,7 +1017,7 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
     if (jsonObj)
     {
         ret = ConvertStrToUuid(jsonObj->valuestring, &doxm->owner);
-                VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
     }
 
     ret = OC_STACK_OK;
@@ -731,10 +1033,10 @@ exit:
     return doxm;
 }
 
-OicSecPstat_t* JSONToPstatBin(const char * jsonStr)
+OicSecPstat_t *JSONToPstatBin(const char *jsonStr)
 {
-    printf("IN JSONToPstatBin\n");
-    if(NULL == jsonStr)
+    printf("IN %s\n", __func__);
+    if (NULL == jsonStr)
     {
         return NULL;
     }
@@ -754,7 +1056,7 @@ OicSecPstat_t* JSONToPstatBin(const char * jsonStr)
     jsonPstat = cJSON_GetObjectItem(jsonRoot, OIC_JSON_PSTAT_NAME);
     VERIFY_NOT_NULL(TAG, jsonPstat, INFO);
 
-    pstat = (OicSecPstat_t*)OICCalloc(1, sizeof(OicSecPstat_t));
+    pstat = (OicSecPstat_t *)OICCalloc(1, sizeof(OicSecPstat_t));
     VERIFY_NOT_NULL(TAG, pstat, INFO);
 
     jsonDos = cJSON_GetObjectItem(jsonPstat, OIC_JSON_DOS_NAME);
@@ -773,7 +1075,7 @@ OicSecPstat_t* JSONToPstatBin(const char * jsonStr)
         OIC_LOG(INFO, TAG, "pstat.dos.p object found in jsonDos");
         VERIFY_SUCCESS(TAG, (cJSON_True == jsonDosObj->type || cJSON_False == jsonDosObj->type) , ERROR);
         pstat->dos.pending = (bool)jsonDosObj->valueint;
-        OIC_LOG_V(INFO, TAG, "pstat.dos.p = %s", pstat->dos.pending?"true":"false");
+        OIC_LOG_V(INFO, TAG, "pstat.dos.p = %s", pstat->dos.pending ? "true" : "false");
     }
     else
     {
@@ -782,7 +1084,7 @@ OicSecPstat_t* JSONToPstatBin(const char * jsonStr)
         printf("\n***** Pstat.dos Property not found in JSON file. *****\
             \n***** Pstat.dos Property is MANDATORY as of OCF 1.0 *****\
             \n***** Using default .dos vals: s = %d, p = %s *****\n\n", pstat->dos.state, \
-            pstat->dos.pending?"true":"false");
+               pstat->dos.pending ? "true" : "false");
     }
 
     jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_ISOP_NAME);
@@ -815,7 +1117,8 @@ OicSecPstat_t* JSONToPstatBin(const char * jsonStr)
     VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
     VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
     pstat->smLen = 1;
-    pstat->sm = (OicSecDpom_t*)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
+    pstat->sm = (OicSecDpom_t *)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
+    VERIFY_NOT_NULL(TAG, pstat->sm, ERROR);
     pstat->sm[0] = (OicSecDpom_t)jsonObj->valueint;
 
     ret = OC_STACK_OK;
@@ -831,7 +1134,7 @@ exit:
     return pstat;
 }
 
-static OicEncodingType_t GetEncodingTypeFromStr(const char* encodingType)
+static OicEncodingType_t GetEncodingTypeFromStr(const char *encodingType)
 {
     if (strcmp(OIC_SEC_ENCODING_RAW, encodingType) == 0)
     {
@@ -854,15 +1157,15 @@ static OicEncodingType_t GetEncodingTypeFromStr(const char* encodingType)
     return OIC_ENCODING_RAW;
 }
 
-OicSecCred_t * JSONToCredBin(const char * jsonStr)
+OicSecCred_t *JSONToCredBin(const char *jsonStr)
 {
     if (NULL == jsonStr)
     {
-        OIC_LOG(ERROR, TAG,"JSONToCredBin jsonStr in NULL");
+        OIC_LOG(ERROR, TAG, "JSONToCredBin jsonStr in NULL");
         return NULL;
     }
 
-    OicSecCred_t *headCred = (OicSecCred_t*)OICCalloc(1, sizeof(OicSecCred_t));
+    OicSecCred_t *headCred = (OicSecCred_t *)OICCalloc(1, sizeof(OicSecCred_t));
     OCStackResult ret = OC_STACK_ERROR;
     cJSON *jsonRoot = NULL;
     VERIFY_NOT_NULL(TAG, headCred, ERROR);
@@ -889,13 +1192,13 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             VERIFY_NOT_NULL(TAG, jsonCred, ERROR);
 
             OicSecCred_t *cred = NULL;
-            if(idx == 0)
+            if (idx == 0)
             {
                 cred = headCred;
             }
             else
             {
-                cred = (OicSecCred_t*)OICCalloc(1, sizeof(OicSecCred_t));
+                cred = (OicSecCred_t *)OICCalloc(1, sizeof(OicSecCred_t));
                 OicSecCred_t *temp = headCred;
                 while (temp->next)
                 {
@@ -910,7 +1213,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
 
             //CredId -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_CREDID_NAME);
-            if(jsonObj)
+            if (jsonObj)
             {
                 VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
                 VERIFY_SUCCESS(TAG, jsonObj->valueint <= UINT16_MAX, ERROR);
@@ -921,7 +1224,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_SUBJECTID_NAME);
             VERIFY_NOT_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-            if(strcmp(jsonObj->valuestring, WILDCARD_RESOURCE_URI) == 0)
+            if (strcmp(jsonObj->valuestring, WILDCARD_RESOURCE_URI) == 0)
             {
                 cred->subject.id[0] = '*';
             }
@@ -1002,13 +1305,14 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
 
             //Period -- Not Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PERIOD_NAME);
-            if(jsonObj && cJSON_String == jsonObj->type)
+            if (jsonObj && cJSON_String == jsonObj->type)
             {
                 cred->period = OICStrdup(jsonObj->valuestring);
                 VERIFY_NOT_NULL(TAG, cred->period, ERROR);
             }
             cred->next = NULL;
-        } while( ++idx < numCred);
+        }
+        while ( ++idx < numCred);
     }
 
     // rownerid
@@ -1029,11 +1333,11 @@ exit:
     return headCred;
 }
 
-static OicSecAmacl_t* JSONToAmaclBin(const char * jsonStr)
+static OicSecAmacl_t *JSONToAmaclBin(const char *jsonStr)
 {
     OCStackResult ret = OC_STACK_ERROR;
-    OicSecAmacl_t * headAmacl = (OicSecAmacl_t*)OICCalloc(1, sizeof(OicSecAmacl_t));
-
+    OicSecAmacl_t *headAmacl = (OicSecAmacl_t *)OICCalloc(1, sizeof(OicSecAmacl_t));
+    VERIFY_NOT_NULL_RETURN(TAG, headAmacl, ERROR, NULL);
     cJSON *jsonRoot = NULL;
     cJSON *jsonAmacl = NULL;
 
@@ -1057,7 +1361,8 @@ static OicSecAmacl_t* JSONToAmaclBin(const char * jsonStr)
     VERIFY_SUCCESS(TAG, cJSON_Array == jsonRlistArray->type, ERROR);
 
     headAmacl->resourcesLen = cJSON_GetArraySize(jsonRlistArray);
-    headAmacl->resources = (char**)OICCalloc(headAmacl->resourcesLen, sizeof(char*));
+    headAmacl->resources = (char **)OICCalloc(headAmacl->resourcesLen, sizeof(char *));
+    VERIFY_NOT_NULL(TAG, headAmacl->resources, ERROR);
     size_t idxx = 0;
     do
     {
@@ -1079,7 +1384,8 @@ static OicSecAmacl_t* JSONToAmaclBin(const char * jsonStr)
         headAmacl->resources[idxx] = OICStrdup(jsonRsrcObj->valuestring);
         VERIFY_NOT_NULL(TAG, (headAmacl->resources[idxx]), ERROR);
 
-    } while ( ++idxx < headAmacl->resourcesLen);
+    }
+    while ( ++idxx < headAmacl->resourcesLen);
 
     // Rowner -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonAmacl, OIC_JSON_ROWNERID_NAME);
@@ -1098,7 +1404,7 @@ exit:
     return headAmacl;
 }
 
-OCDeviceProperties* JSONToDPBin(const char *jsonStr)
+OCDeviceProperties *JSONToDPBin(const char *jsonStr)
 {
     OIC_LOG(DEBUG, TAG, "JSONToDPBin IN");
     if (NULL == jsonStr)
@@ -1117,7 +1423,7 @@ OCDeviceProperties* JSONToDPBin(const char *jsonStr)
     jsonDeviceProps = cJSON_GetObjectItem(jsonRoot, OC_JSON_DEVICE_PROPS_NAME);
     VERIFY_NOT_NULL(TAG, jsonDeviceProps, ERROR);
 
-    deviceProps = (OCDeviceProperties*)OICCalloc(1, sizeof(OCDeviceProperties));
+    deviceProps = (OCDeviceProperties *)OICCalloc(1, sizeof(OCDeviceProperties));
     VERIFY_NOT_NULL(TAG, deviceProps, ERROR);
 
     // Protocol Independent ID -- Mandatory
@@ -1140,18 +1446,25 @@ exit:
     return deviceProps;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     if (argc == 3)
     {
         printf("JSON File Name: %s\n CBOR File Name: %s \n", argv[1], argv[2]);
         ConvertJsonToCBOR(argv[1], argv[2]);
     }
+    else if (argc == 4)
+    {
+        printf("Encoding Introspection File\n");
+        printf("JSON File Name: %s\n CBOR File Name: %s \n", argv[1], argv[2]);
+        GenericConvertToCbor(argv[1], argv[2]);
+    }
     else
     {
         printf("This program requires two inputs:\n");
         printf("1. First input is a json file tha will be converted to cbor. \n");
         printf("2. Second input is a resulting cbor file that will store converted cbor. \n");
-        printf("\t json2cbor <json_file_name> <cbor_file_name>. \n");
+        printf("3. Third input is a flag [-i] that indicates that encoding is for introspection file. \n");
+        printf("\t json2cbor <json_file_name> <cbor_file_name> [-i]. \n");
     }
 }

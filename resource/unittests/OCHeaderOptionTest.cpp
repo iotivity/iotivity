@@ -51,7 +51,8 @@ namespace OC
                     if (HeaderOption::IF_MATCH_OPTION_ID != i
                             && HeaderOption::IF_NONE_MATCH_OPTION_ID != i
                             && HeaderOption::LOCATION_PATH_OPTION_ID != i
-                            && HeaderOption::LOCATION_QUERY_OPTION_ID != i)
+                            && HeaderOption::LOCATION_QUERY_OPTION_ID != i
+                            && HeaderOption::ACCEPT_OPTION_ID != i)
                     {
                         ASSERT_THROW(
                                 HeaderOption::OCHeaderOption(i,""),

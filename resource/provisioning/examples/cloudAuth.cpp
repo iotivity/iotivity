@@ -187,8 +187,8 @@ OCStackApplicationResult handleCloudSignUpResponse(void *ctx,
         OIC_LOG(DEBUG, TAG, "Login successful");
         SessionParsePayload((OCRepPayload*)response->payload);
     }
-exit:
     response->result = OC_STACK_OK;
+exit:
     handleCB(NULL, response, NULL);
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -296,9 +296,9 @@ OCStackApplicationResult handleCloudSignInResponse(void *ctx,
     }
 
     OIC_LOG_V(DEBUG, TAG, "OUT: %s", __func__);
+    response->result = OC_STACK_OK;
 
 exit:
-    response->result = OC_STACK_OK;
     handleCB(NULL, response, NULL);
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -404,9 +404,9 @@ OCStackApplicationResult handleCloudSignOutResponse(void *ctx,
     }
 
     OIC_LOG_V(DEBUG, TAG, "OUT: %s", __func__);
+    response->result = OC_STACK_OK;
 
 exit:
-    response->result = OC_STACK_OK;
     handleCB(NULL, response, NULL);
     return OC_STACK_DELETE_TRANSACTION;
 }

@@ -20,7 +20,7 @@
 
 import os
 import os.path
-from tools.scons.RunTest import *
+from tools.scons.RunTest import run_test
 
 Import('test_env')
 
@@ -32,44 +32,55 @@ rd_mode = stacktest_env.get('RD_MODE')
 ######################################################################
 # Build flags
 ######################################################################
-stacktest_env.PrependUnique(CPPPATH = [
-        '../../security/include',
-        '../../ocsocket/include',
-        '../../logger/include',
-        '../../../c_common/ocrandom/include',
-        '../../include',
-        '../../stack/include',
-        '../../stack/include/internal',
-        '../../connectivity/api',
-        '../../connectivity/inc/pkix',
-        '../../connectivity/external/inc',
-        '../../../oc_logger/include',
-        ])
+stacktest_env.PrependUnique(CPPPATH=[
+    '../../security/include',
+    '../../ocsocket/include',
+    '../../logger/include',
+    '../../../c_common/ocrandom/include',
+    '../../include',
+    '../../stack/include',
+    '../../stack/include/internal',
+    '../../connectivity/api',
+    '../../connectivity/inc/pkix',
+    '../../connectivity/external/inc',
+    '../../../oc_logger/include',
+])
 
-stacktest_env.PrependUnique(LIBS = ['octbstack_test',
-                                    'ocsrm',
-                                    'connectivity_abstraction',
-                                    'coap',
-                                    'mbedcrypto'])
-if target_os != 'darwin':
-    stacktest_env.PrependUnique(LIBS = ['oc_logger'])
+stacktest_env.PrependUnique(LIBS=[
+    'octbstack_internal',
+    'ocsrm',
+    'routingmanager',
+    'connectivity_abstraction_internal',
+    'coap',
+])
 
 if stacktest_env.get('SECURED') == '1':
-    stacktest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509'])
+    stacktest_env.AppendUnique(LIBS=['mbedtls', 'mbedx509'])
+
+# c_common calls into mbedcrypto.
+stacktest_env.AppendUnique(LIBS=['mbedcrypto'])
+
+if 'CLIENT' in rd_mode and target_os not in [
+        'arduino', 'darwin', 'ios', 'windows', 'winrt'
+]:
+    stacktest_env.PrependUnique(LIBS=['oc', 'oc_logger'])
+if 'SERVER' in rd_mode:
+    if target_os in ['linux', 'tizen']:
+        stacktest_env.ParseConfig('pkg-config --cflags --libs sqlite3')
+    elif target_os in ['msys_nt', 'windows']:
+        stacktest_env.PrependUnique(LIBS=['sqlite3'])
 
 if stacktest_env.get('LOGGING'):
-    stacktest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    stacktest_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 if target_os in ['msys_nt', 'windows']:
-    stacktest_env.PrependUnique(LIBS = ['sqlite3'])
-    stacktest_env.AppendUnique(CCFLAGS=['/W4', '/WX'])
+    stacktest_env.AppendUnique(CCFLAGS=['/W4'])
 else:
-    stacktest_env.PrependUnique(LIBS = ['m'])
+    stacktest_env.PrependUnique(LIBS=['m'])
+    if target_os in ['tizen', 'linux']:
+        stacktest_env.ParseConfig(
+            "pkg-config --cflags --libs gobject-2.0 gio-2.0 glib-2.0")
 
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-    stacktest_env.PrependUnique(LIBS = ['resource_directory'])
-
-stacktest_env.AppendUnique(LIBS = ['timer'])
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -81,9 +92,9 @@ Alias("test", [stacktests, cbortests])
 stacktest_env.AppendTarget('test')
 if stacktest_env.get('TEST') == '1':
     if target_os in ['linux', 'windows']:
-                run_test(stacktest_env,
-                         'resource_csdk_stack_test.memcheck',
-                         'resource/csdk/stack/test/stacktests')
-                run_test(stacktest_env,
-                         'resource_csdk_stack_test.memcheck',
-                         'resource/csdk/stack/test/cbortests')
+        run_test(stacktest_env,
+                 'resource_csdk_stack_test.memcheck',
+                 'resource/csdk/stack/test/stacktests')
+        run_test(stacktest_env,
+                 'resource_csdk_stack_test.memcheck',
+                 'resource/csdk/stack/test/cbortests')

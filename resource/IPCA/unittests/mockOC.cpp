@@ -110,7 +110,9 @@ uint16_t g_mockHostPort = 10000;
 std::string g_mockCompleteAddress = "coap://[fe80::1%25eth0]:10000";
 void SetMockOCDevAddr(OCDevAddr& addr)
 {
-    addr = {OC_DEFAULT_ADAPTER, OC_IP_USE_V6};
+    memset (&addr, 0, sizeof(addr));
+    addr.adapter = OC_DEFAULT_ADAPTER;
+    addr.flags= OC_IP_USE_V6;
     addr.port = g_mockHostPort;
     strcpy(addr.addr, g_mockHostAddress.c_str());
 }
@@ -131,6 +133,16 @@ OCEntityHandlerResult MockEntityHandler(OCEntityHandlerFlag flag,
 void OCPlatform::Configure(const PlatformConfig& config)
 {
     g_platformConfig = config;
+}
+
+OCStackResult OCPlatform::start()
+{
+    return OC_STACK_OK;
+}
+
+OCStackResult OCPlatform::stop()
+{
+    return OC_STACK_OK;
 }
 
 OCStackResult OCPlatform::setPropertyValue(OCPayloadType type, const std::string& tag,
@@ -332,7 +344,25 @@ OCStackResult OCPlatform::getDeviceInfo(const std::string& host,
     ocRep.setDevAddr(addr);
     ocRep.setValue(OC_RSRVD_DEVICE_NAME, g_deviceInfo.deviceName);
     ocRep.setValue(OC_RSRVD_SPEC_VERSION, g_deviceInfo.specVersion);
-    ocRep.setValue(OC_RSRVD_DATA_MODEL_VERSION, g_deviceInfo.dataModelVersions);
+    ocRep.setValue(OC_RSRVD_PROTOCOL_INDEPENDENT_ID, g_deviceInfo.platformIndependentId);
+
+    //  DMV is returned in CSV.
+    std::ostringstream outputStream;
+    bool firstEntry = true;
+    for (auto dataModelVersion : g_deviceInfo.dataModelVersions)
+    {
+        if (!firstEntry)
+        {
+            outputStream << ',' << dataModelVersion;
+        }
+        else
+        {
+            outputStream << dataModelVersion;
+            firstEntry = false;
+        }
+    }
+
+    ocRep.setValue(OC_RSRVD_DATA_MODEL_VERSION, outputStream.str());
 
     std::thread getDeviceInfoCallbackThread(deviceInfoHandler, ocRep);
     getDeviceInfoCallbackThread.detach();
@@ -435,10 +465,33 @@ OCStackResult OCPlatform::sendResponse(const std::shared_ptr<OCResourceResponse>
     {
         case OC_REST_POST:
         {
+            OCStackResult ocResult = OC_STACK_ERROR;
+            if ((result == OC_EH_OK) || (result == OC_EH_RESOURCE_CREATED))
+            {
+                ocResult = OC_STACK_OK;
+            }
+
+            // Add path of new resource in the header option.
+            std::string newResourcePath = pResponse->getNewResourceUri();
+            if (!newResourcePath.empty())
+            {
+                // MAX_URI_LENGTH is the URI limit of OCEntityHandlerResponse.resourceUri in
+                // inProcServerWrapper.cpp.
+                if (newResourcePath.length() > MAX_URI_LENGTH)
+                {
+                    return OC_STACK_ERROR;
+                }
+
+                HeaderOption::OCHeaderOption headerOption(
+                                                HeaderOption::LOCATION_PATH_OPTION_ID,
+                                                newResourcePath);
+                serverHeaderOptions.push_back(headerOption);
+            }
+
             std::thread postCallbackThread(pendingRequest->postCallback,
                             serverHeaderOptions,
                             ocRep,
-                            (result == OC_EH_OK) ? OC_STACK_OK : OC_STACK_ERROR);
+                            ocResult);
             postCallbackThread.detach();
             break;
         }
@@ -455,11 +508,23 @@ OCStackResult OCPlatform::sendResponse(const std::shared_ptr<OCResourceResponse>
 
         case OC_REST_DELETE:
         {
+            OCStackResult ocResult = OC_STACK_ERROR;
+            if ((result == OC_EH_OK) || (result == OC_EH_RESOURCE_DELETED))
+            {
+                ocResult = OC_STACK_OK;
+            }
+
             std::thread deleteCallbackThread(pendingRequest->deleteCallback,
                             serverHeaderOptions,
-                            (result == OC_EH_OK) ? OC_STACK_OK : OC_STACK_ERROR);
+                            ocResult);
             deleteCallbackThread.detach();
             break;
+        }
+
+        default:
+        {
+            assert(false);
+            return OC_STACK_ERROR;
         }
     }
 
@@ -641,7 +706,7 @@ std::string OCResource::setHost(const std::string& host)
     OC_UNUSED(host);
 
     g_mockCompleteAddress.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
-    m_devAddr.addr[g_mockCompleteAddress.length()] = NULL;
+    m_devAddr.addr[g_mockCompleteAddress.length()] = '\0';
     return host;
 }
 
@@ -825,13 +890,13 @@ OCEntityHandlerResult MockEntityHandler(OCEntityHandlerFlag flag,
         std::lock_guard<std::recursive_mutex> lock(g_globalMutex);
         for (auto request : g_requestList)
         {
-            PendingRequest::Ptr pendingRequest = request.second;
-            if (pendingRequest->method & (OC_REST_OBSERVE | OC_REST_OBSERVE_ALL))
+            PendingRequest::Ptr localPendingRequest = request.second;
+            if (localPendingRequest->method & (OC_REST_OBSERVE | OC_REST_OBSERVE_ALL))
             {
-                if (pendingRequest->mockOCResource->m_uri.compare(uri) == 0)
+                if (localPendingRequest->mockOCResource->m_uri.compare(uri) == 0)
                 {
-                    observationIdToCancel = pendingRequest->observationId;
-                    g_requestList.erase(pendingRequest->requestNumber);
+                    observationIdToCancel = localPendingRequest->observationId;
+                    g_requestList.erase(localPendingRequest->requestNumber);
                     break;
                 }
             }
@@ -853,7 +918,9 @@ OCEntityHandlerResult MockEntityHandler(OCEntityHandlerFlag flag,
 
     OCPayload* payload = reinterpret_cast<OCPayload*>(ocInfo.getPayload());
 
-    OCEntityHandlerRequest  entityHandlerRequest = {0};
+    OCEntityHandlerRequest  entityHandlerRequest;
+    memset(&entityHandlerRequest, 0, sizeof(OCEntityHandlerRequest));
+
     entityHandlerRequest.requestHandle = reinterpret_cast<void*>(pendingRequest->requestNumber);
     entityHandlerRequest.resource = nullptr;
     entityHandlerRequest.messageID = 0;

@@ -44,13 +44,19 @@ import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(ConnectorPool.class)
 public class AccountSessionTest {
     private String               mDi                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
     public static final String   SESSION_URI         = Constants.ACCOUNT_SESSION_FULL_URI;
@@ -94,6 +100,9 @@ public class AccountSessionTest {
             }
         }).when(mRequestChannel).sendRequest(Mockito.any(IRequest.class),
                 Mockito.any(CoapDevice.class));
+
+        PowerMockito.mockStatic(ConnectorPool.class);
+        PowerMockito.when(ConnectorPool.getConnection(Mockito.anyString())).thenReturn(mRequestChannel);
     }
 
     @Test

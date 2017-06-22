@@ -18,11 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "oic_malloc.h"
 #include "ocstack.h"
 #include <stdlib.h>
 #include "cbor.h"
+#include "platform_features.h"
 
 #define STRINGIZE2(x) #x
 #define STRINGIZE(x) STRINGIZE2(x)
@@ -111,12 +112,12 @@ bool ReadCBORFile(const char* filename, const char* rsrcname, uint8_t **payload,
                     {
                         size = (size_t)st.st_size;
 
-                        CborValue cbor = {0, };
-                        CborParser parser = {0, };
+                        CborValue cbor = {NULL, NULL, 0, 0, 0, 0};
+                        CborParser parser = {NULL, 0};
                         cbor_parser_init(data, size, 0, &parser, &cbor);
                         CborError cborFindResult = CborNoError;
 
-                        CborValue curVal = {0, };
+                        CborValue curVal = {NULL, NULL, 0, 0, 0, 0};
                         cborFindResult = cbor_value_map_find_value(&cbor, rsrcname, &curVal);
                         if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
                         {

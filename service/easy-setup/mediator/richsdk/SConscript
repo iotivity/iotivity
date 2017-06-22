@@ -27,13 +27,13 @@ Import('env')
 easysetup_path = os.curdir
 
 if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS = ['-Os'])
-    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+    env.AppendUnique(CCFLAGS=['-Os'])
+    env.AppendUnique(CPPDEFINES=['NDEBUG'])
 else:
-    env.AppendUnique(CCFLAGS = ['-g'])
+    env.AppendUnique(CCFLAGS=['-g'])
 
 if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 # Easysetup provides reference implemenation of Arduino Enrollee.
 # Mediator applications developed on different platforms will be default defining the
@@ -43,9 +43,9 @@ if env.get('LOGGING'):
 ##### The following lines must be uncommented, if target Enrollee is not Arduino
 target_enrollee = env.get('ES_TARGET_ENROLLEE')
 if target_enrollee == 'arduino':
-	print "REMOTE_ARDUINO_ENROLEE flag is defined."
-	print "The Mediator application will be working only with Arduino Enrollee."
-	env.AppendUnique(CPPDEFINES = ['REMOTE_ARDUINO_ENROLEE'])
+    print "REMOTE_ARDUINO_ENROLEE flag is defined."
+    print "The Mediator application will be working only with Arduino Enrollee."
+    env.AppendUnique(CPPDEFINES=['REMOTE_ARDUINO_ENROLEE'])
 
 # Add third party libraries
 lib_env = env.Clone()
@@ -57,7 +57,7 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-easy_setup_env.AppendUnique(CPPPATH = [
+easy_setup_env.AppendUnique(CPPPATH=[
     'inc',
     'src',
     '../../inc',
@@ -65,98 +65,128 @@ easy_setup_env.AppendUnique(CPPPATH = [
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',
     '#/resource/oc_logger/include'
-    ])
+])
 
 if target_os not in ['windows']:
-    easy_setup_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
+    easy_setup_env.AppendUnique(CXXFLAGS=['-Wall', '-std=c++0x'])
 
-if target_os in ['linux','tizen']:
-   easy_setup_env.AppendUnique(LIBS = ['pthread', 'dl', 'coap'])
+if target_os in ['linux', 'tizen']:
+    easy_setup_env.AppendUnique(LIBS=['pthread', 'dl', 'coap'])
 
 if target_os in ['android']:
-	easy_setup_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-	if env.get('SECURED') == '1':
-		easy_setup_env.AppendUnique(LIBPATH = [env.get('SRC_DIR')+'/java/iotivity-android/build/native-libs/armeabi'])
-	easy_setup_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-	easy_setup_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'gnustl_shared'])
-	if env.get('SECURED') == '1':
-		easy_setup_env.AppendUnique(LIBS = ['ocpmapi','ocprovision'])
-	if not env.get('RELEASE'):
-		easy_setup_env.AppendUnique(LIBS = ['log'])
+    easy_setup_env.AppendUnique(LIBPATH=[env.get('BUILD_DIR')])
+    if env.get('SECURED') == '1':
+        easy_setup_env.AppendUnique(LIBPATH=[
+            env.get('SRC_DIR') +
+            '/java/iotivity-android/build/native-libs/armeabi'
+        ])
+    easy_setup_env.AppendUnique(RPATH=[env.get('BUILD_DIR')])
+    easy_setup_env.AppendUnique(CXXFLAGS=['-frtti', '-fexceptions'])
+    easy_setup_env.PrependUnique(LIBS=[
+        'oc',
+        'octbstack',
+        'oc_logger',
+        'connectivity_abstraction',
+        'gnustl_shared'
+    ])
+    if env.get('SECURED') == '1':
+        easy_setup_env.AppendUnique(LIBS=['ocpmapi', 'ocprovision'])
+    if not env.get('RELEASE'):
+        easy_setup_env.AppendUnique(LIBS=['log'])
 
-if target_os in ['linux','tizen']:
-	easy_setup_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-	easy_setup_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-	easy_setup_env.AppendUnique(CXXFLAGS = ['-pthread'])
-	easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger'])
-	if env.get('SECURED') == '1':
-		easy_setup_env.AppendUnique(LIBS = ['ocpmapi', 'ocprovision'])
+if target_os in ['linux', 'tizen']:
+    easy_setup_env.AppendUnique(LIBPATH=[env.get('BUILD_DIR')])
+    easy_setup_env.AppendUnique(RPATH=[env.get('BUILD_DIR')])
+    easy_setup_env.AppendUnique(CXXFLAGS=['-pthread'])
+    easy_setup_env.PrependUnique(LIBS=[
+        'oc',
+        'octbstack',
+        'oc_logger',
+    ])
+    if env.get('SECURED') == '1':
+        easy_setup_env.AppendUnique(LIBS=['ocpmapi', 'ocprovision'])
 
-if target_os in ['android','ios','linux','tizen']:
-	easy_setup_env.PrependUnique(CPPPATH = [
-		env.get('SRC_DIR') + '/resource/c_common/oic_malloc/include',
-		env.get('SRC_DIR') + '/resource/include',
-		env.get('SRC_DIR') + '/resource/csdk/logger/include',
-		env.get('SRC_DIR') + '/resource/csdk/include',
-		env.get('SRC_DIR') + '/resource/csdk/stack/include',
-		env.get('SRC_DIR') + '/resource/csdk/logger/include',
-		env.get('SRC_DIR') + '/resource/csdk/security/include',
-		env.get('SRC_DIR') + '/extlibs/cjson',
-		env.get('SRC_DIR') + '/service/easy-setup/inc'])
-	if target_os not in ['linux', 'tizen']:
-		easy_setup_env.PrependUnique(CPPPATH = [env.get('SRC_DIR') + '/extlibs/sqlite3'])
-	if env.get('SECURED') == '1':
-		with_upstream_libcoap = easy_setup_env.get('WITH_UPSTREAM_LIBCOAP')
-		if with_upstream_libcoap == '1':
-			# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
-			easy_setup_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
-		else:
-			# For bring up purposes only, the forked version will live here.
-			easy_setup_env.AppendUnique(CPPPATH = [env.get('SRC_DIR') + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include'])
-		easy_setup_env.AppendUnique(CPPPATH = [
-			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include',
-			env.get('SRC_DIR') + '/resource/csdk/security/include/internal',
-			env.get('SRC_DIR') + '/resource/csdk/connectivity/api/',
-			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
-			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/cloud',
-			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/oxm'])
-		easy_setup_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+if target_os in ['android', 'ios', 'linux', 'tizen']:
+    easy_setup_env.PrependUnique(CPPPATH=[
+        env.get('SRC_DIR') + '/resource/c_common/oic_malloc/include',
+        env.get('SRC_DIR') + '/resource/include',
+        env.get('SRC_DIR') + '/resource/csdk/logger/include',
+        env.get('SRC_DIR') + '/resource/csdk/include',
+        env.get('SRC_DIR') + '/resource/csdk/stack/include',
+        env.get('SRC_DIR') + '/resource/csdk/logger/include',
+        env.get('SRC_DIR') + '/resource/csdk/security/include',
+        env.get('SRC_DIR') + '/extlibs/cjson',
+        env.get('SRC_DIR') + '/service/easy-setup/inc'
+    ])
+    if target_os not in ['linux', 'tizen']:
+        easy_setup_env.PrependUnique(
+            CPPPATH=[env.get('SRC_DIR') + '/extlibs/sqlite3'])
+    if env.get('SECURED') == '1':
+        with_upstream_libcoap = easy_setup_env.get('WITH_UPSTREAM_LIBCOAP')
+        if with_upstream_libcoap == '1':
+            easy_setup_env.AppendUnique(
+                CPPPATH=['#extlibs/libcoap/libcoap/include'])
+        else:
+            easy_setup_env.AppendUnique(CPPPATH=[
+                env.get('SRC_DIR') +
+                '/resource/csdk/connectivity/lib/libcoap-4.1.1/include'
+            ])
+        easy_setup_env.AppendUnique(CPPPATH=[
+            env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include',
+            env.get('SRC_DIR') + '/resource/csdk/security/include/internal',
+            env.get('SRC_DIR') + '/resource/csdk/connectivity/api/',
+            env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
+            env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/cloud',
+            env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/oxm'
+        ])
+        easy_setup_env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if not env.get('RELEASE') and target_os not in ['ios']:
-    easy_setup_env.PrependUnique(LIBS = ['gcov'])
-    easy_setup_env.AppendUnique(CCFLAGS = ['--coverage'])
+    easy_setup_env.PrependUnique(LIBS=['gcov'])
+    easy_setup_env.AppendUnique(CCFLAGS=['--coverage'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
 
-print"easysetup_path %s" % easysetup_path
+print "easysetup_path %s" % easysetup_path
 
 es_src = None
 
-if target_os in ['android','ios','linux','tizen']:
-	if env.get('SECURED') == '1':
-		env.AppendUnique(es_src = [os.path.join(easysetup_path, 'src/EnrolleeSecurity.cpp')])
+if target_os in ['android', 'ios', 'linux', 'tizen']:
+    if env.get('SECURED') == '1':
+        env.AppendUnique(
+            es_src=[os.path.join(easysetup_path, 'src/EnrolleeSecurity.cpp')])
 
-	es_common_src =	['src/RemoteEnrollee.cpp',
-		'src/EnrolleeResource.cpp',
-		'src/CloudResource.cpp',
-		'src/EasySetup.cpp',
-		'src/ESException.cpp']
+    es_common_src = [
+        'src/RemoteEnrollee.cpp',
+        'src/EnrolleeResource.cpp',
+        'src/CloudResource.cpp',
+        'src/EasySetup.cpp',
+        'src/ESException.cpp',
+    ]
 
-	env.AppendUnique(es_src = es_common_src)
+    env.AppendUnique(es_src=es_common_src)
 
-	es_sdk_static = easy_setup_env.StaticLibrary('ESMediatorRich', env.get('es_src'))
-	easy_setup_env.InstallTarget(es_sdk_static, 'libESMediatorRich')
-	if target_os not in ['ios']:
-		es_sdk_shared = easy_setup_env.SharedLibrary('ESMediatorRich', env.get('es_src'))
-		easy_setup_env.UserInstallTargetLib(es_sdk_shared, 'libESMediatorRich')
-		easy_setup_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libESMediatorRich.so'])
+    es_sdk_static = easy_setup_env.StaticLibrary('ESMediatorRich',
+                                                 env.get('es_src'))
+    easy_setup_env.InstallTarget(es_sdk_static, 'libESMediatorRich')
+    if target_os not in ['ios']:
+        es_sdk_shared = easy_setup_env.SharedLibrary('ESMediatorRich',
+                                                     env.get('es_src'))
+        easy_setup_env.UserInstallTargetLib(es_sdk_shared, 'libESMediatorRich')
+        easy_setup_env.AppendUnique(
+            LINKFLAGS=['-Wl,-soname,libESMediatorRich.so'])
 
-filenames = [ 'ESException.h', 'ESRichCommon.h', 'EasySetup.hpp', 'RemoteEnrollee.h' ]
+filenames = [
+    'ESException.h',
+    'ESRichCommon.h',
+    'EasySetup.hpp',
+    'RemoteEnrollee.h'
+]
 for filename in filenames:
-	easy_setup_env.UserInstallTargetHeader('inc/' + filename, "service/easy-setup", filename)
+    easy_setup_env.UserInstallTargetHeader(
+        'inc/' + filename, "service/easy-setup", filename)
 
 print "Files path is %s" % env.get('es_src')
 
@@ -165,23 +195,21 @@ print "Files path is %s" % env.get('es_src')
 ################################################ ######################
 
 if target_os in ['android']:
-	SConscript('android/SConscript')
+    SConscript('android/SConscript')
 
 ######################################################################
 # Build RichSDK Mediator Sample App
 ################################################ ######################
 if target_os in ['linux']:
-	SConscript('../../sampleapp/mediator/linux/richsdk_sample/SConscript')
+    SConscript('../../sampleapp/mediator/linux/richsdk_sample/SConscript')
 
  
 if target_os in ['android']:
-	SConscript('../../sampleapp/mediator/android/SConscript')
-
+    SConscript('../../sampleapp/mediator/android/SConscript')
 
 ######################################################################
 #Build UnitTestcases for Mediator[RichSDK]
 ################################################ ######################
 if env.get('SECURED') == '0':
-   if target_os == 'linux':
-       SConscript('unittests/SConscript')
-
+    if target_os == 'linux':
+        SConscript('unittests/SConscript')

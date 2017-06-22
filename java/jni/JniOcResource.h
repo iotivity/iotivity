@@ -37,60 +37,60 @@
 #ifndef _Included_org_iotivity_base_OcResource
 #define _Included_org_iotivity_base_OcResource
 
-using namespace OC;
-
 class JniOcResource
 {
 public:
-    JniOcResource(std::shared_ptr<OCResource> resource);
+    JniOcResource(std::shared_ptr<OC::OCResource> resource);
     ~JniOcResource();
 
-    OCStackResult get(JNIEnv* env, const QueryParamsMap &queryParametersMap, jobject jListener);
-    OCStackResult get(JNIEnv* env, const QueryParamsMap &queryParametersMap, jobject jListener,
-        QualityOfService QoS);
+    OCStackResult get(JNIEnv* env, const OC::QueryParamsMap &queryParametersMap, jobject jListener);
+    OCStackResult get(JNIEnv* env, const OC::QueryParamsMap &queryParametersMap, jobject jListener,
+        OC::QualityOfService QoS);
     OCStackResult get(JNIEnv* env, const std::string &resourceType, const std::string &resourceInterface,
-        const QueryParamsMap &queryParametersMap, jobject jListener);
+        const OC::QueryParamsMap &queryParametersMap, jobject jListener);
     OCStackResult get(JNIEnv* env, const std::string &resourceType, const std::string &resourceInterface,
-        const QueryParamsMap &queryParametersMap, jobject jListener, QualityOfService QoS);
+        const OC::QueryParamsMap &queryParametersMap, jobject jListener, OC::QualityOfService QoS);
 
-    OCStackResult put(JNIEnv* env, const OCRepresentation &representation, const QueryParamsMap &queryParametersMap,
+    OCStackResult put(JNIEnv* env, const OC::OCRepresentation &representation, const OC::QueryParamsMap &queryParametersMap,
         jobject jListener);
-    OCStackResult put(JNIEnv* env, const OCRepresentation &representation, const QueryParamsMap &queryParametersMap,
-        jobject jListener, QualityOfService QoS);
+    OCStackResult put(JNIEnv* env, const OC::OCRepresentation &representation, const OC::QueryParamsMap &queryParametersMap,
+        jobject jListener, OC::QualityOfService QoS);
     OCStackResult put(JNIEnv* env, const std::string &resourceType, const std::string &resourceInterface,
-        const OCRepresentation &representation, const QueryParamsMap &queryParametersMap, jobject jListener);
+        const OC::OCRepresentation &representation, const OC::QueryParamsMap &queryParametersMap, jobject jListener);
     OCStackResult put(JNIEnv* env, const std::string &resourceType, const std::string &resourceInterface,
-        const OCRepresentation &representation, const QueryParamsMap &queryParametersMap, jobject jListener, QualityOfService QoS);
+        const OC::OCRepresentation &representation, const OC::QueryParamsMap &queryParametersMap, jobject jListener, OC::QualityOfService QoS);
 
-    OCStackResult post(JNIEnv* env, const OCRepresentation &representation, const QueryParamsMap &queryParametersMap,
+    OCStackResult post(JNIEnv* env, const OC::OCRepresentation &representation, const OC::QueryParamsMap &queryParametersMap,
         jobject jListener);
-    OCStackResult post(JNIEnv* env, const OCRepresentation &representation, const QueryParamsMap &queryParametersMap,
-        jobject jListener, QualityOfService QoS);
+    OCStackResult post(JNIEnv* env, const OC::OCRepresentation &representation, const OC::QueryParamsMap &queryParametersMap,
+        jobject jListener, OC::QualityOfService QoS);
     OCStackResult post(JNIEnv* env, const std::string &resourceType, const std::string &resourceInterface,
-        const OCRepresentation &representation, const QueryParamsMap &queryParametersMap, jobject jListener);
+        const OC::OCRepresentation &representation, const OC::QueryParamsMap &queryParametersMap, jobject jListener);
     OCStackResult post(JNIEnv* env, const std::string &resourceType, const std::string &resourceInterface,
-        const OCRepresentation &representation, const QueryParamsMap &queryParametersMap, jobject jListener, QualityOfService QoS);
+        const OC::OCRepresentation &representation, const OC::QueryParamsMap &queryParametersMap, jobject jListener, OC::QualityOfService QoS);
 
     OCStackResult deleteResource(JNIEnv* env, jobject jListener);
-    OCStackResult deleteResource(JNIEnv* env, jobject jListener, QualityOfService QoS);
+    OCStackResult deleteResource(JNIEnv* env, jobject jListener, OC::QualityOfService QoS);
 
-    OCStackResult observe(JNIEnv* env, ObserveType observeType, const QueryParamsMap &queryParametersMap,
+    OCStackResult observe(JNIEnv* env, OC::ObserveType observeType, const OC::QueryParamsMap &queryParametersMap,
         jobject jListener);
-    OCStackResult observe(JNIEnv* env, ObserveType observeType, const QueryParamsMap &queryParametersMap,
-        jobject jListener, QualityOfService qos);
+    OCStackResult observe(JNIEnv* env, OC::ObserveType observeType, const OC::QueryParamsMap &queryParametersMap,
+        jobject jListener, OC::QualityOfService qos);
 
     OCStackResult cancelObserve(JNIEnv* env);
-    OCStackResult cancelObserve(JNIEnv* env, QualityOfService qos);
+    OCStackResult cancelObserve(JNIEnv* env, OC::QualityOfService qos);
 
-    void setHeaderOptions(const HeaderOptions &headerOptions);
+    void setHeaderOptions(const OC::HeaderOptions &headerOptions);
     void unsetHeaderOptions();
     std::string host();
+    std::vector< std::string > getAllHosts() const;
+    std::string setHost(const std::string& host);
     std::string uri();
     OCConnectivityType connectivityType() const;
     bool isObservable();
     std::vector< std::string >  getResourceTypes() const;
     std::vector< std::string >  getResourceInterfaces(void) const;
-    OCResourceIdentifier uniqueIdentifier() const;
+    OC::OCResourceIdentifier uniqueIdentifier() const;
     std::string sid() const;
 
     JniOnGetListener* addOnGetListener(JNIEnv* env, jobject jListener);
@@ -105,7 +105,7 @@ public:
     void removeOnDeleteListener(JNIEnv* env, jobject jListener);
     void removeOnObserveListener(JNIEnv* env, jobject jListener);
 
-    std::shared_ptr<OCResource> getOCResource();
+    std::shared_ptr<OC::OCResource> getOCResource();
 
     static JniOcResource* getJniOcResourcePtr(JNIEnv *env, jobject thiz);
 
@@ -117,23 +117,23 @@ public:
     void removeOnMQTopicSubscribeListener(JNIEnv* env, jobject jListener);
 
     OCStackResult discoveryMQTopics(JNIEnv* env, const QueryParamsMap &queryParametersMap,
-                                    jobject jListener, QualityOfService QoS);
-    OCStackResult createMQTopic(JNIEnv* env, const OCRepresentation &representation,
+                                    jobject jListener, OC::QualityOfService QoS);
+    OCStackResult createMQTopic(JNIEnv* env, const OC::OCRepresentation &representation,
                                 const std::string &targetUri,
                                 const QueryParamsMap &queryParametersMap,
-                                jobject jListener, QualityOfService QoS);
+                                jobject jListener, OC::QualityOfService QoS);
 #endif
 #ifdef MQ_SUBSCRIBER
     OCStackResult subscribeMQTopic(JNIEnv* env, const QueryParamsMap &queryParametersMap,
-                                   jobject jListener, QualityOfService QoS);
-    OCStackResult unsubscribeMQTopic(QualityOfService QoS);
+                                   jobject jListener, OC::QualityOfService QoS);
+    OCStackResult unsubscribeMQTopic(OC::QualityOfService QoS);
     OCStackResult requestMQPublish(JNIEnv* env, const QueryParamsMap &queryParametersMap,
-                                   jobject jListener, QualityOfService QoS);
+                                   jobject jListener, OC::QualityOfService QoS);
 #endif
 #ifdef MQ_PUBLISHER
-    OCStackResult publishMQTopic(JNIEnv* env, const OCRepresentation &representation,
+    OCStackResult publishMQTopic(JNIEnv* env, const OC::OCRepresentation &representation,
                                  const QueryParamsMap &queryParametersMap,
-                                 jobject jListener, QualityOfService QoS);
+                                 jobject jListener, OC::QualityOfService QoS);
 #endif
 
 private:
@@ -147,7 +147,7 @@ private:
     JniListenerManager<JniOnMQSubscribeListener> m_onSubcribeTopicManager;
 #endif
 
-    std::shared_ptr<OCResource> m_sharedResource;
+    std::shared_ptr<OC::OCResource> m_sharedResource;
 };
 
 /* DO NOT EDIT THIS FILE BEYOND THIS LINE - it is machine generated */
@@ -315,6 +315,22 @@ extern "C" {
     */
     JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcResource_getHost
         (JNIEnv *, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcResource
+    * Method:    getAllHosts
+    * Signature: ()Ljava/util/List;
+    */
+    JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcResource_getAllHosts
+        (JNIEnv *, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcResource
+    * Method:    setHost
+    * Signature: (Ljava/lang/String;)Ljava/lang/String;
+    */
+    JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcResource_setHost
+        (JNIEnv *, jobject, jstring);
 
     /*
     * Class:     org_iotivity_base_OcResource

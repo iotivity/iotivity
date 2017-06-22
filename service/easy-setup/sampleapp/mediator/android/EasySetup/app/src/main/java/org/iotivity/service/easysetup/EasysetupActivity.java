@@ -88,8 +88,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-
 
 public class EasysetupActivity extends Activity
                                 implements OcPlatform.OnPresenceListener,
@@ -98,7 +98,7 @@ public class EasysetupActivity extends Activity
     PlatformConfig cfg;
     OcAccountManager m_accountManager = null;
     final String deviceID = "9E09F4FE-978A-4BC3-B356-1F93BCA37829";
-    final String CIServer = "coap+tcp://52.69.149.85:5683";
+    final String CIServer = "coap+tcp://13.124.29.169:5683";
 
     private static final int BUFFER_SIZE = 1024;
 
@@ -421,6 +421,31 @@ public class EasysetupActivity extends Activity
                             String hostAddress = ocResource.getHost();
                             Log.d(TAG,"URI of the resource: " + resourceUri);
                             Log.d(TAG,"Host address of the resource: " + hostAddress);
+
+                            if(mSecurityMode.isChecked())
+                            {
+                                // Change the host of the resource to secure endpoint.
+                                List<String> endpoints = ocResource.getAllHosts();
+                                if(null != endpoints || 0 == endpoints.size())
+                                {
+                                    Log.d(TAG, "Endpoints of the resource: " + endpoints);
+                                    Iterator<String> itr = endpoints.iterator();
+                                    while(itr.hasNext())
+                                    {
+                                        String endpoint = itr.next();
+                                        if(null != endpoint && endpoint.contains("coaps://"))
+                                        {
+                                            String retval = ocResource.setHost(endpoint);
+                                            Log.d(TAG, "Found coaps endpoint: setHost() returned " + retval);
+                                            break;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    Log.d(TAG, "No endpoints found");
+                                }
+                            }
 
                             mRemoteEnrollee = mEasySetup.createRemoteEnrollee(ocResource);
 
@@ -1004,7 +1029,6 @@ public class EasysetupActivity extends Activity
                 });
 
                 mAccessToken = ocRepresentation.getValue("accesstoken");
-                mRefreshtoken = ocRepresentation.getValue("refreshtoken");
                 mUserID = ocRepresentation.getValue("uid");
 
                 if(mAccessToken != null)

@@ -185,7 +185,7 @@ static OCStackResult handleAclGetInfoResponse(void *ctx, void **data, OCClientRe
         goto exit;
     }
 
-    OicSecAcl_t* acl = CBORPayloadToAcl2(cbor, size);
+    OicSecAcl_t* acl = CBORPayloadToCloudAcl(cbor, size);
     if (NULL == acl)
     {
         OIC_LOG(ERROR, TAG, "Can't parse CBOR payload");
@@ -193,6 +193,13 @@ static OCStackResult handleAclGetInfoResponse(void *ctx, void **data, OCClientRe
     }
 
     OIC_LOG_ACL(INFO, acl);
+
+    if (NULL == acl->aces)
+    {
+        OIC_LOG(WARNING, TAG, "NULL aces received. Database update is not required");
+        OIC_LOG(WARNING, TAG, "Assume that it is correct behavior");
+        goto exit;
+    }
 
     result = InstallACL(acl);
     if (result != OC_STACK_OK)
@@ -254,7 +261,7 @@ OCStackResult OCCloudAclIndividualAclUpdate(void* ctx,
         goto no_memory;
     }
 
-    int acllist_count = 0;
+    size_t acllist_count = 0;
     //code below duplicates LL_COUNT, implemented in newer version of utlist.h
     {
         cloudAce_t *ace = (cloudAce_t*)aces;
@@ -297,7 +304,7 @@ OCStackResult OCCloudAclIndividualAclUpdate(void* ctx,
 
         OICFree(uuid);
 
-        int reslist_count = 0;
+        size_t reslist_count = 0;
         //code below duplicates LL_COUNT, implemented in newer version of utlist.h
         {
             OicSecRsrc_t *res = ace->resources;
@@ -385,6 +392,7 @@ OCStackResult OCCloudAclIndividualAceUpdate(void* ctx,
 
     VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(aceId, TAG, "NULL aceId", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aces, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
     snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s?%s=%s", DEFAULT_PREFIX,
@@ -398,7 +406,7 @@ OCStackResult OCCloudAclIndividualAceUpdate(void* ctx,
         goto no_memory;
     }
 
-    int acllist_count = 1;
+    size_t acllist_count = 1;
 
     helperPayload = OICCalloc(acllist_count, sizeof(OCRepPayload *));
     if (!helperPayload)
@@ -432,7 +440,7 @@ OCStackResult OCCloudAclIndividualAceUpdate(void* ctx,
 
         OICFree(uuid);
 
-        int reslist_count = 0;
+        size_t reslist_count = 0;
         //code below duplicates LL_COUNT, implemented in newer version of utlist.h
         {
             OicSecRsrc_t *res = ace->resources;
@@ -535,6 +543,7 @@ OCStackResult OCCloudAclIndividualAceDelete(void* ctx,
 
     VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(aceId, TAG, "NULL aceId", OC_STACK_INVALID_PARAM);
 
     snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s?%s=%s", DEFAULT_PREFIX,
             endPoint->addr, endPoint->port, OC_RSRVD_ACL_ID_URL, aclId,

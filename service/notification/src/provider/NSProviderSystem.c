@@ -73,17 +73,17 @@ void NSDeinitProviderInfo()
 
     if (providerInfo->providerName)
     {
-        OICFree(providerInfo->providerName);
+        NSOICFree(providerInfo->providerName);
         providerInfo->providerName = NULL;
     }
 
     if (providerInfo->userInfo)
     {
-        OICFree(providerInfo->userInfo);
+        NSOICFree(providerInfo->userInfo);
         providerInfo->userInfo = NULL;
     }
 
-    OICFree(providerInfo);
+    NSOICFree(providerInfo);
     providerInfo = NULL;
 }
 

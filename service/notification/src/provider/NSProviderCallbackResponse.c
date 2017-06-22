@@ -99,7 +99,7 @@ void * NSCallbackResponseSchedule(void * ptr)
                         NSSubscribeRequestCb(consumer);
                     }
 
-                    OICFree(copyQuery);
+                    NSOICFree(copyQuery);
                     NSFreeConsumer(consumer);
                     NSFreeOCEntityHandlerRequest(request);
 
@@ -117,7 +117,7 @@ void * NSCallbackResponseSchedule(void * ptr)
                     NS_LOG(DEBUG, "No Task Type");
                     break;
             }
-            OICFree(node);
+            NSOICFree(node);
         }
 
         pthread_mutex_unlock(&NSMutex[CALLBACK_RESPONSE_SCHEDULER]);

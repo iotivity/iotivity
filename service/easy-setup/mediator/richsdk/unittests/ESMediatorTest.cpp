@@ -52,6 +52,7 @@ namespace
     std::mutex mutexForCondition;
 
     ESEnrolleeSimulator g_enrolleeSimul;
+    std::shared_ptr<OC::OCResource> g_enrolleeResource;
     std::shared_ptr<RemoteEnrollee> g_remoteEnrollee;
 }
 
@@ -192,6 +193,7 @@ TEST_F(EasysetupMediatorTest, createremoteenrolleeFailedWithNotEasySetupResource
 TEST_F(EasysetupMediatorTest, createremoteenrolleeSucceedWithEasySetupResource)
 {
     discoverRemoteEnrollee();
+    g_enrolleeResource = m_enrolleeResource;
     g_remoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(m_enrolleeResource);
 
     ASSERT_NE(nullptr, g_remoteEnrollee);
@@ -240,13 +242,11 @@ TEST_F(GetConfigurationTest, GetConfigurationSucceed)
                 {
                     if(conf.getWiFiModes().at(0) == WIFI_11G &&
                         conf.getWiFiFreq() == WIFI_5G &&
-                        !strcmp(conf.getDeviceName().c_str(), "Test Device") &&
-                        !strcmp(conf.getModelNumber().c_str(), "Test Model Number"))
+                        !strcmp(conf.getDeviceName().c_str(), "Test Device"))
                     {
                         isWellConstructed = true;
                     }
                     cout << "getDeviceName : " << conf.getDeviceName().c_str() << endl;
-                    cout << "getModelNumber : " << conf.getModelNumber().c_str() << endl;
                 }
             }
         });
@@ -345,7 +345,6 @@ TEST_F(ProvisionDevicePropertiesTest,
 {
     DeviceProp devProp;
     devProp.setWiFiProp("Iotivity_SSID", "Iotivity_PWD", WPA2_PSK, TKIP_AES);
-    devProp.setDevConfProp("korean", "Korea", "Location");
 
     EXPECT_ANY_THROW(g_remoteEnrollee->provisionDeviceProperties(devProp, nullptr));
 }
@@ -355,7 +354,6 @@ TEST_F(ProvisionDevicePropertiesTest,
 {
     DeviceProp devProp;
     devProp.setWiFiProp("Iotivity_SSID", "Iotivity_PWD", WPA2_PSK, TKIP_AES);
-    devProp.setDevConfProp("korean", "Korea", "Location");
 
     int cntForReceivedCallbackWithSuccess = 0;
 
@@ -377,6 +375,65 @@ TEST_F(ProvisionDevicePropertiesTest,
 
     EXPECT_EQ(cntForReceivedCallbackWithSuccess, 1);
 }
+
+class RequestToConnectTest : public EasysetupMediatorTest
+{
+
+public:
+    RequestToConnectTest() = default;
+    ~RequestToConnectTest() = default;
+
+    static void connectRequestStatusCb(shared_ptr< ConnectRequestStatus > /*status*/)
+    {
+    }
+
+protected:
+    void SetUp()
+    {
+        TestWithMock::SetUp();
+    }
+
+    void TearDown()
+    {
+        TestWithMock::TearDown();
+    }
+};
+
+TEST_F(RequestToConnectTest,
+          ThrowExceptionWhenRequestToConnectFailedByCallbackIsNull)
+{
+    std::vector<ES_CONNECT_TYPE> connectTypes;
+    connectTypes.push_back(ES_CONNECT_NONE);
+
+    EXPECT_ANY_THROW(g_remoteEnrollee->requestToConnect(connectTypes, nullptr));
+}
+
+TEST_F(RequestToConnectTest, RequestToConnectSucceed)
+{
+    std::vector<ES_CONNECT_TYPE> connectTypes;
+    connectTypes.push_back(ES_CONNECT_NONE);
+
+    int cntForReceivedCallbackWithSuccess = 0;
+
+    mocks.OnCallFunc(connectRequestStatusCb).Do(
+        [&cntForReceivedCallbackWithSuccess]
+        (std::shared_ptr< ConnectRequestStatus > status)
+        {
+            if(status->getESResult() == ES_OK)
+            {
+               cntForReceivedCallbackWithSuccess++;
+            }
+
+        });
+
+    g_remoteEnrollee->requestToConnect(connectTypes, connectRequestStatusCb);
+
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, g_waitForResponse);
+
+    EXPECT_EQ(cntForReceivedCallbackWithSuccess, 1);
+}
+
 
 class ProvisionCloudPropertiesTest : public EasysetupMediatorTest
 {
@@ -464,6 +521,32 @@ TEST_F(ProvisionCloudPropertiesTest, ProvisionCloudPropertiesSucceed)
     responseCon.wait_for(lock, g_waitForResponse);
 
     EXPECT_EQ(cntForReceivedCallbackWithSuccess, 1);
+}
+
+TEST_F(ProvisionCloudPropertiesTest, ProvisionCloudPropertiesWithResourceSucceed)
+{
+    CloudProp cloudProp;
+    cloudProp.setCloudProp("authCode", "authProvider", "ciServer");
+    cloudProp.setCloudID("f002ae8b-c42c-40d3-8b8d-1927c17bd1b3");
+
+    int cntForReceivedCallbackWithSuccess = 0;
+
+    mocks.OnCallFunc(cloudPropProvStatusCb).Do(
+        [& cntForReceivedCallbackWithSuccess](std::shared_ptr< CloudPropProvisioningStatus > status)
+        {
+            if(status->getESResult() == ES_OK)
+            {
+               cntForReceivedCallbackWithSuccess++;
+            }
+        });
+
+    g_remoteEnrollee->provisionCloudProperties(g_enrolleeResource, cloudProp, cloudPropProvStatusCb);
+
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, g_waitForResponse);
+
+    EXPECT_EQ(cntForReceivedCallbackWithSuccess, 1);
 
     ESTerminateEnrollee();
 }
+

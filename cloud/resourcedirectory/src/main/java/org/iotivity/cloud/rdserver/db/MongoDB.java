@@ -50,13 +50,15 @@ public class MongoDB {
     /**
      * API creating MongoClient and initializing MongoDatabase
      *
+     * @param host
+     *            host of MongoDatabase
      * @param dbname
      *            database name to create MongoDatabase
      * @throws Exception
      */
-    public MongoDB(String dbname) throws Exception {
+    public MongoDB(String host, String dbname) throws Exception {
 
-        mongoClient = new MongoClient();
+        mongoClient = new MongoClient(host);
         mongoClient.dropDatabase(dbname);
         db = mongoClient.getDatabase(dbname);
     }
