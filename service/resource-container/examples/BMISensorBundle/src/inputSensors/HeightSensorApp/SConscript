@@ -14,7 +14,6 @@ SConscript('#service/third_party_libs.scons',
 linux_sample_env.AppendUnique(CPPPATH=['include'])
 linux_sample_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-pthread'])
 linux_sample_env.AppendUnique(CPPDEFINES=['LINUX'])
-linux_sample_env.AppendUnique(LIBPATH=[env.get('BUILD_DIR')])
 linux_sample_env.AppendUnique(LIBS=[
     'coap',
     'connectivity_abstraction',
