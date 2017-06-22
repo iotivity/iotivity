@@ -47,7 +47,6 @@ public:
     virtual void TearDown()
     {
         CommonTestUtil::runCommonTCTearDownPart();
-        OCStop();
     }
 
     static OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
