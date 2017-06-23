@@ -22,6 +22,7 @@
 
 #include "utlist.h"
 #include "oic_malloc.h"
+#include "ocrandom.h"
 #include "policyengine.h"
 #include "resourcemanager.h"
 #include "securevirtualresourcetypes.h"
@@ -241,9 +242,17 @@ bool IsRequestFromResourceOwner(SRMRequestContext_t *context)
     bool retVal = false;
     OicUuid_t resourceOwner;
 
-    if(NULL == context)
+    if (NULL == context)
     {
-        return false;
+        retVal = false;
+        goto exit;
+    }
+
+    if (SUBJECT_ID_TYPE_UUID != context->subjectIdType)
+    {
+        OIC_LOG_V(DEBUG, TAG, "%s: Non-UUID subject type cannot be rowner.", __func__);
+        retVal = false;
+        goto exit;
     }
 
     if (IsNilUuid(&context->subjectUuid))
@@ -257,9 +266,37 @@ bool IsRequestFromResourceOwner(SRMRequestContext_t *context)
     if((OIC_R_ACL_TYPE <= context->resourceType) && \
         (OIC_SEC_SVR_TYPE_COUNT > context->resourceType))
     {
-        GetSvrRownerId_t getRownerId = GetSvrRownerId[(int)context->resourceType];
+        GetSvrRownerId_t getRownerId = NULL;
+        OCStackResult getRownerResult = OC_STACK_ERROR;
 
-        if((NULL != getRownerId) && (OC_STACK_OK == getRownerId(&resourceOwner)))
+        getRownerId = GetSvrRownerId[(int)context->resourceType];
+
+        if (NULL != getRownerId)
+        {
+            getRownerResult = getRownerId(&resourceOwner);
+        }
+
+#ifndef NDEBUG // if debug build, log the IDs being used for matching rowner
+        char strUuid[UUID_STRING_SIZE] = "UUID_ERROR";
+        if (OCConvertUuidToString(context->subjectUuid.id, strUuid))
+        {
+            OIC_LOG_V(DEBUG, TAG, "context->subjectUuid for request: %s.", strUuid);
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "failed to convert context->subjectUuid to str.");
+        }
+        if (OCConvertUuidToString(resourceOwner.id, strUuid))
+        {
+            OIC_LOG_V(DEBUG, TAG, "rowneruuid for requested SVR: %s.", strUuid);
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "failed to convert rowneruuid to str.");
+        }
+#endif
+
+        if(OC_STACK_OK == getRownerResult)
         {
             retVal = UuidCmp(&context->subjectUuid, &resourceOwner);
         }
