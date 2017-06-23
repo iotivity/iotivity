@@ -162,7 +162,6 @@ for flags in p.stdout.readlines():
         env.Replace(AR=prefix + 'ar')
         env.Replace(RANLIB=prefix + 'ranlib')
 
-
     elif flags.startswith('CFLAGS='):
         env.AppendUnique(CFLAGS=Split(flags.replace('CFLAGS=', '')))
 
@@ -244,19 +243,17 @@ if env.get('SECURED') == '1':
 else:
     env.AppendUnique(LIBS=['mbedcrypto'])
 
-# From android-5 (API > 20), all application must be built with flags '-fPIE' '-pie'.
-# Due to the limitation of Scons, it's required to added it into the command line
-# directly (otherwise, it will also be added when build share library)
-env.Replace(
-    CCCOM='$CC -o $TARGET -c $CFLAGS $CCFLAGS $_CCCOMCOM -fPIE $SOURCES')
-env.Replace(
-    CXXCOM='$CXX -o $TARGET -c $CXXFLAGS $CCFLAGS $_CCCOMCOM -fPIE $SOURCES')
-env.Replace(
-    LINKCOM=
-    '$LINK -o $TARGET -pie $LINKFLAGS $__RPATH $SOURCES $_LIBDIRFLAGS $_LIBFLAGS'
-)
+# From android-5 (API > 20), all executables must be built position-independent
+# so with flags '-fPIE' '-pie'.
+# If we add those flags to CFLAGS or CCFLAGS, scons will also apply them
+# to building objects for shared libraries.
+# The workaround chosen here is to rewrite the cc/cxx build rule
+env.Replace(CCCOM='$CC -o $TARGET -c $CFLAGS $CCFLAGS $_CCCOMCOM -fPIE $SOURCES')
+env.Replace(CXXCOM='$CXX -o $TARGET -c $CXXFLAGS $CCFLAGS $_CCCOMCOM -fPIE $SOURCES')
+env.Replace(LINKCOM='$LINK -o $TARGET -pie $LINKFLAGS $__RPATH $SOURCES $_LIBDIRFLAGS $_LIBFLAGS')
 
-# Fix android-ndk compatibility issue, make applications build on new NDK can run on old platform
+# Fix android-ndk compatibility issue, make sure applications built
+# on new NDK can run on old platform
 if platform_ver == '' or int(platform_ver) > 20:
     SConscript('compatibility/c_compat.scons')
 
