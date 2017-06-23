@@ -172,6 +172,13 @@ bool CAHelper::selectNetwork()
     return selectNetwork(m_availableNetwork, CA_STATUS_OK);
 }
 
+CATransportAdapter_t CAHelper::getselectNetwork()
+{
+    IOTIVITYTEST_LOG(DEBUG, "getselectNetwork");
+
+    return CAGetSelectedNetwork();
+}
+
 bool CAHelper::selectNetwork(int interestedNetwork, CAResult_t expectedResult)
 {
     IOTIVITYTEST_LOG(DEBUG, "[selectNetwork] IN");

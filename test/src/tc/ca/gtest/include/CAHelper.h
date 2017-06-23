@@ -242,6 +242,7 @@ public:
 
     bool initialize();
     bool selectNetwork();
+    CATransportAdapter_t getselectNetwork();
     bool selectNetwork(int interestedNetwork, CAResult_t expectedResult);
     bool unselectNetwork();
     bool unselectNetwork(int interestedNetwork, CAResult_t expectedResult);

@@ -333,6 +333,65 @@ TEST_F(CANetworkTest_btc, CASelectNetwork_P)
 #endif
 
 /**
+ * @GRL
+ * @since 2017-06-22
+ * @see CAResult_t CAInitialize()
+ * @see void CATerminate()
+ * @objective Test 'CAGetSelectedNetwork_' should match with selectnetwork
+ * @target CAResult_t CAGetSelectedNetwork()
+ * @test_data valid IP Adapter
+ * @pre_condition Initialize CA using CAInitialize
+ * @procedure  1. Call SelectNetowrk to select IP as network
+ *             2. call getSelectNetwork to get selected network
+               3. Check selected network with  m_availableNetwork
+ * @post_condition Terminate CA using CATerminate API
+ * @expected getSelectNetwork value should match with m_availableNetwork
+ */
+#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
+TEST_F(CANetworkTest_btc, CAGetSelectedNetwork_P)
+{
+    if (!m_caHelper.initialize())
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+        return;
+    }
+    if (!m_caHelper.selectNetwork())
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+    }
+     if (m_caHelper.m_availableNetwork != m_caHelper.getselectNetwork())
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+    }
+
+    CATerminate();
+}
+#endif
+/**
+ * @GRL
+ * @since 2017-06-22
+ * @objective Test 'CAGetSelectedNetwork_' should match with selectnetwork
+ * @target CAResult_t CAGetSelectedNetwork()
+ * @procedure  1. call getSelectNetwork to get selected network
+               2. Check selected network with  m_availableNetwork
+ * @expected getSelectNetwork value should match with m_availableNetwork
+ */
+#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
+TEST_F(CANetworkTest_btc, CAGetSelectedNetwork_N)
+{
+    CATransportAdapter_t CATransportAdapter = m_caHelper.getselectNetwork();
+    printf("Adapter value: %d\n",CATransportAdapter);
+    printf("m_availableNetwork: %d\n",m_caHelper.m_availableNetwork);
+    if (m_caHelper.m_availableNetwork !=  CATransportAdapter)
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+    }
+
+    CATerminate();
+}
+#endif
+
+/**
  * @since 2014-11-28
  * @see CAResult_t CAInitialize()
  * @see CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
