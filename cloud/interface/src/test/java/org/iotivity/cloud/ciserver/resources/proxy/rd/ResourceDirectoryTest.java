@@ -44,6 +44,8 @@ import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem;
+import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceDirectory.AccountReceiveHandler;
+import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceDirectory.PublishResponseHandler;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.Before;
 import org.junit.Test;
@@ -128,8 +130,10 @@ public class ResourceDirectoryTest {
                 Mockito.any(IRequest.class), Mockito.any(CoapDevice.class));
 
         PowerMockito.mockStatic(ConnectorPool.class);
-        PowerMockito.when(ConnectorPool.getConnection("account")).thenReturn(mRequestChannelASServer);
-        PowerMockito.when(ConnectorPool.getConnection("rd")).thenReturn(mRequestChannelRDServer);
+        PowerMockito.when(ConnectorPool.getConnection("account"))
+                .thenReturn(mRequestChannelASServer);
+        PowerMockito.when(ConnectorPool.getConnection("rd"))
+                .thenReturn(mRequestChannelRDServer);
     }
 
     @Test
@@ -157,7 +161,7 @@ public class ResourceDirectoryTest {
     @Test
     public void testRDResourcePublishOnResponseReceived() throws Exception {
 
-        ResourceDirectory.AccountReceiveHandler accountReceiveHandler = mRdHandler.new AccountReceiveHandler(
+        ResourceDirectory.AccountReceiveHandler accountReceiveHandler = new AccountReceiveHandler(
                 rdPublishRequest, mMockDevice);
 
         IRequest request = makeResourcePublishRequest();
@@ -171,7 +175,7 @@ public class ResourceDirectoryTest {
     @Test
     public void testRDResourcePublishPayloadConverted() throws Exception {
 
-        ResourceDirectory.AccountReceiveHandler accountReceiveHandler = mRdHandler.new AccountReceiveHandler(
+        ResourceDirectory.AccountReceiveHandler accountReceiveHandler = new AccountReceiveHandler(
                 rdPublishRequest, mMockDevice);
 
         IRequest request = makeResourcePublishRequest();
@@ -185,7 +189,7 @@ public class ResourceDirectoryTest {
     @Test
     public void testRDResourcePublishResponse() throws Exception {
 
-        ResourceDirectory.PublishResponseHandler publishResponseHandler = mRdHandler.new PublishResponseHandler(
+        ResourceDirectory.PublishResponseHandler publishResponseHandler = new PublishResponseHandler(
                 mMockDevice);
 
         CountDownLatch latch = new CountDownLatch(1);

@@ -42,6 +42,7 @@ import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem;
+import org.iotivity.cloud.ciserver.resources.proxy.account.Account.AccountReceiveHandler;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.Before;
 import org.junit.Test;
@@ -126,8 +127,10 @@ public class AccountTest {
                 Mockito.any(IRequest.class), Mockito.any(CoapDevice.class));
 
         PowerMockito.mockStatic(ConnectorPool.class);
-        PowerMockito.when(ConnectorPool.getConnection("account")).thenReturn(mRequestChannelASServer);
-        PowerMockito.when(ConnectorPool.getConnection("rd")).thenReturn(mRequestChannelRDServer);
+        PowerMockito.when(ConnectorPool.getConnection("account"))
+                .thenReturn(mRequestChannelASServer);
+        PowerMockito.when(ConnectorPool.getConnection("rd"))
+                .thenReturn(mRequestChannelRDServer);
     }
 
     @Test
@@ -148,7 +151,7 @@ public class AccountTest {
             .createRequest(RequestMethod.DELETE, ACCOUNT_URI, "di=device1");
 
     @InjectMocks
-    Account.AccountReceiveHandler accountReceiveHandler = mAcHandler.new AccountReceiveHandler(
+    Account.AccountReceiveHandler accountReceiveHandler = new AccountReceiveHandler(
             asRequest, mMockDevice);
 
     @Test

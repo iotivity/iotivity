@@ -27,7 +27,6 @@ import java.util.HashMap;
 
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.Device;
-import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.device.IResponseEventHandler;
 import org.iotivity.cloud.base.exception.ClientException;
 import org.iotivity.cloud.base.exception.ServerException;
@@ -49,7 +48,7 @@ import org.iotivity.cloud.util.Cbor;
  */
 
 public class ResourceDirectory extends Resource {
-    private Cbor<HashMap<String, Object>> mCbor     = new Cbor<>();
+    private Cbor<HashMap<String, Object>> mCbor = new Cbor<>();
 
     public ResourceDirectory() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.RD_URI));
@@ -88,7 +87,8 @@ public class ResourceDirectory extends Resource {
                 break;
 
             case DELETE:
-                ConnectorPool.getConnection("rd").sendRequest(request, srcDevice);
+                ConnectorPool.getConnection("rd").sendRequest(request,
+                        srcDevice);
                 break;
 
             default:
@@ -97,7 +97,7 @@ public class ResourceDirectory extends Resource {
         }
     }
 
-    class AccountReceiveHandler implements IResponseEventHandler {
+    static class AccountReceiveHandler implements IResponseEventHandler {
         private Device   mSrcDevice;
         private IRequest mRequest;
 
