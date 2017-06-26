@@ -1,5 +1,4 @@
 %define PREFIX /usr/apps/com.oic.ri
-%define ROOTDIR  %{_builddir}/%{name}-%{version}
 %define DEST_INC_DIR  %{buildroot}/%{_includedir}/OICHeaders
 %define DEST_LIB_DIR  %{buildroot}/%{_libdir}
 
@@ -20,9 +19,21 @@ Source0: http://mirrors.kernel.org/%{name}/%{version}/%{name}-%{version}.tar.gz
 %en_speedpython
 %endif
 
+%ifarch armv7l armv7hl armv7nhl armv7tnhl armv7thl
+%define TARGET_ARCH "armeabi-v7a"
+%endif
+%ifarch aarch64
+%define TARGET_ARCH "arm64"
+%endif
+%ifarch x86_64
+%define TARGET_ARCH "x86_64"
+%endif
+%ifarch %{ix86}
+%define TARGET_ARCH "x86"
+%endif
 # Default values to be eventually overiden BEFORE or as gbs params:
 %{!?LOGGING: %define LOGGING 1}
-%{!?RELEASE: %define RELEASE 1}
+%{!?RELEASE: %define RELEASE True}
 %{!?SECURED: %define SECURED 0}
 %{!?TARGET_OS: %define TARGET_OS tizen}
 %{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
@@ -30,7 +41,14 @@ Source0: http://mirrors.kernel.org/%{name}/%{version}/%{name}-%{version}.tar.gz
 %{!?WITH_MQ: %define WITH_MQ OFF}
 %{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?WITH_TCP: %define WITH_TCP 0}
-%{!?TARGET_ARCH: %define TARGET_ARCH arm}
+%{!?TARGET_ARCH: %define TARGET_ARCH %{_arch}}
+%if "True" == "%{RELEASE}"
+%define build_mode release
+%else
+%define build_mode debug
+%endif
+
+%define BUILD_DIR out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/
 
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(ttrace)
@@ -70,28 +88,28 @@ scons %{JOB} --prefix=%{_prefix} \
 mkdir -p %{DEST_INC_DIR}
 mkdir -p %{DEST_LIB_DIR}/pkgconfig
 
-cp -f %{ROOTDIR}/resource/csdk/stack/liboctbstack.so %{buildroot}/%{_libdir}
-cp -f %{ROOTDIR}/resource/c_common/libc_common.a %{buildroot}/%{_libdir}
-cp -f %{ROOTDIR}/resource/csdk/security/libocsrm.a %{buildroot}/%{_libdir}
-cp -f %{ROOTDIR}/resource/csdk/connectivity/src/libconnectivity_abstraction.so %{buildroot}/%{_libdir}
-cp -f %{ROOTDIR}/extlibs/libcoap/libcoap.a %{buildroot}/%{_libdir}
+install %{BUILD_DIR}/liboctbstack.so %{buildroot}/%{_libdir}
+install %{BUILD_DIR}/libc_common.a %{buildroot}/%{_libdir}
+install %{BUILD_DIR}/libocsrm.a %{buildroot}/%{_libdir}
+install %{BUILD_DIR}/libconnectivity_abstraction.so %{buildroot}/%{_libdir}
+install %{BUILD_DIR}/libcoap.a %{buildroot}/%{_libdir}
 # Renamed to avoid colision with system package
 # I suppose it was added to be used along Tizen SDK which does not ship it
 cp -av /usr/lib*/libuuid.so.1 %{buildroot}%{_libdir}/libuuid1.so ||:
 
-if echo %{SECURED}|grep -qi '1'; then
-	cp -f %{ROOTDIR}/out/tizen/*/*/libmbedcrypto.a %{buildroot}/%{_libdir}
-	cp -f %{ROOTDIR}/out/tizen/*/*/libmbedtls.a %{buildroot}/%{_libdir}
-	cp -f %{ROOTDIR}/out/tizen/*/*/libmbedx509.a %{buildroot}/%{_libdir}
-fi
+%if 0%{?SECURED} == 1
+cp -f %{BUILD_DIR}/libmbedcrypto.a %{buildroot}/%{_libdir}
+cp -f %{BUILD_DIR}/libmbedtls.a %{buildroot}/%{_libdir}
+cp -f %{BUILD_DIR}/libmbedx509.a %{buildroot}/%{_libdir}
+%endif
 
-cp -rf %{ROOTDIR}/resource/csdk/stack/include/ocstack.h* %{DEST_INC_DIR}/
-cp -rf %{ROOTDIR}/resource/csdk/security/include/securevirtualresourcetypes.h* %{DEST_INC_DIR}/
-cp -rf %{ROOTDIR}/resource/c_common/byte_array.h* %{DEST_INC_DIR}/
-cp -rf %{ROOTDIR}/resource/csdk/stack/include/ocstackconfig.h* %{DEST_INC_DIR}/
-cp -rf %{ROOTDIR}/resource/csdk/include/octypes.h* %{DEST_INC_DIR}/
-cp -rf %{ROOTDIR}/resource/csdk/logger/include/logger.h* %{DEST_INC_DIR}/
-cp -rf %{ROOTDIR}/resource/csdk/logger/include/logger_types.h* %{DEST_INC_DIR}/
+cp -rf resource/csdk/stack/include/ocstack.h* %{DEST_INC_DIR}/
+cp -rf resource/csdk/security/include/securevirtualresourcetypes.h* %{DEST_INC_DIR}/
+cp -rf resource/c_common/byte_array.h* %{DEST_INC_DIR}/
+cp -rf resource/csdk/stack/include/ocstackconfig.h* %{DEST_INC_DIR}/
+cp -rf resource/csdk/include/octypes.h* %{DEST_INC_DIR}/
+cp -rf resource/csdk/logger/include/logger.h* %{DEST_INC_DIR}/
+cp -rf resource/csdk/logger/include/logger_types.h* %{DEST_INC_DIR}/
 cp resource/oc_logger/include/oc_logger.hpp %{DEST_INC_DIR}/
 cp resource/oc_logger/include/oc_log_stream.hpp %{DEST_INC_DIR}/
 cp resource/oc_logger/include/oc_logger.h %{DEST_INC_DIR}/
@@ -105,7 +123,7 @@ cp resource/c_common/iotivity_config.h %{DEST_INC_DIR}
 cp resource/c_common/*/include/*.h %{DEST_INC_DIR}
 cp resource/csdk/stack/include/payload_logging.h %{DEST_INC_DIR}
 cp extlibs/tinycbor/tinycbor/src/cbor.h %{DEST_INC_DIR}
-cp -rf %{ROOTDIR}/com.oic.ri.pc %{DEST_LIB_DIR}/pkgconfig/
+cp -f com.oic.ri.pc %{DEST_LIB_DIR}/pkgconfig/
 
 %files
 %manifest com.oic.ri.manifest
