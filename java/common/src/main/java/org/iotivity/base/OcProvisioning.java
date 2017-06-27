@@ -83,16 +83,29 @@ public class OcProvisioning {
      *
      * @param type     OxmType ownership transfer type.
      * @param pinCallbackListener Pin callback Listener.
-     *
+     * @deprecated use {@link #setOwnershipTransferCBdata} instead.
      * @throws OcException Indicate failure registering ownership transfer.
      *                     Use OcException.GetErrorCode() for more details.
      */
     public static void SetownershipTransferCBdata(OxmType type,
-            PinCallbackListener pinCallbackListener) throws OcException
-    {
+            PinCallbackListener pinCallbackListener) throws OcException {
         OcProvisioning.ownershipTransferCBdata(type.getValue(), pinCallbackListener);
     }
 
+    /**
+     *  API for registering Ownership transfer methods for a particular
+     *  transfer Type
+     *
+     * @param type     OxmType ownership transfer type.
+     * @param pinCallbackListener Pin callback Listener.
+     *
+     * @throws OcException Indicate failure registering ownership transfer.
+     *                     Use OcException.GetErrorCode() for more details.
+     */
+    public static void setOwnershipTransferCBdata(OxmType type,
+            PinCallbackListener pinCallbackListener) throws OcException {
+        OcProvisioning.ownershipTransferCBdata(type.getValue(), pinCallbackListener);
+    }
     private  static native void ownershipTransferCBdata(int oxmType,  PinCallbackListener pinCallbackListener);
 
     public static interface PinCallbackListener {
@@ -111,8 +124,8 @@ public class OcProvisioning {
      */
     public static List<OcSecureResource> discoverMOTEnabledDevices(int timeout)
         throws OcException {
-            return Arrays.asList(OcProvisioning.discoverMOTEnabledDevices1(timeout));
-        }
+        return Arrays.asList(OcProvisioning.discoverMOTEnabledDevices1(timeout));
+    }
     private static native OcSecureResource[] discoverMOTEnabledDevices1(int timeout)
         throws OcException;
 
@@ -126,8 +139,8 @@ public class OcProvisioning {
      */
     public static List<OcSecureResource> discoverMOTEnabledOwnedDevices(int timeout)
         throws OcException {
-            return Arrays.asList(OcProvisioning.discoverMOTEnabledOwnedDevices1(timeout));
-        }
+        return Arrays.asList(OcProvisioning.discoverMOTEnabledOwnedDevices1(timeout));
+    }
     private static native OcSecureResource[] discoverMOTEnabledOwnedDevices1(int timeout)
         throws OcException;
 
@@ -249,7 +262,7 @@ public class OcProvisioning {
      *                     Use OcException.GetErrorCode() for more details.
      */
     public static int saveTrustCertChain(byte[] trustCertChain, EncodingType encodingType) throws OcException {
-        return saveTrustCertChain1(trustCertChain,encodingType.getValue());
+        return saveTrustCertChain1(trustCertChain, encodingType.getValue());
     }
     private static native int saveTrustCertChain1(byte[] trustCertChain, int encodingType)
         throws OcException;

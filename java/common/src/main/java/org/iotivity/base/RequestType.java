@@ -26,7 +26,7 @@ public enum RequestType {
     GET("GET"),
     PUT("PUT"),
     POST("POST"),
-    DELETE("DELETE"),;
+    DELETE("DELETE");
     private String value;
 
     private RequestType(String value) {

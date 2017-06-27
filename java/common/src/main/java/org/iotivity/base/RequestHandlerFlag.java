@@ -27,7 +27,7 @@ import java.util.EnumSet;
 public enum RequestHandlerFlag {
     INIT(1 << 0),
     REQUEST(1 << 1),
-    OBSERVER(1 << 2),;
+    OBSERVER(1 << 2);
 
     private int value;
 

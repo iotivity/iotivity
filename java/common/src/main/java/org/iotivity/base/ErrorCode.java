@@ -75,7 +75,7 @@ public enum ErrorCode {
     JNI_EXCEPTION("JNI_EXCEPTION", "Generic Java binder error"),
     JNI_NO_NATIVE_OBJECT("JNI_NO_NATIVE_OBJECT", ""),
     JNI_INVALID_VALUE("JNI_INVALID_VALUE", ""),
-    INVALID_CLASS_CAST("INVALID_CLASS_CAST", ""),;
+    INVALID_CLASS_CAST("INVALID_CLASS_CAST", "");
 
     private String error;
     private String description;

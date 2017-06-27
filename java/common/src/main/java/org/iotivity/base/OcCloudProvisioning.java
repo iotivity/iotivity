@@ -70,7 +70,7 @@ public class  OcCloudProvisioning {
         public void getAclIdByDeviceListener(int result, String aclId);
     }
 
-     public interface CreateAclIdListener {
+    public interface CreateAclIdListener {
         public void createAclIdListener(int result, String aclId);
     }
 
@@ -130,7 +130,7 @@ public class  OcCloudProvisioning {
     public native void getIndividualAclInfo(String aclId,
             GetIndividualAclInfoListener cloudAclIndividualGetInfoHandler) throws OcException;
 
-	 /**
+    /**
     * Method to update Individual ACL info
     * @param aclId ACL ID
     * @param cloudAces List of cloud Aces for updation.
