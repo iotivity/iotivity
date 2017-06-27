@@ -79,6 +79,7 @@ namespace OIC
                 const std::string PRINTER = "oic.d.printer";
                 const std::string SCANNER = "oic.d.scanner";
                 const std::string PRINTER_MULTIFUNCTION = "oic.d.multifunctionprinter";
+                const std::string SWITCH = "oic.d.switch";
             }
 
             namespace RESOURCE_TYPE
