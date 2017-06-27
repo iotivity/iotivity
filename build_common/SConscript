@@ -409,6 +409,11 @@ if env['CONFIG_ENVIRONMENT_IMPORT'] == True:
     if os.environ['LDFLAGS'] != None:
         env.AppendUnique(LINKFLAGS=Split(os.environ['LDFLAGS']))
 
+if target_os in ['windows']:
+    # UnpackAll.py needs access to system PATH components that SCons
+    # does not include by default - e.g., the path to 7z.exe.
+    env.AppendUnique(PATH=os.environ['PATH'])
+
 # Ensure scons is able to change its working directory
 env.SConscriptChdir(1)
 
@@ -832,10 +837,6 @@ conf.CheckPThreadsSupport()
 env = conf.Finish()
 ######################################################################
 
-# must call external_builders.scons second time to properly setup
-# UnpackAll builder this is due to the system path not being pulled
-# in for windows till after the windows target has run.
-env.SConscript('external_builders.scons')
 env.SConscript('external_libs.scons')
 
 Return('env')
