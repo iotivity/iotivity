@@ -27,9 +27,7 @@
 #include <map>
 #include <memory>
 #include <iterator>
-#if defined(_MSC_VER)
 #include <functional>
-#endif
 
 #include "iotivity_config.h"
 #include "iotivity_debug.h"
