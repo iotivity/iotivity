@@ -26,6 +26,7 @@
 #include <memory>
 #include <utility>
 #include <exception>
+#include <functional>
 
 #include <OCException.h>
 #include <StringConstants.h>
