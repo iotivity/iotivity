@@ -92,7 +92,7 @@ bool Nest::isAuthorized()
     if (curlCode != MPM_RESULT_OK)
     {
         OIC_LOG_V(ERROR, TAG, "Curl GET Request operation failed. Error code %d", curlCode);
-        return MPM_RESULT_INTERNAL_ERROR;
+        return false;
     }
 
     if (MPM_RESULT_OK != parseStructureJsonResponse(response, m_metaInfo))
